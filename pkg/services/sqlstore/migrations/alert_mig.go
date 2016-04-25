@@ -9,6 +9,7 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
 			{Name: "panel_id", Type: DB_BigInt, Nullable: false},
+			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "query", Type: DB_Text, Nullable: false},
 			{Name: "query_ref_id", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "warn_level", Type: DB_NVarchar, Length: 255, Nullable: false},
@@ -22,14 +23,15 @@ func addAlertMigrations(mg *Migrator) {
 	}
 
 	// create table
-	mg.AddMigration("create alert table v1", NewAddTableMigration(alertV1))
+	mg.AddMigration("create alert_rule table v1", NewAddTableMigration(alertV1))
 
 	alert_changes := Table{
-		Name: "alert_rule_updates",
+		Name: "alert_rule_change",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "alert_id", Type: DB_BigInt, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
+			{Name: "type", Type: DB_NVarchar, Length: 50, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 		},
 	}

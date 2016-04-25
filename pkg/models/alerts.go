@@ -2,10 +2,12 @@ package models
 
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"time"
 )
 
 type AlertRule struct {
 	Id          int64
+	OrgId       int64
 	DashboardId int64
 	PanelId     int64
 	Query       string
@@ -17,6 +19,13 @@ type AlertRule struct {
 	Description string
 	QueryRange  string
 	Aggregator  string
+}
+
+type AlertRuleChange struct {
+	OrgId   int64
+	AlertId int64
+	Type    string
+	Created time.Time
 }
 
 func (cmd *SaveDashboardCommand) GetAlertModels() *[]AlertRule {
@@ -31,6 +40,7 @@ func (cmd *SaveDashboardCommand) GetAlertModels() *[]AlertRule {
 			alerting := panel.Get("alerting")
 			alert := AlertRule{
 				DashboardId: cmd.Result.Id,
+				OrgId:       cmd.Result.OrgId,
 				PanelId:     panel.Get("id").MustInt64(),
 				Id:          alerting.Get("id").MustInt64(),
 				QueryRefId:  alerting.Get("query_ref").MustString(),

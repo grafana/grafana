@@ -18,6 +18,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			{
 				PanelId:     1,
 				DashboardId: testDash.Id,
+				OrgId:       testDash.OrgId,
 				Query:       "Query",
 				QueryRefId:  "A",
 				WarnLevel:   "> 30",
@@ -41,6 +42,10 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		Convey("Can create one alert", func() {
 			So(err, ShouldBeNil)
+
+			alertChanges, er := GetAlertRuleChanges(1)
+			So(er, ShouldBeNil)
+			So(len(alertChanges), ShouldEqual, 1)
 		})
 
 		Convey("Can read properties", func() {
@@ -82,6 +87,15 @@ func TestAlertingDataAccess(t *testing.T) {
 				So(len(alerts), ShouldEqual, 1)
 				So(alerts[0].Query, ShouldEqual, "Updated Query")
 			})
+
+			Convey("Updates without changes should be ignored", func() {
+				err3 := SaveAlerts(&modifiedCmd)
+				So(err3, ShouldBeNil)
+
+				alertChanges, er := GetAlertRuleChanges(1)
+				So(er, ShouldBeNil)
+				So(len(alertChanges), ShouldEqual, 2)
+			})
 		})
 
 		Convey("Multiple alerts per dashboard", func() {
@@ -90,16 +104,19 @@ func TestAlertingDataAccess(t *testing.T) {
 					DashboardId: testDash.Id,
 					PanelId:     1,
 					Query:       "1",
+					OrgId:       1,
 				},
 				{
 					DashboardId: testDash.Id,
 					PanelId:     2,
 					Query:       "2",
+					OrgId:       1,
 				},
 				{
 					DashboardId: testDash.Id,
 					PanelId:     3,
 					Query:       "3",
+					OrgId:       1,
 				},
 			}
 
@@ -112,6 +129,9 @@ func TestAlertingDataAccess(t *testing.T) {
 				alerts, err2 := GetAlertsByDashboardId(testDash.Id)
 				So(err2, ShouldBeNil)
 				So(len(alerts), ShouldEqual, 3)
+				alertChanges, er := GetAlertRuleChanges(1)
+				So(er, ShouldBeNil)
+				So(len(alertChanges), ShouldEqual, 4)
 			})
 
 			Convey("should updated two dashboards and delete one", func() {
@@ -124,6 +144,12 @@ func TestAlertingDataAccess(t *testing.T) {
 					alerts, err2 := GetAlertsByDashboardId(testDash.Id)
 					So(err2, ShouldBeNil)
 					So(len(alerts), ShouldEqual, 2)
+				})
+
+				Convey("should add one more alert_rule_change", func() {
+					alertChanges, er := GetAlertRuleChanges(1)
+					So(er, ShouldBeNil)
+					So(len(alertChanges), ShouldEqual, 6)
 				})
 			})
 		})
