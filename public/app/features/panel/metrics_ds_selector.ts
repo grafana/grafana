@@ -13,10 +13,10 @@ var template = `
         <i class="icon-gf icon-gf-datasource"></i>
       </label>
       <label class="gf-form-label">
-        Data source
+        Panel data source
       </label>
 
-      <metric-segment segment="ctrl.dsSegment"
+      <metric-segment segment="ctrl.dsSegment" style-mode="select"
                       get-options="ctrl.getOptions()"
                       on-change="ctrl.datasourceChanged()"></metric-segment>
     </div>
