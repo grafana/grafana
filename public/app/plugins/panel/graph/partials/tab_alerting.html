@@ -14,6 +14,7 @@
     </div>
 
     <h5 class="section-heading">Thresholds</h5>
+		<p ng-show="ctrl.panel.grid.threshold1 || ctrl.panel.grid.threshold2">We noticed you have existing threshholds.<a href="#" ng-click="ctrl.convertThresholdsToAlert()">Convert them</a></p>
     <div class="gf-form">
       <span class="gf-form-label width-7">Warn level</span>
       <input class="gf-form-input max-width-7" type="text" ng-model="ctrl.panel.alerting.warn_level"></input>

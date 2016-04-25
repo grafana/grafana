@@ -103,6 +103,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     aliasColors: {},
     // other style overrides
     seriesOverrides: [],
+    alerting: {},
   };
 
   /** @ngInject */
@@ -308,6 +309,16 @@ class GraphCtrl extends MetricsPanelCtrl {
   toggleLegend() {
     this.panel.legend.show = !this.panel.legend.show;
     this.refresh();
+  }
+
+  convertThresholdsToAlerts() {
+    if (this.panel.grid && this.panel.grid.thresholds1) {
+      this.panel.alerting.warn_level = '< ' + this.panel.grid.threshold1;
+    }
+
+    if (this.panel.grid && this.panel.grid.thresholds2) {
+      this.panel.alerting.crit_level = '< ' + this.panel.grid.threshold2;
+    }
   }
 
   legendValuesOptionChanged() {
