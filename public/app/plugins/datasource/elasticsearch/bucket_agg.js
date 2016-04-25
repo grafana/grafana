@@ -124,7 +124,6 @@ function (angular, _, queryDef) {
         }
       }
 
-      console.log(settingsLinkText);
       $scope.settingsLinkText = settingsLinkText;
       $scope.agg.settings = settings;
       return true;
