@@ -11,6 +11,8 @@ func init() {
 }
 
 func SaveAlerts(cmd *m.SaveAlertsCommand) error {
+	//this function should be refactored
+
 	fmt.Printf("Saving alerts for dashboard %v\n", cmd.DashboardId)
 
 	alerts, err := GetAlertsByDashboardId(cmd.DashboardId)
