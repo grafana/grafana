@@ -156,11 +156,12 @@ func GetPluginReadme(c *middleware.Context) Response {
 func ImportDashboard(c *middleware.Context, apiCmd dtos.ImportDashboardCommand) Response {
 
 	cmd := plugins.ImportDashboardCommand{
-		OrgId:    c.OrgId,
-		UserId:   c.UserId,
-		PluginId: apiCmd.PluginId,
-		Path:     apiCmd.Path,
-		Inputs:   apiCmd.Inputs,
+		OrgId:     c.OrgId,
+		UserId:    c.UserId,
+		PluginId:  apiCmd.PluginId,
+		Path:      apiCmd.Path,
+		Inputs:    apiCmd.Inputs,
+		Overwrite: apiCmd.Overwrite,
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
