@@ -341,7 +341,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
             value: {
               color: panel.colorValue ? getColorForValue(data, data.valueRounded) : null,
               formatter: function() { return getValueText(); },
-              font: { size: getGaugeFontSize() }
+              font: { size: getGaugeFontSize(), family: 'Helvetica Neue", Helvetica, Arial, sans-serif' }
             },
             show: true
           }
@@ -360,7 +360,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     function getGaugeFontSize() {
       if (panel.valueFontSize) {
         var num = parseInt(panel.valueFontSize.substring(0, panel.valueFontSize.length - 1));
-        return 30 * (num / 100);
+        return (30 * (num / 100)) + 15;
       } else {
         return 30;
       }
