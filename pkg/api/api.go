@@ -6,7 +6,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/macaron-contrib/binding"
-  "github.com/grafana/grafana/pkg/netcrunch"
 )
 
 // Register adds http routes
@@ -151,18 +150,11 @@ func Register(r *macaron.Macaron) {
 			r.Delete("/:id", DeleteDataSource)
 			r.Get("/:id", wrap(GetDataSourceById))
 			r.Get("/plugins", GetDataSourcePlugins)
-      r.Get("/netcrunch", GetNetCrunchDatasource)
 		}, regOrgAdmin)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
 		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
 		r.Any("/datasources/proxy/:id", reqSignedIn, ProxyDataSourceRequest)
-
-    // Proxy for default NetCrunch datasource
-    r.Any("/datasources/proxy/netcrunch/" + netcrunch.NetCrunchServerSettings.Api + "/", reqSignedIn,
-          ProxyNetCrunchServerRequest)
-    r.Any("/datasources/proxy/netcrunch/" + netcrunch.NetCrunchServerSettings.Api + "/*", reqSignedIn,
-          ProxyNetCrunchServerRequest)
 
 		// Dashboard
 		r.Group("/dashboards", func() {

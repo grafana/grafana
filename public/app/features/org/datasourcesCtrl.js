@@ -7,7 +7,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('DataSourcesCtrl', function($scope, $http, $q, backendSrv, datasourceSrv) {
+  module.controller('DataSourcesCtrl', function($scope, $http, backendSrv, datasourceSrv) {
 
     $scope.init = function() {
       $scope.datasources = [];
@@ -15,15 +15,7 @@ function (angular) {
     };
 
     $scope.getDatasources = function() {
-      var
-        netCrunchDefaultDatasource = backendSrv.get('api/datasources/netcrunch'),
-        otherDatasources = backendSrv.get('/api/datasources');
-
-      $q.all([netCrunchDefaultDatasource, otherDatasources]).then(function(datasources) {
-        var results;
-
-        results = datasources[1];
-        results.unshift(datasources[0]);
+      backendSrv.get('/api/datasources').then(function(results) {
         $scope.datasources = results;
       });
     };
