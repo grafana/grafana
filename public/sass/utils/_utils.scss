@@ -59,15 +59,16 @@ button.close {
 
 // Toggling content
 .hide {
-  display: none;
+  display: none !important;
 }
+
 .show {
   display: block;
 }
 
 // Visibility
 .invisible {
-  visibility: hidden;
+  visibility: hidden !important;
 }
 
 // For Affix plugin
