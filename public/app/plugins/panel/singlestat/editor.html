@@ -179,13 +179,18 @@
 					Min
 				</li>
 				<li>
-					<input type="text" class="input-small tight-form-input" ng-model="ctrl.panel.gauge.minValue" ng-blur="ctrl.render()" placeholder="0"></input>
+					<input type="number" class="input-small tight-form-input" ng-model="ctrl.panel.gauge.minValue" ng-blur="ctrl.render()" placeholder="0"></input>
 				</li>
 				<li class="tight-form-item last">
 					Max
 				</li>
 				<li>
-					<input type="text" class="input-small tight-form-input last" ng-model="ctrl.panel.gauge.maxValue" ng-blur="ctrl.render()" placeholder="100"></input>
+					<input type="number" class="input-small tight-form-input last" ng-model="ctrl.panel.gauge.maxValue" ng-blur="ctrl.render()" placeholder="100"></input>
+					<span class="alert-state-critical" ng-show="ctrl.invalidGaugeRange">
+						&nbsp;
+						<i class="fa fa-warning"></i>
+						Min value is bigger than max.
+					</span>
 				</li>
 			</ul>
 			<div class="clearfix"></div>

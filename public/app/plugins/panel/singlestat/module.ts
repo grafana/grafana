@@ -18,6 +18,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   data: any;
   fontSizes: any[];
   unitFormats: any[];
+  invalidGaugeRange: boolean;
 
   // Set and populate defaults
   panelDefaults = {
@@ -287,6 +288,12 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function addGauge() {
+      ctrl.invalidGaugeRange = false;
+      if (panel.gauge.minValue > panel.gauge.maxValue) {
+        ctrl.invalidGaugeRange = true;
+        return;
+      }
+
       var plotCanvas = $('<div></div>');
       var plotCss = {
         top: '10px',
