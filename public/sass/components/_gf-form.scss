@@ -126,6 +126,7 @@ $gf-form-margin: 0.25rem;
 
   &--dropdown {
     padding-right: $input-padding-x*2;
+
     &:after {
       position: absolute;
       top: 35%;
