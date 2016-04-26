@@ -278,6 +278,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       return body;
     }
 
+    function getValueText() {
+      var result = panel.prefix ? panel.prefix : '';
+      result += data.valueFormated;
+      result += panel.postfix ? panel.postfix : '';
+
+      return result;
+    }
+
     function addGauge() {
       var plotCanvas = $('<div></div>');
       var plotCss = {
@@ -332,7 +340,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
             },
             value: {
               color: panel.colorValue ? getColorForValue(data, data.valueRounded) : null,
-              formatter: function () { return data.valueFormated; },
+              formatter: function() { return getValueText(); },
               font: { size: getGaugeFontSize() }
             },
             show: true
@@ -419,6 +427,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function render() {
       if (!ctrl.data) { return; }
+      ctrl.setValues(ctrl.data);
       data = ctrl.data;
       setElementHeight();
 
