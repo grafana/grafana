@@ -44,18 +44,15 @@ export class PanelCtrl {
       this.pluginName = plugin.name;
     }
 
-    $scope.$on("refresh", () => this.refresh());
-    $scope.$on("render", () => this.render());
+    $scope.$on("refresh", this.refresh.bind(this));
+    $scope.$on("render", this.render.bind(this));
     $scope.$on("$destroy", () => this.events.emit('panel-teardown'));
   }
 
   init() {
     this.calculatePanelHeight();
-
     this.publishAppEvent('panel-initialized', {scope: this.$scope});
     this.events.emit('panel-initialized');
-
-    this.refresh();
   }
 
   renderingCompleted() {
