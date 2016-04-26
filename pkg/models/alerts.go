@@ -43,13 +43,13 @@ func (cmd *SaveDashboardCommand) GetAlertModels() *[]AlertRule {
 				OrgId:       cmd.Result.OrgId,
 				PanelId:     panel.Get("id").MustInt64(),
 				Id:          alerting.Get("id").MustInt64(),
-				QueryRefId:  alerting.Get("query_ref").MustString(),
-				WarnLevel:   alerting.Get("warn_level").MustString(),
-				CritLevel:   alerting.Get("crit_level").MustString(),
+				QueryRefId:  alerting.Get("queryRef").MustString(),
+				WarnLevel:   alerting.Get("warnLevel").MustString(),
+				CritLevel:   alerting.Get("critLevel").MustString(),
 				Interval:    alerting.Get("interval").MustString(),
 				Title:       alerting.Get("title").MustString(),
 				Description: alerting.Get("description").MustString(),
-				QueryRange:  alerting.Get("query_range").MustString(),
+				QueryRange:  alerting.Get("queryRange").MustString(),
 				Aggregator:  alerting.Get("aggregator").MustString(),
 			}
 

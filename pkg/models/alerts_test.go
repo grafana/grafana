@@ -67,12 +67,12 @@ func TestAlertModel(t *testing.T) {
           "stack": false,
           "steppedLine": false,
           "alerting": {
-						"query_ref": "A",
-						"warn_level": "> 30",
-						"crit_level": "> 50",
+						"queryRef": "A",
+						"warnLevel": "> 30",
+						"critLevel": "> 50",
 						"title": "desktop visiter alerts",
 						"description": "Restart the webservers",
-						"query_range": "5m",
+						"queryRange": "5m",
 						"aggregator": "avg",
 						"interval": "10"
           },

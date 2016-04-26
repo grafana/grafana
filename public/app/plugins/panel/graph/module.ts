@@ -313,11 +313,11 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   convertThresholdsToAlerts() {
     if (this.panel.grid && this.panel.grid.thresholds1) {
-      this.panel.alerting.warn_level = '< ' + this.panel.grid.threshold1;
+      this.panel.alerting.warnLevel = '< ' + this.panel.grid.threshold1;
     }
 
     if (this.panel.grid && this.panel.grid.thresholds2) {
-      this.panel.alerting.crit_level = '< ' + this.panel.grid.threshold2;
+      this.panel.alerting.critLevel = '< ' + this.panel.grid.threshold2;
     }
   }
 
