@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"fmt"
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
@@ -9,6 +10,33 @@ import (
 
 func init() {
 	bus.AddHandler("sql", SaveAlerts)
+	bus.AddHandler("sql", GetAllAlertsForOrg)
+	bus.AddHandler("sql", GetAlertById)
+}
+
+func GetAlertById(query *m.GetAlertById) error {
+	alert := m.AlertRule{}
+	has, err := x.Id(query.Id).Get(&alert)
+
+	if !has {
+		return fmt.Errorf("could not find alert")
+	}
+	if err != nil {
+		return err
+	}
+	fmt.Printf("\n\n%v\n\n", query)
+	query.Result = alert
+	return nil
+}
+
+func GetAllAlertsForOrg(query *m.GetAlertsQuery) error {
+	alerts := make([]m.AlertRule, 0)
+	if err := x.Where("org_id = ?", query.OrgId).Find(&alerts); err != nil {
+		return err
+	}
+
+	query.Result = alerts
+	return nil
 }
 
 func DeleteAlertDefinition(dashboardId int64, sess *xorm.Session) error {

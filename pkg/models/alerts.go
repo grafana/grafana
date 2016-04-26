@@ -82,3 +82,16 @@ type SaveAlertsCommand struct {
 
 	Alerts *[]AlertRule
 }
+
+//Queries
+type GetAlertsQuery struct {
+	OrgId int64
+
+	Result []AlertRule
+}
+
+type GetAlertById struct {
+	Id int64
+
+	Result AlertRule
+}

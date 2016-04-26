@@ -236,6 +236,11 @@ func Register(r *macaron.Macaron) {
 		// metrics
 		r.Get("/metrics/test", GetTestMetrics)
 
+		r.Group("/alert_rule", func() {
+			r.Get("/", wrap(GetAlerts))
+			r.Get("/:id", ValidateOrgAlert, wrap(GetAlert))
+		})
+
 	}, reqSignedIn)
 
 	// admin api
