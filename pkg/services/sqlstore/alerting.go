@@ -1,7 +1,6 @@
 package sqlstore
 
 import (
-	"fmt"
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
@@ -62,71 +61,79 @@ func alertIsDifferent(rule1, rule2 m.AlertRule) bool {
 }
 
 func SaveAlerts(cmd *m.SaveAlertsCommand) error {
-	//this function should be refactored
 	return inTransaction(func(sess *xorm.Session) error {
-		fmt.Printf("Saving alerts for dashboard %v\n", cmd.DashboardId)
-
 		alerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
 		if err != nil {
 			return err
 		}
 
-		for _, alert := range *cmd.Alerts {
-			update := false
-			var alertToUpdate m.AlertRule
+		upsertAlerts(alerts, cmd.Alerts, sess)
 
-			for _, k := range alerts {
-				if alert.PanelId == k.PanelId {
-					update = true
-					alert.Id = k.Id
-					alertToUpdate = k
-				}
-			}
-
-			if update {
-
-				if alertIsDifferent(alertToUpdate, alert) {
-					_, err = sess.Id(alert.Id).Update(&alert)
-					if err != nil {
-						return err
-					}
-
-					SaveAlertChange("UPDATED", alert, sess)
-				}
-
-			} else {
-				_, err = sess.Insert(&alert)
-				if err != nil {
-					return err
-				}
-				SaveAlertChange("CREATED", alert, sess)
-			}
-		}
-
-		for _, missingAlert := range alerts {
-			missing := true
-
-			for _, k := range *cmd.Alerts {
-				if missingAlert.PanelId == k.PanelId {
-					missing = false
-				}
-			}
-
-			if missing {
-				_, err = sess.Exec("DELETE FROM alert_rule WHERE id = ?", missingAlert.Id)
-				if err != nil {
-					return err
-				}
-
-				err = SaveAlertChange("DELETED", missingAlert, sess)
-				if err != nil {
-					return err
-				}
-			}
-		}
+		deleteMissingAlerts(alerts, cmd.Alerts, sess)
 
 		return nil
 	})
+}
+
+func upsertAlerts(alerts []m.AlertRule, posted *[]m.AlertRule, sess *xorm.Session) error {
+	for _, alert := range *posted {
+		update := false
+		var alertToUpdate m.AlertRule
+
+		for _, k := range alerts {
+			if alert.PanelId == k.PanelId {
+				update = true
+				alert.Id = k.Id
+				alertToUpdate = k
+			}
+		}
+
+		if update {
+			if alertIsDifferent(alertToUpdate, alert) {
+				_, err := sess.Id(alert.Id).Update(&alert)
+				if err != nil {
+					return err
+				}
+
+				SaveAlertChange("UPDATED", alert, sess)
+			}
+
+		} else {
+			_, err := sess.Insert(&alert)
+			if err != nil {
+				return err
+			}
+			SaveAlertChange("CREATED", alert, sess)
+		}
+	}
+
+	return nil
+}
+
+func deleteMissingAlerts(alerts []m.AlertRule, posted *[]m.AlertRule, sess *xorm.Session) error {
+	for _, missingAlert := range alerts {
+		missing := true
+
+		for _, k := range *posted {
+			if missingAlert.PanelId == k.PanelId {
+				missing = false
+			}
+		}
+
+		if missing {
+			_, err := sess.Exec("DELETE FROM alert_rule WHERE id = ?", missingAlert.Id)
+			if err != nil {
+				return err
+			}
+
+			err = SaveAlertChange("DELETED", missingAlert, sess)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	return nil
 }
 
 func GetAlertsByDashboardId2(dashboardId int64, sess *xorm.Session) ([]m.AlertRule, error) {
@@ -152,9 +159,6 @@ func GetAlertsByDashboardId(dashboardId int64) ([]m.AlertRule, error) {
 }
 
 func GetAlertsByDashboardAndPanelId(dashboardId, panelId int64) (m.AlertRule, error) {
-	// this code should be refactored!!
-	// uniqueness should be garanted!
-
 	alerts := make([]m.AlertRule, 0)
 	err := x.Where("dashboard_id = ? and panel_id = ?", dashboardId, panelId).Find(&alerts)
 
