@@ -18,6 +18,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   data: any;
   fontSizes: any[];
   unitFormats: any[];
+  invalidGaugeRange: boolean;
 
   // Set and populate defaults
   panelDefaults = {
@@ -53,7 +54,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       show: false,
       minValue: 0,
       maxValue: 100,
-      thresholdLabels: true
+      thresholdMarkers: true,
+      thresholdLabels: false
     }
   };
 
@@ -278,14 +280,30 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       return body;
     }
 
+    function getValueText() {
+      var result = panel.prefix ? panel.prefix : '';
+      result += data.valueFormated;
+      result += panel.postfix ? panel.postfix : '';
+
+      return result;
+    }
+
     function addGauge() {
+      ctrl.invalidGaugeRange = false;
+      if (panel.gauge.minValue > panel.gauge.maxValue) {
+        ctrl.invalidGaugeRange = true;
+        return;
+      }
+
       var plotCanvas = $('<div></div>');
+      var width = elem.width();
+      var height = elem.height();
       var plotCss = {
         top: '10px',
         margin: 'auto',
         position: 'relative',
-        height: (elem.height() * 0.9) + 'px',
-        width: elem.width() + 'px'
+        height: (height * 0.9) + 'px',
+        width:  width + 'px'
       };
 
       plotCanvas.css(plotCss);
@@ -306,6 +324,12 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         ? 'rgb(230,230,230)'
         : 'rgb(38,38,38)';
 
+
+      var dimension = Math.min(width, height);
+      var fontSize = Math.min(dimension/4, 100);
+      var gaugeWidth = Math.min(dimension/6, 60);
+      var thresholdMarkersWidth = gaugeWidth/5;
+
       var options = {
         series: {
           gauges: {
@@ -315,11 +339,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
               background: { color: bgColor },
               border: { color: null },
               shadow: { show: false },
-              width: 38
+              width: gaugeWidth,
             },
             frame: { show: false },
             label: { show: false },
-            layout: { margin: 0 },
+            layout: { margin: 0, thresholdWidth: 0 },
             cell: { border: { width: 0 } },
             threshold: {
               values: thresholds,
@@ -328,12 +352,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
                 margin: 8,
                 font: { size: 18 }
               },
-              width: 8
+              show: panel.gauge.thresholdMarkers,
+              width: thresholdMarkersWidth,
             },
             value: {
               color: panel.colorValue ? getColorForValue(data, data.valueRounded) : null,
-              formatter: function () { return data.valueFormated; },
-              font: { size: getGaugeFontSize() }
+              formatter: function() { return getValueText(); },
+              font: { size: fontSize, family: 'Helvetica Neue", Helvetica, Arial, sans-serif' }
             },
             show: true
           }
@@ -352,7 +377,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     function getGaugeFontSize() {
       if (panel.valueFontSize) {
         var num = parseInt(panel.valueFontSize.substring(0, panel.valueFontSize.length - 1));
-        return 30 * (num / 100);
+        return (30 * (num / 100)) + 15;
       } else {
         return 30;
       }
@@ -419,6 +444,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function render() {
       if (!ctrl.data) { return; }
+      ctrl.setValues(ctrl.data);
       data = ctrl.data;
       setElementHeight();
 

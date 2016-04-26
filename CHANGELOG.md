@@ -11,6 +11,8 @@
 * **Graph**: Fixed issue with unneeded scrollbar in legend for Firefox, fixes [#4760](https://github.com/grafana/grafana/issues/4760)
 * **Table panel**: Fixed issue table panel formating string array properties, fixes [#4791](https://github.com/grafana/grafana/issues/4791)
 * **grafana-cli**: Improve error message when failing to install plugins due to corrupt response, fixes [#4651](https://github.com/grafana/grafana/issues/4651)
+* **Singlestat**: Fixes prefix an postfix for gauges, fixes [#4812](https://github.com/grafana/grafana/issues/4812)
+* **Singlestat**: Fixes auto-refresh on change for some options, fixes [#4809](https://github.com/grafana/grafana/issues/4809)
 
 # 3.0.0-beta5 (2016-04-15)
 
