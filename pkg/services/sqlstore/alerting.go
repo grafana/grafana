@@ -12,21 +12,37 @@ func init() {
 	bus.AddHandler("sql", SaveAlerts)
 }
 
-func SaveAlertChange(change string, alert m.AlertRule) error {
-	return inTransaction(func(sess *xorm.Session) error {
-		_, err := sess.Insert(&m.AlertRuleChange{
-			OrgId:   alert.OrgId,
-			Type:    change,
-			Created: time.Now(),
-			AlertId: alert.Id,
-		})
+func DeleteAlertDefinition(dashboardId int64, sess *xorm.Session) error {
+	alerts := make([]m.AlertRule, 0)
+	sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
 
+	for _, alert := range alerts {
+		_, err := sess.Exec("DELETE FROM alert_rule WHERE id = ? ", alert.Id)
 		if err != nil {
 			return err
 		}
 
-		return nil
+		if err := SaveAlertChange("DELETED", alert, sess); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func SaveAlertChange(change string, alert m.AlertRule, sess *xorm.Session) error {
+	_, err := sess.Insert(&m.AlertRuleChange{
+		OrgId:   alert.OrgId,
+		Type:    change,
+		Created: time.Now(),
+		AlertId: alert.Id,
 	})
+
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func alertIsDifferent(rule1, rule2 m.AlertRule) bool {
@@ -47,69 +63,81 @@ func alertIsDifferent(rule1, rule2 m.AlertRule) bool {
 
 func SaveAlerts(cmd *m.SaveAlertsCommand) error {
 	//this function should be refactored
+	return inTransaction(func(sess *xorm.Session) error {
+		fmt.Printf("Saving alerts for dashboard %v\n", cmd.DashboardId)
 
-	fmt.Printf("Saving alerts for dashboard %v\n", cmd.DashboardId)
+		alerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
+		if err != nil {
+			return err
+		}
 
-	alerts, err := GetAlertsByDashboardId(cmd.DashboardId)
-	if err != nil {
-		return err
-	}
+		for _, alert := range *cmd.Alerts {
+			update := false
+			var alertToUpdate m.AlertRule
 
-	for _, alert := range *cmd.Alerts {
-		update := false
-		var alertToUpdate m.AlertRule
+			for _, k := range alerts {
+				if alert.PanelId == k.PanelId {
+					update = true
+					alert.Id = k.Id
+					alertToUpdate = k
+				}
+			}
 
-		for _, k := range alerts {
-			if alert.PanelId == k.PanelId {
-				update = true
-				alert.Id = k.Id
-				alertToUpdate = k
+			if update {
+
+				if alertIsDifferent(alertToUpdate, alert) {
+					_, err = sess.Id(alert.Id).Update(&alert)
+					if err != nil {
+						return err
+					}
+
+					SaveAlertChange("UPDATED", alert, sess)
+				}
+
+			} else {
+				_, err = sess.Insert(&alert)
+				if err != nil {
+					return err
+				}
+				SaveAlertChange("CREATED", alert, sess)
 			}
 		}
 
-		if update {
+		for _, missingAlert := range alerts {
+			missing := true
 
-			if alertIsDifferent(alertToUpdate, alert) {
-				_, err = x.Id(alert.Id).Update(&alert)
+			for _, k := range *cmd.Alerts {
+				if missingAlert.PanelId == k.PanelId {
+					missing = false
+				}
+			}
+
+			if missing {
+				_, err = sess.Exec("DELETE FROM alert_rule WHERE id = ?", missingAlert.Id)
 				if err != nil {
 					return err
 				}
 
-				SaveAlertChange("UPDATED", alert)
+				err = SaveAlertChange("DELETED", missingAlert, sess)
+				if err != nil {
+					return err
+				}
 			}
-
-		} else {
-			_, err = x.Insert(&alert)
-			if err != nil {
-				return err
-			}
-			SaveAlertChange("CREATED", alert)
 		}
+
+		return nil
+	})
+}
+
+func GetAlertsByDashboardId2(dashboardId int64, sess *xorm.Session) ([]m.AlertRule, error) {
+	alerts := make([]m.AlertRule, 0)
+	err := sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
+
+	if err != nil {
+		return []m.AlertRule{}, err
 	}
 
-	for _, missingAlert := range alerts {
-		missing := true
-
-		for _, k := range *cmd.Alerts {
-			if missingAlert.PanelId == k.PanelId {
-				missing = false
-			}
-		}
-
-		if missing {
-			_, err = x.Exec("DELETE FROM alert_rule WHERE id = ?", missingAlert.Id)
-			if err != nil {
-				return err
-			}
-
-			err = SaveAlertChange("DELETED", missingAlert)
-			if err != nil {
-				return err
-			}
-		}
-	}
-
-	return nil
+	return alerts, nil
 }
 
 func GetAlertsByDashboardId(dashboardId int64) ([]m.AlertRule, error) {
