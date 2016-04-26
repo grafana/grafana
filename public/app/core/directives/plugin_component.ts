@@ -211,6 +211,9 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     // let a binding digest cycle complete before adding to dom
     setTimeout(function() {
       elem.append(child);
+      scope.$apply(function() {
+        scope.$broadcast('refresh');
+      });
     });
   }
 
