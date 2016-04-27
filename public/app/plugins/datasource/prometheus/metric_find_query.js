@@ -13,7 +13,7 @@ function (_, moment) {
   PrometheusMetricFindQuery.prototype.process = function() {
     var label_values_regex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]+)\)$/;
     var metric_names_regex = /^metrics\((.+)\)$/;
-    var query_result_regex = /^query_result\((.+)\)$/;
+    var query_result_regex = /^query_result\((.+?)(?:,\s*([0-9]+))?\)$/;
 
     var label_values_query = this.query.match(label_values_regex);
     if (label_values_query) {
@@ -31,7 +31,7 @@ function (_, moment) {
 
     var query_result_query = this.query.match(query_result_regex);
     if (query_result_query) {
-      return this.queryResultQuery(query_result_query[1]);
+      return this.queryResultQuery(query_result_query[1], query_result_query[2]);
     }
 
     // if query contains full metric name, return metric name and label list
@@ -85,8 +85,9 @@ function (_, moment) {
     });
   };
 
-  PrometheusMetricFindQuery.prototype.queryResultQuery = function(query) {
-    var url = '/api/v1/query?query=' + encodeURIComponent(query) + '&time=' + (moment().valueOf() / 1000);
+  PrometheusMetricFindQuery.prototype.queryResultQuery = function(query, time) {
+    time = time || moment().valueOf();
+    var url = '/api/v1/query?query=' + encodeURIComponent(query) + '&time=' + (time / 1000);
 
     return this.datasource._request('GET', url)
     .then(function(result) {

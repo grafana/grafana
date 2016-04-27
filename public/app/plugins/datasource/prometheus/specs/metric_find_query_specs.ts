@@ -97,5 +97,24 @@ describe('PrometheusMetricFindQuery', function() {
       expect(results.length).to.be(1);
       expect(results[0].text).to.be('metric{job="testjob"} 3846 1443454528000');
     });
+    it('query_result(metric, time) should generate metric name query', function() {
+      response = {
+        status: "success",
+        data: {
+          resultType: "vector",
+          result: [{
+            metric: {"__name__": "metric", job: "testjob"},
+            value: [1443454528.000, "3846"]
+          }]
+        }
+      };
+      ctx.$httpBackend.expect('GET', /proxied\/api\/v1\/query\?query=metric&time=.*/).respond(response);
+      var pm = new PrometheusMetricFindQuery(ctx.ds, 'query_result(metric, 1443454528000)');
+      pm.process().then(function(data) { results = data; });
+      ctx.$httpBackend.flush();
+      ctx.$rootScope.$apply();
+      expect(results.length).to.be(1);
+      expect(results[0].text).to.be('metric{job="testjob"} 3846 1443454528000');
+    });
   });
 });
