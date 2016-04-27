@@ -13,6 +13,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   var loadOrgBundle = new BundleLoader('app/features/org/all');
   var loadPluginsBundle = new BundleLoader('app/features/plugins/all');
   var loadAdminBundle = new BundleLoader('app/features/admin/admin');
+  var loadAlertsBundle = new BundleLoader('app/features/alerts/all');
 
   $routeProvider
   .when('/', {
@@ -196,6 +197,12 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controller: 'StyleGuideCtrl',
     controllerAs: 'ctrl',
     templateUrl: 'public/app/features/styleguide/styleguide.html',
+  })
+  .when('/alerts', {
+    templateUrl: 'public/app/features/alerts/partials/alerts_page.html',
+    controller: 'AlertPageCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadAlertsBundle,
   })
   .otherwise({
     templateUrl: 'public/app/partials/error.html',

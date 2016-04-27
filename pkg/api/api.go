@@ -58,6 +58,8 @@ func Register(r *macaron.Macaron) {
 
 	r.Get("/playlists/", reqSignedIn, Index)
 	r.Get("/playlists/*", reqSignedIn, Index)
+	r.Get("/alerts/", reqSignedIn, Index)
+	r.Get("/alerts/*", reqSignedIn, Index)
 
 	// sign up
 	r.Get("/signup", Index)

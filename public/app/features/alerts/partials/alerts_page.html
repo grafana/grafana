@@ -1,0 +1,34 @@
+<navbar icon="fa fa-fw fa-list" title="Alerts" title-url="alerts">
+</navbar>
+
+<div class="page-container" >
+	<div class="page-header">
+    <h1>Alerts</h1>
+  </div>
+
+  <table class="filter-table">
+    <thead>
+      <th><strong>Name</strong></th>
+      <th style="width: 68px"></th>
+      <th style="width: 28px"></th>
+
+    </thead>
+    <tr ng-repeat="alert in ctrl.alerts">
+      <td>
+				{{alert.title}}
+      </td>
+      <td class="text-center">
+				<a href="/dashboard/{{alert.dashboardUri}}" class="btn btn-inverse btn-small">
+          Go to dashboard
+        </a>
+      </td>
+      <td class="text-right">
+        <a ng-click="ctrl.deleteAlert(alert)" class="btn btn-danger btn-small">
+          <i class="fa fa-remove"></i>
+        </a>
+      </td>
+    </tr>
+  </table>
+</div>
+
+

@@ -1,0 +1,2 @@
+import './alerts_ctrl';
+
