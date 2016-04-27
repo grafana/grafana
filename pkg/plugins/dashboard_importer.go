@@ -11,12 +11,13 @@ import (
 )
 
 type ImportDashboardCommand struct {
-	Path   string                 `json:"string"`
-	Inputs []ImportDashboardInput `json:"inputs"`
+	Path      string
+	Inputs    []ImportDashboardInput
+	Overwrite bool
 
-	OrgId    int64  `json:"-"`
-	UserId   int64  `json:"-"`
-	PluginId string `json:"-"`
+	OrgId    int64
+	UserId   int64
+	PluginId string
 	Result   *PluginDashboardInfoDTO
 }
 
@@ -67,6 +68,7 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		Dashboard: generatedDash,
 		OrgId:     cmd.OrgId,
 		UserId:    cmd.UserId,
+		Overwrite: cmd.Overwrite,
 	}
 
 	if err := bus.Dispatch(&saveCmd); err != nil {

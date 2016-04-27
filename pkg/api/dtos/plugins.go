@@ -48,6 +48,6 @@ func (slice PluginList) Swap(i, j int) {
 type ImportDashboardCommand struct {
 	PluginId  string                         `json:"pluginId"`
 	Path      string                         `json:"path"`
-	Reinstall bool                           `json:"reinstall"`
+	Overwrite bool                           `json:"overwrite"`
 	Inputs    []plugins.ImportDashboardInput `json:"inputs"`
 }

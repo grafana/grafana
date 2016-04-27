@@ -43,11 +43,11 @@ export class DashImportListCtrl {
     });
   }
 
-  import(dash, reinstall) {
+  import(dash, overwrite) {
     var installCmd = {
       pluginId: this.plugin.id,
       path: dash.path,
-      reinstall: reinstall,
+      overwrite: overwrite,
       inputs: []
     };
 
