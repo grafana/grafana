@@ -20,15 +20,14 @@ export class QueryRowCtrl {
     this.target = this.queryCtrl.target;
     this.panel = this.panelCtrl.panel;
 
-    this.toggleCollapse(true);
+    if (!this.target.refId) {
+      this.target.refId = this.getNextQueryLetter();
+    }
 
+    this.toggleCollapse(true);
     if (this.target.isNew) {
       delete this.target.isNew;
       this.toggleCollapse(false);
-    }
-
-    if (!this.target.refId) {
-      this.target.refId = this.getNextQueryLetter();
     }
   }
 
@@ -72,6 +71,10 @@ export class QueryRowCtrl {
   }
 
   toggleEditorMode() {
+    if (this.canCollapse && this.collapsed) {
+      this.collapsed = false;
+    }
+
     this.queryCtrl.toggleEditorMode();
   }
 
@@ -104,6 +107,7 @@ function queryEditorRowDirective() {
     scope: {
       queryCtrl: "=",
       canCollapse: "=",
+      hasTextEditMode: "=",
     },
   };
 }
