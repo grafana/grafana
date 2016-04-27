@@ -43,8 +43,15 @@ Elasticsearch from the browser. You do this by specifying these to options in yo
 
 ![](/img/elasticsearch/elasticsearch_ds_details.png)
 
-Here you can specify a default for the `time field` and specify the name of your elasticsearch index. You can use
-a time pattern for the index name or a wildcard.
+Here you can specify a default for the `time field` and specify the name of your elasticsearch index. You can use a time pattern for the index name or a wildcard.
+
+You must also specify the Elasticsearch version you are using (it will modify the requests send to elasticsearch).
+
+You can also enable the Fixed Schema option. It supposes that every metric type (e.g. cpu, memory) is stored in a single type within the elasticsearch index. It allows more precise auto-completion:
+- one can autocomplete on the metric names only (and not all the fields in elastic)
+- when a metric is selected, the tags autocompletes only for the tags associated with this metric
+
+More details [at the end of this page](#fixed-schema-details).
 
 ## Metric Query editor
 
@@ -90,3 +97,68 @@ Use lucene format.
 ## Annotations
 TODO
 
+
+## Fixed Schema details
+
+This option imposes some constrains on the way you store you data. This allows more precise auto-completion and more performant queries (not implemnted yet).
+
+### How should you store your data ?
+
+- Every type of metric (e.g. cpu, memory) should be in a single type within the elasticsearch Index.
+- Your model for your data in elastic must be flat (i.e. no nested fields) (this is true with and without the Fixed Schema option).
+- Every document in elasticsearch can store only one metric e.g. it is *not* yet possible to display 
+```json
+{
+    "timestamp": 1442165810,
+    "cpu": 1.2,
+    "memory": 368873
+    "host": "my_hostname",
+    "instance": "Local",
+}
+```
+
+Only the first constrain is hard, and some developement could lift the two
+others.
+
+/!\ The auto-completion is based on the mapping of the index of the current
+day. It supposes that the tags keys (not the values) of your metrics have not
+changed over time.
+
+### Configure the Elasticsearch index
+
+For intance, if you want to stores your data on indexes starting with `test-metrics-`, you can use the following template for elasticsearch.
+The data field in elasticsearch is the one you will use when adding the datasource
+
+```json
+PUT _template/metrics_template
+{
+  "template": "test-metrics-*",
+  "settings": {
+    "index": {
+      "refresh_interval": "5s"
+    }
+  },
+  "mappings": {
+    "_default_": {
+      "dynamic_templates": [
+        {
+          "strings": {
+            "match": "*",
+            "match_mapping_type": "string",
+            "mapping":   { "type": "string",
+                           "doc_values": true,
+                           "index": "not_analyzed" }
+          }
+        }
+      ],
+      "_all":            { "enabled": false },
+      "_source":            { "enabled": false },
+      "properties": {
+        "timestamp":    { "type": "date",    "doc_values": true}
+      }
+    }
+  }
+}
+```
+
+One can see [this blog](https://www.elastic.co/blog/elasticsearch-as-a-time-series-data-store) for more details on the template configuration.

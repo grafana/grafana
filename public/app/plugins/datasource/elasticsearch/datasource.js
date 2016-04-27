@@ -19,6 +19,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     this.name = instanceSettings.name;
     this.index = instanceSettings.index;
     this.timeField = instanceSettings.jsonData.timeField;
+    this.fixedSchema = instanceSettings.jsonData.fixedSchema || false;
     this.esVersion = instanceSettings.jsonData.esVersion;
     this.indexPattern = new IndexPattern(instanceSettings.index, instanceSettings.jsonData.interval);
     this.interval = instanceSettings.jsonData.timeInterval;
@@ -201,6 +202,58 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
       return this._post('_msearch', payload).then(function(res) {
         return new ElasticResponse(sentTargets, res).getTimeSeries();
+      });
+    };
+
+    // In the Fixed ES Schema, metrics names are the _type
+    // field in the mapping
+    this.getIndexTypes = function() {
+      return this._get('/_mapping').then(function(res) {
+        var fields = {};
+
+        for (var indexName in res) {
+          var index = res[indexName];
+          var mappings = index.mappings;
+          if (!mappings) { continue; }
+          for (var typeName in mappings) {
+            if (typeName === '_default_') { continue; }
+            fields[typeName] = {text: typeName, value: typeName};
+          }
+        }
+
+        // transform to array
+        return _.map(fields, function(value) {
+          return value;
+        });
+      });
+    };
+
+    // To get the tags for a given metric, we look at the
+    // mapping associated with _typpe = metric
+    this.getTags = function(metric) {
+      return this._get('/_mapping/'+metric).then(function(res) {
+        var fields = {};
+
+        for (var indexName in res) {
+          var index = res[indexName];
+          var mappings = index.mappings;
+          if (!mappings) { continue; }
+          for (var typeName in mappings) { // typeName should be equal to metric
+            var properties = mappings[typeName].properties;
+            for (var field in properties) {
+              var prop = properties[field];
+
+              if (prop.type && field[0] !== '_' && field !== metric) {
+                fields[field] = {text: field, value: field};
+              }
+            }
+          }
+        }
+
+        // transform to array
+        return _.map(fields, function(value) {
+          return value;
+        });
       });
     };
 

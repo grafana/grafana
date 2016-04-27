@@ -16,9 +16,10 @@
 <div ng-repeat="agg in ctrl.target.metrics">
 	<elastic-metric-agg
 		target="ctrl.target" index="$index"
-		get-fields="ctrl.getFields($fieldType)"
+		get-fields="ctrl.getMetrics($fieldType)"
 		on-change="ctrl.queryUpdated()"
-		es-version="ctrl.esVersion">
+		es-version="ctrl.esVersion"
+		fixed-schema="ctrl.fixedSchema">
 	</elastic-metric-agg>
 </div>
 
