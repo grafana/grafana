@@ -149,17 +149,34 @@ func updateNetCrunchDatasource(netCrunchSettings NetCrunchServerSettings, orgId 
   }
 }
 
-//***
+func getOrgs () ([]*models.OrgDTO, bool) {
+  query := models.SearchOrgsQuery {
+    Query: "",
+    Name:  "",
+    Page:  0,
+    Limit: 1000,
+  }
 
-func updateNetCrunchDatasources(netCrunchSettings NetCrunchServerSettings) bool {
-  updateNetCrunchDatasource(netCrunchSettings, 1)
-  return true
+  err := bus.Dispatch(&query);
+  return query.Result, (err == nil)
 }
 
-//***
+func updateNetCrunchDatasources(netCrunchSettings NetCrunchServerSettings) bool {
+
+  result := true
+  orgs, found := getOrgs()
+
+  if found {
+    for index := range orgs {
+      if (updateNetCrunchDatasource(netCrunchSettings, orgs[index].Id) == false) {
+        result = false;
+      }
+    }
+  }
+  return result
+}
 
 func Upgrade() {
-
   UpgradeFileName := getUpgradeFileName()
   if (setting.PathExists(UpgradeFileName) && loadUpgradeFile(UpgradeFileName)) {
     netCrunchSettings, err := readNetCrunchServerSettings()
