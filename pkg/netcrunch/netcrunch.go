@@ -1,38 +1,11 @@
 package netcrunch
 
 import (
-  "github.com/grafana/grafana/pkg/setting"
-  "github.com/grafana/grafana/pkg/models"
+  "github.com/grafana/grafana/pkg/log"
 )
 
-var (
-  NetCrunchServerSettings setting.NetCrunchSettings
-)
+func Upgrade() {
 
-func Init() {
-  NetCrunchServerSettings = setting.NetCrunch
-}
+  log.Info("NetCrunch: Upgrade")
 
-func GetNetCrunchServerUrl() string {
-  return NetCrunchServerSettings.Protocol + "://" + NetCrunchServerSettings.Host + ":" +
-         NetCrunchServerSettings.Port
-}
-
-func GetNetCrunchDataSource() models.DataSource {
-  return models.DataSource {
-    Id:                 -1,
-    OrgId:              -1,
-    Version:            0,
-    Name:               "NetCrunch",
-    Type:               models.DS_NETCRUNCH,
-    Access:             models.DS_ACCESS_PROXY,
-    Url:                GetNetCrunchServerUrl(),
-    User:               NetCrunchServerSettings.User,
-    Password:           NetCrunchServerSettings.Password,
-    Database:           "",
-    BasicAuth:          false,
-    BasicAuthUser:      "",
-    BasicAuthPassword:  "",
-    IsDefault:          true,
-  }
 }
