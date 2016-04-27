@@ -22,6 +22,19 @@ func ValidateOrgAlert(c *middleware.Context) {
 }
 
 // GET /api/alert_rule
+func GetAlertChanges(c *middleware.Context) Response {
+	query := models.GetAlertChangesQuery{
+		OrgId: c.OrgId,
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return ApiError(500, "List alerts failed", err)
+	}
+
+	return Json(200, query.Result)
+}
+
+// GET /api/alert_rule
 func GetAlerts(c *middleware.Context) Response {
 	query := models.GetAlertsQuery{
 		OrgId: c.OrgId,

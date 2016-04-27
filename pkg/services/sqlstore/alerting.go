@@ -5,7 +5,6 @@ import (
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	"time"
 )
 
 func init() {
@@ -52,21 +51,6 @@ func DeleteAlertDefinition(dashboardId int64, sess *xorm.Session) error {
 		if err := SaveAlertChange("DELETED", alert, sess); err != nil {
 			return err
 		}
-	}
-
-	return nil
-}
-
-func SaveAlertChange(change string, alert m.AlertRule, sess *xorm.Session) error {
-	_, err := sess.Insert(&m.AlertRuleChange{
-		OrgId:   alert.OrgId,
-		Type:    change,
-		Created: time.Now(),
-		AlertId: alert.Id,
-	})
-
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -199,15 +183,4 @@ func GetAlertsByDashboardAndPanelId(dashboardId, panelId int64) (m.AlertRule, er
 	}
 
 	return alerts[0], nil
-}
-
-func GetAlertRuleChanges(orgid int64) ([]m.AlertRuleChange, error) {
-	alertChanges := make([]m.AlertRuleChange, 0)
-	err := x.Where("org_id = ?", orgid).Find(&alertChanges)
-
-	if err != nil {
-		return []m.AlertRuleChange{}, err
-	}
-
-	return alertChanges, nil
 }

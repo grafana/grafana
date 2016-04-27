@@ -95,3 +95,9 @@ type GetAlertById struct {
 
 	Result AlertRule
 }
+
+type GetAlertChangesQuery struct {
+	OrgId int64
+
+	Result []AlertRuleChange
+}

@@ -46,9 +46,10 @@ func TestAlertRuleChangesDataAccess(t *testing.T) {
 
 			SaveAlerts(&cmd)
 
-			alertChanges, er := GetAlertRuleChanges(FakeOrgId)
+			query := &m.GetAlertChangesQuery{OrgId: FakeOrgId}
+			er := GetAlertRuleChanges(query)
 			So(er, ShouldBeNil)
-			So(len(alertChanges), ShouldEqual, 1)
+			So(len(query.Result), ShouldEqual, 1)
 
 			err = DeleteDashboard(&m.DeleteDashboardCommand{
 				OrgId: FakeOrgId,
@@ -66,9 +67,10 @@ func TestAlertRuleChangesDataAccess(t *testing.T) {
 			})
 
 			Convey("should add one more alert_rule_change", func() {
-				alertChanges, er := GetAlertRuleChanges(FakeOrgId)
+				query := &m.GetAlertChangesQuery{OrgId: FakeOrgId}
+				er := GetAlertRuleChanges(query)
 				So(er, ShouldBeNil)
-				So(len(alertChanges), ShouldEqual, 2)
+				So(len(query.Result), ShouldEqual, 2)
 			})
 		})
 	})

@@ -237,6 +237,7 @@ func Register(r *macaron.Macaron) {
 		r.Get("/metrics/test", GetTestMetrics)
 
 		r.Group("/alert_rule", func() {
+			r.Get("/changes", wrap(GetAlertChanges))
 			r.Get("/", wrap(GetAlerts))
 			r.Get("/:id", ValidateOrgAlert, wrap(GetAlert))
 		})

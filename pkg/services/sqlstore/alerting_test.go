@@ -43,9 +43,10 @@ func TestAlertingDataAccess(t *testing.T) {
 		Convey("Can create one alert", func() {
 			So(err, ShouldBeNil)
 
-			alertChanges, er := GetAlertRuleChanges(1)
+			query := &m.GetAlertChangesQuery{OrgId: 1}
+			er := GetAlertRuleChanges(query)
 			So(er, ShouldBeNil)
-			So(len(alertChanges), ShouldEqual, 1)
+			So(len(query.Result), ShouldEqual, 1)
 		})
 
 		Convey("Can read properties", func() {
@@ -92,9 +93,10 @@ func TestAlertingDataAccess(t *testing.T) {
 				err3 := SaveAlerts(&modifiedCmd)
 				So(err3, ShouldBeNil)
 
-				alertChanges, er := GetAlertRuleChanges(1)
+				query := &m.GetAlertChangesQuery{OrgId: 1}
+				er := GetAlertRuleChanges(query)
 				So(er, ShouldBeNil)
-				So(len(alertChanges), ShouldEqual, 2)
+				So(len(query.Result), ShouldEqual, 2)
 			})
 		})
 
@@ -129,9 +131,11 @@ func TestAlertingDataAccess(t *testing.T) {
 				alerts, err2 := GetAlertsByDashboardId(testDash.Id)
 				So(err2, ShouldBeNil)
 				So(len(alerts), ShouldEqual, 3)
-				alertChanges, er := GetAlertRuleChanges(1)
+
+				query := &m.GetAlertChangesQuery{OrgId: 1}
+				er := GetAlertRuleChanges(query)
 				So(er, ShouldBeNil)
-				So(len(alertChanges), ShouldEqual, 4)
+				So(len(query.Result), ShouldEqual, 4)
 			})
 
 			Convey("should updated two dashboards and delete one", func() {
@@ -147,9 +151,10 @@ func TestAlertingDataAccess(t *testing.T) {
 				})
 
 				Convey("should add one more alert_rule_change", func() {
-					alertChanges, er := GetAlertRuleChanges(1)
+					query := &m.GetAlertChangesQuery{OrgId: 1}
+					er := GetAlertRuleChanges(query)
 					So(er, ShouldBeNil)
-					So(len(alertChanges), ShouldEqual, 6)
+					So(len(query.Result), ShouldEqual, 6)
 				})
 			})
 		})
