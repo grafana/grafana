@@ -132,8 +132,6 @@ var (
 	// QUOTA
 	Quota QuotaSettings
 
-  // NetCrunch Server settings
-  NetCrunch NetCrunchSettings
 )
 
 type CommandLineArgs struct {
@@ -473,7 +471,6 @@ func NewConfigContext(args *CommandLineArgs) error {
 	readSessionConfig()
 	readSmtpSettings()
 	readQuotaSettings()
-  readNetCrunchSettings()
 
   if VerifyEmailEnabled && !Smtp.Enabled {
     log.Warn("require_email_validation is enabled but smpt is disabled")

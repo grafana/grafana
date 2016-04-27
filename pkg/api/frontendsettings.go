@@ -46,7 +46,6 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
         dsMap["username"] = ds.User
         dsMap["password"] = ds.Password
         dsMap["url"] = url
-        dsMap["serverUrl"] = ds.Url
       }
     }
 
