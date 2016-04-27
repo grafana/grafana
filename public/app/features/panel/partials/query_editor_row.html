@@ -35,8 +35,8 @@
 				<i class="fa fa-bars"></i>
 			</a>
 			<ul class="dropdown-menu pull-right" role="menu">
-				<li role="menuitem">
-					<a tabindex="1" ng-click="ctrl.toggleEditorMode()">Toggle text editor</a>
+				<li role="menuitem" ng-if="ctrl.hasTextEditMode">
+					<a tabindex="1" ng-click="ctrl.toggleEditorMode()">Toggle Edit Mode</a>
 				</li>
 				<li role="menuitem">
 					<a tabindex="1" ng-click="ctrl.duplicateQuery()">Duplicate</a>

@@ -164,7 +164,7 @@ export default class InfluxQuery {
 
   getMeasurementAndPolicy(interpolate) {
     var policy = this.target.policy;
-    var measurement = this.target.measurement;
+    var measurement = this.target.measurement || 'measurement';
 
     if (!measurement.match('^/.*/')) {
       measurement = '"' + measurement+ '"';
@@ -190,10 +190,6 @@ export default class InfluxQuery {
       } else {
         return target.query;
       }
-    }
-
-    if (!target.measurement) {
-      throw {message: "Metric measurement is missing"};
     }
 
     var query = 'SELECT ';

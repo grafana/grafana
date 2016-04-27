@@ -59,7 +59,7 @@
 	</div>
 
 	<div ng-if="agg.type === 'extended_stats'">
-		<gf-form-switch ng-repeat="stat in extendedStats" class="gf-form offset-width-7" label="{{stat.text}}" label-class="width-10" checked="agg.meta[stat.value]" on-change="ctrl.render()"></gf-form-switch>
+		<gf-form-switch ng-repeat="stat in extendedStats" class="gf-form offset-width-7" label="{{stat.text}}" label-class="width-10" checked="agg.meta[stat.value]" on-change="onChangeInternal()"></gf-form-switch>
 
 		<div class="gf-form offset-width-7">
 			<label class="gf-form-label width-10">Sigma</label>

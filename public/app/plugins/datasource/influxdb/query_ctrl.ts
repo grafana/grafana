@@ -155,7 +155,11 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   toggleEditorMode() {
-    this.target.query = this.queryModel.render(false);
+    try {
+      this.target.query = this.queryModel.render(false);
+    } catch (err) {
+      console.log('query render error');
+    }
     this.target.rawQuery = !this.target.rawQuery;
   }
 
