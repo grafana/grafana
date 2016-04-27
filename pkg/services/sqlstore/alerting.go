@@ -68,6 +68,7 @@ func alertIsDifferent(rule1, rule2 m.AlertRule) bool {
 	result = result || rule1.Title != rule2.Title
 	result = result || rule1.Description != rule2.Description
 	result = result || rule1.QueryRange != rule2.QueryRange
+	result = result || rule1.DatasourceName != rule2.DatasourceName
 
 	return result
 }

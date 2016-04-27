@@ -3,7 +3,6 @@ package models
 import (
 	"testing"
 
-	"fmt"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -12,7 +11,7 @@ func TestAlertModel(t *testing.T) {
 
 	Convey("Parsing alerts from dashboard", t, func() {
 		json := `{
-  "id": 7,
+  "id": 57,
   "title": "Graphite 4",
   "originalTitle": "Graphite 4",
   "tags": [
@@ -30,92 +29,172 @@ func TestAlertModel(t *testing.T) {
       "height": "250px",
       "panels": [
         {
-          "aliasColors": {},
-          "bars": false,
-          "datasource": null,
-          "editable": true,
+          "title": "Active desktop users",
           "error": false,
-          "fill": 1,
-          "grid": {
-            "threshold1": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2": null,
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "id": 1,
+          "span": 6,
+          "editable": true,
+          "type": "graph",
           "isNew": true,
-          "legend": {
-            "alignAsTable": true,
-            "avg": false,
-            "current": false,
-            "max": false,
-            "min": false,
-            "rightSide": true,
-            "show": true,
-            "total": false,
-            "values": false
-          },
-          "lines": true,
-          "linewidth": 2,
-          "nullPointMode": "connected",
-          "percentage": false,
-          "pointradius": 5,
-          "points": false,
-          "renderer": "flot",
-          "seriesOverrides": [],
-          "span": 12,
-          "stack": false,
-          "steppedLine": false,
-          "alerting": {
-						"queryRef": "A",
-						"warnLevel": "> 30",
-						"critLevel": "> 50",
-						"title": "desktop visiter alerts",
-						"description": "Restart the webservers",
-						"queryRange": "5m",
-						"aggregator": "avg",
-						"interval": "10"
-          },
+          "id": 3,
           "targets": [
             {
-              "hide": false,
               "refId": "A",
-              "target": "statsd.fakesite.counters.session_start.desktop.count"
-            },
-            {
-              "hide": false,
-              "refId": "B",
-              "target": "statsd.fakesite.counters.session_start.mobile.count"
+              "target": "aliasByNode(statsd.fakesite.counters.session_start.desktop.count, 4)"
             }
           ],
-          "timeFrom": null,
-          "timeShift": null,
-          "title": "Panel Title",
-          "tooltip": {
-            "msResolution": false,
-            "shared": true,
-            "value_type": "cumulative"
-          },
-          "type": "graph",
+          "datasource": null,
+          "renderer": "flot",
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            },
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
           "xaxis": {
             "show": true
           },
+          "grid": {
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "lines": true,
+          "fill": 1,
+          "linewidth": 2,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": false,
+          "percentage": false,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "shared": true,
+            "msResolution": false
+          },
+          "timeFrom": null,
+          "timeShift": null,
+          "aliasColors": {},
+          "seriesOverrides": [],
+          "alerting": {
+            "queryRef": "A",
+            "warnLevel": "> 30",
+            "critLevel": "> 50",
+            "aggregator": "sum",
+            "queryRange": "10m",
+            "interval": "10s",
+            "title": "active desktop users",
+            "description": "restart webservers"
+          },
+          "links": []
+        },
+        {
+          "title": "Active mobile users",
+          "error": false,
+          "span": 6,
+          "editable": true,
+          "type": "graph",
+          "isNew": true,
+          "id": 4,
+          "targets": [
+            {
+              "refId": "A",
+              "target": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"
+            }
+          ],
+          "datasource": "graphite2",
+          "renderer": "flot",
           "yaxes": [
             {
-              "format": "short",
+              "label": null,
+              "show": true,
               "logBase": 1,
-              "max": null,
               "min": null,
-              "show": true
+              "max": null,
+              "format": "short"
             },
             {
-              "format": "short",
+              "label": null,
+              "show": true,
               "logBase": 1,
-              "max": null,
               "min": null,
-              "show": true
+              "max": null,
+              "format": "short"
             }
-          ]
+          ],
+          "xaxis": {
+            "show": true
+          },
+          "grid": {
+            "threshold1": null,
+            "threshold2": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "lines": true,
+          "fill": 1,
+          "linewidth": 2,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": false,
+          "percentage": false,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "shared": true,
+            "msResolution": false
+          },
+          "timeFrom": null,
+          "timeShift": null,
+          "aliasColors": {
+            "mobile": "#EAB839"
+          },
+          "seriesOverrides": [],
+          "alerting": {
+            "queryRef": "A",
+            "warnLevel": "> 300",
+            "critLevel": "> 500",
+            "aggregator": "avg",
+            "queryRange": "10m",
+            "interval": "10s",
+            "title": "active mobile users",
+            "description": "restart itunes"
+          },
+          "links": []
         }
       ],
       "title": "Row"
@@ -140,7 +219,7 @@ func TestAlertModel(t *testing.T) {
             "col": 0,
             "desc": true
           },
-          "span": 12,
+          "span": 6,
           "styles": [
             {
               "dateFormat": "YYYY-MM-DD HH:mm:ss",
@@ -201,9 +280,10 @@ func TestAlertModel(t *testing.T) {
               "target": ""
             }
           ],
-          "title": "Panel Title",
+          "title": "Broken influxdb panel",
           "transform": "table",
-          "type": "table"
+          "type": "table",
+          "links": []
         }
       ],
       "title": "New row"
@@ -248,10 +328,9 @@ func TestAlertModel(t *testing.T) {
     "list": []
   },
   "schemaVersion": 12,
-  "version": 20,
+  "version": 16,
   "links": []
 }`
-
 		dashboardJson, _ := simplejson.NewJson([]byte(json))
 		cmd := &SaveDashboardCommand{
 			Dashboard: dashboardJson,
@@ -267,14 +346,14 @@ func TestAlertModel(t *testing.T) {
 
 		Convey("all properties have been set", func() {
 			So(alerts, ShouldNotBeEmpty)
-			So(len(alerts), ShouldEqual, 1)
+			So(len(alerts), ShouldEqual, 2)
 
 			for _, v := range alerts {
 				So(v.DashboardId, ShouldEqual, 1)
 				So(v.PanelId, ShouldNotEqual, 0)
 
-				So(v.WarnLevel, ShouldEqual, "> 30")
-				So(v.CritLevel, ShouldEqual, "> 50")
+				So(v.WarnLevel, ShouldNotBeEmpty)
+				So(v.CritLevel, ShouldNotBeEmpty)
 
 				So(v.Aggregator, ShouldNotBeEmpty)
 				So(v.Query, ShouldNotBeEmpty)
@@ -282,12 +361,19 @@ func TestAlertModel(t *testing.T) {
 				So(v.QueryRange, ShouldNotBeEmpty)
 				So(v.Title, ShouldNotBeEmpty)
 				So(v.Description, ShouldNotBeEmpty)
-				So(v.Interval, ShouldEqual, "10")
-
-				fmt.Println(v.Query)
 			}
 
-			So(alerts[0].Query, ShouldEqual, "{\"hide\":false,\"refId\":\"A\",\"target\":\"statsd.fakesite.counters.session_start.desktop.count\"}")
+			So(alerts[0].WarnLevel, ShouldEqual, "> 30")
+			So(alerts[1].WarnLevel, ShouldEqual, "> 300")
+
+			So(alerts[0].CritLevel, ShouldEqual, "> 50")
+			So(alerts[1].CritLevel, ShouldEqual, "> 500")
+
+			So(alerts[0].Query, ShouldEqual, `{"refId":"A","target":"aliasByNode(statsd.fakesite.counters.session_start.desktop.count, 4)"}`)
+			So(alerts[1].Query, ShouldEqual, `{"refId":"A","target":"aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}`)
+
+			So(alerts[0].DatasourceName, ShouldEqual, "")
+			So(alerts[1].DatasourceName, ShouldEqual, "graphite2")
 		})
 	})
 }
