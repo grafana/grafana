@@ -6,27 +6,27 @@ import (
 )
 
 type AlertRule struct {
-	Id             int64
-	OrgId          int64
-	DashboardId    int64
-	PanelId        int64
-	Query          string
-	QueryRefId     string
-	WarnLevel      string
-	CritLevel      string
-	Interval       string
-	Title          string
-	Description    string
-	QueryRange     string
-	Aggregator     string
-	DatasourceName string
+	Id             int64  `json:"id"`
+	OrgId          int64  `json:"-"`
+	DashboardId    int64  `json:"dashboardId"`
+	PanelId        int64  `json:"panelId"`
+	Query          string `json:"query"`
+	QueryRefId     string `json:"queryRefId"`
+	WarnLevel      string `json:"warnLevel"`
+	CritLevel      string `json:"critLevel"`
+	Interval       string `json:"interval"`
+	Title          string `json:"title"`
+	Description    string `json:"description"`
+	QueryRange     string `json:"queryRange"`
+	Aggregator     string `json:"aggregator"`
+	DatasourceName string `json:"-"`
 }
 
 type AlertRuleChange struct {
-	OrgId   int64
-	AlertId int64
-	Type    string
-	Created time.Time
+	OrgId   int64     `json:"-"`
+	AlertId int64     `json:"alertId"`
+	Type    string    `json:"type"`
+	Created time.Time `json:"created"`
 }
 
 func (cmd *SaveDashboardCommand) GetAlertModels() *[]AlertRule {
