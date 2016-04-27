@@ -1,15 +1,15 @@
 
 <div class="gf-form-query">
 	<div class="gf-form">
-		<label class="gf-form-label">
-			{{ctrl.target.refId}}
+    <label class="gf-form-label">
+      <a class="pointer query-keyword" tabindex="1" ng-click="ctrl.toggleCollapse()" ng-class="{muted: !ctrl.canCollapse}">
+				<i class="fa fa-caret-down" ng-hide="ctrl.collapsed"></i>
+				<i class="fa fa-caret-right" ng-show="ctrl.collapsed"></i>
+        {{ctrl.target.refId}}
+				<em ng-show="ctrl.target.datasource">{{ctrl.target.datasource}}&nbsp;</em>
+      </a>
 		</label>
-		<label class="gf-form-label">
-			<a ng-click="ctrl.toggleHideQuery()" role="menuitem">
-				<i class="fa fa-eye"></i>
-			</a>
-		</label>
-	</div>
+  </div>
 
 	<div class="gf-form-query-content gf-form-query-content--collapsed" ng-if="ctrl.collapsed">
 		<div class="gf-form">
@@ -23,13 +23,6 @@
 	</div>
 
 	<div class="gf-form">
-		<label class="gf-form-label">
-			<a class="pointer" tabindex="1" ng-click="ctrl.toggleCollapse()" ng-class="{muted: !ctrl.canCollapse}">
-				<em ng-show="ctrl.target.datasource">{{ctrl.target.datasource}}&nbsp;</em>
-				<i class="fa fa-fw fa-chevron-down" ng-hide="ctrl.collapsed"></i>
-				<i class="fa fa-fw fa-chevron-left" ng-show="ctrl.collapsed"></i>
-			</a>
-		</label>
 		<label class="gf-form-label dropdown">
 			<a class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
 				<i class="fa fa-bars"></i>
@@ -48,6 +41,11 @@
 					<a tabindex="1" ng-click="ctrl.moveQuery(1)">Move down</a>
 				</li>
 			</ul>
+		</label>
+    <label class="gf-form-label">
+			<a ng-click="ctrl.toggleHideQuery()" role="menuitem">
+				<i class="fa fa-eye"></i>
+			</a>
 		</label>
 		<label class="gf-form-label">
 			<a class="pointer" tabindex="1" ng-click="ctrl.removeQuery(ctrl.target)">
