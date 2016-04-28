@@ -1,8 +1,10 @@
 package netcrunch
 
 import (
+  "os"
   "errors"
   "path/filepath"
+  "io/ioutil"
   "gopkg.in/ini.v1"
   "github.com/grafana/grafana/pkg/log"
   "github.com/grafana/grafana/pkg/setting"
@@ -41,11 +43,13 @@ func getVersionFileName() string {
 }
 
 func loadUpgradeFile(filePath string) bool {
-  var err error
-
-  UpgradeFile, err = ini.Load(filePath)
-  UpgradeFile.BlockMode = false
-
+  upgradeData, err := ioutil.ReadFile(filePath)
+  if (err == nil) {
+    UpgradeFile, err = ini.Load(upgradeData)
+    if (err == nil) {
+      UpgradeFile.BlockMode = false
+    }
+  }
   return (err == nil)
 }
 
@@ -176,15 +180,34 @@ func updateNetCrunchDatasources(netCrunchSettings NetCrunchServerSettings) bool 
   return result
 }
 
+func writeVersionFile(fileName string) bool {
+  version := []byte(setting.BuildVersion + "\n")
+  return (ioutil.WriteFile(fileName, version, 0644) == nil)
+}
+
+func removeFile(fileName string) bool {
+  err := os.Remove(fileName)
+  return (err == nil)
+}
+
 func Upgrade() {
   UpgradeFileName := getUpgradeFileName()
-  if (setting.PathExists(UpgradeFileName) && loadUpgradeFile(UpgradeFileName)) {
-    netCrunchSettings, err := readNetCrunchServerSettings()
-    if (err == nil) {
-      if updateNetCrunchDatasources(netCrunchSettings) {
-        log.Info("NetCrunch: Upgrade")
-      } else {
-        log.Info("NetCrunch: Upgrade error")
+  VersionFileName := getVersionFileName()
+
+  if (setting.PathExists(UpgradeFileName)) {
+    if (loadUpgradeFile(UpgradeFileName)) {
+      if (!setting.PathExists(VersionFileName)) {
+        netCrunchSettings, err := readNetCrunchServerSettings()
+        if (err == nil) {
+          if (updateNetCrunchDatasources(netCrunchSettings) &&
+              writeVersionFile(VersionFileName) && removeFile(UpgradeFileName)) {
+            log.Info("NetCrunch: Upgrade")
+          } else {
+            log.Info("NetCrunch: Upgrade error")
+          }
+        } else {
+          log.Info("NetCrunch: Upgrade error")
+        }
       }
     } else {
       log.Info("NetCrunch: Upgrade error")
