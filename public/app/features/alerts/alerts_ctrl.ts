@@ -15,7 +15,7 @@ export class AlertPageCtrl {
   }
 
   loadAlerts() {
-    this.backendSrv.get('/api/alert_rule').then(result => {
+    this.backendSrv.get('/api/alerts').then(result => {
       console.log(result);
       this.alerts = result;
     });

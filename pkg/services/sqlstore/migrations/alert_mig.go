@@ -19,7 +19,7 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "description", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "query_range", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "aggregator", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "datasource_name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "state", Type: DB_NVarchar, Length: 255, Nullable: false},
 		},
 	}
 

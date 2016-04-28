@@ -16,19 +16,18 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		items := []m.AlertRule{
 			{
-				PanelId:        1,
-				DashboardId:    testDash.Id,
-				OrgId:          testDash.OrgId,
-				Query:          "Query",
-				QueryRefId:     "A",
-				WarnLevel:      "> 30",
-				CritLevel:      "> 50",
-				Interval:       "10",
-				Title:          "Alerting title",
-				Description:    "Alerting description",
-				QueryRange:     "5m",
-				Aggregator:     "avg",
-				DatasourceName: "graphite",
+				PanelId:     1,
+				DashboardId: testDash.Id,
+				OrgId:       testDash.OrgId,
+				Query:       "Query",
+				QueryRefId:  "A",
+				WarnLevel:   "> 30",
+				CritLevel:   "> 50",
+				Interval:    "10",
+				Title:       "Alerting title",
+				Description: "Alerting description",
+				QueryRange:  "5m",
+				Aggregator:  "avg",
 			},
 		}
 
@@ -63,7 +62,6 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(alert.Description, ShouldEqual, "Alerting description")
 			So(alert.QueryRange, ShouldEqual, "5m")
 			So(alert.Aggregator, ShouldEqual, "avg")
-			So(alert.DatasourceName, ShouldEqual, "graphite")
 		})
 
 		Convey("Alerts with same dashboard id and panel id should update", func() {

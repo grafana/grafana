@@ -371,9 +371,6 @@ func TestAlertModel(t *testing.T) {
 
 			So(alerts[0].Query, ShouldEqual, `{"refId":"A","target":"aliasByNode(statsd.fakesite.counters.session_start.desktop.count, 4)"}`)
 			So(alerts[1].Query, ShouldEqual, `{"refId":"A","target":"aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}`)
-
-			So(alerts[0].DatasourceName, ShouldEqual, "")
-			So(alerts[1].DatasourceName, ShouldEqual, "graphite2")
 		})
 	})
 }

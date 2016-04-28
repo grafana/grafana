@@ -13,7 +13,7 @@ func init() {
 	bus.AddHandler("sql", GetAlertById)
 }
 
-func GetAlertById(query *m.GetAlertById) error {
+func GetAlertById(query *m.GetAlertByIdQuery) error {
 	alert := m.AlertRule{}
 	has, err := x.Id(query.Id).Get(&alert)
 
@@ -68,7 +68,7 @@ func alertIsDifferent(rule1, rule2 m.AlertRule) bool {
 	result = result || rule1.Title != rule2.Title
 	result = result || rule1.Description != rule2.Description
 	result = result || rule1.QueryRange != rule2.QueryRange
-	result = result || rule1.DatasourceName != rule2.DatasourceName
+	//don't compare .State! That would be insane.
 
 	return result
 }
@@ -81,7 +81,6 @@ func SaveAlerts(cmd *m.SaveAlertsCommand) error {
 		}
 
 		upsertAlerts(alerts, cmd.Alerts, sess)
-
 		deleteMissingAlerts(alerts, cmd.Alerts, sess)
 
 		return nil

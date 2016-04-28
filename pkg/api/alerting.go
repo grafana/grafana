@@ -9,7 +9,7 @@ import (
 
 func ValidateOrgAlert(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
-	query := models.GetAlertById{Id: id}
+	query := models.GetAlertByIdQuery{Id: id}
 
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(404, "Alert not found", nil)
@@ -22,7 +22,7 @@ func ValidateOrgAlert(c *middleware.Context) {
 	}
 }
 
-// GET /api/alert_rule/changes
+// GET /api/alerts/changes
 func GetAlertChanges(c *middleware.Context) Response {
 	query := models.GetAlertChangesQuery{
 		OrgId: c.OrgId,
@@ -35,7 +35,7 @@ func GetAlertChanges(c *middleware.Context) Response {
 	return Json(200, query.Result)
 }
 
-// GET /api/alert_rule
+// GET /api/alerts
 func GetAlerts(c *middleware.Context) Response {
 	query := models.GetAlertsQuery{
 		OrgId: c.OrgId,
@@ -85,14 +85,38 @@ func GetAlerts(c *middleware.Context) Response {
 	return Json(200, alertDTOs)
 }
 
-// GET /api/alert_rule/:id
+// GET /api/alerts/:id
 func GetAlert(c *middleware.Context) Response {
 	id := c.ParamsInt64(":id")
-	query := models.GetAlertById{Id: id}
+	query := models.GetAlertByIdQuery{Id: id}
 
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "List alerts failed", err)
 	}
 
 	return Json(200, &query.Result)
+}
+
+// PUT /api/alerts/state/:id
+func PutAlertState(c *middleware.Context, cmd models.UpdateAlertStateCommand) Response {
+	alertId := c.ParamsInt64(":alertId")
+
+	if alertId != cmd.AlertId {
+		return ApiError(401, "Bad Request", nil)
+	}
+
+	query := models.GetAlertByIdQuery{Id: alertId}
+	if err := bus.Dispatch(&query); err != nil {
+		return ApiError(500, "Failed to get alertstate", err)
+	}
+
+	if query.Result.OrgId != 0 && query.Result.OrgId != c.OrgId {
+		return ApiError(500, "Alert not found", nil)
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to set new state", err)
+	}
+
+	return Json(200, cmd.Result)
 }
