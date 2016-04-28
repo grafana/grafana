@@ -86,6 +86,13 @@
 		</div>
 	</div>
 
+	<div ng-if="agg.type === 'geohash_grid'">
+		<div class="gf-form offset-width-7">
+			<label class="gf-form-label">Precision</label>
+			<input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.precision" spellcheck='false' placeholder="3" ng-blur="onChangeInternal()">
+		</div>
+	</div>
+
 </div>
 
 
