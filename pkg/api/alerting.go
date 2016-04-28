@@ -62,6 +62,7 @@ func GetAlerts(c *middleware.Context) Response {
 			Description: alert.Description,
 			QueryRange:  alert.QueryRange,
 			Aggregator:  alert.Aggregator,
+			State:       alert.State,
 		})
 	}
 

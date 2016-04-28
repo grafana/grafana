@@ -28,6 +28,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				Description: "Alerting description",
 				QueryRange:  "5m",
 				Aggregator:  "avg",
+				State:       "OK",
 			},
 		}
 
@@ -62,6 +63,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(alert.Description, ShouldEqual, "Alerting description")
 			So(alert.QueryRange, ShouldEqual, "5m")
 			So(alert.Aggregator, ShouldEqual, "avg")
+			So(alert.State, ShouldEqual, "OK")
 		})
 
 		Convey("Alerts with same dashboard id and panel id should update", func() {

@@ -10,12 +10,15 @@
     <thead>
       <th><strong>Name</strong></th>
       <th style="width: 68px"></th>
+      <th style="width: 68px"></th>
       <th style="width: 28px"></th>
-
     </thead>
     <tr ng-repeat="alert in ctrl.alerts">
       <td>
 				{{alert.title}}
+      </td>
+      <td>
+				{{alert.state}}
       </td>
       <td class="text-center">
 				<a href="/dashboard/{{alert.dashboardUri}}" class="btn btn-inverse btn-small">

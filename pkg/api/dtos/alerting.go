@@ -13,6 +13,7 @@ type AlertRuleDTO struct {
 	Description string `json:"description"`
 	QueryRange  string `json:"queryRange"`
 	Aggregator  string `json:"aggregator"`
+	State       string `json:"state"`
 
 	DashbboardUri string `json:"dashboardUri"`
 }
