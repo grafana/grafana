@@ -11,7 +11,6 @@ export function infoPopover() {
     template: '<i class="fa fa-info-circle"></i>',
     transclude: true,
     link: function(scope, elem, attrs, ctrl, transclude) {
-
       var offset = attrs.offset || '0 -10px';
       var position = attrs.position || 'right middle';
       var classes = 'drop-help drop-hide-out-of-bounds';
@@ -39,6 +38,7 @@ export function infoPopover() {
           position: position,
           classes: classes,
           openOn: openOn,
+          hoverOpenDelay: 400,
           tetherOptions: {
             offset: offset
           }

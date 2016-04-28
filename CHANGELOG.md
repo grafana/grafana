@@ -2,6 +2,7 @@
 
 ### Enhancements
 * **Singlestat**: Support for gauges in singlestat panel. closes [#3688](https://github.com/grafana/grafana/pull/3688)
+* **Templating**: Support for data source as variable, closes [#816](https://github.com/grafana/grafana/pull/816)
 
 ### Bug fixes
 * **InfluxDB 0.12**: Fixed issue templating and `show tag values` query only returning tags for first measurement,  fixes [#4726](https://github.com/grafana/grafana/issues/4726)

@@ -63,6 +63,10 @@ export class MetricsDsSelectorCtrl {
       }
     }
 
+    if (!this.current) {
+      this.current = {name: dsValue + ' not found', value: null};
+    }
+
     this.dsSegment = uiSegmentSrv.newSegment(this.current.name);
   }
 
