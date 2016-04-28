@@ -323,17 +323,10 @@ function (angular, _, kbn) {
         options[value] = {text: text, value: value};
       }
 
-      return _.map(_.keys(options).sort(), function(key) {
-        return options[key];
-      });
+      return _.sortBy(options, 'text');
     };
 
     this.addAllOption = function(variable) {
-      if (variable.allValue) {
-        variable.options.unshift({text: 'All', value: variable.allValue});
-        return;
-      }
-
       variable.options.unshift({text: 'All', value: "$__all"});
     };
 

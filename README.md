@@ -103,8 +103,7 @@ npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```bash
 npm install
-npm install -g grunt-cli
-grunt
+npm run build
 ```
 
 ### Recompile backend on source change
@@ -145,4 +144,3 @@ please [sign the CLA](http://docs.grafana.org/project/cla/)
 
 Grafana is distributed under Apache 2.0 License.
 Work in progress Grafana 2.0 (with included Grafana backend)
-

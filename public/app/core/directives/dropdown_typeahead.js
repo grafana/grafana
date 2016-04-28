@@ -9,10 +9,10 @@ function (_, $, coreModule) {
   coreModule.default.directive('dropdownTypeahead', function($compile) {
 
     var inputTemplate = '<input type="text"'+
-      ' class="tight-form-input input-medium tight-form-input"' +
+      ' class="gf-form-input input-medium tight-form-input"' +
       ' spellcheck="false" style="display:none"></input>';
 
-    var buttonTemplate = '<a  class="tight-form-item tight-form-func dropdown-toggle"' +
+    var buttonTemplate = '<a  class="gf-form-label tight-form-func dropdown-toggle"' +
       ' tabindex="1" gf-dropdown="menuItems" data-toggle="dropdown"' +
       ' data-placement="top"><i class="fa fa-plus"></i></a>';
 

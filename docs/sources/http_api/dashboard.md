@@ -191,7 +191,7 @@ Will return the home dashboard.
 
 `GET /api/dashboards/tags`
 
-Get all tabs of dashboards
+Get all tags of dashboards
 
 **Example Request**:
 

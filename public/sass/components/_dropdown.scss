@@ -67,18 +67,20 @@
   }
 
   // Links within the dropdown menu
-  > li > a {
-    display: block;
-    padding: 3px 20px 3px 15px;
-    clear: both;
-    font-weight: normal;
-    line-height: $line-height-base;
-    color: $dropdownLinkColor;
-    white-space: nowrap;
+  > li {
+      > a {
+      display: block;
+      padding: 3px 20px 3px 15px;
+      clear: both;
+      font-weight: normal;
+      line-height: $line-height-base;
+      color: $dropdownLinkColor;
+      white-space: nowrap;
 
-    i {
-      padding-right: 5px;
-      color: $link-color-disabled;
+      i {
+        padding-right: 5px;
+        color: $link-color-disabled;
+      }
     }
   }
 }
