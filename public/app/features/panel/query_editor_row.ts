@@ -79,6 +79,7 @@ export class QueryRowCtrl {
   }
 
   removeQuery() {
+    delete this.panelCtrl.__collapsedQueryCache[this.target.refId];
     this.panel.targets = _.without(this.panel.targets, this.target);
     this.panelCtrl.refresh();
   }
