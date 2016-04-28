@@ -102,6 +102,7 @@ func upsertAlerts(alerts []m.AlertRule, posted *[]m.AlertRule, sess *xorm.Sessio
 
 		if update {
 			if alertIsDifferent(alertToUpdate, alert) {
+				alert.State = alertToUpdate.State
 				_, err := sess.Id(alert.Id).Update(&alert)
 				if err != nil {
 					return err
