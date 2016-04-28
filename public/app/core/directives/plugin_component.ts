@@ -206,9 +206,15 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     });
 
     $compile(child)(scope);
-
     elem.empty();
-    elem.append(child);
+
+    // let a binding digest cycle complete before adding to dom
+    setTimeout(function() {
+      elem.append(child);
+      scope.$apply(function() {
+        scope.$broadcast('refresh');
+      });
+    });
   }
 
   function registerPluginComponent(scope, elem, attrs, componentInfo) {

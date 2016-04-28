@@ -67,8 +67,8 @@ $page-gradient: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%
 
 // Links
 // -------------------------
-$link-color:              darken($white,11%);
-$link-color-disabled:     darken($link-color,30%);
+$link-color:              darken($white, 11%);
+$link-color-disabled:     darken($link-color, 30%);
 $link-hover-color:        $white;
 $external-link-color:     $blue;
 
@@ -76,7 +76,7 @@ $external-link-color:     $blue;
 // -------------------------
 $headings-color:       darken($white,11%);
 $abbr-border-color: 	 $gray-3 !default;
-$text-muted: 			     darken($link-color,30%);
+$text-muted: 			     $text-color-weak;
 
 $blockquote-small-color:  $gray-3 !default;
 $blockquote-border-color: $gray-4 !default;

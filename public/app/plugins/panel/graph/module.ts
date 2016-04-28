@@ -13,85 +13,6 @@ import TimeSeries from 'app/core/time_series2';
 import * as fileExport from 'app/core/utils/file_export';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 
-var panelDefaults = {
-  // datasource name, null = default datasource
-  datasource: null,
-  // sets client side (flot) or native graphite png renderer (png)
-  renderer: 'flot',
-  yaxes: [
-    {
-      label: null,
-      show: true,
-      logBase: 1,
-      min: null,
-      max: null,
-      format: 'short'
-    },
-    {
-      label: null,
-      show: true,
-      logBase: 1,
-      min: null,
-      max: null,
-      format: 'short'
-    }
-  ],
-  xaxis: {
-    show: true
-  },
-  grid          : {
-    threshold1: null,
-    threshold2: null,
-    threshold1Color: 'rgba(216, 200, 27, 0.27)',
-    threshold2Color: 'rgba(234, 112, 112, 0.22)'
-  },
-  // show/hide lines
-  lines         : true,
-  // fill factor
-  fill          : 1,
-  // line width in pixels
-  linewidth     : 2,
-  // show hide points
-  points        : false,
-  // point radius in pixels
-  pointradius   : 5,
-  // show hide bars
-  bars          : false,
-  // enable/disable stacking
-  stack         : false,
-  // stack percentage mode
-  percentage    : false,
-  // legend options
-  legend: {
-    show: true, // disable/enable legend
-    values: false, // disable/enable legend values
-    min: false,
-    max: false,
-    current: false,
-    total: false,
-    avg: false
-  },
-  // how null points should be handled
-  nullPointMode : 'connected',
-  // staircase line mode
-  steppedLine: false,
-  // tooltip options
-  tooltip       : {
-    value_type: 'cumulative',
-    shared: true,
-    msResolution: false,
-  },
-  // time overrides
-  timeFrom: null,
-  timeShift: null,
-  // metric queries
-  targets: [{}],
-  // series color overrides
-  aliasColors: {},
-  // other style overrides
-  seriesOverrides: [],
-};
-
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
@@ -105,14 +26,93 @@ class GraphCtrl extends MetricsPanelCtrl {
   datapointsWarning: boolean;
   colors: any = [];
 
+  panelDefaults = {
+    // datasource name, null = default datasource
+    datasource: null,
+    // sets client side (flot) or native graphite png renderer (png)
+    renderer: 'flot',
+    yaxes: [
+      {
+        label: null,
+        show: true,
+        logBase: 1,
+        min: null,
+        max: null,
+        format: 'short'
+      },
+      {
+        label: null,
+        show: true,
+        logBase: 1,
+        min: null,
+        max: null,
+        format: 'short'
+      }
+    ],
+    xaxis: {
+      show: true
+    },
+    grid          : {
+      threshold1: null,
+      threshold2: null,
+      threshold1Color: 'rgba(216, 200, 27, 0.27)',
+      threshold2Color: 'rgba(234, 112, 112, 0.22)'
+    },
+    // show/hide lines
+    lines         : true,
+    // fill factor
+    fill          : 1,
+    // line width in pixels
+    linewidth     : 2,
+    // show hide points
+    points        : false,
+    // point radius in pixels
+    pointradius   : 5,
+    // show hide bars
+    bars          : false,
+    // enable/disable stacking
+    stack         : false,
+    // stack percentage mode
+    percentage    : false,
+    // legend options
+    legend: {
+      show: true, // disable/enable legend
+      values: false, // disable/enable legend values
+      min: false,
+      max: false,
+      current: false,
+      total: false,
+      avg: false
+    },
+    // how null points should be handled
+    nullPointMode : 'connected',
+    // staircase line mode
+    steppedLine: false,
+    // tooltip options
+    tooltip       : {
+      value_type: 'cumulative',
+      shared: true,
+      msResolution: false,
+    },
+    // time overrides
+    timeFrom: null,
+    timeShift: null,
+    // metric queries
+    targets: [{}],
+    // series color overrides
+    aliasColors: {},
+    // other style overrides
+    seriesOverrides: [],
+  };
+
   /** @ngInject */
   constructor($scope, $injector, private annotationsSrv) {
     super($scope, $injector);
 
-    _.defaults(this.panel, angular.copy(panelDefaults));
-    _.defaults(this.panel.tooltip, panelDefaults.tooltip);
-    _.defaults(this.panel.grid, panelDefaults.grid);
-    _.defaults(this.panel.legend, panelDefaults.legend);
+    _.defaults(this.panel, this.panelDefaults);
+    _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
+    _.defaults(this.panel.grid, this.panelDefaults.grid);
+    _.defaults(this.panel.legend, this.panelDefaults.legend);
 
     this.colors = $scope.$root.colors;
 

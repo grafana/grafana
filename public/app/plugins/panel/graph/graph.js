@@ -73,7 +73,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             var legendSeries = _.filter(data, function(series) {
               return series.hideFromLegend(panel.legend) === false;
             });
-            var total = 23 + (22 * legendSeries.length);
+            var total = 23 + (21 * legendSeries.length);
             return Math.min(total, Math.floor(panelHeight/2));
           } else {
             return 26;

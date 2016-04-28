@@ -18,16 +18,14 @@ pre {
 code {
   color: $text-color;
   white-space: nowrap;
+  padding: 2px 5px;
+  margin: 0 2px;
 }
 
 code.code--small {
   font-size: $font-size-xs;
   padding: 0.2rem;
   margin: 0 2px;
-}
-
-p.code--line {
-  line-height: 1.8;
 }
 
 // Blocks of code
