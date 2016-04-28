@@ -1,12 +1,14 @@
 
 <div class="gf-form-query">
 	<div class="gf-form">
-    <label class="gf-form-label">
-      <a class="pointer query-keyword" tabindex="1" ng-click="ctrl.toggleCollapse()" ng-class="{muted: !ctrl.canCollapse}">
-				<i class="fa fa-caret-down" ng-hide="ctrl.collapsed"></i>
-				<i class="fa fa-caret-right" ng-show="ctrl.collapsed"></i>
-        {{ctrl.target.refId}}
-				<em ng-show="ctrl.target.datasource">{{ctrl.target.datasource}}&nbsp;</em>
+    <label class="gf-form-label gf-form-query-letter-cell">
+      <a class="pointer" tabindex="1" ng-click="ctrl.toggleCollapse()">
+        <span  ng-class="{muted: !ctrl.canCollapse}" class="gf-form-query-letter-cell-carret">
+          <i class="fa fa-caret-down" ng-hide="ctrl.collapsed"></i>
+          <i class="fa fa-caret-right" ng-show="ctrl.collapsed"></i>
+        </span>
+        <span class="gf-form-query-letter-cell-letter">{{ctrl.target.refId}}</span>
+        <em class="gf-form-query-letter-cell-ds" ng-show="ctrl.target.datasource">({{ctrl.target.datasource}})</em>
       </a>
 		</label>
   </div>
