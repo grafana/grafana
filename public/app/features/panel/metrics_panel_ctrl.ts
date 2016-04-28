@@ -15,6 +15,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   error: boolean;
   loading: boolean;
   datasource: any;
+  datasourceName: any;
   $q: any;
   $timeout: any;
   datasourceSrv: any;
@@ -244,6 +245,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     this.panel.datasource = datasource.value;
+    this.datasourceName = datasource.name;
     this.datasource = null;
     this.refresh();
   }
