@@ -11,7 +11,6 @@ func TestAlertingStateAccess(t *testing.T) {
 	Convey("Test alerting state changes", t, func() {
 		InitTestDB(t)
 
-		//setup alert
 		testDash := insertTestDashboard("dashboard with alerts", 1, "alert")
 
 		items := []m.AlertRule{
@@ -78,6 +77,18 @@ func TestAlertingStateAccess(t *testing.T) {
 					err := GetAlertById(query)
 					So(err, ShouldBeNil)
 					So(query.Result.State, ShouldEqual, "OK")
+				})
+
+				Convey("should have two event state logs", func() {
+					query := &m.GetAlertsStateLogCommand{
+						AlertId: 1,
+						OrgId:   1,
+					}
+
+					err := GetAlertStateLogByAlertId(query)
+					So(err, ShouldBeNil)
+
+					So(len(*query.Result), ShouldEqual, 2)
 				})
 			})
 		})

@@ -98,6 +98,21 @@ func GetAlert(c *middleware.Context) Response {
 	return Json(200, &query.Result)
 }
 
+// GET /api/alerts/state/:id
+func GetAlertState(c *middleware.Context) Response {
+	alertId := c.ParamsInt64(":alertId")
+
+	query := models.GetAlertsStateLogCommand{
+		AlertId: alertId,
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return ApiError(500, "Failed get alert state log", err)
+	}
+
+	return Json(200, query.Result)
+}
+
 // PUT /api/alerts/state/:id
 func PutAlertState(c *middleware.Context, cmd models.UpdateAlertStateCommand) Response {
 	alertId := c.ParamsInt64(":alertId")

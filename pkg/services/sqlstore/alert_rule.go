@@ -23,7 +23,7 @@ func GetAlertById(query *m.GetAlertByIdQuery) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("\n\n%v\n\n", query)
+
 	query.Result = alert
 	return nil
 }
