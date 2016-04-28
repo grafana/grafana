@@ -77,6 +77,7 @@ const
   NC_WRONG_SERVER_VERSION = 10;
   HOST_ADDRESS_RESOLVE_ERROR = 11;
   NC_SERVER_SERVICE_NAME = 'NCServerSvc';
+  NC_SERVER_ADMIN_USER = 'admin';
 
 function TNetCrunchWebAppConnection.GetPropertyValue(AJSONObject: TVariantArray; const APropertyName: String) : String;
 var
@@ -129,7 +130,7 @@ begin
   FLoginCode := -1;
   try
     FNetCrunchClient := InitNetCrunchClient(AAddress, APort, 0, False) as INCClient;
-    FUsername := CONSOLE_NETCRUNCH_USER;
+    FUsername := NC_SERVER_ADMIN_USER;
     FPassword := APassword;
   except
     FNetCrunchClient := Nil;
@@ -491,7 +492,7 @@ var
 begin
   Address := ResolveDNSName(String(AnsiString(AAddress)));
   Port := String(AnsiString(APort));
-  Password := EncodeNcConsolePassword(String(AnsiString(APassword)));
+  Password := String(AnsiString(APassword));
 
   NetCrunchConnection := TNetCrunchServerConnection.Create(Address, Port, Password);
   ServerConfigList := TStringList.Create;
