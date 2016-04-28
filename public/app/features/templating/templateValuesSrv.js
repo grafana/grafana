@@ -288,9 +288,7 @@ function (angular, _, kbn) {
         options[value] = {text: text, value: value};
       }
 
-      return _.map(_.keys(options).sort(), function(key) {
-        return options[key];
-      });
+      return _.sortBy(options, 'text');
     };
 
     this.addAllOption = function(variable) {
