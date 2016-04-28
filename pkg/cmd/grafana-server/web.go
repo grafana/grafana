@@ -4,9 +4,13 @@
 package main
 
 import (
+	"crypto/tls"
 	"fmt"
+	"net"
 	"net/http"
 	"path"
+	"strings"
+	"time"
 
 	"gopkg.in/macaron.v1"
 
@@ -78,21 +82,91 @@ func mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {
 func StartServer() {
 
 	var err error
-	m := newMacaron()
-	api.Register(m)
-
+	restart := make(chan struct{}, 1)
+	restart <- struct{}{}
+	first := true
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
 	log.Info("Listen: %v://%s%s", setting.Protocol, listenAddr, setting.AppSubUrl)
-	switch setting.Protocol {
-	case setting.HTTP:
-		err = http.ListenAndServe(listenAddr, m)
-	case setting.HTTPS:
-		err = http.ListenAndServeTLS(listenAddr, setting.CertFile, setting.KeyFile, m)
-	default:
-		log.Fatal(4, "Invalid protocol: %s", setting.Protocol)
-	}
-
+	l, err := net.Listen("tcp", listenAddr)
 	if err != nil {
 		log.Fatal(4, "Fail to start server: %v", err)
 	}
+	if !(setting.Protocol == setting.HTTP || setting.Protocol == setting.HTTPS) {
+		log.Fatal(4, "Invalid protocol: %s", setting.Protocol)
+	}
+	for {
+		select {
+		case <-restart:
+			if !first {
+				log.Info("Restarting backend on %v://%s%s", setting.Protocol, listenAddr, setting.AppSubUrl)
+				l.Close()
+				//wait up to 1 second for the old socket to close
+				timer := time.NewTimer(time.Second)
+				pre := time.Now()
+			CONNECT:
+				for {
+					select {
+					case <-timer.C:
+						log.Fatal(4, "Fail to start server: %v", err)
+					default:
+						l, err = net.Listen("tcp", listenAddr)
+						if err == nil {
+							log.Debug("took %f seconds to bind new socket.", time.Since(pre).Seconds())
+							timer.Stop()
+							break CONNECT
+						}
+					}
+				}
+			}
+			first = false
+			go func() {
+				plugins.Init()
+				m := newMacaron()
+				api.Register(m, restart)
+				srv := http.Server{
+					Addr:    listenAddr,
+					Handler: m,
+				}
+
+				switch setting.Protocol {
+				case setting.HTTP:
+					err = srv.Serve(tcpKeepAliveListener{l.(*net.TCPListener)})
+				case setting.HTTPS:
+					cert, err := tls.LoadX509KeyPair(setting.CertFile, setting.KeyFile)
+					if err != nil {
+						log.Fatal(4, "Fail to start server: %v", err)
+					}
+					srv.TLSConfig = &tls.Config{
+						Certificates: []tls.Certificate{cert},
+						NextProtos:   []string{"http/1.1"},
+					}
+					tlsListener := tls.NewListener(tcpKeepAliveListener{l.(*net.TCPListener)}, srv.TLSConfig)
+					err = srv.Serve(tlsListener)
+				}
+				if err != nil && !strings.Contains(err.Error(), "use of closed network connection") {
+					log.Fatal(4, "Fail to start server: %v", err)
+				}
+			}()
+		default:
+			break
+		}
+	}
+}
+
+// tcpKeepAliveListener sets TCP keep-alive timeouts on accepted
+// connections. It's used by ListenAndServe and ListenAndServeTLS so
+// dead TCP connections (e.g. closing laptop mid-download) eventually
+// go away.
+type tcpKeepAliveListener struct {
+	*net.TCPListener
+}
+
+func (ln tcpKeepAliveListener) Accept() (c net.Conn, err error) {
+	tc, err := ln.AcceptTCP()
+	if err != nil {
+		return
+	}
+	tc.SetKeepAlive(true)
+	tc.SetKeepAlivePeriod(3 * time.Minute)
+	return tc, nil
 }
