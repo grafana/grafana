@@ -63,7 +63,9 @@ function (angular, _, kbn) {
       // determine our dependencies.
       if (variable.type === "query") {
         _.forEach(this.variables, function(v) {
-          if (templateSrv.containsVariable(variable.query, v.name)) {
+          // both query and datasource can contain variable
+          if (templateSrv.containsVariable(variable.query, v.name) ||
+              templateSrv.containsVariable(variable.datasource, v.name)) {
             dependencies.push(self.variableLock[v.name].promise);
           }
         });
@@ -149,7 +151,8 @@ function (angular, _, kbn) {
         if (otherVariable === updatedVariable) {
           return;
         }
-        if (templateSrv.containsVariable(otherVariable.query, updatedVariable.name)) {
+        if (templateSrv.containsVariable(otherVariable.query, updatedVariable.name) ||
+            templateSrv.containsVariable(otherVariable.datasource, updatedVariable.name)) {
           return self.updateOptions(otherVariable);
         }
       });
