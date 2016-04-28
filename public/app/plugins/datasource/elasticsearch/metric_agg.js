@@ -68,6 +68,11 @@ function (angular, _, queryDef) {
       }
 
       switch($scope.agg.type) {
+        case 'cardinality': {
+          var precision_threshold = $scope.agg.settings.precision_threshold || '';
+          $scope.settingsLinkText = 'Precision threshold: ' + precision_threshold;
+          break;
+        }
         case 'percentiles': {
           $scope.agg.settings.percents = $scope.agg.settings.percents || [25,50,75,95,99];
           $scope.settingsLinkText = 'Values: ' + $scope.agg.settings.percents.join(',');
