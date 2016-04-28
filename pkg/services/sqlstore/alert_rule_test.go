@@ -69,6 +69,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		Convey("Alerts with same dashboard id and panel id should update", func() {
 			modifiedItems := items
 			modifiedItems[0].Query = "Updated Query"
+			modifiedItems[0].State = "ALERT"
 
 			modifiedCmd := m.SaveAlertsCommand{
 				DashboardId: testDash.Id,
@@ -89,6 +90,10 @@ func TestAlertingDataAccess(t *testing.T) {
 				So(err2, ShouldBeNil)
 				So(len(alerts), ShouldEqual, 1)
 				So(alerts[0].Query, ShouldEqual, "Updated Query")
+
+				Convey("Alert state should not be updated", func() {
+					So(alerts[0].State, ShouldEqual, "OK")
+				})
 			})
 
 			Convey("Updates without changes should be ignored", func() {
