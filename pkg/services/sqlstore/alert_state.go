@@ -50,7 +50,7 @@ func SetNewAlertState(cmd *m.UpdateAlertStateCommand) error {
 func GetAlertStateLogByAlertId(cmd *m.GetAlertsStateLogCommand) error {
 	alertLogs := make([]m.AlertStateLog, 0)
 
-	if err := x.Where("alert_id = ?", cmd.AlertId).Find(&alertLogs); err != nil {
+	if err := x.Where("alert_id = ?", cmd.AlertId).Desc("created").Find(&alertLogs); err != nil {
 		return err
 	}
 

@@ -1,0 +1,29 @@
+<navbar icon="fa fa-fw fa-list" title="Alerts" title-url="alerts">
+</navbar>
+
+<div class="page-container" >
+  <div class="page-header">
+    <h1>Alert history for {{ctrl.alert.title}}</h1>
+  </div>
+
+  <table class="filter-table">
+    <thead>
+      <th style="width: 68px"></th>
+      <th><strong>Time</strong></th>
+      <th>Description</th>
+    </thead>
+    <tr ng-repeat="alertLog in ctrl.alertLogs">
+      <td>
+        {{alertLog.newState}}
+      </td>
+      <td>
+        {{alertLog.created}}
+      </td>
+      <td>
+        {{alertLog.info}}
+      </td>
+    </tr>
+  </table>
+</div>
+
+

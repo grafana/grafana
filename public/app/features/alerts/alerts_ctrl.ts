@@ -8,15 +8,14 @@ import config from 'app/core/config';
 export class AlertPageCtrl {
 
   alerts: any;
+
   /** @ngInject */
-  constructor(private $scope, private backendSrv) {
-    console.log('ctor!');
+  constructor(private backendSrv) {
     this.loadAlerts();
   }
 
   loadAlerts() {
     this.backendSrv.get('/api/alerts').then(result => {
-      console.log(result);
       this.alerts = result;
     });
   }

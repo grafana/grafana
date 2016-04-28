@@ -18,7 +18,9 @@
 				{{alert.title}}
       </td>
       <td>
-				{{alert.state}}
+				<a href="/alerts/events/{{alert.id}}" class="btn btn-inverse btn-small">
+          {{alert.state}}
+        </a>
       </td>
       <td class="text-center">
 				<a href="/dashboard/{{alert.dashboardUri}}" class="btn btn-inverse btn-small">

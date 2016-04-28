@@ -204,6 +204,12 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controllerAs: 'ctrl',
     resolve: loadAlertsBundle,
   })
+  .when('/alerts/events/:alertId', {
+    templateUrl: 'public/app/features/alerts/partials/alert_log.html',
+    controller: 'AlertLogCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadAlertsBundle,
+  })
   .otherwise({
     templateUrl: 'public/app/partials/error.html',
     controller: 'ErrorCtrl'
