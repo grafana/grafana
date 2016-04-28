@@ -102,8 +102,8 @@ function (angular, _, coreModule, config) {
 
           if (ds) {
             metricSources.push({
-              name: '[[' + variable.name + ']]',
-              value: '[[' + variable.name + ']]',
+              name: '$' + variable.name,
+              value: '$' + variable.name,
               meta: ds.meta,
             });
           }
