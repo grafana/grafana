@@ -55,8 +55,10 @@ export class MetricsDsSelectorCtrl {
   constructor(private uiSegmentSrv, datasourceSrv) {
     this.datasources = datasourceSrv.getMetricSources();
 
+    var dsValue = this.panelCtrl.panel.datasource || null;
+
     for (let ds of this.datasources) {
-      if (ds.value === this.panelCtrl.panel.datasource) {
+      if (ds.value === dsValue) {
         this.current = ds;
       }
     }

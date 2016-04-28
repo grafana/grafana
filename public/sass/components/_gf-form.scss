@@ -223,43 +223,6 @@ $gf-form-margin: 0.25rem;
   }
 }
 
-.gf-form-query {
-  display: flex;
-  flex-direction: row;
-  flex-wrap: nowrap;
-  align-content: flex-start;
-  align-items: flex-start;
-
-  .gf-form,
-  .gf-form-filler {
-    margin-bottom: 2px;
-  }
-
-  .gf-form-switch,
-  .gf-form-switch label,
-  .gf-form-input,
-  .gf-form-select-wrapper,
-  .gf-form-filler,
-  .gf-form-label {
-    margin-right: 2px;
-  }
-}
-
-.gf-form-query-content {
-  flex-grow: 2;
-
-  &--collapsed {
-    overflow: hidden;
-
-    .gf-form-label {
-      overflow: hidden;
-      text-overflow: ellipsis;
-      width: 100%;
-      white-space: nowrap;
-    }
-  }
-}
-
 .gf-form-help-icon {
   flex-grow: 0;
   padding-left: $spacer;
