@@ -14,6 +14,15 @@
 * **Singlestat**: Fixes prefix an postfix for gauges, fixes [#4812](https://github.com/grafana/grafana/issues/4812)
 * **Singlestat**: Fixes auto-refresh on change for some options, fixes [#4809](https://github.com/grafana/grafana/issues/4809)
 
+### Breaking changes
+**Data Source Query Editors**: Issue [#3900](https://github.com/grafana/grafana/issues/3900)
+
+Query editors have been updated to use the new form styles. External data source plugins needs to be
+updated to work. Sorry to introduce breaking change this late in beta phase. We wanted to get this change
+in before 3.0 stable is released so we don't have to break data sources in next release (3.1). If you are
+a data source plugin author and want help for how the new form styles work please ask for help in
+slack channel (link to slack channel in readme).
+
 # 3.0.0-beta5 (2016-04-15)
 
 ### Bug fixes
