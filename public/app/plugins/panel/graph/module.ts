@@ -12,6 +12,7 @@ import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
 import * as fileExport from 'app/core/utils/file_export';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
+import {graphAlertEditor} from './alert_tab_ctrl';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -129,7 +130,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Axes', 'public/app/plugins/panel/graph/tab_axes.html', 2);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
     this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
-    this.addEditorTab('Alerting', 'public/app/plugins/panel/graph/partials/tab_alerting.html', 5);
+    this.addEditorTab('Alerting', graphAlertEditor, 5);
 
     this.logScales = {
       'linear': 1,
@@ -311,15 +312,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.refresh();
   }
 
-  convertThresholdsToAlerts() {
-    if (this.panel.grid && this.panel.grid.thresholds1) {
-      this.panel.alerting.warnLevel = '< ' + this.panel.grid.threshold1;
-    }
-
-    if (this.panel.grid && this.panel.grid.thresholds2) {
-      this.panel.alerting.critLevel = '< ' + this.panel.grid.threshold2;
-    }
-  }
 
   legendValuesOptionChanged() {
     var legend = this.panel.legend;

@@ -21,7 +21,6 @@ export class AlertLogCtrl {
 
   loadAlertLogs() {
     this.backendSrv.get('/api/alerts/events/' + this.alertId).then(result => {
-      console.log(result);
       this.alertLogs = result;
     });
 
