@@ -120,6 +120,11 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   toggleColumnSort(col, colIndex) {
+    // remove sort flag from current column
+    if (this.table.columns[this.panel.sort.col]) {
+      this.table.columns[this.panel.sort.col].sort = false;
+    }
+
     if (this.panel.sort.col === colIndex) {
       if (this.panel.sort.desc) {
         this.panel.sort.desc = false;
