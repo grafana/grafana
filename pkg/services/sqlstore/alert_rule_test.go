@@ -51,19 +51,23 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("Can read properties", func() {
-			alert, err2 := GetAlertsByDashboardAndPanelId(testDash.Id, 1)
+			query := m.GetAlertForPanelQuery{
+				DashboardId: testDash.Id,
+				PanelId:     1,
+			}
+			err2 := GetAlertsByDashboardAndPanelId(&query)
 
 			So(err2, ShouldBeNil)
-			So(alert.Interval, ShouldEqual, "10")
-			So(alert.WarnLevel, ShouldEqual, "> 30")
-			So(alert.CritLevel, ShouldEqual, "> 50")
-			So(alert.Query, ShouldEqual, "Query")
-			So(alert.QueryRefId, ShouldEqual, "A")
-			So(alert.Title, ShouldEqual, "Alerting title")
-			So(alert.Description, ShouldEqual, "Alerting description")
-			So(alert.QueryRange, ShouldEqual, "5m")
-			So(alert.Aggregator, ShouldEqual, "avg")
-			So(alert.State, ShouldEqual, "OK")
+			So(query.Result.Interval, ShouldEqual, "10")
+			So(query.Result.WarnLevel, ShouldEqual, "> 30")
+			So(query.Result.CritLevel, ShouldEqual, "> 50")
+			So(query.Result.Query, ShouldEqual, "Query")
+			So(query.Result.QueryRefId, ShouldEqual, "A")
+			So(query.Result.Title, ShouldEqual, "Alerting title")
+			So(query.Result.Description, ShouldEqual, "Alerting description")
+			So(query.Result.QueryRange, ShouldEqual, "5m")
+			So(query.Result.Aggregator, ShouldEqual, "avg")
+			So(query.Result.State, ShouldEqual, "OK")
 		})
 
 		Convey("Alerts with same dashboard id and panel id should update", func() {
@@ -85,14 +89,15 @@ func TestAlertingDataAccess(t *testing.T) {
 			})
 
 			Convey("Alerts should be updated", func() {
-				alerts, err2 := GetAlertsByDashboardId(testDash.Id)
+				query := m.GetAlertsForDashboardQuery{DashboardId: testDash.Id}
+				err2 := GetAlertsByDashboardId(&query)
 
 				So(err2, ShouldBeNil)
-				So(len(alerts), ShouldEqual, 1)
-				So(alerts[0].Query, ShouldEqual, "Updated Query")
+				So(len(query.Result), ShouldEqual, 1)
+				So(query.Result[0].Query, ShouldEqual, "Updated Query")
 
 				Convey("Alert state should not be updated", func() {
-					So(alerts[0].State, ShouldEqual, "OK")
+					So(query.Result[0].State, ShouldEqual, "OK")
 				})
 			})
 
@@ -135,9 +140,11 @@ func TestAlertingDataAccess(t *testing.T) {
 			Convey("Should save 3 dashboards", func() {
 				So(err, ShouldBeNil)
 
-				alerts, err2 := GetAlertsByDashboardId(testDash.Id)
+				queryForDashboard := m.GetAlertsForDashboardQuery{DashboardId: testDash.Id}
+				err2 := GetAlertsByDashboardId(&queryForDashboard)
+
 				So(err2, ShouldBeNil)
-				So(len(alerts), ShouldEqual, 3)
+				So(len(queryForDashboard.Result), ShouldEqual, 3)
 
 				query := &m.GetAlertChangesQuery{OrgId: 1}
 				er := GetAlertRuleChanges(query)
@@ -152,9 +159,10 @@ func TestAlertingDataAccess(t *testing.T) {
 				err = SaveAlerts(&cmd)
 
 				Convey("should delete the missing alert", func() {
-					alerts, err2 := GetAlertsByDashboardId(testDash.Id)
+					query := m.GetAlertsForDashboardQuery{DashboardId: testDash.Id}
+					err2 := GetAlertsByDashboardId(&query)
 					So(err2, ShouldBeNil)
-					So(len(alerts), ShouldEqual, 2)
+					So(len(query.Result), ShouldEqual, 2)
 				})
 
 				Convey("should add one more alert_rule_change", func() {
@@ -200,11 +208,12 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("Alerts should be removed", func() {
-				alerts, err2 := GetAlertsByDashboardId(testDash.Id)
+				query := m.GetAlertsForDashboardQuery{DashboardId: testDash.Id}
+				err2 := GetAlertsByDashboardId(&query)
 
 				So(testDash.Id, ShouldEqual, 1)
 				So(err2, ShouldBeNil)
-				So(len(alerts), ShouldEqual, 0)
+				So(len(query.Result), ShouldEqual, 0)
 			})
 		})
 	})

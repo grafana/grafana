@@ -11,6 +11,8 @@ func init() {
 	bus.AddHandler("sql", SaveAlerts)
 	bus.AddHandler("sql", GetAllAlertsForOrg)
 	bus.AddHandler("sql", GetAlertById)
+	bus.AddHandler("sql", GetAlertsByDashboardId)
+	bus.AddHandler("sql", GetAlertsByDashboardAndPanelId)
 }
 
 func GetAlertById(query *m.GetAlertByIdQuery) error {
@@ -160,28 +162,29 @@ func GetAlertsByDashboardId2(dashboardId int64, sess *xorm.Session) ([]m.AlertRu
 	return alerts, nil
 }
 
-func GetAlertsByDashboardId(dashboardId int64) ([]m.AlertRule, error) {
+func GetAlertsByDashboardId(cmd *m.GetAlertsForDashboardQuery) error {
 	alerts := make([]m.AlertRule, 0)
-	err := x.Where("dashboard_id = ?", dashboardId).Find(&alerts)
+	err := x.Where("dashboard_id = ?", cmd.DashboardId).Find(&alerts)
 
 	if err != nil {
-		return []m.AlertRule{}, err
+		return err
 	}
 
-	return alerts, nil
+	cmd.Result = alerts
+	return nil
 }
 
-func GetAlertsByDashboardAndPanelId(dashboardId, panelId int64) (m.AlertRule, error) {
+func GetAlertsByDashboardAndPanelId(cmd *m.GetAlertForPanelQuery) error {
 	alerts := make([]m.AlertRule, 0)
-	err := x.Where("dashboard_id = ? and panel_id = ?", dashboardId, panelId).Find(&alerts)
+	err := x.Where("dashboard_id = ? and panel_id = ?", cmd.DashboardId, cmd.PanelId).Find(&alerts)
 
 	if err != nil {
-		return m.AlertRule{}, err
+		return err
 	}
 
 	if len(alerts) != 1 {
-		return m.AlertRule{}, err
+		return err
 	}
-
-	return alerts[0], nil
+	cmd.Result = alerts[0]
+	return nil
 }

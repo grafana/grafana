@@ -246,6 +246,9 @@ func Register(r *macaron.Macaron) {
 			r.Get("/:id", ValidateOrgAlert, wrap(GetAlert))
 		})
 
+		r.Get("/alerts-dashboard/:dashboardId", wrap(GetAlertsForDashboard))
+		r.Get("/alerts-dashboard/:dashboardId/:panelId", wrap(GetAlertsForPanel))
+
 	}, reqSignedIn)
 
 	// admin api

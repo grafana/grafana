@@ -102,3 +102,16 @@ type GetAlertChangesQuery struct {
 
 	Result []AlertRuleChange
 }
+
+type GetAlertsForDashboardQuery struct {
+	DashboardId int64
+
+	Result []AlertRule
+}
+
+type GetAlertForPanelQuery struct {
+	DashboardId int64
+	PanelId     int64
+
+	Result AlertRule
+}
