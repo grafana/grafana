@@ -61,7 +61,6 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 			for key, data := range cmd.SecureJsonData {
 				pluginSetting.SecureJsonData[key] = util.Encrypt([]byte(data), setting.SecretKey)
 			}
-			pluginSetting.SecureJsonData = cmd.GetEncryptedJsonData()
 			pluginSetting.Updated = time.Now()
 			pluginSetting.Enabled = cmd.Enabled
 			pluginSetting.JsonData = cmd.JsonData
