@@ -27,7 +27,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   resolution: any;
   timeInfo: any;
   skipDataOnInit: boolean;
-  datasources: any[];
   dataStream: any;
   dataSubscription: any;
 
@@ -52,7 +51,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   private onInitMetricsPanelEditMode() {
     this.addEditorTab('Metrics', 'public/app/partials/metrics.html');
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
-    this.datasources = this.datasourceSrv.getMetricSources();
   }
 
   private onMetricsPanelRefresh() {
@@ -248,16 +246,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.panel.datasource = datasource.value;
     this.datasource = null;
     this.refresh();
-  }
-
-  addDataQuery(datasource) {
-    var target: any = {};
-
-    if (datasource) {
-      target.datasource = datasource.name;
-    }
-
-    this.panel.targets.push(target);
   }
 }
 
