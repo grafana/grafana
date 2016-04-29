@@ -23,7 +23,7 @@ function (angular, _) {
     $scope.variableTypes = [
       {value: "query",      text: "Query"},
       {value: "interval",   text: "Interval"},
-      {value: "datasource", text: "Datasource"},
+      {value: "datasource", text: "Data source"},
       {value: "custom",     text: "Custom"},
     ];
 
