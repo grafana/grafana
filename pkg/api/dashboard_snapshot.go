@@ -21,6 +21,10 @@ func GetSharingOptions(c *middleware.Context) {
 }
 
 func CreateDashboardSnapshot(c *middleware.Context, cmd m.CreateDashboardSnapshotCommand) {
+	if cmd.Name == "" {
+		cmd.Name = "Unnamed snapshot"
+	}
+
 	if cmd.External {
 		// external snapshot ref requires key and delete key
 		if cmd.Key == "" || cmd.DeleteKey == "" {

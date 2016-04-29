@@ -32,6 +32,8 @@ export default class TableModel {
     if (options.desc) {
       this.rows.reverse();
       this.columns[options.col].desc = true;
+    } else {
+      this.columns[options.col].desc = false;
     }
   }
 }

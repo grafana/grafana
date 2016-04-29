@@ -103,6 +103,10 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			}
 
 			for _, include := range plugin.Includes {
+				if !c.HasUserRole(include.Role) {
+					continue
+				}
+
 				if include.Type == "page" && include.AddToNav {
 					link := &dtos.NavLink{
 						Url:  setting.AppSubUrl + "/plugins/" + plugin.Id + "/page/" + include.Slug,
@@ -110,6 +114,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 					}
 					appLink.Children = append(appLink.Children, link)
 				}
+
 				if include.Type == "dashboard" && include.AddToNav {
 					link := &dtos.NavLink{
 						Url:  setting.AppSubUrl + "/dashboard/db/" + include.Slug,
@@ -124,7 +129,9 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Plugin Config", Icon: "fa fa-cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/edit"})
 			}
 
-			data.MainNavLinks = append(data.MainNavLinks, appLink)
+			if len(appLink.Children) > 0 {
+				data.MainNavLinks = append(data.MainNavLinks, appLink)
+			}
 		}
 	}
 
