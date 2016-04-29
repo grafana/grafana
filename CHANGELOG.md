@@ -1,4 +1,9 @@
-# 3.0.0-beta6 (unreleased)
+# 3.0.0-beta7 (unreleased)
+
+### Bug fixes
+* **Dashboard title**: Fixed max dashboard title width (media query) for large screens,  fixes [#4859](https://github.com/grafana/grafana/issues/4859)
+
+# 3.0.0-beta6 (2016-04-29)
 
 ### Enhancements
 * **Singlestat**: Support for gauges in singlestat panel. closes [#3688](https://github.com/grafana/grafana/pull/3688)
