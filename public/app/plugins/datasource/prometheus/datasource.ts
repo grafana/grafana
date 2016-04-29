@@ -63,11 +63,14 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     var end = getPrometheusTime(options.range.to, true);
 
     var queries = [];
+    var activeTargets = [];
+
     options = _.clone(options);
     _.each(options.targets, _.bind(function(target) {
       if (!target.expr || target.hide) {
         return;
       }
+      activeTargets.push(target);
 
       var query: any = {};
       query.expr = templateSrv.replace(target.expr, options.scopedVars, interpolateQueryExpr);
@@ -109,7 +112,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
         delete self.lastErrors.query;
 
         _.each(response.data.data.result, function(metricData) {
-          result.push(self.transformMetricData(metricData, options.targets[index], start, end));
+          result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
         });
       });
 
