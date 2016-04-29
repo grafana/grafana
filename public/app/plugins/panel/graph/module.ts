@@ -10,6 +10,7 @@ import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
+import config from 'app/core/config';
 import * as fileExport from 'app/core/utils/file_export';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 import {graphAlertEditor} from './alert_tab_ctrl';
@@ -130,7 +131,9 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Axes', 'public/app/plugins/panel/graph/tab_axes.html', 2);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
     this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
-    this.addEditorTab('Alerting', graphAlertEditor, 5);
+    if (config.alertingEnabled) {
+      this.addEditorTab('Alerting', graphAlertEditor, 5);
+    }
 
     this.logScales = {
       'linear': 1,

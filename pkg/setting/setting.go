@@ -137,6 +137,9 @@ var (
 
 	// QUOTA
 	Quota QuotaSettings
+
+	// Alerting
+	AlertingEnabled bool
 )
 
 type CommandLineArgs struct {
@@ -483,6 +486,9 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ldapSec := Cfg.Section("auth.ldap")
 	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
 	LdapConfigFile = ldapSec.Key("config_file").String()
+
+	alerting := Cfg.Section("alerting")
+	AlertingEnabled = alerting.Key("enabled").MustBool(false)
 
 	readSessionConfig()
 	readSmtpSettings()
