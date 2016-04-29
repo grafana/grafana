@@ -17,7 +17,7 @@ func getGrafanaPluginDir() string {
 	defaultNix := "/var/lib/grafana/plugins"
 
 	if currentOS == "windows" {
-		return "..\\data\\plugins"
+		return "../data/plugins"
 	}
 
 	pwd, err := os.Getwd()
@@ -35,9 +35,10 @@ func getGrafanaPluginDir() string {
 }
 
 func isDevenvironment(pwd string) bool {
-	// if ../conf/default.ini exists, grafana is not installed as package
-	_, err := os.Stat("../conf/default.ini")
-	return err != nil
+	// if ../conf/defaults.ini exists, grafana is not installed as package
+	// that its in development environment.
+	_, err := os.Stat("../conf/defaults.ini")
+	return err == nil
 }
 
 func main() {

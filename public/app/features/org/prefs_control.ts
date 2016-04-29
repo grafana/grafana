@@ -49,7 +49,7 @@ export class PrefsControlCtrl {
 }
 
 var template = `
-<form name="ctrl.prefsForm" class="gf-form-group">
+<form name="ctrl.prefsForm" class="section gf-form-group">
   <h3 class="page-heading">Preferences</h3>
 
   <div class="gf-form">
@@ -61,9 +61,8 @@ var template = `
 
   <div class="gf-form">
     <span class="gf-form-label width-9">Home Dashboard</span>
-    <dashboard-selector
-        class="gf-form-select-wrapper max-width-20"
-        model="ctrl.prefs.homeDashboardId">
+    <dashboard-selector class="gf-form-select-wrapper max-width-20 gf-form-select-wrapper--has-help-icon"
+                        model="ctrl.prefs.homeDashboardId">
     </dashboard-selector>
   </div>
 

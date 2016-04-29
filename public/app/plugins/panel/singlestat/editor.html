@@ -158,6 +158,55 @@
 
 <div class="editor-row">
 	<div class="section" style="margin-bottom: 20px">
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<strong>Gauge</strong>
+				</li>
+				<li class="tight-form-item">
+					Show&nbsp;
+					<input class="cr1" id="panel.gauge.show" type="checkbox"
+					ng-model="ctrl.panel.gauge.show" ng-checked="ctrl.panel.gauge.show" ng-change="ctrl.render()">
+					<label for="panel.gauge.show" class="cr1"></label>
+				</li>
+				<li class="tight-form-item">
+					Min
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input" ng-model="ctrl.panel.gauge.minValue" ng-blur="ctrl.render()" placeholder="0"></input>
+				</li>
+				<li class="tight-form-item last">
+					Max
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input last" ng-model="ctrl.panel.gauge.maxValue" ng-blur="ctrl.render()" placeholder="100"></input>
+					<span class="alert-state-critical" ng-show="ctrl.invalidGaugeRange">
+						&nbsp;
+						<i class="fa fa-warning"></i>
+						Min value is bigger than max.
+					</span>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form last">
+			<li class="tight-form-item">
+				Threshold labels&nbsp;
+				<input class="cr1" id="panel.gauge.thresholdLabels" type="checkbox" ng-model="ctrl.panel.gauge.thresholdLabels" ng-checked="ctrl.panel.gauge.thresholdLabels" ng-change="ctrl.render()">
+				<label for="panel.gauge.thresholdLabels" class="cr1"></label>
+			</li>
+			<li class="tight-form-item">
+				Threshold markers&nbsp;
+				<input class="cr1" id="panel.gauge.thresholdMarkers" type="checkbox" ng-model="ctrl.panel.gauge.thresholdMarkers" ng-checked="ctrl.panel.gauge.thresholdMarkers" ng-change="ctrl.render()">
+				<label for="panel.gauge.thresholdMarkers" class="cr1"></label>
+			</li>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+</div>
+
+<div class="editor-row">
+	<div class="section" style="margin-bottom: 20px">
 		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item">

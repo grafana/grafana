@@ -63,7 +63,9 @@ function (angular, _, kbn) {
       // determine our dependencies.
       if (variable.type === "query") {
         _.forEach(this.variables, function(v) {
-          if (templateSrv.containsVariable(variable.query, v.name)) {
+          // both query and datasource can contain variable
+          if (templateSrv.containsVariable(variable.query, v.name) ||
+              templateSrv.containsVariable(variable.datasource, v.name)) {
             dependencies.push(self.variableLock[v.name].promise);
           }
         });
@@ -149,7 +151,8 @@ function (angular, _, kbn) {
         if (otherVariable === updatedVariable) {
           return;
         }
-        if (templateSrv.containsVariable(otherVariable.query, updatedVariable.name)) {
+        if (templateSrv.containsVariable(otherVariable.query, updatedVariable.name) ||
+            templateSrv.containsVariable(otherVariable.datasource, updatedVariable.name)) {
           return self.updateOptions(otherVariable);
         }
       });
@@ -158,6 +161,11 @@ function (angular, _, kbn) {
     };
 
     this._updateNonQueryVariable = function(variable) {
+      if (variable.type === 'datasource') {
+        self.updateDataSourceVariable(variable);
+        return;
+      }
+
       // extract options in comma seperated string
       variable.options = _.map(variable.query.split(/[,]+/), function(text) {
         return { text: text.trim(), value: text.trim() };
@@ -170,6 +178,36 @@ function (angular, _, kbn) {
       if (variable.type === 'custom' && variable.includeAll) {
         self.addAllOption(variable);
       }
+    };
+
+    this.updateDataSourceVariable = function(variable) {
+      var options = [];
+      var sources = datasourceSrv.getMetricSources({skipVariables: true});
+      var regex;
+
+      if (variable.regex) {
+        regex = kbn.stringToJsRegex(templateSrv.replace(variable.regex));
+      }
+
+      for (var i = 0; i < sources.length; i++) {
+        var source = sources[i];
+        // must match on type
+        if (source.meta.id !== variable.query) {
+          continue;
+        }
+
+        if (regex && !regex.exec(source.name)) {
+          continue;
+        }
+
+        options.push({text: source.name, value: source.name});
+      }
+
+      if (options.length === 0) {
+        options.push({text: 'No datasurces found', value: ''});
+      }
+
+      variable.options = options;
     };
 
     this.updateOptions = function(variable) {
@@ -288,17 +326,10 @@ function (angular, _, kbn) {
         options[value] = {text: text, value: value};
       }
 
-      return _.map(_.keys(options).sort(), function(key) {
-        return options[key];
-      });
+      return _.sortBy(options, 'text');
     };
 
     this.addAllOption = function(variable) {
-      if (variable.allValue) {
-        variable.options.unshift({text: 'All', value: variable.allValue});
-        return;
-      }
-
       variable.options.unshift({text: 'All', value: "$__all"});
     };
 

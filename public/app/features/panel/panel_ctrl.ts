@@ -50,9 +50,9 @@ export class PanelCtrl {
   }
 
   init() {
-    this.publishAppEvent('panel-instantiated', {scope: this.$scope});
     this.calculatePanelHeight();
-    this.refresh();
+    this.publishAppEvent('panel-initialized', {scope: this.$scope});
+    this.events.emit('panel-initialized');
   }
 
   renderingCompleted() {
