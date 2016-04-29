@@ -15,16 +15,16 @@
 				</td>
 				<td>
 					v{{dash.revision}}
-				</td>
-				<td ng-if="dash.installed">
-					Imported v{{dash.installedRevision}}
+					<span ng-if="dash.installed">
+						&nbsp;(Imported v{{dash.installedRevision}})
+					<span>
 				</td>
 				<td style="text-align: right">
 					<button class="btn btn-secondary" ng-click="ctrl.import(dash, false)" ng-show="!dash.installed">
 						Import
 					</button>
 					<button class="btn btn-secondary" ng-click="ctrl.import(dash, true)" ng-show="dash.installed">
-						Re-Import
+						Update
 					</button>
 					<button class="btn btn-danger" ng-click="ctrl.remove(dash)" ng-show="dash.installed">
 						Delete

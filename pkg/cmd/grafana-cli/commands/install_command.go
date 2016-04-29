@@ -126,11 +126,16 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			retryCount++
-			if retryCount == 1 {
-				log.Debug("\nFailed downloading. Will retry once.\n")
-				downloadFile(pluginName, filePath, url)
+			if retryCount < 3 {
+				fmt.Println("Failed downloading. Will retry once.")
+				err = downloadFile(pluginName, filePath, url)
 			} else {
-				panic(r)
+				failure := fmt.Sprintf("%v", r)
+				if failure == "runtime error: makeslice: len out of range" {
+					err = fmt.Errorf("Corrupt http response from source. Please try again.\n")
+				} else {
+					panic(r)
+				}
 			}
 		}
 	}()
@@ -164,14 +169,14 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 				return fmt.Errorf(permissionsDeniedMessage, newFile)
 			}
 
-			defer dst.Close()
 			src, err := zf.Open()
 			if err != nil {
-				log.Errorf("%v", err)
+				log.Errorf("Failed to extract file: %v", err)
 			}
-			defer src.Close()
 
 			io.Copy(dst, src)
+			dst.Close()
+			src.Close()
 		}
 	}
 
