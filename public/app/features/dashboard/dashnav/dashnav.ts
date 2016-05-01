@@ -172,7 +172,7 @@ export class DashNavCtrl {
       var clone = $scope.dashboard.getSaveModelClone();
       var blob = new Blob([angular.toJson(clone, true)], { type: "application/json;charset=utf-8" });
       var wnd: any = window;
-      wnd.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime());
+      wnd.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime() + '.json');
     };
 
     $scope.snapshot = function() {
