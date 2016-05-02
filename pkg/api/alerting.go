@@ -88,7 +88,7 @@ func GetAlerts(c *middleware.Context) Response {
 
 // GET /api/alerts/:id
 func GetAlert(c *middleware.Context) Response {
-	id := c.ParamsInt64(":id")
+	id := c.ParamsInt64(":alertId")
 	query := models.GetAlertByIdQuery{Id: id}
 
 	if err := bus.Dispatch(&query); err != nil {
