@@ -54,7 +54,7 @@ func TestAlertingStateAccess(t *testing.T) {
 
 			err = SetNewAlertState(&m.UpdateAlertStateCommand{
 				AlertId:  1,
-				NewState: "ALERT",
+				NewState: "CRITICAL",
 				Info:     "Shit just hit the fan",
 			})
 
@@ -62,7 +62,7 @@ func TestAlertingStateAccess(t *testing.T) {
 				query := &m.GetAlertByIdQuery{Id: 1}
 				err := GetAlertById(query)
 				So(err, ShouldBeNil)
-				So(query.Result.State, ShouldEqual, "ALERT")
+				So(query.Result.State, ShouldEqual, "CRITICAL")
 			})
 
 			Convey("Changes state to ok", func() {
