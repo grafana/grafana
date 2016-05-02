@@ -7,15 +7,20 @@ import angular from 'angular';
 export class AlertTabCtrl {
   panel: any;
   panelCtrl: any;
+  alerting: any;
 
   /** @ngInject */
   constructor($scope) {
     $scope.alertTab = this;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
+    this.alerting = this.alerting || {};
+
+
+    this.convertThresholdsToAlertThresholds();
   }
 
-  convertThresholdsToAlerts() {
+  convertThresholdsToAlertThresholds() {
     if (this.panel.grid && this.panel.grid.threshold1) {
       this.panel.alerting.warnLevel = '< ' + this.panel.grid.threshold1;
     }
@@ -34,7 +39,5 @@ export function graphAlertEditor() {
     scope: true,
     templateUrl: 'public/app/plugins/panel/graph/partials/tab_alerting.html',
     controller: AlertTabCtrl,
-    //bindToController: true,
-    //controllerAs: 'ctrl',
   };
 }
