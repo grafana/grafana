@@ -13,6 +13,7 @@ func init() {
 	bus.AddHandler("sql", GetAlertById)
 	bus.AddHandler("sql", GetAlertsByDashboardId)
 	bus.AddHandler("sql", GetAlertsByDashboardAndPanelId)
+	bus.AddHandler("sql", DeleteAlertById)
 }
 
 func GetAlertById(query *m.GetAlertByIdQuery) error {
@@ -28,6 +29,16 @@ func GetAlertById(query *m.GetAlertByIdQuery) error {
 
 	query.Result = alert
 	return nil
+}
+
+func DeleteAlertById(cmd *m.DeleteAlertCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		if _, err := sess.Exec("DELETE FROM alert_rule WHERE id = ?", cmd.AlertId); err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 func GetAllAlertsForOrg(query *m.GetAlertsQuery) error {

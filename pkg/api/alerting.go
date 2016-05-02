@@ -8,7 +8,7 @@ import (
 )
 
 func ValidateOrgAlert(c *middleware.Context) {
-	id := c.ParamsInt64(":id")
+	id := c.ParamsInt64(":alertId")
 	query := models.GetAlertByIdQuery{Id: id}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -96,6 +96,24 @@ func GetAlert(c *middleware.Context) Response {
 	}
 
 	return Json(200, &query.Result)
+}
+
+// DEL /api/alerts/:id
+func DelAlert(c *middleware.Context) Response {
+	alertId := c.ParamsInt64(":alertId")
+
+	if alertId == 0 {
+		return ApiError(401, "Failed to parse alertid", nil)
+	}
+
+	cmd := models.DeleteAlertCommand{AlertId: alertId}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to delete alert", err)
+	}
+
+	var resp = map[string]interface{}{"alertId": alertId}
+	return Json(200, resp)
 }
 
 // GET /api/alerts/state/:id

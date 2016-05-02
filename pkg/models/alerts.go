@@ -84,6 +84,10 @@ type SaveAlertsCommand struct {
 	Alerts *[]AlertRule
 }
 
+type DeleteAlertCommand struct {
+	AlertId int64
+}
+
 //Queries
 type GetAlertsQuery struct {
 	OrgId int64

@@ -243,7 +243,8 @@ func Register(r *macaron.Macaron) {
 			r.Put("/events/:alertId", bind(m.UpdateAlertStateCommand{}), wrap(PutAlertState))
 			r.Get("/changes", wrap(GetAlertChanges))
 			r.Get("/", wrap(GetAlerts))
-			r.Get("/:id", ValidateOrgAlert, wrap(GetAlert))
+			r.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
+			r.Delete("/:alertId", ValidateOrgAlert, wrap(DelAlert))
 		})
 
 		r.Get("/alerts-dashboard/:dashboardId", wrap(GetAlertsForDashboard))

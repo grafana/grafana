@@ -23,6 +23,16 @@ export class AlertPageCtrl {
       });
     });
   }
+
+  deleteAlert(alert) {
+    this.backendSrv.delete('/api/alerts/' + alert.id).then(result => {
+      if (result.alertId) {
+        this.alerts = this.alerts.filter(alert => {
+          return alert.id !== result.alertId;
+        });
+      }
+    });
+  }
 }
 
 coreModule.controller('AlertPageCtrl', AlertPageCtrl);
