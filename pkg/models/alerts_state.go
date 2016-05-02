@@ -15,13 +15,13 @@ type AlertStateLog struct {
 
 var (
 	ALERT_STATE_OK           = "OK"
-	ALERT_STATE_ALERT        = "ALERT"
+	ALERT_STATE_CRITICAL     = "CRITICAL"
 	ALERT_STATE_WARN         = "WARN"
 	ALERT_STATE_ACKNOWLEDGED = "ACKNOWLEDGED"
 )
 
 func (this *UpdateAlertStateCommand) IsValidState() bool {
-	return this.NewState == ALERT_STATE_OK || this.NewState == ALERT_STATE_WARN || this.NewState == ALERT_STATE_ALERT || this.NewState == ALERT_STATE_ACKNOWLEDGED
+	return this.NewState == ALERT_STATE_OK || this.NewState == ALERT_STATE_WARN || this.NewState == ALERT_STATE_CRITICAL || this.NewState == ALERT_STATE_ACKNOWLEDGED
 }
 
 // Commands
