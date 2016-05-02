@@ -6,12 +6,12 @@
     <h1>Alerts</h1>
   </div>
 
-  <table class="filter-table">
+  <table class="grafana-options-table">
     <thead>
-      <th><strong>Name</strong></th>
-      <th style="width: 49px">State</th>
-      <th style="width: 122px"></th>
-      <th style="width: 28px"></th>
+      <th style="min-width: 200px"><strong>Name</strong></th>
+      <th style="width: 1%">State</th>
+      <th style="width: 1%"></th>
+      <th style="width: 1%"></th>
     </thead>
     <tr ng-repeat="alert in ctrl.alerts">
       <td>
@@ -24,7 +24,8 @@
       </td>
       <td class="text-center">
 				<a href="/dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit" class="btn btn-inverse btn-small">
-          Go to dashboard
+          <i class="fa fa-edit"></i>
+          edit
         </a>
       </td>
       <td class="text-right">
