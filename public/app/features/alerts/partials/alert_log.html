@@ -9,15 +9,15 @@
   <table class="filter-table">
     <thead>
       <th style="width: 68px">Status</th>
-      <th><strong>Time</strong></th>
+      <th style="width: 160px">Time</th>
       <th>Description</th>
     </thead>
     <tr ng-repeat="alertLog in ctrl.alertLogs">
       <td>
-        {{alertLog.newState}}
+        <i class="icon-gf {{alertLog.iconCss}}"></i>
       </td>
       <td>
-        {{alertLog.created}}
+        {{alertLog.humanTime}}
       </td>
       <td>
         {{alertLog.info}}

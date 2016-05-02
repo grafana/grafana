@@ -4,6 +4,8 @@ import angular from 'angular';
 import _ from 'lodash';
 import coreModule from '../../core/core_module';
 import config from 'app/core/config';
+import alertDef from './alert_def';
+import moment from 'moment';
 
 export class AlertLogCtrl {
 
@@ -22,6 +24,11 @@ export class AlertLogCtrl {
   loadAlertLogs() {
     this.backendSrv.get('/api/alerts/events/' + this.alertId).then(result => {
       this.alertLogs = result;
+
+      _.each(this.alertLogs, log => {
+        log.iconCss = alertDef.getCssForState(log.newState);
+        log.humanTime = moment(log.created).format("YYYY-MM-DD HH:mm:ss");
+      });
     });
 
     this.backendSrv.get('/api/alerts/' + this.alertId).then(result => {
