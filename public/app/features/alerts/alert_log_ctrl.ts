@@ -23,11 +23,10 @@ export class AlertLogCtrl {
 
   loadAlertLogs() {
     this.backendSrv.get('/api/alerts/events/' + this.alertId).then(result => {
-      this.alertLogs = result;
-
-      _.each(this.alertLogs, log => {
+      this.alertLogs = _.map(result, log => {
         log.iconCss = alertDef.getCssForState(log.newState);
         log.humanTime = moment(log.created).format("YYYY-MM-DD HH:mm:ss");
+        return log;
       });
     });
 

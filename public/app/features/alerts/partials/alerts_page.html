@@ -9,8 +9,8 @@
   <table class="filter-table">
     <thead>
       <th><strong>Name</strong></th>
-      <th style="width: 68px"></th>
-      <th style="width: 68px"></th>
+      <th style="width: 68px">State</th>
+      <th style="width: 122px"></th>
       <th style="width: 28px"></th>
     </thead>
     <tr ng-repeat="alert in ctrl.alerts">
@@ -18,8 +18,8 @@
 				{{alert.title}}
       </td>
       <td>
-				<a href="/alerts/events/{{alert.id}}" class="btn btn-inverse btn-small">
-          {{alert.state}}
+				<a href="/alerts/events/{{alert.id}}">
+          <i class="icon-gf {{alert.iconCss}}"></i>
         </a>
       </td>
       <td class="text-center">
