@@ -41,6 +41,12 @@ export class TableRenderer {
       return this.defaultCellFormater;
     }
 
+    if (style.type === 'hidden') {
+      return v => {
+        return undefined;
+      };
+    }
+
     if (style.type === 'date') {
       return v => {
         if (_.isArray(v)) { v = v[0]; }
@@ -96,7 +102,11 @@ export class TableRenderer {
 
   renderCell(columnIndex, value, addWidthHack = false) {
     value = this.formatColumnValue(columnIndex, value);
-    value = _.escape(value);
+
+    if (value !== undefined) {
+      value = _.escape(value);
+    }
+
     var style = '';
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + ';color: white"';
@@ -112,6 +122,13 @@ export class TableRenderer {
     var widthHack = '';
     if (addWidthHack) {
       widthHack = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].text + '</div>';
+    }
+
+    if (value === undefined) {
+      style = ' style="display:none;"';
+      this.table.columns[columnIndex].hidden = true;
+    } else {
+      this.table.columns[columnIndex].hidden = false;
     }
 
     return '<td' + style + '>' + value + widthHack + '</td>';
