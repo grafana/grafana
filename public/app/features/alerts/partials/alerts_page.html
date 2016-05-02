@@ -15,7 +15,9 @@
     </thead>
     <tr ng-repeat="alert in ctrl.alerts">
       <td>
-				{{alert.title}}
+				<a href="/alerts/events/{{alert.id}}">
+          {{alert.title}}
+        </a>
       </td>
       <td class="text-center">
 				<a href="/alerts/events/{{alert.id}}">
