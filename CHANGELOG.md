@@ -1,4 +1,4 @@
-# 3.0.0-beta7 (unreleased)
+# 3.0.0-beta7 (2016-05-02)
 
 ### Bug fixes
 * **Dashboard title**: Fixed max dashboard title width (media query) for large screens,  fixes [#4859](https://github.com/grafana/grafana/issues/4859)
