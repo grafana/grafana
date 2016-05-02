@@ -220,11 +220,15 @@ transformers['json'] = {
 };
 
 function applyAliasing(panel, model){
+  var hash = [];
   for (var i = 0; i < model.columns.length; i++) {
     for (var j = 0; j < panel.styles.length; j++) {
       var regex = kbn.stringToJsRegex(panel.styles[j].pattern);
-      if (panel.styles[j].alias && model.columns[i].text.match(regex)) {
-        model.columns[i].alias = model.columns[i].text.replace(regex, panel.styles[j].alias);
+      if (model.columns[i].text.match(regex)) {
+        if (!hash[i]) {
+          model.columns[i].alias = panel.styles[j].alias ? model.columns[i].text.replace(regex, panel.styles[j].alias) : '';
+          hash[i] = model.columns[i].alias;
+        }
       }
     }
   }
