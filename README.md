@@ -87,6 +87,18 @@ the latest master builds [here](http://grafana.org/download/builds)
 go get github.com/grafana/grafana
 ```
 
+Since imports of dependencies use the absolute path github.com/grafana/grafana within the $GOPATH,
+you will need to put your version of the code in $GOPATH/src/github.com/grafana/grafana to be able
+to develop and build grafana on a cloned repository. To do so, you can clone your forked repository
+directly to $GOPATH/src/github.com/grafana or you can create a symbolic link from your version
+of the code to $GOPATH/src/github.com/grafana/grafana. The last options makes it possible to change
+easily the grafana repository you want to build.
+```bash
+go get github.com/*your_account*/grafana
+mkdir $GOPATH/src/github.com/grafana
+ln -s  github.com/*your_account*/grafana $GOPATH/src/github.com/grafana/grafana
+```
+
 ### Building the backend
 Replace X.Y.Z by actual version number.
 ```bash
@@ -104,6 +116,13 @@ npm (v2.5.0) and grunt (v0.4.5). Run the following:
 ```bash
 npm install
 npm run build
+```
+
+To build the frontend assets only on changes:
+
+```bash
+sudo npm install -g grunt-cli # to do only once to install grunt command line interface
+grunt watch
 ```
 
 ### Recompile backend on source change
