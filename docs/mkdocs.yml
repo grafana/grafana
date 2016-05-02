@@ -1,6 +1,5 @@
 site_name: Grafana Documentation
-#site_url: http://docs.grafana.com/
-site_url: /
+site_url: http://docs.grafana.org/
 site_description: Documentation for Grafana, The Graphite and Influxdb dashboard and graph composer
 site_favicon: img/fav32.png
 
