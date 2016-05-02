@@ -39,6 +39,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       }
     ],
     columns: [],
+    rowLink: '',
     scroll: true,
     fontSize: '100%',
     sort: {col: 0, desc: true},
