@@ -3,17 +3,17 @@
     <h5 class="section-heading">Query</h5>
     <div class="gf-form" style="margin-bottom: 2rem">
       <span class="gf-form-label width-9">Query to watch</span>
-      <div class="gf-form-select-wrapper max-width-7">
+      <div class="gf-form-select-wrapper max-width-12">
         <select class="gf-form-input"
           ng-model="ctrl.panel.alerting.queryRef"
-          ng-options="target.refId as target.refId for target in ctrl.panel.targets"></select>
+          ng-options="target.refId as target.refId for target in alertTab.metricTargets"></select>
       </div>
     </div>
 
     <h5 class="section-heading">Thresholds</h5>
     <div class="gf-form">
       <span class="gf-form-label width-9">
-        <i class="icon-gf icon-gf-warn alert-state-warn"></i>
+        <i class="icon-gf icon-gf-warn alert-icon-warn"></i>
         Warn level
       </span>
       <div class="gf-form-select-wrapper max-width-10">
@@ -23,7 +23,7 @@
     </div>
     <div class="gf-form">
       <span class="gf-form-label width-9">
-        <i class="icon-gf icon-gf-critical alert-state-critical"></i>
+        <i class="icon-gf icon-gf-critical alert-icon-critical"></i>
         Critical level
       </span>
       <div class="gf-form-select-wrapper max-width-10">

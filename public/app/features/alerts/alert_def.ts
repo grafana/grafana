@@ -3,9 +3,9 @@
 //import _ from 'lodash';
 
 var alertStateToCssMap = {
-  "OK": "icon-gf-online alert-state-online",
-  "WARN": "icon-gf-warn alert-state-warn",
-  "CRITICAL": "icon-gf-critical alert-state-critical",
+  "OK": "icon-gf-online alert-icon-online",
+  "WARN": "icon-gf-warn alert-icon-warn",
+  "CRITICAL": "icon-gf-critical alert-icon-critical",
   "ACKNOWLEDGED": "icon-gf-alert-disabled"
 };
 
