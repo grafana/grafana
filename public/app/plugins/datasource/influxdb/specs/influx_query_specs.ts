@@ -101,6 +101,19 @@ describe('InfluxQuery', function() {
     });
   });
 
+  describe('query with value condition', function() {
+    it('should not quote value', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        groupBy: [],
+        tags: [{key: 'value', value: '5', operator: '>'}]
+      }, templateSrv, {});
+
+      var queryText = query.render();
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "value" > 5 AND $timeFilter');
+    });
+  });
+
   describe('series with groupByTag', function() {
     it('should generate correct query', function() {
       var query = new InfluxQuery({

@@ -49,7 +49,7 @@ export class DashboardExporter {
     return this.makeExportable(dashboard).then(clean => {
       var blob = new Blob([angular.toJson(clean, true)], { type: "application/json;charset=utf-8" });
       var wnd: any = window;
-      wnd.saveAs(blob, clean.title + '-' + new Date().getTime());
+      wnd.saveAs(blob, clean.title + '-' + new Date().getTime() + '.json');
     });
   }
 
