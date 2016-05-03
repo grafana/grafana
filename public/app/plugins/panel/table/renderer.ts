@@ -7,10 +7,12 @@ import kbn from 'app/core/utils/kbn';
 export class TableRenderer {
   formaters: any[];
   colorState: any;
+  alignState: any;
 
   constructor(private panel, private table, private isUtc) {
     this.formaters = [];
     this.colorState = {};
+    this.alignState = '';
   }
 
   getColorForValue(value, style) {
@@ -47,6 +49,14 @@ export class TableRenderer {
       };
     }
 
+    if (style.type === 'string') {
+      return v => {
+        this.alignState = style.align;
+
+        return v;
+      };
+    }
+
     if (style.type === 'date') {
       return v => {
         if (_.isArray(v)) { v = v[0]; }
@@ -54,6 +64,7 @@ export class TableRenderer {
         if (this.isUtc) {
           date = date.utc();
         }
+        this.alignState = style.align;
         return date.format(style.dateFormat);
       };
     }
@@ -62,6 +73,8 @@ export class TableRenderer {
       let valueFormater = kbn.valueFormats[style.unit];
 
       return v =>  {
+        this.alignState = style.align;
+
         if (v === null || v === void 0) {
           return '-';
         }
@@ -134,7 +147,7 @@ export class TableRenderer {
       }
     }
 
-    return '<td' + style + '>' + value + widthHack + '</td>';
+    return '<td' + style + ' align="' + this.alignState + '">' + value + widthHack + '</td>';
   }
 
   render(page) {
