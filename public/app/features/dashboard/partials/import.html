@@ -4,15 +4,19 @@
 <div class="page-container">
 	<div class="page-header">
 		<h1>
-			Import file
-			<em style="font-size: 14px;padding-left: 10px;"> <i class="fa fa-info-circle"></i> Load dashboard from local .json file</em>
+			Import dashboard
 		</h1>
 	</div>
 
+	<h5 class="section-heading">
+		Upload .json file
+	</h5>
+
 	<div class="gf-form-group">
-			<form class="gf-form">
-				<input type="file" id="dashupload" dash-upload/><br>
-			</form>
+		<form class="gf-form">
+			<input type="file" id="dashupload" dash-upload name="dashupload" class="hide"/><br>
+			<label class="btn btn-success" for="dashupload">Select file</label>
+		</form>
 	</div>
 
 	<h5 class="section-heading">
