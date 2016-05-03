@@ -200,8 +200,8 @@
             Decimals
           </li>
           <li style="width: 105px">
-            <input type="number" class="input-mini tight-form-input" ng-model="style.decimals"
-                   ng-change="render()" ng-model-onblur>
+            <input type="number" class="input-mini tight-form-input" min="0" ng-model="style.decimals"
+                   ng-change="editor.render()" ng-model-onblur>
           </li>
         </ul>
         <div class="clearfix"></div>
