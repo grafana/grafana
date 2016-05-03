@@ -31,7 +31,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     }
 
     if (options.format === 'png') {
-      return $q.when(this.url + '/render' + '?' + params.join('&'));
+      return $q.when({data: this.url + '/render' + '?' + params.join('&')});
     }
 
     var httpOptions: any = {method: this.render_method, url: '/render'};
