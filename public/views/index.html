@@ -39,6 +39,36 @@
 			</div>
 
 			<div ng-view class="main-view"></div>
+
+			<footer class="footer">
+				<div class="row text-center">
+					<a href="http://docs.grafana.org" target="_blank">
+						<i class="fa fa-question-circle"></i>
+						Docs
+					</a>
+					<span class="muted">|</a>
+					<a href="https://grafana.net/support/plans" target="_blank">
+						<i class="fa fa-question-circle"></i>
+						Support Plans
+					</a>
+					<span class="muted">|</a>
+					<a href="https://grafana.org/community" target="_blank">
+						<i class="fa fa-comments"></i>
+						Community
+					</a>
+					<span class="muted">|</a>
+					<a href="http://docs.grafana.org" target="_blank">
+					<a href="http://grafana.org" target="_blank">Grafana</a>
+					<span class="muted">v[[.BuildVersion]] (commit: [[.BuildCommit]])</span>
+					<span class="muted">|</a>
+					[[if .NewGrafanaVersionExists]]
+						<a href="http://grafana.org/download" target="_blank" bs-tooltip="'[[.NewGrafanaVersion]]'">
+							<i class="fa fa-question-circle-o"></i>
+							New version available!
+						</a>
+					[[end]]
+				</div>
+			</footer>
 		</grafana-app>
   </body>
 
