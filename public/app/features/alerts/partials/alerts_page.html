@@ -11,7 +11,6 @@
       <th style="min-width: 200px"><strong>Name</strong></th>
       <th style="width: 1%">State</th>
       <th style="width: 1%"></th>
-      <th style="width: 1%"></th>
     </thead>
     <tr ng-repeat="alert in ctrl.alerts">
       <td>
@@ -28,11 +27,6 @@
 				<a href="/dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit" class="btn btn-inverse btn-small">
           <i class="fa fa-edit"></i>
           edit
-        </a>
-      </td>
-      <td class="text-right">
-        <a ng-click="ctrl.deleteAlert(alert)" class="btn btn-danger btn-small">
-          <i class="fa fa-remove"></i>
         </a>
       </td>
     </tr>
