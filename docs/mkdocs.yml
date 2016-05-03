@@ -1,5 +1,4 @@
 site_name: Grafana Documentation
-#site_url: http://docs.grafana.com/
 site_url: /
 site_description: Documentation for Grafana, The Graphite and Influxdb dashboard and graph composer
 site_favicon: img/fav32.png
@@ -46,6 +45,7 @@ pages:
 
 - ['guides/basic_concepts.md', 'User Guides', 'Basic Concepts']
 - ['guides/gettingstarted.md', 'User Guides', 'Getting Started']
+- ['guides/whats-new-in-v3.md', 'User Guides', "What's New in Grafana v3.0"]
 - ['guides/whats-new-in-v2-6.md', 'User Guides', "What's New in Grafana v2.6"]
 - ['guides/whats-new-in-v2-5.md', 'User Guides', "What's New in Grafana v2.5"]
 - ['guides/whats-new-in-v2-1.md', 'User Guides', "What's New in Grafana v2.1"]
