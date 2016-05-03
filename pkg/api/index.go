@@ -75,6 +75,14 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		Children: dashboardChildNavs,
 	})
 
+	if setting.AlertingEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR) {
+		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+			Text: "Alerts",
+			Icon: "icon-gf icon-gf-monitoring",
+			Url:  setting.AppSubUrl + "/alerts",
+		})
+	}
+
 	if c.OrgRole == m.ROLE_ADMIN {
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 			Text: "Data Sources",
