@@ -1,3 +1,8 @@
+# 3.1.0
+
+### Enhancements
+* **Singlestat**: Add support for range to text mappings, closes [#1319](https://github.com/grafana/grafana/issues/1319)
+
 # 3.0.0-beta7 (2016-05-02)
 
 ### Bug fixes
