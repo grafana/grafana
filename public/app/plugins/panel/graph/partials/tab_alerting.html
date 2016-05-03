@@ -16,14 +16,20 @@
         <i class="icon-gf icon-gf-warn alert-state-warn"></i>
         Warn level
       </span>
-      <input class="gf-form-input max-width-7" type="text" ng-model="ctrl.panel.alerting.warnLevel" ng-change="alertTab.thresholdsUpdated()"></input>
+      <div class="gf-form-select-wrapper max-width-10">
+        <select class="gf-form-input" ng-model="ctrl.panel.alerting.warnOperator" ng-options="oper as oper for oper in ['>', '<', '<=', '>=']"></select>
+      </div>
+      <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.panel.alerting.warnLevel" ng-change="alertTab.thresholdsUpdated()"></input>
     </div>
     <div class="gf-form">
       <span class="gf-form-label width-9">
         <i class="icon-gf icon-gf-critical alert-state-critical"></i>
         Critical level
       </span>
-      <input class="gf-form-input max-width-7" type="text" ng-model="ctrl.panel.alerting.critLevel" ng-change="alertTab.thresholdsUpdated()"></input>
+      <div class="gf-form-select-wrapper max-width-10">
+        <select class="gf-form-input" ng-model="ctrl.panel.alerting.critOperator" ng-options="oper as oper for oper in ['>', '<', '<=', '>=']"></select>
+      </div>
+      <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.panel.alerting.critLevel" ng-change="alertTab.thresholdsUpdated()"></input>
     </div>
   </div>
 

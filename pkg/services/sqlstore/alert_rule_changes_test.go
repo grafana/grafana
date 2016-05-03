@@ -22,18 +22,20 @@ func TestAlertRuleChangesDataAccess(t *testing.T) {
 		Convey("When dashboard is removed", func() {
 			items := []m.AlertRule{
 				{
-					PanelId:     1,
-					DashboardId: testDash.Id,
-					Query:       "Query",
-					QueryRefId:  "A",
-					WarnLevel:   "> 30",
-					CritLevel:   "> 50",
-					Interval:    "10",
-					Title:       "Alerting title",
-					Description: "Alerting description",
-					QueryRange:  "5m",
-					Aggregator:  "avg",
-					OrgId:       FakeOrgId,
+					PanelId:      1,
+					DashboardId:  testDash.Id,
+					Query:        "Query",
+					QueryRefId:   "A",
+					WarnLevel:    30,
+					CritLevel:    50,
+					WarnOperator: ">",
+					CritOperator: ">",
+					Interval:     "10",
+					Title:        "Alerting title",
+					Description:  "Alerting description",
+					QueryRange:   "5m",
+					Aggregator:   "avg",
+					OrgId:        FakeOrgId,
 				},
 			}
 

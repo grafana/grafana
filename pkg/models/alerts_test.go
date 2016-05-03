@@ -101,8 +101,10 @@ func TestAlertModel(t *testing.T) {
           "seriesOverrides": [],
           "alerting": {
             "queryRef": "A",
-            "warnLevel": "> 30",
-            "critLevel": "> 50",
+            "warnLevel": 30,
+            "critLevel": 50,
+            "warnOperator": ">",
+            "critOperator": ">",
             "aggregator": "sum",
             "queryRange": "10m",
             "interval": "10s",
@@ -186,8 +188,10 @@ func TestAlertModel(t *testing.T) {
           "seriesOverrides": [],
           "alerting": {
             "queryRef": "A",
-            "warnLevel": "> 300",
-            "critLevel": "> 500",
+            "warnOperator": ">",
+            "critOperator": ">",
+            "warnLevel": 300,
+            "critLevel": 500,
             "aggregator": "avg",
             "queryRange": "10m",
             "interval": "10s",
@@ -363,11 +367,16 @@ func TestAlertModel(t *testing.T) {
 				So(v.Description, ShouldNotBeEmpty)
 			}
 
-			So(alerts[0].WarnLevel, ShouldEqual, "> 30")
-			So(alerts[1].WarnLevel, ShouldEqual, "> 300")
+			So(alerts[0].WarnLevel, ShouldEqual, 30)
+			So(alerts[1].WarnLevel, ShouldEqual, 300)
 
-			So(alerts[0].CritLevel, ShouldEqual, "> 50")
-			So(alerts[1].CritLevel, ShouldEqual, "> 500")
+			So(alerts[0].CritLevel, ShouldEqual, 50)
+			So(alerts[1].CritLevel, ShouldEqual, 500)
+
+			So(alerts[0].CritOperator, ShouldEqual, ">")
+			So(alerts[1].CritOperator, ShouldEqual, ">")
+			So(alerts[0].WarnOperator, ShouldEqual, ">")
+			So(alerts[1].WarnOperator, ShouldEqual, ">")
 
 			So(alerts[0].Query, ShouldEqual, `{"refId":"A","target":"aliasByNode(statsd.fakesite.counters.session_start.desktop.count, 4)"}`)
 			So(alerts[1].Query, ShouldEqual, `{"refId":"A","target":"aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}`)

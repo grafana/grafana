@@ -6,20 +6,22 @@ import (
 )
 
 type AlertRule struct {
-	Id          int64  `json:"id"`
-	OrgId       int64  `json:"-"`
-	DashboardId int64  `json:"dashboardId"`
-	PanelId     int64  `json:"panelId"`
-	Query       string `json:"query"`
-	QueryRefId  string `json:"queryRefId"`
-	WarnLevel   string `json:"warnLevel"`
-	CritLevel   string `json:"critLevel"`
-	Interval    string `json:"interval"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	QueryRange  string `json:"queryRange"`
-	Aggregator  string `json:"aggregator"`
-	State       string `json:"state"`
+	Id           int64  `json:"id"`
+	OrgId        int64  `json:"-"`
+	DashboardId  int64  `json:"dashboardId"`
+	PanelId      int64  `json:"panelId"`
+	Query        string `json:"query"`
+	QueryRefId   string `json:"queryRefId"`
+	WarnLevel    int64  `json:"warnLevel"`
+	CritLevel    int64  `json:"critLevel"`
+	WarnOperator string `json:"warnOperator"`
+	CritOperator string `json:"critOperator"`
+	Interval     string `json:"interval"`
+	Title        string `json:"title"`
+	Description  string `json:"description"`
+	QueryRange   string `json:"queryRange"`
+	Aggregator   string `json:"aggregator"`
+	State        string `json:"state"`
 }
 
 type AlertRuleChange struct {
@@ -40,18 +42,20 @@ func (cmd *SaveDashboardCommand) GetAlertModels() *[]AlertRule {
 
 			alerting := panel.Get("alerting")
 			alert := AlertRule{
-				DashboardId: cmd.Result.Id,
-				OrgId:       cmd.Result.OrgId,
-				PanelId:     panel.Get("id").MustInt64(),
-				Id:          alerting.Get("id").MustInt64(),
-				QueryRefId:  alerting.Get("queryRef").MustString(),
-				WarnLevel:   alerting.Get("warnLevel").MustString(),
-				CritLevel:   alerting.Get("critLevel").MustString(),
-				Interval:    alerting.Get("interval").MustString(),
-				Title:       alerting.Get("title").MustString(),
-				Description: alerting.Get("description").MustString(),
-				QueryRange:  alerting.Get("queryRange").MustString(),
-				Aggregator:  alerting.Get("aggregator").MustString(),
+				DashboardId:  cmd.Result.Id,
+				OrgId:        cmd.Result.OrgId,
+				PanelId:      panel.Get("id").MustInt64(),
+				Id:           alerting.Get("id").MustInt64(),
+				QueryRefId:   alerting.Get("queryRef").MustString(),
+				WarnLevel:    alerting.Get("warnLevel").MustInt64(),
+				CritLevel:    alerting.Get("critLevel").MustInt64(),
+				WarnOperator: alerting.Get("warnOperator").MustString(),
+				CritOperator: alerting.Get("critOperator").MustString(),
+				Interval:     alerting.Get("interval").MustString(),
+				Title:        alerting.Get("title").MustString(),
+				Description:  alerting.Get("description").MustString(),
+				QueryRange:   alerting.Get("queryRange").MustString(),
+				Aggregator:   alerting.Get("aggregator").MustString(),
 			}
 
 			for _, targetsObj := range panel.Get("targets").MustArray() {

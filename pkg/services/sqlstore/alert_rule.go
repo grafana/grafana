@@ -75,6 +75,8 @@ func alertIsDifferent(rule1, rule2 m.AlertRule) bool {
 	result = result || rule1.Aggregator != rule2.Aggregator
 	result = result || rule1.CritLevel != rule2.CritLevel
 	result = result || rule1.WarnLevel != rule2.WarnLevel
+	result = result || rule1.WarnOperator != rule2.WarnOperator
+	result = result || rule1.CritOperator != rule2.CritOperator
 	result = result || rule1.Query != rule2.Query
 	result = result || rule1.QueryRefId != rule2.QueryRefId
 	result = result || rule1.Interval != rule2.Interval

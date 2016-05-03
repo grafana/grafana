@@ -24,36 +24,25 @@ export class AlertTabCtrl {
 
   convertThresholdsToAlertThresholds() {
     if (this.panel.grid && this.panel.grid.threshold1) {
-      this.panel.alerting.warnLevel = '< ' + this.panel.grid.threshold1;
+      this.panel.alerting.warnOperator = '<';
+      this.panel.alerting.warnLevel = this.panel.grid.threshold1;
     }
 
     if (this.panel.grid && this.panel.grid.threshold2) {
-      this.panel.alerting.critLevel = '< ' + this.panel.grid.threshold2;
+      this.panel.alerting.critOperator = '<';
+      this.panel.alerting.critLevel = this.panel.grid.threshold2;
     }
   }
 
   thresholdsUpdated() {
     if (this.panel.alerting.warnLevel) {
-      var threshold = this.panel.alerting.warnLevel
-        .replace(' ', '')
-        .replace('>', '')
-        .replace('<', '')
-        .replace('>=', '')
-        .replace('<=', '');
-
-      this.panel.grid.threshold1 = parseInt(threshold);
+      this.panel.grid.threshold1 = parseInt(this.panel.alerting.warnLevel);
     }
 
     if (this.panel.alerting.critLevel) {
-      var threshold = this.panel.alerting.critLevel
-        .replace(' ', '')
-        .replace('>', '')
-        .replace('<', '')
-        .replace('>=', '')
-        .replace('<=', '');
-
-      this.panel.grid.threshold2 = parseInt(threshold);
+      this.panel.grid.threshold2 = parseInt(this.panel.alerting.critLevel);
     }
+
     this.panelCtrl.render();
   }
 }

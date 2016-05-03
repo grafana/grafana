@@ -15,18 +15,20 @@ func TestAlertingStateAccess(t *testing.T) {
 
 		items := []m.AlertRule{
 			{
-				PanelId:     1,
-				DashboardId: testDash.Id,
-				OrgId:       testDash.OrgId,
-				Query:       "Query",
-				QueryRefId:  "A",
-				WarnLevel:   "> 30",
-				CritLevel:   "> 50",
-				Interval:    "10",
-				Title:       "Alerting title",
-				Description: "Alerting description",
-				QueryRange:  "5m",
-				Aggregator:  "avg",
+				PanelId:      1,
+				DashboardId:  testDash.Id,
+				OrgId:        testDash.OrgId,
+				Query:        "Query",
+				QueryRefId:   "A",
+				WarnLevel:    30,
+				CritLevel:    50,
+				WarnOperator: ">",
+				CritOperator: ">",
+				Interval:     "10",
+				Title:        "Alerting title",
+				Description:  "Alerting description",
+				QueryRange:   "5m",
+				Aggregator:   "avg",
 			},
 		}
 

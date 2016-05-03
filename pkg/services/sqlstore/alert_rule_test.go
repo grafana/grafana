@@ -16,19 +16,21 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		items := []m.AlertRule{
 			{
-				PanelId:     1,
-				DashboardId: testDash.Id,
-				OrgId:       testDash.OrgId,
-				Query:       "Query",
-				QueryRefId:  "A",
-				WarnLevel:   "> 30",
-				CritLevel:   "> 50",
-				Interval:    "10",
-				Title:       "Alerting title",
-				Description: "Alerting description",
-				QueryRange:  "5m",
-				Aggregator:  "avg",
-				State:       "OK",
+				PanelId:      1,
+				DashboardId:  testDash.Id,
+				OrgId:        testDash.OrgId,
+				Query:        "Query",
+				QueryRefId:   "A",
+				WarnLevel:    30,
+				CritLevel:    50,
+				WarnOperator: ">",
+				CritOperator: ">",
+				Interval:     "10",
+				Title:        "Alerting title",
+				Description:  "Alerting description",
+				QueryRange:   "5m",
+				Aggregator:   "avg",
+				State:        "OK",
 			},
 		}
 
@@ -59,8 +61,10 @@ func TestAlertingDataAccess(t *testing.T) {
 
 			So(err2, ShouldBeNil)
 			So(query.Result.Interval, ShouldEqual, "10")
-			So(query.Result.WarnLevel, ShouldEqual, "> 30")
-			So(query.Result.CritLevel, ShouldEqual, "> 50")
+			So(query.Result.WarnLevel, ShouldEqual, 30)
+			So(query.Result.CritLevel, ShouldEqual, 50)
+			So(query.Result.WarnOperator, ShouldEqual, ">")
+			So(query.Result.CritOperator, ShouldEqual, ">")
 			So(query.Result.Query, ShouldEqual, "Query")
 			So(query.Result.QueryRefId, ShouldEqual, "A")
 			So(query.Result.Title, ShouldEqual, "Alerting title")
@@ -177,17 +181,19 @@ func TestAlertingDataAccess(t *testing.T) {
 		Convey("When dashboard is removed", func() {
 			items := []m.AlertRule{
 				{
-					PanelId:     1,
-					DashboardId: testDash.Id,
-					Query:       "Query",
-					QueryRefId:  "A",
-					WarnLevel:   "> 30",
-					CritLevel:   "> 50",
-					Interval:    "10",
-					Title:       "Alerting title",
-					Description: "Alerting description",
-					QueryRange:  "5m",
-					Aggregator:  "avg",
+					PanelId:      1,
+					DashboardId:  testDash.Id,
+					Query:        "Query",
+					QueryRefId:   "A",
+					WarnLevel:    30,
+					CritLevel:    50,
+					WarnOperator: ">",
+					CritOperator: ">",
+					Interval:     "10",
+					Title:        "Alerting title",
+					Description:  "Alerting description",
+					QueryRange:   "5m",
+					Aggregator:   "avg",
 				},
 			}
 
