@@ -52,8 +52,7 @@ export class TableRenderer {
     if (style.type === 'string') {
       return v => {
         this.alignState = style.align;
-
-        return v;
+        return this.defaultCellFormater(v);
       };
     }
 
