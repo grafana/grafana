@@ -103,7 +103,8 @@ type project_response_struct struct {
 }
 
 type project_struct struct {
-	Name string
+	Name    string
+	Enabled bool
 }
 
 ////////////////////////
@@ -217,7 +218,9 @@ func GetProjects(data *Projects_data) error {
 		return err
 	}
 	for _, project := range project_response.Projects {
-		data.Projects = append(data.Projects, project.Name)
+		if project.Enabled {
+			data.Projects = append(data.Projects, project.Name)
+		}
 	}
 	return nil
 }
