@@ -11,11 +11,13 @@ export class AlertTabCtrl {
 
   /** @ngInject */
   constructor($scope) {
-    $scope.alertTab = this;
+    $scope.alertTab = this; //HACK ATTACK!
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
-    this.alerting = this.alerting || {};
-
+    this.panel.alerting = this.panel.alerting || {};
+    this.panel.alerting.aggregator = this.panel.alerting.aggregator || 'avg';
+    this.panel.alerting.interval = this.panel.alerting.interval || '60s';
+    this.panel.alerting.queryRange = this.panel.alerting.queryRange || '10m';
 
     this.convertThresholdsToAlertThresholds();
   }
@@ -28,6 +30,31 @@ export class AlertTabCtrl {
     if (this.panel.grid && this.panel.grid.threshold2) {
       this.panel.alerting.critLevel = '< ' + this.panel.grid.threshold2;
     }
+  }
+
+  thresholdsUpdated() {
+    if (this.panel.alerting.warnLevel) {
+      var threshold = this.panel.alerting.warnLevel
+        .replace(' ', '')
+        .replace('>', '')
+        .replace('<', '')
+        .replace('>=', '')
+        .replace('<=', '');
+
+      this.panel.grid.threshold1 = parseInt(threshold);
+    }
+
+    if (this.panel.alerting.critLevel) {
+      var threshold = this.panel.alerting.critLevel
+        .replace(' ', '')
+        .replace('>', '')
+        .replace('<', '')
+        .replace('>=', '')
+        .replace('<=', '');
+
+      this.panel.grid.threshold2 = parseInt(threshold);
+    }
+    this.panelCtrl.render();
   }
 }
 
