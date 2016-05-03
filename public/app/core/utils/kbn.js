@@ -241,6 +241,20 @@ function($, _) {
     return formatted;
   };
 
+  kbn.toLocaleString = function(value, decimals) {
+    if (value === null) {
+      return "";
+    }
+
+    var options = {};
+
+    if (decimals != null) {
+      options = {maximumFractionDigits: decimals, minimumFractionDigits: decimals};
+    }
+
+    return value.toLocaleString(undefined, options);
+  };
+
   kbn.toFixedScaled = function(value, decimals, scaledDecimals, additionalDecimals, ext) {
     if (scaledDecimals === null) {
       return kbn.toFixed(value, decimals) + ext;
@@ -340,6 +354,7 @@ function($, _) {
 
   // Dimensionless Units
   kbn.valueFormats.none  = kbn.toFixed;
+  kbn.valueFormats.locale = kbn.toLocaleString;
   kbn.valueFormats.short = kbn.formatBuilders.scaledUnits(1000, ['', ' K', ' Mil', ' Bil', ' Tri', ' Quadr', ' Quint', ' Sext', ' Sept']);
   kbn.valueFormats.dB    = kbn.formatBuilders.fixedUnit('dB');
   kbn.valueFormats.ppm   = kbn.formatBuilders.fixedUnit('ppm');
@@ -574,6 +589,7 @@ function($, _) {
         text: 'none',
         submenu: [
           {text: 'none' ,             value: 'none'       },
+          {text: 'locale',            value: 'locale'     },
           {text: 'short',             value: 'short'      },
           {text: 'percent (0-100)',   value: 'percent'    },
           {text: 'percent (0.0-1.0)', value: 'percentunit'},
