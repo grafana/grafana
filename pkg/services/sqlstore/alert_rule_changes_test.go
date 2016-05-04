@@ -82,6 +82,7 @@ func TestAlertRuleChangesDataAccess(t *testing.T) {
 				SaveAlertChange("UPDATED", items[0], sess)
 				SaveAlertChange("UPDATED", items[0], sess)
 				SaveAlertChange("UPDATED", items[0], sess)
+				sess.Commit()
 
 				Convey("query for max one change", func() {
 					query := &m.GetAlertChangesQuery{OrgId: FakeOrgId, Limit: 1}

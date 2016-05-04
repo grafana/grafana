@@ -9,6 +9,8 @@ export class AlertTabCtrl {
   panelCtrl: any;
   alerting: any;
   metricTargets = [{ refId: '- select query -' } ];
+  operators = ['>', '<', '<=', '>='];
+  aggregators = ['avg', 'sum', 'min', 'max', 'median'];
 
   /** @ngInject */
   constructor($scope, private $timeout) {

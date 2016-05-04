@@ -239,13 +239,14 @@ func Register(r *macaron.Macaron) {
 		r.Get("/metrics/test", GetTestMetrics)
 
 		r.Group("/alerts", func() {
-			r.Get("/events/:alertId", wrap(GetAlertState))
-			r.Put("/events/:alertId", bind(m.UpdateAlertStateCommand{}), wrap(PutAlertState))
-			r.Get("/changes", wrap(GetAlertChanges))
-			r.Get("/", wrap(GetAlerts))
+			r.Get("/:alertId/states", wrap(GetAlertState))
+			r.Put("/:alertId/state", bind(m.UpdateAlertStateCommand{}), wrap(PutAlertState))
 			r.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
+			r.Get("/", wrap(GetAlerts))
 			r.Delete("/:alertId", ValidateOrgAlert, wrap(DelAlert))
 		})
+
+		r.Get("/alert-changes", wrap(GetAlertChanges))
 
 		r.Get("/alerts-dashboard/:dashboardId", wrap(GetAlertsForDashboard))
 		r.Get("/alerts-dashboard/:dashboardId/:panelId", wrap(GetAlertsForPanel))

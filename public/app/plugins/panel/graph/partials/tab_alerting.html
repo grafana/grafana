@@ -17,7 +17,7 @@
         Warn level
       </span>
       <div class="gf-form-select-wrapper max-width-10">
-        <select class="gf-form-input" ng-model="ctrl.panel.alerting.warnOperator" ng-options="oper as oper for oper in ['>', '<', '<=', '>=']"></select>
+				<select class="gf-form-input" ng-model="ctrl.panel.alerting.warnOperator" ng-options="oper as oper for oper in alertTab.operators"></select>
       </div>
       <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.panel.alerting.warnLevel" ng-change="alertTab.thresholdsUpdated()"></input>
     </div>
@@ -27,7 +27,7 @@
         Critical level
       </span>
       <div class="gf-form-select-wrapper max-width-10">
-        <select class="gf-form-input" ng-model="ctrl.panel.alerting.critOperator" ng-options="oper as oper for oper in ['>', '<', '<=', '>=']"></select>
+        <select class="gf-form-input" ng-model="ctrl.panel.alerting.critOperator" ng-options="oper as oper for oper in alertTab.operators"></select>
       </div>
       <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.panel.alerting.critLevel" ng-change="alertTab.thresholdsUpdated()"></input>
     </div>
@@ -40,7 +40,7 @@
       <div class="gf-form-select-wrapper max-width-10">
         <select class="gf-form-input"
           ng-model="ctrl.panel.alerting.aggregator"
-          ng-options="oper as oper for oper in ['avg', 'sum', 'min', 'max', 'median']"></select>
+          ng-options="oper as oper for oper in alertTab.aggregators"></select>
       </div>
     </div>
 
