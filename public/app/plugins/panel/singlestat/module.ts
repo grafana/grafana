@@ -82,7 +82,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   onDataError(err) {
-    this.onDataReceived({data: []});
+    this.onDataReceived([]);
   }
 
   onDataReceived(dataList) {
