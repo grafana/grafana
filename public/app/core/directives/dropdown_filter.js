@@ -15,18 +15,6 @@ define([
     this.id = 'filterDropdown' + uniqueId++;
     this.giveSearchFocus = 0;
     this.query = '';
-
-    this.optionsFilter = function(options) {
-      var result = [];
-
-      for (var i = 0; i < options.length; i++) {
-        if (!options[i].hidden) {
-          result.push(options[i]);
-        }
-      }
-
-      return result;
-    };
   });
 
   coreModule.default.directive('dropdownFilter', function() {
@@ -50,11 +38,6 @@ define([
 
         scope.$watch("df.options", function(newValue) {
           if (newValue && newValue.length) {
-            var newValueFiltered = scope.df.optionsFilter(newValue);
-            if (newValueFiltered.length !== newValue.length) {
-              scope.df.options = newValueFiltered;
-              return;
-            }
             var lastSelectedValue = store.get(scope.df.id);
             var index = -1;
             for (var i = 0; i < scope.df.options.length; i++) {
@@ -64,6 +47,11 @@ define([
               }
             }
             scope.selectedItem = scope.df.options[index === -1 ? 0 : index];
+            if (scope.selectedItem.hidden) {
+              scope.selectedItem = _.filter(scope.df.options, function(item) {
+                return item.hidden === false;
+              })[0];
+            }
             store.set(scope.df.id, scope.selectedItem.text);
             if (index === -1) {
               scope.notifyParents();

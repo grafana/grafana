@@ -120,7 +120,6 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
   onFilter(event, filter) {
     this.panel.filter = filter;
-    console.log(this.panel.filter);
     this.render();
   }
 
