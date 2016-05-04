@@ -18,8 +18,8 @@ export class TableRenderer {
   getColorForValue(value, style) {
     if (!style.thresholds) { return null; }
 
-    for (var i = style.thresholds.length; i > 0; i--) {
-      if (value >= style.thresholds[i - 1]) {
+    for (var i = style.thresholds.length; i--;) {
+      if (value >= style.thresholds[i]) {
         return style.colors[i];
       }
     }
