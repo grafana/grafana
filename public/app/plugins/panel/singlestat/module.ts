@@ -324,9 +324,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         ? 'rgb(230,230,230)'
         : 'rgb(38,38,38)';
 
-
+      var fontScale = parseInt(panel.valueFontSize) / 100;
       var dimension = Math.min(width, height);
-      var fontSize = Math.min(dimension/4, 100);
+      var fontSize = Math.min(dimension/5, 100) * fontScale;
       var gaugeWidth = Math.min(dimension/6, 60);
       var thresholdMarkersWidth = gaugeWidth/5;
 
@@ -372,15 +372,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       };
 
       $.plot(plotCanvas, [plotSeries], options);
-    }
-
-    function getGaugeFontSize() {
-      if (panel.valueFontSize) {
-        var num = parseInt(panel.valueFontSize.substring(0, panel.valueFontSize.length - 1));
-        return (30 * (num / 100)) + 15;
-      } else {
-        return 30;
-      }
     }
 
     function addSparkline() {
