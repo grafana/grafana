@@ -21,7 +21,8 @@ export class AlertTabCtrl {
     this.panel.alerting.queryRange = this.panel.alerting.queryRange || '10m';
     this.panel.alerting.warnOperator = this.panel.alerting.warnOperator || '>';
     this.panel.alerting.critOperator = this.panel.alerting.critOperator || '>';
-    this.panel.alerting.title = this.panel.alerting.title || this.panel.title + ' alert';
+    var defaultTitle = (this.panelCtrl.dashboard.title + ' ' + this.panel.title + ' alert');
+    this.panel.alerting.title = this.panel.alerting.title || defaultTitle;
 
     this.panel.targets.map(target => {
       this.metricTargets.push(target);
