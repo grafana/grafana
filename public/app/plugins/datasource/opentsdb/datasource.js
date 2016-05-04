@@ -377,10 +377,11 @@ function (angular, _, dateMath) {
       if (target.filters && target.filters.length > 0) {
         query.filters = angular.copy(target.filters);
       } else {
-        query.tags = angular.copy(target.tags);
-        if(query.tags){
-          for(var key in query.tags){
-            query.tags[key] = templateSrv.replace(query.tags[key], options.scopedVars, 'pipe');
+        if(target.tags){
+          query.tags = {};
+          for(var key in target.tags){
+            var tagkey = templateSrv.replace(key, options.scopedVars, 'pipe');
+            query.tags[tagkey] = templateSrv.replace(target.tags[key], options.scopedVars, 'pipe');
           }
         }
       }
