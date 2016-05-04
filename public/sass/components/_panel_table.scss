@@ -16,6 +16,11 @@
   position: relative;
 }
 
+.table-panel-headless {
+  padding-top:0;
+  border-top:1px solid $body-bg;
+}
+
 .table-panel-footer {
   text-align: center;
   font-size: 90%;
@@ -62,7 +67,7 @@
   }
 
   td {
-    padding: 0.45em 0 0.45em 1.1em;
+    padding: 0.45em 1.1em 0.45em 1.1em;
     border-bottom: 2px solid $body-bg;
     border-right: 2px solid $body-bg;
 
