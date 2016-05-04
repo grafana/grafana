@@ -25,6 +25,7 @@ type AlertRule struct {
 }
 
 type AlertRuleChange struct {
+	Id      int64     `json:"id"`
 	OrgId   int64     `json:"-"`
 	AlertId int64     `json:"alertId"`
 	Type    string    `json:"type"`
@@ -106,7 +107,9 @@ type GetAlertByIdQuery struct {
 }
 
 type GetAlertChangesQuery struct {
-	OrgId int64
+	OrgId   int64
+	Limit   int64
+	SinceId int64
 
 	Result []AlertRuleChange
 }

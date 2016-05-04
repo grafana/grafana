@@ -28,6 +28,14 @@ func GetAlertChanges(c *middleware.Context) Response {
 		OrgId: c.OrgId,
 	}
 
+	limit := c.QueryInt64("limit")
+	if limit == 0 {
+		limit = 10
+	}
+
+	query.Limit = limit
+	query.SinceId = c.QueryInt64("sinceId")
+
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "List alerts failed", err)
 	}
@@ -116,7 +124,7 @@ func DelAlert(c *middleware.Context) Response {
 	return Json(200, resp)
 }
 
-// GET /api/alerts/state/:id
+// GET /api/alerts/events/:id
 func GetAlertState(c *middleware.Context) Response {
 	alertId := c.ParamsInt64(":alertId")
 
@@ -131,7 +139,7 @@ func GetAlertState(c *middleware.Context) Response {
 	return Json(200, query.Result)
 }
 
-// PUT /api/alerts/state/:id
+// PUT /api/alerts/events/:id
 func PutAlertState(c *middleware.Context, cmd models.UpdateAlertStateCommand) Response {
 	alertId := c.ParamsInt64(":alertId")
 

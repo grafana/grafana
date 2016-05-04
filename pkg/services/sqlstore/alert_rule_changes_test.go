@@ -75,6 +75,28 @@ func TestAlertRuleChangesDataAccess(t *testing.T) {
 				So(er, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 2)
 			})
+
+			Convey("add 4 updates", func() {
+				sess := x.NewSession()
+				SaveAlertChange("UPDATED", items[0], sess)
+				SaveAlertChange("UPDATED", items[0], sess)
+				SaveAlertChange("UPDATED", items[0], sess)
+				SaveAlertChange("UPDATED", items[0], sess)
+
+				Convey("query for max one change", func() {
+					query := &m.GetAlertChangesQuery{OrgId: FakeOrgId, Limit: 1}
+					er := GetAlertRuleChanges(query)
+					So(er, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 1)
+				})
+
+				Convey("query for all since id 5", func() {
+					query := &m.GetAlertChangesQuery{OrgId: FakeOrgId, SinceId: 5}
+					er := GetAlertRuleChanges(query)
+					So(er, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 2)
+				})
+			})
 		})
 	})
 }
