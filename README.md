@@ -88,7 +88,6 @@ go get github.com/grafana/grafana
 ```
 
 ### Building the backend
-Replace X.Y.Z by actual version number.
 ```bash
 cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup            (only needed once to install godep)
