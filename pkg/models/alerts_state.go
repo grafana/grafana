@@ -4,7 +4,7 @@ import (
 	"time"
 )
 
-type AlertStateLog struct {
+type AlertState struct {
 	Id       int64     `json:"-"`
 	OrgId    int64     `json:"-"`
 	AlertId  int64     `json:"alertId"`
@@ -36,9 +36,9 @@ type UpdateAlertStateCommand struct {
 
 // Queries
 
-type GetAlertsStateLogCommand struct {
+type GetAlertsStateCommand struct {
 	OrgId   int64 `json:"orgId" binding:"Required"`
 	AlertId int64 `json:"alertId" binding:"Required"`
 
-	Result *[]AlertStateLog
+	Result *[]AlertState
 }

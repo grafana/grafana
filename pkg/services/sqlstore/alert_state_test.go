@@ -82,7 +82,7 @@ func TestAlertingStateAccess(t *testing.T) {
 				})
 
 				Convey("should have two event state logs", func() {
-					query := &m.GetAlertsStateLogCommand{
+					query := &m.GetAlertsStateCommand{
 						AlertId: 1,
 						OrgId:   1,
 					}

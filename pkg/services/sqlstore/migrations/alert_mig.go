@@ -42,7 +42,7 @@ func addAlertMigrations(mg *Migrator) {
 	mg.AddMigration("create alert_rules_updates table v1", NewAddTableMigration(alert_changes))
 
 	alert_state_log := Table{
-		Name: "alert_state_log",
+		Name: "alert_state",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "alert_id", Type: DB_BigInt, Nullable: false},

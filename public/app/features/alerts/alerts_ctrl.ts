@@ -16,7 +16,7 @@ export class AlertPageCtrl {
   }
 
   loadAlerts() {
-    this.backendSrv.get('/api/alerts').then(result => {
+    this.backendSrv.get('/api/alerts/rules').then(result => {
       this.alerts = _.map(result, alert => {
         alert.iconCss = alertDef.getCssForState(alert.state);
         return alert;

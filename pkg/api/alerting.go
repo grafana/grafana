@@ -30,7 +30,7 @@ func GetAlertChanges(c *middleware.Context) Response {
 
 	limit := c.QueryInt64("limit")
 	if limit == 0 {
-		limit = 10
+		limit = 50
 	}
 
 	query.Limit = limit
@@ -125,10 +125,10 @@ func DelAlert(c *middleware.Context) Response {
 }
 
 // GET /api/alerts/events/:id
-func GetAlertState(c *middleware.Context) Response {
+func GetAlertStates(c *middleware.Context) Response {
 	alertId := c.ParamsInt64(":alertId")
 
-	query := models.GetAlertsStateLogCommand{
+	query := models.GetAlertsStateCommand{
 		AlertId: alertId,
 	}
 
@@ -141,13 +141,9 @@ func GetAlertState(c *middleware.Context) Response {
 
 // PUT /api/alerts/events/:id
 func PutAlertState(c *middleware.Context, cmd models.UpdateAlertStateCommand) Response {
-	alertId := c.ParamsInt64(":alertId")
+	cmd.AlertId = c.ParamsInt64(":alertId")
 
-	if alertId != cmd.AlertId {
-		return ApiError(401, "Bad Request", nil)
-	}
-
-	query := models.GetAlertByIdQuery{Id: alertId}
+	query := models.GetAlertByIdQuery{Id: cmd.AlertId}
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "Failed to get alertstate", err)
 	}

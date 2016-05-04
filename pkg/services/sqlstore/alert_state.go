@@ -32,7 +32,7 @@ func SetNewAlertState(cmd *m.UpdateAlertStateCommand) error {
 		alert.State = cmd.NewState
 		sess.Id(alert.Id).Update(&alert)
 
-		log := m.AlertStateLog{
+		log := m.AlertState{
 			AlertId:  cmd.AlertId,
 			OrgId:    cmd.AlertId,
 			NewState: cmd.NewState,
@@ -47,8 +47,8 @@ func SetNewAlertState(cmd *m.UpdateAlertStateCommand) error {
 	})
 }
 
-func GetAlertStateLogByAlertId(cmd *m.GetAlertsStateLogCommand) error {
-	alertLogs := make([]m.AlertStateLog, 0)
+func GetAlertStateLogByAlertId(cmd *m.GetAlertsStateCommand) error {
+	alertLogs := make([]m.AlertState, 0)
 
 	if err := x.Where("alert_id = ?", cmd.AlertId).Desc("created").Find(&alertLogs); err != nil {
 		return err
