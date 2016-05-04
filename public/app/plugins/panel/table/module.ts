@@ -39,8 +39,11 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       }
     ],
     columns: [],
+    filter: {column: null, query: ''},
     rowLink: '',
     scroll: true,
+    search: false,
+    header: true,
     fontSize: '100%',
     sort: {col: 0, desc: true},
   };
@@ -64,6 +67,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
+    $scope.$on('filter', this.onFilter.bind(this));
   }
 
   onInitEditMode() {
@@ -111,6 +115,12 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       }
     }
 
+    this.render();
+  }
+
+  onFilter(event, filter) {
+    this.panel.filter = filter;
+    console.log(this.panel.filter);
     this.render();
   }
 

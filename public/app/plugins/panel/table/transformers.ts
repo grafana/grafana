@@ -152,6 +152,8 @@ transformers['table'] = {
     // merging series
     var tableColumns = [];
     var tableRows = [];
+    var filterColumnIndex = -1;
+    var filteringEnabled = panel.filter.column && panel.filter.query && panel.search;
     for (var i = 0; i < data.length; i++){
       if (data[i].type !== 'table') {
         throw {message: 'Query result is not in table format, try using another transform.'};
@@ -170,6 +172,9 @@ transformers['table'] = {
 
         if (!columnFound) {
           tableColumns.push(data[i].columns[k]);
+          if (filteringEnabled && panel.filter.column.text === data[i].columns[k].text) {
+            filterColumnIndex = tableColumns.length - 1;
+          }
         }
       }
 
@@ -206,6 +211,12 @@ transformers['table'] = {
           }
         }
       }
+    }
+
+    if (filterColumnIndex !== -1 && filteringEnabled) {
+      tableRows = _.filter(tableRows, function(row) {
+        return ('' + row[filterColumnIndex]).toLowerCase().match(panel.filter.query.toLowerCase());
+      });
     }
 
     model.columns = tableColumns;
