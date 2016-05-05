@@ -91,11 +91,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var data: any = {};
     this.setValues(data);
 
-    data.thresholds = this.panel.thresholds.split(',').map(function(strVale) {
-      return Number(strVale.trim());
-    });
-
-    data.colorMap = this.panel.colors;
     this.data = data;
     this.render();
   }
@@ -435,8 +430,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function render() {
       if (!ctrl.data) { return; }
-      ctrl.setValues(ctrl.data);
       data = ctrl.data;
+
+      // get thresholds
+      data.thresholds = panel.thresholds.split(',').map(function(strVale) {
+        return Number(strVale.trim());
+      });
+      data.colorMap = panel.colors;
+
       setElementHeight();
 
       var body = panel.gauge.show ? '' : getBigValueHtml();
