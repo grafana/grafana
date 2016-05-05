@@ -88,9 +88,9 @@
 .btn-success {
   @include buttonBackground($btn-success-bg, $btn-success-bg-hl);
 }
-// Info appears as a neutral blue
-.btn-secondary {
-  @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+// Disabled is a gray.
+.btn-disabled {
+  @include buttonBackground($btn-disabled-bg, $btn-disabled-bg-hl, $btn-disabled-text-color);
 }
 // Inverse appears as dark gray
 .btn-inverse {

@@ -151,6 +151,10 @@ $btn-warning-bg-hl:     darken($orange, 3%);
 $btn-danger-bg:         lighten($red, 3%);
 $btn-danger-bg-hl:      darken($red, 3%);
 
+$btn-disabled-bg:         $gray-1;
+$btn-disabled-bg-hl:      lighten($gray-1, 5%);
+$btn-disabled-text-color: $dark-4;
+
 $btn-inverse-bg:          $gray-5;
 $btn-inverse-bg-hl:       darken($gray-5, 5%);
 $btn-inverse-text-color:  $dark-4;

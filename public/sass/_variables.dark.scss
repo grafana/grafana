@@ -144,6 +144,10 @@ $btn-warning-bg-hl:     	    lighten($brand-warning, 8%);
 $btn-danger-bg:               $red;
 $btn-danger-bg-hl:            lighten($red, 5%);
 
+$btn-disabled-bg:             $gray-1;
+$btn-disabled-bg-hl:          lighten($gray-1, 5%);
+$btn-disabled-text-color:     $gray-3;
+
 $btn-inverse-bg:              $dark-3;
 $btn-inverse-bg-hl:     	    lighten($dark-3, 4%);
 $btn-inverse-text-color:      $link-color;
