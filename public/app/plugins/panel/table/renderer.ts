@@ -74,16 +74,16 @@ export class TableRenderer {
       return v =>  {
         this.alignState = style.align;
 
+        if (style.colorMode) {
+          this.colorState[style.colorMode] = this.getColorForValue(v, style);
+        }
+
         if (v === null || v === void 0) {
-          return '-';
+          v = '-';
         }
 
         if (_.isString(v)) {
           return v;
-        }
-
-        if (style.colorMode) {
-          this.colorState[style.colorMode] = this.getColorForValue(v, style);
         }
 
         return valueFormater(v, style.decimals, null);
