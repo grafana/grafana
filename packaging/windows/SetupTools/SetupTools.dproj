@@ -64,12 +64,12 @@
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base)'!=''">
         <VerInfo_IncludeVerInfo>true</VerInfo_IncludeVerInfo>
-        <DCC_UnitSearchPath>Z:\NetCrunch\9.x\Development\Source\Imonitor\Shared\ClientServer;Z:\NetCrunch\9.x\Development\Source\INCLUDE;Z:\NetCrunch\9.x\Development\Source\Imonitor\Client\UI\User Profiles;Z:\NetCrunch\9.x\Development\Source\Imonitor\Shared\User Profiles;Z:\NetCrunch\9.x\Development\Source\Imonitor\Shared\Alerts\shared;Z:\NetCrunch\9.x\Development\Source\WebAccess\Common;Z:\NetCrunch\9.x\Development\Source\Imonitor\Shared\Remote Access;Z:\NetCrunch\9.x\Development\Source\Imonitor\Client;Z:\NetCrunch\9.x\Development\Source\Imonitor\Shared\Monitoring;Z:\NetCrunch\9.x\Development\Source\Imonitor\Server\Monitoring;V:\ADREM\common\lib;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
+        <DCC_UnitSearchPath>Z:\NetCrunch\9.x\Development\Source\Imonitor\Shared\ClientServer;Z:\NetCrunch\9.x\Development\Source\INCLUDE;Z:\NetCrunch\9.x\Development\Source\Imonitor\Client\UI\User Profiles;Z:\NetCrunch\9.x\Development\Source\Imonitor\Shared\User Profiles;Z:\NetCrunch\9.x\Development\Source\Imonitor\Shared\Alerts\shared;Z:\NetCrunch\9.x\Development\Source\WebAccess\Common;Z:\NetCrunch\9.x\Development\Source\Imonitor\Shared\Remote Access;Z:\NetCrunch\9.x\Development\Source\Imonitor\Client;Z:\NetCrunch\9.x\Development\Source\Imonitor\Shared\Monitoring;Z:\NetCrunch\9.x\Development\Source\Imonitor\Server\Monitoring;V:\ADREM\common\lib;Z:\NetCrunch\9.x\Development\Source\units;$(DCC_UnitSearchPath)</DCC_UnitSearchPath>
         <VerInfo_Keys>CompanyName=AdRem Software, Inc.;FileDescription=Tools for installer;FileVersion=1.0.0.0;InternalName=Tools for installer;LegalCopyright=2015 (c) AdRem Software Inc., all rights reserved;LegalTrademarks=;OriginalFilename=SetupTools.dll;ProductName=AdRem Setup Tools Library;ProductVersion=1.0.0.0;Comments=</VerInfo_Keys>
         <Manifest_File>None</Manifest_File>
         <DCC_BplOutput>Z:\NetCrunch\9.x\Development\Source\Imonitor\Shared\ClientServer\</DCC_BplOutput>
         <VerInfo_Locale>1045</VerInfo_Locale>
-        <DCC_Define>NO_FORMS;NC_SHARED;$(DCC_Define)</DCC_Define>
+        <DCC_Define>NO_FORMS;NC_SHARED;NOT_USE_FORMS;$(DCC_Define)</DCC_Define>
         <SanitizedProjectName>SetupTools</SanitizedProjectName>
         <DCC_Namespace>System;Xml;Data;Datasnap;Web;Soap;$(DCC_Namespace)</DCC_Namespace>
         <GenDll>true</GenDll>
@@ -178,12 +178,27 @@
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
-                <DeployClass Name="ProjectiOSDeviceResourceRules">
+                <DeployClass Name="DependencyModule">
+                    <Platform Name="Win32">
+                        <Operation>0</Operation>
+                        <Extensions>.dll;.bpl</Extensions>
+                    </Platform>
                     <Platform Name="iOSDevice64">
                         <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                    <Platform Name="OSX32">
+                        <RemoteDir>Contents\MacOS</RemoteDir>
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
                     </Platform>
                     <Platform Name="iOSDevice32">
                         <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
+                    </Platform>
+                    <Platform Name="iOSSimulator">
+                        <Operation>1</Operation>
+                        <Extensions>.dylib</Extensions>
                     </Platform>
                 </DeployClass>
                 <DeployClass Name="ProjectOSXResource">
@@ -537,27 +552,12 @@
                         <Operation>1</Operation>
                     </Platform>
                 </DeployClass>
-                <DeployClass Name="DependencyModule">
-                    <Platform Name="Win32">
-                        <Operation>0</Operation>
-                        <Extensions>.dll;.bpl</Extensions>
-                    </Platform>
+                <DeployClass Name="ProjectiOSDeviceResourceRules">
                     <Platform Name="iOSDevice64">
                         <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
-                    </Platform>
-                    <Platform Name="OSX32">
-                        <RemoteDir>Contents\MacOS</RemoteDir>
-                        <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
                     </Platform>
                     <Platform Name="iOSDevice32">
                         <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
-                    </Platform>
-                    <Platform Name="iOSSimulator">
-                        <Operation>1</Operation>
-                        <Extensions>.dylib</Extensions>
                     </Platform>
                 </DeployClass>
                 <ProjectRoot Platform="iOSDevice64" Name="$(PROJECTNAME).app"/>
