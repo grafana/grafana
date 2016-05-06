@@ -286,6 +286,9 @@ transformers['json'] = {
 };
 
 function applyAliasing(panel, model){
+  if (!panel.styles) {
+    return;
+  }
   var hash = [];
   for (var i = 0; i < model.columns.length; i++) {
     for (var j = 0; j < panel.styles.length; j++) {
