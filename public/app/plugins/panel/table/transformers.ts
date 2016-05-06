@@ -189,8 +189,8 @@ transformers['table'] = {
         tableRows = data[i].rows;
       } else {
         for (let k = 0; k < data[i].rows.length; k++) {
-          let clone = _.clone(data[i].rows[k]);
           for (let j = 0; j < tableRows.length; j++) {
+            let clone = _.clone(data[i].rows[k]);
             var equal = true;
             for (let n = intersection.length; n--;) {
               if (tableRows[j][intersection[n][0]] !== clone[intersection[n][1]]) {

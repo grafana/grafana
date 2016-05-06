@@ -133,14 +133,14 @@
                     style="width: 150px"
             ></select>
           </li>
-          <li class="tight-form-item" style="width: 86px" ng-if="style.type != 'hidden'">
+          <li class="tight-form-item" style="width: 60px" ng-if="style.type != 'hidden'">
             Alias
           </li>
           <li ng-if="style.type != 'hidden'">
             <input type="text" ng-model="style.alias" ng-blur="editor.render()"
                    class="input-medium tight-form-input">
           </li>
-          <li class="tight-form-item" style="width: 86px" ng-if="style.type != 'hidden'">
+          <li class="tight-form-item" style="width: 60px" ng-if="style.type != 'hidden'">
             Align
           </li>
           <li ng-if="style.type != 'hidden'">
@@ -148,7 +148,7 @@
                     ng-model="style.align"
                     ng-options="a.value as a.text for a in editor.alignTypes"
                     ng-change="editor.render()"
-                    style="width: 150px"
+                    style="width: 80px"
             ></select>
           </li>
         </ul>
