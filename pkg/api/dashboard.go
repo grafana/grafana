@@ -59,20 +59,23 @@ func GetDashboard(c *middleware.Context) {
 		creator = getUserLogin(dash.CreatedBy)
 	}
 
+	historicalVersions := getHistoricalVersions(dash.Id)
+
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
 		Meta: dtos.DashboardMeta{
-			IsStarred: isStarred,
-			Slug:      slug,
-			Type:      m.DashTypeDB,
-			CanStar:   c.IsSignedIn,
-			CanSave:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
-			CanEdit:   canEditDashboard(c.OrgRole),
-			Created:   dash.Created,
-			Updated:   dash.Updated,
-			UpdatedBy: updater,
-			CreatedBy: creator,
-			Version:   dash.Version,
+			IsStarred:          isStarred,
+			Slug:               slug,
+			Type:               m.DashTypeDB,
+			CanStar:            c.IsSignedIn,
+			CanSave:            c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
+			CanEdit:            canEditDashboard(c.OrgRole),
+			Created:            dash.Created,
+			Updated:            dash.Updated,
+			UpdatedBy:          updater,
+			CreatedBy:          creator,
+			Version:            dash.Version,
+			HistoricalVersions: historicalVersions,
 		},
 	}
 
@@ -89,6 +92,16 @@ func getUserLogin(userId int64) string {
 		user := query.Result
 		return user.Login
 	}
+}
+
+func getHistoricalVersions(id int64) []*int64 {
+	query := m.GetDashboardHistoryQuery{Id: id}
+	err := bus.Dispatch(&query)
+	historyVersions := make([]*int64, 0)
+	if err == nil {
+		historyVersions = query.Result
+	}
+	return historyVersions
 }
 
 func DeleteDashboard(c *middleware.Context) {

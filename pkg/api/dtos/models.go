@@ -38,20 +38,21 @@ type CurrentUser struct {
 }
 
 type DashboardMeta struct {
-	IsStarred  bool      `json:"isStarred,omitempty"`
-	IsHome     bool      `json:"isHome,omitempty"`
-	IsSnapshot bool      `json:"isSnapshot,omitempty"`
-	Type       string    `json:"type,omitempty"`
-	CanSave    bool      `json:"canSave"`
-	CanEdit    bool      `json:"canEdit"`
-	CanStar    bool      `json:"canStar"`
-	Slug       string    `json:"slug"`
-	Expires    time.Time `json:"expires"`
-	Created    time.Time `json:"created"`
-	Updated    time.Time `json:"updated"`
-	UpdatedBy  string    `json:"updatedBy"`
-	CreatedBy  string    `json:"createdBy"`
-	Version    int       `json:"version"`
+	IsStarred          bool      `json:"isStarred,omitempty"`
+	IsHome             bool      `json:"isHome,omitempty"`
+	IsSnapshot         bool      `json:"isSnapshot,omitempty"`
+	Type               string    `json:"type,omitempty"`
+	CanSave            bool      `json:"canSave"`
+	CanEdit            bool      `json:"canEdit"`
+	CanStar            bool      `json:"canStar"`
+	Slug               string    `json:"slug"`
+	Expires            time.Time `json:"expires"`
+	Created            time.Time `json:"created"`
+	Updated            time.Time `json:"updated"`
+	UpdatedBy          string    `json:"updatedBy"`
+	CreatedBy          string    `json:"createdBy"`
+	Version            int       `json:"version"`
+	HistoricalVersions []*int64  `json:"historicalVersions"`
 }
 
 type DashboardFullWithMeta struct {

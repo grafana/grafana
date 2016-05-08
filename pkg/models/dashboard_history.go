@@ -15,3 +15,9 @@ type DashboardHistory struct {
 	UpdatedBy        int64
 	Data             *simplejson.Json
 }
+
+type GetDashboardHistoryQuery struct {
+	Id int64
+
+	Result []*int64
+}

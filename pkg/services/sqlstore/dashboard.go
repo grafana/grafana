@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -20,6 +21,7 @@ func init() {
 	bus.AddHandler("sql", GetDashboardTags)
 	bus.AddHandler("sql", GetDashboardSlugById)
 	bus.AddHandler("sql", GetDashboardsByPluginId)
+	bus.AddHandler("sql", GetHistoricalVersions)
 }
 
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
@@ -312,4 +314,16 @@ func GetDashboardSlugById(query *m.GetDashboardSlugByIdQuery) error {
 
 	query.Result = slug.Slug
 	return nil
+}
+
+func GetHistoricalVersions(query *m.GetDashboardHistoryQuery) error {
+	var rawSql = `SELECT dashboard_version from dashboard_history WHERE dashboard_id=?`
+
+	query.Result = make([]*int64, 0)
+	sess := x.Sql(rawSql, query.Id)
+	err := sess.Find(&query.Result)
+
+	log.Info("%v", err)
+
+	return err
 }
