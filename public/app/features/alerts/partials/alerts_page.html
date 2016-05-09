@@ -17,12 +17,12 @@
 		</thead>
 		<tr ng-repeat="alert in ctrl.alerts">
 			<td>
-				<a href="/alerts/events/{{alert.id}}">
+				<a href="/alerts/{{alert.id}}/states">
 					{{alert.title}}
 				</a>
 			</td>
 			<td class="text-center">
-				<a href="/alerts/events/{{alert.id}}">
+				<a href="/alerts/{{alert.id}}/states">
 					<i class="icon-gf {{alert.iconCss}}"></i>
 				</a>
 			</td>
