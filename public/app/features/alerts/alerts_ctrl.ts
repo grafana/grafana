@@ -9,6 +9,8 @@ import alertDef from './alert_def';
 export class AlertPageCtrl {
 
   alerts: any;
+  stateFilters = [ 'Ok', 'Warn', 'Critical', 'Acknowledged' ];
+  stateFilter = 'Warn';
 
   /** @ngInject */
   constructor(private backendSrv) {
@@ -16,7 +18,11 @@ export class AlertPageCtrl {
   }
 
   loadAlerts() {
-    this.backendSrv.get('/api/alerts/rules').then(result => {
+    var params = {
+      state: this.stateFilter
+    };
+
+    this.backendSrv.get('/api/alerts/rules', params).then(result => {
       this.alerts = _.map(result, alert => {
         alert.iconCss = alertDef.getCssForState(alert.state);
         return alert;

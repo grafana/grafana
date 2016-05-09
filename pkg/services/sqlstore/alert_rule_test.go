@@ -30,7 +30,6 @@ func TestAlertingDataAccess(t *testing.T) {
 				Description:  "Alerting description",
 				QueryRange:   "5m",
 				Aggregator:   "avg",
-				State:        "OK",
 			},
 		}
 

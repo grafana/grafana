@@ -47,6 +47,7 @@ func GetAlertChanges(c *middleware.Context) Response {
 func GetAlerts(c *middleware.Context) Response {
 	query := models.GetAlertsQuery{
 		OrgId: c.OrgId,
+		State: c.QueryStrings("state"),
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -78,8 +79,10 @@ func GetAlerts(c *middleware.Context) Response {
 		DashboardIds: dashboardIds,
 	}
 
-	if err := bus.Dispatch(&dashboardsQuery); err != nil {
-		return ApiError(500, "List alerts failed", err)
+	if len(alertDTOs) > 0 {
+		if err := bus.Dispatch(&dashboardsQuery); err != nil {
+			return ApiError(500, "List alerts failed", err)
+		}
 	}
 
 	//TODO: should be possible to speed this up with lookup table
@@ -128,7 +131,7 @@ func DelAlert(c *middleware.Context) Response {
 func GetAlertStates(c *middleware.Context) Response {
 	alertId := c.ParamsInt64(":alertId")
 
-	query := models.GetAlertsStateCommand{
+	query := models.GetAlertsStateQuery{
 		AlertId: alertId,
 	}
 

@@ -82,7 +82,7 @@ func TestAlertingStateAccess(t *testing.T) {
 				})
 
 				Convey("should have two event state logs", func() {
-					query := &m.GetAlertsStateCommand{
+					query := &m.GetAlertsStateQuery{
 						AlertId: 1,
 						OrgId:   1,
 					}
@@ -91,6 +91,17 @@ func TestAlertingStateAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					So(len(*query.Result), ShouldEqual, 2)
+				})
+
+				Convey("should not get any alerts with critical state", func() {
+					query := &m.GetAlertsQuery{
+						OrgId: 1,
+						State: []string{"Critical"},
+					}
+
+					err := HandleAlertsQuery(query)
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 0)
 				})
 			})
 		})

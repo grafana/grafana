@@ -96,6 +96,7 @@ type DeleteAlertCommand struct {
 //Queries
 type GetAlertsQuery struct {
 	OrgId int64
+	State []string
 
 	Result []AlertRule
 }

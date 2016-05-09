@@ -1,15 +1,17 @@
 package sqlstore
 
 import (
+	"bytes"
 	"fmt"
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"strings"
 )
 
 func init() {
 	bus.AddHandler("sql", SaveAlerts)
-	bus.AddHandler("sql", GetAllAlertsForOrg)
+	bus.AddHandler("sql", HandleAlertsQuery)
 	bus.AddHandler("sql", GetAlertById)
 	bus.AddHandler("sql", GetAlertsByDashboardId)
 	bus.AddHandler("sql", GetAlertsByDashboardAndPanelId)
@@ -41,9 +43,33 @@ func DeleteAlertById(cmd *m.DeleteAlertCommand) error {
 	})
 }
 
-func GetAllAlertsForOrg(query *m.GetAlertsQuery) error {
+func HandleAlertsQuery(query *m.GetAlertsQuery) error {
+	var sql bytes.Buffer
+	params := make([]interface{}, 0)
+
+	sql.WriteString(`SELECT *
+						from alert_rule
+						`)
+
+	sql.WriteString(`WHERE org_id = ?`)
+	params = append(params, query.OrgId)
+
+	if len(query.State) > 0 {
+
+		sql.WriteString(` AND (`)
+		for i, v := range query.State {
+			if i > 0 {
+				sql.WriteString(" OR ")
+			}
+			sql.WriteString("state = ? ")
+			params = append(params, strings.ToUpper(v))
+		}
+		sql.WriteString(")")
+
+	}
+
 	alerts := make([]m.AlertRule, 0)
-	if err := x.Where("org_id = ?", query.OrgId).Find(&alerts); err != nil {
+	if err := x.Sql(sql.String(), params...).Find(&alerts); err != nil {
 		return err
 	}
 
@@ -127,6 +153,7 @@ func upsertAlerts(alerts []m.AlertRule, posted *[]m.AlertRule, sess *xorm.Sessio
 			}
 
 		} else {
+			alert.State = "OK"
 			_, err := sess.Insert(&alert)
 			if err != nil {
 				return err
