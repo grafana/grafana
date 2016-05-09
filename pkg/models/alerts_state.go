@@ -14,14 +14,16 @@ type AlertState struct {
 }
 
 var (
-	ALERT_STATE_OK           = "OK"
-	ALERT_STATE_CRITICAL     = "CRITICAL"
-	ALERT_STATE_WARN         = "WARN"
-	ALERT_STATE_ACKNOWLEDGED = "ACKNOWLEDGED"
+	VALID_STATES = []string{"OK", "WARN", "CRITICAL", "ACKNOWLEDGED"}
 )
 
 func (this *UpdateAlertStateCommand) IsValidState() bool {
-	return this.NewState == ALERT_STATE_OK || this.NewState == ALERT_STATE_WARN || this.NewState == ALERT_STATE_CRITICAL || this.NewState == ALERT_STATE_ACKNOWLEDGED
+	for _, v := range VALID_STATES {
+		if this.NewState == v {
+			return true
+		}
+	}
+	return false
 }
 
 // Commands

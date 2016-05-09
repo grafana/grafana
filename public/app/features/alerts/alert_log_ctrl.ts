@@ -11,18 +11,16 @@ export class AlertLogCtrl {
 
   alertLogs: any;
   alert: any;
-  alertId: any;
 
   /** @ngInject */
   constructor(private $route, private backendSrv) {
     if ($route.current.params.alertId) {
-      this.alertId = $route.current.params.alertId;
-      this.loadAlertLogs();
+      this.loadAlertLogs($route.current.params.alertId);
     }
   }
 
-  loadAlertLogs() {
-    this.backendSrv.get(`/api/alerts/rules/${this.alertId}/states`).then(result => {
+  loadAlertLogs(alertId: number) {
+    this.backendSrv.get(`/api/alerts/rules/${alertId}/states`).then(result => {
       this.alertLogs = _.map(result, log => {
         log.iconCss = alertDef.getCssForState(log.newState);
         log.humanTime = moment(log.created).format("YYYY-MM-DD HH:mm:ss");
@@ -30,7 +28,7 @@ export class AlertLogCtrl {
       });
     });
 
-    this.backendSrv.get(`/api/alerts/rules/${this.alertId}`).then(result => {
+    this.backendSrv.get(`/api/alerts/rules/${alertId}`).then(result => {
       this.alert = result;
     });
   }
