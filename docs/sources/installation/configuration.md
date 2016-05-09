@@ -186,7 +186,7 @@ Defaults to `admin`.
 
 ### admin_password
 
-The password of the default Grafana admin.  Defaults to `admin`.
+The password of the default Grafana admin. Set once on first-run.  Defaults to `admin`.
 
 ### login_remember_days
 
