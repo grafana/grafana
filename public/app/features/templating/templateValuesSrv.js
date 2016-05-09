@@ -213,8 +213,7 @@ function (angular, _, kbn) {
     this.updateOptions = function(variable) {
       if (variable.type !== 'query') {
         self._updateNonQueryVariable(variable);
-        self.setVariableValue(variable, variable.options[0]);
-        return $q.when([]);
+        return self.validateVariableSelectionState(variable);
       }
 
       return datasourceSrv.get(variable.datasource)
@@ -251,7 +250,7 @@ function (angular, _, kbn) {
       if (_.isArray(variable.current.value)) {
         self.selectOptionsForCurrentValue(variable);
       } else {
-        var currentOption = _.findWhere(variable.options, { text: variable.current.text });
+        var currentOption = _.findWhere(variable.options, {text: variable.current.text});
         if (currentOption) {
           return self.setVariableValue(variable, currentOption, true);
         } else {
