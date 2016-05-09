@@ -96,7 +96,7 @@ func TestAlertingStateAccess(t *testing.T) {
 				Convey("should not get any alerts with critical state", func() {
 					query := &m.GetAlertsQuery{
 						OrgId: 1,
-						State: []string{"Critical"},
+						State: []string{"Critical", "Warn"},
 					}
 
 					err := HandleAlertsQuery(query)
