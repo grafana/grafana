@@ -36,9 +36,19 @@ export class DashboardExporter {
               type: 'datasource',
               id: ds.meta.id,
               name: ds.meta.name,
-              version: ds.meta.info.version
+              version: ds.meta.info.version || "1.0.0",
             };
           }));
+        }
+
+        var panelDef = config.panels[panel.type];
+        if (panelDef) {
+          requires['panel' + panelDef.id] = {
+            type: 'panel',
+            id: panelDef.id,
+            name: panelDef.name,
+            version: panelDef.info.version,
+          };
         }
       });
     }
@@ -56,14 +66,21 @@ export class DashboardExporter {
       dash["__requires"] = requires;
 
       return dash;
+    }).catch(err => {
+      console.log('Export failed:', err);
+      return {};
     });
   }
 
   export(dashboard) {
     return this.makeExportable(dashboard).then(clean => {
-      var blob = new Blob([angular.toJson(clean, true)], { type: "application/json;charset=utf-8" });
-      var wnd: any = window;
-      wnd.saveAs(blob, clean.title + '-' + new Date().getTime() + '.json');
+      var html = angular.toJson(clean, true);
+      var uri = "data:application/json," + encodeURIComponent(html);
+      var newWindow = window.open(uri);
+
+      // var blob = new Blob([angular.toJson(clean, true)], { type: "application/json;charset=utf-8" });
+      // var wnd: any = window;
+      // wnd.saveAs(blob, clean.title + '-' + new Date().getTime() + '.json');
     });
   }
 
