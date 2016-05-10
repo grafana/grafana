@@ -2,7 +2,7 @@ import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/co
 
 import {DashboardExporter} from '../exporter';
 
-describe('given dashboard with repeated panels', function() {
+describe.only('given dashboard with repeated panels', function() {
   var dash, exported;
 
   beforeEach((done) => {
@@ -39,6 +39,7 @@ describe('given dashboard with repeated panels', function() {
     exporter.makeExportable(dash).then(clean => {
       exported = clean;
       done();
+      console.log('done');
     });
   });
 
@@ -54,6 +55,12 @@ describe('given dashboard with repeated panels', function() {
   it('should replace datasource refs', function() {
     var panel = exported.rows[0].panels[0];
     expect(panel.datasource).to.be("${DS_GFDB}");
+  });
+
+  it('should add datasource as input', function() {
+    expect(exported.__inputs[0].name).to.be("DS_GFDB");
+    expect(exported.__inputs[0].pluginId).to.be("testdb");
+    expect(exported.__inputs[0].type).to.be("datasource");
   });
 
 });
