@@ -46,8 +46,10 @@ func GetAlertChanges(c *middleware.Context) Response {
 // GET /api/alerts
 func GetAlerts(c *middleware.Context) Response {
 	query := models.GetAlertsQuery{
-		OrgId: c.OrgId,
-		State: c.QueryStrings("state"),
+		OrgId:       c.OrgId,
+		State:       c.QueryStrings("state"),
+		DashboardId: c.QueryInt64("dashboardId"),
+		PanelId:     c.QueryInt64("panelId"),
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -160,35 +162,4 @@ func PutAlertState(c *middleware.Context, cmd models.UpdateAlertStateCommand) Re
 	}
 
 	return Json(200, cmd.Result)
-}
-
-// GET /api/alerts-dashboard/:dashboardId
-func GetAlertsForDashboard(c *middleware.Context) Response {
-	dashboardId := c.ParamsInt64(":dashboardId")
-	query := &models.GetAlertsForDashboardQuery{
-		DashboardId: dashboardId,
-	}
-
-	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Failed get alert ", err)
-	}
-
-	return Json(200, query.Result)
-}
-
-// GET /api/alerts-dashboard/:dashboardId/:panelId
-func GetAlertsForPanel(c *middleware.Context) Response {
-	dashboardId := c.ParamsInt64(":dashboardId")
-	panelId := c.ParamsInt64(":panelId")
-
-	query := &models.GetAlertForPanelQuery{
-		DashboardId: dashboardId,
-		PanelId:     panelId,
-	}
-
-	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Failed get alert ", err)
-	}
-
-	return Json(200, query.Result)
 }

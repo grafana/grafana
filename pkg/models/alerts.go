@@ -95,8 +95,10 @@ type DeleteAlertCommand struct {
 
 //Queries
 type GetAlertsQuery struct {
-	OrgId int64
-	State []string
+	OrgId       int64
+	State       []string
+	DashboardId int64
+	PanelId     int64
 
 	Result []AlertRule
 }
@@ -113,17 +115,4 @@ type GetAlertChangesQuery struct {
 	SinceId int64
 
 	Result []AlertRuleChange
-}
-
-type GetAlertsForDashboardQuery struct {
-	DashboardId int64
-
-	Result []AlertRule
-}
-
-type GetAlertForPanelQuery struct {
-	DashboardId int64
-	PanelId     int64
-
-	Result AlertRule
 }

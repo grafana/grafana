@@ -61,8 +61,8 @@ func TestAlertRuleChangesDataAccess(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("Alerts should be removed", func() {
-				query := m.GetAlertsForDashboardQuery{DashboardId: testDash.Id}
-				err2 := GetAlertsByDashboardId(&query)
+				query := m.GetAlertsQuery{DashboardId: testDash.Id, OrgId: 1}
+				err2 := HandleAlertsQuery(&query)
 
 				So(testDash.Id, ShouldEqual, 1)
 				So(err2, ShouldBeNil)
