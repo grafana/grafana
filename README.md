@@ -109,7 +109,7 @@ go run build.go build
 
 ### Building frontend assets
 
-To build less to css for the frontend you will need a recent version of of **node (v0.12.0)**,
+To build less to css for the frontend you will need a recent version of of **node (v4+)**,
 npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```bash
