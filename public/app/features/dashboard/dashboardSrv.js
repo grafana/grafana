@@ -3,8 +3,9 @@ define([
   'jquery',
   'lodash',
   'moment',
+  'app/core/utils/seriesutil',
 ],
-function (angular, $, _, moment) {
+function (angular, $, _, moment, seriesUtil) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -200,13 +201,13 @@ function (angular, $, _, moment) {
     };
 
     p.getNextQueryLetter = function(panel) {
-      var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-      return _.find(letters, function(refId) {
-        return _.every(panel.targets, function(other) {
-          return other.refId !== refId;
-        });
-      });
+      return seriesUtil.seriesRefLetters(
+        _.find(_.range(26*26), function(num) {
+          var refId = seriesUtil.seriesRefLetters(num);
+          return _.every(panel.targets, function(other) {
+            return other.refId !== refId;
+          });
+        }));
     };
 
     p.isTimezoneUtc = function() {

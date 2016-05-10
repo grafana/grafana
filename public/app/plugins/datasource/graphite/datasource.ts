@@ -3,6 +3,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import moment from 'moment';
+import * as seriesUtil from 'app/core/utils/seriesutil';
 
 import * as dateMath from 'app/core/utils/datemath';
 
@@ -207,8 +208,6 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     return backendSrv.datasourceRequest(options);
   };
 
-  this._seriesRefLetters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
   this.buildGraphiteParams = function(options, scopedVars) {
     var graphite_options = ['from', 'until', 'rawData', 'format', 'maxDataPoints', 'cacheTimeout'];
     var clean_options = [], targets = {};
@@ -232,7 +231,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       }
 
       if (!target.refId) {
-        target.refId = this._seriesRefLetters[i];
+        target.refId = seriesUtil.seriesRefLetters(i);
       }
 
       targetValue = templateSrv.replace(target.target, scopedVars);
