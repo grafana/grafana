@@ -78,7 +78,7 @@ the latest master builds [here](http://grafana.org/download/builds)
 ### Dependencies
 
 - Go 1.5
-- NodeJS
+- NodeJS v4+
 - [Godep](https://github.com/tools/godep)
 
 ### Get Code
@@ -87,8 +87,19 @@ the latest master builds [here](http://grafana.org/download/builds)
 go get github.com/grafana/grafana
 ```
 
+Since imports of dependencies use the absolute path github.com/grafana/grafana within the $GOPATH,
+you will need to put your version of the code in $GOPATH/src/github.com/grafana/grafana to be able
+to develop and build grafana on a cloned repository. To do so, you can clone your forked repository
+directly to $GOPATH/src/github.com/grafana or you can create a symbolic link from your version
+of the code to $GOPATH/src/github.com/grafana/grafana. The last options makes it possible to change
+easily the grafana repository you want to build.
+```bash
+go get github.com/*your_account*/grafana
+mkdir $GOPATH/src/github.com/grafana
+ln -s  github.com/*your_account*/grafana $GOPATH/src/github.com/grafana/grafana
+```
+
 ### Building the backend
-Replace X.Y.Z by actual version number.
 ```bash
 cd $GOPATH/src/github.com/grafana/grafana
 go run build.go setup            (only needed once to install godep)
@@ -98,12 +109,19 @@ go run build.go build
 
 ### Building frontend assets
 
-To build less to css for the frontend you will need a recent version of of node (v0.12.0),
+To build less to css for the frontend you will need a recent version of of **node (v4+)**,
 npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```bash
 npm install
 npm run build
+```
+
+To build the frontend assets only on changes:
+
+```bash
+sudo npm install -g grunt-cli # to do only once to install grunt command line interface
+grunt watch
 ```
 
 ### Recompile backend on source change
