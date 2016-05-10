@@ -1,7 +1,6 @@
 {
 	"ImportPath": "github.com/grafana/grafana",
 	"GoVersion": "go1.5.1",
-	"GodepVersion": "v60",
 	"Packages": [
 		"./pkg/..."
 	],
@@ -276,7 +275,8 @@
 		},
 		{
 			"ImportPath": "github.com/mattn/go-sqlite3",
-			"Rev": "e28cd440fabdd39b9520344bc26829f61db40ece"
+			"Comment": "v1.1.0-67-g7204887",
+			"Rev": "7204887cf3a42df1cfaa5505dc3a3427f6dded8b"
 		},
 		{
 			"ImportPath": "github.com/rainycape/unidecode",
