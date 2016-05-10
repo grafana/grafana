@@ -684,6 +684,7 @@ define([
 
           serverConnection = new adrem.Connection();
           serverConnection.useWebSocket = false;
+          serverConnection.reloadOnLogout = false;
           netCrunchClient = serverConnection.Client;
 
           netCrunchClient.on('exception', function (e) {
@@ -856,10 +857,18 @@ define([
         this.queryTrendData = queryTrendData;
       }
 
+      function getConnectionKey(datasource) {
+        return datasource.serverURL + ':' + datasource.username;
+      }
+
+      function clearCacheForConnection(datasource) {
+        connectionPool[getConnectionKey(datasource)] = null;
+      }
+
       function getConnection(datasource) {
         var connection,
             connectionLoggedIn,
-            connectionKey = datasource.serverUrl;
+            connectionKey = getConnectionKey(datasource);
 
         if (connectionPool[connectionKey] == null) {
           connection = new NetCrunchConnection(datasource.url, datasource.name);
@@ -869,17 +878,55 @@ define([
             },
             function(error) {
               connectionPool[connectionKey] = null;
+              connection.logout();
               return $q.reject(error);
-            });
-          connectionLoggedIn = connectionPool[connectionKey];
-        } else {
-          connectionLoggedIn = connectionPool[connectionKey];
+            }
+          );
         }
+
+        connectionLoggedIn = connectionPool[connectionKey];
         return connectionLoggedIn;
       }
 
+      function clearConnection(datasource) {
+        var connectionKey = getConnectionKey(datasource),
+            connectionCleared = $q.defer();
+
+        if (connectionPool[connectionKey] != null) {
+          connectionPool[connectionKey].then(function(connection) {
+            connection.logout().then(function() {
+              clearCacheForConnection(datasource);
+              connectionCleared.resolve();
+            });
+          });
+        } else {
+          connectionCleared.resolve();
+        }
+
+        return connectionCleared.promise;
+      }
+
+      function testConnection(datasource) {
+        return clearConnection(datasource).then(function() {
+          var testResult = $q.defer();
+
+          getConnection(datasource).then(
+            function() {
+              clearConnection(datasource).then(function() {
+                testResult.resolve();
+              });
+            },
+            function(error) {
+              testResult.reject(error);
+            }
+          );
+          return testResult.promise;
+        });
+      }
+
       return {
-        getConnection : getConnection
+        getConnection : getConnection,
+        testConnection : testConnection
       };
     });
   });

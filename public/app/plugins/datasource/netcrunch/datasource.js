@@ -170,10 +170,15 @@ function (angular, _, moment) {
     NetCrunchDatasource.prototype.testDatasource = function() {
       var testResult = $q.defer();
 
-      //TODO: reimplement this code
+      netCrunchConnectionProvider.testConnection(this.datasource).then(
+        function() {
+          testResult.resolve({ status: "success", message: "Data source is working", title: "Success" });
+        },
+        function(error) {
+          testResult.resolve({ status: "error", message: CONNECTION_ERROR_MESSAGES[error], title: "Error" });
+        }
+      );
 
-      testResult.resolve({ status: "info", message: "This feature is not supported for NetCrunch datasource",
-                           title: "Information" });
       return testResult.promise;
     };
 
