@@ -16,6 +16,7 @@ export class DashboardExporter {
     dynSrv.process(dash, {cleanUpOnly: true});
 
     var inputs = [];
+    var requires = {};
     var datasources = {};
     var promises = [];
 
@@ -30,6 +31,13 @@ export class DashboardExporter {
               pluginId: ds.meta.id,
             };
             panel.datasource = '${' + refName  +'}';
+
+            requires['datasource' + ds.meta.id] = {
+              type: 'datasource',
+              id: ds.meta.id,
+              name: ds.meta.name,
+              version: ds.meta.info.version
+            };
           }));
         }
       });
@@ -40,7 +48,13 @@ export class DashboardExporter {
         inputs.push(value);
       });
 
+      requires = _.map(requires, req =>  {
+        return req;
+      });
+
       dash["__inputs"] = inputs;
+      dash["__requires"] = requires;
+
       return dash;
     });
   }
