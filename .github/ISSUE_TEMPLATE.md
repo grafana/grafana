@@ -6,7 +6,20 @@ If this issue is about a plugin, please open the issue in that repository.
 
 Start your issues title with [Feature Request] / [Bug] / [Question] or no tag if your unsure.
 
-Ex
-* What grafana version are you using?
-* What datasource are you using?
-* What OS are you running grafana on?
+Also, please be aware that GitHub now supports uploading of screenshots; look at the bottom of this input field.
+
+Sample issue:
+
+# Basic information
+
+## What grafana version are you using?
+
+## What datasource are you using?
+
+## What OS are you running grafana on?
+
+# What did you do?
+
+# What was the expected result?
+
+# What happenend instead?
