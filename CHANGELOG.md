@@ -2,6 +2,7 @@
 
 ### Enhancements
 * **Singlestat**: Add support for range to text mappings, closes [#1319](https://github.com/grafana/grafana/issues/1319)
+* **Graph**: Adds sort order options for graph tooltip, closes  [#1189](https://github.com/grafana/grafana/issues/1189)
 
 # 3.0.0 stable (unreleased)
 
