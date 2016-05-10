@@ -245,7 +245,7 @@ func Register(r *macaron.Macaron) {
 				r.Put("/:alertId/state", bind(m.UpdateAlertStateCommand{}), wrap(PutAlertState))
 
 				r.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
-				r.Delete("/:alertId", ValidateOrgAlert, wrap(DelAlert))
+				//r.Delete("/:alertId", ValidateOrgAlert, wrap(DelAlert)) disabled until we know how to handle it dashboard updates
 				r.Get("/", wrap(GetAlerts))
 			})
 
