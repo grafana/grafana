@@ -91,7 +91,7 @@ function (angular, _, moment) {
       var initTask = $q.defer(),
           nodesReady = $q.defer(),
           networkAtlasReady = $q.defer(),
-          netCrunchLogin,
+          datasourceInitialized = false,
           self = this;
 
       this.datasource = datasource;
@@ -129,27 +129,38 @@ function (angular, _, moment) {
         });
       }
 
-      if (datasource.url != null) {
-        netCrunchLogin = netCrunchConnectionProvider.getConnection(datasource);
-        netCrunchLogin.then(
-          function(connection) {
-            self.netCrunchConnection = connection;
-            self.cache = self.createQueryCache();
-            initUpdateNodes(connection.networkAtlas);
-            initUpdateAtlas(connection.networkAtlas);
-            initTask.resolve();
-          },
-          function(error) {
-            alertSrv.set(datasource.name, CONNECTION_ERROR_MESSAGES[error], 'error');
-            console.log('');
-            console.log('NetCrunch datasource');
-            console.log(datasource.name + ': ' + CONNECTION_ERROR_MESSAGES[error]);
-            initTask.reject();
-          }
-        );
-      } else {
-        initTask.reject();
+      function initDatasource() {
+        var netCrunchLogin;
+
+        if (datasource.url != null) {
+          netCrunchLogin=netCrunchConnectionProvider.getConnection(datasource);
+          netCrunchLogin.then(
+            function (connection) {
+              self.netCrunchConnection=connection;
+              self.cache=self.createQueryCache();
+              initUpdateNodes(connection.networkAtlas);
+              initUpdateAtlas(connection.networkAtlas);
+              initTask.resolve();
+            },
+            function (error) {
+              alertSrv.set(datasource.name, CONNECTION_ERROR_MESSAGES[error], 'error');
+              console.log('');
+              console.log('NetCrunch datasource');
+              console.log(datasource.name + ': ' + CONNECTION_ERROR_MESSAGES[error]);
+              initTask.reject();
+            }
+          );
+        } else {
+          initTask.reject();
+        }
       }
+
+      this.initDatasource = function() {
+        if (datasourceInitialized === false) {
+          datasourceInitialized = true;
+          initDatasource();
+        }
+      };
     }
 
     NetCrunchDatasource.prototype.createQueryCache = function() {
@@ -176,6 +187,7 @@ function (angular, _, moment) {
       var
         countersApi = this.netCrunchConnection.counters;
 
+      this.initDatasource();
       return this.ready.then(function() {
         return countersApi.getCounters(nodeId).then(function(counters) {
           return countersApi.prepareCountersForMonitors(counters).then(function(counters) {
@@ -500,6 +512,7 @@ function (angular, _, moment) {
       }
 
       try {
+        this.initDatasource();
         return this.ready.then(function() {
           var targets = options.targets || [],
               scopedVars = (options.scopedVars == null) ? {} : options.scopedVars,
