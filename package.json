@@ -4,7 +4,7 @@
     "company": "Coding Instinct AB"
   },
   "name": "grafana",
-  "version": "3.0.0-beta7",
+  "version": "3.0.1",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"

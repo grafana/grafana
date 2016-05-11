@@ -1,4 +1,4 @@
-# 3.0.0 stable (unreleased)
+# 3.0.0 Stable (2016-05-11)
 
 * **Templating**: Fixed issue with new data source variable not persisting current selected value, fixes [#4934](https://github.com/grafana/grafana/issues/4934)
 
