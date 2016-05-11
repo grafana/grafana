@@ -5,7 +5,6 @@ import "./directives/annotation_tooltip";
 import "./directives/dash_class";
 import "./directives/confirm_click";
 import "./directives/dash_edit_link";
-import "./directives/dash_upload";
 import "./directives/dropdown_typeahead";
 import "./directives/grafana_version_check";
 import "./directives/metric_segment";

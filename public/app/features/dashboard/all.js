@@ -16,4 +16,5 @@ define([
   './graphiteImportCtrl',
   './importCtrl',
   './impression_store',
+  './upload',
 ], function () {});
