@@ -10,7 +10,7 @@ page_keywords: grafana, installation, centos, fedora, opensuse, redhat, guide
 
 Description | Download
 ------------ | -------------
-Stable .RPM for CentOS / Fedora / OpenSuse / Redhat Linux | [grafana-3.0.1-1.x86_64.rpm](https://grafanarel.s3.amazonaws.com/builds/grafana-2.3.1-1.x86_64.rpm)
+Stable .RPM for CentOS / Fedora / OpenSuse / Redhat Linux | [grafana-3.0.1-1.x86_64.rpm](https://grafanarel.s3.amazonaws.com/builds/grafana-3.0.1-1.x86_64.rpm)
 
 ## Install Stable Release from package file
 
