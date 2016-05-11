@@ -1,18 +1,34 @@
 <query-editor-row query-ctrl="ctrl" can-collapse="false">
 	<div class="gf-form-inline">
-		<div class="gf-form gf-form--grow">
-			<label class="gf-form-label width-8">Query</label>
-			<input type="text" class="gf-form-input" ng-model="ctrl.target.expr" spellcheck='false' placeholder="query expression" data-min-length=0 data-items=100 ng-model-onblur ng-change="ctrl.refreshMetricData()">
+		<div class="gf-form">
+			<label class="gf-form-label width-8 query-keyword">Query</label>
+			<metric-segment segment="ctrl.metricSegment" get-options="ctrl.getMetricOptions()" on-change="ctrl.queryChanged()"></metric-segment>
 		</div>
-		<div class="gf-form max-width-22">
-			<label class="gf-form-label">Metric lookup</label>
-			<input type="text" class="gf-form-input" ng-model="ctrl.target.metric" spellcheck='false' bs-typeahead="ctrl.suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100>
+
+		<div class="gf-form" ng-repeat="part in ctrl.query.functions">
+				<query-part-editor class="gf-form-label query-part"
+													part="part"
+													remove-action="ctrl.removePart(query.functions, part)"
+													part-updated="ctrl.partUpdated(query.functions, part)"
+													get-options="ctrl.getPartOptions(part)">
+				</query-part-editor>
+		</div>
+
+		<div class="gf-form">
+			<label class="dropdown"
+							dropdown-typeahead="ctrl.addQueryPartMenu"
+							dropdown-typeahead-on-select="ctrl.addQueryPart($item, $subItem)">
+			</label>
+		</div>
+
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
 		</div>
 	</div>
 
 	<div class="gf-form-inline">
 		<div class="gf-form max-width-26">
-			<label class="gf-form-label width-8">Legend format</label>
+			<label class="gf-form-label width-8 query-keyword">Legend format</label>
 			<input type="text" class="gf-form-input" ng-model="ctrl.target.legendFormat"
 			spellcheck='false' placeholder="legend format" data-min-length=0 data-items=1000
 			ng-model-onblur ng-change="ctrl.refreshMetricData()">

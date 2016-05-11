@@ -6,46 +6,68 @@ import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
 import {QueryCtrl} from 'app/plugins/sdk';
+import {PromQuery, getQueryPartCategories} from './prom_query';
 
 class PrometheusQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
-  metric: any;
+  query: any;
+  metricSegment: any;
+  addQueryPartMenu: any[];
   resolutions: any;
   oldTarget: any;
   suggestMetrics: any;
   linkToPrometheus: any;
 
   /** @ngInject */
-  constructor($scope, $injector, private templateSrv) {
+  constructor($scope, $injector, private templateSrv, private uiSegmentSrv) {
     super($scope, $injector);
 
-    var target = this.target;
-    target.expr = target.expr || '';
-    target.intervalFactor = target.intervalFactor || 2;
+    this.query = new PromQuery(this.target, templateSrv);
 
-    this.metric = '';
+    if (this.target.metric) {
+      this.metricSegment = uiSegmentSrv.newSegment(this.target.metric);
+    } else {
+      this.metricSegment = uiSegmentSrv.newSegment({value: 'select metric', fake: true});
+    }
+
     this.resolutions = _.map([1,2,3,4,5,10], function(f) {
       return {factor: f, label: '1/' + f};
     });
 
-    $scope.$on('typeahead-updated', () => {
-      this.$scope.$apply(() => {
+    this.updateLink();
+    this.buildQueryPartMenu();
+  }
 
-        this.target.expr += this.target.metric;
-        this.metric = '';
-        this.refreshMetricData();
+  buildQueryPartMenu() {
+    var categories = getQueryPartCategories();
+    this.addQueryPartMenu = _.reduce(categories, function(memo, cat, key) {
+      var menu = {
+        text: key,
+        submenu: cat.map(item => {
+         return {text: item.type, value: item.type};
+        }),
+      };
+      memo.push(menu);
+      return memo;
+    }, []);
+  }
+
+  addQueryPart(item, subItem) {
+    this.query.addQueryPart(item, subItem);
+    this.panelCtrl.refresh();
+  }
+
+  getMetricOptions() {
+    return this.datasource.performSuggestQuery('').then(res => {
+      return _.map(res, metric => {
+        return this.uiSegmentSrv.newSegment(metric);
       });
     });
+  }
 
-    // called from typeahead so need this
-    // here in order to ensure this ref
-    this.suggestMetrics = (query, callback) => {
-      console.log(this);
-      this.datasource.performSuggestQuery(query).then(callback);
-    };
-
-    this.updateLink();
+  queryChanged() {
+    this.target.metric = this.metricSegment.value;
   }
 
   refreshMetricData() {
