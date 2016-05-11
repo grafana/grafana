@@ -7,6 +7,8 @@ import {
   quotedIdentityRenderer,
 } from 'app/core/components/query_part/query_part';
 
+import _ from 'lodash';
+
 var index = [];
 var categories = {
   Functions: [],
@@ -23,8 +25,21 @@ export class PromQuery {
 
   constructor(target, templateSrv?, scopedVars?) {
     this.target = target;
+
+    this.target.expr = this.target.expr || '';
+    this.target.intervalFactor = this.target.intervalFactor || 2;
+    this.target.functions = this.target.functions || [];
+
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
+
+    this.updateProjection();
+  }
+
+  updateProjection() {
+    this.functions = _.map(this.target.functions, function(func: any) {
+      return createPart(func);
+    });
   }
 
   render() {
@@ -33,17 +48,16 @@ export class PromQuery {
       query += '[' + this.target.range + ']';
     }
 
-    for (let funcModel of this.target.functions) {
-      var partDef = index[funcModel.type];
-      if (!partDef) {
-        continue;
-      }
-
-      var part = new QueryPart(funcModel, partDef);
-      query = part.render(query);
+    for (let func of this.functions) {
+      query = func.render(query);
     }
 
     return query;
+  }
+
+  addQueryPart(category, item) {
+    var partModel = createPart({type: item.text});
+    partModel.def.addStrategy(this, partModel);
   }
 }
 
@@ -63,6 +77,7 @@ function register(options: any) {
 
 function addFunctionStrategy(model, partModel) {
   model.functions.push(partModel);
+  model.target.functions.push(partModel.part);
 }
 
 register({
@@ -74,6 +89,6 @@ register({
   renderer: functionRenderer,
 });
 
-export function getCategories() {
+export function getQueryPartCategories() {
   return categories;
 }
