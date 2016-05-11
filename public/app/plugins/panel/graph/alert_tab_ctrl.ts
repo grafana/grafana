@@ -12,17 +12,23 @@ export class AlertTabCtrl {
   operators = ['>', '<', '<=', '>='];
   aggregators = ['avg', 'sum', 'min', 'max', 'median'];
 
+  defaultValues = {
+    aggregator: 'avg',
+    interval: '60s',
+    queryRange: '10m',
+    warnOperator: '>',
+    critOperator: '>',
+    queryRef: '- select query -'
+  };
+
   /** @ngInject */
   constructor($scope, private $timeout) {
     $scope.alertTab = this; //HACK ATTACK!
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
-    this.panel.alerting = this.panel.alerting || {};
-    this.panel.alerting.aggregator = this.panel.alerting.aggregator || 'avg';
-    this.panel.alerting.interval = this.panel.alerting.interval || '60s';
-    this.panel.alerting.queryRange = this.panel.alerting.queryRange || '10m';
-    this.panel.alerting.warnOperator = this.panel.alerting.warnOperator || '>';
-    this.panel.alerting.critOperator = this.panel.alerting.critOperator || '>';
+
+    _.defaults(this.panel.alerting, this.defaultValues);
+
     var defaultTitle = (this.panelCtrl.dashboard.title + ' ' + this.panel.title + ' alert');
     this.panel.alerting.title = this.panel.alerting.title || defaultTitle;
 
@@ -35,12 +41,17 @@ export class AlertTabCtrl {
   }
 
   convertThresholdsToAlertThresholds() {
-    if (this.panel.grid && this.panel.grid.threshold1) {
+    if (this.panel.grid
+        && this.panel.grid.threshold1
+        && this.panel.alerting.warnLevel === undefined) {
       this.panel.alerting.warnOperator = '>';
       this.panel.alerting.warnLevel = this.panel.grid.threshold1;
     }
 
-    if (this.panel.grid && this.panel.grid.threshold2) {
+    if (this.panel.grid
+        && this.panel.grid.threshold2
+        && this.panel.alerting.critLevel === undefined
+       ) {
       this.panel.alerting.critOperator = '>';
       this.panel.alerting.critLevel = this.panel.grid.threshold2;
     }
@@ -48,7 +59,7 @@ export class AlertTabCtrl {
 
   markAsDeleted() {
     if (this.panel.alerting) {
-      this.panel.alerting.queryRef = this.metricTargets[0].refId;
+      this.panel.alerting = this.defaultValues;
     }
   }
 
