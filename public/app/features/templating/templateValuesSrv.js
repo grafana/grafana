@@ -204,7 +204,7 @@ function (angular, _, kbn) {
       }
 
       if (options.length === 0) {
-        options.push({text: 'No datasurces found', value: ''});
+        options.push({text: 'No data sources found', value: ''});
       }
 
       variable.options = options;
