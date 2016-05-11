@@ -1,12 +1,5 @@
-# 3.1.0
+# 3.0.0 Stable (2016-05-11)
 
-### Enhancements
-* **Singlestat**: Add support for range to text mappings, closes [#1319](https://github.com/grafana/grafana/issues/1319)
-* **Graph**: Adds sort order options for graph tooltip, closes  [#1189](https://github.com/grafana/grafana/issues/1189)
-
-# 3.0.0 stable (unreleased)
-
-### Bug fixes
 * **Templating**: Fixed issue with new data source variable not persisting current selected value, fixes [#4934](https://github.com/grafana/grafana/issues/4934)
 
 # 3.0.0-beta7 (2016-05-02)
