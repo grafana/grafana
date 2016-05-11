@@ -43,7 +43,8 @@ export class AlertTabCtrl {
   convertThresholdsToAlertThresholds() {
     if (this.panel.grid
         && this.panel.grid.threshold1
-        && this.panel.alerting.warnLevel === undefined) {
+        && this.panel.alerting.warnLevel === undefined
+       ) {
       this.panel.alerting.warnOperator = '>';
       this.panel.alerting.warnLevel = this.panel.grid.threshold1;
     }
