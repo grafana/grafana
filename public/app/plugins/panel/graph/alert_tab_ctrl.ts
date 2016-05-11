@@ -46,6 +46,12 @@ export class AlertTabCtrl {
     }
   }
 
+  markAsDeleted() {
+    if (this.panel.alerting) {
+      this.panel.alerting.queryRef = this.metricTargets[0].refId;
+    }
+  }
+
   thresholdsUpdated() {
     if (this.panel.alerting.warnLevel) {
       this.panel.grid.threshold1 = parseInt(this.panel.alerting.warnLevel);
