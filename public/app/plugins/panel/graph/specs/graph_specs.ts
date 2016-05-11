@@ -48,12 +48,12 @@ describe('grafanaGraph', function() {
               thresholds: [],
               xaxis: {},
               seriesOverrides: [],
+              hiddenSeries: {},
               tooltip: {
                 shared: true
               }
             },
             renderingCompleted: sinon.spy(),
-            hiddenSeries: {},
             dashboard: {
               getTimezone: sinon.stub().returns('browser')
             },
@@ -170,7 +170,7 @@ describe('grafanaGraph', function() {
 
   graphScenario('when series is hidden', function(ctx) {
     ctx.setup(function(ctrl) {
-      ctrl.hiddenSeries = {'series2': true};
+      ctrl.panel.hiddenSeries = {'series2': true};
     });
 
     it('should remove datapoints and disable stack', function() {
