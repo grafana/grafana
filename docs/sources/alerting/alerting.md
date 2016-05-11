@@ -42,7 +42,7 @@ QueryRange: The time range for which the query should look back.
 Aggregator: How the result should be reduced into a single value. ex avg, sum, min, max
 State: Current state of the alert OK, WARN, CRITICAL, ACKNOWLEGED.
 
-You can configure these settings in the Alerting tab on graph panels in edit mode. When the dashboard is saved the alert is created, updated based on what data you provide. If you wish to delete an alert you simply set the query to ' - select query - ' in the alerting tab and save the dashboard. (this will be improved within the UI later on).
+You can configure these settings in the Alerting tab on graph panels in edit mode. When the dashboard is saved the alert is created, updated based on what data you provide. If you wish to delete an alert you simply set the query to '- select query -' in the alerting tab and save the dashboard. (this will be improved within the UI later on).
 
 
 
@@ -52,9 +52,9 @@ Endpoints
 
 ``` http
 GET /api/alerts/rules
-state //array of strings optional
-dashboardId //int optional
-panelId //int optional
+state //array of strings *optional*
+dashboardId //int *optional*
+panelId //int *optional*
 
 Result
 []AlertRule
@@ -62,8 +62,8 @@ Result
 
 ``` http
 GET /api/alerts/changes
-limit //array of strings optional
-sinceId //int optional
+limit //array of strings *optional*
+sinceId //int *optional*
 
 Result
 [
