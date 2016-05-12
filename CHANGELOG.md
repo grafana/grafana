@@ -1,4 +1,8 @@
-# 3.0.0 Stable (2016-05-11)
+# 3.0.2 Stable (unreleased)
+
+* **Templating**: Fixed issue mixing row repeat and panel repeats, fixes [#4988](https://github.com/grafana/grafana/issues/4988)
+
+# 3.0.1 Stable (2016-05-11)
 
 * **Templating**: Fixed issue with new data source variable not persisting current selected value, fixes [#4934](https://github.com/grafana/grafana/issues/4934)
 
