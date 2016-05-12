@@ -89,7 +89,3 @@ export function dashboardImportList() {
 }
 
 coreModule.directive('dashboardImportList', dashboardImportList);
-
-
-
-
