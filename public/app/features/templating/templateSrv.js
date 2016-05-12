@@ -97,7 +97,8 @@ function (angular, _) {
       if (!str) {
         return false;
       }
-      return str.indexOf('$' + variableName) !== -1 || str.indexOf('[[' + variableName + ']]') !== -1;
+      var match = this._regex.exec(str);
+      return match && (match[1] === variableName || match[2] === variableName);
     };
 
     this.highlightVariablesAsHtml = function(str) {
