@@ -1,4 +1,4 @@
-///<reference path="../../headers/common.d.ts" />
+///<reference path="../../../headers/common.d.ts" />
 
 import config from 'app/core/config';
 import _ from 'lodash';
@@ -23,6 +23,8 @@ export class WizardStep {
 export class WizardFlow {
   name: string;
   steps: WizardStep[];
+  reject: any;
+  fulfill: any;
 
   constructor(name) {
     this.name = name;
@@ -36,11 +38,25 @@ export class WizardFlow {
     });
   }
 
+  next(index) {
+    var step = this.steps[0];
+
+    return step.fn().then(() => {
+      if (this.steps.length === index+1) {
+        return;
+      }
+
+      return this.next(index+1);
+    });
+  }
+
   start() {
     appEvents.emit('show-modal', {
-      src: 'public/app/features/plugins/partials/wizard.html',
+      src: 'public/app/core/components/wizard/wizard.html',
       model: this
     });
+
+    return this.next(0);
   }
 }
 
