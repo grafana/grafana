@@ -50,6 +50,15 @@ describe('PrometheusMetricFindQuery', function() {
       ctx.$rootScope.$apply();
       expect(results.length).to.be(3);
     });
+    it('label_values(metric, resource) should pass correct time', function() {
+      ctx.timeSrv.setTime({ from: moment.utc('2011-01-01'), to: moment.utc('2015-01-01') });
+      ctx.$httpBackend.expect('GET',
+        /proxied\/api\/v1\/series\?match\[\]=metric&start=1293840000&end=1420070400/).respond(response);
+      var pm = new PrometheusMetricFindQuery(ctx.ds, 'label_values(metric, resource)', ctx.timeSrv);
+      pm.process().then(function(data) { results = data; });
+      ctx.$httpBackend.flush();
+      ctx.$rootScope.$apply();
+    });
     it('label_values(metric{label1="foo", label2="bar", label3="baz"}, resource) should generate series query', function() {
       response = {
         status: "success",
