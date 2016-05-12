@@ -18,5 +18,5 @@ rpm_ver=3.0.1-1
 #package_cloud push grafana/testing/el/6 grafana-${rpm_ver}.x86_64.rpm
 #package_cloud push grafana/testing/el/7 grafana-${rpm_ver}.x86_64.rpm
 
-package_cloud push grafana/stable/el/7 grafana-${version}.x86_64.rpm
-package_cloud push grafana/stable/el/6 grafana-${version}.x86_64.rpm
+package_cloud push grafana/stable/el/7 grafana-${rpm_ver}.x86_64.rpm
+package_cloud push grafana/stable/el/6 grafana-${rpm_ver}.x86_64.rpm
