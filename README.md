@@ -16,6 +16,7 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 - [What's New in Grafana 2.0](http://docs.grafana.org/guides/whats-new-in-v2/)
 - [What's New in Grafana 2.1](http://docs.grafana.org/guides/whats-new-in-v2-1/)
 - [What's New in Grafana 2.5](http://docs.grafana.org/guides/whats-new-in-v2-5/)
+- [What's New in Grafana 3.0](http://docs.grafana.org/guides/whats-new-in-v3/)
 
 ## Features
 ### Graphite Target Editor
@@ -78,7 +79,7 @@ the latest master builds [here](http://grafana.org/download/builds)
 ### Dependencies
 
 - Go 1.5
-- NodeJS v0.12.0
+- NodeJS v4+
 - [Godep](https://github.com/tools/godep)
 
 ### Get Code
@@ -109,7 +110,7 @@ go run build.go build
 
 ### Building frontend assets
 
-To build less to css for the frontend you will need a recent version of of **node (v0.12.0)**,
+To build less to css for the frontend you will need a recent version of of **node (v4+)**,
 npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```bash
