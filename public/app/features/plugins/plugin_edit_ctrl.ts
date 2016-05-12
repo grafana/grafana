@@ -4,8 +4,6 @@ import angular from 'angular';
 import _ from 'lodash';
 import appEvents from 'app/core/app_events';
 
-import {WizardFlow} from './wizard';
-
 export class PluginEditCtrl {
   model: any;
   pluginIcon: string;
@@ -83,58 +81,19 @@ export class PluginEditCtrl {
   }
 
   update() {
-    var wizard = new WizardFlow("Application Setup");
-
-    wizard.addStep("Validating form", () => {
-      return new Promise((resolve) => {
-        setTimeout(resolve, 2000);
-      });
+    this.preUpdateHook().then(() => {
+      var updateCmd = _.extend({
+        enabled: this.model.enabled,
+        pinned: this.model.pinned,
+        jsonData: this.model.jsonData,
+        secureJsonData: this.model.secureJsonData,
+      }, {});
+      return this.backendSrv.post(`/api/plugins/${this.pluginId}/settings`, updateCmd);
+    })
+    .then(this.postUpdateHook)
+    .then((res) => {
+      window.location.href = window.location.href;
     });
-
-    wizard.addStep("Saving application config", () => {
-      return new Promise((resolve) => {
-        setTimeout(resolve, 2000);
-      });
-    });
-
-    wizard.addStep("Validing key", () => {
-      return new Promise((resolve) => {
-        setTimeout(resolve, 2000);
-      });
-    });
-
-    wizard.addStep("Adding Raintank metric data source", () => {
-      return new Promise((resolve) => {
-        setTimeout(resolve, 2000);
-      });
-    });
-
-    wizard.addStep("Adding Raintank event data source", () => {
-      return new Promise((resolve) => {
-        setTimeout(resolve, 2000);
-      });
-    });
-
-    wizard.addStep("Importing worldPing dashboards", () => {
-      return new Promise((resolve) => {
-        setTimeout(resolve, 2000);
-      });
-    });
-
-    wizard.start();
-    // this.preUpdateHook().then(() => {
-    //   var updateCmd = _.extend({
-    //     enabled: this.model.enabled,
-    //     pinned: this.model.pinned,
-    //     jsonData: this.model.jsonData,
-    //     secureJsonData: this.model.secureJsonData,
-    //   }, {});
-    //   return this.backendSrv.post(`/api/plugins/${this.pluginId}/settings`, updateCmd);
-    // })
-    // .then(this.postUpdateHook)
-    // .then((res) => {
-    //   window.location.href = window.location.href;
-    // });
   }
 
   importDashboards() {

@@ -3,15 +3,27 @@
 import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
 
+import {WizardFlow} from 'app/core/core';
+
 var wnd: any = window;
 
 class DashboardImporter {
 
   prepareForImport(dash) {
     dash.id = null;
-    return Promise.resolve(dash);
-  }
 
+    var wizard = new WizardFlow('Import Dashboard');
+
+    wizard.addStep("Importing dashboard", function() {
+      return new Promise(done => {
+        setTimeout(done, 2000);
+      });
+    });
+
+    return wizard.start().then(() => {
+      return dash;
+    });
+  }
 }
 
 
