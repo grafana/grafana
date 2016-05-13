@@ -64,7 +64,7 @@ describe('when rendering table', () => {
 
     it('number column with unit specified should ignore style unit', () => {
       var html = renderer.renderCell(5, 1230);
-      expect(html).to.be('<td>1.23 kbps</td>');
+      expect(html).to.be('<td align="auto">1.23 kbps</td>');
     });
 
     it('number column should be formated', () => {
