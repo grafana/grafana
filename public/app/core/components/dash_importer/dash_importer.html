@@ -1,0 +1,76 @@
+<div class="modal-body">
+	<div class="modal-header">
+		<h2 class="modal-header-title">
+			<i class="fa fa-upload"></i>
+			<span class="p-l-1">Import Dashboard</span>
+		</h2>
+
+		<a class="modal-header-close" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</a>
+	</div>
+
+	<div class="modal-content" ng-cloak>
+    <div ng-if="model.step === 0">
+			<form class="gf-form-group">
+        <dash-upload on-upload="model.onUpload(dash)"></dash-upload>
+			</form>
+
+			<h5 class="section-heading">Or paste JSON:</h5>
+
+			<div class="gf-form-group">
+				<div class="gf-form">
+					<textarea rows="7" data-share-panel-url="" class="gf-form-input" ng-model="model.jsonText"></textarea>
+				</div>
+				<button type="button" class="btn btn-secondary" ng-click="model.loadJsonText()">
+					<i class="fa fa-paste"></i>
+					Load
+				</button>
+        <span ng-if="model.parseError" class="text-error p-l-1">
+          <i class="fa fa-warning"></i>
+          {{model.parseError}}
+        </span>
+			</div>
+		</div>
+
+    <div ng-if="model.step === 2">
+      <div class="gf-form-group">
+        <h3 class="section-heading p-b-1" ng-if="model.nameExists">
+          <i class="fa fa-warning"></i> Dashboard with same title already exists
+        </h3>
+        <h3 class="section-heading p-b-1" ng-if="!model.nameExists">
+          <i class="fa fa-check"></i> Dashboard title available
+        </h3>
+        <div class="gf-form-inline">
+          <div class="gf-form gf-form--grow">
+            <label class="gf-form-label">New title</label>
+            <input type="text" class="gf-form-input" ng-model="model.dash.title" give-focus="true" ng-change="model.titleChanged()" ng-class="{'validation-error': model.nameExists}">
+            <button type="button" class="btn btn-success gf-form-btn width-10" ng-click="model.saveDashboard()">
+              <i class="fa fa-save"></i>
+              <span ng-show="model.nameExists">Overwrite &amp; Open</span>
+              <span ng-show="!model.nameExists">Save &amp; Open</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  <!-- <table class="filter&#45;table"> -->
+  <!-- 	<tbody> -->
+  <!-- 		<tr ng&#45;repeat="step in model.steps"> -->
+  <!-- 			<td>{{step.name}}</td> -->
+  <!-- 			<td>{{step.status}}</td> -->
+  <!-- 			<td width="1%"> -->
+  <!-- 				<i class="fa fa&#45;check" style="color: #39A039"></i> -->
+  <!-- 			</td> -->
+  <!-- 		</tr> -->
+  <!-- 	</tbody> -->
+  <!-- </table> -->
+
+  <div class="gf-form-button-row text-right">
+    <a class="btn-text" ng-click="dismiss();">Cancel</a>
+  </div>
+</div>
+
+</div>
+
