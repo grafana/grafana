@@ -11,7 +11,8 @@ describe('when rendering table', () => {
       {text: 'Value'},
       {text: 'Colored'},
       {text: 'Undefined'},
-      {text: 'String'}
+      {text: 'String'},
+      {text: 'United', unit: 'bps'},
     ];
 
     var panel = {
@@ -44,6 +45,12 @@ describe('when rendering table', () => {
           pattern: 'String',
           type: 'string',
           align: 'auto'
+        },
+        {
+          pattern: 'United',
+          type: 'number',
+          unit: 'ms',
+          decimals: 2,
         }
       ]
     };
@@ -53,6 +60,11 @@ describe('when rendering table', () => {
     it('time column should be formated', () => {
       var html = renderer.renderCell(0, 1388556366666);
       expect(html).to.be('<td align="auto">2014-01-01T06:06:06+00:00</td>');
+    });
+
+    it('number column with unit specified should ignore style unit', () => {
+      var html = renderer.renderCell(5, 1230);
+      expect(html).to.be('<td>1.23 kbps</td>');
     });
 
     it('number column should be formated', () => {

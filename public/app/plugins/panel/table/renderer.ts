@@ -38,7 +38,7 @@ export class TableRenderer {
     return v;
   }
 
-  createColumnFormater(style) {
+  createColumnFormater(style, column) {
     if (!style) {
       return this.defaultCellFormater;
     }
@@ -69,7 +69,7 @@ export class TableRenderer {
     }
 
     if (style.type === 'number') {
-      let valueFormater = kbn.valueFormats[style.unit];
+      let valueFormater = kbn.valueFormats[column.unit || style.unit];
 
       return v =>  {
         this.alignState = style.align;
@@ -103,7 +103,7 @@ export class TableRenderer {
       let column = this.table.columns[colIndex];
       var regex = kbn.stringToJsRegex(style.pattern);
       if (column.text.match(regex)) {
-        this.formaters[colIndex] = this.createColumnFormater(style);
+        this.formaters[colIndex] = this.createColumnFormater(style, column);
         return this.formaters[colIndex](value);
       }
     }
