@@ -677,6 +677,7 @@ function($, _) {
           {text: 'electron volt (eV)',         value: 'ev'          },
           {text: 'Ampere (A)',                 value: 'amp'         },
           {text: 'Volt (V)',                   value: 'volt'        },
+          {text: 'Decibel-milliwatt (dBm)',    value: 'dBm'         },
         ]
       },
       {
