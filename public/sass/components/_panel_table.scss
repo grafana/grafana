@@ -96,11 +96,23 @@
 }
 
 .table-panel-table-header-inner {
-  padding: 0.45em 0 0.45em 1.1em;
   text-align: left;
+  display:inline-block;
   color: $blue;
   position: absolute;
   top: 0;
+}
+.table-panel-table-header-inner-align-right, .table-panel-table-header-inner-align-center {
+  position: relative;
+  margin-left: -50%;
+  padding: 0.45em 1.1em 0.45em 1.1em;
+}
+.table-panel-table-header-inner-align-right {
+  margin-left: -100%;
+}
+.table-panel-table-header-inner-align-left, .table-panel-table-header-inner-align-auto {
+  position: relative;
+  padding: 0.45em 1.1em 0.45em 1.1em;
 }
 
 .table-panel-width-hack {

@@ -49,6 +49,7 @@ describe('when rendering table', () => {
         {
           pattern: 'United',
           type: 'number',
+          align: 'auto',
           unit: 'ms',
           decimals: 2,
         }
