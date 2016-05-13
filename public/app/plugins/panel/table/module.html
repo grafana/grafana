@@ -8,13 +8,15 @@
 		<table class="table-panel-table">
 			<thead ng-if="ctrl.panel.header">
 				<tr>
-					<th ng-repeat="col in ctrl.table.columns" ng-hide="col.hidden">
+					<th ng-repeat="col in ctrl.table.columns" ng-hide="col.hidden" style="text-align:{{col.style.align}}">
 						<div class="table-panel-table-header-inner pointer" ng-click="ctrl.toggleColumnSort(col, $index)">
-							{{col.alias == '' ? col.text : col.alias}}
-							<span class="table-panel-table-header-controls" ng-if="col.sort">
-								<i class="fa fa-caret-down" ng-show="col.desc"></i>
-								<i class="fa fa-caret-up" ng-hide="col.desc"></i>
-							</span>
+							<div class="table-panel-table-header-inner-align-{{col.style.align}}">
+								{{col.alias == '' ? col.text : col.alias}}
+								<span class="table-panel-table-header-controls" ng-if="col.sort">
+									<i class="fa fa-caret-down" ng-show="col.desc"></i>
+									<i class="fa fa-caret-up" ng-hide="col.desc"></i>
+								</span>
+							</div>
 						</div>
 					</th>
 				</tr>

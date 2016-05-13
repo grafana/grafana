@@ -104,6 +104,7 @@ export class TableRenderer {
     for (let i = 0; i < this.panel.styles.length; i++) {
       let style = this.panel.styles[i];
       let column = this.table.columns[colIndex];
+      column.style = style;
       var regex = kbn.stringToJsRegex(style.pattern);
       if (column.text.match(regex)) {
         this.formaters[colIndex] = this.createColumnFormater(style, column);
