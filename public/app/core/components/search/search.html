@@ -62,15 +62,15 @@
 	</div>
 
 	<div class="search-button-row">
-		<button class="btn btn-inverse pull-left" ng-click="ctrl.newDashboard()" ng-show="ctrl.contextSrv.isEditor">
+		<a class="btn btn-inverse pull-left" href="dashboard/new" ng-show="ctrl.contextSrv.isEditor" ng-click="ctrl.isOpen = false;">
 			<i class="fa fa-plus"></i>
 			Create New
-		</button>
+		</a>
 
-		<button class="btn btn-inverse pull-left" ng-click="ctrl.import()" ng-show="ctrl.contextSrv.isEditor">
+		<a class="btn btn-inverse pull-left" ng-click="ctrl.import()" ng-show="ctrl.contextSrv.isEditor" ng-click="ctrl.isOpen = false;">
 			<i class="fa fa-upload"></i>
 			Import
-		</button>
+		</a>
 
  		<div class="clearfix"></div>
 	</div>

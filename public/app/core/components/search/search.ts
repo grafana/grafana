@@ -5,7 +5,7 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from '../../core_module';
-import {DashImporter} from '../dash_importer/dash_importer';
+import appEvents from 'app/core/app_events';
 
 export class SearchCtrl {
   isOpen: boolean;
@@ -149,12 +149,10 @@ export class SearchCtrl {
     this.searchDashboards();
   };
 
-  newDashboard() {
-    this.$location.url('dashboard/new');
-  };
-
   import() {
-    new DashImporter(this.backendSrv, this.$location).run();
+    appEvents.emit('show-modal', {
+      templateHtml: '<dash-import></dash-import>',
+    });
   }
 }
 

@@ -26,6 +26,7 @@ export class UtilSrv {
     var modal = this.$modal({
       modalClass: options.modalClass,
       template: options.src,
+      templateHtml: options.templateHtml,
       persist: false,
       show: false,
       scope: options.scope,
@@ -34,7 +35,6 @@ export class UtilSrv {
 
     Promise.resolve(modal).then(function(modalEl) {
       modalEl.modal('show');
-      options.scope.model.dismiss = options.scope.dismiss;
     });
   }
 }

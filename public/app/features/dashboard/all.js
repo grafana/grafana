@@ -17,4 +17,5 @@ define([
   './importCtrl',
   './impression_store',
   './upload',
+  './import/import',
 ], function () {});
