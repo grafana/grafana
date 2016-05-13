@@ -38,6 +38,11 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         align: 'auto',
         pattern: '/.*/',
         thresholds: [],
+      },
+      {
+        type: 'string',
+        align: 'auto',
+        maxWidth: 0
       }
     ],
     columns: [],

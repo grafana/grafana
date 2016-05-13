@@ -8,11 +8,13 @@ export class TableRenderer {
   formaters: any[];
   colorState: any;
   alignState: any;
+  maxWidth: any;
 
   constructor(private panel, private table, private isUtc) {
     this.formaters = [];
     this.colorState = {};
     this.alignState = '';
+    this.maxWidth = null;
   }
 
   getColorForValue(value, style) {
@@ -52,6 +54,7 @@ export class TableRenderer {
     if (style.type === 'string') {
       return v => {
         this.alignState = style.align;
+        this.maxWidth = style.maxWidth;
         return this.defaultCellFormater(v);
       };
     }
@@ -112,6 +115,28 @@ export class TableRenderer {
     return this.formaters[colIndex](value);
   }
 
+  compileStyles() {
+    var result = [];
+
+    if (this.maxWidth) {
+      result.push('width:' + this.maxWidth + 'px');
+      result.push('max-width:' + this.maxWidth + 'px');
+      result.push('word-wrap:break-word');
+      this.maxWidth = null;
+    }
+
+    if (this.colorState.cell) {
+      result.push('background-color:' + this.colorState.cell);
+      result.push('color: white');
+      this.colorState.cell = null;
+    } else if (this.colorState.value) {
+      result.push('color:' + this.colorState.value);
+      this.colorState.value = null;
+    }
+
+    return ' style="' + result.join(';') + '"';
+  }
+
   renderCell(columnIndex, value, addWidthHack = false, rowLink = '') {
     value = this.formatColumnValue(columnIndex, value);
 
@@ -119,14 +144,7 @@ export class TableRenderer {
       value = _.escape(value);
     }
 
-    var style = '';
-    if (this.colorState.cell) {
-      style = ' style="background-color:' + this.colorState.cell + ';color: white"';
-      this.colorState.cell = null;
-    } else if (this.colorState.value) {
-      style = ' style="color:' + this.colorState.value + '"';
-      this.colorState.value = null;
-    }
+    var style = this.compileStyles();
 
     // because of the fixed table headers css only solution
     // there is an issue if header cell is wider the cell
