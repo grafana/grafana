@@ -135,7 +135,7 @@ export class TableRenderer {
       this.colorState.value = null;
     }
 
-    return ' style="' + result.join(';') + '"';
+    return result.length ? ' style="' + result.join(';') + '"' : '';
   }
 
   renderCell(columnIndex, value, addWidthHack = false, rowLink = '') {
