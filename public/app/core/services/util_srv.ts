@@ -34,6 +34,7 @@ export class UtilSrv {
 
     Promise.resolve(modal).then(function(modalEl) {
       modalEl.modal('show');
+      options.scope.model.dismiss = options.scope.dismiss;
     });
   }
 }

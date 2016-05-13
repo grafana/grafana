@@ -3,34 +3,22 @@
 import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
 
-import {WizardFlow} from 'app/core/core';
-
-var wnd: any = window;
-
-class DashboardImporter {
-
-  prepareForImport(dash) {
-    dash.id = null;
-
-    var wizard = new WizardFlow('Import Dashboard');
-
-    wizard.addStep("Importing dashboard", function() {
-      return new Promise(done => {
-        setTimeout(done, 2000);
-      });
-    });
-
-    return wizard.start().then(() => {
-      return dash;
-    });
-  }
-}
-
+var template = `
+<input type="file" id="dashupload" name="dashupload" class="hide"/>
+<label class="btn btn-secondary" for="dashupload">
+  <i class="fa fa-upload"></i>
+  Upload .json File
+</label>
+`;
 
 /** @ngInject */
 function uploadDashboardDirective(timer, alertSrv, $location) {
   return {
-    restrict: 'A',
+    restrict: 'E',
+    template: template,
+    scope: {
+      onUpload: '&',
+    },
     link: function(scope) {
       function file_selected(evt) {
         var files = evt.target.files; // FileList object
@@ -45,15 +33,7 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
               return;
             }
 
-            var importer = new DashboardImporter();
-            importer.prepareForImport(dash).then(modified => {
-              wnd.grafanaImportDashboard = modified;
-              var title = kbn.slugifyForUrl(dash.title);
-
-              scope.$apply(function() {
-                $location.path('/dashboard-import/' + title);
-              });
-            });
+            scope.onUpload({dash: dash});
           };
         };
 
@@ -63,6 +43,8 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
           reader.readAsText(f);
         }
       }
+
+      var wnd: any = window;
       // Check for the various File API support.
       if (wnd.File && wnd.FileReader && wnd.FileList && wnd.Blob) {
         // Something

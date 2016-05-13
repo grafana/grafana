@@ -5,6 +5,7 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from '../../core_module';
+import {DashImporter} from '../dash_importer/dash_importer';
 
 export class SearchCtrl {
   isOpen: boolean;
@@ -151,6 +152,10 @@ export class SearchCtrl {
   newDashboard() {
     this.$location.url('dashboard/new');
   };
+
+  import() {
+    new DashImporter(this.backendSrv, this.$location).run();
+  }
 }
 
 export function searchDirective() {
