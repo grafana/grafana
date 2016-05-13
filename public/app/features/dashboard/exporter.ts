@@ -29,6 +29,7 @@ export class DashboardExporter {
               name: refName,
               type: 'datasource',
               pluginId: ds.meta.id,
+              pluginName: ds.meta.name,
             };
             panel.datasource = '${' + refName  +'}';
 

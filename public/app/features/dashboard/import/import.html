@@ -1,0 +1,96 @@
+<div class="modal-body">
+
+	<div class="modal-header">
+		<h2 class="modal-header-title">
+			<i class="fa fa-upload"></i>
+			<span class="p-l-1">Import Dashboard</span>
+		</h2>
+
+		<a class="modal-header-close" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</a>
+	</div>
+
+	<div class="modal-content" ng-cloak>
+		<div ng-if="ctrl.step === 1">
+
+			<form class="gf-form-group">
+				<dash-upload on-upload="ctrl.onUpload(dash)"></dash-upload>
+			</form>
+
+			<h5 class="section-heading">Or paste JSON:</h5>
+
+			<div class="gf-form-group">
+				<div class="gf-form">
+					<textarea rows="7" data-share-panel-url="" class="gf-form-input" ng-ctrl="ctrl.jsonText"></textarea>
+				</div>
+				<button type="button" class="btn btn-secondary" ng-click="ctrl.loadJsonText()">
+					<i class="fa fa-paste"></i>
+					Load
+				</button>
+				<span ng-if="ctrl.parseError" class="text-error p-l-1">
+					<i class="fa fa-warning"></i>
+					{{ctrl.parseError}}
+				</span>
+			</div>
+		</div>
+
+		<div ng-if="ctrl.step === 2">
+			<h3 class="section-heading">
+				Options
+			</h3>
+
+			<div class="gf-form-group">
+				<div class="gf-form-inline">
+					<div class="gf-form gf-form--grow">
+						<label class="gf-form-label width-15">Title</label>
+						<input type="text" class="gf-form-input" ng-model="ctrl.dash.title" give-focus="true" ng-change="ctrl.titleChanged()" ng-class="{'validation-error': ctrl.nameExists}">
+						<label class="gf-form-label text-success" ng-if="!ctrl.nameExists">
+							<i class="fa fa-check"></i>
+						</label>
+					</div>
+				</div>
+
+				<div class="gf-form-inline" ng-if="ctrl.nameExists">
+					<div class="gf-form offset-width-15 gf-form--grow">
+						<label class="gf-form-label text-warning gf-form-label--grow">
+							<i class="fa fa-warning"></i>
+							A Dashboard with the same name already exists
+						</label>
+					</div>
+				</div>
+
+				<div ng-repeat="input in ctrl.inputs">
+					<div class="gf-form">
+						<label class="gf-form-label width-15">{{input.name}}</label>
+						<div class="gf-form-select-wrapper" style="width: 100%">
+							<select class="gf-form-input" ng-model="input.value" ng-options="v.value as v.text for v in input.options" ng-change="ctrl.inputValueChanged()"></select>
+						</div>
+						<label class="gf-form-label text-success" ng-show="input.value">
+							<i class="fa fa-check"></i>
+						</label>
+					</div>
+					<div class="gf-form offset-width-15 gf-form--grow">
+						<label class="gf-form-label gf-form-label--grow" ng-show="input.info">
+							<i class="fa fa-info-circle"></i>
+							{{input.info}}
+						</label>
+						<label class="gf-form-label gf-form-label--grow" ng-show="input.error">
+							<i class="fa fa-info-circle"></i>
+							{{input.info}}
+						</label>
+					</div>
+				</div>
+			</div>
+
+			<div class="gf-form-button-row">
+				<button type="button" class="btn gf-form-btn width-10" ng-click="ctrl.saveDashboard()" ng-class="{'btn-danger': ctrl.nameExists, 'btn-success': !ctrl.nameExists}" ng-disable="!ctrl.inputsOk">
+					<i class="fa fa-save"></i> Save &amp; Open
+				</button>
+				<a class="btn btn-link" ng-click="dismiss()">Cancel</a>
+			</div>
+
+		</div>
+	</div>
+</div>
+

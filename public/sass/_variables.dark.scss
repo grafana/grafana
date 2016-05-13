@@ -232,13 +232,13 @@ $paginationActiveBackground:          $blue;
 
 // Form states and alerts
 // -------------------------
-$state-warning-text:      darken(#c09853, 10%);
+$state-warning-text:      $warn;
 $state-warning-bg:        $brand-warning;
 
 $errorText:               #E84D4D;
 $errorBackground:         $btn-danger-bg;
 
-$successText:             #468847;
+$successText:             #12D95A;
 $successBackground:       $btn-success-bg;
 
 $infoText:                $blue-dark;

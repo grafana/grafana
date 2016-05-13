@@ -33,7 +33,9 @@ function uploadDashboardDirective(timer, alertSrv, $location) {
               return;
             }
 
-            scope.onUpload({dash: dash});
+            scope.$apply(function() {
+              scope.onUpload({dash: dash});
+            });
           };
         };
 

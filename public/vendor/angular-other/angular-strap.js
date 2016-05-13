@@ -25,11 +25,16 @@ angular.module('$strap.directives').factory('$modal', [
   function ($rootScope, $compile, $http, $timeout, $q, $templateCache, $strapConfig) {
     var ModalFactory = function ModalFactory(config) {
       function Modal(config) {
-        var options = angular.extend({ show: true }, $strapConfig.modal, config), scope = options.scope ? options.scope : $rootScope.$new(), templateUrl = options.template;
-        return $q.when($templateCache.get(templateUrl) || $http.get(templateUrl, { cache: true }).then(function (res) {
+        var options = angular.extend({ show: true }, $strapConfig.modal, config);
+        var scope = options.scope ? options.scope : $rootScope.$new()
+        var templateUrl = options.template;
+        return $q.when(options.templateHtml || $templateCache.get(templateUrl) || $http.get(templateUrl, { cache: true }).then(function (res) {
           return res.data;
         })).then(function onSuccess(template) {
-          var id = templateUrl.replace('.html', '').replace(/[\/|\.|:]/g, '-') + '-' + scope.$id;
+          var id = scope.$id;
+          if (templateUrl) {
+            id += templateUrl.replace('.html', '').replace(/[\/|\.|:]/g, '-');
+          }
           // grafana change, removed fade
           var $modal = $('<div class="modal hide" tabindex="-1"></div>').attr('id', id).html(template);
           if (options.modalClass)
