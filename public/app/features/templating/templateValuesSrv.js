@@ -8,7 +8,7 @@ function (angular, _, kbn) {
 
   var module = angular.module('grafana.services');
 
-  module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $location, templateSrv, timeSrv) {
+  module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $location, templateSrv, timeSrv, dynamicDashboardSrv) {
     var self = this;
 
     function getNoneOption() { return { text: 'None', value: '', isNone: true }; }
@@ -27,7 +27,12 @@ function (angular, _, kbn) {
         .filter(function(variable) {
           return variable.refresh === 2;
         }).map(function(variable) {
-          return self.updateOptions(variable);
+          return self.updateOptions(variable).then(function () {
+            return self.variableUpdated(variable).then(function () {
+              dynamicDashboardSrv.update(self.dashboard);
+              $rootScope.$emit('template-variable-value-updated');
+            });
+          });
         });
 
       return $q.all(promises);
@@ -35,6 +40,7 @@ function (angular, _, kbn) {
     }, $rootScope);
 
     this.init = function(dashboard) {
+      this.dashboard = dashboard;
       this.variables = dashboard.templating.list;
       templateSrv.init(this.variables);
 
@@ -143,7 +149,7 @@ function (angular, _, kbn) {
 
     this.variableUpdated = function(variable) {
       templateSrv.updateTemplateData();
-      return this.updateOptionsInChildVariables(variable);
+      return self.updateOptionsInChildVariables(variable);
     };
 
     this.updateOptionsInChildVariables = function(updatedVariable) {
