@@ -149,11 +149,6 @@ export class SearchCtrl {
     this.searchDashboards();
   };
 
-  import() {
-    appEvents.emit('show-modal', {
-      templateHtml: '<dash-import></dash-import>',
-    });
-  }
 }
 
 export function searchDirective() {

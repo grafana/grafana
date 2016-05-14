@@ -10,14 +10,14 @@ import (
 )
 
 type PluginDashboardInfoDTO struct {
-	PluginId          string `json:"pluginId"`
-	Title             string `json:"title"`
-	Installed         bool   `json:"installed"`
-	InstalledUri      string `json:"installedUri"`
-	InstalledRevision string `json:"installedRevision"`
-	Revision          string `json:"revision"`
-	Description       string `json:"description"`
-	Path              string `json:"path"`
+	PluginId         string `json:"pluginId"`
+	Title            string `json:"title"`
+	Imported         bool   `json:"imported"`
+	ImportedUri      string `json:"importedUri"`
+	ImportedRevision int64  `json:"importedRevision"`
+	Revision         int64  `json:"revision"`
+	Description      string `json:"description"`
+	Path             string `json:"path"`
 }
 
 func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDTO, error) {
@@ -42,7 +42,12 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 	return result, nil
 }
 
-func loadPluginDashboard(plugin *PluginBase, path string) (*m.Dashboard, error) {
+func loadPluginDashboard(pluginId, path string) (*m.Dashboard, error) {
+	plugin, exists := Plugins[pluginId]
+
+	if !exists {
+		return nil, PluginNotFoundError{pluginId}
+	}
 
 	dashboardFilePath := filepath.Join(plugin.PluginDir, path)
 	reader, err := os.Open(dashboardFilePath)
@@ -66,14 +71,14 @@ func getDashboardImportStatus(orgId int64, plugin *PluginBase, path string) (*Pl
 	var dashboard *m.Dashboard
 	var err error
 
-	if dashboard, err = loadPluginDashboard(plugin, path); err != nil {
+	if dashboard, err = loadPluginDashboard(plugin.Id, path); err != nil {
 		return nil, err
 	}
 
 	res.Path = path
 	res.PluginId = plugin.Id
 	res.Title = dashboard.Title
-	res.Revision = dashboard.GetString("revision", "1.0")
+	res.Revision = dashboard.Data.Get("revision").MustInt64(1)
 
 	query := m.GetDashboardQuery{OrgId: orgId, Slug: dashboard.Slug}
 
@@ -82,9 +87,9 @@ func getDashboardImportStatus(orgId int64, plugin *PluginBase, path string) (*Pl
 			return nil, err
 		}
 	} else {
-		res.Installed = true
-		res.InstalledUri = "db/" + query.Result.Slug
-		res.InstalledRevision = query.Result.GetString("revision", "1.0")
+		res.Imported = true
+		res.ImportedUri = "db/" + query.Result.Slug
+		res.ImportedRevision = query.Result.Data.Get("revision").MustInt64(1)
 	}
 
 	return res, nil

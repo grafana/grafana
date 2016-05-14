@@ -84,7 +84,7 @@
 			</div>
 
 			<div class="gf-form-button-row">
-				<button type="button" class="btn gf-form-btn width-10" ng-click="ctrl.saveDashboard()" ng-class="{'btn-danger': ctrl.nameExists, 'btn-success': !ctrl.nameExists}" ng-disable="!ctrl.inputsOk">
+				<button type="button" class="btn gf-form-btn width-10" ng-click="ctrl.saveDashboard()" ng-class="{'btn-danger': ctrl.nameExists, 'btn-success': !ctrl.nameExists}" ng-disabled="!ctrl.inputsValid">
 					<i class="fa fa-save"></i> Save &amp; Open
 				</button>
 				<a class="btn btn-link" ng-click="dismiss()">Cancel</a>

@@ -12,7 +12,7 @@ function ($, coreModule) {
     'import':      { src: '<dash-import></dash-import>' }
   };
 
-  coreModule.default.directive('dashEditorView', function($compile, $location) {
+  coreModule.default.directive('dashEditorView', function($compile, $location, $rootScope) {
     return {
       restrict: 'A',
       link: function(scope, elem) {
@@ -56,6 +56,21 @@ function ($, coreModule) {
               }
             }
           };
+
+          if (editview === 'import') {
+            var modalScope = $rootScope.$new();
+            modalScope.$on("$destroy", function() {
+              editorScope.dismiss();
+            });
+
+            $rootScope.appEvent('show-modal', {
+              templateHtml: '<dash-import></dash-import>',
+              scope: modalScope,
+              backdrop: 'static'
+            });
+
+            return;
+          }
 
           var view = payload.src;
           if (view.indexOf('.html') > 0)  {

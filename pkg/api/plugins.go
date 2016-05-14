@@ -168,10 +168,11 @@ func ImportDashboard(c *middleware.Context, apiCmd dtos.ImportDashboardCommand) 
 		Path:      apiCmd.Path,
 		Inputs:    apiCmd.Inputs,
 		Overwrite: apiCmd.Overwrite,
+		Dashboard: apiCmd.Dashboard,
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to install dashboard", err)
+		return ApiError(500, "Failed to import dashboard", err)
 	}
 
 	return Json(200, cmd.Result)
