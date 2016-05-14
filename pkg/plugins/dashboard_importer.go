@@ -11,6 +11,7 @@ import (
 )
 
 type ImportDashboardCommand struct {
+	Dashboard *simplejson.Json
 	Path      string
 	Inputs    []ImportDashboardInput
 	Overwrite bool
@@ -41,17 +42,15 @@ func init() {
 }
 
 func ImportDashboard(cmd *ImportDashboardCommand) error {
-	plugin, exists := Plugins[cmd.PluginId]
-
-	if !exists {
-		return PluginNotFoundError{cmd.PluginId}
-	}
-
 	var dashboard *m.Dashboard
 	var err error
 
-	if dashboard, err = loadPluginDashboard(plugin, cmd.Path); err != nil {
-		return err
+	if cmd.PluginId != "" {
+		if dashboard, err = loadPluginDashboard(cmd.PluginId, cmd.Path); err != nil {
+			return err
+		}
+	} else {
+		dashboard = m.NewDashboardFromJson(cmd.Dashboard)
 	}
 
 	evaluator := &DashTemplateEvaluator{
@@ -76,13 +75,13 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 	}
 
 	cmd.Result = &PluginDashboardInfoDTO{
-		PluginId:          cmd.PluginId,
-		Title:             dashboard.Title,
-		Path:              cmd.Path,
-		Revision:          dashboard.GetString("revision", "1.0"),
-		InstalledUri:      "db/" + saveCmd.Result.Slug,
-		InstalledRevision: dashboard.GetString("revision", "1.0"),
-		Installed:         true,
+		PluginId:         cmd.PluginId,
+		Title:            dashboard.Title,
+		Path:             cmd.Path,
+		Revision:         dashboard.Data.Get("revision").MustInt64(1),
+		ImportedUri:      "db/" + saveCmd.Result.Slug,
+		ImportedRevision: dashboard.Data.Get("revision").MustInt64(1),
+		Imported:         true,
 	}
 
 	return nil

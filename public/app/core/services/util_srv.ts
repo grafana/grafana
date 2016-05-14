@@ -30,7 +30,8 @@ export class UtilSrv {
       persist: false,
       show: false,
       scope: options.scope,
-      keyboard: false
+      keyboard: false,
+      backdrop: options.backdrop
     });
 
     Promise.resolve(modal).then(function(modalEl) {

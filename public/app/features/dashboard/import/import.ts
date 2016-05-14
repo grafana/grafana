@@ -12,7 +12,6 @@ export class DashImportCtrl {
   parseError: string;
   nameExists: boolean;
   dash: any;
-  dismiss: any;
   inputs: any[];
   inputsValid: boolean;
 
@@ -33,6 +32,7 @@ export class DashImportCtrl {
         var inputModel = {
           name: input.name,
           type: input.type,
+          pluginId: input.pluginId,
           options: []
         };
 
@@ -64,7 +64,7 @@ export class DashImportCtrl {
     });
   }
 
-  inputOptionChanged() {
+  inputValueChanged() {
     this.inputsValid = true;
     for (let input of this.inputs) {
       if (!input.value) {
@@ -86,9 +86,22 @@ export class DashImportCtrl {
   }
 
   saveDashboard() {
-    return this.backendSrv.saveDashboard(this.dash, {overwrite: true}).then(res => {
-      this.$location.url('dashboard/db/' + res.slug);
-      this.dismiss();
+    var inputs = this.inputs.map(input => {
+      return {
+        name: input.name,
+        type: input.type,
+        pluginId: input.pluginId,
+        value: input.value
+      };
+    });
+
+    return this.backendSrv.post('api/dashboards/import', {
+      dashboard: this.dash,
+      overwrite: true,
+      inputs: inputs
+    }).then(res => {
+      this.$location.url('dashboard/' + res.importedUri);
+      this.$scope.dismiss();
     });
   }
 
