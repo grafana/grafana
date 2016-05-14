@@ -7,7 +7,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AlertAssociationCtrl', function($scope, $routeParams, $location, alertMgrSrv) {
+  module.controller('AlertAssociationCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv) {
     var associatedMetricRows = [];
     var alertId = $routeParams.id;
     var distance = $routeParams.distance;

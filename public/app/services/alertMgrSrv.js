@@ -91,6 +91,6 @@ function (angular) {
         },
         headers: {'Content-Type': 'text/plain'},
       });
-    }
+    };
   });
 });
