@@ -37,7 +37,9 @@ func AddApiKey(cmd *m.AddApiKeyCommand) error {
 			OrgId:   cmd.OrgId,
 			Name:    cmd.Name,
 			Role:    cmd.Role,
+			Client:  cmd.Client,
 			Key:     cmd.Key,
+			Token:   cmd.Token,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}

@@ -8,12 +8,15 @@ function (angular) {
   var module = angular.module('grafana.controllers');
 
   module.controller('OnCallersCtrl', function($scope, oncallerMgrSrv, alertSrv) {
-    oncallerMgrSrv.load().then(function onSuccess(response) {
-      $scope.oncallerDefList = response.data;
-    }, function onFailed(response) {
-      $scope.err = response.message || "Request failed";
-      $scope.status = response.status;
-    });
+
+    $scope.init = function() {
+      oncallerMgrSrv.load().then(function onSuccess(response) {
+        $scope.oncallerDefList = response.data;
+      }, function onFailed(response) {
+        $scope.err = response.message || "Request failed";
+        $scope.status = response.status;
+      });
+    };
 
     $scope.remove = function(oncallerService) {
       $scope.appEvent('confirm-modal', {

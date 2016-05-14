@@ -9,19 +9,22 @@ function (angular) {
 
   module.controller('AlertStatusCtrl', function($scope, alertMgrSrv) {
     var alertRows = [];
-    alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
-      for (var i = 0; i < response.data.length; i++) {
-        alertRows.push({ height: '250px', panels:[], triggeredAlert: response.data[i]});
-      }
 
-      $scope.initDashboard({
-        meta: { canStar: false, canShare: false, canEdit: false },
-        dashboard: {
-          title: "Triggered Alerts",
-          rows: alertRows,
-          time: {from: "now-2h", to: "now"}
-        },
-      }, $scope);
-    });
+    $scope.init = function() {
+      alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
+        for (var i = 0; i < response.data.length; i++) {
+          alertRows.push({ height: '250px', panels:[], triggeredAlert: response.data[i]});
+        }
+
+        $scope.initDashboard({
+          meta: { canStar: false, canShare: false, canEdit: false },
+          dashboard: {
+            title: "Triggered Alerts",
+            rows: alertRows,
+            time: {from: "now-2h", to: "now"}
+          },
+        }, $scope);
+      });
+    };
   });
 });

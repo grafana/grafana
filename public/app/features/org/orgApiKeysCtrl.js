@@ -9,7 +9,8 @@ function (angular) {
   module.controller('OrgApiKeysCtrl', function($scope, $http, backendSrv) {
 
     $scope.roleTypes = ['Viewer', 'Editor', 'Admin'];
-    $scope.token = { role: 'Viewer' };
+    $scope.clientTypes = ['Agent', 'Application'];
+    $scope.token = { role: 'Admin', client: 'Agent' };
 
     $scope.init = function() {
       $scope.getTokens();
@@ -26,15 +27,15 @@ function (angular) {
     };
 
     $scope.addToken = function() {
-      backendSrv.post('/api/auth/keys', $scope.token).then(function(result) {
+      backendSrv.post('/api/auth/keys', $scope.token).then(function() {
 
-        var modalScope = $scope.$new(true);
+        /*var modalScope = $scope.$new(true);
         modalScope.key = result.key;
 
         $scope.appEvent('show-modal', {
           src: './app/features/org/partials/apikeyModal.html',
           scope: modalScope
-        });
+        });*/
 
         $scope.getTokens();
       });

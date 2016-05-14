@@ -43,6 +43,10 @@ func Register(r *macaron.Macaron) {
 
 	r.Get("/dashboard/*", reqSignedIn, Index)
 	r.Get("/dashboard-solo/*", reqSignedIn, Index)
+  
+  // alerts and oncallers
+	r.Get("/alerts", reqSignedIn, Index)
+	r.Get("/oncallers", reqSignedIn, Index)
 
 	// sign up
 	r.Get("/signup", Index)
@@ -155,7 +159,7 @@ func Register(r *macaron.Macaron) {
 		// Alert source
 		r.Group("/alertsource", func() {
 			r.Get("/", GetAlertSource)
-		}, regOrgAdmin)
+		})
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
 		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)
