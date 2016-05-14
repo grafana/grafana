@@ -70,6 +70,7 @@ function (angular) {
         meta: { canStar: false, canShare: false, canEdit: false },
         dashboard: {
           title: "Associated Metrics",
+          id: alertId,
           rows: associatedMetricRows,
           time: {from: "now-2h", to: "now"}
         },
