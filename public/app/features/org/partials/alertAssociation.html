@@ -7,11 +7,22 @@
   </ul>
 </topnav>
 
-Correlation threshold: <input ng-model="correlationThreshold" placeholder="100">
-<a href="alerts/association/{{ dashboard.id }}/{{ correlationThreshold }}">Click here to filter results</a>
-<br>
-Correlation minutes - before:<input ng-model="correlationBefore" placeholder="1">, after:<input ng-model="correlationAfter" placeholder="3">,
-<button type="submit" class="btn btn-success" ng-click="resetCorrelation()">Recalculate</button>
+<div ng-if="dashboard.rows.length === 0">
+  <h2 align="center">Correlated metrics are being calculated! Please refresh this page in 30 seconds!</h2>
+</div>
+
+<div ng-if="dashboard.rows.length > 0">
+  <input ng-model="correlationThreshold" placeholder="100">
+  <span ng-show="!correlationThreshold.length">Adjust threshold. The smaller the less metrics!</span>
+  <span ng-show="correlationThreshold.length">
+      <a href="alerts/association/{{ dashboard.id }}/{{ correlationThreshold }}">
+        <span style="color: green; ">Click here to filter results</span>
+      </a>
+  </span>
+  <br>
+  Correlation minutes - before:<input ng-model="correlationBefore" placeholder="1">, after:<input ng-model="correlationAfter" placeholder="3">
+  <button type="submit" class="btn btn-success" ng-click="resetCorrelation()">Recalculate</button>
+</div>
 
 <div class="main-view-container">
   <div class="grafana-row" ng-controller="RowCtrl"
