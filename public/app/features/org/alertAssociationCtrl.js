@@ -7,7 +7,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AlertAssociationCtrl', function($scope, $routeParams, alertMgrSrv) {
+  module.controller('AlertAssociationCtrl', function($scope, $routeParams, $location, alertMgrSrv) {
     var associatedMetricRows = [];
     var alertId = $routeParams.id;
     var distance = $routeParams.distance;
@@ -76,6 +76,14 @@ function (angular) {
         },
       }, $scope);
     });
+
+    $scope.resetCorrelation = function() {
+      alertMgrSrv.resetCorrelation(alertId, $scope.correlationBefore, $scope.correlationAfter).then(function onSuccess() {
+        $location.path("alerts/status");
+      }, function onFailed(response) {
+        alertSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 10000);
+      });
+    };
 
   });
 });

@@ -79,5 +79,18 @@ function (angular) {
       });
     };
 
+    this.resetCorrelation = function(alertId, backtrackSteps, advancedSteps) {
+      return $http({
+        method: "post",
+        url: alertAssociationUrl,
+        params: {
+          id: alertId,
+          backtrackSteps: backtrackSteps,
+          advancedSteps: advancedSteps,
+          reset: true
+        },
+        headers: {'Content-Type': 'text/plain'},
+      });
+    }
   });
 });

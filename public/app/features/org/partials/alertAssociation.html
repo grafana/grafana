@@ -9,6 +9,9 @@
 
 Correlation threshold: <input ng-model="correlationThreshold" placeholder="100">
 <a href="alerts/association/{{ dashboard.id }}/{{ correlationThreshold }}">Click here to filter results</a>
+<br>
+Correlation minutes - before:<input ng-model="correlationBefore" placeholder="1">, after:<input ng-model="correlationAfter" placeholder="3">,
+<button type="submit" class="btn btn-success" ng-click="resetCorrelation()">Recalculate</button>
 
 <div class="main-view-container">
   <div class="grafana-row" ng-controller="RowCtrl"
