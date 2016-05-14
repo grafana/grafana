@@ -10,12 +10,13 @@ function (angular) {
   module.controller('AlertAssociationCtrl', function($scope, $routeParams, alertMgrSrv) {
     var associatedMetricRows = [];
     var alertId = $routeParams.id;
+    var distance = $routeParams.distance;
 
-    alertMgrSrv.loadAssociatedMetrics(alertId).then(function onSuccess(response) {
+    alertMgrSrv.loadAssociatedMetrics(alertId, distance).then(function onSuccess(response) {
       var correlationOfAlertMap = response.data;
 
       for (var host in correlationOfAlertMap) {
-        var correlatedMetrics = correlationOfAlertMap[host].metrics;
+        var correlatedMetrics = correlationOfAlertMap[host];
         var normalizedMetricMap = {};
 
         for (var m in correlatedMetrics) {

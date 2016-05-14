@@ -71,11 +71,11 @@ function (angular) {
       });
     };
 
-    this.loadAssociatedMetrics = function(alertId) {
+    this.loadAssociatedMetrics = function(alertId, threshold) {
       return $http({
         method: "get",
         url: alertAssociationUrl,
-        params: {id: alertId}
+        params: {id: alertId, distance: threshold}
       });
     };
 

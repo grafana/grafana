@@ -19,6 +19,8 @@ function (angular, _, config) {
 
     _.defaults($scope.row,_d);
 
+    $scope.correlationThreshold = 100;
+
     $scope.init = function() {
       $scope.editor = {index: 0};
     };
@@ -139,6 +141,7 @@ function (angular, _, config) {
       var _as = 12 - $scope.dashboard.rowSpan($scope.row);
       var triggeredMetric = triggeredAlert.alertDetails.hostQuery.metricQueries[0].metric;
 
+      var correlationThreshold = $scope.correlationThreshold;
       var panel = {
         title: triggeredAlert.name,
         error: false,
@@ -150,7 +153,7 @@ function (angular, _, config) {
           {
             title: "Associated Metrics",
             type: "absolute",
-            url: "alerts/association/" + triggeredAlert.id
+            url: "alerts/association/" + triggeredAlert.id + "/" + correlationThreshold
           }, {
             targetBlank: "true",
             title: "Associated Log Info",
