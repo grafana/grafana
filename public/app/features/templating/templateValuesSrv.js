@@ -27,10 +27,15 @@ function (angular, _, kbn) {
         .filter(function(variable) {
           return variable.refresh === 2;
         }).map(function(variable) {
+          var previousVariable = angular.copy(variable);
           return self.updateOptions(variable).then(function () {
             return self.variableUpdated(variable).then(function () {
-              dynamicDashboardSrv.update(self.dashboard);
-              $rootScope.$emit('template-variable-value-updated');
+              var updatedVariable = angular.copy(variable);
+              delete(updatedVariable.$$hashKey);
+              if (JSON.stringify(previousVariable) !== JSON.stringify(updatedVariable)) {
+                dynamicDashboardSrv.update(self.dashboard);
+                $rootScope.$emit('template-variable-value-updated');
+              }
             });
           });
         });
