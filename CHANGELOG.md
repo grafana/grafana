@@ -1,4 +1,11 @@
-# 3.0.2 Stable (unreleased)
+# 3.1.0
+
+### Enhancements
+* **Singlestat**: Add support for range to text mappings, closes [#1319](https://github.com/grafana/grafana/issues/1319)
+* **Graph**: Adds sort order options for graph tooltip, closes  [#1189](https://github.com/grafana/grafana/issues/1189)
+* **Theme**: Add default theme to config file [#5011](https://github.com/grafana/grafana/pull/5011)
+
+# 3.0.2 Stable (2016-05-16)
 
 * **Templating**: Fixed issue mixing row repeat and panel repeats, fixes [#4988](https://github.com/grafana/grafana/issues/4988)
 * **Templating**: Fixed issue detecting dependencies in nested variables, fixes [#4987](https://github.com/grafana/grafana/issues/4987), fixes [#4986](https://github.com/grafana/grafana/issues/4986)
@@ -9,6 +16,7 @@
 
 # 3.0.1 Stable (2016-05-11)
 
+### Bug fixes
 * **Templating**: Fixed issue with new data source variable not persisting current selected value, fixes [#4934](https://github.com/grafana/grafana/issues/4934)
 
 # 3.0.0-beta7 (2016-05-02)
