@@ -20,17 +20,17 @@
 		</thead>
 		<tr ng-repeat="alert in ctrl.alerts">
 			<td>
-				<a href="/alerts/{{alert.id}}/states">
+				<a href="alerts/{{alert.id}}/states">
 					{{alert.title}}
 				</a>
 			</td>
 			<td class="text-center">
-				<a href="/alerts/{{alert.id}}/states">
+				<a href="alerts/{{alert.id}}/states">
 					<i class="icon-gf {{alert.iconCss}}"></i>
 				</a>
 			</td>
 			<td class="text-center">
-				<a href="/dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit" class="btn btn-inverse btn-small">
+				<a href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit" class="btn btn-inverse btn-small">
 					<i class="fa fa-edit"></i>
 					edit
 				</a>
@@ -38,5 +38,4 @@
 		</tr>
 	</table>
 </div>
-
 

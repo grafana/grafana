@@ -78,12 +78,14 @@ export class AlertSrv {
     scope.text2 = payload.text2;
     scope.confirmText = payload.confirmText;
     scope.confirmTextRequired = payload.confirmText !== "";
+
     scope.onConfirm = function() {
       if (!scope.confirmTextRequired || (scope.confirmTextRequired && scope.confirmTextValid)) {
         payload.onConfirm();
         scope.dismiss();
       }
     };
+
     scope.updateConfirmText = function(value) {
       scope.confirmInput = value;
       scope.confirmTextValid = scope.confirmText === scope.confirmInput;
