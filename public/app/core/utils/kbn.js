@@ -397,7 +397,7 @@ function($, _) {
   kbn.valueFormats.amp          = kbn.formatBuilders.decimalSIPrefix('A');
   kbn.valueFormats.volt         = kbn.formatBuilders.decimalSIPrefix('V');
   kbn.valueFormats.dBm          = kbn.formatBuilders.decimalSIPrefix('dBm');
-  
+
   // Temperature
   kbn.valueFormats.celsius   = kbn.formatBuilders.fixedUnit('°C');
   kbn.valueFormats.farenheit = kbn.formatBuilders.fixedUnit('°F');
