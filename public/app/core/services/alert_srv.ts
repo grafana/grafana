@@ -77,7 +77,7 @@ export class AlertSrv {
     scope.text = payload.text;
     scope.text2 = payload.text2;
     scope.confirmText = payload.confirmText;
-    scope.confirmTextRequired = payload.confirmText !== "";
+    scope.confirmTextRequired = payload.confirmText !== undefined && payload.confirmText !== "";
 
     scope.onConfirm = function() {
       if (!scope.confirmTextRequired || (scope.confirmTextRequired && scope.confirmTextValid)) {
