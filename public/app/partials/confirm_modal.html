@@ -24,12 +24,12 @@
 
 		<div class="modal-content-confirm-text" ng-if="confirmTextRequired">
 			<span><i class="fa fa-warning"></i> Please type in the name of the dashboard to confirm.</span>
-			<input type="text" class="gf-form-input width-16 {{confirmInputStyle}}" style="display: inline-block;" ng-model="confirmInput" ng-change="updateConfirmText(confirmInput)">
+			<input type="text" class="gf-form-input width-16" style="display: inline-block;" ng-model="confirmInput" ng-change="updateConfirmText(confirmInput)">
 		</div>
 
 		<div class="confirm-modal-buttons">
 			<button type="button" class="btn btn-inverse" ng-click="dismiss()">{{noText}}</button>
-			<button type="button" class="btn btn-danger" ng-click="onConfirm();" ng-disabled="!confirmTextValid">{{yesText}}</button>
+			<button type="button" class="btn btn-danger" ng-click="onConfirm();" ng-class="{'btn-inverse': !confirmTextValid, 'btn-primary': confirmTextValid}">{{yesText}}</button>
 		</div>
 	</div>
 

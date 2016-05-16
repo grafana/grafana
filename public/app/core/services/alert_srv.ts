@@ -76,7 +76,6 @@ export class AlertSrv {
     scope.title = payload.title;
     scope.text = payload.text;
     scope.text2 = payload.text2;
-    scope.confirmText = payload.confirmText;
     scope.confirmTextRequired = payload.confirmText !== undefined && payload.confirmText !== "";
 
     scope.onConfirm = function() {
@@ -87,12 +86,8 @@ export class AlertSrv {
     };
 
     scope.updateConfirmText = function(value) {
-      scope.confirmInput = value;
-      scope.confirmTextValid = scope.confirmText === scope.confirmInput;
-      scope.confirmInputStyle = scope.confirmTextValid ? "confirm-model-valid-input" : "confirm-model-invalid-input";
+      scope.confirmTextValid = payload.confirmText.toLowerCase() === value.toLowerCase();
     };
-
-    scope.updateConfirmText("");
 
     scope.icon = payload.icon || "fa-check";
     scope.yesText = payload.yesText || "Yes";
