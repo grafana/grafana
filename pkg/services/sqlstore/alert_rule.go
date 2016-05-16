@@ -3,10 +3,12 @@ package sqlstore
 import (
 	"bytes"
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	"strings"
 )
 
 func init() {
@@ -134,8 +136,8 @@ func SaveAlerts(cmd *m.SaveAlertsCommand) error {
 	})
 }
 
-func upsertAlerts(alerts []m.AlertRule, posted *[]m.AlertRule, sess *xorm.Session) error {
-	for _, alert := range *posted {
+func upsertAlerts(alerts []m.AlertRule, posted []m.AlertRule, sess *xorm.Session) error {
+	for _, alert := range posted {
 		update := false
 		var alertToUpdate m.AlertRule
 
@@ -149,6 +151,7 @@ func upsertAlerts(alerts []m.AlertRule, posted *[]m.AlertRule, sess *xorm.Sessio
 
 		if update {
 			if alertIsDifferent(alertToUpdate, alert) {
+				alert.Updated = time.Now()
 				alert.State = alertToUpdate.State
 				_, err := sess.Id(alert.Id).Update(&alert)
 				if err != nil {
@@ -159,6 +162,8 @@ func upsertAlerts(alerts []m.AlertRule, posted *[]m.AlertRule, sess *xorm.Sessio
 			}
 
 		} else {
+			alert.Updated = time.Now()
+			alert.Created = time.Now()
 			alert.State = "OK"
 			_, err := sess.Insert(&alert)
 			if err != nil {
@@ -171,11 +176,11 @@ func upsertAlerts(alerts []m.AlertRule, posted *[]m.AlertRule, sess *xorm.Sessio
 	return nil
 }
 
-func deleteMissingAlerts(alerts []m.AlertRule, posted *[]m.AlertRule, sess *xorm.Session) error {
+func deleteMissingAlerts(alerts []m.AlertRule, posted []m.AlertRule, sess *xorm.Session) error {
 	for _, missingAlert := range alerts {
 		missing := true
 
-		for _, k := range *posted {
+		for _, k := range posted {
 			if missingAlert.PanelId == k.PanelId {
 				missing = false
 			}

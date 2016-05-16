@@ -1,13 +1,15 @@
 package models
 
 import (
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"time"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 type AlertRule struct {
 	Id           int64  `json:"id"`
 	OrgId        int64  `json:"-"`
+	DataSourceId int64  `json:"datasourceId"`
 	DashboardId  int64  `json:"dashboardId"`
 	PanelId      int64  `json:"panelId"`
 	Query        string `json:"query"`
@@ -17,11 +19,15 @@ type AlertRule struct {
 	WarnOperator string `json:"warnOperator"`
 	CritOperator string `json:"critOperator"`
 	Interval     string `json:"interval"`
+	Frequency    int64  `json:"frequency"`
 	Title        string `json:"title"`
 	Description  string `json:"description"`
 	QueryRange   string `json:"queryRange"`
 	Aggregator   string `json:"aggregator"`
 	State        string `json:"state"`
+
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
 }
 
 type AlertRuleChange struct {
@@ -32,7 +38,7 @@ type AlertRuleChange struct {
 	Created time.Time `json:"created"`
 }
 
-func (cmd *SaveDashboardCommand) GetAlertModels() *[]AlertRule {
+func (cmd *SaveDashboardCommand) GetAlertModels() []AlertRule {
 	alerts := make([]AlertRule, 0)
 
 	for _, rowObj := range cmd.Dashboard.Get("rows").MustArray() {
@@ -77,7 +83,7 @@ func (cmd *SaveDashboardCommand) GetAlertModels() *[]AlertRule {
 		}
 	}
 
-	return &alerts
+	return alerts
 }
 
 // Commands
@@ -86,7 +92,7 @@ type SaveAlertsCommand struct {
 	UserId      int64
 	OrgId       int64
 
-	Alerts *[]AlertRule
+	Alerts []AlertRule
 }
 
 type DeleteAlertCommand struct {
@@ -99,6 +105,12 @@ type GetAlertsQuery struct {
 	State       []string
 	DashboardId int64
 	PanelId     int64
+
+	Result []AlertRule
+}
+
+type GetAlertsForExecutionQuery struct {
+	Timestamp int64
 
 	Result []AlertRule
 }
