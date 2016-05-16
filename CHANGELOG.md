@@ -5,7 +5,6 @@
 * **Graph**: Fixed broken PNG rendering in graph panel, fixes [#5025](https://github.com/grafana/grafana/issues/5025)
 * **Graph**: Fixed broken xaxis on graph panel, fixes [#5024](https://github.com/grafana/grafana/issues/5024)
 
-5024
 * **Influxdb**: Fixes crash when hiding middle serie, fixes [#5005](https://github.com/grafana/grafana/issues/5005)
 
 # 3.0.1 Stable (2016-05-11)
