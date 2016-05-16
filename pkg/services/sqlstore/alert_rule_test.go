@@ -34,7 +34,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		}
 
 		cmd := m.SaveAlertsCommand{
-			Alerts:      &items,
+			Alerts:      items,
 			DashboardId: testDash.Id,
 			OrgId:       1,
 			UserId:      1,
@@ -80,7 +80,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				DashboardId: testDash.Id,
 				OrgId:       1,
 				UserId:      1,
-				Alerts:      &modifiedItems,
+				Alerts:      modifiedItems,
 			}
 
 			err := SaveAlerts(&modifiedCmd)
@@ -135,7 +135,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				},
 			}
 
-			cmd.Alerts = &multipleItems
+			cmd.Alerts = multipleItems
 			err = SaveAlerts(&cmd)
 
 			Convey("Should save 3 dashboards", func() {
@@ -156,7 +156,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			Convey("should updated two dashboards and delete one", func() {
 				missingOneAlert := multipleItems[:2]
 
-				cmd.Alerts = &missingOneAlert
+				cmd.Alerts = missingOneAlert
 				err = SaveAlerts(&cmd)
 
 				Convey("should delete the missing alert", func() {
@@ -195,7 +195,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			}
 
 			cmd := m.SaveAlertsCommand{
-				Alerts:      &items,
+				Alerts:      items,
 				DashboardId: testDash.Id,
 				OrgId:       1,
 				UserId:      1,

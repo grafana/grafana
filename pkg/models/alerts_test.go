@@ -346,7 +346,7 @@ func TestAlertModel(t *testing.T) {
 			},
 		}
 
-		alerts := *cmd.GetAlertModels()
+		alerts := cmd.GetAlertModels()
 
 		Convey("all properties have been set", func() {
 			So(alerts, ShouldNotBeEmpty)

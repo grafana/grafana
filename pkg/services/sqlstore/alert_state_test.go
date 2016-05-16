@@ -33,7 +33,7 @@ func TestAlertingStateAccess(t *testing.T) {
 		}
 
 		cmd := m.SaveAlertsCommand{
-			Alerts:      &items,
+			Alerts:      items,
 			DashboardId: testDash.Id,
 			OrgId:       1,
 			UserId:      1,

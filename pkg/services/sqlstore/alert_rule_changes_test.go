@@ -40,7 +40,7 @@ func TestAlertRuleChangesDataAccess(t *testing.T) {
 			}
 
 			cmd := m.SaveAlertsCommand{
-				Alerts:      &items,
+				Alerts:      items,
 				DashboardId: testDash.Id,
 				OrgId:       FakeOrgId,
 				UserId:      2,
