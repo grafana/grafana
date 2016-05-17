@@ -1,10 +1,10 @@
-///<reference path="../../headers/common.d.ts" />
+///<reference path="../../../headers/common.d.ts" />
 
 import config from 'app/core/config';
 import angular from 'angular';
 import _ from 'lodash';
 
-import {DynamicDashboardSrv} from './dynamic_dashboard_srv';
+import {DynamicDashboardSrv} from '../dynamic_dashboard_srv';
 
 export class DashboardExporter {
 

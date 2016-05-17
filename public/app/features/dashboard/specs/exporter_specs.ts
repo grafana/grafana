@@ -2,7 +2,7 @@ import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/co
 
 import _ from 'lodash';
 import config from 'app/core/config';
-import {DashboardExporter} from '../exporter';
+import {DashboardExporter} from '../export/exporter';
 
 describe.only('given dashboard with repeated panels', function() {
   var dash, exported;

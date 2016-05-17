@@ -18,4 +18,5 @@ define([
   './impression_store',
   './upload',
   './import/import',
+  './export/export_modal',
 ], function () {});
