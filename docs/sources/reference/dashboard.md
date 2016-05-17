@@ -26,7 +26,6 @@ When a user creates a new dashboard, a new dashboard JSON object is initialized 
 {
   "id": null,
   "title": "New dashboard",
-  "originalTitle": "New dashboard",
   "tags": [],
   "style": "dark",
   "timezone": "browser",
@@ -59,7 +58,6 @@ Each field in the dashboard JSON is explained below with its usage:
 | ---- | ----- |
 | **id** | unique dashboard id, an integer |
 | **title** | current title of dashboard |
-| **originalTitle** | title of dashboard when saved for the first time |
 | **tags** | tags associated with dashboard, an array of strings |
 | **style** | theme of dashboard, i.e. `dark` or `light` |
 | **timezone** | timezone of dashboard, i.e. `utc` or `browser` |
