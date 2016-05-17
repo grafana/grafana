@@ -30,12 +30,12 @@
 			</li>
 			<li>
 				<a class="pointer" ng-click="shareDashboard(1)">
-					<i class="icon-gf icon-gf-snapshot"></i>Snapshot sharing
+					<i class="icon-gf icon-gf-snapshot"></i>Snapshot
 				</a>
 			</li>
       <li>
-				<a class="pointer" ng-click="shareExport()">
-					<i class="fa fa-cloud-upload"></i>Export for sharing
+				<a class="pointer" ng-click="shareDashboard(2)">
+					<i class="fa fa-cloud-upload"></i>Export
 				</a>
 			</li>
 		</ul>
@@ -49,8 +49,6 @@
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('settings');">Settings</a></li>
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('annotations');">Annotations</a></li>
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('templating');">Templating</a></li>
-			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="exportDashboard();">Export</a></li>
-			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="editJson();">View JSON</a></li>
 			<li ng-if="contextSrv.isEditor && !dashboard.editable"><a class="pointer" ng-click="makeEditable();">Make Editable</a></li>
 			<li ng-if="contextSrv.isEditor"><a class="pointer" ng-click="saveDashboardAs();">Save As...</a></li>
 			<li ng-if="dashboardMeta.canSave"><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>
