@@ -217,7 +217,7 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 func getAllMetrics(region string, namespace string, database string) (cloudwatch.ListMetricsOutput, error) {
 	cfg := &aws.Config{
 		Region:      aws.String(region),
-		Credentials: getCredentials(database),
+		Credentials: getCredentials(database, region),
 	}
 
 	svc := cloudwatch.New(session.New(cfg), cfg)
