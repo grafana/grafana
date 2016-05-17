@@ -59,12 +59,6 @@ export class DashNavCtrl {
       $scope.shareDashboard(1);
     };
 
-    $scope.shareExport = function() {
-      $scope.appEvent('show-modal', {
-        templateHtml: '<dash-export-modal></dash-export-modal>',
-      });
-    };
-
     $scope.openSearch = function() {
       $scope.appEvent('show-dash-search');
     };

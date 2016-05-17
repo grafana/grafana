@@ -22,11 +22,15 @@ function (angular, _, require, config) {
         $scope.modalTitle = 'Share Panel';
         $scope.tabs.push({title: 'Embed', src: 'shareEmbed.html'});
       } else {
-        $scope.modalTitle = 'Share Dashboard';
+        $scope.modalTitle = 'Share';
       }
 
       if (!$scope.dashboard.meta.isSnapshot) {
-        $scope.tabs.push({title: 'Snapshot sharing', src: 'shareSnapshot.html'});
+        $scope.tabs.push({title: 'Snapshot', src: 'shareSnapshot.html'});
+      }
+
+      if (!$scope.dashboard.meta.isSnapshot) {
+        $scope.tabs.push({title: 'Export', src: 'shareExport.html'});
       }
 
       $scope.buildUrl();
