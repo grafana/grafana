@@ -107,11 +107,13 @@ function (angular, _, moment) {
       this.cache = this.createQueryCache();
       this.instanceId = (new Date()).getTime();
 
-      function initUpdateNodes(networkAtlas) {
-        $rootScope.$on('netcrunch-host-data-changed(' + self.url + ')', function() {
+      function initUpdateNodes(networkAtlas, fromCache) {
+
+        function updateNodes() {
           var nodes = networkAtlas.networkNodes;
 
           nodes.table = [];
+          nodes.ready = true;
           Object.keys(nodes).forEach(function(nodeId) {
             nodes.table.push(nodes[nodeId]);
           });
@@ -120,11 +122,22 @@ function (angular, _, moment) {
             nodesReady.resolve(updated);
             $rootScope.$broadcast('hosts-updated(' + self.instanceId + ')', updated);
           });
-        });
+        }
+
+        if ((fromCache === true) && (networkAtlas.networkNodes.ready === true)) {
+          updateNodes();
+        }
+
+        $rootScope.$on('netcrunch-host-data-changed(' + self.url + ')', updateNodes);
       }
 
-      function initUpdateAtlas(networkAtlas) {
+      function initUpdateAtlas(networkAtlas, fromCache) {
+        if ((fromCache === true) && (networkAtlas.isReady === true)) {
+          networkAtlasReady.resolve(networkAtlas);
+        }
+
         $rootScope.$on('netcrunch-network-data-changed(' + self.url + ')', function() {
+          networkAtlas.isReady = true;
           networkAtlasReady.resolve(networkAtlas);
         });
       }
@@ -136,10 +149,12 @@ function (angular, _, moment) {
           netCrunchLogin=netCrunchConnectionProvider.getConnection(datasource);
           netCrunchLogin.then(
             function (connection) {
+              var fromCache=connection.fromCache;
+
               self.netCrunchConnection=connection;
               self.cache=self.createQueryCache();
-              initUpdateNodes(connection.networkAtlas);
-              initUpdateAtlas(connection.networkAtlas);
+              initUpdateNodes(connection.networkAtlas, fromCache);
+              initUpdateAtlas(connection.networkAtlas, fromCache);
               initTask.resolve();
             },
             function (error) {

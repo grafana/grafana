@@ -353,6 +353,8 @@ function (angular) {
     $scope.init = function() {
       var connectionTag = 'hosts-updated(' + $scope.datasource.instanceId + ')';
 
+      $scope.datasource.initDatasource();
+
       $scope.datasource.nodes.then(function(nodes) {
         prepareNodes(nodes);
       });

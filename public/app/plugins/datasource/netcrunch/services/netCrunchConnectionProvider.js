@@ -867,13 +867,13 @@ define([
 
       function getConnection(datasource) {
         var connection,
-            connectionLoggedIn,
             connectionKey = getConnectionKey(datasource);
 
         if (connectionPool[connectionKey] == null) {
           connection = new NetCrunchConnection(datasource.url, datasource.name);
           connectionPool[connectionKey] = connection.login(datasource.username, datasource.password).then(
             function() {
+              connection.fromCache = false;
               return connection;
             },
             function(error) {
@@ -882,10 +882,13 @@ define([
               return $q.reject(error);
             }
           );
+          return connectionPool[connectionKey];
+        } else {
+          return connectionPool[connectionKey].then(function(connection) {
+            connection.fromCache = true;
+            return connection;
+          });
         }
-
-        connectionLoggedIn = connectionPool[connectionKey];
-        return connectionLoggedIn;
       }
 
       function clearConnection(datasource) {
