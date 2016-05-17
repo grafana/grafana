@@ -682,7 +682,7 @@ define([
         function establishConnection () {
           var connectionState = $q.defer();
 
-          serverConnection = new adrem.Connection();
+          serverConnection = new adrem.Connection(apiURL);
           serverConnection.useWebSocket = false;
           serverConnection.reloadOnLogout = false;
           netCrunchClient = serverConnection.Client;
