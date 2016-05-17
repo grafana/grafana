@@ -4,7 +4,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import angular from 'angular';
 
-import {DashboardExporter} from '../exporter';
+import {DashboardExporter} from '../export/exporter';
 
 export class DashNavCtrl {
 
@@ -14,7 +14,6 @@ export class DashNavCtrl {
     $scope.init = function() {
       $scope.onAppEvent('save-dashboard', $scope.saveDashboard);
       $scope.onAppEvent('delete-dashboard', $scope.deleteDashboard);
-      $scope.onAppEvent('export-dashboard', $scope.snapshot);
       $scope.onAppEvent('quick-snapshot', $scope.quickSnapshot);
 
       $scope.showSettingsMenu = $scope.dashboardMeta.canEdit || $scope.contextSrv.isEditor;
@@ -58,6 +57,12 @@ export class DashNavCtrl {
 
     $scope.quickSnapshot = function() {
       $scope.shareDashboard(1);
+    };
+
+    $scope.shareExport = function() {
+      $scope.appEvent('show-modal', {
+        templateHtml: '<dash-export-modal></dash-export-modal>',
+      });
     };
 
     $scope.openSearch = function() {
@@ -181,7 +186,6 @@ export class DashNavCtrl {
       $rootScope.$broadcast('refresh');
 
       $timeout(function() {
-        $scope.exportDashboard();
         $scope.dashboard.snapshot = false;
         $scope.appEvent('dashboard-snapshot-cleanup');
       }, 1000);
