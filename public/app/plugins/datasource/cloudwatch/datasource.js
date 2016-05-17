@@ -3,9 +3,10 @@ define([
   'lodash',
   'moment',
   'app/core/utils/datemath',
+  './metric_find_query',
   './annotation_query',
 ],
-function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
+function (angular, _, moment, dateMath, CloudWatchMetricFindQuery, CloudWatchAnnotationQuery) {
   'use strict';
 
   /** @ngInject */
@@ -147,87 +148,17 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
       });
     };
 
+    this.performElbDescribeInstanceHealth = function(region, loadBalancerName) {
+      return this.awsRequest({
+        region: region,
+        action: 'ElbDescribeInstanceHealth',
+        parameters: { loadBalancerName: loadBalancerName }
+      });
+    };
+
     this.metricFindQuery = function(query) {
-      var region;
-      var namespace;
-      var metricName;
-
-      var transformSuggestData = function(suggestData) {
-        return _.map(suggestData, function(v) {
-          return { text: v };
-        });
-      };
-
-      var regionQuery = query.match(/^regions\(\)/);
-      if (regionQuery) {
-        return this.getRegions();
-      }
-
-      var namespaceQuery = query.match(/^namespaces\(\)/);
-      if (namespaceQuery) {
-        return this.getNamespaces();
-      }
-
-      var metricNameQuery = query.match(/^metrics\(([^\)]+?)(,\s?([^,]+?))?\)/);
-      if (metricNameQuery) {
-        return this.getMetrics(metricNameQuery[1], metricNameQuery[3]);
-      }
-
-      var dimensionKeysQuery = query.match(/^dimension_keys\(([^\)]+?)(,\s?([^,]+?))?\)/);
-      if (dimensionKeysQuery) {
-        return this.getDimensionKeys(dimensionKeysQuery[1], dimensionKeysQuery[3]);
-      }
-
-      var dimensionValuesQuery = query.match(/^dimension_values\(([^,]+?),\s?([^,]+?),\s?([^,]+?),\s?([^,]+?)\)/);
-      if (dimensionValuesQuery) {
-        region = templateSrv.replace(dimensionValuesQuery[1]);
-        namespace = templateSrv.replace(dimensionValuesQuery[2]);
-        metricName = templateSrv.replace(dimensionValuesQuery[3]);
-        var dimensionKey = templateSrv.replace(dimensionValuesQuery[4]);
-
-        return this.getDimensionValues(region, namespace, metricName, dimensionKey, {});
-      }
-
-      var ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
-      if (ebsVolumeIdsQuery) {
-        region = templateSrv.replace(ebsVolumeIdsQuery[1]);
-        var instanceId = templateSrv.replace(ebsVolumeIdsQuery[2]);
-        var instanceIds = [
-          instanceId
-        ];
-
-        return this.performEC2DescribeInstances(region, [], instanceIds).then(function(result) {
-          var volumeIds = _.map(result.Reservations[0].Instances[0].BlockDeviceMappings, function(mapping) {
-            return mapping.Ebs.VolumeId;
-          });
-
-          return transformSuggestData(volumeIds);
-        });
-      }
-
-      var ec2InstanceAttributeQuery = query.match(/^ec2_instance_attribute\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
-      if (ec2InstanceAttributeQuery) {
-        region = templateSrv.replace(ec2InstanceAttributeQuery[1]);
-        var filterJson = JSON.parse(templateSrv.replace(ec2InstanceAttributeQuery[3]));
-        var filters = _.map(filterJson, function(values, name) {
-          return {
-            Name: name,
-            Values: values
-          };
-        });
-        var targetAttributeName = templateSrv.replace(ec2InstanceAttributeQuery[2]);
-
-        return this.performEC2DescribeInstances(region, filters, null).then(function(result) {
-          var attributes = _.chain(result.Reservations)
-          .map(function(reservations) {
-            return _.pluck(reservations.Instances, targetAttributeName);
-          })
-          .flatten().uniq().sortBy().value();
-          return transformSuggestData(attributes);
-        });
-      }
-
-      return $q.when([]);
+      var metricFindQuery = new CloudWatchMetricFindQuery(this, query, $q, templateSrv);
+      return metricFindQuery.process();
     };
 
     this.performDescribeAlarms = function(region, actionPrefix, alarmNamePrefix, alarmNames, stateValue) {

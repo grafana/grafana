@@ -66,6 +66,7 @@ Name | Description
 `dimension_values(region, namespace, metric, dimension_key)` | Returns a list of dimension values matching the specified `region`, `namespace`, `metric` and `dimension_key`.
 `ebs_volume_ids(region, instance_id)` | Returns a list of volume id matching the specified `region`, `instance_id`.
 `ec2_instance_attribute(region, attribute_name, filters)` | Returns a list of attribute matching the specified `region`, `attribute_name`, `filters`.
+`elb_instance_ids(region, load_balancer_name)` | Returns a list of instance id matching the specified `region`, `load_balancer_name`.
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
