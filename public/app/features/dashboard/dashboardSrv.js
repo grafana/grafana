@@ -22,7 +22,6 @@ function (angular, $, _, moment) {
 
       this.id = data.id || null;
       this.title = data.title || 'No Title';
-      this.originalTitle = this.title;
       this.tags = data.tags || [];
       this.style = data.style || "dark";
       this.timezone = data.timezone || '';

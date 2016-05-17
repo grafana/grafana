@@ -15,6 +15,8 @@ export class DashboardExporter {
     var dynSrv = new DynamicDashboardSrv();
     dynSrv.process(dash, {cleanUpOnly: true});
 
+    dash.id = null;
+
     var inputs = [];
     var requires = {};
     var datasources = {};
@@ -63,10 +65,14 @@ export class DashboardExporter {
         return req;
       });
 
-      dash["__inputs"] = inputs;
-      dash["__requires"] = requires;
+      // make inputs and requires a top thing
+      var newObj = {};
+      newObj["__inputs"] = inputs;
+      newObj["__requires"] = requires;
 
-      return dash;
+      _.defaults(newObj, dash);
+
+      return newObj;
     }).catch(err => {
       console.log('Export failed:', err);
       return {};

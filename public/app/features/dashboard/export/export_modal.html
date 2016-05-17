@@ -12,10 +12,10 @@
 	</div>
 
 	<div class="modal-content" ng-cloak>
-		<p>
-			Exporting will export a cleaned sharable dashboard that can be imported
-			into another Grafana instance.
-		</p>
+		<!-- <p> -->
+		<!-- 	Exporting will export a cleaned sharable dashboard that can be imported -->
+		<!-- 	into another Grafana instance. -->
+		<!-- </p> -->
 
 		<h3 class="section-heading">
 			Options
@@ -38,37 +38,29 @@
 			</div>
 		</div>
 
-		<h3 class="section-heading">
-			Dashboard data sources
-		</h3>
-
-		<div class="gf-form-group">
-			<div class="gf-form-inline" ng-repeat="input in ctrl.dash.__inputs">
-				<div class="gf-form width-25">
-					<label class="gf-form-label width-8">Name</label>
-					<input type="text" class="gf-form-input" ng-model="input.name">
-					<label class="gf-form-label text-success" ng-show="input.name">
-						<i class="fa fa-check"></i>
-					</label>
-				</div>
-				<div class="gf-form width-25">
-					<label class="gf-form-label width-8">Description</label>
-					<input type="text" class="gf-form-input" ng-model="input.desc">
-					<label class="gf-form-label text-success" ng-show="input.desc">
-						<i class="fa fa-check"></i>
-					</label>
-				</div>
-			</div>
-		</div>
+		<!-- <h3 class="section&#45;heading"> -->
+		<!-- 	Dashboard data sources -->
+		<!-- </h3> -->
+		<!--  -->
+		<!-- <div class="gf&#45;form&#45;group"> -->
+		<!-- 	<div class="gf&#45;form&#45;inline" ng&#45;repeat="input in ctrl.dash.__inputs"> -->
+		<!-- 		<div class="gf&#45;form width&#45;25"> -->
+		<!-- 			<label class="gf&#45;form&#45;label width&#45;8">Name</label> -->
+		<!-- 			<input type="text" class="gf&#45;form&#45;input" ng&#45;model="input.name"> -->
+		<!-- 		</div> -->
+		<!-- 	</div> -->
+		<!-- </div> -->
 
 		<div class="gf-form-button-row">
-			<button type="button" class="btn gf-form-btn width-10 btn-success" ng-click="ctrl.export()">
-				<i class="fa fa-download"></i> Export
+			<button type="button" class="btn gf-form-btn width-10 btn-success" ng-click="ctrl.save()">
+				<i class="fa fa-save"></i> Save to file
+			</button>
+			<button type="button" class="btn gf-form-btn width-10 btn-secondary" ng-click="ctrl.saveJson()">
+				<i class="fa fa-file-text-o"></i> View JSON
 			</button>
 			<a class="btn btn-link" ng-click="dismiss()">Cancel</a>
 		</div>
 
 	</div>
-</div>
 </div>
 
