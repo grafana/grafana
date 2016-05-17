@@ -1,6 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import config from 'app/core/config';
+import panelclipboard from 'app/core/panelclipboard';
 import _ from 'lodash';
 import angular from 'angular';
 import $ from 'jquery';
@@ -81,6 +82,10 @@ export class PanelCtrl {
     this.changeView(true, true);
   }
 
+  copyPanel() {
+    panelclipboard.set(this.panel, this.dashboard.title + ": ");
+  }
+
   exitFullscreen() {
     this.changeView(false, false);
   }
@@ -111,6 +116,7 @@ export class PanelCtrl {
     let menu = [];
     menu.push({text: 'View', click: 'ctrl.viewPanel(); dismiss();'});
     menu.push({text: 'Edit', click: 'ctrl.editPanel(); dismiss();', role: 'Editor'});
+    menu.push({text: 'Copy', click: 'ctrl.copyPanel(); dismiss();'});
     if (!this.fullscreen) { //  duplication is not supported in fullscreen mode
       menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
     }

@@ -1,9 +1,10 @@
 define([
   'angular',
   'lodash',
-  'app/core/config'
+  'app/core/config',
+  'app/core/panelclipboard'
 ],
-function (angular, _, config) {
+function (angular, _, config, panelclipboard) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -112,6 +113,20 @@ function (angular, _, config) {
       $timeout(function() {
         $scope.dashboardViewState.update({fullscreen: true, edit: true, panelId: panel.id });
       });
+    };
+
+    $scope.pastePanel = function() {
+      var panel = panelclipboard.get();
+      if (panel != null) {
+        panel.span = 12;
+        $scope.addPanel(panel);
+
+        $timeout(function() {
+          $scope.$broadcast('render');
+        });
+      } else {
+        $scope.appEvent('alert-error', ["Clipboard error", "The clipboard doesn't contain a valid panel"]);
+      }
     };
 
     $scope.setHeight = function(height) {

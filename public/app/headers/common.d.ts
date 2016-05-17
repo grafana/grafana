@@ -38,6 +38,11 @@ declare module 'app/core/store' {
   export default store;
 }
 
+declare module 'app/core/panelclipboard' {
+  var panelclipboard: any;
+  export default panelclipboard;
+}
+
 declare module 'tether' {
   var config: any;
   export default config;
