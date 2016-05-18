@@ -31,6 +31,8 @@ export class DashImportCtrl {
       for (let input of this.dash.__inputs) {
         var inputModel = {
           name: input.name,
+          label: input.label,
+          description: input.description,
           type: input.type,
           pluginId: input.pluginId,
           options: []
@@ -55,6 +57,8 @@ export class DashImportCtrl {
 
     if (sources.length === 0) {
       inputModel.error = "No data sources of type " + input.pluginName + " found";
+    } else if (inputModel.description) {
+      inputModel.info = inputModel.description;
     } else {
       inputModel.info = "Select a " + input.pluginName + " data source";
     }

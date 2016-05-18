@@ -62,7 +62,7 @@
 
 				<div ng-repeat="input in ctrl.inputs">
 					<div class="gf-form">
-						<label class="gf-form-label width-15">{{input.name}}</label>
+						<label class="gf-form-label width-15">{{input.label}}</label>
 						<div class="gf-form-select-wrapper" style="width: 100%">
 							<select class="gf-form-input" ng-model="input.value" ng-options="v.value as v.text for v in input.options" ng-change="ctrl.inputValueChanged()"></select>
 						</div>
