@@ -138,6 +138,10 @@ define([
     this.replace = function(target) {
       return target;
     };
+
+    this.setTime = function(time) {
+      this.time = time;
+    };
   }
 
   function ContextSrvStub() {
