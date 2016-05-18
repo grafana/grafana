@@ -282,7 +282,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
           options.xaxis = {
             timezone: dashboard.getTimezone(),
-            show: panel['x-axis'],
+            show: panel.xaxis.show,
             mode: "time",
             min: min,
             max: max,
@@ -452,12 +452,21 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           url += panel.fill !== 0 ? ('&areaAlpha=' + (panel.fill/10).toFixed(1)) : '';
           url += panel.linewidth !== 0 ? '&lineWidth=' + panel.linewidth : '';
           url += panel.legend.show ? '&hideLegend=false' : '&hideLegend=true';
-          url += panel.grid.leftMin !== null ? '&yMin=' + panel.grid.leftMin : '';
-          url += panel.grid.leftMax !== null ? '&yMax=' + panel.grid.leftMax : '';
-          url += panel.grid.rightMin !== null ? '&yMin=' + panel.grid.rightMin : '';
-          url += panel.grid.rightMax !== null ? '&yMax=' + panel.grid.rightMax : '';
-          url += panel['x-axis'] ? '' : '&hideAxes=true';
-          url += panel['y-axis'] ? '' : '&hideYAxis=true';
+
+          if (panel.yaxes && panel.yaxes.length > 0) {
+            var showYaxis = false;
+            for(var i = 0; panel.yaxes.length > i; i++) {
+              if (panel.yaxes[i].show) {
+                url += (panel.yaxes[i].min !== null && panel.yaxes[i].min !== undefined) ? '&yMin=' + panel.yaxes[i].min : '';
+                url += (panel.yaxes[i].max !== null && panel.yaxes[i].max !== undefined) ? '&yMax=' + panel.yaxes[i].max : '';
+                showYaxis = true;
+                break;
+              }
+            }
+            url += showYaxis ? '' : '&hideYAxis=true';
+          }
+
+          url += panel.xaxis.show ? '' : '&hideAxes=true';
 
           switch(panel.yaxes[0].format) {
             case 'bytes':

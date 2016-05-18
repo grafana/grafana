@@ -5,5 +5,8 @@
 *~
 extern/
 node_modules/
-tmp
+tmp/
+data/
 vendor/
+public_gen/
+dist/
