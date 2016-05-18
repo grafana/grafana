@@ -81,17 +81,5 @@ export class DashboardExporter {
     });
   }
 
-  export(dashboard) {
-    return this.makeExportable(dashboard).then(clean => {
-      var html = angular.toJson(clean, true);
-      var uri = "data:application/json," + encodeURIComponent(html);
-      var newWindow = window.open(uri);
-
-      // var blob = new Blob([angular.toJson(clean, true)], { type: "application/json;charset=utf-8" });
-      // var wnd: any = window;
-      // wnd.saveAs(blob, clean.title + '-' + new Date().getTime() + '.json');
-    });
-  }
-
 }
 
