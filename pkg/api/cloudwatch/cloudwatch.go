@@ -56,7 +56,7 @@ type cache struct {
 var awsCredentialCache map[string]cache = make(map[string]cache)
 var credentialCacheLock sync.RWMutex
 
-func getCredentials(profile string, region string) *credentials.Credentials {
+func getCredentials(profile string, region string, assumeRoleArn string) *credentials.Credentials {
 	credentialCacheLock.RLock()
 	if _, ok := awsCredentialCache[profile]; ok {
 		if awsCredentialCache[profile].expiration != nil &&
@@ -73,9 +73,9 @@ func getCredentials(profile string, region string) *credentials.Credentials {
 	sessionToken := ""
 	var expiration *time.Time
 	expiration = nil
-	if strings.Index(profile, "arn:") == 0 {
+	if strings.Index(assumeRoleArn, "arn:aws:iam:") == 0 {
 		params := &sts.AssumeRoleInput{
-			RoleArn:         aws.String(profile),
+			RoleArn:         aws.String(assumeRoleArn),
 			RoleSessionName: aws.String("GrafanaSession"),
 			DurationSeconds: aws.Int64(900),
 		}
@@ -116,12 +116,17 @@ func getCredentials(profile string, region string) *credentials.Credentials {
 	return creds
 }
 
-func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
+func getAwsConfig(req *cwRequest) *aws.Config {
+	assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	cfg := &aws.Config{
 		Region:      aws.String(req.Region),
-		Credentials: getCredentials(req.DataSource.Database, req.Region),
+		Credentials: getCredentials(req.DataSource.Database, req.Region, assumeRoleArn),
 	}
+	return cfg
+}
 
+func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
+	cfg := getAwsConfig(req)
 	svc := cloudwatch.New(session.New(cfg), cfg)
 
 	reqParam := &struct {
@@ -157,11 +162,7 @@ func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
 }
 
 func handleListMetrics(req *cwRequest, c *middleware.Context) {
-	cfg := &aws.Config{
-		Region:      aws.String(req.Region),
-		Credentials: getCredentials(req.DataSource.Database, req.Region),
-	}
-
+	cfg := getAwsConfig(req)
 	svc := cloudwatch.New(session.New(cfg), cfg)
 
 	reqParam := &struct {
@@ -197,11 +198,7 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 }
 
 func handleDescribeAlarms(req *cwRequest, c *middleware.Context) {
-	cfg := &aws.Config{
-		Region:      aws.String(req.Region),
-		Credentials: getCredentials(req.DataSource.Database, req.Region),
-	}
-
+	cfg := getAwsConfig(req)
 	svc := cloudwatch.New(session.New(cfg), cfg)
 
 	reqParam := &struct {
@@ -240,11 +237,7 @@ func handleDescribeAlarms(req *cwRequest, c *middleware.Context) {
 }
 
 func handleDescribeAlarmsForMetric(req *cwRequest, c *middleware.Context) {
-	cfg := &aws.Config{
-		Region:      aws.String(req.Region),
-		Credentials: getCredentials(req.DataSource.Database, req.Region),
-	}
-
+	cfg := getAwsConfig(req)
 	svc := cloudwatch.New(session.New(cfg), cfg)
 
 	reqParam := &struct {
@@ -280,11 +273,7 @@ func handleDescribeAlarmsForMetric(req *cwRequest, c *middleware.Context) {
 }
 
 func handleDescribeAlarmHistory(req *cwRequest, c *middleware.Context) {
-	cfg := &aws.Config{
-		Region:      aws.String(req.Region),
-		Credentials: getCredentials(req.DataSource.Database, req.Region),
-	}
-
+	cfg := getAwsConfig(req)
 	svc := cloudwatch.New(session.New(cfg), cfg)
 
 	reqParam := &struct {
@@ -316,11 +305,7 @@ func handleDescribeAlarmHistory(req *cwRequest, c *middleware.Context) {
 }
 
 func handleDescribeInstances(req *cwRequest, c *middleware.Context) {
-	cfg := &aws.Config{
-		Region:      aws.String(req.Region),
-		Credentials: getCredentials(req.DataSource.Database, req.Region),
-	}
-
+	cfg := getAwsConfig(req)
 	svc := ec2.New(session.New(cfg), cfg)
 
 	reqParam := &struct {
