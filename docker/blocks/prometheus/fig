@@ -6,7 +6,7 @@ prometheus:
   volumes:
     - /var/docker/prometheus:/prometheus-data
 
-fake-data-gen:
+fake-prometheus-data:
   image: grafana/fake-data-gen
   net: bridge
   ports:
