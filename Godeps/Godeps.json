@@ -125,6 +125,11 @@
 			"Rev": "abb928e07c4108683d6b4d0b6ca08fe6bc0eee5f"
 		},
 		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/sts",
+			"Comment": "v1.0.0",
+			"Rev": "abb928e07c4108683d6b4d0b6ca08fe6bc0eee5f"
+		},
+		{
 			"ImportPath": "github.com/bmizerany/assert",
 			"Comment": "release.r60-6-ge17e998",
 			"Rev": "e17e99893cb6509f428e1728281c2ad60a6b31e3"
