@@ -7,6 +7,7 @@
 
 # 3.0.3 Patch release (unreleased)
 * **Time picker**: Fixed issue timepicker and UTC when reading time from URL, fixes [#5078](https://github.com/grafana/grafana/issues/5078)
+* **CloudWatch**: Support for Multiple Account by AssumeRole, closes [#3522](https://github.com/grafana/grafana/issues/3522)
 
 # 3.0.2 Patch release (2016-05-16)
 
