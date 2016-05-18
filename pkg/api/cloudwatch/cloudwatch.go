@@ -80,7 +80,18 @@ func getCredentials(profile string, region string, assumeRoleArn string) *creden
 			DurationSeconds: aws.Int64(900),
 		}
 
-		svc := sts.New(session.New(), &aws.Config{Region: aws.String(region)})
+		stsSess := session.New()
+		stsCreds := credentials.NewChainCredentials(
+			[]credentials.Provider{
+				&credentials.EnvProvider{},
+				&credentials.SharedCredentialsProvider{Filename: "", Profile: profile},
+				&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(stsSess), ExpiryWindow: 5 * time.Minute},
+			})
+		stsConfig := &aws.Config{
+			Region:      aws.String(region),
+			Credentials: stsCreds,
+		}
+		svc := sts.New(session.New(stsConfig), stsConfig)
 		resp, err := svc.AssumeRole(params)
 		if err != nil {
 			// ignore
