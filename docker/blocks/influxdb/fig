@@ -5,7 +5,7 @@ influxdb:
     - "8083:8083"
     - "8086:8086"
 
-fake-data-gen:
+fake-influxdb-data:
   image: grafana/fake-data-gen
   net: bridge
   environment:
