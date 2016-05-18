@@ -10,7 +10,7 @@ import PrometheusMetricFindQuery from './metric_find_query';
 var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
 /** @ngInject */
-export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
   this.type = 'prometheus';
   this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
   this.name = instanceSettings.name;
@@ -145,7 +145,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       return $q.reject(err);
     }
 
-    var metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
+    var metricFindQuery = new PrometheusMetricFindQuery(this, interpolated, timeSrv);
     return metricFindQuery.process();
   };
 
