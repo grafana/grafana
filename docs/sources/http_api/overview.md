@@ -18,4 +18,5 @@ dashboards, creating users and updating data sources.
 * [User API](/http_api/user/)
 * [Admin API](/http_api/admin/)
 * [Snapshot API](/http_api/snapshot/)
+* [Preferences API](/http_api/preferences/)
 * [Other API](/http_api/other/)
