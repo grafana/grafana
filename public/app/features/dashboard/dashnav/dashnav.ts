@@ -169,10 +169,11 @@ export class DashNavCtrl {
       });
     };
 
-    $scope.exportDashboard = function() {
+    $scope.viewJson = function() {
       var clone = $scope.dashboard.getSaveModelClone();
-      var exporter = new DashboardExporter(datasourceSrv);
-      exporter.export(clone);
+      var html = angular.toJson(clone, true);
+      var uri = "data:application/json," + encodeURIComponent(html);
+      var newWindow = window.open(uri);
     };
 
     $scope.snapshot = function() {
