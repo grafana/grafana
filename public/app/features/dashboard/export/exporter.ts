@@ -26,9 +26,11 @@ export class DashboardExporter {
       _.each(row.panels, (panel) => {
         if (panel.datasource !== undefined) {
           promises.push(this.datasourceSrv.get(panel.datasource).then(ds => {
-            var refName = 'DS_' + ds.name.toUpperCase();
+            var refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
             datasources[panel.datasource] = {
               name: refName,
+              label: ds.name,
+              description: '',
               type: 'datasource',
               pluginId: ds.meta.id,
               pluginName: ds.meta.name,
