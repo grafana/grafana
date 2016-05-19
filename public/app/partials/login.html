@@ -52,7 +52,7 @@
 
 				<div class="login-oauth text-center" ng-if="oauthEnabled">
 					<a class="btn btn-large btn-google" href="login/openidc" target="_self" ng-if="openidcAuthEnabled">
-						<i class="fa fa-openid"></i>
+						<i class="fa {{openidcProviderIcon}}"></i>
 						with {{openidcProviderName}}
 					</a>
 					<a class="btn btn-large btn-google" href="login/google" target="_self" ng-if="googleAuthEnabled">

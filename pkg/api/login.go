@@ -30,6 +30,7 @@ func LoginView(c *middleware.Context) {
 	viewData.Settings["openidcAuthEnabled"] = setting.OAuthService.Openidc
 	if setting.OAuthService.Openidc {
 		viewData.Settings["openidcProviderName"] = setting.OAuthService.OAuthInfos["openidc"].ProviderName
+		viewData.Settings["openidcProviderIcon"] = setting.OAuthService.OAuthInfos["openidc"].ProviderIcon
 	}
 	viewData.Settings["disableUserSignUp"] = !setting.AllowUserSignUp
 	viewData.Settings["loginHint"] = setting.LoginHint
