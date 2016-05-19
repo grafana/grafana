@@ -42,7 +42,7 @@ func NewOAuthService() {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
-	allOauthes := []string{"github", "google"}
+	allOauthes := []string{"github", "google", "openidc"}
 
 	for _, name := range allOauthes {
 		sec := setting.Cfg.Section("auth." + name)
@@ -98,7 +98,46 @@ func NewOAuthService() {
 				allowSignup: info.AllowSignup,
 			}
 		}
+		if name == "openidc" {
+			setting.OAuthService.Openidc = true
+			provider := sec.Key("provider").String()
+			if provider != "" && (config.Endpoint.AuthURL == "" || config.Endpoint.TokenURL == "" || info.ApiUrl == "") {
+				urls, _ := getOpenIDCProviderConfig(provider)
+				if config.Endpoint.AuthURL == "" {
+					config.Endpoint.AuthURL = urls[0]
+				}
+				if config.Endpoint.TokenURL == "" {
+					config.Endpoint.TokenURL = urls[1]
+				}
+				if info.ApiUrl == "" {
+					info.ApiUrl = urls[2]
+				}
+			}
+			SocialMap["openidc"] = &SocialOpenIDC{
+				Config: &config, allowedDomains: info.AllowedDomains,
+				apiUrl:      info.ApiUrl,
+				allowSignup: info.AllowSignup,
+			}
+		}
 	}
+}
+
+func getOpenIDCProviderConfig(url string) ([]string, error) {
+	var providerConfig struct {
+		AuthUrl  string `json:"authorization_endpoint"`
+		TokenUrl string `json:"token_endpoint"`
+		ApiUrl   string `json:"userinfo_endpoint"`
+	}
+	r, err := http.Get(url + "/.well-known/openid-configuration")
+	if err != nil {
+		return nil, err
+	}
+	defer r.Body.Close()
+
+	if err = json.NewDecoder(r.Body).Decode(&providerConfig); err != nil {
+		return nil, err
+	}
+	return []string{providerConfig.AuthUrl, providerConfig.TokenUrl, providerConfig.ApiUrl}, nil
 }
 
 func isEmailAllowed(email string, allowedDomains []string) bool {
@@ -355,6 +394,57 @@ func (s *SocialGoogle) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 		return nil, err
 	}
 	defer r.Body.Close()
+	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
+		return nil, err
+	}
+	return &BasicUserInfo{
+		Identity: data.Id,
+		Name:     data.Name,
+		Email:    data.Email,
+	}, nil
+}
+
+//   ___                   ___ ____     ____                            _
+//  / _ \ _ __   ___ _ __ |_ _|  _ \   / ___|___  _ __  _ __   ___  ___| |_
+// | | | | '_ \ / _ \ '_ \ | || | | | | |   / _ \| '_ \| '_ \ / _ \/ __| __|
+// | |_| | |_) |  __/ | | || || |_| | | |__| (_) | | | | | | |  __/ (__| |_
+//  \___/| .__/ \___|_| |_|___|____/   \____\___/|_| |_|_| |_|\___|\___|\__|
+//       |_|
+
+type SocialOpenIDC struct {
+	*oauth2.Config
+	allowedDomains []string
+	apiUrl         string
+	allowSignup    bool
+}
+
+func (s *SocialOpenIDC) Type() int {
+	return int(models.OPENIDC)
+}
+
+func (s *SocialOpenIDC) IsEmailAllowed(email string) bool {
+	return isEmailAllowed(email, s.allowedDomains)
+}
+
+func (s *SocialOpenIDC) IsSignupAllowed() bool {
+	return s.allowSignup
+}
+
+func (s *SocialOpenIDC) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
+	var data struct {
+		Id    string `json:"sub"`
+		Name  string `json:"name"`
+		Email string `json:"email"`
+	}
+	var err error
+
+	client := s.Client(oauth2.NoContext, token)
+	r, err := client.Get(s.apiUrl)
+	if err != nil {
+		return nil, err
+	}
+	defer r.Body.Close()
+
 	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
 		return nil, err
 	}
