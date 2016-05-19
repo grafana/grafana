@@ -15,6 +15,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
   oldTarget: any;
   suggestMetrics: any;
   linkToPrometheus: any;
+  alertRule: any;
 
   /** @ngInject */
   constructor($scope, $injector, private templateSrv) {
@@ -70,6 +71,18 @@ class PrometheusQueryCtrl extends QueryCtrl {
     };
     var hash = encodeURIComponent(JSON.stringify([expr]));
     this.linkToPrometheus = this.datasource.directUrl + '/graph#' + hash;
+  }
+
+  updateAlertRule() {
+    var alertName = 'AlertName';
+    var threshold = this.panelCtrl.panel.grid.threshold2 || this.panelCtrl.panel.grid.threshold1;
+    var rule = 'ALERT ' + alertName + '\n' +
+    '  IF ' + this.panelCtrl.panel.targets[0].expr + ' > ' + threshold + '\n' +
+    '  ANNOTATIONS {' + '\n' +
+    '    summary = "",' + '\n' +
+    '    description = "",' + '\n' +
+    '  }';
+    this.alertRule = rule;
   }
 }
 
