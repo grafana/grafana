@@ -28,7 +28,7 @@ export function parse(text, roundUp?) {
       mathString = text.substring(index + 2);
     }
     // We're going to just require ISO8601 timestamps, k?
-    time = moment(parseString);
+    time = moment(parseString, moment.ISO_8601);
   }
 
   if (!mathString.length) {
