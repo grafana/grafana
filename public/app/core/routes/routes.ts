@@ -32,20 +32,18 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controller : 'SoloPanelCtrl',
     pageClass: 'page-dashboard',
   })
-  .when('/dashboard-import/:file', {
-    templateUrl: 'public/app/partials/dashboard.html',
-    controller : 'DashFromImportCtrl',
-    reloadOnSearch: false,
-    pageClass: 'page-dashboard',
-  })
   .when('/dashboard/new', {
     templateUrl: 'public/app/partials/dashboard.html',
     controller : 'NewDashboardCtrl',
     reloadOnSearch: false,
     pageClass: 'page-dashboard',
   })
-  .when('/import/dashboard', {
-    templateUrl: 'public/app/features/dashboard/partials/import.html',
+  .when('/dashboards/list', {
+    templateUrl: 'public/app/features/dashboard/partials/dash_list.html',
+    controller : 'DashListCtrl',
+  })
+  .when('/dashboards/migrate', {
+    templateUrl: 'public/app/features/dashboard/partials/migrate.html',
     controller : 'DashboardImportCtrl',
   })
   .when('/datasources', {
