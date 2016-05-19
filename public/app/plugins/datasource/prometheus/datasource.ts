@@ -257,15 +257,19 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   };
 
   this.renderTemplate = function(format, data) {
+    var variableName = 'labels';
     var originalSettings = _.templateSettings;
     _.templateSettings = {
-      interpolate: /\{\{(.+?)\}\}/g
+      interpolate: /\{\{(.+?)\}\}/g,
+      variable: variableName
     };
 
-    var template = _.template(templateSrv.replace(format));
+    var template = _.template(templateSrv.replace(format).replace(/{{/g, '{{' + variableName + '.'));
     var result;
     try {
-      result = template(data);
+      var templateData = angular.copy(data); // for backward compatibility
+      templateData[variableName] = angular.copy(templateData); // support new format
+      result = template(templateData);
     } catch (e) {
       result = null;
     }
