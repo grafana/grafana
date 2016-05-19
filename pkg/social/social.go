@@ -56,6 +56,7 @@ func NewOAuthService() {
 			Enabled:        sec.Key("enabled").MustBool(),
 			AllowedDomains: sec.Key("allowed_domains").Strings(" "),
 			AllowSignup:    sec.Key("allow_sign_up").MustBool(),
+			ProviderName:   sec.Key("provider_name").String(),
 		}
 
 		if !info.Enabled {

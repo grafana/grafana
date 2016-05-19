@@ -28,6 +28,9 @@ func LoginView(c *middleware.Context) {
 	viewData.Settings["googleAuthEnabled"] = setting.OAuthService.Google
 	viewData.Settings["githubAuthEnabled"] = setting.OAuthService.GitHub
 	viewData.Settings["openidcAuthEnabled"] = setting.OAuthService.Openidc
+	if setting.OAuthService.Openidc {
+		viewData.Settings["openidcProviderName"] = setting.OAuthService.OAuthInfos["openidc"].ProviderName
+	}
 	viewData.Settings["disableUserSignUp"] = !setting.AllowUserSignUp
 	viewData.Settings["loginHint"] = setting.LoginHint
 
