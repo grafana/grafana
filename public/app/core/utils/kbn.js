@@ -396,6 +396,7 @@ function($, _) {
   kbn.valueFormats.ev           = kbn.formatBuilders.decimalSIPrefix('eV');
   kbn.valueFormats.amp          = kbn.formatBuilders.decimalSIPrefix('A');
   kbn.valueFormats.volt         = kbn.formatBuilders.decimalSIPrefix('V');
+  kbn.valueFormats.dBm          = kbn.formatBuilders.decimalSIPrefix('dBm');
 
   // Temperature
   kbn.valueFormats.celsius   = kbn.formatBuilders.fixedUnit('°C');
@@ -677,6 +678,7 @@ function($, _) {
           {text: 'electron volt (eV)',         value: 'ev'          },
           {text: 'Ampere (A)',                 value: 'amp'         },
           {text: 'Volt (V)',                   value: 'volt'        },
+          {text: 'Decibel-milliwatt (dBm)',    value: 'dBm'         },
         ]
       },
       {

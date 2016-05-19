@@ -4,7 +4,7 @@
     "company": "Coding Instinct AB"
   },
   "name": "grafana",
-  "version": "3.0.0-beta7",
+  "version": "3.1.0",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -13,7 +13,7 @@
     "zone.js": "^0.6.6",
     "autoprefixer": "^6.3.3",
     "es6-promise": "^3.0.2",
-    "es6-shim": "^0.35.0",
+    "es6-shim": "^0.35.1",
     "expect.js": "~0.2.0",
     "glob": "~3.2.7",
     "grunt": "~0.4.0",
