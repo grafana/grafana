@@ -190,6 +190,11 @@ define([
         expect(contains).to.be(true);
       });
 
+      it('should not find it if only part matches with $var syntax', function() {
+        var contains = _templateSrv.containsVariable('this.$ServerDomain.filters', 'Server');
+        expect(contains).to.be(false);
+      });
+
       it('should find it with [[var]] syntax', function() {
         var contains = _templateSrv.containsVariable('this.[[test]].filters', 'test');
         expect(contains).to.be(true);

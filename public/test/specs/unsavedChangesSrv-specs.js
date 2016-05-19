@@ -29,6 +29,7 @@ define([
 
     beforeEach(function() {
       dash = _dashboardSrv.create({
+        refresh: false,
         rows: [
           {
             panels: [{ test: "asd", legend: { } }]
