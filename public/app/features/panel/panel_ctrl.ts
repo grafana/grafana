@@ -90,6 +90,15 @@ export class PanelCtrl {
     this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
     this.editModeInitiated = true;
     this.events.emit('init-edit-mode', null);
+
+    var route = this.$injector.get('$route');
+    if (route.current.params.editorTab) {
+      this.editorTabs.forEach((tab, i) => {
+        if (tab.title === route.current.params.editorTab) {
+          this.editorTabIndex = i;
+        }
+      });
+    }
   }
 
   addEditorTab(title, directiveFn, index?) {
