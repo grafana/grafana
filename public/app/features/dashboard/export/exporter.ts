@@ -22,28 +22,33 @@ export class DashboardExporter {
     var datasources = {};
     var promises = [];
 
+    var templateizeDatasourceUsage = obj => {
+      promises.push(this.datasourceSrv.get(obj.datasource).then(ds => {
+        var refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
+        datasources[obj.datasource] = {
+          name: refName,
+          label: ds.name,
+          description: '',
+          type: 'datasource',
+          pluginId: ds.meta.id,
+          pluginName: ds.meta.name,
+        };
+        obj.datasource = '${' + refName  +'}';
+
+        requires['datasource' + ds.meta.id] = {
+          type: 'datasource',
+          id: ds.meta.id,
+          name: ds.meta.name,
+          version: ds.meta.info.version || "1.0.0",
+        };
+      }));
+    };
+
+    // check up panel data sources
     for (let row of dash.rows) {
       _.each(row.panels, (panel) => {
         if (panel.datasource !== undefined) {
-          promises.push(this.datasourceSrv.get(panel.datasource).then(ds => {
-            var refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
-            datasources[panel.datasource] = {
-              name: refName,
-              label: ds.name,
-              description: '',
-              type: 'datasource',
-              pluginId: ds.meta.id,
-              pluginName: ds.meta.name,
-            };
-            panel.datasource = '${' + refName  +'}';
-
-            requires['datasource' + ds.meta.id] = {
-              type: 'datasource',
-              id: ds.meta.id,
-              name: ds.meta.name,
-              version: ds.meta.info.version || "1.0.0",
-            };
-          }));
+          templateizeDatasourceUsage(panel);
         }
 
         var panelDef = config.panels[panel.type];
@@ -56,6 +61,21 @@ export class DashboardExporter {
           };
         }
       });
+    }
+
+    // templatize template vars
+    for (let variable of dash.templating.list) {
+      if (variable.type === 'query') {
+        templateizeDatasourceUsage(variable);
+        variable.options = [];
+        variable.current = {};
+        variable.refresh = 1;
+      }
+    }
+
+    // templatize annotations vars
+    for (let annotationDef of dash.annotations.list) {
+      templateizeDatasourceUsage(annotationDef);
     }
 
     return Promise.all(promises).then(() => {

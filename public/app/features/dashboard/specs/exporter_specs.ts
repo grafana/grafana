@@ -10,12 +10,21 @@ describe.only('given dashboard with repeated panels', function() {
   beforeEach(done => {
     dash = {
       rows: [],
-      templating: { list: [] }
+      templating: { list: [] },
+      annotations: { list: [] },
     };
+
     dash.templating.list.push({
       name: 'apps',
-      current: {},
-      options: []
+      type: 'query',
+      datasource: 'gfdb',
+      current: {value: 'Asd', text: 'Asd'},
+      options: [{value: 'Asd', text: 'Asd'}]
+    });
+
+    dash.annotations.list.push({
+      name: 'logs',
+      datasource: 'gfdb',
     });
 
     dash.rows.push({
@@ -61,6 +70,17 @@ describe.only('given dashboard with repeated panels', function() {
   it('should replace datasource refs', function() {
     var panel = exported.rows[0].panels[0];
     expect(panel.datasource).to.be("${DS_GFDB}");
+  });
+
+  it('should replace datasource in variable query', function() {
+    expect(exported.templating.list[0].datasource).to.be("${DS_GFDB}");
+    expect(exported.templating.list[0].options.length).to.be(0);
+    expect(exported.templating.list[0].current.value).to.be(undefined);
+    expect(exported.templating.list[0].current.text).to.be(undefined);
+  });
+
+  it('should replace datasource in annotation query', function() {
+    expect(exported.annotations.list[0].datasource).to.be("${DS_GFDB}");
   });
 
   it('should add datasource as input', function() {
