@@ -78,6 +78,14 @@ export class DashboardExporter {
       templateizeDatasourceUsage(annotationDef);
     }
 
+    // add grafana version
+    requires['grafana'] = {
+      type: 'grafana',
+      id: 'grafana',
+      name: 'Grafana',
+      version: config.buildInfo.version
+    };
+
     return Promise.all(promises).then(() => {
       _.each(datasources, (value, key) => {
         inputs.push(value);

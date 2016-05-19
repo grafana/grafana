@@ -14,6 +14,10 @@ describe.only('given dashboard with repeated panels', function() {
       annotations: { list: [] },
     };
 
+    config.buildInfo = {
+      version: "3.0.2"
+    };
+
     dash.templating.list.push({
       name: 'apps',
       type: 'query',
@@ -102,6 +106,13 @@ describe.only('given dashboard with repeated panels', function() {
     expect(require.name).to.be("Graph");
     expect(require.id).to.be("graph");
     expect(require.version).to.be("1.1.0");
+  });
+
+  it('should add grafana version', function() {
+    var require = _.findWhere(exported.__requires, {name: 'Grafana'});
+    expect(require.type).to.be("grafana");
+    expect(require.id).to.be("grafana");
+    expect(require.version).to.be("3.0.2");
   });
 
 });
