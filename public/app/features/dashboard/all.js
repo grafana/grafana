@@ -19,4 +19,5 @@ define([
   './upload',
   './import/import',
   './export/export_modal',
+  './dash_list_ctrl',
 ], function () {});

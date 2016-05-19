@@ -25,18 +25,6 @@ function (coreModule) {
 
   });
 
-  coreModule.default.controller('DashFromImportCtrl', function($scope, $location, alertSrv) {
-    if (!window.grafanaImportDashboard) {
-      alertSrv.set('Not found', 'Cannot reload page with unsaved imported dashboard', 'warning', 7000);
-      $location.path('');
-      return;
-    }
-    $scope.initDashboard({
-      meta: { canShare: false, canStar: false },
-      dashboard: window.grafanaImportDashboard
-    }, $scope);
-  });
-
   coreModule.default.controller('NewDashboardCtrl', function($scope) {
     $scope.initDashboard({
       meta: { canStar: false, canShare: false },
