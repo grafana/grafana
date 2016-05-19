@@ -8,7 +8,7 @@ graphite:
     - /etc/localtime:/etc/localtime:ro
     - /etc/timezone:/etc/timezone:ro
 
-fake-data-gen:
+fake-graphite-data:
   image: grafana/fake-data-gen
   net: bridge
   environment:

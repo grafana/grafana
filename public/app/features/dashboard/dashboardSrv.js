@@ -65,7 +65,7 @@ function (angular, $, _, moment) {
 
     // cleans meta data and other non peristent state
     p.getSaveModelClone = function() {
-      var copy = angular.copy(this);
+      var copy = $.extend(true, {}, this);
       delete copy.meta;
       return copy;
     };
