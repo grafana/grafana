@@ -234,10 +234,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var panel = ctrl.panel;
     var templateSrv = this.templateSrv;
     var data, linkInfo;
+    var width, height;
     var $panelContainer = elem.find('.panel-container');
     elem = elem.find('.singlestat-panel');
 
     function setElementHeight() {
+      width = elem.width();
+      height = elem.height();
       elem.css('height', ctrl.height + 'px');
     }
 
@@ -291,8 +294,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       }
 
       var plotCanvas = $('<div></div>');
-      var width = elem.width();
-      var height = elem.height();
       var plotCss = {
         top: '10px',
         margin: 'auto',

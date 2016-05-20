@@ -8,6 +8,7 @@ import $ from 'jquery';
 const TITLE_HEIGHT = 25;
 const EMPTY_TITLE_HEIGHT = 9;
 const PANEL_PADDING = 5;
+const PANEL_BORDER = 2;
 
 import {Emitter} from 'app/core/core';
 
@@ -141,7 +142,7 @@ export class PanelCtrl {
       }
     }
 
-    this.height = this.containerHeight - (PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
+    this.height = this.containerHeight - (PANEL_BORDER + PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
   }
 
   render(payload?) {
