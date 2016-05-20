@@ -70,7 +70,7 @@ function (angular, _, require, config) {
       $scope.shareUrl = linkSrv.addParamsToUrl(baseUrl, params);
 
       var soloUrl = $scope.shareUrl;
-      soloUrl = soloUrl.replace('/dashboard/', '/dashboard-solo/');
+      soloUrl = soloUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
       soloUrl = soloUrl.replace("&fullscreen", "");
 
       $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
