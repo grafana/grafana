@@ -1,7 +1,25 @@
 footer {
 		font-size: 75%;
+		width: 98%;  /* was causing horiz scrollbars - need to examine */
 	a {
 		color: $gray-1;
+	}
+	ul {
+		list-style: none;
+	}
+	li { display: inline-block; 
+		padding-right: 2px;
+		 &:after {
+		 	content: ' | ';
+		 	padding-left: 2px;
+		 	color: $gray-1;
+		 }
+	}
+	li:last-child {
+		&:after {
+			padding-left: 0;
+			content: '';
+		}
 	}
 }
 
