@@ -75,7 +75,7 @@ function (angular, _, require, config) {
 
       $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
 
-      $scope.imageUrl = soloUrl.replace('/dashboard-solo/', '/render/dashboard-solo/');
+      $scope.imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
     };
