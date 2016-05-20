@@ -200,6 +200,11 @@ define([
         expect(contains).to.be(true);
       });
 
+      it('should find it when part of segment', function() {
+        var contains = _templateSrv.containsVariable('metrics.$env.$group-*', 'group');
+        expect(contains).to.be(true);
+      });
+
     });
 
     describe('updateTemplateData with simple value', function() {
