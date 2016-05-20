@@ -97,8 +97,11 @@ function (angular, _) {
       if (!str) {
         return false;
       }
-      var match = this._regex.exec(str);
-      return match && (match[1] === variableName || match[2] === variableName);
+
+      variableName = regexEscape(variableName);
+      var findVarRegex = new RegExp('\\$(' + variableName + ')[\\W|$]|\\[\\[(' + variableName + ')\\]\\]', 'g');
+      var match = findVarRegex.exec(str);
+      return match !== null;
     };
 
     this.highlightVariablesAsHtml = function(str) {
