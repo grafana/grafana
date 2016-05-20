@@ -7,9 +7,9 @@ import (
 )
 
 type AlertRule struct {
-	Id           int64  `json:"id"`
-	OrgId        int64  `json:"-"`
-	DataSourceId int64  `json:"datasourceId"`
+	Id    int64 `json:"id"`
+	OrgId int64 `json:"-"`
+	//DataSourceId int64  `json:"datasourceId"`
 	DashboardId  int64  `json:"dashboardId"`
 	PanelId      int64  `json:"panelId"`
 	Query        string `json:"query"`
@@ -19,12 +19,12 @@ type AlertRule struct {
 	WarnOperator string `json:"warnOperator"`
 	CritOperator string `json:"critOperator"`
 	Interval     string `json:"interval"`
-	Frequency    int64  `json:"frequency"`
-	Title        string `json:"title"`
-	Description  string `json:"description"`
-	QueryRange   string `json:"queryRange"`
-	Aggregator   string `json:"aggregator"`
-	State        string `json:"state"`
+	//Frequency    int64  `json:"frequency"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	QueryRange  string `json:"queryRange"`
+	Aggregator  string `json:"aggregator"`
+	State       string `json:"state"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`

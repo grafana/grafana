@@ -21,7 +21,6 @@ func init() {
 func GetAlertById(query *m.GetAlertByIdQuery) error {
 	alert := m.AlertRule{}
 	has, err := x.Id(query.Id).Get(&alert)
-
 	if !has {
 		return fmt.Errorf("could not find alert")
 	}
