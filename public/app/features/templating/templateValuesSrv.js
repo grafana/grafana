@@ -313,6 +313,14 @@ function (angular, _, kbn) {
         var value = item.value || item.text;
         var text = item.text || item.value;
 
+        if (_.isNumber(value)) {
+          value = value.toString();
+        }
+
+        if (_.isNumber(text)) {
+          text = text.toString();
+        }
+
         if (regex) {
           matches = regex.exec(value);
           if (!matches) { continue; }
