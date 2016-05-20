@@ -257,7 +257,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   };
 
   this.renderTemplate = function(aliasPattern, aliasData) {
-    var aliasRegex = /\{\{(.+?)\}\}/g;
+    var aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
     return aliasPattern.replace(aliasRegex, function(match, g1) {
       if (aliasData[g1]) {
         return aliasData[g1];
