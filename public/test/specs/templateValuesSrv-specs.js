@@ -126,6 +126,19 @@ define([
       });
     });
 
+    describeUpdateVariable('query variable with numeric results', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'query', query: '', name: 'test', current: {} };
+        scenario.queryResult = [{text: 12, value: 12}];
+      });
+
+      it('should set current value to first option', function() {
+        expect(scenario.variable.current.value).to.be('12');
+        expect(scenario.variable.options[0].value).to.be('12');
+        expect(scenario.variable.options[0].text).to.be('12');
+      });
+    });
+
     describeUpdateVariable('interval variable without auto', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'interval', query: '1s,2h,5h,1d', name: 'test' };
