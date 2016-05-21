@@ -386,5 +386,43 @@ define([
       });
     });
 
+    describeUpdateVariable('without sort', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {type: 'query', query: 'apps.*', name: 'test', sort: 0};
+        scenario.queryResult = [{text: 'bbb2'}, {text: 'aaa10'}, { text: 'ccc3'}];
+      });
+
+      it('should return options without sort', function() {
+        expect(scenario.variable.options[0].text).to.be('bbb2');
+        expect(scenario.variable.options[1].text).to.be('aaa10');
+        expect(scenario.variable.options[2].text).to.be('ccc3');
+      });
+    });
+
+    describeUpdateVariable('with alphabetical sort', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {type: 'query', query: 'apps.*', name: 'test', sort: 1};
+        scenario.queryResult = [{text: 'bbb2'}, {text: 'aaa10'}, { text: 'ccc3'}];
+      });
+
+      it('should return options with alphabetical sort', function() {
+        expect(scenario.variable.options[0].text).to.be('aaa10');
+        expect(scenario.variable.options[1].text).to.be('bbb2');
+        expect(scenario.variable.options[2].text).to.be('ccc3');
+      });
+    });
+
+    describeUpdateVariable('with numerical sort', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {type: 'query', query: 'apps.*', name: 'test', sort: 2};
+        scenario.queryResult = [{text: 'bbb2'}, {text: 'aaa10'}, { text: 'ccc3'}];
+      });
+
+      it('should return options with numerical sort', function() {
+        expect(scenario.variable.options[0].text).to.be('bbb2');
+        expect(scenario.variable.options[1].text).to.be('ccc3');
+        expect(scenario.variable.options[2].text).to.be('aaa10');
+      });
+    });
   });
 });

@@ -327,7 +327,7 @@ function (angular, _, kbn) {
 
     this.metricNamesToVariableValues = function(variable, metricNames) {
       var regex, options, i, matches;
-      options = {}; // use object hash to remove duplicates
+      options = [];
 
       if (variable.regex) {
         regex = kbn.stringToJsRegex(templateSrv.replace(variable.regex));
@@ -355,10 +355,24 @@ function (angular, _, kbn) {
           }
         }
 
-        options[value] = {text: text, value: value};
+        options.push({text: text, value: value});
       }
+      options = _.uniq(options, 'value');
 
-      return _.sortBy(options, 'text');
+      if (variable.sort === 1) {
+        return _.sortBy(options, 'text');
+      } else if (variable.sort === 2) {
+        return _.sortBy(options, function(opt) {
+          var matches = opt.text.match(/.*?(\d+).*/);
+          if (!matches) {
+            return 0;
+          } else {
+            return parseInt(matches[1], 10);
+          }
+        });
+      } else {
+        return options;
+      }
     };
 
     this.addAllOption = function(variable) {

@@ -13,6 +13,7 @@ function (angular, _) {
       type: 'query',
       datasource: null,
       refresh: 0,
+      sort: 1,
       name: '',
       hide: 0,
       options: [],
@@ -32,6 +33,12 @@ function (angular, _) {
       {value: 0, text: "Never"},
       {value: 1, text: "On Dashboard Load"},
       {value: 2, text: "On Time Range Change"},
+    ];
+
+    $scope.sortOptions = [
+      {value: 0, text: "Without Sort"},
+      {value: 1, text: "Alphabetical"},
+      {value: 2, text: "Numerical"},
     ];
 
     $scope.hideOptions = [
