@@ -26,10 +26,11 @@ function (angular, _, dateMath) {
       var start = convertToTSDBTime(options.rangeRaw.from, false);
       var end = convertToTSDBTime(options.rangeRaw.to, true);
       var qs = [];
+      var self = this;
 
       _.each(options.targets, function(target) {
         if (!target.metric) { return; }
-        qs.push(convertTargetToQuery(target, options, this.prefix));
+        qs.push(convertTargetToQuery(target, options, self.prefix));
       });
 
       var queries = _.compact(qs);
@@ -55,7 +56,7 @@ function (angular, _, dateMath) {
           if (index === -1) {
             index = 0;
           }
-          return transformMetricData(metricData, groupByTags, options.targets[index], options, this.prefix);
+          return transformMetricData(metricData, groupByTags, options.targets[index], options, self.prefix);
         });
         return { data: result };
       });
@@ -92,7 +93,8 @@ function (angular, _, dateMath) {
         return $q.when([]);
       }
 
-      var m = this.prefix + metric + "{" + key + "=*}";
+      //var m = this.prefix + metric + "{" + key + "=*}";
+      var m = metric + "{" + key + "=*}";
 
       return this._get('/api/search/lookup', {m: m, limit: 3000}).then(function(result) {
         result = result.data.results;
@@ -109,7 +111,8 @@ function (angular, _, dateMath) {
     OpenTSDBDatasource.prototype._performMetricKeyLookup = function(metric) {
       if(!metric) { return $q.when([]); }
 
-      return this._get('/api/search/lookup', {m: this.prefix + metric, limit: 1000}).then(function(result) {
+      //return this._get('/api/search/lookup', {m: this.prefix + metric, limit: 1000}).then(function(result) {
+      return this._get('/api/search/lookup', {m: metric, limit: 1000}).then(function(result) {
         result = result.data.results;
         var tagks = [];
         _.each(result, function(r) {
@@ -134,6 +137,7 @@ function (angular, _, dateMath) {
     OpenTSDBDatasource.prototype.metricFindQuery = function(query) {
       if (!query) { return $q.when([]); }
 
+      var self = this;
       var interpolated;
       try {
         interpolated = templateSrv.replace(query);
@@ -146,7 +150,7 @@ function (angular, _, dateMath) {
       var responseTransform = function(result) {
         if (type && (type === 'metrics')) {
           return _.map(result, function(value) {
-            return {text: value.replace(this.prefix, '')};
+            return {text: value.replace(self.prefix, '')};
           });
         }
         return _.map(result, function(value) {
@@ -163,7 +167,8 @@ function (angular, _, dateMath) {
       var metrics_query = interpolated.match(metrics_regex);
       if (metrics_query) {
         type = 'metrics';
-        return this._performSuggestQuery(this.prefix + metrics_query[1], type).then(responseTransform);
+        //return this._performSuggestQuery(this.prefix + metrics_query[1], type).then(responseTransform);
+        return this._performSuggestQuery(metrics_query[1], type).then(responseTransform);
       }
 
       var tag_names_query = interpolated.match(tag_names_regex);
@@ -254,9 +259,13 @@ function (angular, _, dateMath) {
       if (!target.metric || target.hide) {
         return null;
       }
-
+      // Faking prefix is used to avoid compilation error
+      if (prefix == null) {
+        prefix = "this.prefix";
+      }
       var query = {
-        metric: prefix + templateSrv.replace(target.metric, options.scopedVars),
+        //metric: prefix + templateSrv.replace(target.metric, options.scopedVars),
+        metric: templateSrv.replace(target.metric, options.scopedVars),
         aggregator: "avg"
       };
 
@@ -303,7 +312,8 @@ function (angular, _, dateMath) {
       var interpolatedTagValue;
       return _.map(metrics, function(metricData) {
         return _.findIndex(options.targets, function(target) {
-          return (this.prefix + target.metric) === metricData.metric &&
+          //return (this.prefix + target.metric) === metricData.metric &&
+          return (target.metric) === metricData.metric &&
             _.all(target.tags, function(tagV, tagK) {
             interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars);
             return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
