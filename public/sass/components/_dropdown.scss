@@ -17,6 +17,15 @@
   outline: 0;
 }
 
+.dropdown-desc {
+    position: relative;
+    top: -3px;
+    width: 250px;
+    font-size: 80%;
+    margin-left: 22px;
+    color: $gray-2;
+}
+
 // Dropdown arrow/caret
 // --------------------
 .caret {
@@ -75,7 +84,7 @@
       font-weight: normal;
       line-height: $line-height-base;
       color: $dropdownLinkColor;
-      white-space: nowrap;
+      // white-space: nowrap;   NEED WRAP FOR DROPDOWN DESC - TRW
 
       i {
         padding-right: 5px;
