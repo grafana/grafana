@@ -10,13 +10,13 @@ page_keywords: grafana, installation, debian, ubuntu, guide
 
 Description | Download
 ------------ | -------------
-Stable .deb for Debian-based Linux | [grafana_3.0.3-1463994644.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_3.0.3-1463994644.deb)
+Stable .deb for Debian-based Linux | [grafana_3.0.3-1463994644.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_3.0.3-1463994644_amd64.deb)
 
 ## Install Stable
 
-    $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_3.0.3-1463994644.deb
+    $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_3.0.3-1463994644_amd64.deb
     $ sudo apt-get install -y adduser libfontconfig
-    $ sudo dpkg -i grafana_3.0.3-1463994644.deb
+    $ sudo dpkg -i grafana_3.0.3-1463994644_amd64.deb
 
 ## APT Repository
 
