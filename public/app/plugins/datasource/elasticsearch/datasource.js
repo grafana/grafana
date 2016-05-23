@@ -78,7 +78,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         range[timeField]["format"] = "epoch_millis";
       }
 
-      var queryInterpolated = templateSrv.replace(queryString);
+      var queryInterpolated = templateSrv.replace(queryString, {}, 'lucene');
       var filter = { "bool": { "must": [{ "range": range }] } };
       var query = { "bool": { "should": [{ "query_string": { "query": queryInterpolated } }] } };
       var data = {
@@ -204,6 +204,14 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       });
     };
 
+    function escapeForJson(value) {
+      return value.replace(/\"/g, '\\"');
+    }
+
+    function luceneThenJsonFormat(value) {
+      return escapeForJson(templateSrv.luceneFormat(value));
+    }
+
     this.getFields = function(query) {
       return this._get('/_mapping').then(function(res) {
         var fields = {};
@@ -246,7 +254,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var header = this.getQueryHeader('count', range.from, range.to);
       var esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
 
-      esQuery = esQuery.replace("$lucene_query", queryDef.query || '*');
+      esQuery = esQuery.replace("$lucene_query", escapeForJson(queryDef.query || '*'));
       esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
       esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
       esQuery = header + '\n' + esQuery + '\n';
@@ -260,7 +268,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
 
     this.metricFindQuery = function(query) {
-      query = templateSrv.replace(query);
+      query = templateSrv.replace(query, {}, luceneThenJsonFormat);
       query = angular.fromJson(query);
       if (!query) {
         return $q.when([]);
