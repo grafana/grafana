@@ -19,15 +19,21 @@ type AlertRule struct {
 	WarnOperator string `json:"warnOperator"`
 	CritOperator string `json:"critOperator"`
 	Interval     string `json:"interval"`
-	//Frequency    int64  `json:"frequency"`
-	Title       string `json:"title"`
-	Description string `json:"description"`
-	QueryRange  string `json:"queryRange"`
-	Aggregator  string `json:"aggregator"`
-	State       string `json:"state"`
+	Frequency    int64  `json:"frequency"`
+	Title        string `json:"title"`
+	Description  string `json:"description"`
+	QueryRange   string `json:"queryRange"`
+	Aggregator   string `json:"aggregator"`
+	State        string `json:"state"`
 
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
+}
+
+type HeartBeat struct {
+	ServerId string
+	Updated  time.Time
+	Created  time.Time
 }
 
 type AlertRuleChange struct {

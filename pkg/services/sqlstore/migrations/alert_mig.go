@@ -5,11 +5,13 @@ import (
 )
 
 func addAlertMigrations(mg *Migrator) {
+
 	alertV1 := Table{
 		Name: "alert_rule",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
+			//{Name: "datasource_id", Type: DB_BigInt, Nullable: false},
 			{Name: "panel_id", Type: DB_BigInt, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "query", Type: DB_Text, Nullable: false},
@@ -19,6 +21,7 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "crit_level", Type: DB_BigInt, Nullable: false},
 			{Name: "crit_operator", Type: DB_NVarchar, Length: 10, Nullable: false},
 			{Name: "interval", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "frequency", Type: DB_BigInt, Nullable: false},
 			{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "description", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "query_range", Type: DB_NVarchar, Length: 255, Nullable: false},
@@ -58,4 +61,17 @@ func addAlertMigrations(mg *Migrator) {
 	}
 
 	mg.AddMigration("create alert_state_log table v1", NewAddTableMigration(alert_state_log))
+
+	alert_heartbeat := Table{
+		Name: "alert_heartbeat",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "server_id", Type: DB_NVarchar, Length: 50, Nullable: false},
+			{Name: "created", Type: DB_DateTime, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
+		},
+	}
+
+	mg.AddMigration("create alert_heartbeat table v1", NewAddTableMigration(alert_heartbeat))
+
 }
