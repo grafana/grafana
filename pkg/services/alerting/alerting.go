@@ -76,9 +76,10 @@ func (s *Scheduler) updateJobs(reader RuleReader) {
 	jobs := make([]*AlertJob, 0)
 	rules := reader.Fetch()
 
-	for i := s.serverPosition - 1; i < len(rules); i = i + s.clusterSize {
+	for i := s.serverPosition - 1; i < len(rules); i += s.clusterSize {
 		rule := rules[i]
 		jobs = append(jobs, &AlertJob{
+			id:        rule.Id,
 			name:      rule.Title,
 			frequency: rule.Frequency,
 			rule:      rule,
@@ -150,6 +151,10 @@ type Executor interface {
 type DummieExecutor struct{}
 
 func (this DummieExecutor) Execute(rule m.AlertRule) (err error, result AlertResult) {
-	time.Sleep(1000)
+	if rule.Id == 6 {
+		time.Sleep(time.Second * 60)
+	}
+	time.Sleep(time.Second)
+	log.Info("Finnished executing: %d", rule.Id)
 	return nil, AlertResult{state: "OK", id: rule.Id}
 }
