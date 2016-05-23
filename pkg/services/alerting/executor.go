@@ -7,16 +7,17 @@ import (
 )
 
 type Executor interface {
-	Execute(rule m.AlertRule) (err error, result AlertResult)
+	Execute(rule m.AlertRule, responseQueue chan *AlertResult)
 }
 
 type DummieExecutor struct{}
 
-func (this DummieExecutor) Execute(rule m.AlertRule) (err error, result AlertResult) {
-	if rule.Id == 6 {
-		time.Sleep(time.Second * 60)
-	}
+func (this DummieExecutor) Execute(rule m.AlertRule, responseQueue chan *AlertResult) {
+	//if rule.Id == 6 {
+	//	time.Sleep(time.Second * 60)
+	//}
 	time.Sleep(time.Second)
 	log.Info("Finnished executing: %d", rule.Id)
-	return nil, AlertResult{state: "OK", id: rule.Id}
+	responseQueue <- &AlertResult{state: "OK", id: rule.Id}
+	//return nil,
 }

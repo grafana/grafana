@@ -21,7 +21,7 @@ func TestAlertingScheduler(t *testing.T) {
 
 		Convey("single server", func() {
 			scheduler := &Scheduler{
-				jobs:           make([]*AlertJob, 0),
+				jobs:           make(map[int64]*AlertJob, 0),
 				runQueue:       make(chan *AlertJob, 1000),
 				serverId:       "",
 				serverPosition: 1,
@@ -34,7 +34,7 @@ func TestAlertingScheduler(t *testing.T) {
 
 		Convey("two servers", func() {
 			scheduler := &Scheduler{
-				jobs:           make([]*AlertJob, 0),
+				jobs:           make(map[int64]*AlertJob, 0),
 				runQueue:       make(chan *AlertJob, 1000),
 				serverId:       "",
 				serverPosition: 1,
@@ -43,12 +43,12 @@ func TestAlertingScheduler(t *testing.T) {
 
 			scheduler.updateJobs(mockFn)
 			So(len(scheduler.jobs), ShouldEqual, 3)
-			So(scheduler.jobs[0].rule.Id, ShouldEqual, 1)
+			So(scheduler.jobs[1].rule.Id, ShouldEqual, 1)
 		})
 
 		Convey("six servers", func() {
 			scheduler := &Scheduler{
-				jobs:           make([]*AlertJob, 0),
+				jobs:           make(map[int64]*AlertJob, 0),
 				runQueue:       make(chan *AlertJob, 1000),
 				serverId:       "",
 				serverPosition: 6,
@@ -57,7 +57,7 @@ func TestAlertingScheduler(t *testing.T) {
 
 			scheduler.updateJobs(mockFn)
 			So(len(scheduler.jobs), ShouldEqual, 1)
-			So(scheduler.jobs[0].rule.Id, ShouldEqual, 6)
+			So(scheduler.jobs[6].rule.Id, ShouldEqual, 6)
 		})
 
 		Convey("more servers then alerts", func() {
@@ -68,7 +68,7 @@ func TestAlertingScheduler(t *testing.T) {
 			}
 
 			scheduler := &Scheduler{
-				jobs:           make([]*AlertJob, 0),
+				jobs:           make(map[int64]*AlertJob, 0),
 				runQueue:       make(chan *AlertJob, 1000),
 				serverId:       "",
 				serverPosition: 3,

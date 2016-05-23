@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/grafana/grafana/pkg/bus"
+	//"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -22,12 +22,14 @@ func Init() {
 	scheduler := NewScheduler()
 	go scheduler.Dispatch(&AlertRuleReader{})
 	go scheduler.Executor(&DummieExecutor{})
+	go scheduler.HandleResponses()
 }
 
 type Scheduler struct {
-	jobs     []*AlertJob
-	runQueue chan *AlertJob
-	mtx      sync.RWMutex
+	jobs          map[int64]*AlertJob
+	runQueue      chan *AlertJob
+	responseQueue chan *AlertResult
+	mtx           sync.RWMutex
 
 	alertRuleFetcher RuleReader
 
@@ -38,30 +40,35 @@ type Scheduler struct {
 
 func NewScheduler() *Scheduler {
 	return &Scheduler{
-		jobs:     make([]*AlertJob, 0),
-		runQueue: make(chan *AlertJob, 1000),
-		serverId: strconv.Itoa(rand.Intn(1000)),
+		jobs:          make(map[int64]*AlertJob, 0),
+		runQueue:      make(chan *AlertJob, 1000),
+		responseQueue: make(chan *AlertResult, 1000),
+		serverId:      strconv.Itoa(rand.Intn(1000)),
 	}
 }
 
 func (this *Scheduler) heartBeat() {
-	//write heartBeat to db.
-	//get the modulus position of active servers
 
-	cmd := &m.HeartBeatCommand{ServerId: this.serverId}
+	//Lets cheat on this until we focus on clustering
 	log.Info("Heartbeat: Sending heartbeat from " + this.serverId)
-	err := bus.Dispatch(cmd)
+	this.clusterSize = 1
+	this.serverPosition = 1
 
-	if err != nil {
-		log.Error(1, "Failed to send heartbeat.")
-	} else {
-		this.clusterSize = cmd.Result.ClusterSize
-		this.serverPosition = cmd.Result.UptimePosition
-	}
+	/*
+		cmd := &m.HeartBeatCommand{ServerId: this.serverId}
+		err := bus.Dispatch(cmd)
+
+		if err != nil {
+			log.Error(1, "Failed to send heartbeat.")
+		} else {
+			this.clusterSize = cmd.Result.ClusterSize
+			this.serverPosition = cmd.Result.UptimePosition
+		}
+	*/
 }
 
 func (this *Scheduler) Dispatch(reader RuleReader) {
-	reschedule := time.NewTicker(time.Second * 10)
+	reschedule := time.NewTicker(time.Second * 100)
 	secondTicker := time.NewTicker(time.Second)
 	heartbeat := time.NewTicker(time.Second * 5)
 
@@ -83,7 +90,7 @@ func (this *Scheduler) Dispatch(reader RuleReader) {
 func (this *Scheduler) updateJobs(f func() []m.AlertRule) {
 	log.Debug("Scheduler: UpdateJobs()")
 
-	jobs := make([]*AlertJob, 0)
+	jobs := make(map[int64]*AlertJob, 0)
 	rules := f()
 
 	this.mtx.Lock()
@@ -91,10 +98,7 @@ func (this *Scheduler) updateJobs(f func() []m.AlertRule) {
 
 	for i := this.serverPosition - 1; i < len(rules); i += this.clusterSize {
 		rule := rules[i]
-		jobs = append(jobs, &AlertJob{
-			rule:   rule,
-			offset: int64(len(jobs)),
-		})
+		jobs[rule.Id] = &AlertJob{rule: rule, offset: int64(len(jobs))}
 	}
 
 	log.Debug("Scheduler: Selected %d jobs", len(jobs))
@@ -117,15 +121,21 @@ func (this *Scheduler) Executor(executor Executor) {
 	for job := range this.runQueue {
 		log.Info("Executor: queue length %d", len(this.runQueue))
 		log.Info("Executor: executing %s", job.rule.Title)
-		go Measure(executor, job)
+		this.jobs[job.rule.Id].running = true
+		go this.Measure(executor, job)
 	}
 }
 
-func Measure(exec Executor, rule *AlertJob) {
+func (this *Scheduler) HandleResponses() {
+	for response := range this.responseQueue {
+		log.Info("Response: alert %d returned %s", response.id, response.state)
+		this.jobs[response.id].running = false
+	}
+}
+
+func (this *Scheduler) Measure(exec Executor, rule *AlertJob) {
 	now := time.Now()
-	rule.running = true
-	exec.Execute(rule.rule)
-	rule.running = true
+	exec.Execute(rule.rule, this.responseQueue)
 	elapsed := time.Since(now)
 	log.Info("Schedular: exeuction took %v milli seconds", elapsed.Nanoseconds()/1000000)
 }
