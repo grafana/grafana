@@ -53,7 +53,7 @@ func (s *Scheduler) heartBeat() {
 func (s *Scheduler) Dispatch(reader RuleReader) {
 	reschedule := time.NewTicker(time.Second * 10)
 	secondTicker := time.NewTicker(time.Second)
-	ticker := time.NewTicker(time.Second * 5)
+	heartbeat := time.NewTicker(time.Second * 5)
 
 	s.heartBeat()
 	s.updateJobs(reader.Fetch)
@@ -64,7 +64,7 @@ func (s *Scheduler) Dispatch(reader RuleReader) {
 			s.queueJobs()
 		case <-reschedule.C:
 			s.updateJobs(reader.Fetch)
-		case <-ticker.C:
+		case <-heartbeat.C:
 			s.heartBeat()
 		}
 	}
@@ -104,7 +104,6 @@ func (s *Scheduler) queueJobs() {
 }
 
 func (s *Scheduler) Executor(executor Executor) {
-
 	for job := range s.runQueue {
 		log.Info("Executor: queue length %d", len(s.runQueue))
 		log.Info("Executor: executing %s", job.name)
@@ -125,36 +124,4 @@ type AlertResult struct {
 	id       int64
 	state    string
 	duration time.Time
-}
-
-type RuleReader interface {
-	Fetch() []m.AlertRule
-}
-
-type AlertRuleReader struct{}
-
-func (this AlertRuleReader) Fetch() []m.AlertRule {
-	return []m.AlertRule{
-		{Id: 1, Title: "alert rule 1", Interval: "10s", Frequency: 10},
-		{Id: 2, Title: "alert rule 2", Interval: "10s", Frequency: 10},
-		{Id: 3, Title: "alert rule 3", Interval: "10s", Frequency: 10},
-		{Id: 4, Title: "alert rule 4", Interval: "10s", Frequency: 5},
-		{Id: 5, Title: "alert rule 5", Interval: "10s", Frequency: 5},
-		{Id: 6, Title: "alert rule 6", Interval: "10s", Frequency: 1},
-	}
-}
-
-type Executor interface {
-	Execute(rule m.AlertRule) (err error, result AlertResult)
-}
-
-type DummieExecutor struct{}
-
-func (this DummieExecutor) Execute(rule m.AlertRule) (err error, result AlertResult) {
-	if rule.Id == 6 {
-		time.Sleep(time.Second * 60)
-	}
-	time.Sleep(time.Second)
-	log.Info("Finnished executing: %d", rule.Id)
-	return nil, AlertResult{state: "OK", id: rule.Id}
 }
