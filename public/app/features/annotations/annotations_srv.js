@@ -55,10 +55,11 @@ define([
         }, this);
       });
 
-      promiseCached = $q.all(promises)
-        .then(function() {
-          return list;
-        });
+      promiseCached = $q.all(promises).then(function() {
+        return list;
+      }).catch(function(err) {
+        $rootScope.appEvent('alert-error', ['Annotations failed', (err.message || err)]);
+      });
 
       return promiseCached;
     };

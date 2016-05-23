@@ -14,7 +14,8 @@ func TestCloudWatchMetrics(t *testing.T) {
 		region := "us-east-1"
 		namespace := "Foo"
 		database := "default"
-		f := func(region string, namespace string, database string) (cloudwatch.ListMetricsOutput, error) {
+		assumeRoleArn := ""
+		f := func(region string, namespace string, database string, assumeRoleArn string) (cloudwatch.ListMetricsOutput, error) {
 			return cloudwatch.ListMetricsOutput{
 				Metrics: []*cloudwatch.Metric{
 					{
@@ -28,7 +29,7 @@ func TestCloudWatchMetrics(t *testing.T) {
 				},
 			}, nil
 		}
-		metrics, _ := getMetricsForCustomMetrics(region, namespace, database, f)
+		metrics, _ := getMetricsForCustomMetrics(region, namespace, database, assumeRoleArn, f)
 
 		Convey("Should contain Test_MetricName", func() {
 			So(metrics, ShouldContain, "Test_MetricName")
@@ -39,7 +40,8 @@ func TestCloudWatchMetrics(t *testing.T) {
 		region := "us-east-1"
 		namespace := "Foo"
 		database := "default"
-		f := func(region string, namespace string, database string) (cloudwatch.ListMetricsOutput, error) {
+		assumeRoleArn := ""
+		f := func(region string, namespace string, database string, assumeRoleArn string) (cloudwatch.ListMetricsOutput, error) {
 			return cloudwatch.ListMetricsOutput{
 				Metrics: []*cloudwatch.Metric{
 					{
@@ -53,7 +55,7 @@ func TestCloudWatchMetrics(t *testing.T) {
 				},
 			}, nil
 		}
-		dimensionKeys, _ := getDimensionsForCustomMetrics(region, namespace, database, f)
+		dimensionKeys, _ := getDimensionsForCustomMetrics(region, namespace, database, assumeRoleArn, f)
 
 		Convey("Should contain Test_DimensionName", func() {
 			So(dimensionKeys, ShouldContain, "Test_DimensionName")

@@ -86,7 +86,7 @@ func init() {
 		"AWS/EC2":              {"AutoScalingGroupName", "ImageId", "InstanceId", "InstanceType"},
 		"AWS/ELB":              {"LoadBalancerName", "AvailabilityZone"},
 		"AWS/ElasticMapReduce": {"ClusterId", "JobFlowId", "JobId"},
-		"AWS/ES":               {},
+		"AWS/ES":               {"ClientId", "DomainName"},
 		"AWS/Events":           {"RuleName"},
 		"AWS/Kinesis":          {"StreamName", "ShardID"},
 		"AWS/Lambda":           {"FunctionName"},
@@ -166,7 +166,8 @@ func handleGetMetrics(req *cwRequest, c *middleware.Context) {
 		}
 	} else {
 		var err error
-		if namespaceMetrics, err = getMetricsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, getAllMetrics); err != nil {
+		assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
+		if namespaceMetrics, err = getMetricsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, assumeRoleArn, getAllMetrics); err != nil {
 			c.JsonApiErr(500, "Unable to call AWS API", err)
 			return
 		}
@@ -199,7 +200,8 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 		}
 	} else {
 		var err error
-		if dimensionValues, err = getDimensionsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, getAllMetrics); err != nil {
+		assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
+		if dimensionValues, err = getDimensionsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, assumeRoleArn, getAllMetrics); err != nil {
 			c.JsonApiErr(500, "Unable to call AWS API", err)
 			return
 		}
@@ -214,10 +216,10 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 	c.JSON(200, result)
 }
 
-func getAllMetrics(region string, namespace string, database string) (cloudwatch.ListMetricsOutput, error) {
+func getAllMetrics(region string, namespace string, database string, assumeRoleArn string) (cloudwatch.ListMetricsOutput, error) {
 	cfg := &aws.Config{
 		Region:      aws.String(region),
-		Credentials: getCredentials(database),
+		Credentials: getCredentials(database, region, assumeRoleArn),
 	}
 
 	svc := cloudwatch.New(session.New(cfg), cfg)
@@ -244,8 +246,8 @@ func getAllMetrics(region string, namespace string, database string) (cloudwatch
 
 var metricsCacheLock sync.Mutex
 
-func getMetricsForCustomMetrics(region string, namespace string, database string, getAllMetrics func(string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
-	result, err := getAllMetrics(region, namespace, database)
+func getMetricsForCustomMetrics(region string, namespace string, database string, assumeRoleArn string, getAllMetrics func(string, string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+	result, err := getAllMetrics(region, namespace, database, assumeRoleArn)
 	if err != nil {
 		return []string{}, err
 	}
@@ -282,8 +284,8 @@ func getMetricsForCustomMetrics(region string, namespace string, database string
 
 var dimensionsCacheLock sync.Mutex
 
-func getDimensionsForCustomMetrics(region string, namespace string, database string, getAllMetrics func(string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
-	result, err := getAllMetrics(region, namespace, database)
+func getDimensionsForCustomMetrics(region string, namespace string, database string, assumeRoleArn string, getAllMetrics func(string, string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+	result, err := getAllMetrics(region, namespace, database, assumeRoleArn)
 	if err != nil {
 		return []string{}, err
 	}
