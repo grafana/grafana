@@ -43,7 +43,7 @@ func TestAlertingScheduler(t *testing.T) {
 
 			scheduler.updateJobs(mockFn)
 			So(len(scheduler.jobs), ShouldEqual, 3)
-			So(scheduler.jobs[0].id, ShouldEqual, 1)
+			So(scheduler.jobs[0].rule.Id, ShouldEqual, 1)
 		})
 
 		Convey("six servers", func() {
@@ -57,7 +57,7 @@ func TestAlertingScheduler(t *testing.T) {
 
 			scheduler.updateJobs(mockFn)
 			So(len(scheduler.jobs), ShouldEqual, 1)
-			So(scheduler.jobs[0].id, ShouldEqual, 6)
+			So(scheduler.jobs[0].rule.Id, ShouldEqual, 6)
 		})
 
 		Convey("more servers then alerts", func() {

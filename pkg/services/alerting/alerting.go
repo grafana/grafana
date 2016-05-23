@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -47,9 +48,16 @@ func (this *Scheduler) heartBeat() {
 	//write heartBeat to db.
 	//get the modulus position of active servers
 
+	cmd := &m.HeartBeatCommand{ServerId: this.serverId}
 	log.Info("Heartbeat: Sending heartbeat from " + this.serverId)
-	this.clusterSize = 1
-	this.serverPosition = 1
+	err := bus.Dispatch(cmd)
+
+	if err != nil {
+		log.Error(1, "Failed to send heartbeat.")
+	} else {
+		this.clusterSize = cmd.Result.ClusterSize
+		this.serverPosition = cmd.Result.UptimePosition
+	}
 }
 
 func (this *Scheduler) Dispatch(reader RuleReader) {

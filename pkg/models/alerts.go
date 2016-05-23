@@ -30,10 +30,16 @@ type AlertRule struct {
 	Updated time.Time `json:"updated"`
 }
 
-type HeartBeat struct {
+type AlertingClusterInfo struct {
+	ServerId       string
+	ClusterSize    int
+	UptimePosition int
+}
+
+type HeartBeatCommand struct {
 	ServerId string
-	Updated  time.Time
-	Created  time.Time
+
+	Result AlertingClusterInfo
 }
 
 type AlertRuleChange struct {
