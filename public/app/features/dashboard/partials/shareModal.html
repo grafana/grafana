@@ -25,11 +25,10 @@
 </div>
 
 <script type="text/ng-template" id="shareEmbed.html">
-	<div class="share-modal-big-icon">
-		<i class="fa fa-code"></i>
-	</div>
-
 	<div class="share-snapshot-header">
+		<div class="share-modal-big-icon">
+			<i class="fa fa-code"></i>
+		</div>
 		<p class="share-snapshot-info-text">
 			The html code below can be pasted and included in another web page. Unless anonymous access
 			is enabled the user viewing that page need to be signed into grafana for the graph to load.
@@ -93,21 +92,22 @@
 
 <script type="text/ng-template" id="shareSnapshot.html">
 	<div class="ng-cloak" ng-cloak ng-controller="ShareSnapshotCtrl" ng-init="init()">
-		<div class="share-modal-big-icon">
-			<i ng-if="loading" class="fa fa-spinner fa-spin"></i>
-			<i ng-if="!loading" class="icon-gf icon-gf-snapshot"></i>
-		</div>
-
 		<div class="share-snapshot-header" ng-if="step === 1">
-			<p class="share-snapshot-info-text">
-				A snapshot is an instant way to share an interactive dashboard publicly.
-				When created, we <strong>strip sensitive data</strong> like queries (metric, template and annotation) and panel links,
-				leaving only the visible metric data and series names embedded into your dashboard.
-			</p>
-			<p class="share-snapshot-info-text">
-				Keep in mind, your <strong>snapshot can be viewed by anyone</strong> that has the link and can reach the URL.
-				Share wisely.
-			</p>
+			<div class="share-modal-big-icon">
+				<i ng-if="loading" class="fa fa-spinner fa-spin"></i>
+				<i ng-if="!loading" class="icon-gf icon-gf-snapshot"></i>
+			</div>
+			<div>
+				<p class="share-snapshot-info-text">
+					A snapshot is an instant way to share an interactive dashboard publicly.
+					When created, we <strong>strip sensitive data</strong> like queries (metric, template and annotation) and panel links,
+					leaving only the visible metric data and series names embedded into your dashboard.
+				</p>
+				<p class="share-snapshot-info-text">
+					Keep in mind, your <strong>snapshot can be viewed by anyone</strong> that has the link and can reach the URL.
+					Share wisely.
+				</p>
+			</div>
 		</div>
 
 		<div class="share-snapshot-header" ng-if="step === 3">
