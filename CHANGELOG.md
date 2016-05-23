@@ -1,11 +1,12 @@
-# 3.1.0
+# 3.1.0 (unreleased)
 
 ### Enhancements
 * **Singlestat**: Add support for range to text mappings, closes [#1319](https://github.com/grafana/grafana/issues/1319)
 * **Graph**: Adds sort order options for graph tooltip, closes  [#1189](https://github.com/grafana/grafana/issues/1189)
 * **Theme**: Add default theme to config file [#5011](https://github.com/grafana/grafana/pull/5011)
 
-# 3.0.3 Patch release (unreleased)
+# 3.0.3 Patch release (2016-05-23)
+* **Annotations**: Annotations can now use a template variable as data source, closes [#5054](https://github.com/grafana/grafana/issues/5054)
 * **Time picker**: Fixed issue timepicker and UTC when reading time from URL, fixes [#5078](https://github.com/grafana/grafana/issues/5078)
 * **CloudWatch**: Support for Multiple Account by AssumeRole, closes [#3522](https://github.com/grafana/grafana/issues/3522)
 * **Singlestat**: Fixed alignment and minium height issue, fixes [#5113](https://github.com/grafana/grafana/issues/5113), fixes [#4679](https://github.com/grafana/grafana/issues/4679)
