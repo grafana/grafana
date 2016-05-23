@@ -11,27 +11,33 @@ function (_) {
   }
 
   PrometheusMetricFindQuery.prototype.process = function() {
-    var label_values_regex = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]+)\)$/;
-    var metric_names_regex = /^metrics\((.+)\)$/;
-    var query_result_regex = /^query_result\((.+)\)$/;
+    var labelValuesRegex  = /^label_values\((?:(.+),\s*)?([a-zA-Z_][a-zA-Z0-9_]+)\)$/;
+    var metricNamesRegex = /^metrics\((.+)\)$/;
+    var labelsRegex = /^labels\((.+)\)$/;
+    var queryResultRegex = /^query_result\((.+)\)$/;
 
-    var label_values_query = this.query.match(label_values_regex);
-    if (label_values_query) {
-      if (label_values_query[1]) {
-        return this.labelValuesQuery(label_values_query[2], label_values_query[1]);
+    var labelsQuery = this.query.match(labelsRegex);
+    if (labelsQuery) {
+      return this.labelsQuery(labelsQuery[1]);
+    }
+
+    var labelValuesQuery = this.query.match(labelValuesRegex);
+    if (labelValuesQuery) {
+      if (labelValuesQuery[1]) {
+        return this.labelValuesQuery(labelValuesQuery[2], labelValuesQuery[1]);
       } else {
-        return this.labelValuesQuery(label_values_query[2], null);
+        return this.labelValuesQuery(labelValuesQuery[2], null);
       }
     }
 
-    var metric_names_query = this.query.match(metric_names_regex);
-    if (metric_names_query) {
-      return this.metricNameQuery(metric_names_query[1]);
+    var metricNamesQuery = this.query.match(metricNamesRegex);
+    if (metricNamesQuery) {
+      return this.metricNameQuery(metricNamesQuery[1]);
     }
 
-    var query_result_query = this.query.match(query_result_regex);
-    if (query_result_query) {
-      return this.queryResultQuery(query_result_query[1]);
+    var queryResultQuery = this.query.match(queryResultRegex);
+    if (queryResultQuery) {
+      return this.queryResultQuery(queryResultQuery[1]);
     }
 
     // if query contains full metric name, return metric name and label list
@@ -67,45 +73,71 @@ function (_) {
     }
   };
 
+  PrometheusMetricFindQuery.prototype.labelsQuery = function(metric) {
+    var url;
+
+    url = '/api/v1/series?match[]=' + encodeURIComponent(metric)
+      + '&start=' + (this.range.from.valueOf() / 1000)
+      + '&end=' + (this.range.to.valueOf() / 1000);
+
+    return this.datasource._request('GET', url)
+      .then(function(result) {
+        var tags = {};
+        _.each(result.data.data, function(metric) {
+          _.each(metric, function(value, key) {
+            if (key === "__name__") {
+              return;
+            }
+
+            tags[key] = key;
+          });
+        });
+
+        return _.map(tags, function(value) {
+          return {text: value, value: value};
+        });
+      });
+  };
+
   PrometheusMetricFindQuery.prototype.metricNameQuery = function(metricFilterPattern) {
     var url = '/api/v1/label/__name__/values';
 
     return this.datasource._request('GET', url)
-    .then(function(result) {
-      return _.chain(result.data.data)
-      .filter(function(metricName) {
-        var r = new RegExp(metricFilterPattern);
-        return r.test(metricName);
-      })
-      .map(function(matchedMetricName) {
-        return {
-          text: matchedMetricName,
-          expandable: true
-        };
-      })
-      .value();
-    });
+      .then(function(result) {
+        return _.chain(result.data.data)
+          .filter(function(metricName) {
+            var r = new RegExp(metricFilterPattern);
+            return r.test(metricName);
+          })
+        .map(function(matchedMetricName) {
+          return {
+            text: matchedMetricName,
+            expandable: true
+          };
+        })
+        .value();
+      });
   };
 
   PrometheusMetricFindQuery.prototype.queryResultQuery = function(query) {
     var url = '/api/v1/query?query=' + encodeURIComponent(query) + '&time=' + (this.range.to.valueOf() / 1000);
 
     return this.datasource._request('GET', url)
-    .then(function(result) {
-      return _.map(result.data.data.result, function(metricData) {
-        var text = metricData.metric.__name__ || '';
-        delete metricData.metric.__name__;
-        text += '{' +
-                _.map(metricData.metric, function(v, k) { return k + '="' + v + '"'; }).join(',') +
-                '}';
-        text += ' ' + metricData.value[1] + ' ' + metricData.value[0] * 1000;
+      .then(function(result) {
+        return _.map(result.data.data.result, function(metricData) {
+          var text = metricData.metric.__name__ || '';
+          delete metricData.metric.__name__;
+          text += '{' +
+            _.map(metricData.metric, function(v, k) { return k + '="' + v + '"'; }).join(',') +
+            '}';
+          text += ' ' + metricData.value[1] + ' ' + metricData.value[0] * 1000;
 
-        return {
-          text: text,
-          expandable: true
-        };
+          return {
+            text: text,
+            expandable: true
+          };
+        });
       });
-    });
   };
 
   PrometheusMetricFindQuery.prototype.metricNameAndLabelsQuery = function(query) {
@@ -115,14 +147,14 @@ function (_) {
 
     var self = this;
     return this.datasource._request('GET', url)
-    .then(function(result) {
-      return _.map(result.data.data, function(metric) {
-        return {
-          text: self.datasource.getOriginalMetricName(metric),
-          expandable: true
-        };
+      .then(function(result) {
+        return _.map(result.data.data, function(metric) {
+          return {
+            text: self.datasource.getOriginalMetricName(metric),
+            expandable: true
+          };
+        });
       });
-    });
   };
 
   return PrometheusMetricFindQuery;

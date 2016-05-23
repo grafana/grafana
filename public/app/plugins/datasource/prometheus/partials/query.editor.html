@@ -1,5 +1,10 @@
-<query-editor-row query-ctrl="ctrl" can-collapse="false">
-	<div class="gf-form-inline">
+<query-editor-row query-ctrl="ctrl" can-collapse="false" has-text-edit-mode="true">
+
+  <div class="gf-form" ng-if="!ctrl.target.editorMode">
+    <input type="text" class="gf-form-input" ng-model="ctrl.target.expr" spellcheck="false" ng-blur="ctrl.refresh()"></input>
+	</div>
+
+	<div class="gf-form-inline" ng-if="ctrl.target.editorMode">
 		<div class="gf-form">
 			<label class="gf-form-label width-8 query-keyword">Query</label>
 			<metric-segment segment="ctrl.metricSegment" get-options="ctrl.getMetricOptions()" on-change="ctrl.queryChanged()"></metric-segment>

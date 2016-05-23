@@ -2,7 +2,6 @@ import {
   QueryPartDef,
   QueryPart,
   functionRenderer,
-  suffixRenderer,
   identityRenderer,
   quotedIdentityRenderer,
 } from 'app/core/components/query_part/query_part';
@@ -12,6 +11,7 @@ import _ from 'lodash';
 var index = [];
 var categories = {
   Functions: [],
+  GroupBy: [],
 };
 
 export class PromQuery {
@@ -29,6 +29,7 @@ export class PromQuery {
     this.target.expr = this.target.expr || '';
     this.target.intervalFactor = this.target.intervalFactor || 2;
     this.target.functions = this.target.functions || [];
+    this.target.editorMode = this.target.editorMode || true;
 
     this.templateSrv = templateSrv;
     this.scopedVars = scopedVars;
@@ -80,6 +81,10 @@ function addFunctionStrategy(model, partModel) {
   model.target.functions.push(partModel.part);
 }
 
+function groupByLabelRenderer(part, innerExpr) {
+  return innerExpr + ' by(' + part.params.join(',')  + ')';
+}
+
 register({
   type: 'rate',
   addStrategy: addFunctionStrategy,
@@ -87,6 +92,26 @@ register({
   params: [],
   defaultParams: [],
   renderer: functionRenderer,
+});
+
+register({
+  type: 'sum',
+  addStrategy: addFunctionStrategy,
+  category: categories.Functions,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+register({
+  type: 'by',
+  addStrategy: addFunctionStrategy,
+  category: categories.Functions,
+  params: [
+    {name: "label", type: "string", dynamicLookup: true}
+  ],
+  defaultParams: [],
+  renderer: groupByLabelRenderer,
 });
 
 export function getQueryPartCategories() {

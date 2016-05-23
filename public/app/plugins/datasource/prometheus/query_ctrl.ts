@@ -20,7 +20,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
   linkToPrometheus: any;
 
   /** @ngInject */
-  constructor($scope, $injector, private templateSrv, private uiSegmentSrv) {
+  constructor($scope, $injector, private templateSrv, private uiSegmentSrv, private $rootScope) {
     super($scope, $injector);
 
     this.query = new PromQuery(this.target, templateSrv);
@@ -58,6 +58,39 @@ class PrometheusQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
+  getPartOptions(part) {
+    if (part.def.type === 'by') {
+      return this.datasource.metricFindQuery('labels(' + this.target.metric + ')')
+      .then(this.transformToSegments(true))
+      .catch(this.handleQueryError.bind(true));
+    }
+  }
+
+  partUpdated(part) {
+    this.target.expr = this.query.render();
+    this.panelCtrl.refresh();
+  }
+
+  handleQueryError(err) {
+    this.$rootScope.appEvent('alert-error', ['Query failed', err.message]);
+  }
+
+  transformToSegments(addTemplateVars) {
+    return (results) => {
+      var segments = _.map(results, segment => {
+        return this.uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
+      });
+
+      if (addTemplateVars) {
+        for (let variable of this.templateSrv.variables) {
+          segments.unshift(this.uiSegmentSrv.newSegment({ type: 'template', value: '/^$' + variable.name + '$/', expandable: true }));
+        }
+      }
+
+      return segments;
+    };
+  }
+
   getMetricOptions() {
     return this.datasource.performSuggestQuery('').then(res => {
       return _.map(res, metric => {
@@ -68,6 +101,13 @@ class PrometheusQueryCtrl extends QueryCtrl {
 
   queryChanged() {
     this.target.metric = this.metricSegment.value;
+    this.target.expr = this.query.render();
+    this.refresh();
+  }
+
+  toggleEditorMode() {
+    this.target.expr = this.query.render(false);
+    this.target.editorMode = !this.target.editorMode;
   }
 
   refreshMetricData() {
