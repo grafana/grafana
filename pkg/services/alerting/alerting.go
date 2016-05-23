@@ -84,11 +84,8 @@ func (this *Scheduler) updateJobs(f func() []m.AlertRule) {
 	for i := this.serverPosition - 1; i < len(rules); i += this.clusterSize {
 		rule := rules[i]
 		jobs = append(jobs, &AlertJob{
-			id:        rule.Id,
-			name:      rule.Title,
-			frequency: rule.Frequency,
-			rule:      rule,
-			offset:    int64(len(jobs)),
+			rule:   rule,
+			offset: int64(len(jobs)),
 		})
 	}
 
@@ -101,8 +98,8 @@ func (this *Scheduler) queueJobs() {
 	now := time.Now().Unix()
 
 	for _, job := range this.jobs {
-		if now%job.frequency == 0 && job.running == false {
-			log.Info("Scheduler: Putting job on to run queue: %s", job.name)
+		if now%job.rule.Frequency == 0 && job.running == false {
+			log.Info("Scheduler: Putting job on to run queue: %s", job.rule.Title)
 			this.runQueue <- job
 		}
 	}
@@ -111,7 +108,7 @@ func (this *Scheduler) queueJobs() {
 func (this *Scheduler) Executor(executor Executor) {
 	for job := range this.runQueue {
 		log.Info("Executor: queue length %d", len(this.runQueue))
-		log.Info("Executor: executing %s", job.name)
+		log.Info("Executor: executing %s", job.rule.Title)
 		go Measure(executor, job)
 	}
 }
@@ -126,13 +123,10 @@ func Measure(exec Executor, rule *AlertJob) {
 }
 
 type AlertJob struct {
-	id        int64
-	name      string
-	frequency int64
-	offset    int64
-	delay     bool
-	running   bool
-	rule      m.AlertRule
+	offset  int64
+	delay   bool
+	running bool
+	rule    m.AlertRule
 }
 
 type AlertResult struct {
