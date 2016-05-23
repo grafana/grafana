@@ -59,5 +59,24 @@ func TestAlertingScheduler(t *testing.T) {
 			So(len(scheduler.jobs), ShouldEqual, 1)
 			So(scheduler.jobs[0].id, ShouldEqual, 6)
 		})
+
+		Convey("more servers then alerts", func() {
+			mockFn := func() []m.AlertRule {
+				return []m.AlertRule{
+					{Id: 1, Title: "test 1"},
+				}
+			}
+
+			scheduler := &Scheduler{
+				jobs:           make([]*AlertJob, 0),
+				runQueue:       make(chan *AlertJob, 1000),
+				serverId:       "",
+				serverPosition: 3,
+				clusterSize:    3,
+			}
+
+			scheduler.updateJobs(mockFn)
+			So(len(scheduler.jobs), ShouldEqual, 0)
+		})
 	})
 }
