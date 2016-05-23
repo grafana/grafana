@@ -2,14 +2,9 @@ package migrations
 
 import (
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 func addAlertMigrations(mg *Migrator) {
-	if !setting.AlertingEnabled {
-		return
-	}
-
 	alertV1 := Table{
 		Name: "alert_rule",
 		Columns: []*Column{
