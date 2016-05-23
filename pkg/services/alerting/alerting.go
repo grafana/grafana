@@ -107,7 +107,7 @@ func (s *Scheduler) Executor(executor Executor) {
 	for job := range s.runQueue {
 		log.Info("Executor: queue length %d", len(s.runQueue))
 		log.Info("Executor: executing %s", job.name)
-		executor.Execute(job.rule)
+		go executor.Execute(job.rule)
 	}
 }
 
