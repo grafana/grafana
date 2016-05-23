@@ -56,25 +56,25 @@ func (s *Scheduler) Dispatch(reader RuleReader) {
 	ticker := time.NewTicker(time.Second * 5)
 
 	s.heartBeat()
-	s.updateJobs(reader)
+	s.updateJobs(reader.Fetch)
 
 	for {
 		select {
 		case <-secondTicker.C:
 			s.queueJobs()
 		case <-reschedule.C:
-			s.updateJobs(reader)
+			s.updateJobs(reader.Fetch)
 		case <-ticker.C:
 			s.heartBeat()
 		}
 	}
 }
 
-func (s *Scheduler) updateJobs(reader RuleReader) {
+func (s *Scheduler) updateJobs(f func() []m.AlertRule) {
 	log.Debug("Scheduler: UpdateJobs()")
 
 	jobs := make([]*AlertJob, 0)
-	rules := reader.Fetch()
+	rules := f()
 
 	for i := s.serverPosition - 1; i < len(rules); i += s.clusterSize {
 		rule := rules[i]
