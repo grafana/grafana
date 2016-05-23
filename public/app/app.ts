@@ -42,6 +42,10 @@ export class GrafanaApp {
     app.constant('grafanaVersion', "@grafanaVersion@");
 
     app.config(($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) => {
+      if (config.buildInfo.env !== 'development') {
+        $compileProvider.debugInfoEnabled(false);
+      }
+
       this.registerFunctions.controller = $controllerProvider.register;
       this.registerFunctions.directive  = $compileProvider.directive;
       this.registerFunctions.factory    = $provide.factory;

@@ -15,8 +15,6 @@ module.exports = function(config,grunt) {
         src = confDir+src;
       }
 
-      var exec = require('child_process').execFileSync;
-
       try {
         grunt.config('copy.phantom_bin', {
           src: src,

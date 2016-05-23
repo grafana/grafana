@@ -35,6 +35,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     valueMaps: [
       { value: 'null', op: '=', text: 'N/A' }
     ],
+    mappingTypes: [
+      {name: 'value to text', value: 1},
+      {name: 'range to text', value: 2},
+    ],
+    rangeMaps: [
+      { from: 'null', to: 'null', text: 'N/A' }
+    ],
+    mappingType: 1,
     nullPointMode: 'connected',
     valueName: 'avg',
     prefixFontSize: '50%',
@@ -73,6 +81,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   onInitEditMode() {
     this.fontSizes = ['20%', '30%','50%','70%','80%','100%', '110%', '120%', '150%', '170%', '200%'];
     this.addEditorTab('Options', 'public/app/plugins/panel/singlestat/editor.html', 2);
+    this.addEditorTab('Value Mappings', 'public/app/plugins/panel/singlestat/mappings.html', 3);
     this.unitFormats = kbn.getUnitFormats();
   }
 
@@ -82,7 +91,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   onDataError(err) {
-    this.onDataReceived({data: []});
+    this.onDataReceived([]);
   }
 
   onDataReceived(dataList) {
@@ -91,11 +100,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var data: any = {};
     this.setValues(data);
 
-    data.thresholds = this.panel.thresholds.split(',').map(function(strVale) {
-      return Number(strVale.trim());
-    });
-
-    data.colorMap = this.panel.colors;
     this.data = data;
     this.render();
   }
@@ -197,23 +201,45 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       }
     }
 
-    // check value to text mappings
-    for (var i = 0; i < this.panel.valueMaps.length; i++) {
-      var map = this.panel.valueMaps[i];
-      // special null case
-      if (map.value === 'null') {
-        if (data.value === null || data.value === void 0) {
+    // check value to text mappings if its enabled
+    if (this.panel.mappingType === 1) {
+      for (var i = 0; i < this.panel.valueMaps.length; i++) {
+        var map = this.panel.valueMaps[i];
+        // special null case
+        if (map.value === 'null') {
+          if (data.value === null || data.value === void 0) {
+            data.valueFormated = map.text;
+            return;
+          }
+          continue;
+        }
+
+        // value/number to text mapping
+        var value = parseFloat(map.value);
+        if (value === data.valueRounded) {
           data.valueFormated = map.text;
           return;
         }
-        continue;
       }
+    } else if (this.panel.mappingType === 2) {
+      for (var i = 0; i < this.panel.rangeMaps.length; i++) {
+        var map = this.panel.rangeMaps[i];
+        // special null case
+        if (map.from === 'null' && map.to === 'null') {
+          if (data.value === null || data.value === void 0) {
+            data.valueFormated = map.text;
+            return;
+          }
+          continue;
+        }
 
-      // value/number to text mapping
-      var value = parseFloat(map.value);
-      if (value === data.valueRounded) {
-        data.valueFormated = map.text;
-        return;
+        // value/number to range mapping
+        var from = parseFloat(map.from);
+        var to = parseFloat(map.to);
+        if (to >= data.valueRounded && from <= data.valueRounded) {
+          data.valueFormated = map.text;
+          return;
+        }
       }
     }
 
@@ -232,6 +258,16 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     this.panel.valueMaps.push({value: '', op: '=', text: '' });
   }
 
+  removeRangeMap(rangeMap) {
+    var index = _.indexOf(this.panel.rangeMaps, rangeMap);
+    this.panel.rangeMaps.splice(index, 1);
+    this.render();
+  };
+
+  addRangeMap() {
+    this.panel.rangeMaps.push({from: '', to: '', text: ''});
+  }
+
   link(scope, elem, attrs, ctrl) {
     var $location = this.$location;
     var linkSrv = this.linkSrv;
@@ -239,10 +275,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var panel = ctrl.panel;
     var templateSrv = this.templateSrv;
     var data, linkInfo;
+    var width, height;
     var $panelContainer = elem.find('.panel-container');
     elem = elem.find('.singlestat-panel');
 
     function setElementHeight() {
+      width = elem.width();
+      height = elem.height();
       elem.css('height', ctrl.height + 'px');
     }
 
@@ -296,8 +335,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       }
 
       var plotCanvas = $('<div></div>');
-      var width = elem.width();
-      var height = elem.height();
       var plotCss = {
         top: '10px',
         margin: 'auto',
@@ -324,9 +361,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         ? 'rgb(230,230,230)'
         : 'rgb(38,38,38)';
 
-
+      var fontScale = parseInt(panel.valueFontSize) / 100;
       var dimension = Math.min(width, height);
-      var fontSize = Math.min(dimension/4, 100);
+      var fontSize = Math.min(dimension/5, 100) * fontScale;
       var gaugeWidth = Math.min(dimension/6, 60);
       var thresholdMarkersWidth = gaugeWidth/5;
 
@@ -372,15 +409,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       };
 
       $.plot(plotCanvas, [plotSeries], options);
-    }
-
-    function getGaugeFontSize() {
-      if (panel.valueFontSize) {
-        var num = parseInt(panel.valueFontSize.substring(0, panel.valueFontSize.length - 1));
-        return (30 * (num / 100)) + 15;
-      } else {
-        return 30;
-      }
     }
 
     function addSparkline() {
@@ -444,8 +472,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function render() {
       if (!ctrl.data) { return; }
-      ctrl.setValues(ctrl.data);
       data = ctrl.data;
+
+      // get thresholds
+      data.thresholds = panel.thresholds.split(',').map(function(strVale) {
+        return Number(strVale.trim());
+      });
+      data.colorMap = panel.colors;
+
       setElementHeight();
 
       var body = panel.gauge.show ? '' : getBigValueHtml();
