@@ -475,11 +475,14 @@ function (angular, _, moment) {
         if ((target.hide !== true) && (target.counterDataComplete === true)) {
           targetDataQuery = validateCounterData(target).then(function(counterData) {
             var query = null,
+                seriesName = self.name + ' - ' + counterData.nodeName + ' - ' + counterData.counterDisplayName,
                 seriesDataQuery,
                 seriesTypes;
 
+            seriesName = target.aliasName || seriesName;
+
             if (counterData != null) {
-              query = [$q.when(counterData.nodeName + ' - ' + counterData.counterDisplayName)];
+              query = [$q.when(seriesName)];
               seriesTypes = (series == null) ? Object.create(null) : series;
               seriesTypes = self.validateSeriesTypes(seriesTypes);
               seriesDataQuery = prepareSeriesDataQuery(target, range, seriesTypes);
