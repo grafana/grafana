@@ -244,15 +244,26 @@ function (angular, _, kbn) {
     this.validateVariableSelectionState = function(variable) {
       if (!variable.current) {
         if (!variable.options.length) { return; }
-        return self.setVariableValue(variable, variable.options[0], true);
+        return self.setVariableValue(variable, variable.options[0], false);
       }
 
       if (_.isArray(variable.current.value)) {
         self.selectOptionsForCurrentValue(variable);
+        // updated selected value
+        var selected = {
+          value: _.map(_.filter(variable.options, {selected: true}), function(op) {
+            return op.value;
+          })
+        };
+        // if none pick first
+        if (selected.value.length === 0) {
+          selected = variable.options[0];
+        }
+        return self.setVariableValue(variable, selected, false);
       } else {
         var currentOption = _.findWhere(variable.options, {text: variable.current.text});
         if (currentOption) {
-          return self.setVariableValue(variable, currentOption, true);
+          return self.setVariableValue(variable, currentOption, false);
         } else {
           if (!variable.options.length) { return; }
           return self.setVariableValue(variable, variable.options[0]);
