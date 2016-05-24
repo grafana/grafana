@@ -125,7 +125,7 @@
   }
 
   .share-modal-options {
-    margin: 11px 20px 33px 20px;
+    margin: 11px 0px 33px 0px;
     display: inline-block;
   }
 
@@ -137,14 +137,15 @@
     }
   }
 
-  .share-snapshot-info-text {
+  .share-modal-info-text {
+    margin-top: 5px;
     strong {
       color: $headings-color;
       font-weight: 500;
     }
   }
 
-  .share-snapshot-header {
+  .share-modal-header {
     display: flex;
     margin: 0px 0 22px 0;
   }
@@ -153,7 +154,7 @@
     text-align: left;
   }
 
-  .share-snapshot-link {
+  .share-modal-link {
     max-width: 716px;
     white-space: nowrap;
     overflow: hidden;
