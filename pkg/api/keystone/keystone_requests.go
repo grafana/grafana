@@ -167,7 +167,7 @@ func AuthenticateUnscoped(data *Auth_data) error {
 }
 
 func authenticate(data *Auth_data, b []byte) error {
-	request, err := http.NewRequest("POST", data.Server+"/v3/auth/tokens", bytes.NewBuffer(b))
+	request, err := http.NewRequest("POST", data.Server+"/v3/auth/tokens?nocatalog", bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}
@@ -175,7 +175,10 @@ func authenticate(data *Auth_data, b []byte) error {
 	resp, err := GetHttpClient().Do(request)
 	if err != nil {
 		return err
-	} else if resp.StatusCode != 201 {
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 201 {
 		return errors.New("Keystone authentication failed: " + resp.Status)
 	}
 
@@ -211,7 +214,10 @@ func GetProjects(data *Projects_data) error {
 	resp, err := GetHttpClient().Do(request)
 	if err != nil {
 		return err
-	} else if resp.StatusCode != 200 {
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
 		return errors.New("Keystone project-list failed: " + resp.Status)
 	}
 
