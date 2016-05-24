@@ -1,9 +1,40 @@
+.page-dashboard footer {
+	display: none;
+}
+
+footer {
+		font-size: 75%;
+		width: 98%;  /* was causing horiz scrollbars - need to examine */
+	a {
+		color: $gray-1;
+	}
+	ul {
+		list-style: none;
+	}
+	li { display: inline-block;
+		padding-right: 2px;
+		 &:after {
+		 	content: ' | ';
+		 	padding-left: 2px;
+		 	color: $gray-1;
+		 }
+	}
+	li:last-child {
+		&:after {
+			padding-left: 0;
+			content: '';
+		}
+	}
+}
+
 .grafana-version-info {
   position: absolute;
   bottom: 2px;
   left: 3px;
-  font-size: 80%;
   color: darken($gray-1, 25%);
   a { color: darken($gray-1, 25%); }
 }
 
+.footer {
+  padding: 5rem 0 1rem 0;
+}
