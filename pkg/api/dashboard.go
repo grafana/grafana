@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -167,14 +168,12 @@ func GetHomeDashboard(c *middleware.Context) {
 	if prefsQuery.Result.HomeDashboardId != 0 {
 		slugQuery := m.GetDashboardSlugByIdQuery{Id: prefsQuery.Result.HomeDashboardId}
 		err := bus.Dispatch(&slugQuery)
-		if err != nil {
-			c.JsonApiErr(500, "Failed to get slug from database", err)
-			return
+		if err == nil {
+			dashRedirect := dtos.DashboardRedirect{RedirectUri: "db/" + slugQuery.Result}
+			c.JSON(200, &dashRedirect)
+		} else {
+			log.Warn("Failed to get slug from database, %s", err.Error())
 		}
-
-		dashRedirect := dtos.DashboardRedirect{RedirectUri: "db/" + slugQuery.Result}
-		c.JSON(200, &dashRedirect)
-		return
 	}
 
 	filePath := path.Join(setting.StaticRootPath, "dashboards/home.json")
