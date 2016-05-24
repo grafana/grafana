@@ -135,6 +135,8 @@ var (
 	KeystoneEditorRoles      []string
 	KeystoneAdminRoles       []string
 	KeystoneGlobalAdminRoles []string
+  KeystoneVerifySSLCert    bool
+  KeystoneRootCAPEMFile    []string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -486,6 +488,9 @@ func NewConfigContext(args *CommandLineArgs) error {
 	KeystoneEditorRoles = strings.Split(keystone.Key("editor_roles").String(), ",")
 	KeystoneAdminRoles = strings.Split(keystone.Key("admin_roles").String(), ",")
 	KeystoneGlobalAdminRoles = strings.Split(keystone.Key("global_admin_roles").String(), ",")
+
+	KeystoneVerifySSLCert = keystone.Key("verify_ssl_cert").MustBool(true)
+	KeystoneRootCAPEMFile = keystone.Key("root_ca_pem_file").String()
 
 	readSessionConfig()
 	readSmtpSettings()
