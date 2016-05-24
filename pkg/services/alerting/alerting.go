@@ -129,7 +129,9 @@ func (this *Scheduler) Executor(executor Executor) {
 func (this *Scheduler) HandleResponses() {
 	for response := range this.responseQueue {
 		log.Info("Response: alert %d returned %s", response.id, response.state)
-		this.jobs[response.id].running = false
+		if this.jobs[response.id] != nil {
+			this.jobs[response.id].running = false
+		}
 	}
 }
 
