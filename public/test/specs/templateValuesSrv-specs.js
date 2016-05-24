@@ -126,6 +126,46 @@ define([
       });
     });
 
+    describeUpdateVariable('query variable with multi select and new options does not contain some selected values', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {
+          type: 'query',
+          query: '',
+          name: 'test',
+          current: {
+            value: ['val1', 'val2', 'val3'],
+            text: 'val1 + val2 + val3'
+          }
+        };
+        scenario.queryResult = [{text: 'val2'}, {text: 'val3'}];
+      });
+
+      it('should update current value', function() {
+        expect(scenario.variable.current.value).to.eql(['val2', 'val3']);
+        expect(scenario.variable.current.text).to.eql('val2 + val3');
+      });
+    });
+
+    describeUpdateVariable('query variable with multi select and new options does not contain any selected values', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {
+          type: 'query',
+          query: '',
+          name: 'test',
+          current: {
+            value: ['val1', 'val2', 'val3'],
+            text: 'val1 + val2 + val3'
+          }
+        };
+        scenario.queryResult = [{text: 'val5'}, {text: 'val6'}];
+      });
+
+      it('should update current value with first one', function() {
+        expect(scenario.variable.current.value).to.eql('val5');
+        expect(scenario.variable.current.text).to.eql('val5');
+      });
+    });
+
     describeUpdateVariable('query variable with numeric results', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'query', query: '', name: 'test', current: {} };
