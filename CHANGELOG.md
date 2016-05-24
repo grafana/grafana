@@ -1,6 +1,8 @@
 # 3.1.0 (unreleased)
 
 ### Enhancements
+* **Dashboard Url**: Time range changes updates url, closes [#458](https://github.com/grafana/grafana/issues/458)
+* **Dashboard Url**: Template variable change updates url, closes [#5002](https://github.com/grafana/grafana/issues/5002)
 * **Singlestat**: Add support for range to text mappings, closes [#1319](https://github.com/grafana/grafana/issues/1319)
 * **Graph**: Adds sort order options for graph tooltip, closes  [#1189](https://github.com/grafana/grafana/issues/1189)
 * **Theme**: Add default theme to config file [#5011](https://github.com/grafana/grafana/pull/5011)
