@@ -73,14 +73,5 @@
 			</div>
 		</div>
 
-		<div class="row" style="margin-top: 50px">
-			<div class="version-footer text-center small">
-				Grafana version: {{buildInfo.version}}, commit: {{buildInfo.commit}},
-				build date: {{buildInfo.buildstamp | date: 'yyyy-MM-dd HH:mm:ss' }}
-			</div>
-			<div class="version-footer text-center small" ng-show="buildInfo.hasUpdate">
-				<a class="external-link" target="_blank" href="http://grafana.org/download">New Grafana Version Available ({{buildInfo.latestVersion}})</a>
-			</div>
-		</div>
 	</div>
 </div>
