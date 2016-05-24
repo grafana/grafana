@@ -4,6 +4,7 @@
 * **Singlestat**: Add support for range to text mappings, closes [#1319](https://github.com/grafana/grafana/issues/1319)
 * **Graph**: Adds sort order options for graph tooltip, closes  [#1189](https://github.com/grafana/grafana/issues/1189)
 * **Theme**: Add default theme to config file [#5011](https://github.com/grafana/grafana/pull/5011)
+* **Page Footer**: Added page footer with links to docs, shows Grafana version and info if new version is available, closes [#4889](https://github.com/grafana/grafana/pull/4889)
 
 # 3.0.3 Patch release (2016-05-23)
 * **Annotations**: Annotations can now use a template variable as data source, closes [#5054](https://github.com/grafana/grafana/issues/5054)
