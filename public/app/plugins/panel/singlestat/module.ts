@@ -275,13 +275,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var panel = ctrl.panel;
     var templateSrv = this.templateSrv;
     var data, linkInfo;
-    var width, height;
     var $panelContainer = elem.find('.panel-container');
     elem = elem.find('.singlestat-panel');
 
     function setElementHeight() {
-      width = elem.width();
-      height = elem.height();
       elem.css('height', ctrl.height + 'px');
     }
 
@@ -328,6 +325,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function addGauge() {
+      var width = elem.width();
+      var height = elem.height();
+
       ctrl.invalidGaugeRange = false;
       if (panel.gauge.minValue > panel.gauge.maxValue) {
         ctrl.invalidGaugeRange = true;
