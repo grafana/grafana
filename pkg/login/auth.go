@@ -43,6 +43,7 @@ func AuthenticateUser(query *LoginUserQuery) error {
 	if setting.KeystoneEnabled {
 		auther := NewKeystoneAuthenticator(setting.KeystoneURL,
 			setting.KeystoneDefaultDomain,
+			setting.KeystoneDefaultRole,
 			setting.KeystoneGlobalAdminRoles,
 			setting.KeystoneAdminRoles,
 			setting.KeystoneEditorRoles,

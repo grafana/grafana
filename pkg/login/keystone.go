@@ -11,6 +11,7 @@ import (
 type keystoneAuther struct {
 	server      string
 	domainname  string
+	defaultrole string
 	roles       map[m.RoleType][]string
 	admin_roles []string
 
@@ -18,7 +19,7 @@ type keystoneAuther struct {
 	project_list map[string][]string
 }
 
-func NewKeystoneAuthenticator(server, domainname string, global_admin_roles, admin_roles, editor_roles,
+func NewKeystoneAuthenticator(server, domainname, default_role string, global_admin_roles, admin_roles, editor_roles,
 	read_editor_roles, viewer_roles []string) *keystoneAuther {
 	roles := map[m.RoleType][]string{
 		m.ROLE_ADMIN:            admin_roles,
@@ -26,7 +27,7 @@ func NewKeystoneAuthenticator(server, domainname string, global_admin_roles, adm
 		m.ROLE_READ_ONLY_EDITOR: read_editor_roles,
 		m.ROLE_VIEWER:           viewer_roles,
 	}
-	return &keystoneAuther{server: server, domainname: domainname, roles: roles, admin_roles: global_admin_roles}
+	return &keystoneAuther{server: server, domainname: domainname, defaultrole: default_role, roles: roles, admin_roles: global_admin_roles}
 }
 
 func (a *keystoneAuther) login(query *LoginUserQuery) error {
@@ -315,5 +316,5 @@ func (a *keystoneAuther) getRole(user_roles []string) m.RoleType {
 			}
 		}
 	}
-	return ""
+	return m.RoleType(a.defaultrole)
 }

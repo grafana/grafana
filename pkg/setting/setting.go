@@ -130,13 +130,14 @@ var (
 	KeystoneEnabled          bool
 	KeystoneURL              string
 	KeystoneDefaultDomain    string
+	KeystoneDefaultRole      string
 	KeystoneViewerRoles      []string
 	KeystoneReadEditorRoles  []string
 	KeystoneEditorRoles      []string
 	KeystoneAdminRoles       []string
 	KeystoneGlobalAdminRoles []string
-  KeystoneVerifySSLCert    bool
-  KeystoneRootCAPEMFile    []string
+	KeystoneVerifySSLCert    bool
+	KeystoneRootCAPEMFile    string
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -483,6 +484,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	KeystoneEnabled = keystone.Key("enabled").MustBool(false)
 	KeystoneURL = keystone.Key("auth_url").String()
 	KeystoneDefaultDomain = keystone.Key("default_domain").String()
+	KeystoneDefaultRole = keystone.Key("default_role").String()
 	KeystoneViewerRoles = strings.Split(keystone.Key("viewer_roles").String(), ",")
 	KeystoneReadEditorRoles = strings.Split(keystone.Key("read_editor_roles").String(), ",")
 	KeystoneEditorRoles = strings.Split(keystone.Key("editor_roles").String(), ",")
