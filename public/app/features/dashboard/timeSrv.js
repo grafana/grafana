@@ -10,7 +10,7 @@ define([
 
   var module = angular.module('grafana.services');
 
-  module.service('timeSrv', function($rootScope, $timeout, $routeParams, timer, $location) {
+  module.service('timeSrv', function($rootScope, $timeout, $routeParams, timer) {
     var self = this;
 
     this.init = function(dashboard) {
@@ -107,13 +107,6 @@ define([
         this.setAutoRefresh(this.old_refresh);
         this.old_refresh = null;
       }
-
-      // update url params
-      var urlParams = $location.search();
-      var urlRange = this.timeRangeForUrl();
-      urlParams.from = urlRange.from;
-      urlParams.to = urlRange.to;
-      $location.search(urlParams);
 
       $rootScope.appEvent('time-range-changed', this.time);
       $timeout(this.refreshDashboard, 0);

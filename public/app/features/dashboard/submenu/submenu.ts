@@ -27,25 +27,8 @@ export class SubmenuCtrl {
     return this.templateValuesSrv.getValuesForTag(variable, tagKey);
   }
 
-  updateUrlParamsWithCurrentVariables() {
-    // update url
-    var params = this.$location.search();
-    // remove variable params
-    _.each(params, function(value, key) {
-      if (key.indexOf('var-') === 0) {
-        delete params[key];
-      }
-    });
-
-    // add new values
-    this.templateSrv.fillVariableValuesForUrl(params);
-    // update url
-    this.$location.search(params);
-  }
-
   variableUpdated(variable) {
     this.templateValuesSrv.variableUpdated(variable).then(() => {
-      this.updateUrlParamsWithCurrentVariables();
       this.dynamicDashboardSrv.update(this.dashboard);
       this.$rootScope.$emit('template-variable-value-updated');
       this.$rootScope.$broadcast('refresh');
