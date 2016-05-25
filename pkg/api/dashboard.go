@@ -159,10 +159,10 @@ func canEditDashboard(role m.RoleType) bool {
 	return role == m.ROLE_ADMIN || role == m.ROLE_EDITOR || role == m.ROLE_READ_ONLY_EDITOR
 }
 
-func GetHomeDashboard(c *middleware.Context) {
+func GetHomeDashboard(c *middleware.Context) Response {
 	prefsQuery := m.GetPreferencesWithDefaultsQuery{OrgId: c.OrgId, UserId: c.UserId}
 	if err := bus.Dispatch(&prefsQuery); err != nil {
-		c.JsonApiErr(500, "Failed to get preferences", err)
+		return ApiError(500, "Failed to get preferences", err)
 	}
 
 	if prefsQuery.Result.HomeDashboardId != 0 {
@@ -170,7 +170,7 @@ func GetHomeDashboard(c *middleware.Context) {
 		err := bus.Dispatch(&slugQuery)
 		if err == nil {
 			dashRedirect := dtos.DashboardRedirect{RedirectUri: "db/" + slugQuery.Result}
-			c.JSON(200, &dashRedirect)
+			return Json(200, &dashRedirect)
 		} else {
 			log.Warn("Failed to get slug from database, %s", err.Error())
 		}
@@ -179,8 +179,7 @@ func GetHomeDashboard(c *middleware.Context) {
 	filePath := path.Join(setting.StaticRootPath, "dashboards/home.json")
 	file, err := os.Open(filePath)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to load home dashboard", err)
-		return
+		return ApiError(500, "Failed to load home dashboard", err)
 	}
 
 	dash := dtos.DashboardFullWithMeta{}
@@ -188,11 +187,10 @@ func GetHomeDashboard(c *middleware.Context) {
 	dash.Meta.CanEdit = canEditDashboard(c.OrgRole)
 	jsonParser := json.NewDecoder(file)
 	if err := jsonParser.Decode(&dash.Dashboard); err != nil {
-		c.JsonApiErr(500, "Failed to load home dashboard", err)
-		return
+		return ApiError(500, "Failed to load home dashboard", err)
 	}
 
-	c.JSON(200, &dash)
+	return Json(200, &dash)
 }
 
 func GetDashboardFromJsonFile(c *middleware.Context) {
