@@ -211,7 +211,7 @@ func Register(r *macaron.Macaron) {
 			r.Combo("/db/:slug").Get(GetDashboard).Delete(DeleteDashboard)
 			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), PostDashboard)
 			r.Get("/file/:file", GetDashboardFromJsonFile)
-			r.Get("/home", GetHomeDashboard)
+			r.Get("/home", wrap(GetHomeDashboard))
 			r.Get("/tags", GetDashboardTags)
 			r.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
 		})
