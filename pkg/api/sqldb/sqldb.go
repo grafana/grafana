@@ -85,7 +85,7 @@ func getData(db *core.DB, req *sqlDataRequest) (interface{}, error) {
 	data.Results = make([]resultsStruct, 1)
 	data.Results[0].Series = make([]seriesStruct, 0)
 
-	for i, _ := range queries {
+	for i := range queries {
 		if queries[i] == "" {
 			continue
 		}
@@ -123,7 +123,7 @@ func arrangeResult(rows *core.Rows, name string) (interface{}, error) {
 		}
 
 		// bytes -> string
-		for i, _ := range columnValues {
+		for i := range columnValues {
 			switch columnValues[i].(type) {
 			case []byte:
 				columnValues[i] = fmt.Sprintf("%s", columnValues[i])
