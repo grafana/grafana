@@ -35,10 +35,28 @@ func NewLogger(bufLen int64, mode, config string) {
 	}
 }
 
+func IsTrace() bool {
+	for _, logger := range loggers {
+		if logger.level <= TRACE {
+			return true
+		}
+	}
+	return false
+}
+
 func Trace(format string, v ...interface{}) {
 	for _, logger := range loggers {
 		logger.Trace(format, v...)
 	}
+}
+
+func IsDebug() bool {
+	for _, logger := range loggers {
+		if logger.level <= DEBUG {
+			return true
+		}
+	}
+	return false
 }
 
 func Debug(format string, v ...interface{}) {
@@ -47,10 +65,28 @@ func Debug(format string, v ...interface{}) {
 	}
 }
 
+func IsInfo() bool {
+	for _, logger := range loggers {
+		if logger.level <= INFO {
+			return true
+		}
+	}
+	return false
+}
+
 func Info(format string, v ...interface{}) {
 	for _, logger := range loggers {
 		logger.Info(format, v...)
 	}
+}
+
+func IsWarn() bool {
+	for _, logger := range loggers {
+		if logger.level <= WARN {
+			return true
+		}
+	}
+	return false
 }
 
 func Warn(format string, v ...interface{}) {
@@ -59,16 +95,43 @@ func Warn(format string, v ...interface{}) {
 	}
 }
 
+func IsError() bool {
+	for _, logger := range loggers {
+		if logger.level <= ERROR {
+			return true
+		}
+	}
+	return false
+}
+
 func Error(skip int, format string, v ...interface{}) {
 	for _, logger := range loggers {
 		logger.Error(skip, format, v...)
 	}
 }
 
+func IsCritical() bool {
+	for _, logger := range loggers {
+		if logger.level <= CRITICAL {
+			return true
+		}
+	}
+	return false
+}
+
 func Critical(skip int, format string, v ...interface{}) {
 	for _, logger := range loggers {
 		logger.Critical(skip, format, v...)
 	}
+}
+
+func IsFatal() bool {
+	for _, logger := range loggers {
+		if logger.level <= FATAL {
+			return true
+		}
+	}
+	return false
 }
 
 func Fatal(skip int, format string, v ...interface{}) {
