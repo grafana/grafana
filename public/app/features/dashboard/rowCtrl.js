@@ -142,9 +142,10 @@ function (angular, _, config) {
   });
 
   module.directive('panelWidth', function() {
-    var fullscreen = false;
 
     return function(scope, element) {
+      var fullscreen = false;
+
       function updateWidth() {
         if (!fullscreen) {
           element[0].style.width = ((scope.panel.span / 1.2) * 10) + '%';
