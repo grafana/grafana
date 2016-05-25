@@ -79,7 +79,6 @@ function (angular, _, kbn) {
         else if (variable.refresh === 1 || variable.refresh === 2) {
           return self.updateOptions(variable).then(function() {
             if (_.isEmpty(variable.current) && variable.options.length) {
-              console.log("setting current for %s", variable.name);
               self.setVariableValue(variable, variable.options[0]);
             }
             lock.resolve();
@@ -102,7 +101,10 @@ function (angular, _, kbn) {
       }
 
       return promise.then(function() {
-        var option = _.findWhere(variable.options, { text: urlValue });
+        var option = _.find(variable.options, function(op) {
+          return op.text === urlValue || op.value === urlValue;
+        });
+
         option = option || { text: urlValue, value: urlValue };
 
         self.updateAutoInterval(variable);

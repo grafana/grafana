@@ -1,6 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import angular from 'angular';
+import _ from 'lodash';
 
 export class SubmenuCtrl {
   annotations: any;
@@ -8,7 +9,11 @@ export class SubmenuCtrl {
   dashboard: any;
 
   /** @ngInject */
-  constructor(private $rootScope, private templateValuesSrv, private dynamicDashboardSrv) {
+  constructor(private $rootScope,
+              private templateValuesSrv,
+              private templateSrv,
+              private dynamicDashboardSrv,
+              private $location) {
     this.annotations = this.dashboard.templating.list;
     this.variables = this.dashboard.templating.list;
   }
@@ -22,8 +27,25 @@ export class SubmenuCtrl {
     return this.templateValuesSrv.getValuesForTag(variable, tagKey);
   }
 
+  updateUrlParamsWithCurrentVariables() {
+    // update url
+    var params = this.$location.search();
+    // remove variable params
+    _.each(params, function(value, key) {
+      if (key.indexOf('var-') === 0) {
+        delete params[key];
+      }
+    });
+
+    // add new values
+    this.templateSrv.fillVariableValuesForUrl(params);
+    // update url
+    this.$location.search(params);
+  }
+
   variableUpdated(variable) {
     this.templateValuesSrv.variableUpdated(variable).then(() => {
+      this.updateUrlParamsWithCurrentVariables();
       this.dynamicDashboardSrv.update(this.dashboard);
       this.$rootScope.$emit('template-variable-value-updated');
       this.$rootScope.$broadcast('refresh');
