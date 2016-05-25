@@ -38,10 +38,10 @@
     function checkIsReady() {
       var canvas = page.evaluate(function() {
         if (!window.angular) { return false; }
-        var body = window.angular.element(document.body);   // 1
+        var body = window.angular.element(document.body);
         if (!body.scope) { return false; }
 
-        var rootScope = body.scope();
+        var rootScope = body.injector().get('$rootScope');
         if (!rootScope) {return false;}
         if (!rootScope.performance) { return false; }
         var panelsToLoad = window.angular.element('div.panel').length;

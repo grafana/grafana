@@ -209,7 +209,9 @@ function (_, $, coreModule) {
             // needs to call this after digest so
             // property is synced with outerscope
             $scope.$$postDigest(function() {
-              $scope.onChange();
+              $scope.$apply(function() {
+                $scope.onChange();
+              });
             });
           };
 

@@ -256,23 +256,14 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return this.renderTemplate(options.legendFormat, labelData) || '{}';
   };
 
-  this.renderTemplate = function(format, data) {
-    var originalSettings = _.templateSettings;
-    _.templateSettings = {
-      interpolate: /\{\{(.+?)\}\}/g
-    };
-
-    var template = _.template(templateSrv.replace(format));
-    var result;
-    try {
-      result = template(data);
-    } catch (e) {
-      result = null;
-    }
-
-    _.templateSettings = originalSettings;
-
-    return result;
+  this.renderTemplate = function(aliasPattern, aliasData) {
+    var aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
+    return aliasPattern.replace(aliasRegex, function(match, g1) {
+      if (aliasData[g1]) {
+        return aliasData[g1];
+      }
+      return g1;
+    });
   };
 
   this.getOriginalMetricName = function(labelData) {

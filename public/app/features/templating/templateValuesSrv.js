@@ -79,7 +79,6 @@ function (angular, _, kbn) {
         else if (variable.refresh === 1 || variable.refresh === 2) {
           return self.updateOptions(variable).then(function() {
             if (_.isEmpty(variable.current) && variable.options.length) {
-              console.log("setting current for %s", variable.name);
               self.setVariableValue(variable, variable.options[0]);
             }
             lock.resolve();
@@ -102,7 +101,10 @@ function (angular, _, kbn) {
       }
 
       return promise.then(function() {
-        var option = _.findWhere(variable.options, { text: urlValue });
+        var option = _.find(variable.options, function(op) {
+          return op.text === urlValue || op.value === urlValue;
+        });
+
         option = option || { text: urlValue, value: urlValue };
 
         self.updateAutoInterval(variable);
@@ -244,15 +246,26 @@ function (angular, _, kbn) {
     this.validateVariableSelectionState = function(variable) {
       if (!variable.current) {
         if (!variable.options.length) { return; }
-        return self.setVariableValue(variable, variable.options[0], true);
+        return self.setVariableValue(variable, variable.options[0], false);
       }
 
       if (_.isArray(variable.current.value)) {
         self.selectOptionsForCurrentValue(variable);
+        // updated selected value
+        var selected = {
+          value: _.map(_.filter(variable.options, {selected: true}), function(op) {
+            return op.value;
+          })
+        };
+        // if none pick first
+        if (selected.value.length === 0) {
+          selected = variable.options[0];
+        }
+        return self.setVariableValue(variable, selected, false);
       } else {
         var currentOption = _.findWhere(variable.options, {text: variable.current.text});
         if (currentOption) {
-          return self.setVariableValue(variable, currentOption, true);
+          return self.setVariableValue(variable, currentOption, false);
         } else {
           if (!variable.options.length) { return; }
           return self.setVariableValue(variable, variable.options[0]);
@@ -312,6 +325,14 @@ function (angular, _, kbn) {
         var item = metricNames[i];
         var value = item.value || item.text;
         var text = item.text || item.value;
+
+        if (_.isNumber(value)) {
+          value = value.toString();
+        }
+
+        if (_.isNumber(text)) {
+          text = text.toString();
+        }
 
         if (regex) {
           matches = regex.exec(value);
