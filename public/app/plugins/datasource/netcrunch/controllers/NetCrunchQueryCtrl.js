@@ -64,7 +64,7 @@ function (angular) {
     $scope.nodeSelectionShow = false;
     $scope.nodeSelectionFocus = false;
     $scope.target.nodeID = ($scope.target.nodeID == null) ? null : $scope.target.nodeID;
-    $scope.target.aliasName = ($scope.target.aliasName == null) ? null : $scope.target.aliasName;
+    $scope.target.alias = ($scope.target.alias == null) ? null : $scope.target.alias;
 
     $scope.processingCounters = true;
     $scope.counters = [];
