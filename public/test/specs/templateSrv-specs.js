@@ -205,6 +205,10 @@ define([
         expect(contains).to.be(true);
       });
 
+      it('should find it its the only thing', function() {
+        var contains = _templateSrv.containsVariable('$env', 'env');
+        expect(contains).to.be(true);
+      });
     });
 
     describe('updateTemplateData with simple value', function() {
