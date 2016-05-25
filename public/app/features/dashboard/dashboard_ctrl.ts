@@ -6,7 +6,6 @@ import moment from 'moment';
 import _ from 'lodash';
 
 import coreModule from 'app/core/core_module';
-import {DynamicDashboardSrv} from './dynamic_dashboard_srv';
 
 export class DashboardCtrl {
 
@@ -19,13 +18,13 @@ export class DashboardCtrl {
     templateValuesSrv,
     dashboardSrv,
     unsavedChangesSrv,
+    dynamicDashboardSrv,
     dashboardViewStateSrv,
     contextSrv,
     $timeout) {
 
       $scope.editor = { index: 0 };
       $scope.panels = config.panels;
-      $scope.dynamicDashboardSrv = new DynamicDashboardSrv();
 
       var resizeEventTimeout;
 
@@ -43,7 +42,7 @@ export class DashboardCtrl {
         // template values service needs to initialize completely before
         // the rest of the dashboard can load
         templateValuesSrv.init(dashboard).finally(function() {
-          $scope.dynamicDashboardSrv.init(dashboard);
+          dynamicDashboardSrv.init(dashboard);
 
           unsavedChangesSrv.init(dashboard, $scope);
 
@@ -64,7 +63,7 @@ export class DashboardCtrl {
       };
 
       $scope.templateVariableUpdated = function() {
-        $scope.dynamicDashboardSrv.update($scope.dashboard);
+        dynamicDashboardSrv.update($scope.dashboard);
       };
 
       $scope.updateSubmenuVisibility = function() {

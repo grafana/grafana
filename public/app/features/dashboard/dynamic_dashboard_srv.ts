@@ -184,3 +184,5 @@ export class DynamicDashboardSrv {
   }
 }
 
+coreModule.service('dynamicDashboardSrv', DynamicDashboardSrv);
+
