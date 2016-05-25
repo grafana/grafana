@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 
 	. "github.com/smartystreets/goconvey/convey"
+	//"github.com/grafana/grafana/pkg/log"
 )
 
 var indexTypes = []string{"Unknown", "INDEX", "UNIQUE INDEX"}
@@ -28,7 +29,7 @@ func TestMigrations(t *testing.T) {
 			sqlutil.CleanDB(x)
 
 			mg := NewMigrator(x)
-			//mg.LogLevel = log.DEBUG
+			//mg.LogLevel = log.ERROR
 			AddMigrations(mg)
 
 			err = mg.Start()

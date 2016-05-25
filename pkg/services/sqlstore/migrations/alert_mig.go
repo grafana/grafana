@@ -11,7 +11,7 @@ func addAlertMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
-			//{Name: "datasource_id", Type: DB_BigInt, Nullable: false},
+			{Name: "datasource_id", Type: DB_BigInt, Nullable: false},
 			{Name: "panel_id", Type: DB_BigInt, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "query", Type: DB_Text, Nullable: false},

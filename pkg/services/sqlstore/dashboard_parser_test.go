@@ -1,9 +1,11 @@
-package models
+package sqlstore
 
 import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -336,17 +338,38 @@ func TestAlertModel(t *testing.T) {
   "links": []
 }`
 		dashboardJson, _ := simplejson.NewJson([]byte(json))
-		cmd := &SaveDashboardCommand{
+		cmd := &m.SaveDashboardCommand{
 			Dashboard: dashboardJson,
 			UserId:    1,
 			OrgId:     1,
 			Overwrite: true,
-			Result: &Dashboard{
+			Result: &m.Dashboard{
 				Id: 1,
 			},
 		}
 
-		alerts := cmd.GetAlertModels()
+		InitTestDB(t)
+
+		AddDataSource(&m.AddDataSourceCommand{
+			Name:      "graphite2",
+			OrgId:     1,
+			Type:      m.DS_INFLUXDB,
+			Access:    m.DS_ACCESS_DIRECT,
+			Url:       "http://test",
+			IsDefault: false,
+			Database:  "site",
+		})
+
+		AddDataSource(&m.AddDataSourceCommand{
+			Name:      "InfluxDB",
+			OrgId:     1,
+			Type:      m.DS_GRAPHITE,
+			Access:    m.DS_ACCESS_DIRECT,
+			Url:       "http://test",
+			IsDefault: true,
+		})
+
+		alerts := alerting.ParseAlertsFromDashboard(cmd)
 
 		Convey("all properties have been set", func() {
 			So(alerts, ShouldNotBeEmpty)
@@ -380,6 +403,10 @@ func TestAlertModel(t *testing.T) {
 
 			So(alerts[0].Query, ShouldEqual, `{"refId":"A","target":"aliasByNode(statsd.fakesite.counters.session_start.desktop.count, 4)"}`)
 			So(alerts[1].Query, ShouldEqual, `{"refId":"A","target":"aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}`)
+
+			So(alerts[0].DatasourceId, ShouldEqual, 2)
+			So(alerts[1].DatasourceId, ShouldEqual, 1)
+
 		})
 	})
 }

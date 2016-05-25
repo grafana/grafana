@@ -115,7 +115,7 @@ func (mg *Migrator) Start() error {
 
 func (mg *Migrator) exec(m Migration) error {
 	if mg.LogLevel <= log.INFO {
-		log.Info("Migrator: exec migration id: %v", m.Id())
+		//log.Info("Migrator: exec migration id: %v", m.Id())
 	}
 
 	err := mg.inTransaction(func(sess *xorm.Session) error {

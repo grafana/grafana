@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -154,7 +155,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 			DashboardId: cmd.Result.Id,
 			OrgId:       c.OrgId,
 			UserId:      c.UserId,
-			Alerts:      cmd.GetAlertModels(),
+			Alerts:      alerting.ParseAlertsFromDashboard(&cmd),
 		}
 
 		err = bus.Dispatch(&saveAlertCommand)
