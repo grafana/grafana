@@ -1,0 +1,53 @@
+<h3 class="page-heading">SqlDB Details</h3>
+
+<div class="gf-form-group">
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-15">
+			<span class="gf-form-label width-7">DBMS</span>
+			<select class="input-medium tight-form-input" ng-model="ctrl.current.jsonData.dbms" ng-options="f for f in ['postgres', 'mysql']"></select>
+		</div>
+		<div class="gf-form max-width-15" ng-if="ctrl.current.jsonData.dbms === 'postgres'">
+			<span class="gf-form-label width-7">SSL</span>
+			<input class="cr1" id="jsonData.ssl" type="checkbox" value="on" ng-model="ctrl.current.jsonData.ssl" ng-checked="ctrl.current.jsonData.ssl">
+			<label for="jsonData.ssl" class="cr1"></label>
+		</div>
+	</div>
+
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-7">Host</span>
+			<input type="text" class="gf-form-input" ng-model='ctrl.current.jsonData.host' placeholder="localhost" required></input>
+		</div>
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-7">Port</span>
+			<input type="text" class="gf-form-input" ng-model='ctrl.current.jsonData.port' placeholder="5432" required></input>
+		</div>
+	</div>
+
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-7">Database</span>
+			<input type="text" class="gf-form-input" ng-model='ctrl.current.database' placeholder="" required></input>
+		</div>
+	</div>
+
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-7">User</span>
+			<input type="text" class="gf-form-input" ng-model='ctrl.current.user' placeholder="" required></input>
+		</div>
+		<div class="gf-form max-width-30">
+			<span class="gf-form-label width-7">Password</span>
+			<input type="password" class="gf-form-input" ng-model='ctrl.current.password' placeholder="" required></input>
+		</div>
+	</div>
+</div>
+
+<div class="gf-form-group">
+	<div class="gf-form max-width-21">
+		<span class="gf-form-label">Default group by time</span>
+		<input type="text" class="gf-form-input width-6" ng-model="ctrl.current.jsonData.timeInterval"
+		spellcheck='false' placeholder="example: >10s"></input>
+		<i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >10s'" data-placement="right"></i>
+	</div>
+</div>

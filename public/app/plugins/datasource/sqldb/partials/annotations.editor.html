@@ -1,0 +1,57 @@
+
+<h5 class="section-heading">Query
+	<tip>You can use some variables to specify the condition about span:
+		 (ex1) $timeColumn &gt; $timeFrom AND $timeColumn &lt; $timeTo
+		 (ex2) $timeColumn &gt; $unixFrom AND $timeColumn &lt; $unixTo
+		 (ex3) $timeFileter
+	</tip>
+</h5>
+<div class="gf-form-group">
+	<div class="gf-form">
+		<input type="text" class="gf-form-input" ng-model='ctrl.annotation.query' placeholder="select text from events where $timeFilter"></input>
+	</div>
+</div>
+
+<h5 class="section-heading">Query parts</h5>
+<div class="gf-form-group">
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label width-5">Schema</span>
+			<input type="text" class="gf-form-input max-width-10" ng-model='ctrl.annotation.schema' placeholder=""></input>
+		</div>
+
+		<div class="gf-form">
+			<span class="gf-form-label width-5">Table</span>
+			<input type="text" class="gf-form-input max-width-10" ng-model='ctrl.annotation.table' placeholder=""></input>
+		</div>
+	</div>
+
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label width-5">Time</span>
+			<input type="text" class="gf-form-input max-width-10" ng-model='ctrl.annotation.timeCol' placeholder=""></input>
+		</div>
+
+		<div class="gf-form">
+			<span class="gf-form-label width-7">Type of Time</span>
+            <select type="text" class="gf-form-input max-width-20" ng-model='ctrl.annotation.timeDataType' ng-options="f for f in ['timestamp without time zone', 'timestamp with time zone', 'numeric']"></select>
+		</div>
+	</div>
+
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label width-5">Tags</span>
+			<input type="text" class="gf-form-input max-width-10" ng-model='ctrl.annotation.tags' placeholder=""></input>
+		</div>
+
+		<div class="gf-form">
+			<span class="gf-form-label width-5">Title</span>
+			<input type="text" class="gf-form-input max-width-10" ng-model='ctrl.annotation.title' placeholder=""></input>
+		</div>
+
+		<div class="gf-form">
+			<span class="gf-form-label width-5">Text</span>
+			<input type="text" class="gf-form-input max-width-10" ng-model='ctrl.annotation.text' placeholder=""></input>
+		</div>
+	</div>
+</div>
