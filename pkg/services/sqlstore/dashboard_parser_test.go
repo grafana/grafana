@@ -406,7 +406,6 @@ func TestAlertModel(t *testing.T) {
 
 			So(alerts[0].DatasourceId, ShouldEqual, 2)
 			So(alerts[1].DatasourceId, ShouldEqual, 1)
-
 		})
 	})
 }

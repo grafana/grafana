@@ -12,12 +12,12 @@ type Executor interface {
 
 type DummieExecutor struct{}
 
-func (this DummieExecutor) Execute(rule m.AlertRule, responseQueue chan *AlertResult) {
+func (this *DummieExecutor) Execute(rule m.AlertRule, responseQueue chan *AlertResult) {
 	if rule.Id == 6 {
 		time.Sleep(time.Second * 0)
 	}
 	//time.Sleep(time.Second)
 	log.Info("Finnished executing: %d", rule.Id)
 
-	responseQueue <- &AlertResult{state: "OK", id: rule.Id}
+	responseQueue <- &AlertResult{State: "OK", Id: rule.Id}
 }

@@ -21,7 +21,7 @@ func Init() {
 
 	scheduler := NewScheduler()
 	go scheduler.Dispatch(&AlertRuleReader{})
-	go scheduler.Executor(&DummieExecutor{})
+	go scheduler.Executor(&GraphiteExecutor{})
 	go scheduler.HandleResponses()
 }
 
@@ -128,9 +128,9 @@ func (this *Scheduler) Executor(executor Executor) {
 
 func (this *Scheduler) HandleResponses() {
 	for response := range this.responseQueue {
-		log.Info("Response: alert %d returned %s", response.id, response.state)
-		if this.jobs[response.id] != nil {
-			this.jobs[response.id].running = false
+		log.Info("Response: alert(%d) status(%s) actual(%v)", response.Id, response.State, response.ActualValue)
+		if this.jobs[response.Id] != nil {
+			this.jobs[response.Id].running = false
 		}
 	}
 }
@@ -143,10 +143,10 @@ func (this *Scheduler) MeasureAndExecute(exec Executor, rule *AlertJob) {
 
 	select {
 	case <-time.After(time.Second * 5):
-		this.responseQueue <- &AlertResult{id: rule.rule.Id, state: "timed out", duration: time.Since(now).Nanoseconds() / 1000000}
+		this.responseQueue <- &AlertResult{Id: rule.rule.Id, State: "timed out", Duration: float64(time.Since(now).Nanoseconds()) / float64(1000000)}
 	case r := <-response:
-		r.duration = time.Since(now).Nanoseconds() / 1000000
-		log.Info("Schedular: exeuction took %v milli seconds", r.duration)
+		r.Duration = float64(time.Since(now).Nanoseconds()) / float64(1000000)
+		log.Info("Schedular: exeuction took %vms", r.Duration)
 		this.responseQueue <- r
 	}
 }
@@ -159,7 +159,8 @@ type AlertJob struct {
 }
 
 type AlertResult struct {
-	id       int64
-	state    string
-	duration int64
+	Id          int64
+	State       string
+	ActualValue float64
+	Duration    float64
 }

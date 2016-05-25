@@ -17,6 +17,18 @@ func (this AlertRuleReader) Fetch() []m.AlertRule {
 		//{Id: 3, Title: "alert rule 3", Interval: "10s", Frequency: 10},
 		//{Id: 4, Title: "alert rule 4", Interval: "10s", Frequency: 5},
 		//{Id: 5, Title: "alert rule 5", Interval: "10s", Frequency: 5},
-		{Id: 6, Title: "alert rule 6", Interval: "10s", Frequency: 1},
+		{
+			Id:           6,
+			OrgId:        1,
+			Title:        "alert rule 6",
+			Interval:     "10s",
+			Frequency:    3,
+			DatasourceId: 1,
+			WarnOperator: ">",
+			WarnLevel:    100,
+			Aggregator:   "avg",
+			Query:        `{"refId":"A","target":"statsd.fakesite.counters.session_start.*.count","textEditor":true}"`,
+			QueryRange:   "1h",
+		},
 	}
 }
