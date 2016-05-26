@@ -17,6 +17,12 @@
 # Short-Description: start and stop grafana-server
 ### END INIT INFO
 
+# init.d / servicectl compatibility (openSUSE)
+if [ -f /etc/rc.status ]; then
+    . /etc/rc.status
+    rc_reset
+fi
+
 # Source function library
 . /etc/rc.d/init.d/functions
 
@@ -35,16 +41,16 @@ MAX_OPEN_FILES=10000
 
 PID_FILE=/var/run/$PROG.pid
 PID_FILE_TIMEOUT=10
-
 DAEMON=/usr/sbin/$PROG
-DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR} cfg:default.paths.plugins=${PLUGINS_DIR}"
 
 lockfile=/var/lock/subsys/$PROG
 
-# Source the default environment file
+# Source the default Grafana environment file
 if [ -f "/etc/sysconfig/$PROG" ]; then
     . /etc/sysconfig/$PROG
 fi
+
+DAEMON_OPTS="--pidfile=${PID_FILE} --config=${CONF_FILE} cfg:default.paths.data=${DATA_DIR} cfg:default.paths.logs=${LOG_DIR} cfg:default.paths.plugins=${PLUGINS_DIR}"
 
 if [ "$EUID" != "0" ]; then
     echo "You need root privileges to run this script."
