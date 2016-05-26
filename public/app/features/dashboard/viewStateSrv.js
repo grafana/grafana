@@ -53,7 +53,7 @@ function (angular, _, $) {
         self.registerPanel(payload.scope);
       });
 
-      this.update(this.getQueryStringState(), true);
+      this.update(this.getQueryStringState());
       this.expandRowForPanel();
     }
 

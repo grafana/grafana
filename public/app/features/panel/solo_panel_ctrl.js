@@ -17,6 +17,10 @@ function (angular, $) {
       var params = $location.search();
       panelId = parseInt(params.panelId);
 
+      // add fullscreen param;
+      params.fullscreen = true;
+      $location.search(params);
+
       dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug).then(function(result) {
         $scope.initDashboard(result, $scope);
       });
