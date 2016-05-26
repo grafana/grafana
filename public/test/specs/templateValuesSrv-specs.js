@@ -166,6 +166,27 @@ define([
       });
     });
 
+    describeUpdateVariable('query variable with multi select and $__all selected', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {
+          type: 'query',
+          query: '',
+          name: 'test',
+          includeAll: true,
+          current: {
+            value: ['$__all'],
+            text: 'All'
+          }
+        };
+        scenario.queryResult = [{text: 'val5'}, {text: 'val6'}];
+      });
+
+      it('should keep current All value', function() {
+        expect(scenario.variable.current.value).to.eql(['$__all']);
+        expect(scenario.variable.current.text).to.eql('All');
+      });
+    });
+
     describeUpdateVariable('query variable with numeric results', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'query', query: '', name: 'test', current: {} };
