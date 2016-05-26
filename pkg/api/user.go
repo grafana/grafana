@@ -40,6 +40,24 @@ func UpdateUser(c *middleware.Context, cmd m.UpdateUserCommand) Response {
 	return handleUpdateUser(cmd)
 }
 
+//POST /api/users/:id/using/:orgId
+func UpdateUserActiveOrg(c *middleware.Context) Response {
+	userId := c.ParamsInt64(":id")
+	orgId := c.ParamsInt64(":orgId")
+
+	if !validateUsingOrg(userId, orgId) {
+		return ApiError(401, "Not a valid organization", nil)
+	}
+
+	cmd := m.SetUsingOrgCommand{UserId: userId, OrgId: orgId}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed change active organization", err)
+	}
+
+	return ApiSuccess("Active organization changed")
+}
+
 func handleUpdateUser(cmd m.UpdateUserCommand) Response {
 	if len(cmd.Login) == 0 {
 		cmd.Login = cmd.Email
