@@ -15,18 +15,18 @@ type AlertState struct {
 
 var (
 	VALID_STATES = []string{
-		ALERT_STATE_OK,
-		ALERT_STATE_WARN,
-		ALERT_STATE_CRITICAL,
-		ALERT_STATE_ACKNOWLEDGED,
-		ALERT_STATE_MAINTENANCE,
+		AlertStateOk,
+		AlertStateWarn,
+		AlertStateCritical,
+		AlertStateAcknowledged,
+		AlertStateMaintenance,
 	}
 
-	ALERT_STATE_OK           = "OK"
-	ALERT_STATE_WARN         = "WARN"
-	ALERT_STATE_CRITICAL     = "CRITICAL"
-	ALERT_STATE_ACKNOWLEDGED = "ACKNOWLEDGED"
-	ALERT_STATE_MAINTENANCE  = "MAINTENANCE"
+	AlertStateOk           = "OK"
+	AlertStateWarn         = "WARN"
+	AlertStateCritical     = "CRITICAL"
+	AlertStateAcknowledged = "ACKNOWLEDGED"
+	AlertStateMaintenance  = "MAINTENANCE"
 )
 
 func (this *UpdateAlertStateCommand) IsValidState() bool {

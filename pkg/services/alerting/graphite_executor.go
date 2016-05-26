@@ -44,23 +44,23 @@ func (this *GraphiteExecutor) executeRules(series []Series, rule m.AlertRule) *A
 		avg = sum / float64(len(v.Datapoints))
 
 		if float64(rule.CritLevel) < avg {
-			return &AlertResult{State: m.ALERT_STATE_CRITICAL, Id: rule.Id, ActualValue: avg}
+			return &AlertResult{State: m.AlertStateCritical, Id: rule.Id, ActualValue: avg}
 		}
 
 		if float64(rule.WarnLevel) < avg {
-			return &AlertResult{State: m.ALERT_STATE_WARN, Id: rule.Id, ActualValue: avg}
+			return &AlertResult{State: m.AlertStateWarn, Id: rule.Id, ActualValue: avg}
 		}
 
 		if float64(rule.CritLevel) < sum {
-			return &AlertResult{State: m.ALERT_STATE_CRITICAL, Id: rule.Id, ActualValue: sum}
+			return &AlertResult{State: m.AlertStateCritical, Id: rule.Id, ActualValue: sum}
 		}
 
 		if float64(rule.WarnLevel) < sum {
-			return &AlertResult{State: m.ALERT_STATE_WARN, Id: rule.Id, ActualValue: sum}
+			return &AlertResult{State: m.AlertStateWarn, Id: rule.Id, ActualValue: sum}
 		}
 	}
 
-	return &AlertResult{State: m.ALERT_STATE_OK, Id: rule.Id}
+	return &AlertResult{State: m.AlertStateOk, Id: rule.Id}
 }
 
 func (this *GraphiteExecutor) getSeries(rule m.AlertRule) (Response, error) {
