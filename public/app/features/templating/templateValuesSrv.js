@@ -105,8 +105,6 @@ function (angular, _, kbn) {
           return op.text === urlValue || op.value === urlValue;
         });
 
-        option = option || { text: urlValue, value: urlValue };
-
         self.updateAutoInterval(variable);
         return self.setVariableValue(variable, option, true);
       });
@@ -127,8 +125,8 @@ function (angular, _, kbn) {
     this.setVariableValue = function(variable, option, initPhase) {
       variable.current = angular.copy(option);
 
-      if (_.isArray(variable.current.value)) {
-        variable.current.text = variable.current.value.join(' + ');
+      if (_.isArray(variable.current.text)) {
+        variable.current.text = variable.current.text.join(' + ');
       }
 
       self.selectOptionsForCurrentValue(variable);
@@ -226,6 +224,7 @@ function (angular, _, kbn) {
 
     this.selectOptionsForCurrentValue = function(variable) {
       var i, y, value, option;
+      var selected = [];
 
       for (i = 0; i < variable.options.length; i++) {
         option = variable.options[i];
@@ -235,12 +234,16 @@ function (angular, _, kbn) {
             value = variable.current.value[y];
             if (option.value === value) {
               option.selected = true;
+              selected.push(option);
             }
           }
         } else if (option.value === variable.current.value) {
           option.selected = true;
+          selected.push(option);
         }
       }
+
+      return selected;
     };
 
     this.validateVariableSelectionState = function(variable) {
@@ -250,17 +253,18 @@ function (angular, _, kbn) {
       }
 
       if (_.isArray(variable.current.value)) {
-        self.selectOptionsForCurrentValue(variable);
-        // updated selected value
-        var selected = {
-          value: _.map(_.filter(variable.options, {selected: true}), function(op) {
-            return op.value;
-          })
-        };
+        var selected = self.selectOptionsForCurrentValue(variable);
+
         // if none pick first
-        if (selected.value.length === 0) {
+        if (selected.length === 0) {
           selected = variable.options[0];
+        } else {
+          selected = {
+            value: _.map(selected, function(val) {return val.value;}),
+            text: _.map(selected, function(val) {return val.text;}).join(' + '),
+          };
         }
+
         return self.setVariableValue(variable, selected, false);
       } else {
         var currentOption = _.findWhere(variable.options, {text: variable.current.text});
