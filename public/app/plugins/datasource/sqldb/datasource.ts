@@ -405,6 +405,7 @@ export default class SqlDatasource {
     case 'timestamp':
     case 'timestamptz':
     case 'datetime':
+    case 'date':
       return 'timestamp';
 
     case 'numeric':
