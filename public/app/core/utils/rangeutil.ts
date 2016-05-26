@@ -146,5 +146,5 @@ export = {
   getRelativeTimesList: getRelativeTimesList,
   describeTextRange: describeTextRange,
   describeTimeRange: describeTimeRange,
-}
+};
 
