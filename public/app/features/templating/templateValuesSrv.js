@@ -105,6 +105,8 @@ function (angular, _, kbn) {
           return op.text === urlValue || op.value === urlValue;
         });
 
+        option = option || { text: urlValue, value: urlValue };
+
         self.updateAutoInterval(variable);
         return self.setVariableValue(variable, option, true);
       });
