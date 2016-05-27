@@ -14,11 +14,20 @@ export class DashImportCtrl {
   dash: any;
   inputs: any[];
   inputsValid: boolean;
+  gnetUrl: string;
+  gnetError: string;
+  gnetInfo: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $location, private $scope) {
+  constructor(private backendSrv, private $location, private $scope, private $routeParams) {
     this.step = 1;
     this.nameExists = false;
+
+    // check gnetId in url
+    if ($routeParams.gnetId)  {
+      this.gnetUrl = $routeParams.gnetId ;
+      this.checkGnetDashboard();
+    }
   }
 
   onUpload(dash) {
@@ -119,6 +128,37 @@ export class DashImportCtrl {
       this.parseError = err.message;
       return;
     }
+  }
+
+  checkGnetDashboard() {
+    this.gnetError = '';
+
+    var match = /(^\d+$)|dashboards\/(\d+)/.exec(this.gnetUrl);
+    var dashboardId;
+
+    if (match && match[1]) {
+      dashboardId = match[1];
+    } else if (match && match[2]) {
+      dashboardId = match[2];
+    } else {
+      this.gnetError = 'Could not find dashboard';
+    }
+
+    return this.backendSrv.get('api/gnet/dashboards/' + dashboardId).then(res => {
+      this.gnetInfo = res;
+      // store reference to grafana.net
+      res.json.gnetId = dashboardId;
+      this.onUpload(res.json);
+    }).catch(err => {
+      this.gnetError = err.message || err;
+    });
+  }
+
+  back() {
+    this.gnetUrl = '';
+    this.step = 1;
+    this.gnetError = '';
+    this.gnetInfo = '';
   }
 
 }

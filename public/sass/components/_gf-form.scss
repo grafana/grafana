@@ -158,6 +158,10 @@ $gf-form-margin: 0.25rem;
       color: transparent;
       text-shadow: 0 0 0 $text-color;
     }
+
+    &.ng-empty {
+      color: $text-color-weak;
+    }
   }
 
   &:after {

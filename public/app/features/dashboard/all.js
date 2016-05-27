@@ -17,7 +17,7 @@ define([
   './importCtrl',
   './impression_store',
   './upload',
-  './import/import',
+  './import/dash_import',
   './export/export_modal',
   './dash_list_ctrl',
 ], function () {});
