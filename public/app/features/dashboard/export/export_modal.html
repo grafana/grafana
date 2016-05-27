@@ -15,16 +15,6 @@
 			You can share dashboards on <a class="external-link" href="https://grafana.net">Grafana.net</a>
 		</p>
 
-		<div class="gf-form-group">
-			<div class="gf-form">
-				<label class="gf-form-label width-8">Title</label>
-				<input type="text" class="gf-form-input" ng-model="ctrl.dash.title" ng-change="ctrl.titleChanged()">
-				<label class="gf-form-label text-success" ng-show="ctrl.dash.title">
-					<i class="fa fa-check"></i>
-				</label>
-			</div>
-		</div>
-
 		<div class="gf-form-button-row">
 			<button type="button" class="btn gf-form-btn width-10 btn-success" ng-click="ctrl.save()">
 				<i class="fa fa-save"></i> Save to file
