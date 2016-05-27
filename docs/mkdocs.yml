@@ -84,6 +84,7 @@ pages:
 - ['http_api/user.md', 'API', 'User API']
 - ['http_api/admin.md', 'API', 'Admin API']
 - ['http_api/snapshot.md', 'API', 'Snapshot API']
+- ['http_api/preferences.md', 'API', 'Preferences API']
 - ['http_api/other.md', 'API', 'Other API']
 
 - ['plugins/index.md', 'Plugins', 'Overview']
