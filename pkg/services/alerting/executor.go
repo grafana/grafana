@@ -11,13 +11,22 @@ type Executor interface {
 
 type ExecutorImpl struct{}
 
-type fn func(float64, float64) bool
+type compareFn func(float64, float64) bool
+type aggregationFn func(*m.TimeSeries) float64
 
-var operators map[string]fn = map[string]fn{
+var operators map[string]compareFn = map[string]compareFn{
 	">":  func(num1, num2 float64) bool { return num1 > num2 },
 	">=": func(num1, num2 float64) bool { return num1 >= num2 },
 	"<":  func(num1, num2 float64) bool { return num1 < num2 },
 	"<=": func(num1, num2 float64) bool { return num1 <= num2 },
+}
+
+var aggregator map[string]aggregationFn = map[string]aggregationFn{
+	"avg":  func(series *m.TimeSeries) float64 { return series.Avg },
+	"sum":  func(series *m.TimeSeries) float64 { return series.Sum },
+	"min":  func(series *m.TimeSeries) float64 { return series.Min },
+	"max":  func(series *m.TimeSeries) float64 { return series.Max },
+	"mean": func(series *m.TimeSeries) float64 { return series.Mean },
 }
 
 func (this *ExecutorImpl) Execute(rule m.AlertRule, responseQueue chan *AlertResult) {
@@ -32,28 +41,14 @@ func (this *ExecutorImpl) Execute(rule m.AlertRule, responseQueue chan *AlertRes
 
 func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlice) *AlertResult {
 	for _, v := range series {
-		var avg float64
-		var sum float64
-		for _, dp := range v.Points {
-			sum += dp[0]
+		var aggValue = aggregator[rule.Aggregator](v)
+
+		if rule.CritOperator != "" && operators[rule.CritOperator](float64(rule.CritLevel), aggValue) {
+			return &AlertResult{State: m.AlertStateCritical, Id: rule.Id, ActualValue: aggValue}
 		}
 
-		avg = sum / float64(len(v.Points))
-
-		if rule.CritOperator != "" && operators[rule.CritOperator](float64(rule.CritLevel), avg) {
-			return &AlertResult{State: m.AlertStateCritical, Id: rule.Id, ActualValue: avg}
-		}
-
-		if rule.WarnOperator != "" && operators[rule.WarnOperator](float64(rule.WarnLevel), avg) {
-			return &AlertResult{State: m.AlertStateWarn, Id: rule.Id, ActualValue: avg}
-		}
-
-		if rule.CritOperator != "" && operators[rule.CritOperator](float64(rule.CritLevel), sum) {
-			return &AlertResult{State: m.AlertStateCritical, Id: rule.Id, ActualValue: sum}
-		}
-
-		if rule.WarnOperator != "" && operators[rule.WarnOperator](float64(rule.WarnLevel), sum) {
-			return &AlertResult{State: m.AlertStateWarn, Id: rule.Id, ActualValue: sum}
+		if rule.WarnOperator != "" && operators[rule.WarnOperator](float64(rule.WarnLevel), aggValue) {
+			return &AlertResult{State: m.AlertStateWarn, Id: rule.Id, ActualValue: aggValue}
 		}
 	}
 
