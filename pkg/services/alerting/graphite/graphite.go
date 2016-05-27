@@ -1,4 +1,4 @@
-package alerting
+package graphite
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	"time"
 )
 
-type GraphiteExecutor struct{}
+type GraphiteClient struct{}
 
 type GraphiteSerie struct {
 	Datapoints [][2]float64
@@ -20,17 +20,7 @@ type GraphiteSerie struct {
 
 type GraphiteResponse []GraphiteSerie
 
-func (this *GraphiteExecutor) Execute(rule m.AlertRule, responseQueue chan *AlertResult) {
-	response, err := this.getSeries(rule)
-
-	if err != nil {
-		responseQueue <- &AlertResult{State: "CRITICAL", Id: rule.Id}
-	}
-
-	responseQueue <- this.executeRules(response, rule)
-}
-
-func (this *GraphiteExecutor) getSeries(rule m.AlertRule) (GraphiteResponse, error) {
+func (this GraphiteClient) GetSeries(rule m.AlertRule) (m.TimeSeriesSlice, error) {
 	query := &m.GetDataSourceByIdQuery{Id: rule.DatasourceId, OrgId: rule.OrgId}
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
@@ -61,7 +51,16 @@ func (this *GraphiteExecutor) getSeries(rule m.AlertRule) (GraphiteResponse, err
 		return nil, fmt.Errorf("error!")
 	}
 
-	return response, nil
+	timeSeries := make([]*m.TimeSeries, 0)
+
+	for _, v := range response {
+		timeSeries = append(timeSeries, &m.TimeSeries{
+			Name:   v.Target,
+			Points: v.Datapoints,
+		})
+	}
+
+	return timeSeries, nil
 }
 
 func getTargetFromRule(rule m.AlertRule) string {

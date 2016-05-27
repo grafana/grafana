@@ -6,10 +6,6 @@ import (
 	"time"
 )
 
-type Executor interface {
-	Execute(rule m.AlertRule, responseQueue chan *AlertResult)
-}
-
 type DummieExecutor struct{}
 
 func (this *DummieExecutor) Execute(rule m.AlertRule, responseQueue chan *AlertResult) {

@@ -21,7 +21,7 @@ func Init() {
 
 	scheduler := NewScheduler()
 	go scheduler.Dispatch(&AlertRuleReader{})
-	go scheduler.Executor(&GraphiteExecutor{})
+	go scheduler.Executor(&ExecutorImpl{})
 	go scheduler.HandleResponses()
 }
 

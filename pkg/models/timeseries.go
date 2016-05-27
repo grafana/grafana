@@ -1,4 +1,4 @@
-package alerting
+package models
 
 type TimeSeries struct {
 	Name   string       `json:"name"`
