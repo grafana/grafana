@@ -54,10 +54,7 @@ func (this GraphiteClient) GetSeries(rule m.AlertRule) (m.TimeSeriesSlice, error
 	timeSeries := make([]*m.TimeSeries, 0)
 
 	for _, v := range response {
-		timeSeries = append(timeSeries, &m.TimeSeries{
-			Name:   v.Target,
-			Points: v.Datapoints,
-		})
+		timeSeries = append(timeSeries, m.NewTimeSeries(v.Target, v.Datapoints))
 	}
 
 	return timeSeries, nil
