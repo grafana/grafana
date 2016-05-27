@@ -147,5 +147,11 @@ define([
       var str = kbn.calculateInterval(range, 1000, '>10s');
       expect(str).to.be('20m');
     });
+	
+    it('10s 900 resolution and user low limit in ms', function() {
+      var range = { from: dateMath.parse('now-10s'), to: dateMath.parse('now') };
+      var str = kbn.calculateInterval(range, 900, '>15ms');
+      expect(str).to.be('15ms');
+    });
   });
 });
