@@ -25,7 +25,7 @@ export class DashboardExporter {
     var templateizeDatasourceUsage = obj => {
       promises.push(this.datasourceSrv.get(obj.datasource).then(ds => {
         var refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
-        datasources[obj.datasource] = {
+        datasources[refName] = {
           name: refName,
           label: ds.name,
           description: '',
