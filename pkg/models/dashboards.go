@@ -29,6 +29,7 @@ type Dashboard struct {
 	Id      int64
 	Slug    string
 	OrgId   int64
+	GnetId  int64
 	Version int
 
 	Created time.Time
@@ -75,6 +76,10 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 		dash.Data.Set("version", 0)
 		dash.Created = time.Now()
 		dash.Updated = time.Now()
+	}
+
+	if gnetId, err := dash.Data.Get("gnetId").Float64(); err == nil {
+		dash.GnetId = int64(gnetId)
 	}
 
 	return dash

@@ -147,10 +147,11 @@ export class DashImportCtrl {
     return this.backendSrv.get('api/gnet/dashboards/' + dashboardId).then(res => {
       this.gnetInfo = res;
       // store reference to grafana.net
-      res.json.gnetId = dashboardId;
+      res.json.gnetId = res.id;
       this.onUpload(res.json);
     }).catch(err => {
-      this.gnetError = err.message || err;
+      err.isHandled = true;
+      this.gnetError = err.data.message || err;
     });
   }
 
