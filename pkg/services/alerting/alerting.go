@@ -50,7 +50,7 @@ func NewScheduler() *Scheduler {
 func (this *Scheduler) heartBeat() {
 
 	//Lets cheat on this until we focus on clustering
-	log.Info("Heartbeat: Sending heartbeat from " + this.serverId)
+	//log.Info("Heartbeat: Sending heartbeat from " + this.serverId)
 	this.clusterSize = 1
 	this.serverPosition = 1
 
@@ -119,7 +119,7 @@ func (this *Scheduler) queueJobs() {
 
 func (this *Scheduler) Executor(executor Executor) {
 	for job := range this.runQueue {
-		log.Info("Executor: queue length %d", len(this.runQueue))
+		//log.Info("Executor: queue length %d", len(this.runQueue))
 		log.Info("Executor: executing %s", job.rule.Title)
 		this.jobs[job.rule.Id].running = true
 		this.MeasureAndExecute(executor, job)
