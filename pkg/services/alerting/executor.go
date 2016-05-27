@@ -19,6 +19,7 @@ var operators map[string]compareFn = map[string]compareFn{
 	">=": func(num1, num2 float64) bool { return num1 >= num2 },
 	"<":  func(num1, num2 float64) bool { return num1 < num2 },
 	"<=": func(num1, num2 float64) bool { return num1 <= num2 },
+	"":   func(num1, num2 float64) bool { return false },
 }
 
 var aggregator map[string]aggregationFn = map[string]aggregationFn{
@@ -40,14 +41,18 @@ func (this *ExecutorImpl) Execute(rule m.AlertRule, responseQueue chan *AlertRes
 }
 
 func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlice) *AlertResult {
-	for _, v := range series {
-		var aggValue = aggregator[rule.Aggregator](v)
+	for _, serie := range series {
+		if aggregator[rule.Aggregator] == nil {
+			continue
+		}
 
-		if rule.CritOperator != "" && operators[rule.CritOperator](float64(rule.CritLevel), aggValue) {
+		var aggValue = aggregator[rule.Aggregator](serie)
+
+		if operators[rule.CritOperator](float64(rule.CritLevel), aggValue) {
 			return &AlertResult{State: m.AlertStateCritical, Id: rule.Id, ActualValue: aggValue}
 		}
 
-		if rule.WarnOperator != "" && operators[rule.WarnOperator](float64(rule.WarnLevel), aggValue) {
+		if operators[rule.WarnOperator](float64(rule.WarnLevel), aggValue) {
 			return &AlertResult{State: m.AlertStateWarn, Id: rule.Id, ActualValue: aggValue}
 		}
 	}
