@@ -3,7 +3,6 @@ package alerting
 import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -46,18 +45,12 @@ func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []m.AlertRule {
 				}
 			}
 
-			log.Info("datasource is %s", panel.Get("datasource").MustString())
-			log.Info("is datasource null? %v", panel.Get("datasource").MustString() == "")
 			if panel.Get("datasource").MustString() == "" {
-
 				query := &m.GetDataSourcesQuery{OrgId: cmd.OrgId}
 				if err := bus.Dispatch(query); err == nil {
-
 					for _, ds := range query.Result {
-						log.Info("found datasource %s", ds.Name)
 						if ds.IsDefault {
 							alert.DatasourceId = ds.Id
-							log.Info("setting default datasource! %d", ds.Id)
 						}
 					}
 				}
