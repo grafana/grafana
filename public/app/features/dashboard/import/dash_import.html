@@ -18,7 +18,21 @@
 				<dash-upload on-upload="ctrl.onUpload(dash)"></dash-upload>
 			</form>
 
-			<h5 class="section-heading">Or paste JSON:</h5>
+			<h5 class="section-heading">Grafana.net Dashboard</h5>
+
+      <div class="gf-form-group">
+				<div class="gf-form">
+					<input type="text" class="gf-form-input" ng-ctrl="ctrl.grafanaNetUrl" placeholder="Paste Grafana.net dashboard url or id" ng-change="ctrl.checkGnetDashboard()"></textarea>
+				</div>
+        <div class="gf-form" ng-if="ctrl.gnetError">
+          <label class="gf-form-label text-warning">
+            <i class="fa fa-warning"></i>
+            {{ctrl.gnetError}}
+          </label>
+        </div>
+      </div>
+
+      <h5 class="section-heading">Or paste JSON</h5>
 
 			<div class="gf-form-group">
 				<div class="gf-form">

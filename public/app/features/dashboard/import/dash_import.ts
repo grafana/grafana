@@ -126,7 +126,7 @@ export class DashImportCtrl {
 export function dashImportDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/import/import.html',
+    templateUrl: 'public/app/features/dashboard/import/dash_import.html',
     controller: DashImportCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
