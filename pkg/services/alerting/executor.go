@@ -11,6 +11,15 @@ type Executor interface {
 
 type ExecutorImpl struct{}
 
+type fn func(float64, float64) bool
+
+var operators map[string]fn = map[string]fn{
+	">":  func(num1, num2 float64) bool { return num1 > num2 },
+	">=": func(num1, num2 float64) bool { return num1 >= num2 },
+	"<":  func(num1, num2 float64) bool { return num1 < num2 },
+	"<=": func(num1, num2 float64) bool { return num1 <= num2 },
+}
+
 func (this *ExecutorImpl) Execute(rule m.AlertRule, responseQueue chan *AlertResult) {
 	response, err := graphite.GraphiteClient{}.GetSeries(rule)
 
@@ -18,10 +27,10 @@ func (this *ExecutorImpl) Execute(rule m.AlertRule, responseQueue chan *AlertRes
 		responseQueue <- &AlertResult{State: "CRITICAL", Id: rule.Id}
 	}
 
-	responseQueue <- this.executeRules(response, rule)
+	responseQueue <- this.ValidateRule(rule, response)
 }
 
-func (this *ExecutorImpl) executeRules(series m.TimeSeriesSlice, rule m.AlertRule) *AlertResult {
+func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlice) *AlertResult {
 	for _, v := range series {
 		var avg float64
 		var sum float64
@@ -31,19 +40,19 @@ func (this *ExecutorImpl) executeRules(series m.TimeSeriesSlice, rule m.AlertRul
 
 		avg = sum / float64(len(v.Points))
 
-		if float64(rule.CritLevel) < avg {
+		if rule.CritOperator != "" && operators[rule.CritOperator](float64(rule.CritLevel), avg) {
 			return &AlertResult{State: m.AlertStateCritical, Id: rule.Id, ActualValue: avg}
 		}
 
-		if float64(rule.WarnLevel) < avg {
+		if rule.WarnOperator != "" && operators[rule.WarnOperator](float64(rule.WarnLevel), avg) {
 			return &AlertResult{State: m.AlertStateWarn, Id: rule.Id, ActualValue: avg}
 		}
 
-		if float64(rule.CritLevel) < sum {
+		if rule.CritOperator != "" && operators[rule.CritOperator](float64(rule.CritLevel), sum) {
 			return &AlertResult{State: m.AlertStateCritical, Id: rule.Id, ActualValue: sum}
 		}
 
-		if float64(rule.WarnLevel) < sum {
+		if rule.WarnOperator != "" && operators[rule.WarnOperator](float64(rule.WarnLevel), sum) {
 			return &AlertResult{State: m.AlertStateWarn, Id: rule.Id, ActualValue: sum}
 		}
 	}
