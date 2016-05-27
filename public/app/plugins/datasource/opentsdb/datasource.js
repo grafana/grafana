@@ -199,11 +199,21 @@ function (angular, _, dateMath) {
     };
 
     this._get = function(relativeUrl, params) {
-      return backendSrv.datasourceRequest({
+      var options = {
         method: 'GET',
         url: this.url + relativeUrl,
         params: params,
-      });
+      };
+
+      if (this.basicAuth || this.withCredentials) {
+        options.withCredentials = true;
+      }
+
+      if (this.basicAuth) {
+        options.headers = {"Authorization": this.basicAuth};
+      }
+
+      return backendSrv.datasourceRequest(options);
     };
 
     this.metricFindQuery = function(query) {
