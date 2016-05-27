@@ -16,6 +16,8 @@ type TimeSeries struct {
 type TimeSeriesSlice []*TimeSeries
 
 func NewTimeSeries(name string, points [][2]float64) *TimeSeries {
+	//Todo: This should be made safer :)
+
 	ts := &TimeSeries{
 		Name:   name,
 		Points: points,
