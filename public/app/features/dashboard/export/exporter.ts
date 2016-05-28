@@ -91,6 +91,26 @@ export class DashboardExporter {
         inputs.push(value);
       });
 
+      // templatize constants
+      for (let variable of dash.templating.list) {
+        if (variable.type === 'constant') {
+          var refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
+          inputs.push({
+            name: refName,
+            type: 'constant',
+            label: variable.label || variable.name,
+            value: variable.current.value,
+            description: '',
+          });
+          // update current and option
+          variable.query = '${' + refName + '}';
+          variable.options[0] = variable.current = {
+            value: variable.query,
+            text: variable.query,
+          };
+        }
+      }
+
       requires = _.map(requires, req =>  {
         return req;
       });

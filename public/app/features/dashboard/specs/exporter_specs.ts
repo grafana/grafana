@@ -26,6 +26,13 @@ describe('given dashboard with repeated panels', function() {
       options: [{value: 'Asd', text: 'Asd'}]
     });
 
+    dash.templating.list.push({
+      name: 'prefix',
+      type: 'constant',
+      current: {value: 'collectd', text: 'collectd'},
+      options: []
+    });
+
     dash.annotations.list.push({
       name: 'logs',
       datasource: 'gfdb',
@@ -113,6 +120,22 @@ describe('given dashboard with repeated panels', function() {
     expect(require.type).to.be("grafana");
     expect(require.id).to.be("grafana");
     expect(require.version).to.be("3.0.2");
+  });
+
+  it('should add constant template variables as inputs', function() {
+    var input = _.findWhere(exported.__inputs, {name: 'VAR_PREFIX'});
+    expect(input.type).to.be("constant");
+    expect(input.label).to.be("prefix");
+    expect(input.value).to.be("collectd");
+  });
+
+  it('should templatize constant variables', function() {
+    var variable = _.findWhere(exported.templating.list, {name: 'prefix'});
+    expect(variable.query).to.be("${VAR_PREFIX}");
+    expect(variable.current.text).to.be("${VAR_PREFIX}");
+    expect(variable.current.value).to.be("${VAR_PREFIX}");
+    expect(variable.options[0].text).to.be("${VAR_PREFIX}");
+    expect(variable.options[0].value).to.be("${VAR_PREFIX}");
   });
 
 });
