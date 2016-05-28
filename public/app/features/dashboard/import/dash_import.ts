@@ -41,7 +41,8 @@ export class DashImportCtrl {
         var inputModel = {
           name: input.name,
           label: input.label,
-          description: input.description,
+          info: input.description,
+          value: input.value,
           type: input.type,
           pluginId: input.pluginId,
           options: []
@@ -49,6 +50,8 @@ export class DashImportCtrl {
 
         if (input.type === 'datasource') {
           this.setDatasourceOptions(input, inputModel);
+        } else if (!inputModel.info) {
+          inputModel.info = 'Specify a string constant';
         }
 
         this.inputs.push(inputModel);
@@ -65,7 +68,7 @@ export class DashImportCtrl {
     });
 
     if (sources.length === 0) {
-      inputModel.error = "No data sources of type " + input.pluginName + " found";
+      inputModel.info = "No data sources of type " + input.pluginName + " found";
     } else if (inputModel.description) {
       inputModel.info = inputModel.description;
     } else {
