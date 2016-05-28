@@ -152,6 +152,14 @@
 				</div>
 			</div>
 
+			<div ng-show="current.type === 'constant'" class="gf-form-group">
+        <h5 class="section-heading">Constant options</h5>
+				<div class="gf-form">
+					<span class="gf-form-label">Value</span>
+					<input type="text" class="gf-form-input" ng-model='current.query' ng-blur="runQuery()" placeholder="your metric prefix"></input>
+				</div>
+			</div>
+
 			<div ng-show="current.type === 'query'" class="gf-form-group">
         <h5 class="section-heading">Query Options</h5>
 
@@ -214,7 +222,7 @@
         </div>
       </div>
 
-      <div class="section gf-form-group" ng-hide="current.type === 'datasource'">
+      <div class="section gf-form-group" ng-show="showSelectionOptions()">
         <h5 class="section-heading">Selection Options</h5>
         <div class="section">
           <gf-form-switch class="gf-form"
