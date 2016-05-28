@@ -168,6 +168,11 @@ function (angular, _, kbn) {
         return;
       }
 
+      if (variable.type === 'constant') {
+        variable.options = [{text: variable.query, value: variable.query}];
+        return;
+      }
+
       // extract options in comma seperated string
       variable.options = _.map(variable.query.split(/[,]+/), function(text) {
         return { text: text.trim(), value: text.trim() };
@@ -175,6 +180,7 @@ function (angular, _, kbn) {
 
       if (variable.type === 'interval') {
         self.updateAutoInterval(variable);
+        return;
       }
 
       if (variable.type === 'custom' && variable.includeAll) {
@@ -273,7 +279,7 @@ function (angular, _, kbn) {
         if (currentOption) {
           return self.setVariableValue(variable, currentOption, false);
         } else {
-          if (!variable.options.length) { return; }
+          if (!variable.options.length) { return $q.when(null); }
           return self.setVariableValue(variable, variable.options[0]);
         }
       }
