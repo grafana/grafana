@@ -78,6 +78,7 @@ function (angular) {
         time: {from: "now-2h", to: "now"}
       },
     }, $scope);
+
     $scope.resetCorrelation = function() {
       $scope.correlationThreshold = 100; // reset the threshold to default value
       alertMgrSrv.resetCorrelation(alertId, $scope.correlationBefore, $scope.correlationAfter).then(function onSuccess() {
@@ -86,5 +87,7 @@ function (angular) {
         alertSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 10000);
       });
     };
+
+    $scope.init();
   });
 });

@@ -37,5 +37,7 @@ function (angular) {
         }
       });
     };
+
+    $scope.init();
   });
 });
