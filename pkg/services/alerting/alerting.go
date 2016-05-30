@@ -28,7 +28,7 @@ func Init() {
 type Scheduler struct {
 	jobs          map[int64]*m.AlertJob
 	runQueue      chan *m.AlertJob
-	responseQueue chan *AlertResult
+	responseQueue chan *m.AlertResult
 
 	alertRuleFetcher RuleReader
 }
@@ -37,7 +37,7 @@ func NewScheduler() *Scheduler {
 	return &Scheduler{
 		jobs:          make(map[int64]*m.AlertJob, 0),
 		runQueue:      make(chan *m.AlertJob, 1000),
-		responseQueue: make(chan *AlertResult, 1000),
+		responseQueue: make(chan *m.AlertResult, 1000),
 	}
 }
 
@@ -66,6 +66,7 @@ func (this *Scheduler) updateJobs(f func() []m.AlertJob) {
 	for i := 0; i < len(rules); i++ {
 		rule := rules[i]
 		//jobs[rule.Rule.Id] = &m.AlertJob{Rule: rule, Offset: int64(len(jobs))}
+		rule.Offset = int64(len(jobs))
 		jobs[rule.Rule.Id] = &rule
 	}
 
@@ -115,22 +116,15 @@ func (this *Scheduler) HandleResponses() {
 func (this *Scheduler) MeasureAndExecute(exec Executor, rule *m.AlertJob) {
 	now := time.Now()
 
-	response := make(chan *AlertResult, 1)
+	response := make(chan *m.AlertResult, 1)
 	go exec.Execute(rule, response)
 
 	select {
 	case <-time.After(time.Second * 5):
-		this.responseQueue <- &AlertResult{Id: rule.Rule.Id, State: "timed out", Duration: float64(time.Since(now).Nanoseconds()) / float64(1000000)}
+		this.responseQueue <- &m.AlertResult{Id: rule.Rule.Id, State: "timed out", Duration: float64(time.Since(now).Nanoseconds()) / float64(1000000)}
 	case r := <-response:
 		r.Duration = float64(time.Since(now).Nanoseconds()) / float64(1000000)
 		log.Info("Schedular: exeuction took %vms", r.Duration)
 		this.responseQueue <- r
 	}
-}
-
-type AlertResult struct {
-	Id          int64
-	State       string
-	ActualValue float64
-	Duration    float64
 }

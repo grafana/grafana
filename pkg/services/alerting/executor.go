@@ -6,7 +6,7 @@ import (
 )
 
 type Executor interface {
-	Execute(rule *m.AlertJob, responseQueue chan *AlertResult)
+	Execute(rule *m.AlertJob, responseQueue chan *m.AlertResult)
 }
 
 type ExecutorImpl struct{}
@@ -30,17 +30,17 @@ var aggregator map[string]aggregationFn = map[string]aggregationFn{
 	"mean": func(series *m.TimeSeries) float64 { return series.Mean },
 }
 
-func (this *ExecutorImpl) Execute(rule *m.AlertJob, responseQueue chan *AlertResult) {
+func (this *ExecutorImpl) Execute(rule *m.AlertJob, responseQueue chan *m.AlertResult) {
 	response, err := graphite.GraphiteClient{}.GetSeries(rule)
 
 	if err != nil {
-		responseQueue <- &AlertResult{State: "PENDING", Id: rule.Rule.Id}
+		responseQueue <- &m.AlertResult{State: "PENDING", Id: rule.Rule.Id}
 	}
 
 	responseQueue <- this.ValidateRule(rule.Rule, response)
 }
 
-func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlice) *AlertResult {
+func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlice) *m.AlertResult {
 	for _, serie := range series {
 		if aggregator[rule.Aggregator] == nil {
 			continue
@@ -49,13 +49,13 @@ func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlic
 		var aggValue = aggregator[rule.Aggregator](serie)
 
 		if operators[rule.CritOperator](aggValue, float64(rule.CritLevel)) {
-			return &AlertResult{State: m.AlertStateCritical, Id: rule.Id, ActualValue: aggValue}
+			return &m.AlertResult{State: m.AlertStateCritical, Id: rule.Id, ActualValue: aggValue}
 		}
 
 		if operators[rule.WarnOperator](aggValue, float64(rule.WarnLevel)) {
-			return &AlertResult{State: m.AlertStateWarn, Id: rule.Id, ActualValue: aggValue}
+			return &m.AlertResult{State: m.AlertStateWarn, Id: rule.Id, ActualValue: aggValue}
 		}
 	}
 
-	return &AlertResult{State: m.AlertStateOk, Id: rule.Id}
+	return &m.AlertResult{State: m.AlertStateOk, Id: rule.Id}
 }

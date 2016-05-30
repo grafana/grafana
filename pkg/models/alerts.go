@@ -116,3 +116,10 @@ type AlertJob struct {
 	Rule       AlertRule
 	Datasource DataSource
 }
+
+type AlertResult struct {
+	Id          int64
+	State       string
+	ActualValue float64
+	Duration    float64
+}
