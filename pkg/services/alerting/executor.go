@@ -34,7 +34,7 @@ func (this *ExecutorImpl) Execute(rule m.AlertRule, responseQueue chan *AlertRes
 	response, err := graphite.GraphiteClient{}.GetSeries(rule)
 
 	if err != nil {
-		responseQueue <- &AlertResult{State: "CRITICAL", Id: rule.Id}
+		responseQueue <- &AlertResult{State: "PENDING", Id: rule.Id}
 	}
 
 	responseQueue <- this.ValidateRule(rule, response)

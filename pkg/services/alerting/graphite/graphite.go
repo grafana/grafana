@@ -48,7 +48,7 @@ func (this GraphiteClient) GetSeries(rule m.AlertRule) (m.TimeSeriesSlice, error
 	}
 
 	if res.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("error!")
+		return nil, fmt.Errorf("expected httpstatus 200, found %d", res.StatusCode)
 	}
 
 	timeSeries := make([]*m.TimeSeries, 0)

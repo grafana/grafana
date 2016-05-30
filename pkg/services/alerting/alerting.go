@@ -6,6 +6,7 @@ import (
 	"time"
 
 	//"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -131,6 +132,14 @@ func (this *Scheduler) HandleResponses() {
 		log.Info("Response: alert(%d) status(%s) actual(%v)", response.Id, response.State, response.ActualValue)
 		if this.jobs[response.Id] != nil {
 			this.jobs[response.Id].running = false
+		}
+		cmd := m.UpdateAlertStateCommand{
+			AlertId:  response.Id,
+			NewState: response.State,
+		}
+
+		if err := bus.Dispatch(&cmd); err != nil {
+			log.Error(1, "failed to save state", err)
 		}
 	}
 }
