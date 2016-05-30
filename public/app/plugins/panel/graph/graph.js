@@ -31,6 +31,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         var sortedSeries;
         var legendSideLastValue = null;
         var rootScope = scope.$root;
+        var panelWidth = 0;
 
         rootScope.onAppEvent('setCrosshair', function(event, info) {
           // do not need to to this if event is from this panel
@@ -104,7 +105,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             return true;
           }
 
-          if (elem.width() === 0) {
+          if (panelWidth === 0) {
             return true;
           }
         }
@@ -159,6 +160,16 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
         // Function for rendering panel
         function render_panel() {
+          if (!rootScope.panelWidthCache) {
+            rootScope.panelWidthCache = {};
+          }
+          if (rootScope.panelWidthCache[panel.span]) {
+            panelWidth = rootScope.panelWidthCache[panel.span];
+          } else {
+            panelWidth = elem.width();
+            rootScope.panelWidthCache[panel.span] = panelWidth;
+          }
+
           if (shouldAbortRender()) {
             return;
           }
@@ -276,7 +287,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         }
 
         function addTimeAxis(options) {
-          var ticks = elem.width() / 100;
+          var ticks = panelWidth / 100;
           var min = _.isUndefined(ctrl.range.from) ? null : ctrl.range.from.valueOf();
           var max = _.isUndefined(ctrl.range.to) ? null : ctrl.range.to.valueOf();
 
@@ -444,7 +455,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         }
 
         function render_panel_as_graphite_png(url) {
-          url += '&width=' + elem.width();
+          url += '&width=' + panelWidth;
           url += '&height=' + elem.css('height').replace('px', '');
           url += '&bgcolor=1f1f1f'; // @grayDarker & @grafanaPanelBackground
           url += '&fgcolor=BBBFC2'; // @textColor & @grayLighter
