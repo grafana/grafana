@@ -64,9 +64,9 @@ function (_) {
       return query;
 
     } else if (type === 'SCHEMA') {
-      query = 'SELECT schema_name ' +
-              'FROM information_schema.schemata ' +
-              'ORDER BY schema_name';
+      query = 'SELECT DISTINCT(table_schema) AS table_schema ' +
+              'FROM information_schema.columns ' +
+              'ORDER BY table_schema';
       return query;
 
     } else if (type === 'SET_DEFAULT') {
