@@ -48,12 +48,10 @@ func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlic
 
 		var aggValue = aggregator[rule.Aggregator](serie)
 
-		//if operators[rule.CritOperator](float64(rule.CritLevel), aggValue) {
 		if operators[rule.CritOperator](aggValue, float64(rule.CritLevel)) {
 			return &AlertResult{State: m.AlertStateCritical, Id: rule.Id, ActualValue: aggValue}
 		}
 
-		//if operators[rule.WarnOperator](float64(rule.WarnLevel), aggValue) {
 		if operators[rule.WarnOperator](aggValue, float64(rule.WarnLevel)) {
 			return &AlertResult{State: m.AlertStateWarn, Id: rule.Id, ActualValue: aggValue}
 		}
