@@ -26,7 +26,7 @@ func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []m.AlertRule {
 				CritLevel:    alerting.Get("critLevel").MustInt64(),
 				WarnOperator: alerting.Get("warnOperator").MustString(),
 				CritOperator: alerting.Get("critOperator").MustString(),
-				Frequency:    alerting.Get("interval").MustInt64(),
+				Frequency:    alerting.Get("frequency").MustInt64(),
 				Title:        alerting.Get("title").MustString(),
 				Description:  alerting.Get("description").MustString(),
 				QueryRange:   alerting.Get("queryRange").MustInt(),

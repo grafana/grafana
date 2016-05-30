@@ -6,7 +6,7 @@ import (
 )
 
 type Executor interface {
-	Execute(rule m.AlertRule, responseQueue chan *AlertResult)
+	Execute(rule *m.AlertJob, responseQueue chan *AlertResult)
 }
 
 type ExecutorImpl struct{}
@@ -30,14 +30,14 @@ var aggregator map[string]aggregationFn = map[string]aggregationFn{
 	"mean": func(series *m.TimeSeries) float64 { return series.Mean },
 }
 
-func (this *ExecutorImpl) Execute(rule m.AlertRule, responseQueue chan *AlertResult) {
+func (this *ExecutorImpl) Execute(rule *m.AlertJob, responseQueue chan *AlertResult) {
 	response, err := graphite.GraphiteClient{}.GetSeries(rule)
 
 	if err != nil {
-		responseQueue <- &AlertResult{State: "PENDING", Id: rule.Id}
+		responseQueue <- &AlertResult{State: "PENDING", Id: rule.Rule.Id}
 	}
 
-	responseQueue <- this.ValidateRule(rule, response)
+	responseQueue <- this.ValidateRule(rule.Rule, response)
 }
 
 func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlice) *AlertResult {

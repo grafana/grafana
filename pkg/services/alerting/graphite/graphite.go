@@ -3,7 +3,7 @@ package graphite
 import (
 	"fmt"
 	"github.com/franela/goreq"
-	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"net/http"
@@ -21,24 +21,21 @@ type GraphiteSerie struct {
 
 type GraphiteResponse []GraphiteSerie
 
-func (this GraphiteClient) GetSeries(rule m.AlertRule) (m.TimeSeriesSlice, error) {
-	query := &m.GetDataSourceByIdQuery{Id: rule.DatasourceId, OrgId: rule.OrgId}
-	if err := bus.Dispatch(query); err != nil {
-		return nil, err
-	}
-
+func (this GraphiteClient) GetSeries(rule *m.AlertJob) (m.TimeSeriesSlice, error) {
 	v := url.Values{
 		"format": []string{"json"},
-		"target": []string{getTargetFromRule(rule)},
+		"target": []string{getTargetFromRule(rule.Rule)},
 		"until":  []string{"now"},
-		"from":   []string{"-" + strconv.Itoa(rule.QueryRange) + "s"},
+		"from":   []string{"-" + strconv.Itoa(rule.Rule.QueryRange) + "s"},
 	}
+
+	log.Debug("Graphite: sending request with querystring: ", v.Encode())
 
 	res, err := goreq.Request{
 		Method:  "POST",
-		Uri:     query.Result.Url + "/render",
+		Uri:     rule.Datasource.Url + "/render",
 		Body:    v.Encode(),
-		Timeout: 500 * time.Millisecond,
+		Timeout: 5 * time.Second,
 	}.Do()
 
 	response := GraphiteResponse{}

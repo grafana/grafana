@@ -108,3 +108,11 @@ type GetAlertChangesQuery struct {
 
 	Result []AlertRuleChange
 }
+
+type AlertJob struct {
+	Offset     int64
+	Delay      bool
+	Running    bool
+	Rule       AlertRule
+	Datasource DataSource
+}
