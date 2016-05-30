@@ -11,7 +11,7 @@ func TestAlertingExecutor(t *testing.T) {
 		executor := &ExecutorImpl{}
 
 		Convey("Show return ok since avg is above 2", func() {
-			rule := m.AlertRule{CritLevel: 10, CritOperator: "<", Aggregator: "sum"}
+			rule := m.AlertRule{CritLevel: 10, CritOperator: ">", Aggregator: "sum"}
 
 			timeSeries := []*m.TimeSeries{
 				m.NewTimeSeries("test1", [][2]float64{{2, 0}}),
@@ -22,7 +22,7 @@ func TestAlertingExecutor(t *testing.T) {
 		})
 
 		Convey("Show return critical since below 2", func() {
-			rule := m.AlertRule{CritLevel: 10, CritOperator: ">", Aggregator: "sum"}
+			rule := m.AlertRule{CritLevel: 10, CritOperator: "<", Aggregator: "sum"}
 
 			timeSeries := []*m.TimeSeries{
 				m.NewTimeSeries("test1", [][2]float64{{2, 0}}),
@@ -33,7 +33,7 @@ func TestAlertingExecutor(t *testing.T) {
 		})
 
 		Convey("Show return critical since sum is above 10", func() {
-			rule := m.AlertRule{CritLevel: 10, CritOperator: "<", Aggregator: "sum"}
+			rule := m.AlertRule{CritLevel: 10, CritOperator: ">", Aggregator: "sum"}
 
 			timeSeries := []*m.TimeSeries{
 				m.NewTimeSeries("test1", [][2]float64{{9, 0}, {9, 0}}),
@@ -44,7 +44,7 @@ func TestAlertingExecutor(t *testing.T) {
 		})
 
 		Convey("Show return ok since avg is below 10", func() {
-			rule := m.AlertRule{CritLevel: 10, CritOperator: "<", Aggregator: "avg"}
+			rule := m.AlertRule{CritLevel: 10, CritOperator: ">", Aggregator: "avg"}
 
 			timeSeries := []*m.TimeSeries{
 				m.NewTimeSeries("test1", [][2]float64{{9, 0}, {9, 0}}),
@@ -55,7 +55,7 @@ func TestAlertingExecutor(t *testing.T) {
 		})
 
 		Convey("Show return ok since min is below 10", func() {
-			rule := m.AlertRule{CritLevel: 10, CritOperator: "<", Aggregator: "min"}
+			rule := m.AlertRule{CritLevel: 10, CritOperator: ">", Aggregator: "min"}
 
 			timeSeries := []*m.TimeSeries{
 				m.NewTimeSeries("test1", [][2]float64{{11, 0}, {9, 0}}),
@@ -66,7 +66,7 @@ func TestAlertingExecutor(t *testing.T) {
 		})
 
 		Convey("Show return ok since max is above 10", func() {
-			rule := m.AlertRule{CritLevel: 10, CritOperator: "<", Aggregator: "max"}
+			rule := m.AlertRule{CritLevel: 10, CritOperator: ">", Aggregator: "max"}
 
 			timeSeries := []*m.TimeSeries{
 				m.NewTimeSeries("test1", [][2]float64{{1, 0}, {11, 0}}),

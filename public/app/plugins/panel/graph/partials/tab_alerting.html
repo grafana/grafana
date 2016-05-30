@@ -45,15 +45,15 @@
     </div>
 
     <div class="gf-form">
-      <span class="gf-form-label width-10">Query range</span>
-      <input class="gf-form-input max-width-10" type="text"
-        ng-model="ctrl.panel.alerting.queryRange" placeholder="10m"></input>
+      <span class="gf-form-label width-10">Query range  (seconds)</span>
+      <input class="gf-form-input max-width-10" type="number"
+        ng-model="ctrl.panel.alerting.queryRange" placeholder="3600"></input>
     </div>
 
     <div class="gf-form">
-      <span class="gf-form-label width-10">Interval</span>
-      <input class="gf-form-input max-width-10" type="text"
-        ng-model="ctrl.panel.alerting.interval" placeholder="10s"></input>
+      <span class="gf-form-label width-10">Frequency (seconds)</span>
+      <input class="gf-form-input max-width-10" type="number"
+        ng-model="ctrl.panel.alerting.interval" placeholder="60"></input>
     </div>
   </div>
   <div class="gf-form-group section">
