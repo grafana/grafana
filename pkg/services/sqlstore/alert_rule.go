@@ -102,25 +102,6 @@ func DeleteAlertDefinition(dashboardId int64, sess *xorm.Session) error {
 	return nil
 }
 
-func alertIsDifferent(rule1, rule2 m.AlertRule) bool {
-	result := false
-
-	result = result || rule1.Aggregator != rule2.Aggregator
-	result = result || rule1.CritLevel != rule2.CritLevel
-	result = result || rule1.WarnLevel != rule2.WarnLevel
-	result = result || rule1.WarnOperator != rule2.WarnOperator
-	result = result || rule1.CritOperator != rule2.CritOperator
-	result = result || rule1.Query != rule2.Query
-	result = result || rule1.QueryRefId != rule2.QueryRefId
-	result = result || rule1.Frequency != rule2.Frequency
-	result = result || rule1.Title != rule2.Title
-	result = result || rule1.Description != rule2.Description
-	result = result || rule1.QueryRange != rule2.QueryRange
-	//don't compare .State! That would be insane.
-
-	return result
-}
-
 func SaveAlerts(cmd *m.SaveAlertsCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		alerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
@@ -149,7 +130,7 @@ func upsertAlerts(alerts []m.AlertRule, posted []m.AlertRule, sess *xorm.Session
 		}
 
 		if update {
-			if alertIsDifferent(alertToUpdate, alert) {
+			if alertToUpdate.Equals(alert) {
 				alert.Updated = time.Now()
 				alert.State = alertToUpdate.State
 				_, err := sess.Id(alert.Id).Update(&alert)

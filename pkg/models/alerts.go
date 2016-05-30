@@ -27,6 +27,25 @@ type AlertRule struct {
 	Updated time.Time `json:"updated"`
 }
 
+func (this *AlertRule) Equals(other AlertRule) bool {
+	result := false
+
+	result = result || this.Aggregator != other.Aggregator
+	result = result || this.CritLevel != other.CritLevel
+	result = result || this.WarnLevel != other.WarnLevel
+	result = result || this.WarnOperator != other.WarnOperator
+	result = result || this.CritOperator != other.CritOperator
+	result = result || this.Query != other.Query
+	result = result || this.QueryRefId != other.QueryRefId
+	result = result || this.Frequency != other.Frequency
+	result = result || this.Title != other.Title
+	result = result || this.Description != other.Description
+	result = result || this.QueryRange != other.QueryRange
+	//don't compare .State! That would be insane.
+
+	return result
+}
+
 type AlertingClusterInfo struct {
 	ServerId       string
 	ClusterSize    int
