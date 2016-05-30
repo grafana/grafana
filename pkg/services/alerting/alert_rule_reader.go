@@ -21,7 +21,6 @@ func (this AlertRuleReader) Fetch() []m.AlertRule {
 			Id:           1,
 			OrgId:        1,
 			Title:        "alert rule 1",
-			Interval:     "10s",
 			Frequency:    3,
 			DatasourceId: 1,
 			WarnOperator: "<",

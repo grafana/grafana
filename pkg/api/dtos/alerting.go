@@ -10,7 +10,7 @@ type AlertRuleDTO struct {
 	CritLevel    int64  `json:"critLevel"`
 	WarnOperator string `json:"warnOperator"`
 	CritOperator string `json:"critOperator"`
-	Interval     string `json:"interval"`
+	Frequency    int64  `json:"frequency"`
 	Title        string `json:"title"`
 	Description  string `json:"description"`
 	QueryRange   int    `json:"queryRange"`

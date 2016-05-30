@@ -112,7 +112,7 @@ func alertIsDifferent(rule1, rule2 m.AlertRule) bool {
 	result = result || rule1.CritOperator != rule2.CritOperator
 	result = result || rule1.Query != rule2.Query
 	result = result || rule1.QueryRefId != rule2.QueryRefId
-	result = result || rule1.Interval != rule2.Interval
+	result = result || rule1.Frequency != rule2.Frequency
 	result = result || rule1.Title != rule2.Title
 	result = result || rule1.Description != rule2.Description
 	result = result || rule1.QueryRange != rule2.QueryRange

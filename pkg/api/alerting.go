@@ -68,7 +68,7 @@ func GetAlerts(c *middleware.Context) Response {
 			QueryRefId:  alert.QueryRefId,
 			WarnLevel:   alert.WarnLevel,
 			CritLevel:   alert.CritLevel,
-			Interval:    alert.Interval,
+			Frequency:   alert.Frequency,
 			Title:       alert.Title,
 			Description: alert.Description,
 			QueryRange:  alert.QueryRange,

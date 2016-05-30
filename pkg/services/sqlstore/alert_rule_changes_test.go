@@ -30,7 +30,7 @@ func TestAlertRuleChangesDataAccess(t *testing.T) {
 					CritLevel:    50,
 					WarnOperator: ">",
 					CritOperator: ">",
-					Interval:     "10",
+					Frequency:    10,
 					Title:        "Alerting title",
 					Description:  "Alerting description",
 					QueryRange:   3600,

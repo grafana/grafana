@@ -20,7 +20,6 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "warn_operator", Type: DB_NVarchar, Length: 10, Nullable: false},
 			{Name: "crit_level", Type: DB_BigInt, Nullable: false},
 			{Name: "crit_operator", Type: DB_NVarchar, Length: 10, Nullable: false},
-			{Name: "interval", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "frequency", Type: DB_BigInt, Nullable: false},
 			{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "description", Type: DB_NVarchar, Length: 255, Nullable: false},

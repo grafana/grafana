@@ -25,7 +25,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				CritLevel:    50,
 				WarnOperator: ">",
 				CritOperator: ">",
-				Interval:     "10",
+				Frequency:    10,
 				Title:        "Alerting title",
 				Description:  "Alerting description",
 				QueryRange:   3600,
@@ -58,7 +58,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 			alert := alertQuery.Result[0]
 			So(err2, ShouldBeNil)
-			So(alert.Interval, ShouldEqual, "10")
+			So(alert.Frequency, ShouldEqual, 10)
 			So(alert.WarnLevel, ShouldEqual, 30)
 			So(alert.CritLevel, ShouldEqual, 50)
 			So(alert.WarnOperator, ShouldEqual, ">")
@@ -188,7 +188,7 @@ func TestAlertingDataAccess(t *testing.T) {
 					CritLevel:    50,
 					WarnOperator: ">",
 					CritOperator: ">",
-					Interval:     "10",
+					Frequency:    10,
 					Title:        "Alerting title",
 					Description:  "Alerting description",
 					QueryRange:   3600,
