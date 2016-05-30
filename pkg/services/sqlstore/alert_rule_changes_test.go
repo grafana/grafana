@@ -33,7 +33,7 @@ func TestAlertRuleChangesDataAccess(t *testing.T) {
 					Interval:     "10",
 					Title:        "Alerting title",
 					Description:  "Alerting description",
-					QueryRange:   "5m",
+					QueryRange:   3600,
 					Aggregator:   "avg",
 					OrgId:        FakeOrgId,
 				},

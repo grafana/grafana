@@ -30,7 +30,7 @@ func (this AlertRuleReader) Fetch() []m.AlertRule {
 			CritLevel:    4,
 			Aggregator:   "avg",
 			Query:        `{"refId":"A","target":"statsd.fakesite.counters.session_start.*.count","textEditor":true}"`,
-			QueryRange:   "1h",
+			QueryRange:   3600,
 		},
 	}
 }

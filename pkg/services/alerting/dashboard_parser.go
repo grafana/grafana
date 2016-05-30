@@ -29,7 +29,7 @@ func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []m.AlertRule {
 				Interval:     alerting.Get("interval").MustString(),
 				Title:        alerting.Get("title").MustString(),
 				Description:  alerting.Get("description").MustString(),
-				QueryRange:   alerting.Get("queryRange").MustString(),
+				QueryRange:   alerting.Get("queryRange").MustInt(),
 				Aggregator:   alerting.Get("aggregator").MustString(),
 			}
 

@@ -20,7 +20,7 @@ type AlertRule struct {
 	Frequency    int64  `json:"frequency"`
 	Title        string `json:"title"`
 	Description  string `json:"description"`
-	QueryRange   string `json:"queryRange"`
+	QueryRange   int    `json:"queryRange"`
 	Aggregator   string `json:"aggregator"`
 	State        string `json:"state"`
 

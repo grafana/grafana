@@ -28,7 +28,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				Interval:     "10",
 				Title:        "Alerting title",
 				Description:  "Alerting description",
-				QueryRange:   "5m",
+				QueryRange:   3600,
 				Aggregator:   "avg",
 				DatasourceId: 42,
 			},
@@ -67,7 +67,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(alert.QueryRefId, ShouldEqual, "A")
 			So(alert.Title, ShouldEqual, "Alerting title")
 			So(alert.Description, ShouldEqual, "Alerting description")
-			So(alert.QueryRange, ShouldEqual, "5m")
+			So(alert.QueryRange, ShouldEqual, 3600)
 			So(alert.Aggregator, ShouldEqual, "avg")
 			So(alert.State, ShouldEqual, "OK")
 			So(alert.DatasourceId, ShouldEqual, 42)
@@ -191,7 +191,7 @@ func TestAlertingDataAccess(t *testing.T) {
 					Interval:     "10",
 					Title:        "Alerting title",
 					Description:  "Alerting description",
-					QueryRange:   "5m",
+					QueryRange:   3600,
 					Aggregator:   "avg",
 				},
 			}

@@ -24,7 +24,7 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "frequency", Type: DB_BigInt, Nullable: false},
 			{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "description", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "query_range", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "query_range", Type: DB_Int, Nullable: false},
 			{Name: "aggregator", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "state", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},

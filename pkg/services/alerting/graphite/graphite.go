@@ -8,6 +8,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 )
 
@@ -30,7 +31,7 @@ func (this GraphiteClient) GetSeries(rule m.AlertRule) (m.TimeSeriesSlice, error
 		"format": []string{"json"},
 		"target": []string{getTargetFromRule(rule)},
 		"until":  []string{"now"},
-		"from":   []string{"-" + rule.QueryRange},
+		"from":   []string{"-" + strconv.Itoa(rule.QueryRange) + "s"},
 	}
 
 	res, err := goreq.Request{
