@@ -231,6 +231,15 @@ QueryPartDef.register({
 });
 
 QueryPartDef.register({
+  type: 'spread',
+  addStrategy: addTransformationStrategy,
+  category: categories.Transformations,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+QueryPartDef.register({
   type: 'non_negative_derivative',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
