@@ -266,7 +266,7 @@ export default class SqlDatasource {
             's': 'SECOND',
             'w': 'WEEK',
           };
-          rtn = 'DATE_SUB(CURDATE(), INTERVAL ' + amount + ' ' + units[unit] + ')';
+          rtn = 'DATE_SUB(CURRENT_TIMESTAMP(), INTERVAL ' + amount + ' ' + units[unit] + ')';
           break;
 
         default:
