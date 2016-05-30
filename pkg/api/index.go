@@ -36,11 +36,15 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			LightTheme:     prefs.Theme == "light",
 			Timezone:       prefs.Timezone,
 		},
-		Settings:           settings,
-		AppUrl:             setting.AppUrl,
-		AppSubUrl:          setting.AppSubUrl,
-		GoogleAnalyticsId:  setting.GoogleAnalyticsId,
-		GoogleTagManagerId: setting.GoogleTagManagerId,
+		Settings:                settings,
+		AppUrl:                  setting.AppUrl,
+		AppSubUrl:               setting.AppSubUrl,
+		GoogleAnalyticsId:       setting.GoogleAnalyticsId,
+		GoogleTagManagerId:      setting.GoogleTagManagerId,
+		BuildVersion:            setting.BuildVersion,
+		BuildCommit:             setting.BuildCommit,
+		NewGrafanaVersion:       plugins.GrafanaLatestVersion,
+		NewGrafanaVersionExists: plugins.GrafanaHasUpdate,
 	}
 
 	if setting.DisableGravatar {

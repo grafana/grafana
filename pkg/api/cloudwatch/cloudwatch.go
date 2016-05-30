@@ -57,11 +57,12 @@ var awsCredentialCache map[string]cache = make(map[string]cache)
 var credentialCacheLock sync.RWMutex
 
 func getCredentials(profile string, region string, assumeRoleArn string) *credentials.Credentials {
+	cacheKey := profile + ":" + assumeRoleArn
 	credentialCacheLock.RLock()
-	if _, ok := awsCredentialCache[profile]; ok {
-		if awsCredentialCache[profile].expiration != nil &&
-			(*awsCredentialCache[profile].expiration).After(time.Now().UTC()) {
-			result := awsCredentialCache[profile].credential
+	if _, ok := awsCredentialCache[cacheKey]; ok {
+		if awsCredentialCache[cacheKey].expiration != nil &&
+			(*awsCredentialCache[cacheKey].expiration).After(time.Now().UTC()) {
+			result := awsCredentialCache[cacheKey].credential
 			credentialCacheLock.RUnlock()
 			return result
 		}
@@ -118,7 +119,7 @@ func getCredentials(profile string, region string, assumeRoleArn string) *creden
 			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
 		})
 	credentialCacheLock.Lock()
-	awsCredentialCache[profile] = cache{
+	awsCredentialCache[cacheKey] = cache{
 		credential: creds,
 		expiration: expiration,
 	}

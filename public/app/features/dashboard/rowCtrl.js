@@ -142,12 +142,19 @@ function (angular, _, config) {
   });
 
   module.directive('panelWidth', function() {
+
     return function(scope, element) {
+      var fullscreen = false;
+
       function updateWidth() {
-        element[0].style.width = ((scope.panel.span / 1.2) * 10) + '%';
+        if (!fullscreen) {
+          element[0].style.width = ((scope.panel.span / 1.2) * 10) + '%';
+        }
       }
 
       scope.onAppEvent('panel-fullscreen-enter', function(evt, info) {
+        fullscreen = true;
+
         if (scope.panel.id !== info.panelId) {
           element.hide();
         } else {
@@ -156,14 +163,20 @@ function (angular, _, config) {
       });
 
       scope.onAppEvent('panel-fullscreen-exit', function(evt, info) {
+        fullscreen = false;
+
         if (scope.panel.id !== info.panelId) {
           element.show();
-        } else {
-          updateWidth();
         }
+
+        updateWidth();
       });
 
       scope.$watch('panel.span', updateWidth);
+
+      if (fullscreen) {
+        element.hide();
+      }
     };
   });
 

@@ -25,6 +25,7 @@ function (angular, _) {
       {value: "interval",   text: "Interval"},
       {value: "datasource", text: "Data source"},
       {value: "custom",     text: "Custom"},
+      {value: "constant",   text: "Constant"},
     ];
 
     $scope.refreshOptions = [
@@ -141,13 +142,32 @@ function (angular, _) {
       $scope.current = angular.copy(replacementDefaults);
     };
 
+    $scope.showSelectionOptions = function() {
+      if ($scope.current) {
+        if ($scope.current.type === 'query') {
+          return true;
+        }
+        if ($scope.current.type === 'custom') {
+          return true;
+        }
+      }
+      return false;
+    };
+
     $scope.typeChanged = function () {
       if ($scope.current.type === 'interval') {
         $scope.current.query = '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d';
+        $scope.current.refresh = 0;
       }
 
       if ($scope.current.type === 'query') {
         $scope.current.query = '';
+      }
+
+      if ($scope.current.type === 'constant') {
+        $scope.current.query = '';
+        $scope.current.refresh = 0;
+        $scope.current.hide = 2;
       }
 
       if ($scope.current.type === 'datasource') {

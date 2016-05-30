@@ -325,6 +325,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function addGauge() {
+      var width = elem.width();
+      var height = elem.height();
+
       ctrl.invalidGaugeRange = false;
       if (panel.gauge.minValue > panel.gauge.maxValue) {
         ctrl.invalidGaugeRange = true;
@@ -332,8 +335,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       }
 
       var plotCanvas = $('<div></div>');
-      var width = elem.width();
-      var height = elem.height();
       var plotCss = {
         top: '10px',
         margin: 'auto',

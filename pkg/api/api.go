@@ -117,6 +117,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/:id", wrap(GetUserById))
 			r.Get("/:id/orgs", wrap(GetUserOrgList))
 			r.Put("/:id", bind(m.UpdateUserCommand{}), wrap(UpdateUser))
+			r.Post("/:id/using/:orgId", wrap(UpdateUserActiveOrg))
 		}, reqGrafanaAdmin)
 
 		// org information available to all users.
@@ -211,7 +212,7 @@ func Register(r *macaron.Macaron) {
 			r.Combo("/db/:slug").Get(GetDashboard).Delete(DeleteDashboard)
 			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), PostDashboard)
 			r.Get("/file/:file", GetDashboardFromJsonFile)
-			r.Get("/home", GetHomeDashboard)
+			r.Get("/home", wrap(GetHomeDashboard))
 			r.Get("/tags", GetDashboardTags)
 			r.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
 		})

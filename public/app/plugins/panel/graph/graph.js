@@ -66,7 +66,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
         function getLegendHeight(panelHeight) {
           if (!panel.legend.show || panel.legend.rightSide) {
-            return 2;
+            return 0;
           }
 
           if (panel.legend.alignAsTable) {

@@ -1,6 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import angular from 'angular';
+import _ from 'lodash';
 
 export class SubmenuCtrl {
   annotations: any;
@@ -8,7 +9,11 @@ export class SubmenuCtrl {
   dashboard: any;
 
   /** @ngInject */
-  constructor(private $rootScope, private templateValuesSrv, private dynamicDashboardSrv) {
+  constructor(private $rootScope,
+              private templateValuesSrv,
+              private templateSrv,
+              private dynamicDashboardSrv,
+              private $location) {
     this.annotations = this.dashboard.templating.list;
     this.variables = this.dashboard.templating.list;
   }

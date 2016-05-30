@@ -38,10 +38,11 @@
     function checkIsReady() {
       var canvas = page.evaluate(function() {
         if (!window.angular) { return false; }
-        var body = window.angular.element(document.body);   // 1
-        if (!body.scope) { return false; }
+        var body = window.angular.element(document.body);
+        if (!body.injector) { return false; }
+        if (!body.injector()) { return false; }
 
-        var rootScope = body.scope();
+        var rootScope = body.injector().get('$rootScope');
         if (!rootScope) {return false;}
         if (!rootScope.performance) { return false; }
         var panelsToLoad = window.angular.element('div.panel').length;
@@ -59,6 +60,7 @@
           width:  bb.width,
           height: bb.height
         };
+
         page.render(params.png);
         phantom.exit();
       }

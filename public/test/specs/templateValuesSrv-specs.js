@@ -126,6 +126,80 @@ define([
       });
     });
 
+    describeUpdateVariable('query variable with multi select and new options does not contain some selected values', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {
+          type: 'query',
+          query: '',
+          name: 'test',
+          current: {
+            value: ['val1', 'val2', 'val3'],
+            text: 'val1 + val2 + val3'
+          }
+        };
+        scenario.queryResult = [{text: 'val2'}, {text: 'val3'}];
+      });
+
+      it('should update current value', function() {
+        expect(scenario.variable.current.value).to.eql(['val2', 'val3']);
+        expect(scenario.variable.current.text).to.eql('val2 + val3');
+      });
+    });
+
+    describeUpdateVariable('query variable with multi select and new options does not contain any selected values', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {
+          type: 'query',
+          query: '',
+          name: 'test',
+          current: {
+            value: ['val1', 'val2', 'val3'],
+            text: 'val1 + val2 + val3'
+          }
+        };
+        scenario.queryResult = [{text: 'val5'}, {text: 'val6'}];
+      });
+
+      it('should update current value with first one', function() {
+        expect(scenario.variable.current.value).to.eql('val5');
+        expect(scenario.variable.current.text).to.eql('val5');
+      });
+    });
+
+    describeUpdateVariable('query variable with multi select and $__all selected', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {
+          type: 'query',
+          query: '',
+          name: 'test',
+          includeAll: true,
+          current: {
+            value: ['$__all'],
+            text: 'All'
+          }
+        };
+        scenario.queryResult = [{text: 'val5'}, {text: 'val6'}];
+      });
+
+      it('should keep current All value', function() {
+        expect(scenario.variable.current.value).to.eql(['$__all']);
+        expect(scenario.variable.current.text).to.eql('All');
+      });
+    });
+
+    describeUpdateVariable('query variable with numeric results', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'query', query: '', name: 'test', current: {} };
+        scenario.queryResult = [{text: 12, value: 12}];
+      });
+
+      it('should set current value to first option', function() {
+        expect(scenario.variable.current.value).to.be('12');
+        expect(scenario.variable.options[0].value).to.be('12');
+        expect(scenario.variable.options[0].text).to.be('12');
+      });
+    });
+
     describeUpdateVariable('interval variable without auto', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'interval', query: '1s,2h,5h,1d', name: 'test' };
