@@ -4,6 +4,7 @@ import (
 	"fmt"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting/graphite"
+	"math"
 )
 
 type Executor interface {
@@ -24,11 +25,50 @@ var operators map[string]compareFn = map[string]compareFn{
 }
 
 var aggregator map[string]aggregationFn = map[string]aggregationFn{
-	"avg":  func(series *m.TimeSeries) float64 { return series.Avg },
-	"sum":  func(series *m.TimeSeries) float64 { return series.Sum },
-	"min":  func(series *m.TimeSeries) float64 { return series.Min },
-	"max":  func(series *m.TimeSeries) float64 { return series.Max },
-	"mean": func(series *m.TimeSeries) float64 { return series.Mean },
+	"avg": func(series *m.TimeSeries) float64 {
+		sum := float64(0)
+
+		for _, v := range series.Points {
+			sum += v[0]
+		}
+
+		return sum / float64(len(series.Points))
+	},
+	"sum": func(series *m.TimeSeries) float64 {
+		sum := float64(0)
+
+		for _, v := range series.Points {
+			sum += v[0]
+		}
+
+		return sum
+	},
+	"min": func(series *m.TimeSeries) float64 {
+		min := series.Points[0][0]
+
+		for _, v := range series.Points {
+			if v[0] < min {
+				min = v[0]
+			}
+		}
+
+		return min
+	},
+	"max": func(series *m.TimeSeries) float64 {
+		max := series.Points[0][0]
+
+		for _, v := range series.Points {
+			if v[0] > max {
+				max = v[0]
+			}
+		}
+
+		return max
+	},
+	"mean": func(series *m.TimeSeries) float64 {
+		midPosition := int64(math.Floor(float64(len(series.Points)) / float64(2)))
+		return series.Points[midPosition][0]
+	},
 }
 
 func (this *ExecutorImpl) GetSeries(job *m.AlertJob) (m.TimeSeriesSlice, error) {
@@ -58,11 +98,21 @@ func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlic
 		var aggValue = aggregator[rule.Aggregator](serie)
 
 		if operators[rule.CritOperator](aggValue, rule.CritLevel) {
-			return &m.AlertResult{State: m.AlertStateCritical, Id: rule.Id, ActualValue: aggValue, Rule: rule}
+			return &m.AlertResult{
+				State:       m.AlertStateCritical,
+				Id:          rule.Id,
+				ActualValue: aggValue,
+				Rule:        rule,
+			}
 		}
 
 		if operators[rule.WarnOperator](aggValue, rule.WarnLevel) {
-			return &m.AlertResult{State: m.AlertStateWarn, Id: rule.Id, ActualValue: aggValue, Rule: rule}
+			return &m.AlertResult{
+				State:       m.AlertStateWarn,
+				Id:          rule.Id,
+				ActualValue: aggValue,
+				Rule:        rule,
+			}
 		}
 	}
 
