@@ -102,6 +102,7 @@ func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlic
 				State:       m.AlertStateCritical,
 				Id:          rule.Id,
 				ActualValue: aggValue,
+				Description: fmt.Sprintf("Actual value: %1.2f for %s", aggValue, serie.Name),
 				Rule:        rule,
 			}
 		}
@@ -110,11 +111,12 @@ func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlic
 			return &m.AlertResult{
 				State:       m.AlertStateWarn,
 				Id:          rule.Id,
+				Description: fmt.Sprintf("Actual value: %1.2f for %s", aggValue, serie.Name),
 				ActualValue: aggValue,
 				Rule:        rule,
 			}
 		}
 	}
 
-	return &m.AlertResult{State: m.AlertStateOk, Id: rule.Id, Rule: rule}
+	return &m.AlertResult{State: m.AlertStateOk, Id: rule.Id, Rule: rule, Description: "Alert is OK!"}
 }

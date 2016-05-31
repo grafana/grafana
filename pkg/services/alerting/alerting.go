@@ -3,7 +3,6 @@ package alerting
 import (
 	"time"
 
-	"fmt"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
@@ -103,12 +102,7 @@ func (this *Scheduler) HandleResponses() {
 		cmd := m.UpdateAlertStateCommand{
 			AlertId:  response.Id,
 			NewState: response.State,
-		}
-
-		if cmd.NewState != m.AlertStateOk {
-			cmd.Info = fmt.Sprintf("Actual value: %1.2f", response.ActualValue)
-		} else {
-			cmd.Info = "Alert is OK!"
+			Info:     response.Description,
 		}
 
 		if err := bus.Dispatch(&cmd); err != nil {
