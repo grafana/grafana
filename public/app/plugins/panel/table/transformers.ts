@@ -5,6 +5,7 @@ import moment from 'moment';
 import flatten from '../../../core/utils/flatten';
 import TimeSeries from '../../../core/time_series2';
 import TableModel from '../../../core/table_model';
+import kbn from 'app/core/utils/kbn';
 
 var transformers = {};
 
@@ -148,12 +149,78 @@ transformers['table'] = {
       return;
     }
 
-    if (data[0].type !== 'table') {
-      throw {message: 'Query result is not in table format, try using another transform.'};
+    // merging series
+    var tableColumns = [];
+    var tableRows = [];
+    var filterColumnIndex = -1;
+    var filteringEnabled = panel.filter.column && panel.filter.query && panel.search;
+    for (var i = 0; i < data.length; i++){
+      if (data[i].type !== 'table') {
+        throw {message: 'Query result is not in table format, try using another transform.'};
+      }
+
+      var intersection = [];
+      for (let k = 0; k < data[i].columns.length; k++) {
+        var columnFound = false;
+        for (let j = 0; j < tableColumns.length; j++) {
+          if (tableColumns[j].text === data[i].columns[k].text) {
+            intersection.push([j, k]);
+            columnFound = true;
+            break;
+          }
+        }
+
+        if (!columnFound) {
+          tableColumns.push(data[i].columns[k]);
+          if (filteringEnabled && panel.filter.column.text === data[i].columns[k].text) {
+            filterColumnIndex = tableColumns.length - 1;
+          }
+        }
+      }
+
+      var compareByTime = true;
+      // remove intersection by Time if other tags/columns applied
+      if (intersection.length > 1) {
+        compareByTime = false;
+        intersection = intersection.splice(1);
+      }
+
+      if (tableRows.length === 0) {
+        tableRows = data[i].rows;
+      } else {
+        for (let k = 0; k < data[i].rows.length; k++) {
+          for (let j = 0; j < tableRows.length; j++) {
+            let clone = _.clone(data[i].rows[k]);
+            var equal = true;
+            for (let n = intersection.length; n--;) {
+              if (tableRows[j][intersection[n][0]] !== clone[intersection[n][1]]) {
+                equal = false;
+                break;
+              } else {
+                clone.splice(intersection[n][1], 1);
+              }
+            }
+            if (equal && clone.length) {
+              // remove Time from clone if there are other tags in series
+              if (!compareByTime) {
+                clone = clone.splice(1);
+              }
+              tableRows[j] = tableRows[j].concat(clone);
+              break;
+            }
+          }
+        }
+      }
     }
 
-    model.columns = data[0].columns;
-    model.rows = data[0].rows;
+    if (filterColumnIndex !== -1 && filteringEnabled) {
+      tableRows = _.filter(tableRows, function(row) {
+        return ('' + row[filterColumnIndex]).toLowerCase().match(panel.filter.query.toLowerCase());
+      });
+    }
+
+    model.columns = tableColumns;
+    model.rows = tableRows;
   }
 };
 
@@ -218,6 +285,24 @@ transformers['json'] = {
   }
 };
 
+function applyAliasing(panel, model){
+  if (!panel.styles) {
+    return;
+  }
+  var hash = [];
+  for (var i = 0; i < model.columns.length; i++) {
+    for (var j = 0; j < panel.styles.length; j++) {
+      var regex = kbn.stringToJsRegex(panel.styles[j].pattern);
+      if (model.columns[i].text.match(regex)) {
+        if (!hash[i]) {
+          model.columns[i].alias = panel.styles[j].alias ? model.columns[i].text.replace(regex, panel.styles[j].alias) : '';
+          hash[i] = model.columns[i].alias;
+        }
+      }
+    }
+  }
+}
+
 function transformDataToTable(data, panel) {
   var model = new TableModel();
 
@@ -231,6 +316,7 @@ function transformDataToTable(data, panel) {
   }
 
   transformer.transform(data, panel, model);
+  applyAliasing(panel, model);
   return model;
 }
 

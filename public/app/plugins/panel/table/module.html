@@ -1,16 +1,22 @@
-<div class="table-panel-container">
-	<div class="table-panel-header-bg"></div>
+<div class="table-filter" ng-if="ctrl.panel.search && ctrl.panel.transform == 'table'">
+	<dropdown-filter options="ctrl.table.columns" style="height:38px; display:block;"></dropdown-filter>
+</div>
+<div class="clearfix"></div>
+<div class="table-panel-container" ng-class="{false:'table-panel-headless'}[ctrl.panel.header]">
+	<div class="table-panel-header-bg" ng-if="ctrl.panel.header"></div>
 	<div class="table-panel-scroll">
 		<table class="table-panel-table">
-			<thead>
+			<thead ng-if="ctrl.panel.header">
 				<tr>
-					<th ng-repeat="col in ctrl.table.columns">
+					<th ng-repeat="col in ctrl.table.columns" ng-hide="col.hidden" style="text-align:{{col.style.align}}">
 						<div class="table-panel-table-header-inner pointer" ng-click="ctrl.toggleColumnSort(col, $index)">
-							{{col.text}}
-							<span class="table-panel-table-header-controls" ng-if="col.sort">
-								<i class="fa fa-caret-down" ng-show="col.desc"></i>
-								<i class="fa fa-caret-up" ng-hide="col.desc"></i>
-							</span>
+							<div class="table-panel-table-header-inner-align-{{col.style.align}}">
+								{{col.alias == '' ? col.text : col.alias}}
+								<span class="table-panel-table-header-controls" ng-if="col.sort">
+									<i class="fa fa-caret-down" ng-show="col.desc"></i>
+									<i class="fa fa-caret-up" ng-hide="col.desc"></i>
+								</span>
+							</div>
 						</div>
 					</th>
 				</tr>

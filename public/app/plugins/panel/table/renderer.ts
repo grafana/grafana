@@ -7,17 +7,21 @@ import kbn from 'app/core/utils/kbn';
 export class TableRenderer {
   formaters: any[];
   colorState: any;
+  alignState: any;
+  maxWidth: any;
 
   constructor(private panel, private table, private isUtc) {
     this.formaters = [];
     this.colorState = {};
+    this.alignState = '';
+    this.maxWidth = null;
   }
 
   getColorForValue(value, style) {
     if (!style.thresholds) { return null; }
 
-    for (var i = style.thresholds.length; i > 0; i--) {
-      if (value >= style.thresholds[i - 1]) {
+    for (var i = style.thresholds.length; i--;) {
+      if (value >= style.thresholds[i]) {
         return style.colors[i];
       }
     }
@@ -41,6 +45,20 @@ export class TableRenderer {
       return this.defaultCellFormater;
     }
 
+    if (style.type === 'hidden') {
+      return v => {
+        return undefined;
+      };
+    }
+
+    if (style.type === 'string') {
+      return v => {
+        this.alignState = style.align;
+        this.maxWidth = style.maxWidth;
+        return this.defaultCellFormater(v);
+      };
+    }
+
     if (style.type === 'date') {
       return v => {
         if (_.isArray(v)) { v = v[0]; }
@@ -48,6 +66,7 @@ export class TableRenderer {
         if (this.isUtc) {
           date = date.utc();
         }
+        this.alignState = style.align;
         return date.format(style.dateFormat);
       };
     }
@@ -56,16 +75,18 @@ export class TableRenderer {
       let valueFormater = kbn.valueFormats[column.unit || style.unit];
 
       return v =>  {
+        this.alignState = style.align;
+
+        if (style.colorMode) {
+          this.colorState[style.colorMode] = this.getColorForValue(v, style);
+        }
+
         if (v === null || v === void 0) {
-          return '-';
+          v = '-';
         }
 
         if (_.isString(v)) {
           return v;
-        }
-
-        if (style.colorMode) {
-          this.colorState[style.colorMode] = this.getColorForValue(v, style);
         }
 
         return valueFormater(v, style.decimals, null);
@@ -83,6 +104,7 @@ export class TableRenderer {
     for (let i = 0; i < this.panel.styles.length; i++) {
       let style = this.panel.styles[i];
       let column = this.table.columns[colIndex];
+      column.style = style;
       var regex = kbn.stringToJsRegex(style.pattern);
       if (column.text.match(regex)) {
         this.formaters[colIndex] = this.createColumnFormater(style, column);
@@ -94,17 +116,36 @@ export class TableRenderer {
     return this.formaters[colIndex](value);
   }
 
-  renderCell(columnIndex, value, addWidthHack = false) {
-    value = this.formatColumnValue(columnIndex, value);
-    value = _.escape(value);
-    var style = '';
+  compileStyles() {
+    var result = [];
+
+    if (this.maxWidth) {
+      result.push('width:' + this.maxWidth + 'px');
+      result.push('max-width:' + this.maxWidth + 'px');
+      result.push('word-wrap:break-word');
+      this.maxWidth = null;
+    }
+
     if (this.colorState.cell) {
-      style = ' style="background-color:' + this.colorState.cell + ';color: white"';
+      result.push('background-color:' + this.colorState.cell);
+      result.push('color: white');
       this.colorState.cell = null;
     } else if (this.colorState.value) {
-      style = ' style="color:' + this.colorState.value + '"';
+      result.push('color:' + this.colorState.value);
       this.colorState.value = null;
     }
+
+    return result.length ? ' style="' + result.join(';') + '"' : '';
+  }
+
+  renderCell(columnIndex, value, addWidthHack = false, rowLink = '') {
+    value = this.formatColumnValue(columnIndex, value);
+
+    if (value !== undefined) {
+      value = _.escape(value);
+    }
+
+    var style = this.compileStyles();
 
     // because of the fixed table headers css only solution
     // there is an issue if header cell is wider the cell
@@ -114,7 +155,17 @@ export class TableRenderer {
       widthHack = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].text + '</div>';
     }
 
-    return '<td' + style + '>' + value + widthHack + '</td>';
+    if (value === undefined) {
+      style = ' style="display:none;"';
+      this.table.columns[columnIndex].hidden = true;
+    } else {
+      this.table.columns[columnIndex].hidden = false;
+      if (rowLink !== '') {
+        value = '<a href="' + rowLink + '" target="_new">' + value + '</a>';
+      }
+    }
+
+    return '<td' + style + ' align="' + this.alignState + '">' + value + widthHack + '</td>';
   }
 
   render(page) {
@@ -127,8 +178,16 @@ export class TableRenderer {
       let row = this.table.rows[y];
       let cellHtml = '';
       let rowStyle = '';
+      let rowLink = this.panel.rowLink;
+
+      if (rowLink) {
+        for (var i = 0; i < this.table.columns.length; i++) {
+          rowLink = rowLink.replace('$' + this.table.columns[i].text, _.escape(row[i]));
+        }
+      }
+
       for (var i = 0; i < this.table.columns.length; i++) {
-        cellHtml += this.renderCell(i, row[i], y === startPos);
+        cellHtml += this.renderCell(i, row[i], y === startPos, rowLink);
       }
 
       if (this.colorState.row) {

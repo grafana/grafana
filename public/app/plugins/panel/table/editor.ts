@@ -16,6 +16,7 @@ export class TablePanelEditorCtrl {
   colorModes: any;
   columnStyles: any;
   columnTypes: any;
+  alignTypes: any;
   fontSizes: any;
   dateFormats: any;
   addColumnSegment: any;
@@ -39,6 +40,13 @@ export class TablePanelEditorCtrl {
       {text: 'Number', value: 'number'},
       {text: 'String', value: 'string'},
       {text: 'Date', value: 'date'},
+      {text: 'Hidden', value: 'hidden'}
+    ];
+    this.alignTypes = [
+      {text: 'Auto', value: 'auto'},
+      {text: 'Left', value: 'left'},
+      {text: 'Center', value: 'center'},
+      {text: 'Right', value: 'right'}
     ];
     this.fontSizes = ['80%', '90%', '100%', '110%', '120%', '130%', '150%', '160%', '180%', '200%', '220%', '250%'];
     this.dateFormats = [
@@ -106,7 +114,10 @@ export class TablePanelEditorCtrl {
     var columnStyleDefaults = {
       unit: 'short',
       type: 'number',
+      align: 'auto',
+      alias: '',
       decimals: 2,
+      maxWidth: 0,
       colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
       colorMode: null,
       pattern: '/.*/',

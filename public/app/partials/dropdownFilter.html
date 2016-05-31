@@ -1,0 +1,16 @@
+<div class="submenu-item ng-scope" style="margin-right:0; width:100%;">
+  <div class="variable-link-wrapper" style="width:100%; height:36px;">
+    <a ng-click="show()" id="selectBox" class="variable-value-link tight-form-item ng-binding" style="display:inline-block; position:relative; z-index:1; overflow:hidden; height:20px; line-height:25px; padding-top:5px; width:150px;">
+      {{selectedItem.alias || selectedItem.text}}
+      <i class="fa fa-caret-down" style="float:right; top:7px; margin-left:8px;"></i>
+    </a>
+    <input type="text" class="tight-form-clear-input input-small ng-pristine ng-valid ng-touched" style="width:100%; position:absolute; top:0; left:0; padding-left:176px; box-sizing:border-box; height:auto; line-height:19px;" placeholder="Find rows by column value" give-focus="giveSearchFocus" ng-model="df.query" ng-change="search()" />
+    <div class="variable-value-dropdown" ng-if="visible">
+      <div class="variable-option-wrapper">
+        <div class="variable-option-column">
+          <a class="variable-option pointer" ng-repeat="item in df.options" ng-hide="item.hidden" ng-click="selectValue(item)"><span>{{item.alias || item.text}}</span></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

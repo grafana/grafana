@@ -27,6 +27,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         type: 'date',
         pattern: 'Time',
         dateFormat: 'YYYY-MM-DD HH:mm:ss',
+        align: 'auto',
       },
       {
         unit: 'short',
@@ -34,12 +35,22 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         decimals: 2,
         colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
         colorMode: null,
+        align: 'auto',
         pattern: '/.*/',
         thresholds: [],
+      },
+      {
+        type: 'string',
+        align: 'auto',
+        maxWidth: 0
       }
     ],
     columns: [],
+    filter: {column: null, query: ''},
+    rowLink: '',
     scroll: true,
+    search: false,
+    header: true,
     fontSize: '100%',
     sort: {col: 0, desc: true},
   };
@@ -63,6 +74,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
+    $scope.$on('filter', this.onFilter.bind(this));
   }
 
   onInitEditMode() {
@@ -110,6 +122,11 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       }
     }
 
+    this.render();
+  }
+
+  onFilter(event, filter) {
+    this.panel.filter = filter;
     this.render();
   }
 
