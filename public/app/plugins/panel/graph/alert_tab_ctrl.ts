@@ -14,8 +14,8 @@ export class AlertTabCtrl {
 
   defaultValues = {
     aggregator: 'avg',
-    interval: '60s',
-    queryRange: '10m',
+    frequency: 10,
+    queryRange: 3600,
     warnOperator: '>',
     critOperator: '>',
     queryRef: '- select query -'
