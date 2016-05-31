@@ -43,7 +43,7 @@ func NewScheduler() *Scheduler {
 }
 
 func (this *Scheduler) Dispatch(reader RuleReader) {
-	reschedule := time.NewTicker(time.Second * 5)
+	reschedule := time.NewTicker(time.Second * 10)
 	secondTicker := time.NewTicker(time.Second)
 
 	this.updateJobs(reader.Fetch)
@@ -66,19 +66,16 @@ func (this *Scheduler) updateJobs(f func() []m.AlertJob) {
 
 	for i := 0; i < len(rules); i++ {
 		rule := rules[i]
-		//jobs[rule.Rule.Id] = &m.AlertJob{Rule: rule, Offset: int64(len(jobs))}
-		rule.Offset = int64(len(jobs))
+		rule.Offset = int64(i)
 		jobs[rule.Rule.Id] = &rule
 	}
 
 	log.Debug("Scheduler: Selected %d jobs", len(jobs))
-
 	this.jobs = jobs
 }
 
 func (this *Scheduler) queueJobs() {
 	now := time.Now().Unix()
-
 	for _, job := range this.jobs {
 		if now%job.Rule.Frequency == 0 && job.Running == false {
 			log.Info("Scheduler: Putting job on to run queue: %s", job.Rule.Title)
@@ -118,18 +115,23 @@ func (this *Scheduler) HandleResponses() {
 	}
 }
 
-func (this *Scheduler) MeasureAndExecute(exec Executor, rule *m.AlertJob) {
+func (this *Scheduler) MeasureAndExecute(exec Executor, job *m.AlertJob) {
 	now := time.Now()
 
-	response := make(chan *m.AlertResult, 1)
-	go exec.Execute(rule, response)
+	responseChan := make(chan *m.AlertResult, 1)
+	go exec.Execute(job, responseChan)
 
 	select {
 	case <-time.After(time.Second * 5):
-		this.responseQueue <- &m.AlertResult{Id: rule.Rule.Id, State: "timed out", Duration: float64(time.Since(now).Nanoseconds()) / float64(1000000)}
-	case r := <-response:
-		r.Duration = float64(time.Since(now).Nanoseconds()) / float64(1000000)
-		log.Info("Schedular: exeuction took %vms", r.Duration)
-		this.responseQueue <- r
+		this.responseQueue <- &m.AlertResult{
+			Id:       job.Rule.Id,
+			State:    "timed out",
+			Duration: float64(time.Since(now).Nanoseconds()) / float64(1000000),
+			Rule:     job.Rule,
+		}
+	case result := <-responseChan:
+		result.Duration = float64(time.Since(now).Nanoseconds()) / float64(1000000)
+		log.Info("Schedular: exeuction took %vms", result.Duration)
+		this.responseQueue <- result
 	}
 }

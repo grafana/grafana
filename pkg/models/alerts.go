@@ -122,4 +122,5 @@ type AlertResult struct {
 	State       string
 	ActualValue float64
 	Duration    float64
+	Rule        AlertRule
 }

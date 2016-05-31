@@ -31,7 +31,7 @@ var (
 
 func (this *AlertRuleReader) initReader() {
 	alertJobs = make([]m.AlertJob, 0)
-	heartbeat := time.NewTicker(time.Second * 5)
+	heartbeat := time.NewTicker(time.Second * 10)
 	this.rr()
 
 	for {
