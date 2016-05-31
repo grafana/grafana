@@ -107,6 +107,8 @@ func (this *Scheduler) HandleResponses() {
 
 		if cmd.NewState != m.AlertStateOk {
 			cmd.Info = fmt.Sprintf("Actual value: %1.2f", response.ActualValue)
+		} else {
+			cmd.Info = "Alert is OK!"
 		}
 
 		if err := bus.Dispatch(&cmd); err != nil {

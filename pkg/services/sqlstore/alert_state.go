@@ -29,9 +29,9 @@ func SetNewAlertState(cmd *m.UpdateAlertStateCommand) error {
 			return err
 		}
 
-		//if alert.State == cmd.NewState {
-		//	return nil
-		//}
+		if alert.State == cmd.NewState {
+			return nil
+		}
 
 		alert.State = cmd.NewState
 		sess.Id(alert.Id).Update(&alert)
