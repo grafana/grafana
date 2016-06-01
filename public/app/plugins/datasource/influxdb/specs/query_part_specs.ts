@@ -16,6 +16,15 @@ describe('InfluxQueryPart', () => {
       expect(part.render('mean(value)')).to.be('derivative(mean(value), 10s)');
     });
 
+    it('should nest spread function', () => {
+      var part = queryPart.create({
+        type: 'spread'
+      });
+
+      expect(part.text).to.be('spread()');
+      expect(part.render('value')).to.be('spread(value)');
+    });
+
     it('should handle suffirx parts', () => {
       var part = queryPart.create({
         type: 'math',

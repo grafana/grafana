@@ -35,15 +35,6 @@ function (angular, coreModule, config) {
       }
     };
 
-    // build info view model
-    $scope.buildInfo = {
-      version: config.buildInfo.version,
-      commit: config.buildInfo.commit,
-      buildstamp: new Date(config.buildInfo.buildstamp * 1000),
-      latestVersion: config.buildInfo.latestVersion,
-      hasUpdate: config.buildInfo.hasUpdate,
-    };
-
     $scope.submit = function() {
       if ($scope.loginMode) {
         $scope.login();

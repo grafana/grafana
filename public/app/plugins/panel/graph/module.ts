@@ -92,6 +92,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     tooltip       : {
       value_type: 'cumulative',
       shared: true,
+      ordering: 'alphabetical',
       msResolution: false,
     },
     // time overrides

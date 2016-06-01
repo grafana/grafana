@@ -54,13 +54,12 @@ function (angular, _, dateMath) {
       });
 
       return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
-        var metricToTargetMapping = mapMetricsToTargets(response.data, options);
+        var metricToTargetMapping = mapMetricsToTargets(response.data, options, this.tsdbVersion);
         var result = _.map(response.data, function(metricData, index) {
           index = metricToTargetMapping[index];
           if (index === -1) {
             index = 0;
           }
-
           this._saveTagKeys(metricData);
 
           return transformMetricData(metricData, groupByTags, options.targets[index], options, this.tsdbResolution);
@@ -114,6 +113,9 @@ function (angular, _, dateMath) {
         msResolution: msResolution,
         globalAnnotations: true
       };
+      if (this.tsdbVersion === 3) {
+        reqBody.showQuery = true;
+      }
 
       // Relative queries (e.g. last hour) don't include an end time
       if (end) {
@@ -393,23 +395,27 @@ function (angular, _, dateMath) {
       return query;
     }
 
-    function mapMetricsToTargets(metrics, options) {
+    function mapMetricsToTargets(metrics, options, tsdbVersion) {
       var interpolatedTagValue;
       return _.map(metrics, function(metricData) {
-        return _.findIndex(options.targets, function(target) {
-          if (target.filters && target.filters.length > 0) {
-            return target.metric === metricData.metric &&
-            _.all(target.filters, function(filter) {
-              return filter.tagk === interpolatedTagValue === "*";
-            });
-          } else {
-            return target.metric === metricData.metric &&
-            _.all(target.tags, function(tagV, tagK) {
-              interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars, 'pipe');
-              return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
-            });
-          }
-        });
+        if (tsdbVersion === 3) {
+          return metricData.query.index;
+        } else {
+          return _.findIndex(options.targets, function(target) {
+            if (target.filters && target.filters.length > 0) {
+              return target.metric === metricData.metric &&
+              _.all(target.filters, function(filter) {
+                return filter.tagk === interpolatedTagValue === "*";
+              });
+            } else {
+              return target.metric === metricData.metric &&
+              _.all(target.tags, function(tagV, tagK) {
+                interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars, 'pipe');
+                return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
+              });
+            }
+          });
+        }
       });
     }
 

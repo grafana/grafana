@@ -43,7 +43,9 @@ export class GrafanaApp {
     app.constant('grafanaVersion', "@grafanaVersion@");
 
     app.config(($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) => {
-      //$compileProvider.debugInfoEnabled(false);
+      if (config.buildInfo.env !== 'development') {
+        $compileProvider.debugInfoEnabled(false);
+      }
 
       // Configure moment.js to use browser locale http://momentjs.com/docs/#/i18n/changing-locale/
       var locale = window.navigator.userLanguage || window.navigator.language;
