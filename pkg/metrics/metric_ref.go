@@ -5,11 +5,49 @@ type comboCounterRef struct {
 	metricCounter Counter
 }
 
+type comboTimerRef struct {
+	usageTimer  Timer
+	metricTimer Timer
+}
+
 func NewComboCounterRef(name string) Counter {
 	cr := &comboCounterRef{}
 	cr.usageCounter = UsageStats.GetOrRegister(name, NewCounter).(Counter)
 	cr.metricCounter = MetricStats.GetOrRegister(name, NewCounter).(Counter)
 	return cr
+}
+
+func NewComboTimerRef(name string) Timer {
+	tr := &comboTimerRef{}
+	tr.usageTimer = UsageStats.GetOrRegister(name, NewTimer).(Timer)
+	tr.metricTimer = MetricStats.GetOrRegister(name, NewTimer).(Timer)
+	return tr
+}
+
+func (t comboTimerRef) Clear() {
+	t.metricTimer.Clear()
+	t.usageTimer.Clear()
+}
+
+func (t comboTimerRef) Avg() int64 {
+	panic("Avg called on combotimer ref")
+}
+
+func (t comboTimerRef) Min() int64 {
+	panic("Avg called on combotimer ref")
+}
+
+func (t comboTimerRef) Max() int64 {
+	panic("Avg called on combotimer ref")
+}
+
+func (t comboTimerRef) Total() int64 {
+	panic("Avg called on combotimer ref")
+}
+
+func (t comboTimerRef) AddTiming(timing int64) {
+	t.metricTimer.AddTiming(timing)
+	t.usageTimer.AddTiming(timing)
 }
 
 func (c comboCounterRef) Clear() {

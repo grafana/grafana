@@ -52,6 +52,14 @@ func sendMetricUsage(sender MetricSender) {
 				metrics[name+".count"] = metric.Count()
 				metric.Clear()
 			}
+		case Timer:
+			if metric.Total() > 0 {
+				metrics[name+".avg"] = metric.Avg()
+				metrics[name+".min"] = metric.Min()
+				metrics[name+".max"] = metric.Max()
+				metrics[name+".total"] = metric.Total()
+				metric.Clear()
+			}
 		}
 	})
 
