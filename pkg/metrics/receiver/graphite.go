@@ -37,7 +37,7 @@ func (this *GraphiteSender) Send(metrics map[string]interface{}) error {
 	_, err = conn.Write(buf.Bytes())
 
 	if err != nil {
-		return fmt.Errorf("Graphite Sender: Failed to send metrics!", err)
+		return fmt.Errorf("Graphite Sender: Failed to send metrics! %s", err)
 	}
 
 	return nil
