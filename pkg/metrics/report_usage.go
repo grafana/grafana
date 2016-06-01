@@ -9,20 +9,55 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics/receiver"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+type MetricSender interface {
+	Send(metrics map[string]interface{}) error
+}
+
 func StartUsageReportLoop() chan struct{} {
 	M_Instance_Start.Inc(1)
 
-	ticker := time.NewTicker(time.Hour * 24)
+	hourTicker := time.NewTicker(time.Hour * 24)
+	secondTicker := time.NewTicker(time.Second * 10)
+
+	sender := &receiver.GraphiteSender{
+		Host:     "localhost",
+		Port:     "2003",
+		Protocol: "tcp",
+		Prefix:   "grafana.",
+	}
+
 	for {
 		select {
-		case <-ticker.C:
+		case <-hourTicker.C:
 			sendUsageStats()
+		case <-secondTicker.C:
+			sendMetricUsage(sender)
 		}
+	}
+}
+
+func sendMetricUsage(sender MetricSender) {
+	metrics := map[string]interface{}{}
+
+	MetricStats.Each(func(name string, i interface{}) {
+		switch metric := i.(type) {
+		case Counter:
+			if metric.Count() > 0 {
+				metrics[name+".count"] = metric.Count()
+				metric.Clear()
+			}
+		}
+	})
+
+	err := sender.Send(metrics)
+	if err != nil {
+		log.Error(1, "Failed to send metrics:", err)
 	}
 }
 
