@@ -2,14 +2,20 @@ package alerting
 
 import (
 	"fmt"
+
+	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting/graphite"
+	b "github.com/grafana/grafana/pkg/services/alerting/datasources"
 	"math"
 )
 
 type Executor interface {
 	Execute(rule *m.AlertJob, responseQueue chan *m.AlertResult)
 }
+
+var (
+	ResultLogFmt = "%s executor: %s  %1.2f %s %1.2f : %v"
+)
 
 type ExecutorImpl struct{}
 
@@ -23,7 +29,6 @@ var operators map[string]compareFn = map[string]compareFn{
 	"<=": func(num1, num2 float64) bool { return num1 <= num2 },
 	"":   func(num1, num2 float64) bool { return false },
 }
-
 var aggregator map[string]aggregationFn = map[string]aggregationFn{
 	"avg": func(series *m.TimeSeries) float64 {
 		sum := float64(0)
@@ -71,16 +76,8 @@ var aggregator map[string]aggregationFn = map[string]aggregationFn{
 	},
 }
 
-func (this *ExecutorImpl) GetSeries(job *m.AlertJob) (m.TimeSeriesSlice, error) {
-	if job.Datasource.Type == m.DS_GRAPHITE {
-		return graphite.GraphiteClient{}.GetSeries(job)
-	}
-
-	return nil, fmt.Errorf("Grafana does not support alerts for %s", job.Datasource.Type)
-}
-
 func (this *ExecutorImpl) Execute(job *m.AlertJob, responseQueue chan *m.AlertResult) {
-	response, err := this.GetSeries(job)
+	response, err := b.GetSeries(job)
 
 	if err != nil {
 		responseQueue <- &m.AlertResult{State: "PENDING", Id: job.Rule.Id, Rule: job.Rule}
@@ -96,8 +93,11 @@ func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlic
 		}
 
 		var aggValue = aggregator[rule.Aggregator](serie)
+		var critOperartor = operators[rule.CritOperator]
+		var critResult = critOperartor(aggValue, rule.CritLevel)
 
-		if operators[rule.CritOperator](aggValue, rule.CritLevel) {
+		log.Debug(ResultLogFmt, "Crit", serie.Name, aggValue, rule.CritOperator, rule.CritLevel, critResult)
+		if critResult {
 			return &m.AlertResult{
 				State:       m.AlertStateCritical,
 				Id:          rule.Id,
@@ -107,7 +107,10 @@ func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlic
 			}
 		}
 
-		if operators[rule.WarnOperator](aggValue, rule.WarnLevel) {
+		var warnOperartor = operators[rule.CritOperator]
+		var warnResult = warnOperartor(aggValue, rule.CritLevel)
+		log.Debug(ResultLogFmt, "Warn", serie.Name, aggValue, rule.WarnOperator, rule.WarnLevel, warnResult)
+		if warnResult {
 			return &m.AlertResult{
 				State:       m.AlertStateWarn,
 				Id:          rule.Id,
