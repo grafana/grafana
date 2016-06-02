@@ -39,25 +39,7 @@ func instrumentationLoop() chan struct{} {
 }
 
 func sendMetrics(settings *MetricSettings) {
-	metrics := map[string]interface{}{}
-
-	MetricStats.Each(func(name string, i interface{}) {
-		switch metric := i.(type) {
-		case Counter:
-			if metric.Count() > 0 {
-				metrics[name+".count"] = metric.Count()
-				metric.Clear()
-			}
-		case Timer:
-			if metric.Total() > 0 {
-				metrics[name+".avg"] = metric.Avg()
-				metrics[name+".min"] = metric.Min()
-				metrics[name+".max"] = metric.Max()
-				metrics[name+".total"] = metric.Total()
-				metric.Clear()
-			}
-		}
-	})
+	metrics := MetricStats.GetSnapshots()
 
 	for _, publisher := range settings.Publishers {
 		publisher.Publish(metrics)
@@ -79,15 +61,15 @@ func sendUsageStats() {
 		"metrics": metrics,
 	}
 
-	UsageStats.Each(func(name string, i interface{}) {
-		switch metric := i.(type) {
+	snapshots := UsageStats.GetSnapshots()
+	for _, m := range snapshots {
+		switch metric := m.(type) {
 		case Counter:
 			if metric.Count() > 0 {
-				metrics[name+".count"] = metric.Count()
-				metric.Clear()
+				metrics[metric.Name()+".count"] = metric.Count()
 			}
 		}
-	})
+	}
 
 	statsQuery := m.GetSystemStatsQuery{}
 	if err := bus.Dispatch(&statsQuery); err != nil {

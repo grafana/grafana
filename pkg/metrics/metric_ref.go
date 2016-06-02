@@ -1,28 +1,38 @@
 package metrics
 
 type comboCounterRef struct {
+	*MetricMeta
 	usageCounter  Counter
 	metricCounter Counter
 }
 
 type comboTimerRef struct {
+	*MetricMeta
 	usageTimer  Timer
 	metricTimer Timer
 }
 
-func NewComboCounterRef(name string) Counter {
-	cr := &comboCounterRef{}
-	cr.usageCounter = UsageStats.GetOrRegister(name, NewCounter).(Counter)
-	cr.metricCounter = MetricStats.GetOrRegister(name, NewCounter).(Counter)
+func RegComboCounter(name string, tagStrings ...string) Counter {
+	meta := NewMetricMeta(name, tagStrings)
+	cr := &comboCounterRef{
+		MetricMeta:    meta,
+		usageCounter:  NewCounter(meta),
+		metricCounter: NewCounter(meta),
+	}
+
+	UsageStats.Register(cr.usageCounter)
+	MetricStats.Register(cr.metricCounter)
+
 	return cr
 }
 
-func NewComboTimerRef(name string) Timer {
-	tr := &comboTimerRef{}
-	tr.usageTimer = UsageStats.GetOrRegister(name, NewTimer).(Timer)
-	tr.metricTimer = MetricStats.GetOrRegister(name, NewTimer).(Timer)
-	return tr
-}
+// func NewComboTimerRef(name string, tagStrings ...string) Timer {
+// 	meta := NewMetricMeta(name, tagStrings)
+// 	tr := &comboTimerRef{}
+// 	tr.usageTimer = UsageStats.GetOrRegister(NewTimer).(Timer)
+// 	tr.metricTimer = MetricStats.GetOrRegister(NewTimer).(Timer)
+// 	return tr
+// }
 
 func (t comboTimerRef) Clear() {
 	t.metricTimer.Clear()
@@ -71,7 +81,6 @@ func (c comboCounterRef) Inc(i int64) {
 	c.metricCounter.Inc(i)
 }
 
-// Snapshot returns the snapshot.
-func (c comboCounterRef) Snapshot() Counter {
-	panic("snapshot called on a combocounter ref")
+func (c comboCounterRef) Snapshot() Metric {
+	return c.metricCounter.Snapshot()
 }
