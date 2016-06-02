@@ -205,7 +205,9 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
 
     function escapeForJson(value) {
-      return value.replace(/\"/g, '\\"');
+      return value
+        .replace(/\s/g, '\\ ')
+        .replace(/\"/g, '\\"');
     }
 
     function luceneThenJsonFormat(value) {
