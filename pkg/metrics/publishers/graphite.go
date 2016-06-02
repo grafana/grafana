@@ -22,12 +22,12 @@ func CreateGraphitePublisher() (*GraphitePublisher, error) {
 		return nil, nil
 	}
 
-	graphiteReceiver := &GraphitePublisher{}
-	graphiteReceiver.Protocol = "tcp"
-	graphiteReceiver.Address = graphiteSection.Key("address").MustString("localhost:2003")
-	graphiteReceiver.Prefix = graphiteSection.Key("prefix").MustString("service.grafana.%(instance_name)s")
+	publisher := &GraphitePublisher{}
+	publisher.Protocol = "tcp"
+	publisher.Address = graphiteSection.Key("address").MustString("localhost:2003")
+	publisher.Prefix = graphiteSection.Key("prefix").MustString("service.grafana.%(instance_name)s")
 
-	return graphiteReceiver, nil
+	return publisher, nil
 }
 
 func (this *GraphitePublisher) Publish(metrics map[string]interface{}) {

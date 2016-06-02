@@ -43,5 +43,12 @@ func readSettings() *MetricSettings {
 		settings.Publishers = append(settings.Publishers, graphitePublisher)
 	}
 
+	if influxPublisher, err := publishers.CreateInfluxPublisher(); err != nil {
+		log.Error(3, "Metrics: Failed to init InfluxDB metric publisher", err)
+	} else if influxPublisher != nil {
+		log.Info("Metrics: Internal metrics publisher InfluxDB initialized")
+		settings.Publishers = append(settings.Publishers, influxPublisher)
+	}
+
 	return settings
 }
