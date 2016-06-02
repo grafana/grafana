@@ -64,13 +64,10 @@ func main() {
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()
+	metrics.Init()
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)
-	}
-
-	if setting.ReportingEnabled {
-		go metrics.StartUsageReportLoop()
 	}
 
 	StartServer()

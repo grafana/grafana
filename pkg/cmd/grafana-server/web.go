@@ -31,7 +31,7 @@ func newMacaron() *macaron.Macaron {
 
 	for _, route := range plugins.StaticRoutes {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)
-		log.Info("Plugins: Adding route %s -> %s", pluginRoute, route.Directory)
+		log.Debug("Plugins: Adding route %s -> %s", pluginRoute, route.Directory)
 		mapStatic(m, route.Directory, "", pluginRoute)
 	}
 
