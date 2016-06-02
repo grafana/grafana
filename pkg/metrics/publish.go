@@ -9,40 +9,36 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics/senders"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type MetricSender interface {
-	Send(metrics map[string]interface{}) error
+func Init() {
+	go instrumentationLoop()
 }
 
-func StartUsageReportLoop() chan struct{} {
+func instrumentationLoop() chan struct{} {
 	M_Instance_Start.Inc(1)
 
-	hourTicker := time.NewTicker(time.Hour * 24)
-	secondTicker := time.NewTicker(time.Second * 10)
+	settings := readSettings()
 
-	sender := &receiver.GraphiteSender{
-		Host:     "localhost",
-		Port:     "2003",
-		Protocol: "tcp",
-		Prefix:   "grafana.",
-	}
+	onceEveryDayTick := time.NewTicker(time.Hour * 24)
+	secondTicker := time.NewTicker(time.Second * time.Duration(settings.IntervalSeconds))
 
 	for {
 		select {
-		case <-hourTicker.C:
+		case <-onceEveryDayTick.C:
 			sendUsageStats()
 		case <-secondTicker.C:
-			sendMetricUsage(sender)
+			if settings.Enabled {
+				sendMetrics(settings)
+			}
 		}
 	}
 }
 
-func sendMetricUsage(sender MetricSender) {
+func sendMetrics(settings *MetricSettings) {
 	metrics := map[string]interface{}{}
 
 	MetricStats.Each(func(name string, i interface{}) {
@@ -63,13 +59,16 @@ func sendMetricUsage(sender MetricSender) {
 		}
 	})
 
-	err := sender.Send(metrics)
-	if err != nil {
-		log.Error(1, "Failed to send metrics:", err)
+	for _, publisher := range settings.Publishers {
+		publisher.Publish(metrics)
 	}
 }
 
 func sendUsageStats() {
+	if !setting.ReportingEnabled {
+		return
+	}
+
 	log.Trace("Sending anonymous usage stats to stats.grafana.org")
 
 	version := strings.Replace(setting.BuildVersion, ".", "_", -1)
