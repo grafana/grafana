@@ -173,7 +173,7 @@ function (angular, _, kbn) {
         return;
       }
 
-      // extract options in comma seperated string
+      // extract options in comma separated string
       variable.options = _.map(variable.query.split(/[,]+/), function(text) {
         return { text: text.trim(), value: text.trim() };
       });
