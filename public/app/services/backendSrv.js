@@ -111,7 +111,7 @@ function (angular, _, config) {
           $window.location.href = location;
           deferred.reject();
         } else {
-            deferred.resolve(data);
+          deferred.resolve(data);
         }
       }, function(err) {
         // handle unauthorized for backend requests
