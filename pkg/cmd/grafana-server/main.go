@@ -118,9 +118,7 @@ func listenToSystemSignels() {
 	signalChan := make(chan os.Signal, 1)
 	code := 0
 
-	signal.Notify(signalChan, os.Interrupt)
-	signal.Notify(signalChan, os.Kill)
-	signal.Notify(signalChan, syscall.SIGTERM)
+	signal.Notify(signalChan, os.Interrupt, os.Kill, syscall.SIGTERM)
 
 	select {
 	case sig := <-signalChan:
