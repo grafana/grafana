@@ -48,7 +48,7 @@ type LdapGroupToOrgRole struct {
 	OrgRole m.RoleType `toml:"org_role"`
 }
 
-var ldapCfg LdapConfig
+var LdapCfg LdapConfig
 
 func loadLdapConfig() {
 	if !setting.LdapEnabled {
@@ -57,17 +57,17 @@ func loadLdapConfig() {
 
 	log.Info("Login: Ldap enabled, reading config file: %s", setting.LdapConfigFile)
 
-	_, err := toml.DecodeFile(setting.LdapConfigFile, &ldapCfg)
+	_, err := toml.DecodeFile(setting.LdapConfigFile, &LdapCfg)
 	if err != nil {
 		log.Fatal(3, "Failed to load ldap config file: %s", err)
 	}
 
-	if len(ldapCfg.Servers) == 0 {
+	if len(LdapCfg.Servers) == 0 {
 		log.Fatal(3, "ldap enabled but no ldap servers defined in config file: %s", setting.LdapConfigFile)
 	}
 
 	// set default org id
-	for _, server := range ldapCfg.Servers {
+	for _, server := range LdapCfg.Servers {
 		assertNotEmptyCfg(server.SearchFilter, "search_filter")
 		assertNotEmptyCfg(server.SearchBaseDNs, "search_base_dns")
 
