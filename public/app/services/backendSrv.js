@@ -8,7 +8,7 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('backendSrv', function($http, alertSrv, $timeout) {
+  module.service('backendSrv', function($http, alertSrv, $timeout, $location, $window, $q) {
     var self = this;
 
     this.get = function(url, params) {
@@ -98,7 +98,22 @@ function (angular, _, config) {
       var requestIsLocal = options.url.indexOf('/') === 0;
       var firstAttempt = options.retry === 0;
 
-      return $http(options).then(null, function(err) {
+      var deferred = $q.defer();
+
+      $http(options).then(function(data) {
+
+        var contentType = data.headers('Content-Type');
+        //if there is something wrong - we do not expect HTML data in response
+        if (contentType && contentType.indexOf('text/html') !== -1) {
+          var idx = $location.absUrl().indexOf($location.path());
+          //"redirect" to root url
+          var location = $location.absUrl().substring(0, idx);
+          $window.location.href = location;
+          deferred.reject();
+        } else {
+            deferred.resolve(data);
+        }
+      }, function(err) {
         // handle unauthorized for backend requests
         if (requestIsLocal && firstAttempt  && err.status === 401) {
           return self.loginPing().then(function() {
@@ -107,8 +122,10 @@ function (angular, _, config) {
           });
         }
 
-        throw err;
+        deferred.reject(err);
       });
+
+      return deferred.promise;
     };
 
     this.loginPing = function() {
