@@ -2,12 +2,11 @@ package metrics
 
 import (
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/metrics/publishers"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
 type MetricPublisher interface {
-	Publish(metrics map[string]interface{})
+	Publish(metrics []Metric)
 }
 
 type MetricSettings struct {
@@ -36,14 +35,14 @@ func readSettings() *MetricSettings {
 		return settings
 	}
 
-	if graphitePublisher, err := publishers.CreateGraphitePublisher(); err != nil {
+	if graphitePublisher, err := CreateGraphitePublisher(); err != nil {
 		log.Error(3, "Metrics: Failed to init Graphite metric publisher", err)
 	} else if graphitePublisher != nil {
 		log.Info("Metrics: Internal metrics publisher Graphite initialized")
 		settings.Publishers = append(settings.Publishers, graphitePublisher)
 	}
 
-	if influxPublisher, err := publishers.CreateInfluxPublisher(); err != nil {
+	if influxPublisher, err := CreateInfluxPublisher(); err != nil {
 		log.Error(3, "Metrics: Failed to init InfluxDB metric publisher", err)
 	} else if influxPublisher != nil {
 		log.Info("Metrics: Internal metrics publisher InfluxDB initialized")

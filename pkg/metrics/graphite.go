@@ -1,4 +1,4 @@
-package publishers
+package metrics
 
 import (
 	"bytes"
@@ -30,7 +30,7 @@ func CreateGraphitePublisher() (*GraphitePublisher, error) {
 	return publisher, nil
 }
 
-func (this *GraphitePublisher) Publish(metrics map[string]interface{}) {
+func (this *GraphitePublisher) Publish(metrics []Metric) {
 	conn, err := net.DialTimeout(this.Protocol, this.Address, time.Second*5)
 
 	if err != nil {
@@ -40,10 +40,17 @@ func (this *GraphitePublisher) Publish(metrics map[string]interface{}) {
 
 	buf := bytes.NewBufferString("")
 	now := time.Now().Unix()
-	for key, value := range metrics {
-		metricName := this.Prefix + key
-		line := fmt.Sprintf("%s %d %d\n", metricName, value, now)
-		buf.WriteString(line)
+	for _, m := range metrics {
+		metricName := this.Prefix + m.Name() + m.StringifyTags()
+
+		switch metric := m.(type) {
+		case Counter:
+			if metric.Count() > 0 {
+				line := fmt.Sprintf("%s %d %d\n", metricName, metric.Count(), now)
+				buf.WriteString(line)
+			}
+		}
+
 	}
 
 	log.Trace("Metrics: GraphitePublisher.Publish() \n%s", buf)

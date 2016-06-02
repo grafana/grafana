@@ -77,8 +77,6 @@ func GetDashboard(c *middleware.Context) {
 	}
 
 	c.JSON(200, dto)
-
-	metrics.M_Api_Dashboard_Get_Timer.AddTiming(123333)
 }
 
 func getUserLogin(userId int64) string {
