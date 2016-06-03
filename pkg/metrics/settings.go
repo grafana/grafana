@@ -38,7 +38,7 @@ func readSettings() *MetricSettings {
 	if graphitePublisher, err := CreateGraphitePublisher(); err != nil {
 		log.Error(3, "Metrics: Failed to init Graphite metric publisher", err)
 	} else if graphitePublisher != nil {
-		log.Info("Metrics: Internal metrics publisher Graphite initialized")
+		log.Info("Metrics: Graphite publisher initialized")
 		settings.Publishers = append(settings.Publishers, graphitePublisher)
 	}
 
