@@ -15,7 +15,8 @@ type Executor interface {
 }
 
 var (
-	ResultLogFmt = "%s executor: %s  %1.2f %s %1.2f : %v"
+	resultLogFmt   = "%s executor: %s  %1.2f %s %1.2f : %v"
+	descriptionFmt = "Actual value: %1.2f for %s"
 )
 
 type ExecutorImpl struct{}
@@ -23,14 +24,14 @@ type ExecutorImpl struct{}
 type compareFn func(float64, float64) bool
 type aggregationFn func(*m.TimeSeries) float64
 
-var operators map[string]compareFn = map[string]compareFn{
+var operators = map[string]compareFn{
 	">":  func(num1, num2 float64) bool { return num1 > num2 },
 	">=": func(num1, num2 float64) bool { return num1 >= num2 },
 	"<":  func(num1, num2 float64) bool { return num1 < num2 },
 	"<=": func(num1, num2 float64) bool { return num1 <= num2 },
 	"":   func(num1, num2 float64) bool { return false },
 }
-var aggregator map[string]aggregationFn = map[string]aggregationFn{
+var aggregator = map[string]aggregationFn{
 	"avg": func(series *m.TimeSeries) float64 {
 		sum := float64(0)
 
@@ -77,19 +78,19 @@ var aggregator map[string]aggregationFn = map[string]aggregationFn{
 	},
 }
 
-func (this *ExecutorImpl) Execute(job *m.AlertJob, responseQueue chan *m.AlertResult) {
+func (executor *ExecutorImpl) Execute(job *m.AlertJob, responseQueue chan *m.AlertResult) {
 	response, err := b.GetSeries(job)
 
 	if err != nil {
 		responseQueue <- &m.AlertResult{State: m.AlertStatePending, Id: job.Rule.Id, AlertJob: job}
 	}
 
-	result := this.validateRule(job.Rule, response)
+	result := executor.validateRule(job.Rule, response)
 	result.AlertJob = job
 	responseQueue <- result
 }
 
-func (this *ExecutorImpl) validateRule(rule m.AlertRule, series m.TimeSeriesSlice) *m.AlertResult {
+func (executor *ExecutorImpl) validateRule(rule m.AlertRule, series m.TimeSeriesSlice) *m.AlertResult {
 	for _, serie := range series {
 		if aggregator[rule.Aggregator] == nil {
 			continue
@@ -99,24 +100,24 @@ func (this *ExecutorImpl) validateRule(rule m.AlertRule, series m.TimeSeriesSlic
 		var critOperartor = operators[rule.CritOperator]
 		var critResult = critOperartor(aggValue, rule.CritLevel)
 
-		log.Debug(ResultLogFmt, "Crit", serie.Name, aggValue, rule.CritOperator, rule.CritLevel, critResult)
+		log.Trace(resultLogFmt, "Crit", serie.Name, aggValue, rule.CritOperator, rule.CritLevel, critResult)
 		if critResult {
 			return &m.AlertResult{
 				State:       m.AlertStateCritical,
 				Id:          rule.Id,
 				ActualValue: aggValue,
-				Description: fmt.Sprintf("Actual value: %1.2f for %s", aggValue, serie.Name),
+				Description: fmt.Sprintf(descriptionFmt, aggValue, serie.Name),
 			}
 		}
 
 		var warnOperartor = operators[rule.CritOperator]
 		var warnResult = warnOperartor(aggValue, rule.CritLevel)
-		log.Debug(ResultLogFmt, "Warn", serie.Name, aggValue, rule.WarnOperator, rule.WarnLevel, warnResult)
+		log.Trace(resultLogFmt, "Warn", serie.Name, aggValue, rule.WarnOperator, rule.WarnLevel, warnResult)
 		if warnResult {
 			return &m.AlertResult{
 				State:       m.AlertStateWarn,
 				Id:          rule.Id,
-				Description: fmt.Sprintf("Actual value: %1.2f for %s", aggValue, serie.Name),
+				Description: fmt.Sprintf(descriptionFmt, aggValue, serie.Name),
 				ActualValue: aggValue,
 			}
 		}

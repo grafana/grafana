@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	MaxRetries = 3
+	maxRetries = 3
 )
 
 func Init() {
@@ -115,9 +115,9 @@ func (scheduler *Scheduler) handleResponses() {
 
 		if response.State == m.AlertStatePending {
 			response.AlertJob.Retry++
-			if response.AlertJob.Retry > MaxRetries {
+			if response.AlertJob.Retry > maxRetries {
 				response.State = m.AlertStateCritical
-				response.Description = fmt.Sprintf("Failed to run check after %d retires", MaxRetries)
+				response.Description = fmt.Sprintf("Failed to run check after %d retires", maxRetries)
 				scheduler.saveState(response)
 			}
 		} else {

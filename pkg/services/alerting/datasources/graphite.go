@@ -22,7 +22,7 @@ type GraphiteSerie struct {
 
 type GraphiteResponse []GraphiteSerie
 
-func (this GraphiteClient) GetSeries(rule m.AlertJob, datasource m.DataSource) (m.TimeSeriesSlice, error) {
+func (client GraphiteClient) GetSeries(rule m.AlertJob, datasource m.DataSource) (m.TimeSeriesSlice, error) {
 	v := url.Values{
 		"format": []string{"json"},
 		"target": []string{getTargetFromRule(rule.Rule)},
