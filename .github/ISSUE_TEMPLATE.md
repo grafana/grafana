@@ -1,7 +1,7 @@
 * **I'm submitting a ...**
 - [ ] Bug report
 - [ ] Feature request
-- [ ] Question / Support request: **Please do not** open a github issue. [Support Options](https://grafana.org/support/)
+- [ ] Question / Support request: **Please do not** open a github issue. [Support Options](http://grafana.org/support/)
 
 Please include this information:
 - What Grafana version are you using?
