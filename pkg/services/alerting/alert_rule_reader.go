@@ -1,21 +1,22 @@
 package alerting
 
 import (
-	"github.com/grafana/grafana/pkg/bus"
-	m "github.com/grafana/grafana/pkg/models"
 	"sync"
 	"time"
+
+	"github.com/grafana/grafana/pkg/bus"
+	m "github.com/grafana/grafana/pkg/models"
 )
 
 type RuleReader interface {
-	Fetch() []m.AlertJob
+	Fetch() []m.AlertRule
 }
 
 type AlertRuleReader struct {
-	serverId       string
+	sync.RWMutex
+	serverID       string
 	serverPosition int
 	clusterSize    int
-	mtx            sync.RWMutex
 }
 
 func NewRuleReader() *AlertRuleReader {
@@ -26,27 +27,29 @@ func NewRuleReader() *AlertRuleReader {
 }
 
 var (
-	alertJobs []m.AlertJob
+	alertJobs []m.AlertRule
 )
 
-func (this *AlertRuleReader) initReader() {
-	alertJobs = make([]m.AlertJob, 0)
+func (arr *AlertRuleReader) Fetch() []m.AlertRule {
+	return alertJobs
+}
+
+func (arr *AlertRuleReader) initReader() {
+	alertJobs = make([]m.AlertRule, 0)
 	heartbeat := time.NewTicker(time.Second * 10)
-	this.rr()
+	arr.updateRules()
 
 	for {
 		select {
 		case <-heartbeat.C:
-			this.rr()
+			arr.updateRules()
 		}
 	}
 }
 
-func (this *AlertRuleReader) rr() {
-	this.mtx.Lock()
-	defer this.mtx.Unlock()
-
-	rules := make([]m.AlertRule, 0)
+func (arr *AlertRuleReader) updateRules() {
+	arr.Lock()
+	defer arr.Unlock()
 
 	/*
 		rules = []m.AlertRule{
@@ -76,38 +79,19 @@ func (this *AlertRuleReader) rr() {
 	cmd := &m.GetAlertsQuery{
 		OrgId: 1,
 	}
-	bus.Dispatch(cmd)
-	rules = cmd.Result
-	//for i := this.serverPosition - 1; i < len(rules); i += this.clusterSize {
+	err := bus.Dispatch(cmd)
 
-	jobs := make([]m.AlertJob, 0)
-	for _, rule := range rules {
-		query := &m.GetDataSourceByIdQuery{Id: rule.DatasourceId, OrgId: rule.OrgId}
-		err := bus.Dispatch(query)
-
-		if err != nil {
-			continue
-		}
-
-		jobs = append(jobs, m.AlertJob{
-			Rule:       rule,
-			Datasource: query.Result,
-		})
+	if err == nil {
+		alertJobs = cmd.Result
 	}
-
-	alertJobs = jobs
 }
 
-func (this *AlertRuleReader) Fetch() []m.AlertJob {
-	return alertJobs
-}
-
-func (this *AlertRuleReader) heartBeat() {
+func (arr *AlertRuleReader) heartBeat() {
 
 	//Lets cheat on this until we focus on clustering
 	//log.Info("Heartbeat: Sending heartbeat from " + this.serverId)
-	this.clusterSize = 1
-	this.serverPosition = 1
+	arr.clusterSize = 1
+	arr.serverPosition = 1
 
 	/*
 		cmd := &m.HeartBeatCommand{ServerId: this.serverId}

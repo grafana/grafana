@@ -110,11 +110,10 @@ type GetAlertChangesQuery struct {
 }
 
 type AlertJob struct {
-	Offset     int64
-	Delay      bool
-	Running    bool
-	Rule       AlertRule
-	Datasource DataSource
+	Offset  int64
+	Delay   bool
+	Running bool
+	Rule    AlertRule
 }
 
 type AlertResult struct {

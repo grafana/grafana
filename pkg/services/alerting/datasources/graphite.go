@@ -2,14 +2,15 @@ package graphite
 
 import (
 	"fmt"
-	"github.com/franela/goreq"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
+
+	"github.com/franela/goreq"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	m "github.com/grafana/grafana/pkg/models"
 )
 
 type GraphiteClient struct{}
@@ -21,7 +22,7 @@ type GraphiteSerie struct {
 
 type GraphiteResponse []GraphiteSerie
 
-func (this GraphiteClient) GetSeries(rule *m.AlertJob) (m.TimeSeriesSlice, error) {
+func (this GraphiteClient) GetSeries(rule *m.AlertJob, datasource m.DataSource) (m.TimeSeriesSlice, error) {
 	v := url.Values{
 		"format": []string{"json"},
 		"target": []string{getTargetFromRule(rule.Rule)},
@@ -33,7 +34,7 @@ func (this GraphiteClient) GetSeries(rule *m.AlertJob) (m.TimeSeriesSlice, error
 
 	res, err := goreq.Request{
 		Method:  "POST",
-		Uri:     rule.Datasource.Url + "/render",
+		Uri:     datasource.Url + "/render",
 		Body:    v.Encode(),
 		Timeout: 5 * time.Second,
 	}.Do()

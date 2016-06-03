@@ -19,7 +19,7 @@ func Init() {
 	scheduler := NewScheduler()
 	reader := NewRuleReader()
 
-	go scheduler.Dispatch(reader)
+	go scheduler.dispatch(reader)
 	go scheduler.Executor(&ExecutorImpl{})
 	go scheduler.HandleResponses()
 
@@ -41,62 +41,65 @@ func NewScheduler() *Scheduler {
 	}
 }
 
-func (this *Scheduler) Dispatch(reader RuleReader) {
+func (scheduler *Scheduler) dispatch(reader RuleReader) {
 	reschedule := time.NewTicker(time.Second * 10)
 	secondTicker := time.NewTicker(time.Second)
 
-	this.updateJobs(reader.Fetch)
+	scheduler.updateJobs(reader.Fetch)
 
 	for {
 		select {
 		case <-secondTicker.C:
-			this.queueJobs()
+			scheduler.queueJobs()
 		case <-reschedule.C:
-			this.updateJobs(reader.Fetch)
+			scheduler.updateJobs(reader.Fetch)
 		}
 	}
 }
 
-func (this *Scheduler) updateJobs(f func() []m.AlertJob) {
+func (scheduler *Scheduler) updateJobs(alertRuleFn func() []m.AlertRule) {
 	log.Debug("Scheduler: UpdateJobs()")
 
 	jobs := make(map[int64]*m.AlertJob, 0)
-	rules := f()
+	rules := alertRuleFn()
 
 	for i := 0; i < len(rules); i++ {
 		rule := rules[i]
-		rule.Offset = int64(i)
-		jobs[rule.Rule.Id] = &rule
+		jobs[rule.Id] = &m.AlertJob{
+			Rule:    rule,
+			Offset:  int64(i),
+			Running: false,
+		}
 	}
 
 	log.Debug("Scheduler: Selected %d jobs", len(jobs))
-	this.jobs = jobs
+	scheduler.jobs = jobs
 }
 
-func (this *Scheduler) queueJobs() {
+func (scheduler *Scheduler) queueJobs() {
 	now := time.Now().Unix()
-	for _, job := range this.jobs {
+	for _, job := range scheduler.jobs {
 		if now%job.Rule.Frequency == 0 && job.Running == false {
 			log.Info("Scheduler: Putting job on to run queue: %s", job.Rule.Title)
-			this.runQueue <- job
+			scheduler.runQueue <- job
 		}
 	}
 }
 
-func (this *Scheduler) Executor(executor Executor) {
-	for job := range this.runQueue {
+func (scheduler *Scheduler) Executor(executor Executor) {
+	for job := range scheduler.runQueue {
 		//log.Info("Executor: queue length %d", len(this.runQueue))
 		log.Info("Executor: executing %s", job.Rule.Title)
-		this.jobs[job.Rule.Id].Running = true
-		this.MeasureAndExecute(executor, job)
+		scheduler.jobs[job.Rule.Id].Running = true
+		scheduler.MeasureAndExecute(executor, job)
 	}
 }
 
-func (this *Scheduler) HandleResponses() {
-	for response := range this.responseQueue {
+func (scheduler *Scheduler) HandleResponses() {
+	for response := range scheduler.responseQueue {
 		log.Info("Response: alert(%d) status(%s) actual(%v)", response.Id, response.State, response.ActualValue)
-		if this.jobs[response.Id] != nil {
-			this.jobs[response.Id].Running = false
+		if scheduler.jobs[response.Id] != nil {
+			scheduler.jobs[response.Id].Running = false
 		}
 
 		cmd := m.UpdateAlertStateCommand{
@@ -111,7 +114,7 @@ func (this *Scheduler) HandleResponses() {
 	}
 }
 
-func (this *Scheduler) MeasureAndExecute(exec Executor, job *m.AlertJob) {
+func (scheduler *Scheduler) MeasureAndExecute(exec Executor, job *m.AlertJob) {
 	now := time.Now()
 
 	responseChan := make(chan *m.AlertResult, 1)
@@ -119,7 +122,7 @@ func (this *Scheduler) MeasureAndExecute(exec Executor, job *m.AlertJob) {
 
 	select {
 	case <-time.After(time.Second * 5):
-		this.responseQueue <- &m.AlertResult{
+		scheduler.responseQueue <- &m.AlertResult{
 			Id:       job.Rule.Id,
 			State:    "timed out",
 			Duration: float64(time.Since(now).Nanoseconds()) / float64(1000000),
@@ -128,6 +131,6 @@ func (this *Scheduler) MeasureAndExecute(exec Executor, job *m.AlertJob) {
 	case result := <-responseChan:
 		result.Duration = float64(time.Since(now).Nanoseconds()) / float64(1000000)
 		log.Info("Schedular: exeuction took %vms", result.Duration)
-		this.responseQueue <- result
+		scheduler.responseQueue <- result
 	}
 }
