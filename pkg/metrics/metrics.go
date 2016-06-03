@@ -13,8 +13,9 @@ var (
 	M_Api_User_SignUpStarted          Counter
 	M_Api_User_SignUpCompleted        Counter
 	M_Api_User_SignUpInvite           Counter
-	M_Api_Dashboard_Get               Counter
-	M_Api_Dashboard_Post              Counter
+	M_Api_Dashboard_Save              Timer
+	M_Api_Dashboard_Get               Timer
+	M_Api_Dashboard_Search            Timer
 	M_Api_Admin_User_Create           Counter
 	M_Api_Login_Post                  Counter
 	M_Api_Login_OAuth                 Counter
@@ -43,9 +44,11 @@ func initMetricVars(settings *MetricSettings) {
 	M_Api_User_SignUpStarted = RegCounter("api.user.signup_started")
 	M_Api_User_SignUpCompleted = RegCounter("api.user.signup_completed")
 	M_Api_User_SignUpInvite = RegCounter("api.user.signup_invite")
-	M_Api_Dashboard_Get = RegCounter("api.dashboard.get")
 
-	M_Api_Dashboard_Post = RegCounter("api.dashboard.post")
+	M_Api_Dashboard_Save = RegTimer("api.dashboard.save")
+	M_Api_Dashboard_Get = RegTimer("api.dashboard.get")
+	M_Api_Dashboard_Search = RegTimer("api.dashboard.search")
+
 	M_Api_Admin_User_Create = RegCounter("api.admin.user_create")
 	M_Api_Login_Post = RegCounter("api.login.post")
 	M_Api_Login_OAuth = RegCounter("api.login.oauth")
