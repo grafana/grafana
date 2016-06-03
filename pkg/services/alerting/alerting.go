@@ -74,8 +74,8 @@ func (scheduler *Scheduler) updateJobs(alertRuleFn func() []m.AlertRule) {
 			job = scheduler.jobs[rule.Id]
 		} else {
 			job = &m.AlertJob{
-				Running: false,
-				Retry:   0,
+				Running:    false,
+				RetryCount: 0,
 			}
 		}
 
@@ -110,24 +110,28 @@ func (scheduler *Scheduler) executor(executor Executor) {
 
 func (scheduler *Scheduler) handleResponses() {
 	for response := range scheduler.responseQueue {
-		log.Info("Response: alert(%d) status(%s) actual(%v) retry(%d) running(%v)", response.Id, response.State, response.ActualValue, response.AlertJob.Retry, response.AlertJob.Running)
+		log.Info("Response: alert(%d) status(%s) actual(%v) retry(%d)", response.Id, response.State, response.ActualValue, response.AlertJob.RetryCount)
 		response.AlertJob.Running = false
 
-		if response.State == m.AlertStatePending {
-			response.AlertJob.Retry++
-			if response.AlertJob.Retry > maxRetries {
-				response.State = m.AlertStateCritical
-				response.Description = fmt.Sprintf("Failed to run check after %d retires", maxRetries)
-				scheduler.saveState(response)
+		if response.IsResultIncomplete() {
+			response.AlertJob.RetryCount++
+			if response.AlertJob.RetryCount < maxRetries {
+				scheduler.runQueue <- response.AlertJob
+			} else {
+				saveState(&m.AlertResult{
+					Id:          response.Id,
+					State:       m.AlertStateCritical,
+					Description: fmt.Sprintf("Failed to run check after %d retires", maxRetries),
+				})
 			}
 		} else {
-			response.AlertJob.Retry = 0
-			scheduler.saveState(response)
+			response.AlertJob.RetryCount = 0
+			saveState(response)
 		}
 	}
 }
 
-func (scheduler *Scheduler) saveState(response *m.AlertResult) {
+func saveState(response *m.AlertResult) {
 	cmd := &m.UpdateAlertStateCommand{
 		AlertId:  response.Id,
 		NewState: response.State,

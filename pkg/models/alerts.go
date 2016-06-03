@@ -110,11 +110,11 @@ type GetAlertChangesQuery struct {
 }
 
 type AlertJob struct {
-	Offset  int64
-	Delay   bool
-	Running bool
-	Retry   int
-	Rule    AlertRule
+	Offset     int64
+	Delay      bool
+	Running    bool
+	RetryCount int
+	Rule       AlertRule
 }
 
 type AlertResult struct {
@@ -124,4 +124,8 @@ type AlertResult struct {
 	Duration    float64
 	Description string
 	AlertJob    *AlertJob
+}
+
+func (ar *AlertResult) IsResultIncomplete() bool {
+	return ar.State == AlertStatePending
 }
