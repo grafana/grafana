@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/hashicorp/go-version"
@@ -51,7 +51,7 @@ func upgradeAllCommand(c CommandLine) error {
 	}
 
 	for _, p := range pluginsToUpgrade {
-		log.Infof("Updating %v \n", p.Id)
+		logger.Infof("Updating %v \n", p.Id)
 
 		s.RemoveInstalledPlugin(pluginsDir, p.Id)
 		InstallPlugin(p.Id, "", c)

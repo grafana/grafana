@@ -2,7 +2,7 @@ package commands
 
 import (
 	"github.com/fatih/color"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 )
 
@@ -27,6 +27,6 @@ func upgradeCommand(c CommandLine) error {
 		return InstallPlugin(localPlugin.Id, "", c)
 	}
 
-	log.Infof("%s %s is up to date \n", color.GreenString("✔"), localPlugin.Id)
+	logger.Infof("%s %s is up to date \n", color.GreenString("✔"), localPlugin.Id)
 	return nil
 }
