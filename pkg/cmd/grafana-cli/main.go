@@ -7,7 +7,8 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/lunny/log"
 )
 
 var version = "master"
@@ -42,7 +43,7 @@ func isDevenvironment(pwd string) bool {
 }
 
 func main() {
-	SetupLogging()
+	setupLogging()
 
 	app := cli.NewApp()
 	app.Name = "Grafana cli"
@@ -73,14 +74,14 @@ func main() {
 	app.CommandNotFound = cmdNotFound
 
 	if err := app.Run(os.Args); err != nil {
-		log.Errorf("%v", err)
+		logger.Errorf("%v", err)
 	}
 }
 
-func SetupLogging() {
+func setupLogging() {
 	for _, f := range os.Args {
 		if f == "-D" || f == "--debug" || f == "-debug" {
-			log.SetDebug(true)
+			logger.SetDebug(true)
 		}
 	}
 }

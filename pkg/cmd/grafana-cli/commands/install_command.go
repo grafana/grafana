@@ -14,9 +14,10 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	"github.com/lunny/log"
 )
 
 func validateInput(c CommandLine, pluginFolder string) error {
@@ -78,10 +79,10 @@ func InstallPlugin(pluginName, version string, c CommandLine) error {
 		pluginName,
 		version)
 
-	log.Infof("installing %v @ %v\n", plugin.Id, version)
-	log.Infof("from url: %v\n", downloadURL)
-	log.Infof("into: %v\n", pluginFolder)
-	log.Info("\n")
+	logger.Infof("installing %v @ %v\n", plugin.Id, version)
+	logger.Infof("from url: %v\n", downloadURL)
+	logger.Infof("into: %v\n", pluginFolder)
+	logger.Info("\n")
 
 	err = downloadFile(plugin.Id, pluginFolder, downloadURL)
 	if err != nil {
