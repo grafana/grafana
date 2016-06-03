@@ -386,11 +386,12 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               if (max === null || max < series.stats.max) {
                 max = series.stats.max;
               }
-              if (min === null || min > series.stats.min) {
-                min = series.stats.min;
+              if (min === null || min > series.stats.logmin) {
+                min = series.stats.logmin;
               }
             }
           }
+
           if (max === null && min === null) {
             max = Math.pow(axis.logBase,+2);
             min = Math.pow(axis.logBase,-2);
@@ -400,7 +401,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             min = max*Math.pow(axis.logBase,-4);
           }
 
-          axis.transform = function(v) { return Math.log(v) / Math.log(axis.logBase); };
+          axis.transform = function(v) { return (v < Number.MIN_VALUE) ? null : Math.log(v) / Math.log(axis.logBase); };
           axis.inverseTransform  = function (v) { return Math.pow(axis.logBase,v); };
 
           min = axis.inverseTransform(Math.floor(axis.transform(min)));
