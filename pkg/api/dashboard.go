@@ -31,8 +31,6 @@ func isDashboardStarredByUser(c *middleware.Context, dashId int64) (bool, error)
 }
 
 func GetDashboard(c *middleware.Context) {
-	metrics.M_Api_Dashboard_Get.Inc(1)
-
 	slug := strings.ToLower(c.Params(":slug"))
 
 	query := m.GetDashboardQuery{Slug: slug, OrgId: c.OrgId}
@@ -76,6 +74,7 @@ func GetDashboard(c *middleware.Context) {
 		},
 	}
 
+	c.TimeRequest(metrics.M_Api_Dashboard_Get)
 	c.JSON(200, dto)
 }
 
@@ -150,8 +149,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 		return
 	}
 
-	metrics.M_Api_Dashboard_Post.Inc(1)
-
+	c.TimeRequest(metrics.M_Api_Dashboard_Save)
 	c.JSON(200, util.DynMap{"status": "success", "slug": cmd.Result.Slug, "version": cmd.Result.Version})
 }
 

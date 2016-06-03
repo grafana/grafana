@@ -1,6 +1,7 @@
 {
 	"ImportPath": "github.com/grafana/grafana",
 	"GoVersion": "go1.5.1",
+	"GodepVersion": "v60",
 	"Packages": [
 		"./pkg/..."
 	],
@@ -225,6 +226,21 @@
 		{
 			"ImportPath": "github.com/hashicorp/go-version",
 			"Rev": "7e3c02b30806fa5779d3bdfc152ce4c6f40e7b38"
+		},
+		{
+			"ImportPath": "github.com/influxdata/influxdb/client",
+			"Comment": "v0.13.0-74-g2c9d0fc",
+			"Rev": "2c9d0fcc04eba3ffc88f2aafe8466874e384d80d"
+		},
+		{
+			"ImportPath": "github.com/influxdata/influxdb/models",
+			"Comment": "v0.13.0-74-g2c9d0fc",
+			"Rev": "2c9d0fcc04eba3ffc88f2aafe8466874e384d80d"
+		},
+		{
+			"ImportPath": "github.com/influxdata/influxdb/pkg/escape",
+			"Comment": "v0.13.0-74-g2c9d0fc",
+			"Rev": "2c9d0fcc04eba3ffc88f2aafe8466874e384d80d"
 		},
 		{
 			"ImportPath": "github.com/jmespath/go-jmespath",

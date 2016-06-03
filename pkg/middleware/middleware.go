@@ -257,3 +257,7 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 func (ctx *Context) HasUserRole(role m.RoleType) bool {
 	return ctx.OrgRole.Includes(role)
 }
+
+func (ctx *Context) TimeRequest(timer metrics.Timer) {
+	ctx.Data["perfmon.timer"] = timer
+}
