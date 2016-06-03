@@ -15,13 +15,13 @@ import (
 )
 
 func Init() {
-	go instrumentationLoop()
+	settings := readSettings()
+	initMetricVars(settings)
+	go instrumentationLoop(settings)
 }
 
-func instrumentationLoop() chan struct{} {
+func instrumentationLoop(settings *MetricSettings) chan struct{} {
 	M_Instance_Start.Inc(1)
-
-	settings := readSettings()
 
 	onceEveryDayTick := time.NewTicker(time.Hour * 24)
 	secondTicker := time.NewTicker(time.Second * time.Duration(settings.IntervalSeconds))
@@ -59,16 +59,6 @@ func sendUsageStats() {
 	report := map[string]interface{}{
 		"version": version,
 		"metrics": metrics,
-	}
-
-	snapshots := UsageStats.GetSnapshots()
-	for _, m := range snapshots {
-		switch metric := m.(type) {
-		case Counter:
-			if metric.Count() > 0 {
-				metrics[metric.Name()+".count"] = metric.Count()
-			}
-		}
 	}
 
 	statsQuery := m.GetSystemStatsQuery{}

@@ -58,13 +58,13 @@ func main() {
 	flag.Parse()
 	writePIDFile()
 	initRuntime()
+	metrics.Init()
 
 	search.Init()
 	login.Init()
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()
-	metrics.Init()
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)
@@ -87,6 +87,7 @@ func initRuntime() {
 
 	log.Info("Starting Grafana")
 	log.Info("Version: %v, Commit: %v, Build date: %v", setting.BuildVersion, setting.BuildCommit, time.Unix(setting.BuildStamp, 0))
+
 	setting.LogConfigurationInfo()
 
 	sqlstore.NewEngine()

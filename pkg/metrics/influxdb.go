@@ -76,7 +76,7 @@ func (this *InfluxPublisher) Publish(metrics []Metric) {
 
 	for _, m := range metrics {
 		tags := m.GetTagsCopy()
-		addPoint := func(name string, value int64) {
+		addPoint := func(name string, value interface{}) {
 			bp.Points = append(bp.Points, client.Point{
 				Measurement: name,
 				Tags:        tags,
@@ -87,11 +87,11 @@ func (this *InfluxPublisher) Publish(metrics []Metric) {
 		switch metric := m.(type) {
 		case Counter:
 			addPoint(metric.Name()+".count", metric.Count())
-		case Timer:
+		case SimpleTimer:
 			addPoint(metric.Name()+".count", metric.Count())
 			addPoint(metric.Name()+".max", metric.Max())
 			addPoint(metric.Name()+".min", metric.Min())
-			addPoint(metric.Name()+".avg", metric.Avg())
+			addPoint(metric.Name()+".avg", metric.Mean())
 		}
 	}
 

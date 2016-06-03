@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"reflect"
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -40,23 +41,38 @@ func (this *GraphitePublisher) Publish(metrics []Metric) {
 
 	buf := bytes.NewBufferString("")
 	now := time.Now().Unix()
-	addToBuf := func(metric string, value int64) {
+	addIntToBuf := func(metric string, value int64) {
 		buf.WriteString(fmt.Sprintf("%s %d %d\n", metric, value, now))
+	}
+	addFloatToBuf := func(metric string, value float64) {
+		buf.WriteString(fmt.Sprintf("%s %f %d\n", metric, value, now))
 	}
 
 	for _, m := range metrics {
+		log.Info("metric: %v, %v", m, reflect.TypeOf(m))
 		metricName := this.Prefix + m.Name() + m.StringifyTags()
-		log.Info(metricName)
 
 		switch metric := m.(type) {
 		case Counter:
-			addToBuf(metricName+".count", metric.Count())
+			addIntToBuf(metricName+".count", metric.Count())
+		case SimpleTimer:
+			addIntToBuf(metricName+".count", metric.Count())
+			addIntToBuf(metricName+".max", metric.Max())
+			addIntToBuf(metricName+".min", metric.Min())
+			addFloatToBuf(metricName+".mean", metric.Mean())
 		case Timer:
-			addToBuf(metricName+".count", metric.Count())
-			addToBuf(metricName+".max", metric.Max())
-			addToBuf(metricName+".min", metric.Min())
-			addToBuf(metricName+".avg", metric.Avg())
+			percentiles := metric.Percentiles([]float64{0.25, 0.75, 0.90, 0.99})
+			addIntToBuf(metricName+".count", metric.Count())
+			addIntToBuf(metricName+".max", metric.Max())
+			addIntToBuf(metricName+".min", metric.Min())
+			addFloatToBuf(metricName+".mean", metric.Mean())
+			addFloatToBuf(metricName+".std", metric.StdDev())
+			addFloatToBuf(metricName+".p25", percentiles[0])
+			addFloatToBuf(metricName+".p75", percentiles[1])
+			addFloatToBuf(metricName+".p90", percentiles[2])
+			addFloatToBuf(metricName+".p99", percentiles[3])
 		}
+
 	}
 
 	log.Trace("Metrics: GraphitePublisher.Publish() \n%s", buf)
