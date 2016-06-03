@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 func GetTestMetrics(c *middleware.Context) {
@@ -40,6 +41,10 @@ func GetTestMetrics(c *middleware.Context) {
 }
 
 func GetInternalMetrics(c *middleware.Context) Response {
+	if metrics.UseNilMetrics {
+		return Json(200, util.DynMap{"message": "Metrics disabled"})
+	}
+
 	snapshots := metrics.MetricStats.GetSnapshots()
 
 	resp := make(map[string]interface{})
