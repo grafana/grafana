@@ -20,8 +20,8 @@ func Init() {
 	reader := NewRuleReader()
 
 	go scheduler.dispatch(reader)
-	go scheduler.Executor(&ExecutorImpl{})
-	go scheduler.HandleResponses()
+	go scheduler.executor(&ExecutorImpl{})
+	go scheduler.handleResponses()
 
 }
 
@@ -65,11 +65,22 @@ func (scheduler *Scheduler) updateJobs(alertRuleFn func() []m.AlertRule) {
 
 	for i := 0; i < len(rules); i++ {
 		rule := rules[i]
-		jobs[rule.Id] = &m.AlertJob{
-			Rule:    rule,
-			Offset:  int64(i),
-			Running: false,
+		/*
+			jobs[rule.Id] = &m.AlertJob{
+				Offset:  int64(i),
+				Running: false,
+				Rule:    rule,
+			}
+		*/
+
+		job := &m.AlertJob{}
+		if scheduler.jobs[rule.Id] != nil {
+			job = scheduler.jobs[rule.Id]
 		}
+
+		job.Rule = rule
+		job.Offset = int64(i)
+		jobs[rule.Id] = job
 	}
 
 	log.Debug("Scheduler: Selected %d jobs", len(jobs))
@@ -86,35 +97,33 @@ func (scheduler *Scheduler) queueJobs() {
 	}
 }
 
-func (scheduler *Scheduler) Executor(executor Executor) {
+func (scheduler *Scheduler) executor(executor Executor) {
 	for job := range scheduler.runQueue {
 		//log.Info("Executor: queue length %d", len(this.runQueue))
 		log.Info("Executor: executing %s", job.Rule.Title)
-		scheduler.jobs[job.Rule.Id].Running = true
-		scheduler.MeasureAndExecute(executor, job)
+		job.Running = true
+		scheduler.measureAndExecute(executor, job)
 	}
 }
 
-func (scheduler *Scheduler) HandleResponses() {
+func (scheduler *Scheduler) handleResponses() {
 	for response := range scheduler.responseQueue {
-		log.Info("Response: alert(%d) status(%s) actual(%v)", response.Id, response.State, response.ActualValue)
-		if scheduler.jobs[response.Id] != nil {
-			scheduler.jobs[response.Id].Running = false
-		}
+		log.Info("Response: alert(%d) status(%s) actual(%v) running(%v)", response.Id, response.State, response.ActualValue, response.AlertJob.Running)
+		response.AlertJob.Running = false
 
-		cmd := m.UpdateAlertStateCommand{
+		cmd := &m.UpdateAlertStateCommand{
 			AlertId:  response.Id,
 			NewState: response.State,
 			Info:     response.Description,
 		}
 
-		if err := bus.Dispatch(&cmd); err != nil {
-			log.Error(1, "failed to save state", err)
+		if err := bus.Dispatch(cmd); err != nil {
+			log.Error(2, "failed to save state %v", err)
 		}
 	}
 }
 
-func (scheduler *Scheduler) MeasureAndExecute(exec Executor, job *m.AlertJob) {
+func (scheduler *Scheduler) measureAndExecute(exec Executor, job *m.AlertJob) {
 	now := time.Now()
 
 	responseChan := make(chan *m.AlertResult, 1)
@@ -126,7 +135,7 @@ func (scheduler *Scheduler) MeasureAndExecute(exec Executor, job *m.AlertJob) {
 			Id:       job.Rule.Id,
 			State:    "timed out",
 			Duration: float64(time.Since(now).Nanoseconds()) / float64(1000000),
-			Rule:     job.Rule,
+			AlertJob: job,
 		}
 	case result := <-responseChan:
 		result.Duration = float64(time.Since(now).Nanoseconds()) / float64(1000000)

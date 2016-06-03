@@ -26,7 +26,7 @@ func GetSeries(job *m.AlertJob) (m.TimeSeriesSlice, error) {
 	}
 
 	if query.Result.Type == m.DS_GRAPHITE {
-		return GraphiteClient{}.GetSeries(job, query.Result)
+		return GraphiteClient{}.GetSeries(*job, query.Result)
 	}
 
 	return nil, fmt.Errorf("Grafana does not support alerts for %s", query.Result.Type)

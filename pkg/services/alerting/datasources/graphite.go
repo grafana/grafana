@@ -22,7 +22,7 @@ type GraphiteSerie struct {
 
 type GraphiteResponse []GraphiteSerie
 
-func (this GraphiteClient) GetSeries(rule *m.AlertJob, datasource m.DataSource) (m.TimeSeriesSlice, error) {
+func (this GraphiteClient) GetSeries(rule m.AlertJob, datasource m.DataSource) (m.TimeSeriesSlice, error) {
 	v := url.Values{
 		"format": []string{"json"},
 		"target": []string{getTargetFromRule(rule.Rule)},
@@ -39,9 +39,6 @@ func (this GraphiteClient) GetSeries(rule *m.AlertJob, datasource m.DataSource) 
 		Timeout: 5 * time.Second,
 	}.Do()
 
-	response := GraphiteResponse{}
-	res.Body.FromJsonTo(&response)
-
 	if err != nil {
 		return nil, err
 	}
@@ -49,6 +46,9 @@ func (this GraphiteClient) GetSeries(rule *m.AlertJob, datasource m.DataSource) 
 	if res.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("expected httpstatus 200, found %d", res.StatusCode)
 	}
+
+	response := GraphiteResponse{}
+	res.Body.FromJsonTo(&response)
 
 	timeSeries := make([]*m.TimeSeries, 0)
 

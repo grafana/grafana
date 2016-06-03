@@ -3,10 +3,11 @@ package alerting
 import (
 	"fmt"
 
+	"math"
+
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	b "github.com/grafana/grafana/pkg/services/alerting/datasources"
-	"math"
 )
 
 type Executor interface {
@@ -80,13 +81,15 @@ func (this *ExecutorImpl) Execute(job *m.AlertJob, responseQueue chan *m.AlertRe
 	response, err := b.GetSeries(job)
 
 	if err != nil {
-		responseQueue <- &m.AlertResult{State: "PENDING", Id: job.Rule.Id, Rule: job.Rule}
+		responseQueue <- &m.AlertResult{State: "PENDING", Id: job.Rule.Id, AlertJob: job}
 	}
 
-	responseQueue <- this.ValidateRule(job.Rule, response)
+	result := this.validateRule(job.Rule, response)
+	result.AlertJob = job
+	responseQueue <- result
 }
 
-func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlice) *m.AlertResult {
+func (this *ExecutorImpl) validateRule(rule m.AlertRule, series m.TimeSeriesSlice) *m.AlertResult {
 	for _, serie := range series {
 		if aggregator[rule.Aggregator] == nil {
 			continue
@@ -103,7 +106,6 @@ func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlic
 				Id:          rule.Id,
 				ActualValue: aggValue,
 				Description: fmt.Sprintf("Actual value: %1.2f for %s", aggValue, serie.Name),
-				Rule:        rule,
 			}
 		}
 
@@ -116,10 +118,9 @@ func (this *ExecutorImpl) ValidateRule(rule m.AlertRule, series m.TimeSeriesSlic
 				Id:          rule.Id,
 				Description: fmt.Sprintf("Actual value: %1.2f for %s", aggValue, serie.Name),
 				ActualValue: aggValue,
-				Rule:        rule,
 			}
 		}
 	}
 
-	return &m.AlertResult{State: m.AlertStateOk, Id: rule.Id, Rule: rule, Description: "Alert is OK!"}
+	return &m.AlertResult{State: m.AlertStateOk, Id: rule.Id, Description: "Alert is OK!"}
 }

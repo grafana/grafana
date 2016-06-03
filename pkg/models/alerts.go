@@ -122,5 +122,5 @@ type AlertResult struct {
 	ActualValue float64
 	Duration    float64
 	Description string
-	Rule        AlertRule
+	AlertJob    *AlertJob
 }
