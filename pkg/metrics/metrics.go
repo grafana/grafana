@@ -1,7 +1,12 @@
 package metrics
 
-var MetricStats = NewRegistry()
-var UseNilMetrics bool = true
+var MetricStats Registry
+var UseNilMetrics bool
+
+func init() {
+	// init with nil metrics
+	initMetricVars(&MetricSettings{})
+}
 
 var (
 	M_Instance_Start                  Counter
@@ -31,6 +36,7 @@ var (
 
 func initMetricVars(settings *MetricSettings) {
 	UseNilMetrics = settings.Enabled == false
+	MetricStats = NewRegistry()
 
 	M_Instance_Start = RegCounter("instance_start")
 
