@@ -1,7 +1,5 @@
 package metrics
 
-import "github.com/Unknwon/log"
-
 var MetricStats = NewRegistry()
 var UseNilMetrics bool = true
 
@@ -31,7 +29,6 @@ var (
 )
 
 func initMetricVars(settings *MetricSettings) {
-	log.Info("Init metric vars")
 	UseNilMetrics = settings.Enabled == false
 
 	M_Instance_Start = RegCounter("instance_start")
