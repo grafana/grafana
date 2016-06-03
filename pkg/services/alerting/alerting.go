@@ -1,12 +1,17 @@
 package alerting
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+)
+
+var (
+	MaxRetries = 3
 )
 
 func Init() {
@@ -70,6 +75,7 @@ func (scheduler *Scheduler) updateJobs(alertRuleFn func() []m.AlertRule) {
 		} else {
 			job = &m.AlertJob{
 				Running: false,
+				Retry:   0,
 			}
 		}
 
@@ -104,18 +110,32 @@ func (scheduler *Scheduler) executor(executor Executor) {
 
 func (scheduler *Scheduler) handleResponses() {
 	for response := range scheduler.responseQueue {
-		log.Info("Response: alert(%d) status(%s) actual(%v) running(%v)", response.Id, response.State, response.ActualValue, response.AlertJob.Running)
+		log.Info("Response: alert(%d) status(%s) actual(%v) retry(%d) running(%v)", response.Id, response.State, response.ActualValue, response.AlertJob.Retry, response.AlertJob.Running)
 		response.AlertJob.Running = false
 
-		cmd := &m.UpdateAlertStateCommand{
-			AlertId:  response.Id,
-			NewState: response.State,
-			Info:     response.Description,
+		if response.State == m.AlertStatePending {
+			response.AlertJob.Retry++
+			if response.AlertJob.Retry > MaxRetries {
+				response.State = m.AlertStateCritical
+				response.Description = fmt.Sprintf("Failed to run check after %d retires", MaxRetries)
+				scheduler.saveState(response)
+			}
+		} else {
+			response.AlertJob.Retry = 0
+			scheduler.saveState(response)
 		}
+	}
+}
 
-		if err := bus.Dispatch(cmd); err != nil {
-			log.Error(2, "failed to save state %v", err)
-		}
+func (scheduler *Scheduler) saveState(response *m.AlertResult) {
+	cmd := &m.UpdateAlertStateCommand{
+		AlertId:  response.Id,
+		NewState: response.State,
+		Info:     response.Description,
+	}
+
+	if err := bus.Dispatch(cmd); err != nil {
+		log.Error(2, "failed to save state %v", err)
 	}
 }
 
@@ -129,7 +149,7 @@ func (scheduler *Scheduler) measureAndExecute(exec Executor, job *m.AlertJob) {
 	case <-time.After(time.Second * 5):
 		scheduler.responseQueue <- &m.AlertResult{
 			Id:       job.Rule.Id,
-			State:    "timed out",
+			State:    m.AlertStatePending,
 			Duration: float64(time.Since(now).Nanoseconds()) / float64(1000000),
 			AlertJob: job,
 		}

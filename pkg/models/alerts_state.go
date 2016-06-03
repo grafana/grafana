@@ -27,6 +27,7 @@ var (
 	AlertStateCritical     = "CRITICAL"
 	AlertStateAcknowledged = "ACKNOWLEDGED"
 	AlertStateMaintenance  = "MAINTENANCE"
+	AlertStatePending      = "PENDING"
 )
 
 func (this *UpdateAlertStateCommand) IsValidState() bool {

@@ -113,6 +113,7 @@ type AlertJob struct {
 	Offset  int64
 	Delay   bool
 	Running bool
+	Retry   int
 	Rule    AlertRule
 }
 

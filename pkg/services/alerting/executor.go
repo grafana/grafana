@@ -81,7 +81,7 @@ func (this *ExecutorImpl) Execute(job *m.AlertJob, responseQueue chan *m.AlertRe
 	response, err := b.GetSeries(job)
 
 	if err != nil {
-		responseQueue <- &m.AlertResult{State: "PENDING", Id: job.Rule.Id, AlertJob: job}
+		responseQueue <- &m.AlertResult{State: m.AlertStatePending, Id: job.Rule.Id, AlertJob: job}
 	}
 
 	result := this.validateRule(job.Rule, response)
