@@ -17,6 +17,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var i int = 0
+
 var dataProxyTransport = &http.Transport{
 	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	Proxy:           http.ProxyFromEnvironment,
