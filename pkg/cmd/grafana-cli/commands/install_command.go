@@ -17,7 +17,6 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
-	"github.com/lunny/log"
 )
 
 func validateInput(c CommandLine, pluginFolder string) error {
@@ -89,7 +88,7 @@ func InstallPlugin(pluginName, version string, c CommandLine) error {
 		return err
 	}
 
-	log.Infof("%s Installed %s successfully \n", color.GreenString("✔"), plugin.Id)
+	logger.Infof("%s Installed %s successfully \n", color.GreenString("✔"), plugin.Id)
 
 	/* Enable once we need support for downloading depedencies
 	res, _ := s.ReadPlugin(pluginFolder, pluginName)
@@ -172,7 +171,7 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 
 			src, err := zf.Open()
 			if err != nil {
-				log.Errorf("Failed to extract file: %v", err)
+				logger.Errorf("Failed to extract file: %v", err)
 			}
 
 			io.Copy(dst, src)
