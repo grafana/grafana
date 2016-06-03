@@ -44,6 +44,12 @@ Then you can override them using:
 
 <hr />
 
+## instance_name
+Set the name of the grafana-server instance. Used in logging and internal metrics and in
+clustering info. Defaults to: `${HOSTNAME}, which will be replaced with
+environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use
+system calls to get the machine name.
+
 ## [paths]
 
 ### data
@@ -439,3 +445,22 @@ Grafana backend index those json dashboards which will make them appear in regul
 
 ### path
 The full path to a directory containing your json dashboards.
+
+## [metrics]
+
+### enabled
+Enable metrics reporting. defaults true. Available via HTTP API `/api/metrics`.
+
+### interval_seconds
+
+Flush/Write interval when sending metrics to external TSDB. Defaults to 60s.
+
+## [metrics.graphite]
+Include this section if you want to send internal Grafana metrics to Graphite.
+
+### address
+Format `<Hostname or ip>`:port
+
+### prefix
+Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
+
