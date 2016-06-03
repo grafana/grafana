@@ -39,8 +39,11 @@ func instrumentationLoop(settings *MetricSettings) chan struct{} {
 }
 
 func sendMetrics(settings *MetricSettings) {
-	metrics := MetricStats.GetSnapshots()
+	if len(settings.Publishers) == 0 {
+		return
+	}
 
+	metrics := MetricStats.GetSnapshots()
 	for _, publisher := range settings.Publishers {
 		publisher.Publish(metrics)
 	}
