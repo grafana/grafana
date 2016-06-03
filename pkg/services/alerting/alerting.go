@@ -63,23 +63,19 @@ func (scheduler *Scheduler) updateJobs(alertRuleFn func() []m.AlertRule) {
 	jobs := make(map[int64]*m.AlertJob, 0)
 	rules := alertRuleFn()
 
-	for i := 0; i < len(rules); i++ {
-		rule := rules[i]
-		/*
-			jobs[rule.Id] = &m.AlertJob{
-				Offset:  int64(i),
-				Running: false,
-				Rule:    rule,
-			}
-		*/
-
-		job := &m.AlertJob{}
+	for i, rule := range rules {
+		var job *m.AlertJob
 		if scheduler.jobs[rule.Id] != nil {
 			job = scheduler.jobs[rule.Id]
+		} else {
+			job = &m.AlertJob{
+				Running: false,
+			}
 		}
 
 		job.Rule = rule
 		job.Offset = int64(i)
+
 		jobs[rule.Id] = job
 	}
 
