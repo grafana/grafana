@@ -7,7 +7,7 @@ import (
 	"path"
 
 	"github.com/franela/goreq"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 )
 
@@ -64,7 +64,7 @@ func GetLocalPlugins(pluginDir string) []m.InstalledPlugin {
 }
 
 func RemoveInstalledPlugin(pluginPath, id string) error {
-	log.Infof("Removing plugin: %v\n", id)
+	logger.Infof("Removing plugin: %v\n", id)
 	return IoHelper.RemoveAll(path.Join(pluginPath, id))
 }
 
