@@ -6,6 +6,7 @@ import "sync/atomic"
 type Counter interface {
 	Metric
 
+	Clear()
 	Count() int64
 	Dec(int64)
 	Inc(int64)
@@ -17,6 +18,12 @@ func NewCounter(meta *MetricMeta) Counter {
 		MetricMeta: meta,
 		count:      0,
 	}
+}
+
+func RegCounter(name string, tagStrings ...string) Counter {
+	cr := NewCounter(NewMetricMeta(name, tagStrings))
+	MetricStats.Register(cr)
+	return cr
 }
 
 // StandardCounter is the standard implementation of a Counter and uses the

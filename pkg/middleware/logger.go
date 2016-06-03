@@ -39,12 +39,12 @@ func Logger() macaron.Handler {
 		rw := res.(macaron.ResponseWriter)
 		c.Next()
 
-		timeTakenMs := int64(time.Since(start) / time.Millisecond)
+		timeTakenMs := time.Since(start) / time.Millisecond
 		content := fmt.Sprintf("Completed %s %s \"%s %s %s\" %v %s %d bytes in %dms", c.RemoteAddr(), uname, req.Method, req.URL.Path, req.Proto, rw.Status(), http.StatusText(rw.Status()), rw.Size(), timeTakenMs)
 
 		if timer, ok := c.Data["perfmon.timer"]; ok {
 			timerTyped := timer.(metrics.Timer)
-			timerTyped.AddTiming(timeTakenMs)
+			timerTyped.Update(timeTakenMs)
 		}
 
 		switch rw.Status() {

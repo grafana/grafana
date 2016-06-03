@@ -32,7 +32,12 @@ func (r *StandardRegistry) GetSnapshots() []Metric {
 	metrics := make([]Metric, len(r.metrics))
 	for i, metric := range r.metrics {
 		metrics[i] = metric.Snapshot()
-		metric.Clear()
+		switch typedMetric := metric.(type) {
+		case Histogram:
+			// do not clear histograms
+		case Counter:
+			typedMetric.Clear()
+		}
 	}
 	return metrics
 }
