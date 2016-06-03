@@ -21,6 +21,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
 )
@@ -28,6 +29,7 @@ import (
 func Logger() macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		start := time.Now()
+		c.Data["perfmon.start"] = start
 
 		uname := c.GetCookie(setting.CookieUserName)
 		if len(uname) == 0 {
@@ -37,7 +39,13 @@ func Logger() macaron.Handler {
 		rw := res.(macaron.ResponseWriter)
 		c.Next()
 
-		content := fmt.Sprintf("Completed %s %s \"%s %s %s\" %v %s %d bytes in %dus", c.RemoteAddr(), uname, req.Method, req.URL.Path, req.Proto, rw.Status(), http.StatusText(rw.Status()), rw.Size(), time.Since(start)/time.Microsecond)
+		timeTakenMs := int64(time.Since(start) / time.Millisecond)
+		content := fmt.Sprintf("Completed %s %s \"%s %s %s\" %v %s %d bytes in %dms", c.RemoteAddr(), uname, req.Method, req.URL.Path, req.Proto, rw.Status(), http.StatusText(rw.Status()), rw.Size(), timeTakenMs)
+
+		if timer, ok := c.Data["perfmon.timer"]; ok {
+			timerTyped := timer.(metrics.Timer)
+			timerTyped.AddTiming(timeTakenMs)
+		}
 
 		switch rw.Status() {
 		case 200, 304:

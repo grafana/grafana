@@ -26,13 +26,24 @@ func RegComboCounter(name string, tagStrings ...string) Counter {
 	return cr
 }
 
-// func NewComboTimerRef(name string, tagStrings ...string) Timer {
-// 	meta := NewMetricMeta(name, tagStrings)
-// 	tr := &comboTimerRef{}
-// 	tr.usageTimer = UsageStats.GetOrRegister(NewTimer).(Timer)
-// 	tr.metricTimer = MetricStats.GetOrRegister(NewTimer).(Timer)
-// 	return tr
-// }
+func RegComboTimer(name string, tagStrings ...string) Timer {
+	meta := NewMetricMeta(name, tagStrings)
+	tr := &comboTimerRef{
+		MetricMeta:  meta,
+		usageTimer:  NewTimer(meta),
+		metricTimer: NewTimer(meta),
+	}
+
+	UsageStats.Register(tr.usageTimer)
+	MetricStats.Register(tr.metricTimer)
+	return tr
+}
+
+func RegTimer(name string, tagStrings ...string) Timer {
+	tr := NewTimer(NewMetricMeta(name, tagStrings))
+	MetricStats.Register(tr)
+	return tr
+}
 
 func (t comboTimerRef) Clear() {
 	t.metricTimer.Clear()
@@ -51,8 +62,12 @@ func (t comboTimerRef) Max() int64 {
 	panic("Avg called on combotimer ref")
 }
 
-func (t comboTimerRef) Total() int64 {
+func (t comboTimerRef) Count() int64 {
 	panic("Avg called on combotimer ref")
+}
+
+func (t comboTimerRef) Snapshot() Metric {
+	panic("Snapshot called on combotimer ref")
 }
 
 func (t comboTimerRef) AddTiming(timing int64) {

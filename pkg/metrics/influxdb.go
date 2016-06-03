@@ -75,17 +75,23 @@ func (this *InfluxPublisher) Publish(metrics []Metric) {
 	}
 
 	for _, m := range metrics {
-		point := client.Point{
-			Measurement: this.prefix + m.Name(),
-			Tags:        m.Tags(),
+		tags := m.GetTagsCopy()
+		addPoint := func(name string, value int64) {
+			bp.Points = append(bp.Points, client.Point{
+				Measurement: name,
+				Tags:        tags,
+				Fields:      map[string]interface{}{"value": value},
+			})
 		}
 
 		switch metric := m.(type) {
 		case Counter:
-			if metric.Count() > 0 {
-				point.Fields = map[string]interface{}{"value": metric.Count()}
-				bp.Points = append(bp.Points, point)
-			}
+			addPoint(metric.Name()+".count", metric.Count())
+		case Timer:
+			addPoint(metric.Name()+".count", metric.Count())
+			addPoint(metric.Name()+".max", metric.Max())
+			addPoint(metric.Name()+".min", metric.Min())
+			addPoint(metric.Name()+".avg", metric.Avg())
 		}
 	}
 
