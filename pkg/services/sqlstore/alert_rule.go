@@ -16,6 +16,7 @@ func init() {
 	bus.AddHandler("sql", HandleAlertsQuery)
 	bus.AddHandler("sql", GetAlertById)
 	bus.AddHandler("sql", DeleteAlertById)
+	bus.AddHandler("sql", GetAllAlertQueryHandler)
 }
 
 func GetAlertById(query *m.GetAlertByIdQuery) error {
@@ -29,6 +30,17 @@ func GetAlertById(query *m.GetAlertByIdQuery) error {
 	}
 
 	query.Result = alert
+	return nil
+}
+
+func GetAllAlertQueryHandler(query *m.GetAllAlertsQuery) error {
+	var alerts []m.AlertRule
+	err := x.Sql("select * from alert_rule").Find(&alerts)
+	if err != nil {
+		return err
+	}
+
+	query.Result = alerts
 	return nil
 }
 

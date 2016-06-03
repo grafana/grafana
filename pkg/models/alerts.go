@@ -89,6 +89,10 @@ type GetAlertsQuery struct {
 	Result []AlertRule
 }
 
+type GetAllAlertsQuery struct {
+	Result []AlertRule
+}
+
 type GetAlertsForExecutionQuery struct {
 	Timestamp int64
 

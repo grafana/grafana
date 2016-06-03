@@ -21,10 +21,10 @@ type AlertRuleReader struct {
 }
 
 func NewRuleReader() *AlertRuleReader {
-	rrr := &AlertRuleReader{}
+	ruleReader := &AlertRuleReader{}
 
-	go rrr.initReader()
-	return rrr
+	go ruleReader.initReader()
+	return ruleReader
 }
 
 var (
@@ -52,9 +52,7 @@ func (arr *AlertRuleReader) updateRules() {
 	arr.Lock()
 	defer arr.Unlock()
 
-	cmd := &m.GetAlertsQuery{
-		OrgId: 1,
-	}
+	cmd := &m.GetAllAlertsQuery{}
 	err := bus.Dispatch(cmd)
 
 	if err == nil {
