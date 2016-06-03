@@ -34,8 +34,8 @@ type Registry interface {
 // The standard implementation of a Registry is a mutex-protected map
 // of names to metrics.
 type StandardRegistry struct {
+  sync.Mutex
 	metrics map[string]interface{}
-	mutex   sync.Mutex
 }
 
 // Create a new registry.
@@ -52,8 +52,8 @@ func (r *StandardRegistry) Each(f func(string, interface{})) {
 
 // Get the metric by the given name or nil if none is registered.
 func (r *StandardRegistry) Get(name string) interface{} {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
+	r.Lock()
+	defer r.Unlock()
 	return r.metrics[name]
 }
 
@@ -62,8 +62,8 @@ func (r *StandardRegistry) Get(name string) interface{} {
 // The interface can be the metric to register if not found in registry,
 // or a function returning the metric for lazy instantiation.
 func (r *StandardRegistry) GetOrRegister(name string, i interface{}) interface{} {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
+	r.Lock()
+	defer r.Unlock()
 	if metric, ok := r.metrics[name]; ok {
 		return metric
 	}
@@ -77,8 +77,8 @@ func (r *StandardRegistry) GetOrRegister(name string, i interface{}) interface{}
 // Register the given metric under the given name.  Returns a DuplicateMetric
 // if a metric by the given name is already registered.
 func (r *StandardRegistry) Register(name string, i interface{}) error {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
+	r.Lock()
+	defer r.Unlock()
 	return r.register(name, i)
 }
 
@@ -93,8 +93,8 @@ func (r *StandardRegistry) register(name string, i interface{}) error {
 
 func (r *StandardRegistry) registered() map[string]interface{} {
 	metrics := make(map[string]interface{}, len(r.metrics))
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
+	r.Lock()
+	defer r.Unlock()
 	for name, i := range r.metrics {
 		metrics[name] = i
 	}
