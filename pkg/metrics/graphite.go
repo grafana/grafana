@@ -61,7 +61,6 @@ func (this *GraphitePublisher) Publish(metrics []Metric) {
 			this.addFloat(buf, metricName+".p90", percentiles[2], now)
 			this.addFloat(buf, metricName+".p99", percentiles[3], now)
 		}
-
 	}
 
 	log.Trace("Metrics: GraphitePublisher.Publish() \n%s", buf)

@@ -235,7 +235,7 @@ func Register(r *macaron.Macaron) {
 		r.Get("/search/", Search)
 
 		// metrics
-		r.Get("/metrics/test", GetTestMetrics)
+		r.Get("/metrics/test", wrap(GetTestMetrics))
 
 		// metrics
 		r.Get("/metrics", wrap(GetInternalMetrics))

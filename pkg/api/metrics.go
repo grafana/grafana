@@ -1,7 +1,9 @@
 package api
 
 import (
+	"encoding/json"
 	"math/rand"
+	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -37,7 +39,7 @@ func GetTestMetrics(c *middleware.Context) {
 	c.JSON(200, &result)
 }
 
-func GetInternalMetrics(c middleware.Context) Response {
+func GetInternalMetrics(c *middleware.Context) Response {
 	snapshots := metrics.MetricStats.GetSnapshots()
 
 	resp := make(map[string]interface{})
@@ -66,5 +68,17 @@ func GetInternalMetrics(c middleware.Context) Response {
 		}
 	}
 
-	return Json(200, resp)
+	var b []byte
+	var err error
+	if b, err = json.MarshalIndent(resp, "", " "); err != nil {
+		return ApiError(500, "body json marshal", err)
+	}
+
+	return &NormalResponse{
+		body:   b,
+		status: 200,
+		header: http.Header{
+			"Content-Type": []string{"application/json"},
+		},
+	}
 }
