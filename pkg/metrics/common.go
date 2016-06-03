@@ -27,8 +27,17 @@ func (m *MetricMeta) Name() string {
 	return m.name
 }
 
-func (m *MetricMeta) Tags() map[string]string {
-	return m.tags
+func (m *MetricMeta) GetTagsCopy() map[string]string {
+	if len(m.tags) == 0 {
+		return make(map[string]string)
+	}
+
+	copy := make(map[string]string)
+	for k2, v2 := range m.tags {
+		copy[k2] = v2
+	}
+
+	return copy
 }
 
 func (m *MetricMeta) StringifyTags() string {
@@ -46,7 +55,7 @@ func (m *MetricMeta) StringifyTags() string {
 
 type Metric interface {
 	Name() string
-	Tags() map[string]string
+	GetTagsCopy() map[string]string
 	StringifyTags() string
 	Snapshot() Metric
 	Clear()

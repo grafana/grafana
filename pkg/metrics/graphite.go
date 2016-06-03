@@ -40,17 +40,23 @@ func (this *GraphitePublisher) Publish(metrics []Metric) {
 
 	buf := bytes.NewBufferString("")
 	now := time.Now().Unix()
+	addToBuf := func(metric string, value int64) {
+		buf.WriteString(fmt.Sprintf("%s %d %d\n", metric, value, now))
+	}
+
 	for _, m := range metrics {
 		metricName := this.Prefix + m.Name() + m.StringifyTags()
+		log.Info(metricName)
 
 		switch metric := m.(type) {
 		case Counter:
-			if metric.Count() > 0 {
-				line := fmt.Sprintf("%s %d %d\n", metricName, metric.Count(), now)
-				buf.WriteString(line)
-			}
+			addToBuf(metricName+".count", metric.Count())
+		case Timer:
+			addToBuf(metricName+".count", metric.Count())
+			addToBuf(metricName+".max", metric.Max())
+			addToBuf(metricName+".min", metric.Min())
+			addToBuf(metricName+".avg", metric.Avg())
 		}
-
 	}
 
 	log.Trace("Metrics: GraphitePublisher.Publish() \n%s", buf)
