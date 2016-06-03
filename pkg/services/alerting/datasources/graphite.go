@@ -11,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type GraphiteClient struct{}
@@ -32,12 +33,18 @@ func (client GraphiteClient) GetSeries(rule m.AlertJob, datasource m.DataSource)
 
 	log.Debug("Graphite: sending request with querystring: ", v.Encode())
 
-	res, err := goreq.Request{
+	req := goreq.Request{
 		Method:  "POST",
 		Uri:     datasource.Url + "/render",
 		Body:    v.Encode(),
 		Timeout: 5 * time.Second,
-	}.Do()
+	}
+
+	if datasource.BasicAuth {
+		req.AddHeader("Authorization", util.GetBasicAuthHeader(datasource.User, datasource.Password))
+	}
+
+	res, err := req.Do()
 
 	if err != nil {
 		return nil, err
