@@ -31,6 +31,7 @@ module.exports = function(config) {
         'tether-drop/**/*',
         'tether-drop/**/*',
         'remarkable/dist/*',
+        'chart.js/**/*',
       ],
       dest: '<%= srcDir %>/vendor/npm'
     }
