@@ -1,15 +1,17 @@
 package graphite
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
 	"time"
 
-	"github.com/franela/goreq"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -19,6 +21,10 @@ type GraphiteClient struct{}
 type GraphiteSerie struct {
 	Datapoints [][2]float64
 	Target     string
+}
+
+var DefaultClient = &http.Client{
+	Timeout: time.Minute,
 }
 
 type GraphiteResponse []GraphiteSerie
@@ -31,20 +37,21 @@ func (client GraphiteClient) GetSeries(rule m.AlertJob, datasource m.DataSource)
 		"from":   []string{"-" + strconv.Itoa(rule.Rule.QueryRange) + "s"},
 	}
 
-	log.Debug("Graphite: sending request with querystring: ", v.Encode())
+	log.Trace("Graphite: sending request with querystring: ", v.Encode())
 
-	req := goreq.Request{
-		Method:  "POST",
-		Uri:     datasource.Url + "/render",
-		Body:    v.Encode(),
-		Timeout: 5 * time.Second,
+	req, err := http.NewRequest("POST", datasource.Url+"/render", nil)
+
+	if err != nil {
+		return nil, fmt.Errorf("Could not create request")
 	}
+
+	req.Body = ioutil.NopCloser(bytes.NewReader([]byte(v.Encode())))
 
 	if datasource.BasicAuth {
-		req.AddHeader("Authorization", util.GetBasicAuthHeader(datasource.User, datasource.Password))
+		req.Header.Add("Authorization", util.GetBasicAuthHeader(datasource.User, datasource.Password))
 	}
 
-	res, err := req.Do()
+	res, err := DefaultClient.Do(req)
 
 	if err != nil {
 		return nil, err
@@ -55,10 +62,10 @@ func (client GraphiteClient) GetSeries(rule m.AlertJob, datasource m.DataSource)
 	}
 
 	response := GraphiteResponse{}
-	res.Body.FromJsonTo(&response)
 
-	timeSeries := make([]*m.TimeSeries, 0)
+	json.NewDecoder(res.Body).Decode(&response)
 
+	var timeSeries []*m.TimeSeries
 	for _, v := range response {
 		timeSeries = append(timeSeries, m.NewTimeSeries(v.Target, v.Datapoints))
 	}
