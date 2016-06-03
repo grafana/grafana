@@ -10,9 +10,9 @@ func StringsFallback3(val1 string, val2 string, val3 string) string {
 
 func stringsFallback(vals ...string) string {
 	for _, v := range vals {
-	  if v != "" {
-	    return v
-	  }
+		if v != "" {
+			return v
+		}
 	}
 	return ""
 }
