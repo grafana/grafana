@@ -8,7 +8,6 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
-	"github.com/lunny/log"
 )
 
 var version = "master"
@@ -24,7 +23,7 @@ func getGrafanaPluginDir() string {
 	pwd, err := os.Getwd()
 
 	if err != nil {
-		log.Error("Could not get current path. using default")
+		logger.Error("Could not get current path. using default")
 		return defaultNix
 	}
 
