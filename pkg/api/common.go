@@ -12,8 +12,12 @@ import (
 )
 
 var (
-	NotFound    = ApiError(404, "Not found", nil)
-	ServerError = ApiError(500, "Server error", nil)
+	NotFound = func() Response {
+		return ApiError(404, "Not found", nil)
+	}
+	ServerError = func(err error) Response {
+		return ApiError(500, "Server error", err)
+	}
 )
 
 type Response interface {
@@ -34,7 +38,7 @@ func wrap(action interface{}) macaron.Handler {
 		if err == nil && val != nil && len(val) > 0 {
 			res = val[0].Interface().(Response)
 		} else {
-			res = ServerError
+			res = ServerError(err)
 		}
 
 		res.WriteTo(c.Resp)
