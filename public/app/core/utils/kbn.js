@@ -649,6 +649,9 @@ function($, _) {
           {text: 'reads/sec (rps)',     value: 'rps' },
           {text: 'writes/sec (wps)',    value: 'wps' },
           {text: 'I/O ops/sec (iops)',  value: 'iops'},
+          {text: 'ops/min (opm)',       value: 'opm' },
+          {text: 'reads/min (rpm)',     value: 'rpm' },
+          {text: 'writes/min (wpm)',    value: 'wpm' },
         ]
       },
       {
