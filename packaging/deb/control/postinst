@@ -10,9 +10,9 @@ startGrafana() {
     /bin/systemctl start grafana-server
 	elif [ -x "/etc/init.d/grafana-server" ]; then
 		if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
-			invoke-rc.d grafana-server start || true
+			invoke-rc.d grafana-server restart || true
 		else
-			/etc/init.d/grafana-server start || true
+			/etc/init.d/grafana-server restart || true
 		fi
 	fi
 }
