@@ -161,13 +161,22 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 	}
 
 	user := new(m.User)
-	if strings.Contains(query.LoginOrEmail, "@") {
-		user = &m.User{Email: query.LoginOrEmail}
-	} else {
-		user = &m.User{Login: query.LoginOrEmail}
+
+	// Try and find the user by login first.
+	// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
+	user = &m.User{Login: query.LoginOrEmail}
+	has, err := x.Get(user)
+
+	if err != nil {
+		return err
 	}
 
-	has, err := x.Get(user)
+	if has == false && strings.Contains(query.LoginOrEmail, "@") {
+		// If the user wasn't found, and it contains an "@" fallback to finding the
+		// user by email.
+		user = &m.User{Email: query.LoginOrEmail}
+		has, err = x.Get(user)
+	}
 
 	if err != nil {
 		return err
