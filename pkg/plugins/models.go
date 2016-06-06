@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -58,7 +57,7 @@ func (pb *PluginBase) registerPlugin(pluginDir string) error {
 	}
 
 	if !strings.HasPrefix(pluginDir, setting.StaticRootPath) {
-		log.Info("Plugins: Registering plugin %v", pb.Name)
+		plog.Info("Registering plugin", "name", pb.Name)
 	}
 
 	if len(pb.Dependencies.Plugins) == 0 {

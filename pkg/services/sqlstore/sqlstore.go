@@ -89,7 +89,6 @@ func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
 	dialect = migrator.NewDialect(x.DriverName())
 
 	migrator := migrator.NewMigrator(x)
-	migrator.LogLevel = log.INFO
 	migrations.AddMigrations(migrator)
 
 	if err := migrator.Start(); err != nil {

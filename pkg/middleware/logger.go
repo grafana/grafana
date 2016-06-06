@@ -16,11 +16,9 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
@@ -40,25 +38,21 @@ func Logger() macaron.Handler {
 		c.Next()
 
 		timeTakenMs := time.Since(start) / time.Millisecond
-		content := fmt.Sprintf("Completed %s %s \"%s %s %s\" %v %s %d bytes in %dms", c.RemoteAddr(), uname, req.Method, req.URL.Path, req.Proto, rw.Status(), http.StatusText(rw.Status()), rw.Size(), timeTakenMs)
 
 		if timer, ok := c.Data["perfmon.timer"]; ok {
 			timerTyped := timer.(metrics.Timer)
 			timerTyped.Update(timeTakenMs)
 		}
 
-		switch rw.Status() {
-		case 200, 304:
-			content = fmt.Sprintf("%s", content)
+		status := rw.Status()
+		if status == 200 || status == 304 {
 			if !setting.RouterLogging {
 				return
 			}
-		case 404:
-			content = fmt.Sprintf("%s", content)
-		case 500:
-			content = fmt.Sprintf("%s", content)
 		}
 
-		log.Info(content)
+		if ctx, ok := c.Data["ctx"]; ok {
+			ctx.(*Context).Logger.Info("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "uname", uname, "time_ms", timeTakenMs, "size", rw.Size())
+		}
 	}
 }

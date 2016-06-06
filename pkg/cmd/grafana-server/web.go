@@ -6,6 +6,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"os"
 	"path"
 
 	"gopkg.in/macaron.v1"
@@ -17,6 +18,8 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
+
+var logger log.Logger
 
 func newMacaron() *macaron.Macaron {
 	macaron.Env = setting.Env
@@ -76,23 +79,26 @@ func mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {
 }
 
 func StartServer() {
+	logger = log.New("server")
 
 	var err error
 	m := newMacaron()
 	api.Register(m)
 
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
-	log.Info("Listen: %v://%s%s", setting.Protocol, listenAddr, setting.AppSubUrl)
+	logger.Info("Server Listening", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl)
 	switch setting.Protocol {
 	case setting.HTTP:
 		err = http.ListenAndServe(listenAddr, m)
 	case setting.HTTPS:
 		err = http.ListenAndServeTLS(listenAddr, setting.CertFile, setting.KeyFile, m)
 	default:
-		log.Fatal(4, "Invalid protocol: %s", setting.Protocol)
+		logger.Error("Invalid protocol", "protocol", setting.Protocol)
+		os.Exit(1)
 	}
 
 	if err != nil {
-		log.Fatal(4, "Fail to start server: %v", err)
+		logger.Error("Fail to start server", "error", err)
+		os.Exit(1)
 	}
 }
