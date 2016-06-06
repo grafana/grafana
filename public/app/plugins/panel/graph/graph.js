@@ -376,6 +376,9 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           if (axis.min < Number.MIN_VALUE) {
             axis.min = null;
           }
+          if (axis.max < Number.MIN_VALUE) {
+            axis.max = null;
+          }
 
           var series, i;
           var max = axis.max, min = axis.min;
@@ -392,23 +395,32 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             }
           }
 
-          if (max === null && min === null) {
-            max = Math.pow(axis.logBase,+2);
-            min = Math.pow(axis.logBase,-2);
-          } else if (max === null) {
-            max = min*Math.pow(axis.logBase,+4);
-          } else if (min === null) {
-            min = max*Math.pow(axis.logBase,-4);
-          }
-
           axis.transform = function(v) { return (v < Number.MIN_VALUE) ? null : Math.log(v) / Math.log(axis.logBase); };
           axis.inverseTransform  = function (v) { return Math.pow(axis.logBase,v); };
 
-          min = axis.inverseTransform(Math.floor(axis.transform(min)));
-          max = axis.inverseTransform(Math.ceil(axis.transform(max)));
+          if (max === null && min === null) {
+            max = axis.inverseTransform(+2);
+            min = axis.inverseTransform(-2);
+          } else if (max === null) {
+            max = min*axis.inverseTransform(+4);
+          } else if (min === null) {
+            min = max*axis.inverseTransform(-4);
+          }
 
-          axis.min = axis.min !== null ? axis.min : min;
-          axis.max = axis.max !== null ? axis.max : max;
+          if (axis.min !== null) {
+            min = axis.inverseTransform(Math.ceil(axis.transform(axis.min)));
+          } else {
+            min = axis.min = axis.inverseTransform(Math.floor(axis.transform(min)));
+          }
+          if (axis.max !== null) {
+            max = axis.inverseTransform(Math.floor(axis.transform(axis.max)));
+          } else {
+            max = axis.max = axis.inverseTransform(Math.ceil(axis.transform(max)));
+          }
+
+          if (min < Number.MIN_VALUE || max < Number.MIN_VALUE) {
+            return;
+          }
 
           axis.ticks = [];
           var nextTick;
