@@ -1,48 +1,25 @@
 package alerting
 
 import (
-	"fmt"
 	"time"
 
-	"github.com/Unknwon/log"
-	"github.com/grafana/grafana/pkg/services/alerting/alertstates"
+	"github.com/grafana/grafana/pkg/log"
 )
 
-type Scheduler struct {
-	jobs          map[int64]*AlertJob
-	runQueue      chan *AlertJob
-	responseQueue chan *AlertResult
+type SchedulerImpl struct {
+	jobs map[int64]*AlertJob
 }
 
-func NewScheduler() *Scheduler {
-	return &Scheduler{
-		jobs:          make(map[int64]*AlertJob, 0),
-		runQueue:      make(chan *AlertJob, 1000),
-		responseQueue: make(chan *AlertResult, 1000),
+func NewScheduler() Scheduler {
+	return &SchedulerImpl{
+		jobs: make(map[int64]*AlertJob, 0),
 	}
 }
 
-func (scheduler *Scheduler) dispatch(reader RuleReader) {
-	reschedule := time.NewTicker(time.Second * 10)
-	secondTicker := time.NewTicker(time.Second)
-
-	scheduler.updateJobs(reader.Fetch)
-
-	for {
-		select {
-		case <-secondTicker.C:
-			scheduler.queueJobs()
-		case <-reschedule.C:
-			scheduler.updateJobs(reader.Fetch)
-		}
-	}
-}
-
-func (scheduler *Scheduler) updateJobs(alertRuleFn func() []AlertRule) {
-	log.Debug("Scheduler: UpdateJobs()")
+func (scheduler *SchedulerImpl) Update(rules []*AlertRule) {
+	log.Debug("Scheduler: Update()")
 
 	jobs := make(map[int64]*AlertJob, 0)
-	rules := alertRuleFn()
 
 	for i, rule := range rules {
 		var job *AlertJob
@@ -65,65 +42,57 @@ func (scheduler *Scheduler) updateJobs(alertRuleFn func() []AlertRule) {
 	scheduler.jobs = jobs
 }
 
-func (scheduler *Scheduler) queueJobs() {
-	now := time.Now().Unix()
+func (scheduler *SchedulerImpl) Tick(tickTime time.Time, execQueue chan *AlertJob) {
+	now := tickTime.Unix()
+
 	for _, job := range scheduler.jobs {
 		if now%job.Rule.Frequency == 0 && job.Running == false {
-			log.Info("Scheduler: Putting job on to run queue: %s", job.Rule.Title)
-			scheduler.runQueue <- job
+			log.Trace("Scheduler: Putting job on to exec queue: %s", job.Rule.Title)
+			execQueue <- job
 		}
 	}
 }
 
-func (scheduler *Scheduler) executor(executor Executor) {
-	for job := range scheduler.runQueue {
-		//log.Info("Executor: queue length %d", len(this.runQueue))
-		log.Info("Executor: executing %s", job.Rule.Title)
-		job.Running = true
-		scheduler.measureAndExecute(executor, job)
-	}
-}
-
-func (scheduler *Scheduler) handleResponses() {
-	for response := range scheduler.responseQueue {
-		log.Info("Response: alert(%d) status(%s) actual(%v) retry(%d)", response.Id, response.State, response.ActualValue, response.AlertJob.RetryCount)
-		response.AlertJob.Running = false
-
-		if response.IsResultIncomplete() {
-			response.AlertJob.RetryCount++
-			if response.AlertJob.RetryCount < maxRetries {
-				scheduler.runQueue <- response.AlertJob
-			} else {
-				saveState(&AlertResult{
-					Id:          response.Id,
-					State:       alertstates.Critical,
-					Description: fmt.Sprintf("Failed to run check after %d retires", maxRetries),
-				})
-			}
-		} else {
-			response.AlertJob.RetryCount = 0
-			saveState(response)
-		}
-	}
-}
-
-func (scheduler *Scheduler) measureAndExecute(exec Executor, job *AlertJob) {
-	now := time.Now()
-
-	responseChan := make(chan *AlertResult, 1)
-	go exec.Execute(job, responseChan)
-
-	select {
-	case <-time.After(time.Second * 5):
-		scheduler.responseQueue <- &AlertResult{
-			Id:       job.Rule.Id,
-			State:    alertstates.Pending,
-			Duration: float64(time.Since(now).Nanoseconds()) / float64(1000000),
-			AlertJob: job,
-		}
-	case result := <-responseChan:
-		result.Duration = float64(time.Since(now).Nanoseconds()) / float64(1000000)
-		log.Info("Schedular: exeuction took %vms", result.Duration)
-		scheduler.responseQueue <- result
-	}
-}
+// func (scheduler *Scheduler) handleResponses() {
+// 	for response := range scheduler.responseQueue {
+// 		log.Info("Response: alert(%d) status(%s) actual(%v) retry(%d)", response.Id, response.State, response.ActualValue, response.AlertJob.RetryCount)
+// 		response.AlertJob.Running = false
+//
+// 		if response.IsResultIncomplete() {
+// 			response.AlertJob.RetryCount++
+// 			if response.AlertJob.RetryCount < maxRetries {
+// 				scheduler.runQueue <- response.AlertJob
+// 			} else {
+// 				saveState(&AlertResult{
+// 					Id:          response.Id,
+// 					State:       alertstates.Critical,
+// 					Description: fmt.Sprintf("Failed to run check after %d retires", maxRetries),
+// 				})
+// 			}
+// 		} else {
+// 			response.AlertJob.RetryCount = 0
+// 			saveState(response)
+// 		}
+// 	}
+// }
+//
+// func (scheduler *Scheduler) measureAndExecute(exec Executor, job *AlertJob) {
+// 	now := time.Now()
+//
+// 	responseChan := make(chan *AlertResult, 1)
+// 	go exec.Execute(job, responseChan)
+//
+// 	select {
+// 	case <-time.After(time.Second * 5):
+// 		scheduler.responseQueue <- &AlertResult{
+// 			Id:       job.Rule.Id,
+// 			State:    alertstates.Pending,
+// 			Duration: float64(time.Since(now).Nanoseconds()) / float64(1000000),
+// 			AlertJob: job,
+// 		}
+// 	case result := <-responseChan:
+// 		result.Duration = float64(time.Since(now).Nanoseconds()) / float64(1000000)
+// 		log.Info("Schedular: exeuction took %vms", result.Duration)
+// 		scheduler.responseQueue <- result
+// 	}
+// }

@@ -11,19 +11,24 @@ var (
 	maxRetries = 3
 )
 
+var engine *Engine
+
 func Init() {
 	if !setting.AlertingEnabled {
 		return
 	}
 
-	log.Info("Alerting: Initializing scheduler...")
+	log.Info("Alerting: Initializing alerting engine...")
 
-	scheduler := NewScheduler()
-	reader := NewRuleReader()
+	engine = NewEngine()
+	engine.Start()
 
-	go scheduler.dispatch(reader)
-	go scheduler.executor(&ExecutorImpl{})
-	go scheduler.handleResponses()
+	// scheduler := NewScheduler()
+	// reader := NewRuleReader()
+	//
+	// go scheduler.dispatch(reader)
+	// go scheduler.executor(&ExecutorImpl{})
+	// go scheduler.handleResponses()
 }
 
 func saveState(response *AlertResult) {

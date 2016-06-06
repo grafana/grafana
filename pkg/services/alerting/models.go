@@ -7,7 +7,7 @@ type AlertJob struct {
 	Delay      bool
 	Running    bool
 	RetryCount int
-	Rule       AlertRule
+	Rule       *AlertRule
 }
 
 type AlertResult struct {

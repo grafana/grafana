@@ -12,10 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type Executor interface {
-	Execute(rule *AlertJob, responseQueue chan *AlertResult)
-}
-
 var (
 	resultLogFmt   = "%s executor: %s  %1.2f %s %1.2f : %v"
 	descriptionFmt = "Actual value: %1.2f for %s"
@@ -111,7 +107,7 @@ func (executor *ExecutorImpl) GetSeries(job *AlertJob) (tsdb.TimeSeriesSlice, er
 	return nil, fmt.Errorf("Grafana does not support alerts for %s", query.Result.Type)
 }
 
-func (executor *ExecutorImpl) validateRule(rule AlertRule, series tsdb.TimeSeriesSlice) *AlertResult {
+func (executor *ExecutorImpl) validateRule(rule *AlertRule, series tsdb.TimeSeriesSlice) *AlertResult {
 	for _, serie := range series {
 		if aggregator[rule.Aggregator] == nil {
 			continue
