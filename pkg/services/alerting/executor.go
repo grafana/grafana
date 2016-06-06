@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	resultLogFmt   = "%s executor: %s  %1.2f %s %1.2f : %v"
+	resultLogFmt   = "Alerting: executor %s  %1.2f %s %1.2f : %v"
 	descriptionFmt = "Actual value: %1.2f for %s"
 )
 
@@ -77,19 +77,19 @@ var aggregator = map[string]aggregationFn{
 	},
 }
 
-func (executor *ExecutorImpl) Execute(job *AlertJob, resultQueue chan *AlertResult) {
-	response, err := executor.GetSeries(job)
+func (e *ExecutorImpl) Execute(job *AlertJob, resultQueue chan *AlertResult) {
+	response, err := e.GetSeries(job)
 
 	if err != nil {
 		resultQueue <- &AlertResult{State: alertstates.Pending, Id: job.Rule.Id, AlertJob: job}
 	}
 
-	result := executor.validateRule(job.Rule, response)
+	result := e.validateRule(job.Rule, response)
 	result.AlertJob = job
 	resultQueue <- result
 }
 
-func (executor *ExecutorImpl) GetSeries(job *AlertJob) (tsdb.TimeSeriesSlice, error) {
+func (e *ExecutorImpl) GetSeries(job *AlertJob) (tsdb.TimeSeriesSlice, error) {
 	query := &m.GetDataSourceByIdQuery{
 		Id:    job.Rule.DatasourceId,
 		OrgId: job.Rule.OrgId,
@@ -108,7 +108,7 @@ func (executor *ExecutorImpl) GetSeries(job *AlertJob) (tsdb.TimeSeriesSlice, er
 	return nil, fmt.Errorf("Grafana does not support alerts for %s", query.Result.Type)
 }
 
-func (executor *ExecutorImpl) validateRule(rule *AlertRule, series tsdb.TimeSeriesSlice) *AlertResult {
+func (e *ExecutorImpl) validateRule(rule *AlertRule, series tsdb.TimeSeriesSlice) *AlertResult {
 	for _, serie := range series {
 		if aggregator[rule.Aggregator] == nil {
 			continue

@@ -16,7 +16,7 @@ func NewScheduler() Scheduler {
 	}
 }
 
-func (s *SchedulerImpl) Update(rules []AlertRule) {
+func (s *SchedulerImpl) Update(rules []*AlertRule) {
 	log.Debug("Scheduler: Update()")
 
 	jobs := make(map[int64]*AlertJob, 0)
@@ -32,7 +32,7 @@ func (s *SchedulerImpl) Update(rules []AlertRule) {
 			}
 		}
 
-		job.Rule = &rule
+		job.Rule = rule
 		job.Offset = int64(i)
 
 		jobs[rule.Id] = job
@@ -44,8 +44,6 @@ func (s *SchedulerImpl) Update(rules []AlertRule) {
 
 func (s *SchedulerImpl) Tick(tickTime time.Time, execQueue chan *AlertJob) {
 	now := tickTime.Unix()
-
-	log.Info("Alerting: Scheduler.Tick() %v", len(s.jobs))
 
 	for _, job := range s.jobs {
 		if now%job.Rule.Frequency == 0 && job.Running == false {

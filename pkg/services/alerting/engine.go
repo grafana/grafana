@@ -35,7 +35,7 @@ func NewEngine() *Engine {
 func (e *Engine) Start() {
 	log.Info("Alerting: Engine.Start()")
 
-	go e.schedulerTick()
+	go e.alertingTicker()
 	go e.execDispatch()
 	go e.resultHandler()
 }
@@ -45,7 +45,7 @@ func (e *Engine) Stop() {
 	close(e.resultQueue)
 }
 
-func (e *Engine) schedulerTick() {
+func (e *Engine) alertingTicker() {
 	tickIndex := 0
 
 	for {
@@ -57,6 +57,8 @@ func (e *Engine) schedulerTick() {
 			}
 
 			e.scheduler.Tick(tick, e.execQueue)
+
+			tickIndex++
 		}
 	}
 }
