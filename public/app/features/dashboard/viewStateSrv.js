@@ -51,6 +51,13 @@ function (angular, _, $) {
 
       $scope.onAppEvent('panel-initialized', function(evt, payload) {
         self.registerPanel(payload.scope);
+
+        if ($scope.profilingEnabled) {
+          $scope.performance.panelsInitialized++;
+          if ($scope.performance.panelsInitialized === $scope.performance.panelCount) {
+            $scope.performance.allPanelsInitialized = new Date().getTime();
+          }
+        }
       });
 
       this.update(this.getQueryStringState());

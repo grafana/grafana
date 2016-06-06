@@ -95,7 +95,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   setTimeQueryStart() {
-    this.timing = {};
     this.timing.queryStart = new Date().getTime();
   }
 
