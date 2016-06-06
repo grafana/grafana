@@ -31,6 +31,7 @@ export class PanelCtrl {
   height: any;
   containerHeight: any;
   events: Emitter;
+  timing: any;
 
   constructor($scope, $injector) {
     this.$injector = $injector;
@@ -38,6 +39,7 @@ export class PanelCtrl {
     this.$timeout = $injector.get('$timeout');
     this.editorTabIndex = 0;
     this.events = new Emitter();
+    this.timing = {};
 
     var plugin = config.panels[this.panel.type];
     if (plugin) {
@@ -58,6 +60,20 @@ export class PanelCtrl {
 
   renderingCompleted() {
     this.$scope.$root.performance.panelsRendered++;
+    this.timing.renderEnd = new Date().getTime();
+    if (this.$scope.$root.profilingEnabled) {
+      this.$scope.$root.performance.panels.push({
+        panelId: this.panel.id,
+        query: this.timing.queryEnd - this.timing.queryStart,
+        render: this.timing.renderEnd - this.timing.renderStart,
+      });
+
+      if (this.$scope.$root.performance.panelsRendered === this.$scope.$root.performance.panelCount) {
+        this.$scope.$root.performance.allPanelsRendered = new Date().getTime();
+        var timeTaken = this.$scope.$root.performance.allPanelsRendered - this.$scope.$root.performance.dashboardLoadStart;
+        console.log("Dashboard::Performance - All panels rendered in " + timeTaken + " ms");
+      }
+    }
   }
 
   refresh() {
@@ -169,6 +185,7 @@ export class PanelCtrl {
     }
 
     this.calculatePanelHeight();
+    this.timing.renderStart = new Date().getTime();
     this.events.emit('render', payload);
   }
 
