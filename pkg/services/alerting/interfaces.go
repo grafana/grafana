@@ -8,5 +8,5 @@ type Executor interface {
 
 type Scheduler interface {
 	Tick(time time.Time, execQueue chan *AlertJob)
-	Update(rules []*AlertRule)
+	Update(rules []AlertRule)
 }

@@ -17,7 +17,8 @@ var (
 	descriptionFmt = "Actual value: %1.2f for %s"
 )
 
-type ExecutorImpl struct{}
+type ExecutorImpl struct {
+}
 
 type compareFn func(float64, float64) bool
 type aggregationFn func(*tsdb.TimeSeries) float64
@@ -76,16 +77,16 @@ var aggregator = map[string]aggregationFn{
 	},
 }
 
-func (executor *ExecutorImpl) Execute(job *AlertJob, responseQueue chan *AlertResult) {
+func (executor *ExecutorImpl) Execute(job *AlertJob, resultQueue chan *AlertResult) {
 	response, err := executor.GetSeries(job)
 
 	if err != nil {
-		responseQueue <- &AlertResult{State: alertstates.Pending, Id: job.Rule.Id, AlertJob: job}
+		resultQueue <- &AlertResult{State: alertstates.Pending, Id: job.Rule.Id, AlertJob: job}
 	}
 
 	result := executor.validateRule(job.Rule, response)
 	result.AlertJob = job
-	responseQueue <- result
+	resultQueue <- result
 }
 
 func (executor *ExecutorImpl) GetSeries(job *AlertJob) (tsdb.TimeSeriesSlice, error) {

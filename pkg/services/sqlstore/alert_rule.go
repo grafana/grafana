@@ -29,12 +29,12 @@ func GetAlertById(query *m.GetAlertByIdQuery) error {
 		return err
 	}
 
-	query.Result = alert
+	query.Result = &alert
 	return nil
 }
 
 func GetAllAlertQueryHandler(query *m.GetAllAlertsQuery) error {
-	var alerts []m.AlertRule
+	var alerts []*m.AlertRule
 	err := x.Sql("select * from alert_rule").Find(&alerts)
 	if err != nil {
 		return err
@@ -87,7 +87,7 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 		sql.WriteString(")")
 	}
 
-	alerts := make([]m.AlertRule, 0)
+	alerts := make([]*m.AlertRule, 0)
 	if err := x.Sql(sql.String(), params...).Find(&alerts); err != nil {
 		return err
 	}
@@ -97,7 +97,7 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 }
 
 func DeleteAlertDefinition(dashboardId int64, sess *xorm.Session) error {
-	alerts := make([]m.AlertRule, 0)
+	alerts := make([]*m.AlertRule, 0)
 	sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
 
 	for _, alert := range alerts {
@@ -128,10 +128,10 @@ func SaveAlerts(cmd *m.SaveAlertsCommand) error {
 	})
 }
 
-func upsertAlerts(alerts []m.AlertRule, posted []m.AlertRule, sess *xorm.Session) error {
+func upsertAlerts(alerts []*m.AlertRule, posted []*m.AlertRule, sess *xorm.Session) error {
 	for _, alert := range posted {
 		update := false
-		var alertToUpdate m.AlertRule
+		var alertToUpdate *m.AlertRule
 
 		for _, k := range alerts {
 			if alert.PanelId == k.PanelId {
@@ -145,7 +145,7 @@ func upsertAlerts(alerts []m.AlertRule, posted []m.AlertRule, sess *xorm.Session
 			if alertToUpdate.Equals(alert) {
 				alert.Updated = time.Now()
 				alert.State = alertToUpdate.State
-				_, err := sess.Id(alert.Id).Update(&alert)
+				_, err := sess.Id(alert.Id).Update(alert)
 				if err != nil {
 					return err
 				}
@@ -157,7 +157,7 @@ func upsertAlerts(alerts []m.AlertRule, posted []m.AlertRule, sess *xorm.Session
 			alert.Updated = time.Now()
 			alert.Created = time.Now()
 			alert.State = "OK"
-			_, err := sess.Insert(&alert)
+			_, err := sess.Insert(alert)
 			if err != nil {
 				return err
 			}
@@ -168,7 +168,7 @@ func upsertAlerts(alerts []m.AlertRule, posted []m.AlertRule, sess *xorm.Session
 	return nil
 }
 
-func deleteMissingAlerts(alerts []m.AlertRule, posted []m.AlertRule, sess *xorm.Session) error {
+func deleteMissingAlerts(alerts []*m.AlertRule, posted []*m.AlertRule, sess *xorm.Session) error {
 	for _, missingAlert := range alerts {
 		missing := true
 
@@ -194,12 +194,12 @@ func deleteMissingAlerts(alerts []m.AlertRule, posted []m.AlertRule, sess *xorm.
 	return nil
 }
 
-func GetAlertsByDashboardId2(dashboardId int64, sess *xorm.Session) ([]m.AlertRule, error) {
-	alerts := make([]m.AlertRule, 0)
+func GetAlertsByDashboardId2(dashboardId int64, sess *xorm.Session) ([]*m.AlertRule, error) {
+	alerts := make([]*m.AlertRule, 0)
 	err := sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
 
 	if err != nil {
-		return []m.AlertRule{}, err
+		return []*m.AlertRule{}, err
 	}
 
 	return alerts, nil

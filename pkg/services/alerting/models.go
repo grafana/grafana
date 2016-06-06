@@ -40,4 +40,5 @@ type AlertRule struct {
 	Description  string
 	QueryRange   int
 	Aggregator   string
+	State        string
 }

@@ -27,7 +27,7 @@ type AlertRule struct {
 	Updated time.Time `json:"updated"`
 }
 
-func (this *AlertRule) Equals(other AlertRule) bool {
+func (this *AlertRule) Equals(other *AlertRule) bool {
 	result := false
 
 	result = result || this.Aggregator != other.Aggregator
@@ -72,7 +72,7 @@ type SaveAlertsCommand struct {
 	UserId      int64
 	OrgId       int64
 
-	Alerts []AlertRule
+	Alerts []*AlertRule
 }
 
 type DeleteAlertCommand struct {
@@ -86,23 +86,23 @@ type GetAlertsQuery struct {
 	DashboardId int64
 	PanelId     int64
 
-	Result []AlertRule
+	Result []*AlertRule
 }
 
 type GetAllAlertsQuery struct {
-	Result []AlertRule
+	Result []*AlertRule
 }
 
 type GetAlertsForExecutionQuery struct {
 	Timestamp int64
 
-	Result []AlertRule
+	Result []*AlertRule
 }
 
 type GetAlertByIdQuery struct {
 	Id int64
 
-	Result AlertRule
+	Result *AlertRule
 }
 
 type GetAlertChangesQuery struct {
@@ -110,5 +110,5 @@ type GetAlertChangesQuery struct {
 	Limit   int64
 	SinceId int64
 
-	Result []AlertRuleChange
+	Result []*AlertRuleChange
 }

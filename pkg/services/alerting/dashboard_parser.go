@@ -6,8 +6,8 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []m.AlertRule {
-	alerts := make([]m.AlertRule, 0)
+func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []*m.AlertRule {
+	alerts := make([]*m.AlertRule, 0)
 
 	for _, rowObj := range cmd.Dashboard.Get("rows").MustArray() {
 		row := simplejson.NewFromAny(rowObj)
@@ -16,7 +16,7 @@ func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []m.AlertRule {
 			panel := simplejson.NewFromAny(panelObj)
 
 			alerting := panel.Get("alerting")
-			alert := m.AlertRule{
+			alert := &m.AlertRule{
 				DashboardId:  cmd.Result.Id,
 				OrgId:        cmd.Result.OrgId,
 				PanelId:      panel.Get("id").MustInt64(),
