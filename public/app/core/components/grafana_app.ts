@@ -17,7 +17,7 @@ export class GrafanaCtrl {
 
       $scope._ = _;
 
-      $rootScope.profilingEnabled = store.getBool('profilingEnabled');
+      $rootScope.profilingEnabled = store.getBool('profilingEnabled') || config.buildInfo.env === 'development';
       $rootScope.performance = { loadStart: new Date().getTime() };
       $rootScope.appSubUrl = config.appSubUrl;
 
