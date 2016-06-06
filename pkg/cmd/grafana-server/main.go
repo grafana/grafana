@@ -59,6 +59,7 @@ func main() {
 	flag.Parse()
 	writePIDFile()
 	initRuntime()
+	metrics.Init()
 
 	search.Init()
 	login.Init()
@@ -69,10 +70,6 @@ func main() {
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)
-	}
-
-	if setting.ReportingEnabled {
-		go metrics.StartUsageReportLoop()
 	}
 
 	StartServer()
@@ -92,6 +89,7 @@ func initRuntime() {
 
 	log.Info("Starting Grafana")
 	log.Info("Version: %v, Commit: %v, Build date: %v", setting.BuildVersion, setting.BuildCommit, time.Unix(setting.BuildStamp, 0))
+
 	setting.LogConfigurationInfo()
 
 	sqlstore.NewEngine()
@@ -120,9 +118,7 @@ func listenToSystemSignels() {
 	signalChan := make(chan os.Signal, 1)
 	code := 0
 
-	signal.Notify(signalChan, os.Interrupt)
-	signal.Notify(signalChan, os.Kill)
-	signal.Notify(signalChan, syscall.SIGTERM)
+	signal.Notify(signalChan, os.Interrupt, os.Kill, syscall.SIGTERM)
 
 	select {
 	case sig := <-signalChan:

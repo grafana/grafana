@@ -14,19 +14,46 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func StartUsageReportLoop() chan struct{} {
+func Init() {
+	settings := readSettings()
+	initMetricVars(settings)
+	go instrumentationLoop(settings)
+}
+
+func instrumentationLoop(settings *MetricSettings) chan struct{} {
 	M_Instance_Start.Inc(1)
 
-	ticker := time.NewTicker(time.Hour * 24)
+	onceEveryDayTick := time.NewTicker(time.Hour * 24)
+	secondTicker := time.NewTicker(time.Second * time.Duration(settings.IntervalSeconds))
+
 	for {
 		select {
-		case <-ticker.C:
+		case <-onceEveryDayTick.C:
 			sendUsageStats()
+		case <-secondTicker.C:
+			if settings.Enabled {
+				sendMetrics(settings)
+			}
 		}
 	}
 }
 
+func sendMetrics(settings *MetricSettings) {
+	if len(settings.Publishers) == 0 {
+		return
+	}
+
+	metrics := MetricStats.GetSnapshots()
+	for _, publisher := range settings.Publishers {
+		publisher.Publish(metrics)
+	}
+}
+
 func sendUsageStats() {
+	if !setting.ReportingEnabled {
+		return
+	}
+
 	log.Trace("Sending anonymous usage stats to stats.grafana.org")
 
 	version := strings.Replace(setting.BuildVersion, ".", "_", -1)
@@ -36,16 +63,6 @@ func sendUsageStats() {
 		"version": version,
 		"metrics": metrics,
 	}
-
-	UsageStats.Each(func(name string, i interface{}) {
-		switch metric := i.(type) {
-		case Counter:
-			if metric.Count() > 0 {
-				metrics[name+".count"] = metric.Count()
-				metric.Clear()
-			}
-		}
-	})
 
 	statsQuery := m.GetSystemStatsQuery{}
 	if err := bus.Dispatch(&statsQuery); err != nil {
