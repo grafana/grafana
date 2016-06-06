@@ -143,8 +143,15 @@ function (_, TableModel) {
               }
             }
           }
+
+          var float_v = null;
           for (j = 1; j < values.length; j++) {
-            reordered.push(parseFloat(values[j]));
+            float_v = parseFloat(values[j]);
+            if (isNaN(float_v)) {
+              reordered.push(values[j]);
+            } else {
+              reordered.push(float_v);
+            }
           }
           table.rows.push(reordered);
         }
