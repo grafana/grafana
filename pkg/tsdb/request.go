@@ -27,6 +27,10 @@ func HandleRequest(req *Request) (*Response, error) {
 
 			response.BatchTimings = append(response.BatchTimings, batchResult.Timings)
 
+			if batchResult.Error != nil {
+				return nil, batchResult.Error
+			}
+
 			for refId, result := range batchResult.QueryResults {
 				context.Results[refId] = result
 			}

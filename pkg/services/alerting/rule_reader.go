@@ -60,7 +60,7 @@ func (arr *AlertRuleReader) Fetch() []*AlertRule {
 		model.CritLevel = ruleDef.CritLevel
 		model.CritOperator = ruleDef.CritOperator
 		model.Frequency = ruleDef.Frequency
-		model.Title = ruleDef.Title
+		model.Name = ruleDef.Name
 		model.Description = ruleDef.Description
 		model.Aggregator = ruleDef.Aggregator
 		model.State = ruleDef.State

@@ -77,7 +77,7 @@ func getDatasource(id int64, orgId int64) (*m.DataSource, error) {
 		return nil, err
 	}
 
-	return &query.Result, nil
+	return query.Result, nil
 }
 
 func ProxyDataSourceRequest(c *middleware.Context) {

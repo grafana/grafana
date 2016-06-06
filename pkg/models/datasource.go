@@ -131,13 +131,13 @@ type GetDataSourcesQuery struct {
 type GetDataSourceByIdQuery struct {
 	Id     int64
 	OrgId  int64
-	Result DataSource
+	Result *DataSource
 }
 
 type GetDataSourceByNameQuery struct {
 	Name   string
 	OrgId  int64
-	Result DataSource
+	Result *DataSource
 }
 
 // ---------------------

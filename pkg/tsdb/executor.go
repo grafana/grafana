@@ -13,12 +13,12 @@ func init() {
 }
 
 func getExecutorFor(dsInfo *DataSourceInfo) Executor {
-	if fn, exists := registry[dsInfo.Type]; exists {
+	if fn, exists := registry[dsInfo.PluginId]; exists {
 		return fn(dsInfo)
 	}
 	return nil
 }
 
-func RegisterExecutor(dsType string, fn GetExecutorFn) {
-	registry[dsType] = fn
+func RegisterExecutor(pluginId string, fn GetExecutorFn) {
+	registry[pluginId] = fn
 }

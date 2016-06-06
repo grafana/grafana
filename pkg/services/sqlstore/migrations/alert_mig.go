@@ -21,7 +21,7 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "crit_level", Type: DB_Float, Nullable: false},
 			{Name: "crit_operator", Type: DB_NVarchar, Length: 10, Nullable: false},
 			{Name: "frequency", Type: DB_BigInt, Nullable: false},
-			{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "description", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "query_range", Type: DB_Int, Nullable: false},
 			{Name: "aggregator", Type: DB_NVarchar, Length: 255, Nullable: false},
@@ -32,7 +32,7 @@ func addAlertMigrations(mg *Migrator) {
 	}
 
 	// create table
-	mg.AddMigration("create alert_rule table v1", NewAddTableMigration(alertV1))
+	mg.AddMigration("create alert_rule table v2", NewAddTableMigration(alertV1))
 
 	alert_changes := Table{
 		Name: "alert_rule_change",

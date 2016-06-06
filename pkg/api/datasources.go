@@ -123,9 +123,7 @@ func GetDataSourceByName(c *middleware.Context) Response {
 		return ApiError(500, "Failed to query datasources", err)
 	}
 
-	ds := query.Result
-	dtos := convertModelToDtos(ds)
-
+	dtos := convertModelToDtos(query.Result)
 	return Json(200, &dtos)
 }
 
@@ -148,7 +146,7 @@ func GetDataSourceIdByName(c *middleware.Context) Response {
 	return Json(200, &dtos)
 }
 
-func convertModelToDtos(ds m.DataSource) dtos.DataSource {
+func convertModelToDtos(ds *m.DataSource) dtos.DataSource {
 	return dtos.DataSource{
 		Id:                ds.Id,
 		OrgId:             ds.OrgId,

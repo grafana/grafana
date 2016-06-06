@@ -47,7 +47,7 @@ func (s *SchedulerImpl) Tick(tickTime time.Time, execQueue chan *AlertJob) {
 
 	for _, job := range s.jobs {
 		if now%job.Rule.Frequency == 0 && job.Running == false {
-			log.Trace("Scheduler: Putting job on to exec queue: %s", job.Rule.Title)
+			log.Trace("Scheduler: Putting job on to exec queue: %s", job.Rule.Name)
 			execQueue <- job
 		}
 	}

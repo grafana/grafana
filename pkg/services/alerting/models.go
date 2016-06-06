@@ -1,7 +1,5 @@
 package alerting
 
-import "github.com/grafana/grafana/pkg/services/alerting/alertstates"
-
 type AlertJob struct {
 	Offset     int64
 	Delay      bool
@@ -11,16 +9,12 @@ type AlertJob struct {
 }
 
 type AlertResult struct {
-	Id          int64
 	State       string
 	ActualValue float64
 	Duration    float64
 	Description string
+	Error       error
 	AlertJob    *AlertJob
-}
-
-func (ar *AlertResult) IsResultIncomplete() bool {
-	return ar.State == alertstates.Pending
 }
 
 type AlertRule struct {
@@ -36,7 +30,7 @@ type AlertRule struct {
 	WarnOperator string
 	CritOperator string
 	Frequency    int64
-	Title        string
+	Name         string
 	Description  string
 	QueryRange   int
 	Aggregator   string

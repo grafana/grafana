@@ -17,7 +17,7 @@ type AlertRule struct {
 	WarnOperator string  `json:"warnOperator"`
 	CritOperator string  `json:"critOperator"`
 	Frequency    int64   `json:"frequency"`
-	Title        string  `json:"title"`
+	Name         string  `json:"name"`
 	Description  string  `json:"description"`
 	QueryRange   int     `json:"queryRange"`
 	Aggregator   string  `json:"aggregator"`
@@ -38,7 +38,7 @@ func (this *AlertRule) Equals(other *AlertRule) bool {
 	result = result || this.Query != other.Query
 	result = result || this.QueryRefId != other.QueryRefId
 	result = result || this.Frequency != other.Frequency
-	result = result || this.Title != other.Title
+	result = result || this.Name != other.Name
 	result = result || this.Description != other.Description
 	result = result || this.QueryRange != other.QueryRange
 	//don't compare .State! That would be insane.

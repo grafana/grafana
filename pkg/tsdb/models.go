@@ -1,10 +1,8 @@
 package tsdb
 
-import "time"
-
 type TimeRange struct {
-	From time.Time
-	To   time.Time
+	From string
+	To   string
 }
 
 type Request struct {
@@ -21,7 +19,7 @@ type Response struct {
 type DataSourceInfo struct {
 	Id                int64
 	Name              string
-	Type              string
+	PluginId          string
 	Url               string
 	Password          string
 	User              string

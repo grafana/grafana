@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"fmt"
+	"strconv"
 
 	"math"
 
@@ -78,38 +79,79 @@ var aggregator = map[string]aggregationFn{
 }
 
 func (e *ExecutorImpl) Execute(job *AlertJob, resultQueue chan *AlertResult) {
-	response, err := e.GetSeries(job)
-
+	timeSeries, err := e.executeQuery(job)
 	if err != nil {
-		resultQueue <- &AlertResult{State: alertstates.Pending, Id: job.Rule.Id, AlertJob: job}
+		resultQueue <- &AlertResult{
+			Error:    err,
+			State:    alertstates.Pending,
+			AlertJob: job,
+		}
 	}
 
-	result := e.validateRule(job.Rule, response)
+	result := e.evaluateRule(job.Rule, timeSeries)
 	result.AlertJob = job
 	resultQueue <- result
 }
 
-func (e *ExecutorImpl) GetSeries(job *AlertJob) (tsdb.TimeSeriesSlice, error) {
-	query := &m.GetDataSourceByIdQuery{
+func (e *ExecutorImpl) executeQuery(job *AlertJob) (tsdb.TimeSeriesSlice, error) {
+	getDsInfo := &m.GetDataSourceByIdQuery{
 		Id:    job.Rule.DatasourceId,
 		OrgId: job.Rule.OrgId,
 	}
 
-	err := bus.Dispatch(query)
-
-	if err != nil {
+	if err := bus.Dispatch(getDsInfo); err != nil {
 		return nil, fmt.Errorf("Could not find datasource for %d", job.Rule.DatasourceId)
 	}
 
-	// if query.Result.Type == m.DS_GRAPHITE {
-	// 	return GraphiteClient{}.GetSeries(*job, query.Result)
-	// }
+	req := e.GetRequestForAlertRule(job.Rule, getDsInfo.Result)
+	result := make(tsdb.TimeSeriesSlice, 0)
 
-	return nil, fmt.Errorf("Grafana does not support alerts for %s", query.Result.Type)
+	resp, err := tsdb.HandleRequest(req)
+	if err != nil {
+		return nil, fmt.Errorf("Alerting: GetSeries() tsdb.HandleRequest() error %v", err)
+	}
+
+	for _, v := range resp.Results {
+		if v.Error != nil {
+			return nil, fmt.Errorf("Alerting: GetSeries() tsdb.HandleRequest() response error %v", v)
+		}
+
+		result = append(result, v.Series...)
+	}
+
+	return result, nil
 }
 
-func (e *ExecutorImpl) validateRule(rule *AlertRule, series tsdb.TimeSeriesSlice) *AlertResult {
+func (e *ExecutorImpl) GetRequestForAlertRule(rule *AlertRule, datasource *m.DataSource) *tsdb.Request {
+
+	req := &tsdb.Request{
+		TimeRange: tsdb.TimeRange{
+			From: "-" + strconv.Itoa(rule.QueryRange) + "s",
+			To:   "now",
+		},
+		Queries: tsdb.QuerySlice{
+			&tsdb.Query{
+				RefId: rule.QueryRefId,
+				Query: rule.Query,
+				DataSource: &tsdb.DataSourceInfo{
+					Id:       datasource.Id,
+					Name:     datasource.Name,
+					PluginId: datasource.Type,
+					Url:      datasource.Url,
+				},
+			},
+		},
+	}
+
+	return req
+}
+
+func (e *ExecutorImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice) *AlertResult {
+	log.Trace("Alerting: executor.evaluateRule: %v, query result: series: %v", rule.Name, len(series))
+
 	for _, serie := range series {
+		log.Info("Alerting: executor.validate: %v", serie.Name)
+
 		if aggregator[rule.Aggregator] == nil {
 			continue
 		}
@@ -122,7 +164,6 @@ func (e *ExecutorImpl) validateRule(rule *AlertRule, series tsdb.TimeSeriesSlice
 		if critResult {
 			return &AlertResult{
 				State:       alertstates.Critical,
-				Id:          rule.Id,
 				ActualValue: aggValue,
 				Description: fmt.Sprintf(descriptionFmt, aggValue, serie.Name),
 			}
@@ -134,12 +175,11 @@ func (e *ExecutorImpl) validateRule(rule *AlertRule, series tsdb.TimeSeriesSlice
 		if warnResult {
 			return &AlertResult{
 				State:       alertstates.Warn,
-				Id:          rule.Id,
 				Description: fmt.Sprintf(descriptionFmt, aggValue, serie.Name),
 				ActualValue: aggValue,
 			}
 		}
 	}
 
-	return &AlertResult{State: alertstates.Ok, Id: rule.Id, Description: "Alert is OK!"}
+	return &AlertResult{State: alertstates.Ok, Description: "Alert is OK!"}
 }

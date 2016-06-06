@@ -3,6 +3,7 @@ package alerting
 import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -27,12 +28,13 @@ func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []*m.AlertRule {
 				WarnOperator: alerting.Get("warnOperator").MustString(),
 				CritOperator: alerting.Get("critOperator").MustString(),
 				Frequency:    alerting.Get("frequency").MustInt64(),
-				Title:        alerting.Get("title").MustString(),
+				Name:         alerting.Get("name").MustString(),
 				Description:  alerting.Get("description").MustString(),
 				QueryRange:   alerting.Get("queryRange").MustInt(),
 				Aggregator:   alerting.Get("aggregator").MustString(),
 			}
 
+			log.Info("Alertrule: %v", alert.Name)
 			for _, targetsObj := range panel.Get("targets").MustArray() {
 				target := simplejson.NewFromAny(targetsObj)
 

@@ -33,7 +33,7 @@ func NewEngine() *Engine {
 }
 
 func (e *Engine) Start() {
-	log.Info("Alerting: Engine.Start()")
+	log.Info("Alerting: engine.Start()")
 
 	go e.alertingTicker()
 	go e.execDispatch()
@@ -51,13 +51,12 @@ func (e *Engine) alertingTicker() {
 	for {
 		select {
 		case tick := <-e.ticker.C:
-			// update rules ever tenth tick
+			// TEMP SOLUTION update rules ever tenth tick
 			if tickIndex%10 == 0 {
 				e.scheduler.Update(e.ruleReader.Fetch())
 			}
 
 			e.scheduler.Tick(tick, e.execQueue)
-
 			tickIndex++
 		}
 	}
@@ -65,7 +64,7 @@ func (e *Engine) alertingTicker() {
 
 func (e *Engine) execDispatch() {
 	for job := range e.execQueue {
-		log.Trace("Alerting: Engine:execDispatch() starting job %s", job.Rule.Title)
+		log.Trace("Alerting: engine:execDispatch() starting job %s", job.Rule.Name)
 		job.Running = true
 		e.executeJob(job)
 	}
@@ -80,33 +79,39 @@ func (e *Engine) executeJob(job *AlertJob) {
 	select {
 	case <-time.After(time.Second * 5):
 		e.resultQueue <- &AlertResult{
-			Id:       job.Rule.Id,
 			State:    alertstates.Pending,
 			Duration: float64(time.Since(now).Nanoseconds()) / float64(1000000),
+			Error:    fmt.Errorf("Timeout"),
 			AlertJob: job,
 		}
+		log.Trace("Alerting: engine.executeJob(): timeout")
 	case result := <-resultChan:
 		result.Duration = float64(time.Since(now).Nanoseconds()) / float64(1000000)
-		log.Trace("Alerting: engine.executeJob(): exeuction took %vms", result.Duration)
+		log.Trace("Alerting: engine.executeJob(): done %vms", result.Duration)
 		e.resultQueue <- result
 	}
 }
 
 func (e *Engine) resultHandler() {
 	for result := range e.resultQueue {
-		log.Debug("Alerting: engine.resultHandler(): alert(%d) status(%s) actual(%v) retry(%d)", result.Id, result.State, result.ActualValue, result.AlertJob.RetryCount)
+		log.Debug("Alerting: engine.resultHandler(): alert(%d) status(%s) actual(%v) retry(%d)", result.AlertJob.Rule.Id, result.State, result.ActualValue, result.AlertJob.RetryCount)
+
 		result.AlertJob.Running = false
 
-		if result.IsResultIncomplete() {
+		// handle result error
+		if result.Error != nil {
 			result.AlertJob.RetryCount++
+
 			if result.AlertJob.RetryCount < maxRetries {
+				log.Error(3, "Alerting: Rule('%s') Result Error: %v, Retrying..", result.AlertJob.Rule.Name, result.Error)
+
 				e.execQueue <- result.AlertJob
 			} else {
-				saveState(&AlertResult{
-					Id:          result.Id,
-					State:       alertstates.Critical,
-					Description: fmt.Sprintf("Failed to run check after %d retires", maxRetries),
-				})
+				log.Error(3, "Alerting: Rule('%s') Result Error: %v, Max retries reached", result.AlertJob.Rule.Name, result.Error)
+
+				result.State = alertstates.Critical
+				result.Description = fmt.Sprintf("Failed to run check after %d retires, Error: %v", maxRetries, result.Error)
+				saveState(result)
 			}
 		} else {
 			result.AlertJob.RetryCount = 0

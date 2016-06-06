@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	_ "github.com/grafana/grafana/pkg/tsdb/graphite"
 )
 
 var (
@@ -31,11 +32,11 @@ func Init() {
 	// go scheduler.handleResponses()
 }
 
-func saveState(response *AlertResult) {
+func saveState(result *AlertResult) {
 	cmd := &m.UpdateAlertStateCommand{
-		AlertId:  response.Id,
-		NewState: response.State,
-		Info:     response.Description,
+		AlertId:  result.AlertJob.Rule.Id,
+		NewState: result.State,
+		Info:     result.Description,
 	}
 
 	if err := bus.Dispatch(cmd); err != nil {

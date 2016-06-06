@@ -22,7 +22,7 @@ func ValidateOrgAlert(c *middleware.Context) {
 	}
 }
 
-// GET /api/alerts/changes
+// GET /api/alerting/changes
 func GetAlertChanges(c *middleware.Context) Response {
 	query := models.GetAlertChangesQuery{
 		OrgId: c.OrgId,
@@ -69,7 +69,7 @@ func GetAlerts(c *middleware.Context) Response {
 			WarnLevel:   alert.WarnLevel,
 			CritLevel:   alert.CritLevel,
 			Frequency:   alert.Frequency,
-			Title:       alert.Title,
+			Name:        alert.Name,
 			Description: alert.Description,
 			QueryRange:  alert.QueryRange,
 			Aggregator:  alert.Aggregator,

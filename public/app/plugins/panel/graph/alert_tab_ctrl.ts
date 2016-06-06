@@ -29,8 +29,8 @@ export class AlertTabCtrl {
 
     _.defaults(this.panel.alerting, this.defaultValues);
 
-    var defaultTitle = (this.panelCtrl.dashboard.title + ' ' + this.panel.title + ' alert');
-    this.panel.alerting.title = this.panel.alerting.title || defaultTitle;
+    var defaultName = (this.panelCtrl.dashboard.title + ' ' + this.panel.title + ' alert');
+    this.panel.alerting.name = this.panel.alerting.name || defaultName;
 
     this.panel.targets.map(target => {
       this.metricTargets.push(target);

@@ -110,7 +110,7 @@ func TestAlertModel(t *testing.T) {
             "aggregator": "sum",
             "queryRange": "10m",
             "frequency": 10,
-            "title": "active desktop users",
+            "name": "active desktop users",
             "description": "restart webservers"
           },
           "links": []
@@ -386,7 +386,7 @@ func TestAlertModel(t *testing.T) {
 				So(v.Query, ShouldNotBeEmpty)
 				So(v.QueryRefId, ShouldNotBeEmpty)
 				So(v.QueryRange, ShouldNotBeEmpty)
-				So(v.Title, ShouldNotBeEmpty)
+				So(v.Name, ShouldNotBeEmpty)
 				So(v.Description, ShouldNotBeEmpty)
 			}
 

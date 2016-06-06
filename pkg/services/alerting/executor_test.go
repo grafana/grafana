@@ -20,7 +20,7 @@ func TestAlertingExecutor(t *testing.T) {
 					tsdb.NewTimeSeries("test1", [][2]float64{{2, 0}}),
 				}
 
-				result := executor.validateRule(rule, timeSeries)
+				result := executor.evaluateRule(rule, timeSeries)
 				So(result.State, ShouldEqual, alertstates.Ok)
 			})
 
@@ -31,7 +31,7 @@ func TestAlertingExecutor(t *testing.T) {
 					tsdb.NewTimeSeries("test1", [][2]float64{{2, 0}}),
 				}
 
-				result := executor.validateRule(rule, timeSeries)
+				result := executor.evaluateRule(rule, timeSeries)
 				So(result.State, ShouldEqual, alertstates.Critical)
 			})
 
@@ -42,7 +42,7 @@ func TestAlertingExecutor(t *testing.T) {
 					tsdb.NewTimeSeries("test1", [][2]float64{{9, 0}, {9, 0}}),
 				}
 
-				result := executor.validateRule(rule, timeSeries)
+				result := executor.evaluateRule(rule, timeSeries)
 				So(result.State, ShouldEqual, alertstates.Critical)
 			})
 
@@ -53,7 +53,7 @@ func TestAlertingExecutor(t *testing.T) {
 					tsdb.NewTimeSeries("test1", [][2]float64{{9, 0}, {9, 0}}),
 				}
 
-				result := executor.validateRule(rule, timeSeries)
+				result := executor.evaluateRule(rule, timeSeries)
 				So(result.State, ShouldEqual, alertstates.Ok)
 			})
 
@@ -64,7 +64,7 @@ func TestAlertingExecutor(t *testing.T) {
 					tsdb.NewTimeSeries("test1", [][2]float64{{11, 0}, {9, 0}}),
 				}
 
-				result := executor.validateRule(rule, timeSeries)
+				result := executor.evaluateRule(rule, timeSeries)
 				So(result.State, ShouldEqual, alertstates.Ok)
 			})
 
@@ -75,7 +75,7 @@ func TestAlertingExecutor(t *testing.T) {
 					tsdb.NewTimeSeries("test1", [][2]float64{{1, 0}, {11, 0}}),
 				}
 
-				result := executor.validateRule(rule, timeSeries)
+				result := executor.evaluateRule(rule, timeSeries)
 				So(result.State, ShouldEqual, alertstates.Critical)
 			})
 		})
@@ -89,7 +89,7 @@ func TestAlertingExecutor(t *testing.T) {
 					tsdb.NewTimeSeries("test1", [][2]float64{{2, 0}}),
 				}
 
-				result := executor.validateRule(rule, timeSeries)
+				result := executor.evaluateRule(rule, timeSeries)
 				So(result.State, ShouldEqual, alertstates.Ok)
 			})
 
@@ -101,7 +101,7 @@ func TestAlertingExecutor(t *testing.T) {
 					tsdb.NewTimeSeries("test1", [][2]float64{{11, 0}}),
 				}
 
-				result := executor.validateRule(rule, timeSeries)
+				result := executor.evaluateRule(rule, timeSeries)
 				So(result.State, ShouldEqual, alertstates.Critical)
 			})
 		})
