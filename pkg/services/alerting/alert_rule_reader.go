@@ -10,7 +10,7 @@ import (
 )
 
 type RuleReader interface {
-	Fetch() []m.AlertRule
+	Fetch() []AlertRule
 }
 
 type AlertRuleReader struct {
@@ -28,15 +28,15 @@ func NewRuleReader() *AlertRuleReader {
 }
 
 var (
-	alertJobs []m.AlertRule
+	alertJobs []AlertRule
 )
 
-func (arr *AlertRuleReader) Fetch() []m.AlertRule {
+func (arr *AlertRuleReader) Fetch() []AlertRule {
 	return alertJobs
 }
 
 func (arr *AlertRuleReader) initReader() {
-	alertJobs = make([]m.AlertRule, 0)
+	alertJobs = make([]AlertRule, 0)
 	heartbeat := time.NewTicker(time.Second * 10)
 	arr.updateRules()
 
@@ -56,7 +56,7 @@ func (arr *AlertRuleReader) updateRules() {
 	err := bus.Dispatch(cmd)
 
 	if err == nil {
-		alertJobs = cmd.Result
+		//alertJobs = cmd.Result
 	} else {
 		log.Error(1, "AlertRuleReader: Could not load alerts")
 	}

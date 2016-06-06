@@ -5,13 +5,15 @@ import (
 
 	"math"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
-	b "github.com/grafana/grafana/pkg/services/alerting/datasources"
+	"github.com/grafana/grafana/pkg/services/alerting/alertstates"
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type Executor interface {
-	Execute(rule *m.AlertJob, responseQueue chan *m.AlertResult)
+	Execute(rule *AlertJob, responseQueue chan *AlertResult)
 }
 
 var (
@@ -22,7 +24,7 @@ var (
 type ExecutorImpl struct{}
 
 type compareFn func(float64, float64) bool
-type aggregationFn func(*m.TimeSeries) float64
+type aggregationFn func(*tsdb.TimeSeries) float64
 
 var operators = map[string]compareFn{
 	">":  func(num1, num2 float64) bool { return num1 > num2 },
@@ -32,7 +34,7 @@ var operators = map[string]compareFn{
 	"":   func(num1, num2 float64) bool { return false },
 }
 var aggregator = map[string]aggregationFn{
-	"avg": func(series *m.TimeSeries) float64 {
+	"avg": func(series *tsdb.TimeSeries) float64 {
 		sum := float64(0)
 
 		for _, v := range series.Points {
@@ -41,7 +43,7 @@ var aggregator = map[string]aggregationFn{
 
 		return sum / float64(len(series.Points))
 	},
-	"sum": func(series *m.TimeSeries) float64 {
+	"sum": func(series *tsdb.TimeSeries) float64 {
 		sum := float64(0)
 
 		for _, v := range series.Points {
@@ -50,7 +52,7 @@ var aggregator = map[string]aggregationFn{
 
 		return sum
 	},
-	"min": func(series *m.TimeSeries) float64 {
+	"min": func(series *tsdb.TimeSeries) float64 {
 		min := series.Points[0][0]
 
 		for _, v := range series.Points {
@@ -61,7 +63,7 @@ var aggregator = map[string]aggregationFn{
 
 		return min
 	},
-	"max": func(series *m.TimeSeries) float64 {
+	"max": func(series *tsdb.TimeSeries) float64 {
 		max := series.Points[0][0]
 
 		for _, v := range series.Points {
@@ -72,17 +74,17 @@ var aggregator = map[string]aggregationFn{
 
 		return max
 	},
-	"mean": func(series *m.TimeSeries) float64 {
+	"mean": func(series *tsdb.TimeSeries) float64 {
 		midPosition := int64(math.Floor(float64(len(series.Points)) / float64(2)))
 		return series.Points[midPosition][0]
 	},
 }
 
-func (executor *ExecutorImpl) Execute(job *m.AlertJob, responseQueue chan *m.AlertResult) {
-	response, err := b.GetSeries(job)
+func (executor *ExecutorImpl) Execute(job *AlertJob, responseQueue chan *AlertResult) {
+	response, err := executor.GetSeries(job)
 
 	if err != nil {
-		responseQueue <- &m.AlertResult{State: m.AlertStatePending, Id: job.Rule.Id, AlertJob: job}
+		responseQueue <- &AlertResult{State: alertstates.Pending, Id: job.Rule.Id, AlertJob: job}
 	}
 
 	result := executor.validateRule(job.Rule, response)
@@ -90,7 +92,26 @@ func (executor *ExecutorImpl) Execute(job *m.AlertJob, responseQueue chan *m.Ale
 	responseQueue <- result
 }
 
-func (executor *ExecutorImpl) validateRule(rule m.AlertRule, series m.TimeSeriesSlice) *m.AlertResult {
+func (executor *ExecutorImpl) GetSeries(job *AlertJob) (tsdb.TimeSeriesSlice, error) {
+	query := &m.GetDataSourceByIdQuery{
+		Id:    job.Rule.DatasourceId,
+		OrgId: job.Rule.OrgId,
+	}
+
+	err := bus.Dispatch(query)
+
+	if err != nil {
+		return nil, fmt.Errorf("Could not find datasource for %d", job.Rule.DatasourceId)
+	}
+
+	// if query.Result.Type == m.DS_GRAPHITE {
+	// 	return GraphiteClient{}.GetSeries(*job, query.Result)
+	// }
+
+	return nil, fmt.Errorf("Grafana does not support alerts for %s", query.Result.Type)
+}
+
+func (executor *ExecutorImpl) validateRule(rule AlertRule, series tsdb.TimeSeriesSlice) *AlertResult {
 	for _, serie := range series {
 		if aggregator[rule.Aggregator] == nil {
 			continue
@@ -102,8 +123,8 @@ func (executor *ExecutorImpl) validateRule(rule m.AlertRule, series m.TimeSeries
 
 		log.Trace(resultLogFmt, "Crit", serie.Name, aggValue, rule.CritOperator, rule.CritLevel, critResult)
 		if critResult {
-			return &m.AlertResult{
-				State:       m.AlertStateCritical,
+			return &AlertResult{
+				State:       alertstates.Critical,
 				Id:          rule.Id,
 				ActualValue: aggValue,
 				Description: fmt.Sprintf(descriptionFmt, aggValue, serie.Name),
@@ -114,8 +135,8 @@ func (executor *ExecutorImpl) validateRule(rule m.AlertRule, series m.TimeSeries
 		var warnResult = warnOperartor(aggValue, rule.CritLevel)
 		log.Trace(resultLogFmt, "Warn", serie.Name, aggValue, rule.WarnOperator, rule.WarnLevel, warnResult)
 		if warnResult {
-			return &m.AlertResult{
-				State:       m.AlertStateWarn,
+			return &AlertResult{
+				State:       alertstates.Warn,
 				Id:          rule.Id,
 				Description: fmt.Sprintf(descriptionFmt, aggValue, serie.Name),
 				ActualValue: aggValue,
@@ -123,5 +144,5 @@ func (executor *ExecutorImpl) validateRule(rule m.AlertRule, series m.TimeSeries
 		}
 	}
 
-	return &m.AlertResult{State: m.AlertStateOk, Id: rule.Id, Description: "Alert is OK!"}
+	return &AlertResult{State: alertstates.Ok, Id: rule.Id, Description: "Alert is OK!"}
 }

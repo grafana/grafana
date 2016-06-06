@@ -2,6 +2,8 @@ package models
 
 import (
 	"time"
+
+	"github.com/grafana/grafana/pkg/services/alerting/alertstates"
 )
 
 type AlertState struct {
@@ -13,25 +15,8 @@ type AlertState struct {
 	Info     string    `json:"info"`
 }
 
-var (
-	VALID_STATES = []string{
-		AlertStateOk,
-		AlertStateWarn,
-		AlertStateCritical,
-		AlertStateAcknowledged,
-		AlertStateMaintenance,
-	}
-
-	AlertStateOk           = "OK"
-	AlertStateWarn         = "WARN"
-	AlertStateCritical     = "CRITICAL"
-	AlertStateAcknowledged = "ACKNOWLEDGED"
-	AlertStateMaintenance  = "MAINTENANCE"
-	AlertStatePending      = "PENDING"
-)
-
 func (this *UpdateAlertStateCommand) IsValidState() bool {
-	for _, v := range VALID_STATES {
+	for _, v := range alertstates.ValidStates {
 		if this.NewState == v {
 			return true
 		}
