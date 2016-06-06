@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -23,6 +24,7 @@ type Context struct {
 
 	IsSignedIn     bool
 	AllowAnonymous bool
+	Logger         log.Logger
 }
 
 func GetContextHandler() macaron.Handler {
@@ -33,6 +35,7 @@ func GetContextHandler() macaron.Handler {
 			Session:        GetSession(),
 			IsSignedIn:     false,
 			AllowAnonymous: false,
+			Logger:         log.New("context"),
 		}
 
 		// the order in which these are tested are important
@@ -47,6 +50,11 @@ func GetContextHandler() macaron.Handler {
 			initContextWithApiKeyFromSession(ctx) ||
 			initContextWithAnonymousUser(ctx) {
 		}
+
+		ctx.Logger = log.New("context", "user", ctx.UserId, "orgId", ctx.OrgId)
+		// set ctx in data array on the original context
+		c.Data["ctx"] = ctx
+		fmt.Printf("c: %v\n", c)
 
 		c.Map(ctx)
 	}

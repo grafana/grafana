@@ -39,7 +39,6 @@ func init() {
 }
 
 func main() {
-
 	v := flag.Bool("v", false, "prints current version and exits")
 	flag.Parse()
 	if *v {
@@ -48,10 +47,16 @@ func main() {
 	}
 
 	buildstampInt64, _ := strconv.ParseInt(buildstamp, 10, 64)
+	if buildstampInt64 == 0 {
+		buildstampInt64 = time.Now().Unix()
+	}
 
 	setting.BuildVersion = version
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
+
+	logger := log.New("main")
+	logger.Info("Starting Grafana", "version", version, "commit", commit, "compiled", time.Unix(buildstampInt64, 0))
 
 	go listenToSystemSignels()
 
