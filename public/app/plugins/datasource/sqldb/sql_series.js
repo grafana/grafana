@@ -144,7 +144,7 @@ function (_, TableModel) {
             }
           }
           for (j = 1; j < values.length; j++) {
-            reordered.push(values[j]);
+            reordered.push(parseFloat(values[j]));
           }
           table.rows.push(reordered);
         }
