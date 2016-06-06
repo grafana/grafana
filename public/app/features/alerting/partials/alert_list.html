@@ -1,9 +1,9 @@
-<navbar icon="fa fa-fw fa-list" title="Alerts" title-url="alerts">
+<navbar icon="fa fa-fw fa-list" title="Alerting" title-url="alerting">
 </navbar>
 
 <div class="page-container" >
 	<div class="page-header">
-		<h1>Alerts</h1>
+		<h1>Alerting</h1>
 		<div class="gf-form-inline pull-right">
 			<gf-form-switch class="gf-form" label="Ok" label-class="width-5" checked="ctrl.filter.ok" on-change="ctrl.updateFilter()"></gf-form-switch>
 			<gf-form-switch class="gf-form" label="Warn" label-class="width-5" checked="ctrl.filter.warn" on-change="ctrl.updateFilter()"></gf-form-switch>
@@ -20,12 +20,12 @@
 		</thead>
 		<tr ng-repeat="alert in ctrl.alerts">
 			<td>
-				<a href="alerts/{{alert.id}}/states">
+				<a href="alerting/{{alert.id}}/states">
 					{{alert.title}}
 				</a>
 			</td>
 			<td class="text-center">
-				<a href="alerts/{{alert.id}}/states">
+				<a href="alerting/{{alert.id}}/states">
 					<i class="icon-gf {{alert.iconCss}}"></i>
 				</a>
 			</td>

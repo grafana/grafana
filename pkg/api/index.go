@@ -81,9 +81,9 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	if setting.AlertingEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR) {
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
-			Text: "Alerts",
+			Text: "Alerting",
 			Icon: "icon-gf icon-gf-monitoring",
-			Url:  setting.AppSubUrl + "/alerts",
+			Url:  setting.AppSubUrl + "/alerting",
 		})
 	}
 

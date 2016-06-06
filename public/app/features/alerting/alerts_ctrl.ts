@@ -6,7 +6,7 @@ import coreModule from '../../core/core_module';
 import config from 'app/core/config';
 import alertDef from './alert_def';
 
-export class AlertPageCtrl {
+export class AlertListCtrl {
 
   alerts: any;
   filter = {
@@ -58,5 +58,5 @@ export class AlertPageCtrl {
   }
 }
 
-coreModule.controller('AlertPageCtrl', AlertPageCtrl);
+coreModule.controller('AlertListCtrl', AlertListCtrl);
 

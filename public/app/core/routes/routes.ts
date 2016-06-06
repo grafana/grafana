@@ -13,7 +13,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   var loadOrgBundle = new BundleLoader('app/features/org/all');
   var loadPluginsBundle = new BundleLoader('app/features/plugins/all');
   var loadAdminBundle = new BundleLoader('app/features/admin/admin');
-  var loadAlertsBundle = new BundleLoader('app/features/alerts/all');
+  var loadAlertingBundle = new BundleLoader('app/features/alerting/all');
 
   $routeProvider
   .when('/', {
@@ -190,25 +190,22 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controllerAs: 'ctrl',
     resolve: loadPluginsBundle,
   })
-  .when('/global-alerts', {
-    templateUrl: 'public/app/features/dashboard/partials/globalAlerts.html',
-  })
   .when('/styleguide/:page?', {
     controller: 'StyleGuideCtrl',
     controllerAs: 'ctrl',
     templateUrl: 'public/app/features/styleguide/styleguide.html',
   })
-  .when('/alerts', {
-    templateUrl: 'public/app/features/alerts/partials/alerts_page.html',
-    controller: 'AlertPageCtrl',
+  .when('/alerting', {
+    templateUrl: 'public/app/features/alerting/partials/alert_list.html',
+    controller: 'AlertListCtrl',
     controllerAs: 'ctrl',
-    resolve: loadAlertsBundle,
+    resolve: loadAlertingBundle,
   })
-  .when('/alerts/:alertId/states', {
-    templateUrl: 'public/app/features/alerts/partials/alert_log.html',
+  .when('/alerting/:alertId/states', {
+    templateUrl: 'public/app/features/alerting/partials/alert_log.html',
     controller: 'AlertLogCtrl',
     controllerAs: 'ctrl',
-    resolve: loadAlertsBundle,
+    resolve: loadAlertingBundle,
   })
   .otherwise({
     templateUrl: 'public/app/partials/error.html',

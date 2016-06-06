@@ -72,5 +72,4 @@ func addAlertMigrations(mg *Migrator) {
 	}
 
 	mg.AddMigration("create alert_heartbeat table v1", NewAddTableMigration(alert_heartbeat))
-
 }
