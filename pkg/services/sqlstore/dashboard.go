@@ -123,6 +123,11 @@ type DashboardSearchProjection struct {
 }
 
 func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
+	limit := query.Limit
+	if limit == 0 {
+		limit = 1000
+	}
+
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
@@ -165,7 +170,8 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 		params = append(params, "%"+query.Title+"%")
 	}
 
-	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 1000"))
+	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT ?"))
+	params = append(params, limit)
 
 	var res []DashboardSearchProjection
 
