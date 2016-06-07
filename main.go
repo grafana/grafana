@@ -66,7 +66,7 @@ func main() {
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()
-  netcrunch.Upgrade()
+  netcrunch.Init()
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)

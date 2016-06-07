@@ -23,6 +23,7 @@ type NetCrunchServerSettings struct {
 
 var (
   UpgradeFile *ini.File
+  StatusesFile *ini.File
 )
 
 func getUpgradeFilesBasePath() string {
@@ -42,12 +43,27 @@ func getVersionFileName() string {
   return filepath.Join(getUpgradeFilesBasePath(), "version")
 }
 
+func getStatusesFileName() string {
+  return filepath.Join(getUpgradeFilesBasePath(), "statuses")
+}
+
 func loadUpgradeFile(filePath string) bool {
   upgradeData, err := ioutil.ReadFile(filePath)
   if (err == nil) {
     UpgradeFile, err = ini.Load(upgradeData)
     if (err == nil) {
       UpgradeFile.BlockMode = false
+    }
+  }
+  return (err == nil)
+}
+
+func loadStatusesFile(filePath string) bool {
+  statusesData, err := ioutil.ReadFile(filePath)
+  if (err == nil) {
+    StatusesFile, err = ini.Load(statusesData)
+    if (err == nil) {
+      StatusesFile.BlockMode = false
     }
   }
   return (err == nil)
@@ -185,12 +201,16 @@ func writeVersionFile(fileName string) bool {
   return (ioutil.WriteFile(fileName, version, 0644) == nil)
 }
 
+func writeStatusesFile(fileName string, statuses *ini.File) bool {
+  return (statuses.SaveTo(fileName) == nil)
+}
+
 func removeFile(fileName string) bool {
   err := os.Remove(fileName)
   return (err == nil)
 }
 
-func Upgrade() {
+func upgrade() {
   UpgradeFileName := getUpgradeFileName()
   VersionFileName := getVersionFileName()
 
@@ -200,7 +220,8 @@ func Upgrade() {
         netCrunchSettings, err := readNetCrunchServerSettings()
         if (err == nil) {
           if (updateNetCrunchDatasources(netCrunchSettings) &&
-              writeVersionFile(VersionFileName) && removeFile(UpgradeFileName)) {
+              writeVersionFile(VersionFileName) && removeFile(UpgradeFileName) &&
+              SetInitializationSuccess()) {
             log.Info("NetCrunch: Upgrade")
           } else {
             log.Info("NetCrunch: Upgrade error")
@@ -213,4 +234,46 @@ func Upgrade() {
       log.Info("NetCrunch: Upgrade error")
     }
   }
+}
+
+func CheckInitializationSuccess() (bool, error) {
+  key, err := StatusesFile.Section("Initialization").GetKey("success")
+  if (err == nil) {
+    return key.MustBool(false), nil
+  } else {
+    return false, err
+  }
+}
+
+func SetInitializationSuccess() bool {
+  StatusesFileName := getStatusesFileName()
+  successStatus, err := CheckInitializationSuccess()
+
+  if ((err == nil) && (!successStatus)) {
+    StatusesFile.Section("Initialization").NewKey("success", "true")
+    return writeStatusesFile(StatusesFileName, StatusesFile)
+  }
+  return true
+}
+
+func Init() {
+  StatusesFileName := getStatusesFileName()
+
+  if (setting.PathExists(StatusesFileName)) {
+    if (!loadStatusesFile(StatusesFileName)) {
+      log.Info("NetCrunch: Failed to load statuses")
+    }
+  } else {
+    DefaultStatusesFile := ini.Empty()
+    DefaultStatusesFile.NewSection("Initialization")
+    DefaultStatusesFile.Section("Initialization").NewKey("success", "false")
+    if (writeStatusesFile(StatusesFileName, DefaultStatusesFile) &&
+        loadStatusesFile(StatusesFileName)) {
+      log.Info("NetCrunch: Statuses created")
+    } else {
+      log.Info("NetCrunch: Statuses creation error")
+    }
+  }
+
+  upgrade()
 }
