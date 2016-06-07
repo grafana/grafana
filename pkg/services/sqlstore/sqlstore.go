@@ -81,7 +81,7 @@ func NewEngine() {
 	err = SetEngine(x, setting.Env == setting.DEV)
 
 	if err != nil {
-		sqlog.Error("Fail to initialize orm engine: %v", err)
+		sqlog.Error("Fail to initialize orm engine", "error", err)
 		os.Exit(1)
 	}
 }
