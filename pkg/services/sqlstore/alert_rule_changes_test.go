@@ -21,7 +21,7 @@ func TestAlertRuleChangesDataAccess(t *testing.T) {
 
 		Convey("When dashboard is removed", func() {
 			items := []*m.AlertRule{
-				&m.AlertRule{
+				{
 					PanelId:      1,
 					DashboardId:  testDash.Id,
 					Query:        "Query",
@@ -48,7 +48,6 @@ func TestAlertRuleChangesDataAccess(t *testing.T) {
 
 			SaveAlerts(&cmd)
 
-			query := &m.GetAlertChangesQuery{OrgId: FakeOrgId}
 			er := GetAlertRuleChanges(query)
 			So(er, ShouldBeNil)
 			So(len(query.Result), ShouldEqual, 1)
