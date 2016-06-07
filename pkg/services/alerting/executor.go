@@ -19,6 +19,13 @@ var (
 )
 
 type ExecutorImpl struct {
+	log log.Logger
+}
+
+func NewExecutor() *ExecutorImpl {
+	return &ExecutorImpl{
+		log: log.New("alerting.executor"),
+	}
 }
 
 type compareFn func(float64, float64) bool
@@ -147,10 +154,10 @@ func (e *ExecutorImpl) GetRequestForAlertRule(rule *AlertRule, datasource *m.Dat
 }
 
 func (e *ExecutorImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice) *AlertResult {
-	log.Trace("Alerting: executor.evaluateRule: %v, query result: series: %v", rule.Name, len(series))
+	e.log.Debug("Evaluating Alerting Rule", "seriesCount", len(series), "ruleName", rule.Name)
 
 	for _, serie := range series {
-		log.Info("Alerting: executor.validate: %v", serie.Name)
+		log.Debug("Evaluating series", "series", serie.Name)
 
 		if aggregator[rule.Aggregator] == nil {
 			continue

@@ -19,8 +19,6 @@ func Init() {
 		return
 	}
 
-	log.Info("Alerting: Initializing alerting engine...")
-
 	engine = NewEngine()
 	engine.Start()
 

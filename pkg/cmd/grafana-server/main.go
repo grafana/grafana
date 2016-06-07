@@ -40,7 +40,6 @@ func init() {
 }
 
 func main() {
-
 	v := flag.Bool("v", false, "prints current version and exits")
 	flag.Parse()
 	if *v {
@@ -49,6 +48,9 @@ func main() {
 	}
 
 	buildstampInt64, _ := strconv.ParseInt(buildstamp, 10, 64)
+	if buildstampInt64 == 0 {
+		buildstampInt64 = time.Now().Unix()
+	}
 
 	setting.BuildVersion = version
 	setting.BuildCommit = commit
@@ -87,8 +89,8 @@ func initRuntime() {
 		log.Fatal(3, err.Error())
 	}
 
-	log.Info("Starting Grafana")
-	log.Info("Version: %v, Commit: %v, Build date: %v", setting.BuildVersion, setting.BuildCommit, time.Unix(setting.BuildStamp, 0))
+	logger := log.New("main")
+	logger.Info("Starting Grafana", "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0))
 
 	setting.LogConfigurationInfo()
 

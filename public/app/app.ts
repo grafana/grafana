@@ -41,10 +41,11 @@ export class GrafanaApp {
     var app = angular.module('grafana', []);
     app.constant('grafanaVersion', "@grafanaVersion@");
 
-    app.config(($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) => {
+    app.config(($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $httpProvider, $provide) => {
       if (config.buildInfo.env !== 'development') {
         $compileProvider.debugInfoEnabled(false);
       }
+      $httpProvider.useApplyAsync(true);
 
       this.registerFunctions.controller = $controllerProvider.register;
       this.registerFunctions.directive  = $compileProvider.directive;

@@ -14,6 +14,8 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var metricsLogger log.Logger = log.New("metrics")
+
 func Init() {
 	settings := readSettings()
 	initMetricVars(settings)
@@ -54,7 +56,7 @@ func sendUsageStats() {
 		return
 	}
 
-	log.Trace("Sending anonymous usage stats to stats.grafana.org")
+	metricsLogger.Debug("Sending anonymous usage stats to stats.grafana.org")
 
 	version := strings.Replace(setting.BuildVersion, ".", "_", -1)
 
@@ -66,7 +68,7 @@ func sendUsageStats() {
 
 	statsQuery := m.GetSystemStatsQuery{}
 	if err := bus.Dispatch(&statsQuery); err != nil {
-		log.Error(3, "Failed to get system stats", err)
+		metricsLogger.Error("Failed to get system stats", "error", err)
 		return
 	}
 
@@ -80,7 +82,7 @@ func sendUsageStats() {
 
 	dsStats := m.GetDataSourceStatsQuery{}
 	if err := bus.Dispatch(&dsStats); err != nil {
-		log.Error(3, "Failed to get datasource stats", err)
+		metricsLogger.Error("Failed to get datasource stats", "error", err)
 		return
 	}
 

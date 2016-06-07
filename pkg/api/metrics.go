@@ -87,3 +87,9 @@ func GetInternalMetrics(c *middleware.Context) Response {
 		},
 	}
 }
+
+// Genereates a index out of range error
+func GenerateError(c *middleware.Context) Response {
+	var array []string
+	return Json(200, array[20])
+}

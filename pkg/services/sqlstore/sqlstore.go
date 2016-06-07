@@ -40,8 +40,8 @@ var (
 	}
 
 	mysqlConfig MySQLConfig
-
-	UseSQLite3 bool
+	UseSQLite3  bool
+	sqlog       log.Logger = log.New("sqlstore")
 )
 
 func EnsureAdminUser() {
@@ -74,13 +74,15 @@ func NewEngine() {
 	x, err := getEngine()
 
 	if err != nil {
-		log.Fatal(3, "Sqlstore: Fail to connect to database: %v", err)
+		sqlog.Crit("Fail to connect to database", "error", err)
+		os.Exit(1)
 	}
 
 	err = SetEngine(x, setting.Env == setting.DEV)
 
 	if err != nil {
-		log.Fatal(3, "fail to initialize orm engine: %v", err)
+		sqlog.Error("Fail to initialize orm engine: %v", err)
+		os.Exit(1)
 	}
 }
 
@@ -89,22 +91,10 @@ func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
 	dialect = migrator.NewDialect(x.DriverName())
 
 	migrator := migrator.NewMigrator(x)
-	migrator.LogLevel = log.INFO
 	migrations.AddMigrations(migrator)
 
 	if err := migrator.Start(); err != nil {
 		return fmt.Errorf("Sqlstore::Migration failed err: %v\n", err)
-	}
-
-	if enableLog {
-		logPath := path.Join(setting.LogsPath, "xorm.log")
-		os.MkdirAll(path.Dir(logPath), os.ModePerm)
-
-		f, err := os.Create(logPath)
-		if err != nil {
-			return fmt.Errorf("sqlstore.init(fail to create xorm.log): %v", err)
-		}
-		x.Logger = xorm.NewSimpleLogger(f)
 	}
 
 	return nil
@@ -158,8 +148,7 @@ func getEngine() (*xorm.Engine, error) {
 		return nil, fmt.Errorf("Unknown database type: %s", DbCfg.Type)
 	}
 
-	log.Info("Database: %v", DbCfg.Type)
-
+	sqlog.Info("Initializing DB", "dbtype", DbCfg.Type)
 	return xorm.NewEngine(DbCfg.Type, cnnstr)
 }
 
