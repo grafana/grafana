@@ -90,21 +90,40 @@ var logLevels = map[string]log15.Lvl{
 	"Critical": log15.LvlCrit,
 }
 
-func getLogLevel(key string, defaultName string, cfg *ini.File) (string, log15.Lvl) {
+func getLogLevelFromConfig(key string, defaultName string, cfg *ini.File) (string, log15.Lvl) {
 	levelName := cfg.Section(key).Key("level").In(defaultName, []string{"Trace", "Debug", "Info", "Warn", "Error", "Critical"})
+	level := getLogLevelFromString(levelName)
+	return levelName, level
+}
 
+func getLogLevelFromString(levelName string) log15.Lvl {
 	level, ok := logLevels[levelName]
+
 	if !ok {
 		Root.Error("Unknown log level", "level", levelName)
+		return log15.LvlError
 	}
 
-	return levelName, level
+	return level
+}
+
+func getFilters(filterStrArray []string) map[string]log15.Lvl {
+	filterMap := make(map[string]log15.Lvl)
+
+	for _, filterStr := range filterStrArray {
+		parts := strings.Split(filterStr, ":")
+		filterMap[parts[0]] = getLogLevelFromString(parts[1])
+	}
+
+	return filterMap
 }
 
 func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 	Close()
 
-	defaultLevelName, _ := getLogLevel("log", "Info", cfg)
+	defaultLevelName, _ := getLogLevelFromConfig("log", "Info", cfg)
+	defaultFilters := getFilters(cfg.Section("log").Key("filters").Strings(" "))
+
 	handlers := make([]log15.Handler, 0)
 
 	for _, mode := range modes {
@@ -115,12 +134,15 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 		}
 
 		// Log level.
-		_, level := getLogLevel("log."+mode, defaultLevelName, cfg)
+		_, level := getLogLevelFromConfig("log."+mode, defaultLevelName, cfg)
+		modeFilters := getFilters(sec.Key("filters").Strings(" "))
+
+		var handler log15.Handler
 
 		// Generate log configuration.
 		switch mode {
 		case "console":
-			handlers = append(handlers, log15.LvlFilterHandler(level, log15.StdoutHandler))
+			handler = log15.StdoutHandler
 		case "file":
 			fileName := sec.Key("file_name").MustString(filepath.Join(logsPath, "grafana.log"))
 			os.MkdirAll(filepath.Dir(fileName), os.ModePerm)
@@ -134,7 +156,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 			fileHandler.Init()
 
 			loggersToClose = append(loggersToClose, fileHandler)
-			handlers = append(handlers, log15.LvlFilterHandler(level, fileHandler))
+			handler = fileHandler
 
 			// case "conn":
 			// 	LogConfigs[i] = util.DynMap{
@@ -168,7 +190,41 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 			// 		"tag":      sec.Key("tag").MustString(""),
 			// 	}
 		}
+
+		for key, value := range defaultFilters {
+			if _, exist := modeFilters[key]; !exist {
+				modeFilters[key] = value
+			}
+		}
+
+		for key, value := range modeFilters {
+			fmt.Printf("key: %v, value: %v \n", key, value)
+		}
+
+		handler = LogFilterHandler(level, modeFilters, handler)
+		handlers = append(handlers, handler)
 	}
 
 	Root.SetHandler(log15.MultiHandler(handlers...))
+}
+
+func LogFilterHandler(maxLevel log15.Lvl, filters map[string]log15.Lvl, h log15.Handler) log15.Handler {
+	return log15.FilterHandler(func(r *log15.Record) (pass bool) {
+
+		if len(filters) > 0 {
+			for i := 0; i < len(r.Ctx); i += 2 {
+				key := r.Ctx[i].(string)
+				if key == "logger" {
+					loggerName, strOk := r.Ctx[i+1].(string)
+					if strOk {
+						if filterLevel, ok := filters[loggerName]; ok {
+							return r.Lvl <= filterLevel
+						}
+					}
+				}
+			}
+		}
+
+		return r.Lvl <= maxLevel
+	}, h)
 }

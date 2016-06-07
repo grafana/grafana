@@ -29,7 +29,7 @@ type MigrationLog struct {
 func NewMigrator(engine *xorm.Engine) *Migrator {
 	mg := &Migrator{}
 	mg.x = engine
-	mg.Logger = log.New("Migrator")
+	mg.Logger = log.New("migrator")
 	mg.migrations = make([]Migration, 0)
 	mg.dialect = NewDialect(mg.x.DriverName())
 	return mg

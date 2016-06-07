@@ -546,7 +546,12 @@ func readSessionConfig() {
 }
 
 func initLogging() {
+	// split on comma
 	LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), ",")
+	// also try space
+	if len(LogModes) == 1 {
+		LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), " ")
+	}
 	LogsPath = makeAbsolute(Cfg.Section("paths").Key("logs").String(), HomePath)
 	log.ReadLoggingConfig(LogModes, LogsPath, Cfg)
 }

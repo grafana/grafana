@@ -20,6 +20,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/metrics"
+	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
 )
 
@@ -40,9 +41,9 @@ func Logger() macaron.Handler {
 
 		status := rw.Status()
 		if status == 200 || status == 304 {
-			// if !setting.RouterLogging {
-			// 	return
-			// }
+			if !setting.RouterLogging {
+				return
+			}
 		}
 
 		if ctx, ok := c.Data["ctx"]; ok {
