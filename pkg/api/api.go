@@ -5,13 +5,14 @@ import (
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/live"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"gopkg.in/macaron.v1"
 )
 
 // Register adds http routes
-func Register(r *macaron.Macaron) {
+func Register(r *macaron.Macaron, restartChan chan struct{}) {
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
@@ -252,6 +253,17 @@ func Register(r *macaron.Macaron) {
 		r.Get("/users/:id/quotas", wrap(GetUserQuotas))
 		r.Put("/users/:id/quotas/:target", bind(m.UpdateUserQuotaCmd{}), wrap(UpdateUserQuota))
 		r.Get("/stats", AdminGetStats)
+		r.Put("/restart", func(c *middleware.Context) {
+			select {
+			case restartChan <- struct{}{}:
+				// restart sent.
+				log.Info("restart event emitted.")
+			default:
+				// restart already pending.
+				log.Info("restart channel full.")
+			}
+			c.JSON(200, "OK")
+		})
 	}, reqGrafanaAdmin)
 
 	// rendering
