@@ -110,6 +110,23 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           }
         }
 
+        function getLabelWidth(type, text, elem) {
+          var labelWidth = 0;
+          if (!rootScope.labelWidthCache) {
+            rootScope.labelWidthCache = {};
+          }
+          if (!rootScope.labelWidthCache[type]) {
+            rootScope.labelWidthCache[type] = {};
+          }
+          if (rootScope.labelWidthCache[type][text]) {
+            labelWidth = rootScope.labelWidthCache[type][text];
+          } else {
+            labelWidth = elem.width();
+            rootScope.labelWidthCache[type][text] = labelWidth;
+          }
+          return labelWidth;
+        }
+
         function drawHook(plot) {
           // Update legend values
           var yaxis = plot.getYAxes();
@@ -138,7 +155,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               .text(panel.yaxes[0].label)
               .appendTo(elem);
 
-            yaxisLabel.css("margin-top", yaxisLabel.width() / 2);
+            yaxisLabel[0].style.marginTop = (getLabelWidth('left', panel.yaxes[0].label, yaxisLabel) / 2) + 'px';
           }
 
           // add right axis labels
@@ -147,7 +164,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               .text(panel.yaxes[1].label)
               .appendTo(elem);
 
-            rightLabel.css("margin-top", rightLabel.width() / 2);
+            rightLabel[0].style.marginTop = (getLabelWidth('right', panel.yaxes[1].label, rightLabel) / 2) + 'px';
           }
         }
 
