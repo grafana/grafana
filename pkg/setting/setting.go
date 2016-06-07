@@ -138,6 +138,9 @@ var (
 
 	// QUOTA
 	Quota QuotaSettings
+
+	// logger
+	logger log.Logger
 )
 
 type CommandLineArgs struct {
@@ -148,6 +151,7 @@ type CommandLineArgs struct {
 
 func init() {
 	IsWindows = runtime.GOOS == "windows"
+	logger = log.New("settings")
 }
 
 func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
@@ -544,38 +548,31 @@ func readSessionConfig() {
 func initLogging() {
 	LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), ",")
 	LogsPath = makeAbsolute(Cfg.Section("paths").Key("logs").String(), HomePath)
-
 	log.ReadLoggingConfig(LogModes, LogsPath, Cfg)
 }
 
 func LogConfigurationInfo() {
 	var text bytes.Buffer
-	text.WriteString("Configuration Info\n")
 
-	text.WriteString("Config files:\n")
-	for i, file := range configFiles {
-		text.WriteString(fmt.Sprintf("  [%d]: %s\n", i, file))
+	for _, file := range configFiles {
+		logger.Info("Config loaded from", "file", file)
 	}
 
 	if len(appliedCommandLineProperties) > 0 {
-		text.WriteString("Command lines overrides:\n")
-		for i, prop := range appliedCommandLineProperties {
-			text.WriteString(fmt.Sprintf("  [%d]: %s\n", i, prop))
+		for _, prop := range appliedCommandLineProperties {
+			logger.Info("Config overriden from command line", "arg", prop)
 		}
 	}
 
 	if len(appliedEnvOverrides) > 0 {
 		text.WriteString("\tEnvironment variables used:\n")
-		for i, prop := range appliedEnvOverrides {
-			text.WriteString(fmt.Sprintf("  [%d]: %s\n", i, prop))
+		for _, prop := range appliedEnvOverrides {
+			logger.Info("Config overriden from Environment variable", "var", prop)
 		}
 	}
 
-	text.WriteString("Paths:\n")
-	text.WriteString(fmt.Sprintf("  home: %s\n", HomePath))
-	text.WriteString(fmt.Sprintf("  data: %s\n", DataPath))
-	text.WriteString(fmt.Sprintf("  logs: %s\n", LogsPath))
-	text.WriteString(fmt.Sprintf("  plugins: %s\n", PluginsPath))
-
-	log.Info(text.String())
+	logger.Info("Path Home", "path", HomePath)
+	logger.Info("Path Data", "path", DataPath)
+	logger.Info("Path Logs", "path", LogsPath)
+	logger.Info("Path Plugins", "path", PluginsPath)
 }

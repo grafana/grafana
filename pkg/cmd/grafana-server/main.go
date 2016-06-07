@@ -55,9 +55,6 @@ func main() {
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
 
-	logger := log.New("main")
-	logger.Info("Starting Grafana", "version", version, "commit", commit, "compiled", time.Unix(buildstampInt64, 0))
-
 	go listenToSystemSignels()
 
 	flag.Parse()
@@ -90,8 +87,8 @@ func initRuntime() {
 		log.Fatal(3, err.Error())
 	}
 
-	log.Info("Starting Grafana")
-	log.Info("Version: %v, Commit: %v, Build date: %v", setting.BuildVersion, setting.BuildCommit, time.Unix(setting.BuildStamp, 0))
+	logger := log.New("main")
+	logger.Info("Starting Grafana", "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0))
 
 	setting.LogConfigurationInfo()
 

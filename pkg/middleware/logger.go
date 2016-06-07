@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
 )
 
@@ -28,11 +27,6 @@ func Logger() macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		start := time.Now()
 		c.Data["perfmon.start"] = start
-
-		uname := c.GetCookie(setting.CookieUserName)
-		if len(uname) == 0 {
-			uname = "-"
-		}
 
 		rw := res.(macaron.ResponseWriter)
 		c.Next()
@@ -46,13 +40,14 @@ func Logger() macaron.Handler {
 
 		status := rw.Status()
 		if status == 200 || status == 304 {
-			if !setting.RouterLogging {
-				return
-			}
+			// if !setting.RouterLogging {
+			// 	return
+			// }
 		}
 
 		if ctx, ok := c.Data["ctx"]; ok {
-			ctx.(*Context).Logger.Info("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "uname", uname, "time_ms", timeTakenMs, "size", rw.Size())
+			ctxTyped := ctx.(*Context)
+			ctxTyped.Logger.Info("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "uname", ctxTyped.Login, "time_ns", timeTakenMs, "size", rw.Size())
 		}
 	}
 }
