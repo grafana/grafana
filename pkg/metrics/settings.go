@@ -1,9 +1,6 @@
 package metrics
 
-import (
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/setting"
-)
+import "github.com/grafana/grafana/pkg/setting"
 
 type MetricPublisher interface {
 	Publish(metrics []Metric)
@@ -24,7 +21,7 @@ func readSettings() *MetricSettings {
 
 	var section, err = setting.Cfg.GetSection("metrics")
 	if err != nil {
-		log.Fatal(3, "Unable to find metrics config section")
+		metricsLogger.Crit("Unable to find metrics config section", "error", err)
 		return nil
 	}
 
@@ -36,9 +33,9 @@ func readSettings() *MetricSettings {
 	}
 
 	if graphitePublisher, err := CreateGraphitePublisher(); err != nil {
-		log.Error(3, "Metrics: Failed to init Graphite metric publisher", err)
+		metricsLogger.Error("Failed to init Graphite metric publisher", "error", err)
 	} else if graphitePublisher != nil {
-		log.Info("Metrics: Graphite publisher initialized")
+		metricsLogger.Info("Metrics publisher initialized", "type", "graphite")
 		settings.Publishers = append(settings.Publishers, graphitePublisher)
 	}
 

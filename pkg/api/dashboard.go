@@ -31,7 +31,6 @@ func isDashboardStarredByUser(c *middleware.Context, dashId int64) (bool, error)
 }
 
 func GetDashboard(c *middleware.Context) {
-	log.New("test", "asd").Error("muppets")
 	slug := strings.ToLower(c.Params(":slug"))
 
 	query := m.GetDashboardQuery{Slug: slug, OrgId: c.OrgId}

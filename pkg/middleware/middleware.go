@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"fmt"
 	"strconv"
 	"strings"
 
@@ -52,9 +51,7 @@ func GetContextHandler() macaron.Handler {
 		}
 
 		ctx.Logger = log.New("context", "user", ctx.UserId, "orgId", ctx.OrgId)
-		// set ctx in data array on the original context
-		c.Data["ctx"] = ctx
-		fmt.Printf("c: %v\n", c)
+		ctx.Data["ctx"] = ctx
 
 		c.Map(ctx)
 	}
