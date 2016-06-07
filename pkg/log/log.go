@@ -158,29 +158,6 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 			loggersToClose = append(loggersToClose, fileHandler)
 			handler = fileHandler
 
-			// case "conn":
-			// 	LogConfigs[i] = util.DynMap{
-			// 		"level":          level,
-			// 		"reconnectOnMsg": sec.Key("reconnect_on_msg").MustBool(),
-			// 		"reconnect":      sec.Key("reconnect").MustBool(),
-			// 		"net":            sec.Key("protocol").In("tcp", []string{"tcp", "unix", "udp"}),
-			// 		"addr":           sec.Key("addr").MustString(":7020"),
-			// 	}
-			// case "smtp":
-			// 	LogConfigs[i] = util.DynMap{
-			// 		"level":     level,
-			// 		"user":      sec.Key("user").MustString("example@example.com"),
-			// 		"passwd":    sec.Key("passwd").MustString("******"),
-			// 		"host":      sec.Key("host").MustString("127.0.0.1:25"),
-			// 		"receivers": sec.Key("receivers").MustString("[]"),
-			// 		"subject":   sec.Key("subject").MustString("Diagnostic message from serve"),
-			// 	}
-			// case "database":
-			// 	LogConfigs[i] = util.DynMap{
-			// 		"level":  level,
-			// 		"driver": sec.Key("driver").String(),
-			// 		"conn":   sec.Key("conn").String(),
-			// 	}
 			// case "syslog":
 			// 	LogConfigs[i] = util.DynMap{
 			// 		"level":    level,

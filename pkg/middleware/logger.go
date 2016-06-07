@@ -48,7 +48,7 @@ func Logger() macaron.Handler {
 
 		if ctx, ok := c.Data["ctx"]; ok {
 			ctxTyped := ctx.(*Context)
-			ctxTyped.Logger.Info("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "uname", ctxTyped.Login, "time_ns", timeTakenMs, "size", rw.Size())
+			ctxTyped.Logger.Info("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "time_ns", timeTakenMs, "size", rw.Size())
 		}
 	}
 }
