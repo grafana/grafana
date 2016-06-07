@@ -64,7 +64,7 @@ Licensed under the MIT license.
 	// Requiring a container is a little iffy, but unfortunately canvas
 	// operations don't work unless the canvas is attached to the DOM.
 
-	function Canvas(cls, container) {
+	function Canvas(cls, container, width, height) {
 
 		var element = container.children("." + cls)[0];
 
@@ -111,7 +111,7 @@ Licensed under the MIT license.
 
 		// Size the canvas to match the internal dimensions of its container
 
-		this.resize(container.width(), container.height());
+		this.resize(width, height);
 
 		// Collection of HTML div layers for text overlaid onto the canvas
 
@@ -1338,8 +1338,10 @@ Licensed under the MIT license.
             if (placeholder.css("position") == 'static')
                 placeholder.css("position", "relative"); // for positioning labels and overlay
 
-            surface = new Canvas("flot-base", placeholder);
-            overlay = new Canvas("flot-overlay", placeholder); // overlay canvas for interactive features
+            var placeholderWidth = placeholder.width();
+            var placeholderHeight = placeholder.height();
+            surface = new Canvas("flot-base", placeholder, placeholderWidth, placeholderHeight);
+            overlay = new Canvas("flot-overlay", placeholder, placeholderWidth, placeholderHeight); // overlay canvas for interactive features
 
             ctx = surface.context;
             octx = overlay.context;
