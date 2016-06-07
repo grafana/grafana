@@ -50,7 +50,7 @@ func GetContextHandler() macaron.Handler {
 			initContextWithAnonymousUser(ctx) {
 		}
 
-		ctx.Logger = log.New("context", "user", ctx.UserId, "orgId", ctx.OrgId)
+		ctx.Logger = log.New("context", "userId", ctx.UserId, "orgId", ctx.OrgId, "uname", ctx.Login)
 		ctx.Data["ctx"] = ctx
 
 		c.Map(ctx)
