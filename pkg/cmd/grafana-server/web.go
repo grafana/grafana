@@ -26,7 +26,7 @@ func newMacaron() *macaron.Macaron {
 	m := macaron.New()
 
 	m.Use(middleware.Logger())
-	m.Use(macaron.Recovery())
+	m.Use(middleware.Recovery())
 
 	if setting.EnableGzip {
 		m.Use(middleware.Gziper())
@@ -34,7 +34,7 @@ func newMacaron() *macaron.Macaron {
 
 	for _, route := range plugins.StaticRoutes {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)
-		log.Debug("Plugins: Adding route %s -> %s", pluginRoute, route.Directory)
+		logger.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
 		mapStatic(m, route.Directory, "", pluginRoute)
 	}
 
