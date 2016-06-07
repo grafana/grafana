@@ -7,6 +7,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+  "github.com/grafana/grafana/pkg/netcrunch"
 )
 
 var (
@@ -27,7 +28,10 @@ func Init() {
 func AuthenticateUser(query *LoginUserQuery) error {
 	err := loginUsingGrafanaDB(query)
 	if err == nil || err != ErrInvalidCredentials {
-		return err
+    if (err == nil) {
+      netcrunch.SetInitializationSuccess()
+    }
+    return err
 	}
 
 	if setting.LdapEnabled {
