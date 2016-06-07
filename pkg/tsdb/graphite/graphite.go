@@ -7,8 +7,8 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/Unknwon/log"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -20,7 +20,10 @@ func NewGraphiteExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
 	return &GraphiteExecutor{dsInfo}
 }
 
+var glog log.Logger
+
 func init() {
+	glog = log.New("tsdb.graphite")
 	tsdb.RegisterExecutor("graphite", NewGraphiteExecutor)
 }
 
@@ -57,7 +60,7 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	var data []TargetResponseDTO
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		log.Info("Error: %v", string(body))
+		glog.Info("Failed to unmarshal graphite response", "error", err)
 		result.Error = err
 		return result
 	}

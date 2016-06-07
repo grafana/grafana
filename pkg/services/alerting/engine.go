@@ -92,7 +92,7 @@ func (e *Engine) executeJob(job *AlertJob) {
 
 	case result := <-resultChan:
 		result.Duration = float64(time.Since(now).Nanoseconds()) / float64(1000000)
-		e.log.Debug("Job Execution done", "time_taken", result.Duration, "ruleId", job.Rule.Id)
+		e.log.Debug("Job Execution done", "timeTakenMs", result.Duration, "ruleId", job.Rule.Id)
 		e.resultQueue <- result
 	}
 }
