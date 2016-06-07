@@ -8,13 +8,15 @@ startGrafana() {
   if [ -x /bin/systemctl ]; then
     /bin/systemctl daemon-reload
     /bin/systemctl start grafana-server
-	elif [ -x "/etc/init.d/grafana-server" ]; then
-		if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
-			invoke-rc.d grafana-server start || true
-		else
-			/etc/init.d/grafana-server start || true
-		fi
-	fi
+  elif [ -f "/etc/init/grafana-server.conf" ]; then
+    start grafana-server
+  elif [ -x "/etc/init.d/grafana-server" ]; then
+    if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
+      invoke-rc.d grafana-server start || true
+    else
+      /etc/init.d/grafana-server start || true
+    fi
+  fi
 }
 
 case "$1" in
