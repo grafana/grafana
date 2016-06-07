@@ -15,61 +15,61 @@ import (
 	"github.com/inconshreveable/log15"
 )
 
-var rootLogger log15.Logger
+var Root log15.Logger
 var loggersToClose []DisposableHandler
 
 func init() {
 	loggersToClose = make([]DisposableHandler, 0)
-	rootLogger = log15.Root()
+	Root = log15.Root()
 }
 
 func New(logger string, ctx ...interface{}) Logger {
 	params := append([]interface{}{"logger", logger}, ctx...)
-	return rootLogger.New(params...)
+	return Root.New(params...)
 }
 
 func Trace(format string, v ...interface{}) {
-	rootLogger.Debug(fmt.Sprintf(format, v))
+	Root.Debug(fmt.Sprintf(format, v))
 }
 
 func Debug(format string, v ...interface{}) {
-	rootLogger.Debug(fmt.Sprintf(format, v))
+	Root.Debug(fmt.Sprintf(format, v))
 }
 
 func Debug2(message string, v ...interface{}) {
-	rootLogger.Debug(message, v...)
+	Root.Debug(message, v...)
 }
 
 func Info(format string, v ...interface{}) {
-	rootLogger.Info(fmt.Sprintf(format, v))
+	Root.Info(fmt.Sprintf(format, v))
 }
 
 func Info2(message string, v ...interface{}) {
-	rootLogger.Info(message, v...)
+	Root.Info(message, v...)
 }
 
 func Warn(format string, v ...interface{}) {
-	rootLogger.Warn(fmt.Sprintf(format, v))
+	Root.Warn(fmt.Sprintf(format, v))
 }
 
 func Warn2(message string, v ...interface{}) {
-	rootLogger.Warn(message, v...)
+	Root.Warn(message, v...)
 }
 
 func Error(skip int, format string, v ...interface{}) {
-	rootLogger.Error(fmt.Sprintf(format, v))
+	Root.Error(fmt.Sprintf(format, v))
 }
 
 func Error2(message string, v ...interface{}) {
-	rootLogger.Error(message, v...)
+	Root.Error(message, v...)
 }
 
 func Critical(skip int, format string, v ...interface{}) {
-	rootLogger.Crit(fmt.Sprintf(format, v))
+	Root.Crit(fmt.Sprintf(format, v))
 }
 
 func Fatal(skip int, format string, v ...interface{}) {
-	rootLogger.Crit(fmt.Sprintf(format, v))
+	Root.Crit(fmt.Sprintf(format, v))
 	Close()
 	os.Exit(1)
 }
@@ -95,7 +95,7 @@ func getLogLevel(key string, defaultName string, cfg *ini.File) (string, log15.L
 
 	level, ok := logLevels[levelName]
 	if !ok {
-		rootLogger.Error("Unknown log level", "level", levelName)
+		Root.Error("Unknown log level", "level", levelName)
 	}
 
 	return levelName, level
@@ -111,7 +111,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 		mode = strings.TrimSpace(mode)
 		sec, err := cfg.GetSection("log." + mode)
 		if err != nil {
-			rootLogger.Error("Unknown log mode", "mode", mode)
+			Root.Error("Unknown log mode", "mode", mode)
 		}
 
 		// Log level.
@@ -134,7 +134,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 			fileHandler.Init()
 
 			loggersToClose = append(loggersToClose, fileHandler)
-			handlers = append(handlers, log15.LazyHandler(fileHandler))
+			handlers = append(handlers, log15.LvlFilterHandler(level, fileHandler))
 
 			// case "conn":
 			// 	LogConfigs[i] = util.DynMap{
@@ -170,5 +170,5 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 		}
 	}
 
-	rootLogger.SetHandler(log15.MultiHandler(handlers...))
+	Root.SetHandler(log15.MultiHandler(handlers...))
 }
