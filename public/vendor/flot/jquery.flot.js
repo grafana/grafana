@@ -376,9 +376,19 @@ Licensed under the MIT license.
         info.width = size.width;
         info.height = size.height;
 			} else {
-        info.width = element.outerWidth(true);
-        info.height = element.outerHeight(true);
-        this._textSizeCache[text] = { width: info.width, height: info.height };
+        if (true) {
+          var mc = document.createElement('canvas');
+          var ctx = mc.getContext('2d');
+          ctx.font = font;
+          var metrics = ctx.measureText(text);
+          info.width = metrics.width;
+          info.height = 10;
+          this._textSizeCache[text] = { width: metrics.width, height: info.height };
+        } else {
+          info.width = element.outerWidth(true);
+          info.height = element.outerHeight(true);
+          this._textSizeCache[text] = { width: info.width, height: info.height };
+        }
 			}
 			element.detach();
 		}
