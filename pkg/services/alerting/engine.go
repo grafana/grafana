@@ -114,11 +114,11 @@ func (e *Engine) resultHandler() {
 
 				result.State = alertstates.Critical
 				result.Description = fmt.Sprintf("Failed to run check after %d retires, Error: %v", maxRetries, result.Error)
-				saveState(result)
+				e.saveState(result)
 			}
 		} else {
 			result.AlertJob.RetryCount = 0
-			saveState(result)
+			e.saveState(result)
 		}
 	}
 }

@@ -48,6 +48,7 @@ func TestAlertRuleChangesDataAccess(t *testing.T) {
 
 			SaveAlerts(&cmd)
 
+			query := &m.GetAlertChangesQuery{OrgId: FakeOrgId}
 			er := GetAlertRuleChanges(query)
 			So(er, ShouldBeNil)
 			So(len(query.Result), ShouldEqual, 1)

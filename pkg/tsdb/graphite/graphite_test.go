@@ -16,7 +16,7 @@ func TestGraphite(t *testing.T) {
 		})
 
 		queries := tsdb.QuerySlice{
-			&tsdb.Query{Query: "apps.backend.*.counters.requests.count"},
+			&tsdb.Query{Query: "{\"target\": \"apps.backend.*.counters.requests.count\"}"},
 		}
 		context := tsdb.NewQueryContext(queries, tsdb.TimeRange{})
 

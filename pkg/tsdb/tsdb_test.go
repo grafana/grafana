@@ -55,7 +55,7 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When executing request with one query", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, Type: "test"}},
+				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
 			},
 		}
 
@@ -74,8 +74,8 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When executing one request with two queries from same data source", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, Type: "test"}},
-				{RefId: "B", Query: "asd", DataSource: &DataSourceInfo{Id: 1, Type: "test"}},
+				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "B", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
 			},
 		}
 
@@ -100,9 +100,9 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When executing one request with three queries from different datasources", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, Type: "test"}},
-				{RefId: "B", Query: "asd", DataSource: &DataSourceInfo{Id: 1, Type: "test"}},
-				{RefId: "C", Query: "asd", DataSource: &DataSourceInfo{Id: 2, Type: "test"}},
+				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "B", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "C", Query: "asd", DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}},
 			},
 		}
 
@@ -117,24 +117,22 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When query uses data source of unknown type", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, Type: "asdasdas"}},
+				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "asdasdas"}},
 			},
 		}
 
-		res, err := HandleRequest(req)
-		So(err, ShouldBeNil)
-
-		Convey("Should return error", func() {
-			So(res.Results["A"].Error.Error(), ShouldContainSubstring, "not find")
-		})
+		_, err := HandleRequest(req)
+		So(err, ShouldNotBeNil)
 	})
 
 	Convey("When executing request that depend on other query", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, Type: "test"}},
-				{RefId: "B", Query: "#A / 2", DataSource: &DataSourceInfo{Id: 2, Type: "test"},
-					Depends: []string{"A"},
+				{
+					RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"},
+				},
+				{
+					RefId: "B", Query: "#A / 2", DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}, Depends: []string{"A"},
 				},
 			},
 		}
