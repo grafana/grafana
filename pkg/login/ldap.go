@@ -219,7 +219,8 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 
 		// add role
 		cmd := m.AddOrgUserCommand{UserId: user.Id, Role: group.OrgRole, OrgId: group.OrgId}
-		if err := bus.Dispatch(&cmd); err != nil {
+		err := bus.Dispatch(&cmd)
+		if err != nil && err != m.ErrOrgNotFound {
 			return err
 		}
 
