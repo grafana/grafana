@@ -31,7 +31,7 @@ define([
       it('should update querystring and view state', function() {
         var updateState = {fullscreen: true, edit: true, panelId: 1};
         viewState.update(updateState);
-        expect(location.search()).to.eql({fullscreen: true, edit: true, panelId: 1, org: 19});
+        expect(location.search()).to.eql({fullscreen: true, edit: true, panelId: 1});
         expect(viewState.dashboard.meta.fullscreen).to.be(true);
         expect(viewState.state.fullscreen).to.be(true);
       });
@@ -41,7 +41,6 @@ define([
       it('should remove params from query string', function() {
         viewState.update({fullscreen: true, panelId: 1, edit: true});
         viewState.update({fullscreen: false});
-        expect(location.search()).to.eql({org: 19});
         expect(viewState.dashboard.meta.fullscreen).to.be(false);
         expect(viewState.state.fullscreen).to.be(null);
       });

@@ -4,6 +4,7 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import angular from 'angular';
 import $ from 'jquery';
+import {profiler} from 'app/core/profiler';
 
 const TITLE_HEIGHT = 25;
 const EMPTY_TITLE_HEIGHT = 9;
@@ -31,6 +32,7 @@ export class PanelCtrl {
   height: any;
   containerHeight: any;
   events: Emitter;
+  timing: any;
 
   constructor($scope, $injector) {
     this.$injector = $injector;
@@ -38,6 +40,7 @@ export class PanelCtrl {
     this.$timeout = $injector.get('$timeout');
     this.editorTabIndex = 0;
     this.events = new Emitter();
+    this.timing = {};
 
     var plugin = config.panels[this.panel.type];
     if (plugin) {
@@ -57,7 +60,7 @@ export class PanelCtrl {
   }
 
   renderingCompleted() {
-    this.$scope.$root.performance.panelsRendered++;
+    profiler.renderingCompleted(this.panel.id, this.timing);
   }
 
   refresh() {
@@ -169,6 +172,7 @@ export class PanelCtrl {
     }
 
     this.calculatePanelHeight();
+    this.timing.renderStart = new Date().getTime();
     this.events.emit('render', payload);
   }
 

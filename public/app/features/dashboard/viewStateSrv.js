@@ -92,7 +92,6 @@ function (angular, _, $) {
       state.fullscreen = state.fullscreen ? true : null;
       state.edit =  (state.edit === "true" || state.edit === true) || null;
       state.editview = state.editview || null;
-      state.org = contextSrv.user.orgId;
       return state;
     };
 
@@ -100,7 +99,6 @@ function (angular, _, $) {
       var urlState = _.clone(this.state);
       urlState.fullscreen = this.state.fullscreen ? true : null;
       urlState.edit = this.state.edit ? true : null;
-      urlState.org = contextSrv.user.orgId;
       return urlState;
     };
 

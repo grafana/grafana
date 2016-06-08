@@ -18,6 +18,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
   'use strict';
 
   var module = angular.module('grafana.directives');
+  var labelWidthCache = {};
+  var panelWidthCache = {};
 
   module.directive('grafanaGraph', function($rootScope, timeSrv) {
     return {
@@ -31,6 +33,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         var sortedSeries;
         var legendSideLastValue = null;
         var rootScope = scope.$root;
+        var panelWidth = 0;
 
         rootScope.onAppEvent('setCrosshair', function(event, info) {
           // do not need to to this if event is from this panel
@@ -104,9 +107,19 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             return true;
           }
 
-          if (elem.width() === 0) {
+          if (panelWidth === 0) {
             return true;
           }
+        }
+
+        function getLabelWidth(text, elem) {
+          var labelWidth = labelWidthCache[text];
+
+          if (!labelWidth) {
+            labelWidth = labelWidthCache[text] = elem.width();
+          }
+
+          return labelWidth;
         }
 
         function drawHook(plot) {
@@ -137,7 +150,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               .text(panel.yaxes[0].label)
               .appendTo(elem);
 
-            yaxisLabel.css("margin-top", yaxisLabel.width() / 2);
+            yaxisLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[0].label, yaxisLabel) / 2) + 'px';
           }
 
           // add right axis labels
@@ -146,7 +159,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               .text(panel.yaxes[1].label)
               .appendTo(elem);
 
-            rightLabel.css("margin-top", rightLabel.width() / 2);
+            rightLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[1].label, rightLabel) / 2) + 'px';
           }
         }
 
@@ -159,6 +172,11 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
         // Function for rendering panel
         function render_panel() {
+          panelWidth = panelWidthCache[panel.span];
+          if (!panelWidth) {
+            panelWidth = panelWidthCache[panel.span] = elem.width();
+          }
+
           if (shouldAbortRender()) {
             return;
           }
@@ -276,7 +294,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         }
 
         function addTimeAxis(options) {
-          var ticks = elem.width() / 100;
+          var ticks = panelWidth / 100;
           var min = _.isUndefined(ctrl.range.from) ? null : ctrl.range.from.valueOf();
           var max = _.isUndefined(ctrl.range.to) ? null : ctrl.range.to.valueOf();
 
@@ -444,7 +462,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         }
 
         function render_panel_as_graphite_png(url) {
-          url += '&width=' + elem.width();
+          url += '&width=' + panelWidth;
           url += '&height=' + elem.css('height').replace('px', '');
           url += '&bgcolor=1f1f1f'; // @grayDarker & @grafanaPanelBackground
           url += '&fgcolor=BBBFC2'; // @textColor & @grayLighter

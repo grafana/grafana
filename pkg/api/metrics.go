@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetTestMetrics(c *middleware.Context) {
+func GetTestMetrics(c *middleware.Context) Response {
 	from := c.QueryInt64("from")
 	to := c.QueryInt64("to")
 	maxDataPoints := c.QueryInt64("maxDataPoints")
@@ -37,7 +37,7 @@ func GetTestMetrics(c *middleware.Context) {
 		result.Data[seriesIndex].DataPoints = points
 	}
 
-	c.JSON(200, &result)
+	return Json(200, &result)
 }
 
 func GetInternalMetrics(c *middleware.Context) Response {

@@ -13,6 +13,7 @@ import (
 	"gopkg.in/ini.v1"
 
 	"github.com/inconshreveable/log15"
+	"github.com/inconshreveable/log15/term"
 )
 
 var Root log15.Logger
@@ -82,16 +83,17 @@ func Close() {
 }
 
 var logLevels = map[string]log15.Lvl{
-	"Trace":    log15.LvlDebug,
-	"Debug":    log15.LvlDebug,
-	"Info":     log15.LvlInfo,
-	"Warn":     log15.LvlWarn,
-	"Error":    log15.LvlError,
-	"Critical": log15.LvlCrit,
+	"trace":    log15.LvlDebug,
+	"debug":    log15.LvlDebug,
+	"info":     log15.LvlInfo,
+	"warn":     log15.LvlWarn,
+	"error":    log15.LvlError,
+	"critical": log15.LvlCrit,
 }
 
 func getLogLevelFromConfig(key string, defaultName string, cfg *ini.File) (string, log15.Lvl) {
-	levelName := cfg.Section(key).Key("level").In(defaultName, []string{"Trace", "Debug", "Info", "Warn", "Error", "Critical"})
+	levelName := cfg.Section(key).Key("level").MustString("info")
+	levelName = strings.ToLower(levelName)
 	level := getLogLevelFromString(levelName)
 	return levelName, level
 }
@@ -118,10 +120,26 @@ func getFilters(filterStrArray []string) map[string]log15.Lvl {
 	return filterMap
 }
 
+func getLogFormat(format string) log15.Format {
+	switch format {
+	case "console":
+		if term.IsTty(os.Stdout.Fd()) {
+			return log15.TerminalFormat()
+		}
+		return log15.LogfmtFormat()
+	case "text":
+		return log15.LogfmtFormat()
+	case "json":
+		return log15.JsonFormat()
+	default:
+		return log15.LogfmtFormat()
+	}
+}
+
 func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 	Close()
 
-	defaultLevelName, _ := getLogLevelFromConfig("log", "Info", cfg)
+	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
 	defaultFilters := getFilters(cfg.Section("log").Key("filters").Strings(" "))
 
 	handlers := make([]log15.Handler, 0)
@@ -136,18 +154,20 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 		// Log level.
 		_, level := getLogLevelFromConfig("log."+mode, defaultLevelName, cfg)
 		modeFilters := getFilters(sec.Key("filters").Strings(" "))
+		format := getLogFormat(sec.Key("format").MustString(""))
 
 		var handler log15.Handler
 
 		// Generate log configuration.
 		switch mode {
 		case "console":
-			handler = log15.StdoutHandler
+			handler = log15.StreamHandler(os.Stdout, format)
 		case "file":
 			fileName := sec.Key("file_name").MustString(filepath.Join(logsPath, "grafana.log"))
 			os.MkdirAll(filepath.Dir(fileName), os.ModePerm)
 			fileHandler := NewFileWriter()
 			fileHandler.Filename = fileName
+			fileHandler.Format = format
 			fileHandler.Rotate = sec.Key("log_rotate").MustBool(true)
 			fileHandler.Maxlines = sec.Key("max_lines").MustInt(1000000)
 			fileHandler.Maxsize = 1 << uint(sec.Key("max_size_shift").MustInt(28))
@@ -157,25 +177,27 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 
 			loggersToClose = append(loggersToClose, fileHandler)
 			handler = fileHandler
+		case "syslog":
+			sysLogHandler := NewSyslog()
+			sysLogHandler.Format = format
+			sysLogHandler.Network = sec.Key("network").MustString("")
+			sysLogHandler.Address = sec.Key("address").MustString("")
+			sysLogHandler.Facility = sec.Key("facility").MustString("local7")
+			sysLogHandler.Tag = sec.Key("tag").MustString("")
 
-			// case "syslog":
-			// 	LogConfigs[i] = util.DynMap{
-			// 		"level":    level,
-			// 		"network":  sec.Key("network").MustString(""),
-			// 		"address":  sec.Key("address").MustString(""),
-			// 		"facility": sec.Key("facility").MustString("local7"),
-			// 		"tag":      sec.Key("tag").MustString(""),
-			// 	}
+			if err := sysLogHandler.Init(); err != nil {
+				Root.Error("Failed to init syslog log handler", "error", err)
+				os.Exit(1)
+			}
+
+			loggersToClose = append(loggersToClose, sysLogHandler)
+			handler = sysLogHandler
 		}
 
 		for key, value := range defaultFilters {
 			if _, exist := modeFilters[key]; !exist {
 				modeFilters[key] = value
 			}
-		}
-
-		for key, value := range modeFilters {
-			fmt.Printf("key: %v, value: %v \n", key, value)
 		}
 
 		handler = LogFilterHandler(level, modeFilters, handler)

@@ -8,6 +8,11 @@
 * **Theme**: Add default theme to config file [#5011](https://github.com/grafana/grafana/pull/5011)
 * **Page Footer**: Added page footer with links to docs, shows Grafana version and info if new version is available, closes [#4889](https://github.com/grafana/grafana/pull/4889)
 * **InfluxDB**: Add spread function, closes [#5211](https://github.com/grafana/grafana/issues/5211)
+* **Scripts**: Use restart instead of start for deb package script, closes [#5282](https://github.com/grafana/grafana/pull/5282)
+* **Logging**: Moved to structured logging lib, and moved to component specific level filters via config file, closes [#4590](https://github.com/grafana/grafana/issues/4590)
+
+## Breaking changes
+* **Logging** : Changed default logging output format (now structured into message, and key value pairs, with logger key acting as component). You can also no change in config to json log ouput.
 
 # 3.0.4 Patch release (2016-05-25)
 * **Panel**: Fixed blank dashboard issue when switching to other dashboard while in fullscreen edit mode, fixes [#5163](https://github.com/grafana/grafana/pull/5163)
