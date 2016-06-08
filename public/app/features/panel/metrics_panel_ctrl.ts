@@ -200,6 +200,11 @@ class MetricsPanelCtrl extends PanelCtrl {
       this.panel.snapshotData = result.data;
     }
 
+    if (!result || !result.data) {
+      console.log('Data source query result invalid, missing data field:', result);
+      result = {data: []};
+    }
+
     return this.events.emit('data-received', result.data);
   }
 
