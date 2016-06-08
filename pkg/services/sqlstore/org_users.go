@@ -26,6 +26,12 @@ func AddOrgUser(cmd *m.AddOrgUserCommand) error {
 			return m.ErrOrgUserAlreadyAdded
 		}
 
+		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.OrgId); err != nil {
+			return err
+		} else if len(res) != 1 {
+			return m.ErrOrgNotFound
+		}
+
 		entity := m.OrgUser{
 			OrgId:   cmd.OrgId,
 			UserId:  cmd.UserId,
