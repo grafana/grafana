@@ -60,6 +60,14 @@ function (angular, $, config, moment) {
         $scope.updateSubmenuVisibility();
         $scope.setWindowTitleAndTheme();
 
+        if ($scope.profilingEnabled) {
+          $scope.performance.panels = [];
+          $scope.performance.panelCount = 0;
+          $scope.dashboard.rows.forEach(function(row) {
+            $scope.performance.panelCount += row.panels.length;
+          });
+        }
+
         $scope.appEvent("dashboard-loaded", $scope.dashboard);
       }).catch(function(err) {
         if (err.data && err.data.message) { err.message = err.data.message; }
