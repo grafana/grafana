@@ -7,7 +7,7 @@ define([
 
   var module = angular.module('grafana.services');
 
-  module.service('annotationsSrv', function($rootScope, $q, datasourceSrv, alertSrv, timeSrv) {
+  module.service('annotationsSrv', function($rootScope, $q, datasourceSrv, alertSrv, timeSrv, templateSrv) {
     var promiseCached;
     var list = [];
     var self = this;
@@ -43,6 +43,7 @@ define([
           return;
         }
         return datasourceSrv.get(annotation.datasource).then(function(datasource) {
+          annotation.query = templateSrv.replace(annotation.query);
           var query = {range: range, rangeRaw: rangeRaw, annotation: annotation};
           return datasource.annotationQuery(query)
             .then(self.receiveAnnotationResults)
