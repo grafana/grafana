@@ -157,25 +157,26 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 
 			loggersToClose = append(loggersToClose, fileHandler)
 			handler = fileHandler
+		case "syslog":
+			sysLogHandler := NewSyslog()
+			sysLogHandler.Network = sec.Key("network").MustString("")
+			sysLogHandler.Address = sec.Key("address").MustString("")
+			sysLogHandler.Facility = sec.Key("facility").MustString("local7")
+			sysLogHandler.Tag = sec.Key("tag").MustString("")
 
-			// case "syslog":
-			// 	LogConfigs[i] = util.DynMap{
-			// 		"level":    level,
-			// 		"network":  sec.Key("network").MustString(""),
-			// 		"address":  sec.Key("address").MustString(""),
-			// 		"facility": sec.Key("facility").MustString("local7"),
-			// 		"tag":      sec.Key("tag").MustString(""),
-			// 	}
+			if err := sysLogHandler.Init(); err != nil {
+				Root.Error("Failed to init syslog log handler", "error", err)
+				os.Exit(1)
+			}
+
+			loggersToClose = append(loggersToClose, sysLogHandler)
+			handler = sysLogHandler
 		}
 
 		for key, value := range defaultFilters {
 			if _, exist := modeFilters[key]; !exist {
 				modeFilters[key] = value
 			}
-		}
-
-		for key, value := range modeFilters {
-			fmt.Printf("key: %v, value: %v \n", key, value)
 		}
 
 		handler = LogFilterHandler(level, modeFilters, handler)
