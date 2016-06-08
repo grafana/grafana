@@ -25,7 +25,7 @@ function (angular, $) {
         $scope.initDashboard(result, $scope);
       });
 
-      $scope.onAppEvent("dashboard-loaded", $scope.initPanelScope);
+      $scope.onAppEvent("dashboard-initialized", $scope.initPanelScope);
     };
 
     $scope.initPanelScope = function() {

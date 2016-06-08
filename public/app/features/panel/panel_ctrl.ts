@@ -4,6 +4,7 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import angular from 'angular';
 import $ from 'jquery';
+import {profiler} from 'app/core/profiler';
 
 const TITLE_HEIGHT = 25;
 const EMPTY_TITLE_HEIGHT = 9;
@@ -59,21 +60,7 @@ export class PanelCtrl {
   }
 
   renderingCompleted() {
-    this.$scope.$root.performance.panelsRendered++;
-    this.timing.renderEnd = new Date().getTime();
-    if (this.$scope.$root.profilingEnabled) {
-      this.$scope.$root.performance.panels.push({
-        panelId: this.panel.id,
-        query: this.timing.queryEnd - this.timing.queryStart,
-        render: this.timing.renderEnd - this.timing.renderStart,
-      });
-
-      if (this.$scope.$root.performance.panelsRendered === this.$scope.$root.performance.panelCount) {
-        this.$scope.$root.performance.allPanelsRendered = new Date().getTime();
-        var timeTaken = this.$scope.$root.performance.allPanelsRendered - this.$scope.$root.performance.dashboardLoadStart;
-        console.log("Dashboard::Performance - All panels rendered in " + timeTaken + " ms");
-      }
-    }
+    profiler.renderingCompleted(this.panel.id, this.timing);
   }
 
   refresh() {
