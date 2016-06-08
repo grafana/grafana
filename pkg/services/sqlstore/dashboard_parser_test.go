@@ -108,7 +108,7 @@ func TestAlertModel(t *testing.T) {
             "warnOperator": ">",
             "critOperator": ">",
             "aggregator": "sum",
-            "queryRange": "10m",
+            "queryRange": 3600,
             "frequency": 10,
             "name": "active desktop users",
             "description": "restart webservers"
@@ -195,9 +195,9 @@ func TestAlertModel(t *testing.T) {
             "warnLevel": 300,
             "critLevel": 500,
             "aggregator": "avg",
-            "queryRange": "10m",
+            "queryRange": 3600,
             "frequency": 10,
-            "title": "active mobile users",
+            "name": "active mobile users",
             "description": "restart itunes"
           },
           "links": []
@@ -385,7 +385,8 @@ func TestAlertModel(t *testing.T) {
 				So(v.Aggregator, ShouldNotBeEmpty)
 				So(v.Query, ShouldNotBeEmpty)
 				So(v.QueryRefId, ShouldNotBeEmpty)
-				So(v.QueryRange, ShouldNotBeEmpty)
+				So(v.QueryRange, ShouldNotEqual, 0)
+				So(v.Frequency, ShouldNotEqual, 0)
 				So(v.Name, ShouldNotBeEmpty)
 				So(v.Description, ShouldNotBeEmpty)
 			}
