@@ -14,7 +14,7 @@ func TestAlertingStateAccess(t *testing.T) {
 		testDash := insertTestDashboard("dashboard with alerts", 1, "alert")
 
 		items := []*m.AlertRule{
-			&m.AlertRule{
+			{
 				PanelId:      1,
 				DashboardId:  testDash.Id,
 				OrgId:        testDash.OrgId,
