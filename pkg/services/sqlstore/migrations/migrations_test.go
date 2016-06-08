@@ -6,6 +6,7 @@ import (
 	"github.com/go-xorm/xorm"
 	. "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
+	"github.com/inconshreveable/log15"
 
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -28,7 +29,7 @@ func TestMigrations(t *testing.T) {
 			sqlutil.CleanDB(x)
 
 			mg := NewMigrator(x)
-			//mg.LogLevel = log.DEBUG
+			mg.Logger.SetHandler(log15.DiscardHandler())
 			AddMigrations(mg)
 
 			err = mg.Start()

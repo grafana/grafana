@@ -23,6 +23,7 @@ type Context struct {
 
 	IsSignedIn     bool
 	AllowAnonymous bool
+	Logger         log.Logger
 }
 
 func GetContextHandler() macaron.Handler {
@@ -33,6 +34,7 @@ func GetContextHandler() macaron.Handler {
 			Session:        GetSession(),
 			IsSignedIn:     false,
 			AllowAnonymous: false,
+			Logger:         log.New("context"),
 		}
 
 		// the order in which these are tested are important
@@ -47,6 +49,9 @@ func GetContextHandler() macaron.Handler {
 			initContextWithApiKeyFromSession(ctx) ||
 			initContextWithAnonymousUser(ctx) {
 		}
+
+		ctx.Logger = log.New("context", "userId", ctx.UserId, "orgId", ctx.OrgId, "uname", ctx.Login)
+		ctx.Data["ctx"] = ctx
 
 		c.Map(ctx)
 	}

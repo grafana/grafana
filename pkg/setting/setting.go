@@ -5,7 +5,6 @@ package setting
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"os"
@@ -139,6 +138,9 @@ var (
 
 	// QUOTA
 	Quota QuotaSettings
+
+	// logger
+	logger log.Logger
 )
 
 type CommandLineArgs struct {
@@ -149,7 +151,7 @@ type CommandLineArgs struct {
 
 func init() {
 	IsWindows = runtime.GOOS == "windows"
-	log.NewLogger(0, "console", `{"level": 0, "formatting":true}`)
+	logger = log.New("settings")
 }
 
 func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
@@ -335,7 +337,7 @@ func loadConfiguration(args *CommandLineArgs) {
 
 	// init logging before specific config so we can log errors from here on
 	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
-	initLogging(args)
+	initLogging()
 
 	// load specified config file
 	loadSpecifedConfigFile(args.Config)
@@ -351,7 +353,7 @@ func loadConfiguration(args *CommandLineArgs) {
 
 	// update data path and logging config
 	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
-	initLogging(args)
+	initLogging()
 }
 
 func pathExists(path string) bool {
@@ -543,134 +545,39 @@ func readSessionConfig() {
 	}
 }
 
-var logLevels = map[string]int{
-	"Trace":    0,
-	"Debug":    1,
-	"Info":     2,
-	"Warn":     3,
-	"Error":    4,
-	"Critical": 5,
-}
-
-func getLogLevel(key string, defaultName string) (string, int) {
-	levelName := Cfg.Section(key).Key("level").In(defaultName, []string{"Trace", "Debug", "Info", "Warn", "Error", "Critical"})
-
-	level, ok := logLevels[levelName]
-	if !ok {
-		log.Fatal(4, "Unknown log level: %s", levelName)
-	}
-
-	return levelName, level
-}
-
-func initLogging(args *CommandLineArgs) {
-	//close any existing log handlers.
-	log.Close()
-	// Get and check log mode.
+func initLogging() {
+	// split on comma
 	LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), ",")
-	LogsPath = makeAbsolute(Cfg.Section("paths").Key("logs").String(), HomePath)
-
-	defaultLevelName, _ := getLogLevel("log", "Info")
-
-	LogConfigs = make([]util.DynMap, len(LogModes))
-
-	for i, mode := range LogModes {
-
-		mode = strings.TrimSpace(mode)
-		sec, err := Cfg.GetSection("log." + mode)
-		if err != nil {
-			log.Fatal(4, "Unknown log mode: %s", mode)
-		}
-
-		// Log level.
-		_, level := getLogLevel("log."+mode, defaultLevelName)
-
-		// Generate log configuration.
-		switch mode {
-		case "console":
-			formatting := sec.Key("formatting").MustBool(true)
-			LogConfigs[i] = util.DynMap{
-				"level":      level,
-				"formatting": formatting,
-			}
-		case "file":
-			logPath := sec.Key("file_name").MustString(filepath.Join(LogsPath, "grafana.log"))
-			os.MkdirAll(filepath.Dir(logPath), os.ModePerm)
-			LogConfigs[i] = util.DynMap{
-				"level":    level,
-				"filename": logPath,
-				"rotate":   sec.Key("log_rotate").MustBool(true),
-				"maxlines": sec.Key("max_lines").MustInt(1000000),
-				"maxsize":  1 << uint(sec.Key("max_size_shift").MustInt(28)),
-				"daily":    sec.Key("daily_rotate").MustBool(true),
-				"maxdays":  sec.Key("max_days").MustInt(7),
-			}
-		case "conn":
-			LogConfigs[i] = util.DynMap{
-				"level":          level,
-				"reconnectOnMsg": sec.Key("reconnect_on_msg").MustBool(),
-				"reconnect":      sec.Key("reconnect").MustBool(),
-				"net":            sec.Key("protocol").In("tcp", []string{"tcp", "unix", "udp"}),
-				"addr":           sec.Key("addr").MustString(":7020"),
-			}
-		case "smtp":
-			LogConfigs[i] = util.DynMap{
-				"level":     level,
-				"user":      sec.Key("user").MustString("example@example.com"),
-				"passwd":    sec.Key("passwd").MustString("******"),
-				"host":      sec.Key("host").MustString("127.0.0.1:25"),
-				"receivers": sec.Key("receivers").MustString("[]"),
-				"subject":   sec.Key("subject").MustString("Diagnostic message from serve"),
-			}
-		case "database":
-			LogConfigs[i] = util.DynMap{
-				"level":  level,
-				"driver": sec.Key("driver").String(),
-				"conn":   sec.Key("conn").String(),
-			}
-		case "syslog":
-			LogConfigs[i] = util.DynMap{
-				"level":    level,
-				"network":  sec.Key("network").MustString(""),
-				"address":  sec.Key("address").MustString(""),
-				"facility": sec.Key("facility").MustString("local7"),
-				"tag":      sec.Key("tag").MustString(""),
-			}
-		}
-
-		cfgJsonBytes, _ := json.Marshal(LogConfigs[i])
-		log.NewLogger(Cfg.Section("log").Key("buffer_len").MustInt64(10000), mode, string(cfgJsonBytes))
+	// also try space
+	if len(LogModes) == 1 {
+		LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), " ")
 	}
+	LogsPath = makeAbsolute(Cfg.Section("paths").Key("logs").String(), HomePath)
+	log.ReadLoggingConfig(LogModes, LogsPath, Cfg)
 }
 
 func LogConfigurationInfo() {
 	var text bytes.Buffer
-	text.WriteString("Configuration Info\n")
 
-	text.WriteString("Config files:\n")
-	for i, file := range configFiles {
-		text.WriteString(fmt.Sprintf("  [%d]: %s\n", i, file))
+	for _, file := range configFiles {
+		logger.Info("Config loaded from", "file", file)
 	}
 
 	if len(appliedCommandLineProperties) > 0 {
-		text.WriteString("Command lines overrides:\n")
-		for i, prop := range appliedCommandLineProperties {
-			text.WriteString(fmt.Sprintf("  [%d]: %s\n", i, prop))
+		for _, prop := range appliedCommandLineProperties {
+			logger.Info("Config overriden from command line", "arg", prop)
 		}
 	}
 
 	if len(appliedEnvOverrides) > 0 {
 		text.WriteString("\tEnvironment variables used:\n")
-		for i, prop := range appliedEnvOverrides {
-			text.WriteString(fmt.Sprintf("  [%d]: %s\n", i, prop))
+		for _, prop := range appliedEnvOverrides {
+			logger.Info("Config overriden from Environment variable", "var", prop)
 		}
 	}
 
-	text.WriteString("Paths:\n")
-	text.WriteString(fmt.Sprintf("  home: %s\n", HomePath))
-	text.WriteString(fmt.Sprintf("  data: %s\n", DataPath))
-	text.WriteString(fmt.Sprintf("  logs: %s\n", LogsPath))
-	text.WriteString(fmt.Sprintf("  plugins: %s\n", PluginsPath))
-
-	log.Info(text.String())
+	logger.Info("Path Home", "path", HomePath)
+	logger.Info("Path Data", "path", DataPath)
+	logger.Info("Path Logs", "path", LogsPath)
+	logger.Info("Path Plugins", "path", PluginsPath)
 }

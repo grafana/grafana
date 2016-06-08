@@ -240,6 +240,9 @@ func Register(r *macaron.Macaron) {
 		// metrics
 		r.Get("/metrics", wrap(GetInternalMetrics))
 
+		// error test
+		r.Get("/metrics/error", wrap(GenerateError))
+
 	}, reqSignedIn)
 
 	// admin api
