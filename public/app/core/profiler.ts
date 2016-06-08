@@ -36,7 +36,9 @@ export class Profiler {
   }
 
   refresh() {
-    if (this.panels.length > 0) {
+    this.panels = [];
+
+    setTimeout(() => {
       var totalRender = 0;
       var totalQuery = 0;
 
@@ -49,8 +51,7 @@ export class Profiler {
       console.log('total query: ' + totalQuery);
       console.log('total render: ' + totalRender);
       console.log('avg render: ' + totalRender / this.panels.length);
-    }
-    this.$rootScope.panels = [];
+    }, 5000);
   }
 
   dashboardFetched() {

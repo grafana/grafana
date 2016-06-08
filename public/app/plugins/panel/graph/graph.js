@@ -18,6 +18,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
   'use strict';
 
   var module = angular.module('grafana.directives');
+  var labelWidthCache = {};
+  var panelWidthCache = {};
 
   module.directive('grafanaGraph', function($rootScope, timeSrv) {
     return {
@@ -110,20 +112,13 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           }
         }
 
-        function getLabelWidth(type, text, elem) {
-          var labelWidth = 0;
-          if (!rootScope.labelWidthCache) {
-            rootScope.labelWidthCache = {};
+        function getLabelWidth(text, elem) {
+          var labelWidth = labelWidthCache[text];
+
+          if (!labelWidth) {
+            labelWidth = labelWidthCache[text] = elem.width();
           }
-          if (!rootScope.labelWidthCache[type]) {
-            rootScope.labelWidthCache[type] = {};
-          }
-          if (rootScope.labelWidthCache[type][text]) {
-            labelWidth = rootScope.labelWidthCache[type][text];
-          } else {
-            labelWidth = elem.width();
-            rootScope.labelWidthCache[type][text] = labelWidth;
-          }
+
           return labelWidth;
         }
 
@@ -155,7 +150,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               .text(panel.yaxes[0].label)
               .appendTo(elem);
 
-            yaxisLabel[0].style.marginTop = (getLabelWidth('left', panel.yaxes[0].label, yaxisLabel) / 2) + 'px';
+            yaxisLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[0].label, yaxisLabel) / 2) + 'px';
           }
 
           // add right axis labels
@@ -164,7 +159,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               .text(panel.yaxes[1].label)
               .appendTo(elem);
 
-            rightLabel[0].style.marginTop = (getLabelWidth('right', panel.yaxes[1].label, rightLabel) / 2) + 'px';
+            rightLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[1].label, rightLabel) / 2) + 'px';
           }
         }
 
@@ -177,14 +172,9 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
         // Function for rendering panel
         function render_panel() {
-          if (!rootScope.panelWidthCache) {
-            rootScope.panelWidthCache = {};
-          }
-          if (rootScope.panelWidthCache[panel.span]) {
-            panelWidth = rootScope.panelWidthCache[panel.span];
-          } else {
-            panelWidth = elem.width();
-            rootScope.panelWidthCache[panel.span] = panelWidth;
+          panelWidth = panelWidthCache[panel.span];
+          if (!panelWidth) {
+            panelWidth = panelWidthCache[panel.span] = elem.width();
           }
 
           if (shouldAbortRender()) {
