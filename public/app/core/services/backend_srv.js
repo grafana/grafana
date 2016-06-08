@@ -7,7 +7,7 @@ define([
 function (angular, _, coreModule, config) {
   'use strict';
 
-  coreModule.default.service('backendSrv', function($http, alertSrv, $timeout) {
+  coreModule.default.service('backendSrv', function($http, alertSrv, $timeout, $q) {
     var self = this;
 
     this.get = function(url, params) {
@@ -91,8 +91,25 @@ function (angular, _, coreModule, config) {
       });
     };
 
+    var datasourceInFlightRequests = {};
+    var HTTP_REQUEST_ABORTED = -1;
     this.datasourceRequest = function(options) {
       options.retry = options.retry || 0;
+
+      // A cacheKey is provided by the datasource as a unique identifier for a
+      // particular query. If the cacheKey exists, the promise it is keyed to
+      // is canceled, canceling the previous datasource request if it is still
+      // in-flight.
+      var canceler;
+      if (options.cacheKey) {
+        if (canceler = datasourceInFlightRequests[options.cacheKey]) {
+          canceler.resolve();
+        }
+        canceler = $q.defer();
+        options.timeout = canceler.promise;
+        datasourceInFlightRequests[options.cacheKey] = canceler;
+      }
+
       var requestIsLocal = options.url.indexOf('/') === 0;
       var firstAttempt = options.retry === 0;
 
@@ -102,10 +119,25 @@ function (angular, _, coreModule, config) {
       }
 
       return $http(options).then(null, function(err) {
+        if (err.status === HTTP_REQUEST_ABORTED) {
+          // Need to return the right data structure so it has no effect on
+          // iterating over returned data in datasource.ts#115
+          // TODO: Hitting another refresh cancels the "loading" animation on
+          // panes. Figure out how to keep it going.
+          return {
+            data: {
+              data: {
+                result: []
+              }
+            }
+          };
+        }
+
         // handle unauthorized for backend requests
         if (requestIsLocal && firstAttempt  && err.status === 401) {
           return self.loginPing().then(function() {
             options.retry = 1;
+            canceler.resolve();
             return self.datasourceRequest(options);
           });
         }
