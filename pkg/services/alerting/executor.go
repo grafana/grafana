@@ -136,7 +136,7 @@ func (e *ExecutorImpl) GetRequestForAlertRule(rule *AlertRule, datasource *m.Dat
 			From: "-" + strconv.Itoa(rule.QueryRange) + "s",
 			To:   "now",
 		},
-		Queries: tsdb.QuerySlice{
+		Queries: []*tsdb.Query{
 			{
 				RefId: rule.QueryRefId,
 				Query: rule.Query,
