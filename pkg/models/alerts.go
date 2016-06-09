@@ -27,6 +27,10 @@ type AlertRule struct {
 	Updated time.Time `json:"updated"`
 }
 
+func (alertRule *AlertRule) ValidToSave() bool {
+	return alertRule.Query != "" && alertRule.Frequency != 0 && alertRule.QueryRange != 0 && alertRule.Name != ""
+}
+
 func (this *AlertRule) Equals(other *AlertRule) bool {
 	result := false
 
@@ -50,6 +54,13 @@ type AlertingClusterInfo struct {
 	ServerId       string
 	ClusterSize    int
 	UptimePosition int
+}
+
+type HeartBeat struct {
+	Id       int64
+	ServerId string
+	Updated  time.Time
+	Created  time.Time
 }
 
 type HeartBeatCommand struct {
