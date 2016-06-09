@@ -2,49 +2,44 @@ package models
 
 import (
 	"time"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 type AlertRule struct {
-	Id           int64   `json:"id"`
-	OrgId        int64   `json:"-"`
-	DatasourceId int64   `json:"datasourceId"`
-	DashboardId  int64   `json:"dashboardId"`
-	PanelId      int64   `json:"panelId"`
-	Query        string  `json:"query"`
-	QueryRefId   string  `json:"queryRefId"`
-	WarnLevel    float64 `json:"warnLevel"`
-	CritLevel    float64 `json:"critLevel"`
-	WarnOperator string  `json:"warnOperator"`
-	CritOperator string  `json:"critOperator"`
-	Frequency    int64   `json:"frequency"`
-	Name         string  `json:"name"`
-	Description  string  `json:"description"`
-	QueryRange   int     `json:"queryRange"`
-	Aggregator   string  `json:"aggregator"`
-	State        string  `json:"state"`
+	Id          int64
+	OrgId       int64
+	DashboardId int64
+	PanelId     int64
+	Name        string
+	Description string
+	State       string
 
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
+	Created time.Time
+	Updated time.Time
+
+	Expression *simplejson.Json
 }
 
 func (alertRule *AlertRule) ValidToSave() bool {
-	return alertRule.Query != "" && alertRule.Frequency != 0 && alertRule.QueryRange != 0 && alertRule.Name != ""
+	return true
 }
 
-func (this *AlertRule) Equals(other *AlertRule) bool {
+func (this *AlertRule) ContainsUpdates(other *AlertRule) bool {
 	result := false
 
-	result = result || this.Aggregator != other.Aggregator
-	result = result || this.CritLevel != other.CritLevel
-	result = result || this.WarnLevel != other.WarnLevel
-	result = result || this.WarnOperator != other.WarnOperator
-	result = result || this.CritOperator != other.CritOperator
-	result = result || this.Query != other.Query
-	result = result || this.QueryRefId != other.QueryRefId
-	result = result || this.Frequency != other.Frequency
 	result = result || this.Name != other.Name
 	result = result || this.Description != other.Description
-	result = result || this.QueryRange != other.QueryRange
+
+	json1, err1 := this.Expression.MarshalJSON()
+	json2, err2 := other.Expression.MarshalJSON()
+
+	if err1 != nil || err2 != nil {
+		return false
+	}
+
+	result = result || string(json1) != string(json2)
+
 	//don't compare .State! That would be insane.
 
 	return result

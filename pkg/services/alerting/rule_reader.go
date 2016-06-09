@@ -52,19 +52,12 @@ func (arr *AlertRuleReader) Fetch() []*AlertRule {
 		model := &AlertRule{}
 		model.Id = ruleDef.Id
 		model.OrgId = ruleDef.OrgId
-		model.DatasourceId = ruleDef.DatasourceId
-		model.Query = ruleDef.Query
-		model.QueryRefId = ruleDef.QueryRefId
-		model.WarnLevel = ruleDef.WarnLevel
-		model.WarnOperator = ruleDef.WarnOperator
-		model.CritLevel = ruleDef.CritLevel
-		model.CritOperator = ruleDef.CritOperator
-		model.Frequency = ruleDef.Frequency
 		model.Name = ruleDef.Name
 		model.Description = ruleDef.Description
-		model.Aggregator = ruleDef.Aggregator
 		model.State = ruleDef.State
-		model.QueryRange = ruleDef.QueryRange
+
+		ParseAlertRulesFromAlertModel(ruleDef, model)
+
 		res[i] = model
 	}
 

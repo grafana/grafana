@@ -101,17 +101,45 @@ func TestAlertModel(t *testing.T) {
           "timeShift": null,
           "aliasColors": {},
           "seriesOverrides": [],
+          
+          
           "alerting": {
-            "queryRef": "A",
-            "warnLevel": 30,
-            "critLevel": 50,
-            "warnOperator": ">",
-            "critOperator": ">",
-            "aggregator": "sum",
-            "queryRange": 3600,
             "frequency": 10,
-            "name": "active desktop users",
-            "description": "restart webservers"
+            "warning": {
+              "op": ">",
+              "level": 10
+            },
+            "critical": {
+              "op": ">",
+              "level": 20
+            },
+            "function": "static",
+            "valueQuery": {
+              "queryRefId": "A",
+              "from": "5m",
+              "to": "now",
+              "agg": "avg",
+              "params": [
+                "#A",
+                "5m",
+                "now",
+                "avg"
+              ]
+            },
+            "evalQuery": {
+              "queryRefId": "A",
+              "from": "5m",
+              "to": "now",
+              "agg": "avg",
+              "params": [
+                "#A",
+                "5m",
+                "now",
+                "avg"
+              ]
+            },
+            "evalStringParam1": "",
+            "name": "Alerting Panel Title alert"
           },
           "links": []
         },
@@ -189,16 +217,42 @@ func TestAlertModel(t *testing.T) {
           },
           "seriesOverrides": [],
           "alerting": {
-            "queryRef": "A",
-            "warnOperator": ">",
-            "critOperator": ">",
-            "warnLevel": 300,
-            "critLevel": 500,
-            "aggregator": "avg",
-            "queryRange": 3600,
             "frequency": 10,
-            "name": "active mobile users",
-            "description": "restart itunes"
+            "warning": {
+              "op": ">",
+              "level": 10
+            },
+            "critical": {
+              "op": ">",
+              "level": 20
+            },
+            "function": "static",
+            "valueQuery": {
+              "queryRefId": "A",
+              "from": "5m",
+              "to": "now",
+              "agg": "avg",
+              "params": [
+                "#A",
+                "5m",
+                "now",
+                "avg"
+              ]
+            },
+            "evalQuery": {
+              "queryRefId": "A",
+              "from": "5m",
+              "to": "now",
+              "agg": "avg",
+              "params": [
+                "#A",
+                "5m",
+                "now",
+                "avg"
+              ]
+            },
+            "evalStringParam1": "",
+            "name": "Alerting Panel Title alert"
           },
           "links": []
         }
@@ -379,37 +433,13 @@ func TestAlertModel(t *testing.T) {
 				So(v.DashboardId, ShouldEqual, 1)
 				So(v.PanelId, ShouldNotEqual, 0)
 
-				So(v.WarnLevel, ShouldNotBeEmpty)
-				So(v.CritLevel, ShouldNotBeEmpty)
-
-				So(v.Aggregator, ShouldNotBeEmpty)
-				So(v.Query, ShouldNotBeEmpty)
-				So(v.QueryRefId, ShouldNotBeEmpty)
-				So(v.QueryRange, ShouldNotEqual, 0)
-				So(v.Frequency, ShouldNotEqual, 0)
 				So(v.Name, ShouldNotBeEmpty)
 				So(v.Description, ShouldNotBeEmpty)
+
+				expr := simplejson.NewFromAny(v.Expression)
+				So(expr.Get("valueQuery").Get("query").MustString(), ShouldNotEqual, "")
+				So(expr.Get("valueQuery").Get("datsourceId").MustInt64(), ShouldNotEqual, 0)
 			}
-
-			So(alerts[0].WarnLevel, ShouldEqual, 30)
-			So(alerts[1].WarnLevel, ShouldEqual, 300)
-
-			So(alerts[0].Frequency, ShouldEqual, 10)
-			So(alerts[1].Frequency, ShouldEqual, 10)
-
-			So(alerts[0].CritLevel, ShouldEqual, 50)
-			So(alerts[1].CritLevel, ShouldEqual, 500)
-
-			So(alerts[0].CritOperator, ShouldEqual, ">")
-			So(alerts[1].CritOperator, ShouldEqual, ">")
-			So(alerts[0].WarnOperator, ShouldEqual, ">")
-			So(alerts[1].WarnOperator, ShouldEqual, ">")
-
-			So(alerts[0].Query, ShouldEqual, `{"refId":"A","target":"aliasByNode(statsd.fakesite.counters.session_start.desktop.count, 4)"}`)
-			So(alerts[1].Query, ShouldEqual, `{"refId":"A","target":"aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}`)
-
-			So(alerts[0].DatasourceId, ShouldEqual, 2)
-			So(alerts[1].DatasourceId, ShouldEqual, 1)
 		})
 	})
 }

@@ -81,6 +81,7 @@ export class AlertTabCtrl {
 
     var defaultName = (this.panelCtrl.dashboard.title + ' ' + this.panel.title + ' alert');
     this.panel.alerting.name = this.panel.alerting.name || defaultName;
+    this.panel.alerting.description = this.panel.alerting.description || defaultName;
 
     this.panel.targets.map(target => {
       this.metricTargets.push(target);
@@ -92,7 +93,7 @@ export class AlertTabCtrl {
   }
 
   evalFuncChanged() {
-    var evalFuncDef = _.findWhere(this.evalFuncs, { value: this.rule.expression.evalFunc });
+    var evalFuncDef = _.findWhere(this.evalFuncs, { value: this.rule.evalFunc });
     console.log(evalFuncDef);
     this.secondParam = evalFuncDef.secondParam;
   }

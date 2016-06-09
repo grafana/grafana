@@ -7,7 +7,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -39,7 +38,7 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 
 	for _, query := range queries {
 		params["target"] = []string{
-			getTargetFromQuery(query.Query),
+			query.Query,
 		}
 	}
 
@@ -76,9 +75,4 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 
 	result.QueryResults["A"] = queryRes
 	return result
-}
-
-func getTargetFromQuery(query string) string {
-	json, _ := simplejson.NewJson([]byte(query))
-	return json.Get("target").MustString()
 }

@@ -186,7 +186,7 @@ func upsertAlerts(alerts []*m.AlertRule, posted []*m.AlertRule, sess *xorm.Sessi
 		}
 
 		if update {
-			if alertToUpdate.Equals(alert) {
+			if alertToUpdate.ContainsUpdates(alert) {
 				alert.Updated = time.Now()
 				alert.State = alertToUpdate.State
 				_, err := sess.Id(alert.Id).Update(alert)
