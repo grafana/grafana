@@ -43,6 +43,10 @@ func getVersionFileName() string {
   return filepath.Join(getUpgradeFilesBasePath(), "version")
 }
 
+func getUpgradeMarkerFileName() string {
+  return filepath.Join(getUpgradeFilesBasePath(), "upgrade")
+}
+
 func getStatusesFileName() string {
   return filepath.Join(getUpgradeFilesBasePath(), "statuses")
 }
@@ -213,6 +217,7 @@ func removeFile(fileName string) bool {
 func upgrade() {
   UpgradeFileName := getUpgradeFileName()
   VersionFileName := getVersionFileName()
+  UpgradeMarkerFileName := getUpgradeMarkerFileName()
 
   if (setting.PathExists(UpgradeFileName)) {
     if (loadUpgradeFile(UpgradeFileName)) {
@@ -220,9 +225,13 @@ func upgrade() {
         netCrunchSettings, err := readNetCrunchServerSettings()
         if (err == nil) {
           if (updateNetCrunchDatasources(netCrunchSettings) &&
-              writeVersionFile(VersionFileName) && removeFile(UpgradeFileName) &&
-              SetInitializationSuccess()) {
+              writeVersionFile(VersionFileName) && removeFile(UpgradeFileName)) {
             log.Info("NetCrunch: Upgrade")
+
+            if (setting.PathExists(UpgradeMarkerFileName)) {
+              SetInitializationSuccess()
+              removeFile(UpgradeMarkerFileName)
+            }
           } else {
             log.Info("NetCrunch: Upgrade error")
           }
