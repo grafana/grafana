@@ -3,6 +3,7 @@ package keystone
 import (
 	"time"
 
+	"errors"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -17,7 +18,12 @@ const (
 )
 
 func getUserName(c *middleware.Context) (string, error) {
-	userQuery := m.GetUserByIdQuery{Id: c.Session.Get(middleware.SESS_KEY_USERID).(int64)}
+	var keystoneUserIdObj interface{}
+	if keystoneUserIdObj = c.Session.Get(middleware.SESS_KEY_USERID); keystoneUserIdObj == nil {
+		return "", errors.New("Session timed out trying to get keystone userId")
+	}
+
+	userQuery := m.GetUserByIdQuery{Id: keystoneUserIdObj.(int64)}
 	if err := bus.Dispatch(&userQuery); err != nil {
 		if err == m.ErrUserNotFound {
 			return "", err
@@ -46,10 +52,15 @@ func getNewToken(c *middleware.Context) (string, error) {
 		return "", err
 	}
 
+	var keystonePasswordObj interface{}
+	if keystonePasswordObj = c.Session.Get(middleware.SESS_KEY_PASSWORD); keystonePasswordObj == nil {
+		return "", errors.New("Session timed out trying to get keystone password")
+	}
+
 	auth := Auth_data{
 		Username: username,
 		Project:  project,
-		Password: c.Session.Get(middleware.SESS_KEY_PASSWORD).(string),
+		Password: keystonePasswordObj.(string),
 		Domain:   setting.KeystoneDefaultDomain,
 		Server:   setting.KeystoneURL,
 	}
@@ -70,11 +81,11 @@ func validateCurrentToken(c *middleware.Context) (bool, error) {
 		return false, nil
 	}
 
-	expiration_string := c.Session.Get(SESS_TOKEN_EXPIRATION).(string)
-	if expiration_string == "" {
+	expiration_obj := c.Session.Get(SESS_TOKEN_EXPIRATION)
+	if expiration_obj == nil || expiration_obj.(string) == "" {
 		return false, nil
 	}
-	expiration, err := time.Parse(time.RFC3339, c.Session.Get(SESS_TOKEN_EXPIRATION).(string))
+	expiration, err := time.Parse(time.RFC3339, expiration_obj.(string))
 	if err != nil {
 		return false, err
 	}
@@ -101,7 +112,12 @@ func GetToken(c *middleware.Context) (string, error) {
 	var err error
 	valid, err := validateCurrentToken(c)
 	if valid {
-		return c.Session.Get(SESS_TOKEN).(string), nil
+
+		var sessionTokenObj interface{}
+		if sessionTokenObj = c.Session.Get(SESS_TOKEN); sessionTokenObj == nil {
+			return "", errors.New("Session timed out trying to get token")
+		}
+		return sessionTokenObj.(string), nil
 	}
 	if token, err = getNewToken(c); err != nil {
 		return "", err
