@@ -80,7 +80,7 @@
 					</div>
 
 					<div ng-repeat="panel in row.panels track by panel.id" class="panel" ui-draggable="!dashboard.meta.fullscreen" drag="panel.id"
-						ui-on-drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
+						ui-on-drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width ng-hide="panel.suppress">
 						<plugin-component type="panel" class="panel-margin">
 						</plugin-component>
 					</div>
