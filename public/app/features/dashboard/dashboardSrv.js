@@ -65,7 +65,7 @@ function (angular, $, _, moment) {
 
     // cleans meta data and other non peristent state
     p.getSaveModelClone = function() {
-      var copy = angular.copy(this);
+      var copy = $.extend(true, {}, this);
       delete copy.meta;
       return copy;
     };
@@ -184,6 +184,7 @@ function (angular, $, _, moment) {
     p.formatDate = function(date, format) {
       date = moment.isMoment(date) ? date : moment(date);
       format = format || 'YYYY-MM-DD HH:mm:ss';
+      this.timezone = this.getTimezone();
 
       return this.timezone === 'browser' ?
         moment(date).format(format) :

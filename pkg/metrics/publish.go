@@ -14,20 +14,49 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func StartUsageReportLoop() chan struct{} {
+var metricsLogger log.Logger = log.New("metrics")
+
+func Init() {
+	settings := readSettings()
+	initMetricVars(settings)
+	go instrumentationLoop(settings)
+}
+
+func instrumentationLoop(settings *MetricSettings) chan struct{} {
 	M_Instance_Start.Inc(1)
 
-	ticker := time.NewTicker(time.Hour * 24)
+	onceEveryDayTick := time.NewTicker(time.Hour * 24)
+	secondTicker := time.NewTicker(time.Second * time.Duration(settings.IntervalSeconds))
+
 	for {
 		select {
-		case <-ticker.C:
+		case <-onceEveryDayTick.C:
 			sendUsageStats()
+		case <-secondTicker.C:
+			if settings.Enabled {
+				sendMetrics(settings)
+			}
 		}
 	}
 }
 
+func sendMetrics(settings *MetricSettings) {
+	if len(settings.Publishers) == 0 {
+		return
+	}
+
+	metrics := MetricStats.GetSnapshots()
+	for _, publisher := range settings.Publishers {
+		publisher.Publish(metrics)
+	}
+}
+
 func sendUsageStats() {
-	log.Trace("Sending anonymous usage stats to stats.grafana.org")
+	if !setting.ReportingEnabled {
+		return
+	}
+
+	metricsLogger.Debug("Sending anonymous usage stats to stats.grafana.org")
 
 	version := strings.Replace(setting.BuildVersion, ".", "_", -1)
 
@@ -37,19 +66,9 @@ func sendUsageStats() {
 		"metrics": metrics,
 	}
 
-	UsageStats.Each(func(name string, i interface{}) {
-		switch metric := i.(type) {
-		case Counter:
-			if metric.Count() > 0 {
-				metrics[name+".count"] = metric.Count()
-				metric.Clear()
-			}
-		}
-	})
-
 	statsQuery := m.GetSystemStatsQuery{}
 	if err := bus.Dispatch(&statsQuery); err != nil {
-		log.Error(3, "Failed to get system stats", err)
+		metricsLogger.Error("Failed to get system stats", "error", err)
 		return
 	}
 
@@ -63,7 +82,7 @@ func sendUsageStats() {
 
 	dsStats := m.GetDataSourceStatsQuery{}
 	if err := bus.Dispatch(&dsStats); err != nil {
-		log.Error(3, "Failed to get datasource stats", err)
+		metricsLogger.Error("Failed to get datasource stats", "error", err)
 		return
 	}
 

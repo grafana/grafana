@@ -1,8 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import './query_part_editor';
-import './query_part_editor';
-
 import angular from 'angular';
 import _ from 'lodash';
 import InfluxQueryBuilder from './query_builder';
@@ -22,6 +19,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   selectMenu: any;
   measurementSegment: any;
   removeTagFilterSegment: any;
+
 
   /** @ngInject **/
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
@@ -154,7 +152,11 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   toggleEditorMode() {
-    this.target.query = this.queryModel.render(false);
+    try {
+      this.target.query = this.queryModel.render(false);
+    } catch (err) {
+      console.log('query render error');
+    }
     this.target.rawQuery = !this.target.rawQuery;
   }
 
@@ -315,6 +317,10 @@ export class InfluxQueryCtrl extends QueryCtrl {
     } else if ((tagOperator === '=~' || tagOperator === '!~') && /^(?!\/.*\/$)/.test(tagValue)) {
       return '=';
     }
+  }
+
+  getCollapsedText() {
+    return this.queryModel.render(false);
   }
 }
 

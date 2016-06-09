@@ -7,7 +7,7 @@ import (
 	"path"
 
 	"github.com/franela/goreq"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 )
 
@@ -44,7 +44,7 @@ func ReadPlugin(pluginDir, pluginName string) (m.InstalledPlugin, error) {
 	}
 
 	if res.Id == "" {
-		return m.InstalledPlugin{}, errors.New("could not read find plugin " + pluginName)
+		return m.InstalledPlugin{}, errors.New("could not find plugin " + pluginName + " in " + pluginDir)
 	}
 
 	return res, nil
@@ -64,18 +64,26 @@ func GetLocalPlugins(pluginDir string) []m.InstalledPlugin {
 }
 
 func RemoveInstalledPlugin(pluginPath, id string) error {
-	log.Infof("Removing plugin: %v\n", id)
+	logger.Infof("Removing plugin: %v\n", id)
 	return IoHelper.RemoveAll(path.Join(pluginPath, id))
 }
 
 func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
-	resp, _ := ListAllPlugins(repoUrl)
+	fullUrl := repoUrl + "/repo/" + pluginId
 
-	for _, i := range resp.Plugins {
-		if i.Id == pluginId {
-			return i, nil
-		}
+	res, err := goreq.Request{Uri: fullUrl, MaxRedirects: 3}.Do()
+	if err != nil {
+		return m.Plugin{}, err
+	}
+	if res.StatusCode != 200 {
+		return m.Plugin{}, fmt.Errorf("Could not access %s statuscode %v", fullUrl, res.StatusCode)
 	}
 
-	return m.Plugin{}, errors.New("could not find plugin named \"" + pluginId + "\"")
+	var resp m.Plugin
+	err = res.Body.FromJsonTo(&resp)
+	if err != nil {
+		return m.Plugin{}, errors.New("Could not load plugin data")
+	}
+
+	return resp, nil
 }

@@ -15,6 +15,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   error: boolean;
   loading: boolean;
   datasource: any;
+  datasourceName: any;
   $q: any;
   $timeout: any;
   datasourceSrv: any;
@@ -27,7 +28,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   resolution: any;
   timeInfo: any;
   skipDataOnInit: boolean;
-  datasources: any[];
   dataStream: any;
   dataSubscription: any;
 
@@ -52,7 +52,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   private onInitMetricsPanelEditMode() {
     this.addEditorTab('Metrics', 'public/app/partials/metrics.html');
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
-    this.datasources = this.datasourceSrv.getMetricSources();
   }
 
   private onMetricsPanelRefresh() {
@@ -65,7 +64,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       var data = this.panel.snapshotData;
       // backward compatability
       if (!_.isArray(data)) {
-        data = data;
+        data = data.data;
       }
 
       this.events.emit('data-snapshot-load', data);
@@ -96,7 +95,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   setTimeQueryStart() {
-    this.timing = {};
     this.timing.queryStart = new Date().getTime();
   }
 
@@ -201,6 +199,11 @@ class MetricsPanelCtrl extends PanelCtrl {
       this.panel.snapshotData = result.data;
     }
 
+    if (!result || !result.data) {
+      console.log('Data source query result invalid, missing data field:', result);
+      result = {data: []};
+    }
+
     return this.events.emit('data-received', result.data);
   }
 
@@ -246,18 +249,9 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     this.panel.datasource = datasource.value;
+    this.datasourceName = datasource.name;
     this.datasource = null;
     this.refresh();
-  }
-
-  addDataQuery(datasource) {
-    var target: any = {};
-
-    if (datasource) {
-      target.datasource = datasource.name;
-    }
-
-    this.panel.targets.push(target);
   }
 }
 

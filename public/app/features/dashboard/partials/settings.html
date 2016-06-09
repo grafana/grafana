@@ -26,7 +26,10 @@
 				<input type="text" class="gf-form-input width-25" ng-model='dashboard.title'></input>
 			</div>
 			<div class="gf-form">
-				<label class="gf-form-label width-7">Tags<tip>Press enter to a add tag</tip></label>
+				<label class="gf-form-label width-7">
+          Tags
+          <info-popover mode="right-normal">Press enter to add a tag</info-popover>
+        </label>
 				<bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="add tags">
 				</bootstrap-tagsinput>
 			</div>
@@ -46,19 +49,19 @@
                         label="Editable"
                         tooltip="Uncheck, then save and reload to disable all dashboard editing"
                         checked="dashboard.editable"
-                        label-class="width-10">
+                        label-class="width-11">
         </gf-form-switch>
         <gf-form-switch class="gf-form"
                         label="Hide Controls"
                         tooltip="Hide row controls. Shortcut: CTRL+H"
                         checked="dashboard.hideControls"
-                        label-class="width-10">
+                        label-class="width-11">
         </gf-form-switch>
         <gf-form-switch class="gf-form"
                         label="Shared Crosshair"
                         tooltip="Shared Crosshair line on all graphs. Shortcut: CTRL+O"
                         checked="dashboard.sharedCrosshair"
-                        label-class="width-10">
+                        label-class="width-11">
         </gf-form-switch>
       </div>
     </div>
@@ -83,7 +86,7 @@
 					<button class="btn btn-inverse gf-from-btn" ng-click="_.move(dashboard.rows,$index,$index+1)">
 						<i ng-class="{'invisible': $last}" class="fa fa-arrow-down"></i>
 					</button>
-					<button class="btn btn-inverse gf-form-btn" click="dashboard.rows = _.without(dashboard.rows,row)">
+					<button class="btn btn-inverse gf-form-btn" ng-click="dashboard.rows = _.without(dashboard.rows,row)">
 						<i class="fa fa-trash"></i>
 					</button>
 				</div>

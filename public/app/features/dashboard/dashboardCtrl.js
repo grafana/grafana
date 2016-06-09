@@ -35,10 +35,6 @@ function (angular, $, config, moment) {
     };
 
     $scope.setupDashboard = function(data) {
-      $rootScope.performance.dashboardLoadStart = new Date().getTime();
-      $rootScope.performance.panelsInitialized = 0;
-      $rootScope.performance.panelsRendered = 0;
-
       var dashboard = dashboardSrv.create(data.dashboard, data.meta);
       dashboardSrv.setCurrent(dashboard);
 
@@ -60,7 +56,15 @@ function (angular, $, config, moment) {
         $scope.updateSubmenuVisibility();
         $scope.setWindowTitleAndTheme();
 
-        $scope.appEvent("dashboard-loaded", $scope.dashboard);
+        if ($scope.profilingEnabled) {
+          $scope.performance.panels = [];
+          $scope.performance.panelCount = 0;
+          $scope.dashboard.rows.forEach(function(row) {
+            $scope.performance.panelCount += row.panels.length;
+          });
+        }
+
+        $scope.appEvent("dashboard-initialized", $scope.dashboard);
       }).catch(function(err) {
         if (err.data && err.data.message) { err.message = err.data.message; }
         $scope.appEvent("alert-error", ['Dashboard init failed', 'Template variables could not be initialized: ' + err.message]);
@@ -76,7 +80,6 @@ function (angular, $, config, moment) {
     };
 
     $scope.broadcastRefresh = function() {
-      $rootScope.performance.panelsRendered = 0;
       $rootScope.$broadcast('refresh');
     };
 

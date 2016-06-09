@@ -7,10 +7,10 @@ page_keywords: grafana, opentsdb, documentation
 # OpenTSDB Guide
 The newest release of Grafana adds additional functionality when using an OpenTSDB Data source.
 
-![](/img/v2/add_OpenTSDB.jpg)
+![](/img/v2/add_OpenTSDB.png)
 
-1. Open the side menu by clicking the the Grafana icon in the top header. 
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.    
+1. Open the side menu by clicking the the Grafana icon in the top header.
+2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 
     > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
 

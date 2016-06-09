@@ -82,7 +82,7 @@ $external-link-color:    $blue;
 // -------------------------
 $headings-color:       $text-color;
 $abbr-border-color: 	 $gray-2 !default;
-$text-muted: 			     darken($link-color,30%);
+$text-muted: 			     $text-color-weak;
 
 $blockquote-small-color:  $gray-2 !default;
 $blockquote-border-color: $gray-3 !default;
@@ -109,7 +109,8 @@ $tight-form-func-bg:            $gray-5;
 $tight-form-func-highlight-bg:  $gray-6;
 
 $modal-background: $body-bg;
-$code-tag-bg:      $dark-5;
+$code-tag-bg:      $gray-6;
+$code-tag-border:  darken($code-tag-bg, 3%);
 
 // Lists
 $grafanaListBackground:    	   $gray-6;
@@ -281,7 +282,7 @@ $tooltipColor:            $popover-help-color;
 $tooltipBackground:       $popover-help-bg;
 $tooltipArrowWidth:       5px;
 $tooltipArrowColor:       $tooltipBackground;
-$tooltipLinkColor:        $link-color;
+$tooltipLinkColor:        lighten($popover-help-color, 5%);
 $graph-tooltip-bg:        $gray-5;
 
 // images
@@ -291,3 +292,7 @@ $checkboxImageUrl: '../img/checkbox_white.png';
 $card-background: linear-gradient(135deg, $gray-5, $gray-6);
 $card-background-hover: linear-gradient(135deg, $gray-6, $gray-7);
 $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .1);
+
+// footer
+$footer-link-color:   $gray-3;
+$footer-link-hover:   $dark-5;

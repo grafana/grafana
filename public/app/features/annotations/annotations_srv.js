@@ -14,7 +14,7 @@ define([
 
     this.init = function() {
       $rootScope.onAppEvent('refresh', this.clearCache, $rootScope);
-      $rootScope.onAppEvent('dashboard-loaded', this.clearCache, $rootScope);
+      $rootScope.onAppEvent('dashboard-initialized', this.clearCache, $rootScope);
     };
 
     this.clearCache = function() {
@@ -55,10 +55,11 @@ define([
         }, this);
       });
 
-      promiseCached = $q.all(promises)
-        .then(function() {
-          return list;
-        });
+      promiseCached = $q.all(promises).then(function() {
+        return list;
+      }).catch(function(err) {
+        $rootScope.appEvent('alert-error', ['Annotations failed', (err.message || err)]);
+      });
 
       return promiseCached;
     };

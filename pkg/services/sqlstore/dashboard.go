@@ -123,6 +123,11 @@ type DashboardSearchProjection struct {
 }
 
 func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
+	limit := query.Limit
+	if limit == 0 {
+		limit = 1000
+	}
+
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
@@ -165,7 +170,8 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 		params = append(params, "%"+query.Title+"%")
 	}
 
-	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 1000"))
+	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT ?"))
+	params = append(params, limit)
 
 	var res []DashboardSearchProjection
 
@@ -216,7 +222,7 @@ func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
 func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 	return inTransaction2(func(sess *session) error {
 		dashboard := m.Dashboard{Slug: cmd.Slug, OrgId: cmd.OrgId}
-		has, err := x.Get(&dashboard)
+		has, err := sess.Get(&dashboard)
 		if err != nil {
 			return err
 		} else if has == false {

@@ -18,6 +18,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
   'use strict';
 
   var module = angular.module('grafana.directives');
+  var labelWidthCache = {};
+  var panelWidthCache = {};
 
   module.directive('grafanaGraph', function($rootScope, timeSrv) {
     return {
@@ -31,6 +33,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         var sortedSeries;
         var legendSideLastValue = null;
         var rootScope = scope.$root;
+        var panelWidth = 0;
 
         rootScope.onAppEvent('setCrosshair', function(event, info) {
           // do not need to to this if event is from this panel
@@ -66,14 +69,14 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
         function getLegendHeight(panelHeight) {
           if (!panel.legend.show || panel.legend.rightSide) {
-            return 2;
+            return 0;
           }
 
           if (panel.legend.alignAsTable) {
             var legendSeries = _.filter(data, function(series) {
               return series.hideFromLegend(panel.legend) === false;
             });
-            var total = 23 + (22 * legendSeries.length);
+            var total = 23 + (21 * legendSeries.length);
             return Math.min(total, Math.floor(panelHeight/2));
           } else {
             return 26;
@@ -104,9 +107,19 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             return true;
           }
 
-          if (elem.width() === 0) {
+          if (panelWidth === 0) {
             return true;
           }
+        }
+
+        function getLabelWidth(text, elem) {
+          var labelWidth = labelWidthCache[text];
+
+          if (!labelWidth) {
+            labelWidth = labelWidthCache[text] = elem.width();
+          }
+
+          return labelWidth;
         }
 
         function drawHook(plot) {
@@ -137,7 +150,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               .text(panel.yaxes[0].label)
               .appendTo(elem);
 
-            yaxisLabel.css("margin-top", yaxisLabel.width() / 2);
+            yaxisLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[0].label, yaxisLabel) / 2) + 'px';
           }
 
           // add right axis labels
@@ -146,7 +159,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               .text(panel.yaxes[1].label)
               .appendTo(elem);
 
-            rightLabel.css("margin-top", rightLabel.width() / 2);
+            rightLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[1].label, rightLabel) / 2) + 'px';
           }
         }
 
@@ -159,6 +172,11 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
         // Function for rendering panel
         function render_panel() {
+          panelWidth = panelWidthCache[panel.span];
+          if (!panelWidth) {
+            panelWidth = panelWidthCache[panel.span] = elem.width();
+          }
+
           if (shouldAbortRender()) {
             return;
           }
@@ -276,13 +294,13 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         }
 
         function addTimeAxis(options) {
-          var ticks = elem.width() / 100;
+          var ticks = panelWidth / 100;
           var min = _.isUndefined(ctrl.range.from) ? null : ctrl.range.from.valueOf();
           var max = _.isUndefined(ctrl.range.to) ? null : ctrl.range.to.valueOf();
 
           options.xaxis = {
             timezone: dashboard.getTimezone(),
-            show: panel['x-axis'],
+            show: panel.xaxis.show,
             mode: "time",
             min: min,
             max: max,
@@ -444,7 +462,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         }
 
         function render_panel_as_graphite_png(url) {
-          url += '&width=' + elem.width();
+          url += '&width=' + panelWidth;
           url += '&height=' + elem.css('height').replace('px', '');
           url += '&bgcolor=1f1f1f'; // @grayDarker & @grafanaPanelBackground
           url += '&fgcolor=BBBFC2'; // @textColor & @grayLighter
@@ -452,12 +470,21 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           url += panel.fill !== 0 ? ('&areaAlpha=' + (panel.fill/10).toFixed(1)) : '';
           url += panel.linewidth !== 0 ? '&lineWidth=' + panel.linewidth : '';
           url += panel.legend.show ? '&hideLegend=false' : '&hideLegend=true';
-          url += panel.grid.leftMin !== null ? '&yMin=' + panel.grid.leftMin : '';
-          url += panel.grid.leftMax !== null ? '&yMax=' + panel.grid.leftMax : '';
-          url += panel.grid.rightMin !== null ? '&yMin=' + panel.grid.rightMin : '';
-          url += panel.grid.rightMax !== null ? '&yMax=' + panel.grid.rightMax : '';
-          url += panel['x-axis'] ? '' : '&hideAxes=true';
-          url += panel['y-axis'] ? '' : '&hideYAxis=true';
+
+          if (panel.yaxes && panel.yaxes.length > 0) {
+            var showYaxis = false;
+            for(var i = 0; panel.yaxes.length > i; i++) {
+              if (panel.yaxes[i].show) {
+                url += (panel.yaxes[i].min !== null && panel.yaxes[i].min !== undefined) ? '&yMin=' + panel.yaxes[i].min : '';
+                url += (panel.yaxes[i].max !== null && panel.yaxes[i].max !== undefined) ? '&yMax=' + panel.yaxes[i].max : '';
+                showYaxis = true;
+                break;
+              }
+            }
+            url += showYaxis ? '' : '&hideYAxis=true';
+          }
+
+          url += panel.xaxis.show ? '' : '&hideAxes=true';
 
           switch(panel.yaxes[0].format) {
             case 'bytes':

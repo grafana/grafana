@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -30,8 +31,6 @@ func isDashboardStarredByUser(c *middleware.Context, dashId int64) (bool, error)
 }
 
 func GetDashboard(c *middleware.Context) {
-	metrics.M_Api_Dashboard_Get.Inc(1)
-
 	slug := strings.ToLower(c.Params(":slug"))
 
 	query := m.GetDashboardQuery{Slug: slug, OrgId: c.OrgId}
@@ -75,6 +74,7 @@ func GetDashboard(c *middleware.Context) {
 		},
 	}
 
+	c.TimeRequest(metrics.M_Api_Dashboard_Get)
 	c.JSON(200, dto)
 }
 
@@ -149,8 +149,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 		return
 	}
 
-	metrics.M_Api_Dashboard_Post.Inc(1)
-
+	c.TimeRequest(metrics.M_Api_Dashboard_Save)
 	c.JSON(200, util.DynMap{"status": "success", "slug": cmd.Result.Slug, "version": cmd.Result.Version})
 }
 
@@ -158,30 +157,27 @@ func canEditDashboard(role m.RoleType) bool {
 	return role == m.ROLE_ADMIN || role == m.ROLE_EDITOR || role == m.ROLE_READ_ONLY_EDITOR
 }
 
-func GetHomeDashboard(c *middleware.Context) {
+func GetHomeDashboard(c *middleware.Context) Response {
 	prefsQuery := m.GetPreferencesWithDefaultsQuery{OrgId: c.OrgId, UserId: c.UserId}
 	if err := bus.Dispatch(&prefsQuery); err != nil {
-		c.JsonApiErr(500, "Failed to get preferences", err)
+		return ApiError(500, "Failed to get preferences", err)
 	}
 
 	if prefsQuery.Result.HomeDashboardId != 0 {
 		slugQuery := m.GetDashboardSlugByIdQuery{Id: prefsQuery.Result.HomeDashboardId}
 		err := bus.Dispatch(&slugQuery)
-		if err != nil {
-			c.JsonApiErr(500, "Failed to get slug from database", err)
-			return
+		if err == nil {
+			dashRedirect := dtos.DashboardRedirect{RedirectUri: "db/" + slugQuery.Result}
+			return Json(200, &dashRedirect)
+		} else {
+			log.Warn("Failed to get slug from database, %s", err.Error())
 		}
-
-		dashRedirect := dtos.DashboardRedirect{RedirectUri: "db/" + slugQuery.Result}
-		c.JSON(200, &dashRedirect)
-		return
 	}
 
 	filePath := path.Join(setting.StaticRootPath, "dashboards/home.json")
 	file, err := os.Open(filePath)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to load home dashboard", err)
-		return
+		return ApiError(500, "Failed to load home dashboard", err)
 	}
 
 	dash := dtos.DashboardFullWithMeta{}
@@ -189,11 +185,10 @@ func GetHomeDashboard(c *middleware.Context) {
 	dash.Meta.CanEdit = canEditDashboard(c.OrgRole)
 	jsonParser := json.NewDecoder(file)
 	if err := jsonParser.Decode(&dash.Dashboard); err != nil {
-		c.JsonApiErr(500, "Failed to load home dashboard", err)
-		return
+		return ApiError(500, "Failed to load home dashboard", err)
 	}
 
-	c.JSON(200, &dash)
+	return Json(200, &dash)
 }
 
 func GetDashboardFromJsonFile(c *middleware.Context) {

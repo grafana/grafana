@@ -85,7 +85,8 @@
 }
 
 .graph-legend-table {
-  overflow-y: scroll;
+  overflow-y: auto;
+  overflow-x: hidden;
 
   .graph-legend-series {
     display: table-row;
@@ -236,6 +237,7 @@
   white-space: nowrap;
   font-size: $font-size-sm;
   background-color: $graph-tooltip-bg;
+  color: $text-color;
 
   .graph-tooltip-time {
     text-align: center;
@@ -248,7 +250,7 @@
     display: table-row;
 
     &--highlight {
-      color: $link-color;
+      color: $text-color-emphasis;
       font-weight: bold;
     }
   }

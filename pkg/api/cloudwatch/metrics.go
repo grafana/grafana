@@ -45,6 +45,15 @@ func init() {
 		"AWS/EBS": {"VolumeReadBytes", "VolumeWriteBytes", "VolumeReadOps", "VolumeWriteOps", "VolumeTotalReadTime", "VolumeTotalWriteTime", "VolumeIdleTime", "VolumeQueueLength", "VolumeThroughputPercentage", "VolumeConsumedReadWriteOps"},
 		"AWS/EC2": {"CPUCreditUsage", "CPUCreditBalance", "CPUUtilization", "DiskReadOps", "DiskWriteOps", "DiskReadBytes", "DiskWriteBytes", "NetworkIn", "NetworkOut", "StatusCheckFailed", "StatusCheckFailed_Instance", "StatusCheckFailed_System"},
 		"AWS/ELB": {"HealthyHostCount", "UnHealthyHostCount", "RequestCount", "Latency", "HTTPCode_ELB_4XX", "HTTPCode_ELB_5XX", "HTTPCode_Backend_2XX", "HTTPCode_Backend_3XX", "HTTPCode_Backend_4XX", "HTTPCode_Backend_5XX", "BackendConnectionErrors", "SurgeQueueLength", "SpilloverCount"},
+		"AWS/ElasticBeanstalk": {
+			"EnvironmentHealth",
+			"ApplicationLatencyP10", "ApplicationLatencyP50", "ApplicationLatencyP75", "ApplicationLatencyP85", "ApplicationLatencyP90", "ApplicationLatencyP95", "ApplicationLatencyP99", "ApplicationLatencyP99.9",
+			"ApplicationRequests2xx", "ApplicationRequests3xx", "ApplicationRequests4xx", "ApplicationRequests5xx", "ApplicationRequestsTotal",
+			"CPUIdle", "CPUIowait", "CPUIrq", "CPUNice", "CPUSoftirq", "CPUSystem", "CPUUser",
+			"InstanceHealth", "InstancesDegraded", "InstancesInfo", "InstancesNoData", "InstancesOk", "InstancesPending", "InstancesSevere", "InstancesUnknown", "InstancesWarning",
+			"LoadAverage1min", "LoadAverage5min",
+			"RootFilesystemUtil",
+		},
 		"AWS/ElasticMapReduce": {"IsIdle", "JobsRunning", "JobsFailed",
 			"MapTasksRunning", "MapTasksRemaining", "MapSlotsOpen", "RemainingMapTasksPerSlot", "ReduceTasksRunning", "ReduceTasksRemaining", "ReduceSlotsOpen",
 			"CoreNodesRunning", "CoreNodesPending", "LiveDataNodes", "TaskNodesRunning", "TaskNodesPending", "LiveTaskTrackers",
@@ -56,7 +65,7 @@ func init() {
 			"HbaseBackupFailed", "MostRecentBackupDuration", "TimeSinceLastSuccessfulBackup"},
 		"AWS/ES":       {"ClusterStatus.green", "ClusterStatus.yellow", "ClusterStatus.red", "Nodes", "SearchableDocuments", "DeletedDocuments", "CPUUtilization", "FreeStorageSpace", "JVMMemoryPressure", "AutomatedSnapshotFailure", "MasterCPUUtilization", "MasterFreeStorageSpace", "MasterJVMMemoryPressure", "ReadLatency", "WriteLatency", "ReadThroughput", "WriteThroughput", "DiskQueueLength", "ReadIOPS", "WriteIOPS"},
 		"AWS/Events":   {"Invocations", "FailedInvocations", "TriggeredRules", "MatchedEvents", "ThrottledRules"},
-		"AWS/Kinesis":  {"PutRecord.Bytes", "PutRecord.Latency", "PutRecord.Success", "PutRecords.Bytes", "PutRecords.Latency", "PutRecords.Records", "PutRecords.Success", "IncomingBytes", "IncomingRecords", "GetRecords.Bytes", "GetRecords.IteratorAgeMilliseconds", "GetRecords.Latency", "GetRecords.Success"},
+		"AWS/Kinesis":  {"GetRecords.Bytes", "GetRecords.IteratorAge", "GetRecords.IteratorAgeMilliseconds", "GetRecords.Latency", "GetRecords.Records", "GetRecords.Success", "IncomingBytes", "IncomingRecords", "PutRecord.Bytes", "PutRecord.Latency", "PutRecord.Success", "PutRecords.Bytes", "PutRecords.Latency", "PutRecords.Records", "PutRecords.Success", "ReadProvisionedThroughputExceeded", "WriteProvisionedThroughputExceeded", "IteratorAgeMilliseconds", "OutgoingBytes", "OutgoingRecords"},
 		"AWS/Lambda":   {"Invocations", "Errors", "Duration", "Throttles"},
 		"AWS/Logs":     {"IncomingBytes", "IncomingLogEvents", "ForwardedBytes", "ForwardedLogEvents", "DeliveryErrors", "DeliveryThrottling"},
 		"AWS/ML":       {"PredictCount", "PredictFailureCount"},
@@ -85,10 +94,11 @@ func init() {
 		"AWS/EBS":              {"VolumeId"},
 		"AWS/EC2":              {"AutoScalingGroupName", "ImageId", "InstanceId", "InstanceType"},
 		"AWS/ELB":              {"LoadBalancerName", "AvailabilityZone"},
+		"AWS/ElasticBeanstalk": {"EnvironmentName", "InstanceId"},
 		"AWS/ElasticMapReduce": {"ClusterId", "JobFlowId", "JobId"},
-		"AWS/ES":               {},
+		"AWS/ES":               {"ClientId", "DomainName"},
 		"AWS/Events":           {"RuleName"},
-		"AWS/Kinesis":          {"StreamName"},
+		"AWS/Kinesis":          {"StreamName", "ShardID"},
 		"AWS/Lambda":           {"FunctionName"},
 		"AWS/Logs":             {"LogGroupName", "DestinationType", "FilterName"},
 		"AWS/ML":               {"MLModelId", "RequestMode"},
@@ -166,7 +176,8 @@ func handleGetMetrics(req *cwRequest, c *middleware.Context) {
 		}
 	} else {
 		var err error
-		if namespaceMetrics, err = getMetricsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, getAllMetrics); err != nil {
+		assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
+		if namespaceMetrics, err = getMetricsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, assumeRoleArn, getAllMetrics); err != nil {
 			c.JsonApiErr(500, "Unable to call AWS API", err)
 			return
 		}
@@ -199,7 +210,8 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 		}
 	} else {
 		var err error
-		if dimensionValues, err = getDimensionsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, getAllMetrics); err != nil {
+		assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
+		if dimensionValues, err = getDimensionsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, assumeRoleArn, getAllMetrics); err != nil {
 			c.JsonApiErr(500, "Unable to call AWS API", err)
 			return
 		}
@@ -214,10 +226,10 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 	c.JSON(200, result)
 }
 
-func getAllMetrics(region string, namespace string, database string) (cloudwatch.ListMetricsOutput, error) {
+func getAllMetrics(region string, namespace string, database string, assumeRoleArn string) (cloudwatch.ListMetricsOutput, error) {
 	cfg := &aws.Config{
 		Region:      aws.String(region),
-		Credentials: getCredentials(database),
+		Credentials: getCredentials(database, region, assumeRoleArn),
 	}
 
 	svc := cloudwatch.New(session.New(cfg), cfg)
@@ -244,8 +256,8 @@ func getAllMetrics(region string, namespace string, database string) (cloudwatch
 
 var metricsCacheLock sync.Mutex
 
-func getMetricsForCustomMetrics(region string, namespace string, database string, getAllMetrics func(string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
-	result, err := getAllMetrics(region, namespace, database)
+func getMetricsForCustomMetrics(region string, namespace string, database string, assumeRoleArn string, getAllMetrics func(string, string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+	result, err := getAllMetrics(region, namespace, database, assumeRoleArn)
 	if err != nil {
 		return []string{}, err
 	}
@@ -282,8 +294,8 @@ func getMetricsForCustomMetrics(region string, namespace string, database string
 
 var dimensionsCacheLock sync.Mutex
 
-func getDimensionsForCustomMetrics(region string, namespace string, database string, getAllMetrics func(string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
-	result, err := getAllMetrics(region, namespace, database)
+func getDimensionsForCustomMetrics(region string, namespace string, database string, assumeRoleArn string, getAllMetrics func(string, string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+	result, err := getAllMetrics(region, namespace, database, assumeRoleArn)
 	if err != nil {
 		return []string{}, err
 	}

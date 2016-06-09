@@ -1,7 +1,7 @@
 package commands
 
 import (
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 )
 
@@ -18,7 +18,7 @@ func listremoteCommand(c CommandLine) error {
 			pluginVersion = i.Versions[0].Version
 		}
 
-		log.Infof("id: %v version: %s\n", i.Id, pluginVersion)
+		logger.Infof("id: %v version: %s\n", i.Id, pluginVersion)
 	}
 
 	return nil

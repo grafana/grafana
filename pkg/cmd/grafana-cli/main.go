@@ -7,7 +7,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 )
 
 var version = "master"
@@ -17,13 +17,13 @@ func getGrafanaPluginDir() string {
 	defaultNix := "/var/lib/grafana/plugins"
 
 	if currentOS == "windows" {
-		return "..\\data\\plugins"
+		return "../data/plugins"
 	}
 
 	pwd, err := os.Getwd()
 
 	if err != nil {
-		log.Error("Could not get current path. using default")
+		logger.Error("Could not get current path. using default")
 		return defaultNix
 	}
 
@@ -35,13 +35,14 @@ func getGrafanaPluginDir() string {
 }
 
 func isDevenvironment(pwd string) bool {
-	// if ../conf/default.ini exists, grafana is not installed as package
-	_, err := os.Stat("../conf/default.ini")
-	return err != nil
+	// if ../conf/defaults.ini exists, grafana is not installed as package
+	// that its in development environment.
+	_, err := os.Stat("../conf/defaults.ini")
+	return err == nil
 }
 
 func main() {
-	SetupLogging()
+	setupLogging()
 
 	app := cli.NewApp()
 	app.Name = "Grafana cli"
@@ -72,14 +73,14 @@ func main() {
 	app.CommandNotFound = cmdNotFound
 
 	if err := app.Run(os.Args); err != nil {
-		log.Errorf("%v", err)
+		logger.Errorf("%v", err)
 	}
 }
 
-func SetupLogging() {
+func setupLogging() {
 	for _, f := range os.Args {
 		if f == "-D" || f == "--debug" || f == "-debug" {
-			log.SetDebug(true)
+			logger.SetDebug(true)
 		}
 	}
 }
