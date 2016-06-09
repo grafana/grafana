@@ -6,108 +6,46 @@ import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
 import {QueryCtrl} from 'app/plugins/sdk';
-import {PromQuery, getQueryPartCategories} from './prom_query';
 
 class PrometheusQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
-  query: any;
-  metricSegment: any;
-  addQueryPartMenu: any[];
+  metric: any;
   resolutions: any;
   oldTarget: any;
   suggestMetrics: any;
   linkToPrometheus: any;
 
   /** @ngInject */
-  constructor($scope, $injector, private templateSrv, private uiSegmentSrv, private $rootScope) {
+  constructor($scope, $injector, private templateSrv) {
     super($scope, $injector);
 
-    this.query = new PromQuery(this.target, templateSrv);
+    var target = this.target;
+    target.expr = target.expr || '';
+    target.intervalFactor = target.intervalFactor || 2;
 
-    if (this.target.metric) {
-      this.metricSegment = uiSegmentSrv.newSegment(this.target.metric);
-    } else {
-      this.metricSegment = uiSegmentSrv.newSegment({value: 'select metric', fake: true});
-    }
-
+    this.metric = '';
     this.resolutions = _.map([1,2,3,4,5,10], function(f) {
       return {factor: f, label: '1/' + f};
     });
 
-    this.updateLink();
-    this.buildQueryPartMenu();
-  }
+    $scope.$on('typeahead-updated', () => {
+      this.$scope.$apply(() => {
 
-  buildQueryPartMenu() {
-    var categories = getQueryPartCategories();
-    this.addQueryPartMenu = _.reduce(categories, function(memo, cat, key) {
-      var menu = {
-        text: key,
-        submenu: cat.map(item => {
-         return {text: item.type, value: item.type};
-        }),
-      };
-      memo.push(menu);
-      return memo;
-    }, []);
-  }
-
-  addQueryPart(item, subItem) {
-    this.query.addQueryPart(item, subItem);
-    this.panelCtrl.refresh();
-  }
-
-  getPartOptions(part) {
-    if (part.def.type === 'by') {
-      return this.datasource.metricFindQuery('labels(' + this.target.metric + ')')
-      .then(this.transformToSegments(true))
-      .catch(this.handleQueryError.bind(true));
-    }
-  }
-
-  partUpdated(part) {
-    this.target.expr = this.query.render();
-    this.panelCtrl.refresh();
-  }
-
-  handleQueryError(err) {
-    this.$rootScope.appEvent('alert-error', ['Query failed', err.message]);
-  }
-
-  transformToSegments(addTemplateVars) {
-    return (results) => {
-      var segments = _.map(results, segment => {
-        return this.uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
-      });
-
-      if (addTemplateVars) {
-        for (let variable of this.templateSrv.variables) {
-          segments.unshift(this.uiSegmentSrv.newSegment({ type: 'template', value: '/^$' + variable.name + '$/', expandable: true }));
-        }
-      }
-
-      return segments;
-    };
-  }
-
-  getMetricOptions() {
-    return this.datasource.performSuggestQuery('').then(res => {
-      return _.map(res, metric => {
-        return this.uiSegmentSrv.newSegment(metric);
+        this.target.expr += this.target.metric;
+        this.metric = '';
+        this.refreshMetricData();
       });
     });
-  }
 
-  queryChanged() {
-    this.target.metric = this.metricSegment.value;
-    this.target.expr = this.query.render();
-    this.refresh();
-  }
+    // called from typeahead so need this
+    // here in order to ensure this ref
+    this.suggestMetrics = (query, callback) => {
+      console.log(this);
+      this.datasource.performSuggestQuery(query).then(callback);
+    };
 
-  toggleEditorMode() {
-    this.target.expr = this.query.render(false);
-    this.target.editorMode = !this.target.editorMode;
+    this.updateLink();
   }
 
   refreshMetricData() {
@@ -120,6 +58,10 @@ class PrometheusQueryCtrl extends QueryCtrl {
 
   updateLink() {
     var range = this.panelCtrl.range;
+    if (!range) {
+      return;
+    }
+
     var rangeDiff = Math.ceil((range.to.valueOf() - range.from.valueOf()) / 1000);
     var endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
     var expr = {
