@@ -49,11 +49,9 @@ export class AlertTabCtrl {
 
   defaultValues = {
     frequency: 10,
-    warnOperator: '>',
-    critOperator: '>',
-    evalFunc: 'static',
-    critLevel: 20,
-    warnLevel: 10,
+    warning: { op: '>', level: 10 },
+    critical: { op: '>', level: 20 },
+    function: 'static',
     valueQuery: {
       queryRefId: 'A',
       from: '5m',
@@ -94,7 +92,8 @@ export class AlertTabCtrl {
   }
 
   evalFuncChanged() {
-    var evalFuncDef = _.findWhere(this.evalFuncs, {value: this.rule.evalFunc});
+    var evalFuncDef = _.findWhere(this.evalFuncs, { value: this.rule.expression.evalFunc });
+    console.log(evalFuncDef);
     this.secondParam = evalFuncDef.secondParam;
   }
 
