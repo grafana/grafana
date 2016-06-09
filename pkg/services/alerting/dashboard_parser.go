@@ -65,7 +65,7 @@ func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []*m.AlertRule {
 				alert.DatasourceId = query.Result.Id
 			}
 
-			if alert.Query != "" {
+			if alert.ValidToSave() {
 				alerts = append(alerts, alert)
 			}
 		}

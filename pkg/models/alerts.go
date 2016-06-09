@@ -27,6 +27,10 @@ type AlertRule struct {
 	Updated time.Time `json:"updated"`
 }
 
+func (alertRule *AlertRule) ValidToSave() bool {
+	return alertRule.Query != "" && alertRule.Frequency != 0 && alertRule.QueryRange != 0 && alertRule.Name != ""
+}
+
 func (this *AlertRule) Equals(other *AlertRule) bool {
 	result := false
 

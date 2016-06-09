@@ -64,6 +64,7 @@ func (arr *AlertRuleReader) Fetch() []*AlertRule {
 		model.Description = ruleDef.Description
 		model.Aggregator = ruleDef.Aggregator
 		model.State = ruleDef.State
+		model.QueryRange = ruleDef.QueryRange
 		res[i] = model
 	}
 
