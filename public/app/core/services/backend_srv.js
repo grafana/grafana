@@ -96,18 +96,18 @@ function (angular, _, coreModule, config) {
     this.datasourceRequest = function(options) {
       options.retry = options.retry || 0;
 
-      // A cacheKey is provided by the datasource as a unique identifier for a
-      // particular query. If the cacheKey exists, the promise it is keyed to
+      // A requestID is provided by the datasource as a unique identifier for a
+      // particular query. If the requestID exists, the promise it is keyed to
       // is canceled, canceling the previous datasource request if it is still
       // in-flight.
       var canceler;
-      if (options.cacheKey) {
-        if (canceler = datasourceInFlightRequests[options.cacheKey]) {
+      if (options.requestID) {
+        if (canceler = datasourceInFlightRequests[options.requestID]) {
           canceler.resolve();
         }
         canceler = $q.defer();
         options.timeout = canceler.promise;
-        datasourceInFlightRequests[options.cacheKey] = canceler;
+        datasourceInFlightRequests[options.requestID] = canceler;
       }
 
       var requestIsLocal = options.url.indexOf('/') === 0;

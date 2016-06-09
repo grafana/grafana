@@ -21,11 +21,11 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   this.withCredentials = instanceSettings.withCredentials;
   this.lastErrors = {};
 
-  this._request = function(method, url, cacheKey) {
+  this._request = function(method, url, requestID) {
     var options: any = {
       url: this.url + url,
       method: method,
-      cacheKey: cacheKey,
+      requestID: requestID,
     };
 
     if (this.basicAuth || this.withCredentials) {
@@ -77,7 +77,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
       var query: any = {};
       query.expr = templateSrv.replace(target.expr, options.scopedVars, self.interpolateQueryExpr);
-      query.cacheKey = target.cacheKey;
+      query.requestID = target.exprID;
 
       var interval = target.interval || options.interval;
       var intervalFactor = target.intervalFactor || 1;
@@ -128,7 +128,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
   this.performTimeSeriesQuery = function(query, start, end) {
     var url = '/api/v1/query_range?query=' + encodeURIComponent(query.expr) + '&start=' + start + '&end=' + end + '&step=' + query.step;
-    return this._request('GET', url, query.cacheKey);
+    return this._request('GET', url, query.requestID);
   };
 
   this.performSuggestQuery = function(query) {

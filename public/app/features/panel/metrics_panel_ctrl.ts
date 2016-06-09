@@ -183,7 +183,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     };
 
     metricsQuery.targets.forEach(function(target) {
-      target.cacheKey = target.expr + target.refId + metricsQuery.panelId;
+      target.exprID = target.expr + target.refId + metricsQuery.panelId;
     });
 
     return datasource.query(metricsQuery);
