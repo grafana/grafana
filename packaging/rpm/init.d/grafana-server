@@ -115,7 +115,7 @@ case "$1" in
     exit $return
     ;;
   stop)
-    echo -n "Stopping $DESC ..."
+    echo -n "Stopping $DESC: ..."
 
     if [ -f "$PID_FILE" ]; then
       killproc -p $PID_FILE -d 20 $NAME
