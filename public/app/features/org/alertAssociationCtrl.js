@@ -80,7 +80,7 @@ function (angular) {
     }, $scope);
 
     $scope.resetCorrelation = function() {
-      $scope.correlationThreshold = 100; // reset the threshold to default value
+      $scope.correlationThreshold = 50; // reset the threshold to default value
       alertMgrSrv.resetCorrelation(alertId, $scope.correlationBefore, $scope.correlationAfter).then(function onSuccess() {
         $location.path("alerts/association/" + alertId + "/" + $scope.correlationThreshold);
       }, function onFailed(response) {

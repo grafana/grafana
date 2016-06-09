@@ -15,6 +15,15 @@
     <form name="editForm">
       <div class="tight-form">
         <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">id</li>
+          <li><li><input type="text" class="input-xxlarge tight-form-input last"
+                         ng-model="alertDef.id" placeholder="randomly generated" readonly>
+        </li></li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      <div class="tight-form">
+        <ul class="tight-form-list">
           <li class="tight-form-item" style="width: 80px">Name</li>
           <li><li><input type="text" class="input-xxlarge tight-form-input last"
                          ng-model="alertDef.name" placeholder="alert name" required>
@@ -28,6 +37,15 @@
           <li><li><input type="text" class="input-xxlarge tight-form-input last"
                          ng-model="alertDef.description" placeholder="alert description" required>
           </li></li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      <div class="tight-form">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">Description</li>
+          <li><li><input type="text" class="input-xxlarge tight-form-input last"
+                         ng-model="alertDef.service" required>
+        </li></li>
         </ul>
         <div class="clearfix"></div>
       </div>
@@ -98,6 +116,46 @@
           <li>
             <input type="text" class="tight-form-input input-medium last"
                    ng-model='alertDef.alertDetails.warn.durarionMinutes' placeholder="warn duration" required />
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      <div class="tight-form">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">cluster</li>
+          <li><li><input type="text" class="input-xxlarge tight-form-input last"
+                         ng-model="alertDef.alertDetails.cluster" required>
+        </li></li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      <div class="tight-form">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">
+            Host List
+          </li>
+          <li>
+            <input type="text" class="tight-form-input input-xlarge"
+                 ng-model="alertDef.alertDetails.hosts" placeholder="null">
+          </li>
+          <li class="tight-form-item">
+            Host membership
+          </li>
+          <li>
+            <input type="text" class="tight-form-input input-medium" style="width: 138px"
+                 ng-model="alertDef.alertDetails.membership" placeholder="*">          
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      <div class="tight-form">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">Monitoring scope</li>
+          <li>
+            <select class="input-medium tight-form-input last"
+                         ng-model="alertDef.alertDetails.monitoringScope"
+                         ng-options="f for f in ['HOST', 'CLUSTER']">
+            </select>
           </li>
         </ul>
         <div class="clearfix"></div>
