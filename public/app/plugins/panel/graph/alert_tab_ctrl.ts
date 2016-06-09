@@ -9,8 +9,9 @@ export class AlertTabCtrl {
   panelCtrl: any;
   alerting: any;
   metricTargets = [{ refId: '- select query -' } ];
-  operators = ['>', '<', '<=', '>='];
+  evalFuncs = ['Greater Then', 'Percent Change'];
   aggregators = ['avg', 'sum', 'min', 'max', 'median'];
+  rule: any;
 
   defaultValues = {
     aggregator: 'avg',
@@ -18,16 +19,22 @@ export class AlertTabCtrl {
     queryRange: 3600,
     warnOperator: '>',
     critOperator: '>',
-    queryRef: '- select query -'
+    queryRef: '- select query -',
+    valueExpr: 'query(#A, 5m, now, avg)',
+    evalFunc: 'Greater Then',
+    evalExpr: '',
+    critLevel: 20,
+    warnLevel: 10,
   };
 
   /** @ngInject */
   constructor($scope, private $timeout) {
-    $scope.alertTab = this; //HACK ATTACK!
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
+    $scope.ctrl = this;
 
     _.defaults(this.panel.alerting, this.defaultValues);
+    this.rule = this.panel.alerting;
 
     var defaultName = (this.panelCtrl.dashboard.title + ' ' + this.panel.title + ' alert');
     this.panel.alerting.name = this.panel.alerting.name || defaultName;

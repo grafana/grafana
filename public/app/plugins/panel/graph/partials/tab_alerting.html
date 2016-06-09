@@ -1,61 +1,55 @@
 <div class="editor-row">
   <div class="gf-form-group section" >
-    <h5 class="section-heading">Query</h5>
-    <div class="gf-form" style="margin-bottom: 2rem">
-      <span class="gf-form-label width-9">Query to watch</span>
-      <div class="gf-form-select-wrapper max-width-12">
-        <select class="gf-form-input"
-          ng-model="ctrl.panel.alerting.queryRef"
-          ng-options="target.refId as target.refId for target in alertTab.metricTargets"></select>
+    <h5 class="section-heading">Alert Rule</h5>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <span class="gf-form-label">Value</span>
+        <input class="gf-form-input width-15" type="text" ng-model="ctrl.rule.valueExpr" ng-change="ctrl.thresholdsUpdated()"></input>
       </div>
-    </div>
-
-    <h5 class="section-heading">Thresholds</h5>
-    <div class="gf-form">
-      <span class="gf-form-label width-9">
-        <i class="icon-gf icon-gf-warn alert-icon-warn"></i>
-        Warn level
-      </span>
-      <div class="gf-form-select-wrapper max-width-10">
-				<select class="gf-form-input" ng-model="ctrl.panel.alerting.warnOperator" ng-options="oper as oper for oper in alertTab.operators"></select>
+      <div class="gf-form">
+        <div class="gf-form-select-wrapper max-width-10">
+          <select class="gf-form-input" ng-model="ctrl.rule.evalFunc" ng-options="oper as oper for oper in ctrl.evalFuncs"></select>
+        </div>
       </div>
-      <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.panel.alerting.warnLevel" ng-change="alertTab.thresholdsUpdated()"></input>
-    </div>
-    <div class="gf-form">
-      <span class="gf-form-label width-9">
-        <i class="icon-gf icon-gf-critical alert-icon-critical"></i>
-        Critical level
-      </span>
-      <div class="gf-form-select-wrapper max-width-10">
-        <select class="gf-form-input" ng-model="ctrl.panel.alerting.critOperator" ng-options="oper as oper for oper in alertTab.operators"></select>
+      <div class="gf-form">
+        <span class="gf-form-label">
+          <i class="icon-gf icon-gf-warn alert-icon-warn"></i>
+          Warn
+        </span>
+        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.panel.alerting.warnLevel" ng-change="alertTab.thresholdsUpdated()"></input>
       </div>
-      <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.panel.alerting.critLevel" ng-change="alertTab.thresholdsUpdated()"></input>
+      <div class="gf-form">
+        <span class="gf-form-label">
+          <i class="icon-gf icon-gf-warn alert-icon-critical"></i>
+          Critcal
+        </span>
+        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.panel.alerting.warnLevel" ng-change="alertTab.thresholdsUpdated()"></input>
+      </div>
     </div>
   </div>
-
-  <div class="gf-form-group section">
-    <h5 class="section-heading">Aggregation settings</h5>
-    <div class="gf-form">
-      <span class="gf-form-label width-12">Aggregation method</span>
-      <div class="gf-form-select-wrapper max-width-10">
-        <select class="gf-form-input"
-          ng-model="ctrl.panel.alerting.aggregator"
-          ng-options="oper as oper for oper in alertTab.aggregators"></select>
-      </div>
-    </div>
-
-    <div class="gf-form">
-      <span class="gf-form-label width-12">Query range  (seconds)</span>
-      <input class="gf-form-input max-width-10" type="number"
-        ng-model="ctrl.panel.alerting.queryRange" placeholder="3600"></input>
-    </div>
-
-    <div class="gf-form">
-      <span class="gf-form-label width-12">Frequency (seconds)</span>
-      <input class="gf-form-input max-width-10" type="number"
-        ng-model="ctrl.panel.alerting.frequency" placeholder="60"></input>
-    </div>
-  </div>
+</div>
+  <!--   <div class="gf&#45;form"> -->
+  <!--     <span class="gf&#45;form&#45;label width&#45;12">Aggregation method</span> -->
+  <!--     <div class="gf&#45;form&#45;select&#45;wrapper max&#45;width&#45;10"> -->
+  <!--       <select class="gf&#45;form&#45;input" -->
+  <!--         ng&#45;model="ctrl.panel.alerting.aggregator" -->
+  <!--         ng&#45;options="oper as oper for oper in alertTab.aggregators"></select> -->
+  <!--     </div> -->
+  <!--   </div> -->
+  <!--  -->
+  <!--   <div class="gf&#45;form"> -->
+  <!--     <span class="gf&#45;form&#45;label width&#45;12">Query range  (seconds)</span> -->
+  <!--     <input class="gf&#45;form&#45;input max&#45;width&#45;10" type="number" -->
+  <!--       ng&#45;model="ctrl.panel.alerting.queryRange" placeholder="3600"></input> -->
+  <!--   </div> -->
+  <!--  -->
+  <!--   <div class="gf&#45;form"> -->
+  <!--     <span class="gf&#45;form&#45;label width&#45;12">Frequency (seconds)</span> -->
+  <!--     <input class="gf&#45;form&#45;input max&#45;width&#45;10" type="number" -->
+  <!--       ng&#45;model="ctrl.panel.alerting.frequency" placeholder="60"></input> -->
+  <!--   </div> -->
+  <!-- </div> -->
+<div>
   <div class="gf-form-group section">
     <h5 class="section-heading">Alert info</h5>
     <div class="gf-form">
