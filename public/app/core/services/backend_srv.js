@@ -120,21 +120,15 @@ function (angular, _, coreModule, config) {
 
       return $http(options).then(null, function(err) {
         if (err.status === HTTP_REQUEST_ABORTED) {
-          // Need to return the right data structure so it has no effect on
-          // iterating over returned data in datasource.ts#115
-          // TODO: Hitting another refresh cancels the "loading" animation on
-          // panes. Figure out how to keep it going.
-          return {
-            data: {
-              data: {
-                result: []
-              }
-            }
-          };
+          // TODO: Hitting refresh before the original request returns cancels
+          // the "loading" animation on the panes, but it should continue to be
+          // visible.
+          err.statusText = "request aborted";
+          return err;
         }
 
         // handle unauthorized for backend requests
-        if (requestIsLocal && firstAttempt  && err.status === 401) {
+        if (requestIsLocal && firstAttempt && err.status === 401) {
           return self.loginPing().then(function() {
             options.retry = 1;
             canceler.resolve();

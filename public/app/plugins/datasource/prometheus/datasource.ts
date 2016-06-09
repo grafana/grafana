@@ -58,6 +58,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return escapedValues.join('|');
   };
 
+  var HTTP_REQUEST_ABORTED = -1;
   // Called once per panel (graph)
   this.query = function(options) {
     var self = this;
@@ -107,6 +108,9 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       var result = [];
 
       _.each(allResponse, function(response, index) {
+        if (response.status === HTTP_REQUEST_ABORTED) {
+          return;
+        }
         if (response.status === 'error') {
           self.lastErrors.query = response.error;
           throw response.error;
