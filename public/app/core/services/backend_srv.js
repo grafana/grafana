@@ -131,7 +131,9 @@ function (angular, _, coreModule, config) {
         if (requestIsLocal && firstAttempt && err.status === 401) {
           return self.loginPing().then(function() {
             options.retry = 1;
-            canceler.resolve();
+            if (canceler) {
+              canceler.resolve();
+            }
             return self.datasourceRequest(options);
           });
         }
