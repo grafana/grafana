@@ -1,33 +1,67 @@
-<div class="editor-row">
-  <div class="gf-form-group section" >
+
+  <div class="gf-form-group" >
     <h5 class="section-heading">Alert Rule</h5>
     <div class="gf-form-inline">
       <div class="gf-form">
-        <span class="gf-form-label">Value</span>
-        <input class="gf-form-input width-15" type="text" ng-model="ctrl.rule.valueExpr" ng-change="ctrl.thresholdsUpdated()"></input>
+
+        <query-part-editor
+                    class="gf-form-label query-part"
+                    part="ctrl.valueQuery"
+                    part-updated="ctrl.valueQueryUpdated()">
+        </query-part-editor>
+
       </div>
       <div class="gf-form">
-        <div class="gf-form-select-wrapper max-width-10">
-          <select class="gf-form-input" ng-model="ctrl.rule.evalFunc" ng-options="oper as oper for oper in ctrl.evalFuncs"></select>
+        <span class="gf-form-label">Evaluate Against</span>
+        <div class="gf-form-select-wrapper">
+          <select   class="gf-form-input"
+                    ng-model="ctrl.rule.evalFunc"
+                    ng-options="f.value as f.text for f in ctrl.evalFuncs"
+                    ng-change="ctrl.evalFuncChanged()"
+                    >
+          </select>
         </div>
       </div>
+      <div class="gf-form" ng-if="ctrl.secondParam === 'query'">
+        <query-part-editor
+                    class="gf-form-label query-part"
+                    part="ctrl.evalQuery"
+                    part-updated="ctrl.evalQueryUpdated()">
+        </query-part-editor>
+      </div>
+      <div class="gf-form" ng-if="ctrl.secondParam === 'duration'">
+        <span class="gf-form-label">Duration</span>
+        <input class="gf-form-input max-width-7" type="text" ng-model="ctrl.rule.evalStringParam1" ng-change="ctrl.ruleUpdated()"></input>
+      </div>
+    </div>
+  </div>
+
+  <div class="gf-form-group" >
+    <h5 class="section-heading">Levels</h5>
+    <div class="gf-form-inline">
       <div class="gf-form">
         <span class="gf-form-label">
           <i class="icon-gf icon-gf-warn alert-icon-warn"></i>
-          Warn
+          Warn if value
         </span>
-        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.panel.alerting.warnLevel" ng-change="alertTab.thresholdsUpdated()"></input>
+        <span class="gf-form-label">
+          &gt;
+        </span>
+        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.rule.warnLevel" ng-change="alertTab.thresholdsUpdated()"></input>
       </div>
       <div class="gf-form">
         <span class="gf-form-label">
           <i class="icon-gf icon-gf-warn alert-icon-critical"></i>
-          Critcal
+          Critcal if value
         </span>
-        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.panel.alerting.warnLevel" ng-change="alertTab.thresholdsUpdated()"></input>
+        <span class="gf-form-label">
+          &gt;
+        </span>
+        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.rule.critLevel" ng-change="alertTab.thresholdsUpdated()"></input>
       </div>
     </div>
   </div>
-</div>
+
   <!--   <div class="gf&#45;form"> -->
   <!--     <span class="gf&#45;form&#45;label width&#45;12">Aggregation method</span> -->
   <!--     <div class="gf&#45;form&#45;select&#45;wrapper max&#45;width&#45;10"> -->
