@@ -52,6 +52,13 @@ type AlertingClusterInfo struct {
 	UptimePosition int
 }
 
+type HeartBeat struct {
+	Id       int64
+	ServerId string
+	Updated  time.Time
+	Created  time.Time
+}
+
 type HeartBeatCommand struct {
 	ServerId string
 
