@@ -2,7 +2,6 @@ package alerting
 
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type AlertJob struct {
@@ -36,10 +35,7 @@ type AlertRule struct {
 	Query           AlertQuery
 	Transform       string
 	TransformParams simplejson.Json
-}
-
-type Transformer interface {
-	Transform(tsdb tsdb.TimeSeriesSlice) float64
+	Transformer     Transformer
 }
 
 type Level struct {

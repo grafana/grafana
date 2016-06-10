@@ -108,6 +108,12 @@ func ConvetAlertModelToAlertRule(ruleDef *m.AlertRuleModel) (*AlertRule, error) 
 	model.Transform = ruleDef.Expression.Get("transform").Get("type").MustString()
 	model.TransformParams = *ruleDef.Expression.Get("transform")
 
+	if model.Transform == "aggregation" {
+		model.Transformer = &AggregationTransformer{
+			Method: ruleDef.Expression.Get("transform").Get("method").MustString(),
+		}
+	}
+
 	query := ruleDef.Expression.Get("query")
 	model.Query = AlertQuery{
 		Query:        query.Get("query").MustString(),
