@@ -1,5 +1,10 @@
 package alerting
 
+import (
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb"
+)
+
 type AlertJob struct {
 	Offset     int64
 	Delay      bool
@@ -18,26 +23,23 @@ type AlertResult struct {
 }
 
 type AlertRule struct {
-	Id          int64
-	OrgId       int64
-	DashboardId int64
-	PanelId     int64
-	//WarnLevel    float64
-	//CritLevel    float64
-	//WarnOperator string
-	//CritOperator string
-	Frequency   int64
-	Name        string
-	Description string
-	State       string
+	Id              int64
+	OrgId           int64
+	DashboardId     int64
+	PanelId         int64
+	Frequency       int64
+	Name            string
+	Description     string
+	State           string
+	Warning         Level
+	Critical        Level
+	Query           AlertQuery
+	Transform       string
+	TransformParams simplejson.Json
+}
 
-	Warning  Level
-	Critical Level
-
-	ValueQuery AlertQuery
-	EvalFunc   string
-	EvalQuery  AlertQuery
-	EvalParam  string
+type Transformer interface {
+	Transform(tsdb tsdb.TimeSeriesSlice) float64
 }
 
 type Level struct {
@@ -49,6 +51,6 @@ type AlertQuery struct {
 	Query        string
 	DatasourceId int64
 	Aggregator   string
-	From         int64
-	Until        int64
+	From         string
+	To           string
 }

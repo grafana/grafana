@@ -49,15 +49,7 @@ func (arr *AlertRuleReader) Fetch() []*AlertRule {
 
 	res := make([]*AlertRule, len(cmd.Result))
 	for i, ruleDef := range cmd.Result {
-		model := &AlertRule{}
-		model.Id = ruleDef.Id
-		model.OrgId = ruleDef.OrgId
-		model.Name = ruleDef.Name
-		model.Description = ruleDef.Description
-		model.State = ruleDef.State
-
-		ParseAlertRulesFromAlertModel(ruleDef, model)
-
+		model, _ := ConvetAlertModelToAlertRule(ruleDef)
 		res[i] = model
 	}
 

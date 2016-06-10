@@ -60,8 +60,8 @@ export class AlertTabCtrl {
     },
     transform: {
       type: 'aggregation',
-      method: 'avg',
-    },
+      method: 'avg'
+    }
   };
 
   /** @ngInject */

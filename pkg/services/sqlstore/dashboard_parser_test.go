@@ -9,34 +9,25 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestAlertModel(t *testing.T) {
+func TestAlertModelParsing(t *testing.T) {
 
-	Convey("Parsing alerts from dashboard", t, func() {
-		json := `{
+	Convey("Parsing alert info from json", t, func() {
+		Convey("Parsing and validating alerts from dashboards", func() {
+			json := `{
   "id": 57,
   "title": "Graphite 4",
   "originalTitle": "Graphite 4",
   "tags": [
     "graphite"
   ],
-  "style": "dark",
-  "timezone": "browser",
-  "editable": true,
-  "hideControls": false,
-  "sharedCrosshair": false,
   "rows": [
     {
-      "collapse": false,
-      "editable": true,
-      "height": "250px",
+
       "panels": [
         {
           "title": "Active desktop users",
-          "error": false,
-          "span": 6,
           "editable": true,
           "type": "graph",
-          "isNew": true,
           "id": 3,
           "targets": [
             {
@@ -45,111 +36,31 @@ func TestAlertModel(t *testing.T) {
             }
           ],
           "datasource": null,
-          "renderer": "flot",
-          "yaxes": [
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
-          "xaxis": {
-            "show": true
-          },
-          "grid": {
-            "threshold1": null,
-            "threshold2": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "lines": true,
-          "fill": 1,
-          "linewidth": 2,
-          "points": false,
-          "pointradius": 5,
-          "bars": false,
-          "stack": false,
-          "percentage": false,
-          "legend": {
-            "show": true,
-            "values": false,
-            "min": false,
-            "max": false,
-            "current": false,
-            "total": false,
-            "avg": false
-          },
-          "nullPointMode": "connected",
-          "steppedLine": false,
-          "tooltip": {
-            "value_type": "cumulative",
-            "shared": true,
-            "msResolution": false
-          },
-          "timeFrom": null,
-          "timeShift": null,
-          "aliasColors": {},
-          "seriesOverrides": [],
-          
-          
           "alerting": {
-            "frequency": 10,
-            "warning": {
-              "op": ">",
-              "level": 10
-            },
+            "name": "Alerting Panel Title alert",
+            "description": "description",
             "critical": {
-              "op": ">",
-              "level": 20
+              "level": 20,
+              "op": ">"
             },
-            "function": "static",
-            "valueQuery": {
-              "queryRefId": "A",
+            "frequency": 10,
+            "query": {
               "from": "5m",
-              "to": "now",
-              "agg": "avg",
-              "params": [
-                "#A",
-                "5m",
-                "now",
-                "avg"
-              ]
+              "refId": "A",
+              "to": "now"
             },
-            "evalQuery": {
-              "queryRefId": "A",
-              "from": "5m",
-              "to": "now",
-              "agg": "avg",
-              "params": [
-                "#A",
-                "5m",
-                "now",
-                "avg"
-              ]
+            "transform": {
+              "method": "avg",
+              "name": "aggregation"
             },
-            "evalStringParam1": "",
-            "name": "Alerting Panel Title alert"
-          },
-          "links": []
+            "warning": {
+              "level": 10,
+              "op": ">"
+            }           
+          }
         },
         {
           "title": "Active mobile users",
-          "error": false,
-          "span": 6,
-          "editable": true,
-          "type": "graph",
-          "isNew": true,
           "id": 4,
           "targets": [
             {
@@ -158,103 +69,28 @@ func TestAlertModel(t *testing.T) {
             }
           ],
           "datasource": "graphite2",
-          "renderer": "flot",
-          "yaxes": [
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            },
-            {
-              "label": null,
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
-          "xaxis": {
-            "show": true
-          },
-          "grid": {
-            "threshold1": null,
-            "threshold2": null,
-            "threshold1Color": "rgba(216, 200, 27, 0.27)",
-            "threshold2Color": "rgba(234, 112, 112, 0.22)"
-          },
-          "lines": true,
-          "fill": 1,
-          "linewidth": 2,
-          "points": false,
-          "pointradius": 5,
-          "bars": false,
-          "stack": false,
-          "percentage": false,
-          "legend": {
-            "show": true,
-            "values": false,
-            "min": false,
-            "max": false,
-            "current": false,
-            "total": false,
-            "avg": false
-          },
-          "nullPointMode": "connected",
-          "steppedLine": false,
-          "tooltip": {
-            "value_type": "cumulative",
-            "shared": true,
-            "msResolution": false
-          },
-          "timeFrom": null,
-          "timeShift": null,
-          "aliasColors": {
-            "mobile": "#EAB839"
-          },
-          "seriesOverrides": [],
           "alerting": {
-            "frequency": 10,
-            "warning": {
-              "op": ">",
-              "level": 10
-            },
+            "name": "Alerting Panel Title alert",
+            "description": "description",
             "critical": {
-              "op": ">",
-              "level": 20
+              "level": 20,
+              "op": ">"
             },
-            "function": "static",
-            "valueQuery": {
-              "queryRefId": "A",
+            "frequency": 10,
+            "query": {
               "from": "5m",
-              "to": "now",
-              "agg": "avg",
-              "params": [
-                "#A",
-                "5m",
-                "now",
-                "avg"
-              ]
+              "refId": "A",
+              "to": "now"
             },
-            "evalQuery": {
-              "queryRefId": "A",
-              "from": "5m",
-              "to": "now",
-              "agg": "avg",
-              "params": [
-                "#A",
-                "5m",
-                "now",
-                "avg"
-              ]
+            "transform": {
+              "method": "avg",
+              "name": "aggregation"
             },
-            "evalStringParam1": "",
-            "name": "Alerting Panel Title alert"
-          },
-          "links": []
+            "warning": {
+              "level": 10,
+              "op": ">"
+            }
+          }
         }
       ],
       "title": "Row"
@@ -265,41 +101,8 @@ func TestAlertModel(t *testing.T) {
       "height": "250px",
       "panels": [
         {
-          "columns": [],
           "datasource": "InfluxDB",
-          "editable": true,
-          "error": false,
-          "fontSize": "100%",
           "id": 2,
-          "isNew": true,
-          "pageSize": null,
-          "scroll": true,
-          "showHeader": true,
-          "sort": {
-            "col": 0,
-            "desc": true
-          },
-          "span": 6,
-          "styles": [
-            {
-              "dateFormat": "YYYY-MM-DD HH:mm:ss",
-              "pattern": "Time",
-              "type": "date"
-            },
-            {
-              "colorMode": null,
-              "colors": [
-                "rgba(245, 54, 54, 0.9)",
-                "rgba(237, 129, 40, 0.89)",
-                "rgba(50, 172, 45, 0.97)"
-              ],
-              "decimals": 2,
-              "pattern": "/.*/",
-              "thresholds": [],
-              "type": "number",
-              "unit": "short"
-            }
-          ],
           "targets": [
             {
               "dsType": "influxdb",
@@ -342,104 +145,60 @@ func TestAlertModel(t *testing.T) {
           ],
           "title": "Broken influxdb panel",
           "transform": "table",
-          "type": "table",
-          "links": []
+          "type": "table"
         }
       ],
       "title": "New row"
     }
-  ],
-  "time": {
-    "from": "now-1h",
-    "to": "now"
-  },
-  "timepicker": {
-    "now": true,
-    "nowDelay": "5m",
-    "refresh_intervals": [
-      "5s",
-      "10s",
-      "30s",
-      "1m",
-      "5m",
-      "15m",
-      "30m",
-      "1h",
-      "2h",
-      "1d",
-      "7d"
-    ],
-    "time_options": [
-      "5m",
-      "15m",
-      "1h",
-      "6h",
-      "12h",
-      "24h",
-      "2d",
-      "7d",
-      "30d"
-    ]
-  },
-  "templating": {
-    "list": []
-  },
-  "annotations": {
-    "list": []
-  },
-  "schemaVersion": 12,
-  "version": 16,
-  "links": []
+  ]
+
 }`
-		dashboardJson, _ := simplejson.NewJson([]byte(json))
-		cmd := &m.SaveDashboardCommand{
-			Dashboard: dashboardJson,
-			UserId:    1,
-			OrgId:     1,
-			Overwrite: true,
-			Result: &m.Dashboard{
-				Id: 1,
-			},
-		}
-
-		InitTestDB(t)
-
-		AddDataSource(&m.AddDataSourceCommand{
-			Name:      "graphite2",
-			OrgId:     1,
-			Type:      m.DS_INFLUXDB,
-			Access:    m.DS_ACCESS_DIRECT,
-			Url:       "http://test",
-			IsDefault: false,
-			Database:  "site",
-		})
-
-		AddDataSource(&m.AddDataSourceCommand{
-			Name:      "InfluxDB",
-			OrgId:     1,
-			Type:      m.DS_GRAPHITE,
-			Access:    m.DS_ACCESS_DIRECT,
-			Url:       "http://test",
-			IsDefault: true,
-		})
-
-		alerts := alerting.ParseAlertsFromDashboard(cmd)
-
-		Convey("all properties have been set", func() {
-			So(alerts, ShouldNotBeEmpty)
-			So(len(alerts), ShouldEqual, 2)
-
-			for _, v := range alerts {
-				So(v.DashboardId, ShouldEqual, 1)
-				So(v.PanelId, ShouldNotEqual, 0)
-
-				So(v.Name, ShouldNotBeEmpty)
-				So(v.Description, ShouldNotBeEmpty)
-
-				expr := simplejson.NewFromAny(v.Expression)
-				So(expr.Get("valueQuery").Get("query").MustString(), ShouldNotEqual, "")
-				So(expr.Get("valueQuery").Get("datsourceId").MustInt64(), ShouldNotEqual, 0)
+			dashboardJSON, _ := simplejson.NewJson([]byte(json))
+			cmd := &m.SaveDashboardCommand{
+				Dashboard: dashboardJSON,
+				UserId:    1,
+				OrgId:     1,
+				Overwrite: true,
+				Result: &m.Dashboard{
+					Id: 1,
+				},
 			}
+
+			InitTestDB(t)
+
+			AddDataSource(&m.AddDataSourceCommand{
+				Name:      "graphite2",
+				OrgId:     1,
+				Type:      m.DS_INFLUXDB,
+				Access:    m.DS_ACCESS_DIRECT,
+				Url:       "http://test",
+				IsDefault: false,
+				Database:  "site",
+			})
+
+			AddDataSource(&m.AddDataSourceCommand{
+				Name:      "InfluxDB",
+				OrgId:     1,
+				Type:      m.DS_GRAPHITE,
+				Access:    m.DS_ACCESS_DIRECT,
+				Url:       "http://test",
+				IsDefault: true,
+			})
+
+			alerts := alerting.ParseAlertsFromDashboard(cmd)
+
+			Convey("all properties have been set", func() {
+				So(alerts, ShouldNotBeEmpty)
+				So(len(alerts), ShouldEqual, 2)
+
+				for _, v := range alerts {
+					So(v.DashboardId, ShouldEqual, 1)
+					So(v.PanelId, ShouldNotEqual, 0)
+
+					So(v.Name, ShouldNotBeEmpty)
+					So(v.Description, ShouldNotBeEmpty)
+				}
+			})
 		})
 	})
 }

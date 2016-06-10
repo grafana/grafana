@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -13,13 +14,14 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		testDash := insertTestDashboard("dashboard with alerts", 1, "alert")
 
-		items := []*m.AlertRule{
+		items := []*m.AlertRuleModel{
 			{
 				PanelId:     1,
 				DashboardId: testDash.Id,
 				OrgId:       testDash.OrgId,
 				Name:        "Alerting title",
 				Description: "Alerting description",
+				Expression:  simplejson.New(),
 			},
 		}
 
@@ -54,8 +56,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		Convey("Alerts with same dashboard id and panel id should update", func() {
 			modifiedItems := items
-			modifiedItems[0].Name = "New name"
-			//modifiedItems[0].State = "ALERT"
+			modifiedItems[0].Name = "Name"
 
 			modifiedCmd := m.SaveAlertsCommand{
 				DashboardId: testDash.Id,
@@ -95,24 +96,27 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("Multiple alerts per dashboard", func() {
-			multipleItems := []*m.AlertRule{
+			multipleItems := []*m.AlertRuleModel{
 				{
 					DashboardId: testDash.Id,
 					PanelId:     1,
 					Name:        "1",
 					OrgId:       1,
+					Expression:  simplejson.New(),
 				},
 				{
 					DashboardId: testDash.Id,
 					PanelId:     2,
 					Name:        "2",
 					OrgId:       1,
+					Expression:  simplejson.New(),
 				},
 				{
 					DashboardId: testDash.Id,
 					PanelId:     3,
 					Name:        "3",
 					OrgId:       1,
+					Expression:  simplejson.New(),
 				},
 			}
 
@@ -157,7 +161,7 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("When dashboard is removed", func() {
-			items := []*m.AlertRule{
+			items := []*m.AlertRuleModel{
 				{
 					PanelId:     1,
 					DashboardId: testDash.Id,

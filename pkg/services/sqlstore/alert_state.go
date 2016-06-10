@@ -19,7 +19,7 @@ func SetNewAlertState(cmd *m.UpdateAlertStateCommand) error {
 			return fmt.Errorf("new state is invalid")
 		}
 
-		alert := m.AlertRule{}
+		alert := m.AlertRuleModel{}
 		has, err := sess.Id(cmd.AlertId).Get(&alert)
 		if !has {
 			return fmt.Errorf("Could not find alert")
