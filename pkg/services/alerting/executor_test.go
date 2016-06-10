@@ -41,18 +41,19 @@ func TestAlertingExecutor(t *testing.T) {
 				So(result.State, ShouldEqual, alertstates.Critical)
 			})
 
-			/*
-				Convey("Show return critical since sum is above 10", func() {
-					rule := &AlertRule{Critical: Level{Level: 10, Operator: ">"}}
+			Convey("Show return critical since sum is above 10", func() {
+				rule := &AlertRule{
+					Critical:    Level{Level: 10, Operator: ">"},
+					Transformer: &AggregationTransformer{Method: "sum"},
+				}
 
-					timeSeries := []*tsdb.TimeSeries{
-						tsdb.NewTimeSeries("test1", [][2]float64{{9, 0}, {9, 0}}),
-					}
+				timeSeries := []*tsdb.TimeSeries{
+					tsdb.NewTimeSeries("test1", [][2]float64{{9, 0}, {9, 0}}),
+				}
 
-					result := executor.evaluateRule(rule, timeSeries)
-					So(result.State, ShouldEqual, alertstates.Critical)
-				})
-			*/
+				result := executor.evaluateRule(rule, timeSeries)
+				So(result.State, ShouldEqual, alertstates.Critical)
+			})
 
 			Convey("Show return ok since avg is below 10", func() {
 				rule := &AlertRule{
@@ -81,18 +82,21 @@ func TestAlertingExecutor(t *testing.T) {
 				result := executor.evaluateRule(rule, timeSeries)
 				So(result.State, ShouldEqual, alertstates.Ok)
 			})
-			/*
-				Convey("Show return ok since max is above 10", func() {
-					rule := &AlertRule{Critical: Level{Level: 10, Operator: ">"}}
 
-					timeSeries := []*tsdb.TimeSeries{
-						tsdb.NewTimeSeries("test1", [][2]float64{{1, 0}, {11, 0}}),
-					}
+			Convey("Show return ok since max is above 10", func() {
+				rule := &AlertRule{
+					Critical:    Level{Level: 10, Operator: ">"},
+					Transformer: &AggregationTransformer{Method: "max"},
+				}
 
-					result := executor.evaluateRule(rule, timeSeries)
-					So(result.State, ShouldEqual, alertstates.Critical)
-				})
-			*/
+				timeSeries := []*tsdb.TimeSeries{
+					tsdb.NewTimeSeries("test1", [][2]float64{{1, 0}, {11, 0}}),
+				}
+
+				result := executor.evaluateRule(rule, timeSeries)
+				So(result.State, ShouldEqual, alertstates.Critical)
+			})
+
 		})
 
 		Convey("muliple time series", func() {
