@@ -20,7 +20,7 @@ func TestAlertRuleChangesDataAccess(t *testing.T) {
 		var err error
 
 		Convey("When dashboard is removed", func() {
-			items := []*m.AlertRuleDAO{
+			items := []*m.AlertRuleModel{
 				{
 					PanelId:     1,
 					DashboardId: testDash.Id,

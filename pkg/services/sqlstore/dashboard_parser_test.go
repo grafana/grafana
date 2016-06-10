@@ -37,44 +37,26 @@ func TestAlertModelParsing(t *testing.T) {
           ],
           "datasource": null,
           "alerting": {
-            "name": "alert name",
+            "name": "Alerting Panel Title alert",
             "description": "description",
-            "frequency": 10,
-            "warning": {
-              "op": ">",
-              "level": 10
-            },
             "critical": {
-              "op": ">",
-              "level": 20
+              "level": 20,
+              "op": ">"
             },
-            "function": "static",
-            "valueQuery": {
-              "queryRefId": "A",
+            "frequency": 10,
+            "query": {
               "from": "5m",
-              "to": "now",
-              "agg": "avg",
-              "params": [
-                "#A",
-                "5m",
-                "now",
-                "avg"
-              ]
+              "refId": "A",
+              "to": "now"
             },
-            "evalQuery": {
-              "queryRefId": "A",
-              "from": "5m",
-              "to": "now",
-              "agg": "avg",
-              "params": [
-                "#A",
-                "5m",
-                "now",
-                "avg"
-              ]
+            "transform": {
+              "method": "avg",
+              "name": "aggregation"
             },
-            "evalStringParam1": "",
-            "name": "Alerting Panel Title alert"
+            "warning": {
+              "level": 10,
+              "op": ">"
+            }           
           }
         },
         {
@@ -88,44 +70,26 @@ func TestAlertModelParsing(t *testing.T) {
           ],
           "datasource": "graphite2",
           "alerting": {
-            "name": "alert name",
+            "name": "Alerting Panel Title alert",
             "description": "description",
-            "frequency": 10,
-            "warning": {
-              "op": ">",
-              "level": 10
-            },
             "critical": {
-              "op": ">",
-              "level": 20
+              "level": 20,
+              "op": ">"
             },
-            "function": "static",
-            "valueQuery": {
-              "queryRefId": "A",
+            "frequency": 10,
+            "query": {
               "from": "5m",
-              "to": "now",
-              "agg": "avg",
-              "params": [
-                "#A",
-                "5m",
-                "now",
-                "avg"
-              ]
+              "refId": "A",
+              "to": "now"
             },
-            "evalQuery": {
-              "queryRefId": "A",
-              "from": "5m",
-              "to": "now",
-              "agg": "avg",
-              "params": [
-                "#A",
-                "5m",
-                "now",
-                "avg"
-              ]
+            "transform": {
+              "method": "avg",
+              "name": "aggregation"
             },
-            "evalStringParam1": "",
-            "name": "Alerting Panel Title alert"
+            "warning": {
+              "level": 10,
+              "op": ">"
+            }
           }
         }
       ],

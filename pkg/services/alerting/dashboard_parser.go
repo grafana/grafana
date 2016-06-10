@@ -9,8 +9,8 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []*m.AlertRuleDAO {
-	alerts := make([]*m.AlertRuleDAO, 0)
+func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []*m.AlertRuleModel {
+	alerts := make([]*m.AlertRuleModel, 0)
 
 	for _, rowObj := range cmd.Dashboard.Get("rows").MustArray() {
 		row := simplejson.NewFromAny(rowObj)
@@ -19,7 +19,7 @@ func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []*m.AlertRuleDAO {
 			panel := simplejson.NewFromAny(panelObj)
 
 			alerting := panel.Get("alerting")
-			alert := &m.AlertRuleDAO{
+			alert := &m.AlertRuleModel{
 				DashboardId: cmd.Result.Id,
 				OrgId:       cmd.Result.OrgId,
 				PanelId:     panel.Get("id").MustInt64(),
@@ -70,7 +70,7 @@ func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []*m.AlertRuleDAO {
 
 			alert.Expression = alerting
 
-			_, err := ParseAlertRulesFromAlertModel(alert)
+			_, err := ConvetAlertModelToAlertRule(alert)
 
 			if err == nil && alert.ValidToSave() {
 				alerts = append(alerts, alert)
@@ -84,7 +84,7 @@ func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []*m.AlertRuleDAO {
 	return alerts
 }
 
-func ParseAlertRulesFromAlertModel(ruleDef *m.AlertRuleDAO) (*AlertRule, error) {
+func ConvetAlertModelToAlertRule(ruleDef *m.AlertRuleModel) (*AlertRule, error) {
 	model := &AlertRule{}
 	model.Id = ruleDef.Id
 	model.OrgId = ruleDef.OrgId

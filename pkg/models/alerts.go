@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-type AlertRuleDAO struct {
+type AlertRuleModel struct {
 	Id          int64
 	OrgId       int64
 	DashboardId int64
@@ -21,15 +21,15 @@ type AlertRuleDAO struct {
 	Expression *simplejson.Json
 }
 
-func (this AlertRuleDAO) TableName() string {
+func (this AlertRuleModel) TableName() string {
 	return "alert_rule"
 }
 
-func (alertRule *AlertRuleDAO) ValidToSave() bool {
+func (alertRule *AlertRuleModel) ValidToSave() bool {
 	return alertRule.DashboardId != 0
 }
 
-func (this *AlertRuleDAO) ContainsUpdates(other *AlertRuleDAO) bool {
+func (this *AlertRuleModel) ContainsUpdates(other *AlertRuleModel) bool {
 	result := false
 	result = result || this.Name != other.Name
 	result = result || this.Description != other.Description
@@ -83,7 +83,7 @@ type SaveAlertsCommand struct {
 	UserId      int64
 	OrgId       int64
 
-	Alerts []*AlertRuleDAO
+	Alerts []*AlertRuleModel
 }
 
 type DeleteAlertCommand struct {
@@ -97,17 +97,17 @@ type GetAlertsQuery struct {
 	DashboardId int64
 	PanelId     int64
 
-	Result []*AlertRuleDAO
+	Result []*AlertRuleModel
 }
 
 type GetAllAlertsQuery struct {
-	Result []*AlertRuleDAO
+	Result []*AlertRuleModel
 }
 
 type GetAlertByIdQuery struct {
 	Id int64
 
-	Result *AlertRuleDAO
+	Result *AlertRuleModel
 }
 
 type GetAlertChangesQuery struct {

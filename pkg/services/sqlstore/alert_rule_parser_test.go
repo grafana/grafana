@@ -12,7 +12,7 @@ import (
 func TestAlertRuleModelParsing(t *testing.T) {
 
 	Convey("Parsing alertRule from expression", t, func() {
-		alertRuleDAO := &m.AlertRuleDAO{}
+		alertRuleDAO := &m.AlertRuleModel{}
 		json, _ := simplejson.NewJson([]byte(`
       {
         "frequency": 10,
@@ -25,27 +25,27 @@ func TestAlertRuleModelParsing(t *testing.T) {
           "level": 20
         },
         "query": {
-          "queryRefId": "A",
+          "refId": "A",
           "from": "5m",
           "to": "now",
           "datasourceId": 1,
           "query": "aliasByNode(statsd.fakesite.counters.session_start.*.count, 4)"
         },
         "transform": {
-          "name": "aggregation",
+          "type": "aggregation",
           "method": "avg"
-        }`))
+        }
+			}`))
 
 		alertRuleDAO.Name = "Test"
 		alertRuleDAO.Expression = json
-		rule, _ := alerting.ParseAlertRulesFromAlertModel(alertRuleDAO)
+		rule, _ := alerting.ConvetAlertModelToAlertRule(alertRuleDAO)
 
 		Convey("Confirm that all properties are set", func() {
 			So(rule.Query.Query, ShouldEqual, "aliasByNode(statsd.fakesite.counters.session_start.*.count, 4)")
 			So(rule.Query.From, ShouldEqual, "5m")
 			So(rule.Query.To, ShouldEqual, "now")
 			So(rule.Query.DatasourceId, ShouldEqual, 1)
-			//So(rule.ValueQuery.Aggregator, ShouldEqual, "avg")
 			So(rule.Warning.Level, ShouldEqual, 10)
 			So(rule.Warning.Operator, ShouldEqual, ">")
 			So(rule.Critical.Level, ShouldEqual, 20)

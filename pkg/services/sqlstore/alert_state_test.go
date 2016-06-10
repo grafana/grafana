@@ -13,7 +13,7 @@ func TestAlertingStateAccess(t *testing.T) {
 
 		testDash := insertTestDashboard("dashboard with alerts", 1, "alert")
 
-		items := []*m.AlertRuleDAO{
+		items := []*m.AlertRuleModel{
 			{
 				PanelId:     1,
 				DashboardId: testDash.Id,
