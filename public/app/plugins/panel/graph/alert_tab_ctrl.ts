@@ -51,20 +51,15 @@ export class AlertTabCtrl {
     frequency: 10,
     warning: { op: '>', level: 10 },
     critical: { op: '>', level: 20 },
-    function: 'static',
-    valueQuery: {
-      queryRefId: 'A',
-      from: '600s',
+    query: {
+      refId: 'A',
+      from: '5m',
       to: 'now',
-      agg: 'avg',
     },
-    evalQuery: {
-      queryRefId: 'A',
-      from: '600s',
-      to: 'now',
-      agg: 'avg',
-    },
-    evalStringParam1: '',
+    transform: {
+      type: 'aggregation',
+      method: 'avg'
+    }
   };
 
   /** @ngInject */

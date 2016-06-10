@@ -100,7 +100,7 @@ func (e *ExecutorImpl) Execute(job *AlertJob, resultQueue chan *AlertResult) {
 
 func (e *ExecutorImpl) executeQuery(job *AlertJob) (tsdb.TimeSeriesSlice, error) {
 	getDsInfo := &m.GetDataSourceByIdQuery{
-		Id:    job.Rule.ValueQuery.DatasourceId,
+		Id:    job.Rule.Query.DatasourceId,
 		OrgId: job.Rule.OrgId,
 	}
 
@@ -128,16 +128,16 @@ func (e *ExecutorImpl) executeQuery(job *AlertJob) (tsdb.TimeSeriesSlice, error)
 }
 
 func (e *ExecutorImpl) GetRequestForAlertRule(rule *AlertRule, datasource *m.DataSource) *tsdb.Request {
-	log.Debug2("GetRequest", "query", rule.ValueQuery.Query, "from", rule.ValueQuery.From, "datasourceId", datasource.Id)
+	log.Debug2("GetRequest", "query", rule.Query.Query, "from", rule.Query.From, "datasourceId", datasource.Id)
 	req := &tsdb.Request{
 		TimeRange: tsdb.TimeRange{
-			From: "-" + rule.ValueQuery.From,
-			To:   rule.ValueQuery.To,
+			From: "-" + rule.Query.From,
+			To:   rule.Query.To,
 		},
 		Queries: []*tsdb.Query{
 			{
 				RefId: "A",
-				Query: rule.ValueQuery.Query,
+				Query: rule.Query.Query,
 				DataSource: &tsdb.DataSourceInfo{
 					Id:       datasource.Id,
 					Name:     datasource.Name,

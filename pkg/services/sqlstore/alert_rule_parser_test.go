@@ -15,58 +15,37 @@ func TestAlertRuleModelParsing(t *testing.T) {
 		alertRuleDAO := &m.AlertRuleDAO{}
 		json, _ := simplejson.NewJson([]byte(`
       {
-        "critical": {
-          "level": 20,
-          "op": ">"
-        },
-        "description": "Alerting Panel Title alert",
-        "evalQuery": {
-          "agg": "avg",
-          "from": "5m",
-          "params": [
-            "#A",
-            "5m",
-            "now",
-            "avg"
-          ],
-          "queryRefId": "A",
-          "to": "now"
-        },
-        "evalStringParam1": "",
         "frequency": 10,
-        "function": "static",
-        "name": "Alerting Panel Title alert",
-        "queryRef": "- select query -",
-        "valueQuery": {
-          "agg": "avg",
-          "datasourceId": 1,
-          "from": "5m",
-          "params": [
-            "#A",
-            "5m",
-            "now",
-            "avg"
-          ],
-          "query": "aliasByNode(statsd.fakesite.counters.session_start.*.count, 4)",
-          "queryRefId": "A",
-          "to": "now"
-        },
         "warning": {
-          "level": 10,
-          "op": ">"
-        }
-      }`))
+          "op": ">",
+          "level": 10
+        },
+        "critical": {
+          "op": ">",
+          "level": 20
+        },
+        "query": {
+          "queryRefId": "A",
+          "from": "5m",
+          "to": "now",
+          "datasourceId": 1,
+          "query": "aliasByNode(statsd.fakesite.counters.session_start.*.count, 4)"
+        },
+        "transform": {
+          "name": "aggregation",
+          "method": "avg"
+        }`))
 
 		alertRuleDAO.Name = "Test"
 		alertRuleDAO.Expression = json
 		rule, _ := alerting.ParseAlertRulesFromAlertModel(alertRuleDAO)
 
 		Convey("Confirm that all properties are set", func() {
-			So(rule.ValueQuery.Query, ShouldEqual, "aliasByNode(statsd.fakesite.counters.session_start.*.count, 4)")
-			So(rule.ValueQuery.From, ShouldEqual, "5m")
-			So(rule.ValueQuery.To, ShouldEqual, "now")
-			So(rule.ValueQuery.DatasourceId, ShouldEqual, 1)
-			So(rule.ValueQuery.Aggregator, ShouldEqual, "avg")
+			So(rule.Query.Query, ShouldEqual, "aliasByNode(statsd.fakesite.counters.session_start.*.count, 4)")
+			So(rule.Query.From, ShouldEqual, "5m")
+			So(rule.Query.To, ShouldEqual, "now")
+			So(rule.Query.DatasourceId, ShouldEqual, 1)
+			//So(rule.ValueQuery.Aggregator, ShouldEqual, "avg")
 			So(rule.Warning.Level, ShouldEqual, 10)
 			So(rule.Warning.Operator, ShouldEqual, ">")
 			So(rule.Critical.Level, ShouldEqual, 20)

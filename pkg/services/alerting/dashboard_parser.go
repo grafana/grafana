@@ -30,8 +30,8 @@ func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []*m.AlertRuleDAO {
 
 			log.Info("Alertrule: %v", alert.Name)
 
-			valueQuery := alerting.Get("valueQuery")
-			valueQueryRef := valueQuery.Get("queryRefId").MustString()
+			valueQuery := alerting.Get("query")
+			valueQueryRef := valueQuery.Get("refId").MustString()
 			for _, targetsObj := range panel.Get("targets").MustArray() {
 				target := simplejson.NewFromAny(targetsObj)
 
@@ -48,7 +48,7 @@ func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []*m.AlertRuleDAO {
 						if err := bus.Dispatch(query); err == nil {
 							for _, ds := range query.Result {
 								if ds.IsDefault {
-									alerting.SetPath([]string{"valueQuery", "datasourceId"}, ds.Id)
+									alerting.SetPath([]string{"query", "datasourceId"}, ds.Id)
 								}
 							}
 						}
@@ -58,12 +58,12 @@ func ParseAlertsFromDashboard(cmd *m.SaveDashboardCommand) []*m.AlertRuleDAO {
 							OrgId: cmd.OrgId,
 						}
 						bus.Dispatch(query)
-						alerting.SetPath([]string{"valueQuery", "datasourceId"}, query.Result.Id)
+						alerting.SetPath([]string{"query", "datasourceId"}, query.Result.Id)
 					}
 
 					targetQuery := target.Get("target").MustString()
 					if targetQuery != "" {
-						alerting.SetPath([]string{"valueQuery", "query"}, targetQuery)
+						alerting.SetPath([]string{"query", "query"}, targetQuery)
 					}
 				}
 			}
@@ -105,23 +105,24 @@ func ParseAlertRulesFromAlertModel(ruleDef *m.AlertRuleDAO) (*AlertRule, error) 
 	}
 
 	model.Frequency = ruleDef.Expression.Get("frequency").MustInt64()
+	model.Transform = ruleDef.Expression.Get("transform").Get("type").MustString()
+	model.TransformParams = *ruleDef.Expression.Get("transform")
 
-	valueQuery := ruleDef.Expression.Get("valueQuery")
-
-	model.ValueQuery = AlertQuery{
-		Query:        valueQuery.Get("query").MustString(),
-		DatasourceId: valueQuery.Get("datasourceId").MustInt64(),
-		From:         valueQuery.Get("from").MustString(),
-		To:           valueQuery.Get("to").MustString(),
-		Aggregator:   valueQuery.Get("agg").MustString(),
+	query := ruleDef.Expression.Get("query")
+	model.Query = AlertQuery{
+		Query:        query.Get("query").MustString(),
+		DatasourceId: query.Get("datasourceId").MustInt64(),
+		From:         query.Get("from").MustString(),
+		To:           query.Get("to").MustString(),
+		Aggregator:   query.Get("agg").MustString(),
 	}
 
-	if model.ValueQuery.Query == "" {
-		return nil, fmt.Errorf("missing valueQuery query")
+	if model.Query.Query == "" {
+		return nil, fmt.Errorf("missing query.query")
 	}
 
-	if model.ValueQuery.DatasourceId == 0 {
-		return nil, fmt.Errorf("missing valueQuery datasourceId")
+	if model.Query.DatasourceId == 0 {
+		return nil, fmt.Errorf("missing query.datasourceId")
 	}
 
 	return model, nil
