@@ -166,12 +166,12 @@ func AuthenticateUnscoped(data *Auth_data) error {
 
 	return authenticate(data, b)
 }
-
 func authenticate(data *Auth_data, b []byte) error {
 	auth_url := data.Server + "/v3/auth/tokens?nocatalog"
 
 	log.Debug("Authentication request to URL: %s", auth_url)
-	log.Debug("Authentication request body: \n%s", b)
+
+	log.Debug("Authentication request body: \n%s", anonymisePasswordsTokens(data, b))
 
 	request, err := http.NewRequest("POST", auth_url, bytes.NewBuffer(b))
 	if err != nil {
@@ -214,6 +214,20 @@ func authenticate(data *Auth_data, b []byte) error {
 	data.Roles = auth_response.Token.Roles
 
 	return nil
+}
+
+func anonymisePasswordsTokens(data *Auth_data, json []byte) []byte {
+	anonJson := json
+	if data.Password != "" {
+		anonJson = bytes.Replace(anonJson, []byte("\"password\":\""+data.Password+"\""),
+			[]byte("\"password\":\"********\""), -1)
+	}
+	if data.UnscopedToken != "" {
+		anonJson = bytes.Replace(anonJson, []byte("\"token\":{\"id\":\""+data.UnscopedToken+"\""),
+			[]byte("\"token\":{\"id\":\"****************\""), -1)
+	}
+
+	return anonJson
 }
 
 // Projects Section
