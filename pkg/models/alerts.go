@@ -31,18 +31,19 @@ func (alertRule *AlertRuleDAO) ValidToSave() bool {
 
 func (this *AlertRuleDAO) ContainsUpdates(other *AlertRuleDAO) bool {
 	result := false
-
 	result = result || this.Name != other.Name
 	result = result || this.Description != other.Description
 
-	json1, err1 := this.Expression.MarshalJSON()
-	json2, err2 := other.Expression.MarshalJSON()
+	if this.Expression != nil && other.Expression != nil {
+		json1, err1 := this.Expression.Encode()
+		json2, err2 := other.Expression.Encode()
 
-	if err1 != nil || err2 != nil {
-		return false
+		if err1 != nil || err2 != nil {
+			return false
+		}
+
+		result = result || string(json1) != string(json2)
 	}
-
-	result = result || string(json1) != string(json2)
 
 	//don't compare .State! That would be insane.
 
