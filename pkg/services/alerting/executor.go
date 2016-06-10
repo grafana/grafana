@@ -2,7 +2,6 @@ package alerting
 
 import (
 	"fmt"
-	"strconv"
 
 	"math"
 
@@ -14,7 +13,6 @@ import (
 )
 
 var (
-	resultLogFmt   = "Alerting: executor %s  %1.2f %s %1.2f : %v"
 	descriptionFmt = "Actual value: %1.2f for %s"
 )
 
@@ -102,7 +100,7 @@ func (e *ExecutorImpl) Execute(job *AlertJob, resultQueue chan *AlertResult) {
 
 func (e *ExecutorImpl) executeQuery(job *AlertJob) (tsdb.TimeSeriesSlice, error) {
 	getDsInfo := &m.GetDataSourceByIdQuery{
-		Id:    1,
+		Id:    job.Rule.ValueQuery.DatasourceId,
 		OrgId: job.Rule.OrgId,
 	}
 
@@ -130,15 +128,16 @@ func (e *ExecutorImpl) executeQuery(job *AlertJob) (tsdb.TimeSeriesSlice, error)
 }
 
 func (e *ExecutorImpl) GetRequestForAlertRule(rule *AlertRule, datasource *m.DataSource) *tsdb.Request {
+	log.Debug2("GetRequest", "query", rule.ValueQuery.Query, "from", rule.ValueQuery.From, "datasourceId", datasource.Id)
 	req := &tsdb.Request{
 		TimeRange: tsdb.TimeRange{
-			From: "-" + strconv.Itoa(int(rule.ValueQuery.From)) + "s",
-			To:   "now",
+			From: "-" + rule.ValueQuery.From,
+			To:   rule.ValueQuery.To,
 		},
 		Queries: []*tsdb.Query{
 			{
 				RefId: "A",
-				Query: "apps.fakesite.*.counters.requests.count",
+				Query: rule.ValueQuery.Query,
 				DataSource: &tsdb.DataSourceInfo{
 					Id:       datasource.Id,
 					Name:     datasource.Name,
@@ -156,7 +155,7 @@ func (e *ExecutorImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice
 	e.log.Debug("Evaluating Alerting Rule", "seriesCount", len(series), "ruleName", rule.Name)
 
 	for _, serie := range series {
-		log.Debug("Evaluating series", "series", serie.Name)
+		e.log.Debug("Evaluating series", "series", serie.Name)
 
 		if aggregator["avg"] == nil {
 			continue
@@ -166,7 +165,7 @@ func (e *ExecutorImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice
 		var critOperartor = operators[rule.Critical.Operator]
 		var critResult = critOperartor(aggValue, rule.Critical.Level)
 
-		log.Trace(resultLogFmt, "Crit", serie.Name, aggValue, rule.Critical.Operator, rule.Critical.Level, critResult)
+		e.log.Debug("Alert execution Crit", "name", serie.Name, "aggValue", aggValue, "operator", rule.Critical.Operator, "level", rule.Critical.Level, "result", critResult)
 		if critResult {
 			return &AlertResult{
 				State:       alertstates.Critical,
@@ -177,7 +176,7 @@ func (e *ExecutorImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice
 
 		var warnOperartor = operators[rule.Warning.Operator]
 		var warnResult = warnOperartor(aggValue, rule.Warning.Level)
-		log.Trace(resultLogFmt, "Warn", serie.Name, aggValue, rule.Warning.Operator, rule.Warning.Level, warnResult)
+		e.log.Debug("Alert execution Warn", "name", serie.Name, "aggValue", aggValue, "operator", rule.Warning.Operator, "level", rule.Warning.Level, "result", warnResult)
 		if warnResult {
 			return &AlertResult{
 				State:       alertstates.Warn,

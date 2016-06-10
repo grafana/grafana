@@ -59,7 +59,7 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	var data []TargetResponseDTO
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		glog.Info("Failed to unmarshal graphite response", "error", err)
+		glog.Info("Failed to unmarshal graphite response", "error", err, "body", string(body))
 		result.Error = err
 		return result
 	}

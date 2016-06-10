@@ -54,13 +54,13 @@ export class AlertTabCtrl {
     function: 'static',
     valueQuery: {
       queryRefId: 'A',
-      from: '5m',
+      from: '600s',
       to: 'now',
       agg: 'avg',
     },
     evalQuery: {
       queryRefId: 'A',
-      from: '5m',
+      from: '600s',
       to: 'now',
       agg: 'avg',
     },

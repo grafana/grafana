@@ -49,6 +49,6 @@ type AlertQuery struct {
 	Query        string
 	DatasourceId int64
 	Aggregator   string
-	From         int64
-	Until        int64
+	From         string
+	To           string
 }

@@ -13,13 +13,13 @@ func TestAlertingModelTest(t *testing.T) {
 		json1, _ := simplejson.NewJson([]byte(`{ "field": "value" }`))
 		json2, _ := simplejson.NewJson([]byte(`{ "field": "value" }`))
 
-		rule1 := &AlertRule{
+		rule1 := &AlertRuleDAO{
 			Expression:  json1,
 			Name:        "Namn",
 			Description: "Description",
 		}
 
-		rule2 := &AlertRule{
+		rule2 := &AlertRuleDAO{
 			Expression:  json2,
 			Name:        "Namn",
 			Description: "Description",

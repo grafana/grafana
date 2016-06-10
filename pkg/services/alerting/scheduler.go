@@ -8,16 +8,18 @@ import (
 
 type SchedulerImpl struct {
 	jobs map[int64]*AlertJob
+	log  log.Logger
 }
 
 func NewScheduler() Scheduler {
 	return &SchedulerImpl{
 		jobs: make(map[int64]*AlertJob, 0),
+		log:  log.New("alerting.scheduler"),
 	}
 }
 
 func (s *SchedulerImpl) Update(rules []*AlertRule) {
-	log.Debug("Scheduler: Update()")
+	s.log.Debug("Scheduler: Update")
 
 	jobs := make(map[int64]*AlertJob, 0)
 
@@ -38,7 +40,7 @@ func (s *SchedulerImpl) Update(rules []*AlertRule) {
 		jobs[rule.Id] = job
 	}
 
-	log.Debug("Scheduler: Selected %d jobs", len(jobs))
+	s.log.Debug("Scheduler: Selected %d jobs", len(jobs))
 	s.jobs = jobs
 }
 

@@ -48,7 +48,7 @@ func GetAlertRuleChanges(query *m.GetAlertChangesQuery) error {
 	return nil
 }
 
-func SaveAlertChange(change string, alert *m.AlertRule, sess *xorm.Session) error {
+func SaveAlertChange(change string, alert *m.AlertRuleDAO, sess *xorm.Session) error {
 	_, err := sess.Insert(&m.AlertRuleChange{
 		OrgId:   alert.OrgId,
 		Type:    change,
