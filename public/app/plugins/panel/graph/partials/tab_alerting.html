@@ -6,32 +6,34 @@
 
         <query-part-editor
                     class="gf-form-label query-part"
-                    part="ctrl.valueQuery"
-                    part-updated="ctrl.valueQueryUpdated()">
+                    part="ctrl.query"
+                    part-updated="ctrl.queryUpdated()">
         </query-part-editor>
 
       </div>
       <div class="gf-form">
-        <span class="gf-form-label">Evaluate Against</span>
+        <span class="gf-form-label">Transform using</span>
         <div class="gf-form-select-wrapper">
           <select   class="gf-form-input"
-                    ng-model="ctrl.rule.evalFunc"
-                    ng-options="f.value as f.text for f in ctrl.evalFuncs"
-                    ng-change="ctrl.evalFuncChanged()"
+                    ng-model="ctrl.rule.transform.type"
+                    ng-options="f.type as f.text for f in ctrl.transforms"
+                    ng-change="ctrl.transformChanged()"
                     >
           </select>
         </div>
       </div>
-      <div class="gf-form" ng-if="ctrl.secondParam === 'query'">
-        <query-part-editor
-                    class="gf-form-label query-part"
-                    part="ctrl.evalQuery"
-                    part-updated="ctrl.evalQueryUpdated()">
-        </query-part-editor>
+      <div class="gf-form" ng-if="ctrl.transformDef.type === 'aggregation'">
+        <span class="gf-form-label">Method</span>
+        <div class="gf-form-select-wrapper">
+          <select   class="gf-form-input"
+                    ng-model="ctrl.rule.transform.method"
+                    ng-options="f for f in ctrl.aggregators">
+          </select>
+        </div>
       </div>
-      <div class="gf-form" ng-if="ctrl.secondParam === 'duration'">
-        <span class="gf-form-label">Duration</span>
-        <input class="gf-form-input max-width-7" type="text" ng-model="ctrl.rule.evalStringParam1" ng-change="ctrl.ruleUpdated()"></input>
+      <div class="gf-form" ng-if="ctrl.transformDef.type === 'forecast'">
+        <span class="gf-form-label">Timespan</span>
+        <input class="gf-form-input max-width-7" type="text" ng-model="ctrl.rule.transform.timespan" ng-change="ctrl.ruleUpdated()"></input>
       </div>
     </div>
   </div>
