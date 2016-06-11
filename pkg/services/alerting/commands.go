@@ -19,8 +19,9 @@ func init() {
 
 func updateDashboardAlerts(cmd *UpdateDashboardAlertsCommand) error {
 	saveAlerts := m.SaveAlertsCommand{
-		OrgId:  cmd.OrgId,
-		UserId: cmd.UserId,
+		OrgId:       cmd.OrgId,
+		UserId:      cmd.UserId,
+		DashboardId: cmd.Dashboard.Id,
 	}
 
 	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId)

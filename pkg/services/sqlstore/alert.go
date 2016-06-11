@@ -184,6 +184,7 @@ func upsertAlerts(alerts []*m.Alert, posted []*m.Alert, sess *xorm.Session) erro
 				update = true
 				alert.Id = k.Id
 				alertToUpdate = k
+				break
 			}
 		}
 
@@ -224,6 +225,7 @@ func deleteMissingAlerts(alerts []*m.Alert, posted []*m.Alert, sess *xorm.Sessio
 		for _, k := range posted {
 			if missingAlert.PanelId == k.PanelId {
 				missing = false
+				break
 			}
 		}
 

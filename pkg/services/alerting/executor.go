@@ -69,7 +69,7 @@ func (e *ExecutorImpl) executeQuery(job *AlertJob) (tsdb.TimeSeriesSlice, error)
 }
 
 func (e *ExecutorImpl) GetRequestForAlertRule(rule *AlertRule, datasource *m.DataSource) *tsdb.Request {
-	log.Debug2("GetRequest", "query", rule.Query.Query, "from", rule.Query.From, "datasourceId", datasource.Id)
+	e.log.Debug("GetRequest", "query", rule.Query.Query, "from", rule.Query.From, "datasourceId", datasource.Id)
 	req := &tsdb.Request{
 		TimeRange: tsdb.TimeRange{
 			From: "-" + rule.Query.From,
