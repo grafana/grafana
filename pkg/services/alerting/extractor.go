@@ -47,7 +47,8 @@ func (e *DashAlertExtractor) lookupDatasourceId(dsName string) (int64, error) {
 	return 0, errors.New("Could not find datasource id for " + dsName)
 }
 
-func (e *DashAlertExtractor) GetRuleModels() ([]*m.Alert, error) {
+func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
+	e.log.Debug("GetAlerts")
 
 	alerts := make([]*m.Alert, 0)
 
@@ -116,5 +117,6 @@ func (e *DashAlertExtractor) GetRuleModels() ([]*m.Alert, error) {
 		}
 	}
 
+	e.log.Debug("Extracted alerts from dashboard", "alertCount", len(alerts))
 	return alerts, nil
 }

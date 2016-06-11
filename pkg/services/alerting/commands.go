@@ -25,13 +25,13 @@ func updateDashboardAlerts(cmd *UpdateDashboardAlertsCommand) error {
 
 	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId)
 
-	alerts, err := extractor.GetRuleModels()
-	if err != nil {
+	if alerts, err := extractor.GetAlerts(); err != nil {
 		return err
+	} else {
+		saveAlerts.Alerts = alerts
 	}
 
-	saveAlerts.Alerts = alerts
-	if bus.Dispatch(&saveAlerts); err != nil {
+	if err := bus.Dispatch(&saveAlerts); err != nil {
 		return err
 	}
 
