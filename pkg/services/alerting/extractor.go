@@ -65,7 +65,7 @@ func (e *AlertRuleExtractor) GetRuleModels() (m.AlertRules, error) {
 				continue
 			}
 
-			ruleModel := &m.AlertRuleModel{
+			ruleModel := &m.Alert{
 				DashboardId: e.Dash.Id,
 				OrgId:       e.OrgId,
 				PanelId:     panel.Get("id").MustInt64(),

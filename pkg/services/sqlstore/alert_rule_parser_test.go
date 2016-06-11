@@ -12,7 +12,7 @@ import (
 func TestAlertRuleModelParsing(t *testing.T) {
 
 	Convey("Parsing alertRule from expression", t, func() {
-		alertRuleDAO := &m.AlertRuleModel{}
+		alertRuleDAO := &m.Alert{}
 		json, _ := simplejson.NewJson([]byte(`
       {
         "frequency": 10,

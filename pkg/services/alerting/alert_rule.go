@@ -25,7 +25,7 @@ type AlertRule struct {
 	Transformer     Transformer
 }
 
-func NewAlertRuleFromDBModel(ruleDef *m.AlertRuleModel) (*AlertRule, error) {
+func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 	model := &AlertRule{}
 	model.Id = ruleDef.Id
 	model.OrgId = ruleDef.OrgId

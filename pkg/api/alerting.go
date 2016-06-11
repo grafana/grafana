@@ -43,7 +43,7 @@ func GetAlertChanges(c *middleware.Context) Response {
 	return Json(200, query.Result)
 }
 
-// GET /api/alerts
+// GET /api/alerts/rules/
 func GetAlerts(c *middleware.Context) Response {
 	query := models.GetAlertsQuery{
 		OrgId:       c.OrgId,

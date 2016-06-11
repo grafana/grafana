@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-type AlertRuleModel struct {
+type Alert struct {
 	Id          int64
 	OrgId       int64
 	DashboardId int64
@@ -24,17 +24,11 @@ type AlertRuleModel struct {
 	Expression *simplejson.Json
 }
 
-type AlertRules []*AlertRuleModel
-
-func (this AlertRuleModel) TableName() string {
-	return "alert_rule"
+func (alert *Alert) ValidToSave() bool {
+	return alert.DashboardId != 0
 }
 
-func (alertRule *AlertRuleModel) ValidToSave() bool {
-	return alertRule.DashboardId != 0
-}
-
-func (this *AlertRuleModel) ContainsUpdates(other *AlertRuleModel) bool {
+func (this *Alert) ContainsUpdates(other *Alert) bool {
 	result := false
 	result = result || this.Name != other.Name
 	result = result || this.Description != other.Description
@@ -51,7 +45,6 @@ func (this *AlertRuleModel) ContainsUpdates(other *AlertRuleModel) bool {
 	}
 
 	//don't compare .State! That would be insane.
-
 	return result
 }
 
@@ -70,11 +63,10 @@ type HeartBeat struct {
 
 type HeartBeatCommand struct {
 	ServerId string
-
-	Result AlertingClusterInfo
+	Result   AlertingClusterInfo
 }
 
-type AlertRuleChange struct {
+type AlertChange struct {
 	Id      int64     `json:"id"`
 	OrgId   int64     `json:"-"`
 	AlertId int64     `json:"alertId"`
@@ -88,7 +80,7 @@ type SaveAlertsCommand struct {
 	UserId      int64
 	OrgId       int64
 
-	Alerts AlertRules
+	Alerts []*Alert
 }
 
 type DeleteAlertCommand struct {
@@ -102,17 +94,17 @@ type GetAlertsQuery struct {
 	DashboardId int64
 	PanelId     int64
 
-	Result []*AlertRuleModel
+	Result []*Alert
 }
 
 type GetAllAlertsQuery struct {
-	Result []*AlertRuleModel
+	Result []*Alert
 }
 
 type GetAlertByIdQuery struct {
 	Id int64
 
-	Result *AlertRuleModel
+	Result *Alert
 }
 
 type GetAlertChangesQuery struct {
@@ -120,5 +112,5 @@ type GetAlertChangesQuery struct {
 	Limit   int64
 	SinceId int64
 
-	Result []*AlertRuleChange
+	Result []*AlertChange
 }

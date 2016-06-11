@@ -31,7 +31,7 @@ type UpdateAlertStateCommand struct {
 	NewState string `json:"newState" binding:"Required"`
 	Info     string `json:"info"`
 
-	Result *AlertRuleModel
+	Result *Alert
 }
 
 // Queries
