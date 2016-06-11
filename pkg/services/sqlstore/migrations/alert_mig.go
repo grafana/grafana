@@ -7,7 +7,7 @@ import (
 func addAlertMigrations(mg *Migrator) {
 
 	alertV1 := Table{
-		Name: "alert_rule",
+		Name: "alert",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
@@ -26,10 +26,10 @@ func addAlertMigrations(mg *Migrator) {
 	}
 
 	// create table
-	mg.AddMigration("create alert_rule table v2", NewAddTableMigration(alertV1))
+	mg.AddMigration("create alert table v1", NewAddTableMigration(alertV1))
 
 	alert_changes := Table{
-		Name: "alert_rule_change",
+		Name: "alert_change",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "alert_id", Type: DB_BigInt, Nullable: false},
@@ -39,7 +39,7 @@ func addAlertMigrations(mg *Migrator) {
 		},
 	}
 
-	mg.AddMigration("create alert_rules_updates table v1", NewAddTableMigration(alert_changes))
+	mg.AddMigration("create alert_change table v1", NewAddTableMigration(alert_changes))
 
 	alert_state_log := Table{
 		Name: "alert_state",

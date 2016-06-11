@@ -39,7 +39,7 @@ func GetAlertRuleChanges(query *m.GetAlertChangesQuery) error {
 		params = append(params, query.Limit)
 	}
 
-	alertChanges := make([]*m.AlertRuleChange, 0)
+	alertChanges := make([]*m.AlertChange, 0)
 	if err := x.Sql(sql.String(), params...).Find(&alertChanges); err != nil {
 		return err
 	}
@@ -49,7 +49,7 @@ func GetAlertRuleChanges(query *m.GetAlertChangesQuery) error {
 }
 
 func SaveAlertChange(change string, alert *m.Alert, sess *xorm.Session) error {
-	_, err := sess.Insert(&m.AlertRuleChange{
+	_, err := sess.Insert(&m.AlertChange{
 		OrgId:   alert.OrgId,
 		Type:    change,
 		Created: time.Now(),

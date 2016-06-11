@@ -79,7 +79,7 @@ func GetAlertById(query *m.GetAlertByIdQuery) error {
 
 func GetAllAlertQueryHandler(query *m.GetAllAlertsQuery) error {
 	var alerts []*m.Alert
-	err := x.Sql("select * from alert_rule").Find(&alerts)
+	err := x.Sql("select * from alert").Find(&alerts)
 	if err != nil {
 		return err
 	}
@@ -90,7 +90,7 @@ func GetAllAlertQueryHandler(query *m.GetAllAlertsQuery) error {
 
 func DeleteAlertById(cmd *m.DeleteAlertCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		if _, err := sess.Exec("DELETE FROM alert_rule WHERE id = ?", cmd.AlertId); err != nil {
+		if _, err := sess.Exec("DELETE FROM alert WHERE id = ?", cmd.AlertId); err != nil {
 			return err
 		}
 
@@ -103,7 +103,7 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 	params := make([]interface{}, 0)
 
 	sql.WriteString(`SELECT *
-						from alert_rule
+						from alert
 						`)
 
 	sql.WriteString(`WHERE org_id = ?`)
@@ -141,14 +141,16 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 }
 
 func DeleteAlertDefinition(dashboardId int64, sess *xorm.Session) error {
-	alerts := make(m.Alerts, 0)
+	alerts := make([]*m.Alert, 0)
 	sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
 
 	for _, alert := range alerts {
-		_, err := sess.Exec("DELETE FROM alert_rule WHERE id = ? ", alert.Id)
+		_, err := sess.Exec("DELETE FROM alert WHERE id = ? ", alert.Id)
 		if err != nil {
 			return err
 		}
+
+		sqlog.Debug("Alert deleted (due to dashboard deletion)", "name", alert.Name, "id", alert.Id)
 
 		if err := SaveAlertChange("DELETED", alert, sess); err != nil {
 			return err
@@ -194,6 +196,7 @@ func upsertAlerts(alerts []*m.Alert, posted []*m.Alert, sess *xorm.Session) erro
 					return err
 				}
 
+				sqlog.Debug("Alert updated", "name", alert.Name, "id", alert.Id)
 				SaveAlertChange("UPDATED", alert, sess)
 			}
 
@@ -205,6 +208,8 @@ func upsertAlerts(alerts []*m.Alert, posted []*m.Alert, sess *xorm.Session) erro
 			if err != nil {
 				return err
 			}
+
+			sqlog.Debug("Alert inserted", "name", alert.Name, "id", alert.Id)
 			SaveAlertChange("CREATED", alert, sess)
 		}
 	}
@@ -223,10 +228,12 @@ func deleteMissingAlerts(alerts []*m.Alert, posted []*m.Alert, sess *xorm.Sessio
 		}
 
 		if missing {
-			_, err := sess.Exec("DELETE FROM alert_rule WHERE id = ?", missingAlert.Id)
+			_, err := sess.Exec("DELETE FROM alert WHERE id = ?", missingAlert.Id)
 			if err != nil {
 				return err
 			}
+
+			sqlog.Debug("Alert deleted", "name", missingAlert.Name, "id", missingAlert.Id)
 
 			err = SaveAlertChange("DELETED", missingAlert, sess)
 			if err != nil {

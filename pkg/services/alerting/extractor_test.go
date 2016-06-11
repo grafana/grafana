@@ -36,7 +36,7 @@ func TestAlertRuleExtraction(t *testing.T) {
             }
           ],
           "datasource": null,
-          "alerting": {
+          "alert": {
             "name": "name1",
             "description": "desc1",
 						"scheduler": 1,
@@ -71,7 +71,7 @@ func TestAlertRuleExtraction(t *testing.T) {
             }
           ],
           "datasource": "graphite2",
-          "alerting": {
+          "alert": {
             "name": "name2",
             "description": "desc2",
 						"scheduler": 0,
@@ -150,7 +150,7 @@ func TestAlertRuleExtraction(t *testing.T) {
           "title": "Broken influxdb panel",
           "transform": "table",
           "type": "table",
-					"alerting": {
+					"alert": {
 						"deleted": true
 					}
         }
@@ -164,7 +164,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			dash := m.NewDashboardFromJson(dashJson)
-			extractor := NewAlertRuleExtractor(dash, 1)
+			extractor := NewDashAlertExtractor(dash, 1)
 
 			// mock data
 			defaultDs := &m.DataSource{Id: 12, OrgId: 2, Name: "I am default", IsDefault: true}

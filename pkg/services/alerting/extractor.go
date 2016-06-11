@@ -9,21 +9,21 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-type AlertRuleExtractor struct {
+type DashAlertExtractor struct {
 	Dash  *m.Dashboard
 	OrgId int64
 	log   log.Logger
 }
 
-func NewAlertRuleExtractor(dash *m.Dashboard, orgId int64) *AlertRuleExtractor {
-	return &AlertRuleExtractor{
+func NewDashAlertExtractor(dash *m.Dashboard, orgId int64) *DashAlertExtractor {
+	return &DashAlertExtractor{
 		Dash:  dash,
 		OrgId: orgId,
 		log:   log.New("alerting.extractor"),
 	}
 }
 
-func (e *AlertRuleExtractor) lookupDatasourceId(dsName string) (int64, error) {
+func (e *DashAlertExtractor) lookupDatasourceId(dsName string) (int64, error) {
 	if dsName == "" {
 		query := &m.GetDataSourcesQuery{OrgId: e.OrgId}
 		if err := bus.Dispatch(query); err != nil {
@@ -47,36 +47,36 @@ func (e *AlertRuleExtractor) lookupDatasourceId(dsName string) (int64, error) {
 	return 0, errors.New("Could not find datasource id for " + dsName)
 }
 
-func (e *AlertRuleExtractor) GetRuleModels() (m.AlertRules, error) {
+func (e *DashAlertExtractor) GetRuleModels() ([]*m.Alert, error) {
 
-	rules := make(m.AlertRules, 0)
+	alerts := make([]*m.Alert, 0)
 
 	for _, rowObj := range e.Dash.Data.Get("rows").MustArray() {
 		row := simplejson.NewFromAny(rowObj)
 
 		for _, panelObj := range row.Get("panels").MustArray() {
 			panel := simplejson.NewFromAny(panelObj)
-			jsonRule := panel.Get("alerting")
+			jsonAlert := panel.Get("alert")
 
 			// check if marked for deletion
-			deleted := jsonRule.Get("deleted").MustBool()
+			deleted := jsonAlert.Get("deleted").MustBool()
 			if deleted {
 				e.log.Info("Deleted alert rule found")
 				continue
 			}
 
-			ruleModel := &m.Alert{
+			alert := &m.Alert{
 				DashboardId: e.Dash.Id,
 				OrgId:       e.OrgId,
 				PanelId:     panel.Get("id").MustInt64(),
-				Id:          jsonRule.Get("id").MustInt64(),
-				Name:        jsonRule.Get("name").MustString(),
-				Scheduler:   jsonRule.Get("scheduler").MustInt64(),
-				Enabled:     jsonRule.Get("enabled").MustBool(),
-				Description: jsonRule.Get("description").MustString(),
+				Id:          jsonAlert.Get("id").MustInt64(),
+				Name:        jsonAlert.Get("name").MustString(),
+				Scheduler:   jsonAlert.Get("scheduler").MustInt64(),
+				Enabled:     jsonAlert.Get("enabled").MustBool(),
+				Description: jsonAlert.Get("description").MustString(),
 			}
 
-			valueQuery := jsonRule.Get("query")
+			valueQuery := jsonAlert.Get("query")
 			valueQueryRef := valueQuery.Get("refId").MustString()
 			for _, targetsObj := range panel.Get("targets").MustArray() {
 				target := simplejson.NewFromAny(targetsObj)
@@ -97,24 +97,24 @@ func (e *AlertRuleExtractor) GetRuleModels() (m.AlertRules, error) {
 
 					targetQuery := target.Get("target").MustString()
 					if targetQuery != "" {
-						jsonRule.SetPath([]string{"query", "query"}, targetQuery)
+						jsonAlert.SetPath([]string{"query", "query"}, targetQuery)
 					}
 				}
 			}
 
-			ruleModel.Expression = jsonRule
+			alert.Expression = jsonAlert
 
 			// validate
-			_, err := NewAlertRuleFromDBModel(ruleModel)
-			if err == nil && ruleModel.ValidToSave() {
-				rules = append(rules, ruleModel)
+			_, err := NewAlertRuleFromDBModel(alert)
+			if err == nil && alert.ValidToSave() {
+				alerts = append(alerts, alert)
 			} else {
-				e.log.Error("Failed to extract alert rules from dashboard", "error", err)
-				return nil, errors.New("Failed to extract alert rules from dashboard")
+				e.log.Error("Failed to extract alerts from dashboard", "error", err)
+				return nil, errors.New("Failed to extract alerts from dashboard")
 			}
 
 		}
 	}
 
-	return rules, nil
+	return alerts, nil
 }

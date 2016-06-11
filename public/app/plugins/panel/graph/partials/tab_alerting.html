@@ -13,7 +13,7 @@
         <span class="gf-form-label">Transform using</span>
         <div class="gf-form-select-wrapper">
           <select   class="gf-form-input"
-                    ng-model="ctrl.rule.transform.type"
+                    ng-model="ctrl.alert.transform.type"
                     ng-options="f.type as f.text for f in ctrl.transforms"
                     ng-change="ctrl.transformChanged()"
                     >
@@ -24,14 +24,14 @@
         <span class="gf-form-label">Method</span>
         <div class="gf-form-select-wrapper">
           <select   class="gf-form-input"
-                    ng-model="ctrl.rule.transform.method"
+                    ng-model="ctrl.alert.transform.method"
                     ng-options="f for f in ctrl.aggregators">
           </select>
         </div>
       </div>
       <div class="gf-form" ng-if="ctrl.transformDef.type === 'forecast'">
         <span class="gf-form-label">Timespan</span>
-        <input class="gf-form-input max-width-5" type="text" ng-model="ctrl.rule.transform.timespan" ng-change="ctrl.ruleUpdated()"></input>
+        <input class="gf-form-input max-width-5" type="text" ng-model="ctrl.alert.transform.timespan" ng-change="ctrl.ruleUpdated()"></input>
       </div>
     </div>
   </div>
@@ -44,16 +44,16 @@
           <i class="icon-gf icon-gf-warn alert-icon-warn"></i>
           Warn if
         </span>
-        <metric-segment-model property="ctrl.rule.warning.op" options="ctrl.levelOpList" custom="false" css-class="query-segment-operator"></metric-segment-model>
-        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.rule.warnLevel" ng-change="ctrl.thresholdsUpdated()"></input>
+        <metric-segment-model property="ctrl.alert.warning.op" options="ctrl.levelOpList" custom="false" css-class="query-segment-operator"></metric-segment-model>
+        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.warnLevel" ng-change="ctrl.thresholdsUpdated()"></input>
       </div>
       <div class="gf-form">
         <span class="gf-form-label">
           <i class="icon-gf icon-gf-warn alert-icon-critical"></i>
           Critcal if
         </span>
-        <metric-segment-model property="ctrl.rule.critical.op" options="ctrl.levelOpList" custom="false" css-class="query-segment-operator"></metric-segment-model>
-        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.rule.critLevel" ng-change="ctrl.thresholdsUpdated()"></input>
+        <metric-segment-model property="ctrl.alert.critical.op" options="ctrl.levelOpList" custom="false" css-class="query-segment-operator"></metric-segment-model>
+        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.critLevel" ng-change="ctrl.thresholdsUpdated()"></input>
       </div>
     </div>
   </div>
@@ -67,14 +67,14 @@
         <span class="gf-form-label">Scheduler</span>
         <div class="gf-form-select-wrapper">
           <select   class="gf-form-input"
-                    ng-model="ctrl.rule.scheduler"
+                    ng-model="ctrl.alert.scheduler"
                     ng-options="f.value as f.text for f in ctrl.schedulers">
           </select>
         </div>
       </div>
       <div class="gf-form">
         <span class="gf-form-label">Evaluate every</span>
-        <input class="gf-form-input max-width-7" type="text" ng-model="ctrl.rule.frequency"></input>
+        <input class="gf-form-input max-width-7" type="text" ng-model="ctrl.alert.frequency"></input>
       </div>
     </div>
   </div>
@@ -83,7 +83,7 @@
     <div class="gf-form-inline">
       <div class="gf-form">
         <span class="gf-form-label">Groups</span>
-        <bootstrap-tagsinput ng-model="ctrl.rule.notify" tagclass="label label-tag" placeholder="add tags">
+        <bootstrap-tagsinput ng-model="ctrl.alert.notify" tagclass="label label-tag" placeholder="add tags">
 				</bootstrap-tagsinput>
       </div>
     </div>
@@ -109,8 +109,8 @@
 
 <div class="editor-row">
   <div class="gf-form-button-row">
-    <button class="btn btn-danger" ng-click="ctrl.delete()" ng-show="ctrl.rule.enabled">Delete</button>
-    <button class="btn btn-success" ng-click="ctrl.enable()" ng-hide="ctrl.rule.enabled">Enable</button>
-    <button class="btn btn-secondary" ng-click="ctrl.disable()" ng-show="ctrl.rule.enabled">Disable</button>
+    <button class="btn btn-danger" ng-click="ctrl.delete()" ng-show="ctrl.alert.enabled">Delete</button>
+    <button class="btn btn-success" ng-click="ctrl.enable()" ng-hide="ctrl.alert.enabled">Enable</button>
+    <button class="btn btn-secondary" ng-click="ctrl.disable()" ng-show="ctrl.alert.enabled">Disable</button>
   </div>
 </div>

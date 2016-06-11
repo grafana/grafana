@@ -22,7 +22,6 @@ var alertQueryDef = new QueryPartDef({
 export class AlertTabCtrl {
   panel: any;
   panelCtrl: any;
-  alerting: any;
   metricTargets = [{ refId: '- select query -' } ];
   schedulers = [{text: 'Grafana', value: 1}, {text: 'External', value: 0}];
   transforms = [
@@ -36,7 +35,7 @@ export class AlertTabCtrl {
     },
   ];
   aggregators = ['avg', 'sum', 'min', 'max', 'last'];
-  rule: any;
+  alert: any;
   query: any;
   queryParams: any;
   transformDef: any;
@@ -71,33 +70,37 @@ export class AlertTabCtrl {
     $scope.ctrl = this;
 
     this.metricTargets = this.panel.targets.map(val => val);
-    this.rule = this.panel.alerting = this.panel.alerting || {};
+
+    this.initAlertModel();
+  }
+
+  initAlertModel() {
+    this.alert = this.panel.alert = this.panel.alert || {};
 
     // set defaults
-    _.defaults(this.rule, this.defaultValues);
+    _.defaults(this.alert, this.defaultValues);
 
     var defaultName = (this.panelCtrl.dashboard.title + ' ' + this.panel.title + ' alert');
-    this.rule.name = this.rule.name || defaultName;
-    this.rule.description = this.rule.description || defaultName;
-    this.rule.queryRef = this.panel.alerting.queryRef || this.metricTargets[0].refId;
+    this.alert.name = this.alert.name || defaultName;
+    this.alert.description = this.alert.description || defaultName;
 
     // great temp working model
     this.queryParams = {
       params: [
-        this.rule.query.refId,
-        this.rule.query.from,
-        this.rule.query.to
+        this.alert.query.refId,
+        this.alert.query.from,
+        this.alert.query.to
       ]
     };
 
     // init the query part components model
     this.query = new QueryPart(this.queryParams, alertQueryDef);
     this.convertThresholdsToAlertThresholds();
-    this.transformDef = _.findWhere(this.transforms, {type: this.rule.transform.type});
+    this.transformDef = _.findWhere(this.transforms, {type: this.alert.transform.type});
   }
 
   queryUpdated() {
-    this.rule.query = {
+    this.alert.query = {
       refId: this.query.params[0],
       from: this.query.params[1],
       to: this.query.params[2],
@@ -106,16 +109,16 @@ export class AlertTabCtrl {
 
   transformChanged() {
     // clear model
-    this.rule.transform = {type: this.rule.transform.type};
-    this.transformDef = _.findWhere(this.transforms, {type: this.rule.transform.type});
+    this.alert.transform = {type: this.alert.transform.type};
+    this.transformDef = _.findWhere(this.transforms, {type: this.alert.transform.type});
 
-    switch (this.rule.transform.type) {
+    switch (this.alert.transform.type) {
       case 'aggregation':  {
-        this.rule.transform.method = 'avg';
+        this.alert.transform.method = 'avg';
         break;
       }
       case "forecast": {
-        this.rule.transform.timespan = '7d';
+        this.alert.transform.timespan = '7d';
         break;
       }
     }
@@ -124,45 +127,34 @@ export class AlertTabCtrl {
   convertThresholdsToAlertThresholds() {
     if (this.panel.grid
         && this.panel.grid.threshold1
-        && this.rule.warnLevel === undefined
+        && this.alert.warnLevel === undefined
        ) {
-      this.rule.warning.op = '>';
-      this.rule.warning.level = this.panel.grid.threshold1;
+      this.alert.warning.op = '>';
+      this.alert.warning.level = this.panel.grid.threshold1;
     }
 
     if (this.panel.grid
         && this.panel.grid.threshold2
-        && this.rule.critical.level === undefined
+        && this.alert.critical.level === undefined
        ) {
-      this.rule.critical.op = '>';
-      this.rule.critical.level = this.panel.grid.threshold2;
+      this.alert.critical.op = '>';
+      this.alert.critical.level = this.panel.grid.threshold2;
     }
   }
 
   delete() {
-    this.rule = this.panel.alerting = this.defaultValues;
-    this.rule.deleted = true;
+    this.alert = this.panel.alert = {};
+    this.alert.deleted = true;
+    this.initAlertModel();
   }
 
   enable() {
-    delete this.rule.deleted;
-    this.rule.enabled = true;
+    delete this.alert.deleted;
+    this.alert.enabled = true;
   }
 
   disable() {
-    this.rule.enabled = false;
-  }
-
-  thresholdsUpdated() {
-    if (this.panel.alerting.warnLevel) {
-      this.panel.grid.threshold1 = parseInt(this.panel.alerting.warnLevel);
-    }
-
-    if (this.panel.alerting.critLevel) {
-      this.panel.grid.threshold2 = parseInt(this.panel.alerting.critLevel);
-    }
-
-    this.panelCtrl.render();
+    this.alert.enabled = false;
   }
 }
 

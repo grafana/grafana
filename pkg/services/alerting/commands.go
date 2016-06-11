@@ -18,20 +18,20 @@ func init() {
 }
 
 func updateDashboardAlerts(cmd *UpdateDashboardAlertsCommand) error {
-	saveRulesCmd := m.SaveAlertsCommand{
+	saveAlerts := m.SaveAlertsCommand{
 		OrgId:  cmd.OrgId,
 		UserId: cmd.UserId,
 	}
 
-	extractor := NewAlertRuleExtractor(cmd.Dashboard, cmd.OrgId)
+	extractor := NewDashAlertExtractor(cmd.Dashboard, cmd.OrgId)
 
-	rules, err := extractor.GetRuleModels()
+	alerts, err := extractor.GetRuleModels()
 	if err != nil {
 		return err
 	}
 
-	saveRulesCmd.Alerts = rules
-	if bus.Dispatch(&saveRulesCmd); err != nil {
+	saveAlerts.Alerts = alerts
+	if bus.Dispatch(&saveAlerts); err != nil {
 		return err
 	}
 
