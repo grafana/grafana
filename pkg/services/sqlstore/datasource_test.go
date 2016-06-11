@@ -12,8 +12,6 @@ import (
 )
 
 func InitTestDB(t *testing.T) {
-
-	t.Log("InitTestDB")
 	x, err := xorm.NewEngine(sqlutil.TestDB_Sqlite3.DriverName, sqlutil.TestDB_Sqlite3.ConnStr)
 	//x, err := xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, sqlutil.TestDB_Mysql.ConnStr)
 	//x, err := xorm.NewEngine(sqlutil.TestDB_Postgres.DriverName, sqlutil.TestDB_Postgres.ConnStr)
@@ -24,7 +22,7 @@ func InitTestDB(t *testing.T) {
 
 	sqlutil.CleanDB(x)
 
-	if err := SetEngine(x, false); err != nil {
+	if err := SetEngine(x); err != nil {
 		t.Fatal(err)
 	}
 }
