@@ -78,7 +78,7 @@ func NewEngine() {
 		os.Exit(1)
 	}
 
-	err = SetEngine(x, setting.Env == setting.DEV)
+	err = SetEngine(x)
 
 	if err != nil {
 		sqlog.Error("Fail to initialize orm engine", "error", err)
@@ -86,7 +86,7 @@ func NewEngine() {
 	}
 }
 
-func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
+func SetEngine(engine *xorm.Engine) (err error) {
 	x = engine
 	dialect = migrator.NewDialect(x.DriverName())
 

@@ -22,6 +22,7 @@ var loggersToClose []DisposableHandler
 func init() {
 	loggersToClose = make([]DisposableHandler, 0)
 	Root = log15.Root()
+	Root.SetHandler(log15.DiscardHandler())
 }
 
 func New(logger string, ctx ...interface{}) Logger {
