@@ -80,7 +80,7 @@ func initContextWithAnonymousUser(ctx *Context) bool {
 func initContextWithUserSessionCookie(ctx *Context) bool {
 	// initialize session
 	if err := ctx.Session.Start(ctx); err != nil {
-		log.Error(3, "Failed to start session", err)
+		ctx.Logger.Error("Failed to start session", "error", err)
 		return false
 	}
 
@@ -91,7 +91,7 @@ func initContextWithUserSessionCookie(ctx *Context) bool {
 
 	query := m.GetSignedInUserQuery{UserId: userId}
 	if err := bus.Dispatch(&query); err != nil {
-		log.Error(3, "Failed to get user with id %v", userId)
+		ctx.Logger.Error("Failed to get user with id", "userId", userId)
 		return false
 	} else {
 		ctx.SignedInUser = query.Result
@@ -185,7 +185,7 @@ func initContextWithApiKeyFromSession(ctx *Context) bool {
 
 	keyQuery := m.GetApiKeyByIdQuery{ApiKeyId: keyId.(int64)}
 	if err := bus.Dispatch(&keyQuery); err != nil {
-		log.Error(3, "Failed to get api key by id", err)
+		ctx.Logger.Error("Failed to get api key by id", "id", keyId, "error", err)
 		return false
 	} else {
 		apikey := keyQuery.Result
@@ -202,7 +202,7 @@ func initContextWithApiKeyFromSession(ctx *Context) bool {
 // Handle handles and logs error by given status.
 func (ctx *Context) Handle(status int, title string, err error) {
 	if err != nil {
-		log.Error(4, "%s: %v", title, err)
+		ctx.Logger.Error(title, "error", err)
 		if setting.Env != setting.PROD {
 			ctx.Data["ErrorMsg"] = err
 		}
@@ -223,9 +223,7 @@ func (ctx *Context) Handle(status int, title string, err error) {
 
 func (ctx *Context) JsonOK(message string) {
 	resp := make(map[string]interface{})
-
 	resp["message"] = message
-
 	ctx.JSON(200, resp)
 }
 
@@ -237,7 +235,7 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 	resp := make(map[string]interface{})
 
 	if err != nil {
-		log.Error(4, "%s: %v", message, err)
+		ctx.Logger.Error(message, "error", err)
 		if setting.Env != setting.PROD {
 			resp["error"] = err.Error()
 		}

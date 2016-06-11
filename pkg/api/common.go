@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/setting"
@@ -21,13 +20,15 @@ var (
 )
 
 type Response interface {
-	WriteTo(out http.ResponseWriter)
+	WriteTo(ctx *middleware.Context)
 }
 
 type NormalResponse struct {
-	status int
-	body   []byte
-	header http.Header
+	status     int
+	body       []byte
+	header     http.Header
+	errMessage string
+	err        error
 }
 
 func wrap(action interface{}) macaron.Handler {
@@ -41,17 +42,21 @@ func wrap(action interface{}) macaron.Handler {
 			res = ServerError(err)
 		}
 
-		res.WriteTo(c.Resp)
+		res.WriteTo(c)
 	}
 }
 
-func (r *NormalResponse) WriteTo(out http.ResponseWriter) {
-	header := out.Header()
+func (r *NormalResponse) WriteTo(ctx *middleware.Context) {
+	if r.err != nil {
+		ctx.Logger.Error(r.errMessage, "error", r.err)
+	}
+
+	header := ctx.Resp.Header()
 	for k, v := range r.header {
 		header[k] = v
 	}
-	out.WriteHeader(r.status)
-	out.Write(r.body)
+	ctx.Resp.WriteHeader(r.status)
+	ctx.Resp.Write(r.body)
 }
 
 func (r *NormalResponse) Cache(ttl string) *NormalResponse {
@@ -64,7 +69,6 @@ func (r *NormalResponse) Header(key, value string) *NormalResponse {
 }
 
 // functions to create responses
-
 func Empty(status int) *NormalResponse {
 	return Respond(status, nil)
 }
@@ -80,29 +84,35 @@ func ApiSuccess(message string) *NormalResponse {
 }
 
 func ApiError(status int, message string, err error) *NormalResponse {
-	resp := make(map[string]interface{})
-
-	if err != nil {
-		log.Error(4, "%s: %v", message, err)
-		if setting.Env != setting.PROD {
-			resp["error"] = err.Error()
-		}
-	}
+	data := make(map[string]interface{})
 
 	switch status {
 	case 404:
 		metrics.M_Api_Status_404.Inc(1)
-		resp["message"] = "Not Found"
+		data["message"] = "Not Found"
 	case 500:
 		metrics.M_Api_Status_500.Inc(1)
-		resp["message"] = "Internal Server Error"
+		data["message"] = "Internal Server Error"
 	}
 
 	if message != "" {
-		resp["message"] = message
+		data["message"] = message
 	}
 
-	return Json(status, resp)
+	if err != nil {
+		if setting.Env != setting.PROD {
+			data["error"] = err.Error()
+		}
+	}
+
+	resp := Json(status, data)
+
+	if err != nil {
+		resp.errMessage = message
+		resp.err = err
+	}
+
+	return resp
 }
 
 func Respond(status int, body interface{}) *NormalResponse {
