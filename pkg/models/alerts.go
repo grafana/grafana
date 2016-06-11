@@ -14,12 +14,17 @@ type AlertRuleModel struct {
 	Name        string
 	Description string
 	State       string
+	Scheduler   int64
+	Enabled     bool
+	Frequency   int
 
 	Created time.Time
 	Updated time.Time
 
 	Expression *simplejson.Json
 }
+
+type AlertRules []*AlertRuleModel
 
 func (this AlertRuleModel) TableName() string {
 	return "alert_rule"
@@ -83,7 +88,7 @@ type SaveAlertsCommand struct {
 	UserId      int64
 	OrgId       int64
 
-	Alerts []*AlertRuleModel
+	Alerts AlertRules
 }
 
 type DeleteAlertCommand struct {

@@ -24,6 +24,7 @@ export class AlertTabCtrl {
   panelCtrl: any;
   alerting: any;
   metricTargets = [{ refId: '- select query -' } ];
+  schedulers = [{text: 'Grafana', value: 1}, {text: 'External', value: 0}];
   transforms = [
     {
       text: 'Aggregation',
@@ -33,24 +34,23 @@ export class AlertTabCtrl {
       text: 'Linear Forecast',
       type: 'forecast',
     },
-    {
-      text: 'Percent Change',
-      type: 'percent_change',
-    },
-    {
-      text: 'Query diff',
-      type: 'query_diff',
-    },
   ];
   aggregators = ['avg', 'sum', 'min', 'max', 'last'];
   rule: any;
   query: any;
   queryParams: any;
   transformDef: any;
-  trasnformQuery: any;
+  levelOpList = [
+    {text: '>', value: '>'},
+    {text: '<', value: '<'},
+    {text: '=', value: '='},
+  ];
 
   defaultValues = {
-    frequency: 10,
+    frequency: '60s',
+    notify: [],
+    enabled: false,
+    scheduler: 1,
     warning: { op: '>', level: undefined },
     critical: { op: '>', level: undefined },
     query: {
@@ -139,8 +139,18 @@ export class AlertTabCtrl {
     }
   }
 
-  markAsDeleted() {
-    this.panel.alerting = this.defaultValues;
+  delete() {
+    this.rule = this.panel.alerting = this.defaultValues;
+    this.rule.deleted = true;
+  }
+
+  enable() {
+    delete this.rule.deleted;
+    this.rule.enabled = true;
+  }
+
+  disable() {
+    this.rule.enabled = false;
   }
 
   thresholdsUpdated() {

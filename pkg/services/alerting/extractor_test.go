@@ -1,17 +1,17 @@
-package sqlstore
+package alerting
 
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-func TestAlertModelParsing(t *testing.T) {
+func TestAlertRuleExtraction(t *testing.T) {
 
-	Convey("Parsing alert info from json", t, func() {
+	Convey("Parsing alert rules  from dashboard json", t, func() {
 		Convey("Parsing and validating alerts from dashboards", func() {
 			json := `{
   "id": 57,
@@ -37,13 +37,15 @@ func TestAlertModelParsing(t *testing.T) {
           ],
           "datasource": null,
           "alerting": {
-            "name": "Alerting Panel Title alert",
-            "description": "description",
+            "name": "name1",
+            "description": "desc1",
+						"scheduler": 1,
+						"enabled": true,
             "critical": {
               "level": 20,
               "op": ">"
             },
-            "frequency": 10,
+            "frequency": "60s",
             "query": {
               "from": "5m",
               "refId": "A",
@@ -51,12 +53,12 @@ func TestAlertModelParsing(t *testing.T) {
             },
             "transform": {
               "method": "avg",
-              "name": "aggregation"
+              "type": "aggregation"
             },
             "warning": {
               "level": 10,
               "op": ">"
-            }           
+            }
           }
         },
         {
@@ -70,13 +72,15 @@ func TestAlertModelParsing(t *testing.T) {
           ],
           "datasource": "graphite2",
           "alerting": {
-            "name": "Alerting Panel Title alert",
-            "description": "description",
+            "name": "name2",
+            "description": "desc2",
+						"scheduler": 0,
+						"enabled": true,
             "critical": {
               "level": 20,
               "op": ">"
             },
-            "frequency": 10,
+            "frequency": "60s",
             "query": {
               "from": "5m",
               "refId": "A",
@@ -145,7 +149,10 @@ func TestAlertModelParsing(t *testing.T) {
           ],
           "title": "Broken influxdb panel",
           "transform": "table",
-          "type": "table"
+          "type": "table",
+					"alerting": {
+						"deleted": true
+					}
         }
       ],
       "title": "New row"
@@ -153,51 +160,62 @@ func TestAlertModelParsing(t *testing.T) {
   ]
 
 }`
-			dashboardJSON, _ := simplejson.NewJson([]byte(json))
-			cmd := &m.SaveDashboardCommand{
-				Dashboard: dashboardJSON,
-				UserId:    1,
-				OrgId:     1,
-				Overwrite: true,
-				Result: &m.Dashboard{
-					Id: 1,
-				},
-			}
+			dashJson, err := simplejson.NewJson([]byte(json))
+			So(err, ShouldBeNil)
 
-			InitTestDB(t)
+			dash := m.NewDashboardFromJson(dashJson)
+			extractor := NewAlertRuleExtractor(dash, 1)
 
-			AddDataSource(&m.AddDataSourceCommand{
-				Name:      "graphite2",
-				OrgId:     1,
-				Type:      m.DS_INFLUXDB,
-				Access:    m.DS_ACCESS_DIRECT,
-				Url:       "http://test",
-				IsDefault: false,
-				Database:  "site",
+			// mock data
+			defaultDs := &m.DataSource{Id: 12, OrgId: 2, Name: "I am default", IsDefault: true}
+			graphite2Ds := &m.DataSource{Id: 15, OrgId: 2, Name: "graphite2"}
+
+			bus.AddHandler("test", func(query *m.GetDataSourcesQuery) error {
+				query.Result = []*m.DataSource{defaultDs, graphite2Ds}
+				return nil
 			})
 
-			AddDataSource(&m.AddDataSourceCommand{
-				Name:      "InfluxDB",
-				OrgId:     1,
-				Type:      m.DS_GRAPHITE,
-				Access:    m.DS_ACCESS_DIRECT,
-				Url:       "http://test",
-				IsDefault: true,
+			bus.AddHandler("test", func(query *m.GetDataSourceByNameQuery) error {
+				if query.Name == defaultDs.Name {
+					query.Result = defaultDs
+				}
+				if query.Name == graphite2Ds.Name {
+					query.Result = graphite2Ds
+				}
+				return nil
 			})
 
-			alerts := alerting.ParseAlertsFromDashboard(cmd)
+			alerts, err := extractor.GetRuleModels()
+
+			Convey("Get rules without error", func() {
+				So(err, ShouldBeNil)
+			})
 
 			Convey("all properties have been set", func() {
-				So(alerts, ShouldNotBeEmpty)
 				So(len(alerts), ShouldEqual, 2)
 
 				for _, v := range alerts {
-					So(v.DashboardId, ShouldEqual, 1)
-					So(v.PanelId, ShouldNotEqual, 0)
-
+					So(v.DashboardId, ShouldEqual, 57)
 					So(v.Name, ShouldNotBeEmpty)
 					So(v.Description, ShouldNotBeEmpty)
 				}
+
+				Convey("should extract scheduler property", func() {
+					So(alerts[0].Scheduler, ShouldEqual, 1)
+					So(alerts[1].Scheduler, ShouldEqual, 0)
+				})
+
+				Convey("should extract panel idc", func() {
+					So(alerts[0].PanelId, ShouldEqual, 3)
+					So(alerts[1].PanelId, ShouldEqual, 4)
+				})
+
+				Convey("should extract name and desc", func() {
+					So(alerts[0].Name, ShouldEqual, "name1")
+					So(alerts[0].Description, ShouldEqual, "desc1")
+					So(alerts[1].Name, ShouldEqual, "name2")
+					So(alerts[1].Description, ShouldEqual, "desc2")
+				})
 			})
 		})
 	})

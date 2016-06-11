@@ -151,15 +151,13 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 	}
 
 	if setting.AlertingEnabled {
-		saveAlertCommand := m.SaveAlertsCommand{
-			DashboardId: cmd.Result.Id,
-			OrgId:       c.OrgId,
-			UserId:      c.UserId,
-			Alerts:      alerting.ParseAlertsFromDashboard(&cmd),
+		alertCmd := alerting.UpdateDashboardAlertsCommand{
+			OrgId:     c.OrgId,
+			UserId:    c.UserId,
+			Dashboard: cmd.Result,
 		}
 
-		err = bus.Dispatch(&saveAlertCommand)
-		if err != nil {
+		if err := bus.Dispatch(&alertCmd); err != nil {
 			c.JsonApiErr(500, "Failed to save alerts", err)
 			return
 		}

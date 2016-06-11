@@ -1,9 +1,5 @@
 package alerting
 
-import (
-	"github.com/grafana/grafana/pkg/components/simplejson"
-)
-
 type AlertJob struct {
 	Offset     int64
 	Delay      bool
@@ -19,23 +15,6 @@ type AlertResult struct {
 	Description string
 	Error       error
 	AlertJob    *AlertJob
-}
-
-type AlertRule struct {
-	Id              int64
-	OrgId           int64
-	DashboardId     int64
-	PanelId         int64
-	Frequency       int64
-	Name            string
-	Description     string
-	State           string
-	Warning         Level
-	Critical        Level
-	Query           AlertQuery
-	Transform       string
-	TransformParams simplejson.Json
-	Transformer     Transformer
 }
 
 type Level struct {
