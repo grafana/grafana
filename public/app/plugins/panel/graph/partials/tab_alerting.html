@@ -44,8 +44,8 @@
           <i class="icon-gf icon-gf-warn alert-icon-warn"></i>
           Warn if
         </span>
-        <metric-segment-model property="ctrl.alert.warning.op" options="ctrl.levelOpList" custom="false" css-class="query-segment-operator"></metric-segment-model>
-        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.warnLevel" ng-change="ctrl.thresholdsUpdated()"></input>
+        <metric-segment-model property="ctrl.alert.warn.op" options="ctrl.levelOpList" custom="false" css-class="query-segment-operator"></metric-segment-model>
+        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.warn.level" ng-change="ctrl.levelsUpdated()"></input>
       </div>
       <div class="gf-form">
         <span class="gf-form-label">
@@ -53,7 +53,7 @@
           Critcal if
         </span>
         <metric-segment-model property="ctrl.alert.critical.op" options="ctrl.levelOpList" custom="false" css-class="query-segment-operator"></metric-segment-model>
-        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.critLevel" ng-change="ctrl.thresholdsUpdated()"></input>
+        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.critical.level" ng-change="ctrl.levelsUpdated()"></input>
       </div>
     </div>
   </div>

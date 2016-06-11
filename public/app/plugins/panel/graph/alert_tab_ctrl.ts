@@ -50,7 +50,7 @@ export class AlertTabCtrl {
     notify: [],
     enabled: false,
     scheduler: 1,
-    warning: { op: '>', level: undefined },
+    warn: { op: '>', level: undefined },
     critical: { op: '>', level: undefined },
     query: {
       refId: 'A',
@@ -70,8 +70,16 @@ export class AlertTabCtrl {
     $scope.ctrl = this;
 
     this.metricTargets = this.panel.targets.map(val => val);
-
     this.initAlertModel();
+
+    // set panel alert edit mode
+    this.panelCtrl.editingAlert = true;
+    this.panelCtrl.render();
+
+    $scope.$on("$destroy", () => {
+      this.panelCtrl.editingAlert = false;
+      this.panelCtrl.render();
+    });
   }
 
   initAlertModel() {
@@ -125,21 +133,21 @@ export class AlertTabCtrl {
   }
 
   convertThresholdsToAlertThresholds() {
-    if (this.panel.grid
-        && this.panel.grid.threshold1
-        && this.alert.warnLevel === undefined
-       ) {
-      this.alert.warning.op = '>';
-      this.alert.warning.level = this.panel.grid.threshold1;
-    }
-
-    if (this.panel.grid
-        && this.panel.grid.threshold2
-        && this.alert.critical.level === undefined
-       ) {
-      this.alert.critical.op = '>';
-      this.alert.critical.level = this.panel.grid.threshold2;
-    }
+    // if (this.panel.grid
+    //     && this.panel.grid.threshold1
+    //     && this.alert.warnLevel === undefined
+    //    ) {
+    //   this.alert.warning.op = '>';
+    //   this.alert.warning.level = this.panel.grid.threshold1;
+    // }
+    //
+    // if (this.panel.grid
+    //     && this.panel.grid.threshold2
+    //     && this.alert.critical.level === undefined
+    //    ) {
+    //   this.alert.critical.op = '>';
+    //   this.alert.critical.level = this.panel.grid.threshold2;
+    // }
   }
 
   delete() {
@@ -155,6 +163,10 @@ export class AlertTabCtrl {
 
   disable() {
     this.alert.enabled = false;
+  }
+
+  levelsUpdated() {
+    this.panelCtrl.render();
   }
 }
 

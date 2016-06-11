@@ -169,6 +169,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           var right = panel.yaxes[1];
           if (left.show && left.label) { gridMargin.left = 20; }
           if (right.show && right.label) { gridMargin.right = 20; }
+
         }
 
         // Function for rendering panel
@@ -176,6 +177,12 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           panelWidth = panelWidthCache[panel.span];
           if (!panelWidth) {
             panelWidth = panelWidthCache[panel.span] = elem.width();
+          }
+
+          if (ctrl.editingAlert) {
+            elem.css('margin-right', '220px');
+          } else {
+            elem.css('margin-right', '');
           }
 
           if (shouldAbortRender()) {
@@ -186,6 +193,10 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
           // Populate element
           var options = {
+            alerting: {
+              editing: ctrl.editingAlert,
+              alert: panel.alert,
+            },
             hooks: {
               draw: [drawHook],
               processOffset: [processOffsetHook],
@@ -260,6 +271,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
           function callPlot(incrementRenderCounter) {
             try {
+              console.log('rendering');
               $.plot(elem, sortedSeries, options);
             } catch (e) {
               console.log('flotcharts error', e);
@@ -312,6 +324,50 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         }
 
         function addGridThresholds(options, panel) {
+          if (panel.alert && panel.alert.enabled) {
+            var crit = panel.alert.critical;
+            var warn = panel.alert.warn;
+            var critEdge = Infinity;
+            var warnEdge = crit.level;
+
+            if (_.isNumber(crit.level)) {
+              if (crit.op === '<') {
+                critEdge = -Infinity;
+              }
+
+              // fill
+              options.grid.markings.push({
+                yaxis: {from: crit.level, to: critEdge},
+                color: 'rgba(234, 112, 112, 0.10)',
+              });
+
+              // line
+              options.grid.markings.push({
+                yaxis: {from: crit.level, to: crit.level},
+                color: '#ed2e18'
+              });
+            }
+
+            if (_.isNumber(warn.level)) {
+              // if (warn.op === '<') {
+              // }
+
+              // fill
+              options.grid.markings.push({
+                yaxis: {from: warn.level, to: warnEdge},
+                color: 'rgba(216, 200, 27, 0.10)',
+              });
+
+              // line
+              options.grid.markings.push({
+                yaxis: {from: warn.level, to: warn.level},
+                color: '#F79520'
+              });
+            }
+
+            return;
+          }
+
           if (_.isNumber(panel.grid.threshold1)) {
             var limit1 = panel.grid.thresholdLine ? panel.grid.threshold1 : (panel.grid.threshold2 || null);
             options.grid.markings.push({
