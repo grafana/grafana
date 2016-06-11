@@ -22,6 +22,17 @@ function getHandleTemplate(type, op, value) {
   `;
 }
 
+var dragGhostElem = document.createElement('div');
+
+function dragStartHandler(evt) {
+  evt.dataTransfer.setDragImage(dragGhostElem, -99999, -99999);
+}
+
+function dragEndHandler() {
+  console.log('drag end');
+}
+
+var past;
 
 function drawAlertHandles(plot) {
   var options = plot.getOptions();
@@ -36,7 +47,7 @@ function drawAlertHandles(plot) {
   var height = plot.height();
 
   function renderHandle(type, model) {
-    var $handle = $placeholder.find(`.alert-handle-${type}`);
+    var $handle = $placeholder.find(`.alert-handle-wrapper--${type}`);
 
     if (!_.isNumber(model.level)) {
       $handle.remove();
@@ -44,15 +55,19 @@ function drawAlertHandles(plot) {
     }
 
     if ($handle.length === 0) {
+      console.log('not found');
       $handle = $(getHandleTemplate(type, model.op, model.level));
+      $handle.attr('draggable', true);
+      $handle.bind('dragend', dragEndHandler);
+      $handle.bind('dragstart', dragStartHandler);
       $placeholder.append($handle);
+      console.log('registering drag events');
     } else {
+      console.log('reusing!');
       $handle.html(getHandleTemplate(type, model.op, model.level));
     }
 
     var levelCanvasPos = plot.p2c({x: 0, y: model.level});
-    console.log('canvas level pos', levelCanvasPos.top);
-
     var levelTopPos = Math.min(Math.max(levelCanvasPos.top, 0), height) - 6;
     $handle.css({top: levelTopPos});
   }
@@ -62,6 +77,7 @@ function drawAlertHandles(plot) {
 }
 
 function shutdown() {
+  console.log('shutdown');
 }
 
 function init(plot, classes) {

@@ -169,7 +169,6 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           var right = panel.yaxes[1];
           if (left.show && left.label) { gridMargin.left = 20; }
           if (right.show && right.label) { gridMargin.right = 20; }
-
         }
 
         // Function for rendering panel

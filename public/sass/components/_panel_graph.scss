@@ -317,9 +317,10 @@
 
 .alert-handle-wrapper {
   position: absolute;
+  user-select: none;
 
   &--warn {
-    right: -221px;
+    right: -111px;
     width: 238px;
 
     .alert-handle-line {
@@ -334,7 +335,7 @@
   }
 
   &--critical {
-    right: -105px;
+    right: -54px;
     width: 123px;
 
     .alert-handle-line {
@@ -353,7 +354,7 @@
     z-index: 10;
     position: relative;
     float: right;
-    padding: 0.4rem;;
+    padding: 0.4rem 0.6rem 0.4rem 0.4rem;
     background-color: $btn-inverse-bg;
     box-shadow: $search-shadow;
     cursor: pointer;
@@ -364,11 +365,13 @@
     border-width: 0 1px 1px 0;
     border-style: solid;
     border-color: $black;
+    text-align: right;
 
     .icon-gf {
       font-size: 17px;
       position: relative;
-      top: 2px;
+      top: 0px;
+      float: left;
     }
   }
 
