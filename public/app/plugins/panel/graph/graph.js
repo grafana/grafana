@@ -13,6 +13,7 @@ define([
   'jquery.flot.fillbelow',
   'jquery.flot.crosshair',
   './jquery.flot.events',
+  './jquery.flot.alerts',
 ],
 function (angular, $, moment, _, kbn, GraphTooltip) {
   'use strict';
