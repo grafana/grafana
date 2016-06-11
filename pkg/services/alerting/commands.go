@@ -38,6 +38,10 @@ func updateDashboardAlerts(cmd *UpdateDashboardAlertsCommand) error {
 	return nil
 }
 
+func getTimeDurationStringToSeconds(str string) int64 {
+	return 60
+}
+
 func ConvetAlertModelToAlertRule(ruleDef *m.Alert) (*AlertRule, error) {
 	model := &AlertRule{}
 	model.Id = ruleDef.Id
@@ -58,7 +62,7 @@ func ConvetAlertModelToAlertRule(ruleDef *m.Alert) (*AlertRule, error) {
 		Level:    warning.Get("level").MustFloat64(),
 	}
 
-	model.Frequency = ruleDef.Expression.Get("frequency").MustInt64()
+	model.Frequency = getTimeDurationStringToSeconds(ruleDef.Expression.Get("frequency").MustString())
 	model.Transform = ruleDef.Expression.Get("transform").Get("type").MustString()
 	model.TransformParams = *ruleDef.Expression.Get("transform")
 

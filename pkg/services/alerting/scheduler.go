@@ -18,12 +18,12 @@ func NewScheduler() Scheduler {
 	}
 }
 
-func (s *SchedulerImpl) Update(rules []*AlertRule) {
-	s.log.Debug("Scheduler: Update")
+func (s *SchedulerImpl) Update(alerts []*AlertRule) {
+	s.log.Debug("Scheduling update", "alerts.count", len(alerts))
 
 	jobs := make(map[int64]*AlertJob, 0)
 
-	for i, rule := range rules {
+	for i, rule := range alerts {
 		var job *AlertJob
 		if s.jobs[rule.Id] != nil {
 			job = s.jobs[rule.Id]
@@ -40,7 +40,6 @@ func (s *SchedulerImpl) Update(rules []*AlertRule) {
 		jobs[rule.Id] = job
 	}
 
-	s.log.Debug("Scheduler: Selected new jobs", "job count", len(jobs))
 	s.jobs = jobs
 }
 
