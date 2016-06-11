@@ -6,18 +6,24 @@ import _ from 'lodash';
 
 var options = {};
 
-function getHandleTemplate(type, op, value) {
+function getHandleInnerHtml(type, op, value) {
   if (op === '>') { op = '&gt;'; }
   if (op === '<') { op = '&lt;'; }
 
-  return  `
+  return `
+  <div class="alert-handle-line">
+  </div>
+  <div class="alert-handle">
+  <i class="icon-gf icon-gf-${type} alert-icon-${type}"></i>
+  ${op} ${value}
+  </div>`;
+}
+
+function getFullHandleHtml(type, op, value) {
+  var innerTemplate = getHandleInnerHtml(type, op, value);
+  return `
   <div class="alert-handle-wrapper alert-handle-wrapper--${type}">
-    <div class="alert-handle-line">
-    </div>
-    <div class="alert-handle">
-      <i class="icon-gf icon-gf-${type} alert-icon-${type}"></i>
-      ${op} ${value}
-    </div>
+  ${innerTemplate}
   </div>
   `;
 }
@@ -32,14 +38,12 @@ function dragEndHandler() {
   console.log('drag end');
 }
 
-var past;
-
 function drawAlertHandles(plot) {
   var options = plot.getOptions();
   var $placeholder = plot.getPlaceholder();
 
   if (!options.alerting.editing) {
-    $placeholder.find(".alert-handle").remove();
+    $placeholder.find(".alert-handle-wrapper").remove();
     return;
   }
 
@@ -55,16 +59,15 @@ function drawAlertHandles(plot) {
     }
 
     if ($handle.length === 0) {
-      console.log('not found');
-      $handle = $(getHandleTemplate(type, model.op, model.level));
+      console.log('creating handle');
+      $handle = $(getFullHandleHtml(type, model.op, model.level));
       $handle.attr('draggable', true);
       $handle.bind('dragend', dragEndHandler);
       $handle.bind('dragstart', dragStartHandler);
       $placeholder.append($handle);
-      console.log('registering drag events');
     } else {
-      console.log('reusing!');
-      $handle.html(getHandleTemplate(type, model.op, model.level));
+      console.log('reusing handle!');
+      $handle.html(getHandleInnerHtml(type, model.op, model.level));
     }
 
     var levelCanvasPos = plot.p2c({x: 0, y: model.level});

@@ -320,7 +320,7 @@
   user-select: none;
 
   &--warn {
-    right: -111px;
+    right: -222px;
     width: 238px;
 
     .alert-handle-line {
@@ -335,7 +335,7 @@
   }
 
   &--critical {
-    right: -54px;
+    right: -105px;
     width: 123px;
 
     .alert-handle-line {
