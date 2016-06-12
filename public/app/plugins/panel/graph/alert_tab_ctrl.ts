@@ -73,9 +73,6 @@ export class AlertTabCtrl {
     this.initAlertModel();
 
     // set panel alert edit mode
-    this.panelCtrl.editingAlert = true;
-    this.panelCtrl.render();
-
     $scope.$on("$destroy", () => {
       this.panelCtrl.editingAlert = false;
       this.panelCtrl.render();
@@ -83,7 +80,11 @@ export class AlertTabCtrl {
   }
 
   initAlertModel() {
-    this.alert = this.panel.alert = this.panel.alert || {};
+    if (!this.panel.alert) {
+      return;
+    }
+
+    this.alert = this.panel.alert;
 
     // set defaults
     _.defaults(this.alert, this.defaultValues);
@@ -105,6 +106,9 @@ export class AlertTabCtrl {
     this.query = new QueryPart(this.queryParams, alertQueryDef);
     this.convertThresholdsToAlertThresholds();
     this.transformDef = _.findWhere(this.transforms, {type: this.alert.transform.type});
+
+    this.panelCtrl.editingAlert = true;
+    this.panelCtrl.render();
   }
 
   queryUpdated() {
@@ -151,18 +155,14 @@ export class AlertTabCtrl {
   }
 
   delete() {
-    this.alert = this.panel.alert = {};
-    this.alert.deleted = true;
-    this.initAlertModel();
+    delete this.panel.alert;
+    this.panelCtrl.editingAlert = false;
+    this.panelCtrl.render();
   }
 
   enable() {
-    delete this.alert.deleted;
-    this.alert.enabled = true;
-  }
-
-  disable() {
-    this.alert.enabled = false;
+    this.panel.alert = {};
+    this.initAlertModel();
   }
 
   levelsUpdated() {

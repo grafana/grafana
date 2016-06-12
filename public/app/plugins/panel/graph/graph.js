@@ -5,6 +5,7 @@ define([
   'lodash',
   'app/core/utils/kbn',
   './graph_tooltip',
+  './alert_handle',
   'jquery.flot',
   'jquery.flot.selection',
   'jquery.flot.time',
@@ -13,14 +14,16 @@ define([
   'jquery.flot.fillbelow',
   'jquery.flot.crosshair',
   './jquery.flot.events',
-  './jquery.flot.alerts',
 ],
-function (angular, $, moment, _, kbn, GraphTooltip) {
+function (angular, $, moment, _, kbn, GraphTooltip, AlertHandle) {
   'use strict';
 
   var module = angular.module('grafana.directives');
   var labelWidthCache = {};
   var panelWidthCache = {};
+
+  // systemjs export
+  var AlertHandleManager = AlertHandle.AlertHandleManager;
 
   module.directive('grafanaGraph', function($rootScope, timeSrv) {
     return {
@@ -35,6 +38,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         var legendSideLastValue = null;
         var rootScope = scope.$root;
         var panelWidth = 0;
+        var alertHandles;
 
         rootScope.onAppEvent('setCrosshair', function(event, info) {
           // do not need to to this if event is from this panel
@@ -162,6 +166,10 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
             rightLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[1].label, rightLabel) / 2) + 'px';
           }
+
+          if (alertHandles) {
+            alertHandles.draw(plot);
+          }
         }
 
         function processOffsetHook(plot, gridMargin) {
@@ -178,24 +186,26 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             panelWidth = panelWidthCache[panel.span] = elem.width();
           }
 
-          if (ctrl.editingAlert) {
-            elem.css('margin-right', '220px');
-          } else {
-            elem.css('margin-right', '');
-          }
-
           if (shouldAbortRender()) {
             return;
+          }
+
+          // give space to alert editing
+          if (ctrl.editingAlert) {
+            if (!alertHandles) {
+              elem.css('margin-right', '220px');
+              alertHandles = new AlertHandleManager(ctrl);
+            }
+          } else if (alertHandles) {
+            elem.css('margin-right', '0');
+            alertHandles.cleanUp();
+            alertHandles = null;
           }
 
           var stack = panel.stack ? true : null;
 
           // Populate element
           var options = {
-            alerting: {
-              editing: ctrl.editingAlert,
-              alert: panel.alert,
-            },
             hooks: {
               draw: [drawHook],
               processOffset: [processOffsetHook],
@@ -323,7 +333,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         }
 
         function addGridThresholds(options, panel) {
-          if (panel.alert && panel.alert.enabled) {
+          if (panel.alert) {
             var crit = panel.alert.critical;
             var warn = panel.alert.warn;
             var critEdge = Infinity;

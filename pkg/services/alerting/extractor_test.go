@@ -149,10 +149,7 @@ func TestAlertRuleExtraction(t *testing.T) {
           ],
           "title": "Broken influxdb panel",
           "transform": "table",
-          "type": "table",
-					"alert": {
-						"deleted": true
-					}
+          "type": "table"
         }
       ],
       "title": "New row"
@@ -185,7 +182,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 				return nil
 			})
 
-			alerts, err := extractor.GetRuleModels()
+			alerts, err := extractor.GetAlerts()
 
 			Convey("Get rules without error", func() {
 				So(err, ShouldBeNil)
