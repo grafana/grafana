@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/services/alerting/transformers"
 
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -22,7 +23,7 @@ type AlertRule struct {
 	Query           AlertQuery
 	Transform       string
 	TransformParams simplejson.Json
-	Transformer     Transformer
+	Transformer     transformer.Transformer
 }
 
 func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
@@ -50,9 +51,8 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 	model.TransformParams = *ruleDef.Expression.Get("transform")
 
 	if model.Transform == "aggregation" {
-		model.Transformer = &AggregationTransformer{
-			Method: ruleDef.Expression.Get("transform").Get("method").MustString(),
-		}
+		method := ruleDef.Expression.Get("transform").Get("method").MustString()
+		model.Transformer = transformer.NewAggregationTransformer(method)
 	}
 
 	query := ruleDef.Expression.Get("query")

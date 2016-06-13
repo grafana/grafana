@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/transformers"
 )
 
 type UpdateDashboardAlertsCommand struct {
@@ -68,9 +69,8 @@ func ConvetAlertModelToAlertRule(ruleDef *m.Alert) (*AlertRule, error) {
 	model.TransformParams = *ruleDef.Expression.Get("transform")
 
 	if model.Transform == "aggregation" {
-		model.Transformer = &AggregationTransformer{
-			Method: ruleDef.Expression.Get("transform").Get("method").MustString(),
-		}
+		method := ruleDef.Expression.Get("transform").Get("method").MustString()
+		model.Transformer = transformer.NewAggregationTransformer(method)
 	}
 
 	query := ruleDef.Expression.Get("query")
