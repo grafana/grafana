@@ -16,7 +16,6 @@ type Alert struct {
 	State       string
 	Scheduler   int64
 	Enabled     bool
-	Frequency   int
 
 	Created time.Time
 	Updated time.Time
