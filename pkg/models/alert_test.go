@@ -14,13 +14,13 @@ func TestAlertingModelTest(t *testing.T) {
 		json2, _ := simplejson.NewJson([]byte(`{ "field": "value" }`))
 
 		rule1 := &Alert{
-			Expression:  json1,
+			Settings:    json1,
 			Name:        "Namn",
 			Description: "Description",
 		}
 
 		rule2 := &Alert{
-			Expression:  json2,
+			Settings:    json2,
 			Name:        "Namn",
 			Description: "Description",
 		}
@@ -32,7 +32,7 @@ func TestAlertingModelTest(t *testing.T) {
 
 		Convey("Changing the expression should contain update", func() {
 			json2, _ := simplejson.NewJson([]byte(`{ "field": "newValue" }`))
-			rule1.Expression = json2
+			rule1.Settings = json2
 			So(rule1.ContainsUpdates(rule2), ShouldBeTrue)
 		})
 	})

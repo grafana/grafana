@@ -60,28 +60,28 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 	model.Description = ruleDef.Description
 	model.State = ruleDef.State
 
-	critical := ruleDef.Expression.Get("critical")
+	critical := ruleDef.Settings.Get("critical")
 	model.Critical = Level{
 		Operator: critical.Get("op").MustString(),
 		Level:    critical.Get("level").MustFloat64(),
 	}
 
-	warning := ruleDef.Expression.Get("warn")
+	warning := ruleDef.Settings.Get("warn")
 	model.Warning = Level{
 		Operator: warning.Get("op").MustString(),
 		Level:    warning.Get("level").MustFloat64(),
 	}
 
-	model.Frequency = getTimeDurationStringToSeconds(ruleDef.Expression.Get("frequency").MustString())
-	model.Transform = ruleDef.Expression.Get("transform").Get("type").MustString()
-	model.TransformParams = *ruleDef.Expression.Get("transform")
+	model.Frequency = getTimeDurationStringToSeconds(ruleDef.Settings.Get("frequency").MustString())
+	model.Transform = ruleDef.Settings.Get("transform").Get("type").MustString()
+	model.TransformParams = *ruleDef.Settings.Get("transform")
 
 	if model.Transform == "aggregation" {
-		method := ruleDef.Expression.Get("transform").Get("method").MustString()
+		method := ruleDef.Settings.Get("transform").Get("method").MustString()
 		model.Transformer = transformers.NewAggregationTransformer(method)
 	}
 
-	query := ruleDef.Expression.Get("query")
+	query := ruleDef.Settings.Get("query")
 	model.Query = AlertQuery{
 		Query:        query.Get("query").MustString(),
 		DatasourceId: query.Get("datasourceId").MustInt64(),

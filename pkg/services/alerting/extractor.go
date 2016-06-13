@@ -100,7 +100,7 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				}
 			}
 
-			alert.Expression = jsonAlert
+			alert.Settings = jsonAlert
 
 			// validate
 			_, err := NewAlertRuleFromDBModel(alert)

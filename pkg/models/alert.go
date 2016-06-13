@@ -20,7 +20,7 @@ type Alert struct {
 	Created time.Time
 	Updated time.Time
 
-	Expression *simplejson.Json
+	Settings *simplejson.Json
 }
 
 func (alert *Alert) ValidToSave() bool {
@@ -32,9 +32,9 @@ func (this *Alert) ContainsUpdates(other *Alert) bool {
 	result = result || this.Name != other.Name
 	result = result || this.Description != other.Description
 
-	if this.Expression != nil && other.Expression != nil {
-		json1, err1 := this.Expression.Encode()
-		json2, err2 := other.Expression.Encode()
+	if this.Settings != nil && other.Settings != nil {
+		json1, err1 := this.Settings.Encode()
+		json2, err2 := other.Settings.Encode()
 
 		if err1 != nil || err2 != nil {
 			return false

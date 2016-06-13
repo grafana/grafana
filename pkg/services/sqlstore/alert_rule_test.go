@@ -21,7 +21,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				OrgId:       testDash.OrgId,
 				Name:        "Alerting title",
 				Description: "Alerting description",
-				Expression:  simplejson.New(),
+				Settings:    simplejson.New(),
 			},
 		}
 
@@ -102,21 +102,21 @@ func TestAlertingDataAccess(t *testing.T) {
 					PanelId:     1,
 					Name:        "1",
 					OrgId:       1,
-					Expression:  simplejson.New(),
+					Settings:    simplejson.New(),
 				},
 				{
 					DashboardId: testDash.Id,
 					PanelId:     2,
 					Name:        "2",
 					OrgId:       1,
-					Expression:  simplejson.New(),
+					Settings:    simplejson.New(),
 				},
 				{
 					DashboardId: testDash.Id,
 					PanelId:     3,
 					Name:        "3",
 					OrgId:       1,
-					Expression:  simplejson.New(),
+					Settings:    simplejson.New(),
 				},
 			}
 

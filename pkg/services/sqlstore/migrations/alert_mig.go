@@ -16,7 +16,7 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "description", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "state", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "expression", Type: DB_Text, Nullable: false},
+			{Name: "settings", Type: DB_Text, Nullable: false},
 			{Name: "scheduler", Type: DB_BigInt, Nullable: false},
 			{Name: "enabled", Type: DB_Bool, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
