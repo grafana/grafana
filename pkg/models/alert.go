@@ -24,7 +24,7 @@ type Alert struct {
 }
 
 func (alert *Alert) ValidToSave() bool {
-	return alert.DashboardId != 0
+	return alert.DashboardId != 0 && alert.OrgId != 0 && alert.PanelId != 0
 }
 
 func (this *Alert) ContainsUpdates(other *Alert) bool {
