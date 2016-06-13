@@ -91,7 +91,7 @@ func TestAlertingExecutor(t *testing.T) {
 				}
 
 				timeSeries := []*tsdb.TimeSeries{
-					tsdb.NewTimeSeries("test1", [][2]float64{{1, 0}, {11, 0}}),
+					tsdb.NewTimeSeries("test1", [][2]float64{{6, 0}, {11, 0}}),
 				}
 
 				result := executor.evaluateRule(rule, timeSeries)
@@ -124,6 +124,22 @@ func TestAlertingExecutor(t *testing.T) {
 
 				timeSeries := []*tsdb.TimeSeries{
 					tsdb.NewTimeSeries("test1", [][2]float64{{2, 0}}),
+					tsdb.NewTimeSeries("test1", [][2]float64{{11, 0}}),
+				}
+
+				result := executor.evaluateRule(rule, timeSeries)
+				So(result.State, ShouldEqual, alertstates.Critical)
+			})
+
+			Convey("first serie is warn, second is critical", func() {
+				rule := &AlertRule{
+					Critical:    Level{Level: 10, Operator: ">"},
+					Warning:     Level{Level: 5, Operator: ">"},
+					Transformer: transformers.NewAggregationTransformer("avg"),
+				}
+
+				timeSeries := []*tsdb.TimeSeries{
+					tsdb.NewTimeSeries("test1", [][2]float64{{6, 0}}),
 					tsdb.NewTimeSeries("test1", [][2]float64{{11, 0}}),
 				}
 
