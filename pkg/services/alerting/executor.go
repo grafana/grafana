@@ -11,7 +11,7 @@ import (
 )
 
 var (
-	descriptionFmt = "Actual value: %1.2f for %s"
+	descriptionFmt = "Actual value: %1.2f for %s. "
 )
 
 type ExecutorImpl struct {
@@ -95,6 +95,8 @@ func (e *ExecutorImpl) GetRequestForAlertRule(rule *AlertRule, datasource *m.Dat
 func (e *ExecutorImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice) *AlertResult {
 	e.log.Debug("Evaluating Alerting Rule", "seriesCount", len(series), "ruleName", rule.Name)
 
+	triggeredAlert := make([]*TriggeredAlert, 0)
+
 	for _, serie := range series {
 		e.log.Debug("Evaluating series", "series", serie.Name)
 		transformedValue, _ := rule.Transformer.Transform(serie)
@@ -102,23 +104,37 @@ func (e *ExecutorImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice
 		critResult := evalCondition(rule.Critical, transformedValue)
 		e.log.Debug("Alert execution Crit", "name", serie.Name, "transformedValue", transformedValue, "operator", rule.Critical.Operator, "level", rule.Critical.Level, "result", critResult)
 		if critResult {
-			return &AlertResult{
+			triggeredAlert = append(triggeredAlert, &TriggeredAlert{
 				State:       alertstates.Critical,
 				ActualValue: transformedValue,
-				Description: fmt.Sprintf(descriptionFmt, transformedValue, serie.Name),
-			}
+				Name:        serie.Name,
+			})
 		}
 
 		warnResult := evalCondition(rule.Warning, transformedValue)
 		e.log.Debug("Alert execution Warn", "name", serie.Name, "transformedValue", transformedValue, "operator", rule.Warning.Operator, "level", rule.Warning.Level, "result", warnResult)
 		if warnResult {
-			return &AlertResult{
+			triggeredAlert = append(triggeredAlert, &TriggeredAlert{
 				State:       alertstates.Warn,
-				Description: fmt.Sprintf(descriptionFmt, transformedValue, serie.Name),
 				ActualValue: transformedValue,
-			}
+				Name:        serie.Name,
+			})
 		}
 	}
 
-	return &AlertResult{State: alertstates.Ok, Description: "Alert is OK!"}
+	executionState := alertstates.Ok
+	description := ""
+	for _, raised := range triggeredAlert {
+		if raised.State == alertstates.Critical {
+			executionState = alertstates.Critical
+		}
+
+		if executionState != alertstates.Critical && raised.State == alertstates.Warn {
+			executionState = alertstates.Warn
+		}
+
+		description += fmt.Sprintf(descriptionFmt, raised.ActualValue, raised.Name)
+	}
+
+	return &AlertResult{State: executionState, Description: description, TriggeredAlerts: triggeredAlert}
 }

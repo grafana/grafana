@@ -9,12 +9,19 @@ type AlertJob struct {
 }
 
 type AlertResult struct {
-	State       string
+	State           string
+	ActualValue     float64
+	Duration        float64
+	TriggeredAlerts []*TriggeredAlert
+	Description     string
+	Error           error
+	AlertJob        *AlertJob
+}
+
+type TriggeredAlert struct {
 	ActualValue float64
-	Duration    float64
-	Description string
-	Error       error
-	AlertJob    *AlertJob
+	Name        string
+	State       string
 }
 
 type Level struct {
