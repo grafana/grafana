@@ -8,6 +8,18 @@ type AlertJob struct {
 	Rule       *AlertRule
 }
 
+func (aj *AlertJob) Retryable() bool {
+	return aj.RetryCount < maxRetries
+}
+
+func (aj *AlertJob) ResetRetry() {
+	aj.RetryCount = 0
+}
+
+func (aj *AlertJob) IncRetry() {
+	aj.RetryCount++
+}
+
 type AlertResult struct {
 	State           string
 	ActualValue     float64

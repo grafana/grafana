@@ -31,13 +31,14 @@ func SetNewAlertState(cmd *m.UpdateAlertStateCommand) error {
 		}
 
 		if alert.State == cmd.NewState {
+			cmd.Result = &m.Alert{}
 			return nil
 		}
 
 		alert.State = cmd.NewState
 		sess.Id(alert.Id).Update(&alert)
 
-		log := m.AlertState{
+		alertState := m.AlertState{
 			AlertId:  cmd.AlertId,
 			OrgId:    cmd.AlertId,
 			NewState: cmd.NewState,
@@ -45,7 +46,7 @@ func SetNewAlertState(cmd *m.UpdateAlertStateCommand) error {
 			Created:  time.Now(),
 		}
 
-		sess.Insert(&log)
+		sess.Insert(&alertState)
 
 		cmd.Result = &alert
 		return nil

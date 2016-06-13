@@ -108,11 +108,10 @@ func (e *Engine) resultHandler() {
 
 		result.AlertJob.Running = false
 
-		// handle result error
 		if result.Error != nil {
-			result.AlertJob.RetryCount++
+			result.AlertJob.IncRetry()
 
-			if result.AlertJob.RetryCount < maxRetries {
+			if result.AlertJob.Retryable() {
 				e.log.Error("Alert Rule Result Error", "ruleId", result.AlertJob.Rule.Id, "error", result.Error, "retry", result.AlertJob.RetryCount)
 				e.execQueue <- result.AlertJob
 			} else {
@@ -123,7 +122,7 @@ func (e *Engine) resultHandler() {
 				e.saveState(result)
 			}
 		} else {
-			result.AlertJob.RetryCount = 0
+			result.AlertJob.ResetRetry()
 			e.saveState(result)
 		}
 	}
