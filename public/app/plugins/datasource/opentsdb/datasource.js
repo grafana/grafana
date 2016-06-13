@@ -168,7 +168,9 @@ function (angular, _, dateMath) {
         return $q.when([]);
       }
 
-      var keysArray = keys.split(",");
+      var keysArray = keys.split(",").map(function(key) {
+        return key.trim();
+      });
       var key = keysArray[0];
       var keysQuery = key + "=*";
 
