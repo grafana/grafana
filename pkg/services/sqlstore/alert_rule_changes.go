@@ -18,24 +18,24 @@ func GetAlertRuleChanges(query *m.GetAlertChangesQuery) error {
 	params := make([]interface{}, 0)
 
 	sql.WriteString(`SELECT
-					  alert_rule_change.id,
-					  alert_rule_change.org_id,
-					  alert_rule_change.alert_id,
-					  alert_rule_change.type,
-					  alert_rule_change.created
-					  FROM alert_rule_change
+					  alert_change.id,
+					  alert_change.org_id,
+					  alert_change.alert_id,
+					  alert_change.type,
+					  alert_change.created
+					  FROM alert_change
 					  `)
 
-	sql.WriteString(`WHERE alert_rule_change.org_id = ?`)
+	sql.WriteString(`WHERE alert_change.org_id = ?`)
 	params = append(params, query.OrgId)
 
 	if query.SinceId != 0 {
-		sql.WriteString(`AND alert_rule_change.id >= ?`)
+		sql.WriteString(`AND alert_change.id >= ?`)
 		params = append(params, query.SinceId)
 	}
 
 	if query.Limit != 0 {
-		sql.WriteString(` ORDER BY alert_rule_change.id DESC LIMIT ?`)
+		sql.WriteString(` ORDER BY alert_change.id DESC LIMIT ?`)
 		params = append(params, query.Limit)
 	}
 

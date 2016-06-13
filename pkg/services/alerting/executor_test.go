@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/services/alerting/alertstates"
+	"github.com/grafana/grafana/pkg/services/alerting/transformers"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -16,7 +17,7 @@ func TestAlertingExecutor(t *testing.T) {
 			Convey("Show return ok since avg is above 2", func() {
 				rule := &AlertRule{
 					Critical:    Level{Level: 10, Operator: ">"},
-					Transformer: &AggregationTransformer{Method: "avg"},
+					Transformer: transformers.NewAggregationTransformer("avg"),
 				}
 
 				timeSeries := []*tsdb.TimeSeries{
@@ -30,7 +31,7 @@ func TestAlertingExecutor(t *testing.T) {
 			Convey("Show return critical since below 2", func() {
 				rule := &AlertRule{
 					Critical:    Level{Level: 10, Operator: "<"},
-					Transformer: &AggregationTransformer{Method: "avg"},
+					Transformer: transformers.NewAggregationTransformer("avg"),
 				}
 
 				timeSeries := []*tsdb.TimeSeries{
@@ -44,7 +45,7 @@ func TestAlertingExecutor(t *testing.T) {
 			Convey("Show return critical since sum is above 10", func() {
 				rule := &AlertRule{
 					Critical:    Level{Level: 10, Operator: ">"},
-					Transformer: &AggregationTransformer{Method: "sum"},
+					Transformer: transformers.NewAggregationTransformer("sum"),
 				}
 
 				timeSeries := []*tsdb.TimeSeries{
@@ -58,7 +59,7 @@ func TestAlertingExecutor(t *testing.T) {
 			Convey("Show return ok since avg is below 10", func() {
 				rule := &AlertRule{
 					Critical:    Level{Level: 10, Operator: ">"},
-					Transformer: &AggregationTransformer{Method: "avg"},
+					Transformer: transformers.NewAggregationTransformer("avg"),
 				}
 
 				timeSeries := []*tsdb.TimeSeries{
@@ -72,7 +73,7 @@ func TestAlertingExecutor(t *testing.T) {
 			Convey("Show return ok since min is below 10", func() {
 				rule := &AlertRule{
 					Critical:    Level{Level: 10, Operator: ">"},
-					Transformer: &AggregationTransformer{Method: "avg"},
+					Transformer: transformers.NewAggregationTransformer("avg"),
 				}
 
 				timeSeries := []*tsdb.TimeSeries{
@@ -86,7 +87,7 @@ func TestAlertingExecutor(t *testing.T) {
 			Convey("Show return ok since max is above 10", func() {
 				rule := &AlertRule{
 					Critical:    Level{Level: 10, Operator: ">"},
-					Transformer: &AggregationTransformer{Method: "max"},
+					Transformer: transformers.NewAggregationTransformer("max"),
 				}
 
 				timeSeries := []*tsdb.TimeSeries{
@@ -103,7 +104,7 @@ func TestAlertingExecutor(t *testing.T) {
 			Convey("both are ok", func() {
 				rule := &AlertRule{
 					Critical:    Level{Level: 10, Operator: ">"},
-					Transformer: &AggregationTransformer{Method: "avg"},
+					Transformer: transformers.NewAggregationTransformer("avg"),
 				}
 
 				timeSeries := []*tsdb.TimeSeries{
@@ -118,7 +119,7 @@ func TestAlertingExecutor(t *testing.T) {
 			Convey("first serie is good, second is critical", func() {
 				rule := &AlertRule{
 					Critical:    Level{Level: 10, Operator: ">"},
-					Transformer: &AggregationTransformer{Method: "avg"},
+					Transformer: transformers.NewAggregationTransformer("avg"),
 				}
 
 				timeSeries := []*tsdb.TimeSeries{

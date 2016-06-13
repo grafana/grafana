@@ -1,4 +1,4 @@
-package transformer
+package transformers
 
 import "github.com/grafana/grafana/pkg/tsdb"
 

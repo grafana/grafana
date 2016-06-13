@@ -23,7 +23,7 @@ type AlertRule struct {
 	Query           AlertQuery
 	Transform       string
 	TransformParams simplejson.Json
-	Transformer     transformer.Transformer
+	Transformer     transformers.Transformer
 }
 
 func getTimeDurationStringToSeconds(str string) int64 {
@@ -56,7 +56,7 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 
 	if model.Transform == "aggregation" {
 		method := ruleDef.Expression.Get("transform").Get("method").MustString()
-		model.Transformer = transformer.NewAggregationTransformer(method)
+		model.Transformer = transformers.NewAggregationTransformer(method)
 	}
 
 	query := ruleDef.Expression.Get("query")
