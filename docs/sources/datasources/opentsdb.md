@@ -51,6 +51,13 @@ When using OpenTSDB with a template variable of `query` type you can use followi
 
 If you do not see template variables being populated in `Preview of values` section, you need to enable `tsd.core.meta.enable_realtime_ts` in the OpenTSDB server settings. Also, to populate metadata of the existing time series data in OpenTSDB, you need to run `tsdb uid metasync` on the OpenTSDB server.
 
+### Nested Templating
+
+One template variable can be used to filter tag values for another template varible. Very importantly, the order of the parameters matter in tag_values function. First parameter is the metric name, second parameter is the tag key for which you need to find tag values, and after that all other dependent template variables. Some examples are mentioned below to make nested template queries work successfully.
+
+    tag_values(cpu, hostname, env=$env)                   // return tag values for cpu metric, selected env tag value and tag key hostname 
+    tag_values(cpu, hostanme, env=$env, region=$region)   // return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname
+
 > Note: This is required for the OpenTSDB `lookup` api to work.
 
 For details on opentsdb metric queries checkout the official [OpenTSDB documentation](http://opentsdb.net/docs/build/html/index.html)
