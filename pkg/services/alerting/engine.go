@@ -118,7 +118,7 @@ func (e *Engine) resultHandler() {
 				e.log.Error("Alert Rule Result Error After Max Retries", "ruleId", result.AlertJob.Rule.Id, "error", result.Error, "retry", result.AlertJob.RetryCount)
 
 				result.State = alertstates.Critical
-				result.Description = fmt.Sprintf("Failed to run check after %d retires, Error: %v", maxRetries, result.Error)
+				result.Description = fmt.Sprintf("Failed to run check after %d retires, Error: %v", maxAlertExecutionRetries, result.Error)
 				e.saveState(result)
 			}
 		} else {

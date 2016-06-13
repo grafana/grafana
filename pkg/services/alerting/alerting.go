@@ -6,7 +6,7 @@ import (
 )
 
 var (
-	maxRetries = 3
+	maxAlertExecutionRetries = 3
 )
 
 var engine *Engine

@@ -9,7 +9,7 @@ type AlertJob struct {
 }
 
 func (aj *AlertJob) Retryable() bool {
-	return aj.RetryCount < maxRetries
+	return aj.RetryCount < maxAlertExecutionRetries
 }
 
 func (aj *AlertJob) ResetRetry() {
