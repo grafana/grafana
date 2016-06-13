@@ -18,11 +18,4 @@ func Init() {
 
 	engine = NewEngine()
 	engine.Start()
-
-	// scheduler := NewScheduler()
-	// reader := NewRuleReader()
-	//
-	// go scheduler.dispatch(reader)
-	// go scheduler.executor(&ExecutorImpl{})
-	// go scheduler.handleResponses()
 }
