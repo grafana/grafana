@@ -3,14 +3,17 @@ package login
 import (
 	"errors"
 
+	"fmt"
 	"github.com/grafana/grafana/pkg/api/keystone"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
 type keystoneAuther struct {
 	server      string
 	domainname  string
+	defaultrole string
 	roles       map[m.RoleType][]string
 	admin_roles []string
 
@@ -18,7 +21,7 @@ type keystoneAuther struct {
 	project_list map[string][]string
 }
 
-func NewKeystoneAuthenticator(server, domainname string, global_admin_roles, admin_roles, editor_roles,
+func NewKeystoneAuthenticator(server, domainname, default_role string, global_admin_roles, admin_roles, editor_roles,
 	read_editor_roles, viewer_roles []string) *keystoneAuther {
 	roles := map[m.RoleType][]string{
 		m.ROLE_ADMIN:            admin_roles,
@@ -26,19 +29,22 @@ func NewKeystoneAuthenticator(server, domainname string, global_admin_roles, adm
 		m.ROLE_READ_ONLY_EDITOR: read_editor_roles,
 		m.ROLE_VIEWER:           viewer_roles,
 	}
-	return &keystoneAuther{server: server, domainname: domainname, roles: roles, admin_roles: global_admin_roles}
+	return &keystoneAuther{server: server, domainname: domainname, defaultrole: default_role, roles: roles, admin_roles: global_admin_roles}
 }
 
 func (a *keystoneAuther) login(query *LoginUserQuery) error {
 
+	log.Trace("perform initial authentication")
 	// perform initial authentication
 	if err := a.authenticate(query.Username, query.Password); err != nil {
 		return err
 	}
 
+	log.Trace("Get grafana user")
 	if grafanaUser, err := a.getGrafanaUserFor(query.Username); err != nil {
 		return err
 	} else {
+		log.Trace("sync org roles")
 		// sync org roles
 		if err := a.syncOrgRoles(query.Username, query.Password, grafanaUser); err != nil {
 			return err
@@ -160,10 +166,12 @@ func (a *keystoneAuther) updateGrafanaOrgUser(userid, orgid int64, role m.RoleTy
 }
 
 func (a *keystoneAuther) syncOrgRoles(username, password string, user *m.User) error {
+	log.Trace("syncOrgRoles()")
 	err := a.getProjectList(username, password)
 	if err != nil {
 		return err
 	}
+	log.Debug("OpenStack project_list[roles]: %v", a.project_list)
 
 	orgsQuery := m.GetUserOrgListQuery{UserId: user.Id}
 	if err := bus.Dispatch(&orgsQuery); err != nil {
@@ -175,6 +183,7 @@ func (a *keystoneAuther) syncOrgRoles(username, password string, user *m.User) e
 	// update or remove org roles
 	for _, org := range orgsQuery.Result {
 		handledOrgIds[org.OrgId] = true
+		log.Info(fmt.Sprintf("Checking Grafana org %v for roles", org.Name))
 
 		if user_roles, ok := a.project_list[org.Name]; ok {
 			// Update roles if user belongs to org
@@ -315,5 +324,5 @@ func (a *keystoneAuther) getRole(user_roles []string) m.RoleType {
 			}
 		}
 	}
-	return ""
+	return m.RoleType(a.defaultrole)
 }

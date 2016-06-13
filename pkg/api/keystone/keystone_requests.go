@@ -2,9 +2,16 @@ package keystone
 
 import (
 	"bytes"
+	"crypto/tls"
+	"crypto/x509"
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"net/http"
+
+	"fmt"
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 ///////////////////////
@@ -18,7 +25,7 @@ type auth_request_struct struct {
 
 type auth_struct struct {
 	Identity auth_identity_struct `json:"identity"`
-	Scope    string               `json:"scope"`
+	Scope    string               `json:"scope,omitempty"`
 }
 
 type scoped_auth_token_request_struct struct {
@@ -30,15 +37,13 @@ type scoped_auth_password_request_struct struct {
 }
 
 type scoped_auth_token_struct struct {
-	Nocatalog bool                        `json:"nocatalog"`
-	Identity  auth_scoped_identity_struct `json:"identity"`
-	Scope     auth_scope_struct           `json:"scope"`
+	Identity auth_scoped_identity_struct `json:"identity"`
+	Scope    auth_scope_struct           `json:"scope"`
 }
 
 type scoped_auth_password_struct struct {
-	Nocatalog bool                 `json:"nocatalog"`
-	Identity  auth_identity_struct `json:"identity"`
-	Scope     auth_scope_struct    `json:"scope"`
+	Identity auth_identity_struct `json:"identity"`
+	Scope    auth_scope_struct    `json:"scope"`
 }
 
 type auth_scoped_identity_struct struct {
@@ -127,6 +132,7 @@ type Auth_data struct {
 
 func AuthenticateScoped(data *Auth_data) error {
 	if data.UnscopedToken != "" {
+		log.Trace("AuthenticateScoped() with token")
 		var auth_post scoped_auth_token_request_struct
 		auth_post.Auth.Identity.Methods = []string{"token"}
 		auth_post.Auth.Identity.Token.Id = data.UnscopedToken
@@ -136,7 +142,7 @@ func AuthenticateScoped(data *Auth_data) error {
 		return authenticate(data, b)
 	} else {
 		var auth_post scoped_auth_password_request_struct
-		auth_post.Auth.Nocatalog = true
+		log.Trace("AuthenticateScoped() with password")
 		auth_post.Auth.Identity.Methods = []string{"password"}
 		auth_post.Auth.Identity.Password.User.Name = data.Username
 		auth_post.Auth.Identity.Password.User.Password = data.Password
@@ -149,6 +155,7 @@ func AuthenticateScoped(data *Auth_data) error {
 }
 
 func AuthenticateUnscoped(data *Auth_data) error {
+	log.Trace("AuthenticateUnscoped()")
 	var auth_post auth_request_struct
 	auth_post.Auth.Scope = "unscoped"
 	auth_post.Auth.Identity.Methods = []string{"password"}
@@ -159,22 +166,43 @@ func AuthenticateUnscoped(data *Auth_data) error {
 
 	return authenticate(data, b)
 }
-
 func authenticate(data *Auth_data, b []byte) error {
-	request, err := http.NewRequest("POST", data.Server+"/v3/auth/tokens", bytes.NewBuffer(b))
+	auth_url := data.Server + "/v3/auth/tokens?nocatalog"
+
+	log.Debug("Authentication request to URL: %s", auth_url)
+
+	log.Debug("Authentication request body: \n%s", anonymisePasswordsTokens(data, b))
+
+	request, err := http.NewRequest("POST", auth_url, bytes.NewBuffer(b))
 	if err != nil {
 		return err
 	}
 
-	client := &http.Client{}
-	resp, err := client.Do(request)
+	resp, err := GetHttpClient().Do(request)
 	if err != nil {
 		return err
-	} else if resp.StatusCode != 201 {
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 201 {
 		return errors.New("Keystone authentication failed: " + resp.Status)
 	}
 
-	decoder := json.NewDecoder(resp.Body)
+	var decoder *json.Decoder
+
+	if log.IsDebug() {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		strBody := buf.Bytes()
+
+		log.Debug("Authentication response: \n%s", strBody)
+
+		bodyReader := bytes.NewBufferString(fmt.Sprintf("%s", strBody))
+		decoder = json.NewDecoder(bodyReader)
+	} else {
+		decoder = json.NewDecoder(resp.Body)
+	}
+
 	var auth_response auth_response_struct
 	err = decoder.Decode(&auth_response)
 	if err != nil {
@@ -188,6 +216,20 @@ func authenticate(data *Auth_data, b []byte) error {
 	return nil
 }
 
+func anonymisePasswordsTokens(data *Auth_data, json []byte) []byte {
+	anonJson := json
+	if data.Password != "" {
+		anonJson = bytes.Replace(anonJson, []byte("\"password\":\""+data.Password+"\""),
+			[]byte("\"password\":\"********\""), -1)
+	}
+	if data.UnscopedToken != "" {
+		anonJson = bytes.Replace(anonJson, []byte("\"token\":{\"id\":\""+data.UnscopedToken+"\""),
+			[]byte("\"token\":{\"id\":\"****************\""), -1)
+	}
+
+	return anonJson
+}
+
 // Projects Section
 type Projects_data struct {
 	Token  string
@@ -197,21 +239,39 @@ type Projects_data struct {
 }
 
 func GetProjects(data *Projects_data) error {
+	log.Info("Authentication request to URL: %s", data.Server+"/v3/auth/projects")
+
 	request, err := http.NewRequest("GET", data.Server+"/v3/auth/projects", nil)
 	if err != nil {
 		return err
 	}
 	request.Header.Add("X-Auth-Token", data.Token)
 
-	client := &http.Client{}
-	resp, err := client.Do(request)
+	resp, err := GetHttpClient().Do(request)
 	if err != nil {
 		return err
-	} else if resp.StatusCode != 200 {
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != 200 {
 		return errors.New("Keystone project-list failed: " + resp.Status)
 	}
 
-	decoder := json.NewDecoder(resp.Body)
+	var decoder *json.Decoder
+
+	if log.IsDebug() {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		strBody := buf.Bytes()
+
+		log.Debug("Projects response: \n%s", strBody)
+
+		bodyReader := bytes.NewBufferString(fmt.Sprintf("%s", strBody))
+		decoder = json.NewDecoder(bodyReader)
+	} else {
+		decoder = json.NewDecoder(resp.Body)
+	}
+
 	var project_response project_response_struct
 	err = decoder.Decode(&project_response)
 	if err != nil {
@@ -223,4 +283,36 @@ func GetProjects(data *Projects_data) error {
 		}
 	}
 	return nil
+}
+
+// From https://golang.org/pkg/net/http:
+// "Clients and Transports are safe for concurrent use by multiple goroutines and for efficiency should only be created once and re-used."
+var client *http.Client
+
+func GetHttpClient() *http.Client {
+	if client != nil {
+		return client
+	} else {
+		var certPool *x509.CertPool
+		if pemfile := setting.KeystoneRootCAPEMFile; pemfile != "" {
+			certPool = x509.NewCertPool()
+			pemFileContent, err := ioutil.ReadFile(pemfile)
+			if err != nil {
+				panic(err)
+			}
+			if !certPool.AppendCertsFromPEM(pemFileContent) {
+				log.Error(3, "Failed to load any certificates from Root CA PEM file %s", pemfile)
+			} else {
+				log.Info("Successfully loaded certificate(s) from %s", pemfile)
+			}
+		}
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{RootCAs: certPool,
+				InsecureSkipVerify: !setting.KeystoneVerifySSLCert},
+		}
+		tr.Proxy = http.ProxyFromEnvironment
+
+		client = &http.Client{Transport: tr}
+		return client
+	}
 }
