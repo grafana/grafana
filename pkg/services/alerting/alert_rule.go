@@ -2,6 +2,8 @@ package alerting
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting/transformers"
@@ -26,8 +28,28 @@ type AlertRule struct {
 	Transformer     transformers.Transformer
 }
 
+var (
+	ValueFormatRegex = regexp.MustCompile("^\\d+")
+	UnitFormatRegex  = regexp.MustCompile("\\w{1}$")
+)
+
+var unitMultiplier = map[string]int{
+	"s": 1,
+	"m": 60,
+	"h": 3600,
+}
+
 func getTimeDurationStringToSeconds(str string) int64 {
-	return 60
+	multiplier := 1
+
+	value, _ := strconv.Atoi(ValueFormatRegex.FindAllString(str, 1)[0])
+	unit := UnitFormatRegex.FindAllString(str, 1)[0]
+
+	if val, ok := unitMultiplier[unit]; ok {
+		multiplier = val
+	}
+
+	return int64(value * multiplier)
 }
 
 func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
