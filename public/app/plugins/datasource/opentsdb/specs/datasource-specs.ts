@@ -55,14 +55,14 @@ describe('opentsdb', function() {
       ctx.ds.metricFindQuery('tag_values(cpu, hostname, env=$env)').then(function(data) { results = data; });
       ctx.$rootScope.$apply();
       expect(requestOptions.url).to.be('/api/search/lookup');
-      expect(requestOptions.params.m).to.be('cpu{hostname=*, env=$env}');
+      expect(requestOptions.params.m).to.be('cpu{hostname=*,env=$env}');
     });
 
     it('tag_values(cpu, test) should generate lookup query', function() {
       ctx.ds.metricFindQuery('tag_values(cpu, hostname, env=$env, region=$region)').then(function(data) { results = data; });
       ctx.$rootScope.$apply();
       expect(requestOptions.url).to.be('/api/search/lookup');
-      expect(requestOptions.params.m).to.be('cpu{hostname=*, env=$env, region=$region}');
+      expect(requestOptions.params.m).to.be('cpu{hostname=*,env=$env,region=$region}');
     });
 
     it('suggest_tagk() should generate api suggest query', function() {
