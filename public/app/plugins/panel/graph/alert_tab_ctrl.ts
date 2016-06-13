@@ -23,7 +23,7 @@ export class AlertTabCtrl {
   panel: any;
   panelCtrl: any;
   metricTargets = [{ refId: '- select query -' } ];
-  schedulers = [{text: 'Grafana', value: 1}, {text: 'External', value: 0}];
+  handlers = [{text: 'Grafana', value: 1}, {text: 'External', value: 0}];
   transforms = [
     {
       text: 'Aggregation',
@@ -49,7 +49,7 @@ export class AlertTabCtrl {
     frequency: '60s',
     notify: [],
     enabled: false,
-    scheduler: 1,
+    handler: 1,
     warn: { op: '>', level: undefined },
     critical: { op: '>', level: undefined },
     query: {
@@ -104,7 +104,6 @@ export class AlertTabCtrl {
 
     // init the query part components model
     this.query = new QueryPart(this.queryParams, alertQueryDef);
-    this.convertThresholdsToAlertThresholds();
     this.transformDef = _.findWhere(this.transforms, {type: this.alert.transform.type});
 
     this.panelCtrl.editingAlert = true;
@@ -136,22 +135,8 @@ export class AlertTabCtrl {
     }
   }
 
-  convertThresholdsToAlertThresholds() {
-    // if (this.panel.grid
-    //     && this.panel.grid.threshold1
-    //     && this.alert.warnLevel === undefined
-    //    ) {
-    //   this.alert.warning.op = '>';
-    //   this.alert.warning.level = this.panel.grid.threshold1;
-    // }
-    //
-    // if (this.panel.grid
-    //     && this.panel.grid.threshold2
-    //     && this.alert.critical.level === undefined
-    //    ) {
-    //   this.alert.critical.op = '>';
-    //   this.alert.critical.level = this.panel.grid.threshold2;
-    // }
+  operatorChanged() {
+    this.panelCtrl.render();
   }
 
   delete() {

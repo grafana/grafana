@@ -14,7 +14,7 @@ type Alert struct {
 	Name        string
 	Description string
 	State       string
-	Scheduler   int64
+	Handler     int64
 	Enabled     bool
 
 	Created time.Time

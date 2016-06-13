@@ -69,7 +69,7 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				PanelId:     panel.Get("id").MustInt64(),
 				Id:          jsonAlert.Get("id").MustInt64(),
 				Name:        jsonAlert.Get("name").MustString(),
-				Scheduler:   jsonAlert.Get("scheduler").MustInt64(),
+				Handler:     jsonAlert.Get("handler").MustInt64(),
 				Enabled:     jsonAlert.Get("enabled").MustBool(),
 				Description: jsonAlert.Get("description").MustString(),
 			}

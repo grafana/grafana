@@ -41,21 +41,21 @@
     <div class="gf-form-group section">
       <h5 class="section-heading">Levels</h5>
       <div class="gf-form-inline">
-        <div class="gf-form">
-          <span class="gf-form-label">
-            <i class="icon-gf icon-gf-warn alert-icon-warn"></i>
-            Warn if
-          </span>
-          <metric-segment-model property="ctrl.alert.warn.op" options="ctrl.levelOpList" custom="false" css-class="query-segment-operator"></metric-segment-model>
-          <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.warn.level" ng-change="ctrl.levelsUpdated()"></input>
-        </div>
-        <div class="gf-form">
+				<div class="gf-form">
           <span class="gf-form-label">
             <i class="icon-gf icon-gf-warn alert-icon-critical"></i>
             Critcal if
           </span>
-          <metric-segment-model property="ctrl.alert.critical.op" options="ctrl.levelOpList" custom="false" css-class="query-segment-operator"></metric-segment-model>
+          <metric-segment-model property="ctrl.alert.critical.op" options="ctrl.levelOpList" custom="false" css-class="query-segment-operator" on-change="ctrl.operatorChanged()"></metric-segment-model>
           <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.critical.level" ng-change="ctrl.levelsUpdated()"></input>
+        </div>
+				<div class="gf-form">
+          <span class="gf-form-label">
+            <i class="icon-gf icon-gf-warn alert-icon-warn"></i>
+            Warn if
+          </span>
+          <metric-segment-model property="ctrl.alert.warn.op" options="ctrl.levelOpList" custom="false" css-class="query-segment-operator" on-change="ctrl.operatorChanged()"></metric-segment-model>
+          <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.warn.level" ng-change="ctrl.levelsUpdated()"></input>
         </div>
       </div>
     </div>
@@ -66,11 +66,11 @@
       <h5 class="section-heading">Execution</h5>
       <div class="gf-form-inline">
         <div class="gf-form">
-          <span class="gf-form-label">Scheduler</span>
+          <span class="gf-form-label">Handler</span>
           <div class="gf-form-select-wrapper">
             <select   class="gf-form-input"
-                      ng-model="ctrl.alert.scheduler"
-                      ng-options="f.value as f.text for f in ctrl.schedulers">
+                      ng-model="ctrl.alert.handler"
+                      ng-options="f.value as f.text for f in ctrl.handlers">
             </select>
           </div>
         </div>

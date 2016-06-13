@@ -39,7 +39,7 @@ func TestAlertRuleExtraction(t *testing.T) {
           "alert": {
             "name": "name1",
             "description": "desc1",
-						"scheduler": 1,
+						"handler": 1,
 						"enabled": true,
             "critical": {
               "level": 20,
@@ -74,7 +74,7 @@ func TestAlertRuleExtraction(t *testing.T) {
           "alert": {
             "name": "name2",
             "description": "desc2",
-						"scheduler": 0,
+						"handler": 0,
 						"enabled": true,
             "critical": {
               "level": 20,
@@ -197,9 +197,9 @@ func TestAlertRuleExtraction(t *testing.T) {
 					So(v.Description, ShouldNotBeEmpty)
 				}
 
-				Convey("should extract scheduler property", func() {
-					So(alerts[0].Scheduler, ShouldEqual, 1)
-					So(alerts[1].Scheduler, ShouldEqual, 0)
+				Convey("should extract handler property", func() {
+					So(alerts[0].Handler, ShouldEqual, 1)
+					So(alerts[1].Handler, ShouldEqual, 0)
 				})
 
 				Convey("should extract panel idc", func() {

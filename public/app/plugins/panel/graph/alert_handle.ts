@@ -58,15 +58,11 @@ export class AlertHandleManager {
       isMoving = false;
       // calculate graph level
       var graphLevel = plot.c2p({left: 0, top: posTop}).y;
-      console.log('canvasPos:' + posTop + ' Graph level: ' + graphLevel);
       graphLevel = parseInt(graphLevel.toFixed(0));
       levelModel.level = graphLevel;
-      console.log(levelModel);
 
       var levelCanvasPos = plot.p2c({x: 0, y: graphLevel});
-      console.log('canvas pos', levelCanvasPos);
 
-      console.log('stopped');
       handleElem.off("mousemove", dragging);
       handleElem.off("mouseup", dragging);
 
@@ -80,7 +76,6 @@ export class AlertHandleManager {
       isMoving = true;
       lastY = null;
       posTop = handleElem.position().top;
-      console.log('start pos', posTop);
 
       handleElem.on("mousemove", dragging);
       handleElem.on("mouseup", stopped);
@@ -109,12 +104,10 @@ export class AlertHandleManager {
     }
 
     if (handleElem.length === 0) {
-      console.log('creating handle');
       handleElem = $(this.getFullHandleHtml(type, model.op, levelStr));
       this.placeholder.append(handleElem);
       this.setupDragging(handleElem, model);
     } else {
-      console.log('reusing handle!');
       handleElem.html(this.getHandleInnerHtml(type, model.op, levelStr));
     }
 
