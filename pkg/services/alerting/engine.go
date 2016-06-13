@@ -50,6 +50,12 @@ func (e *Engine) Stop() {
 }
 
 func (e *Engine) alertingTicker() {
+	defer func() {
+		if err := recover(); err != nil {
+			e.log.Error("Scheduler Panic, stopping...", "error", err, "stack", log.Stack(1))
+		}
+	}()
+
 	tickIndex := 0
 
 	for {

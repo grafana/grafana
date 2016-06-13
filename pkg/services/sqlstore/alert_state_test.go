@@ -13,22 +13,13 @@ func TestAlertingStateAccess(t *testing.T) {
 
 		testDash := insertTestDashboard("dashboard with alerts", 1, "alert")
 
-		items := []*m.AlertRule{
+		items := []*m.Alert{
 			{
-				PanelId:      1,
-				DashboardId:  testDash.Id,
-				OrgId:        testDash.OrgId,
-				Query:        "Query",
-				QueryRefId:   "A",
-				WarnLevel:    30,
-				CritLevel:    50,
-				WarnOperator: ">",
-				CritOperator: ">",
-				Frequency:    10,
-				Name:         "Alerting title",
-				Description:  "Alerting description",
-				QueryRange:   3600,
-				Aggregator:   "avg",
+				PanelId:     1,
+				DashboardId: testDash.Id,
+				OrgId:       testDash.OrgId,
+				Name:        "Alerting title",
+				Description: "Alerting description",
 			},
 		}
 

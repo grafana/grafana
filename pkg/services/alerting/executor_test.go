@@ -14,7 +14,10 @@ func TestAlertingExecutor(t *testing.T) {
 
 		Convey("single time serie", func() {
 			Convey("Show return ok since avg is above 2", func() {
-				rule := &AlertRule{CritLevel: 10, CritOperator: ">", Aggregator: "sum"}
+				rule := &AlertRule{
+					Critical:    Level{Level: 10, Operator: ">"},
+					Transformer: &AggregationTransformer{Method: "avg"},
+				}
 
 				timeSeries := []*tsdb.TimeSeries{
 					tsdb.NewTimeSeries("test1", [][2]float64{{2, 0}}),
@@ -25,7 +28,10 @@ func TestAlertingExecutor(t *testing.T) {
 			})
 
 			Convey("Show return critical since below 2", func() {
-				rule := &AlertRule{CritLevel: 10, CritOperator: "<", Aggregator: "sum"}
+				rule := &AlertRule{
+					Critical:    Level{Level: 10, Operator: "<"},
+					Transformer: &AggregationTransformer{Method: "avg"},
+				}
 
 				timeSeries := []*tsdb.TimeSeries{
 					tsdb.NewTimeSeries("test1", [][2]float64{{2, 0}}),
@@ -36,7 +42,10 @@ func TestAlertingExecutor(t *testing.T) {
 			})
 
 			Convey("Show return critical since sum is above 10", func() {
-				rule := &AlertRule{CritLevel: 10, CritOperator: ">", Aggregator: "sum"}
+				rule := &AlertRule{
+					Critical:    Level{Level: 10, Operator: ">"},
+					Transformer: &AggregationTransformer{Method: "sum"},
+				}
 
 				timeSeries := []*tsdb.TimeSeries{
 					tsdb.NewTimeSeries("test1", [][2]float64{{9, 0}, {9, 0}}),
@@ -47,7 +56,10 @@ func TestAlertingExecutor(t *testing.T) {
 			})
 
 			Convey("Show return ok since avg is below 10", func() {
-				rule := &AlertRule{CritLevel: 10, CritOperator: ">", Aggregator: "avg"}
+				rule := &AlertRule{
+					Critical:    Level{Level: 10, Operator: ">"},
+					Transformer: &AggregationTransformer{Method: "avg"},
+				}
 
 				timeSeries := []*tsdb.TimeSeries{
 					tsdb.NewTimeSeries("test1", [][2]float64{{9, 0}, {9, 0}}),
@@ -58,7 +70,10 @@ func TestAlertingExecutor(t *testing.T) {
 			})
 
 			Convey("Show return ok since min is below 10", func() {
-				rule := &AlertRule{CritLevel: 10, CritOperator: ">", Aggregator: "min"}
+				rule := &AlertRule{
+					Critical:    Level{Level: 10, Operator: ">"},
+					Transformer: &AggregationTransformer{Method: "avg"},
+				}
 
 				timeSeries := []*tsdb.TimeSeries{
 					tsdb.NewTimeSeries("test1", [][2]float64{{11, 0}, {9, 0}}),
@@ -69,7 +84,10 @@ func TestAlertingExecutor(t *testing.T) {
 			})
 
 			Convey("Show return ok since max is above 10", func() {
-				rule := &AlertRule{CritLevel: 10, CritOperator: ">", Aggregator: "max"}
+				rule := &AlertRule{
+					Critical:    Level{Level: 10, Operator: ">"},
+					Transformer: &AggregationTransformer{Method: "max"},
+				}
 
 				timeSeries := []*tsdb.TimeSeries{
 					tsdb.NewTimeSeries("test1", [][2]float64{{1, 0}, {11, 0}}),
@@ -78,11 +96,15 @@ func TestAlertingExecutor(t *testing.T) {
 				result := executor.evaluateRule(rule, timeSeries)
 				So(result.State, ShouldEqual, alertstates.Critical)
 			})
+
 		})
 
 		Convey("muliple time series", func() {
 			Convey("both are ok", func() {
-				rule := &AlertRule{CritLevel: 10, CritOperator: ">", Aggregator: "sum"}
+				rule := &AlertRule{
+					Critical:    Level{Level: 10, Operator: ">"},
+					Transformer: &AggregationTransformer{Method: "avg"},
+				}
 
 				timeSeries := []*tsdb.TimeSeries{
 					tsdb.NewTimeSeries("test1", [][2]float64{{2, 0}}),
@@ -94,7 +116,10 @@ func TestAlertingExecutor(t *testing.T) {
 			})
 
 			Convey("first serie is good, second is critical", func() {
-				rule := &AlertRule{CritLevel: 10, CritOperator: ">", Aggregator: "sum"}
+				rule := &AlertRule{
+					Critical:    Level{Level: 10, Operator: ">"},
+					Transformer: &AggregationTransformer{Method: "avg"},
+				}
 
 				timeSeries := []*tsdb.TimeSeries{
 					tsdb.NewTimeSeries("test1", [][2]float64{{2, 0}}),

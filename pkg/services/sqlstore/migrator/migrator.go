@@ -107,7 +107,7 @@ func (mg *Migrator) Start() error {
 }
 
 func (mg *Migrator) exec(m Migration) error {
-	log.Info("Executing migration", "id", m.Id())
+	mg.Logger.Info("Executing migration", "id", m.Id())
 
 	err := mg.inTransaction(func(sess *xorm.Session) error {
 

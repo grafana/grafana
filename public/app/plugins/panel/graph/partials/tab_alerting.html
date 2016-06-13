@@ -1,63 +1,99 @@
-<div class="editor-row">
-  <div class="gf-form-group section" >
-    <h5 class="section-heading">Query</h5>
-    <div class="gf-form" style="margin-bottom: 2rem">
-      <span class="gf-form-label width-9">Query to watch</span>
-      <div class="gf-form-select-wrapper max-width-12">
-        <select class="gf-form-input"
-          ng-model="ctrl.panel.alerting.queryRef"
-          ng-options="target.refId as target.refId for target in alertTab.metricTargets"></select>
+
+<div ng-if="ctrl.panel.alert">
+  <div class="editor-row">
+    <div class="gf-form-group section" >
+      <h5 class="section-heading">Alert Query</h5>
+      <div class="gf-form-inline">
+        <div class="gf-form">
+          <query-part-editor
+             class="gf-form-label query-part"
+             part="ctrl.query"
+             part-updated="ctrl.queryUpdated()">
+          </query-part-editor>
+        </div>
+        <div class="gf-form">
+          <span class="gf-form-label">Transform using</span>
+          <div class="gf-form-select-wrapper">
+            <select   class="gf-form-input"
+                      ng-model="ctrl.alert.transform.type"
+                      ng-options="f.type as f.text for f in ctrl.transforms"
+                      ng-change="ctrl.transformChanged()"
+                      >
+            </select>
+          </div>
+        </div>
+        <div class="gf-form" ng-if="ctrl.transformDef.type === 'aggregation'">
+          <span class="gf-form-label">Method</span>
+          <div class="gf-form-select-wrapper">
+            <select   class="gf-form-input"
+                      ng-model="ctrl.alert.transform.method"
+                      ng-options="f for f in ctrl.aggregators">
+            </select>
+          </div>
+        </div>
+        <div class="gf-form" ng-if="ctrl.transformDef.type === 'forecast'">
+          <span class="gf-form-label">Timespan</span>
+          <input class="gf-form-input max-width-5" type="text" ng-model="ctrl.alert.transform.timespan" ng-change="ctrl.ruleUpdated()"></input>
+        </div>
       </div>
     </div>
 
-    <h5 class="section-heading">Thresholds</h5>
-    <div class="gf-form">
-      <span class="gf-form-label width-9">
-        <i class="icon-gf icon-gf-warn alert-icon-warn"></i>
-        Warn level
-      </span>
-      <div class="gf-form-select-wrapper max-width-10">
-				<select class="gf-form-input" ng-model="ctrl.panel.alerting.warnOperator" ng-options="oper as oper for oper in alertTab.operators"></select>
+    <div class="gf-form-group section">
+      <h5 class="section-heading">Levels</h5>
+      <div class="gf-form-inline">
+        <div class="gf-form">
+          <span class="gf-form-label">
+            <i class="icon-gf icon-gf-warn alert-icon-warn"></i>
+            Warn if
+          </span>
+          <metric-segment-model property="ctrl.alert.warn.op" options="ctrl.levelOpList" custom="false" css-class="query-segment-operator"></metric-segment-model>
+          <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.warn.level" ng-change="ctrl.levelsUpdated()"></input>
+        </div>
+        <div class="gf-form">
+          <span class="gf-form-label">
+            <i class="icon-gf icon-gf-warn alert-icon-critical"></i>
+            Critcal if
+          </span>
+          <metric-segment-model property="ctrl.alert.critical.op" options="ctrl.levelOpList" custom="false" css-class="query-segment-operator"></metric-segment-model>
+          <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.critical.level" ng-change="ctrl.levelsUpdated()"></input>
+        </div>
       </div>
-      <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.panel.alerting.warnLevel" ng-change="alertTab.thresholdsUpdated()"></input>
     </div>
-    <div class="gf-form">
-      <span class="gf-form-label width-9">
-        <i class="icon-gf icon-gf-critical alert-icon-critical"></i>
-        Critical level
-      </span>
-      <div class="gf-form-select-wrapper max-width-10">
-        <select class="gf-form-input" ng-model="ctrl.panel.alerting.critOperator" ng-options="oper as oper for oper in alertTab.operators"></select>
+  </div>
+
+  <div class="editor-row">
+    <div class="gf-form-group section">
+      <h5 class="section-heading">Execution</h5>
+      <div class="gf-form-inline">
+        <div class="gf-form">
+          <span class="gf-form-label">Scheduler</span>
+          <div class="gf-form-select-wrapper">
+            <select   class="gf-form-input"
+                      ng-model="ctrl.alert.scheduler"
+                      ng-options="f.value as f.text for f in ctrl.schedulers">
+            </select>
+          </div>
+        </div>
+        <div class="gf-form">
+          <span class="gf-form-label">Evaluate every</span>
+          <input class="gf-form-input max-width-7" type="text" ng-model="ctrl.alert.frequency"></input>
+        </div>
       </div>
-      <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.panel.alerting.critLevel" ng-change="alertTab.thresholdsUpdated()"></input>
+    </div>
+    <div class="gf-form-group section">
+      <h5 class="section-heading">Notifications</h5>
+      <div class="gf-form-inline">
+        <div class="gf-form">
+          <span class="gf-form-label">Groups</span>
+          <bootstrap-tagsinput ng-model="ctrl.alert.notify" tagclass="label label-tag" placeholder="add tags">
+          </bootstrap-tagsinput>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="gf-form-group section">
-    <h5 class="section-heading">Aggregation settings</h5>
-    <div class="gf-form">
-      <span class="gf-form-label width-12">Aggregation method</span>
-      <div class="gf-form-select-wrapper max-width-10">
-        <select class="gf-form-input"
-          ng-model="ctrl.panel.alerting.aggregator"
-          ng-options="oper as oper for oper in alertTab.aggregators"></select>
-      </div>
-    </div>
-
-    <div class="gf-form">
-      <span class="gf-form-label width-12">Query range  (seconds)</span>
-      <input class="gf-form-input max-width-10" type="number"
-        ng-model="ctrl.panel.alerting.queryRange" placeholder="3600"></input>
-    </div>
-
-    <div class="gf-form">
-      <span class="gf-form-label width-12">Frequency (seconds)</span>
-      <input class="gf-form-input max-width-10" type="number"
-        ng-model="ctrl.panel.alerting.frequency" placeholder="60"></input>
-    </div>
-  </div>
-  <div class="gf-form-group section">
-    <h5 class="section-heading">Alert info</h5>
+    <h5 class="section-heading">Information</h5>
     <div class="gf-form">
       <span class="gf-form-label width-10">Alert name</span>
       <input type="text" class="gf-form-input width-22" ng-model="ctrl.panel.alerting.name">
@@ -72,8 +108,13 @@
     </div>
   </div>
 </div>
+
 <div class="editor-row">
   <div class="gf-form-button-row">
-    <button class="btn btn-warning" ng-click="alertTab.markAsDeleted()">Delete Alert</button>
+    <button class="btn btn-danger" ng-click="ctrl.delete()" ng-show="ctrl.panel.alert">Delete</button>
+    <button class="btn btn-inverse" ng-click="ctrl.enable()" ng-hide="ctrl.panel.alert">
+      <i class="icon-gf icon-gf-alert"></i>
+      Add Alert
+    </button>
   </div>
 </div>

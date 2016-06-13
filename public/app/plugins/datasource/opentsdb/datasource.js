@@ -403,10 +403,7 @@ function (angular, _, dateMath) {
         } else {
           return _.findIndex(options.targets, function(target) {
             if (target.filters && target.filters.length > 0) {
-              return target.metric === metricData.metric &&
-              _.all(target.filters, function(filter) {
-                return filter.tagk === interpolatedTagValue === "*";
-              });
+              return target.metric === metricData.metric;
             } else {
               return target.metric === metricData.metric &&
               _.all(target.tags, function(tagV, tagK) {

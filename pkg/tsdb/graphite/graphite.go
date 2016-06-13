@@ -5,9 +5,9 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -31,7 +31,7 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	result := &tsdb.BatchResult{}
 
 	params := url.Values{
-		"from":          []string{context.TimeRange.From},
+		"from":          []string{formatTimeRange(context.TimeRange.From)},
 		"until":         []string{context.TimeRange.To},
 		"format":        []string{"json"},
 		"maxDataPoints": []string{"500"},
@@ -39,7 +39,7 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 
 	for _, query := range queries {
 		params["target"] = []string{
-			getTargetFromQuery(query.Query),
+			query.Query,
 		}
 	}
 
@@ -60,7 +60,7 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	var data []TargetResponseDTO
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		glog.Info("Failed to unmarshal graphite response", "error", err)
+		glog.Info("Failed to unmarshal graphite response", "error", err, "body", string(body))
 		result.Error = err
 		return result
 	}
@@ -78,7 +78,6 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	return result
 }
 
-func getTargetFromQuery(query string) string {
-	json, _ := simplejson.NewJson([]byte(query))
-	return json.Get("target").MustString()
+func formatTimeRange(input string) string {
+	return strings.Replace(strings.Replace(input, "m", "min", -1), "M", "mon", -1)
 }

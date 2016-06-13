@@ -12,6 +12,7 @@ import (
 
 	"gopkg.in/ini.v1"
 
+	"github.com/go-stack/stack"
 	"github.com/inconshreveable/log15"
 	"github.com/inconshreveable/log15/term"
 )
@@ -22,6 +23,7 @@ var loggersToClose []DisposableHandler
 func init() {
 	loggersToClose = make([]DisposableHandler, 0)
 	Root = log15.Root()
+	Root.SetHandler(log15.DiscardHandler())
 }
 
 func New(logger string, ctx ...interface{}) Logger {
@@ -226,4 +228,10 @@ func LogFilterHandler(maxLevel log15.Lvl, filters map[string]log15.Lvl, h log15.
 
 		return r.Lvl <= maxLevel
 	}, h)
+}
+
+func Stack(skip int) string {
+	call := stack.Caller(skip)
+	s := stack.Trace().TrimBelow(call).TrimRuntime()
+	return s.String()
 }

@@ -7,35 +7,29 @@ import (
 func addAlertMigrations(mg *Migrator) {
 
 	alertV1 := Table{
-		Name: "alert_rule",
+		Name: "alert",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "dashboard_id", Type: DB_BigInt, Nullable: false},
-			{Name: "datasource_id", Type: DB_BigInt, Nullable: false},
 			{Name: "panel_id", Type: DB_BigInt, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
-			{Name: "query", Type: DB_Text, Nullable: false},
-			{Name: "query_ref_id", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "warn_level", Type: DB_Float, Nullable: false},
-			{Name: "warn_operator", Type: DB_NVarchar, Length: 10, Nullable: false},
-			{Name: "crit_level", Type: DB_Float, Nullable: false},
-			{Name: "crit_operator", Type: DB_NVarchar, Length: 10, Nullable: false},
-			{Name: "frequency", Type: DB_BigInt, Nullable: false},
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "description", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "query_range", Type: DB_Int, Nullable: false},
-			{Name: "aggregator", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "state", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "expression", Type: DB_Text, Nullable: false},
+			{Name: "scheduler", Type: DB_BigInt, Nullable: false},
+			{Name: "frequency", Type: DB_BigInt, Nullable: false},
+			{Name: "enabled", Type: DB_Bool, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
 	}
 
 	// create table
-	mg.AddMigration("create alert_rule table v2", NewAddTableMigration(alertV1))
+	mg.AddMigration("create alert table v1", NewAddTableMigration(alertV1))
 
 	alert_changes := Table{
-		Name: "alert_rule_change",
+		Name: "alert_change",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "alert_id", Type: DB_BigInt, Nullable: false},
@@ -45,7 +39,7 @@ func addAlertMigrations(mg *Migrator) {
 		},
 	}
 
-	mg.AddMigration("create alert_rules_updates table v1", NewAddTableMigration(alert_changes))
+	mg.AddMigration("create alert_change table v1", NewAddTableMigration(alert_changes))
 
 	alert_state_log := Table{
 		Name: "alert_state",

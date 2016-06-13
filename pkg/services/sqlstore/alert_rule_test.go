@@ -3,34 +3,25 @@ package sqlstore
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestAlertingDataAccess(t *testing.T) {
-
 	Convey("Testing Alerting data access", t, func() {
 		InitTestDB(t)
 
 		testDash := insertTestDashboard("dashboard with alerts", 1, "alert")
 
-		items := []*m.AlertRule{
+		items := []*m.Alert{
 			{
-				PanelId:      1,
-				DashboardId:  testDash.Id,
-				OrgId:        testDash.OrgId,
-				Query:        "Query",
-				QueryRefId:   "A",
-				WarnLevel:    30,
-				CritLevel:    50,
-				WarnOperator: ">",
-				CritOperator: ">",
-				Frequency:    10,
-				Name:         "Alerting title",
-				Description:  "Alerting description",
-				QueryRange:   3600,
-				Aggregator:   "avg",
-				DatasourceId: 42,
+				PanelId:     1,
+				DashboardId: testDash.Id,
+				OrgId:       testDash.OrgId,
+				Name:        "Alerting title",
+				Description: "Alerting description",
+				Expression:  simplejson.New(),
 			},
 		}
 
@@ -58,25 +49,14 @@ func TestAlertingDataAccess(t *testing.T) {
 
 			alert := alertQuery.Result[0]
 			So(err2, ShouldBeNil)
-			So(alert.Frequency, ShouldEqual, 10)
-			So(alert.WarnLevel, ShouldEqual, 30)
-			So(alert.CritLevel, ShouldEqual, 50)
-			So(alert.WarnOperator, ShouldEqual, ">")
-			So(alert.CritOperator, ShouldEqual, ">")
-			So(alert.Query, ShouldEqual, "Query")
-			So(alert.QueryRefId, ShouldEqual, "A")
 			So(alert.Name, ShouldEqual, "Alerting title")
 			So(alert.Description, ShouldEqual, "Alerting description")
-			So(alert.QueryRange, ShouldEqual, 3600)
-			So(alert.Aggregator, ShouldEqual, "avg")
 			So(alert.State, ShouldEqual, "OK")
-			So(alert.DatasourceId, ShouldEqual, 42)
 		})
 
 		Convey("Alerts with same dashboard id and panel id should update", func() {
 			modifiedItems := items
-			modifiedItems[0].Query = "Updated Query"
-			modifiedItems[0].State = "ALERT"
+			modifiedItems[0].Name = "Name"
 
 			modifiedCmd := m.SaveAlertsCommand{
 				DashboardId: testDash.Id,
@@ -97,7 +77,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 				So(err2, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 1)
-				So(query.Result[0].Query, ShouldEqual, "Updated Query")
+				So(query.Result[0].Name, ShouldEqual, "Name")
 
 				Convey("Alert state should not be updated", func() {
 					So(query.Result[0].State, ShouldEqual, "OK")
@@ -116,24 +96,27 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("Multiple alerts per dashboard", func() {
-			multipleItems := []*m.AlertRule{
+			multipleItems := []*m.Alert{
 				{
 					DashboardId: testDash.Id,
 					PanelId:     1,
-					Query:       "1",
+					Name:        "1",
 					OrgId:       1,
+					Expression:  simplejson.New(),
 				},
 				{
 					DashboardId: testDash.Id,
 					PanelId:     2,
-					Query:       "2",
+					Name:        "2",
 					OrgId:       1,
+					Expression:  simplejson.New(),
 				},
 				{
 					DashboardId: testDash.Id,
 					PanelId:     3,
-					Query:       "3",
+					Name:        "3",
 					OrgId:       1,
+					Expression:  simplejson.New(),
 				},
 			}
 
@@ -178,21 +161,12 @@ func TestAlertingDataAccess(t *testing.T) {
 		})
 
 		Convey("When dashboard is removed", func() {
-			items := []*m.AlertRule{
+			items := []*m.Alert{
 				{
-					PanelId:      1,
-					DashboardId:  testDash.Id,
-					Query:        "Query",
-					QueryRefId:   "A",
-					WarnLevel:    30,
-					CritLevel:    50,
-					WarnOperator: ">",
-					CritOperator: ">",
-					Frequency:    10,
-					Name:         "Alerting title",
-					Description:  "Alerting description",
-					QueryRange:   3600,
-					Aggregator:   "avg",
+					PanelId:     1,
+					DashboardId: testDash.Id,
+					Name:        "Alerting title",
+					Description: "Alerting description",
 				},
 			}
 

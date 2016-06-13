@@ -2,10 +2,11 @@ package sqlstore
 
 import (
 	"fmt"
+	"time"
+
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	"time"
 )
 
 func init() {
@@ -19,7 +20,7 @@ func SetNewAlertState(cmd *m.UpdateAlertStateCommand) error {
 			return fmt.Errorf("new state is invalid")
 		}
 
-		alert := m.AlertRule{}
+		alert := m.Alert{}
 		has, err := sess.Id(cmd.AlertId).Get(&alert)
 		if !has {
 			return fmt.Errorf("Could not find alert")

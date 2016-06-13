@@ -17,22 +17,15 @@ type AlertResult struct {
 	AlertJob    *AlertJob
 }
 
-type AlertRule struct {
-	Id           int64
-	OrgId        int64
-	DatasourceId int64
-	DashboardId  int64
-	PanelId      int64
+type Level struct {
+	Operator string
+	Level    float64
+}
+
+type AlertQuery struct {
 	Query        string
-	QueryRefId   string
-	WarnLevel    float64
-	CritLevel    float64
-	WarnOperator string
-	CritOperator string
-	Frequency    int64
-	Name         string
-	Description  string
-	QueryRange   int
+	DatasourceId int64
 	Aggregator   string
-	State        string
+	From         string
+	To           string
 }

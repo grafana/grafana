@@ -1,78 +1,171 @@
-///<reference path="../../../headers/common.d.ts" />
+ ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
 import $ from 'jquery';
 import angular from 'angular';
 
+import {
+  QueryPartDef,
+  QueryPart,
+} from 'app/core/components/query_part/query_part';
+
+var alertQueryDef = new QueryPartDef({
+  type: 'query',
+  params: [
+    {name: "queryRefId", type: 'string', options: ['#A', '#B', '#C', '#D']},
+    {name: "from", type: "string", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']},
+    {name: "to", type: "string", options: ['now']},
+  ],
+  defaultParams: ['#A', '5m', 'now', 'avg']
+});
+
 export class AlertTabCtrl {
   panel: any;
   panelCtrl: any;
-  alerting: any;
   metricTargets = [{ refId: '- select query -' } ];
-  operators = ['>', '<', '<=', '>='];
-  aggregators = ['avg', 'sum', 'min', 'max', 'median'];
+  schedulers = [{text: 'Grafana', value: 1}, {text: 'External', value: 0}];
+  transforms = [
+    {
+      text: 'Aggregation',
+      type: 'aggregation',
+    },
+    {
+      text: 'Linear Forecast',
+      type: 'forecast',
+    },
+  ];
+  aggregators = ['avg', 'sum', 'min', 'max', 'last'];
+  alert: any;
+  query: any;
+  queryParams: any;
+  transformDef: any;
+  levelOpList = [
+    {text: '>', value: '>'},
+    {text: '<', value: '<'},
+    {text: '=', value: '='},
+  ];
 
   defaultValues = {
-    aggregator: 'avg',
-    frequency: 10,
-    queryRange: 3600,
-    warnOperator: '>',
-    critOperator: '>',
-    queryRef: '- select query -'
+    frequency: '60s',
+    notify: [],
+    enabled: false,
+    scheduler: 1,
+    warn: { op: '>', level: undefined },
+    critical: { op: '>', level: undefined },
+    query: {
+      refId: 'A',
+      from: '5m',
+      to: 'now',
+    },
+    transform: {
+      type: 'aggregation',
+      method: 'avg'
+    }
   };
 
   /** @ngInject */
   constructor($scope, private $timeout) {
-    $scope.alertTab = this; //HACK ATTACK!
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
+    $scope.ctrl = this;
 
-    _.defaults(this.panel.alerting, this.defaultValues);
+    this.metricTargets = this.panel.targets.map(val => val);
+    this.initAlertModel();
+
+    // set panel alert edit mode
+    $scope.$on("$destroy", () => {
+      this.panelCtrl.editingAlert = false;
+      this.panelCtrl.render();
+    });
+  }
+
+  initAlertModel() {
+    if (!this.panel.alert) {
+      return;
+    }
+
+    this.alert = this.panel.alert;
+
+    // set defaults
+    _.defaults(this.alert, this.defaultValues);
 
     var defaultName = (this.panelCtrl.dashboard.title + ' ' + this.panel.title + ' alert');
-    this.panel.alerting.name = this.panel.alerting.name || defaultName;
+    this.alert.name = this.alert.name || defaultName;
+    this.alert.description = this.alert.description || defaultName;
 
-    this.panel.targets.map(target => {
-      this.metricTargets.push(target);
-    });
-    this.panel.alerting.queryRef = this.panel.alerting.queryRef || this.metricTargets[0].refId;
+    // great temp working model
+    this.queryParams = {
+      params: [
+        this.alert.query.refId,
+        this.alert.query.from,
+        this.alert.query.to
+      ]
+    };
 
+    // init the query part components model
+    this.query = new QueryPart(this.queryParams, alertQueryDef);
     this.convertThresholdsToAlertThresholds();
+    this.transformDef = _.findWhere(this.transforms, {type: this.alert.transform.type});
+
+    this.panelCtrl.editingAlert = true;
+    this.panelCtrl.render();
+  }
+
+  queryUpdated() {
+    this.alert.query = {
+      refId: this.query.params[0],
+      from: this.query.params[1],
+      to: this.query.params[2],
+    };
+  }
+
+  transformChanged() {
+    // clear model
+    this.alert.transform = {type: this.alert.transform.type};
+    this.transformDef = _.findWhere(this.transforms, {type: this.alert.transform.type});
+
+    switch (this.alert.transform.type) {
+      case 'aggregation':  {
+        this.alert.transform.method = 'avg';
+        break;
+      }
+      case "forecast": {
+        this.alert.transform.timespan = '7d';
+        break;
+      }
+    }
   }
 
   convertThresholdsToAlertThresholds() {
-    if (this.panel.grid
-        && this.panel.grid.threshold1
-        && this.panel.alerting.warnLevel === undefined
-       ) {
-      this.panel.alerting.warnOperator = '>';
-      this.panel.alerting.warnLevel = this.panel.grid.threshold1;
-    }
-
-    if (this.panel.grid
-        && this.panel.grid.threshold2
-        && this.panel.alerting.critLevel === undefined
-       ) {
-      this.panel.alerting.critOperator = '>';
-      this.panel.alerting.critLevel = this.panel.grid.threshold2;
-    }
+    // if (this.panel.grid
+    //     && this.panel.grid.threshold1
+    //     && this.alert.warnLevel === undefined
+    //    ) {
+    //   this.alert.warning.op = '>';
+    //   this.alert.warning.level = this.panel.grid.threshold1;
+    // }
+    //
+    // if (this.panel.grid
+    //     && this.panel.grid.threshold2
+    //     && this.alert.critical.level === undefined
+    //    ) {
+    //   this.alert.critical.op = '>';
+    //   this.alert.critical.level = this.panel.grid.threshold2;
+    // }
   }
 
-  markAsDeleted() {
-    if (this.panel.alerting) {
-      this.panel.alerting = this.defaultValues;
-    }
+  delete() {
+    delete this.panel.alert;
+    this.panelCtrl.editingAlert = false;
+    this.panelCtrl.render();
   }
 
-  thresholdsUpdated() {
-    if (this.panel.alerting.warnLevel) {
-      this.panel.grid.threshold1 = parseInt(this.panel.alerting.warnLevel);
-    }
+  enable() {
+    this.panel.alert = {};
+    this.initAlertModel();
+  }
 
-    if (this.panel.alerting.critLevel) {
-      this.panel.grid.threshold2 = parseInt(this.panel.alerting.critLevel);
-    }
-
+  levelsUpdated() {
     this.panelCtrl.render();
   }
 }

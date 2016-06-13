@@ -2,9 +2,6 @@ package alerting
 
 import (
 	"fmt"
-	"strconv"
-
-	"math"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -14,7 +11,6 @@ import (
 )
 
 var (
-	resultLogFmt   = "Alerting: executor %s  %1.2f %s %1.2f : %v"
 	descriptionFmt = "Actual value: %1.2f for %s"
 )
 
@@ -26,63 +22,6 @@ func NewExecutor() *ExecutorImpl {
 	return &ExecutorImpl{
 		log: log.New("alerting.executor"),
 	}
-}
-
-type compareFn func(float64, float64) bool
-type aggregationFn func(*tsdb.TimeSeries) float64
-
-var operators = map[string]compareFn{
-	">":  func(num1, num2 float64) bool { return num1 > num2 },
-	">=": func(num1, num2 float64) bool { return num1 >= num2 },
-	"<":  func(num1, num2 float64) bool { return num1 < num2 },
-	"<=": func(num1, num2 float64) bool { return num1 <= num2 },
-	"":   func(num1, num2 float64) bool { return false },
-}
-var aggregator = map[string]aggregationFn{
-	"avg": func(series *tsdb.TimeSeries) float64 {
-		sum := float64(0)
-
-		for _, v := range series.Points {
-			sum += v[0]
-		}
-
-		return sum / float64(len(series.Points))
-	},
-	"sum": func(series *tsdb.TimeSeries) float64 {
-		sum := float64(0)
-
-		for _, v := range series.Points {
-			sum += v[0]
-		}
-
-		return sum
-	},
-	"min": func(series *tsdb.TimeSeries) float64 {
-		min := series.Points[0][0]
-
-		for _, v := range series.Points {
-			if v[0] < min {
-				min = v[0]
-			}
-		}
-
-		return min
-	},
-	"max": func(series *tsdb.TimeSeries) float64 {
-		max := series.Points[0][0]
-
-		for _, v := range series.Points {
-			if v[0] > max {
-				max = v[0]
-			}
-		}
-
-		return max
-	},
-	"mean": func(series *tsdb.TimeSeries) float64 {
-		midPosition := int64(math.Floor(float64(len(series.Points)) / float64(2)))
-		return series.Points[midPosition][0]
-	},
 }
 
 func (e *ExecutorImpl) Execute(job *AlertJob, resultQueue chan *AlertResult) {
@@ -102,12 +41,12 @@ func (e *ExecutorImpl) Execute(job *AlertJob, resultQueue chan *AlertResult) {
 
 func (e *ExecutorImpl) executeQuery(job *AlertJob) (tsdb.TimeSeriesSlice, error) {
 	getDsInfo := &m.GetDataSourceByIdQuery{
-		Id:    job.Rule.DatasourceId,
+		Id:    job.Rule.Query.DatasourceId,
 		OrgId: job.Rule.OrgId,
 	}
 
 	if err := bus.Dispatch(getDsInfo); err != nil {
-		return nil, fmt.Errorf("Could not find datasource for %d", job.Rule.DatasourceId)
+		return nil, fmt.Errorf("Could not find datasource")
 	}
 
 	req := e.GetRequestForAlertRule(job.Rule, getDsInfo.Result)
@@ -130,16 +69,16 @@ func (e *ExecutorImpl) executeQuery(job *AlertJob) (tsdb.TimeSeriesSlice, error)
 }
 
 func (e *ExecutorImpl) GetRequestForAlertRule(rule *AlertRule, datasource *m.DataSource) *tsdb.Request {
-
+	e.log.Debug("GetRequest", "query", rule.Query.Query, "from", rule.Query.From, "datasourceId", datasource.Id)
 	req := &tsdb.Request{
 		TimeRange: tsdb.TimeRange{
-			From: "-" + strconv.Itoa(rule.QueryRange) + "s",
-			To:   "now",
+			From: "-" + rule.Query.From,
+			To:   rule.Query.To,
 		},
 		Queries: []*tsdb.Query{
 			{
-				RefId: rule.QueryRefId,
-				Query: rule.Query,
+				RefId: "A",
+				Query: rule.Query.Query,
 				DataSource: &tsdb.DataSourceInfo{
 					Id:       datasource.Id,
 					Name:     datasource.Name,
@@ -157,33 +96,26 @@ func (e *ExecutorImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice
 	e.log.Debug("Evaluating Alerting Rule", "seriesCount", len(series), "ruleName", rule.Name)
 
 	for _, serie := range series {
-		log.Debug("Evaluating series", "series", serie.Name)
+		e.log.Debug("Evaluating series", "series", serie.Name)
+		transformedValue, _ := rule.Transformer.Transform(serie)
 
-		if aggregator[rule.Aggregator] == nil {
-			continue
-		}
-
-		var aggValue = aggregator[rule.Aggregator](serie)
-		var critOperartor = operators[rule.CritOperator]
-		var critResult = critOperartor(aggValue, rule.CritLevel)
-
-		log.Trace(resultLogFmt, "Crit", serie.Name, aggValue, rule.CritOperator, rule.CritLevel, critResult)
+		critResult := evalCondition(rule.Critical, transformedValue)
+		e.log.Debug("Alert execution Crit", "name", serie.Name, "transformedValue", transformedValue, "operator", rule.Critical.Operator, "level", rule.Critical.Level, "result", critResult)
 		if critResult {
 			return &AlertResult{
 				State:       alertstates.Critical,
-				ActualValue: aggValue,
-				Description: fmt.Sprintf(descriptionFmt, aggValue, serie.Name),
+				ActualValue: transformedValue,
+				Description: fmt.Sprintf(descriptionFmt, transformedValue, serie.Name),
 			}
 		}
 
-		var warnOperartor = operators[rule.CritOperator]
-		var warnResult = warnOperartor(aggValue, rule.CritLevel)
-		log.Trace(resultLogFmt, "Warn", serie.Name, aggValue, rule.WarnOperator, rule.WarnLevel, warnResult)
+		warnResult := evalCondition(rule.Warning, transformedValue)
+		e.log.Debug("Alert execution Warn", "name", serie.Name, "transformedValue", transformedValue, "operator", rule.Warning.Operator, "level", rule.Warning.Level, "result", warnResult)
 		if warnResult {
 			return &AlertResult{
 				State:       alertstates.Warn,
-				Description: fmt.Sprintf(descriptionFmt, aggValue, serie.Name),
-				ActualValue: aggValue,
+				Description: fmt.Sprintf(descriptionFmt, transformedValue, serie.Name),
+				ActualValue: transformedValue,
 			}
 		}
 	}
