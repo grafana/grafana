@@ -26,6 +26,8 @@ type AlertRule struct {
 	Transform       string
 	TransformParams simplejson.Json
 	Transformer     transformers.Transformer
+
+	NotificationGroups []int64
 }
 
 var (
