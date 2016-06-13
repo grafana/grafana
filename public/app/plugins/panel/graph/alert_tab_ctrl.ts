@@ -50,7 +50,7 @@ export class AlertTabCtrl {
     notify: [],
     enabled: false,
     scheduler: 1,
-    warning: { op: '>', level: undefined },
+    warn: { op: '>', level: undefined },
     critical: { op: '>', level: undefined },
     query: {
       refId: 'A',
@@ -70,12 +70,21 @@ export class AlertTabCtrl {
     $scope.ctrl = this;
 
     this.metricTargets = this.panel.targets.map(val => val);
-
     this.initAlertModel();
+
+    // set panel alert edit mode
+    $scope.$on("$destroy", () => {
+      this.panelCtrl.editingAlert = false;
+      this.panelCtrl.render();
+    });
   }
 
   initAlertModel() {
-    this.alert = this.panel.alert = this.panel.alert || {};
+    if (!this.panel.alert) {
+      return;
+    }
+
+    this.alert = this.panel.alert;
 
     // set defaults
     _.defaults(this.alert, this.defaultValues);
@@ -97,6 +106,9 @@ export class AlertTabCtrl {
     this.query = new QueryPart(this.queryParams, alertQueryDef);
     this.convertThresholdsToAlertThresholds();
     this.transformDef = _.findWhere(this.transforms, {type: this.alert.transform.type});
+
+    this.panelCtrl.editingAlert = true;
+    this.panelCtrl.render();
   }
 
   queryUpdated() {
@@ -125,36 +137,36 @@ export class AlertTabCtrl {
   }
 
   convertThresholdsToAlertThresholds() {
-    if (this.panel.grid
-        && this.panel.grid.threshold1
-        && this.alert.warnLevel === undefined
-       ) {
-      this.alert.warning.op = '>';
-      this.alert.warning.level = this.panel.grid.threshold1;
-    }
-
-    if (this.panel.grid
-        && this.panel.grid.threshold2
-        && this.alert.critical.level === undefined
-       ) {
-      this.alert.critical.op = '>';
-      this.alert.critical.level = this.panel.grid.threshold2;
-    }
+    // if (this.panel.grid
+    //     && this.panel.grid.threshold1
+    //     && this.alert.warnLevel === undefined
+    //    ) {
+    //   this.alert.warning.op = '>';
+    //   this.alert.warning.level = this.panel.grid.threshold1;
+    // }
+    //
+    // if (this.panel.grid
+    //     && this.panel.grid.threshold2
+    //     && this.alert.critical.level === undefined
+    //    ) {
+    //   this.alert.critical.op = '>';
+    //   this.alert.critical.level = this.panel.grid.threshold2;
+    // }
   }
 
   delete() {
-    this.alert = this.panel.alert = {};
-    this.alert.deleted = true;
-    this.initAlertModel();
+    delete this.panel.alert;
+    this.panelCtrl.editingAlert = false;
+    this.panelCtrl.render();
   }
 
   enable() {
-    delete this.alert.deleted;
-    this.alert.enabled = true;
+    this.panel.alert = {};
+    this.initAlertModel();
   }
 
-  disable() {
-    this.alert.enabled = false;
+  levelsUpdated() {
+    this.panelCtrl.render();
   }
 }
 

@@ -57,12 +57,9 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 
 		for _, panelObj := range row.Get("panels").MustArray() {
 			panel := simplejson.NewFromAny(panelObj)
-			jsonAlert := panel.Get("alert")
+			jsonAlert, hasAlert := panel.CheckGet("alert")
 
-			// check if marked for deletion
-			deleted := jsonAlert.Get("deleted").MustBool()
-			if deleted {
-				e.log.Info("Deleted alert rule found")
+			if !hasAlert {
 				continue
 			}
 

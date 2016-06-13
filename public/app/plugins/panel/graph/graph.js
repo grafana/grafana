@@ -5,6 +5,7 @@ define([
   'lodash',
   'app/core/utils/kbn',
   './graph_tooltip',
+  './alert_handle',
   'jquery.flot',
   'jquery.flot.selection',
   'jquery.flot.time',
@@ -14,12 +15,15 @@ define([
   'jquery.flot.crosshair',
   './jquery.flot.events',
 ],
-function (angular, $, moment, _, kbn, GraphTooltip) {
+function (angular, $, moment, _, kbn, GraphTooltip, AlertHandle) {
   'use strict';
 
   var module = angular.module('grafana.directives');
   var labelWidthCache = {};
   var panelWidthCache = {};
+
+  // systemjs export
+  var AlertHandleManager = AlertHandle.AlertHandleManager;
 
   module.directive('grafanaGraph', function($rootScope, timeSrv) {
     return {
@@ -34,6 +38,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         var legendSideLastValue = null;
         var rootScope = scope.$root;
         var panelWidth = 0;
+        var alertHandles;
 
         rootScope.onAppEvent('setCrosshair', function(event, info) {
           // do not need to to this if event is from this panel
@@ -161,6 +166,10 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
             rightLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[1].label, rightLabel) / 2) + 'px';
           }
+
+          if (alertHandles) {
+            alertHandles.draw(plot);
+          }
         }
 
         function processOffsetHook(plot, gridMargin) {
@@ -179,6 +188,18 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
           if (shouldAbortRender()) {
             return;
+          }
+
+          // give space to alert editing
+          if (ctrl.editingAlert) {
+            if (!alertHandles) {
+              elem.css('margin-right', '220px');
+              alertHandles = new AlertHandleManager(ctrl);
+            }
+          } else if (alertHandles) {
+            elem.css('margin-right', '0');
+            alertHandles.cleanUp();
+            alertHandles = null;
           }
 
           var stack = panel.stack ? true : null;
@@ -259,6 +280,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
           function callPlot(incrementRenderCounter) {
             try {
+              console.log('rendering');
               $.plot(elem, sortedSeries, options);
             } catch (e) {
               console.log('flotcharts error', e);
@@ -311,6 +333,50 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         }
 
         function addGridThresholds(options, panel) {
+          if (panel.alert) {
+            var crit = panel.alert.critical;
+            var warn = panel.alert.warn;
+            var critEdge = Infinity;
+            var warnEdge = crit.level;
+
+            if (_.isNumber(crit.level)) {
+              if (crit.op === '<') {
+                critEdge = -Infinity;
+              }
+
+              // fill
+              options.grid.markings.push({
+                yaxis: {from: crit.level, to: critEdge},
+                color: 'rgba(234, 112, 112, 0.10)',
+              });
+
+              // line
+              options.grid.markings.push({
+                yaxis: {from: crit.level, to: crit.level},
+                color: '#ed2e18'
+              });
+            }
+
+            if (_.isNumber(warn.level)) {
+              // if (warn.op === '<') {
+              // }
+
+              // fill
+              options.grid.markings.push({
+                yaxis: {from: warn.level, to: warnEdge},
+                color: 'rgba(216, 200, 27, 0.10)',
+              });
+
+              // line
+              options.grid.markings.push({
+                yaxis: {from: warn.level, to: warn.level},
+                color: '#F79520'
+              });
+            }
+
+            return;
+          }
+
           if (_.isNumber(panel.grid.threshold1)) {
             var limit1 = panel.grid.thresholdLine ? panel.grid.threshold1 : (panel.grid.threshold2 || null);
             options.grid.markings.push({

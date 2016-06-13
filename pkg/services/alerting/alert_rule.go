@@ -26,6 +26,10 @@ type AlertRule struct {
 	Transformer     transformer.Transformer
 }
 
+func getTimeDurationStringToSeconds(str string) int64 {
+	return 60
+}
+
 func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 	model := &AlertRule{}
 	model.Id = ruleDef.Id
@@ -40,13 +44,13 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 		Level:    critical.Get("level").MustFloat64(),
 	}
 
-	warning := ruleDef.Expression.Get("warning")
+	warning := ruleDef.Expression.Get("warn")
 	model.Warning = Level{
 		Operator: warning.Get("op").MustString(),
 		Level:    warning.Get("level").MustFloat64(),
 	}
 
-	model.Frequency = ruleDef.Expression.Get("frequency").MustInt64()
+	model.Frequency = getTimeDurationStringToSeconds(ruleDef.Expression.Get("frequency").MustString())
 	model.Transform = ruleDef.Expression.Get("transform").Get("type").MustString()
 	model.TransformParams = *ruleDef.Expression.Get("transform")
 

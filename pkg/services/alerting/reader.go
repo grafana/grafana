@@ -49,7 +49,7 @@ func (arr *AlertRuleReader) Fetch() []*AlertRule {
 
 	res := make([]*AlertRule, len(cmd.Result))
 	for i, ruleDef := range cmd.Result {
-		model, _ := ConvetAlertModelToAlertRule(ruleDef)
+		model, _ := NewAlertRuleFromDBModel(ruleDef)
 		res[i] = model
 	}
 
