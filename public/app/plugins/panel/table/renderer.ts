@@ -36,6 +36,12 @@ export class TableRenderer {
     return v;
   }
 
+  escapeCellFormatter(formatter) {
+    return v => {
+      return _.escape(formatter(v));
+    };
+  }
+
   createColumnFormater(style, column) {
     if (!style) {
       return this.defaultCellFormater;
@@ -85,18 +91,23 @@ export class TableRenderer {
       let column = this.table.columns[colIndex];
       var regex = kbn.stringToJsRegex(style.pattern);
       if (column.text.match(regex)) {
-        this.formaters[colIndex] = this.createColumnFormater(style, column);
+        var formatter = this.createColumnFormater(style, column);
+        if (!style || style.escapeHtml === undefined || style.escapeHtml) {
+          this.formaters[colIndex] = this.escapeCellFormatter(formatter);
+        } else {
+          this.formaters[colIndex] = formatter;
+        }
+
         return this.formaters[colIndex](value);
       }
     }
 
-    this.formaters[colIndex] = this.defaultCellFormater;
+    this.formaters[colIndex] = this.escapeCellFormatter(this.defaultCellFormater);
     return this.formaters[colIndex](value);
   }
 
   renderCell(columnIndex, value, addWidthHack = false) {
     value = this.formatColumnValue(columnIndex, value);
-    value = _.escape(value);
     var style = '';
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + ';color: white"';
