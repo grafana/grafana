@@ -30,8 +30,26 @@ func New(logger string, ctx ...interface{}) Logger {
 	return Root.New(params...)
 }
 
+func IsTrace() bool {
+	for _, logger := range loggers {
+		if logger.level <= TRACE {
+			return true
+		}
+	}
+	return false
+}
+
 func Trace(format string, v ...interface{}) {
 	Root.Debug(fmt.Sprintf(format, v))
+}
+
+func IsDebug() bool {
+	for _, logger := range loggers {
+		if logger.level <= DEBUG {
+			return true
+		}
+	}
+	return false
 }
 
 func Debug(format string, v ...interface{}) {
@@ -42,12 +60,30 @@ func Debug2(message string, v ...interface{}) {
 	Root.Debug(message, v...)
 }
 
+func IsInfo() bool {
+	for _, logger := range loggers {
+		if logger.level <= INFO {
+			return true
+		}
+	}
+	return false
+}
+
 func Info(format string, v ...interface{}) {
 	Root.Info(fmt.Sprintf(format, v))
 }
 
 func Info2(message string, v ...interface{}) {
 	Root.Info(message, v...)
+}
+
+func IsWarn() bool {
+	for _, logger := range loggers {
+		if logger.level <= WARN {
+			return true
+		}
+	}
+	return false
 }
 
 func Warn(format string, v ...interface{}) {
@@ -58,6 +94,15 @@ func Warn2(message string, v ...interface{}) {
 	Root.Warn(message, v...)
 }
 
+func IsError() bool {
+	for _, logger := range loggers {
+		if logger.level <= ERROR {
+			return true
+		}
+	}
+	return false
+}
+
 func Error(skip int, format string, v ...interface{}) {
 	Root.Error(fmt.Sprintf(format, v))
 }
@@ -66,8 +111,26 @@ func Error2(message string, v ...interface{}) {
 	Root.Error(message, v...)
 }
 
+func IsCritical() bool {
+	for _, logger := range loggers {
+		if logger.level <= CRITICAL {
+			return true
+		}
+	}
+	return false
+}
+
 func Critical(skip int, format string, v ...interface{}) {
 	Root.Crit(fmt.Sprintf(format, v))
+}
+
+func IsFatal() bool {
+	for _, logger := range loggers {
+		if logger.level <= FATAL {
+			return true
+		}
+	}
+	return false
 }
 
 func Fatal(skip int, format string, v ...interface{}) {
