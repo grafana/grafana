@@ -333,13 +333,11 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
         }
 
         function addGridThresholds(options, panel) {
-          var thresholds = panel.thresholds;
-
-          // use alert thresholds if there are any
-          if (panel.alert) {
-            thresholds = panel.alert.thresholds;
+          if (!panel.alert || !panel.alert.thresholds) {
+            return;
           }
 
+          var thresholds = panel.alert.thresholds;
           var crit = thresholds.crit;
           var warn = thresholds.warn;
           var critEdge = Infinity;

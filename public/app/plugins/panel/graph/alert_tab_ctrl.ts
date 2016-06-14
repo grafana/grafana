@@ -62,28 +62,11 @@ export class AlertTabCtrl {
     });
   }
 
-  getThresholdWithDefaults(thresholds, type, copyFrom) {
+  getThresholdWithDefaults(thresholds, type) {
     var threshold = thresholds[type] || {};
-    var defaultValue = (copyFrom[type] || {}).value || undefined;
-
     threshold.op = threshold.op || '>';
-    threshold.value = threshold.value || defaultValue;
+    threshold.value = threshold.value || undefined;
     return threshold;
-  }
-
-  initThresholdsOnlyMode() {
-    if (!this.panel.thresholds) {
-      return;
-    }
-
-    this.thresholds = this.panel.thresholds;
-
-    // set threshold defaults
-    this.thresholds.warn = this.getThresholdWithDefaults(this.thresholds, 'warn', {});
-    this.thresholds.crit = this.getThresholdWithDefaults(this.thresholds, 'crit', {});
-
-    this.panelCtrl.editingAlert = true;
-    this.panelCtrl.render();
   }
 
   initModel() {
@@ -91,8 +74,8 @@ export class AlertTabCtrl {
 
     // set threshold defaults
     alert.thresholds = alert.thresholds || {};
-    alert.thresholds.warn = this.getThresholdWithDefaults(alert.thresholds, 'warn', this.panel.thresholds);
-    alert.thresholds.crit = this.getThresholdWithDefaults(alert.thresholds, 'crit', this.panel.thresholds);
+    alert.thresholds.warn = this.getThresholdWithDefaults(alert.thresholds, 'warn');
+    alert.thresholds.crit = this.getThresholdWithDefaults(alert.thresholds, 'crit');
 
     alert.frequency = alert.frequency || '60s';
     alert.handler = alert.handler || 1;
@@ -150,21 +133,18 @@ export class AlertTabCtrl {
   }
 
   delete() {
-    delete this.alert;
-    delete this.panel.alert;
-    // clear thresholds
-    if (this.panel.thresholds) {
-      this.panel.thresholds = {};
-    }
+    // keep threshold object (instance used by graph handles)
+    var thresholds = this.alert.thresholds;
+    thresholds.warn.value = undefined;
+    thresholds.crit.value = undefined;
+
+    // reset model but keep thresholds instance
+    this.alert = this.panel.alert = {thresholds: thresholds};
     this.initModel();
   }
 
   enable() {
-    if (this.thresholds) {
-      delete this.thresholds;
-      this.panelCtrl.
-    }
-    this.panel.alert = {};
+    this.alert.enabled = true;
     this.initModel();
   }
 

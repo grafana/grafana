@@ -1,5 +1,5 @@
 
-<div ng-if="ctrl.thresholds">
+<div ng-if="!ctrl.alert.enabled">
   <div class="gf-form-group">
     <h5 class="section-heading">Visual Thresholds</h5>
     <div class="gf-form-inline">
@@ -8,22 +8,22 @@
           <i class="icon-gf icon-gf-warn alert-icon-critical"></i>
           Critcal if
         </span>
-        <metric-segment-model property="ctrl.thresholds.crit.op" options="ctrl.operatorList" custom="false" css-class="query-segment-operator" on-change="ctrl.thresholdsUpdated()"></metric-segment-model>
-        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.thresholds.crit.value" ng-change="ctrl.thresholdsUpdated()"></input>
+        <metric-segment-model property="ctrl.alert.thresholds.crit.op" options="ctrl.operatorList" custom="false" css-class="query-segment-operator" on-change="ctrl.thresholdsUpdated()"></metric-segment-model>
+        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.thresholds.crit.value" ng-change="ctrl.thresholdsUpdated()"></input>
       </div>
       <div class="gf-form">
         <span class="gf-form-label">
           <i class="icon-gf icon-gf-warn alert-icon-warn"></i>
           Warn if
         </span>
-        <metric-segment-model property="ctrl.thresholds.warn.op" options="ctrl.operatorList" custom="false" css-class="query-segment-operator" on-change="ctrl.thresholdsUpdated()"></metric-segment-model>
-        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.thresholds.warn.value" ng-change="ctrl.thresholdsUpdated()"></input>
+        <metric-segment-model property="ctrl.alert.thresholds.warn.op" options="ctrl.operatorList" custom="false" css-class="query-segment-operator" on-change="ctrl.thresholdsUpdated()"></metric-segment-model>
+        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.thresholds.warn.value" ng-change="ctrl.thresholdsUpdated()"></input>
       </div>
     </div>
   </div>
 </div>
 
-<div ng-if="ctrl.alert">
+<div ng-if="ctrl.alert.enabled">
   <div class="editor-row">
     <div class="gf-form-group section" >
       <h5 class="section-heading">Alert Query</h5>
@@ -135,8 +135,8 @@
 
 <div class="editor-row">
   <div class="gf-form-button-row">
-    <button class="btn btn-danger" ng-click="ctrl.delete()" ng-show="ctrl.alert">Delete</button>
-    <button class="btn btn-inverse" ng-click="ctrl.enable()" ng-hide="ctrl.alert">
+    <button class="btn btn-danger" ng-click="ctrl.delete()" ng-show="ctrl.alert.enabled">Delete</button>
+    <button class="btn btn-inverse" ng-click="ctrl.enable()" ng-hide="ctrl.alert.enabled">
       <i class="icon-gf icon-gf-alert"></i>
       Create Alert
     </button>

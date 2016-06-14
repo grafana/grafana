@@ -11,7 +11,7 @@ export class ThresholdControls {
   thresholds: any;
 
   constructor(private panelCtrl) {
-    this.thresholds = this.panelCtrl.thresholds;
+    this.thresholds = this.panelCtrl.panel.alert.thresholds;
   }
 
   getHandleInnerHtml(type, op, value) {
