@@ -4,14 +4,14 @@ import 'jquery.flot';
 import $ from 'jquery';
 import _ from 'lodash';
 
-export class AlertHandleManager {
+export class ThresholdControls {
   plot: any;
   placeholder: any;
   height: any;
-  alert: any;
+  thresholds: any;
 
   constructor(private panelCtrl) {
-    this.alert = panelCtrl.panel.alert;
+    this.thresholds = this.panelCtrl.thresholds;
   }
 
   getHandleInnerHtml(type, op, value) {
@@ -36,7 +36,7 @@ export class AlertHandleManager {
     `;
   }
 
-  setupDragging(handleElem, levelModel) {
+  setupDragging(handleElem, threshold) {
     var isMoving = false;
     var lastY = null;
     var posTop;
@@ -57,11 +57,11 @@ export class AlertHandleManager {
     function stopped() {
       isMoving = false;
       // calculate graph level
-      var graphLevel = plot.c2p({left: 0, top: posTop}).y;
-      graphLevel = parseInt(graphLevel.toFixed(0));
-      levelModel.level = graphLevel;
+      var graphValue = plot.c2p({left: 0, top: posTop}).y;
+      graphValue = parseInt(graphValue.toFixed(0));
+      threshold.value = graphValue;
 
-      var levelCanvasPos = plot.p2c({x: 0, y: graphLevel});
+      var valueCanvasPos = plot.p2c({x: 0, y: graphValue});
 
       handleElem.off("mousemove", dragging);
       handleElem.off("mouseup", dragging);
@@ -90,28 +90,28 @@ export class AlertHandleManager {
 
   renderHandle(type, model, defaultHandleTopPos) {
     var handleElem = this.placeholder.find(`.alert-handle-wrapper--${type}`);
-    var level = model.level;
-    var levelStr = level;
+    var value = model.value;
+    var valueStr = value;
     var handleTopPos = 0;
 
     // handle no value
-    if (!_.isNumber(level)) {
-      levelStr = '';
+    if (!_.isNumber(value)) {
+      valueStr = '';
       handleTopPos = defaultHandleTopPos;
     } else {
-      var levelCanvasPos = this.plot.p2c({x: 0, y: level});
-      handleTopPos = Math.min(Math.max(levelCanvasPos.top, 0), this.height) - 6;
+      var valueCanvasPos = this.plot.p2c({x: 0, y: value});
+      handleTopPos = Math.min(Math.max(valueCanvasPos.top, 0), this.height) - 6;
     }
 
     if (handleElem.length === 0) {
-      handleElem = $(this.getFullHandleHtml(type, model.op, levelStr));
+      handleElem = $(this.getFullHandleHtml(type, model.op, valueStr));
       this.placeholder.append(handleElem);
       this.setupDragging(handleElem, model);
     } else {
-      handleElem.html(this.getHandleInnerHtml(type, model.op, levelStr));
+      handleElem.html(this.getHandleInnerHtml(type, model.op, valueStr));
     }
 
-    handleElem.toggleClass('alert-handle-wrapper--no-value', levelStr === '');
+    handleElem.toggleClass('alert-handle-wrapper--no-value', valueStr === '');
     handleElem.css({top: handleTopPos});
   }
 
@@ -120,9 +120,10 @@ export class AlertHandleManager {
     this.placeholder = plot.getPlaceholder();
     this.height = plot.height();
 
-    this.renderHandle('critical', this.alert.critical, 10);
-    this.renderHandle('warn', this.alert.warn, this.height-30);
+    this.renderHandle('crit', this.thresholds.crit, 10);
+    this.renderHandle('warn', this.thresholds.warn, this.height-30);
   }
+    debugger;
 
 }
 

@@ -54,11 +54,9 @@ class GraphCtrl extends MetricsPanelCtrl {
     xaxis: {
       show: true
     },
-    grid          : {
-      threshold1: null,
-      threshold2: null,
-      threshold1Color: 'rgba(216, 200, 27, 0.27)',
-      threshold2Color: 'rgba(234, 112, 112, 0.22)'
+    thresholds: {
+      warn: {op: '>', level: undefined},
+      crit: {op: '>', level: undefined},
     },
     // show/hide lines
     lines         : true,
@@ -115,7 +113,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     _.defaults(this.panel, this.panelDefaults);
     _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
-    _.defaults(this.panel.grid, this.panelDefaults.grid);
+    _.defaults(this.panel.thresholds, this.panelDefaults.thresholds);
     _.defaults(this.panel.legend, this.panelDefaults.legend);
 
     this.colors = $scope.$root.colors;
@@ -132,6 +130,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Axes', 'public/app/plugins/panel/graph/tab_axes.html', 2);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
     this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
+
     if (config.alertingEnabled) {
       this.addEditorTab('Alerting', graphAlertEditor, 5);
     }

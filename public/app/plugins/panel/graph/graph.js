@@ -5,7 +5,7 @@ define([
   'lodash',
   'app/core/utils/kbn',
   './graph_tooltip',
-  './alert_handle',
+  './thresholds',
   'jquery.flot',
   'jquery.flot.selection',
   'jquery.flot.time',
@@ -15,7 +15,7 @@ define([
   'jquery.flot.crosshair',
   './jquery.flot.events',
 ],
-function (angular, $, moment, _, kbn, GraphTooltip, AlertHandle) {
+function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -23,7 +23,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, AlertHandle) {
   var panelWidthCache = {};
 
   // systemjs export
-  var AlertHandleManager = AlertHandle.AlertHandleManager;
+  var ThresholdControls = thresholds.ThresholdControls;
 
   module.directive('grafanaGraph', function($rootScope, timeSrv) {
     return {
@@ -38,7 +38,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, AlertHandle) {
         var legendSideLastValue = null;
         var rootScope = scope.$root;
         var panelWidth = 0;
-        var alertHandles;
+        var thresholdControls;
 
         rootScope.onAppEvent('setCrosshair', function(event, info) {
           // do not need to to this if event is from this panel
@@ -167,8 +167,8 @@ function (angular, $, moment, _, kbn, GraphTooltip, AlertHandle) {
             rightLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[1].label, rightLabel) / 2) + 'px';
           }
 
-          if (alertHandles) {
-            alertHandles.draw(plot);
+          if (thresholdControls) {
+            thresholdControls.draw(plot);
           }
         }
 
@@ -192,14 +192,14 @@ function (angular, $, moment, _, kbn, GraphTooltip, AlertHandle) {
 
           // give space to alert editing
           if (ctrl.editingAlert) {
-            if (!alertHandles) {
+            if (!thresholdControls) {
               elem.css('margin-right', '220px');
-              alertHandles = new AlertHandleManager(ctrl);
+              thresholdControls = new ThresholdControls(ctrl);
             }
-          } else if (alertHandles) {
+          } else if (thresholdControls) {
             elem.css('margin-right', '0');
-            alertHandles.cleanUp();
-            alertHandles = null;
+            thresholdControls.cleanUp();
+            thresholdControls = null;
           }
 
           var stack = panel.stack ? true : null;
@@ -333,70 +333,73 @@ function (angular, $, moment, _, kbn, GraphTooltip, AlertHandle) {
         }
 
         function addGridThresholds(options, panel) {
+          var thresholds = panel.thresholds;
+
+          // use alert thresholds if there are any
           if (panel.alert) {
-            var crit = panel.alert.critical;
-            var warn = panel.alert.warn;
-            var critEdge = Infinity;
-            var warnEdge = crit.level;
-
-            if (_.isNumber(crit.level)) {
-              if (crit.op === '<') {
-                critEdge = -Infinity;
-              }
-
-              // fill
-              options.grid.markings.push({
-                yaxis: {from: crit.level, to: critEdge},
-                color: 'rgba(234, 112, 112, 0.10)',
-              });
-
-              // line
-              options.grid.markings.push({
-                yaxis: {from: crit.level, to: crit.level},
-                color: '#ed2e18'
-              });
-            }
-
-            if (_.isNumber(warn.level)) {
-              // if (warn.op === '<') {
-              // }
-
-              // fill
-              options.grid.markings.push({
-                yaxis: {from: warn.level, to: warnEdge},
-                color: 'rgba(216, 200, 27, 0.10)',
-              });
-
-              // line
-              options.grid.markings.push({
-                yaxis: {from: warn.level, to: warn.level},
-                color: '#F79520'
-              });
-            }
-
-            return;
+            thresholds = panel.alert.thresholds;
           }
 
-          if (_.isNumber(panel.grid.threshold1)) {
-            var limit1 = panel.grid.thresholdLine ? panel.grid.threshold1 : (panel.grid.threshold2 || null);
+          var crit = thresholds.crit;
+          var warn = thresholds.warn;
+          var critEdge = Infinity;
+          var warnEdge = crit.value;
+
+          if (_.isNumber(crit.value)) {
+            if (crit.op === '<') {
+              critEdge = -Infinity;
+            }
+
+            // fill
             options.grid.markings.push({
-              yaxis: { from: panel.grid.threshold1, to: limit1 },
-              color: panel.grid.threshold1Color
+              yaxis: {from: crit.value, to: critEdge},
+              color: 'rgba(234, 112, 112, 0.10)',
             });
 
-            if (_.isNumber(panel.grid.threshold2)) {
-              var limit2;
-              if (panel.grid.thresholdLine) {
-                limit2 = panel.grid.threshold2;
-              } else {
-                limit2 = panel.grid.threshold1 > panel.grid.threshold2 ?  -Infinity : +Infinity;
-              }
-              options.grid.markings.push({
-                yaxis: { from: panel.grid.threshold2, to: limit2 },
-                color: panel.grid.threshold2Color
-              });
-            }
+            // line
+            options.grid.markings.push({
+              yaxis: {from: crit.value, to: crit.value},
+              color: '#ed2e18'
+            });
           }
+
+          if (_.isNumber(warn.value)) {
+            // if (warn.op === '<') {
+            // }
+
+            // fill
+            options.grid.markings.push({
+              yaxis: {from: warn.value, to: warnEdge},
+              color: 'rgba(216, 200, 27, 0.10)',
+            });
+
+            // line
+            options.grid.markings.push({
+              yaxis: {from: warn.value, to: warn.value},
+              color: '#F79520'
+            });
+          }
+
+          // if (_.isNumber(panel.grid.threshold1)) {
+          //   var limit1 = panel.grid.thresholdLine ? panel.grid.threshold1 : (panel.grid.threshold2 || null);
+          //   options.grid.markings.push({
+          //     yaxis: { from: panel.grid.threshold1, to: limit1 },
+          //     color: panel.grid.threshold1Color
+          //   });
+          //
+          //   if (_.isNumber(panel.grid.threshold2)) {
+          //     var limit2;
+          //     if (panel.grid.thresholdLine) {
+          //       limit2 = panel.grid.threshold2;
+          //     } else {
+          //       limit2 = panel.grid.threshold1 > panel.grid.threshold2 ?  -Infinity : +Infinity;
+          //     }
+          //     options.grid.markings.push({
+          //       yaxis: { from: panel.grid.threshold2, to: limit2 },
+          //       color: panel.grid.threshold2Color
+          //     });
+          //   }
+          // }
         }
 
         function addAnnotations(options) {

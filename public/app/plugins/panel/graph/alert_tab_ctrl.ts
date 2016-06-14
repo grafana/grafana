@@ -22,7 +22,7 @@ var alertQueryDef = new QueryPartDef({
 export class AlertTabCtrl {
   panel: any;
   panelCtrl: any;
-  metricTargets = [{ refId: '- select query -' } ];
+  metricTargets;
   handlers = [{text: 'Grafana', value: 1}, {text: 'External', value: 0}];
   transforms = [
     {
@@ -36,6 +36,7 @@ export class AlertTabCtrl {
   ];
   aggregators = ['avg', 'sum', 'min', 'max', 'last'];
   alert: any;
+  thresholds: any;
   query: any;
   queryParams: any;
   transformDef: any;
@@ -45,24 +46,6 @@ export class AlertTabCtrl {
     {text: '=', value: '='},
   ];
 
-  defaultValues = {
-    frequency: '60s',
-    notify: [],
-    enabled: false,
-    handler: 1,
-    warn: { op: '>', level: undefined },
-    critical: { op: '>', level: undefined },
-    query: {
-      refId: 'A',
-      from: '5m',
-      to: 'now',
-    },
-    transform: {
-      type: 'aggregation',
-      method: 'avg'
-    }
-  };
-
   /** @ngInject */
   constructor($scope, private $timeout) {
     this.panelCtrl = $scope.ctrl;
@@ -70,7 +53,7 @@ export class AlertTabCtrl {
     $scope.ctrl = this;
 
     this.metricTargets = this.panel.targets.map(val => val);
-    this.initAlertModel();
+    this.initModel();
 
     // set panel alert edit mode
     $scope.$on("$destroy", () => {
@@ -79,32 +62,63 @@ export class AlertTabCtrl {
     });
   }
 
-  initAlertModel() {
-    if (!this.panel.alert) {
+  getThresholdWithDefaults(thresholds, type, copyFrom) {
+    var threshold = thresholds[type] || {};
+    var defaultValue = (copyFrom[type] || {}).value || undefined;
+
+    threshold.op = threshold.op || '>';
+    threshold.value = threshold.value || defaultValue;
+    return threshold;
+  }
+
+  initThresholdsOnlyMode() {
+    if (!this.panel.thresholds) {
       return;
     }
 
-    this.alert = this.panel.alert;
+    this.thresholds = this.panel.thresholds;
 
-    // set defaults
-    _.defaults(this.alert, this.defaultValues);
+    // set threshold defaults
+    this.thresholds.warn = this.getThresholdWithDefaults(this.thresholds, 'warn', {});
+    this.thresholds.crit = this.getThresholdWithDefaults(this.thresholds, 'crit', {});
 
-    var defaultName = (this.panelCtrl.dashboard.title + ' ' + this.panel.title + ' alert');
-    this.alert.name = this.alert.name || defaultName;
-    this.alert.description = this.alert.description || defaultName;
+    this.panelCtrl.editingAlert = true;
+    this.panelCtrl.render();
+  }
+
+  initModel() {
+    var alert = this.alert = this.panel.alert = this.panel.alert || {};
+
+    // set threshold defaults
+    alert.thresholds = alert.thresholds || {};
+    alert.thresholds.warn = this.getThresholdWithDefaults(alert.thresholds, 'warn', this.panel.thresholds);
+    alert.thresholds.crit = this.getThresholdWithDefaults(alert.thresholds, 'crit', this.panel.thresholds);
+
+    alert.frequency = alert.frequency || '60s';
+    alert.handler = alert.handler || 1;
+    alert.notifications = alert.notifications || [];
+
+    alert.query = alert.query || {};
+    alert.query.refId = alert.query.refId || 'A';
+    alert.query.from = alert.query.from || '5m';
+    alert.query.to = alert.query.to || 'now';
+
+    alert.transform = alert.transform || {};
+    alert.transform.type = alert.transform.type || 'aggregation';
+    alert.transform.method = alert.transform.method || 'avg';
+
+    var defaultName = this.panel.title + ' alert';
+    alert.name = alert.name || defaultName;
+    alert.description = alert.description || defaultName;
 
     // great temp working model
     this.queryParams = {
-      params: [
-        this.alert.query.refId,
-        this.alert.query.from,
-        this.alert.query.to
-      ]
+      params: [alert.query.refId, alert.query.from, alert.query.to]
     };
 
     // init the query part components model
     this.query = new QueryPart(this.queryParams, alertQueryDef);
-    this.transformDef = _.findWhere(this.transforms, {type: this.alert.transform.type});
+    this.transformDef = _.findWhere(this.transforms, {type: alert.transform.type});
 
     this.panelCtrl.editingAlert = true;
     this.panelCtrl.render();
@@ -135,22 +149,26 @@ export class AlertTabCtrl {
     }
   }
 
-  operatorChanged() {
-    this.panelCtrl.render();
-  }
-
   delete() {
+    delete this.alert;
     delete this.panel.alert;
-    this.panelCtrl.editingAlert = false;
-    this.panelCtrl.render();
+    // clear thresholds
+    if (this.panel.thresholds) {
+      this.panel.thresholds = {};
+    }
+    this.initModel();
   }
 
   enable() {
+    if (this.thresholds) {
+      delete this.thresholds;
+      this.panelCtrl.
+    }
     this.panel.alert = {};
-    this.initAlertModel();
+    this.initModel();
   }
 
-  levelsUpdated() {
+  thresholdsUpdated() {
     this.panelCtrl.render();
   }
 }
