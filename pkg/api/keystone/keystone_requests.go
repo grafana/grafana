@@ -188,20 +188,13 @@ func authenticate(data *Auth_data, b []byte) error {
 		return errors.New("Keystone authentication failed: " + resp.Status)
 	}
 
-	var decoder *json.Decoder
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(resp.Body)
+	strBody := buf.Bytes()
+	log.Debug("Authentication response: \n%s", strBody)
 
-	if log.IsDebug() {
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(resp.Body)
-		strBody := buf.Bytes()
-
-		log.Debug("Authentication response: \n%s", strBody)
-
-		bodyReader := bytes.NewBufferString(fmt.Sprintf("%s", strBody))
-		decoder = json.NewDecoder(bodyReader)
-	} else {
-		decoder = json.NewDecoder(resp.Body)
-	}
+	bodyReader := bytes.NewBufferString(fmt.Sprintf("%s", strBody))
+	var decoder = json.NewDecoder(bodyReader)
 
 	var auth_response auth_response_struct
 	err = decoder.Decode(&auth_response)
@@ -257,20 +250,13 @@ func GetProjects(data *Projects_data) error {
 		return errors.New("Keystone project-list failed: " + resp.Status)
 	}
 
-	var decoder *json.Decoder
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(resp.Body)
+	strBody := buf.Bytes()
+	log.Debug("Projects response: \n%s", strBody)
 
-	if log.IsDebug() {
-		buf := new(bytes.Buffer)
-		buf.ReadFrom(resp.Body)
-		strBody := buf.Bytes()
-
-		log.Debug("Projects response: \n%s", strBody)
-
-		bodyReader := bytes.NewBufferString(fmt.Sprintf("%s", strBody))
-		decoder = json.NewDecoder(bodyReader)
-	} else {
-		decoder = json.NewDecoder(resp.Body)
-	}
+	bodyReader := bytes.NewBufferString(fmt.Sprintf("%s", strBody))
+	var decoder = json.NewDecoder(bodyReader)
 
 	var project_response project_response_struct
 	err = decoder.Decode(&project_response)
