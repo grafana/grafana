@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/go-xorm/xorm"
@@ -43,6 +44,25 @@ func getAlertNotifications(query *m.GetAlertNotificationQuery, sess *xorm.Sessio
 		params = append(params, query.Name)
 	}
 
+	if query.Id != 0 {
+		sql.WriteString(` AND alert_notification.id = ?`)
+		params = append(params, strconv.Itoa(int(query.Id)))
+	}
+
+	if len(query.Ids) > 0 {
+		sql.WriteString(` AND (`)
+
+		for i, id := range query.Ids {
+			if i != 0 {
+				sql.WriteString(` OR`)
+			}
+			sql.WriteString(` alert_notification.id = ?`)
+			params = append(params, id)
+		}
+
+		sql.WriteString(`)`)
+	}
+
 	var result []*m.AlertNotification
 	if err := sess.Sql(sql.String(), params...).Find(&result); err != nil {
 		return err
@@ -71,15 +91,16 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 			Type:     cmd.Type,
 			Created:  time.Now(),
 			Settings: cmd.Settings,
+			Updated:  time.Now(),
 		}
 
-		id, err := sess.Insert(alertNotification)
+		_, err = sess.Insert(alertNotification)
 
 		if err != nil {
 			return err
 		}
 
-		alertNotification.Id = id
+		//alertNotification.Id = int(id)
 		cmd.Result = alertNotification
 		return nil
 	})
@@ -87,28 +108,32 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 
 func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 	return inTransaction(func(sess *xorm.Session) (err error) {
-		alertNotification := &m.AlertNotification{}
-
-		var has bool
-		has, err = sess.Id(cmd.Id).Get(alertNotification)
+		current := &m.AlertNotification{}
+		_, err = sess.Id(cmd.Id).Get(current)
 
 		if err != nil {
 			return err
 		}
 
-		if !has {
-			return fmt.Errorf("Alert notification does not exist")
-		}
-
+		alertNotification := &m.AlertNotification{}
+		alertNotification.Id = cmd.Id
+		alertNotification.OrgId = cmd.OrgID
 		alertNotification.Name = cmd.Name
 		alertNotification.Type = cmd.Type
 		alertNotification.Settings = cmd.Settings
 		alertNotification.Updated = time.Now()
+		alertNotification.Created = current.Created
 
-		_, err = sess.Id(alertNotification.Id).Cols("name", "type", "settings", "updated").Update(alertNotification)
+		var affected int64
+		//affected, err = sess.Id(alertNotification.Id).Cols("name", "type", "settings", "updated").Update(alertNotification)
+		affected, err = sess.Id(alertNotification.Id).Update(alertNotification)
 
 		if err != nil {
 			return err
+		}
+
+		if affected == 0 {
+			return fmt.Errorf("Could not find alert notification")
 		}
 
 		cmd.Result = alertNotification

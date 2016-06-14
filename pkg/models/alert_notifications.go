@@ -38,7 +38,8 @@ type UpdateAlertNotificationCommand struct {
 
 type GetAlertNotificationQuery struct {
 	Name  string
-	ID    int64
+	Id    int64
+	Ids   []int64
 	OrgID int64
 
 	Result []*AlertNotification
