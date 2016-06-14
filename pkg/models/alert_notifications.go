@@ -27,6 +27,7 @@ type CreateAlertNotificationCommand struct {
 }
 
 type UpdateAlertNotificationCommand struct {
+	Id       int64
 	Name     string
 	Type     string
 	OrgID    int64

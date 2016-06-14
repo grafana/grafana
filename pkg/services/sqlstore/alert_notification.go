@@ -2,16 +2,25 @@ package sqlstore
 
 import (
 	"bytes"
+	"fmt"
+	"time"
 
+	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
 func init() {
-	bus.AddHandler("sql", GetAlertNotifications)
+	bus.AddHandler("sql", AlertNotificationQuery)
+	bus.AddHandler("sql", CreateAlertNotificationCommand)
+	bus.AddHandler("sql", UpdateAlertNotification)
 }
 
-func GetAlertNotifications(query *m.GetAlertNotificationQuery) error {
+func AlertNotificationQuery(query *m.GetAlertNotificationQuery) error {
+	return getAlertNotifications(query, x.NewSession())
+}
+
+func getAlertNotifications(query *m.GetAlertNotificationQuery, sess *xorm.Session) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
@@ -35,7 +44,7 @@ func GetAlertNotifications(query *m.GetAlertNotificationQuery) error {
 	}
 
 	var result []*m.AlertNotification
-	if err := x.Sql(sql.String(), params...).Find(&result); err != nil {
+	if err := sess.Sql(sql.String(), params...).Find(&result); err != nil {
 		return err
 	}
 
@@ -43,14 +52,66 @@ func GetAlertNotifications(query *m.GetAlertNotificationQuery) error {
 	return nil
 }
 
-/*
-func CreateAlertNotification(cmd *m.CreateAlertNotificationCommand) error {
+func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
+		existingQuery := &m.GetAlertNotificationQuery{OrgID: cmd.OrgID, Name: cmd.Name}
+		err := getAlertNotifications(existingQuery, sess)
 
+		if err != nil {
+			return err
+		}
 
+		if len(existingQuery.Result) > 0 {
+			return fmt.Errorf("Alert notification name %s already exists", cmd.Name)
+		}
+
+		alertNotification := &m.AlertNotification{
+			OrgId:    cmd.OrgID,
+			Name:     cmd.Name,
+			Type:     cmd.Type,
+			Created:  time.Now(),
+			Settings: cmd.Settings,
+		}
+
+		id, err := sess.Insert(alertNotification)
+
+		if err != nil {
+			return err
+		}
+
+		alertNotification.Id = id
+		cmd.Result = alertNotification
+		return nil
 	})
 }
 
 func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
+	return inTransaction(func(sess *xorm.Session) (err error) {
+		an := &m.AlertNotification{}
 
-}*/
+		var has bool
+		has, err = sess.Id(cmd.Id).Get(an)
+
+		if err != nil {
+			return err
+		}
+
+		if !has {
+			return fmt.Errorf("Alert notification does not exist")
+		}
+
+		an.Name = cmd.Name
+		an.Type = cmd.Type
+		an.Settings = cmd.Settings
+		an.Updated = time.Now()
+
+		_, err = sess.Id(an.Id).Cols("name", "type", "settings", "updated").Update(an)
+
+		if err != nil {
+			return err
+		}
+
+		cmd.Result = an
+		return nil
+	})
+}
