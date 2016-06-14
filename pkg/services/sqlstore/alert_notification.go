@@ -87,10 +87,10 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 
 func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 	return inTransaction(func(sess *xorm.Session) (err error) {
-		an := &m.AlertNotification{}
+		alertNotification := &m.AlertNotification{}
 
 		var has bool
-		has, err = sess.Id(cmd.Id).Get(an)
+		has, err = sess.Id(cmd.Id).Get(alertNotification)
 
 		if err != nil {
 			return err
@@ -100,18 +100,18 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 			return fmt.Errorf("Alert notification does not exist")
 		}
 
-		an.Name = cmd.Name
-		an.Type = cmd.Type
-		an.Settings = cmd.Settings
-		an.Updated = time.Now()
+		alertNotification.Name = cmd.Name
+		alertNotification.Type = cmd.Type
+		alertNotification.Settings = cmd.Settings
+		alertNotification.Updated = time.Now()
 
-		_, err = sess.Id(an.Id).Cols("name", "type", "settings", "updated").Update(an)
+		_, err = sess.Id(alertNotification.Id).Cols("name", "type", "settings", "updated").Update(alertNotification)
 
 		if err != nil {
 			return err
 		}
 
-		cmd.Result = an
+		cmd.Result = alertNotification
 		return nil
 	})
 }
