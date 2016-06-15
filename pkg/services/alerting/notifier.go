@@ -1,29 +1,32 @@
 package alerting
 
 import (
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting/alertstates"
 )
 
-type Notifier struct {
+type NotifierImpl struct {
 	log log.Logger
 }
 
-func NewNotifier() *Notifier {
-	return &Notifier{
+func NewNotifier() *NotifierImpl {
+	return &NotifierImpl{
 		log: log.New("alerting.notifier"),
 	}
 }
 
-func (n *Notifier) Notify(alertResult AlertResult) {
-	notifiers := getNotifiers(alertResult.AlertJob.Rule.OrgId, alertResult.AlertJob.Rule.NotificationGroups)
+func (n *NotifierImpl) Notify(alertResult *AlertResult) {
+	n.log.Warn("LETS NOTIFY!!!!A")
+	notifiers := n.getNotifiers(alertResult.AlertJob.Rule.OrgId, []int64{1, 2})
 
 	for _, notifier := range notifiers {
+
 		warn := alertResult.State == alertstates.Warn && notifier.SendWarning
 		crit := alertResult.State == alertstates.Critical && notifier.SendCritical
-
+		n.log.Warn("looopie", "warn", warn, "crit", crit)
 		if warn || crit {
 			n.log.Info("Sending notification", "state", alertResult.State, "type", notifier.Type)
 			go notifier.Notifierr.Notify(alertResult)
@@ -44,41 +47,44 @@ type Notification struct {
 type EmailNotifier struct {
 	To   string
 	From string
+	log  log.Logger
 }
 
-func (this EmailNotifier) Notify(alertResult AlertResult) {
+func (this *EmailNotifier) Notify(alertResult *AlertResult) {
 	//bus.dispath to notification package in grafana
+	this.log.Info("Sending email")
 }
 
 type WebhookNotifier struct {
 	Url          string
 	AuthUser     string
 	AuthPassword string
+	log          log.Logger
 }
 
-func (this WebhookNotifier) Notify(alertResult AlertResult) {
+func (this *WebhookNotifier) Notify(alertResult *AlertResult) {
 	//bus.dispath to notification package in grafana
+	this.log.Info("Sending webhook")
 }
 
 type Notifierr interface {
-	Notify(alertResult AlertResult)
+	Notify(alertResult *AlertResult)
 }
 
-func getNotifiers(orgId int64, notificationGroups []int64) []*Notification {
-	var notifications []*m.AlertNotification
-
-	for _, notificationId := range notificationGroups {
-		query := m.GetAlertNotificationQuery{
-			OrgID: orgId,
-			Id:    notificationId,
-		}
-
-		notifications = append(notifications, query.Result...)
+func (n *NotifierImpl) getNotifiers(orgId int64, notificationGroups []int64) []*Notification {
+	query := &m.GetAlertNotificationQuery{
+		OrgID: orgId,
+		Ids:   notificationGroups,
+	}
+	err := bus.Dispatch(query)
+	if err != nil {
+		n.log.Error("Failed to read notifications", "error", err)
 	}
 
 	var result []*Notification
 
-	for _, notification := range notifications {
+	n.log.Warn("query result", "length", len(query.Result))
+	for _, notification := range query.Result {
 		not, err := NewNotificationFromDBModel(notification)
 		if err == nil {
 			result = append(result, not)
@@ -103,6 +109,7 @@ var createNotifier = func(notificationType string, settings *simplejson.Json) No
 		return &EmailNotifier{
 			To:   settings.Get("to").MustString(),
 			From: settings.Get("from").MustString(),
+			log:  log.New("alerting.notification.email"),
 		}
 	}
 
@@ -110,5 +117,6 @@ var createNotifier = func(notificationType string, settings *simplejson.Json) No
 		Url:          settings.Get("url").MustString(),
 		AuthUser:     settings.Get("user").MustString(),
 		AuthPassword: settings.Get("password").MustString(),
+		log:          log.New("alerting.notification.webhook"),
 	}
 }

@@ -20,6 +20,7 @@ type Engine struct {
 	handler     AlertingHandler
 	ruleReader  RuleReader
 	log         log.Logger
+	notifier    Notifier
 }
 
 func NewEngine() *Engine {
@@ -31,6 +32,7 @@ func NewEngine() *Engine {
 		handler:     NewHandler(),
 		ruleReader:  NewRuleReader(),
 		log:         log.New("alerting.engine"),
+		notifier:    NewNotifier(),
 	}
 
 	return e
@@ -129,13 +131,23 @@ func (e *Engine) resultHandler() {
 }
 
 func (e *Engine) saveState(result *AlertResult) {
-	cmd := &m.UpdateAlertStateCommand{
-		AlertId:  result.AlertJob.Rule.Id,
-		NewState: result.State,
-		Info:     result.Description,
-	}
+	query := &m.GetAlertByIdQuery{Id: result.AlertJob.Rule.Id}
+	bus.Dispatch(query)
 
-	if err := bus.Dispatch(cmd); err != nil {
-		e.log.Error("Failed to save state", "error", err)
+	if query.Result.ShouldUpdateState(result.State) {
+		cmd := &m.UpdateAlertStateCommand{
+			AlertId:  result.AlertJob.Rule.Id,
+			NewState: result.State,
+			Info:     result.Description,
+		}
+
+		if err := bus.Dispatch(cmd); err != nil {
+			e.log.Error("Failed to save state", "error", err)
+		}
+
+		e.log.Debug("will notify! about", "new state", result.State)
+		e.notifier.Notify(result)
+	} else {
+		e.log.Debug("state remains the same!")
 	}
 }
