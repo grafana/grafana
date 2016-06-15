@@ -15,7 +15,7 @@
 
     <table class="grafana-options-table" ng-if="oncallerDefList.length > 0">
       <tr>
-        <td><strong>Name</strong></td>
+        <td><strong>Org</strong></td>
         <td><strong>Service</strong></td>
         <td></td>
         <td></td>
@@ -23,7 +23,7 @@
       <tr ng-repeat="oncallerDef in oncallerDefList">
         <td style="width:1%">
           <i class="fa fa-phone"></i> &nbsp;
-          {{oncallerDef.name}}
+          {{oncallerDef.org}}
         </td>
         <td style="width:90%">
           {{oncallerDef.service}}

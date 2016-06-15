@@ -18,6 +18,7 @@ function (angular) {
 
     this.init = function() {
       backendSrv.get('/api/alertsource').then(function(result) {
+        // TODO: add current user's org name as filters. Otherwise, he will see all alerts not in his org.
         alertUrlRoot = result.alert.alert_urlroot;
         alertDefUrl = alertUrlRoot + "/alert/" + "definition";
         alertStatusUrl = alertUrlRoot + "/alert/" + "status";
@@ -67,7 +68,7 @@ function (angular) {
       return $http({
         method: "get",
         url: alertStatusUrl,
-        params: {service: "com.test"}
+        params: {} // TODO: filtered by "org" and "service".
       });
     };
 

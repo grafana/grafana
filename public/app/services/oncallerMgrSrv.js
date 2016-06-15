@@ -28,7 +28,7 @@ function (angular) {
       }).then(function onSuccess(response) {
         for (var i = 0; i < response.data.length; i++) {
           var theoncallerDef = response.data[i];
-          self.oncallerDefMap[theoncallerDef.service] = theoncallerDef;
+          self.oncallerDefMap[theoncallerDef.org + ":" + theoncallerDef.service] = theoncallerDef;
         }
         return response;
       }, function onFailed(response) {
@@ -55,8 +55,8 @@ function (angular) {
       });
     };
 
-    this.get = function(service) {
-      return self.oncallerDefMap[service];
+    this.get = function(org, service) {
+      return self.oncallerDefMap[org + ":" + service];
     };
 
   });
