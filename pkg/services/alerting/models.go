@@ -38,7 +38,7 @@ type TriggeredAlert struct {
 
 type Level struct {
 	Operator string
-	Level    float64
+	Value    float64
 }
 
 type AlertQuery struct {

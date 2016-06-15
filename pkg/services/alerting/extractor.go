@@ -63,6 +63,12 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				continue
 			}
 
+			enabled, hasEnabled := jsonAlert.CheckGet("enabled")
+
+			if !hasEnabled || !enabled.MustBool() {
+				continue
+			}
+
 			alert := &m.Alert{
 				DashboardId: e.Dash.Id,
 				OrgId:       e.OrgId,

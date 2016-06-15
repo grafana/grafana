@@ -42,7 +42,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 						"handler": 1,
 						"enabled": true,
             "critical": {
-              "level": 20,
+              "value": 20,
               "op": ">"
             },
             "frequency": "60s",
@@ -56,7 +56,7 @@ func TestAlertRuleExtraction(t *testing.T) {
               "type": "aggregation"
             },
             "warn": {
-              "level": 10,
+              "value": 10,
               "op": ">"
             }
           }
@@ -77,7 +77,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 						"handler": 0,
 						"enabled": true,
             "critical": {
-              "level": 20,
+              "value": 20,
               "op": ">"
             },
             "frequency": "60s",
@@ -91,7 +91,7 @@ func TestAlertRuleExtraction(t *testing.T) {
               "name": "aggregation"
             },
             "warn": {
-              "level": 10,
+              "value": 10,
               "op": ">"
             }
           }
@@ -107,6 +107,19 @@ func TestAlertRuleExtraction(t *testing.T) {
         {
           "datasource": "InfluxDB",
           "id": 2,
+          "alert": {
+            "name": "name2",
+            "description": "desc2",
+						"enabled": false,
+            "critical": {
+              "level": 20,
+              "op": ">"
+            },
+            "warn": {
+              "level": 10,
+              "op": ">"
+            }
+          },
           "targets": [
             {
               "dsType": "influxdb",

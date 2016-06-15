@@ -16,7 +16,7 @@ func TestAlertingExecutor(t *testing.T) {
 		Convey("single time serie", func() {
 			Convey("Show return ok since avg is above 2", func() {
 				rule := &AlertRule{
-					Critical:    Level{Level: 10, Operator: ">"},
+					Critical:    Level{Value: 10, Operator: ">"},
 					Transformer: transformers.NewAggregationTransformer("avg"),
 				}
 
@@ -30,7 +30,7 @@ func TestAlertingExecutor(t *testing.T) {
 
 			Convey("Show return critical since below 2", func() {
 				rule := &AlertRule{
-					Critical:    Level{Level: 10, Operator: "<"},
+					Critical:    Level{Value: 10, Operator: "<"},
 					Transformer: transformers.NewAggregationTransformer("avg"),
 				}
 
@@ -44,7 +44,7 @@ func TestAlertingExecutor(t *testing.T) {
 
 			Convey("Show return critical since sum is above 10", func() {
 				rule := &AlertRule{
-					Critical:    Level{Level: 10, Operator: ">"},
+					Critical:    Level{Value: 10, Operator: ">"},
 					Transformer: transformers.NewAggregationTransformer("sum"),
 				}
 
@@ -58,7 +58,7 @@ func TestAlertingExecutor(t *testing.T) {
 
 			Convey("Show return ok since avg is below 10", func() {
 				rule := &AlertRule{
-					Critical:    Level{Level: 10, Operator: ">"},
+					Critical:    Level{Value: 10, Operator: ">"},
 					Transformer: transformers.NewAggregationTransformer("avg"),
 				}
 
@@ -72,7 +72,7 @@ func TestAlertingExecutor(t *testing.T) {
 
 			Convey("Show return ok since min is below 10", func() {
 				rule := &AlertRule{
-					Critical:    Level{Level: 10, Operator: ">"},
+					Critical:    Level{Value: 10, Operator: ">"},
 					Transformer: transformers.NewAggregationTransformer("avg"),
 				}
 
@@ -86,7 +86,7 @@ func TestAlertingExecutor(t *testing.T) {
 
 			Convey("Show return ok since max is above 10", func() {
 				rule := &AlertRule{
-					Critical:    Level{Level: 10, Operator: ">"},
+					Critical:    Level{Value: 10, Operator: ">"},
 					Transformer: transformers.NewAggregationTransformer("max"),
 				}
 
@@ -103,7 +103,7 @@ func TestAlertingExecutor(t *testing.T) {
 		Convey("muliple time series", func() {
 			Convey("both are ok", func() {
 				rule := &AlertRule{
-					Critical:    Level{Level: 10, Operator: ">"},
+					Critical:    Level{Value: 10, Operator: ">"},
 					Transformer: transformers.NewAggregationTransformer("avg"),
 				}
 
@@ -118,7 +118,7 @@ func TestAlertingExecutor(t *testing.T) {
 
 			Convey("first serie is good, second is critical", func() {
 				rule := &AlertRule{
-					Critical:    Level{Level: 10, Operator: ">"},
+					Critical:    Level{Value: 10, Operator: ">"},
 					Transformer: transformers.NewAggregationTransformer("avg"),
 				}
 
@@ -133,8 +133,8 @@ func TestAlertingExecutor(t *testing.T) {
 
 			Convey("first serie is warn, second is critical", func() {
 				rule := &AlertRule{
-					Critical:    Level{Level: 10, Operator: ">"},
-					Warning:     Level{Level: 5, Operator: ">"},
+					Critical:    Level{Value: 10, Operator: ">"},
+					Warning:     Level{Value: 5, Operator: ">"},
 					Transformer: transformers.NewAggregationTransformer("avg"),
 				}
 

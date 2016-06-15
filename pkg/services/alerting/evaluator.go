@@ -3,7 +3,7 @@ package alerting
 type compareFn func(float64, float64) bool
 
 func evalCondition(level Level, result float64) bool {
-	return operators[level.Operator](result, level.Level)
+	return operators[level.Operator](result, level.Value)
 }
 
 var operators = map[string]compareFn{
