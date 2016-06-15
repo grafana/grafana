@@ -8,16 +8,16 @@
           <i class="icon-gf icon-gf-warn alert-icon-critical"></i>
           Critcal if
         </span>
-        <metric-segment-model property="ctrl.alert.thresholds.crit.op" options="ctrl.operatorList" custom="false" css-class="query-segment-operator" on-change="ctrl.thresholdsUpdated()"></metric-segment-model>
-        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.thresholds.crit.value" ng-change="ctrl.thresholdsUpdated()"></input>
+        <metric-segment-model property="ctrl.alert.crit.op" options="ctrl.operatorList" custom="false" css-class="query-segment-operator" on-change="ctrl.thresholdsUpdated()"></metric-segment-model>
+        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.crit.value" ng-change="ctrl.thresholdsUpdated()"></input>
       </div>
       <div class="gf-form">
         <span class="gf-form-label">
           <i class="icon-gf icon-gf-warn alert-icon-warn"></i>
           Warn if
         </span>
-        <metric-segment-model property="ctrl.alert.thresholds.warn.op" options="ctrl.operatorList" custom="false" css-class="query-segment-operator" on-change="ctrl.thresholdsUpdated()"></metric-segment-model>
-        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.thresholds.warn.value" ng-change="ctrl.thresholdsUpdated()"></input>
+        <metric-segment-model property="ctrl.alert.warn.op" options="ctrl.operatorList" custom="false" css-class="query-segment-operator" on-change="ctrl.thresholdsUpdated()"></metric-segment-model>
+        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.warn.value" ng-change="ctrl.thresholdsUpdated()"></input>
       </div>
     </div>
   </div>
@@ -70,16 +70,16 @@
             <i class="icon-gf icon-gf-warn alert-icon-critical"></i>
             Critcal if
           </span>
-          <metric-segment-model property="ctrl.alert.thresholds.crit.op" options="ctrl.operatorList" custom="false" css-class="query-segment-operator" on-change="ctrl.thresholdsUpdated()"></metric-segment-model>
-          <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.thresholds.crit.value" ng-change="ctrl.thresholdsUpdated()"></input>
+          <metric-segment-model property="ctrl.alert.crit.op" options="ctrl.operatorList" custom="false" css-class="query-segment-operator" on-change="ctrl.thresholdsUpdated()"></metric-segment-model>
+          <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.crit.value" ng-change="ctrl.thresholdsUpdated()"></input>
         </div>
         <div class="gf-form">
           <span class="gf-form-label">
             <i class="icon-gf icon-gf-warn alert-icon-warn"></i>
             Warn if
           </span>
-          <metric-segment-model property="ctrl.alert.thresholds.warn.op" options="ctrl.operatorList" custom="false" css-class="query-segment-operator" on-change="ctrl.thresholdsUpdated()"></metric-segment-model>
-          <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.thresholds.warn.value" ng-change="ctrl.thresholdsUpdated()"></input>
+          <metric-segment-model property="ctrl.alert.warn.op" options="ctrl.operatorList" custom="false" css-class="query-segment-operator" on-change="ctrl.thresholdsUpdated()"></metric-segment-model>
+          <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.warn.value" ng-change="ctrl.thresholdsUpdated()"></input>
         </div>
       </div>
     </div>

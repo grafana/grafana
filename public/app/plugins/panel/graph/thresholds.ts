@@ -8,10 +8,10 @@ export class ThresholdControls {
   plot: any;
   placeholder: any;
   height: any;
-  thresholds: any;
+  alert: any;
 
   constructor(private panelCtrl) {
-    this.thresholds = this.panelCtrl.panel.alert.thresholds;
+    this.alert = this.panelCtrl.panel.alert;
   }
 
   getHandleInnerHtml(type, op, value) {
@@ -120,10 +120,8 @@ export class ThresholdControls {
     this.placeholder = plot.getPlaceholder();
     this.height = plot.height();
 
-    this.renderHandle('crit', this.thresholds.crit, 10);
-    this.renderHandle('warn', this.thresholds.warn, this.height-30);
+    this.renderHandle('crit', this.alert.crit, 10);
+    this.renderHandle('warn', this.alert.warn, this.height-30);
   }
-    debugger;
-
 }
 

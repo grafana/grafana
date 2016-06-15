@@ -62,8 +62,8 @@ export class AlertTabCtrl {
     });
   }
 
-  getThresholdWithDefaults(thresholds, type) {
-    var threshold = thresholds[type] || {};
+  getThresholdWithDefaults(threshold) {
+    threshold = threshold || {};
     threshold.op = threshold.op || '>';
     threshold.value = threshold.value || undefined;
     return threshold;
@@ -73,13 +73,8 @@ export class AlertTabCtrl {
     var alert = this.alert = this.panel.alert = this.panel.alert || {};
 
     // set threshold defaults
-    alert.thresholds = alert.thresholds || {};
-    alert.thresholds.warn = this.getThresholdWithDefaults(alert.thresholds, 'warn');
-    alert.thresholds.crit = this.getThresholdWithDefaults(alert.thresholds, 'crit');
-
-    alert.frequency = alert.frequency || '60s';
-    alert.handler = alert.handler || 1;
-    alert.notifications = alert.notifications || [];
+    alert.warn = this.getThresholdWithDefaults(alert.warn);
+    alert.crit = this.getThresholdWithDefaults(alert.crit);
 
     alert.query = alert.query || {};
     alert.query.refId = alert.query.refId || 'A';
@@ -89,6 +84,10 @@ export class AlertTabCtrl {
     alert.transform = alert.transform || {};
     alert.transform.type = alert.transform.type || 'aggregation';
     alert.transform.method = alert.transform.method || 'avg';
+
+    alert.frequency = alert.frequency || '60s';
+    alert.handler = alert.handler || 1;
+    alert.notifications = alert.notifications || [];
 
     var defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;
@@ -133,13 +132,11 @@ export class AlertTabCtrl {
   }
 
   delete() {
-    // keep threshold object (instance used by graph handles)
-    var thresholds = this.alert.thresholds;
-    thresholds.warn.value = undefined;
-    thresholds.crit.value = undefined;
+    this.alert.enabled = false;
+    this.alert.warn.value = undefined;
+    this.alert.crit.value = undefined;
 
     // reset model but keep thresholds instance
-    this.alert = this.panel.alert = {thresholds: thresholds};
     this.initModel();
   }
 
