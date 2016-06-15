@@ -171,12 +171,6 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onDataReceived(dataList) {
-    // png renderer returns just a url
-    if (_.isString(dataList)) {
-      this.render(dataList);
-      return;
-    }
-
     this.datapointsWarning = false;
     this.datapointsCount = 0;
     this.datapointsOutside = false;

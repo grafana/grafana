@@ -30,10 +30,6 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       return $q.when({data: []});
     }
 
-    if (options.format === 'png') {
-      return $q.when({data: this.url + '/render' + '?' + params.join('&')});
-    }
-
     var httpOptions: any = {method: this.render_method, url: '/render'};
 
     if (httpOptions.method === 'GET') {
@@ -217,9 +213,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     var intervalFormatFixRegex = /'(\d+)m'/gi;
     var hasTargets = false;
 
-    if (options.format !== 'png') {
-      options['format'] = 'json';
-    }
+    options['format'] = 'json';
 
     function fixIntervalFormat(match) {
       return match.replace('m', 'min').replace('M', 'mon');
