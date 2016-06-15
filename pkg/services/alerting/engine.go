@@ -134,6 +134,7 @@ func (e *Engine) saveState(result *AlertResult) {
 	query := &m.GetAlertByIdQuery{Id: result.AlertJob.Rule.Id}
 	bus.Dispatch(query)
 
+	e.notifier.Notify(result)
 	if query.Result.ShouldUpdateState(result.State) {
 		cmd := &m.UpdateAlertStateCommand{
 			AlertId:  result.AlertJob.Rule.Id,
@@ -146,7 +147,7 @@ func (e *Engine) saveState(result *AlertResult) {
 		}
 
 		e.log.Debug("will notify! about", "new state", result.State)
-		e.notifier.Notify(result)
+
 	} else {
 		e.log.Debug("state remains the same!")
 	}

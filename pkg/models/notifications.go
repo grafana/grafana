@@ -12,6 +12,14 @@ type SendEmailCommand struct {
 	Info     string
 }
 
+type SendWebhook struct {
+	Url          string
+	AuthUser     string
+	AuthPassword string
+	Body         string
+	Method       string
+}
+
 type SendResetPasswordEmailCommand struct {
 	User *User
 }

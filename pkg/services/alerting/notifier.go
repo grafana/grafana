@@ -51,20 +51,36 @@ type EmailNotifier struct {
 }
 
 func (this *EmailNotifier) Dispatch(alertResult *AlertResult) {
-	//bus.dispath to notification package in grafana
-	this.log.Info("Sending email")
+	/*
+		this.log.Info("Sending email")
+		cmd := &m.SendEmailCommand{
+			Data:     map[string]interface{}{},
+			To:       []string{},
+			Info:     "",
+			Massive:  false,
+			Template: "",
+		}
+
+		bus.Dispatch(cmd)
+	*/
 }
 
 type WebhookNotifier struct {
 	Url          string
+	Method       string
 	AuthUser     string
 	AuthPassword string
 	log          log.Logger
 }
 
 func (this *WebhookNotifier) Dispatch(alertResult *AlertResult) {
-	//bus.dispath to notification package in grafana
 	this.log.Info("Sending webhook")
+	cmd := &m.SendWebhook{
+		Url:    this.Url,
+		Method: this.Method,
+	}
+
+	bus.Dispatch(cmd)
 }
 
 type NotificationDispatcher interface {
@@ -115,6 +131,7 @@ var createNotifier = func(notificationType string, settings *simplejson.Json) No
 
 	return &WebhookNotifier{
 		Url:          settings.Get("url").MustString(),
+		Method:       settings.Get("method").MustString(),
 		AuthUser:     settings.Get("user").MustString(),
 		AuthPassword: settings.Get("password").MustString(),
 		log:          log.New("alerting.notification.webhook"),
