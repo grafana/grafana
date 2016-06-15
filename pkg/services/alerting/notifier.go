@@ -29,7 +29,7 @@ func (n *NotifierImpl) Notify(alertResult *AlertResult) {
 		n.log.Warn("looopie", "warn", warn, "crit", crit)
 		if warn || crit {
 			n.log.Info("Sending notification", "state", alertResult.State, "type", notifier.Type)
-			go notifier.Notifierr.Notify(alertResult)
+			go notifier.Notifierr.Dispatch(alertResult)
 		}
 	}
 
@@ -41,7 +41,7 @@ type Notification struct {
 	SendWarning  bool
 	SendCritical bool
 
-	Notifierr Notifierr
+	Notifierr NotificationDispatcher
 }
 
 type EmailNotifier struct {
@@ -50,7 +50,7 @@ type EmailNotifier struct {
 	log  log.Logger
 }
 
-func (this *EmailNotifier) Notify(alertResult *AlertResult) {
+func (this *EmailNotifier) Dispatch(alertResult *AlertResult) {
 	//bus.dispath to notification package in grafana
 	this.log.Info("Sending email")
 }
@@ -62,13 +62,13 @@ type WebhookNotifier struct {
 	log          log.Logger
 }
 
-func (this *WebhookNotifier) Notify(alertResult *AlertResult) {
+func (this *WebhookNotifier) Dispatch(alertResult *AlertResult) {
 	//bus.dispath to notification package in grafana
 	this.log.Info("Sending webhook")
 }
 
-type Notifierr interface {
-	Notify(alertResult *AlertResult)
+type NotificationDispatcher interface {
+	Dispatch(alertResult *AlertResult)
 }
 
 func (n *NotifierImpl) getNotifiers(orgId int64, notificationGroups []int64) []*Notification {
@@ -104,7 +104,7 @@ func NewNotificationFromDBModel(model *m.AlertNotification) (*Notification, erro
 	}, nil
 }
 
-var createNotifier = func(notificationType string, settings *simplejson.Json) Notifierr {
+var createNotifier = func(notificationType string, settings *simplejson.Json) NotificationDispatcher {
 	if notificationType == "email" {
 		return &EmailNotifier{
 			To:   settings.Get("to").MustString(),

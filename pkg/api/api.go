@@ -59,6 +59,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/playlists/", reqSignedIn, Index)
 	r.Get("/playlists/*", reqSignedIn, Index)
 	r.Get("/alerting/", reqSignedIn, Index)
+	r.Get("/alerting/*", reqSignedIn, Index)
 
 	// sign up
 	r.Get("/signup", Index)
@@ -248,6 +249,12 @@ func Register(r *macaron.Macaron) {
 				r.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
 				//r.Delete("/:alertId", ValidateOrgAlert, wrap(DelAlert)) disabled until we know how to handle it dashboard updates
 				r.Get("/", wrap(GetAlerts))
+			})
+
+			r.Get("/notifications", wrap(GetAlertNotifications))
+			r.Group("/notification", func() {
+				r.Post("/", bind(m.CreateAlertNotificationCommand{}), wrap(CreateAlertNotification))
+				r.Put("/", bind(m.UpdateAlertNotificationCommand{}), wrap(UpdateAlertNotification))
 			})
 
 			r.Get("/changes", wrap(GetAlertChanges))
