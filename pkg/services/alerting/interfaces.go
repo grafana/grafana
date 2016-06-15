@@ -2,7 +2,7 @@ package alerting
 
 import "time"
 
-type Executor interface {
+type AlertingHandler interface {
 	Execute(rule *AlertJob, resultChan chan *AlertResult)
 }
 

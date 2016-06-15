@@ -17,7 +17,7 @@ type Engine struct {
 	clock       clock.Clock
 	ticker      *Ticker
 	scheduler   Scheduler
-	executor    Executor
+	handler     AlertingHandler
 	ruleReader  RuleReader
 	log         log.Logger
 }
@@ -28,7 +28,7 @@ func NewEngine() *Engine {
 		execQueue:   make(chan *AlertJob, 1000),
 		resultQueue: make(chan *AlertResult, 1000),
 		scheduler:   NewScheduler(),
-		executor:    NewExecutor(),
+		handler:     NewHandler(),
 		ruleReader:  NewRuleReader(),
 		log:         log.New("alerting.engine"),
 	}
@@ -84,7 +84,7 @@ func (e *Engine) executeJob(job *AlertJob) {
 	now := time.Now()
 
 	resultChan := make(chan *AlertResult, 1)
-	go e.executor.Execute(job, resultChan)
+	go e.handler.Execute(job, resultChan)
 
 	select {
 	case <-time.After(time.Second * 5):

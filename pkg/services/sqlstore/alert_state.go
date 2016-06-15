@@ -22,12 +22,12 @@ func SetNewAlertState(cmd *m.UpdateAlertStateCommand) error {
 
 		alert := m.Alert{}
 		has, err := sess.Id(cmd.AlertId).Get(&alert)
-		if !has {
-			return fmt.Errorf("Could not find alert")
-		}
-
 		if err != nil {
 			return err
+		}
+
+		if !has {
+			return fmt.Errorf("Could not find alert")
 		}
 
 		if alert.State == cmd.NewState {

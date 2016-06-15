@@ -14,17 +14,17 @@ var (
 	descriptionFmt = "Actual value: %1.2f for %s. "
 )
 
-type ExecutorImpl struct {
+type HandlerImpl struct {
 	log log.Logger
 }
 
-func NewExecutor() *ExecutorImpl {
-	return &ExecutorImpl{
+func NewHandler() *HandlerImpl {
+	return &HandlerImpl{
 		log: log.New("alerting.executor"),
 	}
 }
 
-func (e *ExecutorImpl) Execute(job *AlertJob, resultQueue chan *AlertResult) {
+func (e *HandlerImpl) Execute(job *AlertJob, resultQueue chan *AlertResult) {
 	timeSeries, err := e.executeQuery(job)
 	if err != nil {
 		resultQueue <- &AlertResult{
@@ -39,7 +39,7 @@ func (e *ExecutorImpl) Execute(job *AlertJob, resultQueue chan *AlertResult) {
 	resultQueue <- result
 }
 
-func (e *ExecutorImpl) executeQuery(job *AlertJob) (tsdb.TimeSeriesSlice, error) {
+func (e *HandlerImpl) executeQuery(job *AlertJob) (tsdb.TimeSeriesSlice, error) {
 	getDsInfo := &m.GetDataSourceByIdQuery{
 		Id:    job.Rule.Query.DatasourceId,
 		OrgId: job.Rule.OrgId,
@@ -68,7 +68,7 @@ func (e *ExecutorImpl) executeQuery(job *AlertJob) (tsdb.TimeSeriesSlice, error)
 	return result, nil
 }
 
-func (e *ExecutorImpl) GetRequestForAlertRule(rule *AlertRule, datasource *m.DataSource) *tsdb.Request {
+func (e *HandlerImpl) GetRequestForAlertRule(rule *AlertRule, datasource *m.DataSource) *tsdb.Request {
 	e.log.Debug("GetRequest", "query", rule.Query.Query, "from", rule.Query.From, "datasourceId", datasource.Id)
 	req := &tsdb.Request{
 		TimeRange: tsdb.TimeRange{
@@ -92,7 +92,7 @@ func (e *ExecutorImpl) GetRequestForAlertRule(rule *AlertRule, datasource *m.Dat
 	return req
 }
 
-func (e *ExecutorImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice) *AlertResult {
+func (e *HandlerImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice) *AlertResult {
 	e.log.Debug("Evaluating Alerting Rule", "seriesCount", len(series), "ruleName", rule.Name)
 
 	triggeredAlert := make([]*TriggeredAlert, 0)

@@ -11,7 +11,7 @@ import (
 
 func TestAlertingExecutor(t *testing.T) {
 	Convey("Test alert execution", t, func() {
-		executor := NewExecutor()
+		executor := NewHandler()
 
 		Convey("single time serie", func() {
 			Convey("Show return ok since avg is above 2", func() {
