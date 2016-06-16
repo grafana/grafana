@@ -45,24 +45,24 @@ type Notification struct {
 }
 
 type EmailNotifier struct {
-	To   string
-	From string
-	log  log.Logger
+	To  string
+	log log.Logger
 }
 
 func (this *EmailNotifier) Dispatch(alertResult *AlertResult) {
-	/*
-		this.log.Info("Sending email")
-		cmd := &m.SendEmailCommand{
-			Data:     map[string]interface{}{},
-			To:       []string{},
-			Info:     "",
-			Massive:  false,
-			Template: "",
-		}
+	this.log.Info("Sending email")
+	cmd := &m.SendEmailCommand{
+		Data: map[string]interface{}{
+			"Description":     alertResult.Description,
+			"TriggeredAlerts": alertResult.TriggeredAlerts,
+		},
+		To:       []string{this.To},
+		Info:     "Alert result",
+		Massive:  false,
+		Template: "",
+	}
 
-		bus.Dispatch(cmd)
-	*/
+	bus.Dispatch(cmd)
 }
 
 type WebhookNotifier struct {
@@ -124,9 +124,8 @@ func NewNotificationFromDBModel(model *m.AlertNotification) (*Notification, erro
 var createNotifier = func(notificationType string, settings *simplejson.Json) NotificationDispatcher {
 	if notificationType == "email" {
 		return &EmailNotifier{
-			To:   settings.Get("to").MustString(),
-			From: settings.Get("from").MustString(),
-			log:  log.New("alerting.notification.email"),
+			To:  settings.Get("to").MustString(),
+			log: log.New("alerting.notification.email"),
 		}
 	}
 
