@@ -67,7 +67,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
-    "chart.js": "2.1.5",
+    "chart.js": "2.1.6",
     "eventemitter3": "^1.2.0",
     "grunt-jscs": "~1.5.x",
     "grunt-sass-lint": "^0.2.0",
