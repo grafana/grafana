@@ -73,11 +73,19 @@ type WebhookNotifier struct {
 
 func (this *WebhookNotifier) Dispatch(alertResult *AlertResult) {
 	this.log.Info("Sending webhook")
+
+	bodyJSON := simplejson.New()
+	bodyJSON.Set("name", alertResult.AlertJob.Rule.Name)
+	bodyJSON.Set("state", alertResult.State)
+	bodyJSON.Set("trigged", alertResult.TriggeredAlerts)
+
+	body, _ := bodyJSON.MarshalJSON()
+
 	cmd := &m.SendWebhook{
 		Url:      this.Url,
 		User:     this.User,
 		Password: this.Password,
-		Body:     alertResult.Description,
+		Body:     string(body),
 	}
 
 	bus.Dispatch(cmd)
