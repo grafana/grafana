@@ -29,9 +29,8 @@ func RegCounter(name string, tagStrings ...string) Counter {
 // StandardCounter is the standard implementation of a Counter and uses the
 // sync/atomic package to manage a single int64 value.
 type StandardCounter struct {
+	count int64 //Due to a bug in golang the 64bit variable need to come first to be 64bit aligned. https://golang.org/pkg/sync/atomic/#pkg-note-BUG
 	*MetricMeta
-
-	count int64
 }
 
 // Clear sets the counter to zero.

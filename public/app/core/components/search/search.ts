@@ -5,6 +5,7 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from '../../core_module';
+import appEvents from 'app/core/app_events';
 
 export class SearchCtrl {
   isOpen: boolean;
@@ -148,9 +149,6 @@ export class SearchCtrl {
     this.searchDashboards();
   };
 
-  newDashboard() {
-    this.$location.url('dashboard/new');
-  };
 }
 
 export function searchDirective() {

@@ -5,8 +5,10 @@ import store from 'app/core/store';
 import _ from 'lodash';
 import angular from 'angular';
 import $ from 'jquery';
+
 import coreModule from 'app/core/core_module';
 import {profiler} from 'app/core/profiler';
+import appEvents from 'app/core/app_events';
 
 export class GrafanaCtrl {
 
@@ -27,6 +29,7 @@ export class GrafanaCtrl {
     };
 
     $scope.initDashboard = function(dashboardData, viewScope) {
+      $scope.appEvent("dashboard-fetch-end", dashboardData);
       $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
     };
 
@@ -44,6 +47,7 @@ export class GrafanaCtrl {
 
     $rootScope.appEvent = function(name, payload) {
       $rootScope.$emit(name, payload);
+      appEvents.emit(name, payload);
     };
 
     $rootScope.colors = [

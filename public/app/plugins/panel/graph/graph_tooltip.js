@@ -135,13 +135,13 @@ function ($) {
 
         // Dynamically reorder the hovercard for the current time point if the
         // option is enabled.
-        if (panel.tooltip.ordering === 'decreasing') {
+        if (panel.tooltip.sort === 2) {
           seriesHoverInfo.sort(function(a, b) {
-            return parseFloat(b.value) - parseFloat(a.value);
+            return b.value - a.value;
           });
-        } else if (panel.tooltip.ordering === 'increasing') {
+        } else if (panel.tooltip.sort === 1) {
           seriesHoverInfo.sort(function(a, b) {
-            return parseFloat(a.value) - parseFloat(b.value);
+            return a.value - b.value;
           });
         }
 

@@ -55,6 +55,8 @@ func Register(r *macaron.Macaron) {
 
 	r.Get("/dashboard/*", reqSignedIn, Index)
 	r.Get("/dashboard-solo/*", reqSignedIn, Index)
+	r.Get("/import/dashboard", reqSignedIn, Index)
+	r.Get("/dashboards/*", reqSignedIn, Index)
 
 	r.Get("/playlists/", reqSignedIn, Index)
 	r.Get("/playlists/*", reqSignedIn, Index)

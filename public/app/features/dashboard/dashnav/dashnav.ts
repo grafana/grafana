@@ -4,15 +4,16 @@ import _ from 'lodash';
 import moment from 'moment';
 import angular from 'angular';
 
+import {DashboardExporter} from '../export/exporter';
+
 export class DashNavCtrl {
 
   /** @ngInject */
-  constructor($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, $timeout) {
+  constructor($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, $timeout, datasourceSrv) {
 
     $scope.init = function() {
       $scope.onAppEvent('save-dashboard', $scope.saveDashboard);
       $scope.onAppEvent('delete-dashboard', $scope.deleteDashboard);
-      $scope.onAppEvent('export-dashboard', $scope.snapshot);
       $scope.onAppEvent('quick-snapshot', $scope.quickSnapshot);
 
       $scope.showSettingsMenu = $scope.dashboardMeta.canEdit || $scope.contextSrv.isEditor;
@@ -186,11 +187,11 @@ export class DashNavCtrl {
       });
     };
 
-    $scope.exportDashboard = function() {
+    $scope.viewJson = function() {
       var clone = $scope.dashboard.getSaveModelClone();
-      var blob = new Blob([angular.toJson(clone, true)], { type: "application/json;charset=utf-8" });
-      var wnd: any = window;
-      wnd.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime() + '.json');
+      var html = angular.toJson(clone, true);
+      var uri = "data:application/json," + encodeURIComponent(html);
+      var newWindow = window.open(uri);
     };
 
     $scope.snapshot = function() {
@@ -198,7 +199,6 @@ export class DashNavCtrl {
       $rootScope.$broadcast('refresh');
 
       $timeout(function() {
-        $scope.exportDashboard();
         $scope.dashboard.snapshot = false;
         $scope.appEvent('dashboard-snapshot-cleanup');
       }, 1000);

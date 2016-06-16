@@ -1,5 +1,5 @@
 ///<reference path="../headers/common.d.ts" />
-//
+
 import $ from 'jquery';
 import _ from 'lodash';
 import angular from 'angular';
@@ -7,7 +7,6 @@ import angular from 'angular';
 export class Profiler {
   panelsRendered: number;
   enabled: boolean;
-  panels: any[];
   panelsInitCount: any;
   timings: any;
   digestCounter: any;
@@ -29,28 +28,21 @@ export class Profiler {
       return false;
     }, () => {});
 
-    $rootScope.$on('refresh', this.refresh.bind(this));
-    $rootScope.onAppEvent('dashboard-fetched', this.dashboardFetched.bind(this));
-    $rootScope.onAppEvent('dashboard-initialized', this.dashboardInitialized.bind(this));
-    $rootScope.onAppEvent('panel-initialized', this.panelInitialized.bind(this));
+    $rootScope.onAppEvent('refresh', this.refresh.bind(this), $rootScope);
+    $rootScope.onAppEvent('dashboard-fetch-end', this.dashboardFetched.bind(this), $rootScope);
+    $rootScope.onAppEvent('dashboard-initialized', this.dashboardInitialized.bind(this), $rootScope);
+    $rootScope.onAppEvent('panel-initialized', this.panelInitialized.bind(this), $rootScope);
   }
 
   refresh() {
-    this.panels = [];
+    this.timings.query = 0;
+    this.timings.render = 0;
 
     setTimeout(() => {
-      var totalRender = 0;
-      var totalQuery = 0;
-
-      for (let panelTiming of this.panels) {
-        totalRender += panelTiming.render;
-        totalQuery += panelTiming.query;
-      }
-
-      console.log('panel count: ' + this.panels.length);
-      console.log('total query: ' + totalQuery);
-      console.log('total render: ' + totalRender);
-      console.log('avg render: ' + totalRender / this.panels.length);
+      console.log('panel count: ' + this.panelsInitCount);
+      console.log('total query: ' + this.timings.query);
+      console.log('total render: ' + this.timings.render);
+      console.log('avg render: ' + this.timings.render / this.panelsInitCount);
     }, 5000);
   }
 
@@ -60,7 +52,8 @@ export class Profiler {
     this.digestCounter = 0;
     this.panelsInitCount = 0;
     this.panelsRendered = 0;
-    this.panels = [];
+    this.timings.query = 0;
+    this.timings.render = 0;
   }
 
   dashboardInitialized() {
@@ -110,11 +103,8 @@ export class Profiler {
 
     if (this.enabled) {
       panelTimings.renderEnd = new Date().getTime();
-      this.panels.push({
-        panelId: panelId,
-        query: panelTimings.queryEnd - panelTimings.queryStart,
-        render: panelTimings.renderEnd - panelTimings.renderStart,
-      });
+      this.timings.query += panelTimings.queryEnd - panelTimings.queryStart;
+      this.timings.render += panelTimings.renderEnd - panelTimings.renderStart;
     }
   }
 
