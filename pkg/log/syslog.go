@@ -5,8 +5,10 @@ package log
 import (
 	"errors"
 	"log/syslog"
+	"os"
 
 	"github.com/inconshreveable/log15"
+	"gopkg.in/ini.v1"
 )
 
 type SysLogHandler struct {
@@ -18,10 +20,23 @@ type SysLogHandler struct {
 	Format   log15.Format
 }
 
-func NewSyslog() *SysLogHandler {
-	return &SysLogHandler{
+func NewSyslog(sec *ini.Section, format log15.Format) *SysLogHandler {
+	handler := &SysLogHandler{
 		Format: log15.LogfmtFormat(),
 	}
+
+	handler.Format = format
+	handler.Network = sec.Key("network").MustString("")
+	handler.Address = sec.Key("address").MustString("")
+	handler.Facility = sec.Key("facility").MustString("local7")
+	handler.Tag = sec.Key("tag").MustString("")
+
+	if err := handler.Init(); err != nil {
+		Root.Error("Failed to init syslog log handler", "error", err)
+		os.Exit(1)
+	}
+
+	return handler
 }
 
 func (sw *SysLogHandler) Init() error {
