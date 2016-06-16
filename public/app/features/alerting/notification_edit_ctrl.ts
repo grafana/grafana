@@ -10,7 +10,7 @@ export class AlertNotificationEditCtrl {
   notification: any;
 
   /** @ngInject */
-  constructor(private $routeParams, private backendSrv) {
+  constructor(private $routeParams, private backendSrv, private $scope) {
     if ($routeParams.notificationId) {
       this.loadNotification($routeParams.notificationId);
     }
@@ -33,13 +33,17 @@ export class AlertNotificationEditCtrl {
       this.backendSrv.put(`/api/alerts/notification/${this.notification.id}`, this.notification)
         .then(result => {
           this.notification = result;
-          console.log('updated notification', result);
+          this.$scope.appEvent('alert-success', ['Notification created!', '']);
+        }, () => {
+          this.$scope.appEvent('alert-error', ['Unable to create notification.', '']);
         });
     } else {
       this.backendSrv.post(`/api/alerts/notification`, this.notification)
         .then(result => {
           this.notification = result;
-          console.log('created new notification', result);
+          this.$scope.appEvent('alert-success', ['Notification updated!', '']);
+        }, () => {
+          this.$scope.appEvent('alert-error', ['Unable to update notification.', '']);
         });
     }
   }

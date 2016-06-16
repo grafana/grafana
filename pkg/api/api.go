@@ -257,6 +257,7 @@ func Register(r *macaron.Macaron) {
 				r.Post("/", bind(m.CreateAlertNotificationCommand{}), wrap(CreateAlertNotification))
 				r.Put("/:notificationId", bind(m.UpdateAlertNotificationCommand{}), wrap(UpdateAlertNotification))
 				r.Get("/:notificationId", wrap(GetAlertNotificationById))
+				r.Delete("/:notificationId", wrap(DeleteAlertNotification))
 			})
 
 			r.Get("/changes", wrap(GetAlertChanges))

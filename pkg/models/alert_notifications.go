@@ -35,6 +35,11 @@ type UpdateAlertNotificationCommand struct {
 	Result *AlertNotification
 }
 
+type DeleteAlertNotificationCommand struct {
+	Id    int64
+	OrgId int64
+}
+
 type GetAlertNotificationQuery struct {
 	Name  string
 	Id    int64

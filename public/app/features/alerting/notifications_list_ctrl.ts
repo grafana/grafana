@@ -10,7 +10,7 @@ export class AlertNotificationsListCtrl {
   notifications: any;
 
   /** @ngInject */
-  constructor(private backendSrv) {
+  constructor(private backendSrv, private $scope) {
     this.loadNotifications();
   }
 
@@ -19,7 +19,20 @@ export class AlertNotificationsListCtrl {
       this.notifications = result;
     });
   }
+
+  deleteNotification(notificationId) {
+    this.backendSrv.delete(`/api/alerts/notification/${notificationId}`)
+      .then(() => {
+        this.notifications = this.notifications.filter(notification => {
+          return notification.id !== notificationId;
+        });
+        this.$scope.appEvent('alert-success', ['Notification deleted', '']);
+      }, () => {
+        this.$scope.appEvent('alert-error', ['Unable to delete notification', '']);
+      });
+  }
 }
 
 coreModule.controller('AlertNotificationsListCtrl', AlertNotificationsListCtrl);
+
 

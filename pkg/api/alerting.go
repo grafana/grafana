@@ -201,3 +201,16 @@ func UpdateAlertNotification(c *middleware.Context, cmd models.UpdateAlertNotifi
 
 	return Json(200, cmd.Result)
 }
+
+func DeleteAlertNotification(c *middleware.Context) Response {
+	cmd := models.DeleteAlertNotificationCommand{
+		OrgId: c.OrgId,
+		Id:    c.ParamsInt64("notificationId"),
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to delete alert notification", err)
+	}
+
+	return Json(200, map[string]interface{}{"notificationId": cmd.Id})
+}

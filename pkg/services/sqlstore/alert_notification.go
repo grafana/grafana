@@ -15,6 +15,20 @@ func init() {
 	bus.AddHandler("sql", AlertNotificationQuery)
 	bus.AddHandler("sql", CreateAlertNotificationCommand)
 	bus.AddHandler("sql", UpdateAlertNotification)
+	bus.AddHandler("sql", DeleteAlertNotification)
+}
+
+func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		sql := "DELETE FROM alert_notification WHERE alert_notification.org_id = ? AND alert_notification.id = ?"
+		_, err := sess.Exec(sql, cmd.OrgId, cmd.Id)
+
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
 }
 
 func AlertNotificationQuery(query *m.GetAlertNotificationQuery) error {
