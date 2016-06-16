@@ -67,6 +67,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "Chart.Annotation.js": "^0.1.0",
     "chart.js": "2.1.6",
     "eventemitter3": "^1.2.0",
     "grunt-jscs": "~1.5.x",
