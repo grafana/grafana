@@ -182,6 +182,10 @@ class MetricsPanelCtrl extends PanelCtrl {
       cacheTimeout: this.panel.cacheTimeout
     };
 
+    metricsQuery.targets.forEach(function(target) {
+      target.exprID = target.refId + metricsQuery.panelId;
+    });
+
     return datasource.query(metricsQuery);
   }
 

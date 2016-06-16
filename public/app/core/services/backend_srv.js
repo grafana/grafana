@@ -7,7 +7,7 @@ define([
 function (angular, _, coreModule, config) {
   'use strict';
 
-  coreModule.default.service('backendSrv', function($http, alertSrv, $timeout) {
+  coreModule.default.service('backendSrv', function($http, alertSrv, $timeout, $q) {
     var self = this;
 
     this.get = function(url, params) {
@@ -91,8 +91,25 @@ function (angular, _, coreModule, config) {
       });
     };
 
+    var datasourceInFlightRequests = {};
+    var HTTP_REQUEST_ABORTED = -1;
     this.datasourceRequest = function(options) {
       options.retry = options.retry || 0;
+
+      // A requestID is provided by the datasource as a unique identifier for a
+      // particular query. If the requestID exists, the promise it is keyed to
+      // is canceled, canceling the previous datasource request if it is still
+      // in-flight.
+      var canceler;
+      if (options.requestID) {
+        if (canceler = datasourceInFlightRequests[options.requestID]) {
+          canceler.resolve();
+        }
+        canceler = $q.defer();
+        options.timeout = canceler.promise;
+        datasourceInFlightRequests[options.requestID] = canceler;
+      }
+
       var requestIsLocal = options.url.indexOf('/') === 0;
       var firstAttempt = options.retry === 0;
 
@@ -102,10 +119,21 @@ function (angular, _, coreModule, config) {
       }
 
       return $http(options).then(null, function(err) {
+        if (err.status === HTTP_REQUEST_ABORTED) {
+          // TODO: Hitting refresh before the original request returns cancels
+          // the "loading" animation on the panes, but it should continue to be
+          // visible.
+          err.statusText = "request aborted";
+          return err;
+        }
+
         // handle unauthorized for backend requests
-        if (requestIsLocal && firstAttempt  && err.status === 401) {
+        if (requestIsLocal && firstAttempt && err.status === 401) {
           return self.loginPing().then(function() {
             options.retry = 1;
+            if (canceler) {
+              canceler.resolve();
+            }
             return self.datasourceRequest(options);
           });
         }

@@ -21,10 +21,11 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   this.withCredentials = instanceSettings.withCredentials;
   this.lastErrors = {};
 
-  this._request = function(method, url) {
+  this._request = function(method, url, requestID) {
     var options: any = {
       url: this.url + url,
-      method: method
+      method: method,
+      requestID: requestID,
     };
 
     if (this.basicAuth || this.withCredentials) {
@@ -57,6 +58,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return escapedValues.join('|');
   };
 
+  var HTTP_REQUEST_ABORTED = -1;
   // Called once per panel (graph)
   this.query = function(options) {
     var self = this;
@@ -75,6 +77,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
       var query: any = {};
       query.expr = templateSrv.replace(target.expr, options.scopedVars, self.interpolateQueryExpr);
+      query.requestID = target.exprID;
 
       var interval = target.interval || options.interval;
       var intervalFactor = target.intervalFactor || 1;
@@ -105,6 +108,9 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       var result = [];
 
       _.each(allResponse, function(response, index) {
+        if (response.status === HTTP_REQUEST_ABORTED) {
+          return;
+        }
         if (response.status === 'error') {
           self.lastErrors.query = response.error;
           throw response.error;
@@ -122,7 +128,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
   this.performTimeSeriesQuery = function(query, start, end) {
     var url = '/api/v1/query_range?query=' + encodeURIComponent(query.expr) + '&start=' + start + '&end=' + end + '&step=' + query.step;
-    return this._request('GET', url);
+    return this._request('GET', url, query.requestID);
   };
 
   this.performSuggestQuery = function(query) {
