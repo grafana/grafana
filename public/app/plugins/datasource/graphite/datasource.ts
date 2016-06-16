@@ -30,13 +30,17 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
       return $q.when({data: []});
     }
 
-    var httpOptions: any = {method: this.render_method, url: '/render'};
+    var httpOptions: any = {
+      method: 'POST',
+      url: '/render',
+      data: params.join('&'),
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+    };
 
-    if (httpOptions.method === 'GET') {
-      httpOptions.url = httpOptions.url + '?' + params.join('&');
-    } else {
-      httpOptions.data = params.join('&');
-      httpOptions.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+    if (options.panelId) {
+      httpOptions.requestId = 'panel' + options.panelId;
     }
 
     return this.doGraphiteRequest(httpOptions).then(this.convertDataPointsToMs);
@@ -177,17 +181,6 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     });
   };
 
-  this.listDashboards = function(query) {
-    return this.doGraphiteRequest({ method: 'GET',  url: '/dashboard/find/', params: {query: query || ''} })
-    .then(function(results) {
-      return results.data.dashboards;
-    });
-  };
-
-  this.loadDashboard = function(dashName) {
-    return this.doGraphiteRequest({method: 'GET', url: '/dashboard/load/' + encodeURIComponent(dashName) });
-  };
-
   this.doGraphiteRequest = function(options) {
     if (this.basicAuth || this.withCredentials) {
       options.withCredentials = true;
@@ -198,7 +191,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     }
 
     options.url = this.url + options.url;
-    options.inspect = { type: 'graphite' };
+    options.inspect = {type: 'graphite'};
 
     return backendSrv.datasourceRequest(options);
   };

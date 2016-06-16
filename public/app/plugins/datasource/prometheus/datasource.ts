@@ -21,11 +21,11 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   this.withCredentials = instanceSettings.withCredentials;
   this.lastErrors = {};
 
-  this._request = function(method, url, requestID) {
+  this._request = function(method, url, requestId) {
     var options: any = {
       url: this.url + url,
       method: method,
-      requestID: requestID,
+      requestId: requestId,
     };
 
     if (this.basicAuth || this.withCredentials) {
@@ -77,7 +77,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
       var query: any = {};
       query.expr = templateSrv.replace(target.expr, options.scopedVars, self.interpolateQueryExpr);
-      query.requestID = target.exprID;
+      query.requestId = target.expr;
 
       var interval = target.interval || options.interval;
       var intervalFactor = target.intervalFactor || 1;
@@ -103,14 +103,10 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       return this.performTimeSeriesQuery(query, start, end);
     }, this));
 
-    return $q.all(allQueryPromise)
-    .then(function(allResponse) {
+    return $q.all(allQueryPromise).then(function(allResponse) {
       var result = [];
 
       _.each(allResponse, function(response, index) {
-        if (response.status === HTTP_REQUEST_ABORTED) {
-          return;
-        }
         if (response.status === 'error') {
           self.lastErrors.query = response.error;
           throw response.error;
@@ -128,7 +124,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
   this.performTimeSeriesQuery = function(query, start, end) {
     var url = '/api/v1/query_range?query=' + encodeURIComponent(query.expr) + '&start=' + start + '&end=' + end + '&step=' + query.step;
-    return this._request('GET', url, query.requestID);
+    return this._request('GET', url, query.requestId);
   };
 
   this.performSuggestQuery = function(query) {
@@ -175,9 +171,11 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       expr: interpolated,
       step: '60s'
     };
+
     var start = getPrometheusTime(options.range.from, false);
     var end = getPrometheusTime(options.range.to, true);
     var self = this;
+
     return this.performTimeSeriesQuery(query, start, end).then(function(results) {
       var eventList = [];
       tagKeys = tagKeys.split(',');
