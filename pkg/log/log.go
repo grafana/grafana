@@ -179,17 +179,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 			loggersToClose = append(loggersToClose, fileHandler)
 			handler = fileHandler
 		case "syslog":
-			sysLogHandler := NewSyslog()
-			sysLogHandler.Format = format
-			sysLogHandler.Network = sec.Key("network").MustString("")
-			sysLogHandler.Address = sec.Key("address").MustString("")
-			sysLogHandler.Facility = sec.Key("facility").MustString("local7")
-			sysLogHandler.Tag = sec.Key("tag").MustString("")
-
-			if err := sysLogHandler.Init(); err != nil {
-				Root.Error("Failed to init syslog log handler", "error", err)
-				os.Exit(1)
-			}
+			sysLogHandler := NewSyslog(sec, format)
 
 			loggersToClose = append(loggersToClose, sysLogHandler)
 			handler = sysLogHandler
