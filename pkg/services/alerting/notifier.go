@@ -19,14 +19,11 @@ func NewNotifier() *NotifierImpl {
 }
 
 func (n *NotifierImpl) Notify(alertResult *AlertResult) {
-	n.log.Warn("LETS NOTIFY!!!!A")
 	notifiers := n.getNotifiers(alertResult.AlertJob.Rule.OrgId, []int64{1, 2})
 
 	for _, notifier := range notifiers {
-
 		warn := alertResult.State == alertstates.Warn && notifier.SendWarning
 		crit := alertResult.State == alertstates.Critical && notifier.SendCritical
-		n.log.Warn("looopie", "warn", warn, "crit", crit)
 		if warn || crit {
 			n.log.Info("Sending notification", "state", alertResult.State, "type", notifier.Type)
 			go notifier.Notifierr.Dispatch(alertResult)
@@ -100,7 +97,6 @@ func (n *NotifierImpl) getNotifiers(orgId int64, notificationGroups []int64) []*
 
 	var result []*Notification
 
-	n.log.Warn("query result", "length", len(query.Result))
 	for _, notification := range query.Result {
 		not, err := NewNotificationFromDBModel(notification)
 		if err == nil {

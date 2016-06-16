@@ -32,15 +32,13 @@ func processWebhookQueue() {
 			err := sendWebRequest(webhook)
 
 			if err != nil {
-				webhookLog.Error("Failed to send webrequest ")
+				webhookLog.Error("Failed to send webrequest ", "error", err)
 			}
 		}
 	}
 }
 
 func sendWebRequest(webhook *Webhook) error {
-	webhookLog.Error("Sending stuff! ", "url", webhook.Url)
-
 	client := http.Client{
 		Timeout: time.Duration(3 * time.Second),
 	}
