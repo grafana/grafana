@@ -5,6 +5,7 @@ function (coreModule) {
   "use strict";
 
   coreModule.default.controller('LoadDashboardCtrl', function($scope, $routeParams, dashboardLoaderSrv, backendSrv, $location) {
+    $scope.appEvent("dashboard-fetch-start");
 
     if (!$routeParams.slug) {
       backendSrv.get('/api/dashboards/home').then(function(homeDash) {

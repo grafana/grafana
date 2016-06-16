@@ -51,7 +51,7 @@ export class DashboardCtrl {
           $scope.updateSubmenuVisibility();
           $scope.setWindowTitleAndTheme();
 
-          $scope.appEvent("dashboard-loaded", $scope.dashboard);
+          $scope.appEvent("dashboard-initialized", $scope.dashboard);
         }).catch(function(err) {
           if (err.data && err.data.message) { err.message = err.data.message; }
           $scope.appEvent("alert-error", ['Dashboard init failed', 'Template variables could not be initialized: ' + err.message]);
