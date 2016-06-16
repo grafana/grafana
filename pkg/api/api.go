@@ -252,9 +252,11 @@ func Register(r *macaron.Macaron) {
 			})
 
 			r.Get("/notifications", wrap(GetAlertNotifications))
+
 			r.Group("/notification", func() {
 				r.Post("/", bind(m.CreateAlertNotificationCommand{}), wrap(CreateAlertNotification))
-				r.Put("/", bind(m.UpdateAlertNotificationCommand{}), wrap(UpdateAlertNotification))
+				r.Put("/:notificationId", bind(m.UpdateAlertNotificationCommand{}), wrap(UpdateAlertNotification))
+				r.Get("/:notificationId", wrap(GetAlertNotificationById))
 			})
 
 			r.Get("/changes", wrap(GetAlertChanges))

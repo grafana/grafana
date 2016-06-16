@@ -169,20 +169,33 @@ func GetAlertNotifications(c *middleware.Context) Response {
 	return Json(200, query.Result)
 }
 
-func CreateAlertNotification(c *middleware.Context, cmd *models.CreateAlertNotificationCommand) Response {
+func GetAlertNotificationById(c *middleware.Context) Response {
+	query := &models.GetAlertNotificationQuery{
+		OrgID: c.OrgId,
+		Id:    c.ParamsInt64("notificationId"),
+	}
+
+	if err := bus.Dispatch(query); err != nil {
+		return ApiError(500, "Failed to get alert notifications", err)
+	}
+
+	return Json(200, query.Result[0])
+}
+
+func CreateAlertNotification(c *middleware.Context, cmd models.CreateAlertNotificationCommand) Response {
 	cmd.OrgID = c.OrgId
 
-	if err := bus.Dispatch(cmd); err != nil {
+	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to create alert notification", err)
 	}
 
 	return Json(200, cmd.Result)
 }
 
-func UpdateAlertNotification(c *middleware.Context, cmd *models.UpdateAlertNotificationCommand) Response {
+func UpdateAlertNotification(c *middleware.Context, cmd models.UpdateAlertNotificationCommand) Response {
 	cmd.OrgID = c.OrgId
 
-	if err := bus.Dispatch(cmd); err != nil {
+	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to update alert notification", err)
 	}
 

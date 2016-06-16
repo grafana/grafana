@@ -5,7 +5,9 @@ import _ from 'lodash';
 import coreModule from '../../core/core_module';
 import config from 'app/core/config';
 
-export class AlertNotificationsCtrl {
+export class AlertNotificationsListCtrl {
+
+  notifications: any;
 
   /** @ngInject */
   constructor(private backendSrv) {
@@ -13,8 +15,11 @@ export class AlertNotificationsCtrl {
   }
 
   loadNotifications() {
+    this.backendSrv.get(`/api/alerts/notifications`).then(result => {
+      this.notifications = result;
+    });
   }
 }
 
-coreModule.controller('AlertNotificationsCtrl', AlertNotificationsCtrl);
+coreModule.controller('AlertNotificationsListCtrl', AlertNotificationsListCtrl);
 

@@ -1,0 +1,37 @@
+<navbar icon="fa fa-fw fa-list" title="Alerting" title-url="alerting">
+</navbar>
+
+<div class="page-container" >
+	<div class="page-header">
+		<h1>Alert notifications</h1>
+    <button class="btn btn-success pull-right">
+      <i class="fa fa-plus"></i>
+      New Notification
+    </button>
+  </div>
+
+	<table class="grafana-options-table">
+		<thead>
+			<th style="min-width: 200px"><strong>Name</strong></th>
+			<th style="width: 1%">Type</th>
+			<th style="width: 1%"></th>
+		</thead>
+		<tr ng-repeat="notification in ctrl.notifications">
+			<td>
+				<a href="alerting/notification{{notification.id}}/edit">
+					{{alert.name}}
+				</a>
+			</td>
+			<td class="text-center">
+				{{notification.type}}
+			</td>
+			<td class="text-center">
+				<a href="alerting/notification/{{notification.id}}/edit" class="btn btn-inverse btn-small">
+					<i class="fa fa-edit"></i>
+					edit
+				</a>
+			</td>
+		</tr>
+	</table>
+
+</div>

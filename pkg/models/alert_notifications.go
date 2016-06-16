@@ -7,31 +7,30 @@ import (
 )
 
 type AlertNotification struct {
-	Id       int64
-	OrgId    int64
-	Name     string
-	Type     string
-	Settings *simplejson.Json
-
-	Created time.Time
-	Updated time.Time
+	Id       int64            `json:"id"`
+	OrgId    int64            `json:"-"`
+	Name     string           `json:"name"`
+	Type     string           `json:"type"`
+	Settings *simplejson.Json `json:"settings"`
+	Created  time.Time        `json:"created"`
+	Updated  time.Time        `json:"updated"`
 }
 
 type CreateAlertNotificationCommand struct {
-	Name     string
-	Type     string
-	OrgID    int64
-	Settings *simplejson.Json
+	Name     string           `json:"name"  binding:"Required"`
+	Type     string           `json:"type"  binding:"Required"`
+	OrgID    int64            `json:"-"`
+	Settings *simplejson.Json `json:"settings"`
 
 	Result *AlertNotification
 }
 
 type UpdateAlertNotificationCommand struct {
-	Id       int64
-	Name     string
-	Type     string
-	OrgID    int64
-	Settings *simplejson.Json
+	Id       int64            `json:"id"  binding:"Required"`
+	Name     string           `json:"name"  binding:"Required"`
+	Type     string           `json:"type"  binding:"Required"`
+	OrgID    int64            `json:"-"`
+	Settings *simplejson.Json `json:"settings"  binding:"Required"`
 
 	Result *AlertNotification
 }
