@@ -259,6 +259,9 @@ function (angular, $, moment, _, kbn, GraphTooltip, Chart) {
             // TODO
             sortedSeries = _.map(data, function(series) {
               series.borderColor = series.color;
+              series.borderWidth = 2;
+              series.pointRadius = 0;
+              series.fill = (panel.fill > 0); // TODO
               return series;
             });
           }
@@ -303,17 +306,23 @@ function (angular, $, moment, _, kbn, GraphTooltip, Chart) {
                               format: 'x',
                             //  tooltipFormat: 'll HH:mm'
                             },
-                            scaleLabel: {
+                            gridLines: {
                               display: true,
-                              labelString: 'Date'
+                              color: '#c8c8c8'
+                            },
+                            scaleLabel: {
+                              display: false,
                             }
                           }
                         ],
                         yAxes: [
                           {
-                            scaleLabel: {
+                            gridLines: {
                               display: true,
-                              labelString: 'value'
+                              color: '#c8c8c8'
+                            },
+                            scaleLabel: {
+                              display: false,
                             }
                           }
                         ]
