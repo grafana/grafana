@@ -8,7 +8,6 @@ import (
 	"net/url"
 	"time"
 
-	"github.com/Unknwon/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -33,7 +32,6 @@ func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
 		req.Host = url.Host
 
 		req.URL.Path = util.JoinUrlFragments(url.Path+"/api", proxyPath)
-		log.Info("Url: %v", req.URL.Path)
 
 		// clear cookie headers
 		req.Header.Del("Cookie")
