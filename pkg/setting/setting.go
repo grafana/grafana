@@ -144,6 +144,9 @@ var (
 
 	// logger
 	logger log.Logger
+
+	// Grafana.NET URL
+	GrafanaNetUrl string
 )
 
 type CommandLineArgs struct {
@@ -525,6 +528,8 @@ func NewConfigContext(args *CommandLineArgs) error {
 	if VerifyEmailEnabled && !Smtp.Enabled {
 		log.Warn("require_email_validation is enabled but smpt is disabled")
 	}
+
+	GrafanaNetUrl = Cfg.Section("grafana.net").Key("url").MustString("https://grafana.net")
 
 	return nil
 }

@@ -68,10 +68,6 @@ function(angular, $) {
         scope.appEvent('shift-time-forward', evt);
       }, { inputDisabled: true });
 
-      keyboardManager.bind('ctrl+e', function(evt) {
-        scope.appEvent('export-dashboard', evt);
-      }, { inputDisabled: true });
-
       keyboardManager.bind('ctrl+i', function(evt) {
         scope.appEvent('quick-snapshot', evt);
       }, { inputDisabled: true });

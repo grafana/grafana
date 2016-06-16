@@ -92,7 +92,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     tooltip       : {
       value_type: 'cumulative',
       shared: true,
-      ordering: 'alphabetical',
+      sort: 0,
       msResolution: false,
     },
     // time overrides
@@ -176,12 +176,6 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onDataReceived(dataList) {
-    // png renderer returns just a url
-    if (_.isString(dataList)) {
-      this.render(dataList);
-      return;
-    }
-
     this.datapointsWarning = false;
     this.datapointsCount = 0;
     this.datapointsOutside = false;

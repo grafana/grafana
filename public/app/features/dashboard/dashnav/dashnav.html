@@ -26,11 +26,19 @@
 			<li>
 				<a class="pointer" ng-click="shareDashboard(0)">
 					<i class="fa fa-link"></i> Link to Dashboard
+					<div class="dropdown-desc">Share an internal link to the current dashboard. Some configuration options available.</div>
 				</a>
 			</li>
 			<li>
 				<a class="pointer" ng-click="shareDashboard(1)">
-					<i class="icon-gf icon-gf-snapshot"></i>Snapshot sharing
+					<i class="icon-gf icon-gf-snapshot"></i>Snapshot
+					<div class="dropdown-desc">Interactive, publically accessible dashboard. Sensitive data is stripped out.</div>
+				</a>
+			</li>
+      <li>
+				<a class="pointer" ng-click="shareDashboard(2)">
+					<i class="fa fa-cloud-upload"></i>Export
+					<div class="dropdown-desc">Export the dashboard to a JSON file for others and to share on Grafana.net</div>
 				</a>
 			</li>
 		</ul>
@@ -44,8 +52,7 @@
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('settings');">Settings</a></li>
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('annotations');">Annotations</a></li>
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('templating');">Templating</a></li>
-			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="exportDashboard();">Export</a></li>
-			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="editJson();">View JSON</a></li>
+			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="viewJson();">View JSON</a></li>
 			<li ng-if="contextSrv.isEditor && !dashboard.editable"><a class="pointer" ng-click="makeEditable();">Make Editable</a></li>
 			<li ng-if="contextSrv.isEditor"><a class="pointer" ng-click="saveDashboardAs();">Save As...</a></li>
 			<li ng-if="dashboardMeta.canSave"><a class="pointer" ng-click="deleteDashboard();">Delete dashboard</a></li>

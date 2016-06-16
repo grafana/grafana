@@ -84,11 +84,11 @@ function (angular, _, coreModule, config) {
 
       _.each(config.datasources, function(value, key) {
         if (value.meta && value.meta.metrics) {
-          metricSources.push({
-            value: key === config.defaultDatasource ? null : key,
-            name: key,
-            meta: value.meta,
-          });
+          metricSources.push({value: key, name: key, meta: value.meta});
+
+          if (key === config.defaultDatasource) {
+            metricSources.push({value: null, name: 'default', meta: value.meta});
+          }
         }
       });
 
