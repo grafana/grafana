@@ -16,7 +16,6 @@ func TestAlertNotificationExtraction(t *testing.T) {
 		Convey("Parsing email notification from settings", func() {
 			json := `
             {
-                "from": "alerting@grafana.org",
                 "to": "ops@grafana.org"
             }`
 
@@ -36,7 +35,6 @@ func TestAlertNotificationExtraction(t *testing.T) {
 
 			email := not.Notifierr.(*EmailNotifier)
 			So(email.To, ShouldEqual, "ops@grafana.org")
-			So(email.From, ShouldEqual, "alerting@grafana.org")
 		})
 
 		Convey("Parsing webhook notification from settings", func() {
