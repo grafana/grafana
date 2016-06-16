@@ -6,28 +6,13 @@ function ($, coreModule) {
   'use strict';
 
   var editViewMap = {
-    'settings':    { src: 'public/app/features/dashboard/partials/settings.html', title: "Settings" },
-    'annotations': { src: 'public/app/features/annotations/partials/editor.html', title: "Annotations" },
-    'templating':  { src: 'public/app/features/templating/partials/editor.html', title: "Templating" }
+    'settings':    { src: 'public/app/features/dashboard/partials/settings.html'},
+    'annotations': { src: 'public/app/features/annotations/partials/editor.html'},
+    'templating':  { src: 'public/app/features/templating/partials/editor.html'},
+    'import':      { src: '<dash-import></dash-import>' }
   };
 
-  coreModule.default.directive('dashEditorLink', function($timeout) {
-    return {
-      restrict: 'A',
-      link: function(scope, elem, attrs) {
-        var partial = attrs.dashEditorLink;
-
-        elem.bind('click',function() {
-          $timeout(function() {
-            var editorScope = attrs.editorScope === 'isolated' ? null : scope;
-            scope.appEvent('show-dash-editor', { src: partial, scope: editorScope });
-          });
-        });
-      }
-    };
-  });
-
-  coreModule.default.directive('dashEditorView', function($compile, $location) {
+  coreModule.default.directive('dashEditorView', function($compile, $location, $rootScope) {
     return {
       restrict: 'A',
       link: function(scope, elem) {
@@ -72,8 +57,25 @@ function ($, coreModule) {
             }
           };
 
-          var src = "'" + payload.src + "'";
-          var view = $('<div class="tabbed-view" ng-include="' + src + '"></div>');
+          if (editview === 'import') {
+            var modalScope = $rootScope.$new();
+            modalScope.$on("$destroy", function() {
+              editorScope.dismiss();
+            });
+
+            $rootScope.appEvent('show-modal', {
+              templateHtml: '<dash-import></dash-import>',
+              scope: modalScope,
+              backdrop: 'static'
+            });
+
+            return;
+          }
+
+          var view = payload.src;
+          if (view.indexOf('.html') > 0)  {
+            view = $('<div class="tabbed-view" ng-include="' + "'" + view + "'" + '"></div>');
+          }
 
           elem.append(view);
           $compile(elem.contents())(editorScope);

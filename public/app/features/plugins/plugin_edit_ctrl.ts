@@ -88,7 +88,6 @@ export class PluginEditCtrl {
         jsonData: this.model.jsonData,
         secureJsonData: this.model.secureJsonData,
       }, {});
-
       return this.backendSrv.post(`/api/plugins/${this.pluginId}/settings`, updateCmd);
     })
     .then(this.postUpdateHook)

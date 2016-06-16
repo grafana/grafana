@@ -12,7 +12,6 @@ export class SubmenuCtrl {
   constructor(private $rootScope,
               private templateValuesSrv,
               private templateSrv,
-              private dynamicDashboardSrv,
               private $location) {
     this.annotations = this.dashboard.templating.list;
     this.variables = this.dashboard.templating.list;
@@ -29,7 +28,6 @@ export class SubmenuCtrl {
 
   variableUpdated(variable) {
     this.templateValuesSrv.variableUpdated(variable).then(() => {
-      this.dynamicDashboardSrv.update(this.dashboard);
       this.$rootScope.$emit('template-variable-value-updated');
       this.$rootScope.$broadcast('refresh');
     });
