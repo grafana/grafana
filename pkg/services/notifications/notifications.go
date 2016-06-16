@@ -58,11 +58,10 @@ func Init() error {
 
 func sendWebhook(cmd *m.SendWebhook) error {
 	addToWebhookQueue(&Webhook{
-		Url:          cmd.Url,
-		AuthUser:     cmd.AuthUser,
-		AuthPassword: cmd.AuthPassword,
-		Method:       cmd.Method,
-		Body:         cmd.Body,
+		Url:      cmd.Url,
+		User:     cmd.User,
+		Password: cmd.Password,
+		Body:     cmd.Body,
 	})
 
 	return nil

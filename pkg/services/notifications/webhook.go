@@ -1,18 +1,19 @@
 package notifications
 
 import (
+	"bytes"
 	"net/http"
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type Webhook struct {
-	Url          string
-	AuthUser     string
-	AuthPassword string
-	Body         string
-	Method       string
+	Url      string
+	User     string
+	Password string
+	Body     string
 }
 
 var webhookQueue chan *Webhook
@@ -40,9 +41,14 @@ func processWebhookQueue() {
 func sendWebRequest(webhook *Webhook) error {
 	webhookLog.Error("Sending stuff! ", "url", webhook.Url)
 
-	client := http.Client{Timeout: time.Duration(3 * time.Second)}
+	client := http.Client{
+		Timeout: time.Duration(3 * time.Second),
+	}
 
-	request, err := http.NewRequest(webhook.Method, webhook.Url, nil /*io.reader*/)
+	request, err := http.NewRequest("POST", webhook.Url, bytes.NewReader([]byte(webhook.Body)))
+	if webhook.User != "" && webhook.Password != "" {
+		request.Header.Add("Authorization", util.GetBasicAuthHeader(webhook.User, webhook.Password))
+	}
 
 	if err != nil {
 		return err

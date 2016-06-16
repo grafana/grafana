@@ -66,18 +66,19 @@ func (this *EmailNotifier) Dispatch(alertResult *AlertResult) {
 }
 
 type WebhookNotifier struct {
-	Url          string
-	Method       string
-	AuthUser     string
-	AuthPassword string
-	log          log.Logger
+	Url      string
+	User     string
+	Password string
+	log      log.Logger
 }
 
 func (this *WebhookNotifier) Dispatch(alertResult *AlertResult) {
 	this.log.Info("Sending webhook")
 	cmd := &m.SendWebhook{
-		Url:    this.Url,
-		Method: this.Method,
+		Url:      this.Url,
+		User:     this.User,
+		Password: this.Password,
+		Body:     alertResult.Description,
 	}
 
 	bus.Dispatch(cmd)
@@ -130,10 +131,9 @@ var createNotifier = func(notificationType string, settings *simplejson.Json) No
 	}
 
 	return &WebhookNotifier{
-		Url:          settings.Get("url").MustString(),
-		Method:       settings.Get("method").MustString(),
-		AuthUser:     settings.Get("user").MustString(),
-		AuthPassword: settings.Get("password").MustString(),
-		log:          log.New("alerting.notification.webhook"),
+		Url:      settings.Get("url").MustString(),
+		User:     settings.Get("user").MustString(),
+		Password: settings.Get("password").MustString(),
+		log:      log.New("alerting.notification.webhook"),
 	}
 }
