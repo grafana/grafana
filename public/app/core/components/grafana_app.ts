@@ -29,6 +29,7 @@ export class GrafanaCtrl {
     };
 
     $scope.initDashboard = function(dashboardData, viewScope) {
+      $scope.appEvent("dashboard-fetch-end", dashboardData);
       $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
     };
 
