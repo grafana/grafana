@@ -1,6 +1,8 @@
 package alerting
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -108,27 +110,44 @@ func (n *NotifierImpl) getNotifiers(orgId int64, notificationGroups []int64) []*
 }
 
 func NewNotificationFromDBModel(model *m.AlertNotification) (*Notification, error) {
+	notifier, err := createNotifier(model.Type, model.Settings)
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &Notification{
 		Name:         model.Name,
 		Type:         model.Type,
-		Notifierr:    createNotifier(model.Type, model.Settings),
+		Notifierr:    notifier,
 		SendCritical: !model.Settings.Get("ignoreCrit").MustBool(),
 		SendWarning:  !model.Settings.Get("ignoreWarn").MustBool(),
 	}, nil
 }
 
-var createNotifier = func(notificationType string, settings *simplejson.Json) NotificationDispatcher {
+var createNotifier = func(notificationType string, settings *simplejson.Json) (NotificationDispatcher, error) {
 	if notificationType == "email" {
-		return &EmailNotifier{
-			To:  settings.Get("to").MustString(),
-			log: log.New("alerting.notification.email"),
+		to := settings.Get("to").MustString()
+
+		if to == "" {
+			return nil, fmt.Errorf("Could not find to propertie in settings")
 		}
+
+		return &EmailNotifier{
+			To:  to,
+			log: log.New("alerting.notification.email"),
+		}, nil
+	}
+
+	url := settings.Get("url").MustString()
+	if url == "" {
+		return nil, fmt.Errorf("Could not find url propertie in settings")
 	}
 
 	return &WebhookNotifier{
-		Url:      settings.Get("url").MustString(),
+		Url:      url,
 		User:     settings.Get("user").MustString(),
 		Password: settings.Get("password").MustString(),
 		log:      log.New("alerting.notification.webhook"),
-	}
+	}, nil
 }
