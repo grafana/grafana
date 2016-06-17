@@ -279,6 +279,16 @@ function (angular, $, moment, _, kbn, GraphTooltip, Chart) {
                   canvas.height = elem.height();
                   elem.append($(canvas));
 
+                  var type = 'line';
+                  if (panel.lines) {
+                    type = 'line';
+                  } else if (panel.bars) {
+                    type = 'bar';
+                  } else if (panel.points) {
+                    type = '';
+                    // TODO
+                  }
+
                   var labels = [];
                   var ticks = Math.floor(panelWidth / 100);
                   var timediff = Math.floor((ctrl.range.to-ctrl.range.from) / ticks);
@@ -291,7 +301,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, Chart) {
                   Chart.defaults.global.legend.display = false;
                   Chart.defaults.global.tooltips.enabled = false;
                   chart = new Chart(canvas, {
-                    type: 'line',
+                    type: type,
                     data: {
                       labels: labels,
                       datasets: data
