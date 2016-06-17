@@ -109,6 +109,7 @@ func (e *HandlerImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice)
 				ActualValue: transformedValue,
 				Name:        serie.Name,
 			})
+			continue
 		}
 
 		warnResult := evalCondition(rule.Warning, transformedValue)
