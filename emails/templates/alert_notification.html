@@ -3,13 +3,15 @@
 [[Subject .Subject "Grafana Alert: [ [[.State]] ] [[.Name]]" ]]
 
 Alertstate: [[.State]]<br />
-[[.AlertPageUrl]]"<br />
-[[.DashboardLink]]"<br />
+[[.AlertPageUrl]]<br />
+[[.DashboardLink]]<br />
 [[.Description]]<br />
 
 [[if eq .State "Ok"]]
     Everything is Ok     
 [[end]]
+
+<img src="[[.DashboardImage]]" />
 
 [[if ne .State "Ok" ]]
     <table class="row">

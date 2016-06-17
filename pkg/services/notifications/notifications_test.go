@@ -45,11 +45,12 @@ func TestNotifications(t *testing.T) {
 			Convey("When sending reset email password", func() {
 				cmd := &m.SendEmailCommand{
 					Data: map[string]interface{}{
-						"Name":          "Name",
-						"State":         "Critical",
-						"Description":   "Description",
-						"DashboardLink": "http://localhost:3000/dashboard/db/alerting",
-						"AlertPageUrl":  "http://localhost:3000/alerting",
+						"Name":           "Name",
+						"State":          "Critical",
+						"Description":    "Description",
+						"DashboardLink":  "http://localhost:3000/dashboard/db/alerting",
+						"AlertPageUrl":   "http://localhost:3000/alerting",
+						"DashboardImage": "http://localhost:3000/render/dashboard-solo/db/alerting?from=1466169458375&to=1466171258375&panelId=1&width=1000&height=500",
 						"TriggeredAlerts": []testTriggeredAlert{
 							{Name: "desktop", State: "Critical", ActualValue: 13},
 							{Name: "mobile", State: "Warn", ActualValue: 5},
@@ -68,18 +69,18 @@ func TestNotifications(t *testing.T) {
 				So(sentMsg.Body, ShouldContainSubstring, "Warn")
 				So(sentMsg.Body, ShouldContainSubstring, "mobile")
 				So(sentMsg.Body, ShouldContainSubstring, "desktop")
-
 				So(sentMsg.Subject, ShouldContainSubstring, "Grafana Alert: [ Critical ] ")
 			})
 
 			Convey("given critical", func() {
 				cmd := &m.SendEmailCommand{
 					Data: map[string]interface{}{
-						"Name":          "Name",
-						"State":         "Warn",
-						"Description":   "Description",
-						"DashboardLink": "http://localhost:3000/dashboard/db/alerting",
-						"AlertPageUrl":  "http://localhost:3000/alerting",
+						"Name":           "Name",
+						"State":          "Warn",
+						"Description":    "Description",
+						"DashboardLink":  "http://localhost:3000/dashboard/db/alerting",
+						"DashboardImage": "http://localhost:3000/render/dashboard-solo/db/alerting?from=1466169458375&to=1466171258375&panelId=1&width=1000&height=500",
+						"AlertPageUrl":   "http://localhost:3000/alerting",
 						"TriggeredAlerts": []testTriggeredAlert{
 							{Name: "desktop", State: "Critical", ActualValue: 13},
 							{Name: "mobile", State: "Warn", ActualValue: 5},

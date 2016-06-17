@@ -64,6 +64,7 @@ func (this *EmailNotifier) Dispatch(alertResult *AlertResult) {
 			"TriggeredAlerts": alertResult.TriggeredAlerts,
 			"DashboardLink":   grafanaUrl + "/dashboard/db/alerting",
 			"AlertPageUrl":    grafanaUrl + "/alerting",
+			"DashboardImage":  grafanaUrl + "/render/dashboard-solo/db/alerting?from=1466169458375&to=1466171258375&panelId=1&width=1000&height=500",
 		},
 		To:       []string{this.To},
 		Template: "alert_notification.html",
