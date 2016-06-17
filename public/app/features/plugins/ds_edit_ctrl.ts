@@ -168,15 +168,13 @@ coreModule.directive('datasourceHttpSettings', function() {
   return {
     scope: {
       current: "=",
-      defaultUrl: "="
+      suggestUrl: "@",
     },
     templateUrl: 'public/app/features/plugins/partials/ds_http_settings.html',
     link: {
       pre: function($scope, elem, attrs) {
-        $scope.suggestDefaultUrl = function() {
-          return [
-            $scope.defaultUrl
-          ];
+        $scope.getSuggestUrls = function() {
+          return [$scope.suggestUrl];
         };
       }
     }
