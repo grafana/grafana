@@ -37,8 +37,10 @@ function (angular, _) {
 
     $scope.sortOptions = [
       {value: 0, text: "Without Sort"},
-      {value: 1, text: "Alphabetical"},
-      {value: 2, text: "Numerical"},
+      {value: 1, text: "Alphabetical (asc)"},
+      {value: 2, text: "Alphabetical (desc)"},
+      {value: 3, text: "Numerical (asc)"},
+      {value: 4, text: "Numerical (desc)"},
     ];
 
     $scope.hideOptions = [

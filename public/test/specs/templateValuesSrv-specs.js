@@ -399,7 +399,7 @@ define([
       });
     });
 
-    describeUpdateVariable('with alphabetical sort', function(scenario) {
+    describeUpdateVariable('with alphabetical sort (asc)', function(scenario) {
       scenario.setup(function() {
         scenario.variable = {type: 'query', query: 'apps.*', name: 'test', sort: 1};
         scenario.queryResult = [{text: 'bbb2'}, {text: 'aaa10'}, { text: 'ccc3'}];
@@ -412,9 +412,22 @@ define([
       });
     });
 
-    describeUpdateVariable('with numerical sort', function(scenario) {
+    describeUpdateVariable('with alphabetical sort (desc)', function(scenario) {
       scenario.setup(function() {
         scenario.variable = {type: 'query', query: 'apps.*', name: 'test', sort: 2};
+        scenario.queryResult = [{text: 'bbb2'}, {text: 'aaa10'}, { text: 'ccc3'}];
+      });
+
+      it('should return options with alphabetical sort', function() {
+        expect(scenario.variable.options[0].text).to.be('ccc3');
+        expect(scenario.variable.options[1].text).to.be('bbb2');
+        expect(scenario.variable.options[2].text).to.be('aaa10');
+      });
+    });
+
+    describeUpdateVariable('with numerical sort (asc)', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {type: 'query', query: 'apps.*', name: 'test', sort: 3};
         scenario.queryResult = [{text: 'bbb2'}, {text: 'aaa10'}, { text: 'ccc3'}];
       });
 
@@ -422,6 +435,19 @@ define([
         expect(scenario.variable.options[0].text).to.be('bbb2');
         expect(scenario.variable.options[1].text).to.be('ccc3');
         expect(scenario.variable.options[2].text).to.be('aaa10');
+      });
+    });
+
+    describeUpdateVariable('with numerical sort (desc)', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {type: 'query', query: 'apps.*', name: 'test', sort: 4};
+        scenario.queryResult = [{text: 'bbb2'}, {text: 'aaa10'}, { text: 'ccc3'}];
+      });
+
+      it('should return options with numerical sort', function() {
+        expect(scenario.variable.options[0].text).to.be('aaa10');
+        expect(scenario.variable.options[1].text).to.be('ccc3');
+        expect(scenario.variable.options[2].text).to.be('bbb2');
       });
     });
   });

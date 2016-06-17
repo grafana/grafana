@@ -359,18 +359,27 @@ function (angular, _, kbn) {
       }
       options = _.uniq(options, 'value');
 
-      if (variable.sort === 1) {
-        return _.sortBy(options, 'text');
-      } else if (variable.sort === 2) {
-        return _.sortBy(options, function(opt) {
-          var matches = opt.text.match(/.*?(\d+).*/);
-          if (!matches) {
-            return 0;
-          } else {
-            return parseInt(matches[1], 10);
-          }
-        });
+      var sortType = Math.ceil(variable.sort / 2);
+      if (sortType === 0) {
+        return options;
       } else {
+        if (sortType === 1) {
+          options = _.sortBy(options, 'text');
+        } else if (sortType === 2) {
+          options = _.sortBy(options, function(opt) {
+            var matches = opt.text.match(/.*?(\d+).*/);
+            if (!matches) {
+              return 0;
+            } else {
+              return parseInt(matches[1], 10);
+            }
+          });
+        }
+
+        if (variable.sort % 2 === 0) {
+          options = options.reverse();
+        }
+
         return options;
       }
     };
