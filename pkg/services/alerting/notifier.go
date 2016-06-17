@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting/alertstates"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type NotifierImpl struct {
@@ -50,18 +51,28 @@ type EmailNotifier struct {
 
 func (this *EmailNotifier) Dispatch(alertResult *AlertResult) {
 	this.log.Info("Sending email")
-	cmd := &m.SendEmailCommand{
-		Data: map[string]interface{}{
-			"Description":     alertResult.Description,
-			"TriggeredAlerts": alertResult.TriggeredAlerts,
-		},
-		To:       []string{this.To},
-		Info:     "Alert result",
-		Massive:  false,
-		Template: "",
+	grafanaUrl := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
+	if setting.AppSubUrl != "" {
+		grafanaUrl += "/" + setting.AppSubUrl
 	}
 
-	bus.Dispatch(cmd)
+	cmd := &m.SendEmailCommand{
+		Data: map[string]interface{}{
+			"Name":            "Name",
+			"State":           alertResult.State,
+			"Description":     alertResult.Description,
+			"TriggeredAlerts": alertResult.TriggeredAlerts,
+			"DashboardLink":   grafanaUrl + "/dashboard/db/alerting",
+			"AlertPageUrl":    grafanaUrl + "/alerting",
+		},
+		To:       []string{this.To},
+		Template: "alert_notification.html",
+	}
+
+	err := bus.Dispatch(cmd)
+	if err != nil {
+		this.log.Error("Could not send alert notification as email", "error", err)
+	}
 }
 
 type WebhookNotifier struct {

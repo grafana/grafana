@@ -1,0 +1,29 @@
+<!-- This email is sent when an existing user is added to an organization -->
+
+[[Subject .Subject "Grafana Alert: [ [[.State]] ] [[.Name]]" ]]
+
+Alertstate: [[.State]]<br />
+[[.AlertPageUrl]]"<br />
+[[.DashboardLink]]"<br />
+[[.Description]]<br />
+
+[[if eq .State "Ok"]]
+    Everything is Ok     
+[[end]]
+
+[[if ne .State "Ok" ]]
+    <table class="row">
+        <tr>
+            <td class="expander">Serie</td>
+            <td class="expander">State</td>
+            <td class="expander">Actual value</td>
+        </tr>
+        [[ range $ta := .TriggeredAlerts]]            
+        <tr>
+            <td class="expander">[[$ta.Name]]</td>
+            <td class="expander">[[$ta.State]]</td>
+            <td class="expander">[[$ta.ActualValue]]</td>
+        </tr>
+        [[end]]
+    </table>
+[[end]]
