@@ -69,9 +69,7 @@ export class DashImportCtrl {
 
     if (sources.length === 0) {
       inputModel.info = "No data sources of type " + input.pluginName + " found";
-    } else if (inputModel.description) {
-      inputModel.info = inputModel.description;
-    } else {
+    } else if (!inputModel.info) {
       inputModel.info = "Select a " + input.pluginName + " data source";
     }
 
