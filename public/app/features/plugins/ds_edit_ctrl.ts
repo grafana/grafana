@@ -171,9 +171,13 @@ coreModule.directive('datasourceHttpSettings', function() {
       defaultUrl: "="
     },
     templateUrl: 'public/app/features/plugins/partials/ds_http_settings.html',
-    link: function($scope, elem, attrs) {
-      if (!$scope.current.url && $scope.defaultUrl) {
-        $scope.current.url = $scope.defaultUrl;
+    link: {
+      pre: function($scope, elem, attrs) {
+        $scope.suggestDefaultUrl = function() {
+          return [
+            $scope.defaultUrl
+          ];
+        };
       }
     }
   };
