@@ -74,7 +74,6 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 		Value:    warning.Get("value").MustFloat64(),
 	}
 
-	model.Frequency = getTimeDurationStringToSeconds(ruleDef.Settings.Get("frequency").MustString())
 	model.Transform = ruleDef.Settings.Get("transform").Get("type").MustString()
 	model.TransformParams = *ruleDef.Settings.Get("transform")
 
