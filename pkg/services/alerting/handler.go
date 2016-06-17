@@ -102,7 +102,8 @@ func (e *HandlerImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice)
 		transformedValue, _ := rule.Transformer.Transform(serie)
 
 		critResult := evalCondition(rule.Critical, transformedValue)
-		e.log.Debug("Alert execution Crit", "name", serie.Name, "transformedValue", transformedValue, "operator", rule.Critical.Operator, "level", rule.Critical.Value, "result", critResult)
+		condition2 := fmt.Sprintf("%v %s %v ", transformedValue, rule.Critical.Operator, rule.Critical.Value)
+		e.log.Debug("Alert execution Crit", "name", serie.Name, "condition", condition2, "result", critResult)
 		if critResult {
 			triggeredAlert = append(triggeredAlert, &TriggeredAlert{
 				State:       alertstates.Critical,
@@ -113,7 +114,8 @@ func (e *HandlerImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice)
 		}
 
 		warnResult := evalCondition(rule.Warning, transformedValue)
-		e.log.Debug("Alert execution Warn", "name", serie.Name, "transformedValue", transformedValue, "operator", rule.Warning.Operator, "level", rule.Warning.Value, "result", warnResult)
+		condition := fmt.Sprintf("%v %s %v ", transformedValue, rule.Warning.Operator, rule.Warning.Value)
+		e.log.Debug("Alert execution Warn", "name", serie.Name, "condition", condition, "result", warnResult)
 		if warnResult {
 			triggeredAlert = append(triggeredAlert, &TriggeredAlert{
 				State:       alertstates.Warn,
