@@ -22,6 +22,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				Name:        "Alerting title",
 				Description: "Alerting description",
 				Settings:    simplejson.New(),
+				Frequency:   1,
 			},
 		}
 
@@ -52,6 +53,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(alert.Name, ShouldEqual, "Alerting title")
 			So(alert.Description, ShouldEqual, "Alerting description")
 			So(alert.State, ShouldEqual, "OK")
+			So(alert.Frequency, ShouldEqual, 1)
 		})
 
 		Convey("Alerts with same dashboard id and panel id should update", func() {

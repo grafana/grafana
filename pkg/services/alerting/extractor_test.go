@@ -215,6 +215,11 @@ func TestAlertRuleExtraction(t *testing.T) {
 					So(alerts[1].Handler, ShouldEqual, 0)
 				})
 
+				Convey("should extract frequency in seconds", func() {
+					So(alerts[0].Frequency, ShouldEqual, 60)
+					So(alerts[1].Frequency, ShouldEqual, 60)
+				})
+
 				Convey("should extract panel idc", func() {
 					So(alerts[0].PanelId, ShouldEqual, 3)
 					So(alerts[1].PanelId, ShouldEqual, 4)

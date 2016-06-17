@@ -16,6 +16,7 @@ type Alert struct {
 	State       string
 	Handler     int64
 	Enabled     bool
+	Frequency   int64
 
 	Created time.Time
 	Updated time.Time
