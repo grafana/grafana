@@ -75,7 +75,7 @@ function (angular, _, require, config) {
 
       var soloUrl = $scope.shareUrl;
       soloUrl = soloUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
-      soloUrl = soloUrl.replace("&fullscreen", "");
+      soloUrl = soloUrl.replace("&fullscreen", "").replace("&edit", "");
 
       $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
 
