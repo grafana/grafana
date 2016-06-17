@@ -2,19 +2,21 @@
 
 package log
 
-import "github.com/inconshreveable/log15"
+import (
+	"github.com/inconshreveable/log15"
+	"gopkg.in/ini.v1"
+)
 
 type SysLogHandler struct {
 }
 
-func NewSyslog() *SysLogHandler {
+func NewSyslog(sec *ini.Section, format log15.Format) *SysLogHandler {
 	return &SysLogHandler{}
-}
-
-func (sw *SysLogHandler) Init() error {
-	return nil
 }
 
 func (sw *SysLogHandler) Log(r *log15.Record) error {
 	return nil
+}
+
+func (sw *SysLogHandler) Close() {
 }
