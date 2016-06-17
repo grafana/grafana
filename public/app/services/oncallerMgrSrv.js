@@ -46,11 +46,11 @@ function (angular) {
       });
     };
 
-    this.remove = function(oncallerService) {
+    this.remove = function(oncallerOrg, oncallerService) {
       return $http({
         method: "delete",
         url: oncallerUrl,
-        params: {service: oncallerService},
+        params: {org: oncallerOrg, service: oncallerService},
         headers: {'Content-Type': 'text/plain'},
       });
     };

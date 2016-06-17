@@ -29,13 +29,13 @@
           {{oncallerDef.service}}
         </td>
         <td style="width: 1%">
-          <a href="oncallers/edit/{{oncallerDef.service}}" class="btn btn-inverse btn-mini">
+          <a href="oncallers/edit/{{oncallerDef.org}}:{{oncallerDef.service}}" class="btn btn-inverse btn-mini">
             <i class="fa fa-edit"></i>
             Edit
           </a>
         </td>
         <td style="width: 1%">
-          <a ng-click="remove(oncallerDef.service)" class="btn btn-danger btn-mini">
+          <a ng-click="remove(oncallerDef.org, oncallerDef.service)" class="btn btn-danger btn-mini">
             <i class="fa fa-remove"></i>
           </a>
         </td>

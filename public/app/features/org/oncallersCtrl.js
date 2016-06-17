@@ -18,13 +18,13 @@ function (angular) {
       });
     };
 
-    $scope.remove = function(oncallerService) {
+    $scope.remove = function(oncallerOrg, oncallerService) {
       $scope.appEvent('confirm-modal', {
         title: 'Are you sure you want to delete this oncaller?',
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {
-          oncallerMgrSrv.remove(oncallerService).then(function onSuccess() {
+          oncallerMgrSrv.remove(oncallerOrg, oncallerService).then(function onSuccess() {
             for (var i = $scope.oncallerDefList.length - 1; i >= 0; i--) {
               if (oncallerService === $scope.oncallerDefList[i].service) {
                 $scope.oncallerDefList.splice(i, 1);
