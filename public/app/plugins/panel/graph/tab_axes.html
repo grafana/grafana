@@ -40,6 +40,14 @@
 	<div class="section gf-form-group">
 		<h5 class="section-heading">X-Axis</h5>
 		<gf-form-switch class="gf-form" label="Show" label-class="width-5" checked="ctrl.panel.xaxis.show" on-change="ctrl.render()"></gf-form-switch>
+
+    <div ng-if="ctrl.panel.xaxis.show">
+      <div class="gf-form">
+        <label class="gf-form-label width-5">Format</label>
+        <input class="gf-form-input max-width-15" placeholder="auto" empty-to-null ng-model="ctrl.panel.xaxis.format" ng-change="ctrl.render()" ng-model-onblur>
+      </div>
+    </div>
+
 	</div>
 
   <div class="section gf-form-group">

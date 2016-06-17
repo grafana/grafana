@@ -15,6 +15,7 @@ import angular from 'angular';
 import config from 'app/core/config';
 import _ from 'lodash';
 import {coreModule} from './core/core';
+import moment from 'moment';
 
 export class GrafanaApp {
   registerFunctions: any;
@@ -46,6 +47,10 @@ export class GrafanaApp {
         $compileProvider.debugInfoEnabled(false);
       }
       $httpProvider.useApplyAsync(true);
+
+      // Configure moment.js to use browser locale http://momentjs.com/docs/#/i18n/changing-locale/
+      var locale = window.navigator.userLanguage || window.navigator.language;
+      moment.locale(locale);
 
       this.registerFunctions.controller = $controllerProvider.register;
       this.registerFunctions.directive  = $compileProvider.directive;

@@ -254,19 +254,32 @@ describe('grafanaGraph', function() {
 
       it('should format dates as hours minutes', function() {
         var axis = ctx.plotOptions.xaxis;
-        expect(axis.timeformat).to.be('%H:%M');
+        expect(axis.tickFormatter(axis.min)).to.be('10:00');
       });
     });
 
     describe('and the range is less than one year', function() {
-      ctx.setup(function(scope) {
-        scope.range.from = moment([2015, 1, 1]);
-        scope.range.to = moment([2015, 11, 20]);
+      ctx.setup(function(ctrl) {
+        ctrl.range.from = moment([2015, 1, 1]);
+        ctrl.range.to = moment([2015, 11, 20]);
       });
 
       it('should format dates as month days', function() {
         var axis = ctx.plotOptions.xaxis;
-        expect(axis.timeformat).to.be('%m/%d');
+        expect(axis.tickFormatter(axis.min)).to.be('02/01');
+      });
+    });
+
+    describe('and the panel has a custom xaxis format', function() {
+      ctx.setup(function(ctrl) {
+        ctrl.panel.xaxis = {format: 'MM.DD.YYYY'};
+        ctrl.range.from = moment([2015, 1, 1]);
+        ctrl.range.to = moment([2015, 11, 20]);
+      });
+
+      it('should format with the custom format', function() {
+        var axis = ctx.plotOptions.xaxis;
+        expect(axis.tickFormatter(axis.min)).to.be('02.01.2015');
       });
     });
 

@@ -16,6 +16,7 @@ export class TimePickerCtrl {
 
   dashboard: any;
   panel: any;
+  firstDayOfWeek: number;
   absolute: any;
   timeRaw: any;
   tooltip: string;
@@ -42,6 +43,10 @@ export class TimePickerCtrl {
     this.panel = this.dashboard.timepicker;
 
     _.defaults(this.panel, TimePickerCtrl.defaults);
+
+    // angular-ui hardcoded startingDay until https://github.com/angular-ui/bootstrap/commit/332eefb46497486d24e5633be53acb6709bc22d7
+    // This assignment can be removed after updating angular-ui and locale is assigned via https://docs.angularjs.org/api/ng/service/$locale
+    this.firstDayOfWeek = moment.localeData().firstDayOfWeek();
 
     var time = angular.copy(this.timeSrv.timeRange());
     var timeRaw = angular.copy(this.timeSrv.timeRange(false));
