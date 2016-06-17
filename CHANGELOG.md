@@ -15,9 +15,12 @@
 * **OpenTSDB**: Support nested template variables in tag_values function, closes [4398](https://github.com/grafana/grafana/issues/4398)
 * **Datasource**: Pending data source requests are cancelled before new ones are issues (Graphite & Prometheus), closes [5321](https://github.com/grafana/grafana/issues/5321)
 
-## Breaking changes
+### Breaking changes
 * **Logging** : Changed default logging output format (now structured into message, and key value pairs, with logger key acting as component). You can also no change in config to json log ouput.
 * **Graphite** : The Graph panel no longer have a Graphite PNG option. closes #[5367](https://github.com/grafana/grafana/issues/5367)
+
+### Bug fixes
+* **PNG rendering**: Fixed phantomjs rendering and y-axis label rotation. fixes #[5220](https://github.com/grafana/grafana/issues/5220)
 
 # 3.0.4 Patch release (2016-05-25)
 * **Panel**: Fixed blank dashboard issue when switching to other dashboard while in fullscreen edit mode, fixes [#5163](https://github.com/grafana/grafana/pull/5163)
