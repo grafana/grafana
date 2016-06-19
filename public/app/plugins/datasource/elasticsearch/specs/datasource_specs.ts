@@ -11,7 +11,7 @@ describe('ElasticDatasource', function() {
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
+  beforeEach(ctx.providePhase(['templateSrv', 'backendSrv','timeSrv']));
 
   beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
     ctx.$q = $q;
@@ -110,6 +110,77 @@ describe('ElasticDatasource', function() {
       var body = angular.fromJson(parts[1]);
       expect(body.size).to.be(500);
     });
+  });
+
+  describe('When issuing aggregation query on es5.x', function() {
+    var requestOptions, parts, header;
+
+    beforeEach(function() {
+      createDatasource({url: 'http://es.com', index: 'test', jsonData: {esVersion: '5'}});
+
+      ctx.backendSrv.datasourceRequest = function(options) {
+        requestOptions = options;
+        return ctx.$q.when({data: {responses: []}});
+      };
+
+      ctx.ds.query({
+        range: { from: moment([2015, 4, 30, 10]), to: moment([2015, 5, 1, 10]) },
+        targets: [{
+            bucketAggs: [
+                {type: 'date_histogram', field: '@timestamp', id: '2'}
+            ],
+            metrics: [
+                {type: 'count'}], query: 'test' }
+            ]
+      });
+
+      ctx.$rootScope.$apply();
+      parts = requestOptions.data.split('\n');
+      header = angular.fromJson(parts[0]);
+    });
+
+    it('should not set search type to count', function() {
+      expect(header.search_type).to.not.eql('count');
+    });
+
+    it('should set size to 0', function() {
+      var body = angular.fromJson(parts[1]);
+      expect(body.size).to.be(0);
+    });
+
+  });
+
+  describe('When issuing metricFind query on es5.x', function() {
+    var requestOptions, parts, header;
+
+    beforeEach(function() {
+      createDatasource({url: 'http://es.com', index: 'test', jsonData: {esVersion: '5'}});
+
+      ctx.backendSrv.datasourceRequest = function(options) {
+        requestOptions = options;
+        return ctx.$q.when({
+            data: {
+                responses: [{aggregations: {"1": [{buckets: {text: 'test', value: '1'}}]}}]
+            }
+        });
+      };
+
+      ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}');
+      ctx.$rootScope.$apply();
+
+      parts = requestOptions.data.split('\n');
+      header = angular.fromJson(parts[0]);
+    });
+
+    it('should not set search type to count', function() {
+      expect(header.search_type).to.not.eql('count');
+    });
+
+    it('should set size to 0', function() {
+      var body = angular.fromJson(parts[1]);
+      expect(body.size).to.be(0);
+    });
+
   });
 
 });
