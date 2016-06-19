@@ -1,0 +1,77 @@
+.clearfix {
+  @include clearfix();
+}
+
+.highlight-word {
+  color: $brand-primary;
+}
+
+.emphasis-word {
+  font-weight: 500;
+  color: $text-color-emphasis;
+}
+
+// Close icons
+// --------------------------------------------------
+.close {
+  @include opacity(20);
+
+  float: right;
+  font-size: 20px;
+  font-weight: bold;
+  line-height: $line-height-base;
+  color: $black;
+  text-shadow: 0 1px 0 rgba(255,255,255,1);
+
+  &:hover,
+  &:focus {
+    color: $black;
+    text-decoration: none;
+    cursor: pointer;
+    @include opacity(40);
+  }
+}
+
+// Additional properties for button version
+// iOS requires the button element instead of an anchor tag.
+// If you want the anchor version, it requires `href="#"`.
+button.close {
+  padding: 0;
+  cursor: pointer;
+  background: transparent;
+  border: 0;
+  -webkit-appearance: none;
+}
+
+//
+// Utility classes
+// --------------------------------------------------
+
+
+// Quick floats
+.pull-right {
+  float: right !important;
+}
+
+.pull-left {
+  float: left !important;
+}
+
+// Toggling content
+.hide {
+  display: none;
+}
+
+.show {
+  display: block;
+}
+
+// Visibility
+.invisible {
+  visibility: hidden !important;
+}
+
+// For Affix plugin
+.affix {
+  position: fixed;
+}

@@ -1,0 +1,74 @@
+<div class="editor-row">
+	<div class="section gf-form-group" ng-repeat="yaxis in ctrl.panel.yaxes">
+
+		<h5 class="section-heading" ng-show="$index === 0">Left Y</h5>
+		<h5 class="section-heading" ng-show="$index === 1">Right Y</h5>
+
+		<gf-form-switch class="gf-form" label="Show" label-class="width-5" checked="yaxis.show" on-change="ctrl.render()"></gf-form-switch>
+
+		<div ng-if="yaxis.show">
+			<div class="gf-form">
+				<label class="gf-form-label width-5">Unit</label>
+				<div class="gf-form-dropdown-typeahead max-width-15" ng-model="yaxis.format" dropdown-typeahead2="ctrl.unitFormats" dropdown-typeahead-on-select="ctrl.setUnitFormat(yaxis, $subItem)"></div>
+			</div>
+
+			<div class="gf-form">
+				<label class="gf-form-label width-5">Scale</label>
+				<div class="gf-form-select-wrapper max-width-15">
+					<select class="gf-form-input" ng-model="yaxis.logBase" ng-options="v as k for (k, v) in ctrl.logScales" ng-change="ctrl.render()"></select>
+				</div>
+			</div>
+
+			<div class="gf-form-inline">
+				<div class="gf-form max-width-10">
+					<label class="gf-form-label width-5">Y-Min</label>
+					<input type="number" class="gf-form-input" placeholder="auto" empty-to-null ng-model="yaxis.min" ng-change="ctrl.render()" ng-model-onblur>
+				</div>
+				<div class="gf-form max-width-10">
+					<label class="gf-form-label width-5">Y-Max</label>
+					<input type="number" class="gf-form-input" placeholder="auto" empty-to-null ng-model="yaxis.max" ng-change="ctrl.render()" ng-model-onblur>
+				</div>
+			</div>
+
+			<div class="gf-form">
+				<label class="gf-form-label width-5">Label</label>
+				<input type="text" class="gf-form-input max-width-20" ng-model="yaxis.label" ng-change="ctrl.render()" ng-model-onblur>
+			</div>
+		</div>
+	</div>
+
+	<div class="section gf-form-group">
+		<h5 class="section-heading">X-Axis</h5>
+		<gf-form-switch class="gf-form" label="Show" label-class="width-5" checked="ctrl.panel.xaxis.show" on-change="ctrl.render()"></gf-form-switch>
+	</div>
+
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Thresholds</h5>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label width-6">Level 1</label>
+        <input type="number" class="gf-form-input max-width-5" ng-model="ctrl.panel.grid.threshold1" ng-change="ctrl.render()" ng-model-onblur>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-5">Color</label>
+        <div class="gf-form-label">
+          <spectrum-picker ng-model="ctrl.panel.grid.threshold1Color" ng-change="ctrl.render()" ></spectrum-picker>
+        </div>
+      </div>
+    </div>
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label width-6">Level 2</label>
+        <input type="number" class="gf-form-input max-width-5" ng-model="ctrl.panel.grid.threshold2" ng-change="ctrl.render()" ng-model-onblur>
+      </div>
+      <div class="gf-form">
+        <label class="gf-form-label width-5">Color</label>
+        <div class="gf-form-label">
+          <spectrum-picker ng-model="ctrl.panel.grid.threshold2Color" ng-change="ctrl.render()" ></spectrum-picker>
+        </div>
+      </div>
+    </div>
+
+    <gf-form-switch class="gf-form" label="Line Mode" label-class="width-6" checked="ctrl.panel.grid.thresholdLine" on-change="ctrl.render()"></gf-form-switch>
+  </div>
+</div>

@@ -3,6 +3,7 @@ package models
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -16,12 +17,11 @@ func TestDashboardModel(t *testing.T) {
 	})
 
 	Convey("Given a dashboard json", t, func() {
-		json := map[string]interface{}{
-			"title": "test dash",
-		}
+		json := simplejson.New()
+		json.Set("title", "test dash")
 
 		Convey("With tags as string value", func() {
-			json["tags"] = ""
+			json.Set("tags", "")
 			dash := NewDashboardFromJson(json)
 
 			So(len(dash.GetTags()), ShouldEqual, 0)

@@ -102,7 +102,6 @@ function(angular, _) {
         value.current = null;
         value.options = null;
       });
-
     };
 
     p.hasChanges = function() {
@@ -139,8 +138,8 @@ function(angular, _) {
       };
 
       $rootScope.appEvent('show-modal', {
-        src: './app/partials/unsaved-changes.html',
-        modalClass: 'modal-no-header confirm-modal',
+        src: 'public/app/partials/unsaved-changes.html',
+        modalClass: 'confirm-modal',
         scope: modalScope,
       });
     };

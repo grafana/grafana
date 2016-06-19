@@ -23,4 +23,4 @@ scrape_configs:
     # scheme defaults to 'http'.
 
     target_groups:
-      - targets: ['localhost:9090', '172.17.42.1:9091']
+      - targets: ['localhost:9090', '172.17.0.1:9091']

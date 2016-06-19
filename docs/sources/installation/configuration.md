@@ -44,6 +44,12 @@ Then you can override them using:
 
 <hr />
 
+## instance_name
+Set the name of the grafana-server instance. Used in logging and internal metrics and in
+clustering info. Defaults to: `${HOSTNAME}, which will be replaced with
+environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use
+system calls to get the machine name.
+
 ## [paths]
 
 ### data
@@ -156,7 +162,24 @@ The database user's password (not applicable for `sqlite3`).
 
 ### ssl_mode
 
-For `postgres` only, either `disable`, `require` or `verify-full`.
+For Postgres, use either `disable`, `require` or `verify-full`.
+For MySQL, use either `true`, `false`, or `skip-verify`.
+
+### ca_cert_path
+
+(MySQL only) The path to the CA certificate to use. On many linux systems, certs can be found in `/etc/ssl/certs`.
+
+### client_key_path
+
+(MySQL only) The path to the client key. Only if server requires client authentication.
+
+### client_cert_path
+
+(MySQL only) The path to the client cert. Only if server requires client authentication.
+
+### server_cert_name
+
+(MySQL only) The common name field of the certificate used by the `mysql` server. Not necessary if `ssl_mode` is set to `skip-verify`.
 
 <hr />
 
@@ -169,7 +192,7 @@ Defaults to `admin`.
 
 ### admin_password
 
-The password of the default Grafana admin.  Defaults to `admin`.
+The password of the default Grafana admin. Set once on first-run.  Defaults to `admin`.
 
 ### login_remember_days
 
@@ -209,7 +232,7 @@ organization to be created for that new user.
 
 The role new users will be assigned for the main organization (if the
 above setting is set to true).  Defaults to `Viewer`, other valid
-options are `Admin` and `Editor`.
+options are `Admin` and `Editor` and `Read-Only Editor`.
 
 <hr>
 
@@ -251,6 +274,7 @@ example:
     scopes = user:email
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
+    api_url = https://api.github.com
     allow_sign_up = false
     team_ids =
 
@@ -355,7 +379,7 @@ Set to `true` to enable auto sign up of users who do not exist in Grafana DB. De
 
 ### provider
 
-Valid values are `memory`, `file`, `mysql`, `postgres`. Default is `file`.
+Valid values are `memory`, `file`, `mysql`, `postgres`, `memcache` or `redis`. Default is `file`.
 
 ### provider_config
 
@@ -365,6 +389,8 @@ session provider you have configured.
 - **file:** session file path, e.g. `data/sessions`
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
 - **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=disable
+- **memcache:** ex:  127.0.0.1:11211
+- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,db=grafana`
 
 If you use MySQL or Postgres as the session store you need to create the
 session table manually.
@@ -396,10 +422,10 @@ How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 
 ### reporting_enabled
 
-When enabled Grafana will send anonymous usage statistics to 
+When enabled Grafana will send anonymous usage statistics to
 `stats.grafana.org`. No IP addresses are being tracked, only simple counters to
 track running instances, versions, dashboard & error counts. It is very helpful
-to us, so please leave this enabled. Counters are sent every 24 hours. Default 
+to us, so please leave this enabled. Counters are sent every 24 hours. Default
 value is `true`.
 
 ### google_analytics_ua_id
@@ -419,3 +445,22 @@ Grafana backend index those json dashboards which will make them appear in regul
 
 ### path
 The full path to a directory containing your json dashboards.
+
+## [metrics]
+
+### enabled
+Enable metrics reporting. defaults true. Available via HTTP API `/api/metrics`.
+
+### interval_seconds
+
+Flush/Write interval when sending metrics to external TSDB. Defaults to 60s.
+
+## [metrics.graphite]
+Include this section if you want to send internal Grafana metrics to Graphite.
+
+### address
+Format `<Hostname or ip>`:port
+
+### prefix
+Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
+

@@ -1,25 +1,27 @@
-<div class="modal-body gf-box gf-box-no-margin" ng-controller="InspectCtrl" ng-init="init()">
-	<div class="gf-box-header">
-		<div class="gf-box-title">
-			<i class="fa fa-eye"></i>
+<div class="modal-body" ng-controller="InspectCtrl" ng-init="init()">
+	<div class="modal-header">
+		<h2 class="modal-header-title">
 			Inspector
-		</div>
+		</h2>
 
-		<div ng-model="editor.index" bs-tabs>
-			<div ng-repeat="tab in ['Request', 'Response', 'JS Error']" data-title="{{tab}}">
-			</div>
-		</div>
+		<ul class="gf-tabs">
+			<li class="gf-tabs-item" ng-repeat="tab in ['Request', 'Response', 'JS Error']">
+				<a class="gf-tabs-link" ng-click="editor.index = $index" ng-class="{active: editor.index === $index}">
+					{{::tab}}
+				</a>
+			</li>
+		</ul>
 
-		<button class="gf-box-header-close-btn" ng-click="dismiss();">
+		<a class="modal-header-close" ng-click="dismiss();">
 			<i class="fa fa-remove"></i>
-		</button>
+		</a>
 	</div>
 
-	<div class="gf-box-body">
+	<div class="modal-content">
 
 		<div ng-if="editor.index == 0">
-			<h5>Request details</h5>
-			<table class="table table-striped small inspector-request-table">
+			<h5 class="section-heading">Request details</h5>
+			<table class="filter-table gf-form-group">
 				<tr>
 					<td>Url</td>
 					<td>{{inspector.error.config.url}}</td>
@@ -38,8 +40,8 @@
 				</tr>
 			</table>
 
-			<h5>Request parameters</h5>
-			<table class="table table-striped small inspector-request-table">
+			<h5 class="section-heading">Request parameters</h5>
+			<table class="filter-table">
 				<tr ng-repeat="param in request_parameters">
 					<td>
 						{{param.key}}
@@ -61,9 +63,9 @@
 		<div ng-if="editor.index == 2">
 
 			<label>Message:</label>
-			<pre>
-			{{message}}
-		</pre>
+<pre>
+{{message}}
+</pre>
 
 			<label>Stack trace:</label>
 			<pre>

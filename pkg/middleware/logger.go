@@ -16,36 +16,43 @@
 package middleware
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/Unknwon/macaron"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/macaron.v1"
 )
 
 func Logger() macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
 		start := time.Now()
+		c.Data["perfmon.start"] = start
 
 		rw := res.(macaron.ResponseWriter)
 		c.Next()
 
-		content := fmt.Sprintf("Completed %s %v %s in %v", req.URL.Path, rw.Status(), http.StatusText(rw.Status()), time.Since(start))
+		timeTakenMs := time.Since(start) / time.Millisecond
 
-		switch rw.Status() {
-		case 200, 304:
-			content = fmt.Sprintf("%s", content)
+		if timer, ok := c.Data["perfmon.timer"]; ok {
+			timerTyped := timer.(metrics.Timer)
+			timerTyped.Update(timeTakenMs)
+		}
+
+		status := rw.Status()
+		if status == 200 || status == 304 {
 			if !setting.RouterLogging {
 				return
 			}
-		case 404:
-			content = fmt.Sprintf("%s", content)
-		case 500:
-			content = fmt.Sprintf("%s", content)
 		}
 
-		log.Info(content)
+		if ctx, ok := c.Data["ctx"]; ok {
+			ctxTyped := ctx.(*Context)
+			if status == 500 {
+				ctxTyped.Logger.Error("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "time_ns", timeTakenMs, "size", rw.Size())
+			} else {
+				ctxTyped.Logger.Info("Request Completed", "method", req.Method, "path", req.URL.Path, "status", status, "remote_addr", c.RemoteAddr(), "time_ns", timeTakenMs, "size", rw.Size())
+			}
+		}
 	}
 }

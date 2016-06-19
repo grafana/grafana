@@ -6,7 +6,7 @@ page_keywords: grafana, ldap, configuration, documentation, integration
 
 # LDAP Integration
 
-Grafana 2.1 ships with a strong LDAP integration feature. The LDAP integration in Grafana allows your
+Grafana (2.1 and newer) ships with a strong LDAP integration feature. The LDAP integration in Grafana allows your
 Grafana users to login with their LDAP credentials. You can also specify mappings between LDAP
 group memberships and Grafana Organization user roles.
 

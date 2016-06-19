@@ -41,11 +41,20 @@ func New(cfg aws.Config, info metadata.ClientInfo, handlers request.Handlers, op
 		Handlers:   handlers,
 	}
 
-	maxRetries := aws.IntValue(cfg.MaxRetries)
-	if cfg.MaxRetries == nil || maxRetries == aws.UseServiceDefaultRetries {
-		maxRetries = 3
+	switch retryer, ok := cfg.Retryer.(request.Retryer); {
+	case ok:
+		svc.Retryer = retryer
+	case cfg.Retryer != nil && cfg.Logger != nil:
+		s := fmt.Sprintf("WARNING: %T does not implement request.Retryer; using DefaultRetryer instead", cfg.Retryer)
+		cfg.Logger.Log(s)
+		fallthrough
+	default:
+		maxRetries := aws.IntValue(cfg.MaxRetries)
+		if cfg.MaxRetries == nil || maxRetries == aws.UseServiceDefaultRetries {
+			maxRetries = 3
+		}
+		svc.Retryer = DefaultRetryer{NumMaxRetries: maxRetries}
 	}
-	svc.Retryer = DefaultRetryer{NumMaxRetries: maxRetries}
 
 	svc.AddDebugHandlers()
 

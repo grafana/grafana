@@ -1,0 +1,206 @@
+<div class="editor-row">
+	<div class="section tight-form-container" style="margin-bottom: 20px">
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<strong>Big value</strong>
+				</li>
+				<li class="tight-form-item">
+					Prefix
+				</li>
+				<li>
+					<input type="text" class="input-small tight-form-input"
+					ng-model="ctrl.panel.prefix" ng-change="ctrl.render()" ng-model-onblur>
+				</li>
+				<li class="tight-form-item">
+					Value
+				</li>
+				<li>
+					<select class="input-small tight-form-input" ng-model="ctrl.panel.valueName" ng-options="f for f in ['min','max','avg', 'current', 'total']" ng-change="ctrl.render()"></select>
+				</li>
+				<li class="tight-form-item">
+					Postfix
+				</li>
+				<li>
+					<input type="text" class="input-small tight-form-input last"
+					ng-model="ctrl.panel.postfix" ng-change="ctrl.render()" ng-model-onblur>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<strong>Font size</strong>
+				</li>
+				<li class="tight-form-item">
+					Prefix
+				</li>
+				<li>
+					<select class="input-small tight-form-input" ng-model="ctrl.panel.prefixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
+				</li>
+				<li class="tight-form-item">
+					Value
+				</li>
+				<li>
+					<select class="input-small tight-form-input" ng-model="ctrl.panel.valueFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
+				</li>
+				<li class="tight-form-item">
+					Postfix
+				</li>
+				<li>
+					<select class="input-small tight-form-input last" ng-model="ctrl.panel.postfixFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<strong>Unit</strong>
+				</li>
+				<li class="dropdown" style="width: 266px;"
+					ng-model="ctrl.panel.format"
+					dropdown-typeahead="ctrl.unitFormats"
+					dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)">
+				</li>
+				<li class="tight-form-item">
+					Decimals
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input last" placeholder="auto" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" data-placement="right"
+					ng-model="ctrl.panel.decimals" ng-change="ctrl.render()" ng-model-onblur>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+</div>
+
+<div class="editor-row">
+	<div class="section" style="margin-bottom: 20px">
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<strong>Coloring</strong>
+				</li>
+				<li class="tight-form-item">
+					Background&nbsp;
+					<input class="cr1" id="ctrl.panel.colorBackground" type="checkbox"
+					ng-model="ctrl.panel.colorBackground" ng-checked="ctrl.panel.colorBackground" ng-change="ctrl.render()">
+					<label for="ctrl.panel.colorBackground" class="cr1"></label>
+				</li>
+				<li class="tight-form-item">
+					Value&nbsp;
+					<input class="cr1" id="ctrl.panel.colorValue" type="checkbox"
+					ng-model="ctrl.panel.colorValue" ng-checked="ctrl.panel.colorValue" ng-change="ctrl.render()">
+					<label for="ctrl.panel.colorValue" class="cr1"></label>
+				</li>
+				<li class="tight-form-item">
+					Thresholds<tip>Define two threshold values&lt;br /&gt; 50,80 will produce: &lt;50 = Green, 50:80 = Yellow, &gt;80 = Red</tip>
+				</li>
+				<li>
+					<input type="text" class="input-large tight-form-input" ng-model="ctrl.panel.thresholds" ng-blur="ctrl.render()" placeholder="50,80"></input>
+				</li>
+				<li class="tight-form-item">
+					Colors
+				</li>
+				<li class="tight-form-item">
+					<spectrum-picker ng-model="ctrl.panel.colors[0]" ng-change="ctrl.render()" ></spectrum-picker>
+					<spectrum-picker ng-model="ctrl.panel.colors[1]" ng-change="ctrl.render()" ></spectrum-picker>
+					<spectrum-picker ng-model="ctrl.panel.colors[2]" ng-change="ctrl.render()" ></spectrum-picker>
+				</li>
+				<li class="tight-form-item last">
+					<a class="pointer" ng-click="ctrl.invertColorOrder()">invert order</a>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+</div>
+
+<div class="editor-row">
+	<div class="section" style="margin-bottom: 20px">
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<strong>Spark lines</strong>
+				</li>
+				<li class="tight-form-item">
+					Show&nbsp;
+					<input class="cr1" id="ctrl.panel.sparkline.show" type="checkbox"
+					ng-model="ctrl.panel.sparkline.show" ng-checked="ctrl.panel.sparkline.show" ng-change="ctrl.render()">
+					<label for="ctrl.panel.sparkline.show" class="cr1"></label>
+				</li>
+				<li class="tight-form-item">
+					Background mode&nbsp;
+					<input class="cr1" id="ctrl.panel.sparkline.full" type="checkbox"
+					ng-model="ctrl.panel.sparkline.full" ng-checked="ctrl.panel.sparkline.full" ng-change="ctrl.render()">
+					<label for="ctrl.panel.sparkline.full" class="cr1"></label>
+				</li>
+				<li class="tight-form-item">
+					Line Color
+				</li>
+				<li class="tight-form-item">
+					<spectrum-picker ng-model="ctrl.panel.sparkline.lineColor" ng-change="ctrl.render()" ></spectrum-picker>
+				</li>
+				<li class="tight-form-item">
+					Fill Color
+				</li>
+				<li class="tight-form-item last">
+					<spectrum-picker ng-model="ctrl.panel.sparkline.fillColor" ng-change="ctrl.render()" ></spectrum-picker>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+</div>
+
+<div class="editor-row">
+	<div class="section" style="margin-bottom: 20px">
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<strong>Gauge</strong>
+				</li>
+				<li class="tight-form-item">
+					Show&nbsp;
+					<input class="cr1" id="panel.gauge.show" type="checkbox"
+					ng-model="ctrl.panel.gauge.show" ng-checked="ctrl.panel.gauge.show" ng-change="ctrl.render()">
+					<label for="panel.gauge.show" class="cr1"></label>
+				</li>
+				<li class="tight-form-item">
+					Min
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input" ng-model="ctrl.panel.gauge.minValue" ng-blur="ctrl.render()" placeholder="0"></input>
+				</li>
+				<li class="tight-form-item last">
+					Max
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input last" ng-model="ctrl.panel.gauge.maxValue" ng-blur="ctrl.render()" placeholder="100"></input>
+					<span class="alert-state-critical" ng-show="ctrl.invalidGaugeRange">
+						&nbsp;
+						<i class="fa fa-warning"></i>
+						Min value is bigger than max.
+					</span>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form last">
+			<li class="tight-form-item">
+				Threshold labels&nbsp;
+				<input class="cr1" id="panel.gauge.thresholdLabels" type="checkbox" ng-model="ctrl.panel.gauge.thresholdLabels" ng-checked="ctrl.panel.gauge.thresholdLabels" ng-change="ctrl.render()">
+				<label for="panel.gauge.thresholdLabels" class="cr1"></label>
+			</li>
+			<li class="tight-form-item">
+				Threshold markers&nbsp;
+				<input class="cr1" id="panel.gauge.thresholdMarkers" type="checkbox" ng-model="ctrl.panel.gauge.thresholdMarkers" ng-checked="ctrl.panel.gauge.thresholdMarkers" ng-change="ctrl.render()">
+				<label for="panel.gauge.thresholdMarkers" class="cr1"></label>
+			</li>
+			<div class="clearfix"></div>
+		</div>
+	</div>
+</div>

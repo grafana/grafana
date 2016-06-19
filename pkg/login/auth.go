@@ -3,6 +3,7 @@ package login
 import (
 	"errors"
 
+	"crypto/subtle"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -56,7 +57,7 @@ func loginUsingGrafanaDB(query *LoginUserQuery) error {
 	user := userQuery.Result
 
 	passwordHashed := util.EncodePassword(query.Password, user.Salt)
-	if passwordHashed != user.Password {
+	if subtle.ConstantTimeCompare([]byte(passwordHashed), []byte(user.Password)) != 1 {
 		return ErrInvalidCredentials
 	}
 

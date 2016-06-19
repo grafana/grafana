@@ -1,32 +1,39 @@
-<topnav icon="fa fa-fw fa-user" title="Global Users" subnav="true">
-	<ul class="nav">
-		<li class="active"><a href="admin/users">List</a></li>
-		<li><a href="admin/users/create">Create user</a></li>
-	</ul>
-</topnav>
+<navbar icon="fa fa-fw fa-cogs" title="Admin" title-url="admin">
+	<a href="admin/users" class="navbar-page-btn">
+		<i class="icon-gf icon-gf-users"></i>
+		Users
+	</a>
+</navbar>
 
 <div class="page-container">
-	<div class="page">
-		<h2>
-			Users
-		</h2>
+	<div class="page-header">
+		<h1>Users</h1>
 
-		<table class="grafana-options-table">
+		<a class="btn btn-success" href="admin/users/create">
+			<i class="fa fa-plus"></i>
+			Add new user
+		</a>
+	</div>
+
+	<table class="filter-table form-inline">
+		<thead>
 			<tr>
-				<th style="text-align:left">Id</th>
+				<th>Id</th>
 				<th>Name</th>
 				<th>Login</th>
 				<th>Email</th>
 				<th style="white-space: nowrap">Grafana Admin</th>
 				<th></th>
 			</tr>
+		</thead>
+		<tbody>
 			<tr ng-repeat="user in users">
 				<td>{{user.id}}</td>
 				<td>{{user.name}}</td>
 				<td>{{user.login}}</td>
 				<td>{{user.email}}</td>
 				<td>{{user.isAdmin}}</td>
-				<td style="width: 1%">
+				<td class="text-right">
 					<a href="admin/users/edit/{{user.id}}" class="btn btn-inverse btn-small">
 						<i class="fa fa-edit"></i>
 						Edit
@@ -37,6 +44,6 @@
 					</a>
 				</td>
 			</tr>
-		</table>
-	</div>
+		</tbody>
+	</table>
 </div>

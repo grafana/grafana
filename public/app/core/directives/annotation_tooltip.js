@@ -6,7 +6,7 @@ define([
 function ($, _, coreModule) {
   'use strict';
 
-  coreModule.directive('annotationTooltip', function($sanitize, dashboardSrv, $compile) {
+  coreModule.default.directive('annotationTooltip', function($sanitize, dashboardSrv, $compile) {
 
     function sanitizeString(str) {
       try {
@@ -25,7 +25,8 @@ function ($, _, coreModule) {
         var dashboard = dashboardSrv.getCurrent();
         var time = '<i>' + dashboard.formatDate(event.min) + '</i>';
 
-        var tooltip = '<div class="graph-tooltip small"><div class="graph-tooltip-time">' + title + ' ' + time + '</div> ' ;
+        var tooltip = '<div class="graph-annotation">';
+        tooltip += '<div class="graph-annotation-title">' + title + "</div>";
 
         if (event.text) {
           var text = sanitizeString(event.text);
@@ -42,9 +43,10 @@ function ($, _, coreModule) {
 
         if (tags && tags.length) {
           scope.tags = tags;
-          tooltip += '<span class="label label-tag" ng-repeat="tag in tags" tag-color-from-name="tag">{{tag}}</span><br/>';
+          tooltip += '<span class="label label-tag small" ng-repeat="tag in tags" tag-color-from-name="tag">{{tag}}</span><br/>';
         }
 
+        tooltip += '<div class="graph-annotation-time">' + time + '</div>' ;
         tooltip += "</div>";
 
         var $tooltip = $(tooltip);

@@ -1,7 +1,7 @@
 /*
 Package sqlite3 provides interface to SQLite3 databases.
 
-This works as driver for database/sql.
+This works as a driver for database/sql.
 
 Installation
 
@@ -9,7 +9,7 @@ Installation
 
 Supported Types
 
-Currently, go-sqlite3 support following data types.
+Currently, go-sqlite3 supports the following data types.
 
     +------------------------------+
     |go        | sqlite3           |
@@ -26,14 +26,14 @@ Currently, go-sqlite3 support following data types.
 
 SQLite3 Extension
 
-You can write your own extension module for sqlite3. For example, below is a
-extension for Regexp matcher operation.
+You can write your own extension module for sqlite3. For example, below is an
+extension for a Regexp matcher operation.
 
     #include <pcre.h>
     #include <string.h>
     #include <stdio.h>
     #include <sqlite3ext.h>
-    
+
     SQLITE_EXTENSION_INIT1
     static void regexp_func(sqlite3_context *context, int argc, sqlite3_value **argv) {
       if (argc >= 2) {
@@ -44,7 +44,7 @@ extension for Regexp matcher operation.
         int vec[500];
         int n, rc;
         pcre* re = pcre_compile(pattern, 0, &errstr, &erroff, NULL);
-        rc = pcre_exec(re, NULL, target, strlen(target), 0, 0, vec, 500); 
+        rc = pcre_exec(re, NULL, target, strlen(target), 0, 0, vec, 500);
         if (rc <= 0) {
           sqlite3_result_error(context, errstr, 0);
           return;
@@ -52,7 +52,7 @@ extension for Regexp matcher operation.
         sqlite3_result_int(context, 1);
       }
     }
-    
+
     #ifdef _WIN32
     __declspec(dllexport)
     #endif
@@ -63,8 +63,8 @@ extension for Regexp matcher operation.
           (void*)db, regexp_func, NULL, NULL);
     }
 
-It need to build as so/dll shared library. And you need to register
-extension module like below.
+It needs to be built as a so/dll shared library. And you need to register
+the extension module like below.
 
 	sql.Register("sqlite3_with_extensions",
 		&sqlite3.SQLiteDriver{
@@ -79,9 +79,9 @@ Then, you can use this extension.
 
 Connection Hook
 
-You can hook and inject your codes when connection established. database/sql
-doesn't provide the way to get native go-sqlite3 interfaces. So if you want,
-you need to hook ConnectHook and get the SQLiteConn.
+You can hook and inject your code when the connection is established. database/sql
+doesn't provide a way to get native go-sqlite3 interfaces. So if you want,
+you need to set ConnectHook and get the SQLiteConn.
 
 	sql.Register("sqlite3_with_hook_example",
 			&sqlite3.SQLiteDriver{
@@ -90,6 +90,23 @@ you need to hook ConnectHook and get the SQLiteConn.
 						return nil
 					},
 			})
+
+Go SQlite3 Extensions
+
+If you want to register Go functions as SQLite extension functions,
+call RegisterFunction from ConnectHook.
+
+	regex = func(re, s string) (bool, error) {
+		return regexp.MatchString(re, s)
+	}
+	sql.Register("sqlite3_with_go_func",
+			&sqlite3.SQLiteDriver{
+					ConnectHook: func(conn *sqlite3.SQLiteConn) error {
+						return conn.RegisterFunc("regexp", regex, true)
+					},
+			})
+
+See the documentation of RegisterFunc for more details.
 
 */
 package sqlite3

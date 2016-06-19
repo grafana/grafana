@@ -56,6 +56,26 @@ define([
       });
     });
 
+    describe('can detect if series contains ms precision', function() {
+      var fakedata;
+
+      beforeEach(function() {
+        fakedata = testData;
+      });
+
+      it('missing datapoint with ms precision', function() {
+        fakedata.datapoints[0] = [1337, 1234567890000];
+        series = new TimeSeries(fakedata);
+        expect(series.isMsResolutionNeeded()).to.be(false);
+      });
+
+      it('contains datapoint with ms precision', function() {
+        fakedata.datapoints[0] = [1337, 1236547890001];
+        series = new TimeSeries(fakedata);
+        expect(series.isMsResolutionNeeded()).to.be(true);
+      });
+    });
+
     describe('series overrides', function() {
       var series;
       beforeEach(function() {
@@ -148,7 +168,5 @@ define([
       });
 
     });
-
   });
-
 });

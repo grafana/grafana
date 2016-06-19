@@ -1,0 +1,278 @@
+
+@mixin drop-theme($themeName, $theme-bg, $theme-color) {
+  .drop-element.drop-#{$themeName} {
+    max-width: 100%;
+    max-height: 100%;
+
+    .drop-content {
+      border-radius: $border-radius-lg;
+      position: relative;
+      font-family: inherit;
+      background: $theme-bg;
+      color: $theme-color;
+      padding: 0.65rem;
+      font-size: $font-size-sm;
+      max-width: 20rem;
+
+      &:before {
+        content: "";
+        display: block;
+        position: absolute;
+        width: 0;
+        height: 0;
+        border-color: transparent;
+        border-width: $popover-arrow-size;
+        border-style: solid;
+        pointer-events: null;
+      }
+    }
+
+    &.drop-wide {
+      .drop-content {
+        max-width: 40rem;
+      }
+    }
+
+    // Centers and middles
+
+    &.drop-element-attached-bottom.drop-element-attached-center .drop-content {
+      margin-bottom: $popover-arrow-size;
+
+      &:before {
+        top: 100%;
+        left: 50%;
+        margin-left: - $popover-arrow-size;
+        border-top-color: $theme-bg;
+      }
+    }
+
+    &.drop-element-attached-top.drop-element-attached-center .drop-content {
+      margin-top: $popover-arrow-size;
+
+      &:before {
+        bottom: 100%;
+        left: 50%;
+        margin-left: - $popover-arrow-size;
+        border-bottom-color: $theme-bg;
+      }
+    }
+
+    &.drop-element-attached-right.drop-element-attached-middle .drop-content {
+      margin-right: $popover-arrow-size;
+
+      &:before {
+        left: 100%;
+        top: 50%;
+        margin-top: - $popover-arrow-size;
+        border-left-color: $theme-bg;
+      }
+    }
+
+    &.drop-element-attached-left.drop-element-attached-middle .drop-content {
+      margin-left: $popover-arrow-size;
+
+      &:before {
+        right: 100%;
+        top: 50%;
+        margin-top: - $popover-arrow-size;
+        border-right-color: $theme-bg;
+      }
+    }
+
+    // Target middle/center, element corner
+    &.drop-element-attached-left.drop-target-attached-center .drop-content {
+      left: - $popover-arrow-size * 2;
+    }
+
+    &.drop-element-attached-right.drop-target-attached-center .drop-content {
+      left: $popover-arrow-size * 2;
+    }
+
+    &.drop-element-attached-top.drop-element-attached-left.drop-target-attached-middle .drop-content {
+      margin-top: $popover-arrow-size;
+
+      &:before {
+        bottom: 100%;
+        left: $popover-arrow-size;
+        border-bottom-color: $theme-bg;
+      }
+    }
+
+    &.drop-element-attached-top.drop-element-attached-right.drop-target-attached-middle .drop-content {
+      margin-top: $popover-arrow-size;
+
+      &:before {
+        bottom: 100%;
+        right: $popover-arrow-size;
+        border-bottom-color: $theme-bg;
+      }
+    }
+
+    &.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-middle .drop-content {
+      margin-bottom: $popover-arrow-size;
+
+      &:before {
+        top: 100%;
+        left: $popover-arrow-size;
+        border-top-color: $theme-bg;
+      }
+    }
+
+    &.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-middle .drop-content {
+      margin-bottom: $popover-arrow-size;
+
+      &:before {
+        top: 100%;
+        right: $popover-arrow-size;
+        border-top-color: $theme-bg;
+      }
+    }
+
+    // Top and bottom corners
+    &.drop-element-attached-top.drop-element-attached-left.drop-target-attached-bottom .drop-content {
+      margin-top: $popover-arrow-size;
+
+      &:before {
+        bottom: 100%;
+        left: $popover-arrow-size;
+        border-bottom-color: $theme-bg;
+      }
+    }
+
+    &.drop-element-attached-top.drop-element-attached-right.drop-target-attached-bottom .drop-content {
+      margin-top: $popover-arrow-size;
+
+      &:before {
+        bottom: 100%;
+        right: $popover-arrow-size;
+        border-bottom-color: $theme-bg;
+      }
+    }
+
+    &.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-top .drop-content {
+      margin-bottom: $popover-arrow-size;
+
+      &:before {
+        top: 100%;
+        left: $popover-arrow-size;
+        border-top-color: $theme-bg;
+      }
+    }
+
+    &.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-top .drop-content {
+      margin-bottom: $popover-arrow-size;
+
+      &:before {
+        top: 100%;
+        right: $popover-arrow-size;
+        border-top-color: $theme-bg;
+      }
+    }
+
+    // Side corners
+    &.drop-element-attached-top.drop-element-attached-right.drop-target-attached-left .drop-content {
+      margin-right: $popover-arrow-size;
+
+      &:before {
+        top: $popover-arrow-size;
+        left: 100%;
+        border-left-color: $theme-bg;
+      }
+    }
+
+    &.drop-element-attached-top.drop-element-attached-left.drop-target-attached-right .drop-content {
+      margin-left: $popover-arrow-size;
+
+      &:before {
+        top: $popover-arrow-size;
+        right: 100%;
+        border-right-color: $theme-bg;
+      }
+    }
+
+    &.drop-element-attached-bottom.drop-element-attached-right.drop-target-attached-left .drop-content {
+      margin-right: $popover-arrow-size;
+
+      &:before {
+        bottom: $popover-arrow-size;
+        left: 100%;
+        border-left-color: $theme-bg;
+      }
+    }
+
+    &.drop-element-attached-bottom.drop-element-attached-left.drop-target-attached-right .drop-content {
+      margin-left: $popover-arrow-size;
+
+      &:before {
+        bottom: $popover-arrow-size;
+        right: 100%;
+        border-right-color: $theme-bg;
+      }
+    }
+  }
+}
+
+@mixin drop-animation-scale($themePrefix: "drop", $themeName: "default", $attachmentOffset: 0, $easing: "linear") {
+  .#{$themePrefix}-element.#{$themePrefix}-#{$themeName} {
+    transform: translateZ(0);
+    transition: opacity 100ms;
+    opacity: 0;
+    .#{$themePrefix}-content {
+      transition: transform 0.2s $easing;
+      transform: scale(0.8) translateZ(0);
+    }
+    &.#{$themePrefix}-open {
+      display: none;
+    }
+    &.#{$themePrefix}-open-transitionend {
+      display: block;
+    }
+    &.#{$themePrefix}-after-open {
+      transition: none;
+      opacity: 1;
+      .#{$themePrefix}-content {
+        transform: scale(1) translateZ(0);
+      }
+    }
+    // Centers and middles
+    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-center .#{$themePrefix}-content {
+      transform-origin: 50% calc(100% + #{$attachmentOffset});
+    }
+    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-center .#{$themePrefix}-content {
+      transform-origin: 50% (-$attachmentOffset);
+    }
+    &.#{$themePrefix}-element-attached-right.#{$themePrefix}-element-attached-middle .#{$themePrefix}-content {
+      transform-origin: calc(100% + #{$attachmentOffset}) 50%;
+    }
+    &.#{$themePrefix}-element-attached-left.#{$themePrefix}-element-attached-middle .#{$themePrefix}-content {
+      transform-origin: -($attachmentOffset 50%);
+    }
+    // Top and bottom corners
+    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-bottom .#{$themePrefix}-content {
+      transform-origin: 0 (-$attachmentOffset);
+    }
+    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-bottom .#{$themePrefix}-content {
+      transform-origin: 100% (-$attachmentOffset);
+    }
+    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-top .#{$themePrefix}-content {
+      transform-origin: 0 calc(100% + #{$attachmentOffset});
+    }
+    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-top .#{$themePrefix}-content {
+      transform-origin: 100% calc(100% + #{$attachmentOffset});
+    }
+    // Side corners
+    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-left .#{$themePrefix}-content {
+      transform-origin: calc(100% + #{$attachmentOffset}) 0;
+    }
+    &.#{$themePrefix}-element-attached-top.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-right .#{$themePrefix}-content {
+      transform-origin: (-$attachmentOffset) 0;
+    }
+    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-right.#{$themePrefix}-target-attached-left .#{$themePrefix}-content {
+      transform-origin: calc(100% + #{$attachmentOffset}) 100%;
+    }
+    &.#{$themePrefix}-element-attached-bottom.#{$themePrefix}-element-attached-left.#{$themePrefix}-target-attached-right .#{$themePrefix}-content {
+      transform-origin: (-$attachmentOffset) 100%;
+    }
+  }
+}
+

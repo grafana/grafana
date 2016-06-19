@@ -2,6 +2,7 @@ package core
 
 import (
 	"database/sql"
+	"database/sql/driver"
 	"errors"
 	"reflect"
 	"regexp"
@@ -29,10 +30,24 @@ func StructToSlice(query string, st interface{}) (string, []interface{}, error) 
 	}
 
 	args := make([]interface{}, 0)
+	var err error
 	query = re.ReplaceAllStringFunc(query, func(src string) string {
-		args = append(args, vv.Elem().FieldByName(src[1:]).Interface())
+		fv := vv.Elem().FieldByName(src[1:]).Interface()
+		if v, ok := fv.(driver.Valuer); ok {
+			var value driver.Value
+			value, err = v.Value()
+			if err != nil {
+				return "?"
+			}
+			args = append(args, value)
+		} else {
+			args = append(args, fv)
+		}
 		return "?"
 	})
+	if err != nil {
+		return "", []interface{}{}, err
+	}
 	return query, args, nil
 }
 
@@ -43,12 +58,25 @@ type DB struct {
 
 func Open(driverName, dataSourceName string) (*DB, error) {
 	db, err := sql.Open(driverName, dataSourceName)
-	return &DB{db, NewCacheMapper(&SnakeMapper{})}, err
+	if err != nil {
+		return nil, err
+	}
+	return &DB{db, NewCacheMapper(&SnakeMapper{})}, nil
+}
+
+func FromDB(db *sql.DB) *DB {
+	return &DB{db, NewCacheMapper(&SnakeMapper{})}
 }
 
 func (db *DB) Query(query string, args ...interface{}) (*Rows, error) {
 	rows, err := db.DB.Query(query, args...)
-	return &Rows{rows, db.Mapper}, err
+	if err != nil {
+		if rows != nil {
+			rows.Close()
+		}
+		return nil, err
+	}
+	return &Rows{rows, db.Mapper}, nil
 }
 
 func (db *DB) QueryMap(query string, mp interface{}) (*Rows, error) {
@@ -68,28 +96,87 @@ func (db *DB) QueryStruct(query string, st interface{}) (*Rows, error) {
 }
 
 type Row struct {
-	*sql.Row
+	rows *Rows
 	// One of these two will be non-nil:
-	err    error // deferred error for easy chaining
-	Mapper IMapper
+	err error // deferred error for easy chaining
+}
+
+func (row *Row) Columns() ([]string, error) {
+	if row.err != nil {
+		return nil, row.err
+	}
+	return row.rows.Columns()
 }
 
 func (row *Row) Scan(dest ...interface{}) error {
 	if row.err != nil {
 		return row.err
 	}
-	return row.Row.Scan(dest...)
+	defer row.rows.Close()
+
+	for _, dp := range dest {
+		if _, ok := dp.(*sql.RawBytes); ok {
+			return errors.New("sql: RawBytes isn't allowed on Row.Scan")
+		}
+	}
+
+	if !row.rows.Next() {
+		if err := row.rows.Err(); err != nil {
+			return err
+		}
+		return sql.ErrNoRows
+	}
+	err := row.rows.Scan(dest...)
+	if err != nil {
+		return err
+	}
+	// Make sure the query can be processed to completion with no errors.
+	if err := row.rows.Close(); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (row *Row) ScanStructByName(dest interface{}) error {
+	if row.err != nil {
+		return row.err
+	}
+	return row.rows.ScanStructByName(dest)
+}
+
+func (row *Row) ScanStructByIndex(dest interface{}) error {
+	if row.err != nil {
+		return row.err
+	}
+	return row.rows.ScanStructByIndex(dest)
+}
+
+// scan data to a slice's pointer, slice's length should equal to columns' number
+func (row *Row) ScanSlice(dest interface{}) error {
+	if row.err != nil {
+		return row.err
+	}
+	return row.rows.ScanSlice(dest)
+}
+
+// scan data to a map's pointer
+func (row *Row) ScanMap(dest interface{}) error {
+	if row.err != nil {
+		return row.err
+	}
+	return row.rows.ScanMap(dest)
 }
 
 func (db *DB) QueryRow(query string, args ...interface{}) *Row {
-	row := db.DB.QueryRow(query, args...)
-	return &Row{row, nil, db.Mapper}
+	rows, err := db.Query(query, args...)
+	return &Row{rows, err}
 }
 
 func (db *DB) QueryRowMap(query string, mp interface{}) *Row {
 	query, args, err := MapToSlice(query, mp)
 	if err != nil {
-		return &Row{nil, err, db.Mapper}
+		return &Row{nil, err}
 	}
 	return db.QueryRow(query, args...)
 }
@@ -97,7 +184,7 @@ func (db *DB) QueryRowMap(query string, mp interface{}) *Row {
 func (db *DB) QueryRowStruct(query string, st interface{}) *Row {
 	query, args, err := StructToSlice(query, st)
 	if err != nil {
-		return &Row{nil, err, db.Mapper}
+		return &Row{nil, err}
 	}
 	return db.QueryRow(query, args...)
 }
@@ -187,14 +274,14 @@ func (s *Stmt) QueryStruct(st interface{}) (*Rows, error) {
 }
 
 func (s *Stmt) QueryRow(args ...interface{}) *Row {
-	row := s.Stmt.QueryRow(args...)
-	return &Row{row, nil, s.Mapper}
+	rows, err := s.Query(args...)
+	return &Row{rows, err}
 }
 
 func (s *Stmt) QueryRowMap(mp interface{}) *Row {
 	vv := reflect.ValueOf(mp)
 	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Map {
-		return &Row{nil, errors.New("mp should be a map's pointer"), s.Mapper}
+		return &Row{nil, errors.New("mp should be a map's pointer")}
 	}
 
 	args := make([]interface{}, len(s.names))
@@ -208,7 +295,7 @@ func (s *Stmt) QueryRowMap(mp interface{}) *Row {
 func (s *Stmt) QueryRowStruct(st interface{}) *Row {
 	vv := reflect.ValueOf(st)
 	if vv.Kind() != reflect.Ptr || vv.Elem().Kind() != reflect.Struct {
-		return &Row{nil, errors.New("st should be a struct's pointer"), s.Mapper}
+		return &Row{nil, errors.New("st should be a struct's pointer")}
 	}
 
 	args := make([]interface{}, len(s.names))
@@ -540,14 +627,14 @@ func (tx *Tx) QueryStruct(query string, st interface{}) (*Rows, error) {
 }
 
 func (tx *Tx) QueryRow(query string, args ...interface{}) *Row {
-	row := tx.Tx.QueryRow(query, args...)
-	return &Row{row, nil, tx.Mapper}
+	rows, err := tx.Query(query, args...)
+	return &Row{rows, err}
 }
 
 func (tx *Tx) QueryRowMap(query string, mp interface{}) *Row {
 	query, args, err := MapToSlice(query, mp)
 	if err != nil {
-		return &Row{nil, err, tx.Mapper}
+		return &Row{nil, err}
 	}
 	return tx.QueryRow(query, args...)
 }
@@ -555,7 +642,7 @@ func (tx *Tx) QueryRowMap(query string, mp interface{}) *Row {
 func (tx *Tx) QueryRowStruct(query string, st interface{}) *Row {
 	query, args, err := StructToSlice(query, st)
 	if err != nil {
-		return &Row{nil, err, tx.Mapper}
+		return &Row{nil, err}
 	}
 	return tx.QueryRow(query, args...)
 }

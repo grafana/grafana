@@ -6,18 +6,19 @@ module.exports = function(config) {
       }
     },
     options: {
-      configuration: {
-        rules: {
-          curly: true,
-          align: [true, "parameters", "statements"],
-          indent: [true, "spaces"],
-          "class-name": true,
-          "interface-name": true,
-          "semicolon": true,
-          "use-strict": [false, "check-module", "check-function"],
-          "whitespace": [true, "check-branch", "check-decl", "check-type"],
-        }
-      }
+      configuration: 'tslint.json'
+      //   {
+      //   rules: {
+      //     curly: true,
+      //     align: [true, "parameters", "statements"],
+      //     indent: [true, "spaces"],
+      //     "class-name": true,
+      //     "interface-name": true,
+      //     "semicolon": true,
+      //     "use-strict": [false, "check-module", "check-function"],
+      //     "whitespace": [true, "check-branch", "check-decl", "check-type"],
+      //   }
+      // }
     }
   };
 };

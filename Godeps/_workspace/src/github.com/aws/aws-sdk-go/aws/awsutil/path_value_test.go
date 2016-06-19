@@ -105,4 +105,38 @@ func TestSetValueAtPathSuccess(t *testing.T) {
 	assert.Equal(t, "test0", s2.B.B.C)
 	awsutil.SetValueAtPath(&s2, "A", []Struct{{}})
 	assert.Equal(t, []Struct{{}}, s2.A)
+
+	str := "foo"
+
+	s3 := Struct{}
+	awsutil.SetValueAtPath(&s3, "b.b.c", str)
+	assert.Equal(t, "foo", s3.B.B.C)
+
+	s3 = Struct{B: &Struct{B: &Struct{C: str}}}
+	awsutil.SetValueAtPath(&s3, "b.b.c", nil)
+	assert.Equal(t, "", s3.B.B.C)
+
+	s3 = Struct{}
+	awsutil.SetValueAtPath(&s3, "b.b.c", nil)
+	assert.Equal(t, "", s3.B.B.C)
+
+	s3 = Struct{}
+	awsutil.SetValueAtPath(&s3, "b.b.c", &str)
+	assert.Equal(t, "foo", s3.B.B.C)
+
+	var s4 struct{ Name *string }
+	awsutil.SetValueAtPath(&s4, "Name", str)
+	assert.Equal(t, str, *s4.Name)
+
+	s4 = struct{ Name *string }{}
+	awsutil.SetValueAtPath(&s4, "Name", nil)
+	assert.Equal(t, (*string)(nil), s4.Name)
+
+	s4 = struct{ Name *string }{Name: &str}
+	awsutil.SetValueAtPath(&s4, "Name", nil)
+	assert.Equal(t, (*string)(nil), s4.Name)
+
+	s4 = struct{ Name *string }{}
+	awsutil.SetValueAtPath(&s4, "Name", &str)
+	assert.Equal(t, str, *s4.Name)
 }

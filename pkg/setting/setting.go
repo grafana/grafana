@@ -5,8 +5,6 @@ package setting
 
 import (
 	"bytes"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"net/url"
 	"os"
@@ -16,7 +14,7 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/macaron-contrib/session"
+	"github.com/go-macaron/session"
 	"gopkg.in/ini.v1"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -38,9 +36,10 @@ const (
 
 var (
 	// App settings.
-	Env       string = DEV
-	AppUrl    string
-	AppSubUrl string
+	Env          string = DEV
+	AppUrl       string
+	AppSubUrl    string
+	InstanceName string
 
 	// build
 	BuildVersion string
@@ -48,9 +47,10 @@ var (
 	BuildStamp   int64
 
 	// Paths
-	LogsPath string
-	HomePath string
-	DataPath string
+	LogsPath    string
+	HomePath    string
+	DataPath    string
+	PluginsPath string
 
 	// Log settings.
 	LogModes   []string
@@ -76,12 +76,19 @@ var (
 	EmailCodeValidMinutes int
 	DataProxyWhiteList    map[string]bool
 
+	// Snapshots
+	ExternalSnapshotUrl  string
+	ExternalSnapshotName string
+	ExternalEnabled      bool
+
 	// User settings
 	AllowUserSignUp    bool
 	AllowUserOrgCreate bool
 	AutoAssignOrg      bool
 	AutoAssignOrgRole  string
 	VerifyEmailEnabled bool
+	LoginHint          string
+	DefaultTheme       string
 
 	// Http auth
 	AdminUser     string
@@ -118,6 +125,7 @@ var (
 	appliedEnvOverrides          []string
 
 	ReportingEnabled   bool
+	CheckForUpdates    bool
 	GoogleAnalyticsId  string
 	GoogleTagManagerId string
 
@@ -130,6 +138,12 @@ var (
 
 	// QUOTA
 	Quota QuotaSettings
+
+	// logger
+	logger log.Logger
+
+	// Grafana.NET URL
+	GrafanaNetUrl string
 )
 
 type CommandLineArgs struct {
@@ -140,7 +154,7 @@ type CommandLineArgs struct {
 
 func init() {
 	IsWindows = runtime.GOOS == "windows"
-	log.NewLogger(0, "console", `{"level": 0, "formatting":true}`)
+	logger = log.New("settings")
 }
 
 func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
@@ -163,6 +177,11 @@ func ToAbsUrl(relativeUrl string) string {
 	return AppUrl + relativeUrl
 }
 
+func shouldRedactKey(s string) bool {
+	uppercased := strings.ToUpper(s)
+	return strings.Contains(uppercased, "PASSWORD") || strings.Contains(uppercased, "SECRET")
+}
+
 func applyEnvVariableOverrides() {
 	appliedEnvOverrides = make([]string, 0)
 	for _, section := range Cfg.Sections() {
@@ -174,7 +193,7 @@ func applyEnvVariableOverrides() {
 
 			if len(envValue) > 0 {
 				key.SetValue(envValue)
-				if strings.Contains(envKey, "PASSWORD") {
+				if shouldRedactKey(envKey) {
 					envValue = "*********"
 				}
 				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, envValue))
@@ -191,7 +210,7 @@ func applyCommandLineDefaultProperties(props map[string]string) {
 			value, exists := props[keyString]
 			if exists {
 				key.SetValue(value)
-				if strings.Contains(keyString, "password") {
+				if shouldRedactKey(keyString) {
 					value = "*********"
 				}
 				appliedCommandLineProperties = append(appliedCommandLineProperties, fmt.Sprintf("%s=%s", keyString, value))
@@ -246,6 +265,12 @@ func evalEnvVarExpression(value string) string {
 		envVar = strings.TrimPrefix(envVar, "${")
 		envVar = strings.TrimSuffix(envVar, "}")
 		envValue := os.Getenv(envVar)
+
+		// if env variable is hostname and it is emtpy use os.Hostname as default
+		if envVar == "HOSTNAME" && envValue == "" {
+			envValue, _ = os.Hostname()
+		}
+
 		return envValue
 	})
 }
@@ -281,13 +306,11 @@ func loadSpecifedConfigFile(configFile string) {
 
 			defaultSec, err := Cfg.GetSection(section.Name())
 			if err != nil {
-				log.Error(3, "Unknown config section %s defined in %s", section.Name(), configFile)
-				continue
+				defaultSec, _ = Cfg.NewSection(section.Name())
 			}
 			defaultKey, err := defaultSec.GetKey(key.Name())
 			if err != nil {
-				log.Error(3, "Unknown config key %s defined in section %s, in file %s", key.Name(), section.Name(), configFile)
-				continue
+				defaultKey, _ = defaultSec.NewKey(key.Name(), key.Value())
 			}
 			defaultKey.SetValue(key.Value())
 		}
@@ -317,7 +340,7 @@ func loadConfiguration(args *CommandLineArgs) {
 
 	// init logging before specific config so we can log errors from here on
 	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
-	initLogging(args)
+	initLogging()
 
 	// load specified config file
 	loadSpecifedConfigFile(args.Config)
@@ -333,7 +356,7 @@ func loadConfiguration(args *CommandLineArgs) {
 
 	// update data path and logging config
 	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
-	initLogging(args)
+	initLogging()
 }
 
 func pathExists(path string) bool {
@@ -381,14 +404,32 @@ func validateStaticRootPath() error {
 		return nil
 	}
 
-	return errors.New("Failed to detect generated css or javascript files in static root (%s), have you executed default grunt task?")
+	return fmt.Errorf("Failed to detect generated css or javascript files in static root (%s), have you executed default grunt task?", StaticRootPath)
 }
+
+// func readInstanceName() string {
+// 	hostname, _ := os.Hostname()
+// 	if hostname == "" {
+// 		hostname = "hostname_unknown"
+// 	}
+//
+// 	instanceName := Cfg.Section("").Key("instance_name").MustString("")
+// 	if instanceName = "" {
+// 		// set value as it might be used in other places
+// 		Cfg.Section("").Key("instance_name").SetValue(hostname)
+// 		instanceName = hostname
+// 	}
+//
+// 	return
+// }
 
 func NewConfigContext(args *CommandLineArgs) error {
 	setHomePath(args)
 	loadConfiguration(args)
 
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
+	InstanceName = Cfg.Section("").Key("instance_name").MustString("unknown_instance_name")
+	PluginsPath = Cfg.Section("paths").Key("plugins").String()
 
 	server := Cfg.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
@@ -420,6 +461,12 @@ func NewConfigContext(args *CommandLineArgs) error {
 	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 
+	// read snapshots settings
+	snapshots := Cfg.Section("snapshots")
+	ExternalSnapshotUrl = snapshots.Key("external_snapshot_url").String()
+	ExternalSnapshotName = snapshots.Key("external_snapshot_name").String()
+	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
+
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
 	for _, hostAndIp := range security.Key("data_source_proxy_whitelist").Strings(" ") {
@@ -436,6 +483,8 @@ func NewConfigContext(args *CommandLineArgs) error {
 	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
 	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Read Only Editor", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
+	LoginHint = users.Key("login_hint").String()
+	DefaultTheme = users.Key("default_theme").String()
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -458,6 +507,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
+	CheckForUpdates = analytics.Key("check_for_updates").MustBool(true)
 	GoogleAnalyticsId = analytics.Key("google_analytics_ua_id").String()
 	GoogleTagManagerId = analytics.Key("google_tag_manager_id").String()
 
@@ -473,13 +523,15 @@ func NewConfigContext(args *CommandLineArgs) error {
 		log.Warn("require_email_validation is enabled but smpt is disabled")
 	}
 
+	GrafanaNetUrl = Cfg.Section("grafana.net").Key("url").MustString("https://grafana.net")
+
 	return nil
 }
 
 func readSessionConfig() {
 	sec := Cfg.Section("session")
 	SessionOptions = session.Options{}
-	SessionOptions.Provider = sec.Key("provider").In("memory", []string{"memory", "file", "redis", "mysql", "postgres"})
+	SessionOptions.Provider = sec.Key("provider").In("memory", []string{"memory", "file", "redis", "mysql", "postgres", "memcache"})
 	SessionOptions.ProviderConfig = strings.Trim(sec.Key("provider_config").String(), "\" ")
 	SessionOptions.CookieName = sec.Key("cookie_name").MustString("grafana_sess")
 	SessionOptions.CookiePath = AppSubUrl
@@ -498,115 +550,39 @@ func readSessionConfig() {
 	}
 }
 
-var logLevels = map[string]int{
-	"Trace":    0,
-	"Debug":    1,
-	"Info":     2,
-	"Warn":     3,
-	"Error":    4,
-	"Critical": 5,
-}
-
-func initLogging(args *CommandLineArgs) {
-	//close any existing log handlers.
-	log.Close()
-	// Get and check log mode.
+func initLogging() {
+	// split on comma
 	LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), ",")
-	LogsPath = makeAbsolute(Cfg.Section("paths").Key("logs").String(), HomePath)
-
-	LogConfigs = make([]util.DynMap, len(LogModes))
-	for i, mode := range LogModes {
-		mode = strings.TrimSpace(mode)
-		sec, err := Cfg.GetSection("log." + mode)
-		if err != nil {
-			log.Fatal(4, "Unknown log mode: %s", mode)
-		}
-
-		// Log level.
-		levelName := Cfg.Section("log."+mode).Key("level").In("Trace",
-			[]string{"Trace", "Debug", "Info", "Warn", "Error", "Critical"})
-		level, ok := logLevels[levelName]
-		if !ok {
-			log.Fatal(4, "Unknown log level: %s", levelName)
-		}
-
-		// Generate log configuration.
-		switch mode {
-		case "console":
-			formatting := sec.Key("formatting").MustBool(true)
-			LogConfigs[i] = util.DynMap{
-				"level":      level,
-				"formatting": formatting,
-			}
-		case "file":
-			logPath := sec.Key("file_name").MustString(filepath.Join(LogsPath, "grafana.log"))
-			os.MkdirAll(filepath.Dir(logPath), os.ModePerm)
-			LogConfigs[i] = util.DynMap{
-				"level":    level,
-				"filename": logPath,
-				"rotate":   sec.Key("log_rotate").MustBool(true),
-				"maxlines": sec.Key("max_lines").MustInt(1000000),
-				"maxsize":  1 << uint(sec.Key("max_size_shift").MustInt(28)),
-				"daily":    sec.Key("daily_rotate").MustBool(true),
-				"maxdays":  sec.Key("max_days").MustInt(7),
-			}
-		case "conn":
-			LogConfigs[i] = util.DynMap{
-				"level":          level,
-				"reconnectOnMsg": sec.Key("reconnect_on_msg").MustBool(),
-				"reconnect":      sec.Key("reconnect").MustBool(),
-				"net":            sec.Key("protocol").In("tcp", []string{"tcp", "unix", "udp"}),
-				"addr":           sec.Key("addr").MustString(":7020"),
-			}
-		case "smtp":
-			LogConfigs[i] = util.DynMap{
-				"level":     level,
-				"user":      sec.Key("user").MustString("example@example.com"),
-				"passwd":    sec.Key("passwd").MustString("******"),
-				"host":      sec.Key("host").MustString("127.0.0.1:25"),
-				"receivers": sec.Key("receivers").MustString("[]"),
-				"subject":   sec.Key("subject").MustString("Diagnostic message from serve"),
-			}
-		case "database":
-			LogConfigs[i] = util.DynMap{
-				"level":  level,
-				"driver": sec.Key("driver").String(),
-				"conn":   sec.Key("conn").String(),
-			}
-		}
-
-		cfgJsonBytes, _ := json.Marshal(LogConfigs[i])
-		log.NewLogger(Cfg.Section("log").Key("buffer_len").MustInt64(10000), mode, string(cfgJsonBytes))
+	// also try space
+	if len(LogModes) == 1 {
+		LogModes = strings.Split(Cfg.Section("log").Key("mode").MustString("console"), " ")
 	}
+	LogsPath = makeAbsolute(Cfg.Section("paths").Key("logs").String(), HomePath)
+	log.ReadLoggingConfig(LogModes, LogsPath, Cfg)
 }
 
 func LogConfigurationInfo() {
 	var text bytes.Buffer
-	text.WriteString("Configuration Info\n")
 
-	text.WriteString("Config files:\n")
-	for i, file := range configFiles {
-		text.WriteString(fmt.Sprintf("  [%d]: %s\n", i, file))
+	for _, file := range configFiles {
+		logger.Info("Config loaded from", "file", file)
 	}
 
 	if len(appliedCommandLineProperties) > 0 {
-		text.WriteString("Command lines overrides:\n")
-		for i, prop := range appliedCommandLineProperties {
-			text.WriteString(fmt.Sprintf("  [%d]: %s\n", i, prop))
+		for _, prop := range appliedCommandLineProperties {
+			logger.Info("Config overriden from command line", "arg", prop)
 		}
 	}
 
 	if len(appliedEnvOverrides) > 0 {
 		text.WriteString("\tEnvironment variables used:\n")
-		for i, prop := range appliedEnvOverrides {
-			text.WriteString(fmt.Sprintf("  [%d]: %s\n", i, prop))
+		for _, prop := range appliedEnvOverrides {
+			logger.Info("Config overriden from Environment variable", "var", prop)
 		}
 	}
 
-	text.WriteString("Paths:\n")
-	text.WriteString(fmt.Sprintf("  home: %s\n", HomePath))
-	text.WriteString(fmt.Sprintf("  data: %s\n", DataPath))
-	text.WriteString(fmt.Sprintf("  logs: %s\n", LogsPath))
-
-	log.Info(text.String())
+	logger.Info("Path Home", "path", HomePath)
+	logger.Info("Path Data", "path", DataPath)
+	logger.Info("Path Logs", "path", LogsPath)
+	logger.Info("Path Plugins", "path", PluginsPath)
 }

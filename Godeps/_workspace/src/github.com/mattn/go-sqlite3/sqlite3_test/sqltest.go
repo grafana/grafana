@@ -275,12 +275,11 @@ func TestPreparedStmt(t *testing.T) {
 	}
 
 	const nRuns = 10
-	ch := make(chan bool)
+	var wg sync.WaitGroup
 	for i := 0; i < nRuns; i++ {
+		wg.Add(1)
 		go func() {
-			defer func() {
-				ch <- true
-			}()
+			defer wg.Done()
 			for j := 0; j < 10; j++ {
 				count := 0
 				if err := sel.QueryRow().Scan(&count); err != nil && err != sql.ErrNoRows {
@@ -294,9 +293,7 @@ func TestPreparedStmt(t *testing.T) {
 			}
 		}()
 	}
-	for i := 0; i < nRuns; i++ {
-		<-ch
-	}
+	wg.Wait()
 }
 
 // Benchmarks need to use panic() since b.Error errors are lost when
@@ -318,7 +315,7 @@ func BenchmarkQuery(b *testing.B) {
 		var i int
 		var f float64
 		var s string
-//		var t time.Time
+		//		var t time.Time
 		if err := db.QueryRow("select null, 1, 1.1, 'foo'").Scan(&n, &i, &f, &s); err != nil {
 			panic(err)
 		}
@@ -331,7 +328,7 @@ func BenchmarkParams(b *testing.B) {
 		var i int
 		var f float64
 		var s string
-//		var t time.Time
+		//		var t time.Time
 		if err := db.QueryRow("select ?, ?, ?, ?", nil, 1, 1.1, "foo").Scan(&n, &i, &f, &s); err != nil {
 			panic(err)
 		}
@@ -350,7 +347,7 @@ func BenchmarkStmt(b *testing.B) {
 		var i int
 		var f float64
 		var s string
-//		var t time.Time
+		//		var t time.Time
 		if err := st.QueryRow(nil, 1, 1.1, "foo").Scan(&n, &i, &f, &s); err != nil {
 			panic(err)
 		}

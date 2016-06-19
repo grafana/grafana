@@ -1,10 +1,9 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular = require('angular');
-import jquery = require('jquery');
-import moment = require('moment');
-import _ = require('lodash');
-import coreModule = require('../core_module');
+import _ from 'lodash';
+import angular from 'angular';
+import moment from 'moment';
+import coreModule from '../core_module';
 
 coreModule.filter('stringSort', function() {
   return function(input) {
@@ -59,16 +58,19 @@ coreModule.filter('noXml', function() {
 });
 
 coreModule.filter('interpolateTemplateVars', function (templateSrv) {
-  var filterFunc : any = function (text, scope) {
-    if (scope.panel) {
-      return templateSrv.replaceWithText(text, scope.panel.scopedVars);
+  var filterFunc: any = function(text, scope) {
+    var scopedVars;
+    if (scope.ctrl && scope.ctrl.panel) {
+      scopedVars = scope.ctrl.panel.scopedVars;
     } else {
-      return templateSrv.replaceWithText(text, scope.row.scopedVars);
+      scopedVars = scope.row.scopedVars;
     }
+
+    return templateSrv.replaceWithText(text, scopedVars);
   };
 
   filterFunc.$stateful = true;
   return filterFunc;
 });
 
-export {};
+export default {};

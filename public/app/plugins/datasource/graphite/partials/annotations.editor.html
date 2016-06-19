@@ -1,15 +1,10 @@
-<div class="editor-row">
-	<div class="editor-option">
-		<label class="small">Graphite target expression</label>
-		<input type="text" class="span10" ng-model='currentAnnotation.target' placeholder=""></input>
-	</div>
+<div class="gf-form-group">
+  <div class="gf-form">
+    <span class="gf-form-label width-13">Graphite metrics query</span>
+    <input type="text" class="gf-form-input" ng-model='ctrl.annotation.target' placeholder=""></input>
+  </div>
+  <div class="gf-form">
+    <span class="gf-form-label width-13">Or Graphite events query</span>
+    <input type="text" class="gf-form-input" ng-model='ctrl.annotation.tags' placeholder=""></input>
+  </div>
 </div>
-
-<div class="editor-row">
-	<div class="editor-option">
-		<label class="small">Graphite event tags</label>
-		<input type="text" ng-model='currentAnnotation.tags' placeholder=""></input>
-	</div>
-</div>
-
-

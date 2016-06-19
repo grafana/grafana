@@ -16,76 +16,6 @@ import (
 	"time"
 )
 
-var testDSNs = []struct {
-	in  string
-	out string
-	loc *time.Location
-}{
-	{"username:password@protocol(address)/dbname?param=value", "&{user:username passwd:password net:protocol addr:address dbname:dbname params:map[param:value] loc:%p tls:<nil> timeout:0 collation:33 allowAllFiles:false allowOldPasswords:false clientFoundRows:false}", time.UTC},
-	{"user@unix(/path/to/socket)/dbname?charset=utf8", "&{user:user passwd: net:unix addr:/path/to/socket dbname:dbname params:map[charset:utf8] loc:%p tls:<nil> timeout:0 collation:33 allowAllFiles:false allowOldPasswords:false clientFoundRows:false}", time.UTC},
-	{"user:password@tcp(localhost:5555)/dbname?charset=utf8&tls=true", "&{user:user passwd:password net:tcp addr:localhost:5555 dbname:dbname params:map[charset:utf8] loc:%p tls:<nil> timeout:0 collation:33 allowAllFiles:false allowOldPasswords:false clientFoundRows:false}", time.UTC},
-	{"user:password@tcp(localhost:5555)/dbname?charset=utf8mb4,utf8&tls=skip-verify", "&{user:user passwd:password net:tcp addr:localhost:5555 dbname:dbname params:map[charset:utf8mb4,utf8] loc:%p tls:<nil> timeout:0 collation:33 allowAllFiles:false allowOldPasswords:false clientFoundRows:false}", time.UTC},
-	{"user:password@/dbname?loc=UTC&timeout=30s&allowAllFiles=1&clientFoundRows=true&allowOldPasswords=TRUE&collation=utf8mb4_unicode_ci", "&{user:user passwd:password net:tcp addr:127.0.0.1:3306 dbname:dbname params:map[] loc:%p tls:<nil> timeout:30000000000 collation:224 allowAllFiles:true allowOldPasswords:true clientFoundRows:true}", time.UTC},
-	{"user:p@ss(word)@tcp([de:ad:be:ef::ca:fe]:80)/dbname?loc=Local", "&{user:user passwd:p@ss(word) net:tcp addr:[de:ad:be:ef::ca:fe]:80 dbname:dbname params:map[] loc:%p tls:<nil> timeout:0 collation:33 allowAllFiles:false allowOldPasswords:false clientFoundRows:false}", time.Local},
-	{"/dbname", "&{user: passwd: net:tcp addr:127.0.0.1:3306 dbname:dbname params:map[] loc:%p tls:<nil> timeout:0 collation:33 allowAllFiles:false allowOldPasswords:false clientFoundRows:false}", time.UTC},
-	{"@/", "&{user: passwd: net:tcp addr:127.0.0.1:3306 dbname: params:map[] loc:%p tls:<nil> timeout:0 collation:33 allowAllFiles:false allowOldPasswords:false clientFoundRows:false}", time.UTC},
-	{"/", "&{user: passwd: net:tcp addr:127.0.0.1:3306 dbname: params:map[] loc:%p tls:<nil> timeout:0 collation:33 allowAllFiles:false allowOldPasswords:false clientFoundRows:false}", time.UTC},
-	{"", "&{user: passwd: net:tcp addr:127.0.0.1:3306 dbname: params:map[] loc:%p tls:<nil> timeout:0 collation:33 allowAllFiles:false allowOldPasswords:false clientFoundRows:false}", time.UTC},
-	{"user:p@/ssword@/", "&{user:user passwd:p@/ssword net:tcp addr:127.0.0.1:3306 dbname: params:map[] loc:%p tls:<nil> timeout:0 collation:33 allowAllFiles:false allowOldPasswords:false clientFoundRows:false}", time.UTC},
-	{"unix/?arg=%2Fsome%2Fpath.ext", "&{user: passwd: net:unix addr:/tmp/mysql.sock dbname: params:map[arg:/some/path.ext] loc:%p tls:<nil> timeout:0 collation:33 allowAllFiles:false allowOldPasswords:false clientFoundRows:false}", time.UTC},
-}
-
-func TestDSNParser(t *testing.T) {
-	var cfg *config
-	var err error
-	var res string
-
-	for i, tst := range testDSNs {
-		cfg, err = parseDSN(tst.in)
-		if err != nil {
-			t.Error(err.Error())
-		}
-
-		// pointer not static
-		cfg.tls = nil
-
-		res = fmt.Sprintf("%+v", cfg)
-		if res != fmt.Sprintf(tst.out, tst.loc) {
-			t.Errorf("%d. parseDSN(%q) => %q, want %q", i, tst.in, res, fmt.Sprintf(tst.out, tst.loc))
-		}
-	}
-}
-
-func TestDSNParserInvalid(t *testing.T) {
-	var invalidDSNs = []string{
-		"@net(addr/",                  // no closing brace
-		"@tcp(/",                      // no closing brace
-		"tcp(/",                       // no closing brace
-		"(/",                          // no closing brace
-		"net(addr)//",                 // unescaped
-		"user:pass@tcp(1.2.3.4:3306)", // no trailing slash
-		//"/dbname?arg=/some/unescaped/path",
-	}
-
-	for i, tst := range invalidDSNs {
-		if _, err := parseDSN(tst); err == nil {
-			t.Errorf("invalid DSN #%d. (%s) didn't error!", i, tst)
-		}
-	}
-}
-
-func BenchmarkParseDSN(b *testing.B) {
-	b.ReportAllocs()
-
-	for i := 0; i < b.N; i++ {
-		for _, tst := range testDSNs {
-			if _, err := parseDSN(tst.in); err != nil {
-				b.Error(err.Error())
-			}
-		}
-	}
-}
-
 func TestScanNullTime(t *testing.T) {
 	var scanTests = []struct {
 		in    interface{}
@@ -209,4 +139,59 @@ func TestFormatBinaryDateTime(t *testing.T) {
 	expect("1978-12-30", 4, 10)
 	expect("1978-12-30 15:46:23", 7, 19)
 	expect("1978-12-30 15:46:23.987654", 11, 26)
+}
+
+func TestEscapeBackslash(t *testing.T) {
+	expect := func(expected, value string) {
+		actual := string(escapeBytesBackslash([]byte{}, []byte(value)))
+		if actual != expected {
+			t.Errorf(
+				"expected %s, got %s",
+				expected, actual,
+			)
+		}
+
+		actual = string(escapeStringBackslash([]byte{}, value))
+		if actual != expected {
+			t.Errorf(
+				"expected %s, got %s",
+				expected, actual,
+			)
+		}
+	}
+
+	expect("foo\\0bar", "foo\x00bar")
+	expect("foo\\nbar", "foo\nbar")
+	expect("foo\\rbar", "foo\rbar")
+	expect("foo\\Zbar", "foo\x1abar")
+	expect("foo\\\"bar", "foo\"bar")
+	expect("foo\\\\bar", "foo\\bar")
+	expect("foo\\'bar", "foo'bar")
+}
+
+func TestEscapeQuotes(t *testing.T) {
+	expect := func(expected, value string) {
+		actual := string(escapeBytesQuotes([]byte{}, []byte(value)))
+		if actual != expected {
+			t.Errorf(
+				"expected %s, got %s",
+				expected, actual,
+			)
+		}
+
+		actual = string(escapeStringQuotes([]byte{}, value))
+		if actual != expected {
+			t.Errorf(
+				"expected %s, got %s",
+				expected, actual,
+			)
+		}
+	}
+
+	expect("foo\x00bar", "foo\x00bar") // not affected
+	expect("foo\nbar", "foo\nbar")     // not affected
+	expect("foo\rbar", "foo\rbar")     // not affected
+	expect("foo\x1abar", "foo\x1abar") // not affected
+	expect("foo''bar", "foo'bar")      // affected
+	expect("foo\"bar", "foo\"bar")     // not affected
 }

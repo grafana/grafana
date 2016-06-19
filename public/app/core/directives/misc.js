@@ -6,7 +6,7 @@ define([
 function (angular, coreModule, kbn) {
   'use strict';
 
-  coreModule.directive('tip', function($compile) {
+  coreModule.default.directive('tip', function($compile) {
     return {
       restrict: 'E',
       link: function(scope, elem, attrs) {
@@ -18,7 +18,7 @@ function (angular, coreModule, kbn) {
     };
   });
 
-  coreModule.directive('watchChange', function() {
+  coreModule.default.directive('watchChange', function() {
     return {
       scope: { onchange: '&watchChange' },
       link: function(scope, element) {
@@ -31,7 +31,7 @@ function (angular, coreModule, kbn) {
     };
   });
 
-  coreModule.directive('editorOptBool', function($compile) {
+  coreModule.default.directive('editorOptBool', function($compile) {
     return {
       restrict: 'E',
       link: function(scope, elem, attrs) {
@@ -39,7 +39,7 @@ function (angular, coreModule, kbn) {
         var tip = attrs.tip ? (' <tip>' + attrs.tip + '</tip>') : '';
         var showIf = attrs.showIf ? (' ng-show="' + attrs.showIf + '" ') : '';
 
-        var template = '<div class="editor-option text-center"' + showIf + '>' +
+        var template = '<div class="editor-option gf-form-checkbox text-center"' + showIf + '>' +
           ' <label for="' + attrs.model + '" class="small">' +
           attrs.text + tip + '</label>' +
           '<input class="cr1" id="' + attrs.model + '" type="checkbox" ' +
@@ -51,7 +51,7 @@ function (angular, coreModule, kbn) {
     };
   });
 
-  coreModule.directive('editorCheckbox', function($compile, $interpolate) {
+  coreModule.default.directive('editorCheckbox', function($compile, $interpolate) {
     return {
       restrict: 'E',
       link: function(scope, elem, attrs) {
@@ -62,18 +62,20 @@ function (angular, coreModule, kbn) {
         var label = '<label for="' + scope.$id + model + '" class="checkbox-label">' +
           text + tip + '</label>';
 
-        var template = '<input class="cr1" id="' + scope.$id + model + '" type="checkbox" ' +
+        var template =
+          '<input class="cr1" id="' + scope.$id + model + '" type="checkbox" ' +
           '       ng-model="' + model + '"' + ngchange +
           '       ng-checked="' + model + '"></input>' +
           ' <label for="' + scope.$id + model + '" class="cr1"></label>';
 
-        template = label + template;
-        elem.replaceWith($compile(angular.element(template))(scope));
+        template = template + label;
+        elem.addClass('gf-form-checkbox');
+        elem.html($compile(angular.element(template))(scope));
       }
     };
   });
 
-  coreModule.directive('gfDropdown', function ($parse, $compile, $timeout) {
+  coreModule.default.directive('gfDropdown', function ($parse, $compile, $timeout) {
     function buildTemplate(items, placement) {
       var upclass = placement === 'top' ? 'dropup' : '';
       var ul = [
@@ -89,7 +91,6 @@ function (angular, coreModule, kbn) {
         var li = '<li' + (item.submenu && item.submenu.length ? ' class="dropdown-submenu"' : '') + '>' +
           '<a tabindex="-1" ng-href="' + (item.href || '') + '"' + (item.click ? ' ng-click="' + item.click + '"' : '') +
           (item.target ? ' target="' + item.target + '"' : '') + (item.method ? ' data-method="' + item.method + '"' : '') +
-          (item.configModal ? ' dash-editor-link="' + item.configModal + '"' : "") +
           '>' + (item.text || '') + '</a>';
 
         if (item.submenu && item.submenu.length) {

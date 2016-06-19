@@ -1,15 +1,23 @@
 {
-  "pluginType": "datasource",
+  "type": "datasource",
   "name": "Prometheus",
+  "id": "prometheus",
 
-  "type": "prometheus",
-  "serviceName": "PrometheusDatasource",
+  "includes": [
+    {"type": "dashboard", "name": "Prometheus Stats", "path": "dashboards/prometheus_stats.json"}
+  ],
 
-  "module": "app/plugins/datasource/prometheus/datasource",
+  "metrics": true,
+  "annotations": true,
 
-  "partials": {
-    "config": "app/plugins/datasource/prometheus/partials/config.html"
-  },
-
-  "metrics": true
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "http://grafana.org"
+    },
+    "logos": {
+      "small": "img/prometheus_logo.svg",
+      "large": "img/prometheus_logo.svg"
+    }
+  }
 }

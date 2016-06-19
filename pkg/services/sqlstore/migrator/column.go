@@ -55,7 +55,7 @@ func (col *Column) StringNoPk(d Dialect) string {
 	}
 
 	if col.Default != "" {
-		sql += "DEFAULT " + col.Default + " "
+		sql += "DEFAULT " + d.Default(col) + " "
 	}
 
 	return sql

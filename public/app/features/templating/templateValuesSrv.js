@@ -13,11 +13,25 @@ function (angular, _, kbn) {
 
     function getNoneOption() { return { text: 'None', value: '', isNone: true }; }
 
-    $rootScope.onAppEvent('time-range-changed', function()  {
-      var variable = _.findWhere(self.variables, { type: 'interval' });
-      if (variable) {
-        self.updateAutoInterval(variable);
+    // update time variant variables
+    $rootScope.onAppEvent('refresh', function() {
+
+      // look for interval variables
+      var intervalVariable = _.findWhere(self.variables, { type: 'interval' });
+      if (intervalVariable) {
+        self.updateAutoInterval(intervalVariable);
       }
+
+      // update variables with refresh === 2
+      var promises = self.variables
+        .filter(function(variable) {
+          return variable.refresh === 2;
+        }).map(function(variable) {
+          return self.updateOptions(variable);
+        });
+
+      return $q.all(promises);
+
     }, $rootScope);
 
     this.init = function(dashboard) {
@@ -27,29 +41,75 @@ function (angular, _, kbn) {
       var queryParams = $location.search();
       var promises = [];
 
+      // use promises to delay processing variables that
+      // depend on other variables.
+      this.variableLock = {};
+      _.forEach(this.variables, function(variable) {
+        self.variableLock[variable.name] = $q.defer();
+      });
+
       for (var i = 0; i < this.variables.length; i++) {
         var variable = this.variables[i];
-        var urlValue = queryParams['var-' + variable.name];
-        if (urlValue !== void 0) {
-          promises.push(this.setVariableFromUrl(variable, urlValue));
-        }
-        else if (variable.refresh) {
-          promises.push(this.updateOptions(variable));
-        }
-        else if (variable.type === 'interval') {
-          this.updateAutoInterval(variable);
-        }
+        promises.push(this.processVariable(variable, queryParams));
       }
 
       return $q.all(promises);
     };
 
-    this.setVariableFromUrl = function(variable, urlValue) {
-      var option = _.findWhere(variable.options, { text: urlValue });
-      option = option || { text: urlValue, value: urlValue };
+    this.processVariable = function(variable, queryParams) {
+      var dependencies = [];
+      var lock = self.variableLock[variable.name];
 
-      this.updateAutoInterval(variable);
-      return this.setVariableValue(variable, option);
+      // determine our dependencies.
+      if (variable.type === "query") {
+        _.forEach(this.variables, function(v) {
+          // both query and datasource can contain variable
+          if (templateSrv.containsVariable(variable.query, v.name) ||
+              templateSrv.containsVariable(variable.datasource, v.name)) {
+            dependencies.push(self.variableLock[v.name].promise);
+          }
+        });
+      }
+
+      return $q.all(dependencies).then(function() {
+        var urlValue = queryParams['var-' + variable.name];
+        if (urlValue !== void 0) {
+          return self.setVariableFromUrl(variable, urlValue).then(lock.resolve);
+        }
+        else if (variable.refresh === 1 || variable.refresh === 2) {
+          return self.updateOptions(variable).then(function() {
+            if (_.isEmpty(variable.current) && variable.options.length) {
+              self.setVariableValue(variable, variable.options[0]);
+            }
+            lock.resolve();
+          });
+        }
+        else if (variable.type === 'interval') {
+          self.updateAutoInterval(variable);
+          lock.resolve();
+        } else {
+          lock.resolve();
+        }
+      });
+    };
+
+    this.setVariableFromUrl = function(variable, urlValue) {
+      var promise = $q.when(true);
+
+      if (variable.refresh) {
+        promise = this.updateOptions(variable);
+      }
+
+      return promise.then(function() {
+        var option = _.find(variable.options, function(op) {
+          return op.text === urlValue || op.value === urlValue;
+        });
+
+        option = option || { text: urlValue, value: urlValue };
+
+        self.updateAutoInterval(variable);
+        return self.setVariableValue(variable, option, true);
+      });
     };
 
     this.updateAutoInterval = function(variable) {
@@ -60,20 +120,26 @@ function (angular, _, kbn) {
         variable.options.unshift({ text: 'auto', value: '$__auto_interval' });
       }
 
-      var interval = kbn.calculateInterval(timeSrv.timeRange(), variable.auto_count);
+      var interval = kbn.calculateInterval(timeSrv.timeRange(), variable.auto_count, (variable.auto_min ? ">"+variable.auto_min : null));
       templateSrv.setGrafanaVariable('$__auto_interval', interval);
     };
 
-    this.setVariableValue = function(variable, option) {
+    this.setVariableValue = function(variable, option, initPhase) {
       variable.current = angular.copy(option);
 
-      if (_.isArray(variable.current.value)) {
-        variable.current.text = variable.current.value.join(' + ');
+      if (_.isArray(variable.current.text)) {
+        variable.current.text = variable.current.text.join(' + ');
       }
 
       self.selectOptionsForCurrentValue(variable);
-
       templateSrv.updateTemplateData();
+
+      // on first load, variable loading is ordered to ensure
+      // that parents are updated before children.
+      if (initPhase) {
+        return $q.when();
+      }
+
       return self.updateOptionsInChildVariables(variable);
     };
 
@@ -87,7 +153,8 @@ function (angular, _, kbn) {
         if (otherVariable === updatedVariable) {
           return;
         }
-        if (templateSrv.containsVariable(otherVariable.query, updatedVariable.name)) {
+        if (templateSrv.containsVariable(otherVariable.query, updatedVariable.name) ||
+            templateSrv.containsVariable(otherVariable.datasource, updatedVariable.name)) {
           return self.updateOptions(otherVariable);
         }
       });
@@ -96,26 +163,65 @@ function (angular, _, kbn) {
     };
 
     this._updateNonQueryVariable = function(variable) {
-      // extract options in comma seperated string
+      if (variable.type === 'datasource') {
+        self.updateDataSourceVariable(variable);
+        return;
+      }
+
+      if (variable.type === 'constant') {
+        variable.options = [{text: variable.query, value: variable.query}];
+        return;
+      }
+
+      // extract options in comma separated string
       variable.options = _.map(variable.query.split(/[,]+/), function(text) {
         return { text: text.trim(), value: text.trim() };
       });
 
       if (variable.type === 'interval') {
         self.updateAutoInterval(variable);
+        return;
       }
 
       if (variable.type === 'custom' && variable.includeAll) {
         self.addAllOption(variable);
       }
+    };
 
+    this.updateDataSourceVariable = function(variable) {
+      var options = [];
+      var sources = datasourceSrv.getMetricSources({skipVariables: true});
+      var regex;
+
+      if (variable.regex) {
+        regex = kbn.stringToJsRegex(templateSrv.replace(variable.regex));
+      }
+
+      for (var i = 0; i < sources.length; i++) {
+        var source = sources[i];
+        // must match on type
+        if (source.meta.id !== variable.query) {
+          continue;
+        }
+
+        if (regex && !regex.exec(source.name)) {
+          continue;
+        }
+
+        options.push({text: source.name, value: source.name});
+      }
+
+      if (options.length === 0) {
+        options.push({text: 'No data sources found', value: ''});
+      }
+
+      variable.options = options;
     };
 
     this.updateOptions = function(variable) {
       if (variable.type !== 'query') {
         self._updateNonQueryVariable(variable);
-        self.setVariableValue(variable, variable.options[0]);
-        return $q.when([]);
+        return self.validateVariableSelectionState(variable);
       }
 
       return datasourceSrv.get(variable.datasource)
@@ -126,6 +232,7 @@ function (angular, _, kbn) {
 
     this.selectOptionsForCurrentValue = function(variable) {
       var i, y, value, option;
+      var selected = [];
 
       for (i = 0; i < variable.options.length; i++) {
         option = variable.options[i];
@@ -135,28 +242,44 @@ function (angular, _, kbn) {
             value = variable.current.value[y];
             if (option.value === value) {
               option.selected = true;
+              selected.push(option);
             }
           }
         } else if (option.value === variable.current.value) {
           option.selected = true;
+          selected.push(option);
         }
       }
+
+      return selected;
     };
 
     this.validateVariableSelectionState = function(variable) {
       if (!variable.current) {
         if (!variable.options.length) { return; }
-        return self.setVariableValue(variable, variable.options[0]);
+        return self.setVariableValue(variable, variable.options[0], false);
       }
 
       if (_.isArray(variable.current.value)) {
-        self.selectOptionsForCurrentValue(variable);
-      } else {
-        var currentOption = _.findWhere(variable.options, { text: variable.current.text });
-        if (currentOption) {
-          return self.setVariableValue(variable, currentOption);
+        var selected = self.selectOptionsForCurrentValue(variable);
+
+        // if none pick first
+        if (selected.length === 0) {
+          selected = variable.options[0];
         } else {
-          if (!variable.options.length) { return; }
+          selected = {
+            value: _.map(selected, function(val) {return val.value;}),
+            text: _.map(selected, function(val) {return val.text;}).join(' + '),
+          };
+        }
+
+        return self.setVariableValue(variable, selected, false);
+      } else {
+        var currentOption = _.findWhere(variable.options, {text: variable.current.text});
+        if (currentOption) {
+          return self.setVariableValue(variable, currentOption, false);
+        } else {
+          if (!variable.options.length) { return $q.when(null); }
           return self.setVariableValue(variable, variable.options[0]);
         }
       }
@@ -211,75 +334,35 @@ function (angular, _, kbn) {
       }
 
       for (i = 0; i < metricNames.length; i++) {
-        var value = metricNames[i].text;
+        var item = metricNames[i];
+        var value = item.value || item.text;
+        var text = item.text || item.value;
+
+        if (_.isNumber(value)) {
+          value = value.toString();
+        }
+
+        if (_.isNumber(text)) {
+          text = text.toString();
+        }
 
         if (regex) {
           matches = regex.exec(value);
           if (!matches) { continue; }
           if (matches.length > 1) {
             value = matches[1];
+            text = value;
           }
         }
 
-        options[value] = value;
+        options[value] = {text: text, value: value};
       }
 
-      return _.map(_.keys(options).sort(), function(key) {
-        var option = { text: key, value: key };
-
-        // check if values need to be regex escaped
-        if (self.shouldRegexEscape(variable)) {
-          option.value = self.regexEscape(option.value);
-        }
-
-        return option;
-      });
-    };
-
-    this.shouldRegexEscape = function(variable) {
-      return (variable.includeAll || variable.multi) && variable.allFormat.indexOf('regex') !== -1;
-    };
-
-    this.regexEscape = function(value) {
-      return value.replace(/[-[\]{}()*+!<=:?.\/\\^$|#\s,]/g, '\\$&');
+      return _.sortBy(options, 'text');
     };
 
     this.addAllOption = function(variable) {
-      var allValue = '';
-      switch(variable.allFormat) {
-        case 'wildcard': {
-          allValue = '*';
-          break;
-        }
-        case 'regex wildcard': {
-          allValue = '.*';
-          break;
-        }
-        case 'lucene': {
-          var quotedValues = _.map(variable.options, function(val) {
-            return '\\\"' + val.text + '\\\"';
-          });
-          allValue = '(' + quotedValues.join(' OR ') + ')';
-          break;
-        }
-        case 'regex values': {
-          allValue = '(' + _.map(variable.options, function(option) {
-            return self.regexEscape(option.text);
-          }).join('|') + ')';
-          break;
-        }
-        case 'pipe': {
-          allValue = _.pluck(variable.options, 'text').join('|');
-          break;
-        }
-        default: {
-          allValue = '{';
-          allValue += _.pluck(variable.options, 'text').join(',');
-          allValue += '}';
-        }
-      }
-
-      variable.options.unshift({text: 'All', value: allValue});
+      variable.options.unshift({text: 'All', value: "$__all"});
     };
 
   });

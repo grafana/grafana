@@ -28,7 +28,6 @@ func TestMigrations(t *testing.T) {
 			sqlutil.CleanDB(x)
 
 			mg := NewMigrator(x)
-			//mg.LogLevel = log.DEBUG
 			AddMigrations(mg)
 
 			err = mg.Start()

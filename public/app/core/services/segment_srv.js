@@ -6,7 +6,7 @@ define([
 function (angular, _, coreModule) {
   'use strict';
 
-  coreModule.service('uiSegmentSrv', function($sce, templateSrv) {
+  coreModule.default.service('uiSegmentSrv', function($sce, templateSrv) {
     var self = this;
 
     function MetricSegment(options) {
@@ -19,7 +19,7 @@ function (angular, _, coreModule) {
 
       if (_.isString(options)) {
         this.value = options;
-        this.html = $sce.trustAsHtml(this.value);
+        this.html = $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(this.value));
         return;
       }
 

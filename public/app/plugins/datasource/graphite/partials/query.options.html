@@ -1,77 +1,71 @@
-<section class="grafana-metric-options">
-
-	<div class="tight-form">
-		<ul class="tight-form-list">
-			<li class="tight-form-item tight-form-item-icon">
-				<i class="fa fa-wrench"></i>
-			</li>
-			<li class="tight-form-item">
+<section class="grafana-metric-options gf-form-group">
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-15">
+			<span class="gf-form-label width-8">
 				Cache timeout
-			</li>
-			<li>
-				<input type="text"
-					class="input-mini tight-form-input"
-					ng-model="panel.cacheTimeout"
-					bs-tooltip="'Graphite parameter to override memcache default timeout (unit is seconds)'"
-					data-placement="right"
-					spellcheck='false'
-					placeholder="60"></input>
-			</li>
-			<li class="tight-form-item">
-				Max data points
-			</li>
-			<li>
-				<input type="text"
-					class="input-mini tight-form-input"
-					ng-model="panel.maxDataPoints"
-					bs-tooltip="'Override max data points, automatically set to graph width in pixels.'"
-					data-placement="right"
-					ng-model-onblur ng-change="get_data()"
-					spellcheck='false'
-					placeholder="auto"></input>
-			</li>
-		</ul>
-		<div class="clearfix"></div>
+			</span>
+			<input type="text"
+				class="gf-form-input"
+				ng-model="ctrl.panelCtrl.panel.cacheTimeout"
+				bs-tooltip="'Graphite parameter to override memcache default timeout (unit is seconds)'"
+				data-placement="right"
+				spellcheck='false'
+				placeholder="60">
+			</input>
+		</div>
+		<div class="gf-form max-width-15">
+			<span class="gf-form-label">Max data points</span>
+			<input type="text"
+				class="gf-form-input"
+				ng-model="ctrl.panelCtrl.panel.maxDataPoints"
+				bs-tooltip="'Override max data points, automatically set to graph width in pixels.'"
+				data-placement="right"
+				ng-model-onblur ng-change="ctrl.panelCtrl.refresh()"
+				spellcheck='false'
+				placeholder="auto">
+			</input>
+		</div>
 	</div>
-	<div class="tight-form last">
-		<ul class="tight-form-list">
-			<li class="tight-form-item tight-form-item-icon">
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label width-12">
 				<i class="fa fa-info-circle"></i>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					shorter legend names
+				<a ng-click="ctrl.panelCtrl.toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					Shorter legend names
 				</a>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="toggleEditorHelp(2);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					series as parameters
+			</span>
+			<span class="gf-form-label width-12">
+				<i class="fa fa-info-circle"></i>
+				<a ng-click="ctrl.panelCtrl.toggleEditorHelp(2);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					Series as parameters
 				</a>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					stacking
+			</span>
+			<span class="gf-form-label width-7">
+				<i class="fa fa-info-circle"></i>
+				<a ng-click="ctrl.panelCtrl.toggleEditorHelp(3)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					Stacking
 				</a>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="toggleEditorHelp(4)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
-					templating
+			</span>
+			<span class="gf-form-label width-8">
+				<i class="fa fa-info-circle"></i>
+				<a ng-click="ctrl.panelCtrl.toggleEditorHelp(4)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+					Templating
 				</a>
-			</li>
-			<li class="tight-form-item">
-				<a ng-click="toggleEditorHelp(5)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
+			</span>
+			<span class="gf-form-label width-10">
+				<i class="fa fa-info-circle"></i>
+				<a ng-click="ctrl.panelCtrl.toggleEditorHelp(5)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
 					max data points
 				</a>
-			</li>
-		</ul>
-		<div class="clearfix"></div>
+			</span>
+		</div>
 	</div>
 </section>
 
 <div class="editor-row">
-	<div class="pull-left" style="margin-top: 30px;">
+	<div class="pull-left">
 
-		<div class="grafana-info-box span8" ng-if="editorHelpIndex === 1">
+		<div class="grafana-info-box span8" ng-if="ctrl.panelCtrl.editorHelpIndex === 1">
 			<h5>Shorter legend names</h5>
 			<ul>
 				<li>alias() function to specify a custom series name</li>
@@ -81,7 +75,7 @@
 			</ul>
 		</div>
 
-		<div class="grafana-info-box span8" ng-if="editorHelpIndex === 2">
+		<div class="grafana-info-box span8" ng-if="ctrl.panelCtrl.editorHelpIndex === 2">
 			<h5>Series as parameter</h5>
 			<ul>
 				<li>Some graphite functions allow you to have many series arguments</li>
@@ -99,7 +93,7 @@
 			</ul>
 		</div>
 
-		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 3">
+		<div class="grafana-info-box span6" ng-if="ctrl.panelCtrl.editorHelpIndex === 3">
 			<h5>Stacking</h5>
 			<ul>
 				<li>You find the stacking option under Display Styles tab</li>
@@ -107,7 +101,7 @@
 			</ul>
 		</div>
 
-		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 4">
+		<div class="grafana-info-box span6" ng-if="ctrl.panelCtrl.editorHelpIndex === 4">
 			<h5>Templating</h5>
 			<ul>
 				<li>You can use a template variable in place of metric names</li>
@@ -116,7 +110,7 @@
 			</ul>
 		</div>
 
-		<div class="grafana-info-box span6" ng-if="editorHelpIndex === 5">
+		<div class="grafana-info-box span6" ng-if="ctrl.panelCtrl.editorHelpIndex === 5">
 			<h5>Max data points</h5>
 			<ul>
 				<li>Every graphite request is issued with a maxDataPoints parameter</li>

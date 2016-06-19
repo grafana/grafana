@@ -8,7 +8,7 @@ function (angular, _, coreModule) {
 
   // This service was based on OpenJS library available in BSD License
   // http://www.openjs.com/scripts/events/keyboard_shortcuts/index.php
-  coreModule.factory('keyboardManager', ['$window', '$timeout', function ($window, $timeout) {
+  coreModule.default.factory('keyboardManager', ['$window', '$timeout', function ($window, $timeout) {
     var keyboardManagerService = {};
 
     var defaultOpt = {

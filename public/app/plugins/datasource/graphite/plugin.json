@@ -1,17 +1,23 @@
 {
-  "pluginType": "datasource",
   "name": "Graphite",
+  "type": "datasource",
+  "id": "graphite",
 
-  "type": "graphite",
-  "serviceName": "GraphiteDatasource",
+  "includes": [
+    {"type": "dashboard", "name": "Graphite Carbon Metrics", "path": "dashboards/carbon_metrics.json"}
+  ],
 
-  "module": "app/plugins/datasource/graphite/datasource",
-
-  "partials": {
-    "config": "app/plugins/datasource/graphite/partials/config.html"
-  },
-
-  "defaultMatchFormat": "glob",
   "metrics": true,
-  "annotations": true
+  "annotations": true,
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "http://grafana.org"
+    },
+    "logos": {
+      "small": "img/graphite_logo.png",
+      "large": "img/graphite_logo.png"
+    }
+  }
 }

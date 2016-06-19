@@ -1,25 +1,28 @@
-<topnav icon="fa fa-fw fa-users" title="Global Orgs" subnav="true">
-	<ul class="nav">
-		<li class="active"><a href="admin/orgs">List</a></li>
-	</ul>
-</topnav>
+<navbar icon="fa fa-fw fa-cogs" title="Admin" title-url="admin">
+	<a href="admin/orgs" class="navbar-page-btn">
+		<i class="icon-gf icon-gf-users"></i>
+		Orgs
+	</a>
+</navbar>
 
 <div class="page-container">
-	<div class="page">
-		<h2>
-			Organizations
-		</h2>
+	<div class="page-header">
+		<h1>Organizations</h1>
+	</div>
 
-		<table class="grafana-options-table">
+	<table class="filter-table form-inline">
+		<thead>
 			<tr>
-				<th style="text-align:left">Id</th>
+				<th>Id</th>
 				<th>Name</th>
 				<th></th>
 			</tr>
+		</thead>
+		<tbody>
 			<tr ng-repeat="org in orgs">
-        <td>{{org.id}}</td>
+				<td>{{org.id}}</td>
 				<td>{{org.name}}</td>
-				<td style="width: 1%">
+				<td class="text-right">
 					<a href="admin/orgs/edit/{{org.id}}" class="btn btn-inverse btn-small">
 						<i class="fa fa-edit"></i>
 						Edit
@@ -30,7 +33,6 @@
 					</a>
 				</td>
 			</tr>
-		</table>
-
-	</div>
+		</tbody>
+	</table>
 </div>

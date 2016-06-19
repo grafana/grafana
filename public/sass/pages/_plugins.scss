@@ -1,0 +1,90 @@
+.plugin-header {
+  @include clearfix();
+
+  padding: $spacer 0 $spacer/2 0;
+  margin-bottom: 2rem;
+}
+
+.plugin-header-logo {
+  float: left;
+  width: 7rem;
+  img {
+    width: 7rem;
+  }
+  margin-right: $spacer;
+}
+
+.plugin-header-info-block {
+  float: left;
+}
+
+.plugin-header-author {
+}
+
+.plugin-header-stamps-type {
+  color: $link-color-disabled;
+  text-transform: uppercase;
+}
+
+.plugin-info-list-item {
+  img {
+    width: 16px;
+  }
+
+  white-space: nowrap;
+  max-width: $page-sidebar-width;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+
+.plugin-markdown-readme {
+  img {
+    max-width: 100%;
+  }
+
+  ul {
+    padding-left: $spacer*1.5;
+    margin-bottom: $spacer*2;
+  }
+
+  table {
+    td, th {
+      padding: $spacer*.5 $spacer;
+    }
+    th {
+      font-weight: normal;
+      background: $table-bg-accent;
+    }
+  }
+
+  table, th, td {
+    border: 1px solid $table-border;
+    border-collapse: collapse;
+  }
+}
+
+// .app-edit-logo-box {
+//   padding: 1.2rem;
+//   background: $panel-bg;
+//   text-align: center;
+//   img {
+//     max-width: 7rem;
+//   }
+//   margin-right: 2rem;
+// }
+//
+// .app-edit-links {
+//   list-style: none;
+//   margin: 0 0 0 2rem;
+//
+//   li {
+//     background: $panel-bg;
+//     margin-top: 4px;
+//     padding: 0.2rem 1rem;
+//   }
+// }
+//
+// .app-edit-description {
+//   font-style: italic;
+//   margin-bottom: 1.5rem;
+// }

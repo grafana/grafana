@@ -1,0 +1,24 @@
+<div class="table-panel-container">
+	<div class="table-panel-header-bg"></div>
+	<div class="table-panel-scroll">
+		<table class="table-panel-table">
+			<thead>
+				<tr>
+					<th ng-repeat="col in ctrl.table.columns">
+						<div class="table-panel-table-header-inner pointer" ng-click="ctrl.toggleColumnSort(col, $index)">
+							{{col.text}}
+							<span class="table-panel-table-header-controls" ng-if="col.sort">
+								<i class="fa fa-caret-down" ng-show="col.desc"></i>
+								<i class="fa fa-caret-up" ng-hide="col.desc"></i>
+							</span>
+						</div>
+					</th>
+				</tr>
+			</thead>
+			<tbody>
+			</tbody>
+		</table>
+	</div>
+</div>
+<div class="table-panel-footer">
+</div>

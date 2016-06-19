@@ -1,0 +1,111 @@
+//
+// Navs
+// --------------------------------------------------
+
+
+// BASE CLASS
+// ----------
+
+.nav {
+  margin: 0;
+  list-style: none;
+}
+
+// Make links block level
+.nav > li > a {
+  display: block;
+}
+
+// Redeclare pull classes because of specifity
+.nav > .pull-right {
+  float: right;
+}
+
+// TABS AND PILLS
+// -------------
+
+// Common styles
+.nav-tabs {
+  @include clearfix();
+}
+.nav-tabs > li {
+  float: left;
+}
+.nav-tabs > li > a {
+  padding-right: 12px;
+  padding-left: 12px;
+  margin-right: 2px;
+  line-height: 14px; // keeps the overall height an even number
+}
+
+// TABS
+// ----
+
+// Give the tabs something to sit on
+.nav-tabs {
+  border-bottom: 1px solid $divider-border-color;
+  padding-left: 10px;
+  margin: 0 0 10px 0;
+}
+
+// Make the list-items overlay the bottom border
+.nav-tabs > li {
+  margin-bottom: -1px;
+}
+
+// Actual tabs (as links)
+.nav-tabs > li > a {
+  padding: 0.40rem 1rem 0.35rem 1rem;
+  margin-right: $spacer/2;
+  line-height: $line-height-base;
+  border: 1px solid transparent;
+  position: relative;
+
+  &:hover,
+  &:focus {
+    color: $link-hover-color;
+  }
+}
+
+// Active state, and it's :hover/:focus to override normal :hover/:focus
+.nav-tabs > .active > a,
+.nav-tabs > .active > a:hover,
+.nav-tabs > .active > a:focus {
+  @include border-radius(3px);
+  border-color: $divider-border-color;
+  border-bottom: 1px solid $panel-bg;
+  color: $link-color;
+}
+
+// Show/hide tabbable areas
+.tab-content > .tab-pane {
+  display: none;
+}
+
+.tab-content > .active {
+  display: block;
+}
+
+// temp hack
+.modal-body, .gf-box {
+  .nav-tabs {
+    border-bottom: none;
+  }
+
+  .nav-tabs > li > a {
+    border: none;
+    border-radius: 0;
+    &:hover,
+    &:focus {
+      border-bottom: 1px solid $blue;
+    }
+  }
+
+  .nav-tabs > .active > a,
+  .nav-tabs > .active > a:hover,
+  .nav-tabs > .active > a:focus {
+    border: none;
+    border-bottom: 1px solid $blue;
+    color: $link-color;
+  }
+}

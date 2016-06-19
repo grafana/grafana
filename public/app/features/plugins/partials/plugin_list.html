@@ -1,0 +1,58 @@
+<navbar title="Plugins" icon="icon-gf icon-gf-apps" title-url="plugins">
+</navbar>
+
+<div class="page-container">
+  <div class="page-header">
+    <h1>Plugins</h1>
+
+		<div class="page-header-tabs">
+			<ul class="gf-tabs">
+				<li class="gf-tabs-item">
+					<a class="gf-tabs-link" href="plugins?type=panel" ng-class="{active: ctrl.tabIndex === 0}">
+						Panels
+					</a>
+				</li>
+				<li class="gf-tabs-item">
+					<a class="gf-tabs-link" href="plugins?type=datasource" ng-class="{active: ctrl.tabIndex === 1}">
+						Data sources
+					</a>
+				</li>
+				<li class="gf-tabs-item">
+					<a class="gf-tabs-link" href="plugins?type=app" ng-class="{active: ctrl.tabIndex === 2}">
+						Apps
+					</a>
+				</li>
+			</ul>
+		</div>
+	</div>
+
+	<section class="card-section" layout-mode>
+    <layout-selector></layout-selector>
+
+		<ol class="card-list" >
+			<li class="card-item-wrapper" ng-repeat="plugin in ctrl.plugins">
+				<a class="card-item" href="plugins/{{plugin.id}}/edit">
+					<div class="card-item-header">
+						<div class="card-item-type">
+							<i class="icon-gf icon-gf-{{plugin.type}}"></i>
+							{{plugin.type}}
+						</div>
+					  <div class="card-item-notice" ng-show="plugin.hasUpdate">
+							<span bs-tooltip="plugin.latestVersion">Update available!</span>
+						</div>
+					</div>
+					<div class="card-item-body">
+						<figure class="card-item-figure">
+							<img ng-src="{{plugin.info.logos.small}}">
+						</figure>
+						<div class="card-item-details">
+							<div class="card-item-name">{{plugin.name}}</div>
+							<div class="card-item-sub-name">By {{plugin.info.author.name}}</div>
+						</div>
+					</div>
+				</a>
+			</li>
+		</ol>
+	</section>
+
+</div>

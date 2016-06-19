@@ -10,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -41,7 +42,6 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 			req.URL.RawQuery = reqQueryVals.Encode()
 		} else if ds.Type == m.DS_INFLUXDB {
 			req.URL.Path = util.JoinUrlFragments(targetUrl.Path, proxyPath)
-			reqQueryVals.Add("db", ds.Database)
 			req.URL.RawQuery = reqQueryVals.Encode()
 			if !ds.BasicAuth {
 				req.Header.Del("Authorization")
@@ -56,33 +56,35 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 			req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.BasicAuthUser, ds.BasicAuthPassword))
 		}
 
+		dsAuth := req.Header.Get("X-DS-Authorization")
+		if len(dsAuth) > 0 {
+			req.Header.Del("X-DS-Authorization")
+			req.Header.Del("Authorization")
+			req.Header.Add("Authorization", dsAuth)
+		}
+
 		// clear cookie headers
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
 	}
 
-	return &httputil.ReverseProxy{Director: director}
+	return &httputil.ReverseProxy{Director: director, FlushInterval: time.Millisecond * 200}
 }
 
-var dsMap map[int64]*m.DataSource = make(map[int64]*m.DataSource)
-
 func getDatasource(id int64, orgId int64) (*m.DataSource, error) {
-	// ds, exists := dsMap[id]
-	// if exists && ds.OrgId == orgId {
-	// 	return ds, nil
-	// }
-
 	query := m.GetDataSourceByIdQuery{Id: id, OrgId: orgId}
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}
 
-	dsMap[id] = &query.Result
 	return &query.Result, nil
 }
 
 func ProxyDataSourceRequest(c *middleware.Context) {
+	c.TimeRequest(metrics.M_DataSource_ProxyReq_Timer)
+
 	ds, err := getDatasource(c.ParamsInt64(":id"), c.OrgId)
+
 	if err != nil {
 		c.JsonApiErr(500, "Unable to load datasource meta data", err)
 		return
@@ -102,6 +104,7 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		proxyPath := c.Params("*")
 		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
 		proxy.Transport = dataProxyTransport
-		proxy.ServeHTTP(c.RW(), c.Req.Request)
+		proxy.ServeHTTP(c.Resp, c.Req.Request)
+		c.Resp.Header().Del("Set-Cookie")
 	}
 }

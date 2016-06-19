@@ -11,7 +11,7 @@ function (_, moment) {
   }
 
   IndexPattern.intervalMap = {
-    "Hours":   { startOf: 'hour',     amount: 'hours'},
+    "Hourly":   { startOf: 'hour',     amount: 'hours'},
     "Daily":   { startOf: 'day',      amount: 'days'},
     "Weekly":  { startOf: 'isoWeek',  amount: 'weeks'},
     "Monthly": { startOf: 'month',    amount: 'months'},

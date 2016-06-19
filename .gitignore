@@ -6,6 +6,7 @@ awsconfig
 /dist
 /emails/dist
 /public_gen
+/public/vendor/npm
 /tmp
 vendor/phantomjs/phantomjs
 
@@ -30,6 +31,10 @@ public/css/*.min.css
 
 conf/custom.ini
 fig.yml
+docker-compose.yml
 profile.cov
-grafana
+/grafana
 .notouch
+/pkg/cmd/grafana-cli/grafana-cli
+/pkg/cmd/grafana-server/grafana-server
+/examples/*/dist

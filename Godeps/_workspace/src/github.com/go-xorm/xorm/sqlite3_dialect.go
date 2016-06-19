@@ -1,9 +1,14 @@
+// Copyright 2015 The Xorm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package xorm
 
 import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/go-xorm/core"
@@ -152,13 +157,21 @@ func (db *sqlite3) Init(d *core.DB, uri *core.Uri, drivername, dataSourceName st
 
 func (db *sqlite3) SqlType(c *core.Column) string {
 	switch t := c.SQLType.Name; t {
+	case core.Bool:
+		if c.Default == "true" {
+			c.Default = "1"
+		} else if c.Default == "false" {
+			c.Default = "0"
+		}
+		return core.Integer
 	case core.Date, core.DateTime, core.TimeStamp, core.Time:
 		return core.DateTime
 	case core.TimeStampz:
 		return core.Text
-	case core.Char, core.Varchar, core.NVarchar, core.TinyText, core.Text, core.MediumText, core.LongText:
+	case core.Char, core.Varchar, core.NVarchar, core.TinyText,
+		core.Text, core.MediumText, core.LongText, core.Json:
 		return core.Text
-	case core.Bit, core.TinyInt, core.SmallInt, core.MediumInt, core.Int, core.Integer, core.BigInt, core.Bool:
+	case core.Bit, core.TinyInt, core.SmallInt, core.MediumInt, core.Int, core.Integer, core.BigInt:
 		return core.Integer
 	case core.Float, core.Double, core.Real:
 		return core.Real
@@ -238,15 +251,19 @@ func (db *sqlite3) DropIndexSql(tableName string, index *core.Index) string {
 	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
 }
 
+func (db *sqlite3) ForUpdateSql(query string) string {
+	return query
+}
+
 /*func (db *sqlite3) ColumnCheckSql(tableName, colName string) (string, []interface{}) {
 	args := []interface{}{tableName}
 	sql := "SELECT name FROM sqlite_master WHERE type='table' and name = ? and ((sql like '%`" + colName + "`%') or (sql like '%[" + colName + "]%'))"
 	return sql, args
 }*/
 
-func (db *sqlite3) IsColumnExist(tableName string, col *core.Column) (bool, error) {
+func (db *sqlite3) IsColumnExist(tableName, colName string) (bool, error) {
 	args := []interface{}{tableName}
-	query := "SELECT name FROM sqlite_master WHERE type='table' and name = ? and ((sql like '%`" + col.Name + "`%') or (sql like '%[" + col.Name + "]%'))"
+	query := "SELECT name FROM sqlite_master WHERE type='table' and name = ? and ((sql like '%`" + colName + "`%') or (sql like '%[" + colName + "]%'))"
 	rows, err := db.DB().Query(query, args...)
 	if db.Logger != nil {
 		db.Logger.Info("[sql]", query, args)
@@ -290,10 +307,13 @@ func (db *sqlite3) GetColumns(tableName string) ([]string, map[string]*core.Colu
 
 	nStart := strings.Index(name, "(")
 	nEnd := strings.LastIndex(name, ")")
-	colCreates := strings.Split(name[nStart+1:nEnd], ",")
+	reg := regexp.MustCompile(`[^\(,\)]*(\([^\(]*\))?`)
+	colCreates := reg.FindAllString(name[nStart+1:nEnd], -1)
 	cols := make(map[string]*core.Column)
 	colSeq := make([]string, 0)
 	for _, colStr := range colCreates {
+		reg = regexp.MustCompile(`,\s`)
+		colStr = reg.ReplaceAllString(colStr, ",")
 		fields := strings.Fields(strings.TrimSpace(colStr))
 		col := new(core.Column)
 		col.Indexes = make(map[string]bool)

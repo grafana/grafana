@@ -96,4 +96,9 @@ func addDataSourceMigration(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Drop old table data_source_v1 #2", NewDropTableMigration("data_source_v1"))
+
+	// add column to activate withCredentials option
+	mg.AddMigration("Add column with_credentials", NewAddColumnMigration(tableV2, &Column{
+		Name: "with_credentials", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
 }

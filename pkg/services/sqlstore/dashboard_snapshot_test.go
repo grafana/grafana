@@ -5,6 +5,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -16,9 +17,9 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 		Convey("Given saved snaphot", func() {
 			cmd := m.CreateDashboardSnapshotCommand{
 				Key: "hej",
-				Dashboard: map[string]interface{}{
+				Dashboard: simplejson.NewFromAny(map[string]interface{}{
 					"hello": "mupp",
-				},
+				}),
 			}
 			err := CreateDashboardSnapshot(&cmd)
 			So(err, ShouldBeNil)
@@ -29,7 +30,7 @@ func TestDashboardSnapshotDBAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(query.Result, ShouldNotBeNil)
-				So(query.Result.Dashboard["hello"], ShouldEqual, "mupp")
+				So(query.Result.Dashboard.Get("hello").MustString(), ShouldEqual, "mupp")
 			})
 
 		})

@@ -6,7 +6,7 @@ define([
 function (angular, coreModule, config) {
   'use strict';
 
-  coreModule.controller('LoginCtrl', function($scope, backendSrv, contextSrv, $location) {
+  coreModule.default.controller('LoginCtrl', function($scope, backendSrv, contextSrv, $location) {
     $scope.formModel = {
       user: '',
       email: '',
@@ -17,7 +17,9 @@ function (angular, coreModule, config) {
 
     $scope.googleAuthEnabled = config.googleAuthEnabled;
     $scope.githubAuthEnabled = config.githubAuthEnabled;
+    $scope.oauthEnabled = config.githubAuthEnabled || config.googleAuthEnabled;
     $scope.disableUserSignUp = config.disableUserSignUp;
+    $scope.loginHint     = config.loginHint;
 
     $scope.loginMode = true;
     $scope.submitBtnText = 'Log in';
@@ -31,13 +33,6 @@ function (angular, coreModule, config) {
         delete params.failedMsg;
         $location.search(params);
       }
-    };
-
-    // build info view model
-    $scope.buildInfo = {
-      version: config.buildInfo.version,
-      commit: config.buildInfo.commit,
-      buildstamp: new Date(config.buildInfo.buildstamp * 1000)
     };
 
     $scope.submit = function() {
@@ -83,7 +78,5 @@ function (angular, coreModule, config) {
     };
 
     $scope.init();
-
   });
-
 });

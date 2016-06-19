@@ -16,11 +16,13 @@ const (
 	ControlTypeBeheraPasswordPolicy   = "1.3.6.1.4.1.42.2.27.8.5.1"
 	ControlTypeVChuPasswordMustChange = "2.16.840.1.113730.3.4.4"
 	ControlTypeVChuPasswordWarning    = "2.16.840.1.113730.3.4.5"
+	ControlTypeManageDsaIT            = "2.16.840.1.113730.3.4.2"
 )
 
 var ControlTypeMap = map[string]string{
 	ControlTypePaging:               "Paging",
 	ControlTypeBeheraPasswordPolicy: "Password Policy - Behera Draft",
+	ControlTypeManageDsaIT:          "Manage DSA IT",
 }
 
 type Control interface {
@@ -163,6 +165,36 @@ func (c *ControlVChuPasswordWarning) String() string {
 		ControlTypeVChuPasswordWarning,
 		false,
 		c.Expire)
+}
+
+type ControlManageDsaIT struct {
+	Criticality bool
+}
+
+func (c *ControlManageDsaIT) GetControlType() string {
+	return ControlTypeManageDsaIT
+}
+
+func (c *ControlManageDsaIT) Encode() *ber.Packet {
+	//FIXME
+	packet := ber.Encode(ber.ClassUniversal, ber.TypeConstructed, ber.TagSequence, nil, "Control")
+	packet.AppendChild(ber.NewString(ber.ClassUniversal, ber.TypePrimitive, ber.TagOctetString, ControlTypeManageDsaIT, "Control Type ("+ControlTypeMap[ControlTypeManageDsaIT]+")"))
+	if c.Criticality {
+		packet.AppendChild(ber.NewBoolean(ber.ClassUniversal, ber.TypePrimitive, ber.TagBoolean, c.Criticality, "Criticality"))
+	}
+	return packet
+}
+
+func (c *ControlManageDsaIT) String() string {
+	return fmt.Sprintf(
+		"Control Type: %s (%q)  Criticality: %t",
+		ControlTypeMap[ControlTypeManageDsaIT],
+		ControlTypeManageDsaIT,
+		c.Criticality)
+}
+
+func NewControlManageDsaIT(Criticality bool) *ControlManageDsaIT {
+	return &ControlManageDsaIT{Criticality: Criticality}
 }
 
 func FindControl(controls []Control, controlType string) Control {

@@ -1,0 +1,168 @@
+//
+// Modals
+// --------------------------------------------------
+
+// Background
+.modal-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: $zindex-modal-backdrop;
+  background-color: $black;
+}
+
+.modal-backdrop,
+.modal-backdrop.fade.in {
+  @include opacity(70);
+}
+
+// Base modal
+.modal {
+  position: fixed;
+  z-index: $zindex-modal;
+  width: 100%;
+	background-color: $panel-bg;
+  @include box-shadow(0 3px 7px rgba(0,0,0,0.3));
+  @include background-clip(padding-box);
+  outline: none;
+
+  max-width: 750px;
+  left: 0;
+  right: 0;
+  margin-left: auto;
+  margin-right: auto;
+  top: 20%;
+}
+
+.modal-header {
+  background-color: $body-bg;
+	@include brand-bottom-border();
+	@include clearfix();
+
+  .gf-tabs-link.active {
+    background-color: $panel-bg;
+  }
+}
+
+.modal-header-title {
+  font-style: italic;
+  font-size: $font-size-h3;
+  float: left;
+  padding-top: $spacer * 0.75;
+  margin: 0 $spacer*3 0 $spacer*1.5;
+}
+
+.modal-header-close {
+  float: right;
+  padding: 0.75rem $spacer;
+}
+
+// Body (where all modal content resides)
+.modal-body {
+  position: relative;
+  overflow-y: auto;
+}
+
+.modal-content {
+  padding: $spacer*2;
+}
+
+// Remove bottom margin if need be
+.modal-form {
+  margin-bottom: 0;
+}
+
+// Footer (for actions)
+.modal-footer {
+  padding: 14px 15px 15px;
+	border-top: 1px solid $panel-bg;
+  background-color: $panel-bg;
+  text-align: right; // right align buttons
+  @include clearfix(); // clear it in case folks use .pull-* classes on buttons
+}
+
+.modal--narrow {
+  max-width: 500px;
+}
+
+.confirm-modal {
+  max-width: 500px;
+
+  .confirm-modal-icon {
+    padding-top: 41px;
+    font-size: 280%;
+    color: $green;
+    padding-bottom: 20px;
+  }
+
+  .confirm-modal-text {
+    font-size: $font-size-h4;
+    color: $link-color;
+    margin-bottom: $spacer*2;
+    padding-top: $spacer;
+  }
+
+  .confirm-modal-text2 {
+    font-size: $font-size-h5;
+    padding-top: $spacer;
+  }
+
+  .confirm-modal-buttons {
+    margin-bottom: $spacer;
+    button {
+      margin-right: $spacer/2;
+    }
+  }
+}
+
+.share-modal-body {
+  padding: 10px 0;
+
+  .tight-form {
+    text-align: left;
+  }
+
+  .share-modal-options {
+    margin: 11px 0px 33px 0px;
+    display: inline-block;
+  }
+
+  .share-modal-big-icon {
+    margin-bottom: 10px;
+    margin-right: 2rem;
+    .fa, .icon-gf {
+      font-size: 50px;
+    }
+  }
+
+  .share-modal-info-text {
+    margin-top: 5px;
+    strong {
+      color: $headings-color;
+      font-weight: 500;
+    }
+  }
+
+  .share-modal-header {
+    display: flex;
+    margin: 0px 0 22px 0;
+  }
+
+  .share-modal-content {
+    flex-grow: 1;
+  }
+
+  .tight-form {
+    text-align: left;
+  }
+
+  .share-modal-link {
+    max-width: 716px;
+    white-space: nowrap;
+    overflow: hidden;
+    display: block;
+    text-overflow: ellipsis;
+  }
+}

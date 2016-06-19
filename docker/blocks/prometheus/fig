@@ -1,6 +1,16 @@
 prometheus:
   build: blocks/prometheus
+  net: bridge
   ports:
     - "9090:9090"
   volumes:
     - /var/docker/prometheus:/prometheus-data
+
+fake-prometheus-data:
+  image: grafana/fake-data-gen
+  net: bridge
+  ports:
+    - "9091:9091"
+  environment:
+    FD_DATASOURCE: prom
+

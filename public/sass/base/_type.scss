@@ -1,0 +1,287 @@
+//
+// Typography
+// --------------------------------------------------
+
+
+// Body text
+// -------------------------
+
+p {
+  margin: 0 0 $line-height-base / 2;
+}
+.lead {
+  margin-bottom: $line-height-base;
+  font-size: $font-size-base * 1.5;
+  font-weight: 200;
+  line-height: $line-height-base * 1.5;
+}
+
+// Emphasis & misc
+
+// -------------------------
+
+// Ex: 14px base font * 85% = about 12px
+small   { font-size: 85%; }
+strong  { font-weight: bold; }
+em      { font-style: italic; color: $headings-color; }
+cite    { font-style: normal; }
+
+// Utility classes
+.muted               { color: $text-muted; }
+a.muted:hover,
+a.muted:focus        { color: darken($text-muted, 10%); }
+
+.text-warning        { color: $state-warning-text; }
+a.text-warning:hover,
+a.text-warning:focus { color: darken($state-warning-text, 10%); }
+
+.text-error          { color: $errorText; }
+a.text-error:hover,
+a.text-error:focus   { color: darken($errorText, 10%); }
+
+.text-info           { color: $infoText; }
+a.text-info:hover,
+a.text-info:focus    { color: darken($infoText, 10%); }
+
+.text-success        { color: $successText; }
+a.text-success:hover,
+a.text-success:focus { color: darken($successText, 10%); }
+a { cursor: pointer; }
+
+.text-left           { text-align: left; }
+.text-right          { text-align: right; }
+.text-center         { text-align: center; }
+
+//
+// Headings
+//
+
+h1, h2, h3, h4, h5, h6,
+.h1, .h2, .h3, .h4, .h5, .h6 {
+  margin-bottom: $headings-margin-bottom;
+  font-family: $headings-font-family;
+  font-weight: $headings-font-weight;
+  line-height: $headings-line-height;
+  color: $headings-color;
+}
+
+h1, .h1 { font-size: $font-size-h1; font-style: italic; }
+h2, .h2 { font-size: $font-size-h2; }
+h3, .h3 { font-size: $font-size-h3; }
+h4, .h4 { font-size: $font-size-h4; }
+h5, .h5 { font-size: $font-size-h5; }
+h6, .h6 { font-size: $font-size-h6; }
+
+.lead {
+  font-size: $lead-font-size;
+  font-weight: $lead-font-weight;
+}
+
+// Type display classes
+.display-1 {
+  font-size: $display1-size;
+  font-weight: $display1-weight;
+}
+.display-2 {
+  font-size: $display2-size;
+  font-weight: $display2-weight;
+}
+.display-3 {
+  font-size: $display3-size;
+  font-weight: $display3-weight;
+}
+.display-4 {
+  font-size: $display4-size;
+  font-weight: $display4-weight;
+}
+
+
+//
+// Horizontal rules
+//
+
+hr {
+  margin-top: $spacer-y;
+  margin-bottom: $spacer-y;
+  border: 0;
+  border-top: $hr-border-width solid $hr-border-color;
+}
+
+
+//
+// Emphasis
+//
+
+small,
+.small {
+  font-size: $font-size-sm;
+  font-weight: normal;
+}
+
+.small-xs {
+  font-size: $font-size-xs;
+}
+
+mark,
+.mark {
+  padding: .2em;
+  background-color: $state-warning-bg;
+}
+
+
+// Lists
+// --------------------------------------------------
+
+// Unordered and Ordered lists
+ul, ol {
+  padding: 0;
+}
+ul ul,
+ul ol,
+ol ol,
+ol ul {
+  margin-bottom: 0;
+}
+li {
+  line-height: $line-height-base;
+}
+
+// Remove default list styles
+ul.unstyled,
+ol.unstyled {
+  margin-left: 0;
+  list-style: none;
+}
+
+// Single-line list items
+ul.inline,
+ol.inline {
+  margin-left: 0;
+  list-style: none;
+  > li {
+    display: inline-block;
+    padding-left: 5px;
+    padding-right: 5px;
+  }
+}
+
+// Description Lists
+dl {
+  margin-bottom: $line-height-base;
+}
+dt,
+dd {
+  line-height: $line-height-base;
+}
+dt {
+  font-weight: bold;
+}
+dd {
+  margin-left: $line-height-base / 2;
+}
+// Horizontal layout (like forms)
+.dl-horizontal {
+  @include clearfix();
+  dt {
+    float: left;
+    width: $horizontalComponentOffset - 20;
+    clear: left;
+    text-align: right;
+    @include text-overflow();
+  }
+  dd {
+    margin-left: $horizontalComponentOffset;
+  }
+}
+
+// MISC
+// ----
+
+// Abbreviations and acronyms
+abbr[title],
+// Added data-* attribute to help out our tooltip plugin, per https://github.com/twbs/bootstrap/issues/5257
+abbr[data-original-title] {
+  cursor: help;
+  border-bottom: 1px dotted $gray-2;
+}
+abbr.initialism {
+  font-size: 90%;
+  text-transform: uppercase;
+}
+
+// Blockquotes
+blockquote {
+  padding: 0 0 0 15px;
+  margin: 0 0 $line-height-base;
+  border-left: 5px solid $gray-3;
+  p {
+    margin-bottom: 0;
+    font-size: $font-size-base * 1.25;
+    font-weight: 300;
+    line-height: 1.25;
+  }
+  small {
+    display: block;
+    line-height: $line-height-base;
+    color: $gray-2;
+    &:before {
+      content: '\2014 \00A0';
+    }
+  }
+
+  // Float right with text-align: right
+  &.pull-right {
+    float: right;
+    padding-right: 15px;
+    padding-left: 0;
+    border-right: 5px solid $gray-3;
+    border-left: 0;
+    p,
+    small {
+      text-align: right;
+    }
+    small {
+      &:before {
+        content: '';
+      }
+      &:after {
+        content: '\00A0 \2014';
+      }
+    }
+  }
+}
+
+// Quotes
+q:before,
+q:after,
+blockquote:before,
+blockquote:after {
+  content: "";
+}
+
+// Addresses
+address {
+  display: block;
+  margin-bottom: $line-height-base;
+  font-style: normal;
+  line-height: $line-height-base;
+}
+
+a.external-link {
+  color: $blue;
+  text-decoration: underline;
+}
+
+
+.link {
+  color: $link-color;
+  cursor: pointer;
+}
+
+.link:hover {
+  color: $link-hover-color;
+}
+
+.pointer {
+  cursor: pointer;
+}

@@ -50,7 +50,7 @@ define([
 
       if (!isNaN(value)) {
         var epoch = parseInt(value);
-        return moment(epoch);
+        return moment.utc(epoch);
       }
 
       return null;
@@ -69,7 +69,11 @@ define([
       this.dashboard.refresh = interval;
       if (interval) {
         var _i = kbn.interval_to_ms(interval);
-        this.start_scheduled_refresh(_i);
+        var wait_ms = _i - (Date.now() % _i);
+        $timeout(function () {
+          self.start_scheduled_refresh(_i);
+          self.refreshDashboard();
+        }, wait_ms);
       } else {
         this.cancel_scheduled_refresh();
       }

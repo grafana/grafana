@@ -1,4 +1,4 @@
-// Copyright 2013 - 2014 The XORM Authors. All rights reserved.
+// Copyright 2013 - 2015 The Xorm Authors. All rights reserved.
 // Use of this source code is governed by a BSD
 // license that can be found in the LICENSE file.
 

@@ -6,12 +6,15 @@ define([
 function (_, $, coreModule) {
   'use strict';
 
-  coreModule.directive('metricSegment', function($compile, $sce) {
+  coreModule.default.directive('metricSegment', function($compile, $sce) {
     var inputTemplate = '<input type="text" data-provide="typeahead" ' +
-      ' class="tight-form-clear-input input-medium"' +
+      ' class="gf-form-input input-medium"' +
       ' spellcheck="false" style="display:none"></input>';
 
-    var buttonTemplate = '<a class="tight-form-item" ng-class="segment.cssClass" ' +
+    var linkTemplate = '<a class="gf-form-label" ng-class="segment.cssClass" ' +
+      'tabindex="1" give-focus="segment.focus" ng-bind-html="segment.html"></a>';
+
+    var selectTemplate = '<a class="gf-form-input gf-form-input--dropdown" ng-class="segment.cssClass" ' +
       'tabindex="1" give-focus="segment.focus" ng-bind-html="segment.html"></a>';
 
     return {
@@ -20,9 +23,9 @@ function (_, $, coreModule) {
         getOptions: "&",
         onChange: "&",
       },
-      link: function($scope, elem) {
+      link: function($scope, elem, attrs) {
         var $input = $(inputTemplate);
-        var $button = $(buttonTemplate);
+        var $button = $(attrs.styleMode === 'select' ? selectTemplate : linkTemplate);
         var segment = $scope.segment;
         var options = null;
         var cancelBlur = null;
@@ -55,8 +58,8 @@ function (_, $, coreModule) {
           });
         };
 
-        $scope.switchToLink = function() {
-          if (linkMode) { return; }
+        $scope.switchToLink = function(fromClick) {
+          if (linkMode && !fromClick) { return; }
 
           clearTimeout(cancelBlur);
           cancelBlur = null;
@@ -69,7 +72,7 @@ function (_, $, coreModule) {
         $scope.inputBlur = function() {
           // happens long before the click event on the typeahead options
           // need to have long delay because the blur
-          cancelBlur = setTimeout($scope.switchToLink, 100);
+          cancelBlur = setTimeout($scope.switchToLink, 200);
         };
 
         $scope.source = function(query, callback) {
@@ -100,7 +103,7 @@ function (_, $, coreModule) {
           }
 
           $input.val(value);
-          $scope.switchToLink();
+          $scope.switchToLink(true);
 
           return value;
         };
@@ -157,7 +160,7 @@ function (_, $, coreModule) {
     };
   });
 
-  coreModule.directive('metricSegmentModel', function(uiSegmentSrv, $q) {
+  coreModule.default.directive('metricSegmentModel', function(uiSegmentSrv, $q) {
     return {
       template: '<metric-segment segment="segment" get-options="getOptionsInternal()" on-change="onSegmentChange()"></metric-segment>',
       restrict: 'E',
@@ -206,7 +209,9 @@ function (_, $, coreModule) {
             // needs to call this after digest so
             // property is synced with outerscope
             $scope.$$postDigest(function() {
-              $scope.onChange();
+              $scope.$apply(function() {
+                $scope.onChange();
+              });
             });
           };
 

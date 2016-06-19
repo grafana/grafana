@@ -48,8 +48,11 @@ Name | Description
 `label_values(label)` | Returns a list of label values for the `label` in every metric.
 `label_values(metric, label)` | Returns a list of label values for the `label` in the specified metric.
 `metrics(metric)` | Returns a list of metrics matching the specified `metric` regex.
+`query_result(query)` | Returns a list of Prometheus query result for the `query`.
 
 For details of `metric names` & `label names`, and `label values`, please refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
+
+> Note: The part of queries is incompatible with the version before 2.6, if you specify like `foo.*`, please change like `metrics(foo.*)`.
 
 You can create a template variable in Grafana and have that variable filled with values from any Prometheus metric exploration query.
 You can then use this variable in your Prometheus metric queries.

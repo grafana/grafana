@@ -1,3 +1,7 @@
+// Copyright 2015 The Xorm Authors. All rights reserved.
+// Use of this source code is governed by a BSD-style
+// license that can be found in the LICENSE file.
+
 package xorm
 
 import (
@@ -10,6 +14,30 @@ import (
 
 	"github.com/go-xorm/core"
 )
+
+func splitTag(tag string) (tags []string) {
+	tag = strings.TrimSpace(tag)
+	var hasQuote = false
+	var lastIdx = 0
+	for i, t := range tag {
+		if t == '\'' {
+			hasQuote = !hasQuote
+		} else if t == ' ' {
+			if lastIdx < i && !hasQuote {
+				tags = append(tags, strings.TrimSpace(tag[lastIdx:i]))
+				lastIdx = i + 1
+			}
+		}
+	}
+	if lastIdx < len(tag) {
+		tags = append(tags, strings.TrimSpace(tag[lastIdx:len(tag)]))
+	}
+	return
+}
+
+type zeroable interface {
+	IsZero() bool
+}
 
 func isZero(k interface{}) bool {
 	switch k.(type) {
@@ -33,10 +61,39 @@ func isZero(k interface{}) bool {
 		return k.(uint32) == 0
 	case uint64:
 		return k.(uint64) == 0
+	case float32:
+		return k.(float32) == 0
+	case float64:
+		return k.(float64) == 0
+	case bool:
+		return k.(bool) == false
 	case string:
 		return k.(string) == ""
+	case zeroable:
+		return k.(zeroable).IsZero()
 	}
 	return false
+}
+
+func int64ToInt(id int64, k reflect.Kind) interface{} {
+	var v interface{} = id
+	switch k {
+	case reflect.Int16:
+		v = int16(id)
+	case reflect.Int32:
+		v = int32(id)
+	case reflect.Int:
+		v = int(id)
+	case reflect.Uint16:
+		v = uint16(id)
+	case reflect.Uint32:
+		v = uint32(id)
+	case reflect.Uint64:
+		v = uint64(id)
+	case reflect.Uint:
+		v = uint(id)
+	}
+	return v
 }
 
 func isPKZero(pk core.PK) bool {
@@ -46,6 +103,10 @@ func isPKZero(pk core.PK) bool {
 		}
 	}
 	return false
+}
+
+func equalNoCase(s1, s2 string) bool {
+	return strings.ToLower(s1) == strings.ToLower(s2)
 }
 
 func indexNoCase(s, sep string) int {
@@ -129,8 +190,8 @@ func reflect2value(rawValue *reflect.Value) (str string, err error) {
 		}
 	//时间类型
 	case reflect.Struct:
-		if aa == core.TimeType {
-			str = rawValue.Interface().(time.Time).Format(time.RFC3339Nano)
+		if aa.ConvertibleTo(core.TimeType) {
+			str = vv.Convert(core.TimeType).Interface().(time.Time).Format(time.RFC3339Nano)
 		} else {
 			err = fmt.Errorf("Unsupported struct type %v", vv.Type().Name())
 		}
@@ -349,6 +410,14 @@ func genCols(table *core.Table, session *Session, bean interface{}, useCol bool,
 		if session.Statement.OmitStr != "" {
 			if _, ok := session.Statement.columnMap[lColName]; ok {
 				continue
+			}
+		}
+
+		// !evalphobia! set fieldValue as nil when column is nullable and zero-value
+		if _, ok := session.Statement.nullableMap[lColName]; ok {
+			if col.Nullable && isZero(fieldValue.Interface()) {
+				var nilValue *int
+				fieldValue = reflect.ValueOf(nilValue)
 			}
 		}
 

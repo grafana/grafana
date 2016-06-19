@@ -1,0 +1,49 @@
+<navbar icon="fa fa-fw fa-list" title="Playlists" title-url="playlists">
+</navbar>
+
+<div class="page-container">
+  <div class="page-header">
+    <h1>Saved playlists</h1>
+    <a class="btn btn-success pull-right" href="playlists/create">
+      <i class="fa fa-plus"></i>
+      New Playlist
+    </a>
+  </div>
+
+  <table class="filter-table" style="margin-top: 20px">
+    <thead>
+      <th><strong>Name</strong></th>
+      <th><strong>Start url</strong></th>
+      <th style="width: 68px"></th>
+      <th style="width: 68px"></th>
+      <th style="width: 25px"></th>
+
+    </thead>
+    <tr ng-repeat="playlist in ctrl.playlists">
+      <td>
+				<a href="playlists/edit/{{playlist.id}}">{{playlist.name}}</a>
+      </td>
+      <td >
+				<a href="playlists/play/{{playlist.id}}">playlists/play/{{playlist.id}}</a>
+      </td>
+      <td class="text-center">
+        <a href="playlists/play/{{playlist.id}}" class="btn btn-inverse btn-small">
+          <i class="fa fa-play"></i>
+          Play
+        </a>
+      </td>
+      <td  class="text-right">
+        <a href="playlists/edit/{{playlist.id}}" class="btn btn-inverse btn-small">
+          <i class="fa fa-edit"></i>
+          Edit
+        </a>
+      </td>
+      <td  class="text-right">
+        <a ng-click="ctrl.removePlaylist(playlist)" class="btn btn-danger btn-small">
+          <i class="fa fa-remove"></i>
+        </a>
+      </td>
+    </tr>
+  </table>
+
+</div>

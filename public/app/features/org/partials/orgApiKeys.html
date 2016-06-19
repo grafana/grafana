@@ -1,55 +1,50 @@
-<topnav icon="fa fa-fw fa-users" title="Organization" subnav="true">
-	<ul class="nav">
-		<li class="active"><a href="org/apikeys">API Keys</a></li>
-	</ul>
-</topnav>
+<navbar icon="icon-gf icon-gf-users" title="Organization" title-url="org">
+</navbar>
 
 <div class="page-container">
-	<div class="page">
+	<div class="page-header">
+		<h1>API Keys</h1>
+	</div>
 
-		<h2>
-			API Keys
-		</h2>
+	<h3 class="page-heading">Add new</h3>
+	<form name="addTokenForm" class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form max-width-21">
+				<span class="gf-form-label">Add a key</span>
+				<input type="text" class="gf-form-input" ng-model='token.name' placeholder="Name"></input>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label">Role</span>
+				<select class="gf-form-input gf-size-auto" ng-model="token.role" ng-options="r for r in roleTypes"></select>
+			</div>
+			<div class="gf-form">
+				<button class="btn gf-form-btn btn-success" ng-click="addToken()">Add</button>
+			</div>
+		</div>
+	</form>
 
-		<form name="addTokenrForm" class="form-inline tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 100px">
-					Add a key
-				</li>
-				<li>
-					<input type="text" class="input-xlarge tight-form-input" ng-model='token.name' placeholder="Name"></input>
-				</li>
-				<li class="tight-form-item">
-					Role
-				</li>
-				<li>
-					<select class="input-small tight-form-input" ng-model="token.role" ng-options="r for r in roleTypes"></select>
-				</li>
-				<li style="float: right">
-					<button class="btn btn-success tight-form-btn" ng-click="addToken()">Add</button>
-				</li>
-				<div class="clearfix"></div>
-			</ul>
-		</form>
-
-		<table class="grafana-options-table" style="width: 250px">
+	<h3 class="page-heading">Existing Keys</h3>
+	<table class="filter-table">
+		<thead>
 			<tr>
-				<th style="text-align: left">Name</th>
-				<th style="text-align: left">Role</th>
-				<th></th>
+				<th>Name</th>
+				<th>Role</th>
+				<th style="width: 34px;"></th>
 			</tr>
+		</thead>
+		<tbody>
 			<tr ng-repeat="t in tokens">
 				<td>{{t.name}}</td>
 				<td>{{t.role}}</td>
-				<td style="width: 1%">
+				<td>
 					<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">
 						<i class="fa fa-remove"></i>
 					</a>
 				</td>
 			</tr>
-		</table>
-	</div>
-
+		</tbody>
+	</table>
 </div>
+
 
 

@@ -18,10 +18,10 @@ Press `Shift`+`?` to open the keyboard shortcut dialog from anywhere within the 
 |---|---|
 |`Esc`|Exit fullscreen edit/view mode, close search or any editor view|
 |`F`|Open dashboard search view (also contains import/playlist controls)|
+|`R`|Refresh (Fetches new data and rerenders panels)|
 |`CTRL`+`S`|Save dashboard|
 |`CTRL`+`H`|Hide row controls|
 |`CTRL`+`Z`|Zoom out|
-|`CTRL`+`R`|Refresh (Fetches new data and rerenders panels)|
 |`CTRL`+`O`|Enable/Disable shared graph crosshair|
 
 

@@ -6,7 +6,7 @@ define([
 function (angular, _, coreModule) {
   'use strict';
 
-  coreModule.controller('ValueSelectDropdownCtrl', function($q) {
+  coreModule.default.controller('ValueSelectDropdownCtrl', function($q) {
     var vm = this;
 
     vm.show = function() {
@@ -156,7 +156,7 @@ function (angular, _, coreModule) {
     vm.selectionsChanged = function(commitChange) {
       vm.selectedValues = _.filter(vm.options, {selected: true});
 
-      if (vm.selectedValues.length > 1 && vm.selectedValues.length !== vm.options.length) {
+      if (vm.selectedValues.length > 1) {
         if (vm.selectedValues[0].text === 'All') {
           vm.selectedValues[0].selected = false;
           vm.selectedValues = vm.selectedValues.slice(1, vm.selectedValues.length);
@@ -179,8 +179,7 @@ function (angular, _, coreModule) {
       vm.variable.current.text = _.pluck(vm.selectedValues, 'text').join(' + ');
       vm.variable.current.tags = vm.selectedTags;
 
-      // only single value
-      if (vm.selectedValues.length === 1) {
+      if (!vm.variable.multi) {
         vm.variable.current.value = vm.selectedValues[0].value;
       }
 
@@ -224,10 +223,10 @@ function (angular, _, coreModule) {
 
   });
 
-  coreModule.directive('valueSelectDropdown', function($compile, $window, $timeout, $rootScope) {
+  coreModule.default.directive('valueSelectDropdown', function($compile, $window, $timeout, $rootScope) {
     return {
       scope: { variable: "=", onUpdated: "&", getValuesForTag: "&" },
-      templateUrl: 'app/partials/valueSelectDropdown.html',
+      templateUrl: 'public/app/partials/valueSelectDropdown.html',
       controller: 'ValueSelectDropdownCtrl',
       controllerAs: 'vm',
       bindToController: true,

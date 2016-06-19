@@ -39,7 +39,7 @@ function (angular, $, coreModule) {
     element.css("border-color", borderColor);
   }
 
-  coreModule.directive('tagColorFromName', function() {
+  coreModule.default.directive('tagColorFromName', function() {
     return {
       scope: { tagColorFromName: "=" },
       link: function (scope, element) {
@@ -48,7 +48,7 @@ function (angular, $, coreModule) {
     };
   });
 
-  coreModule.directive('bootstrapTagsinput', function() {
+  coreModule.default.directive('bootstrapTagsinput', function() {
 
     function getItemProperty(scope, property) {
       if (!property) {

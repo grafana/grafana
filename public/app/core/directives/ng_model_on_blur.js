@@ -6,7 +6,7 @@ define([
 function (coreModule, kbn, rangeUtil) {
   'use strict';
 
-  coreModule.directive('ngModelOnblur', function() {
+  coreModule.default.directive('ngModelOnblur', function() {
     return {
       restrict: 'A',
       priority: 1,
@@ -26,7 +26,7 @@ function (coreModule, kbn, rangeUtil) {
     };
   });
 
-  coreModule.directive('emptyToNull', function () {
+  coreModule.default.directive('emptyToNull', function () {
     return {
       restrict: 'A',
       require: 'ngModel',
@@ -39,13 +39,16 @@ function (coreModule, kbn, rangeUtil) {
     };
   });
 
-  coreModule.directive('validTimeSpan', function() {
+  coreModule.default.directive('validTimeSpan', function() {
     return {
       require: 'ngModel',
       link: function(scope, elm, attrs, ctrl) {
         ctrl.$validators.integer = function(modelValue, viewValue) {
           if (ctrl.$isEmpty(modelValue)) {
             return true;
+          }
+          if (viewValue.indexOf('$') === 0) {
+            return true; // allow template variable
           }
           var info = rangeUtil.describeTextRange(viewValue);
           return info.invalid !== true;

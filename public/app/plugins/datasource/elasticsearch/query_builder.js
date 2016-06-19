@@ -1,6 +1,7 @@
 define([
+  './query_def'
 ],
-function () {
+function (queryDef) {
   'use strict';
 
   function ElasticQueryBuilder(options) {
@@ -152,6 +153,10 @@ function () {
           this.buildTermsAgg(aggDef, esAgg, target);
           break;
         }
+        case 'geohash_grid': {
+          esAgg['geohash_grid'] = {field: aggDef.field, precision: aggDef.settings.precision};
+          break;
+        }
       }
 
       nestedAggs.aggs = nestedAggs.aggs || {};
@@ -167,14 +172,25 @@ function () {
         continue;
       }
 
-      var metricAgg = {field: metric.field};
+      var aggField = {};
+      var metricAgg = null;
+
+      if (queryDef.isPipelineAgg(metric.type)) {
+        if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
+          metricAgg = { buckets_path: metric.pipelineAgg };
+        } else {
+          continue;
+        }
+      } else {
+        metricAgg = {field: metric.field};
+      }
+
       for (var prop in metric.settings) {
         if (metric.settings.hasOwnProperty(prop) && metric.settings[prop] !== null) {
           metricAgg[prop] = metric.settings[prop];
         }
       }
 
-      var aggField = {};
       aggField[metric.type] = metricAgg;
       nestedAggs.aggs[metric.id] = aggField;
     }
@@ -217,5 +233,4 @@ function () {
   };
 
   return ElasticQueryBuilder;
-
 });

@@ -1,0 +1,44 @@
+<navbar title="Migrate" title-url="dashboards/migrate" icon="fa fa-download">
+</navbar>
+
+<div class="page-container">
+	<div class="page-header">
+		<h1>
+			Migrate dashboards
+		</h1>
+	</div>
+
+	<h5 class="section-heading">
+		Import dashboards from Elasticsearch or InfluxDB
+	</h5>
+
+	<div class="gf-form-inline gf-form-group">
+		<div class="gf-form">
+			<div class="gf-form-label">Dashboard source</div>
+			<div class="gf-form-select-wrapper">
+				<select class="gf-form-input gf-size-auto" ng-model="sourceName" ng-options="f for f in datasources"></select>
+			</div>
+		</div>
+		<div class="gf-form">
+			<button class="btn btn-success gf-form-btn" ng-click="startImport()">Import</button>
+		</div>
+	</div>
+
+	<h5 class="section-heading" ng-if="importing">{{infoText}}</h5>
+	<div class="editor-row" ng-if="importing">
+		<div class="editor-row row">
+			<table class="grafana-options-table span5">
+				<tr ng-repeat="dash in imported">
+					<td>{{dash.name}}</td>
+					<td>
+						{{dash.info}}
+					</td>
+				</tr>
+			</table>
+		</div>
+	</div>
+
+	<div ng-include="'public/app/features/dashboard/partials/graphiteImport.html'"></div>
+
+</div>
+

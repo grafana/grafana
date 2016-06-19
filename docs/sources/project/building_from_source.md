@@ -11,7 +11,7 @@ dev environment. Grafana ships with its own required backend server; also comple
 
 ## Dependencies
 
-- [Go 1.4](https://golang.org/dl/)
+- [Go 1.5](https://golang.org/dl/)
 - [NodeJS](https://nodejs.org/download/)
 
 ## Get Code
@@ -35,7 +35,7 @@ to install GCC. We recommend [TDM-GCC](http://tdm-gcc.tdragon.net/download).
 
 ## Build the Front-end Assets
 
-To build less to css for the frontend you will need a recent version of of node (v0.12.0),
+To build less to css for the frontend you will need a recent version of node (v0.12.0),
 npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```
@@ -54,7 +54,7 @@ bra run
 ## Running Grafana Locally
 You can run a local instance of Grafana by running:
 ```
-./bin/grafana-server 
+./bin/grafana-server
 ```
 If you built the binary with `go run build.go build`, run `./bin/grafana-server`
 
@@ -63,7 +63,7 @@ If you built it with `go build .`, run `./grafana`
 Open grafana in your browser (default [http://localhost:3000](http://localhost:3000)) and login with admin user (default user/pass = admin/admin).
 
 ## Developing for Grafana
-To add features, customize your config, etc, you'll need to rebuild on source change (requires that you executed [godep restore](#build-the-backend), as outlined above). 
+To add features, customize your config, etc, you'll need to rebuild on source change (requires that you executed [godep restore](#build-the-backend), as outlined above).
 ```
 go get github.com/Unknwon/bra
 bra run
@@ -88,7 +88,7 @@ You only need to add the options you want to override. Config files are applied 
 Learn more about Grafana config options in the [Configuration section](/installation/configuration/)
 
 ## Create a pull requests
-Please contribute to the Grafana project and submit a pull request! Build new features, write or update documentation, fix bugs and generally make Grafana even more awesome.     
+Please contribute to the Grafana project and submit a pull request! Build new features, write or update documentation, fix bugs and generally make Grafana even more awesome.
 
 Before or after you create a pull request, sign the [contributor license agreement](/project/cla.html).
-Together we can build amazing software faster. 
+Together we can build amazing software faster.
