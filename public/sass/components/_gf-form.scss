@@ -127,7 +127,7 @@ $gf-form-margin: 0.25rem;
   &--dropdown {
     padding-right: $input-padding-x*2;
 
-    &:after {
+    &::after {
       position: absolute;
       top: 35%;
       right: $input-padding-x/2;
@@ -164,7 +164,7 @@ $gf-form-margin: 0.25rem;
     }
   }
 
-  &:after {
+  &::after {
     position: absolute;
     top: 35%;
     right: $input-padding-x/2;
@@ -176,7 +176,7 @@ $gf-form-margin: 0.25rem;
   }
 
   &--has-help-icon {
-    &:after {
+    &::after {
       right: $input-padding-x*3;
     }
   }
@@ -215,7 +215,7 @@ $gf-form-margin: 0.25rem;
   background-color: $input-bg;
   padding-right: $input-padding-x;
 
-  &:after {
+  &::after {
     position: absolute;
     top: 35%;
     right: $input-padding-x/2;

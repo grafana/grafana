@@ -20,7 +20,6 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
 
   var module = angular.module('grafana.directives');
   var labelWidthCache = {};
-  var panelWidthCache = {};
 
   // systemjs export
   var ThresholdControls = thresholds.ThresholdControls;
@@ -107,11 +106,6 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
 
           if (!setElementHeight()) { return true; }
 
-          if(_.isString(data)) {
-            render_panel_as_graphite_png(data);
-            return true;
-          }
-
           if (panelWidth === 0) {
             return true;
           }
@@ -181,10 +175,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
 
         // Function for rendering panel
         function render_panel() {
-          panelWidth = panelWidthCache[panel.span];
-          if (!panelWidth) {
-            panelWidth = panelWidthCache[panel.span] = elem.width();
-          }
+          panelWidth =  elem.width();
 
           if (shouldAbortRender()) {
             return;
@@ -531,80 +522,6 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
           return "%H:%M";
         }
 
-        function render_panel_as_graphite_png(url) {
-          url += '&width=' + panelWidth;
-          url += '&height=' + elem.css('height').replace('px', '');
-          url += '&bgcolor=1f1f1f'; // @grayDarker & @grafanaPanelBackground
-          url += '&fgcolor=BBBFC2'; // @textColor & @grayLighter
-          url += panel.stack ? '&areaMode=stacked' : '';
-          url += panel.fill !== 0 ? ('&areaAlpha=' + (panel.fill/10).toFixed(1)) : '';
-          url += panel.linewidth !== 0 ? '&lineWidth=' + panel.linewidth : '';
-          url += panel.legend.show ? '&hideLegend=false' : '&hideLegend=true';
-
-          if (panel.yaxes && panel.yaxes.length > 0) {
-            var showYaxis = false;
-            for(var i = 0; panel.yaxes.length > i; i++) {
-              if (panel.yaxes[i].show) {
-                url += (panel.yaxes[i].min !== null && panel.yaxes[i].min !== undefined) ? '&yMin=' + panel.yaxes[i].min : '';
-                url += (panel.yaxes[i].max !== null && panel.yaxes[i].max !== undefined) ? '&yMax=' + panel.yaxes[i].max : '';
-                showYaxis = true;
-                break;
-              }
-            }
-            url += showYaxis ? '' : '&hideYAxis=true';
-          }
-
-          url += panel.xaxis.show ? '' : '&hideAxes=true';
-
-          switch(panel.yaxes[0].format) {
-            case 'bytes':
-              url += '&yUnitSystem=binary';
-              break;
-            case 'bits':
-              url += '&yUnitSystem=binary';
-              break;
-            case 'bps':
-              url += '&yUnitSystem=si';
-              break;
-            case 'pps':
-              url += '&yUnitSystem=si';
-              break;
-            case 'Bps':
-              url += '&yUnitSystem=si';
-              break;
-            case 'short':
-              url += '&yUnitSystem=si';
-              break;
-            case 'joule':
-              url += '&yUnitSystem=si';
-              break;
-            case 'watt':
-              url += '&yUnitSystem=si';
-              break;
-            case 'ev':
-              url += '&yUnitSystem=si';
-              break;
-            case 'none':
-              url += '&yUnitSystem=none';
-              break;
-          }
-
-          switch(panel.nullPointMode) {
-            case 'connected':
-              url += '&lineMode=connected';
-              break;
-            case 'null':
-              break; // graphite default lineMode
-            case 'null as zero':
-              url += "&drawNullAsZero=true";
-              break;
-          }
-
-          url += panel.steppedLine ? '&lineMode=staircase' : '';
-
-          elem.html('<img src="' + url + '"></img>');
-        }
-
         new GraphTooltip(elem, dashboard, scope, function() {
           return sortedSeries;
         });
@@ -620,5 +537,4 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
       }
     };
   });
-
 });
