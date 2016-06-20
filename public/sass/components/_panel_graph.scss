@@ -47,19 +47,19 @@
   white-space: nowrap;
   font-size: 85%;
   text-align: left;
-  &.current:before {
+  &.current::before {
     content: "Current: "
   }
-  &.max:before {
+  &.max::before {
     content: "Max: "
   }
-  &.min:before {
+  &.min::before {
     content: "Min: "
   }
-  &.total:before {
+  &.total::before {
     content: "Total: "
   }
-  &.avg:before {
+  &.avg::before {
     content: "Avg: "
   }
 }
@@ -95,7 +95,7 @@
     &--right-y {
       float: none;
 
-      .graph-legend-alias:after {
+      .graph-legend-alias::after {
         content: '(right-y)';
         padding: 0 5px;
         color: $text-color-weak;
@@ -137,7 +137,7 @@
 
   .graph-legend-value {
     &.current, &.max, &.min, &.total, &.avg {
-      &:before {
+      &::before {
         content: '';
       }
     }
