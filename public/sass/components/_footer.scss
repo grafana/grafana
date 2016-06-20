@@ -23,14 +23,14 @@
   li {
     display: inline-block;
     padding-right: 2px;
-    &:after {
+    &::after {
       content: ' | ';
       padding-left: 2px;
     }
   }
 
   li:last-child {
-    &:after {
+    &::after {
       padding-left: 0;
       content: '';
     }

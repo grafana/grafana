@@ -24,7 +24,7 @@
     [data-role="remove"] {
       margin-left:8px;
       cursor:pointer;
-      &:after{
+      &::after{
         content: "x";
         padding:0px 2px;
       }

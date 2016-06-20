@@ -207,7 +207,7 @@
 }
 
 // Caret to indicate there is a submenu
-.dropdown-submenu > a:after {
+.dropdown-submenu > a::after {
   display: block;
   content: " ";
   float: right;
@@ -220,7 +220,7 @@
   margin-top: 5px;
   margin-right: -10px;
 }
-.dropdown-submenu:hover > a:after {
+.dropdown-submenu:hover > a::after {
   border-left-color: $dropdownLinkColorHover;
 }
 
