@@ -340,7 +340,6 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
           var crit = panel.alert.crit;
           var warn = panel.alert.warn;
           var critEdge = Infinity;
-          var warnEdge = crit.value;
 
           if (_.isNumber(crit.value)) {
             if (crit.op === '<') {
@@ -361,8 +360,13 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
           }
 
           if (_.isNumber(warn.value)) {
-            // if (warn.op === '<') {
-            // }
+            //var warnEdge = crit.value || Infinity;
+            var warnEdge;
+            if (crit.value) {
+              warnEdge = crit.value;
+            } else {
+              warnEdge = warn.op === '<' ? -Infinity : Infinity;
+            }
 
             // fill
             options.grid.markings.push({
