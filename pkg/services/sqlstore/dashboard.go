@@ -5,10 +5,10 @@ import (
 	"fmt"
 
 	"github.com/go-xorm/xorm"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/metrics"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/ganting/grafana/pkg/bus"
+	"github.com/ganting/grafana/pkg/metrics"
+	m "github.com/ganting/grafana/pkg/models"
+	"github.com/ganting/grafana/pkg/services/search"
 )
 
 func init() {

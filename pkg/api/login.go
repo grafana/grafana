@@ -3,15 +3,15 @@ package api
 import (
 	"net/url"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/login"
-	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/ganting/grafana/pkg/api/dtos"
+	"github.com/ganting/grafana/pkg/bus"
+	"github.com/ganting/grafana/pkg/log"
+	"github.com/ganting/grafana/pkg/login"
+	"github.com/ganting/grafana/pkg/metrics"
+	"github.com/ganting/grafana/pkg/middleware"
+	m "github.com/ganting/grafana/pkg/models"
+	"github.com/ganting/grafana/pkg/setting"
+	"github.com/ganting/grafana/pkg/util"
 )
 
 const (

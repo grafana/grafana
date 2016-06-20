@@ -6,10 +6,10 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/metrics"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/ganting/grafana/pkg/api/dtos"
+	"github.com/ganting/grafana/pkg/metrics"
+	"github.com/ganting/grafana/pkg/middleware"
+	"github.com/ganting/grafana/pkg/util"
 )
 
 func GetTestMetrics(c *middleware.Context) {

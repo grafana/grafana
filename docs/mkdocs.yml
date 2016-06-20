@@ -5,7 +5,7 @@ site_favicon: img/fav32.png
 
 dev_addr: '0.0.0.0:8000'
 
-repo_url: https://github.com/grafana/grafana/
+repo_url: https://github.com/ganting/grafana/
 
 docs_dir: sources
 

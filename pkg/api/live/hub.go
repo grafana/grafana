@@ -1,9 +1,9 @@
 package live
 
 import (
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/ganting/grafana/pkg/api/dtos"
+	"github.com/ganting/grafana/pkg/components/simplejson"
+	"github.com/ganting/grafana/pkg/log"
 )
 
 type hub struct {

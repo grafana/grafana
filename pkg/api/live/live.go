@@ -3,9 +3,9 @@ package live
 import (
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/ganting/grafana/pkg/api/dtos"
+	"github.com/ganting/grafana/pkg/log"
+	"github.com/ganting/grafana/pkg/middleware"
 )
 
 type LiveConn struct {

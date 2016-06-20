@@ -79,7 +79,7 @@ This version also brings some new features for user management.
 - Organization admins can now invite new users (via email or manually via invite link)
 - Users can signup using invite link and get automatically added to invited organization
 - User signup workflow can (if enabled) contain an email verification step.
-- Check out [#2353](https://github.com/grafana/grafana/issues/2353) for more info.
+- Check out [#2353](https://github.com/ganting/grafana/issues/2353) for more info.
 
 ### Miscellaneous improvements
 
@@ -97,7 +97,7 @@ future release.
 
 ### Changelog
 For a detailed list and link to github issues for everything included in the 2.5 release please
-view the [CHANGELOG.md](https://github.com/grafana/grafana/blob/master/CHANGELOG.md) file.
+view the [CHANGELOG.md](https://github.com/ganting/grafana/blob/master/CHANGELOG.md) file.
 
 - - -
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/ganting/grafana/pkg/cmd/grafana-cli/logger"
 )
 
 func runCommand(command func(commandLine CommandLine) error) func(context *cli.Context) {

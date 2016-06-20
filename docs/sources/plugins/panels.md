@@ -14,5 +14,5 @@ Panels are the main building blocks of dashboards.
 Examples
 
 - [clock-panel](https://github.com/grafana/clock-panel)
-- [singlestat-panel](https://github.com/grafana/grafana/blob/master/public/app/plugins/panel/singlestat/module.ts)
+- [singlestat-panel](https://github.com/ganting/grafana/blob/master/public/app/plugins/panel/singlestat/module.ts)
 

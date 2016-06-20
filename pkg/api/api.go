@@ -2,11 +2,11 @@ package api
 
 import (
 	"github.com/go-macaron/binding"
-	"github.com/grafana/grafana/pkg/api/avatar"
-	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/api/live"
-	"github.com/grafana/grafana/pkg/middleware"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/ganting/grafana/pkg/api/avatar"
+	"github.com/ganting/grafana/pkg/api/dtos"
+	"github.com/ganting/grafana/pkg/api/live"
+	"github.com/ganting/grafana/pkg/middleware"
+	m "github.com/ganting/grafana/pkg/models"
 	"gopkg.in/macaron.v1"
 )
 

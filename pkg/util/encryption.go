@@ -7,7 +7,7 @@ import (
 	"crypto/sha256"
 	"io"
 
-	"github.com/grafana/grafana/pkg/log"
+	"github.com/ganting/grafana/pkg/log"
 )
 
 const saltLength = 8

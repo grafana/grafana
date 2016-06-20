@@ -4,7 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/ganting/grafana/pkg/components/simplejson"
 )
 
 const (

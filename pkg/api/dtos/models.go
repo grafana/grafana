@@ -6,9 +6,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/ganting/grafana/pkg/components/simplejson"
+	m "github.com/ganting/grafana/pkg/models"
+	"github.com/ganting/grafana/pkg/setting"
 )
 
 type AnyId struct {

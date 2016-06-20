@@ -2,7 +2,7 @@ FROM centos:6.6
 
 RUN yum install -y initscripts curl tar gcc libc6-dev git
 
-ENV GOLANG_VERSION 1.4.2
+ENV GOLANG_VERSION 1.6.0
 
 RUN curl -sSL https://golang.org/dl/go$GOLANG_VERSION.src.tar.gz \
 		| tar -v -C /usr/src -xz

@@ -1,6 +1,6 @@
 package metrics
 
-import "github.com/grafana/grafana/pkg/log"
+import "github.com/ganting/grafana/pkg/log"
 
 type MetricMeta struct {
 	tags map[string]string

@@ -10,9 +10,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/ganting/grafana/pkg/log"
+	"github.com/ganting/grafana/pkg/setting"
+	"github.com/ganting/grafana/pkg/util"
 )
 
 var (

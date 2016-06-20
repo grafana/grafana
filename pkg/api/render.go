@@ -4,10 +4,10 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/components/renderer"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/ganting/grafana/pkg/components/renderer"
+	"github.com/ganting/grafana/pkg/middleware"
+	"github.com/ganting/grafana/pkg/setting"
+	"github.com/ganting/grafana/pkg/util"
 )
 
 func RenderToPng(c *middleware.Context) {

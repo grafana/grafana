@@ -7,12 +7,12 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
-	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/ganting/grafana/pkg/bus"
+	"github.com/ganting/grafana/pkg/log"
+	m "github.com/ganting/grafana/pkg/models"
+	"github.com/ganting/grafana/pkg/services/sqlstore/migrations"
+	"github.com/ganting/grafana/pkg/services/sqlstore/migrator"
+	"github.com/ganting/grafana/pkg/setting"
 
 	"github.com/go-sql-driver/mysql"
 	_ "github.com/go-sql-driver/mysql"

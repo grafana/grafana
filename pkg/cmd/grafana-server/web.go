@@ -10,12 +10,12 @@ import (
 
 	"gopkg.in/macaron.v1"
 
-	"github.com/grafana/grafana/pkg/api"
-	"github.com/grafana/grafana/pkg/api/static"
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/ganting/grafana/pkg/api"
+	"github.com/ganting/grafana/pkg/api/static"
+	"github.com/ganting/grafana/pkg/log"
+	"github.com/ganting/grafana/pkg/middleware"
+	"github.com/ganting/grafana/pkg/plugins"
+	"github.com/ganting/grafana/pkg/setting"
 )
 
 func newMacaron() *macaron.Macaron {

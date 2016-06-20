@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"regexp"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/ganting/grafana/pkg/bus"
+	"github.com/ganting/grafana/pkg/components/simplejson"
+	m "github.com/ganting/grafana/pkg/models"
 )
 
 type ImportDashboardCommand struct {

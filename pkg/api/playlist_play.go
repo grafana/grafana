@@ -3,10 +3,10 @@ package api
 import (
 	"strconv"
 
-	"github.com/grafana/grafana/pkg/bus"
-	_ "github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/search"
+	"github.com/ganting/grafana/pkg/bus"
+	_ "github.com/ganting/grafana/pkg/log"
+	m "github.com/ganting/grafana/pkg/models"
+	"github.com/ganting/grafana/pkg/services/search"
 )
 
 func populateDashboardsById(dashboardByIds []int64) ([]m.PlaylistDashboardDto, error) {

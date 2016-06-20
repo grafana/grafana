@@ -4,8 +4,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/ganting/grafana/pkg/setting"
+	"github.com/ganting/grafana/pkg/util"
 )
 
 var (

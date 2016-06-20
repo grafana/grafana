@@ -3,7 +3,7 @@ FROM debian:jessie
 RUN apt-get -y update
 RUN apt-get -y install libfontconfig
 
-RUN   mkdir -p /opt/grafana
+RUN mkdir -p /opt/grafana
 
 ADD tmp/ /opt/grafana/
 

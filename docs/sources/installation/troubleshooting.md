@@ -6,7 +6,7 @@ page_keywords: grafana, support, documentation
 
 This page is dedicated to helping you solve any problem you have getting
 Grafana to work. Please review it before opening a new [GitHub
-issue](https://github.com/grafana/grafana/issues/new) or asking a
+issue](https://github.com/ganting/grafana/issues/new) or asking a
 question in the `#grafana` IRC channel on freenode.
 
 ## General connection issues
@@ -34,7 +34,7 @@ information will be of great help in finding the cause of the error.
 
 If you are unable to solve the issue, even after reading the remainder
 of this troubleshooting guide, you should open a [GitHub support
-issue](https://github.com/grafana/grafana/issues).  Before you do that
+issue](https://github.com/ganting/grafana/issues).  Before you do that
 please search the existing closed or open issues. Also if you need to
 create a support issue, screen shots and or text information about the
 chrome console error, request and response information from the

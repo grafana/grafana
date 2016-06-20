@@ -4,8 +4,8 @@ import (
 	"errors"
 
 	"fmt"
-	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
-	services "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
+	m "github.com/ganting/grafana/pkg/cmd/grafana-cli/models"
+	services "github.com/ganting/grafana/pkg/cmd/grafana-cli/services"
 )
 
 var getPluginss func(path string) []m.InstalledPlugin = services.GetLocalPlugins

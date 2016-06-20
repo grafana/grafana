@@ -10,12 +10,12 @@ import (
 	"net/url"
 	"text/template"
 
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/middleware"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/ganting/grafana/pkg/bus"
+	"github.com/ganting/grafana/pkg/log"
+	"github.com/ganting/grafana/pkg/middleware"
+	m "github.com/ganting/grafana/pkg/models"
+	"github.com/ganting/grafana/pkg/plugins"
+	"github.com/ganting/grafana/pkg/util"
 )
 
 type templateData struct {

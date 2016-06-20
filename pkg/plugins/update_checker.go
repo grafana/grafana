@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/setting"
+	"github.com/ganting/grafana/pkg/log"
+	"github.com/ganting/grafana/pkg/setting"
 )
 
 type GrafanaNetPlugin struct {
