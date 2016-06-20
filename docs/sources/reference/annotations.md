@@ -40,3 +40,10 @@ as the name for the fields that should be used for the annotation title, tags an
 For InfluxDB you need to enter a query like in the above screenshot. You need to have the ```where $timeFilter``` part.
 If you only select one column you will not need to enter anything in the column mapping fields.
 
+## Prometheus Annotations
+![](/img/v3/annotations_prom.png)
+
+Prometheus supports two ways to query annotations.
+
+- A regular metric query
+- A Prometheus query for pending and firing alerts (for details see [Inspecting alerts during runtime](https://prometheus.io/docs/alerting/rules/#inspecting-alerts-during-runtime))
