@@ -1,9 +1,8 @@
 define([
   'jquery',
   'lodash',
-  'moment'
 ],
-function($, _, moment) {
+function($, _) {
   'use strict';
 
   var kbn = {};
@@ -581,20 +580,6 @@ function($, _, moment) {
     }
   };
 
-  // Date and time
-  kbn.toDateTime = function(size, timeScale) {
-    var datetime = moment(size * timeScale);
-    return datetime.format('YYYY-MM-DD hh:mm:ss');
-  };
-
-  kbn.valueFormats.datems = function(size) {
-    return kbn.toDateTime(size, 1000);
-  };
-
-  kbn.valueFormats.dates = function(size) {
-    return kbn.toDateTime(size, 1);
-  };
-
   ///// FORMAT MENU /////
 
   kbn.getUnitFormats = function() {
@@ -631,13 +616,6 @@ function($, _, moment) {
           {text: 'minutes (m)',       value: 'm'    },
           {text: 'hours (h)',         value: 'h'    },
           {text: 'days (d)',          value: 'd'    },
-        ]
-      },
-      {
-        text: 'date and time',
-        submenu: [
-          {text: 'date (ms)', value: 'datems'},
-          {text: 'date (s)',  value: 'dates' }
         ]
       },
       {
