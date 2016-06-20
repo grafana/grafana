@@ -104,6 +104,7 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		token, err := keystone.GetToken(c)
 		if err != nil {
 			c.JsonApiErr(500, "Failed to get keystone token", err)
+			return
 		}
 		c.Req.Request.Header["X-Auth-Token"] = []string{token}
 	}
