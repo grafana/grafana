@@ -261,7 +261,7 @@ func Register(r *macaron.Macaron) {
 				r.Put("/:notificationId", bind(m.UpdateAlertNotificationCommand{}), wrap(UpdateAlertNotification))
 				r.Get("/:notificationId", wrap(GetAlertNotificationById))
 				r.Delete("/:notificationId", wrap(DeleteAlertNotification))
-			})
+			}, reqOrgAdmin)
 
 			//r.Get("/changes", wrap(GetAlertChanges))
 		})
