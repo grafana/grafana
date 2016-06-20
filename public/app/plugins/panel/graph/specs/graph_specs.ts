@@ -113,55 +113,101 @@ describe('grafanaGraph', function() {
 
   graphScenario('grid thresholds 100, 200', function(ctx) {
     ctx.setup(function(ctrl) {
-      ctrl.panel.grid = {
-        threshold1: 100,
-        threshold1Color: "#111",
-        threshold2: 200,
-        threshold2Color: "#222",
+      ctrl.panel.alert = {
+        warn: { op: ">", value: 100},
+        crit: { op: ">", value: 200}
       };
     });
 
-    it('should add grid markings', function() {
+    it('should add crit fill', function() {
       var markings = ctx.plotOptions.grid.markings;
-      expect(markings[0].yaxis.from).to.be(100);
-      expect(markings[0].yaxis.to).to.be(200);
-      expect(markings[0].color).to.be('#111');
+
+      expect(markings[0].yaxis.from).to.be(200);
+      expect(markings[0].yaxis.to).to.be(Infinity);
+      expect(markings[0].color).to.be('rgba(234, 112, 112, 0.10)');
+    });
+
+    it('should add crit line', function() {
+      var markings = ctx.plotOptions.grid.markings;
+
       expect(markings[1].yaxis.from).to.be(200);
-      expect(markings[1].yaxis.to).to.be(Infinity);
+      expect(markings[1].yaxis.to).to.be(200);
+      expect(markings[1].color).to.be('#ed2e18');
+    });
+
+    it('should add warn fill', function() {
+      var markings = ctx.plotOptions.grid.markings;
+
+      expect(markings[2].yaxis.from).to.be(100);
+      expect(markings[2].yaxis.to).to.be(200);
+      expect(markings[2].color).to.be('rgba(216, 200, 27, 0.10)');
+    });
+
+    it('should add warn line', function() {
+      var markings = ctx.plotOptions.grid.markings;
+      expect(markings[3].yaxis.from).to.be(100);
+      expect(markings[3].yaxis.to).to.be(100);
+      expect(markings[3].color).to.be('#F79520');
     });
   });
 
   graphScenario('inverted grid thresholds 200, 100', function(ctx) {
     ctx.setup(function(ctrl) {
-      ctrl.panel.grid = {
-        threshold1: 200,
-        threshold1Color: "#111",
-        threshold2: 100,
-        threshold2Color: "#222",
+      ctrl.panel.alert = {
+        warn: { op: "<", value: 200},
+        crit: { op: "<", value: 100}
       };
     });
 
-    it('should add grid markings', function() {
+    it('should add crit fill', function() {
       var markings = ctx.plotOptions.grid.markings;
-      expect(markings[0].yaxis.from).to.be(200);
-      expect(markings[0].yaxis.to).to.be(100);
-      expect(markings[0].color).to.be('#111');
+      expect(markings[0].yaxis.from).to.be(100);
+      expect(markings[0].yaxis.to).to.be(-Infinity);
+      expect(markings[0].color).to.be('rgba(234, 112, 112, 0.10)');
+    });
+
+    it('should add crit line', function() {
+      var markings = ctx.plotOptions.grid.markings;
       expect(markings[1].yaxis.from).to.be(100);
-      expect(markings[1].yaxis.to).to.be(-Infinity);
+      expect(markings[1].yaxis.to).to.be(100);
+      expect(markings[1].color).to.be('#ed2e18');
+    });
+
+    it('should add warn fill', function() {
+      var markings = ctx.plotOptions.grid.markings;
+      expect(markings[2].yaxis.from).to.be(200);
+      expect(markings[2].yaxis.to).to.be(100);
+      expect(markings[2].color).to.be('rgba(216, 200, 27, 0.10)');
+    });
+
+    it('should add warn line', function() {
+      var markings = ctx.plotOptions.grid.markings;
+      expect(markings[3].yaxis.from).to.be(200);
+      expect(markings[3].yaxis.to).to.be(200);
+      expect(markings[3].color).to.be('#F79520');
     });
   });
 
-  graphScenario('grid thresholds from zero', function(ctx) {
+  graphScenario('grid warn thresholds from zero', function(ctx) {
     ctx.setup(function(ctrl) {
-      ctrl.panel.grid = {
-        threshold1: 0,
-        threshold1Color: "#111",
+      ctrl.panel.alert = {
+        warn: { op: ">", value: 0},
+        crit: { op: ">", value: undefined}
       };
     });
 
-    it('should add grid markings', function() {
+    it('should add warn fill', function() {
       var markings = ctx.plotOptions.grid.markings;
       expect(markings[0].yaxis.from).to.be(0);
+      expect(markings[0].yaxis.to).to.be(Infinity);
+      expect(markings[0].color).to.be('rgba(216, 200, 27, 0.10)');
+    });
+
+    it('should add warn line', function() {
+      var markings = ctx.plotOptions.grid.markings;
+      expect(markings[1].yaxis.from).to.be(0);
+      expect(markings[1].yaxis.to).to.be(0);
+      expect(markings[1].color).to.be('#F79520');
     });
   });
 

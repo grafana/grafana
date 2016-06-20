@@ -54,9 +54,9 @@ class GraphCtrl extends MetricsPanelCtrl {
     xaxis: {
       show: true
     },
-    thresholds: {
-      warn: {op: '>', level: undefined},
-      crit: {op: '>', level: undefined},
+    alert: {
+      warn: {op: '>', value: undefined},
+      crit: {op: '>', value: undefined},
     },
     // show/hide lines
     lines         : true,
@@ -113,7 +113,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     _.defaults(this.panel, this.panelDefaults);
     _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
-    _.defaults(this.panel.thresholds, this.panelDefaults.thresholds);
+    _.defaults(this.panel.alert, this.panelDefaults.alert);
     _.defaults(this.panel.legend, this.panelDefaults.legend);
 
     this.colors = $scope.$root.colors;
