@@ -1,5 +1,7 @@
 package dtos
 
+import "time"
+
 type AlertRuleDTO struct {
 	Id           int64   `json:"id"`
 	DashboardId  int64   `json:"dashboardId"`
@@ -18,4 +20,12 @@ type AlertRuleDTO struct {
 	State        string  `json:"state"`
 
 	DashbboardUri string `json:"dashboardUri"`
+}
+
+type AlertNotificationDTO struct {
+	Id      int64     `json:"id"`
+	Name    string    `json:"name"`
+	Type    string    `json:"type"`
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
 }

@@ -166,7 +166,19 @@ func GetAlertNotifications(c *middleware.Context) Response {
 		return ApiError(500, "Failed to get alert notifications", err)
 	}
 
-	return Json(200, query.Result)
+	var result []dtos.AlertNotificationDTO
+
+	for _, notification := range query.Result {
+		result = append(result, dtos.AlertNotificationDTO{
+			Id:      notification.Id,
+			Name:    notification.Name,
+			Type:    notification.Type,
+			Created: notification.Created,
+			Updated: notification.Updated,
+		})
+	}
+
+	return Json(200, result)
 }
 
 func GetAlertNotificationById(c *middleware.Context) Response {

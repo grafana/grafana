@@ -263,7 +263,7 @@ func Register(r *macaron.Macaron) {
 				r.Delete("/:notificationId", wrap(DeleteAlertNotification))
 			})
 
-			r.Get("/changes", wrap(GetAlertChanges))
+			//r.Get("/changes", wrap(GetAlertChanges))
 		})
 
 		// error test
