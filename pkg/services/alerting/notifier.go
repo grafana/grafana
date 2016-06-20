@@ -22,12 +22,12 @@ func NewNotifier() *NotifierImpl {
 }
 
 func (n *NotifierImpl) Notify(alertResult *AlertResult) {
-	notifiers := n.getNotifiers(alertResult.AlertJob.Rule.OrgId, []int64{1, 2})
+	notifiers := n.getNotifiers(alertResult.AlertJob.Rule.OrgId, alertResult.AlertJob.Rule.NotificationGroups)
 
 	for _, notifier := range notifiers {
 		warn := alertResult.State == alertstates.Warn && notifier.SendWarning
 		crit := alertResult.State == alertstates.Critical && notifier.SendCritical
-		if warn || crit {
+		if (warn || crit) || alertResult.State == alertstates.Ok {
 			n.log.Info("Sending notification", "state", alertResult.State, "type", notifier.Type)
 			go notifier.Notifierr.Dispatch(alertResult)
 		}
@@ -109,8 +109,9 @@ type NotificationDispatcher interface {
 
 func (n *NotifierImpl) getNotifiers(orgId int64, notificationGroups []int64) []*Notification {
 	query := &m.GetAlertNotificationQuery{
-		OrgID: orgId,
-		Ids:   notificationGroups,
+		OrgID:                orgId,
+		Ids:                  notificationGroups,
+		IncludeAlwaysExecute: true,
 	}
 	err := bus.Dispatch(query)
 	if err != nil {
@@ -118,11 +119,13 @@ func (n *NotifierImpl) getNotifiers(orgId int64, notificationGroups []int64) []*
 	}
 
 	var result []*Notification
-
+	n.log.Info("notifiriring", "count", len(query.Result), "groups", notificationGroups)
 	for _, notification := range query.Result {
 		not, err := NewNotificationFromDBModel(notification)
 		if err == nil {
 			result = append(result, not)
+		} else {
+			n.log.Error("Failed to read notification model", "error", err)
 		}
 	}
 

@@ -28,10 +28,11 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 		Convey("Can save Alert Notification", func() {
 			cmd := &m.CreateAlertNotificationCommand{
-				Name:     "ops",
-				Type:     "email",
-				OrgID:    1,
-				Settings: simplejson.New(),
+				Name:          "ops",
+				Type:          "email",
+				OrgID:         1,
+				Settings:      simplejson.New(),
+				AlwaysExecute: true,
 			}
 
 			err = CreateAlertNotificationCommand(cmd)
@@ -39,6 +40,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			So(cmd.Result.Id, ShouldNotEqual, 0)
 			So(cmd.Result.OrgId, ShouldNotEqual, 0)
 			So(cmd.Result.Type, ShouldEqual, "email")
+			So(cmd.Result.AlwaysExecute, ShouldEqual, true)
 
 			Convey("Cannot save Alert Notification with the same name", func() {
 				err = CreateAlertNotificationCommand(cmd)
@@ -47,11 +49,12 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 			Convey("Can update alert notification", func() {
 				newCmd := &m.UpdateAlertNotificationCommand{
-					Name:     "NewName",
-					Type:     "webhook",
-					OrgID:    cmd.Result.OrgId,
-					Settings: simplejson.New(),
-					Id:       cmd.Result.Id,
+					Name:          "NewName",
+					Type:          "webhook",
+					OrgID:         cmd.Result.OrgId,
+					Settings:      simplejson.New(),
+					Id:            cmd.Result.Id,
+					AlwaysExecute: true,
 				}
 				err := UpdateAlertNotification(newCmd)
 				So(err, ShouldBeNil)
@@ -60,6 +63,14 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 		})
 
 		Convey("Can search using an array of ids", func() {
+			So(CreateAlertNotificationCommand(&m.CreateAlertNotificationCommand{
+				Name:          "nagios",
+				Type:          "webhook",
+				OrgID:         1,
+				Settings:      simplejson.New(),
+				AlwaysExecute: true,
+			}), ShouldBeNil)
+
 			So(CreateAlertNotificationCommand(&m.CreateAlertNotificationCommand{
 				Name:     "ops2",
 				Type:     "email",
@@ -75,14 +86,26 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			}), ShouldBeNil)
 
 			Convey("search", func() {
+				existingNotification := int64(2)
+				missingThatSholdNotCauseerrors := int64(99)
+
 				query := &m.GetAlertNotificationQuery{
-					Ids:   []int64{1, 2, 3},
-					OrgID: 1,
+					Ids:                  []int64{existingNotification, missingThatSholdNotCauseerrors},
+					OrgID:                1,
+					IncludeAlwaysExecute: true,
 				}
 
 				err := AlertNotificationQuery(query)
 				So(err, ShouldBeNil)
 				So(len(query.Result), ShouldEqual, 2)
+				defaultNotifications := 0
+				for _, not := range query.Result {
+					if not.AlwaysExecute {
+						defaultNotifications++
+					}
+				}
+
+				So(defaultNotifications, ShouldEqual, 1)
 			})
 		})
 	})

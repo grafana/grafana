@@ -22,9 +22,7 @@ func TestEmailIntegrationTest(t *testing.T) {
 		err := Init()
 		So(err, ShouldBeNil)
 
-		var sentMsg *Message
 		addToMailQueue = func(msg *Message) {
-			sentMsg = msg
 			ioutil.WriteFile("../../../tmp/test_email.html", []byte(msg.Body), 0777)
 		}
 

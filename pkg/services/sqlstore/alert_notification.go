@@ -46,7 +46,8 @@ func getAlertNotifications(query *m.GetAlertNotificationQuery, sess *xorm.Sessio
 	                      alert_notification.type,
 	   					  alert_notification.created,
 	                      alert_notification.updated,
-	                      alert_notification.settings
+	                      alert_notification.settings,
+						  alert_notification.always_execute
 	   					  FROM alert_notification
 	   					  `)
 
@@ -77,9 +78,34 @@ func getAlertNotifications(query *m.GetAlertNotificationQuery, sess *xorm.Sessio
 		sql.WriteString(`)`)
 	}
 
-	var result []*m.AlertNotification
-	if err := sess.Sql(sql.String(), params...).Find(&result); err != nil {
+	var searches []*m.AlertNotification
+	if err := sess.Sql(sql.String(), params...).Find(&searches); err != nil {
 		return err
+	}
+
+	var result []*m.AlertNotification
+	var def []*m.AlertNotification
+	if query.IncludeAlwaysExecute {
+
+		if err := sess.Where("org_id = ? AND always_execute = 1", query.OrgID).Find(&def); err != nil {
+			return err
+		}
+
+		result = append(result, def...)
+	}
+
+	for _, s := range searches {
+		canAppend := true
+		for _, d := range result {
+			if d.Id == s.Id {
+				canAppend = false
+				break
+			}
+		}
+
+		if canAppend {
+			result = append(result, s)
+		}
 	}
 
 	query.Result = result
@@ -88,7 +114,7 @@ func getAlertNotifications(query *m.GetAlertNotificationQuery, sess *xorm.Sessio
 
 func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		existingQuery := &m.GetAlertNotificationQuery{OrgID: cmd.OrgID, Name: cmd.Name}
+		existingQuery := &m.GetAlertNotificationQuery{OrgID: cmd.OrgID, Name: cmd.Name, IncludeAlwaysExecute: false}
 		err := getAlertNotifications(existingQuery, sess)
 
 		if err != nil {
@@ -100,12 +126,13 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 		}
 
 		alertNotification := &m.AlertNotification{
-			OrgId:    cmd.OrgID,
-			Name:     cmd.Name,
-			Type:     cmd.Type,
-			Created:  time.Now(),
-			Settings: cmd.Settings,
-			Updated:  time.Now(),
+			OrgId:         cmd.OrgID,
+			Name:          cmd.Name,
+			Type:          cmd.Type,
+			Created:       time.Now(),
+			Settings:      cmd.Settings,
+			Updated:       time.Now(),
+			AlwaysExecute: cmd.AlwaysExecute,
 		}
 
 		_, err = sess.Insert(alertNotification)
@@ -114,7 +141,6 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 			return err
 		}
 
-		//alertNotification.Id = int(id)
 		cmd.Result = alertNotification
 		return nil
 	})
@@ -137,9 +163,9 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		alertNotification.Settings = cmd.Settings
 		alertNotification.Updated = time.Now()
 		alertNotification.Created = current.Created
+		alertNotification.AlwaysExecute = cmd.AlwaysExecute
 
 		var affected int64
-		//affected, err = sess.Id(alertNotification.Id).Cols("name", "type", "settings", "updated").Update(alertNotification)
 		affected, err = sess.Id(alertNotification.Id).Update(alertNotification)
 
 		if err != nil {

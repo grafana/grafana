@@ -63,6 +63,8 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 	model.State = ruleDef.State
 	model.Frequency = ruleDef.Frequency
 
+	model.NotificationGroups = []int64{1, 2}
+
 	critical := ruleDef.Settings.Get("crit")
 	model.Critical = Level{
 		Operator: critical.Get("op").MustString(),
