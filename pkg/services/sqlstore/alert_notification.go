@@ -155,15 +155,18 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 			return err
 		}
 
-		alertNotification := &m.AlertNotification{}
-		alertNotification.Id = cmd.Id
-		alertNotification.OrgId = cmd.OrgID
-		alertNotification.Name = cmd.Name
-		alertNotification.Type = cmd.Type
-		alertNotification.Settings = cmd.Settings
-		alertNotification.Updated = time.Now()
-		alertNotification.Created = current.Created
-		alertNotification.AlwaysExecute = cmd.AlwaysExecute
+		alertNotification := &m.AlertNotification{
+			Id:            cmd.Id,
+			OrgId:         cmd.OrgID,
+			Name:          cmd.Name,
+			Type:          cmd.Type,
+			Settings:      cmd.Settings,
+			Updated:       time.Now(),
+			Created:       current.Created,
+			AlwaysExecute: cmd.AlwaysExecute,
+		}
+
+		sess.UseBool("always_execute")
 
 		var affected int64
 		affected, err = sess.Id(alertNotification.Id).Update(alertNotification)
