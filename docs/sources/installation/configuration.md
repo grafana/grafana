@@ -446,6 +446,19 @@ Grafana backend index those json dashboards which will make them appear in regul
 ### path
 The full path to a directory containing your json dashboards.
 
+## [log]
+
+### mode
+Either "console", "file", "syslog". Default is console and  file
+Use space to separate multiple modes, e.g. "console file"
+
+### level
+Either "debug", "info", "warn", "error", "critical", default is "info"
+
+### filter
+optional settings to set different levels for specific loggers.
+Ex `filters = sqlstore:debug`
+
 ## [metrics]
 
 ### enabled
