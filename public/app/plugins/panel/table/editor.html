@@ -94,6 +94,12 @@
 							style="width: 150px"
 							></select>
 					</li>
+          <li class="tight-form-item" style="width: 86px">
+            Alias
+          </li>
+          <li>
+            <input type="text" ng-model="style.alias" ng-blur="editor.render()" class="input-medium tight-form-input">
+          </li>
 				</ul>
 				<ul class="tight-form-list" ng-if="style.type === 'date'">
 					<li class="tight-form-item">
