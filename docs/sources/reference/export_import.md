@@ -34,7 +34,7 @@ Find dashboads for common server applications at [Grafana.net/dashboards](https:
 
 <img src="/img/v31/gnet_dashboards_list.png">
 
-## Importing & Uploading dashboards with Grafana 2.x or 3.0
+## Import & Sharing with Grafana 2.x or 3.0
 
 Dashboards on Grafana.net use a new feature in Grafana 3.1 that allows the import process
 to update each panel so that they are using a data source of your choosing. If you are running a
