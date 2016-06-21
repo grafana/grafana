@@ -1,8 +1,9 @@
 define([
   'jquery',
   'lodash',
+  'moment'
 ],
-function($, _) {
+function($, _, moment) {
   'use strict';
 
   var kbn = {};
@@ -580,6 +581,45 @@ function($, _) {
     }
   };
 
+  // Date and time
+  kbn.toDateTime = function(size, timeScale) {
+    var datetime;
+    if (timeScale === 's') {
+      datetime = moment.unix(size);
+    } else {
+      datetime = moment(size);
+    }
+    return datetime;
+  };
+
+  kbn.toDuration = function(size, timeScale) {
+    return moment.duration(size, timeScale);
+  };
+
+  kbn.valueFormats.dtms = function(size) {
+    return kbn.toDateTime(size, 'ms').format('YYYY-MM-DD hh:mm:ss');
+  };
+
+  kbn.valueFormats.dts = function(size) {
+    return kbn.toDateTime(size, 's').format('YYYY-MM-DD hh:mm:ss');
+  };
+
+  kbn.valueFormats.dtfromnowms = function(size) {
+    return kbn.toDateTime(size, 'ms').fromNow(true);
+  };
+
+  kbn.valueFormats.dtfromnows = function(size) {
+    return kbn.toDateTime(size, 's').fromNow(true);
+  };
+
+  kbn.valueFormats.dtdurationms = function(size) {
+    return kbn.toDuration(size, 'ms').humanize();
+  };
+
+  kbn.valueFormats.dtdurations = function(size) {
+    return kbn.toDuration(size, 's').humanize();
+  };
+
   ///// FORMAT MENU /////
 
   kbn.getUnitFormats = function() {
@@ -616,6 +656,17 @@ function($, _) {
           {text: 'minutes (m)',       value: 'm'    },
           {text: 'hours (h)',         value: 'h'    },
           {text: 'days (d)',          value: 'd'    },
+        ]
+      },
+      {
+        text: 'date and time',
+        submenu: [
+          {text: 'date and time (ms)', value: 'dtms'},
+          {text: 'date and time (s)',  value: 'dts' },
+          {text: 'from now (ms)',  value: 'dtfromnowms' },
+          {text: 'from now (s)',  value: 'dtfromnows' },
+          {text: 'duration (ms)',  value: 'dtdurationms' },
+          {text: 'duration (s)',  value: 'dtdurations' }
         ]
       },
       {
