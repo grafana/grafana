@@ -1,0 +1,16 @@
+{
+  "type": "datasource",
+  "name": "SqlDB",
+  "id": "sqldb",
+
+  "defaultMatchFormat": "regex values",
+  "metrics": true,
+  "annotations": true,
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "http://grafana.org"
+    }
+  }
+}
