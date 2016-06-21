@@ -71,7 +71,6 @@ export class DashboardCtrl {
       };
 
       $scope.broadcastRefresh = function() {
-        $rootScope.performance.panelsRendered = 0;
         $rootScope.$broadcast('refresh');
       };
 
