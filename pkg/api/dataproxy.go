@@ -7,7 +7,15 @@ import (
 	"net/http/httputil"
 	"net/url"
 	"time"
+	"io/ioutil"
+	"bytes"
+	"encoding/json"
+	"strings"
+	"fmt"
 
+	"github.com/influxdata/influxdb/influxql"
+
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
@@ -80,6 +88,58 @@ func getDatasource(id int64, orgId int64) (*m.DataSource, error) {
 	return &query.Result, nil
 }
 
+type MeasurementBody map[string][]map[string][]map[string]interface{}
+
+func getMeasurements(ds *m.DataSource, proxyPath string) ([]string,error) {
+	var measurements []string
+	client := &http.Client{}
+	req, err := http.NewRequest("GET", util.JoinUrlFragments(ds.Url,proxyPath), nil)
+	q := req.URL.Query()
+	q.Set("q","SHOW MEASUREMENTS")
+	q.Add("db", ds.Database)
+	req.URL.RawQuery = q.Encode()
+	if err != nil {
+		return nil,err
+	}
+	req.SetBasicAuth(ds.User, ds.Password)
+	res, err := client.Do(req)
+	if err != nil {
+		return nil,err
+	}
+	contents, err := ioutil.ReadAll(res.Body)
+	if err != nil{
+		return nil,err
+	}
+	var v MeasurementBody
+	err = json.Unmarshal(contents, &v)
+	if err != nil{
+		return nil,err
+	}
+	for _,val := range v["results"][0]["series"][0]["values"].([]interface{}){
+		measurements = append(measurements, val.([]interface{})[0].(string))
+	}
+	return measurements,nil
+}
+
+func Filter(vs []string, f func(string) bool) []string {
+	vsf := make([]string, 0)
+	for _, v := range vs {
+		if f(v) {
+			vsf = append(vsf, v)
+		}
+	}
+	return vsf
+}
+
+func All(vs []string, f func(string) bool) bool {
+	for _, v := range vs {
+		if !f(v) {
+			return false
+		}
+	}
+	return true
+}
+
 func ProxyDataSourceRequest(c *middleware.Context) {
 	c.TimeRequest(metrics.M_DataSource_ProxyReq_Timer)
 
@@ -100,6 +160,123 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 
 	if ds.Type == m.DS_CLOUDWATCH {
 		cloudwatch.HandleRequest(c, ds)
+	}else if ds.Type == m.DS_INFLUXDB {
+		proxyPath := c.Params("*")
+		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
+		proxy.Transport = dataProxyTransport
+
+		if (c.SignedInUser.Login != setting.AdminUser) && (c.SignedInUser.OrgId != 1) {
+			queries := strings.TrimSpace(c.Req.Request.URL.Query().Get("q"))
+			parsed,err := influxql.ParseQuery(queries)
+			if err != nil {
+				c.JsonApiErr(500, "Unable to verify authorization", err)
+				log.Warn("Queries: %#v",queries)
+				return
+			}else{
+				var measurements []string
+				validator := func(x string) bool {return strings.HasPrefix(x,fmt.Sprintf("P%d.",c.SignedInUser.OrgId))}
+				for _, s := range parsed.Statements {
+					switch stmt := s.(type) {
+					case *influxql.SelectStatement:
+						if stmt.Target != nil {
+							c.JsonApiErr(403, "Unauthorized Query", nil)
+							log.Warn("Unauthed SELECT INTO Query: %#v",s.String())
+							return
+						}
+						for indx,source := range stmt.SourceNames() {
+							regex := stmt.Sources[indx].(*influxql.Measurement).Regex
+							if regex != nil {
+								regex := regex.Val
+								if len(measurements) == 0 {
+									measurements,err = getMeasurements(ds,proxyPath)
+									if err != nil{
+										c.JsonApiErr(500, "Unable to verify authorization", err)
+										return
+									}
+								}
+								if !All(Filter(measurements,regex.MatchString),validator){
+									c.JsonApiErr(403, "Unauthorized Query", nil)
+									log.Warn("Unauthed SELECT Query: %#v, source: /%s/",s.String(),regex.String())
+									return
+								}
+							}else if !validator(source) {
+								c.JsonApiErr(403, "Unauthorized Query", nil)
+								log.Warn("Unauthed SELECT Query: %#v, source: %#v",s.String(),source)
+								return
+							}
+						}
+					case *influxql.ShowFieldKeysStatement:
+						log.Info("Metadata Query: %#v",s.String())
+					case *influxql.ShowMeasurementsStatement:
+						log.Info("Metadata Query: %#v",s.String())
+					case *influxql.ShowSeriesStatement:
+						log.Info("Metadata Query: %#v",s.String())
+					case *influxql.ShowTagKeysStatement:
+						log.Info("Metadata Query: %#v",s.String())
+					case *influxql.ShowTagValuesStatement:
+						log.Info("Metadata Query: %#v",s.String())
+					default:
+						c.JsonApiErr(403, "Unauthorized Query", nil)
+						log.Warn("Unauthed Query Type: %#v",s.String())
+						return
+					}
+				}
+			}
+		}
+		proxy.ServeHTTP(c.Resp, c.Req.Request)
+		c.Resp.Header().Del("Set-Cookie")
+	}else if ds.Type == m.DS_OPENTSDB {
+		proxyPath := c.Params("*")
+		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
+		proxy.Transport = dataProxyTransport
+
+		if (c.SignedInUser.Login != setting.AdminUser) && (c.SignedInUser.OrgId != 1) {
+
+			contents, err := ioutil.ReadAll(c.Req.Request.Body)
+
+			if err != nil || len(contents) == 0 {
+				c.Req.Request.ParseForm()
+				form_values := c.Req.Request.Form
+				if contents, ok := form_values["q"]; ok && !(strings.Contains(strings.Join(contents,""),"m=") || strings.Contains(strings.Join(contents,""),"tsuid=")){
+					log.Info("Metadata Query: %#v",contents)
+				}else{
+					c.JsonApiErr(500, "Unable to verify authorization", nil)
+					return
+				}
+			}else{
+				c.Req.Request.Body = ioutil.NopCloser(bytes.NewReader(contents))
+
+				var v util.DynMap
+				err = json.Unmarshal(contents, &v)
+				if err != nil {
+					log.Warn("Body: %s",contents)
+					c.JsonApiErr(500, "Unable to verify authorization", err)
+					return
+				}
+
+				for _,element := range v["queries"].([]interface{}) {
+					m := element.(util.DynMap)
+					org_matches := strings.HasPrefix(m["metric"].(string),fmt.Sprintf("P%d.",c.SignedInUser.OrgId))
+					if !org_matches || (m["tsuids"] != nil) {
+						c.JsonApiErr(403, "Unauthorized Query", nil)
+						return
+					}
+				}
+			}
+		}
+		proxy.ServeHTTP(c.Resp, c.Req.Request)
+		c.Resp.Header().Del("Set-Cookie")
+	}else if ds.Type == m.DS_ES {
+		if (c.SignedInUser.Login == setting.AdminUser) || (c.SignedInUser.OrgId == 1) || (ds.OrgId == c.SignedInUser.OrgId) {
+			proxyPath := c.Params("*")
+			proxy := NewReverseProxy(ds, proxyPath, targetUrl)
+			proxy.Transport = dataProxyTransport
+			proxy.ServeHTTP(c.Resp, c.Req.Request)
+			c.Resp.Header().Del("Set-Cookie")
+		}else{
+			c.JsonApiErr(403, "Unauthorized Query", nil)
+			return
+		}
 	} else {
 		proxyPath := c.Params("*")
 		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
