@@ -12,27 +12,33 @@ import (
 )
 
 type NotifierImpl struct {
-	log log.Logger
+	log              log.Logger
+	getNotifications func(orgId int64, notificationGroups []int64) []*Notification
 }
 
 func NewNotifier() *NotifierImpl {
+	log := log.New("alerting.notifier")
 	return &NotifierImpl{
-		log: log.New("alerting.notifier"),
+		log:              log,
+		getNotifications: buildGetNotifiers(log),
 	}
 }
 
+func (n NotifierImpl) ShouldDispath(alertResult *AlertResult, notifier *Notification) bool {
+	warn := alertResult.State == alertstates.Warn && notifier.SendWarning
+	crit := alertResult.State == alertstates.Critical && notifier.SendCritical
+	return (warn || crit) || alertResult.State == alertstates.Ok
+}
+
 func (n *NotifierImpl) Notify(alertResult *AlertResult) {
-	notifiers := n.getNotifiers(alertResult.AlertJob.Rule.OrgId, alertResult.AlertJob.Rule.NotificationGroups)
+	notifiers := n.getNotifications(alertResult.AlertJob.Rule.OrgId, alertResult.AlertJob.Rule.NotificationGroups)
 
 	for _, notifier := range notifiers {
-		warn := alertResult.State == alertstates.Warn && notifier.SendWarning
-		crit := alertResult.State == alertstates.Critical && notifier.SendCritical
-		if (warn || crit) || alertResult.State == alertstates.Ok {
+		if n.ShouldDispath(alertResult, notifier) {
 			n.log.Info("Sending notification", "state", alertResult.State, "type", notifier.Type)
 			go notifier.Notifierr.Dispatch(alertResult)
 		}
 	}
-
 }
 
 type Notification struct {
@@ -107,29 +113,31 @@ type NotificationDispatcher interface {
 	Dispatch(alertResult *AlertResult)
 }
 
-func (n *NotifierImpl) getNotifiers(orgId int64, notificationGroups []int64) []*Notification {
-	query := &m.GetAlertNotificationQuery{
-		OrgID:                orgId,
-		Ids:                  notificationGroups,
-		IncludeAlwaysExecute: true,
-	}
-	err := bus.Dispatch(query)
-	if err != nil {
-		n.log.Error("Failed to read notifications", "error", err)
-	}
-
-	var result []*Notification
-	n.log.Info("notifiriring", "count", len(query.Result), "groups", notificationGroups)
-	for _, notification := range query.Result {
-		not, err := NewNotificationFromDBModel(notification)
-		if err == nil {
-			result = append(result, not)
-		} else {
-			n.log.Error("Failed to read notification model", "error", err)
+func buildGetNotifiers(log log.Logger) func(orgId int64, notificationGroups []int64) []*Notification {
+	return func(orgId int64, notificationGroups []int64) []*Notification {
+		query := &m.GetAlertNotificationQuery{
+			OrgID:                orgId,
+			Ids:                  notificationGroups,
+			IncludeAlwaysExecute: true,
 		}
-	}
+		err := bus.Dispatch(query)
+		if err != nil {
+			log.Error("Failed to read notifications", "error", err)
+		}
 
-	return result
+		var result []*Notification
+		log.Info("notifiriring", "count", len(query.Result), "groups", notificationGroups)
+		for _, notification := range query.Result {
+			not, err := NewNotificationFromDBModel(notification)
+			if err == nil {
+				result = append(result, not)
+			} else {
+				log.Error("Failed to read notification model", "error", err)
+			}
+		}
+
+		return result
+	}
 }
 
 func NewNotificationFromDBModel(model *m.AlertNotification) (*Notification, error) {

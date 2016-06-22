@@ -7,93 +7,119 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting/alertstates"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestAlertNotificationExtraction(t *testing.T) {
+	Convey("Notifier tests", t, func() {
+		Convey("rules for sending notifications", func() {
+			dummieNotifier := NotifierImpl{}
 
-	Convey("Parsing alert notification from settings", t, func() {
-		Convey("Parsing email", func() {
-			Convey("empty settings should return error", func() {
-				json := `{ }`
+			result := &AlertResult{
+				State: alertstates.Critical,
+			}
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
-					Name:     "ops",
-					Type:     "email",
-					Settings: settingsJSON,
-				}
+			notifier := &Notification{
+				Name:         "Test Notifier",
+				Type:         "TestType",
+				SendCritical: true,
+				SendWarning:  true,
+			}
 
-				_, err := NewNotificationFromDBModel(model)
-				So(err, ShouldNotBeNil)
+			Convey("Should send notification", func() {
+				So(dummieNotifier.ShouldDispath(result, notifier), ShouldBeTrue)
 			})
 
-			Convey("from settings", func() {
-				json := `
+			Convey("warn:false and state:warn should not send", func() {
+				result.State = alertstates.Warn
+				notifier.SendWarning = false
+				So(dummieNotifier.ShouldDispath(result, notifier), ShouldBeFalse)
+			})
+		})
+
+		Convey("Parsing alert notification from settings", func() {
+			Convey("Parsing email", func() {
+				Convey("empty settings should return error", func() {
+					json := `{ }`
+
+					settingsJSON, _ := simplejson.NewJson([]byte(json))
+					model := &m.AlertNotification{
+						Name:     "ops",
+						Type:     "email",
+						Settings: settingsJSON,
+					}
+
+					_, err := NewNotificationFromDBModel(model)
+					So(err, ShouldNotBeNil)
+				})
+
+				Convey("from settings", func() {
+					json := `
 				{
 					"to": "ops@grafana.org"
 				}`
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
-					Name:     "ops",
-					Type:     "email",
-					Settings: settingsJSON,
-				}
+					settingsJSON, _ := simplejson.NewJson([]byte(json))
+					model := &m.AlertNotification{
+						Name:     "ops",
+						Type:     "email",
+						Settings: settingsJSON,
+					}
 
-				not, err := NewNotificationFromDBModel(model)
+					not, err := NewNotificationFromDBModel(model)
 
-				So(err, ShouldBeNil)
-				So(not.Name, ShouldEqual, "ops")
-				So(not.Type, ShouldEqual, "email")
-				So(reflect.TypeOf(not.Notifierr).Elem().String(), ShouldEqual, "alerting.EmailNotifier")
+					So(err, ShouldBeNil)
+					So(not.Name, ShouldEqual, "ops")
+					So(not.Type, ShouldEqual, "email")
+					So(reflect.TypeOf(not.Notifierr).Elem().String(), ShouldEqual, "alerting.EmailNotifier")
 
-				email := not.Notifierr.(*EmailNotifier)
-				So(email.To, ShouldEqual, "ops@grafana.org")
-			})
-		})
-
-		Convey("Parsing webhook", func() {
-			Convey("empty settings should return error", func() {
-				json := `{ }`
-
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
-					Name:     "ops",
-					Type:     "webhook",
-					Settings: settingsJSON,
-				}
-
-				_, err := NewNotificationFromDBModel(model)
-				So(err, ShouldNotBeNil)
+					email := not.Notifierr.(*EmailNotifier)
+					So(email.To, ShouldEqual, "ops@grafana.org")
+				})
 			})
 
-			Convey("from settings", func() {
-				json := `
+			Convey("Parsing webhook", func() {
+				Convey("empty settings should return error", func() {
+					json := `{ }`
+
+					settingsJSON, _ := simplejson.NewJson([]byte(json))
+					model := &m.AlertNotification{
+						Name:     "ops",
+						Type:     "webhook",
+						Settings: settingsJSON,
+					}
+
+					_, err := NewNotificationFromDBModel(model)
+					So(err, ShouldNotBeNil)
+				})
+
+				Convey("from settings", func() {
+					json := `
 				{
 					"url": "http://localhost:3000",
 					"username": "username",
 					"password": "password"
 				}`
 
-				settingsJSON, _ := simplejson.NewJson([]byte(json))
-				model := &m.AlertNotification{
-					Name:     "slack",
-					Type:     "webhook",
-					Settings: settingsJSON,
-				}
+					settingsJSON, _ := simplejson.NewJson([]byte(json))
+					model := &m.AlertNotification{
+						Name:     "slack",
+						Type:     "webhook",
+						Settings: settingsJSON,
+					}
 
-				not, err := NewNotificationFromDBModel(model)
+					not, err := NewNotificationFromDBModel(model)
 
-				So(err, ShouldBeNil)
-				So(not.Name, ShouldEqual, "slack")
-				So(not.Type, ShouldEqual, "webhook")
-				So(reflect.TypeOf(not.Notifierr).Elem().String(), ShouldEqual, "alerting.WebhookNotifier")
+					So(err, ShouldBeNil)
+					So(not.Name, ShouldEqual, "slack")
+					So(not.Type, ShouldEqual, "webhook")
+					So(reflect.TypeOf(not.Notifierr).Elem().String(), ShouldEqual, "alerting.WebhookNotifier")
 
-				webhook := not.Notifierr.(*WebhookNotifier)
-				So(webhook.Url, ShouldEqual, "http://localhost:3000")
+					webhook := not.Notifierr.(*WebhookNotifier)
+					So(webhook.Url, ShouldEqual, "http://localhost:3000")
+				})
 			})
 		})
-
 	})
 }
