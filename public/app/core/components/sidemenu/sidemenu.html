@@ -22,6 +22,13 @@
 					{{::menuItem.text}}
 				</a>
 			</li>
+            <li><input ng-model="::ctrl.orgFilter" type="text" ng-change="::ctrl.loadOrgsItems();" class="gf-form-input" placeholder="Filter"></li>
+            <li ng-repeat="orgItem in ctrl.orgItems" ng-class="::orgItem.cssClass">
+				<a href="{{::orgItem.url}}" ng-show="::orgItem.url" target="{{::orgItem.target}}">
+					<i class="{{::orgItem.icon}}" ng-show="::orgItem.icon"></i>
+					{{::orgItem.text}}
+				</a>
+			</li>
 		</ul>
 	</li>
 
