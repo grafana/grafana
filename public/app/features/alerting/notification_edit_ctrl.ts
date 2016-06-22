@@ -13,6 +13,13 @@ export class AlertNotificationEditCtrl {
   constructor(private $routeParams, private backendSrv, private $scope) {
     if ($routeParams.notificationId) {
       this.loadNotification($routeParams.notificationId);
+    } else {
+      this.notification = {
+        settings: {
+          sendCrit: true,
+          sendWarn: true,
+        }
+      };
     }
   }
 

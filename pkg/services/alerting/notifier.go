@@ -151,8 +151,8 @@ func NewNotificationFromDBModel(model *m.AlertNotification) (*Notification, erro
 		Name:         model.Name,
 		Type:         model.Type,
 		Notifierr:    notifier,
-		SendCritical: !model.Settings.Get("ignoreCrit").MustBool(),
-		SendWarning:  !model.Settings.Get("ignoreWarn").MustBool(),
+		SendCritical: model.Settings.Get("sendCrit").MustBool(),
+		SendWarning:  model.Settings.Get("sendWarn").MustBool(),
 	}, nil
 }
 
