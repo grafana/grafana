@@ -121,20 +121,19 @@ func (e *Engine) resultHandler() {
 
 				result.State = alertstates.Critical
 				result.Description = fmt.Sprintf("Failed to run check after %d retires, Error: %v", maxAlertExecutionRetries, result.Error)
-				e.saveState(result)
+				e.reactToState(result)
 			}
 		} else {
 			result.AlertJob.ResetRetry()
-			e.saveState(result)
+			e.reactToState(result)
 		}
 	}
 }
 
-func (e *Engine) saveState(result *AlertResult) {
+func (e *Engine) reactToState(result *AlertResult) {
 	query := &m.GetAlertByIdQuery{Id: result.AlertJob.Rule.Id}
 	bus.Dispatch(query)
 
-	e.notifier.Notify(result)
 	if query.Result.ShouldUpdateState(result.State) {
 		cmd := &m.UpdateAlertStateCommand{
 			AlertId:  result.AlertJob.Rule.Id,
@@ -146,9 +145,7 @@ func (e *Engine) saveState(result *AlertResult) {
 			e.log.Error("Failed to save state", "error", err)
 		}
 
-		e.log.Debug("will notify! about", "new state", result.State)
-
-	} else {
-		e.log.Debug("state remains the same!")
+		e.log.Debug("will notify about new state", "new state", result.State)
+		e.notifier.Notify(result)
 	}
 }
