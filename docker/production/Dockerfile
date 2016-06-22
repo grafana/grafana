@@ -1,7 +1,4 @@
-FROM debian:jessie
-
-RUN apt-get -y update
-RUN apt-get -y install libfontconfig
+FROM docker.hikvision.com.cn/prometheus/base:1.0
 
 RUN mkdir -p /opt/grafana
 
@@ -13,4 +10,4 @@ VOLUME ["/opt/grafana/data"]
 VOLUME ["/opt/grafana/conf"]
 
 WORKDIR /opt/grafana/
-ENTRYPOINT ["./grafana", "web"]
+ENTRYPOINT ["./bin/grafana-server"]

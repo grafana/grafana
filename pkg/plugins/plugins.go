@@ -73,7 +73,8 @@ func Init() error {
 		app.initApp()
 	}
 
-	go StartPluginUpdateChecker()
+  //不要到grafana官网检查插件的更新
+	//go StartPluginUpdateChecker()
 	return nil
 }
 

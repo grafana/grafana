@@ -5,9 +5,9 @@ cd ../../
 
 go run build.go build
 
-grunt release
+grunt release --force
 
-docker build --tag "grafana/grafana:develop" .
+docker build --tag "docker.hikvision.com.cn/prometheus/grafana:1.0" .
 
 rm Dockerfile
 cd docker/production

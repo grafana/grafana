@@ -14,7 +14,6 @@ import (
 
 	"github.com/ganting/grafana/pkg/log"
 	"github.com/ganting/grafana/pkg/login"
-	"github.com/ganting/grafana/pkg/metrics"
 	"github.com/ganting/grafana/pkg/plugins"
 	"github.com/ganting/grafana/pkg/services/eventpublisher"
 	"github.com/ganting/grafana/pkg/services/notifications"
@@ -58,7 +57,8 @@ func main() {
 	flag.Parse()
 	writePIDFile()
 	initRuntime()
-	metrics.Init()
+  //不要发送metric数据到grafana的官网
+	//metrics.Init()
 
 	search.Init()
 	login.Init()
