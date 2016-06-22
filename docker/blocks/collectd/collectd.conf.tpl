@@ -17,6 +17,7 @@ LoadPlugin write_graphite
 LoadPlugin processes
 LoadPlugin aggregation
 LoadPlugin match_regex
+# LoadPlugin memcached
 
 <Plugin df>
   # expose host's mounts into container using -v /:/host:ro  (location inside container does not matter much)
@@ -71,6 +72,11 @@ LoadPlugin match_regex
   Interface "/^docker.*/"
   IgnoreSelected true
 </Plugin>
+
+# <Plugin "memcached">
+#   Host "memcached"
+#   Port "11211"
+# </Plugin>
 
 <Chain "PostCache">
   <Rule>
