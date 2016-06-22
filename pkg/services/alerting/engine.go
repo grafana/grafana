@@ -54,7 +54,7 @@ func (e *Engine) Stop() {
 func (e *Engine) alertingTicker() {
 	defer func() {
 		if err := recover(); err != nil {
-			e.log.Error("Scheduler Panic, stopping...", "error", err, "stack", log.Stack(1))
+			e.log.Error("Scheduler Panic: stopping alertingTicker", "error", err, "stack", log.Stack(1))
 		}
 	}()
 
@@ -75,6 +75,12 @@ func (e *Engine) alertingTicker() {
 }
 
 func (e *Engine) execDispatch() {
+	defer func() {
+		if err := recover(); err != nil {
+			e.log.Error("Scheduler Panic: stopping executor", "error", err, "stack", log.Stack(1))
+		}
+	}()
+
 	for job := range e.execQueue {
 		log.Trace("Alerting: engine:execDispatch() starting job %s", job.Rule.Name)
 		job.Running = true
@@ -105,6 +111,12 @@ func (e *Engine) executeJob(job *AlertJob) {
 }
 
 func (e *Engine) resultHandler() {
+	defer func() {
+		if err := recover(); err != nil {
+			e.log.Error("Engine Panic, stopping resultHandler", "error", err, "stack", log.Stack(1))
+		}
+	}()
+
 	for result := range e.resultQueue {
 		e.log.Debug("Alert Rule Result", "ruleId", result.AlertJob.Rule.Id, "state", result.State, "value", result.ActualValue, "retry", result.AlertJob.RetryCount)
 
