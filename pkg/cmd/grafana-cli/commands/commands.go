@@ -48,13 +48,10 @@ var pluginCommands = []cli.Command{
 		Usage:  "list all installed plugins",
 		Action: runCommand(lsCommand),
 	}, {
-		Name:   "uninstall",
-		Usage:  "uninstall <plugin id>",
-		Action: runCommand(removeCommand),
-	}, {
-		Name:   "remove",
-		Usage:  "remove <plugin id>",
-		Action: runCommand(removeCommand),
+		Name:    "uninstall",
+		Aliases: []string{"remove"},
+		Usage:   "uninstall <plugin id>",
+		Action:  runCommand(removeCommand),
 	},
 }
 
