@@ -1,0 +1,53 @@
+<h2>SQL Options</h2>
+
+<div class="tight-form">
+	<ul class="tight-form-list">
+		<li class="tight-form-item" style="width: 80px">
+			DB Type
+		</li>
+		<li>
+			<select class="input-medium tight-form-input" ng-model="ctrl.current.jsonData.sqlDBType" ng-options="f for f in ['mysql', 'postgres']"></select>
+		</li>
+		<li class="tight-form-item" style="width: 80px">
+			Host
+		</li>
+		<li>
+			<input type="text" class="tight-form-input input-medium" ng-model='ctrl.current.jsonData.sqlHost' placeholder="localhost:3306">
+		</li>
+		<li class="tight-form-item" ng-if="ctrl.current.jsonData.sqlDBType === 'postgres'">
+			SSL&nbsp;
+			<input class="cr1" id="jsonData.sqlSsl" type="checkbox" ng-model="current.jsonData.sqlSsl" ng-checked="ctrl.current.jsonData.sqlSsl">
+			<label for="jsonData.sqlSsl" class="cr1"></label>
+		</li>
+	</ul>
+	<div class="clearfix"></div>
+</div>
+<div class="tight-form">
+	<ul class="tight-form-list">
+		<li class="tight-form-item" style="width: 80px">
+			Database
+		</li>
+		<li>
+			<input type="text" class="tight-form-input input-medium" ng-model='ctrl.current.database' placeholder="">
+		</li>
+	</ul>
+	<div class="clearfix"></div>
+</div>
+<div class="tight-form">
+	<ul class="tight-form-list">
+		<li class="tight-form-item" style="width: 80px">
+			User
+		</li>
+		<li>
+			<input type="text" class="tight-form-input input-medium" ng-model='ctrl.current.user' placeholder="">
+		</li>
+		<li class="tight-form-item" style="width: 80px">
+			Password
+		</li>
+		<li>
+			<input type="password" class="tight-form-input input-medium" ng-model='ctrl.current.password' placeholder="">
+		</li>
+	</ul>
+	<div class="clearfix"></div>
+</div>
+
