@@ -126,7 +126,6 @@ func (e *HandlerImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice)
 	}
 
 	executionState := alertstates.Ok
-	description := ""
 	for _, raised := range triggeredAlert {
 		if raised.State == alertstates.Critical {
 			executionState = alertstates.Critical
@@ -135,9 +134,7 @@ func (e *HandlerImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice)
 		if executionState != alertstates.Critical && raised.State == alertstates.Warn {
 			executionState = alertstates.Warn
 		}
-
-		description += fmt.Sprintf(descriptionFmt, raised.ActualValue, raised.Name)
 	}
 
-	return &AlertResult{State: executionState, Description: description, TriggeredAlerts: triggeredAlert}
+	return &AlertResult{State: executionState, Description: "Returned " + executionState, TriggeredAlerts: triggeredAlert}
 }

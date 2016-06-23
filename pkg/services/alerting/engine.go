@@ -6,6 +6,7 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting/alertstates"
@@ -145,10 +146,11 @@ func (e *Engine) resultHandler() {
 func (e *Engine) reactToState(result *AlertResult) {
 	if shouldUpdateState(result) {
 		cmd := &m.UpdateAlertStateCommand{
-			AlertId:  result.AlertJob.Rule.Id,
-			NewState: result.State,
-			Info:     result.Description,
-			OrgId:    result.AlertJob.Rule.OrgId,
+			AlertId:         result.AlertJob.Rule.Id,
+			NewState:        result.State,
+			Info:            result.Description,
+			OrgId:           result.AlertJob.Rule.OrgId,
+			TriggeredAlerts: simplejson.NewFromAny(result.TriggeredAlerts),
 		}
 
 		if err := bus.Dispatch(cmd); err != nil {

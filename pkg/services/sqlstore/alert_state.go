@@ -51,11 +51,12 @@ func SetNewAlertState(cmd *m.UpdateAlertStateCommand) error {
 		sess.Id(alert.Id).Update(&alert)
 
 		alertState := m.AlertState{
-			AlertId:  cmd.AlertId,
-			OrgId:    cmd.OrgId,
-			NewState: cmd.NewState,
-			Info:     cmd.Info,
-			Created:  time.Now(),
+			AlertId:         cmd.AlertId,
+			OrgId:           cmd.OrgId,
+			NewState:        cmd.NewState,
+			Info:            cmd.Info,
+			Created:         time.Now(),
+			TriggeredAlerts: cmd.TriggeredAlerts,
 		}
 
 		sess.Insert(&alertState)
