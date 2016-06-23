@@ -28,6 +28,7 @@ func (this *UpdateAlertStateCommand) IsValidState() bool {
 
 type UpdateAlertStateCommand struct {
 	AlertId  int64  `json:"alertId" binding:"Required"`
+	OrgId    int64  `json:"orgId" binding:"Required"`
 	NewState string `json:"newState" binding:"Required"`
 	Info     string `json:"info"`
 
@@ -41,4 +42,11 @@ type GetAlertsStateQuery struct {
 	AlertId int64 `json:"alertId" binding:"Required"`
 
 	Result *[]AlertState
+}
+
+type GetLastAlertStateQuery struct {
+	AlertId int64
+	OrgId   int64
+
+	Result *AlertState
 }

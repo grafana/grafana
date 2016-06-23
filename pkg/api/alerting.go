@@ -140,6 +140,7 @@ func GetAlertStates(c *middleware.Context) Response {
 // PUT /api/alerts/events/:id
 func PutAlertState(c *middleware.Context, cmd models.UpdateAlertStateCommand) Response {
 	cmd.AlertId = c.ParamsInt64(":alertId")
+	cmd.OrgId = c.OrgId
 
 	query := models.GetAlertByIdQuery{Id: cmd.AlertId}
 	if err := bus.Dispatch(&query); err != nil {

@@ -143,14 +143,12 @@ func (e *Engine) resultHandler() {
 }
 
 func (e *Engine) reactToState(result *AlertResult) {
-	query := &m.GetAlertByIdQuery{Id: result.AlertJob.Rule.Id}
-	bus.Dispatch(query)
-
-	if query.Result.ShouldUpdateState(result.State) {
+	if shouldUpdateState(result) {
 		cmd := &m.UpdateAlertStateCommand{
 			AlertId:  result.AlertJob.Rule.Id,
 			NewState: result.State,
 			Info:     result.Description,
+			OrgId:    result.AlertJob.Rule.OrgId,
 		}
 
 		if err := bus.Dispatch(cmd); err != nil {
@@ -160,4 +158,23 @@ func (e *Engine) reactToState(result *AlertResult) {
 		e.log.Debug("will notify about new state", "new state", result.State)
 		e.notifier.Notify(result)
 	}
+}
+
+func shouldUpdateState(result *AlertResult) bool {
+	query := &m.GetLastAlertStateQuery{
+		AlertId: result.AlertJob.Rule.Id,
+		OrgId:   result.AlertJob.Rule.OrgId,
+	}
+
+	if err := bus.Dispatch(query); err != nil {
+		log.Error2("Failed to read last alert state", "error", err)
+		return false
+	}
+
+	now := time.Now()
+	noEarlierState := query.Result == nil
+	olderThen15Min := query.Result.Created.Before(now.Add(time.Minute * -15))
+	changedState := query.Result.NewState != result.State
+
+	return noEarlierState || changedState || olderThen15Min
 }
