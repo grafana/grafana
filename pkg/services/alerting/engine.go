@@ -5,35 +5,32 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting/alertstates"
 )
 
 type Engine struct {
-	execQueue   chan *AlertJob
-	resultQueue chan *AlertResult
-	clock       clock.Clock
-	ticker      *Ticker
-	scheduler   Scheduler
-	handler     AlertingHandler
-	ruleReader  RuleReader
-	log         log.Logger
-	notifier    Notifier
+	execQueue       chan *AlertJob
+	resultQueue     chan *AlertResult
+	clock           clock.Clock
+	ticker          *Ticker
+	scheduler       Scheduler
+	handler         AlertingHandler
+	ruleReader      RuleReader
+	log             log.Logger
+	responseHandler ResultHandler
 }
 
 func NewEngine() *Engine {
 	e := &Engine{
-		ticker:      NewTicker(time.Now(), time.Second*0, clock.New()),
-		execQueue:   make(chan *AlertJob, 1000),
-		resultQueue: make(chan *AlertResult, 1000),
-		scheduler:   NewScheduler(),
-		handler:     NewHandler(),
-		ruleReader:  NewRuleReader(),
-		log:         log.New("alerting.engine"),
-		notifier:    NewNotifier(),
+		ticker:          NewTicker(time.Now(), time.Second*0, clock.New()),
+		execQueue:       make(chan *AlertJob, 1000),
+		resultQueue:     make(chan *AlertResult, 1000),
+		scheduler:       NewScheduler(),
+		handler:         NewHandler(),
+		ruleReader:      NewRuleReader(),
+		log:             log.New("alerting.engine"),
+		responseHandler: NewResultHandler(),
 	}
 
 	return e
@@ -134,49 +131,13 @@ func (e *Engine) resultHandler() {
 
 				result.State = alertstates.Critical
 				result.Description = fmt.Sprintf("Failed to run check after %d retires, Error: %v", maxAlertExecutionRetries, result.Error)
-				e.reactToState(result)
+				//e.reactToState(result)
+				e.responseHandler.Handle(result)
 			}
 		} else {
 			result.AlertJob.ResetRetry()
-			e.reactToState(result)
+			//e.reactToState(result)
+			e.responseHandler.Handle(result)
 		}
 	}
-}
-
-func (e *Engine) reactToState(result *AlertResult) {
-	if shouldUpdateState(result) {
-		cmd := &m.UpdateAlertStateCommand{
-			AlertId:         result.AlertJob.Rule.Id,
-			NewState:        result.State,
-			Info:            result.Description,
-			OrgId:           result.AlertJob.Rule.OrgId,
-			TriggeredAlerts: simplejson.NewFromAny(result.TriggeredAlerts),
-		}
-
-		if err := bus.Dispatch(cmd); err != nil {
-			e.log.Error("Failed to save state", "error", err)
-		}
-
-		e.log.Debug("will notify about new state", "new state", result.State)
-		e.notifier.Notify(result)
-	}
-}
-
-func shouldUpdateState(result *AlertResult) bool {
-	query := &m.GetLastAlertStateQuery{
-		AlertId: result.AlertJob.Rule.Id,
-		OrgId:   result.AlertJob.Rule.OrgId,
-	}
-
-	if err := bus.Dispatch(query); err != nil {
-		log.Error2("Failed to read last alert state", "error", err)
-		return false
-	}
-
-	now := time.Now()
-	noEarlierState := query.Result == nil
-	olderThen15Min := query.Result.Created.Before(now.Add(time.Minute * -15))
-	changedState := query.Result.NewState != result.State
-
-	return noEarlierState || changedState || olderThen15Min
 }
