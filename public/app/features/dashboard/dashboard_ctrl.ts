@@ -36,31 +36,31 @@ export class DashboardCtrl {
 
           // init services
           timeSrv.init(dashboard);
+
+          // template values service needs to initialize completely before
+          // the rest of the dashboard can load
+          templateValuesSrv.init(dashboard).finally(function() {
+            dynamicDashboardSrv.init(dashboard);
+
+            unsavedChangesSrv.init(dashboard, $scope);
+
+            $scope.dashboard = dashboard;
+            $scope.dashboardMeta = dashboard.meta;
+            $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
+
+            dashboardKeybindings.shortcuts($scope);
+
+            $scope.updateSubmenuVisibility();
+            $scope.setWindowTitleAndTheme();
+
+            $scope.appEvent("dashboard-initialized", $scope.dashboard);
+          }).catch(function(err) {
+            if (err.data && err.data.message) { err.message = err.data.message; }
+            $scope.appEvent("alert-error", ['Dashboard init failed', 'Template variables could not be initialized: ' + err.message]);
+          });
         } catch (err) {
           $scope.appEvent("alert-error", ['Dashboard init failed', err.message]);
         }
-
-        // template values service needs to initialize completely before
-        // the rest of the dashboard can load
-        templateValuesSrv.init(dashboard).finally(function() {
-          dynamicDashboardSrv.init(dashboard);
-
-          unsavedChangesSrv.init(dashboard, $scope);
-
-          $scope.dashboard = dashboard;
-          $scope.dashboardMeta = dashboard.meta;
-          $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
-
-          dashboardKeybindings.shortcuts($scope);
-
-          $scope.updateSubmenuVisibility();
-          $scope.setWindowTitleAndTheme();
-
-          $scope.appEvent("dashboard-initialized", $scope.dashboard);
-        }).catch(function(err) {
-          if (err.data && err.data.message) { err.message = err.data.message; }
-          $scope.appEvent("alert-error", ['Dashboard init failed', 'Template variables could not be initialized: ' + err.message]);
-        });
       };
 
       $scope.templateVariableUpdated = function() {
