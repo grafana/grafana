@@ -1,4 +1,4 @@
-# 3.1.0 (2016-06-23)
+# 3.1.0-beta1 (2016-06-23)
 
 ### Enhancements
 * **Dashboard Export/Import**: Dashboard export now templetize data sources and constant variables, users pick these on import, closes [#5084](https://github.com/grafana/grafana/issues/5084)
