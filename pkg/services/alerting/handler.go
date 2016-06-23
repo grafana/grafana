@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -28,9 +29,10 @@ func (e *HandlerImpl) Execute(job *AlertJob, resultQueue chan *AlertResult) {
 	timeSeries, err := e.executeQuery(job)
 	if err != nil {
 		resultQueue <- &AlertResult{
-			Error:    err,
-			State:    alertstates.Pending,
-			AlertJob: job,
+			Error:         err,
+			State:         alertstates.Pending,
+			AlertJob:      job,
+			ExeuctionTime: time.Now(),
 		}
 	}
 
@@ -136,5 +138,5 @@ func (e *HandlerImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice)
 		}
 	}
 
-	return &AlertResult{State: executionState, Description: "Returned " + executionState, TriggeredAlerts: triggeredAlert}
+	return &AlertResult{State: executionState, Description: "Returned " + executionState, TriggeredAlerts: triggeredAlert, ExeuctionTime: time.Now()}
 }

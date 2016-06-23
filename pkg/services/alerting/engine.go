@@ -95,10 +95,11 @@ func (e *Engine) executeJob(job *AlertJob) {
 	select {
 	case <-time.After(time.Second * 5):
 		e.resultQueue <- &AlertResult{
-			State:    alertstates.Pending,
-			Duration: float64(time.Since(now).Nanoseconds()) / float64(1000000),
-			Error:    fmt.Errorf("Timeout"),
-			AlertJob: job,
+			State:         alertstates.Pending,
+			Duration:      float64(time.Since(now).Nanoseconds()) / float64(1000000),
+			Error:         fmt.Errorf("Timeout"),
+			AlertJob:      job,
+			ExeuctionTime: time.Now(),
 		}
 		e.log.Debug("Job Execution timeout", "alertRuleId", job.Rule.Id)
 	case result := <-resultChan:

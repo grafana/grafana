@@ -55,13 +55,15 @@ func (handler *ResultHandlerImpl) shouldUpdateState(result *AlertResult) bool {
 		return false
 	}
 
-	now := time.Now()
-
 	if query.Result == nil {
 		return true
 	}
 
-	olderThen15Min := query.Result.Created.Before(now.Add(time.Minute * -15))
+	//now := time.Now()
+	//olderThen15Min := query.Result.Created.Before(now.Add(time.Minute * -15))
+	lastExecution := query.Result.Created
+	asdf := result.ExeuctionTime.Add(time.Minute * -15)
+	olderThen15Min := lastExecution.Before(asdf)
 	changedState := query.Result.NewState != result.State
 
 	return changedState || olderThen15Min

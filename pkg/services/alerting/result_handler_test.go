@@ -51,6 +51,7 @@ func TestAlertResultHandler(t *testing.T) {
 					Created:  now.Add(time.Minute * -30),
 				}
 				mockResult.State = alertstates.Critical
+				mockResult.ExeuctionTime = time.Now()
 				So(resultHandler.shouldUpdateState(mockResult), ShouldBeTrue)
 			})
 		})
