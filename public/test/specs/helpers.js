@@ -167,10 +167,15 @@ define([
     };
   }
 
+  function AlertSrvStub() {
+    this.set = function() {};
+  }
+
   return {
     ControllerTestContext: ControllerTestContext,
     TimeSrvStub: TimeSrvStub,
     ContextSrvStub: ContextSrvStub,
+    AlertSrvStub: AlertSrvStub,
     ServiceTestContext: ServiceTestContext
   };
 
