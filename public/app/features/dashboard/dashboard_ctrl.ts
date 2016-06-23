@@ -21,6 +21,7 @@ export class DashboardCtrl {
     dynamicDashboardSrv,
     dashboardViewStateSrv,
     contextSrv,
+    alertSrv,
     $timeout) {
 
       $scope.editor = { index: 0 };
@@ -29,11 +30,15 @@ export class DashboardCtrl {
       var resizeEventTimeout;
 
       $scope.setupDashboard = function(data) {
-        var dashboard = dashboardSrv.create(data.dashboard, data.meta);
-        dashboardSrv.setCurrent(dashboard);
+        try {
+          var dashboard = dashboardSrv.create(data.dashboard, data.meta);
+          dashboardSrv.setCurrent(dashboard);
 
-        // init services
-        timeSrv.init(dashboard);
+          // init services
+          timeSrv.init(dashboard);
+        } catch (err) {
+          $scope.appEvent("alert-error", ['Dashboard init failed', err.message]);
+        }
 
         // template values service needs to initialize completely before
         // the rest of the dashboard can load
