@@ -55,7 +55,7 @@ func TestAlertRuleModel(t *testing.T) {
 					"datasourceId": 1
 				},
 				"transform": {
-					"method": "avg",
+					"type": "avg",
 					"name": "aggregation"
 				}
 			}

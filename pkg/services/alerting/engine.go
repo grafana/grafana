@@ -132,12 +132,10 @@ func (e *Engine) resultHandler() {
 
 				result.State = alertstates.Critical
 				result.Description = fmt.Sprintf("Failed to run check after %d retires, Error: %v", maxAlertExecutionRetries, result.Error)
-				//e.reactToState(result)
 				e.responseHandler.Handle(result)
 			}
 		} else {
 			result.AlertJob.ResetRetry()
-			//e.reactToState(result)
 			e.responseHandler.Handle(result)
 		}
 	}

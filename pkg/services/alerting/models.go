@@ -47,7 +47,6 @@ type Level struct {
 type AlertQuery struct {
 	Query        string
 	DatasourceId int64
-	Aggregator   string
 	From         string
 	To           string
 }
