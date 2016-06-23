@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"fmt"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -62,15 +63,38 @@ func (this *EmailNotifier) Dispatch(alertResult *AlertResult) {
 		grafanaUrl += "/" + setting.AppSubUrl
 	}
 
+	query := &m.GetDashboardsQuery{
+		DashboardIds: []int64{alertResult.AlertJob.Rule.DashboardId},
+	}
+
+	if err := bus.Dispatch(query); err != nil {
+		this.log.Error("Failed to load dashboard", "error", err)
+		return
+	}
+
+	if len(query.Result) != 1 {
+		this.log.Error("Can only support one dashboard", "result", len(query.Result))
+		return
+	}
+
+	dashboard := query.Result[0]
+
+	panelId := strconv.Itoa(int(alertResult.AlertJob.Rule.PanelId))
+
+	//TODO: get from alertrule and transforms to seconds
+	from := "1466169458375"
+	to := "1466171258375"
+
+	renderUrl := fmt.Sprintf("%s/render/dashboard-solo/db/%s?from=%s&to=%s&panelId=%s&width=1000&height=500", grafanaUrl, dashboard.Slug, from, to, panelId)
 	cmd := &m.SendEmailCommand{
 		Data: map[string]interface{}{
 			"Name":            "Name",
 			"State":           alertResult.State,
 			"Description":     alertResult.Description,
 			"TriggeredAlerts": alertResult.TriggeredAlerts,
-			"DashboardLink":   grafanaUrl + "/dashboard/db/alerting",
+			"DashboardLink":   grafanaUrl + "/dashboard/db/" + dashboard.Slug,
 			"AlertPageUrl":    grafanaUrl + "/alerting",
-			"DashboardImage":  grafanaUrl + "/render/dashboard-solo/db/alerting?from=1466169458375&to=1466171258375&panelId=1&width=1000&height=500",
+			"DashboardImage":  renderUrl,
 		},
 		To:       []string{this.To},
 		Template: "alert_notification.html",

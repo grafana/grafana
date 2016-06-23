@@ -249,10 +249,10 @@ func GetDashboards(query *m.GetDashboardsQuery) error {
 		return m.ErrCommandValidationFailed
 	}
 
-	var dashboards = make([]m.Dashboard, 0)
+	var dashboards = make([]*m.Dashboard, 0)
 
 	err := x.In("id", query.DashboardIds).Find(&dashboards)
-	query.Result = &dashboards
+	query.Result = dashboards
 
 	if err != nil {
 		return err

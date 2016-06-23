@@ -82,7 +82,7 @@ func GetAlerts(c *middleware.Context) Response {
 
 	//TODO: should be possible to speed this up with lookup table
 	for _, alert := range alertDTOs {
-		for _, dash := range *dashboardsQuery.Result {
+		for _, dash := range dashboardsQuery.Result {
 			if alert.DashboardId == dash.Id {
 				alert.DashbboardUri = "db/" + dash.Slug
 			}
