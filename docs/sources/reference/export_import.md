@@ -24,7 +24,7 @@ the dashboard, and will also be added as an required input when the dashboard is
 
 ## Importing a dashboard
 
-To import a dasbhoard open dashboard search and then hit the import button.
+To import a dashboard open dashboard search and then hit the import button.
 
 <img src="/img/v31/import_step1.png">
 
