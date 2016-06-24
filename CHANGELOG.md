@@ -1,4 +1,4 @@
-# 3.1.0 (2016-06-23)
+# 3.1.0-beta1 (2016-06-23)
 
 ### Enhancements
 * **Dashboard Export/Import**: Dashboard export now templetize data sources and constant variables, users pick these on import, closes [#5084](https://github.com/grafana/grafana/issues/5084)
@@ -16,10 +16,11 @@
 
 ### Breaking changes
 * **Logging** : Changed default logging output format (now structured into message, and key value pairs, with logger key acting as component). You can also no change in config to json log ouput.
-* **Graphite** : The Graph panel no longer have a Graphite PNG option. closes #[5367](https://github.com/grafana/grafana/issues/5367)
+* **Graphite** : The Graph panel no longer have a Graphite PNG option. closes [#5367](https://github.com/grafana/grafana/issues/5367)
 
 ### Bug fixes
-* **PNG rendering**: Fixed phantomjs rendering and y-axis label rotation. fixes #[5220](https://github.com/grafana/grafana/issues/5220)
+* **PNG rendering**: Fixed phantomjs rendering and y-axis label rotation. fixes [#5220](https://github.com/grafana/grafana/issues/5220)
+* **CLI**: The cli tool now supports reading plugin.json from dist/plugin.json. fixes [#5410](https://github.com/grafana/grafana/issues/5410)
 
 # 3.0.4 Patch release (2016-05-25)
 * **Panel**: Fixed blank dashboard issue when switching to other dashboard while in fullscreen edit mode, fixes [#5163](https://github.com/grafana/grafana/pull/5163)
