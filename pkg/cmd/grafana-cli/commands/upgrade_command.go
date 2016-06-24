@@ -7,7 +7,7 @@ import (
 )
 
 func upgradeCommand(c CommandLine) error {
-	pluginsDir := c.GlobalString("pluginsDir")
+	pluginsDir := c.PluginDirectory()
 	pluginName := c.Args().First()
 
 	localPlugin, err := s.ReadPlugin(pluginsDir, pluginName)
@@ -16,7 +16,7 @@ func upgradeCommand(c CommandLine) error {
 		return err
 	}
 
-	v, err2 := s.GetPlugin(localPlugin.Id, c.GlobalString("repo"))
+	v, err2 := s.GetPlugin(localPlugin.Id, c.RepoDirectory())
 
 	if err2 != nil {
 		return err2

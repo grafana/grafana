@@ -28,7 +28,7 @@ func ShouldUpgrade(installed string, remote m.Plugin) bool {
 }
 
 func upgradeAllCommand(c CommandLine) error {
-	pluginsDir := c.GlobalString("pluginsDir")
+	pluginsDir := c.PluginDirectory()
 
 	localPlugins := s.GetLocalPlugins(pluginsDir)
 

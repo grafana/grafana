@@ -12,7 +12,7 @@ var getPluginss func(path string) []m.InstalledPlugin = services.GetLocalPlugins
 var removePlugin func(pluginPath, id string) error = services.RemoveInstalledPlugin
 
 func removeCommand(c CommandLine) error {
-	pluginPath := c.GlobalString("pluginsDir")
+	pluginPath := c.PluginDirectory()
 	localPlugins := getPluginss(pluginPath)
 
 	plugin := c.Args().First()
