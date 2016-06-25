@@ -51,6 +51,22 @@ describe('SingleStatCtrl', function() {
     });
   });
 
+  singleStatScenario('showing serie name instead of value', function(ctx) {
+    ctx.setup(function() {
+      ctx.datapoints = [[10,1], [20,2]];
+      ctx.ctrl.panel.valueName = 'name';
+    });
+
+    it('Should use series avg as default main value', function() {
+      expect(ctx.data.value).to.be(0);
+      expect(ctx.data.valueRounded).to.be(0);
+    });
+
+    it('should set formated falue', function() {
+      expect(ctx.data.valueFormated).to.be('test.cpu1');
+    });
+  });
+
   singleStatScenario('MainValue should use same number for decimals as displayed when checking thresholds', function(ctx) {
     ctx.setup(function() {
       ctx.datapoints = [[99.999,1], [99.99999,2]];
