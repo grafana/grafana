@@ -397,6 +397,9 @@ function($, _, moment) {
   kbn.valueFormats.rps  = kbn.formatBuilders.simpleCountUnit('rps');
   kbn.valueFormats.wps  = kbn.formatBuilders.simpleCountUnit('wps');
   kbn.valueFormats.iops = kbn.formatBuilders.simpleCountUnit('iops');
+  kbn.valueFormats.opm = kbn.formatBuilders.simpleCountUnit('opm');
+  kbn.valueFormats.rpm = kbn.formatBuilders.simpleCountUnit('rpm');
+  kbn.valueFormats.wpm = kbn.formatBuilders.simpleCountUnit('wpm');
 
   // Energy
   kbn.valueFormats.watt         = kbn.formatBuilders.decimalSIPrefix('W');
