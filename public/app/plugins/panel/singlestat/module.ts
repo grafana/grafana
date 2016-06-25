@@ -188,7 +188,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       if (_.isString(lastValue)) {
         data.value = 0;
-        data.valueFormated = lastValue;
+        data.valueFormated = _.escape(lastValue);
         data.valueRounded = 0;
       } else {
         data.value = this.series[0].stats[this.panel.valueName];
