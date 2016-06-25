@@ -29,7 +29,7 @@ func LoginView(c *middleware.Context) {
 	viewData.Settings["githubAuthEnabled"] = setting.OAuthService.GitHub
 	viewData.Settings["disableUserSignUp"] = !setting.AllowUserSignUp
 	viewData.Settings["loginHint"] = setting.LoginHint
-	viewData.Settings["oauthOnly"] = setting.DisableUserPassLogin
+	viewData.Settings["allowUserPassLogin"] = setting.AllowUserPassLogin
 
 	if !tryLoginUsingRememberCookie(c) {
 		c.HTML(200, VIEW_INDEX, viewData)
