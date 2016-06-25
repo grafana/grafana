@@ -3,6 +3,12 @@
 ### Enhancements
 * **Login**: Adds option to disable username/password logins, closes [#4674](https://github.com/grafana/grafana/issues/4674)
 
+
+# 3.1.0 stable (unreleased)
+
+### Bugfixes
+* **User Alert Notices**: Backend error alert popups did not show properly, fixes [#5435](https://github.com/grafana/grafana/issues/5435)
+
 # 3.1.0-beta1 (2016-06-23)
 
 ### Enhancements
