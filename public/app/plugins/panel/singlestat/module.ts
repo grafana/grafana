@@ -200,9 +200,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
       }
 
-      // Add $seriesName variable for using in prefix or postfix
+      // Add $__name variable for using in prefix or postfix
       data.scopedVars = {
-        seriesName: {
+        __name: {
           value: this.series[0].label
         }
       };
