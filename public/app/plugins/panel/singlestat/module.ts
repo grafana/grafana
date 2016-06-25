@@ -199,6 +199,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.valueFormated = formatFunc(data.value, decimalInfo.decimals, decimalInfo.scaledDecimals);
         data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
       }
+
+      // Add $seriesName variable for using in prefix or postfix
+      data.scopedVars = {
+        seriesName: {
+          value: this.series[0].label
+        }
+      };
     }
 
     // check value to text mappings if its enabled
@@ -296,7 +303,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function getSpan(className, fontSize, value)  {
-      value = templateSrv.replace(value);
+      value = templateSrv.replace(value, data.scopedVars);
       return '<span class="' + className + '" style="font-size:' + fontSize + '">' +
         value + '</span>';
     }
