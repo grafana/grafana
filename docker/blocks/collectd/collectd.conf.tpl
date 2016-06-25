@@ -14,10 +14,10 @@ LoadPlugin interface
 LoadPlugin uptime
 LoadPlugin swap
 LoadPlugin write_graphite
-
-<Plugin cpu>
-  ReportByCpu {{ REPORT_BY_CPU | default("false") }}
-</Plugin>
+LoadPlugin processes
+LoadPlugin aggregation
+LoadPlugin match_regex
+# LoadPlugin memcached
 
 <Plugin df>
   # expose host's mounts into container using -v /:/host:ro  (location inside container does not matter much)
@@ -46,6 +46,9 @@ LoadPlugin write_graphite
   ReportByDevice false
   ReportReserved true
   ReportInodes true
+  ValuesAbsolute true
+  ValuesPercentage true
+  ReportInodes true
 </Plugin>
 
 <Plugin "disk">
@@ -53,6 +56,15 @@ LoadPlugin write_graphite
   IgnoreSelected false
 </Plugin>
 
+<Plugin "aggregation">
+  <Aggregation>
+    Plugin "cpu"
+    Type "cpu"
+    GroupBy "Host"
+    GroupBy "TypeInstance"
+    CalculateAverage true
+  </Aggregation>
+</Plugin>
 
 <Plugin interface>
   Interface "lo"
@@ -61,6 +73,24 @@ LoadPlugin write_graphite
   IgnoreSelected true
 </Plugin>
 
+# <Plugin "memcached">
+#   Host "memcached"
+#   Port "11211"
+# </Plugin>
+
+<Chain "PostCache">
+  <Rule>
+    <Match regex>
+      Plugin "^cpu$"
+      PluginInstance "^[0-9]+$"
+    </Match>
+    <Target write>
+      Plugin "aggregation"
+    </Target>
+    Target stop
+  </Rule>
+  Target "write"
+</Chain>
 
 <Plugin "write_graphite">
  <Carbon>

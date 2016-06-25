@@ -6,6 +6,12 @@ prometheus:
   volumes:
     - /var/docker/prometheus:/prometheus-data
 
+node_exporter:
+  image: prom/node-exporter
+  net: bridge
+  ports:
+    - "9100:9100"
+
 fake-prometheus-data:
   image: grafana/fake-data-gen
   net: bridge

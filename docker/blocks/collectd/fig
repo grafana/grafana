@@ -9,3 +9,4 @@ collectd:
     COLLECT_INTERVAL: 10
   links:
     - graphite
+    - memcached

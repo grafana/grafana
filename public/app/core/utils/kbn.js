@@ -1,8 +1,9 @@
 define([
   'jquery',
   'lodash',
+  'moment'
 ],
-function($, _) {
+function($, _, moment) {
   'use strict';
 
   var kbn = {};
@@ -580,6 +581,18 @@ function($, _) {
     }
   };
 
+  kbn.toDuration = function(size, timeScale) {
+    return moment.duration(size, timeScale);
+  };
+
+  kbn.valueFormats.dtdurationms = function(size) {
+    return kbn.toDuration(size, 'ms').humanize();
+  };
+
+  kbn.valueFormats.dtdurations = function(size) {
+    return kbn.toDuration(size, 's').humanize();
+  };
+
   ///// FORMAT MENU /////
 
   kbn.getUnitFormats = function() {
@@ -616,6 +629,8 @@ function($, _) {
           {text: 'minutes (m)',       value: 'm'    },
           {text: 'hours (h)',         value: 'h'    },
           {text: 'days (d)',          value: 'd'    },
+          {text: 'duration (ms)',     value: 'dtdurationms' },
+          {text: 'duration (s)',      value: 'dtdurations' }
         ]
       },
       {
