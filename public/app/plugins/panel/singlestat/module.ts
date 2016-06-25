@@ -19,6 +19,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   fontSizes: any[];
   unitFormats: any[];
   invalidGaugeRange: boolean;
+  panel: any;
+  events: any;
+  valueNameOptions: any[] = ['min','max','avg', 'current', 'total', 'name'];
 
   // Set and populate defaults
   panelDefaults = {
@@ -186,7 +189,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       var lastPoint = _.last(this.series[0].datapoints);
       var lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
 
-      if (_.isString(lastValue)) {
+      if (this.panel.valueName === 'name') {
+        data.value = 0;
+        data.valueRounded = 0;
+        data.valueFormated = this.series[0].alias;
+      } else if (_.isString(lastValue)) {
         data.value = 0;
         data.valueFormated = lastValue;
         data.valueRounded = 0;
