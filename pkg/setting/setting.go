@@ -82,14 +82,14 @@ var (
 	ExternalEnabled      bool
 
 	// User settings
-	AllowUserSignUp      bool
-	AllowUserOrgCreate   bool
-	AutoAssignOrg        bool
-	AutoAssignOrgRole    string
-	VerifyEmailEnabled   bool
-	LoginHint            string
-	DefaultTheme         string
-	DisableUserPassLogin bool
+	AllowUserSignUp    bool
+	AllowUserOrgCreate bool
+	AutoAssignOrg      bool
+	AutoAssignOrgRole  string
+	VerifyEmailEnabled bool
+	LoginHint          string
+	DefaultTheme       string
+	AllowUserPassLogin bool
 
 	// Http auth
 	AdminUser     string
@@ -486,7 +486,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 	LoginHint = users.Key("login_hint").String()
 	DefaultTheme = users.Key("default_theme").String()
-	DisableUserPassLogin = users.Key("disable_user_pass_login").MustBool(false)
+	AllowUserPassLogin = users.Key("allow_user_pass_login").MustBool(true)
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
