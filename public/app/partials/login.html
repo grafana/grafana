@@ -17,7 +17,7 @@
 				</button>
 			</div>
 
-      <form name="loginForm" class="login-form gf-form-group">
+      <form name="loginForm" class="login-form gf-form-group" ng-if="allowUserPassLogin">
 				<div class="gf-form" ng-if="loginMode">
 					<span class="gf-form-label width-7">User</span>
 					<input type="text" name="username" class="gf-form-input max-width-14" required ng-model='formModel.user' placeholder={{loginHint}}>
@@ -40,7 +40,7 @@
 			</form>
 
 			<div ng-if="loginMode">
-				<div class="text-center login-divider" ng-if="oauthEnabled">
+				<div class="text-center login-divider" ng-if="oauthEnabled && allowUserPassLogin">
 					<div class="login-divider-line">
 						<span class="login-divider-text">
 							Or login with
@@ -64,7 +64,7 @@
 
 			<div class="clearfix"></div>
 
-			<div class="text-center password-recovery">
+			<div class="text-center password-recovery" ng-if="allowUserPassLogin">
 				<div class="text-center">
 					<a href="user/password/send-reset-email">
 						Forgot your password?
