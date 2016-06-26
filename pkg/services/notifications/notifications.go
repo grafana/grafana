@@ -23,10 +23,13 @@ var tmplWelcomeOnSignUp = "welcome_on_signup.html"
 
 func Init() error {
 	initMailQueue()
+	initWebhookQueue()
 
 	bus.AddHandler("email", sendResetPasswordEmail)
 	bus.AddHandler("email", validateResetPasswordCode)
 	bus.AddHandler("email", sendEmailCommandHandler)
+
+	bus.AddHandler("webhook", sendWebhook)
 
 	bus.AddEventListener(signUpStartedHandler)
 	bus.AddEventListener(signUpCompletedHandler)
@@ -49,6 +52,17 @@ func Init() error {
 	if setting.EmailCodeValidMinutes == 0 {
 		setting.EmailCodeValidMinutes = 120
 	}
+
+	return nil
+}
+
+func sendWebhook(cmd *m.SendWebhook) error {
+	addToWebhookQueue(&Webhook{
+		Url:      cmd.Url,
+		User:     cmd.User,
+		Password: cmd.Password,
+		Body:     cmd.Body,
+	})
 
 	return nil
 }

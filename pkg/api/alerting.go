@@ -82,7 +82,7 @@ func GetAlerts(c *middleware.Context) Response {
 
 	//TODO: should be possible to speed this up with lookup table
 	for _, alert := range alertDTOs {
-		for _, dash := range *dashboardsQuery.Result {
+		for _, dash := range dashboardsQuery.Result {
 			if alert.DashboardId == dash.Id {
 				alert.DashbboardUri = "db/" + dash.Slug
 			}
@@ -140,6 +140,7 @@ func GetAlertStates(c *middleware.Context) Response {
 // PUT /api/alerts/events/:id
 func PutAlertState(c *middleware.Context, cmd models.UpdateAlertStateCommand) Response {
 	cmd.AlertId = c.ParamsInt64(":alertId")
+	cmd.OrgId = c.OrgId
 
 	query := models.GetAlertByIdQuery{Id: cmd.AlertId}
 	if err := bus.Dispatch(&query); err != nil {
@@ -155,4 +156,74 @@ func PutAlertState(c *middleware.Context, cmd models.UpdateAlertStateCommand) Re
 	}
 
 	return Json(200, cmd.Result)
+}
+
+func GetAlertNotifications(c *middleware.Context) Response {
+	query := &models.GetAlertNotificationQuery{
+		OrgID: c.OrgId,
+	}
+
+	if err := bus.Dispatch(query); err != nil {
+		return ApiError(500, "Failed to get alert notifications", err)
+	}
+
+	var result []dtos.AlertNotificationDTO
+
+	for _, notification := range query.Result {
+		result = append(result, dtos.AlertNotificationDTO{
+			Id:      notification.Id,
+			Name:    notification.Name,
+			Type:    notification.Type,
+			Created: notification.Created,
+			Updated: notification.Updated,
+		})
+	}
+
+	return Json(200, result)
+}
+
+func GetAlertNotificationById(c *middleware.Context) Response {
+	query := &models.GetAlertNotificationQuery{
+		OrgID: c.OrgId,
+		Id:    c.ParamsInt64("notificationId"),
+	}
+
+	if err := bus.Dispatch(query); err != nil {
+		return ApiError(500, "Failed to get alert notifications", err)
+	}
+
+	return Json(200, query.Result[0])
+}
+
+func CreateAlertNotification(c *middleware.Context, cmd models.CreateAlertNotificationCommand) Response {
+	cmd.OrgID = c.OrgId
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to create alert notification", err)
+	}
+
+	return Json(200, cmd.Result)
+}
+
+func UpdateAlertNotification(c *middleware.Context, cmd models.UpdateAlertNotificationCommand) Response {
+	cmd.OrgID = c.OrgId
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to update alert notification", err)
+	}
+
+	return Json(200, cmd.Result)
+}
+
+func DeleteAlertNotification(c *middleware.Context) Response {
+	cmd := models.DeleteAlertNotificationCommand{
+		OrgId: c.OrgId,
+		Id:    c.ParamsInt64("notificationId"),
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to delete alert notification", err)
+	}
+
+	return Json(200, map[string]interface{}{"notificationId": cmd.Id})
 }

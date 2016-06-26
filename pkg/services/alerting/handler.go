@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -28,9 +29,10 @@ func (e *HandlerImpl) Execute(job *AlertJob, resultQueue chan *AlertResult) {
 	timeSeries, err := e.executeQuery(job)
 	if err != nil {
 		resultQueue <- &AlertResult{
-			Error:    err,
-			State:    alertstates.Pending,
-			AlertJob: job,
+			Error:         err,
+			State:         alertstates.Pending,
+			AlertJob:      job,
+			ExeuctionTime: time.Now(),
 		}
 	}
 
@@ -102,17 +104,20 @@ func (e *HandlerImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice)
 		transformedValue, _ := rule.Transformer.Transform(serie)
 
 		critResult := evalCondition(rule.Critical, transformedValue)
-		e.log.Debug("Alert execution Crit", "name", serie.Name, "transformedValue", transformedValue, "operator", rule.Critical.Operator, "level", rule.Critical.Value, "result", critResult)
+		condition2 := fmt.Sprintf("%v %s %v ", transformedValue, rule.Critical.Operator, rule.Critical.Value)
+		e.log.Debug("Alert execution Crit", "name", serie.Name, "condition", condition2, "result", critResult)
 		if critResult {
 			triggeredAlert = append(triggeredAlert, &TriggeredAlert{
 				State:       alertstates.Critical,
 				ActualValue: transformedValue,
 				Name:        serie.Name,
 			})
+			continue
 		}
 
 		warnResult := evalCondition(rule.Warning, transformedValue)
-		e.log.Debug("Alert execution Warn", "name", serie.Name, "transformedValue", transformedValue, "operator", rule.Warning.Operator, "level", rule.Warning.Value, "result", warnResult)
+		condition := fmt.Sprintf("%v %s %v ", transformedValue, rule.Warning.Operator, rule.Warning.Value)
+		e.log.Debug("Alert execution Warn", "name", serie.Name, "condition", condition, "result", warnResult)
 		if warnResult {
 			triggeredAlert = append(triggeredAlert, &TriggeredAlert{
 				State:       alertstates.Warn,
@@ -123,7 +128,6 @@ func (e *HandlerImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice)
 	}
 
 	executionState := alertstates.Ok
-	description := ""
 	for _, raised := range triggeredAlert {
 		if raised.State == alertstates.Critical {
 			executionState = alertstates.Critical
@@ -132,9 +136,7 @@ func (e *HandlerImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice)
 		if executionState != alertstates.Critical && raised.State == alertstates.Warn {
 			executionState = alertstates.Warn
 		}
-
-		description += fmt.Sprintf(descriptionFmt, raised.ActualValue, raised.Name)
 	}
 
-	return &AlertResult{State: executionState, Description: description, TriggeredAlerts: triggeredAlert}
+	return &AlertResult{State: executionState, Description: "Returned " + executionState, TriggeredAlerts: triggeredAlert, ExeuctionTime: time.Now()}
 }

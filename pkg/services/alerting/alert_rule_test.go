@@ -38,7 +38,7 @@ func TestAlertRuleModel(t *testing.T) {
 				"description": "desc2",
 				"handler": 0,
 				"enabled": true,
-				"critical": {
+				"crit": {
 					"value": 20,
 					"op": ">"
 				},
@@ -55,7 +55,7 @@ func TestAlertRuleModel(t *testing.T) {
 					"datasourceId": 1
 				},
 				"transform": {
-					"method": "avg",
+					"type": "avg",
 					"name": "aggregation"
 				}
 			}
@@ -75,11 +75,12 @@ func TestAlertRuleModel(t *testing.T) {
 			alertRule, err := NewAlertRuleFromDBModel(alert)
 
 			So(err, ShouldBeNil)
-			So(alertRule.Critical.Operator, ShouldEqual, ">")
-			So(alertRule.Critical.Value, ShouldEqual, 20)
 
 			So(alertRule.Warning.Operator, ShouldEqual, ">")
 			So(alertRule.Warning.Value, ShouldEqual, 10)
+
+			So(alertRule.Critical.Operator, ShouldEqual, ">")
+			So(alertRule.Critical.Value, ShouldEqual, 20)
 		})
 	})
 }

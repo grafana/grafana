@@ -5,32 +5,32 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
-	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting/alertstates"
 )
 
 type Engine struct {
-	execQueue   chan *AlertJob
-	resultQueue chan *AlertResult
-	clock       clock.Clock
-	ticker      *Ticker
-	scheduler   Scheduler
-	handler     AlertingHandler
-	ruleReader  RuleReader
-	log         log.Logger
+	execQueue       chan *AlertJob
+	resultQueue     chan *AlertResult
+	clock           clock.Clock
+	ticker          *Ticker
+	scheduler       Scheduler
+	handler         AlertingHandler
+	ruleReader      RuleReader
+	log             log.Logger
+	responseHandler ResultHandler
 }
 
 func NewEngine() *Engine {
 	e := &Engine{
-		ticker:      NewTicker(time.Now(), time.Second*0, clock.New()),
-		execQueue:   make(chan *AlertJob, 1000),
-		resultQueue: make(chan *AlertResult, 1000),
-		scheduler:   NewScheduler(),
-		handler:     NewHandler(),
-		ruleReader:  NewRuleReader(),
-		log:         log.New("alerting.engine"),
+		ticker:          NewTicker(time.Now(), time.Second*0, clock.New()),
+		execQueue:       make(chan *AlertJob, 1000),
+		resultQueue:     make(chan *AlertResult, 1000),
+		scheduler:       NewScheduler(),
+		handler:         NewHandler(),
+		ruleReader:      NewRuleReader(),
+		log:             log.New("alerting.engine"),
+		responseHandler: NewResultHandler(),
 	}
 
 	return e
@@ -52,7 +52,7 @@ func (e *Engine) Stop() {
 func (e *Engine) alertingTicker() {
 	defer func() {
 		if err := recover(); err != nil {
-			e.log.Error("Scheduler Panic, stopping...", "error", err, "stack", log.Stack(1))
+			e.log.Error("Scheduler Panic: stopping alertingTicker", "error", err, "stack", log.Stack(1))
 		}
 	}()
 
@@ -73,6 +73,12 @@ func (e *Engine) alertingTicker() {
 }
 
 func (e *Engine) execDispatch() {
+	defer func() {
+		if err := recover(); err != nil {
+			e.log.Error("Scheduler Panic: stopping executor", "error", err, "stack", log.Stack(1))
+		}
+	}()
+
 	for job := range e.execQueue {
 		log.Trace("Alerting: engine:execDispatch() starting job %s", job.Rule.Name)
 		job.Running = true
@@ -89,10 +95,11 @@ func (e *Engine) executeJob(job *AlertJob) {
 	select {
 	case <-time.After(time.Second * 5):
 		e.resultQueue <- &AlertResult{
-			State:    alertstates.Pending,
-			Duration: float64(time.Since(now).Nanoseconds()) / float64(1000000),
-			Error:    fmt.Errorf("Timeout"),
-			AlertJob: job,
+			State:         alertstates.Pending,
+			Duration:      float64(time.Since(now).Nanoseconds()) / float64(1000000),
+			Error:         fmt.Errorf("Timeout"),
+			AlertJob:      job,
+			ExeuctionTime: time.Now(),
 		}
 		e.log.Debug("Job Execution timeout", "alertRuleId", job.Rule.Id)
 	case result := <-resultChan:
@@ -103,6 +110,12 @@ func (e *Engine) executeJob(job *AlertJob) {
 }
 
 func (e *Engine) resultHandler() {
+	defer func() {
+		if err := recover(); err != nil {
+			e.log.Error("Engine Panic, stopping resultHandler", "error", err, "stack", log.Stack(1))
+		}
+	}()
+
 	for result := range e.resultQueue {
 		e.log.Debug("Alert Rule Result", "ruleId", result.AlertJob.Rule.Id, "state", result.State, "value", result.ActualValue, "retry", result.AlertJob.RetryCount)
 
@@ -119,23 +132,11 @@ func (e *Engine) resultHandler() {
 
 				result.State = alertstates.Critical
 				result.Description = fmt.Sprintf("Failed to run check after %d retires, Error: %v", maxAlertExecutionRetries, result.Error)
-				e.saveState(result)
+				e.responseHandler.Handle(result)
 			}
 		} else {
 			result.AlertJob.ResetRetry()
-			e.saveState(result)
+			e.responseHandler.Handle(result)
 		}
-	}
-}
-
-func (e *Engine) saveState(result *AlertResult) {
-	cmd := &m.UpdateAlertStateCommand{
-		AlertId:  result.AlertJob.Rule.Id,
-		NewState: result.State,
-		Info:     result.Description,
-	}
-
-	if err := bus.Dispatch(cmd); err != nil {
-		e.log.Error("Failed to save state", "error", err)
 	}
 }

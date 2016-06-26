@@ -271,7 +271,6 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
 
           function callPlot(incrementRenderCounter) {
             try {
-              console.log('rendering');
               $.plot(elem, sortedSeries, options);
             } catch (e) {
               console.log('flotcharts error', e);

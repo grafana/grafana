@@ -28,6 +28,10 @@ func (alert *Alert) ValidToSave() bool {
 	return alert.DashboardId != 0 && alert.OrgId != 0 && alert.PanelId != 0
 }
 
+func (alert *Alert) ShouldUpdateState(newState string) bool {
+	return alert.State != newState
+}
+
 func (this *Alert) ContainsUpdates(other *Alert) bool {
 	result := false
 	result = result || this.Name != other.Name
