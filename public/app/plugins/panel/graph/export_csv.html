@@ -1,4 +1,4 @@
-<div class="modal-body" ng-controller="ExportCsvCtrl" ng-init="init()">
+<div class="modal-body" ng-controller="ExportCsvCtrl as ctrl">
   <div class="modal-header">
     <h2 class="modal-header-title">
       Export Series as CSV
@@ -23,19 +23,19 @@
             <div class="gf-form">
               <span class="gf-form-label width-6">Timezone</span>
               <div class="gf-form-select-wrapper width-12">
-                <select class="gf-form-input" ng-options="key as value for (key, value) in exportTzAvail" ng-model="exportTz"></select>
+                <select class="gf-form-input" ng-options="key as value for (key, value) in ctrl.exportTzAvail" ng-model="ctrl.exportTz"></select>
               </div>
             </div>
 
             <div class="gf-form">
               <span class="gf-form-label width-6">Series as</span>
               <div class="gf-form-select-wrapper width-12">
-                <select class="gf-form-input" ng-options="key as value for (key, value) in exportModesAvail" ng-model="exportMode"></select>
+                <select class="gf-form-input" ng-options="key as value for (key, value) in ctrl.exportModesAvail" ng-model="ctrl.exportMode"></select>
               </div>
             </div>
           </div>
           <div class="gf-form-buttons-row">
-            <button class="btn btn-inverse" ng-click="exportCsv()"><i class="fa fa-floppy-o"></i> Export</button> 
+            <button class="btn btn-inverse" ng-click="ctrl.exportCsv()"><i class="fa fa-floppy-o"></i> Export</button> 
           </div>
         </div>
       </div>
