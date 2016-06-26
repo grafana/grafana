@@ -18,6 +18,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   hiddenSeries: any = {};
   seriesList: any = [];
+  origSeriesList: any = [];
   logScales: any;
   unitFormats: any;
   annotationsPromise: any;
@@ -86,6 +87,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     },
     // how null points should be handled
     nullPointMode : 'connected',
+    computation: '',
     // staircase line mode
     steppedLine: false,
     // tooltip options
@@ -167,6 +169,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onDataError(err) {
     this.seriesList = [];
+    this.origSeriesList = [];
     this.render([]);
   }
 
@@ -174,8 +177,10 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.datapointsWarning = false;
     this.datapointsCount = 0;
     this.datapointsOutside = false;
-    this.seriesList = dataList.map(this.seriesHandler.bind(this));
+    this.origSeriesList = this.seriesList = dataList.map(this.seriesHandler.bind(this));
     this.datapointsWarning = this.datapointsCount === 0 || this.datapointsOutside;
+
+    this.redoComputation();
 
     this.annotationsPromise.then(annotations => {
       this.loading = false;
@@ -213,6 +218,53 @@ class GraphCtrl extends MetricsPanelCtrl {
 
 
     return series;
+  }
+
+  redoComputation() {
+    if (!this.panel.computation) {
+      this.seriesList = this.origSeriesList;
+      this.render(this.seriesList);
+      return;
+    }
+
+    var orig = this.origSeriesList;
+    if (orig.length === 0) {
+      this.render(orig);
+      return;
+    }
+
+    // the reason for creating the function params like this is to undefine all
+    // globals inside of the computation function (preventing XSS and other nasty things)
+    // our actual argument is the `series` argument which comes first
+    var params = Object.keys(window);
+    params.unshift('series');
+
+    var fn = new Function(params.join(','), 'return ' + this.panel.computation + ';');
+
+    // number of args we pass in, needs to match the params array length
+    var args = new Array(params.length);
+    var series = new Array(orig.length);
+    var datapts = orig[0].datapoints.map((pt, idx) => {
+      for (var i=0 ; i<orig.length ; ++i) {
+        series[i] = orig[i].datapoints[idx][0];
+      }
+      args[0] = series;
+      var res = fn.apply(null, args);
+      if (isNaN(res)) {
+        res = 0;
+      }
+
+      return [res, pt[1]];
+    });
+
+    this.seriesList = [new TimeSeries({
+      datapoints: datapts,
+      alias: 'computed',
+      color: orig[0].color,
+      unit: orig[0].unit,
+    })];
+
+    this.render(this.seriesList);
   }
 
   onRender() {
