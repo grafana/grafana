@@ -359,29 +359,29 @@ function (angular, _, kbn) {
       }
       options = _.uniq(options, 'value');
 
-      var sortType = Math.ceil(variable.sort / 2);
-      if (sortType === 0) {
-        return options;
-      } else {
-        if (sortType === 1) {
-          options = _.sortBy(options, 'text');
-        } else if (sortType === 2) {
-          options = _.sortBy(options, function(opt) {
-            var matches = opt.text.match(/.*?(\d+).*/);
-            if (!matches) {
-              return 0;
-            } else {
-              return parseInt(matches[1], 10);
-            }
-          });
-        }
-
-        if (variable.sort % 2 === 0) {
-          options = options.reverse();
-        }
-
+      if (variable.sort === 0) {
         return options;
       }
+
+      var sortType = Math.ceil(variable.sort / 2);
+      var reverseSort = (variable.sort % 2 === 0);
+      if (sortType === 1) {
+        options = _.sortBy(options, 'text');
+      } else if (sortType === 2) {
+        options = _.sortBy(options, function(opt) {
+          var matches = opt.text.match(/.*?(\d+).*/);
+          if (!matches) {
+            return 0;
+          } else {
+            return parseInt(matches[1], 10);
+          }
+        });
+      }
+      if (reverseSort) {
+        options = options.reverse();
+      }
+
+      return options;
     };
 
     this.addAllOption = function(variable) {
