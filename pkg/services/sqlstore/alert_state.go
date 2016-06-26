@@ -24,7 +24,7 @@ func GetLastAlertStateQuery(cmd *m.GetLastAlertStateQuery) error {
 
 	if len(states) == 0 {
 		cmd.Result = nil
-		return fmt.Errorf("invalid amount of alertstates. Expected 1 got %v", len(states))
+		return nil
 	}
 
 	cmd.Result = &states[0]

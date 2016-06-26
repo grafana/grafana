@@ -150,7 +150,6 @@ func buildGetNotifiers(log log.Logger) func(orgId int64, notificationGroups []in
 		}
 
 		var result []*Notification
-		log.Info("notifiriring", "count", len(query.Result), "groups", notificationGroups)
 		for _, notification := range query.Result {
 			not, err := NewNotificationFromDBModel(notification)
 			if err == nil {
