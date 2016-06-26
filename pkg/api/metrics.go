@@ -19,7 +19,7 @@ func GetTestMetrics(c *middleware.Context) Response {
 	stepInSeconds := (to - from) / maxDataPoints
 
 	result := dtos.MetricQueryResultDto{}
-	result.Data = make([]dtos.MetricQueryResultDataDto, 1)
+	result.Data = make([]dtos.MetricQueryResultDataDto, 2)
 
 	for seriesIndex := range result.Data {
 		points := make([][2]float64, maxDataPoints)
