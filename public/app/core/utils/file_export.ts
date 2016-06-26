@@ -1,20 +1,33 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import _ from 'lodash';
+import moment from 'moment';
 
 declare var window: any;
 
-export function exportSeriesListToCsv(seriesList) {
+export function exportDateAsTz(dt, offsetTz = null) {
+    var d = (new Date(dt)).toISOString();
+    // Maintain compatibility with current export functionality
+    // which exports with 'Z', instead of +00:00 on the end of 
+    // the string.
+    if (offsetTz === null || offsetTz === '00:00') {
+      return d;
+    }
+
+    return moment(d).utcOffset(offsetTz).format();
+}
+
+export function exportSeriesListToCsv(seriesList, tzOffset = null) {
     var text = 'sep=;\nSeries;Time;Value\n';
     _.each(seriesList, function(series) {
         _.each(series.datapoints, function(dp) {
-            text += series.alias + ';' + new Date(dp[1]).toISOString() + ';' + dp[0] + '\n';
+            text += series.alias + ';' + exportDateAsTz(dp[1], tzOffset) + ';' + dp[0] + '\n';
         });
     });
     saveSaveBlob(text, 'grafana_data_export.csv');
 };
 
-export function exportSeriesListToCsvColumns(seriesList) {
+export function exportSeriesListToCsvColumns(seriesList, tzOffset = null) {
     var text = 'sep=;\nTime;';
     // add header
     _.each(seriesList, function(series) {
@@ -30,7 +43,7 @@ export function exportSeriesListToCsvColumns(seriesList) {
         var cIndex = 0;
         dataArr.push([]);
         _.each(series.datapoints, function(dp) {
-            dataArr[0][cIndex] = new Date(dp[1]).toISOString();
+            dataArr[0][cIndex] = exportDateAsTz(dp[1], tzOffset);
             dataArr[sIndex][cIndex] = dp[0];
             cIndex++;
         });

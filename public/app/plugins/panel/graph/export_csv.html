@@ -1,0 +1,44 @@
+<div class="modal-body" ng-controller="ExportCsvCtrl" ng-init="init()">
+  <div class="modal-header">
+    <h2 class="modal-header-title">
+      Export Series as CSV
+    </h2>
+    <a class="modal-header-close" ng-click="dismiss();">
+      <i class="fa fa-remove"></i>
+    </a>
+  </div>
+  <div class="modal-content">
+    <div class="share-modal-body">
+      <div class="share-modal-header">
+        <div class="share-modal-big-icon">
+          <i class="fa fa-database"></i>
+        </div>
+        <div class="share-modal-content">
+          <p class="share-modal-info-text">
+            Export this panel as a CSV, with the options below.
+          </p>
+          <!---->
+          <div class="gf-form-group share-modal-options">
+
+            <div class="gf-form">
+              <span class="gf-form-label width-6">Timezone</span>
+              <div class="gf-form-select-wrapper width-12">
+                <select class="gf-form-input" ng-options="key as value for (key, value) in exportTzAvail" ng-model="exportTz"></select>
+              </div>
+            </div>
+
+            <div class="gf-form">
+              <span class="gf-form-label width-6">Series as</span>
+              <div class="gf-form-select-wrapper width-12">
+                <select class="gf-form-input" ng-options="key as value for (key, value) in exportModesAvail" ng-model="exportMode"></select>
+              </div>
+            </div>
+          </div>
+          <div class="gf-form-buttons-row">
+            <button class="btn btn-inverse" ng-click="exportCsv()"><i class="fa fa-floppy-o"></i> Export</button> 
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
