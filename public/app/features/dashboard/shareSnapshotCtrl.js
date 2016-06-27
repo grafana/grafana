@@ -41,9 +41,12 @@ function (angular, _) {
 
     $scope.createSnapshot = function(external) {
       $scope.dashboard.snapshot = {
-        timestamp: new Date(),
-        originalUrl: $location.absUrl()
+        timestamp: new Date()
       };
+
+      if (!external) {
+        $scope.dashboard.snapshot.originalUrl = $location.absUrl();
+      }
 
       $scope.loading = true;
       $scope.snapshot.external = external;
