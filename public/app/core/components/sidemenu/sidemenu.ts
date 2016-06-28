@@ -15,6 +15,7 @@ export class SideMenuCtrl {
   orgFilter: string;
   orgItems: any;
   orgs: any;
+  maxShownOrgs: number;
 
   /** @ngInject */
   constructor(private $scope, private $location, private contextSrv, private backendSrv, private $element) {
@@ -22,7 +23,7 @@ export class SideMenuCtrl {
     this.user = contextSrv.user;
     this.appSubUrl = config.appSubUrl;
     this.showSignout = this.contextSrv.isSignedIn && !config['authProxyEnabled'];
-
+    this.maxShownOrgs = 10;
 
     this.mainLinks = config.bootData.mainNavLinks;
     this.openUserDropdown();
@@ -79,7 +80,7 @@ export class SideMenuCtrl {
        return;
      }
 
-     if (this.orgFilter === '' || org.name.indexOf(this.orgFilter) !== -1){
+     if (this.orgItems.length < this.maxShownOrgs && (this.orgFilter === '' || org.name.indexOf(this.orgFilter) !== -1)){
        this.orgItems.push({
          text: "Switch to " + org.name,
          icon: "fa fa-fw fa-random",
