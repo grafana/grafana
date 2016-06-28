@@ -22,7 +22,7 @@
 					{{::menuItem.text}}
 				</a>
 			</li>
-            <li ng-show="ctrl.orgs.length > ctrl.maxShownOrgs">
+            <li ng-show="ctrl.orgs.length > ctrl.maxShownOrgs" style="margin-left: 10px;width: 90%">
                 <input ng-model="::ctrl.orgFilter" type="text" ng-change="::ctrl.loadOrgsItems();" class="gf-input-small" placeholder="Filter">
                 <span class="sidemenu-item-text">Max shown : {{::ctrl.maxShownOrgs}}</span>
             </li>
