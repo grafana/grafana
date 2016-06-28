@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -155,15 +156,34 @@ func getEngine() (*xorm.Engine, error) {
 func LoadConfig() {
 	sec := setting.Cfg.Section("database")
 
-	DbCfg.Type = sec.Key("type").String()
+	cfgURL := sec.Key("url").String()
+	if len(cfgURL) != 0 {
+		dbURL, _ := url.Parse(cfgURL)
+		DbCfg.Type = dbURL.Scheme
+		DbCfg.Host = dbURL.Host
+
+		pathSplit := strings.Split(dbURL.Path, "/")
+		if len(pathSplit) > 1 {
+			DbCfg.Name = pathSplit[1]
+		}
+
+		userInfo := dbURL.User
+		if userInfo != nil {
+			DbCfg.User = userInfo.Username()
+			DbCfg.Pwd, _ = userInfo.Password()
+		}
+	} else {
+		DbCfg.Type = sec.Key("type").String()
+		DbCfg.Host = sec.Key("host").String()
+		DbCfg.Name = sec.Key("name").String()
+		DbCfg.User = sec.Key("user").String()
+		if len(DbCfg.Pwd) == 0 {
+			DbCfg.Pwd = sec.Key("password").String()
+		}
+	}
+
 	if DbCfg.Type == "sqlite3" {
 		UseSQLite3 = true
-	}
-	DbCfg.Host = sec.Key("host").String()
-	DbCfg.Name = sec.Key("name").String()
-	DbCfg.User = sec.Key("user").String()
-	if len(DbCfg.Pwd) == 0 {
-		DbCfg.Pwd = sec.Key("password").String()
 	}
 	DbCfg.SslMode = sec.Key("ssl_mode").String()
 	DbCfg.Path = sec.Key("path").MustString("data/grafana.db")
