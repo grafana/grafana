@@ -259,6 +259,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, Chart) {
             // TODO
             sortedSeries = _.map(data, function(series) {
               series.borderColor = series.color;
+              series.backgroundColor = series.color;
               series.borderWidth = 2;
               series.pointRadius = 0;
               series.fill = (panel.fill > 0); // TODO
