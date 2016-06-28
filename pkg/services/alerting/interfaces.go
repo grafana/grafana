@@ -10,3 +10,7 @@ type Scheduler interface {
 	Tick(time time.Time, execQueue chan *AlertJob)
 	Update(rules []*AlertRule)
 }
+
+type Notifier interface {
+	Notify(alertResult *AlertResult)
+}

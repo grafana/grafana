@@ -1,0 +1,60 @@
+<navbar icon="fa fa-fw fa-list" title="Alerting" title-url="alerting">
+</navbar>
+
+<div class="page-container" >
+	<div class="page-header">
+		<h1>Alert notification</h1>
+  </div>
+
+	<div class="gf-form-group section">
+		<div class="gf-form">
+			<span class="gf-form-label width-8">Name</span>
+			<input type="text" class="gf-form-input max-width-12" ng-model="ctrl.notification.name"></input>
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label width-8">Type</span>
+			<div class="gf-form-select-wrapper width-12">
+				<select class="gf-form-input"
+					ng-model="ctrl.notification.type"
+					ng-options="t for t in ['webhook', 'email']"
+					ng-change="ctrl.typeChanged(notification, $index)">
+				</select>
+			</div>
+		</div>
+		<div class="gf-form">
+			<gf-form-switch class="gf-form" label-class="width-8" label="Always execute" checked="ctrl.notification.alwaysExecute" on-change=""></gf-form-switch>
+		</div>
+		<div class="gf-form">
+			<gf-form-switch class="gf-form" label-class="width-8" label="Send Warning" checked="ctrl.notification.settings.sendWarn" on-change=""></gf-form-switch>
+		</div>
+		<div class="gf-form">
+			<gf-form-switch class="gf-form" label-class="width-8" label="Send Critical" checked="ctrl.notification.settings.sendCrit" on-change=""></gf-form-switch>
+		</div>
+	</div>
+	<div class="gf-form-group section" ng-show="ctrl.notification.type === 'webhook'">
+		<div class="gf-form">
+			<span class="gf-form-label width-6">Url</span>
+			<input type="text" class="gf-form-input max-width-26" ng-model="ctrl.notification.settings.url"></input>
+		</div>
+		<div class="gf-form-inline">
+			<div class="gf-form">
+				<span class="gf-form-label width-6">Username</span>
+				<input type="text" class="gf-form-input max-width-10" ng-model="ctrl.notification.settings.username"></input>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-6">Password</span>
+				<input type="text" class="gf-form-input max-width-10" ng-model="ctrl.notification.settings.password"></input>
+			</div>
+		</div>
+	</div>
+	<div class="gf-form-group section" ng-show="ctrl.notification.type === 'email'">
+		<div class="gf-form">
+			<span class="gf-form-label width-8">To</span>
+			<input type="text" class="gf-form-input max-width-26" ng-model="ctrl.notification.settings.to">
+		</div>
+	</div>
+
+  <div class="gf-form-button-group">
+    <button ng-click="ctrl.save()" class="btn btn-success">Save</button>
+  </div>
+</div>

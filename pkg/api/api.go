@@ -62,6 +62,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/playlists/", reqSignedIn, Index)
 	r.Get("/playlists/*", reqSignedIn, Index)
 	r.Get("/alerting/", reqSignedIn, Index)
+	r.Get("/alerting/*", reqSignedIn, Index)
 
 	// sign up
 	r.Get("/signup", Index)
@@ -247,13 +248,22 @@ func Register(r *macaron.Macaron) {
 		r.Group("/alerts", func() {
 			r.Group("/rules", func() {
 				r.Get("/:alertId/states", wrap(GetAlertStates))
-				r.Put("/:alertId/state", bind(m.UpdateAlertStateCommand{}), wrap(PutAlertState))
+				//r.Put("/:alertId/state", bind(m.UpdateAlertStateCommand{}), wrap(PutAlertState))
 				r.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
 				//r.Delete("/:alertId", ValidateOrgAlert, wrap(DelAlert)) disabled until we know how to handle it dashboard updates
 				r.Get("/", wrap(GetAlerts))
 			})
 
-			r.Get("/changes", wrap(GetAlertChanges))
+			r.Get("/notifications", wrap(GetAlertNotifications))
+
+			r.Group("/notification", func() {
+				r.Post("/", bind(m.CreateAlertNotificationCommand{}), wrap(CreateAlertNotification))
+				r.Put("/:notificationId", bind(m.UpdateAlertNotificationCommand{}), wrap(UpdateAlertNotification))
+				r.Get("/:notificationId", wrap(GetAlertNotificationById))
+				r.Delete("/:notificationId", wrap(DeleteAlertNotification))
+			}, reqOrgAdmin)
+
+			//r.Get("/changes", wrap(GetAlertChanges))
 		})
 
 		// error test

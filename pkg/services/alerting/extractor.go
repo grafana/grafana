@@ -23,28 +23,28 @@ func NewDashAlertExtractor(dash *m.Dashboard, orgId int64) *DashAlertExtractor {
 	}
 }
 
-func (e *DashAlertExtractor) lookupDatasourceId(dsName string) (int64, error) {
+func (e *DashAlertExtractor) lookupDatasourceId(dsName string) (*m.DataSource, error) {
 	if dsName == "" {
 		query := &m.GetDataSourcesQuery{OrgId: e.OrgId}
 		if err := bus.Dispatch(query); err != nil {
-			return 0, err
+			return nil, err
 		} else {
 			for _, ds := range query.Result {
 				if ds.IsDefault {
-					return ds.Id, nil
+					return ds, nil
 				}
 			}
 		}
 	} else {
 		query := &m.GetDataSourceByNameQuery{Name: dsName, OrgId: e.OrgId}
 		if err := bus.Dispatch(query); err != nil {
-			return 0, err
+			return nil, err
 		} else {
-			return query.Result.Id, nil
+			return query.Result, nil
 		}
 	}
 
-	return 0, errors.New("Could not find datasource id for " + dsName)
+	return nil, errors.New("Could not find datasource id for " + dsName)
 }
 
 func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
@@ -94,10 +94,11 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 						dsName = panel.Get("datasource").MustString()
 					}
 
-					if datasourceId, err := e.lookupDatasourceId(dsName); err != nil {
+					if datasource, err := e.lookupDatasourceId(dsName); err != nil {
 						return nil, err
 					} else {
-						valueQuery.SetPath([]string{"datasourceId"}, datasourceId)
+						valueQuery.SetPath([]string{"datasourceId"}, datasource.Id)
+						valueQuery.SetPath([]string{"datasourceType"}, datasource.Type)
 					}
 
 					targetQuery := target.Get("target").MustString()

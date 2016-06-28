@@ -151,7 +151,7 @@ type GetDashboardTagsQuery struct {
 
 type GetDashboardsQuery struct {
 	DashboardIds []int64
-	Result       *[]Dashboard
+	Result       []*Dashboard
 }
 
 type GetDashboardSlugByIdQuery struct {

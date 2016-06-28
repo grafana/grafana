@@ -52,8 +52,8 @@ func TestAlertRuleExtraction(t *testing.T) {
               "to": "now"
             },
             "transform": {
-              "method": "avg",
-              "type": "aggregation"
+              "type": "avg",
+              "name": "aggregation"
             },
             "warn": {
               "value": 10,
@@ -87,7 +87,7 @@ func TestAlertRuleExtraction(t *testing.T) {
               "to": "now"
             },
             "transform": {
-              "method": "avg",
+              "type": "avg",
               "name": "aggregation"
             },
             "warn": {

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting/transformers"
@@ -26,6 +27,8 @@ type AlertRule struct {
 	Transform       string
 	TransformParams simplejson.Json
 	Transformer     transformers.Transformer
+
+	NotificationGroups []int64
 }
 
 var (
@@ -61,7 +64,18 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 	model.State = ruleDef.State
 	model.Frequency = ruleDef.Frequency
 
-	critical := ruleDef.Settings.Get("critical")
+	ngs := ruleDef.Settings.Get("notificationGroups").MustString()
+	var ids []int64
+	for _, v := range strings.Split(ngs, ",") {
+		id, err := strconv.Atoi(v)
+		if err == nil {
+			ids = append(ids, int64(id))
+		}
+	}
+
+	model.NotificationGroups = ids
+
+	critical := ruleDef.Settings.Get("crit")
 	model.Critical = Level{
 		Operator: critical.Get("op").MustString(),
 		Value:    critical.Get("value").MustFloat64(),
@@ -74,6 +88,10 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 	}
 
 	model.Transform = ruleDef.Settings.Get("transform").Get("type").MustString()
+	if model.Transform == "" {
+		return nil, fmt.Errorf("missing transform")
+	}
+
 	model.TransformParams = *ruleDef.Settings.Get("transform")
 
 	if model.Transform == "aggregation" {
@@ -87,7 +105,6 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 		DatasourceId: query.Get("datasourceId").MustInt64(),
 		From:         query.Get("from").MustString(),
 		To:           query.Get("to").MustString(),
-		Aggregator:   query.Get("agg").MustString(),
 	}
 
 	if model.Query.Query == "" {

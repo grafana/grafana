@@ -12,6 +12,23 @@ import (
 func init() {
 	bus.AddHandler("sql", SetNewAlertState)
 	bus.AddHandler("sql", GetAlertStateLogByAlertId)
+	bus.AddHandler("sql", GetLastAlertStateQuery)
+}
+
+func GetLastAlertStateQuery(cmd *m.GetLastAlertStateQuery) error {
+	states := make([]m.AlertState, 0)
+
+	if err := x.Where("alert_id = ? and org_id = ? ", cmd.AlertId, cmd.OrgId).Desc("created").Find(&states); err != nil {
+		return err
+	}
+
+	if len(states) == 0 {
+		cmd.Result = nil
+		return nil
+	}
+
+	cmd.Result = &states[0]
+	return nil
 }
 
 func SetNewAlertState(cmd *m.UpdateAlertStateCommand) error {
@@ -30,20 +47,16 @@ func SetNewAlertState(cmd *m.UpdateAlertStateCommand) error {
 			return fmt.Errorf("Could not find alert")
 		}
 
-		if alert.State == cmd.NewState {
-			cmd.Result = &m.Alert{}
-			return nil
-		}
-
 		alert.State = cmd.NewState
 		sess.Id(alert.Id).Update(&alert)
 
 		alertState := m.AlertState{
-			AlertId:  cmd.AlertId,
-			OrgId:    cmd.AlertId,
-			NewState: cmd.NewState,
-			Info:     cmd.Info,
-			Created:  time.Now(),
+			AlertId:         cmd.AlertId,
+			OrgId:           cmd.OrgId,
+			NewState:        cmd.NewState,
+			Info:            cmd.Info,
+			Created:         time.Now(),
+			TriggeredAlerts: cmd.TriggeredAlerts,
 		}
 
 		sess.Insert(&alertState)
@@ -54,12 +67,12 @@ func SetNewAlertState(cmd *m.UpdateAlertStateCommand) error {
 }
 
 func GetAlertStateLogByAlertId(cmd *m.GetAlertsStateQuery) error {
-	alertLogs := make([]m.AlertState, 0)
+	states := make([]m.AlertState, 0)
 
-	if err := x.Where("alert_id = ?", cmd.AlertId).Desc("created").Find(&alertLogs); err != nil {
+	if err := x.Where("alert_id = ?", cmd.AlertId).Desc("created").Find(&states); err != nil {
 		return err
 	}
 
-	cmd.Result = &alertLogs
+	cmd.Result = &states
 	return nil
 }

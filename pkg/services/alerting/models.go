@@ -1,5 +1,7 @@
 package alerting
 
+import "time"
+
 type AlertJob struct {
 	Offset     int64
 	Delay      bool
@@ -28,6 +30,7 @@ type AlertResult struct {
 	Description     string
 	Error           error
 	AlertJob        *AlertJob
+	ExeuctionTime   time.Time
 }
 
 type TriggeredAlert struct {
@@ -44,7 +47,6 @@ type Level struct {
 type AlertQuery struct {
 	Query        string
 	DatasourceId int64
-	Aggregator   string
 	From         string
 	To           string
 }
