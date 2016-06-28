@@ -57,7 +57,7 @@
     "systemjs": "0.19.24"
   },
   "engines": {
-    "node": "0.4.x",
+    "node": "4.x",
     "npm": "2.14.x"
   },
   "scripts": {
