@@ -36,6 +36,8 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "type", Type: DB_NVarchar, Length: 50, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
+			{Name: "updated_by", Type: DB_BigInt, Nullable: false},
+			{Name: "new_alert_settings", Type: DB_Text, Nullable: false},
 		},
 	}
 

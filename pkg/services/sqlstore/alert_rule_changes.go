@@ -22,7 +22,9 @@ func GetAlertRuleChanges(query *m.GetAlertChangesQuery) error {
 					  alert_change.org_id,
 					  alert_change.alert_id,
 					  alert_change.type,
-					  alert_change.created
+					  alert_change.created,
+					  alert_change.new_alert_settings,
+					  alert_change.updated_by
 					  FROM alert_change
 					  `)
 
@@ -48,12 +50,14 @@ func GetAlertRuleChanges(query *m.GetAlertChangesQuery) error {
 	return nil
 }
 
-func SaveAlertChange(change string, alert *m.Alert, sess *xorm.Session) error {
+func SaveAlertChange(cmd *m.CreateAlertChangeCommand, sess *xorm.Session) error {
 	_, err := sess.Insert(&m.AlertChange{
-		OrgId:   alert.OrgId,
-		Type:    change,
-		Created: time.Now(),
-		AlertId: alert.Id,
+		OrgId:            cmd.OrgId,
+		Type:             cmd.Type,
+		Created:          time.Now(),
+		AlertId:          cmd.AlertId,
+		NewAlertSettings: cmd.NewAlertSettings,
+		UpdatedBy:        cmd.UpdatedBy,
 	})
 
 	if err != nil {

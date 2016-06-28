@@ -71,14 +71,24 @@ type HeartBeatCommand struct {
 }
 
 type AlertChange struct {
-	Id      int64     `json:"id"`
-	OrgId   int64     `json:"-"`
-	AlertId int64     `json:"alertId"`
-	Type    string    `json:"type"`
-	Created time.Time `json:"created"`
+	Id               int64            `json:"id"`
+	OrgId            int64            `json:"-"`
+	AlertId          int64            `json:"alertId"`
+	UpdatedBy        int64            `json:"updatedBy"`
+	NewAlertSettings *simplejson.Json `json:"newAlertSettings"`
+	Type             string           `json:"type"`
+	Created          time.Time        `json:"created"`
 }
 
 // Commands
+type CreateAlertChangeCommand struct {
+	OrgId            int64
+	AlertId          int64
+	UpdatedBy        int64
+	NewAlertSettings *simplejson.Json
+	Type             string
+}
+
 type SaveAlertsCommand struct {
 	DashboardId int64
 	UserId      int64

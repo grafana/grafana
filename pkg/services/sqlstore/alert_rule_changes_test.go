@@ -69,10 +69,16 @@ func TestAlertRuleChangesDataAccess(t *testing.T) {
 
 			Convey("add 4 updates", func() {
 				sess := x.NewSession()
-				SaveAlertChange("UPDATED", items[0], sess)
-				SaveAlertChange("UPDATED", items[0], sess)
-				SaveAlertChange("UPDATED", items[0], sess)
-				SaveAlertChange("UPDATED", items[0], sess)
+				updateCmd := m.CreateAlertChangeCommand{
+					AlertId:   items[0].Id,
+					OrgId:     items[0].OrgId,
+					UpdatedBy: 1,
+				}
+
+				SaveAlertChange(&updateCmd, sess)
+				SaveAlertChange(&updateCmd, sess)
+				SaveAlertChange(&updateCmd, sess)
+				SaveAlertChange(&updateCmd, sess)
 				sess.Commit()
 
 				Convey("query for max one change", func() {
