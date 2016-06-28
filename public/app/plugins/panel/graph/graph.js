@@ -315,11 +315,23 @@ function (angular, $, moment, _, kbn, GraphTooltip, Chart) {
                             type: "time",
                             time: {
                               format: 'x',
-                            //  tooltipFormat: 'll HH:mm'
+                              displayFormats: {
+                                millisecond: 'HH:mm:ss',
+                                second: 'HH:mm:ss',
+                                minute: 'HH:mm',
+                                hour: 'HH:mm',
+                                day: 'HH:mm',
+                                week: 'M/D',
+                                month: 'M/D',
+                                quarter: 'M/D',
+                                year: 'YYYY-M'
+                              }
+                              //  tooltipFormat: 'll HH:mm'
                             },
                             gridLines: {
                               display: true,
-                              color: '#c8c8c8'
+                              color: 'rgba(200, 200, 200, 0.5)',
+                              drawBorder: false
                             },
                             scaleLabel: {
                               display: false,
