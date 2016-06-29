@@ -69,11 +69,12 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
 
-		re := regexp.MustCompile("grafana_[^;]*;")
-		cookie = re.ReplaceAllString(cookie, "")
-		
-		req.Header.Add("Cookie", cookie)
-		
+		if cookie != "" {
+			re := regexp.MustCompile("grafana_[^;]*;")
+			cookie = re.ReplaceAllString(cookie, "")
+			
+			req.Header.Add("Cookie", cookie)
+		}
 	}
 
 	return &httputil.ReverseProxy{Director: director, FlushInterval: time.Millisecond * 200}
