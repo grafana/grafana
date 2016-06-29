@@ -409,7 +409,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
             value: {
               color: panel.colorValue ? getColorForValue(data, data.valueRounded) : null,
               formatter: function() { return getValueText(); },
-              font: { size: fontSize, family: 'Helvetica Neue", Helvetica, Arial, sans-serif' }
+              font: { size: fontSize, family: '"Helvetica Neue", Helvetica, Arial, sans-serif' }
             },
             show: true
           }
