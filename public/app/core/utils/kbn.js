@@ -653,7 +653,7 @@ function($, _, moment) {
           {text: 'hours (h)',         value: 'h'    },
           {text: 'days (d)',          value: 'd'    },
           {text: 'duration (ms)',     value: 'dtdurationms' },
-          {text: 'duration (s)',      value: 'dtdurations' }
+          {text: 'duration (s)',      value: 'dtdurations' },
           {text: 'hex (0x)',          value: 'hex0x'      },
           {text: 'hex',               value: 'hex'        }
         ]
