@@ -629,7 +629,9 @@ function($, _, moment) {
           {text: 'percent (0.0-1.0)', value: 'percentunit'},
           {text: 'Humidity (%H)',     value: 'humidity'   },
           {text: 'ppm',               value: 'ppm'        },
-          {text: 'decibel',           value: 'dB'         },
+          {text: 'hexadecimal (0x)',  value: 'hex0x'      },
+          {text: 'hexadecimal',       value: 'hex'        },
+          {text: 'decibel',           value: 'dB'         }
         ]
       },
       {
@@ -653,9 +655,7 @@ function($, _, moment) {
           {text: 'hours (h)',         value: 'h'    },
           {text: 'days (d)',          value: 'd'    },
           {text: 'duration (ms)',     value: 'dtdurationms' },
-          {text: 'duration (s)',      value: 'dtdurations' },
-          {text: 'hexadecimal (0x)',          value: 'hex0x'      },
-          {text: 'hexadecimal',               value: 'hex'        }
+          {text: 'duration (s)',      value: 'dtdurations' }
         ]
       },
       {
