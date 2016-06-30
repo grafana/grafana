@@ -382,7 +382,7 @@ function($, _, moment) {
   kbn.valueFormats.hex0x = function(value, decimals) {
     if (value == null) { return ""; }
     var hexString = kbn.valueFormats.hex(value, decimals);
-    if (hexString.chartAt(0) === "-") {
+    if (hexString.substring(0,1) === "-") {
       return "-0x" + hexString.substring(1, -1);
     }
     return "0x" + hexString;
