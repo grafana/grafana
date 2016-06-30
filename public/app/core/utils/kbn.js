@@ -368,6 +368,28 @@ function($, _, moment) {
     return kbn.toFixed(100*size, decimals) + '%';
   };
 
+
+  /* Formats the number to hexadecimal. Does float if decimals are not 0.
+   * there are two options. One that shows the 0x and one that doesn't */  
+
+  kbn.valueFormats.hex = function(value, decimals) {
+    if (value == null) { return ""; }
+    if (decimals === 0) {
+      return Math.floor(value).toString(16).toUpperCase();
+    }
+    return parseFloat(kbn.toFixed(value, decimals)).toString(16).toUpperCase();
+  };
+
+  kbn.valueFormats.hex0x = function(value, decimals) {
+    if (value == null) { return ""; }
+    var hexString = kbn.valueFormats.hex(value, decimals);
+    if (hexString.chartAt(0) === "-") {
+      return "-0x" + hexString.substring(1, -1);
+    }
+    return "0x" + hexString;
+  };
+
+
   // Currencies
   kbn.valueFormats.currencyUSD = kbn.formatBuilders.currency('$');
   kbn.valueFormats.currencyGBP = kbn.formatBuilders.currency('£');
@@ -610,6 +632,9 @@ function($, _, moment) {
           {text: 'Humidity (%H)',     value: 'humidity'   },
           {text: 'ppm',               value: 'ppm'        },
           {text: 'decibel',           value: 'dB'         },
+          {text: 'hex (0x)',          value: 'hex0x'      },
+          {text: 'hex',               value: 'hex'        }
+
         ]
       },
       {
