@@ -41,16 +41,13 @@
 					<div class="dropdown-desc">Export the dashboard to a JSON file for others and to share on Grafana.net</div>
 				</a>
 			</li>
-			<li>
-				<a class="pointer" ng-if="dashboard.snapshot.originalUrl" ng-href="{{dashboard.snapshot.originalUrl}}">
-					<i class="fa fa-link"></i> Original Dashboard
-					<div class="dropdown-desc">Open original dashboard</div>
-				</a>
-			</li>
 		</ul>
 	</li>
 	<li ng-show="::dashboardMeta.canSave">
 		<a ng-click="saveDashboard()" bs-tooltip="'Save dashboard <br> CTRL+S'" data-placement="bottom"><i class="fa fa-save"></i></a>
+	</li>
+	<li ng-if="dashboard.snapshot.originalUrl">
+		<a ng-href="{{dashboard.snapshot.originalUrl}}" bs-tooltip="'Open original dashboard'" data-placement="bottom"><i class="fa fa-link"></i></a>
 	</li>
 	<li ng-if="::showSettingsMenu" class="dropdown">
 		<a class="pointer" ng-click="hideTooltip($event)" bs-tooltip="'Manage dashboard'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-cog"></i></a>
