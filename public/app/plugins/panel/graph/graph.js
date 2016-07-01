@@ -12,6 +12,7 @@ define([
   'jquery.flot.stackpercent',
   'jquery.flot.fillbelow',
   'jquery.flot.crosshair',
+  'jquery.flot.dashes',
   './jquery.flot.events',
 ],
 function (angular, $, moment, _, kbn, GraphTooltip) {
@@ -172,6 +173,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             return;
           }
 
+          // un-check dashes if lines are unchecked
+          panel.dashes = panel.lines ? panel.dashes : false;
           var stack = panel.stack ? true : null;
 
           // Populate element
@@ -188,8 +191,13 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
                 show: panel.lines,
                 zero: false,
                 fill: translateFillOption(panel.fill),
-                lineWidth: panel.linewidth,
+                lineWidth: panel.dashes ? 0 : panel.linewidth,
                 steps: panel.steppedLine
+              },
+              dashes: {
+                show: panel.dashes,
+                lineWidth: panel.linewidth,
+                dashLength: [panel.dashLength, panel.spaceLength]
               },
               bars:   {
                 show: panel.bars,

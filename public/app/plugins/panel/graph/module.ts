@@ -64,6 +64,12 @@ class GraphCtrl extends MetricsPanelCtrl {
     fill          : 1,
     // line width in pixels
     linewidth     : 2,
+    // show/hide dashed line
+    dashes        : false,
+    // length of a dash
+    dashLength    : 10,
+    // length of space between two dashes
+    spaceLength   : 10,
     // show hide points
     points        : false,
     // point radius in pixels
