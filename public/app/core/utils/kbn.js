@@ -374,12 +374,19 @@ function($, _, moment) {
   kbn.valueFormats.currencyEUR = kbn.formatBuilders.currency('€');
   kbn.valueFormats.currencyJPY = kbn.formatBuilders.currency('¥');
 
-  // Data
+  // Data (Binary)
   kbn.valueFormats.bits   = kbn.formatBuilders.binarySIPrefix('b');
   kbn.valueFormats.bytes  = kbn.formatBuilders.binarySIPrefix('B');
   kbn.valueFormats.kbytes = kbn.formatBuilders.binarySIPrefix('B', 1);
   kbn.valueFormats.mbytes = kbn.formatBuilders.binarySIPrefix('B', 2);
   kbn.valueFormats.gbytes = kbn.formatBuilders.binarySIPrefix('B', 3);
+
+  // Data (Decimal)
+  kbn.valueFormats.decbits   = kbn.formatBuilders.decimalSIPrefix('b');
+  kbn.valueFormats.decbytes  = kbn.formatBuilders.decimalSIPrefix('B');
+  kbn.valueFormats.deckbytes = kbn.formatBuilders.decimalSIPrefix('B', 1);
+  kbn.valueFormats.decmbytes = kbn.formatBuilders.decimalSIPrefix('B', 2);
+  kbn.valueFormats.decgbytes = kbn.formatBuilders.decimalSIPrefix('B', 3);
 
   // Data Rate
   kbn.valueFormats.pps    = kbn.formatBuilders.decimalSIPrefix('pps');
@@ -637,13 +644,23 @@ function($, _, moment) {
         ]
       },
       {
-        text: 'data',
+        text: 'data (IEC)',
         submenu: [
           {text: 'bits',      value: 'bits'  },
           {text: 'bytes',     value: 'bytes' },
-          {text: 'kilobytes', value: 'kbytes'},
-          {text: 'megabytes', value: 'mbytes'},
-          {text: 'gigabytes', value: 'gbytes'},
+          {text: 'kibibytes', value: 'kbytes'},
+          {text: 'mebibytes', value: 'mbytes'},
+          {text: 'gibibytes', value: 'gbytes'},
+        ]
+      },
+      {
+        text: 'data (Metric)',
+        submenu: [
+          {text: 'bits',      value: 'decbits'  },
+          {text: 'bytes',     value: 'decbytes' },
+          {text: 'kilobytes', value: 'deckbytes'},
+          {text: 'megabytes', value: 'decmbytes'},
+          {text: 'gigabytes', value: 'decgbytes'},
         ]
       },
       {

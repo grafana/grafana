@@ -110,6 +110,13 @@ define([
     });
   });
 
+  describe('kbn deckbytes format when scaled decimals is null do not use it', function() {
+    it('should use specified decimals', function() {
+      var str = kbn.valueFormats['deckbytes'](10000000, 3, null);
+      expect(str).to.be('10.000 GB');
+    });
+  });
+
   describe('kbn roundValue', function() {
     it('should should handle null value', function() {
       var str = kbn.roundValue(null, 2);
