@@ -134,6 +134,8 @@ export default class InfluxDatasource {
   };
 
   _seriesQuery(query) {
+    if (!query) { return this.$q.when({results: []}); }
+
     return this._influxRequest('GET', '/query', {q: query, epoch: 'ms'});
   }
 

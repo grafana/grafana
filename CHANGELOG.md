@@ -23,8 +23,8 @@
 * **InfluxDB**: Add spread function, closes [#5211](https://github.com/grafana/grafana/issues/5211)
 * **Scripts**: Use restart instead of start for deb package script, closes [#5282](https://github.com/grafana/grafana/pull/5282)
 * **Logging**: Moved to structured logging lib, and moved to component specific level filters via config file, closes [#4590](https://github.com/grafana/grafana/issues/4590)
-* **OpenTSDB**: Support nested template variables in tag_values function, closes [4398](https://github.com/grafana/grafana/issues/4398)
-* **Datasource**: Pending data source requests are cancelled before new ones are issues (Graphite & Prometheus), closes [5321](https://github.com/grafana/grafana/issues/5321)
+* **OpenTSDB**: Support nested template variables in tag_values function, closes [#4398](https://github.com/grafana/grafana/issues/4398)
+* **Datasource**: Pending data source requests are cancelled before new ones are issues (Graphite & Prometheus), closes [#5321](https://github.com/grafana/grafana/issues/5321)
 
 ### Breaking changes
 * **Logging** : Changed default logging output format (now structured into message, and key value pairs, with logger key acting as component). You can also no change in config to json log ouput.
