@@ -191,9 +191,7 @@ func TestMiddlewareContext(t *testing.T) {
 				}
 			})
 
-			var createUserCmd *m.CreateUserCommand
 			bus.AddHandler("test", func(cmd *m.CreateUserCommand) error {
-				createUserCmd = cmd
 				cmd.Result = m.User{Id: 33}
 				return nil
 			})

@@ -32,7 +32,7 @@ var validateLsCommand = func(pluginDir string) error {
 }
 
 func lsCommand(c CommandLine) error {
-	pluginDir := c.GlobalString("pluginsDir")
+	pluginDir := c.PluginDirectory()
 	if err := validateLsCommand(pluginDir); err != nil {
 		return err
 	}

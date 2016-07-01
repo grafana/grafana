@@ -1,4 +1,16 @@
-# 3.1.0 (unreleased)
+# 3.2.0-pre (unreleased)
+
+### Enhancements
+* **Login**: Adds option to disable username/password logins, closes [#4674](https://github.com/grafana/grafana/issues/4674)
+* **SingleStat**: Add seriename as option in singlestat panel, closes [#4740](https://github.com/grafana/grafana/issues/4740)
+
+
+# 3.1.0 stable (unreleased)
+
+### Bugfixes
+* **User Alert Notices**: Backend error alert popups did not show properly, fixes [#5435](https://github.com/grafana/grafana/issues/5435)
+
+# 3.1.0-beta1 (2016-06-23)
 
 ### Enhancements
 * **Dashboard Export/Import**: Dashboard export now templetize data sources and constant variables, users pick these on import, closes [#5084](https://github.com/grafana/grafana/issues/5084)
@@ -11,7 +23,6 @@
 * **InfluxDB**: Add spread function, closes [#5211](https://github.com/grafana/grafana/issues/5211)
 * **Scripts**: Use restart instead of start for deb package script, closes [#5282](https://github.com/grafana/grafana/pull/5282)
 * **Logging**: Moved to structured logging lib, and moved to component specific level filters via config file, closes [#4590](https://github.com/grafana/grafana/issues/4590)
-* **Search**: Add search limit query parameter, closes [#5292](https://github.com/grafana/grafana/pull/5292)
 * **OpenTSDB**: Support nested template variables in tag_values function, closes [#4398](https://github.com/grafana/grafana/issues/4398)
 * **Datasource**: Pending data source requests are cancelled before new ones are issues (Graphite & Prometheus), closes [#5321](https://github.com/grafana/grafana/issues/5321)
 

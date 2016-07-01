@@ -102,6 +102,11 @@ $gf-form-margin: 0.25rem;
     display: none;
   }
 
+  &.gf-input-small {
+    padding: $input-padding-y/3 $input-padding-x/3;
+    font-size: $font-size-xs;
+  }
+
   // Customize the `:focus` state to imitate native WebKit styles.
   @include form-control-focus();
 
