@@ -153,6 +153,20 @@ describe('grafanaGraph', function() {
     });
   });
 
+  graphScenario('dashed lines options', function(ctx) {
+    ctx.setup(function(ctrl) {
+      ctrl.panel.lines = true;
+      ctrl.panel.linewidth = 2;
+      ctrl.panel.dashes = true;
+    });
+
+    it('should configure dashed plot with correct options', function() {
+      expect(ctx.plotOptions.series.lines.show).to.be(true);
+      expect(ctx.plotOptions.series.dashes.lineWidth).to.be(2);
+      expect(ctx.plotOptions.series.dashes.show).to.be(true);
+    });
+  });
+
   graphScenario('should use timeStep for barWidth', function(ctx) {
     ctx.setup(function(ctrl, data) {
       ctrl.panel.bars = true;
