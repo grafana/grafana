@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.services');
 
-  module.service('dynamicDashboardSrv', function()  {
+  module.service('dynamicDashboardSrv', function($http)  {
     var self = this;
 
     this.init = function(dashboard) {
@@ -25,8 +25,21 @@ function (angular, _) {
     };
 
     this.process = function(dashboard) {
-      if (dashboard.templating.list.length === 0) { return; }
+      //if (dashboard.templating.list.length === 0) { return; }
       this.dashboard = dashboard;
+
+      var loadPanelFromOuterSource = function(originalPanel) {
+        return function(response) {
+          var loadedPanel = _.chain(response.dashboard.rows)
+          .pluck('panels')
+          .flatten()
+          .find(function(panel) {
+            return panel.id === parseInt(originalPanel.symlink.panelId, 10);
+          })
+          .value();
+          originalPanel = _.extend(panel, loadedPanel);
+        };
+      };
 
       var i, j, row, panel;
       for (i = 0; i < this.dashboard.rows.length; i++) {
@@ -45,6 +58,9 @@ function (angular, _) {
         // repeat panels
         for (j = 0; j < row.panels.length; j++) {
           panel = row.panels[j];
+          if (panel.symlink) {
+            $http.get(panel.symlink.url).success(loadPanelFromOuterSource(panel));
+          }
           if (panel.repeat) {
             this.repeatPanel(panel, row);
           }

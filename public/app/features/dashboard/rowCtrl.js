@@ -105,6 +105,7 @@ function (angular, _, config) {
         editable: true,
         type: type,
         isNew: true,
+        symlink: {},
       };
 
       $scope.addPanel(panel);
