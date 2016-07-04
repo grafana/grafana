@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"time"
 	"regexp"
+	"time"
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/bus"
@@ -72,7 +72,7 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 		if cookie != "" {
 			re := regexp.MustCompile("grafana_[^;]*;")
 			cookie = re.ReplaceAllString(cookie, "")
-			
+
 			req.Header.Add("Cookie", cookie)
 		}
 	}
