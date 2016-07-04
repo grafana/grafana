@@ -305,7 +305,7 @@ function (angular, _, dateMath) {
       var interpolatedTagValue;
       return _.map(metrics, function(metricData) {
         return _.findIndex(options.targets, function(target) {
-          return (this.prefix + target.metric) === metricData.metric &&
+          return (target.metric) === metricData.metric &&
             _.all(target.tags, function(tagV, tagK) {
             interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars);
             return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
