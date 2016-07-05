@@ -14,9 +14,17 @@ The export feature is accessed from the share menu.
 
 <img src="/img/v31/export_menu.png">
 
+### Making a dashboard portable
+
+If you want to export a dashboard for others to use then it could be a good idea to
+add template variables for things like a metric prefix (use contant variable) and server name.
+
+A template varible of the type `Constant` will automatically be hidden in
+the dashboard, and will also be added as an required input when the dashboard is imported.
+
 ## Importing a dashboard
 
-To import a dasbhoard open dashboard search and then hit the import button.
+To import a dashboard open dashboard search and then hit the import button.
 
 <img src="/img/v31/import_step1.png">
 

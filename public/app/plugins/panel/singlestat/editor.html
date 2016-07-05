@@ -16,7 +16,10 @@
 					Value
 				</li>
 				<li>
-					<select class="input-small tight-form-input" ng-model="ctrl.panel.valueName" ng-options="f for f in ['min','max','avg', 'current', 'total']" ng-change="ctrl.render()"></select>
+					<select class="input-small tight-form-input"
+            ng-model="ctrl.panel.valueName"
+            ng-options="f for f in ctrl.valueNameOptions"
+            ng-change="ctrl.render()"></select>
 				</li>
 				<li class="tight-form-item">
 					Postfix

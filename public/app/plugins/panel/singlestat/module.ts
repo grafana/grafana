@@ -19,6 +19,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   fontSizes: any[];
   unitFormats: any[];
   invalidGaugeRange: boolean;
+  panel: any;
+  events: any;
+  valueNameOptions: any[] = ['min','max','avg', 'current', 'total', 'name'];
 
   // Set and populate defaults
   panelDefaults = {
@@ -186,9 +189,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       var lastPoint = _.last(this.series[0].datapoints);
       var lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
 
-      if (_.isString(lastValue)) {
+      if (this.panel.valueName === 'name') {
         data.value = 0;
-        data.valueFormated = lastValue;
+        data.valueRounded = 0;
+        data.valueFormated = this.series[0].alias;
+      } else if (_.isString(lastValue)) {
+        data.value = 0;
+        data.valueFormated = _.escape(lastValue);
         data.valueRounded = 0;
       } else {
         data.value = this.series[0].stats[this.panel.valueName];
@@ -199,6 +206,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.valueFormated = formatFunc(data.value, decimalInfo.decimals, decimalInfo.scaledDecimals);
         data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
       }
+
+      // Add $__name variable for using in prefix or postfix
+      data.scopedVars = {
+        __name: {
+          value: this.series[0].label
+        }
+      };
     }
 
     // check value to text mappings if its enabled
@@ -296,7 +310,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function getSpan(className, fontSize, value)  {
-      value = templateSrv.replace(value);
+      value = templateSrv.replace(value, data.scopedVars);
       return '<span class="' + className + '" style="font-size:' + fontSize + '">' +
         value + '</span>';
     }
@@ -395,7 +409,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
             value: {
               color: panel.colorValue ? getColorForValue(data, data.valueRounded) : null,
               formatter: function() { return getValueText(); },
-              font: { size: fontSize, family: 'Helvetica Neue", Helvetica, Arial, sans-serif' }
+              font: { size: fontSize, family: '"Helvetica Neue", Helvetica, Arial, sans-serif' }
             },
             show: true
           }
