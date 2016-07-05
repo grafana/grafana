@@ -24,6 +24,7 @@ export class TimePickerCtrl {
   refresh: any;
   isOpen: boolean;
   isUtc: boolean;
+  firstDayOfWeek: number;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private timeSrv) {
@@ -42,6 +43,8 @@ export class TimePickerCtrl {
     this.panel = this.dashboard.timepicker;
 
     _.defaults(this.panel, TimePickerCtrl.defaults);
+
+    this.firstDayOfWeek = moment.localeData().firstDayOfWeek();
 
     var time = angular.copy(this.timeSrv.timeRange());
     var timeRaw = angular.copy(this.timeSrv.timeRange(false));
