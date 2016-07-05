@@ -42,13 +42,15 @@ export class GrafanaApp {
     var app = angular.module('grafana', []);
     app.constant('grafanaVersion', "@grafanaVersion@");
 
+    moment.locale(config.bootData.user.locale);
+
     app.config(($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $httpProvider, $provide) => {
+
       if (config.buildInfo.env !== 'development') {
         $compileProvider.debugInfoEnabled(false);
       }
-      $httpProvider.useApplyAsync(true);
 
-      moment.locale(window.navigator.userLanguage || window.navigator.language);
+      $httpProvider.useApplyAsync(true);
 
       this.registerFunctions.controller = $controllerProvider.register;
       this.registerFunctions.directive  = $compileProvider.directive;
