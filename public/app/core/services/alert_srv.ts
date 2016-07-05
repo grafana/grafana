@@ -28,10 +28,6 @@ export class AlertSrv {
     }, this.$rootScope);
 
     appEvents.on('confirm-modal', this.showConfirmModal.bind(this));
-
-    this.$rootScope.onAppEvent('confirm-modal', (e, data) => {
-      this.showConfirmModal(data);
-    }, this.$rootScope);
   }
 
   set(title, text, severity, timeout) {
