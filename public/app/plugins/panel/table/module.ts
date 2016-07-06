@@ -139,7 +139,8 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   exportCsv() {
-    FileExport.exportTableDataToCsv(this.table);
+    var renderer = new TableRenderer(this.panel, this.table, this.dashboard.isTimezoneUtc());
+    FileExport.exportTableDataToCsv(renderer.render_values());
   }
 
   link(scope, elem, attrs, ctrl) {
