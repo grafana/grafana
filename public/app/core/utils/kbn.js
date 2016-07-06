@@ -388,7 +388,6 @@ function($, _, moment) {
     return "0x" + hexString;
   };
 
-
   // Currencies
   kbn.valueFormats.currencyUSD = kbn.formatBuilders.currency('$');
   kbn.valueFormats.currencyGBP = kbn.formatBuilders.currency('£');
