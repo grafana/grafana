@@ -1,4 +1,4 @@
-# 3.2.0-pre (unreleased)
+# 4.0-pre (unreleased)
 
 ### Enhancements
 * **Login**: Adds option to disable username/password logins, closes [#4674](https://github.com/grafana/grafana/issues/4674)
