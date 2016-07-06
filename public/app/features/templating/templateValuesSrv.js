@@ -23,6 +23,12 @@ function (angular, _, $, kbn) {
         self.updateAutoInterval(intervalVariable);
       }
 
+      self.variables.filter(function(variable) {
+        return variable.type === 'custom' && _.contains(['$__time_from', '$__time_to'], variable.query);
+      }).map(function(variable) {
+        self._setTimeRangeVariable(variable);
+      });
+
       // update variables with refresh === 2
       var promises = self.variables
         .filter(function(variable) {
@@ -97,6 +103,9 @@ function (angular, _, $, kbn) {
         }
         else if (variable.type === 'interval') {
           self.updateAutoInterval(variable);
+          lock.resolve();
+        } else if (variable.type === 'custom' && _.contains(['$__time_from', '$__time_to'], variable.query)) {
+          self._setTimeRangeVariable(variable);
           lock.resolve();
         } else {
           lock.resolve();
@@ -374,6 +383,11 @@ function (angular, _, $, kbn) {
 
     this.addAllOption = function(variable) {
       variable.options.unshift({text: 'All', value: "$__all"});
+    };
+
+    this._setTimeRangeVariable = function(variable) {
+      var timeRange = timeSrv.timeRange();
+      templateSrv.setGrafanaVariable(variable.query, timeRange[variable.query.slice('$__time_'.length)].valueOf().toString());
     };
 
   });
