@@ -54,13 +54,18 @@ export class DashboardCtrl {
             $scope.setWindowTitleAndTheme();
 
             $scope.appEvent("dashboard-initialized", $scope.dashboard);
-          }).catch(function(err) {
-            if (err.data && err.data.message) { err.message = err.data.message; }
-            $scope.appEvent("alert-error", ['Dashboard init failed', 'Template variables could not be initialized: ' + err.message]);
-          });
+          }).catch($scope.dashboardInitError.bind(this));
         } catch (err) {
-          $scope.appEvent("alert-error", ['Dashboard init failed', err.message]);
+          $scope.dashboardInitError(err);
         }
+      };
+
+      $scope.dashboardInitError = function(err) {
+        console.log('Dashboard init failed', err);
+        if (err.data && err.data.message) {
+          err.message = err.data.message;
+        }
+        $scope.appEvent("alert-error", ['Dashboard init failed', err.message]);
       };
 
       $scope.templateVariableUpdated = function() {
