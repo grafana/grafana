@@ -21,6 +21,7 @@ export class DashboardCtrl {
     dynamicDashboardSrv,
     dashboardViewStateSrv,
     contextSrv,
+    alertSrv,
     $timeout) {
 
       $scope.editor = { index: 0 };
@@ -29,33 +30,37 @@ export class DashboardCtrl {
       var resizeEventTimeout;
 
       $scope.setupDashboard = function(data) {
-        var dashboard = dashboardSrv.create(data.dashboard, data.meta);
-        dashboardSrv.setCurrent(dashboard);
+        try {
+          var dashboard = dashboardSrv.create(data.dashboard, data.meta);
+          dashboardSrv.setCurrent(dashboard);
 
-        // init services
-        timeSrv.init(dashboard);
+          // init services
+          timeSrv.init(dashboard);
 
-        // template values service needs to initialize completely before
-        // the rest of the dashboard can load
-        templateValuesSrv.init(dashboard).finally(function() {
-          dynamicDashboardSrv.init(dashboard);
+          // template values service needs to initialize completely before
+          // the rest of the dashboard can load
+          templateValuesSrv.init(dashboard).finally(function() {
+            dynamicDashboardSrv.init(dashboard);
 
-          unsavedChangesSrv.init(dashboard, $scope);
+            unsavedChangesSrv.init(dashboard, $scope);
 
-          $scope.dashboard = dashboard;
-          $scope.dashboardMeta = dashboard.meta;
-          $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
+            $scope.dashboard = dashboard;
+            $scope.dashboardMeta = dashboard.meta;
+            $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
 
-          dashboardKeybindings.shortcuts($scope);
+            dashboardKeybindings.shortcuts($scope);
 
-          $scope.updateSubmenuVisibility();
-          $scope.setWindowTitleAndTheme();
+            $scope.updateSubmenuVisibility();
+            $scope.setWindowTitleAndTheme();
 
-          $scope.appEvent("dashboard-initialized", $scope.dashboard);
-        }).catch(function(err) {
-          if (err.data && err.data.message) { err.message = err.data.message; }
-          $scope.appEvent("alert-error", ['Dashboard init failed', 'Template variables could not be initialized: ' + err.message]);
-        });
+            $scope.appEvent("dashboard-initialized", $scope.dashboard);
+          }).catch(function(err) {
+            if (err.data && err.data.message) { err.message = err.data.message; }
+            $scope.appEvent("alert-error", ['Dashboard init failed', 'Template variables could not be initialized: ' + err.message]);
+          });
+        } catch (err) {
+          $scope.appEvent("alert-error", ['Dashboard init failed', err.message]);
+        }
       };
 
       $scope.templateVariableUpdated = function() {
