@@ -12,6 +12,7 @@ export class SideMenuCtrl {
   mainLinks: any;
   orgMenu: any;
   appSubUrl: string;
+  loginUrl: string;
 
   /** @ngInject */
   constructor(private $scope, private $location, private contextSrv, private backendSrv, private $element) {
@@ -22,13 +23,14 @@ export class SideMenuCtrl {
 
     this.mainLinks = config.bootData.mainNavLinks;
     this.openUserDropdown();
+    this.loginUrl = '/login?redirect=' + encodeURIComponent(this.$location.path());
 
     this.$scope.$on('$routeChangeSuccess', () => {
       if (!this.contextSrv.pinned) {
         this.contextSrv.sidemenu = false;
       }
+      this.loginUrl = '/login?redirect=' + encodeURIComponent(this.$location.path());
     });
-
   }
 
  getUrl(url) {
