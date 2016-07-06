@@ -177,7 +177,7 @@ define([
       });
       it('positive float', function() {
 	var str = kbn.valueFormats.hex(50.52, 1);
-	expect(str).to.be('32.828F5C28F5C2');
+	expect(str).to.be('32.8');
       }); 
       it('negative float', function() {
 	var str = kbn.valueFormats.hex(-50.333, 2);

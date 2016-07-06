@@ -373,9 +373,6 @@ function($, _, moment) {
 
   kbn.valueFormats.hex = function(value, decimals) {
     if (value == null) { return ""; }
-    if (decimals === 0) {
-      return Math.floor(value).toString(16).toUpperCase();
-    }
     return parseFloat(kbn.toFixed(value, decimals)).toString(16).toUpperCase();
   };
 
@@ -383,7 +380,7 @@ function($, _, moment) {
     if (value == null) { return ""; }
     var hexString = kbn.valueFormats.hex(value, decimals);
     if (hexString.substring(0,1) === "-") {
-      return "-0x" + hexString.substring(1, -1);
+      return "-0x" + hexString.substring(1);
     }
     return "0x" + hexString;
   };
