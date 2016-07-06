@@ -22,6 +22,7 @@ describe('grafanaGraph', function() {
 
         beforeEach(angularMocks.module(function($provide) {
           $provide.value("timeSrv", new helpers.TimeSrvStub());
+          $provide.value("alertSrv", new helpers.AlertSrvStub());
         }));
 
         beforeEach(angularMocks.inject(function($rootScope, $compile) {

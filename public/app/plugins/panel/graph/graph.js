@@ -20,7 +20,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
   var module = angular.module('grafana.directives');
   var labelWidthCache = {};
 
-  module.directive('grafanaGraph', function($rootScope, timeSrv) {
+  module.directive('grafanaGraph', function($rootScope, timeSrv, alertSrv) {
     return {
       restrict: 'A',
       template: '<div> </div>',
@@ -252,7 +252,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             try {
               $.plot(elem, sortedSeries, options);
             } catch (e) {
-              console.log('flotcharts error', e);
+              alertSrv.set('flotcharts error', e.message, 'error');
             }
 
             if (incrementRenderCounter) {
