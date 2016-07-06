@@ -1,14 +1,15 @@
 define([
   'angular',
   'lodash',
+  'jquery',
   'app/core/utils/kbn',
 ],
-function (angular, _, kbn) {
+function (angular, _, $, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $location, templateSrv, timeSrv, dynamicDashboardSrv) {
+  module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $location, templateSrv, timeSrv) {
     var self = this;
 
     function getNoneOption() { return { text: 'None', value: '', isNone: true }; }
@@ -27,14 +28,13 @@ function (angular, _, kbn) {
         .filter(function(variable) {
           return variable.refresh === 2;
         }).map(function(variable) {
-          var previousVariable = angular.copy(variable);
+          var previousOptions = variable.options.slice();
+
           return self.updateOptions(variable).then(function () {
             return self.variableUpdated(variable).then(function () {
-              var updatedVariable = angular.copy(variable);
-              delete(updatedVariable.$$hashKey);
-              if (JSON.stringify(previousVariable) !== JSON.stringify(updatedVariable)) {
-                dynamicDashboardSrv.update(self.dashboard);
-                $rootScope.$emit('template-variable-value-updated');
+              // check if current options changed due to refresh
+              if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
+                $rootScope.appEvent('template-variable-value-updated');
               }
             });
           });

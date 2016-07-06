@@ -87,6 +87,7 @@ export class DashboardCtrl {
       };
 
       $scope.templateVariableUpdated = function() {
+        console.log('dynamic update');
         dynamicDashboardSrv.update($scope.dashboard);
       };
 
