@@ -45,6 +45,7 @@ pages:
 
 - ['guides/basic_concepts.md', 'User Guides', 'Basic Concepts']
 - ['guides/gettingstarted.md', 'User Guides', 'Getting Started']
+- ['guides/whats-new-in-v3-1.md', 'User Guides', "What's New in Grafana v3.1"]
 - ['guides/whats-new-in-v3.md', 'User Guides', "What's New in Grafana v3.0"]
 - ['guides/whats-new-in-v2-6.md', 'User Guides', "What's New in Grafana v2.6"]
 - ['guides/whats-new-in-v2-5.md', 'User Guides', "What's New in Grafana v2.5"]
@@ -84,6 +85,7 @@ pages:
 - ['http_api/user.md', 'API', 'User API']
 - ['http_api/admin.md', 'API', 'Admin API']
 - ['http_api/snapshot.md', 'API', 'Snapshot API']
+- ['http_api/preferences.md', 'API', 'Preferences API']
 - ['http_api/other.md', 'API', 'Other API']
 
 - ['plugins/index.md', 'Plugins', 'Overview']

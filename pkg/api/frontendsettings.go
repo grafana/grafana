@@ -142,6 +142,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			"buildstamp":    setting.BuildStamp,
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,
+			"env":           setting.Env,
 		},
 	}
 

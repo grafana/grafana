@@ -39,12 +39,13 @@ entire experience right within Grafana.
 
 <img src="/img/v3/grafana_net_tour.png">
 
-A preview of [Grafana.net](http://grafana.net) is launching along with this release. We
-think it’s the perfect compliment to Grafana.
+[Grafana.net](https://grafana.net) offers a central repository where the community can come together to discover, create and
+share plugins (data sources, panels, apps) and dashboards.
 
-Grafana.net currently offers a central repository where the community
-can come together to discover and share plugins (Data Sources, Panels,
-Apps) and Dashboards for Grafana 3.0 and above.
+We are also working on a hosted Graphite-compatible data source that will be optimized for use with Grafana.
+It’ll be easy to combine your existing data source(s) with this OpenSaaS option. Finally, Grafana.net can
+also be a hub to manage all your Grafana instances. You’ll be able to monitor their health and availability,
+perform dashboard backups, and more.
 
 We are also working on a hosted Graphite-compatible Data Source that
 will be optimized for use with Grafana. It’ll be easy to combine your
@@ -64,7 +65,6 @@ and sign up for an account</a> in the meantime.
 Grafana 3.0 comes with a new command line tool called grafana-cli. You
 can easily install plugins from Grafana.net with it. For
 example:
-
 
 ```
 grafana-cli install grafana-pie-chart-panel
@@ -187,6 +187,33 @@ you can still install manually from [Grafana.net](http://grafana.net)
 
 * KairosDB: This data source has also no longer shipped with Grafana,
 you can install it manually from [Grafana.net](http://grafana.net)
+
+## Plugin showcase
+
+Discovering and installing plugins is very quick and easy with Grafana 3.0 and [Grafana.net](https://grafana.net). Here
+are a couple that I incurage you try!
+
+#### [Clock Panel](https://grafana.net/plugins/grafana-clock-panel)
+Support's both current time and count down mode.
+<img src="/img/v3/clock_panel.png">
+
+#### [Pie Chart Panel](https://grafana.net/plugins/grafana-piechart-panel)
+A simple pie chart panel is now available as an external plugin.
+<img src="/img/v3/pie_chart_panel.png">
+
+#### [WorldPing App](https://grafana.net/plugins/raintank-worldping-app)
+This is full blown Grafana App that adds new panels, data sources and pages to give
+feature rich global performance monitoring directly from your on-prem Grafana.
+
+<img src="/img/v3/wP-Screenshot-dash-web.png">
+
+#### [Zabbix App](https://grafana.net/plugins/alexanderzobnin-zabbix-app)
+This app contains the already very pouplar Zabbix data source plugin, 2 dashboards and a triggers panel. It is
+created and maintained by [Alexander Zobnin](https://github.com/alexanderzobnin/grafana-zabbix).
+
+<img src="/img/v3/zabbix_app.png">
+
+Checkout the full list of plugins on [Grafana.net](https://grafana.net/plugins)
 
 ## CHANGELOG
 

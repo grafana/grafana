@@ -110,6 +110,13 @@ define([
     });
   });
 
+  describe('kbn deckbytes format when scaled decimals is null do not use it', function() {
+    it('should use specified decimals', function() {
+      var str = kbn.valueFormats['deckbytes'](10000000, 3, null);
+      expect(str).to.be('10.000 GB');
+    });
+  });
+
   describe('kbn roundValue', function() {
     it('should should handle null value', function() {
       var str = kbn.roundValue(null, 2);
@@ -146,6 +153,12 @@ define([
       var range = { from: dateMath.parse('now-14d'), to: dateMath.parse('now') };
       var str = kbn.calculateInterval(range, 1000, '>10s');
       expect(str).to.be('20m');
+    });
+	
+    it('10s 900 resolution and user low limit in ms', function() {
+      var range = { from: dateMath.parse('now-10s'), to: dateMath.parse('now') };
+      var str = kbn.calculateInterval(range, 900, '>15ms');
+      expect(str).to.be('15ms');
     });
   });
 });

@@ -52,6 +52,8 @@ function (angular, _) {
           else if (panel.repeatPanelId && panel.repeatIteration !== this.iteration) {
             row.panels = _.without(row.panels, panel);
             j = j - 1;
+          } else if (row.repeat || row.repeatRowId) {
+            continue;
           } else if (!_.isEmpty(panel.scopedVars) && panel.repeatIteration !== this.iteration) {
             panel.scopedVars = {};
           }
@@ -118,7 +120,6 @@ function (angular, _) {
           panel = copy.panels[i];
           panel.scopedVars = {};
           panel.scopedVars[variable.name] = option;
-          panel.repeatIteration = this.iteration;
         }
       }, this);
     };

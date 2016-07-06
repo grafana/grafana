@@ -70,9 +70,9 @@
 	</div>
 
 	<div ng-if="agg.type === 'filters'">
-		<div class="gf-form-inline" ng-repeat="filter in agg.settings.filters" ng-class="{last: $last}">
+		<div class="gf-form-inline offset-width-7" ng-repeat="filter in agg.settings.filters">
 			<div class="gf-form">
-				<label class="gf-form-item width-10">Query {{$index + 1}}</label>
+				<label class="gf-form-label width-10">Query {{$index + 1}}</label>
 				<input type="text" class="gf-form-input max-width-12" ng-model="filter.query" spellcheck='false' placeholder="Lucene query" ng-blur="onChangeInternal()">
 			</div>
 			<div class="gf-form">
@@ -88,7 +88,7 @@
 
 	<div ng-if="agg.type === 'geohash_grid'">
 		<div class="gf-form offset-width-7">
-			<label class="gf-form-label">Precision</label>
+			<label class="gf-form-label width-10">Precision</label>
 			<input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.precision" spellcheck='false' placeholder="3" ng-blur="onChangeInternal()">
 		</div>
 	</div>

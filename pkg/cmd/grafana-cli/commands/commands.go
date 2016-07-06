@@ -5,7 +5,7 @@ import (
 
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 )
 
 func runCommand(command func(commandLine CommandLine) error) func(context *cli.Context) {
@@ -13,13 +13,13 @@ func runCommand(command func(commandLine CommandLine) error) func(context *cli.C
 
 		cmd := &contextCommandLine{context}
 		if err := command(cmd); err != nil {
-			log.Errorf("\n%s: ", color.RedString("Error"))
-			log.Errorf("%s\n\n", err)
+			logger.Errorf("\n%s: ", color.RedString("Error"))
+			logger.Errorf("%s\n\n", err)
 
 			cmd.ShowHelp()
 			os.Exit(1)
 		} else {
-			log.Info("\nRestart grafana after installing plugins . <service grafana-server restart>\n\n")
+			logger.Info("\nRestart grafana after installing plugins . <service grafana-server restart>\n\n")
 		}
 	}
 }
@@ -48,13 +48,10 @@ var pluginCommands = []cli.Command{
 		Usage:  "list all installed plugins",
 		Action: runCommand(lsCommand),
 	}, {
-		Name:   "uninstall",
-		Usage:  "uninstall <plugin id>",
-		Action: runCommand(removeCommand),
-	}, {
-		Name:   "remove",
-		Usage:  "remove <plugin id>",
-		Action: runCommand(removeCommand),
+		Name:    "uninstall",
+		Aliases: []string{"remove"},
+		Usage:   "uninstall <plugin id>",
+		Action:  runCommand(removeCommand),
 	},
 }
 

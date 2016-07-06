@@ -45,7 +45,7 @@ export default class InfluxDatasource {
     var i, y;
 
     var allQueries = _.map(options.targets, (target) => {
-      if (target.hide) { return []; }
+      if (target.hide) { return ""; }
 
       queryTargets.push(target);
 
@@ -54,8 +54,12 @@ export default class InfluxDatasource {
       var query =  queryModel.render(true);
       query = query.replace(/\$interval/g, (target.interval || options.interval));
       return query;
-
-    }).join(";");
+    }).reduce((acc, current) => {
+      if (current !== "") {
+        acc += ";" + current;
+      }
+      return acc;
+    });
 
     // replace grafana variables
     allQueries = allQueries.replace(/\$timeFilter/g, timeFilter);
@@ -130,6 +134,8 @@ export default class InfluxDatasource {
   };
 
   _seriesQuery(query) {
+    if (!query) { return this.$q.when({results: []}); }
+
     return this._influxRequest('GET', '/query', {q: query, epoch: 'ms'});
   }
 

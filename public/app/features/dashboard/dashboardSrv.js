@@ -22,7 +22,7 @@ function (angular, $, _, moment) {
 
       this.id = data.id || null;
       this.title = data.title || 'No Title';
-      this.originalTitle = this.title;
+      this.description = data.description;
       this.tags = data.tags || [];
       this.style = data.style || "dark";
       this.timezone = data.timezone || '';
@@ -39,6 +39,7 @@ function (angular, $, _, moment) {
       this.schemaVersion = data.schemaVersion || 0;
       this.version = data.version || 0;
       this.links = data.links || [];
+      this.gnetId = data.gnetId || null;
       this._updateSchema(data);
       this._initMeta(meta);
     }
@@ -65,7 +66,7 @@ function (angular, $, _, moment) {
 
     // cleans meta data and other non peristent state
     p.getSaveModelClone = function() {
-      var copy = angular.copy(this);
+      var copy = $.extend(true, {}, this);
       delete copy.meta;
       return copy;
     };

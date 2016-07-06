@@ -1,20 +1,17 @@
-Thank you! For helping us make Grafana even better.
+* **I'm submitting a ...**
+- [ ] Bug report
+- [ ] Feature request
+- [ ] Question / Support request: **Please do not** open a github issue. [Support Options](http://grafana.org/support/)
 
-To help us respond to your issues faster, please make sure to add as much information as possible.
-
-If this issue is about a plugin, please open the issue in that repository.
-
-Start your issues title with [Feature Request] / [Bug] / [Question] or no tag if your unsure. Also, please be aware that GitHub now supports uploading of screenshots; look at the bottom of this input field.
-
-Please include some basic information:
-- What grafana version are you using?
+Please include this information:
+- What Grafana version are you using?
 - What datasource are you using?
 - What OS are you running grafana on?
 - What did you do?
 - What was the expected result?
-- What happenend instead?
+- What happened instead?
 
-If you question/bug relates to a metric query / unexpected data visualization, please include:
+**IMPORTANT** If it relates to metric data viz:
 - An image or text representation of your metric query
-- The raw query and response from your data source (check this in chrome dev tools network tab)
+- The raw query and response for the network request (check this in chrome dev tools network tab, here you can see metric requests and other request, please include the request body and request response)
 

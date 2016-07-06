@@ -58,10 +58,14 @@ class PrometheusQueryCtrl extends QueryCtrl {
 
   updateLink() {
     var range = this.panelCtrl.range;
+    if (!range) {
+      return;
+    }
+
     var rangeDiff = Math.ceil((range.to.valueOf() - range.from.valueOf()) / 1000);
     var endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
     var expr = {
-      expr: this.templateSrv.replace(this.target.expr, this.panelCtrl.panel.scopedVars),
+      expr: this.templateSrv.replace(this.target.expr, this.panelCtrl.panel.scopedVars, this.datasource.interpolateQueryExpr),
       range_input: rangeDiff + 's',
       end_input: endTime,
       step_input: '',

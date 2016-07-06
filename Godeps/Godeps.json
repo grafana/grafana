@@ -1,6 +1,7 @@
 {
 	"ImportPath": "github.com/grafana/grafana",
 	"GoVersion": "go1.5.1",
+	"GodepVersion": "v60",
 	"Packages": [
 		"./pkg/..."
 	],
@@ -125,6 +126,11 @@
 			"Rev": "abb928e07c4108683d6b4d0b6ca08fe6bc0eee5f"
 		},
 		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/sts",
+			"Comment": "v1.0.0",
+			"Rev": "abb928e07c4108683d6b4d0b6ca08fe6bc0eee5f"
+		},
+		{
 			"ImportPath": "github.com/bmizerany/assert",
 			"Comment": "release.r60-6-ge17e998",
 			"Rev": "e17e99893cb6509f428e1728281c2ad60a6b31e3"
@@ -200,6 +206,11 @@
 			"Rev": "267b128680c46286b9ca13475c3cca5de8f79bd7"
 		},
 		{
+			"ImportPath": "github.com/go-stack/stack",
+			"Comment": "v1.5.2",
+			"Rev": "100eb0c0a9c5b306ca2fb4f165df21d80ada4b82"
+		},
+		{
 			"ImportPath": "github.com/go-xorm/core",
 			"Comment": "v0.4.4-7-g9e608f7",
 			"Rev": "9e608f7330b9d16fe2818cfe731128b3f156cb9a"
@@ -220,6 +231,16 @@
 		{
 			"ImportPath": "github.com/hashicorp/go-version",
 			"Rev": "7e3c02b30806fa5779d3bdfc152ce4c6f40e7b38"
+		},
+		{
+			"ImportPath": "github.com/inconshreveable/log15",
+			"Comment": "v2.3-61-g20bca5a",
+			"Rev": "20bca5a7a57282e241fac83ec9ea42538027f1c1"
+		},
+		{
+			"ImportPath": "github.com/inconshreveable/log15/term",
+			"Comment": "v2.3-61-g20bca5a",
+			"Rev": "20bca5a7a57282e241fac83ec9ea42538027f1c1"
 		},
 		{
 			"ImportPath": "github.com/jmespath/go-jmespath",

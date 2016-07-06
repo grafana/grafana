@@ -132,12 +132,10 @@ func readVersionFromPackageJson() {
 	if len(parts) > 1 {
 		linuxPackageVersion = parts[0]
 		linuxPackageIteration = parts[1]
-		if linuxPackageIteration != "" {
-			// add timestamp to iteration
-			linuxPackageIteration = fmt.Sprintf("%s%v", linuxPackageIteration, time.Now().Unix())
-		}
-		log.Println(fmt.Sprintf("Iteration %v", linuxPackageIteration))
 	}
+
+	// add timestamp to iteration
+	linuxPackageIteration = fmt.Sprintf("%d%s", time.Now().Unix(), linuxPackageIteration)
 }
 
 type linuxPackageOptions struct {

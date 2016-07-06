@@ -1,13 +1,13 @@
 define([
-  'lodash',
-  'moment',
+  'lodash'
 ],
-function (_, moment) {
+function (_) {
   'use strict';
 
-  function PrometheusMetricFindQuery(datasource, query) {
+  function PrometheusMetricFindQuery(datasource, query, timeSrv) {
     this.datasource = datasource;
     this.query = query;
+    this.range = timeSrv.timeRange();
   }
 
   PrometheusMetricFindQuery.prototype.process = function() {
@@ -51,7 +51,9 @@ function (_, moment) {
         });
       });
     } else {
-      url = '/api/v1/series?match[]=' + encodeURIComponent(metric);
+      url = '/api/v1/series?match[]=' + encodeURIComponent(metric)
+        + '&start=' + (this.range.from.valueOf() / 1000)
+        + '&end=' + (this.range.to.valueOf() / 1000);
 
       return this.datasource._request('GET', url)
       .then(function(result) {
@@ -86,7 +88,7 @@ function (_, moment) {
   };
 
   PrometheusMetricFindQuery.prototype.queryResultQuery = function(query) {
-    var url = '/api/v1/query?query=' + encodeURIComponent(query) + '&time=' + (moment().valueOf() / 1000);
+    var url = '/api/v1/query?query=' + encodeURIComponent(query) + '&time=' + (this.range.to.valueOf() / 1000);
 
     return this.datasource._request('GET', url)
     .then(function(result) {
@@ -107,7 +109,9 @@ function (_, moment) {
   };
 
   PrometheusMetricFindQuery.prototype.metricNameAndLabelsQuery = function(query) {
-    var url = '/api/v1/series?match[]=' + encodeURIComponent(query);
+    var url = '/api/v1/series?match[]=' + encodeURIComponent(query)
+      + '&start=' + (this.range.from.valueOf() / 1000)
+      + '&end=' + (this.range.to.valueOf() / 1000);
 
     var self = this;
     return this.datasource._request('GET', url)

@@ -78,7 +78,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         range[timeField]["format"] = "epoch_millis";
       }
 
-      var queryInterpolated = templateSrv.replace(queryString);
+      var queryInterpolated = templateSrv.replace(queryString, {}, 'lucene');
       var filter = { "bool": { "must": [{ "range": range }] } };
       var query = { "bool": { "should": [{ "query_string": { "query": queryInterpolated } }] } };
       var data = {
@@ -204,6 +204,11 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       });
     };
 
+    function escapeForJson(value) {
+      var luceneQuery = JSON.stringify(value);
+      return luceneQuery.substr(1, luceneQuery.length - 2);
+    }
+
     this.getFields = function(query) {
       return this._get('/_mapping').then(function(res) {
         var fields = {};
@@ -247,7 +252,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var header = this.getQueryHeader(searchType, range.from, range.to);
       var esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
 
-      esQuery = esQuery.replace("$lucene_query", queryDef.query || '*');
+      esQuery = esQuery.replace("$lucene_query", escapeForJson(queryDef.query));
       esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
       esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
       esQuery = header + '\n' + esQuery + '\n';
@@ -261,8 +266,9 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
 
     this.metricFindQuery = function(query) {
-      query = templateSrv.replace(query);
       query = angular.fromJson(query);
+      query.query = templateSrv.replace(query.query || '*', {}, 'lucene');
+
       if (!query) {
         return $q.when([]);
       }
@@ -273,42 +279,6 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       if (query.find === 'terms') {
         return this.getTerms(query);
       }
-    };
-
-    this.getDashboard = function(id) {
-      return this._get('/dashboard/' + id)
-      .then(function(result) {
-        return angular.fromJson(result._source.dashboard);
-      });
-    };
-
-    this.searchDashboards = function() {
-      var query = {
-        query: { query_string: { query: '*' } },
-        size: 10000,
-        sort: ["_uid"],
-      };
-
-      return this._post(this.index + '/dashboard/_search', query)
-      .then(function(results) {
-        if(_.isUndefined(results.hits)) {
-          return { dashboards: [], tags: [] };
-        }
-
-        var resultsHits = results.hits.hits;
-        var displayHits = { dashboards: [] };
-
-        for (var i = 0, len = resultsHits.length; i < len; i++) {
-          var hit = resultsHits[i];
-          displayHits.dashboards.push({
-            id: hit._id,
-            title: hit._source.title,
-            tags: hit._source.tags
-          });
-        }
-
-        return displayHits;
-      });
     };
   }
 

@@ -141,4 +141,21 @@ export class TableRenderer {
 
     return html;
   }
+
+  render_values() {
+    let rows = [];
+
+    for (var y = 0; y < this.table.rows.length; y++) {
+      let row = this.table.rows[y];
+      let new_row = [];
+      for (var i = 0; i < this.table.columns.length; i++) {
+        new_row.push(this.formatColumnValue(i, row[i]));
+      }
+      rows.push(new_row);
+    }
+    return {
+        columns: this.table.columns,
+        rows: rows,
+    };
+  }
 }

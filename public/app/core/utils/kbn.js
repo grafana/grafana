@@ -1,8 +1,9 @@
 define([
   'jquery',
   'lodash',
+  'moment'
 ],
-function($, _) {
+function($, _, moment) {
   'use strict';
 
   var kbn = {};
@@ -12,9 +13,21 @@ function($, _) {
 
   kbn.round_interval = function(interval) {
     switch (true) {
-    // 0.3s
-    case (interval <= 300):
-      return 100;       // 0.1s
+    // 0.015s
+    case (interval <= 15):
+      return 10;      // 0.01s
+    // 0.035s
+    case (interval <= 35):
+      return 20;      // 0.02s
+    // 0.075s
+    case (interval <= 75):
+      return 50;       // 0.05s
+    // 0.15s
+    case (interval <= 150):
+      return 100;      // 0.1s
+    // 0.35s
+    case (interval <= 350):
+      return 200;      // 0.2s
     // 0.75s
     case (interval <= 750):
       return 500;       // 0.5s
@@ -133,7 +146,7 @@ function($, _) {
     return str;
   };
 
-  kbn.interval_regex = /(\d+(?:\.\d+)?)([Mwdhmsy])/;
+  kbn.interval_regex = /(\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
 
   // histogram & trends
   kbn.intervals_in_seconds = {
@@ -143,7 +156,8 @@ function($, _) {
     d: 86400,
     h: 3600,
     m: 60,
-    s: 1
+    s: 1,
+    ms: 0.001
   };
 
   kbn.calculateInterval = function(range, resolution, userInterval) {
@@ -360,12 +374,19 @@ function($, _) {
   kbn.valueFormats.currencyEUR = kbn.formatBuilders.currency('€');
   kbn.valueFormats.currencyJPY = kbn.formatBuilders.currency('¥');
 
-  // Data
+  // Data (Binary)
   kbn.valueFormats.bits   = kbn.formatBuilders.binarySIPrefix('b');
   kbn.valueFormats.bytes  = kbn.formatBuilders.binarySIPrefix('B');
   kbn.valueFormats.kbytes = kbn.formatBuilders.binarySIPrefix('B', 1);
   kbn.valueFormats.mbytes = kbn.formatBuilders.binarySIPrefix('B', 2);
   kbn.valueFormats.gbytes = kbn.formatBuilders.binarySIPrefix('B', 3);
+
+  // Data (Decimal)
+  kbn.valueFormats.decbits   = kbn.formatBuilders.decimalSIPrefix('b');
+  kbn.valueFormats.decbytes  = kbn.formatBuilders.decimalSIPrefix('B');
+  kbn.valueFormats.deckbytes = kbn.formatBuilders.decimalSIPrefix('B', 1);
+  kbn.valueFormats.decmbytes = kbn.formatBuilders.decimalSIPrefix('B', 2);
+  kbn.valueFormats.decgbytes = kbn.formatBuilders.decimalSIPrefix('B', 3);
 
   // Data Rate
   kbn.valueFormats.pps    = kbn.formatBuilders.decimalSIPrefix('pps');
@@ -383,6 +404,9 @@ function($, _) {
   kbn.valueFormats.rps  = kbn.formatBuilders.simpleCountUnit('rps');
   kbn.valueFormats.wps  = kbn.formatBuilders.simpleCountUnit('wps');
   kbn.valueFormats.iops = kbn.formatBuilders.simpleCountUnit('iops');
+  kbn.valueFormats.opm = kbn.formatBuilders.simpleCountUnit('opm');
+  kbn.valueFormats.rpm = kbn.formatBuilders.simpleCountUnit('rpm');
+  kbn.valueFormats.wpm = kbn.formatBuilders.simpleCountUnit('wpm');
 
   // Energy
   kbn.valueFormats.watt         = kbn.formatBuilders.decimalSIPrefix('W');
@@ -396,6 +420,7 @@ function($, _) {
   kbn.valueFormats.ev           = kbn.formatBuilders.decimalSIPrefix('eV');
   kbn.valueFormats.amp          = kbn.formatBuilders.decimalSIPrefix('A');
   kbn.valueFormats.volt         = kbn.formatBuilders.decimalSIPrefix('V');
+  kbn.valueFormats.dBm          = kbn.formatBuilders.decimalSIPrefix('dBm');
 
   // Temperature
   kbn.valueFormats.celsius   = kbn.formatBuilders.fixedUnit('°C');
@@ -566,6 +591,18 @@ function($, _) {
     }
   };
 
+  kbn.toDuration = function(size, timeScale) {
+    return moment.duration(size, timeScale);
+  };
+
+  kbn.valueFormats.dtdurationms = function(size) {
+    return kbn.toDuration(size, 'ms').humanize();
+  };
+
+  kbn.valueFormats.dtdurations = function(size) {
+    return kbn.toDuration(size, 's').humanize();
+  };
+
   ///// FORMAT MENU /////
 
   kbn.getUnitFormats = function() {
@@ -602,16 +639,28 @@ function($, _) {
           {text: 'minutes (m)',       value: 'm'    },
           {text: 'hours (h)',         value: 'h'    },
           {text: 'days (d)',          value: 'd'    },
+          {text: 'duration (ms)',     value: 'dtdurationms' },
+          {text: 'duration (s)',      value: 'dtdurations' }
         ]
       },
       {
-        text: 'data',
+        text: 'data (IEC)',
         submenu: [
           {text: 'bits',      value: 'bits'  },
           {text: 'bytes',     value: 'bytes' },
-          {text: 'kilobytes', value: 'kbytes'},
-          {text: 'megabytes', value: 'mbytes'},
-          {text: 'gigabytes', value: 'gbytes'},
+          {text: 'kibibytes', value: 'kbytes'},
+          {text: 'mebibytes', value: 'mbytes'},
+          {text: 'gibibytes', value: 'gbytes'},
+        ]
+      },
+      {
+        text: 'data (Metric)',
+        submenu: [
+          {text: 'bits',      value: 'decbits'  },
+          {text: 'bytes',     value: 'decbytes' },
+          {text: 'kilobytes', value: 'deckbytes'},
+          {text: 'megabytes', value: 'decmbytes'},
+          {text: 'gigabytes', value: 'decgbytes'},
         ]
       },
       {
@@ -635,6 +684,9 @@ function($, _) {
           {text: 'reads/sec (rps)',     value: 'rps' },
           {text: 'writes/sec (wps)',    value: 'wps' },
           {text: 'I/O ops/sec (iops)',  value: 'iops'},
+          {text: 'ops/min (opm)',       value: 'opm' },
+          {text: 'reads/min (rpm)',     value: 'rpm' },
+          {text: 'writes/min (wpm)',    value: 'wpm' },
         ]
       },
       {
@@ -677,6 +729,7 @@ function($, _) {
           {text: 'electron volt (eV)',         value: 'ev'          },
           {text: 'Ampere (A)',                 value: 'amp'         },
           {text: 'Volt (V)',                   value: 'volt'        },
+          {text: 'Decibel-milliwatt (dBm)',    value: 'dBm'         },
         ]
       },
       {

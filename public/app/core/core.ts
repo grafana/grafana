@@ -5,7 +5,6 @@ import "./directives/annotation_tooltip";
 import "./directives/dash_class";
 import "./directives/confirm_click";
 import "./directives/dash_edit_link";
-import "./directives/dash_upload";
 import "./directives/dropdown_typeahead";
 import "./directives/grafana_version_check";
 import "./directives/metric_segment";
@@ -33,6 +32,8 @@ import {Emitter} from './utils/emitter';
 import {layoutSelector} from './components/layout_selector/layout_selector';
 import {switchDirective} from './components/switch';
 import {dashboardSelector} from './components/dashboard_selector';
+import {queryPartEditorDirective} from './components/query_part/query_part_editor';
+import {WizardFlow} from './components/wizard/wizard';
 import 'app/core/controllers/all';
 import 'app/core/services/all';
 import 'app/core/routes/routes';
@@ -56,4 +57,6 @@ export {
   Emitter,
   appEvents,
   dashboardSelector,
+  queryPartEditorDirective,
+  WizardFlow,
 };

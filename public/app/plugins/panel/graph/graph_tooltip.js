@@ -81,9 +81,9 @@ function ($) {
           // Stacked series can increase its length on each new stacked serie if null points found,
           // to speed the index search we begin always on the last found hoverIndex.
           var newhoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
-          results.push({ value: value, hoverIndex: newhoverIndex });
+          results.push({ value: value, hoverIndex: newhoverIndex, color: series.color, label: series.label });
         } else {
-          results.push({ value: value, hoverIndex: hoverIndex });
+          results.push({ value: value, hoverIndex: hoverIndex, color: series.color, label: series.label });
         }
       }
 
@@ -133,6 +133,18 @@ function ($) {
 
         absoluteTime = dashboard.formatDate(seriesHoverInfo.time, tooltipFormat);
 
+        // Dynamically reorder the hovercard for the current time point if the
+        // option is enabled.
+        if (panel.tooltip.sort === 2) {
+          seriesHoverInfo.sort(function(a, b) {
+            return b.value - a.value;
+          });
+        } else if (panel.tooltip.sort === 1) {
+          seriesHoverInfo.sort(function(a, b) {
+            return a.value - b.value;
+          });
+        }
+
         for (i = 0; i < seriesHoverInfo.length; i++) {
           hoverInfo = seriesHoverInfo[i];
 
@@ -150,7 +162,7 @@ function ($) {
           value = series.formatValue(hoverInfo.value);
 
           seriesHtml += '<div class="graph-tooltip-list-item ' + highlightClass + '"><div class="graph-tooltip-series-name">';
-          seriesHtml += '<i class="fa fa-minus" style="color:' + series.color +';"></i> ' + series.label + ':</div>';
+          seriesHtml += '<i class="fa fa-minus" style="color:' + hoverInfo.color +';"></i> ' + hoverInfo.label + ':</div>';
           seriesHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
           plot.highlight(i, hoverInfo.hoverIndex);
         }

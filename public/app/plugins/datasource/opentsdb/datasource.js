@@ -54,13 +54,12 @@ function (angular, _, dateMath) {
       });
 
       return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
-        var metricToTargetMapping = mapMetricsToTargets(response.data, options);
+        var metricToTargetMapping = mapMetricsToTargets(response.data, options, this.tsdbVersion);
         var result = _.map(response.data, function(metricData, index) {
           index = metricToTargetMapping[index];
           if (index === -1) {
             index = 0;
           }
-
           this._saveTagKeys(metricData);
 
           return transformMetricData(metricData, groupByTags, options.targets[index], options, this.tsdbResolution);
@@ -114,6 +113,9 @@ function (angular, _, dateMath) {
         msResolution: msResolution,
         globalAnnotations: true
       };
+      if (this.tsdbVersion === 3) {
+        reqBody.showQuery = true;
+      }
 
       // Relative queries (e.g. last hour) don't include an end time
       if (end) {
@@ -126,13 +128,7 @@ function (angular, _, dateMath) {
         data: reqBody
       };
 
-      if (this.basicAuth || this.withCredentials) {
-        options.withCredentials = true;
-      }
-
-      if (this.basicAuth) {
-        options.headers = {"Authorization": this.basicAuth};
-      }
+      this._addCredentialOptions(options);
 
       // In case the backend is 3rd-party hosted and does not suport OPTIONS, urlencoded requests
       // go as POST rather than OPTIONS+POST
@@ -160,12 +156,23 @@ function (angular, _, dateMath) {
       });
     };
 
-    this._performMetricKeyValueLookup = function(metric, key) {
-      if(!metric || !key) {
+    this._performMetricKeyValueLookup = function(metric, keys) {
+
+      if(!metric || !keys) {
         return $q.when([]);
       }
 
-      var m = metric + "{" + key + "=*}";
+      var keysArray = keys.split(",").map(function(key) {
+        return key.trim();
+      });
+      var key = keysArray[0];
+      var keysQuery = key + "=*";
+
+      if (keysArray.length > 1) {
+        keysQuery += "," + keysArray.splice(1).join(",");
+      }
+
+      var m = metric + "{" + keysQuery + "}";
 
       return this._get('/api/search/lookup', {m: m, limit: 3000}).then(function(result) {
         result = result.data.results;
@@ -197,11 +204,24 @@ function (angular, _, dateMath) {
     };
 
     this._get = function(relativeUrl, params) {
-      return backendSrv.datasourceRequest({
+      var options = {
         method: 'GET',
         url: this.url + relativeUrl,
         params: params,
-      });
+      };
+
+      this._addCredentialOptions(options);
+
+      return backendSrv.datasourceRequest(options);
+    };
+
+    this._addCredentialOptions = function(options) {
+      if (this.basicAuth || this.withCredentials) {
+        options.withCredentials = true;
+      }
+      if (this.basicAuth) {
+        options.headers = {"Authorization": this.basicAuth};
+      }
     };
 
     this.metricFindQuery = function(query) {
@@ -223,7 +243,7 @@ function (angular, _, dateMath) {
 
       var metrics_regex = /metrics\((.*)\)/;
       var tag_names_regex = /tag_names\((.*)\)/;
-      var tag_values_regex = /tag_values\((.*),\s?(.*)\)/;
+      var tag_values_regex = /tag_values\((.*?),\s?(.*)\)/;
       var tag_names_suggest_regex = /suggest_tagk\((.*)\)/;
       var tag_values_suggest_regex = /suggest_tagv\((.*)\)/;
 
@@ -393,23 +413,24 @@ function (angular, _, dateMath) {
       return query;
     }
 
-    function mapMetricsToTargets(metrics, options) {
+    function mapMetricsToTargets(metrics, options, tsdbVersion) {
       var interpolatedTagValue;
       return _.map(metrics, function(metricData) {
-        return _.findIndex(options.targets, function(target) {
-          if (target.filters && target.filters.length > 0) {
-            return target.metric === metricData.metric &&
-            _.all(target.filters, function(filter) {
-              return filter.tagk === interpolatedTagValue === "*";
-            });
-          } else {
-            return target.metric === metricData.metric &&
-            _.all(target.tags, function(tagV, tagK) {
-              interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars, 'pipe');
-              return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
-            });
-          }
-        });
+        if (tsdbVersion === 3) {
+          return metricData.query.index;
+        } else {
+          return _.findIndex(options.targets, function(target) {
+            if (target.filters && target.filters.length > 0) {
+              return target.metric === metricData.metric;
+            } else {
+              return target.metric === metricData.metric &&
+              _.all(target.tags, function(tagV, tagK) {
+                interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars, 'pipe');
+                return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
+              });
+            }
+          });
+        }
       });
     }
 
@@ -421,7 +442,6 @@ function (angular, _, dateMath) {
       date = dateMath.parse(date, roundUp);
       return date.valueOf();
     }
-
   }
 
   return {

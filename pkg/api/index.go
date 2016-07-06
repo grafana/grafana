@@ -1,6 +1,8 @@
 package api
 
 import (
+	"strings"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -21,6 +23,15 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	}
 	prefs := prefsQuery.Result
 
+	// Read locale from acccept-language
+	acceptLang := c.Req.Header.Get("Accept-Language")
+	locale := "en-US"
+
+	if len(acceptLang) > 0 {
+		parts := strings.Split(acceptLang, ",")
+		locale = parts[0]
+	}
+
 	var data = dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:             c.UserId,
@@ -35,12 +46,17 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			IsGrafanaAdmin: c.IsGrafanaAdmin,
 			LightTheme:     prefs.Theme == "light",
 			Timezone:       prefs.Timezone,
+			Locale:         locale,
 		},
-		Settings:           settings,
-		AppUrl:             setting.AppUrl,
-		AppSubUrl:          setting.AppSubUrl,
-		GoogleAnalyticsId:  setting.GoogleAnalyticsId,
-		GoogleTagManagerId: setting.GoogleTagManagerId,
+		Settings:                settings,
+		AppUrl:                  setting.AppUrl,
+		AppSubUrl:               setting.AppSubUrl,
+		GoogleAnalyticsId:       setting.GoogleAnalyticsId,
+		GoogleTagManagerId:      setting.GoogleTagManagerId,
+		BuildVersion:            setting.BuildVersion,
+		BuildCommit:             setting.BuildCommit,
+		NewGrafanaVersion:       plugins.GrafanaLatestVersion,
+		NewGrafanaVersionExists: plugins.GrafanaHasUpdate,
 	}
 
 	if setting.DisableGravatar {
@@ -65,7 +81,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Divider: true})
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "New", Icon: "fa fa-plus", Url: setting.AppSubUrl + "/dashboard/new"})
-		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "Import", Icon: "fa fa-download", Url: setting.AppSubUrl + "/import/dashboard"})
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "Import", Icon: "fa fa-download", Url: setting.AppSubUrl + "/dashboard/new/?editview=import"})
 	}
 
 	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{

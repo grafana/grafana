@@ -50,7 +50,7 @@ define([
 
       if (!isNaN(value)) {
         var epoch = parseInt(value);
-        return moment(epoch);
+        return moment.utc(epoch);
       }
 
       return null;

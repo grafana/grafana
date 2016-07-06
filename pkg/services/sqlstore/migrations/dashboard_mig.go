@@ -102,4 +102,13 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Add column created_by in dashboard - v2", NewAddColumnMigration(dashboardV2, &Column{
 		Name: "created_by", Type: DB_Int, Nullable: true,
 	}))
+
+	// add column to store gnetId
+	mg.AddMigration("Add column gnetId in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "gnet_id", Type: DB_BigInt, Nullable: true,
+	}))
+
+	mg.AddMigration("Add index for gnetId in dashboard", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"gnet_id"}, Type: IndexType,
+	}))
 }

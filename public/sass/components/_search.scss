@@ -74,11 +74,11 @@
     background-color: $grafanaListBackground;
     margin-bottom: 4px;
 
-    .search-result-icon:before {
+    .search-result-icon::before {
       content: "\f009";
     }
 
-    &.search-item-dash-home .search-result-icon:before {
+    &.search-item-dash-home .search-result-icon::before {
       content: "\f015";
     }
   }

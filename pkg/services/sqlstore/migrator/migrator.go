@@ -11,11 +11,10 @@ import (
 )
 
 type Migrator struct {
-	LogLevel log.LogLevel
-
 	x          *xorm.Engine
 	dialect    Dialect
 	migrations []Migration
+	Logger     log.Logger
 }
 
 type MigrationLog struct {
@@ -30,7 +29,7 @@ type MigrationLog struct {
 func NewMigrator(engine *xorm.Engine) *Migrator {
 	mg := &Migrator{}
 	mg.x = engine
-	mg.LogLevel = log.WARN
+	mg.Logger = log.New("migrator")
 	mg.migrations = make([]Migration, 0)
 	mg.dialect = NewDialect(mg.x.DriverName())
 	return mg
@@ -69,9 +68,7 @@ func (mg *Migrator) GetMigrationLog() (map[string]MigrationLog, error) {
 }
 
 func (mg *Migrator) Start() error {
-	if mg.LogLevel <= log.INFO {
-		log.Info("Migrator: Starting DB migration")
-	}
+	mg.Logger.Info("Starting DB migration")
 
 	logMap, err := mg.GetMigrationLog()
 	if err != nil {
@@ -81,9 +78,7 @@ func (mg *Migrator) Start() error {
 	for _, m := range mg.migrations {
 		_, exists := logMap[m.Id()]
 		if exists {
-			if mg.LogLevel <= log.DEBUG {
-				log.Debug("Migrator: Skipping migration: %v, Already executed", m.Id())
-			}
+			mg.Logger.Debug("Skipping migration: Already executed", "id", m.Id())
 			continue
 		}
 
@@ -95,12 +90,10 @@ func (mg *Migrator) Start() error {
 			Timestamp:   time.Now(),
 		}
 
-		if mg.LogLevel <= log.DEBUG {
-			log.Debug("Migrator: Executing SQL: \n %v \n", sql)
-		}
+		mg.Logger.Debug("Executing", "sql", sql)
 
 		if err := mg.exec(m); err != nil {
-			log.Error(3, "Migrator: error: \n%s:\n%s", err, sql)
+			mg.Logger.Error("Exec failed", "error", err, "sql", sql)
 			record.Error = err.Error()
 			mg.x.Insert(&record)
 			return err
@@ -114,9 +107,7 @@ func (mg *Migrator) Start() error {
 }
 
 func (mg *Migrator) exec(m Migration) error {
-	if mg.LogLevel <= log.INFO {
-		log.Info("Migrator: exec migration id: %v", m.Id())
-	}
+	mg.Logger.Info("Executing migration", "id", m.Id())
 
 	err := mg.inTransaction(func(sess *xorm.Session) error {
 
@@ -125,14 +116,14 @@ func (mg *Migrator) exec(m Migration) error {
 			sql, args := condition.Sql(mg.dialect)
 			results, err := sess.Query(sql, args...)
 			if err != nil || len(results) == 0 {
-				log.Info("Migrator: skipping migration id: %v, condition not fulfilled", m.Id())
+				mg.Logger.Info("Skipping migration condition not fulfilled", "id", m.Id())
 				return sess.Rollback()
 			}
 		}
 
 		_, err := sess.Exec(m.Sql(mg.dialect))
 		if err != nil {
-			log.Error(3, "Migrator: exec FAILED migration id: %v, err: %v", m.Id(), err)
+			mg.Logger.Error("Executing migration failed", "id", m.Id(), "error", err)
 			return err
 		}
 		return nil

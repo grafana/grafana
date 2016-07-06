@@ -18,6 +18,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
   'use strict';
 
   var module = angular.module('grafana.directives');
+  var labelWidthCache = {};
 
   module.directive('grafanaGraph', function($rootScope, timeSrv) {
     return {
@@ -31,6 +32,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         var sortedSeries;
         var legendSideLastValue = null;
         var rootScope = scope.$root;
+        var panelWidth = 0;
 
         rootScope.onAppEvent('setCrosshair', function(event, info) {
           // do not need to to this if event is from this panel
@@ -66,7 +68,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
         function getLegendHeight(panelHeight) {
           if (!panel.legend.show || panel.legend.rightSide) {
-            return 2;
+            return 0;
           }
 
           if (panel.legend.alignAsTable) {
@@ -99,14 +101,19 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
           if (!setElementHeight()) { return true; }
 
-          if(_.isString(data)) {
-            render_panel_as_graphite_png(data);
+          if (panelWidth === 0) {
             return true;
+          }
+        }
+
+        function getLabelWidth(text, elem) {
+          var labelWidth = labelWidthCache[text];
+
+          if (!labelWidth) {
+            labelWidth = labelWidthCache[text] = elem.width();
           }
 
-          if (elem.width() === 0) {
-            return true;
-          }
+          return labelWidth;
         }
 
         function drawHook(plot) {
@@ -137,7 +144,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               .text(panel.yaxes[0].label)
               .appendTo(elem);
 
-            yaxisLabel.css("margin-top", yaxisLabel.width() / 2);
+            yaxisLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[0].label, yaxisLabel) / 2) + 'px';
           }
 
           // add right axis labels
@@ -146,7 +153,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               .text(panel.yaxes[1].label)
               .appendTo(elem);
 
-            rightLabel.css("margin-top", rightLabel.width() / 2);
+            rightLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[1].label, rightLabel) / 2) + 'px';
           }
         }
 
@@ -159,6 +166,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
         // Function for rendering panel
         function render_panel() {
+          panelWidth =  elem.width();
+
           if (shouldAbortRender()) {
             return;
           }
@@ -242,8 +251,12 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           function callPlot(incrementRenderCounter) {
             try {
               $.plot(elem, sortedSeries, options);
+              delete ctrl.error;
+              delete ctrl.inspector;
             } catch (e) {
               console.log('flotcharts error', e);
+              ctrl.error = e.message || "Render Error";
+              ctrl.inspector = {error: ctrl.error};
             }
 
             if (incrementRenderCounter) {
@@ -276,13 +289,13 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         }
 
         function addTimeAxis(options) {
-          var ticks = elem.width() / 100;
+          var ticks = panelWidth / 100;
           var min = _.isUndefined(ctrl.range.from) ? null : ctrl.range.from.valueOf();
           var max = _.isUndefined(ctrl.range.to) ? null : ctrl.range.to.valueOf();
 
           options.xaxis = {
             timezone: dashboard.getTimezone(),
-            show: panel['x-axis'],
+            show: panel.xaxis.show,
             mode: "time",
             min: min,
             max: max,
@@ -443,71 +456,6 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           return "%H:%M";
         }
 
-        function render_panel_as_graphite_png(url) {
-          url += '&width=' + elem.width();
-          url += '&height=' + elem.css('height').replace('px', '');
-          url += '&bgcolor=1f1f1f'; // @grayDarker & @grafanaPanelBackground
-          url += '&fgcolor=BBBFC2'; // @textColor & @grayLighter
-          url += panel.stack ? '&areaMode=stacked' : '';
-          url += panel.fill !== 0 ? ('&areaAlpha=' + (panel.fill/10).toFixed(1)) : '';
-          url += panel.linewidth !== 0 ? '&lineWidth=' + panel.linewidth : '';
-          url += panel.legend.show ? '&hideLegend=false' : '&hideLegend=true';
-          url += panel.grid.leftMin !== null ? '&yMin=' + panel.grid.leftMin : '';
-          url += panel.grid.leftMax !== null ? '&yMax=' + panel.grid.leftMax : '';
-          url += panel.grid.rightMin !== null ? '&yMin=' + panel.grid.rightMin : '';
-          url += panel.grid.rightMax !== null ? '&yMax=' + panel.grid.rightMax : '';
-          url += panel['x-axis'] ? '' : '&hideAxes=true';
-          url += panel['y-axis'] ? '' : '&hideYAxis=true';
-
-          switch(panel.yaxes[0].format) {
-            case 'bytes':
-              url += '&yUnitSystem=binary';
-              break;
-            case 'bits':
-              url += '&yUnitSystem=binary';
-              break;
-            case 'bps':
-              url += '&yUnitSystem=si';
-              break;
-            case 'pps':
-              url += '&yUnitSystem=si';
-              break;
-            case 'Bps':
-              url += '&yUnitSystem=si';
-              break;
-            case 'short':
-              url += '&yUnitSystem=si';
-              break;
-            case 'joule':
-              url += '&yUnitSystem=si';
-              break;
-            case 'watt':
-              url += '&yUnitSystem=si';
-              break;
-            case 'ev':
-              url += '&yUnitSystem=si';
-              break;
-            case 'none':
-              url += '&yUnitSystem=none';
-              break;
-          }
-
-          switch(panel.nullPointMode) {
-            case 'connected':
-              url += '&lineMode=connected';
-              break;
-            case 'null':
-              break; // graphite default lineMode
-            case 'null as zero':
-              url += "&drawNullAsZero=true";
-              break;
-          }
-
-          url += panel.steppedLine ? '&lineMode=staircase' : '';
-
-          elem.html('<img src="' + url + '"></img>');
-        }
-
         new GraphTooltip(elem, dashboard, scope, function() {
           return sortedSeries;
         });
@@ -523,5 +471,4 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
       }
     };
   });
-
 });

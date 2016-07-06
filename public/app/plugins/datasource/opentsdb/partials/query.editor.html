@@ -69,7 +69,7 @@
 			</div>
 		</div>
 
-		<div class="gf-form" ng-if="ctrl.tsdbVersion == 2">
+		<div class="gf-form" ng-if="ctrl.tsdbVersion >= 2">
 			<label class="gf-form-label query-keyword width-6">Fill</label>
 			<div class="gf-form-select-wrapper">
 				<select ng-model="ctrl.target.downsampleFillPolicy" class="gf-form-input"
@@ -91,7 +91,7 @@
 		</div>
 	</div>
 
-	<div class="gf-form-inline" ng-if="ctrl.tsdbVersion == 2">
+	<div class="gf-form-inline" ng-if="ctrl.tsdbVersion >= 2">
 		<div class="gf-form">
 
 			<label class="gf-form-label query-keyword width-8">
@@ -170,7 +170,7 @@
 		<div class="gf-form">
 			<label class="gf-form-label query-keyword width-8">
 				Tags
-				<info-popover mode="right-normal" ng-if="ctrl.tsdbVersion == 2">
+				<info-popover mode="right-normal" ng-if="ctrl.tsdbVersion >= 2">
 					Please use filters, tags are deprecated in opentsdb 2.2
 				</info-popover>
 			</label>

@@ -4,10 +4,12 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import angular from 'angular';
 import $ from 'jquery';
+import {profiler} from 'app/core/profiler';
 
 const TITLE_HEIGHT = 25;
 const EMPTY_TITLE_HEIGHT = 9;
 const PANEL_PADDING = 5;
+const PANEL_BORDER = 2;
 
 import {Emitter} from 'app/core/core';
 
@@ -30,6 +32,7 @@ export class PanelCtrl {
   height: any;
   containerHeight: any;
   events: Emitter;
+  timing: any;
 
   constructor($scope, $injector) {
     this.$injector = $injector;
@@ -37,6 +40,7 @@ export class PanelCtrl {
     this.$timeout = $injector.get('$timeout');
     this.editorTabIndex = 0;
     this.events = new Emitter();
+    this.timing = {};
 
     var plugin = config.panels[this.panel.type];
     if (plugin) {
@@ -56,7 +60,7 @@ export class PanelCtrl {
   }
 
   renderingCompleted() {
-    this.$scope.$root.performance.panelsRendered++;
+    profiler.renderingCompleted(this.panel.id, this.timing);
   }
 
   refresh() {
@@ -90,6 +94,23 @@ export class PanelCtrl {
     this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
     this.editModeInitiated = true;
     this.events.emit('init-edit-mode', null);
+
+    var routeParams = this.$injector.get('$routeParams');
+    if (routeParams.editorTab) {
+      this.editorTabs.forEach((tab, i) => {
+        if (tab.title === routeParams.editorTab) {
+          this.editorTabIndex = i;
+        }
+      });
+    }
+  }
+
+  changeTab(newIndex) {
+    this.editorTabIndex = newIndex;
+    var route = this.$injector.get('$route');
+
+    route.current.params.editorTab = this.editorTabs[newIndex].title;
+    route.updateParams();
   }
 
   addEditorTab(title, directiveFn, index?) {
@@ -141,7 +162,7 @@ export class PanelCtrl {
       }
     }
 
-    this.height = this.containerHeight - (PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
+    this.height = this.containerHeight - (PANEL_BORDER + PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
   }
 
   render(payload?) {
@@ -151,6 +172,7 @@ export class PanelCtrl {
     }
 
     this.calculatePanelHeight();
+    this.timing.renderStart = new Date().getTime();
     this.events.emit('render', payload);
   }
 

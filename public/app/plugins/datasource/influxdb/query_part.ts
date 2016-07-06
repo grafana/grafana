@@ -1,6 +1,14 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
+import {
+  QueryPartDef,
+  QueryPart,
+  functionRenderer,
+  suffixRenderer,
+  identityRenderer,
+  quotedIdentityRenderer,
+} from 'app/core/components/query_part/query_part';
 
 var index = [];
 var categories = {
@@ -12,69 +20,24 @@ var categories = {
   Fields: [],
 };
 
+function createPart(part): any {
+  var def = index[part.type];
+  if (!def) {
+    throw {message: 'Could not find query part ' + part.type};
+  }
+
+  return new QueryPart(part, def);
+};
+
+function register(options: any) {
+  index[options.type] = new QueryPartDef(options);
+  options.category.push(index[options.type]);
+}
+
 var groupByTimeFunctions = [];
-
-class QueryPartDef {
-  type: string;
-  params: any[];
-  defaultParams: any[];
-  renderer: any;
-  category: any;
-  addStrategy: any;
-
-  constructor(options: any) {
-    this.type = options.type;
-    this.params = options.params;
-    this.defaultParams = options.defaultParams;
-    this.renderer = options.renderer;
-    this.category = options.category;
-    this.addStrategy = options.addStrategy;
-  }
-
-  static register(options: any) {
-    index[options.type] = new QueryPartDef(options);
-    options.category.push(index[options.type]);
-  }
-}
-
-function functionRenderer(part, innerExpr) {
-  var str = part.def.type + '(';
-  var parameters = _.map(part.params, (value, index) => {
-    var paramType = part.def.params[index];
-    if (paramType.type === 'time') {
-      if (value === 'auto') {
-        value = '$interval';
-      }
-    }
-    if (paramType.quote === 'single') {
-      return "'" + value + "'";
-    } else if (paramType.quote === 'double') {
-      return '"' + value + '"';
-    }
-
-    return value;
-  });
-
-  if (innerExpr) {
-    parameters.unshift(innerExpr);
-  }
-  return str + parameters.join(', ') + ')';
-}
 
 function aliasRenderer(part, innerExpr) {
   return innerExpr + ' AS ' + '"' + part.params[0] + '"';
-}
-
-function suffixRenderer(part, innerExpr) {
-  return innerExpr + ' ' + part.params[0];
-}
-
-function identityRenderer(part, innerExpr) {
-  return part.params[0];
-}
-
-function quotedIdentityRenderer(part, innerExpr) {
-  return '"' + part.params[0] + '"';
 }
 
 function fieldRenderer(part, innerExpr) {
@@ -149,13 +112,13 @@ function addAliasStrategy(selectParts, partModel) {
 function addFieldStrategy(selectParts, partModel, query) {
   // copy all parts
   var parts = _.map(selectParts, function(part: any) {
-    return new QueryPart({type: part.def.type, params: _.clone(part.params)});
+    return createPart({type: part.def.type, params: _.clone(part.params)});
   });
 
   query.selectModels.push(parts);
 }
 
-QueryPartDef.register({
+register({
   type: 'field',
   addStrategy: addFieldStrategy,
   category: categories.Fields,
@@ -165,7 +128,7 @@ QueryPartDef.register({
 });
 
 // Aggregations
-QueryPartDef.register({
+register({
   type: 'count',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
@@ -174,7 +137,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'distinct',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
@@ -183,7 +146,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'integral',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
@@ -192,7 +155,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'mean',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
@@ -201,7 +164,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'median',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
@@ -210,7 +173,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'sum',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
@@ -221,7 +184,7 @@ QueryPartDef.register({
 
 // transformations
 
-QueryPartDef.register({
+register({
   type: 'derivative',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
@@ -230,7 +193,16 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
+  type: 'spread',
+  addStrategy: addTransformationStrategy,
+  category: categories.Transformations,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+register({
   type: 'non_negative_derivative',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
@@ -239,7 +211,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'difference',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
@@ -248,7 +220,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'moving_average',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
@@ -257,7 +229,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'stddev',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
@@ -266,7 +238,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'time',
   category: groupByTimeFunctions,
   params: [{ name: "interval", type: "time", options: ['auto', '1s', '10s', '1m', '5m', '10m', '15m', '1h'] }],
@@ -274,7 +246,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'fill',
   category: groupByTimeFunctions,
   params: [{ name: "fill", type: "string", options: ['none', 'null', '0', 'previous'] }],
@@ -283,7 +255,7 @@ QueryPartDef.register({
 });
 
 // Selectors
-QueryPartDef.register({
+register({
   type: 'bottom',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Selectors,
@@ -292,7 +264,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'first',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Selectors,
@@ -301,7 +273,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'last',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Selectors,
@@ -310,7 +282,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'max',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Selectors,
@@ -319,7 +291,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'min',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Selectors,
@@ -328,7 +300,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'percentile',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Selectors,
@@ -337,7 +309,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'top',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Selectors,
@@ -346,7 +318,7 @@ QueryPartDef.register({
   renderer: functionRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'tag',
   category: groupByTimeFunctions,
   params: [{name: 'tag', type: 'string', dynamicLookup: true}],
@@ -354,7 +326,7 @@ QueryPartDef.register({
   renderer: fieldRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'math',
   addStrategy: addMathStrategy,
   category: categories.Math,
@@ -363,7 +335,7 @@ QueryPartDef.register({
   renderer: suffixRenderer,
 });
 
-QueryPartDef.register({
+register({
   type: 'alias',
   addStrategy: addAliasStrategy,
   category: categories.Aliasing,
@@ -373,74 +345,9 @@ QueryPartDef.register({
   renderer: aliasRenderer,
 });
 
-class QueryPart {
-  part: any;
-  def: QueryPartDef;
-  params: any[];
-  text: string;
-
-  constructor(part: any) {
-    this.part = part;
-    this.def = index[part.type];
-    if (!this.def) {
-      throw {message: 'Could not find query part ' + part.type};
-    }
-
-    part.params = part.params || _.clone(this.def.defaultParams);
-    this.params = part.params;
-    this.updateText();
-  }
-
-  render(innerExpr: string) {
-    return this.def.renderer(this, innerExpr);
-  }
-
-  hasMultipleParamsInString (strValue, index) {
-    if (strValue.indexOf(',') === -1) {
-      return false;
-    }
-
-    return this.def.params[index + 1] && this.def.params[index + 1].optional;
-  }
-
-  updateParam (strValue, index) {
-    // handle optional parameters
-    // if string contains ',' and next param is optional, split and update both
-    if (this.hasMultipleParamsInString(strValue, index)) {
-      _.each(strValue.split(','), function(partVal: string, idx) {
-        this.updateParam(partVal.trim(), idx);
-      }, this);
-      return;
-    }
-
-    if (strValue === '' && this.def.params[index].optional) {
-      this.params.splice(index, 1);
-    } else {
-      this.params[index] = strValue;
-    }
-
-    this.part.params = this.params;
-    this.updateText();
-  }
-
-  updateText() {
-    if (this.params.length === 0) {
-      this.text = this.def.type + '()';
-      return;
-    }
-
-    var text = this.def.type + '(';
-    text += this.params.join(', ');
-    text += ')';
-    this.text = text;
-  }
-}
 
 export default {
-  create: function(part): any {
-    return new QueryPart(part);
-  },
-
+  create: createPart,
   getCategories: function() {
     return categories;
   }

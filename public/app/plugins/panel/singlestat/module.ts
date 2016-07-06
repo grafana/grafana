@@ -19,6 +19,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   fontSizes: any[];
   unitFormats: any[];
   invalidGaugeRange: boolean;
+  panel: any;
+  events: any;
+  valueNameOptions: any[] = ['min','max','avg', 'current', 'total', 'name'];
 
   // Set and populate defaults
   panelDefaults = {
@@ -35,6 +38,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     valueMaps: [
       { value: 'null', op: '=', text: 'N/A' }
     ],
+    mappingTypes: [
+      {name: 'value to text', value: 1},
+      {name: 'range to text', value: 2},
+    ],
+    rangeMaps: [
+      { from: 'null', to: 'null', text: 'N/A' }
+    ],
+    mappingType: 1,
     nullPointMode: 'connected',
     valueName: 'avg',
     prefixFontSize: '50%',
@@ -73,6 +84,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   onInitEditMode() {
     this.fontSizes = ['20%', '30%','50%','70%','80%','100%', '110%', '120%', '150%', '170%', '200%'];
     this.addEditorTab('Options', 'public/app/plugins/panel/singlestat/editor.html', 2);
+    this.addEditorTab('Value Mappings', 'public/app/plugins/panel/singlestat/mappings.html', 3);
     this.unitFormats = kbn.getUnitFormats();
   }
 
@@ -177,9 +189,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       var lastPoint = _.last(this.series[0].datapoints);
       var lastValue = _.isArray(lastPoint) ? lastPoint[0] : null;
 
-      if (_.isString(lastValue)) {
+      if (this.panel.valueName === 'name') {
         data.value = 0;
-        data.valueFormated = lastValue;
+        data.valueRounded = 0;
+        data.valueFormated = this.series[0].alias;
+      } else if (_.isString(lastValue)) {
+        data.value = 0;
+        data.valueFormated = _.escape(lastValue);
         data.valueRounded = 0;
       } else {
         data.value = this.series[0].stats[this.panel.valueName];
@@ -190,25 +206,54 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.valueFormated = formatFunc(data.value, decimalInfo.decimals, decimalInfo.scaledDecimals);
         data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
       }
+
+      // Add $__name variable for using in prefix or postfix
+      data.scopedVars = {
+        __name: {
+          value: this.series[0].label
+        }
+      };
     }
 
-    // check value to text mappings
-    for (var i = 0; i < this.panel.valueMaps.length; i++) {
-      var map = this.panel.valueMaps[i];
-      // special null case
-      if (map.value === 'null') {
-        if (data.value === null || data.value === void 0) {
+    // check value to text mappings if its enabled
+    if (this.panel.mappingType === 1) {
+      for (var i = 0; i < this.panel.valueMaps.length; i++) {
+        var map = this.panel.valueMaps[i];
+        // special null case
+        if (map.value === 'null') {
+          if (data.value === null || data.value === void 0) {
+            data.valueFormated = map.text;
+            return;
+          }
+          continue;
+        }
+
+        // value/number to text mapping
+        var value = parseFloat(map.value);
+        if (value === data.valueRounded) {
           data.valueFormated = map.text;
           return;
         }
-        continue;
       }
+    } else if (this.panel.mappingType === 2) {
+      for (var i = 0; i < this.panel.rangeMaps.length; i++) {
+        var map = this.panel.rangeMaps[i];
+        // special null case
+        if (map.from === 'null' && map.to === 'null') {
+          if (data.value === null || data.value === void 0) {
+            data.valueFormated = map.text;
+            return;
+          }
+          continue;
+        }
 
-      // value/number to text mapping
-      var value = parseFloat(map.value);
-      if (value === data.valueRounded) {
-        data.valueFormated = map.text;
-        return;
+        // value/number to range mapping
+        var from = parseFloat(map.from);
+        var to = parseFloat(map.to);
+        if (to >= data.valueRounded && from <= data.valueRounded) {
+          data.valueFormated = map.text;
+          return;
+        }
       }
     }
 
@@ -225,6 +270,16 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
   addValueMap() {
     this.panel.valueMaps.push({value: '', op: '=', text: '' });
+  }
+
+  removeRangeMap(rangeMap) {
+    var index = _.indexOf(this.panel.rangeMaps, rangeMap);
+    this.panel.rangeMaps.splice(index, 1);
+    this.render();
+  };
+
+  addRangeMap() {
+    this.panel.rangeMaps.push({from: '', to: '', text: ''});
   }
 
   link(scope, elem, attrs, ctrl) {
@@ -255,7 +310,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function getSpan(className, fontSize, value)  {
-      value = templateSrv.replace(value);
+      value = templateSrv.replace(value, data.scopedVars);
       return '<span class="' + className + '" style="font-size:' + fontSize + '">' +
         value + '</span>';
     }
@@ -284,6 +339,9 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     }
 
     function addGauge() {
+      var width = elem.width();
+      var height = elem.height();
+
       ctrl.invalidGaugeRange = false;
       if (panel.gauge.minValue > panel.gauge.maxValue) {
         ctrl.invalidGaugeRange = true;
@@ -291,8 +349,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       }
 
       var plotCanvas = $('<div></div>');
-      var width = elem.width();
-      var height = elem.height();
       var plotCss = {
         top: '10px',
         margin: 'auto',
@@ -353,7 +409,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
             value: {
               color: panel.colorValue ? getColorForValue(data, data.valueRounded) : null,
               formatter: function() { return getValueText(); },
-              font: { size: fontSize, family: 'Helvetica Neue", Helvetica, Arial, sans-serif' }
+              font: { size: fontSize, family: '"Helvetica Neue", Helvetica, Arial, sans-serif' }
             },
             show: true
           }
