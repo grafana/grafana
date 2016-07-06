@@ -3,6 +3,7 @@
 import './graph';
 import './legend';
 import './series_overrides_ctrl';
+import './export_csv_ctrl';
 
 import template from './template';
 import angular from 'angular';
@@ -10,7 +11,6 @@ import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
-import * as fileExport from 'app/core/utils/file_export';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 
 class GraphCtrl extends MetricsPanelCtrl {
@@ -141,8 +141,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitPanelActions(actions) {
-    actions.push({text: 'Export CSV (series as rows)', click: 'ctrl.exportCsv()'});
-    actions.push({text: 'Export CSV (series as columns)', click: 'ctrl.exportCsvColumns()'});
+    actions.push({text: 'Export as CSV', click: 'ctrl.exportCsv()'});
     actions.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
   }
 
@@ -311,11 +310,13 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   exportCsv() {
-    fileExport.exportSeriesListToCsv(this.seriesList);
-  }
+    var csvScope = this.$scope.$new();
+    csvScope.seriesList = this.seriesList;
 
-  exportCsvColumns() {
-    fileExport.exportSeriesListToCsvColumns(this.seriesList);
+    this.publishAppEvent('show-modal', {
+      src: 'public/app/plugins/panel/graph/export_csv.html',
+      scope: csvScope
+    });
   }
 }
 
