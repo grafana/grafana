@@ -31,41 +31,59 @@ export class DashboardCtrl {
 
       $scope.setupDashboard = function(data) {
         try {
-          var dashboard = dashboardSrv.create(data.dashboard, data.meta);
-          dashboardSrv.setCurrent(dashboard);
-
-          // init services
-          timeSrv.init(dashboard);
-
-          // template values service needs to initialize completely before
-          // the rest of the dashboard can load
-          templateValuesSrv.init(dashboard).finally(function() {
-            dynamicDashboardSrv.init(dashboard);
-
-            unsavedChangesSrv.init(dashboard, $scope);
-
-            $scope.dashboard = dashboard;
-            $scope.dashboardMeta = dashboard.meta;
-            $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
-
-            dashboardKeybindings.shortcuts($scope);
-
-            $scope.updateSubmenuVisibility();
-            $scope.setWindowTitleAndTheme();
-
-            $scope.appEvent("dashboard-initialized", $scope.dashboard);
-          }).catch($scope.dashboardInitError.bind(this));
+          $scope.setupDashboardInternal(data);
         } catch (err) {
-          $scope.dashboardInitError(err);
+          $scope.onInitFailed(err, 'Dashboard init failed', true);
         }
       };
 
-      $scope.dashboardInitError = function(err) {
-        console.log('Dashboard init failed', err);
+      $scope.setupDashboardInternal = function(data) {
+        var dashboard = dashboardSrv.create(data.dashboard, data.meta);
+        dashboardSrv.setCurrent(dashboard);
+
+        // init services
+        timeSrv.init(dashboard);
+
+        // template values service needs to initialize completely before
+        // the rest of the dashboard can load
+        templateValuesSrv.init(dashboard)
+        // template values failes are non fatal
+        .catch($scope.onInitFailed.bind(this, 'Templating init failed', false))
+        // continue
+        .finally(function() {
+          dynamicDashboardSrv.init(dashboard);
+          unsavedChangesSrv.init(dashboard, $scope);
+
+          $scope.dashboard = dashboard;
+          $scope.dashboardMeta = dashboard.meta;
+          $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
+
+          dashboardKeybindings.shortcuts($scope);
+
+          $scope.updateSubmenuVisibility();
+          $scope.setWindowTitleAndTheme();
+
+          $scope.appEvent("dashboard-initialized", $scope.dashboard);
+        })
+        .catch($scope.onInitFailed.bind(this, 'Dashboard init failed', true));
+      };
+
+      $scope.onInitFailed = function(msg, fatal, err) {
+        console.log(msg, err);
+
         if (err.data && err.data.message) {
           err.message = err.data.message;
+        } else if (!err.message) {
+          err = {message: err.toString()};
         }
-        $scope.appEvent("alert-error", ['Dashboard init failed', err.message]);
+
+        $scope.appEvent("alert-error", [msg, err.message]);
+
+        // protect against  recursive fallbacks
+        if (fatal && !$scope.loadedFallbackDashboard) {
+          $scope.loadedFallbackDashboard = true;
+          $scope.setupDashboard({dashboard: {title: 'Dashboard Init failed'}});
+        }
       };
 
       $scope.templateVariableUpdated = function() {
