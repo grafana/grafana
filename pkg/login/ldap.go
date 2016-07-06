@@ -164,6 +164,7 @@ func (a *ldapAuther) syncUserInfo(user *m.User, ldapUser *ldapUserInfo) error {
 
 func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 	if len(a.server.LdapGroups) == 0 {
+		log.Warn("Ldap: no group mappings defined")
 		return nil
 	}
 
