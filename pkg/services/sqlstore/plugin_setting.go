@@ -13,14 +13,20 @@ func init() {
 	bus.AddHandler("sql", GetPluginSettings)
 	bus.AddHandler("sql", GetPluginSettingById)
 	bus.AddHandler("sql", UpdatePluginSetting)
+	bus.AddHandler("sql", UpdatePluginSettingVersion)
 }
 
 func GetPluginSettings(query *m.GetPluginSettingsQuery) error {
-	sql := `SELECT org_id, plugin_id, enabled, pinned
-					FROM plugin_setting
-					WHERE org_id=?`
+	sql := `SELECT org_id, plugin_id, enabled, pinned, plugin_version
+					FROM plugin_setting `
+	params := make([]interface{}, 0)
 
-	sess := x.Sql(sql, query.OrgId)
+	if query.OrgId != 0 {
+		sql += "WHERE org_id=?"
+		params = append(params, query.OrgId)
+	}
+
+	sess := x.Sql(sql, params...)
 	query.Result = make([]*m.PluginSettingInfoDTO, 0)
 	return sess.Find(&query.Result)
 }
@@ -51,6 +57,7 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 				Enabled:        cmd.Enabled,
 				Pinned:         cmd.Pinned,
 				JsonData:       cmd.JsonData,
+				PluginVersion:  cmd.PluginVersion,
 				SecureJsonData: cmd.GetEncryptedJsonData(),
 				Created:        time.Now(),
 				Updated:        time.Now(),
@@ -65,8 +72,18 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 			pluginSetting.Enabled = cmd.Enabled
 			pluginSetting.JsonData = cmd.JsonData
 			pluginSetting.Pinned = cmd.Pinned
+			pluginSetting.PluginVersion = cmd.PluginVersion
 			_, err = sess.Id(pluginSetting.Id).Update(&pluginSetting)
 			return err
 		}
+	})
+}
+
+func UpdatePluginSettingVersion(cmd *m.UpdatePluginSettingVersionCmd) error {
+	return inTransaction2(func(sess *session) error {
+
+		_, err := sess.Exec("UPDATE plugin_setting SET plugin_version=? WHERE org_id=? AND plugin_id=?", cmd.PluginVersion, cmd.OrgId, cmd.PluginId)
+		return err
+
 	})
 }
