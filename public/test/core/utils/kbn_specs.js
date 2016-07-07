@@ -161,4 +161,50 @@ define([
       expect(str).to.be('15ms');
     });
   });
+
+  describe('hex', function() {
+      it('positive integer', function() {
+	var str = kbn.valueFormats.hex(100, 0);
+	expect(str).to.be('64');
+      });
+      it('negative integer', function() {
+	var str = kbn.valueFormats.hex(-100, 0);
+	expect(str).to.be('-64');
+      });
+      it('null', function() {
+	var str = kbn.valueFormats.hex(null, 0);
+	expect(str).to.be('');
+      });
+      it('positive float', function() {
+	var str = kbn.valueFormats.hex(50.52, 1);
+	expect(str).to.be('32.8');
+      }); 
+      it('negative float', function() {
+	var str = kbn.valueFormats.hex(-50.333, 2);
+	expect(str).to.be('-32.547AE147AE14');
+      });
+  });
+
+  describe('hex 0x', function() {
+    it('positive integeter', function() {
+      var str = kbn.valueFormats.hex0x(7999,0);
+      expect(str).to.be('0x1F3F');
+    });
+    it('negative integer', function() {
+      var str = kbn.valueFormats.hex0x(-584,0);
+      expect(str).to.be('-0x248');
+    });
+    it('null', function() {
+      var str = kbn.valueFormats.hex0x(null, 0);
+      expect(str).to.be('');
+    });
+    it('positive float', function() {
+      var str = kbn.valueFormats.hex0x(74.443, 3);
+      expect(str).to.be('0x4A.716872B020C4');
+    });
+    it('negative float', function() {
+      var str = kbn.valueFormats.hex0x(-65.458, 1);
+      expect(str).to.be('-0x41.8');
+    });
+  });
 });
