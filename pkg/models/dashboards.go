@@ -26,11 +26,12 @@ var (
 
 // Dashboard model
 type Dashboard struct {
-	Id      int64
-	Slug    string
-	OrgId   int64
-	GnetId  int64
-	Version int
+	Id       int64
+	Slug     string
+	OrgId    int64
+	GnetId   int64
+	Version  int
+	PluginId string
 
 	Created time.Time
 	Updated time.Time
@@ -151,7 +152,13 @@ type GetDashboardTagsQuery struct {
 
 type GetDashboardsQuery struct {
 	DashboardIds []int64
-	Result       *[]Dashboard
+	Result       []*Dashboard
+}
+
+type GetDashboardsByPluginIdQuery struct {
+	OrgId    int64
+	PluginId string
+	Result   []*Dashboard
 }
 
 type GetDashboardSlugByIdQuery struct {

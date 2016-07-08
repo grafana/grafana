@@ -12,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -109,7 +110,7 @@ func DeleteDashboard(c *middleware.Context) {
 	c.JSON(200, resp)
 }
 
-func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
+func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	cmd.OrgId = c.OrgId
 
 	if !c.IsSignedIn {
@@ -122,35 +123,43 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 	if dash.Id == 0 {
 		limitReached, err := middleware.QuotaReached(c, "dashboard")
 		if err != nil {
-			c.JsonApiErr(500, "failed to get quota", err)
-			return
+			return ApiError(500, "failed to get quota", err)
 		}
 		if limitReached {
-			c.JsonApiErr(403, "Quota reached", nil)
-			return
+			return ApiError(403, "Quota reached", nil)
+		}
+	}
+
+	if !cmd.Overwrite {
+		if autoUpdate, exists := dash.Data.CheckGet("autoUpdate"); exists {
+			message := "Dashboard marked as auto updated."
+
+			if pluginId, err := autoUpdate.Get("pluginId").String(); err == nil {
+				if pluginDef, ok := plugins.Plugins[pluginId]; ok {
+					message = "Dashboard updated automatically when plugin " + pluginDef.Name + " is updated."
+				}
+			}
+
+			return Json(412, util.DynMap{"status": "auto-update-dashboard", "message": message})
 		}
 	}
 
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		if err == m.ErrDashboardWithSameNameExists {
-			c.JSON(412, util.DynMap{"status": "name-exists", "message": err.Error()})
-			return
+			return Json(412, util.DynMap{"status": "name-exists", "message": err.Error()})
 		}
 		if err == m.ErrDashboardVersionMismatch {
-			c.JSON(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
-			return
+			return Json(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
 		}
 		if err == m.ErrDashboardNotFound {
-			c.JSON(404, util.DynMap{"status": "not-found", "message": err.Error()})
-			return
+			return Json(404, util.DynMap{"status": "not-found", "message": err.Error()})
 		}
-		c.JsonApiErr(500, "Failed to save dashboard", err)
-		return
+		return ApiError(500, "Failed to save dashboard", err)
 	}
 
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)
-	c.JSON(200, util.DynMap{"status": "success", "slug": cmd.Result.Slug, "version": cmd.Result.Version})
+	return Json(200, util.DynMap{"status": "success", "slug": cmd.Result.Slug, "version": cmd.Result.Version})
 }
 
 func canEditDashboard(role m.RoleType) bool {

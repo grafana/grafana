@@ -19,6 +19,7 @@ func init() {
 	bus.AddHandler("sql", SearchDashboards)
 	bus.AddHandler("sql", GetDashboardTags)
 	bus.AddHandler("sql", GetDashboardSlugById)
+	bus.AddHandler("sql", GetDashboardsByPluginId)
 }
 
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
@@ -245,10 +246,23 @@ func GetDashboards(query *m.GetDashboardsQuery) error {
 		return m.ErrCommandValidationFailed
 	}
 
-	var dashboards = make([]m.Dashboard, 0)
+	var dashboards = make([]*m.Dashboard, 0)
 
 	err := x.In("id", query.DashboardIds).Find(&dashboards)
-	query.Result = &dashboards
+	query.Result = dashboards
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetDashboardsByPluginId(query *m.GetDashboardsByPluginIdQuery) error {
+	var dashboards = make([]*m.Dashboard, 0)
+
+	err := x.Where("org_id=? AND plugin_id=?", query.OrgId, query.PluginId).Find(&dashboards)
+	query.Result = dashboards
 
 	if err != nil {
 		return err

@@ -18,6 +18,7 @@ type PluginDashboardInfoDTO struct {
 	Revision         int64  `json:"revision"`
 	Description      string `json:"description"`
 	Path             string `json:"path"`
+	Removed          bool
 }
 
 func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDTO, error) {
@@ -29,14 +30,40 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 
 	result := make([]*PluginDashboardInfoDTO, 0)
 
+	// load current dashboards
+	query := m.GetDashboardsByPluginIdQuery{OrgId: orgId, PluginId: pluginId}
+	if err := bus.Dispatch(&query); err != nil {
+		return nil, err
+	}
+
 	for _, include := range plugin.Includes {
-		if include.Type == PluginTypeDashboard {
-			if dashInfo, err := getDashboardImportStatus(orgId, plugin, include.Path); err != nil {
-				return nil, err
-			} else {
-				result = append(result, dashInfo)
+		if include.Type != PluginTypeDashboard {
+			continue
+		}
+
+		res := &PluginDashboardInfoDTO{}
+		var dashboard *m.Dashboard
+		var err error
+
+		if dashboard, err = loadPluginDashboard(plugin.Id, include.Path); err != nil {
+			return nil, err
+		}
+
+		res.Path = include.Path
+		res.PluginId = plugin.Id
+		res.Title = dashboard.Title
+		res.Revision = dashboard.Data.Get("revision").MustInt64(1)
+
+		// find existing dashboard
+		for _, existingDash := range query.Result {
+			if existingDash.Slug == dashboard.Slug {
+				res.Imported = true
+				res.ImportedUri = "db/" + existingDash.Slug
+				res.ImportedRevision = existingDash.Data.Get("revision").MustInt64(1)
 			}
 		}
+
+		result = append(result, res)
 	}
 
 	return result, nil

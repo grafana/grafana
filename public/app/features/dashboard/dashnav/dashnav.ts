@@ -134,6 +134,21 @@ export class DashNavCtrl {
           }
         });
       }
+
+      if (err.data && err.data.status === "auto-update-dashboard") {
+        err.isHandled = true;
+
+        $scope.appEvent('confirm-modal', {
+          title: 'Auto Update Dashboard',
+          text: err.data.message,
+          text2: 'Use Save As... to create copy or ignore this warning.',
+          yesText: "Save & Overwrite",
+          icon: "fa-warning",
+          onConfirm: function() {
+            $scope.saveDashboard({overwrite: true});
+          }
+        });
+      }
     };
 
     $scope.deleteDashboard = function() {
