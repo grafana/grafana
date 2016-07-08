@@ -46,6 +46,11 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 					return m.ErrDashboardVersionMismatch
 				}
 			}
+
+			// do not allow plugin dashboard updates without overwrite flag
+			if existing.PluginId != "" && cmd.Overwrite == false {
+				return m.UpdatePluginDashboardError{PluginId: existing.PluginId}
+			}
 		}
 
 		sameTitleExists, err := sess.Where("org_id=? AND slug=?", dash.OrgId, dash.Slug).Get(&sameTitle)

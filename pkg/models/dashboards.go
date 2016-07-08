@@ -17,6 +17,14 @@ var (
 	ErrDashboardVersionMismatch    = errors.New("The dashboard has been changed by someone else")
 )
 
+type UpdatePluginDashboardError struct {
+	PluginId string
+}
+
+func (d UpdatePluginDashboardError) Error() string {
+	return "Dashboard belong to plugin"
+}
+
 var (
 	DashTypeJson     = "file"
 	DashTypeDB       = "db"

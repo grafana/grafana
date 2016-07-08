@@ -135,13 +135,13 @@ export class DashNavCtrl {
         });
       }
 
-      if (err.data && err.data.status === "auto-update-dashboard") {
+      if (err.data && err.data.status === "plugin-dashboard") {
         err.isHandled = true;
 
         $scope.appEvent('confirm-modal', {
-          title: 'Auto Update Dashboard',
+          title: 'Plugin Dashboard',
           text: err.data.message,
-          text2: 'Use Save As... to create copy or ignore this warning.',
+          text2: 'Your changes will be overwritten next time you update the plugin. Use Save As to create custom version.',
           yesText: "Save & Overwrite",
           icon: "fa-warning",
           onConfirm: function() {

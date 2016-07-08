@@ -130,20 +130,6 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		}
 	}
 
-	if !cmd.Overwrite {
-		if autoUpdate, exists := dash.Data.CheckGet("autoUpdate"); exists {
-			message := "Dashboard marked as auto updated."
-
-			if pluginId, err := autoUpdate.Get("pluginId").String(); err == nil {
-				if pluginDef, ok := plugins.Plugins[pluginId]; ok {
-					message = "Dashboard updated automatically when plugin " + pluginDef.Name + " is updated."
-				}
-			}
-
-			return Json(412, util.DynMap{"status": "auto-update-dashboard", "message": message})
-		}
-	}
-
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		if err == m.ErrDashboardWithSameNameExists {
@@ -151,6 +137,14 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		}
 		if err == m.ErrDashboardVersionMismatch {
 			return Json(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
+		}
+		if pluginErr, ok := err.(m.UpdatePluginDashboardError); ok {
+			message := "Dashboard is belongs to plugin " + pluginErr.PluginId + "."
+			// look up plugin name
+			if pluginDef, exist := plugins.Plugins[pluginErr.PluginId]; exist {
+				message = "Dashboard is belongs to plugin " + pluginDef.Name + "."
+			}
+			return Json(412, util.DynMap{"status": "plugin-dashboard", "message": message})
 		}
 		if err == m.ErrDashboardNotFound {
 			return Json(404, util.DynMap{"status": "not-found", "message": err.Error()})
