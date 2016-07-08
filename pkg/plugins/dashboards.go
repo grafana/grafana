@@ -14,6 +14,7 @@ type PluginDashboardInfoDTO struct {
 	Title            string `json:"title"`
 	Imported         bool   `json:"imported"`
 	ImportedUri      string `json:"importedUri"`
+	Slug             string `json:"slug"`
 	ImportedRevision int64  `json:"importedRevision"`
 	Revision         int64  `json:"revision"`
 	Description      string `json:"description"`
@@ -35,6 +36,8 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}
+
+	existingMatches := make(map[int64]bool)
 
 	for _, include := range plugin.Includes {
 		if include.Type != PluginTypeDashboard {
@@ -60,10 +63,21 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 				res.Imported = true
 				res.ImportedUri = "db/" + existingDash.Slug
 				res.ImportedRevision = existingDash.Data.Get("revision").MustInt64(1)
+				existingMatches[existingDash.Id] = true
 			}
 		}
 
 		result = append(result, res)
+	}
+
+	// find deleted dashboards
+	for _, dash := range query.Result {
+		if _, exists := existingMatches[dash.Id]; !exists {
+			result = append(result, &PluginDashboardInfoDTO{
+				Slug:    dash.Slug,
+				Removed: true,
+			})
+		}
 	}
 
 	return result, nil

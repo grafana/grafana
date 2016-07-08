@@ -62,17 +62,33 @@ func syncPluginDashboards(pluginDef *PluginBase, orgId int64) {
 	plog.Info("Syncing plugin dashboards to DB", "pluginId", pluginDef.Id)
 
 	// Get plugin dashboards
-	if dashboards, err := GetPluginDashboards(orgId, pluginDef.Id); err != nil {
+	dashboards, err := GetPluginDashboards(orgId, pluginDef.Id)
+
+	if err != nil {
 		plog.Error("Failed to load app dashboards", "error", err)
 		return
-	} else {
-		// Update dashboards with updated revisions
-		for _, dash := range dashboards {
-			if dash.ImportedRevision != dash.Revision {
-				if err := autoUpdateAppDashboard(dash, orgId); err != nil {
-					plog.Error("Failed to auto update app dashboard", "pluginId", pluginDef.Id, "error", err)
-					return
-				}
+	}
+
+	// Update dashboards with updated revisions
+	for _, dash := range dashboards {
+		// remove removed ones
+		if dash.Removed {
+			plog.Info("Deleting plugin dashboard", "pluginId", pluginDef.Id, "dashboard", dash.Slug)
+
+			deleteCmd := m.DeleteDashboardCommand{OrgId: orgId, Slug: dash.Slug}
+			if err := bus.Dispatch(&deleteCmd); err != nil {
+				plog.Error("Failed to auto update app dashboard", "pluginId", pluginDef.Id, "error", err)
+				return
+			}
+
+			continue
+		}
+
+		// update updated ones
+		if dash.ImportedRevision != dash.Revision {
+			if err := autoUpdateAppDashboard(dash, orgId); err != nil {
+				plog.Error("Failed to auto update app dashboard", "pluginId", pluginDef.Id, "error", err)
+				return
 			}
 		}
 	}
