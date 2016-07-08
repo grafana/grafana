@@ -105,33 +105,3 @@ func loadPluginDashboard(pluginId, path string) (*m.Dashboard, error) {
 
 	return m.NewDashboardFromJson(data), nil
 }
-
-func getDashboardImportStatus(orgId int64, plugin *PluginBase, path string) (*PluginDashboardInfoDTO, error) {
-	res := &PluginDashboardInfoDTO{}
-
-	var dashboard *m.Dashboard
-	var err error
-
-	if dashboard, err = loadPluginDashboard(plugin.Id, path); err != nil {
-		return nil, err
-	}
-
-	res.Path = path
-	res.PluginId = plugin.Id
-	res.Title = dashboard.Title
-	res.Revision = dashboard.Data.Get("revision").MustInt64(1)
-
-	query := m.GetDashboardQuery{OrgId: orgId, Slug: dashboard.Slug}
-
-	if err := bus.Dispatch(&query); err != nil {
-		if err != m.ErrDashboardNotFound {
-			return nil, err
-		}
-	} else {
-		res.Imported = true
-		res.ImportedUri = "db/" + query.Result.Slug
-		res.ImportedRevision = query.Result.Data.Get("revision").MustInt64(1)
-	}
-
-	return res, nil
-}
