@@ -53,7 +53,7 @@
     "phantomjs-prebuilt": "^2.1.7",
     "reflect-metadata": "0.1.2",
     "rxjs": "5.0.0-beta.4",
-    "sass-lint": "^1.6.0",
+    "sass-lint": "^1.8.2",
     "systemjs": "0.19.24"
   },
   "engines": {
@@ -69,7 +69,7 @@
   "dependencies": {
     "eventemitter3": "^1.2.0",
     "grunt-jscs": "~1.5.x",
-    "grunt-sass-lint": "^0.1.0",
+    "grunt-sass-lint": "^0.2.0",
     "grunt-sync": "^0.4.1",
     "karma-sinon": "^1.0.3",
     "lodash": "^2.4.1",
