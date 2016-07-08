@@ -38,10 +38,7 @@ func TestPluginDashboards(t *testing.T) {
 			data.Set("revision", 22)
 
 			query.Result = []*m.Dashboard{
-				&m.Dashboard{
-					Slug: "nginx-connections",
-					Data: data,
-				},
+				{Slug: "nginx-connections", Data: data},
 			}
 			return nil
 		})
