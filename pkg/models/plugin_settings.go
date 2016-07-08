@@ -86,3 +86,9 @@ type GetPluginSettingByIdQuery struct {
 	OrgId    int64
 	Result   *PluginSetting
 }
+
+type PluginStateChangedEvent struct {
+	PluginId string
+	OrgId    int64
+	Enabled  bool
+}

@@ -96,6 +96,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 
 	dash.UpdatedBy = cmd.UserId
 	dash.OrgId = cmd.OrgId
+	dash.PluginId = cmd.PluginId
 	dash.UpdateSlug()
 	return dash
 }
@@ -120,6 +121,7 @@ type SaveDashboardCommand struct {
 	UserId    int64            `json:"userId"`
 	OrgId     int64            `json:"-"`
 	Overwrite bool             `json:"overwrite"`
+	PluginId  string           `json:"-"`
 
 	Result *Dashboard
 }

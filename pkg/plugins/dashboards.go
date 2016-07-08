@@ -18,7 +18,7 @@ type PluginDashboardInfoDTO struct {
 	Revision         int64  `json:"revision"`
 	Description      string `json:"description"`
 	Path             string `json:"path"`
-	Removed          bool
+	Removed          bool   `json:"removed"`
 }
 
 func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDTO, error) {

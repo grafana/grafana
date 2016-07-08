@@ -7,6 +7,10 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
+func init() {
+	bus.AddEventListener(handlePluginStateChanged)
+}
+
 func updateAppDashboards() {
 	time.Sleep(time.Second * 1)
 
@@ -20,9 +24,14 @@ func updateAppDashboards() {
 	}
 
 	for _, pluginSetting := range query.Result {
-		if appDef, exist := Apps[pluginSetting.PluginId]; exist {
-			if appDef.Info.Version != pluginSetting.PluginVersion {
-				handleAppPluginUpdated(appDef, pluginSetting.OrgId)
+		// ignore disabled plugins
+		if !pluginSetting.Enabled {
+			continue
+		}
+
+		if pluginDef, exist := Plugins[pluginSetting.PluginId]; exist {
+			if pluginDef.Info.Version != pluginSetting.PluginVersion {
+				syncPluginDashboards(pluginDef, pluginSetting.OrgId)
 			}
 		}
 	}
@@ -49,11 +58,11 @@ func autoUpdateAppDashboard(pluginDashInfo *PluginDashboardInfoDTO, orgId int64)
 	return nil
 }
 
-func handleAppPluginUpdated(appDef *AppPlugin, orgId int64) {
-	plog.Info("App update detected", "pluginId", appDef.Id)
+func syncPluginDashboards(pluginDef *PluginBase, orgId int64) {
+	plog.Info("Syncing plugin dashboards to DB", "pluginId", pluginDef.Id)
 
 	// Get plugin dashboards
-	if dashboards, err := GetPluginDashboards(orgId, appDef.Id); err != nil {
+	if dashboards, err := GetPluginDashboards(orgId, pluginDef.Id); err != nil {
 		plog.Error("Failed to load app dashboards", "error", err)
 		return
 	} else {
@@ -61,7 +70,7 @@ func handleAppPluginUpdated(appDef *AppPlugin, orgId int64) {
 		for _, dash := range dashboards {
 			if dash.ImportedRevision != dash.Revision {
 				if err := autoUpdateAppDashboard(dash, orgId); err != nil {
-					plog.Error("Failed to auto update app dashboard", "pluginId", appDef.Id, "error", err)
+					plog.Error("Failed to auto update app dashboard", "pluginId", pluginDef.Id, "error", err)
 					return
 				}
 			}
@@ -69,7 +78,7 @@ func handleAppPluginUpdated(appDef *AppPlugin, orgId int64) {
 	}
 
 	// update version in plugin_setting table to mark that we have processed the update
-	query := m.GetPluginSettingByIdQuery{PluginId: appDef.Id, OrgId: orgId}
+	query := m.GetPluginSettingByIdQuery{PluginId: pluginDef.Id, OrgId: orgId}
 	if err := bus.Dispatch(&query); err != nil {
 		plog.Error("Failed to read plugin setting by id", "error", err)
 		return
@@ -79,10 +88,36 @@ func handleAppPluginUpdated(appDef *AppPlugin, orgId int64) {
 	cmd := m.UpdatePluginSettingVersionCmd{
 		OrgId:         appSetting.OrgId,
 		PluginId:      appSetting.PluginId,
-		PluginVersion: appDef.Info.Version,
+		PluginVersion: pluginDef.Info.Version,
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		plog.Error("Failed to update plugin setting version", "error", err)
 	}
+}
+
+func handlePluginStateChanged(event *m.PluginStateChangedEvent) error {
+	plog.Info("Plugin state changed", "pluginId", event.PluginId, "enabled", event.Enabled)
+
+	if event.Enabled {
+		syncPluginDashboards(Plugins[event.PluginId], event.OrgId)
+	} else {
+		query := m.GetDashboardsByPluginIdQuery{PluginId: event.PluginId, OrgId: event.OrgId}
+
+		if err := bus.Dispatch(&query); err != nil {
+			return err
+		} else {
+			for _, dash := range query.Result {
+				deleteCmd := m.DeleteDashboardCommand{OrgId: dash.OrgId, Slug: dash.Slug}
+
+				plog.Info("Deleting plugin dashboard", "pluginId", event.PluginId, "dashboard", dash.Slug)
+
+				if err := bus.Dispatch(&deleteCmd); err != nil {
+					return err
+				}
+			}
+		}
+	}
+
+	return nil
 }
