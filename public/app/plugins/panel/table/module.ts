@@ -45,7 +45,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private annotationsSrv) {
+  constructor($scope, $injector, private annotationsSrv, private $sanitize) {
     super($scope, $injector);
     this.pageIndex = 0;
 
@@ -159,7 +159,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     function appendTableRows(tbodyElem) {
-      var renderer = new TableRenderer(panel, data, ctrl.dashboard.isTimezoneUtc());
+      var renderer = new TableRenderer(panel, data, ctrl.dashboard.isTimezoneUtc(), ctrl.$sanitize);
       tbodyElem.empty();
       tbodyElem.html(renderer.render(ctrl.pageIndex));
     }

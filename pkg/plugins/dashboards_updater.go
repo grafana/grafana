@@ -12,7 +12,7 @@ func init() {
 }
 
 func updateAppDashboards() {
-	time.Sleep(time.Second * 1)
+	time.Sleep(time.Second * 5)
 
 	plog.Debug("Looking for App Dashboard Updates")
 

@@ -8,7 +8,7 @@ export class TableRenderer {
   formaters: any[];
   colorState: any;
 
-  constructor(private panel, private table, private isUtc) {
+  constructor(private panel, private table, private isUtc, private sanitize) {
     this.formaters = [];
     this.colorState = {};
   }
@@ -24,7 +24,7 @@ export class TableRenderer {
     return _.first(style.colors);
   }
 
-  defaultCellFormater(v) {
+  defaultCellFormater(v, style) {
     if (v === null || v === void 0 || v === undefined) {
       return '';
     }
@@ -33,7 +33,11 @@ export class TableRenderer {
       v = v.join(', ');
     }
 
-    return v;
+    if (style && style.sanitize) {
+      return this.sanitize(v);
+    } else {
+      return _.escape(v);
+    }
   }
 
   createColumnFormater(style, column) {
@@ -61,7 +65,7 @@ export class TableRenderer {
         }
 
         if (_.isString(v)) {
-          return v;
+          return this.defaultCellFormater(v, style);
         }
 
         if (style.colorMode) {
@@ -72,7 +76,9 @@ export class TableRenderer {
       };
     }
 
-    return this.defaultCellFormater;
+    return (value) => {
+      return this.defaultCellFormater(value, style);
+    };
   }
 
   formatColumnValue(colIndex, value) {
@@ -96,7 +102,6 @@ export class TableRenderer {
 
   renderCell(columnIndex, value, addWidthHack = false) {
     value = this.formatColumnValue(columnIndex, value);
-    value = _.escape(value);
     var style = '';
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + ';color: white"';

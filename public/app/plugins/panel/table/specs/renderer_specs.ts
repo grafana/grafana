@@ -13,6 +13,7 @@ describe('when rendering table', () => {
       {text: 'Undefined'},
       {text: 'String'},
       {text: 'United', unit: 'bps'},
+      {text: 'Sanitized'},
     ];
 
     var panel = {
@@ -47,11 +48,20 @@ describe('when rendering table', () => {
           type: 'number',
           unit: 'ms',
           decimals: 2,
+        },
+        {
+          pattern: 'Sanitized',
+          type: 'string',
+          sanitize: true,
         }
       ]
     };
 
-    var renderer = new TableRenderer(panel, table, 'utc');
+    var sanitize = function(value) {
+      return 'sanitized';
+    };
+
+    var renderer = new TableRenderer(panel, table, 'utc', sanitize);
 
     it('time column should be formated', () => {
       var html = renderer.renderCell(0, 1388556366666);
@@ -106,6 +116,11 @@ describe('when rendering table', () => {
     it('undefined value should render as -', () => {
       var html = renderer.renderCell(3, undefined);
       expect(html).to.be('<td></td>');
+    });
+
+    it('sanitized value should render as', () => {
+      var html = renderer.renderCell(6, 'text <a href="http://google.com">link</a>');
+      expect(html).to.be('<td>sanitized</td>');
     });
   });
 });
