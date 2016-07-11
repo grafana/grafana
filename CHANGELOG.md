@@ -8,8 +8,10 @@
 
 # 3.1.0 stable (unreleased)
 
-### Bugfixes
+### Bugfixes & Enhancements,
 * **User Alert Notices**: Backend error alert popups did not show properly, fixes [#5435](https://github.com/grafana/grafana/issues/5435)
+* **Table**: Added sanitize HTML option to allow links in table cells, fixes [#4596](https://github.com/grafana/grafana/issues/4596)
+* **Apps**: App dashboards are automatically synced to DB at startup after plugin update, fixes [#5529](https://github.com/grafana/grafana/issues/5529)
 
 # 3.1.0-beta1 (2016-06-23)
 
