@@ -98,7 +98,6 @@ export class TableRenderer {
 
   renderCell(columnIndex, value, addWidthHack = false, rowLink = '') {
     value = this.formatColumnValue(columnIndex, value);
-    value = _.escape(value);
     var style = '';
 
     if (rowLink !== '') {
