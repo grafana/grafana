@@ -134,6 +134,21 @@ export class DashNavCtrl {
           }
         });
       }
+
+      if (err.data && err.data.status === "plugin-dashboard") {
+        err.isHandled = true;
+
+        $scope.appEvent('confirm-modal', {
+          title: 'Plugin Dashboard',
+          text: err.data.message,
+          text2: 'Your changes will be overwritten next time you update the plugin. Use Save As to create custom version.',
+          yesText: "Save & Overwrite",
+          icon: "fa-warning",
+          onConfirm: function() {
+            $scope.saveDashboard({overwrite: true});
+          }
+        });
+      }
     };
 
     $scope.deleteDashboard = function() {
