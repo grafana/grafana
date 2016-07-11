@@ -1,9 +1,10 @@
 define([
   'angular',
   'lodash',
+  'jquery',
   'app/core/utils/kbn',
 ],
-function (angular, _, kbn) {
+function (angular, _, $, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -27,7 +28,16 @@ function (angular, _, kbn) {
         .filter(function(variable) {
           return variable.refresh === 2;
         }).map(function(variable) {
-          return self.updateOptions(variable);
+          var previousOptions = variable.options.slice();
+
+          return self.updateOptions(variable).then(function () {
+            return self.variableUpdated(variable).then(function () {
+              // check if current options changed due to refresh
+              if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
+                $rootScope.appEvent('template-variable-value-updated');
+              }
+            });
+          });
         });
 
       return $q.all(promises);
@@ -35,6 +45,7 @@ function (angular, _, kbn) {
     }, $rootScope);
 
     this.init = function(dashboard) {
+      this.dashboard = dashboard;
       this.variables = dashboard.templating.list;
       templateSrv.init(this.variables);
 
@@ -145,7 +156,7 @@ function (angular, _, kbn) {
 
     this.variableUpdated = function(variable) {
       templateSrv.updateTemplateData();
-      return this.updateOptionsInChildVariables(variable);
+      return self.updateOptionsInChildVariables(variable);
     };
 
     this.updateOptionsInChildVariables = function(updatedVariable) {

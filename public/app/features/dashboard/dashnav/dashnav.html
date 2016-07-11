@@ -46,6 +46,9 @@
 	<li ng-show="::dashboardMeta.canSave">
 		<a ng-click="saveDashboard()" bs-tooltip="'Save dashboard <br> CTRL+S'" data-placement="bottom"><i class="fa fa-save"></i></a>
 	</li>
+	<li ng-if="dashboard.snapshot.originalUrl">
+		<a ng-href="{{dashboard.snapshot.originalUrl}}" bs-tooltip="'Open original dashboard'" data-placement="bottom"><i class="fa fa-link"></i></a>
+	</li>
 	<li ng-if="::showSettingsMenu" class="dropdown">
 		<a class="pointer" ng-click="hideTooltip($event)" bs-tooltip="'Manage dashboard'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-cog"></i></a>
 		<ul class="dropdown-menu">

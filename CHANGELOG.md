@@ -1,3 +1,18 @@
+# 4.0-pre (unreleased)
+
+### Enhancements
+* **Login**: Adds option to disable username/password logins, closes [#4674](https://github.com/grafana/grafana/issues/4674)
+* **SingleStat**: Add seriename as option in singlestat panel, closes [#4740](https://github.com/grafana/grafana/issues/4740)
+* **Localization**: Week start day now dependant on browser locale setting, closes [#3003](https://github.com/grafana/grafana/issues/3003)
+* **Templating**: Update panel repeats for variables that change on time refresh, closes [#5021](https://github.com/grafana/grafana/issues/5021)
+
+# 3.1.0 stable (unreleased)
+
+### Bugfixes & Enhancements,
+* **User Alert Notices**: Backend error alert popups did not show properly, fixes [#5435](https://github.com/grafana/grafana/issues/5435)
+* **Table**: Added sanitize HTML option to allow links in table cells, fixes [#4596](https://github.com/grafana/grafana/issues/4596)
+* **Apps**: App dashboards are automatically synced to DB at startup after plugin update, fixes [#5529](https://github.com/grafana/grafana/issues/5529)
+
 # 3.1.0-beta1 (2016-06-23)
 
 ### Enhancements
@@ -11,8 +26,8 @@
 * **InfluxDB**: Add spread function, closes [#5211](https://github.com/grafana/grafana/issues/5211)
 * **Scripts**: Use restart instead of start for deb package script, closes [#5282](https://github.com/grafana/grafana/pull/5282)
 * **Logging**: Moved to structured logging lib, and moved to component specific level filters via config file, closes [#4590](https://github.com/grafana/grafana/issues/4590)
-* **OpenTSDB**: Support nested template variables in tag_values function, closes [4398](https://github.com/grafana/grafana/issues/4398)
-* **Datasource**: Pending data source requests are cancelled before new ones are issues (Graphite & Prometheus), closes [5321](https://github.com/grafana/grafana/issues/5321)
+* **OpenTSDB**: Support nested template variables in tag_values function, closes [#4398](https://github.com/grafana/grafana/issues/4398)
+* **Datasource**: Pending data source requests are cancelled before new ones are issues (Graphite & Prometheus), closes [#5321](https://github.com/grafana/grafana/issues/5321)
 
 ### Breaking changes
 * **Logging** : Changed default logging output format (now structured into message, and key value pairs, with logger key acting as component). You can also no change in config to json log ouput.

@@ -1,6 +1,8 @@
 package api
 
 import (
+	"strings"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -21,6 +23,15 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	}
 	prefs := prefsQuery.Result
 
+	// Read locale from acccept-language
+	acceptLang := c.Req.Header.Get("Accept-Language")
+	locale := "en-US"
+
+	if len(acceptLang) > 0 {
+		parts := strings.Split(acceptLang, ",")
+		locale = parts[0]
+	}
+
 	var data = dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:             c.UserId,
@@ -35,6 +46,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			IsGrafanaAdmin: c.IsGrafanaAdmin,
 			LightTheme:     prefs.Theme == "light",
 			Timezone:       prefs.Timezone,
+			Locale:         locale,
 		},
 		Settings:                settings,
 		AppUrl:                  setting.AppUrl,

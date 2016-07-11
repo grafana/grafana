@@ -4,7 +4,7 @@
     "company": "Coding Instinct AB"
   },
   "name": "grafana",
-  "version": "3.2.0-pre1",
+  "version": "4.0.0-pre1",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -53,11 +53,11 @@
     "phantomjs-prebuilt": "^2.1.7",
     "reflect-metadata": "0.1.2",
     "rxjs": "5.0.0-beta.4",
-    "sass-lint": "^1.6.0",
+    "sass-lint": "^1.7.0",
     "systemjs": "0.19.24"
   },
   "engines": {
-    "node": "0.4.x",
+    "node": "4.x",
     "npm": "2.14.x"
   },
   "scripts": {
@@ -69,7 +69,7 @@
   "dependencies": {
     "eventemitter3": "^1.2.0",
     "grunt-jscs": "~1.5.x",
-    "grunt-sass-lint": "^0.1.0",
+    "grunt-sass-lint": "^0.2.0",
     "grunt-sync": "^0.4.1",
     "karma-sinon": "^1.0.3",
     "lodash": "^2.4.1",

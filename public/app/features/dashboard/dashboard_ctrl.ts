@@ -21,6 +21,7 @@ export class DashboardCtrl {
     dynamicDashboardSrv,
     dashboardViewStateSrv,
     contextSrv,
+    alertSrv,
     $timeout) {
 
       $scope.editor = { index: 0 };
@@ -29,6 +30,14 @@ export class DashboardCtrl {
       var resizeEventTimeout;
 
       $scope.setupDashboard = function(data) {
+        try {
+          $scope.setupDashboardInternal(data);
+        } catch (err) {
+          $scope.onInitFailed(err, 'Dashboard init failed', true);
+        }
+      };
+
+      $scope.setupDashboardInternal = function(data) {
         var dashboard = dashboardSrv.create(data.dashboard, data.meta);
         dashboardSrv.setCurrent(dashboard);
 
@@ -37,9 +46,12 @@ export class DashboardCtrl {
 
         // template values service needs to initialize completely before
         // the rest of the dashboard can load
-        templateValuesSrv.init(dashboard).finally(function() {
+        templateValuesSrv.init(dashboard)
+        // template values failes are non fatal
+        .catch($scope.onInitFailed.bind(this, 'Templating init failed', false))
+        // continue
+        .finally(function() {
           dynamicDashboardSrv.init(dashboard);
-
           unsavedChangesSrv.init(dashboard, $scope);
 
           $scope.dashboard = dashboard;
@@ -52,13 +64,30 @@ export class DashboardCtrl {
           $scope.setWindowTitleAndTheme();
 
           $scope.appEvent("dashboard-initialized", $scope.dashboard);
-        }).catch(function(err) {
-          if (err.data && err.data.message) { err.message = err.data.message; }
-          $scope.appEvent("alert-error", ['Dashboard init failed', 'Template variables could not be initialized: ' + err.message]);
-        });
+        })
+        .catch($scope.onInitFailed.bind(this, 'Dashboard init failed', true));
+      };
+
+      $scope.onInitFailed = function(msg, fatal, err) {
+        console.log(msg, err);
+
+        if (err.data && err.data.message) {
+          err.message = err.data.message;
+        } else if (!err.message) {
+          err = {message: err.toString()};
+        }
+
+        $scope.appEvent("alert-error", [msg, err.message]);
+
+        // protect against  recursive fallbacks
+        if (fatal && !$scope.loadedFallbackDashboard) {
+          $scope.loadedFallbackDashboard = true;
+          $scope.setupDashboard({dashboard: {title: 'Dashboard Init failed'}});
+        }
       };
 
       $scope.templateVariableUpdated = function() {
+        console.log('dynamic update');
         dynamicDashboardSrv.update($scope.dashboard);
       };
 

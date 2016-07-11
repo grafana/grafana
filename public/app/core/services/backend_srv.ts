@@ -87,7 +87,7 @@ export class BackendSrv {
         });
       }
 
-      this.$timeout(this.requestErrorHandler.bind(this), 50);
+      this.$timeout(this.requestErrorHandler.bind(this, err), 50);
       throw err;
     });
   };

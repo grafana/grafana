@@ -89,6 +89,7 @@ var (
 	VerifyEmailEnabled bool
 	LoginHint          string
 	DefaultTheme       string
+	AllowUserPassLogin bool
 
 	// Http auth
 	AdminUser     string
@@ -286,19 +287,19 @@ func evalConfigValues() {
 	}
 }
 
-func loadSpecifedConfigFile(configFile string) {
+func loadSpecifedConfigFile(configFile string) error {
 	if configFile == "" {
 		configFile = filepath.Join(HomePath, "conf/custom.ini")
 		// return without error if custom file does not exist
 		if !pathExists(configFile) {
-			return
+			return nil
 		}
 	}
 
 	userConfig, err := ini.Load(configFile)
 	userConfig.BlockMode = false
 	if err != nil {
-		log.Fatal(3, "Failed to parse %v, %v", configFile, err)
+		return fmt.Errorf("Failed to parse %v, %v", configFile, err)
 	}
 
 	for _, section := range userConfig.Sections() {
@@ -320,6 +321,7 @@ func loadSpecifedConfigFile(configFile string) {
 	}
 
 	configFiles = append(configFiles, configFile)
+	return nil
 }
 
 func loadConfiguration(args *CommandLineArgs) {
@@ -341,12 +343,12 @@ func loadConfiguration(args *CommandLineArgs) {
 	// load default overrides
 	applyCommandLineDefaultProperties(commandLineProps)
 
-	// init logging before specific config so we can log errors from here on
-	DataPath = makeAbsolute(Cfg.Section("paths").Key("data").String(), HomePath)
-	initLogging()
-
 	// load specified config file
-	loadSpecifedConfigFile(args.Config)
+	err = loadSpecifedConfigFile(args.Config)
+	if err != nil {
+		initLogging()
+		log.Fatal(3, err.Error())
+	}
 
 	// apply environment overrides
 	applyEnvVariableOverrides()
@@ -488,6 +490,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 	LoginHint = users.Key("login_hint").String()
 	DefaultTheme = users.Key("default_theme").String()
+	AllowUserPassLogin = users.Key("allow_user_pass_login").MustBool(true)
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)

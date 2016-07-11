@@ -77,7 +77,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
       var query: any = {};
       query.expr = templateSrv.replace(target.expr, options.scopedVars, self.interpolateQueryExpr);
-      query.requestId = target.expr;
+      query.requestId = options.panelId + target.refId;
 
       var interval = target.interval || options.interval;
       var intervalFactor = target.intervalFactor || 1;

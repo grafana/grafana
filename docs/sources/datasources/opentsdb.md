@@ -22,7 +22,7 @@ Name | Description
 Name | The data source name, important that this is the same as in Grafana v1.x if you plan to import old dashboards.
 Default | Default data source means that it will be pre-selected for new panels.
 Url | The http protocol, ip and port of you opentsdb server (default port is usually 4242)
-Access | Proxy = access via Grafana backend, Direct = access directory from browser.
+Access | Proxy = access via Grafana backend, Direct = access directly from browser.
 Version | Version = opentsdb version, either <=2.1 or 2.2
 Resolution | Metrics from opentsdb may have datapoints with either second or millisecond resolution.
 

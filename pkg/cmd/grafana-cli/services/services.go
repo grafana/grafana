@@ -75,9 +75,16 @@ func GetLocalPlugins(pluginDir string) []m.InstalledPlugin {
 	return result
 }
 
-func RemoveInstalledPlugin(pluginPath, id string) error {
-	logger.Infof("Removing plugin: %v\n", id)
-	return IoHelper.RemoveAll(path.Join(pluginPath, id))
+func RemoveInstalledPlugin(pluginPath, pluginName string) error {
+	logger.Infof("Removing plugin: %v\n", pluginName)
+	pluginDir := path.Join(pluginPath, pluginName)
+
+	_, err := IoHelper.Stat(pluginDir)
+	if err != nil {
+		return err
+	}
+
+	return IoHelper.RemoveAll(pluginDir)
 }
 
 func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
