@@ -77,3 +77,9 @@
     color: $link-hover-color;
   }
 }
+
+@include media-breakpoint-down(sm) {
+  .get-more-plugins-link {
+    display: none;
+  }
+}
