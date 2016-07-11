@@ -38,6 +38,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
         thresholds: [],
       }
     ],
+    rowLink: '',
     columns: [],
     scroll: true,
     fontSize: '100%',

@@ -13,6 +13,7 @@ describe('when rendering table', () => {
       {text: 'Undefined'},
       {text: 'String'},
       {text: 'United', unit: 'bps'},
+      {text: 'Sanitized'},
     ];
 
     var panel = {
@@ -47,6 +48,10 @@ describe('when rendering table', () => {
           type: 'number',
           unit: 'ms',
           decimals: 2,
+        },
+        {
+          pattern: 'Sanitized',
+          type: 'string',
         }
       ]
     };
