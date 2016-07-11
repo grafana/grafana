@@ -33,7 +33,7 @@ export class TableRenderer {
       v = v.join(', ');
     }
 
-    return v;
+    return _.escape(v);
   }
 
   createColumnFormater(style, column) {
