@@ -8,7 +8,7 @@ export class TableRenderer {
   formaters: any[];
   colorState: any;
 
-  constructor(private panel, private table, private isUtc) {
+  constructor(private panel, private table, private isUtc, private sanitize) {
     this.formaters = [];
     this.colorState = {};
   }
@@ -24,7 +24,7 @@ export class TableRenderer {
     return _.first(style.colors);
   }
 
-  defaultCellFormater(v) {
+  defaultCellFormater(v, style) {
     if (v === null || v === void 0 || v === undefined) {
       return '';
     }
@@ -33,7 +33,11 @@ export class TableRenderer {
       v = v.join(', ');
     }
 
-    return v;
+    if (style && style.sanitize) {
+      return this.sanitize(v);
+    } else {
+      return _.escape(v);
+    }
   }
 
   createColumnFormater(style, column) {
@@ -61,7 +65,7 @@ export class TableRenderer {
         }
 
         if (_.isString(v)) {
-          return v;
+          return this.defaultCellFormater(v, style);
         }
 
         if (style.colorMode) {
@@ -72,7 +76,9 @@ export class TableRenderer {
       };
     }
 
-    return this.defaultCellFormater;
+    return (value) => {
+      return this.defaultCellFormater(value, style);
+    };
   }
 
   formatColumnValue(colIndex, value) {
@@ -94,10 +100,14 @@ export class TableRenderer {
     return this.formaters[colIndex](value);
   }
 
-  renderCell(columnIndex, value, addWidthHack = false) {
+  renderCell(columnIndex, value, addWidthHack = false, rowLink = '') {
     value = this.formatColumnValue(columnIndex, value);
-    value = _.escape(value);
     var style = '';
+
+    if (rowLink !== '') {
+      value = '<a href="' + rowLink + '" target="_new">' + value + '</a>';
+    }
+
     if (this.colorState.cell) {
       style = ' style="background-color:' + this.colorState.cell + ';color: white"';
       this.colorState.cell = null;
@@ -121,14 +131,22 @@ export class TableRenderer {
     let pageSize = this.panel.pageSize || 100;
     let startPos = page * pageSize;
     let endPos = Math.min(startPos + pageSize, this.table.rows.length);
+    let rowLink = this.panel.rowLink;
     var html = "";
 
     for (var y = startPos; y < endPos; y++) {
       let row = this.table.rows[y];
       let cellHtml = '';
       let rowStyle = '';
+
+      if (rowLink) {
+        for (var i = 0; i < this.table.columns.length; i++) {
+          rowLink = rowLink.replace('$' + this.table.columns[i].text, _.escape(row[i]));
+        }
+      }
+
       for (var i = 0; i < this.table.columns.length; i++) {
-        cellHtml += this.renderCell(i, row[i], y === startPos);
+        cellHtml += this.renderCell(i, row[i], y === startPos, rowLink);
       }
 
       if (this.colorState.row) {
