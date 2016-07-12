@@ -139,10 +139,10 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 			return Json(412, util.DynMap{"status": "version-mismatch", "message": err.Error()})
 		}
 		if pluginErr, ok := err.(m.UpdatePluginDashboardError); ok {
-			message := "Dashboard is belongs to plugin " + pluginErr.PluginId + "."
+			message := "The dashboard belongs to plugin " + pluginErr.PluginId + "."
 			// look up plugin name
 			if pluginDef, exist := plugins.Plugins[pluginErr.PluginId]; exist {
-				message = "Dashboard is belongs to plugin " + pluginDef.Name + "."
+				message = "The dashboard belongs to plugin " + pluginDef.Name + "."
 			}
 			return Json(412, util.DynMap{"status": "plugin-dashboard", "message": message})
 		}
