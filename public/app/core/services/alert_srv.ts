@@ -73,6 +73,8 @@ export class AlertSrv {
     scope.text = payload.text;
     scope.text2 = payload.text2;
     scope.onConfirm = payload.onConfirm;
+    scope.onAltAction = payload.onAltAction;
+    scope.altActionText = payload.altActionText;
     scope.icon = payload.icon || "fa-check";
     scope.yesText = payload.yesText || "Yes";
     scope.noText = payload.noText || "Cancel";

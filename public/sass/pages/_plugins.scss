@@ -63,28 +63,23 @@
   }
 }
 
-// .app-edit-logo-box {
-//   padding: 1.2rem;
-//   background: $panel-bg;
-//   text-align: center;
-//   img {
-//     max-width: 7rem;
-//   }
-//   margin-right: 2rem;
-// }
-//
-// .app-edit-links {
-//   list-style: none;
-//   margin: 0 0 0 2rem;
-//
-//   li {
-//     background: $panel-bg;
-//     margin-top: 4px;
-//     padding: 0.2rem 1rem;
-//   }
-// }
-//
-// .app-edit-description {
-//   font-style: italic;
-//   margin-bottom: 1.5rem;
-// }
+.get-more-plugins-link {
+  color: $text-muted;
+  font-size: $font-size-sm;
+  padding-right: 7rem;
+  background: url(../img/grafana_net_logo.svg);
+  background-size: 6.5rem 3rem;
+  background-repeat: no-repeat;
+  background-position: right;
+  position: relative;
+  top: 1.2rem;
+  &:hover {
+    color: $link-hover-color;
+  }
+}
+
+@include media-breakpoint-down(sm) {
+  .get-more-plugins-link {
+    display: none;
+  }
+}

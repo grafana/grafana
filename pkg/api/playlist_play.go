@@ -18,7 +18,7 @@ func populateDashboardsById(dashboardByIds []int64) ([]m.PlaylistDashboardDto, e
 			return result, err
 		}
 
-		for _, item := range *dashboardQuery.Result {
+		for _, item := range dashboardQuery.Result {
 			result = append(result, m.PlaylistDashboardDto{
 				Id:    item.Id,
 				Slug:  item.Slug,
