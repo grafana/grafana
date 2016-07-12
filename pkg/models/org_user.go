@@ -20,22 +20,10 @@ const (
 	ROLE_EDITOR           RoleType = "Editor"
 	ROLE_READ_ONLY_EDITOR RoleType = "Read Only Editor"
 	ROLE_ADMIN            RoleType = "Admin"
-	ROLE_AGENT            RoleType = "Agent"
 )
 
 func (r RoleType) IsValid() bool {
-	return r == ROLE_VIEWER || r == ROLE_ADMIN || r == ROLE_EDITOR || r == ROLE_READ_ONLY_EDITOR || r == ROLE_AGENT
-}
-
-type ClientType string
-
-const (
-	CLIENT_APPLICATION ClientType = "Application"
-	CLIENT_AGENT       ClientType = "Agent"
-)
-
-func (c ClientType) IsValid() bool {
-	return c == CLIENT_APPLICATION || c == CLIENT_AGENT
+	return r == ROLE_VIEWER || r == ROLE_ADMIN || r == ROLE_EDITOR || r == ROLE_READ_ONLY_EDITOR
 }
 
 type OrgUser struct {

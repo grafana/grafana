@@ -9,8 +9,7 @@ function (angular) {
   module.controller('OrgApiKeysCtrl', function($scope, $http, backendSrv) {
 
     $scope.roleTypes = ['Viewer', 'Editor', 'Admin'];
-    $scope.clientTypes = ['Agent', 'Application'];
-    $scope.token = { role: 'Admin', client: 'Agent' };
+    $scope.token = { role: 'Admin' };
 
     $scope.init = function() {
       $scope.getTokens();

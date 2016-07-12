@@ -21,8 +21,7 @@ func GetApiKeys(c *middleware.Context) Response {
 			Id:     t.Id,
 			Name:   t.Name,
 			Role:   t.Role,
-			Client: t.Client,
-			Token:  t.Token,
+			Key:    t.Key,
 		}
 	}
 
@@ -46,15 +45,11 @@ func AddApiKey(c *middleware.Context, cmd m.AddApiKeyCommand) Response {
 	if !cmd.Role.IsValid() {
 		return ApiError(400, "Invalid role specified", nil)
 	}
-	if !cmd.Client.IsValid() {
-		return ApiError(400, "Invalid client specified", nil)
-	}
 
 	cmd.OrgId = c.OrgId
 
 	newKeyInfo := apikeygen.New(cmd.OrgId, cmd.Name)
 	cmd.Key = newKeyInfo.HashedKey
-	cmd.Token = newKeyInfo.ClientSecret
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to add API key", err)

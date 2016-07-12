@@ -88,7 +88,6 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			Email:         cmd.Email,
 			Name:          cmd.Name,
 			Login:         cmd.Login,
-			OrgName:       cmd.OrgName,
 			IsAdmin:       cmd.IsAdmin,
 			OrgId:         orgId,
 			EmailVerified: cmd.EmailVerified,

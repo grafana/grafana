@@ -12,9 +12,7 @@ type ApiKey struct {
 	OrgId   int64
 	Name    string
 	Key     string
-	Token   string
 	Role    RoleType
-	Client  ClientType
 	Created time.Time
 	Updated time.Time
 }
@@ -24,10 +22,8 @@ type ApiKey struct {
 type AddApiKeyCommand struct {
 	Name   string     `json:"name" binding:"Required"`
 	Role   RoleType   `json:"role" binding:"Required"`
-	Client ClientType `json:"client" binding:"Required"`
 	OrgId  int64      `json:"-"`
 	Key    string     `json:"-"`
-	Token  string     `json:"-"`
 
 	Result *ApiKey    `json:"-"`
 }
@@ -36,8 +32,7 @@ type UpdateApiKeyCommand struct {
 	Id     int64      `json:"id"`
 	Name   string     `json:"name"`
 	Role   RoleType   `json:"role"`
-	Client ClientType `json:"client"`
-  
+
 	OrgId  int64      `json:"-"`
 }
 
@@ -71,7 +66,6 @@ type GetApiKeyByIdQuery struct {
 type ApiKeyDTO struct {
 	Id     int64      `json:"id"`
 	Name   string     `json:"name"`
-	Token  string     `json:"token"`
 	Role   RoleType   `json:"role"`
-	Client ClientType `json:"client"`
+	Key    string     `json:"key"`
 }

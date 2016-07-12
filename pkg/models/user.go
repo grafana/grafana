@@ -19,7 +19,7 @@ type User struct {
 	Password      string
 	Salt          string
 	Rands         string
-	OrgName       string
+	Company       string
 	EmailVerified bool
 	Theme         string
 
@@ -47,6 +47,7 @@ type CreateUserCommand struct {
 	Email         string
 	Login         string
 	Name          string
+	Company       string
 	OrgName       string
 	Password      string
 	EmailVerified bool
@@ -149,9 +150,8 @@ type UserProfileDTO struct {
 	Name           string `json:"name"`
 	Login          string `json:"login"`
 	Theme          string `json:"theme"`
-	OrgId          int64  `json:"org_id"`
-	OrgName        string `json:"org_name"`
-	IsGrafanaAdmin bool   `json:"is_grafana_admin"`
+	OrgId          int64  `json:"orgId"`
+	IsGrafanaAdmin bool   `json:"isGrafanaAdmin"`
 }
 
 type UserSearchHitDTO struct {
@@ -159,5 +159,5 @@ type UserSearchHitDTO struct {
 	Name    string `json:"name"`
 	Login   string `json:"login"`
 	Email   string `json:"email"`
-	IsAdmin bool   `json:"is_admin"`
+	IsAdmin bool   `json:"isAdmin"`
 }

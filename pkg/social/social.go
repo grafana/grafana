@@ -20,7 +20,7 @@ type BasicUserInfo struct {
 	Name     string
 	Email    string
 	Login    string
-	OrgName  string
+	Company  string
 }
 
 type SocialConnector interface {
