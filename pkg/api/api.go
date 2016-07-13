@@ -245,7 +245,7 @@ func Register(r *macaron.Macaron) {
 		// metrics
 		r.Get("/metrics", wrap(GetInternalMetrics))
 
-		r.Group("/alerts", func() {
+		r.Group("/alerting", func() {
 			r.Group("/rules", func() {
 				r.Get("/:alertId/states", wrap(GetAlertStates))
 				//r.Put("/:alertId/state", bind(m.UpdateAlertStateCommand{}), wrap(PutAlertState))
@@ -262,8 +262,6 @@ func Register(r *macaron.Macaron) {
 				r.Get("/:notificationId", wrap(GetAlertNotificationById))
 				r.Delete("/:notificationId", wrap(DeleteAlertNotification))
 			}, reqOrgAdmin)
-
-			//r.Get("/changes", wrap(GetAlertChanges))
 		})
 
 		// error test

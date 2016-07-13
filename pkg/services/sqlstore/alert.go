@@ -151,17 +151,6 @@ func DeleteAlertDefinition(dashboardId int64, sess *xorm.Session) error {
 		}
 
 		sqlog.Debug("Alert deleted (due to dashboard deletion)", "name", alert.Name, "id", alert.Id)
-
-		cmd := &m.CreateAlertChangeCommand{
-			Type:             "DELETED",
-			UpdatedBy:        1,
-			AlertId:          alert.Id,
-			OrgId:            alert.OrgId,
-			NewAlertSettings: alert.Settings,
-		}
-		if err := SaveAlertChange(cmd, sess); err != nil {
-			return err
-		}
 	}
 
 	return nil
@@ -205,13 +194,6 @@ func upsertAlerts(alerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *xorm.Sessio
 				}
 
 				sqlog.Debug("Alert updated", "name", alert.Name, "id", alert.Id)
-				SaveAlertChange(&m.CreateAlertChangeCommand{
-					OrgId:            alert.OrgId,
-					AlertId:          alert.Id,
-					NewAlertSettings: alert.Settings,
-					UpdatedBy:        cmd.UserId,
-					Type:             "UPDATED",
-				}, sess)
 			}
 
 		} else {
@@ -224,13 +206,6 @@ func upsertAlerts(alerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *xorm.Sessio
 			}
 
 			sqlog.Debug("Alert inserted", "name", alert.Name, "id", alert.Id)
-			SaveAlertChange(&m.CreateAlertChangeCommand{
-				OrgId:            alert.OrgId,
-				AlertId:          alert.Id,
-				NewAlertSettings: alert.Settings,
-				UpdatedBy:        cmd.UserId,
-				Type:             "CREATED",
-			}, sess)
 		}
 	}
 
@@ -255,17 +230,6 @@ func deleteMissingAlerts(alerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *xorm
 			}
 
 			sqlog.Debug("Alert deleted", "name", missingAlert.Name, "id", missingAlert.Id)
-
-			SaveAlertChange(&m.CreateAlertChangeCommand{
-				OrgId:            missingAlert.OrgId,
-				AlertId:          missingAlert.Id,
-				NewAlertSettings: missingAlert.Settings,
-				UpdatedBy:        cmd.UserId,
-				Type:             "DELETED",
-			}, sess)
-			if err != nil {
-				return err
-			}
 		}
 	}
 

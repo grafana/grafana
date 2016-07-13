@@ -22,27 +22,6 @@ func ValidateOrgAlert(c *middleware.Context) {
 	}
 }
 
-// GET /api/alerting/changes
-func GetAlertChanges(c *middleware.Context) Response {
-	query := models.GetAlertChangesQuery{
-		OrgId: c.OrgId,
-	}
-
-	limit := c.QueryInt64("limit")
-	if limit == 0 {
-		limit = 50
-	}
-
-	query.Limit = limit
-	query.SinceId = c.QueryInt64("sinceId")
-
-	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "List alerts failed", err)
-	}
-
-	return Json(200, query.Result)
-}
-
 // GET /api/alerts/rules/
 func GetAlerts(c *middleware.Context) Response {
 	query := models.GetAlertsQuery{
