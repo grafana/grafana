@@ -24,19 +24,20 @@ func (aj *AlertJob) IncRetry() {
 
 type AlertResult struct {
 	State           string
-	ActualValue     float64
-	Duration        float64
 	TriggeredAlerts []*TriggeredAlert
-	Description     string
 	Error           error
-	AlertJob        *AlertJob
-	ExeuctionTime   time.Time
+	Description     string
+	StartTime       time.Time
+	EndTime         time.Time
+
+	AlertJob *AlertJob
 }
 
 type TriggeredAlert struct {
-	ActualValue float64
-	Name        string
-	State       string
+	Value  float64
+	Metric string
+	State  string
+	Tags   map[string]string
 }
 
 type Level struct {

@@ -19,6 +19,7 @@ type Engine struct {
 	ruleReader      RuleReader
 	log             log.Logger
 	responseHandler ResultHandler
+	alertJobTimeout time.Duration
 }
 
 func NewEngine() *Engine {
@@ -31,6 +32,7 @@ func NewEngine() *Engine {
 		ruleReader:      NewRuleReader(),
 		log:             log.New("alerting.engine"),
 		responseHandler: NewResultHandler(),
+		alertJobTimeout: time.Second * 5,
 	}
 
 	return e
@@ -87,24 +89,25 @@ func (e *Engine) execDispatch() {
 }
 
 func (e *Engine) executeJob(job *AlertJob) {
-	now := time.Now()
+	startTime := time.Now()
 
 	resultChan := make(chan *AlertResult, 1)
 	go e.handler.Execute(job, resultChan)
 
 	select {
-	case <-time.After(time.Second * 5):
+	case <-time.After(e.alertJobTimeout):
 		e.resultQueue <- &AlertResult{
-			State:         alertstates.Pending,
-			Duration:      float64(time.Since(now).Nanoseconds()) / float64(1000000),
-			Error:         fmt.Errorf("Timeout"),
-			AlertJob:      job,
-			ExeuctionTime: time.Now(),
+			State:     alertstates.Pending,
+			Error:     fmt.Errorf("Timeout"),
+			AlertJob:  job,
+			StartTime: startTime,
+			EndTime:   time.Now(),
 		}
+		close(resultChan)
 		e.log.Debug("Job Execution timeout", "alertRuleId", job.Rule.Id)
 	case result := <-resultChan:
-		result.Duration = float64(time.Since(now).Nanoseconds()) / float64(1000000)
-		e.log.Debug("Job Execution done", "timeTakenMs", result.Duration, "ruleId", job.Rule.Id)
+		duration := float64(result.EndTime.Nanosecond()-result.StartTime.Nanosecond()) / float64(1000000)
+		e.log.Debug("Job Execution done", "timeTakenMs", duration, "ruleId", job.Rule.Id)
 		e.resultQueue <- result
 	}
 }
@@ -117,7 +120,7 @@ func (e *Engine) resultHandler() {
 	}()
 
 	for result := range e.resultQueue {
-		e.log.Debug("Alert Rule Result", "ruleId", result.AlertJob.Rule.Id, "state", result.State, "value", result.ActualValue, "retry", result.AlertJob.RetryCount)
+		e.log.Debug("Alert Rule Result", "ruleId", result.AlertJob.Rule.Id, "state", result.State, "retry", result.AlertJob.RetryCount)
 
 		result.AlertJob.Running = false
 

@@ -24,7 +24,7 @@ export class AlertNotificationEditCtrl {
   }
 
   loadNotification(notificationId) {
-    this.backendSrv.get(`/api/alerts/notification/${notificationId}`).then(result => {
+    this.backendSrv.get(`/api/alert-notifications/${notificationId}`).then(result => {
       console.log(result);
       this.notification = result;
     });
@@ -37,7 +37,7 @@ export class AlertNotificationEditCtrl {
   save() {
     if (this.notification.id) {
       console.log('this.notification: ', this.notification);
-      this.backendSrv.put(`/api/alerts/notification/${this.notification.id}`, this.notification)
+      this.backendSrv.put(`/api/alert-notifications/${this.notification.id}`, this.notification)
         .then(result => {
           this.notification = result;
           this.$scope.appEvent('alert-success', ['Notification created!', '']);
@@ -45,7 +45,7 @@ export class AlertNotificationEditCtrl {
           this.$scope.appEvent('alert-error', ['Unable to create notification.', '']);
         });
     } else {
-      this.backendSrv.post(`/api/alerts/notification`, this.notification)
+      this.backendSrv.post(`/api/alert-notifications`, this.notification)
         .then(result => {
           this.notification = result;
           this.$scope.appEvent('alert-success', ['Notification updated!', '']);

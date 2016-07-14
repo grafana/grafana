@@ -26,18 +26,24 @@ func NewHandler() *HandlerImpl {
 }
 
 func (e *HandlerImpl) Execute(job *AlertJob, resultQueue chan *AlertResult) {
+	startTime := time.Now()
+
 	timeSeries, err := e.executeQuery(job)
 	if err != nil {
 		resultQueue <- &AlertResult{
-			Error:         err,
-			State:         alertstates.Pending,
-			AlertJob:      job,
-			ExeuctionTime: time.Now(),
+			Error:     err,
+			State:     alertstates.Pending,
+			AlertJob:  job,
+			StartTime: time.Now(),
+			EndTime:   time.Now(),
 		}
 	}
 
 	result := e.evaluateRule(job.Rule, timeSeries)
 	result.AlertJob = job
+	result.StartTime = startTime
+	result.EndTime = time.Now()
+
 	resultQueue <- result
 }
 
@@ -108,9 +114,9 @@ func (e *HandlerImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice)
 		e.log.Debug("Alert execution Crit", "name", serie.Name, "condition", condition2, "result", critResult)
 		if critResult {
 			triggeredAlert = append(triggeredAlert, &TriggeredAlert{
-				State:       alertstates.Critical,
-				ActualValue: transformedValue,
-				Name:        serie.Name,
+				State:  alertstates.Critical,
+				Value:  transformedValue,
+				Metric: serie.Name,
 			})
 			continue
 		}
@@ -120,9 +126,9 @@ func (e *HandlerImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice)
 		e.log.Debug("Alert execution Warn", "name", serie.Name, "condition", condition, "result", warnResult)
 		if warnResult {
 			triggeredAlert = append(triggeredAlert, &TriggeredAlert{
-				State:       alertstates.Warn,
-				ActualValue: transformedValue,
-				Name:        serie.Name,
+				State:  alertstates.Warn,
+				Value:  transformedValue,
+				Metric: serie.Name,
 			})
 		}
 	}
@@ -138,5 +144,5 @@ func (e *HandlerImpl) evaluateRule(rule *AlertRule, series tsdb.TimeSeriesSlice)
 		}
 	}
 
-	return &AlertResult{State: executionState, Description: "Returned " + executionState, TriggeredAlerts: triggeredAlert, ExeuctionTime: time.Now()}
+	return &AlertResult{State: executionState, TriggeredAlerts: triggeredAlert}
 }

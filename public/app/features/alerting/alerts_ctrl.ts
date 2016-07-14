@@ -49,7 +49,7 @@ export class AlertListCtrl {
       state: stats
     };
 
-    this.backendSrv.get('/api/alerts/rules', params).then(result => {
+    this.backendSrv.get('/api/alerts', params).then(result => {
       this.alerts = _.map(result, alert => {
         alert.iconCss = alertDef.getCssForState(alert.state);
         return alert;

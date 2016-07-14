@@ -60,7 +60,7 @@ func (handler *ResultHandlerImpl) shouldUpdateState(result *AlertResult) bool {
 	}
 
 	lastExecution := query.Result.Created
-	asdf := result.ExeuctionTime.Add(time.Minute * -15)
+	asdf := result.StartTime.Add(time.Minute * -15)
 	olderThen15Min := lastExecution.Before(asdf)
 	changedState := query.Result.NewState != result.State
 

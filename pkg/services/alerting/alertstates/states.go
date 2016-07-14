@@ -5,14 +5,12 @@ var (
 		Ok,
 		Warn,
 		Critical,
-		Acknowledged,
-		Maintenance,
+		Unknown,
 	}
 
-	Ok           = "OK"
-	Warn         = "WARN"
-	Critical     = "CRITICAL"
-	Acknowledged = "ACKNOWLEDGED"
-	Maintenance  = "MAINTENANCE"
-	Pending      = "PENDING"
+	Ok       = "OK"
+	Warn     = "WARN"
+	Critical = "CRITICAL"
+	Pending  = "PENDING"
+	Unknown  = "UNKNOWN"
 )

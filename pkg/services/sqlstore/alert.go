@@ -158,24 +158,29 @@ func DeleteAlertDefinition(dashboardId int64, sess *xorm.Session) error {
 
 func SaveAlerts(cmd *m.SaveAlertsCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		alerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
+		existingAlerts, err := GetAlertsByDashboardId2(cmd.DashboardId, sess)
 		if err != nil {
 			return err
 		}
 
-		upsertAlerts(alerts, cmd, sess)
-		deleteMissingAlerts(alerts, cmd, sess)
+		if err := upsertAlerts(existingAlerts, cmd, sess); err != nil {
+			return err
+		}
+
+		if err := deleteMissingAlerts(existingAlerts, cmd, sess); err != nil {
+			return err
+		}
 
 		return nil
 	})
 }
 
-func upsertAlerts(alerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *xorm.Session) error {
+func upsertAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *xorm.Session) error {
 	for _, alert := range cmd.Alerts {
 		update := false
 		var alertToUpdate *m.Alert
 
-		for _, k := range alerts {
+		for _, k := range existingAlerts {
 			if alert.PanelId == k.PanelId {
 				update = true
 				alert.Id = k.Id
@@ -195,11 +200,13 @@ func upsertAlerts(alerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *xorm.Sessio
 
 				sqlog.Debug("Alert updated", "name", alert.Name, "id", alert.Id)
 			}
-
 		} else {
 			alert.Updated = time.Now()
 			alert.Created = time.Now()
-			alert.State = "OK"
+			alert.State = "UNKNOWN"
+			alert.CreatedBy = cmd.UserId
+			alert.UpdatedBy = cmd.UserId
+
 			_, err := sess.Insert(alert)
 			if err != nil {
 				return err

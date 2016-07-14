@@ -245,24 +245,22 @@ func Register(r *macaron.Macaron) {
 		// metrics
 		r.Get("/metrics", wrap(GetInternalMetrics))
 
-		r.Group("/alerting", func() {
-			r.Group("/rules", func() {
-				r.Get("/:alertId/states", wrap(GetAlertStates))
-				//r.Put("/:alertId/state", bind(m.UpdateAlertStateCommand{}), wrap(PutAlertState))
-				r.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
-				//r.Delete("/:alertId", ValidateOrgAlert, wrap(DelAlert)) disabled until we know how to handle it dashboard updates
-				r.Get("/", wrap(GetAlerts))
-			})
-
-			r.Get("/notifications", wrap(GetAlertNotifications))
-
-			r.Group("/notification", func() {
-				r.Post("/", bind(m.CreateAlertNotificationCommand{}), wrap(CreateAlertNotification))
-				r.Put("/:notificationId", bind(m.UpdateAlertNotificationCommand{}), wrap(UpdateAlertNotification))
-				r.Get("/:notificationId", wrap(GetAlertNotificationById))
-				r.Delete("/:notificationId", wrap(DeleteAlertNotification))
-			}, reqOrgAdmin)
+		r.Group("/alerts", func() {
+			r.Get("/:alertId/states", wrap(GetAlertStates))
+			//r.Put("/:alertId/state", bind(m.UpdateAlertStateCommand{}), wrap(PutAlertState))
+			r.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
+			//r.Delete("/:alertId", ValidateOrgAlert, wrap(DelAlert)) disabled until we know how to handle it dashboard updates
+			r.Get("/", wrap(GetAlerts))
 		})
+
+		r.Get("/alert-notifications", wrap(GetAlertNotifications))
+
+		r.Group("/alert-notifications", func() {
+			r.Post("/", bind(m.CreateAlertNotificationCommand{}), wrap(CreateAlertNotification))
+			r.Put("/:notificationId", bind(m.UpdateAlertNotificationCommand{}), wrap(UpdateAlertNotification))
+			r.Get("/:notificationId", wrap(GetAlertNotificationById))
+			r.Delete("/:notificationId", wrap(DeleteAlertNotification))
+		}, reqOrgAdmin)
 
 		// error test
 		r.Get("/metrics/error", wrap(GenerateError))

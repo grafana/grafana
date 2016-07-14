@@ -18,6 +18,9 @@ type Alert struct {
 	Enabled     bool
 	Frequency   int64
 
+	CreatedBy int64
+	UpdatedBy int64
+
 	Created time.Time
 	Updated time.Time
 

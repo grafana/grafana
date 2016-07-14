@@ -15,13 +15,13 @@ export class AlertNotificationsListCtrl {
   }
 
   loadNotifications() {
-    this.backendSrv.get(`/api/alerts/notifications`).then(result => {
+    this.backendSrv.get(`/api/alert-notifications`).then(result => {
       this.notifications = result;
     });
   }
 
   deleteNotification(notificationId) {
-    this.backendSrv.delete(`/api/alerts/notification/${notificationId}`)
+    this.backendSrv.delete(`/api/alerts-notification/${notificationId}`)
       .then(() => {
         this.notifications = this.notifications.filter(notification => {
           return notification.id !== notificationId;
