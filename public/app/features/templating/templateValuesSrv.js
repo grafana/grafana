@@ -337,11 +337,24 @@ function (angular, _, $, kbn) {
     };
 
     this.metricNamesToVariableValues = function(variable, metricNames) {
-      var regex, options, i, matches;
+      var regex, options, i, matches, substitutionStr;
       options = {}; // use object hash to remove duplicates
 
       if (variable.regex) {
-        regex = kbn.stringToJsRegex(templateSrv.replace(variable.regex));
+        if (variable.regex.substring(0, 2) === 's/') { // This is a substitution regex
+          var tempRegex;
+          var reArray = variable.regex.split('/');
+          if (reArray.length > 4) { // Maximum length should be for s/abc/xyz/gi, so do nothing
+            regex = kbn.stringToJsRegex(templateSrv.replace(variable.regex));
+          } else if (reArray.length <= 4 && reArray.length > 2) {
+            substitutionStr = reArray[2];
+            tempRegex = '/' + reArray[1] + '/' + ((reArray.length === 4) ? reArray[3] : '');
+            regex = kbn.stringToJsRegex(templateSrv.replace(tempRegex));
+          }
+        }
+        else {
+          regex = kbn.stringToJsRegex(templateSrv.replace(variable.regex));
+        }
       }
 
       for (i = 0; i < metricNames.length; i++) {
@@ -358,10 +371,17 @@ function (angular, _, $, kbn) {
         }
 
         if (regex) {
-          matches = regex.exec(value);
-          if (!matches) { continue; }
-          if (matches.length > 1) {
-            value = matches[1];
+          if (!substitutionStr) {
+            matches = regex.exec(value);
+            if (!matches) { continue; }
+            if (matches.length > 1) {
+              value = matches[1];
+              text = value;
+            }
+          }
+          else {
+            matches = value.replace(regex, substitutionStr);
+            value = matches;
             text = value;
           }
         }
