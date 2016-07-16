@@ -538,7 +538,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       elem.mouseleave(function() {
         if (panel.links.length === 0) { return;}
-        $(timeout(function() {
+        $timeout(function() {
           drilldownTooltip.detach();
         });
       });
