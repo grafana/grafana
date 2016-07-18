@@ -101,7 +101,7 @@ export class Profiler {
   renderingCompleted(panelId, panelTimings) {
     // add render counter to root scope
     // used by phantomjs render.js to know when panel has rendered
-    this.$rootScope.panelsRendered = this.panelsRendered++;
+    this.$rootScope.panelsRendered = this.panelsRendered + 1;
 
     if (this.enabled) {
       panelTimings.renderEnd = new Date().getTime();
