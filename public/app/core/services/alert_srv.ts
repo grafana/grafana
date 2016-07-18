@@ -85,6 +85,9 @@ export class AlertSrv {
       scope.confirmTextValid = payload.confirmText.toLowerCase() === value.toLowerCase();
     };
 
+    scope.onConfirm = payload.onConfirm;
+    scope.onAltAction = payload.onAltAction;
+    scope.altActionText = payload.altActionText;
     scope.icon = payload.icon || "fa-check";
     scope.yesText = payload.yesText || "Yes";
     scope.noText = payload.noText || "Cancel";

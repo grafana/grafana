@@ -107,9 +107,12 @@ function (angular, _, $) {
       this.dashboard.meta.fullscreen = this.state.fullscreen;
 
       if (!this.state.fullscreen) {
-        this.state.panelId = null;
         this.state.fullscreen = null;
         this.state.edit = null;
+        // clear panel id unless in solo mode
+        if (!this.dashboard.meta.soloMode) {
+          this.state.panelId = null;
+        }
       }
 
       $location.search(this.serializeToUrl());
@@ -196,11 +199,13 @@ function (angular, _, $) {
       var self = this;
       self.panelScopes.push(panelScope);
 
-      if (self.state.panelId === panelScope.ctrl.panel.id) {
-        if (self.state.edit) {
-          panelScope.ctrl.editPanel();
-        } else {
-          panelScope.ctrl.viewPanel();
+      if (!self.dashboard.meta.soloMode) {
+        if (self.state.panelId === panelScope.ctrl.panel.id) {
+          if (self.state.edit) {
+            panelScope.ctrl.editPanel();
+          } else {
+            panelScope.ctrl.viewPanel();
+          }
         }
       }
 

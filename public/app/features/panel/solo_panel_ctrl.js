@@ -17,15 +17,12 @@ function (angular, $) {
       var params = $location.search();
       panelId = parseInt(params.panelId);
 
-      // add fullscreen param;
-      params.fullscreen = true;
-      $location.search(params);
+      $scope.onAppEvent("dashboard-initialized", $scope.initPanelScope);
 
       dashboardLoaderSrv.loadDashboard($routeParams.type, $routeParams.slug).then(function(result) {
+        result.meta.soloMode = true;
         $scope.initDashboard(result, $scope);
       });
-
-      $scope.onAppEvent("dashboard-initialized", $scope.initPanelScope);
     };
 
     $scope.initPanelScope = function() {
