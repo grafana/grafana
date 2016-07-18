@@ -68,6 +68,7 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		OrgId:     cmd.OrgId,
 		UserId:    cmd.UserId,
 		Overwrite: cmd.Overwrite,
+		PluginId:  cmd.PluginId,
 	}
 
 	if err := bus.Dispatch(&saveCmd); err != nil {

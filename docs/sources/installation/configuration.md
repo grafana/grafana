@@ -46,7 +46,7 @@ Then you can override them using:
 
 ## instance_name
 Set the name of the grafana-server instance. Used in logging and internal metrics and in
-clustering info. Defaults to: `${HOSTNAME}, which will be replaced with
+clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use
 system calls to get the machine name.
 

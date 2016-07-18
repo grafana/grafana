@@ -23,13 +23,13 @@ export class SideMenuCtrl {
 
     this.mainLinks = config.bootData.mainNavLinks;
     this.openUserDropdown();
-    this.loginUrl = '/login?redirect=' + encodeURIComponent(this.$location.path());
+    this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
 
     this.$scope.$on('$routeChangeSuccess', () => {
       if (!this.contextSrv.pinned) {
         this.contextSrv.sidemenu = false;
       }
-      this.loginUrl = '/login?redirect=' + encodeURIComponent(this.$location.path());
+      this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
     });
   }
 
