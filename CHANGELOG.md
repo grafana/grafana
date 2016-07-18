@@ -6,6 +6,10 @@
 * **Localization**: Week start day now dependant on browser locale setting, closes [#3003](https://github.com/grafana/grafana/issues/3003)
 * **Templating**: Update panel repeats for variables that change on time refresh, closes [#5021](https://github.com/grafana/grafana/issues/5021)
 
+# 3.1.1 (unreleased / v3.1.x branch)
+* **IFrame embedding**: Fixed issue of using full iframe height, fixes [#5605](https://github.com/grafana/grafana/issues/5606)
+* **Panel PNG rendering**: Fixed issue detecting render completion, fixes [#5605](https://github.com/grafana/grafana/issues/5606)
+
 # 3.1.0 stable (2016-07-12)
 
 ### Bugfixes & Enhancements,
