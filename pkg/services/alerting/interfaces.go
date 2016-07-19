@@ -3,7 +3,7 @@ package alerting
 import "time"
 
 type AlertingHandler interface {
-	Execute(rule *AlertJob, resultChan chan *AlertResult)
+	Execute(rule *AlertRule, resultChan chan *AlertResultContext)
 }
 
 type Scheduler interface {
@@ -12,11 +12,11 @@ type Scheduler interface {
 }
 
 type Notifier interface {
-	Notify(alertResult *AlertResult)
+	Notify(alertResult *AlertResultContext)
 }
 
 type AlertCondition interface {
-	Eval()
+	Eval(result *AlertResultContext)
 }
 
 type QueryReducer interface {

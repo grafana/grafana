@@ -13,6 +13,7 @@ type Alert struct {
 	PanelId     int64
 	Name        string
 	Description string
+	Severity    string
 	State       string
 	Handler     int64
 	Enabled     bool

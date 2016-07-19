@@ -6,12 +6,11 @@ import (
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/services/alerting/alertstates"
 )
 
 type Engine struct {
 	execQueue       chan *AlertJob
-	resultQueue     chan *AlertResult
+	resultQueue     chan *AlertResultContext
 	clock           clock.Clock
 	ticker          *Ticker
 	scheduler       Scheduler
@@ -26,7 +25,7 @@ func NewEngine() *Engine {
 	e := &Engine{
 		ticker:          NewTicker(time.Now(), time.Second*0, clock.New()),
 		execQueue:       make(chan *AlertJob, 1000),
-		resultQueue:     make(chan *AlertResult, 1000),
+		resultQueue:     make(chan *AlertResultContext, 1000),
 		scheduler:       NewScheduler(),
 		handler:         NewHandler(),
 		ruleReader:      NewRuleReader(),
@@ -91,15 +90,14 @@ func (e *Engine) execDispatch() {
 func (e *Engine) executeJob(job *AlertJob) {
 	startTime := time.Now()
 
-	resultChan := make(chan *AlertResult, 1)
-	go e.handler.Execute(job, resultChan)
+	resultChan := make(chan *AlertResultContext, 1)
+	go e.handler.Execute(job.Rule, resultChan)
 
 	select {
 	case <-time.After(e.alertJobTimeout):
-		e.resultQueue <- &AlertResult{
-			State:     alertstates.Pending,
+		e.resultQueue <- &AlertResultContext{
 			Error:     fmt.Errorf("Timeout"),
-			AlertJob:  job,
+			Rule:      job.Rule,
 			StartTime: startTime,
 			EndTime:   time.Now(),
 		}
@@ -110,6 +108,8 @@ func (e *Engine) executeJob(job *AlertJob) {
 		e.log.Debug("Job Execution done", "timeTakenMs", duration, "ruleId", job.Rule.Id)
 		e.resultQueue <- result
 	}
+
+	job.Running = false
 }
 
 func (e *Engine) resultHandler() {
@@ -120,25 +120,11 @@ func (e *Engine) resultHandler() {
 	}()
 
 	for result := range e.resultQueue {
-		e.log.Debug("Alert Rule Result", "ruleId", result.AlertJob.Rule.Id, "state", result.State, "retry", result.AlertJob.RetryCount)
-
-		result.AlertJob.Running = false
+		e.log.Debug("Alert Rule Result", "ruleId", result.Rule.Id, "triggered", result.Triggered)
 
 		if result.Error != nil {
-			result.AlertJob.IncRetry()
-
-			if result.AlertJob.Retryable() {
-				e.log.Error("Alert Rule Result Error", "ruleId", result.AlertJob.Rule.Id, "error", result.Error, "retry", result.AlertJob.RetryCount)
-				e.execQueue <- result.AlertJob
-			} else {
-				e.log.Error("Alert Rule Result Error After Max Retries", "ruleId", result.AlertJob.Rule.Id, "error", result.Error, "retry", result.AlertJob.RetryCount)
-
-				result.State = alertstates.Critical
-				result.Description = fmt.Sprintf("Failed to run check after %d retires, Error: %v", maxAlertExecutionRetries, result.Error)
-				e.responseHandler.Handle(result)
-			}
+			e.log.Error("Alert Rule Result Error", "ruleId", result.Rule.Id, "error", result.Error, "retry")
 		} else {
-			result.AlertJob.ResetRetry()
 			e.responseHandler.Handle(result)
 		}
 	}

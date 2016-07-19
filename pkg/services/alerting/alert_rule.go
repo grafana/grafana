@@ -6,31 +6,11 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/alerting/transformers"
 
 	m "github.com/grafana/grafana/pkg/models"
 )
 
 type AlertRule struct {
-	Id              int64
-	OrgId           int64
-	DashboardId     int64
-	PanelId         int64
-	Frequency       int64
-	Name            string
-	Description     string
-	State           string
-	Warning         Level
-	Critical        Level
-	Query           AlertQuery
-	Transform       string
-	TransformParams simplejson.Json
-	Transformer     transformers.Transformer
-
-	NotificationGroups []int64
-}
-
-type AlertRule2 struct {
 	Id            int64
 	OrgId         int64
 	DashboardId   int64
@@ -38,7 +18,7 @@ type AlertRule2 struct {
 	Frequency     int64
 	Name          string
 	Description   string
-	State         string
+	Severity      string
 	Conditions    []AlertCondition
 	Notifications []int64
 }
@@ -68,17 +48,13 @@ func getTimeDurationStringToSeconds(str string) int64 {
 }
 
 func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
-	return nil, nil
-}
-
-func NewAlertRuleFromDBModel2(ruleDef *m.Alert) (*AlertRule2, error) {
-	model := &AlertRule2{}
+	model := &AlertRule{}
 	model.Id = ruleDef.Id
 	model.OrgId = ruleDef.OrgId
 	model.Name = ruleDef.Name
 	model.Description = ruleDef.Description
-	model.State = ruleDef.State
 	model.Frequency = ruleDef.Frequency
+	model.Severity = ruleDef.Severity
 
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		if id, ok := v.(int64); ok {

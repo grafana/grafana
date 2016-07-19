@@ -13,7 +13,7 @@ type QueryCondition struct {
 	Evaluator AlertEvaluator
 }
 
-func (c *QueryCondition) Eval() {
+func (c *QueryCondition) Eval(context *AlertResultContext) {
 }
 
 func NewQueryCondition(model *simplejson.Json) (*QueryCondition, error) {

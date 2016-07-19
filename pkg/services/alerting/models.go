@@ -22,18 +22,17 @@ func (aj *AlertJob) IncRetry() {
 	aj.RetryCount++
 }
 
-type AlertResult struct {
-	State           string
-	TriggeredAlerts []*TriggeredAlert
-	Error           error
-	Description     string
-	StartTime       time.Time
-	EndTime         time.Time
-
-	AlertJob *AlertJob
+type AlertResultContext struct {
+	Triggered   bool
+	Details     []*AlertResultDetail
+	Error       error
+	Description string
+	StartTime   time.Time
+	EndTime     time.Time
+	Rule        *AlertRule
 }
 
-type TriggeredAlert struct {
+type AlertResultDetail struct {
 	Value  float64
 	Metric string
 	State  string

@@ -66,7 +66,7 @@ func TestAlertRuleModel(t *testing.T) {
 				Settings: alertJSON,
 			}
 
-			alertRule, err := NewAlertRuleFromDBModel2(alert)
+			alertRule, err := NewAlertRuleFromDBModel(alert)
 			So(err, ShouldBeNil)
 
 			So(alertRule.Conditions, ShouldHaveLength, 1)
