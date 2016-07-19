@@ -38,26 +38,19 @@ func TestAlertRuleModel(t *testing.T) {
 				"description": "desc2",
 				"handler": 0,
 				"enabled": true,
-				"crit": {
-					"value": 20,
-					"op": ">"
-				},
-				"warn": {
-					"value": 10,
-					"op": ">"
-				},
 				"frequency": "60s",
-				"query": {
-					"from": "5m",
-					"refId": "A",
-					"to": "now",
-					"query": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)",
-					"datasourceId": 1
-				},
-				"transform": {
-					"type": "avg",
-					"name": "aggregation"
-				}
+        "conditions": [
+          {
+            "type": "query",
+            "query":  {
+              "params": ["A", "5m", "now"],
+              "datasourceId": 1,
+              "query":  "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"
+            },
+            "reducer": {"type": "avg", "params": []},
+            "evaluator": {"type": ">", "params": [100]}
+          }
+        ]
 			}
 			`
 
@@ -72,15 +65,11 @@ func TestAlertRuleModel(t *testing.T) {
 
 				Settings: alertJSON,
 			}
-			alertRule, err := NewAlertRuleFromDBModel(alert)
 
+			alertRule, err := NewAlertRuleFromDBModel2(alert)
 			So(err, ShouldBeNil)
 
-			So(alertRule.Warning.Operator, ShouldEqual, ">")
-			So(alertRule.Warning.Value, ShouldEqual, 10)
-
-			So(alertRule.Critical.Operator, ShouldEqual, ">")
-			So(alertRule.Critical.Value, ShouldEqual, 20)
+			So(alertRule.Conditions, ShouldHaveLength, 1)
 		})
 	})
 }

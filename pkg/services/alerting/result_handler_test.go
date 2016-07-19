@@ -38,7 +38,7 @@ func TestAlertResultHandler(t *testing.T) {
 
 			Convey("alert state have changed", func() {
 				mockAlertState = &m.AlertState{
-					NewState: alertstates.Critical,
+					State: alertstates.Critical,
 				}
 				mockResult.State = alertstates.Ok
 				So(resultHandler.shouldUpdateState(mockResult), ShouldBeTrue)
@@ -47,11 +47,11 @@ func TestAlertResultHandler(t *testing.T) {
 			Convey("last alert state was 15min ago", func() {
 				now := time.Now()
 				mockAlertState = &m.AlertState{
-					NewState: alertstates.Critical,
-					Created:  now.Add(time.Minute * -30),
+					State:   alertstates.Critical,
+					Created: now.Add(time.Minute * -30),
 				}
 				mockResult.State = alertstates.Critical
-				mockResult.ExeuctionTime = time.Now()
+				mockResult.StartTime = time.Now()
 				So(resultHandler.shouldUpdateState(mockResult), ShouldBeTrue)
 			})
 		})

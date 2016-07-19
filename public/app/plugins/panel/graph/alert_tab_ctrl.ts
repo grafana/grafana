@@ -38,11 +38,15 @@ export class AlertTabCtrl {
   ];
   alert: any;
   conditionModels: any;
-  levelOpList = [
+  evalFunctions = [
     {text: '>', value: '>'},
     {text: '<', value: '<'},
-    {text: '=', value: '='},
   ];
+  severityLevels = [
+    {text: 'Critical', value: 'critical'},
+    {text: 'Warning', value: 'warning'},
+  ];
+
 
   /** @ngInject */
   constructor($scope, private $timeout) {
@@ -60,21 +64,15 @@ export class AlertTabCtrl {
     });
   }
 
-  getThresholdWithDefaults(threshold) {
-    threshold = threshold || {};
-    threshold.op = threshold.op || '>';
-    threshold.value = threshold.value || undefined;
-    return threshold;
-  }
-
   initModel() {
     var alert = this.alert = this.panel.alert = this.panel.alert || {};
 
-    alert.conditions = alert.conditions || [];
+    alert.conditions = [];
     if (alert.conditions.length === 0) {
       alert.conditions.push(this.buildDefaultCondition());
     }
 
+    alert.severity = alert.severity || 'critical';
     alert.frequency = alert.frequency || '60s';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
@@ -95,32 +93,23 @@ export class AlertTabCtrl {
   buildDefaultCondition() {
     return {
       type: 'query',
-      refId: 'A',
-      from: '5m',
-      to: 'now',
-      reducer: 'avg',
-      reducerParams: [],
-      warn: this.getThresholdWithDefaults({}),
-      crit: this.getThresholdWithDefaults({}),
+      query: {params: ['A', '5m', 'now']},
+      reducer: {type: 'avg', params: []},
+      evaluator: {type: '>', params: [null]},
     };
   }
 
   buildConditionModel(source) {
     var cm: any = {source: source, type: source.type};
 
-    var queryPartModel = {
-      params: [source.refId, source.from, source.to]
-    };
-
-    cm.queryPart = new QueryPart(queryPartModel, alertQueryDef);
+    cm.queryPart = new QueryPart(source.query, alertQueryDef);
     cm.reducerPart = new QueryPart({params: []}, reducerAvgDef);
+    cm.evaluator = source.evaluator;
+
     return cm;
   }
 
   queryPartUpdated(conditionModel) {
-    conditionModel.source.refId = conditionModel.queryPart.params[0];
-    conditionModel.source.from = conditionModel.queryPart.params[1];
-    conditionModel.source.to = conditionModel.queryPart.params[2];
   }
 
   addCondition(type) {
@@ -138,10 +127,6 @@ export class AlertTabCtrl {
 
   delete() {
     this.alert.enabled = false;
-    this.alert.warn.value = undefined;
-    this.alert.crit.value = undefined;
-
-    // reset model but keep thresholds instance
     this.initModel();
   }
 
