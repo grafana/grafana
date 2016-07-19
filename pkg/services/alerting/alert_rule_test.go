@@ -31,7 +31,7 @@ func TestAlertRuleModel(t *testing.T) {
 			So(seconds, ShouldEqual, 1)
 		})
 
-		Convey("", func() {
+		Convey("can construct alert rule model", func() {
 			json := `
 			{
 				"name": "name2",
@@ -70,6 +70,27 @@ func TestAlertRuleModel(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			So(alertRule.Conditions, ShouldHaveLength, 1)
+
+			Convey("Can read query condition from json model", func() {
+				queryCondition, ok := alertRule.Conditions[0].(*QueryCondition)
+				So(ok, ShouldBeTrue)
+
+				So(queryCondition.Query.From, ShouldEqual, "5m")
+				So(queryCondition.Query.To, ShouldEqual, "now")
+				So(queryCondition.Query.DatasourceId, ShouldEqual, 1)
+
+				Convey("Can read query reducer", func() {
+					reducer, ok := queryCondition.Reducer.(*SimpleReducer)
+					So(ok, ShouldBeTrue)
+					So(reducer.Type, ShouldEqual, "avg")
+				})
+
+				Convey("Can read evaluator", func() {
+					evaluator, ok := queryCondition.Evaluator.(*DefaultAlertEvaluator)
+					So(ok, ShouldBeTrue)
+					So(evaluator.Type, ShouldEqual, ">")
+				})
+			})
 		})
 	})
 }

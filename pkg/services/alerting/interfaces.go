@@ -14,3 +14,15 @@ type Scheduler interface {
 type Notifier interface {
 	Notify(alertResult *AlertResult)
 }
+
+type AlertCondition interface {
+	Eval()
+}
+
+type QueryReducer interface {
+	Reduce() float64
+}
+
+type AlertEvaluator interface {
+	Eval() bool
+}
