@@ -45,7 +45,7 @@ func TestAlertRuleModel(t *testing.T) {
             "query":  {
               "params": ["A", "5m", "now"],
               "datasourceId": 1,
-              "query":  "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"
+              "model": {"target": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}
             },
             "reducer": {"type": "avg", "params": []},
             "evaluator": {"type": ">", "params": [100]}

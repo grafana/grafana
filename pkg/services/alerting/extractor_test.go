@@ -14,162 +14,69 @@ func TestAlertRuleExtraction(t *testing.T) {
 	Convey("Parsing alert rules  from dashboard json", t, func() {
 		Convey("Parsing and validating alerts from dashboards", func() {
 			json := `{
-  "id": 57,
-  "title": "Graphite 4",
-  "originalTitle": "Graphite 4",
-  "tags": [
-    "graphite"
-  ],
-  "rows": [
-    {
-
-      "panels": [
+        "id": 57,
+        "title": "Graphite 4",
+        "originalTitle": "Graphite 4",
+        "tags": ["graphite"],
+        "rows": [
         {
-          "title": "Active desktop users",
-          "editable": true,
-          "type": "graph",
-          "id": 3,
-          "targets": [
+          "panels": [
+          {
+            "title": "Active desktop users",
+            "editable": true,
+            "type": "graph",
+            "id": 3,
+            "targets": [
             {
               "refId": "A",
               "target": "aliasByNode(statsd.fakesite.counters.session_start.desktop.count, 4)"
             }
-          ],
-          "datasource": null,
-          "alert": {
-            "name": "name1",
-            "description": "desc1",
-						"handler": 1,
-						"enabled": true,
-            "critical": {
-              "value": 20,
-              "op": ">"
-            },
-            "frequency": "60s",
-            "query": {
-              "from": "5m",
-              "refId": "A",
-              "to": "now"
-            },
-            "transform": {
-              "type": "avg",
-              "name": "aggregation"
-            },
-            "warn": {
-              "value": 10,
-              "op": ">"
-            }
-          }
-        },
-        {
-          "title": "Active mobile users",
-          "id": 4,
-          "targets": [
-            {
-              "refId": "A",
-              "target": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"
-            }
-          ],
-          "datasource": "graphite2",
-          "alert": {
-            "name": "name2",
-            "description": "desc2",
-						"handler": 0,
-						"enabled": true,
-            "critical": {
-              "value": 20,
-              "op": ">"
-            },
-            "frequency": "60s",
-            "query": {
-              "from": "5m",
-              "refId": "A",
-              "to": "now"
-            },
-            "transform": {
-              "type": "avg",
-              "name": "aggregation"
-            },
-            "warn": {
-              "value": 10,
-              "op": ">"
-            }
-          }
-        }
-      ],
-      "title": "Row"
-    },
-    {
-      "collapse": false,
-      "editable": true,
-      "height": "250px",
-      "panels": [
-        {
-          "datasource": "InfluxDB",
-          "id": 2,
-          "alert": {
-            "name": "name2",
-            "description": "desc2",
-						"enabled": false,
-            "critical": {
-              "level": 20,
-              "op": ">"
-            },
-            "warn": {
-              "level": 10,
-              "op": ">"
+            ],
+            "datasource": null,
+            "alert": {
+              "name": "name1",
+              "description": "desc1",
+              "handler": 1,
+              "enabled": true,
+              "frequency": "60s",
+              "conditions": [
+              {
+                "type": "query",
+                "query": {"params": ["A", "5m", "now"]},
+                "reducer": {"type": "avg", "params": []},
+                "evaluator": {"type": ">", "params": [100]}
+              }
+              ]
             }
           },
-          "targets": [
-            {
-              "dsType": "influxdb",
-              "groupBy": [
-                {
-                  "params": [
-                    "$interval"
-                  ],
-                  "type": "time"
-                },
-                {
-                  "params": [
-                    "null"
-                  ],
-                  "type": "fill"
-                }
-              ],
-              "measurement": "cpu",
-              "policy": "default",
-              "query": "SELECT mean(\"value\") FROM \"cpu\" WHERE $timeFilter GROUP BY time($interval) fill(null)",
-              "refId": "A",
-              "resultFormat": "table",
-              "select": [
-                [
-                  {
-                    "params": [
-                      "value"
-                    ],
-                    "type": "field"
-                  },
-                  {
-                    "params": [],
-                    "type": "mean"
-                  }
-                ]
-              ],
-              "tags": [],
-              "target": ""
+          {
+            "title": "Active mobile users",
+            "id": 4,
+            "targets": [
+              {"refId": "A", "target": ""},
+              {"refId": "B", "target": "aliasByNode(statsd.fakesite.counters.session_start.mobile.count, 4)"}
+            ],
+            "datasource": "graphite2",
+            "alert": {
+              "name": "name2",
+              "description": "desc2",
+              "handler": 0,
+              "enabled": true,
+              "frequency": "60s",
+              "conditions": [
+              {
+                "type": "query",
+                "query":  {"params": ["B", "5m", "now"]},
+                "reducer": {"type": "avg", "params": []},
+                "evaluator": {"type": ">", "params": [100]}
+              }
+              ]
             }
-          ],
-          "title": "Broken influxdb panel",
-          "transform": "table",
-          "type": "table"
+          }
+          ]
         }
-      ],
-      "title": "New row"
-    }
-  ]
-
-}`
+      ]
+    }`
 			dashJson, err := simplejson.NewJson([]byte(json))
 			So(err, ShouldBeNil)
 
@@ -230,6 +137,18 @@ func TestAlertRuleExtraction(t *testing.T) {
 					So(alerts[0].Description, ShouldEqual, "desc1")
 					So(alerts[1].Name, ShouldEqual, "name2")
 					So(alerts[1].Description, ShouldEqual, "desc2")
+				})
+
+				Convey("should set datasourceId", func() {
+					condition := simplejson.NewFromAny(alerts[0].Settings.Get("conditions").MustArray()[0])
+					query := condition.Get("query")
+					So(query.Get("datasourceId").MustInt64(), ShouldEqual, 12)
+				})
+
+				Convey("should copy query model to condition", func() {
+					condition := simplejson.NewFromAny(alerts[0].Settings.Get("conditions").MustArray()[0])
+					model := condition.Get("query").Get("model")
+					So(model.Get("target").MustString(), ShouldEqual, "aliasByNode(statsd.fakesite.counters.session_start.desktop.count, 4)")
 				})
 			})
 		})
