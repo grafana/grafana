@@ -11,7 +11,7 @@ type AlertState struct {
 	Id              int64            `json:"-"`
 	OrgId           int64            `json:"-"`
 	AlertId         int64            `json:"alertId"`
-	NewState        string           `json:"newState"`
+	State           string           `json:"state"`
 	Created         time.Time        `json:"created"`
 	Info            string           `json:"info"`
 	TriggeredAlerts *simplejson.Json `json:"triggeredAlerts"`
@@ -19,7 +19,7 @@ type AlertState struct {
 
 func (this *UpdateAlertStateCommand) IsValidState() bool {
 	for _, v := range alertstates.ValidStates {
-		if this.NewState == v {
+		if this.State == v {
 			return true
 		}
 	}
@@ -31,7 +31,7 @@ func (this *UpdateAlertStateCommand) IsValidState() bool {
 type UpdateAlertStateCommand struct {
 	AlertId         int64            `json:"alertId" binding:"Required"`
 	OrgId           int64            `json:"orgId" binding:"Required"`
-	NewState        string           `json:"newState" binding:"Required"`
+	State           string           `json:"state" binding:"Required"`
 	Info            string           `json:"info"`
 	TriggeredAlerts *simplejson.Json `json:"triggeredAlerts"`
 

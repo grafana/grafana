@@ -47,13 +47,13 @@ func SetNewAlertState(cmd *m.UpdateAlertStateCommand) error {
 			return fmt.Errorf("Could not find alert")
 		}
 
-		alert.State = cmd.NewState
+		alert.State = cmd.State
 		sess.Id(alert.Id).Update(&alert)
 
 		alertState := m.AlertState{
 			AlertId:         cmd.AlertId,
 			OrgId:           cmd.OrgId,
-			NewState:        cmd.NewState,
+			State:           cmd.State,
 			Info:            cmd.Info,
 			Created:         time.Now(),
 			TriggeredAlerts: cmd.TriggeredAlerts,

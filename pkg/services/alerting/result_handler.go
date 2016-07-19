@@ -29,7 +29,7 @@ func (handler *ResultHandlerImpl) Handle(result *AlertResult) {
 	if handler.shouldUpdateState(result) {
 		cmd := &m.UpdateAlertStateCommand{
 			AlertId:         result.AlertJob.Rule.Id,
-			NewState:        result.State,
+			State:           result.State,
 			Info:            result.Description,
 			OrgId:           result.AlertJob.Rule.OrgId,
 			TriggeredAlerts: simplejson.NewFromAny(result.TriggeredAlerts),
@@ -62,7 +62,7 @@ func (handler *ResultHandlerImpl) shouldUpdateState(result *AlertResult) bool {
 	lastExecution := query.Result.Created
 	asdf := result.StartTime.Add(time.Minute * -15)
 	olderThen15Min := lastExecution.Before(asdf)
-	changedState := query.Result.NewState != result.State
+	changedState := query.Result.State != result.State
 
 	return changedState || olderThen15Min
 }
