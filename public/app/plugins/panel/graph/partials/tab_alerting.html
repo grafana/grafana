@@ -1,27 +1,27 @@
 
-<div ng-if="!ctrl.alert.enabled">
-  <div class="gf-form-group">
-    <h5 class="section-heading">Visual Thresholds</h5>
-    <div class="gf-form-inline">
-      <div class="gf-form">
-        <span class="gf-form-label">
-          <i class="icon-gf icon-gf-warn alert-icon-critical"></i>
-          Critcal if
-        </span>
-        <metric-segment-model property="ctrl.alert.crit.op" options="ctrl.operatorList" custom="false" css-class="query-segment-operator" on-change="ctrl.thresholdsUpdated()"></metric-segment-model>
-        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.crit.value" ng-change="ctrl.thresholdsUpdated()"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label">
-          <i class="icon-gf icon-gf-warn alert-icon-warn"></i>
-          Warn if
-        </span>
-        <metric-segment-model property="ctrl.alert.warn.op" options="ctrl.operatorList" custom="false" css-class="query-segment-operator" on-change="ctrl.thresholdsUpdated()"></metric-segment-model>
-        <input class="gf-form-input max-width-7" type="number" ng-model="ctrl.alert.warn.value" ng-change="ctrl.thresholdsUpdated()"></input>
-      </div>
-    </div>
-  </div>
-</div>
+<!-- <div ng&#45;if="!ctrl.alert.enabled"> -->
+<!--   <div class="gf&#45;form&#45;group"> -->
+<!--     <h5 class="section&#45;heading">Visual Thresholds</h5> -->
+<!--     <div class="gf&#45;form&#45;inline"> -->
+<!--       <div class="gf&#45;form"> -->
+<!--         <span class="gf&#45;form&#45;label"> -->
+<!--           <i class="icon&#45;gf icon&#45;gf&#45;warn alert&#45;icon&#45;critical"></i> -->
+<!--           Critcal if -->
+<!--         </span> -->
+<!--         <metric&#45;segment&#45;model property="ctrl.alert.crit.op" options="ctrl.operatorList" custom="false" css&#45;class="query&#45;segment&#45;operator" on&#45;change="ctrl.thresholdsUpdated()"></metric&#45;segment&#45;model> -->
+<!--         <input class="gf&#45;form&#45;input max&#45;width&#45;7" type="number" ng&#45;model="ctrl.alert.crit.value" ng&#45;change="ctrl.thresholdsUpdated()"></input> -->
+<!--       </div> -->
+<!--       <div class="gf&#45;form"> -->
+<!--         <span class="gf&#45;form&#45;label"> -->
+<!--           <i class="icon&#45;gf icon&#45;gf&#45;warn alert&#45;icon&#45;warn"></i> -->
+<!--           Warn if -->
+<!--         </span> -->
+<!--         <metric&#45;segment&#45;model property="ctrl.alert.warn.op" options="ctrl.operatorList" custom="false" css&#45;class="query&#45;segment&#45;operator" on&#45;change="ctrl.thresholdsUpdated()"></metric&#45;segment&#45;model> -->
+<!--         <input class="gf&#45;form&#45;input max&#45;width&#45;7" type="number" ng&#45;model="ctrl.alert.warn.value" ng&#45;change="ctrl.thresholdsUpdated()"></input> -->
+<!--       </div> -->
+<!--     </div> -->
+<!--   </div> -->
+<!-- </div> -->
 
 <div ng-if="ctrl.alert.enabled">
   <div class="gf-form-group">
@@ -69,7 +69,7 @@
         </query-part-editor>
       </div>
       <div class="gf-form">
-        <span class="gf-form-label">Reduce</span>
+        <span class="gf-form-label">Reducer</span>
         <query-part-editor
               class="gf-form-label query-part"
               part="conditionModel.reducerPart"
@@ -102,24 +102,29 @@
   </div>
 
   <div class="gf-form-group">
-    <div class="dropdown">
-      <button class="btn btn-inverse dropdown-toggle gf-form-btn" data-toggle="dropdown">
-        <i class="fa fa-plus"></i>&nbsp;Add Condition
-      </button>
+    <div class="gf-form-button-row">
+      <div class="dropdown pull-left" ng-if="ctrl.alert.enabled" >
+        <button class="btn btn-inverse dropdown-toggle" data-toggle="dropdown">
+          <i class="fa fa-plus"></i>&nbsp;Add Condition
+        </button>
 
-      <ul class="dropdown-menu" role="menu">
-        <li ng-repeat="ct in ctrl.conditionTypes" role="menuitem">
-          <a ng-click="ctrl.addCondition(ct.value);">{{ct.text}}</a>
-        </li>
-      </ul>
+        <ul class="dropdown-menu" role="menu">
+          <li ng-repeat="ct in ctrl.conditionTypes" role="menuitem">
+            <a ng-click="ctrl.addCondition(ct.value);">{{ct.text}}</a>
+          </li>
+        </ul>
+      </div>
+
+      <button class="btn btn-inverse" ng-click="ctrl.delete()">
+        Delete Alert
+      </button>
     </div>
   </div>
 </div>
 
-<div class="editor-row">
+<div class="gf-form-group" ng-if="!ctrl.alert.enabled">
   <div class="gf-form-button-row">
-    <button class="btn btn-danger" ng-click="ctrl.delete()" ng-show="ctrl.alert.enabled">Delete</button>
-    <button class="btn btn-inverse" ng-click="ctrl.enable()" ng-hide="ctrl.alert.enabled">
+    <button class="btn btn-inverse" ng-click="ctrl.enable()">
       <i class="icon-gf icon-gf-alert"></i>
       Create Alert
     </button>

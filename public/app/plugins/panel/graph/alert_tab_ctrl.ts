@@ -32,7 +32,9 @@ export class AlertTabCtrl {
   handlers = [{text: 'Grafana', value: 1}, {text: 'External', value: 0}];
   conditionTypes = [
     {text: 'Query', value: 'query'},
-    {text: 'Alert state', value: 'alert_state'},
+    {text: 'Other alert', value: 'other_alert'},
+    {text: 'Time of day', value: 'time_of_day'},
+    {text: 'Day of week', value: 'day_of_week'},
   ];
   alert: any;
   conditionModels: any;
@@ -68,10 +70,6 @@ export class AlertTabCtrl {
   initModel() {
     var alert = this.alert = this.panel.alert = this.panel.alert || {};
 
-    // set threshold defaults
-    alert.warn = this.getThresholdWithDefaults(alert.warn);
-    alert.crit = this.getThresholdWithDefaults(alert.crit);
-
     alert.conditions = alert.conditions || [];
     if (alert.conditions.length === 0) {
       alert.conditions.push(this.buildDefaultCondition());
@@ -102,6 +100,8 @@ export class AlertTabCtrl {
       to: 'now',
       reducer: 'avg',
       reducerParams: [],
+      warn: this.getThresholdWithDefaults({}),
+      crit: this.getThresholdWithDefaults({}),
     };
   }
 
