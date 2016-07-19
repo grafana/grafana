@@ -19,27 +19,23 @@ var alertQueryDef = new QueryPartDef({
   defaultParams: ['#A', '5m', 'now', 'avg']
 });
 
+var reducerAvgDef = new QueryPartDef({
+  type: 'avg',
+  params: [],
+  defaultParams: []
+});
+
 export class AlertTabCtrl {
   panel: any;
   panelCtrl: any;
   metricTargets;
   handlers = [{text: 'Grafana', value: 1}, {text: 'External', value: 0}];
-  transforms = [
-    {
-      text: 'Aggregation',
-      type: 'aggregation',
-    },
-    {
-      text: 'Linear Forecast',
-      type: 'forecast',
-    },
+  conditionTypes = [
+    {text: 'Query', value: 'query'},
+    {text: 'Alert state', value: 'alert_state'},
   ];
-  aggregators = ['avg', 'sum', 'min', 'max', 'last'];
   alert: any;
-  thresholds: any;
-  query: any;
-  queryParams: any;
-  transformDef: any;
+  conditionModels: any;
   levelOpList = [
     {text: '>', value: '>'},
     {text: '<', value: '<'},
@@ -76,14 +72,10 @@ export class AlertTabCtrl {
     alert.warn = this.getThresholdWithDefaults(alert.warn);
     alert.crit = this.getThresholdWithDefaults(alert.crit);
 
-    alert.query = alert.query || {};
-    alert.query.refId = alert.query.refId || 'A';
-    alert.query.from = alert.query.from || '5m';
-    alert.query.to = alert.query.to || 'now';
-
-    alert.transform = alert.transform || {};
-    alert.transform.type = alert.transform.type || 'aggregation';
-    alert.transform.method = alert.transform.method || 'avg';
+    alert.conditions = alert.conditions || [];
+    if (alert.conditions.length === 0) {
+      alert.conditions.push(this.buildDefaultCondition());
+    }
 
     alert.frequency = alert.frequency || '60s';
     alert.handler = alert.handler || 1;
@@ -93,42 +85,55 @@ export class AlertTabCtrl {
     alert.name = alert.name || defaultName;
     alert.description = alert.description || defaultName;
 
-    // great temp working model
-    this.queryParams = {
-      params: [alert.query.refId, alert.query.from, alert.query.to]
-    };
-
-    // init the query part components model
-    this.query = new QueryPart(this.queryParams, alertQueryDef);
-    this.transformDef = _.findWhere(this.transforms, {type: alert.transform.type});
+    this.conditionModels = _.reduce(alert.conditions, (memo, value) => {
+      memo.push(this.buildConditionModel(value));
+      return memo;
+    }, []);
 
     this.panelCtrl.editingAlert = true;
     this.panelCtrl.render();
   }
 
-  queryUpdated() {
-    this.alert.query = {
-      refId: this.query.params[0],
-      from: this.query.params[1],
-      to: this.query.params[2],
+  buildDefaultCondition() {
+    return {
+      type: 'query',
+      refId: 'A',
+      from: '5m',
+      to: 'now',
+      reducer: 'avg',
+      reducerParams: [],
     };
   }
 
-  transformChanged() {
-    // clear model
-    this.alert.transform = {type: this.alert.transform.type};
-    this.transformDef = _.findWhere(this.transforms, {type: this.alert.transform.type});
+  buildConditionModel(source) {
+    var cm: any = {source: source, type: source.type};
 
-    switch (this.alert.transform.type) {
-      case 'aggregation':  {
-        this.alert.transform.method = 'avg';
-        break;
-      }
-      case "forecast": {
-        this.alert.transform.timespan = '7d';
-        break;
-      }
-    }
+    var queryPartModel = {
+      params: [source.refId, source.from, source.to]
+    };
+
+    cm.queryPart = new QueryPart(queryPartModel, alertQueryDef);
+    cm.reducerPart = new QueryPart({params: []}, reducerAvgDef);
+    return cm;
+  }
+
+  queryPartUpdated(conditionModel) {
+    conditionModel.source.refId = conditionModel.queryPart.params[0];
+    conditionModel.source.from = conditionModel.queryPart.params[1];
+    conditionModel.source.to = conditionModel.queryPart.params[2];
+  }
+
+  addCondition(type) {
+    var condition = this.buildDefaultCondition();
+    // add to persited model
+    this.alert.conditions.push(condition);
+    // add to view model
+    this.conditionModels.push(this.buildConditionModel(condition));
+  }
+
+  removeCondition(index) {
+    this.alert.conditions.splice(index, 1);
+    this.conditionModels.splice(index, 1);
   }
 
   delete() {
