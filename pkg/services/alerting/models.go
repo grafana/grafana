@@ -1,6 +1,10 @@
 package alerting
 
-import "time"
+import (
+	"time"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+)
 
 type AlertJob struct {
 	Offset     int64
@@ -45,7 +49,7 @@ type Level struct {
 }
 
 type AlertQuery struct {
-	Query        string
+	Model        *simplejson.Json
 	DatasourceId int64
 	From         string
 	To           string

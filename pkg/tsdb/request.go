@@ -1,5 +1,7 @@
 package tsdb
 
+type HandleRequestFunc func(req *Request) (*Response, error)
+
 func HandleRequest(req *Request) (*Response, error) {
 	context := NewQueryContext(req.Queries, req.TimeRange)
 

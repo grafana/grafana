@@ -1,6 +1,10 @@
 package alerting
 
-import "time"
+import (
+	"time"
+
+	"github.com/grafana/grafana/pkg/tsdb"
+)
 
 type AlertHandler interface {
 	Execute(rule *AlertRule, resultChan chan *AlertResultContext)
@@ -20,9 +24,9 @@ type AlertCondition interface {
 }
 
 type QueryReducer interface {
-	Reduce() float64
+	Reduce(timeSeries *tsdb.TimeSeries) float64
 }
 
 type AlertEvaluator interface {
-	Eval() bool
+	Eval(timeSeries *tsdb.TimeSeries, reducedValue float64) bool
 }
