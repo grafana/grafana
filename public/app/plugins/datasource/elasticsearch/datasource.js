@@ -254,6 +254,8 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       esQuery = esQuery.replace("$lucene_query", escapeForJson(queryDef.query));
       esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
       esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
+      esQuery = esQuery.replace(/\$sortOrder/g, queryDef.sortOrder);
+      esQuery = esQuery.replace(/\$size/g, queryDef.size);
       esQuery = header + '\n' + esQuery + '\n';
 
       return this._post('_msearch?search_type=count', esQuery).then(function(res) {
@@ -270,6 +272,14 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
       if (!query) {
         return $q.when([]);
+      }
+
+      if(query.sortOrder === undefined) {
+        query.sortOrder = "asc";
+      }
+
+      if(query.size === undefined) {
+        query.size = 0;
       }
 
       if (query.find === 'fields') {
