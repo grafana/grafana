@@ -5,6 +5,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func ValidateOrgAlert(c *middleware.Context) {
@@ -69,6 +70,21 @@ func GetAlerts(c *middleware.Context) Response {
 	}
 
 	return Json(200, alertDTOs)
+}
+
+// POST /api/alerts/test
+func TestAlertRule(c *middleware.Context, dto dtos.TestAlertRuleCommand) Response {
+	backendCmd := alerting.TestAlertRuleCommand{
+		OrgId:     c.OrgId,
+		Dashboard: dto.Dashboard,
+		PanelId:   dto.PanelId,
+	}
+
+	if err := bus.Dispatch(&backendCmd); err != nil {
+		return ApiError(500, "Failed to test rule", err)
+	}
+
+	return Json(200, backendCmd.Result)
 }
 
 // GET /api/alerts/:id

@@ -1,6 +1,10 @@
 package dtos
 
-import "time"
+import (
+	"time"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+)
 
 type AlertRuleDTO struct {
 	Id           int64   `json:"id"`
@@ -28,4 +32,9 @@ type AlertNotificationDTO struct {
 	Type    string    `json:"type"`
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
+}
+
+type TestAlertRuleCommand struct {
+	Dashboard *simplejson.Json `json:"dashboard"`
+	PanelId   int64            `json:"panelId"`
 }
