@@ -31,6 +31,16 @@ func (e *HandlerImpl) eval(rule *AlertRule) *AlertResultContext {
 
 	for _, condition := range rule.Conditions {
 		condition.Eval(result)
+
+		// break if condition could not be evaluated
+		if result.Error != nil {
+			break
+		}
+
+		// break if result has not triggered yet
+		if result.Triggered == false {
+			break
+		}
 	}
 
 	result.EndTime = time.Now()

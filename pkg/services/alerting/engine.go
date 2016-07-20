@@ -14,7 +14,7 @@ type Engine struct {
 	clock           clock.Clock
 	ticker          *Ticker
 	scheduler       Scheduler
-	handler         AlertingHandler
+	handler         AlertHandler
 	ruleReader      RuleReader
 	log             log.Logger
 	responseHandler ResultHandler
