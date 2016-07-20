@@ -79,11 +79,11 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       }
 
       var queryInterpolated = templateSrv.replace(queryString, {}, 'lucene');
-      var filter = { "bool": { "must": [{ "range": range }] } };
-      var query = { "bool": { "should": [{ "query_string": { "query": queryInterpolated } }] } };
+      var query = { "bool": { "must": [{ "range": range }, { "query_string": { "query": queryInterpolated } }] }};
+
       var data = {
         "fields": [timeField, "_source"],
-        "query" : { "filtered": { "query" : query, "filter": filter } },
+        "query" : query,
         "size": 10000
       };
 
@@ -124,11 +124,12 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
         for (var i = 0; i < hits.length; i++) {
           var source = hits[i]._source;
-          var fields = hits[i].fields;
           var time = source[timeField];
-
-          if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
-            time = fields[timeField];
+          if (typeof hits[i].fields !== 'undefined') {
+            var fields = hits[i].fields;
+            if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
+              time = fields[timeField];
+            }
           }
 
           var event = {
