@@ -16,7 +16,7 @@ function (angular, $, _, moment) {
         data = {};
       }
 
-      if (!data.id && data.version) {
+      if (!data.id && data.version && !data.schemaVersion) {
         data.schemaVersion = data.version;
       }
 
