@@ -150,7 +150,7 @@ export class AlertTabCtrl {
     };
 
     return this.backendSrv.post('/api/alerts/test', payload).then(res => {
-      this.testResult = angular.toJson(res, true);
+      this.testResult = res;
       this.testing = false;
     });
   }

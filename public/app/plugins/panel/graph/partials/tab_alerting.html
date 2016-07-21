@@ -132,9 +132,7 @@
 </div>
 
 <div class="gf-form-group" ng-if="ctrl.testResult">
-  <pre>
-{{ctrl.testResult}}
-  </pre>
+  <json-tree root-name="result" object="ctrl.testResult" start-expanded="true"></json-tree>
 </div>
 
 <div class="gf-form-group" ng-if="!ctrl.alert.enabled">

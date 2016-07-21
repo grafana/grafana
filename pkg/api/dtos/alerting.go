@@ -42,8 +42,8 @@ type AlertTestCommand struct {
 type AlertTestResult struct {
 	Triggered bool                  `json:"triggerd"`
 	Timing    string                `json:"timing"`
-	Error     string                `json:"error"`
-	Logs      []*AlertTestResultLog `json:"logs"`
+	Error     string                `json:"error,omitempty"`
+	Logs      []*AlertTestResultLog `json:"logs,omitempty"`
 }
 
 type AlertTestResultLog struct {
