@@ -19,26 +19,26 @@ func TestAlertingExecutor(t *testing.T) {
 		handler := NewHandler()
 
 		Convey("Show return triggered with single passing condition", func() {
-			rule := &AlertRule{
+			context := NewAlertResultContext(&AlertRule{
 				Conditions: []AlertCondition{&conditionStub{
 					triggered: true,
 				}},
-			}
+			})
 
-			result := handler.eval(rule)
-			So(result.Triggered, ShouldEqual, true)
+			handler.eval(context)
+			So(context.Triggered, ShouldEqual, true)
 		})
 
 		Convey("Show return false with not passing condition", func() {
-			rule := &AlertRule{
+			context := NewAlertResultContext(&AlertRule{
 				Conditions: []AlertCondition{
 					&conditionStub{triggered: true},
 					&conditionStub{triggered: false},
 				},
-			}
+			})
 
-			result := handler.eval(rule)
-			So(result.Triggered, ShouldEqual, false)
+			handler.eval(context)
+			So(context.Triggered, ShouldEqual, false)
 		})
 
 		// 	Convey("Show return critical since below 2", func() {

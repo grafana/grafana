@@ -8,7 +8,7 @@ json-tree {
     &::before {
       pointer-events: none;
     }
-    &::before, & > .key {
+    &::before, & > .json-tree-key {
       cursor: pointer;
     }
   }
@@ -41,7 +41,7 @@ json-tree {
       content: '\25b6';
       position: absolute;
       left: 0px;
-      font-size: 10px;
+      font-size: 8px;
       transition: transform .1s ease;
     }
     &.expanded::before {
