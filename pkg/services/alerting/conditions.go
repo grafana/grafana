@@ -2,7 +2,6 @@ package alerting
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -50,15 +49,22 @@ func (c *QueryCondition) executeQuery(context *AlertResultContext) (tsdb.TimeSer
 
 	resp, err := c.HandleRequest(req)
 	if err != nil {
-		return nil, fmt.Errorf("Alerting: GetSeries() tsdb.HandleRequest() error %v", err)
+		return nil, fmt.Errorf("tsdb.HandleRequest() error %v", err)
 	}
 
 	for _, v := range resp.Results {
 		if v.Error != nil {
-			return nil, fmt.Errorf("Alerting: GetSeries() tsdb.HandleRequest() response error %v", v)
+			return nil, fmt.Errorf("tsdb.HandleRequest() response error %v", v)
 		}
 
 		result = append(result, v.Series...)
+
+		if context.IsTestRun {
+			context.Logs = append(context.Logs, &AlertResultLogEntry{
+				Message: "Query Condition Query Result",
+				Data:    v.Series,
+			})
+		}
 	}
 
 	return result, nil
@@ -154,17 +160,17 @@ func NewDefaultAlertEvaluator(model *simplejson.Json) (*DefaultAlertEvaluator, e
 
 	evaluator.Type = model.Get("type").MustString()
 	if evaluator.Type == "" {
-		return nil, errors.New("Alert evaluator missing type property")
+		return nil, AlertValidationError{Reason: "Evaluator missing type property"}
 	}
 
 	params := model.Get("params").MustArray()
 	if len(params) == 0 {
-		return nil, errors.New("Alert evaluator missing threshold parameter")
+		return nil, AlertValidationError{Reason: "Evaluator missing threshold parameter"}
 	}
 
 	threshold, ok := params[0].(json.Number)
 	if !ok {
-		return nil, errors.New("Alert evaluator has invalid threshold parameter")
+		return nil, AlertValidationError{Reason: "Evaluator has invalid threshold parameter"}
 	}
 
 	evaluator.Threshold, _ = threshold.Float64()

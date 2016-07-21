@@ -19,6 +19,7 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "settings", Type: DB_Text, Nullable: false},
 			{Name: "frequency", Type: DB_BigInt, Nullable: false},
 			{Name: "handler", Type: DB_BigInt, Nullable: false},
+			{Name: "severity", Type: DB_Text, Nullable: false},
 			{Name: "enabled", Type: DB_Bool, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},

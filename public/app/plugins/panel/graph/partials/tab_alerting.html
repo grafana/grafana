@@ -131,6 +131,12 @@
   Evaluating rule <i class="fa fa-spinner fa-spin"></i>
 </div>
 
+<div class="gf-form-group" ng-if="ctrl.testResult">
+  <pre>
+{{ctrl.testResult}}
+  </pre>
+</div>
+
 <div class="gf-form-group" ng-if="!ctrl.alert.enabled">
   <div class="gf-form-button-row">
     <button class="btn btn-inverse" ng-click="ctrl.enable()">

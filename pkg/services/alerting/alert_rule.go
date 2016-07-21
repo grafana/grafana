@@ -23,6 +23,14 @@ type AlertRule struct {
 	Notifications []int64
 }
 
+type AlertValidationError struct {
+	Reason string
+}
+
+func (e AlertValidationError) Error() string {
+	return e.Reason
+}
+
 var (
 	ValueFormatRegex = regexp.MustCompile("^\\d+")
 	UnitFormatRegex  = regexp.MustCompile("\\w{1}$")

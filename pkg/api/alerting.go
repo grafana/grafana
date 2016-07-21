@@ -83,6 +83,9 @@ func AlertTest(c *middleware.Context, dto dtos.AlertTestCommand) Response {
 	}
 
 	if err := bus.Dispatch(&backendCmd); err != nil {
+		if validationErr, ok := err.(alerting.AlertValidationError); ok {
+			return ApiError(422, validationErr.Error(), nil)
+		}
 		return ApiError(500, "Failed to test rule", err)
 	}
 
@@ -94,6 +97,10 @@ func AlertTest(c *middleware.Context, dto dtos.AlertTestCommand) Response {
 
 	if res.Error != nil {
 		dtoRes.Error = res.Error.Error()
+	}
+
+	for _, log := range res.Logs {
+		dtoRes.Logs = append(dtoRes.Logs, &dtos.AlertTestResultLog{Message: log.Message, Data: log.Data})
 	}
 
 	dtoRes.Timing = fmt.Sprintf("%1.3fs", res.GetDurationSeconds())

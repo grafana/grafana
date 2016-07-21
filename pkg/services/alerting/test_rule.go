@@ -2,7 +2,6 @@ package alerting
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -38,28 +37,21 @@ func handleAlertTestCommand(cmd *AlertTestCommand) error {
 				return err
 			}
 
-			if res, err := testAlertRule(rule); err != nil {
-				return err
-			} else {
-				cmd.Result = res
-				return nil
-			}
+			cmd.Result = testAlertRule(rule)
+			return nil
 		}
 	}
 
 	return fmt.Errorf("Could not find alert with panel id %d", cmd.PanelId)
 }
 
-func testAlertRule(rule *AlertRule) (*AlertResultContext, error) {
+func testAlertRule(rule *AlertRule) *AlertResultContext {
 	handler := NewHandler()
 
-	resultChan := make(chan *AlertResultContext, 1)
-	handler.Execute(rule, resultChan)
+	context := NewAlertResultContext(rule)
+	context.IsTestRun = true
 
-	select {
-	case <-time.After(time.Second * 10):
-		return &AlertResultContext{Error: fmt.Errorf("Timeout")}, nil
-	case result := <-resultChan:
-		return result, nil
-	}
+	handler.Execute(context)
+
+	return context
 }

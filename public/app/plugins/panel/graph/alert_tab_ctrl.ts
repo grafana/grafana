@@ -69,7 +69,7 @@ export class AlertTabCtrl {
   initModel() {
     var alert = this.alert = this.panel.alert = this.panel.alert || {};
 
-    alert.conditions = [];
+    alert.conditions = alert.conditions || [];
     if (alert.conditions.length === 0) {
       alert.conditions.push(this.buildDefaultCondition());
     }
@@ -149,8 +149,8 @@ export class AlertTabCtrl {
       panelId: this.panelCtrl.panel.id,
     };
 
-    this.backendSrv.post('/api/alerts/test', payload).then(res => {
-      this.testResult = res;
+    return this.backendSrv.post('/api/alerts/test', payload).then(res => {
+      this.testResult = angular.toJson(res, true);
       this.testing = false;
     });
   }

@@ -7,7 +7,7 @@ import (
 )
 
 type AlertHandler interface {
-	Execute(rule *AlertRule, resultChan chan *AlertResultContext)
+	Execute(context *AlertResultContext)
 }
 
 type Scheduler interface {

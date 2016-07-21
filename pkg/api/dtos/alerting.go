@@ -40,7 +40,13 @@ type AlertTestCommand struct {
 }
 
 type AlertTestResult struct {
-	Triggered bool   `json:"triggerd"`
-	Timing    string `json:"timing"`
-	Error     string `json:"error"`
+	Triggered bool                  `json:"triggerd"`
+	Timing    string                `json:"timing"`
+	Error     string                `json:"error"`
+	Logs      []*AlertTestResultLog `json:"logs"`
+}
+
+type AlertTestResultLog struct {
+	Message string      `json:"message"`
+	Data    interface{} `json:"data"`
 }

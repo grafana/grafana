@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -11,41 +12,50 @@ var (
 )
 
 type HandlerImpl struct {
-	log log.Logger
+	log             log.Logger
+	alertJobTimeout time.Duration
 }
 
 func NewHandler() *HandlerImpl {
 	return &HandlerImpl{
-		log: log.New("alerting.executor"),
+		log:             log.New("alerting.executor"),
+		alertJobTimeout: time.Second * 5,
 	}
 }
 
-func (e *HandlerImpl) Execute(rule *AlertRule, resultQueue chan *AlertResultContext) {
-	resultQueue <- e.eval(rule)
-}
+func (e *HandlerImpl) Execute(context *AlertResultContext) {
 
-func (e *HandlerImpl) eval(rule *AlertRule) *AlertResultContext {
-	result := &AlertResultContext{
-		StartTime: time.Now(),
-		Rule:      rule,
+	go e.eval(context)
+
+	select {
+	case <-time.After(e.alertJobTimeout):
+		context.Error = fmt.Errorf("Timeout")
+		context.EndTime = time.Now()
+		e.log.Debug("Job Execution timeout", "alertId", context.Rule.Id)
+	case <-context.DoneChan:
+		e.log.Debug("Job Execution done", "timing", context.GetDurationSeconds(), "alertId", context.Rule.Id)
 	}
 
-	for _, condition := range rule.Conditions {
-		condition.Eval(result)
+}
+
+func (e *HandlerImpl) eval(context *AlertResultContext) {
+
+	for _, condition := range context.Rule.Conditions {
+		condition.Eval(context)
 
 		// break if condition could not be evaluated
-		if result.Error != nil {
+		if context.Error != nil {
 			break
 		}
 
 		// break if result has not triggered yet
-		if result.Triggered == false {
+		if context.Triggered == false {
 			break
 		}
 	}
 
-	result.EndTime = time.Now()
-	return result
+	context.EndTime = time.Now()
+	context.DoneChan <- true
 }
 
 // func (e *HandlerImpl) executeQuery(job *AlertJob) (tsdb.TimeSeriesSlice, error) {

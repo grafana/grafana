@@ -1,7 +1,6 @@
 package alerting
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/benbjohnson/clock"
@@ -18,7 +17,6 @@ type Engine struct {
 	ruleReader      RuleReader
 	log             log.Logger
 	responseHandler ResultHandler
-	alertJobTimeout time.Duration
 }
 
 func NewEngine() *Engine {
@@ -31,7 +29,6 @@ func NewEngine() *Engine {
 		ruleReader:      NewRuleReader(),
 		log:             log.New("alerting.engine"),
 		responseHandler: NewResultHandler(),
-		alertJobTimeout: time.Second * 5,
 	}
 
 	return e
@@ -82,32 +79,14 @@ func (e *Engine) execDispatch() {
 
 	for job := range e.execQueue {
 		log.Trace("Alerting: engine:execDispatch() starting job %s", job.Rule.Name)
-		job.Running = true
 		e.executeJob(job)
 	}
 }
 
 func (e *Engine) executeJob(job *AlertJob) {
-	startTime := time.Now()
-
-	resultChan := make(chan *AlertResultContext, 1)
-	go e.handler.Execute(job.Rule, resultChan)
-
-	select {
-	case <-time.After(e.alertJobTimeout):
-		e.resultQueue <- &AlertResultContext{
-			Error:     fmt.Errorf("Timeout"),
-			Rule:      job.Rule,
-			StartTime: startTime,
-			EndTime:   time.Now(),
-		}
-		close(resultChan)
-		e.log.Debug("Job Execution timeout", "alertRuleId", job.Rule.Id)
-	case result := <-resultChan:
-		e.log.Debug("Job Execution done", "timing", result.GetDurationSeconds(), "ruleId", job.Rule.Id)
-		e.resultQueue <- result
-	}
-
+	job.Running = true
+	context := NewAlertResultContext(job.Rule)
+	e.handler.Execute(context)
 	job.Running = false
 }
 
