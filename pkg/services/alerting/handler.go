@@ -33,7 +33,7 @@ func (e *HandlerImpl) Execute(context *AlertResultContext) {
 		context.EndTime = time.Now()
 		e.log.Debug("Job Execution timeout", "alertId", context.Rule.Id)
 	case <-context.DoneChan:
-		e.log.Debug("Job Execution done", "timing", context.GetDurationSeconds(), "alertId", context.Rule.Id)
+		e.log.Debug("Job Execution done", "timing", context.GetDurationSeconds(), "alertId", context.Rule.Id, "triggered", context.Triggered)
 	}
 
 }

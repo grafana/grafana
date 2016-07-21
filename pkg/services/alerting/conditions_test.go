@@ -60,7 +60,7 @@ func (ctx *queryConditionTestContext) exec() {
           }`))
 	So(err, ShouldBeNil)
 
-	condition, err := NewQueryCondition(jsonModel)
+	condition, err := NewQueryCondition(jsonModel, 0)
 	So(err, ShouldBeNil)
 
 	condition.HandleRequest = func(req *tsdb.Request) (*tsdb.Response, error) {

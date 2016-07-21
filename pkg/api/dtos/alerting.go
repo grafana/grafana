@@ -50,3 +50,8 @@ type AlertTestResultLog struct {
 	Message string      `json:"message"`
 	Data    interface{} `json:"data"`
 }
+
+type AlertEvent struct {
+	Metric string  `json:"metric"`
+	Value  float64 `json:"value"`
+}

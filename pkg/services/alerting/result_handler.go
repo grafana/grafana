@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting/alertstates"
@@ -37,11 +36,10 @@ func (handler *ResultHandlerImpl) Handle(result *AlertResultContext) {
 
 	if handler.shouldUpdateState(result, newState) {
 		cmd := &m.UpdateAlertStateCommand{
-			AlertId:         result.Rule.Id,
-			Info:            result.Description,
-			OrgId:           result.Rule.OrgId,
-			State:           newState,
-			TriggeredAlerts: simplejson.NewFromAny(result.Details),
+			AlertId: result.Rule.Id,
+			Info:    result.Description,
+			OrgId:   result.Rule.OrgId,
+			State:   newState,
 		}
 
 		if err := bus.Dispatch(cmd); err != nil {

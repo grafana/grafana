@@ -29,11 +29,10 @@ func (this *UpdateAlertStateCommand) IsValidState() bool {
 // Commands
 
 type UpdateAlertStateCommand struct {
-	AlertId         int64            `json:"alertId" binding:"Required"`
-	OrgId           int64            `json:"orgId" binding:"Required"`
-	State           string           `json:"state" binding:"Required"`
-	Info            string           `json:"info"`
-	TriggeredAlerts *simplejson.Json `json:"triggeredAlerts"`
+	AlertId int64  `json:"alertId" binding:"Required"`
+	OrgId   int64  `json:"orgId" binding:"Required"`
+	State   string `json:"state" binding:"Required"`
+	Info    string `json:"info"`
 
 	Result *Alert
 }

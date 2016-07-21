@@ -11,6 +11,7 @@ import (
 )
 
 type QueryCondition struct {
+	Index         int
 	Query         AlertQuery
 	Reducer       QueryReducer
 	Evaluator     AlertEvaluator
@@ -27,7 +28,18 @@ func (c *QueryCondition) Eval(context *AlertResultContext) {
 	for _, series := range seriesList {
 		reducedValue := c.Reducer.Reduce(series)
 		pass := c.Evaluator.Eval(series, reducedValue)
+
+		if context.IsTestRun {
+			context.Logs = append(context.Logs, &AlertResultLogEntry{
+				Message: fmt.Sprintf("Condition[%d]: Eval: %v, Metric: %s, Value: %1.3f", c.Index, pass, series.Name, reducedValue),
+			})
+		}
+
 		if pass {
+			context.Events = append(context.Events, &AlertEvent{
+				Metric: series.Name,
+				Value:  reducedValue,
+			})
 			context.Triggered = true
 			break
 		}
@@ -61,7 +73,7 @@ func (c *QueryCondition) executeQuery(context *AlertResultContext) (tsdb.TimeSer
 
 		if context.IsTestRun {
 			context.Logs = append(context.Logs, &AlertResultLogEntry{
-				Message: "Query Condition Query Result",
+				Message: fmt.Sprintf("Condition[%d]: Query Result", c.Index),
 				Data:    v.Series,
 			})
 		}
@@ -93,8 +105,9 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource) *tsdb.
 	return req
 }
 
-func NewQueryCondition(model *simplejson.Json) (*QueryCondition, error) {
+func NewQueryCondition(model *simplejson.Json, index int) (*QueryCondition, error) {
 	condition := QueryCondition{}
+	condition.Index = index
 	condition.HandleRequest = tsdb.HandleRequest
 
 	queryJson := model.Get("query")

@@ -70,11 +70,11 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 		}
 	}
 
-	for _, condition := range ruleDef.Settings.Get("conditions").MustArray() {
+	for index, condition := range ruleDef.Settings.Get("conditions").MustArray() {
 		conditionModel := simplejson.NewFromAny(condition)
 		switch conditionModel.Get("type").MustString() {
 		case "query":
-			queryCondition, err := NewQueryCondition(conditionModel)
+			queryCondition, err := NewQueryCondition(conditionModel, index)
 			if err != nil {
 				return nil, err
 			}

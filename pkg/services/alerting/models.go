@@ -30,7 +30,7 @@ func (aj *AlertJob) IncRetry() {
 type AlertResultContext struct {
 	Triggered   bool
 	IsTestRun   bool
-	Details     []*AlertResultDetail
+	Events      []*AlertEvent
 	Logs        []*AlertResultLogEntry
 	Error       error
 	Description string
@@ -51,6 +51,7 @@ func NewAlertResultContext(rule *AlertRule) *AlertResultContext {
 		StartTime:  time.Now(),
 		Rule:       rule,
 		Logs:       make([]*AlertResultLogEntry, 0),
+		Events:     make([]*AlertEvent, 0),
 		DoneChan:   make(chan bool, 1),
 		CancelChan: make(chan bool, 1),
 		log:        log.New("alerting.engine"),
@@ -62,7 +63,7 @@ type AlertResultLogEntry struct {
 	Data    interface{}
 }
 
-type AlertResultDetail struct {
+type AlertEvent struct {
 	Value  float64
 	Metric string
 	State  string
