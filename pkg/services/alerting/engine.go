@@ -71,23 +71,25 @@ func (e *Engine) alertingTicker() {
 }
 
 func (e *Engine) execDispatch() {
-	defer func() {
-		if err := recover(); err != nil {
-			e.log.Error("Scheduler Panic: stopping executor", "error", err, "stack", log.Stack(1))
-		}
-	}()
-
 	for job := range e.execQueue {
-		log.Trace("Alerting: engine:execDispatch() starting job %s", job.Rule.Name)
-		e.executeJob(job)
+		e.log.Debug("Starting executing alert rule %s", job.Rule.Name)
+		go e.executeJob(job)
 	}
 }
 
 func (e *Engine) executeJob(job *AlertJob) {
+	defer func() {
+		if err := recover(); err != nil {
+			e.log.Error("Execute Alert Panic", "error", err, "stack", log.Stack(1))
+		}
+	}()
+
 	job.Running = true
 	context := NewAlertResultContext(job.Rule)
 	e.handler.Execute(context)
 	job.Running = false
+
+	e.resultQueue <- context
 }
 
 func (e *Engine) resultHandler() {

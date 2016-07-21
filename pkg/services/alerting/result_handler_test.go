@@ -1,15 +1,24 @@
 package alerting
 
+// import (
+// 	"testing"
+// 	"time"
+//
+// 	"github.com/grafana/grafana/pkg/bus"
+// 	m "github.com/grafana/grafana/pkg/models"
+// 	"github.com/grafana/grafana/pkg/services/alerting/alertstates"
+//
+// 	. "github.com/smartystreets/goconvey/convey"
+// )
+//
 // func TestAlertResultHandler(t *testing.T) {
 // 	Convey("Test result Handler", t, func() {
 // 		resultHandler := ResultHandlerImpl{}
-// 		mockResult := &AlertResult{
-// 			State: alertstates.Ok,
-// 			AlertJob: &AlertJob{
-// 				Rule: &AlertRule{
-// 					Id:    1,
-// 					OrgId: 1,
-// 				},
+// 		mockResult := &AlertResultContext{
+// 			Triggered: false,
+// 			Rule: &AlertRule{
+// 				Id:    1,
+// 				OrgId 1,
 // 			},
 // 		}
 // 		mockAlertState := &m.AlertState{}
@@ -30,7 +39,7 @@ package alerting
 // 				mockAlertState = &m.AlertState{
 // 					State: alertstates.Critical,
 // 				}
-// 				mockResult.State = alertstates.Ok
+// 				mockResult.Triggered = false
 // 				So(resultHandler.shouldUpdateState(mockResult), ShouldBeTrue)
 // 			})
 //
@@ -40,7 +49,7 @@ package alerting
 // 					State:   alertstates.Critical,
 // 					Created: now.Add(time.Minute * -30),
 // 				}
-// 				mockResult.State = alertstates.Critical
+// 				mockResult.Triggered = true
 // 				mockResult.StartTime = time.Now()
 // 				So(resultHandler.shouldUpdateState(mockResult), ShouldBeTrue)
 // 			})

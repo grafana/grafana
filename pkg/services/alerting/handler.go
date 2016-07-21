@@ -55,6 +55,7 @@ func (e *HandlerImpl) eval(context *AlertResultContext) {
 	}
 
 	context.EndTime = time.Now()
+	context.DoneChan <- true
 }
 
 // func (e *HandlerImpl) executeQuery(job *AlertJob) (tsdb.TimeSeriesSlice, error) {

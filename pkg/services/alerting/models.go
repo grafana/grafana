@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/log"
 )
 
 type AlertJob struct {
@@ -38,6 +39,7 @@ type AlertResultContext struct {
 	Rule        *AlertRule
 	DoneChan    chan bool
 	CancelChan  chan bool
+	log         log.Logger
 }
 
 func (a *AlertResultContext) GetDurationSeconds() float64 {
@@ -51,6 +53,7 @@ func NewAlertResultContext(rule *AlertRule) *AlertResultContext {
 		Logs:       make([]*AlertResultLogEntry, 0),
 		DoneChan:   make(chan bool, 1),
 		CancelChan: make(chan bool, 1),
+		log:        log.New("alerting.engine"),
 	}
 }
 
