@@ -1,6 +1,8 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -73,8 +75,8 @@ func GetAlerts(c *middleware.Context) Response {
 }
 
 // POST /api/alerts/test
-func TestAlertRule(c *middleware.Context, dto dtos.TestAlertRuleCommand) Response {
-	backendCmd := alerting.TestAlertRuleCommand{
+func AlertTest(c *middleware.Context, dto dtos.AlertTestCommand) Response {
+	backendCmd := alerting.AlertTestCommand{
 		OrgId:     c.OrgId,
 		Dashboard: dto.Dashboard,
 		PanelId:   dto.PanelId,
@@ -84,7 +86,19 @@ func TestAlertRule(c *middleware.Context, dto dtos.TestAlertRuleCommand) Respons
 		return ApiError(500, "Failed to test rule", err)
 	}
 
-	return Json(200, backendCmd.Result)
+	res := backendCmd.Result
+
+	dtoRes := &dtos.AlertTestResult{
+		Triggered: res.Triggered,
+	}
+
+	if res.Error != nil {
+		dtoRes.Error = res.Error.Error()
+	}
+
+	dtoRes.Timing = fmt.Sprintf("%1.3fs", res.GetDurationSeconds())
+
+	return Json(200, dtoRes)
 }
 
 // GET /api/alerts/:id

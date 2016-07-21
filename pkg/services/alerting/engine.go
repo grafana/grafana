@@ -104,8 +104,7 @@ func (e *Engine) executeJob(job *AlertJob) {
 		close(resultChan)
 		e.log.Debug("Job Execution timeout", "alertRuleId", job.Rule.Id)
 	case result := <-resultChan:
-		duration := float64(result.EndTime.Nanosecond()-result.StartTime.Nanosecond()) / float64(1000000)
-		e.log.Debug("Job Execution done", "timeTakenMs", duration, "ruleId", job.Rule.Id)
+		e.log.Debug("Job Execution done", "timing", result.GetDurationSeconds(), "ruleId", job.Rule.Id)
 		e.resultQueue <- result
 	}
 

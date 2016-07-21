@@ -9,7 +9,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-type TestAlertRuleCommand struct {
+type AlertTestCommand struct {
 	Dashboard *simplejson.Json
 	PanelId   int64
 	OrgId     int64
@@ -18,24 +18,26 @@ type TestAlertRuleCommand struct {
 }
 
 func init() {
-	bus.AddHandler("alerting", handleTestAlertRuleCommand)
+	bus.AddHandler("alerting", handleAlertTestCommand)
 }
 
-func handleTestAlertRuleCommand(cmd *TestAlertRuleCommand) error {
+func handleAlertTestCommand(cmd *AlertTestCommand) error {
 
-	dash, err := m.NewDashboardFromJson(cmd.Dashboard)
+	dash := m.NewDashboardFromJson(cmd.Dashboard)
+
+	extractor := NewDashAlertExtractor(dash, cmd.OrgId)
+	alerts, err := extractor.GetAlerts()
 	if err != nil {
 		return err
 	}
 
-	extractor := NewDashAlertExtractor(cmd.Dashboard)
-	rules, err := extractor.GetAlerts()
-	if err != nil {
-		return err
-	}
+	for _, alert := range alerts {
+		if alert.PanelId == cmd.PanelId {
+			rule, err := NewAlertRuleFromDBModel(alert)
+			if err != nil {
+				return err
+			}
 
-	for _, rule := range rules {
-		if rule.PanelId == cmd.PanelId {
 			if res, err := testAlertRule(rule); err != nil {
 				return err
 			} else {

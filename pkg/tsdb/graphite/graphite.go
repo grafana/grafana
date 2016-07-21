@@ -31,14 +31,15 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	result := &tsdb.BatchResult{}
 
 	params := url.Values{
-		"from":          []string{formatTimeRange(context.TimeRange.From)},
-		"until":         []string{context.TimeRange.To},
+		"from":          []string{"-" + formatTimeRange(context.TimeRange.From)},
+		"until":         []string{formatTimeRange(context.TimeRange.To)},
 		"format":        []string{"json"},
 		"maxDataPoints": []string{"500"},
 	}
 
 	for _, query := range queries {
 		params["target"] = []string{query.Query}
+		glog.Debug("Graphite request", "query", query.Query)
 	}
 
 	client := http.Client{Timeout: time.Duration(10 * time.Second)}
@@ -77,5 +78,8 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 }
 
 func formatTimeRange(input string) string {
+	if input == "now" {
+		return input
+	}
 	return strings.Replace(strings.Replace(input, "m", "min", -1), "M", "mon", -1)
 }

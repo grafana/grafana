@@ -36,6 +36,10 @@ type AlertResultContext struct {
 	Rule        *AlertRule
 }
 
+func (a *AlertResultContext) GetDurationSeconds() float64 {
+	return float64(a.EndTime.Nanosecond()-a.StartTime.Nanosecond()) / float64(1000000000)
+}
+
 type AlertResultDetail struct {
 	Value  float64
 	Metric string

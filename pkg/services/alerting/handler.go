@@ -27,6 +27,7 @@ func (e *HandlerImpl) Execute(rule *AlertRule, resultQueue chan *AlertResultCont
 func (e *HandlerImpl) eval(rule *AlertRule) *AlertResultContext {
 	result := &AlertResultContext{
 		StartTime: time.Now(),
+		Rule:      rule,
 	}
 
 	for _, condition := range rule.Conditions {

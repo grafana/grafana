@@ -116,11 +116,19 @@
         </ul>
       </div>
 
+      <button class="btn btn-inverse" ng-click="ctrl.test()">
+        Test Rule
+      </button>
+
       <button class="btn btn-inverse" ng-click="ctrl.delete()">
         Delete Alert
       </button>
     </div>
   </div>
+</div>
+
+<div class="gf-form-group" ng-if="ctrl.testing">
+  Evaluating rule <i class="fa fa-spinner fa-spin"></i>
 </div>
 
 <div class="gf-form-group" ng-if="!ctrl.alert.enabled">

@@ -29,6 +29,9 @@ export class AlertTabCtrl {
   panel: any;
   panelCtrl: any;
   metricTargets;
+  testing: boolean;
+  testResult: any;
+
   handlers = [{text: 'Grafana', value: 1}, {text: 'External', value: 0}];
   conditionTypes = [
     {text: 'Query', value: 'query'},
@@ -47,9 +50,8 @@ export class AlertTabCtrl {
     {text: 'Warning', value: 'warning'},
   ];
 
-
   /** @ngInject */
-  constructor($scope, private $timeout) {
+  constructor($scope, private $timeout, private backendSrv, private dashboardSrv) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
     $scope.ctrl = this;
@@ -137,6 +139,20 @@ export class AlertTabCtrl {
 
   thresholdsUpdated() {
     this.panelCtrl.render();
+  }
+
+  test() {
+    this.testing = true;
+
+    var payload = {
+      dashboard: this.dashboardSrv.getCurrent().getSaveModelClone(),
+      panelId: this.panelCtrl.panel.id,
+    };
+
+    this.backendSrv.post('/api/alerts/test', payload).then(res => {
+      this.testResult = res;
+      this.testing = false;
+    });
   }
 }
 

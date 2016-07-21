@@ -34,7 +34,13 @@ type AlertNotificationDTO struct {
 	Updated time.Time `json:"updated"`
 }
 
-type TestAlertRuleCommand struct {
-	Dashboard *simplejson.Json `json:"dashboard"`
-	PanelId   int64            `json:"panelId"`
+type AlertTestCommand struct {
+	Dashboard *simplejson.Json `json:"dashboard" binding:"Required"`
+	PanelId   int64            `json:"panelId" binding:"Required"`
+}
+
+type AlertTestResult struct {
+	Triggered bool   `json:"triggerd"`
+	Timing    string `json:"timing"`
+	Error     string `json:"error"`
 }
