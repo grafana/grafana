@@ -1,16 +1,15 @@
 ///<reference path="../../headers/common.d.ts" />
 
-var alertStateToCssMap = {
-  "OK": "icon-gf-online alert-icon-online",
-  "WARN": "icon-gf-warn alert-icon-warn",
-  "CRITICAL": "icon-gf-critical alert-icon-critical",
-  "ACKNOWLEDGED": "icon-gf-alert-disabled"
+var alertSeverityIconMap = {
+  "ok": "icon-gf-online alert-icon-online",
+  "warning": "icon-gf-warn alert-icon-warn",
+  "critical": "icon-gf-critical alert-icon-critical",
 };
 
-function getCssForState(alertState) {
-  return alertStateToCssMap[alertState];
+function getSeverityIconClass(alertState) {
+  return alertSeverityIconMap[alertState];
 }
 
 export default {
-  getCssForState
+  getSeverityIconClass,
 };

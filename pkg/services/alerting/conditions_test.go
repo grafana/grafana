@@ -19,20 +19,20 @@ func TestQueryCondition(t *testing.T) {
 			ctx.reducer = `{"type": "avg"}`
 			ctx.evaluator = `{"type": ">", "params": [100]}`
 
-			Convey("should trigger when avg is above 100", func() {
+			Convey("should fire when avg is above 100", func() {
 				ctx.series = tsdb.TimeSeriesSlice{tsdb.NewTimeSeries("test1", [][2]float64{{120, 0}})}
 				ctx.exec()
 
 				So(ctx.result.Error, ShouldBeNil)
-				So(ctx.result.Triggered, ShouldBeTrue)
+				So(ctx.result.Firing, ShouldBeTrue)
 			})
 
-			Convey("Should not trigger when avg is below 100", func() {
+			Convey("Should not fire when avg is below 100", func() {
 				ctx.series = tsdb.TimeSeriesSlice{tsdb.NewTimeSeries("test1", [][2]float64{{90, 0}})}
 				ctx.exec()
 
 				So(ctx.result.Error, ShouldBeNil)
-				So(ctx.result.Triggered, ShouldBeFalse)
+				So(ctx.result.Firing, ShouldBeFalse)
 			})
 		})
 	})

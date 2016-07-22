@@ -17,51 +17,8 @@ func init() {
 	bus.AddHandler("sql", GetAlertById)
 	bus.AddHandler("sql", DeleteAlertById)
 	bus.AddHandler("sql", GetAllAlertQueryHandler)
-	//bus.AddHandler("sql", HeartBeat)
+	bus.AddHandler("sql", SetAlertState)
 }
-
-/*
-func HeartBeat(query *m.HeartBeatCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
-		now := time.Now().Sub(0, 0, 0, 5)
-		activeTime := time.Now().Sub(0, 0, 0, 5)
-		ownHeartbeats := make([]m.HeartBeat, 0)
-		err := x.Where("server_id = ?", query.ServerId).Find(&ownHeartbeats)
-
-		if err != nil {
-			return err
-		}
-
-		if (len(ownHeartbeats)) > 0 && ownHeartbeats[0].Updated > activeTime {
-			//update
-			x.Insert(&m.HeartBeat{ServerId: query.ServerId, Created: now, Updated: now})
-		} else {
-			thisServer := ownHeartbeats[0]
-			thisServer.Updated = now
-			x.Id(thisServer.Id).Update(&thisServer)
-		}
-
-		activeServers := make([]m.HeartBeat, 0)
-		err = x.Where("server_id = ? and updated > ", query.ServerId, now.String()).OrderBy("id").Find(&activeServers)
-
-		if err != nil {
-			return err
-		}
-
-		for i, pos := range activeServers {
-			if pos.ServerId == query.ServerId {
-				query.Result = &m.AlertingClusterInfo{
-					ClusterSize:    len(activeServers),
-					UptimePosition: i,
-				}
-				return nil
-			}
-		}
-
-		return nil
-	})
-}
-*/
 
 func GetAlertById(query *m.GetAlertByIdQuery) error {
 	alert := m.Alert{}
@@ -203,7 +160,7 @@ func upsertAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *xor
 		} else {
 			alert.Updated = time.Now()
 			alert.Created = time.Now()
-			alert.State = "UNKNOWN"
+			alert.State = m.AlertStatePending
 			alert.CreatedBy = cmd.UserId
 			alert.UpdatedBy = cmd.UserId
 
@@ -252,4 +209,21 @@ func GetAlertsByDashboardId2(dashboardId int64, sess *xorm.Session) ([]*m.Alert,
 	}
 
 	return alerts, nil
+}
+
+func SetAlertState(cmd *m.SetAlertStateCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		alert := m.Alert{}
+
+		if has, err := sess.Id(cmd.AlertId).Get(&alert); err != nil {
+			return err
+		} else if !has {
+			return fmt.Errorf("Could not find alert")
+		}
+
+		alert.State = cmd.State
+		sess.Id(alert.Id).Update(&alert)
+
+		return nil
+	})
 }

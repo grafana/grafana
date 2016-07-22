@@ -46,8 +46,8 @@ export class AlertTabCtrl {
     {text: '<', value: '<'},
   ];
   severityLevels = [
-    {text: 'Critical', value: 'CRITICAL'},
-    {text: 'Warning', value: 'WARN'},
+    {text: 'Critical', value: 'critical'},
+    {text: 'Warning', value: 'warning'},
   ];
 
   /** @ngInject */

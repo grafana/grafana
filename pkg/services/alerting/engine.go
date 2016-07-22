@@ -100,7 +100,7 @@ func (e *Engine) resultHandler() {
 	}()
 
 	for result := range e.resultQueue {
-		e.log.Debug("Alert Rule Result", "ruleId", result.Rule.Id, "triggered", result.Triggered)
+		e.log.Debug("Alert Rule Result", "ruleId", result.Rule.Id, "firing", result.Firing)
 
 		if result.Error != nil {
 			e.log.Error("Alert Rule Result Error", "ruleId", result.Rule.Id, "error", result.Error, "retry")

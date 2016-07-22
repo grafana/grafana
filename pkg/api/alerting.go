@@ -49,6 +49,7 @@ func GetAlerts(c *middleware.Context) Response {
 			Name:        alert.Name,
 			Description: alert.Description,
 			State:       alert.State,
+			Severity:    alert.Severity,
 		})
 	}
 
@@ -92,7 +93,7 @@ func AlertTest(c *middleware.Context, dto dtos.AlertTestCommand) Response {
 	res := backendCmd.Result
 
 	dtoRes := &dtos.AlertTestResult{
-		Triggered: res.Triggered,
+		Firing: res.Firing,
 	}
 
 	if res.Error != nil {
@@ -138,41 +139,41 @@ func DelAlert(c *middleware.Context) Response {
 	return Json(200, resp)
 }
 
-// GET /api/alerts/events/:id
-func GetAlertStates(c *middleware.Context) Response {
-	alertId := c.ParamsInt64(":alertId")
-
-	query := models.GetAlertsStateQuery{
-		AlertId: alertId,
-	}
-
-	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Failed get alert state log", err)
-	}
-
-	return Json(200, query.Result)
-}
-
-// PUT /api/alerts/events/:id
-func PutAlertState(c *middleware.Context, cmd models.UpdateAlertStateCommand) Response {
-	cmd.AlertId = c.ParamsInt64(":alertId")
-	cmd.OrgId = c.OrgId
-
-	query := models.GetAlertByIdQuery{Id: cmd.AlertId}
-	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Failed to get alertstate", err)
-	}
-
-	if query.Result.OrgId != 0 && query.Result.OrgId != c.OrgId {
-		return ApiError(500, "Alert not found", nil)
-	}
-
-	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to set new state", err)
-	}
-
-	return Json(200, cmd.Result)
-}
+// // GET /api/alerts/events/:id
+// func GetAlertStates(c *middleware.Context) Response {
+// 	alertId := c.ParamsInt64(":alertId")
+//
+// 	query := models.GetAlertsStateQuery{
+// 		AlertId: alertId,
+// 	}
+//
+// 	if err := bus.Dispatch(&query); err != nil {
+// 		return ApiError(500, "Failed get alert state log", err)
+// 	}
+//
+// 	return Json(200, query.Result)
+// }
+//
+// // PUT /api/alerts/events/:id
+// func PutAlertState(c *middleware.Context, cmd models.UpdateAlertStateCommand) Response {
+// 	cmd.AlertId = c.ParamsInt64(":alertId")
+// 	cmd.OrgId = c.OrgId
+//
+// 	query := models.GetAlertByIdQuery{Id: cmd.AlertId}
+// 	if err := bus.Dispatch(&query); err != nil {
+// 		return ApiError(500, "Failed to get alertstate", err)
+// 	}
+//
+// 	if query.Result.OrgId != 0 && query.Result.OrgId != c.OrgId {
+// 		return ApiError(500, "Alert not found", nil)
+// 	}
+//
+// 	if err := bus.Dispatch(&cmd); err != nil {
+// 		return ApiError(500, "Failed to set new state", err)
+// 	}
+//
+// 	return Json(200, cmd.Result)
+// }
 
 func GetAlertNotifications(c *middleware.Context) Response {
 	query := &models.GetAlertNotificationQuery{

@@ -2,7 +2,6 @@ package alerting
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -90,8 +89,12 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				Handler:     jsonAlert.Get("handler").MustInt64(),
 				Enabled:     jsonAlert.Get("enabled").MustBool(),
 				Description: jsonAlert.Get("description").MustString(),
-				Severity:    jsonAlert.Get("severity").MustString(),
+				Severity:    m.AlertSeverityType(jsonAlert.Get("severity").MustString()),
 				Frequency:   getTimeDurationStringToSeconds(jsonAlert.Get("frequency").MustString()),
+			}
+
+			if !alert.Severity.IsValid() {
+				return nil, AlertValidationError{Reason: "Invalid alert Severity"}
 			}
 
 			for _, condition := range jsonAlert.Get("conditions").MustArray() {
@@ -102,7 +105,7 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				panelQuery := findPanelQueryByRefId(panel, queryRefId)
 
 				if panelQuery == nil {
-					return nil, fmt.Errorf("Alert referes to query %s, that could not be found", queryRefId)
+					return nil, AlertValidationError{Reason: "Alert refes to query that cannot be found"}
 				}
 
 				dsName := ""

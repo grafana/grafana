@@ -28,7 +28,7 @@ func (aj *AlertJob) IncRetry() {
 }
 
 type AlertResultContext struct {
-	Triggered   bool
+	Firing      bool
 	IsTestRun   bool
 	Events      []*AlertEvent
 	Logs        []*AlertResultLogEntry

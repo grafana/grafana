@@ -7,11 +7,11 @@ import (
 )
 
 type conditionStub struct {
-	triggered bool
+	firing bool
 }
 
 func (c *conditionStub) Eval(context *AlertResultContext) {
-	context.Triggered = c.triggered
+	context.Firing = c.firing
 }
 
 func TestAlertingExecutor(t *testing.T) {
@@ -21,24 +21,24 @@ func TestAlertingExecutor(t *testing.T) {
 		Convey("Show return triggered with single passing condition", func() {
 			context := NewAlertResultContext(&AlertRule{
 				Conditions: []AlertCondition{&conditionStub{
-					triggered: true,
+					firing: true,
 				}},
 			})
 
 			handler.eval(context)
-			So(context.Triggered, ShouldEqual, true)
+			So(context.Firing, ShouldEqual, true)
 		})
 
 		Convey("Show return false with not passing condition", func() {
 			context := NewAlertResultContext(&AlertRule{
 				Conditions: []AlertCondition{
-					&conditionStub{triggered: true},
-					&conditionStub{triggered: false},
+					&conditionStub{firing: true},
+					&conditionStub{firing: false},
 				},
 			})
 
 			handler.eval(context)
-			So(context.Triggered, ShouldEqual, false)
+			So(context.Firing, ShouldEqual, false)
 		})
 
 		// 	Convey("Show return critical since below 2", func() {

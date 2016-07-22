@@ -18,7 +18,8 @@ type AlertRule struct {
 	Frequency     int64
 	Name          string
 	Description   string
-	Severity      string
+	State         m.AlertStateType
+	Severity      m.AlertSeverityType
 	Conditions    []AlertCondition
 	Notifications []int64
 }
@@ -63,6 +64,7 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 	model.Description = ruleDef.Description
 	model.Frequency = ruleDef.Frequency
 	model.Severity = ruleDef.Severity
+	model.State = ruleDef.State
 
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		if id, ok := v.(int64); ok {

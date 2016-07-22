@@ -40,7 +40,7 @@ func (c *QueryCondition) Eval(context *AlertResultContext) {
 				Metric: series.Name,
 				Value:  reducedValue,
 			})
-			context.Triggered = true
+			context.Firing = true
 			break
 		}
 	}
