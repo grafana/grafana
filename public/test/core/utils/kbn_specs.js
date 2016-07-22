@@ -68,6 +68,11 @@ define([
   describeValueFormat('wps', 789000000, 1000000, -1, '789M wps');
   describeValueFormat('iops', 11000000000, 1000000000, -1, '11B iops');
 
+  describeValueFormat('s', 1.23456789e-7, 1e-10, 8, '123.5 ns');
+  describeValueFormat('s', 1.23456789e-4, 1e-7, 5, '123.5 µs');
+  describeValueFormat('s', 1.23456789e-3, 1e-6, 4, '1.235 ms');
+  describeValueFormat('s', 1.23456789e-2, 1e-5, 3, '12.35 ms');
+  describeValueFormat('s', 1.23456789e-1, 1e-4, 2, '123.5 ms');
   describeValueFormat('s', 24, 1, 0, '24 s');
   describeValueFormat('s', 246, 1, 0, '4.1 min');
   describeValueFormat('s', 24567, 100, 0, '6.82 hour');
