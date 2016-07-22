@@ -76,19 +76,19 @@ describe('grafanaSingleStat', function() {
   describe('string thresholds with multiple matches', () => {
     var data: any = {
       colorMap : ['green', 'yellow', 'red'],
-      thresholds : [/val/, /v.*/]
+      thresholds : [/val/, /v.*[^e]$/]
     };
 
     it('"other" should be green', () => {
       expect(getColorForValue(data, 'other')).to.be('green');
     });
 
-    it('"value1" should be red', () => {
-      expect(getColorForValue(data, 'value1')).to.be('red');
+    it('"value" should be red', () => {
+      expect(getColorForValue(data, 'value')).to.be('yellow');
     });
 
-    it('"victor" should be red', () => {
-      expect(getColorForValue(data, 'victor')).to.be('red');
+    it('"val" should be red', () => {
+      expect(getColorForValue(data, 'val')).to.be('red');
     });
   });
 });

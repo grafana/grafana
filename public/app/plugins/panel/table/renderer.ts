@@ -15,9 +15,14 @@ export class TableRenderer {
 
   getColorForValue(value, style) {
     if (!style.thresholds) { return null; }
-
+    _.each(style.thresholds, function(r) {
+        console.log(r.source);
+    });
+    console.log(value);
     for (var i = style.thresholds.length; i > 0; i--) {
-      if (value >= style.thresholds[i - 1]) {
+      if (_.isNumber(value) && value >= style.thresholds[i - 1]) {
+        return style.colors[i];
+      } else if (_.isString(value) && value.match(style.thresholds[i-1])) {
         return style.colors[i];
       }
     }
@@ -73,6 +78,20 @@ export class TableRenderer {
         }
 
         return valueFormater(v, style.decimals, null);
+      };
+    }
+
+    if (style.type === 'string') {
+      return v => {
+        if (style.colorMode) {
+          var stringStyle = _.merge({}, style);
+          console.log(stringStyle.thresholds);
+          stringStyle.thresholds = _.map(stringStyle.thresholds, function(str) {
+            return kbn.stringToJsRegex(str.trim());
+          });
+          this.colorState[stringStyle.colorModel] = this.getColorForValue(v, stringStyle);
+        }
+        return this.defaultCellFormater(v, stringStyle);
       };
     }
 

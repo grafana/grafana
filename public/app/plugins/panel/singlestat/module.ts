@@ -589,7 +589,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 }
 
 function getColorForValue(data, value) {
-  var colorIndices = [];
   for (var i = data.thresholds.length; i > 0; i--) {
     if (_.isNumber(value) && value >= data.thresholds[i-1]) {
       return data.colorMap[i];
