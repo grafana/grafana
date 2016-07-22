@@ -49,8 +49,46 @@ describe('grafanaSingleStat', function() {
       thresholds: [-27, 20]
     };
 
-    it('-30 should return green', () => {
+    it('-26 should return yellow', () => {
       expect(getColorForValue(data, -26)).to.be('yellow');
+    });
+  });
+
+  describe('string thresholds', () => {
+    var data: any = {
+      colorMap : ['green', 'yellow', 'red'],
+      thresholds : [/value1/, /value2/]
+    };
+
+    it('"other" should be green', () => {
+      expect(getColorForValue(data, 'other')).to.be('green');
+    });
+
+    it('"value1" should be yellow', () => {
+      expect(getColorForValue(data, 'value1')).to.be('yellow');
+    });
+
+    it('"value2" should be red', () => {
+      expect(getColorForValue(data, 'value2')).to.be('red');
+    });
+  });
+
+  describe('string thresholds with multiple matches', () => {
+    var data: any = {
+      colorMap : ['green', 'yellow', 'red'],
+      thresholds : [/val/, /v.*/]
+    };
+
+    it('"other" should be green', () => {
+      expect(getColorForValue(data, 'other')).to.be('green');
+    });
+
+    it('"value1" should be red', () => {
+      expect(getColorForValue(data, 'value1')).to.be('red');
+    });
+
+    it('"victor" should be red', () => {
+      expect(getColorForValue(data, 'victor')).to.be('red');
     });
   });
 });
