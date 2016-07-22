@@ -494,7 +494,11 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       // get thresholds
       data.thresholds = panel.thresholds.split(',').map(function(strVale) {
-        return Number(strVale.trim());
+        if (strVale.trim().charAt(0) === '/') {
+          return kbn.stringToJsRegex(strVale.trim());
+        } else {
+          return Number(strVale.trim());
+        }
       });
       data.colorMap = panel.colors;
 
@@ -598,7 +602,7 @@ function getColorForValue(data, value) {
     }
   }
   if (colorIndices.length > 0) {
-    return data.colorMap[_.last(colorIndices)];
+    return data.colorMap[_.first(colorIndices)];
   } else {
     return _.first(data.colorMap);
   }
