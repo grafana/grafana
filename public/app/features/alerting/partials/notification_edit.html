@@ -6,14 +6,14 @@
 		<h1>Alert notification</h1>
   </div>
 
-	<div class="gf-form-group section">
+	<div class="gf-form-group">
 		<div class="gf-form">
 			<span class="gf-form-label width-8">Name</span>
-			<input type="text" class="gf-form-input max-width-12" ng-model="ctrl.notification.name"></input>
+			<input type="text" class="gf-form-input max-width-15" ng-model="ctrl.notification.name" required></input>
 		</div>
 		<div class="gf-form">
 			<span class="gf-form-label width-8">Type</span>
-			<div class="gf-form-select-wrapper width-12">
+			<div class="gf-form-select-wrapper width-15">
 				<select class="gf-form-input"
 					ng-model="ctrl.notification.type"
 					ng-options="t for t in ['webhook', 'email']"
@@ -21,17 +21,10 @@
 				</select>
 			</div>
 		</div>
-		<div class="gf-form">
-			<gf-form-switch class="gf-form" label-class="width-8" label="Always execute" checked="ctrl.notification.alwaysExecute" on-change=""></gf-form-switch>
-		</div>
-		<div class="gf-form">
-			<gf-form-switch class="gf-form" label-class="width-8" label="Send Warning" checked="ctrl.notification.settings.sendWarn" on-change=""></gf-form-switch>
-		</div>
-		<div class="gf-form">
-			<gf-form-switch class="gf-form" label-class="width-8" label="Send Critical" checked="ctrl.notification.settings.sendCrit" on-change=""></gf-form-switch>
-		</div>
 	</div>
-	<div class="gf-form-group section" ng-show="ctrl.notification.type === 'webhook'">
+
+	<div class="gf-form-group" ng-show="ctrl.notification.type === 'webhook'">
+    <h3 class="page-heading">Webhook settings</h3>
 		<div class="gf-form">
 			<span class="gf-form-label width-6">Url</span>
 			<input type="text" class="gf-form-input max-width-26" ng-model="ctrl.notification.settings.url"></input>
@@ -48,9 +41,9 @@
 		</div>
 	</div>
 	<div class="gf-form-group section" ng-show="ctrl.notification.type === 'email'">
+    <h3 class="page-heading">Email addresses</h3>
 		<div class="gf-form">
-			<span class="gf-form-label width-8">To</span>
-			<input type="text" class="gf-form-input max-width-26" ng-model="ctrl.notification.settings.to">
+      <textarea rows="7" class="gf-form-input width-25" ng-ctrl="ctrl.notification.settings.addresses"></textarea>
 		</div>
 	</div>
 

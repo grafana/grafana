@@ -7,7 +7,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-type AlertRuleDTO struct {
+type AlertRule struct {
 	Id          int64               `json:"id"`
 	DashboardId int64               `json:"dashboardId"`
 	PanelId     int64               `json:"panelId"`
@@ -19,7 +19,7 @@ type AlertRuleDTO struct {
 	DashbboardUri string `json:"dashboardUri"`
 }
 
-type AlertNotificationDTO struct {
+type AlertNotification struct {
 	Id      int64     `json:"id"`
 	Name    string    `json:"name"`
 	Type    string    `json:"type"`

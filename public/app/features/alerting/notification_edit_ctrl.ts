@@ -15,10 +15,7 @@ export class AlertNotificationEditCtrl {
       this.loadNotification($routeParams.notificationId);
     } else {
       this.notification = {
-        settings: {
-          sendCrit: true,
-          sendWarn: true,
-        }
+        type: 'email',
       };
     }
   }
