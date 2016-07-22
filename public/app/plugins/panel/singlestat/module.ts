@@ -67,7 +67,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       maxValue: 100,
       thresholdMarkers: true,
       thresholdLabels: false
-    }
+    },
+    isString : false
   };
 
   /** @ngInject */
@@ -193,11 +194,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.value = 0;
         data.valueRounded = 0;
         data.valueFormated = this.series[0].alias;
+        this.panel.isString = true;
       } else if (_.isString(lastValue)) {
         data.value = 0;
         data.valueFormated = _.escape(lastValue);
         data.valueRounded = 0;
+        this.panel.isString = true;
       } else {
+        this.panel.isString = false;
         data.value = this.series[0].stats[this.panel.valueName];
         data.flotpairs = this.series[0].flotpairs;
 
@@ -301,7 +305,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         return valueString;
       }
 
-      var color = getColorForValue(data, value);
+      var color = getColorForValue(data, panel.isString ? valueString : value);
       if (color) {
         return '<span style="color:' + color + '">'+ valueString + '</span>';
       }
@@ -407,7 +411,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
               width: thresholdMarkersWidth,
             },
             value: {
-              color: panel.colorValue ? getColorForValue(data, data.valueRounded) : null,
+              color: panel.colorValue ? getColorForValue(data, this.panel.isString ? data.valueFormated : data.valueRounded) : null,
               formatter: function() { return getValueText(); },
               font: { size: fontSize, family: '"Helvetica Neue", Helvetica, Arial, sans-serif' }
             },
@@ -499,7 +503,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       var body = panel.gauge.show ? '' : getBigValueHtml();
 
       if (panel.colorBackground && !isNaN(data.valueRounded)) {
-        var color = getColorForValue(data, data.valueRounded);
+        var color = getColorForValue(data, panel.isString ? data.valueFormated : data.valueRounded);
         if (color) {
           $panelContainer.css('background-color', color);
           if (scope.fullscreen) {
