@@ -5,8 +5,10 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from '../../core_module';
+import appEvents from 'app/core/app_events';
 
 export class SearchCtrl {
+  isOpen: boolean;
   query: any;
   giveSearchFocus: number;
   selectedIndex: number;
@@ -15,16 +17,34 @@ export class SearchCtrl {
   tagsMode: boolean;
   showImport: boolean;
   dismiss: any;
+  ignoreClose: any;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private $timeout, private backendSrv, private contextSrv) {
+  constructor(private $scope, private $location, private $timeout, private backendSrv, private contextSrv, private $rootScope) {
+    $rootScope.onAppEvent('show-dash-search', this.openSearch.bind(this), $scope);
+    $rootScope.onAppEvent('hide-dash-search', this.closeSearch.bind(this), $scope);
+  }
+
+  closeSearch() {
+    this.isOpen = this.ignoreClose;
+  }
+
+  openSearch() {
+    if (this.isOpen) {
+      this.isOpen = false;
+      return;
+    }
+
+    this.isOpen = true;
     this.giveSearchFocus = 0;
     this.selectedIndex = -1;
     this.results = [];
     this.query = { query: '', tag: [], starred: false };
     this.currentSearchId = 0;
+    this.ignoreClose = true;
 
-    $timeout(() => {
+    this.$timeout(() => {
+      this.ignoreClose = false;
       this.giveSearchFocus = this.giveSearchFocus + 1;
       this.query.query = '';
       this.search();
@@ -33,7 +53,7 @@ export class SearchCtrl {
 
   keyDown(evt) {
     if (evt.keyCode === 27) {
-      this.dismiss();
+      this.closeSearch();
     }
     if (evt.keyCode === 40) {
       this.moveSelection(1);
@@ -129,9 +149,6 @@ export class SearchCtrl {
     this.searchDashboards();
   };
 
-  newDashboard() {
-    this.$location.url('dashboard/new');
-  };
 }
 
 export function searchDirective() {
@@ -141,10 +158,7 @@ export function searchDirective() {
     controller: SearchCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
-    scope: {
-      dismiss: '&'
-    },
   };
 }
 
-coreModule.directive('search', searchDirective);
+coreModule.directive('dashboardSearch', searchDirective);

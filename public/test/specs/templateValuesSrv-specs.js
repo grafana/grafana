@@ -34,12 +34,13 @@ define([
         options: [{text: "test", value: "test"}]
       };
 
-      beforeEach(function() {
+      beforeEach(function(done) {
         var dashboard = { templating: { list: [variable] } };
         var urlParams = {};
         urlParams["var-apps"] = "new";
         ctx.$location.search = sinon.stub().returns(urlParams);
-        ctx.service.init(dashboard);
+        ctx.service.init(dashboard).then(function() { done(); });
+        ctx.$rootScope.$digest();
       });
 
       it('should update current value', function() {
@@ -56,12 +57,13 @@ define([
         options: [{text: "val1", value: "val1"}, {text: 'val2', value: 'val2'}, {text: 'val3', value: 'val3', selected: true}]
       };
 
-      beforeEach(function() {
+      beforeEach(function(done) {
         var dashboard = { templating: { list: [variable] } };
         var urlParams = {};
         urlParams["var-apps"] = ["val2", "val1"];
         ctx.$location.search = sinon.stub().returns(urlParams);
-        ctx.service.init(dashboard);
+        ctx.service.init(dashboard).then(function() { done(); });
+        ctx.$rootScope.$digest();
       });
 
       it('should update current value', function() {
@@ -90,6 +92,7 @@ define([
           var ds = {};
           ds.metricFindQuery = sinon.stub().returns(ctx.$q.when(scenario.queryResult));
           ctx.datasourceSrv.get = sinon.stub().returns(ctx.$q.when(ds));
+          ctx.datasourceSrv.getMetricSources = sinon.stub().returns(scenario.metricSources);
 
           ctx.service.updateOptions(scenario.variable);
           ctx.$rootScope.$digest();
@@ -123,6 +126,80 @@ define([
       });
     });
 
+    describeUpdateVariable('query variable with multi select and new options does not contain some selected values', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {
+          type: 'query',
+          query: '',
+          name: 'test',
+          current: {
+            value: ['val1', 'val2', 'val3'],
+            text: 'val1 + val2 + val3'
+          }
+        };
+        scenario.queryResult = [{text: 'val2'}, {text: 'val3'}];
+      });
+
+      it('should update current value', function() {
+        expect(scenario.variable.current.value).to.eql(['val2', 'val3']);
+        expect(scenario.variable.current.text).to.eql('val2 + val3');
+      });
+    });
+
+    describeUpdateVariable('query variable with multi select and new options does not contain any selected values', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {
+          type: 'query',
+          query: '',
+          name: 'test',
+          current: {
+            value: ['val1', 'val2', 'val3'],
+            text: 'val1 + val2 + val3'
+          }
+        };
+        scenario.queryResult = [{text: 'val5'}, {text: 'val6'}];
+      });
+
+      it('should update current value with first one', function() {
+        expect(scenario.variable.current.value).to.eql('val5');
+        expect(scenario.variable.current.text).to.eql('val5');
+      });
+    });
+
+    describeUpdateVariable('query variable with multi select and $__all selected', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = {
+          type: 'query',
+          query: '',
+          name: 'test',
+          includeAll: true,
+          current: {
+            value: ['$__all'],
+            text: 'All'
+          }
+        };
+        scenario.queryResult = [{text: 'val5'}, {text: 'val6'}];
+      });
+
+      it('should keep current All value', function() {
+        expect(scenario.variable.current.value).to.eql(['$__all']);
+        expect(scenario.variable.current.text).to.eql('All');
+      });
+    });
+
+    describeUpdateVariable('query variable with numeric results', function(scenario) {
+      scenario.setup(function() {
+        scenario.variable = { type: 'query', query: '', name: 'test', current: {} };
+        scenario.queryResult = [{text: 12, value: 12}];
+      });
+
+      it('should set current value to first option', function() {
+        expect(scenario.variable.current.value).to.be('12');
+        expect(scenario.variable.options[0].value).to.be('12');
+        expect(scenario.variable.options[0].text).to.be('12');
+      });
+    });
+
     describeUpdateVariable('interval variable without auto', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'interval', query: '1s,2h,5h,1d', name: 'test' };
@@ -134,7 +211,6 @@ define([
         expect(scenario.variable.options[0].value).to.be('1s');
       });
     });
-
 
     describeUpdateVariable('interval variable with auto', function(scenario) {
       scenario.setup(function() {
@@ -164,7 +240,7 @@ define([
 
     describeUpdateVariable('update custom variable', function(scenario) {
       scenario.setup(function() {
-        scenario.variable = { type: 'custom', query: 'hej, hop, asd', name: 'test'};
+        scenario.variable = {type: 'custom', query: 'hej, hop, asd', name: 'test'};
       });
 
       it('should update options array', function() {
@@ -235,7 +311,7 @@ define([
       });
     });
 
-   describeUpdateVariable('regex pattern without slashes', function(scenario) {
+    describeUpdateVariable('regex pattern without slashes', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'query', query: 'apps.*', name: 'test' };
         scenario.variable.regex = 'backend_01';
@@ -247,7 +323,7 @@ define([
       });
     });
 
-   describeUpdateVariable('regex pattern remove duplicates', function(scenario) {
+    describeUpdateVariable('regex pattern remove duplicates', function(scenario) {
       scenario.setup(function() {
         scenario.variable = { type: 'query', query: 'apps.*', name: 'test' };
         scenario.variable.regex = 'backend_01';
@@ -259,107 +335,56 @@ define([
       });
     });
 
-    describeUpdateVariable('with include All glob syntax', function(scenario) {
+    describeUpdateVariable('with include All', function(scenario) {
       scenario.setup(function() {
-        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'glob' };
+        scenario.variable = {type: 'query', query: 'apps.*', name: 'test', includeAll: true};
         scenario.queryResult = [{text: 'backend1'}, {text: 'backend2'}, { text: 'backend3'}];
       });
 
-      it('should add All Glob option', function() {
-        expect(scenario.variable.options[0].value).to.be('{backend1,backend2,backend3}');
+      it('should add All option', function() {
+        expect(scenario.variable.options[0].text).to.be('All');
+        expect(scenario.variable.options[0].value).to.be('$__all');
       });
     });
 
-    describeUpdateVariable('with include all wildcard', function(scenario) {
+    describeUpdateVariable('with include all and custom value', function(scenario) {
       scenario.setup(function() {
-        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'wildcard' };
+        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allValue: '*' };
         scenario.queryResult = [{text: 'backend1'}, {text: 'backend2'}, { text: 'backend3'}];
       });
 
-      it('should add All wildcard option', function() {
-        expect(scenario.variable.options[0].value).to.be('*');
+      it('should add All option with custom value', function() {
+        expect(scenario.variable.options[0].value).to.be('$__all');
       });
     });
 
-    describeUpdateVariable('with include all wildcard', function(scenario) {
+    describeUpdateVariable('datasource variable with regex filter', function(scenario) {
       scenario.setup(function() {
-        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'regex wildcard' };
-        scenario.queryResult = [{text: 'backend1'}, {text: 'backend2'}, { text: 'backend3'}];
+        scenario.variable = {
+          type: 'datasource',
+          query: 'graphite',
+          name: 'test',
+          current: {value: 'backend4_pee', text: 'backend4_pee'},
+          regex: '/pee$/'
+        };
+        scenario.metricSources = [
+          {name: 'backend1', meta: {id: 'influx'}},
+          {name: 'backend2_pee', meta: {id: 'graphite'}},
+          {name: 'backend3', meta: {id: 'graphite'}},
+          {name: 'backend4_pee', meta: {id: 'graphite'}},
+        ];
       });
 
-      it('should add All wildcard option', function() {
-        expect(scenario.variable.options[0].value).to.be('.*');
-      });
-    });
-
-    describeUpdateVariable('with include all regex values', function(scenario) {
-      scenario.setup(function() {
-        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'wildcard' };
-        scenario.queryResult = [{text: 'backend1'}, {text: 'backend2'}, { text: 'backend3'}];
+      it('should set only contain graphite ds and filtered using regex', function() {
+        expect(scenario.variable.options.length).to.be(2);
+        expect(scenario.variable.options[0].value).to.be('backend2_pee');
+        expect(scenario.variable.options[1].value).to.be('backend4_pee');
       });
 
-      it('should add All wildcard option', function() {
-        expect(scenario.variable.options[0].value).to.be('*');
-      });
-    });
-
-    describeUpdateVariable('with include all glob no values', function(scenario) {
-      scenario.setup(function() {
-        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'glob' };
-        scenario.queryResult = [];
-      });
-
-      it('should add empty glob', function() {
-        expect(scenario.variable.options[0].value).to.be('{}');
-      });
-    });
-
-    describeUpdateVariable('with include all lucene and values', function(scenario) {
-      scenario.setup(function() {
-        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'lucene' };
-        scenario.queryResult = [{text: 'backend1'}, { text: 'backend2'}];
-      });
-
-      it('should add lucene glob', function() {
-        expect(scenario.variable.options[0].value).to.be('(\\\"backend1\\\" OR \\\"backend2\\\")');
-      });
-    });
-
-    describeUpdateVariable('with include all regex all values', function(scenario) {
-      scenario.setup(function() {
-        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'regex values' };
-        scenario.queryResult = [{text: 'backend1'}, {text: 'backend2'}, { text: 'backend3'}];
-      });
-
-      it('should add empty glob', function() {
-        expect(scenario.variable.options[0].value).to.be('(backend1|backend2|backend3)');
-      });
-    });
-
-    describeUpdateVariable('with include all regex values and values require escaping', function(scenario) {
-      scenario.setup(function() {
-        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'regex values' };
-        scenario.queryResult = [{text: '/root'}, {text: '/var'}, { text: '/lib'}];
-      });
-
-      it('should regex escape options', function() {
-        expect(scenario.variable.options[0].value).to.be('(\\/lib|\\/root|\\/var)');
-        expect(scenario.variable.options[1].value).to.be('\\/lib');
-        expect(scenario.variable.options[1].text).to.be('/lib');
-      });
-    });
-
-    describeUpdateVariable('with include all pipe all values', function(scenario) {
-      scenario.setup(function() {
-        scenario.variable = { type: 'query', query: 'apps.*', name: 'test', includeAll: true, allFormat: 'pipe' };
-        scenario.queryResult = [{text: 'backend1'}, {text: 'backend2'}, { text: 'backend3'}];
-      });
-
-      it('should add pipe delimited string', function() {
-        expect(scenario.variable.options[0].value).to.be('backend1|backend2|backend3');
+      it('should keep current value if available', function() {
+        expect(scenario.variable.current.value).to.be('backend4_pee');
       });
     });
 
   });
-
 });

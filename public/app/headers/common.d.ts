@@ -1,5 +1,4 @@
-///<reference path="../../vendor/npm/angular2/typings/tsd.d.ts" />
-///<reference path="../../vendor/npm/angular2/manual_typings/globals.d.ts" />
+/// <reference path="./es6-shim/es6-shim.d.ts" />
 
 declare var System: any;
 
@@ -39,4 +38,17 @@ declare module 'app/core/store' {
   export default store;
 }
 
+declare module 'tether' {
+  var config: any;
+  export default config;
+}
 
+declare module 'tether-drop' {
+  var config: any;
+  export default config;
+}
+
+declare module 'eventemitter3' {
+  var config: any;
+  export default config;
+}

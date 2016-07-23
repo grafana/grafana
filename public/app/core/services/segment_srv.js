@@ -19,7 +19,7 @@ function (angular, _, coreModule) {
 
       if (_.isString(options)) {
         this.value = options;
-        this.html = $sce.trustAsHtml(this.value);
+        this.html = $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(this.value));
         return;
       }
 

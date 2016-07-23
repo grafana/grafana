@@ -24,7 +24,7 @@ type User struct {
 	Age      float32
 	Alias    string
 	NickName string
-	Created  time.Time
+	Created  NullTime
 }
 
 func init() {
@@ -85,7 +85,7 @@ func BenchmarkOriQuery(b *testing.B) {
 			var Id int64
 			var Name, Title, Alias, NickName string
 			var Age float32
-			var Created time.Time
+			var Created NullTime
 			err = rows.Scan(&Id, &Name, &Title, &Age, &Alias, &NickName, &Created)
 			if err != nil {
 				b.Error(err)
@@ -600,7 +600,7 @@ func TestExecStruct(t *testing.T) {
 		Age:      1.2,
 		Alias:    "lunny",
 		NickName: "lunny xiao",
-		Created:  time.Now(),
+		Created:  NullTime(time.Now()),
 	}
 
 	_, err = db.ExecStruct("insert into user (`name`, title, age, alias, nick_name,created) "+
@@ -645,7 +645,7 @@ func BenchmarkExecStruct(b *testing.B) {
 		Age:      1.2,
 		Alias:    "lunny",
 		NickName: "lunny xiao",
-		Created:  time.Now(),
+		Created:  NullTime(time.Now()),
 	}
 
 	for i := 0; i < b.N; i++ {

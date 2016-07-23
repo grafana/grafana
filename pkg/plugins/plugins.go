@@ -3,6 +3,7 @@ package plugins
 import (
 	"encoding/json"
 	"errors"
+	"io/ioutil"
 	"os"
 	"path"
 	"path/filepath"
@@ -19,7 +20,12 @@ var (
 	Panels       map[string]*PanelPlugin
 	StaticRoutes []*PluginStaticRoute
 	Apps         map[string]*AppPlugin
+	Plugins      map[string]*PluginBase
 	PluginTypes  map[string]interface{}
+
+	GrafanaLatestVersion string
+	GrafanaHasUpdate     bool
+	plog                 log.Logger
 )
 
 type PluginScanner struct {
@@ -28,49 +34,59 @@ type PluginScanner struct {
 }
 
 func Init() error {
+	plog = log.New("plugins")
+
 	DataSources = make(map[string]*DataSourcePlugin)
 	StaticRoutes = make([]*PluginStaticRoute, 0)
 	Panels = make(map[string]*PanelPlugin)
 	Apps = make(map[string]*AppPlugin)
+	Plugins = make(map[string]*PluginBase)
 	PluginTypes = map[string]interface{}{
 		"panel":      PanelPlugin{},
 		"datasource": DataSourcePlugin{},
 		"app":        AppPlugin{},
 	}
 
+	plog.Info("Starting plugin search")
 	scan(path.Join(setting.StaticRootPath, "app/plugins"))
-	scan(setting.PluginsPath)
+
+	// check if plugins dir exists
+	if _, err := os.Stat(setting.PluginsPath); os.IsNotExist(err) {
+		plog.Warn("Plugin dir does not exist", "dir", setting.PluginsPath)
+		if err = os.MkdirAll(setting.PluginsPath, os.ModePerm); err != nil {
+			plog.Warn("Failed to create plugin dir", "dir", setting.PluginsPath, "error", err)
+		} else {
+			plog.Info("Plugin dir created", "dir", setting.PluginsPath)
+			scan(setting.PluginsPath)
+		}
+	} else {
+		scan(setting.PluginsPath)
+	}
+
+	// check plugin paths defined in config
 	checkPluginPaths()
-	// checkDependencies()
+
+	for _, panel := range Panels {
+		panel.initFrontendPlugin()
+	}
+	for _, panel := range DataSources {
+		panel.initFrontendPlugin()
+	}
+	for _, app := range Apps {
+		app.initApp()
+	}
+
+	go StartPluginUpdateChecker()
+	go updateAppDashboards()
+
 	return nil
 }
-
-// func checkDependencies() {
-// 	for appType, app := range Apps {
-// 		for _, reqPanel := range app.PanelPlugins {
-// 			if _, ok := Panels[reqPanel]; !ok {
-// 				log.Fatal(4, "App %s requires Panel type %s, but it is not present.", appType, reqPanel)
-// 			}
-// 		}
-// 		for _, reqDataSource := range app.DatasourcePlugins {
-// 			if _, ok := DataSources[reqDataSource]; !ok {
-// 				log.Fatal(4, "App %s requires DataSource type %s, but it is not present.", appType, reqDataSource)
-// 			}
-// 		}
-// 		for _, reqApiPlugin := range app.ApiPlugins {
-// 			if _, ok := ApiPlugins[reqApiPlugin]; !ok {
-// 				log.Fatal(4, "App %s requires ApiPlugin type %s, but it is not present.", appType, reqApiPlugin)
-// 			}
-// 		}
-// 	}
-// }
 
 func checkPluginPaths() error {
 	for _, section := range setting.Cfg.Sections() {
 		if strings.HasPrefix(section.Name(), "plugin.") {
 			path := section.Key("path").String()
 			if path != "" {
-				log.Info("Plugin: Scaning dir %s", path)
 				scan(path)
 			}
 		}
@@ -102,6 +118,10 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 		return err
 	}
 
+	if f.Name() == "node_modules" {
+		return util.WalkSkipDir
+	}
+
 	if f.IsDir() {
 		return nil
 	}
@@ -109,7 +129,7 @@ func (scanner *PluginScanner) walker(currentPath string, f os.FileInfo, err erro
 	if f.Name() == "plugin.json" {
 		err := scanner.loadPluginJson(currentPath)
 		if err != nil {
-			log.Error(3, "Failed to load plugin json file: %v,  err: %v", currentPath, err)
+			log.Error(3, "Plugins: Failed to load plugin json file: %v,  err: %v", currentPath, err)
 			scanner.errors = append(scanner.errors, err)
 		}
 	}
@@ -137,11 +157,39 @@ func (scanner *PluginScanner) loadPluginJson(pluginJsonFilePath string) error {
 
 	var loader PluginLoader
 	if pluginGoType, exists := PluginTypes[pluginCommon.Type]; !exists {
-		return errors.New("Unkown plugin type " + pluginCommon.Type)
+		return errors.New("Unknown plugin type " + pluginCommon.Type)
 	} else {
 		loader = reflect.New(reflect.TypeOf(pluginGoType)).Interface().(PluginLoader)
 	}
 
 	reader.Seek(0, 0)
 	return loader.Load(jsonParser, currentDir)
+}
+
+func GetPluginReadme(pluginId string) ([]byte, error) {
+	plug, exists := Plugins[pluginId]
+	if !exists {
+		return nil, PluginNotFoundError{pluginId}
+	}
+
+	if plug.Readme != nil {
+		return plug.Readme, nil
+	}
+
+	readmePath := filepath.Join(plug.PluginDir, "README.md")
+	if _, err := os.Stat(readmePath); os.IsNotExist(err) {
+		readmePath = filepath.Join(plug.PluginDir, "readme.md")
+	}
+
+	if _, err := os.Stat(readmePath); os.IsNotExist(err) {
+		plug.Readme = make([]byte, 0)
+		return plug.Readme, nil
+	}
+
+	if readmeBytes, err := ioutil.ReadFile(readmePath); err != nil {
+		return nil, err
+	} else {
+		plug.Readme = readmeBytes
+		return plug.Readme, nil
+	}
 }

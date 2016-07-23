@@ -30,10 +30,10 @@ export class PlaylistsCtrl {
   removePlaylist(playlist) {
 
     this.$scope.appEvent('confirm-modal', {
-      title: 'Confirm delete playlist',
+      title: 'Delete',
       text: 'Are you sure you want to delete playlist ' + playlist.name + '?',
       yesText: "Delete",
-      icon: "fa-warning",
+      icon: "fa-trash",
       onConfirm: () => {
         this.removePlaylistConfirmed(playlist);
       }

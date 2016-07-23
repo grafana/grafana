@@ -5,10 +5,11 @@ import './metric_agg';
 
 import angular from 'angular';
 import _ from 'lodash';
-import {QueryCtrl} from 'app/features/panel/panel';
+import queryDef from './query_def';
+import {QueryCtrl} from 'app/plugins/sdk';
 
 export class ElasticQueryCtrl extends QueryCtrl {
-  static templateUrl = 'public/app/plugins/datasource/elasticsearch/partials/query.editor.html';
+  static templateUrl = 'partials/query.editor.html';
 
   esVersion: any;
   rawQueryOld: string;
@@ -36,6 +37,48 @@ export class ElasticQueryCtrl extends QueryCtrl {
     }
 
     this.$rootScope.appEvent('elastic-query-updated');
+  }
+
+  getCollapsedText() {
+    var metricAggs = this.target.metrics;
+    var bucketAggs = this.target.bucketAggs;
+    var metricAggTypes = queryDef.getMetricAggTypes(this.esVersion);
+    var bucketAggTypes = queryDef.bucketAggTypes;
+    var text = '';
+
+    if (this.target.query) {
+      text += 'Query: ' + this.target.query + ', ';
+    }
+
+    text += 'Metrics: ';
+
+    _.each(metricAggs, (metric, index) => {
+      var aggDef = _.findWhere(metricAggTypes, {value: metric.type});
+      text += aggDef.text + '(';
+      if (aggDef.requiresField) {
+        text += metric.field;
+      }
+      text += '), ';
+    });
+
+    _.each(bucketAggs, (bucketAgg, index) => {
+      if (index === 0) {
+        text += ' Group by: ';
+      }
+
+      var aggDef = _.findWhere(bucketAggTypes, {value: bucketAgg.type});
+      text += aggDef.text + '(';
+      if (aggDef.requiresField) {
+        text += bucketAgg.field;
+      }
+      text += '), ';
+    });
+
+    if (this.target.alias) {
+      text += 'Alias: ' + this.target.alias;
+    }
+
+    return text;
   }
 
   handleQueryError(err) {

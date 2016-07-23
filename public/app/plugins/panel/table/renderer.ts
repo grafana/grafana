@@ -8,7 +8,7 @@ export class TableRenderer {
   formaters: any[];
   colorState: any;
 
-  constructor(private panel, private table, private timezone) {
+  constructor(private panel, private table, private isUtc, private sanitize) {
     this.formaters = [];
     this.colorState = {};
   }
@@ -16,28 +16,31 @@ export class TableRenderer {
   getColorForValue(value, style) {
     if (!style.thresholds) { return null; }
 
-    for (var i = style.thresholds.length - 1; i >= 0 ; i--) {
-      if (value >= style.thresholds[i]) {
+    for (var i = style.thresholds.length; i > 0; i--) {
+      if (value >= style.thresholds[i - 1]) {
         return style.colors[i];
       }
     }
-    return null;
+    return _.first(style.colors);
   }
 
-  defaultCellFormater(v) {
-    if (v === null || v === void 0) {
+  defaultCellFormater(v, style) {
+    if (v === null || v === void 0 || v === undefined) {
       return '';
     }
 
     if (_.isArray(v)) {
-      v = v.join(',&nbsp;');
+      v = v.join(', ');
     }
 
-    return v;
+    if (style && style.sanitize) {
+      return this.sanitize(v);
+    } else {
+      return _.escape(v);
+    }
   }
 
-
-  createColumnFormater(style) {
+  createColumnFormater(style, column) {
     if (!style) {
       return this.defaultCellFormater;
     }
@@ -46,7 +49,7 @@ export class TableRenderer {
       return v => {
         if (_.isArray(v)) { v = v[0]; }
         var date = moment(v);
-        if (this.timezone === 'utc') {
+        if (this.isUtc) {
           date = date.utc();
         }
         return date.format(style.dateFormat);
@@ -54,7 +57,7 @@ export class TableRenderer {
     }
 
     if (style.type === 'number') {
-      let valueFormater = kbn.valueFormats[style.unit];
+      let valueFormater = kbn.valueFormats[column.unit || style.unit];
 
       return v =>  {
         if (v === null || v === void 0) {
@@ -62,7 +65,7 @@ export class TableRenderer {
         }
 
         if (_.isString(v)) {
-          return v;
+          return this.defaultCellFormater(v, style);
         }
 
         if (style.colorMode) {
@@ -73,7 +76,9 @@ export class TableRenderer {
       };
     }
 
-    return this.defaultCellFormater;
+    return (value) => {
+      return this.defaultCellFormater(value, style);
+    };
   }
 
   formatColumnValue(colIndex, value) {
@@ -86,7 +91,7 @@ export class TableRenderer {
       let column = this.table.columns[colIndex];
       var regex = kbn.stringToJsRegex(style.pattern);
       if (column.text.match(regex)) {
-        this.formaters[colIndex] = this.createColumnFormater(style);
+        this.formaters[colIndex] = this.createColumnFormater(style, column);
         return this.formaters[colIndex](value);
       }
     }
@@ -140,5 +145,22 @@ export class TableRenderer {
     }
 
     return html;
+  }
+
+  render_values() {
+    let rows = [];
+
+    for (var y = 0; y < this.table.rows.length; y++) {
+      let row = this.table.rows[y];
+      let new_row = [];
+      for (var i = 0; i < this.table.columns.length; i++) {
+        new_row.push(this.formatColumnValue(i, row[i]));
+      }
+      rows.push(new_row);
+    }
+    return {
+        columns: this.table.columns,
+        rows: rows,
+    };
   }
 }

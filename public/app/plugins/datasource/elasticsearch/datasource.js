@@ -47,15 +47,15 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
 
     this._get = function(url) {
-      return this._request('GET', this.indexPattern.getIndexForToday() + url)
-      .then(function(results) {
+      return this._request('GET', this.indexPattern.getIndexForToday() + url).then(function(results) {
+        results.data.$$config = results.config;
         return results.data;
       });
     };
 
     this._post = function(url, data) {
-      return this._request('POST', url, data)
-      .then(function(results) {
+      return this._request('POST', url, data).then(function(results) {
+        results.data.$$config = results.config;
         return results.data;
       });
     };
@@ -74,7 +74,11 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         to: options.range.to.valueOf(),
       };
 
-      var queryInterpolated = templateSrv.replace(queryString);
+      if (this.esVersion >= 2) {
+        range[timeField]["format"] = "epoch_millis";
+      }
+
+      var queryInterpolated = templateSrv.replace(queryString, {}, 'lucene');
       var filter = { "bool": { "must": [{ "range": range }] } };
       var query = { "bool": { "should": [{ "query_string": { "query": queryInterpolated } }] } };
       var data = {
@@ -170,7 +174,10 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
         var queryObj = this.queryBuilder.build(target);
         var esQuery = angular.toJson(queryObj);
-        var luceneQuery = angular.toJson(target.query || '*');
+        var luceneQuery = target.query || '*';
+        luceneQuery = templateSrv.replace(luceneQuery, options.scopedVars, 'lucene');
+        luceneQuery = angular.toJson(luceneQuery);
+
         // remove inner quotes
         luceneQuery = luceneQuery.substr(1, luceneQuery.length - 2);
         esQuery = esQuery.replace("$lucene_query", luceneQuery);
@@ -196,6 +203,11 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         return new ElasticResponse(sentTargets, res).getTimeSeries();
       });
     };
+
+    function escapeForJson(value) {
+      var luceneQuery = JSON.stringify(value);
+      return luceneQuery.substr(1, luceneQuery.length - 2);
+    }
 
     this.getFields = function(query) {
       return this._get('/_mapping').then(function(res) {
@@ -239,12 +251,12 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var header = this.getQueryHeader('count', range.from, range.to);
       var esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
 
-      esQuery = esQuery.replace("$lucene_query", queryDef.query || '*');
+      esQuery = esQuery.replace("$lucene_query", escapeForJson(queryDef.query));
       esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
       esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
       esQuery = header + '\n' + esQuery + '\n';
 
-      return this._post('/_msearch?search_type=count', esQuery).then(function(res) {
+      return this._post('_msearch?search_type=count', esQuery).then(function(res) {
         var buckets = res.responses[0].aggregations["1"].buckets;
         return _.map(buckets, function(bucket) {
           return {text: bucket.key, value: bucket.key};
@@ -253,8 +265,9 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
 
     this.metricFindQuery = function(query) {
-      query = templateSrv.replace(query);
       query = angular.fromJson(query);
+      query.query = templateSrv.replace(query.query || '*', {}, 'lucene');
+
       if (!query) {
         return $q.when([]);
       }
@@ -265,42 +278,6 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       if (query.find === 'terms') {
         return this.getTerms(query);
       }
-    };
-
-    this.getDashboard = function(id) {
-      return this._get('/dashboard/' + id)
-      .then(function(result) {
-        return angular.fromJson(result._source.dashboard);
-      });
-    };
-
-    this.searchDashboards = function() {
-      var query = {
-        query: { query_string: { query: '*' } },
-        size: 10000,
-        sort: ["_uid"],
-      };
-
-      return this._post(this.index + '/dashboard/_search', query)
-      .then(function(results) {
-        if(_.isUndefined(results.hits)) {
-          return { dashboards: [], tags: [] };
-        }
-
-        var resultsHits = results.hits.hits;
-        var displayHits = { dashboards: [] };
-
-        for (var i = 0, len = resultsHits.length; i < len; i++) {
-          var hit = resultsHits[i];
-          displayHits.dashboards.push({
-            id: hit._id,
-            title: hit._source.title,
-            tags: hit._source.tags
-          });
-        }
-
-        return displayHits;
-      });
     };
   }
 

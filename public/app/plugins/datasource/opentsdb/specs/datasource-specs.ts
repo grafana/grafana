@@ -4,7 +4,7 @@ import {OpenTsDatasource} from "../datasource";
 
 describe('opentsdb', function() {
   var ctx = new helpers.ServiceTestContext();
-  var instanceSettings = {url: '' };
+  var instanceSettings = {url: '', jsonData: { tsdbVersion: 1 }};
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
@@ -12,9 +12,10 @@ describe('opentsdb', function() {
 
   beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
     ctx.$q = $q;
-    ctx.$httpBackend =  $httpBackend;
+    ctx.$httpBackend = $httpBackend;
     ctx.$rootScope = $rootScope;
     ctx.ds = $injector.instantiate(OpenTsDatasource, {instanceSettings: instanceSettings});
+    $httpBackend.when('GET', /\.html$/).respond('');
   }));
 
   describe('When performing metricFindQuery', function() {
@@ -48,6 +49,20 @@ describe('opentsdb', function() {
       ctx.$rootScope.$apply();
       expect(requestOptions.url).to.be('/api/search/lookup');
       expect(requestOptions.params.m).to.be('cpu{hostname=*}');
+    });
+
+    it('tag_values(cpu, test) should generate lookup query', function() {
+      ctx.ds.metricFindQuery('tag_values(cpu, hostname, env=$env)').then(function(data) { results = data; });
+      ctx.$rootScope.$apply();
+      expect(requestOptions.url).to.be('/api/search/lookup');
+      expect(requestOptions.params.m).to.be('cpu{hostname=*,env=$env}');
+    });
+
+    it('tag_values(cpu, test) should generate lookup query', function() {
+      ctx.ds.metricFindQuery('tag_values(cpu, hostname, env=$env, region=$region)').then(function(data) { results = data; });
+      ctx.$rootScope.$apply();
+      expect(requestOptions.url).to.be('/api/search/lookup');
+      expect(requestOptions.params.m).to.be('cpu{hostname=*,env=$env,region=$region}');
     });
 
     it('suggest_tagk() should generate api suggest query', function() {

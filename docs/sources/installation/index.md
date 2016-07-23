@@ -13,6 +13,7 @@ your platform, you might be able to build one yourself. Read the [build
 from source](../project/building_from_source) instructions for more
 information.
 
+## Platforms
 - [Installing on Debian / Ubuntu](debian.md)
 - [Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)](rpm.md)
 - [Installing on Mac OS X](mac.md)

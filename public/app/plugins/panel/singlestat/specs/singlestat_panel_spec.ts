@@ -24,8 +24,6 @@ describe('grafanaSingleStat', function() {
     });
   });
 
-
-
   describe('negative thresholds', () => {
     var data: any = {
       colorMap: ['green', 'yellow', 'red'],

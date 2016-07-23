@@ -33,31 +33,32 @@
   var tries = 0;
 
   page.open(params.url, function (status) {
-    console.log('Loading a web page: ' + params.url + ' status: ' + status);
+    // console.log('Loading a web page: ' + params.url + ' status: ' + status);
 
     function checkIsReady() {
-      var canvas = page.evaluate(function() {
+      var panelsRendered = page.evaluate(function() {
         if (!window.angular) { return false; }
-        var body = window.angular.element(document.body);   // 1
-        if (!body.scope) { return false; }
+        var body = window.angular.element(document.body);
+        if (!body.injector) { return false; }
+        if (!body.injector()) { return false; }
 
-        var rootScope = body.scope();
+        var rootScope = body.injector().get('$rootScope');
         if (!rootScope) {return false;}
-        if (!rootScope.performance) { return false; }
-        var panelsToLoad = window.angular.element('div.panel').length;
-        return rootScope.performance.panelsRendered >= panelsToLoad;
+        return rootScope.panelsRendered;
       });
 
-      if (canvas || tries === 1000) {
-        var bb = page.evaluate(function () { 
-          return document.getElementsByClassName("main-view")[0].getBoundingClientRect(); 
+      if (panelsRendered || tries === 1000) {
+        var bb = page.evaluate(function () {
+          return document.getElementsByClassName("main-view")[0].getBoundingClientRect();
         });
-          page.clipRect = {
+
+        page.clipRect = {
           top:    bb.top,
           left:   bb.left,
           width:  bb.width,
           height: bb.height
         };
+
         page.render(params.png);
         phantom.exit();
       }

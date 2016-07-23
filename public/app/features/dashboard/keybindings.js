@@ -60,6 +60,18 @@ function(angular, $) {
         scope.appEvent('zoom-out', evt);
       }, { inputDisabled: true });
 
+      keyboardManager.bind('left', function(evt) {
+        scope.appEvent('shift-time-backward', evt);
+      }, { inputDisabled: true });
+
+      keyboardManager.bind('right', function(evt) {
+        scope.appEvent('shift-time-forward', evt);
+      }, { inputDisabled: true });
+
+      keyboardManager.bind('ctrl+i', function(evt) {
+        scope.appEvent('quick-snapshot', evt);
+      }, { inputDisabled: true });
+
       keyboardManager.bind('esc', function() {
         var popups = $('.popover.in');
         if (popups.length > 0) {

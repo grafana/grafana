@@ -9,7 +9,7 @@ function ($) {
     var ctrl = scope.ctrl;
     var panel = ctrl.panel;
 
-    var $tooltip = $('<div id="tooltip">');
+    var $tooltip = $('<div id="tooltip" class="graph-tooltip">');
 
     this.findHoverIndexFromDataPoints = function(posX, series, last) {
       var ps = series.datapoints.pointsize;
@@ -33,8 +33,8 @@ function ($) {
       return j - 1;
     };
 
-    this.showTooltip = function(absoluteTime, relativeTime, innerHtml, pos) {
-      var body = '<div class="graph-tooltip small"><div class="graph-tooltip-time">'+ absoluteTime + '<br>(' + relativeTime + ')</div> ' ;
+    this.showTooltip = function(absoluteTime, innerHtml, pos) {
+      var body = '<div class="graph-tooltip-time">'+ absoluteTime + '</div>';
       body += innerHtml + '</div>';
       $tooltip.html(body).place_tt(pos.pageX + 20, pos.pageY);
     };
@@ -81,9 +81,9 @@ function ($) {
           // Stacked series can increase its length on each new stacked serie if null points found,
           // to speed the index search we begin always on the last found hoverIndex.
           var newhoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
-          results.push({ value: value, hoverIndex: newhoverIndex });
+          results.push({ value: value, hoverIndex: newhoverIndex, color: series.color, label: series.label });
         } else {
-          results.push({ value: value, hoverIndex: hoverIndex });
+          results.push({ value: value, hoverIndex: hoverIndex, color: series.color, label: series.label });
         }
       }
 
@@ -108,7 +108,13 @@ function ($) {
       var plot = elem.data().plot;
       var plotData = plot.getData();
       var seriesList = getSeriesFn();
-      var group, value, absoluteTime, relativeTime, hoverInfo, i, series, seriesHtml;
+      var group, value, absoluteTime, hoverInfo, i, series, seriesHtml, tooltipFormat;
+
+      if (panel.tooltip.msResolution) {
+        tooltipFormat = 'YYYY-MM-DD HH:mm:ss.SSS';
+      } else {
+        tooltipFormat = 'YYYY-MM-DD HH:mm:ss';
+      }
 
       if (dashboard.sharedCrosshair) {
         ctrl.publishAppEvent('setCrosshair', { pos: pos, scope: scope });
@@ -125,8 +131,19 @@ function ($) {
 
         seriesHtml = '';
 
-        relativeTime = dashboard.getRelativeTime(seriesHoverInfo.time);
-        absoluteTime = dashboard.formatDate(seriesHoverInfo.time);
+        absoluteTime = dashboard.formatDate(seriesHoverInfo.time, tooltipFormat);
+
+        // Dynamically reorder the hovercard for the current time point if the
+        // option is enabled.
+        if (panel.tooltip.sort === 2) {
+          seriesHoverInfo.sort(function(a, b) {
+            return b.value - a.value;
+          });
+        } else if (panel.tooltip.sort === 1) {
+          seriesHoverInfo.sort(function(a, b) {
+            return a.value - b.value;
+          });
+        }
 
         for (i = 0; i < seriesHoverInfo.length; i++) {
           hoverInfo = seriesHoverInfo[i];
@@ -135,17 +152,22 @@ function ($) {
             continue;
           }
 
+          var highlightClass = '';
+          if (item && i === item.seriesIndex) {
+            highlightClass = 'graph-tooltip-list-item--highlight';
+          }
+
           series = seriesList[i];
 
           value = series.formatValue(hoverInfo.value);
 
-          seriesHtml += '<div class="graph-tooltip-list-item"><div class="graph-tooltip-series-name">';
-          seriesHtml += '<i class="fa fa-minus" style="color:' + series.color +';"></i> ' + series.label + ':</div>';
+          seriesHtml += '<div class="graph-tooltip-list-item ' + highlightClass + '"><div class="graph-tooltip-series-name">';
+          seriesHtml += '<i class="fa fa-minus" style="color:' + hoverInfo.color +';"></i> ' + hoverInfo.label + ':</div>';
           seriesHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
           plot.highlight(i, hoverInfo.hoverIndex);
         }
 
-        self.showTooltip(absoluteTime, relativeTime, seriesHtml, pos);
+        self.showTooltip(absoluteTime, seriesHtml, pos);
       }
       // single series tooltip
       else if (item) {
@@ -162,12 +184,11 @@ function ($) {
 
         value = series.formatValue(value);
 
-        relativeTime = dashboard.getRelativeTime(item.datapoint[0]);
-        absoluteTime = dashboard.formatDate(item.datapoint[0]);
+        absoluteTime = dashboard.formatDate(item.datapoint[0], tooltipFormat);
 
         group += '<div class="graph-tooltip-value">' + value + '</div>';
 
-        self.showTooltip(absoluteTime, relativeTime, group, pos);
+        self.showTooltip(absoluteTime, group, pos);
       }
       // no hit
       else {

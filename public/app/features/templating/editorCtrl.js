@@ -12,20 +12,45 @@ function (angular, _) {
     var replacementDefaults = {
       type: 'query',
       datasource: null,
-      refresh: false,
+      refresh: 0,
       name: '',
+      hide: 0,
       options: [],
       includeAll: false,
-      allFormat: 'glob',
       multi: false,
-      multiFormat: 'glob',
     };
+
+    $scope.variableTypes = [
+      {value: "query",      text: "Query"},
+      {value: "interval",   text: "Interval"},
+      {value: "datasource", text: "Data source"},
+      {value: "custom",     text: "Custom"},
+      {value: "constant",   text: "Constant"},
+    ];
+
+    $scope.refreshOptions = [
+      {value: 0, text: "Never"},
+      {value: 1, text: "On Dashboard Load"},
+      {value: 2, text: "On Time Range Change"},
+    ];
+
+    $scope.hideOptions = [
+      {value: 0, text: ""},
+      {value: 1, text: "Label"},
+      {value: 2, text: "Variable"},
+    ];
 
     $scope.init = function() {
       $scope.mode = 'list';
 
+      $scope.datasourceTypes = {};
       $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
+        $scope.datasourceTypes[ds.meta.id] = {text: ds.meta.name, value: ds.meta.id};
         return !ds.meta.builtIn;
+      });
+
+      $scope.datasourceTypes = _.map($scope.datasourceTypes, function(value) {
+        return value;
       });
 
       $scope.variables = templateSrv.variables;
@@ -117,12 +142,38 @@ function (angular, _) {
       $scope.current = angular.copy(replacementDefaults);
     };
 
+    $scope.showSelectionOptions = function() {
+      if ($scope.current) {
+        if ($scope.current.type === 'query') {
+          return true;
+        }
+        if ($scope.current.type === 'custom') {
+          return true;
+        }
+      }
+      return false;
+    };
+
     $scope.typeChanged = function () {
       if ($scope.current.type === 'interval') {
         $scope.current.query = '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d';
+        $scope.current.refresh = 0;
       }
+
       if ($scope.current.type === 'query') {
         $scope.current.query = '';
+      }
+
+      if ($scope.current.type === 'constant') {
+        $scope.current.query = '';
+        $scope.current.refresh = 0;
+        $scope.current.hide = 2;
+      }
+
+      if ($scope.current.type === 'datasource') {
+        $scope.current.query = $scope.datasourceTypes[0].value;
+        $scope.current.regex = '';
+        $scope.current.refresh = 1;
       }
     };
 

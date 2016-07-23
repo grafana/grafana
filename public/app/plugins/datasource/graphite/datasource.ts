@@ -16,38 +16,34 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.render_method = instanceSettings.render_method || 'POST';
 
   this.query = function(options) {
-    try {
-      var graphOptions = {
-        from: this.translateTime(options.rangeRaw.from, false),
-        until: this.translateTime(options.rangeRaw.to, true),
-        targets: options.targets,
-        format: options.format,
-        cacheTimeout: options.cacheTimeout || this.cacheTimeout,
-        maxDataPoints: options.maxDataPoints,
-      };
+    var graphOptions = {
+      from: this.translateTime(options.rangeRaw.from, false),
+      until: this.translateTime(options.rangeRaw.to, true),
+      targets: options.targets,
+      format: options.format,
+      cacheTimeout: options.cacheTimeout || this.cacheTimeout,
+      maxDataPoints: options.maxDataPoints,
+    };
 
-      var params = this.buildGraphiteParams(graphOptions, options.scopedVars);
-      if (params.length === 0) {
-        return $q.when([]);
-      }
-
-      if (options.format === 'png') {
-        return $q.when(this.url + '/render' + '?' + params.join('&'));
-      }
-
-      var httpOptions: any = {method: this.render_method, url: '/render'};
-
-      if (httpOptions.method === 'GET') {
-        httpOptions.url = httpOptions.url + '?' + params.join('&');
-      } else {
-        httpOptions.data = params.join('&');
-        httpOptions.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-      }
-
-      return this.doGraphiteRequest(httpOptions).then(this.convertDataPointsToMs);
-    } catch (err) {
-      return $q.reject(err);
+    var params = this.buildGraphiteParams(graphOptions, options.scopedVars);
+    if (params.length === 0) {
+      return $q.when({data: []});
     }
+
+    var httpOptions: any = {
+      method: 'POST',
+      url: '/render',
+      data: params.join('&'),
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded'
+      },
+    };
+
+    if (options.panelId) {
+      httpOptions.requestId = this.name + '.panelId.' + options.panelId;
+    }
+
+    return this.doGraphiteRequest(httpOptions).then(this.convertDataPointsToMs);
   };
 
   this.convertDataPointsToMs = function(result) {
@@ -64,7 +60,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
   this.annotationQuery = function(options) {
     // Graphite metric as annotation
     if (options.annotation.target) {
-      var target = templateSrv.replace(options.annotation.target);
+      var target = templateSrv.replace(options.annotation.target, {}, 'glob');
       var graphiteQuery = {
         rangeRaw: options.rangeRaw,
         targets: [{ target: target }],
@@ -72,8 +68,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
         maxDataPoints: 100
       };
 
-      return this.query(graphiteQuery)
-      .then(function(result) {
+      return this.query(graphiteQuery).then(function(result) {
         var list = [];
 
         for (var i = 0; i < result.data.length; i++) {
@@ -186,17 +181,6 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     });
   };
 
-  this.listDashboards = function(query) {
-    return this.doGraphiteRequest({ method: 'GET',  url: '/dashboard/find/', params: {query: query || ''} })
-    .then(function(results) {
-      return results.data.dashboards;
-    });
-  };
-
-  this.loadDashboard = function(dashName) {
-    return this.doGraphiteRequest({method: 'GET', url: '/dashboard/load/' + encodeURIComponent(dashName) });
-  };
-
   this.doGraphiteRequest = function(options) {
     if (this.basicAuth || this.withCredentials) {
       options.withCredentials = true;
@@ -207,7 +191,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     }
 
     options.url = this.url + options.url;
-    options.inspect = { type: 'graphite' };
+    options.inspect = {type: 'graphite'};
 
     return backendSrv.datasourceRequest(options);
   };
@@ -222,9 +206,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     var intervalFormatFixRegex = /'(\d+)m'/gi;
     var hasTargets = false;
 
-    if (options.format !== 'png') {
-      options['format'] = 'json';
-    }
+    options['format'] = 'json';
 
     function fixIntervalFormat(match) {
       return match.replace('m', 'min').replace('M', 'mon');
@@ -246,7 +228,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     }
 
     function nestedSeriesRegexReplacer(match, g1) {
-      return targets[g1];
+      return targets[g1] || match;
     }
 
     for (i = 0; i < options.targets.length; i++) {

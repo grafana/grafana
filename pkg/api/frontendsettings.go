@@ -59,7 +59,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			defaultDatasource = ds.Name
 		}
 
-		if len(ds.JsonData) > 0 {
+		if ds.JsonData != nil {
 			dsMap["jsonData"] = ds.JsonData
 		}
 
@@ -121,10 +121,11 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	panels := map[string]interface{}{}
 	for _, panel := range enabledPlugins.Panels {
 		panels[panel.Id] = map[string]interface{}{
-			"module": panel.Module,
-			"name":   panel.Name,
-			"id":     panel.Id,
-			"info":   panel.Info,
+			"module":  panel.Module,
+			"baseUrl": panel.BaseUrl,
+			"name":    panel.Name,
+			"id":      panel.Id,
+			"info":    panel.Info,
 		}
 	}
 
@@ -136,9 +137,12 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		"allowOrgCreate":    (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":  setting.AuthProxyEnabled,
 		"buildInfo": map[string]interface{}{
-			"version":    setting.BuildVersion,
-			"commit":     setting.BuildCommit,
-			"buildstamp": setting.BuildStamp,
+			"version":       setting.BuildVersion,
+			"commit":        setting.BuildCommit,
+			"buildstamp":    setting.BuildStamp,
+			"latestVersion": plugins.GrafanaLatestVersion,
+			"hasUpdate":     plugins.GrafanaHasUpdate,
+			"env":           setting.Env,
 		},
 	}
 

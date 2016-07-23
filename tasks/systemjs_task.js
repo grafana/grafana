@@ -14,9 +14,9 @@ module.exports = function(grunt) {
       'app/app',
       'app/features/all',
       'app/plugins/panel/**/module',
-      'app/plugins/datasource/graphite/datasource',
-      'app/plugins/datasource/influxdb/datasource',
-      'app/plugins/datasource/elasticsearch/datasource',
+      'app/plugins/datasource/graphite/module',
+      'app/plugins/datasource/influxdb/module',
+      'app/plugins/datasource/elasticsearch/module',
     ];
 
     var expression = modules.join(' + ');

@@ -1,0 +1,253 @@
+$gf-form-margin: 0.25rem;
+
+.gf-form {
+  margin-bottom: $gf-form-margin;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  text-align: left;
+  position: relative;
+
+  &--offset-1 {
+    margin-left: $spacer;
+  }
+
+  &--grow {
+    flex-grow: 1;
+  }
+}
+
+.gf-form-disabled {
+  color: $text-color-weak;
+
+  .query-keyword,
+  a,
+  .gf-form-input {
+    color: $text-color-weak;
+  }
+}
+
+.gf-form-group {
+  margin-bottom: $spacer * 2.5;
+}
+
+.gf-form-inline {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: flex-start;
+}
+
+.gf-form-button-row {
+  padding-top: $spacer * 1.5;
+  a, button {
+    margin-right: $spacer;
+  }
+}
+
+.gf-form-label {
+  padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
+  line-height: $input-line-height;
+  flex-shrink: 0;
+
+  background-color: $input-label-bg;
+  display: block;
+  font-size: $font-size-sm;
+  margin-right: $gf-form-margin;
+
+  border: $input-btn-border-width solid transparent;
+  @include border-radius($label-border-radius-sm);
+
+
+  &--grow {
+    flex-grow: 1;
+    min-height: 2.70rem;
+  }
+}
+
+.gf-form-checkbox {
+  flex-shrink: 0;
+  padding: $input-padding-y $input-padding-x;
+  line-height: $input-line-height;
+
+  .checkbox-label {
+    display: inline;
+    cursor: pointer;
+    padding: $input-padding-y 0.4rem;
+    line-height: $input-line-height;
+  }
+}
+
+.gf-form-input {
+  display: block;
+  width: 100%;
+  padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
+  font-size: $font-size-base;
+  line-height: $input-line-height;
+  color: $input-color;
+  background-color: $input-bg;
+  background-image: none;
+  background-clip: padding-box;
+  border: $input-btn-border-width solid $input-border-color;
+  @include border-radius($input-border-radius-sm);
+  @include box-shadow($input-box-shadow);
+  transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+
+  // Unstyle the caret on `<select>`s in IE10+.
+  &::-ms-expand {
+    background-color: transparent;
+    border: 0;
+    display: none;
+  }
+
+  &.gf-input-small {
+    padding: $input-padding-y/3 $input-padding-x/3;
+    font-size: $font-size-xs;
+  }
+
+  // Customize the `:focus` state to imitate native WebKit styles.
+  @include form-control-focus();
+
+  // Placeholder
+  &::placeholder {
+    color: $input-color-placeholder;
+    opacity: 1;
+  }
+
+  &:disabled,
+  &[readonly] {
+    background-color: $input-bg-disabled;
+    // iOS fix for unreadable disabled content; see https://github.com/twbs/bootstrap/issues/11655.
+    opacity: 1;
+  }
+
+  &:disabled {
+    cursor: $cursor-disabled;
+  }
+
+  &.gf-size-auto { width: auto; }
+
+  &--dropdown {
+    padding-right: $input-padding-x*2;
+
+    &::after {
+      position: absolute;
+      top: 35%;
+      right: $input-padding-x/2;
+      background-color: transparent;
+      color: $input-color;
+      font: normal normal normal $font-size-sm/1 FontAwesome;
+      content: '\f0d7';
+      pointer-events: none;
+    }
+  }
+}
+
+.gf-form-select-wrapper {
+  margin-right: $gf-form-margin;
+  position: relative;
+  background-color: $input-bg;
+
+  select.gf-form-input {
+    text-indent: .01px;
+    text-overflow: '';
+    padding-right: $input-padding-x*2;
+    -webkit-appearance: none;
+    -moz-appearance: menulist-text; // was set to "window" and caused odd display on windos and linux.
+    appearance: none;
+
+    &:-moz-focusring {
+      outline: none;
+      color: transparent;
+      text-shadow: 0 0 0 $text-color;
+    }
+
+    &.ng-empty {
+      color: $text-color-weak;
+    }
+  }
+
+  &::after {
+    position: absolute;
+    top: 35%;
+    right: $input-padding-x/2;
+    background-color: transparent;
+    color: $input-color;
+    font: normal normal normal $font-size-sm/1 FontAwesome;
+    content: '\f0d7';
+    pointer-events: none;
+  }
+
+  &--has-help-icon {
+    &::after {
+      right: $input-padding-x*3;
+    }
+  }
+}
+
+.gf-form--v-stretch {
+  align-items: stretch;
+}
+
+.gf-form-btn {
+  padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
+  line-height: $input-line-height;
+  font-size: $font-size-sm;
+
+  flex-shrink: 0;
+  flex-grow: 0;
+}
+
+.gf-form-switch {
+  margin-right: $gf-form-margin;
+}
+
+.natural-language-input {
+  &input[type="number"] {
+    font-size: $font-size-base;
+    line-height: $input-line-height;
+    margin: -6px -5px 0 5px;
+    padding: $input-padding-y/2 $input-padding-x/2;
+  }
+}
+
+.gf-form-dropdown-typeahead {
+  margin-right: $gf-form-margin;
+  position: relative;
+  background-color: $input-bg;
+  padding-right: $input-padding-x;
+
+  &::after {
+    position: absolute;
+    top: 35%;
+    right: $input-padding-x/2;
+    background-color: transparent;
+    color: $input-color;
+    font: normal normal normal $font-size-sm/1 FontAwesome;
+    content: '\f0d7';
+    pointer-events: none;
+  }
+}
+
+.gf-form-help-icon {
+  flex-grow: 0;
+  padding-left: $spacer;
+  color: $text-color-weak;
+
+  &--right-absolute {
+    position: absolute;
+    right: $spacer;
+    top: 8px;
+  }
+
+  &--right-normal {
+    float: right;
+  }
+}
+
+select.gf-form-input ~ .gf-form-help-icon {
+  right: 10px;
+}

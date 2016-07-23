@@ -3,61 +3,70 @@
 import angular from 'angular';
 import $ from 'jquery';
 
-import {PanelCtrl} from './panel_ctrl';
-
-export class DefaultPanelCtrl extends PanelCtrl {
-  /** @ngInject */
-  constructor($scope, $injector) {
-    super($scope, $injector);
-  }
-}
-
-export class PanelDirective {
-  template: string;
-  templateUrl: string;
-  bindToController: boolean;
-  scope: any;
-  controller: any;
-  controllerAs: string;
-
-  getDirective() {
-    if (!this.controller) {
-      this.controller = DefaultPanelCtrl;
-    }
-
-    return {
-      template: this.template,
-      templateUrl: this.templateUrl,
-      controller: this.controller,
-      controllerAs: 'ctrl',
-      bindToController: true,
-      scope: {dashboard: "=", panel: "=", row: "="},
-      link: (scope, elem, attrs, ctrl) => {
-        ctrl.init();
-        this.link(scope, elem, attrs, ctrl);
-      }
-    };
-  }
-
-  link(scope, elem, attrs, ctrl) {
-    return null;
-  }
-}
-
-
 var module = angular.module('grafana.directives');
+
+var panelTemplate = `
+  <div class="panel-container" ng-class="{'panel-transparent': ctrl.panel.transparent}">
+    <div class="panel-header">
+      <span class="alert-error panel-error small pointer" ng-if="ctrl.error" ng-click="ctrl.openInspector()">
+        <span data-placement="top" bs-tooltip="ctrl.error">
+          <i class="fa fa-exclamation"></i><span class="panel-error-arrow"></span>
+        </span>
+      </span>
+
+      <span class="panel-loading" ng-show="ctrl.loading">
+        <i class="fa fa-spinner fa-spin"></i>
+      </span>
+
+      <div class="panel-title-container drag-handle" panel-menu></div>
+    </div>
+
+    <div class="panel-content">
+      <ng-transclude></ng-transclude>
+    </div>
+    <panel-resizer></panel-resizer>
+  </div>
+
+  <div class="panel-full-edit" ng-if="ctrl.editMode">
+    <div class="tabbed-view tabbed-view--panel-edit">
+      <div class="tabbed-view-header">
+        <h2 class="tabbed-view-title">
+          {{ctrl.pluginName}}
+        </h2>
+
+        <ul class="gf-tabs">
+          <li class="gf-tabs-item" ng-repeat="tab in ::ctrl.editorTabs">
+            <a class="gf-tabs-link" ng-click="ctrl.changeTab($index)" ng-class="{active: ctrl.editorTabIndex === $index}">
+              {{::tab.title}}
+            </a>
+          </li>
+        </ul>
+
+        <button class="tabbed-view-close-btn" ng-click="ctrl.exitFullscreen();">
+          <i class="fa fa-remove"></i>
+        </button>
+      </div>
+
+      <div class="tabbed-view-body">
+        <div ng-repeat="tab in ctrl.editorTabs" ng-if="ctrl.editorTabIndex === $index">
+          <panel-editor-tab editor-tab="tab" ctrl="ctrl" index="$index"></panel-editor-tab>
+        </div>
+      </div>
+    </div>
+  </div>
+`;
 
 module.directive('grafanaPanel', function() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/panel/partials/panel.html',
+    template: panelTemplate,
     transclude: true,
     scope: { ctrl: "=" },
     link: function(scope, elem) {
       var panelContainer = elem.find('.panel-container');
       var ctrl = scope.ctrl;
-      scope.$watchGroup(['ctrl.fullscreen', 'ctrl.height', 'ctrl.panel.height', 'ctrl.row.height'], function() {
-        panelContainer.css({ minHeight: ctrl.height || ctrl.panel.height || ctrl.row.height, display: 'block' });
+      scope.$watchGroup(['ctrl.fullscreen', 'ctrl.containerHeight'], function() {
+        panelContainer.css({minHeight: ctrl.containerHeight});
         elem.toggleClass('panel-fullscreen', ctrl.fullscreen ? true : false);
       });
     }
@@ -112,7 +121,7 @@ module.directive('panelResizer', function($rootScope) {
         }
 
         scope.$apply(function() {
-          scope.$broadcast('render');
+          ctrl.render();
         });
       }
 

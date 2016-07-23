@@ -5,9 +5,10 @@ import {describe, beforeEach, it, sinon, expect, angularMocks} from '../../../..
 import '../module';
 import angular from 'angular';
 import $ from 'jquery';
-import helpers from '../../../../../test/specs/helpers';
-import TimeSeries from '../../../../core/time_series2';
+import helpers from 'test/specs/helpers';
+import TimeSeries from 'app/core/time_series2';
 import moment from 'moment';
+import {Emitter} from 'app/core/core';
 
 describe('grafanaGraph', function() {
 
@@ -24,31 +25,49 @@ describe('grafanaGraph', function() {
         }));
 
         beforeEach(angularMocks.inject(function($rootScope, $compile) {
-          var ctrl: any = {};
+          var ctrl: any = {
+            events: new Emitter(),
+            height: 200,
+            panel: {
+              legend: {},
+              grid: { },
+              yaxes: [
+                {
+                  min: null,
+                  max: null,
+                  format: 'short',
+                  logBase: 1
+                },
+                {
+                  min: null,
+                  max: null,
+                  format: 'short',
+                  logBase: 1
+                }
+              ],
+              xaxis: {},
+              seriesOverrides: [],
+              tooltip: {
+                shared: true
+              }
+            },
+            renderingCompleted: sinon.spy(),
+            hiddenSeries: {},
+            dashboard: {
+              getTimezone: sinon.stub().returns('browser')
+            },
+            range: {
+              from: moment([2015, 1, 1, 10]),
+              to: moment([2015, 1, 1, 22]),
+            },
+          };
+
           var scope = $rootScope.$new();
           scope.ctrl = ctrl;
-          var element = angular.element("<div style='width:" + elementWidth + "px' grafana-graph><div>");
 
-          ctrl.height = '200px';
-          ctrl.panel = {
-            legend: {},
-            grid: { },
-            y_formats: [],
-            seriesOverrides: [],
-            tooltip: {
-              shared: true
-            }
-          };
 
           $rootScope.onAppEvent = sinon.spy();
-          ctrl.otherPanelInFullscreenMode = sinon.spy();
-          ctrl.renderingCompleted = sinon.spy();
-          ctrl.hiddenSeries = {};
-          ctrl.dashboard = { timezone: 'browser' };
-          ctrl.range = {
-            from: moment([2015, 1, 1, 10]),
-            to: moment([2015, 1, 1, 22]),
-          };
+
           ctx.data = [];
           ctx.data.push(new TimeSeries({
             datapoints: [[1,1],[2,2]],
@@ -61,11 +80,12 @@ describe('grafanaGraph', function() {
 
           setupFunc(ctrl, ctx.data);
 
+          var element = angular.element("<div style='width:" + elementWidth + "px' grafana-graph><div>");
           $compile(element)(scope);
           scope.$digest();
-          $.plot = ctx.plotSpy = sinon.spy();
 
-          scope.$emit('render', ctx.data);
+          $.plot = ctx.plotSpy = sinon.spy();
+          ctrl.events.emit('render', ctx.data);
           ctx.plotData = ctx.plotSpy.getCall(0).args[1];
           ctx.plotOptions = ctx.plotSpy.getCall(0).args[2];
         }));
@@ -147,13 +167,7 @@ describe('grafanaGraph', function() {
 
   graphScenario('when logBase is log 10', function(ctx) {
     ctx.setup(function(ctrl) {
-      ctrl.panel.grid = {
-        leftMax: null,
-        rightMax: null,
-        leftMin: null,
-        rightMin: null,
-        leftLogBase: 10,
-      };
+      ctrl.panel.yaxes[0].logBase = 10;
     });
 
     it('should apply axis transform and ticks', function() {
@@ -182,11 +196,10 @@ describe('grafanaGraph', function() {
     ctx.setup(function(ctrl, data) {
       ctrl.panel.lines = true;
       ctrl.panel.fill = 5;
-      ctrl.panel.seriesOverrides = [
-        { alias: 'test', fill: 0, points: true }
-      ];
-
+      data[0].zindex = 10;
       data[1].alias = 'test';
+      data[1].lines = {fill: 0.001};
+      data[1].points = {show: true};
     });
 
     it('should match second series and fill zero, and enable points', function() {
@@ -197,8 +210,9 @@ describe('grafanaGraph', function() {
   });
 
   graphScenario('should order series order according to zindex', function(ctx) {
-    ctx.setup(function(ctrl) {
-      ctrl.panel.seriesOverrides = [{ alias: 'series1', zindex: 2 }];
+    ctx.setup(function(ctrl, data) {
+      data[1].zindex = 1;
+      data[0].zindex = 10;
     });
 
     it('should move zindex 2 last', function() {

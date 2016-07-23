@@ -35,7 +35,7 @@ func (a *ldapAuther) Dial() error {
 				return err
 			} else {
 				if !certPool.AppendCertsFromPEM(pem) {
-					return errors.New("Failed to append CA certficate " + caCertFile)
+					return errors.New("Failed to append CA certificate " + caCertFile)
 				}
 			}
 		}
@@ -164,6 +164,7 @@ func (a *ldapAuther) syncUserInfo(user *m.User, ldapUser *ldapUserInfo) error {
 
 func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 	if len(a.server.LdapGroups) == 0 {
+		log.Warn("Ldap: no group mappings defined")
 		return nil
 	}
 
@@ -219,7 +220,8 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 
 		// add role
 		cmd := m.AddOrgUserCommand{UserId: user.Id, Role: group.OrgRole, OrgId: group.OrgId}
-		if err := bus.Dispatch(&cmd); err != nil {
+		err := bus.Dispatch(&cmd)
+		if err != nil && err != m.ErrOrgNotFound {
 			return err
 		}
 
@@ -290,7 +292,7 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 				a.server.Attr.Name,
 				a.server.Attr.MemberOf,
 			},
-			Filter: strings.Replace(a.server.SearchFilter, "%s", username, -1),
+			Filter: strings.Replace(a.server.SearchFilter, "%s", ldap.EscapeFilter(username), -1),
 		}
 
 		searchResult, err = a.conn.Search(&searchReq)
@@ -318,7 +320,12 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 		// If we are using a POSIX LDAP schema it won't support memberOf, so we manually search the groups
 		var groupSearchResult *ldap.SearchResult
 		for _, groupSearchBase := range a.server.GroupSearchBaseDNs {
-			filter := strings.Replace(a.server.GroupSearchFilter, "%s", username, -1)
+			var filter_replace string
+			filter_replace = getLdapAttr(a.server.GroupSearchFilterUserAttribute, searchResult)
+			if a.server.GroupSearchFilterUserAttribute == "" {
+				filter_replace = getLdapAttr(a.server.Attr.Username, searchResult)
+			}
+			filter := strings.Replace(a.server.GroupSearchFilter, "%s", ldap.EscapeFilter(filter_replace), -1)
 
 			if ldapCfg.VerboseLogging {
 				log.Info("LDAP: Searching for user's groups: %s", filter)

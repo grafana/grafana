@@ -1,0 +1,194 @@
+.login-container {
+  background-position: left;
+  background-size: 60%;
+  background-repeat: no-repeat;
+  min-width: 100%;
+  margin-left: 0;
+  margin-top: -26px; /* BAD HACK - experiement to see how it looks */
+  padding-top: $spacer * 5; /* BAD HACK - experiement to see how it looks */
+}
+
+.login-form {
+  display: inline-block;
+  max-width: 24rem;
+}
+
+.login-box {
+  max-width: 700px;
+  margin: 0 auto; /* was $spacer * 2 auto 0 auto; */
+}
+
+.login-box-logo {
+  text-align: center;
+  margin-bottom: $spacer * 2;
+  img {
+    width: 6rem;
+  }
+  .icon-gf-grafana_wordmark {
+    color: $link-color;
+    position: relative;
+    top: -4.5rem;
+    font-size: 2.5rem;
+    text-shadow: 3px 3px 5px black;
+  }
+}
+
+.login-inner-box {
+  background: $panel-bg;
+  text-align: center;
+}
+
+.login-tab-header {
+  background: $tight-form-bg;
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.btn-login-tab {
+  background: transparent;
+  border: none;
+  font-size: 15px;
+  padding: 10px 10px;
+
+  &.active {
+    background: darken($tight-form-bg, 5%);
+    color: $white;
+  }
+
+  &:focus {
+    outline: 0;
+  }
+
+  font-weight: bold;
+  display: inline-block;
+  width: 170px;
+  color: $text-color;
+}
+
+.password-strength {
+  display: block;
+  width: 15%;
+  overflow: visible;
+  white-space: nowrap;
+  padding-top: 3px;
+  color: darken($text-color, 20%);
+  border-top: 3px solid $red;
+  &.password-strength-ok {
+    width: 40%;
+    border-top: 3px solid lighten($yellow, 10%);
+  }
+  &.password-strength-good {
+    width: 100%;
+    border-top: 3px solid lighten($green, 10%);
+  }
+}
+
+.login-submit-button-row {
+  text-align: center;
+  margin-top: 30px;
+  button {
+    padding: 14px 23px;
+    font-size: 16px;
+    font-weight: bold;
+    min-width: 150px;
+    display: inline-block;
+    border: 1px solid lighten($btn-inverse-bg, 10%);
+  }
+}
+
+.login-oauth {
+  margin-bottom: 15px;
+
+  .btn {
+    margin: 5px;
+  }
+
+  .btn-google {
+    background: #dd4b39;
+    color: white;
+  }
+
+  .btn-github {
+    background: #555;
+    color: white;
+  }
+}
+
+.password-recovery {
+  background: $tight-form-bg;
+  margin-top: 10px;
+  padding: 10px;
+  a {
+    color: $gray-2;
+  }
+}
+
+.login-divider {
+  float: left;
+  width: 50%;
+  margin: 5px 25% 25px 25%;
+
+  .login-divider-line {
+    width: 100%;
+    height: 10px;
+    border-bottom: 1px solid $gray-1;
+
+    .login-divider-text {
+      background-color: $panel-bg;
+      color: $gray-2;
+      padding: 0 10px;
+    }
+  }
+}
+
+.signup-page-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100%;
+  width: 100%;
+  background-image: url(../img/background_tease.jpg);
+  opacity: 0.3;
+  z-index: -1;
+}
+
+.invite-box {
+  text-align: center;
+  border: 1px solid $tight-form-func-bg;
+	background-color: $panel-bg;
+  max-width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+
+  .tight-form {
+    text-align: left;
+  }
+
+  h3 {
+    margin-top: 30px;
+  }
+
+  .modal-close {
+    float: right;
+    font-size: 140%;
+    padding: 10px;
+  }
+
+  .modal-tagline {
+    font-size: 16px;
+  }
+}
+
+@include media-breakpoint-up(md) {
+  .login-box-logo {
+    img {
+      width: 125px;
+    }
+    .icon-gf-grafana_wordmark {
+      top: -5px;
+      font-size: 3rem;
+    }
+  }
+}

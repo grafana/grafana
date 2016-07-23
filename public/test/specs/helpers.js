@@ -54,7 +54,7 @@ define([
 
         config.panels['test'] = {info: {}};
         self.ctrl = $controller(Ctrl, {$scope: self.scope}, {
-          panel: self.panel, dashboard: self.dashboard
+          panel: self.panel, dashboard: self.dashboard, row: {}
         });
       });
     };
@@ -137,6 +137,10 @@ define([
 
     this.replace = function(target) {
       return target;
+    };
+
+    this.setTime = function(time) {
+      this.time = time;
     };
   }
 

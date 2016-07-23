@@ -39,7 +39,7 @@ function (angular, coreModule, kbn) {
         var tip = attrs.tip ? (' <tip>' + attrs.tip + '</tip>') : '';
         var showIf = attrs.showIf ? (' ng-show="' + attrs.showIf + '" ') : '';
 
-        var template = '<div class="editor-option text-center"' + showIf + '>' +
+        var template = '<div class="editor-option gf-form-checkbox text-center"' + showIf + '>' +
           ' <label for="' + attrs.model + '" class="small">' +
           attrs.text + tip + '</label>' +
           '<input class="cr1" id="' + attrs.model + '" type="checkbox" ' +
@@ -69,7 +69,8 @@ function (angular, coreModule, kbn) {
           ' <label for="' + scope.$id + model + '" class="cr1"></label>';
 
         template = template + label;
-        elem.replaceWith($compile(angular.element(template))(scope));
+        elem.addClass('gf-form-checkbox');
+        elem.html($compile(angular.element(template))(scope));
       }
     };
   });
@@ -90,7 +91,6 @@ function (angular, coreModule, kbn) {
         var li = '<li' + (item.submenu && item.submenu.length ? ' class="dropdown-submenu"' : '') + '>' +
           '<a tabindex="-1" ng-href="' + (item.href || '') + '"' + (item.click ? ' ng-click="' + item.click + '"' : '') +
           (item.target ? ' target="' + item.target + '"' : '') + (item.method ? ' data-method="' + item.method + '"' : '') +
-          (item.configModal ? ' dash-editor-link="' + item.configModal + '"' : "") +
           '>' + (item.text || '') + '</a>';
 
         if (item.submenu && item.submenu.length) {

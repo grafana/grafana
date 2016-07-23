@@ -44,6 +44,10 @@ function (angular, _) {
         timestamp: new Date()
       };
 
+      if (!external) {
+        $scope.dashboard.snapshot.originalUrl = $location.absUrl();
+      }
+
       $scope.loading = true;
       $scope.snapshot.external = external;
 
@@ -117,7 +121,7 @@ function (angular, _) {
       // remove template queries
       _.each(dash.templating.list, function(variable) {
         variable.query = "";
-        variable.options = [];
+        variable.options = variable.current;
         variable.refresh = false;
       });
 

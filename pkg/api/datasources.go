@@ -1,12 +1,14 @@
 package api
 
 import (
+	"sort"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/plugins"
 	//"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -18,9 +20,10 @@ func GetDataSources(c *middleware.Context) {
 		return
 	}
 
-	result := make([]*dtos.DataSource, len(query.Result))
-	for i, ds := range query.Result {
-		result[i] = &dtos.DataSource{
+	result := make(dtos.DataSourceList, 0)
+	for _, ds := range query.Result {
+
+		dsItem := dtos.DataSource{
 			Id:        ds.Id,
 			OrgId:     ds.OrgId,
 			Name:      ds.Name,
@@ -33,8 +36,17 @@ func GetDataSources(c *middleware.Context) {
 			BasicAuth: ds.BasicAuth,
 			IsDefault: ds.IsDefault,
 		}
+
+		if plugin, exists := plugins.DataSources[ds.Type]; exists {
+			dsItem.TypeLogoUrl = plugin.Info.Logos.Small
+		} else {
+			dsItem.TypeLogoUrl = "public/img/icn-datasource.svg"
+		}
+
+		result = append(result, dsItem)
 	}
 
+	sort.Sort(result)
 	c.JSON(200, result)
 }
 
@@ -52,24 +64,9 @@ func GetDataSourceById(c *middleware.Context) Response {
 	}
 
 	ds := query.Result
+	dtos := convertModelToDtos(ds)
 
-	return Json(200, &dtos.DataSource{
-		Id:                ds.Id,
-		OrgId:             ds.OrgId,
-		Name:              ds.Name,
-		Url:               ds.Url,
-		Type:              ds.Type,
-		Access:            ds.Access,
-		Password:          ds.Password,
-		Database:          ds.Database,
-		User:              ds.User,
-		BasicAuth:         ds.BasicAuth,
-		BasicAuthUser:     ds.BasicAuthUser,
-		BasicAuthPassword: ds.BasicAuthPassword,
-		WithCredentials:   ds.WithCredentials,
-		IsDefault:         ds.IsDefault,
-		JsonData:          ds.JsonData,
-	})
+	return Json(200, &dtos)
 }
 
 func DeleteDataSource(c *middleware.Context) {
@@ -115,20 +112,58 @@ func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) {
 	c.JsonOK("Datasource updated")
 }
 
-func GetDataSourcePlugins(c *middleware.Context) {
-	dsList := make(map[string]*plugins.DataSourcePlugin)
+// Get /api/datasources/name/:name
+func GetDataSourceByName(c *middleware.Context) Response {
+	query := m.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
 
-	if enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId); err != nil {
-		c.JsonApiErr(500, "Failed to get org apps", err)
-		return
-	} else {
-
-		for key, value := range enabledPlugins.DataSources {
-			if !value.BuiltIn {
-				dsList[key] = value
-			}
+	if err := bus.Dispatch(&query); err != nil {
+		if err == m.ErrDataSourceNotFound {
+			return ApiError(404, "Data source not found", nil)
 		}
+		return ApiError(500, "Failed to query datasources", err)
+	}
 
-		c.JSON(200, dsList)
+	ds := query.Result
+	dtos := convertModelToDtos(ds)
+
+	return Json(200, &dtos)
+}
+
+// Get /api/datasources/id/:name
+func GetDataSourceIdByName(c *middleware.Context) Response {
+	query := m.GetDataSourceByNameQuery{Name: c.Params(":name"), OrgId: c.OrgId}
+
+	if err := bus.Dispatch(&query); err != nil {
+		if err == m.ErrDataSourceNotFound {
+			return ApiError(404, "Data source not found", nil)
+		}
+		return ApiError(500, "Failed to query datasources", err)
+	}
+
+	ds := query.Result
+	dtos := dtos.AnyId{
+		Id: ds.Id,
+	}
+
+	return Json(200, &dtos)
+}
+
+func convertModelToDtos(ds m.DataSource) dtos.DataSource {
+	return dtos.DataSource{
+		Id:                ds.Id,
+		OrgId:             ds.OrgId,
+		Name:              ds.Name,
+		Url:               ds.Url,
+		Type:              ds.Type,
+		Access:            ds.Access,
+		Password:          ds.Password,
+		Database:          ds.Database,
+		User:              ds.User,
+		BasicAuth:         ds.BasicAuth,
+		BasicAuthUser:     ds.BasicAuthUser,
+		BasicAuthPassword: ds.BasicAuthPassword,
+		WithCredentials:   ds.WithCredentials,
+		IsDefault:         ds.IsDefault,
+		JsonData:          ds.JsonData,
 	}
 }

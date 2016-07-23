@@ -11,7 +11,7 @@ export class PlaylistEditCtrl {
   searchQuery: string = '';
   loading: boolean = false;
   playlist: any = {
-    interval: '10m',
+    interval: '5m',
   };
   playlistItems: any = [];
   dashboardresult: any = [];

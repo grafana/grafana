@@ -13,11 +13,11 @@
     "tests"
   ],
   "dependencies": {
-    "jquery": "~2.1.4",
-    "angular": "~1.5.0",
-    "angular-route": "~1.5.0",
-    "angular-mocks": "~1.5.0",
-    "angular-sanitize": "~1.5.0",
+    "jquery": "~2.2.4",
+    "angular": "~1.5.3",
+    "angular-route": "~1.5.3",
+    "angular-mocks": "~1.5.3",
+    "angular-sanitize": "~1.5.3",
     "angular-bindonce": "~0.3.3"
   }
 }

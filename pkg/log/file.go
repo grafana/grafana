@@ -5,43 +5,39 @@
 package log
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/inconshreveable/log15"
 )
 
 // FileLogWriter implements LoggerInterface.
 // It writes messages by lines limit, file size limit, or time frequency.
 type FileLogWriter struct {
-	*log.Logger
 	mw *MuxWriter
-	// The opened file
-	Filename string `json:"filename"`
 
-	Maxlines          int `json:"maxlines"`
+	Format            log15.Format
+	Filename          string
+	Maxlines          int
 	maxlines_curlines int
 
 	// Rotate at size
-	Maxsize         int `json:"maxsize"`
+	Maxsize         int
 	maxsize_cursize int
 
 	// Rotate daily
-	Daily          bool  `json:"daily"`
-	Maxdays        int64 `json:"maxdays"`
+	Daily          bool
+	Maxdays        int64
 	daily_opendate int
 
-	Rotate bool `json:"rotate"`
-
-	startLock sync.Mutex // Only one log can write to the file
-
-	Level LogLevel `json:"level"`
+	Rotate    bool
+	startLock sync.Mutex
 }
 
 // an *os.File writer with locker.
@@ -66,37 +62,29 @@ func (l *MuxWriter) SetFd(fd *os.File) {
 }
 
 // create a FileLogWriter returning as LoggerInterface.
-func NewFileWriter() LoggerInterface {
+func NewFileWriter() *FileLogWriter {
 	w := &FileLogWriter{
 		Filename: "",
+		Format:   log15.LogfmtFormat(),
 		Maxlines: 1000000,
 		Maxsize:  1 << 28, //256 MB
 		Daily:    true,
 		Maxdays:  7,
 		Rotate:   true,
-		Level:    TRACE,
 	}
 	// use MuxWriter instead direct use os.File for lock write when rotate
 	w.mw = new(MuxWriter)
-	// set MuxWriter as Logger's io.Writer
-	w.Logger = log.New(w.mw, "", log.Ldate|log.Ltime)
 	return w
 }
 
-// Init file logger with json config.
-// config like:
-//	{
-//	"filename":"log/gogs.log",
-//	"maxlines":10000,
-//	"maxsize":1<<30,
-//	"daily":true,
-//	"maxdays":15,
-//	"rotate":true
-//	}
-func (w *FileLogWriter) Init(config string) error {
-	if err := json.Unmarshal([]byte(config), w); err != nil {
-		return err
-	}
+func (w *FileLogWriter) Log(r *log15.Record) error {
+	data := w.Format.Format(r)
+	w.docheck(len(data))
+	_, err := w.mw.Write(data)
+	return err
+}
+
+func (w *FileLogWriter) Init() error {
 	if len(w.Filename) == 0 {
 		return errors.New("config must have filename")
 	}
@@ -129,17 +117,6 @@ func (w *FileLogWriter) docheck(size int) {
 	}
 	w.maxlines_curlines++
 	w.maxsize_cursize += size
-}
-
-// write logger message into file.
-func (w *FileLogWriter) WriteMsg(msg string, skip int, level LogLevel) error {
-	if level < w.Level {
-		return nil
-	}
-	n := 24 + len(msg) // 24 stand for the length "2013/06/23 21:00:22 [T] "
-	w.docheck(n)
-	w.Logger.Println(msg)
-	return nil
 }
 
 func (w *FileLogWriter) createLogFile() (*os.File, error) {
@@ -227,7 +204,7 @@ func (w *FileLogWriter) deleteOldLog() {
 }
 
 // destroy file logger, close file writer.
-func (w *FileLogWriter) Destroy() {
+func (w *FileLogWriter) Close() {
 	w.mw.fd.Close()
 }
 
@@ -236,8 +213,4 @@ func (w *FileLogWriter) Destroy() {
 // flush file means sync file from disk.
 func (w *FileLogWriter) Flush() {
 	w.mw.fd.Sync()
-}
-
-func init() {
-	Register("file", NewFileWriter)
 }

@@ -4,14 +4,17 @@ import _ from 'lodash';
 import moment from 'moment';
 import angular from 'angular';
 
+import {DashboardExporter} from '../export/exporter';
+
 export class DashNavCtrl {
 
   /** @ngInject */
-  constructor($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, $timeout) {
+  constructor($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, $timeout, datasourceSrv) {
 
     $scope.init = function() {
       $scope.onAppEvent('save-dashboard', $scope.saveDashboard);
       $scope.onAppEvent('delete-dashboard', $scope.deleteDashboard);
+      $scope.onAppEvent('quick-snapshot', $scope.quickSnapshot);
 
       $scope.showSettingsMenu = $scope.dashboardMeta.canEdit || $scope.contextSrv.isEditor;
 
@@ -50,6 +53,10 @@ export class DashNavCtrl {
         src: 'public/app/features/dashboard/partials/shareModal.html',
         scope: modalScope
       });
+    };
+
+    $scope.quickSnapshot = function() {
+      $scope.shareDashboard(1);
     };
 
     $scope.openSearch = function() {
@@ -102,8 +109,9 @@ export class DashNavCtrl {
         err.isHandled = true;
 
         $scope.appEvent('confirm-modal', {
-          title: 'Someone else has updated this dashboard!',
-          text: "Would you still like to save this dashboard?",
+          title: 'Conflict',
+          text: 'Someone else has updated this dashboard.',
+          text2: 'Would you still like to save this dashboard?',
           yesText: "Save & Overwrite",
           icon: "fa-warning",
           onConfirm: function() {
@@ -116,10 +124,30 @@ export class DashNavCtrl {
         err.isHandled = true;
 
         $scope.appEvent('confirm-modal', {
-          title: 'Another dashboard with the same name exists',
-          text: "Would you still like to save this dashboard?",
+          title: 'Conflict',
+          text: 'Dashboard with the same name exists.',
+          text2: 'Would you still like to save this dashboard?',
           yesText: "Save & Overwrite",
           icon: "fa-warning",
+          onConfirm: function() {
+            $scope.saveDashboard({overwrite: true});
+          }
+        });
+      }
+
+      if (err.data && err.data.status === "plugin-dashboard") {
+        err.isHandled = true;
+
+        $scope.appEvent('confirm-modal', {
+          title: 'Plugin Dashboard',
+          text: err.data.message,
+          text2: 'Your changes will be lost when you update the plugin. Use Save As to create custom version.',
+          yesText: "Overwrite",
+          icon: "fa-warning",
+          altActionText: "Save As",
+          onAltAction: function() {
+            $scope.saveDashboardAs();
+          },
           onConfirm: function() {
             $scope.saveDashboard({overwrite: true});
           }
@@ -129,7 +157,9 @@ export class DashNavCtrl {
 
     $scope.deleteDashboard = function() {
       $scope.appEvent('confirm-modal', {
-        title: 'Do you want to delete dashboard ' + $scope.dashboard.title + '?',
+        title: 'Delete',
+        text: 'Do you want to delete this dashboard?',
+        text2: $scope.dashboard.title,
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {
@@ -154,14 +184,15 @@ export class DashNavCtrl {
       $scope.appEvent('show-modal', {
         src: 'public/app/features/dashboard/partials/saveDashboardAs.html',
         scope: newScope,
+        modalClass: 'modal--narrow'
       });
     };
 
-    $scope.exportDashboard = function() {
+    $scope.viewJson = function() {
       var clone = $scope.dashboard.getSaveModelClone();
-      var blob = new Blob([angular.toJson(clone, true)], { type: "application/json;charset=utf-8" });
-      var wnd: any = window;
-      wnd.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime());
+      var html = angular.toJson(clone, true);
+      var uri = "data:application/json," + encodeURIComponent(html);
+      var newWindow = window.open(uri);
     };
 
     $scope.snapshot = function() {
@@ -169,7 +200,6 @@ export class DashNavCtrl {
       $rootScope.$broadcast('refresh');
 
       $timeout(function() {
-        $scope.exportDashboard();
         $scope.dashboard.snapshot = false;
         $scope.appEvent('dashboard-snapshot-cleanup');
       }, 1000);

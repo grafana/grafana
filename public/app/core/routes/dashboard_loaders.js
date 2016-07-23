@@ -4,13 +4,18 @@ define([
 function (coreModule) {
   "use strict";
 
-  coreModule.default.controller('LoadDashboardCtrl', function($scope, $routeParams, dashboardLoaderSrv, backendSrv) {
+  coreModule.default.controller('LoadDashboardCtrl', function($scope, $routeParams, dashboardLoaderSrv, backendSrv, $location) {
+    $scope.appEvent("dashboard-fetch-start");
 
     if (!$routeParams.slug) {
-      backendSrv.get('/api/dashboards/home').then(function(result) {
-        var meta = result.meta;
-        meta.canSave = meta.canShare = meta.canStar = false;
-        $scope.initDashboard(result, $scope);
+      backendSrv.get('/api/dashboards/home').then(function(homeDash) {
+        if (homeDash.redirectUri) {
+          $location.path('dashboard/' + homeDash.redirectUri);
+        } else {
+          var meta = homeDash.meta;
+          meta.canSave = meta.canShare = meta.canStar = false;
+          $scope.initDashboard(homeDash, $scope);
+        }
       });
       return;
     }
@@ -19,18 +24,6 @@ function (coreModule) {
       $scope.initDashboard(result, $scope);
     });
 
-  });
-
-  coreModule.default.controller('DashFromImportCtrl', function($scope, $location, alertSrv) {
-    if (!window.grafanaImportDashboard) {
-      alertSrv.set('Not found', 'Cannot reload page with unsaved imported dashboard', 'warning', 7000);
-      $location.path('');
-      return;
-    }
-    $scope.initDashboard({
-      meta: { canShare: false, canStar: false },
-      dashboard: window.grafanaImportDashboard
-    }, $scope);
   });
 
   coreModule.default.controller('NewDashboardCtrl', function($scope) {

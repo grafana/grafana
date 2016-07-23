@@ -2,10 +2,10 @@
 
 import './query_parameter_ctrl';
 import _ from 'lodash';
-import {QueryCtrl} from 'app/features/panel/panel';
+import {QueryCtrl} from 'app/plugins/sdk';
 
 export class CloudWatchQueryCtrl extends QueryCtrl {
-  static templateUrl = 'public/app/plugins/datasource/cloudwatch/partials/query.editor.html';
+  static templateUrl = 'partials/query.editor.html';
 
   aliasSyntax: string;
 

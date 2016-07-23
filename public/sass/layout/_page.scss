@@ -1,0 +1,96 @@
+.grafana-app {
+  display: block;
+  height: 100%;
+}
+
+.main-view {
+  // height: 100%; REMOVED FOR FOOTER TRW
+}
+
+.page-container {
+  background-color: $page-bg;
+  padding: ($spacer * 2) ($spacer * 4);
+  max-width: 1060px;
+  min-height: calc(100% - 54px);
+  padding-bottom: $spacer * 5;
+  background-image: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%)
+}
+
+.page-body {
+  @include media-breakpoint-up(md) {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+}
+
+.page-content-with-sidebar {
+  width: calc(100% - #{$page-sidebar-width + $page-sidebar-margin}); // sidebar width + margin
+}
+
+.page-sidebar {
+  @include media-breakpoint-up(md) {
+    width: $page-sidebar-width;
+    margin-left: $page-sidebar-margin;
+  }
+}
+
+.page-header {
+  padding: $spacer 0 0 0;
+  margin-bottom: 2rem;
+  @include brand-bottom-border();
+  @include clearfix();
+
+  h1 {
+    flex-grow: 1;
+    display: inline-block;
+    margin-bottom: $spacer*1.5;
+  }
+
+  button, a {
+    float: right;
+    margin-left: $spacer;
+  }
+}
+
+.page-heading {
+  font-size: 1.25rem;
+  margin-top: 0;
+  margin-bottom: $spacer * 0.7;
+}
+
+.admin-page {
+  max-width: 800px;
+  margin-left: 10px;
+  .gf-box {
+    margin-top: 0;
+  }
+  .gf-box-body {
+    min-height: 0;
+  }
+  h2 {
+    margin-left: 15px;
+    margin-bottom: 0px;
+    font-size: $font-size-lg;
+    color: $text-color;
+    i {
+      padding-right: 6px;
+    }
+  }
+}
+
+.page-sidebar {
+  color: $text-color-weak;
+  h4 {
+    font-size: $font-size-base;
+    font-weight: $font-weight-semi-bold;
+  }
+  h5 {
+    font-size: $font-size-base;
+    font-weight: $font-weight-semi-bold;
+  }
+}
+
+.page-sidebar-section {
+  margin-bottom: $spacer*2;
+}

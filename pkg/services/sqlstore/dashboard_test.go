@@ -5,6 +5,7 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
 )
@@ -12,11 +13,11 @@ import (
 func insertTestDashboard(title string, orgId int64, tags ...interface{}) *m.Dashboard {
 	cmd := m.SaveDashboardCommand{
 		OrgId: orgId,
-		Dashboard: map[string]interface{}{
+		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
 			"title": title,
 			"tags":  tags,
-		},
+		}),
 	}
 
 	err := SaveDashboard(&cmd)
@@ -32,6 +33,8 @@ func TestDashboardDataAccess(t *testing.T) {
 
 		Convey("Given saved dashboard", func() {
 			savedDash := insertTestDashboard("test dash 23", 1, "prod", "webapp")
+			insertTestDashboard("test dash 45", 1, "prod")
+			insertTestDashboard("test dash 67", 1, "prod", "webapp")
 
 			Convey("Should return dashboard model", func() {
 				So(savedDash.Title, ShouldEqual, "test dash 23")
@@ -56,11 +59,11 @@ func TestDashboardDataAccess(t *testing.T) {
 				cmd := m.SaveDashboardCommand{
 					OrgId:     1,
 					Overwrite: true,
-					Dashboard: map[string]interface{}{
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
 						"id":    float64(123412321),
 						"title": "Expect error",
 						"tags":  []interface{}{},
-					},
+					}),
 				}
 
 				err := SaveDashboard(&cmd)
@@ -74,11 +77,11 @@ func TestDashboardDataAccess(t *testing.T) {
 				cmd := m.SaveDashboardCommand{
 					OrgId:     2,
 					Overwrite: true,
-					Dashboard: map[string]interface{}{
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
 						"id":    float64(query.Result.Id),
 						"title": "Expect error",
 						"tags":  []interface{}{},
-					},
+					}),
 				}
 
 				err := SaveDashboard(&cmd)
@@ -87,7 +90,7 @@ func TestDashboardDataAccess(t *testing.T) {
 
 			Convey("Should be able to search for dashboard", func() {
 				query := search.FindPersistedDashboardsQuery{
-					Title: "test",
+					Title: "test dash 23",
 					OrgId: 1,
 				}
 
@@ -99,14 +102,45 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(len(hit.Tags), ShouldEqual, 2)
 			})
 
+			Convey("Should be able to search for dashboard by dashboard ids", func() {
+				Convey("should be able to find two dashboards by id", func() {
+					query := search.FindPersistedDashboardsQuery{
+						DashboardIds: []int{1, 2},
+						OrgId:        1,
+					}
+
+					err := SearchDashboards(&query)
+					So(err, ShouldBeNil)
+
+					So(len(query.Result), ShouldEqual, 2)
+
+					hit := query.Result[0]
+					So(len(hit.Tags), ShouldEqual, 2)
+
+					hit2 := query.Result[1]
+					So(len(hit2.Tags), ShouldEqual, 1)
+				})
+
+				Convey("DashboardIds that does not exists should not cause errors", func() {
+					query := search.FindPersistedDashboardsQuery{
+						DashboardIds: []int{1000},
+						OrgId:        1,
+					}
+
+					err := SearchDashboards(&query)
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 0)
+				})
+			})
+
 			Convey("Should not be able to save dashboard with same name", func() {
 				cmd := m.SaveDashboardCommand{
 					OrgId: 1,
-					Dashboard: map[string]interface{}{
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
 						"id":    nil,
 						"title": "test dash 23",
 						"tags":  []interface{}{},
-					},
+					}),
 				}
 
 				err := SaveDashboard(&cmd)

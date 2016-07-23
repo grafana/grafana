@@ -1,0 +1,159 @@
+.submenu-controls {
+  margin: 0 $panel-margin ($panel-margin*2) $panel-margin;
+  font-size: 16px;
+}
+
+.annotation-disabled, .annotation-disabled a {
+  color: $link-color-disabled;
+}
+
+.annotation-segment {
+  label.cr1 {
+    margin-left: 5px;
+    margin-top: 3px;
+  }
+  padding: 8px 7px;
+}
+
+.submenu-item {
+  margin-right: 20px;
+  display: inline-block;
+  border-radius: 3px;
+  background-color: $panel-bg;
+  border: $panel-border;
+  margin-right: 10px;
+  display: inline-block;
+  float: left;
+
+  .fa-caret-down {
+    font-size: 75%;
+    position: relative;
+    top: 1px;
+  }
+}
+
+.variable-value-link {
+  font-size: 16px;
+  padding-right: 10px;
+  .label-tag {
+    margin: 0 5px;
+  }
+
+  padding: 8px 7px;
+  box-sizing: content-box;
+  display: inline-block;
+  font-weight: normal;
+  display: inline-block;
+  color: $text-color;
+}
+
+.submenu-item-label {
+  padding: 8px 0px 8px 7px;
+  box-sizing: content-box;
+  display: inline-block;
+  font-weight: normal;
+  display: inline-block;
+}
+
+.variable-link-wrapper  {
+  display: inline-block;
+  position: relative;
+
+  .hidden-input {
+    padding: 8px 7px;
+    border: none;
+    margin: 0px;
+    background: transparent;
+    border-radius: 0;
+    border-right: 1px solid $tight-form-border;
+  }
+}
+
+.variable-value-dropdown {
+  position: absolute;
+  top: 47px;
+  min-width: 150px;
+  max-height: 400px;
+  min-height: 150px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  background-color: $dropdownBackground;
+  box-shadow: 0 0 25px 0 rgba(0,0,0,0.4);
+  z-index: 1000;
+  font-size: $font-size-base;
+  border-radius: 3px 3px 0 0;
+  border: 1px solid $tight-form-func-bg;
+
+  &.multi {
+   .selected {
+     .variable-option-icon{
+       background: url($checkboxImageUrl) 0px -18px no-repeat;
+     }
+   }
+ }
+
+ &.single {
+   .variable-option-icon {
+     display: none;
+   }
+   .selected {
+     background-color: $tight-form-func-highlight-bg;
+   }
+ }
+}
+
+.variable-options-wrapper {
+  display: table;
+  width: 100%;
+}
+
+.variable-options-column {
+  max-height: 350px;
+  display: table-cell;
+  line-height: 26px;
+  &:nth-child(2) {
+    border-left: 1px solid $tight-form-func-bg;
+  }
+}
+
+.variable-option-tag,
+.variable-option,
+.variable-options-column-header {
+  display: block;
+  padding: 2px 27px 0 8px;
+  position: relative;
+  white-space: nowrap;
+  min-width: 115px;
+}
+
+.variable-options-column-header {
+  padding-top: 5px;
+  padding-bottom: 5px;
+  margin-bottom: 5px;
+  &.many-selected {
+    .variable-option-icon {
+      background: url($checkboxImageUrl) 0px -36px no-repeat;
+    }
+  }
+}
+
+.variable-option-icon {
+  display: inline-block;
+  width: 24px;
+  height: 18px;
+  position: relative;
+  top: 4px;
+  background: url($checkboxImageUrl) left top no-repeat;
+}
+
+.variable-option {
+  &:hover, &.highlighted {
+    background-color: $blue-dark;
+  }
+}
+
+.dash-nav-link {
+  padding: 8px 7px;
+  display: inline-block;
+  color: $text-color;
+}

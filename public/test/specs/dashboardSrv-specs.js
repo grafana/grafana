@@ -7,6 +7,10 @@ define([
     var _dashboardSrv;
 
     beforeEach(module('grafana.services'));
+    beforeEach(module(function($provide) {
+      $provide.value('contextSrv', {
+      });
+    }));
 
     beforeEach(inject(function(dashboardSrv) {
       _dashboardSrv = dashboardSrv;
@@ -109,6 +113,7 @@ define([
       var model;
       var graph;
       var singlestat;
+      var table;
 
       beforeEach(function() {
         model = _dashboardSrv.create({
@@ -121,11 +126,18 @@ define([
             {
               panels: [
                 {
-                  type: 'graphite', legend: true, aliasYAxis: { test: 2 }, grid: { min: 1, max: 10 },
+                  type: 'graph', legend: true, aliasYAxis: { test: 2 },
+                  y_formats: ['kbyte', 'ms'],
+                  grid: {min: 1, max: 10, rightMin: 5, rightMax: 15, leftLogBase: 1, rightLogBase: 2},
+                  leftYAxisLabel: 'left label',
                   targets: [{refId: 'A'}, {}],
                 },
                 {
                   type: 'singlestat', legend: true, thresholds: '10,20,30', aliasYAxis: { test: 2 }, grid: { min: 1, max: 10 },
+                  targets: [{refId: 'A'}, {}],
+                },
+                {
+                  type: 'table', legend: true, styles: [{ thresholds: ["10", "20", "30"]}, { thresholds: ["100", "200", "300"]}],
                   targets: [{refId: 'A'}, {}],
                 }
               ]
@@ -135,6 +147,7 @@ define([
 
         graph = model.rows[0].panels[0];
         singlestat = model.rows[0].panels[1];
+        table = model.rows[0].panels[2];
       });
 
       it('should have title', function() {
@@ -166,11 +179,6 @@ define([
         expect(graph.legend.show).to.be(true);
       });
 
-      it('update grid options', function() {
-        expect(graph.grid.leftMin).to.be(1);
-        expect(graph.grid.leftMax).to.be(10);
-      });
-
       it('move aliasYAxis to series override', function() {
         expect(graph.seriesOverrides[0].alias).to.be("test");
         expect(graph.seriesOverrides[0].yaxis).to.be(2);
@@ -180,8 +188,31 @@ define([
         expect(model.annotations.list[0].name).to.be('old');
       });
 
+      it('table panel should only have two thresholds values', function() {
+        expect(table.styles[0].thresholds[0]).to.be("20");
+        expect(table.styles[0].thresholds[1]).to.be("30");
+        expect(table.styles[1].thresholds[0]).to.be("200");
+        expect(table.styles[1].thresholds[1]).to.be("300");
+      });
+
+      it('graph grid to yaxes options', function() {
+        expect(graph.yaxes[0].min).to.be(1);
+        expect(graph.yaxes[0].max).to.be(10);
+        expect(graph.yaxes[0].format).to.be('kbyte');
+        expect(graph.yaxes[0].label).to.be('left label');
+        expect(graph.yaxes[0].logBase).to.be(1);
+        expect(graph.yaxes[1].min).to.be(5);
+        expect(graph.yaxes[1].max).to.be(15);
+        expect(graph.yaxes[1].format).to.be('ms');
+        expect(graph.yaxes[1].logBase).to.be(2);
+
+        expect(graph.grid.rightMax).to.be(undefined);
+        expect(graph.grid.rightLogBase).to.be(undefined);
+        expect(graph.y_formats).to.be(undefined);
+      });
+
       it('dashboard schema version should be set to latest', function() {
-        expect(model.schemaVersion).to.be(9);
+        expect(model.schemaVersion).to.be(12);
       });
 
     });
@@ -235,6 +266,8 @@ define([
           rows: [{
             panels: [{
               type: 'graph',
+              grid: {},
+              yaxes: [{}, {}],
               targets: [{
                 "alias": "$tag_datacenter $tag_source $col",
                 "column": "value",
@@ -307,6 +340,28 @@ define([
       it('should add empty list', function() {
         expect(model.annotations.list.length).to.be(0);
         expect(model.templating.list.length).to.be(0);
+      });
+    });
+
+    describe('Formatting epoch timestamp when timezone is set as utc', function() {
+      var dashboard;
+
+      beforeEach(function() {
+        dashboard = _dashboardSrv.create({
+          timezone: 'utc',
+        });
+      });
+
+      it('Should format timestamp with second resolution by default', function() {
+        expect(dashboard.formatDate(1234567890000)).to.be('2009-02-13 23:31:30');
+      });
+
+      it('Should format timestamp with second resolution even if second format is passed as parameter', function() {
+        expect(dashboard.formatDate(1234567890007,'YYYY-MM-DD HH:mm:ss')).to.be('2009-02-13 23:31:30');
+      });
+
+      it('Should format timestamp with millisecond resolution if format is passed as parameter', function() {
+        expect(dashboard.formatDate(1234567890007,'YYYY-MM-DD HH:mm:ss.SSS')).to.be('2009-02-13 23:31:30.007');
       });
     });
 

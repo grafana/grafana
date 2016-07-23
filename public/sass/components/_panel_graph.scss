@@ -1,0 +1,317 @@
+.graph-canvas-wrapper {
+  position: relative;
+  cursor: crosshair;
+}
+
+.histogram-chart {
+  position: relative;
+}
+
+.datapoints-warning {
+  pointer: none;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 10;
+  margin-top: -50px;
+  margin-left: -100px;
+  width: 200px;
+  text-align: center;
+  cursor: auto;
+  padding: 10px;
+}
+
+.graph-legend {
+  @include clearfix();
+  margin: 0 $spacer;
+  text-align: center;
+  width: calc(100% - $spacer);
+  padding-top: 6px;
+
+  .popover-content {
+    padding: 0;
+  }
+}
+
+.graph-legend-icon {
+  position: relative;
+  padding-right: 4px;
+  top: 1px;
+}
+
+.graph-legend-icon,
+.graph-legend-alias,
+.graph-legend-value {
+  cursor: pointer;
+  float: left;
+  white-space: nowrap;
+  font-size: 85%;
+  text-align: left;
+  &.current::before {
+    content: "Current: "
+  }
+  &.max::before {
+    content: "Max: "
+  }
+  &.min::before {
+    content: "Min: "
+  }
+  &.total::before {
+    content: "Total: "
+  }
+  &.avg::before {
+    content: "Avg: "
+  }
+}
+
+.graph-legend-icon .fa {
+  font-size: 135%;
+  position: relative;
+  top: 1px;
+}
+
+.graph-legend-series {
+  float: left;
+  white-space: nowrap;
+  padding-left: 10px;
+
+  &--right-y {
+    float: right;
+  }
+}
+
+.graph-legend-value {
+  padding-left: 6px;
+}
+
+.graph-legend-table {
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  .graph-legend-series {
+    display: table-row;
+    float: none;
+    padding-left: 0;
+    &--right-y {
+      float: none;
+
+      .graph-legend-alias::after {
+        content: '(right-y)';
+        padding: 0 5px;
+        color: $text-color-weak;
+      }
+    }
+  }
+
+
+  td, .graph-legend-alias, .graph-legend-icon, .graph-legend-value {
+    float: none;
+    display: table-cell;
+    white-space: nowrap;
+    padding: 2px 10px;
+    text-align: right;
+  }
+
+  .graph-legend-icon {
+    width: 5px;
+    padding: 0;
+    top: 0;
+    .fa {
+      top: 4px;
+    }
+  }
+
+ .graph-legend-value  {
+    padding-left: 15px;
+  }
+
+  .graph-legend-alias {
+    padding-left: 7px;
+    text-align: left;
+    width: 95%;
+  }
+
+  .graph-legend-series:nth-child(odd) {
+    background-color: $grafanaListAccent;
+  }
+
+  .graph-legend-value {
+    &.current, &.max, &.min, &.total, &.avg {
+      &::before {
+        content: '';
+      }
+    }
+  }
+
+  th {
+    text-align: right;
+    padding: 0px 10px 1px 0;
+    font-weight: bold;
+    color: $blue;
+    font-size: 85%;
+    white-space: nowrap;
+  }
+}
+
+.graph-legend-rightside {
+
+  &.graph-wrapper {
+    display: table;
+    width: 100%;
+  }
+
+  .graph-canvas-wrapper {
+    display: table-cell;
+    width: 100%;
+    position: relative;
+  }
+
+  .graph-legend-wrapper {
+    display: table-cell;
+    vertical-align: top;
+    position: relative;
+    left: 4px;
+  }
+
+  .graph-legend {
+    margin: 0;
+  }
+
+  .graph-legend-series {
+    display: block;
+    padding-left: 0px;
+  }
+
+  .graph-legend-table .graph-legend-series {
+    display: table-row;
+  }
+}
+
+.graph-legend-series-hidden {
+  .graph-legend-value,
+  .graph-legend-alias {
+    color: $link-color-disabled;
+  }
+}
+
+.graph-legend-popover {
+  width: 200px;
+  label {
+    display: inline-block;
+  }
+  .btn {
+    padding: 1px 3px;
+    margin-right: 0px;
+    line-height: initial;
+  }
+  .close {
+    margin-right: 5px;
+    color: $link-color;
+    opacity: 0.7;
+    text-shadow: none;
+  }
+  .editor-row {
+    padding: 5px;
+  }
+}
+
+.annotation-tags {
+  color: $purple;
+}
+
+.graph-series-override {
+  input {
+    float: left;
+    margin-right: 10px;
+  }
+  .graph-series-override-option {
+    float: left;
+    padding: 2px 6px;
+  }
+  .graph-series-override-selector {
+    float: left;
+  }
+}
+
+.graph-tooltip {
+  white-space: nowrap;
+  font-size: $font-size-sm;
+  background-color: $graph-tooltip-bg;
+  color: $text-color;
+
+  .graph-tooltip-time {
+    text-align: center;
+    position: relative;
+    top: -3px;
+    padding: 0.2rem;
+  }
+
+  .graph-tooltip-list-item {
+    display: table-row;
+
+    &--highlight {
+      color: $text-color-emphasis;
+      font-weight: bold;
+    }
+  }
+
+  .graph-tooltip-series-name {
+    display: table-cell;
+    padding: 0.15rem;
+  }
+
+  .graph-tooltip-value {
+    display: table-cell;
+    font-weight: bold;
+    padding-left: 15px;
+    text-align: right;
+  }
+}
+
+.graph-annotation {
+
+  .label-tag {
+    margin-right: 4px;
+    margin-top: 8px;
+  }
+
+  .graph-annotation-title {
+    font-weight: $font-weight-semi-bold;
+    position: relative;
+    top: -0.4rem;
+  }
+
+  a {
+    color: $blue;
+    text-decoration: underline;
+  }
+
+  .graph-annotation-time {
+    position: relative;
+    text-align: center;
+    top: 0.6rem;
+  }
+}
+
+.left-yaxis-label {
+  top: 50%;
+  left: -5px;
+  transform: rotate(-90deg);
+  transform-origin: left top;
+}
+
+.right-yaxis-label {
+  top: 50%;
+  right: -5px;
+  transform: rotate(90deg);
+  transform-origin: right top;
+}
+
+.axisLabel {
+  color: $text-color;
+  font-size: $font-size-sm;
+  position: absolute;
+  text-align: center;
+  font-size: 12px;
+}
+

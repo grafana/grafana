@@ -30,7 +30,8 @@ From the Grafana Server Admin page, you can access the System Info page which su
 
 ## Why would I have multiple Organizations?
 
-In many cases, a Grafana installation will only have one Organization. There's no need to create multiple Organizations
-if you want all your users to have access to the same set of dashboards and data. In a multitenant deployment,
+Organizations in Grafana are best suited for a **multi-tenant deployment**. In a multi-tenant deployment,
 Organizations can be used to provide a full Grafana experience to different sets of users from a single Grafana instance,
-at the convenience of the Grafana Administrator.
+at the convenience of the Grafana Administrator. 
+
+In most cases, a Grafana installation will only have **one** Organization. Since dashboards, data sources and other configuration items are not shared between organizations, there's no need to create multiple Organizations if you want all your users to have access to the same set of dashboards and data. 

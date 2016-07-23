@@ -1,0 +1,49 @@
+$popover-arrow-size: 0.7rem;
+$color: inherit;
+$backgroundColor: $btn-secondary-bg;
+$color: $text-color;
+$useDropShadow: false;
+$attachmentOffset: 0%;
+$easing: cubic-bezier(0, 0, 0.265, 1.00);
+
+.drop-element {
+  z-index: 10000;
+  position: absolute;
+  display: none;
+  opacity: 0;
+
+  &.drop-open {
+    display: block;
+  }
+
+ }
+
+.drop-element, .drop-element * {
+  box-sizing: border-box;
+}
+
+.drop-popopver-close {
+  position: absolute;
+  top: -5px;
+  right: 0;
+  font-size: $font-size-lg;
+}
+
+.drop-help {
+  ul {
+    padding-left: $spacer;
+  }
+}
+
+.drop-hide-out-of-bounds {
+  &.drop-open.drop-help.drop-out-of-bounds,
+  &.drop-open-transitionend.drop-help.drop-out-of-bounds {
+    display: none;
+  }
+}
+@include drop-theme("help", $popover-help-bg, $popover-help-color);
+@include drop-theme("popover", $popover-bg, $popover-color);
+
+@include drop-animation-scale("drop", "help", $attachmentOffset: $attachmentOffset, $easing: $easing);
+@include drop-animation-scale("drop", "popover", $attachmentOffset: $attachmentOffset, $easing: $easing);
+

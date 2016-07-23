@@ -1,0 +1,20 @@
+language: go
+sudo: false
+
+matrix:
+  include:
+    - go: 1.2
+    - go: 1.3
+    - go: 1.4
+    - go: 1.5
+    - go: 1.6
+    - go: tip
+
+install:
+  - go get golang.org/x/tools/cmd/vet
+
+script:
+  - go get -t -v ./...
+  - diff -u <(echo -n) <(gofmt -d .)
+  - go vet .
+  - go test -v -race ./...

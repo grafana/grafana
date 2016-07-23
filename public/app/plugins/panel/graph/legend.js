@@ -10,7 +10,7 @@ function (angular, _, $) {
 
   var module = angular.module('grafana.directives');
 
-  module.directive('graphLegend', function(popoverSrv) {
+  module.directive('graphLegend', function(popoverSrv, $timeout) {
 
     return {
       link: function(scope, elem) {
@@ -22,7 +22,7 @@ function (angular, _, $) {
         var seriesList;
         var i;
 
-        scope.$on('render', function() {
+        ctrl.events.on('render', function() {
           data = ctrl.seriesList;
           if (data) {
             render();
@@ -41,13 +41,23 @@ function (angular, _, $) {
 
           var el = $(e.currentTarget).find('.fa-minus');
           var index = getSeriesIndexForElement(el);
-          var seriesInfo = seriesList[index];
-          var popoverScope = scope.$new();
-          popoverScope.series = seriesInfo;
-          popoverSrv.show({
-            element: el,
-            templateUrl:  'public/app/plugins/panel/graph/legend.popover.html',
-            scope: popoverScope
+          var series = seriesList[index];
+
+          $timeout(function() {
+            popoverSrv.show({
+              element: el[0],
+              position: 'bottom center',
+              template: '<gf-color-picker></gf-color-picker>',
+              model: {
+                series: series,
+                toggleAxis: function() {
+                  ctrl.toggleAxis(series);
+                },
+                colorSelected: function(color) {
+                  ctrl.changeSeriesColor(series, color);
+                }
+              },
+            });
           });
         }
 
@@ -90,6 +100,12 @@ function (angular, _, $) {
         }
 
         function render() {
+          if (!ctrl.panel.legend.show) {
+            elem.empty();
+            firstRender = true;
+            return;
+          }
+
           if (firstRender) {
             elem.append($container);
             $container.on('click', '.graph-legend-icon', openColorSelector);
@@ -131,33 +147,23 @@ function (angular, _, $) {
             }
           }
 
+          var seriesShown = 0;
           for (i = 0; i < seriesList.length; i++) {
             var series = seriesList[i];
 
-            // ignore empty series
-            if (panel.legend.hideEmpty && series.allIsNull) {
-              continue;
-            }
-            // ignore series excluded via override
-            if (!series.legend) {
-              continue;
-            }
-            // ignore zero series
-            if (panel.legend.hideZero && series.allIsZero) {
+            if (series.hideFromLegend(panel.legend)) {
               continue;
             }
 
             var html = '<div class="graph-legend-series';
-            if (series.yaxis === 2) { html += ' pull-right'; }
+            if (series.yaxis === 2) { html += ' graph-legend-series--right-y'; }
             if (ctrl.hiddenSeries[series.alias]) { html += ' graph-legend-series-hidden'; }
             html += '" data-series-index="' + i + '">';
             html += '<div class="graph-legend-icon">';
             html += '<i class="fa fa-minus pointer" style="color:' + series.color + '"></i>';
             html += '</div>';
 
-            html += '<div class="graph-legend-alias">';
-            html += '<a>' + _.escape(series.label) + '</a>';
-            html += '</div>';
+            html += '<a class="graph-legend-alias pointer">' + _.escape(series.label) + '</a>';
 
             if (panel.legend.values) {
               var avg = series.formatValue(series.stats.avg);
@@ -175,6 +181,21 @@ function (angular, _, $) {
 
             html += '</div>';
             $container.append($(html));
+
+            seriesShown++;
+          }
+
+          if (panel.legend.alignAsTable) {
+            var maxHeight = ctrl.height;
+
+            if (!panel.legend.rightSide) {
+              maxHeight = maxHeight/2;
+            }
+
+            var topPadding = 6;
+            $container.css("max-height", maxHeight - topPadding);
+          } else {
+            $container.css("max-height", "");
           }
         }
       }

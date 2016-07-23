@@ -1,0 +1,91 @@
+$switch-border-radius: 1rem;
+$switch-width: 3.5rem;
+$switch-height: 1.5rem;
+
+/* ============================================================
+  SWITCH 3 - YES NO
+============================================================ */
+
+.gf-form-switch {
+  position: relative;
+  max-width: 4.5rem;
+  flex-grow: 1;
+  min-width: 4.0rem;
+
+  input {
+    position: absolute;
+    margin-left: -9999px;
+    visibility: hidden;
+    display: none;
+  }
+
+  input + label {
+    display: block;
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    user-select: none;
+    width: 100%;
+    height: 2.65rem;
+    background-color: $page-bg;
+  }
+
+  input + label::before, input + label::after {
+    @include buttonBackground($input-bg, $input-bg);
+
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    color: #fff;
+    font-size: $font-size-sm;
+    text-align: center;
+    line-height: 2.8rem;
+    font-size: 150%;
+  }
+
+  &:hover {
+    input + label::before {
+      @include buttonBackground($input-bg, lighten($input-bg, 5%));
+      color: $text-color;
+      text-shadow: $text-shadow-faint;
+    }
+
+    input + label::after {
+      @include buttonBackground($input-bg, lighten($input-bg, 5%));
+      color: lighten($orange, 10%);
+      text-shadow: $text-shadow-strong;
+    }
+
+  }
+
+  input + label::before {
+    font-family: 'FontAwesome';
+    content: "\f096"; // square-o
+    color: $text-color-faint;
+    transition: transform 0.4s;
+    backface-visibility: hidden;
+    text-shadow: $text-shadow-faint;
+  }
+
+  input + label::after {
+    content: "\f046"; // check-square-o
+    color: $orange;
+    text-shadow: $text-shadow-strong;
+
+    font-family: 'FontAwesome';
+    transition: transform 0.4s;
+    transform: rotateY(180deg);
+    backface-visibility: hidden;
+  }
+
+  input:checked + label::before {
+    transform: rotateY(180deg);
+  }
+
+  input:checked + label::after {
+    transform: rotateY(0);
+  }
+}

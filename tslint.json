@@ -1,7 +1,7 @@
 {
   "rules": {
     "class-name": true,
-    "comment-format": [true, "check-space"],
+    "comment-format": [false, "check-space"],
     "curly": true,
     "eofline": true,
     "forin": false,
@@ -23,13 +23,12 @@
     "no-debugger": true,
     "no-duplicate-key": true,
     "no-duplicate-variable": true,
-    "no-empty": true,
+    "no-empty": false,
     "no-eval": true,
     "no-inferrable-types": true,
     "no-shadowed-variable": false,
     "no-string-literal": false,
     "no-switch-case-fall-through": false,
-    "no-trailing-comma": true,
     "no-trailing-whitespace": true,
     "no-unused-expression": false,
     "no-unused-variable": false,

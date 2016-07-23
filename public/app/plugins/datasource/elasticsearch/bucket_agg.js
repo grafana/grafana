@@ -60,6 +60,10 @@ function (angular, _, queryDef) {
           $scope.agg.query = '*';
           break;
         }
+        case 'geohash_grid': {
+          $scope.agg.settings.precision = 3;
+          break;
+        }
       }
 
       $scope.validateModel();
@@ -77,7 +81,7 @@ function (angular, _, queryDef) {
       switch($scope.agg.type) {
         case 'terms': {
           settings.order = settings.order || "asc";
-          settings.size = settings.size || "0";
+          settings.size = settings.size || "10";
           settings.orderBy = settings.orderBy || "_term";
 
           if (settings.size !== '0') {
@@ -121,6 +125,13 @@ function (angular, _, queryDef) {
           if (settings.trimEdges && settings.trimEdges > 0) {
             settingsLinkText += ', Trim edges: ' + settings.trimEdges;
           }
+          break;
+        }
+        case 'geohash_grid': {
+          // limit precision to 7
+          settings.precision = Math.max(Math.min(settings.precision, 7), 1);
+          settingsLinkText = 'Precision: ' + settings.precision;
+          break;
         }
       }
 

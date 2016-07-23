@@ -1,17 +1,14 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import './query_part_editor';
-import './query_part_editor';
-
 import angular from 'angular';
 import _ from 'lodash';
 import InfluxQueryBuilder from './query_builder';
 import InfluxQuery from './influx_query';
 import queryPart from './query_part';
-import {QueryCtrl} from 'app/features/panel/panel';
+import {QueryCtrl} from 'app/plugins/sdk';
 
 export class InfluxQueryCtrl extends QueryCtrl {
-  static templateUrl = 'public/app/plugins/datasource/influxdb/partials/query.editor.html';
+  static templateUrl = 'partials/query.editor.html';
 
   queryModel: InfluxQuery;
   queryBuilder: any;
@@ -23,12 +20,13 @@ export class InfluxQueryCtrl extends QueryCtrl {
   measurementSegment: any;
   removeTagFilterSegment: any;
 
+
   /** @ngInject **/
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
     super($scope, $injector);
 
     this.target = this.target;
-    this.queryModel = new InfluxQuery(this.target);
+    this.queryModel = new InfluxQuery(this.target, templateSrv, this.panel.scopedVars);
     this.queryBuilder = new InfluxQueryBuilder(this.target, this.datasource.database);
     this.groupBySegment = this.uiSegmentSrv.newPlusButton();
     this.resultFormats = [
@@ -153,7 +151,12 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  toggleQueryMode() {
+  toggleEditorMode() {
+    try {
+      this.target.query = this.queryModel.render(false);
+    } catch (err) {
+      console.log('query render error');
+    }
     this.target.rawQuery = !this.target.rawQuery;
   }
 
@@ -192,7 +195,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
       if (addTemplateVars) {
         for (let variable of this.templateSrv.variables) {
-          segments.unshift(this.uiSegmentSrv.newSegment({ type: 'template', value: '/$' + variable.name + '$/', expandable: true }));
+          segments.unshift(this.uiSegmentSrv.newSegment({ type: 'template', value: '/^$' + variable.name + '$/', expandable: true }));
         }
       }
 
@@ -314,6 +317,10 @@ export class InfluxQueryCtrl extends QueryCtrl {
     } else if ((tagOperator === '=~' || tagOperator === '!~') && /^(?!\/.*\/$)/.test(tagValue)) {
       return '=';
     }
+  }
+
+  getCollapsedText() {
+    return this.queryModel.render(false);
   }
 }
 

@@ -2,6 +2,16 @@
 
 import config from 'app/core/config';
 import _ from 'lodash';
+import angular from 'angular';
+import $ from 'jquery';
+import {profiler} from 'app/core/profiler';
+
+const TITLE_HEIGHT = 25;
+const EMPTY_TITLE_HEIGHT = 9;
+const PANEL_PADDING = 5;
+const PANEL_BORDER = 2;
+
+import {Emitter} from 'app/core/core';
 
 export class PanelCtrl {
   panel: any;
@@ -10,7 +20,6 @@ export class PanelCtrl {
   editorTabIndex: number;
   pluginName: string;
   pluginId: string;
-  icon: string;
   editorTabs: any;
   $scope: any;
   $injector: any;
@@ -19,12 +28,19 @@ export class PanelCtrl {
   inspector: any;
   editModeInitiated: boolean;
   editorHelpIndex: number;
+  editMode: any;
+  height: any;
+  containerHeight: any;
+  events: Emitter;
+  timing: any;
 
   constructor($scope, $injector) {
     this.$injector = $injector;
     this.$scope = $scope;
     this.$timeout = $injector.get('$timeout');
     this.editorTabIndex = 0;
+    this.events = new Emitter();
+    this.timing = {};
 
     var plugin = config.panels[this.panel.type];
     if (plugin) {
@@ -33,19 +49,22 @@ export class PanelCtrl {
     }
 
     $scope.$on("refresh", () => this.refresh());
+    $scope.$on("render", () => this.render());
+    $scope.$on("$destroy", () => this.events.emit('panel-teardown'));
   }
 
   init() {
-    this.publishAppEvent('panel-instantiated', {scope: this.$scope});
-    this.refresh();
+    this.calculatePanelHeight();
+    this.publishAppEvent('panel-initialized', {scope: this.$scope});
+    this.events.emit('panel-initialized');
   }
 
   renderingCompleted() {
-    this.$scope.$root.performance.panelsRendered++;
+    profiler.renderingCompleted(this.panel.id, this.timing);
   }
 
   refresh() {
-    return;
+    this.events.emit('refresh', null);
   }
 
   publishAppEvent(evtName, evt) {
@@ -74,6 +93,24 @@ export class PanelCtrl {
     this.editorTabs = [];
     this.addEditorTab('General', 'public/app/partials/panelgeneral.html');
     this.editModeInitiated = true;
+    this.events.emit('init-edit-mode', null);
+
+    var routeParams = this.$injector.get('$routeParams');
+    if (routeParams.editorTab) {
+      this.editorTabs.forEach((tab, i) => {
+        if (tab.title === routeParams.editorTab) {
+          this.editorTabIndex = i;
+        }
+      });
+    }
+  }
+
+  changeTab(newIndex) {
+    this.editorTabIndex = newIndex;
+    var route = this.$injector.get('$route');
+
+    route.current.params.editorTab = this.editorTabs[newIndex].title;
+    route.updateParams();
   }
 
   addEditorTab(title, directiveFn, index?) {
@@ -95,21 +132,48 @@ export class PanelCtrl {
     let menu = [];
     menu.push({text: 'View', click: 'ctrl.viewPanel(); dismiss();'});
     menu.push({text: 'Edit', click: 'ctrl.editPanel(); dismiss();', role: 'Editor'});
-    menu.push({text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
+    if (!this.fullscreen) { //  duplication is not supported in fullscreen mode
+      menu.push({ text: 'Duplicate', click: 'ctrl.duplicate()', role: 'Editor' });
+    }
     menu.push({text: 'Share', click: 'ctrl.sharePanel(); dismiss();'});
     return menu;
   }
 
   getExtendedMenu() {
-    return [{text: 'Panel JSON', click: 'ctrl.editPanelJson(); dismiss();'}];
+    var actions = [{text: 'Panel JSON', click: 'ctrl.editPanelJson(); dismiss();'}];
+    this.events.emit('init-panel-actions', actions);
+    return actions;
   }
 
   otherPanelInFullscreenMode() {
     return this.dashboard.meta.fullscreen && !this.fullscreen;
   }
 
-  broadcastRender(arg1?, arg2?) {
-    this.$scope.$broadcast('render', arg1, arg2);
+  calculatePanelHeight() {
+    if (this.fullscreen) {
+      var docHeight = $(window).height();
+      var editHeight = Math.floor(docHeight * 0.3);
+      var fullscreenHeight = Math.floor(docHeight * 0.7);
+      this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
+    } else {
+      this.containerHeight = this.panel.height || this.row.height;
+      if (_.isString(this.containerHeight)) {
+        this.containerHeight = parseInt(this.containerHeight.replace('px', ''), 10);
+      }
+    }
+
+    this.height = this.containerHeight - (PANEL_BORDER + PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
+  }
+
+  render(payload?) {
+    // ignore if other panel is in fullscreen mode
+    if (this.otherPanelInFullscreenMode()) {
+      return;
+    }
+
+    this.calculatePanelHeight();
+    this.timing.renderStart = new Date().getTime();
+    this.events.emit('render', payload);
   }
 
   toggleEditorHelp(index) {
@@ -127,15 +191,16 @@ export class PanelCtrl {
   updateColumnSpan(span) {
     this.panel.span = Math.min(Math.max(Math.floor(this.panel.span + span), 1), 12);
     this.$timeout(() => {
-      this.broadcastRender();
+      this.render();
     });
   }
 
   removePanel() {
     this.publishAppEvent('confirm-modal', {
-      title: 'Are you sure you want to remove this panel?',
+      title: 'Remove Panel',
+      text: 'Are you sure you want to remove this panel?',
       icon: 'fa-trash',
-      yesText: 'Delete',
+      yesText: 'Remove',
       onConfirm: () => {
         this.row.panels = _.without(this.row.panels, this.panel);
       }
@@ -168,8 +233,20 @@ export class PanelCtrl {
     shareScope.dashboard = this.dashboard;
 
     this.publishAppEvent('show-modal', {
-     src: 'public/app/features/dashboard/partials/shareModal.html',
-     scope: shareScope
-   });
- }
+      src: 'public/app/features/dashboard/partials/shareModal.html',
+      scope: shareScope
+    });
+  }
+
+  openInspector() {
+    var modalScope = this.$scope.$new();
+    modalScope.panel = this.panel;
+    modalScope.dashboard = this.dashboard;
+    modalScope.inspector = angular.copy(this.inspector);
+
+    this.publishAppEvent('show-modal', {
+      src: 'public/app/partials/inspector.html',
+      scope: modalScope
+    });
+  }
 }

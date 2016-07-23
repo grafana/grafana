@@ -1,0 +1,62 @@
+<navbar icon="icon-gf icon-gf-users" title="Profile" title-url="profile">
+</navbar>
+
+<div class="page-container">
+	<div class="page-header">
+		<h1>Profile</h1>
+	</div>
+
+	<form name="ctrl.userForm" class="gf-form-group">
+		<h3 class="page-heading">Information</h3>
+
+		<div class="gf-form">
+			<span class="gf-form-label width-9">Name</span>
+			<input class="gf-form-input max-width-21" type="text" required ng-model="ctrl.user.name" >
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label width-9">Email</span>
+			<input class="gf-form-input max-width-21" type="email" required ng-model="ctrl.user.email">
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label width-9">Username</span>
+			<input class="gf-form-input max-width-21" type="text" required ng-model="ctrl.user.login">
+		</div>
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-click="ctrl.update()">Update</button>
+		</div>
+	</form>
+
+	<prefs-control mode="user"></prefs-control>
+
+	<h3 class="page-heading">Password</h3>
+	<div class="gf-form-group">
+		<a href="profile/password" class="btn btn-inverse">Change Password</a>
+	</div>
+
+	<h3 class="page-heading">Organizations</h3>
+	<div class="gf-form-group">
+		<table class="filter-table form-inline">
+			<thead>
+				<tr>
+					<th>Name</th>
+					<th>Role</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="org in ctrl.orgs">
+					<td>{{org.name}}</td>
+					<td>{{org.role}}</td>
+					<td class="text-right">
+						<span class="btn btn-primary btn-mini" ng-show="org.orgId === contextSrv.user.orgId">
+							Current
+						</span>
+						<a ng-click="ctrl.setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== contextSrv.user.orgId">
+							Select
+						</a>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+

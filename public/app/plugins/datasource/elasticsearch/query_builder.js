@@ -153,6 +153,10 @@ function (queryDef) {
           this.buildTermsAgg(aggDef, esAgg, target);
           break;
         }
+        case 'geohash_grid': {
+          esAgg['geohash_grid'] = {field: aggDef.field, precision: aggDef.settings.precision};
+          break;
+        }
       }
 
       nestedAggs.aggs = nestedAggs.aggs || {};

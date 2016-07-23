@@ -4,3 +4,5 @@ elasticsearch:
   ports:
     - "9200:9200"
     - "9300:9300"
+  volumes:
+    - ./blocks/elastic/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml

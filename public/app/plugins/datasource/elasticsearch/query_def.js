@@ -20,9 +20,10 @@ function (_) {
     ],
 
     bucketAggTypes: [
-      {text: "Terms",           value: 'terms' },
+      {text: "Terms",           value: 'terms', requiresField: true},
       {text: "Filters",         value: 'filters' },
-      {text: "Date Histogram",  value: 'date_histogram' },
+      {text: "Geo Hash Grid",        value: 'geohash_grid', requiresField: true},
+      {text: "Date Histogram",  value: 'date_histogram', requiresField: true},
     ],
 
     orderByOptions: [

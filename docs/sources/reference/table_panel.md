@@ -17,7 +17,7 @@ To view table panels in action and test different configurations with sample dat
 
 The table panel has many ways to manipulate your data for optimal presentation.
 
-<img class="no-shadow" src="/img/v2/table-config.png">
+<img class="no-shadow" src="/img/v2/table-config2.png">
 
 1. `Data`: Control how your query is transformed into a table.
 2. `Table Display`: Table display options.
@@ -33,19 +33,19 @@ you want in the table. Only applicable for some transforms.
 
 ### Time series to rows
 
-<img src="/img/v2/table_ts_to_rows.png">
+<img src="/img/v2/table_ts_to_rows2.png">
 
 In the most simple mode you can turn time series to rows. This means you get a `Time`, `Metric` and a `Value` column. Where `Metric` is the name of the time series.
 
 ### Time series to columns
 
-![](/img/v2/table_ts_to_columns.png)
+![](/img/v2/table_ts_to_columns2.png)
 
 This transform allows you to take multiple time series and group them by time. Which will result in the primary column being `Time` and a column for each time series.
 
 ### Time series aggregations
 
-![](/img/v2/table_ts_to_aggregations.png)
+![](/img/v2/table_ts_to_aggregations2.png)
 This table transformation will lay out your table into rows by metric, allowing columns of `Avg`, `Min`, `Max`, `Total`, `Current` and `Count`. More than one column can be added.
 
 ### Annotations

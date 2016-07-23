@@ -179,8 +179,7 @@ function (angular, _, coreModule) {
       vm.variable.current.text = _.pluck(vm.selectedValues, 'text').join(' + ');
       vm.variable.current.tags = vm.selectedTags;
 
-      // only single value
-      if (vm.selectedValues.length === 1) {
+      if (!vm.variable.multi) {
         vm.variable.current.value = vm.selectedValues[0].value;
       }
 

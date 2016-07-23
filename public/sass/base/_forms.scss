@@ -1,0 +1,236 @@
+//
+// Forms
+// --------------------------------------------------
+
+
+// GENERAL STYLES
+// --------------
+
+// Groups of fields with labels on top (legends)
+legend {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin-bottom: $line-height-base;
+  font-size: $font-size-base * 1.5;
+  line-height: $line-height-base * 2;
+  color: $gray-3;
+  border: 0;
+  border-bottom: 1px solid #e5e5e5;
+
+  // Small
+  small {
+    font-size: $line-height-base * .75;
+    color: $gray-2;
+  }
+}
+
+// Reset height since textareas have rows
+// Set font for forms
+label,
+input,
+button,
+select,
+textarea {
+  @include font-shorthand($font-size-base,normal,$line-height-base); // Set size, weight, line-height here
+}
+input,
+button,
+select,
+textarea {
+  font-family: $font-family-base; // And only set font-family here for those that need it (note the missing label element)
+}
+
+// Identify controls by their labels
+label {
+  display: block;
+}
+
+input,
+select {
+  background-color: $input-bg;
+  color: $input-color;
+  border: none;
+  box-shadow: none;
+}
+
+textarea {
+  height: auto;
+}
+
+// Reset width of input images, buttons, radios, checkboxes
+input[type="file"],
+input[type="image"],
+input[type="submit"],
+input[type="reset"],
+input[type="button"],
+input[type="radio"],
+input[type="checkbox"] {
+  width: auto; // Override of generic input selector
+}
+
+// Set the height of select and file controls to match text inputs
+select,
+input[type="file"] {
+  height: $input-height; /* In IE7, the height of the select element cannot be changed by height, only font-size */
+  line-height: $input-height;
+}
+
+// Make select elements obey height by applying a border
+select {
+  width: 220px; // default input width + 10px of padding that doesn't get applied
+  border: 1px solid $input-border-color;
+  background-color: $input-bg; // Chrome on Linux and Mobile Safari need background-color
+}
+
+// Make multiple select elements height not fixed
+select[multiple],
+select[size] {
+  height: auto;
+}
+
+// Focus for select, file, radio, and checkbox
+select:focus,
+input[type="file"]:focus,
+input[type="radio"]:focus,
+input[type="checkbox"]:focus {
+  @include tab-focus();
+}
+
+// Placeholder
+// -------------------------
+
+// Placeholder text gets special styles because when browsers invalidate entire lines if it doesn't understand a selector
+input,
+textarea {
+  @include placeholder();
+}
+
+// INPUT SIZES
+// -----------
+
+// General classes for quick sizes
+.input-mini       { width: 60px; }
+.input-small      { width: 90px; }
+.input-medium     { width: 150px; }
+.input-large      { width: 210px; }
+.input-xlarge     { width: 270px; }
+.input-xxlarge    { width: 530px; }
+
+// GRID SIZING FOR INPUTS
+// ----------------------
+
+// DISABLED STATE
+// --------------
+
+// Disabled and read-only inputs
+input[disabled],
+select[disabled],
+textarea[disabled],
+input[readonly],
+select[readonly],
+textarea[readonly] {
+  cursor: $cursor-disabled;
+  background-color: $input-bg-disabled;
+}
+
+// Explicitly reset the colors here
+input[type="radio"][disabled],
+input[type="checkbox"][disabled],
+input[type="radio"][readonly],
+input[type="checkbox"][readonly] {
+  cursor: $cursor-disabled;
+  background-color: transparent;
+}
+
+input[type=text].input-fluid {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px;
+  font-size: 16px;
+  -moz-box-sizing: border-box;
+  height: 100%;
+}
+
+input[type="checkbox"].cr1 {
+  display: none;
+}
+
+.editor-option label.cr1 {
+  display: inline-block;
+  margin: 5px 0 1px 0;
+}
+
+label.cr1 {
+  display: inline-block;
+  height: 18px;
+  position: relative;
+  clear: none;
+  text-indent: 2px;
+  margin: 0 0 0px 0;
+  padding: 0 0 0 20px;
+  vertical-align: top;
+  background: url($checkboxImageUrl) left top no-repeat;
+  cursor:pointer;
+}
+
+input[type="checkbox"].cr1:checked+label {
+  background: url($checkboxImageUrl) 0px -18px no-repeat;
+}
+
+.gf-fluid-input {
+  border: none;
+  display: block;
+  overflow: hidden;
+  padding-right: 10px;
+  input[type=text] {
+    width: 100%;
+    padding: 5px 6px;
+    height: 100%;
+    box-sizing: border-box;
+  }
+  textarea {
+    width: 100%;
+    padding: 5px 6px;
+    height: 100%;
+    box-sizing: border-box;
+  }
+}
+
+// Form control feedback states
+//
+// Apply contextual and semantic states to individual form controls.
+
+.form-control-success,
+.form-control-warning,
+.form-control-danger {
+  padding-right: ($input-padding-x * 3);
+  background-repeat: no-repeat;
+  background-position: center right ($input-height / 4);
+  background-size: ($input-height / 2) ($input-height / 2);
+}
+
+// Form validation states
+.has-success {
+  @include form-control-validation($brand-success);
+
+  .form-control-success {
+    background-image: $form-icon-success;
+  }
+}
+
+.has-warning {
+  @include form-control-validation($brand-warning);
+
+  .form-control-warning {
+    background-image: $form-icon-warning;
+  }
+}
+
+.has-danger {
+  @include form-control-validation($brand-danger);
+
+  .form-control-danger {
+    background-image: $form-icon-danger;
+  }
+}

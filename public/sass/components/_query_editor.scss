@@ -1,0 +1,69 @@
+.query-keyword {
+  font-weight: bold;
+  color: $blue;
+}
+
+.query-segment-key {
+  //border-right: none;
+  //padding-right: 1px;
+}
+
+.query-segment-operator {
+  //padding-right: 1px;
+  //border-right: none;
+  color: $orange;
+}
+
+.gf-form-query {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-content: flex-start;
+  align-items: flex-start;
+
+  .gf-form,
+  .gf-form-filler {
+    margin-bottom: 2px;
+  }
+
+  .gf-form-switch,
+  .gf-form-switch label,
+  .gf-form-input,
+  .gf-form-select-wrapper,
+  .gf-form-filler,
+  .gf-form-label {
+    margin-right: 2px;
+  }
+}
+
+.gf-form-query-content {
+  flex-grow: 2;
+
+  &--collapsed {
+    overflow: hidden;
+
+    .gf-form-label {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      width: 100%;
+      white-space: nowrap;
+    }
+  }
+}
+
+.gf-form-query-letter-cell {
+  .gf-form-query-letter-cell-carret {
+    display: inline-block;
+    width: 0.7rem;
+    position: relative;
+    left: -2px;
+  }
+  .gf-form-query-letter-cell-letter {
+    font-weight: bold;
+    color: $blue;
+  }
+  .gf-form-query-letter-cell-ds {
+    color: $text-color-weak;
+  }
+}
+

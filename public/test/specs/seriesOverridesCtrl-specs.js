@@ -1,6 +1,6 @@
 define([
   './helpers',
-  'app/plugins/panel/graph/seriesOverridesCtrl'
+  'app/plugins/panel/graph/series_overrides_ctrl'
 ], function(helpers) {
   'use strict';
 
@@ -20,6 +20,7 @@ define([
      // beforeEach(function() {
       ctx.scope = $rootScope.$new();
       ctx.scope.ctrl = {
+        refresh: sinon.spy(),
         render: sinon.spy(),
         seriesList: []
       };
