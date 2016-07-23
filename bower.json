@@ -13,7 +13,7 @@
     "tests"
   ],
   "dependencies": {
-    "jquery": "~2.1.4",
+    "jquery": "~2.2.4",
     "angular": "~1.5.3",
     "angular-route": "~1.5.3",
     "angular-mocks": "~1.5.3",
