@@ -5,7 +5,7 @@ import {GraphiteDatasource} from "../datasource";
 
 describe('graphiteDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
-  var instanceSettings: any = {url: ['']};
+  var instanceSettings: any = {url: [''], name: 'graphiteProd'};
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
@@ -24,9 +24,10 @@ describe('graphiteDatasource', function() {
 
   describe('When querying influxdb with one target using query editor target spec', function() {
     var query = {
-    rangeRaw: { from: 'now-1h', to: 'now' },
-    targets: [{ target: 'prod1.count' }, {target: 'prod2.count'}],
-    maxDataPoints: 500,
+      panelId: 3,
+      rangeRaw: { from: 'now-1h', to: 'now' },
+      targets: [{ target: 'prod1.count' }, {target: 'prod2.count'}],
+      maxDataPoints: 500,
     };
 
     var results;
@@ -44,6 +45,10 @@ describe('graphiteDatasource', function() {
 
     it('should generate the correct query', function() {
       expect(requestOptions.url).to.be('/render');
+    });
+
+    it('should set unique requestId', function() {
+      expect(requestOptions.requestId).to.be('graphiteProd.panelId.3');
     });
 
     it('should query correctly', function() {
