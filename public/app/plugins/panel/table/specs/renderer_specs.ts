@@ -14,6 +14,7 @@ describe('when rendering table', () => {
       {text: 'String'},
       {text: 'United', unit: 'bps'},
       {text: 'Sanitized'},
+      {text: 'StringColored'}
     ];
 
     var panel = {
@@ -53,7 +54,14 @@ describe('when rendering table', () => {
           pattern: 'Sanitized',
           type: 'string',
           sanitize: true,
-        }
+        },
+        {
+          pattern: 'StringColored',
+          type: 'string',
+          colorMode: 'value',
+          thresholds: ["/val/", "/v.*[^e]$/"],
+          colors: ['green', 'orange', 'red']
+         }
       ]
     };
 
@@ -121,6 +129,21 @@ describe('when rendering table', () => {
     it('sanitized value should render as', () => {
       var html = renderer.renderCell(6, 'text <a href="http://google.com">link</a>');
       expect(html).to.be('<td>sanitized</td>');
+    });
+
+    it('"other" should be colored green', () => {
+      var html = renderer.renderCell(7, 'other');
+      expect(html).to.be('<td style="color:green">other</td>');
+    });
+
+    it('"value" should be colored orange', () => {
+      var html = renderer.renderCell(7, 'value');
+      expect(html).to.be('<td style="color:orange">value</td>');
+    });
+
+    it('"val" should be colored red', () => {
+      var html = renderer.renderCell(7, 'val');
+      expect(html).to.be('<td style="color:red">val</td>');
     });
   });
 });
