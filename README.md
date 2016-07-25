@@ -79,9 +79,17 @@ This step imports an existing Infra dashboard into your local Grafana for testin
 - Select the JSON file at `~/Development/grafana/src/github.com/improbable-io/grafana/sampledash.json`
 - Enter a name for the dashboard and click `Save & Open`
 
-You will see a dashboard with no data and an error alert. This is fine!
+You may see a dashboard with no data and an error alert. This is fine! If you see this,
+- Click on the settings icon on the top bar and select `Templating`
+- Click the `Edit` button on the `$cluster` row
+- Under `Data source options -> Type`, select `Prometheus`
+- Click `Update` and close the templating panel
 
+You should then be able to select a cluster, project, and deployment using the dropdowns at the top of the dashboard.
 
+If all has gone well, you'll see something like this:
+
+![a Grafana dashboard](https://github.com/improbable-io/grafana/blob/readme/setup/dashboard.png)
 
 
 # Frontend development
