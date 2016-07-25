@@ -1,63 +1,55 @@
-[Grafana](http://grafana.org) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) [![Coverage Status](https://coveralls.io/repos/grafana/grafana/badge.png)](https://coveralls.io/r/grafana/grafana)
+[Grafana](http://grafana.org)
 ================
-[Website](http://grafana.org) |
-[Twitter](https://twitter.com/grafana) |
-[IRC](https://webchat.freenode.net/?channels=grafana) |
-![](https://brandfolder.com/api/favicon/icon?size=16&domain=www.slack.com)
-[Slack](http://slack.raintank.io) |
-[Email](mailto:contact@grafana.org)
 
-Grafana is an open source, feature rich metrics dashboard and graph editor for
+This is Improbable's fork of Grafana 3.1, an open source, feature rich metrics dashboard and graph editor for
 Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 
-![](http://grafana.org/assets/img/start_page_bg.png)
-
-- [Install instructions](http://docs.grafana.org/installation/)
-- [What's New in Grafana 2.0](http://docs.grafana.org/guides/whats-new-in-v2/)
-- [What's New in Grafana 2.1](http://docs.grafana.org/guides/whats-new-in-v2-1/)
-- [What's New in Grafana 2.5](http://docs.grafana.org/guides/whats-new-in-v2-5/)
 - [What's New in Grafana 3.0](http://docs.grafana.org/guides/whats-new-in-v3/)
 
-## Features
-### Graphite Target Editor
-- Graphite target expression parser
-- Feature rich query composer
-- Quickly add and edit functions & parameters
-- Templated queries
-- [See it in action](http://docs.grafana.org/datasources/graphite/)
+# Setup instructions
 
-### Graphing
-- Fast rendering, even over large timespans
-- Click and drag to zoom
-- Multiple Y-axis, logarithmic scales
-- Bars, Lines, Points
-- Smart Y-axis formatting
-- Series toggles & color selector
-- Legend values, and formatting options
-- Grid thresholds, axis labels
-- [Annotations](http://docs.grafana.org/reference/annotations/)
-- Any panel can be rendered to PNG (server side using phantomjs)
+## Prerequisites
 
-### Dashboards
-- Create, edit, save & search dashboards
-- Change column spans and row heights
-- Drag and drop panels to rearrange
-- [Templating](http://docs.grafana.org/reference/templating/)
-- [Scripted dashboards](http://docs.grafana.org/reference/scripting/)
-- [Dashboard playlists](http://docs.grafana.org/reference/playlist/)
-- [Time range controls](http://docs.grafana.org/reference/timerange/)
-- [Share snapshots publicly](http://docs.grafana.org/v2.0/reference/sharing/)
+- `node.js` v4, `npm` v2
+- `go` v1.5 or v1.6
 
-### Elasticsearch
-- Feature rich query editor UI
+Please note that the installation process for Grafana involves changing your `GOPATH` for the current shell session. Reopen your shell before doing any other Go development.
 
-### InfluxDB
-- Use InfluxDB as a metric data source, annotation source
-- Query editor with series and column typeahead, easy group by and function selection
+## 1. Check out repo into GOPATH
 
-### OpenTSDB
-- Use as metric data source
-- Query editor with metric name typeahead and tag filtering
+This step will download the Improbable Grafana code to a directory on your computer.
+
+Open a shell in a directory where you are happy to make a directory for Grafana development. For this example it will be `~/Development`.
+
+```
+cd ~/Development
+mkdir grafana
+export GOPATH=`pwd`
+mkdir $GOPATH/src/github.com/grafana
+cd $GOPATH/src/github.com/grafana
+git clone git@github.com:improbable-io/grafana.git
+```
+
+## 2. Build backend
+
+This step will install `godep` and pull down the Go dependencies.
+
+```
+cd $GOPATH/src/github.com/grafana/grafana
+go run build.go setup
+godep restore
+go run build.go build
+```
+
+## 3. Build frontend
+
+
+
+```
+```
+
+
+
 
 ## Requirements
 There are no dependencies except an external time series data store. For dashboards and user accounts Grafana can use an embedded
