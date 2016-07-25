@@ -49,8 +49,7 @@ export class AlertListCtrl {
 
     this.backendSrv.get('/api/alerts', params).then(result => {
       this.alerts = _.map(result, alert => {
-        alert.severityClass = alertDef.getSeverityClass(alert.severity);
-        alert.stateClass = alertDef.getStateClass(alert.state);
+        alert.severityClass = alertDef.getSeverityIconClass(alert.severity);
         return alert;
       });
     });

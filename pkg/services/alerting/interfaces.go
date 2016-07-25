@@ -17,6 +17,7 @@ type Scheduler interface {
 
 type Notifier interface {
 	Notify(alertResult *AlertResultContext)
+	GetType() string
 }
 
 type AlertCondition interface {

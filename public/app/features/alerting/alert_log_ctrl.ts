@@ -22,7 +22,7 @@ export class AlertLogCtrl {
   loadAlertLogs(alertId: number) {
     this.backendSrv.get(`/api/alerts/${alertId}/states`).then(result => {
       this.alertLogs = _.map(result, log => {
-        log.iconCss = alertDef.getCssForState(log.state);
+        log.iconCss = alertDef.getSeverityIconClass(log.severity);
         log.humanTime = moment(log.created).format("YYYY-MM-DD HH:mm:ss");
         return log;
       });

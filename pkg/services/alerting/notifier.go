@@ -1,197 +1,156 @@
 package alerting
 
 import (
+	"errors"
 	"fmt"
-	"log"
-	"strconv"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/log"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-type NotifierImpl struct {
-	log              log.Logger
-	getNotifications func(orgId int64, notificationGroups []int64) []*Notification
-}
-
-func NewNotifier() *NotifierImpl {
-	log := log.New("alerting.notifier")
-	return &NotifierImpl{
-		log:              log,
-		getNotifications: buildGetNotifiers(log),
-	}
-}
-
-func (n *NotifierImpl) Notify(alertResult *AlertResultContext) {
-	notifiers := n.getNotifications(alertResult.Rule.OrgId, alertResult.Rule.Notifications)
-
-	for _, notifier := range notifiers {
-		n.log.Info("Sending notification", "state", alertResult.State, "type", notifier.Type)
-		go notifier.Notifierr.Dispatch(alertResult)
-	}
-}
-
-type Notification struct {
-	Name         string
-	Type         string
-	SendWarning  bool
-	SendCritical bool
-
-	Notifierr NotificationDispatcher
-}
-
-type EmailNotifier struct {
-	To  string
+type RootNotifier struct {
+	NotifierBase
 	log log.Logger
 }
 
-func (this *EmailNotifier) Dispatch(alertResult *AlertResult) {
-	this.log.Info("Sending email")
-	grafanaUrl := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
-	if setting.AppSubUrl != "" {
-		grafanaUrl += "/" + setting.AppSubUrl
+func NewRootNotifier() *RootNotifier {
+	return &RootNotifier{
+		log: log.New("alerting.notifier"),
+	}
+}
+
+func (n *RootNotifier) Notify(context *AlertResultContext) {
+	notifiers, err := n.getNotifiers(context.Rule.OrgId, context.Rule.Notifications)
+	if err != nil {
+		n.log.Error("Failed to read notifications", "error", err)
+		return
 	}
 
-	query := &m.GetDashboardsQuery{
-		DashboardIds: []int64{alertResult.AlertJob.Rule.DashboardId},
+	for _, notifier := range notifiers {
+		n.log.Info("Sending notification", "firing", context.Firing, "type", notifier.GetType())
+		go notifier.Notify(context)
 	}
+}
+
+func (n *RootNotifier) getNotifiers(orgId int64, notificationIds []int64) ([]Notifier, error) {
+	query := &m.GetAlertNotificationsQuery{OrgId: orgId, Ids: notificationIds}
 
 	if err := bus.Dispatch(query); err != nil {
+		return nil, err
+	}
+
+	var result []Notifier
+	for _, notification := range query.Result {
+		if not, err := NewNotificationFromDBModel(notification); err != nil {
+			return nil, err
+		} else {
+			result = append(result, not)
+		}
+	}
+
+	return result, nil
+}
+
+type NotifierBase struct {
+	Name string
+	Type string
+}
+
+func (n *NotifierBase) GetType() string {
+	return n.Type
+}
+
+type EmailNotifier struct {
+	NotifierBase
+	Addresses []string
+	log       log.Logger
+}
+
+func (this *EmailNotifier) Notify(context *AlertResultContext) {
+	this.log.Info("Sending alert notification to %v", this.Addresses)
+
+	slugQuery := &m.GetDashboardSlugByIdQuery{Id: context.Rule.DashboardId}
+	if err := bus.Dispatch(slugQuery); err != nil {
 		this.log.Error("Failed to load dashboard", "error", err)
 		return
 	}
+	dashboardSlug := slugQuery.Result
 
-	if len(query.Result) != 1 {
-		this.log.Error("Can only support one dashboard", "result", len(query.Result))
-		return
-	}
-
-	dashboard := query.Result[0]
-
-	panelId := strconv.Itoa(int(alertResult.AlertJob.Rule.PanelId))
-
-	//TODO: get from alertrule and transforms to seconds
-	from := "1466169458375"
-	to := "1466171258375"
-
-	renderUrl := fmt.Sprintf("%s/render/dashboard-solo/db/%s?from=%s&to=%s&panelId=%s&width=1000&height=500", grafanaUrl, dashboard.Slug, from, to, panelId)
 	cmd := &m.SendEmailCommand{
 		Data: map[string]interface{}{
-			"Name":            "Name",
-			"State":           alertResult.State,
-			"Description":     alertResult.Description,
-			"TriggeredAlerts": alertResult.TriggeredAlerts,
-			"DashboardLink":   grafanaUrl + "/dashboard/db/" + dashboard.Slug,
-			"AlertPageUrl":    grafanaUrl + "/alerting",
-			"DashboardImage":  renderUrl,
+			"RuleName": context.Rule.Name,
+			"Severity": context.Rule.Severity,
+			"RuleLink": setting.ToAbsUrl("dashboard/db/" + dashboardSlug),
 		},
-		To:       []string{this.To},
+		To:       this.Addresses,
 		Template: "alert_notification.html",
 	}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
-		this.log.Error("Could not send alert notification as email", "error", err)
+		this.log.Error("Failed tosend alert notification email", "error", err)
 	}
 }
 
-type WebhookNotifier struct {
-	Url      string
-	User     string
-	Password string
-	log      log.Logger
-}
+// type WebhookNotifier struct {
+// 	Url      string
+// 	User     string
+// 	Password string
+// 	log      log.Logger
+// }
+//
+// func (this *WebhookNotifier) Dispatch(context *AlertResultContext) {
+// 	this.log.Info("Sending webhook")
+//
+// 	bodyJSON := simplejson.New()
+// 	bodyJSON.Set("name", context.AlertJob.Rule.Name)
+// 	bodyJSON.Set("state", context.State)
+// 	bodyJSON.Set("trigged", context.TriggeredAlerts)
+//
+// 	body, _ := bodyJSON.MarshalJSON()
+//
+// 	cmd := &m.SendWebhook{
+// 		Url:      this.Url,
+// 		User:     this.User,
+// 		Password: this.Password,
+// 		Body:     string(body),
+// 	}
+//
+// 	bus.Dispatch(cmd)
+// }
 
-func (this *WebhookNotifier) Dispatch(alertResult *AlertResultContext) {
-	this.log.Info("Sending webhook")
+func NewNotificationFromDBModel(model *m.AlertNotification) (Notifier, error) {
+	if model.Type == "email" {
+		addressesString := model.Settings.Get("addresses").MustString()
 
-	bodyJSON := simplejson.New()
-	bodyJSON.Set("name", alertResult.AlertJob.Rule.Name)
-	bodyJSON.Set("state", alertResult.State)
-	bodyJSON.Set("trigged", alertResult.TriggeredAlerts)
-
-	body, _ := bodyJSON.MarshalJSON()
-
-	cmd := &m.SendWebhook{
-		Url:      this.Url,
-		User:     this.User,
-		Password: this.Password,
-		Body:     string(body),
-	}
-
-	bus.Dispatch(cmd)
-}
-
-type NotificationDispatcher interface {
-	Dispatch(alertResult *AlertResult)
-}
-
-func buildGetNotifiers(log log.Logger) func(orgId int64, notificationGroups []int64) []*Notification {
-	return func(orgId int64, notificationGroups []int64) []*Notification {
-		query := &m.GetAlertNotificationQuery{
-			OrgID:                orgId,
-			Ids:                  notificationGroups,
-			IncludeAlwaysExecute: true,
-		}
-		err := bus.Dispatch(query)
-		if err != nil {
-			log.Error("Failed to read notifications", "error", err)
-		}
-
-		var result []*Notification
-		for _, notification := range query.Result {
-			not, err := NewNotificationFromDBModel(notification)
-			if err == nil {
-				result = append(result, not)
-			} else {
-				log.Error("Failed to read notification model", "error", err)
-			}
-		}
-
-		return result
-	}
-}
-
-func NewNotificationFromDBModel(model *m.AlertNotification) (*Notification, error) {
-	notifier, err := createNotifier(model.Type, model.Settings)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return &Notification{
-		Name:         model.Name,
-		Type:         model.Type,
-		Notifierr:    notifier,
-		SendCritical: model.Settings.Get("sendCrit").MustBool(),
-		SendWarning:  model.Settings.Get("sendWarn").MustBool(),
-	}, nil
-}
-
-var createNotifier = func(notificationType string, settings *simplejson.Json) (NotificationDispatcher, error) {
-	if notificationType == "email" {
-		to := settings.Get("to").MustString()
-
-		if to == "" {
-			return nil, fmt.Errorf("Could not find to propertie in settings")
+		if addressesString == "" {
+			return nil, fmt.Errorf("Could not find addresses in settings")
 		}
 
 		return &EmailNotifier{
-			To:  to,
-			log: log.New("alerting.notification.email"),
+			NotifierBase: NotifierBase{
+				Name: model.Name,
+				Type: model.Type,
+			},
+			Addresses: strings.Split(addressesString, "\n"),
+			log:       log.New("alerting.notification.email"),
 		}, nil
 	}
 
-	url := settings.Get("url").MustString()
-	if url == "" {
-		return nil, fmt.Errorf("Could not find url propertie in settings")
-	}
+	return nil, errors.New("Unsupported notification type")
 
-	return &WebhookNotifier{
-		Url:      url,
-		User:     settings.Get("user").MustString(),
-		Password: settings.Get("password").MustString(),
-		log:      log.New("alerting.notification.webhook"),
-	}, nil
+	// url := settings.Get("url").MustString()
+	// if url == "" {
+	// 	return nil, fmt.Errorf("Could not find url propertie in settings")
+	// }
+	//
+	// return &WebhookNotifier{
+	// 	Url:      url,
+	// 	User:     settings.Get("user").MustString(),
+	// 	Password: settings.Get("password").MustString(),
+	// 	log:      log.New("alerting.notification.webhook"),
+	// }, nil
 }
