@@ -27,7 +27,6 @@ export class AlertListCtrl {
 
   updateFilter() {
     var stats = [];
-
     this.filter.ok && stats.push('OK');
     this.filter.warn && stats.push('Warn');
     this.filter.critical && stats.push('critical');

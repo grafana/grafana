@@ -49,14 +49,17 @@ export class AlertTabCtrl {
     {text: 'Critical', value: 'critical'},
     {text: 'Warning', value: 'warning'},
   ];
+  addNotificationSegment;
 
   /** @ngInject */
-  constructor($scope, private $timeout, private backendSrv, private dashboardSrv) {
+  constructor($scope, private $timeout, private backendSrv, private dashboardSrv, private uiSegmentSrv) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
     $scope.ctrl = this;
 
     this.metricTargets = this.panel.targets.map(val => val);
+    this.addNotificationSegment = uiSegmentSrv.newPlusButton();
+
     this.initModel();
 
     // set panel alert edit mode
@@ -64,6 +67,28 @@ export class AlertTabCtrl {
       this.panelCtrl.editingAlert = false;
       this.panelCtrl.render();
     });
+  }
+
+  getNotifications() {
+    return this.backendSrv.get('/api/alert-notifications').then(res => {
+      return res.map(item => {
+        return this.uiSegmentSrv.newSegment(item.name);
+      });
+    });
+  }
+
+  notificationAdded() {
+    this.alert.notifications.push({
+      name: this.addNotificationSegment.value
+    });
+
+    // reset plus button
+    this.addNotificationSegment.value = this.uiSegmentSrv.newPlusButton().value;
+    this.addNotificationSegment.html = this.uiSegmentSrv.newPlusButton().html;
+  }
+
+  removeNotification(index) {
+    this.alert.notifications.splice(index, 1);
   }
 
   initModel() {

@@ -20,16 +20,12 @@ export class AlertNotificationsListCtrl {
     });
   }
 
-  deleteNotification(notificationId) {
-    this.backendSrv.delete(`/api/alerts-notification/${notificationId}`)
-      .then(() => {
-        this.notifications = this.notifications.filter(notification => {
-          return notification.id !== notificationId;
-        });
-        this.$scope.appEvent('alert-success', ['Notification deleted', '']);
-      }, () => {
-        this.$scope.appEvent('alert-error', ['Unable to delete notification', '']);
+  deleteNotification(id) {
+    this.backendSrv.delete(`/api/alert-notifications/${id}`).then(() => {
+      this.notifications = this.notifications.filter(notification => {
+        return notification.id !== notificationId;
       });
+    });
   }
 }
 

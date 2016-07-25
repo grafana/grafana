@@ -211,7 +211,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controllerAs: 'ctrl',
     resolve: loadAlertingBundle,
   })
-  .when('/alerting/notification/:notificationId/edit', {
+  .when('/alerting/notification/:id/edit', {
     templateUrl: 'public/app/features/alerting/partials/notification_edit.html',
     controller: 'AlertNotificationEditCtrl',
     controllerAs: 'ctrl',

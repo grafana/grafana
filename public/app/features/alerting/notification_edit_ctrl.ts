@@ -6,49 +6,39 @@ import coreModule from '../../core/core_module';
 import config from 'app/core/config';
 
 export class AlertNotificationEditCtrl {
-
-  notification: any;
+  model: any;
 
   /** @ngInject */
-  constructor(private $routeParams, private backendSrv, private $scope) {
-    if ($routeParams.notificationId) {
-      this.loadNotification($routeParams.notificationId);
+  constructor(private $routeParams, private backendSrv, private $scope, private $location) {
+    if ($routeParams.id) {
+      this.loadNotification($routeParams.id);
     } else {
-      this.notification = {
+      this.model = {
         type: 'email',
+        settings: {}
       };
     }
   }
 
-  loadNotification(notificationId) {
-    this.backendSrv.get(`/api/alert-notifications/${notificationId}`).then(result => {
-      console.log(result);
-      this.notification = result;
+  loadNotification(id) {
+    this.backendSrv.get(`/api/alert-notifications/${id}`).then(result => {
+      this.model = result;
     });
   }
 
   isNew() {
-    return this.notification === undefined || this.notification.id === undefined;
+    return this.model.id === undefined;
   }
 
   save() {
-    if (this.notification.id) {
-      console.log('this.notification: ', this.notification);
-      this.backendSrv.put(`/api/alert-notifications/${this.notification.id}`, this.notification)
-        .then(result => {
-          this.notification = result;
-          this.$scope.appEvent('alert-success', ['Notification created!', '']);
-        }, () => {
-          this.$scope.appEvent('alert-error', ['Unable to create notification.', '']);
-        });
+    if (this.model.id) {
+      this.backendSrv.put(`/api/alert-notifications/${this.model.id}`, this.model).then(res => {
+        this.model = res;
+      });
     } else {
-      this.backendSrv.post(`/api/alert-notifications`, this.notification)
-        .then(result => {
-          this.notification = result;
-          this.$scope.appEvent('alert-success', ['Notification updated!', '']);
-        }, () => {
-          this.$scope.appEvent('alert-error', ['Unable to update notification.', '']);
-        });
+      this.backendSrv.post(`/api/alert-notifications`, this.model).then(res => {
+        this.$location.path('alerting/notification/' + res.id + '/edit');
+      });
     }
   }
 }
