@@ -18,7 +18,7 @@ type HandlerImpl struct {
 
 func NewHandler() *HandlerImpl {
 	return &HandlerImpl{
-		log:             log.New("alerting.executor"),
+		log:             log.New("alerting.handler"),
 		alertJobTimeout: time.Second * 5,
 	}
 }
@@ -33,7 +33,7 @@ func (e *HandlerImpl) Execute(context *AlertResultContext) {
 		context.EndTime = time.Now()
 		e.log.Debug("Job Execution timeout", "alertId", context.Rule.Id)
 	case <-context.DoneChan:
-		e.log.Debug("Job Execution done", "timing", context.GetDurationSeconds(), "alertId", context.Rule.Id, "firing", context.Firing)
+		e.log.Debug("Job Execution done", "timeMs", context.GetDurationMs(), "alertId", context.Rule.Id, "firing", context.Firing)
 	}
 
 }

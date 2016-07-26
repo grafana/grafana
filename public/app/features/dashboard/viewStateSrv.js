@@ -115,6 +115,11 @@ function (angular, _, $) {
         }
       }
 
+      // if no edit state cleanup tab parm
+      if (!this.state.edit) {
+        delete this.state.tab;
+      }
+
       $location.search(this.serializeToUrl());
       this.syncState();
     };

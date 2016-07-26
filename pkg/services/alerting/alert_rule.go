@@ -60,6 +60,8 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 	model := &AlertRule{}
 	model.Id = ruleDef.Id
 	model.OrgId = ruleDef.OrgId
+	model.DashboardId = ruleDef.DashboardId
+	model.PanelId = ruleDef.PanelId
 	model.Name = ruleDef.Name
 	model.Description = ruleDef.Description
 	model.Frequency = ruleDef.Frequency
@@ -67,8 +69,11 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 	model.State = ruleDef.State
 
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
-		if id, ok := v.(int64); ok {
-			model.Notifications = append(model.Notifications, int64(id))
+		jsonModel := simplejson.NewFromAny(v)
+		if id, err := jsonModel.Get("id").Int64(); err != nil {
+			return nil, AlertValidationError{Reason: "Invalid notification schema"}
+		} else {
+			model.Notifications = append(model.Notifications, id)
 		}
 	}
 

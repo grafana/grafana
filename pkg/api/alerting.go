@@ -104,7 +104,7 @@ func AlertTest(c *middleware.Context, dto dtos.AlertTestCommand) Response {
 		dtoRes.Logs = append(dtoRes.Logs, &dtos.AlertTestResultLog{Message: log.Message, Data: log.Data})
 	}
 
-	dtoRes.Timing = fmt.Sprintf("%1.3fs", res.GetDurationSeconds())
+	dtoRes.TimeMs = fmt.Sprintf("%1.3fms", res.GetDurationMs())
 
 	return Json(200, dtoRes)
 }

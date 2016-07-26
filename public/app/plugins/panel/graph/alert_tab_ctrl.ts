@@ -1,8 +1,6 @@
  ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import $ from 'jquery';
-import angular from 'angular';
 
 import {
   QueryPartDef,
@@ -28,7 +26,6 @@ var reducerAvgDef = new QueryPartDef({
 export class AlertTabCtrl {
   panel: any;
   panelCtrl: any;
-  metricTargets;
   testing: boolean;
   testResult: any;
 
@@ -50,37 +47,57 @@ export class AlertTabCtrl {
     {text: 'Warning', value: 'warning'},
   ];
   addNotificationSegment;
+  notifications;
+  alertNotifications;
 
   /** @ngInject */
-  constructor($scope, private $timeout, private backendSrv, private dashboardSrv, private uiSegmentSrv) {
+  constructor(private $scope, private $timeout, private backendSrv, private dashboardSrv, private uiSegmentSrv) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
-    $scope.ctrl = this;
+    this.$scope.ctrl = this;
+  }
 
-    this.metricTargets = this.panel.targets.map(val => val);
-    this.addNotificationSegment = uiSegmentSrv.newPlusButton();
+  $onInit() {
+    this.addNotificationSegment = this.uiSegmentSrv.newPlusButton();
 
     this.initModel();
 
     // set panel alert edit mode
-    $scope.$on("$destroy", () => {
+    this.$scope.$on("$destroy", () => {
       this.panelCtrl.editingAlert = false;
       this.panelCtrl.render();
     });
-  }
 
-  getNotifications() {
+    // build notification model
+    this.notifications = [];
+    this.alertNotifications = [];
+
     return this.backendSrv.get('/api/alert-notifications').then(res => {
-      return res.map(item => {
-        return this.uiSegmentSrv.newSegment(item.name);
+      this.notifications = res;
+
+      _.each(this.alert.notifications, item => {
+        var model = _.findWhere(this.notifications, {id: item.id});
+        if (model) {
+          this.alertNotifications.push(model);
+        }
       });
     });
   }
 
+  getNotifications() {
+    return Promise.resolve(this.notifications.map(item => {
+      return this.uiSegmentSrv.newSegment(item.name);
+    }));
+  }
+
   notificationAdded() {
-    this.alert.notifications.push({
-      name: this.addNotificationSegment.value
-    });
+    var model = _.findWhere(this.notifications, {name: this.addNotificationSegment.value});
+    if (!model) {
+      return;
+    }
+
+    this.alertNotifications.push({name: model.name});
+    this.alert.notifications.push({id: model.id});
 
     // reset plus button
     this.addNotificationSegment.value = this.uiSegmentSrv.newPlusButton().value;
@@ -89,6 +106,7 @@ export class AlertTabCtrl {
 
   removeNotification(index) {
     this.alert.notifications.splice(index, 1);
+    this.alertNotifications.splice(index, 1);
   }
 
   initModel() {

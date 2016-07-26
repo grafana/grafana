@@ -17,7 +17,8 @@ type ResultHandlerImpl struct {
 
 func NewResultHandler() *ResultHandlerImpl {
 	return &ResultHandlerImpl{
-		log: log.New("alerting.resultHandler"),
+		log:      log.New("alerting.resultHandler"),
+		notifier: NewRootNotifier(),
 	}
 }
 
@@ -47,7 +48,6 @@ func (handler *ResultHandlerImpl) Handle(result *AlertResultContext) {
 		}
 
 		result.Rule.State = newState
-		//handler.log.Debug("will notify about new state", "new state", result.State)
-		//handler.notifier.Notify(result)
+		handler.notifier.Notify(result)
 	}
 }

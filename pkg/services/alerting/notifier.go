@@ -23,6 +23,8 @@ func NewRootNotifier() *RootNotifier {
 }
 
 func (n *RootNotifier) Notify(context *AlertResultContext) {
+	n.log.Info("Sending notifications for", "ruleId", context.Rule.Id)
+
 	notifiers, err := n.getNotifiers(context.Rule.OrgId, context.Rule.Notifications)
 	if err != nil {
 		n.log.Error("Failed to read notifications", "error", err)
@@ -70,20 +72,22 @@ type EmailNotifier struct {
 }
 
 func (this *EmailNotifier) Notify(context *AlertResultContext) {
-	this.log.Info("Sending alert notification to %v", this.Addresses)
+	this.log.Info("Sending alert notification to", "addresses", this.Addresses)
 
 	slugQuery := &m.GetDashboardSlugByIdQuery{Id: context.Rule.DashboardId}
 	if err := bus.Dispatch(slugQuery); err != nil {
 		this.log.Error("Failed to load dashboard", "error", err)
 		return
 	}
-	dashboardSlug := slugQuery.Result
+
+	ruleLink := fmt.Sprintf("%sdashboard/db/%s?fullscreen&edit&tab=alert&panelId=%d", setting.AppUrl, slugQuery.Result, context.Rule.PanelId)
 
 	cmd := &m.SendEmailCommand{
 		Data: map[string]interface{}{
-			"RuleName": context.Rule.Name,
-			"Severity": context.Rule.Severity,
-			"RuleLink": setting.ToAbsUrl("dashboard/db/" + dashboardSlug),
+			"RuleState": context.Rule.State,
+			"RuleName":  context.Rule.Name,
+			"Severity":  context.Rule.Severity,
+			"RuleLink":  ruleLink,
 		},
 		To:       this.Addresses,
 		Template: "alert_notification.html",
@@ -91,7 +95,7 @@ func (this *EmailNotifier) Notify(context *AlertResultContext) {
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
-		this.log.Error("Failed tosend alert notification email", "error", err)
+		this.log.Error("Failed to send alert notification email", "error", err)
 	}
 }
 

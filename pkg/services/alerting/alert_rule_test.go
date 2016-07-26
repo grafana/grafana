@@ -49,8 +49,12 @@ func TestAlertRuleModel(t *testing.T) {
             },
             "reducer": {"type": "avg", "params": []},
             "evaluator": {"type": ">", "params": [100]}
-          }
-        ]
+					}
+        ],
+        "notifications": [
+					{"id": 1134},
+					{"id": 22}
+				]
 			}
 			`
 
@@ -90,6 +94,10 @@ func TestAlertRuleModel(t *testing.T) {
 					So(ok, ShouldBeTrue)
 					So(evaluator.Type, ShouldEqual, ">")
 				})
+			})
+
+			Convey("Can read notifications", func() {
+				So(len(alertRule.Notifications), ShouldEqual, 2)
 			})
 		})
 	})

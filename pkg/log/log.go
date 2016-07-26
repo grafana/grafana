@@ -116,7 +116,9 @@ func getFilters(filterStrArray []string) map[string]log15.Lvl {
 
 	for _, filterStr := range filterStrArray {
 		parts := strings.Split(filterStr, ":")
-		filterMap[parts[0]] = getLogLevelFromString(parts[1])
+		if len(parts) > 1 {
+			filterMap[parts[0]] = getLogLevelFromString(parts[1])
+		}
 	}
 
 	return filterMap

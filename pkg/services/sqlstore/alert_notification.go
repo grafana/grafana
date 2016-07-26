@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-xorm/xorm"
@@ -63,8 +64,10 @@ func getAlertNotifications(query *m.GetAlertNotificationsQuery, sess *xorm.Sessi
 	}
 
 	if len(query.Ids) > 0 {
-		sql.WriteString(` AND alert_notification.id IN (?)`)
-		params = append(params, query.Ids)
+		sql.WriteString(` AND alert_notification.id IN (?` + strings.Repeat(",?", len(query.Ids)-1) + ")")
+		for _, v := range query.Ids {
+			params = append(params, v)
+		}
 	}
 
 	results := make([]*m.AlertNotification, 0)

@@ -18,10 +18,13 @@ type AlertRuleReader struct {
 	serverID       string
 	serverPosition int
 	clusterSize    int
+	log            log.Logger
 }
 
 func NewRuleReader() *AlertRuleReader {
-	ruleReader := &AlertRuleReader{}
+	ruleReader := &AlertRuleReader{
+		log: log.New("alerting.ruleReader"),
+	}
 
 	go ruleReader.initReader()
 	return ruleReader
@@ -40,17 +43,19 @@ func (arr *AlertRuleReader) initReader() {
 
 func (arr *AlertRuleReader) Fetch() []*AlertRule {
 	cmd := &m.GetAllAlertsQuery{}
-	err := bus.Dispatch(cmd)
 
-	if err != nil {
-		log.Error(1, "Alerting: ruleReader.fetch(): Could not load alerts", err)
+	if err := bus.Dispatch(cmd); err != nil {
+		arr.log.Error("Could not load alerts", "error", err)
 		return []*AlertRule{}
 	}
 
-	res := make([]*AlertRule, len(cmd.Result))
-	for i, ruleDef := range cmd.Result {
-		model, _ := NewAlertRuleFromDBModel(ruleDef)
-		res[i] = model
+	res := make([]*AlertRule, 0)
+	for _, ruleDef := range cmd.Result {
+		if model, err := NewAlertRuleFromDBModel(ruleDef); err != nil {
+			arr.log.Error("Could not build alert model for rule", "ruleId", ruleDef.Id, "error", err)
+		} else {
+			res = append(res, model)
+		}
 	}
 
 	return res

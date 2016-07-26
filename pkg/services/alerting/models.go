@@ -42,8 +42,8 @@ type AlertResultContext struct {
 	log         log.Logger
 }
 
-func (a *AlertResultContext) GetDurationSeconds() float64 {
-	return float64(a.EndTime.Nanosecond()-a.StartTime.Nanosecond()) / float64(1000000000)
+func (a *AlertResultContext) GetDurationMs() float64 {
+	return float64(a.EndTime.Nanosecond()-a.StartTime.Nanosecond()) / float64(1000000)
 }
 
 func NewAlertResultContext(rule *AlertRule) *AlertResultContext {

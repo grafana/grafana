@@ -95,10 +95,10 @@ export class PanelCtrl {
     this.editModeInitiated = true;
     this.events.emit('init-edit-mode', null);
 
-    var routeParams = this.$injector.get('$routeParams');
-    if (routeParams.editorTab) {
+    var urlTab = (this.$injector.get('$routeParams').tab || '').toLowerCase();
+    if (urlTab) {
       this.editorTabs.forEach((tab, i) => {
-        if (tab.title === routeParams.editorTab) {
+        if (tab.title.toLowerCase() === urlTab) {
           this.editorTabIndex = i;
         }
       });
@@ -109,7 +109,7 @@ export class PanelCtrl {
     this.editorTabIndex = newIndex;
     var route = this.$injector.get('$route');
 
-    route.current.params.editorTab = this.editorTabs[newIndex].title;
+    route.current.params.tab = this.editorTabs[newIndex].title.toLowerCase();
     route.updateParams();
   }
 
