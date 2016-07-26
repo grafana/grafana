@@ -127,13 +127,13 @@ export class TableRenderer {
     let pageSize = this.panel.pageSize || 100;
     let startPos = page * pageSize;
     let endPos = Math.min(startPos + pageSize, this.table.rows.length);
-    let rowLink = this.panel.rowLink;
     var html = "";
 
     for (var y = startPos; y < endPos; y++) {
       let row = this.table.rows[y];
       let cellHtml = '';
       let rowStyle = '';
+      let rowLink = this.panel.rowLink;
 
       if (rowLink) {
         for (var i = 0; i < this.table.columns.length; i++) {
