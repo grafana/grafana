@@ -184,7 +184,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
           // give space to alert editing
           if (ctrl.editingAlert) {
             if (!thresholdControls) {
-              elem.css('margin-right', '220px');
+              elem.css('margin-right', '110px');
               thresholdControls = new ThresholdControls(ctrl);
             }
           } else if (thresholdControls) {
@@ -327,74 +327,28 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
         }
 
         function addGridThresholds(options, panel) {
-          if (!panel.alert) {
+          if (!panel.thresholds || panel.thresholds.length === 0) {
             return;
           }
 
-          var crit = panel.alert.crit;
-          var warn = panel.alert.warn;
-          var critEdge = Infinity;
-
-          if (_.isNumber(crit.value)) {
-            if (crit.op === '<') {
-              critEdge = -Infinity;
+          for (var i = 0; i < panel.thresholds.length; i++) {
+            var threshold = panel.thresholds[i];
+            if (!_.isNumber(threshold.from)) {
+              continue;
             }
 
             // fill
             options.grid.markings.push({
-              yaxis: {from: crit.value, to: critEdge},
+              yaxis: {from: threshold.from, to: threshold.to},
               color: 'rgba(234, 112, 112, 0.10)',
             });
 
             // line
             options.grid.markings.push({
-              yaxis: {from: crit.value, to: crit.value},
+              yaxis: {from: threshold.from, to: threshold.from},
               color: '#ed2e18'
             });
           }
-
-          if (_.isNumber(warn.value)) {
-            //var warnEdge = crit.value || Infinity;
-            var warnEdge;
-            if (crit.value) {
-              warnEdge = crit.value;
-            } else {
-              warnEdge = warn.op === '<' ? -Infinity : Infinity;
-            }
-
-            // fill
-            options.grid.markings.push({
-              yaxis: {from: warn.value, to: warnEdge},
-              color: 'rgba(216, 200, 27, 0.10)',
-            });
-
-            // line
-            options.grid.markings.push({
-              yaxis: {from: warn.value, to: warn.value},
-              color: '#F79520'
-            });
-          }
-
-          // if (_.isNumber(panel.grid.threshold1)) {
-          //   var limit1 = panel.grid.thresholdLine ? panel.grid.threshold1 : (panel.grid.threshold2 || null);
-          //   options.grid.markings.push({
-          //     yaxis: { from: panel.grid.threshold1, to: limit1 },
-          //     color: panel.grid.threshold1Color
-          //   });
-          //
-          //   if (_.isNumber(panel.grid.threshold2)) {
-          //     var limit2;
-          //     if (panel.grid.thresholdLine) {
-          //       limit2 = panel.grid.threshold2;
-          //     } else {
-          //       limit2 = panel.grid.threshold1 > panel.grid.threshold2 ?  -Infinity : +Infinity;
-          //     }
-          //     options.grid.markings.push({
-          //       yaxis: { from: panel.grid.threshold2, to: limit2 },
-          //       color: panel.grid.threshold2Color
-          //     });
-          //   }
-          // }
         }
 
         function addAnnotations(options) {

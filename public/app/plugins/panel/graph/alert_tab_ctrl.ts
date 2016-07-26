@@ -131,8 +131,43 @@ export class AlertTabCtrl {
       return memo;
     }, []);
 
-    this.panelCtrl.editingAlert = true;
+    ///this.panelCtrl.editingAlert = true;
+    this.syncThresholds();
     this.panelCtrl.render();
+  }
+
+  syncThresholds() {
+    var threshold: any = {};
+    if (this.panel.thresholds && this.panel.thresholds.length > 0) {
+      threshold = this.panel.thresholds[0];
+    } else {
+      this.panel.thresholds = [threshold];
+    }
+
+    var updated = false;
+    for (var condition of this.conditionModels) {
+      if (condition.type === 'query') {
+        var value = condition.evaluator.params[0];
+        if (!_.isNumber(value)) {
+          continue;
+        }
+
+        if (value !== threshold.from) {
+          threshold.from = value;
+          updated = true;
+        }
+
+        if (condition.evaluator.type === '<' && threshold.to !== -Infinity) {
+          threshold.to = -Infinity;
+          updated = true;
+        } else if (condition.evaluator.type === '>' && threshold.to !== Infinity) {
+          threshold.to = Infinity;
+          updated = true;
+        }
+      }
+    }
+
+    return updated;
   }
 
   buildDefaultCondition() {
@@ -180,8 +215,10 @@ export class AlertTabCtrl {
     this.initModel();
   }
 
-  thresholdsUpdated() {
-    this.panelCtrl.render();
+  thresholdUpdated() {
+    if (this.syncThresholds()) {
+      this.panelCtrl.render();
+    }
   }
 
   test() {

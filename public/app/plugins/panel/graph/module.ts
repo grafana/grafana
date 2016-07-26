@@ -105,6 +105,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     // other style overrides
     seriesOverrides: [],
     alerting: {},
+    thresholds: [],
   };
 
   /** @ngInject */
