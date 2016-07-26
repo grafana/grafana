@@ -151,7 +151,7 @@ describe('ElasticDatasource', function() {
   });
 
   describe('When issuing metricFind query on es5.x', function() {
-    var requestOptions, parts, header;
+    var requestOptions, parts, header, body;
 
     beforeEach(function() {
       createDatasource({url: 'http://es.com', index: 'test', jsonData: {esVersion: '5'}});
@@ -170,6 +170,7 @@ describe('ElasticDatasource', function() {
 
       parts = requestOptions.data.split('\n');
       header = angular.fromJson(parts[0]);
+      body = angular.fromJson(parts[1]);
     });
 
     it('should not set search type to count', function() {
@@ -177,10 +178,12 @@ describe('ElasticDatasource', function() {
     });
 
     it('should set size to 0', function() {
-      var body = angular.fromJson(parts[1]);
       expect(body.size).to.be(0);
     });
 
+    it('should not set terms aggregation size to 0', function() {
+      expect(body['aggs']['1']['terms'].size).to.not.be(0);
+    });
   });
 
 });

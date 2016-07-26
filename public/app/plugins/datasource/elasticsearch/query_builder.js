@@ -28,7 +28,8 @@ function (queryDef) {
       return queryNode;
     }
 
-    queryNode.terms.size = parseInt(aggDef.settings.size, 10);
+    queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 1000 : parseInt(aggDef.settings.size, 10);
+
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
       queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
@@ -268,7 +269,7 @@ function (queryDef) {
       "1": {
         "terms": {
           "field": queryDef.field,
-          "size": 0,
+          "size": 1000,
           "order": {
             "_term": "asc"
           }
