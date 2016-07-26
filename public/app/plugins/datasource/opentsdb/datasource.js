@@ -128,13 +128,7 @@ function (angular, _, dateMath) {
         data: reqBody
       };
 
-      if (this.basicAuth || this.withCredentials) {
-        options.withCredentials = true;
-      }
-
-      if (this.basicAuth) {
-        options.headers = {"Authorization": this.basicAuth};
-      }
+      this._addCredentialOptions(options);
 
       // In case the backend is 3rd-party hosted and does not suport OPTIONS, urlencoded requests
       // go as POST rather than OPTIONS+POST
@@ -210,11 +204,24 @@ function (angular, _, dateMath) {
     };
 
     this._get = function(relativeUrl, params) {
-      return backendSrv.datasourceRequest({
+      var options = {
         method: 'GET',
         url: this.url + relativeUrl,
         params: params,
-      });
+      };
+
+      this._addCredentialOptions(options);
+
+      return backendSrv.datasourceRequest(options);
+    };
+
+    this._addCredentialOptions = function(options) {
+      if (this.basicAuth || this.withCredentials) {
+        options.withCredentials = true;
+      }
+      if (this.basicAuth) {
+        options.headers = {"Authorization": this.basicAuth};
+      }
     };
 
     this.metricFindQuery = function(query) {
@@ -435,7 +442,6 @@ function (angular, _, dateMath) {
       date = dateMath.parse(date, roundUp);
       return date.valueOf();
     }
-
   }
 
   return {

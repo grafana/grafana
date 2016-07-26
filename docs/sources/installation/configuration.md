@@ -46,7 +46,7 @@ Then you can override them using:
 
 ## instance_name
 Set the name of the grafana-server instance. Used in logging and internal metrics and in
-clustering info. Defaults to: `${HOSTNAME}, which will be replaced with
+clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use
 system calls to get the machine name.
 
@@ -445,6 +445,19 @@ Grafana backend index those json dashboards which will make them appear in regul
 
 ### path
 The full path to a directory containing your json dashboards.
+
+## [log]
+
+### mode
+Either "console", "file", "syslog". Default is console and  file
+Use space to separate multiple modes, e.g. "console file"
+
+### level
+Either "debug", "info", "warn", "error", "critical", default is "info"
+
+### filter
+optional settings to set different levels for specific loggers.
+Ex `filters = sqlstore:debug`
 
 ## [metrics]
 

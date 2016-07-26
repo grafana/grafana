@@ -88,7 +88,6 @@ export class PluginEditCtrl {
         jsonData: this.model.jsonData,
         secureJsonData: this.model.secureJsonData,
       }, {});
-
       return this.backendSrv.post(`/api/plugins/${this.pluginId}/settings`, updateCmd);
     })
     .then(this.postUpdateHook)
@@ -98,28 +97,7 @@ export class PluginEditCtrl {
   }
 
   importDashboards() {
-    // move to dashboards tab
-    this.tabIndex = 2;
-
-    return new Promise((resolve) => {
-      if (!this.$scope.$$phase) {
-        this.$scope.$digest();
-      }
-
-      // let angular load dashboards tab
-      setTimeout(() => {
-        resolve();
-      }, 1000);
-
-    }).then(() => {
-      return new Promise((resolve, reject) => {
-        // send event to import list component
-        appEvents.emit('dashboard-list-import-all', {
-          resolve: resolve,
-          reject: reject
-        });
-      });
-    });
+    return Promise.resolve();
   }
 
   setPreUpdateHook(callback: () => any) {

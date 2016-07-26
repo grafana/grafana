@@ -12,7 +12,7 @@ import * as dateMath from 'app/core/utils/datemath';
 import {Subject} from 'vendor/npm/rxjs/Subject';
 
 class MetricsPanelCtrl extends PanelCtrl {
-  error: boolean;
+  error: any;
   loading: boolean;
   datasource: any;
   datasourceName: any;
@@ -86,8 +86,14 @@ class MetricsPanelCtrl extends PanelCtrl {
     .then(this.issueQueries.bind(this))
     .then(this.handleQueryResult.bind(this))
     .catch(err => {
+      // if cancelled  keep loading set to true
+      if (err.cancelled) {
+        console.log('Panel request cancelled', err);
+        return;
+      }
+
       this.loading = false;
-      this.error = err.message || "Timeseries data request error";
+      this.error = err.message || "Request Error";
       this.inspector = {error: err};
       this.events.emit('data-error', err);
       console.log('Panel data error:', err);

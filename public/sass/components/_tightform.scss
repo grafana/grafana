@@ -25,11 +25,10 @@
   border: 1px solid $tight-form-border;
   border-bottom: none;
 
-  .tight-form, .tight-form-item, [type=text].tight-form-input, [type=text].tight-form-clear-input  {
+  .tight-form, .tight-form-item, [type="text"].tight-form-input, [type="text"].tight-form-clear-input  {
     border: none;
   }
 }
-
 
 .spaced-form {
   .tight-form {
@@ -122,14 +121,14 @@
   }
 }
 
-input[type=text].tight-form-func-param {
+input[type="text"].tight-form-func-param {
   background: transparent;
   border: none;
   margin: 0;
   padding: 0;
 }
 
-input[type=text].tight-form-clear-input {
+input[type="text"].tight-form-clear-input {
   padding: 8px 7px;
   border: none;
   margin: 0px;
@@ -138,10 +137,10 @@ input[type=text].tight-form-clear-input {
   border-right: 1px solid $tight-form-border;
 }
 
-[type=text],
-[type=email],
-[type=number],
-[type=password] {
+[type="text"],
+[type="email"],
+[type="number"],
+[type="password"] {
   &.tight-form-input {
     background-color: $input-bg;
     border: none;
@@ -157,7 +156,7 @@ input[type=text].tight-form-clear-input {
   }
 }
 
-input[type=checkbox].tight-form-checkbox {
+input[type="checkbox"].tight-form-checkbox {
   margin: 0;
 }
 
@@ -200,7 +199,7 @@ select.tight-form-input {
 }
 
 .tight-form-radio {
-  input[type=radio] {
+  input[type="radio"] {
     margin: 0;
   }
   label {

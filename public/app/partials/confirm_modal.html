@@ -1,4 +1,4 @@
-<div class="modal-body">
+<div class="modal-body" ng-cloak>
 	<div class="modal-header">
 		<h2 class="modal-header-title">
 			<i class="fa {{icon}}"></i>
@@ -24,6 +24,7 @@
 		<div class="confirm-modal-buttons">
 			<button type="button" class="btn btn-inverse" ng-click="dismiss()">{{noText}}</button>
 			<button type="button" class="btn btn-danger" ng-click="onConfirm();dismiss();">{{yesText}}</button>
+			<button ng-show="onAltAction" type="button" class="btn btn-success" ng-click="dismiss();onAltAction();">{{altActionText}}</button>
 		</div>
 	</div>
 

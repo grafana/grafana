@@ -34,6 +34,7 @@ type CurrentUser struct {
 	IsGrafanaAdmin bool       `json:"isGrafanaAdmin"`
 	GravatarUrl    string     `json:"gravatarUrl"`
 	Timezone       string     `json:"timezone"`
+	Locale         string     `json:"locale"`
 }
 
 type DashboardMeta struct {

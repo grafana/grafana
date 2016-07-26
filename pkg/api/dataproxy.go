@@ -91,6 +91,11 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
+	if ds.Type == m.DS_CLOUDWATCH {
+		cloudwatch.HandleRequest(c, ds)
+		return
+	}
+
 	targetUrl, _ := url.Parse(ds.Url)
 	if len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[targetUrl.Host]; !exists {
@@ -109,13 +114,9 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		c.Req.Request.Header["X-Auth-Token"] = []string{token}
 	}
 
-	if ds.Type == m.DS_CLOUDWATCH {
-		cloudwatch.HandleRequest(c, ds)
-	} else {
-		proxyPath := c.Params("*")
-		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
-		proxy.Transport = dataProxyTransport
-		proxy.ServeHTTP(c.Resp, c.Req.Request)
-		c.Resp.Header().Del("Set-Cookie")
-	}
+	proxyPath := c.Params("*")
+	proxy := NewReverseProxy(ds, proxyPath, targetUrl)
+	proxy.Transport = dataProxyTransport
+	proxy.ServeHTTP(c.Resp, c.Req.Request)
+	c.Resp.Header().Del("Set-Cookie")
 }

@@ -212,7 +212,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
       if (/^\/.*\/$/.test(nextValue)) {
         return this.$q.when(this.uiSegmentSrv.newOperators(['=~', '!~']));
       } else {
-        return this.$q.when(this.uiSegmentSrv.newOperators(['=', '<>', '<', '>']));
+        return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<>', '<', '>']));
       }
     }
 

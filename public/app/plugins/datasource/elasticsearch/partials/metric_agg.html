@@ -58,6 +58,11 @@
 		<input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.percents" array-join ng-blur="onChange()"></input>
 	</div>
 
+	<div class="gf-form offset-width-7" ng-if="agg.type === 'cardinality'">
+		<label class="gf-form-label width-10">Precision threshold</label>
+		<input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.precision_threshold" ng-blur="onChange()"></input>
+	</div>
+
 	<div ng-if="agg.type === 'extended_stats'">
 		<gf-form-switch ng-repeat="stat in extendedStats" class="gf-form offset-width-7" label="{{stat.text}}" label-class="width-10" checked="agg.meta[stat.value]" on-change="onChangeInternal()"></gf-form-switch>
 

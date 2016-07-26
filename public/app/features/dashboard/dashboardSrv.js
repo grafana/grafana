@@ -16,13 +16,10 @@ function (angular, $, _, moment) {
         data = {};
       }
 
-      if (!data.id && data.version) {
-        data.schemaVersion = data.version;
-      }
-
       this.id = data.id || null;
       this.title = data.title || 'No Title';
-      this.originalTitle = this.title;
+      this.autoUpdate = data.autoUpdate;
+      this.description = data.description;
       this.tags = data.tags || [];
       this.style = data.style || "dark";
       this.timezone = data.timezone || '';
@@ -39,6 +36,7 @@ function (angular, $, _, moment) {
       this.schemaVersion = data.schemaVersion || 0;
       this.version = data.version || 0;
       this.links = data.links || [];
+      this.gnetId = data.gnetId || null;
       this._updateSchema(data);
       this._initMeta(meta);
     }

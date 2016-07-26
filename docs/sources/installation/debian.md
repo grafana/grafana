@@ -10,25 +10,25 @@ page_keywords: grafana, installation, debian, ubuntu, guide
 
 Description | Download
 ------------ | -------------
-Stable .deb for Debian-based Linux | [grafana_3.0.4-1464167696.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_3.0.4-1464167696_amd64.deb)
+Stable .deb for Debian-based Linux | [3.1.0](https://grafanarel.s3.amazonaws.com/builds/grafana_3.1.0-1468321182_amd64.deb)
 
 ## Install Stable
 
-    $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_3.0.4-1464167696_amd64.deb
+    $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_3.1.0-1468321182_amd64.deb
     $ sudo apt-get install -y adduser libfontconfig
-    $ sudo dpkg -i grafana_3.0.4-1464167696_amd64.deb
+    $ sudo dpkg -i grafana_3.1.0-1468321182_amd64.deb
 
 ## APT Repository
 
 Add the following line to your `/etc/apt/sources.list` file.
 
-    deb https://packagecloud.io/grafana/stable/debian/ wheezy main
+    deb https://packagecloud.io/grafana/stable/debian/ jessie main
 
 Use the above line even if you are on Ubuntu or another Debian version.
 There is also a testing repository if you want beta or release
 candidates.
 
-    deb https://packagecloud.io/grafana/testing/debian/ wheezy main
+    deb https://packagecloud.io/grafana/testing/debian/ jessie main
 
 Then add the [Package Cloud](https://packagecloud.io/grafana) key. This
 allows you to install signed packages.

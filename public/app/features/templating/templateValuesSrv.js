@@ -1,15 +1,17 @@
 define([
   'angular',
   'lodash',
+  'jquery',
   'app/core/utils/kbn',
 ],
-function (angular, _, kbn) {
+function (angular, _, $, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
   module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $location, templateSrv, timeSrv) {
     var self = this;
+    this.variableLock = {};
 
     function getNoneOption() { return { text: 'None', value: '', isNone: true }; }
 
@@ -27,7 +29,16 @@ function (angular, _, kbn) {
         .filter(function(variable) {
           return variable.refresh === 2;
         }).map(function(variable) {
-          return self.updateOptions(variable);
+          var previousOptions = variable.options.slice();
+
+          return self.updateOptions(variable).then(function () {
+            return self.variableUpdated(variable).then(function () {
+              // check if current options changed due to refresh
+              if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
+                $rootScope.appEvent('template-variable-value-updated');
+              }
+            });
+          });
         });
 
       return $q.all(promises);
@@ -35,6 +46,7 @@ function (angular, _, kbn) {
     }, $rootScope);
 
     this.init = function(dashboard) {
+      this.dashboard = dashboard;
       this.variables = dashboard.templating.list;
       templateSrv.init(this.variables);
 
@@ -90,6 +102,8 @@ function (angular, _, kbn) {
         } else {
           lock.resolve();
         }
+      }).finally(function() {
+        delete self.variableLock[variable.name];
       });
     };
 
@@ -124,7 +138,7 @@ function (angular, _, kbn) {
       templateSrv.setGrafanaVariable('$__auto_interval', interval);
     };
 
-    this.setVariableValue = function(variable, option, initPhase) {
+    this.setVariableValue = function(variable, option) {
       variable.current = angular.copy(option);
 
       if (_.isArray(variable.current.text)) {
@@ -134,21 +148,20 @@ function (angular, _, kbn) {
       self.selectOptionsForCurrentValue(variable);
       templateSrv.updateTemplateData();
 
-      // on first load, variable loading is ordered to ensure
-      // that parents are updated before children.
-      if (initPhase) {
-        return $q.when();
-      }
-
-      return self.updateOptionsInChildVariables(variable);
+      return this.updateOptionsInChildVariables(variable);
     };
 
     this.variableUpdated = function(variable) {
       templateSrv.updateTemplateData();
-      return this.updateOptionsInChildVariables(variable);
+      return self.updateOptionsInChildVariables(variable);
     };
 
     this.updateOptionsInChildVariables = function(updatedVariable) {
+      // if there is a variable lock ignore cascading update because we are in a boot up scenario
+      if (self.variableLock[updatedVariable.name]) {
+        return $q.when();
+      }
+
       var promises = _.map(self.variables, function(otherVariable) {
         if (otherVariable === updatedVariable) {
           return;

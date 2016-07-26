@@ -20,6 +20,7 @@ type PluginSetting struct {
 	Pinned         bool
 	JsonData       map[string]interface{}
 	SecureJsonData SecureJsonData
+	PluginVersion  string
 
 	Created time.Time
 	Updated time.Time
@@ -44,9 +45,17 @@ type UpdatePluginSettingCmd struct {
 	Pinned         bool                   `json:"pinned"`
 	JsonData       map[string]interface{} `json:"jsonData"`
 	SecureJsonData map[string]string      `json:"secureJsonData"`
+	PluginVersion  string                 `json:"version"`
 
 	PluginId string `json:"-"`
 	OrgId    int64  `json:"-"`
+}
+
+// specific command, will only update version
+type UpdatePluginSettingVersionCmd struct {
+	PluginVersion string
+	PluginId      string `json:"-"`
+	OrgId         int64  `json:"-"`
 }
 
 func (cmd *UpdatePluginSettingCmd) GetEncryptedJsonData() SecureJsonData {
@@ -65,14 +74,21 @@ type GetPluginSettingsQuery struct {
 }
 
 type PluginSettingInfoDTO struct {
-	OrgId    int64
-	PluginId string
-	Enabled  bool
-	Pinned   bool
+	OrgId         int64
+	PluginId      string
+	Enabled       bool
+	Pinned        bool
+	PluginVersion string
 }
 
 type GetPluginSettingByIdQuery struct {
 	PluginId string
 	OrgId    int64
 	Result   *PluginSetting
+}
+
+type PluginStateChangedEvent struct {
+	PluginId string
+	OrgId    int64
+	Enabled  bool
 }
