@@ -6,6 +6,29 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
+type AlertStateType string
+type AlertSeverityType string
+
+const (
+	AlertStatePending AlertStateType = "pending"
+	AlertStateFiring  AlertStateType = "firing"
+	AlertStateOK      AlertStateType = "ok"
+)
+
+func (s AlertStateType) IsValid() bool {
+	return s == AlertStatePending || s == AlertStateFiring || s == AlertStateOK
+}
+
+const (
+	AlertSeverityCritical AlertSeverityType = "critical"
+	AlertSeverityWarning  AlertSeverityType = "warning"
+	AlertSeverityInfo     AlertSeverityType = "info"
+)
+
+func (s AlertSeverityType) IsValid() bool {
+	return s == AlertSeverityCritical || s == AlertSeverityInfo || s == AlertSeverityWarning
+}
+
 type Alert struct {
 	Id          int64
 	OrgId       int64
@@ -13,7 +36,8 @@ type Alert struct {
 	PanelId     int64
 	Name        string
 	Description string
-	State       string
+	Severity    AlertSeverityType
+	State       AlertStateType
 	Handler     int64
 	Enabled     bool
 	Frequency   int64
@@ -31,7 +55,7 @@ func (alert *Alert) ValidToSave() bool {
 	return alert.DashboardId != 0 && alert.OrgId != 0 && alert.PanelId != 0
 }
 
-func (alert *Alert) ShouldUpdateState(newState string) bool {
+func (alert *Alert) ShouldUpdateState(newState AlertStateType) bool {
 	return alert.State != newState
 }
 
@@ -73,31 +97,19 @@ type HeartBeatCommand struct {
 	Result   AlertingClusterInfo
 }
 
-type AlertChange struct {
-	Id               int64            `json:"id"`
-	OrgId            int64            `json:"-"`
-	AlertId          int64            `json:"alertId"`
-	UpdatedBy        int64            `json:"updatedBy"`
-	NewAlertSettings *simplejson.Json `json:"newAlertSettings"`
-	Type             string           `json:"type"`
-	Created          time.Time        `json:"created"`
-}
-
-// Commands
-type CreateAlertChangeCommand struct {
-	OrgId            int64
-	AlertId          int64
-	UpdatedBy        int64
-	NewAlertSettings *simplejson.Json
-	Type             string
-}
-
 type SaveAlertsCommand struct {
 	DashboardId int64
 	UserId      int64
 	OrgId       int64
 
 	Alerts []*Alert
+}
+
+type SetAlertStateCommand struct {
+	AlertId   int64
+	OrgId     int64
+	State     AlertStateType
+	Timestamp time.Time
 }
 
 type DeleteAlertCommand struct {
@@ -122,12 +134,4 @@ type GetAlertByIdQuery struct {
 	Id int64
 
 	Result *Alert
-}
-
-type GetAlertChangesQuery struct {
-	OrgId   int64
-	Limit   int64
-	SinceId int64
-
-	Result []*AlertChange
 }

@@ -1,16 +1,13 @@
 package alerting
 
 import (
-	"time"
-
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
 type ResultHandler interface {
-	Handle(result *AlertResult)
+	Handle(result *AlertResultContext)
 }
 
 type ResultHandlerImpl struct {
@@ -20,49 +17,37 @@ type ResultHandlerImpl struct {
 
 func NewResultHandler() *ResultHandlerImpl {
 	return &ResultHandlerImpl{
-		log:      log.New("alerting.responseHandler"),
-		notifier: NewNotifier(),
+		log:      log.New("alerting.resultHandler"),
+		notifier: NewRootNotifier(),
 	}
 }
 
-func (handler *ResultHandlerImpl) Handle(result *AlertResult) {
-	if handler.shouldUpdateState(result) {
-		cmd := &m.UpdateAlertStateCommand{
-			AlertId:         result.AlertJob.Rule.Id,
-			State:           result.State,
-			Info:            result.Description,
-			OrgId:           result.AlertJob.Rule.OrgId,
-			TriggeredAlerts: simplejson.NewFromAny(result.TriggeredAlerts),
+func (handler *ResultHandlerImpl) Handle(result *AlertResultContext) {
+	var newState m.AlertStateType
+
+	if result.Error != nil {
+		handler.log.Error("Alert Rule Result Error", "ruleId", result.Rule.Id, "error", result.Error)
+		newState = m.AlertStatePending
+	} else if result.Firing {
+		newState = m.AlertStateFiring
+	} else {
+		newState = m.AlertStateOK
+	}
+
+	if result.Rule.State != newState {
+		handler.log.Info("New state change", "alertId", result.Rule.Id, "newState", newState, "oldState", result.Rule.State)
+
+		cmd := &m.SetAlertStateCommand{
+			AlertId: result.Rule.Id,
+			OrgId:   result.Rule.OrgId,
+			State:   newState,
 		}
 
 		if err := bus.Dispatch(cmd); err != nil {
 			handler.log.Error("Failed to save state", "error", err)
 		}
 
-		handler.log.Debug("will notify about new state", "new state", result.State)
+		result.Rule.State = newState
 		handler.notifier.Notify(result)
 	}
-}
-
-func (handler *ResultHandlerImpl) shouldUpdateState(result *AlertResult) bool {
-	query := &m.GetLastAlertStateQuery{
-		AlertId: result.AlertJob.Rule.Id,
-		OrgId:   result.AlertJob.Rule.OrgId,
-	}
-
-	if err := bus.Dispatch(query); err != nil {
-		log.Error2("Failed to read last alert state", "error", err)
-		return false
-	}
-
-	if query.Result == nil {
-		return true
-	}
-
-	lastExecution := query.Result.Created
-	asdf := result.StartTime.Add(time.Minute * -15)
-	olderThen15Min := lastExecution.Before(asdf)
-	changedState := query.Result.State != result.State
-
-	return changedState || olderThen15Min
 }

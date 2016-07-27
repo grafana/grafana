@@ -27,11 +27,9 @@ export class AlertListCtrl {
 
   updateFilter() {
     var stats = [];
-
-    this.filter.ok && stats.push('Ok');
+    this.filter.ok && stats.push('OK');
     this.filter.warn && stats.push('Warn');
     this.filter.critical && stats.push('critical');
-    this.filter.acknowleged && stats.push('acknowleged');
 
     this.$route.current.params.state = stats;
     this.$route.updateParams();
@@ -40,10 +38,9 @@ export class AlertListCtrl {
   loadAlerts() {
     var stats = [];
 
-    this.filter.ok && stats.push('Ok');
+    this.filter.ok && stats.push('OK');
     this.filter.warn && stats.push('Warn');
     this.filter.critical && stats.push('critical');
-    this.filter.acknowleged && stats.push('acknowleged');
 
     var params = {
       state: stats
@@ -51,7 +48,7 @@ export class AlertListCtrl {
 
     this.backendSrv.get('/api/alerts', params).then(result => {
       this.alerts = _.map(result, alert => {
-        alert.iconCss = alertDef.getCssForState(alert.state);
+        alert.severityClass = alertDef.getSeverityIconClass(alert.severity);
         return alert;
       });
     });

@@ -113,37 +113,18 @@ color: #FFFFFF !important;
 					<table class="container" style="border-collapse: collapse; border-spacing: 0; margin: 0 auto; padding: 0; text-align: inherit; vertical-align: top; width: 580px">
 						<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
 							<td style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0; text-align: left; vertical-align: top; word-break: break-word" align="left" valign="top">
-								
+								{{Subject .Subject "Grafana Alert: {{.Severity}} {{.RuleName}}"}}
 
-{{Subject .Subject "Grafana Alert: [ {{.State}} ] {{.Name}}" }}
+<br />
+<br />
 
-Alertstate: {{.State}}<br />
-{{.AlertPageUrl}}<br />
-{{.DashboardLink}}<br />
-{{.Description}}<br />
+Alert rule: {{.RuleName}}<br />
+Alert state: {{.RuleState}}<br />
 
-{{if eq .State "Ok"}}
-    Everything is Ok     
-{{end}}
+<a href="{{.RuleLink}}" style="color: #E67612; text-decoration: none">Link to alert rule</a>
 
-{{if ne .State "Ok" }}
-    <img src="{{.DashboardImage}}" style="-ms-interpolation-mode: bicubic; clear: both; display: block; float: left; max-width: 100%; outline: none; text-decoration: none; width: auto" align="left" />
+<br />
 
-    <table class="row" style="border-collapse: collapse; border-spacing: 0; display: block; padding: 0px; position: relative; text-align: left; vertical-align: top; width: 100%">
-        <tr style="padding: 0; text-align: left; vertical-align: top" align="left">
-            <td class="expander" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0; text-align: left; vertical-align: top; visibility: hidden; width: 0px; word-break: break-word" align="left" valign="top">Serie</td>
-            <td class="expander" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0; text-align: left; vertical-align: top; visibility: hidden; width: 0px; word-break: break-word" align="left" valign="top">State</td>
-            <td class="expander" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0; text-align: left; vertical-align: top; visibility: hidden; width: 0px; word-break: break-word" align="left" valign="top">Actual value</td>
-        </tr>
-        {{ range $ta := .TriggeredAlerts}}            
-        <tr style="padding: 0; text-align: left; vertical-align: top" align="left">
-            <td class="expander" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0; text-align: left; vertical-align: top; visibility: hidden; width: 0px; word-break: break-word" align="left" valign="top">{{$ta.Name}}</td>
-            <td class="expander" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0; text-align: left; vertical-align: top; visibility: hidden; width: 0px; word-break: break-word" align="left" valign="top">{{$ta.State}}</td>
-            <td class="expander" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0; text-align: left; vertical-align: top; visibility: hidden; width: 0px; word-break: break-word" align="left" valign="top">{{$ta.ActualValue}}</td>
-        </tr>
-        {{end}}
-    </table>
-{{end}}
 
 								
 								<table class="row footer" style="border-collapse: collapse; border-spacing: 0; display: block; margin-top: 20px; padding: 0px; position: relative; text-align: left; vertical-align: top; width: 100%">

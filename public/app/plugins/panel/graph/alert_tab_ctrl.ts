@@ -1,8 +1,6 @@
  ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import $ from 'jquery';
-import angular from 'angular';
 
 import {
   QueryPartDef,
@@ -19,72 +17,107 @@ var alertQueryDef = new QueryPartDef({
   defaultParams: ['#A', '5m', 'now', 'avg']
 });
 
+var reducerAvgDef = new QueryPartDef({
+  type: 'avg',
+  params: [],
+  defaultParams: []
+});
+
 export class AlertTabCtrl {
   panel: any;
   panelCtrl: any;
-  metricTargets;
+  testing: boolean;
+  testResult: any;
+
   handlers = [{text: 'Grafana', value: 1}, {text: 'External', value: 0}];
-  transforms = [
-    {
-      text: 'Aggregation',
-      type: 'aggregation',
-    },
-    {
-      text: 'Linear Forecast',
-      type: 'forecast',
-    },
+  conditionTypes = [
+    {text: 'Query', value: 'query'},
+    {text: 'Other alert', value: 'other_alert'},
+    {text: 'Time of day', value: 'time_of_day'},
+    {text: 'Day of week', value: 'day_of_week'},
   ];
-  aggregators = ['avg', 'sum', 'min', 'max', 'last'];
   alert: any;
-  thresholds: any;
-  query: any;
-  queryParams: any;
-  transformDef: any;
-  levelOpList = [
+  conditionModels: any;
+  evalFunctions = [
     {text: '>', value: '>'},
     {text: '<', value: '<'},
-    {text: '=', value: '='},
   ];
+  severityLevels = [
+    {text: 'Critical', value: 'critical'},
+    {text: 'Warning', value: 'warning'},
+  ];
+  addNotificationSegment;
+  notifications;
+  alertNotifications;
 
   /** @ngInject */
-  constructor($scope, private $timeout) {
+  constructor(private $scope, private $timeout, private backendSrv, private dashboardSrv, private uiSegmentSrv) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
-    $scope.ctrl = this;
+    this.$scope.ctrl = this;
+  }
 
-    this.metricTargets = this.panel.targets.map(val => val);
+  $onInit() {
+    this.addNotificationSegment = this.uiSegmentSrv.newPlusButton();
+
     this.initModel();
 
     // set panel alert edit mode
-    $scope.$on("$destroy", () => {
+    this.$scope.$on("$destroy", () => {
       this.panelCtrl.editingAlert = false;
       this.panelCtrl.render();
     });
+
+    // build notification model
+    this.notifications = [];
+    this.alertNotifications = [];
+
+    return this.backendSrv.get('/api/alert-notifications').then(res => {
+      this.notifications = res;
+
+      _.each(this.alert.notifications, item => {
+        var model = _.findWhere(this.notifications, {id: item.id});
+        if (model) {
+          this.alertNotifications.push(model);
+        }
+      });
+    });
   }
 
-  getThresholdWithDefaults(threshold) {
-    threshold = threshold || {};
-    threshold.op = threshold.op || '>';
-    threshold.value = threshold.value || undefined;
-    return threshold;
+  getNotifications() {
+    return Promise.resolve(this.notifications.map(item => {
+      return this.uiSegmentSrv.newSegment(item.name);
+    }));
+  }
+
+  notificationAdded() {
+    var model = _.findWhere(this.notifications, {name: this.addNotificationSegment.value});
+    if (!model) {
+      return;
+    }
+
+    this.alertNotifications.push({name: model.name});
+    this.alert.notifications.push({id: model.id});
+
+    // reset plus button
+    this.addNotificationSegment.value = this.uiSegmentSrv.newPlusButton().value;
+    this.addNotificationSegment.html = this.uiSegmentSrv.newPlusButton().html;
+  }
+
+  removeNotification(index) {
+    this.alert.notifications.splice(index, 1);
+    this.alertNotifications.splice(index, 1);
   }
 
   initModel() {
     var alert = this.alert = this.panel.alert = this.panel.alert || {};
 
-    // set threshold defaults
-    alert.warn = this.getThresholdWithDefaults(alert.warn);
-    alert.crit = this.getThresholdWithDefaults(alert.crit);
+    alert.conditions = alert.conditions || [];
+    if (alert.conditions.length === 0) {
+      alert.conditions.push(this.buildDefaultCondition());
+    }
 
-    alert.query = alert.query || {};
-    alert.query.refId = alert.query.refId || 'A';
-    alert.query.from = alert.query.from || '5m';
-    alert.query.to = alert.query.to || 'now';
-
-    alert.transform = alert.transform || {};
-    alert.transform.type = alert.transform.type || 'aggregation';
-    alert.transform.method = alert.transform.method || 'avg';
-
+    alert.severity = alert.severity || 'critical';
     alert.frequency = alert.frequency || '60s';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
@@ -93,50 +126,87 @@ export class AlertTabCtrl {
     alert.name = alert.name || defaultName;
     alert.description = alert.description || defaultName;
 
-    // great temp working model
-    this.queryParams = {
-      params: [alert.query.refId, alert.query.from, alert.query.to]
-    };
+    this.conditionModels = _.reduce(alert.conditions, (memo, value) => {
+      memo.push(this.buildConditionModel(value));
+      return memo;
+    }, []);
 
-    // init the query part components model
-    this.query = new QueryPart(this.queryParams, alertQueryDef);
-    this.transformDef = _.findWhere(this.transforms, {type: alert.transform.type});
-
-    this.panelCtrl.editingAlert = true;
+    ///this.panelCtrl.editingAlert = true;
+    this.syncThresholds();
     this.panelCtrl.render();
   }
 
-  queryUpdated() {
-    this.alert.query = {
-      refId: this.query.params[0],
-      from: this.query.params[1],
-      to: this.query.params[2],
+  syncThresholds() {
+    var threshold: any = {};
+    if (this.panel.thresholds && this.panel.thresholds.length > 0) {
+      threshold = this.panel.thresholds[0];
+    } else {
+      this.panel.thresholds = [threshold];
+    }
+
+    var updated = false;
+    for (var condition of this.conditionModels) {
+      if (condition.type === 'query') {
+        var value = condition.evaluator.params[0];
+        if (!_.isNumber(value)) {
+          continue;
+        }
+
+        if (value !== threshold.from) {
+          threshold.from = value;
+          updated = true;
+        }
+
+        if (condition.evaluator.type === '<' && threshold.to !== -Infinity) {
+          threshold.to = -Infinity;
+          updated = true;
+        } else if (condition.evaluator.type === '>' && threshold.to !== Infinity) {
+          threshold.to = Infinity;
+          updated = true;
+        }
+      }
+    }
+
+    return updated;
+  }
+
+  buildDefaultCondition() {
+    return {
+      type: 'query',
+      query: {params: ['A', '5m', 'now']},
+      reducer: {type: 'avg', params: []},
+      evaluator: {type: '>', params: [null]},
     };
   }
 
-  transformChanged() {
-    // clear model
-    this.alert.transform = {type: this.alert.transform.type};
-    this.transformDef = _.findWhere(this.transforms, {type: this.alert.transform.type});
+  buildConditionModel(source) {
+    var cm: any = {source: source, type: source.type};
 
-    switch (this.alert.transform.type) {
-      case 'aggregation':  {
-        this.alert.transform.method = 'avg';
-        break;
-      }
-      case "forecast": {
-        this.alert.transform.timespan = '7d';
-        break;
-      }
-    }
+    cm.queryPart = new QueryPart(source.query, alertQueryDef);
+    cm.reducerPart = new QueryPart({params: []}, reducerAvgDef);
+    cm.evaluator = source.evaluator;
+
+    return cm;
+  }
+
+  queryPartUpdated(conditionModel) {
+  }
+
+  addCondition(type) {
+    var condition = this.buildDefaultCondition();
+    // add to persited model
+    this.alert.conditions.push(condition);
+    // add to view model
+    this.conditionModels.push(this.buildConditionModel(condition));
+  }
+
+  removeCondition(index) {
+    this.alert.conditions.splice(index, 1);
+    this.conditionModels.splice(index, 1);
   }
 
   delete() {
     this.alert.enabled = false;
-    this.alert.warn.value = undefined;
-    this.alert.crit.value = undefined;
-
-    // reset model but keep thresholds instance
     this.initModel();
   }
 
@@ -145,8 +215,24 @@ export class AlertTabCtrl {
     this.initModel();
   }
 
-  thresholdsUpdated() {
-    this.panelCtrl.render();
+  thresholdUpdated() {
+    if (this.syncThresholds()) {
+      this.panelCtrl.render();
+    }
+  }
+
+  test() {
+    this.testing = true;
+
+    var payload = {
+      dashboard: this.dashboardSrv.getCurrent().getSaveModelClone(),
+      panelId: this.panelCtrl.panel.id,
+    };
+
+    return this.backendSrv.post('/api/alerts/test', payload).then(res => {
+      this.testResult = res;
+      this.testing = false;
+    });
   }
 }
 

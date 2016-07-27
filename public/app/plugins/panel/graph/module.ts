@@ -105,6 +105,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     // other style overrides
     seriesOverrides: [],
     alerting: {},
+    thresholds: [],
   };
 
   /** @ngInject */
@@ -132,7 +133,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
 
     if (config.alertingEnabled) {
-      this.addEditorTab('Alerting', graphAlertEditor, 5);
+      this.addEditorTab('Alert', graphAlertEditor, 5);
     }
 
     this.logScales = {

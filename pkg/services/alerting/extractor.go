@@ -47,6 +47,17 @@ func (e *DashAlertExtractor) lookupDatasourceId(dsName string) (*m.DataSource, e
 	return nil, errors.New("Could not find datasource id for " + dsName)
 }
 
+func findPanelQueryByRefId(panel *simplejson.Json, refId string) *simplejson.Json {
+	for _, targetsObj := range panel.Get("targets").MustArray() {
+		target := simplejson.NewFromAny(targetsObj)
+
+		if target.Get("refId").MustString() == refId {
+			return target
+		}
+	}
+	return nil
+}
+
 func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 	e.log.Debug("GetAlerts")
 
@@ -78,34 +89,39 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				Handler:     jsonAlert.Get("handler").MustInt64(),
 				Enabled:     jsonAlert.Get("enabled").MustBool(),
 				Description: jsonAlert.Get("description").MustString(),
+				Severity:    m.AlertSeverityType(jsonAlert.Get("severity").MustString()),
 				Frequency:   getTimeDurationStringToSeconds(jsonAlert.Get("frequency").MustString()),
 			}
 
-			valueQuery := jsonAlert.Get("query")
-			valueQueryRef := valueQuery.Get("refId").MustString()
-			for _, targetsObj := range panel.Get("targets").MustArray() {
-				target := simplejson.NewFromAny(targetsObj)
+			if !alert.Severity.IsValid() {
+				return nil, AlertValidationError{Reason: "Invalid alert Severity"}
+			}
 
-				if target.Get("refId").MustString() == valueQueryRef {
-					dsName := ""
-					if target.Get("datasource").MustString() != "" {
-						dsName = target.Get("datasource").MustString()
-					} else if panel.Get("datasource").MustString() != "" {
-						dsName = panel.Get("datasource").MustString()
-					}
+			for _, condition := range jsonAlert.Get("conditions").MustArray() {
+				jsonCondition := simplejson.NewFromAny(condition)
 
-					if datasource, err := e.lookupDatasourceId(dsName); err != nil {
-						return nil, err
-					} else {
-						valueQuery.SetPath([]string{"datasourceId"}, datasource.Id)
-						valueQuery.SetPath([]string{"datasourceType"}, datasource.Type)
-					}
+				jsonQuery := jsonCondition.Get("query")
+				queryRefId := jsonQuery.Get("params").MustArray()[0].(string)
+				panelQuery := findPanelQueryByRefId(panel, queryRefId)
 
-					targetQuery := target.Get("target").MustString()
-					if targetQuery != "" {
-						jsonAlert.SetPath([]string{"query", "query"}, targetQuery)
-					}
+				if panelQuery == nil {
+					return nil, AlertValidationError{Reason: "Alert refes to query that cannot be found"}
 				}
+
+				dsName := ""
+				if panelQuery.Get("datasource").MustString() != "" {
+					dsName = panelQuery.Get("datasource").MustString()
+				} else if panel.Get("datasource").MustString() != "" {
+					dsName = panel.Get("datasource").MustString()
+				}
+
+				if datasource, err := e.lookupDatasourceId(dsName); err != nil {
+					return nil, err
+				} else {
+					jsonQuery.SetPath([]string{"datasourceId"}, datasource.Id)
+				}
+
+				jsonQuery.Set("model", panelQuery.Interface())
 			}
 
 			alert.Settings = jsonAlert
@@ -116,9 +132,8 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				alerts = append(alerts, alert)
 			} else {
 				e.log.Error("Failed to extract alerts from dashboard", "error", err)
-				return nil, errors.New("Failed to extract alerts from dashboard")
+				return nil, err
 			}
-
 		}
 	}
 

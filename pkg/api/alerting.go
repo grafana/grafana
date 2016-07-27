@@ -1,10 +1,13 @@
 package api
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func ValidateOrgAlert(c *middleware.Context) {
@@ -36,16 +39,17 @@ func GetAlerts(c *middleware.Context) Response {
 	}
 
 	dashboardIds := make([]int64, 0)
-	alertDTOs := make([]*dtos.AlertRuleDTO, 0)
+	alertDTOs := make([]*dtos.AlertRule, 0)
 	for _, alert := range query.Result {
 		dashboardIds = append(dashboardIds, alert.DashboardId)
-		alertDTOs = append(alertDTOs, &dtos.AlertRuleDTO{
+		alertDTOs = append(alertDTOs, &dtos.AlertRule{
 			Id:          alert.Id,
 			DashboardId: alert.DashboardId,
 			PanelId:     alert.PanelId,
 			Name:        alert.Name,
 			Description: alert.Description,
 			State:       alert.State,
+			Severity:    alert.Severity,
 		})
 	}
 
@@ -69,6 +73,40 @@ func GetAlerts(c *middleware.Context) Response {
 	}
 
 	return Json(200, alertDTOs)
+}
+
+// POST /api/alerts/test
+func AlertTest(c *middleware.Context, dto dtos.AlertTestCommand) Response {
+	backendCmd := alerting.AlertTestCommand{
+		OrgId:     c.OrgId,
+		Dashboard: dto.Dashboard,
+		PanelId:   dto.PanelId,
+	}
+
+	if err := bus.Dispatch(&backendCmd); err != nil {
+		if validationErr, ok := err.(alerting.AlertValidationError); ok {
+			return ApiError(422, validationErr.Error(), nil)
+		}
+		return ApiError(500, "Failed to test rule", err)
+	}
+
+	res := backendCmd.Result
+
+	dtoRes := &dtos.AlertTestResult{
+		Firing: res.Firing,
+	}
+
+	if res.Error != nil {
+		dtoRes.Error = res.Error.Error()
+	}
+
+	for _, log := range res.Logs {
+		dtoRes.Logs = append(dtoRes.Logs, &dtos.AlertTestResultLog{Message: log.Message, Data: log.Data})
+	}
+
+	dtoRes.TimeMs = fmt.Sprintf("%1.3fms", res.GetDurationMs())
+
+	return Json(200, dtoRes)
 }
 
 // GET /api/alerts/:id
@@ -101,55 +139,53 @@ func DelAlert(c *middleware.Context) Response {
 	return Json(200, resp)
 }
 
-// GET /api/alerts/events/:id
-func GetAlertStates(c *middleware.Context) Response {
-	alertId := c.ParamsInt64(":alertId")
-
-	query := models.GetAlertsStateQuery{
-		AlertId: alertId,
-	}
-
-	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Failed get alert state log", err)
-	}
-
-	return Json(200, query.Result)
-}
-
-// PUT /api/alerts/events/:id
-func PutAlertState(c *middleware.Context, cmd models.UpdateAlertStateCommand) Response {
-	cmd.AlertId = c.ParamsInt64(":alertId")
-	cmd.OrgId = c.OrgId
-
-	query := models.GetAlertByIdQuery{Id: cmd.AlertId}
-	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Failed to get alertstate", err)
-	}
-
-	if query.Result.OrgId != 0 && query.Result.OrgId != c.OrgId {
-		return ApiError(500, "Alert not found", nil)
-	}
-
-	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to set new state", err)
-	}
-
-	return Json(200, cmd.Result)
-}
+// // GET /api/alerts/events/:id
+// func GetAlertStates(c *middleware.Context) Response {
+// 	alertId := c.ParamsInt64(":alertId")
+//
+// 	query := models.GetAlertsStateQuery{
+// 		AlertId: alertId,
+// 	}
+//
+// 	if err := bus.Dispatch(&query); err != nil {
+// 		return ApiError(500, "Failed get alert state log", err)
+// 	}
+//
+// 	return Json(200, query.Result)
+// }
+//
+// // PUT /api/alerts/events/:id
+// func PutAlertState(c *middleware.Context, cmd models.UpdateAlertStateCommand) Response {
+// 	cmd.AlertId = c.ParamsInt64(":alertId")
+// 	cmd.OrgId = c.OrgId
+//
+// 	query := models.GetAlertByIdQuery{Id: cmd.AlertId}
+// 	if err := bus.Dispatch(&query); err != nil {
+// 		return ApiError(500, "Failed to get alertstate", err)
+// 	}
+//
+// 	if query.Result.OrgId != 0 && query.Result.OrgId != c.OrgId {
+// 		return ApiError(500, "Alert not found", nil)
+// 	}
+//
+// 	if err := bus.Dispatch(&cmd); err != nil {
+// 		return ApiError(500, "Failed to set new state", err)
+// 	}
+//
+// 	return Json(200, cmd.Result)
+// }
 
 func GetAlertNotifications(c *middleware.Context) Response {
-	query := &models.GetAlertNotificationQuery{
-		OrgID: c.OrgId,
-	}
+	query := &models.GetAlertNotificationsQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(query); err != nil {
 		return ApiError(500, "Failed to get alert notifications", err)
 	}
 
-	var result []dtos.AlertNotificationDTO
+	var result []dtos.AlertNotification
 
 	for _, notification := range query.Result {
-		result = append(result, dtos.AlertNotificationDTO{
+		result = append(result, dtos.AlertNotification{
 			Id:      notification.Id,
 			Name:    notification.Name,
 			Type:    notification.Type,
@@ -162,8 +198,8 @@ func GetAlertNotifications(c *middleware.Context) Response {
 }
 
 func GetAlertNotificationById(c *middleware.Context) Response {
-	query := &models.GetAlertNotificationQuery{
-		OrgID: c.OrgId,
+	query := &models.GetAlertNotificationsQuery{
+		OrgId: c.OrgId,
 		Id:    c.ParamsInt64("notificationId"),
 	}
 
@@ -175,7 +211,7 @@ func GetAlertNotificationById(c *middleware.Context) Response {
 }
 
 func CreateAlertNotification(c *middleware.Context, cmd models.CreateAlertNotificationCommand) Response {
-	cmd.OrgID = c.OrgId
+	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to create alert notification", err)
@@ -185,7 +221,7 @@ func CreateAlertNotification(c *middleware.Context, cmd models.CreateAlertNotifi
 }
 
 func UpdateAlertNotification(c *middleware.Context, cmd models.UpdateAlertNotificationCommand) Response {
-	cmd.OrgID = c.OrgId
+	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to update alert notification", err)
@@ -204,5 +240,5 @@ func DeleteAlertNotification(c *middleware.Context) Response {
 		return ApiError(500, "Failed to delete alert notification", err)
 	}
 
-	return Json(200, map[string]interface{}{"notificationId": cmd.Id})
+	return ApiSuccess("Notification deleted")
 }

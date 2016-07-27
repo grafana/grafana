@@ -4,31 +4,32 @@ import (
 	"fmt"
 	"regexp"
 	"strconv"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/services/alerting/transformers"
 
 	m "github.com/grafana/grafana/pkg/models"
 )
 
 type AlertRule struct {
-	Id              int64
-	OrgId           int64
-	DashboardId     int64
-	PanelId         int64
-	Frequency       int64
-	Name            string
-	Description     string
-	State           string
-	Warning         Level
-	Critical        Level
-	Query           AlertQuery
-	Transform       string
-	TransformParams simplejson.Json
-	Transformer     transformers.Transformer
+	Id            int64
+	OrgId         int64
+	DashboardId   int64
+	PanelId       int64
+	Frequency     int64
+	Name          string
+	Description   string
+	State         m.AlertStateType
+	Severity      m.AlertSeverityType
+	Conditions    []AlertCondition
+	Notifications []int64
+}
 
-	NotificationGroups []int64
+type AlertValidationError struct {
+	Reason string
+}
+
+func (e AlertValidationError) Error() string {
+	return e.Reason
 }
 
 var (
@@ -59,60 +60,37 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 	model := &AlertRule{}
 	model.Id = ruleDef.Id
 	model.OrgId = ruleDef.OrgId
+	model.DashboardId = ruleDef.DashboardId
+	model.PanelId = ruleDef.PanelId
 	model.Name = ruleDef.Name
 	model.Description = ruleDef.Description
-	model.State = ruleDef.State
 	model.Frequency = ruleDef.Frequency
+	model.Severity = ruleDef.Severity
+	model.State = ruleDef.State
 
-	ngs := ruleDef.Settings.Get("notificationGroups").MustString()
-	var ids []int64
-	for _, v := range strings.Split(ngs, ",") {
-		id, err := strconv.Atoi(v)
-		if err == nil {
-			ids = append(ids, int64(id))
+	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
+		jsonModel := simplejson.NewFromAny(v)
+		if id, err := jsonModel.Get("id").Int64(); err != nil {
+			return nil, AlertValidationError{Reason: "Invalid notification schema"}
+		} else {
+			model.Notifications = append(model.Notifications, id)
 		}
 	}
 
-	model.NotificationGroups = ids
-
-	critical := ruleDef.Settings.Get("crit")
-	model.Critical = Level{
-		Operator: critical.Get("op").MustString(),
-		Value:    critical.Get("value").MustFloat64(),
+	for index, condition := range ruleDef.Settings.Get("conditions").MustArray() {
+		conditionModel := simplejson.NewFromAny(condition)
+		switch conditionModel.Get("type").MustString() {
+		case "query":
+			queryCondition, err := NewQueryCondition(conditionModel, index)
+			if err != nil {
+				return nil, err
+			}
+			model.Conditions = append(model.Conditions, queryCondition)
+		}
 	}
 
-	warning := ruleDef.Settings.Get("warn")
-	model.Warning = Level{
-		Operator: warning.Get("op").MustString(),
-		Value:    warning.Get("value").MustFloat64(),
-	}
-
-	model.Transform = ruleDef.Settings.Get("transform").Get("type").MustString()
-	if model.Transform == "" {
-		return nil, fmt.Errorf("missing transform")
-	}
-
-	model.TransformParams = *ruleDef.Settings.Get("transform")
-
-	if model.Transform == "aggregation" {
-		method := ruleDef.Settings.Get("transform").Get("method").MustString()
-		model.Transformer = transformers.NewAggregationTransformer(method)
-	}
-
-	query := ruleDef.Settings.Get("query")
-	model.Query = AlertQuery{
-		Query:        query.Get("query").MustString(),
-		DatasourceId: query.Get("datasourceId").MustInt64(),
-		From:         query.Get("from").MustString(),
-		To:           query.Get("to").MustString(),
-	}
-
-	if model.Query.Query == "" {
-		return nil, fmt.Errorf("missing query.query")
-	}
-
-	if model.Query.DatasourceId == 0 {
-		return nil, fmt.Errorf("missing query.datasourceId")
+	if len(model.Conditions) == 0 {
+		return nil, fmt.Errorf("Alert is missing conditions")
 	}
 
 	return model, nil

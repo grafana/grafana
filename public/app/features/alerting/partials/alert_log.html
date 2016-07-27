@@ -6,55 +6,6 @@
     <h1>Alert history for {{ctrl.alert.title}}</h1>
   </div>
 
-  <div class="gf-form-group section" >
-    <h5 class="section-heading">Thresholds</h5>
-    <div class="gf-form">
-      <span class="gf-form-label width-9">
-        <i class="icon-gf icon-gf-warn alert-icon-warn"></i>
-        Warn level
-      </span>
-      <div class="gf-form-label max-width-10">
-        {{ctrl.alert.warnOperator}}
-      </div>
-      <div class="gf-form-label max-width-10">
-        {{ctrl.alert.warnLevel}}
-      </div>
-    </div>
-    <div class="gf-form">
-      <span class="gf-form-label width-9">
-        <i class="icon-gf icon-gf-critical alert-icon-critical"></i>
-        Critical level
-      </span>
-      <div class="gf-form-label max-width-10">
-        {{ctrl.alert.critOperator}}
-      </div>
-      <div class="gf-form-label max-width-10">
-        {{ctrl.alert.critLevel}}
-      </div>
-    </div>
-  </div>
-
-  <div class="gf-form-group section" >
-    <h5 class="section-heading">Aggregators</h5>
-    <div class="gf-form">
-      <span class="gf-form-label width-12">
-        Aggregator
-      </span>
-      <div class="gf-form-label max-width-10">
-        {{ctrl.alert.aggregator}}
-      </div>
-    </div>
-    <div class="gf-form">
-      <span class="gf-form-label width-12">Query range  (seconds)</span>
-      <span class="gf-form-label width-10">{{ctrl.alert.queryRange}}</span>
-    </div>
-
-    <div class="gf-form">
-      <span class="gf-form-label width-12">Frequency (seconds)</span>
-      <span class="gf-form-label width-10">{{ctrl.alert.frequency}}</span>
-    </div>
-  </div>
-
   <table class="filter-table">
     <thead>
       <th style="width: 68px">Status</th>

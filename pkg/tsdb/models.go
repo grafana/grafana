@@ -46,8 +46,8 @@ type QueryResult struct {
 }
 
 type TimeSeries struct {
-	Name   string
-	Points [][2]float64
+	Name   string       `json:"name"`
+	Points [][2]float64 `json:"points"`
 }
 
 type TimeSeriesSlice []*TimeSeries

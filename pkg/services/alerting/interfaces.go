@@ -1,9 +1,13 @@
 package alerting
 
-import "time"
+import (
+	"time"
 
-type AlertingHandler interface {
-	Execute(rule *AlertJob, resultChan chan *AlertResult)
+	"github.com/grafana/grafana/pkg/tsdb"
+)
+
+type AlertHandler interface {
+	Execute(context *AlertResultContext)
 }
 
 type Scheduler interface {
@@ -12,5 +16,18 @@ type Scheduler interface {
 }
 
 type Notifier interface {
-	Notify(alertResult *AlertResult)
+	Notify(alertResult *AlertResultContext)
+	GetType() string
+}
+
+type AlertCondition interface {
+	Eval(result *AlertResultContext)
+}
+
+type QueryReducer interface {
+	Reduce(timeSeries *tsdb.TimeSeries) float64
+}
+
+type AlertEvaluator interface {
+	Eval(timeSeries *tsdb.TimeSeries, reducedValue float64) bool
 }

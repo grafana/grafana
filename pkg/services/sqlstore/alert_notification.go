@@ -3,7 +3,7 @@ package sqlstore
 import (
 	"bytes"
 	"fmt"
-	"strconv"
+	"strings"
 	"time"
 
 	"github.com/go-xorm/xorm"
@@ -31,11 +31,11 @@ func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
 	})
 }
 
-func AlertNotificationQuery(query *m.GetAlertNotificationQuery) error {
+func AlertNotificationQuery(query *m.GetAlertNotificationsQuery) error {
 	return getAlertNotifications(query, x.NewSession())
 }
 
-func getAlertNotifications(query *m.GetAlertNotificationQuery, sess *xorm.Session) error {
+func getAlertNotifications(query *m.GetAlertNotificationsQuery, sess *xorm.Session) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
@@ -43,16 +43,15 @@ func getAlertNotifications(query *m.GetAlertNotificationQuery, sess *xorm.Sessio
 	   					  alert_notification.id,
 	   					  alert_notification.org_id,
 	   					  alert_notification.name,
-	                      alert_notification.type,
+	              alert_notification.type,
 	   					  alert_notification.created,
-	                      alert_notification.updated,
-	                      alert_notification.settings,
-						  alert_notification.always_execute
+	              alert_notification.updated,
+	              alert_notification.settings
 	   					  FROM alert_notification
 	   					  `)
 
 	sql.WriteString(` WHERE alert_notification.org_id = ?`)
-	params = append(params, query.OrgID)
+	params = append(params, query.OrgId)
 
 	if query.Name != "" {
 		sql.WriteString(` AND alert_notification.name = ?`)
@@ -61,60 +60,28 @@ func getAlertNotifications(query *m.GetAlertNotificationQuery, sess *xorm.Sessio
 
 	if query.Id != 0 {
 		sql.WriteString(` AND alert_notification.id = ?`)
-		params = append(params, strconv.Itoa(int(query.Id)))
+		params = append(params, query.Id)
 	}
 
 	if len(query.Ids) > 0 {
-		sql.WriteString(` AND (`)
-
-		for i, id := range query.Ids {
-			if i != 0 {
-				sql.WriteString(` OR`)
-			}
-			sql.WriteString(` alert_notification.id = ?`)
-			params = append(params, id)
+		sql.WriteString(` AND alert_notification.id IN (?` + strings.Repeat(",?", len(query.Ids)-1) + ")")
+		for _, v := range query.Ids {
+			params = append(params, v)
 		}
-
-		sql.WriteString(`)`)
 	}
 
-	var searches []*m.AlertNotification
-	if err := sess.Sql(sql.String(), params...).Find(&searches); err != nil {
+	results := make([]*m.AlertNotification, 0)
+	if err := sess.Sql(sql.String(), params...).Find(&results); err != nil {
 		return err
 	}
 
-	var result []*m.AlertNotification
-	var def []*m.AlertNotification
-	if query.IncludeAlwaysExecute {
-
-		if err := sess.Where("org_id = ? AND always_execute = 1", query.OrgID).Find(&def); err != nil {
-			return err
-		}
-
-		result = append(result, def...)
-	}
-
-	for _, s := range searches {
-		canAppend := true
-		for _, d := range result {
-			if d.Id == s.Id {
-				canAppend = false
-				break
-			}
-		}
-
-		if canAppend {
-			result = append(result, s)
-		}
-	}
-
-	query.Result = result
+	query.Result = results
 	return nil
 }
 
 func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		existingQuery := &m.GetAlertNotificationQuery{OrgID: cmd.OrgID, Name: cmd.Name, IncludeAlwaysExecute: false}
+		existingQuery := &m.GetAlertNotificationsQuery{OrgId: cmd.OrgId, Name: cmd.Name}
 		err := getAlertNotifications(existingQuery, sess)
 
 		if err != nil {
@@ -126,18 +93,15 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 		}
 
 		alertNotification := &m.AlertNotification{
-			OrgId:         cmd.OrgID,
-			Name:          cmd.Name,
-			Type:          cmd.Type,
-			Created:       time.Now(),
-			Settings:      cmd.Settings,
-			Updated:       time.Now(),
-			AlwaysExecute: cmd.AlwaysExecute,
+			OrgId:    cmd.OrgId,
+			Name:     cmd.Name,
+			Type:     cmd.Type,
+			Settings: cmd.Settings,
+			Created:  time.Now(),
+			Updated:  time.Now(),
 		}
 
-		_, err = sess.Insert(alertNotification)
-
-		if err != nil {
+		if _, err = sess.Insert(alertNotification); err != nil {
 			return err
 		}
 
@@ -148,38 +112,34 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 
 func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 	return inTransaction(func(sess *xorm.Session) (err error) {
-		current := &m.AlertNotification{}
-		_, err = sess.Id(cmd.Id).Get(current)
+		current := m.AlertNotification{}
 
-		if err != nil {
+		if _, err = sess.Id(cmd.Id).Get(&current); err != nil {
 			return err
 		}
 
-		alertNotification := &m.AlertNotification{
-			Id:            cmd.Id,
-			OrgId:         cmd.OrgID,
-			Name:          cmd.Name,
-			Type:          cmd.Type,
-			Settings:      cmd.Settings,
-			Updated:       time.Now(),
-			Created:       current.Created,
-			AlwaysExecute: cmd.AlwaysExecute,
-		}
-
-		sess.UseBool("always_execute")
-
-		var affected int64
-		affected, err = sess.Id(alertNotification.Id).Update(alertNotification)
-
-		if err != nil {
+		// check if name exists
+		sameNameQuery := &m.GetAlertNotificationsQuery{OrgId: cmd.OrgId, Name: cmd.Name}
+		if err := getAlertNotifications(sameNameQuery, sess); err != nil {
 			return err
 		}
 
-		if affected == 0 {
+		if len(sameNameQuery.Result) > 0 && sameNameQuery.Result[0].Id != current.Id {
+			return fmt.Errorf("Alert notification name %s already exists", cmd.Name)
+		}
+
+		current.Updated = time.Now()
+		current.Settings = cmd.Settings
+		current.Name = cmd.Name
+		current.Type = cmd.Type
+
+		if affected, err := sess.Id(cmd.Id).Update(current); err != nil {
+			return err
+		} else if affected == 0 {
 			return fmt.Errorf("Could not find alert notification")
 		}
 
-		cmd.Result = alertNotification
+		cmd.Result = &current
 		return nil
 	})
 }

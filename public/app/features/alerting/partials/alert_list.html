@@ -1,4 +1,4 @@
-<navbar icon="fa fa-fw fa-list" title="Alerting" title-url="alerting">
+<navbar icon="icon-gf icon-gf-monitoring" title="Alerting" title-url="alerting">
 </navbar>
 
 <div class="page-container" >
@@ -7,28 +7,29 @@
 	</div>
 
   <div class="gf-form-inline">
-		<gf-form-switch class="gf-form" label="Ok" label-class="width-5" checked="ctrl.filter.ok" on-change="ctrl.updateFilter()"></gf-form-switch>
+		<gf-form-switch class="gf-form" label="OK" label-class="width-5" checked="ctrl.filter.ok" on-change="ctrl.updateFilter()"></gf-form-switch>
 		<gf-form-switch class="gf-form" label="Warn" label-class="width-5" checked="ctrl.filter.warn" on-change="ctrl.updateFilter()"></gf-form-switch>
 		<gf-form-switch class="gf-form" label="Critical" label-class="width-5" checked="ctrl.filter.critical" on-change="ctrl.updateFilter()"></gf-form-switch>
-		<gf-form-switch class="gf-form" label="Acknowleged" label-class="width-7" checked="ctrl.filter.acknowleged" on-change="ctrl.updateFilter()"></gf-form-switch>
 	</div>
 
 	<table class="grafana-options-table">
 		<thead>
 			<th style="min-width: 200px"><strong>Name</strong></th>
 			<th style="width: 1%">State</th>
+			<th style="width: 1%">Severity</th>
 			<th style="width: 1%"></th>
 		</thead>
 		<tr ng-repeat="alert in ctrl.alerts">
 			<td>
-				<a href="alerting/{{alert.id}}/states">
+				<a href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&editorTab=Alerting">
 					{{alert.name}}
 				</a>
 			</td>
 			<td class="text-center">
-				<a href="alerting/{{alert.id}}/states">
-					<i class="icon-gf {{alert.iconCss}}"></i>
-				</a>
+				{{alert.state}}
+			</td>
+			<td class="text-center">
+				{{alert.severity}}
 			</td>
 			<td class="text-center">
 				<a href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&editorTab=Alerting" class="btn btn-inverse btn-small">
