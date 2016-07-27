@@ -2,17 +2,13 @@ package alerting
 
 import (
 	"errors"
-	"fmt"
-	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type RootNotifier struct {
-	NotifierBase
 	log log.Logger
 }
 
@@ -20,6 +16,10 @@ func NewRootNotifier() *RootNotifier {
 	return &RootNotifier{
 		log: log.New("alerting.notifier"),
 	}
+}
+
+func (n *RootNotifier) GetType() string {
+	return "root"
 }
 
 func (n *RootNotifier) Notify(context *AlertResultContext) {
@@ -46,7 +46,7 @@ func (n *RootNotifier) getNotifiers(orgId int64, notificationIds []int64) ([]Not
 
 	var result []Notifier
 	for _, notification := range query.Result {
-		if not, err := NewNotificationFromDBModel(notification); err != nil {
+		if not, err := n.getNotifierFor(notification); err != nil {
 			return nil, err
 		} else {
 			result = append(result, not)
@@ -56,47 +56,40 @@ func (n *RootNotifier) getNotifiers(orgId int64, notificationIds []int64) ([]Not
 	return result, nil
 }
 
-type NotifierBase struct {
-	Name string
-	Type string
-}
-
-func (n *NotifierBase) GetType() string {
-	return n.Type
-}
-
-type EmailNotifier struct {
-	NotifierBase
-	Addresses []string
-	log       log.Logger
-}
-
-func (this *EmailNotifier) Notify(context *AlertResultContext) {
-	this.log.Info("Sending alert notification to", "addresses", this.Addresses)
-
-	slugQuery := &m.GetDashboardSlugByIdQuery{Id: context.Rule.DashboardId}
-	if err := bus.Dispatch(slugQuery); err != nil {
-		this.log.Error("Failed to load dashboard", "error", err)
-		return
+func (n *RootNotifier) getNotifierFor(model *m.AlertNotification) (Notifier, error) {
+	factory, found := notifierFactories[model.Type]
+	if !found {
+		return nil, errors.New("Unsupported notification type")
 	}
 
-	ruleLink := fmt.Sprintf("%sdashboard/db/%s?fullscreen&edit&tab=alert&panelId=%d", setting.AppUrl, slugQuery.Result, context.Rule.PanelId)
+	return factory(model)
+	// if model.Type == "email" {
+	// 	addressesString := model.Settings.Get("addresses").MustString()
+	//
+	// 	if addressesString == "" {
+	// 		return nil, fmt.Errorf("Could not find addresses in settings")
+	// 	}
+	//
+	// 		NotifierBase: NotifierBase{
+	// 			Name: model.Name,
+	// 			Type: model.Type,
+	// 		},
+	// 		Addresses: strings.Split(addressesString, "\n"),
+	// 		log:       log.New("alerting.notification.email"),
+	// 	}, nil
+	// }
 
-	cmd := &m.SendEmailCommand{
-		Data: map[string]interface{}{
-			"RuleState": context.Rule.State,
-			"RuleName":  context.Rule.Name,
-			"Severity":  context.Rule.Severity,
-			"RuleLink":  ruleLink,
-		},
-		To:       this.Addresses,
-		Template: "alert_notification.html",
-	}
-
-	err := bus.Dispatch(cmd)
-	if err != nil {
-		this.log.Error("Failed to send alert notification email", "error", err)
-	}
+	// url := settings.Get("url").MustString()
+	// if url == "" {
+	// 	return nil, fmt.Errorf("Could not find url propertie in settings")
+	// }
+	//
+	// return &WebhookNotifier{
+	// 	Url:      url,
+	// 	User:     settings.Get("user").MustString(),
+	// 	Password: settings.Get("password").MustString(),
+	// 	log:      log.New("alerting.notification.webhook"),
+	// }, nil
 }
 
 // type WebhookNotifier struct {
@@ -126,35 +119,10 @@ func (this *EmailNotifier) Notify(context *AlertResultContext) {
 // 	bus.Dispatch(cmd)
 // }
 
-func NewNotificationFromDBModel(model *m.AlertNotification) (Notifier, error) {
-	if model.Type == "email" {
-		addressesString := model.Settings.Get("addresses").MustString()
+type NotifierFactory func(notification *m.AlertNotification) (Notifier, error)
 
-		if addressesString == "" {
-			return nil, fmt.Errorf("Could not find addresses in settings")
-		}
+var notifierFactories map[string]NotifierFactory = make(map[string]NotifierFactory)
 
-		return &EmailNotifier{
-			NotifierBase: NotifierBase{
-				Name: model.Name,
-				Type: model.Type,
-			},
-			Addresses: strings.Split(addressesString, "\n"),
-			log:       log.New("alerting.notification.email"),
-		}, nil
-	}
-
-	return nil, errors.New("Unsupported notification type")
-
-	// url := settings.Get("url").MustString()
-	// if url == "" {
-	// 	return nil, fmt.Errorf("Could not find url propertie in settings")
-	// }
-	//
-	// return &WebhookNotifier{
-	// 	Url:      url,
-	// 	User:     settings.Get("user").MustString(),
-	// 	Password: settings.Get("password").MustString(),
-	// 	log:      log.New("alerting.notification.webhook"),
-	// }, nil
+func RegisterNotifier(typeName string, factory NotifierFactory) {
+	notifierFactories[typeName] = factory
 }

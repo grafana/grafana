@@ -29,8 +29,7 @@ func (s *SchedulerImpl) Update(alerts []*AlertRule) {
 			job = s.jobs[rule.Id]
 		} else {
 			job = &AlertJob{
-				Running:    false,
-				RetryCount: 0,
+				Running: false,
 			}
 		}
 

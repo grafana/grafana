@@ -2,6 +2,8 @@ package notifications
 
 import (
 	"bytes"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"time"
 
@@ -39,6 +41,8 @@ func processWebhookQueue() {
 }
 
 func sendWebRequest(webhook *Webhook) error {
+	webhookLog.Debug("Sending webhook", "url", webhook.Url)
+
 	client := http.Client{
 		Timeout: time.Duration(3 * time.Second),
 	}
@@ -56,8 +60,17 @@ func sendWebRequest(webhook *Webhook) error {
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
+	_, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Webhook response code %s", resp.StatusCode)
+	}
+
+	defer resp.Body.Close()
 	return nil
 }
 

@@ -8,23 +8,10 @@ import (
 )
 
 type AlertJob struct {
-	Offset     int64
-	Delay      bool
-	Running    bool
-	RetryCount int
-	Rule       *AlertRule
-}
-
-func (aj *AlertJob) Retryable() bool {
-	return aj.RetryCount < maxAlertExecutionRetries
-}
-
-func (aj *AlertJob) ResetRetry() {
-	aj.RetryCount = 0
-}
-
-func (aj *AlertJob) IncRetry() {
-	aj.RetryCount++
+	Offset  int64
+	Delay   bool
+	Running bool
+	Rule    *AlertRule
 }
 
 type AlertResultContext struct {

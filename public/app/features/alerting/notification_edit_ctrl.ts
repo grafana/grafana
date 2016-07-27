@@ -41,6 +41,10 @@ export class AlertNotificationEditCtrl {
       });
     }
   }
+
+  typeChanged() {
+    this.model.settings = {};
+  }
 }
 
 coreModule.controller('AlertNotificationEditCtrl', AlertNotificationEditCtrl);
