@@ -27,12 +27,16 @@ func runCommand(command func(commandLine CommandLine) error) func(context *cli.C
 var pluginCommands = []cli.Command{
 	{
 		Name:   "install",
-		Usage:  "install <plugin id>",
+		Usage:  "install <plugin id> <plugin version (optional)>",
 		Action: runCommand(installCommand),
 	}, {
 		Name:   "list-remote",
 		Usage:  "list remote available plugins",
 		Action: runCommand(listremoteCommand),
+	}, {
+		Name:   "list-versions",
+		Usage:  "list-versions <plugin id>",
+		Action: runCommand(listversionsCommand),
 	}, {
 		Name:    "update",
 		Usage:   "update <plugin id>",

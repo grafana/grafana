@@ -13,7 +13,7 @@ define([
   module.service('timeSrv', function($rootScope, $timeout, $routeParams, timer) {
     var self = this;
 
-    $rootScope.onAppEvent('zoom-out', function(e, factor) { self.zoomOut(factor); }, $rootScope);
+    $rootScope.$on('zoom-out', function(e, factor) { self.zoomOut(factor); });
 
     this.init = function(dashboard) {
       timer.cancel_all();
