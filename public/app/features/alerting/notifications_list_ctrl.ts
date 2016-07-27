@@ -23,7 +23,7 @@ export class AlertNotificationsListCtrl {
   deleteNotification(id) {
     this.backendSrv.delete(`/api/alert-notifications/${id}`).then(() => {
       this.notifications = this.notifications.filter(notification => {
-        return notification.id !== notificationId;
+        return notification.id !== id;
       });
     });
   }
