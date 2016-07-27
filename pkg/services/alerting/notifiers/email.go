@@ -23,7 +23,7 @@ func NewEmailNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	addressesString := model.Settings.Get("addresses").MustString()
 
 	if addressesString == "" {
-		return nil, alerting.AlertValidationError{Reason: "Could not find addresses in settings"}
+		return nil, alerting.ValidationError{Reason: "Could not find addresses in settings"}
 	}
 
 	return &EmailNotifier{
@@ -36,7 +36,7 @@ func NewEmailNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}, nil
 }
 
-func (this *EmailNotifier) Notify(context *alerting.AlertResultContext) {
+func (this *EmailNotifier) Notify(context *alerting.EvalContext) {
 	this.log.Info("Sending alert notification to", "addresses", this.Addresses)
 
 	ruleLink, err := getRuleLink(context.Rule)

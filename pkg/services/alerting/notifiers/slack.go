@@ -17,7 +17,7 @@ func init() {
 func NewSlackNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
-		return nil, alerting.AlertValidationError{Reason: "Could not find url property in settings"}
+		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
 	return &SlackNotifier{
@@ -36,7 +36,7 @@ type SlackNotifier struct {
 	log log.Logger
 }
 
-func (this *SlackNotifier) Notify(context *alerting.AlertResultContext) {
+func (this *SlackNotifier) Notify(context *alerting.EvalContext) {
 	this.log.Info("Executing slack notification", "ruleId", context.Rule.Id, "notification", this.Name)
 
 	rule := context.Rule

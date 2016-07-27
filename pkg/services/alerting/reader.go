@@ -10,10 +10,10 @@ import (
 )
 
 type RuleReader interface {
-	Fetch() []*AlertRule
+	Fetch() []*Rule
 }
 
-type AlertRuleReader struct {
+type DefaultRuleReader struct {
 	sync.RWMutex
 	serverID       string
 	serverPosition int
@@ -21,8 +21,8 @@ type AlertRuleReader struct {
 	log            log.Logger
 }
 
-func NewRuleReader() *AlertRuleReader {
-	ruleReader := &AlertRuleReader{
+func NewRuleReader() *DefaultRuleReader {
+	ruleReader := &DefaultRuleReader{
 		log: log.New("alerting.ruleReader"),
 	}
 
@@ -30,7 +30,7 @@ func NewRuleReader() *AlertRuleReader {
 	return ruleReader
 }
 
-func (arr *AlertRuleReader) initReader() {
+func (arr *DefaultRuleReader) initReader() {
 	heartbeat := time.NewTicker(time.Second * 10)
 
 	for {
@@ -41,17 +41,17 @@ func (arr *AlertRuleReader) initReader() {
 	}
 }
 
-func (arr *AlertRuleReader) Fetch() []*AlertRule {
+func (arr *DefaultRuleReader) Fetch() []*Rule {
 	cmd := &m.GetAllAlertsQuery{}
 
 	if err := bus.Dispatch(cmd); err != nil {
 		arr.log.Error("Could not load alerts", "error", err)
-		return []*AlertRule{}
+		return []*Rule{}
 	}
 
-	res := make([]*AlertRule, 0)
+	res := make([]*Rule, 0)
 	for _, ruleDef := range cmd.Result {
-		if model, err := NewAlertRuleFromDBModel(ruleDef); err != nil {
+		if model, err := NewRuleFromDBAlert(ruleDef); err != nil {
 			arr.log.Error("Could not build alert model for rule", "ruleId", ruleDef.Id, "error", err)
 		} else {
 			res = append(res, model)
@@ -61,7 +61,7 @@ func (arr *AlertRuleReader) Fetch() []*AlertRule {
 	return res
 }
 
-func (arr *AlertRuleReader) heartbeat() {
+func (arr *DefaultRuleReader) heartbeat() {
 
 	//Lets cheat on this until we focus on clustering
 	//log.Info("Heartbeat: Sending heartbeat from " + this.serverId)

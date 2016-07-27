@@ -15,7 +15,7 @@ func init() {
 func NewWebHookNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if url == "" {
-		return nil, alerting.AlertValidationError{Reason: "Could not find url property in settings"}
+		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
 	return &WebhookNotifier{
@@ -38,7 +38,7 @@ type WebhookNotifier struct {
 	log      log.Logger
 }
 
-func (this *WebhookNotifier) Notify(context *alerting.AlertResultContext) {
+func (this *WebhookNotifier) Notify(context *alerting.EvalContext) {
 	this.log.Info("Sending webhook")
 
 	bodyJSON := simplejson.New()

@@ -10,7 +10,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-type AlertRule struct {
+type Rule struct {
 	Id            int64
 	OrgId         int64
 	DashboardId   int64
@@ -20,15 +20,15 @@ type AlertRule struct {
 	Description   string
 	State         m.AlertStateType
 	Severity      m.AlertSeverityType
-	Conditions    []AlertCondition
+	Conditions    []Condition
 	Notifications []int64
 }
 
-type AlertValidationError struct {
+type ValidationError struct {
 	Reason string
 }
 
-func (e AlertValidationError) Error() string {
+func (e ValidationError) Error() string {
 	return e.Reason
 }
 
@@ -56,8 +56,8 @@ func getTimeDurationStringToSeconds(str string) int64 {
 	return int64(value * multiplier)
 }
 
-func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
-	model := &AlertRule{}
+func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
+	model := &Rule{}
 	model.Id = ruleDef.Id
 	model.OrgId = ruleDef.OrgId
 	model.DashboardId = ruleDef.DashboardId
@@ -71,7 +71,7 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)
 		if id, err := jsonModel.Get("id").Int64(); err != nil {
-			return nil, AlertValidationError{Reason: "Invalid notification schema"}
+			return nil, ValidationError{Reason: "Invalid notification schema"}
 		} else {
 			model.Notifications = append(model.Notifications, id)
 		}
@@ -81,7 +81,7 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 		conditionModel := simplejson.NewFromAny(condition)
 		conditionType := conditionModel.Get("type").MustString()
 		if factory, exist := conditionFactories[conditionType]; !exist {
-			return nil, AlertValidationError{Reason: "Unknown alert condition: " + conditionType}
+			return nil, ValidationError{Reason: "Unknown alert condition: " + conditionType}
 		} else {
 			if queryCondition, err := factory(conditionModel, index); err != nil {
 				return nil, err
@@ -98,7 +98,7 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 	return model, nil
 }
 
-type ConditionFactory func(model *simplejson.Json, index int) (AlertCondition, error)
+type ConditionFactory func(model *simplejson.Json, index int) (Condition, error)
 
 var conditionFactories map[string]ConditionFactory = make(map[string]ConditionFactory)
 

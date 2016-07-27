@@ -7,22 +7,22 @@ import (
 )
 
 type ResultHandler interface {
-	Handle(result *AlertResultContext)
+	Handle(result *EvalContext)
 }
 
-type ResultHandlerImpl struct {
+type DefaultResultHandler struct {
 	notifier Notifier
 	log      log.Logger
 }
 
-func NewResultHandler() *ResultHandlerImpl {
-	return &ResultHandlerImpl{
+func NewResultHandler() *DefaultResultHandler {
+	return &DefaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
 		notifier: NewRootNotifier(),
 	}
 }
 
-func (handler *ResultHandlerImpl) Handle(result *AlertResultContext) {
+func (handler *DefaultResultHandler) Handle(result *EvalContext) {
 	var newState m.AlertStateType
 
 	if result.Error != nil {

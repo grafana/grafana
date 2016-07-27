@@ -2,20 +2,20 @@ package alerting
 
 import "time"
 
-type AlertHandler interface {
-	Execute(context *AlertResultContext)
+type EvalHandler interface {
+	Eval(context *EvalContext)
 }
 
 type Scheduler interface {
-	Tick(time time.Time, execQueue chan *AlertJob)
-	Update(rules []*AlertRule)
+	Tick(time time.Time, execQueue chan *Job)
+	Update(rules []*Rule)
 }
 
 type Notifier interface {
-	Notify(alertResult *AlertResultContext)
+	Notify(alertResult *EvalContext)
 	GetType() string
 }
 
-type AlertCondition interface {
-	Eval(result *AlertResultContext)
+type Condition interface {
+	Eval(result *EvalContext)
 }

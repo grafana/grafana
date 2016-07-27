@@ -9,7 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func getRuleLink(rule *alerting.AlertRule) (string, error) {
+func getRuleLink(rule *alerting.Rule) (string, error) {
 	slugQuery := &m.GetDashboardSlugByIdQuery{Id: rule.DashboardId}
 	if err := bus.Dispatch(slugQuery); err != nil {
 		return "", err

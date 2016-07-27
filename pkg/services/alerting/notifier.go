@@ -22,7 +22,7 @@ func (n *RootNotifier) GetType() string {
 	return "root"
 }
 
-func (n *RootNotifier) Notify(context *AlertResultContext) {
+func (n *RootNotifier) Notify(context *EvalContext) {
 	n.log.Info("Sending notifications for", "ruleId", context.Rule.Id)
 
 	notifiers, err := n.getNotifiers(context.Rule.OrgId, context.Rule.Notifications)
@@ -63,61 +63,7 @@ func (n *RootNotifier) getNotifierFor(model *m.AlertNotification) (Notifier, err
 	}
 
 	return factory(model)
-	// if model.Type == "email" {
-	// 	addressesString := model.Settings.Get("addresses").MustString()
-	//
-	// 	if addressesString == "" {
-	// 		return nil, fmt.Errorf("Could not find addresses in settings")
-	// 	}
-	//
-	// 		NotifierBase: NotifierBase{
-	// 			Name: model.Name,
-	// 			Type: model.Type,
-	// 		},
-	// 		Addresses: strings.Split(addressesString, "\n"),
-	// 		log:       log.New("alerting.notification.email"),
-	// 	}, nil
-	// }
-
-	// url := settings.Get("url").MustString()
-	// if url == "" {
-	// 	return nil, fmt.Errorf("Could not find url propertie in settings")
-	// }
-	//
-	// return &WebhookNotifier{
-	// 	Url:      url,
-	// 	User:     settings.Get("user").MustString(),
-	// 	Password: settings.Get("password").MustString(),
-	// 	log:      log.New("alerting.notification.webhook"),
-	// }, nil
 }
-
-// type WebhookNotifier struct {
-// 	Url      string
-// 	User     string
-// 	Password string
-// 	log      log.Logger
-// }
-//
-// func (this *WebhookNotifier) Dispatch(context *AlertResultContext) {
-// 	this.log.Info("Sending webhook")
-//
-// 	bodyJSON := simplejson.New()
-// 	bodyJSON.Set("name", context.AlertJob.Rule.Name)
-// 	bodyJSON.Set("state", context.State)
-// 	bodyJSON.Set("trigged", context.TriggeredAlerts)
-//
-// 	body, _ := bodyJSON.MarshalJSON()
-//
-// 	cmd := &m.SendWebhook{
-// 		Url:      this.Url,
-// 		User:     this.User,
-// 		Password: this.Password,
-// 		Body:     string(body),
-// 	}
-//
-// 	bus.Dispatch(cmd)
-// }
 
 type NotifierFactory func(notification *m.AlertNotification) (Notifier, error)
 

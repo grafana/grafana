@@ -13,7 +13,7 @@ type AlertTestCommand struct {
 	PanelId   int64
 	OrgId     int64
 
-	Result *AlertResultContext
+	Result *EvalContext
 }
 
 func init() {
@@ -32,7 +32,7 @@ func handleAlertTestCommand(cmd *AlertTestCommand) error {
 
 	for _, alert := range alerts {
 		if alert.PanelId == cmd.PanelId {
-			rule, err := NewAlertRuleFromDBModel(alert)
+			rule, err := NewRuleFromDBAlert(alert)
 			if err != nil {
 				return err
 			}
@@ -45,13 +45,13 @@ func handleAlertTestCommand(cmd *AlertTestCommand) error {
 	return fmt.Errorf("Could not find alert with panel id %d", cmd.PanelId)
 }
 
-func testAlertRule(rule *AlertRule) *AlertResultContext {
-	handler := NewHandler()
+func testAlertRule(rule *Rule) *EvalContext {
+	handler := NewEvalHandler()
 
-	context := NewAlertResultContext(rule)
+	context := NewEvalContext(rule)
 	context.IsTestRun = true
 
-	handler.Execute(context)
+	handler.Eval(context)
 
 	return context
 }

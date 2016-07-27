@@ -8,27 +8,27 @@ import (
 )
 
 type Engine struct {
-	execQueue       chan *AlertJob
-	resultQueue     chan *AlertResultContext
-	clock           clock.Clock
-	ticker          *Ticker
-	scheduler       Scheduler
-	handler         AlertHandler
-	ruleReader      RuleReader
-	log             log.Logger
-	responseHandler ResultHandler
+	execQueue     chan *Job
+	resultQueue   chan *EvalContext
+	clock         clock.Clock
+	ticker        *Ticker
+	scheduler     Scheduler
+	evalHandler   EvalHandler
+	ruleReader    RuleReader
+	log           log.Logger
+	resultHandler ResultHandler
 }
 
 func NewEngine() *Engine {
 	e := &Engine{
-		ticker:          NewTicker(time.Now(), time.Second*0, clock.New()),
-		execQueue:       make(chan *AlertJob, 1000),
-		resultQueue:     make(chan *AlertResultContext, 1000),
-		scheduler:       NewScheduler(),
-		handler:         NewHandler(),
-		ruleReader:      NewRuleReader(),
-		log:             log.New("alerting.engine"),
-		responseHandler: NewResultHandler(),
+		ticker:        NewTicker(time.Now(), time.Second*0, clock.New()),
+		execQueue:     make(chan *Job, 1000),
+		resultQueue:   make(chan *EvalContext, 1000),
+		scheduler:     NewScheduler(),
+		evalHandler:   NewEvalHandler(),
+		ruleReader:    NewRuleReader(),
+		log:           log.New("alerting.engine"),
+		resultHandler: NewResultHandler(),
 	}
 
 	return e
@@ -39,7 +39,7 @@ func (e *Engine) Start() {
 
 	go e.alertingTicker()
 	go e.execDispatch()
-	go e.resultHandler()
+	go e.resultDispatch()
 }
 
 func (e *Engine) Stop() {
@@ -77,7 +77,7 @@ func (e *Engine) execDispatch() {
 	}
 }
 
-func (e *Engine) executeJob(job *AlertJob) {
+func (e *Engine) executeJob(job *Job) {
 	defer func() {
 		if err := recover(); err != nil {
 			e.log.Error("Execute Alert Panic", "error", err, "stack", log.Stack(1))
@@ -85,14 +85,14 @@ func (e *Engine) executeJob(job *AlertJob) {
 	}()
 
 	job.Running = true
-	context := NewAlertResultContext(job.Rule)
-	e.handler.Execute(context)
+	context := NewEvalContext(job.Rule)
+	e.evalHandler.Eval(context)
 	job.Running = false
 
 	e.resultQueue <- context
 }
 
-func (e *Engine) resultHandler() {
+func (e *Engine) resultDispatch() {
 	defer func() {
 		if err := recover(); err != nil {
 			e.log.Error("Engine Panic, stopping resultHandler", "error", err, "stack", log.Stack(1))
@@ -105,7 +105,7 @@ func (e *Engine) resultHandler() {
 		if result.Error != nil {
 			e.log.Error("Alert Rule Result Error", "ruleId", result.Rule.Id, "error", result.Error, "retry")
 		} else {
-			e.responseHandler.Handle(result)
+			e.resultHandler.Handle(result)
 		}
 	}
 }

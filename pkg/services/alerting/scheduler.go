@@ -7,28 +7,28 @@ import (
 )
 
 type SchedulerImpl struct {
-	jobs map[int64]*AlertJob
+	jobs map[int64]*Job
 	log  log.Logger
 }
 
 func NewScheduler() Scheduler {
 	return &SchedulerImpl{
-		jobs: make(map[int64]*AlertJob, 0),
+		jobs: make(map[int64]*Job, 0),
 		log:  log.New("alerting.scheduler"),
 	}
 }
 
-func (s *SchedulerImpl) Update(alerts []*AlertRule) {
-	s.log.Debug("Scheduling update", "alerts.count", len(alerts))
+func (s *SchedulerImpl) Update(rules []*Rule) {
+	s.log.Debug("Scheduling update", "rules.count", len(rules))
 
-	jobs := make(map[int64]*AlertJob, 0)
+	jobs := make(map[int64]*Job, 0)
 
-	for i, rule := range alerts {
-		var job *AlertJob
+	for i, rule := range rules {
+		var job *Job
 		if s.jobs[rule.Id] != nil {
 			job = s.jobs[rule.Id]
 		} else {
-			job = &AlertJob{
+			job = &Job{
 				Running: false,
 			}
 		}
@@ -42,7 +42,7 @@ func (s *SchedulerImpl) Update(alerts []*AlertRule) {
 	s.jobs = jobs
 }
 
-func (s *SchedulerImpl) Tick(tickTime time.Time, execQueue chan *AlertJob) {
+func (s *SchedulerImpl) Tick(tickTime time.Time, execQueue chan *Job) {
 	now := tickTime.Unix()
 
 	for _, job := range s.jobs {

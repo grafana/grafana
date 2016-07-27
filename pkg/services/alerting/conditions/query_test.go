@@ -63,7 +63,7 @@ type queryConditionTestContext struct {
 	reducer   string
 	evaluator string
 	series    tsdb.TimeSeriesSlice
-	result    *alerting.AlertResultContext
+	result    *alerting.EvalContext
 	condition *QueryCondition
 }
 
@@ -107,8 +107,8 @@ func queryConditionScenario(desc string, fn queryConditionScenarioFunc) {
 		})
 
 		ctx := &queryConditionTestContext{}
-		ctx.result = &alerting.AlertResultContext{
-			Rule: &alerting.AlertRule{},
+		ctx.result = &alerting.EvalContext{
+			Rule: &alerting.Rule{},
 		}
 
 		fn(ctx)

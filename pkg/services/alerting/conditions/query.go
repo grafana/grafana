@@ -11,7 +11,7 @@ import (
 )
 
 func init() {
-	alerting.RegisterCondition("query", func(model *simplejson.Json, index int) (alerting.AlertCondition, error) {
+	alerting.RegisterCondition("query", func(model *simplejson.Json, index int) (alerting.Condition, error) {
 		return NewQueryCondition(model, index)
 	})
 }
@@ -31,7 +31,7 @@ type AlertQuery struct {
 	To           string
 }
 
-func (c *QueryCondition) Eval(context *alerting.AlertResultContext) {
+func (c *QueryCondition) Eval(context *alerting.EvalContext) {
 	seriesList, err := c.executeQuery(context)
 	if err != nil {
 		context.Error = err
@@ -43,13 +43,13 @@ func (c *QueryCondition) Eval(context *alerting.AlertResultContext) {
 		pass := c.Evaluator.Eval(series, reducedValue)
 
 		if context.IsTestRun {
-			context.Logs = append(context.Logs, &alerting.AlertResultLogEntry{
+			context.Logs = append(context.Logs, &alerting.ResultLogEntry{
 				Message: fmt.Sprintf("Condition[%d]: Eval: %v, Metric: %s, Value: %1.3f", c.Index, pass, series.Name, reducedValue),
 			})
 		}
 
 		if pass {
-			context.Events = append(context.Events, &alerting.AlertEvent{
+			context.Events = append(context.Events, &alerting.Event{
 				Metric: series.Name,
 				Value:  reducedValue,
 			})
@@ -59,7 +59,7 @@ func (c *QueryCondition) Eval(context *alerting.AlertResultContext) {
 	}
 }
 
-func (c *QueryCondition) executeQuery(context *alerting.AlertResultContext) (tsdb.TimeSeriesSlice, error) {
+func (c *QueryCondition) executeQuery(context *alerting.EvalContext) (tsdb.TimeSeriesSlice, error) {
 	getDsInfo := &m.GetDataSourceByIdQuery{
 		Id:    c.Query.DatasourceId,
 		OrgId: context.Rule.OrgId,
@@ -85,7 +85,7 @@ func (c *QueryCondition) executeQuery(context *alerting.AlertResultContext) (tsd
 		result = append(result, v.Series...)
 
 		if context.IsTestRun {
-			context.Logs = append(context.Logs, &alerting.AlertResultLogEntry{
+			context.Logs = append(context.Logs, &alerting.ResultLogEntry{
 				Message: fmt.Sprintf("Condition[%d]: Query Result", c.Index),
 				Data:    v.Series,
 			})

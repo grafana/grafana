@@ -10,12 +10,12 @@ import (
 
 type FakeCondition struct{}
 
-func (f *FakeCondition) Eval(context *AlertResultContext) {}
+func (f *FakeCondition) Eval(context *EvalContext) {}
 
 func TestAlertRuleModel(t *testing.T) {
 	Convey("Testing alert rule", t, func() {
 
-		RegisterCondition("test", func(model *simplejson.Json, index int) (AlertCondition, error) {
+		RegisterCondition("test", func(model *simplejson.Json, index int) (Condition, error) {
 			return &FakeCondition{}, nil
 		})
 
@@ -72,7 +72,7 @@ func TestAlertRuleModel(t *testing.T) {
 				Settings: alertJSON,
 			}
 
-			alertRule, err := NewAlertRuleFromDBModel(alert)
+			alertRule, err := NewRuleFromDBAlert(alert)
 			So(err, ShouldBeNil)
 
 			So(alertRule.Conditions, ShouldHaveLength, 1)

@@ -6,50 +6,50 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 )
 
-type AlertJob struct {
+type Job struct {
 	Offset  int64
 	Delay   bool
 	Running bool
-	Rule    *AlertRule
+	Rule    *Rule
 }
 
-type AlertResultContext struct {
+type EvalContext struct {
 	Firing      bool
 	IsTestRun   bool
-	Events      []*AlertEvent
-	Logs        []*AlertResultLogEntry
+	Events      []*Event
+	Logs        []*ResultLogEntry
 	Error       error
 	Description string
 	StartTime   time.Time
 	EndTime     time.Time
-	Rule        *AlertRule
+	Rule        *Rule
 	DoneChan    chan bool
 	CancelChan  chan bool
 	log         log.Logger
 }
 
-func (a *AlertResultContext) GetDurationMs() float64 {
+func (a *EvalContext) GetDurationMs() float64 {
 	return float64(a.EndTime.Nanosecond()-a.StartTime.Nanosecond()) / float64(1000000)
 }
 
-func NewAlertResultContext(rule *AlertRule) *AlertResultContext {
-	return &AlertResultContext{
+func NewEvalContext(rule *Rule) *EvalContext {
+	return &EvalContext{
 		StartTime:  time.Now(),
 		Rule:       rule,
-		Logs:       make([]*AlertResultLogEntry, 0),
-		Events:     make([]*AlertEvent, 0),
+		Logs:       make([]*ResultLogEntry, 0),
+		Events:     make([]*Event, 0),
 		DoneChan:   make(chan bool, 1),
 		CancelChan: make(chan bool, 1),
 		log:        log.New("alerting.engine"),
 	}
 }
 
-type AlertResultLogEntry struct {
+type ResultLogEntry struct {
 	Message string
 	Data    interface{}
 }
 
-type AlertEvent struct {
+type Event struct {
 	Value  float64
 	Metric string
 	State  string

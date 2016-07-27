@@ -94,7 +94,7 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 			}
 
 			if !alert.Severity.IsValid() {
-				return nil, AlertValidationError{Reason: "Invalid alert Severity"}
+				return nil, ValidationError{Reason: "Invalid alert Severity"}
 			}
 
 			for _, condition := range jsonAlert.Get("conditions").MustArray() {
@@ -105,7 +105,7 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				panelQuery := findPanelQueryByRefId(panel, queryRefId)
 
 				if panelQuery == nil {
-					return nil, AlertValidationError{Reason: "Alert refes to query that cannot be found"}
+					return nil, ValidationError{Reason: "Alert refes to query that cannot be found"}
 				}
 
 				dsName := ""
@@ -127,7 +127,7 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 			alert.Settings = jsonAlert
 
 			// validate
-			_, err := NewAlertRuleFromDBModel(alert)
+			_, err := NewRuleFromDBAlert(alert)
 			if err == nil && alert.ValidToSave() {
 				alerts = append(alerts, alert)
 			} else {

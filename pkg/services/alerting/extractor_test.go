@@ -13,7 +13,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 	Convey("Parsing alert rules  from dashboard json", t, func() {
 
-		RegisterCondition("query", func(model *simplejson.Json, index int) (AlertCondition, error) {
+		RegisterCondition("query", func(model *simplejson.Json, index int) (Condition, error) {
 			return &FakeCondition{}, nil
 		})
 
