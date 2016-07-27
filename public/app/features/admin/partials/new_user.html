@@ -1,14 +1,14 @@
-<topnav icon="fa fa-fw fa-cogs" title="Global Users" subnav="true">
+<topnav icon="fa fa-fw fa-cogs" title="全体成员" subnav="true">
 	<ul class="nav">
-		<li><a href="admin/users">Users</a></li>
-		<li class="active"><a href="admin/users/create">Create user</a></li>
+		<li><a href="admin/users">用户管理</a></li>
+		<li class="active"><a href="admin/users/create">新建用户</a></li>
 	</ul>
 </topnav>
 
 <div class="page-container">
 	<div class="page">
 		<h2>
-			Create a new user
+			创建新用户
 		</h2>
 
 		<form name="userForm">
@@ -16,7 +16,7 @@
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
-							<strong>Name</strong>
+							<strong>姓名</strong>
 						</li>
 						<li>
 							<input type="text" required ng-model="user.name" class="input-xxlarge tight-form-input last" >
@@ -27,7 +27,7 @@
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
-							<strong>Email</strong>
+							<strong>邮箱</strong>
 						</li>
 						<li>
 							<input type="email" ng-model="user.email" class="input-xxlarge tight-form-input last" >
@@ -38,7 +38,7 @@
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
-							<strong>Username</strong>
+							<strong>账号名称</strong>
 						</li>
 						<li>
 							<input type="text" ng-model="user.login" class="input-xxlarge tight-form-input last" >
@@ -60,7 +60,7 @@
 			</div>
 
 			<br>
-			<button type="submit" class="pull-right btn btn-success" ng-click="create()">Create</button>
+			<button type="submit" class="pull-right btn btn-success" ng-click="create()">新建</button>
 		</form>
 	</div>
 </div>

@@ -18,7 +18,9 @@ function (angular, _, dateMath) {
       this.url = datasource.url;
       this.name = datasource.name;
       this.supportMetrics = true;
-      this.prefix = contextSrv.user.orgName + ".";
+      //需要重新开启
+      //this.prefix = contextSrv.user.orgName + ".";
+      this.prefix = "";
     }
 
     // Called once per panel (graph)

@@ -19,7 +19,7 @@ function (angular) {
         $scope.initDashboard({
           meta: { canStar: false, canShare: false, canEdit: false },
           dashboard: {
-            title: "Triggered Alerts",
+            title: "触发报警",
             rows: alertRows,
             time: {from: "now-2h", to: "now"}
           },

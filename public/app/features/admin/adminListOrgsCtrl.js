@@ -20,8 +20,8 @@ function (angular) {
 
     $scope.deleteOrg = function(org) {
       $scope.appEvent('confirm-modal', {
-        title: 'Do you want to delete organization ' + org.name + '?',
-        text: 'All dashboards and users for this organization will be removed!',
+        title: '你想删除 ' + org.name + ' 公司吗?',
+        text: '公司的成员和所有的仪表盘(资料)都会被清除',
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {

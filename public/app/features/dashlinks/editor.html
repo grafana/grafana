@@ -1,5 +1,5 @@
 <div class="editor-row">
-	<h5>Links and Dash Navigation</h5>
+	<h5>链接和导航</h5>
 
 	<div ng-repeat="link in dashboard.links" style="margin-top: 10px;">
 		<div class="tight-form">
@@ -18,21 +18,21 @@
 					<i class="fa fa-fw fa-unlink"></i>
 				</li>
 
-				<li class="tight-form-item">Type</li>
+				<li class="tight-form-item">类型</li>
 				<li>
 					<select class="input-medium tight-form-input" style="width: 150px;" ng-model="link.type" ng-options="f for f in ['dashboards','link']" ng-change="updated()"></select>
 				</li>
 
-				<li class="tight-form-item" ng-show="link.type === 'dashboards'">With tags</li>
+				<li class="tight-form-item" ng-show="link.type === 'dashboards'">标签</li>
 				<li ng-show="link.type === 'dashboards'">
-					<bootstrap-tagsinput ng-model="link.tags" tagclass="label label-tag" placeholder="add tags">
+					<bootstrap-tagsinput ng-model="link.tags" tagclass="label label-tag" placeholder="加入标签">
 					</bootstrap-tagsinput>
 				</li>
 				<li class="tight-form-item" ng-show="link.type === 'dashboards'">
-					<editor-checkbox text="As dropdown" model="link.asDropdown" change="updated()"></editor-checkbox>
+					<editor-checkbox text="下拉显示" model="link.asDropdown" change="updated()"></editor-checkbox>
 				</li>
 				<li class="tight-form-item" ng-show="link.type === 'dashboards' && link.asDropdown">
-					Title
+					标题
 				</li>
 				<li ng-show="link.type === 'dashboards' && link.asDropdown">
 					<input type="text" ng-model="link.title" class="input-medium tight-form-input" ng-model-onblur ng-change="updated()">
@@ -73,10 +73,10 @@
 					<i class="fa fa-fw fa-unlink invisible"></i>
 				</li>
 				<li class="tight-form-item">
-					<editor-checkbox text="Keep current time range" model="link.keepTime" change="updated()"></editor-checkbox>
+					<editor-checkbox text="和当前时间范围保持一致" model="link.keepTime" change="updated()"></editor-checkbox>
 				</li>
 				<li class="tight-form-item">
-					<editor-checkbox text="Add current variable values" model="link.includeVars" change="updated()"></editor-checkbox>
+					<editor-checkbox text="添加当前变量值" model="link.includeVars" change="updated()"></editor-checkbox>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -85,6 +85,6 @@
 </div>
 <div class="editor-row">
 	<br>
-	<button class="btn btn-inverse" ng-click="addLink()"><i class="fa fa-plus"></i> Add link</button>
+	<button class="btn btn-inverse" ng-click="addLink()"><i class="fa fa-plus"></i> 增加链接</button>
 </div>
 

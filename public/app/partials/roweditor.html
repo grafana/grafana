@@ -2,7 +2,7 @@
 <div class="gf-box-header">
 	<div class="gf-box-title">
 		<i class="fa fa-th-list"></i>
-		Row settings
+		行设置
 	</div>
 
 	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
@@ -23,13 +23,13 @@
 			<div class="tight-form last">
 				<ul class="tight-form-list">
 					<li class="tight-form-item">
-						Title
+						标题
 					</li>
 					<li>
 						<input type="text" class="input-xlarge tight-form-input" ng-model='row.title'></input>
 					</li>
 					<li class="tight-form-item">
-						Height
+						高
 					</li>
 					<li>
 						<input type="text" class="input-small tight-form-input" ng-model='row.height'></input>
@@ -44,11 +44,11 @@
 			</div>
 		</div>
 		<div class="section">
-			<h5>Templating options</h5>
+			<h5>模板选项</h5>
 			<div class="tight-form last">
 				<ul class="tight-form-list">
 					<li class="tight-form-item">
-						Repeat Row
+						重复行
 					</li>
 					<li>
 						<select class="input-small tight-form-input last" ng-model="row.repeat" ng-options="f.name as f.name for f in dashboard.templating.list">

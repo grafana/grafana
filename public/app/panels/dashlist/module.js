@@ -21,7 +21,7 @@ function (angular, app, _, config, PanelMeta) {
   module.controller('DashListPanelCtrl', function($scope, panelSrv, backendSrv) {
 
     $scope.panelMeta = new PanelMeta({
-      panelName: 'Dashboard list',
+      panelName: '仪表盘列表',
       editIcon:  "fa fa-star",
       fullscreen: true,
     });
@@ -50,7 +50,7 @@ function (angular, app, _, config, PanelMeta) {
       }
 
       if ($scope.isNewPanel()) {
-        $scope.panel.title = "Starred Dashboards";
+        $scope.panel.title = "关注的仪表盘";
       }
     };
 

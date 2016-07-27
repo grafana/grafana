@@ -9,10 +9,10 @@
 					<i class="fa fa-bars"></i>
 				</a>
 				<ul class="dropdown-menu pull-right" role="menu">
-					<li role="menuitem"><a tabindex="1" ng-click="toggleQueryMode()">Switch editor mode</a></li>
-					<li role="menuitem"><a tabindex="1" ng-click="duplicateDataQuery(target)">Duplicate</a></li>
-					<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index-1)">Move up</a></li>
-					<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index+1)">Move down</a></li>
+					<li role="menuitem"><a tabindex="1" ng-click="toggleQueryMode()">切换到编辑模式</a></li>
+					<li role="menuitem"><a tabindex="1" ng-click="duplicateDataQuery(target)">复制</a></li>
+					<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index-1)">上移</a></li>
+					<li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index+1)">下移</a></li>
 				</ul>
 			</div>
 		</li>
@@ -38,7 +38,7 @@
 
 	<ul class="tight-form-list" role="menu">
 		<li class="tight-form-item" style="width: 86px">
-			Metric
+			指标
 		</li>
 		<li>
 			<input type="text" class="input-large tight-form-input" ng-model="target.metric"
@@ -50,7 +50,7 @@
 			</a>
 		</li>
 		<li class="tight-form-item">
-			Aggregator
+			聚合
 		</li>
 		<li>
 			<select ng-model="target.aggregator" class="tight-form-input input-small"
@@ -63,7 +63,7 @@
 		</li>
 
 		<li class="tight-form-item">
-			Alias:
+			别名:
 			<tip>Use patterns like $tag_tagname to replace part of the alias for a tag value</tip>
 		</li>
 		<li>
@@ -82,7 +82,7 @@
 <div class="tight-form">
 	<ul class="tight-form-list" role="menu">
 		<li class="tight-form-item tight-form-align" style="width: 86px">
-			Down sample
+      降低采样
 		</li>
 
 		<li>
@@ -94,7 +94,7 @@
 		</li>
 
 		<li class="tight-form-item">
-			Aggregator
+			聚合
 		</li>
 
 		<li>
@@ -105,7 +105,7 @@
 		</li>
 
 		<li class="tight-form-item">
-			<editor-checkbox text="Disable downsampling" model="target.disableDownsampling" change="targetBlur()"></editor-checkbox>
+			<editor-checkbox text="取消降低采样" model="target.disableDownsampling" change="targetBlur()"></editor-checkbox>
 		</li>
 
 	</ul>
@@ -115,7 +115,7 @@
 <div class="tight-form">
 	<ul class="tight-form-list" role="menu">
 		<li class="tight-form-item tight-form-align" style="width: 86px">
-			Tags
+			标签
 		</li>
 		<li ng-repeat="(key, value) in target.tags track by $index" class="tight-form-item">
 			{{key}}&nbsp;=&nbsp;{{value}}
@@ -140,7 +140,7 @@
 			data-min-length=0 data-items=100 ng-model="target.currentTagValue" placeholder="value">
 			</input>
 			<a ng-click="addTag()">
-				add tag
+				添加标签
 			</a>
 			<a bs-tooltip="target.errors.tags"
 				style="color: rgb(229, 189, 28)"
@@ -155,15 +155,15 @@
 <div class="tight-form">
 	<ul class="tight-form-list" role="menu">
 		<li class="tight-form-item tight-form-align" style="width: 86px">
-			<editor-checkbox text="Rate" model="target.shouldComputeRate" change="targetBlur()"></editor-checkbox>
+			<editor-checkbox text="比率" model="target.shouldComputeRate" change="targetBlur()"></editor-checkbox>
 		</li>
 
 		<li class="tight-form-item" ng-hide="!target.shouldComputeRate">
-			<editor-checkbox text="Counter" model="target.isCounter" change="targetBlur()"></editor-checkbox>
+			<editor-checkbox text="计数器" model="target.isCounter" change="targetBlur()"></editor-checkbox>
 		</li>
 
 		<li class="tight-form-item" ng-hide="!target.isCounter">
-			Counter Max:
+			计数器最大值:
 		</li>
 
 		<li ng-hide="!target.isCounter">
@@ -173,7 +173,7 @@
 			ng-blur="targetBlur()"></input>
 		</li>
 		<li class="tight-form-item" ng-hide="!target.isCounter">
-			Reset Value:
+			重置数值:
 		</li>
 		<li ng-hide="!target.isCounter">
 			<input type="text" class="tight-form-input input-small" ng-disabled="!target.shouldComputeRate"

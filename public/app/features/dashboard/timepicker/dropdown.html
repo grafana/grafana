@@ -1,7 +1,7 @@
 <div class="row pull-right">
 	<div class="gf-timepicker-absolute-section">
-		<h3>Time range</h3>
-		<label class="small">From:</label>
+		<h3>时间区间</h3>
+		<label class="small">始:</label>
 		<div class="input-prepend">
 			<input type="text" class="input-large" ng-model="ctrl.timeRaw.from" input-datetime>
 			<button class="btn btn-primary" type="button" ng-click="openFromPicker=!openFromPicker">
@@ -13,7 +13,7 @@
 			<datepicker ng-model="ctrl.absolute.fromJs" class="gf-timepicker-component" show-weeks="false" ng-change="ctrl.absoluteFromChanged()"></datepicker>
 		</div>
 
-		<label class="small">To:</label>
+		<label class="small">至:</label>
 		<div class="input-prepend">
 			<input type="text" class="input-large" ng-model="ctrl.timeRaw.to" input-datetime>
 			<button class="btn btn-primary" type="button" ng-click="openToPicker=!openToPicker">
@@ -25,17 +25,17 @@
 			<datepicker ng-model="ctrl.absolute.toJs" class="gf-timepicker-component" show-weeks="false" ng-change="ctrl.absoluteToChanged()"></datepicker>
 		</div>
 
-		<label class="small">Refreshing every:</label>
+		<label class="small">刷新频率:</label>
 		<select ng-model="ctrl.refresh.value" class='input-medium' ng-options="f.value as f.text for f in ctrl.refresh.options">
 		</select>
 
 		<button class="btn btn-inverse gf-timepicker-btn-apply" type="button" ng-click="ctrl.applyCustom()">
-			Apply
+			应用
 		</button>
 	</div>
 
 	<div class="gf-timepicker-relative-section">
-		<h3>Quick ranges</h3>
+		<h3>快速选择</h3>
 		<ul ng-repeat="group in ctrl.timeOptions">
 			<li bindonce ng-repeat='option in group' ng-class="{active: option.active}">
 				<a ng-click="ctrl.setRelativeFilter(option)" bo-text="option.display"></a>

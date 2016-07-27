@@ -9,7 +9,7 @@
 			<ul class="nav nav-tabs">
 				<li ng-class="{active: mode === 'list'}">
 					<a ng-click="mode = 'list';">
-						Variables
+						模板变量
 					</a>
 				</li>
 
@@ -22,7 +22,7 @@
 				<li ng-class="{active: mode === 'new'}">
 					<a ng-click="mode = 'new';">
 						<i class="fa fa-plus"></i>
-						New
+						新增
 					</a>
 				</li>
 			</ul>
@@ -41,7 +41,7 @@
 			<div class="editor-row row">
 				<div class="span8">
 					<div ng-if="variables.length === 0">
-						<em>No template variables defined</em>
+						<em>没有任何模板定义</em>
 					</div>
 					<table class="grafana-options-table">
 						<tr ng-repeat="variable in variables">
@@ -56,7 +56,7 @@
 							<td style="width: 1%">
 								<a ng-click="edit(variable)" class="btn btn-inverse btn-small">
 									<i class="fa fa-edit"></i>
-									Edit
+									编辑
 								</a>
 							</td>
 							<td style="width: 1%"><i ng-click="_.move(variables,$index,$index-1)" ng-hide="$first" class="pointer fa fa-arrow-up"></i></td>
@@ -75,23 +75,23 @@
 		<div ng-if="mode === 'edit' || mode === 'new'">
 			<div class="editor-row">
 				<div class="tight-form-section">
-					<h5>Variable</h5>
+					<h5>变量</h5>
 					<div class="tight-form last">
 						<ul class="tight-form-list">
 							<li class="tight-form-item" style="width: 100px">
-								Name
+								名称
 							</li>
 							<li>
 								<input type="text" class="input-large tight-form-input" placeholder="name" ng-model='current.name'></input>
 							</li>
 							<li class="tight-form-item">
-								Type
+								类型
 							</li>
 							<li>
 								<select class="input-small tight-form-input" ng-model="current.type" ng-options="f for f in ['query', 'interval', 'custom']" ng-change="typeChanged()"></select>
 							</li>
 							<li class="tight-form-item" ng-show="current.type === 'query'">
-								Data source
+								数据源
 							</li>
 							<li ng-show="current.type === 'query'">
 								<select class="input input-medium tight-form-input last" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"></select>
@@ -104,13 +104,13 @@
 
 			<div class="editor-row">
 				<div class="tight-form-section">
-					<h5>Value Options</h5>
+					<h5>变量值选项</h5>
 
 					<div ng-show="current.type === 'interval'">
 						<div class="tight-form">
 							<ul class="tight-form-list">
 								<li class="tight-form-item" style="width: 160px">
-									Values
+									时间值
 								</li>
 								<li>
 									<input type="text" style="width: 345px" class="input-xxlarge tight-form-input last" placeholder="name" ng-model='current.query' placeholder="1m,10m,1h,6h,1d,7d" ng-model-onblur ng-change="runQuery()"></input>
@@ -121,10 +121,10 @@
 						<div class="tight-form last">
 							<ul class="tight-form-list">
 								<li class="tight-form-item" style="width: 160px">
-									<editor-checkbox text="Include auto interval" model="current.auto" change="runQuery()"></editor-checkbox>
+									<editor-checkbox text="包含自动间隔时间" model="current.auto" change="runQuery()"></editor-checkbox>
 								</li>
 								<li class="tight-form-item" ng-show="current.auto">
-									Auto interval steps <tip>How many steps, roughly, the interval is rounded and will not always match this count<tip>
+									自动步长时间 <tip>How many steps, roughly, the interval is rounded and will not always match this count<tip>
 								</li>
 								<li>
 									<select class="input-mini tight-form-input last" ng-model="current.auto_count" ng-options="f for f in [3,5,10,30,50,100,200]" ng-change="runQuery()"></select>
@@ -138,7 +138,7 @@
 						<div class="tight-form last">
 							<ul class="tight-form-list">
 								<li class="tight-form-item" style="width: 180px">
-									Values seperated by comma
+									值(通过逗号分开)
 								</li>
 								<li>
 									<input type="text" class="input tight-form-input last" style="width: 325px;" ng-model='current.query' ng-blur="runQuery()" placeholder="1, 10, 20, myvalue"></input>
@@ -153,7 +153,7 @@
 						<div class="tight-form">
 							<ul class="tight-form-list">
 								<li class="tight-form-item" style="width: 100px">
-									Query
+									查询语句
 								</li>
 								<li>
 									<input type="text" style="width: 588px" class="input-xxlarge tight-form-input last" ng-model='current.query' placeholder="metric name or tags query" ng-model-onblur ng-change="runQuery()"></input>
@@ -164,7 +164,7 @@
 						<div class="tight-form">
 							<ul class="tight-form-list">
 								<li class="tight-form-item" style="width: 100px;">
-									Regex
+									正则匹配
 									<tip>Optional, if you want to extract part of a series name or metric node segment</tip>
 								</li>
 								<li>
@@ -177,13 +177,13 @@
 						<div class="tight-form">
 							<ul class="tight-form-list">
 								<li class="tight-form-item" style="width: 100px;">
-									<editor-checkbox text="All value" model="current.includeAll" change="runQuery()"></editor-checkbox>
+									<editor-checkbox text="所有值" model="current.includeAll" change="runQuery()"></editor-checkbox>
 								</li>
 								<li ng-show="current.includeAll">
 									<input type="text" class="input-xlarge tight-form-input" style="width:364px" ng-model='current.options[0].value'></input>
 								</li>
 								<li class="tight-form-item" ng-show="current.includeAll">
-									All format
+									所有格式化
 								</li>
 								<li ng-show="current.includeAll">
 									<select class="input-medium tight-form-input last" ng-model="current.allFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'wildcard', 'regex wildcard', 'regex values', 'lucene', 'pipe']"></select>
@@ -195,7 +195,7 @@
 						<div class="tight-form last">
 							<ul class="tight-form-list">
 								<li class="tight-form-item last">
-									<editor-checkbox text="Refresh on load" model="current.refresh"></editor-checkbox>
+									<editor-checkbox text="加载时自动更新" model="current.refresh"></editor-checkbox>
 									<tip>Check if you want values to be updated on dashboard load, will slow down dashboard load time</tip>
 								</li>
 							</ul>
@@ -207,14 +207,14 @@
 
 			<div class="editor-row">
 				<div class="tight-form-section" ng-hide="current.type === 'interval'">
-					<h5>Multi-value selection <tip>Enables multiple values to be selected at the same time</tip></h5>
+					<h5>多选 <tip>Enables multiple values to be selected at the same time</tip></h5>
 					<div class="tight-form last">
 						<ul class="tight-form-list">
 							<li class="tight-form-item last" style="width: 100px;">
-								<editor-checkbox text="Enable" model="current.multi" change="runQuery()"></editor-checkbox>
+								<editor-checkbox text="激活" model="current.multi" change="runQuery()"></editor-checkbox>
 							</li>
 							<li class="tight-form-item" ng-show="current.multi">
-								Multi format
+								多选格式
 							</li>
 							<li ng-show="current.multi">
 								<select class="input-medium tight-form-input last" ng-model="current.multiFormat" ng-change="runQuery()" ng-options="f for f in ['glob', 'regex values', 'lucene', 'pipe']"></select>
@@ -225,17 +225,17 @@
 				</div>
 
 				<div class="tight-form-section">
-					<h5>Display options</h5>
+					<h5>展示选项</h5>
 					<div class="tight-form last">
 						<ul class="tight-form-list">
 							<li class="tight-form-item" style="width: 100px">
-								Variable Label
+								变量标签
 							</li>
 							<li>
 								<input type="text" class="input-medium tight-form-input" ng-model='current.label' placeholder=""></input>
 							</li>
 							<li class="tight-form-item last">
-								<editor-checkbox text="Hide label" model="current.hideLabel" change="runQuery()"></editor-checkbox>
+								<editor-checkbox text="隐藏标签" model="current.hideLabel" change="runQuery()"></editor-checkbox>
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -245,11 +245,11 @@
 
 			<div class="editor-row" ng-if="current.type === 'query'">
 				<div class="tight-form-section">
-					<h5>Value groups/tags (Experimental feature)</h5>
+					<h5>值 /标识 (Experimental feature)</h5>
 					<div class="tight-form last" ng-if="current.useTags">
 						<ul class="tight-form-list">
 							<li class="tight-form-item" style="width: 135px">
-								Tags query
+								标识查询
 							</li>
 							<li>
 								<input type="text" style="width: 588px" class="input-xxlarge tight-form-input last" ng-model='current.tagsQuery' placeholder="metric name or tags query" ng-model-onblur></input>
@@ -260,7 +260,7 @@
 					<div class="tight-form" ng-if="current.useTags">
 						<ul class="tight-form-list">
 							<li class="tight-form-item" style="width: 135px;">
-								Tag values query
+								标识值的查询
 							</li>
 							<li>
 								<input type="text" style="width: 588px" class="input tight-form-input last" ng-model='current.tagValuesQuery' placeholder="apps.$tag.*" ng-model-onblur></input>
@@ -271,7 +271,7 @@
 					<div class="tight-form">
 						<ul class="tight-form-list">
 							<li class="tight-form-item last">
-								<editor-checkbox text="Enable" model="current.useTags" change="runQuery()"></editor-checkbox>
+								<editor-checkbox text="激活" model="current.useTags" change="runQuery()"></editor-checkbox>
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -281,7 +281,7 @@
 
 			<div class="editor-row">
 				<div class="tight-form-section">
-					<h5>Preview of values (shows max 20)</h5>
+					<h5>值预览 最多20个</h5>
 					<div class="tight-form last">
 						<ul class="tight-form-list">
 							<li class="tight-form-item" ng-repeat="option in current.options | limitTo: 20">
@@ -295,8 +295,8 @@
 		</div>
 
 		<div class="editor-row" style="margin-top: 20px">
-			<button type="button" class="btn btn-success" ng-show="mode === 'edit'" ng-click="update();">Update</button>
-			<button type="button" class="btn btn-success" ng-show="mode === 'new'" ng-click="add();">Add</button>
+			<button type="button" class="btn btn-success" ng-show="mode === 'edit'" ng-click="update();">更新</button>
+			<button type="button" class="btn btn-success" ng-show="mode === 'new'" ng-click="add();">添加</button>
 		</div>
 
 	</div>

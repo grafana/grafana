@@ -1,22 +1,22 @@
-<topnav icon="fa fa-fw fa-users" title="Organization" subnav="true">
+<topnav icon="fa fa-fw fa-users" title="公司" subnav="true">
 	<ul class="nav">
-		<li class="active"><a href="org">Info</a></li>
+		<li class="active"><a href="org">信息</a></li>
 	</ul>
 </topnav>
 
 <div class="page-container">
 	<div class="page">
 
-		<h2>Organization</h2>
+		<h2>公司</h2>
 
 		<div class="tight-form-section">
-			<h5>Info</h5>
+			<h5>信息</h5>
 
 			<form name="orgForm">
 				<div class="tight-form last">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
-							Org. name
+							公司名称
 						</li>
 						<li>
 							<input type="text" required ng-model="org.name" class="tight-form-input last" style="width: 475px">
@@ -26,24 +26,24 @@
 				</div>
 
 				<br>
-				<button type="submit" class="pull-right btn btn-success" ng-click="update()">Update</button>
+				<button type="submit" class="pull-right btn btn-success" ng-click="update()">更新</button>
 			</form>
 		</div>
 
 		<div class="tight-form-section">
-			<h5>Address</h5>
+			<h5>公司地址</h5>
 
 			<form name="addressForm">
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
-							Address 1
+							地址 1
 						</li>
 						<li>
 							<input type="text" ng-model="address.address1" class="tight-form-input" style="width:193px">
 						</li>
 						<li class="tight-form-item" style="width: 75px">
-							Address 2
+							地址 2
 						</li>
 						<li>
 							<input type="text" ng-model="address.address2" class="tight-form-input last" style="width:193px">
@@ -54,14 +54,14 @@
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
-							City
+							城市
 						</li>
 						<li>
 							<input type="text" ng-model="address.city" class="tight-form-input" style="width: 193px">
 						</li>
 						<li class="tight-form-item" style="width: 75px">
-							Postal code
-						</li>
+              邮政编码
+            </li>
 						<li>
 							<input type="text" ng-model="address.zipCode" class="input-medium tight-form-input last" style="width: 193px">
 						</li>
@@ -71,13 +71,13 @@
 				<div class="tight-form last">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
-							State
+							省
 						</li>
 						<li>
 							<input type="text" ng-model="address.state" class="tight-form-input" style="width: 193px">
 						</li>
 						<li class="tight-form-item" style="width: 75px">
-							Country
+							国家
 						</li>
 						<li>
 							<input type="text" ng-model="address.country" class="tight-form-input last" style="width: 193px">
@@ -87,7 +87,7 @@
 				</div>
 
 				<br>
-				<button type="submit" class="pull-right btn btn-success" ng-click="updateAddress()">Update</button>
+				<button type="submit" class="pull-right btn btn-success" ng-click="updateAddress()">更新</button>
 
 			</form>
 		</div>

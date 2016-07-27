@@ -4,10 +4,10 @@
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					Left Y
+					左Y轴
 				</li>
 				<li class="tight-form-item">
-					Unit
+					单位
 				</li>
 				<li class="dropdown" style="width: 140px;"
 					ng-model="panel.y_formats[0]"
@@ -15,7 +15,7 @@
 					dropdown-typeahead-on-select="setUnitFormat(0, $subItem)">
 				</li>
 				<li class="tight-form-item">
-					&nbsp;&nbsp; Grid Max
+					&nbsp;&nbsp; 最大网格
 				</li>
 				<li>
 					<input type="number" class="input-small tight-form-input" placeholder="auto"
@@ -23,7 +23,7 @@
 					ng-change="render()" ng-model-onblur>
 				</li>
 				<li class="tight-form-item">
-					Min
+					最小
 				</li>
 				<li>
 					<input type="number" class="input-small tight-form-input" placeholder="auto"
@@ -31,13 +31,13 @@
 					ng-change="render()" ng-model-onblur>
 				</li>
 				<li class="tight-form-item">
-					Scale type
+					规模
 				</li>
 				<li>
 					<select class="input-small tight-form-input" style="width: 113px" ng-model="panel.grid.leftLogBase" ng-options="v as k for (k, v) in logScales" ng-change="render()"></select>
 				</li>
 				<li class="tight-form-item">
-					Label
+					标签
 				</li>
 				<li>
 					<input type="text" class="input-small tight-form-input last"
@@ -49,10 +49,10 @@
 		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					Right Y
+					右Y轴
 				</li>
 				<li class="tight-form-item">
-					Unit
+					单位
 				</li>
 				<li class="dropdown" style="width: 140px"
 					ng-model="panel.y_formats[1]"
@@ -60,7 +60,7 @@
 					dropdown-typeahead-on-select="setUnitFormat(1, $subItem)">
 				</li>
 				<li class="tight-form-item">
-					&nbsp;&nbsp; Grid Max
+					&nbsp;&nbsp; 最大网格
 				</li>
 				<li>
 					<input type="number" class="input-small tight-form-input" placeholder="auto"
@@ -68,7 +68,7 @@
 					ng-change="render()" ng-model-onblur>
 				</li>
 				<li class="tight-form-item">
-					Min
+					最小网格
 				</li>
 				<li>
 					<input type="number" class="input-small tight-form-input" placeholder="auto"
@@ -76,13 +76,13 @@
 					ng-change="render()" ng-model-onblur>
 				</li>
 				<li class="tight-form-item">
-					Scale type
+					规模
 				</li>
 				<li>
 					<select class="input-small tight-form-input" style="width: 113px" ng-model="panel.grid.rightLogBase" ng-options="v as k for (k, v) in logScales" ng-change="render()"></select>
 				</li>
 				<li class="tight-form-item">
-					Label
+					标签
 				</li>
 				<li>
 					<input type="text" class="input-small tight-form-input last"
@@ -97,16 +97,16 @@
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					Show Axis
+					显示坐标轴
 				</li>
 				<li class="tight-form-item">
-					X-Axis&nbsp;
+					X-坐标轴&nbsp;
 					<input class="cr1" id="hideXAxis" type="checkbox"
 					ng-model="panel['x-axis']" ng-checked="panel['x-axis']" ng-change="render()">
 					<label for="hideXAxis" class="cr1"></label>
 				</li>
 				<li class="tight-form-item last">
-					Y-Axis&nbsp;
+					Y-坐标轴&nbsp;
 					<input class="cr1" id="hideYAxis" type="checkbox"
 					ng-model="panel['y-axis']" ng-checked="panel['y-axis']" ng-change="render()">
 					<label for="hideYAxis" class="cr1"></label>
@@ -117,7 +117,7 @@
 		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					Thresholds
+					阈值线
 				</li>
 				<li class="tight-form-item">
 					Level 1
@@ -153,19 +153,19 @@
 		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 110px">
-					Legend
+					图例
 				</li>
 				<li class="tight-form-item">
-					<editor-checkbox text="Show" model="panel.legend.show" change="get_data()"></editor-checkbox>
+					<editor-checkbox text="显示" model="panel.legend.show" change="get_data()"></editor-checkbox>
 				</li>
 				<li class="tight-form-item">
-					<editor-checkbox text="Table" model="panel.legend.alignAsTable" change="render()"></editor-checkbox>
+					<editor-checkbox text="表格" model="panel.legend.alignAsTable" change="render()"></editor-checkbox>
 				</li>
 				<li class="tight-form-item">
-					<editor-checkbox text="Right side" model="panel.legend.rightSide" change="render()"></editor-checkbox>
+					<editor-checkbox text="右侧显示" model="panel.legend.rightSide" change="render()"></editor-checkbox>
 				</li>
 				<li class="tight-form-item last">
-					<editor-checkbox text="Hide empty" model="panel.legend.hideEmpty" change="render()"></editor-checkbox>
+					<editor-checkbox text="隐藏空的" model="panel.legend.hideEmpty" change="render()"></editor-checkbox>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -175,7 +175,7 @@
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 105px">
-					Legend values
+					图例值
 				</li>
 				<li class="tight-form-item">
 					<editor-checkbox text="Min" model="panel.legend.min" change="legendValuesOptionChanged()"></editor-checkbox>
@@ -198,7 +198,7 @@
 		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 105px">
-					<strong>Decimals</strong>
+					<strong>精度</strong>
 				</li>
 				<li style="width: 105px">
 					<input type="number" class="input-small tight-form-input" placeholder="auto" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" data-placement="right"

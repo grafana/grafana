@@ -1,19 +1,19 @@
-<topnav icon="fa fa-fw fa-users" title="Global Orgs" subnav="true">
+<topnav icon="fa fa-fw fa-users" title="全部公司" subnav="true">
 	<ul class="nav">
-		<li class="active"><a href="admin/orgs">List</a></li>
+		<li class="active"><a href="admin/orgs">列表</a></li>
 	</ul>
 </topnav>
 
 <div class="page-container">
 	<div class="page">
 		<h2>
-			Organizations
+			公司管理
 		</h2>
 
 		<table class="grafana-options-table">
 			<tr>
-				<th style="text-align:left">Id</th>
-				<th>Name</th>
+				<th style="text-align:left">公司名称</th>
+				<th>操作</th>
 				<th></th>
 			</tr>
 			<tr ng-repeat="org in orgs">
@@ -21,7 +21,7 @@
 				<td style="width: 1%">
 					<a href="admin/orgs/edit/{{org.id}}" class="btn btn-inverse btn-small">
 						<i class="fa fa-edit"></i>
-						Edit
+						编辑
 					</a>
 					&nbsp;&nbsp;
 					<a ng-click="deleteOrg(org)" class="btn btn-danger btn-small">

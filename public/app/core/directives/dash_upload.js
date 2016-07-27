@@ -18,7 +18,7 @@ function (kbn, coreModule) {
                   window.grafanaImportDashboard = JSON.parse(e.target.result);
                 } catch (err) {
                   console.log(err);
-                  scope.appEvent('alert-error', ['Import failed', 'JSON -> JS Serialization failed: ' + err.message]);
+                  scope.appEvent('alert-error', ['导入 失败', 'JSON -> JS Serialization failed: ' + err.message]);
                   return;
                 }
                 var title = kbn.slugifyForUrl(window.grafanaImportDashboard.title);
@@ -38,7 +38,7 @@ function (kbn, coreModule) {
           // Something
           document.getElementById('dashupload').addEventListener('change', file_selected, false);
         } else {
-          alertSrv.set('Oops','Sorry, the HTML5 File APIs are not fully supported in this browser.','error');
+          alertSrv.set('非常抱歉','上传失败, 您的浏览器版本过低,请换最新的谷歌浏览器/火狐浏览器','error');
         }
       }
     };

@@ -3,23 +3,23 @@
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					<strong>Big value</strong>
+					<strong>大数目</strong>
 				</li>
 				<li class="tight-form-item">
-					Prefix
+					前缀
 				</li>
 				<li>
 					<input type="text" class="input-small tight-form-input"
 					ng-model="panel.prefix" ng-change="render()" ng-model-onblur>
 				</li>
 				<li class="tight-form-item">
-					Value
+					数值
 				</li>
 				<li>
 					<select class="input-small tight-form-input" ng-model="panel.valueName" ng-options="f for f in ['min','max','avg', 'current', 'total']" ng-change="render()"></select>
 				</li>
 				<li class="tight-form-item">
-					Postfix
+					后缀
 				</li>
 				<li>
 					<input type="text" class="input-small tight-form-input last"
@@ -31,22 +31,22 @@
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					<strong>Font size</strong>
+					<strong>字体大小</strong>
 				</li>
 				<li class="tight-form-item">
-					Prefix
+					前缀
 				</li>
 				<li>
 					<select class="input-small tight-form-input" ng-model="panel.prefixFontSize" ng-options="f for f in fontSizes" ng-change="render()"></select>
 				</li>
 				<li class="tight-form-item">
-					Value
+					数值
 				</li>
 				<li>
 					<select class="input-small tight-form-input" ng-model="panel.valueFontSize" ng-options="f for f in fontSizes" ng-change="render()"></select>
 				</li>
 				<li class="tight-form-item">
-					Postfix
+					后缀
 				</li>
 				<li>
 					<select class="input-small tight-form-input last" ng-model="panel.postfixFontSize" ng-options="f for f in fontSizes" ng-change="render()"></select>
@@ -57,7 +57,7 @@
 		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					<strong>Unit</strong>
+					<strong>单位</strong>
 				</li>
 				<li class="dropdown" style="width: 266px;"
 					ng-model="panel.format"
@@ -65,7 +65,7 @@
 					dropdown-typeahead-on-select="setUnitFormat($subItem)">
 				</li>
 				<li class="tight-form-item">
-					Decimals
+					精度
 				</li>
 				<li>
 					<input type="number" class="input-small tight-form-input last" placeholder="auto" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" data-placement="right"
@@ -82,28 +82,28 @@
 		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					<strong>Coloring</strong>
+					<strong>颜色</strong>
 				</li>
 				<li class="tight-form-item">
-					Background&nbsp;
+					背景&nbsp;
 					<input class="cr1" id="panel.colorBackground" type="checkbox"
 					ng-model="panel.colorBackground" ng-checked="panel.colorBackground" ng-change="render()">
 					<label for="panel.colorBackground" class="cr1"></label>
 				</li>
 				<li class="tight-form-item">
-					Value&nbsp;
+					数值&nbsp;
 					<input class="cr1" id="panel.colorValue" type="checkbox"
 					ng-model="panel.colorValue" ng-checked="panel.colorValue" ng-change="render()">
 					<label for="panel.colorValue" class="cr1"></label>
 				</li>
 				<li class="tight-form-item">
-					Thresholds<tip>Comma seperated values</tip>
+					阈值<tip>Comma seperated values</tip>
 				</li>
 				<li>
 					<input type="text" class="input-large tight-form-input" ng-model="panel.thresholds" ng-blur="render()" placeholder="0,50,80"></input>
 				</li>
 				<li class="tight-form-item">
-					Colors
+					颜色
 				</li>
 				<li class="tight-form-item">
 					<spectrum-picker ng-model="panel.colors[0]" ng-change="render()" ></spectrum-picker>
@@ -111,7 +111,7 @@
 					<spectrum-picker ng-model="panel.colors[2]" ng-change="render()" ></spectrum-picker>
 				</li>
 				<li class="tight-form-item last">
-					<a class="pointer" ng-click="invertColorOrder()">invert order</a>
+					<a class="pointer" ng-click="invertColorOrder()">翻转排序</a>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -124,28 +124,28 @@
 		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
-					<strong>Spark lines</strong>
+					<strong>火线 Spark lines</strong>
 				</li>
 				<li class="tight-form-item">
-					Show&nbsp;
+					显示&nbsp;
 					<input class="cr1" id="panel.sparkline.show" type="checkbox"
 					ng-model="panel.sparkline.show" ng-checked="panel.sparkline.show" ng-change="render()">
 					<label for="panel.sparkline.show" class="cr1"></label>
 				</li>
 				<li class="tight-form-item">
-					Background mode&nbsp;
+					背景模式&nbsp;
 					<input class="cr1" id="panel.sparkline.full" type="checkbox"
 					ng-model="panel.sparkline.full" ng-checked="panel.sparkline.full" ng-change="render()">
 					<label for="panel.sparkline.full" class="cr1"></label>
 				</li>
 				<li class="tight-form-item">
-					Line Color
+					线颜色
 				</li>
 				<li class="tight-form-item">
 					<spectrum-picker ng-model="panel.sparkline.lineColor" ng-change="render()" ></spectrum-picker>
 				</li>
 				<li class="tight-form-item">
-					Fill Color
+					填充颜色
 				</li>
 				<li class="tight-form-item last">
 					<spectrum-picker ng-model="panel.sparkline.fillColor" ng-change="render()" ></spectrum-picker>
@@ -161,7 +161,7 @@
 		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item">
-					<strong>Value to text mapping</strong>
+					<strong>数值转换</strong>
 				</li>
 				<li class="tight-form-item"  ng-repeat-start="map in panel.valueMaps">
 					<i class="fa fa-remove pointer" ng-click="removeValueMap(map)"></i>

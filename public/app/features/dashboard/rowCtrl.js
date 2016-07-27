@@ -45,7 +45,7 @@ function (angular, _, config) {
 
     $scope.deleteRow = function() {
       $scope.appEvent('confirm-modal', {
-        title: 'Are you sure you want to delete this row?',
+        title: '您是否想删除整行?',
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {
@@ -110,7 +110,7 @@ function (angular, _, config) {
 
     $scope.removePanel = function(panel) {
       $scope.appEvent('confirm-modal', {
-        title: 'Are you sure you want to remove this panel?',
+        title: '您是否想移除这个面板?',
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {

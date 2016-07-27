@@ -20,7 +20,7 @@ function (angular) {
 
     $scope.remove = function(alertId) {
       $scope.appEvent('confirm-modal', {
-        title: 'Are you sure you want to delete this alert?',
+        title: '您是否需要删除这个报警规则',
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {

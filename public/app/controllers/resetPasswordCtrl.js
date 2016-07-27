@@ -31,7 +31,7 @@ function (angular) {
       if (!$scope.resetForm.$valid) { return; }
 
       if ($scope.formModel.newPassword !== $scope.formModel.confirmPassword) {
-        $scope.appEvent('alert-warning', ['New passwords do not match', '']);
+        $scope.appEvent('alert-warning', ['两次密码不一致,请重新输入', '']);
         return;
       }
 

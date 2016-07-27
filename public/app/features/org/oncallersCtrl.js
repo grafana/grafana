@@ -20,7 +20,7 @@ function (angular) {
 
     $scope.remove = function(oncallerOrg, oncallerService) {
       $scope.appEvent('confirm-modal', {
-        title: 'Are you sure you want to delete this oncaller?',
+        title: '您确定要删除这个报警通知吗?',
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {

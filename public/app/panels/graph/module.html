@@ -9,9 +9,9 @@
 
 			<div ng-if="datapointsWarning" class="datapoints-warning">
 				<span class="small" ng-show="!datapointsCount">
-					No datapoints <tip>No datapoints returned from metric query</tip>
+					没有数据 <tip>No datapoints returned from metric query</tip>
 				</span>
-				<span class="small" ng-show="datapointsOutside">Datapoints outside time range <tip>Can be caused by timezone mismatch between browser and graphite server</tip></span>
+				<span class="small" ng-show="datapointsOutside">数据溢出 <tip>Can be caused by timezone mismatch between browser and graphite server</tip></span>
 			</div>
 
 			<div grafana-graph class="histogram-chart">

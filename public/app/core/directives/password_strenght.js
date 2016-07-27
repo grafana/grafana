@@ -24,17 +24,17 @@ function (coreModule) {
             return;
           }
           if (newValue.length < 4) {
-            $scope.strengthText = "strength: weak sauce.";
+            $scope.strengthText = "密码强度:太弱";
             $scope.strengthClass = "password-strength-bad";
             return;
           }
           if (newValue.length <= 8) {
-            $scope.strengthText = "strength: you can do better.";
+            $scope.strengthText = "密码强度:适中";
             $scope.strengthClass = "password-strength-ok";
             return;
           }
 
-          $scope.strengthText = "strength: strong like a bull.";
+          $scope.strengthText = "密码强度:非常高";
           $scope.strengthClass = "password-strength-good";
         }
 

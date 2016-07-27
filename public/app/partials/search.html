@@ -2,7 +2,7 @@
 
 	<div class="search-field-wrapper">
 		<span style="position: relative;">
-			<input  type="text" placeholder="Find dashboards by name" give-focus="giveSearchFocus" tabindex="1"
+			<input  type="text" placeholder="输入关键词搜索您想要的仪表盘" give-focus="giveSearchFocus" tabindex="1"
 			ng-keydown="keyDown($event)" ng-model="query.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="search()" />
 		</span>
 		<div class="search-switches">
@@ -43,7 +43,7 @@
 	</div>
 
 	<div class="search-results-container" ng-if="!tagsMode">
-		<h6 ng-hide="results.length">No dashboards matching your query were found.</h6>
+		<h6 ng-hide="results.length">无法找到仪表盘</h6>
 
 		<a class="search-item pointer search-item-{{row.type}}" bindonce ng-repeat="row in results"
 			ng-class="{'selected': $index == selectedIndex}" ng-href="{{row.url}}">
@@ -65,15 +65,15 @@
 	<div class="search-button-row">
 		<button class="btn btn-inverse pull-left" ng-click="newDashboard()" ng-show="contextSrv.isEditor">
 			<i class="fa fa-plus"></i>
-			New
+			新建
 		</button>
 		<a class="btn btn-inverse pull-left" href="import/dashboard" ng-show="contextSrv.isEditor">
 			<i class="fa fa-download"></i>
-			Import
+			导入
 		</a>
 		<button class="btn btn-inverse pull-left" dash-editor-link="app/partials/playlist.html" editor-scope="isolated" ng-click="dismiss();">
 			<i class="fa fa-play"></i>
-			Playlist
+			播放列表
 		</button>
 		<div class="clearfix"></div>
 	</div>

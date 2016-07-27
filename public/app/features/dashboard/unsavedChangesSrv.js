@@ -26,7 +26,7 @@ function(angular, _) {
       $window.onbeforeunload = function() {
         if (self.ignoreChanges()) { return; }
         if (self.hasChanges()) {
-          return "There are unsaved changes to this dashboard";
+          return "您修改后的仪表盘尚未保存";
         }
       };
 

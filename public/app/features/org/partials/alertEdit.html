@@ -1,16 +1,16 @@
-<topnav title="Alerts" icon="fa fa-fw fa-bell" subnav="true">
+<topnav title="告警管理" icon="fa fa-fw fa-bell" subnav="true">
   <ul class="nav">
-    <li><a href="alerts">Overview</a></li>
-    <li ng-class="{active: isNew}"><a href="alerts/new">Add new</a></li>
-    <li class="active" ng-show="!isNew"><a href="alerts/edit/{{current.name}}">Edit</a></li>
-    <li><a href="alerts/status">Status</a></li>
+    <li><a href="alerts">总览</a></li>
+    <li ng-class="{active: isNew}"><a href="alerts/new">新建报警规则</a></li>
+    <li class="active" ng-show="!isNew"><a href="alerts/edit/{{current.name}}">编辑</a></li>
+    <li><a href="alerts/status">状态</a></li>
   </ul>
 </topnav>
 
 <div class="page-container">
   <div class="page">
-    <h2 ng-show="isNew">Add Alert</h2>
-    <h2 ng-show="!isNew">Edit Alert</h2>
+    <h2 ng-show="isNew">新建报警规则</h2>
+    <h2 ng-show="!isNew">修改报警规则</h2>
 
     <form name="editForm">
       <div class="tight-form">
@@ -24,25 +24,25 @@
       </div>
       <div class="tight-form">
         <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">Name</li>
+          <li class="tight-form-item" style="width: 80px">名称</li>
           <li><li><input type="text" class="input-xxlarge tight-form-input last"
-                         ng-model="alertDef.name" placeholder="alert name" required>
+                         ng-model="alertDef.name" placeholder="报警规则名称" required>
           </li></li>
         </ul>
         <div class="clearfix"></div>
       </div>
       <div class="tight-form">
         <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">Description</li>
+          <li class="tight-form-item" style="width: 80px">描述</li>
           <li><li><input type="text" class="input-xxlarge tight-form-input last"
-                         ng-model="alertDef.description" placeholder="alert description" required>
+                         ng-model="alertDef.description" placeholder="报警规则描述信息" required>
           </li></li>
         </ul>
         <div class="clearfix"></div>
       </div>
       <div class="tight-form">
         <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">Org</li>
+          <li class="tight-form-item" style="width: 80px">公司名称</li>
           <li><li><input type="text" class="input-xxlarge tight-form-input last"
                          ng-model="alertDef.org" required>
         </li></li>
@@ -51,7 +51,7 @@
       </div>
       <div class="tight-form">
         <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">Service</li>
+          <li class="tight-form-item" style="width: 80px">服务名称</li>
           <li><li><input type="text" class="input-xxlarge tight-form-input last"
                          ng-model="alertDef.service" required>
         </li></li>
@@ -60,11 +60,11 @@
       </div>
 
       <br>
-      <h5>Alert Details</h5>
+      <h5>规则详情设置</h5>
       <div class="tight-form">
         <ul class="tight-form-list">
           <li class="tight-form-item" style="width: 80px">
-            Metric
+            指标
           </li>
           <li>
             <input type="text" class="tight-form-input input-xlarge"
@@ -74,7 +74,7 @@
                    placeholder="metric name" required />
           </li>
           <li class="tight-form-item">
-            Aggregator <tip>Select how to round up data point to a minute granularity</tip>
+            预聚合 <tip>选择一分钟里面数据展示形式</tip>
           </li>
           <li>
             <select class="input-medium tight-form-input last"
@@ -88,17 +88,17 @@
       <div class="tight-form">
         <ul class="tight-form-list">
           <li class="tight-form-item" style="width: 80px">
-            Critical
+            临界值
           </li>
           <li class="tight-form-item">
-            Threshold
+            阈值
           </li>
           <li>
             <input type="text" class="tight-form-input input-medium" style="width: 139px"
                    ng-model='alertDef.alertDetails.crit.threshold' placeholder="critical threshold" required />
           </li>
           <li class="tight-form-item" style="width: 120px">
-            DurationInMinutes
+            持续时间
           </li>
           <li>
             <input type="text" class="tight-form-input input-medium last"
@@ -110,17 +110,17 @@
       <div class="tight-form">
         <ul class="tight-form-list">
           <li class="tight-form-item" style="width: 80px">
-            Warning
+            警告
           </li>
           <li class="tight-form-item">
-            Threshold
+            阈值
           </li>
           <li>
             <input type="text" class="tight-form-input input-medium" style="width: 139px"
                    ng-model='alertDef.alertDetails.warn.threshold' placeholder="warn threshold" required />
           </li>
           <li class="tight-form-item" style="width: 120px">
-            DurationInMinutes
+            持续时间
           </li>
           <li>
             <input type="text" class="tight-form-input input-medium last"
@@ -131,7 +131,7 @@
       </div>
       <div class="tight-form">
         <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">cluster</li>
+          <li class="tight-form-item" style="width: 80px">集群</li>
           <li><li><input type="text" class="input-xxlarge tight-form-input last"
                          ng-model="alertDef.alertDetails.cluster" required>
         </li></li>
@@ -159,7 +159,7 @@
       </div>
       <div class="tight-form">
         <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">Monitoring scope</li>
+          <li class="tight-form-item" style="width: 80px">监控范围</li>
           <li>
             <select class="input-medium tight-form-input last"
                          ng-model="alertDef.alertDetails.monitoringScope"
@@ -171,9 +171,9 @@
       </div>
 
       <div class="pull-right" style="margin-top: 35px">
-        <button type="submit" class="btn btn-success" ng-show="isNew" ng-click="saveChanges()">Add</button>
-        <button type="submit" class="btn btn-success" ng-show="!isNew" ng-click="saveChanges()">Save</button>
-        <a class="btn btn-inverse" href="alerts">Cancel</a>
+        <button type="submit" class="btn btn-success" ng-show="isNew" ng-click="saveChanges()">增加</button>
+        <button type="submit" class="btn btn-success" ng-show="!isNew" ng-click="saveChanges()">保存</button>
+        <a class="btn btn-inverse" href="alerts">取消</a>
       </div>
       <br>
     </form>

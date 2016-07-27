@@ -28,8 +28,7 @@
 
 	<div class="share-snapshot-header">
 		<p class="share-snapshot-info-text">
-			The html code below can be pasted and included in another web page. Unless anonymous access
-			is enabled the user viewing that page need to be signed into grafana for the graph to load.
+			将下面的代码复制到您需要嵌入的html 代码中
 		</p>
 	</div>
 
@@ -51,7 +50,7 @@
 			<div class="tight-form">
 				<ul class="tight-form-list">
 					<li class="tight-form-item" style="width: 170px;">
-						<label class="checkbox-label" for="options.forCurrent">Current time range</label>
+						<label class="checkbox-label" for="options.forCurrent">当前时间范围</label>
 					</li>
 					<li class="tight-form-item last">
 						<input class="cr1" id="options.forCurrent" type="checkbox" ng-model="options.forCurrent" ng-checked="options.forCurrent" ng-change="buildUrl()">
@@ -63,7 +62,7 @@
 			<div class="tight-form">
 				<ul class="tight-form-list">
 					<li class="tight-form-item" style="width: 170px">
-						<label class="checkbox-label" for="options.includeTemplateVars">Include template variables</label>
+						<label class="checkbox-label" for="options.includeTemplateVars">包含模板参数</label>
 					</li>
 					<li class="tight-form-item last">
 						<input class="cr1" id="options.includeTemplateVars" type="checkbox" ng-model="options.includeTemplateVars" ng-checked="options.includeTemplateVars" ng-change="buildUrl()">
@@ -75,7 +74,7 @@
 			<div class="tight-form">
 				<ul class="tight-form-list">
 					<li class="tight-form-item" style="width: 170px">
-						Theme
+						主题
 					</li>
 					<li>
 						<select class="input-small tight-form-input last" style="width: 211px" ng-model="options.theme" ng-options="f as f for f in ['current', 'dark', 'light']" ng-change="buildUrl()"></select>
@@ -95,13 +94,13 @@
 	<div ng-include src="'shareLinkOptions.html'"></div>
 	<div class="gf-form">
 		<div class="gf-form-row">
-			<button class="btn btn-inverse pull-right" data-clipboard-text="{{shareUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy</button>
+			<button class="btn btn-inverse pull-right" data-clipboard-text="{{shareUrl}}" clipboard-button><i class="fa fa-clipboard"></i> 复制</button>
 			<span class="gf-fluid-input">
 				<input type="text" data-share-panel-url class="input" ng-model='shareUrl'></input>
 			</span>
 		</div>
 		<div class="editor-row" style="margin-top: 5px;" ng-show="modeSharePanel">
-			<a href="{{imageUrl}}" target="_blank"><i class="fa fa-camera"></i> Direct link rendered image</a>
+			<a href="{{imageUrl}}" target="_blank"><i class="fa fa-camera"></i> 直接链接渲染图片</a>
 		</div>
 	</div>
 </script>
@@ -137,7 +136,7 @@
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 110px;">
-							Snapshot name
+							快照名称
 						</li>
 						<li>
 							<input type="text" ng-model="snapshot.name" class="input-large tight-form-input last" >
@@ -148,7 +147,7 @@
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 110px">
-							Expire
+							有效期
 						</li>
 						<li>
 							<select class="input-small tight-form-input last" style="width: 211px" ng-model="snapshot.expires" ng-options="f.value as f.text for f in expireOptions"></select>
@@ -165,7 +164,7 @@
 						{{snapshotUrl}}
 					</a>
 					<br>
-					<button class="btn btn-inverse btn-large" data-clipboard-text="{{snapshotUrl}}" clipboard-button><i class="fa fa-clipboard"></i> Copy Link</button>
+					<button class="btn btn-inverse btn-large" data-clipboard-text="{{snapshotUrl}}" clipboard-button><i class="fa fa-clipboard"></i> 复制链接</button>
 				</div>
 			</div>
 		</div>
@@ -173,17 +172,17 @@
 		<div ng-if="step === 1">
 			<button class="btn btn-success btn-large" ng-click="createSnapshot()" ng-disabled="loading">
 				<i class="fa fa-save"></i>
-				Local Snapshot
+				本地快照
 			</button>
 
 			<button class="btn btn-primary btn-large" ng-click="createSnapshot(true)" ng-disabled="loading">
 				<i class="fa fa-cloud-upload"></i>
-				Publish to snapshot.raintank.io
+				发布到 snapshot.raintank.io
 			</button>
 		</div>
 
 		<div class="pull-right" ng-if="step === 2" style="padding: 5px">
-			Did you make a mistake? <a class="pointer" ng-click="deleteSnapshot()" target="_blank">delete snapshot.</a>
+			你是否出现失误? <a class="pointer" ng-click="deleteSnapshot()" target="_blank">删除快照.</a>
 		</div>
 
 	</div>

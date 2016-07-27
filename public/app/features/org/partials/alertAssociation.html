@@ -1,27 +1,27 @@
-<topnav title="Alerts" icon="fa fa-fw bell" subnav="true">
+<topnav title="告警管理" icon="fa fa-fw bell" subnav="true">
   <ul class="nav">
-    <li><a href="alerts">Overview</a></li>
-    <li><a href="alerts/new">Add new</a></li>
-    <li><a href="alerts/status">Status</a></li>
-    <li class="active"><a href="alerts/association/{{current.name}}">Association</a></li>
+    <li><a href="alerts">总览</a></li>
+    <li><a href="alerts/new">新建报警规则</a></li>
+    <li><a href="alerts/status">状态</a></li>
+    <li class="active"><a href="alerts/association/{{current.name}}">关联系分析</a></li>
   </ul>
 </topnav>
 
 <div ng-if="dashboard.rows.length === 0">
-  <h2 align="center">Correlated metrics are being calculated! Please refresh this page in 30 seconds!</h2>
+  <h2 align="center">采集数据正在努力为您计算,请耐心等待30s</h2>
 </div>
 
 <div ng-if="dashboard.rows.length > 0">
   <input ng-model="correlationThreshold" placeholder="100">
-  <span ng-show="!correlationThreshold.length">Adjust threshold. The smaller the less metrics!</span>
+  <span ng-show="!correlationThreshold.length">调整阈值越小越好</span>
   <span ng-show="correlationThreshold.length">
       <a href="alerts/association/{{ dashboard.id }}/{{ correlationThreshold }}">
-        <span style="color: green; ">Click here to filter results</span>
+        <span style="color: green; ">点击这里过滤结果</span>
       </a>
   </span>
   <br>
   Correlation minutes - before:<input ng-model="correlationBefore" placeholder="1">, after:<input ng-model="correlationAfter" placeholder="3">
-  <button type="submit" class="btn btn-success" ng-click="resetCorrelation()">Recalculate</button>
+  <button type="submit" class="btn btn-success" ng-click="resetCorrelation()">重新计算</button>
 </div>
 
 <div class="main-view-container">
@@ -53,7 +53,7 @@
         <div panel-drop-zone class="panel panel-drop-zone" ui-on-drop="onDrop($data, row)" data-drop="true">
           <div class="panel-container" style="background: transparent">
             <div style="text-align: center">
-              <em>Drop here</em>
+              <em>点击这里(drop here)</em>
             </div>
           </div>
         </div>

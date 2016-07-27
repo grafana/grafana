@@ -1,20 +1,20 @@
-<topnav title="{{contextSrv.user.name}}" section="Profile" icon="fa fa-fw fa-user" subnav="true">
+<topnav title="{{contextSrv.user.name}}" section="个人信息" icon="fa fa-fw fa-user" subnav="true">
 	<ul class="nav">
-		<li class="active"><a href="profile">Overview</a></li>
-		<li><a href="profile/password">Change password</a></li>
+		<li class="active"><a href="profile">总览</a></li>
+		<li><a href="profile/password">修改密码</a></li>
 	</ul>
 </topnav>
 
 <div class="page-container">
 	<div class="page">
 
-		<h2>Profile</h2>
+		<h2>个人信息</h2>
 
 		<form name="userForm">
 			<div class="tight-form">
 				<ul class="tight-form-list">
 					<li class="tight-form-item" style="width: 100px">
-						Name
+						姓名
 					</li>
 					<li>
 						<input type="text" required ng-model="user.name" class="input-xxlarge tight-form-input last" >
@@ -25,7 +25,7 @@
 			<div class="tight-form">
 				<ul class="tight-form-list">
 					<li class="tight-form-item" style="width: 100px">
-						Email
+						邮箱
 					</li>
 					<li>
 						<input type="email" required ng-model="user.email" class="input-xxlarge tight-form-input last" >
@@ -36,7 +36,7 @@
 			<div class="tight-form">
 				<ul class="tight-form-list">
 					<li class="tight-form-item" style="width: 100px">
-						Username
+						账号
 					</li>
 					<li>
 						<input type="text" required ng-model="user.login" class="input-xxlarge tight-form-input last" >
@@ -48,7 +48,7 @@
 			<div class="tight-form last">
 				<ul class="tight-form-list">
 					<li class="tight-form-item" style="width: 100px">
-						UI Theme
+						皮肤
 					</li>
 					<li>
 						<select class="input-small tight-form-input" ng-model="user.theme" ng-options="f for f in ['dark', 'light']"></select>
@@ -57,21 +57,21 @@
 				<div class="clearfix"></div>
 			</div>
 			<br>
-			<button type="submit" class="pull-right btn btn-success" ng-click="update()">Update</button>
+			<button type="submit" class="pull-right btn btn-success" ng-click="update()">更新</button>
 		</form>
 
-		<h3>Organizations</h3>
+		<h3>公司</h3>
 
 		<table class="grafana-options-table">
 			<tr ng-repeat="org in orgs">
-				<td style="width: 98%"><strong>Name: </strong> {{org.name}}</td>
-				<td><strong>Role: </strong> {{org.role}}</td>
+				<td style="width: 98%"><strong>公司名: </strong> {{org.name}}</td>
+				<td><strong>角色: </strong> {{org.role}}</td>
 				<td class="nobg max-width-btns">
 					<span class="btn btn-primary btn-mini" ng-show="org.orgId === contextSrv.user.orgId">
-						Current
+						当前用户
 					</span>
 					<a ng-click="setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== contextSrv.user.orgId">
-						Select
+						选择用户
 					</a>
 				</td>
 			</tr>

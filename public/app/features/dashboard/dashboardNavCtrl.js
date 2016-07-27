@@ -77,9 +77,9 @@ function (angular, _) {
         err.isHandled = true;
 
         $scope.appEvent('confirm-modal', {
-          title: 'Someone else has updated this dashboard!',
-          text: "Would you still like to save this dashboard?",
-          yesText: "Save & Overwrite",
+          title: '有人已经更新这仪表盘了！',
+          text: "您是否想直接覆盖并且保存您的操作?",
+          yesText: "保存 & 覆盖",
           icon: "fa-warning",
           onConfirm: function() {
             $scope.saveDashboard({overwrite: true});
@@ -91,9 +91,9 @@ function (angular, _) {
         err.isHandled = true;
 
         $scope.appEvent('confirm-modal', {
-          title: 'Another dashboard with the same name exists',
-          text: "Would you still like to save this dashboard?",
-          yesText: "Save & Overwrite",
+          title: '已经存在相同名字的仪表盘',
+          text: "您是否想直接覆盖并且保存您的操作?",
+          yesText: "保存 & 覆盖",
           icon: "fa-warning",
           onConfirm: function() {
             $scope.saveDashboard({overwrite: true});
@@ -104,7 +104,7 @@ function (angular, _) {
 
     $scope.deleteDashboard = function() {
       $scope.appEvent('confirm-modal', {
-        title: 'Do you want to delete dashboard ' + $scope.dashboard.title + '?',
+        title: '您是否想删除 ' + $scope.dashboard.title + '?',
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {
@@ -115,7 +115,7 @@ function (angular, _) {
 
     $scope.deleteDashboardConfirmed = function() {
       backendSrv.delete('/api/dashboards/db/' + $scope.dashboardMeta.slug).then(function() {
-        $scope.appEvent('alert-success', ['Dashboard Deleted', $scope.dashboard.title + ' has been deleted']);
+        $scope.appEvent('alert-success', ['仪表盘', $scope.dashboard.title + ' 已经被移除']);
         $location.url('/');
       });
     };

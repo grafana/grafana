@@ -1,11 +1,11 @@
 <div class="gf-box-header">
 	<div class="gf-box-title">
 		<i class="fa fa-cogs"></i>
-		Settings
+		设置
 	</div>
 
 	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-		<div ng-repeat="tab in ['General', 'Rows', 'Links', 'Time picker']" data-title="{{tab}}">
+		<div ng-repeat="tab in ['概要', '行设置', '链接', '时间选择']" data-title="{{tab}}">
 		</div>
 	</div>
 
@@ -18,21 +18,21 @@
 	<div ng-if="editor.index == 0">
 		<div class="editor-row">
 			<div class="tight-form-section">
-				<h5>Dashboard info</h5>
+				<h5>仪表盘 信息</h5>
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 90px">
-							Title
+							标题
 						</li>
 						<li>
 							<input type="text" class="input-xlarge tight-form-input" ng-model='dashboard.title'></input>
 						</li>
 						<li class="tight-form-item">
-							Tags
-							<tip>Press enter to a add tag</tip>
+							标签
+							<tip>按下回车即可添加</tip>
 						</li>
 						<li>
-							<bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="add tags">
+							<bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="填写标签">
 							</bootstrap-tagsinput>
 						</li>
 					</ul>
@@ -41,7 +41,7 @@
 				<div class="tight-form last">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 90px">
-							Timezone
+							时区
 						</li>
 						<li>
 							<select ng-model="dashboard.timezone" class='input-small tight-form-input' ng-options="f for f in ['browser','utc']"></select>
@@ -54,14 +54,14 @@
 
 		<div class="editor-row">
 			<div class="tight-form-section">
-				<h5>Toggles</h5>
+				<h5>开启/关闭</h5>
 				<div class="tight-form last">
 					<ul class="tight-form-list">
 						<li class="tight-form-item">
-							<editor-checkbox text="Editable" model="dashboard.editable"></editor-checkbox>
+							<editor-checkbox text="编辑" model="dashboard.editable"></editor-checkbox>
 						</li>
 						<li class="tight-form-item">
-							<editor-checkbox text="Hide Controls (CTRL+H)" model="dashboard.hideControls"></editor-checkbox>
+							<editor-checkbox text="隐藏操作栏(CTRL+H)" model="dashboard.hideControls"></editor-checkbox>
 						</li>
 						<li class="tight-form-item last">
 							<editor-checkbox text="Shared Crosshair (CTRL+O)" model="dashboard.sharedCrosshair"></editor-checkbox>
@@ -76,18 +76,18 @@
 	<div ng-if="editor.index == 1">
 		<div class="editor-row">
 			<div class="tight-form-section">
-				<h5>Rows settings</h5>
+				<h5>行设置</h5>
 				<div class="tight-form-container">
 					<div class="tight-form" ng-repeat="row in dashboard.rows">
 						<ul class="tight-form-list">
 							<li class="tight-form-item">
-								Title
+								标题
 							</li>
 							<li>
 								<input type="text" class="input tight-form-input" style="width: 400px;" ng-model='row.title'></input>
 							</li>
 							<li class="tight-form-item">
-								<editor-checkbox text="Show title" model="row.showTitle"></editor-checkbox>
+								<editor-checkbox text="显示标题" model="row.showTitle"></editor-checkbox>
 							</li>
 							<li class="tight-form-item last">
 								<i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-class="{'invisible': $first}" class="pointer fa fa-arrow-up"></i>
@@ -122,7 +122,7 @@
 <div class="gf-box-footer">
 	<div class="grafana-version-info" ng-show="editor.index === 0">
 		<span class="editor-option small">
-			Grafana version: {{contextSrv.version}} &nbsp;&nbsp;
+			Cloudwiz version: {{contextSrv.version}} &nbsp;&nbsp;
 		</span>
 		<span grafana-version-check>
 		</span>

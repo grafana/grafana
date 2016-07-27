@@ -43,9 +43,9 @@ function (angular, _, config) {
 
       return loadMetricsRecursive($scope.metricPath)
         .then(function() {
-          $scope.infoText = "Indexing completed!";
+          $scope.infoText = "加载成功!";
         }, function(err) {
-          $scope.errorText = "Error: " + err;
+          $scope.errorText = "错误: " + err;
         });
     };
 
@@ -54,7 +54,7 @@ function (angular, _, config) {
 
       getFromEachGraphite('/metrics/index.json', saveMetricsArray)
         .then(function() {
-          $scope.infoText = "Indexing complete!";
+          $scope.infoText = "加载成功!";
         }).then(null, function(err) {
           $scope.errorText = err;
         });

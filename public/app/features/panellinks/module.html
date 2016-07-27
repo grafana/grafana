@@ -1,6 +1,6 @@
 <div class="editor-row">
   <div class="section">
-		<h5>Drilldown / detail link<tip>These links appear in the dropdown menu in the panel menu. </tip></h5>
+		<h5>详细链接<tip>这将会在标题旁边加入链接图标. </tip></h5>
 
 		<div ng-repeat="link in panel.links" style="margin-top: 20px;">
 			<div class="tight-form">
@@ -19,17 +19,17 @@
 						<i class="fa fa-fw fa-unlink"></i>
 					</li>
 
-					<li class="tight-form-item">Type</li>
+					<li class="tight-form-item">类型</li>
 					<li>
 						<select class="input-medium tight-form-input" style="width: 150px;" ng-model="link.type" ng-options="f for f in ['dashboard','absolute']"></select>
 					</li>
 
-					<li class="tight-form-item" ng-show="link.type === 'dashboard'" style="width: 73px;">Dashboard</li>
+					<li class="tight-form-item" ng-show="link.type === 'dashboard'" style="width: 35px;">仪表盘</li>
 					<li ng-show="link.type === 'dashboard'">
 						<input type="text" ng-model="link.dashboard" bs-typeahead="searchDashboards" class="input-large tight-form-input" ng-blur="dashboardChanged(link)">
 					</li>
 
-					<li class="tight-form-item" ng-show="link.type === 'absolute'" style="width: 73px;">Url</li>
+					<li class="tight-form-item" ng-show="link.type === 'absolute'" style="width: 35px;">Url</li>
 					<li ng-show="link.type === 'absolute'">
 						<input type="text" ng-model="link.url" class="input-large tight-form-input">
 					</li>
@@ -43,7 +43,7 @@
 					<li class="tight-form-item" style="width: 20px">
 						<i class="fa fa-fw fa-unlink invisible"></i>
 					</li>
-					<li class="tight-form-item" style="width: 31px">Title</li>
+					<li class="tight-form-item" style="width: 31px">标题</li>
 					<li>
 						<input type="text" ng-model="link.title" class="input-medium tight-form-input">
 					</li>
@@ -62,13 +62,13 @@
 						<i class="fa fa-fw fa-unlink invisible"></i>
 					</li>
 					<li class="tight-form-item">
-						<editor-checkbox text="Keep current time range" model="link.keepTime"></editor-checkbox>
+						<editor-checkbox text="与当前时间区间保持一致" model="link.keepTime"></editor-checkbox>
 					</li>
 					<li class="tight-form-item">
-						<editor-checkbox text="Add current variable values" model="link.includeVars"></editor-checkbox>
+						<editor-checkbox text="加入当前时间变量" model="link.includeVars"></editor-checkbox>
 					</li>
 					<li class="tight-form-item last">
-						<editor-checkbox text="Open in new tab " model="link.targetBlank"></editor-checkbox>
+						<editor-checkbox text="在新的页面打开 " model="link.targetBlank"></editor-checkbox>
 					</li>
 				</ul>
 				<div class="clearfix"></div>
@@ -80,5 +80,5 @@
 
 <div class="editor-row">
 	<br>
-	<button class="btn btn-inverse" ng-click="addLink()"><i class="fa fa-plus"></i> Add link</button>
+	<button class="btn btn-inverse" ng-click="addLink()"><i class="fa fa-plus"></i> 新增链接</button>
 </div>

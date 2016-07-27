@@ -65,7 +65,7 @@ function (angular, $, config) {
         $scope.appEvent("dashboard-loaded", $scope.dashboard);
       }).catch(function(err) {
         if (err.data && err.data.message) { err.message = err.data.message; }
-        $scope.appEvent("alert-error", ['Dashboard init failed', 'Template variables could not be initialized: ' + err.message]);
+        $scope.appEvent("alert-error", ['仪表盘初始化失败', '模板不能被正常的初始化: ' + err.message]);
       });
     };
 

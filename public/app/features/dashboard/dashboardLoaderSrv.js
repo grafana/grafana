@@ -47,7 +47,7 @@ function (angular, moment, _, $, kbn, dateMath) {
         return { meta: { fromScript: true, canDelete: false, canSave: false, canStar: false}, dashboard: result.data };
       }, function(err) {
         console.log('Script dashboard error '+ err);
-        $rootScope.appEvent('alert-error', ["Script Error", "Please make sure it exists and returns a valid dashboard"]);
+        $rootScope.appEvent('alert-error', ["脚本错误", "请确保它存在并返回一个有效的仪表盘"]);
         return self._dashboardLoadFailed('Scripted dashboard');
       });
     };

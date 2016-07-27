@@ -1,15 +1,15 @@
-<topnav title="Alerts" icon="fa fa-fw fa-bell" subnav="true">
+<topnav title="告警管理" icon="fa fa-fw fa-bell" subnav="true">
   <ul class="nav">
-    <li><a href="alerts">Overview</a></li>
-    <li><a href="alerts/new">Add new</a></li>
-    <li class="active"><a href="alerts/status" style="color:red" ng-if="dashboard.rows.length > 0">Status</a></li>
-    <li class="active"><a href="alerts/status" ng-if="dashboard.rows.length === 0">Status</a></li>
+    <li><a href="alerts">总览</a></li>
+    <li><a href="alerts/new">新建报警规则</a></li>
+    <li class="active"><a href="alerts/status" style="color:red" ng-if="dashboard.rows.length > 0">状态</a></li>
+    <li class="active"><a href="alerts/status" ng-if="dashboard.rows.length === 0">状态</a></li>
   </ul>
 </topnav>
 
 <div class="main-view-container">
   <div ng-if="dashboard.rows.length === 0">
-    <h2 align="center">Everything looks good!</h2>
+    <h2 align="center">所有集群一切正常</h2>
   </div>
 
   <div class="grafana-row" ng-controller="RowCtrl" ng-init="createAlertGraphPanel(row.triggeredAlert)" ng-repeat="(row_name, row) in dashboard.rows" row-height>

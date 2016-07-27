@@ -21,14 +21,14 @@ function (angular, config) {
     $scope.disableUserSignUp = config.disableUserSignUp;
 
     $scope.loginMode = true;
-    $scope.submitBtnText = 'Log in';
+    $scope.submitBtnText = '登 录';
 
     $scope.init = function() {
       $scope.$watch("loginMode", $scope.loginModeChanged);
 
       var params = $location.search();
       if (params.failedMsg) {
-        $scope.appEvent('alert-warning', ['Login Failed', params.failedMsg]);
+        $scope.appEvent('alert-warning', ['登录 失败', params.failedMsg]);
         delete params.failedMsg;
         $location.search(params);
       }
@@ -50,7 +50,7 @@ function (angular, config) {
     };
 
     $scope.loginModeChanged = function(newValue) {
-      $scope.submitBtnText = newValue ? 'Log in' : 'Sign up';
+      $scope.submitBtnText = newValue ? '登 录' : '注 册';
     };
 
     $scope.signUp = function() {

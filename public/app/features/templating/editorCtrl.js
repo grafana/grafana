@@ -59,18 +59,18 @@ function (angular, _) {
 
     $scope.isValid = function() {
       if (!$scope.current.name) {
-        $scope.appEvent('alert-warning', ['Validation', 'Template variable requires a name']);
+        $scope.appEvent('alert-warning', ['失败', '模板变量必须要一个名字']);
         return false;
       }
 
       if (!$scope.current.name.match(/^\w+$/)) {
-        $scope.appEvent('alert-warning', ['Validation', 'Only word and digit characters are allowed in variable names']);
+        $scope.appEvent('alert-warning', ['失败', '只有字符和数字被允许在变量名']);
         return false;
       }
 
       var sameName = _.findWhere($scope.variables, { name: $scope.current.name });
       if (sameName && sameName !== $scope.current) {
-        $scope.appEvent('alert-warning', ['Validation', 'Variable with the same name already exists']);
+        $scope.appEvent('alert-warning', ['失败', '名字相同的变量已存在']);
         return false;
       }
 
@@ -80,7 +80,7 @@ function (angular, _) {
     $scope.runQuery = function() {
       return templateValuesSrv.updateOptions($scope.current).then(null, function(err) {
         if (err.data && err.data.message) { err.message = err.data.message; }
-        $scope.appEvent("alert-error", ['Templating', 'Template variables could not be initialized: ' + err.message]);
+        $scope.appEvent("alert-error", ['模板', '模板变量不能被初始化: ' + err.message]);
       });
     };
 

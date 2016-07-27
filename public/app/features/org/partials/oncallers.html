@@ -1,22 +1,22 @@
-<topnav title="OnCallers" icon="fa fa-fw fa-phone" subnav="true">
+<topnav title="告警通知" icon="fa fa-fw fa-phone" subnav="true">
   <ul class="nav">
-    <li class="active" ><a href="oncallers">Overview</a></li>
-    <li><a href="oncallers/new">Add new</a></li>
+    <li class="active" ><a href="oncallers">总览</a></li>
+    <li><a href="oncallers/new">新增</a></li>
   </ul>
 </topnav>
 
 <div class="page-container">
   <div class="page">
-    <h2>OnCaller Definitions</h2>
+    <h2>告警通知列表</h2>
 
     <div ng-if="oncallerDefList.length === 0">
-      <em>No oncaller defined</em>
+      <em>您还没有定义任何报警通知的规则</em>
     </div>
 
     <table class="grafana-options-table" ng-if="oncallerDefList.length > 0">
       <tr>
-        <td><strong>Org</strong></td>
-        <td><strong>Service</strong></td>
+        <td><strong>组织</strong></td>
+        <td><strong>服务名称</strong></td>
         <td></td>
         <td></td>
       </tr>
@@ -31,7 +31,7 @@
         <td style="width: 1%">
           <a href="oncallers/edit/{{oncallerDef.org}}:{{oncallerDef.service}}" class="btn btn-inverse btn-mini">
             <i class="fa fa-edit"></i>
-            Edit
+            编辑
           </a>
         </td>
         <td style="width: 1%">

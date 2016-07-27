@@ -17,7 +17,7 @@ function (angular, _, $, config) {
 
     $scope.setupMainNav = function() {
       $scope.mainLinks.push({
-        text: "Dashboards",
+        text: "智能仪表盘",
         icon: "fa fa-fw fa-th-large",
         href: $scope.getUrl("/"),
       });
@@ -33,13 +33,13 @@ function (angular, _, $, config) {
       */
 
       $scope.mainLinks.push({
-        text: "Alerts",
+        text: "告警管理",
         icon: "fa fa-fw fa-bell",
         href: $scope.getUrl("/alerts"),
       });
 
       $scope.mainLinks.push({
-        text: "OnCallers",
+        text: "告警通知",
         icon: "fa fa-fw fa-phone",
         href: $scope.getUrl("/oncallers"),
       });
@@ -51,15 +51,15 @@ function (angular, _, $, config) {
 
       if (contextSrv.hasRole('Admin')) {
         $scope.orgMenu.push({
-          text: "Organization settings",
+          text: "公司信息设置",
           href: $scope.getUrl("/org"),
         });
         $scope.orgMenu.push({
-          text: "Users",
+          text: "用户管理",
           href: $scope.getUrl("/org/users"),
         });
         $scope.orgMenu.push({
-          text: "API Keys",
+          text: "密钥管理",
           href: $scope.getUrl("/org/apikeys"),
         });
       }
@@ -75,7 +75,7 @@ function (angular, _, $, config) {
           }
 
           $scope.orgMenu.push({
-            text: "Switch to " + org.name,
+            text: "切换到" + org.name,
             icon: "fa fa-fw fa-random",
             click: function() {
               $scope.switchOrg(org.orgId);
@@ -85,7 +85,7 @@ function (angular, _, $, config) {
 
         if (config.allowOrgCreate) {
           $scope.orgMenu.push({
-            text: "New Organization",
+            text: "新建公司",
             icon: "fa fa-fw fa-plus",
             href: $scope.getUrl('/org/new')
           });
@@ -112,13 +112,13 @@ function (angular, _, $, config) {
       */
 
       $scope.mainLinks.push({
-        text: "Global Users",
+        text: "全体成员",
         icon: "fa fa-fw fa-user",
         href: $scope.getUrl("/admin/users"),
       });
 
       $scope.mainLinks.push({
-        text: "Global Orgs",
+        text: "所有公司",
         icon: "fa fa-fw fa-users",
         href: $scope.getUrl("/admin/orgs"),
       });

@@ -23,7 +23,7 @@ function (coreModule) {
 
   coreModule.controller('DashFromImportCtrl', function($scope, $location, alertSrv) {
     if (!window.grafanaImportDashboard) {
-      alertSrv.set('Not found', 'Cannot reload page with unsaved imported dashboard', 'warning', 7000);
+      alertSrv.set('抱歉', '不能在没有保存的情况下刷新页面', 'warning', 7000);
       $location.path('');
       return;
     }
@@ -37,7 +37,7 @@ function (coreModule) {
     $scope.initDashboard({
       meta: { canStar: false, canShare: false },
       dashboard: {
-        title: "New dashboard",
+        title: "新的仪表盘",
         rows: [{ height: '250px', panels:[] }]
       },
     }, $scope);

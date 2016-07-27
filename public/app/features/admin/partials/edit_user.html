@@ -1,15 +1,15 @@
-<topnav icon="fa fa-fw fa-user" title="Global Users" subnav="true">
+<topnav icon="fa fa-fw fa-user" title="全体成员" subnav="true">
 	<ul class="nav">
-		<li><a href="admin/users">Users</a></li>
-		<li><a href="admin/users/create">Create user</a></li>
-		<li class="active"><a href="admin/users/edit/{{user_id}}">Edit user</a></li>
+		<li><a href="admin/users">用户</a></li>
+		<li><a href="admin/users/create">新建用户</a></li>
+		<li class="active"><a href="admin/users/edit/{{user_id}}">用户编辑</a></li>
 	</ul>
 </topnav>
 
 <div class="page-container">
 	<div class="page">
 		<h2>
-			Edit User
+			账号编辑
 		</h2>
 
 		<form name="userForm">
@@ -17,7 +17,7 @@
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
-							Name
+							名称
 						</li>
 						<li>
 							<input type="text" required ng-model="user.name" class="input-xxlarge tight-form-input last" >
@@ -28,7 +28,7 @@
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
-							Email
+							邮箱
 						</li>
 						<li>
 							<input type="email" ng-model="user.email" class="input-xxlarge tight-form-input last" >
@@ -39,7 +39,7 @@
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
-							Username
+							账号
 						</li>
 						<li>
 							<input type="text" ng-model="user.login" class="input-xxlarge tight-form-input last" >
@@ -54,7 +54,7 @@
 		</form>
 
 		<h3>
-			Change password
+			修改密码
 		</h3>
 
 		<form name="passwordForm">
@@ -77,7 +77,7 @@
 		</form>
 
 		<h3>
-			Permissions
+			权限
 		</h3>
 
 		<div>
@@ -98,21 +98,21 @@
 		</div>
 
 		<h3>
-			Organizations
+			公司
 		</h3>
 
 		<form name="addOrgForm">
 			<div class="tight-form">
 				<ul class="tight-form-list">
 					<li class="tight-form-item" style="width: 160px">
-						Add organization
+						新增公司
 					</li>
 					<li>
 						<input type="text" ng-model="newOrg.name" bs-typeahead="searchOrgs"
 									required class="input-xlarge tight-form-input" placeholder="organization name">
 					</li>
 					<li class="tight-form-item">
-						Role
+						角色
 					</li>
 					<li>
 						<select type="text" ng-model="newOrg.role" class="input-small tight-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']">
@@ -128,8 +128,8 @@
 
 		<table class="grafana-options-table form-inline">
 			<tr>
-				<th>Name</th>
-				<th>Role</th>
+				<th>姓名</th>
+				<th>角色</th>
 				<th></th>
 			</tr>
 			<tr ng-repeat="org in orgs">

@@ -1,4 +1,4 @@
-<topnav icon="fa fa-fw fa-users" title="Organization" subnav="true">
+<topnav icon="fa fa-fw fa-users" title="公司" subnav="true">
 	<ul class="nav">
 		<li class="active"><a href="org/apikeys">API Keys</a></li>
 	</ul>
@@ -14,19 +14,19 @@
 		<form name="addTokenrForm" class="form-inline tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 100px">
-					Add a key
+					新增 key
 				</li>
 				<li>
-					<input type="text" class="input-xlarge tight-form-input" ng-model='token.name' placeholder="Name"></input>
+					<input type="text" class="input-xlarge tight-form-input" ng-model='token.name' placeholder="姓名"></input>
 				</li>
 				<li class="tight-form-item">
-					Role
+					角色
 				</li>
 				<li>
 					<select class="input-small tight-form-input" ng-model="token.role" ng-options="r for r in roleTypes"></select>
 				</li>
 				<li style="float: right">
-					<button class="btn btn-success tight-form-btn" ng-click="addToken()">Add</button>
+					<button class="btn btn-success tight-form-btn" ng-click="addToken()">新增</button>
 				</li>
 				<div class="clearfix"></div>
 			</ul>
@@ -34,8 +34,8 @@
 
 		<table class="grafana-options-table" style="width: 250px">
 			<tr>
-				<th style="text-align: left">Name</th>
-				<th style="text-align: left">Role</th>
+				<th style="text-align: left">姓名</th>
+				<th style="text-align: left">角色</th>
 				<th style="text-align: left">Token</th>
 				<th></th>
 			</tr>

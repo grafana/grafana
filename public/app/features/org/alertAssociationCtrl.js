@@ -72,7 +72,7 @@ function (angular) {
     $scope.initDashboard({
       meta: { canStar: false, canShare: false, canEdit: false },
       dashboard: {
-        title: "Associated Metrics",
+        title: "相关联指标",
         id: alertId,
         rows: associatedMetricRows,
         time: {from: "now-2h", to: "now"}

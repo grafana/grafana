@@ -1,14 +1,14 @@
-<topnav icon="fa fa-fw fa-user" title="Global Users" subnav="true">
+<topnav icon="fa fa-fw fa-user" title="全体成员" subnav="true">
 	<ul class="nav">
-		<li><a href="admin/orgs">List</a></li>
-		<li class="active"><a href="admin/orgs/edit/{{org.id}}">Edit Org</a></li>
+		<li><a href="admin/orgs">列表</a></li>
+		<li class="active"><a href="admin/orgs/edit/{{org.id}}">公司编辑</a></li>
 	</ul>
 </topnav>
 
 <div class="page-container">
 	<div class="page">
 		<h2>
-			Organization Details
+			公司详细信息
 		</h2>
 
 		<form name="orgDetailsForm">
@@ -16,7 +16,7 @@
 				<div class="tight-form">
 					<ul class="tight-form-list">
 						<li class="tight-form-item" style="width: 100px">
-							Name
+							名称
 						</li>
 						<li>
 							<input type="text" required ng-model="org.name" class="input-xxlarge tight-form-input last" >
@@ -31,14 +31,14 @@
 		</form>
 
 		<h3>
-			Organization Users
+			公司成员
 		</h3>
 
 		<table class="grafana-options-table form-inline">
 			<tr>
-				<th>Username</th>
-				<th>Email</th>
-				<th>Role</th>
+				<th>账 号</th>
+				<th>邮 箱</th>
+				<th>角 色</th>
 				<th></th>
 			</tr>
 			<tr ng-repeat="orgUser in orgUsers">

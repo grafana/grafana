@@ -16,7 +16,7 @@ function (angular) {
 
     function saveDashboard(options) {
       return backendSrv.saveDashboard($scope.clone, options).then(function(result) {
-        $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + $scope.clone.title]);
+        $scope.appEvent('alert-success', ['仪表盘已经保存', '保存为 ' + $scope.clone.title]);
 
         $location.url('/dashboard/db/' + result.slug);
 
@@ -37,9 +37,9 @@ function (angular) {
           err.isHandled = true;
 
           $scope.appEvent('confirm-modal', {
-            title: 'Another dashboard with the same name exists',
-            text: "Would you still like to save this dashboard?",
-            yesText: "Save & Overwrite",
+            title: '已经有相同名字的仪表盘存在',
+            text: "您是否需要覆盖?",
+            yesText: "保存 & 覆盖",
             icon: "fa-warning",
             onConfirm: function() {
               saveDashboard({overwrite: true});

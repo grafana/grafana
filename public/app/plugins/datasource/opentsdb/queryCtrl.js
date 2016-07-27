@@ -94,7 +94,7 @@ function (angular, _, kbn) {
           if (target.downsampleInterval) {
             kbn.describe_interval(target.downsampleInterval);
           } else {
-            errs.downsampleInterval = "You must supply a downsample interval (e.g. '1m' or '1h').";
+            errs.downsampleInterval = "您必须提供采样的间隔 (e.g. '1m' or '1h').";
           }
         } catch(err) {
           errs.downsampleInterval = err.message;
@@ -102,7 +102,7 @@ function (angular, _, kbn) {
       }
 
       if (target.tags && _.has(target.tags, target.currentTagKey)) {
-        errs.tags = "Duplicate tag key '" + target.currentTagKey + "'.";
+        errs.tags = "重复标签'" + target.currentTagKey + "'.";
       }
 
       return errs;

@@ -31,10 +31,10 @@
 							</span>
 							<ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="drop1">
 								<li>
-									<a ng-click="toggleRow(row)">Collapse row</a>
+									<a ng-click="toggleRow(row)">合并行</a>
 								</li>
 								<li class="dropdown-submenu">
-									<a href="javascript:void(0);">Add Panel</a>
+									<a href="javascript:void(0);">添加模块</a>
 									<ul class="dropdown-menu">
 										<li bindonce ng-repeat="(key, value) in panels">
 											<a ng-click="addPanelDefault(key)" bo-text="value.name"></a>
@@ -42,7 +42,7 @@
 									</ul>
 								</li>
 								<li class="dropdown-submenu">
-									<a href="javascript:void(0);">Set height</a>
+									<a href="javascript:void(0);">设置高度</a>
 									<ul class="dropdown-menu">
 										<li><a ng-click="setHeight('25px')">25 px</a></li>
 										<li><a ng-click="setHeight('100px')">100 px</a></li>
@@ -58,19 +58,19 @@
 									</ul>
 								</li>
 								<li class="dropdown-submenu">
-									<a href="javascript:void(0);">Move</a>
+									<a href="javascript:void(0);">移动</a>
 									<ul class="dropdown-menu">
-										<li><a ng-click="moveRow('up')">Up</a></li>
-										<li><a ng-click="moveRow('down')">Down</a></li>
-                    <li><a ng-click="moveRow('top')">To top</a></li>
-                    <li><a ng-click="moveRow('bottom')">To Bottom</a></li>
+										<li><a ng-click="moveRow('up')">上移</a></li>
+										<li><a ng-click="moveRow('down')">下移</a></li>
+                    <li><a ng-click="moveRow('top')">置顶</a></li>
+                    <li><a ng-click="moveRow('bottom')">置底</a></li>
 									</ul>
 								</li>
 								<li>
-									<a dash-editor-link="app/partials/roweditor.html">Row editor</a>
+									<a dash-editor-link="app/partials/roweditor.html">行编辑</a>
 								</li>
 								<li>
-									<a ng-click="deleteRow()">Delete row</a>
+									<a ng-click="deleteRow()">删除整行</a>
 								</li>
 							</ul>
 						</div>
@@ -102,7 +102,7 @@
 		<div ng-show='dashboardMeta.canEdit' class="row-fluid add-row-panel-hint" ng-hide="dashboardViewState.fullscreen">
 			<div class="span12" style="text-align:right;">
 				<span style="margin-right: 10px;" ng-click="addRowDefault()" class="pointer btn btn-info btn-small">
-					<span><i class="fa fa-plus"></i> ADD ROW</span>
+					<span><i class="fa fa-plus"></i> 新增一行</span>
 				</span>
 			</div>
 		</div>

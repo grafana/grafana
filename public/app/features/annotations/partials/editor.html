@@ -3,14 +3,14 @@
 	<div class="gf-box-header">
 		<div class="gf-box-title">
 			<i class="fa fa-bolt"></i>
-			Annotations
+			标注
 		</div>
 
 		<div class="tabs">
 			<ul class="nav nav-tabs">
 				<li ng-class="{active: mode === 'list'}">
 					<a ng-click="mode = 'list';">
-						List
+						列表
 					</a>
 				</li>
 
@@ -23,7 +23,7 @@
 				<li ng-class="{active: mode === 'new'}">
 					<a ng-click="mode = 'new';">
 						<i class="fa fa-plus"></i>
-						New
+						新建
 					</a>
 				</li>
 			</ul>
@@ -39,7 +39,7 @@
 		<div class="editor-row row" ng-if="mode === 'list'">
 			<div class="span6">
 				<div ng-if="annotations.length === 0">
-					<em>No annotations defined</em>
+					<em>您尚未创建任何标注</em>
 				</div>
 				<table class="grafana-options-table">
 					<tr ng-repeat="annotation in annotations">
@@ -53,7 +53,7 @@
 						<td style="width: 1%" class="nobg">
 							<a ng-click="edit(annotation)" class="btn btn-inverse btn-mini">
 								<i class="fa fa-edit"></i>
-								Edit
+								编辑
 							</a>
 						</td>
 						<td style="width: 1%" class="nobg">
@@ -69,24 +69,24 @@
 		<div ng-if="mode === 'edit' || mode === 'new'">
 			<div class="editor-row">
 				<div class="editor-option">
-					<label class="small">Name</label>
+					<label class="small">标注名</label>
 					<input type="text" class="input-medium" ng-model='currentAnnotation.name' placeholder="name"></input>
 				</div>
 				<div class="editor-option">
-					<label class="small">Datasource</label>
+					<label class="small">数据源</label>
 					<select ng-model="currentAnnotation.datasource" ng-options="f.name as f.name for f in datasources" ng-change="datasourceChanged()"></select>
 				</div>
 				<div class="editor-option text-center">
-					<label class="small">Icon color</label>
+					<label class="small">图标颜色</label>
 					<spectrum-picker ng-model="currentAnnotation.iconColor"></spectrum-picker>
 				</div>
 				<div class="editor-option">
-					<label class="small">Icon size</label>
+					<label class="small">图标大小</label>
 					<select class="input-mini" ng-model="currentAnnotation.iconSize" ng-options="f for f in [7,8,9,10,13,15,17,20,25,30]"></select>
 				</div>
 				<editor-opt-bool text="Grid line" model="currentAnnotation.showLine"></editor-opt-bool>
 				<div class="editor-option text-center">
-					<label class="small">Line color</label>
+					<label class="small">标注线颜色</label>
 					<spectrum-picker ng-model="currentAnnotation.lineColor"></spectrum-picker>
 				</div>
 			</div>

@@ -17,20 +17,20 @@ class PanelMeta {
     this.extendedMenu = [];
 
     if (options.fullscreen) {
-      this.addMenuItem('View', 'icon-eye-open', 'toggleFullscreen(false); dismiss();');
+      this.addMenuItem('查看', 'icon-eye-open', 'toggleFullscreen(false); dismiss();');
     }
 
-    this.addMenuItem('Edit', 'icon-cog', 'editPanel(); dismiss();', 'Editor');
-    this.addMenuItem('Duplicate', 'icon-copy', 'duplicatePanel()', 'Editor');
-    this.addMenuItem('Share', 'icon-share', 'sharePanel(); dismiss();');
+    this.addMenuItem('编辑', 'icon-cog', 'editPanel(); dismiss();', 'Editor');
+    this.addMenuItem('复制', 'icon-copy', 'duplicatePanel()', 'Editor');
+    this.addMenuItem('分享', 'icon-share', 'sharePanel(); dismiss();');
 
-    this.addEditorTab('General', 'app/partials/panelgeneral.html');
+    this.addEditorTab('概要', 'app/partials/panelgeneral.html');
 
     if (options.metricsEditor) {
-      this.addEditorTab('Metrics', 'app/partials/metrics.html');
+      this.addEditorTab('指标', 'app/partials/metrics.html');
     }
 
-    this.addExtendedMenuItem('Panel JSON', '', 'editPanelJson(); dismiss();');
+    this.addExtendedMenuItem('查看JSON', '', 'editPanelJson(); dismiss();');
   }
 
   addMenuItem (text, icon, click, role?) {

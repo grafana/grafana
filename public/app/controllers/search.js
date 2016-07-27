@@ -71,7 +71,7 @@ function (angular, _, config) {
         });
 
         if ($scope.queryHasNoFilters()) {
-          $scope.results.unshift({ title: 'Home', url: config.appSubUrl + '/', type: 'dash-home' });
+          $scope.results.unshift({ title: '主页', url: config.appSubUrl + '/', type: 'dash-home' });
         }
       });
     };

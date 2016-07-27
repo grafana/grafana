@@ -66,21 +66,21 @@
 		<li ng-if="contextSrv.isGrafanaAdmin">
 			<a href="admin/users" class="sidemenu-item">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-cog"></i></span>
-				<span class="sidemenu-item-text">Admin</span>
+				<span class="sidemenu-item-text">后台管理</span>
 	   	</a>
 		</li>
 
 		<li ng-if="contextSrv.isSignedIn">
 			<a href="logout" class="sidemenu-item" target="_self">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-out"></i></span>
-				<span class="sidemenu-item-text">Sign out</span>
+				<span class="sidemenu-item-text">登出</span>
 	   	</a>
 		</li>
 
 		<li ng-if="!contextSrv.isSignedIn">
 			<a href="login" class="sidemenu-item" target="_self">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-in"></i></span>
-				<span class="sidemenu-item-text">Sign in</span>
+				<span class="sidemenu-item-text">登录</span>
 	   	</a>
 		</li>
 	</ul>
@@ -89,13 +89,13 @@
 		<li>
 			<a href="{{appSubUrl}}/" class="sidemenu-item">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-backward"></i></span>
-				<span class="sidemenu-item-text">Exit admin</span>
+				<span class="sidemenu-item-text">退出管理员</span>
 	   	</a>
 		</li>
 		<li>
 			<a href="logout" class="sidemenu-item" target="_self">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-sign-out"></i></span>
-				<span class="sidemenu-item-text">Sign out</span>
+				<span class="sidemenu-item-text">登出</span>
 	   	</a>
 		</li>
 	</ul>

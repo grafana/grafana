@@ -1,23 +1,23 @@
-<topnav title="Alerts" icon="fa fa-fw fa-bell" subnav="true">
+<topnav title="告警管理" icon="fa fa-fw fa-bell" subnav="true">
   <ul class="nav">
-    <li class="active" ><a href="alerts">Overview</a></li>
-    <li><a href="alerts/new">Add new</a></li>
-    <li><a href="alerts/status">Status</a></li>
+    <li class="active" ><a href="alerts">总览</a></li>
+    <li><a href="alerts/new">新建报警规则</a></li>
+    <li><a href="alerts/status">状态</a></li>
   </ul>
 </topnav>
 
 <div class="page-container">
   <div class="page">
-    <h2>Alert Definitions</h2>
+    <h2>报警规则列表</h2>
 
     <div ng-if="alertDefList.length === 0">
-      <em>No alerts defined</em>
+      <em>展示没有任何规则</em>
     </div>
 
     <table class="grafana-options-table" ng-if="alertDefList.length > 0">
       <tr>
-        <td><strong>Name</strong></td>
-        <td><strong>Description</strong></td>
+        <td><strong>报警名称</strong></td>
+        <td><strong>描述</strong></td>
         <td></td>
         <td></td>
       </tr>
@@ -32,7 +32,7 @@
         <td style="width: 1%">
           <a href="alerts/edit/{{alertDef.id}}" class="btn btn-inverse btn-mini">
             <i class="fa fa-edit"></i>
-            Edit
+            编辑
           </a>
         </td>
         <td style="width: 1%">
