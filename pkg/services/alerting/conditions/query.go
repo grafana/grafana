@@ -1,14 +1,20 @@
-package alerting
+package conditions
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
+
+func init() {
+	alerting.RegisterCondition("query", func(model *simplejson.Json, index int) (alerting.AlertCondition, error) {
+		return NewQueryCondition(model, index)
+	})
+}
 
 type QueryCondition struct {
 	Index         int
@@ -18,7 +24,14 @@ type QueryCondition struct {
 	HandleRequest tsdb.HandleRequestFunc
 }
 
-func (c *QueryCondition) Eval(context *AlertResultContext) {
+type AlertQuery struct {
+	Model        *simplejson.Json
+	DatasourceId int64
+	From         string
+	To           string
+}
+
+func (c *QueryCondition) Eval(context *alerting.AlertResultContext) {
 	seriesList, err := c.executeQuery(context)
 	if err != nil {
 		context.Error = err
@@ -30,13 +43,13 @@ func (c *QueryCondition) Eval(context *AlertResultContext) {
 		pass := c.Evaluator.Eval(series, reducedValue)
 
 		if context.IsTestRun {
-			context.Logs = append(context.Logs, &AlertResultLogEntry{
+			context.Logs = append(context.Logs, &alerting.AlertResultLogEntry{
 				Message: fmt.Sprintf("Condition[%d]: Eval: %v, Metric: %s, Value: %1.3f", c.Index, pass, series.Name, reducedValue),
 			})
 		}
 
 		if pass {
-			context.Events = append(context.Events, &AlertEvent{
+			context.Events = append(context.Events, &alerting.AlertEvent{
 				Metric: series.Name,
 				Value:  reducedValue,
 			})
@@ -46,7 +59,7 @@ func (c *QueryCondition) Eval(context *AlertResultContext) {
 	}
 }
 
-func (c *QueryCondition) executeQuery(context *AlertResultContext) (tsdb.TimeSeriesSlice, error) {
+func (c *QueryCondition) executeQuery(context *alerting.AlertResultContext) (tsdb.TimeSeriesSlice, error) {
 	getDsInfo := &m.GetDataSourceByIdQuery{
 		Id:    c.Query.DatasourceId,
 		OrgId: context.Rule.OrgId,
@@ -72,7 +85,7 @@ func (c *QueryCondition) executeQuery(context *AlertResultContext) (tsdb.TimeSer
 		result = append(result, v.Series...)
 
 		if context.IsTestRun {
-			context.Logs = append(context.Logs, &AlertResultLogEntry{
+			context.Logs = append(context.Logs, &alerting.AlertResultLogEntry{
 				Message: fmt.Sprintf("Condition[%d]: Query Result", c.Index),
 				Data:    v.Series,
 			})
@@ -128,64 +141,4 @@ func NewQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 
 	condition.Evaluator = evaluator
 	return &condition, nil
-}
-
-type SimpleReducer struct {
-	Type string
-}
-
-func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) float64 {
-	var value float64 = 0
-
-	switch s.Type {
-	case "avg":
-		for _, point := range series.Points {
-			value += point[0]
-		}
-		value = value / float64(len(series.Points))
-	}
-
-	return value
-}
-
-func NewSimpleReducer(typ string) *SimpleReducer {
-	return &SimpleReducer{Type: typ}
-}
-
-type DefaultAlertEvaluator struct {
-	Type      string
-	Threshold float64
-}
-
-func (e *DefaultAlertEvaluator) Eval(series *tsdb.TimeSeries, reducedValue float64) bool {
-	switch e.Type {
-	case ">":
-		return reducedValue > e.Threshold
-	case "<":
-		return reducedValue < e.Threshold
-	}
-
-	return false
-}
-
-func NewDefaultAlertEvaluator(model *simplejson.Json) (*DefaultAlertEvaluator, error) {
-	evaluator := &DefaultAlertEvaluator{}
-
-	evaluator.Type = model.Get("type").MustString()
-	if evaluator.Type == "" {
-		return nil, AlertValidationError{Reason: "Evaluator missing type property"}
-	}
-
-	params := model.Get("params").MustArray()
-	if len(params) == 0 {
-		return nil, AlertValidationError{Reason: "Evaluator missing threshold parameter"}
-	}
-
-	threshold, ok := params[0].(json.Number)
-	if !ok {
-		return nil, AlertValidationError{Reason: "Evaluator has invalid threshold parameter"}
-	}
-
-	evaluator.Threshold, _ = threshold.Float64()
-	return evaluator, nil
 }

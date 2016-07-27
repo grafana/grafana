@@ -3,7 +3,6 @@ package alerting
 import (
 	"time"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 )
 
@@ -60,11 +59,4 @@ type AlertEvent struct {
 type Level struct {
 	Operator string
 	Value    float64
-}
-
-type AlertQuery struct {
-	Model        *simplejson.Json
-	DatasourceId int64
-	From         string
-	To           string
 }

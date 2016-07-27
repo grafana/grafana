@@ -79,13 +79,15 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 
 	for index, condition := range ruleDef.Settings.Get("conditions").MustArray() {
 		conditionModel := simplejson.NewFromAny(condition)
-		switch conditionModel.Get("type").MustString() {
-		case "query":
-			queryCondition, err := NewQueryCondition(conditionModel, index)
-			if err != nil {
+		conditionType := conditionModel.Get("type").MustString()
+		if factory, exist := conditionFactories[conditionType]; !exist {
+			return nil, AlertValidationError{Reason: "Unknown alert condition: " + conditionType}
+		} else {
+			if queryCondition, err := factory(conditionModel, index); err != nil {
 				return nil, err
+			} else {
+				model.Conditions = append(model.Conditions, queryCondition)
 			}
-			model.Conditions = append(model.Conditions, queryCondition)
 		}
 	}
 
@@ -94,4 +96,12 @@ func NewAlertRuleFromDBModel(ruleDef *m.Alert) (*AlertRule, error) {
 	}
 
 	return model, nil
+}
+
+type ConditionFactory func(model *simplejson.Json, index int) (AlertCondition, error)
+
+var conditionFactories map[string]ConditionFactory = make(map[string]ConditionFactory)
+
+func RegisterCondition(typeName string, factory ConditionFactory) {
+	conditionFactories[typeName] = factory
 }

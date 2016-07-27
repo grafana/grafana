@@ -12,6 +12,11 @@ import (
 func TestAlertRuleExtraction(t *testing.T) {
 
 	Convey("Parsing alert rules  from dashboard json", t, func() {
+
+		RegisterCondition("query", func(model *simplejson.Json, index int) (AlertCondition, error) {
+			return &FakeCondition{}, nil
+		})
+
 		Convey("Parsing and validating alerts from dashboards", func() {
 			json := `{
         "id": 57,
