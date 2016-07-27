@@ -30,6 +30,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/dashboard-solo/:type/:slug', {
     templateUrl: 'public/app/features/panel/partials/soloPanel.html',
     controller : 'SoloPanelCtrl',
+    reloadOnSearch: false,
     pageClass: 'page-dashboard',
   })
   .when('/dashboard/new', {
