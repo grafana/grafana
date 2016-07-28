@@ -1,10 +1,10 @@
 package notifiers
 
 import (
-	"fmt"
+	"encoding/json"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -47,17 +47,36 @@ func (this *SlackNotifier) Notify(context *alerting.EvalContext) {
 		return
 	}
 
-	stateText := string(rule.Severity)
-	if !context.Firing {
-		stateText = "ok"
+	fields := make([]map[string]interface{}, 0)
+	for _, evt := range context.Events {
+		fields = append(fields, map[string]interface{}{
+			"title": evt.Metric,
+			"value": evt.Value,
+		})
 	}
 
-	text := fmt.Sprintf("[%s]: <%s|%s>", stateText, ruleLink, rule.Name)
+	body := map[string]interface{}{
+		"attachments": []map[string]interface{}{
+			map[string]interface{}{
+				"color": context.GetColor(),
+				//"pretext":     "Optional text that appears above the attachment block",
+				// "author_name": "Bobby Tables",
+				// "author_link": "http://flickr.com/bobby/",
+				// "author_icon": "http://flickr.com/icons/bobby.jpg",
+				"title":      "[" + context.GetStateText() + "] " + rule.Name,
+				"title_link": ruleLink,
+				// "text":       "Optional text that appears within the attachment",
+				"fields":      fields,
+				"image_url":   "http://my-website.com/path/to/image.jpg",
+				"thumb_url":   "http://example.com/path/to/thumb.png",
+				"footer":      "Grafana v4.0.0",
+				"footer_icon": "http://grafana.org/assets/img/fav32.png",
+				"ts":          time.Now().Unix(),
+			},
+		},
+	}
 
-	body := simplejson.New()
-	body.Set("text", text)
-
-	data, _ := body.MarshalJSON()
+	data, _ := json.Marshal(&body)
 	cmd := &m.SendWebhook{Url: this.Url, Body: string(data)}
 
 	if err := bus.Dispatch(cmd); err != nil {

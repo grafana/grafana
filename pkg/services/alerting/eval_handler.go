@@ -18,7 +18,7 @@ type DefaultEvalHandler struct {
 
 func NewEvalHandler() *DefaultEvalHandler {
 	return &DefaultEvalHandler{
-		log:             log.New("alerting.handler"),
+		log:             log.New("alerting.evalHandler"),
 		alertJobTimeout: time.Second * 5,
 	}
 }
