@@ -14,6 +14,7 @@ type Scheduler interface {
 type Notifier interface {
 	Notify(alertResult *EvalContext)
 	GetType() string
+	NeedsImage() bool
 }
 
 type Condition interface {

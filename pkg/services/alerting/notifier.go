@@ -22,6 +22,10 @@ func (n *RootNotifier) GetType() string {
 	return "root"
 }
 
+func (n *RootNotifier) NeedsImage() bool {
+	return false
+}
+
 func (n *RootNotifier) Notify(context *EvalContext) {
 	n.log.Info("Sending notifications for", "ruleId", context.Rule.Id)
 

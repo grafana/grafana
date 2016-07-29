@@ -8,3 +8,7 @@ type NotifierBase struct {
 func (n *NotifierBase) GetType() string {
 	return n.Type
 }
+
+func (n *NotifierBase) NeedsImage() bool {
+	return true
+}
