@@ -142,6 +142,7 @@ transformers['table'] = {
     if (!data || data.length === 0) {
       return [];
     }
+    return data[0]
   },
   transform: function(data, panel, model) {
     if (!data || data.length === 0) {
