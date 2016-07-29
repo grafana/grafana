@@ -54,7 +54,6 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) {
 				Value:  reducedValue,
 			})
 			context.Firing = true
-			break
 		}
 	}
 }

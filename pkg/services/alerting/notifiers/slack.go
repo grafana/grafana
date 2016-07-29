@@ -48,11 +48,16 @@ func (this *SlackNotifier) Notify(context *alerting.EvalContext) {
 	}
 
 	fields := make([]map[string]interface{}, 0)
-	for _, evt := range context.Events {
+	fieldLimitCount := 4
+	for index, evt := range context.Events {
 		fields = append(fields, map[string]interface{}{
 			"title": evt.Metric,
 			"value": evt.Value,
+			"short": true,
 		})
+		if index > fieldLimitCount {
+			break
+		}
 	}
 
 	body := map[string]interface{}{
@@ -66,9 +71,9 @@ func (this *SlackNotifier) Notify(context *alerting.EvalContext) {
 				"title":      "[" + context.GetStateText() + "] " + rule.Name,
 				"title_link": ruleLink,
 				// "text":       "Optional text that appears within the attachment",
-				"fields":      fields,
-				"image_url":   "http://my-website.com/path/to/image.jpg",
-				"thumb_url":   "http://example.com/path/to/thumb.png",
+				"fields": fields,
+				// "image_url":   "http://my-website.com/path/to/image.jpg",
+				// "thumb_url":   "http://example.com/path/to/thumb.png",
 				"footer":      "Grafana v4.0.0",
 				"footer_icon": "http://grafana.org/assets/img/fav32.png",
 				"ts":          time.Now().Unix(),
