@@ -1,4 +1,4 @@
-define([
+define( [
 	"./core",
 	"./selector",
 	"./traversing",
@@ -11,6 +11,7 @@ define([
 	"./attributes",
 	"./event",
 	"./event/alias",
+	"./event/focusin",
 	"./manipulation",
 	"./manipulation/_evalUrl",
 	"./wrap",
@@ -28,10 +29,9 @@ define([
 	"./offset",
 	"./dimensions",
 	"./deprecated",
-	"./exports/amd",
-	"./exports/global"
+	"./exports/amd"
 ], function( jQuery ) {
 
-return jQuery;
+return ( window.jQuery = window.$ = jQuery );
 
-});
+} );

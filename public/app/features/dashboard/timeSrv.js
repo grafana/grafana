@@ -13,6 +13,8 @@ define([
   module.service('timeSrv', function($rootScope, $timeout, $routeParams, timer) {
     var self = this;
 
+    $rootScope.$on('zoom-out', function(e, factor) { self.zoomOut(factor); });
+
     this.init = function(dashboard) {
       timer.cancel_all();
 
@@ -135,6 +137,24 @@ define([
       }
 
       return {from: from, to: to};
+    };
+
+    this.zoomOut = function(factor) {
+      var range = this.timeRange();
+
+      var timespan = (range.to.valueOf() - range.from.valueOf());
+      var center = range.to.valueOf() - timespan/2;
+
+      var to = (center + (timespan*factor)/2);
+      var from = (center - (timespan*factor)/2);
+
+      if (to > Date.now() && range.to <= Date.now()) {
+        var offset = to - Date.now();
+        from = from - offset;
+        to = Date.now();
+      }
+
+      this.setTime({from: moment.utc(from), to: moment.utc(to) });
     };
 
   });
