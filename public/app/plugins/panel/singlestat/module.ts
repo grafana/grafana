@@ -195,7 +195,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         data.valueRounded = 0;
         data.valueFormated = this.series[0].alias;
         this.panel.isString = true;
-      } else if (_.isString(lastValue)) {
+      } else if (_.isString !== void 0 && _.isString(lastValue)) {
         data.value = 0;
         data.valueFormated = _.escape(lastValue);
         data.valueRounded = 0;
@@ -505,6 +505,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       setElementHeight();
 
       var body = panel.gauge.show ? '' : getBigValueHtml();
+
+      console.log(data.valueRounded);
 
       if (panel.colorBackground && !isNaN(data.valueRounded)) {
         var color = getColorForValue(data, panel.isString ? data.valueFormated : data.valueRounded);
