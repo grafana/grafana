@@ -142,7 +142,6 @@ transformers['table'] = {
     if (!data || data.length === 0) {
       return [];
     }
-    return data[0].columns;
   },
   transform: function(data, panel, model) {
     if (!data || data.length === 0) {
@@ -153,27 +152,8 @@ transformers['table'] = {
       throw {message: 'Query result is not in table format, try using another transform.'};
     }
 
-    var i,j,k, entry;
-
-    if (panel.columns.length === 0) {
-      for (i = 0; i < data[0].columns.length; i++) {
-        panel.columns.push({ text: data[0].columns[i].text, value : data[0].columns[i].text});
-      }
-    }
-    var indices = [];
-    for (i = 0; i < panel.columns.length; i++) {
-      var column = _.findWhere(data[0].columns, { "text" : panel.columns[i].text });
-      indices.push(_.indexOf(data[0].columns, column));
-      model.columns.push(column);
-    }
-
-    for (i = 0; i < data[0].rows.length; i++) {
-      entry = [];
-      for (j = 0; j < indices.length; j++) {
-        entry.push(data[0].rows[i][indices[j]]);
-      }
-      model.rows.push(entry);
-    }
+    model.columns = data[0].columns;
+    model.rows = data[0].rows;
   }
 };
 
