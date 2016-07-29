@@ -154,6 +154,7 @@ function (angular, _) {
       clone.id = tmpId;
       clone.repeatIteration = this.iteration;
       clone.repeatPanelId = sourcePanel.id;
+      clone.suppressEmpty = sourcePanel.suppressEmpty;
       clone.repeat = null;
       return clone;
     };
