@@ -94,6 +94,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   onDataReceived(dataList) {
     this.dataRaw = dataList;
     this.pageIndex = 0;
+    this.panel.columns = [];
 
     // automatically correct transform mode based on data
     if (this.dataRaw && this.dataRaw.length) {
