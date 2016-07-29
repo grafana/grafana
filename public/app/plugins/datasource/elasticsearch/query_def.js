@@ -72,7 +72,8 @@ function (_) {
     pipelineOptions: {
       'moving_avg' : [
         {text: 'window', default: 5},
-        {text: 'model', default: 'simple'}
+        {text: 'model', default: 'simple'},
+        {text: 'predict', default: 0}
       ],
       'derivative': [
         {text: 'unit', default: undefined},
