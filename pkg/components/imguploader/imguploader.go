@@ -3,7 +3,6 @@ package imguploader
 import (
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
@@ -11,7 +10,7 @@ import (
 )
 
 type Uploader interface {
-	Upload(imgUrl string) (string, error)
+	Upload(path string) (string, error)
 }
 
 type S3Uploader struct {
@@ -28,13 +27,7 @@ func NewS3Uploader(bucket, accessKey, secretKey string) *S3Uploader {
 	}
 }
 
-func (u *S3Uploader) Upload(imgUrl string) (string, error) {
-	client := http.Client{Timeout: time.Duration(60 * time.Second)}
-
-	res, err := client.Get(imgUrl)
-	if err != nil {
-		return "", err
-	}
+func (u *S3Uploader) Upload(path string) (string, error) {
 
 	s3util.DefaultConfig.AccessKey = u.accessKey
 	s3util.DefaultConfig.SecretKey = u.secretKey
@@ -53,7 +46,7 @@ func (u *S3Uploader) Upload(imgUrl string) (string, error) {
 
 	defer writer.Close()
 
-	imgData, err := ioutil.ReadAll(res.Body)
+	imgData, err := ioutil.ReadFile(path)
 	if err != nil {
 		return "", err
 	}

@@ -4,8 +4,11 @@ import (
 	"errors"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/imguploader"
+	"github.com/grafana/grafana/pkg/components/renderer"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type RootNotifier struct {
@@ -35,10 +38,49 @@ func (n *RootNotifier) Notify(context *EvalContext) {
 		return
 	}
 
+	err = n.uploadImage(context)
+	if err != nil {
+		n.log.Error("Failed to upload alert panel image", "error", err)
+	}
+
 	for _, notifier := range notifiers {
 		n.log.Info("Sending notification", "firing", context.Firing, "type", notifier.GetType())
 		go notifier.Notify(context)
 	}
+}
+
+func (n *RootNotifier) uploadImage(context *EvalContext) error {
+	uploader := imguploader.NewS3Uploader(
+		setting.S3TempImageStoreBucketUrl,
+		setting.S3TempImageStoreAccessKey,
+		setting.S3TempImageStoreSecretKey)
+
+	imageUrl, err := context.GetImageUrl()
+	if err != nil {
+		return err
+	}
+
+	renderOpts := &renderer.RenderOpts{
+		Url:       imageUrl,
+		Width:     "800",
+		Height:    "400",
+		SessionId: "123",
+		Timeout:   "10",
+	}
+
+	if imagePath, err := renderer.RenderToPng(renderOpts); err != nil {
+		return err
+	} else {
+		context.ImageOnDiskPath = imagePath
+	}
+
+	context.ImagePublicUrl, err = uploader.Upload(context.ImageOnDiskPath)
+	if err != nil {
+		return err
+	}
+
+	n.log.Info("uploaded", "url", context.ImagePublicUrl)
+	return nil
 }
 
 func (n *RootNotifier) getNotifiers(orgId int64, notificationIds []int64) ([]Notifier, error) {

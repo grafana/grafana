@@ -39,7 +39,7 @@ func NewEmailNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 func (this *EmailNotifier) Notify(context *alerting.EvalContext) {
 	this.log.Info("Sending alert notification to", "addresses", this.Addresses)
 
-	ruleLink, err := getRuleLink(context.Rule)
+	ruleUrl, err := context.GetRuleUrl()
 	if err != nil {
 		this.log.Error("Failed get rule link", "error", err)
 		return
@@ -50,7 +50,7 @@ func (this *EmailNotifier) Notify(context *alerting.EvalContext) {
 			"RuleState": context.Rule.State,
 			"RuleName":  context.Rule.Name,
 			"Severity":  context.Rule.Severity,
-			"RuleLink":  ruleLink,
+			"RuleUrl":   ruleUrl,
 		},
 		To:       this.Addresses,
 		Template: "alert_notification.html",

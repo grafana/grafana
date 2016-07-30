@@ -41,7 +41,7 @@ func (this *SlackNotifier) Notify(context *alerting.EvalContext) {
 
 	rule := context.Rule
 
-	ruleLink, err := getRuleLink(rule)
+	ruleUrl, err := context.GetRuleUrl()
 	if err != nil {
 		this.log.Error("Failed get rule link", "error", err)
 		return
@@ -69,10 +69,10 @@ func (this *SlackNotifier) Notify(context *alerting.EvalContext) {
 				// "author_link": "http://flickr.com/bobby/",
 				// "author_icon": "http://flickr.com/icons/bobby.jpg",
 				"title":      "[" + context.GetStateText() + "] " + rule.Name,
-				"title_link": ruleLink,
+				"title_link": ruleUrl,
 				// "text":       "Optional text that appears within the attachment",
-				"fields": fields,
-				// "image_url":   "http://my-website.com/path/to/image.jpg",
+				"fields":    fields,
+				"image_url": context.ImagePublicUrl,
 				// "thumb_url":   "http://example.com/path/to/thumb.png",
 				"footer":      "Grafana v4.0.0",
 				"footer_icon": "http://grafana.org/assets/img/fav32.png",
