@@ -80,10 +80,19 @@ export class AlertTabCtrl {
       _.each(this.alert.notifications, item => {
         var model = _.findWhere(this.notifications, {id: item.id});
         if (model) {
+          model.iconClass = this.getNotificationIcon(model.type);
           this.alertNotifications.push(model);
         }
       });
     });
+  }
+
+  getNotificationIcon(type) {
+    switch (type) {
+      case "email": return "fa fa-envelope";
+      case "slack": return "fa fa-slack";
+      case "webhook": return "fa fa-cubes";
+    }
   }
 
   getNotifications() {
@@ -98,7 +107,7 @@ export class AlertTabCtrl {
       return;
     }
 
-    this.alertNotifications.push({name: model.name});
+    this.alertNotifications.push({name: model.name, iconClass: this.getNotificationIcon(model.type)});
     this.alert.notifications.push({id: model.id});
 
     // reset plus button
