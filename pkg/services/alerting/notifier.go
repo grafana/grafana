@@ -38,6 +38,10 @@ func (n *RootNotifier) Notify(context *EvalContext) {
 		return
 	}
 
+	if len(notifiers) == 0 {
+		return
+	}
+
 	err = n.uploadImage(context)
 	if err != nil {
 		n.log.Error("Failed to upload alert panel image", "error", err)
@@ -84,8 +88,11 @@ func (n *RootNotifier) uploadImage(context *EvalContext) error {
 }
 
 func (n *RootNotifier) getNotifiers(orgId int64, notificationIds []int64) ([]Notifier, error) {
-	query := &m.GetAlertNotificationsQuery{OrgId: orgId, Ids: notificationIds}
+	if len(notificationIds) == 0 {
+		return []Notifier{}, nil
+	}
 
+	query := &m.GetAlertNotificationsQuery{OrgId: orgId, Ids: notificationIds}
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
 	}

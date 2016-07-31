@@ -12,8 +12,7 @@ import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
 import * as fileExport from 'app/core/utils/file_export';
-import {MetricsPanelCtrl} from 'app/plugins/sdk';
-import {graphAlertEditor} from './alert_tab_ctrl';
+import {MetricsPanelCtrl, alertTab} from 'app/plugins/sdk';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -133,7 +132,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
 
     if (config.alertingEnabled) {
-      this.addEditorTab('Alert', graphAlertEditor, 5);
+      this.addEditorTab('Alert', alertTab, 5);
     }
 
     this.logScales = {

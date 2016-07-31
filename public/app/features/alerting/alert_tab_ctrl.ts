@@ -1,4 +1,4 @@
- ///<reference path="../../../headers/common.d.ts" />
+ ///<reference path="../../headers/common.d.ts" />
 
 import _ from 'lodash';
 
@@ -28,6 +28,7 @@ export class AlertTabCtrl {
   panelCtrl: any;
   testing: boolean;
   testResult: any;
+  subTabIndex: number;
 
   handlers = [{text: 'Grafana', value: 1}, {text: 'External', value: 0}];
   conditionTypes = [
@@ -55,6 +56,7 @@ export class AlertTabCtrl {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
     this.$scope.ctrl = this;
+    this.subTabIndex = 0;
   }
 
   $onInit() {
@@ -237,12 +239,12 @@ export class AlertTabCtrl {
 }
 
 /** @ngInject */
-export function graphAlertEditor() {
+export function alertTab() {
   'use strict';
   return {
     restrict: 'E',
     scope: true,
-    templateUrl: 'public/app/plugins/panel/graph/partials/tab_alerting.html',
+    templateUrl: 'public/app/features/alerting/partials/alert_tab.html',
     controller: AlertTabCtrl,
   };
 }
