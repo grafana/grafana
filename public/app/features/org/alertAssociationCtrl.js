@@ -104,9 +104,6 @@ function (angular) {
               total: true,
               show: true,
               values: true
-            },
-            tooltip: {
-              shared: false
             }
           }
         ]

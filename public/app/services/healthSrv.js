@@ -13,6 +13,7 @@ define([
       var _this = this;
       this.anomalyUrlRoot = "";
       this.anomalyMetricsData = [];
+      this.applicationHealth = 0;
 
       this.init = function () {
         backendSrv.get('/api/alertsource').then(function (result) {
@@ -25,8 +26,9 @@ define([
           method: "get",
           url: anomalyListUrl,
         }).then(function onSuccess(response) {
-          _this.anomalyMetricsData = floor(response.data);
-          return response.data;
+          _this.applicationHealth = response.data.health;
+          _this.anomalyMetricsData = floor(response.data.metricHealths);
+          return _this.anomalyMetricsData;
         }, function onFailed(response) {
           return response;
         });

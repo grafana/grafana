@@ -12,6 +12,7 @@ define([
       $scope.init = function () {
         healthSrv.load().then(function (data) {
           $scope.anomalyList = data;
+          $scope.applicationHealth = Math.floor(healthSrv.applicationHealth);
         });
       };
       $scope.init();

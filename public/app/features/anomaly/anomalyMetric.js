@@ -52,9 +52,6 @@ define([
             total: true,
             show: true,
             values: true
-          },
-          tooltip: {
-            shared: false
           }
         }
       ]

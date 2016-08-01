@@ -6,7 +6,15 @@
 
 <div class="page-container">
   <div class="page">
-    <h2>系统健康指标</h2>
+    <div class="controls">
+      <h2 class="span2">系统健康指标</h2>
+      <div class="progress span3" style="padding: 20px 0px 0px 0px;">
+        <div class="bar bar-success" style="width:{{100-(100-applicationHealth+20)}}%;">
+          <span style="position: absolute;display: block;width: 300px;color:whitesmoke;">应用健康指数:{{applicationHealth}}%</span>
+        </div>
+        <div class="bar bar-danger" style="width:{{(100-applicationHealth)+20}}%;"></div>
+      </div>
+    </div>
 
     <div ng-if="anomalyList.length === 0">
       <em>系统一切正常</em>
