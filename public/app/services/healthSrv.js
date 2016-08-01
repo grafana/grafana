@@ -25,13 +25,18 @@ define([
           method: "get",
           url: anomalyListUrl,
         }).then(function onSuccess(response) {
-          _this.anomalyMetricsData = response.data;
+          _this.anomalyMetricsData = floor(response.data);
           return response.data;
         }, function onFailed(response) {
-          // alert something
-          console.log("false");
           return response;
         });
       };
     });
+
+    function floor(metrics){
+      _.each(metrics, function(metric){
+        metric.health = Math.floor(metric.health);
+      });
+      return metrics;
+    }
   });

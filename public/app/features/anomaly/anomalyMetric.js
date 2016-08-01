@@ -80,7 +80,7 @@ define([
               title: "健康管理",
               id: metricName,
               rows: [setPanelMetaHost(panelMeta, metricName, hostList[0])],
-              time: {from: "now-2d", to: "now-1d"}
+              time: {from: "now-1d", to: "now"}
             }
           }, $scope);
 
