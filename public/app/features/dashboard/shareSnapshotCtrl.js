@@ -36,8 +36,8 @@ function (angular, _) {
         $scope.externalEnabled = options['externalEnabled'];
         $scope.allowNeverSnapshots = options['allowNeverSnapshots'];
         if (!$scope.allowNeverSnapshots) {
-            $scope.expireOptions.pop()
-            $scope.snapshot.expires = $scope.expireOptions[0].value
+            $scope.expireOptions.pop();
+            $scope.snapshot.expires = $scope.expireOptions[0].value;
         }
       });
     };
