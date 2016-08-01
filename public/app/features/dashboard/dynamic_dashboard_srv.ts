@@ -24,7 +24,7 @@ export class DynamicDashboardSrv {
     if (dashboard.templating.list.length === 0) { return; }
 
     this.dashboard = dashboard;
-    this.iteration = new Date().getTime();
+    this.iteration = (this.iteration || new Date().getTime()) + 1;
 
     var cleanUpOnly = options.cleanUpOnly;
 
