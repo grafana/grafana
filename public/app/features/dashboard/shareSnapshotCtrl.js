@@ -34,6 +34,11 @@ function (angular, _) {
         $scope.externalUrl = options['externalSnapshotURL'];
         $scope.sharingButtonText = options['externalSnapshotName'];
         $scope.externalEnabled = options['externalEnabled'];
+        $scope.allowNeverSnapshots = options['allowNeverSnapshots'];
+        if (!$scope.allowNeverSnapshots) {
+            $scope.expireOptions.pop()
+            $scope.snapshot.expires = $scope.expireOptions[0].value
+        }
       });
     };
 
