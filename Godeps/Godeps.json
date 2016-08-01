@@ -277,6 +277,14 @@
 			"Rev": "e6ac2fc51e89a3249e82157fa0bb7a18ef9dd5bb"
 		},
 		{
+			"ImportPath": "github.com/kr/s3",
+			"Rev": "c070c8f9a8f0032d48f0d2a77d4e382788bd8a1d"
+		},
+		{
+			"ImportPath": "github.com/kr/s3/s3util",
+			"Rev": "c070c8f9a8f0032d48f0d2a77d4e382788bd8a1d"
+		},
+		{
 			"ImportPath": "github.com/kr/text",
 			"Rev": "bb797dc4fb8320488f47bf11de07a733d7233e1f"
 		},
@@ -308,17 +316,22 @@
 			"Rev": "836ef0a715aedf08a12d595ed73ec8ed5b288cac"
 		},
 		{
+			"ImportPath": "github.com/smartystreets/assertions",
+			"Comment": "1.6.0-6-g40711f7",
+			"Rev": "40711f7748186bbf9c99977cd89f21ce1a229447"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/assertions/internal/go-render/render",
+			"Comment": "1.6.0-6-g40711f7",
+			"Rev": "40711f7748186bbf9c99977cd89f21ce1a229447"
+		},
+		{
+			"ImportPath": "github.com/smartystreets/assertions/internal/oglematchers",
+			"Comment": "1.6.0-6-g40711f7",
+			"Rev": "40711f7748186bbf9c99977cd89f21ce1a229447"
+		},
+		{
 			"ImportPath": "github.com/smartystreets/goconvey/convey",
-			"Comment": "1.5.0-356-gfbc0a1c",
-			"Rev": "fbc0a1c888f9f96263f9a559d1769905245f1123"
-		},
-		{
-			"ImportPath": "github.com/smartystreets/goconvey/convey/assertions",
-			"Comment": "1.5.0-356-gfbc0a1c",
-			"Rev": "fbc0a1c888f9f96263f9a559d1769905245f1123"
-		},
-		{
-			"ImportPath": "github.com/smartystreets/goconvey/convey/assertions/oglematchers",
 			"Comment": "1.5.0-356-gfbc0a1c",
 			"Rev": "fbc0a1c888f9f96263f9a559d1769905245f1123"
 		},
