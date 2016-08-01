@@ -23,6 +23,7 @@ const (
 	AlertSeverityCritical AlertSeverityType = "critical"
 	AlertSeverityWarning  AlertSeverityType = "warning"
 	AlertSeverityInfo     AlertSeverityType = "info"
+	AlertSeverityOK       AlertSeverityType = "ok"
 )
 
 func (s AlertSeverityType) IsValid() bool {

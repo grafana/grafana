@@ -19,7 +19,7 @@ func NewScheduler() Scheduler {
 }
 
 func (s *SchedulerImpl) Update(rules []*Rule) {
-	s.log.Debug("Scheduling update", "rules.count", len(rules))
+	s.log.Debug("Scheduling update", "ruleCount", len(rules))
 
 	jobs := make(map[int64]*Job, 0)
 

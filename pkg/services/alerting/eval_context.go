@@ -56,6 +56,10 @@ func (c *EvalContext) GetStateText() string {
 	}
 }
 
+func (c *EvalContext) GetNotificationTitle() string {
+	return "[" + c.GetStateText() + "] " + c.Rule.Name
+}
+
 func (c *EvalContext) getDashboardSlug() (string, error) {
 	if c.dashboardSlug != "" {
 		return c.dashboardSlug, nil

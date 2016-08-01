@@ -23,6 +23,7 @@ func AddMigrations(mg *Migrator) {
 	addPlaylistMigrations(mg)
 	addPreferencesMigrations(mg)
 	addAlertMigrations(mg)
+	addAnnotationMig(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

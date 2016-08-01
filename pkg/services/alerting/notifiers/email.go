@@ -47,6 +47,7 @@ func (this *EmailNotifier) Notify(context *alerting.EvalContext) {
 
 	cmd := &m.SendEmailCommand{
 		Data: map[string]interface{}{
+			"Title":     context.GetNotificationTitle(),
 			"RuleState": context.Rule.State,
 			"RuleName":  context.Rule.Name,
 			"Severity":  context.Rule.Severity,

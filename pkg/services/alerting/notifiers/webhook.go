@@ -42,7 +42,9 @@ func (this *WebhookNotifier) Notify(context *alerting.EvalContext) {
 	this.log.Info("Sending webhook")
 
 	bodyJSON := simplejson.New()
-	bodyJSON.Set("name", context.Rule.Name)
+	bodyJSON.Set("title", context.GetNotificationTitle())
+	bodyJSON.Set("ruleId", context.Rule.Id)
+	bodyJSON.Set("ruleName", context.Rule.Name)
 	bodyJSON.Set("firing", context.Firing)
 	bodyJSON.Set("severity", context.Rule.Severity)
 

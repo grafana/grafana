@@ -4,7 +4,6 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
 	"github.com/kr/s3/s3util"
 )
@@ -31,8 +30,6 @@ func (u *S3Uploader) Upload(path string) (string, error) {
 
 	s3util.DefaultConfig.AccessKey = u.accessKey
 	s3util.DefaultConfig.SecretKey = u.secretKey
-	log.Info("AccessKey: %s", u.accessKey)
-	log.Info("SecretKey: %s", u.secretKey)
 
 	header := make(http.Header)
 	header.Add("x-amz-acl", "public-read")

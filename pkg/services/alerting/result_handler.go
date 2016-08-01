@@ -1,13 +1,16 @@
 package alerting
 
 import (
+	"time"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/annotations"
 )
 
 type ResultHandler interface {
-	Handle(result *EvalContext)
+	Handle(ctx *EvalContext)
 }
 
 type DefaultResultHandler struct {
@@ -22,32 +25,47 @@ func NewResultHandler() *DefaultResultHandler {
 	}
 }
 
-func (handler *DefaultResultHandler) Handle(result *EvalContext) {
-	var newState m.AlertStateType
+func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
+	oldState := ctx.Rule.State
 
-	if result.Error != nil {
-		handler.log.Error("Alert Rule Result Error", "ruleId", result.Rule.Id, "error", result.Error)
-		newState = m.AlertStatePending
-	} else if result.Firing {
-		newState = m.AlertStateFiring
+	if ctx.Error != nil {
+		handler.log.Error("Alert Rule Result Error", "ruleId", ctx.Rule.Id, "error", ctx.Error)
+		ctx.Rule.State = m.AlertStatePending
+	} else if ctx.Firing {
+		ctx.Rule.State = m.AlertStateFiring
 	} else {
-		newState = m.AlertStateOK
+		ctx.Rule.State = m.AlertStateOK
 	}
 
-	if result.Rule.State != newState {
-		handler.log.Info("New state change", "alertId", result.Rule.Id, "newState", newState, "oldState", result.Rule.State)
+	if ctx.Rule.State != oldState {
+		handler.log.Info("New state change", "alertId", ctx.Rule.Id, "newState", ctx.Rule.State, "oldState", oldState)
 
 		cmd := &m.SetAlertStateCommand{
-			AlertId: result.Rule.Id,
-			OrgId:   result.Rule.OrgId,
-			State:   newState,
+			AlertId: ctx.Rule.Id,
+			OrgId:   ctx.Rule.OrgId,
+			State:   ctx.Rule.State,
 		}
 
 		if err := bus.Dispatch(cmd); err != nil {
 			handler.log.Error("Failed to save state", "error", err)
 		}
 
-		result.Rule.State = newState
-		handler.notifier.Notify(result)
+		// save annotation
+		item := annotations.Item{
+			OrgId:     ctx.Rule.OrgId,
+			Type:      annotations.AlertType,
+			AlertId:   ctx.Rule.Id,
+			Title:     ctx.Rule.Name,
+			Text:      ctx.GetStateText(),
+			NewState:  string(ctx.Rule.State),
+			PrevState: string(oldState),
+			Timestamp: time.Now(),
+		}
+		annotationRepo := annotations.GetRepository()
+		if err := annotationRepo.Save(&item); err != nil {
+			handler.log.Error("Failed to save annotation for new alert state", "error", err)
+		}
+
+		handler.notifier.Notify(ctx)
 	}
 }

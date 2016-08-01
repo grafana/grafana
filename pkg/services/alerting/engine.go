@@ -38,8 +38,8 @@ func (e *Engine) Start() {
 	e.log.Info("Starting Alerting Engine")
 
 	go e.alertingTicker()
-	go e.execDispatch()
-	go e.resultDispatch()
+	go e.execDispatcher()
+	go e.resultDispatcher()
 }
 
 func (e *Engine) Stop() {
@@ -70,7 +70,7 @@ func (e *Engine) alertingTicker() {
 	}
 }
 
-func (e *Engine) execDispatch() {
+func (e *Engine) execDispatcher() {
 	for job := range e.execQueue {
 		e.log.Debug("Starting executing alert rule %s", job.Rule.Name)
 		go e.executeJob(job)
@@ -92,10 +92,10 @@ func (e *Engine) executeJob(job *Job) {
 	e.resultQueue <- context
 }
 
-func (e *Engine) resultDispatch() {
+func (e *Engine) resultDispatcher() {
 	defer func() {
 		if err := recover(); err != nil {
-			e.log.Error("Engine Panic, stopping resultHandler", "error", err, "stack", log.Stack(1))
+			e.log.Error("Panic in resultDispatcher", "error", err, "stack", log.Stack(1))
 		}
 	}()
 

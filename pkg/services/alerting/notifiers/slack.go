@@ -39,8 +39,6 @@ type SlackNotifier struct {
 func (this *SlackNotifier) Notify(context *alerting.EvalContext) {
 	this.log.Info("Executing slack notification", "ruleId", context.Rule.Id, "notification", this.Name)
 
-	rule := context.Rule
-
 	ruleUrl, err := context.GetRuleUrl()
 	if err != nil {
 		this.log.Error("Failed get rule link", "error", err)
@@ -68,7 +66,7 @@ func (this *SlackNotifier) Notify(context *alerting.EvalContext) {
 				// "author_name": "Bobby Tables",
 				// "author_link": "http://flickr.com/bobby/",
 				// "author_icon": "http://flickr.com/icons/bobby.jpg",
-				"title":      "[" + context.GetStateText() + "] " + rule.Name,
+				"title":      context.GetNotificationTitle(),
 				"title_link": ruleUrl,
 				// "text":       "Optional text that appears within the attachment",
 				"fields":    fields,
