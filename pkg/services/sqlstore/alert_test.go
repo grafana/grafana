@@ -37,11 +37,6 @@ func TestAlertingDataAccess(t *testing.T) {
 
 		Convey("Can create one alert", func() {
 			So(err, ShouldBeNil)
-
-			query := &m.GetAlertChangesQuery{OrgId: 1}
-			er := GetAlertRuleChanges(query)
-			So(er, ShouldBeNil)
-			So(len(query.Result), ShouldEqual, 1)
 		})
 
 		Convey("Can read properties", func() {
@@ -52,7 +47,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(err2, ShouldBeNil)
 			So(alert.Name, ShouldEqual, "Alerting title")
 			So(alert.Description, ShouldEqual, "Alerting description")
-			So(alert.State, ShouldEqual, "OK")
+			So(alert.State, ShouldEqual, "pending")
 			So(alert.Frequency, ShouldEqual, 1)
 		})
 
@@ -82,18 +77,13 @@ func TestAlertingDataAccess(t *testing.T) {
 				So(query.Result[0].Name, ShouldEqual, "Name")
 
 				Convey("Alert state should not be updated", func() {
-					So(query.Result[0].State, ShouldEqual, "OK")
+					So(query.Result[0].State, ShouldEqual, "pending")
 				})
 			})
 
 			Convey("Updates without changes should be ignored", func() {
 				err3 := SaveAlerts(&modifiedCmd)
 				So(err3, ShouldBeNil)
-
-				query := &m.GetAlertChangesQuery{OrgId: 1}
-				er := GetAlertRuleChanges(query)
-				So(er, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 2)
 			})
 		})
 
@@ -133,11 +123,6 @@ func TestAlertingDataAccess(t *testing.T) {
 
 				So(err2, ShouldBeNil)
 				So(len(queryForDashboard.Result), ShouldEqual, 3)
-
-				query := &m.GetAlertChangesQuery{OrgId: 1}
-				er := GetAlertRuleChanges(query)
-				So(er, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 4)
 			})
 
 			Convey("should updated two dashboards and delete one", func() {
@@ -151,13 +136,6 @@ func TestAlertingDataAccess(t *testing.T) {
 					err2 := HandleAlertsQuery(&query)
 					So(err2, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 2)
-				})
-
-				Convey("should add one more alert_rule_change", func() {
-					query := &m.GetAlertChangesQuery{OrgId: 1}
-					er := GetAlertRuleChanges(query)
-					So(er, ShouldBeNil)
-					So(len(query.Result), ShouldEqual, 6)
 				})
 			})
 		})

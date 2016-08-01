@@ -12,7 +12,7 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", AlertNotificationQuery)
+	bus.AddHandler("sql", GetAlertNotifications)
 	bus.AddHandler("sql", CreateAlertNotificationCommand)
 	bus.AddHandler("sql", UpdateAlertNotification)
 	bus.AddHandler("sql", DeleteAlertNotification)
@@ -31,11 +31,11 @@ func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
 	})
 }
 
-func AlertNotificationQuery(query *m.GetAlertNotificationsQuery) error {
-	return getAlertNotifications(query, x.NewSession())
+func GetAlertNotifications(query *m.GetAlertNotificationsQuery) error {
+	return getAlertNotificationsInternal(query, x.NewSession())
 }
 
-func getAlertNotifications(query *m.GetAlertNotificationsQuery, sess *xorm.Session) error {
+func getAlertNotificationsInternal(query *m.GetAlertNotificationsQuery, sess *xorm.Session) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
@@ -82,7 +82,7 @@ func getAlertNotifications(query *m.GetAlertNotificationsQuery, sess *xorm.Sessi
 func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		existingQuery := &m.GetAlertNotificationsQuery{OrgId: cmd.OrgId, Name: cmd.Name}
-		err := getAlertNotifications(existingQuery, sess)
+		err := getAlertNotificationsInternal(existingQuery, sess)
 
 		if err != nil {
 			return err
@@ -120,7 +120,7 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 
 		// check if name exists
 		sameNameQuery := &m.GetAlertNotificationsQuery{OrgId: cmd.OrgId, Name: cmd.Name}
-		if err := getAlertNotifications(sameNameQuery, sess); err != nil {
+		if err := getAlertNotificationsInternal(sameNameQuery, sess); err != nil {
 			return err
 		}
 
