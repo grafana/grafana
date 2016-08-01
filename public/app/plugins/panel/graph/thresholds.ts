@@ -23,7 +23,7 @@ export class ThresholdControls {
     </div>
     <div class="alert-handle">
     <i class="icon-gf icon-gf-${type} alert-icon-${type}"></i>
-    ${op} ${value}
+     ${value}
     </div>`;
   }
 
@@ -59,7 +59,7 @@ export class ThresholdControls {
       // calculate graph level
       var graphValue = plot.c2p({left: 0, top: posTop}).y;
       graphValue = parseInt(graphValue.toFixed(0));
-      threshold.value = graphValue;
+      threshold.from = graphValue;
 
       var valueCanvasPos = plot.p2c({x: 0, y: graphValue});
 
@@ -90,7 +90,7 @@ export class ThresholdControls {
 
   renderHandle(type, model, defaultHandleTopPos) {
     var handleElem = this.placeholder.find(`.alert-handle-wrapper--${type}`);
-    var value = model.value;
+    var value = model.from;
     var valueStr = value;
     var handleTopPos = 0;
 
