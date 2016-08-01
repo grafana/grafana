@@ -33,8 +33,8 @@ define([
       };
     });
 
-    function floor(metrics){
-      _.each(metrics, function(metric){
+    function floor(metrics) {
+      _.each(metrics, function(metric) {
         metric.health = Math.floor(metric.health);
       });
       return metrics;
