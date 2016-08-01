@@ -11,5 +11,6 @@ define([
   './popoverSrv',
   './uiSegmentSrv',
   './backendSrv',
+  './healthSrv',
 ],
 function () {});

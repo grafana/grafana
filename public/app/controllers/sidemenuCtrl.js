@@ -44,6 +44,12 @@ function (angular, _, $, config) {
         href: $scope.getUrl("/oncallers"),
       });
 
+      $scope.mainLinks.push({
+        text: "健康管理",
+        icon: "fa fa-fw fa-stethoscope",
+        href: $scope.getUrl("/anomaly"),
+      });
+
     };
 
     $scope.loadOrgs = function() {

@@ -1,0 +1,40 @@
+<topnav title="健康管理" icon="fa fa-fw fa-stethoscope" subnav="true">
+  <ul class="nav">
+    <li class="active" ><a href="health">列表</a></li>
+  </ul>
+</topnav>
+
+<div class="page-container">
+  <div class="page">
+    <h2>系统健康指标</h2>
+
+    <div ng-if="anomalyList.length === 0">
+      <em>系统一切正常</em>
+    </div>
+    <table class="grafana-options-table" ng-if="anomalyList.length > 0">
+      <tr>
+        <td><strong>指标名称</strong></td>
+        <td><strong>健康指数</strong></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr ng-repeat="anomalyDef in anomalyList">
+        <td style="width:1%">
+          <i class="fa fa-bell"></i> &nbsp;
+          {{anomalyDef.metric}}
+        </td>
+        <td style="width:90%">
+          {{anomalyDef.health}}
+        </td>
+        <td style="width: 1%">
+          <a href="/anomaly/{{anomalyDef.metric}}" class="btn btn-inverse btn-mini">
+            <i class="fa fa-edit"></i>
+            进入
+          </a>
+        </td>
+      </tr>
+    </table>
+
+  </div>
+</div>
+
