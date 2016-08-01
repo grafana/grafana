@@ -10,10 +10,6 @@ export class DynamicDashboardSrv {
   iteration: number;
   dashboard: any;
 
-  constructor() {
-    this.iteration = new Date().getTime();
-  }
-
   init(dashboard) {
     if (dashboard.snapshot) { return; }
     this.process(dashboard, {});
@@ -21,14 +17,14 @@ export class DynamicDashboardSrv {
 
   update(dashboard) {
     if (dashboard.snapshot) { return; }
-
-    this.iteration = this.iteration + 1;
     this.process(dashboard, {});
   }
 
   process(dashboard, options) {
     if (dashboard.templating.list.length === 0) { return; }
+
     this.dashboard = dashboard;
+    this.iteration = new Date().getTime();
 
     var cleanUpOnly = options.cleanUpOnly;
 
