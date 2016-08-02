@@ -17,7 +17,7 @@ func GetSharingOptions(c *middleware.Context) {
 		"externalSnapshotURL":  setting.ExternalSnapshotUrl,
 		"externalSnapshotName": setting.ExternalSnapshotName,
 		"externalEnabled":      setting.ExternalEnabled,
-		"allowNeverSnapshots":  setting.AllowNeverSnapshots,
+		"maxExpirationTime":  setting.MaxExpirationTime,
 	})
 }
 
