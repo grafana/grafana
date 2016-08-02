@@ -477,3 +477,14 @@ Format `<Hostname or ip>`:port
 ### prefix
 Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
 
+## [snapshots]
+
+### external_enabled
+Set to false to disable external snapshot publish endpoint (default true)
+
+### external_snapshot_url
+Set root url to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots-origin.raintank.io)
+
+### external_snapshot_name
+Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`
+
