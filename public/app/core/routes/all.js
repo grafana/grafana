@@ -102,7 +102,11 @@ define([
       .when('/anomaly/:metric', {
         templateUrl: 'app/features/anomaly/partials/anomalyMetric.html',
         controller : 'AnomalyMetric',
-        reloadOnSearch: true,
+        reloadOnSearch: true
+      })
+      .when('/decompose', {
+        templateUrl: 'app/features/decompose/partials/compose.html',
+        controller : 'DecomposeMetricCtrl'
       })
       .when('/org', {
         templateUrl: 'app/features/org/partials/orgDetails.html',

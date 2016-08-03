@@ -23,7 +23,7 @@ class PanelMeta {
     this.addMenuItem('编辑', 'icon-cog', 'editPanel(); dismiss();', 'Editor');
     this.addMenuItem('复制', 'icon-copy', 'duplicatePanel()', 'Editor');
     this.addMenuItem('分享', 'icon-share', 'sharePanel(); dismiss();');
-
+    this.addMenuItem('分析', 'icon-share', 'decompose();','Editor');
     this.addEditorTab('概要', 'app/partials/panelgeneral.html');
 
     if (options.metricsEditor) {

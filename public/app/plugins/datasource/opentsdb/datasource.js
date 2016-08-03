@@ -34,6 +34,19 @@ function (angular, _, dateMath) {
       });
     }
 
+    function decomposeMetricData(target, endWithString) {
+      var param = {
+        metric: target.metric,
+        host: target.tags.host
+      };
+      param[endWithString] = true;
+      return backendSrv.datasourceRequest({
+        method: 'GET',
+        url: healthSrv.anomalyUrlRoot + "/decompose",
+        params: param
+      });
+    }
+
     // Called once per panel (graph)
     OpenTSDBDatasource.prototype.query = function(options) {
       var start = convertToTSDBTime(options.rangeRaw.from, false);
@@ -43,11 +56,25 @@ function (angular, _, dateMath) {
       var targetsResponse = [];
 
       _.each(options.targets, function(target) {
+        var decomposeFlag = false;
         if (!target.metric) { return; }
         if (target.anomaly || target.metric.endsWith(".anomaly")) {
           getAnomalyMetricData(target).then(function (response) {
             targetsResponse = response.data;
           });
+          return;
+        }
+
+        _.each(["trend", "seasonal", "noise"], function (defString) {
+          if (target.metric.endsWith(defString)) {
+            decomposeFlag = true;
+            decomposeMetricData(target, defString).then(function (response) {
+              targetsResponse = response.data;
+            });
+            return;
+          }
+        });
+        if (decomposeFlag) {
           return;
         }
         qs.push(convertTargetToQuery(target, options, self.prefix));
