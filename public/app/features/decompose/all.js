@@ -1,3 +1,3 @@
 define([
-  './decomposeMetricCtrl'
+  './DecomposeMetricCtrl'
 ], function () {});
