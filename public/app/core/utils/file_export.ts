@@ -5,7 +5,7 @@ import _ from 'lodash';
 declare var window: any;
 
 export function exportSeriesListToCsv(seriesList) {
-    var text = 'Series;Time;Value\n';
+    var text = 'sep=;\nSeries;Time;Value\n';
     _.each(seriesList, function(series) {
         _.each(series.datapoints, function(dp) {
             text += series.alias + ';' + new Date(dp[1]).toISOString() + ';' + dp[0] + '\n';
@@ -15,7 +15,7 @@ export function exportSeriesListToCsv(seriesList) {
 };
 
 export function exportSeriesListToCsvColumns(seriesList) {
-    var text = 'Time;';
+    var text = 'sep=;\nTime;';
     // add header
     _.each(seriesList, function(series) {
         text += series.alias + ';';

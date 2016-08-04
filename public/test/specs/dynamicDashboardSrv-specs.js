@@ -1,5 +1,5 @@
 define([
-  'app/features/dashboard/dynamicDashboardSrv',
+  'app/features/dashboard/dynamic_dashboard_srv',
   'app/features/dashboard/dashboardSrv'
 ], function() {
   'use strict';
@@ -12,6 +12,7 @@ define([
       ctx.setup = function (setupFunc) {
 
         beforeEach(module('grafana.services'));
+        beforeEach(module('grafana.core'));
         beforeEach(module(function($provide) {
           $provide.value('contextSrv', {
             user: { timezone: 'utc'}

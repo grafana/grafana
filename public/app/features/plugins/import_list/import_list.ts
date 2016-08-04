@@ -61,15 +61,15 @@ export class DashImportListCtrl {
     }
 
     return this.backendSrv.post(`/api/dashboards/import`, installCmd).then(res => {
-      this.$rootScope.appEvent('alert-success', ['Dashboard Installed', dash.title]);
+      this.$rootScope.appEvent('alert-success', ['Dashboard Imported', dash.title]);
       _.extend(dash, res);
     });
   }
 
   remove(dash) {
-    this.backendSrv.delete('/api/dashboards/' + dash.installedUri).then(() => {
+    this.backendSrv.delete('/api/dashboards/' + dash.importedUri).then(() => {
       this.$rootScope.appEvent('alert-success', ['Dashboard Deleted', dash.title]);
-      dash.installed = false;
+      dash.imported = false;
     });
   }
 }
@@ -89,7 +89,3 @@ export function dashboardImportList() {
 }
 
 coreModule.directive('dashboardImportList', dashboardImportList);
-
-
-
-

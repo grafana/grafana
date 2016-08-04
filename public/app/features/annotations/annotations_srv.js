@@ -14,7 +14,7 @@ define([
 
     this.init = function() {
       $rootScope.onAppEvent('refresh', this.clearCache, $rootScope);
-      $rootScope.onAppEvent('dashboard-loaded', this.clearCache, $rootScope);
+      $rootScope.onAppEvent('dashboard-initialized', this.clearCache, $rootScope);
     };
 
     this.clearCache = function() {

@@ -99,10 +99,10 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
-.fa-chevron-left:before {
+.fa-chevron-left::before {
   content: "\f053";
 }
-.fa-chevron-right:before {
+.fa-chevron-right::before {
   content: "\f054";
 }
 

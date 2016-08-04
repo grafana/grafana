@@ -35,13 +35,13 @@
 			</div>
 
 			<div class="gf-form" ng-repeat="part in selectParts">
-				<influx-query-part-editor
+				<query-part-editor
 														class="gf-form-label query-part"
 														part="part"
 														remove-action="ctrl.removeSelectPart(selectParts, part)"
 														part-updated="ctrl.selectPartUpdated(selectParts, part)"
 														get-options="ctrl.getPartOptions(part)">
-				</influx-query-part-editor>
+				</query-part-editor>
 			</div>
 
 			<div class="gf-form">
@@ -62,12 +62,12 @@
 					<span>GROUP BY</span>
 				</label>
 
-				<influx-query-part-editor
+				<query-part-editor
 								ng-repeat="part in ctrl.queryModel.groupByParts"
 								part="part"
 								class="gf-form-label query-part"
 								remove-action="ctrl.removeGroupByPart(part, $index)" part-updated="ctrl.refresh();" get-options="ctrl.getPartOptions(part)">
-				</influx-query-part-editor>
+				</query-part-editor>
 			</div>
 
 			<div class="gf-form">

@@ -89,5 +89,14 @@ func TestLoadingSettings(t *testing.T) {
 			So(DataPath, ShouldEqual, "/tmp/env_override")
 		})
 
+		Convey("instance_name default to hostname even if hostname env is emtpy", func() {
+			NewConfigContext(&CommandLineArgs{
+				HomePath: "../../",
+			})
+
+			hostname, _ := os.Hostname()
+			So(InstanceName, ShouldEqual, hostname)
+		})
+
 	})
 }

@@ -30,7 +30,7 @@ func InitAppPluginRoutes(r *macaron.Macaron) {
 			}
 			handlers = append(handlers, AppPluginRoute(route, plugin.Id))
 			r.Route(url, route.Method, handlers...)
-			log.Info("Plugins: Adding proxy route %s", url)
+			log.Debug("Plugins: Adding proxy route %s", url)
 		}
 	}
 }

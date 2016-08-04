@@ -166,7 +166,17 @@ coreModule.controller('DataSourceEditCtrl', DataSourceEditCtrl);
 
 coreModule.directive('datasourceHttpSettings', function() {
   return {
-    scope: {current: "="},
-    templateUrl: 'public/app/features/plugins/partials/ds_http_settings.html'
+    scope: {
+      current: "=",
+      suggestUrl: "@",
+    },
+    templateUrl: 'public/app/features/plugins/partials/ds_http_settings.html',
+    link: {
+      pre: function($scope, elem, attrs) {
+        $scope.getSuggestUrls = function() {
+          return [$scope.suggestUrl];
+        };
+      }
+    }
   };
 });

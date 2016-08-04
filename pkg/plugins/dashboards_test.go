@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
@@ -31,6 +32,17 @@ func TestPluginDashboards(t *testing.T) {
 			return m.ErrDashboardNotFound
 		})
 
+		bus.AddHandler("test", func(query *m.GetDashboardsByPluginIdQuery) error {
+			var data = simplejson.New()
+			data.Set("title", "Nginx Connections")
+			data.Set("revision", 22)
+
+			query.Result = []*m.Dashboard{
+				{Slug: "nginx-connections", Data: data},
+			}
+			return nil
+		})
+
 		dashboards, err := GetPluginDashboards(1, "test-app")
 
 		So(err, ShouldBeNil)
@@ -41,12 +53,12 @@ func TestPluginDashboards(t *testing.T) {
 
 		Convey("should include installed version info", func() {
 			So(dashboards[0].Title, ShouldEqual, "Nginx Connections")
-			So(dashboards[0].Revision, ShouldEqual, "1.5")
-			So(dashboards[0].InstalledRevision, ShouldEqual, "1.1")
-			So(dashboards[0].InstalledUri, ShouldEqual, "db/nginx-connections")
+			So(dashboards[0].Revision, ShouldEqual, 25)
+			So(dashboards[0].ImportedRevision, ShouldEqual, 22)
+			So(dashboards[0].ImportedUri, ShouldEqual, "db/nginx-connections")
 
-			So(dashboards[1].Revision, ShouldEqual, "2.0")
-			So(dashboards[1].InstalledRevision, ShouldEqual, "")
+			So(dashboards[1].Revision, ShouldEqual, 2)
+			So(dashboards[1].ImportedRevision, ShouldEqual, 0)
 		})
 	})
 

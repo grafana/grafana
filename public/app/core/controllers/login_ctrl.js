@@ -18,6 +18,7 @@ function (angular, coreModule, config) {
     $scope.googleAuthEnabled = config.googleAuthEnabled;
     $scope.githubAuthEnabled = config.githubAuthEnabled;
     $scope.oauthEnabled = config.githubAuthEnabled || config.googleAuthEnabled;
+    $scope.allowUserPassLogin = config.allowUserPassLogin;
     $scope.disableUserSignUp = config.disableUserSignUp;
     $scope.loginHint     = config.loginHint;
 
@@ -69,7 +70,12 @@ function (angular, coreModule, config) {
       }
 
       backendSrv.post('/login', $scope.formModel).then(function(result) {
-        if (result.redirectUrl) {
+        var params = $location.search();
+
+        if (params.redirect && params.redirect[0] === '/') {
+          window.location.href = config.appSubUrl + params.redirect;
+        }
+        else if (result.redirectUrl) {
           window.location.href = result.redirectUrl;
         } else {
           window.location.href = config.appSubUrl + '/';

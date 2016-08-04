@@ -30,11 +30,6 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/dashboard-solo/:type/:slug', {
     templateUrl: 'public/app/features/panel/partials/soloPanel.html',
     controller : 'SoloPanelCtrl',
-    pageClass: 'page-dashboard',
-  })
-  .when('/dashboard-import/:file', {
-    templateUrl: 'public/app/partials/dashboard.html',
-    controller : 'DashFromImportCtrl',
     reloadOnSearch: false,
     pageClass: 'page-dashboard',
   })
@@ -44,8 +39,12 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     reloadOnSearch: false,
     pageClass: 'page-dashboard',
   })
-  .when('/import/dashboard', {
-    templateUrl: 'public/app/features/dashboard/partials/import.html',
+  .when('/dashboards/list', {
+    templateUrl: 'public/app/features/dashboard/partials/dash_list.html',
+    controller : 'DashListCtrl',
+  })
+  .when('/dashboards/migrate', {
+    templateUrl: 'public/app/features/dashboard/partials/migrate.html',
     controller : 'DashboardImportCtrl',
   })
   .when('/datasources', {

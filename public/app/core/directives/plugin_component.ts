@@ -211,7 +211,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     // let a binding digest cycle complete before adding to dom
     setTimeout(function() {
       elem.append(child);
-      scope.$apply(function() {
+      scope.$applyAsync(function() {
         scope.$broadcast('refresh');
       });
     });
@@ -244,7 +244,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         registerPluginComponent(scope, elem, attrs, componentInfo);
       }).catch(err => {
         $rootScope.appEvent('alert-error', ['Plugin Error', err.message || err]);
-        console.log('Plugin componnet error', err);
+        console.log('Plugin component error', err);
       });
     }
   };

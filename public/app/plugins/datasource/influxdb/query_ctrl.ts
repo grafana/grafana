@@ -1,8 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import './query_part_editor';
-import './query_part_editor';
-
 import angular from 'angular';
 import _ from 'lodash';
 import InfluxQueryBuilder from './query_builder';
@@ -215,7 +212,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
       if (/^\/.*\/$/.test(nextValue)) {
         return this.$q.when(this.uiSegmentSrv.newOperators(['=~', '!~']));
       } else {
-        return this.$q.when(this.uiSegmentSrv.newOperators(['=', '<>', '<', '>']));
+        return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<>', '<', '>']));
       }
     }
 
