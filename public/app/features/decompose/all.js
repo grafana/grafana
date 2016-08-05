@@ -1,0 +1,3 @@
+define([
+  './DecomposeMetricCtrl'
+], function () {});

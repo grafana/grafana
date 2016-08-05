@@ -1,9 +1,14 @@
-<topnav title="告警管理" icon="fa fa-fw bell" subnav="true">
+<topnav title="告警管理" icon="fa fa-fw fa-bell" subnav="true">
   <ul class="nav">
     <li><a href="alerts">总览</a></li>
     <li><a href="alerts/new">新建报警规则</a></li>
     <li><a href="alerts/status">状态</a></li>
-    <li class="active"><a href="alerts/association/{{current.name}}">关联系分析</a></li>
+    <li class="active"><a href="alerts/association/{{current.name}}">关联性分析</a></li>
+  </ul>
+  <ul class="nav pull-right">
+    <li ng-if="dashboard">
+      <gf-time-picker dashboard="dashboard"></gf-time-picker>
+    </li>
   </ul>
 </topnav>
 
@@ -11,43 +16,76 @@
   <h2 align="center">采集数据正在努力为您计算,请耐心等待30s</h2>
 </div>
 
-<div ng-if="dashboard.rows.length > 0">
-  <input ng-model="correlationThreshold" placeholder="100">
-  <span ng-show="!correlationThreshold.length">调整阈值越小越好</span>
-  <span ng-show="correlationThreshold.length">
-      <a href="alerts/association/{{ dashboard.id }}/{{ correlationThreshold }}">
-        <span style="color: green; ">点击这里过滤结果</span>
-      </a>
-  </span>
-  <br>
-  Correlation minutes - before:<input ng-model="correlationBefore" placeholder="1">, after:<input ng-model="correlationAfter" placeholder="3">
-  <button type="submit" class="btn btn-success" ng-click="resetCorrelation()">重新计算</button>
+<div ng-if="dashboard.rows.length > 0" class="page-container" style="padding: 20px 20px 20px 20px;">
+  <h2>调整相关性分析参数</h2>
+  <table class="grafana-options-table">
+    <tr>
+      <td><strong>调整阈值</strong></td>
+      <td><input ng-model="correlationThreshold" placeholder="默认100 调整阈值越小越好"></td>
+      <td>
+        <span ng-show="!correlationThreshold.length"  class="btn btn-inverse">
+          调整阈值越小越好
+        </span>
+        <span ng-show="correlationThreshold.length" class="btn btn-success">
+            <a href="alerts/association/{{ dashboard.id }}/{{ correlationThreshold }}">
+              <i class="fa fa-edit"></i> 过滤结果
+            </a>
+        </span>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <strong>重设时间区间(分钟)</strong>
+      </td>
+      <td>
+        <input ng-model="correlationBefore" placeholder="开始 默认:1">
+        <input ng-model="correlationAfter" placeholder="结束 默认:3">
+      </td>
+      <td>
+        <button type="submit" class="btn btn-success" ng-click="resetCorrelation()">重新计算</button>
+      </td>
+    </tr>
+  </table>
 </div>
 
 <div class="main-view-container">
   <div class="grafana-row" ng-controller="RowCtrl"
-       ng-init="createAssociatedMetricGraphPanel(row.associatedMetrics)"
        ng-repeat="(row_name, row) in dashboard.rows" row-height>
 
     <div class="row-control">
       <div class="row-control-inner">
-        <div class="row-close" ng-show="row.collapse" data-placement="bottom" >
+        <div class="row-close" ng-show="row.collapse" data-placement="bottom">
           <div class="row-close-buttons">
 							<span class="row-button bgPrimary" ng-click="toggleRow(row)">
-								<i bs-tooltip="'Expand row'" data-placement="right" class="fa fa-caret-left pointer" ></i>
+								<i bs-tooltip="'Expand row'" data-placement="right" class="fa fa-caret-left pointer"></i>
 							</span>
           </div>
-          <div class="row-text pointer" ng-click="toggleRow(row)" ng-bind="row.title | interpolateTemplateVars:this"></div>
+          <div class="row-text pointer" ng-click="toggleRow(row)"
+               ng-bind="row.title | interpolateTemplateVars:this"></div>
         </div>
       </div>
 
       <div class="panels-wrapper" ng-if="!row.collapse">
-        <div class="row-text pointer" ng-click="toggleRow(row)" ng-if="row.showTitle" ng-bind="row.title | interpolateTemplateVars:this">
+        <div class="row-text pointer" ng-click="toggleRow(row)" ng-if="row.showTitle"
+             ng-bind="row.title | interpolateTemplateVars:this">
         </div>
 
-        <div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel" ui-draggable="!dashboardViewState.fullscreen" drag="panel.id"
+        <div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel"
+             ui-draggable="!dashboardViewState.fullscreen" drag="panel.id"
              ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
           <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+        </div>
+
+        <div class="page-container panel" style="padding: 20px 20px 20px 20px;">
+          <h2>挑选相似值进行对比</h2>
+          <div class="panel grafana-options-table">
+            <div controls controls-row>
+              <label class="span3 checkbox" ng-repeat="(metricsName, metricsValue) in correlatedMetrics">
+                <input ng-checked="$index == 0 " type="checkbox" ng-click="addQuery(metricsName)">
+                {{metricsName}}</input>
+              </label>
+            </div>
+          </div>
         </div>
 
         <div panel-drop-zone class="panel panel-drop-zone" ui-on-drop="onDrop($data, row)" data-drop="true">

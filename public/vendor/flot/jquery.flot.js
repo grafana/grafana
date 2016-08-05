@@ -921,6 +921,11 @@ Licensed under the MIT license.
 
         function allAxes() {
             // return flat array without annoying null entries
+            _.each(yaxes,function(yaxesObj, i) {
+              if(i>1 && yaxesObj){
+                yaxesObj.options.show = false;
+              }
+            });
             return $.grep(xaxes.concat(yaxes), function (a) { return a; });
         }
 
@@ -1587,7 +1592,6 @@ Licensed under the MIT license.
 
         function setupGrid() {
             var i, axes = allAxes(), showGrid = options.grid.show;
-
             // Initialize the plot's offset from the edge of the canvas
 
             for (var a in plotOffset) {

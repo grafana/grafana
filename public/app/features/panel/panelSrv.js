@@ -8,7 +8,7 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q) {
+  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q, $location) {
 
     this.init = function($scope) {
 
@@ -112,6 +112,11 @@ function (angular, _, config) {
 
       $scope.panelRenderingComplete = function() {
         $rootScope.performance.panelsRendered++;
+      };
+
+      $scope.decompose = function() {
+        window.decomposeTarget = $scope.panel.targets[0];
+        $location.path("/decompose");
       };
 
       $scope.get_data = function() {

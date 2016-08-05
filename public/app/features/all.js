@@ -5,8 +5,10 @@ define([
   './templating/templateSrv',
   './dashboard/all',
   './panel/all',
+  './anomaly/all',
   './profile/profileCtrl',
   './profile/changePasswordCtrl',
   './profile/selectOrgCtrl',
   './admin/all',
+  './decompose/all'
 ], function () {});

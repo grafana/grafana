@@ -122,6 +122,11 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           for (var i = 0; i < data.length; i++) {
             var series = data[i];
             var axis = yaxis[series.yaxis - 1];
+            //if the yaxis much than twice there must be a special code .
+            if(series.yaxis > 2){
+              series.yaxis = 2;
+
+            }
             var formater = kbn.valueFormats[scope.panel.y_formats[series.yaxis - 1]];
 
             // decimal override

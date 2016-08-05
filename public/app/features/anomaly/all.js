@@ -1,0 +1,4 @@
+define([
+  './anomalyCtrl',
+  './anomalyMetric'
+], function () {});

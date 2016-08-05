@@ -11,7 +11,7 @@ function (angular, _, dateMath) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('OpenTSDBDatasource', function($q, backendSrv, templateSrv, contextSrv) {
+  module.factory('OpenTSDBDatasource', function($q, backendSrv, templateSrv, contextSrv, healthSrv) {
 
     function OpenTSDBDatasource(datasource) {
       this.type = 'opentsdb';
@@ -23,15 +23,60 @@ function (angular, _, dateMath) {
       //this.prefix = "";
     }
 
+    function getAnomalyMetricData(target) {
+      return backendSrv.datasourceRequest({
+        method: 'GET',
+        url: healthSrv.anomalyUrlRoot + "/anomaly",
+        params: {
+          metric: target.metric.replace(".anomaly", ""),
+          host: target.tags.host
+        }
+      });
+    }
+
+    function decomposeMetricData(target, endWithString) {
+      var param = {
+        metric: target.metric,
+        host: target.tags.host
+      };
+      param[endWithString] = true;
+      return backendSrv.datasourceRequest({
+        method: 'GET',
+        url: healthSrv.anomalyUrlRoot + "/decompose",
+        params: param
+      });
+    }
+
     // Called once per panel (graph)
     OpenTSDBDatasource.prototype.query = function(options) {
       var start = convertToTSDBTime(options.rangeRaw.from, false);
       var end = convertToTSDBTime(options.rangeRaw.to, true);
       var qs = [];
       var self = this;
+      var targetsResponse = [];
 
       _.each(options.targets, function(target) {
+        var decomposeFlag = false;
         if (!target.metric) { return; }
+        if (target.anomaly || target.metric.endsWith(".anomaly")) {
+          getAnomalyMetricData(target).then(function (response) {
+            targetsResponse = response.data;
+          });
+          return;
+        }
+
+        _.each(["trend", "seasonal", "noise"], function (defString) {
+          if (target.metric.endsWith(defString)) {
+            decomposeFlag = true;
+            decomposeMetricData(target, defString).then(function (response) {
+              targetsResponse = response.data;
+            });
+            return;
+          }
+        });
+        if (decomposeFlag) {
+          return;
+        }
         qs.push(convertTargetToQuery(target, options, self.prefix));
       });
 
@@ -52,6 +97,9 @@ function (angular, _, dateMath) {
       });
 
       return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
+        _.each(targetsResponse, function (target) {
+          response.data.push(target);
+        });
         var metricToTargetMapping = mapMetricsToTargets(response.data, options);
         var result = _.map(response.data, function(metricData, index) {
           index = metricToTargetMapping[index];

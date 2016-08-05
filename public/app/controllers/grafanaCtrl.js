@@ -10,7 +10,7 @@ function (angular, config, _, $, store) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, alertMgrSrv, oncallerMgrSrv, $rootScope, $controller, contextSrv) {
+  module.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, alertMgrSrv, healthSrv, oncallerMgrSrv, $rootScope, $controller, contextSrv) {
 
     $scope.init = function() {
       $scope.contextSrv = contextSrv;
@@ -27,6 +27,7 @@ function (angular, config, _, $, store) {
       utilSrv.init();
       alertMgrSrv.init();
       oncallerMgrSrv.init();
+      healthSrv.init();
 
       $scope.dashAlerts = alertSrv;
     };

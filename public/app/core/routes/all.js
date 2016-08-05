@@ -95,6 +95,19 @@ define([
         controller : 'OnCallerEditCtrl',
         resolve: loadOrgBundle,
       })
+      .when('/anomaly', {
+        templateUrl: 'app/features/anomaly/partials/anomaly.html',
+        controller : 'AnomalyCtrl',
+      })
+      .when('/anomaly/:metric', {
+        templateUrl: 'app/features/anomaly/partials/anomalyMetric.html',
+        controller : 'AnomalyMetric',
+        reloadOnSearch: true
+      })
+      .when('/decompose', {
+        templateUrl: 'app/features/decompose/partials/compose.html',
+        controller : 'DecomposeMetricCtrl'
+      })
       .when('/org', {
         templateUrl: 'app/features/org/partials/orgDetails.html',
         controller : 'OrgDetailsCtrl',
