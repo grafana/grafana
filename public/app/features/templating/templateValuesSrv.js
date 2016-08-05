@@ -166,7 +166,9 @@ function (angular, _, $, kbn) {
         if (otherVariable === updatedVariable) {
           return;
         }
-        if (templateSrv.containsVariable(otherVariable.query, updatedVariable.name) ||
+        if ((otherVariable.type === "datasource" &&
+            templateSrv.containsVariable(otherVariable.regex, updatedVariable.name)) ||
+            templateSrv.containsVariable(otherVariable.query, updatedVariable.name) ||
             templateSrv.containsVariable(otherVariable.datasource, updatedVariable.name)) {
           return self.updateOptions(otherVariable);
         }
