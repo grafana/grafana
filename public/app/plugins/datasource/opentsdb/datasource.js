@@ -34,7 +34,7 @@ function (angular, _, dateMath) {
 
     function decomposeMetricData(target, endWithString) {
       var param = {
-        metric: target.metric,
+        metric: target.metric.replace("."+endWithString, ""),
         host: target.tags.host
       };
       param[endWithString] = true;
