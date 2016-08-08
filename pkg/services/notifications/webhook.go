@@ -67,7 +67,7 @@ func sendWebRequest(webhook *Webhook) error {
 	}
 
 	if resp.StatusCode != 200 {
-		return fmt.Errorf("Webhook response code %s", resp.StatusCode)
+		return fmt.Errorf("Webhook response code %v", resp.StatusCode)
 	}
 
 	defer resp.Body.Close()

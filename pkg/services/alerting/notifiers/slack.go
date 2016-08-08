@@ -60,7 +60,7 @@ func (this *SlackNotifier) Notify(context *alerting.EvalContext) {
 
 	body := map[string]interface{}{
 		"attachments": []map[string]interface{}{
-			map[string]interface{}{
+			{
 				"color": context.GetColor(),
 				//"pretext":     "Optional text that appears above the attachment block",
 				// "author_name": "Bobby Tables",
