@@ -66,7 +66,7 @@ define([
           $scope.anomalyList = anomalyList;
 
           _.each(anomalyList, function (host) {
-            if (host.metric == metricName) {
+            if (host.metric === metricName) {
               $scope.hosts = host.hostHealth;
             }
           });
@@ -103,7 +103,7 @@ define([
         }
 
         function setPanelMetaHost(panelDef, metric, hostname) {
-          var alias = metric + ".anomaly{host=" + hostname + "}"
+          var alias = metric + ".anomaly{host=" + hostname + "}";
           var panel = panelDef.panels[0];
           panel.targets[0].metric = metric;
           panel.targets[0].tags.host = hostname;

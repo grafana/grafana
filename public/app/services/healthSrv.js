@@ -3,7 +3,7 @@ define([
     'lodash',
     'config',
   ],
-  function (angular) {
+  function (angular, _) {
     'use strict';
 
     var module = angular.module('grafana.services');

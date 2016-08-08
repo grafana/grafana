@@ -2,7 +2,7 @@ define([
   'angular',
   'lodash',
 ],
-function (angular) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -71,7 +71,7 @@ function (angular) {
 
     $scope.createAssociatedMetricGraphPanel = function(associatedMetrics) {
       var hostTag = associatedMetrics.hosts[0] || "*";
-      var title = associatedMetrics.metric || "can no found any metric"
+      var title = associatedMetrics.metric || "can no found any metric";
 
       var rowMeta = {
         title: "test for anmoly",
@@ -134,7 +134,7 @@ function (angular) {
       var metricNameMap = $scope.correlatedMetrics;
       var flag = true;
       _.each($scope.dashboard.rows[0].panels[0].targets,function(target) {
-        if(target.metric == metricName){
+        if(target.metric === metricName){
           target.hide = !target.hide;
           flag = false;
         }
