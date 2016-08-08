@@ -18,9 +18,7 @@ function (angular, _, dateMath) {
       this.url = datasource.url;
       this.name = datasource.name;
       this.supportMetrics = true;
-      //需要重新开启
-      this.prefix = contextSrv.user.orgName + ".";
-      //this.prefix = "";
+      this.prefix = contextSrv.user.orgId + ".";
     }
 
     function getAnomalyMetricData(target) {
