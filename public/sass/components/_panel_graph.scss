@@ -334,7 +334,7 @@
     border-width: 0 1px 1px 0;
     border-style: solid;
     border-color: $black;
-    text-align: right;
+    text-align: left;
     color: $text-muted;
 
     .icon-gf {
@@ -353,7 +353,7 @@
     position: relative;
   }
 
-  &--warn {
+  &--T2 {
     right: -222px;
     width: 238px;
 
@@ -363,7 +363,7 @@
     }
   }
 
-  &--crit{
+  &--T1{
     right: -105px;
     width: 123px;
 

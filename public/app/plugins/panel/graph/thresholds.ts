@@ -14,7 +14,7 @@ export class ThresholdControls {
     this.thresholds = this.panelCtrl.panel.thresholds;
   }
 
-  getHandleInnerHtml(type, op, value) {
+ getHandleInnerHtml(handleName, op, value) {
     if (op === '>') { op = '&gt;'; }
     if (op === '<') { op = '&lt;'; }
 
@@ -22,21 +22,16 @@ export class ThresholdControls {
     <div class="alert-handle-line">
     </div>
     <div class="alert-handle">
-    <i class="icon-gf icon-gf-${type} alert-icon-${type}"></i>
-     ${value}
+      ${op} ${value}
     </div>`;
   }
 
-  getFullHandleHtml(type, op, value) {
-    var innerTemplate = this.getHandleInnerHtml(type, op, value);
-    return `
-    <div class="alert-handle-wrapper alert-handle-wrapper--${type}">
-    ${innerTemplate}
-    </div>
-    `;
+  getFullHandleHtml(handleName, op, value) {
+    var innerTemplate = this.getHandleInnerHtml(handleName, op, value);
+    return `<div class="alert-handle-wrapper alert-handle-wrapper--${handleName}">${innerTemplate}</div>`;
   }
 
-  setupDragging(handleElem, threshold) {
+  setupDragging(handleElem, threshold, handleIndex) {
     var isMoving = false;
     var lastY = null;
     var posTop;
@@ -59,7 +54,7 @@ export class ThresholdControls {
       // calculate graph level
       var graphValue = plot.c2p({left: 0, top: posTop}).y;
       graphValue = parseInt(graphValue.toFixed(0));
-      threshold.from = graphValue;
+      threshold.value = graphValue;
 
       var valueCanvasPos = plot.p2c({x: 0, y: graphValue});
 
@@ -69,6 +64,7 @@ export class ThresholdControls {
       // trigger digest and render
       panelCtrl.$scope.$apply(function() {
         panelCtrl.render();
+        panelCtrl.events.emit('threshold-changed', {threshold: threshold, index: handleIndex});
       });
     }
 
@@ -88,9 +84,10 @@ export class ThresholdControls {
     }
   }
 
-  renderHandle(type, model, defaultHandleTopPos) {
-    var handleElem = this.placeholder.find(`.alert-handle-wrapper--${type}`);
-    var value = model.from;
+  renderHandle(handleIndex, model, defaultHandleTopPos) {
+    var handleName = 'T' + (handleIndex+1);
+    var handleElem = this.placeholder.find(`.alert-handle-wrapper--${handleName}`);
+    var value = model.value;
     var valueStr = value;
     var handleTopPos = 0;
 
@@ -104,11 +101,11 @@ export class ThresholdControls {
     }
 
     if (handleElem.length === 0) {
-      handleElem = $(this.getFullHandleHtml(type, model.op, valueStr));
+      handleElem = $(this.getFullHandleHtml(handleName, model.op, valueStr));
       this.placeholder.append(handleElem);
-      this.setupDragging(handleElem, model);
+      this.setupDragging(handleElem, model, handleIndex);
     } else {
-      handleElem.html(this.getHandleInnerHtml(type, model.op, valueStr));
+      handleElem.html(this.getHandleInnerHtml(handleName, model.op, valueStr));
     }
 
     handleElem.toggleClass('alert-handle-wrapper--no-value', valueStr === '');
@@ -121,7 +118,10 @@ export class ThresholdControls {
     this.height = plot.height();
 
     if (this.thresholds.length > 0) {
-      this.renderHandle('crit', this.thresholds[0], 10);
+      this.renderHandle(0, this.thresholds[0], 10);
+    }
+    if (this.thresholds.length > 1) {
+      this.renderHandle(1, this.thresholds[1], this.height-30);
     }
   }
 }

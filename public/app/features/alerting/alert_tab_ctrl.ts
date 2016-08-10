@@ -63,9 +63,12 @@ export class AlertTabCtrl {
 
     // set panel alert edit mode
     this.$scope.$on("$destroy", () => {
-      this.panelCtrl.editingAlert = false;
+      this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
     });
+
+    // subscribe to graph threshold handle changes
+    this.panelCtrl.events.on('threshold-changed', this.graphThresholdChanged.bind(this));
 
     // build notification model
     this.notifications = [];
@@ -139,12 +142,19 @@ export class AlertTabCtrl {
       return memo;
     }, []);
 
-    this.panelCtrl.editingAlert = true;
+    if (this.alert.enabled) {
+      this.panelCtrl.editingThresholds = true;
+    }
+
     this.syncThresholds();
     this.panelCtrl.render();
   }
 
   syncThresholds() {
+    if (this.panel.type !== 'graph') {
+      return;
+    }
+
     var threshold: any = {};
     if (this.panel.thresholds && this.panel.thresholds.length > 0) {
       threshold = this.panel.thresholds[0];
@@ -160,22 +170,28 @@ export class AlertTabCtrl {
           continue;
         }
 
-        if (value !== threshold.from) {
-          threshold.from = value;
+        if (value !== threshold.value) {
+          threshold.value = value;
           updated = true;
         }
 
-        if (condition.evaluator.type === '<' && threshold.to !== -Infinity) {
-          threshold.to = -Infinity;
-          updated = true;
-        } else if (condition.evaluator.type === '>' && threshold.to !== Infinity) {
-          threshold.to = Infinity;
+        if (condition.evaluator.type !== threshold.op) {
+          threshold.op = condition.evaluator.type;
           updated = true;
         }
       }
     }
 
     return updated;
+  }
+
+  graphThresholdChanged(evt) {
+    for (var condition of this.alert.conditions) {
+      if (condition.type === 'query') {
+        condition.evaluator.params[0] = evt.threshold.value;
+        break;
+      }
+    }
   }
 
   buildDefaultCondition() {

@@ -182,9 +182,10 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
           }
 
           // give space to alert editing
-          if (ctrl.editingAlert) {
+          if (ctrl.editingThresholds) {
             if (!thresholdControls) {
-              elem.css('margin-right', '110px');
+              var thresholdMargin = panel.thresholds.length > 1 ? '220px' : '110px';
+              elem.css('margin-right', thresholdMargin);
               thresholdControls = new ThresholdControls(ctrl);
             }
           } else if (thresholdControls) {
