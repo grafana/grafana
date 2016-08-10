@@ -12,6 +12,9 @@
 			<li ng-class="{active: ctrl.subTabIndex === 2}">
 				<a ng-click="ctrl.subTabIndex = 2">Alert History</a>
 			</li>
+      <li>
+				<a ng-click="ctrl.delete()">Delete</a>
+			</li>
 		</ul>
 	</aside>
 
@@ -84,10 +87,6 @@
 				<div class="gf-form-button-row">
 					<button class="btn btn-inverse" ng-click="ctrl.test()">
 						Test Rule
-					</button>
-
-					<button class="btn btn-inverse" ng-click="ctrl.delete()">
-						Delete Alert
 					</button>
 				</div>
 			</div>
