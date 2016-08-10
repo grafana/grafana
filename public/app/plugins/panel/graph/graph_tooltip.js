@@ -1,7 +1,8 @@
 define([
   'jquery',
+  'lodash'
 ],
-function ($) {
+function ($, _) {
   'use strict';
 
   function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
@@ -40,8 +41,9 @@ function ($) {
     };
 
     this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
-      var value, i, series, hoverIndex;
+      var value, i, series, hoverIndex, hoverDistance;
       var results = [];
+      var seriesTimes = new Array(seriesList.length);
 
       //now we know the current X (j) position for X and Y values
       var last_value = 0; //needed for stacked values
@@ -60,7 +62,13 @@ function ($) {
         }
 
         hoverIndex = this.findHoverIndexFromData(pos.x, series);
-        results.time = series.data[hoverIndex][0];
+
+        // Store distance for each highlighted point
+        hoverDistance = Math.abs(pos.x - series.data[hoverIndex][0]);
+        seriesTimes[i] = {
+          time: series.data[hoverIndex][0],
+          distance: hoverDistance
+        };
 
         if (series.stack) {
           if (panel.tooltip.value_type === 'individual') {
@@ -86,6 +94,9 @@ function ($) {
           results.push({ value: value, hoverIndex: hoverIndex, color: series.color, label: series.label });
         }
       }
+
+      // Find point which closer to pointer
+      results.time = _.min(seriesTimes, 'distance').time;
 
       return results;
     };
