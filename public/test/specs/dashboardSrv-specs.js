@@ -128,7 +128,18 @@ define([
                 {
                   type: 'graph', legend: true, aliasYAxis: { test: 2 },
                   y_formats: ['kbyte', 'ms'],
-                  grid: {min: 1, max: 10, rightMin: 5, rightMax: 15, leftLogBase: 1, rightLogBase: 2},
+                  grid: {
+                    min: 1,
+                    max: 10,
+                    rightMin: 5,
+                    rightMax: 15,
+                    leftLogBase: 1,
+                    rightLogBase: 2,
+                    threshold1: 200,
+                    threshold2: 400,
+                    threshold1Color: 'yellow',
+                    threshold2Color: 'red',
+                  },
                   leftYAxisLabel: 'left label',
                   targets: [{refId: 'A'}, {}],
                 },
@@ -212,9 +223,17 @@ define([
       });
 
       it('dashboard schema version should be set to latest', function() {
-        expect(model.schemaVersion).to.be(12);
+        expect(model.schemaVersion).to.be(13);
       });
 
+      it('graph thresholds should be migrated', function() {
+        expect(graph.thresholds.length).to.be(2);
+        expect(graph.thresholds[0].op).to.be('>');
+        expect(graph.thresholds[0].value).to.be(400);
+        expect(graph.thresholds[0].fillColor).to.be('red');
+        expect(graph.thresholds[1].value).to.be(200);
+        expect(graph.thresholds[1].fillColor).to.be('yellow');
+      });
     });
 
     describe('when creating dashboard model with missing list for annoations or templating', function() {
