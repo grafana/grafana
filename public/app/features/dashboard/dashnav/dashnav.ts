@@ -191,7 +191,7 @@ export class DashNavCtrl {
     $scope.viewJson = function() {
       var clone = $scope.dashboard.getSaveModelClone();
       var html = angular.toJson(clone, true);
-      var uri = "data:application/json," + encodeURIComponent(html);
+      var uri = "data:application/json;charset=utf-8," + encodeURIComponent(html);
       var newWindow = window.open(uri);
     };
 
