@@ -354,28 +354,36 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
               }
             }
 
-            var fillColor, lineColor;
-            switch(threshold.severity) {
+            switch(threshold.colorMode) {
               case 'critical': {
-                fillColor = 'rgba(234, 112, 112, 0.12)';
-                lineColor = 'rgba(237, 46, 24, 0.60)';
+                threshold.fillColor = 'rgba(234, 112, 112, 0.12)';
+                threshold.lineColor = 'rgba(237, 46, 24, 0.60)';
                 break;
               }
               case 'warning': {
-                fillColor = 'rgba(235, 138, 14, 0.12)';
-                lineColor = 'rgba(247, 149, 32, 0.60)';
+                threshold.fillColor = 'rgba(235, 138, 14, 0.12)';
+                threshold.lineColor = 'rgba(247, 149, 32, 0.60)';
                 break;
               }
               case 'ok': {
-                fillColor = 'rgba(11, 237, 50, 0.090)';
-                lineColor = 'rgba(6,163,69, 0.60)';
+                threshold.fillColor = 'rgba(11, 237, 50, 0.090)';
+                threshold.lineColor = 'rgba(6,163,69, 0.60)';
+                break;
+              }
+              case 'custom': {
+                threshold.fillColor = threshold.fillColor;
+                threshold.lineColor = threshold.lineColor;
                 break;
               }
             }
 
             // fill
-            options.grid.markings.push({yaxis: {from: threshold.value, to: limit}, color: fillColor});
-            options.grid.markings.push({yaxis: {from: threshold.value, to: threshold.value}, color: lineColor});
+            if (threshold.fill) {
+              options.grid.markings.push({yaxis: {from: threshold.value, to: limit}, color: threshold.fillColor});
+            }
+            if (threshold.line) {
+              options.grid.markings.push({yaxis: {from: threshold.value, to: threshold.value}, color: threshold.lineColor});
+            }
           }
         }
 
