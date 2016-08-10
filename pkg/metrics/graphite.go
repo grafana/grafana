@@ -30,9 +30,13 @@ func CreateGraphitePublisher() (*GraphitePublisher, error) {
 	publisher.address = graphiteSection.Key("address").MustString("localhost:2003")
 
 	safeInstanceName := strings.Replace(setting.InstanceName, ".", "_", -1)
-	prefix := graphiteSection.Key("prefix").MustString("service.grafana.%instance_name%")
+	prefix := graphiteSection.Key("prefix").Value()
 
-	publisher.prefix = strings.Replace(prefix, "%instance_name%", safeInstanceName, -1)
+	if prefix == "" {
+		prefix = "service.grafana.%(instance_name)s"
+	}
+
+	publisher.prefix = strings.Replace(prefix, "%(instance_name)s", safeInstanceName, -1)
 
 	return publisher, nil
 }
