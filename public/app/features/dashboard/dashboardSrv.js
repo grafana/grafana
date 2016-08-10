@@ -514,6 +514,12 @@ function (angular, $, _, moment) {
               panel.thresholds.push(t1);
             }
           }
+
+          delete panel.grid.threshold1;
+          delete panel.grid.threshold1Color;
+          delete panel.grid.threshold2;
+          delete panel.grid.threshold2Color;
+          delete panel.grid.thresholdLine;
         });
       }
 
