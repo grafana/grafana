@@ -1,57 +1,57 @@
 package imguploader
 
 import (
-	"io/ioutil"
-	"net/http"
+	"fmt"
 
-	"github.com/grafana/grafana/pkg/util"
-	"github.com/kr/s3/s3util"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-type Uploader interface {
+type ImageUploader interface {
 	Upload(path string) (string, error)
 }
 
-type S3Uploader struct {
-	bucket    string
-	secretKey string
-	accessKey string
-}
+func NewImageUploader() (ImageUploader, error) {
 
-func NewS3Uploader(bucket, accessKey, secretKey string) *S3Uploader {
-	return &S3Uploader{
-		bucket:    bucket,
-		accessKey: accessKey,
-		secretKey: secretKey,
+	switch setting.ImageUploadProvider {
+	case "s3":
+		s3sec, err := setting.Cfg.GetSection("external_image_storage.s3")
+		if err != nil {
+			return nil, err
+		}
+
+		bucket := s3sec.Key("secret_key").String()
+		accessKey := s3sec.Key("access_key").String()
+		secretKey := s3sec.Key("secret_key").String()
+
+		if bucket == "" {
+			return nil, fmt.Errorf("Could not find bucket setting for image.uploader.s3")
+		}
+
+		if accessKey == "" {
+			return nil, fmt.Errorf("Could not find accessKey setting for image.uploader.s3")
+		}
+
+		if secretKey == "" {
+			return nil, fmt.Errorf("Could not find secretKey setting for image.uploader.s3")
+		}
+
+		return NewS3Uploader(bucket, accessKey, secretKey), nil
+	case "webdav":
+		webdavSec, err := setting.Cfg.GetSection("external_image_storage.webdav")
+		if err != nil {
+			return nil, err
+		}
+
+		url := webdavSec.Key("url").String()
+		if url == "" {
+			return nil, fmt.Errorf("Could not find url key for image.uploader.webdav")
+		}
+
+		username := webdavSec.Key("username").String()
+		password := webdavSec.Key("password").String()
+
+		return NewWebdavImageUploader(url, username, password)
 	}
-}
 
-func (u *S3Uploader) Upload(path string) (string, error) {
-
-	s3util.DefaultConfig.AccessKey = u.accessKey
-	s3util.DefaultConfig.SecretKey = u.secretKey
-
-	header := make(http.Header)
-	header.Add("x-amz-acl", "public-read")
-	header.Add("Content-Type", "image/png")
-
-	fullUrl := u.bucket + util.GetRandomString(20) + ".png"
-	writer, err := s3util.Create(fullUrl, header, nil)
-	if err != nil {
-		return "", err
-	}
-
-	defer writer.Close()
-
-	imgData, err := ioutil.ReadFile(path)
-	if err != nil {
-		return "", err
-	}
-
-	_, err = writer.Write(imgData)
-	if err != nil {
-		return "", err
-	}
-
-	return fullUrl, nil
+	return nil, fmt.Errorf("could not find specified provider")
 }
