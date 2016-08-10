@@ -26,6 +26,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   datapointsOutside: boolean;
   datapointsWarning: boolean;
   colors: any = [];
+  subTabIndex: number;
 
   panelDefaults = {
     // datasource name, null = default datasource
@@ -142,7 +143,9 @@ class GraphCtrl extends MetricsPanelCtrl {
       'log (base 32)': 32,
       'log (base 1024)': 1024
     };
+
     this.unitFormats = kbn.getUnitFormats();
+    this.subTabIndex = 0;
   }
 
   onInitPanelActions(actions) {
@@ -322,6 +325,15 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   exportCsvColumns() {
     fileExport.exportSeriesListToCsvColumns(this.seriesList);
+  }
+
+  addThreshold() {
+    this.panel.thresholds.push({value: undefined, color: "rgba(255,0,0,0.2)"});
+  }
+
+  removeThreshold(index) {
+    this.panel.thresholds.splice(index, 1);
+    this.render();
   }
 }
 

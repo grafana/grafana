@@ -331,23 +331,51 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
             return;
           }
 
+          var gtLimit = Infinity;
+          var ltLimit = -Infinity;
+
           for (var i = 0; i < panel.thresholds.length; i++) {
             var threshold = panel.thresholds[i];
-            if (!_.isNumber(threshold.from)) {
+            if (!_.isNumber(threshold.value)) {
               continue;
             }
 
-            // fill
-            options.grid.markings.push({
-              yaxis: {from: threshold.from, to: threshold.to},
-              color: 'rgba(234, 112, 112, 0.10)',
-            });
+            var limit;
+            switch(threshold.op) {
+              case '>': {
+                limit = gtLimit;
+                gtLimit = threshold.value;
+                break;
+              }
+              case '<': {
+                limit = ltLimit;
+                ltLimit = threshold.value;
+                break;
+              }
+            }
 
-            // line
-            options.grid.markings.push({
-              yaxis: {from: threshold.from, to: threshold.from},
-              color: '#ed2e18'
-            });
+            var fillColor, lineColor;
+            switch(threshold.severity) {
+              case 'critical': {
+                fillColor = 'rgba(234, 112, 112, 0.12)';
+                lineColor = 'rgba(237, 46, 24, 0.60)';
+                break;
+              }
+              case 'warning': {
+                fillColor = 'rgba(235, 138, 14, 0.12)';
+                lineColor = 'rgba(247, 149, 32, 0.60)';
+                break;
+              }
+              case 'ok': {
+                fillColor = 'rgba(11, 237, 50, 0.090)';
+                lineColor = 'rgba(6,163,69, 0.60)';
+                break;
+              }
+            }
+
+            // fill
+            options.grid.markings.push({yaxis: {from: threshold.value, to: limit}, color: fillColor});
+            options.grid.markings.push({yaxis: {from: threshold.value, to: threshold.value}, color: lineColor});
           }
         }
 

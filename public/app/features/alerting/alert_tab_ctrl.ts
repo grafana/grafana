@@ -33,9 +33,6 @@ export class AlertTabCtrl {
   handlers = [{text: 'Grafana', value: 1}, {text: 'External', value: 0}];
   conditionTypes = [
     {text: 'Query', value: 'query'},
-    {text: 'Other alert', value: 'other_alert'},
-    {text: 'Time of day', value: 'time_of_day'},
-    {text: 'Day of week', value: 'day_of_week'},
   ];
   alert: any;
   conditionModels: any;
