@@ -76,7 +76,7 @@ The IP address to bind to. If empty will bind to all interfaces
 The port to bind to, defaults to `3000`. To use port 80 you need to
 either give the Grafana binary permission for example:
 
-    $ sudo setcap 'cap_net_bind_service=+ep' /opt/grafana/current/grafana
+    $ sudo setcap 'cap_net_bind_service=+ep' /usr/sbin/grafana-server
 
 Or redirect port 80 to the Grafana port using:
 
