@@ -20,12 +20,13 @@ define([
 
       this.dashboard = dashboard;
       this.time = dashboard.time;
+      this.refresh = dashboard.refresh;
 
       this._initTimeFromUrl();
       this._parseTime();
 
-      if(this.dashboard.refresh) {
-        this.setAutoRefresh(this.dashboard.refresh);
+      if(this.refresh) {
+        this.setAutoRefresh(this.refresh);
       }
     };
 
@@ -64,6 +65,9 @@ define([
       }
       if ($routeParams.to) {
         this.time.to = this._parseUrlParam($routeParams.to) || this.time.to;
+      }
+      if ($routeParams.refresh) {
+        this.refresh = $routeParams.refresh || this.refresh;
       }
     };
 

@@ -64,7 +64,7 @@ $switch-height: 1.5rem;
   input + label::before {
     font-family: 'FontAwesome';
     content: "\f096"; // square-o
-    color: $text-color-faint;
+    color: $text-color-weak;
     transition: transform 0.4s;
     backface-visibility: hidden;
     text-shadow: $text-shadow-faint;
