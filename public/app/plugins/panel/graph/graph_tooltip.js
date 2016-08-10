@@ -41,9 +41,8 @@ function ($, _) {
     };
 
     this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
-      var value, i, series, hoverIndex, hoverDistance;
+      var value, i, series, hoverIndex, hoverDistance, pointTime;
       var results = [];
-      var seriesTimes = new Array(seriesList.length);
 
       //now we know the current X (j) position for X and Y values
       var last_value = 0; //needed for stacked values
@@ -62,13 +61,8 @@ function ($, _) {
         }
 
         hoverIndex = this.findHoverIndexFromData(pos.x, series);
-
-        // Store distance for each highlighted point
         hoverDistance = Math.abs(pos.x - series.data[hoverIndex][0]);
-        seriesTimes[i] = {
-          time: series.data[hoverIndex][0],
-          distance: hoverDistance
-        };
+        pointTime = series.data[hoverIndex][0];
 
         if (series.stack) {
           if (panel.tooltip.value_type === 'individual') {
@@ -88,15 +82,22 @@ function ($, _) {
           // stacked and steppedLine plots can have series with different length.
           // Stacked series can increase its length on each new stacked serie if null points found,
           // to speed the index search we begin always on the last found hoverIndex.
-          var newhoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
-          results.push({ value: value, hoverIndex: newhoverIndex, color: series.color, label: series.label });
-        } else {
-          results.push({ value: value, hoverIndex: hoverIndex, color: series.color, label: series.label });
+          hoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
+          hoverDistance = Math.abs(pos.x - series.data[hoverIndex][0]);
         }
+
+        results.push({
+          value: value,
+          hoverIndex: hoverIndex,
+          color: series.color,
+          label: series.label,
+          time: pointTime,
+          distance: hoverDistance
+        });
       }
 
       // Find point which closer to pointer
-      results.time = _.min(seriesTimes, 'distance').time;
+      results.time = _.min(results, 'distance').time;
 
       return results;
     };
