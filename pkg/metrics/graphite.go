@@ -21,7 +21,7 @@ type GraphitePublisher struct {
 func CreateGraphitePublisher() (*GraphitePublisher, error) {
 	graphiteSection, err := setting.Cfg.GetSection("metrics.graphite")
 	if err != nil {
-		return nil, err
+		return nil, nil
 	}
 
 	publisher := &GraphitePublisher{}

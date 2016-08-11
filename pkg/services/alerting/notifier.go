@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/renderer"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 )
 
 type RootNotifier struct {
@@ -49,15 +48,14 @@ func (n *RootNotifier) Notify(context *EvalContext) {
 
 	for _, notifier := range notifiers {
 		n.log.Info("Sending notification", "firing", context.Firing, "type", notifier.GetType())
+
 		go notifier.Notify(context)
 	}
 }
 
 func (n *RootNotifier) uploadImage(context *EvalContext) error {
-	uploader := imguploader.NewS3Uploader(
-		setting.S3TempImageStoreBucketUrl,
-		setting.S3TempImageStoreAccessKey,
-		setting.S3TempImageStoreSecretKey)
+
+	uploader, _ := imguploader.NewImageUploader()
 
 	imageUrl, err := context.GetImageUrl()
 	if err != nil {

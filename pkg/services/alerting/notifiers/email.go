@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -38,6 +39,7 @@ func NewEmailNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 
 func (this *EmailNotifier) Notify(context *alerting.EvalContext) {
 	this.log.Info("Sending alert notification to", "addresses", this.Addresses)
+	metrics.M_Alerting_Notification_Sent_Email.Inc(1)
 
 	ruleUrl, err := context.GetRuleUrl()
 	if err != nil {
