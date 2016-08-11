@@ -140,7 +140,7 @@
 
 				<div class="gf-form">
 					<div class="gf-form-select-wrapper">
-						<select class="gf-form-input" ng-model="threshold.op" ng-options="f for f in ['>', '<']" ng-change="ctrl.render()"></select>
+						<select class="gf-form-input" ng-model="threshold.op" ng-options="f for f in ['gt', 'lt']" ng-change="ctrl.render()"></select>
 					</div>
 					<input type="number" ng-model="threshold.value" class="gf-form-input width-8" ng-change="ctrl.render()" placeholder="value">
 				</div>

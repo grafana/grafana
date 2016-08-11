@@ -115,8 +115,8 @@ describe('grafanaGraph', function() {
   graphScenario('grid thresholds 100, 200', function(ctx) {
     ctx.setup(function(ctrl) {
       ctrl.panel.thresholds = [
-        {op: ">", value: 300, fillColor: 'red', lineColor: 'blue', fill: true, line: true},
-        {op: ">", value: 200, fillColor: '#ed2e18', fill: true}
+        {op: "gt", value: 300, fillColor: 'red', lineColor: 'blue', fill: true, line: true},
+        {op: "gt", value: 200, fillColor: '#ed2e18', fill: true}
       ];
     });
 

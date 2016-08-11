@@ -1,27 +1,9 @@
  ///<reference path="../../headers/common.d.ts" />
 
 import _ from 'lodash';
-
-import {
-  QueryPartDef,
-  QueryPart,
-} from 'app/core/components/query_part/query_part';
-
-var alertQueryDef = new QueryPartDef({
-  type: 'query',
-  params: [
-    {name: "queryRefId", type: 'string', options: ['A', 'B', 'C', 'D', 'E', 'F']},
-    {name: "from", type: "string", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']},
-    {name: "to", type: "string", options: ['now']},
-  ],
-  defaultParams: ['#A', '5m', 'now', 'avg']
-});
-
-var reducerAvgDef = new QueryPartDef({
-  type: 'avg',
-  params: [],
-  defaultParams: []
-});
+import {ThresholdMapper} from './threshold_mapper';
+import {QueryPart} from 'app/core/components/query_part/query_part';
+import alertDef from './alert_def';
 
 export class AlertTabCtrl {
   panel: any;
@@ -29,21 +11,11 @@ export class AlertTabCtrl {
   testing: boolean;
   testResult: any;
   subTabIndex: number;
-
-  handlers = [{text: 'Grafana', value: 1}, {text: 'External', value: 0}];
-  conditionTypes = [
-    {text: 'Query', value: 'query'},
-  ];
+  conditionTypes: any;
   alert: any;
   conditionModels: any;
-  evalFunctions = [
-    {text: '>', value: '>'},
-    {text: '<', value: '<'},
-  ];
-  severityLevels = [
-    {text: 'Critical', value: 'critical'},
-    {text: 'Warning', value: 'warning'},
-  ];
+  evalFunctions: any;
+  severityLevels: any;
   addNotificationSegment;
   notifications;
   alertNotifications;
@@ -54,6 +26,9 @@ export class AlertTabCtrl {
     this.panel = this.panelCtrl.panel;
     this.$scope.ctrl = this;
     this.subTabIndex = 0;
+    this.evalFunctions = alertDef.evalFunctions;
+    this.conditionTypes = alertDef.conditionTypes;
+    this.severityLevels = alertDef.severityLevels;
   }
 
   $onInit() {
@@ -101,6 +76,27 @@ export class AlertTabCtrl {
     }));
   }
 
+  evaluatorTypeChanged(evaluator) {
+    // ensure params array is correct length
+    switch (evaluator.type) {
+      case "lt":
+      case "gt": {
+        evaluator.params = [evaluator.params[0]];
+        break;
+      }
+      case "within_range":
+      case "outside_range": {
+        evaluator.params = [evaluator.params[0], evaluator.params[1]];
+        break;
+      }
+      case "no_value": {
+        evaluator.params = [];
+      }
+    }
+
+    this.thresholdUpdated();
+  }
+
   notificationAdded() {
     var model = _.findWhere(this.notifications, {name: this.addNotificationSegment.value});
     if (!model) {
@@ -146,43 +142,8 @@ export class AlertTabCtrl {
       this.panelCtrl.editingThresholds = true;
     }
 
-    this.syncThresholds();
+    ThresholdMapper.alertToGraphThresholds(this.panel);
     this.panelCtrl.render();
-  }
-
-  syncThresholds() {
-    if (this.panel.type !== 'graph') {
-      return;
-    }
-
-    var threshold: any = {};
-    if (this.panel.thresholds && this.panel.thresholds.length > 0) {
-      threshold = this.panel.thresholds[0];
-    } else {
-      this.panel.thresholds = [threshold];
-    }
-
-    var updated = false;
-    for (var condition of this.conditionModels) {
-      if (condition.type === 'query') {
-        var value = condition.evaluator.params[0];
-        if (!_.isNumber(value)) {
-          continue;
-        }
-
-        if (value !== threshold.value) {
-          threshold.value = value;
-          updated = true;
-        }
-
-        if (condition.evaluator.type !== threshold.op) {
-          threshold.op = condition.evaluator.type;
-          updated = true;
-        }
-      }
-    }
-
-    return updated;
   }
 
   graphThresholdChanged(evt) {
@@ -206,8 +167,8 @@ export class AlertTabCtrl {
   buildConditionModel(source) {
     var cm: any = {source: source, type: source.type};
 
-    cm.queryPart = new QueryPart(source.query, alertQueryDef);
-    cm.reducerPart = new QueryPart({params: []}, reducerAvgDef);
+    cm.queryPart = new QueryPart(source.query, alertDef.alertQueryDef);
+    cm.reducerPart = new QueryPart({params: []}, alertDef.reducerAvgDef);
     cm.evaluator = source.evaluator;
 
     return cm;
@@ -240,7 +201,7 @@ export class AlertTabCtrl {
   }
 
   thresholdUpdated() {
-    if (this.syncThresholds()) {
+    if (ThresholdMapper.alertToGraphThresholds(this.panel)) {
       this.panelCtrl.render();
     }
   }

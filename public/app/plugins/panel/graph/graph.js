@@ -343,12 +343,12 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
 
             var limit;
             switch(threshold.op) {
-              case '>': {
+              case 'gt': {
                 limit = gtLimit;
                 gtLimit = threshold.value;
                 break;
               }
-              case '<': {
+              case 'lt': {
                 limit = ltLimit;
                 ltLimit = threshold.value;
                 break;

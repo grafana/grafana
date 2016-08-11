@@ -58,9 +58,10 @@
 						</query-part-editor>
 					</div>
 					<div class="gf-form">
-						<span class="gf-form-label">Value</span>
-						<metric-segment-model property="conditionModel.evaluator.type" options="ctrl.evalFunctions" custom="false" css-class="query-segment-operator" on-change="ctrl.thresholdUpdated()"></metric-segment-model>
-						<input class="gf-form-input max-width-7" type="number" ng-model="conditionModel.evaluator.params[0]" ng-change="ctrl.thresholdUpdated()"></input>
+						<metric-segment-model property="conditionModel.evaluator.type" options="ctrl.evalFunctions" custom="false" css-class="query-keyword" on-change="ctrl.evaluatorTypeChanged(conditionModel.evaluator)"></metric-segment-model>
+						<input class="gf-form-input max-width-7" type="number" ng-hide="conditionModel.evaluator.params.length === 0" ng-model="conditionModel.evaluator.params[0]" ng-change="ctrl.thresholdUpdated()"></input>
+            <label class="gf-form-label query-keyword" ng-show="conditionModel.evaluator.params.length === 2">TO</label>
+						<input class="gf-form-input max-width-7" type="number" ng-if="conditionModel.evaluator.params.length === 2" ng-model="conditionModel.evaluator.params[1]" ng-change="ctrl.thresholdUpdated()"></input>
 					</div>
 					<div class="gf-form">
 						<label class="gf-form-label">
