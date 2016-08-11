@@ -24,4 +24,17 @@ brew update
 brew reinstall grafana
 ```
 
+-------------
 
+You can also install the latest unstable grafana from git:
+
+
+```
+brew install --HEAD grafana/grafana/grafana
+```
+
+To upgrade grafana if you've installed from HEAD:
+
+```
+brew reinstall --HEAD grafana/grafana/grafana
+```
