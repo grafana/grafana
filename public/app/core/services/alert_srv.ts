@@ -16,7 +16,7 @@ export class AlertSrv {
 
   init() {
     this.$rootScope.onAppEvent('alert-error', (e, alert) => {
-      this.set(alert[0], alert[1], 'error', 0);
+      this.set(alert[0], alert[1], 'error', 7000);
     }, this.$rootScope);
 
     this.$rootScope.onAppEvent('alert-warning', (e, alert) => {
@@ -27,10 +27,21 @@ export class AlertSrv {
       this.set(alert[0], alert[1], 'success', 3000);
     }, this.$rootScope);
 
+    appEvents.on('alert-error', options => {
+      this.set(options[0], options[1], 'error', 7000);
+    });
+
     appEvents.on('confirm-modal', this.showConfirmModal.bind(this));
   }
 
   set(title, text, severity, timeout) {
+    if (_.isObject(text)) {
+      console.log('alert error', text);
+      if (text.statusText) {
+        text = `HTTP Error (${text.status}) ${text.statusText}`;
+      }
+    }
+
     var newAlert = {
       title: title || '',
       text: text || '',
