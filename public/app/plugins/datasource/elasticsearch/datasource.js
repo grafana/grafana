@@ -82,10 +82,14 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var query = { "bool": { "must": [{ "range": range }, { "query_string": { "query": queryInterpolated } }] }};
 
       var data = {
-        "fields": [timeField, "_source"],
         "query" : query,
         "size": 10000
       };
+
+      // fields field not supported on ES 5.x
+      if (this.esVersion < 5) {
+        data["fields"] = [timeField, "_source"];
+      }
 
       var header = {search_type: "query_then_fetch", "ignore_unavailable": true};
 
