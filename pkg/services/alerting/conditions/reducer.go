@@ -19,6 +19,29 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) float64 {
 			value += point[0]
 		}
 		value = value / float64(len(series.Points))
+	case "sum":
+		for _, point := range series.Points {
+			value += point[0]
+		}
+	case "min":
+		for i, point := range series.Points {
+			if i == 0 {
+				value = point[0]
+			}
+
+			if value > point[0] {
+				value = point[0]
+			}
+		}
+	case "max":
+		for _, point := range series.Points {
+			if value < point[0] {
+				value = point[0]
+			}
+		}
+	case "mean":
+		meanPosition := int64(len(series.Points) / 2)
+		value = series.Points[meanPosition][0]
 	}
 
 	return value
