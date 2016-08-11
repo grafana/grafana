@@ -75,7 +75,7 @@ func TestAlertRuleModel(t *testing.T) {
 			alertRule, err := NewRuleFromDBAlert(alert)
 			So(err, ShouldBeNil)
 
-			So(alertRule.Conditions, ShouldHaveLength, 1)
+			So(len(alertRule.Conditions), ShouldEqual, 1)
 
 			Convey("Can read notifications", func() {
 				So(len(alertRule.Notifications), ShouldEqual, 2)
