@@ -19,13 +19,14 @@ export class ThresholdControls {
       colorClass = 'warn';
     }
 
-    return `<div class="alert-handle-wrapper alert-handle-wrapper--T${handleIndex}">
-    <div class="alert-handle-line alert-handle-line--${colorClass}">
-    </div>
-    <div class="alert-handle" data-handle-index="${handleIndex}">
-    <i class="icon-gf icon-gf-${colorClass} alert-icon-${colorClass}"></i>
-    <span class="alert-handle-value">${valueStr}</span>
-    </div>
+    return `
+    <div class="alert-handle-wrapper alert-handle-wrapper--T${handleIndex}">
+      <div class="alert-handle-line alert-handle-line--${colorClass}">
+      </div>
+      <div class="alert-handle" data-handle-index="${handleIndex}">
+        <i class="icon-gf icon-gf-${colorClass} alert-icon-${colorClass}"></i>
+        <span class="alert-handle-value">${valueStr}<i class="alert-handle-grip"></i></span>
+      </div>
     </div>`;
 
   }

@@ -350,6 +350,15 @@
     border-left: 1px solid $btn-divider-right;
     padding: 0.5rem;
     line-height: 2rem;
+
+    .alert-handle-grip {
+      background: url($btn-drag-image) no-repeat 50% 50%;
+      background-size: 8px;
+      float: right;
+      width: 1rem;
+      height: 2rem;
+      margin-right: 2px;
+    }
   }
 
   &--T1 {
