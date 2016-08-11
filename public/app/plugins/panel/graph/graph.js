@@ -37,7 +37,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
         var legendSideLastValue = null;
         var rootScope = scope.$root;
         var panelWidth = 0;
-        var thresholdControls;
+        var thresholdControls = new ThresholdControls(ctrl);
 
         rootScope.onAppEvent('setCrosshair', function(event, info) {
           // do not need to to this if event is from this panel
@@ -161,9 +161,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
             rightLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[1].label, rightLabel) / 2) + 'px';
           }
 
-          if (thresholdControls) {
-            thresholdControls.draw(plot);
-          }
+          thresholdControls.draw(plot);
         }
 
         function processOffsetHook(plot, gridMargin) {
@@ -182,17 +180,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
           }
 
           // give space to alert editing
-          if (ctrl.editingThresholds) {
-            if (!thresholdControls) {
-              var thresholdMargin = panel.thresholds.length > 1 ? '220px' : '110px';
-              elem.css('margin-right', thresholdMargin);
-              thresholdControls = new ThresholdControls(ctrl);
-            }
-          } else if (thresholdControls) {
-            elem.css('margin-right', '0');
-            thresholdControls.cleanUp();
-            thresholdControls = null;
-          }
+          thresholdControls.prepare(elem);
 
           var stack = panel.stack ? true : null;
 

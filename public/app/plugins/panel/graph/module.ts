@@ -328,7 +328,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   addThreshold() {
-    this.panel.thresholds.push({value: undefined, color: "rgba(255,0,0,0.2)"});
+    this.panel.thresholds.push({value: undefined, colorMode: "critical", op: 'gt', fill: true, line: true});
   }
 
   removeThreshold(index) {

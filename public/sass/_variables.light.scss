@@ -99,7 +99,7 @@ $component-active-bg:    $brand-primary !default;
 $panel-bg: 		  $gray-7;
 $panel-border:  solid 1px $gray-6;
 
-$divider-border-color:	$gray-2;
+$divider-border-color:	      $gray-2;
 
 // Graphite Target Editor
 $tight-form-border:   $gray-4;
@@ -156,6 +156,9 @@ $btn-inverse-bg-hl:       darken($gray-5, 5%);
 $btn-inverse-text-color:  $dark-4;
 
 $btn-link-color: $gray-1;
+
+$btn-divider-left:   $dark-5;
+$btn-divider-right:  $dark-1;
 
 $iconContainerBackground: $white;
 

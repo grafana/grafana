@@ -34,7 +34,7 @@
 					<div class="gf-form">
 						<span class="gf-form-label">Severity</span>
 						<div class="gf-form-select-wrapper width-13">
-							<select class="gf-form-input" ng-model="ctrl.alert.severity" ng-options="f.value as f.text for f in ctrl.severityLevels">
+							<select class="gf-form-input" ng-model="ctrl.alert.severity" ng-options="f.value as f.text for f in ctrl.severityLevels" ng-change="ctrl.severityChanged()">
 							</select>
 						</div>
 					</div>
@@ -59,9 +59,9 @@
 					</div>
 					<div class="gf-form">
 						<metric-segment-model property="conditionModel.evaluator.type" options="ctrl.evalFunctions" custom="false" css-class="query-keyword" on-change="ctrl.evaluatorTypeChanged(conditionModel.evaluator)"></metric-segment-model>
-						<input class="gf-form-input max-width-7" type="number" ng-hide="conditionModel.evaluator.params.length === 0" ng-model="conditionModel.evaluator.params[0]" ng-change="ctrl.thresholdUpdated()"></input>
+						<input class="gf-form-input max-width-7" type="number" ng-hide="conditionModel.evaluator.params.length === 0" ng-model="conditionModel.evaluator.params[0]" ng-change="ctrl.evaluatorParamsChanged()"></input>
             <label class="gf-form-label query-keyword" ng-show="conditionModel.evaluator.params.length === 2">TO</label>
-						<input class="gf-form-input max-width-7" type="number" ng-if="conditionModel.evaluator.params.length === 2" ng-model="conditionModel.evaluator.params[1]" ng-change="ctrl.thresholdUpdated()"></input>
+						<input class="gf-form-input max-width-7" type="number" ng-if="conditionModel.evaluator.params.length === 2" ng-model="conditionModel.evaluator.params[1]" ng-change="ctrl.evaluatorParamsChanged()"></input>
 					</div>
 					<div class="gf-form">
 						<label class="gf-form-label">

@@ -9,26 +9,25 @@ export class ThresholdControls {
   placeholder: any;
   height: any;
   thresholds: any;
+  needsCleanup: boolean;
 
-  constructor(private panelCtrl) {
-    this.thresholds = this.panelCtrl.panel.thresholds;
-  }
+  constructor(private panelCtrl) {}
 
- getHandleInnerHtml(handleName, op, value) {
-    if (op === '>') { op = '&gt;'; }
-    if (op === '<') { op = '&lt;'; }
+  getHandleHtml(handleIndex, model, valueStr) {
+    var colorClass = 'crit';
+    if (model.colorMode === 'warning') {
+      colorClass = 'warn';
+    }
 
-    return `
-    <div class="alert-handle-line">
+    return `<div class="alert-handle-wrapper alert-handle-wrapper--T${handleIndex}">
+    <div class="alert-handle-line alert-handle-line--${colorClass}">
     </div>
-    <div class="alert-handle">
-      ${op} ${value}
+    <div class="alert-handle" data-handle-index="${handleIndex}">
+    <i class="icon-gf icon-gf-${colorClass} alert-icon-${colorClass}"></i>
+    <span class="alert-handle-value">${valueStr}</span>
+    </div>
     </div>`;
-  }
 
-  getFullHandleHtml(handleName, op, value) {
-    var innerTemplate = this.getHandleInnerHtml(handleName, op, value);
-    return `<div class="alert-handle-wrapper alert-handle-wrapper--${handleName}">${innerTemplate}</div>`;
   }
 
   setupDragging(handleElem, threshold, handleIndex) {
@@ -78,15 +77,18 @@ export class ThresholdControls {
     });
   }
 
-  cleanUp() {
-    if (this.placeholder) {
-      this.placeholder.find(".alert-handle-wrapper").remove();
-    }
+  initDragging(evt) {
+    var handleIndex = $(evt.currentTarget).data("handleIndex");
+    console.log('alert handle index', handleIndex);
   }
 
-  renderHandle(handleIndex, model, defaultHandleTopPos) {
-    var handleName = 'T' + (handleIndex+1);
-    var handleElem = this.placeholder.find(`.alert-handle-wrapper--${handleName}`);
+  cleanUp() {
+    this.placeholder.find(".alert-handle-wrapper").remove();
+    this.needsCleanup = false;
+  }
+
+  renderHandle(handleIndex, defaultHandleTopPos) {
+    var model = this.thresholds[handleIndex];
     var value = model.value;
     var valueStr = value;
     var handleTopPos = 0;
@@ -100,29 +102,48 @@ export class ThresholdControls {
       handleTopPos = Math.min(Math.max(valueCanvasPos.top, 0), this.height) - 6;
     }
 
-    if (handleElem.length === 0) {
-      handleElem = $(this.getFullHandleHtml(handleName, model.op, valueStr));
-      this.placeholder.append(handleElem);
-      this.setupDragging(handleElem, model, handleIndex);
-    } else {
-      handleElem.html(this.getHandleInnerHtml(handleName, model.op, valueStr));
-    }
+    var handleElem = $(this.getHandleHtml(handleIndex, model, valueStr));
+    this.placeholder.append(handleElem);
 
     handleElem.toggleClass('alert-handle-wrapper--no-value', valueStr === '');
     handleElem.css({top: handleTopPos});
   }
 
+  prepare(elem) {
+    if (this.panelCtrl.editingThresholds) {
+      var thresholdMargin = this.panelCtrl.panel.thresholds.length > 1 ? '220px' : '110px';
+      elem.css('margin-right', thresholdMargin);
+    } else if (this.needsCleanup) {
+      elem.css('margin-right', '0');
+    }
+  }
+
   draw(plot) {
+    this.thresholds = this.panelCtrl.panel.thresholds;
     this.plot = plot;
     this.placeholder = plot.getPlaceholder();
+
+    if (this.needsCleanup) {
+      this.cleanUp();
+    }
+
+    // if no thresholds or not editing alerts skip rendering handles
+    if (this.thresholds.length === 0 || !this.panelCtrl.editingThresholds) {
+      return;
+    }
+
     this.height = plot.height();
 
     if (this.thresholds.length > 0) {
-      this.renderHandle(0, this.thresholds[0], 10);
+      this.renderHandle(0, 10);
     }
     if (this.thresholds.length > 1) {
-      this.renderHandle(1, this.thresholds[1], this.height-30);
+      this.renderHandle(1, this.height-30);
     }
+
+    this.placeholder.off('mousedown', '.alert-handle');
+    this.placeholder.on('mousedown', '.alert-handle', this.initDragging.bind(this));
+    this.needsCleanup = true;
   }
 }
 

@@ -76,26 +76,6 @@ export class AlertTabCtrl {
     }));
   }
 
-  evaluatorTypeChanged(evaluator) {
-    // ensure params array is correct length
-    switch (evaluator.type) {
-      case "lt":
-      case "gt": {
-        evaluator.params = [evaluator.params[0]];
-        break;
-      }
-      case "within_range":
-      case "outside_range": {
-        evaluator.params = [evaluator.params[0], evaluator.params[1]];
-        break;
-      }
-      case "no_value": {
-        evaluator.params = [];
-      }
-    }
-
-    this.thresholdUpdated();
-  }
 
   notificationAdded() {
     var model = _.findWhere(this.notifications, {name: this.addNotificationSegment.value});
@@ -200,10 +180,35 @@ export class AlertTabCtrl {
     this.initModel();
   }
 
-  thresholdUpdated() {
-    if (ThresholdMapper.alertToGraphThresholds(this.panel)) {
-      this.panelCtrl.render();
+  evaluatorParamsChanged() {
+    ThresholdMapper.alertToGraphThresholds(this.panel);
+    this.panelCtrl.render();
+  }
+
+  severityChanged() {
+    ThresholdMapper.alertToGraphThresholds(this.panel);
+    this.panelCtrl.render();
+  }
+
+  evaluatorTypeChanged(evaluator) {
+    // ensure params array is correct length
+    switch (evaluator.type) {
+      case "lt":
+      case "gt": {
+        evaluator.params = [evaluator.params[0]];
+        break;
+      }
+      case "within_range":
+      case "outside_range": {
+        evaluator.params = [evaluator.params[0], evaluator.params[1]];
+        break;
+      }
+      case "no_value": {
+        evaluator.params = [];
+      }
     }
+
+    this.evaluatorParamsChanged();
   }
 
   test() {

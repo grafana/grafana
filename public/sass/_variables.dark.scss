@@ -90,12 +90,12 @@ $component-active-bg:    $brand-primary !default;
 // Panel
 // -------------------------
 $panel-bg: 				 $dark-2;
-$panel-border: 			 solid 1px $dark-3;
+$panel-border:  	 solid 1px $dark-3;
 
-$divider-border-color:  #555;
+$divider-border-color:        #555;
 
 // Graphite Target Editor
-$tight-form-border:     #050505;
+$tight-form-border:   #050505;
 $tight-form-bg:     	$dark-3;
 
 $tight-form-func-bg: 		    #333;
@@ -152,6 +152,9 @@ $btn-link-color:              $gray-3;
 
 $iconContainerBackground:	    $black;
 
+$btn-divider-left:   $dark-5;
+$btn-divider-right:  $dark-1;
+
 // Forms
 // -------------------------
 $input-bg:                       $dark-4;
@@ -184,7 +187,6 @@ $dropdownLinkColorActive:       $white;
 
 $dropdownLinkBackgroundActive:  $dark-4;
 $dropdownLinkBackgroundHover:   $dark-4;
-
 
 // COMPONENT VARIABLES
 // --------------------------------------------------
