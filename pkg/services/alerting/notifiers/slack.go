@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 )
@@ -38,6 +39,7 @@ type SlackNotifier struct {
 
 func (this *SlackNotifier) Notify(context *alerting.EvalContext) {
 	this.log.Info("Executing slack notification", "ruleId", context.Rule.Id, "notification", this.Name)
+	metrics.M_Alerting_Notification_Sent_Slack.Inc(1)
 
 	ruleUrl, err := context.GetRuleUrl()
 	if err != nil {

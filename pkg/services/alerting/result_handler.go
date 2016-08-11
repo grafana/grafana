@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
@@ -37,6 +38,7 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 		ctx.Rule.State = m.AlertStateOK
 	}
 
+	countSeverity(ctx.Rule.Severity)
 	if ctx.Rule.State != oldState {
 		handler.log.Info("New state change", "alertId", ctx.Rule.Id, "newState", ctx.Rule.State, "oldState", oldState)
 
@@ -67,5 +69,18 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 		}
 
 		handler.notifier.Notify(ctx)
+	}
+}
+
+func countSeverity(state m.AlertSeverityType) {
+	switch state {
+	case m.AlertSeverityOK:
+		metrics.M_Alerting_Result_Ok.Inc(1)
+	case m.AlertSeverityInfo:
+		metrics.M_Alerting_Result_Info.Inc(1)
+	case m.AlertSeverityWarning:
+		metrics.M_Alerting_Result_Warning.Inc(1)
+	case m.AlertSeverityCritical:
+		metrics.M_Alerting_Result_Critical.Inc(1)
 	}
 }

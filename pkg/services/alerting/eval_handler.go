@@ -5,10 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
-)
-
-var (
-	descriptionFmt = "Actual value: %1.2f for %s. "
+	"github.com/grafana/grafana/pkg/metrics"
 )
 
 type DefaultEvalHandler struct {
@@ -55,5 +52,7 @@ func (e *DefaultEvalHandler) eval(context *EvalContext) {
 	}
 
 	context.EndTime = time.Now()
+	elapsedTime := context.EndTime.Sub(context.StartTime)
+	metrics.M_Alerting_Exeuction_Time.Update(elapsedTime)
 	context.DoneChan <- true
 }
