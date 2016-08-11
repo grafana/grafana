@@ -352,6 +352,45 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           };
         }
 
+        //Override min/max to provide more flexible autoscaling
+        function autoscaleSpanOverride(yaxis, data, options) {
+          var m, op, num, precision;
+          if (yaxis.min != null && data != null) {
+            m = yaxis.min.match(/([<=>~]*)\W*(\d+(\.\d+)?)/);
+            if (m != null) {
+              op = m[1];
+              num = m[2]*1;
+              precision = m[3] == null ? 0 : m[3].length - 1; //Precision based on input
+              if (op === ">") {
+                options.min = data.stats.min < num ? num : null;
+              } else if (op === "<") {
+                options.min = data.stats.min > num ? num : null;
+              } else if (op === "~") {
+                options.min = kbn.roundValue(data.stats.avg - num, precision);
+              } else if (op === "=") {
+                options.min = kbn.roundValue(data.stats.current - num, precision);
+              }
+            }
+          }
+          if (yaxis.max != null && data != null) {
+            m = yaxis.max.match(/([<=>~]*)\W*(\d+(\.\d+)?)/);
+            if (m != null) {
+              op = m[1];
+              num = m[2]*1;
+              precision = m[3] == null ? 0 : m[3].length - 1; //Precision based on input
+              if (op === ">") {
+                options.max = data.stats.max < num ? num : null;
+              } else if (op === "<") {
+                options.max = data.stats.max > num ? num : null;
+              } else if (op === "~") {
+                options.max = kbn.roundValue(data.stats.avg + num, precision);
+              } else if (op === "=") {
+                options.max = kbn.roundValue(data.stats.current + num, precision);
+              }
+            }
+          }
+        }
+
         function configureAxisOptions(data, options) {
           var defaults = {
             position: 'left',
@@ -362,6 +401,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             max: panel.percentage && panel.stack ? 100 : panel.yaxes[0].max,
           };
 
+          autoscaleSpanOverride(panel.yaxes[0], data[0], defaults);
           options.yaxes.push(defaults);
 
           if (_.findWhere(data, {yaxis: 2})) {
@@ -372,6 +412,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             secondY.position = 'right';
             secondY.min = panel.yaxes[1].min;
             secondY.max = panel.percentage && panel.stack ? 100 : panel.yaxes[1].max;
+            autoscaleSpanOverride(panel.yaxes[1], data[1], secondY);
             options.yaxes.push(secondY);
 
             applyLogScale(options.yaxes[1], data);
