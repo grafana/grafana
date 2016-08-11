@@ -322,9 +322,10 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
 
           var gtLimit = Infinity;
           var ltLimit = -Infinity;
+          var i, threshold, other;
 
-          for (var i = 0; i < panel.thresholds.length; i++) {
-            var threshold = panel.thresholds[i];
+          for (i = 0; i < panel.thresholds.length; i++) {
+            threshold = panel.thresholds[i];
             if (!_.isNumber(threshold.value)) {
               continue;
             }
@@ -333,12 +334,26 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
             switch(threshold.op) {
               case 'gt': {
                 limit = gtLimit;
-                gtLimit = threshold.value;
+                // if next threshold is less then op and greater value, then use that as limit
+                if (panel.thresholds.length > i+1) {
+                  other = panel.thresholds[i+1];
+                  if (other.value > threshold.value) {
+                    limit = other.value;
+                    ltLimit = limit;
+                  }
+                }
                 break;
               }
               case 'lt': {
                 limit = ltLimit;
-                ltLimit = threshold.value;
+                // if next threshold is less then op and greater value, then use that as limit
+                if (panel.thresholds.length > i+1) {
+                  other = panel.thresholds[i+1];
+                  if (other.value < threshold.value) {
+                    limit = other.value;
+                    gtLimit = limit;
+                  }
+                }
                 break;
               }
             }
