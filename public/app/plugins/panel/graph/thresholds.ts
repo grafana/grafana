@@ -31,12 +31,16 @@ export class ThresholdControls {
 
   }
 
-  setupDragging(handleElem, threshold, handleIndex) {
+  initDragging(evt) {
+    var handleElem = $(evt.currentTarget).parents(".alert-handle-wrapper");
+    var handleIndex = $(evt.currentTarget).data("handleIndex");
+
     var isMoving = false;
     var lastY = null;
     var posTop;
     var plot = this.plot;
     var panelCtrl = this.panelCtrl;
+    var model = this.thresholds[handleIndex];
 
     function dragging(evt) {
       if (lastY === null) {
@@ -54,33 +58,28 @@ export class ThresholdControls {
       // calculate graph level
       var graphValue = plot.c2p({left: 0, top: posTop}).y;
       graphValue = parseInt(graphValue.toFixed(0));
-      threshold.value = graphValue;
+      model.value = graphValue;
 
       var valueCanvasPos = plot.p2c({x: 0, y: graphValue});
 
       handleElem.off("mousemove", dragging);
       handleElem.off("mouseup", dragging);
+      handleElem.off("mouseleave", dragging);
 
       // trigger digest and render
       panelCtrl.$scope.$apply(function() {
         panelCtrl.render();
-        panelCtrl.events.emit('threshold-changed', {threshold: threshold, index: handleIndex});
+        panelCtrl.events.emit('threshold-changed', {threshold: model, index: handleIndex});
       });
     }
 
-    handleElem.bind('mousedown', function() {
-      isMoving = true;
-      lastY = null;
-      posTop = handleElem.position().top;
+    isMoving = true;
+    lastY = null;
+    posTop = handleElem.position().top;
 
-      handleElem.on("mousemove", dragging);
-      handleElem.on("mouseup", stopped);
-    });
-  }
-
-  initDragging(evt) {
-    var handleIndex = $(evt.currentTarget).data("handleIndex");
-    console.log('alert handle index', handleIndex);
+    handleElem.on("mousemove", dragging);
+    handleElem.on("mouseup", stopped);
+    handleElem.on("mouseleave", stopped);
   }
 
   cleanUp() {
