@@ -33,7 +33,7 @@ func CreateGraphitePublisher() (*GraphitePublisher, error) {
 	prefix := graphiteSection.Key("prefix").Value()
 
 	if prefix == "" {
-		prefix = "service.grafana.%(instance_name)s"
+		prefix = "service.grafana.%(instance_name)s."
 	}
 
 	publisher.prefix = strings.Replace(prefix, "%(instance_name)s", safeInstanceName, -1)
