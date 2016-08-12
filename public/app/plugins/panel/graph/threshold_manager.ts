@@ -10,6 +10,7 @@ export class ThresholdManager {
   height: any;
   thresholds: any;
   needsCleanup: boolean;
+  hasSecondYAxis: any;
 
   constructor(private panelCtrl) {}
 
@@ -109,8 +110,20 @@ export class ThresholdManager {
     handleElem.css({top: handleTopPos});
   }
 
-  prepare(elem) {
-    if (this.panelCtrl.editingThresholds) {
+  shouldDrawHandles() {
+    return !this.hasSecondYAxis && this.panelCtrl.editingThresholds && this.panelCtrl.panel.thresholds.length > 0;
+  }
+
+  prepare(elem, data) {
+    this.hasSecondYAxis = false;
+    for (var i = 0; i < data.length; i++) {
+      if (data[i].yaxis > 1) {
+        this.hasSecondYAxis = true;
+        break;
+      }
+    }
+
+    if (this.shouldDrawHandles()) {
       var thresholdMargin = this.panelCtrl.panel.thresholds.length > 1 ? '220px' : '110px';
       elem.css('margin-right', thresholdMargin);
     } else if (this.needsCleanup) {
@@ -127,8 +140,7 @@ export class ThresholdManager {
       this.cleanUp();
     }
 
-    // if no thresholds or not editing alerts skip rendering handles
-    if (this.thresholds.length === 0 || !this.panelCtrl.editingThresholds) {
+    if (!this.shouldDrawHandles()) {
       return;
     }
 

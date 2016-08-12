@@ -177,7 +177,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
           }
 
           // give space to alert editing
-          thresholdManager.prepare(elem);
+          thresholdManager.prepare(elem, data);
 
           var stack = panel.stack ? true : null;
 
