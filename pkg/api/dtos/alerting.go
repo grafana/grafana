@@ -12,7 +12,7 @@ type AlertRule struct {
 	DashboardId int64               `json:"dashboardId"`
 	PanelId     int64               `json:"panelId"`
 	Name        string              `json:"name"`
-	Description string              `json:"description"`
+	Message     string              `json:"message"`
 	State       m.AlertStateType    `json:"state"`
 	Severity    m.AlertSeverityType `json:"severity"`
 

@@ -111,7 +111,6 @@ export class AlertTabCtrl {
 
     var defaultName = this.panel.title + ' alert';
     alert.name = alert.name || defaultName;
-    alert.description = alert.description || defaultName;
 
     this.conditionModels = _.reduce(alert.conditions, (memo, value) => {
       memo.push(this.buildConditionModel(value));

@@ -36,7 +36,7 @@ type Alert struct {
 	DashboardId int64
 	PanelId     int64
 	Name        string
-	Description string
+	Message     string
 	Severity    AlertSeverityType
 	State       AlertStateType
 	Handler     int64
@@ -63,7 +63,7 @@ func (alert *Alert) ShouldUpdateState(newState AlertStateType) bool {
 func (this *Alert) ContainsUpdates(other *Alert) bool {
 	result := false
 	result = result || this.Name != other.Name
-	result = result || this.Description != other.Description
+	result = result || this.Message != other.Message
 
 	if this.Settings != nil && other.Settings != nil {
 		json1, err1 := this.Settings.Encode()

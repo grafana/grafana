@@ -17,7 +17,7 @@ type Rule struct {
 	PanelId       int64
 	Frequency     int64
 	Name          string
-	Description   string
+	Message       string
 	State         m.AlertStateType
 	Severity      m.AlertSeverityType
 	Conditions    []Condition
@@ -63,7 +63,7 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	model.DashboardId = ruleDef.DashboardId
 	model.PanelId = ruleDef.PanelId
 	model.Name = ruleDef.Name
-	model.Description = ruleDef.Description
+	model.Message = ruleDef.Message
 	model.Frequency = ruleDef.Frequency
 	model.Severity = ruleDef.Severity
 	model.State = ruleDef.State

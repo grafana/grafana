@@ -14,7 +14,7 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "panel_id", Type: DB_BigInt, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "description", Type: DB_Text, Nullable: false},
+			{Name: "message", Type: DB_Text, Nullable: false},
 			{Name: "state", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "settings", Type: DB_Text, Nullable: false},
 			{Name: "frequency", Type: DB_BigInt, Nullable: false},
