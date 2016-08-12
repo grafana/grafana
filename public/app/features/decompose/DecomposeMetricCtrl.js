@@ -9,8 +9,6 @@ define([
 
     module.controller('DecomposeMetricCtrl', function ($scope, $timeout) {
       $scope.init = function () {
-        //  console.log(window.decomposeTarget);
-
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: false},
           dashboard: {
