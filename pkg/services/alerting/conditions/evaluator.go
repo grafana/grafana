@@ -19,9 +19,9 @@ type DefaultAlertEvaluator struct {
 
 func (e *DefaultAlertEvaluator) Eval(series *tsdb.TimeSeries, reducedValue float64) bool {
 	switch e.Type {
-	case ">":
+	case "gt":
 		return reducedValue > e.Threshold
-	case "<":
+	case "lt":
 		return reducedValue < e.Threshold
 	}
 

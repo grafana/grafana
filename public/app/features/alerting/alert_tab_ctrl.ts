@@ -172,7 +172,9 @@ export class AlertTabCtrl {
 
   delete() {
     this.panel.alert = {enabled: false};
-    this.initModel();
+    this.panel.thresholds = [];
+    this.conditionModels = [];
+    this.panelCtrl.render();
   }
 
   enable() {

@@ -3,6 +3,7 @@
 import './graph';
 import './legend';
 import './series_overrides_ctrl';
+import './thresholds_form';
 
 import template from './template';
 import angular from 'angular';
@@ -327,14 +328,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     fileExport.exportSeriesListToCsvColumns(this.seriesList);
   }
 
-  addThreshold() {
-    this.panel.thresholds.push({value: undefined, colorMode: "critical", op: 'gt', fill: true, line: true});
-  }
-
-  removeThreshold(index) {
-    this.panel.thresholds.splice(index, 1);
-    this.render();
-  }
 }
 
 export {GraphCtrl, GraphCtrl as PanelCtrl}
