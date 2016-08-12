@@ -112,37 +112,6 @@ describe('grafanaGraph', function() {
     });
   });
 
-  graphScenario('grid thresholds 100, 200', function(ctx) {
-    ctx.setup(function(ctrl) {
-      ctrl.panel.thresholds = [
-        {op: "gt", value: 300, fillColor: 'red', lineColor: 'blue', fill: true, line: true},
-        {op: "gt", value: 200, fillColor: '#ed2e18', fill: true}
-      ];
-    });
-
-    it('should add fill for threshold with fill: true', function() {
-      var markings = ctx.plotOptions.grid.markings;
-
-      expect(markings[0].yaxis.from).to.be(300);
-      expect(markings[0].yaxis.to).to.be(Infinity);
-      expect(markings[0].color).to.be('red');
-    });
-
-    it('should add line', function() {
-      var markings = ctx.plotOptions.grid.markings;
-
-      expect(markings[1].yaxis.from).to.be(300);
-      expect(markings[1].yaxis.to).to.be(300);
-      expect(markings[1].color).to.be('blue');
-    });
-
-    it('should add fill for second thresholds to previous threshold', function() {
-      var markings = ctx.plotOptions.grid.markings;
-      expect(markings[2].yaxis.from).to.be(200);
-      expect(markings[2].yaxis.to).to.be(300);
-    });
-  });
-
   graphScenario('when logBase is log 10', function(ctx) {
     ctx.setup(function(ctrl) {
       ctrl.panel.yaxes[0].logBase = 10;

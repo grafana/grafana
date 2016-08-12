@@ -129,7 +129,8 @@ export class AlertTabCtrl {
   graphThresholdChanged(evt) {
     for (var condition of this.alert.conditions) {
       if (condition.type === 'query') {
-        condition.evaluator.params[0] = evt.threshold.value;
+        condition.evaluator.params[evt.handleIndex] = evt.threshold.value;
+        this.evaluatorParamsChanged();
         break;
       }
     }
@@ -140,7 +141,7 @@ export class AlertTabCtrl {
       type: 'query',
       query: {params: ['A', '5m', 'now']},
       reducer: {type: 'avg', params: []},
-      evaluator: {type: '>', params: [null]},
+      evaluator: {type: 'gt', params: [null]},
     };
   }
 
@@ -171,7 +172,7 @@ export class AlertTabCtrl {
   }
 
   delete() {
-    this.alert.enabled = false;
+    this.panel.alert = {enabled: false};
     this.initModel();
   }
 

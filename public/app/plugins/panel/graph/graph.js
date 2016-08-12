@@ -5,7 +5,7 @@ define([
   'lodash',
   'app/core/utils/kbn',
   './graph_tooltip',
-  './thresholds',
+  './threshold_manager',
   'jquery.flot',
   'jquery.flot.selection',
   'jquery.flot.time',
@@ -15,14 +15,11 @@ define([
   'jquery.flot.crosshair',
   './jquery.flot.events',
 ],
-function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
+function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
   'use strict';
 
   var module = angular.module('grafana.directives');
   var labelWidthCache = {};
-
-  // systemjs export
-  var ThresholdControls = thresholds.ThresholdControls;
 
   module.directive('grafanaGraph', function($rootScope, timeSrv) {
     return {
@@ -37,7 +34,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
         var legendSideLastValue = null;
         var rootScope = scope.$root;
         var panelWidth = 0;
-        var thresholdControls = new ThresholdControls(ctrl);
+        var thresholdManager = new thresholdManExports.ThresholdManager(ctrl);
 
         rootScope.onAppEvent('setCrosshair', function(event, info) {
           // do not need to to this if event is from this panel
@@ -161,7 +158,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
             rightLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[1].label, rightLabel) / 2) + 'px';
           }
 
-          thresholdControls.draw(plot);
+          thresholdManager.draw(plot);
         }
 
         function processOffsetHook(plot, gridMargin) {
@@ -180,7 +177,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
           }
 
           // give space to alert editing
-          thresholdControls.prepare(elem);
+          thresholdManager.prepare(elem);
 
           var stack = panel.stack ? true : null;
 
@@ -252,7 +249,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
           }
 
           addTimeAxis(options);
-          addGridThresholds(options, panel);
+          thresholdManager.addPlotOptions(options, panel);
           addAnnotations(options);
           configureAxisOptions(data, options);
 
@@ -313,82 +310,6 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholds) {
             ticks: ticks,
             timeformat: time_format(ticks, min, max),
           };
-        }
-
-        function addGridThresholds(options, panel) {
-          if (!panel.thresholds || panel.thresholds.length === 0) {
-            return;
-          }
-
-          var gtLimit = Infinity;
-          var ltLimit = -Infinity;
-          var i, threshold, other;
-
-          for (i = 0; i < panel.thresholds.length; i++) {
-            threshold = panel.thresholds[i];
-            if (!_.isNumber(threshold.value)) {
-              continue;
-            }
-
-            var limit;
-            switch(threshold.op) {
-              case 'gt': {
-                limit = gtLimit;
-                // if next threshold is less then op and greater value, then use that as limit
-                if (panel.thresholds.length > i+1) {
-                  other = panel.thresholds[i+1];
-                  if (other.value > threshold.value) {
-                    limit = other.value;
-                    ltLimit = limit;
-                  }
-                }
-                break;
-              }
-              case 'lt': {
-                limit = ltLimit;
-                // if next threshold is less then op and greater value, then use that as limit
-                if (panel.thresholds.length > i+1) {
-                  other = panel.thresholds[i+1];
-                  if (other.value < threshold.value) {
-                    limit = other.value;
-                    gtLimit = limit;
-                  }
-                }
-                break;
-              }
-            }
-
-            switch(threshold.colorMode) {
-              case 'critical': {
-                threshold.fillColor = 'rgba(234, 112, 112, 0.12)';
-                threshold.lineColor = 'rgba(237, 46, 24, 0.60)';
-                break;
-              }
-              case 'warning': {
-                threshold.fillColor = 'rgba(235, 138, 14, 0.12)';
-                threshold.lineColor = 'rgba(247, 149, 32, 0.60)';
-                break;
-              }
-              case 'ok': {
-                threshold.fillColor = 'rgba(11, 237, 50, 0.090)';
-                threshold.lineColor = 'rgba(6,163,69, 0.60)';
-                break;
-              }
-              case 'custom': {
-                threshold.fillColor = threshold.fillColor;
-                threshold.lineColor = threshold.lineColor;
-                break;
-              }
-            }
-
-            // fill
-            if (threshold.fill) {
-              options.grid.markings.push({yaxis: {from: threshold.value, to: limit}, color: threshold.fillColor});
-            }
-            if (threshold.line) {
-              options.grid.markings.push({yaxis: {from: threshold.value, to: threshold.value}, color: threshold.lineColor});
-            }
-          }
         }
 
         function addAnnotations(options) {

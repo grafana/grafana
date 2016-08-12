@@ -4,7 +4,7 @@ import 'jquery.flot';
 import $ from 'jquery';
 import _ from 'lodash';
 
-export class ThresholdControls {
+export class ThresholdManager {
   plot: any;
   placeholder: any;
   height: any;
@@ -69,7 +69,7 @@ export class ThresholdControls {
       // trigger digest and render
       panelCtrl.$scope.$apply(function() {
         panelCtrl.render();
-        panelCtrl.events.emit('threshold-changed', {threshold: model, index: handleIndex});
+        panelCtrl.events.emit('threshold-changed', {threshold: model, handleIndex: handleIndex});
       });
     }
 
@@ -145,5 +145,82 @@ export class ThresholdControls {
     this.placeholder.on('mousedown', '.alert-handle', this.initDragging.bind(this));
     this.needsCleanup = true;
   }
+
+  addPlotOptions(options, panel) {
+    if (!panel.thresholds || panel.thresholds.length === 0) {
+      return;
+    }
+
+    var gtLimit = Infinity;
+    var ltLimit = -Infinity;
+    var i, threshold, other;
+
+    for (i = 0; i < panel.thresholds.length; i++) {
+      threshold = panel.thresholds[i];
+      if (!_.isNumber(threshold.value)) {
+        continue;
+      }
+
+      var limit;
+      switch (threshold.op) {
+        case 'gt': {
+          limit = gtLimit;
+          // if next threshold is less then op and greater value, then use that as limit
+          if (panel.thresholds.length > i+1) {
+            other = panel.thresholds[i+1];
+            if (other.value > threshold.value) {
+              limit = other.value;
+              ltLimit = limit;
+            }
+          }
+          break;
+        }
+        case 'lt': {
+          limit = ltLimit;
+          // if next threshold is less then op and greater value, then use that as limit
+          if (panel.thresholds.length > i+1) {
+            other = panel.thresholds[i+1];
+            if (other.value < threshold.value) {
+              limit = other.value;
+              gtLimit = limit;
+            }
+          }
+          break;
+        }
+      }
+
+      switch (threshold.colorMode) {
+        case 'critical': {
+          threshold.fillColor = 'rgba(234, 112, 112, 0.12)';
+          threshold.lineColor = 'rgba(237, 46, 24, 0.60)';
+          break;
+        }
+        case 'warning': {
+          threshold.fillColor = 'rgba(235, 138, 14, 0.12)';
+          threshold.lineColor = 'rgba(247, 149, 32, 0.60)';
+          break;
+        }
+        case 'ok': {
+          threshold.fillColor = 'rgba(11, 237, 50, 0.090)';
+          threshold.lineColor = 'rgba(6,163,69, 0.60)';
+          break;
+        }
+        case 'custom': {
+          threshold.fillColor = threshold.fillColor;
+          threshold.lineColor = threshold.lineColor;
+          break;
+        }
+      }
+
+      // fill
+      if (threshold.fill) {
+        options.grid.markings.push({yaxis: {from: threshold.value, to: limit}, color: threshold.fillColor});
+      }
+      if (threshold.line) {
+        options.grid.markings.push({yaxis: {from: threshold.value, to: threshold.value}, color: threshold.lineColor});
+      }
+    }
+  }
+
 }
 
