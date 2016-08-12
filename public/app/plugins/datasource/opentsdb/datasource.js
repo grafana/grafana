@@ -20,55 +20,29 @@ function (angular, _, dateMath) {
       this.supportMetrics = true;
       this.prefix = contextSrv.user.orgId + ".";
     }
-
-    function getAnomalyMetricData(target) {
-      return backendSrv.datasourceRequest({
-        method: 'GET',
-        url: healthSrv.anomalyUrlRoot + "/anomaly",
-        params: {
-          metric: target.metric.replace(".anomaly", ""),
-          host: target.tags.host
-        }
-      });
-    }
-
-    function decomposeMetricData(target, endWithString) {
-      var param = {
-        metric: target.metric.replace("."+endWithString, ""),
-        host: target.tags.host
-      };
-      param[endWithString] = true;
-      return backendSrv.datasourceRequest({
-        method: 'GET',
-        url: healthSrv.anomalyUrlRoot + "/decompose",
-        params: param
-      });
-    }
-
     // Called once per panel (graph)
     OpenTSDBDatasource.prototype.query = function(options) {
+      var anotherQueries = {};
       var start = convertToTSDBTime(options.rangeRaw.from, false);
       var end = convertToTSDBTime(options.rangeRaw.to, true);
       var qs = [];
       var self = this;
-      var targetsResponse = [];
 
-      _.each(options.targets, function(target) {
+      _.each(options.targets, function (target) {
         var decomposeFlag = false;
-        if (!target.metric) { return; }
+        if (!target.metric) {
+          return;
+        }
         if (target.anomaly || target.metric.endsWith(".anomaly")) {
-          getAnomalyMetricData(target).then(function (response) {
-            targetsResponse = response.data;
-          });
+          anotherQueries['anomaly'] = target;
           return;
         }
 
         _.each(["trend", "seasonal", "noise"], function (defString) {
           if (target.metric.endsWith(defString)) {
             decomposeFlag = true;
-            decomposeMetricData(target, defString).then(function (response) {
-              targetsResponse = response.data;
-            });
+            anotherQueries['endWithString'] = defString;
+            anotherQueries['decompose'] = target;
             return;
           }
         });
@@ -81,7 +55,7 @@ function (angular, _, dateMath) {
       var queries = _.compact(qs);
 
       // No valid targets, return the empty result to save a round trip.
-      if (_.isEmpty(queries)) {
+      if (_.isEmpty(queries) && _.isEmpty(anotherQueries)) {
         var d = $q.defer();
         d.resolve({ data: [] });
         return d.promise;
@@ -94,20 +68,72 @@ function (angular, _, dateMath) {
         });
       });
 
-      return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
-        _.each(targetsResponse, function (target) {
-          response.data.push(target);
+      if(!anotherQueries.decompose && !_.isEmpty(queries)){
+        return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
+          return self.anotherQueryPlus(anotherQueries).then(function (targetsResponse) {
+            if(targetsResponse.data){
+              _.each(targetsResponse.data, function (target) {
+                response.data.push(target);
+              });
+            }
+
+            var metricToTargetMapping = mapMetricsToTargets(response.data, options);
+            var result = _.map(response.data, function(metricData, index) {
+              index = metricToTargetMapping[index];
+              if (index === -1) {
+                index = 0;
+              }
+              return transformMetricData(metricData, groupByTags, options.targets[index], options, self.prefix);
+            });
+            return { data: result };
+          });
         });
-        var metricToTargetMapping = mapMetricsToTargets(response.data, options);
-        var result = _.map(response.data, function(metricData, index) {
-          index = metricToTargetMapping[index];
-          if (index === -1) {
-            index = 0;
+      } else{
+        return this.anotherQueryPlus(anotherQueries).then(function (targetsResponse) {
+          var metricToTargetMapping = mapMetricsToTargets(targetsResponse.data, options);
+          var result = _.map(targetsResponse.data, function(metricData, index) {
+            index = metricToTargetMapping[index];
+            if (index === -1) {
+              index = 0;
+            }
+            return transformMetricData(metricData, groupByTags, options.targets[index], options, self.prefix);
+          });
+          return { data: result };
+        });
+      }
+
+    };
+
+    OpenTSDBDatasource.prototype.anotherQueryPlus = function (target) {
+      var options = null;
+      if (target.anomaly) {
+        options = {
+          url: healthSrv.anomalyUrlRoot + "/anomaly",
+          params: {
+            metric: target.anomaly.metric.replace(".anomaly", ""),
+            host: target.anomaly.tags.host
           }
-          return transformMetricData(metricData, groupByTags, options.targets[index], options, self.prefix);
-        });
-        return { data: result };
-      });
+        };
+      }
+
+      if(target.decompose && target.endWithString){
+        options = {
+          url: healthSrv.anomalyUrlRoot + "/decompose",
+          params: {
+            metric: target.decompose.metric.replace("."+target.endWithString, ""),
+            host: target.decompose.tags.host
+          }
+        };
+        options.params[target.endWithString] = true;
+      }
+
+      if (options) {
+        return backendSrv.datasourceRequest(options);
+      } else {
+        var d = $q.defer();
+        d.resolve({});
+        return d.promise;
+      }
     };
 
     OpenTSDBDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {

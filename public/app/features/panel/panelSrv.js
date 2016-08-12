@@ -115,6 +115,7 @@ function (angular, _, config) {
       };
 
       $scope.decompose = function() {
+        $scope.dashboardViewState.update({ fullscreen: false, edit: false, panelId: null });
         window.decomposeTarget = $scope.panel.targets[0];
         $location.path("/decompose");
       };
