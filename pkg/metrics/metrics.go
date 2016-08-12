@@ -80,9 +80,9 @@ func initMetricVars(settings *MetricSettings) {
 	M_Alerting_Result_Info = RegCounter("alerting.result", "severity", "info")
 	M_Alerting_Result_Ok = RegCounter("alerting.result", "severity", "ok")
 	M_Alerting_Active_Alerts = RegCounter("alerting.active_alerts")
-	M_Alerting_Notification_Sent_Slack = RegCounter("alerting.notifcations_sent", "type", "slack")
-	M_Alerting_Notification_Sent_Email = RegCounter("alerting.notifcations_sent", "type", "email")
-	M_Alerting_Notification_Sent_Webhook = RegCounter("alerting.notifcations_sent", "type", "webhook")
+	M_Alerting_Notification_Sent_Slack = RegCounter("alerting.notifications_sent", "type", "slack")
+	M_Alerting_Notification_Sent_Email = RegCounter("alerting.notifications_sent", "type", "email")
+	M_Alerting_Notification_Sent_Webhook = RegCounter("alerting.notifications_sent", "type", "webhook")
 
 	// Timers
 	M_DataSource_ProxyReq_Timer = RegTimer("api.dataproxy.request.all")
