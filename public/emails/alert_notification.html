@@ -113,17 +113,61 @@ color: #FFFFFF !important;
 					<table class="container" style="border-collapse: collapse; border-spacing: 0; margin: 0 auto; padding: 0; text-align: inherit; vertical-align: top; width: 580px">
 						<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
 							<td style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0; text-align: left; vertical-align: top; word-break: break-word" align="left" valign="top">
-								{{Subject .Subject "Grafana Alert: {{.Severity}} {{.RuleName}}"}}
+								{{Subject .Subject "{{.Title}}"}}
 
-<br />
-<br />
+<table class="row" style="border-collapse: collapse; border-spacing: 0; display: block; padding: 0px; position: relative; text-align: left; vertical-align: top; width: 100%">
+	<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
+		<td class="wrapper last" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 10px 0px 0px; position: relative; text-align: left; vertical-align: top; word-break: break-word" align="left" valign="top">
+			<table class="twelve columns" style="border-collapse: collapse; border-spacing: 0; margin: 0 auto; padding: 0; text-align: left; vertical-align: top; width: 580px">
+				<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
+					<td class="center" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0px 0px 10px; text-align: center; vertical-align: top; word-break: break-word" align="center" valign="top">
+						<h3 style="-webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; color: {{.SeverityColor}}; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 22px; font-weight: bold; line-height: 1.3; margin: 20px 0 0; padding: 0; text-align: center; word-break: normal" align="center">{{.Title}}</h3>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
 
-Alert rule: {{.RuleName}}<br />
-Alert state: {{.RuleState}}<br />
+<table class="row" style="border-collapse: collapse; border-spacing: 0; display: block; padding: 0px; position: relative; text-align: left; vertical-align: top; width: 100%">
+	<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
+        <td class="wrapper last" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 10px 0px 0px; position: relative; text-align: left; vertical-align: top; word-break: break-word" align="left" valign="top">
+			<table class="twelve columns" style="border-collapse: collapse; border-spacing: 0; margin: 0 auto; padding: 0; text-align: left; vertical-align: top; width: 580px">
+				<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
+                    <td class="center" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0px 0px 10px; text-align: center; vertical-align: top; word-break: break-word" align="center" valign="top">
+                        <p style="-webkit-font-smoothing: antialiased; -webkit-text-size-adjust: none; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; line-height: 19px; margin: 0 0 10px; padding: 0; text-align: center" align="center">{{.Message}}</p>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+    <tr style="padding: 0; text-align: left; vertical-align: top" align="left">
+		<td class="wrapper last" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 10px 0px 0px; position: relative; text-align: left; vertical-align: top; word-break: break-word" align="left" valign="top">
+			<table class="twelve columns" style="border-collapse: collapse; border-spacing: 0; margin: 0 auto; padding: 0; text-align: left; vertical-align: top; width: 580px">
+				<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
+					<td class="center" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0px 0px 10px; text-align: center; vertical-align: top; word-break: break-word" align="center" valign="top">
+	                    <img src="{{.ImageLink}}" style="-ms-interpolation-mode: bicubic; clear: both; display: block; float: left; max-width: 100%; outline: none; text-decoration: none; width: auto" align="left" />
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
 
-<a href="{{.RuleLink}}" style="color: #E67612; text-decoration: none">Link to alert rule</a>
+<table class="row" style="border-collapse: collapse; border-spacing: 0; display: block; padding: 0px; position: relative; text-align: left; vertical-align: top; width: 100%">
+	<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
+		<td class="wrapper last" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 10px 0px 0px; position: relative; text-align: left; vertical-align: top; word-break: break-word" align="left" valign="top">
+			<table class="twelve columns" style="border-collapse: collapse; border-spacing: 0; margin: 0 auto; padding: 0; text-align: left; vertical-align: top; width: 580px">
+				<tr style="padding: 0; text-align: left; vertical-align: top" align="left">
+					<td class="center" style="-moz-hyphens: auto; -webkit-font-smoothing: antialiased; -webkit-hyphens: auto; -webkit-text-size-adjust: none; border-collapse: collapse !important; color: #222222; font-family: 'Open Sans', 'Helvetica Neue', 'Helvetica', Helvetica, Arial, sans-serif; font-size: 14px; font-weight: normal; hyphens: auto; line-height: 19px; margin: 0; padding: 0px 0px 10px; text-align: center; vertical-align: top; word-break: break-word" align="center" valign="top">
+						<a href="{{.RuleUrl}}" target="_blank" style="color: #E67612; text-decoration: none">Alert rule</a> - <a href="{{.AlertPageUrl}}" target="_blank" style="color: #E67612; text-decoration: none">Alerts page</a>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
 
-<br />
 
 
 								

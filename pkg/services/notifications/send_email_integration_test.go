@@ -18,6 +18,7 @@ func TestEmailIntegrationTest(t *testing.T) {
 		setting.Smtp.Enabled = true
 		setting.Smtp.TemplatesPattern = "emails/*.html"
 		setting.Smtp.FromAddress = "from@address.com"
+		setting.BuildVersion = "4.0.0"
 
 		err := Init()
 		So(err, ShouldBeNil)
@@ -30,19 +31,17 @@ func TestEmailIntegrationTest(t *testing.T) {
 			cmd := &m.SendEmailCommand{
 
 				Data: map[string]interface{}{
-					"Name":           "Name",
-					"State":          "Critical",
-					"Description":    "Description",
-					"DashboardLink":  "http://localhost:3000/dashboard/db/alerting",
-					"AlertPageUrl":   "http://localhost:3000/alerting",
-					"DashboardImage": "http://localhost:3000/render/dashboard-solo/db/alerting?from=1466169458375&to=1466171258375&panelId=3&width=1000&height=500",
-
-					"TriggeredAlerts": []testTriggeredAlert{
-						{Name: "desktop", State: "Critical", ActualValue: 13},
-						{Name: "mobile", State: "Warn", ActualValue: 5},
-					},
+					"Title":         "[CRITICAL] Imaginary timeserie alert",
+					"State":         "Firing",
+					"Name":          "Imaginary timeserie alert",
+					"Severity":      "Critical",
+					"Message":       "Alert message that will support markdown in some distant future.",
+					"RuleUrl":       "http://localhost:3000/dashboard/db/graphite-dashboard",
+					"AlertPageUrl":  "http://localhost:3000/alerting",
+					"ImageLink":     "http://localhost:3000/render/dashboard-solo/db/graphite-dashboard?panelId=1&from=1471008499616&to=1471012099617&width=1000&height=500",
+					"SeverityColor": "#D63232",
 				},
-				To:       []string{"asd@asd.com "},
+				To:       []string{"asdf@asdf.com "},
 				Template: "alert_notification.html",
 			}
 

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -49,11 +50,14 @@ func (this *EmailNotifier) Notify(context *alerting.EvalContext) {
 
 	cmd := &m.SendEmailCommand{
 		Data: map[string]interface{}{
-			"Title":     context.GetNotificationTitle(),
-			"RuleState": context.Rule.State,
-			"RuleName":  context.Rule.Name,
-			"Severity":  context.Rule.Severity,
-			"RuleUrl":   ruleUrl,
+			"Title":         context.GetNotificationTitle(),
+			"State":         context.Rule.State,
+			"Name":          context.Rule.Name,
+			"Severity":      context.Rule.Severity,
+			"SeverityColor": context.GetColor(),
+			"RuleUrl":       ruleUrl,
+			"ImageLink":     context.ImagePublicUrl,
+			"AlertPageUrl":  setting.AppUrl + "alerting",
 		},
 		To:       this.Addresses,
 		Template: "alert_notification.html",

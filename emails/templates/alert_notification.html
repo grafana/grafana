@@ -1,12 +1,56 @@
-[[Subject .Subject "Grafana Alert: [[.Severity]] [[.RuleName]]"]]
+[[Subject .Subject "[[.Title]]"]]
 
-<br>
-<br>
+<table class="row">
+	<tr>
+		<td class="wrapper last">
+			<table class="twelve columns">
+				<tr>
+					<td class="center">
+						<h3 style="text-align:center;color: [[.SeverityColor]]; font-weight: bold;">[[.Title]]</h3>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
 
-Alert rule: [[.RuleName]]<br>
-Alert state: [[.RuleState]]<br>
+<table class="row" >
+	<tr>
+        <td class="wrapper last">
+			<table class="twelve columns">
+				<tr>
+                    <td class="center">
+                        <p style="text-align:center">[[.Message]]</p>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+    <tr>
+		<td class="wrapper last">
+			<table class="twelve columns">
+				<tr>
+					<td class="center">
+	                    <img src="[[.ImageLink]]" />
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
 
-<a href="[[.RuleLink]]">Link to alert rule</a>
+<table class="row">
+	<tr>
+		<td class="wrapper last">
+			<table class="twelve columns">
+				<tr>
+					<td class="center">
+						<a href="[[.RuleUrl]]"  target="_blank">Alert rule</a> - <a href="[[.AlertPageUrl]]"  target="_blank">Alerts page</a>
+					</td>
+				</tr>
+			</table>
+		</td>
+	</tr>
+</table>
 
-<br>
 

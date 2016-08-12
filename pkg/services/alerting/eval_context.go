@@ -100,6 +100,6 @@ func NewEvalContext(rule *Rule) *EvalContext {
 		Events:     make([]*Event, 0),
 		DoneChan:   make(chan bool, 1),
 		CancelChan: make(chan bool, 1),
-		log:        log.New("alerting.engine"),
+		log:        log.New("alerting.evalContext"),
 	}
 }

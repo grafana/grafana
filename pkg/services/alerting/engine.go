@@ -72,7 +72,7 @@ func (e *Engine) alertingTicker() {
 
 func (e *Engine) execDispatcher() {
 	for job := range e.execQueue {
-		e.log.Debug("Starting executing alert rule %s", job.Rule.Name)
+		e.log.Debug("Starting executing alert rule", "alert id", job.Rule.Id)
 		go e.executeJob(job)
 	}
 }
