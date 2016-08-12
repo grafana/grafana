@@ -359,7 +359,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             m = yaxis.min.match(/([<=>~]*)\W*(\d+(\.\d+)?)/);
             if (m != null) {
               op = m[1];
-              num = m[2]*1;
+              num = parseFloat(m[2]);
               precision = m[3] == null ? 0 : m[3].length - 1; //Precision based on input
               if (op === ">") {
                 options.min = data.stats.min < num ? num : null;
@@ -376,7 +376,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             m = yaxis.max.match(/([<=>~]*)\W*(\d+(\.\d+)?)/);
             if (m != null) {
               op = m[1];
-              num = m[2]*1;
+              num = parseFloat(m[2]);
               precision = m[3] == null ? 0 : m[3].length - 1; //Precision based on input
               if (op === ">") {
                 options.max = data.stats.max < num ? num : null;
