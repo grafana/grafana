@@ -7,19 +7,19 @@
 <div class="page-container" style="float: left;width: 93%">
   <div class="page" style="float: left;">
     <h2>集中客运调度系统</h2>
-    <h4>系统健康指标<span class="btn btn-small btn-success">健康值:{{applicationHealth}}%</span></h4>
+    <h4>参与总体计算指标<span class="btn btn-small btn-success">健康值:{{applicationHealth}}%</span></h4>
 
-    <div ng-if="anomalyList.length === 0">
+    <div ng-if="includeMetricsData.length === 0">
       <em>系统一切正常</em>
     </div>
-    <table class="grafana-options-table" ng-if="anomalyList.length > 0">
+    <table class="grafana-options-table" ng-if="includeMetricsData.length > 0">
       <tr>
         <td><strong>指标名称</strong></td>
         <td><strong>健康指数</strong></td>
         <td></td>
         <td></td>
       </tr>
-      <tr ng-repeat="anomalyDef in anomalyList">
+      <tr ng-repeat="anomalyDef in includeMetricsData">
         <td style="width:1%">
           <i class="fa fa-bell"></i> &nbsp;
           {{anomalyDef.metric}}
@@ -33,6 +33,49 @@
           </div>
         </td>
         <td style="width: 1%">
+          <a ng-click="exclude(anomalyDef.metric)" class="btn  btn-mini">
+            <i class="fa fa-ban"></i>
+            剔除
+          </a>
+        </td>
+        <td style="width: 1%">
+          <a href="/anomaly/{{anomalyDef.metric}}" class="btn btn-inverse btn-mini">
+            <i class="fa fa-edit"></i>
+            进入
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <br/>
+    <table class="grafana-options-table" ng-if="excludeMetricsData.length > 0">
+      <h4>不参与总体计算指标</h4>
+      <tr>
+        <td><strong>指标名称</strong></td>
+        <td><strong>健康指数</strong></td>
+        <td></td>
+        <td></td>
+      </tr>
+      <tr ng-repeat="anomalyDef in excludeMetricsData">
+        <td style="width:1%">
+          <i class="fa fa-check-square-o"></i> &nbsp;
+          {{anomalyDef.metric}}
+        </td>
+        <td style="width:50%;padding: 20px 50px 0px 10px;">
+          <div class="progress progress-striped active">
+            <div class="bar bar-success" style="width:{{anomalyDef.health}}%;">
+              <span style="position: absolute;display: block;width: 300px;color:whitesmoke;">健康指数:{{anomalyDef.health}} %</span>
+            </div>
+            <div class="bar bar-danger" style="width:{{100-anomalyDef.health}}%;"></div>
+          </div>
+        </td>
+        <td style="width: 1%">
+          <a ng-click="include(anomalyDef.metric)" class="btn btn-inverse btn-mini">
+            <i class="fa fa-check"></i>
+            增加
+          </a>
+        </td>
+        <td style="width: 1%">
           <a href="/anomaly/{{anomalyDef.metric}}" class="btn btn-inverse btn-mini">
             <i class="fa fa-edit"></i>
             进入
@@ -42,56 +85,5 @@
     </table>
   </div>
 
-  <div style="float: left;margin-left:100px">
-
-    <table class="table">
-      <th><h3>应用系统列表</h3></th>
-      <tr>
-        <td>电子支付平台</td>
-        <td><span class="btn btn-success btn-small disabled">健康指数:89 %</span></td>
-      </tr>
-      <tr>
-        <td>货票系统</td>
-        <td><span class="btn btn-warning btn-small disabled">健康指数:75 %</span></td>
-      </tr>
-      <tr>
-        <td>95306网</td>
-        <td><span class="btn btn-danger btn-small disabled">健康指数:59 %</span></td>
-      </tr>
-      <tr>
-        <td>运输集成平台</td>
-        <td><span class="btn btn-success btn-small disabled">健康指数:92 %</span></td>
-      </tr>
-      <tr>
-        <td>12306网</td>
-        <td><span class="btn btn-danger btn-small disabled">健康指数:34 %</span></td>
-      </tr>
-      <tr>
-        <td>货检/货运安全监控</td>
-        <td><span class="btn btn-success btn-small disabled">健康指数:97 %</span></td>
-      </tr>
-      <tr>
-        <td>保价运输管理监控</td>
-        <td><span class="btn btn-success btn-small disabled">健康指数:91 %</span></td>
-      </tr>
-      <tr>
-        <td>调度系统</td>
-        <td><span class="btn btn-warning btn-small disabled">健康指数:79 %</span></td>
-      </tr>
-      <tr>
-        <td>车辆系统</td>
-        <td><span class="btn btn-warning btn-small disabled">健康指数:73 %</span></td>
-      </tr>
-      <tr>
-        <td>办公系统</td>
-        <td><span class="btn btn-success btn-small disabled">健康指数:83 %</span></td>
-      </tr>
-      <tr>
-        <td>机务系统</td>
-        <td><span class="btn btn-success btn-small disabled">健康指数:93 %</span></td>
-      </tr>
-    </table>
-  </div>
-  </div>
 </div>
 
