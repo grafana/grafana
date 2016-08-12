@@ -10,10 +10,9 @@ define([
 
     module.service('healthSrv', function ($http, backendSrv) {
       var anomalyListUrl = "";
-      var _this = this;
       this.anomalyUrlRoot = "";
       this.anomalyMetricsData = [];
-      this.applicationHealth = 0;
+      var _this = this;
 
       this.init = function () {
         backendSrv.get('/api/alertsource').then(function (result) {
@@ -24,21 +23,42 @@ define([
       this.load = function () {
         return $http({
           method: "get",
-          url: anomalyListUrl,
+          url: anomalyListUrl
         }).then(function onSuccess(response) {
-          _this.applicationHealth = response.data.health;
-          _this.anomalyMetricsData = floor(response.data.metricHealths);
-          return _this.anomalyMetricsData;
+          _this.anomalyMetricsData = response.data.includedMetricHealths.concat(response.data.excludedMetricHealths);
+          return response.data;
         }, function onFailed(response) {
           return response;
         });
       };
-    });
 
-    function floor(metrics) {
-      _.each(metrics, function(metric) {
-        metric.health = Math.floor(metric.health);
-      });
-      return metrics;
-    }
+      this.exclude = function(metricName){
+        $http({
+          method: "post",
+          url: anomalyListUrl + "/exclude",
+          params: {
+            metric: metricName
+          }
+        }).then(function onSuccess(response) {
+          return response.data;
+        }, function onFailed(response) {
+          return response;
+        });
+      };
+
+      this.include = function(metricName){
+        $http({
+          method: "post",
+          url: anomalyListUrl + "/include",
+          params: {
+            metric: metricName
+          }
+        }).then(function onSuccess(response) {
+          return response.data;
+        }, function onFailed(response) {
+          return response;
+        });
+      };
+
+    });
   });
