@@ -47,7 +47,7 @@ func GetAlerts(c *middleware.Context) Response {
 			DashboardId: alert.DashboardId,
 			PanelId:     alert.PanelId,
 			Name:        alert.Name,
-			Description: alert.Description,
+			Message:     alert.Message,
 			State:       alert.State,
 			Severity:    alert.Severity,
 		})

@@ -40,7 +40,7 @@ func TestAlertRuleExtraction(t *testing.T) {
             "datasource": null,
             "alert": {
               "name": "name1",
-              "description": "desc1",
+              "message": "desc1",
               "handler": 1,
               "enabled": true,
               "frequency": "60s",
@@ -65,7 +65,7 @@ func TestAlertRuleExtraction(t *testing.T) {
             "datasource": "graphite2",
             "alert": {
               "name": "name2",
-              "description": "desc2",
+              "message": "desc2",
               "handler": 0,
               "enabled": true,
               "frequency": "60s",
@@ -121,7 +121,7 @@ func TestAlertRuleExtraction(t *testing.T) {
 				for _, v := range alerts {
 					So(v.DashboardId, ShouldEqual, 57)
 					So(v.Name, ShouldNotBeEmpty)
-					So(v.Description, ShouldNotBeEmpty)
+					So(v.Message, ShouldNotBeEmpty)
 				}
 
 				Convey("should extract handler property", func() {
@@ -146,9 +146,9 @@ func TestAlertRuleExtraction(t *testing.T) {
 
 				Convey("should extract name and desc", func() {
 					So(alerts[0].Name, ShouldEqual, "name1")
-					So(alerts[0].Description, ShouldEqual, "desc1")
+					So(alerts[0].Message, ShouldEqual, "desc1")
 					So(alerts[1].Name, ShouldEqual, "name2")
-					So(alerts[1].Description, ShouldEqual, "desc2")
+					So(alerts[1].Message, ShouldEqual, "desc2")
 				})
 
 				Convey("should set datasourceId", func() {

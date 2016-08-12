@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -70,11 +71,11 @@ func (this *SlackNotifier) Notify(context *alerting.EvalContext) {
 				// "author_icon": "http://flickr.com/icons/bobby.jpg",
 				"title":      context.GetNotificationTitle(),
 				"title_link": ruleUrl,
-				// "text":       "Optional text that appears within the attachment",
-				"fields":    fields,
-				"image_url": context.ImagePublicUrl,
+				"text":       context.Rule.Message,
+				"fields":     fields,
+				"image_url":  context.ImagePublicUrl,
 				// "thumb_url":   "http://example.com/path/to/thumb.png",
-				"footer":      "Grafana v4.0.0",
+				"footer":      "Grafana v" + setting.BuildVersion,
 				"footer_icon": "http://grafana.org/assets/img/fav32.png",
 				"ts":          time.Now().Unix(),
 			},

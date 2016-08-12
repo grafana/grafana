@@ -20,7 +20,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				DashboardId: testDash.Id,
 				OrgId:       testDash.OrgId,
 				Name:        "Alerting title",
-				Description: "Alerting description",
+				Message:     "Alerting message",
 				Settings:    simplejson.New(),
 				Frequency:   1,
 			},
@@ -46,7 +46,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			alert := alertQuery.Result[0]
 			So(err2, ShouldBeNil)
 			So(alert.Name, ShouldEqual, "Alerting title")
-			So(alert.Description, ShouldEqual, "Alerting description")
+			So(alert.Message, ShouldEqual, "Alerting message")
 			So(alert.State, ShouldEqual, "pending")
 			So(alert.Frequency, ShouldEqual, 1)
 		})
@@ -146,7 +146,7 @@ func TestAlertingDataAccess(t *testing.T) {
 					PanelId:     1,
 					DashboardId: testDash.Id,
 					Name:        "Alerting title",
-					Description: "Alerting description",
+					Message:     "Alerting message",
 				},
 			}
 

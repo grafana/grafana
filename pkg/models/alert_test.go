@@ -14,15 +14,15 @@ func TestAlertingModelTest(t *testing.T) {
 		json2, _ := simplejson.NewJson([]byte(`{ "field": "value" }`))
 
 		rule1 := &Alert{
-			Settings:    json1,
-			Name:        "Namn",
-			Description: "Description",
+			Settings: json1,
+			Name:     "Namn",
+			Message:  "Message",
 		}
 
 		rule2 := &Alert{
-			Settings:    json2,
-			Name:        "Namn",
-			Description: "Description",
+			Settings: json2,
+			Name:     "Namn",
+			Message:  "Message",
 		}
 
 		Convey("Testing AlertRule equals", func() {
