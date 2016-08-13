@@ -32,7 +32,7 @@ will be expected to export different things. You can find what's expected for [d
 and [apps](./apps.md) plugins in the documentation.
 
 ## Start developing your plugin
-There are two ways that you can start developing a Grafana plugin.
+There are three ways that you can start developing a Grafana plugin.
 
 1. Setup a Grafana development environment. [(described here)](http://docs.grafana.org/project/building_from_source/) and place your plugin in the ```data/plugins``` folder.
 2. Install Grafana and place your plugin in the plugins directory which is set in your [config file](../installation/configuration.md). By default this is `/var/lib/grafana/plugins` on Linux systems.
