@@ -24,9 +24,8 @@ import (
 
 // Equals(x) returns a matcher that matches values v such that v and x are
 // equivalent. This includes the case when the comparison v == x using Go's
-// built-in comparison operator is legal (except for structs, which this
-// matcher does not support), but for convenience the following rules also
-// apply:
+// built-in comparison operator is legal, but for convenience the following
+// rules also apply:
 //
 //  *  Type checking is done based on underlying types rather than actual
 //     types, so that e.g. two aliases for string can be compared:
@@ -50,16 +49,11 @@ import (
 //
 // If you want a stricter matcher that contains no such cleverness, see
 // IdenticalTo instead.
-//
-// Arrays are supported by this matcher, but do not participate in the
-// exceptions above. Two arrays compared with this matcher must have identical
-// types, and their element type must itself be comparable according to Go's ==
-// operator.
 func Equals(x interface{}) Matcher {
 	v := reflect.ValueOf(x)
 
-	// This matcher doesn't support structs.
-	if v.Kind() == reflect.Struct {
+	// The == operator is not defined for array or struct types.
+	if v.Kind() == reflect.Array || v.Kind() == reflect.Struct {
 		panic(fmt.Sprintf("oglematchers.Equals: unsupported kind %v", v.Kind()))
 	}
 
@@ -86,7 +80,7 @@ func isSignedInteger(v reflect.Value) bool {
 
 func isUnsignedInteger(v reflect.Value) bool {
 	k := v.Kind()
-	return k >= reflect.Uint && k <= reflect.Uintptr
+	return k >= reflect.Uint && k <= reflect.Uint64
 }
 
 func isInteger(v reflect.Value) bool {
@@ -313,6 +307,19 @@ func checkAgainstBool(e bool, c reflect.Value) (err error) {
 	return
 }
 
+func checkAgainstUintptr(e uintptr, c reflect.Value) (err error) {
+	if c.Kind() != reflect.Uintptr {
+		err = NewFatalError("which is not a uintptr")
+		return
+	}
+
+	err = errors.New("")
+	if uintptr(c.Uint()) == e {
+		err = nil
+	}
+	return
+}
+
 func checkAgainstChan(e reflect.Value, c reflect.Value) (err error) {
 	// Create a description of e's type, e.g. "chan int".
 	typeStr := fmt.Sprintf("%s %s", e.Type().ChanDir(), e.Type().Elem())
@@ -410,25 +417,6 @@ func checkAgainstString(e reflect.Value, c reflect.Value) (err error) {
 	return
 }
 
-func checkAgainstArray(e reflect.Value, c reflect.Value) (err error) {
-	// Create a description of e's type, e.g. "[2]int".
-	typeStr := fmt.Sprintf("%v", e.Type())
-
-	// Make sure c is the correct type.
-	if c.Type() != e.Type() {
-		err = NewFatalError(fmt.Sprintf("which is not %s", typeStr))
-		return
-	}
-
-	// Check for equality.
-	if e.Interface() != c.Interface() {
-		err = errors.New("")
-		return
-	}
-
-	return
-}
-
 func checkAgainstUnsafePointer(e reflect.Value, c reflect.Value) (err error) {
 	// Make sure c is a pointer.
 	if c.Kind() != reflect.UnsafePointer {
@@ -488,6 +476,9 @@ func (m *equalsMatcher) Matches(candidate interface{}) error {
 	case isUnsignedInteger(e):
 		return checkAgainstUint64(e.Uint(), c)
 
+	case ek == reflect.Uintptr:
+		return checkAgainstUintptr(uintptr(e.Uint()), c)
+
 	case ek == reflect.Float32:
 		return checkAgainstFloat32(float32(e.Float()), c)
 
@@ -517,9 +508,6 @@ func (m *equalsMatcher) Matches(candidate interface{}) error {
 
 	case ek == reflect.String:
 		return checkAgainstString(e, c)
-
-	case ek == reflect.Array:
-		return checkAgainstArray(e, c)
 
 	case ek == reflect.UnsafePointer:
 		return checkAgainstUnsafePointer(e, c)

@@ -47,8 +47,7 @@ func AnyOf(vals ...interface{}) Matcher {
 	// matcher.
 	wrapped := make([]Matcher, len(vals))
 	for i, v := range vals {
-		t := reflect.TypeOf(v)
-		if t != nil && t.Implements(matcherType) {
+		if reflect.TypeOf(v).Implements(matcherType) {
 			wrapped[i] = v.(Matcher)
 		} else {
 			wrapped[i] = Equals(v)

@@ -3,7 +3,7 @@ package assertions
 import (
 	"fmt"
 
-	"github.com/smartystreets/assertions/internal/oglematchers"
+	"github.com/smartystreets/goconvey/convey/assertions/oglematchers"
 )
 
 // ShouldBeGreaterThan receives exactly two parameters and ensures that the first is greater than the second.
@@ -43,7 +43,7 @@ func ShouldBeLessThanOrEqualTo(actual interface{}, expected ...interface{}) stri
 	if fail := need(1, expected); fail != success {
 		return fail
 	} else if matchError := oglematchers.LessOrEqual(expected[0]).Matches(actual); matchError != nil {
-		return fmt.Sprintf(shouldHaveBeenLessOrEqual, actual, expected[0])
+		return fmt.Sprintf(shouldHaveBeenLess, actual, expected[0])
 	}
 	return success
 }

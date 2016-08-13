@@ -23,7 +23,7 @@ import (
 )
 
 // MatchesRegexp returns a matcher that matches strings and byte slices whose
-// contents match the supplied regular expression. The semantics are those of
+// contents match the supplide regular expression. The semantics are those of
 // regexp.Match. In particular, that means the match is not implicitly anchored
 // to the ends of the string: MatchesRegexp("bar") will match "foo bar baz".
 func MatchesRegexp(pattern string) Matcher {

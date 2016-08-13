@@ -28,7 +28,7 @@ func Contains(x interface{}) Matcher {
 	var ok bool
 
 	if result.elementMatcher, ok = x.(Matcher); !ok {
-		result.elementMatcher = DeepEquals(x)
+		result.elementMatcher = Equals(x)
 	}
 
 	return &result

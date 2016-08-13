@@ -17,8 +17,8 @@
 // mocking framework. These matchers are inspired by and mostly compatible with
 // Google Test for C++ and Google JS Test.
 //
-// This package is used by github.com/smartystreets/assertions/internal/ogletest and
-// github.com/smartystreets/assertions/internal/oglemock, which may be more directly useful if you're not
+// This package is used by github.com/smartystreets/goconvey/convey/assertions/ogletest and
+// github.com/smartystreets/goconvey/convey/assertions/oglemock, which may be more directly useful if you're not
 // writing your own testing package or defining your own matchers.
 package oglematchers
 
@@ -26,10 +26,6 @@ package oglematchers
 // matches. For example, GreaterThan(17) matches all numeric values greater
 // than 17, and HasSubstr("taco") matches all strings with the substring
 // "taco".
-//
-// Matchers are typically exposed to tests via constructor functions like
-// HasSubstr. In order to implement such a function you can either define your
-// own matcher type or use NewMatcher.
 type Matcher interface {
 	// Check whether the supplied value belongs to the the set defined by the
 	// matcher. Return a non-nil error if and only if it does not.
