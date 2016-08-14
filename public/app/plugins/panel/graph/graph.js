@@ -28,7 +28,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         var ctrl = scope.ctrl;
         var dashboard = ctrl.dashboard;
         var panel = ctrl.panel;
-        var data, annotations;
+        var data, annotations, histogramData;
         var sortedSeries;
         var legendSideLastValue = null;
         var rootScope = scope.$root;
@@ -226,22 +226,37 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             }
           };
 
-          for (var i = 0; i < data.length; i++) {
-            var series = data[i];
-            series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
+          if (panel.xaxis.mode === 'histogram') {
+            histogramData = formatToHistogram(data, _.last);
 
-            // if hidden remove points and disable stack
-            if (ctrl.hiddenSeries[series.alias]) {
-              series.data = [];
-              series.stack = false;
+            if (histogramData.length && histogramData[0].ticks.length) {
+              // options.series.bars.barWidth = histogramData[0].ticks.length / 1.5;
+              options.series.bars.barWidth = 0.7;
+              // options.series.bars.align = 'center';
+            }
+          } else {
+            for (var i = 0; i < data.length; i++) {
+              var series = data[i];
+              series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
+
+              // if hidden remove points and disable stack
+              if (ctrl.hiddenSeries[series.alias]) {
+                series.data = [];
+                series.stack = false;
+              }
+            }
+
+            if (data.length && data[0].stats.timeStep) {
+              options.series.bars.barWidth = data[0].stats.timeStep / 1.5;
             }
           }
 
-          if (data.length && data[0].stats.timeStep) {
-            options.series.bars.barWidth = data[0].stats.timeStep / 1.5;
+          if (panel.xaxis.mode === 'histogram') {
+            addXAxis(options);
+          } else {
+            addTimeAxis(options);
           }
 
-          addTimeAxis(options);
           addGridThresholds(options, panel);
           addAnnotations(options);
           configureAxisOptions(data, options);
@@ -275,6 +290,24 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           }
         }
 
+        function formatToHistogram(data, getValueCallback) {
+          var histogram = [data[0]];
+
+          histogram[0].data = _.map(data, function(series, index) {
+            var values = _.remove(_.map(series.datapoints, function(point) {
+              return point[0];
+            }), null);
+            var calculatedPoint = getValueCallback(values);
+            return [index, calculatedPoint];
+          });
+
+          histogram[0].ticks = _.map(data, function(series, index) {
+            return [index, series.alias];
+          });
+
+          return histogram;
+        }
+
         function translateFillOption(fill) {
           return fill === 0 ? 0.001 : fill/10;
         }
@@ -302,6 +335,20 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             label: "Datetime",
             ticks: ticks,
             timeformat: time_format(ticks, min, max),
+          };
+        }
+
+        function addXAxis(options) {
+          var ticks = histogramData[0].ticks;
+
+          options.xaxis = {
+            timezone: dashboard.getTimezone(),
+            show: panel.xaxis.show,
+            mode: null,
+            min: 0,
+            max: ticks.length,
+            label: "Datetime",
+            ticks: ticks
           };
         }
 

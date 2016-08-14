@@ -20,6 +20,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   seriesList: any = [];
   logScales: any;
   unitFormats: any;
+  xAxisModes: any;
   annotationsPromise: any;
   datapointsCount: number;
   datapointsOutside: boolean;
@@ -50,7 +51,8 @@ class GraphCtrl extends MetricsPanelCtrl {
       }
     ],
     xaxis: {
-      show: true
+      show: true,
+      mode: 'timeseries'
     },
     grid          : {
       threshold1: null,
@@ -138,6 +140,11 @@ class GraphCtrl extends MetricsPanelCtrl {
       'log (base 1024)': 1024
     };
     this.unitFormats = kbn.getUnitFormats();
+
+    this.xAxisModes = {
+      'Time Series': 'timeseries',
+      'Histogram': 'histogram'
+    };
   }
 
   onInitPanelActions(actions) {
