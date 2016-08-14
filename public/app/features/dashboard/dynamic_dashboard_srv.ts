@@ -54,6 +54,8 @@ export class DynamicDashboardSrv {
           // clean up old left overs
           row.panels = _.without(row.panels, panel);
           j = j - 1;
+        } else if (row.repeat || row.repeatRowId) {
+          continue;
         } else if (!_.isEmpty(panel.scopedVars) && panel.repeatIteration !== this.iteration) {
           panel.scopedVars = {};
         }
@@ -120,7 +122,6 @@ export class DynamicDashboardSrv {
         panel = copy.panels[i];
         panel.scopedVars = {};
         panel.scopedVars[variable.name] = option;
-        panel.repeatIteration = this.iteration;
       }
     });
   }

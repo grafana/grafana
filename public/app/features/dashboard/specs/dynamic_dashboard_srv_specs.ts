@@ -165,6 +165,7 @@ dynamicDashScenario('given dashboard with row repeat', function(ctx) {
 
   it('should generate a repeartRowId based on repeat row index', function() {
     expect(ctx.rows[1].repeatRowId).to.be(1);
+    expect(ctx.rows[1].repeatIteration).to.be(ctx.dynamicDashboardSrv.iteration);
   });
 
   it('should set scopedVars on row panels', function() {
