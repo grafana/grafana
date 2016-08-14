@@ -1,8 +1,11 @@
 package corehandlers_test
 
 import (
+	"bytes"
 	"fmt"
+	"io/ioutil"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"testing"
 
@@ -14,6 +17,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/awstesting"
+	"github.com/aws/aws-sdk-go/awstesting/unit"
+	"github.com/aws/aws-sdk-go/service/s3"
 )
 
 func TestValidateEndpointHandler(t *testing.T) {
@@ -50,7 +55,7 @@ type mockCredsProvider struct {
 
 func (m *mockCredsProvider) Retrieve() (credentials.Value, error) {
 	m.retrieveCalled = true
-	return credentials.Value{}, nil
+	return credentials.Value{ProviderName: "mockCredsProvider"}, nil
 }
 
 func (m *mockCredsProvider) IsExpired() bool {
@@ -69,7 +74,7 @@ func TestAfterRetryRefreshCreds(t *testing.T) {
 	svc.Handlers.Clear()
 	svc.Handlers.ValidateResponse.PushBack(func(r *request.Request) {
 		r.Error = awserr.New("UnknownError", "", nil)
-		r.HTTPResponse = &http.Response{StatusCode: 400}
+		r.HTTPResponse = &http.Response{StatusCode: 400, Body: ioutil.NopCloser(bytes.NewBuffer([]byte{}))}
 	})
 	svc.Handlers.UnmarshalError.PushBack(func(r *request.Request) {
 		r.Error = awserr.New("ExpiredTokenException", "", nil)
@@ -110,4 +115,78 @@ func TestSendHandlerError(t *testing.T) {
 
 	assert.Error(t, r.Error)
 	assert.NotNil(t, r.HTTPResponse)
+}
+
+func setupContentLengthTestServer(t *testing.T, hasContentLength bool, contentLength int64) *httptest.Server {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, ok := r.Header["Content-Length"]
+		assert.Equal(t, hasContentLength, ok, "expect content length to be set, %t", hasContentLength)
+		assert.Equal(t, contentLength, r.ContentLength)
+
+		b, err := ioutil.ReadAll(r.Body)
+		assert.NoError(t, err)
+		r.Body.Close()
+
+		authHeader := r.Header.Get("Authorization")
+		if hasContentLength {
+			assert.Contains(t, authHeader, "content-length")
+		} else {
+			assert.NotContains(t, authHeader, "content-length")
+		}
+
+		assert.Equal(t, contentLength, int64(len(b)))
+	}))
+
+	return server
+}
+
+func TestBuildContentLength_ZeroBody(t *testing.T) {
+	server := setupContentLengthTestServer(t, false, 0)
+
+	svc := s3.New(unit.Session, &aws.Config{
+		Endpoint:         aws.String(server.URL),
+		S3ForcePathStyle: aws.Bool(true),
+		DisableSSL:       aws.Bool(true),
+	})
+	_, err := svc.GetObject(&s3.GetObjectInput{
+		Bucket: aws.String("bucketname"),
+		Key:    aws.String("keyname"),
+	})
+
+	assert.NoError(t, err)
+}
+
+func TestBuildContentLength_NegativeBody(t *testing.T) {
+	server := setupContentLengthTestServer(t, false, 0)
+
+	svc := s3.New(unit.Session, &aws.Config{
+		Endpoint:         aws.String(server.URL),
+		S3ForcePathStyle: aws.Bool(true),
+		DisableSSL:       aws.Bool(true),
+	})
+	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
+		Bucket: aws.String("bucketname"),
+		Key:    aws.String("keyname"),
+	})
+
+	req.HTTPRequest.Header.Set("Content-Length", "-1")
+
+	assert.NoError(t, req.Send())
+}
+
+func TestBuildContentLength_WithBody(t *testing.T) {
+	server := setupContentLengthTestServer(t, true, 1024)
+
+	svc := s3.New(unit.Session, &aws.Config{
+		Endpoint:         aws.String(server.URL),
+		S3ForcePathStyle: aws.Bool(true),
+		DisableSSL:       aws.Bool(true),
+	})
+	_, err := svc.PutObject(&s3.PutObjectInput{
+		Bucket: aws.String("bucketname"),
+		Key:    aws.String("keyname"),
+		Body:   bytes.NewReader(make([]byte, 1024)),
+	})
+
+	assert.NoError(t, err)
 }

@@ -1,0 +1,24 @@
+<html>
+	<head>
+		<link type="text/css" rel="stylesheet" href="/sdk-for-go/api/lib/godoc/style.css">
+	</head>
+	<body>
+		<div style="overflow-x:hidden;text-align:center;">
+			<div id="mobile_container">
+				<div id="mobile_only">
+				<ul class="packages" style="line-height:1.25;font-size:larger;padding-left:60px">
+					<a href="/blog">Blog</a>
+				</ul>
+				<ul class="packages" style="line-height:1.25;font-size:larger;padding-left:60px">
+					<a href="/feedback">Feedback</a>
+				</ul>
+				</div>
+				{{range .List}}
+				<ul class="packages" style="line-height:1.25;font-size:larger;padding-left: {{multiply .Depth 20}}px;">
+					<a target="_parent" href="{{srcLink .Path}}/">{{html .Name}}</a>
+				</ul>
+				{{end}}
+		</div>
+		</div>
+	</body>
+</html>
