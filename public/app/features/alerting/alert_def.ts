@@ -25,12 +25,6 @@ var alertQueryDef = new QueryPartDef({
   defaultParams: ['#A', '5m', 'now', 'avg']
 });
 
-var reducerAvgDef = new QueryPartDef({
-  type: 'avg',
-  params: [],
-  defaultParams: []
-});
-
 var conditionTypes = [
   {text: 'Query', value: 'query'},
 ];
@@ -43,6 +37,19 @@ var evalFunctions = [
   {text: 'HAS NO VALUE' , value: 'no_value'}
 ];
 
+var reducerTypes = [
+  {text: 'avg()', value: 'avg'},
+  {text: 'min()', value: 'min'},
+  {text: 'max()', value: 'max'},
+  {text: 'sum()' , value: 'sum'},
+  {text: 'count()', value: 'count'},
+];
+
+function createReducerPart(model) {
+  var def = new QueryPartDef({type: model.type, defaultParams: []});
+  return new QueryPart(model, def);
+}
+
 var severityLevels = [
   {text: 'Critical', value: 'critical'},
   {text: 'Warning', value: 'warning'},
@@ -50,9 +57,10 @@ var severityLevels = [
 
 export default {
   alertQueryDef: alertQueryDef,
-  reducerAvgDef: reducerAvgDef,
   getSeverityIconClass: getSeverityIconClass,
   conditionTypes: conditionTypes,
   evalFunctions: evalFunctions,
   severityLevels: severityLevels,
+  reducerTypes: reducerTypes,
+  createReducerPart: createReducerPart,
 };

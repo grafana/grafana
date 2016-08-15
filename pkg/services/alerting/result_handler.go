@@ -39,6 +39,7 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 	}
 
 	countSeverity(ctx.Rule.Severity)
+
 	if ctx.Rule.State != oldState {
 		handler.log.Info("New state change", "alertId", ctx.Rule.Id, "newState", ctx.Rule.State, "oldState", oldState)
 

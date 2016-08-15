@@ -49,12 +49,12 @@
 						<span class="gf-form-label query-keyword width-5" ng-if="$index===0">WHEN</span>
 					</div>
 					<div class="gf-form">
-						<query-part-editor class="gf-form-label query-part" part="conditionModel.queryPart" part-updated="ctrl.queryPartUpdated(conditionModel)">
+						<query-part-editor class="gf-form-label query-part" part="conditionModel.queryPart" handle-event="ctrl.handleQueryPartEvent(conditionModel, $event)">
 						</query-part-editor>
 					</div>
 					<div class="gf-form">
 						<span class="gf-form-label">Reducer</span>
-						<query-part-editor class="gf-form-label query-part" part="conditionModel.reducerPart" part-updated="ctrl.reducerPartUpdated(conditionModel)">
+						<query-part-editor class="gf-form-label query-part" part="conditionModel.reducerPart" handle-event="ctrl.handleReducerPartEvent(conditionModel, $event)">
 						</query-part-editor>
 					</div>
 					<div class="gf-form">

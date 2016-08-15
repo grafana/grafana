@@ -62,6 +62,5 @@ func addAlertMigrations(mg *Migrator) {
 	}
 
 	mg.AddMigration("create alert_notification table v1", NewAddTableMigration(alert_notification))
-
 	mg.AddMigration("add index alert_notification org_id & name", NewAddIndexMigration(alert_notification, alert_notification.Indices[0]))
 }
