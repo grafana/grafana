@@ -39,10 +39,6 @@ define([
           params: {
             metric: metricName
           }
-        }).then(function onSuccess(response) {
-          return response.data;
-        }, function onFailed(response) {
-          return response;
         });
       };
 
@@ -53,12 +49,18 @@ define([
           params: {
             metric: metricName
           }
-        }).then(function onSuccess(response) {
-          return response.data;
-        }, function onFailed(response) {
-          return response;
         });
       };
+
+      this.healthSummary = function(orgName){
+        return $http({
+          method: "get",
+          url: _this.anomalyUrlRoot + "/healthsummary",
+          params: {
+            org: orgName
+          }
+        });
+      }
 
     });
   });

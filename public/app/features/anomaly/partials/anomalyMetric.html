@@ -44,11 +44,16 @@
               <label class="span3 checkbox" ng-repeat="(hostname, health) in hosts">
                 <input ng-checked="$index == 0 " type="radio" ng-click="changeHost(hostname)" name="changeHost">
                 {{hostname}}</input> 健康指数:{{health}}
-                <a href="/alerts/association/{{dashboard.id}}/{{hostname}}/100" class="btn btn-inverse btn-mini">
-                  <i class="fa fa-edit"></i>
-                  相关联指标
+                <a href="/alerts/association/{{dashboard.id}}/{{hostname}}/100">
+                  <span class="btn disabled btn-small btn-inverse">
+                   <i class="fa fa-signal">相关联指标</i>
+                  </span>
                 </a>
               </label>
+              <a href="/alerts/association/{{dashboard.id}}/{{hostname}}/100" class="span2 btn btn-inverse btn-mini">
+                <i class="fa fa-edit"></i>
+                相关联指标
+              </a>
             </div>
           </div>
         </div>
