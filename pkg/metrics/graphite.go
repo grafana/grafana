@@ -24,10 +24,15 @@ func CreateGraphitePublisher() (*GraphitePublisher, error) {
 		return nil, nil
 	}
 
+	address := graphiteSection.Key("address").String()
+	if address == "" {
+		return nil, nil
+	}
+
 	publisher := &GraphitePublisher{}
 	publisher.prevCounts = make(map[string]int64)
 	publisher.protocol = "tcp"
-	publisher.address = graphiteSection.Key("address").MustString("localhost:2003")
+	publisher.address = address
 
 	safeInstanceName := strings.Replace(setting.InstanceName, ".", "_", -1)
 	prefix := graphiteSection.Key("prefix").Value()

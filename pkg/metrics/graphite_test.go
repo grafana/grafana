@@ -34,6 +34,29 @@ func TestGraphitePublisher(t *testing.T) {
 		So(publisher.address, ShouldEqual, "localhost:2001")
 	})
 
+	Convey("Test graphite publisher default prefix", t, func() {
+		var err error
+		err = setting.NewConfigContext(&setting.CommandLineArgs{
+			HomePath: "../../",
+		})
+
+		So(err, ShouldBeNil)
+
+		sec, err := setting.Cfg.NewSection("metrics.graphite")
+		sec.NewKey("address", "localhost:2001")
+
+		So(err, ShouldBeNil)
+
+		setting.InstanceName = "hostname.with.dots.com"
+		publisher, err := CreateGraphitePublisher()
+
+		So(err, ShouldBeNil)
+		So(publisher, ShouldNotBeNil)
+
+		So(publisher.prefix, ShouldEqual, "service.grafana.hostname_with_dots_com.")
+		So(publisher.address, ShouldEqual, "localhost:2001")
+	})
+
 	Convey("Test graphite publisher default values", t, func() {
 		var err error
 		err = setting.NewConfigContext(&setting.CommandLineArgs{
@@ -48,9 +71,6 @@ func TestGraphitePublisher(t *testing.T) {
 		publisher, err := CreateGraphitePublisher()
 
 		So(err, ShouldBeNil)
-		So(publisher, ShouldNotBeNil)
-
-		So(publisher.prefix, ShouldEqual, "service.grafana.hostname_with_dots_com.")
-		So(publisher.address, ShouldEqual, "localhost:2003")
+		So(publisher, ShouldBeNil)
 	})
 }
