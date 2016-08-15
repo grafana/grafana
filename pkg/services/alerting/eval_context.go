@@ -13,7 +13,7 @@ import (
 type EvalContext struct {
 	Firing          bool
 	IsTestRun       bool
-	Events          []*Event
+	EvalMatches     []*EvalMatch
 	Logs            []*ResultLogEntry
 	Error           error
 	Description     string
@@ -94,12 +94,12 @@ func (c *EvalContext) GetImageUrl() (string, error) {
 
 func NewEvalContext(rule *Rule) *EvalContext {
 	return &EvalContext{
-		StartTime:  time.Now(),
-		Rule:       rule,
-		Logs:       make([]*ResultLogEntry, 0),
-		Events:     make([]*Event, 0),
-		DoneChan:   make(chan bool, 1),
-		CancelChan: make(chan bool, 1),
-		log:        log.New("alerting.evalContext"),
+		StartTime:   time.Now(),
+		Rule:        rule,
+		Logs:        make([]*ResultLogEntry, 0),
+		EvalMatches: make([]*EvalMatch, 0),
+		DoneChan:    make(chan bool, 1),
+		CancelChan:  make(chan bool, 1),
+		log:         log.New("alerting.evalContext"),
 	}
 }

@@ -31,17 +31,22 @@ func (s AlertSeverityType) IsValid() bool {
 }
 
 type Alert struct {
-	Id          int64
-	OrgId       int64
-	DashboardId int64
-	PanelId     int64
-	Name        string
-	Message     string
-	Severity    AlertSeverityType
-	State       AlertStateType
-	Handler     int64
-	Enabled     bool
-	Frequency   int64
+	Id             int64
+	OrgId          int64
+	DashboardId    int64
+	PanelId        int64
+	Name           string
+	Message        string
+	Severity       AlertSeverityType
+	State          AlertStateType
+	Handler        int64
+	Paused         bool
+	Silenced       bool
+	ExecutionError string
+	Frequency      int64
+
+	LastEvalData *simplejson.Json
+	LastEvalTime time.Time
 
 	CreatedBy int64
 	UpdatedBy int64

@@ -59,7 +59,7 @@ func (this *EmailNotifier) Notify(context *alerting.EvalContext) {
 			"RuleUrl":       ruleUrl,
 			"ImageLink":     context.ImagePublicUrl,
 			"AlertPageUrl":  setting.AppUrl + "alerting",
-			"Events":        context.Events,
+			"EvalMatches":   context.EvalMatches,
 		},
 		To:       this.Addresses,
 		Template: "alert_notification.html",

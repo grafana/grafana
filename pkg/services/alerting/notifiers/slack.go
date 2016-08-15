@@ -50,7 +50,7 @@ func (this *SlackNotifier) Notify(context *alerting.EvalContext) {
 
 	fields := make([]map[string]interface{}, 0)
 	fieldLimitCount := 4
-	for index, evt := range context.Events {
+	for index, evt := range context.EvalMatches {
 		fields = append(fields, map[string]interface{}{
 			"title": evt.Metric,
 			"value": evt.Value,

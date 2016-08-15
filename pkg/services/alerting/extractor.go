@@ -87,7 +87,6 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				Id:          jsonAlert.Get("id").MustInt64(),
 				Name:        jsonAlert.Get("name").MustString(),
 				Handler:     jsonAlert.Get("handler").MustInt64(),
-				Enabled:     jsonAlert.Get("enabled").MustBool(),
 				Message:     jsonAlert.Get("message").MustString(),
 				Severity:    m.AlertSeverityType(jsonAlert.Get("severity").MustString()),
 				Frequency:   getTimeDurationStringToSeconds(jsonAlert.Get("frequency").MustString()),

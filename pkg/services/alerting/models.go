@@ -12,10 +12,9 @@ type ResultLogEntry struct {
 	Data    interface{}
 }
 
-type Event struct {
+type EvalMatch struct {
 	Value  float64
 	Metric string
-	State  string
 	Tags   map[string]string
 }
 
