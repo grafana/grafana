@@ -11,6 +11,7 @@
 * **Templating**: Fixed issue when combining row & panel repeats, fixes [#5790](https://github.com/grafana/grafana/issues/5790)
 * **Drag&Drop**: Fixed issue with drag and drop in latest Chrome(51+), fixes [#5767](https://github.com/grafana/grafana/issues/5767)
 * **Internal Metrics**: Fixed issue with dots in instance_name when sending internal metrics to Graphitge, fixes [#5739](https://github.com/grafana/grafana/issues/5739)
+* **Grafana-CLI**: Add default plugin path for MAC OS, fixes [#5806](https://github.com/grafana/grafana/issues/5806)
 
 # 3.1.1 (2016-08-01)
 * **IFrame embedding**: Fixed issue of using full iframe height, fixes [#5605](https://github.com/grafana/grafana/issues/5606)
