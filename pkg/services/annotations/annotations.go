@@ -27,18 +27,17 @@ const (
 )
 
 type Item struct {
-	Id          int64     `json:"id"`
-	OrgId       int64     `json:"orgId"`
-	PanelLinkId string    `json:"panelLinkId"`
-	Type        ItemType  `json:"type"`
-	Title       string    `json:"title"`
-	Text        string    `json:"text"`
-	Metric      string    `json:"metric"`
-	AlertId     int64     `json:"alertId"`
-	UserId      int64     `json:"userId"`
-	PrevState   string    `json:"prevState"`
-	NewState    string    `json:"newState"`
-	Timestamp   time.Time `json:"timestamp"`
+	Id        int64     `json:"id"`
+	OrgId     int64     `json:"orgId"`
+	Type      ItemType  `json:"type"`
+	Title     string    `json:"title"`
+	Text      string    `json:"text"`
+	Metric    string    `json:"metric"`
+	AlertId   int64     `json:"alertId"`
+	UserId    int64     `json:"userId"`
+	PrevState string    `json:"prevState"`
+	NewState  string    `json:"newState"`
+	Timestamp time.Time `json:"timestamp"`
 
 	Data *simplejson.Json `json:"data"`
 }

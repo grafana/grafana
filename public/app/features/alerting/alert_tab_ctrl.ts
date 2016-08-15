@@ -167,7 +167,7 @@ export class AlertTabCtrl {
   addCondition(type) {
     var condition = this.buildDefaultCondition();
     // add to persited model
-    this.alert.conditions.push(condition);
+    this.panelCtrl.conditions.push(condition);
     // add to view model
     this.conditionModels.push(this.buildConditionModel(condition));
   }

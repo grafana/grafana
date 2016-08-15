@@ -64,7 +64,9 @@ export function queryPartEditorDirective($compile, templateSrv) {
           $link.html(templateSrv.highlightVariablesAsHtml(newValue));
 
           part.updateParam($input.val(), paramIndex);
-          $scope.$apply($scope.partUpdated);
+          $scope.$apply(() => {
+            $scope.handleEvent({$event: {name: 'part-param-changed'}});
+          });
         }
 
         $input.hide();
