@@ -83,7 +83,6 @@ function ($, _) {
           // Stacked series can increase its length on each new stacked serie if null points found,
           // to speed the index search we begin always on the last found hoverIndex.
           hoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
-          hoverDistance = Math.abs(pos.x - series.data[hoverIndex][0]);
         }
 
         results.push({
