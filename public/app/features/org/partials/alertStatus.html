@@ -16,27 +16,39 @@
       </div>
       <table class="grafana-options-table" ng-if="alertRows.length > 0">
         <tr>
-          <td><strong>指标名称</strong></td>
+          <td><strong>名称</strong></td>
+          <td><strong>报警范围</strong></td>
+          <td><strong>报警指标</strong></td>
           <td><strong>报警阈值</strong></td>
+          <td><string>报警级别</string></td>
           <td></td>
           <td></td>
         </tr>
-        <tr ng-repeat="alertDef in alertRows">
+        <tr ng-repeat="alertDetail in alertRows">
           <td style="width:40%">
             <i class="fa fa-bell"></i> &nbsp;
-            {{alertDef.name}}
+            {{alertDetail.definition.name}}
           </td>
           <td style="width:40%">
-            {{alertDef.alertDetails.warn.threshold}}
+            {{alertDetail.status.monitoredEntity}}
+          </td>
+          <td style="width:40%">
+            {{alertDetail.metric}}
+          </td>
+          <td style="width:40%">
+            {{alertDetail.definition.alertDetails.crit.threshold}}
+          </td>
+          <td style="width:40%">
+            {{alertDetail.status.level}}
           </td>
           <td style="width: 10%">
-            <a href="/alerts/association/{{alertDef.id}}/{{correlationThreshold}}" class="btn btn-inverse btn-mini">
+            <a href="/alerts/association/{{alertDetail.metric}}/{{alertDetail.status.monitoredEntity}}/{{correlationThreshold}}" class="btn btn-inverse btn-mini">
               <i class="fa fa-edit"></i>
               相关联指标
             </a>
           </td>
           <td style="width: 10%">
-            <a href="/alerts/association/{{alertDef.id}}/{{correlationThreshold}}" class="btn btn-inverse btn-mini">
+            <a href="/alerts/association/{{alertDetail.metric}}/{{alertDetail.status.monitoredEntity}}/{{correlationThreshold}}" class="btn btn-inverse btn-mini">
               <i class="fa fa-edit"></i>
               相关日志分析
             </a>

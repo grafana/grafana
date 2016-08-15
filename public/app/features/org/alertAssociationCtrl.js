@@ -9,11 +9,12 @@ function (angular) {
 
   module.controller('AlertAssociationCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, $timeout) {
     var associatedMetricRows = [];
-    var alertId = $routeParams.id;
+    var alertMetric = $routeParams.metric;
+    var alertHost = $routeParams.host;
     var distance = $routeParams.distance;
     $scope.yaxisNumber = 3;
     $scope.init = function() {
-      alertMgrSrv.loadAssociatedMetrics(alertId, distance).then(function onSuccess(response) {
+      alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
         var correlationOfAlertMap = response.data;
         for (var host in correlationOfAlertMap) {
           var correlatedMetrics = correlationOfAlertMap[host];
@@ -71,7 +72,7 @@ function (angular) {
 
     $scope.createAssociatedMetricGraphPanel = function(associatedMetrics) {
       var hostTag = associatedMetrics.hosts[0] || "*";
-      var title = associatedMetrics.metric || "can no found any metric"
+      var title = associatedMetrics.metric || "can no found any metric";
 
       var rowMeta = {
         title: "test for anmoly",
@@ -112,7 +113,7 @@ function (angular) {
         meta: { canStar: false, canShare: false, canEdit: false },
         dashboard: {
           title: "相关联指标",
-          id: alertId,
+          id: alertMetric,
           rows: [rowMeta],
           time: {from: "now-2h", to: "now"}
         }
@@ -124,8 +125,8 @@ function (angular) {
 
     $scope.resetCorrelation = function() {
       $scope.correlationThreshold = 50; // reset the threshold to default value
-      alertMgrSrv.resetCorrelation(alertId, $scope.correlationBefore, $scope.correlationAfter).then(function onSuccess() {
-        $location.path("alerts/association/" + alertId + "/" + $scope.correlationThreshold);
+      alertMgrSrv.resetCorrelation(alertMetric, alertHost, $scope.correlationBefore, $scope.correlationAfter).then(function onSuccess() {
+        $location.path("alerts/association/" + alertMetric + "/" + alertHost + "/" + $scope.correlationThreshold);
       }, function onFailed(response) {
         alertSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 10000);
       });
@@ -133,8 +134,9 @@ function (angular) {
     $scope.addQuery = function(metricName) {
       var metricNameMap = $scope.correlatedMetrics;
       var flag = true;
+
       _.each($scope.dashboard.rows[0].panels[0].targets,function(target) {
-        if(target.metric == metricName){
+        if(target.metric === metricName){
           target.hide = !target.hide;
           flag = false;
         }
