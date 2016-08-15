@@ -105,6 +105,7 @@ define([
         function setPanelMetaHost(panelDef, metric, hostname) {
           var alias = metric + ".anomaly{host=" + hostname + "}";
           var panel = panelDef.panels[0];
+          panel.title = metric + "指标异常情况";
           panel.targets[0].metric = metric;
           panel.targets[0].tags.host = hostname;
           panel.targets[1].metric = metric + ".anomaly";
