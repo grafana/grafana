@@ -68,6 +68,11 @@ define([
   describeValueFormat('wps', 789000000, 1000000, -1, '789M wps');
   describeValueFormat('iops', 11000000000, 1000000000, -1, '11B iops');
 
+  describeValueFormat('s', 1.23456789e-7, 1e-10, 8, '123.5 ns');
+  describeValueFormat('s', 1.23456789e-4, 1e-7, 5, '123.5 µs');
+  describeValueFormat('s', 1.23456789e-3, 1e-6, 4, '1.235 ms');
+  describeValueFormat('s', 1.23456789e-2, 1e-5, 3, '12.35 ms');
+  describeValueFormat('s', 1.23456789e-1, 1e-4, 2, '123.5 ms');
   describeValueFormat('s', 24, 1, 0, '24 s');
   describeValueFormat('s', 246, 1, 0, '4.1 min');
   describeValueFormat('s', 24567, 100, 0, '6.82 hour');
@@ -107,6 +112,13 @@ define([
     it('should use specified decimals', function() {
       var str = kbn.valueFormats['kbytes'](10000000, 3, null);
       expect(str).to.be('9.537 GiB');
+    });
+  });
+
+  describe('kbn deckbytes format when scaled decimals is null do not use it', function() {
+    it('should use specified decimals', function() {
+      var str = kbn.valueFormats['deckbytes'](10000000, 3, null);
+      expect(str).to.be('10.000 GB');
     });
   });
 
@@ -152,6 +164,52 @@ define([
       var range = { from: dateMath.parse('now-10s'), to: dateMath.parse('now') };
       var str = kbn.calculateInterval(range, 900, '>15ms');
       expect(str).to.be('15ms');
+    });
+  });
+
+  describe('hex', function() {
+      it('positive integer', function() {
+	var str = kbn.valueFormats.hex(100, 0);
+	expect(str).to.be('64');
+      });
+      it('negative integer', function() {
+	var str = kbn.valueFormats.hex(-100, 0);
+	expect(str).to.be('-64');
+      });
+      it('null', function() {
+	var str = kbn.valueFormats.hex(null, 0);
+	expect(str).to.be('');
+      });
+      it('positive float', function() {
+	var str = kbn.valueFormats.hex(50.52, 1);
+	expect(str).to.be('32.8');
+      }); 
+      it('negative float', function() {
+	var str = kbn.valueFormats.hex(-50.333, 2);
+	expect(str).to.be('-32.547AE147AE14');
+      });
+  });
+
+  describe('hex 0x', function() {
+    it('positive integeter', function() {
+      var str = kbn.valueFormats.hex0x(7999,0);
+      expect(str).to.be('0x1F3F');
+    });
+    it('negative integer', function() {
+      var str = kbn.valueFormats.hex0x(-584,0);
+      expect(str).to.be('-0x248');
+    });
+    it('null', function() {
+      var str = kbn.valueFormats.hex0x(null, 0);
+      expect(str).to.be('');
+    });
+    it('positive float', function() {
+      var str = kbn.valueFormats.hex0x(74.443, 3);
+      expect(str).to.be('0x4A.716872B020C4');
+    });
+    it('negative float', function() {
+      var str = kbn.valueFormats.hex0x(-65.458, 1);
+      expect(str).to.be('-0x41.8');
     });
   });
 });

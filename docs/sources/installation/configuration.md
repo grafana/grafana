@@ -46,7 +46,7 @@ Then you can override them using:
 
 ## instance_name
 Set the name of the grafana-server instance. Used in logging and internal metrics and in
-clustering info. Defaults to: `${HOSTNAME}, which will be replaced with
+clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use
 system calls to get the machine name.
 
@@ -76,7 +76,7 @@ The IP address to bind to. If empty will bind to all interfaces
 The port to bind to, defaults to `3000`. To use port 80 you need to
 either give the Grafana binary permission for example:
 
-    $ sudo setcap 'cap_net_bind_service=+ep' /opt/grafana/current/grafana
+    $ sudo setcap 'cap_net_bind_service=+ep' /usr/sbin/grafana-server
 
 Or redirect port 80 to the Grafana port using:
 
@@ -446,6 +446,19 @@ Grafana backend index those json dashboards which will make them appear in regul
 ### path
 The full path to a directory containing your json dashboards.
 
+## [log]
+
+### mode
+Either "console", "file", "syslog". Default is console and  file
+Use space to separate multiple modes, e.g. "console file"
+
+### level
+Either "debug", "info", "warn", "error", "critical", default is "info"
+
+### filter
+optional settings to set different levels for specific loggers.
+Ex `filters = sqlstore:debug`
+
 ## [metrics]
 
 ### enabled
@@ -463,4 +476,15 @@ Format `<Hostname or ip>`:port
 
 ### prefix
 Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
+
+## [snapshots]
+
+### external_enabled
+Set to false to disable external snapshot publish endpoint (default true)
+
+### external_snapshot_url
+Set root url to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots-origin.raintank.io)
+
+### external_snapshot_name
+Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`
 

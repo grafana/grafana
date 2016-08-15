@@ -40,7 +40,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     };
 
     if (options.panelId) {
-      httpOptions.requestId = 'panel' + options.panelId;
+      httpOptions.requestId = this.name + '.panelId.' + options.panelId;
     }
 
     return this.doGraphiteRequest(httpOptions).then(this.convertDataPointsToMs);
@@ -228,7 +228,7 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     }
 
     function nestedSeriesRegexReplacer(match, g1) {
-      return targets[g1];
+      return targets[g1] || match;
     }
 
     for (i = 0; i < options.targets.length; i++) {

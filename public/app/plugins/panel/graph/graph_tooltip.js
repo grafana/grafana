@@ -1,7 +1,8 @@
 define([
   'jquery',
+  'lodash'
 ],
-function ($) {
+function ($, _) {
   'use strict';
 
   function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
@@ -40,7 +41,7 @@ function ($) {
     };
 
     this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
-      var value, i, series, hoverIndex;
+      var value, i, series, hoverIndex, hoverDistance, pointTime;
       var results = [];
 
       //now we know the current X (j) position for X and Y values
@@ -60,7 +61,8 @@ function ($) {
         }
 
         hoverIndex = this.findHoverIndexFromData(pos.x, series);
-        results.time = series.data[hoverIndex][0];
+        hoverDistance = Math.abs(pos.x - series.data[hoverIndex][0]);
+        pointTime = series.data[hoverIndex][0];
 
         if (series.stack) {
           if (panel.tooltip.value_type === 'individual') {
@@ -80,12 +82,21 @@ function ($) {
           // stacked and steppedLine plots can have series with different length.
           // Stacked series can increase its length on each new stacked serie if null points found,
           // to speed the index search we begin always on the last found hoverIndex.
-          var newhoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
-          results.push({ value: value, hoverIndex: newhoverIndex, color: series.color, label: series.label });
-        } else {
-          results.push({ value: value, hoverIndex: hoverIndex, color: series.color, label: series.label });
+          hoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
         }
+
+        results.push({
+          value: value,
+          hoverIndex: hoverIndex,
+          color: series.color,
+          label: series.label,
+          time: pointTime,
+          distance: hoverDistance
+        });
       }
+
+      // Find point which closer to pointer
+      results.time = _.min(results, 'distance').time;
 
       return results;
     };

@@ -205,13 +205,8 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
 
     function escapeForJson(value) {
-      return value
-        .replace(/\s/g, '\\ ')
-        .replace(/\"/g, '\\"');
-    }
-
-    function luceneThenJsonFormat(value) {
-      return escapeForJson(templateSrv.luceneFormat(value));
+      var luceneQuery = JSON.stringify(value);
+      return luceneQuery.substr(1, luceneQuery.length - 2);
     }
 
     this.getFields = function(query) {
@@ -256,12 +251,12 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var header = this.getQueryHeader('count', range.from, range.to);
       var esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
 
-      esQuery = esQuery.replace("$lucene_query", escapeForJson(queryDef.query || '*'));
+      esQuery = esQuery.replace("$lucene_query", escapeForJson(queryDef.query));
       esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
       esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
       esQuery = header + '\n' + esQuery + '\n';
 
-      return this._post('/_msearch?search_type=count', esQuery).then(function(res) {
+      return this._post('_msearch?search_type=count', esQuery).then(function(res) {
         var buckets = res.responses[0].aggregations["1"].buckets;
         return _.map(buckets, function(bucket) {
           return {text: bucket.key, value: bucket.key};
@@ -270,8 +265,9 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
 
     this.metricFindQuery = function(query) {
-      query = templateSrv.replace(query, {}, luceneThenJsonFormat);
       query = angular.fromJson(query);
+      query.query = templateSrv.replace(query.query || '*', {}, 'lucene');
+
       if (!query) {
         return $q.when([]);
       }

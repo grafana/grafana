@@ -111,4 +111,13 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Add index for gnetId in dashboard", NewAddIndexMigration(dashboardV2, &Index{
 		Cols: []string{"gnet_id"}, Type: IndexType,
 	}))
+
+	// add column to store plugin_id
+	mg.AddMigration("Add column plugin_id in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "plugin_id", Type: DB_NVarchar, Nullable: true, Length: 255,
+	}))
+
+	mg.AddMigration("Add index for plugin_id in dashboard", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"org_id", "plugin_id"}, Type: IndexType,
+	}))
 }

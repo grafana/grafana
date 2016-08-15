@@ -16,12 +16,9 @@ function (angular, $, _, moment) {
         data = {};
       }
 
-      if (!data.id && data.version) {
-        data.schemaVersion = data.version;
-      }
-
       this.id = data.id || null;
       this.title = data.title || 'No Title';
+      this.autoUpdate = data.autoUpdate;
       this.description = data.description;
       this.tags = data.tags || [];
       this.style = data.style || "dark";

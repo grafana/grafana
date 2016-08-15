@@ -30,7 +30,7 @@ $switch-height: 1.5rem;
     background-color: $page-bg;
   }
 
-  input + label:before, input + label:after {
+  input + label::before, input + label::after {
     @include buttonBackground($input-bg, $input-bg);
 
     display: block;
@@ -47,13 +47,13 @@ $switch-height: 1.5rem;
   }
 
   &:hover {
-    input + label:before {
+    input + label::before {
       @include buttonBackground($input-bg, lighten($input-bg, 5%));
       color: $text-color;
       text-shadow: $text-shadow-faint;
     }
 
-    input + label:after {
+    input + label::after {
       @include buttonBackground($input-bg, lighten($input-bg, 5%));
       color: lighten($orange, 10%);
       text-shadow: $text-shadow-strong;
@@ -61,16 +61,16 @@ $switch-height: 1.5rem;
 
   }
 
-  input + label:before {
+  input + label::before {
     font-family: 'FontAwesome';
     content: "\f096"; // square-o
-    color: $text-color-faint;
+    color: $text-color-weak;
     transition: transform 0.4s;
     backface-visibility: hidden;
     text-shadow: $text-shadow-faint;
   }
 
-  input + label:after {
+  input + label::after {
     content: "\f046"; // check-square-o
     color: $orange;
     text-shadow: $text-shadow-strong;
@@ -81,11 +81,11 @@ $switch-height: 1.5rem;
     backface-visibility: hidden;
   }
 
-  input:checked + label:before {
+  input:checked + label::before {
     transform: rotateY(180deg);
   }
 
-  input:checked + label:after {
+  input:checked + label::after {
     transform: rotateY(0);
   }
 }

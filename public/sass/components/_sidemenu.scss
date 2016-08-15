@@ -151,7 +151,7 @@
   display: inline-block;
   position: relative;
 
-  &:after {
+  &::after {
     display: block;
     position: absolute;
     top: 50%;

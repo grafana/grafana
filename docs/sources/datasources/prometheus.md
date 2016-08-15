@@ -23,7 +23,7 @@ Name | Description
 Name | The data source name, important that this is the same as in Grafana v1.x if you plan to import old dashboards.
 Default | Default data source means that it will be pre-selected for new panels.
 Url | The http protocol, ip and port of you Prometheus server (default port is usually 9090)
-Access | Proxy = access via Grafana backend, Direct = access directory from browser.
+Access | Proxy = access via Grafana backend, Direct = access directly from browser.
 Basic Auth | Enable basic authentication to the Prometheus datasource.
 User | Name of your Prometheus user
 Password | Database user's password

@@ -25,7 +25,7 @@ func validateInput(c CommandLine, pluginFolder string) error {
 		return errors.New("please specify plugin to install")
 	}
 
-	pluginsDir := c.GlobalString("pluginsDir")
+	pluginsDir := c.PluginDirectory()
 	if pluginsDir == "" {
 		return errors.New("missing pluginsDir flag")
 	}
@@ -46,7 +46,7 @@ func validateInput(c CommandLine, pluginFolder string) error {
 }
 
 func installCommand(c CommandLine) error {
-	pluginFolder := c.GlobalString("pluginsDir")
+	pluginFolder := c.PluginDirectory()
 	if err := validateInput(c, pluginFolder); err != nil {
 		return err
 	}
@@ -58,8 +58,8 @@ func installCommand(c CommandLine) error {
 }
 
 func InstallPlugin(pluginName, version string, c CommandLine) error {
-	plugin, err := s.GetPlugin(pluginName, c.GlobalString("repo"))
-	pluginFolder := c.GlobalString("pluginsDir")
+	plugin, err := s.GetPlugin(pluginName, c.RepoDirectory())
+	pluginFolder := c.PluginDirectory()
 	if err != nil {
 		return err
 	}

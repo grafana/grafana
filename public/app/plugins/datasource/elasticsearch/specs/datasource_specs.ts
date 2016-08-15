@@ -59,8 +59,8 @@ describe('ElasticDatasource', function() {
 
       ctx.ds.query({
         range: {
-          from: moment([2015, 4, 30, 10]),
-          to: moment([2015, 5, 1, 10])
+          from: moment.utc([2015, 4, 30, 10]),
+          to: moment.utc([2015, 5, 1, 10])
         },
         targets: [{ bucketAggs: [], metrics: [], query: 'escape\\:test' }]
       });
