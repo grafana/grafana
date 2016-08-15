@@ -72,20 +72,21 @@ function (angular) {
       });
     };
 
-    this.loadAssociatedMetrics = function(alertId, threshold) {
+    this.loadAssociatedMetrics = function(alertMetric, alertHost, threshold) {
       return $http({
         method: "get",
         url: alertAssociationUrl,
-        params: {id: alertId, distance: threshold}
+        params: {metric: alertMetric, host: alertHost, distance: threshold}
       });
     };
 
-    this.resetCorrelation = function(alertId, backtrackSteps, advancedSteps) {
+    this.resetCorrelation = function(alertMetric, alertHost, backtrackSteps, advancedSteps) {
       return $http({
         method: "post",
         url: alertAssociationUrl,
         params: {
-          id: alertId,
+          metric: alertMetric,
+          host: alertHost,
           backtrackSteps: backtrackSteps,
           advancedSteps: advancedSteps,
           reset: true
