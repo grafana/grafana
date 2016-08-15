@@ -16,13 +16,12 @@ export class AlertTabCtrl {
   conditionModels: any;
   evalFunctions: any;
   severityLevels: any;
-  reducerTypes: any;
   addNotificationSegment;
   notifications;
   alertNotifications;
 
   /** @ngInject */
-  constructor(private $scope, private $timeout, private backendSrv, private dashboardSrv, private uiSegmentSrv) {
+  constructor(private $scope, private $timeout, private backendSrv, private dashboardSrv, private uiSegmentSrv, private $q) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
     this.$scope.ctrl = this;
@@ -30,7 +29,6 @@ export class AlertTabCtrl {
     this.evalFunctions = alertDef.evalFunctions;
     this.conditionTypes = alertDef.conditionTypes;
     this.severityLevels = alertDef.severityLevels;
-    this.reducerTypes = alertDef.reducerTypes;
   }
 
   $onInit() {
@@ -156,12 +154,34 @@ export class AlertTabCtrl {
     return cm;
   }
 
-  queryPartUpdated(conditionModel) {
+  handleQueryPartEvent(conditionModel, evt) {
+    switch (evt.name) {
+      case "action-remove-part": {
+        break;
+      }
+      case "get-part-actions": {
+        return this.$q.when([]);
+      }
+    }
   }
 
-  changeReducerType(conditionModel, value) {
-    conditionModel.source.reducer.type = value;
-    conditionModel.reducerPart = alertDef.createReducerPart(conditionModel.source.reducer);
+  handleReducerPartEvent(conditionModel, evt) {
+    switch (evt.name) {
+      case "action": {
+        conditionModel.source.reducer.type = evt.action.value;
+        conditionModel.reducerPart = alertDef.createReducerPart(conditionModel.source.reducer);
+        break;
+      }
+      case "get-part-actions": {
+        var result = [];
+        for (var type of alertDef.reducerTypes) {
+          if (type.value !== conditionModel.source.reducer.type) {
+            result.push(type);
+          }
+        }
+        return this.$q.when(result);
+      }
+    }
   }
 
   addCondition(type) {

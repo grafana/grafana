@@ -20,7 +20,6 @@ export class InfluxQueryCtrl extends QueryCtrl {
   measurementSegment: any;
   removeTagFilterSegment: any;
 
-
   /** @ngInject **/
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
     super($scope, $injector);
@@ -123,7 +122,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
         this.panelCtrl.refresh();
         break;
       }
-      case "action-remove-part": {
+      case "action": {
         this.queryModel.removeSelectPart(selectParts, part);
         this.panelCtrl.refresh();
         break;
@@ -146,7 +145,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
         this.panelCtrl.refresh();
         break;
       }
-      case "action-remove-part": {
+      case "action": {
         this.queryModel.removeGroupByPart(part, index);
         this.panelCtrl.refresh();
         break;
@@ -335,4 +334,3 @@ export class InfluxQueryCtrl extends QueryCtrl {
     return this.queryModel.render(false);
   }
 }
-

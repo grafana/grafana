@@ -136,7 +136,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
       };
 
       $scope.triggerPartAction = function(action) {
-        $scope.handleEvent({$event: {name: 'action-' + action.value}});
+        $scope.handleEvent({$event: {name: 'action', action: action}});
       };
 
       function addElementsAndCompile() {
