@@ -117,8 +117,24 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   removeSelectPart(selectParts, part) {
-    this.queryModel.removeSelectPart(selectParts, part);
-    this.panelCtrl.refresh();
+ }
+
+  handleSelectPartEvent(selectParts, part, evt) {
+    switch (evt.name) {
+      case "get-param-options": {
+        var fieldsQuery = this.queryBuilder.buildExploreQuery('FIELDS');
+        return this.datasource.metricFindQuery(fieldsQuery)
+        .then(this.transformToSegments(true))
+        .catch(this.handleQueryError.bind(this));
+      }
+      case "action-remove-part": {
+        this.queryModel.removeSelectPart(selectParts, part);
+        this.panelCtrl.refresh();
+      }
+      case "get-part-actions": {
+        return this.$q.when([{text: 'Remove', value: 'remove-part'}]);
+      }
+    }
   }
 
   selectPartUpdated() {

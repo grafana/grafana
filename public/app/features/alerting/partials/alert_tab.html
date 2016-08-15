@@ -55,6 +55,13 @@
 					<div class="gf-form">
 						<span class="gf-form-label">Reducer</span>
 						<query-part-editor class="gf-form-label query-part" part="conditionModel.reducerPart" part-updated="ctrl.reducerPartUpdated(conditionModel)">
+              <query-part-editor-actions>
+                <ul class="dropdown-menu">
+                  <li ng-repeat="reducer in ctrl.reducerTypes">
+                    <a ng-click="ctrl.changeReducerType(conditionModel, reducer.value)" ng-hide="reducer.value === conditionModel.reducerPart.def.type">{{reducer.text}}</a>
+                  </li>
+                </ul>
+              </query-part-editor-actions>
 						</query-part-editor>
 					</div>
 					<div class="gf-form">

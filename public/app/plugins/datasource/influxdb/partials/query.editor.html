@@ -35,12 +35,7 @@
 			</div>
 
 			<div class="gf-form" ng-repeat="part in selectParts">
-				<query-part-editor
-														class="gf-form-label query-part"
-														part="part"
-														remove-action="ctrl.removeSelectPart(selectParts, part)"
-														part-updated="ctrl.selectPartUpdated(selectParts, part)"
-														get-options="ctrl.getPartOptions(part)">
+				<query-part-editor class="gf-form-label query-part" part="part" handle-event="ctrl.handleSelectPartEvent(selectParts, part, $event)">
 				</query-part-editor>
 			</div>
 

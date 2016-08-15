@@ -16,6 +16,7 @@ export class AlertTabCtrl {
   conditionModels: any;
   evalFunctions: any;
   severityLevels: any;
+  reducerTypes: any;
   addNotificationSegment;
   notifications;
   alertNotifications;
@@ -29,6 +30,7 @@ export class AlertTabCtrl {
     this.evalFunctions = alertDef.evalFunctions;
     this.conditionTypes = alertDef.conditionTypes;
     this.severityLevels = alertDef.severityLevels;
+    this.reducerTypes = alertDef.reducerTypes;
   }
 
   $onInit() {
@@ -148,13 +150,18 @@ export class AlertTabCtrl {
     var cm: any = {source: source, type: source.type};
 
     cm.queryPart = new QueryPart(source.query, alertDef.alertQueryDef);
-    cm.reducerPart = new QueryPart({params: []}, alertDef.reducerAvgDef);
+    cm.reducerPart = alertDef.createReducerPart(source.reducer);
     cm.evaluator = source.evaluator;
 
     return cm;
   }
 
   queryPartUpdated(conditionModel) {
+  }
+
+  changeReducerType(conditionModel, value) {
+    conditionModel.source.reducer.type = value;
+    conditionModel.reducerPart = alertDef.createReducerPart(conditionModel.source.reducer);
   }
 
   addCondition(type) {
