@@ -18,7 +18,7 @@ function (angular, app, _, config, PanelMeta) {
     };
   });
 
-  module.controller('DashListPanelCtrl', function($scope, panelSrv, backendSrv) {
+  module.controller('DashListPanelCtrl', function($scope, panelSrv, backendSrv, healthSrv, contextSrv) {
 
     $scope.panelMeta = new PanelMeta({
       panelName: '仪表盘列表',
@@ -67,10 +67,41 @@ function (angular, app, _, config, PanelMeta) {
       }
 
       return backendSrv.search(params).then(function(result) {
-        $scope.dashList = result;
-        $scope.panelRenderingComplete();
+        healthSrv.healthSummary(contextSrv.user.orgName).then(function(healthResult){
+          mappingHealth(result, healthResult.data.summaryMap);
+          $scope.dashList = result;
+          $scope.panelRenderingComplete();
+        });
       });
     };
+
+    function mappingHealth(dataList, summaryMap){
+      _.each(dataList, function(target){
+        if(summaryMap[target.uri.split("/")[1]]){
+          target = $.extend(target,summaryMap[target.uri.split("/")[1]]);
+          target.healthStyle = Threshold100(target.health);
+          target.alertStyle = Threshold2(target.numAlerts);
+        }
+      });
+    }
+
+    function Threshold100(num) {
+      var style = "btn-success";
+      if(num <77){
+        style = "btn-warning";
+      }else if(num < 33){
+        style = "btn-danger";
+      }
+      return style;
+    }
+
+    function Threshold2(num){
+      var style = "btn-success";
+      if(num > 0){
+        style = "btn-danger";
+      }
+      return style;
+    }
 
     $scope.init();
   });

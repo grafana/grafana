@@ -14,9 +14,11 @@ func addDashboardMigration(mg *Migrator) {
 			{Name: "account_id", Type: DB_BigInt, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
+      //{Name: "service_id", Type: DB_Int, Nullable: true},
 		},
 		Indices: []*Index{
 			{Cols: []string{"account_id"}},
+      //{Cols: []string{"service_id"}},
 			{Cols: []string{"account_id", "slug"}, Type: UniqueIndex},
 		},
 	}
@@ -62,9 +64,11 @@ func addDashboardMigration(mg *Migrator) {
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
+     // {Name: "service_id", Type: DB_Int, Nullable: true},
 		},
 		Indices: []*Index{
 			{Cols: []string{"org_id"}},
+     // {Cols: []string{"service_id"}},
 			{Cols: []string{"org_id", "slug"}, Type: UniqueIndex},
 		},
 	}
@@ -83,6 +87,7 @@ func addDashboardMigration(mg *Migrator) {
 		"org_id":  "account_id",
 		"created": "created",
 		"updated": "updated",
+   // "service_id": "service_id",
 	}))
 
 	mg.AddMigration("drop table dashboard_v1", NewDropTableMigration("dashboard_v1"))
