@@ -232,8 +232,10 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             if (histogramData.length && histogramData[0].ticks.length) {
               // options.series.bars.barWidth = histogramData[0].ticks.length / 1.5;
               options.series.bars.barWidth = 0.7;
-              // options.series.bars.align = 'center';
+              options.series.bars.align = 'center';
             }
+
+            addXAxis(options);
           } else {
             for (var i = 0; i < data.length; i++) {
               var series = data[i];
@@ -249,11 +251,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             if (data.length && data[0].stats.timeStep) {
               options.series.bars.barWidth = data[0].stats.timeStep / 1.5;
             }
-          }
 
-          if (panel.xaxis.mode === 'histogram') {
-            addXAxis(options);
-          } else {
             addTimeAxis(options);
           }
 
@@ -298,11 +296,11 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               return point[0];
             }), null);
             var calculatedPoint = getValueCallback(values);
-            return [index, calculatedPoint];
+            return [index + 1, calculatedPoint];
           });
 
           histogram[0].ticks = _.map(data, function(series, index) {
-            return [index, series.alias];
+            return [index + 1, series.alias];
           });
 
           return histogram;
@@ -346,7 +344,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             show: panel.xaxis.show,
             mode: null,
             min: 0,
-            max: ticks.length,
+            max: ticks.length + 1,
             label: "Datetime",
             ticks: ticks
           };
