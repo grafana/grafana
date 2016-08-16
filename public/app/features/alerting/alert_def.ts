@@ -42,19 +42,29 @@ function createReducerPart(model) {
 }
 
 var severityLevels = {
-  'critical': {text: 'Critical', iconClass: 'icon-gf-critical alert-icon-critical'},
-  'warning': {text: 'Warning', iconClass: 'icon-gf-warn alert-icon-warn'},
+  'critical': {text: 'CRITICAL', iconClass: 'icon-gf icon-gf-critical', stateClass: 'alert-state-critical'},
+  'warning': {text: 'WARNING', iconClass: 'icon-gf icon-gf-warning', stateClass: 'alert-state-warning'},
 };
 
 function getStateDisplayModel(state, severity) {
   var model = {
     text: 'OK',
-    iconClass: 'icon-gf-online alert-icon-online'
+    iconClass: 'icon-gf icon-gf-online',
+    stateClass: 'alert-state-ok'
   };
 
   if (state === 'firing') {
     model.text = severityLevels[severity].text;
     model.iconClass = severityLevels[severity].iconClass;
+    model.stateClass = severityLevels[severity].stateClass;
+  } else if (state === 'pending') {
+    model.text = "PENDING";
+    model.iconClass = "fa fa-question";
+    model.stateClass = "alert-state-pending";
+  } else if (state === 'paused') {
+    model.text = "PAUSED";
+    model.iconClass = "fa fa-pause";
+    model.stateClass = "alert-state-paused";
   }
 
   return model;

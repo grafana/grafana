@@ -99,7 +99,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 			Text:     "Alerting",
-			Icon:     "icon-gf icon-gf-monitoring",
+			Icon:     "icon-gf icon-gf-alert",
 			Url:      setting.AppSubUrl + "/alerting/list",
 			Children: alertChildNavs,
 		})

@@ -1,9 +1,9 @@
-<navbar icon="icon-gf icon-gf-monitoring" title="Alerting" title-url="alerting">
+<navbar icon="icon-gf icon-gf-alert" title="Alerting" title-url="alerting">
 </navbar>
 
 <div class="page-container" >
 	<div class="page-header">
-		<h1>Alerting</h1>
+		<h1>Alert List</h1>
 	</div>
 
   <div class="gf-form-group">
@@ -22,27 +22,34 @@
 
     <ol class="card-list" >
       <li class="card-item-wrapper" ng-repeat="alert in ctrl.alerts">
-        <a class="card-item" href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert">
+        <div class="card-item card-item--alert">
           <div class="card-item-header">
-            <div class="card-item-type">ACTIVE</div>
+            <div class="card-item-type">
+              <a href="dashboard/{{alert.dashboardUri}}" bs-tooltip="'Open dashboard'">
+                <i class="icon-gf icon-gf-dashboard"></i>
+              </a>
+            </div>
             <div class="card-item-notice" ng-show="alert.executionError">
               <span>Execution Error</span>
             </div>
           </div>
           <div class="card-item-body">
             <div class="card-item-details">
-              <div class="card-item-name">{{alert.name}}</div>
+              <div class="card-item-name">
+                <a href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert">
+                  {{alert.name}}
+                </a>
+              </div>
               <div class="card-item-sub-name">
-                <div class="alert-list-state-line">
-                  <i class="icon-gf {{alert.stateModel.iconClass}}"></i>
+                <span class="alert-list-item-state {{alert.stateModel.stateClass}}">
+                  <i class="{{alert.stateModel.iconClass}}"></i>
                   {{alert.stateModel.text}}
-                  for
-                  {{alert.newStateDateAgo}}
+                </span> for {{alert.newStateDateAgo}}
                 </div>
               </div>
             </div>
           </div>
-        </a>
+        </div>
       </li>
     </ol>
   </section>

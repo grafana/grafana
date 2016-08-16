@@ -161,6 +161,7 @@ func upsertAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *xor
 			alert.Updated = time.Now()
 			alert.Created = time.Now()
 			alert.State = m.AlertStatePending
+			alert.NewStateDate = time.Now()
 
 			_, err := sess.Insert(alert)
 			if err != nil {

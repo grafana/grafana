@@ -194,6 +194,9 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controllerAs: 'ctrl',
     templateUrl: 'public/app/features/styleguide/styleguide.html',
   })
+  .when('/alerting', {
+    redirectTo: '/alerting/list'
+  })
   .when('/alerting/list', {
     templateUrl: 'public/app/features/alerting/partials/alert_list.html',
     controller: 'AlertListCtrl',
@@ -215,12 +218,6 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/alerting/notification/:id/edit', {
     templateUrl: 'public/app/features/alerting/partials/notification_edit.html',
     controller: 'AlertNotificationEditCtrl',
-    controllerAs: 'ctrl',
-    resolve: loadAlertingBundle,
-  })
-  .when('/alerting/:alertId/states', {
-    templateUrl: 'public/app/features/alerting/partials/alert_log.html',
-    controller: 'AlertLogCtrl',
     controllerAs: 'ctrl',
     resolve: loadAlertingBundle,
   })

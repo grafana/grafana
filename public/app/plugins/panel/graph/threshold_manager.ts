@@ -15,17 +15,17 @@ export class ThresholdManager {
   constructor(private panelCtrl) {}
 
   getHandleHtml(handleIndex, model, valueStr) {
-    var colorClass = 'crit';
-    if (model.colorMode === 'warning') {
-      colorClass = 'warn';
+    var stateClass = model.colorMode;
+    if (model.colorMode === 'custom') {
+      stateClass = 'critical';
     }
 
     return `
     <div class="alert-handle-wrapper alert-handle-wrapper--T${handleIndex}">
-      <div class="alert-handle-line alert-handle-line--${colorClass}">
+      <div class="alert-handle-line alert-handle-line--${stateClass}">
       </div>
       <div class="alert-handle" data-handle-index="${handleIndex}">
-        <i class="icon-gf icon-gf-${colorClass} alert-icon-${colorClass}"></i>
+        <i class="icon-gf icon-gf-${stateClass} alert-state-${stateClass}"></i>
         <span class="alert-handle-value">${valueStr}<i class="alert-handle-grip"></i></span>
       </div>
     </div>`;
