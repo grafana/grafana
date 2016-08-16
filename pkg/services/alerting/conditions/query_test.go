@@ -36,7 +36,7 @@ func TestQueryCondition(t *testing.T) {
 				Convey("Can read evaluator", func() {
 					evaluator, ok := ctx.condition.Evaluator.(*DefaultAlertEvaluator)
 					So(ok, ShouldBeTrue)
-					So(evaluator.Type, ShouldEqual, ">")
+					So(evaluator.Type, ShouldEqual, "gt")
 				})
 			})
 
