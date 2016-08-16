@@ -1,14 +1,5 @@
 ///<reference path="../../headers/common.d.ts" />
 
-var alertSeverityIconMap = {
-  "ok": "icon-gf-online alert-icon-online",
-  "warning": "icon-gf-warn alert-icon-warn",
-  "critical": "icon-gf-critical alert-icon-critical",
-};
-
-function getSeverityIconClass(alertState) {
-  return alertSeverityIconMap[alertState];
-}
 
 import {
   QueryPartDef,
@@ -50,14 +41,28 @@ function createReducerPart(model) {
   return new QueryPart(model, def);
 }
 
-var severityLevels = [
-  {text: 'Critical', value: 'critical'},
-  {text: 'Warning', value: 'warning'},
-];
+var severityLevels = {
+  'critical': {text: 'Critical', iconClass: 'icon-gf-critical alert-icon-critical'},
+  'warning': {text: 'Warning', iconClass: 'icon-gf-warn alert-icon-warn'},
+};
+
+function getStateDisplayModel(state, severity) {
+  var model = {
+    text: 'OK',
+    iconClass: 'icon-gf-online alert-icon-online'
+  };
+
+  if (state === 'firing') {
+    model.text = severityLevels[severity].text;
+    model.iconClass = severityLevels[severity].iconClass;
+  }
+
+  return model;
+}
 
 export default {
   alertQueryDef: alertQueryDef,
-  getSeverityIconClass: getSeverityIconClass,
+  getStateDisplayModel: getStateDisplayModel,
   conditionTypes: conditionTypes,
   evalFunctions: evalFunctions,
   severityLevels: severityLevels,

@@ -32,6 +32,7 @@ func (s AlertSeverityType) IsValid() bool {
 
 type Alert struct {
 	Id             int64
+	Version        int64
 	OrgId          int64
 	DashboardId    int64
 	PanelId        int64
@@ -45,11 +46,10 @@ type Alert struct {
 	ExecutionError string
 	Frequency      int64
 
-	LastEvalData *simplejson.Json
-	LastEvalTime time.Time
-
-	CreatedBy int64
-	UpdatedBy int64
+	EvalData     *simplejson.Json
+	EvalDate     time.Time
+	NewStateDate time.Time
+	StateChanges int
 
 	Created time.Time
 	Updated time.Time

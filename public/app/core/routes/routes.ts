@@ -194,7 +194,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controllerAs: 'ctrl',
     templateUrl: 'public/app/features/styleguide/styleguide.html',
   })
-  .when('/alerting', {
+  .when('/alerting/list', {
     templateUrl: 'public/app/features/alerting/partials/alert_list.html',
     controller: 'AlertListCtrl',
     controllerAs: 'ctrl',

@@ -34,7 +34,7 @@
 					<div class="gf-form">
 						<span class="gf-form-label">Severity</span>
 						<div class="gf-form-select-wrapper width-13">
-							<select class="gf-form-input" ng-model="ctrl.alert.severity" ng-options="f.value as f.text for f in ctrl.severityLevels" ng-change="ctrl.severityChanged()">
+							<select class="gf-form-input" ng-model="ctrl.alert.severity" ng-options="key as value.text for (key, value) in ctrl.severityLevels" ng-change="ctrl.severityChanged()">
 							</select>
 						</div>
 					</div>

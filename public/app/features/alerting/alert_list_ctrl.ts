@@ -3,23 +3,20 @@
 import angular from 'angular';
 import _ from 'lodash';
 import coreModule from '../../core/core_module';
-import config from 'app/core/config';
+import moment from 'moment';
 import alertDef from './alert_def';
 
 export class AlertListCtrl {
 
   alerts: any;
-  filter = {
-    ok: false,
-    warn: false,
-    critical: false,
-    acknowleged: false
+  filters = {
+    state: 'OK'
   };
 
   /** @ngInject */
   constructor(private backendSrv, private $route) {
     _.each($route.current.params.state, state => {
-      this.filter[state.toLowerCase()] = true;
+      this.filters[state.toLowerCase()] = true;
     });
 
     this.loadAlerts();
@@ -27,10 +24,6 @@ export class AlertListCtrl {
 
   updateFilter() {
     var stats = [];
-    this.filter.ok && stats.push('OK');
-    this.filter.warn && stats.push('Warn');
-    this.filter.critical && stats.push('critical');
-
     this.$route.current.params.state = stats;
     this.$route.updateParams();
   }
@@ -38,17 +31,14 @@ export class AlertListCtrl {
   loadAlerts() {
     var stats = [];
 
-    this.filter.ok && stats.push('OK');
-    this.filter.warn && stats.push('Warn');
-    this.filter.critical && stats.push('critical');
-
     var params = {
       state: stats
     };
 
     this.backendSrv.get('/api/alerts', params).then(result => {
       this.alerts = _.map(result, alert => {
-        alert.severityClass = alertDef.getSeverityIconClass(alert.severity);
+        alert.stateModel = alertDef.getStateDisplayModel(alert.state, alert.severity);
+        alert.newStateDateAgo = moment(alert.newStateDate).fromNow().replace(" ago", "");
         return alert;
       });
     });

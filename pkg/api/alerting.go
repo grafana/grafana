@@ -43,13 +43,16 @@ func GetAlerts(c *middleware.Context) Response {
 	for _, alert := range query.Result {
 		dashboardIds = append(dashboardIds, alert.DashboardId)
 		alertDTOs = append(alertDTOs, &dtos.AlertRule{
-			Id:          alert.Id,
-			DashboardId: alert.DashboardId,
-			PanelId:     alert.PanelId,
-			Name:        alert.Name,
-			Message:     alert.Message,
-			State:       alert.State,
-			Severity:    alert.Severity,
+			Id:             alert.Id,
+			DashboardId:    alert.DashboardId,
+			PanelId:        alert.PanelId,
+			Name:           alert.Name,
+			Message:        alert.Message,
+			State:          alert.State,
+			Severity:       alert.Severity,
+			EvalDate:       alert.EvalDate,
+			NewStateDate:   alert.NewStateDate,
+			ExecutionError: alert.ExecutionError,
 		})
 	}
 

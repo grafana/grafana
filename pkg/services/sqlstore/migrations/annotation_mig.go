@@ -32,6 +32,7 @@ func addAnnotationMig(mg *Migrator) {
 
 	// create indices
 	mg.AddMigration("add index annotation org_id & alert_id ", NewAddIndexMigration(table, table.Indices[0]))
+
 	mg.AddMigration("add index annotation org_id & type", NewAddIndexMigration(table, table.Indices[1]))
 	mg.AddMigration("add index annotation timestamp", NewAddIndexMigration(table, table.Indices[2]))
 }

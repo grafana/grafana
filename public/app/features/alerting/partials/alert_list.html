@@ -6,38 +6,46 @@
 		<h1>Alerting</h1>
 	</div>
 
-  <div class="gf-form-inline">
-		<gf-form-switch class="gf-form" label="OK" label-class="width-5" checked="ctrl.filter.ok" on-change="ctrl.updateFilter()"></gf-form-switch>
-		<gf-form-switch class="gf-form" label="Warn" label-class="width-5" checked="ctrl.filter.warn" on-change="ctrl.updateFilter()"></gf-form-switch>
-		<gf-form-switch class="gf-form" label="Critical" label-class="width-5" checked="ctrl.filter.critical" on-change="ctrl.updateFilter()"></gf-form-switch>
-	</div>
+  <div class="gf-form-group">
+    <div class="gf-form-inline">
+      <div class="gf-form">
+        <label class="gf-form-label">Filter by state</label>
+        <div class="gf-form-select-wrapper width-13">
+          <select class="gf-form-input" ng-model="ctrl.filters.state" ng-options="f for f in ['OK', 'Warning', 'Critical']" ng-change="ctrl.severityChanged()">
+          </select>
+        </div>
+      </div>
+    </div>
+  </div>
 
-	<table class="grafana-options-table">
-		<thead>
-			<th style="min-width: 200px"><strong>Name</strong></th>
-			<th style="width: 1%">State</th>
-			<th style="width: 1%">Severity</th>
-			<th style="width: 1%"></th>
-		</thead>
-		<tr ng-repeat="alert in ctrl.alerts">
-			<td>
-				<a href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&editorTab=Alerting">
-					{{alert.name}}
-				</a>
-			</td>
-			<td class="text-center">
-				{{alert.state}}
-			</td>
-			<td class="text-center">
-				{{alert.severity}}
-			</td>
-			<td class="text-center">
-				<a href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&editorTab=Alerting" class="btn btn-inverse btn-small">
-					<i class="fa fa-edit"></i>
-					edit
-				</a>
-			</td>
-		</tr>
-	</table>
+  <section class="card-section card-list-layout-list">
+
+    <ol class="card-list" >
+      <li class="card-item-wrapper" ng-repeat="alert in ctrl.alerts">
+        <a class="card-item" href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert">
+          <div class="card-item-header">
+            <div class="card-item-type">ACTIVE</div>
+            <div class="card-item-notice" ng-show="alert.executionError">
+              <span>Execution Error</span>
+            </div>
+          </div>
+          <div class="card-item-body">
+            <div class="card-item-details">
+              <div class="card-item-name">{{alert.name}}</div>
+              <div class="card-item-sub-name">
+                <div class="alert-list-state-line">
+                  <i class="icon-gf {{alert.stateModel.iconClass}}"></i>
+                  {{alert.stateModel.text}}
+                  for
+                  {{alert.newStateDateAgo}}
+                </div>
+              </div>
+            </div>
+          </div>
+        </a>
+      </li>
+    </ol>
+  </section>
+
 </div>
 
