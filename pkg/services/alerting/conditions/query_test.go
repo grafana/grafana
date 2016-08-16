@@ -18,7 +18,7 @@ func TestQueryCondition(t *testing.T) {
 		queryConditionScenario("Given avg() and > 100", func(ctx *queryConditionTestContext) {
 
 			ctx.reducer = `{"type": "avg"}`
-			ctx.evaluator = `{"type": "gt "params": [100]}`
+			ctx.evaluator = `{"type": "gt", "params": [100]}`
 
 			Convey("Can read query condition from json model", func() {
 				ctx.exec()
