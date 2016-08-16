@@ -28,7 +28,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         var ctrl = scope.ctrl;
         var dashboard = ctrl.dashboard;
         var panel = ctrl.panel;
-        var data, annotations, histogramData;
+        var data, annotations;
         var sortedSeries;
         var legendSideLastValue = null;
         var rootScope = scope.$root;
@@ -226,38 +226,32 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             }
           };
 
+          for (var i = 0; i < data.length; i++) {
+            var series = data[i];
+            series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
+
+            if (panel.xaxis.mode === 'histogram') {
+              series.data = [
+                [i + 1, series.stats[panel.xaxis.histogramValue]]
+              ];
+            }
+
+            // if hidden remove points and disable stack
+            if (ctrl.hiddenSeries[series.alias]) {
+              series.data = [];
+              series.stack = false;
+            }
+          }
+
           if (panel.xaxis.mode === 'histogram') {
-            // Format to histogram
-
-            var getValueFuncs = {
-              'min': _.min,
-              'max': _.max,
-              'avg': seriesAvg,
-              'current': _.last,
-              'total': seriesSum
-            };
-
-            histogramData = formatToHistogram(data, getValueFuncs[panel.xaxis.histogramValue]);
-
-            if (histogramData.length && histogramData[0].ticks.length) {
-              // options.series.bars.barWidth = histogramData[0].ticks.length / 1.5;
+            if (data.length) {
               options.series.bars.barWidth = 0.7;
               options.series.bars.align = 'center';
             }
 
             addXAxis(options);
+
           } else {
-            for (var i = 0; i < data.length; i++) {
-              var series = data[i];
-              series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
-
-              // if hidden remove points and disable stack
-              if (ctrl.hiddenSeries[series.alias]) {
-                series.data = [];
-                series.stack = false;
-              }
-            }
-
             if (data.length && data[0].stats.timeStep) {
               options.series.bars.barWidth = data[0].stats.timeStep / 1.5;
             }
@@ -298,38 +292,6 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           }
         }
 
-        function formatToHistogram(data, getValueCallback) {
-          var histogram = [data[0]];
-
-          histogram[0].data = _.map(data, function(series, index) {
-            var values = _.remove(_.map(series.datapoints, function(point) {
-              return point[0];
-            }), null);
-            var calculatedPoint = getValueCallback(values);
-            return [index + 1, calculatedPoint];
-          });
-
-          histogram[0].ticks = _.map(data, function(series, index) {
-            return [index + 1, series.alias];
-          });
-
-          return histogram;
-        }
-
-        function seriesSum(values) {
-          return _.reduce(values, function(sum, num) {
-            return sum + num;
-          });
-        }
-
-        function seriesAvg(values) {
-          if (values.length) {
-            return seriesSum(values) / values.length;
-          } else {
-            return null;
-          }
-        }
-
         function translateFillOption(fill) {
           return fill === 0 ? 0.001 : fill/10;
         }
@@ -361,7 +323,9 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         }
 
         function addXAxis(options) {
-          var ticks = histogramData[0].ticks;
+          var ticks = _.map(data, function(series, index) {
+            return [index + 1, series.alias];
+          });
 
           options.xaxis = {
             timezone: dashboard.getTimezone(),
