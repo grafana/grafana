@@ -9,19 +9,19 @@ define([
 
     module.controller('AnomalyCtrl', function ($scope, healthSrv) {
 
-      $scope.reload = function(){
+      $scope.reload = function () {
         healthSrv.load().then(function (data) {
           $scope.applicationHealth = Math.floor(data.health);
           $scope.includeMetricsData = floor(data.includedMetricHealths);
           $scope.excludeMetricsData = floor(data.excludedMetricHealths);
         });
       };
-      $scope.exclude = function(metricName){
+      $scope.exclude = function (metricName) {
         healthSrv.exclude(metricName);
         $scope.reload();
       };
 
-      $scope.include = function(metricName){
+      $scope.include = function (metricName) {
         healthSrv.include(metricName);
         $scope.reload();
       };
@@ -32,7 +32,7 @@ define([
         });
         return metrics;
       }
-      
+
       $scope.init = function () {
         $scope.reload();
       };

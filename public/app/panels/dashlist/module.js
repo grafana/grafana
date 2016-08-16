@@ -66,8 +66,8 @@ function (angular, app, _, config, PanelMeta) {
         params.tag = $scope.panel.tags;
       }
 
-      return backendSrv.search(params).then(function(result) {
-        healthSrv.healthSummary(contextSrv.user.orgName).then(function(healthResult){
+      return backendSrv.search(params).then(function (result) {
+        healthSrv.healthSummary(contextSrv.user.orgName).then(function (healthResult) {
           mappingHealth(result, healthResult.data.summaryMap);
           $scope.dashList = result;
           $scope.panelRenderingComplete();
@@ -75,10 +75,10 @@ function (angular, app, _, config, PanelMeta) {
       });
     };
 
-    function mappingHealth(dataList, summaryMap){
-      _.each(dataList, function(target){
-        if(summaryMap[target.uri.split("/")[1]]){
-          target = $.extend(target,summaryMap[target.uri.split("/")[1]]);
+    function mappingHealth(dataList, summaryMap) {
+      _.each(dataList, function (target) {
+        if (summaryMap[target.uri.split("/")[1]]) {
+          target = $.extend(target, summaryMap[target.uri.split("/")[1]]);
           target.healthStyle = Threshold100(target.health);
           target.alertStyle = Threshold2(target.numAlerts);
         }
@@ -87,17 +87,17 @@ function (angular, app, _, config, PanelMeta) {
 
     function Threshold100(num) {
       var style = "btn-success";
-      if(num <77){
+      if (num < 77) {
         style = "btn-warning";
-      }else if(num < 33){
+      } else if (num < 33) {
         style = "btn-danger";
       }
       return style;
     }
 
-    function Threshold2(num){
+    function Threshold2(num) {
       var style = "btn-success";
-      if(num > 0){
+      if (num > 0) {
         style = "btn-danger";
       }
       return style;

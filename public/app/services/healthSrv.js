@@ -32,7 +32,7 @@ define([
         });
       };
 
-      this.exclude = function(metricName){
+      this.exclude = function (metricName) {
         $http({
           method: "post",
           url: anomalyListUrl + "/exclude",
@@ -42,7 +42,7 @@ define([
         });
       };
 
-      this.include = function(metricName){
+      this.include = function (metricName) {
         $http({
           method: "post",
           url: anomalyListUrl + "/include",
@@ -52,7 +52,7 @@ define([
         });
       };
 
-      this.healthSummary = function(orgName){
+      this.healthSummary = function (orgName) {
         return $http({
           method: "get",
           url: _this.anomalyUrlRoot + "/healthsummary",
