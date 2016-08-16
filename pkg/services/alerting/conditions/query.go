@@ -133,7 +133,7 @@ func NewQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 	condition.Reducer = NewSimpleReducer(reducerJson.Get("type").MustString())
 
 	evaluatorJson := model.Get("evaluator")
-	evaluator, err := NewDefaultAlertEvaluator(evaluatorJson)
+	evaluator, err := NewAlertEvaluator(evaluatorJson)
 	if err != nil {
 		return nil, err
 	}
