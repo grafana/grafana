@@ -41,15 +41,15 @@
           <h2>请选择合适的机器进行查看</h2>
           <div class="panel grafana-options-table">
             <div controls controls-row>
-              <label class="span4 checkbox" ng-repeat="(hostname, health) in hosts">
+              <label class="span3 checkbox" ng-repeat="(hostname, health) in hosts">
                 <input ng-checked="$index == 0 " type="radio" ng-click="changeHost(hostname)" name="changeHost">
                 {{hostname}}</input> 健康指数:{{health}}
-              </label>
-              <a href="/alerts/association/{{dashboard.id}}/{{hostname}}/100">
-                  <span class="btn btn-mini btn-inverse span1">
+                <a href="/alerts/association/{{dashboard.id}}/{{hostname}}/100">
+                  <span class="btn btn-mini btn-primary">
                    <i class="fa fa-signal">相关联指标</i>
                   </span>
-              </a>
+                </a>
+              </label>
             </div>
           </div>
         </div>
