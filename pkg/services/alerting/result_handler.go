@@ -64,6 +64,7 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 			PrevState: string(oldState),
 			Timestamp: time.Now(),
 		}
+
 		annotationRepo := annotations.GetRepository()
 		if err := annotationRepo.Save(&item); err != nil {
 			handler.log.Error("Failed to save annotation for new alert state", "error", err)
