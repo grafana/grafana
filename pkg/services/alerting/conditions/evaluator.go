@@ -8,6 +8,11 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
+var (
+	defaultTypes []string = []string{"gt", "lt"}
+	rangedTypes  []string = []string{"within_range", "outside_range"}
+)
+
 type AlertEvaluator interface {
 	Eval(timeSeries *tsdb.TimeSeries, reducedValue float64) bool
 }
@@ -46,11 +51,7 @@ func (e *RangedAlertEvaluator) Eval(series *tsdb.TimeSeries, reducedValue float6
 }
 
 func NewAlertEvaluator(model *simplejson.Json) (AlertEvaluator, error) {
-	defaultTypes := []string{"gt", "lt"}
-	rangedTypes := []string{"within_range", "outside_range"}
-
 	typ := model.Get("type").MustString()
-
 	if typ == "" {
 		return nil, alerting.ValidationError{Reason: "Evaluator missing type property"}
 	}
@@ -62,29 +63,31 @@ func NewAlertEvaluator(model *simplejson.Json) (AlertEvaluator, error) {
 
 	firstParam, ok := params[0].(json.Number)
 	if !ok {
-		return nil, alerting.ValidationError{Reason: "Evaluator has invalid threshold parameter"}
+		return nil, alerting.ValidationError{Reason: "Evaluator has invalid parameter"}
 	}
 
-	if stringInSlice(typ, defaultTypes) {
-		evaluator := &DefaultAlertEvaluator{Type: typ}
-		evaluator.Threshold, _ = firstParam.Float64()
-		return evaluator, nil
-	} else if stringInSlice(typ, rangedTypes) {
+	if inSlice(typ, defaultTypes) {
+		defaultEval := &DefaultAlertEvaluator{Type: typ}
+		defaultEval.Threshold, _ = firstParam.Float64()
+		return defaultEval, nil
+	}
+
+	if inSlice(typ, rangedTypes) {
 		secondParam, ok := params[1].(json.Number)
 		if !ok {
-			return nil, alerting.ValidationError{Reason: "Evaluator has invalid threshold parameter"}
+			return nil, alerting.ValidationError{Reason: "Evaluator has invalid second parameter"}
 		}
 
-		evaluator := &RangedAlertEvaluator{Type: typ}
-		evaluator.Lower, _ = firstParam.Float64()
-		evaluator.Upper, _ = secondParam.Float64()
-		return evaluator, nil
+		rangedEval := &RangedAlertEvaluator{Type: typ}
+		rangedEval.Lower, _ = firstParam.Float64()
+		rangedEval.Upper, _ = secondParam.Float64()
+		return rangedEval, nil
 	}
 
 	return nil, alerting.ValidationError{Reason: "Evaludator invalid evaluator type"}
 }
 
-func stringInSlice(a string, list []string) bool {
+func inSlice(a string, list []string) bool {
 	for _, b := range list {
 		if b == a {
 			return true
