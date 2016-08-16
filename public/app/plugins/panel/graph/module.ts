@@ -21,6 +21,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   logScales: any;
   unitFormats: any;
   xAxisModes: any;
+  xAxisHistogramValues: any;
   annotationsPromise: any;
   datapointsCount: number;
   datapointsOutside: boolean;
@@ -52,7 +53,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     ],
     xaxis: {
       show: true,
-      mode: 'timeseries'
+      mode: 'timeseries',
+      histogramValue: 'avg'
     },
     grid          : {
       threshold1: null,
@@ -116,6 +118,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
     _.defaults(this.panel.grid, this.panelDefaults.grid);
     _.defaults(this.panel.legend, this.panelDefaults.legend);
+    _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
 
     this.colors = $scope.$root.colors;
 
@@ -145,6 +148,8 @@ class GraphCtrl extends MetricsPanelCtrl {
       'Time Series': 'timeseries',
       'Histogram': 'histogram'
     };
+
+    this.xAxisHistogramValues = ['min', 'max', 'avg', 'current', 'total'];
   }
 
   onInitPanelActions(actions) {

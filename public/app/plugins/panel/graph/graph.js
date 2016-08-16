@@ -227,7 +227,17 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           };
 
           if (panel.xaxis.mode === 'histogram') {
-            histogramData = formatToHistogram(data, _.last);
+            // Format to histogram
+
+            var getValueFuncs = {
+              'min': _.min,
+              'max': _.max,
+              'avg': seriesAvg,
+              'current': _.last,
+              'total': seriesSum
+            };
+
+            histogramData = formatToHistogram(data, getValueFuncs[panel.xaxis.histogramValue]);
 
             if (histogramData.length && histogramData[0].ticks.length) {
               // options.series.bars.barWidth = histogramData[0].ticks.length / 1.5;
@@ -304,6 +314,20 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           });
 
           return histogram;
+        }
+
+        function seriesSum(values) {
+          return _.reduce(values, function(sum, num) {
+            return sum + num;
+          });
+        }
+
+        function seriesAvg(values) {
+          if (values.length) {
+            return seriesSum(values) / values.length;
+          } else {
+            return null;
+          }
         }
 
         function translateFillOption(fill) {
