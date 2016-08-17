@@ -68,7 +68,7 @@ function (angular, app, _, config, PanelMeta) {
 
       return backendSrv.search(params).then(function (result) {
         healthSrv.healthSummary(contextSrv.user.orgName).then(function (healthResult) {
-          mappingHealth(result, healthResult.data.summaryMap);
+          mappingHealth(result, healthResult.data);
           $scope.dashList = result;
           $scope.panelRenderingComplete();
         });
@@ -80,7 +80,7 @@ function (angular, app, _, config, PanelMeta) {
         if (summaryMap[target.uri.split("/")[1]]) {
           target = $.extend(target, summaryMap[target.uri.split("/")[1]]);
           target.healthStyle = Threshold100(target.health);
-          target.alertStyle = Threshold2(target.numAlerts);
+          target.alertStyle = Threshold2(target.numAlertsTriggered);
         }
       });
     }
