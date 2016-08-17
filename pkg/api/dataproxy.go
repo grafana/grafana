@@ -91,25 +91,39 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
-	targetUrl, _ := url.Parse(ds.Url)
-	if len(setting.DataProxyWhiteList) > 0 {
-		if _, exists := setting.DataProxyWhiteList[targetUrl.Host]; !exists {
-			c.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
-			return
-		}
-	}
-
-	if ds.Type == m.DS_CLOUDWATCH {
+	switch ds.Type {
+	case m.DS_CLOUDWATCH:
 		cloudwatch.HandleRequest(c, ds)
 
-	} else if ds.Type == m.DS_SQLDB {
+	case m.DS_SQLDB:
+		host, _ := ds.JsonData.Get("host").String()
+		if !checkWhiteList(c, host) {
+			return
+		}
+
 		sqldb.HandleRequest(c, ds)
 
-	} else {
+	default:
+		targetUrl, _ := url.Parse(ds.Url)
+		if !checkWhiteList(c, targetUrl.Host) {
+			return
+		}
+
 		proxyPath := c.Params("*")
 		proxy := NewReverseProxy(ds, proxyPath, targetUrl)
 		proxy.Transport = dataProxyTransport
 		proxy.ServeHTTP(c.Resp, c.Req.Request)
 		c.Resp.Header().Del("Set-Cookie")
 	}
+}
+
+func checkWhiteList(c *middleware.Context, host string) bool {
+	if host != "" && len(setting.DataProxyWhiteList) > 0 {
+		if _, exists := setting.DataProxyWhiteList[host]; !exists {
+			c.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
+			return false
+		}
+	}
+
+	return true
 }
