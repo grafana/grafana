@@ -4,6 +4,10 @@
 <div class="page-container" >
 	<div class="page-header">
 		<h1>Alert List</h1>
+    <a class="btn btn-inverse" ng-click="ctrl.openHowTo()">
+			<i class="fa fa-info-circle"></i>
+			How to add an alert
+		</a>
 	</div>
 
   <div class="gf-form-group">
@@ -25,8 +29,8 @@
         <div class="card-item card-item--alert">
           <div class="card-item-header">
             <div class="card-item-type">
-              <a href="dashboard/{{alert.dashboardUri}}" bs-tooltip="'Open dashboard'">
-                <i class="icon-gf icon-gf-dashboard"></i>
+              <a class="card-item-cog" href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert" bs-tooltip="'Edit alert rule'">
+                <i class="icon-gf icon-gf-settings"></i>
               </a>
             </div>
             <div class="card-item-notice" ng-show="alert.executionError">

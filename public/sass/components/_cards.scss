@@ -82,6 +82,13 @@
   overflow: hidden;
 }
 
+.card-item-cog {
+  font-size: 130%;
+  position: relative;
+  top: 1rem;
+  color: $text-muted;
+}
+
 .card-item-header {
   margin-bottom: $spacer;
 }

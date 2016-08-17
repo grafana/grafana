@@ -3,6 +3,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import coreModule from '../../core/core_module';
+import appEvents from '../../core/app_events';
 import moment from 'moment';
 import alertDef from './alert_def';
 
@@ -40,6 +41,13 @@ export class AlertListCtrl {
         alert.newStateDateAgo = moment(alert.newStateDate).fromNow().replace(" ago", "");
         return alert;
       });
+    });
+  }
+
+  openHowTo() {
+    appEvents.emit('show-modal', {
+      src: 'public/app/features/alerting/partials/alert_howto.html',
+      model: {}
     });
   }
 }

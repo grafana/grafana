@@ -42,8 +42,8 @@ function createReducerPart(model) {
 }
 
 var severityLevels = {
-  'critical': {text: 'CRITICAL', iconClass: 'icon-gf icon-gf-critical', stateClass: 'alert-state-critical'},
-  'warning': {text: 'WARNING', iconClass: 'icon-gf icon-gf-warning', stateClass: 'alert-state-warning'},
+  'critical': {text: 'Critical', iconClass: 'icon-gf icon-gf-critical', stateClass: 'alert-state-critical'},
+  'warning': {text: 'Warning', iconClass: 'icon-gf icon-gf-warning', stateClass: 'alert-state-warning'},
 };
 
 function getStateDisplayModel(state) {
