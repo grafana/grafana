@@ -46,28 +46,44 @@ var severityLevels = {
   'warning': {text: 'WARNING', iconClass: 'icon-gf icon-gf-warning', stateClass: 'alert-state-warning'},
 };
 
-function getStateDisplayModel(state, severity) {
-  var model = {
-    text: 'OK',
-    iconClass: 'icon-gf icon-gf-online',
-    stateClass: 'alert-state-ok'
-  };
-
-  if (state === 'firing') {
-    model.text = severityLevels[severity].text;
-    model.iconClass = severityLevels[severity].iconClass;
-    model.stateClass = severityLevels[severity].stateClass;
-  } else if (state === 'pending') {
-    model.text = "PENDING";
-    model.iconClass = "fa fa-question";
-    model.stateClass = "alert-state-pending";
-  } else if (state === 'paused') {
-    model.text = "PAUSED";
-    model.iconClass = "fa fa-pause";
-    model.stateClass = "alert-state-paused";
+function getStateDisplayModel(state) {
+  switch (state) {
+    case 'ok': {
+      return {
+        text: 'OK',
+        iconClass: 'icon-gf icon-gf-online',
+        stateClass: 'alert-state-ok'
+      };
+    }
+    case 'critical': {
+      return {
+        text: 'CRITICAL',
+        iconClass: 'icon-gf icon-gf-critical',
+        stateClass: 'alert-state-critical'
+      };
+     }
+     case 'warning': {
+      return {
+        text: 'WARNING',
+        iconClass: 'icon-gf icon-gf-warning',
+        stateClass: 'alert-state-warning'
+      };
+     }
+     case 'pending': {
+      return {
+        text: 'PENDING',
+        iconClass: "fa fa-question",
+        stateClass: 'alert-state-warning'
+      };
+     }
+     case 'paused': {
+      return {
+        text: 'paused',
+        iconClass: "fa fa-pause",
+        stateClass: 'alert-state-paused'
+      };
+     }
   }
-
-  return model;
 }
 
 export default {

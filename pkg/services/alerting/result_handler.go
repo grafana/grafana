@@ -35,7 +35,7 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 		ctx.Rule.State = m.AlertStateExeuctionError
 		exeuctionError = ctx.Error.Error()
 	} else if ctx.Firing {
-		ctx.Rule.State = m.AlertStateFiring
+		ctx.Rule.State = m.AlertStateType(ctx.Rule.Severity)
 	} else {
 		ctx.Rule.State = m.AlertStateOK
 	}

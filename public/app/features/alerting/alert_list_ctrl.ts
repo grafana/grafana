@@ -9,35 +9,34 @@ import alertDef from './alert_def';
 export class AlertListCtrl {
 
   alerts: any;
+  stateFilters = [
+    {text: 'All', value: null},
+    {text: 'OK', value: 'ok'},
+    {text: 'Pending', value: 'pending'},
+    {text: 'Warning', value: 'warning'},
+    {text: 'Critical', value: 'critical'},
+    {text: 'Execution Error', value: 'execution_error'},
+  ];
+
   filters = {
-    state: 'OK'
+    state: 'ALL'
   };
 
   /** @ngInject */
-  constructor(private backendSrv, private $route) {
-    _.each($route.current.params.state, state => {
-      this.filters[state.toLowerCase()] = true;
-    });
-
+  constructor(private backendSrv, private $location) {
+    var params = $location.search();
+    this.filters.state = params.state || null;
     this.loadAlerts();
   }
 
-  updateFilter() {
-    var stats = [];
-    this.$route.current.params.state = stats;
-    this.$route.updateParams();
+  filtersChanged() {
+    this.$location.search(this.filters);
   }
 
   loadAlerts() {
-    var stats = [];
-
-    var params = {
-      state: stats
-    };
-
-    this.backendSrv.get('/api/alerts', params).then(result => {
+    this.backendSrv.get('/api/alerts', this.filters).then(result => {
       this.alerts = _.map(result, alert => {
-        alert.stateModel = alertDef.getStateDisplayModel(alert.state, alert.severity);
+        alert.stateModel = alertDef.getStateDisplayModel(alert.state);
         alert.newStateDateAgo = moment(alert.newStateDate).fromNow().replace(" ago", "");
         return alert;
       });

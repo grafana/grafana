@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"bytes"
 	"fmt"
-	"strings"
 	"time"
 
 	"github.com/go-xorm/xorm"
@@ -76,18 +75,19 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 		params = append(params, query.PanelId)
 	}
 
-	if len(query.State) > 0 {
+	if len(query.State) > 0 && query.State[0] != "ALL" {
 		sql.WriteString(` AND (`)
 		for i, v := range query.State {
 			if i > 0 {
 				sql.WriteString(" OR ")
 			}
 			sql.WriteString("state = ? ")
-			params = append(params, strings.ToUpper(v))
+			params = append(params, v)
 		}
 		sql.WriteString(")")
 	}
 
+	sqlog.Error(sql.String(), "params", params)
 	alerts := make([]*m.Alert, 0)
 	if err := x.Sql(sql.String(), params...).Find(&alerts); err != nil {
 		return err

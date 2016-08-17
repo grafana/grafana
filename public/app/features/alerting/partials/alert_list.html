@@ -11,7 +11,7 @@
       <div class="gf-form">
         <label class="gf-form-label">Filter by state</label>
         <div class="gf-form-select-wrapper width-13">
-          <select class="gf-form-input" ng-model="ctrl.filters.state" ng-options="f for f in ['OK', 'Warning', 'Critical']" ng-change="ctrl.severityChanged()">
+          <select class="gf-form-input" ng-model="ctrl.filters.state" ng-options="f.value as f.text for f in ctrl.stateFilters" ng-change="ctrl.filtersChanged()">
           </select>
         </div>
       </div>

@@ -201,35 +201,36 @@ export class ThresholdManager {
         }
       }
 
+      var fillColor, lineColor;
       switch (threshold.colorMode) {
         case 'critical': {
-          threshold.fillColor = 'rgba(234, 112, 112, 0.12)';
-          threshold.lineColor = 'rgba(237, 46, 24, 0.60)';
+          fillColor = 'rgba(234, 112, 112, 0.12)';
+          lineColor = 'rgba(237, 46, 24, 0.60)';
           break;
         }
         case 'warning': {
-          threshold.fillColor = 'rgba(235, 138, 14, 0.12)';
-          threshold.lineColor = 'rgba(247, 149, 32, 0.60)';
+          fillColor = 'rgba(235, 138, 14, 0.12)';
+          lineColor = 'rgba(247, 149, 32, 0.60)';
           break;
         }
         case 'ok': {
-          threshold.fillColor = 'rgba(11, 237, 50, 0.090)';
-          threshold.lineColor = 'rgba(6,163,69, 0.60)';
+          fillColor = 'rgba(11, 237, 50, 0.090)';
+          lineColor = 'rgba(6,163,69, 0.60)';
           break;
         }
         case 'custom': {
-          threshold.fillColor = threshold.fillColor;
-          threshold.lineColor = threshold.lineColor;
+          fillColor = threshold.fillColor;
+          lineColor = threshold.lineColor;
           break;
         }
       }
 
       // fill
       if (threshold.fill) {
-        options.grid.markings.push({yaxis: {from: threshold.value, to: limit}, color: threshold.fillColor});
+        options.grid.markings.push({yaxis: {from: threshold.value, to: limit}, color: fillColor});
       }
       if (threshold.line) {
-        options.grid.markings.push({yaxis: {from: threshold.value, to: threshold.value}, color: threshold.lineColor});
+        options.grid.markings.push({yaxis: {from: threshold.value, to: threshold.value}, color: lineColor});
       }
     }
   }

@@ -13,12 +13,13 @@ const (
 	AlertStatePending        AlertStateType = "pending"
 	AlertStateExeuctionError AlertStateType = "exeuction_error"
 	AlertStatePaused         AlertStateType = "paused"
-	AlertStateFiring         AlertStateType = "firing"
+	AlertStateCritical       AlertStateType = "critical"
+	AlertStateWarning        AlertStateType = "warning"
 	AlertStateOK             AlertStateType = "ok"
 )
 
 func (s AlertStateType) IsValid() bool {
-	return s == AlertStatePending || s == AlertStateFiring || s == AlertStateOK
+	return s == AlertStateOK || s == AlertStatePending || s == AlertStateExeuctionError || s == AlertStatePaused || s == AlertStateCritical || s == AlertStateWarning
 }
 
 const (
