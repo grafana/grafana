@@ -161,6 +161,76 @@ export default class TimeSeries {
     return result;
   }
 
+  getChartjsPairs(fillStyle) {
+    var result = [];
+
+    this.stats.total = 0;
+    this.stats.max = -Number.MAX_VALUE;
+    this.stats.min = Number.MAX_VALUE;
+    this.stats.avg = null;
+    this.stats.current = null;
+    this.allIsNull = true;
+    this.allIsZero = true;
+
+    var ignoreNulls = fillStyle === 'connected';
+    var nullAsZero = fillStyle === 'null as zero';
+    var currentTime;
+    var currentValue;
+    var nonNulls = 0;
+
+    for (var i = 0; i < this.datapoints.length; i++) {
+      currentValue = this.datapoints[i][0];
+      currentTime = this.datapoints[i][1];
+
+      if (currentValue === null) {
+        if (ignoreNulls) { continue; }
+        if (nullAsZero) {
+          currentValue = 0;
+        }
+      }
+
+      if (currentValue !== null) {
+        if (_.isNumber(currentValue)) {
+          this.stats.total += currentValue;
+          this.allIsNull = false;
+          nonNulls++;
+        }
+
+        if (currentValue > this.stats.max) {
+          this.stats.max = currentValue;
+        }
+
+        if (currentValue < this.stats.min) {
+          this.stats.min = currentValue;
+        }
+      }
+
+      if (currentValue !== 0) {
+        this.allIsZero = false;
+      }
+
+      result.push({ x: currentTime, y: currentValue });
+    }
+
+    if (this.datapoints.length >= 2) {
+      this.stats.timeStep = this.datapoints[1][1] - this.datapoints[0][1];
+    }
+
+    if (this.stats.max === -Number.MAX_VALUE) { this.stats.max = null; }
+    if (this.stats.min === Number.MAX_VALUE) { this.stats.min = null; }
+
+    if (result.length) {
+      this.stats.avg = (this.stats.total / nonNulls);
+      this.stats.current = result[result.length-1][1];
+      if (this.stats.current === null && result.length > 1) {
+        this.stats.current = result[result.length-2][1];
+      }
+    }
+
+    this.stats.count = result.length;
+    return result;
+  }
+
   updateLegendValues(formater, decimals, scaledDecimals) {
     this.valueFormater = formater;
     this.decimals = decimals;

@@ -40,6 +40,12 @@
 	<div class="section gf-form-group">
 		<h5 class="section-heading">Hover info</h5>
 		<div class="gf-form">
+			<label class="gf-form-label width-9">Renderer</label>
+			<div class="gf-form-select-wrapper max-width-8">
+				<select class="gf-form-input" ng-model="ctrl.panel.renderer" ng-options="f for f in ['flot', 'chart.js']" ng-change="ctrl.render()"></select>
+			</div>
+		</div>
+		<div class="gf-form">
 			<label class="gf-form-label width-9">Mode</label>
 			<div class="gf-form-select-wrapper max-width-8">
 				<select class="gf-form-input" ng-model="ctrl.panel.tooltip.shared" ng-options="f.value as f.text for f in [{text: 'All series', value: true}, {text: 'Single', value: false}]" ng-change="ctrl.render()"></select>
