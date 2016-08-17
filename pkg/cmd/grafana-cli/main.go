@@ -8,38 +8,10 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 )
 
 var version = "master"
-
-func getGrafanaPluginDir() string {
-	currentOS := runtime.GOOS
-	defaultNix := "/var/lib/grafana/plugins"
-
-	if currentOS == "windows" {
-		return "../data/plugins"
-	}
-
-	pwd, err := os.Getwd()
-
-	if err != nil {
-		logger.Error("Could not get current path. using default")
-		return defaultNix
-	}
-
-	if isDevenvironment(pwd) {
-		return "../data/plugins"
-	}
-
-	return defaultNix
-}
-
-func isDevenvironment(pwd string) bool {
-	// if ../conf/defaults.ini exists, grafana is not installed as package
-	// that its in development environment.
-	_, err := os.Stat("../conf/defaults.ini")
-	return err == nil
-}
 
 func main() {
 	setupLogging()
@@ -54,7 +26,7 @@ func main() {
 		cli.StringFlag{
 			Name:   "pluginsDir",
 			Usage:  "path to the grafana plugin directory",
-			Value:  getGrafanaPluginDir(),
+			Value:  utils.GetGrafanaPluginDir(runtime.GOOS),
 			EnvVar: "GF_PLUGIN_DIR",
 		},
 		cli.StringFlag{
