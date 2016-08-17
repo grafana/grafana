@@ -67,18 +67,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "60s",
             "handler": 1,
             "name": "Critical alert panel",
             "notifications": [],
-            "severity": "critical",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "critical"
           },
           "alerting": {},
           "aliasColors": {},
@@ -184,18 +178,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "60s",
             "handler": 1,
             "name": "Critical alert panel",
             "notifications": [],
-            "severity": "critical",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "critical"
           },
           "alerting": {},
           "aliasColors": {},
@@ -301,18 +289,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "60s",
             "handler": 1,
             "name": "Critical alert panel",
             "notifications": [],
-            "severity": "critical",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "critical"
           },
           "alerting": {},
           "aliasColors": {},
@@ -418,18 +400,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "60s",
             "handler": 1,
             "name": "Critical alert panel",
             "notifications": [],
-            "severity": "critical",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "critical"
           },
           "alerting": {},
           "aliasColors": {},
@@ -543,18 +519,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "60s",
             "handler": 1,
             "name": "Warning panel alert",
             "notifications": [],
-            "severity": "warning",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "warning"
           },
           "alerting": {},
           "aliasColors": {},
@@ -659,18 +629,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "60s",
             "handler": 1,
             "name": "Warning panel alert",
             "notifications": [],
-            "severity": "warning",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "warning"
           },
           "alerting": {},
           "aliasColors": {},
@@ -775,18 +739,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "60s",
             "handler": 1,
             "name": "Warning panel alert",
             "notifications": [],
-            "severity": "warning",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "warning"
           },
           "alerting": {},
           "aliasColors": {},
@@ -891,18 +849,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "60s",
             "handler": 1,
             "name": "Warning panel alert",
             "notifications": [],
-            "severity": "warning",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "warning"
           },
           "alerting": {},
           "aliasColors": {},
@@ -1015,18 +967,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "10s",
             "handler": 1,
             "name": "Fast Critical panel alert",
             "notifications": [],
-            "severity": "critical",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "critical"
           },
           "alerting": {},
           "aliasColors": {},
@@ -1131,18 +1077,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "10s",
             "handler": 1,
             "name": "Fast Critical panel alert",
             "notifications": [],
-            "severity": "critical",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "critical"
           },
           "alerting": {},
           "aliasColors": {},
@@ -1247,18 +1187,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "10s",
             "handler": 1,
             "name": "Fast Critical panel alert",
             "notifications": [],
-            "severity": "critical",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "critical"
           },
           "alerting": {},
           "aliasColors": {},
@@ -1363,18 +1297,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "10s",
             "handler": 1,
             "name": "Fast Critical panel alert",
             "notifications": [],
-            "severity": "critical",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "critical"
           },
           "alerting": {},
           "aliasColors": {},
@@ -1466,12 +1394,6 @@
         {
           "alert": {
             "enabled": true,
-            "warn": {
-              "op": ">"
-            },
-            "crit": {
-              "op": ">"
-            },
             "conditions": [
               {
                 "type": "query",
@@ -1582,12 +1504,6 @@
         {
           "alert": {
             "enabled": true,
-            "warn": {
-              "op": ">"
-            },
-            "crit": {
-              "op": ">"
-            },
             "conditions": [
               {
                 "type": "query",
@@ -1698,12 +1614,6 @@
         {
           "alert": {
             "enabled": true,
-            "warn": {
-              "op": ">"
-            },
-            "crit": {
-              "op": ">"
-            },
             "conditions": [
               {
                 "type": "query",
@@ -1814,12 +1724,6 @@
         {
           "alert": {
             "enabled": true,
-            "warn": {
-              "op": ">"
-            },
-            "crit": {
-              "op": ">"
-            },
             "conditions": [
               {
                 "type": "query",
@@ -1974,12 +1878,6 @@
             "show": true
           },
           "alert": {
-            "warn": {
-              "op": ">"
-            },
-            "crit": {
-              "op": ">"
-            },
             "conditions": [
               {
                 "type": "query",
@@ -2090,12 +1988,6 @@
             "show": true
           },
           "alert": {
-            "warn": {
-              "op": ">"
-            },
-            "crit": {
-              "op": ">"
-            },
             "conditions": [
               {
                 "type": "query",
@@ -2216,12 +2108,6 @@
             "show": true
           },
           "alert": {
-            "warn": {
-              "op": ">"
-            },
-            "crit": {
-              "op": ">"
-            },
             "conditions": [
               {
                 "type": "query",
