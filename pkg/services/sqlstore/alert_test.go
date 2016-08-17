@@ -175,5 +175,39 @@ func TestAlertingDataAccess(t *testing.T) {
 				So(len(query.Result), ShouldEqual, 0)
 			})
 		})
+
+		Convey("Can set new execution error", func() {
+			items := []*m.Alert{
+				{
+					PanelId:     1,
+					DashboardId: testDash.Id,
+					Name:        "Alerting title",
+					Message:     "Alerting message",
+				},
+			}
+
+			cmd := m.SaveAlertsCommand{
+				Alerts:      items,
+				DashboardId: testDash.Id,
+				OrgId:       1,
+				UserId:      1,
+			}
+
+			SaveAlerts(&cmd)
+
+			So(SaveExecutionErrorForAlert(&m.SaveExecutionErrorCommand{
+				AlertId:        1,
+				ExecutionError: "the slacker is broken",
+			}), ShouldBeNil)
+
+			Convey("Alerts should be removed", func() {
+				query := &m.GetAlertByIdQuery{Id: 1}
+				err2 := GetAlertById(query)
+
+				So(testDash.Id, ShouldEqual, 1)
+				So(err2, ShouldBeNil)
+				So(query.Result.ExecutionError, ShouldEqual, "the slacker is broken")
+			})
+		})
 	})
 }

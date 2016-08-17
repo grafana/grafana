@@ -122,6 +122,11 @@ type DeleteAlertCommand struct {
 	AlertId int64
 }
 
+type SaveExecutionErrorCommand struct {
+	AlertId        int64
+	ExecutionError string
+}
+
 //Queries
 type GetAlertsQuery struct {
 	OrgId       int64
