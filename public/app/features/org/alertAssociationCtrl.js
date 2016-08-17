@@ -109,6 +109,9 @@ function (angular, _) {
           }
         ]
       };
+
+      $scope.host = alertHost;
+
       $scope.initDashboard({
         meta: { canStar: false, canShare: false, canEdit: false },
         dashboard: {
