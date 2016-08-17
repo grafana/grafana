@@ -18,15 +18,13 @@ dependencies:
 
 test:
   override:
-     # FMT
      - test -z "$(gofmt -s -l . | grep -v Godeps/_workspace/src/ | tee /dev/stderr)"
-     # GO VET
      - go vet ./pkg/...
-     # Go test
-     - godep go test -v ./pkg/...
-     # js tests
+     # JS tests
      - npm test
      - npm run coveralls
+     # GO tests
+     - godep go test -v ./pkg/...
 
 deployment:
   master:

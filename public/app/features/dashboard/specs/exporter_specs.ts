@@ -47,7 +47,8 @@ describe('given dashboard with repeated panels', function() {
     });
     dash.rows.push({
       repeat: null,
-      repeatRowId: 1
+      repeatRowId: 1,
+      panels: [],
     });
 
     var datasourceSrvStub = {

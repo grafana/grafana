@@ -129,11 +129,6 @@ function (angular, _, dateMath) {
       };
 
       this._addCredentialOptions(options);
-
-      // In case the backend is 3rd-party hosted and does not suport OPTIONS, urlencoded requests
-      // go as POST rather than OPTIONS+POST
-      options.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-
       return backendSrv.datasourceRequest(options);
     };
 
