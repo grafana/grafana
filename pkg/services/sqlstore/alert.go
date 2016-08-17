@@ -223,6 +223,7 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 		alert.State = cmd.State
 		alert.StateChanges += 1
 		alert.NewStateDate = time.Now()
+		alert.ExecutionError = cmd.Error
 
 		sess.Id(alert.Id).Update(&alert)
 		return nil

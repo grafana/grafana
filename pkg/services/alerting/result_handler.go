@@ -29,9 +29,11 @@ func NewResultHandler() *DefaultResultHandler {
 func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 	oldState := ctx.Rule.State
 
+	exeuctionError := ""
 	if ctx.Error != nil {
 		handler.log.Error("Alert Rule Result Error", "ruleId", ctx.Rule.Id, "error", ctx.Error)
-		ctx.Rule.State = m.AlertStatePending
+		ctx.Rule.State = m.AlertStateExeuctionError
+		exeuctionError = ctx.Error.Error()
 	} else if ctx.Firing {
 		ctx.Rule.State = m.AlertStateFiring
 	} else {
@@ -47,6 +49,7 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 			AlertId: ctx.Rule.Id,
 			OrgId:   ctx.Rule.OrgId,
 			State:   ctx.Rule.State,
+			Error:   exeuctionError,
 		}
 
 		if err := bus.Dispatch(cmd); err != nil {
