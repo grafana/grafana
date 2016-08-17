@@ -466,7 +466,7 @@ Enable metrics reporting. defaults true. Available via HTTP API `/api/metrics`.
 
 ### interval_seconds
 
-Flush/Write interval when sending metrics to external TSDB. Defaults to 60s.
+Flush/Write interval when sending metrics to external TSDB. Defaults to 10s.
 
 ## [metrics.graphite]
 Include this section if you want to send internal Grafana metrics to Graphite.
