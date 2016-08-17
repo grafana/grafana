@@ -18,24 +18,6 @@ func init() {
 	bus.AddHandler("sql", DeleteAlertById)
 	bus.AddHandler("sql", GetAllAlertQueryHandler)
 	bus.AddHandler("sql", SetAlertState)
-	bus.AddHandler("sql", SaveExecutionErrorForAlert)
-}
-
-func SaveExecutionErrorForAlert(cmd *m.SaveExecutionErrorCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
-		alert := m.Alert{}
-
-		if has, err := sess.Id(cmd.AlertId).Get(&alert); err != nil {
-			return err
-		} else if !has {
-			return fmt.Errorf("Could not find alert")
-		}
-
-		alert.ExecutionError = cmd.ExecutionError
-
-		sess.Id(alert.Id).Update(&alert)
-		return nil
-	})
 }
 
 func GetAlertById(query *m.GetAlertByIdQuery) error {
@@ -241,6 +223,7 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 		alert.State = cmd.State
 		alert.StateChanges += 1
 		alert.NewStateDate = time.Now()
+		alert.ExecutionError = cmd.Error
 
 		sess.Id(alert.Id).Update(&alert)
 		return nil

@@ -10,9 +10,11 @@ type AlertStateType string
 type AlertSeverityType string
 
 const (
-	AlertStatePending AlertStateType = "pending"
-	AlertStateFiring  AlertStateType = "firing"
-	AlertStateOK      AlertStateType = "ok"
+	AlertStatePending        AlertStateType = "pending"
+	AlertStateExeuctionError AlertStateType = "exeuction_error"
+	AlertStatePaused         AlertStateType = "paused"
+	AlertStateFiring         AlertStateType = "firing"
+	AlertStateOK             AlertStateType = "ok"
 )
 
 func (s AlertStateType) IsValid() bool {
@@ -41,7 +43,6 @@ type Alert struct {
 	Severity       AlertSeverityType
 	State          AlertStateType
 	Handler        int64
-	Paused         bool
 	Silenced       bool
 	ExecutionError string
 	Frequency      int64
@@ -115,16 +116,12 @@ type SetAlertStateCommand struct {
 	AlertId   int64
 	OrgId     int64
 	State     AlertStateType
+	Error     string
 	Timestamp time.Time
 }
 
 type DeleteAlertCommand struct {
 	AlertId int64
-}
-
-type SaveExecutionErrorCommand struct {
-	AlertId        int64
-	ExecutionError string
 }
 
 //Queries
