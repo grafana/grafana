@@ -29,7 +29,7 @@ func NewResultHandler() *DefaultResultHandler {
 func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 	oldState := ctx.Rule.State
 
-	exeuctionError := ""
+	exeuctionError := " "
 	if ctx.Error != nil {
 		handler.log.Error("Alert Rule Result Error", "ruleId", ctx.Rule.Id, "error", ctx.Error)
 		ctx.Rule.State = m.AlertStateExeuctionError
@@ -41,7 +41,6 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 	}
 
 	countSeverity(ctx.Rule.Severity)
-
 	if ctx.Rule.State != oldState {
 		handler.log.Info("New state change", "alertId", ctx.Rule.Id, "newState", ctx.Rule.State, "oldState", oldState)
 

@@ -74,7 +74,6 @@
             "notifications": [],
             "severity": "critical"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -185,7 +184,6 @@
             "notifications": [],
             "severity": "critical"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -296,7 +294,6 @@
             "notifications": [],
             "severity": "critical"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -407,7 +404,6 @@
             "notifications": [],
             "severity": "critical"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -526,7 +522,6 @@
             "notifications": [],
             "severity": "warning"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -636,7 +631,6 @@
             "notifications": [],
             "severity": "warning"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -746,7 +740,6 @@
             "notifications": [],
             "severity": "warning"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -856,7 +849,6 @@
             "notifications": [],
             "severity": "warning"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -974,7 +966,6 @@
             "notifications": [],
             "severity": "critical"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -1084,7 +1075,6 @@
             "notifications": [],
             "severity": "critical"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -1194,7 +1184,6 @@
             "notifications": [],
             "severity": "critical"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -1304,7 +1293,6 @@
             "notifications": [],
             "severity": "critical"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -1422,7 +1410,6 @@
             "notifications": [],
             "name": "Fast Warning panel alert"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -1532,7 +1519,6 @@
             "notifications": [],
             "name": "Fast Warning panel alert"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -1642,7 +1628,6 @@
             "notifications": [],
             "name": "Fast Warning panel alert"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -1752,7 +1737,6 @@
             "notifications": [],
             "name": "Fast Warning panel alert"
           },
-          "alerting": {},
           "aliasColors": {},
           "bars": false,
           "datasource": "${DS_GRAPHITE}",
@@ -1936,7 +1920,6 @@
           "timeShift": null,
           "aliasColors": {},
           "seriesOverrides": [],
-          "alerting": {},
           "thresholds": [
             {
               "value": 20,
@@ -2047,7 +2030,6 @@
           "timeShift": null,
           "aliasColors": {},
           "seriesOverrides": [],
-          "alerting": {},
           "thresholds": [
             {
               "value": 10,
@@ -2167,7 +2149,6 @@
           "timeShift": null,
           "aliasColors": {},
           "seriesOverrides": [],
-          "alerting": {},
           "thresholds": [
             {
               "value": 60,
