@@ -21,7 +21,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   logScales: any;
   unitFormats: any;
   xAxisModes: any;
-  xAxisHistogramValues: any;
+  xAxisSeriesValues: any;
   annotationsPromise: any;
   datapointsCount: number;
   datapointsOutside: boolean;
@@ -53,8 +53,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     ],
     xaxis: {
       show: true,
-      mode: 'timeseries',
-      histogramValue: 'avg'
+      mode: 'time',
+      seriesValue: 'avg'
     },
     grid          : {
       threshold1: null,
@@ -145,11 +145,11 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.unitFormats = kbn.getUnitFormats();
 
     this.xAxisModes = {
-      'Time Series': 'timeseries',
-      'Histogram': 'histogram'
+      'Time': 'time',
+      'Series': 'series'
     };
 
-    this.xAxisHistogramValues = ['min', 'max', 'avg', 'current', 'total'];
+    this.xAxisSeriesValues = ['min', 'max', 'avg', 'current', 'total'];
   }
 
   onInitPanelActions(actions) {

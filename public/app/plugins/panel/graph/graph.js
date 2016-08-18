@@ -230,9 +230,9 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             var series = data[i];
             series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
 
-            if (panel.xaxis.mode === 'histogram') {
+            if (panel.xaxis.mode === 'series') {
               series.data = [
-                [i + 1, series.stats[panel.xaxis.histogramValue]]
+                [i + 1, series.stats[panel.xaxis.seriesValue]]
               ];
             }
 
@@ -243,7 +243,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             }
           }
 
-          if (panel.xaxis.mode === 'histogram') {
+          if (panel.xaxis.mode === 'series') {
             if (data.length) {
               options.series.bars.barWidth = 0.7;
               options.series.bars.align = 'center';
