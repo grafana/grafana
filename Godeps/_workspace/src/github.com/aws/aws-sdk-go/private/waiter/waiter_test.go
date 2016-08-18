@@ -266,6 +266,7 @@ func TestWaiterError(t *testing.T) {
 	svc.Handlers.Send.Clear() // mock sending
 	svc.Handlers.Unmarshal.Clear()
 	svc.Handlers.UnmarshalMeta.Clear()
+	svc.Handlers.UnmarshalError.Clear()
 	svc.Handlers.ValidateResponse.Clear()
 
 	reqNum := 0
@@ -291,14 +292,14 @@ func TestWaiterError(t *testing.T) {
 		numBuiltReq++
 	})
 	svc.Handlers.Send.PushBack(func(r *request.Request) {
+		code := 200
 		if reqNum == 1 {
-			r.Error = awserr.New("MockException", "mock exception message", nil)
-			r.HTTPResponse = &http.Response{
-				StatusCode: 400,
-				Status:     http.StatusText(400),
-				Body:       ioutil.NopCloser(bytes.NewReader([]byte{})),
-			}
-			reqNum++
+			code = 400
+		}
+		r.HTTPResponse = &http.Response{
+			StatusCode: code,
+			Status:     http.StatusText(code),
+			Body:       ioutil.NopCloser(bytes.NewReader([]byte{})),
 		}
 	})
 	svc.Handlers.Unmarshal.PushBack(func(r *request.Request) {
@@ -308,6 +309,14 @@ func TestWaiterError(t *testing.T) {
 		}
 		r.Data = resps[reqNum]
 		reqNum++
+	})
+	svc.Handlers.UnmarshalMeta.PushBack(func(r *request.Request) {
+		if reqNum == 1 {
+			r.Error = awserr.New("MockException", "mock exception message", nil)
+			// If there was an error unmarshal error will be called instead of unmarshal
+			// need to increment count here also
+			reqNum++
+		}
 	})
 
 	waiterCfg := waiter.Config{
@@ -358,6 +367,7 @@ func TestWaiterStatus(t *testing.T) {
 		code := 200
 		if reqNum == 3 {
 			code = 404
+			r.Error = awserr.New("NotFound", "Not Found", nil)
 		}
 		r.HTTPResponse = &http.Response{
 			StatusCode: code,
