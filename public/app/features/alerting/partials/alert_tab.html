@@ -67,6 +67,13 @@
             <label class="gf-form-label query-keyword" ng-show="conditionModel.evaluator.params.length === 2">TO</label>
 						<input class="gf-form-input max-width-7" type="number" ng-if="conditionModel.evaluator.params.length === 2" ng-model="conditionModel.evaluator.params[1]" ng-change="ctrl.evaluatorParamsChanged()"></input>
 					</div>
+					<gf-form-switch class="gf-form"
+                        label="OR NO VALUE"
+                        label-class="query-keyword"
+                        checked="dashboard.editable"
+                        >
+					</gf-form-switch>
+
 					<div class="gf-form">
 						<label class="gf-form-label">
 							<a class="pointer" tabindex="1" ng-click="ctrl.removeCondition($index)">

@@ -106,6 +106,9 @@ func AlertTest(c *middleware.Context, dto dtos.AlertTestCommand) Response {
 	for _, log := range res.Logs {
 		dtoRes.Logs = append(dtoRes.Logs, &dtos.AlertTestResultLog{Message: log.Message, Data: log.Data})
 	}
+	for _, match := range res.EvalMatches {
+		dtoRes.EvalMatches = append(dtoRes.EvalMatches, &dtos.EvalMatch{Metric: match.Metric, Value: match.Value})
+	}
 
 	dtoRes.TimeMs = fmt.Sprintf("%1.3fms", res.GetDurationMs())
 

@@ -53,8 +53,9 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) {
 				Metric: series.Name,
 				Value:  reducedValue,
 			})
-			context.Firing = true
 		}
+
+		context.Firing = evalMatch
 	}
 }
 

@@ -53,10 +53,10 @@ export class ThresholdMapper {
             thresholds.push({value: value1, op: 'gt'});
             thresholds.push({value: value2, op: 'lt'});
           }
-
           break;
         }
       }
+      break;
     }
 
     for (var t of panel.thresholds) {
