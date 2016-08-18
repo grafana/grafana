@@ -392,10 +392,10 @@
     z-index: 0;
     position: relative;
 
-    &--crit {
+    &--critical {
       background-color: rgba(237, 46, 24, 0.60);
     }
-    &--warn {
+    &--warning {
       background-color: rgba(247, 149, 32, 0.60);
     }
   }

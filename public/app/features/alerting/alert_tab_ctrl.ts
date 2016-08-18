@@ -4,6 +4,7 @@ import _ from 'lodash';
 import {ThresholdMapper} from './threshold_mapper';
 import {QueryPart} from 'app/core/components/query_part/query_part';
 import alertDef from './alert_def';
+import config from 'app/core/config';
 
 export class AlertTabCtrl {
   panel: any;
@@ -19,9 +20,17 @@ export class AlertTabCtrl {
   addNotificationSegment;
   notifications;
   alertNotifications;
+  error: string;
 
   /** @ngInject */
-  constructor(private $scope, private $timeout, private backendSrv, private dashboardSrv, private uiSegmentSrv, private $q) {
+  constructor(private $scope,
+              private $timeout,
+              private backendSrv,
+              private dashboardSrv,
+              private uiSegmentSrv,
+              private $q,
+              private datasourceSrv,
+              private templateSrv) {
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
     this.$scope.ctrl = this;
@@ -35,6 +44,7 @@ export class AlertTabCtrl {
     this.addNotificationSegment = this.uiSegmentSrv.newPlusButton();
 
     this.initModel();
+    this.validateModel();
 
     // set panel alert edit mode
     this.$scope.$on("$destroy", () => {
@@ -144,6 +154,47 @@ export class AlertTabCtrl {
     };
   }
 
+  validateModel() {
+    let firstTarget;
+    var fixed = false;
+    let foundTarget = null;
+
+    for (var condition of this.alert.conditions) {
+      if (condition.type !== 'query') {
+        continue;
+      }
+
+      for (var target of this.panel.targets) {
+        if (!firstTarget) {
+          firstTarget = target;
+        }
+        if (condition.query.params[0] === target.refId) {
+          foundTarget = target;
+          break;
+        }
+      }
+
+      if (!foundTarget) {
+        if (firstTarget) {
+          condition.query.params[0] = firstTarget.refId;
+          foundTarget = firstTarget;
+          fixed = true;
+        } else {
+          this.error = "Could not find any metric queries";
+        }
+      }
+
+      var datasourceName = foundTarget.datasource || this.panel.datasource;
+      this.datasourceSrv.get(datasourceName).then(ds => {
+        if (ds.meta.id !== 'graphite') {
+          this.error = 'Currently the alerting backend only supports Graphite queries';
+        } else if (this.templateSrv.variableExists(foundTarget.target)) {
+          this.error = 'Template variables are not supported in alert queries';
+        }
+      });
+    }
+  }
+
   buildConditionModel(source) {
     var cm: any = {source: source, type: source.type};
 
@@ -187,7 +238,7 @@ export class AlertTabCtrl {
   addCondition(type) {
     var condition = this.buildDefaultCondition();
     // add to persited model
-    this.panelCtrl.conditions.push(condition);
+    this.alert.conditions.push(condition);
     // add to view model
     this.conditionModels.push(this.buildConditionModel(condition));
   }
@@ -198,7 +249,7 @@ export class AlertTabCtrl {
   }
 
   delete() {
-    this.panel.alert = {enabled: false};
+    this.alert = this.panel.alert = {enabled: false};
     this.panel.thresholds = [];
     this.conditionModels = [];
     this.panelCtrl.render();
@@ -223,12 +274,12 @@ export class AlertTabCtrl {
     // ensure params array is correct length
     switch (evaluator.type) {
       case "lt":
-      case "gt": {
+        case "gt": {
         evaluator.params = [evaluator.params[0]];
         break;
       }
       case "within_range":
-      case "outside_range": {
+        case "outside_range": {
         evaluator.params = [evaluator.params[0], evaluator.params[1]];
         break;
       }
