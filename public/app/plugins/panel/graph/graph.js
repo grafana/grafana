@@ -234,6 +234,16 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               series.data = [
                 [i + 1, series.stats[panel.xaxis.seriesValue]]
               ];
+            } else if (panel.xaxis.mode === 'table') {
+              series.data = [];
+              for (var j = 0; j < series.datapoints.length; j++) {
+                var dataIndex = i * series.datapoints.length + j;
+                series.datapoints[j];
+                series.data.push([
+                  dataIndex + 1,
+                  series.datapoints[j][0]
+                ]);
+              }
             }
 
             // if hidden remove points and disable stack
@@ -252,7 +262,10 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               options.series.lines.show = false;
             }
 
-            addXAxis(options);
+            addXSeriesAxis(options);
+
+          } else if (panel.xaxis.mode === 'table') {
+            addXTableAxis(options);
 
           } else {
             if (data.length && data[0].stats.timeStep) {
@@ -325,10 +338,30 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           };
         }
 
-        function addXAxis(options) {
+        function addXSeriesAxis(options) {
           var ticks = _.map(data, function(series, index) {
             return [index + 1, series.alias];
           });
+
+          options.xaxis = {
+            timezone: dashboard.getTimezone(),
+            show: panel.xaxis.show,
+            mode: null,
+            min: 0,
+            max: ticks.length + 1,
+            label: "Datetime",
+            ticks: ticks
+          };
+        }
+
+        function addXTableAxis(options) {
+          var ticks = _.map(data, function(series, seriesIndex) {
+            return _.map(series.datapoints, function(point, pointIndex) {
+              var tickIndex = seriesIndex * series.datapoints.length + pointIndex;
+              return [tickIndex + 1, point[1]];
+            });
+          });
+          ticks = _.flatten(ticks, true);
 
           options.xaxis = {
             timezone: dashboard.getTimezone(),

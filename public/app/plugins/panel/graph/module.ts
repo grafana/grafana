@@ -22,6 +22,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   unitFormats: any;
   xAxisModes: any;
   xAxisSeriesValues: any;
+  xAxisColumns: any = [];
   annotationsPromise: any;
   datapointsCount: number;
   datapointsOutside: boolean;
@@ -146,7 +147,8 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     this.xAxisModes = {
       'Time': 'time',
-      'Series': 'series'
+      'Series': 'series',
+      'Table': 'table'
     };
 
     this.xAxisSeriesValues = ['min', 'max', 'avg', 'current', 'total'];
@@ -186,7 +188,26 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.datapointsWarning = false;
     this.datapointsCount = 0;
     this.datapointsOutside = false;
-    this.seriesList = dataList.map(this.seriesHandler.bind(this));
+
+    let dataHandler: (seriesData, index)=>any;
+    if (this.panel.xaxis.mode === 'table') {
+      if (dataList.length) {
+        // Table panel uses only first enabled tagret, so we can use dataList[0]
+        // for table data representation
+        this.xAxisColumns = _.map(dataList[0].columns, function(column, index) {
+          return {
+            text: column.text,
+            index: index
+          };
+        });
+      }
+
+      dataHandler = this.tableHandler;
+    } else {
+      dataHandler = this.seriesHandler;
+    }
+
+    this.seriesList = dataList.map(dataHandler.bind(this));
     this.datapointsWarning = this.datapointsCount === 0 || this.datapointsOutside;
 
     this.annotationsPromise.then(annotations => {
@@ -202,6 +223,42 @@ class GraphCtrl extends MetricsPanelCtrl {
   seriesHandler(seriesData, index) {
     var datapoints = seriesData.datapoints;
     var alias = seriesData.target;
+    var colorIndex = index % this.colors.length;
+    var color = this.panel.aliasColors[alias] || this.colors[colorIndex];
+
+    var series = new TimeSeries({
+      datapoints: datapoints,
+      alias: alias,
+      color: color,
+      unit: seriesData.unit,
+    });
+
+    if (datapoints && datapoints.length > 0) {
+      var last = moment.utc(datapoints[datapoints.length - 1][1]);
+      var from = moment.utc(this.range.from);
+      if (last - from < -10000) {
+        this.datapointsOutside = true;
+      }
+
+      this.datapointsCount += datapoints.length;
+      this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
+    }
+
+
+    return series;
+  }
+
+  tableHandler(seriesData, index) {
+    var xColumnIndex = Number(this.panel.xaxis.columnIndex);
+    var datapoints = _.map(seriesData.rows, (row) => {
+      return [
+        _.last(row),       // Y value (always last column)
+        row[xColumnIndex]  // X value
+      ];
+    });
+
+    var alias = seriesData.columns[xColumnIndex].text;
+
     var colorIndex = index % this.colors.length;
     var color = this.panel.aliasColors[alias] || this.colors[colorIndex];
 
