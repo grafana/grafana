@@ -93,10 +93,29 @@ dynamicDashScenario('given dashboard with panel repeat', function(ctx) {
     });
   });
 
+  describe('After a second iteration with different variable', function() {
+    beforeEach(function() {
+      ctx.dash.templating.list.push({
+        name: 'server',
+        current: { text: 'se1, se2, se3', value: ['se1']},
+        options: [{text: 'se1', value: 'se1', selected: true}]
+      });
+      ctx.rows[0].panels[0].repeat = "server";
+      ctx.dynamicDashboardSrv.update(ctx.dash);
+    });
+
+    it('should remove scopedVars value for last variable', function() {
+      expect(ctx.rows[0].panels[0].scopedVars.apps).to.be(undefined);
+    });
+
+    it('should have new variable value in scopedVars', function() {
+      expect(ctx.rows[0].panels[0].scopedVars.server.value).to.be("se1");
+    });
+  });
+
   describe('After a second iteration and selected values reduced', function() {
     beforeEach(function() {
       ctx.dash.templating.list[0].options[1].selected = false;
-
       ctx.dynamicDashboardSrv.update(ctx.dash);
     });
 
@@ -116,7 +135,7 @@ dynamicDashScenario('given dashboard with panel repeat', function(ctx) {
     });
 
     it('should remove scoped vars from reused panel', function() {
-      expect(ctx.rows[0].panels[0].scopedVars).to.be.empty();
+      expect(ctx.rows[0].panels[0].scopedVars).to.be(undefined);
     });
   });
 
@@ -165,6 +184,7 @@ dynamicDashScenario('given dashboard with row repeat', function(ctx) {
 
   it('should generate a repeartRowId based on repeat row index', function() {
     expect(ctx.rows[1].repeatRowId).to.be(1);
+    expect(ctx.rows[1].repeatIteration).to.be(ctx.dynamicDashboardSrv.iteration);
   });
 
   it('should set scopedVars on row panels', function() {

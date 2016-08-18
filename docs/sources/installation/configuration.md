@@ -76,7 +76,7 @@ The IP address to bind to. If empty will bind to all interfaces
 The port to bind to, defaults to `3000`. To use port 80 you need to
 either give the Grafana binary permission for example:
 
-    $ sudo setcap 'cap_net_bind_service=+ep' /opt/grafana/current/grafana
+    $ sudo setcap 'cap_net_bind_service=+ep' /usr/sbin/grafana-server
 
 Or redirect port 80 to the Grafana port using:
 
@@ -466,7 +466,7 @@ Enable metrics reporting. defaults true. Available via HTTP API `/api/metrics`.
 
 ### interval_seconds
 
-Flush/Write interval when sending metrics to external TSDB. Defaults to 60s.
+Flush/Write interval when sending metrics to external TSDB. Defaults to 10s.
 
 ## [metrics.graphite]
 Include this section if you want to send internal Grafana metrics to Graphite.
@@ -476,4 +476,15 @@ Format `<Hostname or ip>`:port
 
 ### prefix
 Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
+
+## [snapshots]
+
+### external_enabled
+Set to false to disable external snapshot publish endpoint (default true)
+
+### external_snapshot_url
+Set root url to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots-origin.raintank.io)
+
+### external_snapshot_name
+Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`
 

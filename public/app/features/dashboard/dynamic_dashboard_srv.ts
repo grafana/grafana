@@ -10,10 +10,6 @@ export class DynamicDashboardSrv {
   iteration: number;
   dashboard: any;
 
-  constructor() {
-    this.iteration = new Date().getTime();
-  }
-
   init(dashboard) {
     if (dashboard.snapshot) { return; }
     this.process(dashboard, {});
@@ -21,20 +17,29 @@ export class DynamicDashboardSrv {
 
   update(dashboard) {
     if (dashboard.snapshot) { return; }
-
-    this.iteration = this.iteration + 1;
     this.process(dashboard, {});
   }
 
   process(dashboard, options) {
     if (dashboard.templating.list.length === 0) { return; }
+
     this.dashboard = dashboard;
+    this.iteration = (this.iteration || new Date().getTime()) + 1;
 
     var cleanUpOnly = options.cleanUpOnly;
-
     var i, j, row, panel;
+
+    // cleanup scopedVars
     for (i = 0; i < this.dashboard.rows.length; i++) {
       row = this.dashboard.rows[i];
+      for (j = 0; j < row.panels.length; j++) {
+        delete row.panels[j].scopedVars;
+      }
+    }
+
+    for (i = 0; i < this.dashboard.rows.length; i++) {
+      row = this.dashboard.rows[i];
+
       // handle row repeats
       if (row.repeat) {
         if (!cleanUpOnly) {
@@ -58,8 +63,6 @@ export class DynamicDashboardSrv {
           // clean up old left overs
           row.panels = _.without(row.panels, panel);
           j = j - 1;
-        } else if (!_.isEmpty(panel.scopedVars) && panel.repeatIteration !== this.iteration) {
-          panel.scopedVars = {};
         }
       }
     }
@@ -124,7 +127,6 @@ export class DynamicDashboardSrv {
         panel = copy.panels[i];
         panel.scopedVars = {};
         panel.scopedVars[variable.name] = option;
-        panel.repeatIteration = this.iteration;
       }
     });
   }

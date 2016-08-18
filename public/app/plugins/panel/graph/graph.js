@@ -251,11 +251,14 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           function callPlot(incrementRenderCounter) {
             try {
               $.plot(elem, sortedSeries, options);
-              delete ctrl.error;
-              delete ctrl.inspector;
+              if (ctrl.renderError) {
+                delete ctrl.error;
+                delete ctrl.inspector;
+              }
             } catch (e) {
               console.log('flotcharts error', e);
               ctrl.error = e.message || "Render Error";
+              ctrl.renderError = true;
               ctrl.inspector = {error: ctrl.error};
             }
 

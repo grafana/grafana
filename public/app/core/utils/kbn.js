@@ -500,6 +500,19 @@ function($, _, moment) {
   kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
     if (size === null) { return ""; }
 
+    // Less than 1 µs, devide in ns
+    if (Math.abs(size) < 0.000001) {
+      return kbn.toFixedScaled(size * 1.e9, decimals, scaledDecimals - decimals, -9, " ns");
+    }
+    // Less than 1 ms, devide in µs
+    if (Math.abs(size) < 0.001) {
+      return kbn.toFixedScaled(size * 1.e6, decimals, scaledDecimals - decimals, -6, " µs");
+    }
+    // Less than 1 second, devide in ms
+    if (Math.abs(size) < 1) {
+      return kbn.toFixedScaled(size * 1.e3, decimals, scaledDecimals - decimals, -3, " ms");
+    }
+
     if (Math.abs(size) < 60) {
       return kbn.toFixed(size, decimals) + " s";
     }
