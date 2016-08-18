@@ -42,4 +42,8 @@ func TestEvalutors(t *testing.T) {
 		So(test(`{"type": "outside_range", "params": [100, 1] }`, 1000), ShouldBeTrue)
 		So(test(`{"type": "outside_range", "params": [100, 1] }`, 50), ShouldBeFalse)
 	})
+
+	Convey("no_value", t, func() {
+		So(test(`{"type": "no_value", "params": [] }`, 1000), ShouldBeTrue)
+	})
 }
