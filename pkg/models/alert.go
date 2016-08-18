@@ -11,7 +11,7 @@ type AlertSeverityType string
 
 const (
 	AlertStatePending        AlertStateType = "pending"
-	AlertStateExeuctionError AlertStateType = "exeuction_error"
+	AlertStateExeuctionError AlertStateType = "execution_error"
 	AlertStatePaused         AlertStateType = "paused"
 	AlertStateCritical       AlertStateType = "critical"
 	AlertStateWarning        AlertStateType = "warning"

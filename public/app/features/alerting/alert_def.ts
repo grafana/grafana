@@ -61,28 +61,36 @@ function getStateDisplayModel(state) {
         iconClass: 'icon-gf icon-gf-critical',
         stateClass: 'alert-state-critical'
       };
-     }
-     case 'warning': {
+    }
+    case 'warning': {
       return {
         text: 'WARNING',
         iconClass: 'icon-gf icon-gf-warning',
         stateClass: 'alert-state-warning'
       };
-     }
-     case 'pending': {
+    }
+    case 'pending': {
       return {
         text: 'PENDING',
         iconClass: "fa fa-question",
         stateClass: 'alert-state-warning'
       };
-     }
-     case 'paused': {
+    }
+    case 'execution_error': {
+      return {
+        text: 'EXECUTION ERROR',
+        iconClass: 'icon-gf icon-gf-critical',
+        stateClass: 'alert-state-critical'
+      };
+    }
+
+    case 'paused': {
       return {
         text: 'paused',
         iconClass: "fa fa-pause",
         stateClass: 'alert-state-paused'
       };
-     }
+    }
   }
 }
 

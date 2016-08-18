@@ -33,9 +33,6 @@
                 <i class="icon-gf icon-gf-settings"></i>
               </a>
             </div>
-            <div class="card-item-notice" ng-show="alert.executionError">
-              <span>Execution Error</span>
-            </div>
           </div>
           <div class="card-item-body">
             <div class="card-item-details">
@@ -49,7 +46,9 @@
                   <i class="{{alert.stateModel.iconClass}}"></i>
                   {{alert.stateModel.text}}
                 </span> for {{alert.newStateDateAgo}}
-                </div>
+              </div>
+              <div class="small muted" ng-show="alert.executionError">
+                {{alert.executionError}}
               </div>
             </div>
           </div>

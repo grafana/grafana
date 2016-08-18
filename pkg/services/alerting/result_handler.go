@@ -29,7 +29,7 @@ func NewResultHandler() *DefaultResultHandler {
 func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 	oldState := ctx.Rule.State
 
-	exeuctionError := " "
+	exeuctionError := ""
 	if ctx.Error != nil {
 		handler.log.Error("Alert Rule Result Error", "ruleId", ctx.Rule.Id, "error", ctx.Error)
 		ctx.Rule.State = m.AlertStateExeuctionError
