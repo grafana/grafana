@@ -21,6 +21,7 @@ export class AlertTabCtrl {
   notifications;
   alertNotifications;
   error: string;
+  appSubUrl: string;
 
   /** @ngInject */
   constructor(private $scope,
@@ -38,6 +39,7 @@ export class AlertTabCtrl {
     this.evalFunctions = alertDef.evalFunctions;
     this.conditionTypes = alertDef.conditionTypes;
     this.severityLevels = alertDef.severityLevels;
+    this.appSubUrl = config.appSubUrl;
   }
 
   $onInit() {
