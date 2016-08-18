@@ -215,6 +215,16 @@ export class AlertTabCtrl {
       case "get-part-actions": {
         return this.$q.when([]);
       }
+      case "part-param-changed": {
+        this.validateModel();
+      }
+      case "get-param-options": {
+        var result = this.panel.targets.map(target => {
+          return this.uiSegmentSrv.newSegment({ value: target.refId });
+        });
+
+        return this.$q.when(result);
+      }
     }
   }
 
