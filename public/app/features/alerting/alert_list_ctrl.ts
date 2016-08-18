@@ -47,6 +47,7 @@ export class AlertListCtrl {
   openHowTo() {
     appEvents.emit('show-modal', {
       src: 'public/app/features/alerting/partials/alert_howto.html',
+      modalClass: 'confirm-modal',
       model: {}
     });
   }
