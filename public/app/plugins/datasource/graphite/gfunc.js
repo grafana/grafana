@@ -263,6 +263,23 @@ function (_, $) {
   });
 
   addFuncDef({
+    name: "groupByNodes",
+    category: categories.Special,
+    params: [
+      {
+        name: "function",
+        type: "string",
+        options: ['sum', 'avg', 'maxSeries']
+      },
+      { name: "node", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+    ],
+    defaultParams: ["sum", 3]
+  });
+
+  addFuncDef({
     name: 'aliasByNode',
     category: categories.Special,
     params: [
