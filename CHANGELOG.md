@@ -8,6 +8,7 @@
 * **Elasticsearch**: Support to set Precision Threshold for Unique Count metric, closes [#4689](https://github.com/grafana/grafana/issues/4689)
 * **Navigation**: Add search to org swithcer, closes [#2609](https://github.com/grafana/grafana/issues/2609)
 * **Database**: Allow database config using one propertie, closes [#5456](https://github.com/grafana/grafana/pull/5456)
+* **Graphite**: Add support for groupByNode, closes [#5613](https://github.com/grafana/grafana/pull/5613)
 
 # 3.1.2 (unreleased)
 * **Templating**: Fixed issue when combining row & panel repeats, fixes [#5790](https://github.com/grafana/grafana/issues/5790)
