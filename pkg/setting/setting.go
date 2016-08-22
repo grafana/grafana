@@ -193,6 +193,11 @@ func shouldRedactKey(s string) bool {
 	return strings.Contains(uppercased, "PASSWORD") || strings.Contains(uppercased, "SECRET")
 }
 
+func shouldRedactURLKey(s string) bool {
+	uppercased := strings.ToUpper(s)
+	return strings.Contains(uppercased, "DATABASE_URL")
+}
+
 func applyEnvVariableOverrides() {
 	appliedEnvOverrides = make([]string, 0)
 	for _, section := range Cfg.Sections() {
@@ -206,6 +211,17 @@ func applyEnvVariableOverrides() {
 				key.SetValue(envValue)
 				if shouldRedactKey(envKey) {
 					envValue = "*********"
+				}
+				if shouldRedactURLKey(envKey) {
+					u, _ := url.Parse(envValue)
+					ui := u.User
+					if ui != nil {
+						_, exists := ui.Password()
+						if exists {
+							u.User = url.UserPassword(ui.Username(), "-redacted-")
+							envValue = u.String()
+						}
+					}
 				}
 				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, envValue))
 			}

@@ -22,6 +22,16 @@
 					{{::menuItem.text}}
 				</a>
 			</li>
+            <li ng-show="ctrl.orgs.length > ctrl.maxShownOrgs" style="margin-left: 10px;width: 90%">
+                <span class="sidemenu-item-text">Max shown : {{::ctrl.maxShownOrgs}}</span>
+                <input ng-model="::ctrl.orgFilter" style="padding-left: 5px" type="text" ng-change="::ctrl.loadOrgsItems();" class="gf-input-small width-12" placeholder="Filter">
+            </li>
+            <li ng-repeat="orgItem in ctrl.orgItems" ng-class="::orgItem.cssClass">
+				<a href="{{::orgItem.url}}" ng-show="::orgItem.url" target="{{::orgItem.target}}">
+					<i class="{{::orgItem.icon}}" ng-show="::orgItem.icon"></i>
+					{{::orgItem.text}}
+				</a>
+			</li>
 		</ul>
 	</li>
 
