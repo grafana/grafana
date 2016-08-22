@@ -47,8 +47,19 @@ func (this *WebhookNotifier) Notify(context *alerting.EvalContext) {
 	bodyJSON.Set("title", context.GetNotificationTitle())
 	bodyJSON.Set("ruleId", context.Rule.Id)
 	bodyJSON.Set("ruleName", context.Rule.Name)
-	bodyJSON.Set("firing", context.Firing)
+	bodyJSON.Set("state", context.Rule.State)
 	bodyJSON.Set("severity", context.Rule.Severity)
+	bodyJSON.Set("evalMatches", context.EvalMatches)
+
+	ruleUrl, err := context.GetRuleUrl()
+	if err == nil {
+		bodyJSON.Set("rule_url", ruleUrl)
+	}
+
+	imageUrl, err := context.GetImageUrl()
+	if err == nil {
+		bodyJSON.Set("image_url", imageUrl)
+	}
 
 	body, _ := bodyJSON.MarshalJSON()
 
