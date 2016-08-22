@@ -42,6 +42,8 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) float64 {
 	case "mean":
 		meanPosition := int64(len(series.Points) / 2)
 		value = series.Points[meanPosition][0]
+	case "count":
+		value = float64(len(series.Points))
 	}
 
 	return value
