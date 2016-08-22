@@ -51,9 +51,11 @@ function (_) {
         });
       });
     } else {
+      var start = this.datasource.getPrometheusTime(this.range.from, false);
+      var end = this.datasource.getPrometheusTime(this.range.to, true);
       url = '/api/v1/series?match[]=' + encodeURIComponent(metric)
-        + '&start=' + (this.range.from.valueOf() / 1000)
-        + '&end=' + (this.range.to.valueOf() / 1000);
+        + '&start=' + start
+        + '&end=' + end;
 
       return this.datasource._request('GET', url)
       .then(function(result) {
@@ -88,7 +90,8 @@ function (_) {
   };
 
   PrometheusMetricFindQuery.prototype.queryResultQuery = function(query) {
-    var url = '/api/v1/query?query=' + encodeURIComponent(query) + '&time=' + (this.range.to.valueOf() / 1000);
+    var end = this.datasource.getPrometheusTime(this.range.to, true);
+    var url = '/api/v1/query?query=' + encodeURIComponent(query) + '&time=' + end;
 
     return this.datasource._request('GET', url)
     .then(function(result) {
@@ -109,9 +112,11 @@ function (_) {
   };
 
   PrometheusMetricFindQuery.prototype.metricNameAndLabelsQuery = function(query) {
+    var start = this.datasource.getPrometheusTime(this.range.from, false);
+    var end = this.datasource.getPrometheusTime(this.range.to, true);
     var url = '/api/v1/series?match[]=' + encodeURIComponent(query)
-      + '&start=' + (this.range.from.valueOf() / 1000)
-      + '&end=' + (this.range.to.valueOf() / 1000);
+      + '&start=' + start
+      + '&end=' + end;
 
     var self = this;
     return this.datasource._request('GET', url)
