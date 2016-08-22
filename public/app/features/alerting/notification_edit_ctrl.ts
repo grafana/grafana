@@ -34,10 +34,12 @@ export class AlertNotificationEditCtrl {
     if (this.model.id) {
       this.backendSrv.put(`/api/alert-notifications/${this.model.id}`, this.model).then(res => {
         this.model = res;
+        this.$scope.appEvent('alert-success', ['Notification updated', '']);
       });
     } else {
       this.backendSrv.post(`/api/alert-notifications`, this.model).then(res => {
         this.$location.path('alerting/notification/' + res.id + '/edit');
+        this.$scope.appEvent('alert-success', ['Notification created', '']);
       });
     }
   }
