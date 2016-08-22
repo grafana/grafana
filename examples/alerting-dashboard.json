@@ -67,18 +67,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "60s",
             "handler": 1,
             "name": "Critical alert panel",
             "notifications": [],
-            "severity": "critical",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "critical"
           },
           "alerting": {},
           "aliasColors": {},
@@ -186,18 +180,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "60s",
             "handler": 1,
             "name": "Warning panel alert",
             "notifications": [],
-            "severity": "warning",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "warning"
           },
           "alerting": {},
           "aliasColors": {},
@@ -302,18 +290,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "60s",
             "handler": 1,
             "name": "No datapoints",
             "notifications": [],
-            "severity": "critical",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "critical"
           },
           "alerting": {},
           "aliasColors": {},
@@ -424,18 +406,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "60s",
             "handler": 1,
             "name": "Alert below value",
             "notifications": [],
-            "severity": "critical",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "critical"
           },
           "alerting": {},
           "aliasColors": {},
@@ -541,18 +517,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "10s",
             "handler": 1,
             "name": "Alert is outside range",
             "notifications": [],
-            "severity": "critical",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "critical"
           },
           "alerting": {},
           "aliasColors": {},
@@ -667,18 +637,12 @@
                 "type": "query"
               }
             ],
-            "crit": {
-              "op": ">"
-            },
             "enabled": true,
             "frequency": "10s",
             "handler": 1,
             "name": "Alert is within range",
             "notifications": [],
-            "severity": "critical",
-            "warn": {
-              "op": ">"
-            }
+            "severity": "critical"
           },
           "alerting": {},
           "aliasColors": {},
