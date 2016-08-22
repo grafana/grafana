@@ -156,11 +156,29 @@ export class DashNavCtrl {
     };
 
     $scope.deleteDashboard = function() {
+      var confirmText = "";
+      var text2 = $scope.dashboard.title;
+      var alerts = 0;
+
+      _.each($scope.dashboard.rows, row => {
+        _.each(row.panels, panel => {
+          if (panel.alerting && panel.alerting.queryRef !== '- select query -') {
+            alerts += 1;
+          };
+        });
+      });
+
+      if (alerts > 0) {
+        confirmText = $scope.dashboard.title;
+        text2 = `This dashboad contains ${alerts} alerts. Deleting this dashboad will also delete those alerts`;
+      }
+
       $scope.appEvent('confirm-modal', {
         title: 'Delete',
         text: 'Do you want to delete this dashboard?',
-        text2: $scope.dashboard.title,
+        text2: text2,
         icon: 'fa-trash',
+        confirmText: confirmText,
         yesText: 'Delete',
         onConfirm: function() {
           $scope.deleteDashboardConfirmed();

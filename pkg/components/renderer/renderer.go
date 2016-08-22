@@ -9,10 +9,11 @@ import (
 	"runtime"
 	"time"
 
+	"strconv"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"strconv"
 )
 
 type RenderOpts struct {
@@ -23,8 +24,10 @@ type RenderOpts struct {
 	Timeout   string
 }
 
+var rendererLog log.Logger = log.New("png-renderer")
+
 func RenderToPng(params *RenderOpts) (string, error) {
-	log.Info("PhantomRenderer::renderToPng url %v", params.Url)
+	rendererLog.Info("Rendering", "url", params.Url)
 
 	var executable = "phantomjs"
 	if runtime.GOOS == "windows" {
@@ -71,11 +74,12 @@ func RenderToPng(params *RenderOpts) (string, error) {
 	select {
 	case <-time.After(time.Duration(timeout) * time.Second):
 		if err := cmd.Process.Kill(); err != nil {
-			log.Error(4, "failed to kill: %v", err)
+			rendererLog.Error("failed to kill", "error", err)
 		}
 		return "", fmt.Errorf("PhantomRenderer::renderToPng timeout (>%vs)", timeout)
 	case <-done:
 	}
 
+	rendererLog.Debug("Image rendered", "path", pngPath)
 	return pngPath, nil
 }

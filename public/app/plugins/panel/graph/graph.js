@@ -5,6 +5,7 @@ define([
   'lodash',
   'app/core/utils/kbn',
   './graph_tooltip',
+  './threshold_manager',
   'jquery.flot',
   'jquery.flot.selection',
   'jquery.flot.time',
@@ -14,7 +15,7 @@ define([
   'jquery.flot.crosshair',
   './jquery.flot.events',
 ],
-function (angular, $, moment, _, kbn, GraphTooltip) {
+function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -33,6 +34,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         var legendSideLastValue = null;
         var rootScope = scope.$root;
         var panelWidth = 0;
+        var thresholdManager = new thresholdManExports.ThresholdManager(ctrl);
 
         rootScope.onAppEvent('setCrosshair', function(event, info) {
           // do not need to to this if event is from this panel
@@ -155,6 +157,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
             rightLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[1].label, rightLabel) / 2) + 'px';
           }
+
+          thresholdManager.draw(plot);
         }
 
         function processOffsetHook(plot, gridMargin) {
@@ -171,6 +175,9 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           if (shouldAbortRender()) {
             return;
           }
+
+          // give space to alert editing
+          thresholdManager.prepare(elem, data);
 
           var stack = panel.stack ? true : null;
 
@@ -242,7 +249,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           }
 
           addTimeAxis(options);
-          addGridThresholds(options, panel);
+          thresholdManager.addPlotOptions(options, panel);
           addAnnotations(options);
           configureAxisOptions(data, options);
 
@@ -306,29 +313,6 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             ticks: ticks,
             timeformat: time_format(ticks, min, max),
           };
-        }
-
-        function addGridThresholds(options, panel) {
-          if (_.isNumber(panel.grid.threshold1)) {
-            var limit1 = panel.grid.thresholdLine ? panel.grid.threshold1 : (panel.grid.threshold2 || null);
-            options.grid.markings.push({
-              yaxis: { from: panel.grid.threshold1, to: limit1 },
-              color: panel.grid.threshold1Color
-            });
-
-            if (_.isNumber(panel.grid.threshold2)) {
-              var limit2;
-              if (panel.grid.thresholdLine) {
-                limit2 = panel.grid.threshold2;
-              } else {
-                limit2 = panel.grid.threshold1 > panel.grid.threshold2 ?  -Infinity : +Infinity;
-              }
-              options.grid.markings.push({
-                yaxis: { from: panel.grid.threshold2, to: limit2 },
-                color: panel.grid.threshold2Color
-              });
-            }
-          }
         }
 
         function addAnnotations(options) {

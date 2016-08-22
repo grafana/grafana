@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/sqlstore/sqlutil"
 
 	. "github.com/smartystreets/goconvey/convey"
+	//"github.com/grafana/grafana/pkg/log"
 )
 
 var indexTypes = []string{"Unknown", "INDEX", "UNIQUE INDEX"}

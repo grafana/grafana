@@ -99,7 +99,7 @@ $component-active-bg:    $brand-primary !default;
 $panel-bg: 		  $gray-7;
 $panel-border:  solid 1px $gray-6;
 
-$divider-border-color:	$gray-2;
+$divider-border-color:	      $gray-2;
 
 // Graphite Target Editor
 $tight-form-border:   $gray-4;
@@ -157,6 +157,10 @@ $btn-inverse-text-color:  $dark-4;
 
 $btn-link-color: $gray-1;
 
+$btn-divider-left:   $gray-4;
+$btn-divider-right:  $gray-7;
+$btn-drag-image:    '../img/grab_light.svg';
+
 $iconContainerBackground: $white;
 
 // Forms
@@ -171,6 +175,7 @@ $input-border-focus:             $blue !default;
 $input-box-shadow-focus:         $blue !default;
 $input-color-placeholder:        $gray-4 !default;
 $input-label-bg:	        	     $gray-6;
+$input-invalid-border-color:     lighten($red, 5%);
 
 // Sidemenu
 // -------------------------

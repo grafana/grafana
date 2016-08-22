@@ -8,7 +8,6 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -42,7 +41,7 @@ func OAuthLogin(ctx *middleware.Context) {
 		return
 	}
 
-	log.Trace("login.OAuthLogin(Got token)")
+	ctx.Logger.Debug("OAuthLogin Got token")
 
 	userInfo, err := connect.UserInfo(token)
 	if err != nil {
@@ -56,11 +55,11 @@ func OAuthLogin(ctx *middleware.Context) {
 		return
 	}
 
-	log.Trace("login.OAuthLogin(social login): %s", userInfo)
+	ctx.Logger.Debug("OAuthLogin got user info", "userInfo", userInfo)
 
 	// validate that the email is allowed to login to grafana
 	if !connect.IsEmailAllowed(userInfo.Email) {
-		log.Info("OAuth login attempt with unallowed email, %s", userInfo.Email)
+		ctx.Logger.Info("OAuth login attempt with unallowed email", "email", userInfo.Email)
 		ctx.Redirect(setting.AppSubUrl + "/login?failedMsg=" + url.QueryEscape("Required email domain not fulfilled"))
 		return
 	}

@@ -140,11 +140,21 @@ var (
 	// QUOTA
 	Quota QuotaSettings
 
+	// Alerting
+	AlertingEnabled bool
+
 	// logger
 	logger log.Logger
 
 	// Grafana.NET URL
 	GrafanaNetUrl string
+
+	// S3 temp image store
+	S3TempImageStoreBucketUrl string
+	S3TempImageStoreAccessKey string
+	S3TempImageStoreSecretKey string
+
+	ImageUploadProvider string
 )
 
 type CommandLineArgs struct {
@@ -534,6 +544,9 @@ func NewConfigContext(args *CommandLineArgs) error {
 	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
 	LdapConfigFile = ldapSec.Key("config_file").String()
 
+	alerting := Cfg.Section("alerting")
+	AlertingEnabled = alerting.Key("enabled").MustBool(false)
+
 	readSessionConfig()
 	readSmtpSettings()
 	readQuotaSettings()
@@ -544,6 +557,8 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	GrafanaNetUrl = Cfg.Section("grafana.net").Key("url").MustString("https://grafana.net")
 
+	imageUploadingSection := Cfg.Section("external_image_storage")
+	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("internal")
 	return nil
 }
 
