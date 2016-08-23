@@ -194,12 +194,18 @@ class GraphCtrl extends MetricsPanelCtrl {
       if (dataList.length) {
         // Table panel uses only first enabled tagret, so we can use dataList[0]
         // for table data representation
+        dataList.splice(1, dataList.length - 1);
         this.xAxisColumns = _.map(dataList[0].columns, function(column, index) {
           return {
             text: column.text,
             index: index
           };
         });
+
+        // Set last column as default value
+        if (!this.panel.xaxis.valueColumnIndex) {
+          this.panel.xaxis.valueColumnIndex = this.xAxisColumns.length - 1;
+        }
       }
 
       dataHandler = this.tableHandler;
@@ -250,14 +256,16 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   tableHandler(seriesData, index) {
     var xColumnIndex = Number(this.panel.xaxis.columnIndex);
+    var valueColumnIndex = this.panel.xaxis.valueColumnIndex;
     var datapoints = _.map(seriesData.rows, (row) => {
+      var value = valueColumnIndex ? row[valueColumnIndex] : _.last(row);
       return [
-        _.last(row),       // Y value (always last column)
+        value,             // Y value
         row[xColumnIndex]  // X value
       ];
     });
 
-    var alias = seriesData.columns[xColumnIndex].text;
+    var alias = seriesData.columns[valueColumnIndex].text;
 
     var colorIndex = index % this.colors.length;
     var color = this.panel.aliasColors[alias] || this.colors[colorIndex];

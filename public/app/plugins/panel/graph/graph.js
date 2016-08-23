@@ -265,6 +265,11 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             addXSeriesAxis(options);
 
           } else if (panel.xaxis.mode === 'table') {
+            if (data.length) {
+              options.series.bars.barWidth = 0.7;
+              options.series.bars.align = 'center';
+            }
+
             addXTableAxis(options);
 
           } else {
