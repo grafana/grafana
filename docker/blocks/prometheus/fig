@@ -1,6 +1,6 @@
 prometheus:
   build: blocks/prometheus
-  net: bridge
+  net: host
   ports:
     - "9090:9090"
   volumes:
@@ -8,13 +8,13 @@ prometheus:
 
 node_exporter:
   image: prom/node-exporter
-  net: bridge
+  net: host
   ports:
     - "9100:9100"
 
 fake-prometheus-data:
   image: grafana/fake-data-gen
-  net: bridge
+  net: host
   ports:
     - "9091:9091"
   environment:
