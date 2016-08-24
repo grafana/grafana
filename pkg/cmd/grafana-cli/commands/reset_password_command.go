@@ -10,6 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+const AdminUserId = 1
+
 func resetPasswordCommand(c CommandLine) error {
 	newPassword := c.Args().First()
 
@@ -17,7 +19,7 @@ func resetPasswordCommand(c CommandLine) error {
 		return fmt.Errorf("New password too short")
 	}
 
-	userQuery := models.GetUserByIdQuery{Id: 1}
+	userQuery := models.GetUserByIdQuery{Id: AdminUserId}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
 		return fmt.Errorf("Could not read user from database. Error: %v", err)
@@ -26,7 +28,7 @@ func resetPasswordCommand(c CommandLine) error {
 	passwordHashed := util.EncodePassword(newPassword, userQuery.Result.Salt)
 
 	cmd := models.ChangeUserPasswordCommand{
-		UserId:      1,
+		UserId:      AdminUserId,
 		NewPassword: passwordHashed,
 	}
 
