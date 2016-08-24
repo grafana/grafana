@@ -38,8 +38,8 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	}
 
 	for _, query := range queries {
-		params["target"] = []string{query.Query}
-		glog.Debug("Graphite request", "query", query.Query)
+		params["target"] = []string{query.Query.Get("target").MustString()}
+		glog.Debug("Graphite request", "query", params["target"][0])
 	}
 
 	client := http.Client{Timeout: time.Duration(10 * time.Second)}
