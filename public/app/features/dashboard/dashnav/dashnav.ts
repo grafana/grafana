@@ -26,6 +26,8 @@ export class DashNavCtrl {
           $scope.titleTooltip += '<br>Expires: &nbsp;' + moment(meta.expires).fromNow() + '<br>';
         }
       }
+
+      $scope.majorMinor = $rootScope.contextSrv.version.split(".",2).join(".");
     };
 
     $scope.openEditView = function(editview) {
