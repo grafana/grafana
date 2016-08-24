@@ -9,7 +9,8 @@ h1 {font-size: 40px;}
 h2 {font-size: 36px;}
 h3 {
   font-size: 22px;
-  margin-top: 20px;
+  margin-top: 10px;
+  margin-bottom: 10px;
 }
 h4 {font-size: 20px;}
 h5 {font-size: 18px;}
@@ -79,10 +80,13 @@ table.google-plus:hover td {
 }
 
 .header {
-  background: #333;
+margin-top:25px;
+margin-bottom: 25px;
 }
 
 .footer {
+  background-color: #2e2e2e;
+  color: #999999;
   margin-top: 20px;
 }
 
