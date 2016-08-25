@@ -234,7 +234,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
               series.data = [
                 [i + 1, series.stats[panel.xaxis.seriesValue]]
               ];
-            } else if (panel.xaxis.mode === 'table') {
+            } else if (panel.xaxis.mode === 'table' ||
+                       panel.xaxis.mode === 'elastic') {
               series.data = [];
               for (var j = 0; j < series.datapoints.length; j++) {
                 var dataIndex = i * series.datapoints.length + j;
@@ -264,7 +265,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
             addXSeriesAxis(options);
 
-          } else if (panel.xaxis.mode === 'table') {
+          } else if (panel.xaxis.mode === 'table' ||
+                     panel.xaxis.mode === 'elastic') {
             if (data.length) {
               options.series.bars.barWidth = 0.7;
               options.series.bars.align = 'center';

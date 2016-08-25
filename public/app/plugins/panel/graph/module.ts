@@ -148,7 +148,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.xAxisModes = {
       'Time': 'time',
       'Series': 'series',
-      'Table': 'table'
+      'Table': 'table',
+      'Elastic Raw Doc': 'elastic'
     };
 
     this.xAxisSeriesValues = ['min', 'max', 'avg', 'current', 'total'];
@@ -195,7 +196,7 @@ class GraphCtrl extends MetricsPanelCtrl {
         // Table panel uses only first enabled tagret, so we can use dataList[0]
         // for table data representation
         dataList.splice(1, dataList.length - 1);
-        this.xAxisColumns = _.map(dataList[0].columns, function(column, index) {
+        this.xAxisColumns = _.map(dataList[0].columns, (column, index) => {
           return {
             text: column.text,
             index: index
@@ -209,6 +210,14 @@ class GraphCtrl extends MetricsPanelCtrl {
       }
 
       dataHandler = this.tableHandler;
+    } else if (this.panel.xaxis.mode === 'elastic') {
+      if (dataList.length) {
+        dataList.splice(1, dataList.length - 1);
+        var point = _.first(dataList[0].datapoints);
+        this.xAxisColumns = getFieldsFromESDoc(point);
+      }
+
+      dataHandler = this.esRawDocHandler;
     } else {
       dataHandler = this.seriesHandler;
     }
@@ -250,13 +259,12 @@ class GraphCtrl extends MetricsPanelCtrl {
       this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
     }
 
-
     return series;
   }
 
   tableHandler(seriesData, index) {
     var xColumnIndex = Number(this.panel.xaxis.columnIndex);
-    var valueColumnIndex = this.panel.xaxis.valueColumnIndex;
+    var valueColumnIndex = Number(this.panel.xaxis.valueColumnIndex);
     var datapoints = _.map(seriesData.rows, (row) => {
       var value = valueColumnIndex ? row[valueColumnIndex] : _.last(row);
       return [
@@ -288,6 +296,46 @@ class GraphCtrl extends MetricsPanelCtrl {
       this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
     }
 
+    return series;
+  }
+
+  esRawDocHandler(seriesData, index) {
+    let xField = this.panel.xaxis.esField;
+    let valueField = this.panel.xaxis.esValueField;
+    let datapoints = _.map(seriesData.datapoints, (doc) => {
+      return [
+        pluckDeep(doc, valueField),  // Y value
+        pluckDeep(doc, xField)       // X value
+      ];
+    });
+
+    // Remove empty points
+    datapoints = _.filter(datapoints, (point) => {
+      return point[0] !== undefined;
+    });
+
+    var alias = valueField;
+
+    var colorIndex = index % this.colors.length;
+    var color = this.panel.aliasColors[alias] || this.colors[colorIndex];
+
+    var series = new TimeSeries({
+      datapoints: datapoints,
+      alias: alias,
+      color: color,
+      unit: seriesData.unit,
+    });
+
+    if (datapoints && datapoints.length > 0) {
+      var last = moment.utc(datapoints[datapoints.length - 1][1]);
+      var from = moment.utc(this.range.from);
+      if (last - from < -10000) {
+        this.datapointsOutside = true;
+      }
+
+      this.datapointsCount += datapoints.length;
+      this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
+    }
 
     return series;
   }
@@ -394,6 +442,40 @@ class GraphCtrl extends MetricsPanelCtrl {
   exportCsvColumns() {
     fileExport.exportSeriesListToCsvColumns(this.seriesList);
   }
+}
+
+function getFieldsFromESDoc(doc) {
+  let fields = [];
+  let fieldNameParts = [];
+
+  function getFieldsRecursive(obj) {
+    _.forEach(obj, (value, key) => {
+      if (_.isObject(value)) {
+        fieldNameParts.push(key);
+        getFieldsRecursive(value);
+      } else {
+        let field = fieldNameParts.concat(key).join('.');
+        fields.push(field);
+      }
+    });
+    fieldNameParts.pop();
+  }
+
+  getFieldsRecursive(doc);
+  return fields;
+}
+
+function pluckDeep(obj: any, property: string) {
+  let propertyParts = property.split('.');
+  let value = obj;
+  for (let i = 0; i < propertyParts.length; ++i) {
+    if (value[propertyParts[i]]) {
+      value = value[propertyParts[i]];
+    } else {
+      return undefined;
+    }
+  }
+  return value;
 }
 
 export {GraphCtrl, GraphCtrl as PanelCtrl}
