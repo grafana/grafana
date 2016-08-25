@@ -132,42 +132,51 @@ function (angular, _) {
       return values;
     };
 
+    this.getVarValues = function(varName, scopedVars) {
+      var variable = self._index[varName];
+      if (scopedVars) {
+        var scoped = scopedVars[varName];
+        if (scoped) {
+          return { variable: variable, values: [scoped.value], skipFormatting: false };
+        }
+      }
+      if (!variable) {
+        return { variable: variable, values: [], skipFormatting: false };
+      }
+      var value = variable.current.value;
+      var systemValue = self._grafanaVariables[value];
+      var skipFormatting = false;
+      if (systemValue) {
+        value = [systemValue];
+      } else if (self.isAllValue(value)) {
+        value = self.getAllValue(variable);
+        if (variable.allValue) {
+          skipFormatting = true;
+        }
+      } else if (!(value instanceof Array)) {
+        value = [value];
+      }
+      return { variable: variable, values: value, skipFormatting: skipFormatting };
+    };
+
     this.replace = function(target, scopedVars, format) {
       if (!target) { return target; }
 
-      var variable, systemValue, value;
-      this._regex.lastIndex = 0;
+      self._regex.lastIndex = 0;
 
-      return target.replace(this._regex, function(match, g1, g2) {
-        variable = self._index[g1 || g2];
-
-        if (scopedVars) {
-          value = scopedVars[g1 || g2];
-          if (value) {
-            return self.formatValue(value.value, format, variable);
-          }
-        }
-
-        if (!variable) {
+      return target.replace(self._regex, function(match, g1, g2) {
+        var varValues = self.getVarValues(g1 || g2, scopedVars);
+        if (!varValues.variable) {
           return match;
         }
-
-        systemValue = self._grafanaVariables[variable.current.value];
-        if (systemValue) {
-          return self.formatValue(systemValue, format, variable);
+        if (varValues.skipFormatting) {
+          return varValues.values;
         }
-
-        value = variable.current.value;
-        if (self.isAllValue(value)) {
-          value = self.getAllValue(variable);
-          // skip formating of custom all values
-          if (variable.allValue) {
-            return value;
-          }
+        // For compatibility return direct string rather than single-value array
+        if (varValues.values.length === 1) {
+          return self.formatValue(varValues.values[0], format, varValues.variable);
         }
-
-        var res = self.formatValue(value, format, variable);
-        return res;
+        return self.formatValue(varValues.values, format, varValues.variable);
       });
     };
 
@@ -209,6 +218,30 @@ function (angular, _) {
 
         params['var-' + variable.name] = value;
       });
+    };
+
+    this.resolveTemplateTarget = function(target, scopedVars) {
+      var names = [], match;
+      // Extract all variable names
+      self._regex.lastIndex = 0;
+      while ((match = self._regex.exec(target)) != null) {
+        names.push({full: match[0], short: match[1] || match[2]});
+      }
+      var resolved = [target];
+      // For each extracted variable and each of its values, build a resolved target string
+      if (names.length > 0) {
+        names.forEach(function(name) {
+          var values = self.getVarValues(name.short, scopedVars).values;
+          var newResolved = [];
+          values.forEach(function(val) {
+            resolved.forEach(function(target) {
+              newResolved.push(target.replace(name.full, val));
+            });
+          });
+          resolved = newResolved;
+        });
+      }
+      return resolved;
     };
 
   });

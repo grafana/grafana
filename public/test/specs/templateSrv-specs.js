@@ -262,6 +262,118 @@ define([
       });
     });
 
+    describe('getVarValues with global', function() {
+      beforeEach(function() {
+        _templateSrv.init([{name: 'test', current: {value: ['value1', 'value2'] }}]);
+      });
+
+      it('should take scoped value', function() {
+        var result = _templateSrv.getVarValues('test', {'test': {value: 'value2', text: 'asd'}});
+        expect(result.variable.name).to.be('test');
+        expect(result.values.length).to.be(1);
+        expect(result.values[0]).to.equal('value2');
+      });
+
+      it('should take global values', function() {
+        var result = _templateSrv.getVarValues('test', {});
+        expect(result.variable.name).to.be('test');
+        expect(result.values.length).to.be(2);
+        expect(result.values[0]).to.equal('value1');
+        expect(result.values[1]).to.equal('value2');
+      });
+    });
+
+    describe('getVarValues with all option', function() {
+      beforeEach(function() {
+        _templateSrv.init([{
+          name: 'test',
+          current: {value: '$__all' },
+          options: [
+            {value: '$__all'}, {value: 'value1'}, {value: 'value2'}
+          ]
+        }]);
+      });
+
+      it('should provide all values', function() {
+        var result = _templateSrv.getVarValues('test', {});
+        expect(result.variable.name).to.be('test');
+        expect(result.values.length).to.be(2);
+        expect(result.values[0]).to.equal('value1');
+        expect(result.values[1]).to.equal('value2');
+      });
+    });
+
+    describe('getVarValues with all option and custom value', function() {
+      beforeEach(function() {
+        _templateSrv.init([{
+          name: 'test',
+          current: {value: '$__all' },
+          allValue: '*',
+          options: [
+            {value: 'value1'}, {value: 'value2'}
+          ]
+        }]);
+      });
+
+      it('should provide formatted all value', function() {
+        var result = _templateSrv.getVarValues('test', {});
+        expect(result.variable.name).to.be('test');
+        expect(result.values.length).to.be(1);
+        expect(result.values[0]).to.equal('*');
+      });
+    });
+
+    describe('resolveTemplateTarget', function() {
+      beforeEach(function() {
+        _templateSrv.init([{
+          name: 'testAll',
+          current: {value: '$__all' },
+          options: [{value: '$__all'}, {value: 'value1'}, {value: 'value2'}]
+        },{
+          name: 'allAgain',
+          current: {value: '$__all' },
+          options: [{value: '$__all'}, {value: 'value3'}, {value: 'value4'}]
+        },{
+          name: 'test',
+          current: {value: 'value6' },
+          options: [{value: '$__all'}, {value: 'value5'}, {value: 'value6'}]
+        }]);
+      });
+
+      it('should resolve without variable', function() {
+        var results = _templateSrv.resolveTemplateTarget('some/test/here', {});
+        expect(results.length).to.be(1);
+        expect(results[0]).to.equal('some/test/here');
+      });
+
+      it('should resolve single value template with scope', function() {
+        var results = _templateSrv.resolveTemplateTarget('some/$test/here', {'test': {value: 'value5', text: 'asd'}});
+        expect(results.length).to.be(1);
+        expect(results[0]).to.equal('some/value5/here');
+      });
+
+      it('should resolve single value template with no scope', function() {
+        var results = _templateSrv.resolveTemplateTarget('some/$test/here', {});
+        expect(results.length).to.be(1);
+        expect(results[0]).to.equal('some/value6/here');
+      });
+
+      it('should resolve to multiple targets', function() {
+        var results = _templateSrv.resolveTemplateTarget('some/$testAll/here', {});
+        expect(results.length).to.be(2);
+        expect(results[0]).to.equal('some/value1/here');
+        expect(results[1]).to.equal('some/value2/here');
+      });
+
+      it('should resolve n-vars template to n-square targets', function() {
+        var results = _templateSrv.resolveTemplateTarget('some/$testAll/here/and/$allAgain/there', {});
+        expect(results.length).to.be(4);
+        expect(results[0]).to.equal('some/value1/here/and/value3/there');
+        expect(results[1]).to.equal('some/value2/here/and/value3/there');
+        expect(results[2]).to.equal('some/value1/here/and/value4/there');
+        expect(results[3]).to.equal('some/value2/here/and/value4/there');
+      });
+    });
   });
 
 });
