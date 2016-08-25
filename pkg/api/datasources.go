@@ -34,6 +34,7 @@ func GetDataSources(c *middleware.Context) {
 			Database:  ds.Database,
 			User:      ds.User,
 			BasicAuth: ds.BasicAuth,
+			TlsAuth:   ds.TlsAuth,
 			IsDefault: ds.IsDefault,
 		}
 
@@ -160,6 +161,9 @@ func convertModelToDtos(ds *m.DataSource) dtos.DataSource {
 		BasicAuth:         ds.BasicAuth,
 		BasicAuthUser:     ds.BasicAuthUser,
 		BasicAuthPassword: ds.BasicAuthPassword,
+		TlsAuth:           ds.TlsAuth,
+		TlsClientCert:     ds.TlsClientCert,
+		TlsClientKey:      ds.TlsClientKey,
 		WithCredentials:   ds.WithCredentials,
 		IsDefault:         ds.IsDefault,
 		JsonData:          ds.JsonData,

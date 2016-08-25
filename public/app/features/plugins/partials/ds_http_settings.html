@@ -49,6 +49,10 @@
 									label="With Credentials"
 				 checked="current.withCredentials" switch-class="max-width-6">
 		</gf-form-switch>
+		<gf-form-switch class="gf-form" ng-if="current.access=='proxy'"
+									label="TLS Client Auth"
+				 checked="current.tlsAuth" switch-class="max-width-6">
+		</gf-form-switch>
 	</div>
 
 	<div class="gf-form" ng-if="current.basicAuth">
@@ -63,6 +67,20 @@
 			Password
 		</span>
 		<input class="gf-form-input max-width-21" type="password" ng-model='current.basicAuthPassword' placeholder="password" required></input>
+	</div>
+
+	<div class="gf-form" ng-if="current.tlsAuth && current.access=='proxy'">
+		<span class="gf-form-label width-7">
+			Client Cert
+		</span>
+		<input class="gf-form-input max-width-23" type="text"  ng-model='current.tlsClientCert' placeholder="cert path" required></input>
+	</div>
+
+	<div class="gf-form" ng-if="current.tlsAuth && current.access=='proxy'">
+		<span class="gf-form-label width-7">
+			Client Key
+		</span>
+		<input class="gf-form-input max-width-23" type="text" ng-model='current.tlsClientKey' placeholder="key path" required></input>
 	</div>
 </div>
 
