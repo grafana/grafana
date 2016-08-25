@@ -43,6 +43,9 @@ type DataSource struct {
 	BasicAuth         bool
 	BasicAuthUser     string
 	BasicAuthPassword string
+	TlsAuth           bool
+	TlsClientCert     string
+	TlsClientKey      string
 	WithCredentials   bool
 	IsDefault         bool
 	JsonData          *simplejson.Json
@@ -87,6 +90,9 @@ type AddDataSourceCommand struct {
 	BasicAuth         bool             `json:"basicAuth"`
 	BasicAuthUser     string           `json:"basicAuthUser"`
 	BasicAuthPassword string           `json:"basicAuthPassword"`
+	TlsAuth           bool             `json:"tlsAuth"`
+	TlsClientCert     string           `json:"tlsClientCert"`
+	TlsClientKey      string           `json:"tlsClientKey"`
 	WithCredentials   bool             `json:"withCredentials"`
 	IsDefault         bool             `json:"isDefault"`
 	JsonData          *simplejson.Json `json:"jsonData"`
@@ -108,6 +114,9 @@ type UpdateDataSourceCommand struct {
 	BasicAuth         bool             `json:"basicAuth"`
 	BasicAuthUser     string           `json:"basicAuthUser"`
 	BasicAuthPassword string           `json:"basicAuthPassword"`
+	TlsAuth           bool             `json:"tlsAuth"`
+	TlsClientCert     string           `json:"tlsClientCert"`
+	TlsClientKey      string           `json:"tlsClientKey"`
 	WithCredentials   bool             `json:"withCredentials"`
 	IsDefault         bool             `json:"isDefault"`
 	JsonData          *simplejson.Json `json:"jsonData"`

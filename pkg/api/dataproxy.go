@@ -17,14 +17,27 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var dataProxyTransport = &http.Transport{
-	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	Proxy:           http.ProxyFromEnvironment,
-	Dial: (&net.Dialer{
-		Timeout:   30 * time.Second,
-		KeepAlive: 30 * time.Second,
-	}).Dial,
-	TLSHandshakeTimeout: 10 * time.Second,
+func dataProxyTransport(ds *m.DataSource) (*http.Transport, error) {
+	transport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			InsecureSkipVerify: true,
+		},
+		Proxy: http.ProxyFromEnvironment,
+		Dial: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).Dial,
+		TLSHandshakeTimeout: 10 * time.Second,
+	}
+
+	if ds.TlsAuth {
+		cert, err := tls.LoadX509KeyPair(ds.TlsClientCert, ds.TlsClientKey)
+		if err != nil {
+			return nil, err
+		}
+		transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
+	}
+	return transport, nil
 }
 
 func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
@@ -128,7 +141,11 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	}
 
 	proxy := NewReverseProxy(ds, proxyPath, targetUrl)
-	proxy.Transport = dataProxyTransport
+	proxy.Transport, err = dataProxyTransport(ds)
+	if err != nil {
+		c.JsonApiErr(400, "Unable to load TLS certificate", err)
+		return
+	}
 	proxy.ServeHTTP(c.Resp, c.Req.Request)
 	c.Resp.Header().Del("Set-Cookie")
 }
