@@ -95,10 +95,10 @@ export class PanelCtrl {
     this.editModeInitiated = true;
     this.events.emit('init-edit-mode', null);
 
-    var routeParams = this.$injector.get('$routeParams');
-    if (routeParams.editorTab) {
+    var urlTab = (this.$injector.get('$routeParams').tab || '').toLowerCase();
+    if (urlTab) {
       this.editorTabs.forEach((tab, i) => {
-        if (tab.title === routeParams.editorTab) {
+        if (tab.title.toLowerCase() === urlTab) {
           this.editorTabIndex = i;
         }
       });
@@ -109,7 +109,7 @@ export class PanelCtrl {
     this.editorTabIndex = newIndex;
     var route = this.$injector.get('$route');
 
-    route.current.params.editorTab = this.editorTabs[newIndex].title;
+    route.current.params.tab = this.editorTabs[newIndex].title.toLowerCase();
     route.updateParams();
   }
 
@@ -152,8 +152,8 @@ export class PanelCtrl {
   calculatePanelHeight() {
     if (this.fullscreen) {
       var docHeight = $(window).height();
-      var editHeight = Math.floor(docHeight * 0.3);
-      var fullscreenHeight = Math.floor(docHeight * 0.7);
+      var editHeight = Math.floor(docHeight * 0.4);
+      var fullscreenHeight = Math.floor(docHeight * 0.6);
       this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
     } else {
       this.containerHeight = this.panel.height || this.row.height;

@@ -12,6 +12,7 @@ import (
 
 	"gopkg.in/ini.v1"
 
+	"github.com/go-stack/stack"
 	"github.com/inconshreveable/log15"
 	"github.com/inconshreveable/log15/term"
 )
@@ -115,7 +116,9 @@ func getFilters(filterStrArray []string) map[string]log15.Lvl {
 
 	for _, filterStr := range filterStrArray {
 		parts := strings.Split(filterStr, ":")
-		filterMap[parts[0]] = getLogLevelFromString(parts[1])
+		if len(parts) > 1 {
+			filterMap[parts[0]] = getLogLevelFromString(parts[1])
+		}
 	}
 
 	return filterMap
@@ -217,4 +220,10 @@ func LogFilterHandler(maxLevel log15.Lvl, filters map[string]log15.Lvl, h log15.
 
 		return r.Lvl <= maxLevel
 	}, h)
+}
+
+func Stack(skip int) string {
+	call := stack.Caller(skip)
+	s := stack.Trace().TrimBelow(call).TrimRuntime()
+	return s.String()
 }

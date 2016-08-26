@@ -365,12 +365,20 @@ function ($, _, angular, Drop) {
 
     plot.hooks.draw.push(function(plot) {
       var options = plot.getOptions();
+      var container = plot.getPlaceholder();
+      var containerElem = container[0];
+
+      if (containerElem.removeEventsElements) {
+        container.find(".events_line").remove();
+        containerElem.removeEventsElements = false;
+      }
 
       if (eventMarkers.eventsEnabled) {
         // check for first run
         if (eventMarkers.getEvents().length < 1) {
           eventMarkers.setTypes(options.events.types);
           eventMarkers.setupEvents(options.events.data);
+          containerElem.removeEventsElements = true;
         } else {
           eventMarkers.updateEvents();
         }

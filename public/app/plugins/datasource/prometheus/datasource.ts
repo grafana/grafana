@@ -62,8 +62,8 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   // Called once per panel (graph)
   this.query = function(options) {
     var self = this;
-    var start = getPrometheusTime(options.range.from, false);
-    var end = getPrometheusTime(options.range.to, true);
+    var start = this.getPrometheusTime(options.range.from, false);
+    var end = this.getPrometheusTime(options.range.to, true);
 
     var queries = [];
     var activeTargets = [];
@@ -79,7 +79,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       query.expr = templateSrv.replace(target.expr, options.scopedVars, self.interpolateQueryExpr);
       query.requestId = options.panelId + target.refId;
 
-      var interval = target.interval || options.interval;
+      var interval = templateSrv.replace(target.interval, options.scopedVars) || options.interval;
       var intervalFactor = target.intervalFactor || 1;
       target.step = query.step = this.calculateInterval(interval, intervalFactor);
       var range = Math.ceil(end - start);
@@ -172,8 +172,8 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       step: '60s'
     };
 
-    var start = getPrometheusTime(options.range.from, false);
-    var end = getPrometheusTime(options.range.to, true);
+    var start = this.getPrometheusTime(options.range.from, false);
+    var end = this.getPrometheusTime(options.range.to, true);
     var self = this;
 
     return this.performTimeSeriesQuery(query, start, end).then(function(results) {
@@ -279,10 +279,10 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return metricName + '{' + labelPart + '}';
   };
 
-  function getPrometheusTime(date, roundUp): number {
+  this.getPrometheusTime = function(date, roundUp) {
     if (_.isString(date)) {
       date = dateMath.parse(date, roundUp);
     }
     return Math.ceil(date.valueOf() / 1000);
-  }
+  };
 }

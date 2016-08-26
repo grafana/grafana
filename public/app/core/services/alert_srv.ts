@@ -83,6 +83,19 @@ export class AlertSrv {
     scope.title = payload.title;
     scope.text = payload.text;
     scope.text2 = payload.text2;
+    scope.confirmTextRequired = payload.confirmText !== undefined && payload.confirmText !== "";
+
+    scope.onConfirm = function() {
+      if (!scope.confirmTextRequired || (scope.confirmTextRequired && scope.confirmTextValid)) {
+        payload.onConfirm();
+        scope.dismiss();
+      }
+    };
+
+    scope.updateConfirmText = function(value) {
+      scope.confirmTextValid = payload.confirmText.toLowerCase() === value.toLowerCase();
+    };
+
     scope.onConfirm = payload.onConfirm;
     scope.onAltAction = payload.onAltAction;
     scope.altActionText = payload.altActionText;

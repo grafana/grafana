@@ -140,6 +140,12 @@
   & > .dropdown-menu {
     display: block;
   }
+
+  &.cascade-open {
+    .dropdown-menu {
+      display: block;
+    }
+  }
 }
 
 // Backdrop to catch body clicks on mobile, etc.

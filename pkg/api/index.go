@@ -91,6 +91,20 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		Children: dashboardChildNavs,
 	})
 
+	if setting.AlertingEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR) {
+		alertChildNavs := []*dtos.NavLink{
+			{Text: "Alert List", Url: setting.AppSubUrl + "/alerting/list"},
+			{Text: "Notifications", Url: setting.AppSubUrl + "/alerting/notifications"},
+		}
+
+		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+			Text:     "Alerting",
+			Icon:     "icon-gf icon-gf-alert",
+			Url:      setting.AppSubUrl + "/alerting/list",
+			Children: alertChildNavs,
+		})
+	}
+
 	if c.OrgRole == m.ROLE_ADMIN {
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 			Text: "Data Sources",

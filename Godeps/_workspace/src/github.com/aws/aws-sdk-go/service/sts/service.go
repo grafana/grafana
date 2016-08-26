@@ -7,8 +7,8 @@ import (
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/client/metadata"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/signer/v4"
 	"github.com/aws/aws-sdk-go/private/protocol/query"
-	"github.com/aws/aws-sdk-go/private/signer/v4"
 )
 
 // The AWS Security Token Service (STS) is a web service that enables you to
@@ -17,33 +17,33 @@ import (
 // This guide provides descriptions of the STS API. For more detailed information
 // about using this service, go to Temporary Security Credentials (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp.html).
 //
-//  As an alternative to using the API, you can use one of the AWS SDKs, which
+//   As an alternative to using the API, you can use one of the AWS SDKs, which
 // consist of libraries and sample code for various programming languages and
 // platforms (Java, Ruby, .NET, iOS, Android, etc.). The SDKs provide a convenient
 // way to create programmatic access to STS. For example, the SDKs take care
 // of cryptographically signing requests, managing errors, and retrying requests
 // automatically. For information about the AWS SDKs, including how to download
 // and install them, see the Tools for Amazon Web Services page (http://aws.amazon.com/tools/).
+//
 //  For information about setting up signatures and authorization through the
-// API, go to Signing AWS API Requests (http://docs.aws.amazon.com/general/latest/gr/signing_aws_api_requests.html"
-// target="_blank) in the AWS General Reference. For general information about
-// the Query API, go to Making Query Requests (http://docs.aws.amazon.com/IAM/latest/UserGuide/IAM_UsingQueryAPI.html"
-// target="_blank) in Using IAM. For information about using security tokens
-// with other AWS products, go to AWS Services That Work with IAM (http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_aws-services-that-work-with-iam.html)
-// in the Using IAM.
+// API, go to Signing AWS API Requests (http://docs.aws.amazon.com/general/latest/gr/signing_aws_api_requests.html)
+// in the AWS General Reference. For general information about the Query API,
+// go to Making Query Requests (http://docs.aws.amazon.com/IAM/latest/UserGuide/IAM_UsingQueryAPI.html)
+// in Using IAM. For information about using security tokens with other AWS
+// products, go to AWS Services That Work with IAM (http://docs.aws.amazon.com/IAM/latest/UserGuide/reference_aws-services-that-work-with-iam.html)
+// in the IAM User Guide.
 //
 // If you're new to AWS and need additional technical information about a specific
 // AWS product, you can find the product's technical documentation at http://aws.amazon.com/documentation/
-// (http://aws.amazon.com/documentation/" target="_blank).
+// (http://aws.amazon.com/documentation/).
 //
 //  Endpoints
 //
 // The AWS Security Token Service (STS) has a default endpoint of https://sts.amazonaws.com
-// that maps to the US East (N. Virginia) region. Additional regions are available,
-// but must first be activated in the AWS Management Console before you can
-// use a different region's endpoint. For more information about activating
-// a region for STS see Activating STS in a New Region (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html)
-// in the Using IAM.
+// that maps to the US East (N. Virginia) region. Additional regions are available
+// and are activated by default. For more information, see Activating and Deactivating
+// AWS STS in an AWS Region (http://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_temp_enable-regions.html)
+// in the IAM User Guide.
 //
 // For information about STS endpoints, see Regions and Endpoints (http://docs.aws.amazon.com/general/latest/gr/rande.html#sts_region)
 // in the AWS General Reference.
@@ -102,11 +102,11 @@ func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegio
 	}
 
 	// Handlers
-	svc.Handlers.Sign.PushBack(v4.Sign)
-	svc.Handlers.Build.PushBack(query.Build)
-	svc.Handlers.Unmarshal.PushBack(query.Unmarshal)
-	svc.Handlers.UnmarshalMeta.PushBack(query.UnmarshalMeta)
-	svc.Handlers.UnmarshalError.PushBack(query.UnmarshalError)
+	svc.Handlers.Sign.PushBackNamed(v4.SignRequestHandler)
+	svc.Handlers.Build.PushBackNamed(query.BuildHandler)
+	svc.Handlers.Unmarshal.PushBackNamed(query.UnmarshalHandler)
+	svc.Handlers.UnmarshalMeta.PushBackNamed(query.UnmarshalMetaHandler)
+	svc.Handlers.UnmarshalError.PushBackNamed(query.UnmarshalErrorHandler)
 
 	// Run custom client initialization if present
 	if initClient != nil {

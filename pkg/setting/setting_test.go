@@ -29,6 +29,20 @@ func TestLoadingSettings(t *testing.T) {
 			So(LogsPath, ShouldEqual, filepath.Join(DataPath, "log"))
 		})
 
+		Convey("Should replace password when defined in environment", func() {
+			os.Setenv("GF_SECURITY_ADMIN_PASSWORD", "supersecret")
+			NewConfigContext(&CommandLineArgs{HomePath: "../../"})
+
+			So(appliedEnvOverrides, ShouldContain, "GF_SECURITY_ADMIN_PASSWORD=*********")
+		})
+
+		Convey("Should replace password in URL when url environment is defined", func() {
+			os.Setenv("GF_DATABASE_URL", "mysql://user:secret@localhost:3306/database")
+			NewConfigContext(&CommandLineArgs{HomePath: "../../"})
+
+			So(appliedEnvOverrides, ShouldContain, "GF_DATABASE_URL=mysql://user:-redacted-@localhost:3306/database")
+		})
+
 		Convey("Should get property map from command line args array", func() {
 			props := getCommandLineProperties([]string{"cfg:test=value", "cfg:map.test=1"})
 

@@ -24,7 +24,7 @@ func TestPaginationQueryPage(t *testing.T) {
 			LastEvaluatedKey: map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key1")}},
 			Count:            aws.Int64(1),
 			Items: []map[string]*dynamodb.AttributeValue{
-				map[string]*dynamodb.AttributeValue{
+				{
 					"key": {S: aws.String("key1")},
 				},
 			},
@@ -33,7 +33,7 @@ func TestPaginationQueryPage(t *testing.T) {
 			LastEvaluatedKey: map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key2")}},
 			Count:            aws.Int64(1),
 			Items: []map[string]*dynamodb.AttributeValue{
-				map[string]*dynamodb.AttributeValue{
+				{
 					"key": {S: aws.String("key2")},
 				},
 			},
@@ -42,7 +42,7 @@ func TestPaginationQueryPage(t *testing.T) {
 			LastEvaluatedKey: map[string]*dynamodb.AttributeValue{},
 			Count:            aws.Int64(1),
 			Items: []map[string]*dynamodb.AttributeValue{
-				map[string]*dynamodb.AttributeValue{
+				{
 					"key": {S: aws.String("key3")},
 				},
 			},
@@ -87,14 +87,14 @@ func TestPaginationQueryPage(t *testing.T) {
 
 	assert.Equal(t,
 		[]map[string]*dynamodb.AttributeValue{
-			map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key1")}},
-			map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key2")}},
+			{"key": {S: aws.String("key1")}},
+			{"key": {S: aws.String("key2")}},
 		}, tokens)
 	assert.Equal(t,
 		[]map[string]*dynamodb.AttributeValue{
-			map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key1")}},
-			map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key2")}},
-			map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key3")}},
+			{"key": {S: aws.String("key1")}},
+			{"key": {S: aws.String("key2")}},
+			{"key": {S: aws.String("key3")}},
 		}, pages)
 	assert.Equal(t, 3, numPages)
 	assert.True(t, gotToEnd)

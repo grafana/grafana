@@ -111,33 +111,4 @@
 		</div>
 	</div>
 
-  <div class="section gf-form-group">
-    <h5 class="section-heading">Thresholds</h5>
-    <div class="gf-form-inline">
-      <div class="gf-form">
-        <label class="gf-form-label width-6">Level 1</label>
-        <input type="number" class="gf-form-input max-width-5" ng-model="ctrl.panel.grid.threshold1" ng-change="ctrl.render()" ng-model-onblur>
-      </div>
-      <div class="gf-form">
-        <label class="gf-form-label width-5">Color</label>
-        <div class="gf-form-label">
-          <spectrum-picker ng-model="ctrl.panel.grid.threshold1Color" ng-change="ctrl.render()" ></spectrum-picker>
-        </div>
-      </div>
-    </div>
-    <div class="gf-form-inline">
-      <div class="gf-form">
-        <label class="gf-form-label width-6">Level 2</label>
-        <input type="number" class="gf-form-input max-width-5" ng-model="ctrl.panel.grid.threshold2" ng-change="ctrl.render()" ng-model-onblur>
-      </div>
-      <div class="gf-form">
-        <label class="gf-form-label width-5">Color</label>
-        <div class="gf-form-label">
-          <spectrum-picker ng-model="ctrl.panel.grid.threshold2Color" ng-change="ctrl.render()" ></spectrum-picker>
-        </div>
-      </div>
-    </div>
-
-    <gf-form-switch class="gf-form" label="Line Mode" label-class="width-6" checked="ctrl.panel.grid.thresholdLine" on-change="ctrl.render()"></gf-form-switch>
-  </div>
 </div>

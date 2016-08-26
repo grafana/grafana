@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -150,6 +151,18 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 			return Json(404, util.DynMap{"status": "not-found", "message": err.Error()})
 		}
 		return ApiError(500, "Failed to save dashboard", err)
+	}
+
+	if setting.AlertingEnabled {
+		alertCmd := alerting.UpdateDashboardAlertsCommand{
+			OrgId:     c.OrgId,
+			UserId:    c.UserId,
+			Dashboard: cmd.Result,
+		}
+
+		if err := bus.Dispatch(&alertCmd); err != nil {
+			return ApiError(500, "Failed to save alerts", err)
+		}
 	}
 
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)

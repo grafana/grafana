@@ -115,6 +115,11 @@ function (angular, _, $) {
         }
       }
 
+      // if no edit state cleanup tab parm
+      if (!this.state.edit) {
+        delete this.state.tab;
+      }
+
       $location.search(this.serializeToUrl());
       this.syncState();
     };
@@ -123,25 +128,28 @@ function (angular, _, $) {
       if (this.panelScopes.length === 0) { return; }
 
       if (this.dashboard.meta.fullscreen) {
-        if (this.fullscreenPanel) {
-          this.leaveFullscreen(false);
-        }
         var panelScope = this.getPanelScope(this.state.panelId);
-        // panel could be about to be created/added and scope does
-        // not exist yet
         if (!panelScope) {
           return;
+        }
+
+        if (this.fullscreenPanel) {
+          // if already fullscreen
+          if (this.fullscreenPanel === panelScope) {
+            return;
+          } else {
+            this.leaveFullscreen(false);
+          }
         }
 
         if (!panelScope.ctrl.editModeInitiated) {
           panelScope.ctrl.initEditMode();
         }
 
-        this.enterFullscreen(panelScope);
-        return;
-      }
-
-      if (this.fullscreenPanel) {
+        if (!panelScope.ctrl.fullscreen) {
+          this.enterFullscreen(panelScope);
+        }
+      } else if (this.fullscreenPanel) {
         this.leaveFullscreen(true);
       }
     };

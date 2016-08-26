@@ -219,7 +219,7 @@ function (angular, $, _, moment) {
       var i, j, k;
       var oldVersion = this.schemaVersion;
       var panelUpgrades = [];
-      this.schemaVersion = 12;
+      this.schemaVersion = 13;
 
       if (oldVersion === this.schemaVersion) {
         return;
@@ -465,6 +465,61 @@ function (angular, $, _, moment) {
             delete panel['y-axis'];
             delete panel['x-axis'];
           }
+        });
+      }
+
+      if (oldVersion < 13) {
+        // update graph yaxes changes
+        panelUpgrades.push(function(panel) {
+          if (panel.type !== 'graph') { return; }
+
+          panel.thresholds = [];
+          var t1 = {}, t2 = {};
+
+          if (panel.grid.threshold1 !== null) {
+            t1.value = panel.grid.threshold1;
+            if (panel.grid.thresholdLine) {
+              t1.line = true;
+              t1.lineColor = panel.grid.threshold1Color;
+            } else {
+              t1.fill = true;
+              t1.fillColor = panel.grid.threshold1Color;
+            }
+          }
+
+          if (panel.grid.threshold2 !== null) {
+            t2.value = panel.grid.threshold2;
+            if (panel.grid.thresholdLine) {
+              t2.line = true;
+              t2.lineColor = panel.grid.threshold2Color;
+            } else {
+              t2.fill = true;
+              t2.fillColor = panel.grid.threshold2Color;
+            }
+          }
+
+          if (_.isNumber(t1.value)) {
+            if (_.isNumber(t2.value)) {
+              if (t1.value > t2.value) {
+                t1.op = t2.op = '<';
+                panel.thresholds.push(t2);
+                panel.thresholds.push(t1);
+              } else {
+                t1.op = t2.op = '>';
+                panel.thresholds.push(t2);
+                panel.thresholds.push(t1);
+              }
+            } else {
+              t1.op = '>';
+              panel.thresholds.push(t1);
+            }
+          }
+
+          delete panel.grid.threshold1;
+          delete panel.grid.threshold1Color;
+          delete panel.grid.threshold2;
+          delete panel.grid.threshold2Color;
+          delete panel.grid.thresholdLine;
         });
       }
 

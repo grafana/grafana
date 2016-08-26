@@ -140,11 +140,21 @@ var (
 	// QUOTA
 	Quota QuotaSettings
 
+	// Alerting
+	AlertingEnabled bool
+
 	// logger
 	logger log.Logger
 
 	// Grafana.NET URL
 	GrafanaNetUrl string
+
+	// S3 temp image store
+	S3TempImageStoreBucketUrl string
+	S3TempImageStoreAccessKey string
+	S3TempImageStoreSecretKey string
+
+	ImageUploadProvider string
 )
 
 type CommandLineArgs struct {
@@ -183,6 +193,11 @@ func shouldRedactKey(s string) bool {
 	return strings.Contains(uppercased, "PASSWORD") || strings.Contains(uppercased, "SECRET")
 }
 
+func shouldRedactURLKey(s string) bool {
+	uppercased := strings.ToUpper(s)
+	return strings.Contains(uppercased, "DATABASE_URL")
+}
+
 func applyEnvVariableOverrides() {
 	appliedEnvOverrides = make([]string, 0)
 	for _, section := range Cfg.Sections() {
@@ -196,6 +211,17 @@ func applyEnvVariableOverrides() {
 				key.SetValue(envValue)
 				if shouldRedactKey(envKey) {
 					envValue = "*********"
+				}
+				if shouldRedactURLKey(envKey) {
+					u, _ := url.Parse(envValue)
+					ui := u.User
+					if ui != nil {
+						_, exists := ui.Password()
+						if exists {
+							u.User = url.UserPassword(ui.Username(), "-redacted-")
+							envValue = u.String()
+						}
+					}
 				}
 				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, envValue))
 			}
@@ -518,6 +544,9 @@ func NewConfigContext(args *CommandLineArgs) error {
 	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
 	LdapConfigFile = ldapSec.Key("config_file").String()
 
+	alerting := Cfg.Section("alerting")
+	AlertingEnabled = alerting.Key("enabled").MustBool(false)
+
 	readSessionConfig()
 	readSmtpSettings()
 	readQuotaSettings()
@@ -528,6 +557,8 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	GrafanaNetUrl = Cfg.Section("grafana.net").Key("url").MustString("https://grafana.net")
 
+	imageUploadingSection := Cfg.Section("external_image_storage")
+	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("internal")
 	return nil
 }
 
