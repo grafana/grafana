@@ -219,7 +219,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
       dataHandler = this.esRawDocHandler;
     } else {
-      dataHandler = this.seriesHandler;
+      dataHandler = this.timeSeriesHandler;
     }
 
     this.seriesList = dataList.map(dataHandler.bind(this));
@@ -235,9 +235,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     });
   }
 
-  seriesHandler(seriesData, index) {
-    var datapoints = seriesData.datapoints;
-    var alias = seriesData.target;
+  seriesHandler(seriesData, index, datapoints, alias) {
     var colorIndex = index % this.colors.length;
     var color = this.panel.aliasColors[alias] || this.colors[colorIndex];
 
@@ -262,6 +260,13 @@ class GraphCtrl extends MetricsPanelCtrl {
     return series;
   }
 
+  timeSeriesHandler(seriesData, index) {
+    var datapoints = seriesData.datapoints;
+    var alias = seriesData.target;
+
+    return this.seriesHandler(seriesData, index, datapoints, alias);
+  }
+
   tableHandler(seriesData, index) {
     var xColumnIndex = Number(this.panel.xaxis.columnIndex);
     var valueColumnIndex = Number(this.panel.xaxis.valueColumnIndex);
@@ -275,28 +280,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     var alias = seriesData.columns[valueColumnIndex].text;
 
-    var colorIndex = index % this.colors.length;
-    var color = this.panel.aliasColors[alias] || this.colors[colorIndex];
-
-    var series = new TimeSeries({
-      datapoints: datapoints,
-      alias: alias,
-      color: color,
-      unit: seriesData.unit,
-    });
-
-    if (datapoints && datapoints.length > 0) {
-      var last = moment.utc(datapoints[datapoints.length - 1][1]);
-      var from = moment.utc(this.range.from);
-      if (last - from < -10000) {
-        this.datapointsOutside = true;
-      }
-
-      this.datapointsCount += datapoints.length;
-      this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
-    }
-
-    return series;
+    return this.seriesHandler(seriesData, index, datapoints, alias);
   }
 
   esRawDocHandler(seriesData, index) {
@@ -316,28 +300,7 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     var alias = valueField;
 
-    var colorIndex = index % this.colors.length;
-    var color = this.panel.aliasColors[alias] || this.colors[colorIndex];
-
-    var series = new TimeSeries({
-      datapoints: datapoints,
-      alias: alias,
-      color: color,
-      unit: seriesData.unit,
-    });
-
-    if (datapoints && datapoints.length > 0) {
-      var last = moment.utc(datapoints[datapoints.length - 1][1]);
-      var from = moment.utc(this.range.from);
-      if (last - from < -10000) {
-        this.datapointsOutside = true;
-      }
-
-      this.datapointsCount += datapoints.length;
-      this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
-    }
-
-    return series;
+    return this.seriesHandler(seriesData, index, datapoints, alias);
   }
 
   onRender() {
