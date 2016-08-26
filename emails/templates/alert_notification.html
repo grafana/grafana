@@ -16,7 +16,7 @@
 
 <table class="row" >
 	<tr>
-        <td class="wrapper last">
+        <td class="last">
 			<table class="twelve columns">
 				<tr>
                     <td class="center">
@@ -31,24 +31,24 @@
 [[if ne .State "ok" ]]
 <table class="row" >
 	<tr>
-        <td class="wrapper last">
+        <td class="last">
 			<center>
 			<table class="twelve columns" >
 				<tr>
-					<td class="wrapper last" style="font-weight: bold;">
-						Metric name
+					<td class="six last">
+						<h5 style="font-weight: bold;">Metric name</h5>
 					</td>
-					<td style="font-weight: bold;">
-						Value
+					<td class="six">
+						<h5 style="font-weight: bold;">Value</h5>
 					</td>
 				</tr>
-				[[range .EvalMatches]] dwds
+				[[range .EvalMatches]]
 				<tr>
-					<td class="wrapper last">
-						[[.Metric]]
+					<td class="six last">
+						<h5 class="data">[[.Metric]]</h5>
 					</td>
-					<td>
-						[[.Value]]
+					<td class="six">
+						<h5 class="data">[[.Value]]</h5>
 					</td>
 				</tr>
 				[[end]]
@@ -79,8 +79,23 @@
 		<td class="wrapper last">
 			<table class="twelve columns">
 				<tr>
-					<td class="center">
-						<a href="[[.RuleUrl]]"  target="_blank">Alert rule</a> - <a href="[[.AlertPageUrl]]"  target="_blank">Alerts page</a>
+					<td class="center six">
+						<table class="better-button" align="center" border="0" cellspacing="0" cellpadding="0">
+							<tr>
+								<td align="center" class="better-button" bgcolor="#ff8f2b">
+									<a href="[[.RuleUrl]]"  target="_blank">View your Alert rule</a>
+								</td>
+							</tr>
+						</table>
+						</td>
+						<td class="center six">
+						<table class="better-button" align="center" border="0" cellspacing="0" cellpadding="0">
+							<tr>
+								<td align="center" class="better-button-alt" bgcolor="#efefef">
+									<a href="[[.AlertPageUrl]]"  target="_blank"> Go to the Alerts page</a>
+								</td>
+							</tr>
+						</table>
 					</td>
 				</tr>
 			</table>
