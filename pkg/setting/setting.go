@@ -190,7 +190,7 @@ func ToAbsUrl(relativeUrl string) string {
 
 func shouldRedactKey(s string) bool {
 	uppercased := strings.ToUpper(s)
-	return strings.Contains(uppercased, "PASSWORD") || strings.Contains(uppercased, "SECRET")
+	return strings.Contains(uppercased, "PASSWORD") || strings.Contains(uppercased, "SECRET") || strings.Contains(uppercased, "PROVIDER_CONFIG")
 }
 
 func shouldRedactURLKey(s string) bool {
