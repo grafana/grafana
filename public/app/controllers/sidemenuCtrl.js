@@ -50,6 +50,11 @@ function (angular, _, $, config) {
         href: $scope.getUrl("/anomaly"),
       });
 
+      $scope.mainLinks.push({
+        text: "日志管理",
+        icon: "fa fa-fw fa-search",
+        href: $scope.getUrl("/logs"),
+      });
     };
 
     $scope.loadOrgs = function() {

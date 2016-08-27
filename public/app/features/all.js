@@ -10,5 +10,6 @@ define([
   './profile/changePasswordCtrl',
   './profile/selectOrgCtrl',
   './admin/all',
-  './decompose/all'
+  './decompose/all',
+  './logs/all'
 ], function () {});
