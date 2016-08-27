@@ -14,8 +14,9 @@ function (_) {
       {text: "Extended Stats",  value: 'extended_stats', requiresField: true, supportsMissing: true, supportsInlineScript: true},
       {text: "Percentiles",  value: 'percentiles', requiresField: true, supportsMissing: true, supportsInlineScript: true},
       {text: "Unique Count", value: "cardinality", requiresField: true, supportsMissing: true},
-      {text: "Moving Average",  value: 'moving_avg', requiresField: false, isPipelineAgg: true, minVersion: 2},
-      {text: "Derivative",  value: 'derivative', requiresField: false, isPipelineAgg: true, minVersion: 2 },
+      {text: "Moving Average",  value: 'moving_avg', requiresField: false, isPipelineAgg: true, customName: false, minVersion: 2},
+      {text: "Derivative",  value: 'derivative', requiresField: false, isPipelineAgg: true, customName: false, minVersion: 2 },
+      {text: "Bucket Script",  value: 'bucket_script', requiresField: false, isPipelineAgg: true, customName: true, minVersion: 2},
       {text: "Raw Document", value: "raw_document", requiresField: false}
     ],
 
@@ -86,6 +87,9 @@ function (_) {
       ],
       'derivative': [
         {text: 'unit', default: undefined},
+      ],
+      'bucket_script': [
+        {text: 'script', default: '0'},
       ]
     },
 
@@ -134,6 +138,10 @@ function (_) {
       return false;
     },
 
+    isBucketScriptAgg: function(metricType) {
+      return this.isPipelineAgg(metricType) && metricType === 'bucket_script';
+    },
+
     getPipelineAggOptions: function(targets) {
       var self = this;
       var result = [];
@@ -142,7 +150,6 @@ function (_) {
           result.push({text: self.describeMetric(metric), value: metric.id });
         }
       });
-
       return result;
     },
 

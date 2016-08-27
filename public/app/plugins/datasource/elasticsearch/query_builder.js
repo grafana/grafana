@@ -204,6 +204,15 @@ function (queryDef) {
       if (queryDef.isPipelineAgg(metric.type)) {
         if (metric.pipelineAgg && /^\d*$/.test(metric.pipelineAgg)) {
           metricAgg = { buckets_path: metric.pipelineAgg };
+        } else if (queryDef.isBucketScriptAgg(metric.type)) {
+          metricAgg = {buckets_path: {}};
+          for (var j = 0; j < target.metrics.length; j++) {
+            var the_metric = target.metrics[j];
+            if (the_metric.type !== 'count' && !queryDef.isPipelineAgg(the_metric.type)) {
+              var key = the_metric.field.replace(/[^A-Za-z0-9]/gi, '');
+              metricAgg['buckets_path'][key] = the_metric.id;
+            }
+          }
         } else {
           continue;
         }
