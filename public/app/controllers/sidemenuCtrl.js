@@ -51,7 +51,7 @@ function (angular, _, $, config) {
       });
 
       $scope.mainLinks.push({
-        text: "日志管理",
+        text: "日志查询",
         icon: "fa fa-fw fa-search",
         href: $scope.getUrl("/logs"),
       });
