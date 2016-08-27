@@ -42,13 +42,14 @@
             {{alertDetail.status.level}}
           </td>
           <td style="width: 10%">
-            <a href="/alerts/association/{{alertDetail.metric}}/{{alertDetail.status.monitoredEntity}}/{{correlationThreshold}}" class="btn btn-inverse btn-mini">
+            <a href="/alerts/association/{{alertDetail.metric}}/{{alertDetail.status.monitoredEntity}}/{{correlationThreshold}}" class="btn btn-mini btn-primary">
               <i class="fa fa-signal"></i>
               相关联指标
             </a>
           </td>
           <td style="width: 10%">
-            <a href="/alerts/association/{{alertDetail.metric}}/{{alertDetail.status.monitoredEntity}}/{{correlationThreshold}}" class="btn btn-inverse btn-mini">
+            <a href="http://localhost:5601/app/kibana#/discover?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:'{{alertDetail.status.levelChangedTimeStr}}',mode:quick,to:now))&_a=(columns:!(message,type,host),index:'logstash-*',interval:auto,query:(query_string:(analyze_wildcard:!t,query:'*')),sort:!('@timestamp',desc))&indexPattern=logstash-*&type=histogram"
+               class="btn btn-mini btn-primary"  target="_blank">
               <i class="fa fa-edit"></i>
               相关日志分析
             </a>
