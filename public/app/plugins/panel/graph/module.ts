@@ -22,6 +22,9 @@ class GraphCtrl extends MetricsPanelCtrl {
   seriesList: any = [];
   logScales: any;
   unitFormats: any;
+  xAxisModes: any;
+  xAxisSeriesValues: any;
+  xAxisColumns: any = [];
   annotationsPromise: any;
   datapointsCount: number;
   datapointsOutside: boolean;
@@ -53,7 +56,9 @@ class GraphCtrl extends MetricsPanelCtrl {
       }
     ],
     xaxis: {
-      show: true
+      show: true,
+      mode: 'time',
+      seriesValue: 'avg'
     },
     alert: {
       warn: {op: '>', value: undefined},
@@ -117,6 +122,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
     _.defaults(this.panel.alert, this.panelDefaults.alert);
     _.defaults(this.panel.legend, this.panelDefaults.legend);
+    _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
 
     this.colors = $scope.$root.colors;
 
@@ -144,8 +150,16 @@ class GraphCtrl extends MetricsPanelCtrl {
       'log (base 32)': 32,
       'log (base 1024)': 1024
     };
-
     this.unitFormats = kbn.getUnitFormats();
+
+    this.xAxisModes = {
+      'Time': 'time',
+      'Series': 'series',
+      'Table': 'table',
+      'Elastic Raw Doc': 'elastic'
+    };
+
+    this.xAxisSeriesValues = ['min', 'max', 'avg', 'current', 'total'];
     this.subTabIndex = 0;
   }
 
@@ -183,7 +197,40 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.datapointsWarning = false;
     this.datapointsCount = 0;
     this.datapointsOutside = false;
-    this.seriesList = dataList.map(this.seriesHandler.bind(this));
+
+    let dataHandler: (seriesData, index)=>any;
+    if (this.panel.xaxis.mode === 'table') {
+      if (dataList.length) {
+        // Table panel uses only first enabled tagret, so we can use dataList[0]
+        // for table data representation
+        dataList.splice(1, dataList.length - 1);
+        this.xAxisColumns = _.map(dataList[0].columns, (column, index) => {
+          return {
+            text: column.text,
+            index: index
+          };
+        });
+
+        // Set last column as default value
+        if (!this.panel.xaxis.valueColumnIndex) {
+          this.panel.xaxis.valueColumnIndex = this.xAxisColumns.length - 1;
+        }
+      }
+
+      dataHandler = this.tableHandler;
+    } else if (this.panel.xaxis.mode === 'elastic') {
+      if (dataList.length) {
+        dataList.splice(1, dataList.length - 1);
+        var point = _.first(dataList[0].datapoints);
+        this.xAxisColumns = getFieldsFromESDoc(point);
+      }
+
+      dataHandler = this.esRawDocHandler;
+    } else {
+      dataHandler = this.timeSeriesHandler;
+    }
+
+    this.seriesList = dataList.map(dataHandler.bind(this));
     this.datapointsWarning = this.datapointsCount === 0 || this.datapointsOutside;
 
     this.annotationsPromise.then(annotations => {
@@ -196,9 +243,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     });
   }
 
-  seriesHandler(seriesData, index) {
-    var datapoints = seriesData.datapoints;
-    var alias = seriesData.target;
+  seriesHandler(seriesData, index, datapoints, alias) {
     var colorIndex = index % this.colors.length;
     var color = this.panel.aliasColors[alias] || this.colors[colorIndex];
 
@@ -220,8 +265,50 @@ class GraphCtrl extends MetricsPanelCtrl {
       this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
     }
 
-
     return series;
+  }
+
+  timeSeriesHandler(seriesData, index) {
+    var datapoints = seriesData.datapoints;
+    var alias = seriesData.target;
+
+    return this.seriesHandler(seriesData, index, datapoints, alias);
+  }
+
+  tableHandler(seriesData, index) {
+    var xColumnIndex = Number(this.panel.xaxis.columnIndex);
+    var valueColumnIndex = Number(this.panel.xaxis.valueColumnIndex);
+    var datapoints = _.map(seriesData.rows, (row) => {
+      var value = valueColumnIndex ? row[valueColumnIndex] : _.last(row);
+      return [
+        value,             // Y value
+        row[xColumnIndex]  // X value
+      ];
+    });
+
+    var alias = seriesData.columns[valueColumnIndex].text;
+
+    return this.seriesHandler(seriesData, index, datapoints, alias);
+  }
+
+  esRawDocHandler(seriesData, index) {
+    let xField = this.panel.xaxis.esField;
+    let valueField = this.panel.xaxis.esValueField;
+    let datapoints = _.map(seriesData.datapoints, (doc) => {
+      return [
+        pluckDeep(doc, valueField),  // Y value
+        pluckDeep(doc, xField)       // X value
+      ];
+    });
+
+    // Remove empty points
+    datapoints = _.filter(datapoints, (point) => {
+      return point[0] !== undefined;
+    });
+
+    var alias = valueField;
+
+    return this.seriesHandler(seriesData, index, datapoints, alias);
   }
 
   onRender() {
@@ -328,6 +415,40 @@ class GraphCtrl extends MetricsPanelCtrl {
     fileExport.exportSeriesListToCsvColumns(this.seriesList);
   }
 
+}
+
+function getFieldsFromESDoc(doc) {
+  let fields = [];
+  let fieldNameParts = [];
+
+  function getFieldsRecursive(obj) {
+    _.forEach(obj, (value, key) => {
+      if (_.isObject(value)) {
+        fieldNameParts.push(key);
+        getFieldsRecursive(value);
+      } else {
+        let field = fieldNameParts.concat(key).join('.');
+        fields.push(field);
+      }
+    });
+    fieldNameParts.pop();
+  }
+
+  getFieldsRecursive(doc);
+  return fields;
+}
+
+function pluckDeep(obj: any, property: string) {
+  let propertyParts = property.split('.');
+  let value = obj;
+  for (let i = 0; i < propertyParts.length; ++i) {
+    if (value[propertyParts[i]]) {
+      value = value[propertyParts[i]];
+    } else {
+      return undefined;
+    }
+  }
+  return value;
 }
 
 export {GraphCtrl, GraphCtrl as PanelCtrl}
