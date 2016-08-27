@@ -40,6 +40,75 @@
 	<div class="section gf-form-group">
 		<h5 class="section-heading">X-Axis</h5>
 		<gf-form-switch class="gf-form" label="Show" label-class="width-5" checked="ctrl.panel.xaxis.show" on-change="ctrl.render()"></gf-form-switch>
+
+		<div class="gf-form">
+			<label class="gf-form-label width-5">Mode</label>
+			<div class="gf-form-select-wrapper max-width-15">
+				<select class="gf-form-input"
+					ng-model="ctrl.panel.xaxis.mode"
+					ng-options="v as k for (k, v) in ctrl.xAxisModes"
+					ng-change="ctrl.refresh()">
+				</select>
+			</div>
+		</div>
+
+		<!-- Series mode -->
+		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode === 'series'">
+			<label class="gf-form-label width-5">Value</label>
+			<div class="gf-form-select-wrapper max-width-15">
+				<select class="gf-form-input"
+					ng-model="ctrl.panel.xaxis.seriesValue"
+					ng-options="v for v in ctrl.xAxisSeriesValues"
+					ng-change="ctrl.render()">
+				</select>
+			</div>
+		</div>
+
+		<!-- Table mode -->
+		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode === 'table'">
+			<label class="gf-form-label width-5">Column</label>
+			<div class="gf-form-select-wrapper max-width-15">
+				<select class="gf-form-input"
+					ng-model="ctrl.panel.xaxis.columnIndex"
+					ng-options="col.index as col.text for col in ctrl.xAxisColumns"
+					ng-change="ctrl.refresh()">
+				</select>
+			</div>
+		</div>
+
+		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode === 'table'">
+			<label class="gf-form-label width-5">Value</label>
+			<div class="gf-form-select-wrapper max-width-15">
+				<select class="gf-form-input"
+					ng-model="ctrl.panel.xaxis.valueColumnIndex"
+					ng-options="col.index as col.text for col in ctrl.xAxisColumns"
+					ng-change="ctrl.refresh()">
+				</select>
+			</div>
+		</div>
+
+		<!-- Elastic Raw Document mode -->
+		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode === 'elastic'">
+			<label class="gf-form-label width-5">Column</label>
+			<div class="gf-form-select-wrapper max-width-15">
+				<select class="gf-form-input"
+					ng-model="ctrl.panel.xaxis.esField"
+					ng-options="field for field in ctrl.xAxisColumns"
+					ng-change="ctrl.refresh()">
+				</select>
+			</div>
+		</div>
+
+		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode === 'elastic'">
+			<label class="gf-form-label width-5">Value</label>
+			<div class="gf-form-select-wrapper max-width-15">
+				<select class="gf-form-input"
+					ng-model="ctrl.panel.xaxis.esValueField"
+					ng-options="field for field in ctrl.xAxisColumns"
+					ng-change="ctrl.refresh()">
+				</select>
+			</div>
+		</div>
 	</div>
 
 </div>
