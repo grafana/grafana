@@ -33,25 +33,31 @@ function (angular, _, $, config) {
       */
 
       $scope.mainLinks.push({
-        text: "告警管理",
+        text: "实时报警分析",
         icon: "fa fa-fw fa-bell",
         href: $scope.getUrl("/alerts"),
       });
 
       $scope.mainLinks.push({
-        text: "告警通知",
+        text: "实时报警通知",
         icon: "fa fa-fw fa-phone",
         href: $scope.getUrl("/oncallers"),
       });
 
       $scope.mainLinks.push({
-        text: "健康管理",
+        text: "实时健康分析",
         icon: "fa fa-fw fa-stethoscope",
         href: $scope.getUrl("/anomaly"),
       });
 
       $scope.mainLinks.push({
-        text: "日志查询",
+        text: "长期分析预测",
+        icon: "fa fa-fw fa-line-chart",
+        href: $scope.getUrl("/analysis"),
+      });
+
+      $scope.mainLinks.push({
+        text: "日志管理查询",
         icon: "fa fa-fw fa-search",
         href: $scope.getUrl("/logs"),
       });
