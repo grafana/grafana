@@ -188,6 +188,10 @@ define([
         templateUrl: 'app/features/logs/partials/logs.html',
         controller : 'LogsCtrl',
       })
+      .when('/analysis', {
+        templateUrl: 'app/features/analysis/partials/analysis.html',
+        controller : 'AnalysisCtrl',
+      })
       .otherwise({
         templateUrl: 'app/partials/error.html',
         controller: 'ErrorCtrl'

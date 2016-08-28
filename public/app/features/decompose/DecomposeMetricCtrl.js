@@ -10,7 +10,7 @@ define([
     module.controller('DecomposeMetricCtrl', function ($scope, $timeout) {
       $scope.init = function () {
         $scope.initDashboard({
-          meta: {canStar: false, canShare: false, canEdit: false},
+          meta: {canStar: false, canShare: false, canEdit: true},
           dashboard: {
             title: "健康管理",
             id: window.decomposeTarget.metric,

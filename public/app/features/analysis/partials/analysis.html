@@ -1,0 +1,38 @@
+<topnav title="中长期分析" icon="fa fa-fw fa-line-chart" subnav="true">
+  <ul class="nav">
+    <li class="active" ><a href="logs">总览</a></li>
+  </ul>
+</topnav>
+
+<div class="page-container">
+  <div class="page">
+    <h2>趋势分析</h2>
+
+    <div class="tight-form">
+      <ul class="tight-form-list">
+        <li class="tight-form-item" style="width: 100px">
+          指标
+        </li>
+        <li>
+          <input placeholder="需要分析的指标" ng-model="targetObj.metric" type="text" required class="input-xxlarge tight-form-input last" >
+        </li>
+      </ul>
+      <div class="clearfix"></div>
+    </div>
+    <div class="tight-form">
+      <ul class="tight-form-list">
+        <li class="tight-form-item" style="width: 100px">
+          机器标签
+        </li>
+        <li>
+          <input placeholder="机器标签(host 名字)" ng-model="targetObj.host" type="text" required class="input-xxlarge tight-form-input last" >
+        </li>
+      </ul>
+      <div class="clearfix"></div>
+    </div>
+
+    <br>
+    <a class="pull-right btn btn-success" ng-click="analysis()">开始分析</a>
+  </div>
+  </div>
+</div>

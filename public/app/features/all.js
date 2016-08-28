@@ -11,5 +11,6 @@ define([
   './profile/selectOrgCtrl',
   './admin/all',
   './decompose/all',
-  './logs/all'
+  './logs/all',
+  './analysis/all'
 ], function () {});
