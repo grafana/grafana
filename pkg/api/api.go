@@ -19,6 +19,9 @@ func Register(r *macaron.Macaron) {
 	quota := middleware.Quota
 	bind := binding.Bind
 
+	// automatically set HEAD for every GET
+	r.SetAutoHead(true)
+
 	// not logged in views
 	r.Get("/", reqSignedIn, Index)
 	r.Get("/logout", Logout)
