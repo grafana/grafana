@@ -43,12 +43,17 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	}
 
 	client := http.Client{Timeout: time.Duration(10 * time.Second)}
-	res, err := client.PostForm(e.Url+"/render?", params)
+	req, _ := http.NewRequest(http.MethodPost, e.Url+"/render?", strings.NewReader(params.Encode()))
+	if e.BasicAuth {
+		req.SetBasicAuth("carl", "carl")
+	}
+
+	res, err := client.Do(req)
+	defer res.Body.Close()
 	if err != nil {
 		result.Error = err
 		return result
 	}
-	defer res.Body.Close()
 
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
