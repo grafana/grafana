@@ -113,7 +113,7 @@ function (_, $, coreModule) {
           if (str[0] === '/') { str = str.substring(1); }
           if (str[str.length - 1] === '/') { str = str.substring(0, str.length-1); }
           try {
-            return item.toLowerCase().match(str);
+            return item.toLowerCase().match(str.toLowerCase());
           } catch(e) {
             return false;
           }
