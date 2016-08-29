@@ -6,7 +6,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/api/live"
 	"github.com/grafana/grafana/pkg/middleware"
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	"gopkg.in/macaron.v1"
 )
 
@@ -18,6 +18,9 @@ func Register(r *macaron.Macaron) {
 	reqOrgAdmin := middleware.RoleAuth(m.ROLE_ADMIN)
 	quota := middleware.Quota
 	bind := binding.Bind
+
+	// automatically set HEAD for every GET
+	r.SetAutoHead(true)
 
 	// not logged in views
 	r.Get("/", reqSignedIn, Index)
