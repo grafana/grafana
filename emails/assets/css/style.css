@@ -102,6 +102,10 @@ margin-bottom: 25px;
   table[class="body"] .left-text-pad {
     padding-right: 10px !important;
   }
+
+  .logo {
+    margin-left: 10px;
+  }
 }
 
 table.better-button {
