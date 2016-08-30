@@ -208,6 +208,8 @@ export class AlertTabCtrl {
           this.error = 'Currently the alerting backend only supports Graphite queries';
         } else if (this.templateSrv.variableExists(foundTarget.target)) {
           this.error = 'Template variables are not supported in alert queries';
+        } else {
+          this.error = '';
         }
       });
     }
