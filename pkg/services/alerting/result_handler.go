@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
@@ -65,6 +66,7 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 			NewState:  string(ctx.Rule.State),
 			PrevState: string(oldState),
 			Timestamp: time.Now(),
+			Data:      simplejson.NewFromAny(ctx.EvalMatches),
 		}
 
 		annotationRepo := annotations.GetRepository()

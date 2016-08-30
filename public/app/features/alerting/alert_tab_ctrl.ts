@@ -5,6 +5,7 @@ import {ThresholdMapper} from './threshold_mapper';
 import {QueryPart} from 'app/core/components/query_part/query_part';
 import alertDef from './alert_def';
 import config from 'app/core/config';
+import moment from 'moment';
 
 export class AlertTabCtrl {
   panel: any;
@@ -22,6 +23,7 @@ export class AlertTabCtrl {
   alertNotifications;
   error: string;
   appSubUrl: string;
+  alertHistory: any;
 
   /** @ngInject */
   constructor(private $scope,
@@ -60,6 +62,7 @@ export class AlertTabCtrl {
     // build notification model
     this.notifications = [];
     this.alertNotifications = [];
+    this.alertHistory = [];
 
     return this.backendSrv.get('/api/alert-notifications').then(res => {
       this.notifications = res;
@@ -70,6 +73,19 @@ export class AlertTabCtrl {
           model.iconClass = this.getNotificationIcon(model.type);
           this.alertNotifications.push(model);
         }
+      });
+    }).then(() => {
+      this.backendSrv.get(`/api/alert-history?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}`).then(res => {
+        this.alertHistory = _.map(res, (ah) => {
+          ah.time = moment(ah.timestamp).format('MMM D, YYYY HH:mm:ss');
+          ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
+
+          ah.metrics = _.map(ah.data, (ev) => {
+            return ev.Metric + "=" + ev.Value;
+          }).join(', ');
+
+          return ah;
+        });
       });
     });
   }

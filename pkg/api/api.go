@@ -254,7 +254,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/", wrap(GetAlerts))
 		})
 
-		r.Get("/alert-history/:alertId", ValidateOrgAlert, wrap(GetAlertHistory))
+		r.Get("/alert-history", wrap(GetAlertHistory))
 
 		r.Get("/alert-notifications", wrap(GetAlertNotifications))
 

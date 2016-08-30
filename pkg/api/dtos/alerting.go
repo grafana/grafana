@@ -55,7 +55,7 @@ type EvalMatch struct {
 
 type AlertHistory struct {
 	AlertId   int64     `json:"alertId"`
-	NewState  string    `json:"netState"`
+	NewState  string    `json:"newState"`
 	Timestamp time.Time `json:"timestamp"`
 	Title     string    `json:"title"`
 	Text      string    `json:"text"`
