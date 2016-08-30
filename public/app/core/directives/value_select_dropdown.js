@@ -81,13 +81,14 @@ function (angular, _, coreModule) {
       }
 
       tagValuesPromise.then(function(values) {
-        tag.values = values;
-        tag.valuesText = values.join(' + ');
+        tag.values = [];  //query of getValuesForTag may return values not exists in vm.options, only keep valid value in this array
         _.each(vm.options, function(option) {
-          if (_.indexOf(tag.values, option.value) !== -1) {
+          if (_.indexOf(values, option.value) !== -1) {
             option.selected = tag.selected;
+            tag.values.push(option.value);  //add the valid value to tag.values array
           }
         });
+        tag.valuesText = values.join(' + ');
 
         vm.selectionsChanged(false);
       });
