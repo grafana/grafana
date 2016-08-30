@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/annotations"
 )
 
 func ValidateOrgAlert(c *middleware.Context) {
@@ -211,4 +212,35 @@ func DeleteAlertNotification(c *middleware.Context) Response {
 	}
 
 	return ApiSuccess("Notification deleted")
+}
+
+func GetAlertHistory(c *middleware.Context) Response {
+	query := &annotations.ItemQuery{
+		AlertId: c.ParamsInt64("alertId"),
+		Type:    annotations.AlertType,
+		OrgId:   c.OrgId,
+		Limit:   c.QueryInt64("limit"),
+	}
+
+	repo := annotations.GetRepository()
+
+	items, err := repo.Find(query)
+	if err != nil {
+		return ApiError(500, "Failed to get history for alert", err)
+	}
+
+	var result []dtos.AlertHistory
+	for _, item := range items {
+		result = append(result, dtos.AlertHistory{
+			AlertId:   item.AlertId,
+			Timestamp: item.Timestamp,
+			Data:      item.Data,
+			NewState:  item.NewState,
+			Text:      item.Text,
+			Metric:    item.Metric,
+			Title:     item.Title,
+		})
+	}
+
+	return Json(200, result)
 }
