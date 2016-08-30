@@ -76,10 +76,8 @@ function (_, $, coreModule) {
         };
 
         $scope.source = function(query, callback) {
-          if (options) { return options; }
-
           $scope.$apply(function() {
-            $scope.getOptions().then(function(altSegments) {
+            $scope.getOptions({ measurementFilter: query }).then(function(altSegments) {
               $scope.altSegments = altSegments;
               options = _.map($scope.altSegments, function(alt) { return alt.value; });
 
