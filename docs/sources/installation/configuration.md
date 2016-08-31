@@ -88,6 +88,8 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 
 `http` or `https`
 
+> **Note** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
+
 ### domain
 
 This setting is only used in as a part of the `root_url` setting (see below). Important if you
