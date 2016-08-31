@@ -76,11 +76,11 @@ export class AlertTabCtrl {
       });
     }).then(() => {
       this.backendSrv.get(`/api/alert-history?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}`).then(res => {
-        this.alertHistory = _.map(res, (ah) => {
+        this.alertHistory = _.map(res, ah => {
           ah.time = moment(ah.timestamp).format('MMM D, YYYY HH:mm:ss');
           ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
 
-          ah.metrics = _.map(ah.data, (ev) => {
+          ah.metrics = _.map(ah.data, ev=> {
             return ev.Metric + "=" + ev.Value;
           }).join(', ');
 
