@@ -41,7 +41,7 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 		ctx.Rule.State = m.AlertStateOK
 	}
 
-	countSeverity(ctx.Rule.Severity)
+	countStateResult(ctx.Rule.State)
 	if ctx.Rule.State != oldState {
 		handler.log.Info("New state change", "alertId", ctx.Rule.Id, "newState", ctx.Rule.State, "oldState", oldState)
 
@@ -78,15 +78,19 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 	}
 }
 
-func countSeverity(state m.AlertSeverityType) {
+func countStateResult(state m.AlertStateType) {
 	switch state {
-	case m.AlertSeverityOK:
-		metrics.M_Alerting_Result_Ok.Inc(1)
-	case m.AlertSeverityInfo:
-		metrics.M_Alerting_Result_Info.Inc(1)
-	case m.AlertSeverityWarning:
-		metrics.M_Alerting_Result_Warning.Inc(1)
-	case m.AlertSeverityCritical:
-		metrics.M_Alerting_Result_Critical.Inc(1)
+	case m.AlertStateCritical:
+		metrics.M_Alerting_Result_State_Critical.Inc(1)
+	case m.AlertStateWarning:
+		metrics.M_Alerting_Result_State_Warning.Inc(1)
+	case m.AlertStateOK:
+		metrics.M_Alerting_Result_State_Ok.Inc(1)
+	case m.AlertStatePaused:
+		metrics.M_Alerting_Result_State_Paused.Inc(1)
+	case m.AlertStatePending:
+		metrics.M_Alerting_Result_State_Pending.Inc(1)
+	case m.AlertStateExeuctionError:
+		metrics.M_Alerting_Result_State_ExecutionError.Inc(1)
 	}
 }
