@@ -82,6 +82,8 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 
 `http` or `https`
 
+> **Note** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
+
 ### domain
 
 This setting is only used in as a part of the `root_url` setting (see below). Important if you
@@ -396,10 +398,10 @@ How long sessions lasts in seconds. Defaults to `86400` (24 hours).
 
 ### reporting_enabled
 
-When enabled Grafana will send anonymous usage statistics to 
+When enabled Grafana will send anonymous usage statistics to
 `stats.grafana.org`. No IP addresses are being tracked, only simple counters to
 track running instances, versions, dashboard & error counts. It is very helpful
-to us, so please leave this enabled. Counters are sent every 24 hours. Default 
+to us, so please leave this enabled. Counters are sent every 24 hours. Default
 value is `true`.
 
 ### google_analytics_ua_id
