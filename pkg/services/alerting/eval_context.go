@@ -28,36 +28,46 @@ type EvalContext struct {
 	ImageOnDiskPath string
 }
 
+type StateDescription struct {
+	Color string
+	Text  string
+	Data  string
+}
+
+func (c *EvalContext) GetStateModel() *StateDescription {
+	if c.Error != nil {
+		return &StateDescription{
+			Color: "#D63232",
+			Text:  "EXECUTION ERROR",
+		}
+	}
+
+	if !c.Firing {
+		return &StateDescription{
+			Color: "#36a64f",
+			Text:  "OK",
+		}
+	}
+
+	if c.Rule.Severity == m.AlertSeverityWarning {
+		return &StateDescription{
+			Color: "#fd821b",
+			Text:  "WARNING",
+		}
+	} else {
+		return &StateDescription{
+			Color: "#D63232",
+			Text:  "CRITICAL",
+		}
+	}
+}
+
 func (a *EvalContext) GetDurationMs() float64 {
 	return float64(a.EndTime.Nanosecond()-a.StartTime.Nanosecond()) / float64(1000000)
 }
 
-func (c *EvalContext) GetColor() string {
-	if !c.Firing {
-		return "#36a64f"
-	}
-
-	if c.Rule.Severity == m.AlertSeverityWarning {
-		return "#fd821b"
-	} else {
-		return "#D63232"
-	}
-}
-
-func (c *EvalContext) GetStateText() string {
-	if !c.Firing {
-		return "OK"
-	}
-
-	if c.Rule.Severity == m.AlertSeverityWarning {
-		return "WARNING"
-	} else {
-		return "CRITICAL"
-	}
-}
-
 func (c *EvalContext) GetNotificationTitle() string {
-	return "[" + c.GetStateText() + "] " + c.Rule.Name
+	return "[" + c.GetStateModel().Text + "] " + c.Rule.Name
 }
 
 func (c *EvalContext) getDashboardSlug() (string, error) {

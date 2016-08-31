@@ -65,7 +65,7 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 			Type:      annotations.AlertType,
 			AlertId:   ctx.Rule.Id,
 			Title:     ctx.Rule.Name,
-			Text:      ctx.GetStateText(),
+			Text:      ctx.GetStateModel().Text,
 			NewState:  string(ctx.Rule.State),
 			PrevState: string(oldState),
 			Timestamp: time.Now(),

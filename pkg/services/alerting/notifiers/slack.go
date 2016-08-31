@@ -61,13 +61,26 @@ func (this *SlackNotifier) Notify(context *alerting.EvalContext) {
 		}
 	}
 
+	if context.Error != nil {
+		fields = append(fields, map[string]interface{}{
+			"title": "Error message",
+			"value": context.Error.Error(),
+			"short": false,
+		})
+	}
+
+	message := ""
+	if context.Rule.State != m.AlertStateOK { //dont add message when going back to alert state ok.
+		message = context.Rule.Message
+	}
+
 	body := map[string]interface{}{
 		"attachments": []map[string]interface{}{
 			{
-				"color":       context.GetColor(),
+				"color":       context.GetStateModel().Color,
 				"title":       context.GetNotificationTitle(),
 				"title_link":  ruleUrl,
-				"text":        context.Rule.Message,
+				"text":        message,
 				"fields":      fields,
 				"image_url":   context.ImagePublicUrl,
 				"footer":      "Grafana v" + setting.BuildVersion,
