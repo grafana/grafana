@@ -49,12 +49,12 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	}
 
 	res, err := client.Do(req)
-	defer res.Body.Close()
 	if err != nil {
 		result.Error = err
 		return result
 	}
 
+	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
 	if err != nil {
 		result.Error = err

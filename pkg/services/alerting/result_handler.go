@@ -31,12 +31,15 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 	oldState := ctx.Rule.State
 
 	exeuctionError := ""
+	annotationData := simplejson.New()
 	if ctx.Error != nil {
 		handler.log.Error("Alert Rule Result Error", "ruleId", ctx.Rule.Id, "error", ctx.Error)
 		ctx.Rule.State = m.AlertStateExeuctionError
 		exeuctionError = ctx.Error.Error()
+		annotationData.Set("errorMessage", exeuctionError)
 	} else if ctx.Firing {
 		ctx.Rule.State = m.AlertStateType(ctx.Rule.Severity)
+		annotationData = simplejson.NewFromAny(ctx.EvalMatches)
 	} else {
 		ctx.Rule.State = m.AlertStateOK
 	}
@@ -66,7 +69,7 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 			NewState:  string(ctx.Rule.State),
 			PrevState: string(oldState),
 			Timestamp: time.Now(),
-			Data:      simplejson.NewFromAny(ctx.EvalMatches),
+			Data:      annotationData,
 		}
 
 		annotationRepo := annotations.GetRepository()
