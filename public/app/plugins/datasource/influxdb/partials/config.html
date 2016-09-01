@@ -31,3 +31,13 @@
 		<i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >10s'" data-placement="right"></i>
 	</div>
 </div>
+
+
+<div class="gf-form-group">
+	<div class="gf-form max-width-21">
+		<span class="gf-form-label">Downsample time suffix</span>
+		<input type="text" class="gf-form-input width-20" ng-model="ctrl.current.jsonData.downSampleGroup" spellcheck='false' placeholder="_1m;_1h;_1d"></input>
+		<input type="text" class="gf-form-input width-20" ng-model="ctrl.current.jsonData.downSampleRange" spellcheck='false' placeholder="3600;86400;10000"></input>
+		<i class="fa fa-question-circle" bs-tooltip="'Generate downsample suffix base on delta between from/until time: example: 86400 -> _1h -> cpu_1h'" data-placement="right"></i>
+	</div>
+</div>
