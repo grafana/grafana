@@ -379,6 +379,11 @@
 			"ImportPath": "gopkg.in/redis.v2",
 			"Comment": "v2.3.2",
 			"Rev": "e6179049628164864e6e84e973cfb56335748dea"
-		}
+		},
+                {
+                        "ImportPath": "gopkg.in/olivere/elastic.v3",
+                        "Comment": "v3.0.47",
+                        "Rev": "908ffee99d2c7e5fc7cf6ddf437b1fb26f4bb286"
+                } 
 	]
 }
