@@ -34,7 +34,7 @@ var (
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
 )
 
-const minGoVersion = 1.3
+const minGoVersion = 1.6
 
 func main() {
 	log.SetOutput(os.Stdout)
