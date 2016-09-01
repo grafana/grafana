@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"path"
 	"strings"
 	"time"
 
@@ -44,18 +45,20 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 
 	for _, query := range queries {
 		params["target"] = []string{query.Query}
-		glog.Debug("Graphite request", "query", query.Query)
 	}
 
-	formData := params.Encode()
-	glog.Info("Graphite request body", "formdata", formData)
-	req, err := http.NewRequest(http.MethodPost, e.Url+"/render", strings.NewReader(formData))
+	u, _ := url.Parse(e.Url)
+	u.Path = path.Join(u.Path, "render")
+	glog.Info("Graphite request body", "formdata", params.Encode())
+
+	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(params.Encode()))
 	if err != nil {
 		glog.Info("Failed to create request", "error", err)
 		result.Error = fmt.Errorf("Failed to create request. error: %v", err)
 		return result
 	}
 
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if e.BasicAuth {
 		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
 	}
