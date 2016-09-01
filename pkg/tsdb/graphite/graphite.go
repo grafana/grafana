@@ -45,7 +45,7 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	client := http.Client{Timeout: time.Duration(10 * time.Second)}
 	req, _ := http.NewRequest(http.MethodPost, e.Url+"/render?", strings.NewReader(params.Encode()))
 	if e.BasicAuth {
-		req.SetBasicAuth("carl", "carl")
+		req.SetBasicAuth(e.BasicAuthPassword, e.BasicAuthPassword)
 	}
 
 	res, err := client.Do(req)
