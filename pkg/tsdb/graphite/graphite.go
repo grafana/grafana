@@ -13,6 +13,10 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
+var (
+	HttpClient = http.Client{Timeout: time.Duration(10 * time.Second)}
+)
+
 type GraphiteExecutor struct {
 	*tsdb.DataSourceInfo
 }
@@ -43,20 +47,27 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 		glog.Debug("Graphite request", "query", query.Query)
 	}
 
-	client := http.Client{Timeout: time.Duration(10 * time.Second)}
-	req, _ := http.NewRequest(http.MethodPost, e.Url+"/render?", strings.NewReader(params.Encode()))
+	formData := params.Encode()
+	glog.Info("Graphite request body", "formdata", formData)
+	req, err := http.NewRequest(http.MethodPost, e.Url+"/render", strings.NewReader(formData))
+	if err != nil {
+		glog.Info("Failed to create request", "error", err)
+		result.Error = fmt.Errorf("Failed to create request. error: %v", err)
+		return result
+	}
+
 	if e.BasicAuth {
 		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
 	}
 
-	res, err := client.Do(req)
+	res, err := HttpClient.Do(req)
 	if err != nil {
 		result.Error = err
 		return result
 	}
 
-	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
+	defer res.Body.Close()
 	if err != nil {
 		result.Error = err
 		return result
