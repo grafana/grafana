@@ -2,6 +2,7 @@ package graphite
 
 import (
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -45,7 +46,7 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	client := http.Client{Timeout: time.Duration(10 * time.Second)}
 	req, _ := http.NewRequest(http.MethodPost, e.Url+"/render?", strings.NewReader(params.Encode()))
 	if e.BasicAuth {
-		req.SetBasicAuth(e.BasicAuthPassword, e.BasicAuthPassword)
+		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
 	}
 
 	res, err := client.Do(req)
@@ -61,10 +62,16 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 		return result
 	}
 
+	if res.StatusCode == http.StatusUnauthorized {
+		glog.Info("Request is Unauthorized", "status", res.Status, "body", string(body))
+		result.Error = fmt.Errorf("Request is Unauthorized status: %v body: %s", res.Status, string(body))
+		return result
+	}
+
 	var data []TargetResponseDTO
 	err = json.Unmarshal(body, &data)
 	if err != nil {
-		glog.Info("Failed to unmarshal graphite response", "error", err, "body", string(body))
+		glog.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
 		result.Error = err
 		return result
 	}
