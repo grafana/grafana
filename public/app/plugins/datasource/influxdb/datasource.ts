@@ -17,6 +17,8 @@ export default class InfluxDatasource {
   database: any;
   basicAuth: any;
   interval: any;
+  downSampleGroup: any;
+  downSampleRange: any;
   supportAnnotations: boolean;
   supportMetrics: boolean;
   responseParser: any;
@@ -34,6 +36,8 @@ export default class InfluxDatasource {
     this.database = instanceSettings.database;
     this.basicAuth = instanceSettings.basicAuth;
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
+    this.downSampleGroup = (instanceSettings.jsonData || {}).downSampleGroup;
+    this.downSampleRange = (instanceSettings.jsonData || {}).downSampleRange;
     this.supportAnnotations = true;
     this.supportMetrics = true;
     this.responseParser = new ResponseParser();
@@ -44,6 +48,23 @@ export default class InfluxDatasource {
     var queryTargets = [];
     var i, y;
 
+    var downSampleGroup = this.downSampleGroup.split(";");
+    var downSampleRange = this.downSampleRange.split(";");
+
+    var rangeTs = options.range.to.unix() - options.range.from.unix();
+    var downSampleExtension = "";
+
+    for (y = 0; y < downSampleRange.length; y++) {
+
+        if (rangeTs <= parseInt(downSampleRange[y])) {
+             break;
+        }
+    }
+
+    if (--y in downSampleGroup) {
+             downSampleExtension = downSampleGroup[y];
+    }
+
     var allQueries = _.map(options.targets, (target) => {
       if (target.hide) { return ""; }
 
@@ -53,6 +74,8 @@ export default class InfluxDatasource {
       var queryModel = new InfluxQuery(target, this.templateSrv, options.scopedVars);
       var query =  queryModel.render(true);
       query = query.replace(/\$interval/g, (target.interval || options.interval));
+      //replace downSample
+      query = query.replace(/\$downsample/g, downSampleExtension);
       return query;
     }).reduce((acc, current) => {
       if (current !== "") {
