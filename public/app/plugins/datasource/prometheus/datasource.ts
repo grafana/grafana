@@ -64,6 +64,8 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     var self = this;
     var start = this.getPrometheusTime(options.range.from, false);
     var end = this.getPrometheusTime(options.range.to, true);
+    start = this.alignTime(start, end - start);
+    end = this.alignTime(end, end - start);
 
     var queries = [];
     var activeTargets = [];
@@ -174,6 +176,8 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
     var start = this.getPrometheusTime(options.range.from, false);
     var end = this.getPrometheusTime(options.range.to, true);
+    start = this.alignTime(start, end - start);
+    end = this.alignTime(end, end - start);
     var self = this;
 
     return this.performTimeSeriesQuery(query, start, end).then(function(results) {
@@ -277,6 +281,14 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       return label[0] + '="' + label[1] + '"';
     }).join(',');
     return metricName + '{' + labelPart + '}';
+  };
+
+  this.alignTime = function(time, range) {
+    var unitTime = 60;
+    if (range < unitTime) {
+      return time;
+    }
+    return time - (time % unitTime);
   };
 
   this.getPrometheusTime = function(date, roundUp) {
