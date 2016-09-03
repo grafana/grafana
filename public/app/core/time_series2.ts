@@ -151,10 +151,7 @@ export default class TimeSeries {
 
     if (result.length) {
       this.stats.avg = (this.stats.total / nonNulls);
-      this.stats.current = result[result.length-1][1];
-      if (this.stats.current === null && result.length > 1) {
-        this.stats.current = result[result.length-2][1];
-      }
+      this.stats.current = currentValue;
     }
 
     this.stats.count = result.length;
