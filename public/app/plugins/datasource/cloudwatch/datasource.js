@@ -338,7 +338,20 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
       });
     }
 
+    this.getExpandedVariables = function(target, dimensionKey, variable) {
+      return _.chain(variable.options)
+      .filter(function(v) {
+        return v.selected;
+      })
+      .map(function(v) {
+        var t = angular.copy(target);
+        t.dimensions[dimensionKey] = v.value;
+        return t;
+      }).value();
+    };
+
     this.expandTemplateVariable = function(targets, templateSrv) {
+      var self = this;
       return _.chain(targets)
       .map(function(target) {
         var dimensionKey = null;
@@ -353,15 +366,7 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
           var variable = _.find(templateSrv.variables, function(variable) {
             return templateSrv.containsVariable(variableName, variable.name);
           });
-          return _.chain(variable.options)
-          .filter(function(v) {
-            return v.selected;
-          })
-          .map(function(v) {
-            var t = angular.copy(target);
-            t.dimensions[dimensionKey] = v.value;
-            return t;
-          }).value();
+          return self.getExpandedVariables(target, dimensionKey, variable);
         } else {
           return [target];
         }
