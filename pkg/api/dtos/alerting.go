@@ -52,3 +52,14 @@ type EvalMatch struct {
 	Metric string            `json:"metric"`
 	Value  float64           `json:"value"`
 }
+
+type AlertHistory struct {
+	AlertId   int64     `json:"alertId"`
+	NewState  string    `json:"newState"`
+	Timestamp time.Time `json:"timestamp"`
+	Title     string    `json:"title"`
+	Text      string    `json:"text"`
+	Metric    string    `json:"metric"`
+
+	Data *simplejson.Json `json:"data"`
+}

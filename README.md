@@ -78,7 +78,7 @@ the latest master builds [here](http://grafana.org/download/builds)
 
 ### Dependencies
 
-- Go 1.5
+- Go 1.6
 - NodeJS v4+
 - [Godep](https://github.com/tools/godep)
 

@@ -54,7 +54,7 @@ func (this *EmailNotifier) Notify(context *alerting.EvalContext) {
 			"State":         context.Rule.State,
 			"Name":          context.Rule.Name,
 			"Severity":      context.Rule.Severity,
-			"SeverityColor": context.GetColor(),
+			"SeverityColor": context.GetStateModel().Color,
 			"Message":       context.Rule.Message,
 			"RuleUrl":       ruleUrl,
 			"ImageLink":     context.ImagePublicUrl,

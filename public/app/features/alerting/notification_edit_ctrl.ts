@@ -38,8 +38,8 @@ export class AlertNotificationEditCtrl {
       });
     } else {
       this.backendSrv.post(`/api/alert-notifications`, this.model).then(res => {
-        this.$location.path('alerting/notification/' + res.id + '/edit');
         this.$scope.appEvent('alert-success', ['Notification created', '']);
+        this.$location.path('alerting/notifications');
       });
     }
   }

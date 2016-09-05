@@ -48,7 +48,6 @@ func (n *RootNotifier) Notify(context *EvalContext) {
 
 	for _, notifier := range notifiers {
 		n.log.Info("Sending notification", "firing", context.Firing, "type", notifier.GetType())
-
 		go notifier.Notify(context)
 	}
 }
