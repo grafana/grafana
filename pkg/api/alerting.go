@@ -214,6 +214,22 @@ func DeleteAlertNotification(c *middleware.Context) Response {
 	return ApiSuccess("Notification deleted")
 }
 
+//POST /api/alert-notifications/test
+func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) Response {
+	cmd := &alerting.NotificationTestCommand{
+		Name:     dto.Name,
+		Type:     dto.Type,
+		Severity: dto.Severity,
+		Settings: dto.Settings,
+	}
+
+	if err := bus.Dispatch(cmd); err != nil {
+		return ApiError(500, "Failed to send alert notifications", err)
+	}
+
+	return ApiSuccess("Test notification sent")
+}
+
 func GetAlertHistory(c *middleware.Context) Response {
 	alertId, err := getAlertIdForRequest(c)
 	if err != nil {

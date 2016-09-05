@@ -46,6 +46,10 @@ func (n *RootNotifier) Notify(context *EvalContext) {
 		n.log.Error("Failed to upload alert panel image", "error", err)
 	}
 
+	n.sendNotifications(notifiers, context)
+}
+
+func (n *RootNotifier) sendNotifications(notifiers []Notifier, context *EvalContext) {
 	for _, notifier := range notifiers {
 		n.log.Info("Sending notification", "firing", context.Firing, "type", notifier.GetType())
 		go notifier.Notify(context)
@@ -53,7 +57,6 @@ func (n *RootNotifier) Notify(context *EvalContext) {
 }
 
 func (n *RootNotifier) uploadImage(context *EvalContext) error {
-
 	uploader, _ := imguploader.NewImageUploader()
 
 	imageUrl, err := context.GetImageUrl()

@@ -63,3 +63,10 @@ type AlertHistory struct {
 
 	Data *simplejson.Json `json:"data"`
 }
+
+type NotificationTestCommand struct {
+	Name     string           `json:"name"`
+	Type     string           `json:"type"`
+	Settings *simplejson.Json `json:"settings"`
+	Severity string           `json:"severity"`
+}
