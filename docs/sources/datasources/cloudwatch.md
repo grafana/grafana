@@ -77,7 +77,7 @@ Example dimension queries which will return list of resources for individual AWS
 
 Service | Query
 ------- | -----
-EBS | `dimension_values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)`
+ELB | `dimension_values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)`
 ElastiCache | `dimension_values(us-east-1,AWS/ElastiCache,CPUUtilization,CacheClusterId)`
 RedShift | `dimension_values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)`
 RDS | `dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)`
