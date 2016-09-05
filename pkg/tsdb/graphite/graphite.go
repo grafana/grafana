@@ -47,8 +47,6 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 		formData["target"] = []string{query.Query}
 	}
 
-	glog.Info("Graphite request body", "formdata", formData.Encode())
-
 	req, err := e.createRequest(formData)
 	if err != nil {
 		result.Error = err
