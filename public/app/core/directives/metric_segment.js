@@ -23,10 +23,10 @@ function (_, $, coreModule) {
         getOptions: "&",
         onChange: "&",
       },
-      link: function($scope, elem, attrs) {
+      link: function($scope, elem) {
         var $input = $(inputTemplate);
-        var $button = $(attrs.styleMode === 'select' ? selectTemplate : linkTemplate);
         var segment = $scope.segment;
+        var $button = $(segment.selectMode ? selectTemplate : linkTemplate);
         var options = null;
         var cancelBlur = null;
         var linkMode = true;
@@ -179,6 +179,7 @@ function (_, $, coreModule) {
               cssClass: attrs.cssClass,
               custom: attrs.custom,
               value: option ? option.text : value,
+              selectMode: attrs.selectMode,
             };
             return uiSegmentSrv.newSegment(segment);
           };

@@ -23,7 +23,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   logScales: any;
   unitFormats: any;
   xAxisModes: any;
-  xAxisSeriesStats: any;
+  xNameSegment: any;
   annotationsPromise: any;
   datapointsCount: number;
   datapointsOutside: boolean;
@@ -154,7 +154,6 @@ class GraphCtrl extends MetricsPanelCtrl {
       'Json': 'json'
     };
 
-    this.xAxisSeriesStats = ['min', 'max', 'avg', 'current', 'count', 'total'];
     this.subTabIndex = 0;
   }
 
@@ -288,7 +287,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     });
 
     var alias = valueField;
-
     return this.seriesHandler(seriesData, index, datapoints, alias);
   }
 
@@ -396,6 +394,22 @@ class GraphCtrl extends MetricsPanelCtrl {
     fileExport.exportSeriesListToCsvColumns(this.seriesList);
   }
 
+  xAxisModeChanged()  {
+    // set defaults
+    this.refresh();
+  }
+
+  getXAxisNameOptions()  {
+    return this.$q.when([
+      {text: 'Avg', value: 'avg'}
+    ]);
+  }
+
+  getXAxisValueOptions()  {
+    return this.$q.when([
+      {text: 'Avg', value: 'avg'}
+    ]);
+  }
 }
 
 function getFieldsFromESDoc(doc) {

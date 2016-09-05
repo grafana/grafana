@@ -28,6 +28,7 @@ function (angular, _, coreModule) {
       this.type = options.type;
       this.fake = options.fake;
       this.value = options.value;
+      this.selectMode = options.selectMode;
       this.type = options.type;
       this.expandable = options.expandable;
       this.html = options.html || $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(this.value));
