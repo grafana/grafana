@@ -7,29 +7,32 @@ import (
 )
 
 type AlertNotification struct {
-	Id       int64            `json:"id"`
-	OrgId    int64            `json:"-"`
-	Name     string           `json:"name"`
-	Type     string           `json:"type"`
-	Settings *simplejson.Json `json:"settings"`
-	Created  time.Time        `json:"created"`
-	Updated  time.Time        `json:"updated"`
+	Id        int64            `json:"id"`
+	OrgId     int64            `json:"-"`
+	Name      string           `json:"name"`
+	Type      string           `json:"type"`
+	IsDefault bool             `json:"isDefault"`
+	Settings  *simplejson.Json `json:"settings"`
+	Created   time.Time        `json:"created"`
+	Updated   time.Time        `json:"updated"`
 }
 
 type CreateAlertNotificationCommand struct {
-	Name     string           `json:"name"  binding:"Required"`
-	Type     string           `json:"type"  binding:"Required"`
-	Settings *simplejson.Json `json:"settings"`
+	Name      string           `json:"name"  binding:"Required"`
+	Type      string           `json:"type"  binding:"Required"`
+	IsDefault bool             `json:"isDefault"`
+	Settings  *simplejson.Json `json:"settings"`
 
 	OrgId  int64 `json:"-"`
 	Result *AlertNotification
 }
 
 type UpdateAlertNotificationCommand struct {
-	Id       int64            `json:"id"  binding:"Required"`
-	Name     string           `json:"name"  binding:"Required"`
-	Type     string           `json:"type"  binding:"Required"`
-	Settings *simplejson.Json `json:"settings"  binding:"Required"`
+	Id        int64            `json:"id"  binding:"Required"`
+	Name      string           `json:"name"  binding:"Required"`
+	Type      string           `json:"type"  binding:"Required"`
+	IsDefault bool             `json:"isDefault"`
+	Settings  *simplejson.Json `json:"settings"  binding:"Required"`
 
 	OrgId  int64 `json:"-"`
 	Result *AlertNotification

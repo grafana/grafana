@@ -17,7 +17,8 @@ export class AlertNotificationEditCtrl {
     } else {
       this.model = {
         type: 'email',
-        settings: {}
+        settings: {},
+        isDefault: false
       };
     }
   }

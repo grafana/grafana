@@ -25,6 +25,15 @@
 				</select>
 			</div>
 		</div>
+		<div class="gf-form">
+			<gf-form-switch
+				class="gf-form"
+				label="All alerts"
+				label-class="width-8"
+				checked="ctrl.model.isDefault"
+				tooltip="Use this notification for all alerts">
+			</gf-form-switch>
+		</div>
 	</div>
 
 	<div class="gf-form-group" ng-show="ctrl.model.type === 'webhook'">

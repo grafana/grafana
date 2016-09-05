@@ -88,11 +88,12 @@ func (n *RootNotifier) uploadImage(context *EvalContext) error {
 }
 
 func (n *RootNotifier) getNotifiers(orgId int64, notificationIds []int64) ([]Notifier, error) {
+	query := &m.GetAlertNotificationsQuery{OrgId: orgId}
+
 	if len(notificationIds) == 0 {
-		return []Notifier{}, nil
+		query.Ids = []int64{0}
 	}
 
-	query := &m.GetAlertNotificationsQuery{OrgId: orgId, Ids: notificationIds}
 	if err := bus.Dispatch(query); err != nil {
 		return nil, err
 	}

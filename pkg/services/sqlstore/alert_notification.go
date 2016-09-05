@@ -40,33 +40,36 @@ func getAlertNotificationsInternal(query *m.GetAlertNotificationsQuery, sess *xo
 	params := make([]interface{}, 0)
 
 	sql.WriteString(`SELECT
-	   					  alert_notification.id,
-	   					  alert_notification.org_id,
-	   					  alert_notification.name,
-	              alert_notification.type,
-	   					  alert_notification.created,
-	              alert_notification.updated,
-	              alert_notification.settings
-	   					  FROM alert_notification
-	   					  `)
+										alert_notification.id,
+										alert_notification.org_id,
+										alert_notification.name,
+										alert_notification.type,
+										alert_notification.created,
+										alert_notification.updated,
+										alert_notification.settings,
+										alert_notification.is_default
+										FROM alert_notification
+	  							`)
 
 	sql.WriteString(` WHERE alert_notification.org_id = ?`)
 	params = append(params, query.OrgId)
 
-	if query.Name != "" {
-		sql.WriteString(` AND alert_notification.name = ?`)
-		params = append(params, query.Name)
-	}
+	if query.Name != "" || query.Id != 0 || len(query.Ids) > 0 {
+		if query.Name != "" {
+			sql.WriteString(` AND alert_notification.name = ?`)
+			params = append(params, query.Name)
+		}
 
-	if query.Id != 0 {
-		sql.WriteString(` AND alert_notification.id = ?`)
-		params = append(params, query.Id)
-	}
+		if query.Id != 0 {
+			sql.WriteString(` AND alert_notification.id = ?`)
+			params = append(params, query.Id)
+		}
 
-	if len(query.Ids) > 0 {
-		sql.WriteString(` AND alert_notification.id IN (?` + strings.Repeat(",?", len(query.Ids)-1) + ")")
-		for _, v := range query.Ids {
-			params = append(params, v)
+		if len(query.Ids) > 0 {
+			sql.WriteString(` AND ((alert_notification.is_default = 1) OR alert_notification.id IN (?` + strings.Repeat(",?", len(query.Ids)-1) + "))")
+			for _, v := range query.Ids {
+				params = append(params, v)
+			}
 		}
 	}
 
@@ -93,12 +96,13 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 		}
 
 		alertNotification := &m.AlertNotification{
-			OrgId:    cmd.OrgId,
-			Name:     cmd.Name,
-			Type:     cmd.Type,
-			Settings: cmd.Settings,
-			Created:  time.Now(),
-			Updated:  time.Now(),
+			OrgId:     cmd.OrgId,
+			Name:      cmd.Name,
+			Type:      cmd.Type,
+			Settings:  cmd.Settings,
+			Created:   time.Now(),
+			Updated:   time.Now(),
+			IsDefault: cmd.IsDefault,
 		}
 
 		if _, err = sess.Insert(alertNotification); err != nil {
@@ -132,6 +136,9 @@ func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
 		current.Settings = cmd.Settings
 		current.Name = cmd.Name
 		current.Type = cmd.Type
+		current.IsDefault = cmd.IsDefault
+
+		sess.UseBool("is_default")
 
 		if affected, err := sess.Id(cmd.Id).Update(current); err != nil {
 			return err

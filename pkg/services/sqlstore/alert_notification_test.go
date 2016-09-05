@@ -63,10 +63,12 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			cmd1 := m.CreateAlertNotificationCommand{Name: "nagios", Type: "webhook", OrgId: 1, Settings: simplejson.New()}
 			cmd2 := m.CreateAlertNotificationCommand{Name: "slack", Type: "webhook", OrgId: 1, Settings: simplejson.New()}
 			cmd3 := m.CreateAlertNotificationCommand{Name: "ops2", Type: "email", OrgId: 1, Settings: simplejson.New()}
+			cmd4 := m.CreateAlertNotificationCommand{IsDefault: true, Name: "default", Type: "email", OrgId: 1, Settings: simplejson.New()}
 
 			So(CreateAlertNotificationCommand(&cmd1), ShouldBeNil)
 			So(CreateAlertNotificationCommand(&cmd2), ShouldBeNil)
 			So(CreateAlertNotificationCommand(&cmd3), ShouldBeNil)
+			So(CreateAlertNotificationCommand(&cmd4), ShouldBeNil)
 
 			Convey("search", func() {
 				query := &m.GetAlertNotificationsQuery{
@@ -76,7 +78,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 
 				err := GetAlertNotifications(query)
 				So(err, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 2)
+				So(len(query.Result), ShouldEqual, 3)
 			})
 		})
 	})

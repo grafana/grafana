@@ -22,11 +22,12 @@ type AlertRule struct {
 }
 
 type AlertNotification struct {
-	Id      int64     `json:"id"`
-	Name    string    `json:"name"`
-	Type    string    `json:"type"`
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
+	Id        int64     `json:"id"`
+	Name      string    `json:"name"`
+	Type      string    `json:"type"`
+	IsDefault bool      `json:"isDefault"`
+	Created   time.Time `json:"created"`
+	Updated   time.Time `json:"updated"`
 }
 
 type AlertTestCommand struct {

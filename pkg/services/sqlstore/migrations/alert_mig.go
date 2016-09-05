@@ -62,5 +62,9 @@ func addAlertMigrations(mg *Migrator) {
 	}
 
 	mg.AddMigration("create alert_notification table v1", NewAddTableMigration(alert_notification))
+	mg.AddMigration("Add column is_default", NewAddColumnMigration(alert_notification, &Column{
+		Name: "is_default", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
 	mg.AddMigration("add index alert_notification org_id & name", NewAddIndexMigration(alert_notification, alert_notification.Indices[0]))
+
 }

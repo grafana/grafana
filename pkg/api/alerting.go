@@ -157,11 +157,12 @@ func GetAlertNotifications(c *middleware.Context) Response {
 
 	for _, notification := range query.Result {
 		result = append(result, dtos.AlertNotification{
-			Id:      notification.Id,
-			Name:    notification.Name,
-			Type:    notification.Type,
-			Created: notification.Created,
-			Updated: notification.Updated,
+			Id:        notification.Id,
+			Name:      notification.Name,
+			Type:      notification.Type,
+			IsDefault: notification.IsDefault,
+			Created:   notification.Created,
+			Updated:   notification.Updated,
 		})
 	}
 
