@@ -354,17 +354,13 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
       var self = this;
       return _.chain(targets)
       .map(function(target) {
-        var dimensionKey = null;
-        var variableName = null;
-        _.each(target.dimensions, function(v, k) {
-          if (templateSrv.variableExists(v)) {
-            dimensionKey = k;
-            variableName = v;
-          }
+        var dimensionKey = _.findKey(target.dimensions, function(v) {
+          return templateSrv.variableExists(v);
         });
+
         if (dimensionKey) {
           var variable = _.find(templateSrv.variables, function(variable) {
-            return templateSrv.containsVariable(variableName, variable.name);
+            return templateSrv.containsVariable(target.dimensions[dimensionKey], variable.name);
           });
           return self.getExpandedVariables(target, dimensionKey, variable);
         } else {
