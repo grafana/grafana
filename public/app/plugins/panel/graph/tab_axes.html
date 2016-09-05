@@ -57,8 +57,8 @@
 			<label class="gf-form-label width-5">Value</label>
 			<div class="gf-form-select-wrapper max-width-15">
 				<select class="gf-form-input"
-					ng-model="ctrl.panel.xaxis.seriesValue"
-					ng-options="v for v in ctrl.xAxisSeriesValues"
+					ng-model="ctrl.panel.xaxis.values[0]"
+					ng-options="v for v in ctrl.xAxisSeriesStats"
 					ng-change="ctrl.render()">
 				</select>
 			</div>
@@ -69,7 +69,7 @@
 			<label class="gf-form-label width-5">Column</label>
 			<div class="gf-form-select-wrapper max-width-15">
 				<select class="gf-form-input"
-					ng-model="ctrl.panel.xaxis.columnIndex"
+					ng-model="ctrl.panel.xaxis.nameField"
 					ng-options="col.index as col.text for col in ctrl.xAxisColumns"
 					ng-change="ctrl.refresh()">
 				</select>
@@ -80,7 +80,7 @@
 			<label class="gf-form-label width-5">Value</label>
 			<div class="gf-form-select-wrapper max-width-15">
 				<select class="gf-form-input"
-					ng-model="ctrl.panel.xaxis.valueColumnIndex"
+					ng-model="ctrl.panel.xaxis.valueFields[0]"
 					ng-options="col.index as col.text for col in ctrl.xAxisColumns"
 					ng-change="ctrl.refresh()">
 				</select>
@@ -88,11 +88,11 @@
 		</div>
 
 		<!-- Elastic Raw Document mode -->
-		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode === 'elastic'">
+		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode === 'json'">
 			<label class="gf-form-label width-5">Column</label>
 			<div class="gf-form-select-wrapper max-width-15">
 				<select class="gf-form-input"
-					ng-model="ctrl.panel.xaxis.esField"
+					ng-model="ctrl.panel.xaxis.nameField"
 					ng-options="field for field in ctrl.xAxisColumns"
 					ng-change="ctrl.refresh()">
 				</select>
@@ -103,7 +103,7 @@
 			<label class="gf-form-label width-5">Value</label>
 			<div class="gf-form-select-wrapper max-width-15">
 				<select class="gf-form-input"
-					ng-model="ctrl.panel.xaxis.esValueField"
+					ng-model="ctrl.panel.xaxis.valueFields[0]"
 					ng-options="field for field in ctrl.xAxisColumns"
 					ng-change="ctrl.refresh()">
 				</select>

@@ -23,8 +23,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   logScales: any;
   unitFormats: any;
   xAxisModes: any;
-  xAxisSeriesValues: any;
-  xAxisColumns: any = [];
+  xAxisSeriesStats: any;
   annotationsPromise: any;
   datapointsCount: number;
   datapointsOutside: boolean;
@@ -58,11 +57,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     xaxis: {
       show: true,
       mode: 'time',
-      seriesValue: 'avg'
-    },
-    alert: {
-      warn: {op: '>', value: undefined},
-      crit: {op: '>', value: undefined},
+      name: null,
+      values: [],
     },
     // show/hide lines
     lines         : true,
@@ -120,7 +116,6 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     _.defaults(this.panel, this.panelDefaults);
     _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
-    _.defaults(this.panel.alert, this.panelDefaults.alert);
     _.defaults(this.panel.legend, this.panelDefaults.legend);
     _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
 
@@ -156,10 +151,10 @@ class GraphCtrl extends MetricsPanelCtrl {
       'Time': 'time',
       'Series': 'series',
       'Table': 'table',
-      'Elastic Raw Doc': 'elastic'
+      'Json': 'json'
     };
 
-    this.xAxisSeriesValues = ['min', 'max', 'avg', 'current', 'total'];
+    this.xAxisSeriesStats = ['min', 'max', 'avg', 'current', 'count', 'total'];
     this.subTabIndex = 0;
   }
 
@@ -199,35 +194,21 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.datapointsOutside = false;
 
     let dataHandler: (seriesData, index)=>any;
-    if (this.panel.xaxis.mode === 'table') {
-      if (dataList.length) {
-        // Table panel uses only first enabled tagret, so we can use dataList[0]
-        // for table data representation
-        dataList.splice(1, dataList.length - 1);
-        this.xAxisColumns = _.map(dataList[0].columns, (column, index) => {
-          return {
-            text: column.text,
-            index: index
-          };
-        });
-
-        // Set last column as default value
-        if (!this.panel.xaxis.valueColumnIndex) {
-          this.panel.xaxis.valueColumnIndex = this.xAxisColumns.length - 1;
-        }
+    switch (this.panel.xaxis.mode) {
+      case 'series':
+      case 'time': {
+        dataHandler = this.timeSeriesHandler;
+        break;
       }
-
-      dataHandler = this.tableHandler;
-    } else if (this.panel.xaxis.mode === 'elastic') {
-      if (dataList.length) {
-        dataList.splice(1, dataList.length - 1);
-        var point = _.first(dataList[0].datapoints);
-        this.xAxisColumns = getFieldsFromESDoc(point);
+      case 'table': {
+         // Table panel uses only first enabled target, so we can use dataList[0]
+         dataList.splice(1, dataList.length - 1);
+         dataHandler = this.tableHandler;
+        break;
       }
-
-      dataHandler = this.esRawDocHandler;
-    } else {
-      dataHandler = this.timeSeriesHandler;
+      case 'json': {
+        break;
+      }
     }
 
     this.seriesList = dataList.map(dataHandler.bind(this));

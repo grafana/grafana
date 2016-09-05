@@ -238,9 +238,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
             series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
 
             if (panel.xaxis.mode === 'series') {
-              series.data = [
-                [i + 1, series.stats[panel.xaxis.seriesValue]]
-              ];
+              series.data = [[i + 1, series.stats[panel.xaxis.values[0]]]];
             } else if (panel.xaxis.mode === 'table' ||
                        panel.xaxis.mode === 'elastic') {
               series.data = [];
