@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"math"
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -34,8 +35,8 @@ func (s *SchedulerImpl) Update(rules []*Rule) {
 		}
 
 		job.Rule = rule
-		job.Offset = int64(i)
-
+		job.Offset = ((rule.Frequency * 1000) / int64(len(rules))) * int64(i)
+		job.Offset = int64(math.Floor(float64(job.Offset) / 1000))
 		jobs[rule.Id] = job
 	}
 
@@ -46,9 +47,27 @@ func (s *SchedulerImpl) Tick(tickTime time.Time, execQueue chan *Job) {
 	now := tickTime.Unix()
 
 	for _, job := range s.jobs {
-		if now%job.Rule.Frequency == 0 && job.Running == false {
-			s.log.Debug("Scheduler: Putting job on to exec queue", "name", job.Rule.Name)
-			execQueue <- job
+		if job.Running {
+			continue
+		}
+
+		if job.OffsetWait && now%job.Offset == 0 {
+			job.OffsetWait = false
+			s.enque(job, execQueue)
+			continue
+		}
+
+		if now%job.Rule.Frequency == 0 {
+			if job.Offset > 0 {
+				job.OffsetWait = true
+			} else {
+				s.enque(job, execQueue)
+			}
 		}
 	}
+}
+
+func (s *SchedulerImpl) enque(job *Job, execQueue chan *Job) {
+	s.log.Debug("Scheduler: Putting job on to exec queue", "name", job.Rule.Name, "id", job.Rule.Id)
+	execQueue <- job
 }
