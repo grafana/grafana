@@ -61,7 +61,6 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
         ctrl.events.on('render', function(renderData) {
           data = renderData || data;
           if (!data) {
-            ctrl.refresh();
             return;
           }
           annotations = data.annotations || annotations;
