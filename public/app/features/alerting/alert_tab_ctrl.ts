@@ -74,18 +74,20 @@ export class AlertTabCtrl {
           this.alertNotifications.push(model);
         }
       });
-    }).then(() => {
-      this.backendSrv.get(`/api/alert-history?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}`).then(res => {
-        this.alertHistory = _.map(res, ah => {
-          ah.time = moment(ah.timestamp).format('MMM D, YYYY HH:mm:ss');
-          ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
+    });
+  }
 
-          ah.metrics = _.map(ah.data, ev=> {
-            return ev.Metric + "=" + ev.Value;
-          }).join(', ');
+  getAlertHistory() {
+    this.backendSrv.get(`/api/alert-history?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}`).then(res => {
+      this.alertHistory = _.map(res, ah => {
+        ah.time = moment(ah.timestamp).format('MMM D, YYYY HH:mm:ss');
+        ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
 
-          return ah;
-        });
+        ah.metrics = _.map(ah.data, ev=> {
+          return ev.Metric + "=" + ev.Value;
+        }).join(', ');
+
+        return ah;
       });
     });
   }
@@ -125,7 +127,11 @@ export class AlertTabCtrl {
   }
 
   initModel() {
-    var alert = this.alert = this.panel.alert = this.panel.alert || {};
+    var alert = this.alert = this.panel.alert = this.panel.alert || {enabled: false};
+
+    if (!this.alert.enabled) {
+      return;
+    }
 
     alert.conditions = alert.conditions || [];
     if (alert.conditions.length === 0) {
@@ -145,11 +151,9 @@ export class AlertTabCtrl {
       return memo;
     }, []);
 
-    if (this.alert.enabled) {
-      this.panelCtrl.editingThresholds = true;
-    }
-
     ThresholdMapper.alertToGraphThresholds(this.panel);
+
+    this.panelCtrl.editingThresholds = true;
     this.panelCtrl.render();
   }
 
@@ -173,6 +177,10 @@ export class AlertTabCtrl {
   }
 
   validateModel() {
+    if (!this.alert.enabled) {
+      return;
+    }
+
     let firstTarget;
     var fixed = false;
     let foundTarget = null;
