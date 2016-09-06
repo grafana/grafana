@@ -17,7 +17,9 @@ export class AlertNotificationEditCtrl {
     } else {
       this.model = {
         type: 'email',
-        settings: {},
+        settings: {
+          severityFilter: 'none'
+        },
         isDefault: false
       };
     }

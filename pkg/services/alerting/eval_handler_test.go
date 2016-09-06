@@ -40,6 +40,5 @@ func TestAlertingExecutor(t *testing.T) {
 			handler.eval(context)
 			So(context.Firing, ShouldEqual, false)
 		})
-
 	})
 }

@@ -2,15 +2,15 @@
 	<aside class="edit-sidemenu-aside">
 		<ul class="edit-sidemenu">
 			<li ng-class="{active: ctrl.subTabIndex === 0}">
-				<a ng-click="ctrl.subTabIndex = 0">Alert Config</a>
+				<a ng-click="ctrl.changeTabIndex(0)">Alert Config</a>
 			</li>
 			<li ng-class="{active: ctrl.subTabIndex === 1}">
-				<a ng-click="ctrl.subTabIndex = 1">
+				<a ng-click="ctrl.changeTabIndex(1)">
 					Notifications <span class="muted">({{ctrl.alert.notifications.length}})</span>
 				</a>
 			</li>
 			<li ng-class="{active: ctrl.subTabIndex === 2}">
-				<a ng-click="ctrl.subTabIndex = 2">Alert History</a>
+				<a ng-click="ctrl.changeTabIndex(2)">Alert History</a>
 			</li>
       <li>
 				<a ng-click="ctrl.delete()">Delete</a>

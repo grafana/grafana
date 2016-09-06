@@ -27,6 +27,7 @@ type EvalContext struct {
 	ImagePublicUrl  string
 	ImageOnDiskPath string
 	NoDataFound     bool
+	RetryCount      int
 }
 
 type StateDescription struct {
@@ -112,5 +113,6 @@ func NewEvalContext(rule *Rule) *EvalContext {
 		DoneChan:    make(chan bool, 1),
 		CancelChan:  make(chan bool, 1),
 		log:         log.New("alerting.evalContext"),
+		RetryCount:  0,
 	}
 }

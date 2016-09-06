@@ -1,6 +1,10 @@
 package alerting
 
-import "time"
+import (
+	"time"
+
+	"github.com/grafana/grafana/pkg/models"
+)
 
 type EvalHandler interface {
 	Eval(context *EvalContext)
@@ -15,6 +19,7 @@ type Notifier interface {
 	Notify(alertResult *EvalContext)
 	GetType() string
 	NeedsImage() bool
+	MatchSeverity(result models.AlertSeverityType) bool
 }
 
 type Condition interface {
