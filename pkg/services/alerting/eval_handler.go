@@ -21,7 +21,6 @@ func NewEvalHandler() *DefaultEvalHandler {
 }
 
 func (e *DefaultEvalHandler) Eval(context *EvalContext) {
-
 	go e.eval(context)
 
 	select {
@@ -32,11 +31,9 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 	case <-context.DoneChan:
 		e.log.Debug("Job Execution done", "timeMs", context.GetDurationMs(), "alertId", context.Rule.Id, "firing", context.Firing)
 	}
-
 }
 
 func (e *DefaultEvalHandler) eval(context *EvalContext) {
-
 	for _, condition := range context.Rule.Conditions {
 		condition.Eval(context)
 
