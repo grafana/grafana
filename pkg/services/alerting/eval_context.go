@@ -26,6 +26,7 @@ type EvalContext struct {
 	dashboardSlug   string
 	ImagePublicUrl  string
 	ImageOnDiskPath string
+	RetryCount      int
 }
 
 type StateDescription struct {
@@ -111,5 +112,6 @@ func NewEvalContext(rule *Rule) *EvalContext {
 		DoneChan:    make(chan bool, 1),
 		CancelChan:  make(chan bool, 1),
 		log:         log.New("alerting.evalContext"),
+		RetryCount:  0,
 	}
 }
