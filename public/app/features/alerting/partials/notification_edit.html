@@ -12,11 +12,11 @@
 
 	<div class="gf-form-group">
 		<div class="gf-form">
-			<span class="gf-form-label width-8">Name</span>
+			<span class="gf-form-label width-12">Name</span>
 			<input type="text" class="gf-form-input max-width-15" ng-model="ctrl.model.name" required></input>
 		</div>
 		<div class="gf-form">
-			<span class="gf-form-label width-8">Type</span>
+			<span class="gf-form-label width-12">Type</span>
 			<div class="gf-form-select-wrapper width-15">
 				<select class="gf-form-input"
 					ng-model="ctrl.model.type"
@@ -26,10 +26,19 @@
 			</div>
 		</div>
 		<div class="gf-form">
+			<span class="gf-form-label width-12">Severity filter</span>
+			<div class="gf-form-select-wrapper width-15">
+				<select class="gf-form-input"
+					ng-model="ctrl.model.settings.severityFilter"
+					ng-options="t for t in ['none', 'critical', 'warning']">
+				</select>
+			</div>
+		</div>
+		<div class="gf-form">
 			<gf-form-switch
 				class="gf-form"
-				label="All alerts"
-				label-class="width-8"
+				label="Send on all alerts"
+				label-class="width-12"
 				checked="ctrl.model.isDefault"
 				tooltip="Use this notification for all alerts">
 			</gf-form-switch>
@@ -91,5 +100,5 @@
 				<button ng-click="ctrl.testNotification()" class="btn btn-secondary">Send</button>
 			</div>
 		</div>
-  </div>
+	</div>
 </div>

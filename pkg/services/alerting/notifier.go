@@ -28,10 +28,14 @@ func (n *RootNotifier) NeedsImage() bool {
 	return false
 }
 
+func (n *RootNotifier) MatchSeverity(result m.AlertSeverityType) bool {
+	return false
+}
+
 func (n *RootNotifier) Notify(context *EvalContext) {
 	n.log.Info("Sending notifications for", "ruleId", context.Rule.Id)
 
-	notifiers, err := n.getNotifiers(context.Rule.OrgId, context.Rule.Notifications)
+	notifiers, err := n.getNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
 	if err != nil {
 		n.log.Error("Failed to read notifications", "error", err)
 		return
@@ -87,7 +91,7 @@ func (n *RootNotifier) uploadImage(context *EvalContext) error {
 	return nil
 }
 
-func (n *RootNotifier) getNotifiers(orgId int64, notificationIds []int64) ([]Notifier, error) {
+func (n *RootNotifier) getNotifiers(orgId int64, notificationIds []int64, context *EvalContext) ([]Notifier, error) {
 	query := &m.GetAlertNotificationsToSendQuery{OrgId: orgId, Ids: notificationIds}
 
 	if err := bus.Dispatch(query); err != nil {
@@ -96,23 +100,37 @@ func (n *RootNotifier) getNotifiers(orgId int64, notificationIds []int64) ([]Not
 
 	var result []Notifier
 	for _, notification := range query.Result {
-		if not, err := n.getNotifierFor(notification); err != nil {
+		if not, err := n.createNotifierFor(notification); err != nil {
 			return nil, err
 		} else {
-			result = append(result, not)
+			if shouldUseNotification(not, context) {
+				result = append(result, not)
+			}
 		}
 	}
 
 	return result, nil
 }
 
-func (n *RootNotifier) getNotifierFor(model *m.AlertNotification) (Notifier, error) {
+func (n *RootNotifier) createNotifierFor(model *m.AlertNotification) (Notifier, error) {
 	factory, found := notifierFactories[model.Type]
 	if !found {
 		return nil, errors.New("Unsupported notification type")
 	}
 
 	return factory(model)
+}
+
+func shouldUseNotification(notifier Notifier, context *EvalContext) bool {
+	if !context.Firing {
+		return true
+	}
+
+	if context.Error != nil {
+		return true
+	}
+
+	return notifier.MatchSeverity(context.Rule.Severity)
 }
 
 type NotifierFactory func(notification *m.AlertNotification) (Notifier, error)
