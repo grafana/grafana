@@ -284,8 +284,9 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   };
 
   this.alignTime = function(time, range) {
+    var refreshInterval = timeSrv.getRefreshInterval();
     var unitTime = 60;
-    if (range < unitTime) {
+    if (!refreshInterval || range < unitTime) {
       return time;
     }
     return time - (time % unitTime);
