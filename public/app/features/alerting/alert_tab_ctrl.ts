@@ -18,6 +18,7 @@ export class AlertTabCtrl {
   conditionModels: any;
   evalFunctions: any;
   severityLevels: any;
+  noDataModes: any;
   addNotificationSegment;
   notifications;
   alertNotifications;
@@ -41,6 +42,7 @@ export class AlertTabCtrl {
     this.evalFunctions = alertDef.evalFunctions;
     this.conditionTypes = alertDef.conditionTypes;
     this.severityLevels = alertDef.severityLevels;
+    this.noDataModes = alertDef.noDataModes;
     this.appSubUrl = config.appSubUrl;
   }
 
@@ -138,6 +140,7 @@ export class AlertTabCtrl {
       alert.conditions.push(this.buildDefaultCondition());
     }
 
+    alert.noDataState = alert.noDataState || 'unknown';
     alert.severity = alert.severity || 'critical';
     alert.frequency = alert.frequency || '60s';
     alert.handler = alert.handler || 1;

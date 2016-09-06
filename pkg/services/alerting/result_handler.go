@@ -41,7 +41,12 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 		ctx.Rule.State = m.AlertStateType(ctx.Rule.Severity)
 		annotationData = simplejson.NewFromAny(ctx.EvalMatches)
 	} else {
-		ctx.Rule.State = m.AlertStateOK
+		// handle no data case
+		if ctx.NoDataFound {
+			ctx.Rule.State = ctx.Rule.NoDataState
+		} else {
+			ctx.Rule.State = m.AlertStateOK
+		}
 	}
 
 	countStateResult(ctx.Rule.State)
@@ -91,8 +96,8 @@ func countStateResult(state m.AlertStateType) {
 		metrics.M_Alerting_Result_State_Ok.Inc(1)
 	case m.AlertStatePaused:
 		metrics.M_Alerting_Result_State_Paused.Inc(1)
-	case m.AlertStatePending:
-		metrics.M_Alerting_Result_State_Pending.Inc(1)
+	case m.AlertStateUnknown:
+		metrics.M_Alerting_Result_State_Unknown.Inc(1)
 	case m.AlertStateExeuctionError:
 		metrics.M_Alerting_Result_State_ExecutionError.Inc(1)
 	}

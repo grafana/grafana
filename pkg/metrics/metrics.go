@@ -33,7 +33,7 @@ var (
 	M_Alerting_Result_State_Warning        Counter
 	M_Alerting_Result_State_Ok             Counter
 	M_Alerting_Result_State_Paused         Counter
-	M_Alerting_Result_State_Pending        Counter
+	M_Alerting_Result_State_Unknown        Counter
 	M_Alerting_Result_State_ExecutionError Counter
 	M_Alerting_Active_Alerts               Counter
 	M_Alerting_Notification_Sent_Slack     Counter
@@ -81,7 +81,7 @@ func initMetricVars(settings *MetricSettings) {
 	M_Alerting_Result_State_Warning = RegCounter("alerting.result", "state", "warning")
 	M_Alerting_Result_State_Ok = RegCounter("alerting.result", "state", "ok")
 	M_Alerting_Result_State_Paused = RegCounter("alerting.result", "state", "paused")
-	M_Alerting_Result_State_Pending = RegCounter("alerting.result", "state", "pending")
+	M_Alerting_Result_State_Unknown = RegCounter("alerting.result", "state", "unknown")
 	M_Alerting_Result_State_ExecutionError = RegCounter("alerting.result", "state", "execution_error")
 
 	M_Alerting_Active_Alerts = RegCounter("alerting.active_alerts")

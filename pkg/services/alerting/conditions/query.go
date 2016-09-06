@@ -40,22 +40,27 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) {
 
 	for _, series := range seriesList {
 		reducedValue := c.Reducer.Reduce(series)
-		evalMatch := c.Evaluator.Eval(series, reducedValue)
+		evalMatch := c.Evaluator.Eval(reducedValue)
 
 		if context.IsTestRun {
 			context.Logs = append(context.Logs, &alerting.ResultLogEntry{
-				Message: fmt.Sprintf("Condition[%d]: Eval: %v, Metric: %s, Value: %1.3f", c.Index, evalMatch, series.Name, reducedValue),
+				Message: fmt.Sprintf("Condition[%d]: Eval: %v, Metric: %s, Value: %1.3f", c.Index, evalMatch, series.Name, *reducedValue),
 			})
 		}
 
 		if evalMatch {
 			context.EvalMatches = append(context.EvalMatches, &alerting.EvalMatch{
 				Metric: series.Name,
-				Value:  reducedValue,
+				Value:  *reducedValue,
 			})
 		}
 
 		context.Firing = evalMatch
+
+		// handle no data scenario
+		if reducedValue == nil {
+			context.NoDataFound = true
+		}
 	}
 }
 

@@ -13,7 +13,7 @@ export class AlertListCtrl {
   stateFilters = [
     {text: 'All', value: null},
     {text: 'OK', value: 'ok'},
-    {text: 'Pending', value: 'pending'},
+    {text: 'Unknown', value: 'unknown'},
     {text: 'Warning', value: 'warning'},
     {text: 'Critical', value: 'critical'},
     {text: 'Execution Error', value: 'execution_error'},

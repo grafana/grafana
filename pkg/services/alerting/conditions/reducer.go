@@ -3,14 +3,18 @@ package conditions
 import "github.com/grafana/grafana/pkg/tsdb"
 
 type QueryReducer interface {
-	Reduce(timeSeries *tsdb.TimeSeries) float64
+	Reduce(timeSeries *tsdb.TimeSeries) *float64
 }
 
 type SimpleReducer struct {
 	Type string
 }
 
-func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) float64 {
+func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) *float64 {
+	if len(series.Points) == 0 {
+		return nil
+	}
+
 	var value float64 = 0
 
 	switch s.Type {
@@ -46,7 +50,7 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) float64 {
 		value = float64(len(series.Points))
 	}
 
-	return value
+	return &value
 }
 
 func NewSimpleReducer(typ string) *SimpleReducer {

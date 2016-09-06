@@ -26,6 +26,7 @@ type EvalContext struct {
 	dashboardSlug   string
 	ImagePublicUrl  string
 	ImageOnDiskPath string
+	NoDataFound     bool
 }
 
 type StateDescription struct {

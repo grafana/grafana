@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -47,6 +48,10 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 		formData["target"] = []string{query.Query}
 	}
 
+	if setting.Env == setting.DEV {
+		glog.Debug("Graphite request", "params", formData)
+	}
+
 	req, err := e.createRequest(formData)
 	if err != nil {
 		result.Error = err
@@ -71,6 +76,10 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 			Name:   series.Target,
 			Points: series.DataPoints,
 		})
+
+		if setting.Env == setting.DEV {
+			glog.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
+		}
 	}
 
 	result.QueryResults["A"] = queryRes

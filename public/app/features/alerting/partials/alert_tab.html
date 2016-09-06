@@ -52,19 +52,20 @@
 						<span class="gf-form-label query-keyword width-5" ng-if="$index">AND</span>
 						<span class="gf-form-label query-keyword width-5" ng-if="$index===0">WHEN</span>
 					</div>
-					<div class="gf-form">
-						<query-part-editor class="gf-form-label query-part" part="conditionModel.queryPart" handle-event="ctrl.handleQueryPartEvent(conditionModel, $event)">
+          <div class="gf-form">
+						<query-part-editor class="gf-form-label query-part" part="conditionModel.reducerPart" handle-event="ctrl.handleReducerPartEvent(conditionModel, $event)">
 						</query-part-editor>
+            <span class="gf-form-label query-keyword">OF</span>
 					</div>
 					<div class="gf-form">
-						<span class="gf-form-label">Reducer</span>
-						<query-part-editor class="gf-form-label query-part" part="conditionModel.reducerPart" handle-event="ctrl.handleReducerPartEvent(conditionModel, $event)">
+						<query-part-editor class="gf-form-label query-part" part="conditionModel.queryPart" handle-event="ctrl.handleQueryPartEvent(conditionModel, $event)">
 						</query-part-editor>
 					</div>
 					<div class="gf-form">
 						<metric-segment-model property="conditionModel.evaluator.type" options="ctrl.evalFunctions" custom="false" css-class="query-keyword" on-change="ctrl.evaluatorTypeChanged(conditionModel.evaluator)"></metric-segment-model>
 						<input class="gf-form-input max-width-7" type="number" ng-hide="conditionModel.evaluator.params.length === 0" ng-model="conditionModel.evaluator.params[0]" ng-change="ctrl.evaluatorParamsChanged()"></input>
             <label class="gf-form-label query-keyword" ng-show="conditionModel.evaluator.params.length === 2">TO</label>
+            <input class="gf-form-input max-width-7" type="number" ng-if="conditionModel.evaluator.params.length === 2" ng-model="conditionModel.evaluator.params[1]" ng-change="ctrl.evaluatorParamsChanged()"></input>
 					</div>
 					<div class="gf-form">
 						<label class="gf-form-label">
@@ -86,6 +87,18 @@
 							</li>
 						</ul>
 					</label>
+				</div>
+
+			</div>
+
+			<div class="gf-form-group">
+				<div class="gf-form">
+          <span class="gf-form-label">If no data points or all values are null</span>
+          <span class="gf-form-label query-keyword">SET STATE TO</span>
+					<div class="gf-form-select-wrapper">
+						<select class="gf-form-input" ng-model="ctrl.alert.noDataState" ng-options="f.value as f.text for f in ctrl.noDataModes">
+						</select>
+					</div>
 				</div>
 
 				<div class="gf-form-button-row">
