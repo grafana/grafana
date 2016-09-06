@@ -147,7 +147,7 @@ func DelAlert(c *middleware.Context) Response {
 }
 
 func GetAlertNotifications(c *middleware.Context) Response {
-	query := &models.GetAlertNotificationsQuery{OrgId: c.OrgId}
+	query := &models.GetAllAlertNotificationsQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(query); err != nil {
 		return ApiError(500, "Failed to get alert notifications", err)
@@ -179,7 +179,7 @@ func GetAlertNotificationById(c *middleware.Context) Response {
 		return ApiError(500, "Failed to get alert notifications", err)
 	}
 
-	return Json(200, query.Result[0])
+	return Json(200, query.Result)
 }
 
 func CreateAlertNotification(c *middleware.Context, cmd models.CreateAlertNotificationCommand) Response {
