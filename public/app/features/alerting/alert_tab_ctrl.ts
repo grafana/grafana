@@ -106,6 +106,13 @@ export class AlertTabCtrl {
     }));
   }
 
+  changeTabIndex(newTabIndex) {
+    this.subTabIndex = newTabIndex;
+
+    if (this.subTabIndex === 2) {
+      this.getAlertHistory();
+    }
+  }
 
   notificationAdded() {
     var model = _.findWhere(this.notifications, {name: this.addNotificationSegment.value});
