@@ -1,7 +1,6 @@
 package imguploader
 
 import (
-	"reflect"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,7 +26,12 @@ func TestImageUploaderFactory(t *testing.T) {
 			uploader, err := NewImageUploader()
 
 			So(err, ShouldBeNil)
-			So(reflect.TypeOf(uploader), ShouldEqual, reflect.TypeOf(&S3Uploader{}))
+			original, ok := uploader.(*S3Uploader)
+
+			So(ok, ShouldBeTrue)
+			So(original.accessKey, ShouldEqual, "access_key")
+			So(original.secretKey, ShouldEqual, "secret_key")
+			So(original.bucket, ShouldEqual, "bucket_url")
 		})
 
 		Convey("Webdav uploader", func() {
@@ -47,7 +51,12 @@ func TestImageUploaderFactory(t *testing.T) {
 			uploader, err := NewImageUploader()
 
 			So(err, ShouldBeNil)
-			So(reflect.TypeOf(uploader), ShouldEqual, reflect.TypeOf(&WebdavUploader{}))
+			original, ok := uploader.(*WebdavUploader)
+
+			So(ok, ShouldBeTrue)
+			So(original.url, ShouldEqual, "webdavUrl")
+			So(original.username, ShouldEqual, "username")
+			So(original.password, ShouldEqual, "password")
 		})
 	})
 }

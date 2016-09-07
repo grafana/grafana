@@ -23,7 +23,6 @@ func NewS3Uploader(bucket, accessKey, secretKey string) *S3Uploader {
 }
 
 func (u *S3Uploader) Upload(path string) (string, error) {
-
 	s3util.DefaultConfig.AccessKey = u.accessKey
 	s3util.DefaultConfig.SecretKey = u.secretKey
 
