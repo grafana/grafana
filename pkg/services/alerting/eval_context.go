@@ -37,31 +37,36 @@ type StateDescription struct {
 }
 
 func (c *EvalContext) GetStateModel() *StateDescription {
-	if c.Error != nil {
-		return &StateDescription{
-			Color: "#D63232",
-			Text:  "EXECUTION ERROR",
-		}
-	}
-
-	if !c.Firing {
+	switch c.Rule.State {
+	case m.AlertStateOK:
 		return &StateDescription{
 			Color: "#36a64f",
 			Text:  "OK",
 		}
-	}
-
-	if c.Rule.Severity == m.AlertSeverityWarning {
+	case m.AlertStateUnknown:
+		return &StateDescription{
+			Color: "#888888",
+			Text:  "UNKNOWN",
+		}
+	case m.AlertStateExeuctionError:
+		return &StateDescription{
+			Color: "#000",
+			Text:  "EXECUTION_ERROR",
+		}
+	case m.AlertStateWarning:
 		return &StateDescription{
 			Color: "#fd821b",
 			Text:  "WARNING",
 		}
-	} else {
+	case m.AlertStateCritical:
 		return &StateDescription{
 			Color: "#D63232",
 			Text:  "CRITICAL",
 		}
+	default:
+		panic("Unknown rule state " + c.Rule.State)
 	}
+
 }
 
 func (a *EvalContext) GetDurationMs() float64 {

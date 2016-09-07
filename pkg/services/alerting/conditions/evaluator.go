@@ -44,6 +44,10 @@ func newThresholdEvaludator(typ string, model *simplejson.Json) (*ThresholdEvalu
 }
 
 func (e *ThresholdEvaluator) Eval(reducedValue *float64) bool {
+	if reducedValue == nil {
+		return false
+	}
+
 	switch e.Type {
 	case "gt":
 		return *reducedValue > e.Threshold
@@ -83,6 +87,10 @@ func newRangedEvaluator(typ string, model *simplejson.Json) (*RangedEvaluator, e
 }
 
 func (e *RangedEvaluator) Eval(reducedValue *float64) bool {
+	if reducedValue == nil {
+		return false
+	}
+
 	switch e.Type {
 	case "within_range":
 		return (e.Lower < *reducedValue && e.Upper > *reducedValue) || (e.Upper < *reducedValue && e.Lower > *reducedValue)
