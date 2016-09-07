@@ -10,44 +10,39 @@ import (
 func TestSimpleReducer(t *testing.T) {
 	Convey("Test simple reducer by calculating", t, func() {
 		Convey("avg", func() {
-			result := testReducer("avg", 1, 2, 3)
+			result := *testReducer("avg", 1, 2, 3)
 			So(result, ShouldEqual, float64(2))
 		})
 
 		Convey("sum", func() {
-			result := testReducer("sum", 1, 2, 3)
+			result := *testReducer("sum", 1, 2, 3)
 			So(result, ShouldEqual, float64(6))
 		})
 
 		Convey("min", func() {
-			result := testReducer("min", 3, 2, 1)
+			result := *testReducer("min", 3, 2, 1)
 			So(result, ShouldEqual, float64(1))
 		})
 
 		Convey("max", func() {
-			result := testReducer("max", 1, 2, 3)
+			result := *testReducer("max", 1, 2, 3)
 			So(result, ShouldEqual, float64(3))
 		})
 
-		Convey("mean odd numbers", func() {
-			result := testReducer("mean", 1, 2, 3000)
-			So(result, ShouldEqual, float64(2))
-		})
-
 		Convey("count", func() {
-			result := testReducer("count", 1, 2, 3000)
+			result := *testReducer("count", 1, 2, 3000)
 			So(result, ShouldEqual, float64(3))
 		})
 	})
 }
 
-func testReducer(typ string, datapoints ...float64) float64 {
+func testReducer(typ string, datapoints ...float64) *float64 {
 	reducer := NewSimpleReducer(typ)
-	var timeserie [][2]float64
+	var timeserie [][2]*float64
 	dummieTimestamp := float64(521452145)
 
-	for _, v := range datapoints {
-		timeserie = append(timeserie, [2]float64{v, dummieTimestamp})
+	for idx := range datapoints {
+		timeserie = append(timeserie, [2]*float64{&datapoints[idx], &dummieTimestamp})
 	}
 
 	tsdb := &tsdb.TimeSeries{
