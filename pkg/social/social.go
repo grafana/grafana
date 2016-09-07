@@ -42,7 +42,7 @@ func NewOAuthService() {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
-	allOauthes := []string{"github", "google"}
+	allOauthes := []string{"github", "google", "generic_oauth"}
 
 	for _, name := range allOauthes {
 		sec := setting.Cfg.Section("auth." + name)
@@ -96,6 +96,22 @@ func NewOAuthService() {
 				Config: &config, allowedDomains: info.AllowedDomains,
 				apiUrl:      info.ApiUrl,
 				allowSignup: info.AllowSignup,
+			}
+		}
+
+		// Generic - Uses the same scheme as Github.
+		if name == "generic_oauth" {
+			setting.OAuthService.Generic = true
+			setting.OAuthService.OAuthProviderName = sec.Key("oauth_provider_name").String()
+			teamIds := sec.Key("team_ids").Ints(",")
+			allowedOrganizations := sec.Key("allowed_organizations").Strings(" ")
+			SocialMap["generic_oauth"] = &SocialGithub{
+				Config:               &config,
+				allowedDomains:       info.AllowedDomains,
+				apiUrl:               info.ApiUrl,
+				allowSignup:          info.AllowSignup,
+				teamIds:              teamIds,
+				allowedOrganizations: allowedOrganizations,
 			}
 		}
 	}
