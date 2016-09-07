@@ -22,7 +22,7 @@ type GenericOAuth struct {
 }
 
 func (s *GenericOAuth) Type() int {
-	return int(models.GITHUB)
+	return int(models.GENERIC)
 }
 
 func (s *GenericOAuth) IsEmailAllowed(email string) bool {
