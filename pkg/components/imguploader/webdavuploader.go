@@ -9,7 +9,6 @@ import (
 	"path"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -20,7 +19,6 @@ type WebdavUploader struct {
 }
 
 func (u *WebdavUploader) Upload(pa string) (string, error) {
-	log.Error2("Hej")
 	client := http.Client{Timeout: time.Duration(10 * time.Second)}
 
 	url, _ := url.Parse(u.url)
