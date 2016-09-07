@@ -341,6 +341,23 @@ You may allow users to sign-up via Google authentication by setting the
 user successfully authenticating via Google authentication will be
 automatically signed up.
 
+## [auth.generic_oauth]
+
+This option could be used if have your own oauth service.
+
+This callback URL must match the full HTTP address that you use in your
+browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
+
+    [auth.generic_oauth]
+    enabled = true
+    client_id = YOUR_APP_CLIENT_ID
+    client_secret = YOUR_APP_CLIENT_SECRET
+    scopes =
+    auth_url =
+    token_url =
+    allowed_domains = mycompany.com mycompany.org
+    allow_sign_up = false
+
 <hr>
 
 ## [auth.basic]
