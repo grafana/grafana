@@ -76,6 +76,14 @@ export class AlertTabCtrl {
           this.alertNotifications.push(model);
         }
       });
+
+      _.each(this.notifications, item => {
+        if (item.isDefault) {
+          item.iconClass = this.getNotificationIcon(item.type);
+          item.bgColor = "#00678b";
+          this.alertNotifications.push(item);
+        }
+      });
     });
   }
 
