@@ -36,6 +36,13 @@ var reducerTypes = [
   {text: 'count()', value: 'count'},
 ];
 
+var noDataModes = [
+  {text: 'OK', value: 'ok'},
+  {text: 'Critical', value: 'critical'},
+  {text: 'Warning', value: 'warning'},
+  {text: 'Unknown', value: 'unknown'},
+];
+
 function createReducerPart(model) {
   var def = new QueryPartDef({type: model.type, defaultParams: []});
   return new QueryPart(model, def);
@@ -69,9 +76,9 @@ function getStateDisplayModel(state) {
         stateClass: 'alert-state-warning'
       };
     }
-    case 'pending': {
+    case 'unknown': {
       return {
-        text: 'PENDING',
+        text: 'UNKNOWN',
         iconClass: "fa fa-question",
         stateClass: 'alert-state-warning'
       };
@@ -100,6 +107,7 @@ export default {
   conditionTypes: conditionTypes,
   evalFunctions: evalFunctions,
   severityLevels: severityLevels,
+  noDataModes: noDataModes,
   reducerTypes: reducerTypes,
   createReducerPart: createReducerPart,
 };

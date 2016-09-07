@@ -5,25 +5,21 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 var (
-	defaultTypes   []string = []string{"gt", "lt"}
-	rangedTypes    []string = []string{"within_range", "outside_range"}
-	paramlessTypes []string = []string{"no_value"}
+	defaultTypes []string = []string{"gt", "lt"}
+	rangedTypes  []string = []string{"within_range", "outside_range"}
 )
 
 type AlertEvaluator interface {
-	Eval(timeSeries *tsdb.TimeSeries, reducedValue float64) bool
+	Eval(reducedValue *float64) bool
 }
 
-type ParameterlessEvaluator struct {
-	Type string
-}
+type NoDataEvaluator struct{}
 
-func (e *ParameterlessEvaluator) Eval(series *tsdb.TimeSeries, reducedValue float64) bool {
-	return len(series.Points) == 0
+func (e *NoDataEvaluator) Eval(reducedValue *float64) bool {
+	return reducedValue == nil
 }
 
 type ThresholdEvaluator struct {
@@ -47,14 +43,16 @@ func newThresholdEvaludator(typ string, model *simplejson.Json) (*ThresholdEvalu
 	return defaultEval, nil
 }
 
-func (e *ThresholdEvaluator) Eval(series *tsdb.TimeSeries, reducedValue float64) bool {
+func (e *ThresholdEvaluator) Eval(reducedValue *float64) bool {
+	if reducedValue == nil {
+		return false
+	}
+
 	switch e.Type {
 	case "gt":
-		return reducedValue > e.Threshold
+		return *reducedValue > e.Threshold
 	case "lt":
-		return reducedValue < e.Threshold
-	case "no_value":
-		return len(series.Points) == 0
+		return *reducedValue < e.Threshold
 	}
 
 	return false
@@ -88,12 +86,16 @@ func newRangedEvaluator(typ string, model *simplejson.Json) (*RangedEvaluator, e
 	return rangedEval, nil
 }
 
-func (e *RangedEvaluator) Eval(series *tsdb.TimeSeries, reducedValue float64) bool {
+func (e *RangedEvaluator) Eval(reducedValue *float64) bool {
+	if reducedValue == nil {
+		return false
+	}
+
 	switch e.Type {
 	case "within_range":
-		return (e.Lower < reducedValue && e.Upper > reducedValue) || (e.Upper < reducedValue && e.Lower > reducedValue)
+		return (e.Lower < *reducedValue && e.Upper > *reducedValue) || (e.Upper < *reducedValue && e.Lower > *reducedValue)
 	case "outside_range":
-		return (e.Upper < reducedValue && e.Lower < reducedValue) || (e.Upper > reducedValue && e.Lower > reducedValue)
+		return (e.Upper < *reducedValue && e.Lower < *reducedValue) || (e.Upper > *reducedValue && e.Lower > *reducedValue)
 	}
 
 	return false
@@ -113,8 +115,8 @@ func NewAlertEvaluator(model *simplejson.Json) (AlertEvaluator, error) {
 		return newRangedEvaluator(typ, model)
 	}
 
-	if inSlice(typ, paramlessTypes) {
-		return &ParameterlessEvaluator{Type: typ}, nil
+	if typ == "no_data" {
+		return &NoDataEvaluator{}, nil
 	}
 
 	return nil, alerting.ValidationError{Reason: "Evaludator invalid evaluator type"}

@@ -19,9 +19,9 @@ func NewImageUploader() (ImageUploader, error) {
 			return nil, err
 		}
 
-		bucket := s3sec.Key("secret_key").String()
-		accessKey := s3sec.Key("access_key").String()
-		secretKey := s3sec.Key("secret_key").String()
+		bucket := s3sec.Key("bucket_url").MustString("")
+		accessKey := s3sec.Key("access_key").MustString("")
+		secretKey := s3sec.Key("secret_key").MustString("")
 
 		if bucket == "" {
 			return nil, fmt.Errorf("Could not find bucket setting for image.uploader.s3")

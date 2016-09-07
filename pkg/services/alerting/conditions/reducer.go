@@ -1,52 +1,72 @@
 package conditions
 
-import "github.com/grafana/grafana/pkg/tsdb"
+import (
+	"math"
+
+	"github.com/grafana/grafana/pkg/tsdb"
+)
 
 type QueryReducer interface {
-	Reduce(timeSeries *tsdb.TimeSeries) float64
+	Reduce(timeSeries *tsdb.TimeSeries) *float64
 }
 
 type SimpleReducer struct {
 	Type string
 }
 
-func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) float64 {
-	var value float64 = 0
+func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) *float64 {
+	if len(series.Points) == 0 {
+		return nil
+	}
+
+	value := float64(0)
+	allNull := true
 
 	switch s.Type {
 	case "avg":
 		for _, point := range series.Points {
-			value += point[0]
+			if point[0] != nil {
+				value += *point[0]
+				allNull = false
+			}
 		}
 		value = value / float64(len(series.Points))
 	case "sum":
 		for _, point := range series.Points {
-			value += point[0]
+			if point[0] != nil {
+				value += *point[0]
+				allNull = false
+			}
 		}
 	case "min":
-		for i, point := range series.Points {
-			if i == 0 {
-				value = point[0]
-			}
-
-			if value > point[0] {
-				value = point[0]
+		value = math.MaxFloat64
+		for _, point := range series.Points {
+			if point[0] != nil {
+				allNull = false
+				if value > *point[0] {
+					value = *point[0]
+				}
 			}
 		}
 	case "max":
+		value = -math.MaxFloat64
 		for _, point := range series.Points {
-			if value < point[0] {
-				value = point[0]
+			if point[0] != nil {
+				allNull = false
+				if value < *point[0] {
+					value = *point[0]
+				}
 			}
 		}
-	case "mean":
-		meanPosition := int64(len(series.Points) / 2)
-		value = series.Points[meanPosition][0]
 	case "count":
 		value = float64(len(series.Points))
 	}
 
-	return value
+	if allNull {
+		return nil
+	}
+
+	return &value
 }
 
 func NewSimpleReducer(typ string) *SimpleReducer {

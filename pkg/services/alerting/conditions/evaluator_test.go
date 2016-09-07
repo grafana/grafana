@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -15,19 +14,7 @@ func evalutorScenario(json string, reducedValue float64, datapoints ...float64) 
 	evaluator, err := NewAlertEvaluator(jsonModel)
 	So(err, ShouldBeNil)
 
-	var timeserie [][2]float64
-	dummieTimestamp := float64(521452145)
-
-	for _, v := range datapoints {
-		timeserie = append(timeserie, [2]float64{v, dummieTimestamp})
-	}
-
-	tsdb := &tsdb.TimeSeries{
-		Name:   "test time serie",
-		Points: timeserie,
-	}
-
-	return evaluator.Eval(tsdb, reducedValue)
+	return evaluator.Eval(reducedValue)
 }
 
 func TestEvalutors(t *testing.T) {

@@ -19,6 +19,9 @@ func Register(r *macaron.Macaron) {
 	quota := middleware.Quota
 	bind := binding.Bind
 
+	// automatically set HEAD for every GET
+	r.SetAutoHead(true)
+
 	// not logged in views
 	r.Get("/", reqSignedIn, Index)
 	r.Get("/logout", Logout)
@@ -247,14 +250,16 @@ func Register(r *macaron.Macaron) {
 
 		r.Group("/alerts", func() {
 			r.Post("/test", bind(dtos.AlertTestCommand{}), wrap(AlertTest))
-			//r.Get("/:alertId/states", wrap(GetAlertStates))
 			r.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
 			r.Get("/", wrap(GetAlerts))
 		})
 
+		r.Get("/alert-history", wrap(GetAlertHistory))
+
 		r.Get("/alert-notifications", wrap(GetAlertNotifications))
 
 		r.Group("/alert-notifications", func() {
+			r.Post("/test", bind(dtos.NotificationTestCommand{}), wrap(NotificationTest))
 			r.Post("/", bind(m.CreateAlertNotificationCommand{}), wrap(CreateAlertNotification))
 			r.Put("/:notificationId", bind(m.UpdateAlertNotificationCommand{}), wrap(UpdateAlertNotification))
 			r.Get("/:notificationId", wrap(GetAlertNotificationById))

@@ -8,6 +8,15 @@ import (
 
 type Repository interface {
 	Save(item *Item) error
+	Find(query *ItemQuery) ([]*Item, error)
+}
+
+type ItemQuery struct {
+	OrgId   int64    `json:"orgId"`
+	Type    ItemType `json:"type"`
+	AlertId int64    `json:"alertId"`
+
+	Limit int64 `json:"alertId"`
 }
 
 var repositoryInstance Repository

@@ -22,11 +22,12 @@ type AlertRule struct {
 }
 
 type AlertNotification struct {
-	Id      int64     `json:"id"`
-	Name    string    `json:"name"`
-	Type    string    `json:"type"`
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
+	Id        int64     `json:"id"`
+	Name      string    `json:"name"`
+	Type      string    `json:"type"`
+	IsDefault bool      `json:"isDefault"`
+	Created   time.Time `json:"created"`
+	Updated   time.Time `json:"updated"`
 }
 
 type AlertTestCommand struct {
@@ -51,4 +52,22 @@ type EvalMatch struct {
 	Tags   map[string]string `json:"tags,omitempty"`
 	Metric string            `json:"metric"`
 	Value  float64           `json:"value"`
+}
+
+type AlertHistory struct {
+	AlertId   int64     `json:"alertId"`
+	NewState  string    `json:"newState"`
+	Timestamp time.Time `json:"timestamp"`
+	Title     string    `json:"title"`
+	Text      string    `json:"text"`
+	Metric    string    `json:"metric"`
+
+	Data *simplejson.Json `json:"data"`
+}
+
+type NotificationTestCommand struct {
+	Name     string           `json:"name"`
+	Type     string           `json:"type"`
+	Settings *simplejson.Json `json:"settings"`
+	Severity string           `json:"severity"`
 }

@@ -10,7 +10,7 @@ type AlertStateType string
 type AlertSeverityType string
 
 const (
-	AlertStatePending        AlertStateType = "pending"
+	AlertStateUnknown        AlertStateType = "unknown"
 	AlertStateExeuctionError AlertStateType = "execution_error"
 	AlertStatePaused         AlertStateType = "paused"
 	AlertStateCritical       AlertStateType = "critical"
@@ -19,7 +19,7 @@ const (
 )
 
 func (s AlertStateType) IsValid() bool {
-	return s == AlertStateOK || s == AlertStatePending || s == AlertStateExeuctionError || s == AlertStatePaused || s == AlertStateCritical || s == AlertStateWarning
+	return s == AlertStateOK || s == AlertStateUnknown || s == AlertStateExeuctionError || s == AlertStatePaused || s == AlertStateCritical || s == AlertStateWarning
 }
 
 const (

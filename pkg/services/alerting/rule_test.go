@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	m "github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -45,6 +45,7 @@ func TestAlertRuleModel(t *testing.T) {
 				"name": "name2",
 				"description": "desc2",
 				"handler": 0,
+				"noDataMode": "critical",
 				"enabled": true,
 				"frequency": "60s",
         "conditions": [
@@ -63,7 +64,7 @@ func TestAlertRuleModel(t *testing.T) {
 			alertJSON, jsonErr := simplejson.NewJson([]byte(json))
 			So(jsonErr, ShouldBeNil)
 
-			alert := &models.Alert{
+			alert := &m.Alert{
 				Id:          1,
 				OrgId:       1,
 				DashboardId: 1,
@@ -79,6 +80,10 @@ func TestAlertRuleModel(t *testing.T) {
 
 			Convey("Can read notifications", func() {
 				So(len(alertRule.Notifications), ShouldEqual, 2)
+			})
+
+			Convey("Can read noDataMode", func() {
+				So(len(alertRule.NoDataMode), ShouldEqual, m.AlertStateCritical)
 			})
 		})
 	})

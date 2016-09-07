@@ -1,6 +1,6 @@
 {
 	"ImportPath": "github.com/grafana/grafana",
-	"GoVersion": "go1.5.1",
+	"GoVersion": "go1.6.2",
 	"GodepVersion": "v60",
 	"Packages": [
 		"./pkg/..."
@@ -368,8 +368,8 @@
 		},
 		{
 			"ImportPath": "gopkg.in/ini.v1",
-			"Comment": "v0-16-g1772191",
-			"Rev": "177219109c97e7920c933e21c9b25f874357b237"
+			"Comment": "v1.21.1",
+			"Rev": "6e4869b434bd001f6983749881c7ead3545887d8"
 		},
 		{
 			"ImportPath": "gopkg.in/macaron.v1",

@@ -88,6 +88,8 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 
 `http` or `https`
 
+> **Note** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
+
 ### domain
 
 This setting is only used in as a part of the `root_url` setting (see below). Important if you
@@ -338,6 +340,23 @@ You may allow users to sign-up via Google authentication by setting the
 `allow_sign_up` option to `true`. When this option is set to `true`, any
 user successfully authenticating via Google authentication will be
 automatically signed up.
+
+## [auth.generic_oauth]
+
+This option could be used if have your own oauth service.
+
+This callback URL must match the full HTTP address that you use in your
+browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
+
+    [auth.generic_oauth]
+    enabled = true
+    client_id = YOUR_APP_CLIENT_ID
+    client_secret = YOUR_APP_CLIENT_SECRET
+    scopes =
+    auth_url =
+    token_url =
+    allowed_domains = mycompany.com mycompany.org
+    allow_sign_up = false
 
 <hr>
 

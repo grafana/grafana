@@ -5,6 +5,7 @@ import {ThresholdMapper} from './threshold_mapper';
 import {QueryPart} from 'app/core/components/query_part/query_part';
 import alertDef from './alert_def';
 import config from 'app/core/config';
+import moment from 'moment';
 
 export class AlertTabCtrl {
   panel: any;
@@ -17,11 +18,13 @@ export class AlertTabCtrl {
   conditionModels: any;
   evalFunctions: any;
   severityLevels: any;
+  noDataModes: any;
   addNotificationSegment;
   notifications;
   alertNotifications;
   error: string;
   appSubUrl: string;
+  alertHistory: any;
 
   /** @ngInject */
   constructor(private $scope,
@@ -39,6 +42,7 @@ export class AlertTabCtrl {
     this.evalFunctions = alertDef.evalFunctions;
     this.conditionTypes = alertDef.conditionTypes;
     this.severityLevels = alertDef.severityLevels;
+    this.noDataModes = alertDef.noDataModes;
     this.appSubUrl = config.appSubUrl;
   }
 
@@ -60,6 +64,7 @@ export class AlertTabCtrl {
     // build notification model
     this.notifications = [];
     this.alertNotifications = [];
+    this.alertHistory = [];
 
     return this.backendSrv.get('/api/alert-notifications').then(res => {
       this.notifications = res;
@@ -70,6 +75,21 @@ export class AlertTabCtrl {
           model.iconClass = this.getNotificationIcon(model.type);
           this.alertNotifications.push(model);
         }
+      });
+    });
+  }
+
+  getAlertHistory() {
+    this.backendSrv.get(`/api/alert-history?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}`).then(res => {
+      this.alertHistory = _.map(res, ah => {
+        ah.time = moment(ah.timestamp).format('MMM D, YYYY HH:mm:ss');
+        ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
+
+        ah.metrics = _.map(ah.data, ev=> {
+          return ev.Metric + "=" + ev.Value;
+        }).join(', ');
+
+        return ah;
       });
     });
   }
@@ -88,6 +108,13 @@ export class AlertTabCtrl {
     }));
   }
 
+  changeTabIndex(newTabIndex) {
+    this.subTabIndex = newTabIndex;
+
+    if (this.subTabIndex === 2) {
+      this.getAlertHistory();
+    }
+  }
 
   notificationAdded() {
     var model = _.findWhere(this.notifications, {name: this.addNotificationSegment.value});
@@ -109,13 +136,18 @@ export class AlertTabCtrl {
   }
 
   initModel() {
-    var alert = this.alert = this.panel.alert = this.panel.alert || {};
+    var alert = this.alert = this.panel.alert = this.panel.alert || {enabled: false};
+
+    if (!this.alert.enabled) {
+      return;
+    }
 
     alert.conditions = alert.conditions || [];
     if (alert.conditions.length === 0) {
       alert.conditions.push(this.buildDefaultCondition());
     }
 
+    alert.noDataState = alert.noDataState || 'unknown';
     alert.severity = alert.severity || 'critical';
     alert.frequency = alert.frequency || '60s';
     alert.handler = alert.handler || 1;
@@ -129,11 +161,9 @@ export class AlertTabCtrl {
       return memo;
     }, []);
 
-    if (this.alert.enabled) {
-      this.panelCtrl.editingThresholds = true;
-    }
-
     ThresholdMapper.alertToGraphThresholds(this.panel);
+
+    this.panelCtrl.editingThresholds = true;
     this.panelCtrl.render();
   }
 
@@ -157,6 +187,10 @@ export class AlertTabCtrl {
   }
 
   validateModel() {
+    if (!this.alert.enabled) {
+      return;
+    }
+
     let firstTarget;
     var fixed = false;
     let foundTarget = null;
@@ -192,6 +226,8 @@ export class AlertTabCtrl {
           this.error = 'Currently the alerting backend only supports Graphite queries';
         } else if (this.templateSrv.variableExists(foundTarget.target)) {
           this.error = 'Template variables are not supported in alert queries';
+        } else {
+          this.error = '';
         }
       });
     }
