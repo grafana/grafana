@@ -59,6 +59,19 @@ func TestQueryCondition(t *testing.T) {
 				So(ctx.result.Error, ShouldBeNil)
 				So(ctx.result.Firing, ShouldBeFalse)
 			})
+
+			Convey("Should fire if only first serie matches", func() {
+				one := float64(120)
+				two := float64(0)
+				ctx.series = tsdb.TimeSeriesSlice{
+					tsdb.NewTimeSeries("test1", [][2]*float64{{&one, &two}}),
+					tsdb.NewTimeSeries("test2", [][2]*float64{{&two, &two}}),
+				}
+				ctx.exec()
+
+				So(ctx.result.Error, ShouldBeNil)
+				So(ctx.result.Firing, ShouldBeTrue)
+			})
 		})
 	})
 }
