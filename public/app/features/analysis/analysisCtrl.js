@@ -10,8 +10,8 @@ define([
     module.controller('AnalysisCtrl', function ($scope, $location) {
       $scope.init = function () {
         var targetObj = {
-          metric:"Active_readers",
-          host:"host1"
+          metric:"usage_rate",
+          host:"User.Utilization"
         };
         $scope.targetObj = targetObj;
       };

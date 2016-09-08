@@ -31,7 +31,7 @@ define([
         var targetMetricName = target.metric;
         var tag = target.tags;
         var rows = [];
-        _.each([".trend", ".seasonal", ".noise"], function (defString, index) {
+        _.each(["", ".seasonal", ".trend", ".noise"], function (defString, index) {
           var panelMeta = {
             title: '',
             type: 'graph',
@@ -45,7 +45,7 @@ define([
                 aggregator: "avg",
                 metric: "",
                 downsampleAggregator: "avg",
-                downsampleInterval: "1m",
+                downsampleInterval: "15m",
                 tags: {host: ""}
               }
             ],
