@@ -2,7 +2,6 @@
 
 import angular from 'angular';
 import _ from 'lodash';
-import config from 'app/core/config';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 
@@ -21,6 +20,7 @@ export class AnnotationsEditorCtrl {
     enable: true
   };
 
+  /** @ngInject */
   constructor(private $scope, private datasourceSrv) {
     $scope.ctrl = this;
 

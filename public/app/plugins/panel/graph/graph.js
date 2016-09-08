@@ -320,16 +320,17 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
           }
 
           var types = {};
+          for (var i = 0; i < annotations.length; i++) {
+            var item = annotations[i];
 
-          _.each(annotations, function(event) {
-            if (!types[event.annotation.name]) {
-              types[event.annotation.name] = {
-                color: event.annotation.iconColor,
+            if (!types[item.annotation.name]) {
+              types[item.annotation.name] = {
+                color: item.annotation.iconColor,
                 position: 'BOTTOM',
                 markerSize: 5,
               };
             }
-          });
+          }
 
           options.events = {
             levels: _.keys(types).length + 1,
