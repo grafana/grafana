@@ -41,7 +41,9 @@ func TestQueryCondition(t *testing.T) {
 			})
 
 			Convey("should fire when avg is above 100", func() {
-				ctx.series = tsdb.TimeSeriesSlice{tsdb.NewTimeSeries("test1", [][2]float64{{120, 0}})}
+				one := float64(120)
+				two := float64(0)
+				ctx.series = tsdb.TimeSeriesSlice{tsdb.NewTimeSeries("test1", [][2]*float64{{&one, &two}})}
 				ctx.exec()
 
 				So(ctx.result.Error, ShouldBeNil)
@@ -49,7 +51,9 @@ func TestQueryCondition(t *testing.T) {
 			})
 
 			Convey("Should not fire when avg is below 100", func() {
-				ctx.series = tsdb.TimeSeriesSlice{tsdb.NewTimeSeries("test1", [][2]float64{{90, 0}})}
+				one := float64(90)
+				two := float64(0)
+				ctx.series = tsdb.TimeSeriesSlice{tsdb.NewTimeSeries("test1", [][2]*float64{{&one, &two}})}
 				ctx.exec()
 
 				So(ctx.result.Error, ShouldBeNil)
