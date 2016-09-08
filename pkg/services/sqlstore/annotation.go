@@ -38,6 +38,9 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		params = append(params, query.AlertId)
 	}
 
+	sql.WriteString(` AND epoch BETWEEN ? AND ?`)
+	params = append(params, query.From, query.To)
+
 	if query.Type != "" {
 		sql.WriteString(` AND type = ?`)
 		params = append(params, string(query.Type))
@@ -47,7 +50,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		query.Limit = 10
 	}
 
-	sql.WriteString(fmt.Sprintf("ORDER BY timestamp DESC LIMIT %v", query.Limit))
+	sql.WriteString(fmt.Sprintf("ORDER BY epoch DESC LIMIT %v", query.Limit))
 
 	items := make([]*annotations.Item, 0)
 	if err := x.Sql(sql.String(), params...).Find(&items); err != nil {

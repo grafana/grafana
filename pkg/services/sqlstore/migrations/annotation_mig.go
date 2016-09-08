@@ -5,6 +5,7 @@ import (
 )
 
 func addAnnotationMig(mg *Migrator) {
+
 	table := Table{
 		Name: "annotation",
 		Columns: []*Column{
@@ -19,20 +20,22 @@ func addAnnotationMig(mg *Migrator) {
 			{Name: "prev_state", Type: DB_NVarchar, Length: 25, Nullable: false},
 			{Name: "new_state", Type: DB_NVarchar, Length: 25, Nullable: false},
 			{Name: "data", Type: DB_Text, Nullable: false},
-			{Name: "timestamp", Type: DB_DateTime, Nullable: false},
+			{Name: "epoch", Type: DB_BigInt, Nullable: false},
 		},
 		Indices: []*Index{
 			{Cols: []string{"org_id", "alert_id"}, Type: IndexType},
 			{Cols: []string{"org_id", "type"}, Type: IndexType},
-			{Cols: []string{"timestamp"}, Type: IndexType},
+			{Cols: []string{"epoch"}, Type: IndexType},
 		},
 	}
 
-	mg.AddMigration("create annotation table v1", NewAddTableMigration(table))
+	mg.AddMigration("Drop old annotation table v2", NewDropTableMigration("annotation"))
+
+	mg.AddMigration("create annotation table v3", NewAddTableMigration(table))
 
 	// create indices
-	mg.AddMigration("add index annotation org_id & alert_id ", NewAddIndexMigration(table, table.Indices[0]))
+	mg.AddMigration("add index annotation org_id & alert_id v2", NewAddIndexMigration(table, table.Indices[0]))
 
-	mg.AddMigration("add index annotation org_id & type", NewAddIndexMigration(table, table.Indices[1]))
-	mg.AddMigration("add index annotation timestamp", NewAddIndexMigration(table, table.Indices[2]))
+	mg.AddMigration("add index annotation org_id & type v2", NewAddIndexMigration(table, table.Indices[1]))
+	mg.AddMigration("add index annotation epoch", NewAddIndexMigration(table, table.Indices[2]))
 }

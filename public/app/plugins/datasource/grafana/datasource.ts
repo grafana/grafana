@@ -12,6 +12,21 @@ class GrafanaDatasource {
       maxDataPoints: options.maxDataPoints
     });
   }
+
+  annotationQuery(options) {
+    return this.backendSrv.get('/api/annotations', {
+      from: options.range.from.valueOf(),
+      to: options.range.to.valueOf(),
+      limit: options.limit,
+      type: options.type,
+    }).then(data => {
+      return data.map(item => {
+        item.annotation = options.annotation;
+        return item;
+      });
+    });
+  }
+
 }
 
 export {GrafanaDatasource};

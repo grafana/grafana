@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/annotations"
 )
 
 func ValidateOrgAlert(c *middleware.Context) {
@@ -229,42 +228,6 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 	}
 
 	return ApiSuccess("Test notification sent")
-}
-
-func GetAlertHistory(c *middleware.Context) Response {
-	alertId, err := getAlertIdForRequest(c)
-	if err != nil {
-		return ApiError(400, "Invalid request", err)
-	}
-
-	query := &annotations.ItemQuery{
-		AlertId: alertId,
-		Type:    annotations.AlertType,
-		OrgId:   c.OrgId,
-		Limit:   c.QueryInt64("limit"),
-	}
-
-	repo := annotations.GetRepository()
-
-	items, err := repo.Find(query)
-	if err != nil {
-		return ApiError(500, "Failed to get history for alert", err)
-	}
-
-	var result []dtos.AlertHistory
-	for _, item := range items {
-		result = append(result, dtos.AlertHistory{
-			AlertId:   item.AlertId,
-			Timestamp: item.Timestamp,
-			Data:      item.Data,
-			NewState:  item.NewState,
-			Text:      item.Text,
-			Metric:    item.Metric,
-			Title:     item.Title,
-		})
-	}
-
-	return Json(200, result)
 }
 
 func getAlertIdForRequest(c *middleware.Context) (int64, error) {

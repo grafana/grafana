@@ -66,7 +66,6 @@ func (c *EvalContext) GetStateModel() *StateDescription {
 	default:
 		panic("Unknown rule state " + c.Rule.State)
 	}
-
 }
 
 func (a *EvalContext) GetDurationMs() float64 {

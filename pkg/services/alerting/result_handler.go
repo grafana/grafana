@@ -73,7 +73,7 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 			Text:      ctx.GetStateModel().Text,
 			NewState:  string(ctx.Rule.State),
 			PrevState: string(oldState),
-			Timestamp: time.Now(),
+			Epoch:     time.Now().Unix(),
 			Data:      annotationData,
 		}
 
