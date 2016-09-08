@@ -1,6 +1,7 @@
 package graphite
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -15,10 +16,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-var (
-	HttpClient = http.Client{Timeout: time.Duration(10 * time.Second)}
-)
-
 type GraphiteExecutor struct {
 	*tsdb.DataSourceInfo
 }
@@ -27,11 +24,23 @@ func NewGraphiteExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
 	return &GraphiteExecutor{dsInfo}
 }
 
-var glog log.Logger
+var (
+	glog       log.Logger
+	HttpClient http.Client
+)
 
 func init() {
 	glog = log.New("tsdb.graphite")
 	tsdb.RegisterExecutor("graphite", NewGraphiteExecutor)
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: setting.AlertingSkipSSLValidation},
+	}
+
+	HttpClient = http.Client{
+		Timeout:   time.Duration(10 * time.Second),
+		Transport: tr,
+	}
 }
 
 func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
