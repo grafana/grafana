@@ -257,7 +257,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       return this.getOriginalMetricName(labelData);
     }
 
-    return this.renderTemplate(options.legendFormat, labelData) || '{}';
+    return this.renderTemplate(templateSrv.replace(options.legendFormat), labelData) || '{}';
   };
 
   this.renderTemplate = function(aliasPattern, aliasData) {
