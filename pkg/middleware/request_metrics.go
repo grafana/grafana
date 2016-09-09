@@ -15,7 +15,11 @@ func RequestMetrics() macaron.Handler {
 
 		status := rw.Status()
 
-		if strings.HasPrefix(req.URL.Path, "/api/") {
+		if strings.HasPrefix(req.RequestURI, "/api/datasources/proxy") {
+			return
+		}
+
+		if strings.HasPrefix(req.RequestURI, "/api/") {
 			switch status {
 			case 200:
 				metrics.M_Api_Status_200.Inc(1)
