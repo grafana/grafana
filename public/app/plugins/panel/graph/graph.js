@@ -323,9 +323,9 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
           for (var i = 0; i < annotations.length; i++) {
             var item = annotations[i];
 
-            if (!types[item.annotation.name]) {
-              types[item.annotation.name] = {
-                color: item.annotation.iconColor,
+            if (!types[item.source.name]) {
+              types[item.source.name] = {
+                color: item.source.iconColor,
                 position: 'BOTTOM',
                 markerSize: 5,
               };

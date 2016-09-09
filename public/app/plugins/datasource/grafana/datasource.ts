@@ -19,11 +19,6 @@ class GrafanaDatasource {
       to: options.range.to.valueOf(),
       limit: options.limit,
       type: options.type,
-    }).then(data => {
-      return data.map(item => {
-        item.annotation = options.annotation;
-        return item;
-      });
     });
   }
 

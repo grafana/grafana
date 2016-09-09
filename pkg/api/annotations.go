@@ -9,11 +9,14 @@ import (
 func GetAnnotations(c *middleware.Context) Response {
 
 	query := &annotations.ItemQuery{
-		From:  c.QueryInt64("from") / 1000,
-		To:    c.QueryInt64("to") / 1000,
-		Type:  annotations.ItemType(c.Query("type")),
-		OrgId: c.OrgId,
-		Limit: c.QueryInt64("limit"),
+		From:        c.QueryInt64("from") / 1000,
+		To:          c.QueryInt64("to") / 1000,
+		Type:        annotations.ItemType(c.Query("type")),
+		OrgId:       c.OrgId,
+		AlertId:     c.QueryInt64("alertId"),
+		DashboardId: c.QueryInt64("dashboardId"),
+		PanelId:     c.QueryInt64("panelId"),
+		Limit:       c.QueryInt64("limit"),
 	}
 
 	repo := annotations.GetRepository()

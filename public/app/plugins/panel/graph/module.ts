@@ -55,10 +55,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     xaxis: {
       show: true
     },
-    alert: {
-      warn: {op: '>', value: undefined},
-      crit: {op: '>', value: undefined},
-    },
     // show/hide lines
     lines         : true,
     // fill factor
@@ -105,7 +101,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     aliasColors: {},
     // other style overrides
     seriesOverrides: [],
-    alerting: {},
     thresholds: [],
   };
 
@@ -115,7 +110,6 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     _.defaults(this.panel, this.panelDefaults);
     _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
-    _.defaults(this.panel.alert, this.panelDefaults.alert);
     _.defaults(this.panel.legend, this.panelDefaults.legend);
 
     this.colors = $scope.$root.colors;
@@ -161,7 +155,11 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   issueQueries(datasource) {
-    this.annotationsPromise = this.annotationsSrv.getAnnotations(this.dashboard);
+    this.annotationsPromise = this.annotationsSrv.getAnnotations({
+      dashboard: this.dashboard,
+      panel: this.panel,
+      range: this.range,
+    });
     return super.issueQueries(datasource);
   }
 
@@ -170,7 +168,11 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onDataSnapshotLoad(snapshotData) {
-    this.annotationsPromise = this.annotationsSrv.getAnnotations(this.dashboard);
+    this.annotationsPromise = this.annotationsSrv.getAnnotations({
+      dashboard: this.dashboard,
+      panel: this.panel,
+      range: this.range,
+    });
     this.onDataReceived(snapshotData);
   }
 

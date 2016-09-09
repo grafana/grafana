@@ -66,15 +66,17 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 
 		// save annotation
 		item := annotations.Item{
-			OrgId:     ctx.Rule.OrgId,
-			Type:      annotations.AlertType,
-			AlertId:   ctx.Rule.Id,
-			Title:     ctx.Rule.Name,
-			Text:      ctx.GetStateModel().Text,
-			NewState:  string(ctx.Rule.State),
-			PrevState: string(oldState),
-			Epoch:     time.Now().Unix(),
-			Data:      annotationData,
+			OrgId:       ctx.Rule.OrgId,
+			DashboardId: ctx.Rule.DashboardId,
+			PanelId:     ctx.Rule.PanelId,
+			Type:        annotations.AlertType,
+			AlertId:     ctx.Rule.Id,
+			Title:       ctx.Rule.Name,
+			Text:        ctx.GetStateModel().Text,
+			NewState:    string(ctx.Rule.State),
+			PrevState:   string(oldState),
+			Epoch:       time.Now().Unix(),
+			Data:        annotationData,
 		}
 
 		annotationRepo := annotations.GetRepository()

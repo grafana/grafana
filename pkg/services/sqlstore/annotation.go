@@ -38,6 +38,21 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		params = append(params, query.AlertId)
 	}
 
+	if query.AlertId != 0 {
+		sql.WriteString(` AND alert_id = ?`)
+		params = append(params, query.AlertId)
+	}
+
+	if query.DashboardId != 0 {
+		sql.WriteString(` AND dashboard_id = ?`)
+		params = append(params, query.DashboardId)
+	}
+
+	if query.PanelId != 0 {
+		sql.WriteString(` AND panel_id = ?`)
+		params = append(params, query.PanelId)
+	}
+
 	sql.WriteString(` AND epoch BETWEEN ? AND ?`)
 	params = append(params, query.From, query.To)
 

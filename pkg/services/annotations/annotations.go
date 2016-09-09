@@ -8,11 +8,13 @@ type Repository interface {
 }
 
 type ItemQuery struct {
-	OrgId   int64    `json:"orgId"`
-	From    int64    `json:"from"`
-	To      int64    `json:"from"`
-	Type    ItemType `json:"type"`
-	AlertId int64    `json:"alertId"`
+	OrgId       int64    `json:"orgId"`
+	From        int64    `json:"from"`
+	To          int64    `json:"from"`
+	Type        ItemType `json:"type"`
+	AlertId     int64    `json:"alertId"`
+	DashboardId int64    `json:"dashboardId"`
+	PanelId     int64    `json:"panelId"`
 
 	Limit int64 `json:"alertId"`
 }
@@ -34,17 +36,19 @@ const (
 )
 
 type Item struct {
-	Id        int64    `json:"id"`
-	OrgId     int64    `json:"orgId"`
-	Type      ItemType `json:"type"`
-	Title     string   `json:"title"`
-	Text      string   `json:"text"`
-	Metric    string   `json:"metric"`
-	AlertId   int64    `json:"alertId"`
-	UserId    int64    `json:"userId"`
-	PrevState string   `json:"prevState"`
-	NewState  string   `json:"newState"`
-	Epoch     int64    `json:"epoch"`
+	Id          int64    `json:"id"`
+	OrgId       int64    `json:"orgId"`
+	DashboardId int64    `json:"dashboardId"`
+	PanelId     int64    `json:"panelId"`
+	Type        ItemType `json:"type"`
+	Title       string   `json:"title"`
+	Text        string   `json:"text"`
+	Metric      string   `json:"metric"`
+	AlertId     int64    `json:"alertId"`
+	UserId      int64    `json:"userId"`
+	PrevState   string   `json:"prevState"`
+	NewState    string   `json:"newState"`
+	Epoch       int64    `json:"epoch"`
 
 	Data *simplejson.Json `json:"data"`
 }
