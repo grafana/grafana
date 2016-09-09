@@ -15,6 +15,7 @@ var (
 	M_Page_Status_404                      Counter
 	M_Api_Status_500                       Counter
 	M_Api_Status_404                       Counter
+	M_Api_Status_200                       Counter
 	M_Api_User_SignUpStarted               Counter
 	M_Api_User_SignUpCompleted             Counter
 	M_Api_User_SignUpInvite                Counter
@@ -57,6 +58,7 @@ func initMetricVars(settings *MetricSettings) {
 
 	M_Api_Status_500 = RegCounter("api.resp_status", "code", "500")
 	M_Api_Status_404 = RegCounter("api.resp_status", "code", "404")
+	M_Api_Status_200 = RegCounter("api.resp_status", "code", "200")
 
 	M_Api_User_SignUpStarted = RegCounter("api.user.signup_started")
 	M_Api_User_SignUpCompleted = RegCounter("api.user.signup_completed")
