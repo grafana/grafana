@@ -15,6 +15,9 @@
 ### Breaking changes
 * **SystemD**: Change systemd description, closes [#5971](https://github.com/grafana/grafana/pull/5971)
 
+### Bugfixes
+* **Table Panel**: Fixed problem when switching to Mixed datasource in metrics tab, fixes [#5999](https://github.com/grafana/grafana/pull/5999)
+
 # 3.1.2 (unreleased)
 * **Templating**: Fixed issue when combining row & panel repeats, fixes [#5790](https://github.com/grafana/grafana/issues/5790)
 * **Drag&Drop**: Fixed issue with drag and drop in latest Chrome(51+), fixes [#5767](https://github.com/grafana/grafana/issues/5767)

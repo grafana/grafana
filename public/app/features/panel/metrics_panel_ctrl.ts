@@ -244,7 +244,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (datasource.meta.mixed) {
       _.each(this.panel.targets, target => {
         target.datasource = this.panel.datasource;
-        if (target.datasource === null) {
+        if (!target.datasource) {
           target.datasource = config.defaultDatasource;
         }
       });
