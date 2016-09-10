@@ -265,7 +265,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
               console.log('flotcharts error', e);
               ctrl.error = e.message || "Render Error";
               ctrl.renderError = true;
-              ctrl.inspector = {error: ctrl.error};
+              ctrl.inspector = {error: e};
             }
 
             if (incrementRenderCounter) {
