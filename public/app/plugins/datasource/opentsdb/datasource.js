@@ -20,6 +20,17 @@ function (angular, _, dateMath) {
       this.supportMetrics = true;
       this.prefix = contextSrv.user.orgId + ".";
     }
+    //TODO delete
+    function getAnomalyMetricData(target) {
+      return backendSrv.datasourceRequest({
+        method: 'GET',
+        url: healthSrv.anomalyUrlRoot + "/anomaly",
+        params: {
+          metric: target.metric.replace(".anomaly", ""),
+          host: target.tags.host
+        }
+      });
+    }
     // Called once per panel (graph)
     OpenTSDBDatasource.prototype.query = function(options) {
       var anotherQueries = {};
@@ -27,10 +38,21 @@ function (angular, _, dateMath) {
       var end = convertToTSDBTime(options.rangeRaw.to, true);
       var qs = [];
       var self = this;
+      //TODO delete
+      var targetsResponse = [];
+
+
 
       _.each(options.targets, function (target) {
         var decomposeFlag = false;
         if (!target.metric) {
+          return;
+        }
+        //TODO delete
+        if (target.anomaly || target.metric.endsWith(".anomaly")) {
+          getAnomalyMetricData(target).then(function (response) {
+            targetsResponse = response.data;
+          });
           return;
         }
         if (target.anomaly || target.metric.endsWith(".anomaly")) {
@@ -38,7 +60,7 @@ function (angular, _, dateMath) {
           return;
         }
 
-        _.each(["trend", "seasonal", "noise"], function (defString) {
+        _.each(["trend", "seasonal", "noise","prediction"], function (defString) {
           if (target.metric.endsWith(defString)) {
             decomposeFlag = true;
             anotherQueries['endWithString'] = defString;
@@ -68,8 +90,12 @@ function (angular, _, dateMath) {
         });
       });
 
-      if(!anotherQueries.decompose && !_.isEmpty(queries)){
+      if(!_.isEmpty(queries)){
         return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
+          //TODO delete
+          _.each(targetsResponse, function (target) {
+            response.data.push(target);
+          });
           return self.anotherQueryPlus(anotherQueries).then(function (targetsResponse) {
             if(targetsResponse.data){
               _.each(targetsResponse.data, function (target) {
