@@ -31,6 +31,49 @@ define([
         var targetMetricName = target.metric;
         var tag = target.tags;
         var rows = [];
+        var panelMeta = {
+          title: targetMetricName,
+          type: 'graph',
+          linewidth: 2,
+          fill: 0,
+          height: "300px",
+          lines: true,
+          targets: [
+            {
+              aggregator: "avg",
+              metric: targetMetricName,
+              downsampleAggregator: "avg",
+              downsampleInterval: "15m",
+              tags: tag
+            },
+            {
+              aggregator: "avg",
+              metric: targetMetricName+".prediction",
+              downsampleAggregator: "avg",
+              downsampleInterval: "1m",
+              tags: tag
+            }
+          ],
+          seriesOverrides: [{
+            alias: targetMetricName + ".prediction{host=" + tag.host + "}",
+            color: "#F9D9F9",
+            zindex: "-1"
+          }],
+          legend: {
+            alignAsTable: true,
+            avg: true,
+            min: true,
+            max: true,
+            current: true,
+            total: true,
+            show: true,
+            values: true
+          },
+          'x-axis': true,
+          'y-axis': true
+        };
+        rows.push(panelMeta);
+
         _.each([".trend", ".seasonal", ".noise"], function (defString, index) {
           var panelMeta = {
             title: '',
