@@ -546,7 +546,6 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	alerting := Cfg.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(false)
-	AlertingSkipSSLValidation = alerting.Key("skip_ssl_validation").MustBool(false)
 
 	readSessionConfig()
 	readSmtpSettings()
