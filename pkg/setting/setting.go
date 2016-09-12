@@ -141,8 +141,7 @@ var (
 	Quota QuotaSettings
 
 	// Alerting
-	AlertingEnabled           bool
-	AlertingSkipSSLValidation bool
+	AlertingEnabled bool
 
 	// logger
 	logger log.Logger

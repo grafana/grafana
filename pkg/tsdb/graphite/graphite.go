@@ -34,7 +34,7 @@ func init() {
 	tsdb.RegisterExecutor("graphite", NewGraphiteExecutor)
 
 	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: setting.AlertingSkipSSLValidation},
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 
 	HttpClient = http.Client{
