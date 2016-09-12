@@ -1,0 +1,12 @@
+<div>
+  <div class="section gf-form-group">
+    <h5 class="section-heading">Options</h5>
+    <div class="gf-form">
+      <span class="gf-form-label width-8">Show</span>
+      <div class="gf-form-select-wrapper max-width-15">
+         <select class="gf-form-input" ng-model="ctrl.panel.show" ng-options="f.value as f.text for f in ctrl.showOptions" ng-change="ctrl.onRender()"></select>
+      </div>
+    </div>
+
+  </div>
+</div>
