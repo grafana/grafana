@@ -8,7 +8,7 @@ System.config({
     'tether-drop': 'vendor/npm/tether-drop/dist/js/drop.js',
     'moment': 'vendor/moment.js',
     "jquery": "vendor/jquery/dist/jquery.js",
-    'lodash-src': 'vendor/lodash.js',
+    'lodash-src': 'vendor/lodash/dist/lodash.js',
     "lodash": 'app/core/lodash_extended.js',
     "angular": "vendor/angular/angular.js",
     "bootstrap": "vendor/bootstrap/bootstrap.js",

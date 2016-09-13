@@ -102,7 +102,7 @@ describe('given dashboard with repeated panels', function() {
   });
 
   it('should add datasource to required', function() {
-    var require = _.findWhere(exported.__requires, {name: 'TestDB'});
+    var require = _.find(exported.__requires, {name: 'TestDB'});
     expect(require.name).to.be("TestDB");
     expect(require.id).to.be("testdb");
     expect(require.type).to.be("datasource");
@@ -110,28 +110,28 @@ describe('given dashboard with repeated panels', function() {
   });
 
   it('should add panel to required', function() {
-    var require = _.findWhere(exported.__requires, {name: 'Graph'});
+    var require = _.find(exported.__requires, {name: 'Graph'});
     expect(require.name).to.be("Graph");
     expect(require.id).to.be("graph");
     expect(require.version).to.be("1.1.0");
   });
 
   it('should add grafana version', function() {
-    var require = _.findWhere(exported.__requires, {name: 'Grafana'});
+    var require = _.find(exported.__requires, {name: 'Grafana'});
     expect(require.type).to.be("grafana");
     expect(require.id).to.be("grafana");
     expect(require.version).to.be("3.0.2");
   });
 
   it('should add constant template variables as inputs', function() {
-    var input = _.findWhere(exported.__inputs, {name: 'VAR_PREFIX'});
+    var input = _.find(exported.__inputs, {name: 'VAR_PREFIX'});
     expect(input.type).to.be("constant");
     expect(input.label).to.be("prefix");
     expect(input.value).to.be("collectd");
   });
 
   it('should templatize constant variables', function() {
-    var variable = _.findWhere(exported.templating.list, {name: 'prefix'});
+    var variable = _.find(exported.templating.list, {name: 'prefix'});
     expect(variable.query).to.be("${VAR_PREFIX}");
     expect(variable.current.text).to.be("${VAR_PREFIX}");
     expect(variable.current.value).to.be("${VAR_PREFIX}");

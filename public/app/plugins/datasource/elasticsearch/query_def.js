@@ -131,21 +131,21 @@ function (_) {
     },
 
     describeOrder: function(order) {
-      var def = _.findWhere(this.orderOptions, {value: order});
+      var def = _.find(this.orderOptions, {value: order});
       return def.text;
     },
 
     describeMetric: function(metric) {
-      var def = _.findWhere(this.metricAggTypes, {value: metric.type});
+      var def = _.find(this.metricAggTypes, {value: metric.type});
       return def.text + ' ' + metric.field;
     },
 
     describeOrderBy: function(orderBy, target) {
-      var def = _.findWhere(this.orderByOptions, {value: orderBy});
+      var def = _.find(this.orderByOptions, {value: orderBy});
       if (def) {
         return def.text;
       }
-      var metric = _.findWhere(target.metrics, {id: orderBy});
+      var metric = _.find(target.metrics, {id: orderBy});
       if (metric) {
         return this.describeMetric(metric);
       } else {

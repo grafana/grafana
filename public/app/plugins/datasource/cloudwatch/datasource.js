@@ -220,7 +220,7 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
         return this.performEC2DescribeInstances(region, filters, null).then(function(result) {
           var attributes = _.chain(result.Reservations)
           .map(function(reservations) {
-            return _.pluck(reservations.Instances, targetAttributeName);
+            return _.map(reservations.Instances, targetAttributeName);
           })
           .flatten().uniq().sortBy().value();
           return transformSuggestData(attributes);

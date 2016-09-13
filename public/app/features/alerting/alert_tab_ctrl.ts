@@ -68,7 +68,7 @@ export class AlertTabCtrl {
       this.notifications = res;
 
       _.each(this.alert.notifications, item => {
-        var model = _.findWhere(this.notifications, {id: item.id});
+        var model = _.find(this.notifications, {id: item.id});
         if (model) {
           model.iconClass = this.getNotificationIcon(model.type);
           this.alertNotifications.push(model);
@@ -123,7 +123,7 @@ export class AlertTabCtrl {
   }
 
   notificationAdded() {
-    var model = _.findWhere(this.notifications, {name: this.addNotificationSegment.value});
+    var model = _.find(this.notifications, {name: this.addNotificationSegment.value});
     if (!model) {
       return;
     }

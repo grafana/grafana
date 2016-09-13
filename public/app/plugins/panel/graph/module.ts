@@ -291,7 +291,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   toggleAxis(info) {
-    var override = _.findWhere(this.panel.seriesOverrides, {alias: info.alias});
+    var override = _.find(this.panel.seriesOverrides, {alias: info.alias});
     if (!override) {
       override = { alias: info.alias };
       this.panel.seriesOverrides.push(override);

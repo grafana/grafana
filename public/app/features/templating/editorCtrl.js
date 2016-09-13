@@ -102,7 +102,7 @@ function (angular, _) {
         return false;
       }
 
-      var sameName = _.findWhere($scope.variables, { name: $scope.current.name });
+      var sameName = _.find($scope.variables, { name: $scope.current.name });
       if (sameName && sameName !== $scope.current) {
         $scope.appEvent('alert-warning', ['Validation', 'Variable with the same name already exists']);
         return false;

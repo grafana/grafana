@@ -65,7 +65,7 @@ export class AnnotationsSrv {
       return this.globalAnnotationsPromise;
     }
 
-    var annotations = _.where(dashboard.annotations.list, {enable: true});
+    var annotations = _.filter(dashboard.annotations.list, {enable: true});
     var range = this.timeSrv.timeRange();
 
     this.globalAnnotationsPromise = this.$q.all(_.map(annotations, annotation => {

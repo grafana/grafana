@@ -40,7 +40,7 @@ function (_, $, coreModule) {
           }
 
           $scope.$apply(function() {
-            var selected = _.findWhere($scope.altSegments, { value: value });
+            var selected = _.find($scope.altSegments, {value: value});
             if (selected) {
               segment.value = selected.value;
               segment.html = selected.html;
@@ -174,7 +174,7 @@ function (_, $, coreModule) {
         pre: function postLink($scope, elem, attrs) {
 
           $scope.valueToSegment = function(value) {
-            var option = _.findWhere($scope.options, {value: value});
+            var option = _.find($scope.options, {value: value});
             var segment = {
               cssClass: attrs.cssClass,
               custom: attrs.custom,
@@ -196,7 +196,7 @@ function (_, $, coreModule) {
 
           $scope.onSegmentChange = function() {
             if ($scope.options) {
-              var option = _.findWhere($scope.options, {text: $scope.segment.value});
+              var option = _.find($scope.options, {text: $scope.segment.value});
               if (option && option.value !== $scope.property) {
                 $scope.property = option.value;
               } else if (attrs.custom !== 'false') {

@@ -111,8 +111,8 @@ function(angular, _) {
       this.cleanDashboardFromIgnoredChanges(current);
       this.cleanDashboardFromIgnoredChanges(original);
 
-      var currentTimepicker = _.findWhere(current.nav, { type: 'timepicker' });
-      var originalTimepicker = _.findWhere(original.nav, { type: 'timepicker' });
+      var currentTimepicker = _.find(current.nav, { type: 'timepicker' });
+      var originalTimepicker = _.find(original.nav, { type: 'timepicker' });
 
       if (currentTimepicker && originalTimepicker) {
         currentTimepicker.now = originalTimepicker.now;

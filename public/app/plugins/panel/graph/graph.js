@@ -351,7 +351,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
 
           options.yaxes.push(defaults);
 
-          if (_.findWhere(data, {yaxis: 2})) {
+          if (_.find(data, {yaxis: 2})) {
             var secondY = _.clone(defaults);
             secondY.index = 2,
             secondY.show = panel.yaxes[1].show;
