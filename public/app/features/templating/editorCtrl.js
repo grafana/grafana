@@ -13,6 +13,7 @@ function (angular, _) {
       type: 'query',
       datasource: null,
       refresh: 0,
+      sort: 1,
       name: '',
       hide: 0,
       options: [],
@@ -32,6 +33,14 @@ function (angular, _) {
       {value: 0, text: "Never"},
       {value: 1, text: "On Dashboard Load"},
       {value: 2, text: "On Time Range Change"},
+    ];
+
+    $scope.sortOptions = [
+      {value: 0, text: "Without Sort"},
+      {value: 1, text: "Alphabetical (asc)"},
+      {value: 2, text: "Alphabetical (desc)"},
+      {value: 3, text: "Numerical (asc)"},
+      {value: 4, text: "Numerical (desc)"},
     ];
 
     $scope.hideOptions = [
@@ -114,6 +123,7 @@ function (angular, _) {
       $scope.currentIsNew = false;
       $scope.mode = 'edit';
 
+      $scope.current.sort = $scope.current.sort || replacementDefaults.sort;
       if ($scope.current.datasource === void 0) {
         $scope.current.datasource = null;
         $scope.current.type = 'query';

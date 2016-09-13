@@ -38,6 +38,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) {
 		return
 	}
 
+	emptySerieCount := 0
 	for _, series := range seriesList {
 		reducedValue := c.Reducer.Reduce(series)
 		evalMatch := c.Evaluator.Eval(reducedValue)
@@ -55,13 +56,14 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) {
 			})
 		}
 
-		context.Firing = evalMatch
-
 		// handle no data scenario
 		if reducedValue == nil {
-			context.NoDataFound = true
+			emptySerieCount++
 		}
 	}
+
+	context.NoDataFound = emptySerieCount == len(seriesList)
+	context.Firing = len(context.EvalMatches) > 0
 }
 
 func (c *QueryCondition) executeQuery(context *alerting.EvalContext) (tsdb.TimeSeriesSlice, error) {

@@ -20,7 +20,7 @@ type DefaultEvalHandler struct {
 func NewEvalHandler() *DefaultEvalHandler {
 	return &DefaultEvalHandler{
 		log:             log.New("alerting.evalHandler"),
-		alertJobTimeout: time.Second * 5,
+		alertJobTimeout: time.Second * 10,
 	}
 }
 
@@ -29,9 +29,9 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 
 	select {
 	case <-time.After(e.alertJobTimeout):
-		context.Error = fmt.Errorf("Timeout")
+		context.Error = fmt.Errorf("Execution timed out after %v", e.alertJobTimeout)
 		context.EndTime = time.Now()
-		e.log.Debug("Job Execution timeout", "alertId", context.Rule.Id)
+		e.log.Debug("Job Execution timeout", "alertId", context.Rule.Id, "timeout setting", e.alertJobTimeout)
 		e.retry(context)
 	case <-context.DoneChan:
 		e.log.Debug("Job Execution done", "timeMs", context.GetDurationMs(), "alertId", context.Rule.Id, "firing", context.Firing)
@@ -45,10 +45,10 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 func (e *DefaultEvalHandler) retry(context *EvalContext) {
 	e.log.Debug("Retrying eval exeuction", "alertId", context.Rule.Id)
 
-	context.RetryCount++
-	if context.RetryCount > MaxRetries {
+	if context.RetryCount < MaxRetries {
 		context.DoneChan = make(chan bool, 1)
 		context.CancelChan = make(chan bool, 1)
+		context.RetryCount++
 		e.Eval(context)
 	}
 }

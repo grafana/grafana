@@ -48,7 +48,16 @@ func (a *ldapAuther) Dial() error {
 				ServerName:         host,
 				RootCAs:            certPool,
 			}
-			a.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
+			if a.server.StartTLS {
+				a.conn, err = ldap.Dial("tcp", address)
+				if err == nil {
+					if err = a.conn.StartTLS(tlsCfg); err == nil {
+						return nil
+					}
+				}
+			} else {
+				a.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
+			}
 		} else {
 			a.conn, err = ldap.Dial("tcp", address)
 		}
