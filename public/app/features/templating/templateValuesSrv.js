@@ -374,12 +374,20 @@ function (angular, _, $, kbn) {
       }
       options = _.uniq(options, 'value');
 
-      if (variable.sort === 0) {
+      return this.sortVariableValues(options, variable.sort);
+    };
+
+    this.addAllOption = function(variable) {
+      variable.options.unshift({text: 'All', value: "$__all"});
+    };
+
+    this.sortVariableValues = function(options, sortOrder) {
+      if (sortOrder === 0) {
         return options;
       }
 
-      var sortType = Math.ceil(variable.sort / 2);
-      var reverseSort = (variable.sort % 2 === 0);
+      var sortType = Math.ceil(sortOrder / 2);
+      var reverseSort = (sortOrder % 2 === 0);
       if (sortType === 1) {
         options = _.sortBy(options, 'text');
       } else if (sortType === 2) {
@@ -397,10 +405,6 @@ function (angular, _, $, kbn) {
       }
 
       return options;
-    };
-
-    this.addAllOption = function(variable) {
-      variable.options.unshift({text: 'All', value: "$__all"});
     };
 
   });
