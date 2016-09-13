@@ -13,12 +13,12 @@
     "tests"
   ],
   "dependencies": {
-    "jquery": "~3.1.0",
-    "angular": "~1.5.9",
-    "angular-route": "~1.5.9",
-    "angular-mocks": "~1.5.9",
-    "angular-sanitize": "~1.5.9",
-    "angular-native-dragdrop": "~1.2.2",
-    "angular-bindonce": "~0.3.3"
+    "jquery": "3.1.0",
+    "angular": "1.5.3",
+    "angular-route": "1.5.3",
+    "angular-mocks": "1.5.3",
+    "angular-sanitize": "1.5.3",
+    "angular-native-dragdrop": "1.2.2",
+    "angular-bindonce": "0.3.3"
   }
 }

@@ -1,6 +1,6 @@
 {
   "name": "angular-mocks",
-  "version": "1.5.9-build.5020+sha.0784977",
+  "version": "1.5.3",
   "description": "AngularJS mocks for testing",
   "main": "angular-mocks.js",
   "scripts": {
@@ -23,12 +23,5 @@
   "bugs": {
     "url": "https://github.com/angular/angular.js/issues"
   },
-  "homepage": "http://angularjs.org",
-  "jspm": {
-    "shim": {
-      "angular-mocks": {
-        "deps": ["angular"]
-      }
-    }
-  }
+  "homepage": "http://angularjs.org"
 }

@@ -31,6 +31,6 @@
     "commit": "e630636fdc39fef815c1c534340aa16caf76a04c"
   },
   "_source": "https://github.com/angular-dragdrop/angular-dragdrop.git",
-  "_target": "~1.2.2",
+  "_target": "1.2.2",
   "_originalSource": "angular-native-dragdrop"
 }
