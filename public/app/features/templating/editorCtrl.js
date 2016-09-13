@@ -123,6 +123,7 @@ function (angular, _) {
       $scope.currentIsNew = false;
       $scope.mode = 'edit';
 
+      $scope.current.sort = $scope.current.sort || replacementDefaults.sort;
       if ($scope.current.datasource === void 0) {
         $scope.current.datasource = null;
         $scope.current.type = 'query';
