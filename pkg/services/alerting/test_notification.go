@@ -35,38 +35,34 @@ func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 		return err
 	}
 
-	notifier.sendNotifications([]Notifier{notifiers}, createTestEvalContext(cmd.State))
+	notifier.sendNotifications([]Notifier{notifiers}, createTestEvalContext())
 
 	return nil
 }
 
-func createTestEvalContext(state m.AlertStateType) *EvalContext {
+func createTestEvalContext() *EvalContext {
 
 	testRule := &Rule{
 		DashboardId: 1,
 		PanelId:     1,
 		Name:        "Test notification",
 		Message:     "Someone is testing the alert notification within grafana.",
-		State:       state,
+		State:       m.AlertStateAlerting,
 	}
 
 	ctx := NewEvalContext(testRule)
 	ctx.ImagePublicUrl = "http://grafana.org/assets/img/blog/mixed_styles.png"
 
 	ctx.IsTestRun = true
-	ctx.Firing = state == m.AlertStateAlerting
+	ctx.Firing = true
 	ctx.Error = nil
-	ctx.EvalMatches = evalMatchesBasedOnState(state)
+	ctx.EvalMatches = evalMatchesBasedOnState()
 
 	return ctx
 }
 
-func evalMatchesBasedOnState(state m.AlertStateType) []*EvalMatch {
+func evalMatchesBasedOnState() []*EvalMatch {
 	matches := make([]*EvalMatch, 0)
-	if state == m.AlertStateOK {
-		return matches
-	}
-
 	matches = append(matches, &EvalMatch{
 		Metric: "High value",
 		Value:  100,

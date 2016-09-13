@@ -62,7 +62,6 @@ export class AlertNotificationEditCtrl {
       name: this.model.name,
       type: this.model.type,
       settings: this.model.settings,
-      severity: this.testSeverity
     };
 
     this.backendSrv.post(`/api/alert-notifications/test`, payload)
