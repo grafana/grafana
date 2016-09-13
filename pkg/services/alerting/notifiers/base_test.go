@@ -1,12 +1,8 @@
 package notifiers
 
-import (
-	"testing"
+import . "github.com/smartystreets/goconvey/convey"
 
-	. "github.com/smartystreets/goconvey/convey"
-)
-
-func TestBaseNotifier(t *testing.T) {
+func TestBaseNotifier( /* t *testing.T */ ) {
 	// Convey("Parsing base notification state", t, func() {
 	//
 	// 	Convey("matches", func() {

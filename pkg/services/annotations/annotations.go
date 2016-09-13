@@ -40,6 +40,7 @@ type Item struct {
 	OrgId       int64    `json:"orgId"`
 	DashboardId int64    `json:"dashboardId"`
 	PanelId     int64    `json:"panelId"`
+	CategoryId  int64    `json:"panelId"`
 	Type        ItemType `json:"type"`
 	Title       string   `json:"title"`
 	Text        string   `json:"text"`
