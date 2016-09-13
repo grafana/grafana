@@ -181,6 +181,17 @@
               <select class="gf-form-input" ng-model="current.refresh" ng-options="f.value as f.text for f in refreshOptions"></select>
             </div>
           </div>
+          <div class="gf-form max-width-21">
+            <span class="gf-form-label width-7">
+              Sort
+              <info-popover mode="right-normal">
+                How to sort the values of this variable.
+              </info-popover>
+            </span>
+            <div class="gf-form-select-wrapper max-width-14">
+              <select class="gf-form-input" ng-model="current.sort" ng-options="f.value as f.text for f in sortOptions" ng-change="runQuery()"></select>
+            </div>
+          </div>
         </div>
         <div class="gf-form">
           <span class="gf-form-label width-7">Query</span>
