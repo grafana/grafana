@@ -34,11 +34,11 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 	annotationData := simplejson.New()
 	if ctx.Error != nil {
 		handler.log.Error("Alert Rule Result Error", "ruleId", ctx.Rule.Id, "error", ctx.Error)
-		ctx.Rule.State = m.AlertStateExeuctionError
+		ctx.Rule.State = m.AlertStateExecError
 		exeuctionError = ctx.Error.Error()
 		annotationData.Set("errorMessage", exeuctionError)
 	} else if ctx.Firing {
-		ctx.Rule.State = m.AlertStateType(ctx.Rule.Severity)
+		ctx.Rule.State = m.AlertStateAlerting
 		annotationData = simplejson.NewFromAny(ctx.EvalMatches)
 	} else {
 		// handle no data case
@@ -90,17 +90,15 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 
 func countStateResult(state m.AlertStateType) {
 	switch state {
-	case m.AlertStateCritical:
-		metrics.M_Alerting_Result_State_Critical.Inc(1)
-	case m.AlertStateWarning:
-		metrics.M_Alerting_Result_State_Warning.Inc(1)
+	case m.AlertStateAlerting:
+		metrics.M_Alerting_Result_State_Alerting.Inc(1)
 	case m.AlertStateOK:
 		metrics.M_Alerting_Result_State_Ok.Inc(1)
 	case m.AlertStatePaused:
 		metrics.M_Alerting_Result_State_Paused.Inc(1)
-	case m.AlertStateUnknown:
-		metrics.M_Alerting_Result_State_Unknown.Inc(1)
-	case m.AlertStateExeuctionError:
-		metrics.M_Alerting_Result_State_ExecutionError.Inc(1)
+	case m.AlertStateNoData:
+		metrics.M_Alerting_Result_State_NoData.Inc(1)
+	case m.AlertStateExecError:
+		metrics.M_Alerting_Result_State_ExecError.Inc(1)
 	}
 }

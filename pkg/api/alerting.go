@@ -49,7 +49,6 @@ func GetAlerts(c *middleware.Context) Response {
 			Name:           alert.Name,
 			Message:        alert.Message,
 			State:          alert.State,
-			Severity:       alert.Severity,
 			EvalDate:       alert.EvalDate,
 			NewStateDate:   alert.NewStateDate,
 			ExecutionError: alert.ExecutionError,
@@ -219,7 +218,6 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 	cmd := &alerting.NotificationTestCommand{
 		Name:     dto.Name,
 		Type:     dto.Type,
-		Severity: dto.Severity,
 		Settings: dto.Settings,
 	}
 

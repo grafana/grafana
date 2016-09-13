@@ -17,7 +17,6 @@ export class AlertTabCtrl {
   alert: any;
   conditionModels: any;
   evalFunctions: any;
-  severityLevels: any;
   noDataModes: any;
   addNotificationSegment;
   notifications;
@@ -41,7 +40,6 @@ export class AlertTabCtrl {
     this.subTabIndex = 0;
     this.evalFunctions = alertDef.evalFunctions;
     this.conditionTypes = alertDef.conditionTypes;
-    this.severityLevels = alertDef.severityLevels;
     this.noDataModes = alertDef.noDataModes;
     this.appSubUrl = config.appSubUrl;
   }
@@ -155,8 +153,7 @@ export class AlertTabCtrl {
       alert.conditions.push(this.buildDefaultCondition());
     }
 
-    alert.noDataState = alert.noDataState || 'unknown';
-    alert.severity = alert.severity || 'critical';
+    alert.noDataState = alert.noDataState || 'no_data';
     alert.frequency = alert.frequency || '60s';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
@@ -317,11 +314,6 @@ export class AlertTabCtrl {
   }
 
   evaluatorParamsChanged() {
-    ThresholdMapper.alertToGraphThresholds(this.panel);
-    this.panelCtrl.render();
-  }
-
-  severityChanged() {
     ThresholdMapper.alertToGraphThresholds(this.panel);
     this.panelCtrl.render();
   }

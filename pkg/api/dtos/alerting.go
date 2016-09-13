@@ -8,17 +8,16 @@ import (
 )
 
 type AlertRule struct {
-	Id             int64               `json:"id"`
-	DashboardId    int64               `json:"dashboardId"`
-	PanelId        int64               `json:"panelId"`
-	Name           string              `json:"name"`
-	Message        string              `json:"message"`
-	State          m.AlertStateType    `json:"state"`
-	Severity       m.AlertSeverityType `json:"severity"`
-	NewStateDate   time.Time           `json:"newStateDate"`
-	EvalDate       time.Time           `json:"evalDate"`
-	ExecutionError string              `json:"executionError"`
-	DashbboardUri  string              `json:"dashboardUri"`
+	Id             int64            `json:"id"`
+	DashboardId    int64            `json:"dashboardId"`
+	PanelId        int64            `json:"panelId"`
+	Name           string           `json:"name"`
+	Message        string           `json:"message"`
+	State          m.AlertStateType `json:"state"`
+	NewStateDate   time.Time        `json:"newStateDate"`
+	EvalDate       time.Time        `json:"evalDate"`
+	ExecutionError string           `json:"executionError"`
+	DashbboardUri  string           `json:"dashboardUri"`
 }
 
 type AlertNotification struct {
@@ -58,5 +57,4 @@ type NotificationTestCommand struct {
 	Name     string           `json:"name"`
 	Type     string           `json:"type"`
 	Settings *simplejson.Json `json:"settings"`
-	Severity string           `json:"severity"`
 }

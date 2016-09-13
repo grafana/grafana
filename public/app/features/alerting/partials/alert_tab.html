@@ -29,18 +29,8 @@
 				<div class="gf-form">
 					<span class="gf-form-label width-8">Name</span>
 					<input type="text" class="gf-form-input width-25" ng-model="ctrl.alert.name">
-				</div>
-				<div class="gf-form-inline">
-					<div class="gf-form">
-						<span class="gf-form-label width-8">Evaluate every</span>
-						<input class="gf-form-input max-width-7" type="text" ng-model="ctrl.alert.frequency"></input>
-					</div>
-					<div class="gf-form">
-						<span class="gf-form-label">Severity</span>
-						<div class="gf-form-select-wrapper width-13">
-							<select class="gf-form-input" ng-model="ctrl.alert.severity" ng-options="key as value.text for (key, value) in ctrl.severityLevels" ng-change="ctrl.severityChanged()">
-							</select>
-						</div>
+					<span class="gf-form-label width-8">Evaluate every</span>
+					<input class="gf-form-input max-width-5" type="text" ng-model="ctrl.alert.frequency"></input>
 					</div>
 				</div>
 			</div>

@@ -20,7 +20,6 @@ type Rule struct {
 	Message       string
 	NoDataState   m.AlertStateType
 	State         m.AlertStateType
-	Severity      m.AlertSeverityType
 	Conditions    []Condition
 	Notifications []int64
 }
@@ -66,9 +65,8 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	model.Name = ruleDef.Name
 	model.Message = ruleDef.Message
 	model.Frequency = ruleDef.Frequency
-	model.Severity = ruleDef.Severity
 	model.State = ruleDef.State
-	model.NoDataState = m.AlertStateType(ruleDef.Settings.Get("noDataState").MustString("unknown"))
+	model.NoDataState = m.AlertStateType(ruleDef.Settings.Get("noDataState").MustString("no_data"))
 
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)

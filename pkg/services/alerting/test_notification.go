@@ -4,11 +4,11 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/models"
+	m "github.com/grafana/grafana/pkg/models"
 )
 
 type NotificationTestCommand struct {
-	Severity string
+	State    m.AlertStateType
 	Name     string
 	Type     string
 	Settings *simplejson.Json
@@ -22,7 +22,7 @@ func init() {
 func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 	notifier := NewRootNotifier()
 
-	model := &models.AlertNotification{
+	model := &m.AlertNotification{
 		Name:     cmd.Name,
 		Type:     cmd.Type,
 		Settings: cmd.Settings,
@@ -35,23 +35,12 @@ func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 		return err
 	}
 
-	severity := models.AlertSeverityType(cmd.Severity)
-	notifier.sendNotifications([]Notifier{notifiers}, createTestEvalContext(severity))
+	notifier.sendNotifications([]Notifier{notifiers}, createTestEvalContext(cmd.State))
 
 	return nil
 }
 
-func createTestEvalContext(severity models.AlertSeverityType) *EvalContext {
-	state := models.AlertStateOK
-	firing := false
-	if severity == models.AlertSeverityCritical {
-		state = models.AlertStateCritical
-		firing = true
-	}
-	if severity == models.AlertSeverityWarning {
-		state = models.AlertStateWarning
-		firing = true
-	}
+func createTestEvalContext(state m.AlertStateType) *EvalContext {
 
 	testRule := &Rule{
 		DashboardId: 1,
@@ -59,23 +48,22 @@ func createTestEvalContext(severity models.AlertSeverityType) *EvalContext {
 		Name:        "Test notification",
 		Message:     "Someone is testing the alert notification within grafana.",
 		State:       state,
-		Severity:    severity,
 	}
 
 	ctx := NewEvalContext(testRule)
 	ctx.ImagePublicUrl = "http://grafana.org/assets/img/blog/mixed_styles.png"
 
 	ctx.IsTestRun = true
-	ctx.Firing = firing
+	ctx.Firing = state == m.AlertStateAlerting
 	ctx.Error = nil
-	ctx.EvalMatches = evalMatchesBasedOnSeverity(severity)
+	ctx.EvalMatches = evalMatchesBasedOnState(state)
 
 	return ctx
 }
 
-func evalMatchesBasedOnSeverity(severity models.AlertSeverityType) []*EvalMatch {
+func evalMatchesBasedOnState(state m.AlertStateType) []*EvalMatch {
 	matches := make([]*EvalMatch, 0)
-	if severity == models.AlertSeverityOK {
+	if state == m.AlertStateOK {
 		return matches
 	}
 

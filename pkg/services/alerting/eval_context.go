@@ -43,25 +43,20 @@ func (c *EvalContext) GetStateModel() *StateDescription {
 			Color: "#36a64f",
 			Text:  "OK",
 		}
-	case m.AlertStateUnknown:
+	case m.AlertStateNoData:
 		return &StateDescription{
 			Color: "#888888",
-			Text:  "UNKNOWN",
+			Text:  "No Data",
 		}
-	case m.AlertStateExeuctionError:
+	case m.AlertStateExecError:
 		return &StateDescription{
 			Color: "#000",
-			Text:  "EXECUTION_ERROR",
+			Text:  "Execution Error",
 		}
-	case m.AlertStateWarning:
-		return &StateDescription{
-			Color: "#fd821b",
-			Text:  "WARNING",
-		}
-	case m.AlertStateCritical:
+	case m.AlertStateAlerting:
 		return &StateDescription{
 			Color: "#D63232",
-			Text:  "CRITICAL",
+			Text:  "Alerting",
 		}
 	default:
 		panic("Unknown rule state " + c.Rule.State)
