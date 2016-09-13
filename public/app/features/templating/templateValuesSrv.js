@@ -348,6 +348,7 @@ function (angular, _, $, kbn) {
         regex = kbn.stringToJsRegex(templateSrv.replace(variable.regex));
       }
 
+      var orderedOptions = [];
       for (i = 0; i < metricNames.length; i++) {
         var item = metricNames[i];
         var value = item.value || item.text;
@@ -369,11 +370,13 @@ function (angular, _, $, kbn) {
             text = value;
           }
         }
-
-        options[value] = {text: text, value: value};
+        if (!options.hasOwnProperty(value)) {
+          options[value] = {text: text, value: value};
+          orderedOptions.push({text: text, value: value});
+        }
       }
 
-      return _.sortBy(options, 'text');
+      return orderedOptions;
     };
 
     this.addAllOption = function(variable) {

@@ -221,9 +221,9 @@ function (queryDef) {
       "1": {
         "terms": {
           "field": queryDef.field,
-          "size": 0,
+          "size": '$size',
           "order": {
-            "_term": "asc"
+            "_term": '$sortOrder'
           }
         },
       }
