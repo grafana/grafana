@@ -5,6 +5,7 @@
 * **SingleStat**: Add seriename as option in singlestat panel, closes [#4740](https://github.com/grafana/grafana/issues/4740)
 * **Localization**: Week start day now dependant on browser locale setting, closes [#3003](https://github.com/grafana/grafana/issues/3003)
 * **Templating**: Update panel repeats for variables that change on time refresh, closes [#5021](https://github.com/grafana/grafana/issues/5021)
+* **Templating**: Add support for numeric and alphabetical sorting of variable values, closes [#2839](https://github.com/grafana/grafana/issues/2839)
 * **Elasticsearch**: Support to set Precision Threshold for Unique Count metric, closes [#4689](https://github.com/grafana/grafana/issues/4689)
 * **Navigation**: Add search to org swithcer, closes [#2609](https://github.com/grafana/grafana/issues/2609)
 * **Database**: Allow database config using one propertie, closes [#5456](https://github.com/grafana/grafana/pull/5456)
