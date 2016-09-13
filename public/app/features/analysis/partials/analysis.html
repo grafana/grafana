@@ -14,7 +14,12 @@
           指标
         </li>
         <li>
-          <input placeholder="需要分析的指标" ng-model="targetObj.metric" type="text" required class="input-xxlarge tight-form-input last" >
+          <!--input placeholder="需要分析的指标" ng-model="targetObj.metric" type="text" required class="input-xxlarge tight-form-input last" -->
+          <input type="text" class="tight-form-input input-xlarge"
+          ng-model='targetObj.metric'
+          spellcheck='false'
+          bs-typeahead="suggestMetrics"
+          placeholder="需要分析的指标" required />
         </li>
       </ul>
       <div class="clearfix"></div>
@@ -25,7 +30,14 @@
           机器标签
         </li>
         <li>
-          <input placeholder="机器标签(host 名字)" ng-model="targetObj.host" type="text" required class="input-xxlarge tight-form-input last" >
+          <!--input placeholder="机器标签(host 名字)" ng-model="targetObj.host" type="text" required class="input-xxlarge tight-form-input last"-->
+          <input type="text" class="input-small tight-form-input ng-pristine ng-valid ng-touched"
+                 spellcheck="false" bs-typeahead="suggestTagKeys" data-min-length="0" data-items="100"
+                 ng-model="targetObj.currentTagKey" placeholder="key" data-provide="typeahead">
+          -
+          <input type="text" class="input-small tight-form-input ng-pristine ng-untouched ng-valid" spellcheck="false"
+                 bs-typeahead="suggestTagValues"
+               data-min-length="0" data-items="100" ng-model="targetObj.currentTagValue" placeholder="value" data-provide="typeahead">
         </li>
       </ul>
       <div class="clearfix"></div>
