@@ -86,7 +86,7 @@ export class AlertTabCtrl {
   }
 
   getAlertHistory() {
-    this.backendSrv.get(`/api/alert-history?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50`).then(res => {
+    this.backendSrv.get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50`).then(res => {
       this.alertHistory = _.map(res, ah => {
         ah.time = moment(ah.timestamp).format('MMM D, YYYY HH:mm:ss');
         ah.stateModel = alertDef.getStateDisplayModel(ah.newState);

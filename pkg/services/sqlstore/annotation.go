@@ -53,8 +53,10 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		params = append(params, query.PanelId)
 	}
 
-	sql.WriteString(` AND epoch BETWEEN ? AND ?`)
-	params = append(params, query.From, query.To)
+	if query.From > 0 && query.To > 0 {
+		sql.WriteString(` AND epoch BETWEEN ? AND ?`)
+		params = append(params, query.From, query.To)
+	}
 
 	if query.Type != "" {
 		sql.WriteString(` AND type = ?`)
