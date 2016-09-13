@@ -48,9 +48,16 @@ define([
             },
             {
               aggregator: "avg",
-              metric: targetMetricName+".prediction",
+              metric: targetMetricName+".prediction.min",
               downsampleAggregator: "avg",
-              downsampleInterval: "1m",
+              downsampleInterval: "15m",
+              tags: tag
+            },
+            {
+              aggregator: "avg",
+              metric: targetMetricName+".prediction.max",
+              downsampleAggregator: "avg",
+              downsampleInterval: "15m",
               tags: tag
             }
           ],
