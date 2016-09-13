@@ -14,10 +14,10 @@
   ],
   "dependencies": {
     "jquery": "~2.2.4",
-    "angular": "~1.5.3",
-    "angular-route": "~1.5.3",
-    "angular-mocks": "~1.5.3",
-    "angular-sanitize": "~1.5.3",
+    "angular": "~1.5.9",
+    "angular-route": "~1.5.9",
+    "angular-mocks": "~1.5.9",
+    "angular-sanitize": "~1.5.9",
     "angular-bindonce": "~0.3.3"
   }
 }
