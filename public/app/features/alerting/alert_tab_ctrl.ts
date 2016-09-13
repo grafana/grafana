@@ -90,11 +90,7 @@ export class AlertTabCtrl {
       this.alertHistory = _.map(res, ah => {
         ah.time = moment(ah.timestamp).format('MMM D, YYYY HH:mm:ss');
         ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
-
-        ah.metrics = _.map(ah.data, ev=> {
-          return ev.Metric + "=" + ev.Value;
-        }).join(', ');
-
+        ah.metrics = alertDef.joinEvalMatches(ah.data, ', ');
         return ah;
       });
     });

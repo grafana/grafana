@@ -1,6 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
-
+import _ from 'lodash';
 import {
   QueryPartDef,
   QueryPart,
@@ -89,6 +89,16 @@ function getStateDisplayModel(state) {
   }
 }
 
+function joinEvalMatches(matches, seperator: string) {
+  return _.reduce(matches, (res, ev)=> {
+    if (ev.Metric !== undefined && ev.Value !== undefined) {
+      res.push(ev.Metric + "=" + ev.Value);
+    }
+
+    return res;
+  }, []).join(seperator);
+}
+
 export default {
   alertQueryDef: alertQueryDef,
   getStateDisplayModel: getStateDisplayModel,
@@ -97,4 +107,5 @@ export default {
   noDataModes: noDataModes,
   reducerTypes: reducerTypes,
   createReducerPart: createReducerPart,
+  joinEvalMatches: joinEvalMatches,
 };

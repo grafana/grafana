@@ -47,6 +47,7 @@ class AlertListPanel extends PanelCtrl {
         this.alertHistory = _.map(res, al => {
           al.time = moment(al.timestamp).format('MMM D, YYYY HH:mm:ss');
           al.stateModel = alertDef.getStateDisplayModel(al.newState);
+          al.metrics = alertDef.joinEvalMatches(al.data, ', ');
           return al;
         });
       });
@@ -58,7 +59,6 @@ class AlertListPanel extends PanelCtrl {
         this.currentAlerts = _.map(res, al => {
           al.stateModel = alertDef.getStateDisplayModel(al.state);
           al.newStateDateAgo = moment(al.newStateDate).fromNow().replace(" ago", "");
-
           return al;
         });
       });
