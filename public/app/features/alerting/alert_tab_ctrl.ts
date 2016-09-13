@@ -128,7 +128,11 @@ export class AlertTabCtrl {
       return;
     }
 
-    this.alertNotifications.push({name: model.name, iconClass: this.getNotificationIcon(model.type)});
+    this.alertNotifications.push({
+      name: model.name,
+      iconClass: this.getNotificationIcon(model.type),
+      isDefault: false
+    });
     this.alert.notifications.push({id: model.id});
 
     // reset plus button
