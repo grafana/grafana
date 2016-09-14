@@ -219,9 +219,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     }
 
     this.getFields = function(query) {
-      return this._get('/_mapping').then(function(res) {
-        var fields = {},
-            new_pre;
+      return this._get('/_mapping').then(function(result) {
         var typeMap = {
           'float': 'number',
           'double': 'number',
@@ -232,57 +230,43 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           'nested': 'nested'
         };
 
-        function autocompleteSearchFields(doc, pre) {
-          for (var field in doc) {
-            var prop = doc[field];
-            if (!prop.hasOwnProperty('type') && prop.hasOwnProperty('properties')) {
-              for (var subfield in prop.properties) {
-                var subfield_prop = prop.properties[subfield];
-                if (pre) {
-                  new_pre = pre + '.' + field + '.' + subfield;
-                } else {
-                  new_pre = field + '.' + subfield;
-                }
-                if (query.type && typeMap[subfield_prop.type] !== query.type) {
-                  autocompleteSearchFields(subfield_prop.properties, new_pre);
-                }
-                if (subfield_prop.type && subfield[0] !== '_') {
-                  if (query.type && typeMap[subfield_prop.type] === query.type) {
-                    fields[new_pre] = {text: new_pre, type: subfield_prop.type};
-                  }
-                }
-              }
-            } else if (prop.hasOwnProperty('type') && prop.hasOwnProperty('properties')) {
-              if (pre) {
-                new_pre = pre + '.' + field;
-              } else {
-                new_pre = field;
-              }
-              autocompleteSearchFields(prop.properties, new_pre);
-              //continue;
-            } else if (prop.hasOwnProperty('type') && !prop.hasOwnProperty('properties')) {
-              if (query.type && typeMap[prop.type] !== query.type) {
-                continue;
-              }
-              if (prop.type && field[0] !== '_') {
-                if (pre) {
-                  new_pre = pre + '.' + field;
-                } else {
-                  new_pre = field;
-                }
-                fields[new_pre] = {text: new_pre, type: prop.type};
+        // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
+        var fieldNameParts = [];
+        var fields = {};
+        function getFieldsRecursively(obj) {
+          for (var key in obj) {
+            var subObj = obj[key];
+
+            // Check mapping field for nested fields
+            if (subObj.hasOwnProperty('properties')) {
+              fieldNameParts.push(key);
+              getFieldsRecursively(subObj.properties);
+            } else {
+              var fieldName = fieldNameParts.concat(key).join('.');
+
+              // Hide meta-fields and check field type
+              if (key[0] !== '_' &&
+                  (!query.type ||
+                    query.type && typeMap[subObj.type] === query.type)) {
+
+                fields[fieldName] = {
+                  text: fieldName,
+                  type: subObj.type
+                };
               }
             }
           }
+          fieldNameParts.pop();
         }
 
-        for (var indexName in res) {
-          var index = res[indexName];
-          var mappings = index.mappings;
-          if (!mappings) { continue; }
-          for (var typeName in mappings) {
-            var properties = mappings[typeName].properties;
-            autocompleteSearchFields(properties, '');
+        for (var indexName in result) {
+          var index = result[indexName];
+          if (index && index.mappings) {
+            var mappings = index.mappings;
+            for (var typeName in mappings) {
+              var properties = mappings[typeName].properties;
+              getFieldsRecursively(properties);
+            }
           }
         }
 
