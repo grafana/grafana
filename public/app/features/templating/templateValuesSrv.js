@@ -188,6 +188,11 @@ function (angular, _, $, kbn) {
         return;
       }
 
+      if (variable.type === 'adhoc') {
+        variable.options = [];
+        return;
+      }
+
       // extract options in comma separated string
       variable.options = _.map(variable.query.split(/[,]+/), function(text) {
         return { text: text.trim(), value: text.trim() };
@@ -271,7 +276,7 @@ function (angular, _, $, kbn) {
 
     this.validateVariableSelectionState = function(variable) {
       if (!variable.current) {
-        if (!variable.options.length) { return; }
+        if (!variable.options.length) { return $q.when(); }
         return self.setVariableValue(variable, variable.options[0], false);
       }
 
