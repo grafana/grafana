@@ -49,7 +49,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     this._get = function(url) {
       var range = timeSrv.timeRange();
       var index_list = this.indexPattern.getIndexList(range.from.valueOf(), range.to.valueOf());
-      if (index_list) {
+      if (_.isArray(index_list) && index_list.length) {
         return this._request('GET', index_list[0] + url).then(function(results) {
           results.data.$$config = results.config;
           return results.data;
