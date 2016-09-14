@@ -14,7 +14,7 @@ class AlertListPanel extends PanelCtrl {
 
   showOptions = [
     {text: 'Current state', value: 'current'},
-    {text: 'Recent statechanges', value: 'changes'}
+    {text: 'State changes', value: 'changes'}
   ];
 
   stateFilter: any = {};
@@ -71,24 +71,6 @@ class AlertListPanel extends PanelCtrl {
       newState: this.panel.stateFilter
     };
 
-    //date.unix();i
-
-    this.panel.since = '12h';
-    if (this.panel.since) {
-      var range = this.timeSrv.timeRange();
-
-      //var timeShiftInterpolated = this.panel.since;
-      var timeShiftInterpolated = this.templateSrv.replace(this.panel.since, this.panel.scopedVars);
-      var timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
-      var timeShift = '-' + timeShiftInterpolated;
-      //params.from = dateMath.parseDateMath(timeShift, range.from, false).unix() * 1000;
-      params.from = dateMath.parseDateMath(timeShift, moment((new Date()).getTime()), true).unix() * 1000;
-      //params.to = dateMath.parseDateMath(timeShift, range.to, true).unix() * 1000;
-      params.to = (new Date()).getTime();
-    }
-
-
-    console.log(params.from, params.to);
     this.backendSrv.get(`/api/annotations`, params)
       .then(res => {
         this.alertHistory = _.map(res, al => {
