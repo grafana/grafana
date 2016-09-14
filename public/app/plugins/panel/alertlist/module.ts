@@ -4,8 +4,10 @@ import _ from 'lodash';
 import moment from 'moment';
 import alertDef from '../../../features/alerting/alert_def';
 import config from 'app/core/config';
-//import * as dateMath from 'app/core/utils/datemath';
 import {PanelCtrl} from 'app/plugins/sdk';
+
+import * as rangeUtil from 'app/core/utils/rangeutil';
+import * as dateMath from 'app/core/utils/datemath';
 
 class AlertListPanel extends PanelCtrl {
   static templateUrl = 'module.html';
@@ -15,25 +17,41 @@ class AlertListPanel extends PanelCtrl {
     {text: 'Recent statechanges', value: 'changes'}
   ];
 
-  alertStates = [ 'all', 'ok', 'alerting', 'paused', 'no_data', 'execution_error' ];
-
+  stateFilter: any = {};
   currentAlerts: any = [];
   alertHistory: any = [];
   // Set and populate defaults
   panelDefaults = {
     show: 'current',
     limit: 10,
-    stateFilter: 'all'
+    stateFilter: []
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private $location, private backendSrv) {
+  constructor($scope, $injector, private $location, private backendSrv, private timeSrv, private templateSrv) {
     super($scope, $injector);
     _.defaults(this.panel, this.panelDefaults);
 
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('render',  this.onRender.bind(this));
     this.events.on('refresh', this.onRender.bind(this));
+
+    for (let key in this.panel.stateFilter) {
+      this.stateFilter[this.panel.stateFilter[key]] = true;
+    }
+  }
+
+  updateStateFilter() {
+    var result = [];
+
+    for (let key in this.stateFilter) {
+      if (this.stateFilter[key]) {
+        result.push(key);
+      }
+    }
+
+    this.panel.stateFilter = result;
+    this.onRender();
   }
 
   onRender() {
@@ -50,22 +68,27 @@ class AlertListPanel extends PanelCtrl {
     var params: any = {
       limit: this.panel.limit,
       type: 'alert',
+      newState: this.panel.stateFilter
     };
 
-    if (this.panel.stateFilter !== "all") {
-      params.newState = this.panel.stateFilter;
-    }
-    /*
-    var since = this.panel.since;
-    if (since !== undefined && since !== "" && since !== null) {
-      var t = this.dashboard.time;
-      var now = (new Date()).getTime();
-      params.to = t.to;
+    //date.unix();i
 
-      //this.range = this.timeSrv.timeRange();
-      params.from = dateMath.parseDateMath("1m", t.from, false);
+    this.panel.since = '12h';
+    if (this.panel.since) {
+      var range = this.timeSrv.timeRange();
+
+      //var timeShiftInterpolated = this.panel.since;
+      var timeShiftInterpolated = this.templateSrv.replace(this.panel.since, this.panel.scopedVars);
+      var timeShiftInfo = rangeUtil.describeTextRange(timeShiftInterpolated);
+      var timeShift = '-' + timeShiftInterpolated;
+      //params.from = dateMath.parseDateMath(timeShift, range.from, false).unix() * 1000;
+      params.from = dateMath.parseDateMath(timeShift, moment((new Date()).getTime()), true).unix() * 1000;
+      //params.to = dateMath.parseDateMath(timeShift, range.to, true).unix() * 1000;
+      params.to = (new Date()).getTime();
     }
-    */
+
+
+    console.log(params.from, params.to);
     this.backendSrv.get(`/api/annotations`, params)
       .then(res => {
         this.alertHistory = _.map(res, al => {
@@ -78,7 +101,11 @@ class AlertListPanel extends PanelCtrl {
   }
 
   getCurrentAlertState() {
-    this.backendSrv.get(`/api/alerts`)
+    var params: any = {
+      state: this.panel.stateFilter
+    };
+
+    this.backendSrv.get(`/api/alerts`, params)
       .then(res => {
         this.currentAlerts = _.map(res, al => {
           al.stateModel = alertDef.getStateDisplayModel(al.state);

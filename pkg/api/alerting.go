@@ -29,10 +29,14 @@ func ValidateOrgAlert(c *middleware.Context) {
 func GetAlerts(c *middleware.Context) Response {
 	query := models.GetAlertsQuery{
 		OrgId:       c.OrgId,
-		State:       c.QueryStrings("state"),
 		DashboardId: c.QueryInt64("dashboardId"),
 		PanelId:     c.QueryInt64("panelId"),
 		Limit:       c.QueryInt64("limit"),
+	}
+
+	states := c.QueryStrings("state")
+	if len(states) > 0 {
+		query.State = states
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
