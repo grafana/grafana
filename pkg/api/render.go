@@ -45,39 +45,3 @@ func RenderToPng(c *middleware.Context) {
 	c.Resp.Header().Set("Content-Type", "image/png")
 	http.ServeFile(c.Resp, c.Req.Request, pngPath)
 }
-
-func RenderToPdf(c *middleware.Context) {
-	queryReader := util.NewUrlQueryReader(c.Req.URL)
-	queryParams := fmt.Sprintf("?%s", c.Req.URL.RawQuery)
-	sessionId := c.Session.ID()
-
-	// Handle api calls authenticated without session
-	if sessionId == "" && c.ApiKeyId != 0 {
-		c.Session.Start(c)
-		c.Session.Set(middleware.SESS_KEY_APIKEY, c.ApiKeyId)
-		// release will make sure the new session is persisted before
-		// we spin up phantomjs
-		c.Session.Release()
-		// cleanup session after render is complete
-		defer func() { c.Session.Destory(c) }()
-	}
-
-	renderOpts := &renderer.RenderOpts{
-		Url:       c.Params("*") + queryParams,
-		Width:     queryReader.Get("width", "800"),
-		Height:    queryReader.Get("height", "400"),
-		SessionId: c.Session.ID(),
-		Timeout:   queryReader.Get("timeout", "30"),
-	}
-
-	renderOpts.Url = setting.ToAbsUrl(renderOpts.Url)
-	pdfPath, err := renderer.RenderToPdf(renderOpts)
-
-	if err != nil {
-		c.Handle(500, "Failed to render to pdf", err)
-		return
-	}
-
-	c.Resp.Header().Set("Content-Type", "application/pdf")
-	http.ServeFile(c.Resp, c.Req.Request, pdfPath)
-}
