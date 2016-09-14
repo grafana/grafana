@@ -26,15 +26,6 @@
 			</div>
 		</div>
 		<div class="gf-form">
-			<span class="gf-form-label width-12">Severity filter</span>
-			<div class="gf-form-select-wrapper width-15">
-				<select class="gf-form-input"
-					ng-model="ctrl.model.settings.severityFilter"
-					ng-options="t for t in ['none', 'critical', 'warning']">
-				</select>
-			</div>
-		</div>
-		<div class="gf-form">
 			<gf-form-switch
 				class="gf-form"
 				label="Send on all alerts"
@@ -86,16 +77,7 @@
 			<div class="gf-form width-8">
 				<button ng-click="ctrl.toggleTest()" class="btn btn-secondary">Test</button>
 			</div>
-
 			<div class="gf-form width-20" ng-show="ctrl.showTest">
-			  <span class="gf-form-label width-13">Severity for test notification</span>
-				<div class="gf-form-select-wrapper width-7">
-					<select class="gf-form-input"
-						ng-model="ctrl.testSeverity"
-						ng-options="t for t in ['critical', 'warning', 'ok']">
-					</select>
-				</div>
-			</div>
 			<div class="gf-form" ng-show="ctrl.showTest">
 				<button ng-click="ctrl.testNotification()" class="btn btn-secondary">Send</button>
 			</div>

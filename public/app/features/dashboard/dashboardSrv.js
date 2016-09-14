@@ -298,7 +298,7 @@ function (angular, $, _, moment) {
 
       if (oldVersion < 6) {
         // move pulldowns to new schema
-        var annotations = _.findWhere(old.pulldowns, { type: 'annotations' });
+        var annotations = _.find(old.pulldowns, { type: 'annotations' });
 
         if (annotations) {
           this.annotations = {
@@ -328,7 +328,7 @@ function (angular, $, _, moment) {
             if (!target.refId) {
               target.refId = this.getNextQueryLetter(panel);
             }
-          }, this);
+          }.bind(this));
         });
       }
 

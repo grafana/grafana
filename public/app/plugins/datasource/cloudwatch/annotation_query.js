@@ -47,7 +47,7 @@ function (_) {
       var start = self.datasource.convertToCloudWatchTime(from, false);
       var end = self.datasource.convertToCloudWatchTime(to, true);
       _.chain(alarms)
-      .pluck('MetricAlarms')
+      .map('MetricAlarms')
       .flatten()
       .each(function(alarm) {
         if (!alarm) {
@@ -70,7 +70,8 @@ function (_) {
 
           d.resolve(eventList);
         });
-      });
+      })
+      .value();
     });
 
     return d.promise;
@@ -91,7 +92,7 @@ function (_) {
       if (!_.isEmpty(dimensions) && !isSameDimensions) {
         return false;
       }
-      if (!_.isEmpty(statistics) && !_.contains(statistics, alarm.Statistic)) {
+      if (!_.isEmpty(statistics) && !_.includes(statistics, alarm.Statistic)) {
         return false;
       }
       if (!_.isNaN(period) && alarm.Period !== period) {

@@ -88,12 +88,7 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				Name:        jsonAlert.Get("name").MustString(),
 				Handler:     jsonAlert.Get("handler").MustInt64(),
 				Message:     jsonAlert.Get("message").MustString(),
-				Severity:    m.AlertSeverityType(jsonAlert.Get("severity").MustString()),
 				Frequency:   getTimeDurationStringToSeconds(jsonAlert.Get("frequency").MustString()),
-			}
-
-			if !alert.Severity.IsValid() {
-				return nil, ValidationError{Reason: "Invalid alert Severity"}
 			}
 
 			for _, condition := range jsonAlert.Get("conditions").MustArray() {

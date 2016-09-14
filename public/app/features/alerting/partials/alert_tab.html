@@ -10,7 +10,7 @@
 				</a>
 			</li>
 			<li ng-class="{active: ctrl.subTabIndex === 2}">
-				<a ng-click="ctrl.changeTabIndex(2)">Alert History</a>
+				<a ng-click="ctrl.changeTabIndex(2)">State history</a>
 			</li>
       <li>
 				<a ng-click="ctrl.delete()">Delete</a>
@@ -27,21 +27,10 @@
 			<div class="gf-form-group">
 				<h5 class="section-heading">Alert Config</h5>
 				<div class="gf-form">
-					<span class="gf-form-label width-8">Name</span>
-					<input type="text" class="gf-form-input width-25" ng-model="ctrl.alert.name">
-				</div>
-				<div class="gf-form-inline">
-					<div class="gf-form">
-						<span class="gf-form-label width-8">Evaluate every</span>
-						<input class="gf-form-input max-width-7" type="text" ng-model="ctrl.alert.frequency"></input>
-					</div>
-					<div class="gf-form">
-						<span class="gf-form-label">Severity</span>
-						<div class="gf-form-select-wrapper width-13">
-							<select class="gf-form-input" ng-model="ctrl.alert.severity" ng-options="key as value.text for (key, value) in ctrl.severityLevels" ng-change="ctrl.severityChanged()">
-							</select>
-						</div>
-					</div>
+					<span class="gf-form-label width-6">Name</span>
+					<input type="text" class="gf-form-input width-20" ng-model="ctrl.alert.name">
+					<span class="gf-form-label">Evaluate every</span>
+					<input class="gf-form-input max-width-5" type="text" ng-model="ctrl.alert.frequency"></input>
 				</div>
 			</div>
 
@@ -136,7 +125,7 @@
 		</div>
 
 		<div class="gf-form-group" style="max-width: 720px;" ng-if="ctrl.subTabIndex === 2">
-			<h5 class="section-heading">Alert history</h5>
+      <h5 class="section-heading">State history <span class="muted small">(last 50 state changes)</span></h5>
 			<section class="card-section card-list-layout-list">
 				<ol class="card-list" >
 					<li class="card-item-wrapper" ng-repeat="ah in ctrl.alertHistory">

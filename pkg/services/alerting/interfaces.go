@@ -2,8 +2,6 @@ package alerting
 
 import (
 	"time"
-
-	"github.com/grafana/grafana/pkg/models"
 )
 
 type EvalHandler interface {
@@ -19,7 +17,7 @@ type Notifier interface {
 	Notify(alertResult *EvalContext)
 	GetType() string
 	NeedsImage() bool
-	MatchSeverity(result models.AlertSeverityType) bool
+	PassesFilter(rule *Rule) bool
 }
 
 type Condition interface {

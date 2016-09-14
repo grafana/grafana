@@ -320,16 +320,17 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
           }
 
           var types = {};
+          for (var i = 0; i < annotations.length; i++) {
+            var item = annotations[i];
 
-          _.each(annotations, function(event) {
-            if (!types[event.annotation.name]) {
-              types[event.annotation.name] = {
-                color: event.annotation.iconColor,
+            if (!types[item.source.name]) {
+              types[item.source.name] = {
+                color: item.source.iconColor,
                 position: 'BOTTOM',
                 markerSize: 5,
               };
             }
-          });
+          }
 
           options.events = {
             levels: _.keys(types).length + 1,
@@ -350,7 +351,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
 
           options.yaxes.push(defaults);
 
-          if (_.findWhere(data, {yaxis: 2})) {
+          if (_.find(data, {yaxis: 2})) {
             var secondY = _.clone(defaults);
             secondY.index = 2,
             secondY.show = panel.yaxes[1].show;

@@ -149,7 +149,7 @@ function (_, queryDef) {
     var maxDepth = target.bucketAggs.length-1;
 
     for (aggId in aggs) {
-      aggDef = _.findWhere(target.bucketAggs, {id: aggId});
+      aggDef = _.find(target.bucketAggs, {id: aggId});
       esAgg = aggs[aggId];
 
       if (!aggDef) {
@@ -178,9 +178,9 @@ function (_, queryDef) {
   };
 
   ElasticResponse.prototype._getMetricName = function(metric) {
-    var metricDef = _.findWhere(queryDef.metricAggTypes, {value: metric});
+    var metricDef = _.find(queryDef.metricAggTypes, {value: metric});
     if (!metricDef)  {
-      metricDef = _.findWhere(queryDef.extendedStats, {value: metric});
+      metricDef = _.find(queryDef.extendedStats, {value: metric});
     }
 
     return metricDef ? metricDef.text : metric;
@@ -205,7 +205,7 @@ function (_, queryDef) {
     }
 
     if (series.field && queryDef.isPipelineAgg(series.metric)) {
-      var appliedAgg = _.findWhere(target.metrics, { id: series.field });
+      var appliedAgg = _.find(target.metrics, { id: series.field });
       if (appliedAgg) {
         metricName += ' ' + queryDef.describeMetric(appliedAgg);
       } else {
@@ -233,8 +233,8 @@ function (_, queryDef) {
   };
 
   ElasticResponse.prototype.nameSeries = function(seriesList, target) {
-    var metricTypeCount = _.uniq(_.pluck(seriesList, 'metric')).length;
-    var fieldNameCount = _.uniq(_.pluck(seriesList, 'field')).length;
+    var metricTypeCount = _.uniq(_.map(seriesList, 'metric')).length;
+    var fieldNameCount = _.uniq(_.map(seriesList, 'field')).length;
 
     for (var i = 0; i < seriesList.length; i++) {
       var series = seriesList[i];
@@ -270,7 +270,7 @@ function (_, queryDef) {
   };
 
   ElasticResponse.prototype.trimDatapoints = function(aggregations, target) {
-    var histogram = _.findWhere(target.bucketAggs, { type: 'date_histogram'});
+    var histogram = _.find(target.bucketAggs, { type: 'date_histogram'});
 
     var shouldDropFirstAndLast = histogram && histogram.settings && histogram.settings.trimEdges;
     if (shouldDropFirstAndLast) {

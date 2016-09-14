@@ -272,7 +272,24 @@ Christian Grete <webmaster@christiangrete.com>
 Liza Ramo <liza.h.ramo@gmail.com>
 Julian Alexander Murillo <julian.alexander.murillo@gmail.com>
 Joelle Fleurantin <joasqueeniebee@gmail.com>
+Jae Sung Park <alberto.park@gmail.com>
 Jun Sun <klsforever@gmail.com>
+Josh Soref <apache@soref.com>
+Henry Wong <henryw4k@gmail.com>
+Jon Dufresne <jon.dufresne@gmail.com>
+Martijn W. van der Lee <martijn@vanderlee.com>
 Devin Wilson <dwilson6.github@gmail.com>
-Todor Prikumov <tono_pr@abv.bg>
+Steve Mao <maochenyan@gmail.com>
 Zack Hall <zackhall@outlook.com>
+Bernhard M. Wiedemann <jquerybmw@lsmod.de>
+Todor Prikumov <tono_pr@abv.bg>
+Jha Naman <createnaman@gmail.com>
+William Robinet <william.robinet@conostix.com>
+Alexander Lisianoi <all3fox@gmail.com>
+Vitaliy Terziev <vitaliyterziev@gmail.com>
+Joe Trumbull <trumbull.j@gmail.com>
+Alexander K <xpyro@ya.ru>
+Damian Senn <jquery@topaxi.codes>
+Ralin Chimev <ralin.chimev@gmail.com>
+Felipe Sateler <fsateler@gmail.com>
+Christophe Tafani-Dereeper <christophetd@hotmail.fr>

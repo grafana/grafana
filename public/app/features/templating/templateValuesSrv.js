@@ -19,7 +19,7 @@ function (angular, _, $, kbn) {
     $rootScope.onAppEvent('refresh', function() {
 
       // look for interval variables
-      var intervalVariable = _.findWhere(self.variables, { type: 'interval' });
+      var intervalVariable = _.find(self.variables, { type: 'interval' });
       if (intervalVariable) {
         self.updateAutoInterval(intervalVariable);
       }
@@ -290,7 +290,7 @@ function (angular, _, $, kbn) {
 
         return self.setVariableValue(variable, selected, false);
       } else {
-        var currentOption = _.findWhere(variable.options, {text: variable.current.text});
+        var currentOption = _.find(variable.options, {text: variable.current.text});
         if (currentOption) {
           return self.setVariableValue(variable, currentOption, false);
         } else {
@@ -372,8 +372,8 @@ function (angular, _, $, kbn) {
 
         options.push({text: text, value: value});
       }
-      options = _.uniq(options, 'value');
 
+      options = _.uniq(options, 'value');
       return this.sortVariableValues(options, variable.sort);
     };
 

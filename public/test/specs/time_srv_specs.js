@@ -25,14 +25,14 @@ define([
     describe('timeRange', function() {
       it('should return unparsed when parse is false', function() {
         ctx.service.setTime({from: 'now', to: 'now-1h' });
-        var time = ctx.service.timeRange(false);
-        expect(time.from).to.be('now');
-        expect(time.to).to.be('now-1h');
+        var time = ctx.service.timeRange();
+        expect(time.raw.from).to.be('now');
+        expect(time.raw.to).to.be('now-1h');
       });
 
       it('should return parsed when parse is true', function() {
         ctx.service.setTime({from: 'now', to: 'now-1h' });
-        var time = ctx.service.timeRange(true);
+        var time = ctx.service.timeRange();
         expect(moment.isMoment(time.from)).to.be(true);
         expect(moment.isMoment(time.to)).to.be(true);
       });
@@ -43,9 +43,9 @@ define([
         ctx.$routeParams.from = 'now-2d';
         ctx.$routeParams.to = 'now';
         ctx.service.init(_dashboard);
-        var time = ctx.service.timeRange(false);
-        expect(time.from).to.be('now-2d');
-        expect(time.to).to.be('now');
+        var time = ctx.service.timeRange();
+        expect(time.raw.from).to.be('now-2d');
+        expect(time.raw.to).to.be('now');
       });
 
       it('should handle formated dates', function() {

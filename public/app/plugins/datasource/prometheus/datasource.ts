@@ -58,7 +58,6 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return escapedValues.join('|');
   };
 
-  var HTTP_REQUEST_ABORTED = -1;
   // Called once per panel (graph)
   this.query = function(options) {
     var self = this;
@@ -69,10 +68,12 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     var activeTargets = [];
 
     options = _.clone(options);
-    _.each(options.targets, _.bind(function(target) {
+
+    _.each(options.targets, target => {
       if (!target.expr || target.hide) {
         return;
       }
+
       activeTargets.push(target);
 
       var query: any = {};
@@ -90,7 +91,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       }
 
       queries.push(query);
-    }, this));
+    });
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
@@ -99,9 +100,9 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       return d.promise;
     }
 
-    var allQueryPromise = _.map(queries, _.bind(function(query) {
+    var allQueryPromise = _.map(queries, query => {
       return this.performTimeSeriesQuery(query, start, end);
-    }, this));
+    });
 
     return $q.all(allQueryPromise).then(function(allResponse) {
       var result = [];
@@ -183,7 +184,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       _.each(results.data.data.result, function(series) {
         var tags = _.chain(series.metric)
         .filter(function(v, k) {
-          return _.contains(tagKeys, k);
+          return _.includes(tagKeys, k);
         }).value();
 
         _.each(series.values, function(value) {
@@ -273,7 +274,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   this.getOriginalMetricName = function(labelData) {
     var metricName = labelData.__name__ || '';
     delete labelData.__name__;
-    var labelPart = _.map(_.pairs(labelData), function(label) {
+    var labelPart = _.map(_.toPairs(labelData), function(label) {
       return label[0] + '="' + label[1] + '"';
     }).join(',');
     return metricName + '{' + labelPart + '}';

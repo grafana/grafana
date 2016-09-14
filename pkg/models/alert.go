@@ -10,27 +10,15 @@ type AlertStateType string
 type AlertSeverityType string
 
 const (
-	AlertStateUnknown        AlertStateType = "unknown"
-	AlertStateExeuctionError AlertStateType = "execution_error"
-	AlertStatePaused         AlertStateType = "paused"
-	AlertStateCritical       AlertStateType = "critical"
-	AlertStateWarning        AlertStateType = "warning"
-	AlertStateOK             AlertStateType = "ok"
+	AlertStateNoData    AlertStateType = "no_data"
+	AlertStateExecError AlertStateType = "execution_error"
+	AlertStatePaused    AlertStateType = "paused"
+	AlertStateAlerting  AlertStateType = "alerting"
+	AlertStateOK        AlertStateType = "ok"
 )
 
 func (s AlertStateType) IsValid() bool {
-	return s == AlertStateOK || s == AlertStateUnknown || s == AlertStateExeuctionError || s == AlertStatePaused || s == AlertStateCritical || s == AlertStateWarning
-}
-
-const (
-	AlertSeverityCritical AlertSeverityType = "critical"
-	AlertSeverityWarning  AlertSeverityType = "warning"
-	AlertSeverityInfo     AlertSeverityType = "info"
-	AlertSeverityOK       AlertSeverityType = "ok"
-)
-
-func (s AlertSeverityType) IsValid() bool {
-	return s == AlertSeverityCritical || s == AlertSeverityInfo || s == AlertSeverityWarning
+	return s == AlertStateOK || s == AlertStateNoData || s == AlertStateExecError || s == AlertStatePaused
 }
 
 type Alert struct {
@@ -41,7 +29,7 @@ type Alert struct {
 	PanelId        int64
 	Name           string
 	Message        string
-	Severity       AlertSeverityType
+	Severity       string
 	State          AlertStateType
 	Handler        int64
 	Silenced       bool

@@ -254,8 +254,6 @@ func Register(r *macaron.Macaron) {
 			r.Get("/", wrap(GetAlerts))
 		})
 
-		r.Get("/alert-history", wrap(GetAlertHistory))
-
 		r.Get("/alert-notifications", wrap(GetAlertNotifications))
 
 		r.Group("/alert-notifications", func() {
@@ -265,6 +263,8 @@ func Register(r *macaron.Macaron) {
 			r.Get("/:notificationId", wrap(GetAlertNotificationById))
 			r.Delete("/:notificationId", wrap(DeleteAlertNotification))
 		}, reqOrgAdmin)
+
+		r.Get("/annotations", wrap(GetAnnotations))
 
 		// error test
 		r.Get("/metrics/error", wrap(GenerateError))

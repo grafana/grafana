@@ -28,7 +28,7 @@ func (n *RootNotifier) NeedsImage() bool {
 	return false
 }
 
-func (n *RootNotifier) MatchSeverity(result m.AlertSeverityType) bool {
+func (n *RootNotifier) PassesFilter(rule *Rule) bool {
 	return false
 }
 
@@ -130,7 +130,7 @@ func shouldUseNotification(notifier Notifier, context *EvalContext) bool {
 		return true
 	}
 
-	return notifier.MatchSeverity(context.Rule.Severity)
+	return notifier.PassesFilter(context.Rule)
 }
 
 type NotifierFactory func(notification *m.AlertNotification) (Notifier, error)
