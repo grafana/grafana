@@ -284,7 +284,7 @@ func Register(r *macaron.Macaron) {
 	}, reqGrafanaAdmin)
 
 	// rendering
-	r.Get("/render/*", reqSignedIn, RenderToPng)
+	r.Get("/render/*", reqSignedIn, RenderToFile)
 
 	// grafana.net proxy
 	r.Any("/api/gnet/*", reqSignedIn, ProxyGnetRequest)

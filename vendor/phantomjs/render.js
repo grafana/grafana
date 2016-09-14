@@ -12,9 +12,9 @@
     params[parts[1]] = parts[2];
   });
 
-  var usage = "url=<url> png=<filename> width=<width> height=<height> cookiename=<cookiename> sessionid=<sessionid> domain=<domain>";
+  var usage = "url=<url> path=<filename> width=<width> height=<height> cookiename=<cookiename> sessionid=<sessionid> domain=<domain>";
 
-  if (!params.url || !params.png || !params.cookiename || ! params.sessionid || !params.domain) {
+  if (!params.url || !params.path || !params.cookiename || ! params.sessionid || !params.domain) {
     console.log(usage);
     phantom.exit();
   }
@@ -70,7 +70,7 @@
           height: bb.height
         };
 
-        page.render(params.png);
+        page.render(params.path);
         phantom.exit();
       }
       else {

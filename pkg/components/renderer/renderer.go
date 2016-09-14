@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"time"
+	"regexp"
 
 	"strconv"
 
@@ -24,9 +25,9 @@ type RenderOpts struct {
 	Timeout   string
 }
 
-var rendererLog log.Logger = log.New("png-renderer")
+var rendererLog log.Logger = log.New("file-renderer")
 
-func RenderToPng(params *RenderOpts) (string, error) {
+func RenderToFile(params *RenderOpts, filetype string) (string, error) {
 	rendererLog.Info("Rendering", "url", params.Url)
 
 	var executable = "phantomjs"
@@ -36,11 +37,26 @@ func RenderToPng(params *RenderOpts) (string, error) {
 
 	binPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, executable))
 	scriptPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, "render.js"))
-	pngPath, _ := filepath.Abs(filepath.Join(setting.ImagesDir, util.GetRandomString(20)))
-	pngPath = pngPath + ".png"
+	renderfilePath, _ := filepath.Abs(filepath.Join(setting.ImagesDir, util.GetRandomString(20)))
+	switch {
+		case regexp.MustCompile(`(?i)^pdf$`).MatchString(filetype):
+			renderfilePath = renderfilePath + ".pdf"
+		case regexp.MustCompile(`(?i)^png$`).MatchString(filetype):
+			renderfilePath = renderfilePath + ".png"
+		case regexp.MustCompile(`(?i)^(jpeg|jpg)$`).MatchString(filetype):
+			renderfilePath = renderfilePath + ".jpg"
+		case regexp.MustCompile(`(?i)^bmp$`).MatchString(filetype):
+			renderfilePath = renderfilePath + ".bmp"
+		case regexp.MustCompile(`(?i)^ppm$`).MatchString(filetype):
+			renderfilePath = renderfilePath + ".ppm"
+		case regexp.MustCompile(`(?i)^gif$`).MatchString(filetype):
+			renderfilePath = renderfilePath + ".gif"
+		default:
+			renderfilePath = renderfilePath + ".png"
+	}
 
 	cmd := exec.Command(binPath, "--ignore-ssl-errors=true", scriptPath, "url="+params.Url, "width="+params.Width,
-		"height="+params.Height, "png="+pngPath, "cookiename="+setting.SessionOptions.CookieName,
+		"height="+params.Height, "path="+renderfilePath, "cookiename="+setting.SessionOptions.CookieName,
 		"domain="+setting.Domain, "sessionid="+params.SessionId)
 	stdout, err := cmd.StdoutPipe()
 
@@ -76,10 +92,10 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		if err := cmd.Process.Kill(); err != nil {
 			rendererLog.Error("failed to kill", "error", err)
 		}
-		return "", fmt.Errorf("PhantomRenderer::renderToPng timeout (>%vs)", timeout)
+		return "", fmt.Errorf("PhantomRenderer::renderToFile timeout (>%vs)", timeout)
 	case <-done:
 	}
 
-	rendererLog.Debug("Image rendered", "path", pngPath)
-	return pngPath, nil
+	rendererLog.Debug("Image rendered", "path", renderfilePath)
+	return renderfilePath, nil
 }
