@@ -102,10 +102,12 @@ type SaveAlertsCommand struct {
 }
 
 type SetAlertStateCommand struct {
-	AlertId   int64
-	OrgId     int64
-	State     AlertStateType
-	Error     string
+	AlertId  int64
+	OrgId    int64
+	State    AlertStateType
+	Error    string
+	EvalData *simplejson.Json
+
 	Timestamp time.Time
 }
 

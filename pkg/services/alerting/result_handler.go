@@ -54,10 +54,11 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 		handler.log.Info("New state change", "alertId", ctx.Rule.Id, "newState", ctx.Rule.State, "oldState", oldState)
 
 		cmd := &m.SetAlertStateCommand{
-			AlertId: ctx.Rule.Id,
-			OrgId:   ctx.Rule.OrgId,
-			State:   ctx.Rule.State,
-			Error:   exeuctionError,
+			AlertId:  ctx.Rule.Id,
+			OrgId:    ctx.Rule.OrgId,
+			State:    ctx.Rule.State,
+			Error:    exeuctionError,
+			EvalData: annotationData,
 		}
 
 		if err := bus.Dispatch(cmd); err != nil {

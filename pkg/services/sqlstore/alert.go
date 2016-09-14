@@ -227,6 +227,8 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 		alert.State = cmd.State
 		alert.StateChanges += 1
 		alert.NewStateDate = time.Now()
+		alert.EvalData = cmd.EvalData
+
 		if cmd.Error == "" {
 			alert.ExecutionError = " " //without this space, xorm skips updating this field
 		} else {
