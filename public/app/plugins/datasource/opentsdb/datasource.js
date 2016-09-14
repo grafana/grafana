@@ -62,7 +62,7 @@ function (angular, _, dateMath) {
           return;
         }
 
-        _.each(["trend", "seasonal", "noise","prediction"], function (defString) {
+        _.each(["trend", "seasonal", "noise","prediction","prediction.min","prediction.max"], function (defString) {
           if (target.metric.endsWith(defString)) {
             decomposeFlag = true;
             anotherQueries['endWithString'] = defString;

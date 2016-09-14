@@ -48,24 +48,30 @@ define([
             },
             {
               aggregator: "avg",
-              metric: targetMetricName+".prediction.min",
-              downsampleAggregator: "avg",
-              downsampleInterval: "15m",
-              tags: tag
-            },
-            {
-              aggregator: "avg",
-              metric: targetMetricName+".prediction.max",
+              metric: targetMetricName+".prediction",
               downsampleAggregator: "avg",
               downsampleInterval: "15m",
               tags: tag
             }
           ],
-          seriesOverrides: [{
-            alias: targetMetricName + ".prediction{host=" + tag.host + "}",
-            color: "#F9D9F9",
-            zindex: "-1"
-          }],
+          seriesOverrides: [
+            {
+              alias: targetMetricName + ".prediction{host=" + tag.host + "}",
+              color: "#F9D9F9",
+              zindex: "-1"
+            },
+            {
+              alias: targetMetricName + ".prediction.min{host=" + tag.host + "}",
+              color: "#FDFCFF",
+              bars: true,
+            },
+            {
+              alias: targetMetricName + ".prediction.max{host=" + tag.host + "}",
+              color: "#008000",
+              bars: true,
+              zindex: "-2"
+            }
+          ],
           legend: {
             alignAsTable: true,
             avg: true,
