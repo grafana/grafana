@@ -88,7 +88,7 @@ export class AlertTabCtrl {
   getAlertHistory() {
     this.backendSrv.get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50`).then(res => {
       this.alertHistory = _.map(res, ah => {
-        ah.time = moment(ah.timestamp).format('MMM D, YYYY HH:mm:ss');
+        ah.time = moment(ah.time).format('MMM D, YYYY HH:mm:ss');
         ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
         ah.metrics = alertDef.joinEvalMatches(ah.data, ', ');
         return ah;

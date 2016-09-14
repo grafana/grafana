@@ -87,6 +87,11 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 		sql.WriteString(")")
 	}
 
+	if query.Limit != 0 {
+		sql.WriteString(" LIMIT ?")
+		params = append(params, query.Limit)
+	}
+
 	alerts := make([]*m.Alert, 0)
 	if err := x.Sql(sql.String(), params...).Find(&alerts); err != nil {
 		return err

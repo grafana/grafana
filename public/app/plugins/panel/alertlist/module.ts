@@ -4,6 +4,7 @@ import _ from 'lodash';
 import moment from 'moment';
 import alertDef from '../../../features/alerting/alert_def';
 import config from 'app/core/config';
+//import * as dateMath from 'app/core/utils/datemath';
 import {PanelCtrl} from 'app/plugins/sdk';
 
 class AlertListPanel extends PanelCtrl {
@@ -11,14 +12,18 @@ class AlertListPanel extends PanelCtrl {
 
   showOptions = [
     {text: 'Current state', value: 'current'},
-    {text: 'State changes', value: 'changes'},
+    {text: 'Recent statechanges', value: 'changes'}
   ];
+
+  alertStates = [ 'all', 'ok', 'alerting', 'paused', 'no_data', 'execution_error' ];
 
   currentAlerts: any = [];
   alertHistory: any = [];
   // Set and populate defaults
   panelDefaults = {
-    show: 'current'
+    show: 'current',
+    limit: 10,
+    stateFilter: 'all'
   };
 
   /** @ngInject */
@@ -37,15 +42,34 @@ class AlertListPanel extends PanelCtrl {
     }
 
     if (this.panel.show === 'changes') {
-      this.getAlertHistory();
+      this.getStateChanges();
     }
   }
 
-  getAlertHistory() {
-    this.backendSrv.get(`/api/alert-history?dashboardId=32&panelId=1`)
+  getStateChanges() {
+    var params: any = {
+      limit: this.panel.limit,
+      type: 'alert',
+    };
+
+    if (this.panel.stateFilter !== "all") {
+      params.newState = this.panel.stateFilter;
+    }
+    /*
+    var since = this.panel.since;
+    if (since !== undefined && since !== "" && since !== null) {
+      var t = this.dashboard.time;
+      var now = (new Date()).getTime();
+      params.to = t.to;
+
+      //this.range = this.timeSrv.timeRange();
+      params.from = dateMath.parseDateMath("1m", t.from, false);
+    }
+    */
+    this.backendSrv.get(`/api/annotations`, params)
       .then(res => {
         this.alertHistory = _.map(res, al => {
-          al.time = moment(al.timestamp).format('MMM D, YYYY HH:mm:ss');
+          al.time = moment(al.time).format('MMM D, YYYY HH:mm:ss');
           al.stateModel = alertDef.getStateDisplayModel(al.newState);
           al.metrics = alertDef.joinEvalMatches(al.data, ', ');
           return al;

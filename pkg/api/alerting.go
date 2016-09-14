@@ -25,13 +25,14 @@ func ValidateOrgAlert(c *middleware.Context) {
 	}
 }
 
-// GET /api/alerts/rules/
+// GET /api/alerts
 func GetAlerts(c *middleware.Context) Response {
 	query := models.GetAlertsQuery{
 		OrgId:       c.OrgId,
 		State:       c.QueryStrings("state"),
 		DashboardId: c.QueryInt64("dashboardId"),
 		PanelId:     c.QueryInt64("panelId"),
+		Limit:       c.QueryInt64("limit"),
 	}
 
 	if err := bus.Dispatch(&query); err != nil {

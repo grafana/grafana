@@ -119,6 +119,7 @@ type GetAlertsQuery struct {
 	State       []string
 	DashboardId int64
 	PanelId     int64
+	Limit       int64
 
 	Result []*Alert
 }

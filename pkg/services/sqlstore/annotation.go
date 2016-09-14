@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/services/annotations"
@@ -61,6 +62,13 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 	if query.Type != "" {
 		sql.WriteString(` AND type = ?`)
 		params = append(params, string(query.Type))
+	}
+
+	if len(query.NewState) > 0 {
+		sql.WriteString(` AND new_state IN (?` + strings.Repeat(",?", len(query.NewState)-1) + ")")
+		for _, v := range query.NewState {
+			params = append(params, v)
+		}
 	}
 
 	if query.Limit == 0 {

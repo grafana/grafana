@@ -1,19 +1,11 @@
 <div class="panel-alert-list">
   <section class="card-section card-list-layout-list" ng-if="ctrl.panel.show === 'current'">
-
-    <ol class="card-list" >
+    <ol class="card-list">
       <li class="card-item-wrapper" ng-repeat="alert in ctrl.currentAlerts">
         <div class="card-item card-item--alert">
-          <div class="card-item-header">
-            <div class="card-item-type">
-              <a class="card-item-cog" href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert" bs-tooltip="'Edit alert rule'">
-                <i class="icon-gf icon-gf-settings"></i>
-              </a>
-            </div>
-          </div>
           <div class="card-item-body">
             <div class="card-item-details">
-              <div class="card-item-name">
+              <div class="card-item-notice">
                 <a href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert">
                   {{alert.name}}
                 </a>
@@ -34,21 +26,21 @@
     </ol>
   </section>
 
-
   <section class="card-section card-list-layout-list" ng-if="ctrl.panel.show === 'changes'">
-    <ol class="card-list" >
+    <ol class="card-list">
       <li class="card-item-wrapper" ng-repeat="al in ctrl.alertHistory">
         <div class="card-item card-item--alert">
+          <div class="card-item-header">
+            <div class="card-item-sub-name">{{al.time}}</div>
+          </div>
           <div class="card-item-body">
             <div class="card-item-details">
+              <div class="card-item-notice">{{al.title}}</div>
               <div class="card-item-sub-name">
                 <span class="alert-list-item-state {{al.stateModel.stateClass}}">
                   <i class="{{al.stateModel.iconClass}}"></i>
                   {{al.stateModel.text}}
                 </span> {{al.metrics}}
-              </div>
-              <div class="card-item-sub-name">
-                {{al.time}}
               </div>
             </div>
           </div>
