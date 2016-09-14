@@ -13,6 +13,9 @@ define([
   module.service('timeSrv', function($rootScope, $timeout, $routeParams, timer) {
     var self = this;
 
+    // default time
+    this.time = {from: '6h', to: 'now'};
+
     $rootScope.$on('zoom-out', function(e, factor) { self.zoomOut(factor); });
 
     this.init = function(dashboard) {

@@ -14,7 +14,7 @@
   ],
   "dependencies": {
     "jquery": "3.1.0",
-    "lodash": "~4.15.0",
+    "lodash": "3.10.1",
     "angular": "1.5.3",
     "angular-route": "1.5.3",
     "angular-mocks": "1.5.3",

@@ -23,7 +23,7 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
 
       var queries = [];
       options = angular.copy(options);
-      _.each(options.targets, _.bind(function(target) {
+      _.each(options.targets, function(target) {
         if (target.hide || !target.namespace || !target.metricName || _.isEmpty(target.statistics)) {
           return;
         }
@@ -43,7 +43,7 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
         target.period = query.period;
 
         queries.push(query);
-      }, this));
+      }.bind(this));
 
       // No valid targets, return the empty result to save a round trip.
       if (_.isEmpty(queries)) {
@@ -54,7 +54,7 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
 
       var allQueryPromise = _.map(queries, function(query) {
         return this.performTimeSeriesQuery(query, start, end);
-      }, this);
+      }.bind(this));
 
       return $q.all(allQueryPromise).then(function(allResponse) {
         var result = [];
@@ -64,7 +64,7 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
           result = result.concat(metrics);
         });
 
-        return { data: result };
+        return {data: result};
       });
     };
 
@@ -125,12 +125,12 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
 
       return this.awsRequest(request).then(function(result) {
         return _.chain(result.Metrics)
-        .pluck('Dimensions')
+        .map('Dimensions')
         .flatten()
         .filter(function(dimension) {
           return dimension !== null && dimension.Name === dimensionKey;
         })
-        .pluck('Value')
+        .map('Value')
         .uniq()
         .sortBy()
         .map(function(value) {
@@ -295,15 +295,19 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
         namespace: templateSrv.replace(options.namespace, scopedVars),
         metric: templateSrv.replace(options.metricName, scopedVars),
       };
+
       var aliasDimensions = {};
+
       _.each(_.keys(options.dimensions), function(origKey) {
         var key = templateSrv.replace(origKey, scopedVars);
         var value = templateSrv.replace(options.dimensions[origKey], scopedVars);
         aliasDimensions[key] = value;
       });
+
       _.extend(aliasData, aliasDimensions);
 
       var periodMs = options.period * 1000;
+
       return _.map(options.statistics, function(stat) {
         var dps = [];
         var lastTimestamp = null;
@@ -318,7 +322,8 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
           }
           lastTimestamp = timestamp;
           dps.push([dp[stat], timestamp]);
-        });
+        })
+        .value();
 
         aliasData.stat = stat;
         var seriesName = aliasPattern.replace(aliasRegex, function(match, g1) {
