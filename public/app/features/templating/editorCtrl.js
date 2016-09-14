@@ -56,7 +56,7 @@ function (angular, _) {
       $scope.datasourceTypes = {};
       $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
         $scope.datasourceTypes[ds.meta.id] = {text: ds.meta.name, value: ds.meta.id};
-        return !ds.meta.builtIn;
+        return !ds.meta.builtIn && ds.value !== null;
       });
 
       $scope.datasourceTypes = _.map($scope.datasourceTypes, function(value) {

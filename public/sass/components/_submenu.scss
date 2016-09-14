@@ -1,6 +1,5 @@
 .submenu-controls {
   margin: 0 $panel-margin ($panel-margin*2) $panel-margin;
-  font-size: 16px;
 }
 
 .annotation-disabled, .annotation-disabled a {
@@ -25,12 +24,12 @@
   .fa-caret-down {
     font-size: 75%;
     position: relative;
-    top: 1px;
+    top: -1px;
+    left: 1px;
   }
 }
 
 .variable-value-link {
-  font-size: 16px;
   padding-right: 10px;
   .label-tag {
     margin: 0 5px;
@@ -39,17 +38,7 @@
   padding: 8px 7px;
   box-sizing: content-box;
   display: inline-block;
-  font-weight: normal;
-  display: inline-block;
   color: $text-color;
-}
-
-.submenu-item-label {
-  padding: 8px 0px 8px 7px;
-  box-sizing: content-box;
-  display: inline-block;
-  font-weight: normal;
-  display: inline-block;
 }
 
 .variable-link-wrapper  {

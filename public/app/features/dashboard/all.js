@@ -20,4 +20,5 @@ define([
   './import/dash_import',
   './export/export_modal',
   './dash_list_ctrl',
+  './ad_hoc_filters',
 ], function () {});

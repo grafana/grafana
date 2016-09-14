@@ -165,7 +165,7 @@
 
         <div class="gf-form-inline">
           <div class="gf-form max-width-21">
-            <span class="gf-form-label width-7" ng-show="current.type === 'query'">Data source</span>
+            <span class="gf-form-label width-7">Data source</span>
             <div class="gf-form-select-wrapper max-width-14">
               <select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"></select>
             </div>
@@ -231,6 +231,17 @@
           </label>
           <input type="text" class="gf-form-input max-width-18" ng-model='current.regex' placeholder="/.*-(.*)-.*/" ng-model-onblur ng-change="runQuery()"></input>
         </div>
+      </div>
+
+			<div ng-show="current.type === 'adhoc'" class="gf-form-group">
+        <h5 class="section-heading">Options</h5>
+
+				<div class="gf-form max-width-21">
+					<span class="gf-form-label width-8">Data source</span>
+					<div class="gf-form-select-wrapper max-width-14">
+						<select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"></select>
+					</div>
+				</div>
       </div>
 
       <div class="section gf-form-group" ng-show="showSelectionOptions()">
