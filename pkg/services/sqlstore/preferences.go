@@ -5,6 +5,8 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -26,7 +28,7 @@ func GetPreferencesWithDefaults(query *m.GetPreferencesWithDefaultsQuery) error 
 	}
 
 	res := &m.Preferences{
-		Theme:           "dark",
+		Theme:           setting.DefaultTheme,
 		Timezone:        "browser",
 		HomeDashboardId: 0,
 	}

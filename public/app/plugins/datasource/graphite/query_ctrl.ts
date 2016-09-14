@@ -9,6 +9,7 @@ import moment from 'moment';
 import gfunc from './gfunc';
 import {Parser} from './parser';
 import {QueryCtrl} from 'app/plugins/sdk';
+import appEvents from 'app/core/app_events';
 
 export class GraphiteQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -141,7 +142,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
         }
       }
     }).catch(err => {
-      this.error = err.message || 'Failed to issue metric query';
+      appEvents.emit('alert-error', ['Error', err]);
     });
   }
 
@@ -178,7 +179,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       altSegments.unshift(this.uiSegmentSrv.newSegment('*'));
       return altSegments;
     }).catch(err => {
-      this.error = err.message || 'Failed to issue metric query';
+      appEvents.emit('alert-error', ['Error', err]);
       return [];
     });
   }

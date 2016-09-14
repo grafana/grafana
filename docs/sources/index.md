@@ -1,6 +1,6 @@
 ---
 page_title: Grafana Installation
-page_description: Install guide for Grafana.
+page_description: Install guide for Grafana
 page_keywords: grafana, installation, documentation
 ---
 

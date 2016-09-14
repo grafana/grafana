@@ -8,10 +8,13 @@ function (_, $, coreModule) {
 
   coreModule.default.directive('metricSegment', function($compile, $sce) {
     var inputTemplate = '<input type="text" data-provide="typeahead" ' +
-      ' class="tight-form-clear-input input-medium"' +
+      ' class="gf-form-input input-medium"' +
       ' spellcheck="false" style="display:none"></input>';
 
-    var buttonTemplate = '<a class="tight-form-item" ng-class="segment.cssClass" ' +
+    var linkTemplate = '<a class="gf-form-label" ng-class="segment.cssClass" ' +
+      'tabindex="1" give-focus="segment.focus" ng-bind-html="segment.html"></a>';
+
+    var selectTemplate = '<a class="gf-form-input gf-form-input--dropdown" ng-class="segment.cssClass" ' +
       'tabindex="1" give-focus="segment.focus" ng-bind-html="segment.html"></a>';
 
     return {
@@ -20,9 +23,9 @@ function (_, $, coreModule) {
         getOptions: "&",
         onChange: "&",
       },
-      link: function($scope, elem) {
+      link: function($scope, elem, attrs) {
         var $input = $(inputTemplate);
-        var $button = $(buttonTemplate);
+        var $button = $(attrs.styleMode === 'select' ? selectTemplate : linkTemplate);
         var segment = $scope.segment;
         var options = null;
         var cancelBlur = null;
@@ -37,7 +40,7 @@ function (_, $, coreModule) {
           }
 
           $scope.$apply(function() {
-            var selected = _.findWhere($scope.altSegments, { value: value });
+            var selected = _.find($scope.altSegments, {value: value});
             if (selected) {
               segment.value = selected.value;
               segment.html = selected.html;
@@ -110,7 +113,7 @@ function (_, $, coreModule) {
           if (str[0] === '/') { str = str.substring(1); }
           if (str[str.length - 1] === '/') { str = str.substring(0, str.length-1); }
           try {
-            return item.toLowerCase().match(str);
+            return item.toLowerCase().match(str.toLowerCase());
           } catch(e) {
             return false;
           }
@@ -171,7 +174,7 @@ function (_, $, coreModule) {
         pre: function postLink($scope, elem, attrs) {
 
           $scope.valueToSegment = function(value) {
-            var option = _.findWhere($scope.options, {value: value});
+            var option = _.find($scope.options, {value: value});
             var segment = {
               cssClass: attrs.cssClass,
               custom: attrs.custom,
@@ -193,7 +196,7 @@ function (_, $, coreModule) {
 
           $scope.onSegmentChange = function() {
             if ($scope.options) {
-              var option = _.findWhere($scope.options, {text: $scope.segment.value});
+              var option = _.find($scope.options, {text: $scope.segment.value});
               if (option && option.value !== $scope.property) {
                 $scope.property = option.value;
               } else if (attrs.custom !== 'false') {
@@ -206,7 +209,9 @@ function (_, $, coreModule) {
             // needs to call this after digest so
             // property is synced with outerscope
             $scope.$$postDigest(function() {
-              $scope.onChange();
+              $scope.$apply(function() {
+                $scope.onChange();
+              });
             });
           };
 

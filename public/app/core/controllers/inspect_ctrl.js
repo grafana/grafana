@@ -7,7 +7,7 @@ define([
 function (angular, _, $, coreModule) {
   'use strict';
 
-  coreModule.default.controller('InspectCtrl', function($scope) {
+  coreModule.default.controller('InspectCtrl', function($scope, $sanitize) {
     var model = $scope.inspector;
 
     function getParametersFromQueryString(queryString) {
@@ -32,7 +32,11 @@ function (angular, _, $, coreModule) {
       if (_.isString(model.error.data)) {
         $scope.response = $("<div>" + model.error.data + "</div>").text();
       } else if (model.error.data) {
-        $scope.response = angular.toJson(model.error.data, true);
+        if (model.error.data.response) {
+          $scope.response = $sanitize(model.error.data.response);
+        } else {
+          $scope.response = angular.toJson(model.error.data, true);
+        }
       } else if (model.error.message) {
         $scope.message = model.error.message;
       }

@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 func GetPluginList(c *middleware.Context) Response {
@@ -46,11 +47,16 @@ func GetPluginList(c *middleware.Context) Response {
 			Info:          &pluginDef.Info,
 			LatestVersion: pluginDef.GrafanaNetVersion,
 			HasUpdate:     pluginDef.GrafanaNetHasUpdate,
+			DefaultNavUrl: pluginDef.DefaultNavUrl,
 		}
 
 		if pluginSetting, exists := pluginSettingsMap[pluginDef.Id]; exists {
 			listItem.Enabled = pluginSetting.Enabled
 			listItem.Pinned = pluginSetting.Pinned
+		}
+
+		if listItem.DefaultNavUrl == "" || !listItem.Enabled {
+			listItem.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + listItem.Id + "/edit"
 		}
 
 		// filter out disabled
@@ -162,10 +168,11 @@ func ImportDashboard(c *middleware.Context, apiCmd dtos.ImportDashboardCommand) 
 		Path:      apiCmd.Path,
 		Inputs:    apiCmd.Inputs,
 		Overwrite: apiCmd.Overwrite,
+		Dashboard: apiCmd.Dashboard,
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to install dashboard", err)
+		return ApiError(500, "Failed to import dashboard", err)
 	}
 
 	return Json(200, cmd.Result)

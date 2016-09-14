@@ -6,28 +6,27 @@
 					<i class="icon-gf icon-gf-dashboard"></i>
 				</td>
 				<td>
-					<a href="dashboard/{{dash.installedUri}}" ng-show="dash.installed">
+					<a href="dashboard/{{dash.importedUri}}" ng-show="dash.imported">
 						{{dash.title}}
 					</a>
-					<span ng-show="!dash.installed">
+					<span ng-show="!dash.imported">
 						{{dash.title}}
 					</span>
 				</td>
 				<td>
-					v{{dash.revision}}
-					<span ng-if="dash.installed">
-						&nbsp;(Imported v{{dash.installedRevision}})
-					<span>
+          <span ng-if="dash.imported" bs-tooltip='"Imported revision:" + dash.importedRevision'>
+            Revision: {{dash.revision}}
+          <span>
 				</td>
 				<td style="text-align: right">
-					<button class="btn btn-secondary" ng-click="ctrl.import(dash, false)" ng-show="!dash.installed">
+					<button class="btn btn-secondary btn-small" ng-click="ctrl.import(dash, false)" ng-show="!dash.imported">
 						Import
 					</button>
-					<button class="btn btn-secondary" ng-click="ctrl.import(dash, true)" ng-show="dash.installed">
+					<button class="btn btn-secondary btn-small" ng-click="ctrl.import(dash, true)" ng-show="dash.imported">
 						Update
 					</button>
-					<button class="btn btn-danger" ng-click="ctrl.remove(dash)" ng-show="dash.installed">
-						Delete
+					<button class="btn btn-danger btn-small" ng-click="ctrl.remove(dash)" ng-show="dash.imported">
+						<i class="fa fa-trash"></i>
 					</button>
 				</td>
 			</tr>

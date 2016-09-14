@@ -2,6 +2,7 @@ package login
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/BurntSushi/toml"
 	"github.com/grafana/grafana/pkg/log"
@@ -18,6 +19,7 @@ type LdapServerConf struct {
 	Host          string           `toml:"host"`
 	Port          int              `toml:"port"`
 	UseSSL        bool             `toml:"use_ssl"`
+	StartTLS      bool             `toml:"start_tls"`
 	SkipVerifySSL bool             `toml:"ssl_skip_verify"`
 	RootCACert    string           `toml:"root_ca_cert"`
 	BindDN        string           `toml:"bind_dn"`
@@ -49,21 +51,24 @@ type LdapGroupToOrgRole struct {
 }
 
 var ldapCfg LdapConfig
+var ldapLogger log.Logger = log.New("ldap")
 
 func loadLdapConfig() {
 	if !setting.LdapEnabled {
 		return
 	}
 
-	log.Info("Login: Ldap enabled, reading config file: %s", setting.LdapConfigFile)
+	ldapLogger.Info("Ldap enabled, reading config file", "file", setting.LdapConfigFile)
 
 	_, err := toml.DecodeFile(setting.LdapConfigFile, &ldapCfg)
 	if err != nil {
-		log.Fatal(3, "Failed to load ldap config file: %s", err)
+		ldapLogger.Crit("Failed to load ldap config file", "error", err)
+		os.Exit(1)
 	}
 
 	if len(ldapCfg.Servers) == 0 {
-		log.Fatal(3, "ldap enabled but no ldap servers defined in config file: %s", setting.LdapConfigFile)
+		ldapLogger.Crit("ldap enabled but no ldap servers defined in config file")
+		os.Exit(1)
 	}
 
 	// set default org id
@@ -83,11 +88,13 @@ func assertNotEmptyCfg(val interface{}, propName string) {
 	switch v := val.(type) {
 	case string:
 		if v == "" {
-			log.Fatal(3, "LDAP config file is missing option: %s", propName)
+			ldapLogger.Crit("LDAP config file is missing option", "option", propName)
+			os.Exit(1)
 		}
 	case []string:
 		if len(v) == 0 {
-			log.Fatal(3, "LDAP config file is missing option: %s", propName)
+			ldapLogger.Crit("LDAP config file is missing option", "option", propName)
+			os.Exit(1)
 		}
 	default:
 		fmt.Println("unknown")

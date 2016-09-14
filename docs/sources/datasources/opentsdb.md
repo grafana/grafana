@@ -7,10 +7,10 @@ page_keywords: grafana, opentsdb, documentation
 # OpenTSDB Guide
 The newest release of Grafana adds additional functionality when using an OpenTSDB Data source.
 
-![](/img/v2/add_OpenTSDB.jpg)
+![](/img/v2/add_OpenTSDB.png)
 
-1. Open the side menu by clicking the the Grafana icon in the top header. 
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.    
+1. Open the side menu by clicking the the Grafana icon in the top header.
+2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 
     > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
 
@@ -22,7 +22,7 @@ Name | Description
 Name | The data source name, important that this is the same as in Grafana v1.x if you plan to import old dashboards.
 Default | Default data source means that it will be pre-selected for new panels.
 Url | The http protocol, ip and port of you opentsdb server (default port is usually 4242)
-Access | Proxy = access via Grafana backend, Direct = access directory from browser.
+Access | Proxy = access via Grafana backend, Direct = access directly from browser.
 Version | Version = opentsdb version, either <=2.1 or 2.2
 Resolution | Metrics from opentsdb may have datapoints with either second or millisecond resolution.
 
@@ -50,6 +50,13 @@ When using OpenTSDB with a template variable of `query` type you can use followi
     suggest_tagv(prefix)          // return tag values for all metrics with specific prefix (can be empty)
 
 If you do not see template variables being populated in `Preview of values` section, you need to enable `tsd.core.meta.enable_realtime_ts` in the OpenTSDB server settings. Also, to populate metadata of the existing time series data in OpenTSDB, you need to run `tsdb uid metasync` on the OpenTSDB server.
+
+### Nested Templating
+
+One template variable can be used to filter tag values for another template varible. Very importantly, the order of the parameters matter in tag_values function. First parameter is the metric name, second parameter is the tag key for which you need to find tag values, and after that all other dependent template variables. Some examples are mentioned below to make nested template queries work successfully.
+
+    tag_values(cpu, hostname, env=$env)                   // return tag values for cpu metric, selected env tag value and tag key hostname 
+    tag_values(cpu, hostanme, env=$env, region=$region)   // return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname
 
 > Note: This is required for the OpenTSDB `lookup` api to work.
 

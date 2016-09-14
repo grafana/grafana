@@ -7,50 +7,25 @@ import (
 	"github.com/aws/aws-sdk-go/aws/client"
 	"github.com/aws/aws-sdk-go/aws/client/metadata"
 	"github.com/aws/aws-sdk-go/aws/request"
+	"github.com/aws/aws-sdk-go/aws/signer/v4"
 	"github.com/aws/aws-sdk-go/private/protocol/query"
-	"github.com/aws/aws-sdk-go/private/signer/v4"
 )
 
-// This is the Amazon CloudWatch API Reference. This guide provides detailed
-// information about Amazon CloudWatch actions, data types, parameters, and
-// errors. For detailed information about Amazon CloudWatch features and their
-// associated API calls, go to the Amazon CloudWatch Developer Guide (http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide).
+// Amazon CloudWatch monitors your Amazon Web Services (AWS) resources and the
+// applications you run on AWS in real-time. You can use CloudWatch to collect
+// and track metrics, which are the variables you want to measure for your resources
+// and applications.
 //
-// Amazon CloudWatch is a web service that enables you to publish, monitor,
-// and manage various metrics, as well as configure alarm actions based on data
-// from metrics. For more information about this product go to http://aws.amazon.com/cloudwatch
-// (http://aws.amazon.com/cloudwatch).
+// CloudWatch alarms send notifications or automatically make changes to the
+// resources you are monitoring based on rules that you define. For example,
+// you can monitor the CPU usage and disk reads and writes of your Amazon Elastic
+// Compute Cloud (Amazon EC2) instances and then use this data to determine
+// whether you should launch additional instances to handle increased load.
+// You can also use this data to stop under-used instances to save money.
 //
-//  For information about the namespace, metric names, and dimensions that
-// other Amazon Web Services products use to send metrics to Cloudwatch, go
-// to Amazon CloudWatch Metrics, Namespaces, and Dimensions Reference (http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html)
-// in the Amazon CloudWatch Developer Guide.
-//
-// Use the following links to get started using the Amazon CloudWatch API Reference:
-//
-//   Actions (http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_Operations.html):
-// An alphabetical list of all Amazon CloudWatch actions.  Data Types (http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/API_Types.html):
-// An alphabetical list of all Amazon CloudWatch data types.  Common Parameters
-// (http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/CommonParameters.html):
-// Parameters that all Query actions can use.  Common Errors (http://docs.aws.amazon.com/AmazonCloudWatch/latest/APIReference/CommonErrors.html):
-// Client and server errors that all actions can return.  Regions and Endpoints
-// (http://docs.aws.amazon.com/general/latest/gr/index.html?rande.html): Itemized
-// regions and endpoints for all AWS products.  WSDL Location (http://monitoring.amazonaws.com/doc/2010-08-01/CloudWatch.wsdl):
-// http://monitoring.amazonaws.com/doc/2010-08-01/CloudWatch.wsdl  In addition
-// to using the Amazon CloudWatch API, you can also use the following SDKs and
-// third-party libraries to access Amazon CloudWatch programmatically.
-//
-//  AWS SDK for Java Documentation (http://aws.amazon.com/documentation/sdkforjava/)
-// AWS SDK for .NET Documentation (http://aws.amazon.com/documentation/sdkfornet/)
-// AWS SDK for PHP Documentation (http://aws.amazon.com/documentation/sdkforphp/)
-// AWS SDK for Ruby Documentation (http://aws.amazon.com/documentation/sdkforruby/)
-//  Developers in the AWS developer community also provide their own libraries,
-// which you can find at the following AWS developer centers:
-//
-//  AWS Java Developer Center (http://aws.amazon.com/java/) AWS PHP Developer
-// Center (http://aws.amazon.com/php/) AWS Python Developer Center (http://aws.amazon.com/python/)
-// AWS Ruby Developer Center (http://aws.amazon.com/ruby/) AWS Windows and .NET
-// Developer Center (http://aws.amazon.com/net/)
+// In addition to monitoring the built-in metrics that come with AWS, you can
+// monitor your own custom metrics. With CloudWatch, you gain system-wide visibility
+// into resource utilization, application performance, and operational health.
 //The service client's operations are safe to be used concurrently.
 // It is not safe to mutate any of the client's properties though.
 type CloudWatch struct {
@@ -97,11 +72,11 @@ func newClient(cfg aws.Config, handlers request.Handlers, endpoint, signingRegio
 	}
 
 	// Handlers
-	svc.Handlers.Sign.PushBack(v4.Sign)
-	svc.Handlers.Build.PushBack(query.Build)
-	svc.Handlers.Unmarshal.PushBack(query.Unmarshal)
-	svc.Handlers.UnmarshalMeta.PushBack(query.UnmarshalMeta)
-	svc.Handlers.UnmarshalError.PushBack(query.UnmarshalError)
+	svc.Handlers.Sign.PushBackNamed(v4.SignRequestHandler)
+	svc.Handlers.Build.PushBackNamed(query.BuildHandler)
+	svc.Handlers.Unmarshal.PushBackNamed(query.UnmarshalHandler)
+	svc.Handlers.UnmarshalMeta.PushBackNamed(query.UnmarshalMetaHandler)
+	svc.Handlers.UnmarshalError.PushBackNamed(query.UnmarshalErrorHandler)
 
 	// Run custom client initialization if present
 	if initClient != nil {

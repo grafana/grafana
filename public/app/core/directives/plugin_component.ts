@@ -136,12 +136,12 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       }
       // Annotations
       case "annotations-query-ctrl": {
-        return System.import(scope.currentDatasource.meta.module).then(function(dsModule) {
+        return System.import(scope.ctrl.currentDatasource.meta.module).then(function(dsModule) {
           return {
-            baseUrl: scope.currentDatasource.meta.baseUrl,
-            name: 'annotations-query-ctrl-' + scope.currentDatasource.meta.id,
+            baseUrl: scope.ctrl.currentDatasource.meta.baseUrl,
+            name: 'annotations-query-ctrl-' + scope.ctrl.currentDatasource.meta.id,
             bindings: {annotation: "=", datasource: "="},
-            attrs: {"annotation": "currentAnnotation", datasource: "currentDatasource"},
+            attrs: {"annotation": "ctrl.currentAnnotation", datasource: "ctrl.currentDatasource"},
             Component: dsModule.AnnotationsQueryCtrl,
           };
         });
@@ -211,7 +211,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     // let a binding digest cycle complete before adding to dom
     setTimeout(function() {
       elem.append(child);
-      scope.$apply(function() {
+      scope.$applyAsync(function() {
         scope.$broadcast('refresh');
       });
     });
@@ -244,7 +244,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         registerPluginComponent(scope, elem, attrs, componentInfo);
       }).catch(err => {
         $rootScope.appEvent('alert-error', ['Plugin Error', err.message || err]);
-        console.log('Plugin componnet error', err);
+        console.log('Plugin component error', err);
       });
     }
   };

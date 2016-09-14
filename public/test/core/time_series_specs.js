@@ -56,7 +56,7 @@ define([
       });
     });
 
-    describe('can detect if serie contains ms precision', function() {
+    describe('can detect if series contains ms precision', function() {
       var fakedata;
 
       beforeEach(function() {
@@ -64,13 +64,13 @@ define([
       });
 
       it('missing datapoint with ms precision', function() {
-        fakedata.datapoints[0] = [1234567890000, 1337];
+        fakedata.datapoints[0] = [1337, 1234567890000];
         series = new TimeSeries(fakedata);
         expect(series.isMsResolutionNeeded()).to.be(false);
       });
 
       it('contains datapoint with ms precision', function() {
-        fakedata.datapoints[0] = [1236547890001, 1337];
+        fakedata.datapoints[0] = [1337, 1236547890001];
         series = new TimeSeries(fakedata);
         expect(series.isMsResolutionNeeded()).to.be(true);
       });

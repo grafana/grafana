@@ -17,3 +17,9 @@
   }
 }
 
+@for $i from 1 through 30 {
+  .offset-width-#{$i} {
+    margin-left: ($spacer * $i) !important;
+  }
+}
+

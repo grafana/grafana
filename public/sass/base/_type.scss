@@ -27,9 +27,9 @@ em      { font-style: italic; color: $headings-color; }
 cite    { font-style: normal; }
 
 // Utility classes
-.muted               { color: $gray-2; }
+.muted               { color: $text-muted; }
 a.muted:hover,
-a.muted:focus        { color: darken($gray-2, 10%); }
+a.muted:focus        { color: darken($text-muted, 10%); }
 
 .text-warning        { color: $state-warning-text; }
 a.text-warning:hover,
@@ -47,6 +47,11 @@ a.text-info:focus    { color: darken($infoText, 10%); }
 a.text-success:hover,
 a.text-success:focus { color: darken($successText, 10%); }
 a { cursor: pointer; }
+
+a[disabled] {
+  cursor: default;
+  pointer-events: none !important;
+}
 
 .text-left           { text-align: left; }
 .text-right          { text-align: right; }
@@ -116,6 +121,10 @@ small,
 .small {
   font-size: $font-size-sm;
   font-weight: normal;
+}
+
+.small-xs {
+  font-size: $font-size-xs;
 }
 
 mark,

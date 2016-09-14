@@ -17,7 +17,10 @@ function (angular, coreModule, config) {
 
     $scope.googleAuthEnabled = config.googleAuthEnabled;
     $scope.githubAuthEnabled = config.githubAuthEnabled;
-    $scope.oauthEnabled = config.githubAuthEnabled || config.googleAuthEnabled;
+    $scope.oauthEnabled = config.githubAuthEnabled || config.googleAuthEnabled || config.genericOAuthEnabled;
+    $scope.allowUserPassLogin = config.allowUserPassLogin;
+    $scope.genericOAuthEnabled = config.genericOAuthEnabled;
+    $scope.oauthProviderName = config.oauthProviderName;
     $scope.disableUserSignUp = config.disableUserSignUp;
     $scope.loginHint     = config.loginHint;
 
@@ -33,15 +36,6 @@ function (angular, coreModule, config) {
         delete params.failedMsg;
         $location.search(params);
       }
-    };
-
-    // build info view model
-    $scope.buildInfo = {
-      version: config.buildInfo.version,
-      commit: config.buildInfo.commit,
-      buildstamp: new Date(config.buildInfo.buildstamp * 1000),
-      latestVersion: config.buildInfo.latestVersion,
-      hasUpdate: config.buildInfo.hasUpdate,
     };
 
     $scope.submit = function() {
@@ -78,7 +72,12 @@ function (angular, coreModule, config) {
       }
 
       backendSrv.post('/login', $scope.formModel).then(function(result) {
-        if (result.redirectUrl) {
+        var params = $location.search();
+
+        if (params.redirect && params.redirect[0] === '/') {
+          window.location.href = config.appSubUrl + params.redirect;
+        }
+        else if (result.redirectUrl) {
           window.location.href = result.redirectUrl;
         } else {
           window.location.href = config.appSubUrl + '/';

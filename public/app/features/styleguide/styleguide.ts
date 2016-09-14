@@ -10,7 +10,7 @@ class StyleGuideCtrl {
   buttonSizes = ['btn-small', '', 'btn-large'];
   buttonVariants = ['-', '-outline-'];
   page: any;
-  pages = ['colors', 'buttons', 'forms', 'dashboard', 'query-editors'];
+  pages = ['colors', 'buttons'];
 
   /** @ngInject **/
   constructor(private $http, $routeParams) {

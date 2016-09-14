@@ -16,7 +16,10 @@
 					Value
 				</li>
 				<li>
-					<select class="input-small tight-form-input" ng-model="ctrl.panel.valueName" ng-options="f for f in ['min','max','avg', 'current', 'total']" ng-change="ctrl.render()"></select>
+					<select class="input-small tight-form-input"
+            ng-model="ctrl.panel.valueName"
+            ng-options="f for f in ctrl.valueNameOptions"
+            ng-change="ctrl.render()"></select>
 				</li>
 				<li class="tight-form-item">
 					Postfix
@@ -64,12 +67,10 @@
 					dropdown-typeahead="ctrl.unitFormats"
 					dropdown-typeahead-on-select="ctrl.setUnitFormat($subItem)">
 				</li>
-				<li class="tight-form-item">
-					Decimals
-				</li>
+				<li class="tight-form-item">Decimals</li>
 				<li>
 					<input type="number" class="input-small tight-form-input last" placeholder="auto" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" data-placement="right"
-					ng-model="ctrl.panel.decimals" ng-change="ctrl.render()" ng-model-onblur>
+					ng-model="ctrl.panel.decimals" ng-change="ctrl.refresh()" ng-model-onblur>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -181,9 +182,9 @@
 				<li>
 					<input type="number" class="input-small tight-form-input last" ng-model="ctrl.panel.gauge.maxValue" ng-blur="ctrl.render()" placeholder="100"></input>
 					<span class="alert-state-critical" ng-show="ctrl.invalidGaugeRange">
-						&nbsp;
-						<i class="fa fa-warning"></i>
+						&nbsp; <i class="fa fa-warning"></i>
 						Min value is bigger than max.
+            &nbsp;
 					</span>
 				</li>
 			</ul>
@@ -200,38 +201,6 @@
 				<input class="cr1" id="panel.gauge.thresholdMarkers" type="checkbox" ng-model="ctrl.panel.gauge.thresholdMarkers" ng-checked="ctrl.panel.gauge.thresholdMarkers" ng-change="ctrl.render()">
 				<label for="panel.gauge.thresholdMarkers" class="cr1"></label>
 			</li>
-			<div class="clearfix"></div>
-		</div>
-	</div>
-</div>
-
-<div class="editor-row">
-	<div class="section" style="margin-bottom: 20px">
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item">
-					<strong>Value to text mapping</strong>
-				</li>
-				<li class="tight-form-item"  ng-repeat-start="map in ctrl.panel.valueMaps">
-					<i class="fa fa-remove pointer" ng-click="ctrl.removeValueMap(map)"></i>
-				</li>
-				<li>
-					<input type="text" ng-model="map.value" placeholder="value" class="input-mini tight-form-input" ng-blur="ctrl.render()">
-				</li>
-				<li class="tight-form-item">
-					<i class="fa fa-arrow-right"></i>
-				</li>
-				<li ng-repeat-end>
-					<input type="text" placeholder="text" ng-model="map.text" class="input-mini tight-form-input" ng-blur="ctrl.render()">
-				</li>
-
-				<li>
-					<a class="pointer tight-form-item last" ng-click="ctrl.addValueMap();">
-						<i class="fa fa-plus"></i>
-					</a>
-				</li>
-
-			</ul>
 			<div class="clearfix"></div>
 		</div>
 	</div>

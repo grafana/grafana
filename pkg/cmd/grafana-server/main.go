@@ -16,6 +16,7 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
+	alertingInit "github.com/grafana/grafana/pkg/services/alerting/init"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -24,7 +25,7 @@ import (
 	"github.com/grafana/grafana/pkg/social"
 )
 
-var version = "3.0.0-beta4"
+var version = "3.1.0"
 var commit = "NA"
 var buildstamp string
 var build_date string
@@ -39,7 +40,6 @@ func init() {
 }
 
 func main() {
-
 	v := flag.Bool("v", false, "prints current version and exits")
 	flag.Parse()
 	if *v {
@@ -48,6 +48,9 @@ func main() {
 	}
 
 	buildstampInt64, _ := strconv.ParseInt(buildstamp, 10, 64)
+	if buildstampInt64 == 0 {
+		buildstampInt64 = time.Now().Unix()
+	}
 
 	setting.BuildVersion = version
 	setting.BuildCommit = commit
@@ -58,19 +61,17 @@ func main() {
 	flag.Parse()
 	writePIDFile()
 	initRuntime()
+	metrics.Init()
 
 	search.Init()
 	login.Init()
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()
+	alertingInit.Init()
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)
-	}
-
-	if setting.ReportingEnabled {
-		go metrics.StartUsageReportLoop()
 	}
 
 	StartServer()
@@ -88,8 +89,9 @@ func initRuntime() {
 		log.Fatal(3, err.Error())
 	}
 
-	log.Info("Starting Grafana")
-	log.Info("Version: %v, Commit: %v, Build date: %v", setting.BuildVersion, setting.BuildCommit, time.Unix(setting.BuildStamp, 0))
+	logger := log.New("main")
+	logger.Info("Starting Grafana", "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0))
+
 	setting.LogConfigurationInfo()
 
 	sqlstore.NewEngine()
@@ -118,9 +120,7 @@ func listenToSystemSignels() {
 	signalChan := make(chan os.Signal, 1)
 	code := 0
 
-	signal.Notify(signalChan, os.Interrupt)
-	signal.Notify(signalChan, os.Kill)
-	signal.Notify(signalChan, syscall.SIGTERM)
+	signal.Notify(signalChan, os.Interrupt, os.Kill, syscall.SIGTERM)
 
 	select {
 	case sig := <-signalChan:

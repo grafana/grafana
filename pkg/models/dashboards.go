@@ -17,6 +17,14 @@ var (
 	ErrDashboardVersionMismatch    = errors.New("The dashboard has been changed by someone else")
 )
 
+type UpdatePluginDashboardError struct {
+	PluginId string
+}
+
+func (d UpdatePluginDashboardError) Error() string {
+	return "Dashboard belong to plugin"
+}
+
 var (
 	DashTypeJson     = "file"
 	DashTypeDB       = "db"
@@ -26,10 +34,12 @@ var (
 
 // Dashboard model
 type Dashboard struct {
-	Id      int64
-	Slug    string
-	OrgId   int64
-	Version int
+	Id       int64
+	Slug     string
+	OrgId    int64
+	GnetId   int64
+	Version  int
+	PluginId string
 
 	Created time.Time
 	Updated time.Time
@@ -77,6 +87,10 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 		dash.Updated = time.Now()
 	}
 
+	if gnetId, err := dash.Data.Get("gnetId").Float64(); err == nil {
+		dash.GnetId = int64(gnetId)
+	}
+
 	return dash
 }
 
@@ -90,6 +104,7 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 
 	dash.UpdatedBy = cmd.UserId
 	dash.OrgId = cmd.OrgId
+	dash.PluginId = cmd.PluginId
 	dash.UpdateSlug()
 	return dash
 }
@@ -114,6 +129,7 @@ type SaveDashboardCommand struct {
 	UserId    int64            `json:"userId"`
 	OrgId     int64            `json:"-"`
 	Overwrite bool             `json:"overwrite"`
+	PluginId  string           `json:"-"`
 
 	Result *Dashboard
 }
@@ -146,7 +162,13 @@ type GetDashboardTagsQuery struct {
 
 type GetDashboardsQuery struct {
 	DashboardIds []int64
-	Result       *[]Dashboard
+	Result       []*Dashboard
+}
+
+type GetDashboardsByPluginIdQuery struct {
+	OrgId    int64
+	PluginId string
+	Result   []*Dashboard
 }
 
 type GetDashboardSlugByIdQuery struct {

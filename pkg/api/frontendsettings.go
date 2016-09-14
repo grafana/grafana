@@ -105,6 +105,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	grafanaDatasourceMeta, _ := plugins.DataSources["grafana"]
 	datasources["-- Grafana --"] = map[string]interface{}{
 		"type": "grafana",
+		"name": "-- Grafana --",
 		"meta": grafanaDatasourceMeta,
 	}
 
@@ -142,7 +143,9 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			"buildstamp":    setting.BuildStamp,
 			"latestVersion": plugins.GrafanaLatestVersion,
 			"hasUpdate":     plugins.GrafanaHasUpdate,
+			"env":           setting.Env,
 		},
+		"alertingEnabled": setting.AlertingEnabled,
 	}
 
 	return jsonObj, nil

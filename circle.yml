@@ -1,6 +1,6 @@
 machine:
   node:
-    version: 4.0
+    version: 5.11.1
   environment:
     GOPATH: "/home/ubuntu/.go_workspace"
     ORG_PATH: "github.com/grafana"
@@ -18,15 +18,13 @@ dependencies:
 
 test:
   override:
-     # FMT
      - test -z "$(gofmt -s -l . | grep -v Godeps/_workspace/src/ | tee /dev/stderr)"
-     # GO VET
      - go vet ./pkg/...
-     # Go test
-     - godep go test -v ./pkg/...
-     # js tests
+     # JS tests
      - npm test
      - npm run coveralls
+     # GO tests
+     - godep go test -v ./pkg/...
 
 deployment:
   master:

@@ -45,6 +45,7 @@ describe('grafanaGraph', function() {
                   logBase: 1
                 }
               ],
+              thresholds: [],
               xaxis: {},
               seriesOverrides: [],
               tooltip: {
@@ -108,60 +109,6 @@ describe('grafanaGraph', function() {
       expect(ctx.plotOptions.series.lines.fill).to.be(0.5);
       expect(ctx.plotOptions.series.lines.lineWidth).to.be(3);
       expect(ctx.plotOptions.series.lines.steps).to.be(true);
-    });
-  });
-
-  graphScenario('grid thresholds 100, 200', function(ctx) {
-    ctx.setup(function(ctrl) {
-      ctrl.panel.grid = {
-        threshold1: 100,
-        threshold1Color: "#111",
-        threshold2: 200,
-        threshold2Color: "#222",
-      };
-    });
-
-    it('should add grid markings', function() {
-      var markings = ctx.plotOptions.grid.markings;
-      expect(markings[0].yaxis.from).to.be(100);
-      expect(markings[0].yaxis.to).to.be(200);
-      expect(markings[0].color).to.be('#111');
-      expect(markings[1].yaxis.from).to.be(200);
-      expect(markings[1].yaxis.to).to.be(Infinity);
-    });
-  });
-
-  graphScenario('inverted grid thresholds 200, 100', function(ctx) {
-    ctx.setup(function(ctrl) {
-      ctrl.panel.grid = {
-        threshold1: 200,
-        threshold1Color: "#111",
-        threshold2: 100,
-        threshold2Color: "#222",
-      };
-    });
-
-    it('should add grid markings', function() {
-      var markings = ctx.plotOptions.grid.markings;
-      expect(markings[0].yaxis.from).to.be(200);
-      expect(markings[0].yaxis.to).to.be(100);
-      expect(markings[0].color).to.be('#111');
-      expect(markings[1].yaxis.from).to.be(100);
-      expect(markings[1].yaxis.to).to.be(-Infinity);
-    });
-  });
-
-  graphScenario('grid thresholds from zero', function(ctx) {
-    ctx.setup(function(ctrl) {
-      ctrl.panel.grid = {
-        threshold1: 0,
-        threshold1Color: "#111",
-      };
-    });
-
-    it('should add grid markings', function() {
-      var markings = ctx.plotOptions.grid.markings;
-      expect(markings[0].yaxis.from).to.be(0);
     });
   });
 

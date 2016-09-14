@@ -10,14 +10,16 @@ import (
 )
 
 type PluginDashboardInfoDTO struct {
-	PluginId          string `json:"pluginId"`
-	Title             string `json:"title"`
-	Installed         bool   `json:"installed"`
-	InstalledUri      string `json:"installedUri"`
-	InstalledRevision string `json:"installedRevision"`
-	Revision          string `json:"revision"`
-	Description       string `json:"description"`
-	Path              string `json:"path"`
+	PluginId         string `json:"pluginId"`
+	Title            string `json:"title"`
+	Imported         bool   `json:"imported"`
+	ImportedUri      string `json:"importedUri"`
+	Slug             string `json:"slug"`
+	ImportedRevision int64  `json:"importedRevision"`
+	Revision         int64  `json:"revision"`
+	Description      string `json:"description"`
+	Path             string `json:"path"`
+	Removed          bool   `json:"removed"`
 }
 
 func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDTO, error) {
@@ -29,20 +31,64 @@ func GetPluginDashboards(orgId int64, pluginId string) ([]*PluginDashboardInfoDT
 
 	result := make([]*PluginDashboardInfoDTO, 0)
 
+	// load current dashboards
+	query := m.GetDashboardsByPluginIdQuery{OrgId: orgId, PluginId: pluginId}
+	if err := bus.Dispatch(&query); err != nil {
+		return nil, err
+	}
+
+	existingMatches := make(map[int64]bool)
+
 	for _, include := range plugin.Includes {
-		if include.Type == PluginTypeDashboard {
-			if dashInfo, err := getDashboardImportStatus(orgId, plugin, include.Path); err != nil {
-				return nil, err
-			} else {
-				result = append(result, dashInfo)
+		if include.Type != PluginTypeDashboard {
+			continue
+		}
+
+		res := &PluginDashboardInfoDTO{}
+		var dashboard *m.Dashboard
+		var err error
+
+		if dashboard, err = loadPluginDashboard(plugin.Id, include.Path); err != nil {
+			return nil, err
+		}
+
+		res.Path = include.Path
+		res.PluginId = plugin.Id
+		res.Title = dashboard.Title
+		res.Revision = dashboard.Data.Get("revision").MustInt64(1)
+
+		// find existing dashboard
+		for _, existingDash := range query.Result {
+			if existingDash.Slug == dashboard.Slug {
+				res.Imported = true
+				res.ImportedUri = "db/" + existingDash.Slug
+				res.ImportedRevision = existingDash.Data.Get("revision").MustInt64(1)
+				existingMatches[existingDash.Id] = true
 			}
+		}
+
+		result = append(result, res)
+	}
+
+	// find deleted dashboards
+	for _, dash := range query.Result {
+		if _, exists := existingMatches[dash.Id]; !exists {
+			result = append(result, &PluginDashboardInfoDTO{
+				Slug:    dash.Slug,
+				Removed: true,
+			})
 		}
 	}
 
 	return result, nil
 }
 
-func loadPluginDashboard(plugin *PluginBase, path string) (*m.Dashboard, error) {
+func loadPluginDashboard(pluginId, path string) (*m.Dashboard, error) {
+	plugin, exists := Plugins[pluginId]
+
+	if !exists {
+		return nil, PluginNotFoundError{pluginId}
+	}
 
 	dashboardFilePath := filepath.Join(plugin.PluginDir, path)
 	reader, err := os.Open(dashboardFilePath)
@@ -58,34 +104,4 @@ func loadPluginDashboard(plugin *PluginBase, path string) (*m.Dashboard, error) 
 	}
 
 	return m.NewDashboardFromJson(data), nil
-}
-
-func getDashboardImportStatus(orgId int64, plugin *PluginBase, path string) (*PluginDashboardInfoDTO, error) {
-	res := &PluginDashboardInfoDTO{}
-
-	var dashboard *m.Dashboard
-	var err error
-
-	if dashboard, err = loadPluginDashboard(plugin, path); err != nil {
-		return nil, err
-	}
-
-	res.Path = path
-	res.PluginId = plugin.Id
-	res.Title = dashboard.Title
-	res.Revision = dashboard.GetString("revision", "1.0")
-
-	query := m.GetDashboardQuery{OrgId: orgId, Slug: dashboard.Slug}
-
-	if err := bus.Dispatch(&query); err != nil {
-		if err != m.ErrDashboardNotFound {
-			return nil, err
-		}
-	} else {
-		res.Installed = true
-		res.InstalledUri = "db/" + query.Result.Slug
-		res.InstalledRevision = query.Result.GetString("revision", "1.0")
-	}
-
-	return res, nil
 }

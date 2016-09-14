@@ -14,7 +14,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 )
@@ -25,7 +25,7 @@ func validateInput(c CommandLine, pluginFolder string) error {
 		return errors.New("please specify plugin to install")
 	}
 
-	pluginsDir := c.GlobalString("pluginsDir")
+	pluginsDir := c.PluginDirectory()
 	if pluginsDir == "" {
 		return errors.New("missing pluginsDir flag")
 	}
@@ -46,7 +46,7 @@ func validateInput(c CommandLine, pluginFolder string) error {
 }
 
 func installCommand(c CommandLine) error {
-	pluginFolder := c.GlobalString("pluginsDir")
+	pluginFolder := c.PluginDirectory()
 	if err := validateInput(c, pluginFolder); err != nil {
 		return err
 	}
@@ -58,8 +58,8 @@ func installCommand(c CommandLine) error {
 }
 
 func InstallPlugin(pluginName, version string, c CommandLine) error {
-	plugin, err := s.GetPlugin(pluginName, c.GlobalString("repo"))
-	pluginFolder := c.GlobalString("pluginsDir")
+	plugin, err := s.GetPlugin(pluginName, c.RepoDirectory())
+	pluginFolder := c.PluginDirectory()
 	if err != nil {
 		return err
 	}
@@ -78,17 +78,17 @@ func InstallPlugin(pluginName, version string, c CommandLine) error {
 		pluginName,
 		version)
 
-	log.Infof("installing %v @ %v\n", plugin.Id, version)
-	log.Infof("from url: %v\n", downloadURL)
-	log.Infof("into: %v\n", pluginFolder)
-	log.Info("\n")
+	logger.Infof("installing %v @ %v\n", plugin.Id, version)
+	logger.Infof("from url: %v\n", downloadURL)
+	logger.Infof("into: %v\n", pluginFolder)
+	logger.Info("\n")
 
 	err = downloadFile(plugin.Id, pluginFolder, downloadURL)
 	if err != nil {
 		return err
 	}
 
-	log.Infof("%s Installed %s successfully \n", color.GreenString("✔"), plugin.Id)
+	logger.Infof("%s Installed %s successfully \n", color.GreenString("✔"), plugin.Id)
 
 	/* Enable once we need support for downloading depedencies
 	res, _ := s.ReadPlugin(pluginFolder, pluginName)
@@ -171,7 +171,7 @@ func downloadFile(pluginName, filePath, url string) (err error) {
 
 			src, err := zf.Open()
 			if err != nil {
-				log.Errorf("Failed to extract file: %v", err)
+				logger.Errorf("Failed to extract file: %v", err)
 			}
 
 			io.Copy(dst, src)

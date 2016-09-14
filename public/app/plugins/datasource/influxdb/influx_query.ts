@@ -152,8 +152,8 @@ export default class InfluxQuery {
       if (interpolate) {
         value = this.templateSrv.replace(value, this.scopedVars);
       }
-      if (isNaN(+value)) {
-        value = "'" + value.replace('\\', '\\\\') + "'";
+      if (operator !== '>' && operator !== '<') {
+        value = "'" + value.replace(/\\/g, '\\\\') + "'";
       }
     } else if (interpolate){
       value = this.templateSrv.replace(value, this.scopedVars, 'regex');
@@ -164,7 +164,7 @@ export default class InfluxQuery {
 
   getMeasurementAndPolicy(interpolate) {
     var policy = this.target.policy;
-    var measurement = this.target.measurement;
+    var measurement = this.target.measurement || 'measurement';
 
     if (!measurement.match('^/.*/')) {
       measurement = '"' + measurement+ '"';
@@ -190,10 +190,6 @@ export default class InfluxQuery {
       } else {
         return target.query;
       }
-    }
-
-    if (!target.measurement) {
-      throw {message: "Metric measurement is missing"};
     }
 
     var query = 'SELECT ';

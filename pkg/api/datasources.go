@@ -22,7 +22,6 @@ func GetDataSources(c *middleware.Context) {
 
 	result := make(dtos.DataSourceList, 0)
 	for _, ds := range query.Result {
-
 		dsItem := dtos.DataSource{
 			Id:        ds.Id,
 			OrgId:     ds.OrgId,
@@ -35,6 +34,7 @@ func GetDataSources(c *middleware.Context) {
 			User:      ds.User,
 			BasicAuth: ds.BasicAuth,
 			IsDefault: ds.IsDefault,
+			JsonData:  ds.JsonData,
 		}
 
 		if plugin, exists := plugins.DataSources[ds.Type]; exists {
@@ -123,9 +123,7 @@ func GetDataSourceByName(c *middleware.Context) Response {
 		return ApiError(500, "Failed to query datasources", err)
 	}
 
-	ds := query.Result
-	dtos := convertModelToDtos(ds)
-
+	dtos := convertModelToDtos(query.Result)
 	return Json(200, &dtos)
 }
 
@@ -148,7 +146,7 @@ func GetDataSourceIdByName(c *middleware.Context) Response {
 	return Json(200, &dtos)
 }
 
-func convertModelToDtos(ds m.DataSource) dtos.DataSource {
+func convertModelToDtos(ds *m.DataSource) dtos.DataSource {
 	return dtos.DataSource{
 		Id:                ds.Id,
 		OrgId:             ds.OrgId,

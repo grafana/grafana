@@ -14,7 +14,7 @@
     "tag": "v1.5.3",
     "commit": "319557fe710cecc11e12c772cc1abb8098d29ccb"
   },
-  "_source": "git://github.com/angular/bower-angular-mocks.git",
-  "_target": "~1.5.3",
+  "_source": "https://github.com/angular/bower-angular-mocks.git",
+  "_target": "1.5.3",
   "_originalSource": "angular-mocks"
 }

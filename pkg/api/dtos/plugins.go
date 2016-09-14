@@ -1,6 +1,9 @@
 package dtos
 
-import "github.com/grafana/grafana/pkg/plugins"
+import (
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/plugins"
+)
 
 type PluginSetting struct {
 	Name          string                      `json:"name"`
@@ -29,6 +32,7 @@ type PluginListItem struct {
 	Info          *plugins.PluginInfo `json:"info"`
 	LatestVersion string              `json:"latestVersion"`
 	HasUpdate     bool                `json:"hasUpdate"`
+	DefaultNavUrl string              `json:"defaultNavUrl"`
 }
 
 type PluginList []PluginListItem
@@ -49,5 +53,6 @@ type ImportDashboardCommand struct {
 	PluginId  string                         `json:"pluginId"`
 	Path      string                         `json:"path"`
 	Overwrite bool                           `json:"overwrite"`
+	Dashboard *simplejson.Json               `json:"dashboard"`
 	Inputs    []plugins.ImportDashboardInput `json:"inputs"`
 }

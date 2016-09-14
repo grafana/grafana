@@ -26,7 +26,7 @@ module.exports = function(config) {
     browsers: ['PhantomJS'],
     captureTimeout: 20000,
     singleRun: true,
-    autoWatchBatchDelay: 10000,
+    autoWatchBatchDelay: 1000,
     browserNoActivityTimeout: 60000,
 
   });

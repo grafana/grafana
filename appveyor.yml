@@ -14,7 +14,7 @@ install:
   - npm install
   - npm install -g grunt-cli
   # install gcc (needed for sqlite3)
-  - choco install -y mingw
+  - choco install -y --limit-output mingw
   - set PATH=C:\tools\mingw64\bin;%PATH%
   - echo %PATH%
   - echo %GOPATH%

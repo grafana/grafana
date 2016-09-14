@@ -5,6 +5,7 @@
 
 // Media queries
 // ---------------------
+
 @include media-breakpoint-down(sm) {
   div.panel {
     width: 100% !important;
@@ -30,6 +31,12 @@
   }
   .page-container {
     padding: ($spacer * 1) ($spacer * 2);
+  }
+}
+
+@include media-breakpoint-down(xs) {
+  .page-dashboard .navbar-page-btn {
+    max-width: 150px;
   }
 }
 
@@ -78,7 +85,7 @@
     }
   }
 
-  .dashnav-dashboards-btn a {
+  .page-dashboard .navbar-page-btn {
     max-width: none;
   }
   .gf-timepicker-nav-btn {

@@ -16,6 +16,7 @@ export default class InfluxDatasource {
   name: string;
   database: any;
   basicAuth: any;
+  withCredentials: any;
   interval: any;
   supportAnnotations: boolean;
   supportMetrics: boolean;
@@ -33,6 +34,7 @@ export default class InfluxDatasource {
     this.name = instanceSettings.name;
     this.database = instanceSettings.database;
     this.basicAuth = instanceSettings.basicAuth;
+    this.withCredentials = instanceSettings.withCredentials;
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
     this.supportAnnotations = true;
     this.supportMetrics = true;
@@ -45,7 +47,7 @@ export default class InfluxDatasource {
     var i, y;
 
     var allQueries = _.map(options.targets, (target) => {
-      if (target.hide) { return []; }
+      if (target.hide) { return ""; }
 
       queryTargets.push(target);
 
@@ -54,8 +56,12 @@ export default class InfluxDatasource {
       var query =  queryModel.render(true);
       query = query.replace(/\$interval/g, (target.interval || options.interval));
       return query;
-
-    }).join(";");
+    }).reduce((acc, current) => {
+      if (current !== "") {
+        acc += ";" + current;
+      }
+      return acc;
+    });
 
     // replace grafana variables
     allQueries = allQueries.replace(/\$timeFilter/g, timeFilter);
@@ -130,6 +136,8 @@ export default class InfluxDatasource {
   };
 
   _seriesQuery(query) {
+    if (!query) { return this.$q.when({results: []}); }
+
     return this._influxRequest('GET', '/query', {q: query, epoch: 'ms'});
   }
 
@@ -181,6 +189,9 @@ export default class InfluxDatasource {
     };
 
     options.headers = options.headers || {};
+    if (this.basicAuth || this.withCredentials) {
+      options.withCredentials = true;
+    }
     if (self.basicAuth) {
       options.headers.Authorization = self.basicAuth;
     }

@@ -1,15 +1,17 @@
 define([
   'angular',
   'lodash',
+  'jquery',
   'app/core/utils/kbn',
 ],
-function (angular, _, kbn) {
+function (angular, _, $, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
   module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $location, templateSrv, timeSrv) {
     var self = this;
+    this.variableLock = {};
 
     function getNoneOption() { return { text: 'None', value: '', isNone: true }; }
 
@@ -17,7 +19,7 @@ function (angular, _, kbn) {
     $rootScope.onAppEvent('refresh', function() {
 
       // look for interval variables
-      var intervalVariable = _.findWhere(self.variables, { type: 'interval' });
+      var intervalVariable = _.find(self.variables, { type: 'interval' });
       if (intervalVariable) {
         self.updateAutoInterval(intervalVariable);
       }
@@ -27,7 +29,16 @@ function (angular, _, kbn) {
         .filter(function(variable) {
           return variable.refresh === 2;
         }).map(function(variable) {
-          return self.updateOptions(variable);
+          var previousOptions = variable.options.slice();
+
+          return self.updateOptions(variable).then(function () {
+            return self.variableUpdated(variable).then(function () {
+              // check if current options changed due to refresh
+              if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
+                $rootScope.appEvent('template-variable-value-updated');
+              }
+            });
+          });
         });
 
       return $q.all(promises);
@@ -35,6 +46,7 @@ function (angular, _, kbn) {
     }, $rootScope);
 
     this.init = function(dashboard) {
+      this.dashboard = dashboard;
       this.variables = dashboard.templating.list;
       templateSrv.init(this.variables);
 
@@ -63,7 +75,9 @@ function (angular, _, kbn) {
       // determine our dependencies.
       if (variable.type === "query") {
         _.forEach(this.variables, function(v) {
-          if (templateSrv.containsVariable(variable.query, v.name)) {
+          // both query and datasource can contain variable
+          if (templateSrv.containsVariable(variable.query, v.name) ||
+              templateSrv.containsVariable(variable.datasource, v.name)) {
             dependencies.push(self.variableLock[v.name].promise);
           }
         });
@@ -77,7 +91,6 @@ function (angular, _, kbn) {
         else if (variable.refresh === 1 || variable.refresh === 2) {
           return self.updateOptions(variable).then(function() {
             if (_.isEmpty(variable.current) && variable.options.length) {
-              console.log("setting current for %s", variable.name);
               self.setVariableValue(variable, variable.options[0]);
             }
             lock.resolve();
@@ -89,6 +102,8 @@ function (angular, _, kbn) {
         } else {
           lock.resolve();
         }
+      }).finally(function() {
+        delete self.variableLock[variable.name];
       });
     };
 
@@ -100,7 +115,10 @@ function (angular, _, kbn) {
       }
 
       return promise.then(function() {
-        var option = _.findWhere(variable.options, { text: urlValue });
+        var option = _.find(variable.options, function(op) {
+          return op.text === urlValue || op.value === urlValue;
+        });
+
         option = option || { text: urlValue, value: urlValue };
 
         self.updateAutoInterval(variable);
@@ -120,36 +138,38 @@ function (angular, _, kbn) {
       templateSrv.setGrafanaVariable('$__auto_interval', interval);
     };
 
-    this.setVariableValue = function(variable, option, initPhase) {
+    this.setVariableValue = function(variable, option) {
       variable.current = angular.copy(option);
 
-      if (_.isArray(variable.current.value)) {
-        variable.current.text = variable.current.value.join(' + ');
+      if (_.isArray(variable.current.text)) {
+        variable.current.text = variable.current.text.join(' + ');
       }
 
       self.selectOptionsForCurrentValue(variable);
       templateSrv.updateTemplateData();
 
-      // on first load, variable loading is ordered to ensure
-      // that parents are updated before children.
-      if (initPhase) {
-        return $q.when();
-      }
-
-      return self.updateOptionsInChildVariables(variable);
+      return this.updateOptionsInChildVariables(variable);
     };
 
     this.variableUpdated = function(variable) {
       templateSrv.updateTemplateData();
-      return this.updateOptionsInChildVariables(variable);
+      return self.updateOptionsInChildVariables(variable);
     };
 
     this.updateOptionsInChildVariables = function(updatedVariable) {
+      // if there is a variable lock ignore cascading update because we are in a boot up scenario
+      if (self.variableLock[updatedVariable.name]) {
+        return $q.when();
+      }
+
       var promises = _.map(self.variables, function(otherVariable) {
         if (otherVariable === updatedVariable) {
           return;
         }
-        if (templateSrv.containsVariable(otherVariable.query, updatedVariable.name)) {
+        if ((otherVariable.type === "datasource" &&
+            templateSrv.containsVariable(otherVariable.regex, updatedVariable.name)) ||
+            templateSrv.containsVariable(otherVariable.query, updatedVariable.name) ||
+            templateSrv.containsVariable(otherVariable.datasource, updatedVariable.name)) {
           return self.updateOptions(otherVariable);
         }
       });
@@ -158,13 +178,24 @@ function (angular, _, kbn) {
     };
 
     this._updateNonQueryVariable = function(variable) {
-      // extract options in comma seperated string
+      if (variable.type === 'datasource') {
+        self.updateDataSourceVariable(variable);
+        return;
+      }
+
+      if (variable.type === 'constant') {
+        variable.options = [{text: variable.query, value: variable.query}];
+        return;
+      }
+
+      // extract options in comma separated string
       variable.options = _.map(variable.query.split(/[,]+/), function(text) {
         return { text: text.trim(), value: text.trim() };
       });
 
       if (variable.type === 'interval') {
         self.updateAutoInterval(variable);
+        return;
       }
 
       if (variable.type === 'custom' && variable.includeAll) {
@@ -172,11 +203,40 @@ function (angular, _, kbn) {
       }
     };
 
+    this.updateDataSourceVariable = function(variable) {
+      var options = [];
+      var sources = datasourceSrv.getMetricSources({skipVariables: true});
+      var regex;
+
+      if (variable.regex) {
+        regex = kbn.stringToJsRegex(templateSrv.replace(variable.regex));
+      }
+
+      for (var i = 0; i < sources.length; i++) {
+        var source = sources[i];
+        // must match on type
+        if (source.meta.id !== variable.query) {
+          continue;
+        }
+
+        if (regex && !regex.exec(source.name)) {
+          continue;
+        }
+
+        options.push({text: source.name, value: source.name});
+      }
+
+      if (options.length === 0) {
+        options.push({text: 'No data sources found', value: ''});
+      }
+
+      variable.options = options;
+    };
+
     this.updateOptions = function(variable) {
       if (variable.type !== 'query') {
         self._updateNonQueryVariable(variable);
-        self.setVariableValue(variable, variable.options[0]);
-        return $q.when([]);
+        return self.validateVariableSelectionState(variable);
       }
 
       return datasourceSrv.get(variable.datasource)
@@ -187,6 +247,7 @@ function (angular, _, kbn) {
 
     this.selectOptionsForCurrentValue = function(variable) {
       var i, y, value, option;
+      var selected = [];
 
       for (i = 0; i < variable.options.length; i++) {
         option = variable.options[i];
@@ -196,28 +257,44 @@ function (angular, _, kbn) {
             value = variable.current.value[y];
             if (option.value === value) {
               option.selected = true;
+              selected.push(option);
             }
           }
         } else if (option.value === variable.current.value) {
           option.selected = true;
+          selected.push(option);
         }
       }
+
+      return selected;
     };
 
     this.validateVariableSelectionState = function(variable) {
       if (!variable.current) {
         if (!variable.options.length) { return; }
-        return self.setVariableValue(variable, variable.options[0], true);
+        return self.setVariableValue(variable, variable.options[0], false);
       }
 
       if (_.isArray(variable.current.value)) {
-        self.selectOptionsForCurrentValue(variable);
-      } else {
-        var currentOption = _.findWhere(variable.options, { text: variable.current.text });
-        if (currentOption) {
-          return self.setVariableValue(variable, currentOption, true);
+        var selected = self.selectOptionsForCurrentValue(variable);
+
+        // if none pick first
+        if (selected.length === 0) {
+          selected = variable.options[0];
         } else {
-          if (!variable.options.length) { return; }
+          selected = {
+            value: _.map(selected, function(val) {return val.value;}),
+            text: _.map(selected, function(val) {return val.text;}).join(' + '),
+          };
+        }
+
+        return self.setVariableValue(variable, selected, false);
+      } else {
+        var currentOption = _.find(variable.options, {text: variable.current.text});
+        if (currentOption) {
+          return self.setVariableValue(variable, currentOption, false);
+        } else {
+          if (!variable.options.length) { return $q.when(null); }
           return self.setVariableValue(variable, variable.options[0]);
         }
       }
@@ -265,7 +342,7 @@ function (angular, _, kbn) {
 
     this.metricNamesToVariableValues = function(variable, metricNames) {
       var regex, options, i, matches;
-      options = {}; // use object hash to remove duplicates
+      options = [];
 
       if (variable.regex) {
         regex = kbn.stringToJsRegex(templateSrv.replace(variable.regex));
@@ -276,6 +353,14 @@ function (angular, _, kbn) {
         var value = item.value || item.text;
         var text = item.text || item.value;
 
+        if (_.isNumber(value)) {
+          value = value.toString();
+        }
+
+        if (_.isNumber(text)) {
+          text = text.toString();
+        }
+
         if (regex) {
           matches = regex.exec(value);
           if (!matches) { continue; }
@@ -285,16 +370,41 @@ function (angular, _, kbn) {
           }
         }
 
-        options[value] = {text: text, value: value};
+        options.push({text: text, value: value});
       }
 
-      return _.map(_.keys(options).sort(), function(key) {
-        return options[key];
-      });
+      options = _.uniq(options, 'value');
+      return this.sortVariableValues(options, variable.sort);
     };
 
     this.addAllOption = function(variable) {
       variable.options.unshift({text: 'All', value: "$__all"});
+    };
+
+    this.sortVariableValues = function(options, sortOrder) {
+      if (sortOrder === 0) {
+        return options;
+      }
+
+      var sortType = Math.ceil(sortOrder / 2);
+      var reverseSort = (sortOrder % 2 === 0);
+      if (sortType === 1) {
+        options = _.sortBy(options, 'text');
+      } else if (sortType === 2) {
+        options = _.sortBy(options, function(opt) {
+          var matches = opt.text.match(/.*?(\d+).*/);
+          if (!matches) {
+            return 0;
+          } else {
+            return parseInt(matches[1], 10);
+          }
+        });
+      }
+      if (reverseSort) {
+        options = options.reverse();
+      }
+
+      return options;
     };
 
   });

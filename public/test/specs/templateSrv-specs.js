@@ -141,8 +141,8 @@ define([
       });
 
       it('slash should be properly escaped in regex format', function() {
-         var result = _templateSrv.formatValue('Gi3/14', 'regex');
-         expect(result).to.be('Gi3\\/14');
+        var result = _templateSrv.formatValue('Gi3/14', 'regex');
+        expect(result).to.be('Gi3\\/14');
       });
 
     });
@@ -190,11 +190,25 @@ define([
         expect(contains).to.be(true);
       });
 
+      it('should not find it if only part matches with $var syntax', function() {
+        var contains = _templateSrv.containsVariable('this.$ServerDomain.filters', 'Server');
+        expect(contains).to.be(false);
+      });
+
       it('should find it with [[var]] syntax', function() {
         var contains = _templateSrv.containsVariable('this.[[test]].filters', 'test');
         expect(contains).to.be(true);
       });
 
+      it('should find it when part of segment', function() {
+        var contains = _templateSrv.containsVariable('metrics.$env.$group-*', 'group');
+        expect(contains).to.be(true);
+      });
+
+      it('should find it its the only thing', function() {
+        var contains = _templateSrv.containsVariable('$env', 'env');
+        expect(contains).to.be(true);
+      });
     });
 
     describe('updateTemplateData with simple value', function() {
