@@ -1,6 +1,6 @@
 {
   "name": "angular-sanitize",
-  "version": "1.5.3",
+  "version": "1.5.8",
   "description": "AngularJS module for sanitizing HTML",
   "main": "index.js",
   "scripts": {
@@ -22,5 +22,12 @@
   "bugs": {
     "url": "https://github.com/angular/angular.js/issues"
   },
-  "homepage": "http://angularjs.org"
+  "homepage": "http://angularjs.org",
+  "jspm": {
+    "shim": {
+      "angular-sanitize": {
+        "deps": ["angular"]
+      }
+    }
+  }
 }
