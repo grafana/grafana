@@ -341,40 +341,70 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
 
         //Override min/max to provide more flexible autoscaling
         function autoscaleSpanOverride(yaxis, data, options) {
-          var m, op, num, precision;
+          var expr;
           if (yaxis.min != null && data != null) {
-            m = yaxis.min.match(/([<=>~]*)\W*(\d+(\.\d+)?)/);
-            if (m != null) {
-              op = m[1];
-              num = parseFloat(m[2]);
-              precision = m[3] == null ? 0 : m[3].length - 1; //Precision based on input
-              if (op === ">") {
-                options.min = data.stats.min < num ? num : null;
-              } else if (op === "<") {
-                options.min = data.stats.min > num ? num : null;
-              } else if (op === "~") {
-                options.min = kbn.roundValue(data.stats.avg - num, precision);
-              } else if (op === "=") {
-                options.min = kbn.roundValue(data.stats.current - num, precision);
-              }
-            }
+            expr = parseThresholdExpr(yaxis.min);
+            options.min = autoscaleYAxisMin(expr, data.stats);
           }
           if (yaxis.max != null && data != null) {
-            m = yaxis.max.match(/([<=>~]*)\W*(\d+(\.\d+)?)/);
-            if (m != null) {
-              op = m[1];
-              num = parseFloat(m[2]);
-              precision = m[3] == null ? 0 : m[3].length - 1; //Precision based on input
-              if (op === ">") {
-                options.max = data.stats.max < num ? num : null;
-              } else if (op === "<") {
-                options.max = data.stats.max > num ? num : null;
-              } else if (op === "~") {
-                options.max = kbn.roundValue(data.stats.avg + num, precision);
-              } else if (op === "=") {
-                options.max = kbn.roundValue(data.stats.current + num, precision);
-              }
-            }
+            expr = parseThresholdExpr(yaxis.max);
+            options.max = autoscaleYAxisMax(expr, data.stats);
+          }
+        }
+
+        function parseThresholdExpr(expr) {
+          var match, operator, value, precision;
+          match = expr.match(/\s*([<=>~]*)\W*(\d+(\.\d+)?)/);
+          if (match) {
+            operator = match[1];
+            value = parseFloat(match[2]);
+            //Precision based on input
+            precision = match[3] ? match[3].length - 1 : 0;
+            return {
+              operator: operator,
+              value: value,
+              precision: precision
+            };
+          } else {
+            return undefined;
+          }
+        }
+
+        function autoscaleYAxisMax(expr, dataStats) {
+          var operator = expr.operator,
+              value = expr.value,
+              precision = expr.precision;
+          if (operator === ">") {
+            return dataStats.max < value ? value : null;
+          } else if (operator === "<") {
+            return dataStats.max > value ? value : null;
+          } else if (operator === "~") {
+            return kbn.roundValue(dataStats.avg + value, precision);
+          } else if (operator === "=") {
+            return kbn.roundValue(dataStats.current + value, precision);
+          } else if (!operator && !isNaN(value)) {
+            return kbn.roundValue(value, precision);
+          } else {
+            return null;
+          }
+        }
+
+        function autoscaleYAxisMin(expr, dataStats) {
+          var operator = expr.operator,
+              value = expr.value,
+              precision = expr.precision;
+          if (operator === ">") {
+            return dataStats.min < value ? value : null;
+          } else if (operator === "<") {
+            return dataStats.min > value ? value : null;
+          } else if (operator === "~") {
+            return kbn.roundValue(dataStats.avg - value, precision);
+          } else if (operator === "=") {
+            return kbn.roundValue(dataStats.current - value, precision);
+          } else if (!operator && !isNaN(value)) {
+            return kbn.roundValue(value, precision);
+          } else {
+            return null;
           }
         }
 
