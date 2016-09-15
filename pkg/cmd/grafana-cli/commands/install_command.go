@@ -14,6 +14,7 @@ import (
 	"strings"
 
 	"github.com/fatih/color"
+	"github.com/grafana/grafana-cli/pkg/log"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
@@ -90,13 +91,12 @@ func InstallPlugin(pluginName, version string, c CommandLine) error {
 
 	logger.Infof("%s Installed %s successfully \n", color.GreenString("✔"), plugin.Id)
 
-	/* Enable once we need support for downloading depedencies
 	res, _ := s.ReadPlugin(pluginFolder, pluginName)
-	for _, v := range res.Dependency.Plugins {
+	for _, v := range res.Dependencies.Plugins {
 		InstallPlugin(v.Id, version, c)
 		log.Infof("Installed dependency: %v ✔\n", v.Id)
 	}
-	*/
+
 	return err
 }
 
