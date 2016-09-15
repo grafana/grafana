@@ -2,7 +2,6 @@ all: deps build
 
 deps:
 	go run build.go setup
-	godep restore
 	npm install
 
 build:
@@ -10,7 +9,7 @@ build:
 	npm run build
 
 test:
-	godep go test -v ./pkg/...
+	go test -v ./pkg/...
 	npm test
 
 run:
