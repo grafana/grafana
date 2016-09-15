@@ -24,9 +24,8 @@ go get github.com/grafana/grafana
 ## Building the backend
 ```
 cd $GOPATH/src/github.com/grafana/grafana
-go run build.go setup              # (only needed once to install godep)
-$GOPATH/bin/godep restore          # (will pull down all golang lib dependencies in your current GOPATH)
-go run build.go build              # (or 'go build .')
+go run build.go setup              
+go run build.go build              # (or 'go build ./pkg/cmd/grafana-server')
 ```
 
 #### Building on Windows
@@ -45,7 +44,7 @@ grunt
 ```
 
 ## Recompile backend on source change
-To rebuild on source change (requires that you executed godep restore)
+To rebuild on source change
 ```
 go get github.com/Unknwon/bra
 bra run
@@ -63,9 +62,10 @@ If you built it with `go build .`, run `./grafana`
 Open grafana in your browser (default [http://localhost:3000](http://localhost:3000)) and login with admin user (default user/pass = admin/admin).
 
 ## Developing for Grafana
-To add features, customize your config, etc, you'll need to rebuild on source change (requires that you executed [godep restore](#build-the-backend), as outlined above).
+To add features, customize your config, etc, you'll need to rebuild on source change.
 ```
 go get github.com/Unknwon/bra
+
 bra run
 ```
 You'll also need to run `grunt watch` to watch for changes to the front-end.
