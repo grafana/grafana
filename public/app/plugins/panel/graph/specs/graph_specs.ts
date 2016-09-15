@@ -281,4 +281,36 @@ describe('grafanaGraph', function() {
       });
     });
   });
+  graphScenario('when using regular Y-Min and Y-Max settings', function(ctx) {
+    describe('and Y-Min is 100 and Y-Max is 200', function() {
+      ctx.setup(function(ctrl, data) {
+        ctrl.panel.yaxes[0].min = '100';
+        ctrl.panel.yaxes[0].max = '200';
+        data[0] = new TimeSeries({
+          datapoints: [[120,10],[160,20]],
+          alias: 'series1',
+        });
+      });
+
+      it('should set min to 100 and max to 200', function() {
+         expect(ctx.plotOptions.yaxes[0].min).to.be(100);
+         expect(ctx.plotOptions.yaxes[0].max).to.be(200);
+      });
+    });
+    describe('and Y-Min is 0 and Y-Max is 0', function() {
+      ctx.setup(function(ctrl, data) {
+        ctrl.panel.yaxes[0].min = '0';
+        ctrl.panel.yaxes[0].max = '0';
+        data[0] = new TimeSeries({
+          datapoints: [[120,10],[160,20]],
+          alias: 'series1',
+        });
+      });
+
+      it('should set min to 0 and max to 0', function() {
+         expect(ctx.plotOptions.yaxes[0].min).to.be(0);
+         expect(ctx.plotOptions.yaxes[0].max).to.be(0);
+      });
+    });
+  });
 });
