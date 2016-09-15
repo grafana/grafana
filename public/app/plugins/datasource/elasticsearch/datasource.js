@@ -47,10 +47,19 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
 
     this._get = function(url) {
-      return this._request('GET', this.indexPattern.getIndexForToday() + url).then(function(results) {
-        results.data.$$config = results.config;
-        return results.data;
-      });
+      var range = timeSrv.timeRange();
+      var index_list = this.indexPattern.getIndexList(range.from.valueOf(), range.to.valueOf());
+      if (_.isArray(index_list) && index_list.length) {
+        return this._request('GET', index_list[0] + url).then(function(results) {
+          results.data.$$config = results.config;
+          return results.data;
+        });
+      } else {
+        return this._request('GET', this.indexPattern.getIndexForToday() + url).then(function(results) {
+          results.data.$$config = results.config;
+          return results.data;
+        });
+      }
     };
 
     this._post = function(url, data) {
@@ -210,8 +219,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     }
 
     this.getFields = function(query) {
-      return this._get('/_mapping').then(function(res) {
-        var fields = {};
+      return this._get('/_mapping').then(function(result) {
         var typeMap = {
           'float': 'number',
           'double': 'number',
@@ -219,22 +227,45 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           'long': 'number',
           'date': 'date',
           'string': 'string',
+          'nested': 'nested'
         };
 
-        for (var indexName in res) {
-          var index = res[indexName];
-          var mappings = index.mappings;
-          if (!mappings) { continue; }
-          for (var typeName in mappings) {
-            var properties = mappings[typeName].properties;
-            for (var field in properties) {
-              var prop = properties[field];
-              if (query.type && typeMap[prop.type] !== query.type) {
-                continue;
+        // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
+        var fieldNameParts = [];
+        var fields = {};
+        function getFieldsRecursively(obj) {
+          for (var key in obj) {
+            var subObj = obj[key];
+
+            // Check mapping field for nested fields
+            if (subObj.hasOwnProperty('properties')) {
+              fieldNameParts.push(key);
+              getFieldsRecursively(subObj.properties);
+            } else {
+              var fieldName = fieldNameParts.concat(key).join('.');
+
+              // Hide meta-fields and check field type
+              if (key[0] !== '_' &&
+                  (!query.type ||
+                    query.type && typeMap[subObj.type] === query.type)) {
+
+                fields[fieldName] = {
+                  text: fieldName,
+                  type: subObj.type
+                };
               }
-              if (prop.type && field[0] !== '_') {
-                fields[field] = {text: field, type: prop.type};
-              }
+            }
+          }
+          fieldNameParts.pop();
+        }
+
+        for (var indexName in result) {
+          var index = result[indexName];
+          if (index && index.mappings) {
+            var mappings = index.mappings;
+            for (var typeName in mappings) {
+              var properties = mappings[typeName].properties;
+              getFieldsRecursively(properties);
             }
           }
         }
