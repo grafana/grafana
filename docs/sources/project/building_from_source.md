@@ -11,7 +11,7 @@ dev environment. Grafana ships with its own required backend server; also comple
 
 ## Dependencies
 
-- [Go 1.6](https://golang.org/dl/)
+- [Go 1.7](https://golang.org/dl/)
 - [NodeJS](https://nodejs.org/download/)
 
 ## Get Code

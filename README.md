@@ -78,7 +78,7 @@ the latest master builds [here](http://grafana.org/download/builds)
 
 ### Dependencies
 
-- Go 1.6.2
+- Go 1.7
 - NodeJS v4+
 
 ### Get Code
