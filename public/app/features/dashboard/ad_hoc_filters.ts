@@ -21,7 +21,7 @@ export class AdHocFiltersCtrl {
     if (this.variable.value && !_.isArray(this.variable.value)) {
     }
 
-    for (let tag of this.variable.value) {
+    for (let tag of this.variable.tags) {
       if (this.segments.length > 0) {
         this.segments.push(this.uiSegmentSrv.newCondition('AND'));
       }
@@ -130,7 +130,7 @@ export class AdHocFiltersCtrl {
     });
 
     this.$rootScope.$broadcast('refresh');
-    this.variable.value = tags;
+    this.variable.tags = tags;
   }
 }
 

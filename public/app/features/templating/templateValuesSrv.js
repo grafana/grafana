@@ -189,6 +189,7 @@ function (angular, _, $, kbn) {
       }
 
       if (variable.type === 'adhoc') {
+        variable.current = {};
         variable.options = [];
         return;
       }
