@@ -276,9 +276,10 @@ example:
     scopes = user:email
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
-    api_url = https://api.github.com
+    api_url = https://api.github.com/user
     allow_sign_up = false
     team_ids =
+    allowed_organizations =
 
 Restart the Grafana back-end. You should now see a GitHub login button
 on the login page. You can now login or sign up with your GitHub
@@ -305,6 +306,24 @@ Grafana instance. For example:
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
     allow_sign_up = false
+
+### allowed_organizations
+
+Require an active organization membership for at least one of the given
+organizations on GitHub. If the authenticated user isn't a member of at least
+one of the organizations they will not be able to register or authenticate with
+your Grafana instance. For example
+
+    [auth.github]
+    enabled = true
+    client_id = YOUR_GITHUB_APP_CLIENT_ID
+    client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
+    scopes = user:email,read:org
+    auth_url = https://github.com/login/oauth/authorize
+    token_url = https://github.com/login/oauth/access_token
+    allow_sign_up = false
+    # space-delimited organization names
+    allowed_organizations = github google
 
 <hr>
 
@@ -506,4 +525,3 @@ Set root url to a Grafana instance where you want to publish external snapshots 
 
 ### external_snapshot_name
 Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`
-
