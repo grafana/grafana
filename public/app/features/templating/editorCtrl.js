@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('TemplateEditorCtrl', function($scope, datasourceSrv, templateSrv, templateValuesSrv) {
+  module.controller('TemplateEditorCtrl', function($scope, datasourceSrv, variableSrv) {
 
     var replacementDefaults = {
       type: 'query',
@@ -63,7 +63,7 @@ function (angular, _) {
         return value;
       });
 
-      $scope.variables = templateSrv.variables;
+      $scope.variables = variableSrv.variables;
       $scope.reset();
 
       $scope.$watch('mode', function(val) {
@@ -113,7 +113,7 @@ function (angular, _) {
     };
 
     $scope.runQuery = function() {
-      return templateValuesSrv.updateOptions($scope.current).then(null, function(err) {
+      return variableSrv.updateOptions($scope.current).then(null, function(err) {
         if (err.data && err.data.message) { err.message = err.data.message; }
         $scope.appEvent("alert-error", ['Templating', 'Template variables could not be initialized: ' + err.message]);
       });

@@ -50,22 +50,22 @@ define([
         });
       });
 
-      describe('and setting adhoc variable', function() {
-        var variable = {name: 'filters', type: 'adhoc'};
-
-        beforeEach(function(done) {
-          var dashboard = { templating: { list: [variable] } };
-          var urlParams = {};
-          urlParams["var-filters"] = "hostname|gt|server2";
-          ctx.$location.search = sinon.stub().returns(urlParams);
-          ctx.service.init(dashboard).then(function() { done(); });
-          ctx.$rootScope.$digest();
-        });
-
-        it('should update current value', function() {
-          expect(variable.tags[0]).to.eq({tag: 'hostname', value: 'server2'});
-        });
-      });
+      // describe('and setting adhoc variable', function() {
+      //   var variable = {name: 'filters', type: 'adhoc'};
+      //
+      //   beforeEach(function(done) {
+      //     var dashboard = { templating: { list: [variable] } };
+      //     var urlParams = {};
+      //     urlParams["var-filters"] = "hostname|gt|server2";
+      //     ctx.$location.search = sinon.stub().returns(urlParams);
+      //     ctx.service.init(dashboard).then(function() { done(); });
+      //     ctx.$rootScope.$digest();
+      //   });
+      //
+      //   it('should update current value', function() {
+      //     expect(variable.tags[0]).to.eq({tag: 'hostname', value: 'server2'});
+      //   });
+      // });
     });
 
     describe('when template variable is present in url multiple times', function() {
