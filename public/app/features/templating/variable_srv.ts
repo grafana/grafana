@@ -34,7 +34,52 @@ export class VariableSrv {
       dashboard.templating.list.map(this.addVariable.bind(this));
       this.templateSrv.init(this.variables);
 
-      return this.$q.when();
+      var queryParams = this.$location.search();
+
+      for (let variable of this.variables) {
+        this.variableLock[variable.name] = this.$q.defer();
+      }
+
+      var promises = [];
+
+      for (let variable of this.variables) {
+        promises.push(this.processVariable(variable, queryParams));
+      }
+
+      return this.$q.all(this.variables.map(variable => {
+        return this.processVariable(variable, queryParams);
+      }));
+    }
+
+    processVariable(variable, queryParams) {
+      var dependencies = [];
+      var lock = this.variableLock[variable.name];
+
+      for (let otherVariable of this.variables) {
+        if (variable.dependsOn(otherVariable)) {
+          dependencies.push(this.variableLock[otherVariable.name].promise);
+        }
+      }
+
+      return this.$q.all(dependencies).then(() => {
+        var urlValue = queryParams['var-' + variable.name];
+        if (urlValue !== void 0) {
+          return variable.setValueFromUrl(urlValue).then(lock.resolve);
+        }
+
+        if (variable.refresh === 1 || variable.refresh === 2) {
+          return variable.updateOptions().then(() => {
+            // if (_.isEmpty(variable.current) && variable.options.length) {
+            //   self.setVariableValue(variable, variable.options[0]);
+            // }
+            lock.resolve();
+          });
+        }
+
+        lock.resolve();
+      }).finally(() => {
+        delete this.variableLock[variable.name];
+      });
     }
 
     addVariable(model) {
@@ -60,14 +105,13 @@ export class VariableSrv {
         return this.$q.when();
       }
 
+      // cascade updates to variables that use this variable
       var promises = _.map(this.variables, otherVariable => {
         if (otherVariable === variable) {
           return;
         }
 
-        if (this.templateSrv.containsVariable(otherVariable.regex, variable.name) ||
-            this.templateSrv.containsVariable(otherVariable.query, variable.name) ||
-              this.templateSrv.containsVariable(otherVariable.datasource, variable.name)) {
+        if (otherVariable.dependsOn(variable)) {
           return this.updateOptions(otherVariable);
         }
       });
@@ -101,7 +145,7 @@ export class VariableSrv {
 
     validateVariableSelectionState(variable) {
       if (!variable.current) {
-        if (!variable.options.length) { return Promise.resolve(); }
+        if (!variable.options.length) { return this.$q.when(); }
         return variable.setValue(variable.options[0]);
       }
 
@@ -129,6 +173,7 @@ export class VariableSrv {
         }
       }
     }
+
 }
 
 coreModule.service('variableSrv', VariableSrv);

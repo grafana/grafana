@@ -1,8 +1,9 @@
 define([
   'angular',
   'lodash',
+  'app/core/utils/kbn',
 ],
-function (angular, _) {
+function (angular, _, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -32,10 +33,6 @@ function (angular, _) {
       }
     };
 
-    function regexEscape(value) {
-      return value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&');
-    }
-
     function luceneEscape(value) {
       return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, "\\$1");
     }
@@ -61,10 +58,10 @@ function (angular, _) {
       switch(format) {
         case "regex": {
           if (typeof value === 'string') {
-            return regexEscape(value);
+            return kbn.regexEscape(value);
           }
 
-          var escapedValues = _.map(value, regexEscape);
+          var escapedValues = _.map(value, kbn.regexEscape);
           return '(' + escapedValues.join('|') + ')';
         }
         case "lucene": {
@@ -93,17 +90,6 @@ function (angular, _) {
       this._regex.lastIndex = 0;
       var match = this._regex.exec(expression);
       return match && (self._index[match[1] || match[2]] !== void 0);
-    };
-
-    this.containsVariable = function(str, variableName) {
-      if (!str) {
-        return false;
-      }
-
-      variableName = regexEscape(variableName);
-      var findVarRegex = new RegExp('\\$(' + variableName + ')(?:\\W|$)|\\[\\[(' + variableName + ')\\]\\]', 'g');
-      var match = findVarRegex.exec(str);
-      return match !== null;
     };
 
     this.highlightVariablesAsHtml = function(str) {

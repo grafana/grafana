@@ -3,7 +3,6 @@
 import angular from 'angular';
 import _ from 'lodash';
 import moment from 'moment';
-import kbn from 'app/core/utils/kbn';
 
 import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
@@ -41,6 +40,10 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return backendSrv.datasourceRequest(options);
   };
 
+  function prometheusSpecialRegexEscape(value) {
+    return value.replace(/[\\^$*+?.()|[\]{}]/g, '\\\\$&');
+  }
+
   this.interpolateQueryExpr = function(value, variable, defaultFormatFn) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
@@ -48,10 +51,10 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     }
 
     if (typeof value === 'string') {
-      return kbn.regexEscape(value);
+      return prometheusSpecialRegexEscape(value);
     }
 
-    var escapedValues = _.map(value, kbn.regexEscape);
+    var escapedValues = _.map(value, prometheusSpecialRegexEscape);
     return escapedValues.join('|');
   };
 

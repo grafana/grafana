@@ -43,6 +43,10 @@ export class IntervalVariable implements Variable {
       this.updateAutoValue();
     }
   }
+
+  dependsOn(variableName) {
+    return false;
+  }
 }
 
 variableConstructorMap['interval'] = IntervalVariable;

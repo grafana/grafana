@@ -4,7 +4,7 @@ import moment from 'moment';
 import helpers from 'test/specs/helpers';
 import '../all';
 
-describe.only('VariableSrv', function() {
+describe('VariableSrv', function() {
   var ctx = new helpers.ControllerTestContext();
 
   beforeEach(angularMocks.module('grafana.core'));
@@ -15,10 +15,57 @@ describe.only('VariableSrv', function() {
   beforeEach(angularMocks.inject(($rootScope, $q, $location, $injector) => {
     ctx.$q = $q;
     ctx.$rootScope = $rootScope;
+    ctx.$location = $location;
     ctx.variableSrv = $injector.get('variableSrv');
     ctx.variableSrv.init({templating: {list: []}});
     ctx.$rootScope.$digest();
   }));
+
+  function describeInitSceneario(desc, fn) {
+    describe(desc, function() {
+      var scenario: any = {
+        urlParams: {},
+        setup: setupFn => {
+          scenario.setupFn = setupFn;
+        }
+      };
+
+      beforeEach(function() {
+        scenario.setupFn();
+        var ds: any = {};
+        ds.metricFindQuery = sinon.stub().returns(ctx.$q.when(scenario.queryResult));
+        ctx.datasourceSrv.get = sinon.stub().returns(ctx.$q.when(ds));
+        ctx.datasourceSrv.getMetricSources = sinon.stub().returns(scenario.metricSources);
+
+        ctx.$location.search = sinon.stub().returns(scenario.urlParams);
+
+        ctx.dashboard = {templating: {list: scenario.variables}};
+        ctx.variableSrv.init(ctx.dashboard);
+        ctx.$rootScope.$digest();
+
+        scenario.variables = ctx.variableSrv.variables;
+      });
+
+      fn(scenario);
+    });
+  }
+
+  describeInitSceneario('when setting simple variable via url', scenario => {
+    scenario.setup(() => {
+      scenario.variables = [{
+        name: 'apps',
+        type: 'query',
+        current: {text: "test", value: "test"},
+        options: [{text: "test", value: "test"}]
+      }];
+      scenario.urlParams["var-apps"] = "new";
+    });
+
+    it('should update current value', () => {
+      expect(scenario.variables[0].current.value).to.be("new");
+      expect(scenario.variables[0].current.text).to.be("new");
+    });
+  });
 
   function describeUpdateVariable(desc, fn) {
     describe(desc, function() {
@@ -32,6 +79,8 @@ describe.only('VariableSrv', function() {
         var ds: any = {};
         ds.metricFindQuery = sinon.stub().returns(ctx.$q.when(scenario.queryResult));
         ctx.datasourceSrv.get = sinon.stub().returns(ctx.$q.when(ds));
+        ctx.datasourceSrv.getMetricSources = sinon.stub().returns(scenario.metricSources);
+
 
         scenario.variable = ctx.variableSrv.addVariable(scenario.variableModel);
         ctx.variableSrv.updateOptions(scenario.variable);
@@ -274,6 +323,114 @@ describe.only('VariableSrv', function() {
       });
     });
 
+    describeUpdateVariable('without sort', function(scenario) {
+      scenario.setup(function() {
+        scenario.variableModel = {type: 'query', query: 'apps.*', name: 'test', sort: 0};
+        scenario.queryResult = [{text: 'bbb2'}, {text: 'aaa10'}, { text: 'ccc3'}];
+      });
+
+      it('should return options without sort', function() {
+        expect(scenario.variable.options[0].text).to.be('bbb2');
+        expect(scenario.variable.options[1].text).to.be('aaa10');
+        expect(scenario.variable.options[2].text).to.be('ccc3');
+      });
+    });
+
+    describeUpdateVariable('with alphabetical sort (asc)', function(scenario) {
+      scenario.setup(function() {
+        scenario.variableModel = {type: 'query', query: 'apps.*', name: 'test', sort: 1};
+        scenario.queryResult = [{text: 'bbb2'}, {text: 'aaa10'}, { text: 'ccc3'}];
+      });
+
+      it('should return options with alphabetical sort', function() {
+        expect(scenario.variable.options[0].text).to.be('aaa10');
+        expect(scenario.variable.options[1].text).to.be('bbb2');
+        expect(scenario.variable.options[2].text).to.be('ccc3');
+      });
+    });
+
+    describeUpdateVariable('with alphabetical sort (desc)', function(scenario) {
+      scenario.setup(function() {
+        scenario.variableModel = {type: 'query', query: 'apps.*', name: 'test', sort: 2};
+        scenario.queryResult = [{text: 'bbb2'}, {text: 'aaa10'}, { text: 'ccc3'}];
+      });
+
+      it('should return options with alphabetical sort', function() {
+        expect(scenario.variable.options[0].text).to.be('ccc3');
+        expect(scenario.variable.options[1].text).to.be('bbb2');
+        expect(scenario.variable.options[2].text).to.be('aaa10');
+      });
+    });
+
+    describeUpdateVariable('with numerical sort (asc)', function(scenario) {
+      scenario.setup(function() {
+        scenario.variableModel = {type: 'query', query: 'apps.*', name: 'test', sort: 3};
+        scenario.queryResult = [{text: 'bbb2'}, {text: 'aaa10'}, { text: 'ccc3'}];
+      });
+
+      it('should return options with numerical sort', function() {
+        expect(scenario.variable.options[0].text).to.be('bbb2');
+        expect(scenario.variable.options[1].text).to.be('ccc3');
+        expect(scenario.variable.options[2].text).to.be('aaa10');
+      });
+    });
+
+    describeUpdateVariable('with numerical sort (desc)', function(scenario) {
+      scenario.setup(function() {
+        scenario.variableModel = {type: 'query', query: 'apps.*', name: 'test', sort: 4};
+        scenario.queryResult = [{text: 'bbb2'}, {text: 'aaa10'}, { text: 'ccc3'}];
+      });
+
+      it('should return options with numerical sort', function() {
+        expect(scenario.variable.options[0].text).to.be('aaa10');
+        expect(scenario.variable.options[1].text).to.be('ccc3');
+        expect(scenario.variable.options[2].text).to.be('bbb2');
+      });
+    });
+
+    //
+    // datasource variable update
+    //
+    describeUpdateVariable('datasource variable with regex filter', function(scenario) {
+      scenario.setup(function() {
+        scenario.variableModel = {
+          type: 'datasource',
+          query: 'graphite',
+          name: 'test',
+          current: {value: 'backend4_pee', text: 'backend4_pee'},
+          regex: '/pee$/'
+        };
+        scenario.metricSources = [
+          {name: 'backend1', meta: {id: 'influx'}},
+          {name: 'backend2_pee', meta: {id: 'graphite'}},
+          {name: 'backend3', meta: {id: 'graphite'}},
+          {name: 'backend4_pee', meta: {id: 'graphite'}},
+        ];
+      });
+
+      it('should set only contain graphite ds and filtered using regex', function() {
+        expect(scenario.variable.options.length).to.be(2);
+        expect(scenario.variable.options[0].value).to.be('backend2_pee');
+        expect(scenario.variable.options[1].value).to.be('backend4_pee');
+      });
+
+      it('should keep current value if available', function() {
+        expect(scenario.variable.current.value).to.be('backend4_pee');
+      });
+    });
+
+    //
+    // Custom variable update
+    //
+    describeUpdateVariable('update custom variable', function(scenario) {
+      scenario.setup(function() {
+        scenario.variableModel = {type: 'custom', query: 'hej, hop, asd', name: 'test'};
+      });
+
+      it('should update options array', function() {
+        expect(scenario.variable.options.length).to.be(3);
+        expect(scenario.variable.options[0].text).to.be('hej');
+        expect(scenario.variable.options[1].value).to.be('hop');
+      });
+    });
 });
-
-

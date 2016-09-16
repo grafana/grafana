@@ -10,7 +10,7 @@ function($, _, moment) {
   kbn.valueFormats = {};
 
   kbn.regexEscape = function(value) {
-    return value.replace(/[\\^$*+?.()|[\]{}]/g, '\\\\$&');
+    return value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&')
   };
 
   ///// HELPER FUNCTIONS /////

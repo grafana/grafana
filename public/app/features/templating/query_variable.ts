@@ -2,7 +2,7 @@
 
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {Variable} from './variable';
+import {Variable, containsVariable} from './variable';
 import {VariableSrv, variableConstructorMap} from './variable_srv';
 
 function getNoneOption() {
@@ -17,8 +17,9 @@ export class QueryVariable implements Variable {
   options: any;
   current: any;
   includeAll: boolean;
+  refresh: number;
 
-  constructor(private model, private datasourceSrv, private templateSrv, private variableSrv)  {
+  constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private $q)  {
     _.extend(this, model);
   }
 
@@ -31,6 +32,23 @@ export class QueryVariable implements Variable {
 
     this.variableSrv.selectOptionsForCurrentValue(this);
     return this.variableSrv.variableUpdated(this);
+  }
+
+  setValueFromUrl(urlValue) {
+    var promise = this.$q.when();
+
+    if (this.refresh) {
+      promise = this.updateOptions();
+    }
+
+    return promise.then(() => {
+      var option = _.find(this.options, op => {
+        return op.text === urlValue || op.value === urlValue;
+      });
+
+      option = option || { text: urlValue, value: urlValue };
+      return this.setValue(option);
+    });
   }
 
   updateOptions() {
@@ -102,23 +120,29 @@ export class QueryVariable implements Variable {
 
     var sortType = Math.ceil(sortOrder / 2);
     var reverseSort = (sortOrder % 2 === 0);
+
     if (sortType === 1) {
       options = _.sortBy(options, 'text');
     } else if (sortType === 2) {
       options = _.sortBy(options, function(opt) {
-        var matches = opt.text.match(new RegExp(".*?(\d+).*"));
-        if (!matches) {
-          return 0;
-        } else {
-          return parseInt(matches[1], 10);
-        }
+        var matches = opt.text.match(/.*?(\d+).*/);
+if (!matches) {
+  return 0;
+} else {
+  return parseInt(matches[1], 10);
+}
       });
     }
+
     if (reverseSort) {
       options = options.reverse();
     }
 
     return options;
+  }
+
+  dependsOn(variableName) {
+    return containsVariable(this.query, variableName) || containsVariable(this.datasource, variableName);
   }
 }
 
