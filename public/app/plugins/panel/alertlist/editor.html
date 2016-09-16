@@ -22,7 +22,14 @@
   </div>
 
   <div class="section gf-form-group" ng-if="ctrl.panel.show == 'changes'">
-    <!-- <h5 class="section-heading">Search options</h5> -->
+    <h5 class="section-heading">Time options</h5>
+    <gf-form-switch
+      class="gf-form"
+      label="Within time range"
+      label-class="width-11"
+      tooltip="Show alert changes within the dashboard time range"
+      checked="ctrl.panel.useTimeRange"
+      on-change="ctrl.onRender()"></gf-form-switch>
   </div>
 
   <div class="section gf-form-group" ng-if="ctrl.panel.show == 'current'">

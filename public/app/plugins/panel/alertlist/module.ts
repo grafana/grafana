@@ -24,7 +24,8 @@ class AlertListPanel extends PanelCtrl {
   panelDefaults = {
     show: 'current',
     limit: 10,
-    stateFilter: []
+    stateFilter: [],
+    useTimeRange: false
   };
 
   /** @ngInject */
@@ -70,6 +71,11 @@ class AlertListPanel extends PanelCtrl {
       type: 'alert',
       newState: this.panel.stateFilter
     };
+
+    if (this.panel.useTimeRange) {
+      params.from = dateMath.parse(this.dashboard.time.from).unix() * 1000;
+      params.to = dateMath.parse(this.dashboard.time.to).unix() * 1000;
+    }
 
     this.backendSrv.get(`/api/annotations`, params)
       .then(res => {
