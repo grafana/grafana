@@ -1,9 +1,6 @@
 define([
   'angular',
   'lodash',
-  './editorCtrl',
-  './variable_srv',
-  './templateValuesSrv',
 ],
 function (angular, _) {
   'use strict';
