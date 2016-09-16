@@ -2,6 +2,7 @@
 
 import angular from 'angular';
 import _ from 'lodash';
+import * as seriesUtil from 'app/core/utils/seriesutil';
 
 var module = angular.module('grafana.directives');
 
@@ -37,13 +38,12 @@ export class QueryRowCtrl {
   }
 
   getNextQueryLetter() {
-    var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    return _.find(letters, refId => {
+    return seriesUtil.seriesRefLetters(_.find(_.range(26*26), num => {
+      var refId = seriesUtil.seriesRefLetters(num);
       return _.every(this.panel.targets, function(other) {
         return other.refId !== refId;
       });
-    });
+    }));
   }
 
   toggleCollapse(init) {
