@@ -56,7 +56,7 @@
         var rootScope = body.injector().get('$rootScope');
         if (!rootScope) {return false;}
         var panelsToLoad = window.angular.element('div.panel').length - window.angular.element('div.panel-drop-zone').length;
-        return rootScope.performance.panelsRendered >= panelsToLoad;
+        return rootScope.panelsRendered >= panelsToLoad;
       });
 
       if (panelsRendered || tries === 1000) {
