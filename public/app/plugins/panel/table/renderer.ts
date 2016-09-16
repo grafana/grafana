@@ -82,6 +82,10 @@ export class TableRenderer {
   }
 
   formatColumnValue(colIndex, value) {
+    if (colIndex === -1) {
+      let style = { "type" : "string"};
+      return this.defaultCellFormater(value, style);
+    }
     if (this.formaters[colIndex]) {
       return this.formaters[colIndex](value);
     }
@@ -125,25 +129,47 @@ export class TableRenderer {
   render(page) {
     let pageSize = this.panel.pageSize || 100;
     let startPos = page * pageSize;
-    let endPos = Math.min(startPos + pageSize, this.table.rows.length);
     var html = "";
 
-    for (var y = startPos; y < endPos; y++) {
-      let row = this.table.rows[y];
-      let cellHtml = '';
-      let rowStyle = '';
-      for (var i = 0; i < this.table.columns.length; i++) {
-        cellHtml += this.renderCell(i, row[i], y === startPos);
-      }
+    if (this.panel.transpose) {
+      let endPos = Math.min(startPos + pageSize, this.table.columns.length);
 
-      if (this.colorState.row) {
-        rowStyle = ' style="background-color:' + this.colorState.row + ';color: white"';
-        this.colorState.row = null;
-      }
+      for (var y = startPos; y < endPos; y++) {
+        console.log(y);
+        let cellHtml = this.renderCell(-1, this.table.columns[y].text, false);
+        console.log(cellHtml);
+        let rowStyle = '';
 
-      html += '<tr ' + rowStyle + '>' + cellHtml + '</tr>';
+        for (var i = 0; i < this.table.rows.length; i++) {
+          cellHtml += this.renderCell(y, this.table.rows[i][y]);
+        }
+
+        if (this.colorState.row) {
+          rowStyle = ' style="background-color:' + this.colorState.row + ';color: white"';
+          this.colorState.row = null;
+        }
+
+        html += '<tr ' + rowStyle + '>' + cellHtml + '</tr>';
+      }
+    } else {
+      let endPos = Math.min(startPos + pageSize, this.table.rows.length);
+
+      for (var y = startPos; y < endPos; y++) {
+        let row = this.table.rows[y];
+        let cellHtml = '';
+        let rowStyle = '';
+        for (var i = 0; i < this.table.columns.length; i++) {
+          cellHtml += this.renderCell(i, row[i], y === startPos);
+        }
+
+        if (this.colorState.row) {
+          rowStyle = ' style="background-color:' + this.colorState.row + ';color: white"';
+          this.colorState.row = null;
+        }
+
+        html += '<tr ' + rowStyle + '>' + cellHtml + '</tr>';
+      }
     }
-
     return html;
   }
 
