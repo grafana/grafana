@@ -3,6 +3,13 @@
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 
+export interface Variable {
+  setValue(option);
+  updateOptions();
+  dependsOn(variable);
+  setValueFromUrl(urlValue);
+}
+
 export function containsVariable(...args: any[]) {
   var variableName = args[args.length-1];
   var str = args[0] || '';
@@ -17,12 +24,6 @@ export function containsVariable(...args: any[]) {
   return match !== null;
 }
 
-export interface Variable {
-  setValue(option);
-  updateOptions();
-  dependsOn(variable);
-  setValueFromUrl(urlValue);
-}
 
 
 

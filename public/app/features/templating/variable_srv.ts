@@ -29,9 +29,7 @@ export class VariableSrv {
     init(dashboard) {
       this.variableLock = {};
       this.dashboard = dashboard;
-      this.variables = [];
-
-      dashboard.templating.list.map(this.addVariable.bind(this));
+      this.variables = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
       this.templateSrv.init(this.variables);
 
       var queryParams = this.$location.search();
@@ -60,13 +58,9 @@ export class VariableSrv {
         if (urlValue !== void 0) {
           return variable.setValueFromUrl(urlValue).then(lock.resolve);
         }
+
         if (variable.refresh === 1 || variable.refresh === 2) {
-          return variable.updateOptions().then(() => {
-            // if (_.isEmpty(variable.current) && variable.options.length) {
-            //   self.setVariableValue(variable, variable.options[0]);
-            // }
-            lock.resolve();
-          });
+          return variable.updateOptions().then(lock.resolve);
         }
 
         lock.resolve();
@@ -75,17 +69,26 @@ export class VariableSrv {
       });
     }
 
-    addVariable(model) {
+    createVariableFromModel(model) {
       var ctor = variableConstructorMap[model.type];
       if (!ctor) {
         throw "Unable to find variable constructor for " + model.type;
       }
 
       var variable = this.$injector.instantiate(ctor, {model: model});
-      this.variables.push(variable);
-      this.dashboard.templating.list.push(model);
-
       return variable;
+    }
+
+    addVariable(model) {
+      var variable = this.createVariableFromModel(model);
+      this.variables.push(this.createVariableFromModel(variable));
+      return variable;
+    }
+
+    syncToDashboardModel() {
+      this.dashboard.templating.list = this.variables.map(variable => {
+        return variable.model;
+      });
     }
 
     updateOptions(variable) {
