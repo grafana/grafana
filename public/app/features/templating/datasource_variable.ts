@@ -11,11 +11,12 @@ export class DatasourceVariable implements Variable {
   options: any;
 
   /** @ngInject */
-  constructor(private model, private datasourceSrv) {
+  constructor(private model, private datasourceSrv, private variableSrv) {
     _.extend(this, model);
   }
 
   setValue(option) {
+    this.variableSrv.setOptionAsCurrent(this, option);
   }
 
   updateOptions() {
@@ -48,8 +49,12 @@ export class DatasourceVariable implements Variable {
     this.options = options;
   }
 
-  dependsOn(variableName) {
+  dependsOn(variable) {
     return false;
+  }
+
+  setValueFromUrl(urlValue) {
+    return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
 }
 

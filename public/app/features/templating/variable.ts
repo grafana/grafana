@@ -1,9 +1,14 @@
+///<reference path="../../headers/common.d.ts" />
 
+import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
 
-export function containsVariable(str, variableName) {
-  if (!str) {
-    return false;
+export function containsVariable(...args: any[]) {
+  var variableName = args[args.length-1];
+  var str = args[0] || '';
+
+  for (var i = 1; i < args.length-1; i++) {
+    str += args[i] || '';
   }
 
   variableName = kbn.regexEscape(variableName);
@@ -15,7 +20,8 @@ export function containsVariable(str, variableName) {
 export interface Variable {
   setValue(option);
   updateOptions();
-  dependsOn(variableName);
+  dependsOn(variable);
+  setValueFromUrl(urlValue);
 }
 
 

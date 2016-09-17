@@ -30,6 +30,12 @@ describe('containsVariable', function() {
       var contains = containsVariable('$env', 'env');
       expect(contains).to.be(true);
     });
+
+    it('should be able to pass in multiple test strings', function() {
+      var contains = containsVariable('asd','asd2.$env', 'env');
+      expect(contains).to.be(true);
+    });
+
   });
 
 });

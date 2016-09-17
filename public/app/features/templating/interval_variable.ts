@@ -13,17 +13,20 @@ export class IntervalVariable implements Variable {
   query: string;
 
   /** @ngInject */
-  constructor(private model, private timeSrv, private templateSrv) {
+  constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
     _.extend(this, model);
   }
 
   setValue(option) {
-    if (this.auto) {
-      this.updateAutoValue();
-    }
+    this.updateAutoValue();
+    this.variableSrv.setOptionAsCurrent(this, option);
   }
 
   updateAutoValue() {
+    if (!this.auto) {
+      return;
+    }
+
     // add auto option if missing
     if (this.options.length && this.options[0].text !== 'auto') {
       this.options.unshift({ text: 'auto', value: '$__auto_interval' });
@@ -44,8 +47,13 @@ export class IntervalVariable implements Variable {
     }
   }
 
-  dependsOn(variableName) {
+  dependsOn(variable) {
     return false;
+  }
+
+  setValueFromUrl(urlValue) {
+    this.updateAutoValue();
+    return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
 }
 

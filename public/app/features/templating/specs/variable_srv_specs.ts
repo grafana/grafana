@@ -21,52 +21,6 @@ describe('VariableSrv', function() {
     ctx.$rootScope.$digest();
   }));
 
-  function describeInitSceneario(desc, fn) {
-    describe(desc, function() {
-      var scenario: any = {
-        urlParams: {},
-        setup: setupFn => {
-          scenario.setupFn = setupFn;
-        }
-      };
-
-      beforeEach(function() {
-        scenario.setupFn();
-        var ds: any = {};
-        ds.metricFindQuery = sinon.stub().returns(ctx.$q.when(scenario.queryResult));
-        ctx.datasourceSrv.get = sinon.stub().returns(ctx.$q.when(ds));
-        ctx.datasourceSrv.getMetricSources = sinon.stub().returns(scenario.metricSources);
-
-        ctx.$location.search = sinon.stub().returns(scenario.urlParams);
-
-        ctx.dashboard = {templating: {list: scenario.variables}};
-        ctx.variableSrv.init(ctx.dashboard);
-        ctx.$rootScope.$digest();
-
-        scenario.variables = ctx.variableSrv.variables;
-      });
-
-      fn(scenario);
-    });
-  }
-
-  describeInitSceneario('when setting simple variable via url', scenario => {
-    scenario.setup(() => {
-      scenario.variables = [{
-        name: 'apps',
-        type: 'query',
-        current: {text: "test", value: "test"},
-        options: [{text: "test", value: "test"}]
-      }];
-      scenario.urlParams["var-apps"] = "new";
-    });
-
-    it('should update current value', () => {
-      expect(scenario.variables[0].current.value).to.be("new");
-      expect(scenario.variables[0].current.text).to.be("new");
-    });
-  });
-
   function describeUpdateVariable(desc, fn) {
     describe(desc, function() {
       var scenario: any = {};

@@ -24,31 +24,11 @@ export class QueryVariable implements Variable {
   }
 
   setValue(option){
-    this.current = _.cloneDeep(option);
-
-    if (_.isArray(this.current.text)) {
-      this.current.text = this.current.text.join(' + ');
-    }
-
-    this.variableSrv.selectOptionsForCurrentValue(this);
-    return this.variableSrv.variableUpdated(this);
+    this.variableSrv.setOptionAsCurrent(this, option);
   }
 
   setValueFromUrl(urlValue) {
-    var promise = this.$q.when();
-
-    if (this.refresh) {
-      promise = this.updateOptions();
-    }
-
-    return promise.then(() => {
-      var option = _.find(this.options, op => {
-        return op.text === urlValue || op.value === urlValue;
-      });
-
-      option = option || { text: urlValue, value: urlValue };
-      return this.setValue(option);
-    });
+    return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
 
   updateOptions() {
@@ -126,11 +106,11 @@ export class QueryVariable implements Variable {
     } else if (sortType === 2) {
       options = _.sortBy(options, function(opt) {
         var matches = opt.text.match(/.*?(\d+).*/);
-if (!matches) {
-  return 0;
-} else {
-  return parseInt(matches[1], 10);
-}
+        if (!matches) {
+          return 0;
+        } else {
+          return parseInt(matches[1], 10);
+        }
       });
     }
 
@@ -141,8 +121,8 @@ if (!matches) {
     return options;
   }
 
-  dependsOn(variableName) {
-    return containsVariable(this.query, variableName) || containsVariable(this.datasource, variableName);
+  dependsOn(variable) {
+    return containsVariable(this.query, this.datasource, variable.name);
   }
 }
 

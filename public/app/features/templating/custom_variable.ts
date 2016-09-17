@@ -11,11 +11,12 @@ export class CustomVariable implements Variable {
   includeAll: boolean;
 
   /** @ngInject */
-  constructor(private model, private timeSrv, private templateSrv) {
+  constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
     _.extend(this, model);
   }
 
   setValue(option) {
+    this.variableSrv.setOptionAsCurrent(this, option);
   }
 
   updateOptions() {
@@ -33,8 +34,12 @@ export class CustomVariable implements Variable {
     this.options.unshift({text: 'All', value: "$__all"});
   }
 
-  dependsOn(variableName) {
+  dependsOn(variable) {
     return false;
+  }
+
+  setValueFromUrl(urlValue) {
+    return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
 }
 

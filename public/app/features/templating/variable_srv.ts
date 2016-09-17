@@ -40,12 +40,6 @@ export class VariableSrv {
         this.variableLock[variable.name] = this.$q.defer();
       }
 
-      var promises = [];
-
-      for (let variable of this.variables) {
-        promises.push(this.processVariable(variable, queryParams));
-      }
-
       return this.$q.all(this.variables.map(variable => {
         return this.processVariable(variable, queryParams);
       }));
@@ -66,7 +60,6 @@ export class VariableSrv {
         if (urlValue !== void 0) {
           return variable.setValueFromUrl(urlValue).then(lock.resolve);
         }
-
         if (variable.refresh === 1 || variable.refresh === 2) {
           return variable.updateOptions().then(() => {
             // if (_.isEmpty(variable.current) && variable.options.length) {
@@ -174,6 +167,33 @@ export class VariableSrv {
       }
     }
 
+    setOptionFromUrl(variable, urlValue) {
+      var promise = this.$q.when();
+
+      if (variable.refresh) {
+        promise = variable.updateOptions();
+      }
+
+      return promise.then(() => {
+        var option = _.find(variable.options, op => {
+          return op.text === urlValue || op.value === urlValue;
+        });
+
+        option = option || {text: urlValue, value: urlValue};
+        return variable.setValue(option);
+      });
+    }
+
+    setOptionAsCurrent(variable, option) {
+      variable.current = _.cloneDeep(option);
+
+      if (_.isArray(variable.current.text)) {
+        variable.current.text = variable.current.text.join(' + ');
+      }
+
+      this.selectOptionsForCurrentValue(variable);
+      return this.variableUpdated(variable);
+    }
 }
 
 coreModule.service('variableSrv', VariableSrv);
