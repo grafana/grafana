@@ -312,5 +312,20 @@ describe('grafanaGraph', function() {
          expect(ctx.plotOptions.yaxes[0].max).to.be(0);
       });
     });
+    describe('and negative values used', function() {
+      ctx.setup(function(ctrl, data) {
+        ctrl.panel.yaxes[0].min = '-10';
+        ctrl.panel.yaxes[0].max = '-13.14';
+        data[0] = new TimeSeries({
+          datapoints: [[120,10],[160,20]],
+          alias: 'series1',
+        });
+      });
+
+      it('should set min and max to negative', function() {
+         expect(ctx.plotOptions.yaxes[0].min).to.be(-10);
+         expect(ctx.plotOptions.yaxes[0].max).to.be(-13.14);
+      });
+    });
   });
 });
