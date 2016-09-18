@@ -8,11 +8,15 @@ module.exports = function(config,grunt) {
 
     if (!grunt.file.exists(dest)){
 
-      var m=grunt.file.read(confDir+"location.js")
-      var src=/= \"([^\"]*)\"/.exec(m)[1];
+      src = config.phjs
 
-      if (!grunt.file.isPathAbsolute(src)) {
-        src = confDir+src;
+      if (!src){
+        var m=grunt.file.read(confDir+"location.js")
+        var src=/= \"([^\"]*)\"/.exec(m)[1];
+
+        if (!grunt.file.isPathAbsolute(src)) {
+          src = confDir+src;
+        }
       }
 
       try {
