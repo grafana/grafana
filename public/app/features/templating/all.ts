@@ -7,6 +7,7 @@ import {QueryVariable} from './query_variable';
 import {DatasourceVariable} from './datasource_variable';
 import {CustomVariable} from './custom_variable';
 import {ConstantVariable} from './constant_variable';
+import {AdhocVariable} from './adhoc_variable';
 
 export {
   VariableSrv,
@@ -15,4 +16,5 @@ export {
   DatasourceVariable,
   CustomVariable,
   ConstantVariable,
+  AdhocVariable,
 }
