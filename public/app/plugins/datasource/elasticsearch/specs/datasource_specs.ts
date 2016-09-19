@@ -1,4 +1,4 @@
-
+import _ from 'lodash';
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 import moment from 'moment';
 import angular from 'angular';
@@ -59,8 +59,8 @@ describe('ElasticDatasource', function() {
 
       ctx.ds.query({
         range: {
-          from: moment([2015, 4, 30, 10]),
-          to: moment([2015, 5, 1, 10])
+          from: moment.utc([2015, 4, 30, 10]),
+          to: moment.utc([2015, 5, 1, 10])
         },
         targets: [{ bucketAggs: [], metrics: [], query: 'escape\\:test' }]
       });
@@ -112,7 +112,103 @@ describe('ElasticDatasource', function() {
     });
   });
 
-  describe('When issuing aggregation query on es5.x', function() {
+  describe('When getting fields', function() {
+    var requestOptions, parts, header;
+
+    beforeEach(function() {
+      createDatasource({url: 'http://es.com', index: 'metricbeat'});
+
+      ctx.backendSrv.datasourceRequest = function(options) {
+        requestOptions = options;
+        return ctx.$q.when({data: {
+          metricbeat: {
+            mappings: {
+              metricsets: {
+                _all: {},
+                properties: {
+                  '@timestamp': {type: 'date'},
+                  beat: {
+                    properties: {
+                      name: {type: 'string'},
+                      hostname: {type: 'string'},
+                    }
+                  },
+                  system: {
+                    properties: {
+                      cpu: {
+                        properties: {
+                          system: {type: 'float'},
+                          user: {type: 'float'},
+                        }
+                      },
+                      process: {
+                        properties: {
+                          cpu: {
+                            properties: {
+                              total: {type: 'float'}
+                            }
+                          },
+                          name: {type: 'string'},
+                        }
+                      },
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }});
+      };
+    });
+
+    it('should return nested fields', function() {
+      ctx.ds.getFields({
+        find: 'fields',
+        query: '*'
+      }).then((fieldObjects) => {
+        var fields = _.map(fieldObjects, 'text');
+        expect(fields).to.eql([
+          '@timestamp',
+          'beat.name',
+          'beat.hostname',
+          'system.cpu.system',
+          'system.cpu.user',
+          'system.process.cpu.total',
+          'system.process.name'
+        ]);
+      });
+      ctx.$rootScope.$apply();
+    });
+
+    it('should return fields related to query type', function() {
+      ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+        type: 'number'
+      }).then((fieldObjects) => {
+        var fields = _.map(fieldObjects, 'text');
+        expect(fields).to.eql([
+          'system.cpu.system',
+          'system.cpu.user',
+          'system.process.cpu.total'
+        ]);
+      });
+
+      ctx.ds.getFields({
+        find: 'fields',
+        query: '*',
+        type: 'date'
+      }).then((fieldObjects) => {
+        var fields = _.map(fieldObjects, 'text');
+        expect(fields).to.eql([
+          '@timestamp'
+        ]);
+      });
+
+      ctx.$rootScope.$apply();
+    });
+
+ describe('When issuing aggregation query on es5.x', function() {
     var requestOptions, parts, header;
 
     beforeEach(function() {
@@ -183,7 +279,7 @@ describe('ElasticDatasource', function() {
 
     it('should not set terms aggregation size to 0', function() {
       expect(body['aggs']['1']['terms'].size).to.not.be(0);
-    });
+
   });
 
 });

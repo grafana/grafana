@@ -35,6 +35,17 @@
   page.open(params.url, function (status) {
     // console.log('Loading a web page: ' + params.url + ' status: ' + status);
 
+    page.onError = function(msg, trace) {
+      var msgStack = ['ERROR: ' + msg];
+      if (trace && trace.length) {
+        msgStack.push('TRACE:');
+        trace.forEach(function(t) {
+          msgStack.push(' -> ' + t.file + ': ' + t.line + (t.function ? ' (in function "' + t.function +'")' : ''));
+        });
+      }
+      console.error(msgStack.join('\n'));
+    };
+
     function checkIsReady() {
       var panelsRendered = page.evaluate(function() {
         if (!window.angular) { return false; }

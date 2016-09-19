@@ -48,6 +48,11 @@ a.text-success:hover,
 a.text-success:focus { color: darken($successText, 10%); }
 a { cursor: pointer; }
 
+a[disabled] {
+  cursor: default;
+  pointer-events: none !important;
+}
+
 .text-left           { text-align: left; }
 .text-right          { text-align: right; }
 .text-center         { text-align: center; }

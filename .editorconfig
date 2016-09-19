@@ -2,7 +2,7 @@
 root = true
 
 [*.go]
-indent_style = tabs
+indent_style = tab
 indent_size = 2
 charset = utf-8
 trim_trailing_whitespace = true

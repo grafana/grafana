@@ -115,6 +115,13 @@
       margin-right: $spacer/2;
     }
   }
+
+  .modal-content-confirm-text {
+    margin-bottom: 2rem;
+    span {
+      text-align: center;
+    }
+  }
 }
 
 .share-modal-body {

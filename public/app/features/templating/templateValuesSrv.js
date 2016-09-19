@@ -11,6 +11,7 @@ function (angular, _, $, kbn) {
 
   module.service('templateValuesSrv', function($q, $rootScope, datasourceSrv, $location, templateSrv, timeSrv) {
     var self = this;
+    this.variableLock = {};
 
     function getNoneOption() { return { text: 'None', value: '', isNone: true }; }
 
@@ -18,7 +19,7 @@ function (angular, _, $, kbn) {
     $rootScope.onAppEvent('refresh', function() {
 
       // look for interval variables
-      var intervalVariable = _.findWhere(self.variables, { type: 'interval' });
+      var intervalVariable = _.find(self.variables, { type: 'interval' });
       if (intervalVariable) {
         self.updateAutoInterval(intervalVariable);
       }
@@ -101,6 +102,8 @@ function (angular, _, $, kbn) {
         } else {
           lock.resolve();
         }
+      }).finally(function() {
+        delete self.variableLock[variable.name];
       });
     };
 
@@ -135,7 +138,7 @@ function (angular, _, $, kbn) {
       templateSrv.setGrafanaVariable('$__auto_interval', interval);
     };
 
-    this.setVariableValue = function(variable, option, initPhase) {
+    this.setVariableValue = function(variable, option) {
       variable.current = angular.copy(option);
 
       if (_.isArray(variable.current.text)) {
@@ -145,13 +148,7 @@ function (angular, _, $, kbn) {
       self.selectOptionsForCurrentValue(variable);
       templateSrv.updateTemplateData();
 
-      // on first load, variable loading is ordered to ensure
-      // that parents are updated before children.
-      if (initPhase) {
-        return $q.when();
-      }
-
-      return self.updateOptionsInChildVariables(variable);
+      return this.updateOptionsInChildVariables(variable);
     };
 
     this.variableUpdated = function(variable) {
@@ -160,11 +157,18 @@ function (angular, _, $, kbn) {
     };
 
     this.updateOptionsInChildVariables = function(updatedVariable) {
+      // if there is a variable lock ignore cascading update because we are in a boot up scenario
+      if (self.variableLock[updatedVariable.name]) {
+        return $q.when();
+      }
+
       var promises = _.map(self.variables, function(otherVariable) {
         if (otherVariable === updatedVariable) {
           return;
         }
-        if (templateSrv.containsVariable(otherVariable.query, updatedVariable.name) ||
+        if ((otherVariable.type === "datasource" &&
+            templateSrv.containsVariable(otherVariable.regex, updatedVariable.name)) ||
+            templateSrv.containsVariable(otherVariable.query, updatedVariable.name) ||
             templateSrv.containsVariable(otherVariable.datasource, updatedVariable.name)) {
           return self.updateOptions(otherVariable);
         }
@@ -286,7 +290,7 @@ function (angular, _, $, kbn) {
 
         return self.setVariableValue(variable, selected, false);
       } else {
-        var currentOption = _.findWhere(variable.options, {text: variable.current.text});
+        var currentOption = _.find(variable.options, {text: variable.current.text});
         if (currentOption) {
           return self.setVariableValue(variable, currentOption, false);
         } else {
@@ -338,7 +342,7 @@ function (angular, _, $, kbn) {
 
     this.metricNamesToVariableValues = function(variable, metricNames) {
       var regex, options, i, matches;
-      options = {}; // use object hash to remove duplicates
+      options = [];
 
       if (variable.regex) {
         regex = kbn.stringToJsRegex(templateSrv.replace(variable.regex));
@@ -366,14 +370,41 @@ function (angular, _, $, kbn) {
           }
         }
 
-        options[value] = {text: text, value: value};
+        options.push({text: text, value: value});
       }
 
-      return _.sortBy(options, 'text');
+      options = _.uniq(options, 'value');
+      return this.sortVariableValues(options, variable.sort);
     };
 
     this.addAllOption = function(variable) {
       variable.options.unshift({text: 'All', value: "$__all"});
+    };
+
+    this.sortVariableValues = function(options, sortOrder) {
+      if (sortOrder === 0) {
+        return options;
+      }
+
+      var sortType = Math.ceil(sortOrder / 2);
+      var reverseSort = (sortOrder % 2 === 0);
+      if (sortType === 1) {
+        options = _.sortBy(options, 'text');
+      } else if (sortType === 2) {
+        options = _.sortBy(options, function(opt) {
+          var matches = opt.text.match(/.*?(\d+).*/);
+          if (!matches) {
+            return 0;
+          } else {
+            return parseInt(matches[1], 10);
+          }
+        });
+      }
+      if (reverseSort) {
+        options = options.reverse();
+      }
+
+      return options;
     };
 
   });

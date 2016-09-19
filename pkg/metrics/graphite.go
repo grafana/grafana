@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -23,12 +24,25 @@ func CreateGraphitePublisher() (*GraphitePublisher, error) {
 		return nil, nil
 	}
 
+	address := graphiteSection.Key("address").String()
+	if address == "" {
+		return nil, nil
+	}
+
 	publisher := &GraphitePublisher{}
 	publisher.prevCounts = make(map[string]int64)
 	publisher.protocol = "tcp"
-	publisher.address = graphiteSection.Key("address").MustString("localhost:2003")
-	publisher.prefix = graphiteSection.Key("prefix").MustString("service.grafana.%(instance_name)s")
+	publisher.prefix = graphiteSection.Key("prefix").MustString("prod.grafana.%(instance_name)s")
+	publisher.address = address
 
+	safeInstanceName := strings.Replace(setting.InstanceName, ".", "_", -1)
+	prefix := graphiteSection.Key("prefix").Value()
+
+	if prefix == "" {
+		prefix = "prod.grafana.%(instance_name)s."
+	}
+
+	publisher.prefix = strings.Replace(prefix, "%(instance_name)s", safeInstanceName, -1)
 	return publisher, nil
 }
 

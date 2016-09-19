@@ -47,10 +47,11 @@ var (
 	BuildStamp   int64
 
 	// Paths
-	LogsPath    string
-	HomePath    string
-	DataPath    string
-	PluginsPath string
+	LogsPath       string
+	HomePath       string
+	DataPath       string
+	PluginsPath    string
+	CustomInitPath = "conf/custom.ini"
 
 	// Log settings.
 	LogModes   []string
@@ -140,11 +141,21 @@ var (
 	// QUOTA
 	Quota QuotaSettings
 
+	// Alerting
+	AlertingEnabled bool
+
 	// logger
 	logger log.Logger
 
 	// Grafana.NET URL
 	GrafanaNetUrl string
+
+	// S3 temp image store
+	S3TempImageStoreBucketUrl string
+	S3TempImageStoreAccessKey string
+	S3TempImageStoreSecretKey string
+
+	ImageUploadProvider string
 )
 
 type CommandLineArgs struct {
@@ -180,7 +191,12 @@ func ToAbsUrl(relativeUrl string) string {
 
 func shouldRedactKey(s string) bool {
 	uppercased := strings.ToUpper(s)
-	return strings.Contains(uppercased, "PASSWORD") || strings.Contains(uppercased, "SECRET")
+	return strings.Contains(uppercased, "PASSWORD") || strings.Contains(uppercased, "SECRET") || strings.Contains(uppercased, "PROVIDER_CONFIG")
+}
+
+func shouldRedactURLKey(s string) bool {
+	uppercased := strings.ToUpper(s)
+	return strings.Contains(uppercased, "DATABASE_URL")
 }
 
 func applyEnvVariableOverrides() {
@@ -196,6 +212,17 @@ func applyEnvVariableOverrides() {
 				key.SetValue(envValue)
 				if shouldRedactKey(envKey) {
 					envValue = "*********"
+				}
+				if shouldRedactURLKey(envKey) {
+					u, _ := url.Parse(envValue)
+					ui := u.User
+					if ui != nil {
+						_, exists := ui.Password()
+						if exists {
+							u.User = url.UserPassword(ui.Username(), "-redacted-")
+							envValue = u.String()
+						}
+					}
 				}
 				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, envValue))
 			}
@@ -286,7 +313,7 @@ func evalConfigValues() {
 
 func loadSpecifedConfigFile(configFile string) error {
 	if configFile == "" {
-		configFile = filepath.Join(HomePath, "conf/custom.ini")
+		configFile = filepath.Join(HomePath, CustomInitPath)
 		// return without error if custom file does not exist
 		if !pathExists(configFile) {
 			return nil
@@ -518,6 +545,9 @@ func NewConfigContext(args *CommandLineArgs) error {
 	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
 	LdapConfigFile = ldapSec.Key("config_file").String()
 
+	alerting := Cfg.Section("alerting")
+	AlertingEnabled = alerting.Key("enabled").MustBool(false)
+
 	readSessionConfig()
 	readSmtpSettings()
 	readQuotaSettings()
@@ -528,6 +558,8 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	GrafanaNetUrl = Cfg.Section("grafana.net").Key("url").MustString("https://grafana.net")
 
+	imageUploadingSection := Cfg.Section("external_image_storage")
+	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("internal")
 	return nil
 }
 

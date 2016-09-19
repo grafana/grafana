@@ -51,7 +51,7 @@ export class PluginEditCtrl {
         this.tabIndex = 1;
         this.tabs.push('Config');
 
-        this.hasDashboards = _.findWhere(result.includes, {type: 'dashboard'});
+        this.hasDashboards = _.find(result.includes, {type: 'dashboard'});
         if (this.hasDashboards) {
           this.tabs.push('Dashboards');
         }

@@ -30,7 +30,6 @@ export class TimePickerCtrl {
   constructor(private $scope, private $rootScope, private timeSrv) {
     $scope.ctrl = this;
 
-    $rootScope.onAppEvent('zoom-out', () => this.zoom(2), $scope);
     $rootScope.onAppEvent('shift-time-forward', () => this.move(1), $scope);
     $rootScope.onAppEvent('shift-time-backward', () => this.move(-1), $scope);
     $rootScope.onAppEvent('refresh', () => this.init(), $scope);
@@ -47,7 +46,7 @@ export class TimePickerCtrl {
     this.firstDayOfWeek = moment.localeData().firstDayOfWeek();
 
     var time = angular.copy(this.timeSrv.timeRange());
-    var timeRaw = angular.copy(this.timeSrv.timeRange(false));
+    var timeRaw = angular.copy(time.raw);
 
     if (!this.dashboard.isTimezoneUtc()) {
       time.from.local();
@@ -75,21 +74,7 @@ export class TimePickerCtrl {
   }
 
   zoom(factor) {
-    var range = this.timeSrv.timeRange();
-
-    var timespan = (range.to.valueOf() - range.from.valueOf());
-    var center = range.to.valueOf() - timespan/2;
-
-    var to = (center + (timespan*factor)/2);
-    var from = (center - (timespan*factor)/2);
-
-    if (to > Date.now() && range.to <= Date.now()) {
-      var offset = to - Date.now();
-      from = from - offset;
-      to = Date.now();
-    }
-
-    this.timeSrv.setTime({from: moment.utc(from), to: moment.utc(to) });
+    this.$rootScope.appEvent('zoom-out', 2);
   }
 
   move(direction) {

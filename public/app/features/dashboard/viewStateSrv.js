@@ -107,9 +107,17 @@ function (angular, _, $) {
       this.dashboard.meta.fullscreen = this.state.fullscreen;
 
       if (!this.state.fullscreen) {
-        this.state.panelId = null;
         this.state.fullscreen = null;
         this.state.edit = null;
+        // clear panel id unless in solo mode
+        if (!this.dashboard.meta.soloMode) {
+          this.state.panelId = null;
+        }
+      }
+
+      // if no edit state cleanup tab parm
+      if (!this.state.edit) {
+        delete this.state.tab;
       }
 
       $location.search(this.serializeToUrl());
@@ -120,25 +128,28 @@ function (angular, _, $) {
       if (this.panelScopes.length === 0) { return; }
 
       if (this.dashboard.meta.fullscreen) {
-        if (this.fullscreenPanel) {
-          this.leaveFullscreen(false);
-        }
         var panelScope = this.getPanelScope(this.state.panelId);
-        // panel could be about to be created/added and scope does
-        // not exist yet
         if (!panelScope) {
           return;
+        }
+
+        if (this.fullscreenPanel) {
+          // if already fullscreen
+          if (this.fullscreenPanel === panelScope) {
+            return;
+          } else {
+            this.leaveFullscreen(false);
+          }
         }
 
         if (!panelScope.ctrl.editModeInitiated) {
           panelScope.ctrl.initEditMode();
         }
 
-        this.enterFullscreen(panelScope);
-        return;
-      }
-
-      if (this.fullscreenPanel) {
+        if (!panelScope.ctrl.fullscreen) {
+          this.enterFullscreen(panelScope);
+        }
+      } else if (this.fullscreenPanel) {
         this.leaveFullscreen(true);
       }
     };
@@ -193,11 +204,13 @@ function (angular, _, $) {
       var self = this;
       self.panelScopes.push(panelScope);
 
-      if (self.state.panelId === panelScope.ctrl.panel.id) {
-        if (self.state.edit) {
-          panelScope.ctrl.editPanel();
-        } else {
-          panelScope.ctrl.viewPanel();
+      if (!self.dashboard.meta.soloMode) {
+        if (self.state.panelId === panelScope.ctrl.panel.id) {
+          if (self.state.edit) {
+            panelScope.ctrl.editPanel();
+          } else {
+            panelScope.ctrl.viewPanel();
+          }
         }
       }
 

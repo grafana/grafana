@@ -5,6 +5,7 @@ define([
   'lodash',
   'app/core/utils/kbn',
   './graph_tooltip',
+  './threshold_manager',
   'jquery.flot',
   'jquery.flot.selection',
   'jquery.flot.time',
@@ -14,7 +15,7 @@ define([
   'jquery.flot.crosshair',
   './jquery.flot.events',
 ],
-function (angular, $, moment, _, kbn, GraphTooltip) {
+function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
   'use strict';
 
   var module = angular.module('grafana.directives');
@@ -33,6 +34,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         var legendSideLastValue = null;
         var rootScope = scope.$root;
         var panelWidth = 0;
+        var thresholdManager = new thresholdManExports.ThresholdManager(ctrl);
 
         rootScope.onAppEvent('setCrosshair', function(event, info) {
           // do not need to to this if event is from this panel
@@ -59,7 +61,6 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
         ctrl.events.on('render', function(renderData) {
           data = renderData || data;
           if (!data) {
-            ctrl.refresh();
             return;
           }
           annotations = data.annotations || annotations;
@@ -155,6 +156,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
             rightLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[1].label, rightLabel) / 2) + 'px';
           }
+
+          thresholdManager.draw(plot);
         }
 
         function processOffsetHook(plot, gridMargin) {
@@ -171,6 +174,9 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           if (shouldAbortRender()) {
             return;
           }
+
+          // give space to alert editing
+          thresholdManager.prepare(elem, data);
 
           var stack = panel.stack ? true : null;
 
@@ -242,7 +248,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           }
 
           addTimeAxis(options);
-          addGridThresholds(options, panel);
+          thresholdManager.addPlotOptions(options, panel);
           addAnnotations(options);
           configureAxisOptions(data, options);
 
@@ -251,12 +257,15 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           function callPlot(incrementRenderCounter) {
             try {
               $.plot(elem, sortedSeries, options);
-              delete ctrl.error;
-              delete ctrl.inspector;
+              if (ctrl.renderError) {
+                delete ctrl.error;
+                delete ctrl.inspector;
+              }
             } catch (e) {
               console.log('flotcharts error', e);
               ctrl.error = e.message || "Render Error";
-              ctrl.inspector = {error: ctrl.error};
+              ctrl.renderError = true;
+              ctrl.inspector = {error: e};
             }
 
             if (incrementRenderCounter) {
@@ -305,51 +314,98 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           };
         }
 
-        function addGridThresholds(options, panel) {
-          if (_.isNumber(panel.grid.threshold1)) {
-            var limit1 = panel.grid.thresholdLine ? panel.grid.threshold1 : (panel.grid.threshold2 || null);
-            options.grid.markings.push({
-              yaxis: { from: panel.grid.threshold1, to: limit1 },
-              color: panel.grid.threshold1Color
-            });
-
-            if (_.isNumber(panel.grid.threshold2)) {
-              var limit2;
-              if (panel.grid.thresholdLine) {
-                limit2 = panel.grid.threshold2;
-              } else {
-                limit2 = panel.grid.threshold1 > panel.grid.threshold2 ?  -Infinity : +Infinity;
-              }
-              options.grid.markings.push({
-                yaxis: { from: panel.grid.threshold2, to: limit2 },
-                color: panel.grid.threshold2Color
-              });
-            }
-          }
-        }
-
         function addAnnotations(options) {
           if(!annotations || annotations.length === 0) {
             return;
           }
 
           var types = {};
+          for (var i = 0; i < annotations.length; i++) {
+            var item = annotations[i];
 
-          _.each(annotations, function(event) {
-            if (!types[event.annotation.name]) {
-              types[event.annotation.name] = {
-                color: event.annotation.iconColor,
+            if (!types[item.source.name]) {
+              types[item.source.name] = {
+                color: item.source.iconColor,
                 position: 'BOTTOM',
                 markerSize: 5,
               };
             }
-          });
+          }
 
           options.events = {
             levels: _.keys(types).length + 1,
             data: annotations,
             types: types,
           };
+        }
+
+        //Override min/max to provide more flexible autoscaling
+        function autoscaleSpanOverride(yaxis, data, options) {
+          var expr;
+          if (yaxis.min != null && data != null) {
+            expr = parseThresholdExpr(yaxis.min);
+            options.min = autoscaleYAxisMin(expr, data.stats);
+          }
+          if (yaxis.max != null && data != null) {
+            expr = parseThresholdExpr(yaxis.max);
+            options.max = autoscaleYAxisMax(expr, data.stats);
+          }
+        }
+
+        function parseThresholdExpr(expr) {
+          var match, operator, value, precision;
+          match = expr.match(/\s*([<=>~]*)\W*(\d+(\.\d+)?)/);
+          if (match) {
+            operator = match[1];
+            value = parseFloat(match[2]);
+            //Precision based on input
+            precision = match[3] ? match[3].length - 1 : 0;
+            return {
+              operator: operator,
+              value: value,
+              precision: precision
+            };
+          } else {
+            return undefined;
+          }
+        }
+
+        function autoscaleYAxisMax(expr, dataStats) {
+          var operator = expr.operator,
+              value = expr.value,
+              precision = expr.precision;
+          if (operator === ">") {
+            return dataStats.max < value ? value : null;
+          } else if (operator === "<") {
+            return dataStats.max > value ? value : null;
+          } else if (operator === "~") {
+            return kbn.roundValue(dataStats.avg + value, precision);
+          } else if (operator === "=") {
+            return kbn.roundValue(dataStats.current + value, precision);
+          } else if (!operator && !isNaN(value)) {
+            return kbn.roundValue(value, precision);
+          } else {
+            return null;
+          }
+        }
+
+        function autoscaleYAxisMin(expr, dataStats) {
+          var operator = expr.operator,
+              value = expr.value,
+              precision = expr.precision;
+          if (operator === ">") {
+            return dataStats.min < value ? value : null;
+          } else if (operator === "<") {
+            return dataStats.min > value ? value : null;
+          } else if (operator === "~") {
+            return kbn.roundValue(dataStats.avg - value, precision);
+          } else if (operator === "=") {
+            return kbn.roundValue(dataStats.current - value, precision);
+          } else if (!operator && !isNaN(value)) {
+            return kbn.roundValue(value, precision);
+          } else {
+            return null;
+          }
         }
 
         function configureAxisOptions(data, options) {
@@ -362,9 +418,10 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             max: panel.percentage && panel.stack ? 100 : panel.yaxes[0].max,
           };
 
+          autoscaleSpanOverride(panel.yaxes[0], data[0], defaults);
           options.yaxes.push(defaults);
 
-          if (_.findWhere(data, {yaxis: 2})) {
+          if (_.find(data, {yaxis: 2})) {
             var secondY = _.clone(defaults);
             secondY.index = 2,
             secondY.show = panel.yaxes[1].show;
@@ -372,6 +429,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             secondY.position = 'right';
             secondY.min = panel.yaxes[1].min;
             secondY.max = panel.percentage && panel.stack ? 100 : panel.yaxes[1].max;
+            autoscaleSpanOverride(panel.yaxes[1], data[1], secondY);
             options.yaxes.push(secondY);
 
             applyLogScale(options.yaxes[1], data);

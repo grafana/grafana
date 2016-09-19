@@ -76,7 +76,7 @@ The IP address to bind to. If empty will bind to all interfaces
 The port to bind to, defaults to `3000`. To use port 80 you need to
 either give the Grafana binary permission for example:
 
-    $ sudo setcap 'cap_net_bind_service=+ep' /opt/grafana/current/grafana
+    $ sudo setcap 'cap_net_bind_service=+ep' /usr/sbin/grafana-server
 
 Or redirect port 80 to the Grafana port using:
 
@@ -87,6 +87,8 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 ### protocol
 
 `http` or `https`
+
+> **Note** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
 
 ### domain
 
@@ -274,9 +276,10 @@ example:
     scopes = user:email
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
-    api_url = https://api.github.com
+    api_url = https://api.github.com/user
     allow_sign_up = false
     team_ids =
+    allowed_organizations =
 
 Restart the Grafana back-end. You should now see a GitHub login button
 on the login page. You can now login or sign up with your GitHub
@@ -303,6 +306,24 @@ Grafana instance. For example:
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
     allow_sign_up = false
+
+### allowed_organizations
+
+Require an active organization membership for at least one of the given
+organizations on GitHub. If the authenticated user isn't a member of at least
+one of the organizations they will not be able to register or authenticate with
+your Grafana instance. For example
+
+    [auth.github]
+    enabled = true
+    client_id = YOUR_GITHUB_APP_CLIENT_ID
+    client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
+    scopes = user:email,read:org
+    auth_url = https://github.com/login/oauth/authorize
+    token_url = https://github.com/login/oauth/access_token
+    allow_sign_up = false
+    # space-delimited organization names
+    allowed_organizations = github google
 
 <hr>
 
@@ -338,6 +359,23 @@ You may allow users to sign-up via Google authentication by setting the
 `allow_sign_up` option to `true`. When this option is set to `true`, any
 user successfully authenticating via Google authentication will be
 automatically signed up.
+
+## [auth.generic_oauth]
+
+This option could be used if have your own oauth service.
+
+This callback URL must match the full HTTP address that you use in your
+browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
+
+    [auth.generic_oauth]
+    enabled = true
+    client_id = YOUR_APP_CLIENT_ID
+    client_secret = YOUR_APP_CLIENT_SECRET
+    scopes =
+    auth_url =
+    token_url =
+    allowed_domains = mycompany.com mycompany.org
+    allow_sign_up = false
 
 <hr>
 
@@ -390,7 +428,7 @@ session provider you have configured.
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
 - **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=disable
 - **memcache:** ex:  127.0.0.1:11211
-- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,db=grafana`
+- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`
 
 If you use MySQL or Postgres as the session store you need to create the
 session table manually.
@@ -466,7 +504,7 @@ Enable metrics reporting. defaults true. Available via HTTP API `/api/metrics`.
 
 ### interval_seconds
 
-Flush/Write interval when sending metrics to external TSDB. Defaults to 60s.
+Flush/Write interval when sending metrics to external TSDB. Defaults to 10s.
 
 ## [metrics.graphite]
 Include this section if you want to send internal Grafana metrics to Graphite.
@@ -477,3 +515,13 @@ Format `<Hostname or ip>`:port
 ### prefix
 Graphite metric prefix. Defaults to `prod.grafana.%(instance_name)s.`
 
+## [snapshots]
+
+### external_enabled
+Set to false to disable external snapshot publish endpoint (default true)
+
+### external_snapshot_url
+Set root url to a Grafana instance where you want to publish external snapshots (defaults to https://snapshots-origin.raintank.io)
+
+### external_snapshot_name
+Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`

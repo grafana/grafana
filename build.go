@@ -34,7 +34,7 @@ var (
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
 )
 
-const minGoVersion = 1.3
+const minGoVersion = 1.7
 
 func main() {
 	log.SetOutput(os.Stdout)
@@ -308,8 +308,8 @@ func grunt(params ...string) {
 }
 
 func setup() {
-	runPrint("go", "get", "-v", "github.com/tools/godep")
-	runPrint("go", "get", "-v", "github.com/blang/semver")
+	runPrint("go", "get", "-v", "github.com/kardianos/govendor")
+  runPrint("go", "get", "-v", "github.com/blang/semver")
 	runPrint("go", "get", "-v", "github.com/mattn/go-sqlite3")
 	runPrint("go", "install", "-v", "github.com/mattn/go-sqlite3")
 }
@@ -366,7 +366,6 @@ func rmr(paths ...string) {
 }
 
 func clean() {
-	rmr("bin", "Godeps/_workspace/pkg", "Godeps/_workspace/bin")
 	rmr("dist")
 	rmr("tmp")
 	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/grafana", goos, goarch)))
@@ -383,13 +382,6 @@ func setBuildEnv() {
 	if goarch == "386" {
 		os.Setenv("GO386", "387")
 	}
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Println("Warning: can't determine current dir:", err)
-		log.Println("Build might not work as expected")
-	}
-	os.Setenv("GOPATH", fmt.Sprintf("%s%c%s", filepath.Join(wd, "Godeps", "_workspace"), os.PathListSeparator, os.Getenv("GOPATH")))
-	log.Println("GOPATH=" + os.Getenv("GOPATH"))
 }
 
 func getGitSha() string {

@@ -16,6 +16,7 @@ export default class InfluxDatasource {
   name: string;
   database: any;
   basicAuth: any;
+  withCredentials: any;
   interval: any;
   supportAnnotations: boolean;
   supportMetrics: boolean;
@@ -33,6 +34,7 @@ export default class InfluxDatasource {
     this.name = instanceSettings.name;
     this.database = instanceSettings.database;
     this.basicAuth = instanceSettings.basicAuth;
+    this.withCredentials = instanceSettings.withCredentials;
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
     this.supportAnnotations = true;
     this.supportMetrics = true;
@@ -187,6 +189,9 @@ export default class InfluxDatasource {
     };
 
     options.headers = options.headers || {};
+    if (this.basicAuth || this.withCredentials) {
+      options.withCredentials = true;
+    }
     if (self.basicAuth) {
       options.headers.Authorization = self.basicAuth;
     }

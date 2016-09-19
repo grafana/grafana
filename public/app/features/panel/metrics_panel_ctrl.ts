@@ -80,6 +80,8 @@ class MetricsPanelCtrl extends PanelCtrl {
     delete this.error;
     this.loading = true;
 
+    this.updateTimeRange();
+
     // load datasource service
     this.setTimeQueryStart();
     this.datasourceSrv.get(this.panel.datasource)
@@ -100,6 +102,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     });
   }
 
+
   setTimeQueryStart() {
     this.timing.queryStart = new Date().getTime();
   }
@@ -110,7 +113,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   updateTimeRange() {
     this.range = this.timeSrv.timeRange();
-    this.rangeRaw = this.timeSrv.timeRange(false);
+    this.rangeRaw = this.range.raw;
 
     this.applyPanelTimeOverrides();
 
@@ -169,7 +172,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   };
 
   issueQueries(datasource) {
-    this.updateTimeRange();
     this.datasource = datasource;
 
     if (!this.panel.targets || this.panel.targets.length === 0) {
@@ -244,7 +246,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (datasource.meta.mixed) {
       _.each(this.panel.targets, target => {
         target.datasource = this.panel.datasource;
-        if (target.datasource === null) {
+        if (!target.datasource) {
           target.datasource = config.defaultDatasource;
         }
       });

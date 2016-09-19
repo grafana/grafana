@@ -3,6 +3,7 @@
 import './graph';
 import './legend';
 import './series_overrides_ctrl';
+import './thresholds_form';
 
 import template from './template';
 import angular from 'angular';
@@ -10,8 +11,9 @@ import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
+import config from 'app/core/config';
 import * as fileExport from 'app/core/utils/file_export';
-import {MetricsPanelCtrl} from 'app/plugins/sdk';
+import {MetricsPanelCtrl, alertTab} from 'app/plugins/sdk';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -25,6 +27,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   datapointsOutside: boolean;
   datapointsWarning: boolean;
   colors: any = [];
+  subTabIndex: number;
 
   panelDefaults = {
     // datasource name, null = default datasource
@@ -51,12 +54,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     ],
     xaxis: {
       show: true
-    },
-    grid          : {
-      threshold1: null,
-      threshold2: null,
-      threshold1Color: 'rgba(216, 200, 27, 0.27)',
-      threshold2Color: 'rgba(234, 112, 112, 0.22)'
     },
     // show/hide lines
     lines         : true,
@@ -104,6 +101,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     aliasColors: {},
     // other style overrides
     seriesOverrides: [],
+    thresholds: [],
   };
 
   /** @ngInject */
@@ -112,7 +110,6 @@ class GraphCtrl extends MetricsPanelCtrl {
 
     _.defaults(this.panel, this.panelDefaults);
     _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
-    _.defaults(this.panel.grid, this.panelDefaults.grid);
     _.defaults(this.panel.legend, this.panelDefaults.legend);
 
     this.colors = $scope.$root.colors;
@@ -130,6 +127,10 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
     this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
 
+    if (config.alertingEnabled) {
+      this.addEditorTab('Alert', alertTab, 5);
+    }
+
     this.logScales = {
       'linear': 1,
       'log (base 2)': 2,
@@ -137,7 +138,9 @@ class GraphCtrl extends MetricsPanelCtrl {
       'log (base 32)': 32,
       'log (base 1024)': 1024
     };
+
     this.unitFormats = kbn.getUnitFormats();
+    this.subTabIndex = 0;
   }
 
   onInitPanelActions(actions) {
@@ -152,16 +155,24 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   issueQueries(datasource) {
-    this.annotationsPromise = this.annotationsSrv.getAnnotations(this.dashboard);
+    this.annotationsPromise = this.annotationsSrv.getAnnotations({
+      dashboard: this.dashboard,
+      panel: this.panel,
+      range: this.range,
+    });
     return super.issueQueries(datasource);
   }
 
   zoomOut(evt) {
-    this.publishAppEvent('zoom-out', evt);
+    this.publishAppEvent('zoom-out', 2);
   }
 
   onDataSnapshotLoad(snapshotData) {
-    this.annotationsPromise = this.annotationsSrv.getAnnotations(this.dashboard);
+    this.annotationsPromise = this.annotationsSrv.getAnnotations({
+      dashboard: this.dashboard,
+      panel: this.panel,
+      range: this.range,
+    });
     this.onDataReceived(snapshotData);
   }
 
@@ -280,7 +291,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   toggleAxis(info) {
-    var override = _.findWhere(this.panel.seriesOverrides, {alias: info.alias});
+    var override = _.find(this.panel.seriesOverrides, {alias: info.alias});
     if (!override) {
       override = { alias: info.alias };
       this.panel.seriesOverrides.push(override);
@@ -304,6 +315,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.refresh();
   }
 
+
   legendValuesOptionChanged() {
     var legend = this.panel.legend;
     legend.values = legend.min || legend.max || legend.avg || legend.current || legend.total;
@@ -317,6 +329,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   exportCsvColumns() {
     fileExport.exportSeriesListToCsvColumns(this.seriesList);
   }
+
 }
 
 export {GraphCtrl, GraphCtrl as PanelCtrl}

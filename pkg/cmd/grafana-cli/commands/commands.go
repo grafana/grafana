@@ -14,7 +14,7 @@ func runCommand(command func(commandLine CommandLine) error) func(context *cli.C
 		cmd := &contextCommandLine{context}
 		if err := command(cmd); err != nil {
 			logger.Errorf("\n%s: ", color.RedString("Error"))
-			logger.Errorf("%s\n\n", err)
+			logger.Errorf("%s %s\n\n", color.RedString("✗"), err)
 
 			cmd.ShowHelp()
 			os.Exit(1)
@@ -27,12 +27,16 @@ func runCommand(command func(commandLine CommandLine) error) func(context *cli.C
 var pluginCommands = []cli.Command{
 	{
 		Name:   "install",
-		Usage:  "install <plugin id>",
+		Usage:  "install <plugin id> <plugin version (optional)>",
 		Action: runCommand(installCommand),
 	}, {
 		Name:   "list-remote",
 		Usage:  "list remote available plugins",
 		Action: runCommand(listremoteCommand),
+	}, {
+		Name:   "list-versions",
+		Usage:  "list-versions <plugin id>",
+		Action: runCommand(listversionsCommand),
 	}, {
 		Name:    "update",
 		Usage:   "update <plugin id>",
