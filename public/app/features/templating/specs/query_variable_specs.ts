@@ -10,7 +10,7 @@ describe('QueryVariable', function() {
       var variable = new QueryVariable({}, null, null, null, null);
       expect(variable.datasource).to.be(null);
       expect(variable.refresh).to.be(0);
-      expect(variable.sort).to.be(1);
+      expect(variable.sort).to.be(0);
       expect(variable.name).to.be('');
       expect(variable.hide).to.be(0);
       expect(variable.options.length).to.be(0);

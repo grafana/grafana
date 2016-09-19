@@ -1,26 +1,16 @@
-define([
-  'angular',
-  'lodash',
-],
-function (angular, _) {
-  'use strict';
+///<reference path="../../headers/common.d.ts" />
 
-  var module = angular.module('grafana.controllers');
+import angular from 'angular';
+import _ from 'lodash';
+import $ from 'jquery';
+import kbn from 'app/core/utils/kbn';
+import coreModule from 'app/core/core_module';
+import appEvents from 'app/core/app_events';
 
-  module.controller('TemplateEditorCtrl', function($scope, datasourceSrv, variableSrv) {
+export class VariableEditorCtrl {
 
-    var replacementDefaults = {
-      type: 'query',
-      datasource: null,
-      refresh: 0,
-      sort: 0,
-      name: '',
-      hide: 0,
-      options: [],
-      includeAll: false,
-      multi: false,
-    };
-
+  /** @ngInject */
+  constructor(private $scope, private datasourceSrv, private variableSrv) {
     $scope.variableTypes = [
       {value: "query",      text: "Query"},
       {value: "adhoc",      text: "Ad hoc filters"},
@@ -53,15 +43,13 @@ function (angular, _) {
     $scope.init = function() {
       $scope.mode = 'list';
 
-      $scope.datasourceTypes = {};
       $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
-        $scope.datasourceTypes[ds.meta.id] = {text: ds.meta.name, value: ds.meta.id};
         return !ds.meta.builtIn && ds.value !== null;
       });
 
-      $scope.datasourceTypes = _.map($scope.datasourceTypes, function(value) {
-        return value;
-      });
+      $scope.datasourceTypes = _($scope.datasources).uniqBy('meta.id').map(function(ds) {
+        return {text: ds.meta.name, value: ds.meta.id};
+      }).value();
 
       $scope.variables = variableSrv.variables;
       $scope.reset();
@@ -69,17 +57,6 @@ function (angular, _) {
       $scope.$watch('mode', function(val) {
         if (val === 'new') {
           $scope.reset();
-        }
-      });
-
-      $scope.$watch('current.datasource', function(val) {
-        if ($scope.mode === 'new') {
-          datasourceSrv.get(val).then(function(ds) {
-            if (ds.meta.defaultMatchFormat) {
-              $scope.current.allFormat = ds.meta.defaultMatchFormat;
-              $scope.current.multiFormat = ds.meta.defaultMatchFormat;
-            }
-          });
         }
       });
     };
@@ -123,17 +100,11 @@ function (angular, _) {
       $scope.current = variable;
       $scope.currentIsNew = false;
       $scope.mode = 'edit';
-
-      $scope.current.sort = $scope.current.sort || replacementDefaults.sort;
-      if ($scope.current.datasource === void 0) {
-        $scope.current.datasource = null;
-        $scope.current.type = 'query';
-        $scope.current.allFormat = 'glob';
-      }
     };
 
     $scope.duplicate = function(variable) {
-      $scope.current = angular.copy(variable);
+      var clone = _.cloneDeep(variable.getModel());
+      $scope.current = variableSrv.createVariableFromModel(clone);
       $scope.variables.push($scope.current);
       $scope.current.name = 'copy_of_'+variable.name;
       $scope.updateSubmenuVisibility();
@@ -150,7 +121,7 @@ function (angular, _) {
 
     $scope.reset = function() {
       $scope.currentIsNew = true;
-      $scope.current = angular.copy(replacementDefaults);
+      $scope.current = variableSrv.createVariableFromModel({type: 'query'});
     };
 
     $scope.showSelectionOptions = function() {
@@ -165,27 +136,38 @@ function (angular, _) {
       return false;
     };
 
-    $scope.typeChanged = function () {
-      if ($scope.current.type === 'interval') {
-        $scope.current.query = '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d';
-        $scope.current.refresh = 0;
+    $scope.typeChanged = function() {
+      var old = $scope.current;
+      $scope.current = variableSrv.createVariableFromModel({type: $scope.current.type});
+      $scope.current.name = old.name;
+      $scope.current.hide = old.hide;
+      $scope.current.label = old.label;
+
+      var oldIndex = _.indexOf(this.variables, old);
+      if (oldIndex !== -1) {
+        this.variables[oldIndex] = $scope.current;
       }
 
-      if ($scope.current.type === 'query') {
-        $scope.current.query = '';
-      }
-
-      if ($scope.current.type === 'constant') {
-        $scope.current.query = '';
-        $scope.current.refresh = 0;
-        $scope.current.hide = 2;
-      }
-
-      if ($scope.current.type === 'datasource') {
-        $scope.current.query = $scope.datasourceTypes[0].value;
-        $scope.current.regex = '';
-        $scope.current.refresh = 1;
-      }
+      // if ($scope.current.type === 'interval') {
+      //   $scope.current.query = '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d';
+      //   $scope.current.refresh = 0;
+      // }
+      //
+      // if ($scope.current.type === 'query') {
+      //   $scope.current.query = '';
+      // }
+      //
+      // if ($scope.current.type === 'constant') {
+      //   $scope.current.query = '';
+      //   $scope.current.refresh = 0;
+      //   $scope.current.hide = 2;
+      // }
+      //
+      // if ($scope.current.type === 'datasource') {
+      //   $scope.current.query = $scope.datasourceTypes[0].value;
+      //   $scope.current.regex = '';
+      //   $scope.current.refresh = 1;
+      // }
     };
 
     $scope.removeVariable = function(variable) {
@@ -194,6 +176,8 @@ function (angular, _) {
       $scope.updateSubmenuVisibility();
     };
 
-  });
+  }
+}
 
-});
+coreModule.controller('VariableEditorCtrl', VariableEditorCtrl);
+

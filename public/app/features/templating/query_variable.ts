@@ -26,7 +26,7 @@ export class QueryVariable implements Variable {
     type: 'query',
     query: '',
     regex: '',
-    sort: 1,
+    sort: 0,
     datasource: null,
     refresh: 0,
     hide: 0,

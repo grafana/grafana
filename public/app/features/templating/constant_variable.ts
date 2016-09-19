@@ -11,9 +11,9 @@ export class ConstantVariable implements Variable {
   defaults = {
     type: 'constant',
     name: '',
-    query: '',
     hide: 2,
-    refresh: 0,
+    label: '',
+    query: '',
   };
 
   /** @ngInject */
@@ -33,6 +33,7 @@ export class ConstantVariable implements Variable {
   updateOptions() {
     this.options = [{text: this.query.trim(), value: this.query.trim()}];
     this.setValue(this.options[0]);
+    return Promise.resolve();
   }
 
   dependsOn(variable) {

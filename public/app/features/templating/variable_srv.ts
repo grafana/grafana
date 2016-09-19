@@ -2,10 +2,7 @@
 
 import angular from 'angular';
 import _ from 'lodash';
-import $ from 'jquery';
-import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
-import appEvents from 'app/core/app_events';
 import {Variable} from './variable';
 
 export var variableConstructorMap: any = {};

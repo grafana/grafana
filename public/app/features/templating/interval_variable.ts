@@ -2,7 +2,7 @@
 
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {Variable} from './variable';
+import {Variable, assignModelProperties} from './variable';
 import {VariableSrv, variableConstructorMap} from './variable_srv';
 
 export class IntervalVariable implements Variable {
@@ -12,9 +12,27 @@ export class IntervalVariable implements Variable {
   auto: boolean;
   query: string;
 
+  defaults = {
+    type: 'interval',
+    name: '',
+    hide: 0,
+    label: '',
+    options: [],
+    current: {text: '', value: ''},
+    query: '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d',
+    auto: false,
+    auto_min: '10s',
+    auto_count: 30,
+  };
+
   /** @ngInject */
   constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
-    _.extend(this, model);
+    assignModelProperties(this, model, this.defaults);
+  }
+
+  getModel() {
+    assignModelProperties(this.model, this, this.defaults);
+    return this.model;
   }
 
   setValue(option) {

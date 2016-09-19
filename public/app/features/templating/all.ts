@@ -1,5 +1,5 @@
 import './templateSrv';
-import './editorCtrl';
+import './editor_ctrl';
 
 import {VariableSrv} from './variable_srv';
 import {IntervalVariable} from './interval_variable';

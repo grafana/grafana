@@ -2,7 +2,7 @@
 
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {Variable} from './variable';
+import {Variable, assignModelProperties} from './variable';
 import {VariableSrv, variableConstructorMap} from './variable_srv';
 
 export class DatasourceVariable implements Variable {
@@ -10,9 +10,25 @@ export class DatasourceVariable implements Variable {
   query: string;
   options: any;
 
+ defaults = {
+    type: 'datasource',
+    name: '',
+    hide: 0,
+    label: '',
+    current: {text: '', value: ''}
+    regex: '',
+    options: [],
+    query: '',
+  };
+
   /** @ngInject */
   constructor(private model, private datasourceSrv, private variableSrv) {
-    _.extend(this, model);
+    assignModelProperties(this, model, this.defaults);
+  }
+
+  getModel() {
+    assignModelProperties(this.model, this, this.defaults);
+    return this.model;
   }
 
   setValue(option) {
