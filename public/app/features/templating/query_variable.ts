@@ -2,7 +2,7 @@
 
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {Variable, containsVariable} from './variable';
+import {Variable, containsVariable, assignModelProperties} from './variable';
 import {VariableSrv, variableConstructorMap} from './variable_srv';
 
 function getNoneOption() {
@@ -16,11 +16,36 @@ export class QueryVariable implements Variable {
   sort: any;
   options: any;
   current: any;
-  includeAll: boolean;
   refresh: number;
+  hide: number;
+  name: string;
+  multi: boolean;
+  includeAll: boolean;
+
+  defaults = {
+    type: 'query',
+    query: '',
+    regex: '',
+    sort: 1,
+    datasource: null,
+    refresh: 0,
+    hide: 0,
+    name: '',
+    multi: false,
+    includeAll: false,
+    options: [],
+    current: {text: '', value: ''},
+  };
 
   constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private $q)  {
-    _.extend(this, model);
+    // copy model properties to this instance
+    assignModelProperties(this, model, this.defaults);
+  }
+
+  getModel() {
+    // copy back model properties to model
+    assignModelProperties(this.model, this, this.defaults);
+    return this.model;
   }
 
   setValue(option){

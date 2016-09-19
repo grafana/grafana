@@ -1,6 +1,6 @@
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 
-import {containsVariable} from '../variable';
+import {containsVariable, assignModelProperties} from '../variable';
 
 describe('containsVariable', function() {
 
@@ -36,6 +36,23 @@ describe('containsVariable', function() {
       expect(contains).to.be(true);
     });
 
+  });
+
+});
+
+describe('assignModelProperties', function() {
+
+  it('only set properties defined in defaults', function() {
+    var target: any = {test: 'asd'};
+    assignModelProperties(target, {propA: 1, propB: 2}, {propB: 0});
+    expect(target.propB).to.be(2);
+    expect(target.test).to.be('asd');
+  });
+
+  it('use default value if not found on source', function() {
+    var target: any = {test: 'asd'};
+    assignModelProperties(target, {propA: 1, propB: 2}, {propC: 10});
+    expect(target.propC).to.be(10);
   });
 
 });

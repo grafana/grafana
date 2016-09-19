@@ -13,7 +13,7 @@ function (angular, _) {
       type: 'query',
       datasource: null,
       refresh: 0,
-      sort: 1,
+      sort: 0,
       name: '',
       hide: 0,
       options: [],
@@ -37,7 +37,7 @@ function (angular, _) {
     ];
 
     $scope.sortOptions = [
-      {value: 0, text: "Without Sort"},
+      {value: 0, text: "Query sort"},
       {value: 1, text: "Alphabetical (asc)"},
       {value: 2, text: "Alphabetical (desc)"},
       {value: 3, text: "Numerical (asc)"},

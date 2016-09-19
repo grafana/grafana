@@ -1,16 +1,29 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import {Variable} from './variable';
+import {Variable, assignModelProperties} from './variable';
 import {VariableSrv, variableConstructorMap} from './variable_srv';
 
 export class ConstantVariable implements Variable {
   query: string;
   options: any[];
 
+  defaults = {
+    type: 'constant',
+    name: '',
+    query: '',
+    hide: 2,
+    refresh: 0,
+  };
+
   /** @ngInject */
   constructor(private model, private variableSrv) {
-    _.extend(this, model);
+    assignModelProperties(this, model, this.defaults);
+  }
+
+  getModel() {
+    assignModelProperties(this.model, this, this.defaults);
+    return this.model;
   }
 
   setValue(option) {

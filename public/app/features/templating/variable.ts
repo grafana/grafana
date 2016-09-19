@@ -8,6 +8,14 @@ export interface Variable {
   updateOptions();
   dependsOn(variable);
   setValueFromUrl(urlValue);
+  getModel();
+}
+
+
+export function assignModelProperties(target, source, defaults) {
+  _.forEach(defaults, function(value, key) {
+    target[key] = source[key] === undefined ? value : source[key];
+  });
 }
 
 export function containsVariable(...args: any[]) {
