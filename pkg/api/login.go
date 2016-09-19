@@ -27,6 +27,7 @@ func LoginView(c *middleware.Context) {
 
 	viewData.Settings["googleAuthEnabled"] = setting.OAuthService.Google
 	viewData.Settings["githubAuthEnabled"] = setting.OAuthService.GitHub
+	viewData.Settings["grafanaNetAuthEnabled"] = setting.OAuthService.GrafanaNet
 	viewData.Settings["genericOAuthEnabled"] = setting.OAuthService.Generic
 	viewData.Settings["oauthProviderName"] = setting.OAuthService.OAuthProviderName
 	viewData.Settings["disableUserSignUp"] = !setting.AllowUserSignUp

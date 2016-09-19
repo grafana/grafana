@@ -59,10 +59,13 @@
 						<i class="fa fa-github"></i>
 						with Github
 					</a>
+					<a class="btn btn-large btn-grafana-net" href="login/grafananet" target="_self" ng-if="grafanaNetAuthEnabled">
+						with <span>Grafana.net</span>
+					</a>
 					<a class="btn btn-large btn-generic-oauth" href="login/generic_oauth" target="_self" ng-if="genericOAuthEnabled">
 						<i class="fa fa-gear"></i>
-            with {{oauthProviderName || "OAuth 2"}}
-          </a>
+						with {{oauthProviderName || "OAuth 2"}}
+					</a>
 				</div>
 			</div>
 

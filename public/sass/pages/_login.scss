@@ -112,6 +112,19 @@
     background: #555;
     color: white;
   }
+
+  .btn-grafana-net {
+    background: url(../img/grafana_net_logo.svg);
+    background-size: 10rem;
+    background-repeat: no-repeat;
+    background-position: right 35%;
+    overflow: hidden;
+    padding-right: 10.5rem;
+
+    span {
+      display: none;
+    }
+  }
 }
 
 .password-recovery {
@@ -157,7 +170,7 @@
 .invite-box {
   text-align: center;
   border: 1px solid $tight-form-func-bg;
-	background-color: $panel-bg;
+  background-color: $panel-bg;
   max-width: 800px;
   margin-left: auto;
   margin-right: auto;
