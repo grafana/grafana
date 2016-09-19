@@ -14,7 +14,7 @@ class AlertListPanel extends PanelCtrl {
 
   showOptions = [
     {text: 'Current state', value: 'current'},
-    {text: 'State changes', value: 'changes'}
+    {text: 'Recent state changes', value: 'changes'}
   ];
 
   stateFilter: any = {};
