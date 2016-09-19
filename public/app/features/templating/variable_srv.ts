@@ -3,9 +3,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
-import {Variable} from './variable';
-
-export var variableConstructorMap: any = {};
+import {Variable, variableTypes} from './variable';
 
 export class VariableSrv {
   dashboard: any;
@@ -85,7 +83,7 @@ export class VariableSrv {
   }
 
   createVariableFromModel(model) {
-    var ctor = variableConstructorMap[model.type];
+    var ctor = variableTypes[model.type].ctor;
     if (!ctor) {
       throw "Unable to find variable constructor for " + model.type;
     }

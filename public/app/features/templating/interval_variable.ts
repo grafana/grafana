@@ -2,8 +2,8 @@
 
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {Variable, assignModelProperties} from './variable';
-import {VariableSrv, variableConstructorMap} from './variable_srv';
+import {Variable, assignModelProperties, variableTypes} from './variable';
+import {VariableSrv} from './variable_srv';
 
 export class IntervalVariable implements Variable {
   auto_count: number;
@@ -77,4 +77,8 @@ export class IntervalVariable implements Variable {
   }
 }
 
-variableConstructorMap['interval'] = IntervalVariable;
+variableTypes['interval'] = {
+  name: 'Interval',
+  ctor: IntervalVariable,
+  description: 'Define a timespan interval (ex 1m, 1h, 1d)',
+};

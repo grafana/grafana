@@ -11,6 +11,7 @@ export interface Variable {
   getModel();
 }
 
+export var variableTypes = {};
 
 export function assignModelProperties(target, source, defaults) {
   _.forEach(defaults, function(value, key) {

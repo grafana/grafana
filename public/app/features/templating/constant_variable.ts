@@ -1,8 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import {Variable, assignModelProperties} from './variable';
-import {VariableSrv, variableConstructorMap} from './variable_srv';
+import {Variable, assignModelProperties, variableTypes} from './variable';
+import {VariableSrv} from './variable_srv';
 
 export class ConstantVariable implements Variable {
   query: string;
@@ -45,4 +45,8 @@ export class ConstantVariable implements Variable {
   }
 }
 
-variableConstructorMap['constant'] = ConstantVariable;
+variableTypes['constant'] = {
+  name: 'Constant',
+  ctor: ConstantVariable,
+  description: 'Define a hidden constant variable, useful for metric prefixes in dashboards you want to share' ,
+};

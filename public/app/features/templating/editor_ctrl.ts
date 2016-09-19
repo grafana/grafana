@@ -1,24 +1,14 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
-import $ from 'jquery';
-import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
-import appEvents from 'app/core/app_events';
+import {variableTypes} from './variable';
 
 export class VariableEditorCtrl {
 
   /** @ngInject */
   constructor(private $scope, private datasourceSrv, private variableSrv, templateSrv) {
-    $scope.variableTypes = [
-      {value: "query",      text: "Query"},
-      {value: "adhoc",      text: "Ad hoc filters"},
-      {value: "interval",   text: "Interval"},
-      {value: "datasource", text: "Data source"},
-      {value: "custom",     text: "Custom"},
-      {value: "constant",   text: "Constant"},
-    ];
+    $scope.variableTypes = variableTypes;
 
     $scope.refreshOptions = [
       {value: 0, text: "Never"},

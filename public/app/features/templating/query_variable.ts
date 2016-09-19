@@ -2,8 +2,8 @@
 
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {Variable, containsVariable, assignModelProperties} from './variable';
-import {VariableSrv, variableConstructorMap} from './variable_srv';
+import {Variable, containsVariable, assignModelProperties, variableTypes} from './variable';
+import {VariableSrv} from './variable_srv';
 
 function getNoneOption() {
   return { text: 'None', value: '', isNone: true };
@@ -36,8 +36,6 @@ export class QueryVariable implements Variable {
     options: [],
     current: {text: '', value: ''},
   };
-
-  supportsMulti = true;
 
   constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private $q)  {
     // copy model properties to this instance
@@ -151,4 +149,9 @@ export class QueryVariable implements Variable {
   }
 }
 
-variableConstructorMap['query'] = QueryVariable;
+variableTypes['query'] = {
+  name: 'Query',
+  ctor: QueryVariable,
+  description: 'Variable values are fetched from a datasource query',
+  supportsMulti: true,
+};

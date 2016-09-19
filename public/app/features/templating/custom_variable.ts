@@ -2,8 +2,8 @@
 
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {Variable, assignModelProperties} from './variable';
-import {VariableSrv, variableConstructorMap} from './variable_srv';
+import {Variable, assignModelProperties, variableTypes} from './variable';
+import {VariableSrv} from './variable_srv';
 
 export class CustomVariable implements Variable {
   query: string;
@@ -23,9 +23,7 @@ export class CustomVariable implements Variable {
     multi: false,
   };
 
-  supportsMulti = true;
-
-  /** @ngInject */
+  /** @ngInject **/
   constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
@@ -65,4 +63,9 @@ export class CustomVariable implements Variable {
   }
 }
 
-variableConstructorMap['custom'] = CustomVariable;
+variableTypes['custom'] = {
+  name: 'Custom',
+  ctor: CustomVariable,
+  description: 'Define variable values manually' ,
+  supportsMulti: true,
+};

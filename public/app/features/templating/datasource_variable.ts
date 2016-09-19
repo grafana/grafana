@@ -2,8 +2,8 @@
 
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {Variable, assignModelProperties} from './variable';
-import {VariableSrv, variableConstructorMap} from './variable_srv';
+import {Variable, assignModelProperties, variableTypes} from './variable';
+import {VariableSrv} from './variable_srv';
 
 export class DatasourceVariable implements Variable {
   regex: any;
@@ -75,4 +75,8 @@ export class DatasourceVariable implements Variable {
   }
 }
 
-variableConstructorMap['datasource'] = DatasourceVariable;
+variableTypes['datasource'] = {
+  name: 'Datasource',
+  ctor: DatasourceVariable,
+  description: 'Enabled you to dynamically switch the datasource for multiple panels',
+};

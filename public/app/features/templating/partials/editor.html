@@ -82,21 +82,11 @@
 						<span class="gf-form-label width-6">
               Type
               <info-popover mode="right-normal">
-                <dl>
-                  <dt>Query</dt>
-                  <dd>Variable values are fetched from a metric names query to a data source</dd>
-                  <dt>Interval</dt>
-                  <dd>Timespan variable type</dd>
-                  <dt>Datasource</dt>
-                  <dd>Dynamically switch data sources using this type of variable</dd>
-                  <dt>Custom</dt>
-                  <dd>Define variable values manually</dd>
-                </dl>
-                <a href="http://docs.grafana.org/reference/templating" target="_blank">Templating docs</a>
+								{{variableTypes[current.type].description}}
               </info-popover>
             </span>
 						<div class="gf-form-select-wrapper max-width-17">
-							<select class="gf-form-input" ng-model="current.type" ng-options="f.value as f.text for f in variableTypes" ng-change="typeChanged()"></select>
+							<select class="gf-form-input" ng-model="current.type" ng-options="k as v.name for (k, v) in variableTypes" ng-change="typeChanged()"></select>
 						</div>
 					</div>
         </div>
@@ -215,26 +205,26 @@
 					<label class="gf-form-label width-12">Type</label>
 					<div class="gf-form-select-wrapper max-width-18">
 						<select class="gf-form-input" ng-model="current.query" ng-options="f.value as f.text for f in datasourceTypes" ng-change="runQuery()"></select>
-					</div>
-				</div>
+          </div>
+        </div>
 
-				<div class="gf-form">
-					<label class="gf-form-label width-12">
-						Instance name filter
-						<info-popover mode="right-normal">
-							Regex filter for which data source instances to choose from in
-							the variable value dropdown. Leave empty for all.
-							<br><br>
-							Example: <code>/^prod/</code>
+        <div class="gf-form">
+          <label class="gf-form-label width-12">
+            Instance name filter
+            <info-popover mode="right-normal">
+              Regex filter for which data source instances to choose from in
+              the variable value dropdown. Leave empty for all.
+              <br><br>
+              Example: <code>/^prod/</code>
 
-						</info-popover>
-					</label>
-					<input type="text" class="gf-form-input max-width-18" ng-model='current.regex' placeholder="/.*-(.*)-.*/" ng-model-onblur ng-change="runQuery()"></input>
-				</div>
-			</div>
+            </info-popover>
+          </label>
+          <input type="text" class="gf-form-input max-width-18" ng-model='current.regex' placeholder="/.*-(.*)-.*/" ng-model-onblur ng-change="runQuery()"></input>
+        </div>
+      </div>
 
 			<div ng-show="current.type === 'adhoc'" class="gf-form-group">
-				<h5 class="section-heading">Options</h5>
+        <h5 class="section-heading">Options</h5>
 
 				<div class="gf-form max-width-21">
 					<span class="gf-form-label width-8">Data source</span>
@@ -242,58 +232,58 @@
 						<select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"></select>
 					</div>
 				</div>
-			</div>
+      </div>
 
-			<div class="section gf-form-group" ng-show="current.supportsMulti">
-				<h5 class="section-heading">Selection Options</h5>
-				<div class="section">
-					<gf-form-switch class="gf-form"
-										 label="Multi-value"
-					 label-class="width-10"
-			tooltip="Enables multiple values to be selected at the same time"
-	 checked="current.multi"
-	on-change="runQuery()">
-					</gf-form-switch>
-					<gf-form-switch class="gf-form"
-										 label="Include All option"
-					 label-class="width-10"
-			checked="current.includeAll"
-	 on-change="runQuery()">
-					</gf-form-switch>
-				</div>
-				<div class="gf-form" ng-if="current.includeAll">
-					<span class="gf-form-label width-10">Custom all value</span>
-					<input type="text" class="gf-form-input max-width-15" ng-model='current.allValue' placeholder="blank = auto"></input>
-				</div>
-			</div>
+      <div class="section gf-form-group" ng-show="variableTypes[current.type].supportsMulti">
+        <h5 class="section-heading">Selection Options</h5>
+        <div class="section">
+          <gf-form-switch class="gf-form"
+                          label="Multi-value"
+                          label-class="width-10"
+                          tooltip="Enables multiple values to be selected at the same time"
+                          checked="current.multi"
+                          on-change="runQuery()">
+          </gf-form-switch>
+          <gf-form-switch class="gf-form"
+                          label="Include All option"
+                          label-class="width-10"
+                          checked="current.includeAll"
+                          on-change="runQuery()">
+          </gf-form-switch>
+        </div>
+        <div class="gf-form" ng-if="current.includeAll">
+          <span class="gf-form-label width-10">Custom all value</span>
+          <input type="text" class="gf-form-input max-width-15" ng-model='current.allValue' placeholder="blank = auto"></input>
+        </div>
+      </div>
 
-			<div class="gf-form-group" ng-if="current.type === 'query'">
-				<h5>Value groups/tags (Experimental feature)</h5>
-				<div class="gf-form">
-					<editor-checkbox text="Enable" model="current.useTags" change="runQuery()"></editor-checkbox>
-				</div>
-				<div class="gf-form last" ng-if="current.useTags">
-					<span class="gf-form-label width-10">Tags query</span>
-					<input type="text" class="gf-form-input" ng-model='current.tagsQuery' placeholder="metric name or tags query" ng-model-onblur></input>
-				</div>
-				<div class="gf-form" ng-if="current.useTags">
-					<li class="gf-form-label width-10">Tag values query</li>
-					<input type="text" class="gf-form-input" ng-model='current.tagValuesQuery' placeholder="apps.$tag.*" ng-model-onblur></input>
-				</div>
-			</div>
+      <div class="gf-form-group" ng-if="current.type === 'query'">
+        <h5>Value groups/tags (Experimental feature)</h5>
+        <div class="gf-form">
+          <editor-checkbox text="Enable" model="current.useTags" change="runQuery()"></editor-checkbox>
+        </div>
+        <div class="gf-form last" ng-if="current.useTags">
+          <span class="gf-form-label width-10">Tags query</span>
+          <input type="text" class="gf-form-input" ng-model='current.tagsQuery' placeholder="metric name or tags query" ng-model-onblur></input>
+        </div>
+        <div class="gf-form" ng-if="current.useTags">
+          <li class="gf-form-label width-10">Tag values query</li>
+          <input type="text" class="gf-form-input" ng-model='current.tagValuesQuery' placeholder="apps.$tag.*" ng-model-onblur></input>
+        </div>
+      </div>
 
-			<div class="gf-form-group">
-				<h5>Preview of values (shows max 20)</h5>
-				<div class="gf-form-inline">
-					<div class="gf-form" ng-repeat="option in current.options | limitTo: 20">
-						<span class="gf-form-label">{{option.text}}</span>
-					</div>
-				</div>
-			</div>
-		</div>
+      <div class="gf-form-group">
+        <h5>Preview of values (shows max 20)</h5>
+        <div class="gf-form-inline">
+          <div class="gf-form" ng-repeat="option in current.options | limitTo: 20">
+            <span class="gf-form-label">{{option.text}}</span>
+          </div>
+        </div>
+      </div>
+    </div>
 
-		<div class="gf-form-button-row p-y-0">
-			<button type="button" class="btn btn-success" ng-show="mode === 'edit'" ng-click="update();">Update</button>
+    <div class="gf-form-button-row p-y-0">
+      <button type="button" class="btn btn-success" ng-show="mode === 'edit'" ng-click="update();">Update</button>
       <button type="button" class="btn btn-success" ng-show="mode === 'new'" ng-click="add();">Add</button>
     </div>
   </div>
