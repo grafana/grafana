@@ -15,7 +15,7 @@ export class VariableSrv {
   /** @ngInject */
   constructor(private $rootScope, private $q, private $location, private $injector, private templateSrv) {
     // update time variant variables
-    // $rootScope.onAppEvent('refresh', this.onDashboardRefresh.bind(this), $rootScope);
+    $rootScope.$on('refresh', this.onDashboardRefresh.bind(this), $rootScope);
   }
 
   init(dashboard) {
@@ -41,22 +41,21 @@ export class VariableSrv {
   }
 
   onDashboardRefresh() {
-    // var promises = this.variables
-    // .filter(variable => variable.refresh === 2)
-    // .map(variable => {
-    //   var previousOptions = variable.options.slice();
-    //
-    //   return self.updateOptions(variable).then(function () {
-    //     return self.variableUpdated(variable).then(function () {
-    //       // check if current options changed due to refresh
-    //       if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
-    //         $rootScope.appEvent('template-variable-value-updated');
-    //       }
-    //     });
-    //   });
-    // });
-    //
-    // return this.$q.all(promises);
+    var promises = this.variables
+    .filter(variable => variable.refresh === 2)
+    .map(variable => {
+      var previousOptions = variable.options.slice();
+
+      return variable.updateOptions()
+      .then(this.variableUpdated.bind(this, variable))
+      .then(() => {
+        if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
+          this.$rootScope.$emit('template-variable-value-updated');
+        }
+      });
+    });
+
+    return this.$q.all(promises);
   }
 
   processVariable(variable, queryParams) {

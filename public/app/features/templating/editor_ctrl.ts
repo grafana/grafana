@@ -10,7 +10,7 @@ import appEvents from 'app/core/app_events';
 export class VariableEditorCtrl {
 
   /** @ngInject */
-  constructor(private $scope, private datasourceSrv, private variableSrv) {
+  constructor(private $scope, private datasourceSrv, private variableSrv, templateSrv) {
     $scope.variableTypes = [
       {value: "query",      text: "Query"},
       {value: "adhoc",      text: "Ad hoc filters"},
@@ -27,7 +27,7 @@ export class VariableEditorCtrl {
     ];
 
     $scope.sortOptions = [
-      {value: 0, text: "Query sort"},
+      {value: 0, text: "Disabled"},
       {value: 1, text: "Alphabetical (asc)"},
       {value: 2, text: "Alphabetical (desc)"},
       {value: 3, text: "Numerical (asc)"},
@@ -115,6 +115,7 @@ export class VariableEditorCtrl {
         $scope.runQuery().then(function() {
           $scope.reset();
           $scope.mode = 'list';
+          templateSrv.updateTemplateData();
         });
       }
     };
@@ -122,18 +123,6 @@ export class VariableEditorCtrl {
     $scope.reset = function() {
       $scope.currentIsNew = true;
       $scope.current = variableSrv.createVariableFromModel({type: 'query'});
-    };
-
-    $scope.showSelectionOptions = function() {
-      if ($scope.current) {
-        if ($scope.current.type === 'query') {
-          return true;
-        }
-        if ($scope.current.type === 'custom') {
-          return true;
-        }
-      }
-      return false;
     };
 
     $scope.typeChanged = function() {
@@ -147,27 +136,6 @@ export class VariableEditorCtrl {
       if (oldIndex !== -1) {
         this.variables[oldIndex] = $scope.current;
       }
-
-      // if ($scope.current.type === 'interval') {
-      //   $scope.current.query = '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d';
-      //   $scope.current.refresh = 0;
-      // }
-      //
-      // if ($scope.current.type === 'query') {
-      //   $scope.current.query = '';
-      // }
-      //
-      // if ($scope.current.type === 'constant') {
-      //   $scope.current.query = '';
-      //   $scope.current.refresh = 0;
-      //   $scope.current.hide = 2;
-      // }
-      //
-      // if ($scope.current.type === 'datasource') {
-      //   $scope.current.query = $scope.datasourceTypes[0].value;
-      //   $scope.current.regex = '';
-      //   $scope.current.refresh = 1;
-      // }
     };
 
     $scope.removeVariable = function(variable) {

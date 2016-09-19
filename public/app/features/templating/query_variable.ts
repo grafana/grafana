@@ -37,6 +37,8 @@ export class QueryVariable implements Variable {
     current: {text: '', value: ''},
   };
 
+  supportsMulti = true;
+
   constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private $q)  {
     // copy model properties to this instance
     assignModelProperties(this, model, this.defaults);
@@ -49,7 +51,7 @@ export class QueryVariable implements Variable {
   }
 
   setValue(option){
-    this.variableSrv.setOptionAsCurrent(this, option);
+    return this.variableSrv.setOptionAsCurrent(this, option);
   }
 
   setValueFromUrl(urlValue) {
@@ -59,9 +61,7 @@ export class QueryVariable implements Variable {
   updateOptions() {
     return this.datasourceSrv.get(this.datasource)
     .then(this.updateOptionsFromMetricFindQuery.bind(this))
-    .then(() => {
-      this.variableSrv.validateVariableSelectionState(this);
-    });
+    .then(this.variableSrv.validateVariableSelectionState.bind(this.variableSrv, this));
   }
 
   updateOptionsFromMetricFindQuery(datasource) {

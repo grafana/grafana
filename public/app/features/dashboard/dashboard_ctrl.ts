@@ -87,6 +87,7 @@ export class DashboardCtrl {
       };
 
       $scope.templateVariableUpdated = function() {
+        dynamicDashboardSrv.update($scope.dashboard);
       };
 
       $scope.updateSubmenuVisibility = function() {

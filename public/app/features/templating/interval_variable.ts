@@ -11,12 +11,14 @@ export class IntervalVariable implements Variable {
   options: any;
   auto: boolean;
   query: string;
+  refresh: number;
 
   defaults = {
     type: 'interval',
     name: '',
     hide: 0,
     label: '',
+    refresh: 2,
     options: [],
     current: {text: '', value: ''},
     query: '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d',
@@ -28,6 +30,7 @@ export class IntervalVariable implements Variable {
   /** @ngInject */
   constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
     assignModelProperties(this, model, this.defaults);
+    this.refresh = 2;
   }
 
   getModel() {
@@ -37,7 +40,7 @@ export class IntervalVariable implements Variable {
 
   setValue(option) {
     this.updateAutoValue();
-    this.variableSrv.setOptionAsCurrent(this, option);
+    return this.variableSrv.setOptionAsCurrent(this, option);
   }
 
   updateAutoValue() {
@@ -61,6 +64,7 @@ export class IntervalVariable implements Variable {
     });
 
     this.updateAutoValue();
+    return this.variableSrv.validateVariableSelectionState(this);
   }
 
   dependsOn(variable) {

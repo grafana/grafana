@@ -23,13 +23,15 @@ export class CustomVariable implements Variable {
     multi: false,
   };
 
+  supportsMulti = true;
+
   /** @ngInject */
   constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
 
   setValue(option) {
-    this.variableSrv.setOptionAsCurrent(this, option);
+    return this.variableSrv.setOptionAsCurrent(this, option);
   }
 
   getModel() {
@@ -47,7 +49,7 @@ export class CustomVariable implements Variable {
       this.addAllOption();
     }
 
-    return Promise.resolve();
+    return this.variableSrv.validateVariableSelectionState(this);
   }
 
   addAllOption() {

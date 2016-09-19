@@ -15,7 +15,7 @@ export class DatasourceVariable implements Variable {
     name: '',
     hide: 0,
     label: '',
-    current: {text: '', value: ''}
+    current: {text: '', value: ''},
     regex: '',
     options: [],
     query: '',
@@ -32,7 +32,7 @@ export class DatasourceVariable implements Variable {
   }
 
   setValue(option) {
-    this.variableSrv.setOptionAsCurrent(this, option);
+    return this.variableSrv.setOptionAsCurrent(this, option);
   }
 
   updateOptions() {
@@ -63,6 +63,7 @@ export class DatasourceVariable implements Variable {
     }
 
     this.options = options;
+    return this.variableSrv.validateVariableSelectionState(this);
   }
 
   dependsOn(variable) {
