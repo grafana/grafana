@@ -1,8 +1,10 @@
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 
+import '../all';
+
 import _ from 'lodash';
 import helpers from 'test/specs/helpers';
-import '../all';
+import {Emitter} from 'app/core/core';
 
 describe('VariableSrv init', function() {
   var ctx = new helpers.ControllerTestContext();
@@ -17,7 +19,6 @@ describe('VariableSrv init', function() {
     ctx.$rootScope = $rootScope;
     ctx.$location = $location;
     ctx.variableSrv = $injector.get('variableSrv');
-    ctx.variableSrv.init({templating: {list: []}});
     ctx.$rootScope.$digest();
   }));
 
@@ -39,8 +40,8 @@ describe('VariableSrv init', function() {
         ctx.datasourceSrv.getMetricSources = sinon.stub().returns(scenario.metricSources);
 
         ctx.$location.search = sinon.stub().returns(scenario.urlParams);
+        ctx.dashboard = {templating: {list: scenario.variables}, events: new Emitter()};
 
-        ctx.dashboard = {templating: {list: scenario.variables}};
         ctx.variableSrv.init(ctx.dashboard);
         ctx.$rootScope.$digest();
 
@@ -136,7 +137,6 @@ describe('VariableSrv init', function() {
       expect(variable.options[2].selected).to.be(false);
     });
   });
-
 
 });
 

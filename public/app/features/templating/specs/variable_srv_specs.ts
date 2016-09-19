@@ -1,8 +1,10 @@
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 
+import '../all';
+
 import moment from 'moment';
 import helpers from 'test/specs/helpers';
-import '../all';
+import {Emitter} from 'app/core/core';
 
 describe('VariableSrv', function() {
   var ctx = new helpers.ControllerTestContext();
@@ -17,7 +19,10 @@ describe('VariableSrv', function() {
     ctx.$rootScope = $rootScope;
     ctx.$location = $location;
     ctx.variableSrv = $injector.get('variableSrv');
-    ctx.variableSrv.init({templating: {list: []}});
+    ctx.variableSrv.init({
+      templating: {list: []},
+      events: new Emitter(),
+    });
     ctx.$rootScope.$digest();
   }));
 

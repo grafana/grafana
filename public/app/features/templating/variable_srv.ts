@@ -6,7 +6,6 @@ import $ from 'jquery';
 import kbn from 'app/core/utils/kbn';
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
-import {IntervalVariable} from './interval_variable';
 import {Variable} from './variable';
 
 export var variableConstructorMap: any = {};
@@ -14,95 +13,115 @@ export var variableConstructorMap: any = {};
 export class VariableSrv {
   dashboard: any;
   variables: any;
-
   variableLock: any;
 
   /** @ngInject */
-  constructor(
-    private $rootScope,
-    private $q,
-    private $location,
-    private $injector,
-    private templateSrv) {
+  constructor(private $rootScope, private $q, private $location, private $injector, private templateSrv) {
+    // update time variant variables
+    // $rootScope.onAppEvent('refresh', this.onDashboardRefresh.bind(this), $rootScope);
+  }
+
+  init(dashboard) {
+    this.variableLock = {};
+    this.dashboard = dashboard;
+
+    // create working class models representing variables
+    this.variables = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
+    this.templateSrv.init(this.variables);
+
+    // register event to sync back to persisted model
+    this.dashboard.events.on('prepare-save-model', this.syncToDashboardModel.bind(this));
+
+    // init variables
+    for (let variable of this.variables) {
+      this.variableLock[variable.name] = this.$q.defer();
     }
 
-    init(dashboard) {
-      this.variableLock = {};
-      this.dashboard = dashboard;
-      this.variables = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
-      this.templateSrv.init(this.variables);
+    var queryParams = this.$location.search();
+    return this.$q.all(this.variables.map(variable => {
+      return this.processVariable(variable, queryParams);
+    }));
+  }
 
-      var queryParams = this.$location.search();
+  onDashboardRefresh() {
+    // var promises = this.variables
+    // .filter(variable => variable.refresh === 2)
+    // .map(variable => {
+    //   var previousOptions = variable.options.slice();
+    //
+    //   return self.updateOptions(variable).then(function () {
+    //     return self.variableUpdated(variable).then(function () {
+    //       // check if current options changed due to refresh
+    //       if (angular.toJson(previousOptions) !== angular.toJson(variable.options)) {
+    //         $rootScope.appEvent('template-variable-value-updated');
+    //       }
+    //     });
+    //   });
+    // });
+    //
+    // return this.$q.all(promises);
+  }
 
-      for (let variable of this.variables) {
-        this.variableLock[variable.name] = this.$q.defer();
+  processVariable(variable, queryParams) {
+    var dependencies = [];
+    var lock = this.variableLock[variable.name];
+
+    for (let otherVariable of this.variables) {
+      if (variable.dependsOn(otherVariable)) {
+        dependencies.push(this.variableLock[otherVariable.name].promise);
+      }
+    }
+
+    return this.$q.all(dependencies).then(() => {
+      var urlValue = queryParams['var-' + variable.name];
+      if (urlValue !== void 0) {
+        return variable.setValueFromUrl(urlValue).then(lock.resolve);
       }
 
-      return this.$q.all(this.variables.map(variable => {
-        return this.processVariable(variable, queryParams);
-      }));
-    }
-
-    processVariable(variable, queryParams) {
-      var dependencies = [];
-      var lock = this.variableLock[variable.name];
-
-      for (let otherVariable of this.variables) {
-        if (variable.dependsOn(otherVariable)) {
-          dependencies.push(this.variableLock[otherVariable.name].promise);
-        }
+      if (variable.refresh === 1 || variable.refresh === 2) {
+        return variable.updateOptions().then(lock.resolve);
       }
 
-      return this.$q.all(dependencies).then(() => {
-        var urlValue = queryParams['var-' + variable.name];
-        if (urlValue !== void 0) {
-          return variable.setValueFromUrl(urlValue).then(lock.resolve);
-        }
+      lock.resolve();
+    }).finally(() => {
+      delete this.variableLock[variable.name];
+    });
+  }
 
-        if (variable.refresh === 1 || variable.refresh === 2) {
-          return variable.updateOptions().then(lock.resolve);
-        }
-
-        lock.resolve();
-      }).finally(() => {
-        delete this.variableLock[variable.name];
-      });
+  createVariableFromModel(model) {
+    var ctor = variableConstructorMap[model.type];
+    if (!ctor) {
+      throw "Unable to find variable constructor for " + model.type;
     }
 
-    createVariableFromModel(model) {
-      var ctor = variableConstructorMap[model.type];
-      if (!ctor) {
-        throw "Unable to find variable constructor for " + model.type;
-      }
+    var variable = this.$injector.instantiate(ctor, {model: model});
+    return variable;
+  }
 
-      var variable = this.$injector.instantiate(ctor, {model: model});
-      return variable;
+  addVariable(model) {
+    var variable = this.createVariableFromModel(model);
+    this.variables.push(this.createVariableFromModel(variable));
+    return variable;
+  }
+
+  syncToDashboardModel() {
+    this.dashboard.templating.list = this.variables.map(variable => {
+      return variable.model;
+    });
+  }
+
+  updateOptions(variable) {
+    return variable.updateOptions();
+  }
+
+  variableUpdated(variable) {
+    // if there is a variable lock ignore cascading update because we are in a boot up scenario
+    if (this.variableLock[variable.name]) {
+      return this.$q.when();
     }
 
-    addVariable(model) {
-      var variable = this.createVariableFromModel(model);
-      this.variables.push(this.createVariableFromModel(variable));
-      return variable;
-    }
-
-    syncToDashboardModel() {
-      this.dashboard.templating.list = this.variables.map(variable => {
-        return variable.model;
-      });
-    }
-
-    updateOptions(variable) {
-      return variable.updateOptions();
-    }
-
-    variableUpdated(variable) {
-      // if there is a variable lock ignore cascading update because we are in a boot up scenario
-      if (this.variableLock[variable.name]) {
-        return this.$q.when();
-      }
-
-      // cascade updates to variables that use this variable
-      var promises = _.map(this.variables, otherVariable => {
+    // cascade updates to variables that use this variable
+    var promises = _.map(this.variables, otherVariable => {
         if (otherVariable === variable) {
           return;
         }

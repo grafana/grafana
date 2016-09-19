@@ -185,7 +185,7 @@ function (angular, _, $) {
     DashboardViewState.prototype.enterFullscreen = function(panelScope) {
       var ctrl = panelScope.ctrl;
 
-      ctrl.editMode = this.state.edit && this.$scope.dashboardMeta.canEdit;
+      ctrl.editMode = this.state.edit && this.dashboard.meta.canEdit;
       ctrl.fullscreen = true;
 
       this.oldTimeRange = ctrl.range;

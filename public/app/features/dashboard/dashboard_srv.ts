@@ -6,6 +6,8 @@ import moment from 'moment';
 import _ from 'lodash';
 import $ from 'jquery';
 
+import {Emitter} from 'app/core/core';
+import {contextSrv} from 'app/core/services/context_srv';
 import coreModule from 'app/core/core_module';
 
 export class DashboardModel {
@@ -31,14 +33,14 @@ export class DashboardModel {
   links: any;
   gnetId: any;
   meta: any;
-  contextSrv: any;
+  events: any;
 
-  constructor(data, meta, contextSrv) {
+  constructor(data, meta) {
     if (!data) {
       data = {};
     }
 
-    this.contextSrv = contextSrv;
+    this.events = new Emitter();
     this.id = data.id || null;
     this.title = data.title || 'No Title';
     this.autoUpdate = data.autoUpdate;
@@ -85,8 +87,18 @@ export class DashboardModel {
 
   // cleans meta data and other non peristent state
   getSaveModelClone() {
+    // temp remove stuff
+    var events = this.events;
+    var meta = this.meta;
+    delete this.events;
+    delete this.meta;
+
+    events.emit('prepare-save-model');
     var copy = $.extend(true, {}, this);
-    delete copy.meta;
+
+    // restore properties
+    this.events = events;
+    this.meta = meta;
     return copy;
   }
 
@@ -233,7 +245,7 @@ export class DashboardModel {
   }
 
   getTimezone() {
-    return this.timezone ? this.timezone : this.contextSrv.user.timezone;
+    return this.timezone ? this.timezone : contextSrv.user.timezone;
   }
 
   private updateSchema(old) {
@@ -561,12 +573,8 @@ export class DashboardModel {
 export class DashboardSrv {
   currentDashboard: any;
 
-  /** @ngInject */
-  constructor(private contextSrv) {
-  }
-
   create(dashboard, meta) {
-    return new DashboardModel(dashboard, meta, this.contextSrv);
+    return new DashboardModel(dashboard, meta);
   }
 
   setCurrent(dashboard) {

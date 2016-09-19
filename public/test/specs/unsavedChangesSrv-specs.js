@@ -14,6 +14,7 @@ define([
     var dash;
     var scope;
 
+    beforeEach(module('grafana.core'));
     beforeEach(module('grafana.services'));
     beforeEach(module(function($provide) {
       $provide.value('contextSrv', _contextSrvStub);

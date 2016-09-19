@@ -1,5 +1,4 @@
 import './templateSrv';
-import './templateValuesSrv';
 import './editorCtrl';
 
 import {VariableSrv} from './variable_srv';

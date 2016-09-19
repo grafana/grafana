@@ -42,9 +42,7 @@ export class IntervalVariable implements Variable {
       return {text: text.trim(), value: text.trim()};
     });
 
-    if (this.auto) {
-      this.updateAutoValue();
-    }
+    this.updateAutoValue();
   }
 
   dependsOn(variable) {
