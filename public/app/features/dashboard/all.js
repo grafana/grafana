@@ -7,7 +7,7 @@ define([
   './rowCtrl',
   './shareModalCtrl',
   './shareSnapshotCtrl',
-  './dashboardSrv',
+  './dashboard_srv',
   './keybindings',
   './viewStateSrv',
   './timeSrv',
