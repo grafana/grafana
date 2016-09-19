@@ -339,6 +339,75 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
           };
         }
 
+        //Override min/max to provide more flexible autoscaling
+        function autoscaleSpanOverride(yaxis, data, options) {
+          var expr;
+          if (yaxis.min != null && data != null) {
+            expr = parseThresholdExpr(yaxis.min);
+            options.min = autoscaleYAxisMin(expr, data.stats);
+          }
+          if (yaxis.max != null && data != null) {
+            expr = parseThresholdExpr(yaxis.max);
+            options.max = autoscaleYAxisMax(expr, data.stats);
+          }
+        }
+
+        function parseThresholdExpr(expr) {
+          var match, operator, value, precision;
+          match = expr.match(/\s*([<=>~]*)\W*(\d+(\.\d+)?)/);
+          if (match) {
+            operator = match[1];
+            value = parseFloat(match[2]);
+            //Precision based on input
+            precision = match[3] ? match[3].length - 1 : 0;
+            return {
+              operator: operator,
+              value: value,
+              precision: precision
+            };
+          } else {
+            return undefined;
+          }
+        }
+
+        function autoscaleYAxisMax(expr, dataStats) {
+          var operator = expr.operator,
+              value = expr.value,
+              precision = expr.precision;
+          if (operator === ">") {
+            return dataStats.max < value ? value : null;
+          } else if (operator === "<") {
+            return dataStats.max > value ? value : null;
+          } else if (operator === "~") {
+            return kbn.roundValue(dataStats.avg + value, precision);
+          } else if (operator === "=") {
+            return kbn.roundValue(dataStats.current + value, precision);
+          } else if (!operator && !isNaN(value)) {
+            return kbn.roundValue(value, precision);
+          } else {
+            return null;
+          }
+        }
+
+        function autoscaleYAxisMin(expr, dataStats) {
+          var operator = expr.operator,
+              value = expr.value,
+              precision = expr.precision;
+          if (operator === ">") {
+            return dataStats.min < value ? value : null;
+          } else if (operator === "<") {
+            return dataStats.min > value ? value : null;
+          } else if (operator === "~") {
+            return kbn.roundValue(dataStats.avg - value, precision);
+          } else if (operator === "=") {
+            return kbn.roundValue(dataStats.current - value, precision);
+          } else if (!operator && !isNaN(value)) {
+            return kbn.roundValue(value, precision);
+          } else {
+            return null;
+          }
+        }
+
         function configureAxisOptions(data, options) {
           var defaults = {
             position: 'left',
@@ -349,6 +418,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
             max: panel.percentage && panel.stack ? 100 : panel.yaxes[0].max,
           };
 
+          autoscaleSpanOverride(panel.yaxes[0], data[0], defaults);
           options.yaxes.push(defaults);
 
           if (_.find(data, {yaxis: 2})) {
@@ -359,6 +429,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
             secondY.position = 'right';
             secondY.min = panel.yaxes[1].min;
             secondY.max = panel.percentage && panel.stack ? 100 : panel.yaxes[1].max;
+            autoscaleSpanOverride(panel.yaxes[1], data[1], secondY);
             options.yaxes.push(secondY);
 
             applyLogScale(options.yaxes[1], data);

@@ -14,7 +14,7 @@ class AlertListPanel extends PanelCtrl {
 
   showOptions = [
     {text: 'Current state', value: 'current'},
-    {text: 'State changes', value: 'changes'}
+    {text: 'Recent state changes', value: 'changes'}
   ];
 
   stateFilter: any = {};
@@ -70,6 +70,9 @@ class AlertListPanel extends PanelCtrl {
       type: 'alert',
       newState: this.panel.stateFilter
     };
+
+    params.from = dateMath.parse(this.dashboard.time.from).unix() * 1000;
+    params.to = dateMath.parse(this.dashboard.time.to).unix() * 1000;
 
     this.backendSrv.get(`/api/annotations`, params)
       .then(res => {

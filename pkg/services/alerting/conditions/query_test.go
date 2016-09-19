@@ -85,6 +85,18 @@ func TestQueryCondition(t *testing.T) {
 					So(ctx.result.NoDataFound, ShouldBeTrue)
 				})
 
+				Convey("Should set NoDataFound both series contains null", func() {
+					one := float64(120)
+					ctx.series = tsdb.TimeSeriesSlice{
+						tsdb.NewTimeSeries("test1", [][2]*float64{{nil, &one}}),
+						tsdb.NewTimeSeries("test2", [][2]*float64{{nil, &one}}),
+					}
+					ctx.exec()
+
+					So(ctx.result.Error, ShouldBeNil)
+					So(ctx.result.NoDataFound, ShouldBeTrue)
+				})
+
 				Convey("Should not set NoDataFound if one serie is empty", func() {
 					one := float64(120)
 					two := float64(0)

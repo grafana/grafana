@@ -3,6 +3,8 @@
 // packages from this project as they serve internal purposes.
 package convey
 
+import "github.com/smartystreets/goconvey/convey/reporting"
+
 ////////////////////////////////// suite //////////////////////////////////
 
 // C is the Convey context which you can optionally obtain in your action
@@ -190,4 +192,27 @@ func Println(items ...interface{}) (written int, err error) {
 // output is aligned with the corresponding scopes in the web UI.
 func Printf(format string, items ...interface{}) (written int, err error) {
 	return mustGetCurrentContext().Printf(format, items...)
+}
+
+///////////////////////////////////////////////////////////////////////////////
+
+// SuppressConsoleStatistics prevents automatic printing of console statistics.
+// Calling PrintConsoleStatistics explicitly will force printing of statistics.
+func SuppressConsoleStatistics() {
+	reporting.SuppressConsoleStatistics()
+}
+
+// ConsoleStatistics may be called at any time to print assertion statistics.
+// Generally, the best place to do this would be in a TestMain function,
+// after all tests have been run. Something like this:
+//
+// func TestMain(m *testing.M) {
+//     convey.SuppressConsoleStatistics()
+//     result := m.Run()
+//     convey.PrintConsoleStatistics()
+//     os.Exit(result)
+// }
+//
+func PrintConsoleStatistics() {
+	reporting.PrintConsoleStatistics()
 }

@@ -5,19 +5,22 @@ import (
 	"os"
 
 	"github.com/jtolds/gls"
+	"github.com/smartystreets/assertions"
 	"github.com/smartystreets/goconvey/convey/reporting"
 )
 
 func init() {
+	assertions.GoConveyMode(true)
+
 	declareFlags()
 
 	ctxMgr = gls.NewContextManager()
 }
 
 func declareFlags() {
-	flag.BoolVar(&json, "json", false, "When true, emits results in JSON blocks. Default: 'false'")
-	flag.BoolVar(&silent, "silent", false, "When true, all output from GoConvey is suppressed.")
-	flag.BoolVar(&story, "story", false, "When true, emits story output, otherwise emits dot output. When not provided, this flag mirros the value of the '-test.v' flag")
+	flag.BoolVar(&json, "convey-json", false, "When true, emits results in JSON blocks. Default: 'false'")
+	flag.BoolVar(&silent, "convey-silent", false, "When true, all output from GoConvey is suppressed.")
+	flag.BoolVar(&story, "convey-story", false, "When true, emits story output, otherwise emits dot output. When not provided, this flag mirros the value of the '-test.v' flag")
 
 	if noStoryFlagProvided() {
 		story = verboseEnabled
@@ -31,14 +34,19 @@ func noStoryFlagProvided() bool {
 }
 
 func buildReporter() reporting.Reporter {
+	selectReporter := os.Getenv("GOCONVEY_REPORTER")
+
 	switch {
 	case testReporter != nil:
 		return testReporter
-	case json:
+	case json || selectReporter == "json":
 		return reporting.BuildJsonReporter()
-	case silent:
+	case silent || selectReporter == "silent":
 		return reporting.BuildSilentReporter()
-	case story:
+	case selectReporter == "dot":
+		// Story is turned on when verbose is set, so we need to check for dot reporter first.
+		return reporting.BuildDotReporter()
+	case story || selectReporter == "story":
 		return reporting.BuildStoryReporter()
 	default:
 		return reporting.BuildDotReporter()

@@ -68,7 +68,7 @@ is `3000` and default user and group is `admin`.
 
 To configure the Grafana server to start at boot time:
 
-    $ sudo update-rc.d grafana-server defaults 95 10
+    $ sudo update-rc.d grafana-server defaults
 
 ## Start the server (via systemd)
 

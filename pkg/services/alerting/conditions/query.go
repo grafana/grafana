@@ -43,6 +43,11 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) {
 		reducedValue := c.Reducer.Reduce(series)
 		evalMatch := c.Evaluator.Eval(reducedValue)
 
+		if reducedValue == nil {
+			emptySerieCount++
+			continue
+		}
+
 		if context.IsTestRun {
 			context.Logs = append(context.Logs, &alerting.ResultLogEntry{
 				Message: fmt.Sprintf("Condition[%d]: Eval: %v, Metric: %s, Value: %1.3f", c.Index, evalMatch, series.Name, *reducedValue),
@@ -54,11 +59,6 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) {
 				Metric: series.Name,
 				Value:  *reducedValue,
 			})
-		}
-
-		// handle no data scenario
-		if reducedValue == nil {
-			emptySerieCount++
 		}
 	}
 

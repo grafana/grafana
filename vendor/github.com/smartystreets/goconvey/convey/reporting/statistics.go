@@ -1,12 +1,18 @@
 package reporting
 
-import "fmt"
+import (
+	"fmt"
+	"sync"
+)
 
 func (self *statistics) BeginStory(story *StoryReport) {}
 
 func (self *statistics) Enter(scope *ScopeReport) {}
 
 func (self *statistics) Report(report *AssertionResult) {
+	self.Lock()
+	defer self.Unlock()
+
 	if !self.failing && report.Failure != "" {
 		self.failing = true
 	}
@@ -23,15 +29,36 @@ func (self *statistics) Report(report *AssertionResult) {
 func (self *statistics) Exit() {}
 
 func (self *statistics) EndStory() {
-	self.reportAssertions()
-	self.reportSkippedSections()
-	self.completeReport()
+	self.Lock()
+	defer self.Unlock()
+
+	if !self.suppressed {
+		self.printSummaryLocked()
+	}
 }
-func (self *statistics) reportAssertions() {
-	self.decideColor()
-	self.out.Print("\n%d %s thus far", self.total, plural("assertion", self.total))
+
+func (self *statistics) Suppress() {
+	self.Lock()
+	defer self.Unlock()
+	self.suppressed = true
 }
-func (self *statistics) decideColor() {
+
+func (self *statistics) PrintSummary() {
+	self.Lock()
+	defer self.Unlock()
+	self.printSummaryLocked()
+}
+
+func (self *statistics) printSummaryLocked() {
+	self.reportAssertionsLocked()
+	self.reportSkippedSectionsLocked()
+	self.completeReportLocked()
+}
+func (self *statistics) reportAssertionsLocked() {
+	self.decideColorLocked()
+	self.out.Print("\n%d total %s", self.total, plural("assertion", self.total))
+}
+func (self *statistics) decideColorLocked() {
 	if self.failing && !self.erroring {
 		fmt.Print(yellowColor)
 	} else if self.erroring {
@@ -40,14 +67,13 @@ func (self *statistics) decideColor() {
 		fmt.Print(greenColor)
 	}
 }
-func (self *statistics) reportSkippedSections() {
+func (self *statistics) reportSkippedSectionsLocked() {
 	if self.skipped > 0 {
 		fmt.Print(yellowColor)
 		self.out.Print(" (one or more sections skipped)")
-		self.skipped = 0
 	}
 }
-func (self *statistics) completeReport() {
+func (self *statistics) completeReportLocked() {
 	fmt.Print(resetColor)
 	self.out.Print("\n")
 	self.out.Print("\n")
@@ -64,11 +90,14 @@ func NewStatisticsReporter(out *Printer) *statistics {
 }
 
 type statistics struct {
-	out      *Printer
-	total    int
-	failing  bool
-	erroring bool
-	skipped  int
+	sync.Mutex
+
+	out        *Printer
+	total      int
+	failing    bool
+	erroring   bool
+	skipped    int
+	suppressed bool
 }
 
 func plural(word string, count int) string {
