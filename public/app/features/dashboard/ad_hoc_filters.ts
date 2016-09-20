@@ -21,7 +21,7 @@ export class AdHocFiltersCtrl {
     if (this.variable.value && !_.isArray(this.variable.value)) {
     }
 
-    for (let tag of this.variable.tags) {
+    for (let tag of this.variable.filters) {
       if (this.segments.length > 0) {
         this.segments.push(this.uiSegmentSrv.newCondition('AND'));
       }
@@ -38,7 +38,11 @@ export class AdHocFiltersCtrl {
 
   getOptions(segment, index) {
     if (segment.type === 'operator') {
-      return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<>', '<', '>', '=~', '!~']));
+      return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<', '>', '=~', '!~']));
+    }
+
+    if (segment.type === 'condition') {
+      return this.$q.when([this.uiSegmentSrv.newSegment('AND')]);
     }
 
     return this.datasourceSrv.get(this.variable.datasource).then(ds => {
@@ -100,37 +104,45 @@ export class AdHocFiltersCtrl {
   }
 
   updateVariableModel() {
-    var tags = [];
-    var tagIndex = -1;
-    var tagOperator = "";
+    var filters = [];
+    var filterIndex = -1;
+    var operator = "";
+    var hasFakes = false;
 
-    this.segments.forEach((segment, index) => {
-      if (segment.fake) {
+    this.segments.forEach(segment => {
+      if (segment.type === 'value' && segment.fake) {
+        hasFakes = true;
         return;
       }
 
       switch (segment.type) {
         case 'key': {
-          tags.push({key: segment.value});
-          tagIndex += 1;
+          filters.push({key: segment.value});
+          filterIndex += 1;
           break;
         }
         case 'value': {
-          tags[tagIndex].value = segment.value;
+          filters[filterIndex].value = segment.value;
           break;
         }
         case 'operator': {
-          tags[tagIndex].operator = segment.value;
+          filters[filterIndex].operator = segment.value;
           break;
         }
         case 'condition': {
+          filters[filterIndex].condition = segment.value;
           break;
         }
       }
     });
 
+    if (hasFakes) {
+      return;
+    }
+
+    this.variable.setFilters(filters);
+    this.$rootScope.$emit('template-variable-value-updated');
     this.$rootScope.$broadcast('refresh');
-    this.variable.tags = tags;
   }
 }
 

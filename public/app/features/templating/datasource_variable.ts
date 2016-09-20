@@ -9,13 +9,14 @@ export class DatasourceVariable implements Variable {
   regex: any;
   query: string;
   options: any;
+  current: any;
 
  defaults = {
     type: 'datasource',
     name: '',
     hide: 0,
     label: '',
-    current: {text: '', value: ''},
+    current: {},
     regex: '',
     options: [],
     query: '',
@@ -72,6 +73,10 @@ export class DatasourceVariable implements Variable {
 
   setValueFromUrl(urlValue) {
     return this.variableSrv.setOptionFromUrl(this, urlValue);
+  }
+
+  getValueForUrl() {
+    return this.current.value;
   }
 }
 

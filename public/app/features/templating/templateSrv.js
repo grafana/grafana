@@ -180,18 +180,11 @@ function (angular, _, kbn) {
 
     this.fillVariableValuesForUrl = function(params, scopedVars) {
       _.each(this.variables, function(variable) {
-        var current = variable.current;
-        var value = current.value;
-
-        if (current.text === 'All') {
-          value = 'All';
-        }
-
         if (scopedVars && scopedVars[variable.name] !== void 0) {
-          value = scopedVars[variable.name].value;
+          params['var-' + variable.name] = scopedVars[variable.name].value;
+        } else {
+          params['var-' + variable.name] = variable.getValueForUrl();
         }
-
-        params['var-' + variable.name] = value;
       });
     };
 

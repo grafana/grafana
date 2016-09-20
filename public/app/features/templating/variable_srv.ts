@@ -14,6 +14,7 @@ export class VariableSrv {
   constructor(private $rootScope, private $q, private $location, private $injector, private templateSrv) {
     // update time variant variables
     $rootScope.$on('refresh', this.onDashboardRefresh.bind(this), $rootScope);
+    $rootScope.$on('template-variable-value-updated', this.updateUrlParamsWithCurrentVariables.bind(this), $rootScope);
   }
 
   init(dashboard) {
@@ -209,6 +210,23 @@ export class VariableSrv {
 
     this.selectOptionsForCurrentValue(variable);
     return this.variableUpdated(variable);
+  }
+
+  updateUrlParamsWithCurrentVariables() {
+    // update url
+    var params = this.$location.search();
+
+    // remove variable params
+    _.each(params, function(value, key) {
+      if (key.indexOf('var-') === 0) {
+        delete params[key];
+      }
+    });
+
+    // add new values
+    this.templateSrv.fillVariableValuesForUrl(params);
+    // update url
+    this.$location.search(params);
   }
 }
 

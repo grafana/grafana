@@ -56,9 +56,9 @@ export default class InfluxDatasource {
         // apply add hoc filters
         for (let variable of this.templateSrv.variables) {
           if (variable.type === 'adhoc' && variable.datasource === this.name) {
-            for (let tag of variable.tags) {
-              if (tag.key !== undefined && tag.value !== undefined) {
-                target.tags.push({key: tag.key, value: tag.value, condition: 'AND'});
+            for (let filter of variable.filters) {
+              if (filter.key !== undefined && filter.value !== undefined) {
+                target.tags.push({key: filter.key, value: filter.value, condition: filter.condition, operator: filter.operator});
               }
             }
           }

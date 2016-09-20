@@ -6,6 +6,7 @@ import {Variable, assignModelProperties, variableTypes} from './variable';
 import {VariableSrv} from './variable_srv';
 
 export class AdhocVariable implements Variable {
+  filters: any[];
 
   defaults = {
     type: 'adhoc',
@@ -13,9 +14,7 @@ export class AdhocVariable implements Variable {
     label: '',
     hide: 0,
     datasource: null,
-    options: [],
-    current: {},
-    tags: {},
+    filters: [],
   };
 
   /** @ngInject **/
@@ -41,7 +40,30 @@ export class AdhocVariable implements Variable {
   }
 
   setValueFromUrl(urlValue) {
+    if (!_.isArray(urlValue)) {
+      urlValue = [urlValue];
+    }
+
+    this.filters = urlValue.map(item => {
+      var values = item.split('|');
+      return {
+        key: values[0],
+        operator: values[1],
+        value: values[2],
+      };
+    });
+
     return Promise.resolve();
+  }
+
+  getValueForUrl() {
+    return this.filters.map(filter => {
+      return filter.key + '|' + filter.operator + '|' + filter.value;
+    });
+  }
+
+  setFilters(filters: any[]) {
+    this.filters = filters;
   }
 }
 

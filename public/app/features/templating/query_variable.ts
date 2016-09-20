@@ -33,8 +33,11 @@ export class QueryVariable implements Variable {
     name: '',
     multi: false,
     includeAll: false,
+    allValue: null,
     options: [],
-    current: {text: '', value: ''},
+    current: {},
+    tagsQuery: null,
+    tagValuesQuery: null,
   };
 
   constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private $q)  {
@@ -54,6 +57,13 @@ export class QueryVariable implements Variable {
 
   setValueFromUrl(urlValue) {
     return this.variableSrv.setOptionFromUrl(this, urlValue);
+  }
+
+  getValueForUrl() {
+    if (this.current.text === 'All') {
+      return 'All';
+    }
+    return this.current.value;
   }
 
   updateOptions() {

@@ -12,6 +12,7 @@ export class IntervalVariable implements Variable {
   auto: boolean;
   query: string;
   refresh: number;
+  current: any;
 
   defaults = {
     type: 'interval',
@@ -20,7 +21,7 @@ export class IntervalVariable implements Variable {
     label: '',
     refresh: 2,
     options: [],
-    current: {text: '', value: ''},
+    current: {},
     query: '1m,10m,30m,1h,6h,12h,1d,7d,14d,30d',
     auto: false,
     auto_min: '10s',
@@ -74,6 +75,10 @@ export class IntervalVariable implements Variable {
   setValueFromUrl(urlValue) {
     this.updateAutoValue();
     return this.variableSrv.setOptionFromUrl(this, urlValue);
+  }
+
+  getValueForUrl() {
+    return this.current.value;
   }
 }
 

@@ -8,6 +8,7 @@ export interface Variable {
   updateOptions();
   dependsOn(variable);
   setValueFromUrl(urlValue);
+  getValueForUrl();
   getModel();
 }
 

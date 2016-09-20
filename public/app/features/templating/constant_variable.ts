@@ -7,6 +7,7 @@ import {VariableSrv} from './variable_srv';
 export class ConstantVariable implements Variable {
   query: string;
   options: any[];
+  current: any;
 
   defaults = {
     type: 'constant',
@@ -14,6 +15,7 @@ export class ConstantVariable implements Variable {
     hide: 2,
     label: '',
     query: '',
+    current: {},
   };
 
   /** @ngInject */
@@ -43,6 +45,11 @@ export class ConstantVariable implements Variable {
   setValueFromUrl(urlValue) {
     return this.variableSrv.setOptionFromUrl(this, urlValue);
   }
+
+  getValueForUrl() {
+    return this.current.value;
+  }
+
 }
 
 variableTypes['constant'] = {

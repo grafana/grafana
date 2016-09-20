@@ -10,6 +10,7 @@ export class CustomVariable implements Variable {
   options: any;
   includeAll: boolean;
   multi: boolean;
+  current: any;
 
   defaults = {
     type: 'custom',
@@ -17,10 +18,11 @@ export class CustomVariable implements Variable {
     label: '',
     hide: 0,
     options: [],
-    current: {text: '', value: ''},
+    current: {},
     query: '',
     includeAll: false,
     multi: false,
+    allValue: null,
   };
 
   /** @ngInject **/
@@ -60,6 +62,13 @@ export class CustomVariable implements Variable {
 
   setValueFromUrl(urlValue) {
     return this.variableSrv.setOptionFromUrl(this, urlValue);
+  }
+
+  getValueForUrl() {
+    if (this.current.text === 'All') {
+      return 'All';
+    }
+    return this.current.value;
   }
 }
 
