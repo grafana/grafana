@@ -23,6 +23,7 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
 
       var queries = [];
       options = angular.copy(options);
+      options.targets = this.expandTemplateVariable(options.targets, templateSrv);
       _.each(options.targets, function(target) {
         if (target.hide || !target.namespace || !target.metricName || _.isEmpty(target.statistics)) {
           return;
@@ -336,6 +337,37 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
         return {target: seriesName, datapoints: dps};
       });
     }
+
+    this.getExpandedVariables = function(target, dimensionKey, variable) {
+      return _.chain(variable.options)
+      .filter(function(v) {
+        return v.selected;
+      })
+      .map(function(v) {
+        var t = angular.copy(target);
+        t.dimensions[dimensionKey] = v.value;
+        return t;
+      }).value();
+    };
+
+    this.expandTemplateVariable = function(targets, templateSrv) {
+      var self = this;
+      return _.chain(targets)
+      .map(function(target) {
+        var dimensionKey = _.findKey(target.dimensions, function(v) {
+          return templateSrv.variableExists(v);
+        });
+
+        if (dimensionKey) {
+          var variable = _.find(templateSrv.variables, function(variable) {
+            return templateSrv.containsVariable(target.dimensions[dimensionKey], variable.name);
+          });
+          return self.getExpandedVariables(target, dimensionKey, variable);
+        } else {
+          return [target];
+        }
+      }).flatten().value();
+    };
 
     this.convertToCloudWatchTime = function(date, roundUp) {
       if (_.isString(date)) {
