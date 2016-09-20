@@ -1663,8 +1663,10 @@ Licensed under the MIT license.
                 delta = max - min;
 
             if (delta == 0.0) {
-                // degenerate case
-                var widen = max == 0 ? 1 : 0.01;
+                // Grafana fix: wide Y min and max using increased wideFactor
+                // when all series values are the same
+                var wideFactor = 0.25;
+                var widen = max == 0 ? 1 : max * wideFactor;
 
                 if (opts.min == null)
                     min -= widen;
