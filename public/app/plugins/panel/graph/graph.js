@@ -237,7 +237,7 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
             series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
 
             // if hidden remove points and disable stack
-            if (ctrl.hiddenSeries[series.alias]) {
+            if (panel.hiddenSeries[series.alias]) {
               series.data = [];
               series.stack = false;
             }

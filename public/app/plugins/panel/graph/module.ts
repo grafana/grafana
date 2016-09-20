@@ -18,7 +18,6 @@ import {MetricsPanelCtrl, alertTab} from 'app/plugins/sdk';
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
-  hiddenSeries: any = {};
   seriesList: any = [];
   logScales: any;
   unitFormats: any;
@@ -102,6 +101,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     // other style overrides
     seriesOverrides: [],
     thresholds: [],
+    // hidden series status
+    hiddenSeries: {},
   };
 
   /** @ngInject */
@@ -246,10 +247,10 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   toggleSeries(serie, event) {
     if (event.ctrlKey || event.metaKey || event.shiftKey) {
-      if (this.hiddenSeries[serie.alias]) {
-        delete this.hiddenSeries[serie.alias];
+      if (this.panel.hiddenSeries[serie.alias]) {
+        delete this.panel.hiddenSeries[serie.alias];
       } else {
-        this.hiddenSeries[serie.alias] = true;
+        this.panel.hiddenSeries[serie.alias] = true;
       }
     } else {
       this.toggleSeriesExclusiveMode(serie);
@@ -258,7 +259,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   toggleSeriesExclusiveMode (serie) {
-    var hidden = this.hiddenSeries;
+    var hidden = this.panel.hiddenSeries;
 
     if (hidden[serie.alias]) {
       delete hidden[serie.alias];
@@ -276,7 +277,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     if (alreadyExclusive) {
       // remove all hidden series
       _.each(this.seriesList, value => {
-        delete this.hiddenSeries[value.alias];
+        delete this.panel.hiddenSeries[value.alias];
       });
     } else {
       // hide all but this serie
@@ -285,7 +286,7 @@ class GraphCtrl extends MetricsPanelCtrl {
           return;
         }
 
-        this.hiddenSeries[value.alias] = true;
+        this.panel.hiddenSeries[value.alias] = true;
       });
     }
   }

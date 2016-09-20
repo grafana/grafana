@@ -65,6 +65,11 @@ function (angular, $, _, moment) {
     p.getSaveModelClone = function() {
       var copy = $.extend(true, {}, this);
       delete copy.meta;
+      if (!this.snapshot) {
+        copy.forEachPanel(function (panel) {
+          delete panel.hiddenSeries;
+        });
+      }
       return copy;
     };
 

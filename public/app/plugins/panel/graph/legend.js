@@ -157,7 +157,7 @@ function (angular, _, $) {
 
             var html = '<div class="graph-legend-series';
             if (series.yaxis === 2) { html += ' graph-legend-series--right-y'; }
-            if (ctrl.hiddenSeries[series.alias]) { html += ' graph-legend-series-hidden'; }
+            if (panel.hiddenSeries[series.alias]) { html += ' graph-legend-series-hidden'; }
             html += '" data-series-index="' + i + '">';
             html += '<div class="graph-legend-icon">';
             html += '<i class="fa fa-minus pointer" style="color:' + series.color + '"></i>';
