@@ -141,8 +141,6 @@ func createRequest(repoUrl string, subPaths ...string) ([]byte, error) {
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 
-	logger.Info("grafanaVersion ", grafanaVersion)
-
 	req.Header.Set("grafana-version", grafanaVersion)
 	req.Header.Set("User-Agent", "grafana "+grafanaVersion)
 
