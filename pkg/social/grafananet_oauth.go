@@ -83,6 +83,7 @@ func (s *SocialGrafanaNet) UserInfo(token *oauth2.Token) (*BasicUserInfo, error)
 		Id    int    `json:"id"`
 		Name  string `json:"login"`
 		Email string `json:"email"`
+		Role  string `json:"role"`
 	}
 
 	var err error
@@ -102,6 +103,7 @@ func (s *SocialGrafanaNet) UserInfo(token *oauth2.Token) (*BasicUserInfo, error)
 		Identity: strconv.Itoa(data.Id),
 		Name:     data.Name,
 		Email:    data.Email,
+		Role:     data.Role,
 	}
 
 	if !s.IsOrganizationMember(client) {

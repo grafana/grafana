@@ -83,10 +83,11 @@ func OAuthLogin(ctx *middleware.Context) {
 			return
 		}
 		cmd := m.CreateUserCommand{
-			Login:   userInfo.Email,
-			Email:   userInfo.Email,
-			Name:    userInfo.Name,
-			Company: userInfo.Company,
+			Login:          userInfo.Email,
+			Email:          userInfo.Email,
+			Name:           userInfo.Name,
+			Company:        userInfo.Company,
+			DefaultOrgRole: userInfo.Role,
 		}
 
 		if err = bus.Dispatch(&cmd); err != nil {

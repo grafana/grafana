@@ -15,6 +15,7 @@ type BasicUserInfo struct {
 	Email    string
 	Login    string
 	Company  string
+	Role     string
 }
 
 type SocialConnector interface {
