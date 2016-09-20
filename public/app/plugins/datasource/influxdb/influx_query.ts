@@ -251,4 +251,11 @@ export default class InfluxQuery {
 
     return query;
   }
+
+  renderAdhocFilters(filters) {
+    var conditions = _.map(filters, (tag, index) => {
+      return this.renderTagCondition(tag, index, false);
+    });
+    return conditions.join(' ');
+  }
 }

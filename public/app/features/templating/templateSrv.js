@@ -15,6 +15,7 @@ function (angular, _, kbn) {
     this._index = {};
     this._texts = {};
     this._grafanaVariables = {};
+    this._adhocVariables = {};
 
     this.init = function(variables) {
       this.variables = variables;
@@ -23,14 +24,31 @@ function (angular, _, kbn) {
 
     this.updateTemplateData = function() {
       this._index = {};
+      this._filters = {};
 
       for (var i = 0; i < this.variables.length; i++) {
         var variable = this.variables[i];
+
+        // add adhoc filters to it's own index
+        if (variable.type === 'adhoc') {
+          this._adhocVariables[variable.datasource] = variable;
+          continue;
+        }
+
         if (!variable.current || !variable.current.isNone && !variable.current.value) {
           continue;
         }
+
         this._index[variable.name] = variable;
       }
+    };
+
+    this.getAdhocFilters = function(datasourceName) {
+      var variable = this._adhocVariables[datasourceName];
+      if (variable) {
+        return variable.filters || [];
+      }
+      return []
     };
 
     function luceneEscape(value) {

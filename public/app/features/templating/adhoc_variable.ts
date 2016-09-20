@@ -18,7 +18,7 @@ export class AdhocVariable implements Variable {
   };
 
   /** @ngInject **/
-  constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
+  constructor(private model) {
     assignModelProperties(this, model, this.defaults);
   }
 
@@ -68,7 +68,7 @@ export class AdhocVariable implements Variable {
 }
 
 variableTypes['adhoc'] = {
-  name: 'Ad hoc',
+  name: 'Ad hoc filters',
   ctor: AdhocVariable,
-  description: 'Ad hoc filters',
+  description: 'Add key/value filters on the fly',
 };

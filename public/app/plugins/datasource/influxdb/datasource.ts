@@ -44,42 +44,39 @@ export default class InfluxDatasource {
 
   query(options) {
     var timeFilter = this.getTimeFilter(options);
-    var scopedVars = _.extend({}, options.scopedVars);
+    var scopedVars = options.scopedVars ? _.cloneDeep(options.scopedVars) : {};
     var targets = _.cloneDeep(options.targets);
     var queryTargets = [];
+    var queryModel;
     var i, y;
 
     var allQueries = _.map(targets, target => {
       if (target.hide) { return ""; }
-
-      if (!target.rawQuery) {
-        // apply add hoc filters
-        for (let variable of this.templateSrv.variables) {
-          if (variable.type === 'adhoc' && variable.datasource === this.name) {
-            for (let filter of variable.filters) {
-              if (filter.key !== undefined && filter.value !== undefined) {
-                target.tags.push({key: filter.key, value: filter.value, condition: filter.condition, operator: filter.operator});
-              }
-            }
-          }
-        }
-      }
 
       queryTargets.push(target);
 
       // build query
       scopedVars.interval = {value: target.interval || options.interval};
 
-      var queryModel = new InfluxQuery(target, this.templateSrv, scopedVars);
-      var query =  queryModel.render(true);
+      queryModel = new InfluxQuery(target, this.templateSrv, scopedVars);
+      return queryModel.render(true);
 
-      return query;
     }).reduce((acc, current) => {
       if (current !== "") {
         acc += ";" + current;
       }
       return acc;
     });
+
+    if (allQueries === '') {
+      return this.$q.when({data: []});
+    }
+
+    // add global adhoc filters to timeFilter
+    var adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    if (adhocFilters.length > 0 ) {
+      timeFilter += ' AND ' + queryModel.renderAdhocFilters(adhocFilters);
+    }
 
     // replace grafana variables
     scopedVars.timeFilter = {value: timeFilter};
@@ -120,7 +117,7 @@ export default class InfluxDatasource {
         }
       }
 
-      return { data: seriesList };
+      return {data: seriesList};
     });
   };
 
