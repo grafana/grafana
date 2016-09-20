@@ -1,4 +1,4 @@
-///<reference path="../../../headers/common.d.ts" />
+//<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
 import moment from 'moment';
@@ -17,7 +17,9 @@ export class TableRenderer {
     if (!style.thresholds) { return null; }
 
     for (var i = style.thresholds.length; i > 0; i--) {
-      if (value >= style.thresholds[i - 1]) {
+      if (_.isNumber(value) && value >= style.thresholds[i - 1]) {
+        return style.colors[i];
+      } else if (_.isString(value) && value.match(style.thresholds[i-1])) {
         return style.colors[i];
       }
     }
@@ -76,6 +78,19 @@ export class TableRenderer {
       };
     }
 
+    if (style.type === 'string') {
+      return v => {
+        var stringStyle = _.merge({}, style);
+        if (style.colorMode) {
+          stringStyle.thresholds = _.map(stringStyle.thresholds, function(str) {
+            return kbn.stringToJsRegex(str.trim());
+          });
+          this.colorState[stringStyle.colorMode] = this.getColorForValue(v, stringStyle);
+        }
+        return this.defaultCellFormater(v, stringStyle);
+      };
+    }
+
     return (value) => {
       return this.defaultCellFormater(value, style);
     };
@@ -118,7 +133,6 @@ export class TableRenderer {
     if (addWidthHack) {
       widthHack = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].text + '</div>';
     }
-
     return '<td' + style + '>' + value + widthHack + '</td>';
   }
 
