@@ -25,11 +25,16 @@ var (
 	versionRe = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
 	goarch    string
 	goos      string
+	gocc      string
+	gocxx     string
+	cgo       string
+	pkgArch   string
 	version   string = "v1"
 	// deb & rpm does not support semver so have to handle their version a little differently
 	linuxPackageVersion   string = "v1"
 	linuxPackageIteration string = ""
 	race                  bool
+	phjsToRelease         string
 	workingDir            string
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
 )
@@ -47,6 +52,11 @@ func main() {
 
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
+	flag.StringVar(&gocc, "cc", "", "CC")
+	flag.StringVar(&gocxx, "cxx", "", "CXX")
+	flag.StringVar(&cgo, "cgo-enabled", "", "CGO_ENABLED")
+	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
+	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
 	flag.BoolVar(&race, "race", race, "Use race detector")
 	flag.Parse()
 
@@ -73,15 +83,15 @@ func main() {
 			grunt("test")
 
 		case "package":
-			grunt("release", fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration))
+			grunt(gruntBuildArg("release")...)
 			createLinuxPackages()
 
 		case "pkg-rpm":
-			grunt("release")
+			grunt(gruntBuildArg("release")...)
 			createRpmPackages()
 
 		case "pkg-deb":
-			grunt("release")
+			grunt(gruntBuildArg("release")...)
 			createDebPackages()
 
 		case "latest":
@@ -258,6 +268,10 @@ func createPackage(options linuxPackageOptions) {
 		"-p", "./dist",
 	}
 
+	if pkgArch != "" {
+		args = append(args, "-a", pkgArch)
+	}
+
 	if linuxPackageIteration != "" {
 		args = append(args, "--iteration", linuxPackageIteration)
 	}
@@ -307,9 +321,20 @@ func grunt(params ...string) {
 	runPrint("./node_modules/.bin/grunt", params...)
 }
 
+func gruntBuildArg(task string) []string {
+	args := []string{task, fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration)}
+	if pkgArch != "" {
+		args = append(args, fmt.Sprintf("--arch=%v", pkgArch))
+	}
+	if phjsToRelease != "" {
+		args = append(args, fmt.Sprintf("--phjsToRelease=%v", phjsToRelease))
+	}
+	return args
+}
+
 func setup() {
 	runPrint("go", "get", "-v", "github.com/kardianos/govendor")
-  runPrint("go", "get", "-v", "github.com/blang/semver")
+	runPrint("go", "get", "-v", "github.com/blang/semver")
 	runPrint("go", "get", "-v", "github.com/mattn/go-sqlite3")
 	runPrint("go", "install", "-v", "github.com/mattn/go-sqlite3")
 }
@@ -381,6 +406,15 @@ func setBuildEnv() {
 	}
 	if goarch == "386" {
 		os.Setenv("GO386", "387")
+	}
+	if cgo != "" {
+		os.Setenv("CGO_ENABLED", cgo)
+	}
+	if gocc != "" {
+		os.Setenv("CC", gocc)
+	}
+	if gocxx != "" {
+		os.Setenv("CXX", gocxx)
 	}
 }
 
