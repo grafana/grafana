@@ -288,6 +288,10 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       esQuery = header + '\n' + esQuery + '\n';
 
       return this._post('_msearch?search_type=count', esQuery).then(function(res) {
+        if (!res.responses[0].aggregations) {
+          return [];
+        }
+
         var buckets = res.responses[0].aggregations["1"].buckets;
         return _.map(buckets, function(bucket) {
           return {text: bucket.key, value: bucket.key};

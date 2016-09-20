@@ -9,6 +9,10 @@ function($, _, moment) {
   var kbn = {};
   kbn.valueFormats = {};
 
+  kbn.regexEscape = function(value) {
+    return value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&');
+  };
+
   ///// HELPER FUNCTIONS /////
 
   kbn.round_interval = function(interval) {

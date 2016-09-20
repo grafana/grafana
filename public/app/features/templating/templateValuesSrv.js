@@ -166,8 +166,7 @@ function (angular, _, $, kbn) {
         if (otherVariable === updatedVariable) {
           return;
         }
-        if ((otherVariable.type === "datasource" &&
-            templateSrv.containsVariable(otherVariable.regex, updatedVariable.name)) ||
+        if (templateSrv.containsVariable(otherVariable.regex, updatedVariable.name) ||
             templateSrv.containsVariable(otherVariable.query, updatedVariable.name) ||
             templateSrv.containsVariable(otherVariable.datasource, updatedVariable.name)) {
           return self.updateOptions(otherVariable);
@@ -185,6 +184,12 @@ function (angular, _, $, kbn) {
 
       if (variable.type === 'constant') {
         variable.options = [{text: variable.query, value: variable.query}];
+        return;
+      }
+
+      if (variable.type === 'adhoc') {
+        variable.current = {};
+        variable.options = [];
         return;
       }
 
@@ -271,7 +276,7 @@ function (angular, _, $, kbn) {
 
     this.validateVariableSelectionState = function(variable) {
       if (!variable.current) {
-        if (!variable.options.length) { return; }
+        if (!variable.options.length) { return $q.when(); }
         return self.setVariableValue(variable, variable.options[0], false);
       }
 

@@ -10,11 +10,11 @@ export class SubmenuCtrl {
 
   /** @ngInject */
   constructor(private $rootScope,
-              private templateValuesSrv,
+              private variableSrv,
               private templateSrv,
               private $location) {
     this.annotations = this.dashboard.templating.list;
-    this.variables = this.dashboard.templating.list;
+    this.variables = this.variableSrv.variables;
   }
 
   disableAnnotation(annotation) {
@@ -23,11 +23,11 @@ export class SubmenuCtrl {
   }
 
   getValuesForTag(variable, tagKey) {
-    return this.templateValuesSrv.getValuesForTag(variable, tagKey);
+    return this.variableSrv.getValuesForTag(variable, tagKey);
   }
 
   variableUpdated(variable) {
-    this.templateValuesSrv.variableUpdated(variable).then(() => {
+    this.variableSrv.variableUpdated(variable).then(() => {
       this.$rootScope.$emit('template-variable-value-updated');
       this.$rootScope.$broadcast('refresh');
     });
