@@ -9,6 +9,7 @@ export class VariableEditorCtrl {
   /** @ngInject */
   constructor(private $scope, private datasourceSrv, private variableSrv, templateSrv) {
     $scope.variableTypes = variableTypes;
+    $scope.ctrl = {};
 
     $scope.refreshOptions = [
       {value: 0, text: "Never"},
@@ -60,9 +61,8 @@ export class VariableEditorCtrl {
     };
 
     $scope.isValid = function() {
-      if (!$scope.current.name) {
-        $scope.appEvent('alert-warning', ['Validation', 'Template variable requires a name']);
-        return false;
+      if (!$scope.ctrl.form.$valid) {
+        return;
       }
 
       if (!$scope.current.name.match(/^\w+$/)) {
@@ -79,6 +79,18 @@ export class VariableEditorCtrl {
       return true;
     };
 
+    $scope.validate = function() {
+      $scope.infoText = '';
+      if ($scope.current.type === 'adhoc' && $scope.current.datasource !== null) {
+        $scope.infoText = 'Adhoc filters are applied automatically to all queries that target this datasource';
+        datasourceSrv.get($scope.current.datasource).then(ds => {
+          if (!ds.supportAdhocFilters) {
+            $scope.infoText = 'This datasource does not support adhoc filters yet.';
+          }
+        });
+      }
+    };
+
     $scope.runQuery = function() {
       return variableSrv.updateOptions($scope.current).then(null, function(err) {
         if (err.data && err.data.message) { err.message = err.data.message; }
@@ -90,6 +102,7 @@ export class VariableEditorCtrl {
       $scope.current = variable;
       $scope.currentIsNew = false;
       $scope.mode = 'edit';
+      $scope.validate();
     };
 
     $scope.duplicate = function(variable) {
@@ -126,6 +139,8 @@ export class VariableEditorCtrl {
       if (oldIndex !== -1) {
         this.variables[oldIndex] = $scope.current;
       }
+
+      $scope.validate();
     };
 
     $scope.removeVariable = function(variable) {
@@ -133,7 +148,6 @@ export class VariableEditorCtrl {
       $scope.variables.splice(index, 1);
       $scope.updateSubmenuVisibility();
     };
-
   }
 }
 

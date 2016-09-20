@@ -21,6 +21,7 @@ export default class InfluxDatasource {
   interval: any;
   supportAnnotations: boolean;
   supportMetrics: boolean;
+  supportAdhocFilters: boolean;
   responseParser: any;
 
   /** @ngInject */
@@ -39,6 +40,7 @@ export default class InfluxDatasource {
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
     this.supportAnnotations = true;
     this.supportMetrics = true;
+    this.supportAdhocFilters = true;
     this.responseParser = new ResponseParser();
   }
 
