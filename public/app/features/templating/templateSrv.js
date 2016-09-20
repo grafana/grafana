@@ -48,7 +48,7 @@ function (angular, _, kbn) {
       if (variable) {
         return variable.filters || [];
       }
-      return []
+      return [];
     };
 
     function luceneEscape(value) {
