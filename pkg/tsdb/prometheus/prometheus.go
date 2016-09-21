@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"context"
+	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
@@ -69,7 +70,11 @@ func (e *PrometheusExecutor) Execute(queries tsdb.QuerySlice, queryContext *tsdb
 		return resultWithError(result, err)
 	}
 
-	result.QueryResults = parseResponse(value, query)
+	queryResult, err := parseResponse(value, query)
+	if err != nil {
+		return resultWithError(result, err)
+	}
+	result.QueryResults = queryResult
 	return result
 }
 
@@ -125,18 +130,21 @@ func parseQuery(queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) (*Prom
 	}, nil
 }
 
-func parseResponse(value pmodel.Value, query *PrometheusQuery) map[string]*tsdb.QueryResult {
+func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb.QueryResult, error) {
 	queryResults := make(map[string]*tsdb.QueryResult)
 	queryRes := &tsdb.QueryResult{}
 
-	data := value.(pmodel.Matrix)
+	data, ok := value.(pmodel.Matrix)
+	if !ok {
+		return queryResults, fmt.Errorf("Unsupported result format: %s", value.Type().String())
+	}
 
 	for _, v := range data {
 		var points [][2]*float64
 		for _, k := range v.Values {
-			dummie := float64(k.Timestamp)
-			d2 := float64(k.Value)
-			points = append(points, [2]*float64{&d2, &dummie})
+			timestamp := float64(k.Timestamp)
+			val := float64(k.Value)
+			points = append(points, [2]*float64{&val, &timestamp})
 		}
 
 		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
@@ -146,7 +154,7 @@ func parseResponse(value pmodel.Value, query *PrometheusQuery) map[string]*tsdb.
 	}
 
 	queryResults["A"] = queryRes
-	return queryResults
+	return queryResults, nil
 }
 
 func resultWithError(result *tsdb.BatchResult, err error) *tsdb.BatchResult {
