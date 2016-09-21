@@ -111,7 +111,7 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timera
 		Queries: []*tsdb.Query{
 			{
 				RefId: "A",
-				Query: c.Query.Model.Get("target").MustString(),
+				Model: c.Query.Model,
 				DataSource: &tsdb.DataSourceInfo{
 					Id:                datasource.Id,
 					Name:              datasource.Name,

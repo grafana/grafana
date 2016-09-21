@@ -54,7 +54,7 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	}
 
 	for _, query := range queries {
-		formData["target"] = []string{query.Query}
+		formData["target"] = []string{query.Model.Get("target").MustString()}
 	}
 
 	if setting.Env == setting.DEV {

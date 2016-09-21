@@ -1,8 +1,11 @@
 package tsdb
 
+import "github.com/grafana/grafana/pkg/components/simplejson"
+
 type Query struct {
 	RefId      string
 	Query      string
+	Model      *simplejson.Json
 	Depends    []string
 	DataSource *DataSourceInfo
 	Results    []*TimeSeries

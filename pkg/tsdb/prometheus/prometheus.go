@@ -3,6 +3,8 @@ package prometheus
 import (
 	"context"
 	"net/http"
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -53,25 +55,52 @@ func (e *PrometheusExecutor) Execute(queries tsdb.QuerySlice, queryContext *tsdb
 
 	from, _ := queryContext.TimeRange.FromTime()
 	to, _ := queryContext.TimeRange.ToTime()
+
+	query := parseQuery(queries)
+
 	timeRange := prometheus.Range{
 		Start: from,
 		End:   to,
-		Step:  time.Second,
+		Step:  query.Step,
 	}
 
-	ctx := context.Background()
-	value, err := client.QueryRange(ctx, "counters_logins", timeRange)
+	value, err := client.QueryRange(context.Background(), query.Expr, timeRange)
 
 	if err != nil {
 		result.Error = err
 		return result
 	}
 
-	result.QueryResults = parseResponse(value)
+	result.QueryResults = parseResponse(value, query)
 	return result
 }
 
-func parseResponse(value pmodel.Value) map[string]*tsdb.QueryResult {
+func formatLegend(metric pmodel.Metric, query PrometheusQuery) string {
+	r, _ := regexp.Compile(`\{\{\s*(.+?)\s*\}\}`)
+
+	result := r.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
+		ind := strings.Replace(strings.Replace(string(in), "{{", "", 1), "}}", "", 1)
+		if val, exists := metric[pmodel.LabelName(ind)]; exists {
+			return []byte(val)
+		}
+
+		return in
+	})
+
+	return string(result)
+}
+
+func parseQuery(queries tsdb.QuerySlice) PrometheusQuery {
+	queryModel := queries[0]
+
+	return PrometheusQuery{
+		Expr:         queryModel.Model.Get("expr").MustString(),
+		Step:         time.Second * time.Duration(queryModel.Model.Get("step").MustInt64(1)),
+		LegendFormat: queryModel.Model.Get("legendFormat").MustString(),
+	}
+}
+
+func parseResponse(value pmodel.Value, query PrometheusQuery) map[string]*tsdb.QueryResult {
 	queryResults := make(map[string]*tsdb.QueryResult)
 	queryRes := &tsdb.QueryResult{}
 
@@ -86,7 +115,7 @@ func parseResponse(value pmodel.Value) map[string]*tsdb.QueryResult {
 		}
 
 		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-			Name:   v.Metric.String(),
+			Name:   formatLegend(v.Metric, query),
 			Points: points,
 		})
 	}
