@@ -10,7 +10,7 @@
     </a>
   </div>
 
-	<table class="grafana-options-table" style="/*width: 600px;*/">
+	<table class="grafana-options-table">
 		<thead>
 			<th style="min-width: 200px"><strong>Name</strong></th>
 			<th style="min-width: 100px">Type</th>
@@ -25,7 +25,10 @@
 			<td>
 				{{notification.type}}
 			</td>
-			<td>
+			<td class="text-right">
+				<span class="btn btn-secondary btn-small" ng-show="notification.isDefault == true">
+					default
+				</span>
 				<a href="alerting/notification/{{notification.id}}/edit" class="btn btn-inverse btn-small">
 					<i class="fa fa-edit"></i>
 					edit

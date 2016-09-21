@@ -54,9 +54,9 @@ export class QueryPart {
     // handle optional parameters
     // if string contains ',' and next param is optional, split and update both
     if (this.hasMultipleParamsInString(strValue, index)) {
-      _.each(strValue.split(','), function(partVal: string, idx) {
+      _.each(strValue.split(','), (partVal, idx) => {
         this.updateParam(partVal.trim(), idx);
-      }, this);
+      });
       return;
     }
 

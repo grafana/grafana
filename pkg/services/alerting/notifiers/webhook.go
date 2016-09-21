@@ -20,14 +20,11 @@ func NewWebHookNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &WebhookNotifier{
-		NotifierBase: NotifierBase{
-			Name: model.Name,
-			Type: model.Type,
-		},
-		Url:      url,
-		User:     model.Settings.Get("user").MustString(),
-		Password: model.Settings.Get("password").MustString(),
-		log:      log.New("alerting.notifier.webhook"),
+		NotifierBase: NewNotifierBase(model.Name, model.Type, model.Settings),
+		Url:          url,
+		User:         model.Settings.Get("user").MustString(),
+		Password:     model.Settings.Get("password").MustString(),
+		log:          log.New("alerting.notifier.webhook"),
 	}, nil
 }
 
@@ -48,7 +45,6 @@ func (this *WebhookNotifier) Notify(context *alerting.EvalContext) {
 	bodyJSON.Set("ruleId", context.Rule.Id)
 	bodyJSON.Set("ruleName", context.Rule.Name)
 	bodyJSON.Set("state", context.Rule.State)
-	bodyJSON.Set("severity", context.Rule.Severity)
 	bodyJSON.Set("evalMatches", context.EvalMatches)
 
 	ruleUrl, err := context.GetRuleUrl()

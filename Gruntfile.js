@@ -9,13 +9,16 @@ module.exports = function (grunt) {
     genDir: 'public_gen',
     destDir: 'dist',
     tempDir: 'tmp',
-    arch: os.arch(),
     platform: process.platform.replace('win32', 'windows'),
   };
 
   if (process.platform.match(/^win/)) {
     config.arch = process.env.hasOwnProperty('ProgramFiles(x86)') ? 'x64' : 'x86';
   }
+
+  config.arch = grunt.option('arch') || os.arch();
+
+  config.phjs = grunt.option('phjsToRelease');
 
   config.pkg.version = grunt.option('pkgVer') || config.pkg.version;
   console.log('Version', config.pkg.version);

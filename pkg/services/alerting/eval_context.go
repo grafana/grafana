@@ -26,38 +26,49 @@ type EvalContext struct {
 	dashboardSlug   string
 	ImagePublicUrl  string
 	ImageOnDiskPath string
+	NoDataFound     bool
+	RetryCount      int
+}
+
+type StateDescription struct {
+	Color string
+	Text  string
+	Data  string
+}
+
+func (c *EvalContext) GetStateModel() *StateDescription {
+	switch c.Rule.State {
+	case m.AlertStateOK:
+		return &StateDescription{
+			Color: "#36a64f",
+			Text:  "OK",
+		}
+	case m.AlertStateNoData:
+		return &StateDescription{
+			Color: "#888888",
+			Text:  "No Data",
+		}
+	case m.AlertStateExecError:
+		return &StateDescription{
+			Color: "#000",
+			Text:  "Execution Error",
+		}
+	case m.AlertStateAlerting:
+		return &StateDescription{
+			Color: "#D63232",
+			Text:  "Alerting",
+		}
+	default:
+		panic("Unknown rule state " + c.Rule.State)
+	}
 }
 
 func (a *EvalContext) GetDurationMs() float64 {
 	return float64(a.EndTime.Nanosecond()-a.StartTime.Nanosecond()) / float64(1000000)
 }
 
-func (c *EvalContext) GetColor() string {
-	if !c.Firing {
-		return "#36a64f"
-	}
-
-	if c.Rule.Severity == m.AlertSeverityWarning {
-		return "#fd821b"
-	} else {
-		return "#D63232"
-	}
-}
-
-func (c *EvalContext) GetStateText() string {
-	if !c.Firing {
-		return "OK"
-	}
-
-	if c.Rule.Severity == m.AlertSeverityWarning {
-		return "WARNING"
-	} else {
-		return "CRITICAL"
-	}
-}
-
 func (c *EvalContext) GetNotificationTitle() string {
-	return "[" + c.GetStateText() + "] " + c.Rule.Name
+	return "[" + c.GetStateModel().Text + "] " + c.Rule.Name
 }
 
 func (c *EvalContext) getDashboardSlug() (string, error) {
@@ -101,5 +112,6 @@ func NewEvalContext(rule *Rule) *EvalContext {
 		DoneChan:    make(chan bool, 1),
 		CancelChan:  make(chan bool, 1),
 		log:         log.New("alerting.evalContext"),
+		RetryCount:  0,
 	}
 }

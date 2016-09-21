@@ -78,7 +78,8 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     if (this.panel.transform === 'annotations') {
       this.setTimeQueryStart();
-      return this.annotationsSrv.getAnnotations(this.dashboard).then(annotations => {
+      return this.annotationsSrv.getAnnotations({dashboard: this.dashboard, panel: this.panel, range: this.range})
+      .then(annotations => {
         return {data: annotations};
       });
     }

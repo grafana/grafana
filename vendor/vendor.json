@@ -1,0 +1,67 @@
+{
+	"comment": "",
+	"ignore": "test",
+	"package": [
+		{
+			"checksumSHA1": "6AYg4fjEvFuAVN3wHakGApjhZAM=",
+			"path": "github.com/smartystreets/assertions",
+			"revision": "2063fd1cc7c975db70502811a34b06ad034ccdf2",
+			"revisionTime": "2016-07-07T19:03:55Z"
+		},
+		{
+			"checksumSHA1": "Vzb+dEH/LTYbvr8RXHmt6xJHz04=",
+			"path": "github.com/smartystreets/assertions/internal/go-render/render",
+			"revision": "2063fd1cc7c975db70502811a34b06ad034ccdf2",
+			"revisionTime": "2016-07-07T19:03:55Z"
+		},
+		{
+			"checksumSHA1": "SLC6TfV4icQA9l8YJQu8acJYbuo=",
+			"path": "github.com/smartystreets/assertions/internal/oglematchers",
+			"revision": "2063fd1cc7c975db70502811a34b06ad034ccdf2",
+			"revisionTime": "2016-07-07T19:03:55Z"
+		},
+		{
+			"checksumSHA1": "/mwAihy9AmznMzmbPQ5nWJXBiRU=",
+			"path": "github.com/smartystreets/goconvey/convey",
+			"revision": "5db88ed452e937f2fd557de6f4f1af7f2eabed0b",
+			"revisionTime": "2016-08-23T18:01:44Z"
+		},
+		{
+			"checksumSHA1": "9LakndErFi5uCXtY1KWl0iRnT4c=",
+			"path": "github.com/smartystreets/goconvey/convey/gotest",
+			"revision": "5db88ed452e937f2fd557de6f4f1af7f2eabed0b",
+			"revisionTime": "2016-08-23T18:01:44Z"
+		},
+		{
+			"checksumSHA1": "FWDhk37bhAwZ2363D/L2xePwR64=",
+			"path": "github.com/smartystreets/goconvey/convey/reporting",
+			"revision": "5db88ed452e937f2fd557de6f4f1af7f2eabed0b",
+			"revisionTime": "2016-08-23T18:01:44Z"
+		},
+		{
+			"checksumSHA1": "WHc3uByvGaMcnSoI21fhzYgbOgg=",
+			"path": "golang.org/x/net/context/ctxhttp",
+			"revision": "f4fe4abe3c785295ddf81c7f1823bcd3bad391b6",
+			"revisionTime": "2016-09-20T17:08:14Z"
+		},
+		{
+			"checksumSHA1": "X1gHerCXsqxHcxUmlUttZu73qQg=",
+			"path": "gopkg.in/olivere/elastic.v3",
+			"revision": "0e48129397ff05068bb2909503dd2fef1644c9db",
+			"revisionTime": "2016-09-18T12:51:56Z"
+		},
+		{
+			"checksumSHA1": "lLdKOn9RPtFoTtPUNq5+sIInAiE=",
+			"path": "gopkg.in/olivere/elastic.v3/backoff",
+			"revision": "0e48129397ff05068bb2909503dd2fef1644c9db",
+			"revisionTime": "2016-09-18T12:51:56Z"
+		},
+		{
+			"checksumSHA1": "XQg6xG6l15Ke43KolthYYnVDCYo=",
+			"path": "gopkg.in/olivere/elastic.v3/uritemplates",
+			"revision": "0e48129397ff05068bb2909503dd2fef1644c9db",
+			"revisionTime": "2016-09-18T12:51:56Z"
+		}
+	],
+	"rootPath": "github.com/grafana/grafana"
+}

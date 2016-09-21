@@ -77,7 +77,7 @@ export class MetricsDsSelectorCtrl {
   }
 
   datasourceChanged() {
-    var ds = _.findWhere(this.datasources, {name: this.dsSegment.value});
+    var ds = _.find(this.datasources, {name: this.dsSegment.value});
     if (ds) {
       this.current = ds;
       this.panelCtrl.setDatasource(ds);

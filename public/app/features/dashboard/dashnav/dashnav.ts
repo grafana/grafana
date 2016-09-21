@@ -158,18 +158,13 @@ export class DashNavCtrl {
     $scope.deleteDashboard = function() {
       var confirmText = "";
       var text2 = $scope.dashboard.title;
-      var alerts = 0;
-
-      _.each($scope.dashboard.rows, row => {
-        _.each(row.panels, panel => {
-          if (panel.alerting && panel.alerting.queryRef !== '- select query -') {
-            alerts += 1;
-          };
-        });
-      });
+      var alerts = $scope.dashboard.rows.reduce((memo, row) => {
+        memo += row.panels.filter(panel => panel.alert && panel.alert.enabled).length;
+        return memo;
+      }, 0);
 
       if (alerts > 0) {
-        confirmText = $scope.dashboard.title;
+        confirmText = 'DELETE';
         text2 = `This dashboad contains ${alerts} alerts. Deleting this dashboad will also delete those alerts`;
       }
 

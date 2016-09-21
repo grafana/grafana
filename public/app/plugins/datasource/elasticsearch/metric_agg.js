@@ -50,7 +50,7 @@ function (angular, _, queryDef) {
       $scope.isFirst = $scope.index === 0;
       $scope.isSingle = metricAggs.length === 1;
       $scope.settingsLinkText = '';
-      $scope.aggDef = _.findWhere($scope.metricAggTypes, {value: $scope.agg.type});
+      $scope.aggDef = _.find($scope.metricAggTypes, {value: $scope.agg.type});
 
       if (queryDef.isPipelineAgg($scope.agg.type)) {
         $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'select metric';
@@ -86,7 +86,7 @@ function (angular, _, queryDef) {
 
           var stats = _.reduce($scope.agg.meta, function(memo, val, key) {
             if (val) {
-              var def = _.findWhere($scope.extendedStats, {value: key});
+              var def = _.find($scope.extendedStats, {value: key});
               memo.push(def.text);
             }
             return memo;

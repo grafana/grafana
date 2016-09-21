@@ -104,6 +104,22 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	}
 
 	proxyPath := c.Params("*")
+
+	if ds.Type == m.DS_ES {
+		if c.Req.Request.Method == "DELETE" {
+			c.JsonApiErr(403, "Deletes not allowed on proxied Elasticsearch datasource", nil)
+			return
+		}
+		if c.Req.Request.Method == "PUT" {
+			c.JsonApiErr(403, "Puts not allowed on proxied Elasticsearch datasource", nil)
+			return
+		}
+		if c.Req.Request.Method == "POST" && proxyPath != "_msearch" {
+			c.JsonApiErr(403, "Posts not allowed on proxied Elasticsearch datasource except on /_msearch", nil)
+			return
+		}
+	}
+
 	proxy := NewReverseProxy(ds, proxyPath, targetUrl)
 	proxy.Transport = dataProxyTransport
 	proxy.ServeHTTP(c.Resp, c.Req.Request)

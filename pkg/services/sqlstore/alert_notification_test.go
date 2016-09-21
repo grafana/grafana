@@ -23,7 +23,7 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			err := GetAlertNotifications(cmd)
 			fmt.Printf("errror %v", err)
 			So(err, ShouldBeNil)
-			So(len(cmd.Result), ShouldEqual, 0)
+			So(cmd.Result, ShouldBeNil)
 		})
 
 		Convey("Can save Alert Notification", func() {
@@ -63,20 +63,35 @@ func TestAlertNotificationSQLAccess(t *testing.T) {
 			cmd1 := m.CreateAlertNotificationCommand{Name: "nagios", Type: "webhook", OrgId: 1, Settings: simplejson.New()}
 			cmd2 := m.CreateAlertNotificationCommand{Name: "slack", Type: "webhook", OrgId: 1, Settings: simplejson.New()}
 			cmd3 := m.CreateAlertNotificationCommand{Name: "ops2", Type: "email", OrgId: 1, Settings: simplejson.New()}
+			cmd4 := m.CreateAlertNotificationCommand{IsDefault: true, Name: "default", Type: "email", OrgId: 1, Settings: simplejson.New()}
+
+			otherOrg := m.CreateAlertNotificationCommand{Name: "default", Type: "email", OrgId: 2, Settings: simplejson.New()}
 
 			So(CreateAlertNotificationCommand(&cmd1), ShouldBeNil)
 			So(CreateAlertNotificationCommand(&cmd2), ShouldBeNil)
 			So(CreateAlertNotificationCommand(&cmd3), ShouldBeNil)
+			So(CreateAlertNotificationCommand(&cmd4), ShouldBeNil)
+			So(CreateAlertNotificationCommand(&otherOrg), ShouldBeNil)
 
 			Convey("search", func() {
-				query := &m.GetAlertNotificationsQuery{
+				query := &m.GetAlertNotificationsToSendQuery{
 					Ids:   []int64{cmd1.Result.Id, cmd2.Result.Id, 112341231},
 					OrgId: 1,
 				}
 
-				err := GetAlertNotifications(query)
+				err := GetAlertNotificationsToSend(query)
 				So(err, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 2)
+				So(len(query.Result), ShouldEqual, 3)
+			})
+
+			Convey("all", func() {
+				query := &m.GetAllAlertNotificationsQuery{
+					OrgId: 1,
+				}
+
+				err := GetAllAlertNotifications(query)
+				So(err, ShouldBeNil)
+				So(len(query.Result), ShouldEqual, 4)
 			})
 		})
 	})

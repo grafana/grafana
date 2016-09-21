@@ -25,13 +25,18 @@ func ValidateOrgAlert(c *middleware.Context) {
 	}
 }
 
-// GET /api/alerts/rules/
+// GET /api/alerts
 func GetAlerts(c *middleware.Context) Response {
 	query := models.GetAlertsQuery{
 		OrgId:       c.OrgId,
-		State:       c.QueryStrings("state"),
 		DashboardId: c.QueryInt64("dashboardId"),
 		PanelId:     c.QueryInt64("panelId"),
+		Limit:       c.QueryInt64("limit"),
+	}
+
+	states := c.QueryStrings("state")
+	if len(states) > 0 {
+		query.State = states
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -49,7 +54,6 @@ func GetAlerts(c *middleware.Context) Response {
 			Name:           alert.Name,
 			Message:        alert.Message,
 			State:          alert.State,
-			Severity:       alert.Severity,
 			EvalDate:       alert.EvalDate,
 			NewStateDate:   alert.NewStateDate,
 			ExecutionError: alert.ExecutionError,
@@ -146,7 +150,7 @@ func DelAlert(c *middleware.Context) Response {
 }
 
 func GetAlertNotifications(c *middleware.Context) Response {
-	query := &models.GetAlertNotificationsQuery{OrgId: c.OrgId}
+	query := &models.GetAllAlertNotificationsQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(query); err != nil {
 		return ApiError(500, "Failed to get alert notifications", err)
@@ -156,11 +160,12 @@ func GetAlertNotifications(c *middleware.Context) Response {
 
 	for _, notification := range query.Result {
 		result = append(result, dtos.AlertNotification{
-			Id:      notification.Id,
-			Name:    notification.Name,
-			Type:    notification.Type,
-			Created: notification.Created,
-			Updated: notification.Updated,
+			Id:        notification.Id,
+			Name:      notification.Name,
+			Type:      notification.Type,
+			IsDefault: notification.IsDefault,
+			Created:   notification.Created,
+			Updated:   notification.Updated,
 		})
 	}
 
@@ -177,7 +182,7 @@ func GetAlertNotificationById(c *middleware.Context) Response {
 		return ApiError(500, "Failed to get alert notifications", err)
 	}
 
-	return Json(200, query.Result[0])
+	return Json(200, query.Result)
 }
 
 func CreateAlertNotification(c *middleware.Context, cmd models.CreateAlertNotificationCommand) Response {
@@ -211,4 +216,50 @@ func DeleteAlertNotification(c *middleware.Context) Response {
 	}
 
 	return ApiSuccess("Notification deleted")
+}
+
+//POST /api/alert-notifications/test
+func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) Response {
+	cmd := &alerting.NotificationTestCommand{
+		Name:     dto.Name,
+		Type:     dto.Type,
+		Settings: dto.Settings,
+	}
+
+	if err := bus.Dispatch(cmd); err != nil {
+		return ApiError(500, "Failed to send alert notifications", err)
+	}
+
+	return ApiSuccess("Test notification sent")
+}
+
+func getAlertIdForRequest(c *middleware.Context) (int64, error) {
+	alertId := c.QueryInt64("alertId")
+	panelId := c.QueryInt64("panelId")
+	dashboardId := c.QueryInt64("dashboardId")
+
+	if alertId == 0 && dashboardId == 0 && panelId == 0 {
+		return 0, fmt.Errorf("Missing alertId or dashboardId and panelId")
+	}
+
+	if alertId == 0 {
+		//fetch alertId
+		query := models.GetAlertsQuery{
+			OrgId:       c.OrgId,
+			DashboardId: dashboardId,
+			PanelId:     panelId,
+		}
+
+		if err := bus.Dispatch(&query); err != nil {
+			return 0, err
+		}
+
+		if len(query.Result) != 1 {
+			return 0, fmt.Errorf("PanelId is not unique on dashboard")
+		}
+
+		alertId = query.Result[0].Id
+	}
+
+	return alertId, nil
 }

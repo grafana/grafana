@@ -12,14 +12,6 @@ describe("rangeUtil", () => {
       expect(_.keys(groups).length).to.be(4)
       expect(groups[3][0].active).to.be(true)
     });
-
-    // it('should add custom options to right section', () => {
-    //   var groups = rangeUtil.getRelativeTimesList({
-    //     time_options: ['12m', '15d']
-    //   }, '');
-    //   var value = _.findWhere(groups["3"], {display: 'Last 12 minutes'});
-    //   expect(value).to.not.be(undefined)
-    // });
   });
 
   describe("Can get range text described", () => {
