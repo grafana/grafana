@@ -17,8 +17,7 @@ export class SubmenuCtrl {
     this.variables = this.variableSrv.variables;
   }
 
-  disableAnnotation(annotation) {
-    annotation.enable = !annotation.enable;
+  annotationStateChanged() {
     this.$rootScope.$broadcast('refresh');
   }
 
