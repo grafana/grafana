@@ -7,8 +7,8 @@ function (angular, coreModule, config) {
   'use strict';
 
   var failCodes = {
-    "1000": "Required Github team membership not fulfilled",
-    "1001": "Required Github organization membership not fulfilled",
+    "1000": "Required team membership not fulfilled",
+    "1001": "Required organization membership not fulfilled",
     "1002": "Required email domain not fulfilled",
   };
 
