@@ -8,6 +8,7 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type EvalContext struct {
@@ -28,6 +29,7 @@ type EvalContext struct {
 	ImageOnDiskPath string
 	NoDataFound     bool
 	RetryCount      int
+	TimeRange       tsdb.TimeRange
 }
 
 type StateDescription struct {
