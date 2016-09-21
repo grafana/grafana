@@ -52,18 +52,14 @@ func (e *PrometheusExecutor) Execute(queries tsdb.QuerySlice, queryContext *tsdb
 		return resultWithError(result, err)
 	}
 
-	from, _ := queryContext.TimeRange.FromTime()
-	to, _ := queryContext.TimeRange.ToTime()
-
-	query, err := parseQuery(queries)
-
+	query, err := parseQuery(queries, queryContext)
 	if err != nil {
 		return resultWithError(result, err)
 	}
 
 	timeRange := prometheus.Range{
-		Start: from,
-		End:   to,
+		Start: query.Start,
+		End:   query.End,
 		Step:  query.Step,
 	}
 
@@ -78,9 +74,9 @@ func (e *PrometheusExecutor) Execute(queries tsdb.QuerySlice, queryContext *tsdb
 }
 
 func formatLegend(metric pmodel.Metric, query *PrometheusQuery) string {
-	r, _ := regexp.Compile(`\{\{\s*(.+?)\s*\}\}`)
+	reg, _ := regexp.Compile(`\{\{\s*(.+?)\s*\}\}`)
 
-	result := r.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
+	result := reg.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
 		ind := strings.Replace(strings.Replace(string(in), "{{", "", 1), "}}", "", 1)
 		if val, exists := metric[pmodel.LabelName(ind)]; exists {
 			return []byte(val)
@@ -92,7 +88,7 @@ func formatLegend(metric pmodel.Metric, query *PrometheusQuery) string {
 	return string(result)
 }
 
-func parseQuery(queries tsdb.QuerySlice) (*PrometheusQuery, error) {
+func parseQuery(queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) (*PrometheusQuery, error) {
 	queryModel := queries[0]
 
 	expr, err := queryModel.Model.Get("expr").String()
@@ -110,10 +106,22 @@ func parseQuery(queries tsdb.QuerySlice) (*PrometheusQuery, error) {
 		return nil, err
 	}
 
+	start, err := queryContext.TimeRange.FromTime()
+	if err != nil {
+		return nil, err
+	}
+
+	end, err := queryContext.TimeRange.ToTime()
+	if err != nil {
+		return nil, err
+	}
+
 	return &PrometheusQuery{
 		Expr:         expr,
 		Step:         time.Second * time.Duration(step),
 		LegendFormat: format,
+		Start:        start,
+		End:          end,
 	}, nil
 }
 
