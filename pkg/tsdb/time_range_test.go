@@ -23,15 +23,15 @@ func TestTimeRange(t *testing.T) {
 				fiveMinAgo, _ := time.ParseDuration("-5m")
 				expected := now.Add(fiveMinAgo)
 
-				res, err := tr.FromUnix()
+				res, err := tr.FromTime()
 				So(err, ShouldBeNil)
-				So(res, ShouldAlmostEqual, expected.Unix())
+				So(res.Unix(), ShouldEqual, expected.Unix())
 			})
 
 			Convey("now ", func() {
-				res, err := tr.ToUnix()
+				res, err := tr.ToTime()
 				So(err, ShouldBeNil)
-				So(res, ShouldAlmostEqual, now.Unix())
+				So(res.Unix(), ShouldEqual, now.Unix())
 			})
 		})
 
@@ -43,20 +43,20 @@ func TestTimeRange(t *testing.T) {
 			}
 
 			Convey("5h ago ", func() {
-				fiveMinAgo, _ := time.ParseDuration("-5h")
-				expected := now.Add(fiveMinAgo)
+				fiveHourAgo, _ := time.ParseDuration("-5h")
+				expected := now.Add(fiveHourAgo)
 
-				res, err := tr.FromUnix()
+				res, err := tr.FromTime()
 				So(err, ShouldBeNil)
-				So(res, ShouldAlmostEqual, expected.Unix())
+				So(res.Unix(), ShouldEqual, expected.Unix())
 			})
 
 			Convey("now-10m ", func() {
 				fiveMinAgo, _ := time.ParseDuration("-10m")
 				expected := now.Add(fiveMinAgo)
-				res, err := tr.ToUnix()
+				res, err := tr.ToTime()
 				So(err, ShouldBeNil)
-				So(res, ShouldAlmostEqual, expected.Unix())
+				So(res.Unix(), ShouldEqual, expected.Unix())
 			})
 		})
 
@@ -68,10 +68,10 @@ func TestTimeRange(t *testing.T) {
 				Now:  now,
 			}
 
-			_, err = tr.FromUnix()
+			_, err = tr.FromTime()
 			So(err, ShouldNotBeNil)
 
-			_, err = tr.ToUnix()
+			_, err = tr.ToTime()
 			So(err, ShouldNotBeNil)
 		})
 	})

@@ -20,17 +20,6 @@ type TimeRange struct {
 	Now  time.Time
 }
 
-func (tr TimeRange) FromUnix() (int64, error) {
-	fromRaw := strings.Replace(tr.From, "now-", "", 1)
-
-	diff, err := time.ParseDuration("-" + fromRaw)
-	if err != nil {
-		return 0, err
-	}
-
-	return tr.Now.Add(diff).Unix(), nil
-}
-
 func (tr TimeRange) FromTime() (time.Time, error) {
 	fromRaw := strings.Replace(tr.From, "now-", "", 1)
 
@@ -40,23 +29,6 @@ func (tr TimeRange) FromTime() (time.Time, error) {
 	}
 
 	return tr.Now.Add(diff), nil
-}
-
-func (tr TimeRange) ToUnix() (int64, error) {
-	if tr.To == "now" {
-		return tr.Now.Unix(), nil
-	} else if strings.HasPrefix(tr.To, "now-") {
-		withoutNow := strings.Replace(tr.To, "now-", "", 1)
-
-		diff, err := time.ParseDuration("-" + withoutNow)
-		if err != nil {
-			return 0, nil
-		}
-
-		return tr.Now.Add(diff).Unix(), nil
-	}
-
-	return 0, fmt.Errorf("cannot parse to value %s", tr.To)
 }
 
 func (tr TimeRange) ToTime() (time.Time, error) {
