@@ -93,7 +93,7 @@ export class QueryVariable implements Variable {
     var regex, options, i, matches;
     options = [];
 
-    if (this.model.regex) {
+    if (this.regex) {
       regex = kbn.stringToJsRegex(this.templateSrv.replace(this.regex));
     }
 
