@@ -115,14 +115,14 @@ export class QueryVariable implements Variable {
         if (!matches) { continue; }
         if (matches.length > 1) {
           value = matches[1];
-          text = value;
+          text = matches[1];
         }
       }
 
       options.push({text: text, value: value});
     }
 
-    options = _.uniq(options, 'value');
+    options = _.uniqBy(options, 'value');
     return this.sortVariableValues(options, this.sort);
   }
 

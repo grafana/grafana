@@ -250,7 +250,7 @@ describe('VariableSrv', function() {
     describeUpdateVariable('regex pattern remove duplicates', function(scenario) {
       scenario.setup(function() {
         scenario.variableModel = {type: 'query', query: 'apps.*', name: 'test'};
-        scenario.variableModel.regex = 'backend_01';
+        scenario.variableModel.regex = '/backend_01/';
         scenario.queryResult = [{text: 'apps.backend.backend_01.counters.req'}, {text: 'apps.backend.backend_01.counters.req'}];
       });
 
