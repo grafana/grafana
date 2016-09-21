@@ -16,7 +16,7 @@ func TestPrometheus(t *testing.T) {
 				p.LabelName("device"): p.LabelValue("mobile"),
 			}
 
-			query := PrometheusQuery{
+			query := &PrometheusQuery{
 				LegendFormat: "legend {{app}} {{device}} {{broken}}",
 			}
 
