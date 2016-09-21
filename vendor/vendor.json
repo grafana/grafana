@@ -1,6 +1,25 @@
 {
 	"comment": "",
 	"ignore": "test",
-	"package": [],
+	"package": [
+		{
+			"checksumSHA1": "SMUvX2B8eoFd9wnPofwBKlN6btE=",
+			"path": "github.com/prometheus/client_golang/api/prometheus",
+			"revision": "5636dc67ae776adf5590da7349e70fbb9559972d",
+			"revisionTime": "2016-09-16T18:03:40Z"
+		},
+		{
+			"checksumSHA1": "Jx0GXl5hGnO25s3ryyvtdWHdCpw=",
+			"path": "github.com/prometheus/common/model",
+			"revision": "9a94032291f2192936512bab367bc45e77990d6a",
+			"revisionTime": "2016-09-17T18:44:01Z"
+		},
+		{
+			"checksumSHA1": "WHc3uByvGaMcnSoI21fhzYgbOgg=",
+			"path": "golang.org/x/net/context/ctxhttp",
+			"revision": "71a035914f99bb58fe82eac0f1289f10963d876c",
+			"revisionTime": "2016-09-12T21:59:12Z"
+		}
+	],
 	"rootPath": "github.com/grafana/grafana"
 }
