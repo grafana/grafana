@@ -9,6 +9,7 @@ import InfluxQuery from './influx_query';
 import ResponseParser from './response_parser';
 import InfluxQueryBuilder from './query_builder';
 
+
 export default class InfluxDatasource {
   type: string;
   urls: any;
@@ -21,7 +22,6 @@ export default class InfluxDatasource {
   interval: any;
   supportAnnotations: boolean;
   supportMetrics: boolean;
-  supportAdhocFilters: boolean;
   responseParser: any;
 
   /** @ngInject */
@@ -40,7 +40,6 @@ export default class InfluxDatasource {
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
     this.supportAnnotations = true;
     this.supportMetrics = true;
-    this.supportAdhocFilters = true;
     this.responseParser = new ResponseParser();
   }
 

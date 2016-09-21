@@ -158,6 +158,7 @@ define([
       return _.template(text, this.templateSettings)(this.data);
     };
     this.init = function() {};
+    this.getAdhocFilters = function() { return []; };
     this.fillVariableValuesForUrl = function() {};
     this.updateTemplateData = function() { };
     this.variableExists = function() { return false; };

@@ -84,7 +84,7 @@ export class VariableEditorCtrl {
       if ($scope.current.type === 'adhoc' && $scope.current.datasource !== null) {
         $scope.infoText = 'Adhoc filters are applied automatically to all queries that target this datasource';
         datasourceSrv.get($scope.current.datasource).then(ds => {
-          if (!ds.supportAdhocFilters) {
+          if (!ds.getTagKeys) {
             $scope.infoText = 'This datasource does not support adhoc filters yet.';
           }
         });
