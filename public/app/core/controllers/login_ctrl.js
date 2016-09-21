@@ -6,6 +6,12 @@ define([
 function (angular, coreModule, config) {
   'use strict';
 
+  var failCodes = {
+    "1000": "Required Github team membership not fulfilled",
+    "1001": "Required Github organization membership not fulfilled",
+    "1002": "Required email domain not fulfilled",
+  };
+
   coreModule.default.controller('LoginCtrl', function($scope, backendSrv, contextSrv, $location) {
     $scope.formModel = {
       user: '',
@@ -37,8 +43,8 @@ function (angular, coreModule, config) {
       $scope.$watch("loginMode", $scope.loginModeChanged);
 
       var params = $location.search();
-      if (params.failedMsg) {
-        $scope.appEvent('alert-warning', ['Login Failed', params.failedMsg]);
+      if (params.failCode) {
+        $scope.appEvent('alert-warning', ['Login Failed', failCodes[params.failCode]]);
         delete params.failedMsg;
         $location.search(params);
       }

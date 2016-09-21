@@ -177,11 +177,14 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var target;
       var sentTargets = [];
 
+      // add global adhoc filters to timeFilter
+      var adhocFilters = templateSrv.getAdhocFilters(this.name);
+
       for (var i = 0; i < options.targets.length; i++) {
         target = options.targets[i];
         if (target.hide) {continue;}
 
-        var queryObj = this.queryBuilder.build(target);
+        var queryObj = this.queryBuilder.build(target, adhocFilters);
         var esQuery = angular.toJson(queryObj);
         var luceneQuery = target.query || '*';
         luceneQuery = templateSrv.replace(luceneQuery, options.scopedVars, 'lucene');
@@ -247,7 +250,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
               // Hide meta-fields and check field type
               if (key[0] !== '_' &&
                   (!query.type ||
-                    query.type && typeMap[subObj.type] === query.type)) {
+                   query.type && typeMap[subObj.type] === query.type)) {
 
                 fields[fieldName] = {
                   text: fieldName,
@@ -288,6 +291,10 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       esQuery = header + '\n' + esQuery + '\n';
 
       return this._post('_msearch?search_type=count', esQuery).then(function(res) {
+        if (!res.responses[0].aggregations) {
+          return [];
+        }
+
         var buckets = res.responses[0].aggregations["1"].buckets;
         return _.map(buckets, function(bucket) {
           return {text: bucket.key, value: bucket.key};
@@ -309,6 +316,14 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       if (query.find === 'terms') {
         return this.getTerms(query);
       }
+    };
+
+    this.getTagKeys = function() {
+      return this.getFields({});
+    };
+
+    this.getTagValues = function(options) {
+      return this.getTerms({field: options.key, query: '*'});
     };
   }
 
