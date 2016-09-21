@@ -34,8 +34,8 @@ type AlertQuery struct {
 }
 
 func (c *QueryCondition) Eval(context *alerting.EvalContext) {
-	context.TimeRange = tsdb.NewTimerange(c.Query.From, c.Query.To)
-	seriesList, err := c.executeQuery(context)
+	timerange := tsdb.NewTimerange(c.Query.From, c.Query.To)
+	seriesList, err := c.executeQuery(context, timerange)
 	if err != nil {
 		context.Error = err
 		return
@@ -69,7 +69,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) {
 	context.Firing = len(context.EvalMatches) > 0
 }
 
-func (c *QueryCondition) executeQuery(context *alerting.EvalContext) (tsdb.TimeSeriesSlice, error) {
+func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timerange tsdb.TimeRange) (tsdb.TimeSeriesSlice, error) {
 	getDsInfo := &m.GetDataSourceByIdQuery{
 		Id:    c.Query.DatasourceId,
 		OrgId: context.Rule.OrgId,
@@ -79,7 +79,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext) (tsdb.TimeS
 		return nil, fmt.Errorf("Could not find datasource")
 	}
 
-	req := c.getRequestForAlertRule(getDsInfo.Result, context.TimeRange)
+	req := c.getRequestForAlertRule(getDsInfo.Result, timerange)
 	result := make(tsdb.TimeSeriesSlice, 0)
 
 	resp, err := c.HandleRequest(req)
