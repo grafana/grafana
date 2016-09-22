@@ -221,12 +221,6 @@ function (queryDef) {
       "size": 0,
       "query": {
         "filtered": {
-          "query": {
-            "query_string": {
-              "analyze_wildcard": true,
-              "query": '$lucene_query',
-            }
-          },
           "filter": {
             "bool": {
               "must": [{"range": this.getRangeFilter()}]
@@ -235,6 +229,16 @@ function (queryDef) {
         }
       }
     };
+
+    if (queryDef.query) {
+      query.query.filtered.query = {
+        "query_string": {
+          "analyze_wildcard": true,
+          "query": queryDef.query,
+        }
+      };
+    }
+
     query.aggs =  {
       "1": {
         "terms": {
