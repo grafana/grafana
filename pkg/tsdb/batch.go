@@ -26,7 +26,7 @@ func (bg *Batch) process(context *QueryContext) {
 	if executor == nil {
 		bg.Done = true
 		result := &BatchResult{
-			Error:        errors.New("Could not find executor for data source type " + bg.Queries[0].DataSource.PluginId),
+			Error:        errors.New("Could not find executor for data source type: " + bg.Queries[0].DataSource.PluginId),
 			QueryResults: make(map[string]*QueryResult),
 		}
 		for _, query := range bg.Queries {
