@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/hashicorp/go-version"
 )
 
 type GrafanaNetPlugin struct {
@@ -84,7 +85,15 @@ func checkForUpdates() {
 		for _, gplug := range gNetPlugins {
 			if gplug.Slug == plug.Id {
 				plug.GrafanaNetVersion = gplug.Version
-				plug.GrafanaNetHasUpdate = plug.Info.Version != plug.GrafanaNetVersion
+
+				plugVersion, err1 := version.NewVersion(plug.Info.Version)
+				gplugVersion, err2 := version.NewVersion(gplug.Version)
+
+				if err1 != nil || err2 != nil {
+					plug.GrafanaNetHasUpdate = plug.Info.Version != plug.GrafanaNetVersion
+				} else {
+					plug.GrafanaNetHasUpdate = plugVersion.LessThan(gplugVersion)
+				}
 			}
 		}
 	}
@@ -115,5 +124,12 @@ func checkForUpdates() {
 	} else {
 		GrafanaLatestVersion = githubLatest.Stable
 		GrafanaHasUpdate = githubLatest.Stable != setting.BuildVersion
+	}
+
+	currVersion, err1 := version.NewVersion(setting.BuildVersion)
+	latestVersion, err2 := version.NewVersion(GrafanaLatestVersion)
+
+	if err1 == nil && err2 == nil {
+		GrafanaHasUpdate = currVersion.LessThan(latestVersion)
 	}
 }
