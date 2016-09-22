@@ -44,24 +44,20 @@
 		<div class="gf-form">
 			<label class="gf-form-label width-5">Mode</label>
 			<div class="gf-form-select-wrapper max-width-15">
-				<select class="gf-form-input"
-					ng-model="ctrl.panel.xaxis.mode"
-					ng-options="v as k for (k, v) in ctrl.xAxisModes"
-					ng-change="ctrl.xAxisModeChanged()">
-				</select>
+				<select class="gf-form-input" ng-model="ctrl.panel.xaxis.mode" ng-options="v as k for (k, v) in ctrl.xAxisModes" ng-change="ctrl.xAxisOptionChanged()"> </select>
 			</div>
 		</div>
 
     <!-- Table mode -->
 		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode === 'table' || ctrl.panel.xaxis.mode === 'json'">
 			<label class="gf-form-label width-5">Name</label>
-      <metric-segment-model property="ctrl.panel.xaxis.name" get-options="ctrl.getXAxisNameOptions()" on-change="ctrl.render()" custom="false" css-class="width-10" select-mode="true"></metric-segment-model>
+      <metric-segment-model property="ctrl.panel.xaxis.name" get-options="ctrl.getXAxisNameOptions()" on-change="ctrl.xAxisOptionChanged()" custom="false" css-class="width-10" select-mode="true"></metric-segment-model>
 		</div>
 
 		<!-- Series mode -->
-		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode !== 'time'">
+		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode === 'series'">
 			<label class="gf-form-label width-5">Value</label>
-      <metric-segment-model property="ctrl.panel.xaxis.values[0]" get-options="ctrl.getXAxisValueOptions()" on-change="ctrl.render()" custom="false" css-class="width-10" select-mode="true"></metric-segment-model>
+      <metric-segment-model property="ctrl.panel.xaxis.values[0]" options="ctrl.xAxisStatOptions" on-change="ctrl.xAxisOptionChanged()" custom="false" css-class="width-10" select-mode="true"></metric-segment-model>
 		</div>
 
 	</div>

@@ -14,15 +14,18 @@ import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
 import * as fileExport from 'app/core/utils/file_export';
 import {MetricsPanelCtrl, alertTab} from 'app/plugins/sdk';
+import {DataProcessor} from './data_processor';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
   hiddenSeries: any = {};
   seriesList: any = [];
+  dataList: any = [];
   logScales: any;
   unitFormats: any;
   xAxisModes: any;
+  xAxisStatOptions: any;
   xNameSegment: any;
   annotationsPromise: any;
   datapointsCount: number;
@@ -30,6 +33,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   datapointsWarning: boolean;
   colors: any = [];
   subTabIndex: number;
+  processor: DataProcessor;
 
   panelDefaults = {
     // datasource name, null = default datasource
@@ -118,7 +122,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel.legend, this.panelDefaults.legend);
     _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
 
-    this.colors = $scope.$root.colors;
+    this.processor = new DataProcessor(this.panel);
 
     this.events.on('render', this.onRender.bind(this));
     this.events.on('data-received', this.onDataReceived.bind(this));
@@ -144,6 +148,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       'log (base 32)': 32,
       'log (base 1024)': 1024
     };
+
     this.unitFormats = kbn.getUnitFormats();
 
     this.xAxisModes = {
@@ -152,6 +157,14 @@ class GraphCtrl extends MetricsPanelCtrl {
       'Table': 'table',
       'Json': 'json'
     };
+
+    this.xAxisStatOptions =  [
+      {text: 'Avg', value: 'avg'},
+      {text: 'Min', value: 'min'},
+      {text: 'Max', value: 'min'},
+      {text: 'Total', value: 'total'},
+      {text: 'Count', value: 'count'},
+    ];
 
     this.subTabIndex = 0;
   }
@@ -199,25 +212,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.datapointsCount = 0;
     this.datapointsOutside = false;
 
-    let dataHandler: (seriesData, index)=>any;
-    switch (this.panel.xaxis.mode) {
-      case 'series':
-      case 'time': {
-        dataHandler = this.timeSeriesHandler;
-        break;
-      }
-      case 'table': {
-         // Table panel uses only first enabled target, so we can use dataList[0]
-         dataList.splice(1, dataList.length - 1);
-         dataHandler = this.tableHandler;
-        break;
-      }
-      case 'json': {
-        break;
-      }
-    }
-
-    this.seriesList = dataList.map(dataHandler.bind(this));
+    this.dataList = dataList;
+    this.seriesList = this.processor.getSeriesList({dataList: dataList, range: this.range});
     this.datapointsWarning = this.datapointsCount === 0 || this.datapointsOutside;
 
     this.annotationsPromise.then(annotations => {
@@ -228,73 +224,6 @@ class GraphCtrl extends MetricsPanelCtrl {
       this.loading = false;
       this.render(this.seriesList);
     });
-  }
-
-  seriesHandler(seriesData, index, datapoints, alias) {
-    var colorIndex = index % this.colors.length;
-    var color = this.panel.aliasColors[alias] || this.colors[colorIndex];
-
-    var series = new TimeSeries({
-      datapoints: datapoints,
-      alias: alias,
-      color: color,
-      unit: seriesData.unit,
-    });
-
-    if (datapoints && datapoints.length > 0) {
-      var last = moment.utc(datapoints[datapoints.length - 1][1]);
-      var from = moment.utc(this.range.from);
-      if (last - from < -10000) {
-        this.datapointsOutside = true;
-      }
-
-      this.datapointsCount += datapoints.length;
-      this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
-    }
-
-    return series;
-  }
-
-  timeSeriesHandler(seriesData, index) {
-    var datapoints = seriesData.datapoints;
-    var alias = seriesData.target;
-
-    return this.seriesHandler(seriesData, index, datapoints, alias);
-  }
-
-  tableHandler(seriesData, index) {
-    var xColumnIndex = Number(this.panel.xaxis.columnIndex);
-    var valueColumnIndex = Number(this.panel.xaxis.valueColumnIndex);
-    var datapoints = _.map(seriesData.rows, (row) => {
-      var value = valueColumnIndex ? row[valueColumnIndex] : _.last(row);
-      return [
-        value,             // Y value
-        row[xColumnIndex]  // X value
-      ];
-    });
-
-    var alias = seriesData.columns[valueColumnIndex].text;
-
-    return this.seriesHandler(seriesData, index, datapoints, alias);
-  }
-
-  esRawDocHandler(seriesData, index) {
-    let xField = this.panel.xaxis.esField;
-    let valueField = this.panel.xaxis.esValueField;
-    let datapoints = _.map(seriesData.datapoints, (doc) => {
-      return [
-        pluckDeep(doc, valueField),  // Y value
-        pluckDeep(doc, xField)       // X value
-      ];
-    });
-
-    // Remove empty points
-    datapoints = _.filter(datapoints, (point) => {
-      return point[0] !== undefined;
-    });
-
-    var alias = valueField;
-    return this.seriesHandler(seriesData, index, datapoints, alias);
   }
 
   onRender() {
@@ -380,12 +309,10 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  // Called from panel menu
   toggleLegend() {
     this.panel.legend.show = !this.panel.legend.show;
     this.refresh();
   }
-
 
   legendValuesOptionChanged() {
     var legend = this.panel.legend;
@@ -401,9 +328,21 @@ class GraphCtrl extends MetricsPanelCtrl {
     fileExport.exportSeriesListToCsvColumns(this.seriesList);
   }
 
-  xAxisModeChanged()  {
-    // set defaults
-    this.refresh();
+  xAxisOptionChanged()  {
+    switch (this.panel.xaxis.mode) {
+      case 'time': {
+        this.panel.tooltip.shared = true;
+        this.panel.xaxis.values = [];
+        this.onDataReceived(this.dataList);
+        break;
+      }
+      case 'series': {
+        this.panel.tooltip.shared = false;
+        this.processor.validateXAxisSeriesValue();
+        this.onDataReceived(this.dataList);
+        break;
+      }
+    }
   }
 
   getXAxisNameOptions()  {
@@ -413,44 +352,8 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   getXAxisValueOptions()  {
-    return this.$q.when([
-      {text: 'Avg', value: 'avg'}
-    ]);
+    return this.$q.when(this.processor.getXAxisValueOptions({dataList: this.dataList}));
   }
-}
-
-function getFieldsFromESDoc(doc) {
-  let fields = [];
-  let fieldNameParts = [];
-
-  function getFieldsRecursive(obj) {
-    _.forEach(obj, (value, key) => {
-      if (_.isObject(value)) {
-        fieldNameParts.push(key);
-        getFieldsRecursive(value);
-      } else {
-        let field = fieldNameParts.concat(key).join('.');
-        fields.push(field);
-      }
-    });
-    fieldNameParts.pop();
-  }
-
-  getFieldsRecursive(doc);
-  return fields;
-}
-
-function pluckDeep(obj: any, property: string) {
-  let propertyParts = property.split('.');
-  let value = obj;
-  for (let i = 0; i < propertyParts.length; ++i) {
-    if (value[propertyParts[i]]) {
-      value = value[propertyParts[i]];
-    } else {
-      return undefined;
-    }
-  }
-  return value;
 }
 
 export {GraphCtrl, GraphCtrl as PanelCtrl}
