@@ -87,6 +87,13 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 		sql.WriteString(")")
 	}
 
+	if query.Limit != 0 {
+		sql.WriteString(" LIMIT ?")
+		params = append(params, query.Limit)
+	}
+
+	sql.WriteString("ORDER BY name ASC")
+
 	alerts := make([]*m.Alert, 0)
 	if err := x.Sql(sql.String(), params...).Find(&alerts); err != nil {
 		return err
@@ -159,7 +166,7 @@ func upsertAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *xor
 		} else {
 			alert.Updated = time.Now()
 			alert.Created = time.Now()
-			alert.State = m.AlertStatePending
+			alert.State = m.AlertStateNoData
 			alert.NewStateDate = time.Now()
 
 			_, err := sess.Insert(alert)
@@ -222,6 +229,8 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 		alert.State = cmd.State
 		alert.StateChanges += 1
 		alert.NewStateDate = time.Now()
+		alert.EvalData = cmd.EvalData
+
 		if cmd.Error == "" {
 			alert.ExecutionError = " " //without this space, xorm skips updating this field
 		} else {

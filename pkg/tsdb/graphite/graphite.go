@@ -1,6 +1,7 @@
 package graphite
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -11,11 +12,8 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
-)
-
-var (
-	HttpClient = http.Client{Timeout: time.Duration(10 * time.Second)}
 )
 
 type GraphiteExecutor struct {
@@ -26,11 +24,23 @@ func NewGraphiteExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
 	return &GraphiteExecutor{dsInfo}
 }
 
-var glog log.Logger
+var (
+	glog       log.Logger
+	HttpClient http.Client
+)
 
 func init() {
 	glog = log.New("tsdb.graphite")
 	tsdb.RegisterExecutor("graphite", NewGraphiteExecutor)
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	HttpClient = http.Client{
+		Timeout:   time.Duration(10 * time.Second),
+		Transport: tr,
+	}
 }
 
 func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
@@ -47,7 +57,9 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 		formData["target"] = []string{query.Query}
 	}
 
-	glog.Info("Graphite request body", "formdata", formData.Encode())
+	if setting.Env == setting.DEV {
+		glog.Debug("Graphite request", "params", formData)
+	}
 
 	req, err := e.createRequest(formData)
 	if err != nil {
@@ -73,6 +85,10 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 			Name:   series.Target,
 			Points: series.DataPoints,
 		})
+
+		if setting.Env == setting.DEV {
+			glog.Debug("Graphite response", "target", series.Target, "datapoints", len(series.DataPoints))
+		}
 	}
 
 	result.QueryResults["A"] = queryRes

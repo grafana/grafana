@@ -78,9 +78,8 @@ the latest master builds [here](http://grafana.org/download/builds)
 
 ### Dependencies
 
-- Go 1.6
+- Go 1.7
 - NodeJS v4+
-- [Godep](https://github.com/tools/godep)
 
 ### Get Code
 
@@ -97,14 +96,13 @@ easily the grafana repository you want to build.
 ```bash
 go get github.com/*your_account*/grafana
 mkdir $GOPATH/src/github.com/grafana
-ln -s  github.com/*your_account*/grafana $GOPATH/src/github.com/grafana/grafana
+ln -s  $GOPATH/src/github.com/*your_account*/grafana $GOPATH/src/github.com/grafana/grafana
 ```
 
 ### Building the backend
 ```bash
 cd $GOPATH/src/github.com/grafana/grafana
-go run build.go setup            (only needed once to install godep)
-godep restore                    (will pull down all golang lib dependencies in your current GOPATH)
+go run build.go setup
 go run build.go build
 ```
 
@@ -126,7 +124,7 @@ grunt watch
 ```
 
 ### Recompile backend on source change
-To rebuild on source change (requires that you executed godep restore)
+To rebuild on source change.
 ```bash
 go get github.com/Unknwon/bra
 bra run

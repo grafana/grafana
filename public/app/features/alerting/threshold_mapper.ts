@@ -62,7 +62,7 @@ export class ThresholdMapper {
     for (var t of panel.thresholds) {
       t.fill = true;
       t.line = true;
-      t.colorMode = panel.alert.severity;
+      t.colorMode = 'critical';
     }
 
     var updated = true;

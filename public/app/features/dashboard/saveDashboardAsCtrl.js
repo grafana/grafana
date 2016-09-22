@@ -12,6 +12,14 @@ function (angular) {
       $scope.clone.id = null;
       $scope.clone.editable = true;
       $scope.clone.title = $scope.clone.title + " Copy";
+
+      // remove alerts
+      $scope.clone.rows.forEach(function(row) {
+        row.panels.forEach(function(panel) {
+          delete panel.alert;
+        });
+      });
+
       // remove auto update
       delete $scope.clone.autoUpdate;
     };

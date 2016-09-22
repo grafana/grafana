@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -15,19 +14,7 @@ func evalutorScenario(json string, reducedValue float64, datapoints ...float64) 
 	evaluator, err := NewAlertEvaluator(jsonModel)
 	So(err, ShouldBeNil)
 
-	var timeserie [][2]float64
-	dummieTimestamp := float64(521452145)
-
-	for _, v := range datapoints {
-		timeserie = append(timeserie, [2]float64{v, dummieTimestamp})
-	}
-
-	tsdb := &tsdb.TimeSeries{
-		Name:   "test time serie",
-		Points: timeserie,
-	}
-
-	return evaluator.Eval(tsdb, reducedValue)
+	return evaluator.Eval(&reducedValue)
 }
 
 func TestEvalutors(t *testing.T) {
@@ -55,8 +42,15 @@ func TestEvalutors(t *testing.T) {
 		So(evalutorScenario(`{"type": "outside_range", "params": [100, 1] }`, 50), ShouldBeFalse)
 	})
 
-	Convey("no_value", t, func() {
-		So(evalutorScenario(`{"type": "no_value", "params": [] }`, 1000), ShouldBeTrue)
-		So(evalutorScenario(`{"type": "no_value", "params": [] }`, 1000, 1, 2), ShouldBeFalse)
+	Convey("no_data", t, func() {
+		So(evalutorScenario(`{"type": "no_data", "params": [] }`, 50), ShouldBeFalse)
+
+		jsonModel, err := simplejson.NewJson([]byte(`{"type": "no_data", "params": [] }`))
+		So(err, ShouldBeNil)
+
+		evaluator, err := NewAlertEvaluator(jsonModel)
+		So(err, ShouldBeNil)
+
+		So(evaluator.Eval(nil), ShouldBeTrue)
 	})
 }

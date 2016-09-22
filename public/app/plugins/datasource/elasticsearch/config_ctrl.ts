@@ -27,7 +27,7 @@ export class ElasticConfigCtrl {
   ];
 
   indexPatternTypeChanged() {
-    var def = _.findWhere(this.indexPatternTypes, {value: this.current.jsonData.interval});
+    var def = _.find(this.indexPatternTypes, {value: this.current.jsonData.interval});
     this.current.database = def.example || 'es-index-name';
   }
 }

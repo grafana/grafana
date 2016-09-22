@@ -47,10 +47,11 @@ var (
 	BuildStamp   int64
 
 	// Paths
-	LogsPath    string
-	HomePath    string
-	DataPath    string
-	PluginsPath string
+	LogsPath       string
+	HomePath       string
+	DataPath       string
+	PluginsPath    string
+	CustomInitPath = "conf/custom.ini"
 
 	// Log settings.
 	LogModes   []string
@@ -312,7 +313,7 @@ func evalConfigValues() {
 
 func loadSpecifedConfigFile(configFile string) error {
 	if configFile == "" {
-		configFile = filepath.Join(HomePath, "conf/custom.ini")
+		configFile = filepath.Join(HomePath, CustomInitPath)
 		// return without error if custom file does not exist
 		if !pathExists(configFile) {
 			return nil

@@ -2,21 +2,22 @@
 
 export class BundleLoader {
   lazy: any;
-  loadingDefer: any;
 
   constructor(bundleName) {
+    var defer = null;
+
     this.lazy = ["$q", "$route", "$rootScope", ($q, $route, $rootScope) => {
-      if (this.loadingDefer) {
-        return this.loadingDefer.promise;
+      if (defer) {
+        return defer.promise;
       }
 
-      this.loadingDefer = $q.defer();
+      defer = $q.defer();
 
       System.import(bundleName).then(() => {
-        this.loadingDefer.resolve();
+        defer.resolve();
       });
 
-      return this.loadingDefer.promise;
+      return defer.promise;
     }];
 
   }

@@ -1,6 +1,6 @@
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 
-import 'app/features/dashboard/dashboardSrv';
+import {DashboardSrv} from '../dashboard_srv';
 import {DynamicDashboardSrv} from '../dynamic_dashboard_srv';
 
 function dynamicDashScenario(desc, func)  {
@@ -10,6 +10,7 @@ function dynamicDashScenario(desc, func)  {
 
     ctx.setup = function (setupFunc) {
 
+      beforeEach(angularMocks.module('grafana.core'));
       beforeEach(angularMocks.module('grafana.services'));
       beforeEach(angularMocks.module(function($provide) {
         $provide.value('contextSrv', {

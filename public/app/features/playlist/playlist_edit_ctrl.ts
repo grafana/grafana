@@ -36,13 +36,13 @@ export class PlaylistEditCtrl {
 
   filterFoundPlaylistItems() {
     this.filteredDashboards = _.reject(this.dashboardresult, (playlistItem) => {
-      return _.findWhere(this.playlistItems, (listPlaylistItem) => {
+      return _.find(this.playlistItems, (listPlaylistItem) => {
         return parseInt(listPlaylistItem.value) === playlistItem.id;
       });
     });
 
     this.filteredTags = _.reject(this.tagresult, (tag) => {
-      return _.findWhere(this.playlistItems, (listPlaylistItem) => {
+      return _.find(this.playlistItems, (listPlaylistItem) => {
         return listPlaylistItem.value === tag.term;
       });
     });

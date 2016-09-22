@@ -17,7 +17,7 @@ export class AlertTabCtrl {
   alert: any;
   conditionModels: any;
   evalFunctions: any;
-  severityLevels: any;
+  noDataModes: any;
   addNotificationSegment;
   notifications;
   alertNotifications;
@@ -40,7 +40,7 @@ export class AlertTabCtrl {
     this.subTabIndex = 0;
     this.evalFunctions = alertDef.evalFunctions;
     this.conditionTypes = alertDef.conditionTypes;
-    this.severityLevels = alertDef.severityLevels;
+    this.noDataModes = alertDef.noDataModes;
     this.appSubUrl = config.appSubUrl;
   }
 
@@ -68,24 +68,30 @@ export class AlertTabCtrl {
       this.notifications = res;
 
       _.each(this.alert.notifications, item => {
-        var model = _.findWhere(this.notifications, {id: item.id});
+        var model = _.find(this.notifications, {id: item.id});
         if (model) {
           model.iconClass = this.getNotificationIcon(model.type);
           this.alertNotifications.push(model);
         }
       });
-    }).then(() => {
-      this.backendSrv.get(`/api/alert-history?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}`).then(res => {
-        this.alertHistory = _.map(res, ah => {
-          ah.time = moment(ah.timestamp).format('MMM D, YYYY HH:mm:ss');
-          ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
 
-          ah.metrics = _.map(ah.data, ev=> {
-            return ev.Metric + "=" + ev.Value;
-          }).join(', ');
+      _.each(this.notifications, item => {
+        if (item.isDefault) {
+          item.iconClass = this.getNotificationIcon(item.type);
+          item.bgColor = "#00678b";
+          this.alertNotifications.push(item);
+        }
+      });
+    });
+  }
 
-          return ah;
-        });
+  getAlertHistory() {
+    this.backendSrv.get(`/api/annotations?dashboardId=${this.panelCtrl.dashboard.id}&panelId=${this.panel.id}&limit=50`).then(res => {
+      this.alertHistory = _.map(res, ah => {
+        ah.time = moment(ah.time).format('MMM D, YYYY HH:mm:ss');
+        ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
+        ah.metrics = alertDef.joinEvalMatches(ah.data, ', ');
+        return ah;
       });
     });
   }
@@ -104,14 +110,25 @@ export class AlertTabCtrl {
     }));
   }
 
+  changeTabIndex(newTabIndex) {
+    this.subTabIndex = newTabIndex;
+
+    if (this.subTabIndex === 2) {
+      this.getAlertHistory();
+    }
+  }
 
   notificationAdded() {
-    var model = _.findWhere(this.notifications, {name: this.addNotificationSegment.value});
+    var model = _.find(this.notifications, {name: this.addNotificationSegment.value});
     if (!model) {
       return;
     }
 
-    this.alertNotifications.push({name: model.name, iconClass: this.getNotificationIcon(model.type)});
+    this.alertNotifications.push({
+      name: model.name,
+      iconClass: this.getNotificationIcon(model.type),
+      isDefault: false
+    });
     this.alert.notifications.push({id: model.id});
 
     // reset plus button
@@ -125,14 +142,18 @@ export class AlertTabCtrl {
   }
 
   initModel() {
-    var alert = this.alert = this.panel.alert = this.panel.alert || {};
+    var alert = this.alert = this.panel.alert = this.panel.alert || {enabled: false};
+
+    if (!this.alert.enabled) {
+      return;
+    }
 
     alert.conditions = alert.conditions || [];
     if (alert.conditions.length === 0) {
       alert.conditions.push(this.buildDefaultCondition());
     }
 
-    alert.severity = alert.severity || 'critical';
+    alert.noDataState = alert.noDataState || 'no_data';
     alert.frequency = alert.frequency || '60s';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
@@ -145,11 +166,9 @@ export class AlertTabCtrl {
       return memo;
     }, []);
 
-    if (this.alert.enabled) {
-      this.panelCtrl.editingThresholds = true;
-    }
-
     ThresholdMapper.alertToGraphThresholds(this.panel);
+
+    this.panelCtrl.editingThresholds = true;
     this.panelCtrl.render();
   }
 
@@ -173,6 +192,10 @@ export class AlertTabCtrl {
   }
 
   validateModel() {
+    if (!this.alert.enabled) {
+      return;
+    }
+
     let firstTarget;
     var fixed = false;
     let foundTarget = null;
@@ -291,11 +314,6 @@ export class AlertTabCtrl {
   }
 
   evaluatorParamsChanged() {
-    ThresholdMapper.alertToGraphThresholds(this.panel);
-    this.panelCtrl.render();
-  }
-
-  severityChanged() {
     ThresholdMapper.alertToGraphThresholds(this.panel);
     this.panelCtrl.render();
   }

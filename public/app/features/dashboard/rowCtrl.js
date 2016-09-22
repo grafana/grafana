@@ -129,7 +129,7 @@ function (angular, _, config) {
       });
 
       scope.onAppEvent('panel-fullscreen-enter', function(evt, info) {
-        var hasPanel = _.findWhere(scope.row.panels, {id: info.panelId});
+        var hasPanel = _.find(scope.row.panels, {id: info.panelId});
         if (!hasPanel) {
           element.hide();
         }

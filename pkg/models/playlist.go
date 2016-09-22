@@ -58,17 +58,6 @@ type Playlists []*Playlist
 type PlaylistDashboards []*PlaylistDashboard
 
 //
-// DTOS
-//
-
-type PlaylistDashboardDto struct {
-	Id    int64  `json:"id"`
-	Slug  string `json:"slug"`
-	Title string `json:"title"`
-	Uri   string `json:"uri"`
-}
-
-//
 // COMMANDS
 //
 

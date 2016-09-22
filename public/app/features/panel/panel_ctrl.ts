@@ -242,7 +242,7 @@ export class PanelCtrl {
     var modalScope = this.$scope.$new();
     modalScope.panel = this.panel;
     modalScope.dashboard = this.dashboard;
-    modalScope.inspector = angular.copy(this.inspector);
+    modalScope.inspector = $.extend(true, {}, this.inspector);
 
     this.publishAppEvent('show-modal', {
       src: 'public/app/partials/inspector.html',

@@ -29,12 +29,9 @@ func NewEmailNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &EmailNotifier{
-		NotifierBase: NotifierBase{
-			Name: model.Name,
-			Type: model.Type,
-		},
-		Addresses: strings.Split(addressesString, "\n"),
-		log:       log.New("alerting.notifier.email"),
+		NotifierBase: NewNotifierBase(model.Name, model.Type, model.Settings),
+		Addresses:    strings.Split(addressesString, "\n"),
+		log:          log.New("alerting.notifier.email"),
 	}, nil
 }
 
@@ -50,16 +47,15 @@ func (this *EmailNotifier) Notify(context *alerting.EvalContext) {
 
 	cmd := &m.SendEmailCommand{
 		Data: map[string]interface{}{
-			"Title":         context.GetNotificationTitle(),
-			"State":         context.Rule.State,
-			"Name":          context.Rule.Name,
-			"Severity":      context.Rule.Severity,
-			"SeverityColor": context.GetStateModel().Color,
-			"Message":       context.Rule.Message,
-			"RuleUrl":       ruleUrl,
-			"ImageLink":     context.ImagePublicUrl,
-			"AlertPageUrl":  setting.AppUrl + "alerting",
-			"EvalMatches":   context.EvalMatches,
+			"Title":        context.GetNotificationTitle(),
+			"State":        context.Rule.State,
+			"Name":         context.Rule.Name,
+			"StateModel":   context.GetStateModel(),
+			"Message":      context.Rule.Message,
+			"RuleUrl":      ruleUrl,
+			"ImageLink":    context.ImagePublicUrl,
+			"AlertPageUrl": setting.AppUrl + "alerting",
+			"EvalMatches":  context.EvalMatches,
 		},
 		To:       this.Addresses,
 		Template: "alert_notification.html",

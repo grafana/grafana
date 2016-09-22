@@ -106,7 +106,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     aliasColors: {},
     // other style overrides
     seriesOverrides: [],
-    alerting: {},
     thresholds: [],
   };
 
@@ -169,7 +168,11 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   issueQueries(datasource) {
-    this.annotationsPromise = this.annotationsSrv.getAnnotations(this.dashboard);
+    this.annotationsPromise = this.annotationsSrv.getAnnotations({
+      dashboard: this.dashboard,
+      panel: this.panel,
+      range: this.range,
+    });
     return super.issueQueries(datasource);
   }
 
@@ -178,7 +181,11 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onDataSnapshotLoad(snapshotData) {
-    this.annotationsPromise = this.annotationsSrv.getAnnotations(this.dashboard);
+    this.annotationsPromise = this.annotationsSrv.getAnnotations({
+      dashboard: this.dashboard,
+      panel: this.panel,
+      range: this.range,
+    });
     this.onDataReceived(snapshotData);
   }
 
@@ -355,7 +362,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   toggleAxis(info) {
-    var override = _.findWhere(this.panel.seriesOverrides, {alias: info.alias});
+    var override = _.find(this.panel.seriesOverrides, {alias: info.alias});
     if (!override) {
       override = { alias: info.alias };
       this.panel.seriesOverrides.push(override);

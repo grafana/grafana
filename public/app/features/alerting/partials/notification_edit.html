@@ -12,11 +12,11 @@
 
 	<div class="gf-form-group">
 		<div class="gf-form">
-			<span class="gf-form-label width-8">Name</span>
+			<span class="gf-form-label width-12">Name</span>
 			<input type="text" class="gf-form-input max-width-15" ng-model="ctrl.model.name" required></input>
 		</div>
 		<div class="gf-form">
-			<span class="gf-form-label width-8">Type</span>
+			<span class="gf-form-label width-12">Type</span>
 			<div class="gf-form-select-wrapper width-15">
 				<select class="gf-form-input"
 					ng-model="ctrl.model.type"
@@ -24,6 +24,15 @@
 					ng-change="ctrl.typeChanged(notification, $index)">
 				</select>
 			</div>
+		</div>
+		<div class="gf-form">
+			<gf-form-switch
+				class="gf-form"
+				label="Send on all alerts"
+				label-class="width-12"
+				checked="ctrl.model.isDefault"
+				tooltip="Use this notification for all alerts">
+			</gf-form-switch>
 		</div>
 	</div>
 
@@ -60,7 +69,18 @@
 		</div>
 	</div>
 
-  <div class="gf-form-button-row">
-    <button ng-click="ctrl.save()" class="btn btn-success">Save</button>
-  </div>
+  <div class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form width-6">
+				<button ng-click="ctrl.save()" class="btn btn-success">Save</button>
+			</div>
+			<div class="gf-form width-8">
+				<button ng-click="ctrl.toggleTest()" class="btn btn-secondary">Test</button>
+			</div>
+			<div class="gf-form width-20" ng-show="ctrl.showTest">
+			<div class="gf-form" ng-show="ctrl.showTest">
+				<button ng-click="ctrl.testNotification()" class="btn btn-secondary">Send</button>
+			</div>
+		</div>
+	</div>
 </div>

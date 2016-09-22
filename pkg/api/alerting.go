@@ -8,7 +8,6 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/services/annotations"
 )
 
 func ValidateOrgAlert(c *middleware.Context) {
@@ -26,13 +25,18 @@ func ValidateOrgAlert(c *middleware.Context) {
 	}
 }
 
-// GET /api/alerts/rules/
+// GET /api/alerts
 func GetAlerts(c *middleware.Context) Response {
 	query := models.GetAlertsQuery{
 		OrgId:       c.OrgId,
-		State:       c.QueryStrings("state"),
 		DashboardId: c.QueryInt64("dashboardId"),
 		PanelId:     c.QueryInt64("panelId"),
+		Limit:       c.QueryInt64("limit"),
+	}
+
+	states := c.QueryStrings("state")
+	if len(states) > 0 {
+		query.State = states
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
@@ -50,7 +54,6 @@ func GetAlerts(c *middleware.Context) Response {
 			Name:           alert.Name,
 			Message:        alert.Message,
 			State:          alert.State,
-			Severity:       alert.Severity,
 			EvalDate:       alert.EvalDate,
 			NewStateDate:   alert.NewStateDate,
 			ExecutionError: alert.ExecutionError,
@@ -147,7 +150,7 @@ func DelAlert(c *middleware.Context) Response {
 }
 
 func GetAlertNotifications(c *middleware.Context) Response {
-	query := &models.GetAlertNotificationsQuery{OrgId: c.OrgId}
+	query := &models.GetAllAlertNotificationsQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(query); err != nil {
 		return ApiError(500, "Failed to get alert notifications", err)
@@ -157,11 +160,12 @@ func GetAlertNotifications(c *middleware.Context) Response {
 
 	for _, notification := range query.Result {
 		result = append(result, dtos.AlertNotification{
-			Id:      notification.Id,
-			Name:    notification.Name,
-			Type:    notification.Type,
-			Created: notification.Created,
-			Updated: notification.Updated,
+			Id:        notification.Id,
+			Name:      notification.Name,
+			Type:      notification.Type,
+			IsDefault: notification.IsDefault,
+			Created:   notification.Created,
+			Updated:   notification.Updated,
 		})
 	}
 
@@ -178,7 +182,7 @@ func GetAlertNotificationById(c *middleware.Context) Response {
 		return ApiError(500, "Failed to get alert notifications", err)
 	}
 
-	return Json(200, query.Result[0])
+	return Json(200, query.Result)
 }
 
 func CreateAlertNotification(c *middleware.Context, cmd models.CreateAlertNotificationCommand) Response {
@@ -214,40 +218,19 @@ func DeleteAlertNotification(c *middleware.Context) Response {
 	return ApiSuccess("Notification deleted")
 }
 
-func GetAlertHistory(c *middleware.Context) Response {
-	alertId, err := getAlertIdForRequest(c)
-	if err != nil {
-		return ApiError(400, "Invalid request", err)
+//POST /api/alert-notifications/test
+func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) Response {
+	cmd := &alerting.NotificationTestCommand{
+		Name:     dto.Name,
+		Type:     dto.Type,
+		Settings: dto.Settings,
 	}
 
-	query := &annotations.ItemQuery{
-		AlertId: alertId,
-		Type:    annotations.AlertType,
-		OrgId:   c.OrgId,
-		Limit:   c.QueryInt64("limit"),
+	if err := bus.Dispatch(cmd); err != nil {
+		return ApiError(500, "Failed to send alert notifications", err)
 	}
 
-	repo := annotations.GetRepository()
-
-	items, err := repo.Find(query)
-	if err != nil {
-		return ApiError(500, "Failed to get history for alert", err)
-	}
-
-	var result []dtos.AlertHistory
-	for _, item := range items {
-		result = append(result, dtos.AlertHistory{
-			AlertId:   item.AlertId,
-			Timestamp: item.Timestamp,
-			Data:      item.Data,
-			NewState:  item.NewState,
-			Text:      item.Text,
-			Metric:    item.Metric,
-			Title:     item.Title,
-		})
-	}
-
-	return Json(200, result)
+	return ApiSuccess("Test notification sent")
 }
 
 func getAlertIdForRequest(c *middleware.Context) (int64, error) {

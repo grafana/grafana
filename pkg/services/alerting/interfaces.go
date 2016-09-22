@@ -1,6 +1,8 @@
 package alerting
 
-import "time"
+import (
+	"time"
+)
 
 type EvalHandler interface {
 	Eval(context *EvalContext)
@@ -15,6 +17,7 @@ type Notifier interface {
 	Notify(alertResult *EvalContext)
 	GetType() string
 	NeedsImage() bool
+	PassesFilter(rule *Rule) bool
 }
 
 type Condition interface {

@@ -42,6 +42,7 @@ pages:
 - ['installation/performance.md', 'Installation', 'Performance Tips']
 - ['installation/troubleshooting.md', 'Installation', 'Troubleshooting']
 - ['installation/migrating_to2.md', 'Installation', 'Migrating from v1.x to v2.x']
+- ['installation/behind_proxy.md', 'Installation', 'Grafana behind reverse proxy']
 
 - ['guides/basic_concepts.md', 'User Guides', 'Basic Concepts']
 - ['guides/gettingstarted.md', 'User Guides', 'Getting Started']

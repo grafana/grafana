@@ -26,6 +26,8 @@ type EvalContext struct {
 	dashboardSlug   string
 	ImagePublicUrl  string
 	ImageOnDiskPath string
+	NoDataFound     bool
+	RetryCount      int
 }
 
 type StateDescription struct {
@@ -35,30 +37,29 @@ type StateDescription struct {
 }
 
 func (c *EvalContext) GetStateModel() *StateDescription {
-	if c.Error != nil {
-		return &StateDescription{
-			Color: "#D63232",
-			Text:  "EXECUTION ERROR",
-		}
-	}
-
-	if !c.Firing {
+	switch c.Rule.State {
+	case m.AlertStateOK:
 		return &StateDescription{
 			Color: "#36a64f",
 			Text:  "OK",
 		}
-	}
-
-	if c.Rule.Severity == m.AlertSeverityWarning {
+	case m.AlertStateNoData:
 		return &StateDescription{
-			Color: "#fd821b",
-			Text:  "WARNING",
+			Color: "#888888",
+			Text:  "No Data",
 		}
-	} else {
+	case m.AlertStateExecError:
+		return &StateDescription{
+			Color: "#000",
+			Text:  "Execution Error",
+		}
+	case m.AlertStateAlerting:
 		return &StateDescription{
 			Color: "#D63232",
-			Text:  "CRITICAL",
+			Text:  "Alerting",
 		}
+	default:
+		panic("Unknown rule state " + c.Rule.State)
 	}
 }
 
@@ -111,5 +112,6 @@ func NewEvalContext(rule *Rule) *EvalContext {
 		DoneChan:    make(chan bool, 1),
 		CancelChan:  make(chan bool, 1),
 		log:         log.New("alerting.evalContext"),
+		RetryCount:  0,
 	}
 }

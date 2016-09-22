@@ -222,7 +222,8 @@ func (t *StandardTimer) Update(d time.Duration) {
 func (t *StandardTimer) UpdateSince(ts time.Time) {
 	t.mutex.Lock()
 	defer t.mutex.Unlock()
-	t.histogram.Update(int64(time.Since(ts)))
+	sinceMs := time.Since(ts) / time.Millisecond
+	t.histogram.Update(int64(sinceMs))
 	t.meter.Mark(1)
 }
 
