@@ -1,14 +1,13 @@
 package reporting
 
 import (
-	"fmt"
 	"os"
 	"runtime"
 	"strings"
 )
 
 func init() {
-	if !isXterm() {
+	if !isColorableTerminal() {
 		monochrome()
 	}
 
@@ -43,7 +42,7 @@ func BuildSilentReporter() Reporter {
 	out := NewPrinter(NewConsole())
 	return NewReporters(
 		NewGoTestReporter(),
-		NewProblemReporter(out))
+		NewSilentProblemReporter(out))
 }
 
 var (
@@ -69,6 +68,9 @@ var (
 
 var consoleStatistics = NewStatisticsReporter(NewPrinter(NewConsole()))
 
+func SuppressConsoleStatistics() { consoleStatistics.Suppress() }
+func PrintConsoleStatistics()    { consoleStatistics.PrintSummary() }
+
 // QuiteMode disables all console output symbols. This is only meant to be used
 // for tests that are internal to goconvey where the output is distracting or
 // otherwise not needed in the test output.
@@ -80,10 +82,8 @@ func monochrome() {
 	greenColor, yellowColor, redColor, resetColor = "", "", "", ""
 }
 
-func isXterm() bool {
-	env := fmt.Sprintf("%v", os.Environ())
-	return strings.Contains(env, " TERM=isXterm") ||
-		strings.Contains(env, " TERM=xterm")
+func isColorableTerminal() bool {
+	return strings.Contains(os.Getenv("TERM"), "color")
 }
 
 // This interface allows us to pass the *testing.T struct

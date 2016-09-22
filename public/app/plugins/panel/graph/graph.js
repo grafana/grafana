@@ -354,7 +354,8 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
 
         function parseThresholdExpr(expr) {
           var match, operator, value, precision;
-          match = expr.match(/\s*([<=>~]*)\W*(\d+(\.\d+)?)/);
+          expr = String(expr);
+          match = expr.match(/\s*([<=>~]*)\s*(\-?\d+(\.\d+)?)/);
           if (match) {
             operator = match[1];
             value = parseFloat(match[2]);

@@ -72,8 +72,8 @@ func (n *RootNotifier) uploadImage(context *EvalContext) error {
 		Url:       imageUrl,
 		Width:     "800",
 		Height:    "400",
-		SessionId: "123",
-		Timeout:   "10",
+		SessionId: "cef0256d482b4293",
+		Timeout:   "30",
 	}
 
 	if imagePath, err := renderer.RenderToPng(renderOpts); err != nil {

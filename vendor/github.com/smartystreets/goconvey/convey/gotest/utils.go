@@ -4,18 +4,9 @@
 package gotest
 
 import (
-	"fmt"
 	"runtime"
 	"strings"
 )
-
-func FormatExternalFileAndLine() string {
-	file, line, _ := ResolveExternalCaller()
-	if line == -1 {
-		return "<unknown caller!>" // panic?
-	}
-	return fmt.Sprintf("%s:%d", file, line)
-}
 
 func ResolveExternalCaller() (file string, line int, name string) {
 	var caller_id uintptr
@@ -23,7 +14,7 @@ func ResolveExternalCaller() (file string, line int, name string) {
 
 	for x := 0; x < callers; x++ {
 		caller_id, file, line, _ = runtime.Caller(x)
-		if strings.HasSuffix(file, "_test.go") {
+		if strings.HasSuffix(file, "_test.go") || strings.HasSuffix(file, "_tests.go") {
 			name = runtime.FuncForPC(caller_id).Name()
 			return
 		}

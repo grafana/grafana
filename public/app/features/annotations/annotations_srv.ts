@@ -29,7 +29,7 @@ export class AnnotationsSrv {
       this.getGlobalAnnotations(options),
       this.getPanelAnnotations(options)
     ]).then(allResults => {
-      return _.flatten(allResults);
+      return _.flattenDeep(allResults);
     }).catch(err => {
       this.$rootScope.appEvent('alert-error', ['Annotations failed', (err.message || err)]);
     });

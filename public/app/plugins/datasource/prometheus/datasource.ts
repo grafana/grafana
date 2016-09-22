@@ -40,7 +40,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return backendSrv.datasourceRequest(options);
   };
 
-  function regexEscape(value) {
+  function prometheusSpecialRegexEscape(value) {
     return value.replace(/[\\^$*+?.()|[\]{}]/g, '\\\\$&');
   }
 
@@ -51,10 +51,10 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     }
 
     if (typeof value === 'string') {
-      return regexEscape(value);
+      return prometheusSpecialRegexEscape(value);
     }
 
-    var escapedValues = _.map(value, regexEscape);
+    var escapedValues = _.map(value, prometheusSpecialRegexEscape);
     return escapedValues.join('|');
   };
 

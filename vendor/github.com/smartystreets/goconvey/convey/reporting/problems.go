@@ -3,6 +3,7 @@ package reporting
 import "fmt"
 
 type problem struct {
+	silent   bool
 	out      *Printer
 	errors   []*AssertionResult
 	failures []*AssertionResult
@@ -28,9 +29,13 @@ func (self *problem) EndStory() {
 	self.prepareForNextStory()
 }
 func (self *problem) show(display func(), color string) {
-	fmt.Print(color)
+	if !self.silent {
+		fmt.Print(color)
+	}
 	display()
-	fmt.Print(resetColor)
+	if !self.silent {
+		fmt.Print(resetColor)
+	}
 	self.out.Dedent()
 }
 func (self *problem) showErrors() {
@@ -62,6 +67,13 @@ func NewProblemReporter(out *Printer) *problem {
 	self.prepareForNextStory()
 	return self
 }
+
+func NewSilentProblemReporter(out *Printer) *problem {
+	self := NewProblemReporter(out)
+	self.silent = true
+	return self
+}
+
 func (self *problem) prepareForNextStory() {
 	self.errors = []*AssertionResult{}
 	self.failures = []*AssertionResult{}
