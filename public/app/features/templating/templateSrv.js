@@ -43,6 +43,10 @@ function (angular, _, kbn) {
       }
     };
 
+    this.variableInitialized = function(variable) {
+      this._index[variable.name] = variable;
+    };
+
     this.getAdhocFilters = function(datasourceName) {
       var variable = this._adhocVariables[datasourceName];
       if (variable) {
