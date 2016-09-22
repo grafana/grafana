@@ -202,9 +202,9 @@ func Register(r *macaron.Macaron) {
 
 		r.Get("/plugins", wrap(GetPluginList))
 		r.Get("/plugins/:pluginId/settings", wrap(GetPluginSettingById))
+		r.Get("/plugins/:pluginId/readme", wrap(GetPluginReadme))
 
 		r.Group("/plugins", func() {
-			r.Get("/:pluginId/readme", wrap(GetPluginReadme))
 			r.Get("/:pluginId/dashboards/", wrap(GetPluginDashboards))
 			r.Post("/:pluginId/settings", bind(m.UpdatePluginSettingCmd{}), wrap(UpdatePluginSetting))
 		}, reqOrgAdmin)
