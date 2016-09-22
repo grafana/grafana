@@ -30,8 +30,7 @@ export class AxesEditorCtrl {
     this.xAxisModes = {
       'Time': 'time',
       'Series': 'series',
-      'Table': 'table',
-      'Json': 'json'
+      'Custom': 'custom'
     };
 
     this.xAxisStatOptions =  [
@@ -55,12 +54,21 @@ export class AxesEditorCtrl {
   xAxisOptionChanged()  {
     switch (this.panel.xaxis.mode) {
       case 'time': {
+        this.panel.bars = false;
+        this.panel.lines = true;
+        this.panel.points = false;
+        this.panel.legend.show = true;
         this.panel.tooltip.shared = true;
         this.panel.xaxis.values = [];
         this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
         break;
       }
       case 'series': {
+        this.panel.bars = true;
+        this.panel.lines = false;
+        this.panel.points = false;
+        this.panel.stack = false;
+        this.panel.legend.show = false;
         this.panel.tooltip.shared = false;
         this.panelCtrl.processor.validateXAxisSeriesValue();
         this.panelCtrl.onDataReceived(this.panelCtrl.dataList);

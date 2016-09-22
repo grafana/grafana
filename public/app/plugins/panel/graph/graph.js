@@ -262,9 +262,6 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
             if (data.length) {
               options.series.bars.barWidth = 0.7;
               options.series.bars.align = 'center';
-              options.series.bars.show = true;
-              options.series.points.show = false;
-              options.series.lines.show = false;
             }
 
             addXSeriesAxis(options);

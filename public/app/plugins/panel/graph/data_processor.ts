@@ -11,20 +11,26 @@ export class DataProcessor {
   }
 
   getSeriesList(options) {
+    if (!options.dataList || options.dataList.length === 0) {
+      return [];
+    }
+
+    // auto detect xaxis mode
+    var firstItem;
+    if (options.dataList && options.dataList.length > 0) {
+      firstItem = options.dataList[0];
+      if (firstItem.type === 'docs') {
+        this.panel.xaxis.mode = 'custom';
+      }
+    }
 
     switch (this.panel.xaxis.mode) {
       case 'series':
       case 'time': {
         return options.dataList.map(this.timeSeriesHandler.bind(this));
       }
-      case 'table': {
-         // Table panel uses only first enabled target, so we can use dataList[0]
-         // dataList.splice(1, dataList.length - 1);
-         // dataHandler = this.tableHandler;
-        break;
-      }
-      case 'json': {
-        break;
+      case 'custom': {
+        return this.customHandler(firstItem);
       }
     }
   }
@@ -54,6 +60,11 @@ export class DataProcessor {
     var alias = seriesData.target;
 
     return this.seriesHandler(seriesData, index, datapoints, alias);
+  }
+
+  customHandler(dataItem) {
+    console.log('custom', dataItem);
+    return [];
   }
 
   tableHandler(seriesData, index) {
