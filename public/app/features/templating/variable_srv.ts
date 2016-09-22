@@ -36,7 +36,9 @@ export class VariableSrv {
     var queryParams = this.$location.search();
     return this.$q.all(this.variables.map(variable => {
       return this.processVariable(variable, queryParams);
-    }));
+    })).then(() => {
+      this.templateSrv.updateTemplateData();
+    });
   }
 
   onDashboardRefresh() {
@@ -155,8 +157,7 @@ export class VariableSrv {
 
   validateVariableSelectionState(variable) {
     if (!variable.current) {
-      if (!variable.options.length) { return this.$q.when(); }
-      return variable.setValue(variable.options[0]);
+      variable.current = {};
     }
 
     if (_.isArray(variable.current.value)) {
