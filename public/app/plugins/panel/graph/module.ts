@@ -8,13 +8,13 @@ import './thresholds_form';
 import template from './template';
 import angular from 'angular';
 import moment from 'moment';
-import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
 import * as fileExport from 'app/core/utils/file_export';
 import {MetricsPanelCtrl, alertTab} from 'app/plugins/sdk';
 import {DataProcessor} from './data_processor';
+import {axesEditorComponent} from './axes_editor';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
@@ -22,11 +22,6 @@ class GraphCtrl extends MetricsPanelCtrl {
   hiddenSeries: any = {};
   seriesList: any = [];
   dataList: any = [];
-  logScales: any;
-  unitFormats: any;
-  xAxisModes: any;
-  xAxisStatOptions: any;
-  xNameSegment: any;
   annotationsPromise: any;
   datapointsCount: number;
   datapointsOutside: boolean;
@@ -133,39 +128,13 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitEditMode() {
-    this.addEditorTab('Axes', 'public/app/plugins/panel/graph/tab_axes.html', 2);
+    this.addEditorTab('Axes', axesEditorComponent, 2);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
     this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
 
     if (config.alertingEnabled) {
       this.addEditorTab('Alert', alertTab, 5);
     }
-
-    this.logScales = {
-      'linear': 1,
-      'log (base 2)': 2,
-      'log (base 10)': 10,
-      'log (base 32)': 32,
-      'log (base 1024)': 1024
-    };
-
-    this.unitFormats = kbn.getUnitFormats();
-
-    this.xAxisModes = {
-      'Time': 'time',
-      'Series': 'series',
-      'Table': 'table',
-      'Json': 'json'
-    };
-
-    this.xAxisStatOptions =  [
-      {text: 'Avg', value: 'avg'},
-      {text: 'Min', value: 'min'},
-      {text: 'Max', value: 'min'},
-      {text: 'Total', value: 'total'},
-      {text: 'Count', value: 'count'},
-    ];
-
     this.subTabIndex = 0;
   }
 
@@ -173,11 +142,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     actions.push({text: 'Export CSV (series as rows)', click: 'ctrl.exportCsv()'});
     actions.push({text: 'Export CSV (series as columns)', click: 'ctrl.exportCsvColumns()'});
     actions.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
-  }
-
-  setUnitFormat(axis, subItem) {
-    axis.format = subItem.value;
-    this.render();
   }
 
   issueQueries(datasource) {
@@ -328,32 +292,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     fileExport.exportSeriesListToCsvColumns(this.seriesList);
   }
 
-  xAxisOptionChanged()  {
-    switch (this.panel.xaxis.mode) {
-      case 'time': {
-        this.panel.tooltip.shared = true;
-        this.panel.xaxis.values = [];
-        this.onDataReceived(this.dataList);
-        break;
-      }
-      case 'series': {
-        this.panel.tooltip.shared = false;
-        this.processor.validateXAxisSeriesValue();
-        this.onDataReceived(this.dataList);
-        break;
-      }
-    }
-  }
-
-  getXAxisNameOptions()  {
-    return this.$q.when([
-      {text: 'Avg', value: 'avg'}
-    ]);
-  }
-
-  getXAxisValueOptions()  {
-    return this.$q.when(this.processor.getXAxisValueOptions({dataList: this.dataList}));
-  }
 }
 
 export {GraphCtrl, GraphCtrl as PanelCtrl}
