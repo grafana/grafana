@@ -39,17 +39,16 @@ func StartPluginUpdateChecker() {
 }
 
 func getAllExternalPluginSlugs() string {
-	str := ""
-
+	var result []string
 	for _, plug := range Plugins {
 		if plug.IsCorePlugin {
 			continue
 		}
 
-		str += plug.Id + ","
+		result = append(result, plug.Id)
 	}
 
-	return str
+	return strings.Join(result, ",")
 }
 
 func checkForUpdates() {

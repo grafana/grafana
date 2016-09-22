@@ -2,6 +2,8 @@ package conditions
 
 import (
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -32,7 +34,8 @@ type AlertQuery struct {
 }
 
 func (c *QueryCondition) Eval(context *alerting.EvalContext) {
-	seriesList, err := c.executeQuery(context)
+	timerange := tsdb.NewTimerange(c.Query.From, c.Query.To)
+	seriesList, err := c.executeQuery(context, timerange)
 	if err != nil {
 		context.Error = err
 		return
@@ -66,7 +69,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) {
 	context.Firing = len(context.EvalMatches) > 0
 }
 
-func (c *QueryCondition) executeQuery(context *alerting.EvalContext) (tsdb.TimeSeriesSlice, error) {
+func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timerange tsdb.TimeRange) (tsdb.TimeSeriesSlice, error) {
 	getDsInfo := &m.GetDataSourceByIdQuery{
 		Id:    c.Query.DatasourceId,
 		OrgId: context.Rule.OrgId,
@@ -76,7 +79,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext) (tsdb.TimeS
 		return nil, fmt.Errorf("Could not find datasource")
 	}
 
-	req := c.getRequestForAlertRule(getDsInfo.Result)
+	req := c.getRequestForAlertRule(getDsInfo.Result, timerange)
 	result := make(tsdb.TimeSeriesSlice, 0)
 
 	resp, err := c.HandleRequest(req)
@@ -102,16 +105,13 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext) (tsdb.TimeS
 	return result, nil
 }
 
-func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource) *tsdb.Request {
+func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timerange tsdb.TimeRange) *tsdb.Request {
 	req := &tsdb.Request{
-		TimeRange: tsdb.TimeRange{
-			From: c.Query.From,
-			To:   c.Query.To,
-		},
+		TimeRange: timerange,
 		Queries: []*tsdb.Query{
 			{
 				RefId: "A",
-				Query: c.Query.Model.Get("target").MustString(),
+				Model: c.Query.Model,
 				DataSource: &tsdb.DataSourceInfo{
 					Id:                datasource.Id,
 					Name:              datasource.Name,
@@ -141,6 +141,15 @@ func NewQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 	condition.Query.Model = queryJson.Get("model")
 	condition.Query.From = queryJson.Get("params").MustArray()[1].(string)
 	condition.Query.To = queryJson.Get("params").MustArray()[2].(string)
+
+	if err := validateFromValue(condition.Query.From); err != nil {
+		return nil, err
+	}
+
+	if err := validateToValue(condition.Query.To); err != nil {
+		return nil, err
+	}
+
 	condition.Query.DatasourceId = queryJson.Get("datasourceId").MustInt64()
 
 	reducerJson := model.Get("reducer")
@@ -154,4 +163,26 @@ func NewQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 
 	condition.Evaluator = evaluator
 	return &condition, nil
+}
+
+func validateFromValue(from string) error {
+	fromRaw := strings.Replace(from, "now-", "", 1)
+
+	_, err := time.ParseDuration("-" + fromRaw)
+	return err
+}
+
+func validateToValue(to string) error {
+	if to == "now" {
+		return nil
+	} else if strings.HasPrefix(to, "now-") {
+		withoutNow := strings.Replace(to, "now-", "", 1)
+
+		_, err := time.ParseDuration("-" + withoutNow)
+		if err == nil {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("cannot parse to value %s", to)
 }
