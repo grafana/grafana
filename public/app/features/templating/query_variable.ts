@@ -40,6 +40,7 @@ export class QueryVariable implements Variable {
     tagValuesQuery: null,
   };
 
+  /** @ngInject **/
   constructor(private model, private datasourceSrv, private templateSrv, private variableSrv, private $q)  {
     // copy model properties to this instance
     assignModelProperties(this, model, this.defaults);

@@ -22,7 +22,7 @@ export class DatasourceVariable implements Variable {
     query: '',
   };
 
-  /** @ngInject */
+  /** @ngInject **/
   constructor(private model, private datasourceSrv, private variableSrv) {
     assignModelProperties(this, model, this.defaults);
   }

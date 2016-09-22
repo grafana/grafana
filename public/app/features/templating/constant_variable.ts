@@ -18,7 +18,7 @@ export class ConstantVariable implements Variable {
     current: {},
   };
 
-  /** @ngInject */
+  /** @ngInject **/
   constructor(private model, private variableSrv) {
     assignModelProperties(this, model, this.defaults);
   }
