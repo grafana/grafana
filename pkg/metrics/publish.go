@@ -58,9 +58,7 @@ func updateTotalStats() {
 
 	// every interval also publish totals
 	metricPublishCounter++
-	if metricPublishCounter%2 == 0 {
-		metricsLogger.Info("Stats!")
-
+	if metricPublishCounter%10 == 0 {
 		// get stats
 		statsQuery := m.GetSystemStatsQuery{}
 		if err := bus.Dispatch(&statsQuery); err != nil {
