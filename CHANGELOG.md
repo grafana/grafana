@@ -13,6 +13,7 @@
 * **Influxdb**: Add support for elapsed(), closes [#5827](https://github.com/grafana/grafana/pull/5827)
 * **OAuth**: Add support for generic oauth, closes [#4718](https://github.com/grafana/grafana/pull/4718)
 * **Cloudwatch**: Add support to expand multi select template variable, closes [#5003](https://github.com/grafana/grafana/pull/5003)
+* **Graph Panel**: Now supports flexible lower/upper bounds on Y-Max and Y-Min, PR [#5720](https://github.com/grafana/grafana/pull/5720)
 
 ### Breaking changes
 * **SystemD**: Change systemd description, closes [#5971](https://github.com/grafana/grafana/pull/5971)
@@ -20,6 +21,8 @@
 
 ### Bugfixes
 * **Table Panel**: Fixed problem when switching to Mixed datasource in metrics tab, fixes [#5999](https://github.com/grafana/grafana/pull/5999)
+* **Playlist**: Fixed problem with play order not matching order defined in playlist, fixes [#5467](https://github.com/grafana/grafana/pull/5467)
+* **Graph panel**: Fixed problem with auto decimals on y axis when datamin=datamax, fixes [#6070](https://github.com/grafana/grafana/pull/6070)
 
 # 3.1.2 (unreleased)
 * **Templating**: Fixed issue when combining row & panel repeats, fixes [#5790](https://github.com/grafana/grafana/issues/5790)
