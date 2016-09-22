@@ -1,7 +1,6 @@
 package prometheus
 
 import (
-	"context"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -11,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/prometheus/client_golang/api/prometheus"
+	"golang.org/x/net/context"
 	pmodel "github.com/prometheus/common/model"
 )
 
