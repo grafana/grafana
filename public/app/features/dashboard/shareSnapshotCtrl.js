@@ -34,7 +34,25 @@ function (angular, _) {
         $scope.externalUrl = options['externalSnapshotURL'];
         $scope.sharingButtonText = options['externalSnapshotName'];
         $scope.externalEnabled = options['externalEnabled'];
+        $scope.maxExpirationTime = options['maxExpirationTime'];
+        if ($scope.maxExpirationTime > 0) {
+          $scope.initExpireOptions();
+        }
       });
+    };
+
+    $scope.initExpireOptions = function() {
+      var expireOptions = [];
+      // Ensure one snapshot option is always preset
+      expireOptions.push($scope.expireOptions[0]);
+      $scope.snapshot.expires = $scope.expireOptions[0].value;
+      for (var i = 1; i < $scope.expireOptions.length; i++) {
+        if ($scope.expireOptions[i].value <= $scope.maxExpirationTime && $scope.expireOptions[i].value !== 0){
+          expireOptions.push($scope.expireOptions[i]);
+          $scope.snapshot.expires = $scope.expireOptions[i].value;
+        }
+      }
+      $scope.expireOptions = expireOptions;
     };
 
     $scope.apiUrl = '/api/snapshots';

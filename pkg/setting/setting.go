@@ -81,6 +81,7 @@ var (
 	ExternalSnapshotUrl  string
 	ExternalSnapshotName string
 	ExternalEnabled      bool
+	MaxExpirationTime    int
 
 	// User settings
 	AllowUserSignUp    bool
@@ -495,6 +496,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ExternalSnapshotUrl = snapshots.Key("external_snapshot_url").String()
 	ExternalSnapshotName = snapshots.Key("external_snapshot_name").String()
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
+	MaxExpirationTime = snapshots.Key("max_expiration_time").MustInt()
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
