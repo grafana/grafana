@@ -92,7 +92,7 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 		params = append(params, query.Limit)
 	}
 
-	sql.WriteString("ORDER BY name ASC")
+	sql.WriteString(" ORDER BY name ASC")
 
 	alerts := make([]*m.Alert, 0)
 	if err := x.Sql(sql.String(), params...).Find(&alerts); err != nil {
