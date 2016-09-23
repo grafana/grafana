@@ -68,6 +68,20 @@ function (angular, _, $) {
           ctrl.toggleSeries(seriesInfo, e);
         }
 
+        function removeHighlight(e) {
+          var el = $(e.currentTarget);
+          var index = getSeriesIndexForElement(el);
+          var seriesInfo = seriesList[index];
+          ctrl.publishAppEvent('unhighlight', { series: seriesInfo });
+        }
+
+        function toggleHighlightSeries(e) {
+          var el = $(e.currentTarget);
+          var index = getSeriesIndexForElement(el);
+          var seriesInfo = seriesList[index];
+          ctrl.publishAppEvent('highlight', { series: seriesInfo });
+        }
+
         function sortLegend(e) {
           var el = $(e.currentTarget);
           var stat = el.data('stat');
@@ -110,6 +124,8 @@ function (angular, _, $) {
             elem.append($container);
             $container.on('click', '.graph-legend-icon', openColorSelector);
             $container.on('click', '.graph-legend-alias', toggleSeries);
+            $container.on('mouseenter', '.graph-legend-alias', toggleHighlightSeries);
+            $container.on('mouseleave', '.graph-legend-alias', removeHighlight);
             $container.on('click', 'th', sortLegend);
             firstRender = false;
           }
