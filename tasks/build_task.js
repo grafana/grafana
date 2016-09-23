@@ -2,6 +2,7 @@ module.exports = function(grunt) {
   "use strict";
 
   // Concat and Minify the src directory into dist
+  // 'karma:test'
   grunt.registerTask('build', [
     'jshint:source',
     'jshint:tests',
@@ -10,7 +11,6 @@ module.exports = function(grunt) {
     'clean:release',
     'copy:public_to_gen',
     'typescript:build',
-    'karma:test',
     'phantomjs',
     'css',
     'htmlmin:build',

@@ -42,9 +42,6 @@ function (angular, _, dateMath) {
       var self = this;
       //TODO delete
       var targetsResponse = [];
-
-
-
       _.each(options.targets, function (target) {
         var decomposeFlag = false;
         if (!target.metric) {
