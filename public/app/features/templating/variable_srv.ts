@@ -8,7 +8,6 @@ import {Variable, variableTypes} from './variable';
 export class VariableSrv {
   dashboard: any;
   variables: any;
-  variableLock: any;
 
   /** @ngInject */
   constructor(private $rootScope, private $q, private $location, private $injector, private templateSrv) {
@@ -18,7 +17,6 @@ export class VariableSrv {
   }
 
   init(dashboard) {
-    this.variableLock = {};
     this.dashboard = dashboard;
 
     // create working class models representing variables
@@ -30,7 +28,7 @@ export class VariableSrv {
 
     // init variables
     for (let variable of this.variables) {
-      this.variableLock[variable.name] = this.$q.defer();
+      variable.initLock = this.$q.defer();
     }
 
     var queryParams = this.$location.search();
@@ -61,27 +59,27 @@ export class VariableSrv {
 
   processVariable(variable, queryParams) {
     var dependencies = [];
-    var lock = this.variableLock[variable.name];
 
     for (let otherVariable of this.variables) {
       if (variable.dependsOn(otherVariable)) {
-        dependencies.push(this.variableLock[otherVariable.name].promise);
+        dependencies.push(otherVariable.initLock.promise);
       }
     }
 
     return this.$q.all(dependencies).then(() => {
       var urlValue = queryParams['var-' + variable.name];
       if (urlValue !== void 0) {
-        return variable.setValueFromUrl(urlValue).then(lock.resolve);
+        return variable.setValueFromUrl(urlValue).then(variable.initLock.resolve);
       }
 
       if (variable.refresh === 1 || variable.refresh === 2) {
-        return variable.updateOptions().then(lock.resolve);
+        return variable.updateOptions().then(variable.initLock.resolve);
       }
 
-      lock.resolve();
+      variable.initLock.resolve();
     }).finally(() => {
-      delete this.variableLock[variable.name];
+      this.templateSrv.variableInitialized(variable);
+      delete variable.initLock;
     });
   }
 
@@ -113,7 +111,7 @@ export class VariableSrv {
 
   variableUpdated(variable) {
     // if there is a variable lock ignore cascading update because we are in a boot up scenario
-    if (this.variableLock[variable.name]) {
+    if (variable.initLock) {
       return this.$q.when();
     }
 

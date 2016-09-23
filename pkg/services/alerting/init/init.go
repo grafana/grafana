@@ -6,6 +6,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	"github.com/grafana/grafana/pkg/setting"
 	_ "github.com/grafana/grafana/pkg/tsdb/graphite"
+	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
 )
 
 var engine *alerting.Engine

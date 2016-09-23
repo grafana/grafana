@@ -12,16 +12,17 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 type RenderOpts struct {
-	Url       string
-	Width     string
-	Height    string
-	SessionId string
-	Timeout   string
+	Url     string
+	Width   string
+	Height  string
+	Timeout string
+	OrgId   int64
 }
 
 var rendererLog log.Logger = log.New("png-renderer")
@@ -34,14 +35,28 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		executable = executable + ".exe"
 	}
 
+	params.Url = fmt.Sprintf("%s://localhost:%s/%s", setting.Protocol, setting.HttpPort, params.Url)
+
 	binPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, executable))
 	scriptPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, "render.js"))
 	pngPath, _ := filepath.Abs(filepath.Join(setting.ImagesDir, util.GetRandomString(20)))
 	pngPath = pngPath + ".png"
 
-	cmd := exec.Command(binPath, "--ignore-ssl-errors=true", scriptPath, "url="+params.Url, "width="+params.Width,
-		"height="+params.Height, "png="+pngPath, "cookiename="+setting.SessionOptions.CookieName,
-		"domain="+setting.Domain, "sessionid="+params.SessionId)
+	renderKey := middleware.AddRenderAuthKey(params.OrgId)
+	defer middleware.RemoveRenderAuthKey(renderKey)
+
+	cmdArgs := []string{
+		"--ignore-ssl-errors=true",
+		scriptPath,
+		"url=" + params.Url,
+		"width=" + params.Width,
+		"height=" + params.Height,
+		"png=" + pngPath,
+		"domain=" + setting.Domain,
+		"renderKey=" + renderKey,
+	}
+
+	cmd := exec.Command(binPath, cmdArgs...)
 	stdout, err := cmd.StdoutPipe()
 
 	if err != nil {

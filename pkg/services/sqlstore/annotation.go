@@ -75,7 +75,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 		query.Limit = 10
 	}
 
-	sql.WriteString(fmt.Sprintf("ORDER BY epoch DESC LIMIT %v", query.Limit))
+	sql.WriteString(fmt.Sprintf(" ORDER BY epoch DESC LIMIT %v", query.Limit))
 
 	items := make([]*annotations.Item, 0)
 	if err := x.Sql(sql.String(), params...).Find(&items); err != nil {
