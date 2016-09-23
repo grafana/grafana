@@ -76,7 +76,7 @@ func (n *RootNotifier) uploadImage(context *EvalContext) error {
 		Timeout:   "30",
 	}
 
-	if imagePath, err := renderer.RenderToPng(renderOpts); err != nil {
+	if imagePath, err := renderer.RenderToFile(renderOpts, "png"); err != nil {
 		return err
 	} else {
 		context.ImageOnDiskPath = imagePath

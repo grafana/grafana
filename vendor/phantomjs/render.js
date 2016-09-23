@@ -12,9 +12,9 @@
     params[parts[1]] = parts[2];
   });
 
-  var usage = "url=<url> png=<filename> width=<width> height=<height> cookiename=<cookiename> sessionid=<sessionid> domain=<domain>";
+  var usage = "url=<url> path=<filename> width=<width> height=<height> cookiename=<cookiename> sessionid=<sessionid> domain=<domain>";
 
-  if (!params.url || !params.png || !params.cookiename || ! params.sessionid || !params.domain) {
+  if (!params.url || !params.path || !params.cookiename || ! params.sessionid || !params.domain) {
     console.log(usage);
     phantom.exit();
   }
@@ -55,7 +55,8 @@
 
         var rootScope = body.injector().get('$rootScope');
         if (!rootScope) {return false;}
-        return rootScope.panelsRendered;
+        var panelsToLoad = window.angular.element('div.panel').length - window.angular.element('div.panel-drop-zone').length;
+        return rootScope.panelsRendered >= panelsToLoad;
       });
 
       if (panelsRendered || tries === 1000) {
@@ -70,7 +71,7 @@
           height: bb.height
         };
 
-        page.render(params.png);
+        page.render(params.path);
         phantom.exit();
       }
       else {
