@@ -56,7 +56,7 @@ func main() {
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
 
-	go listenToSystemSignels()
+	go listenToSystemSignals()
 
 	flag.Parse()
 	writePIDFile()
@@ -116,7 +116,7 @@ func writePIDFile() {
 	}
 }
 
-func listenToSystemSignels() {
+func listenToSystemSignals() {
 	signalChan := make(chan os.Signal, 1)
 	code := 0
 
