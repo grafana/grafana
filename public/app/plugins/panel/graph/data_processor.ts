@@ -5,6 +5,8 @@ import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
 import {colors} from 'app/core/core';
 
+
+
 export class DataProcessor {
 
   constructor(private panel) {
@@ -64,6 +66,26 @@ export class DataProcessor {
 
   customHandler(dataItem) {
     console.log('custom', dataItem);
+    let nameField = this.panel.xaxis.name;
+    if (!nameField) {
+      throw {message: 'No field name specified to use for x-axis, check your axes settings'};
+    }
+
+  //   let valueField = this.panel.xaxis.esValueField;
+  //   let datapoints = _.map(seriesData.datapoints, (doc) => {
+  //     return [
+  //       pluckDeep(doc, valueField),  // Y value
+  //       pluckDeep(doc, xField)       // X value
+  //     ];
+  //   });
+  //
+  //   // Remove empty points
+  //   datapoints = _.filter(datapoints, (point) => {
+  //     return point[0] !== undefined;
+  //   });
+  //
+  //   var alias = valueField;
+  //   re
     return [];
   }
 
@@ -120,6 +142,21 @@ export class DataProcessor {
     }
   }
 
+  getDocProperties(dataList) {
+    if (dataList.length === 0) {
+      return [];
+    }
+
+    var firstItem = dataList[0];
+    if (firstItem.type === 'docs'){
+      if (firstItem.datapoints.length === 0) {
+        return [];
+      }
+
+      return this.getPropertiesFromDoc(firstItem.datapoints[0]);
+    }
+  }
+
   getXAxisValueOptions(options) {
     switch (this.panel.xaxis.mode) {
       case 'time': {
@@ -136,40 +173,41 @@ export class DataProcessor {
       }
     }
   }
-}
 
-// function getFieldsFromESDoc(doc) {
-//   let fields = [];
-//   let fieldNameParts = [];
-//
-//   function getFieldsRecursive(obj) {
-//     _.forEach(obj, (value, key) => {
-//       if (_.isObject(value)) {
-//         fieldNameParts.push(key);
-//         getFieldsRecursive(value);
-//       } else {
-//         let field = fieldNameParts.concat(key).join('.');
-//         fields.push(field);
-//       }
-//     });
-//     fieldNameParts.pop();
-//   }
-//
-//   getFieldsRecursive(doc);
-//   return fields;
-// }
-//
-// function pluckDeep(obj: any, property: string) {
-//   let propertyParts = property.split('.');
-//   let value = obj;
-//   for (let i = 0; i < propertyParts.length; ++i) {
-//     if (value[propertyParts[i]]) {
-//       value = value[propertyParts[i]];
-//     } else {
-//       return undefined;
-//     }
-//   }
-//   return value;
-// }
+  getPropertiesFromDoc(doc) {
+    let props = [];
+    let propParts = [];
+
+    function getPropertiesRecursive(obj) {
+      _.forEach(obj, (value, key) => {
+        if (_.isObject(value)) {
+          propParts.push(key);
+          getPropertiesRecursive(value);
+        } else {
+          let field = propParts.concat(key).join('.');
+          props.push(field);
+        }
+      });
+      propParts.pop();
+    }
+
+    getPropertiesRecursive(doc);
+    return props;
+  }
+
+  pluckDeep(obj: any, property: string) {
+    let propertyParts = property.split('.');
+    let value = obj;
+    for (let i = 0; i < propertyParts.length; ++i) {
+      if (value[propertyParts[i]]) {
+        value = value[propertyParts[i]];
+      } else {
+        return undefined;
+      }
+    }
+    return value;
+  }
+
+}
 
 

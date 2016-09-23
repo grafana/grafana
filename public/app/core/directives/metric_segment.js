@@ -170,6 +170,7 @@ function (_, $, coreModule) {
       },
       link: {
         pre: function postLink($scope, elem, attrs) {
+          var cachedOptions;
 
           $scope.valueToSegment = function(value) {
             var option = _.find($scope.options, {value: value});
@@ -189,13 +190,20 @@ function (_, $, coreModule) {
               });
               return $q.when(optionSegments);
             } else {
-              return $scope.getOptions();
+              return $scope.getOptions().then(function(options) {
+                cachedOptions = options;
+                return _.map(options, function(option) {
+                  return uiSegmentSrv.newSegment({value: option.text});
+                });
+              });
             }
           };
 
           $scope.onSegmentChange = function() {
-            if ($scope.options) {
-              var option = _.find($scope.options, {text: $scope.segment.value});
+            var options = $scope.options || cachedOptions;
+
+            if (options) {
+              var option = _.find(options, {text: $scope.segment.value});
               if (option && option.value !== $scope.property) {
                 $scope.property = option.value;
               } else if (attrs.custom !== 'false') {

@@ -40,6 +40,12 @@ export class AxesEditorCtrl {
       {text: 'Total', value: 'total'},
       {text: 'Count', value: 'count'},
     ];
+
+    if (this.panel.xaxis.mode === 'custom') {
+      if (!this.panel.xaxis.name) {
+        this.panel.xaxis.name = 'specify field';
+      }
+    }
   }
 
   setUnitFormat(axis, subItem) {
@@ -77,16 +83,14 @@ export class AxesEditorCtrl {
     }
   }
 
-  getXAxisNameOptions()  {
-    return this.$q.when([
-      {text: 'Avg', value: 'avg'}
-    ]);
-  }
+  getDataPropertyNames() {
+    var props = this.panelCtrl.processor.getDocProperties(this.panelCtrl.dataList);
+    var items = props.map(prop => {
+      return {text: prop};
+    });
+    console.log(items);
 
-  getXAxisValueOptions()  {
-    return this.$q.when(this.panelCtrl.processor.getXAxisValueOptions({
-      dataList: this.panelCtrl.dataList
-    }));
+    return this.$q.when(items);
   }
 
 }
@@ -97,7 +101,7 @@ export function axesEditorComponent() {
   return {
     restrict: 'E',
     scope: true,
-    templateUrl: 'public/app/plugins/panel/graph/tab_axes.html',
+    templateUrl: 'public/app/plugins/panel/graph/axes_editor.html',
     controller: AxesEditorCtrl,
   };
 }
