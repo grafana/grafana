@@ -78,9 +78,11 @@ var (
 	DataProxyWhiteList    map[string]bool
 
 	// Snapshots
-	ExternalSnapshotUrl  string
-	ExternalSnapshotName string
-	ExternalEnabled      bool
+	ExternalSnapshotUrl   string
+	ExternalSnapshotName  string
+	ExternalEnabled       bool
+	SnapShotTTLDays       int
+	SnapShotRemoveExpired bool
 
 	// User settings
 	AllowUserSignUp    bool
@@ -118,8 +120,9 @@ var (
 	IsWindows    bool
 
 	// PhantomJs Rendering
-	ImagesDir  string
-	PhantomDir string
+	ImagesDir            string
+	PhantomDir           string
+	RenderedImageTTLDays int
 
 	// for logging purposes
 	configFiles                  []string
@@ -495,6 +498,8 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ExternalSnapshotUrl = snapshots.Key("external_snapshot_url").String()
 	ExternalSnapshotName = snapshots.Key("external_snapshot_name").String()
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
+	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
+	SnapShotTTLDays = snapshots.Key("snapshot_TTL_days").MustInt(90)
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
@@ -534,6 +539,9 @@ func NewConfigContext(args *CommandLineArgs) error {
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")
 	PhantomDir = filepath.Join(HomePath, "vendor/phantomjs")
+
+	tmpFilesSection := Cfg.Section("tmp.files")
+	RenderedImageTTLDays = tmpFilesSection.Key("rendered_image_ttl_days").MustInt(14)
 
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
