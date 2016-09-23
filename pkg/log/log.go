@@ -32,11 +32,25 @@ func New(logger string, ctx ...interface{}) Logger {
 }
 
 func Trace(format string, v ...interface{}) {
-	Root.Debug(fmt.Sprintf(format, v))
+	var message string
+	if len(v) > 0 {
+		message = fmt.Sprintf(format, v)
+	} else {
+		message = format
+	}
+
+	Root.Debug(message)
 }
 
 func Debug(format string, v ...interface{}) {
-	Root.Debug(fmt.Sprintf(format, v))
+	var message string
+	if len(v) > 0 {
+		message = fmt.Sprintf(format, v)
+	} else {
+		message = format
+	}
+
+	Root.Debug(message)
 }
 
 func Debug2(message string, v ...interface{}) {

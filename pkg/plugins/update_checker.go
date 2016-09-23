@@ -11,6 +11,10 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var (
+	httpClient http.Client = http.Client{Timeout: time.Duration(10 * time.Second)}
+)
+
 type GrafanaNetPlugin struct {
 	Slug    string `json:"slug"`
 	Version string `json:"version"`
@@ -54,10 +58,8 @@ func getAllExternalPluginSlugs() string {
 func checkForUpdates() {
 	log.Trace("Checking for updates")
 
-	client := http.Client{Timeout: time.Duration(5 * time.Second)}
-
 	pluginSlugs := getAllExternalPluginSlugs()
-	resp, err := client.Get("https://grafana.net/api/plugins/versioncheck?slugIn=" + pluginSlugs + "&grafanaVersion=" + setting.BuildVersion)
+	resp, err := httpClient.Get("https://grafana.net/api/plugins/versioncheck?slugIn=" + pluginSlugs + "&grafanaVersion=" + setting.BuildVersion)
 
 	if err != nil {
 		log.Trace("Failed to get plugins repo from grafana.net, %v", err.Error())
@@ -88,7 +90,7 @@ func checkForUpdates() {
 		}
 	}
 
-	resp2, err := client.Get("https://raw.githubusercontent.com/grafana/grafana/master/latest.json")
+	resp2, err := httpClient.Get("https://raw.githubusercontent.com/grafana/grafana/master/latest.json")
 	if err != nil {
 		log.Trace("Failed to get latest.json repo from github: %v", err.Error())
 		return
