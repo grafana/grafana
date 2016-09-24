@@ -28,11 +28,37 @@ describe('Graph DataProcessor', function() {
       });
     });
 
-    it('Should automatically set xaxis mode to custom', () => {
-      expect(panel.xaxis.mode).to.be('custom');
+    it('Should automatically set xaxis mode to field', () => {
+      expect(panel.xaxis.mode).to.be('field');
     });
 
   });
 
+  describe('getDataFieldNames(', () => {
+    var dataList = [{
+      type: 'docs', datapoints: [
+        {
+          hostname: "server1",
+          valueField: 11,
+          nested: {
+            prop1: 'server2', value2: 23}
+        }
+      ]
+    }];
+
+    it('Should return all field names', () => {
+      var fields = processor.getDataFieldNames(dataList, false);
+      expect(fields).to.contain('hostname');
+      expect(fields).to.contain('valueField');
+      expect(fields).to.contain('nested.prop1');
+      expect(fields).to.contain('nested.value2');
+    });
+
+    it('Should return all number fields', () => {
+      var fields = processor.getDataFieldNames(dataList, true);
+      expect(fields).to.contain('valueField');
+      expect(fields).to.contain('nested.value2');
+    });
+  });
 });
 

@@ -180,6 +180,7 @@ function (_, $, coreModule) {
               value: option ? option.text : value,
               selectMode: attrs.selectMode,
             };
+
             return uiSegmentSrv.newSegment(segment);
           };
 

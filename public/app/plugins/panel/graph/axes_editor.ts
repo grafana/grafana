@@ -30,7 +30,7 @@ export class AxesEditorCtrl {
     this.xAxisModes = {
       'Time': 'time',
       'Series': 'series',
-      'Custom': 'custom'
+      'Data field': 'field',
     };
 
     this.xAxisStatOptions =  [
@@ -58,37 +58,15 @@ export class AxesEditorCtrl {
   }
 
   xAxisOptionChanged()  {
-    switch (this.panel.xaxis.mode) {
-      case 'time': {
-        this.panel.bars = false;
-        this.panel.lines = true;
-        this.panel.points = false;
-        this.panel.legend.show = true;
-        this.panel.tooltip.shared = true;
-        this.panel.xaxis.values = [];
-        this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
-        break;
-      }
-      case 'series': {
-        this.panel.bars = true;
-        this.panel.lines = false;
-        this.panel.points = false;
-        this.panel.stack = false;
-        this.panel.legend.show = false;
-        this.panel.tooltip.shared = false;
-        this.panelCtrl.processor.validateXAxisSeriesValue();
-        this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
-        break;
-      }
-    }
+    this.panelCtrl.processor.setPanelDefaultsForNewXAxisMode();
+    this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
   }
 
-  getDataPropertyNames() {
-    var props = this.panelCtrl.processor.getDocProperties(this.panelCtrl.dataList);
+  getDataFieldNames(onlyNumbers) {
+    var props = this.panelCtrl.processor.getDataFieldNames(this.panelCtrl.dataList, onlyNumbers);
     var items = props.map(prop => {
-      return {text: prop};
+      return {text: prop, value: prop};
     });
-    console.log(items);
 
     return this.$q.when(items);
   }

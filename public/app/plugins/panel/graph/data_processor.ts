@@ -21,18 +21,56 @@ export class DataProcessor {
     var firstItem;
     if (options.dataList && options.dataList.length > 0) {
       firstItem = options.dataList[0];
-      if (firstItem.type === 'docs') {
-        this.panel.xaxis.mode = 'custom';
+      let autoDetectMode = this.getAutoDetectXAxisMode(firstItem);
+      if (this.panel.xaxis.mode !== autoDetectMode) {
+        this.panel.xaxis.mode = autoDetectMode;
+        this.setPanelDefaultsForNewXAxisMode();
       }
     }
 
     switch (this.panel.xaxis.mode) {
       case 'series':
-      case 'time': {
+        case 'time': {
         return options.dataList.map(this.timeSeriesHandler.bind(this));
       }
-      case 'custom': {
+      case 'field': {
         return this.customHandler(firstItem);
+      }
+    }
+  }
+
+  getAutoDetectXAxisMode(firstItem) {
+    switch (firstItem.type) {
+      case 'docs': return 'field';
+      case 'table': return 'field';
+      default: {
+        if (this.panel.xaxis.mode === 'series') {
+          return 'series';
+        }
+        return 'time';
+      }
+    }
+  }
+
+  setPanelDefaultsForNewXAxisMode() {
+    switch (this.panel.xaxis.mode) {
+      case 'time': {
+        this.panel.bars = false;
+        this.panel.lines = true;
+        this.panel.points = false;
+        this.panel.legend.show = true;
+        this.panel.tooltip.shared = true;
+        this.panel.xaxis.values = [];
+        break;
+      }
+      case 'series': {
+        this.panel.bars = true;
+        this.panel.lines = false;
+        this.panel.points = false;
+        this.panel.stack = false;
+        this.panel.legend.show = false;
+        this.panel.tooltip.shared = false;
+        break;
       }
     }
   }
@@ -71,21 +109,21 @@ export class DataProcessor {
       throw {message: 'No field name specified to use for x-axis, check your axes settings'};
     }
 
-  //   let valueField = this.panel.xaxis.esValueField;
-  //   let datapoints = _.map(seriesData.datapoints, (doc) => {
-  //     return [
-  //       pluckDeep(doc, valueField),  // Y value
-  //       pluckDeep(doc, xField)       // X value
-  //     ];
-  //   });
-  //
-  //   // Remove empty points
-  //   datapoints = _.filter(datapoints, (point) => {
-  //     return point[0] !== undefined;
-  //   });
-  //
-  //   var alias = valueField;
-  //   re
+    //   let valueField = this.panel.xaxis.esValueField;
+    //   let datapoints = _.map(seriesData.datapoints, (doc) => {
+    //     return [
+    //       pluckDeep(doc, valueField),  // Y value
+    //       pluckDeep(doc, xField)       // X value
+    //     ];
+    //   });
+    //
+    //   // Remove empty points
+    //   datapoints = _.filter(datapoints, (point) => {
+    //     return point[0] !== undefined;
+    //   });
+    //
+    //   var alias = valueField;
+    //   re
     return [];
   }
 
@@ -142,18 +180,37 @@ export class DataProcessor {
     }
   }
 
-  getDocProperties(dataList) {
+  getDataFieldNames(dataList, onlyNumbers) {
     if (dataList.length === 0) {
       return [];
     }
 
+    let fields = [];
     var firstItem = dataList[0];
     if (firstItem.type === 'docs'){
       if (firstItem.datapoints.length === 0) {
         return [];
       }
 
-      return this.getPropertiesFromDoc(firstItem.datapoints[0]);
+      let fieldParts = [];
+
+      function getPropertiesRecursive(obj) {
+        _.forEach(obj, (value, key) => {
+          if (_.isObject(value)) {
+            fieldParts.push(key);
+            getPropertiesRecursive(value);
+          } else {
+            if (!onlyNumbers || _.isNumber(value)) {
+              let field = fieldParts.concat(key).join('.');
+              fields.push(field);
+            }
+          }
+        });
+        fieldParts.pop();
+      }
+
+      getPropertiesRecursive(firstItem.datapoints[0]);
+      return fields;
     }
   }
 
@@ -172,27 +229,6 @@ export class DataProcessor {
         ];
       }
     }
-  }
-
-  getPropertiesFromDoc(doc) {
-    let props = [];
-    let propParts = [];
-
-    function getPropertiesRecursive(obj) {
-      _.forEach(obj, (value, key) => {
-        if (_.isObject(value)) {
-          propParts.push(key);
-          getPropertiesRecursive(value);
-        } else {
-          let field = propParts.concat(key).join('.');
-          props.push(field);
-        }
-      });
-      propParts.pop();
-    }
-
-    getPropertiesRecursive(doc);
-    return props;
   }
 
   pluckDeep(obj: any, property: string) {

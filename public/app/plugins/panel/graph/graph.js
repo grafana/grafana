@@ -258,29 +258,26 @@ function (angular, $, moment, _, kbn, GraphTooltip, thresholdManExports) {
             }
           }
 
-          if (panel.xaxis.mode === 'series') {
-            if (data.length) {
+          switch(panel.xaxis.mode) {
+            case 'series': {
               options.series.bars.barWidth = 0.7;
               options.series.bars.align = 'center';
+              addXSeriesAxis(options);
+              break;
             }
-
-            addXSeriesAxis(options);
-
-          } else if (panel.xaxis.mode === 'table' ||
-                     panel.xaxis.mode === 'elastic') {
-            if (data.length) {
+            case 'table': {
               options.series.bars.barWidth = 0.7;
               options.series.bars.align = 'center';
+              addXTableAxis(options);
+              break;
             }
-
-            addXTableAxis(options);
-
-          } else {
-            if (data.length && data[0].stats.timeStep) {
-              options.series.bars.barWidth = data[0].stats.timeStep / 1.5;
+            default: {
+              if (data.length && data[0].stats.timeStep) {
+                options.series.bars.barWidth = data[0].stats.timeStep / 1.5;
+              }
+              addTimeAxis(options);
+              break;
             }
-
-            addTimeAxis(options);
           }
 
           thresholdManager.addPlotOptions(options, panel);
