@@ -80,7 +80,7 @@ func (e *EsExecutor) convertQueries(queries tsdb.QuerySlice) []EsQuery {
 	var esQuerys []EsQuery
 
 	for _, query := range queries { //TODO allow more then one query
-		str, _ := query.Query.EncodePretty()
+		str, _ := query.Model.EncodePretty()
 		//debug print query
 		fmt.Printf("\nElastic query json model: \n%s", str)
 		e.log.Info("Elastic query")

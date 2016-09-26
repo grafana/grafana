@@ -38,7 +38,7 @@ func init() {
 	}
 
 	HttpClient = http.Client{
-		Timeout:   time.Duration(10 * time.Second),
+		Timeout:   time.Duration(15 * time.Second),
 		Transport: tr,
 	}
 }
@@ -54,7 +54,7 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	}
 
 	for _, query := range queries {
-		formData["target"] = []string{query.Query.Get("target").MustString()}
+		formData["target"] = []string{query.Model.Get("target").MustString()}
 	}
 
 	if setting.Env == setting.DEV {

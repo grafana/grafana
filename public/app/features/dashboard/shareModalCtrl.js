@@ -8,7 +8,7 @@ function (angular, _, require, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv, linkSrv) {
+  module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, templateSrv, linkSrv) {
 
     $scope.options = { forCurrent: true, includeTemplateVars: true, theme: 'current' };
     $scope.editor = { index: $scope.tabIndex || 0};

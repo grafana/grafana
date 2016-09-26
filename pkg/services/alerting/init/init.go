@@ -7,6 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	_ "github.com/grafana/grafana/pkg/tsdb/elasticsearch"
 	_ "github.com/grafana/grafana/pkg/tsdb/graphite"
+	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
 )
 
 var engine *alerting.Engine

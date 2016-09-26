@@ -12,6 +12,7 @@ import (
 	"net/smtp"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -66,7 +67,7 @@ func sendToSmtpServer(recipients []string, msgContent []byte) error {
 		tlsconfig.Certificates = []tls.Certificate{cert}
 	}
 
-	conn, err := net.Dial("tcp", net.JoinHostPort(host, port))
+	conn, err := net.DialTimeout("tcp", net.JoinHostPort(host, port), time.Second*10)
 	if err != nil {
 		return err
 	}

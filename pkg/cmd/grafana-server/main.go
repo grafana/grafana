@@ -17,6 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
 	alertingInit "github.com/grafana/grafana/pkg/services/alerting/init"
+	"github.com/grafana/grafana/pkg/services/backgroundtasks"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -56,19 +57,19 @@ func main() {
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
 
-	go listenToSystemSignels()
+	go listenToSystemSignals()
 
 	flag.Parse()
 	writePIDFile()
 	initRuntime()
 	metrics.Init()
-
 	search.Init()
 	login.Init()
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()
 	alertingInit.Init()
+	backgroundtasks.Init()
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)
@@ -116,7 +117,7 @@ func writePIDFile() {
 	}
 }
 
-func listenToSystemSignels() {
+func listenToSystemSignals() {
 	signalChan := make(chan os.Signal, 1)
 	code := 0
 

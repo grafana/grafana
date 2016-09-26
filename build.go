@@ -334,9 +334,7 @@ func gruntBuildArg(task string) []string {
 
 func setup() {
 	runPrint("go", "get", "-v", "github.com/kardianos/govendor")
-	runPrint("go", "get", "-v", "github.com/blang/semver")
-	runPrint("go", "get", "-v", "github.com/mattn/go-sqlite3")
-	runPrint("go", "install", "-v", "github.com/mattn/go-sqlite3")
+	runPrint("go", "install", "-v", "./pkg/cmd/grafana-server")
 }
 
 func test(pkg string) {

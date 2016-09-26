@@ -17,9 +17,9 @@ func TestMetricQuery(t *testing.T) {
 			query.Set("target", "asdf")
 			request := &Request{
 				Queries: QuerySlice{
-					{RefId: "A", Query: query, DataSource: &DataSourceInfo{Id: 1}},
-					{RefId: "B", Query: query, DataSource: &DataSourceInfo{Id: 1}},
-					{RefId: "C", Query: query, DataSource: &DataSourceInfo{Id: 2}},
+					{RefId: "A", Model: query, DataSource: &DataSourceInfo{Id: 1}},
+					{RefId: "B", Model: query, DataSource: &DataSourceInfo{Id: 1}},
+					{RefId: "C", Model: query, DataSource: &DataSourceInfo{Id: 2}},
 				},
 			}
 
@@ -39,9 +39,9 @@ func TestMetricQuery(t *testing.T) {
 			query2.Set("target", "#A / #B")
 			request := &Request{
 				Queries: QuerySlice{
-					{RefId: "A", Query: query, DataSource: &DataSourceInfo{Id: 1}},
-					{RefId: "B", Query: query, DataSource: &DataSourceInfo{Id: 2}},
-					{RefId: "C", Query: query2, DataSource: &DataSourceInfo{Id: 3}, Depends: []string{"A", "B"}},
+					{RefId: "A", Model: query, DataSource: &DataSourceInfo{Id: 1}},
+					{RefId: "B", Model: query, DataSource: &DataSourceInfo{Id: 2}},
+					{RefId: "C", Model: query2, DataSource: &DataSourceInfo{Id: 3}, Depends: []string{"A", "B"}},
 				},
 			}
 
@@ -65,7 +65,7 @@ func TestMetricQuery(t *testing.T) {
 		query.Set("target", "asdf")
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "A", Model: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
 			},
 		}
 
@@ -86,8 +86,8 @@ func TestMetricQuery(t *testing.T) {
 		query.Set("target", "asdf")
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
-				{RefId: "B", Query: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "A", Model: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "B", Model: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
 			},
 		}
 
@@ -114,9 +114,9 @@ func TestMetricQuery(t *testing.T) {
 		query.Set("target", "asdf")
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
-				{RefId: "B", Query: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
-				{RefId: "C", Query: query, DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}},
+				{RefId: "A", Model: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "B", Model: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "C", Model: query, DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}},
 			},
 		}
 
@@ -133,7 +133,7 @@ func TestMetricQuery(t *testing.T) {
 		query.Set("target", "asdf")
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "asdasdas"}},
+				{RefId: "A", Model: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "asdasdas"}},
 			},
 		}
 
@@ -150,10 +150,10 @@ func TestMetricQuery(t *testing.T) {
 		req := &Request{
 			Queries: QuerySlice{
 				{
-					RefId: "A", Query: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"},
+					RefId: "A", Model: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"},
 				},
 				{
-					RefId: "B", Query: query2, DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}, Depends: []string{"A"},
+					RefId: "B", Model: query2, DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}, Depends: []string{"A"},
 				},
 			},
 		}
