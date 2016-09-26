@@ -68,6 +68,7 @@ export class DataProcessor {
         this.panel.stack = false;
         this.panel.legend.show = false;
         this.panel.tooltip.shared = false;
+        this.panel.xaxis.values = ['total'];
         break;
       }
     }

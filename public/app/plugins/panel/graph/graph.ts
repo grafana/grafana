@@ -236,23 +236,9 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
           }
         };
 
-        for (var i = 0; i < data.length; i++) {
+        for (let i = 0; i < data.length; i++) {
           var series = data[i];
           series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
-
-          if (panel.xaxis.mode === 'series') {
-            series.data = [[i + 1, series.stats[panel.xaxis.values[0]]]];
-          } else if (panel.xaxis.mode === 'table' || panel.xaxis.mode === 'elastic') {
-            series.data = [];
-            for (var j = 0; j < series.datapoints.length; j++) {
-              var dataIndex = i * series.datapoints.length + j;
-              series.datapoints[j];
-              series.data.push([
-                dataIndex + 1,
-                series.datapoints[j][0]
-              ]);
-            }
-          }
 
           // if hidden remove points and disable stack
           if (ctrl.hiddenSeries[series.alias]) {
@@ -265,6 +251,12 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
           case 'series': {
             options.series.bars.barWidth = 0.7;
             options.series.bars.align = 'center';
+
+            for (let i = 0; i < data.length; i++) {
+              var series = data[i];
+              series.data = [[i + 1, series.stats[panel.xaxis.values[0]]]];
+            }
+
             addXSeriesAxis(options);
             break;
           }
@@ -483,7 +475,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         var defaults = {
           position: 'left',
           show: panel.yaxes[0].show,
-          // min: panel.yaxes[0].min,
+          min: panel.yaxes[0].min,
           index: 1,
           logBase: panel.yaxes[0].logBase || 1,
           max: panel.percentage && panel.stack ? 100 : panel.yaxes[0].max,
@@ -494,11 +486,11 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
 
         if (_.find(data, {yaxis: 2})) {
           var secondY = _.clone(defaults);
-          secondY.index = 2,
-            secondY.show = panel.yaxes[1].show;
-          secondY.logBase = panel.yaxes[1].logBase || 1,
-            secondY.position = 'right';
-          // secondY.min = panel.yaxes[1].min;
+          secondY.index = 2;
+          secondY.show = panel.yaxes[1].show;
+          secondY.logBase = panel.yaxes[1].logBase || 1;
+          secondY.position = 'right';
+          secondY.min = panel.yaxes[1].min;
           secondY.max = panel.percentage && panel.stack ? 100 : panel.yaxes[1].max;
           // autoscaleSpanOverride(panel.yaxes[1], data[1], secondY);
           options.yaxes.push(secondY);
