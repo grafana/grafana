@@ -5,8 +5,6 @@ import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
 import {colors} from 'app/core/core';
 
-
-
 export class DataProcessor {
 
   constructor(private panel) {
