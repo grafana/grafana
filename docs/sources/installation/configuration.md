@@ -525,3 +525,9 @@ Set root url to a Grafana instance where you want to publish external snapshots 
 
 ### external_snapshot_name
 Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`
+
+### remove expired snapshot
+Enabled to automatically remove expired snapshots
+
+### remove snapshots after 90 days
+Time to live for snapshots.
