@@ -20,7 +20,7 @@ dropdown. This will open the `Annotations` edit view. Click the `Add` tab to add
 
 You can format the annotation appearance within the graph by mapping data source columns to the fields `title, tag` and `text`. Enter the appropriate field name from your query in the corresponding column to do so.
 
-![Column Mappings](https://i.imgur.com/IftT6V6.png)
+![Column Mappings](img/v31/annotations_cm.png)
 
 ## Graphite annotations
 
