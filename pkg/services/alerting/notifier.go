@@ -74,7 +74,7 @@ func (n *RootNotifier) uploadImage(context *EvalContext) (err error) {
 	if slug, err := context.GetDashboardSlug(); err != nil {
 		return err
 	} else {
-		renderOpts.Url = fmt.Sprintf("dashboard-solo/db/%s?&panelId=%d", slug, context.Rule.PanelId)
+		renderOpts.Path = fmt.Sprintf("dashboard-solo/db/%s?&panelId=%d", slug, context.Rule.PanelId)
 	}
 
 	if imagePath, err := renderer.RenderToPng(renderOpts); err != nil {

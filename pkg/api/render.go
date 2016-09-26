@@ -14,7 +14,7 @@ func RenderToPng(c *middleware.Context) {
 	queryParams := fmt.Sprintf("?%s", c.Req.URL.RawQuery)
 
 	renderOpts := &renderer.RenderOpts{
-		Url:     c.Params("*") + queryParams,
+		Path:    c.Params("*") + queryParams,
 		Width:   queryReader.Get("width", "800"),
 		Height:  queryReader.Get("height", "400"),
 		OrgId:   c.OrgId,
