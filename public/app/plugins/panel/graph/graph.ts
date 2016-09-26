@@ -23,7 +23,7 @@ var labelWidthCache = {};
 module.directive('grafanaGraph', function($rootScope, timeSrv) {
   return {
     restrict: 'A',
-    template: '<div> </div>',
+    template: '',
     link: function(scope, elem) {
       var ctrl = scope.ctrl;
       var dashboard = ctrl.dashboard;
@@ -164,10 +164,15 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         var right = panel.yaxes[1];
         if (left.show && left.label) { gridMargin.left = 20; }
         if (right.show && right.label) { gridMargin.right = 20; }
-      }
 
-      function processDatapoints(plot) {
-        console.log('processDatapoints');
+        // apply y-axis min/max options
+        var yaxis = plot.getYAxes();
+        for (var i = 0; i < yaxis.length; i++) {
+          var axis = yaxis[i];
+          var panelOptions = panel.yaxes[i];
+          axis.options.max = panelOptions.max;
+          axis.options.min = panelOptions.min;
+        }
       }
 
       // Function for rendering panel
@@ -188,7 +193,6 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
           hooks: {
             draw: [drawHook],
             processOffset: [processOffsetHook],
-            processDatapoints: [processDatapoints],
           },
           legend: { show: false },
           series: {
@@ -401,87 +405,15 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         };
       }
 
-      //Override min/max to provide more flexible autoscaling
-      function autoscaleSpanOverride(yaxis, data, options) {
-        var expr;
-        if (yaxis.min != null && data != null) {
-          expr = parseThresholdExpr(yaxis.min);
-          options.min = autoscaleYAxisMin(expr, data.stats);
-        }
-        if (yaxis.max != null && data != null) {
-          expr = parseThresholdExpr(yaxis.max);
-          options.max = autoscaleYAxisMax(expr, data.stats);
-        }
-      }
-
-      function parseThresholdExpr(expr) {
-        var match, operator, value, precision;
-        expr = String(expr);
-        match = expr.match(/\s*([<=>~]*)\s*(\-?\d+(\.\d+)?)/);
-        if (match) {
-          operator = match[1];
-          value = parseFloat(match[2]);
-          //Precision based on input
-          precision = match[3] ? match[3].length - 1 : 0;
-          return {
-            operator: operator,
-            value: value,
-            precision: precision
-          };
-        } else {
-          return undefined;
-        }
-      }
-
-      function autoscaleYAxisMax(expr, dataStats) {
-        var operator = expr.operator,
-          value = expr.value,
-          precision = expr.precision;
-        if (operator === ">") {
-          return dataStats.max < value ? value : null;
-        } else if (operator === "<") {
-          return dataStats.max > value ? value : null;
-        } else if (operator === "~") {
-          return kbn.roundValue(dataStats.avg + value, precision);
-        } else if (operator === "=") {
-          return kbn.roundValue(dataStats.current + value, precision);
-        } else if (!operator && !isNaN(value)) {
-          return kbn.roundValue(value, precision);
-        } else {
-          return null;
-        }
-      }
-
-      function autoscaleYAxisMin(expr, dataStats) {
-        var operator = expr.operator,
-          value = expr.value,
-          precision = expr.precision;
-        if (operator === ">") {
-          return dataStats.min < value ? value : null;
-        } else if (operator === "<") {
-          return dataStats.min > value ? value : null;
-        } else if (operator === "~") {
-          return kbn.roundValue(dataStats.avg - value, precision);
-        } else if (operator === "=") {
-          return kbn.roundValue(dataStats.current - value, precision);
-        } else if (!operator && !isNaN(value)) {
-          return kbn.roundValue(value, precision);
-        } else {
-          return null;
-        }
-      }
-
       function configureAxisOptions(data, options) {
         var defaults = {
           position: 'left',
           show: panel.yaxes[0].show,
-          min: panel.yaxes[0].min,
           index: 1,
           logBase: panel.yaxes[0].logBase || 1,
-          max: panel.percentage && panel.stack ? 100 : panel.yaxes[0].max,
+          max: 100, // correct later
         };
 
-        // autoscaleSpanOverride(panel.yaxes[0], data[0], defaults);
         options.yaxes.push(defaults);
 
         if (_.find(data, {yaxis: 2})) {
@@ -490,12 +422,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
           secondY.show = panel.yaxes[1].show;
           secondY.logBase = panel.yaxes[1].logBase || 1;
           secondY.position = 'right';
-          secondY.min = panel.yaxes[1].min;
-          secondY.max = panel.percentage && panel.stack ? 100 : panel.yaxes[1].max;
-          // autoscaleSpanOverride(panel.yaxes[1], data[1], secondY);
           options.yaxes.push(secondY);
-
-          applyLogScale(options.yaxes[1], data);
           configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? "percent" : panel.yaxes[1].format);
         }
 
