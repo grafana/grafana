@@ -98,64 +98,12 @@ export class DataProcessor {
   }
 
   customHandler(dataItem) {
-    console.log('custom', dataItem);
     let nameField = this.panel.xaxis.name;
     if (!nameField) {
       throw {message: 'No field name specified to use for x-axis, check your axes settings'};
     }
-
-    //   let valueField = this.panel.xaxis.esValueField;
-    //   let datapoints = _.map(seriesData.datapoints, (doc) => {
-    //     return [
-    //       pluckDeep(doc, valueField),  // Y value
-    //       pluckDeep(doc, xField)       // X value
-    //     ];
-    //   });
-    //
-    //   // Remove empty points
-    //   datapoints = _.filter(datapoints, (point) => {
-    //     return point[0] !== undefined;
-    //   });
-    //
-    //   var alias = valueField;
-    //   re
     return [];
   }
-
-  // tableHandler(seriesData, index) {
-  //   var xColumnIndex = Number(this.panel.xaxis.columnIndex);
-  //   var valueColumnIndex = Number(this.panel.xaxis.valueColumnIndex);
-  //   var datapoints = _.map(seriesData.rows, (row) => {
-  //     var value = valueColumnIndex ? row[valueColumnIndex] : _.last(row);
-  //     return [
-  //       value,             // Y value
-  //       row[xColumnIndex]  // X value
-  //     ];
-  //   });
-  //
-  //   var alias = seriesData.columns[valueColumnIndex].text;
-  //
-  //   return this.seriesHandler(seriesData, index, datapoints, alias);
-  // }
-
-  // esRawDocHandler(seriesData, index) {
-  //   let xField = this.panel.xaxis.esField;
-  //   let valueField = this.panel.xaxis.esValueField;
-  //   let datapoints = _.map(seriesData.datapoints, (doc) => {
-  //     return [
-  //       pluckDeep(doc, valueField),  // Y value
-  //       pluckDeep(doc, xField)       // X value
-  //     ];
-  //   });
-  //
-  //   // Remove empty points
-  //   datapoints = _.filter(datapoints, (point) => {
-  //     return point[0] !== undefined;
-  //   });
-  //
-  //   var alias = valueField;
-  //   return this.seriesHandler(seriesData, index, datapoints, alias);
-  // }
 
   validateXAxisSeriesValue() {
     switch (this.panel.xaxis.mode) {

@@ -22,12 +22,6 @@ class TestDataDatasource {
       scenario: options.targets[0].scenario,
       interval: options.intervalMs,
       maxDataPoints: options.maxDataPoints,
-    }).then(res => {
-      res.data = res.data.map(item => {
-        return {target: item.name, datapoints: item.points};
-      });
-
-      return res;
     });
   }
 
