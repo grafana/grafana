@@ -60,6 +60,23 @@ func TestTimeRange(t *testing.T) {
 			})
 		})
 
+		Convey("can parse unix epocs", func() {
+			var err error
+			tr := TimeRange{
+				From: "1474973725473",
+				To:   "1474975757930",
+				Now:  now,
+			}
+
+			res, err := tr.FromTime()
+			So(err, ShouldBeNil)
+			So(res.Unix(), ShouldEqual, 1474973725473)
+
+			res, err = tr.ToTime()
+			So(err, ShouldBeNil)
+			So(res.Unix(), ShouldEqual, 1474975757930)
+		})
+
 		Convey("Cannot parse asdf", func() {
 			var err error
 			tr := TimeRange{

@@ -97,12 +97,7 @@ func (slice DataSourceList) Swap(i, j int) {
 }
 
 type MetricQueryResultDto struct {
-	Data []MetricQueryResultDataDto `json:"data"`
-}
-
-type MetricQueryResultDataDto struct {
-	Target     string       `json:"target"`
-	DataPoints [][2]float64 `json:"datapoints"`
+	Data []interface{} `json:"data"`
 }
 
 type UserStars struct {

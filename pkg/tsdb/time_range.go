@@ -2,11 +2,12 @@ package tsdb
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
 
-func NewTimerange(from, to string) TimeRange {
+func NewTimeRange(from, to string) TimeRange {
 	return TimeRange{
 		From: from,
 		To:   to,
@@ -21,6 +22,10 @@ type TimeRange struct {
 }
 
 func (tr TimeRange) FromTime() (time.Time, error) {
+	if val, err := strconv.ParseInt(tr.From, 10, 64); err == nil {
+		return time.Unix(val, 0), nil
+	}
+
 	fromRaw := strings.Replace(tr.From, "now-", "", 1)
 
 	diff, err := time.ParseDuration("-" + fromRaw)
@@ -43,6 +48,10 @@ func (tr TimeRange) ToTime() (time.Time, error) {
 		}
 
 		return tr.Now.Add(diff), nil
+	}
+
+	if val, err := strconv.ParseInt(tr.To, 10, 64); err == nil {
+		return time.Unix(val, 0), nil
 	}
 
 	return time.Time{}, fmt.Errorf("cannot parse to value %s", tr.To)

@@ -2,39 +2,49 @@ package api
 
 import (
 	"encoding/json"
-	"math/rand"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/util"
 )
 
 func GetTestMetrics(c *middleware.Context) Response {
-	from := c.QueryInt64("from")
-	to := c.QueryInt64("to")
-	maxDataPoints := c.QueryInt64("maxDataPoints")
-	stepInSeconds := (to - from) / maxDataPoints
+
+	timeRange := tsdb.NewTimeRange(c.Query("from"), c.Query("to"))
+
+	req := &tsdb.Request{
+		TimeRange: timeRange,
+		Queries: []*tsdb.Query{
+			{
+				RefId:         "A",
+				MaxDataPoints: c.QueryInt64("maxDataPoints"),
+				IntervalMs:    c.QueryInt64("intervalMs"),
+				DataSource: &tsdb.DataSourceInfo{
+					Name:     "Grafana TestDataDB",
+					PluginId: "grafana-testdata-datasource",
+				},
+			},
+		},
+	}
+
+	resp, err := tsdb.HandleRequest(req)
+	if err != nil {
+		return ApiError(500, "Metric request error", err)
+	}
 
 	result := dtos.MetricQueryResultDto{}
-	result.Data = make([]dtos.MetricQueryResultDataDto, 1)
 
-	for seriesIndex := range result.Data {
-		points := make([][2]float64, maxDataPoints)
-		walker := rand.Float64() * 100
-		time := from
-
-		for i := range points {
-			points[i][0] = walker
-			points[i][1] = float64(time)
-			walker += rand.Float64() - 0.5
-			time += stepInSeconds
+	for _, v := range resp.Results {
+		if v.Error != nil {
+			return ApiError(500, "tsdb.HandleRequest() response error", v.Error)
 		}
 
-		result.Data[seriesIndex].Target = "test-series-" + strconv.Itoa(seriesIndex)
-		result.Data[seriesIndex].DataPoints = points
+		for _, series := range v.Series {
+			result.Data = append(result.Data, series)
+		}
 	}
 
 	return Json(200, &result)

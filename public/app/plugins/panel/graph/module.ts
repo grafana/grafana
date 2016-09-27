@@ -25,7 +25,6 @@ class GraphCtrl extends MetricsPanelCtrl {
   annotationsPromise: any;
   datapointsCount: number;
   datapointsOutside: boolean;
-  datapointsWarning: boolean;
   colors: any = [];
   subTabIndex: number;
   processor: DataProcessor;
@@ -172,13 +171,20 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onDataReceived(dataList) {
-    this.datapointsWarning = false;
-    this.datapointsCount = 0;
-    this.datapointsOutside = false;
 
     this.dataList = dataList;
     this.seriesList = this.processor.getSeriesList({dataList: dataList, range: this.range});
-    this.datapointsWarning = this.datapointsCount === 0 || this.datapointsOutside;
+
+    this.datapointsCount = this.seriesList.reduce((prev, series) => {
+      return prev + series.datapoints.length;
+    }, 0);
+
+    this.datapointsOutside = false;
+    for (let series of this.seriesList) {
+      if (series.isOutsideRange) {
+        this.datapointsOutside = true;
+      }
+    }
 
     this.annotationsPromise.then(annotations => {
       this.loading = false;

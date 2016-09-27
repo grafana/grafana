@@ -1,0 +1,19 @@
+{
+  "type": "datasource",
+  "name": "Grafana TestDataDB",
+  "id": "grafana-testdata-datasource",
+
+  "metrics": true,
+  "annotations": true,
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "http://grafana.org"
+    },
+    "logos": {
+      "small": "",
+      "large": ""
+    }
+  }
+}

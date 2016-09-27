@@ -3,21 +3,22 @@ package tsdb
 import "github.com/grafana/grafana/pkg/components/simplejson"
 
 type Query struct {
-	RefId      string
-	Query      string
-	Model      *simplejson.Json
-	Depends    []string
-	DataSource *DataSourceInfo
-	Results    []*TimeSeries
-	Exclude    bool
+	RefId         string
+	Query         string
+	Model         *simplejson.Json
+	Depends       []string
+	DataSource    *DataSourceInfo
+	Results       []*TimeSeries
+	Exclude       bool
+	MaxDataPoints int64
+	IntervalMs    int64
 }
 
 type QuerySlice []*Query
 
 type Request struct {
-	TimeRange     TimeRange
-	MaxDataPoints int
-	Queries       QuerySlice
+	TimeRange TimeRange
+	Queries   QuerySlice
 }
 
 type Response struct {
