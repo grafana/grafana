@@ -4,6 +4,7 @@
   "id": "grafana-testdata-datasource",
 
   "metrics": true,
+  "alerting": true,
   "annotations": true,
 
   "info": {
