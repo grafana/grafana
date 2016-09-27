@@ -4,7 +4,10 @@
 package backgroundtasks
 
 import (
+	"context"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
@@ -15,11 +18,14 @@ var (
 	tlog log.Logger = log.New("ticker")
 )
 
-func Init() {
-	go start()
+func Init(ctx context.Context) error {
+	g, _ := errgroup.WithContext(ctx)
+	g.Go(func() error { return start(ctx) })
+
+	return g.Wait()
 }
 
-func start() {
+func start(ctx context.Context) error {
 	go cleanup(time.Now())
 
 	ticker := time.NewTicker(time.Hour * 1)
@@ -27,6 +33,8 @@ func start() {
 		select {
 		case tick := <-ticker.C:
 			go cleanup(tick)
+		case <-ctx.Done():
+			return ctx.Err()
 		}
 	}
 }

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -11,6 +12,8 @@ import (
 	"strconv"
 	"syscall"
 	"time"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
@@ -57,26 +60,33 @@ func main() {
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
 
-	go listenToSystemSignals()
+	appContext, cancelFn := context.WithCancel(context.Background())
+	grafanaGroup, _ := errgroup.WithContext(appContext)
+
+	go listenToSystemSignals(cancelFn, grafanaGroup)
 
 	flag.Parse()
 	writePIDFile()
 	initRuntime()
+	initSql()
 	metrics.Init()
 	search.Init()
 	login.Init()
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()
-	alertingInit.Init()
-	backgroundtasks.Init()
+
+	grafanaGroup.Go(func() error { return alertingInit.Init(appContext) })
+	grafanaGroup.Go(func() error { return backgroundtasks.Init(appContext) })
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)
 	}
 
-	StartServer()
-	exitChan <- 0
+	exitCode := StartServer()
+
+	grafanaGroup.Wait()
+	exitChan <- exitCode
 }
 
 func initRuntime() {
@@ -94,7 +104,9 @@ func initRuntime() {
 	logger.Info("Starting Grafana", "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0))
 
 	setting.LogConfigurationInfo()
+}
 
+func initSql() {
 	sqlstore.NewEngine()
 	sqlstore.EnsureAdminUser()
 }
@@ -117,7 +129,7 @@ func writePIDFile() {
 	}
 }
 
-func listenToSystemSignals() {
+func listenToSystemSignals(cancel context.CancelFunc, grafanaGroup *errgroup.Group) {
 	signalChan := make(chan os.Signal, 1)
 	code := 0
 
@@ -125,7 +137,7 @@ func listenToSystemSignals() {
 
 	select {
 	case sig := <-signalChan:
-		log.Info("Received signal %s. shutting down", sig)
+		log.Info2("Received system signal. Shutting down", "signal", sig)
 	case code = <-exitChan:
 		switch code {
 		case 0:
@@ -135,6 +147,8 @@ func listenToSystemSignals() {
 		}
 	}
 
+	cancel()
+	grafanaGroup.Wait()
 	log.Close()
 	os.Exit(code)
 }

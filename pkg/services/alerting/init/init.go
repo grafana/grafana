@@ -1,6 +1,8 @@
 package init
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/services/alerting"
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
@@ -11,11 +13,11 @@ import (
 
 var engine *alerting.Engine
 
-func Init() {
+func Init(ctx context.Context) error {
 	if !setting.AlertingEnabled {
-		return
+		return nil
 	}
 
 	engine = alerting.NewEngine()
-	engine.Start()
+	return engine.Start(ctx)
 }

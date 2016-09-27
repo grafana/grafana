@@ -15,12 +15,6 @@
 			"revisionTime": "2016-09-17T18:44:01Z"
 		},
 		{
-			"checksumSHA1": "WHc3uByvGaMcnSoI21fhzYgbOgg=",
-			"path": "golang.org/x/net/context/ctxhttp",
-			"revision": "71a035914f99bb58fe82eac0f1289f10963d876c",
-			"revisionTime": "2016-09-12T21:59:12Z"
-    },
-    {
 			"checksumSHA1": "6AYg4fjEvFuAVN3wHakGApjhZAM=",
 			"path": "github.com/smartystreets/assertions",
 			"revision": "2063fd1cc7c975db70502811a34b06ad034ccdf2",
@@ -55,6 +49,18 @@
 			"path": "github.com/smartystreets/goconvey/convey/reporting",
 			"revision": "5db88ed452e937f2fd557de6f4f1af7f2eabed0b",
 			"revisionTime": "2016-08-23T18:01:44Z"
+		},
+		{
+			"checksumSHA1": "WHc3uByvGaMcnSoI21fhzYgbOgg=",
+			"path": "golang.org/x/net/context/ctxhttp",
+			"revision": "71a035914f99bb58fe82eac0f1289f10963d876c",
+			"revisionTime": "2016-09-12T21:59:12Z"
+		},
+		{
+			"checksumSHA1": "S0DP7Pn7sZUmXc55IzZnNvERu6s=",
+			"path": "golang.org/x/sync/errgroup",
+			"revision": "316e794f7b5e3df4e95175a45a5fb8b12f85cb4f",
+			"revisionTime": "2016-07-15T18:54:39Z"
 		}
 	],
 	"rootPath": "github.com/grafana/grafana"
