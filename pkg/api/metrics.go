@@ -8,43 +8,47 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/testdata"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetTestMetrics(c *middleware.Context) Response {
+// POST /api/tsdb/query
+func QueryMetrics(c *middleware.Context, reqDto dtos.MetricRequest) Response {
+	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
 
-	timeRange := tsdb.NewTimeRange(c.Query("from"), c.Query("to"))
+	request := &tsdb.Request{TimeRange: timeRange}
 
-	req := &tsdb.Request{
-		TimeRange: timeRange,
-		Queries: []*tsdb.Query{
-			{
-				RefId:         "A",
-				MaxDataPoints: c.QueryInt64("maxDataPoints"),
-				IntervalMs:    c.QueryInt64("intervalMs"),
-				DataSource: &tsdb.DataSourceInfo{
-					Name:     "Grafana TestDataDB",
-					PluginId: "grafana-testdata-datasource",
-				},
+	for _, query := range reqDto.Queries {
+		request.Queries = append(request.Queries, &tsdb.Query{
+			RefId:         query.Get("refId").MustString("A"),
+			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
+			IntervalMs:    query.Get("intervalMs").MustInt64(1000),
+			Model:         query,
+			DataSource: &tsdb.DataSourceInfo{
+				Name:     "Grafana TestDataDB",
+				PluginId: "grafana-testdata-datasource",
 			},
-		},
+		})
 	}
 
-	resp, err := tsdb.HandleRequest(req)
+	resp, err := tsdb.HandleRequest(request)
 	if err != nil {
 		return ApiError(500, "Metric request error", err)
 	}
 
-	result := dtos.MetricQueryResultDto{}
+	return Json(200, &resp)
+}
 
-	for _, v := range resp.Results {
-		if v.Error != nil {
-			return ApiError(500, "tsdb.HandleRequest() response error", v.Error)
-		}
+// GET /api/tsdb/testdata/scenarios
+func GetTestDataScenarios(c *middleware.Context) Response {
+	result := make([]interface{}, 0)
 
-		for _, series := range v.Series {
-			result.Data = append(result.Data, series)
-		}
+	for _, scenario := range testdata.ScenarioRegistry {
+		result = append(result, map[string]interface{}{
+			"id":          scenario.Id,
+			"name":        scenario.Name,
+			"description": scenario.Description,
+		})
 	}
 
 	return Json(200, &result)

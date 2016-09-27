@@ -10,18 +10,38 @@ class TestDataDatasource {
   query(options) {
     var queries = _.filter(options.targets, item => {
       return item.hide !== true;
+    }).map(item => {
+      return {
+        refId: item.refId,
+        scenarioId: item.scenarioId,
+        intervalMs: options.intervalMs,
+        maxDataPoints: options.maxDataPoints,
+      };
     });
 
     if (queries.length === 0) {
       return this.$q.when({data: []});
     }
 
-    return this.backendSrv.get('/api/metrics/test', {
-      from: options.range.from.valueOf(),
-      to: options.range.to.valueOf(),
-      scenario: options.targets[0].scenario,
-      interval: options.intervalMs,
-      maxDataPoints: options.maxDataPoints,
+    return this.backendSrv.post('/api/tsdb/query', {
+      from: options.range.from.valueOf().toString(),
+      to: options.range.to.valueOf().toString(),
+      queries: queries,
+    }).then(res => {
+      var data = [];
+
+      if (res.results) {
+        _.forEach(res.results, queryRes => {
+          for (let series of queryRes.series) {
+            data.push({
+              target: series.name,
+              datapoints: series.points
+            });
+          }
+        });
+      }
+
+      return {data: data};
     });
   }
 

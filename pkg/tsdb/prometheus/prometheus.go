@@ -10,8 +10,8 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/prometheus/client_golang/api/prometheus"
-	"golang.org/x/net/context"
 	pmodel "github.com/prometheus/common/model"
+	"golang.org/x/net/context"
 )
 
 type PrometheusExecutor struct {
@@ -111,12 +111,12 @@ func parseQuery(queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) (*Prom
 		return nil, err
 	}
 
-	start, err := queryContext.TimeRange.FromTime()
+	start, err := queryContext.TimeRange.ParseFrom()
 	if err != nil {
 		return nil, err
 	}
 
-	end, err := queryContext.TimeRange.ToTime()
+	end, err := queryContext.TimeRange.ParseTo()
 	if err != nil {
 		return nil, err
 	}

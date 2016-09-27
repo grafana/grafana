@@ -96,8 +96,10 @@ func (slice DataSourceList) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
 
-type MetricQueryResultDto struct {
-	Data []interface{} `json:"data"`
+type MetricRequest struct {
+	From    string             `json:"from"`
+	To      string             `json:"to"`
+	Queries []*simplejson.Json `json:"queries"`
 }
 
 type UserStars struct {

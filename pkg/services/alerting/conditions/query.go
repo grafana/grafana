@@ -69,7 +69,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) {
 	context.Firing = len(context.EvalMatches) > 0
 }
 
-func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange tsdb.TimeRange) (tsdb.TimeSeriesSlice, error) {
+func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *tsdb.TimeRange) (tsdb.TimeSeriesSlice, error) {
 	getDsInfo := &m.GetDataSourceByIdQuery{
 		Id:    c.Query.DatasourceId,
 		OrgId: context.Rule.OrgId,
@@ -105,9 +105,9 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange t
 	return result, nil
 }
 
-func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timerange tsdb.TimeRange) *tsdb.Request {
+func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRange *tsdb.TimeRange) *tsdb.Request {
 	req := &tsdb.Request{
-		TimeRange: timerange,
+		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
 			{
 				RefId: "A",

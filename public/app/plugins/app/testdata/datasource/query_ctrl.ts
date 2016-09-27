@@ -6,19 +6,20 @@ import {QueryCtrl} from 'app/plugins/sdk';
 export class TestDataQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 
-  scenarioDefs: any;
+  scenarioList: any;
 
   /** @ngInject **/
-  constructor($scope, $injector) {
+  constructor($scope, $injector, private backendSrv) {
     super($scope, $injector);
 
-    this.target.scenario = this.target.scenario || 'random_walk';
+    this.target.scenarioId = this.target.scenarioId || 'random_walk';
+    this.scenarioList = [];
+  }
 
-    this.scenarioDefs = {
-      'random_walk': {text: 'Random Walk'},
-      'no_datapoints': {text: 'No Datapoints'},
-      'data_outside_range': {text: 'Data Outside Range'},
-    };
+  $onInit() {
+    return this.backendSrv.get('/api/tsdb/testdata/scenarios').then(res => {
+      this.scenarioList = res;
+    });
   }
 }
 

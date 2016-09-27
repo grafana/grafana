@@ -14,9 +14,9 @@ func TestMetricQuery(t *testing.T) {
 		Convey("Given 3 queries for 2 data sources", func() {
 			request := &Request{
 				Queries: QuerySlice{
-					{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1}},
-					{RefId: "B", Query: "asd", DataSource: &DataSourceInfo{Id: 1}},
-					{RefId: "C", Query: "asd", DataSource: &DataSourceInfo{Id: 2}},
+					{RefId: "A", DataSource: &DataSourceInfo{Id: 1}},
+					{RefId: "B", DataSource: &DataSourceInfo{Id: 1}},
+					{RefId: "C", DataSource: &DataSourceInfo{Id: 2}},
 				},
 			}
 
@@ -31,9 +31,9 @@ func TestMetricQuery(t *testing.T) {
 		Convey("Given query 2 depends on query 1", func() {
 			request := &Request{
 				Queries: QuerySlice{
-					{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1}},
-					{RefId: "B", Query: "asd", DataSource: &DataSourceInfo{Id: 2}},
-					{RefId: "C", Query: "#A / #B", DataSource: &DataSourceInfo{Id: 3}, Depends: []string{"A", "B"}},
+					{RefId: "A", DataSource: &DataSourceInfo{Id: 1}},
+					{RefId: "B", DataSource: &DataSourceInfo{Id: 2}},
+					{RefId: "C", DataSource: &DataSourceInfo{Id: 3}, Depends: []string{"A", "B"}},
 				},
 			}
 
@@ -55,7 +55,7 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When executing request with one query", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "A", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
 			},
 		}
 
@@ -74,8 +74,8 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When executing one request with two queries from same data source", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
-				{RefId: "B", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "A", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "B", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
 			},
 		}
 
@@ -100,9 +100,9 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When executing one request with three queries from different datasources", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
-				{RefId: "B", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
-				{RefId: "C", Query: "asd", DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}},
+				{RefId: "A", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "B", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "C", DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}},
 			},
 		}
 
@@ -117,7 +117,7 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When query uses data source of unknown type", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "asdasdas"}},
+				{RefId: "A", DataSource: &DataSourceInfo{Id: 1, PluginId: "asdasdas"}},
 			},
 		}
 
@@ -129,10 +129,10 @@ func TestMetricQuery(t *testing.T) {
 		req := &Request{
 			Queries: QuerySlice{
 				{
-					RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"},
+					RefId: "A", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"},
 				},
 				{
-					RefId: "B", Query: "#A / 2", DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}, Depends: []string{"A"},
+					RefId: "B", DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}, Depends: []string{"A"},
 				},
 			},
 		}

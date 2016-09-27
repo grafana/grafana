@@ -4,7 +4,6 @@ import "github.com/grafana/grafana/pkg/components/simplejson"
 
 type Query struct {
 	RefId         string
-	Query         string
 	Model         *simplejson.Json
 	Depends       []string
 	DataSource    *DataSourceInfo
@@ -17,13 +16,13 @@ type Query struct {
 type QuerySlice []*Query
 
 type Request struct {
-	TimeRange TimeRange
+	TimeRange *TimeRange
 	Queries   QuerySlice
 }
 
 type Response struct {
-	BatchTimings []*BatchTiming
-	Results      map[string]*QueryResult
+	BatchTimings []*BatchTiming          `json:"timings"`
+	Results      map[string]*QueryResult `json:"results"`
 }
 
 type DataSourceInfo struct {
@@ -50,14 +49,14 @@ type BatchResult struct {
 }
 
 type QueryResult struct {
-	Error  error
-	RefId  string
-	Series TimeSeriesSlice
+	Error  error           `json:"error"`
+	RefId  string          `json:"refId"`
+	Series TimeSeriesSlice `json:"series"`
 }
 
 type TimeSeries struct {
-	Name   string        `json:"target"`
-	Points [][2]*float64 `json:"datapoints"`
+	Name   string        `json:"name"`
+	Points [][2]*float64 `json:"points"`
 }
 
 type TimeSeriesSlice []*TimeSeries

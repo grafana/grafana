@@ -78,7 +78,7 @@ export class DataProcessor {
   }
 
   timeSeriesHandler(seriesData, index, options) {
-    var datapoints = seriesData.datapoints;
+    var datapoints = seriesData.datapoints || [];
     var alias = seriesData.target;
 
     var colorIndex = index % colors.length;
