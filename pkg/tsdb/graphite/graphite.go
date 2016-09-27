@@ -102,9 +102,9 @@ func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDT
 		return nil, err
 	}
 
-	if res.StatusCode == http.StatusUnauthorized {
-		glog.Info("Request is Unauthorized", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf("Request is Unauthorized status: %v body: %s", res.Status, string(body))
+	if res.StatusCode/100 != 200 {
+		glog.Info("Request failed", "status", res.Status, "body", string(body))
+		return nil, fmt.Errorf("Request failed status: %v", res.Status)
 	}
 
 	var data []TargetResponseDTO
