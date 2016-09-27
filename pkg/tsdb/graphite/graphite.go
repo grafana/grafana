@@ -102,7 +102,7 @@ func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDT
 		return nil, err
 	}
 
-	if res.StatusCode/100 != 200 {
+	if res.StatusCode/100 != 2 {
 		glog.Info("Request failed", "status", res.Status, "body", string(body))
 		return nil, fmt.Errorf("Request failed status: %v", res.Status)
 	}
