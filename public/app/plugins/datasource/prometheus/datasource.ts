@@ -19,6 +19,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   this.directUrl = instanceSettings.directUrl;
   this.basicAuth = instanceSettings.basicAuth;
   this.withCredentials = instanceSettings.withCredentials;
+  this.labelKeys = instanceSettings.jsonData.labelKeys;
   this.lastErrors = {};
 
   this._request = function(method, url, requestId) {
@@ -45,6 +46,17 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   }
 
   this.interpolateQueryExpr = function(value, variable, defaultFormatFn) {
+    if (variable.type === 'adhoc') {
+      var filters = _.map(variable.filters, (label, index) => {
+        var value = label.value;
+        if (label.operator === '=~' || label.operator === '!~') {
+          value = prometheusSpecialRegexEscape(value);
+        }
+        return label.key + label.operator + '"' + label.value + '"';
+      });
+      return filters.join(',');
+    }
+
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return value;
@@ -139,6 +151,22 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
         return metricName.indexOf(query) !== 1;
       });
     });
+  };
+
+
+  this.getTagKeys = function(options) {
+    var keys = _.map(this.labelKeys.split(','), function (key) {
+      return {
+        text: key,
+        expandable: false
+      };
+    });
+    return $q.when(keys);
+  };
+
+  this.getTagValues = function(options) {
+    var query = 'label_values(' + options.key + ')';
+    return this.metricFindQuery(query);
   };
 
   this.metricFindQuery = function(query) {

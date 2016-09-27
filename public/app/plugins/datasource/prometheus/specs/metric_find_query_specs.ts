@@ -7,7 +7,7 @@ import PrometheusMetricFindQuery from '../metric_find_query';
 describe('PrometheusMetricFindQuery', function() {
 
   var ctx = new helpers.ServiceTestContext();
-  var instanceSettings = {url: 'proxied', directUrl: 'direct', user: 'test', password: 'mupp' };
+  var instanceSettings = {url: 'proxied', directUrl: 'direct', user: 'test', password: 'mupp', jsonData: { labelKeys: '' } };
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
