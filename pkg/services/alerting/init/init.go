@@ -12,8 +12,6 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/testdata"
 )
 
-var engine *alerting.Engine
-
 func Init(ctx context.Context) error {
 	if !setting.AlertingEnabled {
 		return nil

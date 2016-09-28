@@ -5,7 +5,6 @@ import (
 
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -15,30 +14,24 @@ func init() {
 	bus.AddHandler("sql", GetDashboardSnapshot)
 	bus.AddHandler("sql", DeleteDashboardSnapshot)
 	bus.AddHandler("sql", SearchDashboardSnapshots)
-	bus.AddEventListener(DeleteExpiredSnapshots)
+	bus.AddHandler("sql", DeleteExpiredSnapshots)
 }
 
-func DeleteExpiredSnapshots(cmd *m.HourCommand) error {
+func DeleteExpiredSnapshots(cmd *m.DeleteExpiredSnapshotsCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		var expiredCount int64 = 0
-		var oldCount int64 = 0
 
 		if setting.SnapShotRemoveExpired {
 			deleteExpiredSql := "DELETE FROM dashboard_snapshot WHERE expires < ?"
-			expiredResponse, err := x.Exec(deleteExpiredSql, cmd.Time)
+			expiredResponse, err := x.Exec(deleteExpiredSql, time.Now)
 			if err != nil {
 				return err
 			}
 			expiredCount, _ = expiredResponse.RowsAffected()
 		}
 
-		oldSnapshotsSql := "DELETE FROM dashboard_snapshot WHERE created < ?"
-		oldResponse, err := x.Exec(oldSnapshotsSql, cmd.Time.AddDate(0, 0, setting.SnapShotTTLDays*-1))
-		oldCount, _ = oldResponse.RowsAffected()
-
-		log.Debug2("Deleted old/expired snaphots", "to old", oldCount, "expired", expiredCount)
-
-		return err
+		sqlog.Debug("Deleted old/expired snaphots", "expired", expiredCount)
+		return nil
 	})
 }
 
