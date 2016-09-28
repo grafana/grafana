@@ -28,8 +28,8 @@ func init() {
 		Name: "Random Walk",
 
 		Handler: func(query *tsdb.Query, context *tsdb.QueryContext) *tsdb.QueryResult {
-			timeWalkerMs := context.TimeRange.MustGetFrom().Unix() * 1000
-			to := context.TimeRange.MustGetTo().Unix() * 1000
+			to := context.TimeRange.MustGetTo().UnixNano() / int64(time.Millisecond)
+			timeWalkerMs := context.TimeRange.MustGetFrom().UnixNano() / int64(time.Millisecond)
 
 			series := newSeriesForQuery(query)
 
@@ -81,7 +81,6 @@ func init() {
 			return queryRes
 		},
 	})
-
 }
 
 func registerScenario(scenario *Scenario) {

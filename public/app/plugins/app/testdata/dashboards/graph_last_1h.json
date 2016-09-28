@@ -1,5 +1,5 @@
 {
-  "revision": 2,
+  "revision": 3,
   "title": "TestData - Graph Panel Last 1h",
   "tags": [
     "grafana-test"
@@ -35,6 +35,7 @@
           },
           "lines": true,
           "linewidth": 2,
+          "links": [],
           "nullPointMode": "connected",
           "percentage": false,
           "pointradius": 5,
@@ -48,8 +49,8 @@
             {
               "refId": "A",
               "scenario": "random_walk",
-              "target": "",
-              "scenarioId": "no_data_points"
+              "scenarioId": "no_data_points",
+              "target": ""
             }
           ],
           "thresholds": [],
@@ -86,8 +87,7 @@
               "min": null,
               "show": true
             }
-          ],
-          "links": []
+          ]
         },
         {
           "aliasColors": {},
@@ -109,6 +109,7 @@
           },
           "lines": true,
           "linewidth": 2,
+          "links": [],
           "nullPointMode": "connected",
           "percentage": false,
           "pointradius": 5,
@@ -122,8 +123,8 @@
             {
               "refId": "A",
               "scenario": "random_walk",
-              "target": "",
-              "scenarioId": "datapoints_outside_range"
+              "scenarioId": "datapoints_outside_range",
+              "target": ""
             }
           ],
           "thresholds": [],
@@ -160,18 +161,8 @@
               "min": null,
               "show": true
             }
-          ],
-          "links": []
-        }
-      ],
-      "title": "New row"
-    },
-    {
-      "title": "New row",
-      "height": "250px",
-      "editable": true,
-      "collapse": false,
-      "panels": [
+          ]
+        },
         {
           "aliasColors": {},
           "bars": false,
@@ -192,21 +183,22 @@
           },
           "lines": true,
           "linewidth": 2,
+          "links": [],
           "nullPointMode": "connected",
           "percentage": false,
           "pointradius": 5,
           "points": false,
           "renderer": "flot",
           "seriesOverrides": [],
-          "span": 8,
+          "span": 4,
           "stack": false,
           "steppedLine": false,
           "targets": [
             {
               "refId": "A",
               "scenario": "random_walk",
-              "target": "",
-              "scenarioId": "random_walk"
+              "scenarioId": "random_walk",
+              "target": ""
             }
           ],
           "thresholds": [],
@@ -243,14 +235,96 @@
               "min": null,
               "show": true
             }
-          ],
-          "links": []
+          ]
         }
-      ]
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "Grafana TestData",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "id": 4,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 8,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "scenario": "random_walk",
+              "scenarioId": "random_walk",
+              "target": ""
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": "5d",
+          "timeShift": null,
+          "title": "Millisecond res x-axis and tooltip",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "title": "New row"
     }
   ],
   "time": {
-    "from": "now-6h",
+    "from": "now-1h",
     "to": "now"
   },
   "timepicker": {
@@ -284,6 +358,7 @@
   "annotations": {
     "list": []
   },
+  "refresh": false,
   "schemaVersion": 13,
   "version": 4,
   "links": [],
