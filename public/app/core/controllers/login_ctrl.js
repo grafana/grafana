@@ -25,7 +25,7 @@ function (angular, _, coreModule, config) {
     $scope.oauth = config.oauth;
     $scope.oauthEnabled = _.keys(config.oauth).length > 0;
 
-    $scope.allowUserPassLogin = config.allowUserPassLogin;
+    $scope.disableLoginForm = config.disableLoginForm;
     $scope.disableUserSignUp = config.disableUserSignUp;
     $scope.loginHint     = config.loginHint;
 

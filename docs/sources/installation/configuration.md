@@ -238,6 +238,14 @@ options are `Admin` and `Editor` and `Read-Only Editor`.
 
 <hr>
 
+## [auth]
+
+### disable_login_form
+
+Set to true to disable (hide) the login form, useful if you use OAuth, defaults to false.
+
+<hr>
+
 ## [auth.anonymous]
 
 ### enabled
