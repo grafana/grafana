@@ -1,9 +1,10 @@
 define([
   'angular',
+  'lodash',
   '../core_module',
   'app/core/config',
 ],
-function (angular, coreModule, config) {
+function (angular, _, coreModule, config) {
   'use strict';
 
   var failCodes = {
@@ -21,18 +22,10 @@ function (angular, coreModule, config) {
 
     contextSrv.sidemenu = false;
 
-    $scope.googleAuthEnabled = config.googleAuthEnabled;
-    $scope.githubAuthEnabled = config.githubAuthEnabled;
-    $scope.grafanaNetAuthEnabled = config.grafanaNetAuthEnabled;
-    $scope.oauthEnabled = (
-      config.githubAuthEnabled
-      || config.googleAuthEnabled
-      || config.grafanaNetAuthEnabled
-      || config.genericOAuthEnabled
-    );
+    $scope.oauth = config.oauth;
+    $scope.oauthEnabled = _.keys(config.oauth).length > 0;
+
     $scope.allowUserPassLogin = config.allowUserPassLogin;
-    $scope.genericOAuthEnabled = config.genericOAuthEnabled;
-    $scope.oauthProviderName = config.oauthProviderName;
     $scope.disableUserSignUp = config.disableUserSignUp;
     $scope.loginHint     = config.loginHint;
 
