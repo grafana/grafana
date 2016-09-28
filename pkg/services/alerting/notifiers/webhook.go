@@ -1,6 +1,8 @@
 package notifiers
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -36,7 +38,7 @@ type WebhookNotifier struct {
 	log      log.Logger
 }
 
-func (this *WebhookNotifier) Notify(context *alerting.EvalContext) {
+func (this *WebhookNotifier) Notify(ctx context.Context, context *alerting.EvalContext) error {
 	this.log.Info("Sending webhook")
 	metrics.M_Alerting_Notification_Sent_Webhook.Inc(1)
 
@@ -58,14 +60,16 @@ func (this *WebhookNotifier) Notify(context *alerting.EvalContext) {
 
 	body, _ := bodyJSON.MarshalJSON()
 
-	cmd := &m.SendWebhook{
+	cmd := &m.SendWebhookSync{
 		Url:      this.Url,
 		User:     this.User,
 		Password: this.Password,
 		Body:     string(body),
 	}
 
-	if err := bus.Dispatch(cmd); err != nil {
+	if err := bus.DispatchCtx(ctx, cmd); err != nil {
 		this.log.Error("Failed to send webhook", "error", err, "webhook", this.Name)
 	}
+
+	return nil
 }
