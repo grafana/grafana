@@ -52,6 +52,10 @@ func (service *CleanUpService) start(ctx context.Context) error {
 }
 
 func (service *CleanUpService) cleanUpTmpFiles() {
+	if _, err := os.Stat(setting.ImagesDir); os.IsNotExist(err) {
+		return
+	}
+
 	files, err := ioutil.ReadDir(setting.ImagesDir)
 	if err != nil {
 		service.log.Error("Problem reading image dir", "error", err)
