@@ -63,6 +63,8 @@ func (this *GraphitePublisher) Publish(metrics []Metric) {
 		switch metric := m.(type) {
 		case Counter:
 			this.addCount(buf, metricName+".count", metric.Count(), now)
+		case Gauge:
+			this.addCount(buf, metricName, metric.Value(), now)
 		case Timer:
 			percentiles := metric.Percentiles([]float64{0.25, 0.75, 0.90, 0.99})
 			this.addCount(buf, metricName+".count", metric.Count(), now)

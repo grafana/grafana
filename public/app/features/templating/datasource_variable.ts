@@ -10,6 +10,7 @@ export class DatasourceVariable implements Variable {
   query: string;
   options: any;
   current: any;
+  refresh: any;
 
  defaults = {
     type: 'datasource',
@@ -20,11 +21,13 @@ export class DatasourceVariable implements Variable {
     regex: '',
     options: [],
     query: '',
+    refresh: 1,
   };
 
-  /** @ngInject */
+  /** @ngInject **/
   constructor(private model, private datasourceSrv, private variableSrv) {
     assignModelProperties(this, model, this.defaults);
+    this.refresh = 1;
   }
 
   getModel() {

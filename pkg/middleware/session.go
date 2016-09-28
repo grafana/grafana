@@ -13,7 +13,6 @@ import (
 
 const (
 	SESS_KEY_USERID = "uid"
-	SESS_KEY_APIKEY = "apikey_id" // used fror render requests with api keys
 )
 
 var sessionManager *session.Manager

@@ -216,11 +216,6 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       });
     };
 
-    function escapeForJson(value) {
-      var luceneQuery = JSON.stringify(value);
-      return luceneQuery.substr(1, luceneQuery.length - 2);
-    }
-
     this.getFields = function(query) {
       return this._get('/_mapping').then(function(result) {
         var typeMap = {
@@ -285,7 +280,6 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var header = this.getQueryHeader('count', range.from, range.to);
       var esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
 
-      esQuery = esQuery.replace("$lucene_query", escapeForJson(queryDef.query));
       esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
       esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
       esQuery = header + '\n' + esQuery + '\n';

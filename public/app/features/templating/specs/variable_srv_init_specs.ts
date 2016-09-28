@@ -62,6 +62,7 @@ describe('VariableSrv init', function() {
           options: [{text: "test", value: "test"}]
         }];
         scenario.urlParams["var-apps"] = "new";
+        scenario.metricSources = [];
       });
 
       it('should update current value', () => {
@@ -107,6 +108,30 @@ describe('VariableSrv init', function() {
         expect(ctx.datasource.metricFindQuery.callCount).to.be(1);
       });
 
+    });
+  });
+
+  describeInitScenario('when datasource variable is initialized', scenario => {
+    scenario.setup(() => {
+      scenario.variables = [{
+          type: 'datasource',
+          query: 'graphite',
+          name: 'test',
+          current: {value: 'backend4_pee', text: 'backend4_pee'},
+          regex: '/pee$/'
+        }
+      ];
+      scenario.metricSources = [
+        {name: 'backend1', meta: {id: 'influx'}},
+        {name: 'backend2_pee', meta: {id: 'graphite'}},
+        {name: 'backend3', meta: {id: 'graphite'}},
+        {name: 'backend4_pee', meta: {id: 'graphite'}},
+      ];
+    });
+
+    it('should update current value', function() {
+      var variable = ctx.variableSrv.variables[0];
+      expect(variable.options.length).to.be(2);
     });
   });
 

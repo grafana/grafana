@@ -1,6 +1,7 @@
 package api
 
 import (
+	"fmt"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -32,6 +33,16 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		locale = parts[0]
 	}
 
+	appUrl := setting.AppUrl
+	appSubUrl := setting.AppSubUrl
+
+	// special case when doing localhost call from phantomjs
+	if c.IsRenderCall {
+		appUrl = fmt.Sprintf("%s://localhost:%s", setting.Protocol, setting.HttpPort)
+		appSubUrl = ""
+		settings["appSubUrl"] = ""
+	}
+
 	var data = dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:             c.UserId,
@@ -49,8 +60,8 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Locale:         locale,
 		},
 		Settings:                settings,
-		AppUrl:                  setting.AppUrl,
-		AppSubUrl:               setting.AppSubUrl,
+		AppUrl:                  appUrl,
+		AppSubUrl:               appSubUrl,
 		GoogleAnalyticsId:       setting.GoogleAnalyticsId,
 		GoogleTagManagerId:      setting.GoogleTagManagerId,
 		BuildVersion:            setting.BuildVersion,
@@ -154,7 +165,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 				}
 			}
 
-			if c.OrgRole == m.ROLE_ADMIN {
+			if len(appLink.Children) > 0 && c.OrgRole == m.ROLE_ADMIN {
 				appLink.Children = append(appLink.Children, &dtos.NavLink{Divider: true})
 				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Plugin Config", Icon: "fa fa-cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/edit"})
 			}

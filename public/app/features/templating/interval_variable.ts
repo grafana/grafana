@@ -28,7 +28,7 @@ export class IntervalVariable implements Variable {
     auto_count: 30,
   };
 
-  /** @ngInject */
+  /** @ngInject **/
   constructor(private model, private timeSrv, private templateSrv, private variableSrv) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 2;
@@ -54,8 +54,8 @@ export class IntervalVariable implements Variable {
       this.options.unshift({ text: 'auto', value: '$__auto_interval' });
     }
 
-    var interval = kbn.calculateInterval(this.timeSrv.timeRange(), this.auto_count, (this.auto_min ? ">"+this.auto_min : null));
-    this.templateSrv.setGrafanaVariable('$__auto_interval', interval);
+    var res = kbn.calculateInterval(this.timeSrv.timeRange(), this.auto_count, (this.auto_min ? ">"+this.auto_min : null));
+    this.templateSrv.setGrafanaVariable('$__auto_interval', res.interval);
   }
 
   updateOptions() {

@@ -71,7 +71,7 @@ func (c *EvalContext) GetNotificationTitle() string {
 	return "[" + c.GetStateModel().Text + "] " + c.Rule.Name
 }
 
-func (c *EvalContext) getDashboardSlug() (string, error) {
+func (c *EvalContext) GetDashboardSlug() (string, error) {
 	if c.dashboardSlug != "" {
 		return c.dashboardSlug, nil
 	}
@@ -86,19 +86,10 @@ func (c *EvalContext) getDashboardSlug() (string, error) {
 }
 
 func (c *EvalContext) GetRuleUrl() (string, error) {
-	if slug, err := c.getDashboardSlug(); err != nil {
+	if slug, err := c.GetDashboardSlug(); err != nil {
 		return "", err
 	} else {
 		ruleUrl := fmt.Sprintf("%sdashboard/db/%s?fullscreen&edit&tab=alert&panelId=%d", setting.AppUrl, slug, c.Rule.PanelId)
-		return ruleUrl, nil
-	}
-}
-
-func (c *EvalContext) GetImageUrl() (string, error) {
-	if slug, err := c.getDashboardSlug(); err != nil {
-		return "", err
-	} else {
-		ruleUrl := fmt.Sprintf("%sdashboard-solo/db/%s?&panelId=%d", setting.AppUrl, slug, c.Rule.PanelId)
 		return ruleUrl, nil
 	}
 }

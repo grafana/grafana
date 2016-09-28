@@ -3,6 +3,18 @@
 	"ignore": "test",
 	"package": [
 		{
+			"checksumSHA1": "SMUvX2B8eoFd9wnPofwBKlN6btE=",
+			"path": "github.com/prometheus/client_golang/api/prometheus",
+			"revision": "5636dc67ae776adf5590da7349e70fbb9559972d",
+			"revisionTime": "2016-09-16T18:03:40Z"
+		},
+		{
+			"checksumSHA1": "Jx0GXl5hGnO25s3ryyvtdWHdCpw=",
+			"path": "github.com/prometheus/common/model",
+			"revision": "9a94032291f2192936512bab367bc45e77990d6a",
+			"revisionTime": "2016-09-17T18:44:01Z"
+		},
+		{
 			"checksumSHA1": "6AYg4fjEvFuAVN3wHakGApjhZAM=",
 			"path": "github.com/smartystreets/assertions",
 			"revision": "2063fd1cc7c975db70502811a34b06ad034ccdf2",
@@ -37,6 +49,18 @@
 			"path": "github.com/smartystreets/goconvey/convey/reporting",
 			"revision": "5db88ed452e937f2fd557de6f4f1af7f2eabed0b",
 			"revisionTime": "2016-08-23T18:01:44Z"
+		},
+		{
+			"checksumSHA1": "WHc3uByvGaMcnSoI21fhzYgbOgg=",
+			"path": "golang.org/x/net/context/ctxhttp",
+			"revision": "71a035914f99bb58fe82eac0f1289f10963d876c",
+			"revisionTime": "2016-09-12T21:59:12Z"
+		},
+		{
+			"checksumSHA1": "PoHLopxwkiXxa3uVhezeq/qJ/Vo=",
+			"path": "gopkg.in/guregu/null.v3",
+			"revision": "41961cea0328defc5f95c1c473f89ebf0d1813f6",
+			"revisionTime": "2016-02-28T00:53:16Z"
 		}
 	],
 	"rootPath": "github.com/grafana/grafana"

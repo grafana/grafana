@@ -38,7 +38,7 @@ func init() {
 	}
 
 	HttpClient = http.Client{
-		Timeout:   time.Duration(10 * time.Second),
+		Timeout:   time.Duration(15 * time.Second),
 		Transport: tr,
 	}
 }
@@ -54,7 +54,7 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	}
 
 	for _, query := range queries {
-		formData["target"] = []string{query.Query}
+		formData["target"] = []string{query.Model.Get("target").MustString()}
 	}
 
 	if setting.Env == setting.DEV {
@@ -79,7 +79,8 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	}
 
 	result.QueryResults = make(map[string]*tsdb.QueryResult)
-	queryRes := &tsdb.QueryResult{}
+	queryRes := tsdb.NewQueryResult()
+
 	for _, series := range data {
 		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
 			Name:   series.Target,
@@ -102,9 +103,9 @@ func (e *GraphiteExecutor) parseResponse(res *http.Response) ([]TargetResponseDT
 		return nil, err
 	}
 
-	if res.StatusCode == http.StatusUnauthorized {
-		glog.Info("Request is Unauthorized", "status", res.Status, "body", string(body))
-		return nil, fmt.Errorf("Request is Unauthorized status: %v body: %s", res.Status, string(body))
+	if res.StatusCode/100 != 2 {
+		glog.Info("Request failed", "status", res.Status, "body", string(body))
+		return nil, fmt.Errorf("Request failed status: %v", res.Status)
 	}
 
 	var data []TargetResponseDTO

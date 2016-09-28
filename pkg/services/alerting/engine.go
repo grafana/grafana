@@ -93,14 +93,18 @@ func (e *Engine) executeJob(job *Job) {
 }
 
 func (e *Engine) resultDispatcher() {
+	for result := range e.resultQueue {
+		go e.handleResponse(result)
+	}
+}
+
+func (e *Engine) handleResponse(result *EvalContext) {
 	defer func() {
 		if err := recover(); err != nil {
 			e.log.Error("Panic in resultDispatcher", "error", err, "stack", log.Stack(1))
 		}
 	}()
 
-	for result := range e.resultQueue {
-		e.log.Debug("Alert Rule Result", "ruleId", result.Rule.Id, "firing", result.Firing)
-		e.resultHandler.Handle(result)
-	}
+	e.log.Debug("Alert Rule Result", "ruleId", result.Rule.Id, "firing", result.Firing)
+	e.resultHandler.Handle(result)
 }

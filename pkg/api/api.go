@@ -58,6 +58,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/plugins/:id/page/:page", reqSignedIn, Index)
 
 	r.Get("/dashboard/*", reqSignedIn, Index)
+	r.Get("/dashboard-solo/snapshot/*", Index)
 	r.Get("/dashboard-solo/*", reqSignedIn, Index)
 	r.Get("/import/dashboard", reqSignedIn, Index)
 	r.Get("/dashboards/*", reqSignedIn, Index)
@@ -202,9 +203,9 @@ func Register(r *macaron.Macaron) {
 
 		r.Get("/plugins", wrap(GetPluginList))
 		r.Get("/plugins/:pluginId/settings", wrap(GetPluginSettingById))
+		r.Get("/plugins/:pluginId/readme", wrap(GetPluginReadme))
 
 		r.Group("/plugins", func() {
-			r.Get("/:pluginId/readme", wrap(GetPluginReadme))
 			r.Get("/:pluginId/dashboards/", wrap(GetPluginDashboards))
 			r.Post("/:pluginId/settings", bind(m.UpdatePluginSettingCmd{}), wrap(UpdatePluginSetting))
 		}, reqOrgAdmin)
@@ -243,7 +244,8 @@ func Register(r *macaron.Macaron) {
 		r.Get("/search/", Search)
 
 		// metrics
-		r.Get("/metrics/test", wrap(GetTestMetrics))
+		r.Post("/tsdb/query", bind(dtos.MetricRequest{}), wrap(QueryMetrics))
+		r.Get("/tsdb/testdata/scenarios", wrap(GetTestDataScenarios))
 
 		// metrics
 		r.Get("/metrics", wrap(GetInternalMetrics))
