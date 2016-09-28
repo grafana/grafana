@@ -11,6 +11,7 @@ var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
 /** @ngInject */
 export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
+  var self = this;
   this.type = 'prometheus';
   this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
   this.name = instanceSettings.name;
@@ -19,7 +20,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   this.directUrl = instanceSettings.directUrl;
   this.basicAuth = instanceSettings.basicAuth;
   this.withCredentials = instanceSettings.withCredentials;
-  this.labelKeys = instanceSettings.jsonData.labelKeys;
+  this.labelKeys = [];
   this.lastErrors = {};
 
   this._request = function(method, url, requestId) {
@@ -87,7 +88,6 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
   // Called once per panel (graph)
   this.query = function(options) {
-    var self = this;
     var start = this.getPrometheusTime(options.range.from, false);
     var end = this.getPrometheusTime(options.range.to, true);
 
@@ -141,6 +141,13 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
           throw response.error;
         }
         delete self.lastErrors.query;
+
+        // remember label keys in response
+        var keys = _.flatten(_.map(response.data.data.result, function(md) {
+          return _.keys(md.metric);
+        }));
+        self.labelKeys = _.uniq(_.union(self.labelKeys, keys));
+
         _.each(response.data.data.result, function(metricData) {
           result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
         });
@@ -171,7 +178,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
 
   this.getTagKeys = function(options) {
-    var keys = _.map(this.labelKeys.split(','), function (key) {
+    var keys = _.map(self.labelKeys, function (key) {
       return {
         text: key,
         expandable: false
@@ -223,7 +230,6 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
     var start = this.getPrometheusTime(options.range.from, false);
     var end = this.getPrometheusTime(options.range.to, true);
-    var self = this;
 
     return this.performTimeSeriesQuery(query, start, end).then(function(results) {
       var eventList = [];

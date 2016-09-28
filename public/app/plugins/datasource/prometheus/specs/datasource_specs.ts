@@ -5,7 +5,7 @@ import {PrometheusDatasource} from '../datasource';
 
 describe('PrometheusDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
-  var instanceSettings = {url: 'proxied', directUrl: 'direct', user: 'test', password: 'mupp', jsonData: { labelKeys: '' } };
+  var instanceSettings = {url: 'proxied', directUrl: 'direct', user: 'test', password: 'mupp' };
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
