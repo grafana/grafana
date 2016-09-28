@@ -25,10 +25,12 @@ func LoginView(c *middleware.Context) {
 		return
 	}
 
-	viewData.Settings["googleAuthEnabled"] = setting.OAuthService.Google
-	viewData.Settings["githubAuthEnabled"] = setting.OAuthService.GitHub
-	viewData.Settings["genericOAuthEnabled"] = setting.OAuthService.Generic
-	viewData.Settings["oauthProviderName"] = setting.OAuthService.OAuthProviderName
+	enabledOAuths := make(map[string]interface{})
+	for key, oauth := range setting.OAuthService.OAuthInfos {
+		enabledOAuths[key] = map[string]string{"name": oauth.Name}
+	}
+
+	viewData.Settings["oauth"] = enabledOAuths
 	viewData.Settings["disableUserSignUp"] = !setting.AllowUserSignUp
 	viewData.Settings["loginHint"] = setting.LoginHint
 	viewData.Settings["allowUserPassLogin"] = setting.AllowUserPassLogin

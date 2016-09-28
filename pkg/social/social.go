@@ -15,6 +15,7 @@ type BasicUserInfo struct {
 	Email    string
 	Login    string
 	Company  string
+	Role     string
 }
 
 type SocialConnector interface {
@@ -36,7 +37,7 @@ func NewOAuthService() {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
-	allOauthes := []string{"github", "google", "generic_oauth"}
+	allOauthes := []string{"github", "google", "generic_oauth", "grafananet"}
 
 	for _, name := range allOauthes {
 		sec := setting.Cfg.Section("auth." + name)
@@ -50,6 +51,7 @@ func NewOAuthService() {
 			Enabled:        sec.Key("enabled").MustBool(),
 			AllowedDomains: sec.Key("allowed_domains").Strings(" "),
 			AllowSignup:    sec.Key("allow_sign_up").MustBool(),
+			Name:           sec.Key("name").MustString(name),
 		}
 
 		if !info.Enabled {
@@ -70,22 +72,18 @@ func NewOAuthService() {
 
 		// GitHub.
 		if name == "github" {
-			setting.OAuthService.GitHub = true
-			teamIds := sec.Key("team_ids").Ints(",")
-			allowedOrganizations := sec.Key("allowed_organizations").Strings(" ")
 			SocialMap["github"] = &SocialGithub{
 				Config:               &config,
 				allowedDomains:       info.AllowedDomains,
 				apiUrl:               info.ApiUrl,
 				allowSignup:          info.AllowSignup,
-				teamIds:              teamIds,
-				allowedOrganizations: allowedOrganizations,
+				teamIds:              sec.Key("team_ids").Ints(","),
+				allowedOrganizations: sec.Key("allowed_organizations").Strings(" "),
 			}
 		}
 
 		// Google.
 		if name == "google" {
-			setting.OAuthService.Google = true
 			SocialMap["google"] = &SocialGoogle{
 				Config: &config, allowedDomains: info.AllowedDomains,
 				apiUrl:      info.ApiUrl,
@@ -95,17 +93,33 @@ func NewOAuthService() {
 
 		// Generic - Uses the same scheme as Github.
 		if name == "generic_oauth" {
-			setting.OAuthService.Generic = true
-			setting.OAuthService.OAuthProviderName = sec.Key("oauth_provider_name").String()
-			teamIds := sec.Key("team_ids").Ints(",")
-			allowedOrganizations := sec.Key("allowed_organizations").Strings(" ")
 			SocialMap["generic_oauth"] = &GenericOAuth{
 				Config:               &config,
 				allowedDomains:       info.AllowedDomains,
 				apiUrl:               info.ApiUrl,
 				allowSignup:          info.AllowSignup,
-				teamIds:              teamIds,
-				allowedOrganizations: allowedOrganizations,
+				teamIds:              sec.Key("team_ids").Ints(","),
+				allowedOrganizations: sec.Key("allowed_organizations").Strings(" "),
+			}
+		}
+
+		if name == "grafananet" {
+			config := oauth2.Config{
+				ClientID:     info.ClientId,
+				ClientSecret: info.ClientSecret,
+				Endpoint: oauth2.Endpoint{
+					AuthURL:  setting.GrafanaNetUrl + "/oauth2/authorize",
+					TokenURL: setting.GrafanaNetUrl + "/api/oauth2/token",
+				},
+				RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
+				Scopes:      info.Scopes,
+			}
+
+			SocialMap["grafananet"] = &SocialGrafanaNet{
+				Config:               &config,
+				url:                  setting.GrafanaNetUrl,
+				allowSignup:          info.AllowSignup,
+				allowedOrganizations: sec.Key("allowed_organizations").Strings(" "),
 			}
 		}
 	}
