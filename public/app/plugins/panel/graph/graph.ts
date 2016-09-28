@@ -140,7 +140,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
 
         // add left axis labels
         if (panel.yaxes[0].label) {
-          var yaxisLabel = $("<div class='axisLabel left-yaxis-label'></div>")
+          var yaxisLabel = $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>")
           .text(panel.yaxes[0].label)
           .appendTo(elem);
 
@@ -149,7 +149,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
 
         // add right axis labels
         if (panel.yaxes[1].label) {
-          var rightLabel = $("<div class='axisLabel right-yaxis-label'></div>")
+          var rightLabel = $("<div class='axisLabel right-yaxis-label flot-temp-elem'></div>")
           .text(panel.yaxes[1].label)
           .appendTo(elem);
 
