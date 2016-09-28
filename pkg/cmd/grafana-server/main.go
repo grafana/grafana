@@ -60,10 +60,10 @@ func main() {
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
 
-	appContext, cancelFn := context.WithCancel(context.Background())
-	grafanaGroup, _ := errgroup.WithContext(appContext)
+	appContext, shutdownFn := context.WithCancel(context.Background())
+	grafanaGroup, appContext := errgroup.WithContext(appContext)
 
-	go listenToSystemSignals(cancelFn, grafanaGroup)
+	go listenToSystemSignals(shutdownFn, grafanaGroup)
 
 	flag.Parse()
 	writePIDFile()

@@ -39,7 +39,7 @@ func NewEngine() *Engine {
 func (e *Engine) Start(grafanaCtx context.Context) error {
 	e.log.Info("Starting Alerting Engine")
 
-	g, _ := errgroup.WithContext(grafanaCtx)
+	g, grafanaCtx := errgroup.WithContext(grafanaCtx)
 
 	g.Go(func() error { return e.alertingTicker(grafanaCtx) })
 	g.Go(func() error { return e.execDispatcher(grafanaCtx) })
@@ -90,7 +90,7 @@ func (e *Engine) execDispatcher(grafanaCtx context.Context) error {
 	}
 }
 
-func (e *Engine) executeJob(grafanaCtx context.Context, job *Job) {
+func (e *Engine) executeJob(grafanaCtx context.Context, job *Job) error {
 	defer func() {
 		if err := recover(); err != nil {
 			e.log.Error("Execute Alert Panic", "error", err, "stack", log.Stack(1))
@@ -108,11 +108,14 @@ func (e *Engine) executeJob(grafanaCtx context.Context, job *Job) {
 	}()
 
 	select {
+
+	case <-grafanaCtx.Done():
+		return grafanaCtx.Err()
 	case evalContext := <-done:
 		e.resultQueue <- evalContext
-	case <-grafanaCtx.Done():
-
 	}
+
+	return nil
 }
 
 func (e *Engine) resultDispatcher(grafanaCtx context.Context) error {
