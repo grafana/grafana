@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"gopkg.in/guregu/null.v3"
 )
 
 var (
@@ -13,13 +14,13 @@ var (
 )
 
 type AlertEvaluator interface {
-	Eval(reducedValue *float64) bool
+	Eval(reducedValue null.Float) bool
 }
 
 type NoDataEvaluator struct{}
 
-func (e *NoDataEvaluator) Eval(reducedValue *float64) bool {
-	return reducedValue == nil
+func (e *NoDataEvaluator) Eval(reducedValue null.Float) bool {
+	return reducedValue.Valid == false
 }
 
 type ThresholdEvaluator struct {
@@ -43,16 +44,16 @@ func newThresholdEvaludator(typ string, model *simplejson.Json) (*ThresholdEvalu
 	return defaultEval, nil
 }
 
-func (e *ThresholdEvaluator) Eval(reducedValue *float64) bool {
-	if reducedValue == nil {
+func (e *ThresholdEvaluator) Eval(reducedValue null.Float) bool {
+	if reducedValue.Valid == false {
 		return false
 	}
 
 	switch e.Type {
 	case "gt":
-		return *reducedValue > e.Threshold
+		return reducedValue.Float64 > e.Threshold
 	case "lt":
-		return *reducedValue < e.Threshold
+		return reducedValue.Float64 < e.Threshold
 	}
 
 	return false
@@ -86,16 +87,18 @@ func newRangedEvaluator(typ string, model *simplejson.Json) (*RangedEvaluator, e
 	return rangedEval, nil
 }
 
-func (e *RangedEvaluator) Eval(reducedValue *float64) bool {
-	if reducedValue == nil {
+func (e *RangedEvaluator) Eval(reducedValue null.Float) bool {
+	if reducedValue.Valid == false {
 		return false
 	}
 
+	floatValue := reducedValue.Float64
+
 	switch e.Type {
 	case "within_range":
-		return (e.Lower < *reducedValue && e.Upper > *reducedValue) || (e.Upper < *reducedValue && e.Lower > *reducedValue)
+		return (e.Lower < floatValue && e.Upper > floatValue) || (e.Upper < floatValue && e.Lower > floatValue)
 	case "outside_range":
-		return (e.Upper < *reducedValue && e.Lower < *reducedValue) || (e.Upper > *reducedValue && e.Lower > *reducedValue)
+		return (e.Upper < floatValue && e.Lower < floatValue) || (e.Upper > floatValue && e.Lower > floatValue)
 	}
 
 	return false

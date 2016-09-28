@@ -140,17 +140,15 @@ func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb
 	}
 
 	for _, v := range data {
-		var points [][2]*float64
-		for _, k := range v.Values {
-			timestamp := float64(k.Timestamp)
-			val := float64(k.Value)
-			points = append(points, [2]*float64{&val, &timestamp})
+		series := tsdb.TimeSeries{
+			Name: formatLegend(v.Metric, query),
 		}
 
-		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-			Name:   formatLegend(v.Metric, query),
-			Points: points,
-		})
+		for _, k := range v.Values {
+			series.Points = append(series.Points, tsdb.NewTimePoint(float64(k.Value), float64(k.Timestamp.Unix()*1000)))
+		}
+
+		queryRes.Series = append(queryRes.Series, &series)
 	}
 
 	queryResults["A"] = queryRes

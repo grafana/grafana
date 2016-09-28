@@ -4,7 +4,6 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -21,7 +20,7 @@ var ScenarioRegistry map[string]*Scenario
 
 func init() {
 	ScenarioRegistry = make(map[string]*Scenario)
-	logger := log.New("tsdb.testdata")
+	//logger := log.New("tsdb.testdata")
 
 	registerScenario(&Scenario{
 		Id:   "random_walk",
@@ -33,13 +32,11 @@ func init() {
 
 			series := newSeriesForQuery(query)
 
-			points := make([][2]*float64, 0)
+			points := make(tsdb.TimeSeriesPoints, 0)
 			walker := rand.Float64() * 100
 
 			for i := int64(0); i < 10000 && timeWalkerMs < to; i++ {
-				timestamp := float64(timeWalkerMs)
-				val := float64(walker)
-				points = append(points, [2]*float64{&val, &timestamp})
+				points = append(points, tsdb.NewTimePoint(walker, float64(timeWalkerMs)))
 
 				walker += rand.Float64() - 0.5
 				timeWalkerMs += query.IntervalMs
@@ -72,12 +69,9 @@ func init() {
 			series := newSeriesForQuery(query)
 			outsideTime := context.TimeRange.MustGetFrom().Add(-1*time.Hour).Unix() * 1000
 
-			timestamp := float64(outsideTime)
-			logger.Info("time", "from", timestamp)
-			val := float64(10)
-
-			series.Points = append(series.Points, [2]*float64{&val, &timestamp})
+			series.Points = append(series.Points, tsdb.NewTimePoint(10, float64(outsideTime)))
 			queryRes.Series = append(queryRes.Series, series)
+
 			return queryRes
 		},
 	})

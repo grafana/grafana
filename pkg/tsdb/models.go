@@ -1,6 +1,9 @@
 package tsdb
 
-import "github.com/grafana/grafana/pkg/components/simplejson"
+import (
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"gopkg.in/guregu/null.v3"
+)
 
 type Query struct {
 	RefId         string
@@ -55,13 +58,29 @@ type QueryResult struct {
 }
 
 type TimeSeries struct {
-	Name   string        `json:"name"`
-	Points [][2]*float64 `json:"points"`
+	Name   string           `json:"name"`
+	Points TimeSeriesPoints `json:"points"`
 }
 
+type TimePoint [2]null.Float
+type TimeSeriesPoints []TimePoint
 type TimeSeriesSlice []*TimeSeries
 
-func NewTimeSeries(name string, points [][2]*float64) *TimeSeries {
+func NewTimePoint(value float64, timestamp float64) TimePoint {
+	return TimePoint{null.FloatFrom(value), null.FloatFrom(timestamp)}
+}
+
+func NewTimeSeriesPointsFromArgs(values ...float64) TimeSeriesPoints {
+	points := make(TimeSeriesPoints, 0)
+
+	for i := 0; i < len(values); i += 2 {
+		points = append(points, NewTimePoint(values[i], values[i+1]))
+	}
+
+	return points
+}
+
+func NewTimeSeries(name string, points TimeSeriesPoints) *TimeSeries {
 	return &TimeSeries{
 		Name:   name,
 		Points: points,

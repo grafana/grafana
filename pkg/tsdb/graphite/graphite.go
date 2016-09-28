@@ -80,6 +80,7 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 
 	result.QueryResults = make(map[string]*tsdb.QueryResult)
 	queryRes := &tsdb.QueryResult{}
+
 	for _, series := range data {
 		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
 			Name:   series.Target,
