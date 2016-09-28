@@ -9,7 +9,7 @@
       "name": "Grafana Project",
       "url": "http://grafana.org"
     },
-    "version": "1.0.7",
+    "version": "1.0.13",
     "updated": "2016-09-26"
   },
 
@@ -18,6 +18,11 @@
       "type": "dashboard",
       "name": "TestData - Graph Last 1h",
       "path": "dashboards/graph_last_1h.json"
+    },
+    {
+      "type": "dashboard",
+      "name": "TestData - Alerts",
+      "path": "dashboards/alerts.json"
     }
   ],
 

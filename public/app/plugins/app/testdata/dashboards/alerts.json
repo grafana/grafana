@@ -1,4 +1,5 @@
 {
+  "revision": 2,
   "title": "TestData - Alerts",
   "tags": [
     "grafana-test"
@@ -20,7 +21,7 @@
               {
                 "evaluator": {
                   "params": [
-                    111
+                    60
                   ],
                   "type": "gt"
                 },
@@ -41,7 +42,7 @@
             "enabled": true,
             "frequency": "60s",
             "handler": 1,
-            "name": "Should always be green",
+            "name": "TestData - Always OK",
             "noDataState": "no_data",
             "notifications": []
           },
@@ -79,17 +80,17 @@
               "refId": "A",
               "scenario": "random_walk",
               "scenarioId": "csv_metric_values",
-              "target": "",
-              "stringInput": "1,20,90,30,5,0"
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
             }
           ],
           "thresholds": [
             {
-              "colorMode": "critical",
+              "value": 60,
+              "op": "gt",
               "fill": true,
               "line": true,
-              "op": "gt",
-              "value": 111
+              "colorMode": "critical"
             }
           ],
           "timeFrom": null,
@@ -154,7 +155,7 @@
             "enabled": true,
             "frequency": "60s",
             "handler": 1,
-            "name": "Always Alerting",
+            "name": "TestData - Always Alerting",
             "noDataState": "no_data",
             "notifications": []
           },
@@ -192,17 +193,17 @@
               "refId": "A",
               "scenario": "random_walk",
               "scenarioId": "csv_metric_values",
-              "target": "",
-              "stringInput": "200,445,100,150,200,220,190"
+              "stringInput": "200,445,100,150,200,220,190",
+              "target": ""
             }
           ],
           "thresholds": [
             {
-              "value": 177,
-              "op": "gt",
+              "colorMode": "critical",
               "fill": true,
               "line": true,
-              "colorMode": "critical"
+              "op": "gt",
+              "value": 177
             }
           ],
           "timeFrom": null,
@@ -280,7 +281,7 @@
     "list": []
   },
   "schemaVersion": 13,
-  "version": 10,
+  "version": 4,
   "links": [],
   "gnetId": null
 }
