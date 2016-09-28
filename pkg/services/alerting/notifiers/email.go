@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"context"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -35,17 +36,17 @@ func NewEmailNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}, nil
 }
 
-func (this *EmailNotifier) Notify(context *alerting.EvalContext) {
+func (this *EmailNotifier) Notify(ctx context.Context, context *alerting.EvalContext) error {
 	this.log.Info("Sending alert notification to", "addresses", this.Addresses)
 	metrics.M_Alerting_Notification_Sent_Email.Inc(1)
 
 	ruleUrl, err := context.GetRuleUrl()
 	if err != nil {
 		this.log.Error("Failed get rule link", "error", err)
-		return
+		return err
 	}
 
-	cmd := &m.SendEmailCommand{
+	cmd := &m.SendEmailCommandSync{
 		Data: map[string]interface{}{
 			"Title":        context.GetNotificationTitle(),
 			"State":        context.Rule.State,
@@ -61,7 +62,11 @@ func (this *EmailNotifier) Notify(context *alerting.EvalContext) {
 		Template: "alert_notification.html",
 	}
 
-	if err := bus.Dispatch(cmd); err != nil {
+	err = bus.DispatchCtx(ctx, cmd)
+
+	if err != nil {
 		this.log.Error("Failed to send alert notification email", "error", err)
 	}
+	return nil
+
 }

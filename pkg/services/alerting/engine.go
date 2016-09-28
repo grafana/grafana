@@ -124,17 +124,17 @@ func (e *Engine) resultDispatcher(grafanaCtx context.Context) error {
 		case <-grafanaCtx.Done():
 			//handle all responses before shutting down.
 			for result := range e.resultQueue {
-				e.handleResponse(result)
+				e.handleResponse(grafanaCtx, result)
 			}
 
 			return grafanaCtx.Err()
 		case result := <-e.resultQueue:
-			e.handleResponse(result)
+			e.handleResponse(grafanaCtx, result)
 		}
 	}
 }
 
-func (e *Engine) handleResponse(result *EvalContext) {
+func (e *Engine) handleResponse(grafanaCtx context.Context, result *EvalContext) {
 	defer func() {
 		if err := recover(); err != nil {
 			e.log.Error("Panic in resultDispatcher", "error", err, "stack", log.Stack(1))
@@ -142,5 +142,5 @@ func (e *Engine) handleResponse(result *EvalContext) {
 	}()
 
 	e.log.Debug("Alert Rule Result", "ruleId", result.Rule.Id, "firing", result.Firing)
-	e.resultHandler.Handle(result)
+	e.resultHandler.Handle(grafanaCtx, result)
 }

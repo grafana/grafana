@@ -1,6 +1,8 @@
 package alerting
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -35,7 +37,7 @@ func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 		return err
 	}
 
-	notifier.sendNotifications([]Notifier{notifiers}, createTestEvalContext())
+	notifier.sendNotifications(context.Background(), []Notifier{notifiers}, createTestEvalContext())
 
 	return nil
 }
