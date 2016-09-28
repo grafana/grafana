@@ -6,6 +6,7 @@ import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
+import TableModel from 'app/core/table_model';
 
 var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
@@ -117,9 +118,18 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
           throw response.error;
         }
         delete self.lastErrors.query;
-        _.each(response.data.data.result, function(metricData) {
-          result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
-        });
+        switch (activeTargets[index].resultFormat) {
+        case 'table': {
+            result.push(self.transformMetricDataToTable(response.data.data.result));
+            break;
+          }
+        default: {
+            _.each(response.data.data.result, function(metricData) {
+              result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
+            });
+            break;
+          }
+        }
       });
 
       return { data: result };
@@ -258,6 +268,44 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     }
 
     return { target: metricLabel, datapoints: dps };
+  };
+
+  this.transformMetricDataToTable = function(series) {
+    var table = new TableModel();
+    var self = this;
+    var i, j;
+
+    if (series.length === 0) {
+      return table;
+    }
+
+    _.each(series, function(series, seriesIndex) {
+      if (seriesIndex === 0) {
+        table.columns.push({text: 'Time', type: 'time'});
+        _.each(_.keys(series.metric), function(key) {
+          table.columns.push({text: key});
+        });
+        table.columns.push({text: 'Value'});
+      }
+
+      if (series.values) {
+        for (i = 0; i < series.values.length; i++) {
+          var values = series.values[i];
+          var reordered = [values[0] * 1000];
+          if (series.metric) {
+            for (var key in series.metric) {
+              if (series.metric.hasOwnProperty(key)) {
+                reordered.push(series.metric[key]);
+              }
+            }
+          }
+          reordered.push(parseFloat(values[1]));
+          table.rows.push(reordered);
+        }
+      }
+    });
+
+    return table;
   };
 
   this.createMetricLabel = function(labelData, options) {

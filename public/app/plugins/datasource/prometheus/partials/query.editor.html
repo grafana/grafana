@@ -39,6 +39,10 @@
 					ng-change="ctrl.refreshMetricData()">
 				</select>
 			</div>
+			<label class="gf-form-label">Format as</label>
+			<div class="gf-form-select-wrapper">
+				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.resultFormat" ng-options="f.value as f.text for f in ctrl.resultFormats" ng-change="ctrl.refresh()"></select>
+			</div>
 			<label class="gf-form-label">
 				<a href="{{ctrl.linkToPrometheus}}" target="_blank" bs-tooltip="'Link to Graph in Prometheus'">
 					<i class="fa fa-share-square-o"></i>
