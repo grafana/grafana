@@ -120,9 +120,8 @@ var (
 	IsWindows    bool
 
 	// PhantomJs Rendering
-	ImagesDir            string
-	PhantomDir           string
-	RenderedImageTTLDays int
+	ImagesDir  string
+	PhantomDir string
 
 	// for logging purposes
 	configFiles                  []string
@@ -542,9 +541,6 @@ func NewConfigContext(args *CommandLineArgs) error {
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")
 	PhantomDir = filepath.Join(HomePath, "vendor/phantomjs")
-
-	tmpFilesSection := Cfg.Section("tmp.files")
-	RenderedImageTTLDays = tmpFilesSection.Key("rendered_image_ttl_days").MustInt(14)
 
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)

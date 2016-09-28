@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"io/ioutil"
@@ -12,18 +13,26 @@ import (
 	"syscall"
 	"time"
 
+	"golang.org/x/sync/errgroup"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
-	alertingInit "github.com/grafana/grafana/pkg/services/alerting/init"
-	"github.com/grafana/grafana/pkg/services/backgroundtasks"
+	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
+
+	"github.com/grafana/grafana/pkg/services/alerting"
+	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
+	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	_ "github.com/grafana/grafana/pkg/tsdb/graphite"
+	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
+	_ "github.com/grafana/grafana/pkg/tsdb/testdata"
 )
 
 var version = "3.1.0"
@@ -57,26 +66,41 @@ func main() {
 	setting.BuildCommit = commit
 	setting.BuildStamp = buildstampInt64
 
-	go listenToSystemSignals()
+	appContext, shutdownFn := context.WithCancel(context.Background())
+	grafanaGroup, appContext := errgroup.WithContext(appContext)
+
+	go listenToSystemSignals(shutdownFn, grafanaGroup)
 
 	flag.Parse()
 	writePIDFile()
+
 	initRuntime()
+	initSql()
 	metrics.Init()
 	search.Init()
 	login.Init()
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()
-	alertingInit.Init()
-	backgroundtasks.Init()
+
+	// init alerting
+	if setting.AlertingEnabled {
+		engine := alerting.NewEngine()
+		grafanaGroup.Go(func() error { return engine.Run(appContext) })
+	}
+
+	// cleanup service
+	cleanUpService := cleanup.NewCleanUpService()
+	grafanaGroup.Go(func() error { return cleanUpService.Run(appContext) })
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)
 	}
 
-	StartServer()
-	exitChan <- 0
+	exitCode := StartServer()
+
+	grafanaGroup.Wait()
+	exitChan <- exitCode
 }
 
 func initRuntime() {
@@ -94,7 +118,9 @@ func initRuntime() {
 	logger.Info("Starting Grafana", "version", version, "commit", commit, "compiled", time.Unix(setting.BuildStamp, 0))
 
 	setting.LogConfigurationInfo()
+}
 
+func initSql() {
 	sqlstore.NewEngine()
 	sqlstore.EnsureAdminUser()
 }
@@ -117,7 +143,7 @@ func writePIDFile() {
 	}
 }
 
-func listenToSystemSignals() {
+func listenToSystemSignals(cancel context.CancelFunc, grafanaGroup *errgroup.Group) {
 	signalChan := make(chan os.Signal, 1)
 	code := 0
 
@@ -125,7 +151,7 @@ func listenToSystemSignals() {
 
 	select {
 	case sig := <-signalChan:
-		log.Info("Received signal %s. shutting down", sig)
+		log.Info2("Received system signal. Shutting down", "signal", sig)
 	case code = <-exitChan:
 		switch code {
 		case 0:
@@ -135,6 +161,8 @@ func listenToSystemSignals() {
 		}
 	}
 
+	cancel()
+	grafanaGroup.Wait()
 	log.Close()
 	os.Exit(code)
 }
