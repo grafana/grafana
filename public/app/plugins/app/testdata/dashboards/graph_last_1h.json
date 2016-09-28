@@ -1,5 +1,5 @@
 {
-  "revision": 3,
+  "revision": 4,
   "title": "TestData - Graph Panel Last 1h",
   "tags": [
     "grafana-test"
@@ -284,7 +284,7 @@
             }
           ],
           "thresholds": [],
-          "timeFrom": "5d",
+          "timeFrom": "2s",
           "timeShift": null,
           "title": "Millisecond res x-axis and tooltip",
           "tooltip": {
@@ -318,9 +318,126 @@
               "show": true
             }
           ]
+        },
+        {
+          "title": "",
+          "error": false,
+          "span": 4,
+          "editable": true,
+          "type": "text",
+          "isNew": true,
+          "id": 6,
+          "mode": "markdown",
+          "content": "Just verify that the tooltip time has millisecond resolution ",
+          "links": []
         }
       ],
       "title": "New row"
+    },
+    {
+      "title": "New row",
+      "height": 336,
+      "editable": true,
+      "collapse": false,
+      "panels": [
+        {
+          "title": "2 yaxis and axis lables",
+          "error": false,
+          "span": 7.99561403508772,
+          "editable": true,
+          "type": "graph",
+          "isNew": true,
+          "id": 5,
+          "targets": [
+            {
+              "target": "",
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0"
+            },
+            {
+              "target": "",
+              "refId": "B",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "2000,3000,4000,1000,3000,10000"
+            }
+          ],
+          "datasource": "Grafana TestData",
+          "renderer": "flot",
+          "yaxes": [
+            {
+              "label": "Perecent",
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "percent"
+            },
+            {
+              "label": "Pressure",
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true,
+            "mode": "time",
+            "name": null,
+            "values": []
+          },
+          "lines": true,
+          "fill": 1,
+          "linewidth": 2,
+          "points": false,
+          "pointradius": 5,
+          "bars": false,
+          "stack": false,
+          "percentage": false,
+          "legend": {
+            "show": true,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false
+          },
+          "nullPointMode": "connected",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "cumulative",
+            "shared": true,
+            "sort": 0,
+            "msResolution": false
+          },
+          "timeFrom": null,
+          "timeShift": null,
+          "aliasColors": {},
+          "seriesOverrides": [
+            {
+              "alias": "B-series",
+              "yaxis": 2
+            }
+          ],
+          "thresholds": [],
+          "links": []
+        },
+        {
+          "title": "",
+          "error": false,
+          "span": 4.00438596491228,
+          "editable": true,
+          "type": "text",
+          "isNew": true,
+          "id": 7,
+          "mode": "markdown",
+          "content": "Verify that axis labels look ok",
+          "links": []
+        }
+      ]
     }
   ],
   "time": {
@@ -360,7 +477,7 @@
   },
   "refresh": false,
   "schemaVersion": 13,
-  "version": 4,
+  "version": 3,
   "links": [],
   "gnetId": null
 }

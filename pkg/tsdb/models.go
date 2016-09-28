@@ -66,6 +66,12 @@ type TimePoint [2]null.Float
 type TimeSeriesPoints []TimePoint
 type TimeSeriesSlice []*TimeSeries
 
+func NewQueryResult() *QueryResult {
+	return &QueryResult{
+		Series: make(TimeSeriesSlice, 0),
+	}
+}
+
 func NewTimePoint(value float64, timestamp float64) TimePoint {
 	return TimePoint{null.FloatFrom(value), null.FloatFrom(timestamp)}
 }

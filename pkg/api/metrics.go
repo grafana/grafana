@@ -48,6 +48,7 @@ func GetTestDataScenarios(c *middleware.Context) Response {
 			"id":          scenario.Id,
 			"name":        scenario.Name,
 			"description": scenario.Description,
+			"stringInput": scenario.StringInput,
 		})
 	}
 

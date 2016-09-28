@@ -132,7 +132,7 @@ func parseQuery(queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) (*Prom
 
 func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb.QueryResult, error) {
 	queryResults := make(map[string]*tsdb.QueryResult)
-	queryRes := &tsdb.QueryResult{}
+	queryRes := tsdb.NewQueryResult()
 
 	data, ok := value.(pmodel.Matrix)
 	if !ok {

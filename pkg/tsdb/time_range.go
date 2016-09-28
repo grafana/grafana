@@ -21,6 +21,14 @@ type TimeRange struct {
 	Now  time.Time
 }
 
+func (tr *TimeRange) GetFromAsMsEpoch() int64 {
+	return tr.MustGetFrom().UnixNano() / int64(time.Millisecond)
+}
+
+func (tr *TimeRange) GetToAsMsEpoch() int64 {
+	return tr.MustGetTo().UnixNano() / int64(time.Millisecond)
+}
+
 func (tr *TimeRange) MustGetFrom() time.Time {
 	if res, err := tr.ParseFrom(); err != nil {
 		return time.Unix(0, 0)
