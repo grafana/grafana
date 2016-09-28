@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
@@ -60,20 +61,20 @@ func (n *RootNotifier) sendNotifications(notifiers []Notifier, context *EvalCont
 	}
 }
 
-func (n *RootNotifier) uploadImage(context *EvalContext) error {
+func (n *RootNotifier) uploadImage(context *EvalContext) (err error) {
 	uploader, _ := imguploader.NewImageUploader()
 
-	imageUrl, err := context.GetImageUrl()
-	if err != nil {
-		return err
-	}
-
 	renderOpts := &renderer.RenderOpts{
-		Url:     imageUrl,
 		Width:   "800",
 		Height:  "400",
 		Timeout: "30",
 		OrgId:   context.Rule.OrgId,
+	}
+
+	if slug, err := context.GetDashboardSlug(); err != nil {
+		return err
+	} else {
+		renderOpts.Path = fmt.Sprintf("dashboard-solo/db/%s?&panelId=%d", slug, context.Rule.PanelId)
 	}
 
 	if imagePath, err := renderer.RenderToPng(renderOpts); err != nil {

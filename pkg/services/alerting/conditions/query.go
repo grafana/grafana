@@ -184,5 +184,6 @@ func validateToValue(to string) error {
 		}
 	}
 
-	return fmt.Errorf("cannot parse to value %s", to)
+	_, err := time.ParseDuration(to)
+	return err
 }
