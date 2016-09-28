@@ -30,6 +30,7 @@ export class DashboardModel {
   snapshot: any;
   schemaVersion: number;
   version: number;
+  revision: number;
   links: any;
   gnetId: any;
   meta: any;
@@ -42,6 +43,7 @@ export class DashboardModel {
 
     this.events = new Emitter();
     this.id = data.id || null;
+    this.revision = data.revision;
     this.title = data.title || 'No Title';
     this.autoUpdate = data.autoUpdate;
     this.description = data.description;

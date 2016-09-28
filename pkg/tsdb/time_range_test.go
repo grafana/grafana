@@ -23,13 +23,13 @@ func TestTimeRange(t *testing.T) {
 				fiveMinAgo, _ := time.ParseDuration("-5m")
 				expected := now.Add(fiveMinAgo)
 
-				res, err := tr.FromTime()
+				res, err := tr.ParseFrom()
 				So(err, ShouldBeNil)
 				So(res.Unix(), ShouldEqual, expected.Unix())
 			})
 
 			Convey("now ", func() {
-				res, err := tr.ToTime()
+				res, err := tr.ParseTo()
 				So(err, ShouldBeNil)
 				So(res.Unix(), ShouldEqual, now.Unix())
 			})
@@ -46,7 +46,7 @@ func TestTimeRange(t *testing.T) {
 				fiveHourAgo, _ := time.ParseDuration("-5h")
 				expected := now.Add(fiveHourAgo)
 
-				res, err := tr.FromTime()
+				res, err := tr.ParseFrom()
 				So(err, ShouldBeNil)
 				So(res.Unix(), ShouldEqual, expected.Unix())
 			})
@@ -54,10 +54,27 @@ func TestTimeRange(t *testing.T) {
 			Convey("now-10m ", func() {
 				fiveMinAgo, _ := time.ParseDuration("-10m")
 				expected := now.Add(fiveMinAgo)
-				res, err := tr.ToTime()
+				res, err := tr.ParseTo()
 				So(err, ShouldBeNil)
 				So(res.Unix(), ShouldEqual, expected.Unix())
 			})
+		})
+
+		Convey("can parse unix epocs", func() {
+			var err error
+			tr := TimeRange{
+				From: "1474973725473",
+				To:   "1474975757930",
+				Now:  now,
+			}
+
+			res, err := tr.ParseFrom()
+			So(err, ShouldBeNil)
+			So(res.UnixNano()/int64(time.Millisecond), ShouldEqual, 1474973725473)
+
+			res, err = tr.ParseTo()
+			So(err, ShouldBeNil)
+			So(res.UnixNano()/int64(time.Millisecond), ShouldEqual, 1474975757930)
 		})
 
 		Convey("Cannot parse asdf", func() {
@@ -68,10 +85,10 @@ func TestTimeRange(t *testing.T) {
 				Now:  now,
 			}
 
-			_, err = tr.FromTime()
+			_, err = tr.ParseFrom()
 			So(err, ShouldNotBeNil)
 
-			_, err = tr.ToTime()
+			_, err = tr.ParseTo()
 			So(err, ShouldNotBeNil)
 		})
 	})

@@ -61,6 +61,12 @@
 			"path": "golang.org/x/sync/errgroup",
 			"revision": "316e794f7b5e3df4e95175a45a5fb8b12f85cb4f",
 			"revisionTime": "2016-07-15T18:54:39Z"
+    },
+    {
+			"checksumSHA1": "PoHLopxwkiXxa3uVhezeq/qJ/Vo=",
+			"path": "gopkg.in/guregu/null.v3",
+			"revision": "41961cea0328defc5f95c1c473f89ebf0d1813f6",
+			"revisionTime": "2016-02-28T00:53:16Z"
 		}
 	],
 	"rootPath": "github.com/grafana/grafana"

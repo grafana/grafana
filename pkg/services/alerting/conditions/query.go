@@ -34,8 +34,8 @@ type AlertQuery struct {
 }
 
 func (c *QueryCondition) Eval(context *alerting.EvalContext) {
-	timerange := tsdb.NewTimerange(c.Query.From, c.Query.To)
-	seriesList, err := c.executeQuery(context, timerange)
+	timeRange := tsdb.NewTimeRange(c.Query.From, c.Query.To)
+	seriesList, err := c.executeQuery(context, timeRange)
 	if err != nil {
 		context.Error = err
 		return
@@ -46,21 +46,21 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) {
 		reducedValue := c.Reducer.Reduce(series)
 		evalMatch := c.Evaluator.Eval(reducedValue)
 
-		if reducedValue == nil {
+		if reducedValue.Valid == false {
 			emptySerieCount++
 			continue
 		}
 
 		if context.IsTestRun {
 			context.Logs = append(context.Logs, &alerting.ResultLogEntry{
-				Message: fmt.Sprintf("Condition[%d]: Eval: %v, Metric: %s, Value: %1.3f", c.Index, evalMatch, series.Name, *reducedValue),
+				Message: fmt.Sprintf("Condition[%d]: Eval: %v, Metric: %s, Value: %1.3f", c.Index, evalMatch, series.Name, reducedValue.Float64),
 			})
 		}
 
 		if evalMatch {
 			context.EvalMatches = append(context.EvalMatches, &alerting.EvalMatch{
 				Metric: series.Name,
-				Value:  *reducedValue,
+				Value:  reducedValue.Float64,
 			})
 		}
 	}
@@ -69,7 +69,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) {
 	context.Firing = len(context.EvalMatches) > 0
 }
 
-func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timerange tsdb.TimeRange) (tsdb.TimeSeriesSlice, error) {
+func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *tsdb.TimeRange) (tsdb.TimeSeriesSlice, error) {
 	getDsInfo := &m.GetDataSourceByIdQuery{
 		Id:    c.Query.DatasourceId,
 		OrgId: context.Rule.OrgId,
@@ -79,7 +79,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timerange t
 		return nil, fmt.Errorf("Could not find datasource")
 	}
 
-	req := c.getRequestForAlertRule(getDsInfo.Result, timerange)
+	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange)
 	result := make(tsdb.TimeSeriesSlice, 0)
 
 	resp, err := c.HandleRequest(req)
@@ -105,9 +105,9 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timerange t
 	return result, nil
 }
 
-func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timerange tsdb.TimeRange) *tsdb.Request {
+func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRange *tsdb.TimeRange) *tsdb.Request {
 	req := &tsdb.Request{
-		TimeRange: timerange,
+		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
 			{
 				RefId: "A",

@@ -3,6 +3,8 @@ package conditions
 import (
 	"testing"
 
+	"gopkg.in/guregu/null.v3"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -14,7 +16,7 @@ func evalutorScenario(json string, reducedValue float64, datapoints ...float64) 
 	evaluator, err := NewAlertEvaluator(jsonModel)
 	So(err, ShouldBeNil)
 
-	return evaluator.Eval(&reducedValue)
+	return evaluator.Eval(null.FloatFrom(reducedValue))
 }
 
 func TestEvalutors(t *testing.T) {
@@ -51,6 +53,6 @@ func TestEvalutors(t *testing.T) {
 		evaluator, err := NewAlertEvaluator(jsonModel)
 		So(err, ShouldBeNil)
 
-		So(evaluator.Eval(nil), ShouldBeTrue)
+		So(evaluator.Eval(null.FloatFromPtr(nil)), ShouldBeTrue)
 	})
 }

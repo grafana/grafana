@@ -25,6 +25,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   range: any;
   rangeRaw: any;
   interval: any;
+  intervalMs: any;
   resolution: any;
   timeInfo: any;
   skipDataOnInit: boolean;
@@ -123,10 +124,21 @@ class MetricsPanelCtrl extends PanelCtrl {
       this.resolution = Math.ceil($(window).width() * (this.panel.span / 12));
     }
 
-    var panelInterval = this.panel.interval;
-    var datasourceInterval = (this.datasource || {}).interval;
-    this.interval = kbn.calculateInterval(this.range, this.resolution, panelInterval || datasourceInterval);
+    this.calculateInterval();
   };
+
+  calculateInterval() {
+    var intervalOverride = this.panel.interval;
+
+    // if no panel interval check datasource
+    if (!intervalOverride && this.datasource && this.datasource.interval) {
+      intervalOverride = this.datasource.interval;
+    }
+
+    var res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
+    this.interval = res.interval;
+    this.intervalMs = res.intervalMs;
+  }
 
   applyPanelTimeOverrides() {
     this.timeInfo = '';
@@ -183,6 +195,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       range: this.range,
       rangeRaw: this.rangeRaw,
       interval: this.interval,
+      intervalMs: this.intervalMs,
       targets: this.panel.targets,
       format: this.panel.renderer === 'png' ? 'png' : 'json',
       maxDataPoints: this.resolution,

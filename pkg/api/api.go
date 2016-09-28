@@ -244,7 +244,8 @@ func Register(r *macaron.Macaron) {
 		r.Get("/search/", Search)
 
 		// metrics
-		r.Get("/metrics/test", wrap(GetTestMetrics))
+		r.Post("/tsdb/query", bind(dtos.MetricRequest{}), wrap(QueryMetrics))
+		r.Get("/tsdb/testdata/scenarios", wrap(GetTestDataScenarios))
 
 		// metrics
 		r.Get("/metrics", wrap(GetInternalMetrics))
