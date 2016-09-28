@@ -154,13 +154,6 @@ function (angular, _, kbn) {
           }
         }
 
-        var adhocVar = _.find(self._adhocVariables, function(v) {
-          return v.name === (g1 || g2);
-        });
-        if (adhocVar) {
-          return self.formatValue(null, format, adhocVar);
-        }
-
         if (!variable) {
           return match;
         }

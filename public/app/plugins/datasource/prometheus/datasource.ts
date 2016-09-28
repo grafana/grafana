@@ -46,17 +46,6 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   }
 
   this.interpolateQueryExpr = function(value, variable, defaultFormatFn) {
-    if (variable.type === 'adhoc') {
-      var filters = _.map(variable.filters, (label, index) => {
-        var value = label.value;
-        if (label.operator === '=~' || label.operator === '!~') {
-          value = prometheusSpecialRegexEscape(value);
-        }
-        return label.key + label.operator + '"' + label.value + '"';
-      });
-      return filters.join(',');
-    }
-
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return value;
@@ -68,6 +57,32 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
     var escapedValues = _.map(value, prometheusSpecialRegexEscape);
     return escapedValues.join('|');
+  };
+
+  this.renderAdhocFilters = function(filters) {
+    var conditions = _.map(filters, (label, index) => {
+      var value = label.value;
+      if (label.operator === '=~' || label.operator === '!~') {
+        value = prometheusSpecialRegexEscape(value);
+      }
+      return label.key + label.operator + '"' + label.value + '"';
+    });
+    return conditions.join(',');
+  };
+
+  this.getScopedVarsWithAdhocVars = function(scopedVars) {
+    var variable = scopedVars ? _.cloneDeep(scopedVars) : {};
+    var adhocFilters = templateSrv.getAdhocFilters(this.name);
+    if (adhocFilters.length > 0) {
+      variable[templateSrv._adhocVariables[this.name].name] = {
+        value: this.renderAdhocFilters(adhocFilters)
+      };
+    } else if (templateSrv._adhocVariables[this.name]) {
+      variable[templateSrv._adhocVariables[this.name].name] = {
+        value: ''
+      };
+    }
+    return variable;
   };
 
   // Called once per panel (graph)
@@ -89,7 +104,8 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       activeTargets.push(target);
 
       var query: any = {};
-      query.expr = templateSrv.replace(target.expr, options.scopedVars, self.interpolateQueryExpr);
+      var scopedVars = this.getScopedVarsWithAdhocVars(options.scopedVars);
+      query.expr = templateSrv.replace(target.expr, scopedVars, self.interpolateQueryExpr);
       query.requestId = options.panelId + target.refId;
 
       var interval = templateSrv.replace(target.interval, options.scopedVars) || options.interval;
@@ -194,7 +210,8 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
     var interpolated;
     try {
-      interpolated = templateSrv.replace(expr, {}, this.interpolateQueryExpr);
+      var scopedVars = this.getScopedVarsWithAdhocVars({});
+      interpolated = templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
     } catch (err) {
       return $q.reject(err);
     }
