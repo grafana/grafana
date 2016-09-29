@@ -24,6 +24,7 @@ export class QueryVariable implements Variable {
 
   defaults = {
     type: 'query',
+    label: null,
     query: '',
     regex: '',
     sort: 0,
