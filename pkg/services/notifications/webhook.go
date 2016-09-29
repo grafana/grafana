@@ -34,7 +34,7 @@ func processWebhookQueue() {
 	for {
 		select {
 		case webhook := <-webhookQueue:
-			err := sendWebRequestSync(context.Background(), webhook)
+			err := sendWebRequestSync(context.TODO(), webhook)
 
 			if err != nil {
 				webhookLog.Error("Failed to send webrequest ", "error", err)
@@ -64,17 +64,18 @@ func sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
 		return err
 	}
 
-	_, err = ioutil.ReadAll(resp.Body)
+	if resp.StatusCode/100 == 2 {
+		return nil
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("Webhook response code %v", resp.StatusCode)
-	}
-
 	defer resp.Body.Close()
-	return nil
+
+	webhookLog.Debug("Webhook failed", "statuscode", resp.Status, "body", string(body))
+	return fmt.Errorf("Webhook response status %v", resp.Status)
 }
 
 var addToWebhookQueue = func(msg *Webhook) {
