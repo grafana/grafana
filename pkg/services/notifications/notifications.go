@@ -1,7 +1,6 @@
 package notifications
 
 import (
-	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -85,98 +84,32 @@ func subjectTemplateFunc(obj map[string]interface{}, value string) string {
 	return ""
 }
 
-func sendEmailCommandHandlerSync(ctx context.Context, cmd *m.SendEmailCommand) error {
-	if !setting.Smtp.Enabled {
-		return errors.New("Grafana mailing/smtp options not configured, contact your Grafana admin")
-	}
-
-	var buffer bytes.Buffer
-	var err error
-	var subjectText interface{}
-
-	data := cmd.Data
-	if data == nil {
-		data = make(map[string]interface{}, 10)
-	}
-
-	setDefaultTemplateData(data, nil)
-	err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template, data)
-	if err != nil {
-		return err
-	}
-
-	subjectData := data["Subject"].(map[string]interface{})
-	subjectText, hasSubject := subjectData["value"]
-
-	if !hasSubject {
-		return errors.New(fmt.Sprintf("Missing subject in Template %s", cmd.Template))
-	}
-
-	subjectTmpl, err := template.New("subject").Parse(subjectText.(string))
-	if err != nil {
-		return err
-	}
-
-	var subjectBuffer bytes.Buffer
-	err = subjectTmpl.ExecuteTemplate(&subjectBuffer, "subject", data)
-	if err != nil {
-		return err
-	}
-
-	buildAndSend(&Message{
-		To:      cmd.To,
-		From:    setting.Smtp.FromAddress,
-		Subject: subjectBuffer.String(),
-		Body:    buffer.String(),
+func sendEmailCommandHandlerSync(ctx context.Context, cmd *m.SendEmailCommandSync) error {
+	message, err := buildEmailMessage(&m.SendEmailCommand{
+		Data:     cmd.Data,
+		Info:     cmd.Info,
+		Massive:  cmd.Massive,
+		Template: cmd.Template,
+		To:       cmd.To,
 	})
 
-	return nil
+	if err != nil {
+		return err
+	}
+
+	_, err = buildAndSend(message)
+
+	return err
 }
 
 func sendEmailCommandHandler(cmd *m.SendEmailCommand) error {
-	if !setting.Smtp.Enabled {
-		return errors.New("Grafana mailing/smtp options not configured, contact your Grafana admin")
-	}
+	message, err := buildEmailMessage(cmd)
 
-	var buffer bytes.Buffer
-	var err error
-	var subjectText interface{}
-
-	data := cmd.Data
-	if data == nil {
-		data = make(map[string]interface{}, 10)
-	}
-
-	setDefaultTemplateData(data, nil)
-	err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template, data)
 	if err != nil {
 		return err
 	}
 
-	subjectData := data["Subject"].(map[string]interface{})
-	subjectText, hasSubject := subjectData["value"]
-
-	if !hasSubject {
-		return errors.New(fmt.Sprintf("Missing subject in Template %s", cmd.Template))
-	}
-
-	subjectTmpl, err := template.New("subject").Parse(subjectText.(string))
-	if err != nil {
-		return err
-	}
-
-	var subjectBuffer bytes.Buffer
-	err = subjectTmpl.ExecuteTemplate(&subjectBuffer, "subject", data)
-	if err != nil {
-		return err
-	}
-
-	addToMailQueue(&Message{
-		To:      cmd.To,
-		From:    setting.Smtp.FromAddress,
-		Subject: subjectBuffer.String(),
-		Body:    buffer.String(),
-	})
+	addToMailQueue(message)
 
 	return nil
 }

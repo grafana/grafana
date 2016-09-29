@@ -5,8 +5,11 @@
 package notifications
 
 import (
+	"bytes"
 	"crypto/tls"
+	"errors"
 	"fmt"
+	"html/template"
 	"net"
 	"net/mail"
 	"net/smtp"
@@ -15,6 +18,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -184,4 +188,50 @@ func buildAndSend(msg *Message) (int, error) {
 			return 1, nil
 		}
 	}
+}
+
+func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
+	if !setting.Smtp.Enabled {
+		return nil, errors.New("Grafana mailing/smtp options not configured, contact your Grafana admin")
+	}
+
+	var buffer bytes.Buffer
+	var err error
+	var subjectText interface{}
+
+	data := cmd.Data
+	if data == nil {
+		data = make(map[string]interface{}, 10)
+	}
+
+	setDefaultTemplateData(data, nil)
+	err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template, data)
+	if err != nil {
+		return nil, err
+	}
+
+	subjectData := data["Subject"].(map[string]interface{})
+	subjectText, hasSubject := subjectData["value"]
+
+	if !hasSubject {
+		return nil, errors.New(fmt.Sprintf("Missing subject in Template %s", cmd.Template))
+	}
+
+	subjectTmpl, err := template.New("subject").Parse(subjectText.(string))
+	if err != nil {
+		return nil, err
+	}
+
+	var subjectBuffer bytes.Buffer
+	err = subjectTmpl.ExecuteTemplate(&subjectBuffer, "subject", data)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Message{
+		To:      cmd.To,
+		From:    setting.Smtp.FromAddress,
+		Subject: subjectBuffer.String(),
+		Body:    buffer.String(),
+	}, nil
 }

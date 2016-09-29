@@ -47,19 +47,21 @@ func (this *EmailNotifier) Notify(ctx context.Context, context *alerting.EvalCon
 	}
 
 	cmd := &m.SendEmailCommandSync{
-		Data: map[string]interface{}{
-			"Title":        context.GetNotificationTitle(),
-			"State":        context.Rule.State,
-			"Name":         context.Rule.Name,
-			"StateModel":   context.GetStateModel(),
-			"Message":      context.Rule.Message,
-			"RuleUrl":      ruleUrl,
-			"ImageLink":    context.ImagePublicUrl,
-			"AlertPageUrl": setting.AppUrl + "alerting",
-			"EvalMatches":  context.EvalMatches,
+		SendEmailCommand: m.SendEmailCommand{
+			Data: map[string]interface{}{
+				"Title":        context.GetNotificationTitle(),
+				"State":        context.Rule.State,
+				"Name":         context.Rule.Name,
+				"StateModel":   context.GetStateModel(),
+				"Message":      context.Rule.Message,
+				"RuleUrl":      ruleUrl,
+				"ImageLink":    context.ImagePublicUrl,
+				"AlertPageUrl": setting.AppUrl + "alerting",
+				"EvalMatches":  context.EvalMatches,
+			},
+			To:       this.Addresses,
+			Template: "alert_notification.html",
 		},
-		To:       this.Addresses,
-		Template: "alert_notification.html",
 	}
 
 	err = bus.DispatchCtx(ctx, cmd)

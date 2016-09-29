@@ -34,7 +34,7 @@ func processWebhookQueue() {
 	for {
 		select {
 		case webhook := <-webhookQueue:
-			err := sendWebRequest(webhook)
+			err := sendWebRequestSync(context.Background(), webhook)
 
 			if err != nil {
 				webhookLog.Error("Failed to send webrequest ", "error", err)
@@ -60,40 +60,6 @@ func sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
 	}
 
 	resp, err := ctxhttp.Do(ctx, client, request)
-	if err != nil {
-		return err
-	}
-
-	_, err = ioutil.ReadAll(resp.Body)
-	if err != nil {
-		return err
-	}
-
-	if resp.StatusCode != 200 {
-		return fmt.Errorf("Webhook response code %v", resp.StatusCode)
-	}
-
-	defer resp.Body.Close()
-	return nil
-}
-
-func sendWebRequest(webhook *Webhook) error {
-	webhookLog.Debug("Sending webhook", "url", webhook.Url)
-
-	client := http.Client{
-		Timeout: time.Duration(10 * time.Second),
-	}
-
-	request, err := http.NewRequest("POST", webhook.Url, bytes.NewReader([]byte(webhook.Body)))
-	if webhook.User != "" && webhook.Password != "" {
-		request.Header.Add("Authorization", util.GetBasicAuthHeader(webhook.User, webhook.Password))
-	}
-
-	if err != nil {
-		return err
-	}
-
-	resp, err := client.Do(request)
 	if err != nil {
 		return err
 	}
