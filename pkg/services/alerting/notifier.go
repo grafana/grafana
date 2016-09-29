@@ -62,7 +62,10 @@ func (n *RootNotifier) sendNotifications(notifiers []Notifier, context *EvalCont
 }
 
 func (n *RootNotifier) uploadImage(context *EvalContext) (err error) {
-	uploader, _ := imguploader.NewImageUploader()
+	uploader, err := imguploader.NewImageUploader()
+	if err != nil {
+		return err
+	}
 
 	renderOpts := &renderer.RenderOpts{
 		Width:   "800",
