@@ -36,16 +36,19 @@ func NewEngine() *Engine {
 	return e
 }
 
-func (e *Engine) Start(grafanaCtx context.Context) error {
-	e.log.Info("Starting Alerting Engine")
+func (e *Engine) Run(ctx context.Context) error {
+	e.log.Info("Initializing Alerting")
 
-	g, grafanaCtx := errgroup.WithContext(grafanaCtx)
+	g, ctx := errgroup.WithContext(ctx)
 
-	g.Go(func() error { return e.alertingTicker(grafanaCtx) })
-	g.Go(func() error { return e.execDispatcher(grafanaCtx) })
-	g.Go(func() error { return e.resultDispatcher(grafanaCtx) })
+	g.Go(func() error { return e.alertingTicker(ctx) })
+	g.Go(func() error { return e.execDispatcher(ctx) })
+	g.Go(func() error { return e.resultDispatcher(ctx) })
 
-	return g.Wait()
+	err := g.Wait()
+
+	e.log.Info("Stopped Alerting", "reason", err)
+	return err
 }
 
 func (e *Engine) Stop() {

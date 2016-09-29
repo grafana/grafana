@@ -19,14 +19,20 @@ import (
 	"github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/plugins"
-	alertingInit "github.com/grafana/grafana/pkg/services/alerting/init"
-	"github.com/grafana/grafana/pkg/services/backgroundtasks"
+	"github.com/grafana/grafana/pkg/services/cleanup"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/services/sqlstore"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
+
+	"github.com/grafana/grafana/pkg/services/alerting"
+	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
+	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
+	_ "github.com/grafana/grafana/pkg/tsdb/graphite"
+	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
+	_ "github.com/grafana/grafana/pkg/tsdb/testdata"
 )
 
 var version = "3.1.0"
@@ -67,6 +73,7 @@ func main() {
 
 	flag.Parse()
 	writePIDFile()
+
 	initRuntime()
 	initSql()
 	metrics.Init()
@@ -76,8 +83,15 @@ func main() {
 	eventpublisher.Init()
 	plugins.Init()
 
-	grafanaGroup.Go(func() error { return alertingInit.Init(appContext) })
-	grafanaGroup.Go(func() error { return backgroundtasks.Init(appContext) })
+	// init alerting
+	if setting.AlertingEnabled {
+		engine := alerting.NewEngine()
+		grafanaGroup.Go(func() error { return engine.Run(appContext) })
+	}
+
+	// cleanup service
+	cleanUpService := cleanup.NewCleanUpService()
+	grafanaGroup.Go(func() error { return cleanUpService.Run(appContext) })
 
 	if err := notifications.Init(); err != nil {
 		log.Fatal(3, "Notification service failed to initialize", err)
