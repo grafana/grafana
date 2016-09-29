@@ -144,6 +144,7 @@ func (e *Engine) handleResponse(result *EvalContext) {
 		}
 	}()
 
+	e.log.Info("rule", "nil", result.Rule == nil)
 	e.log.Debug("Alert Rule Result", "ruleId", result.Rule.Id, "firing", result.Firing)
 	e.resultHandler.Handle(result)
 }
