@@ -23,40 +23,6 @@ func NewEvalHandler() *DefaultEvalHandler {
 	}
 }
 
-/*
-func (e *DefaultEvalHandler) eval(context *EvalContext) {
-	e.eval(context)
-
-		select {
-		case <-time.After(e.alertJobTimeout):
-			e.log.Debug("FUCKY TI FUCKS")
-			context.Error = fmt.Errorf("Execution timed out after %v", e.alertJobTimeout)
-			context.EndTime = time.Now()
-			e.log.Debug("Job Execution timeout", "alertId", context.Rule.Id, "timeout setting", e.alertJobTimeout)
-			//e.retry(context)
-		case <-context.DoneChan:
-			e.log.Debug("Job Execution done", "timeMs", context.GetDurationMs(), "alertId", context.Rule.Id, "firing", context.Firing)
-
-			//if context.Error != nil {
-			//	e.retry(context)
-			//}
-		}
-
-}
-*/
-/*
-func (e *DefaultEvalHandler) retry(context *EvalContext) {
-	e.log.Debug("Retrying eval exeuction", "alertId", context.Rule.Id)
-
-	if context.RetryCount < MaxRetries {
-		context.DoneChan = make(chan bool, 1)
-		context.CancelChan = make(chan bool, 1)
-		context.RetryCount++
-		e.Eval(context)
-	}
-}
-*/
-
 func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -84,7 +50,4 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 	context.EndTime = time.Now()
 	elapsedTime := context.EndTime.Sub(context.StartTime) / time.Millisecond
 	metrics.M_Alerting_Exeuction_Time.Update(elapsedTime)
-	context.EndTime = time.Now()
-	//context.DoneChan <- true
-	//close(context.DoneChan)
 }
