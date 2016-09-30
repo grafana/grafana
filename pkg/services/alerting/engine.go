@@ -11,7 +11,6 @@ import (
 
 type Engine struct {
 	execQueue     chan *Job
-	resultQueue   chan *EvalContext
 	clock         clock.Clock
 	ticker        *Ticker
 	scheduler     Scheduler
@@ -25,7 +24,6 @@ func NewEngine() *Engine {
 	e := &Engine{
 		ticker:        NewTicker(time.Now(), time.Second*0, clock.New()),
 		execQueue:     make(chan *Job, 1000),
-		resultQueue:   make(chan *EvalContext, 1000),
 		scheduler:     NewScheduler(),
 		evalHandler:   NewEvalHandler(),
 		ruleReader:    NewRuleReader(),
@@ -79,7 +77,6 @@ func (e *Engine) runJobDispatcher(grafanaCtx context.Context) error {
 	for {
 		select {
 		case <-grafanaCtx.Done():
-			close(e.resultQueue)
 			return grafanaCtx.Err()
 		case job := <-e.execQueue:
 			go e.processJob(grafanaCtx, job)
@@ -100,7 +97,7 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 
 	go func() {
 		e.evalHandler.Eval(evalContext)
-		e.resultHandler.Handle(evalContext.Context, evalContext)
+		e.resultHandler.Handle(evalContext)
 		e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing)
 		close(done)
 	}()

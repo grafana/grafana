@@ -32,6 +32,22 @@ type EvalContext struct {
 	Context context.Context
 }
 
+func (evalContext *EvalContext) Deadline() (deadline time.Time, ok bool) {
+	return evalContext.Deadline()
+}
+
+func (evalContext *EvalContext) Done() <-chan struct{} {
+	return evalContext.Context.Done()
+}
+
+func (evalContext *EvalContext) Err() error {
+	return evalContext.Context.Err()
+}
+
+func (evalContext *EvalContext) Value(key interface{}) interface{} {
+	return evalContext.Context.Value(key)
+}
+
 type StateDescription struct {
 	Color string
 	Text  string
@@ -97,7 +113,8 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 }
 
 func NewEvalContext(grafanaCtx context.Context, rule *Rule) *EvalContext {
-	ctx, cancelFn := context.WithTimeout(grafanaCtx, time.Duration(time.Second*20))
+	timeout := time.Duration(time.Second * 20)
+	ctx, cancelFn := context.WithTimeout(grafanaCtx, timeout)
 
 	return &EvalContext{
 		Cancel:      cancelFn,

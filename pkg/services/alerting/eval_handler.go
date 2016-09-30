@@ -20,15 +20,6 @@ func NewEvalHandler() *DefaultEvalHandler {
 }
 
 func (e *DefaultEvalHandler) Eval(context *EvalContext) {
-	defer func() {
-		if err := recover(); err != nil {
-			e.log.Error("Alerting rule eval panic", "error", err, "stack", log.Stack(1))
-			if panicErr, ok := err.(error); ok {
-				context.Error = panicErr
-			}
-		}
-	}()
-
 	for _, condition := range context.Rule.Conditions {
 		condition.Eval(context)
 

@@ -1,7 +1,6 @@
 package alerting
 
 import (
-	"context"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -13,7 +12,7 @@ import (
 )
 
 type ResultHandler interface {
-	Handle(ctx context.Context, evalContext *EvalContext) error
+	Handle(evalContext *EvalContext) error
 }
 
 type DefaultResultHandler struct {
@@ -28,7 +27,7 @@ func NewResultHandler() *DefaultResultHandler {
 	}
 }
 
-func (handler *DefaultResultHandler) Handle(ctx context.Context, evalContext *EvalContext) error {
+func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 	oldState := evalContext.Rule.State
 
 	exeuctionError := ""
