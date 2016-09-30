@@ -108,11 +108,10 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 	var err error = nil
 	select {
 	case <-grafanaCtx.Done():
-		job.Running = false
 		err = grafanaCtx.Err()
 	case <-done:
-
 	}
+
 	job.Running = false
 	return err
 }
