@@ -159,7 +159,7 @@ export class DashNavCtrl {
       var confirmText = "";
       var text2 = $scope.dashboard.title;
       var alerts = $scope.dashboard.rows.reduce((memo, row) => {
-        memo += row.panels.filter(panel => panel.alert && panel.alert.enabled).length;
+        memo += row.panels.filter(panel => panel.alert).length;
         return memo;
       }, 0);
 

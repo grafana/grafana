@@ -1,4 +1,4 @@
-<div class="edit-tab-with-sidemenu" ng-if="ctrl.alert.enabled">
+<div class="edit-tab-with-sidemenu" ng-if="ctrl.alert">
 	<aside class="edit-sidemenu-aside">
 		<ul class="edit-sidemenu">
 			<li ng-class="{active: ctrl.subTabIndex === 0}">
@@ -151,7 +151,7 @@
 	</div>
 </div>
 
-<div class="gf-form-group" ng-if="!ctrl.alert.enabled">
+<div class="gf-form-group" ng-if="!ctrl.alert">
 	<div class="gf-form-button-row">
 		<button class="btn btn-inverse" ng-click="ctrl.enable()">
 			<i class="icon-gf icon-gf-alert"></i>

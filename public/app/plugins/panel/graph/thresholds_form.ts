@@ -13,7 +13,7 @@ export class ThresholdFormCtrl {
   constructor($scope) {
     this.panel = this.panelCtrl.panel;
 
-    if (this.panel.alert && this.panel.alert.enabled) {
+    if (this.panel.alert) {
       this.disabled = true;
     }
 

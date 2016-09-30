@@ -34,10 +34,7 @@
 					ng-change="editor.render()"
 					ng-model-onblur>
 			</div>
-			<gf-form-switch class="gf-form" label-class="width-4"
-				label="Scroll"
-				checked="editor.panel.scroll"
-				change="editor.render()"></gf-form-switch>
+			<gf-form-switch class="gf-form" label-class="width-4" label="Scroll" checked="editor.panel.scroll" on-change="editor.render()"></gf-form-switch>
 			<div class="gf-form max-width-17">
 				<label class="gf-form-label width-6">Font size</label>
 				<div class="gf-form-select-wrapper max-width-15">

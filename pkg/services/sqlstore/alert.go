@@ -17,6 +17,7 @@ func init() {
 	bus.AddHandler("sql", DeleteAlertById)
 	bus.AddHandler("sql", GetAllAlertQueryHandler)
 	bus.AddHandler("sql", SetAlertState)
+	bus.AddHandler("sql", GetAlertStatesForDashboard)
 }
 
 func GetAlertById(query *m.GetAlertByIdQuery) error {
@@ -240,4 +241,20 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 		sess.Id(alert.Id).Update(&alert)
 		return nil
 	})
+}
+
+func GetAlertStatesForDashboard(query *m.GetAlertStatesForDashboardQuery) error {
+	var rawSql = `SELECT
+	                id,
+	                dashboard_id,
+	                panel_id,
+	                state,
+	                new_state_date
+	                FROM alert
+	                WHERE org_id = ? AND dashboard_id = ?`
+
+	query.Result = make([]*m.AlertStateInfoDTO, 0)
+	err := x.Sql(rawSql, query.OrgId, query.DashboardId).Find(&query.Result)
+
+	return err
 }

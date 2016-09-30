@@ -22,6 +22,9 @@ class GraphCtrl extends MetricsPanelCtrl {
   hiddenSeries: any = {};
   seriesList: any = [];
   dataList: any = [];
+  annotations: any = [];
+  alertState: any;
+
   annotationsPromise: any;
   datapointsCount: number;
   datapointsOutside: boolean;
@@ -167,11 +170,11 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onDataError(err) {
     this.seriesList = [];
+    this.annotations = [];
     this.render([]);
   }
 
   onDataReceived(dataList) {
-
     this.dataList = dataList;
     this.seriesList = this.processor.getSeriesList({dataList: dataList, range: this.range});
 
@@ -186,9 +189,10 @@ class GraphCtrl extends MetricsPanelCtrl {
       }
     }
 
-    this.annotationsPromise.then(annotations => {
+    this.annotationsPromise.then(result => {
       this.loading = false;
-      this.seriesList.annotations = annotations;
+      this.alertState = result.alertState;
+      this.annotations = result.annotations;
       this.render(this.seriesList);
     }, () => {
       this.loading = false;
