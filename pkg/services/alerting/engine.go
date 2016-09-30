@@ -37,12 +37,12 @@ func NewEngine() *Engine {
 func (e *Engine) Run(ctx context.Context) error {
 	e.log.Info("Initializing Alerting")
 
-	g, ctx := errgroup.WithContext(ctx)
+	alertGroup, ctx := errgroup.WithContext(ctx)
 
-	g.Go(func() error { return e.alertingTicker(ctx) })
-	g.Go(func() error { return e.runJobDispatcher(ctx) })
+	alertGroup.Go(func() error { return e.alertingTicker(ctx) })
+	alertGroup.Go(func() error { return e.runJobDispatcher(ctx) })
 
-	err := g.Wait()
+	err := alertGroup.Wait()
 
 	e.log.Info("Stopped Alerting", "reason", err)
 	return err
@@ -74,12 +74,14 @@ func (e *Engine) alertingTicker(grafanaCtx context.Context) error {
 }
 
 func (e *Engine) runJobDispatcher(grafanaCtx context.Context) error {
+	dispatcherGroup, alertCtx := errgroup.WithContext(grafanaCtx)
+
 	for {
 		select {
 		case <-grafanaCtx.Done():
-			return grafanaCtx.Err()
+			return dispatcherGroup.Wait()
 		case job := <-e.execQueue:
-			go e.processJob(grafanaCtx, job)
+			dispatcherGroup.Go(func() error { return e.processJob(alertCtx, job) })
 		}
 	}
 }
@@ -91,24 +93,12 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 		}
 	}()
 
-	done := make(chan struct{})
 	job.Running = true
 	evalContext := NewEvalContext(grafanaCtx, job.Rule)
-
-	go func() {
-		e.evalHandler.Eval(evalContext)
-		e.resultHandler.Handle(evalContext)
-		e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing)
-		close(done)
-	}()
-
-	var err error = nil
-	select {
-	case <-grafanaCtx.Done():
-		err = grafanaCtx.Err()
-	case <-done:
-	}
+	e.evalHandler.Eval(evalContext)
+	e.resultHandler.Handle(evalContext)
+	e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing)
 
 	job.Running = false
-	return err
+	return evalContext.Error
 }
