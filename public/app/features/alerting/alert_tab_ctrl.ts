@@ -6,6 +6,7 @@ import {QueryPart} from 'app/core/components/query_part/query_part';
 import alertDef from './alert_def';
 import config from 'app/core/config';
 import moment from 'moment';
+import appEvents from 'app/core/app_events';
 
 export class AlertTabCtrl {
   panel: any;
@@ -302,10 +303,20 @@ export class AlertTabCtrl {
   }
 
   delete() {
-    this.alert = this.panel.alert = {enabled: false};
-    this.panel.thresholds = [];
-    this.conditionModels = [];
-    this.panelCtrl.render();
+    appEvents.emit('confirm-modal', {
+      title: 'Delete Alert',
+      text: 'Are you sure you want to delete this alert rule?',
+      text2: 'You need to save dashboard for the delete to take effect',
+      icon: 'fa-trash',
+      yesText: 'Delete',
+      onConfirm: () => {
+        this.alert = this.panel.alert = {enabled: false};
+        this.panel.thresholds = [];
+        this.conditionModels = [];
+        this.panelCtrl.render();
+      }
+    });
+
   }
 
   enable() {
