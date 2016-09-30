@@ -21,7 +21,6 @@ type EvalContext struct {
 	StartTime       time.Time
 	EndTime         time.Time
 	Rule            *Rule
-	DoneChan        chan struct{}
 	log             log.Logger
 	dashboardSlug   string
 	ImagePublicUrl  string
@@ -98,16 +97,15 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 }
 
 func NewEvalContext(grafanaCtx context.Context, rule *Rule) *EvalContext {
-	ctx2, cancelFn := context.WithTimeout(grafanaCtx, time.Duration(time.Second*20))
+	ctx, cancelFn := context.WithTimeout(grafanaCtx, time.Duration(time.Second*20))
 
 	return &EvalContext{
 		Cancel:      cancelFn,
-		Context:     ctx2,
+		Context:     ctx,
 		StartTime:   time.Now(),
 		Rule:        rule,
 		Logs:        make([]*ResultLogEntry, 0),
 		EvalMatches: make([]*EvalMatch, 0),
-		DoneChan:    make(chan struct{}),
 		log:         log.New("alerting.evalContext"),
 		RetryCount:  0,
 	}

@@ -7,10 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/metrics"
 )
 
-var (
-	MaxRetries int = 1
-)
-
 type DefaultEvalHandler struct {
 	log             log.Logger
 	alertJobTimeout time.Duration
