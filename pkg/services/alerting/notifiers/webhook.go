@@ -1,8 +1,6 @@
 package notifiers
 
 import (
-	"context"
-
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -38,24 +36,24 @@ type WebhookNotifier struct {
 	log      log.Logger
 }
 
-func (this *WebhookNotifier) Notify(ctx context.Context, context *alerting.EvalContext) error {
+func (this *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending webhook")
 	metrics.M_Alerting_Notification_Sent_Webhook.Inc(1)
 
 	bodyJSON := simplejson.New()
-	bodyJSON.Set("title", context.GetNotificationTitle())
-	bodyJSON.Set("ruleId", context.Rule.Id)
-	bodyJSON.Set("ruleName", context.Rule.Name)
-	bodyJSON.Set("state", context.Rule.State)
-	bodyJSON.Set("evalMatches", context.EvalMatches)
+	bodyJSON.Set("title", evalContext.GetNotificationTitle())
+	bodyJSON.Set("ruleId", evalContext.Rule.Id)
+	bodyJSON.Set("ruleName", evalContext.Rule.Name)
+	bodyJSON.Set("state", evalContext.Rule.State)
+	bodyJSON.Set("evalMatches", evalContext.EvalMatches)
 
-	ruleUrl, err := context.GetRuleUrl()
+	ruleUrl, err := evalContext.GetRuleUrl()
 	if err == nil {
 		bodyJSON.Set("rule_url", ruleUrl)
 	}
 
-	if context.ImagePublicUrl != "" {
-		bodyJSON.Set("image_url", context.ImagePublicUrl)
+	if evalContext.ImagePublicUrl != "" {
+		bodyJSON.Set("image_url", evalContext.ImagePublicUrl)
 	}
 
 	body, _ := bodyJSON.MarshalJSON()
@@ -67,7 +65,7 @@ func (this *WebhookNotifier) Notify(ctx context.Context, context *alerting.EvalC
 		Body:     string(body),
 	}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.DispatchCtx(evalContext.Context, cmd); err != nil {
 		this.log.Error("Failed to send webhook", "error", err, "webhook", this.Name)
 	}
 

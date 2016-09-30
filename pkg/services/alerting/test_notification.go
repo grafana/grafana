@@ -37,13 +37,12 @@ func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 		return err
 	}
 
-	notifier.sendNotifications(context.Background(), []Notifier{notifiers}, createTestEvalContext())
+	notifier.sendNotifications(createTestEvalContext(), []Notifier{notifiers})
 
 	return nil
 }
 
 func createTestEvalContext() *EvalContext {
-
 	testRule := &Rule{
 		DashboardId: 1,
 		PanelId:     1,
@@ -52,7 +51,7 @@ func createTestEvalContext() *EvalContext {
 		State:       m.AlertStateAlerting,
 	}
 
-	ctx := NewEvalContext(testRule)
+	ctx := NewEvalContext(context.TODO(), testRule)
 	ctx.ImagePublicUrl = "http://grafana.org/assets/img/blog/mixed_styles.png"
 
 	ctx.IsTestRun = true

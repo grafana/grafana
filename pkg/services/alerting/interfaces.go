@@ -1,12 +1,9 @@
 package alerting
 
-import (
-	"context"
-	"time"
-)
+import "time"
 
 type EvalHandler interface {
-	Eval(context *EvalContext)
+	Eval(evalContext *EvalContext)
 }
 
 type Scheduler interface {
@@ -15,7 +12,7 @@ type Scheduler interface {
 }
 
 type Notifier interface {
-	Notify(ctx context.Context, alertResult *EvalContext) error
+	Notify(evalContext *EvalContext) error
 	GetType() string
 	NeedsImage() bool
 	PassesFilter(rule *Rule) bool

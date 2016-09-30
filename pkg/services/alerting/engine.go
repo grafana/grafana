@@ -43,7 +43,7 @@ func (e *Engine) Run(ctx context.Context) error {
 
 	g.Go(func() error { return e.alertingTicker(ctx) })
 	g.Go(func() error { return e.execDispatcher(ctx) })
-	g.Go(func() error { return e.resultDispatcher(ctx) })
+	//g.Go(func() error { return e.resultDispatcher(ctx) })
 
 	err := g.Wait()
 
@@ -51,10 +51,12 @@ func (e *Engine) Run(ctx context.Context) error {
 	return err
 }
 
+/*
 func (e *Engine) Stop() {
 	close(e.execQueue)
 	close(e.resultQueue)
 }
+*/
 
 func (e *Engine) alertingTicker(grafanaCtx context.Context) error {
 	defer func() {
@@ -100,27 +102,30 @@ func (e *Engine) executeJob(grafanaCtx context.Context, job *Job) error {
 		}
 	}()
 
-	done := make(chan *EvalContext, 1)
+	done := make(chan struct{})
+	job.Running = true
+	evalContext := NewEvalContext(grafanaCtx, job.Rule)
+
 	go func() {
-		job.Running = true
-		context := NewEvalContext(job.Rule)
-		e.evalHandler.Eval(context)
-		job.Running = false
-		done <- context
+		e.evalHandler.Eval(evalContext)
+		e.resultHandler.Handle(evalContext.Context, evalContext)
+		e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing)
 		close(done)
 	}()
 
+	var err error = nil
 	select {
-
 	case <-grafanaCtx.Done():
-		return grafanaCtx.Err()
-	case evalContext := <-done:
-		e.resultQueue <- evalContext
-	}
+		job.Running = false
+		err = grafanaCtx.Err()
+	case <-done:
 
-	return nil
+	}
+	job.Running = false
+	return err
 }
 
+/*
 func (e *Engine) resultDispatcher(grafanaCtx context.Context) error {
 	for {
 		select {
@@ -148,3 +153,4 @@ func (e *Engine) handleResponse(grafanaCtx context.Context, result *EvalContext)
 	e.log.Debug("Alert Rule Result", "ruleId", result.Rule.Id, "firing", result.Firing)
 	e.resultHandler.Handle(grafanaCtx, result)
 }
+*/

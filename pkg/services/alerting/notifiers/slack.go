@@ -1,7 +1,6 @@
 package notifiers
 
 import (
-	"context"
 	"encoding/json"
 	"time"
 
@@ -36,7 +35,7 @@ type SlackNotifier struct {
 	log log.Logger
 }
 
-func (this *SlackNotifier) Notify(ctx context.Context, evalContext *alerting.EvalContext) error {
+func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Executing slack notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
 	metrics.M_Alerting_Notification_Sent_Slack.Inc(1)
 
@@ -91,7 +90,7 @@ func (this *SlackNotifier) Notify(ctx context.Context, evalContext *alerting.Eva
 	data, _ := json.Marshal(&body)
 	cmd := &m.SendWebhookSync{Url: this.Url, Body: string(data)}
 
-	if err := bus.DispatchCtx(ctx, cmd); err != nil {
+	if err := bus.DispatchCtx(evalContext.Context, cmd); err != nil {
 		this.log.Error("Failed to send slack notification", "error", err, "webhook", this.Name)
 	}
 

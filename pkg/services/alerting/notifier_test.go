@@ -1,7 +1,6 @@
 package alerting
 
 import (
-	"context"
 	"testing"
 
 	"fmt"
@@ -23,7 +22,7 @@ func (fn *FakeNotifier) NeedsImage() bool {
 	return true
 }
 
-func (fn *FakeNotifier) Notify(ctx context.Context, alertResult *EvalContext) error { return nil }
+func (fn *FakeNotifier) Notify(alertResult *EvalContext) error { return nil }
 
 func (fn *FakeNotifier) PassesFilter(rule *Rule) bool {
 	return fn.FakeMatchResult

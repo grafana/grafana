@@ -1,7 +1,6 @@
 package alerting
 
 import (
-	"context"
 	"errors"
 	"fmt"
 
@@ -36,7 +35,7 @@ func (n *RootNotifier) PassesFilter(rule *Rule) bool {
 	return false
 }
 
-func (n *RootNotifier) Notify(ctx context.Context, context *EvalContext) error {
+func (n *RootNotifier) Notify(context *EvalContext) error {
 	n.log.Info("Sending notifications for", "ruleId", context.Rule.Id)
 
 	notifiers, err := n.getNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
@@ -54,15 +53,15 @@ func (n *RootNotifier) Notify(ctx context.Context, context *EvalContext) error {
 		return err
 	}
 
-	return n.sendNotifications(ctx, notifiers, context)
+	return n.sendNotifications(context, notifiers)
 }
 
-func (n *RootNotifier) sendNotifications(ctx context.Context, notifiers []Notifier, context *EvalContext) error {
-	g, ctx := errgroup.WithContext(ctx)
+func (n *RootNotifier) sendNotifications(context *EvalContext, notifiers []Notifier) error {
+	g, _ := errgroup.WithContext(context.Context)
 
 	for _, notifier := range notifiers {
 		n.log.Info("Sending notification", "firing", context.Firing, "type", notifier.GetType())
-		g.Go(func() error { return notifier.Notify(ctx, context) })
+		g.Go(func() error { return notifier.Notify(context) })
 	}
 
 	return g.Wait()

@@ -86,7 +86,7 @@ func (handler *DefaultResultHandler) Handle(ctx context.Context, evalContext *Ev
 			handler.log.Error("Failed to save annotation for new alert state", "error", err)
 		}
 
-		handler.notifier.Notify(ctx, evalContext)
+		handler.notifier.Notify(evalContext)
 	}
 
 	return nil
