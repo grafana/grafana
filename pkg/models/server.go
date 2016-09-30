@@ -1,10 +1,10 @@
-package core
+package models
 
 import "context"
 
 type GrafanaServer interface {
 	context.Context
-}
 
-type GrafanaServerImpl struct {
+	Start()
+	Shutdown(code int, reason string)
 }
