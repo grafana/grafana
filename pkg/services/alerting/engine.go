@@ -86,6 +86,11 @@ func (e *Engine) runJobDispatcher(grafanaCtx context.Context) error {
 	}
 }
 
+var (
+	unfinishedWorkTimeout time.Duration = time.Second * 5
+	alertTimeout          time.Duration = time.Second * 30
+)
+
 func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 	defer func() {
 		if err := recover(); err != nil {
@@ -93,12 +98,33 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 		}
 	}()
 
-	job.Running = true
-	evalContext := NewEvalContext(grafanaCtx, job.Rule)
-	e.evalHandler.Eval(evalContext)
-	e.resultHandler.Handle(evalContext)
-	e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing)
+	alertCtx, cancelFn := context.WithTimeout(context.TODO(), alertTimeout)
 
+	job.Running = true
+	evalContext := NewEvalContext(alertCtx, job.Rule)
+
+	done := make(chan struct{})
+
+	go func() {
+		e.evalHandler.Eval(evalContext)
+		e.resultHandler.Handle(evalContext)
+		close(done)
+	}()
+
+	var err error = nil
+	select {
+	case <-grafanaCtx.Done():
+		select {
+		case <-time.After(unfinishedWorkTimeout):
+			cancelFn()
+			err = grafanaCtx.Err()
+		case <-done:
+		}
+	case <-done:
+	}
+
+	e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing)
 	job.Running = false
-	return evalContext.Error
+	cancelFn()
+	return err
 }

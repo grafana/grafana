@@ -28,7 +28,6 @@ type EvalContext struct {
 	NoDataFound     bool
 	RetryCount      int
 
-	Cancel  context.CancelFunc
 	Context context.Context
 }
 
@@ -112,13 +111,9 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 	}
 }
 
-func NewEvalContext(grafanaCtx context.Context, rule *Rule) *EvalContext {
-	timeout := time.Duration(time.Second * 20)
-	ctx, cancelFn := context.WithTimeout(grafanaCtx, timeout)
-
+func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
 	return &EvalContext{
-		Cancel:      cancelFn,
-		Context:     ctx,
+		Context:     alertCtx,
 		StartTime:   time.Now(),
 		Rule:        rule,
 		Logs:        make([]*ResultLogEntry, 0),
