@@ -95,10 +95,22 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 
 	job.Running = true
 	evalContext := NewEvalContext(grafanaCtx, job.Rule)
-	e.evalHandler.Eval(evalContext)
-	e.resultHandler.Handle(evalContext)
-	e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing)
+	evalDone := make(chan struct{})
 
+	go func() {
+		e.evalHandler.Eval(evalContext)
+		close(evalDone)
+	}()
+
+	var err error = nil
+	select {
+	case <-grafanaCtx.Done():
+		err = grafanaCtx.Err()
+	case <-evalDone:
+		err = e.resultHandler.Handle(evalContext)
+	}
+
+	e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing)
 	job.Running = false
-	return evalContext.Error
+	return err
 }
