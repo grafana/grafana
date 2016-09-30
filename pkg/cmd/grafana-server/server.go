@@ -103,13 +103,12 @@ func (g *GrafanaServerImpl) startHttpServer() {
 }
 
 func (g *GrafanaServerImpl) Shutdown(code int, reason string) {
-	log.Info("Shutting down", "code", code, "reason", reason)
+	g.log.Info("Shutting down", "code", code, "reason", reason)
 
 	g.shutdownFn()
 	err := g.childRoutines.Wait()
 
-	log.Info("Shutting down completed", "error", err)
-
+	g.log.Info("Shutting down completed", "reason", err)
 	log.Close()
 	os.Exit(code)
 }

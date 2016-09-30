@@ -107,7 +107,7 @@ func listenToSystemSignals(server models.GrafanaServer) {
 
 	select {
 	case sig := <-signalChan:
-		server.Shutdown(0, fmt.Sprintf("system signal=%s", sig))
+		server.Shutdown(0, fmt.Sprintf("system signal: %s", sig))
 	case code = <-exitChan:
 		server.Shutdown(code, "startup error")
 	}
