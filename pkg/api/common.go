@@ -79,7 +79,7 @@ func Json(status int, body interface{}) *NormalResponse {
 func ApiSuccess(message string) *NormalResponse {
 	resp := make(map[string]interface{})
 	resp["message"] = message
-	return Respond(200, resp)
+	return Json(200, resp)
 }
 
 func ApiError(status int, message string, err error) *NormalResponse {
