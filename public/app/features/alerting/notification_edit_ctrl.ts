@@ -7,7 +7,6 @@ import config from 'app/core/config';
 
 export class AlertNotificationEditCtrl {
   model: any;
-  showTest: boolean = false;
   testSeverity: string = "critical";
 
   /** @ngInject */
@@ -51,10 +50,6 @@ export class AlertNotificationEditCtrl {
 
   typeChanged() {
     this.model.settings = {};
-  }
-
-  toggleTest() {
-    this.showTest = !this.showTest;
   }
 
   testNotification() {
