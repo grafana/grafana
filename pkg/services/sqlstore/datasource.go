@@ -60,9 +60,8 @@ func DeleteDataSource(cmd *m.DeleteDataSourceCommand) error {
 func AddDataSource(cmd *m.AddDataSourceCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
-
 		existing := m.DataSource{OrgId: cmd.OrgId, Name: cmd.Name}
-		has, _ := x.Get(&existing)
+		has, _ := sess.Get(&existing)
 
 		if has {
 			return m.ErrDataSourceNameExists
