@@ -61,6 +61,10 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   };
 
   this.renderAdhocFilters = function(filters) {
+    if (filters.length === 0) {
+      return '';
+    }
+
     var conditions = _.map(filters, (label, index) => {
       var value = label.value;
       if (label.operator === '=~' || label.operator === '!~') {
@@ -71,19 +75,16 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return conditions.join(',');
   };
 
-  this.getScopedVarsWithAdhocVars = function(scopedVars) {
-    var variable = scopedVars ? _.cloneDeep(scopedVars) : {};
-    var adhocFilters = templateSrv.getAdhocFilters(this.name);
-    if (adhocFilters.length > 0) {
-      variable[templateSrv._adhocVariables[this.name].name] = {
-        value: this.renderAdhocFilters(adhocFilters)
-      };
-    } else if (templateSrv._adhocVariables[this.name]) {
-      variable[templateSrv._adhocVariables[this.name].name] = {
-        value: ''
-      };
+  this.buildQuery = function(expr, scopedVars) {
+    var result = templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
+    var idx = result.indexOf('{');
+    if (idx === -1) {
+      return result;
     }
-    return variable;
+
+    var adhocFilters = templateSrv.getAdhocFilters(this.name);
+    var filterPart = this.renderAdhocFilters(adhocFilters);
+    return result.slice(0, idx + 1) + filterPart + result.slice(idx + 1);
   };
 
   // Called once per panel (graph)
@@ -104,8 +105,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       activeTargets.push(target);
 
       var query: any = {};
-      var scopedVars = this.getScopedVarsWithAdhocVars(options.scopedVars);
-      query.expr = templateSrv.replace(target.expr, scopedVars, self.interpolateQueryExpr);
+      query.expr = this.buildQuery(target.expr, options.scopedVars);
       query.requestId = options.panelId + target.refId;
 
       var interval = templateSrv.replace(target.interval, options.scopedVars) || options.interval;
@@ -217,8 +217,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
     var interpolated;
     try {
-      var scopedVars = this.getScopedVarsWithAdhocVars({});
-      interpolated = templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
+      interpolated = this.buildQuery(expr, {});
     } catch (err) {
       return $q.reject(err);
     }
