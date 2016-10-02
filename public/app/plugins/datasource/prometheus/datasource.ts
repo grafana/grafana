@@ -171,9 +171,14 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       return $q.reject(err);
     }
 
+    var step = '60s';
+    if (annotation.step) {
+        step = templateSrv.replace(annotation.step);
+    }
+
     var query = {
       expr: interpolated,
-      step: '60s'
+      step: step
     };
 
     var start = this.getPrometheusTime(options.range.from, false);
