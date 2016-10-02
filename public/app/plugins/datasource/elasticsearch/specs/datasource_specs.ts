@@ -11,7 +11,7 @@ describe('ElasticDatasource', function() {
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(ctx.providePhase(['templateSrv', 'backendSrv','timeSrv']));
+  beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
 
   beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
     ctx.$q = $q;
@@ -207,8 +207,9 @@ describe('ElasticDatasource', function() {
 
       ctx.$rootScope.$apply();
     });
+  });
 
- describe('When issuing aggregation query on es5.x', function() {
+  describe('When issuing aggregation query on es5.x', function() {
     var requestOptions, parts, header;
 
     beforeEach(function() {
@@ -279,7 +280,8 @@ describe('ElasticDatasource', function() {
 
     it('should not set terms aggregation size to 0', function() {
       expect(body['aggs']['1']['terms'].size).to.not.be(0);
-
+    });
   });
 
 });
+

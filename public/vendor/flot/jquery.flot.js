@@ -248,7 +248,7 @@ Licensed under the MIT license.
 			// Create the text layer container, if it doesn't exist
 
 			if (this.textContainer == null) {
-				this.textContainer = $("<div class='flot-text'></div>")
+				this.textContainer = $("<div class='flot-text flot-temp-elem'></div>")
 					.css({
 						position: "absolute",
 						top: 0,
@@ -1319,7 +1319,7 @@ Licensed under the MIT license.
             // Make sure the placeholder is clear of everything except canvases
             // from a previous plot in this container that we'll try to re-use.
 
-            placeholder.find(".flot-text").remove();
+            placeholder.find(".flot-temp-elem").remove();
 
             if (placeholder.css("position") == 'static')
                 placeholder.css("position", "relative"); // for positioning labels and overlay
@@ -1663,8 +1663,10 @@ Licensed under the MIT license.
                 delta = max - min;
 
             if (delta == 0.0) {
-                // degenerate case
-                var widen = max == 0 ? 1 : 0.01;
+                // Grafana fix: wide Y min and max using increased wideFactor
+                // when all series values are the same
+                var wideFactor = 0.25;
+                var widen = max == 0 ? 1 : max * wideFactor;
 
                 if (opts.min == null)
                     min -= widen;

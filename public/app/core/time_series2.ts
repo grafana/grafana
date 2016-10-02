@@ -31,6 +31,8 @@ export default class TimeSeries {
   allIsZero: boolean;
   decimals: number;
   scaledDecimals: number;
+  hasMsResolution: boolean;
+  isOutsideRange: boolean;
 
   lines: any;
   bars: any;
@@ -54,6 +56,7 @@ export default class TimeSeries {
     this.stats = {};
     this.legend = true;
     this.unit = opts.unit;
+    this.hasMsResolution = this.isMsResolutionNeeded();
   }
 
   applySeriesOverrides(overrides) {

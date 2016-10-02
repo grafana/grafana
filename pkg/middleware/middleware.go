@@ -22,6 +22,7 @@ type Context struct {
 	Session SessionStore
 
 	IsSignedIn     bool
+	IsRenderCall   bool
 	AllowAnonymous bool
 	Logger         log.Logger
 }
@@ -42,11 +43,11 @@ func GetContextHandler() macaron.Handler {
 		// then init session and look for userId in session
 		// then look for api key in session (special case for render calls via api)
 		// then test if anonymous access is enabled
-		if initContextWithApiKey(ctx) ||
+		if initContextWithRenderAuth(ctx) ||
+			initContextWithApiKey(ctx) ||
 			initContextWithBasicAuth(ctx) ||
 			initContextWithAuthProxy(ctx) ||
 			initContextWithUserSessionCookie(ctx) ||
-			initContextWithApiKeyFromSession(ctx) ||
 			initContextWithAnonymousUser(ctx) {
 		}
 
@@ -172,29 +173,6 @@ func initContextWithBasicAuth(ctx *Context) bool {
 	} else {
 		ctx.SignedInUser = query.Result
 		ctx.IsSignedIn = true
-		return true
-	}
-}
-
-// special case for panel render calls with api key
-func initContextWithApiKeyFromSession(ctx *Context) bool {
-	keyId := ctx.Session.Get(SESS_KEY_APIKEY)
-	if keyId == nil {
-		return false
-	}
-
-	keyQuery := m.GetApiKeyByIdQuery{ApiKeyId: keyId.(int64)}
-	if err := bus.Dispatch(&keyQuery); err != nil {
-		ctx.Logger.Error("Failed to get api key by id", "id", keyId, "error", err)
-		return false
-	} else {
-		apikey := keyQuery.Result
-
-		ctx.IsSignedIn = true
-		ctx.SignedInUser = &m.SignedInUser{}
-		ctx.OrgRole = apikey.Role
-		ctx.ApiKeyId = apikey.Id
-		ctx.OrgId = apikey.OrgId
 		return true
 	}
 }

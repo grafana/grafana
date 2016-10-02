@@ -282,4 +282,16 @@ describe('ElasticQueryBuilder', function() {
     expect(firstLevel.aggs["2"].derivative.buckets_path).to.be("3");
   });
 
+  it('with adhoc filters', function() {
+    var query = builder.build({
+      metrics: [{type: 'Count', id: '0'}],
+      timeField: '@timestamp',
+      bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '3'}],
+    }, [
+      {key: 'key1', operator: '=', value: 'value1'}
+    ]);
+
+    expect(query.query.filtered.filter.bool.must[1].term["key1"]).to.be("value1");
+  });
+
 });

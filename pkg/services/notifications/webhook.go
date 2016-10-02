@@ -44,7 +44,7 @@ func sendWebRequest(webhook *Webhook) error {
 	webhookLog.Debug("Sending webhook", "url", webhook.Url)
 
 	client := http.Client{
-		Timeout: time.Duration(3 * time.Second),
+		Timeout: time.Duration(10 * time.Second),
 	}
 
 	request, err := http.NewRequest("POST", webhook.Url, bytes.NewReader([]byte(webhook.Body)))

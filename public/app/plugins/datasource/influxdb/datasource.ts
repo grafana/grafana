@@ -7,6 +7,8 @@ import * as dateMath from 'app/core/utils/datemath';
 import InfluxSeries from './influx_series';
 import InfluxQuery from './influx_query';
 import ResponseParser from './response_parser';
+import InfluxQueryBuilder from './query_builder';
+
 
 export default class InfluxDatasource {
   type: string;
@@ -43,19 +45,23 @@ export default class InfluxDatasource {
 
   query(options) {
     var timeFilter = this.getTimeFilter(options);
+    var scopedVars = options.scopedVars ? _.cloneDeep(options.scopedVars) : {};
+    var targets = _.cloneDeep(options.targets);
     var queryTargets = [];
+    var queryModel;
     var i, y;
 
-    var allQueries = _.map(options.targets, (target) => {
+    var allQueries = _.map(targets, target => {
       if (target.hide) { return ""; }
 
       queryTargets.push(target);
 
       // build query
-      var queryModel = new InfluxQuery(target, this.templateSrv, options.scopedVars);
-      var query =  queryModel.render(true);
-      query = query.replace(/\$interval/g, (target.interval || options.interval));
-      return query;
+      scopedVars.interval = {value: target.interval || options.interval};
+
+      queryModel = new InfluxQuery(target, this.templateSrv, scopedVars);
+      return queryModel.render(true);
+
     }).reduce((acc, current) => {
       if (current !== "") {
         acc += ";" + current;
@@ -63,11 +69,21 @@ export default class InfluxDatasource {
       return acc;
     });
 
+    if (allQueries === '') {
+      return this.$q.when({data: []});
+    }
+
+    // add global adhoc filters to timeFilter
+    var adhocFilters = this.templateSrv.getAdhocFilters(this.name);
+    if (adhocFilters.length > 0 ) {
+      timeFilter += ' AND ' + queryModel.renderAdhocFilters(adhocFilters);
+    }
+
     // replace grafana variables
-    allQueries = allQueries.replace(/\$timeFilter/g, timeFilter);
+    scopedVars.timeFilter = {value: timeFilter};
 
     // replace templated variables
-    allQueries = this.templateSrv.replace(allQueries, options.scopedVars);
+    allQueries = this.templateSrv.replace(allQueries, scopedVars);
 
     return this._seriesQuery(allQueries).then((data): any => {
       if (!data || !data.results) {
@@ -102,7 +118,7 @@ export default class InfluxDatasource {
         }
       }
 
-      return { data: seriesList };
+      return {data: seriesList};
     });
   };
 
@@ -124,23 +140,29 @@ export default class InfluxDatasource {
   };
 
   metricFindQuery(query) {
-    var interpolated;
-    try {
-      interpolated = this.templateSrv.replace(query, null, 'regex');
-    } catch (err) {
-      return this.$q.reject(err);
-    }
+    var interpolated = this.templateSrv.replace(query, null, 'regex');
 
     return this._seriesQuery(interpolated)
       .then(_.curry(this.responseParser.parse)(query));
-  };
+  }
+
+  getTagKeys(options) {
+    var queryBuilder = new InfluxQueryBuilder({measurement: '', tags: []}, this.database);
+    var query = queryBuilder.buildExploreQuery('TAG_KEYS');
+    return this.metricFindQuery(query);
+  }
+
+  getTagValues(options) {
+    var queryBuilder = new InfluxQueryBuilder({measurement: '', tags: []}, this.database);
+    var query = queryBuilder.buildExploreQuery('TAG_VALUES', options.key);
+    return this.metricFindQuery(query);
+  }
 
   _seriesQuery(query) {
     if (!query) { return this.$q.when({results: []}); }
 
     return this._influxRequest('GET', '/query', {q: query, epoch: 'ms'});
   }
-
 
   serializeParams(params) {
     if (!params) { return '';}

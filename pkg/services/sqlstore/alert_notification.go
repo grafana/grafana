@@ -66,7 +66,8 @@ func GetAlertNotificationsToSend(query *m.GetAlertNotificationsToSendQuery) erro
 	sql.WriteString(` WHERE alert_notification.org_id = ?`)
 	params = append(params, query.OrgId)
 
-	sql.WriteString(` AND ((alert_notification.is_default = 1)`)
+	sql.WriteString(` AND ((alert_notification.is_default = ?)`)
+	params = append(params, dialect.BooleanStr(true))
 	if len(query.Ids) > 0 {
 		sql.WriteString(` OR alert_notification.id IN (?` + strings.Repeat(",?", len(query.Ids)-1) + ")")
 		for _, v := range query.Ids {

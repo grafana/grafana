@@ -8,26 +8,29 @@ import './thresholds_form';
 import template from './template';
 import angular from 'angular';
 import moment from 'moment';
-import kbn from 'app/core/utils/kbn';
 import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
 import * as fileExport from 'app/core/utils/file_export';
 import {MetricsPanelCtrl, alertTab} from 'app/plugins/sdk';
+import {DataProcessor} from './data_processor';
+import {axesEditorComponent} from './axes_editor';
 
 class GraphCtrl extends MetricsPanelCtrl {
   static template = template;
 
   hiddenSeries: any = {};
   seriesList: any = [];
-  logScales: any;
-  unitFormats: any;
+  dataList: any = [];
+  annotations: any = [];
+  alertState: any;
+
   annotationsPromise: any;
   datapointsCount: number;
   datapointsOutside: boolean;
-  datapointsWarning: boolean;
   colors: any = [];
   subTabIndex: number;
+  processor: DataProcessor;
 
   panelDefaults = {
     // datasource name, null = default datasource
@@ -53,7 +56,10 @@ class GraphCtrl extends MetricsPanelCtrl {
       }
     ],
     xaxis: {
-      show: true
+      show: true,
+      mode: 'time',
+      name: null,
+      values: [],
     },
     // show/hide lines
     lines         : true,
@@ -111,8 +117,9 @@ class GraphCtrl extends MetricsPanelCtrl {
     _.defaults(this.panel, this.panelDefaults);
     _.defaults(this.panel.tooltip, this.panelDefaults.tooltip);
     _.defaults(this.panel.legend, this.panelDefaults.legend);
+    _.defaults(this.panel.xaxis, this.panelDefaults.xaxis);
 
-    this.colors = $scope.$root.colors;
+    this.processor = new DataProcessor(this.panel);
 
     this.events.on('render', this.onRender.bind(this));
     this.events.on('data-received', this.onDataReceived.bind(this));
@@ -123,23 +130,13 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitEditMode() {
-    this.addEditorTab('Axes', 'public/app/plugins/panel/graph/tab_axes.html', 2);
+    this.addEditorTab('Axes', axesEditorComponent, 2);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
     this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
 
     if (config.alertingEnabled) {
       this.addEditorTab('Alert', alertTab, 5);
     }
-
-    this.logScales = {
-      'linear': 1,
-      'log (base 2)': 2,
-      'log (base 10)': 10,
-      'log (base 32)': 32,
-      'log (base 1024)': 1024
-    };
-
-    this.unitFormats = kbn.getUnitFormats();
     this.subTabIndex = 0;
   }
 
@@ -147,11 +144,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     actions.push({text: 'Export CSV (series as rows)', click: 'ctrl.exportCsv()'});
     actions.push({text: 'Export CSV (series as columns)', click: 'ctrl.exportCsvColumns()'});
     actions.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
-  }
-
-  setUnitFormat(axis, subItem) {
-    axis.format = subItem.value;
-    this.render();
   }
 
   issueQueries(datasource) {
@@ -178,52 +170,34 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onDataError(err) {
     this.seriesList = [];
+    this.annotations = [];
     this.render([]);
   }
 
   onDataReceived(dataList) {
-    this.datapointsWarning = false;
-    this.datapointsCount = 0;
-    this.datapointsOutside = false;
-    this.seriesList = dataList.map(this.seriesHandler.bind(this));
-    this.datapointsWarning = this.datapointsCount === 0 || this.datapointsOutside;
+    this.dataList = dataList;
+    this.seriesList = this.processor.getSeriesList({dataList: dataList, range: this.range});
 
-    this.annotationsPromise.then(annotations => {
+    this.datapointsCount = this.seriesList.reduce((prev, series) => {
+      return prev + series.datapoints.length;
+    }, 0);
+
+    this.datapointsOutside = false;
+    for (let series of this.seriesList) {
+      if (series.isOutsideRange) {
+        this.datapointsOutside = true;
+      }
+    }
+
+    this.annotationsPromise.then(result => {
       this.loading = false;
-      this.seriesList.annotations = annotations;
+      this.alertState = result.alertState;
+      this.annotations = result.annotations;
       this.render(this.seriesList);
     }, () => {
       this.loading = false;
       this.render(this.seriesList);
     });
-  }
-
-  seriesHandler(seriesData, index) {
-    var datapoints = seriesData.datapoints;
-    var alias = seriesData.target;
-    var colorIndex = index % this.colors.length;
-    var color = this.panel.aliasColors[alias] || this.colors[colorIndex];
-
-    var series = new TimeSeries({
-      datapoints: datapoints,
-      alias: alias,
-      color: color,
-      unit: seriesData.unit,
-    });
-
-    if (datapoints && datapoints.length > 0) {
-      var last = moment.utc(datapoints[datapoints.length - 1][1]);
-      var from = moment.utc(this.range.from);
-      if (last - from < -10000) {
-        this.datapointsOutside = true;
-      }
-
-      this.datapointsCount += datapoints.length;
-      this.panel.tooltip.msResolution = this.panel.tooltip.msResolution || series.isMsResolutionNeeded();
-    }
-
-
-    return series;
   }
 
   onRender() {
@@ -309,12 +283,10 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.render();
   }
 
-  // Called from panel menu
   toggleLegend() {
     this.panel.legend.show = !this.panel.legend.show;
     this.refresh();
   }
-
 
   legendValuesOptionChanged() {
     var legend = this.panel.legend;

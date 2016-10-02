@@ -74,9 +74,9 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				continue
 			}
 
+			// backward compatability check, can be removed later
 			enabled, hasEnabled := jsonAlert.CheckGet("enabled")
-
-			if !hasEnabled || !enabled.MustBool() {
+			if hasEnabled && enabled.MustBool() == false {
 				continue
 			}
 

@@ -28,7 +28,7 @@ function (queryDef) {
       return queryNode;
     }
 
-    queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 1000 : parseInt(aggDef.settings.size, 10);
+    queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 500 : parseInt(aggDef.settings.size, 10);
 
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
@@ -108,7 +108,28 @@ function (queryDef) {
     return query;
   };
 
-  ElasticQueryBuilder.prototype.build = function(target) {
+  ElasticQueryBuilder.prototype.addAdhocFilters = function(query, adhocFilters) {
+    if (!adhocFilters) {
+      return;
+    }
+
+    var i, filter, condition, must;
+
+    if (this.esVersion >= 5) {
+      must = query.query.bool.must;
+    } else {
+      must = query.query.filtered.filter.bool.must;
+    }
+
+    for (i = 0; i < adhocFilters.length; i++) {
+      filter = adhocFilters[i];
+      condition = {};
+      condition[filter.key] = filter.value;
+      must.push({"term": condition});
+    }
+  };
+
+  ElasticQueryBuilder.prototype.build = function(target, adhocFilters) {
     // make sure query has defaults;
     target.metrics = target.metrics || [{ type: 'count', id: '1' }];
     target.dsType = 'elasticsearch';
@@ -153,6 +174,8 @@ function (queryDef) {
         }
       };
     }
+
+    this.addAdhocFilters(query, adhocFilters);
 
     // handle document query
     if (target.bucketAggs.length === 0) {
@@ -228,34 +251,24 @@ function (queryDef) {
   };
 
   ElasticQueryBuilder.prototype.getTermsQuery = function(queryDef) {
-    var query = {};
+    var query, queryPath;
+
     if (this.esVersion >= 5) {
       query = {
         "size": 0,
         "query": {
           "bool": {
-            "must": [
-              {"range": this.getRangeFilter()},
-              {"query_string": {
-                "analyze_wildcard": true,
-                "query": '$lucene_query'
-                }
-              }
-            ]
+            "must": [{"range": this.getRangeFilter()}]
           }
         }
       };
+      queryPath = query.query.bool.must;
+
     } else {
       query = {
         "size": 0,
         "query": {
           "filtered": {
-            "query": {
-              "query_string": {
-                "analyze_wildcard": true,
-                "query": '$lucene_query',
-              }
-            },
             "filter": {
               "bool": {
                 "must": [{"range": this.getRangeFilter()}]
@@ -264,12 +277,23 @@ function (queryDef) {
           }
         }
       };
+      queryPath = query.query.filtered.query;
     }
+
+    if (queryDef.query) {
+      queryPath = {
+        "query_string": {
+          "analyze_wildcard": true,
+          "query": queryDef.query,
+        }
+      };
+    }
+
     query.aggs =  {
       "1": {
         "terms": {
           "field": queryDef.field,
-          "size": 1000,
+          "size": 500,
           "order": {
             "_term": "asc"
           }

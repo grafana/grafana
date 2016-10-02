@@ -78,9 +78,11 @@ var (
 	DataProxyWhiteList    map[string]bool
 
 	// Snapshots
-	ExternalSnapshotUrl  string
-	ExternalSnapshotName string
-	ExternalEnabled      bool
+	ExternalSnapshotUrl   string
+	ExternalSnapshotName  string
+	ExternalEnabled       bool
+	SnapShotTTLDays       int
+	SnapShotRemoveExpired bool
 
 	// User settings
 	AllowUserSignUp    bool
@@ -90,7 +92,7 @@ var (
 	VerifyEmailEnabled bool
 	LoginHint          string
 	DefaultTheme       string
-	AllowUserPassLogin bool
+	DisableLoginForm   bool
 
 	// Http auth
 	AdminUser     string
@@ -495,6 +497,8 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ExternalSnapshotUrl = snapshots.Key("external_snapshot_url").String()
 	ExternalSnapshotName = snapshots.Key("external_snapshot_name").String()
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
+	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
+	SnapShotTTLDays = snapshots.Key("snapshot_TTL_days").MustInt(90)
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
@@ -514,7 +518,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 	LoginHint = users.Key("login_hint").String()
 	DefaultTheme = users.Key("default_theme").String()
-	AllowUserPassLogin = users.Key("allow_user_pass_login").MustBool(true)
+
+	// auth
+	auth := Cfg.Section("auth")
+	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -556,7 +563,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 		log.Warn("require_email_validation is enabled but smpt is disabled")
 	}
 
-	GrafanaNetUrl = Cfg.Section("grafana.net").Key("url").MustString("https://grafana.net")
+	GrafanaNetUrl = Cfg.Section("grafana_net").Key("url").MustString("https://grafana.net")
 
 	imageUploadingSection := Cfg.Section("external_image_storage")
 	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("internal")

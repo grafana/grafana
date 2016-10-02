@@ -96,7 +96,7 @@ easily the grafana repository you want to build.
 ```bash
 go get github.com/*your_account*/grafana
 mkdir $GOPATH/src/github.com/grafana
-ln -s  github.com/*your_account*/grafana $GOPATH/src/github.com/grafana/grafana
+ln -s  $GOPATH/src/github.com/*your_account*/grafana $GOPATH/src/github.com/grafana/grafana
 ```
 
 ### Building the backend

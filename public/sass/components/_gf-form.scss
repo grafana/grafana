@@ -7,6 +7,7 @@ $gf-form-margin: 0.25rem;
   align-items: center;
   text-align: left;
   position: relative;
+  font-size: $font-size-sm;
 
   &--offset-1 {
     margin-left: $spacer;
@@ -48,7 +49,6 @@ $gf-form-margin: 0.25rem;
 .gf-form-label {
   padding: $input-padding-y $input-padding-x;
   margin-right: $gf-form-margin;
-  line-height: $input-line-height;
   flex-shrink: 0;
 
   background-color: $input-label-bg;
@@ -135,7 +135,7 @@ $gf-form-margin: 0.25rem;
     &::after {
       position: absolute;
       top: 35%;
-      right: $input-padding-x/2;
+      right: $input-padding-x;
       background-color: transparent;
       color: $input-color;
       font: normal normal normal $font-size-sm/1 FontAwesome;

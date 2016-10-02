@@ -1,10 +1,10 @@
 package models
 
 type SystemStats struct {
-	DashboardCount int
-	UserCount      int
-	OrgCount       int
-	PlaylistCount  int
+	DashboardCount int64
+	UserCount      int64
+	OrgCount       int64
+	PlaylistCount  int64
 }
 
 type DataSourceStats struct {

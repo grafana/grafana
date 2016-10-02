@@ -34,10 +34,6 @@ function (angular, _, $) {
         $location.search(urlParams);
       });
 
-      $scope.onAppEvent('template-variable-value-updated', function() {
-        self.updateUrlParamsWithCurrentVariables();
-      });
-
       $scope.onAppEvent('$routeUpdate', function() {
         var urlState = self.getQueryStringState();
         if (self.needsSync(urlState)) {
@@ -56,22 +52,6 @@ function (angular, _, $) {
       this.update(this.getQueryStringState());
       this.expandRowForPanel();
     }
-
-    DashboardViewState.prototype.updateUrlParamsWithCurrentVariables = function() {
-      // update url
-      var params = $location.search();
-      // remove variable params
-      _.each(params, function(value, key) {
-        if (key.indexOf('var-') === 0) {
-          delete params[key];
-        }
-      });
-
-      // add new values
-      templateSrv.fillVariableValuesForUrl(params);
-      // update url
-      $location.search(params);
-    };
 
     DashboardViewState.prototype.expandRowForPanel = function() {
       if (!this.state.panelId) { return; }
@@ -185,7 +165,7 @@ function (angular, _, $) {
     DashboardViewState.prototype.enterFullscreen = function(panelScope) {
       var ctrl = panelScope.ctrl;
 
-      ctrl.editMode = this.state.edit && this.$scope.dashboardMeta.canEdit;
+      ctrl.editMode = this.state.edit && this.dashboard.meta.canEdit;
       ctrl.fullscreen = true;
 
       this.oldTimeRange = ctrl.range;

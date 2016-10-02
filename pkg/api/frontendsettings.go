@@ -38,7 +38,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		url := ds.Url
 
 		if ds.Access == m.DS_ACCESS_PROXY {
-			url = setting.AppSubUrl + "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
+			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
 		}
 
 		var dsMap = map[string]interface{}{

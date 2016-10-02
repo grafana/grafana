@@ -237,6 +237,19 @@ describe('InfluxQuery', function() {
       expect(query.target.select[0][2].type).to.be('math');
     });
 
+    describe('when render adhoc filters', function() {
+      it('should generate correct query segment', function() {
+        var query = new InfluxQuery({measurement: 'cpu', }, templateSrv, {});
+
+        var queryText = query.renderAdhocFilters([
+          {key: 'key1', operator: '=', value: 'value1'},
+          {key: 'key2', operator: '!=', value: 'value2'},
+        ]);
+
+        expect(queryText).to.be('"key1" = \'value1\' AND "key2" != \'value2\'');
+      });
+    });
+
   });
 
 });

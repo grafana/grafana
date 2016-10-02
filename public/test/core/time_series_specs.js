@@ -56,6 +56,38 @@ define([
       });
     });
 
+    describe('When checking if ms resolution is needed', function() {
+      describe('msResolution with second resolution timestamps', function() {
+        beforeEach(function() {
+          series = new TimeSeries({datapoints: [[45, 1234567890], [60, 1234567899]]});
+        });
+
+        it('should set hasMsResolution to false', function() {
+          expect(series.hasMsResolution).to.be(false);
+        });
+      });
+
+      describe('msResolution with millisecond resolution timestamps', function() {
+        beforeEach(function() {
+          series = new TimeSeries({datapoints: [[55, 1236547890001], [90, 1234456709000]]});
+        });
+
+        it('should show millisecond resolution tooltip', function() {
+          expect(series.hasMsResolution).to.be(true);
+        });
+      });
+
+      describe('msResolution with millisecond resolution timestamps but with trailing zeroes', function() {
+        beforeEach(function() {
+          series = new TimeSeries({datapoints: [[45, 1234567890000], [60, 1234567899000]]});
+        });
+
+        it('should not show millisecond resolution tooltip', function() {
+          expect(series.hasMsResolution).to.be(false);
+        });
+      });
+    });
+
     describe('can detect if series contains ms precision', function() {
       var fakedata;
 
