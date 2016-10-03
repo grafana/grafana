@@ -3,9 +3,10 @@ define([
   'lodash',
   'moment',
   'app/core/utils/datemath',
+  'app/core/utils/kbn',
   './annotation_query',
 ],
-function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
+function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
   'use strict';
 
   /** @ngInject */
@@ -37,7 +38,16 @@ function (angular, _, moment, dateMath, CloudWatchAnnotationQuery) {
         query.statistics = target.statistics;
 
         var range = end - start;
-        query.period = parseInt(target.period, 10) || (query.namespace === 'AWS/EC2' ? 300 : 60);
+        if (!target.period) {
+          query.period = (query.namespace === 'AWS/EC2') ? 300 : 60;
+        } else if (/^\d+$/.test(target.period)) {
+          query.period = parseInt(target.period, 10);
+        } else {
+          query.period = kbn.interval_to_seconds(templateSrv.replace(target.period, options.scopedVars));
+        }
+        if (query.period < 60) {
+          query.period = 60;
+        }
         if (range / query.period >= 1440) {
           query.period = Math.ceil(range / 1440 / 60) * 60;
         }
