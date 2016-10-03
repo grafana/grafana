@@ -223,12 +223,16 @@
       </div>
 
 			<div ng-if="current.type === 'adhoc'" class="gf-form-group">
-        <h5 class="section-heading">Options</h5>
+				<h5 class="section-heading">Options</h5>
 				<div class="gf-form max-width-21">
 					<span class="gf-form-label width-8">Data source</span>
 					<div class="gf-form-select-wrapper max-width-14">
 						<select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources" required ng-change="validate()"></select>
 					</div>
+				</div>
+				<div class="gf-form max-width-21">
+					<span class="gf-form-label width-8">Target Metric</span>
+					<input type="text" class="gf-form-input max-width-14" ng-model='current.metric' placeholder='metric (optional)'></input>
 				</div>
 			</div>
 

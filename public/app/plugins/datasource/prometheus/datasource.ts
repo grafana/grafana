@@ -72,7 +72,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       }
       return label.key + label.operator + '"' + label.value + '"';
     });
-    return conditions.join(',');
+    return conditions.join(',') + ',';
   };
 
   this.buildQuery = function(expr, scopedVars) {
@@ -166,6 +166,11 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return this._request('GET', url, query.requestId);
   };
 
+  this.performInstantQuery = function(query, time) {
+    var url = '/api/v1/query?query=' + encodeURIComponent(query) + '&time=' + time;
+    return this._request('GET', url);
+  };
+
   this.performSuggestQuery = function(query) {
     var url = '/api/v1/label/__name__/values';
 
@@ -178,13 +183,29 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
 
   this.getTagKeys = function(options) {
-    var keys = _.map(self.labelKeys, function (key) {
-      return {
-        text: key,
-        expandable: false
-      };
+    var labelKeys = angular.copy(self.labelKeys);
+    var transformLabelData = function(labelKeys) {
+      return _.map(labelKeys, function (key) {
+        return { text: key, expandable: false };
+      });
+    };
+
+    if (_.isEmpty(options.metric)) {
+      return $q.when(transformLabelData(labelKeys));
+    }
+
+    var time = this.getPrometheusTime('now', true);
+    return this.performInstantQuery(options.metric, time)
+    .then(function(result) {
+      _.each(result.data.data.result, function(metricData) {
+        _.each(metricData.metric, function(val, key) {
+          labelKeys.push(key);
+        });
+      });
+
+      labelKeys = _.uniq(labelKeys);
+      return $q.when(transformLabelData(labelKeys));
     });
-    return $q.when(keys);
   };
 
   this.getTagValues = function(options) {
