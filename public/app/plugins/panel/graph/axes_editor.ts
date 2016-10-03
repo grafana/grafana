@@ -58,7 +58,9 @@ export class AxesEditorCtrl {
   }
 
   xAxisOptionChanged()  {
-    this.panelCtrl.processor.setPanelDefaultsForNewXAxisMode();
+    if (!this.panel.xaxis.values || !this.panel.xaxis.values[0]){
+      this.panelCtrl.processor.setPanelDefaultsForNewXAxisMode();
+    }
     this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
   }
 

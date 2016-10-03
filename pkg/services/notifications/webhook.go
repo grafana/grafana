@@ -2,10 +2,13 @@ package notifications
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
@@ -38,6 +41,40 @@ func processWebhookQueue() {
 			}
 		}
 	}
+}
+
+func sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
+	webhookLog.Debug("Sending webhook", "url", webhook.Url)
+
+	client := &http.Client{
+		Timeout: time.Duration(10 * time.Second),
+	}
+
+	request, err := http.NewRequest(http.MethodPost, webhook.Url, bytes.NewReader([]byte(webhook.Body)))
+	if webhook.User != "" && webhook.Password != "" {
+		request.Header.Add("Authorization", util.GetBasicAuthHeader(webhook.User, webhook.Password))
+	}
+
+	if err != nil {
+		return err
+	}
+
+	resp, err := ctxhttp.Do(ctx, client, request)
+	if err != nil {
+		return err
+	}
+
+	_, err = ioutil.ReadAll(resp.Body)
+	if err != nil {
+		return err
+	}
+
+	if resp.StatusCode != 200 {
+		return fmt.Errorf("Webhook response code %v", resp.StatusCode)
+	}
+
+	defer resp.Body.Close()
+	return nil
 }
 
 func sendWebRequest(webhook *Webhook) error {

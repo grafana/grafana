@@ -1,8 +1,11 @@
 package alerting
 
 import (
+	"context"
 	"errors"
 	"fmt"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
@@ -33,32 +36,36 @@ func (n *RootNotifier) PassesFilter(rule *Rule) bool {
 	return false
 }
 
-func (n *RootNotifier) Notify(context *EvalContext) {
+func (n *RootNotifier) Notify(ctx context.Context, context *EvalContext) error {
 	n.log.Info("Sending notifications for", "ruleId", context.Rule.Id)
 
 	notifiers, err := n.getNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
 	if err != nil {
-		n.log.Error("Failed to read notifications", "error", err)
-		return
+		return err
 	}
 
 	if len(notifiers) == 0 {
-		return
+		return nil
 	}
 
 	err = n.uploadImage(context)
 	if err != nil {
 		n.log.Error("Failed to upload alert panel image", "error", err)
+		return err
 	}
 
-	n.sendNotifications(notifiers, context)
+	return n.sendNotifications(ctx, notifiers, context)
 }
 
-func (n *RootNotifier) sendNotifications(notifiers []Notifier, context *EvalContext) {
+func (n *RootNotifier) sendNotifications(ctx context.Context, notifiers []Notifier, context *EvalContext) error {
+	g, ctx := errgroup.WithContext(ctx)
+
 	for _, notifier := range notifiers {
 		n.log.Info("Sending notification", "firing", context.Firing, "type", notifier.GetType())
-		go notifier.Notify(context)
+		g.Go(func() error { return notifier.Notify(ctx, context) })
 	}
+
+	return g.Wait()
 }
 
 func (n *RootNotifier) uploadImage(context *EvalContext) (err error) {

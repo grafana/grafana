@@ -36,16 +36,19 @@ func NewEngine() *Engine {
 	return e
 }
 
-func (e *Engine) Start(grafanaCtx context.Context) error {
-	e.log.Info("Starting Alerting Engine")
+func (e *Engine) Run(ctx context.Context) error {
+	e.log.Info("Initializing Alerting")
 
-	g, grafanaCtx := errgroup.WithContext(grafanaCtx)
+	g, ctx := errgroup.WithContext(ctx)
 
-	g.Go(func() error { return e.alertingTicker(grafanaCtx) })
-	g.Go(func() error { return e.execDispatcher(grafanaCtx) })
-	g.Go(func() error { return e.resultDispatcher(grafanaCtx) })
+	g.Go(func() error { return e.alertingTicker(ctx) })
+	g.Go(func() error { return e.execDispatcher(ctx) })
+	g.Go(func() error { return e.resultDispatcher(ctx) })
 
-	return g.Wait()
+	err := g.Wait()
+
+	e.log.Info("Stopped Alerting", "reason", err)
+	return err
 }
 
 func (e *Engine) Stop() {
@@ -124,17 +127,17 @@ func (e *Engine) resultDispatcher(grafanaCtx context.Context) error {
 		case <-grafanaCtx.Done():
 			//handle all responses before shutting down.
 			for result := range e.resultQueue {
-				e.handleResponse(result)
+				e.handleResponse(grafanaCtx, result)
 			}
 
 			return grafanaCtx.Err()
 		case result := <-e.resultQueue:
-			e.handleResponse(result)
+			e.handleResponse(grafanaCtx, result)
 		}
 	}
 }
 
-func (e *Engine) handleResponse(result *EvalContext) {
+func (e *Engine) handleResponse(grafanaCtx context.Context, result *EvalContext) {
 	defer func() {
 		if err := recover(); err != nil {
 			e.log.Error("Panic in resultDispatcher", "error", err, "stack", log.Stack(1))
@@ -142,5 +145,5 @@ func (e *Engine) handleResponse(result *EvalContext) {
 	}()
 
 	e.log.Debug("Alert Rule Result", "ruleId", result.Rule.Id, "firing", result.Firing)
-	e.resultHandler.Handle(result)
+	e.resultHandler.Handle(grafanaCtx, result)
 }

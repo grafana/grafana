@@ -2,6 +2,7 @@ package notifications
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"html/template"
@@ -29,7 +30,10 @@ func Init() error {
 	bus.AddHandler("email", validateResetPasswordCode)
 	bus.AddHandler("email", sendEmailCommandHandler)
 
+	bus.AddCtxHandler("email", sendEmailCommandHandlerSync)
+
 	bus.AddHandler("webhook", sendWebhook)
+	bus.AddCtxHandler("webhook", SendWebhookSync)
 
 	bus.AddEventListener(signUpStartedHandler)
 	bus.AddEventListener(signUpCompletedHandler)
@@ -56,6 +60,15 @@ func Init() error {
 	return nil
 }
 
+func SendWebhookSync(ctx context.Context, cmd *m.SendWebhookSync) error {
+	return sendWebRequestSync(ctx, &Webhook{
+		Url:      cmd.Url,
+		User:     cmd.User,
+		Password: cmd.Password,
+		Body:     cmd.Body,
+	})
+}
+
 func sendWebhook(cmd *m.SendWebhook) error {
 	addToWebhookQueue(&Webhook{
 		Url:      cmd.Url,
@@ -70,6 +83,54 @@ func sendWebhook(cmd *m.SendWebhook) error {
 func subjectTemplateFunc(obj map[string]interface{}, value string) string {
 	obj["value"] = value
 	return ""
+}
+
+func sendEmailCommandHandlerSync(ctx context.Context, cmd *m.SendEmailCommand) error {
+	if !setting.Smtp.Enabled {
+		return errors.New("Grafana mailing/smtp options not configured, contact your Grafana admin")
+	}
+
+	var buffer bytes.Buffer
+	var err error
+	var subjectText interface{}
+
+	data := cmd.Data
+	if data == nil {
+		data = make(map[string]interface{}, 10)
+	}
+
+	setDefaultTemplateData(data, nil)
+	err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template, data)
+	if err != nil {
+		return err
+	}
+
+	subjectData := data["Subject"].(map[string]interface{})
+	subjectText, hasSubject := subjectData["value"]
+
+	if !hasSubject {
+		return errors.New(fmt.Sprintf("Missing subject in Template %s", cmd.Template))
+	}
+
+	subjectTmpl, err := template.New("subject").Parse(subjectText.(string))
+	if err != nil {
+		return err
+	}
+
+	var subjectBuffer bytes.Buffer
+	err = subjectTmpl.ExecuteTemplate(&subjectBuffer, "subject", data)
+	if err != nil {
+		return err
+	}
+
+	buildAndSend(&Message{
+		To:      cmd.To,
+		From:    setting.Smtp.FromAddress,
+		Subject: subjectBuffer.String(),
+		Body:    buffer.String(),
+	})
+
+	return nil
 }
 
 func sendEmailCommandHandler(cmd *m.SendEmailCommand) error {

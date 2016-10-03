@@ -92,7 +92,7 @@ var (
 	VerifyEmailEnabled bool
 	LoginHint          string
 	DefaultTheme       string
-	AllowUserPassLogin bool
+	DisableLoginForm   bool
 
 	// Http auth
 	AdminUser     string
@@ -120,9 +120,8 @@ var (
 	IsWindows    bool
 
 	// PhantomJs Rendering
-	ImagesDir            string
-	PhantomDir           string
-	RenderedImageTTLDays int
+	ImagesDir  string
+	PhantomDir string
 
 	// for logging purposes
 	configFiles                  []string
@@ -519,7 +518,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 	LoginHint = users.Key("login_hint").String()
 	DefaultTheme = users.Key("default_theme").String()
-	AllowUserPassLogin = users.Key("allow_user_pass_login").MustBool(true)
+
+	// auth
+	auth := Cfg.Section("auth")
+	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -539,9 +541,6 @@ func NewConfigContext(args *CommandLineArgs) error {
 	// PhantomJS rendering
 	ImagesDir = filepath.Join(DataPath, "png")
 	PhantomDir = filepath.Join(HomePath, "vendor/phantomjs")
-
-	tmpFilesSection := Cfg.Section("tmp.files")
-	RenderedImageTTLDays = tmpFilesSection.Key("rendered_image_ttl_days").MustInt(14)
 
 	analytics := Cfg.Section("analytics")
 	ReportingEnabled = analytics.Key("reporting_enabled").MustBool(true)
@@ -564,7 +563,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 		log.Warn("require_email_validation is enabled but smpt is disabled")
 	}
 
-	GrafanaNetUrl = Cfg.Section("grafana.net").Key("url").MustString("https://grafana.net")
+	GrafanaNetUrl = Cfg.Section("grafana_net").Key("url").MustString("https://grafana.net")
 
 	imageUploadingSection := Cfg.Section("external_image_storage")
 	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("internal")
