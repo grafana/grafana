@@ -492,6 +492,33 @@ Grafana backend index those json dashboards which will make them appear in regul
 ### path
 The full path to a directory containing your json dashboards.
 
+## [smtp]
+Email server settings.
+
+### enabled
+defaults to false
+
+### host
+defaults to localhost:25
+
+### user
+In case of SMTP auth, defaults to `empty`
+
+### password
+In case of SMTP auth, defaults to `empty`
+
+### cert_file
+File path to a cert file, defaults to `empty`
+
+### key_file
+File path to a key file, defaults to `empty`
+
+### skip_verify
+Verify SSL for smtp server? defaults to `false`
+
+### from_address
+Address used when sending out emails, defaults to `admin@grafana.localhost`
+
 ## [log]
 
 ### mode

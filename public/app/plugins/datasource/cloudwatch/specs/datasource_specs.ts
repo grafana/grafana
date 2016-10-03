@@ -82,6 +82,35 @@ describe('CloudWatchDatasource', function() {
       ctx.$rootScope.$apply();
     });
 
+    it('should generate the correct query with interval variable', function(done) {
+      ctx.templateSrv.data = {
+        period: '10m'
+      };
+
+      var query = {
+        range: { from: 'now-1h', to: 'now' },
+        targets: [
+          {
+            region: 'us-east-1',
+            namespace: 'AWS/EC2',
+            metricName: 'CPUUtilization',
+            dimensions: {
+              InstanceId: 'i-12345678'
+            },
+            statistics: ['Average'],
+            period: '[[period]]'
+          }
+        ]
+      };
+
+      ctx.ds.query(query).then(function() {
+        var params = requestParams.data.parameters;
+        expect(params.period).to.be(600);
+        done();
+      });
+      ctx.$rootScope.$apply();
+    });
+
     it('should return series list', function(done) {
       ctx.ds.query(query).then(function(result) {
         expect(result.data[0].target).to.be('CPUUtilization_Average');

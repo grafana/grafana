@@ -25,6 +25,25 @@ func ValidateOrgAlert(c *middleware.Context) {
 	}
 }
 
+func GetAlertStatesForDashboard(c *middleware.Context) Response {
+	dashboardId := c.QueryInt64("dashboardId")
+
+	if dashboardId == 0 {
+		return ApiError(400, "Missing query parameter dashboardId", nil)
+	}
+
+	query := models.GetAlertStatesForDashboardQuery{
+		OrgId:       c.OrgId,
+		DashboardId: c.QueryInt64("dashboardId"),
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return ApiError(500, "Failed to fetch alert states", err)
+	}
+
+	return Json(200, query.Result)
+}
+
 // GET /api/alerts
 func GetAlerts(c *middleware.Context) Response {
 	query := models.GetAlertsQuery{

@@ -92,6 +92,11 @@ func AddDataSource(c *middleware.Context, cmd m.AddDataSourceCommand) {
 	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == m.ErrDataSourceNameExists {
+			c.JsonApiErr(409, err.Error(), err)
+			return
+		}
+
 		c.JsonApiErr(500, "Failed to add datasource", err)
 		return
 	}

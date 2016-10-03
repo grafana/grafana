@@ -12,7 +12,7 @@ import (
 )
 
 type ResultHandler interface {
-	Handle(ctx *EvalContext)
+	Handle(evalContext *EvalContext) error
 }
 
 type DefaultResultHandler struct {
@@ -27,36 +27,36 @@ func NewResultHandler() *DefaultResultHandler {
 	}
 }
 
-func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
-	oldState := ctx.Rule.State
+func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
+	oldState := evalContext.Rule.State
 
 	exeuctionError := ""
 	annotationData := simplejson.New()
-	if ctx.Error != nil {
-		handler.log.Error("Alert Rule Result Error", "ruleId", ctx.Rule.Id, "error", ctx.Error)
-		ctx.Rule.State = m.AlertStateExecError
-		exeuctionError = ctx.Error.Error()
+	if evalContext.Error != nil {
+		handler.log.Error("Alert Rule Result Error", "ruleId", evalContext.Rule.Id, "error", evalContext.Error)
+		evalContext.Rule.State = m.AlertStateExecError
+		exeuctionError = evalContext.Error.Error()
 		annotationData.Set("errorMessage", exeuctionError)
-	} else if ctx.Firing {
-		ctx.Rule.State = m.AlertStateAlerting
-		annotationData = simplejson.NewFromAny(ctx.EvalMatches)
+	} else if evalContext.Firing {
+		evalContext.Rule.State = m.AlertStateAlerting
+		annotationData = simplejson.NewFromAny(evalContext.EvalMatches)
 	} else {
 		// handle no data case
-		if ctx.NoDataFound {
-			ctx.Rule.State = ctx.Rule.NoDataState
+		if evalContext.NoDataFound {
+			evalContext.Rule.State = evalContext.Rule.NoDataState
 		} else {
-			ctx.Rule.State = m.AlertStateOK
+			evalContext.Rule.State = m.AlertStateOK
 		}
 	}
 
-	countStateResult(ctx.Rule.State)
-	if ctx.Rule.State != oldState {
-		handler.log.Info("New state change", "alertId", ctx.Rule.Id, "newState", ctx.Rule.State, "oldState", oldState)
+	countStateResult(evalContext.Rule.State)
+	if evalContext.Rule.State != oldState {
+		handler.log.Info("New state change", "alertId", evalContext.Rule.Id, "newState", evalContext.Rule.State, "oldState", oldState)
 
 		cmd := &m.SetAlertStateCommand{
-			AlertId:  ctx.Rule.Id,
-			OrgId:    ctx.Rule.OrgId,
-			State:    ctx.Rule.State,
+			AlertId:  evalContext.Rule.Id,
+			OrgId:    evalContext.Rule.OrgId,
+			State:    evalContext.Rule.State,
 			Error:    exeuctionError,
 			EvalData: annotationData,
 		}
@@ -67,14 +67,14 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 
 		// save annotation
 		item := annotations.Item{
-			OrgId:       ctx.Rule.OrgId,
-			DashboardId: ctx.Rule.DashboardId,
-			PanelId:     ctx.Rule.PanelId,
+			OrgId:       evalContext.Rule.OrgId,
+			DashboardId: evalContext.Rule.DashboardId,
+			PanelId:     evalContext.Rule.PanelId,
 			Type:        annotations.AlertType,
-			AlertId:     ctx.Rule.Id,
-			Title:       ctx.Rule.Name,
-			Text:        ctx.GetStateModel().Text,
-			NewState:    string(ctx.Rule.State),
+			AlertId:     evalContext.Rule.Id,
+			Title:       evalContext.Rule.Name,
+			Text:        evalContext.GetStateModel().Text,
+			NewState:    string(evalContext.Rule.State),
 			PrevState:   string(oldState),
 			Epoch:       time.Now().Unix(),
 			Data:        annotationData,
@@ -85,8 +85,10 @@ func (handler *DefaultResultHandler) Handle(ctx *EvalContext) {
 			handler.log.Error("Failed to save annotation for new alert state", "error", err)
 		}
 
-		handler.notifier.Notify(ctx)
+		handler.notifier.Notify(evalContext)
 	}
+
+	return nil
 }
 
 func countStateResult(state m.AlertStateType) {

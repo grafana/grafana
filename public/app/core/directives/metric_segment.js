@@ -136,7 +136,7 @@ function (_, $, coreModule) {
 
         $button.click(function() {
           options = null;
-          $input.css('width', ($button.width() + 16) + 'px');
+          $input.css('width', (Math.max($button.width(), 80) + 16) + 'px');
 
           $button.hide();
           $input.show();

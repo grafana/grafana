@@ -22,7 +22,8 @@ const (
 
 // Typed errors
 var (
-	ErrDataSourceNotFound = errors.New("Data source not found")
+	ErrDataSourceNotFound   = errors.New("Data source not found")
+	ErrDataSourceNameExists = errors.New("Data source with same name already exists")
 )
 
 type DsAccess string

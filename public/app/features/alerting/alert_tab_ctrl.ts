@@ -6,6 +6,7 @@ import {QueryPart} from 'app/core/components/query_part/query_part';
 import alertDef from './alert_def';
 import config from 'app/core/config';
 import moment from 'moment';
+import appEvents from 'app/core/app_events';
 
 export class AlertTabCtrl {
   panel: any;
@@ -47,19 +48,18 @@ export class AlertTabCtrl {
   $onInit() {
     this.addNotificationSegment = this.uiSegmentSrv.newPlusButton();
 
-    this.initModel();
-    this.validateModel();
+    // subscribe to graph threshold handle changes
+    var thresholdChangedEventHandler = this.graphThresholdChanged.bind(this);
+    this.panelCtrl.events.on('threshold-changed', thresholdChangedEventHandler);
 
-    // set panel alert edit mode
+   // set panel alert edit mode
     this.$scope.$on("$destroy", () => {
+      this.panelCtrl.events.off("threshold-changed", thresholdChangedEventHandler);
       this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
     });
 
-    // subscribe to graph threshold handle changes
-    this.panelCtrl.events.on('threshold-changed', this.graphThresholdChanged.bind(this));
-
-    // build notification model
+       // build notification model
     this.notifications = [];
     this.alertNotifications = [];
     this.alertHistory = [];
@@ -67,21 +67,8 @@ export class AlertTabCtrl {
     return this.backendSrv.get('/api/alert-notifications').then(res => {
       this.notifications = res;
 
-      _.each(this.alert.notifications, item => {
-        var model = _.find(this.notifications, {id: item.id});
-        if (model) {
-          model.iconClass = this.getNotificationIcon(model.type);
-          this.alertNotifications.push(model);
-        }
-      });
-
-      _.each(this.notifications, item => {
-        if (item.isDefault) {
-          item.iconClass = this.getNotificationIcon(item.type);
-          item.bgColor = "#00678b";
-          this.alertNotifications.push(item);
-        }
-      });
+      this.initModel();
+      this.validateModel();
     });
   }
 
@@ -142,9 +129,8 @@ export class AlertTabCtrl {
   }
 
   initModel() {
-    var alert = this.alert = this.panel.alert = this.panel.alert || {enabled: false};
-
-    if (!this.alert.enabled) {
+    var alert = this.alert = this.panel.alert;
+    if (!alert) {
       return;
     }
 
@@ -167,6 +153,22 @@ export class AlertTabCtrl {
     }, []);
 
     ThresholdMapper.alertToGraphThresholds(this.panel);
+
+    for (let addedNotification of alert.notifications) {
+      var model = _.find(this.notifications, {id: addedNotification.id});
+      if (model) {
+        model.iconClass = this.getNotificationIcon(model.type);
+        this.alertNotifications.push(model);
+      }
+    }
+
+    for (let notification of this.notifications) {
+      if (notification.isDefault) {
+        notification.iconClass = this.getNotificationIcon(notification.type);
+        notification.bgColor = "#00678b";
+        this.alertNotifications.push(notification);
+      }
+    }
 
     this.panelCtrl.editingThresholds = true;
     this.panelCtrl.render();
@@ -192,7 +194,7 @@ export class AlertTabCtrl {
   }
 
   validateModel() {
-    if (!this.alert.enabled) {
+    if (!this.alert) {
       return;
     }
 
@@ -302,14 +304,24 @@ export class AlertTabCtrl {
   }
 
   delete() {
-    this.alert = this.panel.alert = {enabled: false};
-    this.panel.thresholds = [];
-    this.conditionModels = [];
-    this.panelCtrl.render();
+    appEvents.emit('confirm-modal', {
+      title: 'Delete Alert',
+      text: 'Are you sure you want to delete this alert rule?',
+      text2: 'You need to save dashboard for the delete to take effect',
+      icon: 'fa-trash',
+      yesText: 'Delete',
+      onConfirm: () => {
+        delete this.panel.alert;
+        this.alert = null;
+        this.panel.thresholds = [];
+        this.conditionModels = [];
+        this.panelCtrl.render();
+      }
+    });
   }
 
   enable() {
-    this.alert.enabled = true;
+    this.panel.alert = {};
     this.initModel();
   }
 

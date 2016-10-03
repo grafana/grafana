@@ -62,7 +62,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         if (!data) {
           return;
         }
-        annotations = data.annotations || annotations;
+        annotations = ctrl.annotations;
         render_panel();
       });
 

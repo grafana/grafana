@@ -42,7 +42,6 @@ func TestAlertRuleExtraction(t *testing.T) {
               "name": "name1",
               "message": "desc1",
               "handler": 1,
-              "enabled": true,
               "frequency": "60s",
               "conditions": [
               {
@@ -66,7 +65,6 @@ func TestAlertRuleExtraction(t *testing.T) {
               "name": "name2",
               "message": "desc2",
               "handler": 0,
-              "enabled": true,
               "frequency": "60s",
               "severity": "warning",
               "conditions": [

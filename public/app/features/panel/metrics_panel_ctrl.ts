@@ -131,7 +131,9 @@ class MetricsPanelCtrl extends PanelCtrl {
     var intervalOverride = this.panel.interval;
 
     // if no panel interval check datasource
-    if (!intervalOverride && this.datasource && this.datasource.interval) {
+    if (intervalOverride) {
+      intervalOverride = this.templateSrv.replace(intervalOverride, this.panel.scopedVars);
+    } else if (this.datasource && this.datasource.interval) {
       intervalOverride = this.datasource.interval;
     }
 
