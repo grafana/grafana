@@ -1,6 +1,7 @@
 package elasticsearch
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"strconv"
@@ -28,7 +29,7 @@ func init() {
 	tsdb.RegisterExecutor("elasticsearch", NewEsExecutor)
 }
 
-func (e *EsExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *EsExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
 	batchResult := &tsdb.BatchResult{}
 
 	//convert dashboard query datastructure to helper objects
