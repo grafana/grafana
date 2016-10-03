@@ -1,6 +1,7 @@
 package opentsdb
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -25,6 +26,6 @@ func init() {
 	tsdb.RegisterExecutor("opentsdb", NewOpenTsdbExecutorExecutor)
 }
 
-func (e *OpenTsdbExecutor) Execute(queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
 	panic("Missing implementation")
 }
