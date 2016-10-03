@@ -10,6 +10,7 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 
+	"gopkg.in/guregu/null.v3"
 	elastic "gopkg.in/olivere/elastic.v3"
 )
 
@@ -187,7 +188,7 @@ func (e *EsExecutor) processDateHistogram(esQuery EsQuery, bucketAgg *elastic.Ag
 	for i := 0; i < len(esQuery.Metrics); i++ {
 		mAgg := esQuery.Metrics[i]
 		if mAgg.Hide == false { //TODO raise error if there is more then one metric visible
-			var values [][2]*float64
+			var values tsdb.TimeSeriesPoints
 			for _, bucket := range bucketAgg.Buckets {
 				if mAgg.MetricType == "extended_stats" {
 					//extended, found := bucket.Aggregations.ExtendedStats(mAgg.Id)
@@ -202,15 +203,14 @@ func (e *EsExecutor) processDateHistogram(esQuery EsQuery, bucketAgg *elastic.Ag
 				} else {
 					//everything with json key value should work with this
 					derivative, found := bucket.Aggregations.Derivative(mAgg.Id) //TODO use correct type
-					var valueRow [2]*float64
+					var valueRow [2]null.Float
 					bucketPoint := float64(bucket.Key)
-					valueRow[1] = &bucketPoint
+					valueRow[1] = null.NewFloat(bucketPoint, true)
 					if found && derivative.Value != nil {
-						valueRow[0] = derivative.Value
+						valueRow[0] = null.NewFloat(*derivative.Value, true)
 					} else {
 						//use doc_count
-						point := float64(bucket.DocCount)
-						valueRow[0] = &point
+						valueRow[0] = null.NewFloat(float64(bucket.DocCount), true)
 					}
 					values = append(values, valueRow)
 				}
