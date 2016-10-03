@@ -82,7 +82,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange)
 	result := make(tsdb.TimeSeriesSlice, 0)
 
-	resp, err := c.HandleRequest(context.Context, req)
+	resp, err := c.HandleRequest(context.Ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("tsdb.HandleRequest() error %v", err)
 	}

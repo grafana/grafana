@@ -57,7 +57,7 @@ func (n *RootNotifier) Notify(context *EvalContext) error {
 }
 
 func (n *RootNotifier) sendNotifications(context *EvalContext, notifiers []Notifier) error {
-	g, _ := errgroup.WithContext(context.Context)
+	g, _ := errgroup.WithContext(context.Ctx)
 
 	for _, notifier := range notifiers {
 		n.log.Info("Sending notification", "firing", context.Firing, "type", notifier.GetType())

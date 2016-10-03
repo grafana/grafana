@@ -90,7 +90,7 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	data, _ := json.Marshal(&body)
 	cmd := &m.SendWebhookSync{Url: this.Url, Body: string(data)}
 
-	if err := bus.DispatchCtx(evalContext, cmd); err != nil {
+	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		this.log.Error("Failed to send slack notification", "error", err, "webhook", this.Name)
 	}
 
