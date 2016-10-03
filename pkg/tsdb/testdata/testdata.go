@@ -1,6 +1,8 @@
 package testdata
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -21,7 +23,7 @@ func init() {
 	tsdb.RegisterExecutor("grafana-testdata-datasource", NewTestDataExecutor)
 }
 
-func (e *TestDataExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *TestDataExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 	result.QueryResults = make(map[string]*tsdb.QueryResult)
 

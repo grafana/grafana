@@ -12,7 +12,18 @@ type SendEmailCommand struct {
 	Info     string
 }
 
+type SendEmailCommandSync struct {
+	SendEmailCommand
+}
+
 type SendWebhook struct {
+	Url      string
+	User     string
+	Password string
+	Body     string
+}
+
+type SendWebhookSync struct {
 	Url      string
 	User     string
 	Password string
