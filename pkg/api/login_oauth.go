@@ -29,7 +29,7 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	code := ctx.Query("code")
 	if code == "" {
-		ctx.Redirect(connect.AuthCodeURL("", oauth2.AccessTypeOnline))
+		ctx.Redirect(connect.AuthCodeURL(setting.OAuthService.OAuthInfos[name].State, oauth2.AccessTypeOnline))
 		return
 	}
 
