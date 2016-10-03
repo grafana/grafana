@@ -37,21 +37,9 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
         query.dimensions = self.convertDimensionFormat(target.dimensions, options.scopedVars);
         query.statistics = target.statistics;
 
-        var range = end - start;
-        if (!target.period) {
-          query.period = (query.namespace === 'AWS/EC2') ? 300 : 60;
-        } else if (/^\d+$/.test(target.period)) {
-          query.period = parseInt(target.period, 10);
-        } else {
-          query.period = kbn.interval_to_seconds(templateSrv.replace(target.period, options.scopedVars));
-        }
-        if (query.period < 60) {
-          query.period = 60;
-        }
-        if (range / query.period >= 1440) {
-          query.period = Math.ceil(range / 1440 / 60) * 60;
-        }
-        target.period = query.period;
+        var period = this._getPeriod(target, query, options, start, end);
+        target.period = period;
+        query.period = period;
 
         queries.push(query);
       }.bind(this));
@@ -77,6 +65,27 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
 
         return {data: result};
       });
+    };
+
+    this._getPeriod = function(target, query, options, start, end) {
+      var period;
+      var range = end - start;
+
+      if (!target.period) {
+        period = (query.namespace === 'AWS/EC2') ? 300 : 60;
+      } else if (/^\d+$/.test(target.period)) {
+        period = parseInt(target.period, 10);
+      } else {
+        period = kbn.interval_to_seconds(templateSrv.replace(target.period, options.scopedVars));
+      }
+      if (query.period < 60) {
+        period = 60;
+      }
+      if (range / query.period >= 1440) {
+        period = Math.ceil(range / 1440 / 60) * 60;
+      }
+
+      return period;
     };
 
     this.performTimeSeriesQuery = function(query, start, end) {
