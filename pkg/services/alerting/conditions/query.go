@@ -123,6 +123,7 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRa
 					BasicAuth:         datasource.BasicAuth,
 					BasicAuthUser:     datasource.BasicAuthUser,
 					BasicAuthPassword: datasource.BasicAuthPassword,
+					JsonData:          datasource.JsonData,
 				},
 			},
 		},

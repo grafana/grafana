@@ -39,6 +39,7 @@ type DataSourceInfo struct {
 	BasicAuth         bool
 	BasicAuthUser     string
 	BasicAuthPassword string
+	JsonData          *simplejson.Json
 }
 
 type BatchTiming struct {
