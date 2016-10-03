@@ -3,7 +3,6 @@ package elasticsearch
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -36,8 +35,7 @@ func (e *EsExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, conte
 	//convert dashboard query datastructure to helper objects
 	esQuerys := e.convertQueries(queries)
 	for _, esQuery := range esQuerys {
-		//debug output
-		fmt.Printf("inspect esquery %+v\n", esQuery)
+		e.log.Debug("inspect esquery", "query", esQuery)
 
 		//build and execute search
 		searchResult := e.search(esQuery, context)
@@ -73,7 +71,7 @@ func (e *EsExecutor) buildClient(dataSourceInfo *tsdb.DataSourceInfo) *elastic.C
 	}
 	client, err := elastic.NewClient(clientOptions...)
 	if err != nil {
-		fmt.Printf("\nERROR: creating elastic client \n%#v", err)
+		e.log.Error("Creating elastic client", "error", err)
 	}
 	return client
 }
@@ -83,14 +81,12 @@ func (e *EsExecutor) convertQueries(queries tsdb.QuerySlice) []EsQuery {
 
 	for _, query := range queries { //TODO allow more then one query
 		str, _ := query.Model.EncodePretty()
-		//debug print query
-		fmt.Printf("\nElastic query json model: \n%s", str)
-		e.log.Info("Elastic query")
+		e.log.Info("Elastic query", "query", query.Model)
 
 		var esQuery EsQuery
 		jerr := json.Unmarshal(str, &esQuery)
 		if jerr != nil {
-			fmt.Println("json parser error %s", jerr)
+			e.log.Error("json parser error %s", "error", jerr)
 		} else {
 			esQuery.DataSource = query.DataSource
 			esQuerys = append(esQuerys, esQuery)
@@ -113,11 +109,9 @@ func (e *EsExecutor) search(esQuery EsQuery, context *tsdb.QueryContext) *elasti
 	searchService = e.buildQuery(searchService, esQuery, context)
 	searchService = e.buildAggregations(searchService, esQuery, context)
 
-	// execute
 	searchResult, err := searchService.Do()
 	if err != nil {
-		// Handle error
-		fmt.Printf("\nERROR: executing elastic query \n%#v\n%s", err, err)
+		e.log.Error("Executing elastic query", "error", err)
 		return nil
 	}
 
@@ -137,21 +131,21 @@ func (e *EsExecutor) processAggregation(esQuery EsQuery, index int32, aggregatio
 	if bAgg.AggType == "date_histogram" {
 		bucketAgg, found := aggregation.DateHistogram(bAgg.Id)
 		if found != true {
-			fmt.Printf("Can not find Aggregation with id %s\n", bAgg.Id)
+			e.log.Info("Can not find Aggregation with id", "id", bAgg.Id)
 		}
 		result := e.processDateHistogram(esQuery, bucketAgg)
 		results = append(results, result)
 	} else if bAgg.AggType == "terms" {
 		bucketAgg, found := aggregation.Terms(bAgg.Id)
 		if found != true {
-			fmt.Printf("Can not find Aggregation with id %s\n", bAgg.Id)
+			e.log.Info("Can not find Aggregation with id", "id", bAgg.Id)
 		}
 		aggResults := e.processTerms(esQuery, index, bucketAgg)
 		for _, result := range aggResults {
 			results = append(results, result)
 		}
 	} else {
-		fmt.Printf("Aggregation type currently not supported: %s\n", bAgg.AggType)
+		e.log.Error("Aggregation type currently not supported", "type", bAgg.AggType)
 	}
 	return results
 }
@@ -191,15 +185,9 @@ func (e *EsExecutor) processDateHistogram(esQuery EsQuery, bucketAgg *elastic.Ag
 			var values tsdb.TimeSeriesPoints
 			for _, bucket := range bucketAgg.Buckets {
 				if mAgg.MetricType == "extended_stats" {
-					//extended, found := bucket.Aggregations.ExtendedStats(mAgg.Id)
-					//if mAgg.Meta.Count {
-					//TODO
-					//}
-					fmt.Printf("Aggregation type currently not supported: %s\n", mAgg.MetricType)
+					e.log.Info("Aggregation type currently not supported", "type", mAgg.MetricType)
 				} else if mAgg.MetricType == "percentiles" {
-					//TODO
-					//Percentiles
-					fmt.Printf("Aggregation type currently not supported: %s\n", mAgg.MetricType)
+					e.log.Info("Aggregation type currently not supported", "type", mAgg.MetricType)
 				} else {
 					//everything with json key value should work with this
 					derivative, found := bucket.Aggregations.Derivative(mAgg.Id) //TODO use correct type
@@ -223,15 +211,13 @@ func (e *EsExecutor) processDateHistogram(esQuery EsQuery, bucketAgg *elastic.Ag
 			}
 			queryName = queryName + mAgg.Id //TODO we should also append the term
 
-			//append time series to results
 			queryRes.RefId = esQuery.RefId
 			queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
 				Name:   queryName,
 				Points: values,
 			})
 
-			//debug print
-			fmt.Printf("query result series %s: %+v\n", queryRes.Series[0].Name, queryRes.Series[0].Points)
+			e.log.Debug("query result series", "name", queryRes.Series[0].Name, "points", queryRes.Series[0].Points)
 		}
 	}
 
@@ -325,7 +311,7 @@ func (e *EsExecutor) buildMetricAggregation(agg EsMetric, context *tsdb.QueryCon
 		//TODO change model
 		aggregation = elastic.NewMovAvgAggregation().BucketsPath(agg.Field).Window(agg.Settings.Window)
 	} else { //TODO add more
-		fmt.Printf("Aggregation type currently not supported: %s\n", agg.MetricType)
+		e.log.Info("Aggregation type currently not supported", "type", agg.MetricType)
 	}
 
 	return aggregation
@@ -347,7 +333,7 @@ func (e *EsExecutor) buildBucketAggregation(agg EsBucketAgg, context *tsdb.Query
 		}
 		aggregation = elastic.NewTermsAggregation().Field(agg.Field).Size(int(i))
 	} else { //TODO add more
-		fmt.Printf("Aggregation type currently not supported: %s\n", agg.AggType)
+		e.log.Info("Aggregation type currently not supported", "type", agg.AggType)
 	}
 
 	return aggregation
@@ -362,7 +348,7 @@ func (e *EsExecutor) formatTimeRange(input string) string {
 
 	duration, err := time.ParseDuration("-" + input)
 	if err != nil {
-		fmt.Printf("Something failed on duration parsing %s\n", err)
+		e.log.Error("Something failed on duration parsing", "error", err)
 	}
 
 	return strconv.FormatInt(time.Now().Add(duration).UnixNano()/1000/1000, 10)
