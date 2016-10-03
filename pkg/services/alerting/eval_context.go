@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -20,14 +21,30 @@ type EvalContext struct {
 	StartTime       time.Time
 	EndTime         time.Time
 	Rule            *Rule
-	DoneChan        chan bool
-	CancelChan      chan bool
 	log             log.Logger
 	dashboardSlug   string
 	ImagePublicUrl  string
 	ImageOnDiskPath string
 	NoDataFound     bool
 	RetryCount      int
+
+	Context context.Context
+}
+
+func (evalContext *EvalContext) Deadline() (deadline time.Time, ok bool) {
+	return evalContext.Deadline()
+}
+
+func (evalContext *EvalContext) Done() <-chan struct{} {
+	return evalContext.Context.Done()
+}
+
+func (evalContext *EvalContext) Err() error {
+	return evalContext.Context.Err()
+}
+
+func (evalContext *EvalContext) Value(key interface{}) interface{} {
+	return evalContext.Context.Value(key)
 }
 
 type StateDescription struct {
@@ -94,14 +111,13 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 	}
 }
 
-func NewEvalContext(rule *Rule) *EvalContext {
+func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
 	return &EvalContext{
+		Context:     alertCtx,
 		StartTime:   time.Now(),
 		Rule:        rule,
 		Logs:        make([]*ResultLogEntry, 0),
 		EvalMatches: make([]*EvalMatch, 0),
-		DoneChan:    make(chan bool, 1),
-		CancelChan:  make(chan bool, 1),
 		log:         log.New("alerting.evalContext"),
 		RetryCount:  0,
 	}

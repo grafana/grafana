@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"testing"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -19,25 +20,25 @@ func TestAlertingExecutor(t *testing.T) {
 		handler := NewEvalHandler()
 
 		Convey("Show return triggered with single passing condition", func() {
-			context := NewEvalContext(&Rule{
+			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{&conditionStub{
 					firing: true,
 				}},
 			})
 
-			handler.eval(context)
+			handler.Eval(context)
 			So(context.Firing, ShouldEqual, true)
 		})
 
 		Convey("Show return false with not passing condition", func() {
-			context := NewEvalContext(&Rule{
+			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
 					&conditionStub{firing: true},
 					&conditionStub{firing: false},
 				},
 			})
 
-			handler.eval(context)
+			handler.Eval(context)
 			So(context.Firing, ShouldEqual, false)
 		})
 	})

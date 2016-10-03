@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -11,7 +12,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/prometheus/client_golang/api/prometheus"
 	pmodel "github.com/prometheus/common/model"
-	"golang.org/x/net/context"
 )
 
 type PrometheusExecutor struct {
@@ -45,7 +45,7 @@ func (e *PrometheusExecutor) getClient() (prometheus.QueryAPI, error) {
 	return prometheus.NewQueryAPI(client), nil
 }
 
-func (e *PrometheusExecutor) Execute(queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	client, err := e.getClient()
@@ -64,7 +64,7 @@ func (e *PrometheusExecutor) Execute(queries tsdb.QuerySlice, queryContext *tsdb
 		Step:  query.Step,
 	}
 
-	value, err := client.QueryRange(context.Background(), query.Expr, timeRange)
+	value, err := client.QueryRange(ctx, query.Expr, timeRange)
 
 	if err != nil {
 		return resultWithError(result, err)
