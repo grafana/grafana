@@ -58,7 +58,14 @@ func Debug2(message string, v ...interface{}) {
 }
 
 func Info(format string, v ...interface{}) {
-	Root.Info(fmt.Sprintf(format, v))
+	var message string
+	if len(v) > 0 {
+		message = fmt.Sprintf(format, v)
+	} else {
+		message = format
+	}
+
+	Root.Info(message)
 }
 
 func Info2(message string, v ...interface{}) {
@@ -66,7 +73,14 @@ func Info2(message string, v ...interface{}) {
 }
 
 func Warn(format string, v ...interface{}) {
-	Root.Warn(fmt.Sprintf(format, v))
+	var message string
+	if len(v) > 0 {
+		message = fmt.Sprintf(format, v)
+	} else {
+		message = format
+	}
+
+	Root.Warn(message)
 }
 
 func Warn2(message string, v ...interface{}) {

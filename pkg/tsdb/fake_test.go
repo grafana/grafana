@@ -1,5 +1,7 @@
 package tsdb
 
+import "context"
+
 type FakeExecutor struct {
 	results   map[string]*QueryResult
 	resultsFn map[string]ResultsFn
@@ -14,7 +16,7 @@ func NewFakeExecutor(dsInfo *DataSourceInfo) *FakeExecutor {
 	}
 }
 
-func (e *FakeExecutor) Execute(queries QuerySlice, context *QueryContext) *BatchResult {
+func (e *FakeExecutor) Execute(ctx context.Context, queries QuerySlice, context *QueryContext) *BatchResult {
 	result := &BatchResult{QueryResults: make(map[string]*QueryResult)}
 	for _, query := range queries {
 		if results, has := e.results[query.RefId]; has {

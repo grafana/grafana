@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"regexp"
@@ -10,7 +11,6 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/prometheus/client_golang/api/prometheus"
-	"golang.org/x/net/context"
 	pmodel "github.com/prometheus/common/model"
 )
 
@@ -45,7 +45,7 @@ func (e *PrometheusExecutor) getClient() (prometheus.QueryAPI, error) {
 	return prometheus.NewQueryAPI(client), nil
 }
 
-func (e *PrometheusExecutor) Execute(queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	client, err := e.getClient()
@@ -64,7 +64,7 @@ func (e *PrometheusExecutor) Execute(queries tsdb.QuerySlice, queryContext *tsdb
 		Step:  query.Step,
 	}
 
-	value, err := client.QueryRange(context.Background(), query.Expr, timeRange)
+	value, err := client.QueryRange(ctx, query.Expr, timeRange)
 
 	if err != nil {
 		return resultWithError(result, err)
@@ -111,12 +111,12 @@ func parseQuery(queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) (*Prom
 		return nil, err
 	}
 
-	start, err := queryContext.TimeRange.FromTime()
+	start, err := queryContext.TimeRange.ParseFrom()
 	if err != nil {
 		return nil, err
 	}
 
-	end, err := queryContext.TimeRange.ToTime()
+	end, err := queryContext.TimeRange.ParseTo()
 	if err != nil {
 		return nil, err
 	}
@@ -132,7 +132,7 @@ func parseQuery(queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) (*Prom
 
 func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb.QueryResult, error) {
 	queryResults := make(map[string]*tsdb.QueryResult)
-	queryRes := &tsdb.QueryResult{}
+	queryRes := tsdb.NewQueryResult()
 
 	data, ok := value.(pmodel.Matrix)
 	if !ok {
@@ -140,17 +140,15 @@ func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb
 	}
 
 	for _, v := range data {
-		var points [][2]*float64
-		for _, k := range v.Values {
-			timestamp := float64(k.Timestamp)
-			val := float64(k.Value)
-			points = append(points, [2]*float64{&val, &timestamp})
+		series := tsdb.TimeSeries{
+			Name: formatLegend(v.Metric, query),
 		}
 
-		queryRes.Series = append(queryRes.Series, &tsdb.TimeSeries{
-			Name:   formatLegend(v.Metric, query),
-			Points: points,
-		})
+		for _, k := range v.Values {
+			series.Points = append(series.Points, tsdb.NewTimePoint(float64(k.Value), float64(k.Timestamp.Unix()*1000)))
+		}
+
+		queryRes.Series = append(queryRes.Series, &series)
 	}
 
 	queryResults["A"] = queryRes

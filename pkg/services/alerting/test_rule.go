@@ -1,6 +1,7 @@
 package alerting
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -48,7 +49,7 @@ func handleAlertTestCommand(cmd *AlertTestCommand) error {
 func testAlertRule(rule *Rule) *EvalContext {
 	handler := NewEvalHandler()
 
-	context := NewEvalContext(rule)
+	context := NewEvalContext(context.TODO(), rule)
 	context.IsTestRun = true
 
 	handler.Eval(context)

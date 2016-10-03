@@ -135,3 +135,18 @@ type GetAlertByIdQuery struct {
 
 	Result *Alert
 }
+
+type GetAlertStatesForDashboardQuery struct {
+	OrgId       int64
+	DashboardId int64
+
+	Result []*AlertStateInfoDTO
+}
+
+type AlertStateInfoDTO struct {
+	Id           int64          `json:"id"`
+	DashboardId  int64          `json:"dashboardId"`
+	PanelId      int64          `json:"panelId"`
+	State        AlertStateType `json:"state"`
+	NewStateDate time.Time      `json:"newStateDate"`
+}

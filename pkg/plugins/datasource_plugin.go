@@ -6,6 +6,7 @@ type DataSourcePlugin struct {
 	FrontendPluginBase
 	Annotations bool   `json:"annotations"`
 	Metrics     bool   `json:"metrics"`
+	Alerting    bool   `json:"alerting"`
 	BuiltIn     bool   `json:"builtIn"`
 	Mixed       bool   `json:"mixed"`
 	App         string `json:"app"`

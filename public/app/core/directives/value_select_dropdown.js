@@ -236,7 +236,7 @@ function (angular, _, coreModule) {
         var inputEl = elem.find('input');
 
         function openDropdown() {
-          inputEl.css('width', Math.max(linkEl.width(), 30) + 'px');
+          inputEl.css('width', Math.max(linkEl.width(), 80) + 'px');
 
           inputEl.show();
           linkEl.hide();

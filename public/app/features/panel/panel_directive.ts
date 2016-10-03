@@ -6,7 +6,7 @@ import $ from 'jquery';
 var module = angular.module('grafana.directives');
 
 var panelTemplate = `
-  <div class="panel-container" ng-class="{'panel-transparent': ctrl.panel.transparent}">
+  <div class="panel-container">
     <div class="panel-header">
       <span class="alert-error panel-error small pointer" ng-if="ctrl.error" ng-click="ctrl.openInspector()">
         <span data-placement="top" bs-tooltip="ctrl.error">
@@ -65,6 +65,26 @@ module.directive('grafanaPanel', function() {
     link: function(scope, elem) {
       var panelContainer = elem.find('.panel-container');
       var ctrl = scope.ctrl;
+
+      // the reason for handling these classes this way is for performance
+      // limit the watchers on panels etc
+
+      ctrl.events.on('render', () => {
+        panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
+        panelContainer.toggleClass('panel-has-alert', ctrl.panel.alert !== undefined);
+
+        if (panelContainer.hasClass('panel-has-alert')) {
+          panelContainer.removeClass('panel-alert-state--ok panel-alert-state--alerting');
+        }
+
+        // set special class for ok, or alerting states
+        if (ctrl.alertState) {
+          if (ctrl.alertState.state === 'ok' || ctrl.alertState.state === 'alerting') {
+            panelContainer.addClass('panel-alert-state--' + ctrl.alertState.state);
+          }
+        }
+      });
+
       scope.$watchGroup(['ctrl.fullscreen', 'ctrl.containerHeight'], function() {
         panelContainer.css({minHeight: ctrl.containerHeight});
         elem.toggleClass('panel-fullscreen', ctrl.fullscreen ? true : false);

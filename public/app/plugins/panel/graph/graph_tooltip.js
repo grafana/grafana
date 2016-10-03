@@ -121,18 +121,18 @@ function ($, _) {
       var seriesList = getSeriesFn();
       var group, value, absoluteTime, hoverInfo, i, series, seriesHtml, tooltipFormat;
 
-      if (panel.tooltip.msResolution) {
-        tooltipFormat = 'YYYY-MM-DD HH:mm:ss.SSS';
-      } else {
-        tooltipFormat = 'YYYY-MM-DD HH:mm:ss';
-      }
-
       if (dashboard.sharedCrosshair) {
-        ctrl.publishAppEvent('setCrosshair', { pos: pos, scope: scope });
+        ctrl.publishAppEvent('setCrosshair', {pos: pos, scope: scope});
       }
 
       if (seriesList.length === 0) {
         return;
+      }
+
+      if (seriesList[0].hasMsResolution) {
+        tooltipFormat = 'YYYY-MM-DD HH:mm:ss.SSS';
+      } else {
+        tooltipFormat = 'YYYY-MM-DD HH:mm:ss';
       }
 
       if (panel.tooltip.shared) {

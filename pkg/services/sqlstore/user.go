@@ -128,7 +128,11 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			}
 
 			if setting.AutoAssignOrg && !user.IsAdmin {
-				orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
+				if len(cmd.DefaultOrgRole) > 0 {
+					orgUser.Role = m.RoleType(cmd.DefaultOrgRole)
+				} else {
+					orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
+				}
 			}
 
 			if _, err = sess.Insert(&orgUser); err != nil {

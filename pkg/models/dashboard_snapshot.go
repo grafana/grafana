@@ -63,6 +63,9 @@ type DeleteDashboardSnapshotCommand struct {
 	DeleteKey string `json:"-"`
 }
 
+type DeleteExpiredSnapshotsCommand struct {
+}
+
 type GetDashboardSnapshotQuery struct {
 	Key string
 

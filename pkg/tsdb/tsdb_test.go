@@ -1,6 +1,7 @@
 package tsdb
 
 import (
+	"context"
 	"testing"
 	"time"
 
@@ -72,7 +73,7 @@ func TestMetricQuery(t *testing.T) {
 		fakeExecutor := registerFakeExecutor()
 		fakeExecutor.Return("A", TimeSeriesSlice{&TimeSeries{Name: "argh"}})
 
-		res, err := HandleRequest(req)
+		res, err := HandleRequest(context.TODO(), req)
 		So(err, ShouldBeNil)
 
 		Convey("Should return query results", func() {
@@ -95,7 +96,7 @@ func TestMetricQuery(t *testing.T) {
 		fakeExecutor.Return("A", TimeSeriesSlice{&TimeSeries{Name: "argh"}})
 		fakeExecutor.Return("B", TimeSeriesSlice{&TimeSeries{Name: "barg"}})
 
-		res, err := HandleRequest(req)
+		res, err := HandleRequest(context.TODO(), req)
 		So(err, ShouldBeNil)
 
 		Convey("Should return query results", func() {
@@ -120,7 +121,7 @@ func TestMetricQuery(t *testing.T) {
 			},
 		}
 
-		res, err := HandleRequest(req)
+		res, err := HandleRequest(context.TODO(), req)
 		So(err, ShouldBeNil)
 
 		Convey("Should have been batched in two requests", func() {
@@ -137,7 +138,7 @@ func TestMetricQuery(t *testing.T) {
 			},
 		}
 
-		_, err := HandleRequest(req)
+		_, err := HandleRequest(context.TODO(), req)
 		So(err, ShouldNotBeNil)
 	})
 
@@ -173,7 +174,7 @@ func TestMetricQuery(t *testing.T) {
 				}}
 		})
 
-		res, err := HandleRequest(req)
+		res, err := HandleRequest(context.TODO(), req)
 		So(err, ShouldBeNil)
 
 		Convey("Should have been batched in two requests", func() {

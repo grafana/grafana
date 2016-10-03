@@ -23,10 +23,10 @@ function (_, $, coreModule) {
         getOptions: "&",
         onChange: "&",
       },
-      link: function($scope, elem, attrs) {
+      link: function($scope, elem) {
         var $input = $(inputTemplate);
-        var $button = $(attrs.styleMode === 'select' ? selectTemplate : linkTemplate);
         var segment = $scope.segment;
+        var $button = $(segment.selectMode ? selectTemplate : linkTemplate);
         var options = null;
         var cancelBlur = null;
         var linkMode = true;
@@ -136,7 +136,7 @@ function (_, $, coreModule) {
 
         $button.click(function() {
           options = null;
-          $input.css('width', ($button.width() + 16) + 'px');
+          $input.css('width', (Math.max($button.width(), 80) + 16) + 'px');
 
           $button.hide();
           $input.show();
@@ -170,6 +170,7 @@ function (_, $, coreModule) {
       },
       link: {
         pre: function postLink($scope, elem, attrs) {
+          var cachedOptions;
 
           $scope.valueToSegment = function(value) {
             var option = _.find($scope.options, {value: value});
@@ -177,7 +178,9 @@ function (_, $, coreModule) {
               cssClass: attrs.cssClass,
               custom: attrs.custom,
               value: option ? option.text : value,
+              selectMode: attrs.selectMode,
             };
+
             return uiSegmentSrv.newSegment(segment);
           };
 
@@ -188,13 +191,20 @@ function (_, $, coreModule) {
               });
               return $q.when(optionSegments);
             } else {
-              return $scope.getOptions();
+              return $scope.getOptions().then(function(options) {
+                cachedOptions = options;
+                return _.map(options, function(option) {
+                  return uiSegmentSrv.newSegment({value: option.text});
+                });
+              });
             }
           };
 
           $scope.onSegmentChange = function() {
-            if ($scope.options) {
-              var option = _.find($scope.options, {text: $scope.segment.value});
+            var options = $scope.options || cachedOptions;
+
+            if (options) {
+              var option = _.find(options, {text: $scope.segment.value});
               if (option && option.value !== $scope.property) {
                 $scope.property = option.value;
               } else if (attrs.custom !== 'false') {
