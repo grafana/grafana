@@ -3,7 +3,7 @@ package tsdb
 import "context"
 
 type Executor interface {
-	Execute(ctx context.Context, queries QuerySlice, context *QueryContext) *BatchResult
+	Execute(ctx context.Context, queries QuerySlice, query *QueryContext) *BatchResult
 }
 
 var registry map[string]GetExecutorFn
