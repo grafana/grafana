@@ -30,6 +30,9 @@ using environment variables using the syntax:
 Where the section name is the text within the brackets. Everything
 should be upper case, `.` should be replaced by `_`. For example, given these configuration settings:
 
+    # default section
+    instance_name = ${HOSTNAME}
+
     [security]
     admin_user = admin
 
@@ -39,6 +42,7 @@ should be upper case, `.` should be replaced by `_`. For example, given these co
 
 Then you can override them using:
 
+    export GF_DEFAULT_INSTANCE_NAME=my-instance
     export GF_SECURITY_ADMIN_USER=true
     export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 
