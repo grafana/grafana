@@ -30,7 +30,7 @@ define([
         target.tags[$scope.targetObj.currentTagKey] = $scope.targetObj.currentTagValue;
         window.decomposeTarget = target;
         $location.path("/decompose");
-      }
+      };
 
       $scope.getTextValues = function(metricFindResult) {
         return _.map(metricFindResult, function(value) { return value.text; });

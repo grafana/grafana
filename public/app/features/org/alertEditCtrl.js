@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AlertEditCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, datasourceSrv) {
+  module.controller('AlertEditCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, datasourceSrv, contextSrv) {
 
     $scope.init = function() {
       $scope.datasource = null;
@@ -43,6 +43,7 @@ function (angular, _) {
       } else {
         $scope.alertDef.modificationTime = milliseconds;
       }
+      $scope.alertDef.org = contextSrv.user.orgId;
 
       alertMgrSrv.save($scope.alertDef).then(function onSuccess() {
         $location.path("alerts");
