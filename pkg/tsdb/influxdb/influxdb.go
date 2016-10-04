@@ -38,5 +38,17 @@ func init() {
 }
 
 func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
-	panic("missing implementation")
+	result := &tsdb.BatchResult{}
+	for _, v := range queries {
+
+		query, err := ParseQuery(v.Model)
+
+		if err != nil {
+			result.Error = err
+			return result
+		}
+		glog.Info("Influxdb executor", "query", query)
+	}
+
+	return result
 }
