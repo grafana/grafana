@@ -277,6 +277,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
                 if ((data[i].stats.timeStep / 1.5) < options.series.bars.barWidth) {
                   options.series.bars.barWidth = data[i].stats.timeStep / 1.5;
                 }
+              }
             }
             addTimeAxis(options);
             break;
