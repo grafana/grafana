@@ -15,11 +15,6 @@ type Tag struct {
 	Value    string
 }
 
-type QueryPart struct {
-	Type   string
-	Params []string
-}
-
 type Select []QueryPart
 
 type InfluxDbSelect struct {

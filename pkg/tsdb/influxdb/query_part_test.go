@@ -9,55 +9,54 @@ import (
 func TestInfluxdbQueryPart(t *testing.T) {
 	Convey("Influxdb query part builder", t, func() {
 
-		Convey("can build query", func() {
+		Convey("should handle field renderer parts", func() {
+			part := QueryPart{
+				Type:   "field",
+				Params: []string{"value"},
+			}
+
+			res, _ := part.Render("value")
+			So(res, ShouldEqual, `"value"`)
 		})
 
-		Convey("empty queries should return error", func() {
+		Convey("should handle nested function parts", func() {
+			part := QueryPart{
+				Type:   "derivative",
+				Params: []string{"10s"},
+			}
 
+			res, _ := part.Render("mean(value)")
+			So(res, ShouldEqual, "derivative(mean(value), 10s)")
+		})
+
+		Convey("should nest spread function", func() {
+			part := QueryPart{
+				Type: "spread",
+			}
+
+			res, err := part.Render("value")
+			So(err, ShouldBeNil)
+			So(res, ShouldEqual, "spread(value)")
+		})
+
+		Convey("should handle suffix parts", func() {
+			part := QueryPart{
+				Type:   "math",
+				Params: []string{"/ 100"},
+			}
+
+			res, _ := part.Render("mean(value)")
+			So(res, ShouldEqual, "mean(value) / 100")
+		})
+
+		Convey("should handle alias parts", func() {
+			part := QueryPart{
+				Type:   "alias",
+				Params: []string{"test"},
+			}
+
+			res, _ := part.Render("mean(value)")
+			So(res, ShouldEqual, `mean(value) AS "test"`)
 		})
 	})
 }
-
-/*
-  describe('series with mesurement only', () => {
-    it('should handle nested function parts', () => {
-      var part = queryPart.create({
-        type: 'derivative',
-        params: ['10s'],
-      });
-
-      expect(part.text).to.be('derivative(10s)');
-      expect(part.render('mean(value)')).to.be('derivative(mean(value), 10s)');
-    });
-
-    it('should nest spread function', () => {
-      var part = queryPart.create({
-        type: 'spread'
-      });
-
-      expect(part.text).to.be('spread()');
-      expect(part.render('value')).to.be('spread(value)');
-    });
-
-    it('should handle suffirx parts', () => {
-      var part = queryPart.create({
-        type: 'math',
-        params: ['/ 100'],
-      });
-
-      expect(part.text).to.be('math(/ 100)');
-      expect(part.render('mean(value)')).to.be('mean(value) / 100');
-    });
-
-    it('should handle alias parts', () => {
-      var part = queryPart.create({
-        type: 'alias',
-        params: ['test'],
-      });
-
-      expect(part.text).to.be('alias(test)');
-      expect(part.render('mean(value)')).to.be('mean(value) AS "test"');
-    });
-
-  });
-*/

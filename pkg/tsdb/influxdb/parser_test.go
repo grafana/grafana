@@ -14,70 +14,84 @@ func TestInfluxdbQueryParser(t *testing.T) {
 
 		Convey("converting metric name", func() {
 			json := `
-      {
-        "dsType": "influxdb",
-        "groupBy": [
-          {
-            "params": [
-              "$interval"
-            ],
-            "type": "time"
-          },
-          {
-            "type": "tag",
-            "params": [
-              "datacenter"
-            ]
-          },
-          {
-            "params": [
-              "null"
-            ],
-            "type": "fill"
-          }
-        ],
-        "measurement": "logins.count",
-        "policy": "default",
-        "refId": "B",
-        "resultFormat": "time_series",
-        "select": [
-          [
-            {
-              "params": [
-                "value"
+                  {
+              "dsType": "influxdb",
+              "groupBy": [
+                {
+                  "params": [
+                    "$interval"
+                  ],
+                  "type": "time"
+                },
+                {
+                  "params": [
+                    "datacenter"
+                  ],
+                  "type": "tag"
+                },
+                {
+                  "params": [
+                    "null"
+                  ],
+                  "type": "fill"
+                }
               ],
-              "type": "field"
-            },
-            {
-              "params": [
-
+              "measurement": "logins.count",
+              "policy": "default",
+              "refId": "B",
+              "resultFormat": "time_series",
+              "select": [
+                [
+                  {
+                    "type": "field",
+                    "params": [
+                      "value"
+                    ]
+                  },
+                  {
+                    "type": "count",
+                    "params": []
+                  }
+                ],
+                [
+                  {
+                    "type": "field",
+                    "params": [
+                      "value"
+                    ]
+                  },
+                  {
+                    "type": "mean",
+                    "params": []
+                  }
+                ],
+                [
+                  {
+                    "type": "field",
+                    "params": [
+                      "value"
+                    ]
+                  },
+                  {
+                    "type": "mean",
+                    "params": []
+                  },
+                  {
+                    "type": "math",
+                    "params": [
+                      " / 100"
+                    ]
+                  }
+                ]
               ],
-              "type": "count"
+              "tags": [
+                {
+                  "key": "datacenter",
+                  "operator": "=",
+                  "value": "America"
+                }
+              ]
             }
-          ],
-          [
-            {
-              "params": [
-                "value"
-              ],
-              "type": "field"
-            },
-            {
-              "params": [
-
-              ],
-              "type": "mean"
-            }
-          ]
-        ],
-        "tags": [
-          {
-            "key": "datacenter",
-            "operator": "=",
-            "value": "America"
-          }
-        ]
-      }
       `
 
 			modelJson, err := simplejson.NewJson([]byte(json))
@@ -86,7 +100,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
 			res, err := parser.Parse(modelJson)
 			So(err, ShouldBeNil)
 			So(len(res.GroupBy), ShouldEqual, 3)
-			So(len(res.Selects), ShouldEqual, 2)
+			So(len(res.Selects), ShouldEqual, 3)
 			So(len(res.Tags), ShouldEqual, 1)
 		})
 	})
