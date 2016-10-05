@@ -7,8 +7,14 @@ import (
 
 var renders map[string]QueryDefinition
 
+type DefinitionParameters struct {
+	Name string
+	Type string
+}
+
 type QueryDefinition struct {
 	Renderer func(part *QueryPart, innerExpr string) string
+	Params   []DefinitionParameters
 }
 
 func init() {
@@ -26,34 +32,34 @@ func init() {
 
 	renders["derivative"] = QueryDefinition{
 		Renderer: functionRenderer,
-		//params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
+		Params:   []DefinitionParameters{{Name: "duration", Type: "interval"}},
 	}
 
 	renders["non_negative_derivative"] = QueryDefinition{
 		Renderer: functionRenderer,
-		//params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
+		Params:   []DefinitionParameters{{Name: "duration", Type: "interval"}},
 	}
 	renders["difference"] = QueryDefinition{Renderer: functionRenderer}
 	renders["moving_average"] = QueryDefinition{
 		Renderer: functionRenderer,
-		//params: [{ name: "window", type: "number", options: [5, 10, 20, 30, 40]}]
+		Params:   []DefinitionParameters{{Name: "window", Type: "number"}},
 	}
 	renders["stddev"] = QueryDefinition{Renderer: functionRenderer}
 	renders["time"] = QueryDefinition{
 		Renderer: functionRenderer,
-		//params: [{ name: "interval", type: "time", options: ['auto', '1s', '10s', '1m', '5m', '10m', '15m', '1h'] }],
+		Params:   []DefinitionParameters{{Name: "interval", Type: "time"}},
 	}
 	renders["fill"] = QueryDefinition{
 		Renderer: functionRenderer,
-		//params: [{ name: "fill", type: "string", options: ['none', 'null', '0', 'previous'] }],
+		Params:   []DefinitionParameters{{Name: "fill", Type: "string"}},
 	}
 	renders["elapsed"] = QueryDefinition{
 		Renderer: functionRenderer,
-		//params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
+		Params:   []DefinitionParameters{{Name: "duration", Type: "interval"}},
 	}
 	renders["bottom"] = QueryDefinition{
 		Renderer: functionRenderer,
-		//params: [{name: 'count', type: 'int'}],
+		Params:   []DefinitionParameters{{Name: "count", Type: "int"}},
 	}
 
 	renders["first"] = QueryDefinition{Renderer: functionRenderer}
@@ -62,15 +68,15 @@ func init() {
 	renders["min"] = QueryDefinition{Renderer: functionRenderer}
 	renders["percentile"] = QueryDefinition{
 		Renderer: functionRenderer,
-		//params: [{name: 'nth', type: 'int'}],
+		Params:   []DefinitionParameters{{Name: "nth", Type: "int"}},
 	}
 	renders["top"] = QueryDefinition{
 		Renderer: functionRenderer,
-		//params: [{name: 'count', type: 'int'}],
+		Params:   []DefinitionParameters{{Name: "count", Type: "int"}},
 	}
 	renders["tag"] = QueryDefinition{
 		Renderer: fieldRenderer,
-		//params: [{name: 'tag', type: 'string', dynamicLookup: true}],
+		Params:   []DefinitionParameters{{Name: "tag", Type: "string"}},
 	}
 
 	renders["math"] = QueryDefinition{Renderer: suffixRenderer}
@@ -81,7 +87,7 @@ func fieldRenderer(part *QueryPart, innerExpr string) string {
 	if part.Params[0] == "*" {
 		return "*"
 	}
-	return fmt.Sprintf(`"%v"`, part.Params[0])
+	return fmt.Sprintf(`"%s"`, part.Params[0])
 }
 
 func functionRenderer(part *QueryPart, innerExpr string) string {
@@ -106,19 +112,26 @@ func (r QueryDefinition) Render(part *QueryPart, innerExpr string) string {
 	return r.Renderer(part, innerExpr)
 }
 
-type QueryPartDefinition struct {
+func NewQueryPart(typ string, params []string) (*QueryPart, error) {
+	def, exist := renders[typ]
+
+	if !exist {
+		return nil, fmt.Errorf("Missing query definition for %s", typ)
+	}
+
+	return &QueryPart{
+		Type:   typ,
+		Params: params,
+		Def:    def,
+	}, nil
 }
 
 type QueryPart struct {
+	Def    QueryDefinition
 	Type   string
 	Params []string
 }
 
-func (qp *QueryPart) Render(expr string) (string, error) {
-	renderFn, exist := renders[qp.Type]
-	if !exist {
-		return "", fmt.Errorf("could not find render strategy %s", qp.Type)
-	}
-
-	return renderFn.Renderer(qp, expr), nil
+func (qp *QueryPart) Render(expr string) string {
+	return qp.Def.Renderer(qp, expr)
 }

@@ -10,52 +10,50 @@ func TestInfluxdbQueryPart(t *testing.T) {
 	Convey("Influxdb query part builder", t, func() {
 
 		Convey("should handle field renderer parts", func() {
-			part := QueryPart{
-				Type:   "field",
-				Params: []string{"value"},
-			}
+			part, err := NewQueryPart("field", []string{"value"})
+			So(err, ShouldBeNil)
 
-			res, _ := part.Render("value")
+			res := part.Render("value")
 			So(res, ShouldEqual, `"value"`)
 		})
 
 		Convey("should handle nested function parts", func() {
-			part := QueryPart{
-				Type:   "derivative",
-				Params: []string{"10s"},
-			}
+			part, err := NewQueryPart("derivative", []string{"10s"})
+			So(err, ShouldBeNil)
 
-			res, _ := part.Render("mean(value)")
+			res := part.Render("mean(value)")
 			So(res, ShouldEqual, "derivative(mean(value), 10s)")
 		})
 
-		Convey("should nest spread function", func() {
-			part := QueryPart{
-				Type: "spread",
-			}
-
-			res, err := part.Render("value")
+		Convey("bottom", func() {
+			part, err := NewQueryPart("bottom", []string{"3"})
 			So(err, ShouldBeNil)
-			So(res, ShouldEqual, "spread(value)")
+
+			res := part.Render("value")
+			So(res, ShouldEqual, "bottom(value, 3)")
+		})
+
+		Convey("should nest spread function", func() {
+			part, err := NewQueryPart("spread", []string{})
+			So(err, ShouldBeNil)
+
+			res := part.Render("value")
+			So(res, ShouldEqual, `spread(value)`)
 		})
 
 		Convey("should handle suffix parts", func() {
-			part := QueryPart{
-				Type:   "math",
-				Params: []string{"/ 100"},
-			}
+			part, err := NewQueryPart("math", []string{"/ 100"})
+			So(err, ShouldBeNil)
 
-			res, _ := part.Render("mean(value)")
+			res := part.Render("mean(value)")
 			So(res, ShouldEqual, "mean(value) / 100")
 		})
 
 		Convey("should handle alias parts", func() {
-			part := QueryPart{
-				Type:   "alias",
-				Params: []string{"test"},
-			}
+			part, err := NewQueryPart("alias", []string{"test"})
+			So(err, ShouldBeNil)
 
-			res, _ := part.Render("mean(value)")
+			res := part.Render("mean(value)")
 			So(res, ShouldEqual, `mean(value) AS "test"`)
 		})
 	})

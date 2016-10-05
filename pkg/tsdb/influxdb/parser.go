@@ -1,6 +1,10 @@
 package influxdb
 
-import "github.com/grafana/grafana/pkg/components/simplejson"
+import (
+	"strconv"
+
+	"github.com/grafana/grafana/pkg/components/simplejson"
+)
 
 type InfluxdbQueryParser struct{}
 
@@ -108,14 +112,29 @@ func (*InfluxdbQueryParser) parseQueryPart(model *simplejson.Json) (*QueryPart, 
 	for _, paramObj := range model.Get("params").MustArray() {
 		param := simplejson.NewFromAny(paramObj)
 
-		pv, err := param.String()
-		if err != nil {
-			return nil, err
+		stringParam, err := param.String()
+		if err == nil {
+			params = append(params, stringParam)
+			continue
 		}
-		params = append(params, pv)
+
+		intParam, err := param.Int()
+		if err == nil {
+			params = append(params, strconv.Itoa(intParam))
+			continue
+		}
+
+		return nil, err
+
 	}
 
-	return &QueryPart{Type: typ, Params: params}, nil
+	qp, err := NewQueryPart(typ, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return qp, nil
+	//return &QueryPart{Type: typ, Params: params}, nil
 }
 
 func (qp *InfluxdbQueryParser) parseGroupBy(model *simplejson.Json) ([]*QueryPart, error) {

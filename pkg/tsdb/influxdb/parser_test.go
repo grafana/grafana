@@ -14,7 +14,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
 
 		Convey("converting metric name", func() {
 			json := `
-                  {
+      {
               "dsType": "influxdb",
               "groupBy": [
                 {
@@ -31,7 +31,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
                 },
                 {
                   "params": [
-                    "null"
+                    "none"
                   ],
                   "type": "fill"
                 }
@@ -61,8 +61,10 @@ func TestInfluxdbQueryParser(t *testing.T) {
                     ]
                   },
                   {
-                    "type": "mean",
-                    "params": []
+                    "type": "bottom",
+                    "params": [
+                      3
+                    ]
                   }
                 ],
                 [
