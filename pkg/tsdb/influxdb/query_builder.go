@@ -41,7 +41,11 @@ func (*QueryBuild) Build(query *Query) (string, error) {
 	}
 	res += strings.Join(selectors, ", ")
 
-	res += fmt.Sprintf(` FROM "%s"`, query.Measurement)
+	policy := ""
+	if query.Policy != "" {
+		policy = `"` + query.Policy + `".`
+	}
+	res += fmt.Sprintf(` FROM %s"%s"`, policy, query.Measurement)
 
 	res += " WHERE "
 	conditions := renderTags(query)

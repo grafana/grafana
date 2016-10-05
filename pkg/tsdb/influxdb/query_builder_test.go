@@ -23,12 +23,13 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			query := &Query{
 				Selects:     []*Select{{*qp1, *qp2}},
 				Measurement: "cpu",
+				Policy:      "policy",
 				GroupBy:     []*QueryPart{groupBy1, groupBy2},
 			}
 
 			rawQuery, err := builder.Build(query)
 			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE $timeFilter GROUP BY time($interval) fill(null)`)
+			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "policy"."cpu" WHERE $timeFilter GROUP BY time($interval) fill(null)`)
 		})
 
 		Convey("can asd query", func() {
