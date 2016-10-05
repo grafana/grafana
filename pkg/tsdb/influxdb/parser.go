@@ -69,23 +69,30 @@ func (*InfluxdbQueryParser) parseTags(model *simplejson.Json) ([]*Tag, error) {
 	var result []*Tag
 	for _, t := range model.Get("tags").MustArray() {
 		tagJson := simplejson.NewFromAny(t)
+		tag := &Tag{}
+		var err error
 
-		key, err := tagJson.Get("key").String()
+		tag.Key, err = tagJson.Get("key").String()
+		if err != nil {
+			return nil, err
+		}
+
+		tag.Value, err = tagJson.Get("value").String()
 		if err != nil {
 			return nil, err
 		}
 
 		operator, err := tagJson.Get("operator").String()
-		if err != nil {
-			return nil, err
+		if err == nil {
+			tag.Operator = operator
 		}
 
-		value, err := tagJson.Get("value").String()
-		if err != nil {
-			return nil, err
+		condition, err := tagJson.Get("condition").String()
+		if err == nil {
+			tag.Condition = condition
 		}
 
-		result = append(result, &Tag{Key: key, Operator: operator, Value: value})
+		result = append(result, tag)
 	}
 
 	return result, nil

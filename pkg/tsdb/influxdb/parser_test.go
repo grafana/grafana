@@ -89,6 +89,12 @@ func TestInfluxdbQueryParser(t *testing.T) {
                   "key": "datacenter",
                   "operator": "=",
                   "value": "America"
+                },
+                {
+                  "condition": "OR",
+                  "key": "hostname",
+                  "operator": "=",
+                  "value": "server1"
                 }
               ]
             }
@@ -101,7 +107,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(len(res.GroupBy), ShouldEqual, 3)
 			So(len(res.Selects), ShouldEqual, 3)
-			So(len(res.Tags), ShouldEqual, 1)
+			So(len(res.Tags), ShouldEqual, 2)
 		})
 	})
 }

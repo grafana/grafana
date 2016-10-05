@@ -10,9 +10,10 @@ type Query struct {
 }
 
 type Tag struct {
-	Key      string
-	Operator string
-	Value    string
+	Key       string
+	Operator  string
+	Value     string
+	Condition string
 }
 
 type Select []QueryPart
