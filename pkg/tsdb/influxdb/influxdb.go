@@ -12,10 +12,14 @@ import (
 
 type InfluxDBExecutor struct {
 	*tsdb.DataSourceInfo
+	QueryParser *InfluxdbQueryParser
 }
 
 func NewInfluxDBExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
-	return &InfluxDBExecutor{dsInfo}
+	return &InfluxDBExecutor{
+		DataSourceInfo: dsInfo,
+		QueryParser:    &InfluxdbQueryParser{},
+	}
 }
 
 var (
@@ -41,7 +45,7 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 	result := &tsdb.BatchResult{}
 	for _, v := range queries {
 
-		query, err := ParseQuery(v.Model)
+		query, err := e.QueryParser.Parse(v.Model)
 
 		if err != nil {
 			result.Error = err
