@@ -67,6 +67,7 @@ charts or filled areas).
                 otherps = other.datapoints.pointsize,
                 otherpoints = other.datapoints.points,
                 newpoints = [],
+                mergepoints= [],
                 px, py, intery, qx, qy, bottom,
                 withlines = s.lines.show,
                 horizontal = s.bars.horizontal,
@@ -75,7 +76,41 @@ charts or filled areas).
                 fromgap = true,
                 keyOffset = horizontal ? 1 : 0,
                 accumulateOffset = horizontal ? 0 : 1,
-                i = 0, j = 0, l, m;
+                i = 0, j = 0, l = 0, m;
+
+            /* merge points & otherpoints so that we can stack even if some values are missing */
+            while (i < points.length || j < otherpoints.length) {
+                if (i >= points.length) {
+                    for (m = 0; m < ps; ++m)
+                        mergepoints.push(otherpoints[j + m]);
+                    mergepoints[l+accumulateOffset]=0;
+                    mergepoints[l+2]=0;
+                    j += ps;
+                }
+                else if (j >= otherpoints.length) {
+                    for (m = 0; m < ps; ++m)
+                        mergepoints.push(points[i + m]);
+                    i += ps;
+                }
+                else if (otherpoints[j+keyOffset] < points[i+keyOffset]) {
+                    for (m = 0; m < ps; ++m)
+                        mergepoints.push(otherpoints[j + m]);
+                    mergepoints[l+accumulateOffset]=0;
+                    mergepoints[l+2]=0;
+                    j += ps;
+                }
+                else {
+                    if (otherpoints[j+keyOffset] == points[i+keyOffset])
+                        j += ps;
+                    for (m = 0; m < ps; ++m)
+                        mergepoints.push(points[i + m]);
+                    i += ps;
+                }
+                l += ps;
+            }
+            points=mergepoints;
+            i=0;
+            j=0;
 
             while (true) {
                 if (i >= points.length)
