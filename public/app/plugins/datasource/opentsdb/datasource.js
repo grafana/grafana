@@ -11,73 +11,34 @@ function (angular, _, dateMath) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('OpenTSDBDatasource', function($q, backendSrv, templateSrv, contextSrv, healthSrv) {
+  module.factory('OpenTSDBDatasource', function($q, backendSrv, templateSrv, contextSrv) {
 
     function OpenTSDBDatasource(datasource) {
       this.type = 'opentsdb';
       this.url = datasource.url;
       this.name = datasource.name;
       this.supportMetrics = true;
-      this.prefix = contextSrv.user.orgId + ".";
+      //需要重新开启
+      this.prefix = contextSrv.user.orgName + ".";
+      //this.prefix = "";
     }
-    //TODO delete
-    function getAnomalyMetricData(target) {
-      return backendSrv.datasourceRequest({
-        method: 'GET',
-        url: healthSrv.anomalyUrlRoot + "/anomaly",
-        params: {
-          metric: target.metric.replace(".anomaly", ""),
-          host: target.tags.host
-        }
-      });
-    }
+
     // Called once per panel (graph)
     OpenTSDBDatasource.prototype.query = function(options) {
-      var anotherQueries = {};
       var start = convertToTSDBTime(options.rangeRaw.from, false);
       var end = convertToTSDBTime(options.rangeRaw.to, true);
       var qs = [];
       var self = this;
-      //TODO delete
-      var targetsResponse = [];
 
-
-
-      _.each(options.targets, function (target) {
-        var decomposeFlag = false;
-        if (!target.metric) {
-          return;
-        }
-        //TODO delete
-        if (target.anomaly || target.metric.endsWith(".anomaly")) {
-          getAnomalyMetricData(target).then(function (response) {
-            targetsResponse = response.data;
-          });
-          return;
-        }
-        if (target.anomaly || target.metric.endsWith(".anomaly")) {
-          anotherQueries['anomaly'] = target;
-          return;
-        }
-
-        _.each(["trend", "seasonal", "noise","prediction","prediction.min","prediction.max"], function (defString) {
-          if (target.metric.endsWith(defString)) {
-            decomposeFlag = true;
-            anotherQueries['endWithString'] = defString;
-            anotherQueries['decompose'] = target;
-            return;
-          }
-        });
-        if (decomposeFlag) {
-          return;
-        }
+      _.each(options.targets, function(target) {
+        if (!target.metric) { return; }
         qs.push(convertTargetToQuery(target, options, self.prefix));
       });
 
       var queries = _.compact(qs);
 
       // No valid targets, return the empty result to save a round trip.
-      if (_.isEmpty(queries) && _.isEmpty(anotherQueries)) {
+      if (_.isEmpty(queries)) {
         var d = $q.defer();
         d.resolve({ data: [] });
         return d.promise;
@@ -90,76 +51,17 @@ function (angular, _, dateMath) {
         });
       });
 
-      if(!_.isEmpty(queries)){
-        return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
-          //TODO delete
-          _.each(targetsResponse, function (target) {
-            response.data.push(target);
-          });
-          return self.anotherQueryPlus(anotherQueries).then(function (targetsResponse) {
-            if(targetsResponse.data){
-              _.each(targetsResponse.data, function (target) {
-                response.data.push(target);
-              });
-            }
-
-            var metricToTargetMapping = mapMetricsToTargets(response.data, options);
-            var result = _.map(response.data, function(metricData, index) {
-              index = metricToTargetMapping[index];
-              if (index === -1) {
-                index = 0;
-              }
-              return transformMetricData(metricData, groupByTags, options.targets[index], options, self.prefix);
-            });
-            return { data: result };
-          });
-        });
-      } else{
-        return this.anotherQueryPlus(anotherQueries).then(function (targetsResponse) {
-          var metricToTargetMapping = mapMetricsToTargets(targetsResponse.data, options);
-          var result = _.map(targetsResponse.data, function(metricData, index) {
-            index = metricToTargetMapping[index];
-            if (index === -1) {
-              index = 0;
-            }
-            return transformMetricData(metricData, groupByTags, options.targets[index], options, self.prefix);
-          });
-          return { data: result };
-        });
-      }
-
-    };
-
-    OpenTSDBDatasource.prototype.anotherQueryPlus = function (target) {
-      var options = null;
-      if (target.anomaly) {
-        options = {
-          url: healthSrv.anomalyUrlRoot + "/anomaly",
-          params: {
-            metric: target.anomaly.metric.replace(".anomaly", ""),
-            host: target.anomaly.tags.host
+      return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
+        var metricToTargetMapping = mapMetricsToTargets(response.data, options);
+        var result = _.map(response.data, function(metricData, index) {
+          index = metricToTargetMapping[index];
+          if (index === -1) {
+            index = 0;
           }
-        };
-      }
-
-      if(target.decompose && target.endWithString){
-        options = {
-          url: healthSrv.anomalyUrlRoot + "/decompose",
-          params: {
-            metric: target.decompose.metric.replace("."+target.endWithString, ""),
-            host: target.decompose.tags.host
-          }
-        };
-        options.params[target.endWithString] = true;
-      }
-
-      if (options) {
-        return backendSrv.datasourceRequest(options);
-      } else {
-        var d = $q.defer();
-        d.resolve({});
-        return d.promise;
-      }
+          return transformMetricData(metricData, groupByTags, options.targets[index], options, self.prefix);
+        });
+        return { data: result };
+      });
     };
 
     OpenTSDBDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {
