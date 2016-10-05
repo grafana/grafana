@@ -12,13 +12,15 @@ import (
 
 type InfluxDBExecutor struct {
 	*tsdb.DataSourceInfo
-	QueryParser *InfluxdbQueryParser
+	QueryParser  *InfluxdbQueryParser
+	QueryBuilder *QueryBuild
 }
 
 func NewInfluxDBExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
 	return &InfluxDBExecutor{
 		DataSourceInfo: dsInfo,
 		QueryParser:    &InfluxdbQueryParser{},
+		QueryBuilder:   &QueryBuild{},
 	}
 }
 
@@ -46,12 +48,16 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 	for _, v := range queries {
 
 		query, err := e.QueryParser.Parse(v.Model)
-
 		if err != nil {
 			result.Error = err
 			return result
 		}
+
 		glog.Info("Influxdb executor", "query", query)
+
+		rawQuery, err := e.QueryBuilder.Build(query)
+
+		glog.Info("Influxdb", "error", err, "rawQuery", rawQuery)
 	}
 
 	return result

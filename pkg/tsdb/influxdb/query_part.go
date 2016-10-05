@@ -91,13 +91,13 @@ func fieldRenderer(part *QueryPart, innerExpr string) string {
 }
 
 func functionRenderer(part *QueryPart, innerExpr string) string {
-	params := strings.Join(part.Params, ", ")
-
-	if len(part.Params) > 0 {
-		return fmt.Sprintf("%s(%s, %s)", part.Type, innerExpr, params)
+	if innerExpr != "" {
+		part.Params = append([]string{innerExpr}, part.Params...)
 	}
 
-	return fmt.Sprintf("%s(%s)", part.Type, innerExpr)
+	params := strings.Join(part.Params, ", ")
+
+	return fmt.Sprintf("%s(%s)", part.Type, params)
 }
 
 func suffixRenderer(part *QueryPart, innerExpr string) string {
