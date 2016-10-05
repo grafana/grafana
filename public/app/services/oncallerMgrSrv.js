@@ -8,7 +8,7 @@ function (angular) {
 
   var module = angular.module('grafana.services');
 
-  module.service('oncallerMgrSrv', function($http, alertSrv, backendSrv) {
+  module.service('oncallerMgrSrv', function($http, alertSrv, backendSrv, contextSrv) {
     this.oncallerDefMap = {};
     var self = this;
     var alertUrlRoot = "";
@@ -38,6 +38,7 @@ function (angular) {
     };
 
     this.save = function(oncallerDef) {
+      oncallerDef.org = contextSrv.user.orgId;
       return $http({
         method: "post",
         url: oncallerUrl,
@@ -55,8 +56,9 @@ function (angular) {
       });
     };
 
-    this.get = function(org, service) {
-      return self.oncallerDefMap[org + ":" + service];
+    //id is in the form of org:service
+    this.get = function(id) {
+      return self.oncallerDefMap[id];
     };
 
   });
