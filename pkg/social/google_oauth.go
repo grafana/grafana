@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 
+	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
 
@@ -27,7 +28,7 @@ func (s *SocialGoogle) IsSignupAllowed() bool {
 	return s.allowSignup
 }
 
-func (s *SocialGoogle) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGoogle) UserInfo(ctx context.Context, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id    string `json:"id"`
 		Name  string `json:"name"`
@@ -35,7 +36,7 @@ func (s *SocialGoogle) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 	}
 	var err error
 
-	client := s.Client(oauth2.NoContext, token)
+	client := s.Client(ctx, token)
 	r, err := client.Get(s.apiUrl)
 	if err != nil {
 		return nil, err

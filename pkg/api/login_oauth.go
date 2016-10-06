@@ -1,9 +1,15 @@
 package api
 
 import (
+	"crypto/tls"
+	"crypto/x509"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"log"
+	"net/http"
 
+	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -34,15 +40,44 @@ func OAuthLogin(ctx *middleware.Context) {
 	}
 
 	// handle call back
-	token, err := connect.Exchange(oauth2.NoContext, code)
+	cert, err := tls.LoadX509KeyPair(setting.OAuthService.OAuthInfos[name].TlsClientCert, setting.OAuthService.OAuthInfos[name].TlsClientKey)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// Load CA cert
+	caCert, err := ioutil.ReadFile(setting.OAuthService.OAuthInfos[name].TlsClientCa)
+	if err != nil {
+		log.Fatal(err)
+	}
+	caCertPool := x509.NewCertPool()
+	caCertPool.AppendCertsFromPEM(caCert)
+
+	tr := &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+				Certificates: []tls.Certificate{cert},
+				RootCAs: caCertPool,
+				},
+	}
+	sslcli := &http.Client{Transport: tr}
+	oauthCtx := context.TODO()
+	oauthCtx = context.WithValue(oauthCtx, oauth2.HTTPClient, sslcli)
+
+	//TODO: add check to see if tls_client_* aren't all set, set oauthCtx to oauth2.NoContext
+
+
+	token, err := connect.Exchange(oauthCtx, code)
 	if err != nil {
 		ctx.Handle(500, "login.OAuthLogin(NewTransportWithCode)", err)
 		return
 	}
 
+	token.TokenType = "Bearer"
+
 	ctx.Logger.Debug("OAuthLogin Got token")
 
-	userInfo, err := connect.UserInfo(token)
+	userInfo, err := connect.UserInfo(oauthCtx, token)
 	if err != nil {
 		if err == social.ErrMissingTeamMembership {
 			ctx.Redirect(setting.AppSubUrl + "/login?failCode=1000")
@@ -56,7 +91,7 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	ctx.Logger.Debug("OAuthLogin got user info", "userInfo", userInfo)
 
-	userQuery := m.GetUserByLoginQuery{LoginOrEmail: userInfo.Name}
+	userQuery := m.GetUserByLoginQuery{LoginOrEmail: userInfo.Identity}
 	err = bus.Dispatch(&userQuery)
 
 	// create account if missing

@@ -5,6 +5,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 
+	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
 
@@ -25,14 +26,14 @@ func (s *GenericOAuth) IsSignupAllowed() bool {
 	return s.allowSignup
 }
 
-func (s *GenericOAuth) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *GenericOAuth) UserInfo(ctx context.Context, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id    string `json:"id"`
 		Name  string `json:"username"`
 	}
 
 	var err error
-	client := s.Client(oauth2.NoContext, token)
+	client := s.Client(ctx, token)
 	r, err := client.Get(s.apiUrl)
 	if err != nil {
 		return nil, err

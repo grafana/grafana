@@ -4,6 +4,9 @@ type OAuthInfo struct {
 	ClientId, ClientSecret string
 	Scopes                 []string
 	State                  string
+	TlsClientCert          string
+	TlsClientKey           string
+	TlsClientCa            string
 	AuthUrl, TokenUrl      string
 	Enabled                bool
 	AllowedDomains         []string
