@@ -67,8 +67,8 @@ function (angular, _) {
         if (dashboardUrl !== $location.path()) {
           $location.url(dashboardUrl);
         }
-
-        $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
+        backendSrv.post("/api/dashboards/system", {DashId: data.id.toString(), SystemId: clone.system});
+        $scope.appEvent('alert-success', ['仪表盘保存成功', '保存为' + clone.title]);
       }, $scope.handleSaveDashError);
     };
 

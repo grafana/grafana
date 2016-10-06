@@ -8,7 +8,7 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('SearchCtrl', function($scope, $location, $timeout, backendSrv) {
+  module.controller('SearchCtrl', function($scope, $rootScope,$location, $timeout, backendSrv) {
 
     $scope.init = function() {
       $scope.giveSearchFocus = 0;
@@ -120,7 +120,12 @@ function (angular, _, config) {
     };
 
     $scope.newDashboard = function() {
-      $location.url('dashboard/new');
+      var modalScope = $rootScope.$new();
+      $scope.appEvent('show-modal', {
+        src: './app/partials/select_system.html',
+        modalClass: 'modal-no-header confirm-modal',
+        scope: modalScope
+      });
     };
 
   });

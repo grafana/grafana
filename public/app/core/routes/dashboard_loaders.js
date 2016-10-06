@@ -33,11 +33,14 @@ function (coreModule) {
     }, $scope);
   });
 
-  coreModule.controller('NewDashboardCtrl', function($scope) {
+  coreModule.controller('NewDashboardCtrl', function($scope, $routeParams) {
+    var newTitle = $routeParams.title || "新的仪表盘";
+    var newSystem = $routeParams.system;
     $scope.initDashboard({
       meta: { canStar: false, canShare: false },
       dashboard: {
-        title: "新的仪表盘",
+        title: newTitle,
+        system: newSystem,
         rows: [{ height: '250px', panels:[] }]
       },
     }, $scope);
