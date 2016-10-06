@@ -16,6 +16,8 @@ function (angular) {
       backendSrv.get('/api/org').then(function(org) {
         $scope.org = org;
         $scope.address = org.address;
+        $scope.systems = org.systems;
+        $scope.newSystemName = "";
         contextSrv.user.orgName = org.name;
       });
     };
@@ -29,6 +31,14 @@ function (angular) {
     $scope.updateAddress = function() {
       if (!$scope.addressForm.$valid) { return; }
       backendSrv.put('/api/org/address', $scope.address).then($scope.getOrgInfo);
+    };
+
+    $scope.updateSystems = function() {
+      backendSrv.put('/api/org/system', {System: $scope.systems});
+    };
+
+    $scope.addSystem = function() {
+      backendSrv.post('/api/org/system', {SystemsName: [$scope.newSystemName]}).then($scope.getOrgInfo);
     };
 
     $scope.init();
