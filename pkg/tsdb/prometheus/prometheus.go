@@ -52,12 +52,12 @@ func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlic
 
 	client, err := e.getClient()
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 
 	query, err := parseQuery(queries, queryContext)
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 
 	timeRange := prometheus.Range{
@@ -69,12 +69,12 @@ func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlic
 	value, err := client.QueryRange(ctx, query.Expr, timeRange)
 
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 
 	queryResult, err := parseResponse(value, query)
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 	result.QueryResults = queryResult
 	return result
@@ -157,7 +157,8 @@ func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb
 	return queryResults, nil
 }
 
+/*
 func resultWithError(result *tsdb.BatchResult, err error) *tsdb.BatchResult {
 	result.Error = err
 	return result
-}
+}*/

@@ -9,7 +9,7 @@ import (
 
 func TestInfluxdbQueryBuilder(t *testing.T) {
 	Convey("Influxdb query builder", t, func() {
-		builder := QueryBuild{}
+		builder := QueryBuilder{}
 
 		qp1, _ := NewQueryPart("field", []string{"value"})
 		qp2, _ := NewQueryPart("mean", []string{})
@@ -21,10 +21,10 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 		tag2 := &Tag{Key: "hostname", Value: "server2", Operator: "=", Condition: "OR"}
 
 		queryContext := &tsdb.QueryContext{
-			TimeRange: tsdb.NewTimeRange("now-5h", "now"),
+			TimeRange: tsdb.NewTimeRange("now-5m", "now"),
 		}
 
-		Convey("can build query", func() {
+		Convey("can build simple query", func() {
 			query := &Query{
 				Selects:     []*Select{{*qp1, *qp2}},
 				Measurement: "cpu",
@@ -35,10 +35,10 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := builder.Build(query, queryContext)
 			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "policy"."cpu" WHERE time > now()-5h GROUP BY time(10s) fill(null)`)
+			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "policy"."cpu" WHERE time > now() - 5m GROUP BY time(10s) fill(null)`)
 		})
 
-		Convey("can asd query", func() {
+		Convey("can build query with group bys", func() {
 			query := &Query{
 				Selects:     []*Select{{*qp1, *qp2}},
 				Measurement: "cpu",
@@ -49,7 +49,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := builder.Build(query, queryContext)
 			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE "hostname" = 'server1' OR "hostname" = 'server2' AND time > now()-5h GROUP BY time(10s)`)
+			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE "hostname" = 'server1' OR "hostname" = 'server2' AND time > now() - 5m GROUP BY time(10s)`)
 		})
 	})
 }

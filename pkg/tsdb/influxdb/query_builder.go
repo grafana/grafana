@@ -7,7 +7,7 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type QueryBuild struct{}
+type QueryBuilder struct{}
 
 func renderTags(query *Query) []string {
 	var res []string
@@ -29,7 +29,23 @@ func renderTags(query *Query) []string {
 	return res
 }
 
-func (*QueryBuild) Build(query *Query, queryContext *tsdb.QueryContext) (string, error) {
+func (*QueryBuilder) Build(query *Query, queryContext *tsdb.QueryContext) (string, error) {
+	res := renderSelectors(query)
+	res += renderMeasurement(query)
+	res += renderWhereClause(query)
+	res += renderTimeFilter(query)
+	res += renderGroupBy(query)
+
+	return res, nil
+}
+
+func renderTimeFilter(query *Query) string {
+	//res += "$timeFilter"
+	//res += "time > now() -" + strings.Replace(queryContext.TimeRange.From, "now", "", 1)
+	return "time > now() - 5m"
+}
+
+func renderSelectors(query *Query) string {
 	res := "SELECT "
 
 	var selectors []string
@@ -41,34 +57,40 @@ func (*QueryBuild) Build(query *Query, queryContext *tsdb.QueryContext) (string,
 		}
 		selectors = append(selectors, stk)
 	}
-	res += strings.Join(selectors, ", ")
 
+	return res + strings.Join(selectors, ", ")
+}
+
+func renderMeasurement(query *Query) string {
 	policy := ""
 	if query.Policy == "" || query.Policy == "default" {
 		policy = ""
 	} else {
 		policy = `"` + query.Policy + `".`
 	}
-	res += fmt.Sprintf(` FROM %s"%s"`, policy, query.Measurement)
+	return fmt.Sprintf(` FROM %s"%s"`, policy, query.Measurement)
+}
 
-	res += " WHERE "
+func renderWhereClause(query *Query) string {
+	res := " WHERE "
 	conditions := renderTags(query)
 	res += strings.Join(conditions, " ")
 	if len(conditions) > 0 {
 		res += " AND "
 	}
 
-	//res += "$timeFilter"
-	res += "time > " + strings.Replace(queryContext.TimeRange.From, "now", "now()", 1)
+	return res
+}
 
+func renderGroupBy(query *Query) string {
 	var groupBy []string
 	for _, group := range query.GroupBy {
 		groupBy = append(groupBy, group.Render(""))
 	}
 
 	if len(groupBy) > 0 {
-		res += " GROUP BY " + strings.Join(groupBy, " ")
+		return " GROUP BY " + strings.Join(groupBy, " ")
 	}
 
-	return res, nil
+	return ""
 }

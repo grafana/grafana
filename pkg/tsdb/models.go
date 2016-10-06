@@ -52,6 +52,11 @@ type BatchResult struct {
 	Timings      *BatchTiming
 }
 
+func (br *BatchResult) WithError(err error) *BatchResult {
+	br.Error = err
+	return br
+}
+
 type QueryResult struct {
 	Error  error           `json:"error"`
 	RefId  string          `json:"refId"`
