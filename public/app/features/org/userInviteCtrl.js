@@ -10,12 +10,15 @@ function (angular, _) {
   module.controller('UserInviteCtrl', function($scope, backendSrv) {
 
     $scope.invites = [
-      {name: '', email: '', role: 'Editor'},
+      {name: '', email: '', role: 'Editor', systems:''},
     ];
 
     $scope.options = {skipEmails: false};
 
     $scope.init = function() {
+      backendSrv.get("/api/org/system").then(function(system) {
+        $scope.systems = system;
+      });
     };
 
     $scope.addInvite = function() {
