@@ -3,6 +3,7 @@ package influxdb
 import (
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/tsdb"
 	"gopkg.in/guregu/null.v3"
@@ -45,17 +46,18 @@ func (rp *ResponseParser) parseResult(result []Row, queryResult *tsdb.QueryResul
 }
 
 func (rp *ResponseParser) formatName(row Row, column string) string {
-	tags := ""
+	var tags []string
 
 	for k, v := range row.Tags {
-		tags += k + ": " + v
+		tags = append(tags, fmt.Sprintf("%s: %s", k, v))
 	}
 
-	if tags != "" {
-		tags = fmt.Sprintf(" { %s }", tags)
+	tagText := ""
+	if len(tags) > 0 {
+		tagText = fmt.Sprintf(" { %s }", strings.Join(tags, " "))
 	}
 
-	return fmt.Sprintf("%s.%s%s", row.Name, column, tags)
+	return fmt.Sprintf("%s.%s%s", row.Name, column, tagText)
 }
 
 func (rp *ResponseParser) parseTimepoint(k []interface{}, valuePosition int) tsdb.TimePoint {
