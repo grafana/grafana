@@ -5,6 +5,7 @@ package main
 import (
 	"bytes"
 	"crypto/md5"
+	"crypto/sha1"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -85,17 +86,21 @@ func main() {
 		case "package":
 			grunt(gruntBuildArg("release")...)
 			createLinuxPackages()
+			sha1FilesInDist()
 
 		case "pkg-rpm":
 			grunt(gruntBuildArg("release")...)
 			createRpmPackages()
+			sha1FilesInDist()
 
 		case "pkg-deb":
 			grunt(gruntBuildArg("release")...)
 			createDebPackages()
+			sha1FilesInDist()
 
 		case "latest":
 			makeLatestDistCopies()
+			sha1FilesInDist()
 
 		case "clean":
 			clean()
@@ -490,6 +495,41 @@ func md5File(file string) error {
 	}
 
 	out, err := os.Create(file + ".md5")
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprintf(out, "%x\n", h.Sum(nil))
+	if err != nil {
+		return err
+	}
+
+	return out.Close()
+}
+
+func sha1FilesInDist() {
+	filepath.Walk("./dist", func(path string, f os.FileInfo, err error) error {
+		if strings.Contains(path, ".sha1") == false {
+			sha1File(path)
+		}
+		return nil
+	})
+}
+
+func sha1File(file string) error {
+	fd, err := os.Open(file)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+
+	h := sha1.New()
+	_, err = io.Copy(h, fd)
+	if err != nil {
+		return err
+	}
+
+	out, err := os.Create(file + ".sha1")
 	if err != nil {
 		return err
 	}
