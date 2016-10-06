@@ -119,7 +119,7 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) {
 
 	metrics.M_Api_Dashboard_Post.Inc(1)
 
-	c.JSON(200, util.DynMap{"status": "success", "slug": cmd.Result.Slug, "version": cmd.Result.Version})
+	c.JSON(200, util.DynMap{"status": "success", "slug": cmd.Result.Slug, "version": cmd.Result.Version, "id": cmd.Result.Id})
 }
 
 func canEditDashboard(role m.RoleType) bool {

@@ -23,6 +23,7 @@ function (angular, $, kbn, _, moment) {
 
       this.id = data.id || null;
       this.title = data.title || 'No Title';
+      this.system = data.system || null;
       this.originalTitle = this.title;
       this.tags = data.tags || [];
       this.style = data.style || "dark";

@@ -46,6 +46,14 @@
 						<li>
 							<select ng-model="dashboard.timezone" class='input-small tight-form-input' ng-options="f for f in ['browser','utc']"></select>
 						</li>
+            <li class="tight-form-item" style="width: 90px">
+              子系统
+            </li>
+            <li ng-controller="SystemCtrl" ng-init="init()">
+              <select ng-model="dashboard.system" class="input tight-form-input">
+                <option ng-repeat="system in systems" value="{{system.Id}}" ng-selected="dashboard.system == system.Id">{{system.SystemsName}}</option>
+              </select>
+            </li>
 					</ul>
 					<div class="clearfix"></div>
 				</div>

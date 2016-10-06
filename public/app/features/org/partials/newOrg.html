@@ -10,19 +10,38 @@
 		<h2 style="margin-top: 30px;">新增公司</h2>
 
 		<form name="form">
-			<div class="tight-form last">
-				<ul class="tight-form-list">
-					<li class="tight-form-item" style="width: 100px;">
-						<strong>公司名称</strong>
-					</li>
-					<li>
-						<input type="text" ng-model="newOrg.name" required class="input-xxlarge tight-form-input last" placeholder="公司名称">
-					</li>
-					<li>
-					</li>
-				</ul>
-				<div class="clearfix"></div>
+			<div class="tight-form-container">
+        <div class="tight-form">
+          <ul class="tight-form-list">
+            <li class="tight-form-item" style="width: 100px;">
+              <strong>公司名称</strong>
+            </li>
+            <li>
+              <input type="text" ng-model="newOrg.name" required class="input-xxlarge tight-form-input last" placeholder="公司名称">
+            </li>
+            <div class="clearfix"></div>
+          </ul>
+        </div>
+
+        <h3 style="margin-top: 30px;">子系统</h3>
+        <div class="tight-form" ng-repeat="system in newSystems">
+          <ul class="tight-form-list">
+            <li class="tight-form-item" style="width: 100px;">
+              <strong>系统名称</strong>
+            </li>
+            <li>
+              <input type="text" ng-model="system.name" required class="input-xxlarge tight-form-input last" placeholder="如:办公自动化系统">
+            </li>
+
+            <div class="clearfix"></div>
+          </ul>
+        </div>
 			</div>
+
+      <div style="text-align: left; margin-top: 6px;">
+        <a ng-click="addSystem()">+ 增加子系统</a>
+      </div>
+
 			<br>
 			<button class="btn btn-success pull-right" ng-click="createOrg()">Create</button>
 		</form>
