@@ -45,7 +45,17 @@ func (rp *ResponseParser) parseResult(result []Row, queryResult *tsdb.QueryResul
 }
 
 func (rp *ResponseParser) formatName(row Row, column string) string {
-	return fmt.Sprintf("%s.%s", row.Name, column)
+	tags := ""
+
+	for k, v := range row.Tags {
+		tags += k + ": " + v
+	}
+
+	if tags != "" {
+		tags = fmt.Sprintf(" { %s }", tags)
+	}
+
+	return fmt.Sprintf("%s.%s%s", row.Name, column, tags)
 }
 
 func (rp *ResponseParser) parseTimepoint(k []interface{}, valuePosition int) tsdb.TimePoint {

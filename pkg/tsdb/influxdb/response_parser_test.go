@@ -52,8 +52,8 @@ func TestInfluxdbResponseParser(t *testing.T) {
 		})
 
 		Convey("can format serie names", func() {
-			So(result.Series[0].Name, ShouldEqual, "cpu.mean")
-			So(result.Series[1].Name, ShouldEqual, "cpu.sum")
+			So(result.Series[0].Name, ShouldEqual, "cpu.mean { datacenter: America }")
+			So(result.Series[1].Name, ShouldEqual, "cpu.sum { datacenter: America }")
 		})
 	})
 }
