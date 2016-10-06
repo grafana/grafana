@@ -3,6 +3,8 @@ package influxdb
 import (
 	"fmt"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type QueryBuild struct{}
@@ -27,7 +29,7 @@ func renderTags(query *Query) []string {
 	return res
 }
 
-func (*QueryBuild) Build(query *Query) (string, error) {
+func (*QueryBuild) Build(query *Query, queryContext *tsdb.QueryContext) (string, error) {
 	res := "SELECT "
 
 	var selectors []string
@@ -42,7 +44,9 @@ func (*QueryBuild) Build(query *Query) (string, error) {
 	res += strings.Join(selectors, ", ")
 
 	policy := ""
-	if query.Policy != "" {
+	if query.Policy == "" || query.Policy == "default" {
+		policy = ""
+	} else {
 		policy = `"` + query.Policy + `".`
 	}
 	res += fmt.Sprintf(` FROM %s"%s"`, policy, query.Measurement)
@@ -54,7 +58,8 @@ func (*QueryBuild) Build(query *Query) (string, error) {
 		res += " AND "
 	}
 
-	res += "$timeFilter"
+	//res += "$timeFilter"
+	res += "time > " + strings.Replace(queryContext.TimeRange.From, "now", "now()", 1)
 
 	var groupBy []string
 	for _, group := range query.GroupBy {

@@ -33,6 +33,14 @@ func TestInfluxdbQueryPart(t *testing.T) {
 			So(res, ShouldEqual, "bottom(value, 3)")
 		})
 
+		Convey("time", func() {
+			part, err := NewQueryPart("time", []string{"$interval"})
+			So(err, ShouldBeNil)
+
+			res := part.Render("")
+			So(res, ShouldEqual, "time(10s)")
+		})
+
 		Convey("should nest spread function", func() {
 			part, err := NewQueryPart("spread", []string{})
 			So(err, ShouldBeNil)

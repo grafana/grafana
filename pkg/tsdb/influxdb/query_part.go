@@ -91,6 +91,12 @@ func fieldRenderer(part *QueryPart, innerExpr string) string {
 }
 
 func functionRenderer(part *QueryPart, innerExpr string) string {
+	for i, v := range part.Params {
+		if v == "$interval" {
+			part.Params[i] = "10s"
+		}
+	}
+
 	if innerExpr != "" {
 		part.Params = append([]string{innerExpr}, part.Params...)
 	}
