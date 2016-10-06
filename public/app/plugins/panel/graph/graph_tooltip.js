@@ -142,8 +142,6 @@ function ($, _) {
 
         seriesHtml = '';
 
-        absoluteTime = dashboard.formatDate(seriesHoverInfo.time, tooltipFormat);
-
         // Dynamically reorder the hovercard for the current time point if the
         // option is enabled.
         if (panel.tooltip.sort === 2) {
@@ -156,8 +154,15 @@ function ($, _) {
           });
         }
 
+        var distance, time;
+
         for (i = 0; i < seriesHoverInfo.length; i++) {
           hoverInfo = seriesHoverInfo[i];
+
+          if(! distance || hoverInfo.distance < distance) {
+            distance=hoverInfo.distance;
+            time=hoverInfo.time;
+          }
 
           if (hoverInfo.hidden) {
             continue;
@@ -178,6 +183,7 @@ function ($, _) {
           plot.highlight(i, hoverInfo.hoverIndex);
         }
 
+        absoluteTime = dashboard.formatDate(seriesHoverInfo.time, tooltipFormat);
         self.showTooltip(absoluteTime, seriesHtml, pos);
       }
       // single series tooltip
