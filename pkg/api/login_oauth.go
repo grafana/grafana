@@ -56,14 +56,7 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	ctx.Logger.Debug("OAuthLogin got user info", "userInfo", userInfo)
 
-	// validate that the email is allowed to login to grafana
-	if !connect.IsEmailAllowed(userInfo.Email) {
-		ctx.Logger.Info("OAuth login attempt with unallowed email", "email", userInfo.Email)
-		ctx.Redirect(setting.AppSubUrl + "/login?failCode=1002")
-		return
-	}
-
-	userQuery := m.GetUserByLoginQuery{LoginOrEmail: userInfo.Email}
+	userQuery := m.GetUserByLoginQuery{LoginOrEmail: userInfo.Name}
 	err = bus.Dispatch(&userQuery)
 
 	// create account if missing
@@ -82,8 +75,8 @@ func OAuthLogin(ctx *middleware.Context) {
 			return
 		}
 		cmd := m.CreateUserCommand{
-			Login:          userInfo.Email,
-			Email:          userInfo.Email,
+			Login:          userInfo.Identity,
+			Email:          userInfo.Identity,
 			Name:           userInfo.Name,
 			Company:        userInfo.Company,
 			DefaultOrgRole: userInfo.Role,
