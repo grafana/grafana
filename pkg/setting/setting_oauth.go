@@ -10,6 +10,7 @@ type OAuthInfo struct {
 	ApiUrl                 string
 	AllowSignup            bool
 	Name                   string
+	DisplayName            string
 }
 
 type OAuther struct {
