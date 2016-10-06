@@ -32,7 +32,7 @@ type Org struct {
 
 type CreateOrgCommand struct {
 	Name string `json:"name" binding:"Required"`
-
+  SystemsName []string `json:"systemsName" binding:"Required"`
 	// initial admin user for account
 	UserId int64 `json:"-"`
 	Result Org   `json:"-"`
@@ -54,7 +54,7 @@ type UpdateOrgAddressCommand struct {
 
 type GetOrgByIdQuery struct {
 	Id     int64
-	Result *Org
+	Result *OrgSystems
 }
 
 type GetOrgByNameQuery struct {
@@ -80,6 +80,7 @@ type OrgDetailsDTO struct {
 	Id      int64   `json:"id"`
 	Name    string  `json:"name"`
 	Address Address `json:"address"`
+  	Systems []*Systems `json:"systems"`
 }
 
 type UserOrgDTO struct {

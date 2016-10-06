@@ -43,7 +43,7 @@ func Register(r *macaron.Macaron) {
 
 	r.Get("/dashboard/*", reqSignedIn, Index)
 	r.Get("/dashboard-solo/*", reqSignedIn, Index)
-  
+
   // alerts and oncallers
 	r.Get("/alerts", reqSignedIn, Index)
 	r.Get("/oncallers", reqSignedIn, Index)
@@ -88,6 +88,7 @@ func Register(r *macaron.Macaron) {
 			r.Delete("/stars/dashboard/:id", wrap(UnstarDashboard))
 			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), wrap(ChangeUserPassword))
 			r.Get("/quotas", wrap(GetUserQuotas))
+      r.Get("/system",wrap(GetCurrentUserSystem))
 		})
 
 		// users (admin permission required)
@@ -117,6 +118,11 @@ func Register(r *macaron.Macaron) {
 			r.Get("/invites", wrap(GetPendingOrgInvites))
 			r.Post("/invites", quota("user"), bind(dtos.AddInviteForm{}), wrap(AddOrgInvite))
 			r.Patch("/invites/:code/revoke", wrap(RevokeInvite))
+
+			// system
+			r.Put("/system", bind(dtos.UpdateSystems{}), wrap(UpdateSystems))
+			r.Post("/system", bind(m.AddSystemsCommand{}), wrap(AddNewSystems))
+			r.Get("/system", wrap(GetSystemsForCurrentOrg))
 		}, regOrgAdmin)
 
 		// create new org
@@ -172,6 +178,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/file/:file", GetDashboardFromJsonFile)
 			r.Get("/home", GetHomeDashboard)
 			r.Get("/tags", GetDashboardTags)
+      r.Post("/system", reqEditorRole, bind(m.AddSystemDashboardCommand{}), AddOrUpdateSystemDashbord)
 		})
 
 		// Search
