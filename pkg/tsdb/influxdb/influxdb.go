@@ -18,8 +18,9 @@ import (
 
 type InfluxDBExecutor struct {
 	*tsdb.DataSourceInfo
-	QueryParser  *InfluxdbQueryParser
-	QueryBuilder *QueryBuilder
+	QueryParser    *InfluxdbQueryParser
+	QueryBuilder   *QueryBuilder
+	ResponseParser *ResponseParser
 }
 
 func NewInfluxDBExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
@@ -27,6 +28,7 @@ func NewInfluxDBExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
 		DataSourceInfo: dsInfo,
 		QueryParser:    &InfluxdbQueryParser{},
 		QueryBuilder:   &QueryBuilder{},
+		ResponseParser: &ResponseParser{},
 	}
 }
 
@@ -124,7 +126,7 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 	}
 
 	result.QueryResults = make(map[string]*tsdb.QueryResult)
-	result.QueryResults["A"] = ParseQueryResult(&response)
+	result.QueryResults["A"] = e.ResponseParser.Parse(&response)
 
 	return result
 }

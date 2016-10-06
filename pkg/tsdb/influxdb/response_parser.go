@@ -2,48 +2,79 @@ package influxdb
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/tsdb"
 	"gopkg.in/guregu/null.v3"
 )
 
-func ParseQueryResult(response *Response) *tsdb.QueryResult {
+type ResponseParser struct{}
+
+func (rp *ResponseParser) Parse(response *Response) *tsdb.QueryResult {
 	queryRes := tsdb.NewQueryResult()
 
-	for _, v := range response.Results {
-		for _, r := range v.Series {
-			serie := tsdb.TimeSeries{Name: r.Name}
-			var points tsdb.TimeSeriesPoints
-
-			for _, k := range r.Values {
-				var value null.Float
-				var err error
-				num, ok := k[1].(json.Number)
-				if !ok {
-					value = null.FloatFromPtr(nil)
-				} else {
-					fvalue, err := num.Float64()
-					if err == nil {
-						value = null.FloatFrom(fvalue)
-					}
-				}
-
-				pos0, ok := k[0].(json.Number)
-				timestamp, err := pos0.Float64()
-				if err == nil && ok {
-					points = append(points, tsdb.NewTimePoint(value, timestamp))
-				} else {
-					//glog.Error("Failed to convert response", "err1", err, "ok", ok, "timestamp", timestamp, "value", value.Float64)
-				}
-				serie.Points = points
-			}
-			queryRes.Series = append(queryRes.Series, &serie)
-		}
+	for _, result := range response.Results {
+		rp.parseResult(result.Series, queryRes)
 	}
 
-	for _, v := range queryRes.Series {
-		glog.Info("result", "name", v.Name, "points", v.Points)
+	for _, serie := range queryRes.Series {
+		glog.Debug("result", "name", serie.Name, "points", serie.Points)
 	}
 
 	return queryRes
+}
+
+func (rp *ResponseParser) parseResult(result []Row, queryResult *tsdb.QueryResult) {
+	for _, r := range result {
+		for columnIndex, column := range r.Columns {
+			if column == "time" {
+				continue
+			}
+
+			var points tsdb.TimeSeriesPoints
+			for _, k := range r.Values {
+				points = append(points, rp.parseTimepoint(k, columnIndex))
+			}
+
+			queryResult.Series = append(queryResult.Series, &tsdb.TimeSeries{
+				Name:   rp.formatName(r, column),
+				Points: points,
+			})
+		}
+	}
+}
+
+func (rp *ResponseParser) formatName(row Row, column string) string {
+	return fmt.Sprintf("%s.%s", row.Name, column)
+}
+
+func (rp *ResponseParser) parseTimepoint(k []interface{}, valuePosition int) tsdb.TimePoint {
+	var value null.Float = rp.parseValue(k[valuePosition])
+
+	timestampNumber, _ := k[0].(json.Number)
+	timestamp, err := timestampNumber.Float64()
+	if err != nil {
+		glog.Error("Invalid timestamp format. This should never happen!")
+	}
+
+	return tsdb.NewTimePoint(value, timestamp)
+}
+
+func (rp *ResponseParser) parseValue(value interface{}) null.Float {
+	num, ok := value.(json.Number)
+	if !ok {
+		return null.FloatFromPtr(nil)
+	}
+
+	fvalue, err := num.Float64()
+	if err == nil {
+		return null.FloatFrom(fvalue)
+	}
+
+	ivalue, err := num.Int64()
+	if err == nil {
+		return null.FloatFrom(float64(ivalue))
+	}
+
+	return null.FloatFromPtr(nil)
 }
