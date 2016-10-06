@@ -183,7 +183,7 @@ function ($, _) {
           plot.highlight(i, hoverInfo.hoverIndex);
         }
 
-        absoluteTime = dashboard.formatDate(seriesHoverInfo.time, tooltipFormat);
+        absoluteTime = dashboard.formatDate(time, tooltipFormat);
         self.showTooltip(absoluteTime, seriesHtml, pos);
       }
       // single series tooltip
