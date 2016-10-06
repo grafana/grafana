@@ -79,8 +79,8 @@ function (angular, app, _, config, PanelMeta) {
       _.each(dataList, function (target) {
         if (summaryMap[target.uri.split("/")[1]]) {
           target = $.extend(target, summaryMap[target.uri.split("/")[1]]);
-          target.healthStyle = Threshold100(target.health);
-          target.alertStyle = Threshold2(target.numAlertsTriggered);
+          target.healthStyle = new Threshold100(target.health);
+          target.alertStyle = new Threshold2(target.numAlertsTriggered);
         }
       });
     }
