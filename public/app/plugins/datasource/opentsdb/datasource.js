@@ -19,7 +19,7 @@ function (angular, _, dateMath) {
       this.name = datasource.name;
       this.supportMetrics = true;
       //需要重新开启
-      this.prefix = contextSrv.user.orgName + ".";
+      this.prefix = contextSrv.user.orgId + ".";
       //this.prefix = "";
     }
 
