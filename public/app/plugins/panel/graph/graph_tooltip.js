@@ -86,8 +86,9 @@ function ($, _) {
         }
 
         yaxis = 0;
-        if (series.yaxis.n)
+        if (series.yaxis.n) {
           yaxis = series.yaxis.n;
+        }
 
         results.push({
           value: value,
