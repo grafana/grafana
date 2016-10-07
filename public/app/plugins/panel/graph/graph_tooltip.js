@@ -91,7 +91,8 @@ function ($, _) {
           color: series.color,
           label: series.label,
           time: pointTime,
-          distance: hoverDistance
+          distance: hoverDistance,
+          yaxis: series.yaxis.n
         });
       }
 
@@ -145,7 +146,10 @@ function ($, _) {
         absoluteTime = dashboard.formatDate(seriesHoverInfo.time, tooltipFormat);
 
         // Dynamically reorder the hovercard for the current time point if the
-        // option is enabled.
+        // option is enabled, sort by yaxis by default
+        seriesHoverInfo.sort(function(a, b) {
+          return a.yaxis - b.yaxis;
+        });
         if (panel.tooltip.sort === 2) {
           seriesHoverInfo.sort(function(a, b) {
             return b.value - a.value;
