@@ -84,7 +84,7 @@ function ($, _) {
           // to speed the index search we begin always on the last found hoverIndex.
           hoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
         }
-        
+
         yaxis = 0;
         if (series.yaxis.n)
           yaxis = series.yaxis.n;
