@@ -187,7 +187,7 @@ function ($, _) {
           seriesHtml += '<div class="graph-tooltip-list-item ' + highlightClass + '"><div class="graph-tooltip-series-name">';
           seriesHtml += '<i class="fa fa-minus" style="color:' + hoverInfo.color +';"></i> ' + hoverInfo.label + ':</div>';
           seriesHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
-          plot.highlight(i, hoverInfo.hoverIndex);
+          plot.highlight(hoverInfo.index, hoverInfo.hoverIndex);
         }
 
         self.showTooltip(absoluteTime, seriesHtml, pos);
