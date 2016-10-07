@@ -32,7 +32,7 @@ func getOrgHelper(orgId int64) Response {
 		return ApiError(500, "Failed to get organization", err)
 	}
 
-	org := query.Result
+  	org := query.Result.Org
 	result := m.OrgDetailsDTO{
 		Id:   org.Id,
 		Name: org.Name,
@@ -44,6 +44,7 @@ func getOrgHelper(orgId int64) Response {
 			State:    org.State,
 			Country:  org.Country,
 		},
+    		Systems: query.Result.Systems,
 	}
 
 	return Json(200, &result)

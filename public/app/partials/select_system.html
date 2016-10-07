@@ -1,0 +1,49 @@
+<div class="modal-body" ng-controller="SystemCtrl" ng-init="init()">
+
+  <a class="modal-close" ng-click="dismiss();">
+    <i class="fa fa-remove"></i>
+  </a>
+
+  <h3>
+    创建新的仪表盘
+  </h3>
+
+  <form name="systemForm">
+  <div style="display: inline-block">
+    <div class="tight-form-container">
+      <div class="tight-form">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 100px">
+            仪表盘名称
+          </li>
+          <li>
+            <input ng-model="dashboardSetting.title" type="text" required class="input-large tight-form-input">
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      <div class="tight-form">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 100px">
+            子系统
+          </li>
+          <li>
+            <select ng-model="dashboardSetting.system" class="input-large tight-form-input" required>
+              <option ng-repeat="system in systems" value="{{system.Id}}">{{system.SystemsName}}</option>
+            </select>
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+    </div>
+
+    <div class="" style="margin-top: 30px; margin-bottom: 20px;">
+      <button type="button" class="btn btn-inverse" ng-click="dismiss()">取消</button>
+      <button type="submit" class="btn btn-success" ng-click="addSystem();">创建</button>
+
+    </div>
+  </div>
+</form>
+</div>
+
+

@@ -34,8 +34,8 @@ func SearchOrgs(query *m.SearchOrgsQuery) error {
 }
 
 func GetOrgById(query *m.GetOrgByIdQuery) error {
-	var org m.Org
-	exists, err := x.Id(query.Id).Get(&org)
+	var orgSystem m.OrgSystems
+	exists, err := x.Id(query.Id).Get(&orgSystem.Org)
 	if err != nil {
 		return err
 	}
@@ -43,8 +43,14 @@ func GetOrgById(query *m.GetOrgByIdQuery) error {
 	if !exists {
 		return m.ErrOrgNotFound
 	}
+	serviceQuery:= m.GetOrgSystemsQuery{OrgId: query.Id}
+	err = GetServicesByOrgId(&serviceQuery)
+	if err != nil {
+	  return err
+	}
 
-	query.Result = &org
+  orgSystem.Systems = serviceQuery.Result
+	query.Result = &orgSystem
 	return nil
 }
 
@@ -98,6 +104,9 @@ func CreateOrg(cmd *m.CreateOrgCommand) error {
 			return err
 		}
 
+		systems := m.AddSystemsCommand{SystemsName: cmd.SystemsName,OrgId: org.Id }
+		err := AddSystem(&systems)
+
 		user := m.OrgUser{
 			OrgId:   org.Id,
 			UserId:  cmd.UserId,
@@ -106,7 +115,7 @@ func CreateOrg(cmd *m.CreateOrgCommand) error {
 			Updated: time.Now(),
 		}
 
-		_, err := sess.Insert(&user)
+		_, err = sess.Insert(&user)
 		cmd.Result = org
 
 		sess.publishAfterCommit(&events.OrgCreated{

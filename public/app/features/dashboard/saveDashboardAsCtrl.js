@@ -21,6 +21,7 @@ function (angular) {
         $location.url('/dashboard/db/' + result.slug);
 
         $scope.appEvent('dashboard-saved', $scope.clone);
+        backendSrv.post("/api/dashboards/system", {DashId: result.id.toString(), SystemId: clone.system});
         $scope.dismiss();
       });
     }

@@ -92,6 +92,46 @@
 			</form>
 		</div>
 
+        <div class="tight-form-section">
+          <h5>子系统</h5>
+
+          <form name="addOrgForm">
+            <div class="tight-form">
+              <ul class="tight-form-list">
+                <li class="tight-form-item" style="width:100px">
+                  新增子系统
+                </li>
+                <li>
+                  <input type="text" ng-model="newSystemName" required class="itight-form-input last" placeholder="如:办公自动化系统">
+                </li>
+                <li style="float: right">
+                  <button class="btn btn-success" ng-click="addSystem()"><i class="fa fa-plus-square"></i></button>
+                </li>
+                <div class="clearfix"></div>
+              </ul>
+            </div>
+          </form>
+
+          <div  class="tight-form-section" ng-if="!systems.length">
+            <h4>没有子系统,请手动加入</h4>
+          </div>
+          <form name="orgForm" ng-if="systems.length > 0">
+            <div class="tight-form last" ng-repeat="system in systems">
+              <ul class="tight-form-list">
+                <li class="tight-form-item" style="width: 100px">
+                  子系统名称
+                </li>
+                <li>
+                  <input type="text" required ng-model="system.SystemsName" class="tight-form-input last" style="width: 475px">
+                </li>
+              </ul>
+              <div class="clearfix"></div>
+            </div>
+
+            <br>
+            <button type="submit" class="pull-right btn btn-success" ng-click="updateSystems()">更新</button>
+          </form>
+        </div>
 	</div>
 </div>
 
