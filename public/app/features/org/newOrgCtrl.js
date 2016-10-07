@@ -17,8 +17,8 @@ function (angular, config) {
     };
 
     $scope.createOrg = function () {
-      $scope.newOrg.systemsName = $scope.newSystems;
-      backendSrv.post('/api/orgs/', transposition($scope.newSystems)).then(function (result) {
+      $scope.newOrg.systemsName = transposition($scope.newSystems);
+      backendSrv.post('/api/orgs/', $scope.newOrg).then(function (result) {
         backendSrv.post('/api/user/using/' + result.orgId).then(function () {
           window.location.href = config.appSubUrl + '/org';
         });
