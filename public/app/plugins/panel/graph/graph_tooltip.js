@@ -41,7 +41,7 @@ function ($, _) {
     };
 
     this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
-      var value, i, series, hoverIndex, hoverDistance, pointTime;
+      var value, i, series, hoverIndex, hoverDistance, pointTime, yaxis;
       var results = [];
 
       //now we know the current X (j) position for X and Y values
@@ -84,6 +84,10 @@ function ($, _) {
           // to speed the index search we begin always on the last found hoverIndex.
           hoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
         }
+        
+        yaxis = 0;
+        if (series.yaxis.n)
+          yaxis = series.yaxis.n;
 
         results.push({
           value: value,
@@ -92,7 +96,7 @@ function ($, _) {
           label: series.label,
           time: pointTime,
           distance: hoverDistance,
-          yaxis: series.yaxis.n
+          yaxis: yaxis
         });
       }
 
@@ -147,9 +151,6 @@ function ($, _) {
 
         // Dynamically reorder the hovercard for the current time point if the
         // option is enabled, sort by yaxis by default.
-        seriesHoverInfo.sort(function(a, b) {
-          return a.yaxis - b.yaxis;
-        });
         if (panel.tooltip.sort === 2) {
           seriesHoverInfo.sort(function(a, b) {
             return b.value - a.value;
@@ -157,6 +158,11 @@ function ($, _) {
         } else if (panel.tooltip.sort === 1) {
           seriesHoverInfo.sort(function(a, b) {
             return a.value - b.value;
+          });
+        }
+        else {
+          seriesHoverInfo.sort(function(a, b) {
+            return a.yaxis - b.yaxis;
           });
         }
 
