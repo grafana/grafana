@@ -40,9 +40,14 @@ func (*QueryBuilder) Build(query *Query, queryContext *tsdb.QueryContext) (strin
 }
 
 func renderTimeFilter(query *Query) string {
-	//res += "$timeFilter"
-	//res += "time > now() -" + strings.Replace(queryContext.TimeRange.From, "now", "", 1)
-	return "time > now() - 5m"
+	from := "now() - " + query.TimeRange.From
+	to := ""
+
+	if query.TimeRange.To != "now" && query.TimeRange.To != "" {
+		to = " and time < now() - " + strings.Replace(query.TimeRange.To, "now-", "", 1)
+	}
+
+	return fmt.Sprintf("time > %s%s", from, to)
 }
 
 func renderSelectors(query *Query) string {
