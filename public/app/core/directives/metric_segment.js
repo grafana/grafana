@@ -186,25 +186,27 @@ function (_, $, coreModule) {
 
           $scope.getOptionsInternal = function() {
             if ($scope.options) {
-              var optionSegments = _.map($scope.options, function(option) {
+              cachedOptions = _.map($scope.options, function(option) {
                 return uiSegmentSrv.newSegment({value: option.text});
               });
-              return $q.when(optionSegments);
+              return $q.when(cachedOptions);
             } else {
               return $scope.getOptions().then(function(options) {
-                cachedOptions = options;
-                return _.map(options, function(option) {
+                cachedOptions =_.map(options, function(option) {
+                  if (option.html) {
+                    return option;
+                  }
                   return uiSegmentSrv.newSegment({value: option.text});
                 });
+                return cachedOptions;
               });
             }
           };
 
           $scope.onSegmentChange = function() {
-            var options = $scope.options || cachedOptions;
 
-            if (options) {
-              var option = _.find(options, {text: $scope.segment.value});
+            if (cachedOptions) {
+              var option = _.find(cachedOptions, {value: $scope.segment.value});
               if (option && option.value !== $scope.property) {
                 $scope.property = option.value;
               } else if (attrs.custom !== 'false') {

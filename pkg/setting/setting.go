@@ -134,8 +134,9 @@ var (
 	GoogleTagManagerId string
 
 	// LDAP
-	LdapEnabled    bool
-	LdapConfigFile string
+	LdapEnabled     bool
+	LdapConfigFile  string
+	LdapAllowSignup bool = true
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -551,6 +552,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ldapSec := Cfg.Section("auth.ldap")
 	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
 	LdapConfigFile = ldapSec.Key("config_file").String()
+	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 
 	alerting := Cfg.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(false)

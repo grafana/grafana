@@ -90,10 +90,13 @@ func init() {
 			queryRes := tsdb.NewQueryResult()
 
 			stringInput := query.Model.Get("stringInput").MustString()
-			values := []float64{}
+			values := []null.Float{}
 			for _, strVal := range strings.Split(stringInput, ",") {
+				if strVal == "null" {
+					values = append(values, null.FloatFromPtr(nil))
+				}
 				if val, err := strconv.ParseFloat(strVal, 64); err == nil {
-					values = append(values, val)
+					values = append(values, null.FloatFrom(val))
 				}
 			}
 
@@ -107,7 +110,7 @@ func init() {
 			step := (endTime - startTime) / int64(len(values)-1)
 
 			for _, val := range values {
-				series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(val), float64(startTime)))
+				series.Points = append(series.Points, tsdb.TimePoint{val, null.FloatFrom(float64(startTime))})
 				startTime += step
 			}
 

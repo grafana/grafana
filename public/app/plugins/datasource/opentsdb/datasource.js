@@ -419,7 +419,7 @@ function (angular, _, dateMath) {
               return target.metric === metricData.metric;
             } else {
               return target.metric === metricData.metric &&
-              _.all(target.tags, function(tagV, tagK) {
+              _.every(target.tags, function(tagV, tagK) {
                 interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars, 'pipe');
                 return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
               });
