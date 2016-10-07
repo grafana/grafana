@@ -146,7 +146,7 @@ function ($, _) {
         absoluteTime = dashboard.formatDate(seriesHoverInfo.time, tooltipFormat);
 
         // Dynamically reorder the hovercard for the current time point if the
-        // option is enabled, sort by yaxis by default
+        // option is enabled, sort by yaxis by default.
         seriesHoverInfo.sort(function(a, b) {
           return a.yaxis - b.yaxis;
         });
