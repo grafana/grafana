@@ -532,7 +532,7 @@ Use space to separate multiple modes, e.g. "console file"
 ### level
 Either "debug", "info", "warn", "error", "critical", default is "info"
 
-### filter
+### filters
 optional settings to set different levels for specific loggers.
 Ex `filters = sqlstore:debug`
 
