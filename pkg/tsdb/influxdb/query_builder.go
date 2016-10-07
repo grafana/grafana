@@ -33,18 +33,18 @@ func (*QueryBuilder) Build(query *Query, queryContext *tsdb.QueryContext) (strin
 	res := renderSelectors(query)
 	res += renderMeasurement(query)
 	res += renderWhereClause(query)
-	res += renderTimeFilter(query)
+	res += renderTimeFilter(query, queryContext)
 	res += renderGroupBy(query)
 
 	return res, nil
 }
 
-func renderTimeFilter(query *Query) string {
-	from := "now() - " + query.TimeRange.From
+func renderTimeFilter(query *Query, queryContext *tsdb.QueryContext) string {
+	from := "now() - " + queryContext.TimeRange.From
 	to := ""
 
-	if query.TimeRange.To != "now" && query.TimeRange.To != "" {
-		to = " and time < now() - " + strings.Replace(query.TimeRange.To, "now-", "", 1)
+	if queryContext.TimeRange.To != "now" && queryContext.TimeRange.To != "" {
+		to = " and time < now() - " + strings.Replace(queryContext.TimeRange.To, "now-", "", 1)
 	}
 
 	return fmt.Sprintf("time > %s%s", from, to)

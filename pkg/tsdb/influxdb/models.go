@@ -1,7 +1,5 @@
 package influxdb
 
-import "github.com/grafana/grafana/pkg/tsdb"
-
 type Query struct {
 	Measurement  string
 	Policy       string
@@ -10,8 +8,7 @@ type Query struct {
 	GroupBy      []*QueryPart
 	Selects      []*Select
 
-	Interval  string
-	TimeRange tsdb.TimeRange
+	Interval string
 }
 
 type Tag struct {
