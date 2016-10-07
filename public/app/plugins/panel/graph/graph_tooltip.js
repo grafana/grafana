@@ -97,7 +97,8 @@ function ($, _) {
           label: series.label,
           time: pointTime,
           distance: hoverDistance,
-          yaxis: yaxis
+          yaxis: yaxis,
+          index: i
         });
       }
 
@@ -179,7 +180,7 @@ function ($, _) {
             highlightClass = 'graph-tooltip-list-item--highlight';
           }
 
-          series = seriesList[i];
+          series = seriesList[hoverInfo.index];
 
           value = series.formatValue(hoverInfo.value);
 
