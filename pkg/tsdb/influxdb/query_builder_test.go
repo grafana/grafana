@@ -16,7 +16,8 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 		qp2, _ := NewQueryPart("mean", []string{})
 
 		groupBy1, _ := NewQueryPart("time", []string{"$interval"})
-		groupBy2, _ := NewQueryPart("fill", []string{"null"})
+		groupBy2, _ := NewQueryPart("tag", []string{"datacenter"})
+		groupBy3, _ := NewQueryPart("fill", []string{"null"})
 
 		tag1 := &Tag{Key: "hostname", Value: "server1", Operator: "="}
 		tag2 := &Tag{Key: "hostname", Value: "server2", Operator: "=", Condition: "OR"}
@@ -30,7 +31,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 				Selects:     []*Select{{*qp1, *qp2}},
 				Measurement: "cpu",
 				Policy:      "policy",
-				GroupBy:     []*QueryPart{groupBy1, groupBy2},
+				GroupBy:     []*QueryPart{groupBy1, groupBy3},
 				Interval:    "10s",
 			}
 
@@ -43,14 +44,14 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			query := &Query{
 				Selects:     []*Select{{*qp1, *qp2}},
 				Measurement: "cpu",
-				GroupBy:     []*QueryPart{groupBy1},
+				GroupBy:     []*QueryPart{groupBy1, groupBy2, groupBy3},
 				Tags:        []*Tag{tag1, tag2},
 				Interval:    "5s",
 			}
 
 			rawQuery, err := builder.Build(query, queryContext)
 			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE "hostname" = 'server1' OR "hostname" = 'server2' AND time > now() - 5m GROUP BY time(10s)`)
+			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE "hostname" = 'server1' OR "hostname" = 'server2' AND time > now() - 5m GROUP BY time(10s), "datacenter" fill(null)`)
 		})
 
 		Convey("can render time range", func() {

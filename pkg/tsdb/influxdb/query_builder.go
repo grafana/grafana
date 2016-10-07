@@ -88,14 +88,20 @@ func renderWhereClause(query *Query) string {
 }
 
 func renderGroupBy(query *Query) string {
-	var groupBy []string
-	for _, group := range query.GroupBy {
-		groupBy = append(groupBy, group.Render(""))
+	groupBy := ""
+	for i, group := range query.GroupBy {
+		if i == 0 {
+			groupBy += " GROUP BY"
+		}
+
+		if i > 0 && group.Type != "fill" {
+			groupBy += ", " //fill is special. fill is a creep
+		} else {
+			groupBy += " "
+		}
+
+		groupBy += group.Render("")
 	}
 
-	if len(groupBy) > 0 {
-		return " GROUP BY " + strings.Join(groupBy, " ")
-	}
-
-	return ""
+	return groupBy
 }
