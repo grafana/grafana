@@ -51,12 +51,12 @@ function ($, _) {
         series = seriesList[i];
 
         if (!series.data.length || (panel.legend.hideEmpty && series.allIsNull)) {
-          results.push({ hidden: true });
+          results.push({ hidden: true, value: 0, yaxis: 0 });
           continue;
         }
 
         if (!series.data.length || (panel.legend.hideZero && series.allIsZero)) {
-          results.push({ hidden: true });
+          results.push({ hidden: true, value: 0, yaxis: 0 });
           continue;
         }
 
