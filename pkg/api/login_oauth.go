@@ -3,6 +3,8 @@ package api
 import (
 	"errors"
 	"fmt"
+	"crypto/rand"
+	"encoding/base64"
 
 	"golang.org/x/oauth2"
 
@@ -13,6 +15,12 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
 )
+
+func GenStateString() string {
+        rnd := make([]byte, 32)
+        rand.Read(rnd)
+        return base64.StdEncoding.EncodeToString(rnd)
+}
 
 func OAuthLogin(ctx *middleware.Context) {
 	if setting.OAuthService == nil {
@@ -29,7 +37,17 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	code := ctx.Query("code")
 	if code == "" {
-		ctx.Redirect(connect.AuthCodeURL("", oauth2.AccessTypeOnline))
+		state := GenStateString()
+		ctx.Session.Set(middleware.SESS_KEY_OAUTH_STATE, state)
+		ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
+		return
+	}
+
+	// verify state string
+	savedState := ctx.Session.Get(middleware.SESS_KEY_OAUTH_STATE).(string)
+	queryState := ctx.Query("state")
+	if savedState != queryState {
+		ctx.Handle(500, "login.OAuthLogin(state mismatch)", nil)
 		return
 	}
 
