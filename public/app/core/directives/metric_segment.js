@@ -143,7 +143,6 @@ function (_, $, coreModule) {
           $input.focus();
 
           linkMode = false;
-
           var typeahead = $input.data('typeahead');
           if (typeahead) {
             $input.val('');
@@ -152,7 +151,6 @@ function (_, $, coreModule) {
         });
 
         $input.blur($scope.inputBlur);
-
         $compile(elem.contents())($scope);
       }
     };
