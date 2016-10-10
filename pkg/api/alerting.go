@@ -252,6 +252,27 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 	return ApiSuccess("Test notification sent")
 }
 
+//POST /api/alerts/:alertId/pause
+func PauseAlert(c *middleware.Context, cmd models.PauseAlertCommand) Response {
+	cmd.OrgId = c.OrgId
+	cmd.AlertId = c.ParamsInt64(":alertId")
+
+	if cmd.AlertId == 0 {
+		return ApiError(400, "Missing alert id", nil)
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "", err)
+	}
+
+	response := "un paused"
+	if cmd.Paused {
+		response = "paused"
+	}
+
+	return ApiSuccess("Alert " + response)
+}
+
 func getAlertIdForRequest(c *middleware.Context) (int64, error) {
 	alertId := c.QueryInt64("alertId")
 	panelId := c.QueryInt64("panelId")

@@ -58,3 +58,9 @@ type NotificationTestCommand struct {
 	Type     string           `json:"type"`
 	Settings *simplejson.Json `json:"settings"`
 }
+
+type PauseAlertCommand struct {
+	AlertId     int64 `json:"alertId"`
+	DashboardId int64 `json:"dashboardId"`
+	PanelId     int64 `json:"panelId"`
+}

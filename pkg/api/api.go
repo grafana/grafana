@@ -252,6 +252,7 @@ func Register(r *macaron.Macaron) {
 
 		r.Group("/alerts", func() {
 			r.Post("/test", bind(dtos.AlertTestCommand{}), wrap(AlertTest))
+			r.Post("/:alertId/pause", ValidateOrgAlert, bind(m.PauseAlertCommand{}), wrap(PauseAlert))
 			r.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
 			r.Get("/", wrap(GetAlerts))
 			r.Get("/states-for-dashboard", wrap(GetAlertStatesForDashboard))

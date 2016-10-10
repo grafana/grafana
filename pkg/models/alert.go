@@ -101,6 +101,12 @@ type SaveAlertsCommand struct {
 	Alerts []*Alert
 }
 
+type PauseAlertCommand struct {
+	OrgId   int64
+	AlertId int64 `json:"alertId"`
+	Paused  bool  `json:"bool"`
+}
+
 type SetAlertStateCommand struct {
 	AlertId  int64
 	OrgId    int64
