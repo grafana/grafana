@@ -35,6 +35,14 @@ func OAuthLogin(ctx *middleware.Context) {
 		return
 	}
 
+	error := ctx.Query("error")
+	if error != "" {
+		errorDesc := ctx.Query("error_description")
+		ctx.Logger.Info("OAuthLogin Failed", "error", error, "errorDesc", errorDesc)
+		ctx.Redirect(setting.AppSubUrl + "/login?failCode=1003")
+		return
+	}
+
 	code := ctx.Query("code")
 	if code == "" {
 		state := GenStateString()
