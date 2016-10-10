@@ -20,8 +20,7 @@ type BasicUserInfo struct {
 
 type SocialConnector interface {
 	Type() int
-	UserInfo(token *oauth2.Token) (*BasicUserInfo, error)
-	IsEmailAllowed(email string) bool
+	UserInfo(ctx context.Context, token *oauth2.Token) (*BasicUserInfo, error)
 	IsSignupAllowed() bool
 
 	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
@@ -45,6 +44,10 @@ func NewOAuthService() {
 			ClientId:       sec.Key("client_id").String(),
 			ClientSecret:   sec.Key("client_secret").String(),
 			Scopes:         sec.Key("scopes").Strings(" "),
+			State:          sec.Key("state").String(),
+			TlsClientCert:  sec.Key("tls_client_cert").String(),
+			TlsClientKey:   sec.Key("tls_client_key").String(),
+			TlsClientCa:    sec.Key("tls_client_ca").String(),
 			AuthUrl:        sec.Key("auth_url").String(),
 			TokenUrl:       sec.Key("token_url").String(),
 			ApiUrl:         sec.Key("api_url").String(),
@@ -52,6 +55,7 @@ func NewOAuthService() {
 			AllowedDomains: sec.Key("allowed_domains").Strings(" "),
 			AllowSignup:    sec.Key("allow_sign_up").MustBool(),
 			Name:           sec.Key("name").MustString(name),
+			DisplayName:    sec.Key("display_name").String(),
 		}
 
 		if !info.Enabled {

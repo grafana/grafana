@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 
+	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
 
@@ -78,7 +79,7 @@ func (s *SocialGrafanaNet) FetchOrganizations(client *http.Client) ([]string, er
 	return logins, nil
 }
 
-func (s *SocialGrafanaNet) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGrafanaNet) UserInfo(ctx context.Context, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id    int    `json:"id"`
 		Name  string `json:"login"`
@@ -87,7 +88,7 @@ func (s *SocialGrafanaNet) UserInfo(token *oauth2.Token) (*BasicUserInfo, error)
 	}
 
 	var err error
-	client := s.Client(oauth2.NoContext, token)
+	client := s.Client(ctx, token)
 	r, err := client.Get(s.url + "/api/oauth2/user")
 	if err != nil {
 		return nil, err

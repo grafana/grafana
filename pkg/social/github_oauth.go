@@ -9,6 +9,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/models"
 
+	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 )
 
@@ -168,7 +169,7 @@ func (s *SocialGithub) FetchOrganizations(client *http.Client) ([]string, error)
 	return logins, nil
 }
 
-func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGithub) UserInfo(ctx context.Context, token *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id    int    `json:"id"`
 		Name  string `json:"login"`
@@ -176,7 +177,7 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 	}
 
 	var err error
-	client := s.Client(oauth2.NoContext, token)
+	client := s.Client(ctx, token)
 	r, err := client.Get(s.apiUrl)
 	if err != nil {
 		return nil, err
