@@ -30,11 +30,11 @@ func renderTags(query *Query) []string {
 }
 
 func (*QueryBuilder) Build(query *Query, queryContext *tsdb.QueryContext) (string, error) {
-	res := renderSelectors(query)
+	res := renderSelectors(query, queryContext)
 	res += renderMeasurement(query)
 	res += renderWhereClause(query)
 	res += renderTimeFilter(query, queryContext)
-	res += renderGroupBy(query)
+	res += renderGroupBy(query, queryContext)
 
 	return res, nil
 }
@@ -50,7 +50,7 @@ func renderTimeFilter(query *Query, queryContext *tsdb.QueryContext) string {
 	return fmt.Sprintf("time > %s%s", from, to)
 }
 
-func renderSelectors(query *Query) string {
+func renderSelectors(query *Query, queryContext *tsdb.QueryContext) string {
 	res := "SELECT "
 
 	var selectors []string
@@ -58,7 +58,7 @@ func renderSelectors(query *Query) string {
 
 		stk := ""
 		for _, s := range *sel {
-			stk = s.Render(stk)
+			stk = s.Render(queryContext, stk)
 		}
 		selectors = append(selectors, stk)
 	}
@@ -87,7 +87,7 @@ func renderWhereClause(query *Query) string {
 	return res
 }
 
-func renderGroupBy(query *Query) string {
+func renderGroupBy(query *Query, queryContext *tsdb.QueryContext) string {
 	groupBy := ""
 	for i, group := range query.GroupBy {
 		if i == 0 {
@@ -100,7 +100,7 @@ func renderGroupBy(query *Query) string {
 			groupBy += " "
 		}
 
-		groupBy += group.Render("")
+		groupBy += group.Render(queryContext, "")
 	}
 
 	return groupBy

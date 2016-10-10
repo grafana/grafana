@@ -37,7 +37,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := builder.Build(query, queryContext)
 			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "policy"."cpu" WHERE time > now() - 5m GROUP BY time(10s) fill(null)`)
+			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "policy"."cpu" WHERE time > now() - 5m GROUP BY time(200ms) fill(null)`)
 		})
 
 		Convey("can build query with group bys", func() {
@@ -51,7 +51,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			rawQuery, err := builder.Build(query, queryContext)
 			So(err, ShouldBeNil)
-			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE "hostname" = 'server1' OR "hostname" = 'server2' AND time > now() - 5m GROUP BY time(10s), "datacenter" fill(null)`)
+			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE "hostname" = 'server1' OR "hostname" = 'server2' AND time > now() - 5m GROUP BY time(200ms), "datacenter" fill(null)`)
 		})
 
 		Convey("can render time range", func() {

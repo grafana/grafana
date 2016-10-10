@@ -3,6 +3,8 @@ package influxdb
 import (
 	"fmt"
 	"strings"
+
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 var renders map[string]QueryDefinition
@@ -13,7 +15,7 @@ type DefinitionParameters struct {
 }
 
 type QueryDefinition struct {
-	Renderer func(part *QueryPart, innerExpr string) string
+	Renderer func(queryContext *tsdb.QueryContext, part *QueryPart, innerExpr string) string
 	Params   []DefinitionParameters
 }
 
@@ -83,17 +85,17 @@ func init() {
 	renders["alias"] = QueryDefinition{Renderer: aliasRenderer}
 }
 
-func fieldRenderer(part *QueryPart, innerExpr string) string {
+func fieldRenderer(queryContext *tsdb.QueryContext, part *QueryPart, innerExpr string) string {
 	if part.Params[0] == "*" {
 		return "*"
 	}
 	return fmt.Sprintf(`"%s"`, part.Params[0])
 }
 
-func functionRenderer(part *QueryPart, innerExpr string) string {
+func functionRenderer(queryContext *tsdb.QueryContext, part *QueryPart, innerExpr string) string {
 	for i, v := range part.Params {
 		if v == "$interval" {
-			part.Params[i] = "10s"
+			part.Params[i] = tsdb.CalculateInterval(queryContext.TimeRange)
 		}
 	}
 
@@ -106,16 +108,16 @@ func functionRenderer(part *QueryPart, innerExpr string) string {
 	return fmt.Sprintf("%s(%s)", part.Type, params)
 }
 
-func suffixRenderer(part *QueryPart, innerExpr string) string {
+func suffixRenderer(queryContext *tsdb.QueryContext, part *QueryPart, innerExpr string) string {
 	return fmt.Sprintf("%s %s", innerExpr, part.Params[0])
 }
 
-func aliasRenderer(part *QueryPart, innerExpr string) string {
+func aliasRenderer(queryContext *tsdb.QueryContext, part *QueryPart, innerExpr string) string {
 	return fmt.Sprintf(`%s AS "%s"`, innerExpr, part.Params[0])
 }
 
-func (r QueryDefinition) Render(part *QueryPart, innerExpr string) string {
-	return r.Renderer(part, innerExpr)
+func (r QueryDefinition) Render(queryContext *tsdb.QueryContext, part *QueryPart, innerExpr string) string {
+	return r.Renderer(queryContext, part, innerExpr)
 }
 
 func NewQueryPart(typ string, params []string) (*QueryPart, error) {
@@ -138,6 +140,6 @@ type QueryPart struct {
 	Params []string
 }
 
-func (qp *QueryPart) Render(expr string) string {
-	return qp.Def.Renderer(qp, expr)
+func (qp *QueryPart) Render(queryContext *tsdb.QueryContext, expr string) string {
+	return qp.Def.Renderer(queryContext, qp, expr)
 }
