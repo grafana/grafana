@@ -168,7 +168,7 @@ func (s *SocialGithub) FetchOrganizations(client *http.Client) ([]string, error)
 	return logins, nil
 }
 
-func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGithub) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	var data struct {
 		Id    int    `json:"id"`
 		Name  string `json:"login"`
@@ -176,7 +176,6 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 	}
 
 	var err error
-	client := s.Client(oauth2.NoContext, token)
 	r, err := client.Get(s.apiUrl)
 	if err != nil {
 		return nil, err

@@ -1,11 +1,17 @@
 package api
 
 import (
+	"crypto/rand"
+	"crypto/tls"
+	"crypto/x509"
+	"encoding/base64"
 	"errors"
 	"fmt"
-	"crypto/rand"
-	"encoding/base64"
+	"io/ioutil"
+	"log"
+	"net/http"
 
+	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -17,9 +23,9 @@ import (
 )
 
 func GenStateString() string {
-        rnd := make([]byte, 32)
-        rand.Read(rnd)
-        return base64.StdEncoding.EncodeToString(rnd)
+	rnd := make([]byte, 32)
+	rand.Read(rnd)
+	return base64.StdEncoding.EncodeToString(rnd)
 }
 
 func OAuthLogin(ctx *middleware.Context) {
@@ -60,7 +66,38 @@ func OAuthLogin(ctx *middleware.Context) {
 	}
 
 	// handle call back
-	token, err := connect.Exchange(oauth2.NoContext, code)
+
+	// initialize oauth2 context
+	oauthCtx := oauth2.NoContext
+	if setting.OAuthService.OAuthInfos[name].TlsClientCert != "" {
+		cert, err := tls.LoadX509KeyPair(setting.OAuthService.OAuthInfos[name].TlsClientCert, setting.OAuthService.OAuthInfos[name].TlsClientKey)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		// Load CA cert
+		caCert, err := ioutil.ReadFile(setting.OAuthService.OAuthInfos[name].TlsClientCa)
+		if err != nil {
+			log.Fatal(err)
+		}
+		caCertPool := x509.NewCertPool()
+		caCertPool.AppendCertsFromPEM(caCert)
+
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{
+				InsecureSkipVerify: true,
+				Certificates: []tls.Certificate{cert},
+				RootCAs: caCertPool,
+			},
+		}
+		sslcli := &http.Client{Transport: tr}
+
+		oauthCtx = context.TODO()
+		oauthCtx = context.WithValue(oauthCtx, oauth2.HTTPClient, sslcli)
+	}
+
+	// get token from provider
+	token, err := connect.Exchange(oauthCtx, code)
 	if err != nil {
 		ctx.Handle(500, "login.OAuthLogin(NewTransportWithCode)", err)
 		return
@@ -68,7 +105,11 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	ctx.Logger.Debug("OAuthLogin Got token")
 
-	userInfo, err := connect.UserInfo(token)
+	// set up oauth2 client
+	client := connect.Client(oauthCtx, token)
+
+	// get user info
+	userInfo, err := connect.UserInfo(client)
 	if err != nil {
 		if err == social.ErrMissingTeamMembership {
 			ctx.Redirect(setting.AppSubUrl + "/login?failCode=1000")
@@ -82,7 +123,14 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	ctx.Logger.Debug("OAuthLogin got user info", "userInfo", userInfo)
 
-	userQuery := m.GetUserByLoginQuery{LoginOrEmail: userInfo.Name}
+	// validate that the email is allowed to login to grafana
+	if !connect.IsEmailAllowed(userInfo.Email) {
+		ctx.Logger.Info("OAuth login attempt with unallowed email", "email", userInfo.Email)
+		ctx.Redirect(setting.AppSubUrl + "/login?failCode=1002")
+		return
+	}
+
+	userQuery := m.GetUserByLoginQuery{LoginOrEmail: userInfo.Email}
 	err = bus.Dispatch(&userQuery)
 
 	// create account if missing
@@ -101,8 +149,8 @@ func OAuthLogin(ctx *middleware.Context) {
 			return
 		}
 		cmd := m.CreateUserCommand{
-			Login:          userInfo.Identity,
-			Email:          userInfo.Identity,
+			Login:          userInfo.Email,
+			Email:          userInfo.Email,
 			Name:           userInfo.Name,
 			Company:        userInfo.Company,
 			DefaultOrgRole: userInfo.Role,

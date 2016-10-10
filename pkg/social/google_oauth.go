@@ -2,6 +2,7 @@ package social
 
 import (
 	"encoding/json"
+	"net/http"
 
 	"github.com/grafana/grafana/pkg/models"
 
@@ -27,7 +28,7 @@ func (s *SocialGoogle) IsSignupAllowed() bool {
 	return s.allowSignup
 }
 
-func (s *SocialGoogle) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGoogle) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	var data struct {
 		Id    string `json:"id"`
 		Name  string `json:"name"`
@@ -35,7 +36,6 @@ func (s *SocialGoogle) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 	}
 	var err error
 
-	client := s.Client(oauth2.NoContext, token)
 	r, err := client.Get(s.apiUrl)
 	if err != nil {
 		return nil, err

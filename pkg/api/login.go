@@ -27,7 +27,7 @@ func LoginView(c *middleware.Context) {
 
 	enabledOAuths := make(map[string]interface{})
 	for key, oauth := range setting.OAuthService.OAuthInfos {
-		enabledOAuths[key] = map[string]string{"name": oauth.DisplayName}
+		enabledOAuths[key] = map[string]string{"name": oauth.Name}
 	}
 
 	viewData.Settings["oauth"] = enabledOAuths

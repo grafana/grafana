@@ -9,7 +9,9 @@ type OAuthInfo struct {
 	ApiUrl                 string
 	AllowSignup            bool
 	Name                   string
-	DisplayName            string
+	TlsClientCert          string
+	TlsClientKey           string
+	TlsClientCa            string
 }
 
 type OAuther struct {
