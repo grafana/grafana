@@ -95,7 +95,7 @@ func renderGroupBy(query *Query, queryContext *tsdb.QueryContext) string {
 		}
 
 		if i > 0 && group.Type != "fill" {
-			groupBy += ", " //fill is special. fill is a creep
+			groupBy += ", " //fill is so very special. fill is a creep, fill is a weirdo
 		} else {
 			groupBy += " "
 		}
