@@ -2,8 +2,6 @@ package social
 
 import (
 	"encoding/json"
-	"fmt"
-	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -18,6 +16,10 @@ type SocialGrafanaNet struct {
 	allowSignup          bool
 }
 
+type OrgRecord struct {
+	Login string `json:"login"`
+}
+
 func (s *SocialGrafanaNet) Type() int {
 	return int(models.GRAFANANET)
 }
@@ -30,19 +32,14 @@ func (s *SocialGrafanaNet) IsSignupAllowed() bool {
 	return s.allowSignup
 }
 
-func (s *SocialGrafanaNet) IsOrganizationMember(client *http.Client) bool {
+func (s *SocialGrafanaNet) IsOrganizationMember(organizations []OrgRecord) bool {
 	if len(s.allowedOrganizations) == 0 {
 		return true
 	}
 
-	organizations, err := s.FetchOrganizations(client)
-	if err != nil {
-		return false
-	}
-
 	for _, allowedOrganization := range s.allowedOrganizations {
 		for _, organization := range organizations {
-			if organization == allowedOrganization {
+			if organization.Login == allowedOrganization {
 				return true
 			}
 		}
@@ -51,39 +48,13 @@ func (s *SocialGrafanaNet) IsOrganizationMember(client *http.Client) bool {
 	return false
 }
 
-func (s *SocialGrafanaNet) FetchOrganizations(client *http.Client) ([]string, error) {
-	type Record struct {
-		Login string `json:"login"`
-	}
-
-	url := fmt.Sprintf(s.url + "/api/oauth2/user/orgs")
-	r, err := client.Get(url)
-	if err != nil {
-		return nil, err
-	}
-
-	defer r.Body.Close()
-
-	var records []Record
-
-	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
-		return nil, err
-	}
-
-	var logins = make([]string, len(records))
-	for i, record := range records {
-		logins[i] = record.Login
-	}
-
-	return logins, nil
-}
-
 func (s *SocialGrafanaNet) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 	var data struct {
 		Id    int    `json:"id"`
 		Name  string `json:"login"`
 		Email string `json:"email"`
 		Role  string `json:"role"`
+		Orgs  []OrgRecord `json:"orgs"`
 	}
 
 	var err error
@@ -106,7 +77,7 @@ func (s *SocialGrafanaNet) UserInfo(token *oauth2.Token) (*BasicUserInfo, error)
 		Role:     data.Role,
 	}
 
-	if !s.IsOrganizationMember(client) {
+	if !s.IsOrganizationMember(data.Orgs) {
 		return nil, ErrMissingOrganizationMembership
 	}
 
