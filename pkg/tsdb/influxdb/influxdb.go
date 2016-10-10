@@ -51,6 +51,44 @@ func init() {
 	}
 }
 
+func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
+	result := &tsdb.BatchResult{}
+
+	query, err := e.getQuery(queries, context)
+	if err != nil {
+		return result.WithError(err)
+	}
+
+	glog.Debug("Influxdb query", "raw query", query)
+
+	req, err := e.createRequest(query)
+	if err != nil {
+		return result.WithError(err)
+	}
+
+	resp, err := ctxhttp.Do(ctx, HttpClient, req)
+	if err != nil {
+		return result.WithError(err)
+	}
+
+	if resp.StatusCode/100 != 2 {
+		return result.WithError(fmt.Errorf("Influxdb returned statuscode invalid status code: %v", resp.Status))
+	}
+
+	var response Response
+	dec := json.NewDecoder(resp.Body)
+	dec.UseNumber()
+	err = dec.Decode(&response)
+	if err != nil {
+		return result.WithError(err)
+	}
+
+	result.QueryResults = make(map[string]*tsdb.QueryResult)
+	result.QueryResults["A"] = e.ResponseParser.Parse(&response)
+
+	return result
+}
+
 func (e *InfluxDBExecutor) getQuery(queries tsdb.QuerySlice, context *tsdb.QueryContext) (string, error) {
 	for _, v := range queries {
 		query, err := e.QueryParser.Parse(v.Model)
@@ -91,42 +129,4 @@ func (e *InfluxDBExecutor) createRequest(query string) (*http.Request, error) {
 
 	glog.Debug("influxdb request", "url", req.URL.String())
 	return req, nil
-}
-
-func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
-	result := &tsdb.BatchResult{}
-
-	query, err := e.getQuery(queries, context)
-	if err != nil {
-		return result.WithError(err)
-	}
-
-	glog.Debug("Influxdb query", "raw query", query)
-
-	req, err := e.createRequest(query)
-	if err != nil {
-		return result.WithError(err)
-	}
-
-	resp, err := ctxhttp.Do(ctx, HttpClient, req)
-	if err != nil {
-		return result.WithError(err)
-	}
-
-	if resp.StatusCode/100 != 2 {
-		return result.WithError(fmt.Errorf("Influxdb returned statuscode invalid status code: %v", resp.Status))
-	}
-
-	var response Response
-	dec := json.NewDecoder(resp.Body)
-	dec.UseNumber()
-	err = dec.Decode(&response)
-	if err != nil {
-		return result.WithError(err)
-	}
-
-	result.QueryResults = make(map[string]*tsdb.QueryResult)
-	result.QueryResults["A"] = e.ResponseParser.Parse(&response)
-
-	return result
 }

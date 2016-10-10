@@ -122,7 +122,7 @@ func NewAlertEvaluator(model *simplejson.Json) (AlertEvaluator, error) {
 		return &NoDataEvaluator{}, nil
 	}
 
-	return nil, alerting.ValidationError{Reason: "Evaludator invalid evaluator type"}
+	return nil, alerting.ValidationError{Reason: "Evaludator invalid evaluator type: " + typ}
 }
 
 func inSlice(a string, list []string) bool {
