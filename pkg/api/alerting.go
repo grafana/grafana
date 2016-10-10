@@ -265,12 +265,17 @@ func PauseAlert(c *middleware.Context, cmd models.PauseAlertCommand) Response {
 		return ApiError(500, "", err)
 	}
 
-	response := "un paused"
+	var response models.AlertStateType = models.AlertStateNoData
 	if cmd.Paused {
-		response = "paused"
+		response = models.AlertStatePaused
 	}
 
-	return ApiSuccess("Alert " + response)
+	result := map[string]interface{}{
+		"alertId": cmd.AlertId,
+		"state":   response,
+	}
+
+	return Json(200, result)
 }
 
 func getAlertIdForRequest(c *middleware.Context) (int64, error) {
