@@ -56,15 +56,16 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 		Convey("can render time range", func() {
 			query := Query{}
+			builder := &QueryBuilder{}
 			Convey("render from: 2h to now-1h", func() {
 				query := Query{}
 				queryContext := &tsdb.QueryContext{TimeRange: tsdb.NewTimeRange("2h", "now-1h")}
-				So(renderTimeFilter(&query, queryContext), ShouldEqual, "time > now() - 2h and time < now() - 1h")
+				So(builder.renderTimeFilter(&query, queryContext), ShouldEqual, "time > now() - 2h and time < now() - 1h")
 			})
 
 			Convey("render from: 10m", func() {
 				queryContext := &tsdb.QueryContext{TimeRange: tsdb.NewTimeRange("10m", "now")}
-				So(renderTimeFilter(&query, queryContext), ShouldEqual, "time > now() - 10m")
+				So(builder.renderTimeFilter(&query, queryContext), ShouldEqual, "time > now() - 10m")
 			})
 		})
 	})

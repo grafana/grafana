@@ -134,7 +134,6 @@ func (*InfluxdbQueryParser) parseQueryPart(model *simplejson.Json) (*QueryPart, 
 	}
 
 	return qp, nil
-	//return &QueryPart{Type: typ, Params: params}, nil
 }
 
 func (qp *InfluxdbQueryParser) parseGroupBy(model *simplejson.Json) ([]*QueryPart, error) {

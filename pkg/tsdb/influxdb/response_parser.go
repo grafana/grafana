@@ -15,33 +15,39 @@ func (rp *ResponseParser) Parse(response *Response) *tsdb.QueryResult {
 	queryRes := tsdb.NewQueryResult()
 
 	for _, result := range response.Results {
-		rp.parseResult(result.Series, queryRes)
+		queryRes.Series = append(queryRes.Series, rp.transformRows(result.Series, queryRes)...)
 	}
 
 	return queryRes
 }
 
-func (rp *ResponseParser) parseResult(result []Row, queryResult *tsdb.QueryResult) {
-	for _, r := range result {
-		for columnIndex, column := range r.Columns {
+func (rp *ResponseParser) transformRows(rows []Row, queryResult *tsdb.QueryResult) tsdb.TimeSeriesSlice {
+	var result tsdb.TimeSeriesSlice
+
+	for _, row := range rows {
+		for columnIndex, column := range row.Columns {
 			if column == "time" {
 				continue
 			}
 
 			var points tsdb.TimeSeriesPoints
-			for _, k := range r.Values {
-				points = append(points, rp.parseTimepoint(k, columnIndex))
+			for _, valuePair := range row.Values {
+				point, err := rp.parseTimepoint(valuePair, columnIndex)
+				if err == nil {
+					points = append(points, point)
+				}
 			}
-
-			queryResult.Series = append(queryResult.Series, &tsdb.TimeSeries{
-				Name:   rp.formatName(r, column),
+			result = append(result, &tsdb.TimeSeries{
+				Name:   rp.formatSerieName(row, column),
 				Points: points,
 			})
 		}
 	}
+
+	return result
 }
 
-func (rp *ResponseParser) formatName(row Row, column string) string {
+func (rp *ResponseParser) formatSerieName(row Row, column string) string {
 	var tags []string
 
 	for k, v := range row.Tags {
@@ -56,30 +62,30 @@ func (rp *ResponseParser) formatName(row Row, column string) string {
 	return fmt.Sprintf("%s.%s%s", row.Name, column, tagText)
 }
 
-func (rp *ResponseParser) parseTimepoint(k []interface{}, valuePosition int) tsdb.TimePoint {
-	var value null.Float = rp.parseValue(k[valuePosition])
+func (rp *ResponseParser) parseTimepoint(valuePair []interface{}, valuePosition int) (tsdb.TimePoint, error) {
+	var value null.Float = rp.parseValue(valuePair[valuePosition])
 
-	timestampNumber, _ := k[0].(json.Number)
+	timestampNumber, _ := valuePair[0].(json.Number)
 	timestamp, err := timestampNumber.Float64()
 	if err != nil {
-		glog.Error("Invalid timestamp format. This should never happen!")
+		return tsdb.TimePoint{}, err
 	}
 
-	return tsdb.NewTimePoint(value, timestamp)
+	return tsdb.NewTimePoint(value, timestamp), nil
 }
 
 func (rp *ResponseParser) parseValue(value interface{}) null.Float {
-	num, ok := value.(json.Number)
+	number, ok := value.(json.Number)
 	if !ok {
 		return null.FloatFromPtr(nil)
 	}
 
-	fvalue, err := num.Float64()
+	fvalue, err := number.Float64()
 	if err == nil {
 		return null.FloatFrom(fvalue)
 	}
 
-	ivalue, err := num.Int64()
+	ivalue, err := number.Int64()
 	if err == nil {
 		return null.FloatFrom(float64(ivalue))
 	}

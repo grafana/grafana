@@ -127,6 +127,6 @@ func (e *InfluxDBExecutor) createRequest(query string) (*http.Request, error) {
 		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
 	}
 
-	glog.Debug("influxdb request", "url", req.URL.String())
+	glog.Debug("Influxdb request", "url", req.URL.String())
 	return req, nil
 }

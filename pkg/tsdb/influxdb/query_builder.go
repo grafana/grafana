@@ -9,7 +9,17 @@ import (
 
 type QueryBuilder struct{}
 
-func renderTags(query *Query) []string {
+func (qb *QueryBuilder) Build(query *Query, queryContext *tsdb.QueryContext) (string, error) {
+	res := qb.renderSelectors(query, queryContext)
+	res += qb.renderMeasurement(query)
+	res += qb.renderWhereClause(query)
+	res += qb.renderTimeFilter(query, queryContext)
+	res += qb.renderGroupBy(query, queryContext)
+
+	return res, nil
+}
+
+func (qb *QueryBuilder) renderTags(query *Query) []string {
 	var res []string
 	for i, tag := range query.Tags {
 		str := ""
@@ -29,17 +39,7 @@ func renderTags(query *Query) []string {
 	return res
 }
 
-func (*QueryBuilder) Build(query *Query, queryContext *tsdb.QueryContext) (string, error) {
-	res := renderSelectors(query, queryContext)
-	res += renderMeasurement(query)
-	res += renderWhereClause(query)
-	res += renderTimeFilter(query, queryContext)
-	res += renderGroupBy(query, queryContext)
-
-	return res, nil
-}
-
-func renderTimeFilter(query *Query, queryContext *tsdb.QueryContext) string {
+func (qb *QueryBuilder) renderTimeFilter(query *Query, queryContext *tsdb.QueryContext) string {
 	from := "now() - " + queryContext.TimeRange.From
 	to := ""
 
@@ -50,7 +50,7 @@ func renderTimeFilter(query *Query, queryContext *tsdb.QueryContext) string {
 	return fmt.Sprintf("time > %s%s", from, to)
 }
 
-func renderSelectors(query *Query, queryContext *tsdb.QueryContext) string {
+func (qb *QueryBuilder) renderSelectors(query *Query, queryContext *tsdb.QueryContext) string {
 	res := "SELECT "
 
 	var selectors []string
@@ -66,7 +66,7 @@ func renderSelectors(query *Query, queryContext *tsdb.QueryContext) string {
 	return res + strings.Join(selectors, ", ")
 }
 
-func renderMeasurement(query *Query) string {
+func (qb *QueryBuilder) renderMeasurement(query *Query) string {
 	policy := ""
 	if query.Policy == "" || query.Policy == "default" {
 		policy = ""
@@ -76,9 +76,9 @@ func renderMeasurement(query *Query) string {
 	return fmt.Sprintf(` FROM %s"%s"`, policy, query.Measurement)
 }
 
-func renderWhereClause(query *Query) string {
+func (qb *QueryBuilder) renderWhereClause(query *Query) string {
 	res := " WHERE "
-	conditions := renderTags(query)
+	conditions := qb.renderTags(query)
 	res += strings.Join(conditions, " ")
 	if len(conditions) > 0 {
 		res += " AND "
@@ -87,7 +87,7 @@ func renderWhereClause(query *Query) string {
 	return res
 }
 
-func renderGroupBy(query *Query, queryContext *tsdb.QueryContext) string {
+func (qb *QueryBuilder) renderGroupBy(query *Query, queryContext *tsdb.QueryContext) string {
 	groupBy := ""
 	for i, group := range query.GroupBy {
 		if i == 0 {
