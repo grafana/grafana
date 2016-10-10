@@ -3,6 +3,8 @@ package conditions
 import (
 	"testing"
 
+	"gopkg.in/guregu/null.v3"
+
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -43,7 +45,7 @@ func testReducer(typ string, datapoints ...float64) float64 {
 	}
 
 	for idx := range datapoints {
-		series.Points = append(series.Points, tsdb.NewTimePoint(datapoints[idx], 1234134))
+		series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(datapoints[idx]), 1234134))
 	}
 
 	return reducer.Reduce(series).Float64

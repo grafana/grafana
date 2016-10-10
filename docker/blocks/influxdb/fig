@@ -1,5 +1,7 @@
 influxdb:
-  image: tutum/influxdb:0.12
+  #image: influxdb/influxdb:1.0-alpine
+  image: influxdb:latest
+  container_name: influxdb
   ports:
     - "2004:2004"
     - "8083:8083"
