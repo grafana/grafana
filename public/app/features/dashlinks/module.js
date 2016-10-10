@@ -44,16 +44,18 @@ function (angular, _) {
       restrict: 'E',
       link: function(scope, elem) {
         var link = scope.link;
-        var template = '<div class="submenu-item dropdown">' +
-          '<a class="pointer dash-nav-link" data-placement="bottom"' +
+        var template = '<div class="gf-form">' +
+          '<a class="pointer gf-form-label" data-placement="bottom"' +
           (link.asDropdown ? ' ng-click="fillDropdown(link)" data-toggle="dropdown"'  : "") + '>' +
           '<i></i> <span></span></a>';
 
         if (link.asDropdown) {
           template += '<ul class="dropdown-menu" role="menu">' +
-            '<li ng-repeat="dash in link.searchHits"><a href="{{dash.url}}"><i class="fa fa-th-large"></i> {{dash.title}}</a></li>' +
+            '<li ng-repeat="dash in link.searchHits"><a href="{{dash.url}}">{{dash.title}}</a></li>' +
             '</ul>';
         }
+
+        template += '</div>';
 
         elem.html(template);
         $compile(elem.contents())(scope);

@@ -1,3 +1,0 @@
-test:
-	go get -v -d -t ./...
-	go test -v

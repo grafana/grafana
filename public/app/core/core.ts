@@ -19,6 +19,7 @@ import "./directives/rebuild_on_change";
 import "./directives/give_focus";
 import './jquery_extended';
 import './partials';
+import './components/jsontree/jsontree';
 
 import {grafanaAppDirective} from './components/grafana_app';
 import {sideMenuDirective} from './components/sidemenu/sidemenu';
@@ -40,6 +41,7 @@ import 'app/core/routes/routes';
 import './filters/filters';
 import coreModule from './core_module';
 import appEvents from './app_events';
+import colors from './utils/colors';
 
 
 export {
@@ -59,4 +61,5 @@ export {
   dashboardSelector,
   queryPartEditorDirective,
   WizardFlow,
+  colors,
 };

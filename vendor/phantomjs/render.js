@@ -12,17 +12,17 @@
     params[parts[1]] = parts[2];
   });
 
-  var usage = "url=<url> png=<filename> width=<width> height=<height> cookiename=<cookiename> sessionid=<sessionid> domain=<domain>";
+  var usage = "url=<url> png=<filename> width=<width> height=<height> renderKey=<key>";
 
-  if (!params.url || !params.png || !params.cookiename || ! params.sessionid || !params.domain) {
+  if (!params.url || !params.png ||  !params.renderKey || !params.domain) {
     console.log(usage);
     phantom.exit();
   }
 
   phantom.addCookie({
-    'name': params.cookiename,
-    'value': params.sessionid,
-    'domain': params.domain
+    'name': 'renderKey',
+    'value': params.renderKey,
+    'domain': 'localhost',
   });
 
   page.viewportSize = {
@@ -34,6 +34,17 @@
 
   page.open(params.url, function (status) {
     // console.log('Loading a web page: ' + params.url + ' status: ' + status);
+
+    page.onError = function(msg, trace) {
+      var msgStack = ['ERROR: ' + msg];
+      if (trace && trace.length) {
+        msgStack.push('TRACE:');
+        trace.forEach(function(t) {
+          msgStack.push(' -> ' + t.file + ': ' + t.line + (t.function ? ' (in function "' + t.function +'")' : ''));
+        });
+      }
+      console.error(msgStack.join('\n'));
+    };
 
     function checkIsReady() {
       var panelsRendered = page.evaluate(function() {

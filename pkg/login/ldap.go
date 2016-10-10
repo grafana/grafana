@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type ldapAuther struct {
@@ -48,7 +49,16 @@ func (a *ldapAuther) Dial() error {
 				ServerName:         host,
 				RootCAs:            certPool,
 			}
-			a.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
+			if a.server.StartTLS {
+				a.conn, err = ldap.Dial("tcp", address)
+				if err == nil {
+					if err = a.conn.StartTLS(tlsCfg); err == nil {
+						return nil
+					}
+				}
+			} else {
+				a.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
+			}
 		} else {
 			a.conn, err = ldap.Dial("tcp", address)
 		}
@@ -123,8 +133,10 @@ func (a *ldapAuther) getGrafanaUserFor(ldapUser *ldapUserInfo) (*m.User, error) 
 	// get user from grafana db
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: ldapUser.Username}
 	if err := bus.Dispatch(&userQuery); err != nil {
-		if err == m.ErrUserNotFound {
+		if err == m.ErrUserNotFound && setting.LdapAllowSignup {
 			return a.createGrafanaUser(ldapUser)
+		} else if err == m.ErrUserNotFound {
+			return nil, ErrInvalidCredentials
 		} else {
 			return nil, err
 		}

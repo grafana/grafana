@@ -3,18 +3,24 @@ package api
 import (
 	"errors"
 	"fmt"
-	"net/url"
+	"crypto/rand"
+	"encoding/base64"
 
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
 )
+
+func GenStateString() string {
+        rnd := make([]byte, 32)
+        rand.Read(rnd)
+        return base64.StdEncoding.EncodeToString(rnd)
+}
 
 func OAuthLogin(ctx *middleware.Context) {
 	if setting.OAuthService == nil {
@@ -31,7 +37,17 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	code := ctx.Query("code")
 	if code == "" {
-		ctx.Redirect(connect.AuthCodeURL("", oauth2.AccessTypeOnline))
+		state := GenStateString()
+		ctx.Session.Set(middleware.SESS_KEY_OAUTH_STATE, state)
+		ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
+		return
+	}
+
+	// verify state string
+	savedState := ctx.Session.Get(middleware.SESS_KEY_OAUTH_STATE).(string)
+	queryState := ctx.Query("state")
+	if savedState != queryState {
+		ctx.Handle(500, "login.OAuthLogin(state mismatch)", nil)
 		return
 	}
 
@@ -42,26 +58,26 @@ func OAuthLogin(ctx *middleware.Context) {
 		return
 	}
 
-	log.Trace("login.OAuthLogin(Got token)")
+	ctx.Logger.Debug("OAuthLogin Got token")
 
 	userInfo, err := connect.UserInfo(token)
 	if err != nil {
 		if err == social.ErrMissingTeamMembership {
-			ctx.Redirect(setting.AppSubUrl + "/login?failedMsg=" + url.QueryEscape("Required Github team membership not fulfilled"))
+			ctx.Redirect(setting.AppSubUrl + "/login?failCode=1000")
 		} else if err == social.ErrMissingOrganizationMembership {
-			ctx.Redirect(setting.AppSubUrl + "/login?failedMsg=" + url.QueryEscape("Required Github organization membership not fulfilled"))
+			ctx.Redirect(setting.AppSubUrl + "/login?failCode=1001")
 		} else {
 			ctx.Handle(500, fmt.Sprintf("login.OAuthLogin(get info from %s)", name), err)
 		}
 		return
 	}
 
-	log.Trace("login.OAuthLogin(social login): %s", userInfo)
+	ctx.Logger.Debug("OAuthLogin got user info", "userInfo", userInfo)
 
 	// validate that the email is allowed to login to grafana
 	if !connect.IsEmailAllowed(userInfo.Email) {
-		log.Info("OAuth login attempt with unallowed email, %s", userInfo.Email)
-		ctx.Redirect(setting.AppSubUrl + "/login?failedMsg=" + url.QueryEscape("Required email domain not fulfilled"))
+		ctx.Logger.Info("OAuth login attempt with unallowed email", "email", userInfo.Email)
+		ctx.Redirect(setting.AppSubUrl + "/login?failCode=1002")
 		return
 	}
 
@@ -84,10 +100,11 @@ func OAuthLogin(ctx *middleware.Context) {
 			return
 		}
 		cmd := m.CreateUserCommand{
-			Login:   userInfo.Email,
-			Email:   userInfo.Email,
-			Name:    userInfo.Name,
-			Company: userInfo.Company,
+			Login:          userInfo.Email,
+			Email:          userInfo.Email,
+			Name:           userInfo.Name,
+			Company:        userInfo.Company,
+			DefaultOrgRole: userInfo.Role,
 		}
 
 		if err = bus.Dispatch(&cmd); err != nil {

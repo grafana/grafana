@@ -12,6 +12,7 @@ import (
 
 	"gopkg.in/ini.v1"
 
+	"github.com/go-stack/stack"
 	"github.com/inconshreveable/log15"
 	"github.com/inconshreveable/log15/term"
 )
@@ -31,11 +32,25 @@ func New(logger string, ctx ...interface{}) Logger {
 }
 
 func Trace(format string, v ...interface{}) {
-	Root.Debug(fmt.Sprintf(format, v))
+	var message string
+	if len(v) > 0 {
+		message = fmt.Sprintf(format, v)
+	} else {
+		message = format
+	}
+
+	Root.Debug(message)
 }
 
 func Debug(format string, v ...interface{}) {
-	Root.Debug(fmt.Sprintf(format, v))
+	var message string
+	if len(v) > 0 {
+		message = fmt.Sprintf(format, v)
+	} else {
+		message = format
+	}
+
+	Root.Debug(message)
 }
 
 func Debug2(message string, v ...interface{}) {
@@ -43,7 +58,14 @@ func Debug2(message string, v ...interface{}) {
 }
 
 func Info(format string, v ...interface{}) {
-	Root.Info(fmt.Sprintf(format, v))
+	var message string
+	if len(v) > 0 {
+		message = fmt.Sprintf(format, v)
+	} else {
+		message = format
+	}
+
+	Root.Info(message)
 }
 
 func Info2(message string, v ...interface{}) {
@@ -51,7 +73,14 @@ func Info2(message string, v ...interface{}) {
 }
 
 func Warn(format string, v ...interface{}) {
-	Root.Warn(fmt.Sprintf(format, v))
+	var message string
+	if len(v) > 0 {
+		message = fmt.Sprintf(format, v)
+	} else {
+		message = format
+	}
+
+	Root.Warn(message)
 }
 
 func Warn2(message string, v ...interface{}) {
@@ -115,7 +144,9 @@ func getFilters(filterStrArray []string) map[string]log15.Lvl {
 
 	for _, filterStr := range filterStrArray {
 		parts := strings.Split(filterStr, ":")
-		filterMap[parts[0]] = getLogLevelFromString(parts[1])
+		if len(parts) > 1 {
+			filterMap[parts[0]] = getLogLevelFromString(parts[1])
+		}
 	}
 
 	return filterMap
@@ -217,4 +248,10 @@ func LogFilterHandler(maxLevel log15.Lvl, filters map[string]log15.Lvl, h log15.
 
 		return r.Lvl <= maxLevel
 	}, h)
+}
+
+func Stack(skip int) string {
+	call := stack.Caller(skip)
+	s := stack.Trace().TrimBelow(call).TrimRuntime()
+	return s.String()
 }

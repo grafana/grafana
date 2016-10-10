@@ -20,7 +20,6 @@ export class InfluxQueryCtrl extends QueryCtrl {
   measurementSegment: any;
   removeTagFilterSegment: any;
 
-
   /** @ngInject **/
   constructor($scope, $injector, private templateSrv, private $q, private uiSegmentSrv) {
     super($scope, $injector);
@@ -106,23 +105,55 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  removeGroupByPart(part, index) {
-    this.queryModel.removeGroupByPart(part, index);
-    this.panelCtrl.refresh();
-  }
-
   addSelectPart(selectParts, cat, subitem) {
     this.queryModel.addSelectPart(selectParts, subitem.value);
     this.panelCtrl.refresh();
   }
 
-  removeSelectPart(selectParts, part) {
-    this.queryModel.removeSelectPart(selectParts, part);
-    this.panelCtrl.refresh();
+  handleSelectPartEvent(selectParts, part, evt) {
+    switch (evt.name) {
+      case "get-param-options": {
+        var fieldsQuery = this.queryBuilder.buildExploreQuery('FIELDS');
+        return this.datasource.metricFindQuery(fieldsQuery)
+        .then(this.transformToSegments(true))
+        .catch(this.handleQueryError.bind(this));
+      }
+      case "part-param-changed": {
+        this.panelCtrl.refresh();
+        break;
+      }
+      case "action": {
+        this.queryModel.removeSelectPart(selectParts, part);
+        this.panelCtrl.refresh();
+        break;
+      }
+      case "get-part-actions": {
+        return this.$q.when([{text: 'Remove', value: 'remove-part'}]);
+      }
+    }
   }
 
-  selectPartUpdated() {
-    this.panelCtrl.refresh();
+  handleGroupByPartEvent(part, index, evt) {
+    switch (evt.name) {
+      case "get-param-options": {
+        var tagsQuery = this.queryBuilder.buildExploreQuery('TAG_KEYS');
+        return this.datasource.metricFindQuery(tagsQuery)
+        .then(this.transformToSegments(true))
+        .catch(this.handleQueryError.bind(this));
+      }
+      case "part-param-changed": {
+        this.panelCtrl.refresh();
+        break;
+      }
+      case "action": {
+        this.queryModel.removeGroupByPart(part, index);
+        this.panelCtrl.refresh();
+        break;
+      }
+      case "get-part-actions": {
+        return this.$q.when([{text: 'Remove', value: 'remove-part'}]);
+      }
+    }
   }
 
   fixTagSegments() {
@@ -160,26 +191,11 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.target.rawQuery = !this.target.rawQuery;
   }
 
-  getMeasurements() {
-    var query = this.queryBuilder.buildExploreQuery('MEASUREMENTS');
+  getMeasurements(measurementFilter) {
+    var query = this.queryBuilder.buildExploreQuery('MEASUREMENTS', undefined, measurementFilter);
     return this.datasource.metricFindQuery(query)
       .then(this.transformToSegments(true))
       .catch(this.handleQueryError.bind(this));
-  }
-
-  getPartOptions(part) {
-    if (part.def.type === 'field') {
-      var fieldsQuery = this.queryBuilder.buildExploreQuery('FIELDS');
-      return this.datasource.metricFindQuery(fieldsQuery)
-      .then(this.transformToSegments(true))
-      .catch(this.handleQueryError.bind(this));
-    }
-    if (part.def.type === 'tag') {
-      var tagsQuery = this.queryBuilder.buildExploreQuery('TAG_KEYS');
-      return this.datasource.metricFindQuery(tagsQuery)
-      .then(this.transformToSegments(true))
-      .catch(this.handleQueryError.bind(true));
-    }
   }
 
   handleQueryError(err) {
@@ -241,11 +257,6 @@ export class InfluxQueryCtrl extends QueryCtrl {
     return this.datasource.metricFindQuery(fieldsQuery)
     .then(this.transformToSegments(false))
     .catch(this.handleQueryError);
-  }
-
-  setFill(fill) {
-    this.target.fill = fill;
-    this.panelCtrl.refresh();
   }
 
   tagSegmentUpdated(segment, index) {
@@ -323,4 +334,3 @@ export class InfluxQueryCtrl extends QueryCtrl {
     return this.queryModel.render(false);
   }
 }
-

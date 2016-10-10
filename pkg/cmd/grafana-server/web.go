@@ -6,7 +6,6 @@ package main
 import (
 	"fmt"
 	"net/http"
-	"os"
 	"path"
 
 	"gopkg.in/macaron.v1"
@@ -53,6 +52,7 @@ func newMacaron() *macaron.Macaron {
 
 	m.Use(middleware.GetContextHandler())
 	m.Use(middleware.Sessioner(&setting.SessionOptions))
+	m.Use(middleware.RequestMetrics())
 
 	return m
 }
@@ -78,7 +78,7 @@ func mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {
 	))
 }
 
-func StartServer() {
+func StartServer() int {
 	logger = log.New("server")
 
 	var err error
@@ -94,11 +94,13 @@ func StartServer() {
 		err = http.ListenAndServeTLS(listenAddr, setting.CertFile, setting.KeyFile, m)
 	default:
 		logger.Error("Invalid protocol", "protocol", setting.Protocol)
-		os.Exit(1)
+		return 1
 	}
 
 	if err != nil {
 		logger.Error("Fail to start server", "error", err)
-		os.Exit(1)
+		return 1
 	}
+
+	return 0
 }

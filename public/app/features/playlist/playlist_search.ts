@@ -14,7 +14,7 @@ export class PlaylistSearchCtrl {
 
   /** @ngInject */
   constructor(private $scope, private $location, private $timeout, private backendSrv, private contextSrv) {
-    this.query = { query: '', tag: [], starred: false };
+    this.query = {query: '', tag: [], starred: false, limit: 30};
 
     $timeout(() => {
       this.query.query = '';

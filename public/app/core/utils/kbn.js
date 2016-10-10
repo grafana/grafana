@@ -9,6 +9,10 @@ function($, _, moment) {
   var kbn = {};
   kbn.valueFormats = {};
 
+  kbn.regexEscape = function(value) {
+    return value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&');
+  };
+
   ///// HELPER FUNCTIONS /////
 
   kbn.round_interval = function(interval) {
@@ -170,7 +174,10 @@ function($, _, moment) {
         lowLimitMs = kbn.interval_to_ms(lowLimitInterval);
       }
       else {
-        return userInterval;
+        return {
+          intervalMs: kbn.interval_to_ms(userInterval),
+          interval: userInterval,
+        };
       }
     }
 
@@ -179,7 +186,10 @@ function($, _, moment) {
       intervalMs = lowLimitMs;
     }
 
-    return kbn.secondsToHms(intervalMs / 1000);
+    return {
+      intervalMs: intervalMs,
+      interval: kbn.secondsToHms(intervalMs / 1000),
+    };
   };
 
   kbn.describe_interval = function (string) {

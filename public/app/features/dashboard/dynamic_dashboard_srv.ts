@@ -106,7 +106,7 @@ export class DynamicDashboardSrv {
   // returns a new row clone or reuses a clone from previous iteration
   repeatRow(row, rowIndex) {
     var variables = this.dashboard.templating.list;
-    var variable = _.findWhere(variables, {name: row.repeat});
+    var variable = _.find(variables, {name: row.repeat});
     if (!variable) {
       return;
     }
@@ -167,7 +167,7 @@ export class DynamicDashboardSrv {
 
   repeatPanel(panel, row) {
     var variables = this.dashboard.templating.list;
-    var variable = _.findWhere(variables, {name: panel.repeat});
+    var variable = _.find(variables, {name: panel.repeat});
     if (!variable) { return; }
 
     var selected;

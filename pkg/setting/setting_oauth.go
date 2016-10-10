@@ -8,11 +8,11 @@ type OAuthInfo struct {
 	AllowedDomains         []string
 	ApiUrl                 string
 	AllowSignup            bool
+	Name                   string
 }
 
 type OAuther struct {
-	GitHub, Google, Twitter bool
-	OAuthInfos              map[string]*OAuthInfo
+	OAuthInfos map[string]*OAuthInfo
 }
 
 var OAuthService *OAuther

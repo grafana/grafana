@@ -47,10 +47,11 @@ var (
 	BuildStamp   int64
 
 	// Paths
-	LogsPath    string
-	HomePath    string
-	DataPath    string
-	PluginsPath string
+	LogsPath       string
+	HomePath       string
+	DataPath       string
+	PluginsPath    string
+	CustomInitPath = "conf/custom.ini"
 
 	// Log settings.
 	LogModes   []string
@@ -77,9 +78,11 @@ var (
 	DataProxyWhiteList    map[string]bool
 
 	// Snapshots
-	ExternalSnapshotUrl  string
-	ExternalSnapshotName string
-	ExternalEnabled      bool
+	ExternalSnapshotUrl   string
+	ExternalSnapshotName  string
+	ExternalEnabled       bool
+	SnapShotTTLDays       int
+	SnapShotRemoveExpired bool
 
 	// User settings
 	AllowUserSignUp    bool
@@ -89,7 +92,7 @@ var (
 	VerifyEmailEnabled bool
 	LoginHint          string
 	DefaultTheme       string
-	AllowUserPassLogin bool
+	DisableLoginForm   bool
 
 	// Http auth
 	AdminUser     string
@@ -131,8 +134,9 @@ var (
 	GoogleTagManagerId string
 
 	// LDAP
-	LdapEnabled    bool
-	LdapConfigFile string
+	LdapEnabled     bool
+	LdapConfigFile  string
+	LdapAllowSignup bool = true
 
 	// Keystone
 	KeystoneEnabled          bool
@@ -153,11 +157,21 @@ var (
 	// QUOTA
 	Quota QuotaSettings
 
+	// Alerting
+	ExecuteAlerts bool
+
 	// logger
 	logger log.Logger
 
 	// Grafana.NET URL
 	GrafanaNetUrl string
+
+	// S3 temp image store
+	S3TempImageStoreBucketUrl string
+	S3TempImageStoreAccessKey string
+	S3TempImageStoreSecretKey string
+
+	ImageUploadProvider string
 )
 
 type CommandLineArgs struct {
@@ -193,7 +207,12 @@ func ToAbsUrl(relativeUrl string) string {
 
 func shouldRedactKey(s string) bool {
 	uppercased := strings.ToUpper(s)
-	return strings.Contains(uppercased, "PASSWORD") || strings.Contains(uppercased, "SECRET")
+	return strings.Contains(uppercased, "PASSWORD") || strings.Contains(uppercased, "SECRET") || strings.Contains(uppercased, "PROVIDER_CONFIG")
+}
+
+func shouldRedactURLKey(s string) bool {
+	uppercased := strings.ToUpper(s)
+	return strings.Contains(uppercased, "DATABASE_URL")
 }
 
 func applyEnvVariableOverrides() {
@@ -209,6 +228,17 @@ func applyEnvVariableOverrides() {
 				key.SetValue(envValue)
 				if shouldRedactKey(envKey) {
 					envValue = "*********"
+				}
+				if shouldRedactURLKey(envKey) {
+					u, _ := url.Parse(envValue)
+					ui := u.User
+					if ui != nil {
+						_, exists := ui.Password()
+						if exists {
+							u.User = url.UserPassword(ui.Username(), "-redacted-")
+							envValue = u.String()
+						}
+					}
 				}
 				appliedEnvOverrides = append(appliedEnvOverrides, fmt.Sprintf("%s=%s", envKey, envValue))
 			}
@@ -299,7 +329,7 @@ func evalConfigValues() {
 
 func loadSpecifedConfigFile(configFile string) error {
 	if configFile == "" {
-		configFile = filepath.Join(HomePath, "conf/custom.ini")
+		configFile = filepath.Join(HomePath, CustomInitPath)
 		// return without error if custom file does not exist
 		if !pathExists(configFile) {
 			return nil
@@ -481,6 +511,8 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ExternalSnapshotUrl = snapshots.Key("external_snapshot_url").String()
 	ExternalSnapshotName = snapshots.Key("external_snapshot_name").String()
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
+	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
+	SnapShotTTLDays = snapshots.Key("snapshot_TTL_days").MustInt(90)
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
@@ -500,7 +532,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 	LoginHint = users.Key("login_hint").String()
 	DefaultTheme = users.Key("default_theme").String()
-	AllowUserPassLogin = users.Key("allow_user_pass_login").MustBool(true)
+
+	// auth
+	auth := Cfg.Section("auth")
+	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -530,6 +565,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ldapSec := Cfg.Section("auth.ldap")
 	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
 	LdapConfigFile = ldapSec.Key("config_file").String()
+	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
+
+	alerting := Cfg.Section("alerting")
+	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
 
 	keystone := Cfg.Section("auth.keystone")
 	KeystoneEnabled = keystone.Key("enabled").MustBool(false)
@@ -553,8 +592,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 		log.Warn("require_email_validation is enabled but smpt is disabled")
 	}
 
-	GrafanaNetUrl = Cfg.Section("grafana.net").Key("url").MustString("https://grafana.net")
+	GrafanaNetUrl = Cfg.Section("grafana_net").Key("url").MustString("https://grafana.net")
 
+	imageUploadingSection := Cfg.Section("external_image_storage")
+	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("internal")
 	return nil
 }
 

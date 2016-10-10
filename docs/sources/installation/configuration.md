@@ -30,6 +30,9 @@ using environment variables using the syntax:
 Where the section name is the text within the brackets. Everything
 should be upper case, `.` should be replaced by `_`. For example, given these configuration settings:
 
+    # default section
+    instance_name = ${HOSTNAME}
+
     [security]
     admin_user = admin
 
@@ -39,6 +42,7 @@ should be upper case, `.` should be replaced by `_`. For example, given these co
 
 Then you can override them using:
 
+    export GF_DEFAULT_INSTANCE_NAME=my-instance
     export GF_SECURITY_ADMIN_USER=true
     export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 
@@ -87,6 +91,8 @@ Another way is put a webserver like Nginx or Apache in front of Grafana and have
 ### protocol
 
 `http` or `https`
+
+> **Note** Grafana versions earlier than 3.0 are vulnerable to [POODLE](https://en.wikipedia.org/wiki/POODLE). So we strongly recommend to upgrade to 3.x or use a reverse proxy for ssl termination.
 
 ### domain
 
@@ -236,6 +242,14 @@ options are `Admin` and `Editor` and `Read-Only Editor`.
 
 <hr>
 
+## [auth]
+
+### disable_login_form
+
+Set to true to disable (hide) the login form, useful if you use OAuth, defaults to false.
+
+<hr>
+
 ## [auth.anonymous]
 
 ### enabled
@@ -274,9 +288,10 @@ example:
     scopes = user:email
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
-    api_url = https://api.github.com
+    api_url = https://api.github.com/user
     allow_sign_up = false
     team_ids =
+    allowed_organizations =
 
 Restart the Grafana back-end. You should now see a GitHub login button
 on the login page. You can now login or sign up with your GitHub
@@ -303,6 +318,24 @@ Grafana instance. For example:
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
     allow_sign_up = false
+
+### allowed_organizations
+
+Require an active organization membership for at least one of the given
+organizations on GitHub. If the authenticated user isn't a member of at least
+one of the organizations they will not be able to register or authenticate with
+your Grafana instance. For example
+
+    [auth.github]
+    enabled = true
+    client_id = YOUR_GITHUB_APP_CLIENT_ID
+    client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
+    scopes = user:email,read:org
+    auth_url = https://github.com/login/oauth/authorize
+    token_url = https://github.com/login/oauth/access_token
+    allow_sign_up = false
+    # space-delimited organization names
+    allowed_organizations = github google
 
 <hr>
 
@@ -338,6 +371,23 @@ You may allow users to sign-up via Google authentication by setting the
 `allow_sign_up` option to `true`. When this option is set to `true`, any
 user successfully authenticating via Google authentication will be
 automatically signed up.
+
+## [auth.generic_oauth]
+
+This option could be used if have your own oauth service.
+
+This callback URL must match the full HTTP address that you use in your
+browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
+
+    [auth.generic_oauth]
+    enabled = true
+    client_id = YOUR_APP_CLIENT_ID
+    client_secret = YOUR_APP_CLIENT_SECRET
+    scopes =
+    auth_url =
+    token_url =
+    allowed_domains = mycompany.com mycompany.org
+    allow_sign_up = false
 
 <hr>
 
@@ -390,7 +440,7 @@ session provider you have configured.
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
 - **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=disable
 - **memcache:** ex:  127.0.0.1:11211
-- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,db=grafana`
+- **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`
 
 If you use MySQL or Postgres as the session store you need to create the
 session table manually.
@@ -446,6 +496,33 @@ Grafana backend index those json dashboards which will make them appear in regul
 ### path
 The full path to a directory containing your json dashboards.
 
+## [smtp]
+Email server settings.
+
+### enabled
+defaults to false
+
+### host
+defaults to localhost:25
+
+### user
+In case of SMTP auth, defaults to `empty`
+
+### password
+In case of SMTP auth, defaults to `empty`
+
+### cert_file
+File path to a cert file, defaults to `empty`
+
+### key_file
+File path to a key file, defaults to `empty`
+
+### skip_verify
+Verify SSL for smtp server? defaults to `false`
+
+### from_address
+Address used when sending out emails, defaults to `admin@grafana.localhost`
+
 ## [log]
 
 ### mode
@@ -455,7 +532,7 @@ Use space to separate multiple modes, e.g. "console file"
 ### level
 Either "debug", "info", "warn", "error", "critical", default is "info"
 
-### filter
+### filters
 optional settings to set different levels for specific loggers.
 Ex `filters = sqlstore:debug`
 
@@ -488,3 +565,8 @@ Set root url to a Grafana instance where you want to publish external snapshots 
 ### external_snapshot_name
 Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`
 
+### remove expired snapshot
+Enabled to automatically remove expired snapshots
+
+### remove snapshots after 90 days
+Time to live for snapshots.

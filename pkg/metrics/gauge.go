@@ -24,10 +24,10 @@ func NewGauge(meta *MetricMeta) Gauge {
 	}
 }
 
-func RegGauge(meta *MetricMeta) Gauge {
-	g := NewGauge(meta)
-	MetricStats.Register(g)
-	return g
+func RegGauge(name string, tagStrings ...string) Gauge {
+	tr := NewGauge(NewMetricMeta(name, tagStrings))
+	MetricStats.Register(tr)
+	return tr
 }
 
 // GaugeSnapshot is a read-only copy of another Gauge.

@@ -12,7 +12,7 @@ This document is a “bottom up” introduction to basic concepts in Grafana, an
 ### ** Data Source **
 Grafana supports many different storage backends for your time series data (Data Source). Each Data Source has a specific Query Editor that is customized for the features and capabilities that the particular Data Source exposes. 
 
-The following datasources are officially supported: [Graphite](/datasources/graphite/), [InfluxDB](/datasources/influxdb/), [OpenTSDB](/datasources/opentsdb/), and [KairosDB](/datasources/kairosdb)
+The following datasources are officially supported: [Graphite](/datasources/graphite/), [InfluxDB](/datasources/influxdb/), [OpenTSDB](/datasources/opentsdb/), [Prometheus](/datasources/prometheus/), [Elasticsearch](/datasources/elasticsearch/), [CloudWatch](/datasources/cloudwatch/), and [KairosDB](/datasources/kairosdb)
 
 The query language and capabilities of each Data Source are obviously very different. You can combine data from multiple Data Sources onto a single Dashboard, but each Panel is tied to a specific Data Source that belongs to a particular Organization.
 
@@ -58,7 +58,7 @@ There are a wide variety of styling and formatting options that each Panel expos
 
 Panels can be dragged and dropped and rearranged on the Dashboard. They can also be resized.
 
-There are currently four Panel types: [Graph](/reference/graph/), [Singlestat](/reference/singlestat/), [Dashlist](/reference/dashlist/), and [Text](/reference/text/).
+There are currently four Panel types: [Graph](/reference/graph/), [Singlestat](/reference/singlestat/), [Dashlist](/reference/dashlist/), [Table](/reference/table_panel/),and [Text](/reference/text/).
 
 Panels like the [Graph](/reference/graph/) panel allow you to graph as many metrics and series as you want. Other panels like [Singlestat](/reference/singlestat/) require a reduction of a single query into a single number. [Dashlist](/reference/dashlist/) and [Text](/reference/text/) are special panels that do not connect to any Data Source.
 
@@ -66,7 +66,7 @@ Panels can be made more dynamic by utilizing [Dashboard Templating](/reference/t
 
 Utilize the [Repeating Panel](/reference/templating/#utilizing-template-variables-with-repeating-panels-and-repeating-rows) functionality to dynamically create or remove Panels based on the [Templating Variables](/reference/templating/#utilizing-template-variables-with-repeating-panels-and-repeating-rows) selected.
 
-The time range on Panels is normally what is set in the [Dashboard time picker](/reference/timerange/) but this can be overridden by utilizes [Panel specific time overrides](/reference/timerange/#panel-time-override).
+The time range on Panels is normally what is set in the [Dashboard time picker](/reference/timerange/) but this can be overridden by utilizes [Panel specific time overrides](/reference/timerange/#panel-time-overrides-timeshift).
 
 Panels (or an entire Dashboard) can be [Shared](/reference/sharing/) easily in a variety of ways. You can send a link to someone who has a login to your Grafana. You can use the [Snapshot](/reference/sharing/#snapshots) feature to encode all the data currently being viewed into a static and interactive JSON document; it's so much better than emailing a screenshot!
 

@@ -47,10 +47,19 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
 
     this._get = function(url) {
-      return this._request('GET', this.indexPattern.getIndexForToday() + url).then(function(results) {
-        results.data.$$config = results.config;
-        return results.data;
-      });
+      var range = timeSrv.timeRange();
+      var index_list = this.indexPattern.getIndexList(range.from.valueOf(), range.to.valueOf());
+      if (_.isArray(index_list) && index_list.length) {
+        return this._request('GET', index_list[0] + url).then(function(results) {
+          results.data.$$config = results.config;
+          return results.data;
+        });
+      } else {
+        return this._request('GET', this.indexPattern.getIndexForToday() + url).then(function(results) {
+          results.data.$$config = results.config;
+          return results.data;
+        });
+      }
     };
 
     this._post = function(url, data) {
@@ -168,11 +177,14 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var target;
       var sentTargets = [];
 
+      // add global adhoc filters to timeFilter
+      var adhocFilters = templateSrv.getAdhocFilters(this.name);
+
       for (var i = 0; i < options.targets.length; i++) {
         target = options.targets[i];
         if (target.hide) {continue;}
 
-        var queryObj = this.queryBuilder.build(target);
+        var queryObj = this.queryBuilder.build(target, adhocFilters);
         var esQuery = angular.toJson(queryObj);
         var luceneQuery = target.query || '*';
         luceneQuery = templateSrv.replace(luceneQuery, options.scopedVars, 'lucene');
@@ -204,14 +216,8 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       });
     };
 
-    function escapeForJson(value) {
-      var luceneQuery = JSON.stringify(value);
-      return luceneQuery.substr(1, luceneQuery.length - 2);
-    }
-
     this.getFields = function(query) {
-      return this._get('/_mapping').then(function(res) {
-        var fields = {};
+      return this._get('/_mapping').then(function(result) {
         var typeMap = {
           'float': 'number',
           'double': 'number',
@@ -219,22 +225,45 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           'long': 'number',
           'date': 'date',
           'string': 'string',
+          'nested': 'nested'
         };
 
-        for (var indexName in res) {
-          var index = res[indexName];
-          var mappings = index.mappings;
-          if (!mappings) { continue; }
-          for (var typeName in mappings) {
-            var properties = mappings[typeName].properties;
-            for (var field in properties) {
-              var prop = properties[field];
-              if (query.type && typeMap[prop.type] !== query.type) {
-                continue;
+        // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
+        var fieldNameParts = [];
+        var fields = {};
+        function getFieldsRecursively(obj) {
+          for (var key in obj) {
+            var subObj = obj[key];
+
+            // Check mapping field for nested fields
+            if (subObj.hasOwnProperty('properties')) {
+              fieldNameParts.push(key);
+              getFieldsRecursively(subObj.properties);
+            } else {
+              var fieldName = fieldNameParts.concat(key).join('.');
+
+              // Hide meta-fields and check field type
+              if (key[0] !== '_' &&
+                  (!query.type ||
+                   query.type && typeMap[subObj.type] === query.type)) {
+
+                fields[fieldName] = {
+                  text: fieldName,
+                  type: subObj.type
+                };
               }
-              if (prop.type && field[0] !== '_') {
-                fields[field] = {text: field, type: prop.type};
-              }
+            }
+          }
+          fieldNameParts.pop();
+        }
+
+        for (var indexName in result) {
+          var index = result[indexName];
+          if (index && index.mappings) {
+            var mappings = index.mappings;
+            for (var typeName in mappings) {
+              var properties = mappings[typeName].properties;
+              getFieldsRecursively(properties);
             }
           }
         }
@@ -251,12 +280,15 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var header = this.getQueryHeader('count', range.from, range.to);
       var esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
 
-      esQuery = esQuery.replace("$lucene_query", escapeForJson(queryDef.query));
       esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
       esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
       esQuery = header + '\n' + esQuery + '\n';
 
       return this._post('_msearch?search_type=count', esQuery).then(function(res) {
+        if (!res.responses[0].aggregations) {
+          return [];
+        }
+
         var buckets = res.responses[0].aggregations["1"].buckets;
         return _.map(buckets, function(bucket) {
           return {text: bucket.key, value: bucket.key};
@@ -278,6 +310,14 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       if (query.find === 'terms') {
         return this.getTerms(query);
       }
+    };
+
+    this.getTagKeys = function() {
+      return this.getFields({});
+    };
+
+    this.getTagValues = function(options) {
+      return this.getTerms({field: options.key, query: '*'});
     };
   }
 
