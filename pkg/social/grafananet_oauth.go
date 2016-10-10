@@ -3,7 +3,6 @@ package social
 import (
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
 
@@ -51,8 +50,8 @@ func (s *SocialGrafanaNet) IsOrganizationMember(organizations []OrgRecord) bool 
 
 func (s *SocialGrafanaNet) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	var data struct {
-		Id    int    `json:"id"`
-		Name  string `json:"login"`
+		Name  string `json:"name"`
+		Login string `json:"username"`
 		Email string `json:"email"`
 		Role  string `json:"role"`
 		Orgs  []OrgRecord `json:"orgs"`
@@ -71,8 +70,8 @@ func (s *SocialGrafanaNet) UserInfo(client *http.Client) (*BasicUserInfo, error)
 	}
 
 	userInfo := &BasicUserInfo{
-		Identity: strconv.Itoa(data.Id),
 		Name:     data.Name,
+		Login:    data.Login,
 		Email:    data.Email,
 		Role:     data.Role,
 	}

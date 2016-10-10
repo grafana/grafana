@@ -30,7 +30,6 @@ func (s *SocialGoogle) IsSignupAllowed() bool {
 
 func (s *SocialGoogle) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	var data struct {
-		Id    string `json:"id"`
 		Name  string `json:"name"`
 		Email string `json:"email"`
 	}
@@ -45,7 +44,6 @@ func (s *SocialGoogle) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 		return nil, err
 	}
 	return &BasicUserInfo{
-		Identity: data.Id,
 		Name:     data.Name,
 		Email:    data.Email,
 	}, nil

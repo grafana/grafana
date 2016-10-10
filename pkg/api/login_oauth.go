@@ -149,7 +149,7 @@ func OAuthLogin(ctx *middleware.Context) {
 			return
 		}
 		cmd := m.CreateUserCommand{
-			Login:          userInfo.Email,
+			Login:          userInfo.Login,
 			Email:          userInfo.Email,
 			Name:           userInfo.Name,
 			Company:        userInfo.Company,
