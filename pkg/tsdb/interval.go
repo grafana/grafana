@@ -3,8 +3,6 @@ package tsdb
 import (
 	"fmt"
 	"time"
-
-	"github.com/grafana/grafana/pkg/log"
 )
 
 var (
@@ -16,8 +14,6 @@ var (
 
 func CalculateInterval(timerange *TimeRange) string {
 	interval := time.Duration((timerange.MustGetTo().UnixNano() - timerange.MustGetFrom().UnixNano()) / defaultRes)
-
-	log.Info2("res", "resinMs", time.Duration(interval).String())
 
 	if interval < minInterval {
 		return formatDuration(minInterval)

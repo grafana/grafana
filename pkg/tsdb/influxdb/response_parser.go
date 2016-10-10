@@ -18,12 +18,6 @@ func (rp *ResponseParser) Parse(response *Response) *tsdb.QueryResult {
 		rp.parseResult(result.Series, queryRes)
 	}
 
-	/*
-		for _, serie := range queryRes.Series {
-				glog.Debug("result", "name", serie.Name, "points", serie.Points)
-		}
-	*/
-
 	return queryRes
 }
 
