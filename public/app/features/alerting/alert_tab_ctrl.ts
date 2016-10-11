@@ -315,6 +315,7 @@ export class AlertTabCtrl {
         this.alert = null;
         this.panel.thresholds = [];
         this.conditionModels = [];
+        this.panelCtrl.alertState = null;
         this.panelCtrl.render();
       }
     });

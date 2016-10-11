@@ -68,21 +68,39 @@ module.directive('grafanaPanel', function() {
 
       // the reason for handling these classes this way is for performance
       // limit the watchers on panels etc
+      var transparentLastState;
+      var lastHasAlertRule;
+      var lastAlertState;
+      var hasAlertRule;
 
       ctrl.events.on('render', () => {
-        panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
-        panelContainer.toggleClass('panel-has-alert', ctrl.panel.alert !== undefined);
-
-        if (panelContainer.hasClass('panel-has-alert')) {
-          panelContainer.removeClass('panel-alert-state--ok panel-alert-state--alerting');
+        if (transparentLastState !== ctrl.panel.transparent) {
+          panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
+          transparentLastState = ctrl.panel.transparent;
         }
 
-        // set special class for ok, or alerting states
+        hasAlertRule = ctrl.panel.alert !== undefined;
+        if (lastHasAlertRule !== hasAlertRule) {
+          panelContainer.toggleClass('panel-has-alert', hasAlertRule);
+
+          lastHasAlertRule = hasAlertRule;
+        }
+
         if (ctrl.alertState) {
+          if (lastAlertState) {
+            panelContainer.removeClass('panel-alert-state--' + lastAlertState);
+          }
+
           if (ctrl.alertState.state === 'ok' || ctrl.alertState.state === 'alerting') {
             panelContainer.addClass('panel-alert-state--' + ctrl.alertState.state);
           }
+
+          lastAlertState = ctrl.alertState.state;
+        } else if (lastAlertState) {
+          panelContainer.removeClass('panel-alert-state--' + lastAlertState);
+          lastAlertState = null;
         }
+
       });
 
       scope.$watchGroup(['ctrl.fullscreen', 'ctrl.containerHeight'], function() {
