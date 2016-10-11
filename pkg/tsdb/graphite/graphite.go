@@ -57,7 +57,11 @@ func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 	}
 
 	for _, query := range queries {
-		formData["target"] = []string{query.Model.Get("target").MustString()}
+		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
+			formData["target"] = []string{fullTarget}
+		} else {
+			formData["target"] = []string{query.Model.Get("target").MustString()}
+		}
 	}
 
 	if setting.Env == setting.DEV {
