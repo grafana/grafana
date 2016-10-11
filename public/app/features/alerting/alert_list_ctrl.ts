@@ -47,10 +47,11 @@ export class AlertListCtrl {
     var alert = _.find(this.alerts, {id: alertId});
 
     var payload = {
-      paused: alert.state !== "paused"
+      paused: alert.state !== "paused",
+      alertId: alert.id
     };
 
-    this.backendSrv.post(`/api/alerts/${alertId}/pause`, payload).then(result => {
+    this.backendSrv.post(`/api/pause-alert`, payload).then(result => {
       alert.state = result.state;
       alert.stateModel = alertDef.getStateDisplayModel(result.state);
     });

@@ -252,13 +252,17 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 	return ApiSuccess("Test notification sent")
 }
 
-//POST /api/alerts/:alertId/pause
-func PauseAlert(c *middleware.Context, cmd models.PauseAlertCommand) Response {
-	cmd.OrgId = c.OrgId
-	cmd.AlertId = c.ParamsInt64(":alertId")
+//POST /api/pause-alert
+func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
+	alertId, err := getAlertIdForRequest(c.OrgId, dto.AlertId, dto.PanelId, dto.DashboardId)
+	if err != nil {
+		return ApiError(400, "Bad request", err)
+	}
 
-	if cmd.AlertId == 0 {
-		return ApiError(400, "Missing alert id", nil)
+	cmd := models.PauseAlertCommand{
+		OrgId:   c.OrgId,
+		AlertId: alertId,
+		Paused:  dto.Paused,
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -278,11 +282,7 @@ func PauseAlert(c *middleware.Context, cmd models.PauseAlertCommand) Response {
 	return Json(200, result)
 }
 
-func getAlertIdForRequest(c *middleware.Context) (int64, error) {
-	alertId := c.QueryInt64("alertId")
-	panelId := c.QueryInt64("panelId")
-	dashboardId := c.QueryInt64("dashboardId")
-
+func getAlertIdForRequest(orgId, alertId, panelId, dashboardId int64) (int64, error) {
 	if alertId == 0 && dashboardId == 0 && panelId == 0 {
 		return 0, fmt.Errorf("Missing alertId or dashboardId and panelId")
 	}
@@ -290,7 +290,7 @@ func getAlertIdForRequest(c *middleware.Context) (int64, error) {
 	if alertId == 0 {
 		//fetch alertId
 		query := models.GetAlertsQuery{
-			OrgId:       c.OrgId,
+			OrgId:       orgId,
 			DashboardId: dashboardId,
 			PanelId:     panelId,
 		}
