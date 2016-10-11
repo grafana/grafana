@@ -252,16 +252,11 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 	return ApiSuccess("Test notification sent")
 }
 
-//POST /api/pause-alert
+//POST /api/:alertId/pause
 func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
-	alertId, err := getAlertIdForRequest(c.OrgId, dto.AlertId, dto.PanelId, dto.DashboardId)
-	if err != nil {
-		return ApiError(400, "Bad request", err)
-	}
-
 	cmd := models.PauseAlertCommand{
 		OrgId:   c.OrgId,
-		AlertId: alertId,
+		AlertId: c.ParamsInt64("alertId"),
 		Paused:  dto.Paused,
 	}
 
@@ -283,31 +278,4 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	}
 
 	return Json(200, result)
-}
-
-func getAlertIdForRequest(orgId, alertId, panelId, dashboardId int64) (int64, error) {
-	if alertId == 0 && dashboardId == 0 && panelId == 0 {
-		return 0, fmt.Errorf("Missing alertId or dashboardId and panelId")
-	}
-
-	if alertId == 0 {
-		//fetch alertId
-		query := models.GetAlertsQuery{
-			OrgId:       orgId,
-			DashboardId: dashboardId,
-			PanelId:     panelId,
-		}
-
-		if err := bus.Dispatch(&query); err != nil {
-			return 0, err
-		}
-
-		if len(query.Result) != 1 {
-			return 0, fmt.Errorf("PanelId is not unique on dashboard")
-		}
-
-		alertId = query.Result[0].Id
-	}
-
-	return alertId, nil
 }
