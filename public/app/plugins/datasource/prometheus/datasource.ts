@@ -11,6 +11,7 @@ var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
 /** @ngInject */
 export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
+  var self = this;
   this.type = 'prometheus';
   this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
   this.name = instanceSettings.name;
@@ -19,6 +20,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   this.directUrl = instanceSettings.directUrl;
   this.basicAuth = instanceSettings.basicAuth;
   this.withCredentials = instanceSettings.withCredentials;
+  this.labelKeys = [];
   this.lastErrors = {};
 
   this._request = function(method, url, requestId) {
@@ -58,9 +60,35 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return escapedValues.join('|');
   };
 
+  this.renderAdhocFilters = function(filters) {
+    if (filters.length === 0) {
+      return '';
+    }
+
+    var conditions = _.map(filters, (label, index) => {
+      var value = label.value;
+      if (label.operator === '=~' || label.operator === '!~') {
+        value = prometheusSpecialRegexEscape(value);
+      }
+      return label.key + label.operator + '"' + label.value + '"';
+    });
+    return conditions.join(',') + ',';
+  };
+
+  this.buildQuery = function(expr, scopedVars) {
+    var result = templateSrv.replace(expr, scopedVars, this.interpolateQueryExpr);
+    var idx = result.indexOf('{');
+    if (idx === -1) {
+      return result;
+    }
+
+    var adhocFilters = templateSrv.getAdhocFilters(this.name);
+    var filterPart = this.renderAdhocFilters(adhocFilters);
+    return result.slice(0, idx + 1) + filterPart + result.slice(idx + 1);
+  };
+
   // Called once per panel (graph)
   this.query = function(options) {
-    var self = this;
     var start = this.getPrometheusTime(options.range.from, false);
     var end = this.getPrometheusTime(options.range.to, true);
 
@@ -77,7 +105,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       activeTargets.push(target);
 
       var query: any = {};
-      query.expr = templateSrv.replace(target.expr, options.scopedVars, self.interpolateQueryExpr);
+      query.expr = this.buildQuery(target.expr, options.scopedVars);
       query.requestId = options.panelId + target.refId;
 
       var interval = templateSrv.replace(target.interval, options.scopedVars) || options.interval;
@@ -113,6 +141,13 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
           throw response.error;
         }
         delete self.lastErrors.query;
+
+        // remember label keys in response
+        var keys = _.flatten(_.map(response.data.data.result, function(md) {
+          return _.keys(md.metric);
+        }));
+        self.labelKeys = _.uniq(_.union(self.labelKeys, keys));
+
         _.each(response.data.data.result, function(metricData) {
           result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
         });
@@ -131,6 +166,11 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return this._request('GET', url, query.requestId);
   };
 
+  this.performInstantQuery = function(query, time) {
+    var url = '/api/v1/query?query=' + encodeURIComponent(query) + '&time=' + time;
+    return this._request('GET', url);
+  };
+
   this.performSuggestQuery = function(query) {
     var url = '/api/v1/label/__name__/values';
 
@@ -139,6 +179,38 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
         return metricName.indexOf(query) !== 1;
       });
     });
+  };
+
+
+  this.getTagKeys = function(options) {
+    var labelKeys = angular.copy(self.labelKeys);
+    var transformLabelData = function(labelKeys) {
+      return _.map(labelKeys, function (key) {
+        return { text: key, expandable: false };
+      });
+    };
+
+    if (_.isEmpty(options.metric)) {
+      return $q.when(transformLabelData(labelKeys));
+    }
+
+    var time = this.getPrometheusTime('now', true);
+    return this.performInstantQuery(options.metric, time)
+    .then(function(result) {
+      _.each(result.data.data.result, function(metricData) {
+        _.each(metricData.metric, function(val, key) {
+          labelKeys.push(key);
+        });
+      });
+
+      labelKeys = _.uniq(labelKeys);
+      return $q.when(transformLabelData(labelKeys));
+    });
+  };
+
+  this.getTagValues = function(options) {
+    var query = 'label_values(' + options.key + ')';
+    return this.metricFindQuery(query);
   };
 
   this.metricFindQuery = function(query) {
@@ -166,7 +238,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
     var interpolated;
     try {
-      interpolated = templateSrv.replace(expr, {}, this.interpolateQueryExpr);
+      interpolated = this.buildQuery(expr, {});
     } catch (err) {
       return $q.reject(err);
     }
@@ -178,7 +250,6 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
     var start = this.getPrometheusTime(options.range.from, false);
     var end = this.getPrometheusTime(options.range.to, true);
-    var self = this;
 
     return this.performTimeSeriesQuery(query, start, end).then(function(results) {
       var eventList = [];

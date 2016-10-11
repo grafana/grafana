@@ -14,6 +14,7 @@ export class AdhocVariable implements Variable {
     label: '',
     hide: 0,
     datasource: null,
+    metric: '',
     filters: [],
   };
 

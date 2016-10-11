@@ -45,12 +45,14 @@ export class AdHocFiltersCtrl {
       return this.$q.when([this.uiSegmentSrv.newSegment('AND')]);
     }
 
+    var self = this;
     return this.datasourceSrv.get(this.variable.datasource).then(ds => {
       var options: any = {};
       var promise = null;
 
       if (segment.type !== 'value') {
-        promise = ds.getTagKeys();
+        options.metric = self.variable.metric;
+        promise = ds.getTagKeys(options);
       } else {
         options.key = this.segments[index-2].value;
         promise = ds.getTagValues(options);
