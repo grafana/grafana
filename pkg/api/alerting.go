@@ -270,13 +270,16 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	}
 
 	var response models.AlertStateType = models.AlertStateNoData
+	pausedState := "un paused"
 	if cmd.Paused {
 		response = models.AlertStatePaused
+		pausedState = "paused"
 	}
 
 	result := map[string]interface{}{
 		"alertId": cmd.AlertId,
 		"state":   response,
+		"message": "alert " + pausedState,
 	}
 
 	return Json(200, result)
