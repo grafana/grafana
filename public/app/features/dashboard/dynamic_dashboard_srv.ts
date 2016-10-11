@@ -9,23 +9,21 @@ import coreModule from 'app/core/core_module';
 export class DynamicDashboardSrv {
   iteration: number;
   dashboard: any;
+  variables: any;
 
-  init(dashboard) {
-    if (dashboard.snapshot) { return; }
-    this.process(dashboard, {});
-  }
-
-  update(dashboard) {
-    if (dashboard.snapshot) { return; }
-    this.process(dashboard, {});
-  }
-
-  process(dashboard, options) {
-    if (dashboard.templating.list.length === 0) { return; }
-
+  init(dashboard, variableSrv) {
     this.dashboard = dashboard;
+    this.variables = variableSrv.variables;
+  }
+
+  process(options) {
+    if (this.dashboard.snapshot || this.variables.length === 0) {
+      return;
+    }
+
     this.iteration = (this.iteration || new Date().getTime()) + 1;
 
+    options = options || {};
     var cleanUpOnly = options.cleanUpOnly;
     var i, j, row, panel;
 
@@ -105,8 +103,7 @@ export class DynamicDashboardSrv {
 
   // returns a new row clone or reuses a clone from previous iteration
   repeatRow(row, rowIndex) {
-    var variables = this.dashboard.templating.list;
-    var variable = _.find(variables, {name: row.repeat});
+    var variable = _.find(this.variables, {name: row.repeat});
     if (!variable) {
       return;
     }
@@ -166,8 +163,7 @@ export class DynamicDashboardSrv {
   }
 
   repeatPanel(panel, row) {
-    var variables = this.dashboard.templating.list;
-    var variable = _.find(variables, {name: panel.repeat});
+    var variable = _.find(this.variables, {name: panel.repeat});
     if (!variable) { return; }
 
     var selected;

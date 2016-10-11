@@ -51,7 +51,9 @@ export class DashboardCtrl {
         .catch($scope.onInitFailed.bind(this, 'Templating init failed', false))
         // continue
         .finally(function() {
-          dynamicDashboardSrv.init(dashboard);
+          dynamicDashboardSrv.init(dashboard, variableSrv);
+          dynamicDashboardSrv.process();
+
           unsavedChangesSrv.init(dashboard, $scope);
 
           $scope.dashboard = dashboard;
@@ -87,7 +89,7 @@ export class DashboardCtrl {
       };
 
       $scope.templateVariableUpdated = function() {
-        dynamicDashboardSrv.update($scope.dashboard);
+        dynamicDashboardSrv.process();
       };
 
       $scope.updateSubmenuVisibility = function() {
