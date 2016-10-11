@@ -35,6 +35,7 @@ oncallerMgrSrv, $rootScope, $controller, contextSrv) {
 
     $scope.initDashboard = function(dashboardData, viewScope) {
       $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
+      contextSrv.system = dashboardData.dashboard.system || 0
     };
 
     $rootScope.onAppEvent = function(name, callback, localScope) {

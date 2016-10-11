@@ -31,36 +31,6 @@ function (angular, _, $, config) {
         });
       }
       */
-
-      $scope.mainLinks.push({
-        text: "实时报警分析",
-        icon: "fa fa-fw fa-bell",
-        href: $scope.getUrl("/alerts"),
-      });
-
-      $scope.mainLinks.push({
-        text: "实时报警通知",
-        icon: "fa fa-fw fa-phone",
-        href: $scope.getUrl("/oncallers"),
-      });
-
-      $scope.mainLinks.push({
-        text: "实时健康分析",
-        icon: "fa fa-fw fa-stethoscope",
-        href: $scope.getUrl("/anomaly"),
-      });
-
-      $scope.mainLinks.push({
-        text: "长期分析预测",
-        icon: "fa fa-fw fa-line-chart",
-        href: $scope.getUrl("/analysis"),
-      });
-
-      $scope.mainLinks.push({
-        text: "日志管理查询",
-        icon: "fa fa-fw fa-search",
-        href: $scope.getUrl("/logs"),
-      });
     };
 
     $scope.loadOrgs = function() {
@@ -75,10 +45,12 @@ function (angular, _, $, config) {
           text: "用户管理",
           href: $scope.getUrl("/org/users"),
         });
-        $scope.orgMenu.push({
-          text: "密钥管理",
-          href: $scope.getUrl("/org/apikeys"),
-        });
+        if(contextSrv.isGrafanaAdmin){
+          $scope.orgMenu.push({
+            text: "密钥管理",
+            href: $scope.getUrl("/org/apikeys"),
+          });
+        }
       }
 
       if ($scope.orgMenu.length > 0) {
@@ -141,14 +113,71 @@ function (angular, _, $, config) {
       });
     };
 
+    $scope.setupSystemMenu = function () {
+      $scope.mainLinks.push({
+        text: "系统仪表盘",
+        icon: "fa fa-fw fa-th-large",
+        href: $scope.getUrl(contextSrv.dashboardLink)
+      });
+
+      $scope.mainLinks.push({
+        text: "实时报警分析",
+        icon: "fa fa-fw fa-bell",
+        href: $scope.getUrl("/alerts")
+      });
+
+      $scope.mainLinks.push({
+        text: "实时报警通知",
+        icon: "fa fa-fw fa-phone",
+        href: $scope.getUrl("/oncallers")
+      });
+
+      $scope.mainLinks.push({
+        text: "实时健康分析",
+        icon: "fa fa-fw fa-stethoscope",
+        href: $scope.getUrl("/anomaly")
+      });
+
+      $scope.mainLinks.push({
+        text: "长期分析预测",
+        icon: "fa fa-fw fa-line-chart",
+        href: $scope.getUrl("/analysis")
+      });
+
+      $scope.mainLinks.push({
+        text: "日志管理查询",
+        icon: "fa fa-fw fa-search",
+        href: $scope.getUrl("/logs")
+      });
+
+      $scope.mainLinks.push({
+        text: "返回主页",
+        icon: "fa fa-fw fa-backward",
+        href: $scope.getUrl("/"),
+      });
+    };
+
     $scope.updateMenu = function() {
       $scope.systemSection = false;
       $scope.mainLinks = [];
       $scope.orgMenu = [];
-
+      $scope.dashboardTitle = "";
       var currentPath = $location.path();
       if (currentPath.indexOf('/admin') === 0) {
         $scope.setupAdminNav();
+      } else if (currentPath.indexOf('/alerts') == 0
+                  || currentPath.indexOf('/oncallers') == 0
+                  || currentPath.indexOf('/anomaly') == 0
+                  || currentPath.indexOf('/analysis') == 0
+                  || currentPath.indexOf('/logs') == 0
+      ) {
+        if (contextSrv.system == 0){
+          $location.url("/");
+        }
+        $scope.setupSystemMenu();
+      } else if(currentPath.indexOf('/dashboard/db/') == 0){
+        contextSrv.dashboardLink = currentPath;
+        $scope.setupSystemMenu();
       } else {
         $scope.setupMainNav();
       }
