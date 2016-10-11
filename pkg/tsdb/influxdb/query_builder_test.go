@@ -68,5 +68,20 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 				So(builder.renderTimeFilter(&query, queryContext), ShouldEqual, "time > now() - 10m")
 			})
 		})
+
+		Convey("can build query from raw query", func() {
+			query := &Query{
+				Selects:     []*Select{{*qp1, *qp2}},
+				Measurement: "cpu",
+				Policy:      "policy",
+				GroupBy:     []*QueryPart{groupBy1, groupBy3},
+				Interval:    "10s",
+				RawQuery:    "Raw query",
+			}
+
+			rawQuery, err := builder.Build(query, queryContext)
+			So(err, ShouldBeNil)
+			So(rawQuery, ShouldEqual, `Raw query`)
+		})
 	})
 }

@@ -10,6 +10,7 @@ type InfluxdbQueryParser struct{}
 
 func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json) (*Query, error) {
 	policy := model.Get("policy").MustString("default")
+	rawQuery := model.Get("query").MustString("")
 
 	measurement, err := model.Get("measurement").String()
 	if err != nil {
@@ -43,6 +44,7 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json) (*Query, error) {
 		GroupBy:      groupBys,
 		Tags:         tags,
 		Selects:      selects,
+		RawQuery:     rawQuery,
 	}, nil
 }
 

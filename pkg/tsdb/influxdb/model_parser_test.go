@@ -111,5 +111,61 @@ func TestInfluxdbQueryParser(t *testing.T) {
 			So(len(res.Selects), ShouldEqual, 3)
 			So(len(res.Tags), ShouldEqual, 2)
 		})
+
+		Convey("can part raw query json model", func() {
+			json := `
+      {
+        "dsType": "influxdb",
+        "groupBy": [
+          {
+            "params": [
+              "$interval"
+            ],
+            "type": "time"
+          },
+          {
+            "params": [
+              "null"
+            ],
+            "type": "fill"
+          }
+        ],
+        "policy": "default",
+        "query": "RawDummieQuery",
+        "rawQuery": true,
+        "refId": "A",
+        "resultFormat": "time_series",
+        "select": [
+          [
+            {
+              "params": [
+                "value"
+              ],
+              "type": "field"
+            },
+            {
+              "params": [
+
+              ],
+              "type": "mean"
+            }
+          ]
+        ],
+        "tags": [
+
+        ]
+      }
+      `
+
+			modelJson, err := simplejson.NewJson([]byte(json))
+			So(err, ShouldBeNil)
+
+			res, err := parser.Parse(modelJson)
+			So(err, ShouldBeNil)
+			So(res.RawQuery, ShouldEqual, "RawDummieQuery")
+			So(len(res.GroupBy), ShouldEqual, 2)
+			So(len(res.Selects), ShouldEqual, 2)
+			So(len(res.Tags), ShouldEqual, 0)
+		})
 	})
 }

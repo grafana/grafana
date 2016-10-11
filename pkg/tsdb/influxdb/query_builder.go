@@ -10,6 +10,15 @@ import (
 type QueryBuilder struct{}
 
 func (qb *QueryBuilder) Build(query *Query, queryContext *tsdb.QueryContext) (string, error) {
+	if query.RawQuery != "" {
+		q := query.RawQuery
+
+		q = strings.Replace(q, "$timeFilter", qb.renderTimeFilter(query, queryContext), 1)
+		q = strings.Replace(q, "$interval", tsdb.CalculateInterval(queryContext.TimeRange), 1)
+
+		return q, nil
+	}
+
 	res := qb.renderSelectors(query, queryContext)
 	res += qb.renderMeasurement(query)
 	res += qb.renderWhereClause(query)
