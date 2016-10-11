@@ -126,6 +126,10 @@ export function GraphiteDatasource(instanceSettings, $q, backendSrv, templateSrv
     }
   };
 
+  this.targetContainsTemplate = function(target) {
+    return templateSrv.variableExists(target.target);
+  };
+
   this.translateTime = function(date, roundUp) {
     if (_.isString(date)) {
       if (date === 'now') {

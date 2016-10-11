@@ -58,6 +58,10 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return escapedValues.join('|');
   };
 
+  this.targetContainsTemplate = function(target) {
+    return templateSrv.variableExists(target.expr);
+  };
+
   // Called once per panel (graph)
   this.query = function(options) {
     var self = this;

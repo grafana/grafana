@@ -231,7 +231,7 @@ export class AlertTabCtrl {
       this.datasourceSrv.get(datasourceName).then(ds => {
         if (!ds.meta.alerting) {
           this.error = 'The datasource does not support alerting queries';
-        } else if (this.templateSrv.variableExists(foundTarget.target)) {
+        } else if (ds.targetContainsTemplate(foundTarget)) {
           this.error = 'Template variables are not supported in alert queries';
         } else {
           this.error = '';
