@@ -52,6 +52,11 @@ type BatchResult struct {
 	Timings      *BatchTiming
 }
 
+func (br *BatchResult) WithError(err error) *BatchResult {
+	br.Error = err
+	return br
+}
+
 type QueryResult struct {
 	Error  error           `json:"error"`
 	RefId  string          `json:"refId"`
@@ -73,15 +78,15 @@ func NewQueryResult() *QueryResult {
 	}
 }
 
-func NewTimePoint(value float64, timestamp float64) TimePoint {
-	return TimePoint{null.FloatFrom(value), null.FloatFrom(timestamp)}
+func NewTimePoint(value null.Float, timestamp float64) TimePoint {
+	return TimePoint{value, null.FloatFrom(timestamp)}
 }
 
 func NewTimeSeriesPointsFromArgs(values ...float64) TimeSeriesPoints {
 	points := make(TimeSeriesPoints, 0)
 
 	for i := 0; i < len(values); i += 2 {
-		points = append(points, NewTimePoint(values[i], values[i+1]))
+		points = append(points, NewTimePoint(null.FloatFrom(values[i]), values[i+1]))
 	}
 
 	return points

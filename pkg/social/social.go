@@ -1,16 +1,16 @@
 package social
 
 import (
+	"net/http"
 	"strings"
 
-	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/net/context"
-
 	"golang.org/x/oauth2"
+
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type BasicUserInfo struct {
-	Identity string
 	Name     string
 	Email    string
 	Login    string
@@ -20,12 +20,13 @@ type BasicUserInfo struct {
 
 type SocialConnector interface {
 	Type() int
-	UserInfo(token *oauth2.Token) (*BasicUserInfo, error)
+	UserInfo(client *http.Client) (*BasicUserInfo, error)
 	IsEmailAllowed(email string) bool
 	IsSignupAllowed() bool
 
 	AuthCodeURL(state string, opts ...oauth2.AuthCodeOption) string
 	Exchange(ctx context.Context, code string) (*oauth2.Token, error)
+	Client(ctx context.Context, t *oauth2.Token) *http.Client
 }
 
 var (
@@ -52,6 +53,9 @@ func NewOAuthService() {
 			AllowedDomains: sec.Key("allowed_domains").Strings(" "),
 			AllowSignup:    sec.Key("allow_sign_up").MustBool(),
 			Name:           sec.Key("name").MustString(name),
+			TlsClientCert:  sec.Key("tls_client_cert").String(),
+			TlsClientKey:   sec.Key("tls_client_key").String(),
+			TlsClientCa:    sec.Key("tls_client_ca").String(),
 		}
 
 		if !info.Enabled {
@@ -59,6 +63,7 @@ func NewOAuthService() {
 		}
 
 		setting.OAuthService.OAuthInfos[name] = info
+
 		config := oauth2.Config{
 			ClientID:     info.ClientId,
 			ClientSecret: info.ClientSecret,
@@ -85,9 +90,10 @@ func NewOAuthService() {
 		// Google.
 		if name == "google" {
 			SocialMap["google"] = &SocialGoogle{
-				Config: &config, allowedDomains: info.AllowedDomains,
-				apiUrl:      info.ApiUrl,
-				allowSignup: info.AllowSignup,
+				Config:               &config,
+				allowedDomains:       info.AllowedDomains,
+				apiUrl:               info.ApiUrl,
+				allowSignup:          info.AllowSignup,
 			}
 		}
 
@@ -104,15 +110,15 @@ func NewOAuthService() {
 		}
 
 		if name == "grafananet" {
-			config := oauth2.Config{
+			config = oauth2.Config{
 				ClientID:     info.ClientId,
 				ClientSecret: info.ClientSecret,
-				Endpoint: oauth2.Endpoint{
-					AuthURL:  setting.GrafanaNetUrl + "/oauth2/authorize",
-					TokenURL: setting.GrafanaNetUrl + "/api/oauth2/token",
+				Endpoint:     oauth2.Endpoint{
+					AuthURL:      setting.GrafanaNetUrl + "/oauth2/authorize",
+					TokenURL:     setting.GrafanaNetUrl + "/api/oauth2/token",
 				},
-				RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
-				Scopes:      info.Scopes,
+				RedirectURL:  strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
+				Scopes:       info.Scopes,
 			}
 
 			SocialMap["grafananet"] = &SocialGrafanaNet{
