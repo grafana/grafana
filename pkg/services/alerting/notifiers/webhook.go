@@ -20,7 +20,7 @@ func NewWebHookNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &WebhookNotifier{
-		NotifierBase: NewNotifierBase(model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		Url:          url,
 		User:         model.Settings.Get("user").MustString(),
 		Password:     model.Settings.Get("password").MustString(),

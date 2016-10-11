@@ -23,7 +23,7 @@ func NewSlackNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &SlackNotifier{
-		NotifierBase: NewNotifierBase(model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		Url:          url,
 		log:          log.New("alerting.notifier.slack"),
 	}, nil

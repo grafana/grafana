@@ -29,7 +29,7 @@ func NewEmailNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &EmailNotifier{
-		NotifierBase: NewNotifierBase(model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		Addresses:    strings.Split(addressesString, "\n"),
 		log:          log.New("alerting.notifier.email"),
 	}, nil

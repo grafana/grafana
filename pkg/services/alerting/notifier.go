@@ -35,13 +35,21 @@ func (n *RootNotifier) PassesFilter(rule *Rule) bool {
 	return false
 }
 
-func (n *RootNotifier) Notify(context *EvalContext) error {
-	n.log.Info("Sending notifications for", "ruleId", context.Rule.Id)
+func (n *RootNotifier) GetNotifierId() int64 {
+	return 0
+}
 
+func (n *RootNotifier) GetIsDefault() bool {
+	return false
+}
+
+func (n *RootNotifier) Notify(context *EvalContext) error {
 	notifiers, err := n.getNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
 	if err != nil {
 		return err
 	}
+
+	n.log.Info("Sending notifications for", "ruleId", context.Rule.Id, "Amount to send", len(notifiers))
 
 	if len(notifiers) == 0 {
 		return nil
@@ -60,7 +68,7 @@ func (n *RootNotifier) sendNotifications(context *EvalContext, notifiers []Notif
 	g, _ := errgroup.WithContext(context.Ctx)
 
 	for _, notifier := range notifiers {
-		n.log.Info("Sending notification", "firing", context.Firing, "type", notifier.GetType())
+		n.log.Info("Sending notification", "type", notifier.GetType(), "id", notifier.GetNotifierId(), "isDefault", notifier.GetIsDefault())
 		g.Go(func() error { return notifier.Notify(context) })
 	}
 

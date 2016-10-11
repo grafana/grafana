@@ -16,6 +16,9 @@ type Notifier interface {
 	GetType() string
 	NeedsImage() bool
 	PassesFilter(rule *Rule) bool
+
+	GetNotifierId() int64
+	GetIsDefault() bool
 }
 
 type Condition interface {
