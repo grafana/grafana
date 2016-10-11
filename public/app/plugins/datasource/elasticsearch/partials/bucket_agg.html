@@ -23,7 +23,7 @@
 		<label class="gf-form-label" ng-if="isFirst">
 			<a class="pointer" ng-click="addBucketAgg()"><i class="fa fa-plus"></i></a>
 		</label>
-		<label class="gf-form-label">
+		<label class="gf-form-label" ng-if="!isFirst">
 			<a class="pointer" ng-click="removeBucketAgg()"><i class="fa fa-minus"></i></a>
 		</label>
 	</div>
