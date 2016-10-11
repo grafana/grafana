@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 type SchedulerImpl struct {
@@ -48,7 +49,7 @@ func (s *SchedulerImpl) Tick(tickTime time.Time, execQueue chan *Job) {
 	now := tickTime.Unix()
 
 	for _, job := range s.jobs {
-		if job.Running {
+		if job.Running || job.Rule.State == models.AlertStatePaused {
 			continue
 		}
 
