@@ -1,0 +1,46 @@
+<topnav section="安装指南" icon="fa fa-fw fa-cloud-download" subnav="true">
+  <ul class="nav">
+    <li class="active"><a href="profile">安装</a></li>
+  </ul>
+</topnav>
+
+<div class="page-container" ng-controller="InstallCtrl" ng-init="init()">
+
+  <div class="page">
+
+    <h2>安装指引</h2>
+
+    <h4>请选择子系统和对应的服务,即产生相应的安装命令</h4>
+    <div class="tight-form last">
+      <ul class="tight-form-list">
+        <li class="tight-form-item" style="width: 100px">
+          子系统
+        </li>
+        <li ng-controller="SystemCtrl" ng-init="init()">
+          <select ng-model="installSelect.system" class="input-small tight-form-input" ng-change="changeToken()">
+            <option ng-repeat="sys in systems" value="{{sys.Id}}">{{sys.SystemsName}}</option>
+          </select>
+        </li>
+        <li>
+        </li>
+      </ul>
+      <ul class="tight-form-list">
+        <li class="tight-form-item" style="width: 100px">
+          服务
+        </li>
+        <li>
+          <select ng-model="installSelect.service" class="input-small tight-form-input">
+            <option ng-repeat="service in services">{{service}}</option>
+          </select>
+        </li>
+      </ul>
+      <div class="clearfix"></div>
+    </div>
+
+    <h3>安装命令</h3>
+    <div class="tight-form last" ng-if="installSelect.system != 0">
+        <p style="word-break: break-all">sudo ORG_TOKEN={{token}} METRIC_SERVER_HOST=server1 AGENT_URL=https://github.com/wangy1931/tcollector/releases/download/1.0.0-cloudwiz-agent.beta.2/agent.tar.gz bash -c "$(curl -L https://github.com/wangy1931/tcollector/releases/download/1.0.0-cloudwiz-agent-deploy.beta.2/deploy_agent.sh)"</p>
+    </div>
+  </div>
+</div>
+

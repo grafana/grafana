@@ -62,5 +62,7 @@ function (angular, _, store, config) {
 
     this.isEditor = this.hasRole('Editor') || this.hasRole('Admin');
     this.isOrgAdmin = this.hasRole('Admin');
+    this.system = 0;
+    this.dashboardLink = "";
   });
 });

@@ -1,6 +1,6 @@
 <div ng-controller="SideMenuCtrl" ng-init="init()">
 
-	<ul class="sidemenu sidemenu-main">
+	<ul class="sidemenu sidemenu-main" style="height: 418px;">
 		<li style="margin-bottom: 15px;">
 			<a class="pointer sidemenu-top-btn" ng-click="contextSrv.toggleSideMenu()">
 				<img class="logo-icon" src="img/fav32.png"></img>
@@ -36,6 +36,13 @@
 				<span class="sidemenu-item-text">{{contextSrv.user.name}}</span>
 	   	</a>
 		</li>
+
+    <li ng-if="contextSrv.isOrgAdmin">
+      <a href="install" class="sidemenu-item">
+        <span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-cloud-download"></i></span>
+        <span class="sidemenu-item-text">安装指南</span>
+      </a>
+    </li>
 
     <li ng-if="!contextSrv.isOrgAdmin">
       <a class="sidemenu-item">

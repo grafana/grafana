@@ -58,7 +58,8 @@ define([
           url: _this.anomalyUrlRoot + "/healthsummary",
           params: {
             org: orgName
-          }
+          },
+          timeout: 2000
         });
       };
 
