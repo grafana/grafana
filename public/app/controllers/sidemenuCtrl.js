@@ -173,6 +173,8 @@ function (angular, _, $, config) {
       ) {
         if (contextSrv.system == 0){
           $location.url("/");
+          $scope.appEvent('alert-warning', ['非法操作', '已为您跳转到主页']);
+          return;
         }
         $scope.setupSystemMenu();
       } else if(currentPath.indexOf('/dashboard/db/') == 0){
