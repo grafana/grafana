@@ -273,11 +273,13 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
           default: {
             var width;
             for (let i = 0; i < data.length; i++) {
-              if (data[i].stats.timeStep && (width == null || (data[i].stats.timeStep / 1.5) < width))
+              if (data[i].stats.timeStep && (width == null || (data[i].stats.timeStep / 1.5) < width)) {
                 width = data[i].stats.timeStep / 1.5;
+              }
             }
-            if (width)
+            if (width) {
               options.series.bars.barWidth = width;
+            }
             addTimeAxis(options);
             break;
           }
