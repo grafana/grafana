@@ -156,7 +156,7 @@ export class AlertTabCtrl {
 
     for (let addedNotification of alert.notifications) {
       var model = _.find(this.notifications, {id: addedNotification.id});
-      if (model) {
+      if (model && model.isDefault === false) {
         model.iconClass = this.getNotificationIcon(model.type);
         this.alertNotifications.push(model);
       }
