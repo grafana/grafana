@@ -13,20 +13,25 @@ export class TextPanelCtrl extends PanelCtrl {
     mode    : "markdown", // 'html', 'markdown', 'text'
     content : "# title",
   };
-  /** @ngInject */
+
+  /** @ngInject **/
   constructor($scope, $injector, private templateSrv, private $sce) {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);
 
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
-    this.events.on('refresh', this.onRender.bind(this));
+    this.events.on('refresh', this.onRefresh.bind(this));
     this.events.on('render', this.onRender.bind(this));
   }
 
   onInitEditMode() {
     this.addEditorTab('Options', 'public/app/plugins/panel/text/editor.html');
     this.editorTabIndex = 1;
+  }
+
+  onRefresh() {
+    this.render();
   }
 
   onRender() {
