@@ -333,7 +333,6 @@ function (angular, _, dateMath) {
 
       if (!_.isEmpty(md.tags)) {
         _.each(_.toPairs(md.tags), function(tag) {
-          console.log(tag);
           if (_.has(groupByTags, tag[0])) {
             tagData.push(tag[0] + "=" + tag[1]);
           }
