@@ -74,7 +74,7 @@ Be sure to read the [getting started guide](http://docs.grafana.org/guides/getti
 
 ## Run from master
 If you want to build a package yourself, or contribute. Here is a guide for how to do that. You can always find
-the latest master builds [here](http://grafana.org/download/builds)
+the latest master builds [here](http://grafana.org/builds)
 
 ### Dependencies
 
