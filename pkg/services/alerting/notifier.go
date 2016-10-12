@@ -68,8 +68,9 @@ func (n *RootNotifier) sendNotifications(context *EvalContext, notifiers []Notif
 	g, _ := errgroup.WithContext(context.Ctx)
 
 	for _, notifier := range notifiers {
-		n.log.Info("Sending notification", "type", notifier.GetType(), "id", notifier.GetNotifierId(), "isDefault", notifier.GetIsDefault())
-		g.Go(func() error { return notifier.Notify(context) })
+		not := notifier //avoid updating scope variable in go routine
+		n.log.Info("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
+		g.Go(func() error { return not.Notify(context) })
 	}
 
 	return g.Wait()
