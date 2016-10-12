@@ -12,10 +12,7 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json) (*Query, error) {
 	policy := model.Get("policy").MustString("default")
 	rawQuery := model.Get("query").MustString("")
 
-	measurement, err := model.Get("measurement").String()
-	if err != nil {
-		return nil, err
-	}
+	measurement := model.Get("measurement").MustString("")
 
 	resultFormat, err := model.Get("resultFormat").String()
 	if err != nil {

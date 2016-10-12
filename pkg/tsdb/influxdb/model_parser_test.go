@@ -164,7 +164,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(res.RawQuery, ShouldEqual, "RawDummieQuery")
 			So(len(res.GroupBy), ShouldEqual, 2)
-			So(len(res.Selects), ShouldEqual, 2)
+			So(len(res.Selects), ShouldEqual, 1)
 			So(len(res.Tags), ShouldEqual, 0)
 		})
 	})
