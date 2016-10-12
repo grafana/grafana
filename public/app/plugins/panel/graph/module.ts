@@ -93,7 +93,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     steppedLine: false,
     // tooltip options
     tooltip       : {
-      value_type: 'cumulative',
+      value_type: 'individual',
       shared: true,
       sort: 0,
       msResolution: false,
