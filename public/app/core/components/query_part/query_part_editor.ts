@@ -128,11 +128,9 @@ export function queryPartEditorDirective($compile, templateSrv) {
       }
 
       $scope.showActionsMenu = function() {
-        if ($scope.partActions.length === 0) {
-          $scope.handleEvent({$event: {name: 'get-part-actions'}}).then(res => {
-            $scope.partActions = res;
-          });
-        }
+        $scope.handleEvent({$event: {name: 'get-part-actions'}}).then(res => {
+          $scope.partActions = res;
+        });
       };
 
       $scope.triggerPartAction = function(action) {
