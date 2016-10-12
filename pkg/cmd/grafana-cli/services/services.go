@@ -149,6 +149,9 @@ func createRequest(repoUrl string, subPaths ...string) ([]byte, error) {
 	}
 
 	res, err := HttpClient.Do(req)
+	if res.StatusCode/100 != 2 {
+		return []byte{}, fmt.Errorf("Api returned invalid status: %s", res.Status)
+	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
