@@ -120,6 +120,10 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 					jsonQuery.SetPath([]string{"datasourceId"}, datasource.Id)
 				}
 
+				if interval, err := panel.Get("interval").String(); err == nil {
+					panelQuery.Set("interval", interval)
+				}
+
 				jsonQuery.Set("model", panelQuery.Interface())
 			}
 
