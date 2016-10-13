@@ -332,7 +332,7 @@ function (angular, _, dateMath) {
       var tagData = [];
 
       if (!_.isEmpty(md.tags)) {
-        _.each(_.pairs(md.tags), function(tag) {
+        _.each(_.toPairs(md.tags), function(tag) {
           if (_.has(groupByTags, tag[0])) {
             tagData.push(tag[0] + "=" + tag[1]);
           }
