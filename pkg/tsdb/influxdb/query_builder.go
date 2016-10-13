@@ -67,7 +67,7 @@ func (qb *QueryBuilder) renderSelectors(query *Query, queryContext *tsdb.QueryCo
 
 		stk := ""
 		for _, s := range *sel {
-			stk = s.Render(queryContext, stk)
+			stk = s.Render(query, queryContext, stk)
 		}
 		selectors = append(selectors, stk)
 	}
@@ -109,7 +109,7 @@ func (qb *QueryBuilder) renderGroupBy(query *Query, queryContext *tsdb.QueryCont
 			groupBy += " "
 		}
 
-		groupBy += group.Render(queryContext, "")
+		groupBy += group.Render(query, queryContext, "")
 	}
 
 	return groupBy

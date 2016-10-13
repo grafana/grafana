@@ -91,7 +91,8 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 
 func (e *InfluxDBExecutor) getQuery(queries tsdb.QuerySlice, context *tsdb.QueryContext) (string, error) {
 	for _, v := range queries {
-		query, err := e.QueryParser.Parse(v.Model)
+
+		query, err := e.QueryParser.Parse(v.Model, e.DataSourceInfo)
 		if err != nil {
 			return "", err
 		}

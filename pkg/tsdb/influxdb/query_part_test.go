@@ -10,15 +10,14 @@ import (
 func TestInfluxdbQueryPart(t *testing.T) {
 	Convey("Influxdb query parts", t, func() {
 
-		queryContext := &tsdb.QueryContext{
-			TimeRange: tsdb.NewTimeRange("5m", "now"),
-		}
+		queryContext := &tsdb.QueryContext{TimeRange: tsdb.NewTimeRange("5m", "now")}
+		query := &Query{}
 
 		Convey("render field ", func() {
 			part, err := NewQueryPart("field", []string{"value"})
 			So(err, ShouldBeNil)
 
-			res := part.Render(queryContext, "value")
+			res := part.Render(query, queryContext, "value")
 			So(res, ShouldEqual, `"value"`)
 		})
 
@@ -26,7 +25,7 @@ func TestInfluxdbQueryPart(t *testing.T) {
 			part, err := NewQueryPart("derivative", []string{"10s"})
 			So(err, ShouldBeNil)
 
-			res := part.Render(queryContext, "mean(value)")
+			res := part.Render(query, queryContext, "mean(value)")
 			So(res, ShouldEqual, "derivative(mean(value), 10s)")
 		})
 
@@ -34,7 +33,7 @@ func TestInfluxdbQueryPart(t *testing.T) {
 			part, err := NewQueryPart("bottom", []string{"3"})
 			So(err, ShouldBeNil)
 
-			res := part.Render(queryContext, "value")
+			res := part.Render(query, queryContext, "value")
 			So(res, ShouldEqual, "bottom(value, 3)")
 		})
 
@@ -42,7 +41,7 @@ func TestInfluxdbQueryPart(t *testing.T) {
 			part, err := NewQueryPart("time", []string{"$interval"})
 			So(err, ShouldBeNil)
 
-			res := part.Render(queryContext, "")
+			res := part.Render(query, queryContext, "")
 			So(res, ShouldEqual, "time(200ms)")
 		})
 
@@ -50,7 +49,7 @@ func TestInfluxdbQueryPart(t *testing.T) {
 			part, err := NewQueryPart("spread", []string{})
 			So(err, ShouldBeNil)
 
-			res := part.Render(queryContext, "value")
+			res := part.Render(query, queryContext, "value")
 			So(res, ShouldEqual, `spread(value)`)
 		})
 
@@ -58,7 +57,7 @@ func TestInfluxdbQueryPart(t *testing.T) {
 			part, err := NewQueryPart("math", []string{"/ 100"})
 			So(err, ShouldBeNil)
 
-			res := part.Render(queryContext, "mean(value)")
+			res := part.Render(query, queryContext, "mean(value)")
 			So(res, ShouldEqual, "mean(value) / 100")
 		})
 
@@ -66,7 +65,7 @@ func TestInfluxdbQueryPart(t *testing.T) {
 			part, err := NewQueryPart("alias", []string{"test"})
 			So(err, ShouldBeNil)
 
-			res := part.Render(queryContext, "mean(value)")
+			res := part.Render(query, queryContext, "mean(value)")
 			So(res, ShouldEqual, `mean(value) AS "test"`)
 		})
 	})

@@ -4,13 +4,15 @@ import (
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type InfluxdbQueryParser struct{}
 
-func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json) (*Query, error) {
+func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *tsdb.DataSourceInfo) (*Query, error) {
 	policy := model.Get("policy").MustString("default")
 	rawQuery := model.Get("query").MustString("")
+	interval := model.Get("interval").MustString("")
 
 	measurement := model.Get("measurement").MustString("")
 
@@ -34,6 +36,13 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json) (*Query, error) {
 		return nil, err
 	}
 
+	if interval == "" {
+		dsInterval := dsInfo.JsonData.Get("timeInterval").MustString("")
+		if dsInterval != "" {
+			interval = dsInterval
+		}
+	}
+
 	return &Query{
 		Measurement:  measurement,
 		Policy:       policy,
@@ -42,6 +51,7 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json) (*Query, error) {
 		Tags:         tags,
 		Selects:      selects,
 		RawQuery:     rawQuery,
+		Interval:     interval,
 	}, nil
 }
 

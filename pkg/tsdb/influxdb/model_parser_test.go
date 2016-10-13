@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -11,6 +12,9 @@ func TestInfluxdbQueryParser(t *testing.T) {
 	Convey("Influxdb query parser", t, func() {
 
 		parser := &InfluxdbQueryParser{}
+		dsInfo := &tsdb.DataSourceInfo{
+			JsonData: simplejson.New(),
+		}
 
 		Convey("can parse influxdb json model", func() {
 			json := `
@@ -101,15 +105,16 @@ func TestInfluxdbQueryParser(t *testing.T) {
         ]
       }
       `
-
+			dsInfo.JsonData.Set("timeInterval", ">20s")
 			modelJson, err := simplejson.NewJson([]byte(json))
 			So(err, ShouldBeNil)
 
-			res, err := parser.Parse(modelJson)
+			res, err := parser.Parse(modelJson, dsInfo)
 			So(err, ShouldBeNil)
 			So(len(res.GroupBy), ShouldEqual, 3)
 			So(len(res.Selects), ShouldEqual, 3)
 			So(len(res.Tags), ShouldEqual, 2)
+			So(res.Interval, ShouldEqual, ">20s")
 		})
 
 		Convey("can part raw query json model", func() {
@@ -130,6 +135,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
             "type": "fill"
           }
         ],
+        "interval": ">10s",
         "policy": "default",
         "query": "RawDummieQuery",
         "rawQuery": true,
@@ -160,12 +166,13 @@ func TestInfluxdbQueryParser(t *testing.T) {
 			modelJson, err := simplejson.NewJson([]byte(json))
 			So(err, ShouldBeNil)
 
-			res, err := parser.Parse(modelJson)
+			res, err := parser.Parse(modelJson, dsInfo)
 			So(err, ShouldBeNil)
 			So(res.RawQuery, ShouldEqual, "RawDummieQuery")
 			So(len(res.GroupBy), ShouldEqual, 2)
 			So(len(res.Selects), ShouldEqual, 1)
 			So(len(res.Tags), ShouldEqual, 0)
+			So(res.Interval, ShouldEqual, ">10s")
 		})
 	})
 }
