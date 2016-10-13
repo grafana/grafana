@@ -25,7 +25,9 @@ install:
 build_script:
   - go run build.go build
   - grunt release
+  - 7z a grafana.zip %APPVEYOR_BUILD_FOLDER%\dist\*
 
 artifacts:
-  - path: dist/*
+  - path: grafana.zip
+  #- path: dist/*
     name: binzip
