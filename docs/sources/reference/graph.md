@@ -91,7 +91,7 @@ The legend values are calculated client side by Grafana and depend on what type 
 aggregation or point consolidation you metric query is using. All the above legend values cannot
 be correct at the same time. For example if you plot a rate like requests/second, this is probably
 using average as aggregator, then the Total in the legend will not represent the total number of requests.
-It is just the sum of all data data points received by Grafana.
+It is just the sum of all data points received by Grafana.
 
 ## Display styles
 
