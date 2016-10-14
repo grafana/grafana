@@ -269,6 +269,7 @@ func Register(r *macaron.Macaron) {
 		}, reqOrgAdmin)
 
 		r.Get("/annotations", wrap(GetAnnotations))
+		r.Post("/annotations/mass-delete", reqOrgAdmin, bind(dtos.DeleteAnnotationsCmd{}), wrap(DeleteAnnotations))
 
 		// error test
 		r.Get("/metrics/error", wrap(GenerateError))

@@ -392,16 +392,20 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
           position: 'BOTTOM',
           markerSize: 5,
         };
+
         types['$__ok'] = {
           color: 'rgba(11, 237, 50, 1)',
           position: 'BOTTOM',
           markerSize: 5,
         };
-        types['$__nodata'] = {
+
+        types['$__no_data'] = {
           color: 'rgba(150, 150, 150, 1)',
           position: 'BOTTOM',
           markerSize: 5,
         };
+
+        types['$__execution_error'] = ['$__no_data'];
 
         for (var i = 0; i < annotations.length; i++) {
           var item = annotations[i];
