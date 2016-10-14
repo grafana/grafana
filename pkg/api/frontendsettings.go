@@ -145,7 +145,6 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			"hasUpdate":     plugins.GrafanaHasUpdate,
 			"env":           setting.Env,
 		},
-		"alertingEnabled": setting.AlertingEnabled,
 	}
 
 	return jsonObj, nil

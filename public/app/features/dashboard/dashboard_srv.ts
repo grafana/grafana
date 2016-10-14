@@ -514,9 +514,11 @@ export class DashboardModel {
             if (panel.grid.thresholdLine) {
               t1.line = true;
               t1.lineColor = panel.grid.threshold1Color;
+              t1.colorMode = 'custom';
             } else {
               t1.fill = true;
               t1.fillColor = panel.grid.threshold1Color;
+              t1.colorMode = 'custom';
             }
           }
 
@@ -525,25 +527,27 @@ export class DashboardModel {
             if (panel.grid.thresholdLine) {
               t2.line = true;
               t2.lineColor = panel.grid.threshold2Color;
+              t2.colorMode = 'custom';
             } else {
               t2.fill = true;
               t2.fillColor = panel.grid.threshold2Color;
+              t2.colorMode = 'custom';
             }
           }
 
           if (_.isNumber(t1.value)) {
             if (_.isNumber(t2.value)) {
               if (t1.value > t2.value) {
-                t1.op = t2.op = '<';
-                panel.thresholds.push(t2);
+                t1.op = t2.op = 'lt';
                 panel.thresholds.push(t1);
+                panel.thresholds.push(t2);
               } else {
-                t1.op = t2.op = '>';
-                panel.thresholds.push(t2);
+                t1.op = t2.op = 'gt';
                 panel.thresholds.push(t1);
+                panel.thresholds.push(t2);
               }
             } else {
-              t1.op = '>';
+              t1.op = 'gt';
               panel.thresholds.push(t1);
             }
           }

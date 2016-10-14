@@ -28,7 +28,7 @@ type ThresholdEvaluator struct {
 	Threshold float64
 }
 
-func newThresholdEvaludator(typ string, model *simplejson.Json) (*ThresholdEvaluator, error) {
+func newThresholdEvaluator(typ string, model *simplejson.Json) (*ThresholdEvaluator, error) {
 	params := model.Get("params").MustArray()
 	if len(params) == 0 {
 		return nil, alerting.ValidationError{Reason: "Evaluator missing threshold parameter"}
@@ -111,7 +111,7 @@ func NewAlertEvaluator(model *simplejson.Json) (AlertEvaluator, error) {
 	}
 
 	if inSlice(typ, defaultTypes) {
-		return newThresholdEvaludator(typ, model)
+		return newThresholdEvaluator(typ, model)
 	}
 
 	if inSlice(typ, rangedTypes) {
@@ -122,7 +122,7 @@ func NewAlertEvaluator(model *simplejson.Json) (AlertEvaluator, error) {
 		return &NoDataEvaluator{}, nil
 	}
 
-	return nil, alerting.ValidationError{Reason: "Evaludator invalid evaluator type"}
+	return nil, alerting.ValidationError{Reason: "Evaluator invalid evaluator type: " + typ}
 }
 
 func inSlice(a string, list []string) bool {

@@ -20,7 +20,7 @@ func NewWebHookNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	return &WebhookNotifier{
-		NotifierBase: NewNotifierBase(model.Name, model.Type, model.Settings),
+		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		Url:          url,
 		User:         model.Settings.Get("user").MustString(),
 		Password:     model.Settings.Get("password").MustString(),
@@ -65,7 +65,7 @@ func (this *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 		Body:     string(body),
 	}
 
-	if err := bus.DispatchCtx(evalContext, cmd); err != nil {
+	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		this.log.Error("Failed to send webhook", "error", err, "webhook", this.Name)
 	}
 

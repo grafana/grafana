@@ -11,6 +11,7 @@ function (angular, _, coreModule, config) {
     "1000": "Required team membership not fulfilled",
     "1001": "Required organization membership not fulfilled",
     "1002": "Required email domain not fulfilled",
+    "1003": "Login provider denied login request",
   };
 
   coreModule.default.controller('LoginCtrl', function($scope, backendSrv, contextSrv, $location) {

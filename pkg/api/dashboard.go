@@ -153,16 +153,14 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		return ApiError(500, "Failed to save dashboard", err)
 	}
 
-	if setting.AlertingEnabled {
-		alertCmd := alerting.UpdateDashboardAlertsCommand{
-			OrgId:     c.OrgId,
-			UserId:    c.UserId,
-			Dashboard: cmd.Result,
-		}
+	alertCmd := alerting.UpdateDashboardAlertsCommand{
+		OrgId:     c.OrgId,
+		UserId:    c.UserId,
+		Dashboard: cmd.Result,
+	}
 
-		if err := bus.Dispatch(&alertCmd); err != nil {
-			return ApiError(500, "Failed to save alerts", err)
-		}
+	if err := bus.Dispatch(&alertCmd); err != nil {
+		return ApiError(500, "Failed to save alerts", err)
 	}
 
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)

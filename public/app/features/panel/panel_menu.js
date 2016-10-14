@@ -88,7 +88,8 @@ function (angular, $, _, Tether) {
 
           $scope.$watchCollection('ctrl.panel.links', function(newValue) {
             var showIcon = (newValue ? newValue.length > 0 : false) && ctrl.panel.title !== '';
-            $panelLinksBtn.toggle(showIcon);
+            // cannot use toggle here, only works for attached elements
+            $panelLinksBtn.css({display: showIcon ? 'inline' : 'none'});
           });
 
           function dismiss(time, force) {

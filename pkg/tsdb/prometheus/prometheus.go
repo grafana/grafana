@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/guregu/null.v3"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/prometheus/client_golang/api/prometheus"
@@ -50,12 +52,12 @@ func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlic
 
 	client, err := e.getClient()
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 
 	query, err := parseQuery(queries, queryContext)
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 
 	timeRange := prometheus.Range{
@@ -67,12 +69,12 @@ func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlic
 	value, err := client.QueryRange(ctx, query.Expr, timeRange)
 
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 
 	queryResult, err := parseResponse(value, query)
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 	result.QueryResults = queryResult
 	return result
@@ -145,7 +147,7 @@ func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb
 		}
 
 		for _, k := range v.Values {
-			series.Points = append(series.Points, tsdb.NewTimePoint(float64(k.Value), float64(k.Timestamp.Unix()*1000)))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(float64(k.Value)), float64(k.Timestamp.Unix()*1000)))
 		}
 
 		queryRes.Series = append(queryRes.Series, &series)
@@ -155,7 +157,8 @@ func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb
 	return queryResults, nil
 }
 
+/*
 func resultWithError(result *tsdb.BatchResult, err error) *tsdb.BatchResult {
 	result.Error = err
 	return result
-}
+}*/

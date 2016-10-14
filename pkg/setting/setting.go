@@ -134,8 +134,9 @@ var (
 	GoogleTagManagerId string
 
 	// LDAP
-	LdapEnabled    bool
-	LdapConfigFile string
+	LdapEnabled     bool
+	LdapConfigFile  string
+	LdapAllowSignup bool = true
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -144,7 +145,7 @@ var (
 	Quota QuotaSettings
 
 	// Alerting
-	AlertingEnabled bool
+	ExecuteAlerts bool
 
 	// logger
 	logger log.Logger
@@ -460,7 +461,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
 	InstanceName = Cfg.Section("").Key("instance_name").MustString("unknown_instance_name")
-	PluginsPath = Cfg.Section("paths").Key("plugins").String()
+	PluginsPath = makeAbsolute(Cfg.Section("paths").Key("plugins").String(), HomePath)
 
 	server := Cfg.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
@@ -551,9 +552,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ldapSec := Cfg.Section("auth.ldap")
 	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
 	LdapConfigFile = ldapSec.Key("config_file").String()
+	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 
 	alerting := Cfg.Section("alerting")
-	AlertingEnabled = alerting.Key("enabled").MustBool(false)
+	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
 
 	readSessionConfig()
 	readSmtpSettings()

@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/guregu/null.v3"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -42,7 +44,7 @@ func init() {
 			walker := rand.Float64() * 100
 
 			for i := int64(0); i < 10000 && timeWalkerMs < to; i++ {
-				points = append(points, tsdb.NewTimePoint(walker, float64(timeWalkerMs)))
+				points = append(points, tsdb.NewTimePoint(null.FloatFrom(walker), float64(timeWalkerMs)))
 
 				walker += rand.Float64() - 0.5
 				timeWalkerMs += query.IntervalMs
@@ -73,7 +75,7 @@ func init() {
 			series := newSeriesForQuery(query)
 			outsideTime := context.TimeRange.MustGetFrom().Add(-1*time.Hour).Unix() * 1000
 
-			series.Points = append(series.Points, tsdb.NewTimePoint(10, float64(outsideTime)))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(10), float64(outsideTime)))
 			queryRes.Series = append(queryRes.Series, series)
 
 			return queryRes
@@ -88,10 +90,13 @@ func init() {
 			queryRes := tsdb.NewQueryResult()
 
 			stringInput := query.Model.Get("stringInput").MustString()
-			values := []float64{}
+			values := []null.Float{}
 			for _, strVal := range strings.Split(stringInput, ",") {
+				if strVal == "null" {
+					values = append(values, null.FloatFromPtr(nil))
+				}
 				if val, err := strconv.ParseFloat(strVal, 64); err == nil {
-					values = append(values, val)
+					values = append(values, null.FloatFrom(val))
 				}
 			}
 
@@ -105,7 +110,7 @@ func init() {
 			step := (endTime - startTime) / int64(len(values)-1)
 
 			for _, val := range values {
-				series.Points = append(series.Points, tsdb.NewTimePoint(val, float64(startTime)))
+				series.Points = append(series.Points, tsdb.TimePoint{val, null.FloatFrom(float64(startTime))})
 				startTime += step
 			}
 

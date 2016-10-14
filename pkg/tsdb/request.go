@@ -51,6 +51,8 @@ func HandleRequest(ctx context.Context, req *Request) (*Response, error) {
 					go batch.process(ctx, context)
 				}
 			}
+		case <-ctx.Done():
+			return nil, ctx.Err()
 		}
 	}
 

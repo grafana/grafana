@@ -28,3 +28,4 @@ deployment:
     owner: grafana
     commands:
       - ./scripts/trigger_grafana_packer.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN}
+      - ./scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN}

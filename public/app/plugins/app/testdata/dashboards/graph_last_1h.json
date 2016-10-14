@@ -1,5 +1,5 @@
 {
-  "revision": 4,
+  "revision": 5,
   "title": "TestData - Graph Panel Last 1h",
   "tags": [
     "grafana-test"
@@ -320,124 +320,376 @@
           ]
         },
         {
-          "title": "",
-          "error": false,
-          "span": 4,
-          "editable": true,
-          "type": "text",
-          "isNew": true,
-          "id": 6,
-          "mode": "markdown",
           "content": "Just verify that the tooltip time has millisecond resolution ",
-          "links": []
+          "editable": true,
+          "error": false,
+          "id": 6,
+          "isNew": true,
+          "links": [],
+          "mode": "markdown",
+          "span": 4,
+          "title": "",
+          "type": "text"
         }
       ],
       "title": "New row"
     },
     {
-      "title": "New row",
-      "height": 336,
-      "editable": true,
       "collapse": false,
+      "editable": true,
+      "height": 336,
       "panels": [
         {
-          "title": "2 yaxis and axis lables",
-          "error": false,
-          "span": 7.99561403508772,
-          "editable": true,
-          "type": "graph",
-          "isNew": true,
-          "id": 5,
-          "targets": [
-            {
-              "target": "",
-              "refId": "A",
-              "scenarioId": "csv_metric_values",
-              "stringInput": "1,20,90,30,5,0"
-            },
-            {
-              "target": "",
-              "refId": "B",
-              "scenarioId": "csv_metric_values",
-              "stringInput": "2000,3000,4000,1000,3000,10000"
-            }
-          ],
+          "aliasColors": {},
+          "bars": false,
           "datasource": "Grafana TestData",
-          "renderer": "flot",
-          "yaxes": [
-            {
-              "label": "Perecent",
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "percent"
-            },
-            {
-              "label": "Pressure",
-              "show": true,
-              "logBase": 1,
-              "min": null,
-              "max": null,
-              "format": "short"
-            }
-          ],
-          "xaxis": {
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "id": 5,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
             "show": true,
-            "mode": "time",
-            "name": null,
-            "values": []
+            "total": false,
+            "values": false
           },
           "lines": true,
-          "fill": 1,
           "linewidth": 2,
-          "points": false,
-          "pointradius": 5,
-          "bars": false,
-          "stack": false,
-          "percentage": false,
-          "legend": {
-            "show": true,
-            "values": false,
-            "min": false,
-            "max": false,
-            "current": false,
-            "total": false,
-            "avg": false
-          },
+          "links": [],
           "nullPointMode": "connected",
-          "steppedLine": false,
-          "tooltip": {
-            "value_type": "cumulative",
-            "shared": true,
-            "sort": 0,
-            "msResolution": false
-          },
-          "timeFrom": null,
-          "timeShift": null,
-          "aliasColors": {},
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
           "seriesOverrides": [
             {
               "alias": "B-series",
               "yaxis": 2
             }
           ],
+          "span": 7.99561403508772,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            },
+            {
+              "refId": "B",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "2000,3000,4000,1000,3000,10000",
+              "target": ""
+            }
+          ],
           "thresholds": [],
-          "links": []
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "2 yaxis and axis lables",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "percent",
+              "label": "Perecent",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": "Pressure",
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
         },
         {
-          "title": "",
-          "error": false,
-          "span": 4.00438596491228,
-          "editable": true,
-          "type": "text",
-          "isNew": true,
-          "id": 7,
-          "mode": "markdown",
           "content": "Verify that axis labels look ok",
-          "links": []
+          "editable": true,
+          "error": false,
+          "id": 7,
+          "isNew": true,
+          "links": [],
+          "mode": "markdown",
+          "span": 4.00438596491228,
+          "title": "",
+          "type": "text"
         }
-      ]
+      ],
+      "title": "New row"
+    },
+    {
+      "collapse": false,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "Grafana TestData",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "id": 8,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "B",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,null,null,null,null,null,null,100,10,10,20,30,40,10",
+              "target": ""
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "null value connected",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "Grafana TestData",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "id": 10,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null as zero",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 3,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "B",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,null,null,null,null,null,null,100,10,10,20,30,40,10",
+              "target": ""
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "null value null as zero",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "Grafana TestData",
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "id": 9,
+          "isNew": true,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "B-series",
+              "zindex": -3
+            }
+          ],
+          "span": 5,
+          "stack": true,
+          "steppedLine": false,
+          "targets": [
+            {
+              "hide": false,
+              "refId": "B",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,null,null,null,null,null,null,100,10,10,20,30,40,10",
+              "target": ""
+            },
+            {
+              "alias": "",
+              "hide": false,
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,10,20,30,40,40,40,100,10,20,20",
+              "target": ""
+            },
+            {
+              "alias": "",
+              "hide": false,
+              "refId": "C",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,10,20,30,40,40,40,100,10,20,20",
+              "target": ""
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Stacking value ontop of nulls",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "title": "New row"
     }
   ],
   "time": {
@@ -477,7 +729,7 @@
   },
   "refresh": false,
   "schemaVersion": 13,
-  "version": 3,
+  "version": 13,
   "links": [],
   "gnetId": null
 }

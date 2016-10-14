@@ -43,7 +43,7 @@ function (_, $, coreModule) {
             var selected = _.find($scope.altSegments, {value: value});
             if (selected) {
               segment.value = selected.value;
-              segment.html = selected.html;
+              segment.html = selected.html || selected.value;
               segment.fake = false;
               segment.expandable = selected.expandable;
             }
@@ -186,25 +186,26 @@ function (_, $, coreModule) {
 
           $scope.getOptionsInternal = function() {
             if ($scope.options) {
-              var optionSegments = _.map($scope.options, function(option) {
-                return uiSegmentSrv.newSegment({value: option.text});
-              });
-              return $q.when(optionSegments);
+              cachedOptions = $scope.options;
+              return $q.when(_.map($scope.options, function(option) {
+                return {value: option.text};
+              }));
             } else {
               return $scope.getOptions().then(function(options) {
                 cachedOptions = options;
-                return _.map(options, function(option) {
-                  return uiSegmentSrv.newSegment({value: option.text});
+                return  _.map(options, function(option) {
+                  if (option.html) {
+                    return option;
+                  }
+                  return {value: option.text};
                 });
               });
             }
           };
 
           $scope.onSegmentChange = function() {
-            var options = $scope.options || cachedOptions;
-
-            if (options) {
-              var option = _.find(options, {text: $scope.segment.value});
+            if (cachedOptions) {
+              var option = _.find(cachedOptions, {text: $scope.segment.value});
               if (option && option.value !== $scope.property) {
                 $scope.property = option.value;
               } else if (attrs.custom !== 'false') {

@@ -35,13 +35,21 @@ func (n *RootNotifier) PassesFilter(rule *Rule) bool {
 	return false
 }
 
-func (n *RootNotifier) Notify(context *EvalContext) error {
-	n.log.Info("Sending notifications for", "ruleId", context.Rule.Id)
+func (n *RootNotifier) GetNotifierId() int64 {
+	return 0
+}
 
+func (n *RootNotifier) GetIsDefault() bool {
+	return false
+}
+
+func (n *RootNotifier) Notify(context *EvalContext) error {
 	notifiers, err := n.getNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
 	if err != nil {
 		return err
 	}
+
+	n.log.Info("Sending notifications for", "ruleId", context.Rule.Id, "Amount to send", len(notifiers))
 
 	if len(notifiers) == 0 {
 		return nil
@@ -57,11 +65,12 @@ func (n *RootNotifier) Notify(context *EvalContext) error {
 }
 
 func (n *RootNotifier) sendNotifications(context *EvalContext, notifiers []Notifier) error {
-	g, _ := errgroup.WithContext(context.Context)
+	g, _ := errgroup.WithContext(context.Ctx)
 
 	for _, notifier := range notifiers {
-		n.log.Info("Sending notification", "firing", context.Firing, "type", notifier.GetType())
-		g.Go(func() error { return notifier.Notify(context) })
+		not := notifier //avoid updating scope variable in go routine
+		n.log.Info("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
+		g.Go(func() error { return not.Notify(context) })
 	}
 
 	return g.Wait()

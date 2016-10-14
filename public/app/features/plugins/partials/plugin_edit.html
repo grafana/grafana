@@ -30,12 +30,12 @@
   </div>
 
   <div class="page-body">
-    <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabIndex === 0">
+    <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabs[ctrl.tabIndex] === 'Readme'">
       <div ng-bind-html="ctrl.readmeHtml" class="plugin-markdown-readme">
       </div>
     </div>
 
-    <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabIndex === 1">
+    <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabs[ctrl.tabIndex] === 'Config'">
       <div ng-if="ctrl.model.id">
         <plugin-component type="app-config-ctrl"></plugin-component>
 
@@ -47,7 +47,7 @@
       </div>
     </div>
 
-    <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabIndex === 2">
+    <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabs[ctrl.tabIndex] === 'Dashboards'">
 			<dashboard-import-list plugin="ctrl.model"></dashboard-import-list>
     </div>
 

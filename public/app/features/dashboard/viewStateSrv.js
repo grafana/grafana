@@ -83,6 +83,9 @@ function (angular, _, $) {
     };
 
     DashboardViewState.prototype.update = function(state) {
+      // remember if editStateChanged
+      this.editStateChanged = state.edit !== this.state.edit;
+
       _.extend(this.state, state);
       this.dashboard.meta.fullscreen = this.state.fullscreen;
 
@@ -115,7 +118,7 @@ function (angular, _, $) {
 
         if (this.fullscreenPanel) {
           // if already fullscreen
-          if (this.fullscreenPanel === panelScope) {
+          if (this.fullscreenPanel === panelScope && this.editStateChanged === false) {
             return;
           } else {
             this.leaveFullscreen(false);
