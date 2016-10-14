@@ -1,5 +1,6 @@
 define([
   './dashboard_ctrl',
+  './alerting_srv',
   './dashboardLoaderSrv',
   './dashnav/dashnav',
   './submenu/submenu',

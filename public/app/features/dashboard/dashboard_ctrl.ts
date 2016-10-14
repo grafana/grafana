@@ -16,6 +16,7 @@ export class DashboardCtrl {
     dashboardKeybindings,
     timeSrv,
     variableSrv,
+    alertingSrv,
     dashboardSrv,
     unsavedChangesSrv,
     dynamicDashboardSrv,
@@ -43,6 +44,7 @@ export class DashboardCtrl {
 
         // init services
         timeSrv.init(dashboard);
+        alertingSrv.init(dashboard, data.alerts);
 
         // template values service needs to initialize completely before
         // the rest of the dashboard can load
