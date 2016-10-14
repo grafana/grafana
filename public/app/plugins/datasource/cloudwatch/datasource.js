@@ -369,6 +369,10 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
       }).value();
     };
 
+    this.containsVariable = function (str, variableName) {
+      return str.indexOf('$' + variableName) !== -1;
+    };
+
     this.expandTemplateVariable = function(targets, templateSrv) {
       var self = this;
       return _.chain(targets)
@@ -379,7 +383,7 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
 
         if (dimensionKey) {
           var variable = _.find(templateSrv.variables, function(variable) {
-            return templateSrv.containsVariable(target.dimensions[dimensionKey], variable.name);
+            return self.containsVariable(target.dimensions[dimensionKey], variable.name);
           });
           return self.getExpandedVariables(target, dimensionKey, variable);
         } else {
