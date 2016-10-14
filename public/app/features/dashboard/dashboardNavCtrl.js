@@ -92,12 +92,9 @@ function (angular, _) {
 
         $scope.appEvent('confirm-modal', {
           title: '已经存在相同名字的仪表盘',
-          text: "您是否想直接覆盖并且保存您的操作?",
-          yesText: "保存 & 覆盖",
-          icon: "fa-warning",
-          onConfirm: function() {
-            $scope.saveDashboard({overwrite: true});
-          }
+          text: "请修改您的仪表盘名称",
+          yesText: "立即修改",
+          icon: "fa-warning"
         });
       }
     };

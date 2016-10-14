@@ -6,6 +6,7 @@ import (
   "github.com/wangy1931/grafana/pkg/bus"
   m "github.com/wangy1931/grafana/pkg/models"
   "github.com/wangy1931/grafana/pkg/api/dtos"
+  "github.com/wangy1931/grafana/pkg/components/apikeygen"
   "bytes"
   "strconv"
 )
@@ -40,6 +41,14 @@ func AddSystem(cmd *m.AddSystemsCommand) error {
       }
 
       _, err = sess.Insert(&entity)
+
+      apiEntity := m.AddApiKeyCommand{}
+      apiEntity.OrgId = cmd.OrgId
+      apiEntity.Name = strconv.FormatInt(entity.Id,16)
+      apiEntity.Role = m.ROLE_ADMIN
+      newKeyInfo := apikeygen.New(apiEntity.OrgId, apiEntity.Name)
+      apiEntity.Key = newKeyInfo.HashedKey
+      err = AddApiKey(&apiEntity)
     }
     return err
   })

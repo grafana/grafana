@@ -1,5 +1,5 @@
 {
-  "title": "Home",
+  "title": "主页",
   "tags": [],
   "style": "dark",
   "timezone": "browser",
@@ -14,14 +14,14 @@
           "span": 6,
           "type": "dashlist",
           "mode": "search",
-          "title": "Dashboards"
+          "title": "智能仪表盘"
         },
         {
           "id": 2,
           "span": 6,
           "type": "dashlist",
           "mode": "starred",
-          "title": "Starred dashboards"
+          "title": "已收藏的仪表盘"
         }
       ]
     }
