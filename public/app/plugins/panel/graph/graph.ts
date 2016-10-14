@@ -34,6 +34,9 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
       var rootScope = scope.$root;
       var panelWidth = 0;
       var thresholdManager = new ThresholdManager(ctrl);
+      var tooltip = new GraphTooltip(elem, dashboard, scope, function() {
+        return sortedSeries;
+      });
       var plot;
 
       ctrl.events.on('panel-teardown', () => {
@@ -62,6 +65,19 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         if (plot) {
           plot.clearCrosshair();
         }
+      }, scope);
+
+      rootScope.onAppEvent('setTooltip', function(event, info) {
+        // do not need to to this if event is from this panel
+        // or another panel is in fullscreen mode
+        if (info.scope === scope || ctrl.otherPanelInFullscreenMode()) {
+          return;
+        }
+        tooltip.setTooltip(info.pos);
+      }, scope);
+
+      rootScope.onAppEvent('clearTooltip', function() {
+        tooltip.clearTooltip();
       }, scope);
 
       // Receive render events
@@ -554,10 +570,6 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
 
         return "%H:%M";
       }
-
-      var tooltip = new GraphTooltip(elem, dashboard, scope, function() {
-        return sortedSeries;
-      });
 
       elem.bind("plotselected", function (event, ranges) {
         scope.$apply(function() {
