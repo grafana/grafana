@@ -3,6 +3,7 @@ package influxdb
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -92,12 +93,27 @@ func fieldRenderer(query *Query, queryContext *tsdb.QueryContext, part *QueryPar
 	return fmt.Sprintf(`"%s"`, part.Params[0])
 }
 
+func getDefinedInterval(query *Query, queryContext *tsdb.QueryContext) string {
+	setInterval := strings.Replace(strings.Replace(query.Interval, "<", "", 1), ">", "", 1)
+	defaultInterval := tsdb.CalculateInterval(queryContext.TimeRange)
+
+	if strings.Contains(query.Interval, ">") {
+		parsedDefaultInterval, err := time.ParseDuration(defaultInterval)
+		parsedSetInterval, err2 := time.ParseDuration(setInterval)
+
+		if err == nil && err2 == nil && parsedDefaultInterval > parsedSetInterval {
+			return defaultInterval
+		}
+	}
+
+	return setInterval
+}
+
 func functionRenderer(query *Query, queryContext *tsdb.QueryContext, part *QueryPart, innerExpr string) string {
-	for i, v := range part.Params {
-		if v == "$interval" {
+	for i, param := range part.Params {
+		if param == "$interval" {
 			if query.Interval != "" {
-				interval := strings.Replace(strings.Replace(query.Interval, "<", "", 1), ">", "", 1)
-				part.Params[i] = interval
+				part.Params[i] = getDefinedInterval(query, queryContext)
 			} else {
 				part.Params[i] = tsdb.CalculateInterval(queryContext.TimeRange)
 			}

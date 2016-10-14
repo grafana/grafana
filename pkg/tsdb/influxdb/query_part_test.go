@@ -45,6 +45,27 @@ func TestInfluxdbQueryPart(t *testing.T) {
 			So(res, ShouldEqual, "time(200ms)")
 		})
 
+		Convey("render time interval >10s", func() {
+			part, err := NewQueryPart("time", []string{"$interval"})
+			So(err, ShouldBeNil)
+
+			query.Interval = ">10s"
+
+			res := part.Render(query, queryContext, "")
+			So(res, ShouldEqual, "time(10s)")
+		})
+
+		Convey("render time interval >1s and higher interval calculation", func() {
+			part, err := NewQueryPart("time", []string{"$interval"})
+			queryContext := &tsdb.QueryContext{TimeRange: tsdb.NewTimeRange("1y", "now")}
+			So(err, ShouldBeNil)
+
+			query.Interval = ">1s"
+
+			res := part.Render(query, queryContext, "")
+			So(res, ShouldEqual, "time(168h)")
+		})
+
 		Convey("render spread", func() {
 			part, err := NewQueryPart("spread", []string{})
 			So(err, ShouldBeNil)
