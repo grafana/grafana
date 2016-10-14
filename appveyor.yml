@@ -30,3 +30,7 @@ build_script:
 artifacts:
   - path: grafana-*windows-ia32.zip
     name: binzip
+
+deploy:
+provider: Environment
+    name: GrafanaBuildsS3
