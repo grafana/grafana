@@ -358,9 +358,15 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
     }
 
     this.getExpandedVariables = function(target, dimensionKey, variable) {
+      /* if the all checkbox is marked we should add all values to the targets */
+      var allSelected = _.find(variable.options, {'selected': true, 'text': 'All'});
       return _.chain(variable.options)
       .filter(function(v) {
-        return v.selected;
+        if (allSelected) {
+          return v.text !== 'All';
+        } else {
+          return v.selected;
+        }
       })
       .map(function(v) {
         var t = angular.copy(target);
