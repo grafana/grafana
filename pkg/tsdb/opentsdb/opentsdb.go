@@ -2,10 +2,14 @@ package opentsdb
 
 import (
 	"context"
+	"crypto/tls"
 	"fmt"
 	"path"
 	"strconv"
 	"strings"
+	"time"
+
+	"golang.org/x/net/context/ctxhttp"
 
 	"io/ioutil"
 	"net/http"
@@ -30,12 +34,21 @@ func NewOpenTsdbExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
 
 var (
 	plog       log.Logger
-	HttpClient http.Client
+	HttpClient *http.Client
 )
 
 func init() {
 	plog = log.New("tsdb.opentsdb")
 	tsdb.RegisterExecutor("opentsdb", NewOpenTsdbExecutor)
+
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+
+	HttpClient = &http.Client{
+		Timeout:   time.Duration(15 * time.Second),
+		Transport: tr,
+	}
 }
 
 func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
@@ -65,7 +78,7 @@ func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		return result
 	}
 
-	res, err := HttpClient.Do(req)
+	res, err := ctxhttp.Do(ctx, HttpClient, req)
 	if err != nil {
 		result.Error = err
 		return result
