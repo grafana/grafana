@@ -1,23 +1,23 @@
 package opentsdb
 
 import (
-  "fmt"
-  "path"
-  "strings"
-  "context"
-  "strconv"
+	"context"
+	"fmt"
+	"path"
+	"strconv"
+	"strings"
 
-  "net/url"
-  "net/http"
-  "io/ioutil"
-  //"net/http/httputil"
-  "encoding/json"
+	"io/ioutil"
+	"net/http"
+	"net/url"
+	//"net/http/httputil"
+	"encoding/json"
 
-  "gopkg.in/guregu/null.v3"
+	"gopkg.in/guregu/null.v3"
 
 	"github.com/grafana/grafana/pkg/log"
- 	"github.com/grafana/grafana/pkg/tsdb"
-  "github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type OpenTsdbExecutor struct {
@@ -41,112 +41,112 @@ func init() {
 func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
-  var tsdbQuery OpenTsdbQuery
+	var tsdbQuery OpenTsdbQuery
 
-  tsdbQuery.Start = queryContext.TimeRange.GetFromAsMsEpoch()
-  tsdbQuery.End = queryContext.TimeRange.GetToAsMsEpoch()
+	tsdbQuery.Start = queryContext.TimeRange.GetFromAsMsEpoch()
+	tsdbQuery.End = queryContext.TimeRange.GetToAsMsEpoch()
 
-  for _, query := range queries {
-    tsdbQuery.Queries = []OpenTsdbMetric {
-      OpenTsdbMetric{
-        Metric:      query.Model.Get("metric").MustString(),
-        Aggregator:  query.Model.Get("aggregator").MustString(),
-      },
-    }
-  }
+	for _, query := range queries {
+		tsdbQuery.Queries = []OpenTsdbMetric{
+			OpenTsdbMetric{
+				Metric:     query.Model.Get("metric").MustString(),
+				Aggregator: query.Model.Get("aggregator").MustString(),
+			},
+		}
+	}
 
-  if setting.Env == setting.DEV {
-    plog.Debug("OpenTsdb request", "params", tsdbQuery)
-  }
+	if setting.Env == setting.DEV {
+		plog.Debug("OpenTsdb request", "params", tsdbQuery)
+	}
 
-  req, err := e.createRequest(tsdbQuery)
-  if err != nil {
-    result.Error = err
-    return result
-  }
+	req, err := e.createRequest(tsdbQuery)
+	if err != nil {
+		result.Error = err
+		return result
+	}
 
-  res, err := HttpClient.Do(req)
-  if err != nil {
-    result.Error = err
-    return result
-  }
+	res, err := HttpClient.Do(req)
+	if err != nil {
+		result.Error = err
+		return result
+	}
 
-  queryResult, err := e.parseResponse(tsdbQuery, res)
-  if err != nil {
-    return result.WithError(err)
-  }
+	queryResult, err := e.parseResponse(tsdbQuery, res)
+	if err != nil {
+		return result.WithError(err)
+	}
 
-  result.QueryResults = queryResult
-  return result
+	result.QueryResults = queryResult
+	return result
 }
 
 func (e *OpenTsdbExecutor) createRequest(data OpenTsdbQuery) (*http.Request, error) {
-  u, _ := url.Parse(e.Url)
-  u.Path = path.Join(u.Path, "api/query")
+	u, _ := url.Parse(e.Url)
+	u.Path = path.Join(u.Path, "api/query")
 
-  postData, err := json.Marshal(data)
+	postData, err := json.Marshal(data)
 
-  req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(string(postData)))
-  if err != nil {
-    plog.Info("Failed to create request", "error", err)
-    return nil, fmt.Errorf("Failed to create request. error: %v", err)
-  }
+	req, err := http.NewRequest(http.MethodPost, u.String(), strings.NewReader(string(postData)))
+	if err != nil {
+		plog.Info("Failed to create request", "error", err)
+		return nil, fmt.Errorf("Failed to create request. error: %v", err)
+	}
 
-  req.Header.Set("Content-Type", "application/json")
-  if e.BasicAuth {
-    req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
-  }
+	req.Header.Set("Content-Type", "application/json")
+	if e.BasicAuth {
+		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
+	}
 
-  /*
-  requestDump, err := httputil.DumpRequest(req, true)
-  if err != nil {
-    fmt.Println(err)
-  }
-  fmt.Println(string(requestDump))
-  */
-  return req, err
+	/*
+	  requestDump, err := httputil.DumpRequest(req, true)
+	  if err != nil {
+	    fmt.Println(err)
+	  }
+	  fmt.Println(string(requestDump))
+	*/
+	return req, err
 }
 
 func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response) (map[string]*tsdb.QueryResult, error) {
-  
-  queryResults := make(map[string]*tsdb.QueryResult)
-  queryRes := tsdb.NewQueryResult()
 
-  body, err := ioutil.ReadAll(res.Body)
-  defer res.Body.Close()
-  if err != nil {
-    return nil, err
-  }
+	queryResults := make(map[string]*tsdb.QueryResult)
+	queryRes := tsdb.NewQueryResult()
 
-  if res.StatusCode/100 != 2 {
-    plog.Info("Request failed", "status", res.Status, "body", string(body))
-    return nil, fmt.Errorf("Request failed status: %v", res.Status)
-  }
+	body, err := ioutil.ReadAll(res.Body)
+	defer res.Body.Close()
+	if err != nil {
+		return nil, err
+	}
 
-  var data []OpenTsdbResponse
-  err = json.Unmarshal(body, &data)
-  if err != nil {
-    plog.Info("Failed to unmarshal opentsdb response", "error", err, "status", res.Status, "body", string(body))
-    return nil, err
-  }
+	if res.StatusCode/100 != 2 {
+		plog.Info("Request failed", "status", res.Status, "body", string(body))
+		return nil, fmt.Errorf("Request failed status: %v", res.Status)
+	}
 
-  for _, val := range data {
-    series := tsdb.TimeSeries{
-      Name: val.Metric,
-    }
+	var data []OpenTsdbResponse
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		plog.Info("Failed to unmarshal opentsdb response", "error", err, "status", res.Status, "body", string(body))
+		return nil, err
+	}
 
-    for timeString, value := range val.DataPoints {
-      timestamp, err := strconv.ParseFloat(timeString, 64)
-      if err != nil {
-        plog.Info("Failed to unmarshal opentsdb timestamp", "timestamp", timeString)
-        return nil, err
-      }
-      series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(value), timestamp))
-    }
+	for _, val := range data {
+		series := tsdb.TimeSeries{
+			Name: val.Metric,
+		}
 
-    queryRes.Series = append(queryRes.Series, &series)
-  }
+		for timeString, value := range val.DataPoints {
+			timestamp, err := strconv.ParseFloat(timeString, 64)
+			if err != nil {
+				plog.Info("Failed to unmarshal opentsdb timestamp", "timestamp", timeString)
+				return nil, err
+			}
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(value), timestamp))
+		}
 
-  queryResults["A"] = queryRes
-  return queryResults, nil
+		queryRes.Series = append(queryRes.Series, &series)
+	}
+
+	queryResults["A"] = queryRes
+	return queryResults, nil
 }
