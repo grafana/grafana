@@ -248,7 +248,9 @@ func PauseAlertRule(cmd *m.PauseAlertCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		alert := m.Alert{}
 
-		if has, err := sess.Id(cmd.AlertId).Get(&alert); err != nil {
+		has, err := x.Where("id = ? AND org_id=?", cmd.AlertId, cmd.OrgId).Get(&alert)
+
+		if err != nil {
 			return err
 		} else if !has {
 			return fmt.Errorf("Could not find alert")
