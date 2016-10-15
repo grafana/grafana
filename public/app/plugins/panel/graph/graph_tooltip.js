@@ -48,6 +48,8 @@ function ($) {
       //now we know the current X (j) position for X and Y values
       var last_value = 0; //needed for stacked values
 
+      var minDistance, minTime;
+
       for (i = 0; i < seriesList.length; i++) {
         series = seriesList[i];
 
@@ -64,6 +66,13 @@ function ($) {
         hoverIndex = this.findHoverIndexFromData(pos.x, series);
         hoverDistance = pos.x - series.data[hoverIndex][0];
         pointTime = series.data[hoverIndex][0];
+
+        if (! minDistance
+            || (hoverDistance >=0 && (hoverDistance < minDistance || minDistance < 0))
+            || (hoverDistance < 0 && hoverDistance > minDistance)) {
+          minDistance = hoverDistance;
+          minTime = pointTime;
+        }
 
         if (series.stack) {
           if (panel.tooltip.value_type === 'individual') {
@@ -102,6 +111,9 @@ function ($) {
           index: i
         });
       }
+
+      // Find point which closer to pointer
+      results.time = minTime;
 
       return results;
     };
@@ -147,6 +159,8 @@ function ($) {
 
         seriesHtml = '';
 
+        absoluteTime = dashboard.formatDate(seriesHoverInfo.time, tooltipFormat);
+
         // Dynamically reorder the hovercard for the current time point if the
         // option is enabled, sort by yaxis by default.
         if (panel.tooltip.sort === 2) {
@@ -163,20 +177,11 @@ function ($) {
           });
         }
 
-        var distance, time;
-
         for (i = 0; i < seriesHoverInfo.length; i++) {
           hoverInfo = seriesHoverInfo[i];
 
           if (hoverInfo.hidden) {
             continue;
-          }
-
-          if (! distance
-              || (hoverInfo.distance >=0 && (hoverInfo.distance < distance || distance < 0))
-              || (hoverInfo.distance < 0 && hoverInfo.distance > distance)) {
-            distance = hoverInfo.distance;
-            time = hoverInfo.time;
           }
 
           var highlightClass = '';
@@ -194,7 +199,6 @@ function ($) {
           plot.highlight(hoverInfo.index, hoverInfo.hoverIndex);
         }
 
-        absoluteTime = dashboard.formatDate(time, tooltipFormat);
         self.showTooltip(absoluteTime, seriesHtml, pos);
       }
       // single series tooltip
