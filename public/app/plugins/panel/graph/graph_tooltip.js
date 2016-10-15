@@ -17,7 +17,7 @@ function ($, _) {
       var initial = last*ps;
       var len = series.datapoints.points.length;
       for (var j = initial; j < len; j += ps) {
-        if (series.datapoints.points[j] > posX) {
+        if ((series.datapoints.points[initial] != null && series.datapoints.points[j] == null) || series.datapoints.points[j] > posX) {
           return Math.max(j - ps,  0)/ps;
         }
       }
@@ -78,9 +78,10 @@ function ($, _) {
         }
 
         // Highlighting multiple Points depending on the plot type
-        if (series.lines.steps) {
-          // steppedLine plots can have series with different length.
-          // To speed the index search we begin always on the last found hoverIndex.
+        if (series.lines.steps || series.stack) {
+          // stacked and steppedLine plots can have series with different length.
+          // Stacked series can increase its length on each new stacked serie if null points found,
+          // to speed the index search we begin always on the last found hoverIndex.
           hoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
         }
 
