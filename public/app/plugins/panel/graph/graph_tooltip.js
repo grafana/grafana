@@ -17,7 +17,7 @@ function ($, _) {
       var initial = last*ps;
       var len = series.datapoints.points.length;
       for (var j = initial; j < len; j += ps) {
-        if ((series.datapoints.points[initial] != null && series.datapoints.points[j] == null) || series.datapoints.points[j] > posX) {
+        if ((series.datapoints.points[initial] != null && series.datapoints.points[j] == null && ! series.lines.steps) || series.datapoints.points[j] > posX) {
           return Math.max(j - ps,  0)/ps;
         }
       }
@@ -61,7 +61,7 @@ function ($, _) {
         }
 
         hoverIndex = this.findHoverIndexFromData(pos.x, series);
-        hoverDistance = Math.abs(pos.x - series.data[hoverIndex][0]);
+        hoverDistance = pos.x - series.data[hoverIndex][0];
         pointTime = series.data[hoverIndex][0];
 
         if (series.stack) {
@@ -101,9 +101,6 @@ function ($, _) {
           index: i
         });
       }
-
-      // Find point which closer to pointer
-      results.time = _.min(results, 'distance').time;
 
       return results;
     };
@@ -174,7 +171,7 @@ function ($, _) {
             continue;
           }
 
-          if (! distance || hoverInfo.distance < distance) {
+          if (! distance || (hoverInfo.distance >=0 && (hoverInfo.distance < distance || distance < 0)) || (hoverInfo.distance < 0 && hoverInfo.distance > distance)) {
             distance = hoverInfo.distance;
             time = hoverInfo.time;
           }
