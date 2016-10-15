@@ -2,7 +2,7 @@ define([
   'jquery',
   'lodash'
 ],
-function ($, _) {
+function ($) {
   'use strict';
 
   function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
@@ -17,7 +17,8 @@ function ($, _) {
       var initial = last*ps;
       var len = series.datapoints.points.length;
       for (var j = initial; j < len; j += ps) {
-        if ((series.datapoints.points[initial] != null && series.datapoints.points[j] == null && ! series.lines.steps) || series.datapoints.points[j] > posX) {
+        if ((series.datapoints.points[initial] != null && series.datapoints.points[j] == null && ! series.lines.steps)
+            || series.datapoints.points[j] > posX) {
           return Math.max(j - ps,  0)/ps;
         }
       }
@@ -171,7 +172,9 @@ function ($, _) {
             continue;
           }
 
-          if (! distance || (hoverInfo.distance >=0 && (hoverInfo.distance < distance || distance < 0)) || (hoverInfo.distance < 0 && hoverInfo.distance > distance)) {
+          if (! distance
+              || (hoverInfo.distance >=0 && (hoverInfo.distance < distance || distance < 0))
+              || (hoverInfo.distance < 0 && hoverInfo.distance > distance)) {
             distance = hoverInfo.distance;
             time = hoverInfo.time;
           }
