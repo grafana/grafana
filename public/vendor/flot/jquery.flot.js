@@ -1202,7 +1202,7 @@ Licensed under the MIT license.
                         }
                     }
 
-                    if (insertSteps && k > 0 && (!nullify || points[k-ps] != null)) {
+                    if (insertSteps && k > 0 && (!nullify || points[k - ps] != null)) {
                         // copy the point to make room for a middle point
                         for (m = 0; m < ps; ++m)
                             points[k + ps + m] = points[k + m];
