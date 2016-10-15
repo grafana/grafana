@@ -92,7 +92,7 @@ charts or filled areas).
                     // ignore point
                     i += ps;
                 }
-                else if (j < otherpoints.length && qx == null && qy == null) {
+                else if (j < otherpoints.length && qx == null) {
                     // ignore point
                     j += otherps;
                 }
@@ -111,7 +111,7 @@ charts or filled areas).
                 }
                 else {
                     // cases where we actually got two points
-                    if (px == qx || qx == null) {
+                    if (px == qx) {
                         // take the point from the current series and skip the previous' one
                         for (m = 0; m < ps; ++m)
                             newpoints.push(points[i + m]);
@@ -127,7 +127,10 @@ charts or filled areas).
                         for (m = 0; m < ps; ++m)
                             newpoints.push(otherpoints[j + m]);
 
-                        newpoints[l]=null;
+                        // we might be able to interpolate
+                        if (i > 0 && points[i - ps] != null)
+                            newpoints[l + accumulateOffset] += py + (points[i - ps + accumulateOffset] - py) * (qx - px) / (points[i - ps + keyOffset] - px);
+
                         bottom = qy;
 
                         j += otherps;
@@ -136,6 +139,13 @@ charts or filled areas).
                         // take the point from the current series
                         for (m = 0; m < ps; ++m)
                             newpoints.push(points[i + m]);
+
+                        // we might be able to interpolate a point below,
+                        // this can give us a better y
+                        if (j > 0 && otherpoints[j - otherps] != null)
+                            bottom = qy + (otherpoints[j - otherps + accumulateOffset] - qy) * (px - qx) / (otherpoints[j - otherps + keyOffset] - qx);
+
+                        newpoints[l + accumulateOffset] += bottom;
 
                         i += ps;
                     }
