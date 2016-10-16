@@ -63,14 +63,15 @@ func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
   for i := 0; i < len(queries); i++ {
 
 		metric := make(map[string]interface{})
-		
+
+		// Setting metric and aggregator		
 		metric["metric"] = queries[i].Model.Get("metric").MustString()
 		metric["aggregator"] = queries[i].Model.Get("aggregator").MustString()
 
+		// Setting downsampling options
 		disableDownsampling := queries[i].Model.Get("disableDownsampling").MustBool()
-
 		if !disableDownsampling {
-			downsampleInterval := queries[i].Model.Get("downsampleInterval").MustString()			
+			downsampleInterval := queries[i].Model.Get("downsampleInterval").MustString()
 			if downsampleInterval == "" {
 				downsampleInterval = "1m"  //default value for blank
 			}
@@ -78,6 +79,28 @@ func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 			if queries[i].Model.Get("downsampleFillPolicy").MustString() != "none" {
 				metric["downsample"] = downsample + "-" + queries[i].Model.Get("downsampleFillPolicy").MustString()
 			}
+		}
+
+		// Setting rate options
+		if queries[i].Model.Get("shouldComputeRate").MustBool() {
+			metric["rate"] = true
+			rateOptions := make(map[string]interface{})
+			rateOptions["counter"] = queries[i].Model.Get("isCounter").MustBool()
+			counterMax, counterMaxCheck := queries[i].Model.CheckGet("counterMax")
+			if counterMaxCheck {
+				counterMaxVal, err := strconv.ParseFloat(counterMax.MustString(),64)
+				if err == nil {
+					rateOptions["counterMax"] = counterMaxVal
+				}
+			}
+			resetValue, resetValueCheck := queries[i].Model.CheckGet("counterResetValue")
+			if resetValueCheck {
+				resetValueVal, err := strconv.ParseFloat(resetValue.MustString(),64)
+				if err == nil {
+					rateOptions["resetValue"] = resetValueVal
+				}
+			}
+			metric["rateOptions"] = rateOptions
 		}
 
 		tsdbQuery.Queries[i] = metric
@@ -126,11 +149,11 @@ func (e *OpenTsdbExecutor) createRequest(data OpenTsdbQuery) (*http.Request, err
 	}
 
 	
-	  requestDump, err := httputil.DumpRequest(req, true)
-	  if err != nil {
-	    fmt.Println(err)
-	  }
-	  fmt.Println(string(requestDump))
+	requestDump, err := httputil.DumpRequest(req, true)
+	if err != nil {
+	  fmt.Println(err)
+	}
+	fmt.Println(string(requestDump))
 	
 	return req, err
 }
