@@ -14,7 +14,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	//"net/http/httputil"
+	"net/http/httputil"
 	"encoding/json"
 
 	"gopkg.in/guregu/null.v3"
@@ -58,14 +58,29 @@ func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 
 	tsdbQuery.Start = queryContext.TimeRange.GetFromAsMsEpoch()
 	tsdbQuery.End = queryContext.TimeRange.GetToAsMsEpoch()
+	tsdbQuery.Queries = make([]map[string]interface{}, len(queries))
 
-	for _, query := range queries {
-		tsdbQuery.Queries = []OpenTsdbMetric{
-			OpenTsdbMetric{
-				Metric:     query.Model.Get("metric").MustString(),
-				Aggregator: query.Model.Get("aggregator").MustString(),
-			},
+  for i := 0; i < len(queries); i++ {
+
+		metric := make(map[string]interface{})
+		
+		metric["metric"] = queries[i].Model.Get("metric").MustString()
+		metric["aggregator"] = queries[i].Model.Get("aggregator").MustString()
+
+		disableDownsampling := queries[i].Model.Get("disableDownsampling").MustBool()
+
+		if !disableDownsampling {
+			downsampleInterval := queries[i].Model.Get("downsampleInterval").MustString()			
+			if downsampleInterval == "" {
+				downsampleInterval = "1m"  //default value for blank
+			}
+			downsample :=  downsampleInterval + "-" + queries[i].Model.Get("downsampleAggregator").MustString()
+			if queries[i].Model.Get("downsampleFillPolicy").MustString() != "none" {
+				metric["downsample"] = downsample + "-" + queries[i].Model.Get("downsampleFillPolicy").MustString()
+			}
 		}
+
+		tsdbQuery.Queries[i] = metric
 	}
 
 	if setting.Env == setting.DEV {
@@ -110,13 +125,13 @@ func (e *OpenTsdbExecutor) createRequest(data OpenTsdbQuery) (*http.Request, err
 		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
 	}
 
-	/*
+	
 	  requestDump, err := httputil.DumpRequest(req, true)
 	  if err != nil {
 	    fmt.Println(err)
 	  }
 	  fmt.Println(string(requestDump))
-	*/
+	
 	return req, err
 }
 
