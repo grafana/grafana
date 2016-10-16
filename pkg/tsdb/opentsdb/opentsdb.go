@@ -14,7 +14,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"net/http/httputil"
 	"encoding/json"
 
 	"gopkg.in/guregu/null.v3"
@@ -103,6 +102,18 @@ func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 			metric["rateOptions"] = rateOptions
 		}
 
+		// Setting tags
+		tags, tagsCheck := queries[i].Model.CheckGet("tags")
+		if tagsCheck && len(tags.MustMap()) > 0 {
+			metric["tags"] = tags.MustMap()
+		}
+
+		// Setting filters
+		filters, filtersCheck := queries[i].Model.CheckGet("filters")
+		if filtersCheck && len(filters.MustArray()) > 0 {
+			metric["filters"] = filters.MustArray()
+		}
+
 		tsdbQuery.Queries[i] = metric
 	}
 
@@ -147,13 +158,6 @@ func (e *OpenTsdbExecutor) createRequest(data OpenTsdbQuery) (*http.Request, err
 	if e.BasicAuth {
 		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
 	}
-
-	
-	requestDump, err := httputil.DumpRequest(req, true)
-	if err != nil {
-	  fmt.Println(err)
-	}
-	fmt.Println(string(requestDump))
 	
 	return req, err
 }
