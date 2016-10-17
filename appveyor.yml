@@ -28,7 +28,7 @@ build_script:
   - cp dist/* .
 
 artifacts:
-  - path: grafana-*windows-ia32.zip
+  - path: grafana-*windows-*.zip
     name: binzip
 
 deploy:
