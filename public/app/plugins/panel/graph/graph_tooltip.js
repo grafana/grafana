@@ -170,6 +170,11 @@ function ($, _) {
         for (i = 0; i < seriesHoverInfo.length; i++) {
           hoverInfo = seriesHoverInfo[i];
 
+          if (! distance || hoverInfo.distance < distance) {
+            distance=hoverInfo.distance;
+            time=hoverInfo.time;
+          }
+
           if (hoverInfo.hidden) {
             continue;
           }
