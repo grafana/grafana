@@ -170,6 +170,7 @@ function (angular, _, $, config) {
                   || currentPath.indexOf('/anomaly') == 0
                   || currentPath.indexOf('/analysis') == 0
                   || currentPath.indexOf('/logs') == 0
+                  || currentPath.indexOf('/decompose') == 0
       ) {
         if (contextSrv.system == 0){
           $location.url("/");
