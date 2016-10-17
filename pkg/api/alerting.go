@@ -252,7 +252,7 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 	return ApiSuccess("Test notification sent")
 }
 
-//POST /api/:alertId/pause
+//POST /api/alerts/:alertId/pause
 func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	cmd := models.PauseAlertCommand{
 		OrgId:   c.OrgId,
