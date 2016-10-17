@@ -7,7 +7,7 @@ define([
 
     var module = angular.module('grafana.controllers');
     var panelMeta = {
-      title: "test for anmoly",
+      title: "anomaly for metric",
       height: '300px',
       panels: [
         {
@@ -57,8 +57,12 @@ define([
       ]
     };
 
-    module.controller('AnomalyMetric', function ($scope, healthSrv, $routeParams, $timeout) {
-        var metricName = $routeParams.metric;
+    module.controller('AnomalyMetric', function ($scope, healthSrv, $routeParams, $timeout, contextSrv) {
+        var tmpMetricName1 = $routeParams.metric;
+        var tmpIndex1 = tmpMetricName1.indexOf(".");
+        var tmpMetricName2 = tmpMetricName1.substring(tmpIndex1+1);
+        var tmpIndex2 = tmpMetricName2.indexOf(".");
+        var metricName = tmpMetricName2.substring(tmpIndex2+1);
 
         $scope.init = function () {
           var anomalyList = healthSrv.anomalyMetricsData;
@@ -74,6 +78,7 @@ define([
           $scope.initDashboard({
             meta: {canStar: false, canShare: false, canEdit: true},
             dashboard: {
+              system: contextSrv.system,
               title: "健康管理",
               id: metricName,
               rows: [setPanelMetaHost(panelMeta, metricName, hostList[0])],
