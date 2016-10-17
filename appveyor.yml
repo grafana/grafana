@@ -32,5 +32,5 @@ artifacts:
     name: binzip
 
 deploy:
-provider: Environment
+  - provider: Environment
     name: GrafanaBuildsS3
