@@ -358,15 +358,25 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
     }
 
     this.getExpandedVariables = function(target, dimensionKey, variable) {
+      /* if the all checkbox is marked we should add all values to the targets */
+      var allSelected = _.find(variable.options, {'selected': true, 'text': 'All'});
       return _.chain(variable.options)
       .filter(function(v) {
-        return v.selected;
+        if (allSelected) {
+          return v.text !== 'All';
+        } else {
+          return v.selected;
+        }
       })
       .map(function(v) {
         var t = angular.copy(target);
         t.dimensions[dimensionKey] = v.value;
         return t;
       }).value();
+    };
+
+    this.containsVariable = function (str, variableName) {
+      return str.indexOf('$' + variableName) !== -1;
     };
 
     this.expandTemplateVariable = function(targets, templateSrv) {
@@ -379,7 +389,7 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
 
         if (dimensionKey) {
           var variable = _.find(templateSrv.variables, function(variable) {
-            return templateSrv.containsVariable(target.dimensions[dimensionKey], variable.name);
+            return self.containsVariable(target.dimensions[dimensionKey], variable.name);
           });
           return self.getExpandedVariables(target, dimensionKey, variable);
         } else {
