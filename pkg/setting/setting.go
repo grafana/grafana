@@ -39,6 +39,7 @@ var (
 	Env          string = DEV
 	AppUrl       string
 	AppSubUrl    string
+	AppStaticUrl string
 	InstanceName string
 
 	// build
@@ -172,7 +173,7 @@ func init() {
 	logger = log.New("settings")
 }
 
-func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
+func parseAppUrlAndSubUrl(section *ini.Section) (string, string, string) {
 	appUrl := section.Key("root_url").MustString("http://localhost:3000/")
 	if appUrl[len(appUrl)-1] != '/' {
 		appUrl += "/"
@@ -184,8 +185,9 @@ func parseAppUrlAndSubUrl(section *ini.Section) (string, string) {
 		log.Fatal(4, "Invalid root_url(%s): %s", appUrl, err)
 	}
 	appSubUrl := strings.TrimSuffix(url.Path, "/")
+	appStaticUrl := section.Key("static_url").MustString(fmt.Sprintf("%s/public", appSubUrl))
 
-	return appUrl, appSubUrl
+	return appUrl, appSubUrl, appStaticUrl
 }
 
 func ToAbsUrl(relativeUrl string) string {
@@ -464,7 +466,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	PluginsPath = makeAbsolute(Cfg.Section("paths").Key("plugins").String(), HomePath)
 
 	server := Cfg.Section("server")
-	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
+	AppUrl, AppSubUrl, AppStaticUrl = parseAppUrlAndSubUrl(server)
 
 	Protocol = HTTP
 	if server.Key("protocol").MustString("http") == "https" {

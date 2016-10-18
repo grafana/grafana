@@ -114,6 +114,23 @@ callback URL to be correct).
 > in front of Grafana that exposes it through a subpath. In that
 > case add the subpath to the end of this URL setting.
 
+### static_url
+
+The url where the front end files (HTML, JS, and CSS
+files) are accessible. By default grafana is serving those in the same server.
+For optimization you can put those files on a host optimized for serving static
+files (like a CDN or S3 like server).
+
+> **Note**  You will need to setup CORS headers on your static server to make this work
+
+CORS settings example for Apache:
+
+    Header set Access-Control-Allow-Origin "*"
+
+CORS settings example for Nginx:
+
+   add_header Access-Control-Allow-Origin "*";
+
 ### static_root_path
 
 The path to the directory where the front end files (HTML, JS, and CSS

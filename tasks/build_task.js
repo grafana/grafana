@@ -26,7 +26,7 @@ module.exports = function(grunt) {
     'uglify:genDir'
   ]);
 
-  // task to add [[.AppSubUrl]] to reved path
+  // task to add [[.AppStaticUrl]] to reved path
   grunt.registerTask('remapFilerev', function() {
     var root = grunt.config().genDir;
     var summary = grunt.filerev.summary;
@@ -34,8 +34,8 @@ module.exports = function(grunt) {
 
     for(var key in summary){
       if(summary.hasOwnProperty(key)){
-        var orig = key.replace(root, root+'/[[.AppSubUrl]]/public');
-        var revved = summary[key].replace(root, root+'/[[.AppSubUrl]]/public');
+        var orig = key.replace(root, root+'/[[.AppStaticUrl]]');
+        var revved = summary[key].replace(root, root+'/[[.AppStaticUrl]]');
         fixed[orig] = revved;
       }
     }
