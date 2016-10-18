@@ -20,7 +20,7 @@ module.exports = function(grunt) {
     'clean:gen',
     'copy:node_modules',
     'copy:public_to_gen',
-    'phantomjs',
+    //'phantomjs',
     'css',
     'typescript:build'
   ]);

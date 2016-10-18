@@ -25,7 +25,9 @@ test:
 deployment:
   master:
     branch: master
-    owner: grafana
+
+  staging:
+    branch: master
+    owner: xarorsa
     commands:
-      - ./scripts/trigger_grafana_packer.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN}
-      - ./scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN}
+      - ./deploy_staging.sh
