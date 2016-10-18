@@ -57,11 +57,10 @@ func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 
 	tsdbQuery.Start = queryContext.TimeRange.GetFromAsMsEpoch()
 	tsdbQuery.End = queryContext.TimeRange.GetToAsMsEpoch()
-	tsdbQuery.Queries = make([]map[string]interface{}, len(queries))
 
-  for i := 0; i < len(queries); i++ {
-  	metric := e.buildMetric(queries[i])
-  	tsdbQuery.Queries[i] = metric
+  for _ , query := range queries {
+  	metric := e.buildMetric(query)
+  	tsdbQuery.Queries = append(tsdbQuery.Queries, metric)
 	}
 
 	if setting.Env == setting.DEV {
