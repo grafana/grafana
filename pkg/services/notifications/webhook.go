@@ -15,10 +15,11 @@ import (
 )
 
 type Webhook struct {
-	Url      string
-	User     string
-	Password string
-	Body     string
+	Url        string
+	User       string
+	Password   string
+	Body       string
+	HttpMethod string
 }
 
 var webhookQueue chan *Webhook
@@ -44,13 +45,17 @@ func processWebhookQueue() {
 }
 
 func sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
-	webhookLog.Debug("Sending webhook", "url", webhook.Url)
+	webhookLog.Debug("Sending webhook", "url", webhook.Url, "http method", webhook.HttpMethod)
 
 	client := &http.Client{
 		Timeout: time.Duration(10 * time.Second),
 	}
 
-	request, err := http.NewRequest(http.MethodPost, webhook.Url, bytes.NewReader([]byte(webhook.Body)))
+	if webhook.HttpMethod == "" {
+		webhook.HttpMethod = http.MethodPost
+	}
+
+	request, err := http.NewRequest(webhook.HttpMethod, webhook.Url, bytes.NewReader([]byte(webhook.Body)))
 	if webhook.User != "" && webhook.Password != "" {
 		request.Header.Add("Authorization", util.GetBasicAuthHeader(webhook.User, webhook.Password))
 	}
