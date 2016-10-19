@@ -194,7 +194,7 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 	return nil
 }
 
-func GetUserByEmail(query *m.GetUserByEmail) error {
+func GetUserByEmail(query *m.GetUserByEmailQuery) error {
 	if query.Email == "" {
 		return m.ErrUserNotFound
 	}
