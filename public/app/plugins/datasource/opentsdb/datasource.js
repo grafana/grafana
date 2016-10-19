@@ -102,6 +102,11 @@ function (angular, _, dateMath) {
       }.bind(this));
     };
 
+    this.targetContainsTemplate = function(target) {
+      console.log(target);
+      return false;
+    };
+
     this.performTimeSeriesQuery = function(queries, start, end) {
       var msResolution = false;
       if (this.tsdbResolution === 2) {
