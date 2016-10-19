@@ -1,6 +1,8 @@
 package notifiers
 
 import (
+	"encoding/base64"
+	"io/ioutil"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -43,6 +45,14 @@ func (this *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if err != nil {
 		this.log.Error("Failed get rule link", "error", err)
 		return err
+	}
+
+	imageLink := evalContext.ImagePublicUrl
+	if imageLink == "" {
+		imageBytes, err := ioutil.ReadFile(evalContext.ImageOnDiskPath)
+		if err == nil {
+			imageLink = "data:image/jpg;base64," + base64.StdEncoding.EncodeToString(imageBytes)
+		}
 	}
 
 	cmd := &m.SendEmailCommandSync{
