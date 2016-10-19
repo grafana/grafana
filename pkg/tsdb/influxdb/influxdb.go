@@ -124,8 +124,13 @@ func (e *InfluxDBExecutor) createRequest(query string) (*http.Request, error) {
 	req.URL.RawQuery = params.Encode()
 
 	req.Header.Set("User-Agent", "Grafana")
+
 	if e.BasicAuth {
 		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
+	}
+
+	if e.User != "" {
+		req.SetBasicAuth(e.User, e.Password)
 	}
 
 	glog.Debug("Influxdb request", "url", req.URL.String())

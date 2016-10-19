@@ -125,7 +125,16 @@
 		</div>
 
 		<div class="gf-form-group" style="max-width: 720px;" ng-if="ctrl.subTabIndex === 2">
-      <h5 class="section-heading">State history <span class="muted small">(last 50 state changes)</span></h5>
+			<button class="btn btn-mini btn-danger pull-right" ng-click="ctrl.clearHistory()"><i class="fa fa-trash"></i>&nbsp;Clear history</button>
+      <h5 class="section-heading" style="whitespace: nowrap">
+				State history <span class="muted small">(last 50 state changes)</span>
+			</h5>
+
+      <div ng-show="ctrl.alertHistory.length === 0">
+        <br>
+        <i>No state changes recorded</i>
+      </div>
+
 			<section class="card-section card-list-layout-list">
 				<ol class="card-list" >
 					<li class="card-item-wrapper" ng-repeat="ah in ctrl.alertHistory">

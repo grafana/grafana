@@ -31,6 +31,13 @@ describe("rangeUtil", () => {
       expect(info.from).to.be('now-13h')
     });
 
+    it('should handle non default future amount', () => {
+      var info = rangeUtil.describeTextRange('+3h');
+      expect(info.display).to.be('Next 3 hours')
+      expect(info.from).to.be('now')
+      expect(info.to).to.be('now+3h')
+    });
+
     it('should handle now/d', () => {
       var info = rangeUtil.describeTextRange('now/d');
       expect(info.display).to.be('Today so far');

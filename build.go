@@ -98,6 +98,9 @@ func main() {
 			createDebPackages()
 			sha1FilesInDist()
 
+    case "sha1-dist":
+      sha1FilesInDist()
+
 		case "latest":
 			makeLatestDistCopies()
 			sha1FilesInDist()

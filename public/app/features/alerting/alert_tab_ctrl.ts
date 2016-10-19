@@ -59,7 +59,7 @@ export class AlertTabCtrl {
       this.panelCtrl.render();
     });
 
-       // build notification model
+    // build notification model
     this.notifications = [];
     this.alertNotifications = [];
     this.alertHistory = [];
@@ -350,6 +350,24 @@ export class AlertTabCtrl {
     }
 
     this.evaluatorParamsChanged();
+  }
+
+  clearHistory() {
+    appEvents.emit('confirm-modal', {
+      title: 'Delete Alert History',
+      text: 'Are you sure you want to remove all history & annotations for this alert?',
+      icon: 'fa-trash',
+      yesText: 'Yes',
+      onConfirm: () => {
+        this.backendSrv.post('/api/annotations/mass-delete', {
+          dashboardId: this.panelCtrl.dashboard.id,
+          panelId: this.panel.id,
+        }).then(res => {
+          this.alertHistory = [];
+          this.panelCtrl.refresh();
+        });
+      }
+    });
   }
 
   test() {

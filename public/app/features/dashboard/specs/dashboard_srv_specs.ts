@@ -6,7 +6,7 @@ describe('dashboardSrv', function() {
   var _dashboardSrv;
 
   beforeEach(() => {
-    _dashboardSrv = new DashboardSrv();
+    _dashboardSrv = new DashboardSrv({}, {}, {});
   });
 
   describe('when creating new dashboard with defaults only', function() {
