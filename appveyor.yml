@@ -25,10 +25,11 @@ install:
 build_script:
   - go run build.go build
   - grunt release
+  - go run build.go sha1-dist
   - cp dist/* .
 
 artifacts:
-  - path: grafana-*windows-*.zip
+  - path: grafana-*windows-*.*
     name: binzip
 
 deploy:

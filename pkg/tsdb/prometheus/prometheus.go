@@ -84,8 +84,10 @@ func formatLegend(metric pmodel.Metric, query *PrometheusQuery) string {
 	reg, _ := regexp.Compile(`\{\{\s*(.+?)\s*\}\}`)
 
 	result := reg.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
-		ind := strings.Replace(strings.Replace(string(in), "{{", "", 1), "}}", "", 1)
-		if val, exists := metric[pmodel.LabelName(ind)]; exists {
+		labelName := strings.Replace(string(in), "{{", "", 1)
+		labelName = strings.Replace(labelName, "}}", "", 1)
+		labelName = strings.TrimSpace(labelName)
+		if val, exists := metric[pmodel.LabelName(labelName)]; exists {
 			return []byte(val)
 		}
 
