@@ -202,7 +202,7 @@ func GetUserByEmail(query *m.GetUserByEmailQuery) error {
 	user := new(m.User)
 
 	user = &m.User{Email: query.Email}
-	has, err = x.Get(user)
+	has, err := x.Get(user)
 
 	if err != nil {
 		return err
