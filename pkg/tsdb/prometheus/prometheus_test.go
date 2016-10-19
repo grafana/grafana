@@ -17,7 +17,7 @@ func TestPrometheus(t *testing.T) {
 			}
 
 			query := &PrometheusQuery{
-				LegendFormat: "legend {{app}} {{device}} {{broken}}",
+				LegendFormat: "legend {{app}} {{ device }} {{broken}}",
 			}
 
 			So(formatLegend(metric, query), ShouldEqual, "legend backend mobile {{broken}}")

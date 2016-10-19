@@ -18,7 +18,7 @@ export class AlertNotificationEditCtrl {
       this.model = {
         type: 'email',
         settings: {
-          severityFilter: 'none'
+          httpMethod: 'POST'
         },
         isDefault: false
       };

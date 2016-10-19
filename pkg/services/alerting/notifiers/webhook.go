@@ -24,16 +24,18 @@ func NewWebHookNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 		Url:          url,
 		User:         model.Settings.Get("user").MustString(),
 		Password:     model.Settings.Get("password").MustString(),
+		HttpMethod:   model.Settings.Get("httpMethod").MustString("POST"),
 		log:          log.New("alerting.notifier.webhook"),
 	}, nil
 }
 
 type WebhookNotifier struct {
 	NotifierBase
-	Url      string
-	User     string
-	Password string
-	log      log.Logger
+	Url        string
+	User       string
+	Password   string
+	HttpMethod string
+	log        log.Logger
 }
 
 func (this *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
@@ -59,10 +61,11 @@ func (this *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &m.SendWebhookSync{
-		Url:      this.Url,
-		User:     this.User,
-		Password: this.Password,
-		Body:     string(body),
+		Url:        this.Url,
+		User:       this.User,
+		Password:   this.Password,
+		Body:       string(body),
+		HttpMethod: this.HttpMethod,
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {

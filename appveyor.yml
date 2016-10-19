@@ -25,10 +25,13 @@ install:
 build_script:
   - go run build.go build
   - grunt release
-  #- 7z a grafana.zip %APPVEYOR_BUILD_FOLDER%\dist\*
+  - go run build.go sha1-dist
   - cp dist/* .
 
 artifacts:
-  - path: grafana-*windows-ia32.zip
-  #- path: dist/*
+  - path: grafana-*windows-*.*
     name: binzip
+
+deploy:
+  - provider: Environment
+    name: GrafanaBuildsS3
