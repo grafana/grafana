@@ -96,6 +96,11 @@ type GetUserByLoginQuery struct {
 	Result       *User
 }
 
+type GetUserByEmailQuery struct {
+	Email  string
+	Result *User
+}
+
 type GetUserByIdQuery struct {
 	Id     int64
 	Result *User
