@@ -1,14 +1,9 @@
 package opentsdb
 
 type OpenTsdbQuery struct {
-	Start	   int64     				 `json:"start"`
-	End		   int64   	 				 `json:"end"`
-	Queries  []OpenTsdbMetric  `json:"queries"`
-}
-
-type OpenTsdbMetric struct {
-	Metric      string  `json:"metric"`
-	Aggregator  string  `json:"aggregator"`
+	Start	   int64     				         `json:"start"`
+	End		   int64   	 				 				 `json:"end"`
+	Queries  []map[string]interface{}  `json:"queries"`
 }
 
 type OpenTsdbResponse struct {
