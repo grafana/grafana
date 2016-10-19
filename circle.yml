@@ -21,10 +21,14 @@ dependencies:
 test:
   override:
      - bash scripts/circle-test.sh
+     - bash scripts/deploy_staging.sh
 
 deployment:
   master:
     branch: master
+    owner: xarorsa
+    commands:
+      - ./deploy_production.sh
 
   staging:
     branch: master
