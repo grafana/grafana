@@ -103,24 +103,23 @@ function (angular, _, dateMath) {
     };
 
     this.targetContainsTemplate = function(target) {
-      // Checking for template variables in filters
-      if (target.filters.length > 0) {
+      if (target.filters && target.filters.length > 0) {
         for (var i = 0; i < target.filters.length; i++) {
           if (templateSrv.variableExists(target.filters[i].filter)) {
             return true;
           }
         }
       }
-      // Checking for template variables in tags
-      else if (Object.keys(target.tags).length > 0) {
+
+      if (target.tags && Object.keys(target.tags).length > 0) {
         for (var tagKey in target.tags) {
           if (templateSrv.variableExists(target.tags[tagKey])) {
             return true;
           }
         }
-      } else {
-        return false;
       }
+
+      return false;
     };
 
     this.performTimeSeriesQuery = function(queries, start, end) {
