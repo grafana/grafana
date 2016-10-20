@@ -1,8 +1,7 @@
 package notifiers
 
 import (
-	"encoding/base64"
-	"io/ioutil"
+	"os"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -47,14 +46,6 @@ func (this *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	imageLink := evalContext.ImagePublicUrl
-	if imageLink == "" {
-		imageBytes, err := ioutil.ReadFile(evalContext.ImageOnDiskPath)
-		if err == nil {
-			imageLink = "data:image/jpg;base64," + base64.StdEncoding.EncodeToString(imageBytes)
-		}
-	}
-
 	cmd := &m.SendEmailCommandSync{
 		SendEmailCommand: m.SendEmailCommand{
 			Data: map[string]interface{}{
@@ -64,13 +55,25 @@ func (this *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"StateModel":   evalContext.GetStateModel(),
 				"Message":      evalContext.Rule.Message,
 				"RuleUrl":      ruleUrl,
-				"ImageLink":    evalContext.ImagePublicUrl,
+				"ImageLink":    "",
+				"EmbededImage": "",
 				"AlertPageUrl": setting.AppUrl + "alerting",
 				"EvalMatches":  evalContext.EvalMatches,
 			},
-			To:       this.Addresses,
-			Template: "alert_notification.html",
+			To:           this.Addresses,
+			Template:     "alert_notification.html",
+			EmbededFiles: []string{},
 		},
+	}
+
+	if evalContext.ImagePublicUrl != "" {
+		cmd.Data["ImageLink"] = evalContext.ImagePublicUrl
+	} else {
+		file, err := os.Stat(evalContext.ImageOnDiskPath)
+		if err == nil {
+			cmd.EmbededFiles = []string{evalContext.ImageOnDiskPath}
+			cmd.Data["EmbededImage"] = file.Name()
+		}
 	}
 
 	err = bus.DispatchCtx(evalContext.Ctx, cmd)

@@ -14,12 +14,14 @@ import (
 	"net/mail"
 	"net/smtp"
 	"os"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
+	"gopkg.in/gomail.v2"
 )
 
 var mailQueue chan *Message
@@ -154,40 +156,102 @@ func sendToSmtpServer(recipients []string, msgContent []byte) error {
 }
 
 func buildAndSend(msg *Message) (int, error) {
-	log.Trace("Sending mails to: %s", strings.Join(msg.To, "; "))
-
-	// get message body
-	content := msg.Content()
-
-	if len(msg.To) == 0 {
-		return 0, fmt.Errorf("empty receive emails")
-	} else if len(msg.Body) == 0 {
-		return 0, fmt.Errorf("empty email body")
+	m := gomail.NewMessage()
+	m.SetHeader("From", msg.From)
+	m.SetHeader("To", msg.To[0])
+	m.SetHeader("Subject", msg.Subject)
+	for _, file := range msg.EmbededFiles {
+		m.Embed(file)
 	}
 
-	if msg.Massive {
-		// send mail to multiple emails one by one
-		num := 0
-		for _, to := range msg.To {
-			body := []byte("To: " + to + "\r\n" + content)
-			err := sendToSmtpServer([]string{to}, body)
-			if err != nil {
-				return num, err
-			}
-			num++
-		}
-		return num, nil
-	} else {
-		body := []byte("To: " + strings.Join(msg.To, ";") + "\r\n" + content)
+	m.SetBody("text/html", msg.Body)
 
-		// send to multiple emails in one message
-		err := sendToSmtpServer(msg.To, body)
+	host, port, err := net.SplitHostPort(setting.Smtp.Host)
+
+	if err != nil {
+		return 0, err
+	}
+	iPort, err := strconv.Atoi(port)
+	if err != nil {
+		return 0, err
+	}
+
+	d := gomail.NewPlainDialer(host, iPort, setting.Smtp.User, setting.Smtp.Password)
+
+	tlsconfig := &tls.Config{
+		InsecureSkipVerify: setting.Smtp.SkipVerify,
+		ServerName:         host,
+	}
+
+	if setting.Smtp.CertFile != "" {
+		cert, err := tls.LoadX509KeyPair(setting.Smtp.CertFile, setting.Smtp.KeyFile)
 		if err != nil {
 			return 0, err
-		} else {
-			return 1, nil
 		}
+		tlsconfig.Certificates = []tls.Certificate{cert}
 	}
+
+	d.TLSConfig = tlsconfig
+	if err := d.DialAndSend(m); err != nil {
+		return 0, err
+	}
+
+	return 0, nil
+	/*
+		m := email.NewHTMLMessage(msg.Subject, msg.Body)
+		m.From = mail.Address{Name: "From", Address: "alerting@grafana.org"}
+		m.To = msg.To
+
+		log.Info2("Attaching file", "file", msg.Attachment)
+		if err := m.Attach(msg.Attachment); err != nil {
+			return 0, err
+		}
+
+		// send it
+		host, _, _ := net.SplitHostPort(setting.Smtp.Host)
+
+		auth := smtp.PlainAuth("", setting.Smtp.User, setting.Smtp.Password, host)
+		if err := email.Send(setting.Smtp.Host, auth, m); err != nil {
+			return 0, err
+		}
+
+		return 0, nil
+
+			  log.Trace("Sending mails to: %s", strings.Join(msg.To, "; "))
+
+				// get message body
+				content := msg.Content()
+
+				if len(msg.To) == 0 {
+					return 0, fmt.Errorf("empty receive emails")
+				} else if len(msg.Body) == 0 {
+					return 0, fmt.Errorf("empty email body")
+				}
+
+				if msg.Massive {
+					// send mail to multiple emails one by one
+					num := 0
+					for _, to := range msg.To {
+						body := []byte("To: " + to + "\r\n" + content)
+						err := sendToSmtpServer([]string{to}, body)
+						if err != nil {
+							return num, err
+						}
+						num++
+					}
+					return num, nil
+				} else {
+					body := []byte("To: " + strings.Join(msg.To, ";") + "\r\n" + content)
+
+					// send to multiple emails in one message
+					err := sendToSmtpServer(msg.To, body)
+					if err != nil {
+						return 0, err
+					} else {
+						return 1, nil
+					}
+				}
+	*/
 }
 
 func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
@@ -229,9 +293,10 @@ func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
 	}
 
 	return &Message{
-		To:      cmd.To,
-		From:    setting.Smtp.FromAddress,
-		Subject: subjectBuffer.String(),
-		Body:    buffer.String(),
+		To:           cmd.To,
+		From:         setting.Smtp.FromAddress,
+		Subject:      subjectBuffer.String(),
+		Body:         buffer.String(),
+		EmbededFiles: cmd.EmbededFiles,
 	}, nil
 }
