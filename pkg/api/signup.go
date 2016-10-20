@@ -74,7 +74,7 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 	}
 
 	// check for valid username
-	if util.IsEmail(form.Login) {
+	if util.IsEmail(createUserCmd.Login) {
 		return ApiError(400, "Cannot set email as login name", nil);
 	}
 
