@@ -90,7 +90,6 @@ func sendEmailCommandHandlerSync(ctx context.Context, cmd *m.SendEmailCommandSyn
 	message, err := buildEmailMessage(&m.SendEmailCommand{
 		Data:         cmd.Data,
 		Info:         cmd.Info,
-		Massive:      cmd.Massive,
 		Template:     cmd.Template,
 		To:           cmd.To,
 		EmbededFiles: cmd.EmbededFiles,
@@ -100,7 +99,7 @@ func sendEmailCommandHandlerSync(ctx context.Context, cmd *m.SendEmailCommandSyn
 		return err
 	}
 
-	_, err = buildAndSend(message)
+	_, err = send(message)
 
 	return err
 }

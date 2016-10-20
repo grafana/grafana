@@ -10,16 +10,8 @@ type Message struct {
 	From         string
 	Subject      string
 	Body         string
-	Massive      bool
 	Info         string
 	EmbededFiles []string
-}
-
-// create mail content
-func (m *Message) Content() string {
-	contentType := "text/html; charset=UTF-8"
-	content := "From: " + m.From + "\r\nSubject: " + m.Subject + "\r\nContent-Type: " + contentType + "\r\n\r\n" + m.Body
-	return content
 }
 
 func setDefaultTemplateData(data map[string]interface{}, u *m.User) {
