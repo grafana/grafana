@@ -1,15 +1,6 @@
-function getBaseURL() {
-  "use strict";
-  /* in the case of system.build, window is undefined
-     We should still pull the plugins from the CDN*/
-  if(typeof(window) === "undefined") {
-    return "public";
-  }
-  return window.grafanaBootData.settings.appStaticUrl || "public";
-}
 System.config({
   defaultJSExtenions: true,
-  baseURL: getBaseURL(),
+  baseURL: 'public',
   paths: {
     'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',
     'tether': 'vendor/npm/tether/dist/js/tether.js',
