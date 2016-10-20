@@ -73,6 +73,11 @@ func SignUpStep2(c *middleware.Context, form dtos.SignUpStep2Form) Response {
 		createUserCmd.EmailVerified = true
 	}
 
+	// check for valid username
+	if util.IsEmail(form.Login) {
+		return ApiError(400, "Cannot set email as login name", nil);
+	}
+
 	// check if user exists
 	existing := m.GetUserByLoginQuery{LoginOrEmail: form.Email}
 	if err := bus.Dispatch(&existing); err == nil {
