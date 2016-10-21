@@ -15,6 +15,8 @@ const (
 	AlertStatePaused    AlertStateType = "paused"
 	AlertStateAlerting  AlertStateType = "alerting"
 	AlertStateOK        AlertStateType = "ok"
+
+	KeepLastAlertState AlertStateType = "keep_last"
 )
 
 func (s AlertStateType) IsValid() bool {

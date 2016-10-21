@@ -41,7 +41,6 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 		evalContext.Rule.State = m.AlertStateAlerting
 		annotationData = simplejson.NewFromAny(evalContext.EvalMatches)
 	} else {
-		// handle no data case
 		if evalContext.NoDataFound {
 			evalContext.Rule.State = evalContext.Rule.NoDataState
 		} else {
@@ -50,7 +49,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 	}
 
 	countStateResult(evalContext.Rule.State)
-	if evalContext.Rule.State != oldState {
+	if handler.shouldUpdateAlertState(evalContext, oldState) {
 		handler.log.Info("New state change", "alertId", evalContext.Rule.Id, "newState", evalContext.Rule.State, "oldState", oldState)
 
 		cmd := &m.SetAlertStateCommand{
@@ -89,6 +88,15 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 	}
 
 	return nil
+}
+
+func (handler *DefaultResultHandler) shouldUpdateAlertState(evalContext *EvalContext, oldState m.AlertStateType) bool {
+	if evalContext.NoDataFound && evalContext.Rule.NoDataState == m.KeepLastAlertState {
+		evalContext.Rule.State = oldState
+		return false
+	}
+
+	return evalContext.Rule.State != oldState
 }
 
 func countStateResult(state m.AlertStateType) {
