@@ -1,17 +1,24 @@
-----
-page_title: Prometheus query guide
-page_description: Prometheus query guide
-page_keywords: grafana, prometheus, metrics, query, documentation
----
++++
+title = "Using Prometheus in Grafana"
+description = "Guide for using Prometheus in Grafana"
+keywords = ["grafana", "prometheus", "guide"]
+type = "docs"
+[menu.docs]
+name = "Prometheus"
+parent = "datasources"
+weight = 2
++++
 
-# Prometheus
+
+# Using Prometheus in Grafana
+
 Grafana includes support for Prometheus Datasources. While the process of adding the datasource is similar to adding a Graphite or OpenTSDB datasource type, Prometheus does have a few different options for building queries.
 
 ## Adding the data source to Grafana
-![](/img/v2/add_Prometheus.png)
+![](img/v2/add_Prometheus.png)
 
-1. Open the side menu by clicking the the Grafana icon in the top header. 
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.    
+1. Open the side menu by clicking the the Grafana icon in the top header.
+2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 
     > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
 
@@ -35,7 +42,7 @@ Password | Database user's password
 ## Query editor
 Open a graph in edit mode by click the title.
 
-![](/img/v2/prometheus_editor.png)
+![](img/v2/prometheus_editor.png)
 
 For details on Prometheus metric queries check out the Prometheus documentation
 - [Query Metrics - Prometheus documentation](http://prometheus.io/docs/querying/basics/).
@@ -65,4 +72,4 @@ label_values(hostname)
 
 You can also use raw queries & regular expressions to extract anything you might need.
 
-![](/img/v2/prometheus_templating.png)
+![](img/v2/prometheus_templating.png)

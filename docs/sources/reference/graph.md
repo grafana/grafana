@@ -1,20 +1,24 @@
-----
-page_title: Graph Panel
-page_description: Graph Panel Reference
-page_keywords: grafana, graph, panel, documentation
----
++++
+title = "Graph Panel"
+keywords = ["grafana", "graph panel", "documentation", "guide", "graph"]
+type = "docs"
+[menu.docs]
+name = "Graph"
+parent = "panels"
+weight = 1
++++
 
 # Graph Panel
 
 The main panel in Grafana is simply named Graph. It provides a very rich set of graphing options.
 
-<img src="/img/v1/graph_overview.png" class="no-shadow">
+<img src="img/docs/v1/graph_overview.png" class="no-shadow">
 
 Clicking the title for a panel exposes a menu.  The `edit` option opens additional configuration
 options for the panel.
 
 ## General
-![](/img/v2/graph_general.png)
+![](img/docs/v2/graph_general.png)
 
 The general tab allows customization of a panel's appearance and menu options.
 
@@ -52,7 +56,7 @@ options.
 
 ## Axes & Grid
 
-![](/img/v2/graph_axes_grid_options.png)
+![](img/docs/v2/graph_axes_grid_options.png)
 
 The Axes & Grid tab controls the display of axes, grids and legend.
 
@@ -95,7 +99,7 @@ It is just the sum of all data points received by Grafana.
 
 ## Display styles
 
-![](/img/v2/graph_display_styles.png)
+![](img/docs/v2/graph_display_styles.png)
 
 Display styles controls properties of the graph.
 
@@ -140,4 +144,4 @@ a thicker line width to make it standout.
 
 ## Time range
 
-![](/img/v2/graph_time_range.png)
+![](img/docs/v2/graph_time_range.png)

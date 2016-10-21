@@ -1,17 +1,23 @@
----
-page_title: LDAP Integration
-page_description: LDAP Integration guide for Grafana.
-page_keywords: grafana, ldap, configuration, documentation, integration
----
++++
+title = "LDAP Authentication"
+description = "Grafana LDAP Authentication Guide "
+keywords = ["grafana", "configuration", "documentation", "ldap"]
+type = "docs"
+[menu.docs]
+name = "LDAP Authentication"
+identifier = "ldap"
+parent = "admin"
+weight = 2
++++
 
-# LDAP Integration
+# LDAP Authentication
 
 Grafana (2.1 and newer) ships with a strong LDAP integration feature. The LDAP integration in Grafana allows your
 Grafana users to login with their LDAP credentials. You can also specify mappings between LDAP
 group memberships and Grafana Organization user roles.
 
 ## Configuration
-You turn on LDAP in the [main config file](../configuration/#authldap) as well as specify the path to the LDAP
+You turn on LDAP in the [main config file]({{< relref "configuration.md#auth-ldap" >}}) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
 ### Example config
