@@ -467,7 +467,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	server := Cfg.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
 
-	appStaticUrl := server.Key("static_url").MustString(fmt.Sprintf("%s/public", appSubUrl))
+	appStaticUrl := server.Key("static_url").MustString(fmt.Sprintf("%s/public", AppSubUrl))
 
 	Protocol = HTTP
 	if server.Key("protocol").MustString("http") == "https" {
