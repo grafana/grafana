@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AlertAssociationCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, $timeout) {
+  module.controller('AlertAssociationCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, $timeout, contextSrv) {
     var associatedMetricRows = [];
     var alertMetric = $routeParams.metric;
     var alertHost = $routeParams.host;
@@ -115,6 +115,7 @@ function (angular, _) {
       $scope.initDashboard({
         meta: { canStar: false, canShare: false, canEdit: false },
         dashboard: {
+          system: contextSrv.system,
           title: "相关联指标",
           id: alertMetric,
           rows: [rowMeta],

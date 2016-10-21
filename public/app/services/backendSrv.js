@@ -127,5 +127,16 @@ function (angular, _, config) {
       return this.post('/api/dashboards/db/', {dashboard: dash, overwrite: options.overwrite === true});
     };
 
+    this.getSystemById = function (id) {
+      return this.get("/api/user/system").then(function (systems) {
+        var sys = '';
+        _.each(systems, function (system) {
+          if (system.Id == id) {
+            sys = system.SystemsName;
+          }
+        });
+        return sys;
+      })
+    }
   });
 });

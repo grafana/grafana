@@ -7,7 +7,7 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AlertEditCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, datasourceSrv, contextSrv) {
+  module.controller('AlertEditCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, datasourceSrv, contextSrv, backendSrv) {
 
     $scope.init = function() {
       $scope.datasource = null;
@@ -23,7 +23,8 @@ function (angular, _) {
       $scope.isNew = !$scope.alertDef;
       if ($scope.isNew) {
         $scope.alertDef = {};
-        $scope.alertDef.service = "com.test";
+        $scope.alertDef.org = contextSrv.user.orgId;
+        $scope.alertDef.service = contextSrv.system;
         $scope.alertDef.alertDetails = {};
         $scope.alertDef.alertDetails.cluster = "cluster1";
         $scope.alertDef.alertDetails.hosts = null;
@@ -32,6 +33,10 @@ function (angular, _) {
         $scope.alertDef.alertDetails.hostQuery = {};
         $scope.alertDef.alertDetails.hostQuery.metricQueries = [];
       }
+      $scope.orgName = contextSrv.user.orgName;
+      backendSrv.getSystemById(contextSrv.system).then(function (system) {
+        $scope.serviceName = system;
+      });
     };
 
     $scope.saveChanges = function() {
