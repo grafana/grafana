@@ -104,7 +104,7 @@ function (queryDef) {
     }
 
     var i, filter, condition;
-    var must = query.query.filtered.filter.bool.must;
+    var must = this.esVersion >= 5 ? query.query.bool.filter : query.query.filtered.filter.bool.must;
 
     for (i = 0; i < adhocFilters.length; i++) {
       filter = adhocFilters[i];
@@ -121,25 +121,42 @@ function (queryDef) {
     target.bucketAggs = target.bucketAggs || [{type: 'date_histogram', id: '2', settings: {interval: 'auto'}}];
     target.timeField =  this.timeField;
 
-    var i, nestedAggs, metric;
-    var query = {
-      "size": 0,
-      "query": {
-        "filtered": {
-          "query": {
-            "query_string": {
-              "analyze_wildcard": true,
-              "query": '$lucene_query',
-            }
-          },
-          "filter": {
-            "bool": {
-              "must": [{"range": this.getRangeFilter()}]
+    var i, nestedAggs, metric, query;
+    if (this.esVersion >= 5) {
+      query = {
+        "size": 0,
+        "query": {
+          "bool": {
+            "must": {
+              "query_string": {
+                "analyze_wildcard": true,
+                "query": '$lucene_query',
+              }
+            },
+            "filter": [{"range": this.getRangeFilter()}]
+          }
+        }
+      };
+    } else {
+      query = {
+        "size": 0,
+        "query": {
+          "filtered": {
+            "query": {
+              "query_string": {
+                "analyze_wildcard": true,
+                "query": '$lucene_query',
+              }
+            },
+            "filter": {
+              "bool": {
+                "must": [{"range": this.getRangeFilter()}]
+              }
             }
           }
         }
-      }
-    };
+      };
+    }
 
     this.addAdhocFilters(query, adhocFilters);
 
@@ -217,26 +234,47 @@ function (queryDef) {
   };
 
   ElasticQueryBuilder.prototype.getTermsQuery = function(queryDef) {
-    var query = {
-      "size": 0,
-      "query": {
-        "filtered": {
-          "filter": {
-            "bool": {
-              "must": [{"range": this.getRangeFilter()}]
+    var query;
+    if(this.esVersion >= 5) {
+      query = {
+        "size": 0,
+        "query": {
+          "bool": {
+            "filter": [{"range": this.getRangeFilter()}]
+          }
+        }
+      };
+
+      if (queryDef.query) {
+        query.query.bool.must = {
+          "query_string": {
+            "analyze_wildcard": true,
+            "query": queryDef.query,
+          }
+        };
+      }
+    } else {
+      query = {
+        "size": 0,
+        "query": {
+          "filtered": {
+            "filter": {
+              "bool": {
+                "must": [{"range": this.getRangeFilter()}]
+              }
             }
           }
         }
-      }
-    };
-
-    if (queryDef.query) {
-      query.query.filtered.query = {
-        "query_string": {
-          "analyze_wildcard": true,
-          "query": queryDef.query,
-        }
       };
+
+      if (queryDef.query) {
+        query.query.filtered.query = {
+          "query_string": {
+            "analyze_wildcard": true,
+            "query": queryDef.query,
+          }
+        };
+      }
     }
 
     query.aggs =  {

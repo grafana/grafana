@@ -88,13 +88,25 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       }
 
       var queryInterpolated = templateSrv.replace(queryString, {}, 'lucene');
-      var filter = { "bool": { "must": [{ "range": range }] } };
-      var query = { "bool": { "should": [{ "query_string": { "query": queryInterpolated } }] } };
-      var data = {
-        "fields": [timeField, "_source"],
-        "query" : { "filtered": { "query" : query, "filter": filter } },
-        "size": 10000
-      };
+
+      var filter, query, data;
+      if (this.esVersion >= 5) {
+        filter = [{ "range": range }];
+        query = [{ "query_string": { "query": queryInterpolated } }];
+        data = {
+          "fields": [timeField, "_source"],
+          "query" : { "bool": { "must": query, "filter": filter } },
+          "size": 10000
+        };
+      } else {
+        filter = { "bool": { "must": [{ "range": range }] } };
+        query = { "bool": { "should": [{ "query_string": { "query": queryInterpolated } }] } };
+        data = {
+          "fields": [timeField, "_source"],
+          "query" : { "filtered": { "query": query, "filter": filter } },
+          "size": 10000
+        };
+      }
 
       var header = {search_type: "query_then_fetch", "ignore_unavailable": true};
 
@@ -194,7 +206,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         luceneQuery = luceneQuery.substr(1, luceneQuery.length - 2);
         esQuery = esQuery.replace("$lucene_query", luceneQuery);
 
-        var searchType = queryObj.size === 0 ? 'count' : 'query_then_fetch';
+        var searchType = (this.esVersion < 5 && queryObj.size === 0) ? 'count' : 'query_then_fetch';
         var header = this.getQueryHeader(searchType, options.range.from, options.range.to);
         payload +=  header + '\n';
 
@@ -277,14 +289,19 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
     this.getTerms = function(queryDef) {
       var range = timeSrv.timeRange();
-      var header = this.getQueryHeader('count', range.from, range.to);
+      var header = this.getQueryHeader(this.esVersion < 5 ? 'count' : 'query_then_fetch', range.from, range.to);
       var esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
+      var esUrl = '_msearch';
 
       esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
       esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
       esQuery = header + '\n' + esQuery + '\n';
 
-      return this._post('_msearch?search_type=count', esQuery).then(function(res) {
+      if (this.esVersion < 5) {
+        esUrl += '?search_type=count';
+      }
+
+      return this._post(esUrl, esQuery).then(function(res) {
         if (!res.responses[0].aggregations) {
           return [];
         }
