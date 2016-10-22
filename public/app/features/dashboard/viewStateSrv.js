@@ -155,11 +155,10 @@ function (angular, _, $) {
       if (!render) { return false;}
 
       $timeout(function() {
-        if (self.oldTimeRange !== ctrl.range) {
+        if (self.oldTimeRange && self.oldTimeRange !== ctrl.range) {
           self.$scope.broadcastRefresh();
-        }
-        else {
-          ctrl.render();
+        } else {
+          self.$scope.$broadcast('render');
         }
         delete self.fullscreenPanel;
       });
