@@ -8,6 +8,7 @@ import (
 
 type AlertStateType string
 type AlertSeverityType string
+type NoDataOption string
 
 const (
 	AlertStateNoData    AlertStateType = "no_data"
@@ -15,12 +16,25 @@ const (
 	AlertStatePaused    AlertStateType = "paused"
 	AlertStateAlerting  AlertStateType = "alerting"
 	AlertStateOK        AlertStateType = "ok"
+)
 
-	KeepLastAlertState AlertStateType = "keep_last"
+const (
+	NoDataSetNoData   NoDataOption = "no_data"
+	NoDataSetAlerting NoDataOption = "alerting"
+	NoDataSetOK       NoDataOption = "ok"
+	NoDataKeepState   NoDataOption = "keep_state"
 )
 
 func (s AlertStateType) IsValid() bool {
 	return s == AlertStateOK || s == AlertStateNoData || s == AlertStateExecError || s == AlertStatePaused
+}
+
+func (s NoDataOption) IsValid() bool {
+	return s == NoDataSetNoData || s == NoDataSetAlerting || s == NoDataSetOK || s == NoDataKeepState
+}
+
+func (s NoDataOption) ToAlertState() AlertStateType {
+	return AlertStateType(s)
 }
 
 type Alert struct {

@@ -18,7 +18,7 @@ type Rule struct {
 	Frequency     int64
 	Name          string
 	Message       string
-	NoDataState   m.AlertStateType
+	NoDataState   m.NoDataOption
 	State         m.AlertStateType
 	Conditions    []Condition
 	Notifications []int64
@@ -76,7 +76,7 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	model.Message = ruleDef.Message
 	model.Frequency = ruleDef.Frequency
 	model.State = ruleDef.State
-	model.NoDataState = m.AlertStateType(ruleDef.Settings.Get("noDataState").MustString("no_data"))
+	model.NoDataState = m.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
 
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)

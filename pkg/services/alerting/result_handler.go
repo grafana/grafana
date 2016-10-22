@@ -30,19 +30,21 @@ func NewResultHandler() *DefaultResultHandler {
 func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 	oldState := evalContext.Rule.State
 
-	exeuctionError := ""
+	executionError := ""
 	annotationData := simplejson.New()
 	if evalContext.Error != nil {
 		handler.log.Error("Alert Rule Result Error", "ruleId", evalContext.Rule.Id, "error", evalContext.Error)
 		evalContext.Rule.State = m.AlertStateExecError
-		exeuctionError = evalContext.Error.Error()
-		annotationData.Set("errorMessage", exeuctionError)
+		executionError = evalContext.Error.Error()
+		annotationData.Set("errorMessage", executionError)
 	} else if evalContext.Firing {
 		evalContext.Rule.State = m.AlertStateAlerting
 		annotationData = simplejson.NewFromAny(evalContext.EvalMatches)
 	} else {
 		if evalContext.NoDataFound {
-			evalContext.Rule.State = evalContext.Rule.NoDataState
+			if evalContext.Rule.NoDataState != m.NoDataKeepState {
+				evalContext.Rule.State = evalContext.Rule.NoDataState.ToAlertState()
+			}
 		} else {
 			evalContext.Rule.State = m.AlertStateOK
 		}
@@ -56,7 +58,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			AlertId:  evalContext.Rule.Id,
 			OrgId:    evalContext.Rule.OrgId,
 			State:    evalContext.Rule.State,
-			Error:    exeuctionError,
+			Error:    executionError,
 			EvalData: annotationData,
 		}
 
@@ -91,11 +93,6 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 }
 
 func (handler *DefaultResultHandler) shouldUpdateAlertState(evalContext *EvalContext, oldState m.AlertStateType) bool {
-	if evalContext.NoDataFound && evalContext.Rule.NoDataState == m.KeepLastAlertState {
-		evalContext.Rule.State = oldState
-		return false
-	}
-
 	return evalContext.Rule.State != oldState
 }
 
