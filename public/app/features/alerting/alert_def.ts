@@ -40,6 +40,7 @@ var noDataModes = [
   {text: 'OK', value: 'ok'},
   {text: 'Alerting', value: 'alerting'},
   {text: 'No Data', value: 'no_data'},
+  {text: 'Keep Last', value: 'keep_last'},
 ];
 
 function createReducerPart(model) {
