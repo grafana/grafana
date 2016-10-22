@@ -29,9 +29,18 @@ func NewEmailNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 		return nil, alerting.ValidationError{Reason: "Could not find addresses in settings"}
 	}
 
+	// split addresses with a few different ways
+	addresses := strings.FieldsFunc(addressesString, func(r rune) bool {
+		switch r {
+		case ',', ';', '\n':
+			return true
+		}
+		return false
+	})
+
 	return &EmailNotifier{
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
-		Addresses:    strings.Split(addressesString, `;`),
+		Addresses:    addresses,
 		log:          log.New("alerting.notifier.email"),
 	}, nil
 }
