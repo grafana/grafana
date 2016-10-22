@@ -88,7 +88,7 @@ export class DashboardSrv {
         onAltAction: () => {
           this.saveDashboardAs();
         },
-        onConfirm: function() {
+        onConfirm: () => {
           this.saveDashboard({overwrite: true});
         }
       });
