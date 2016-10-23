@@ -10,13 +10,13 @@ var template = `
   <div class="gf-form-inline">
     <div class="gf-form">
       <label class="gf-form-label">
-        <i class="icon-gf icon-gf-datasource"></i>
+        <i class="icon-gf icon-gf-datasources"></i>
       </label>
       <label class="gf-form-label">
         Panel data source
       </label>
 
-      <metric-segment segment="ctrl.dsSegment" style-mode="select"
+      <metric-segment segment="ctrl.dsSegment"
                       get-options="ctrl.getOptions()"
                       on-change="ctrl.datasourceChanged()"></metric-segment>
     </div>
@@ -67,7 +67,7 @@ export class MetricsDsSelectorCtrl {
       this.current = {name: dsValue + ' not found', value: null};
     }
 
-    this.dsSegment = uiSegmentSrv.newSegment(this.current.name);
+    this.dsSegment = uiSegmentSrv.newSegment({value: this.current.name, selectMode: true});
   }
 
   getOptions() {
@@ -77,7 +77,7 @@ export class MetricsDsSelectorCtrl {
   }
 
   datasourceChanged() {
-    var ds = _.findWhere(this.datasources, {name: this.dsSegment.value});
+    var ds = _.find(this.datasources, {name: this.dsSegment.value});
     if (ds) {
       this.current = ds;
       this.panelCtrl.setDatasource(ds);

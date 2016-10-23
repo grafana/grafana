@@ -28,12 +28,19 @@ var customMetricsDimensionsMap map[string]map[string]map[string]*CustomMetricsCa
 
 func init() {
 	metricsMap = map[string][]string{
-		"AWS/AutoScaling": {"GroupMinSize", "GroupMaxSize", "GroupDesiredCapacity", "GroupInServiceInstances", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"},
-		"AWS/Billing":     {"EstimatedCharges"},
-		"AWS/CloudFront":  {"Requests", "BytesDownloaded", "BytesUploaded", "TotalErrorRate", "4xxErrorRate", "5xxErrorRate"},
-		"AWS/CloudSearch": {"SuccessfulRequests", "SearchableDocuments", "IndexUtilization", "Partitions"},
-		"AWS/DynamoDB":    {"ConditionalCheckFailedRequests", "ConsumedReadCapacityUnits", "ConsumedWriteCapacityUnits", "OnlineIndexConsumedWriteCapacity", "OnlineIndexPercentageProgress", "OnlineIndexThrottleEvents", "ProvisionedReadCapacityUnits", "ProvisionedWriteCapacityUnits", "ReadThrottleEvents", "ReturnedItemCount", "SuccessfulRequestLatency", "SystemErrors", "ThrottledRequests", "UserErrors", "WriteThrottleEvents"},
-		"AWS/ECS":         {"CPUUtilization", "MemoryUtilization"},
+		"AWS/ApiGateway":     {"4XXError", "5XXError", "CacheHitCount", "CacheMissCount", "Count", "IntegrationLatency", "Latency"},
+		"AWS/ApplicationELB": {"ActiveConnectionCount", "ClientTLSNegotiationErrorCount", "HealthyHostCount", "HTTPCode_ELB_4XX_Count", "HTTPCode_ELB_5XX_Count", "HTTPCode_Target_2XX_Count", "HTTPCode_Target_3XX_Count", "HTTPCode_Target_4XX_Count", "HTTPCode_Target_5XX_Count", "NewConnectionCount", "ProcessedBytes", "RejectedConnectionCount", "RequestCount", "TargetConnectionErrorCount", "TargetResponseTime", "TargetTLSNegotiationErrorCount", "UnHealthyHostCount"},
+		"AWS/AutoScaling":    {"GroupMinSize", "GroupMaxSize", "GroupDesiredCapacity", "GroupInServiceInstances", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"},
+		"AWS/Billing":        {"EstimatedCharges"},
+		"AWS/CloudFront":     {"Requests", "BytesDownloaded", "BytesUploaded", "TotalErrorRate", "4xxErrorRate", "5xxErrorRate"},
+		"AWS/CloudSearch":    {"SuccessfulRequests", "SearchableDocuments", "IndexUtilization", "Partitions"},
+		"AWS/DynamoDB":       {"ConditionalCheckFailedRequests", "ConsumedReadCapacityUnits", "ConsumedWriteCapacityUnits", "OnlineIndexConsumedWriteCapacity", "OnlineIndexPercentageProgress", "OnlineIndexThrottleEvents", "ProvisionedReadCapacityUnits", "ProvisionedWriteCapacityUnits", "ReadThrottleEvents", "ReturnedBytes", "ReturnedItemCount", "ReturnedRecordsCount", "SuccessfulRequestLatency", "SystemErrors", "ThrottledRequests", "UserErrors", "WriteThrottleEvents"},
+		"AWS/EBS":            {"VolumeReadBytes", "VolumeWriteBytes", "VolumeReadOps", "VolumeWriteOps", "VolumeTotalReadTime", "VolumeTotalWriteTime", "VolumeIdleTime", "VolumeQueueLength", "VolumeThroughputPercentage", "VolumeConsumedReadWriteOps", "BurstBalance"},
+		"AWS/EC2":            {"CPUCreditUsage", "CPUCreditBalance", "CPUUtilization", "DiskReadOps", "DiskWriteOps", "DiskReadBytes", "DiskWriteBytes", "NetworkIn", "NetworkOut", "NetworkPacketsIn", "NetworkPacketsOut", "StatusCheckFailed", "StatusCheckFailed_Instance", "StatusCheckFailed_System"},
+		"AWS/EC2Spot":        {"AvailableInstancePoolsCount", "BidsSubmittedForCapacity", "EligibleInstancePoolCount", "FulfilledCapacity", "MaxPercentCapacityAllocation", "PendingCapacity", "PercentCapacityAllocation", "TargetCapacity", "TerminatingCapacity"},
+		"AWS/ECS":            {"CPUReservation", "MemoryReservation", "CPUUtilization", "MemoryUtilization"},
+		"AWS/EFS":            {"BurstCreditBalance", "ClientConnections", "DataReadIOBytes", "DataWriteIOBytes", "MetadataIOBytes", "TotalIOBytes", "PermittedThroughput", "PercentIOLimit"},
+		"AWS/ELB":            {"HealthyHostCount", "UnHealthyHostCount", "RequestCount", "Latency", "HTTPCode_ELB_4XX", "HTTPCode_ELB_5XX", "HTTPCode_Backend_2XX", "HTTPCode_Backend_3XX", "HTTPCode_Backend_4XX", "HTTPCode_Backend_5XX", "BackendConnectionErrors", "SurgeQueueLength", "SpilloverCount"},
 		"AWS/ElastiCache": {
 			"CPUUtilization", "FreeableMemory", "NetworkBytesIn", "NetworkBytesOut", "SwapUsage",
 			"BytesUsedForCacheItems", "BytesReadIntoMemcached", "BytesWrittenOutFromMemcached", "CasBadval", "CasHits", "CasMisses", "CmdFlush", "CmdGet", "CmdSet", "CurrConnections", "CurrItems", "DecrHits", "DecrMisses", "DeleteHits", "DeleteMisses", "Evictions", "GetHits", "GetMisses", "IncrHits", "IncrMisses", "Reclaimed",
@@ -42,9 +49,15 @@ func init() {
 			"BytesUsedForCache", "CacheHits", "CacheMisses", "CurrConnections", "Evictions", "HyperLogLogBasedCmds", "NewConnections", "Reclaimed", "ReplicationBytes", "ReplicationLag", "SaveInProgress",
 			"CurrItems", "GetTypeCmds", "HashBasedCmds", "KeyBasedCmds", "ListBasedCmds", "SetBasedCmds", "SetTypeCmds", "SortedSetBasedCmds", "StringBasedCmds",
 		},
-		"AWS/EBS": {"VolumeReadBytes", "VolumeWriteBytes", "VolumeReadOps", "VolumeWriteOps", "VolumeTotalReadTime", "VolumeTotalWriteTime", "VolumeIdleTime", "VolumeQueueLength", "VolumeThroughputPercentage", "VolumeConsumedReadWriteOps"},
-		"AWS/EC2": {"CPUCreditUsage", "CPUCreditBalance", "CPUUtilization", "DiskReadOps", "DiskWriteOps", "DiskReadBytes", "DiskWriteBytes", "NetworkIn", "NetworkOut", "StatusCheckFailed", "StatusCheckFailed_Instance", "StatusCheckFailed_System"},
-		"AWS/ELB": {"HealthyHostCount", "UnHealthyHostCount", "RequestCount", "Latency", "HTTPCode_ELB_4XX", "HTTPCode_ELB_5XX", "HTTPCode_Backend_2XX", "HTTPCode_Backend_3XX", "HTTPCode_Backend_4XX", "HTTPCode_Backend_5XX", "BackendConnectionErrors", "SurgeQueueLength", "SpilloverCount"},
+		"AWS/ElasticBeanstalk": {
+			"EnvironmentHealth",
+			"ApplicationLatencyP10", "ApplicationLatencyP50", "ApplicationLatencyP75", "ApplicationLatencyP85", "ApplicationLatencyP90", "ApplicationLatencyP95", "ApplicationLatencyP99", "ApplicationLatencyP99.9",
+			"ApplicationRequests2xx", "ApplicationRequests3xx", "ApplicationRequests4xx", "ApplicationRequests5xx", "ApplicationRequestsTotal",
+			"CPUIdle", "CPUIowait", "CPUIrq", "CPUNice", "CPUSoftirq", "CPUSystem", "CPUUser",
+			"InstanceHealth", "InstancesDegraded", "InstancesInfo", "InstancesNoData", "InstancesOk", "InstancesPending", "InstancesSevere", "InstancesUnknown", "InstancesWarning",
+			"LoadAverage1min", "LoadAverage5min",
+			"RootFilesystemUtil",
+		},
 		"AWS/ElasticMapReduce": {"IsIdle", "JobsRunning", "JobsFailed",
 			"MapTasksRunning", "MapTasksRemaining", "MapSlotsOpen", "RemainingMapTasksPerSlot", "ReduceTasksRunning", "ReduceTasksRemaining", "ReduceSlotsOpen",
 			"CoreNodesRunning", "CoreNodesPending", "LiveDataNodes", "TaskNodesRunning", "TaskNodesPending", "LiveTaskTrackers",
@@ -54,55 +67,68 @@ func init() {
 			"CoreNodesRunning", "CoreNodesPending", "LiveDataNodes", "MRTotalNodes", "MRActiveNodes", "MRLostNodes", "MRUnhealthyNodes", "MRDecommissionedNodes", "MRRebootedNodes",
 			"S3BytesWritten", "S3BytesRead", "HDFSUtilization", "HDFSBytesRead", "HDFSBytesWritten", "MissingBlocks", "CorruptBlocks", "TotalLoad", "MemoryTotalMB", "MemoryReservedMB", "MemoryAvailableMB", "MemoryAllocatedMB", "PendingDeletionBlocks", "UnderReplicatedBlocks", "DfsPendingReplicationBlocks", "CapacityRemainingGB",
 			"HbaseBackupFailed", "MostRecentBackupDuration", "TimeSinceLastSuccessfulBackup"},
-		"AWS/ES":       {"ClusterStatus.green", "ClusterStatus.yellow", "ClusterStatus.red", "Nodes", "SearchableDocuments", "DeletedDocuments", "CPUUtilization", "FreeStorageSpace", "JVMMemoryPressure", "AutomatedSnapshotFailure", "MasterCPUUtilization", "MasterFreeStorageSpace", "MasterJVMMemoryPressure", "ReadLatency", "WriteLatency", "ReadThroughput", "WriteThroughput", "DiskQueueLength", "ReadIOPS", "WriteIOPS"},
-		"AWS/Events":   {"Invocations", "FailedInvocations", "TriggeredRules", "MatchedEvents", "ThrottledRules"},
-		"AWS/Kinesis":  {"GetRecords.Bytes", "GetRecords.IteratorAge", "GetRecords.IteratorAgeMilliseconds", "GetRecords.Latency", "GetRecords.Records", "GetRecords.Success", "IncomingBytes", "IncomingRecords", "PutRecord.Bytes", "PutRecord.Latency", "PutRecord.Success", "PutRecords.Bytes", "PutRecords.Latency", "PutRecords.Records", "PutRecords.Success", "ReadProvisionedThroughputExceeded", "WriteProvisionedThroughputExceeded", "IteratorAgeMilliseconds", "OutgoingBytes", "OutgoingRecords"},
-		"AWS/Lambda":   {"Invocations", "Errors", "Duration", "Throttles"},
-		"AWS/Logs":     {"IncomingBytes", "IncomingLogEvents", "ForwardedBytes", "ForwardedLogEvents", "DeliveryErrors", "DeliveryThrottling"},
-		"AWS/ML":       {"PredictCount", "PredictFailureCount"},
-		"AWS/OpsWorks": {"cpu_idle", "cpu_nice", "cpu_system", "cpu_user", "cpu_waitio", "load_1", "load_5", "load_15", "memory_buffers", "memory_cached", "memory_free", "memory_swap", "memory_total", "memory_used", "procs"},
-		"AWS/Redshift": {"CPUUtilization", "DatabaseConnections", "HealthStatus", "MaintenanceMode", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "PercentageDiskSpaceUsed", "ReadIOPS", "ReadLatency", "ReadThroughput", "WriteIOPS", "WriteLatency", "WriteThroughput"},
-		"AWS/RDS":      {"BinLogDiskUsage", "CPUUtilization", "CPUCreditUsage", "CPUCreditBalance", "DatabaseConnections", "DiskQueueDepth", "FreeableMemory", "FreeStorageSpace", "ReplicaLag", "SwapUsage", "ReadIOPS", "WriteIOPS", "ReadLatency", "WriteLatency", "ReadThroughput", "WriteThroughput", "NetworkReceiveThroughput", "NetworkTransmitThroughput"},
-		"AWS/Route53":  {"HealthCheckStatus", "HealthCheckPercentageHealthy", "ConnectionTime", "SSLHandshakeTime", "TimeToFirstByte"},
-		"AWS/SNS":      {"NumberOfMessagesPublished", "PublishSize", "NumberOfNotificationsDelivered", "NumberOfNotificationsFailed"},
-		"AWS/SQS":      {"NumberOfMessagesSent", "SentMessageSize", "NumberOfMessagesReceived", "NumberOfEmptyReceives", "NumberOfMessagesDeleted", "ApproximateNumberOfMessagesDelayed", "ApproximateNumberOfMessagesVisible", "ApproximateNumberOfMessagesNotVisible"},
-		"AWS/S3":       {"BucketSizeBytes", "NumberOfObjects"},
-		"AWS/SWF": {"DecisionTaskScheduleToStartTime", "DecisionTaskStartToCloseTime", "DecisionTasksCompleted", "StartedDecisionTasksTimedOutOnClose", "WorkflowStartToCloseTime", "WorkflowsCanceled", "WorkflowsCompleted", "WorkflowsContinuedAsNew", "WorkflowsFailed", "WorkflowsTerminated", "WorkflowsTimedOut",
-			"ActivityTaskScheduleToCloseTime", "ActivityTaskScheduleToStartTime", "ActivityTaskStartToCloseTime", "ActivityTasksCanceled", "ActivityTasksCompleted", "ActivityTasksFailed", "ScheduledActivityTasksTimedOutOnClose", "ScheduledActivityTasksTimedOutOnStart", "StartedActivityTasksTimedOutOnClose", "StartedActivityTasksTimedOutOnHeartbeat"},
+		"AWS/ES":               {"ClusterStatus.green", "ClusterStatus.yellow", "ClusterStatus.red", "Nodes", "SearchableDocuments", "DeletedDocuments", "CPUUtilization", "FreeStorageSpace", "JVMMemoryPressure", "AutomatedSnapshotFailure", "MasterCPUUtilization", "MasterFreeStorageSpace", "MasterJVMMemoryPressure", "ReadLatency", "WriteLatency", "ReadThroughput", "WriteThroughput", "DiskQueueLength", "ReadIOPS", "WriteIOPS"},
+		"AWS/Events":           {"Invocations", "FailedInvocations", "TriggeredRules", "MatchedEvents", "ThrottledRules"},
+		"AWS/Firehose":         {"DeliveryToElasticsearch.Bytes", "DeliveryToElasticsearch.Records", "DeliveryToElasticsearch.Success", "DeliveryToRedshift.Bytes", "DeliveryToRedshift.Records", "DeliveryToRedshift.Success", "DeliveryToS3.Bytes", "DeliveryToS3.DataFreshness", "DeliveryToS3.Records", "DeliveryToS3.Success", "IncomingBytes", "IncomingRecords", "DescribeDeliveryStream.Latency", "DescribeDeliveryStream.Requests", "ListDeliveryStreams.Latency", "ListDeliveryStreams.Requests", "PutRecord.Bytes", "PutRecord.Latency", "PutRecord.Requests", "PutRecordBatch.Bytes", "PutRecordBatch.Latency", "PutRecordBatch.Records", "PutRecordBatch.Requests", "UpdateDeliveryStream.Latency", "UpdateDeliveryStream.Requests"},
+		"AWS/IoT":              {"PublishIn.Success", "PublishOut.Success", "Subscribe.Success", "Ping.Success", "Connect.Success", "GetThingShadow.Accepted"},
+		"AWS/Kinesis":          {"GetRecords.Bytes", "GetRecords.IteratorAge", "GetRecords.IteratorAgeMilliseconds", "GetRecords.Latency", "GetRecords.Records", "GetRecords.Success", "IncomingBytes", "IncomingRecords", "PutRecord.Bytes", "PutRecord.Latency", "PutRecord.Success", "PutRecords.Bytes", "PutRecords.Latency", "PutRecords.Records", "PutRecords.Success", "ReadProvisionedThroughputExceeded", "WriteProvisionedThroughputExceeded", "IteratorAgeMilliseconds", "OutgoingBytes", "OutgoingRecords"},
+		"AWS/KinesisAnalytics": {"Bytes", "MillisBehindLatest", "Records", "Success"},
+		"AWS/Lambda":           {"Invocations", "Errors", "Duration", "Throttles"},
+		"AWS/Logs":             {"IncomingBytes", "IncomingLogEvents", "ForwardedBytes", "ForwardedLogEvents", "DeliveryErrors", "DeliveryThrottling"},
+		"AWS/ML":               {"PredictCount", "PredictFailureCount"},
+		"AWS/OpsWorks":         {"cpu_idle", "cpu_nice", "cpu_system", "cpu_user", "cpu_waitio", "load_1", "load_5", "load_15", "memory_buffers", "memory_cached", "memory_free", "memory_swap", "memory_total", "memory_used", "procs"},
+		"AWS/Redshift":         {"CPUUtilization", "DatabaseConnections", "HealthStatus", "MaintenanceMode", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "PercentageDiskSpaceUsed", "ReadIOPS", "ReadLatency", "ReadThroughput", "WriteIOPS", "WriteLatency", "WriteThroughput"},
+		"AWS/RDS":              {"BinLogDiskUsage", "CPUUtilization", "CPUCreditUsage", "CPUCreditBalance", "DatabaseConnections", "DiskQueueDepth", "FreeableMemory", "FreeStorageSpace", "ReplicaLag", "SwapUsage", "ReadIOPS", "WriteIOPS", "ReadLatency", "WriteLatency", "ReadThroughput", "WriteThroughput", "NetworkReceiveThroughput", "NetworkTransmitThroughput"},
+		"AWS/Route53":          {"HealthCheckStatus", "HealthCheckPercentageHealthy", "ConnectionTime", "SSLHandshakeTime", "TimeToFirstByte"},
+		"AWS/S3":               {"BucketSizeBytes", "NumberOfObjects"},
+		"AWS/SNS":              {"NumberOfMessagesPublished", "PublishSize", "NumberOfNotificationsDelivered", "NumberOfNotificationsFailed"},
+		"AWS/SQS":              {"NumberOfMessagesSent", "SentMessageSize", "NumberOfMessagesReceived", "NumberOfEmptyReceives", "NumberOfMessagesDeleted", "ApproximateNumberOfMessagesDelayed", "ApproximateNumberOfMessagesVisible", "ApproximateNumberOfMessagesNotVisible"},
 		"AWS/StorageGateway": {"CacheHitPercent", "CachePercentUsed", "CachePercentDirty", "CloudBytesDownloaded", "CloudDownloadLatency", "CloudBytesUploaded", "UploadBufferFree", "UploadBufferPercentUsed", "UploadBufferUsed", "QueuedWrites", "ReadBytes", "ReadTime", "TotalCacheSize", "WriteBytes", "WriteTime", "TimeSinceLastRecoveryPoint", "WorkingStorageFree", "WorkingStoragePercentUsed", "WorkingStorageUsed",
 			"CacheHitPercent", "CachePercentUsed", "CachePercentDirty", "ReadBytes", "ReadTime", "WriteBytes", "WriteTime", "QueuedWrites"},
+		"AWS/SWF": {"DecisionTaskScheduleToStartTime", "DecisionTaskStartToCloseTime", "DecisionTasksCompleted", "StartedDecisionTasksTimedOutOnClose", "WorkflowStartToCloseTime", "WorkflowsCanceled", "WorkflowsCompleted", "WorkflowsContinuedAsNew", "WorkflowsFailed", "WorkflowsTerminated", "WorkflowsTimedOut",
+			"ActivityTaskScheduleToCloseTime", "ActivityTaskScheduleToStartTime", "ActivityTaskStartToCloseTime", "ActivityTasksCanceled", "ActivityTasksCompleted", "ActivityTasksFailed", "ScheduledActivityTasksTimedOutOnClose", "ScheduledActivityTasksTimedOutOnStart", "StartedActivityTasksTimedOutOnClose", "StartedActivityTasksTimedOutOnHeartbeat"},
 		"AWS/WAF":        {"AllowedRequests", "BlockedRequests", "CountedRequests"},
 		"AWS/WorkSpaces": {"Available", "Unhealthy", "ConnectionAttempt", "ConnectionSuccess", "ConnectionFailure", "SessionLaunchTime", "InSessionLatency", "SessionDisconnect"},
+		"KMS":            {"SecondsUntilKeyMaterialExpiration"},
 	}
 	dimensionsMap = map[string][]string{
+		"AWS/ApiGateway":       {"ApiName", "Method", "Resource", "Stage"},
+		"AWS/ApplicationELB":   {"LoadBalancer", "TargetGroup", "AvailabilityZone"},
 		"AWS/AutoScaling":      {"AutoScalingGroupName"},
 		"AWS/Billing":          {"ServiceName", "LinkedAccount", "Currency"},
 		"AWS/CloudFront":       {"DistributionId", "Region"},
 		"AWS/CloudSearch":      {},
-		"AWS/DynamoDB":         {"TableName", "GlobalSecondaryIndexName", "Operation"},
-		"AWS/ECS":              {"ClusterName", "ServiceName"},
-		"AWS/ElastiCache":      {"CacheClusterId", "CacheNodeId"},
+		"AWS/DynamoDB":         {"TableName", "GlobalSecondaryIndexName", "Operation", "StreamLabel"},
 		"AWS/EBS":              {"VolumeId"},
 		"AWS/EC2":              {"AutoScalingGroupName", "ImageId", "InstanceId", "InstanceType"},
+		"AWS/EC2Spot":          {"AvailabilityZone", "FleetRequestId", "InstanceType"},
+		"AWS/ECS":              {"ClusterName", "ServiceName"},
+		"AWS/EFS":              {"FileSystemId"},
 		"AWS/ELB":              {"LoadBalancerName", "AvailabilityZone"},
+		"AWS/ElastiCache":      {"CacheClusterId", "CacheNodeId"},
+		"AWS/ElasticBeanstalk": {"EnvironmentName", "InstanceId"},
 		"AWS/ElasticMapReduce": {"ClusterId", "JobFlowId", "JobId"},
-		"AWS/ES":               {},
+		"AWS/ES":               {"ClientId", "DomainName"},
 		"AWS/Events":           {"RuleName"},
+		"AWS/Firehose":         {},
+		"AWS/IoT":              {"Protocol"},
 		"AWS/Kinesis":          {"StreamName", "ShardID"},
-		"AWS/Lambda":           {"FunctionName"},
+		"AWS/KinesisAnalytics": {"Flow", "Id", "Application"},
+		"AWS/Lambda":           {"FunctionName", "Resource", "Version", "Alias"},
 		"AWS/Logs":             {"LogGroupName", "DestinationType", "FilterName"},
 		"AWS/ML":               {"MLModelId", "RequestMode"},
 		"AWS/OpsWorks":         {"StackId", "LayerId", "InstanceId"},
 		"AWS/Redshift":         {"NodeID", "ClusterIdentifier"},
-		"AWS/RDS":              {"DBInstanceIdentifier", "DatabaseClass", "EngineName"},
+		"AWS/RDS":              {"DBInstanceIdentifier", "DBClusterIdentifier", "DatabaseClass", "EngineName"},
 		"AWS/Route53":          {"HealthCheckId"},
+		"AWS/S3":               {"BucketName", "StorageType"},
 		"AWS/SNS":              {"Application", "Platform", "TopicName"},
 		"AWS/SQS":              {"QueueName"},
-		"AWS/S3":               {"BucketName", "StorageType"},
-		"AWS/SWF":              {"Domain", "WorkflowTypeName", "WorkflowTypeVersion", "ActivityTypeName", "ActivityTypeVersion"},
 		"AWS/StorageGateway":   {"GatewayId", "GatewayName", "VolumeId"},
+		"AWS/SWF":              {"Domain", "WorkflowTypeName", "WorkflowTypeVersion", "ActivityTypeName", "ActivityTypeVersion"},
 		"AWS/WAF":              {"Rule", "WebACL"},
 		"AWS/WorkSpaces":       {"DirectoryId", "WorkspaceId"},
+		"KMS":                  {"KeyId"},
 	}
 
 	customMetricsMetricsMap = make(map[string]map[string]map[string]*CustomMetricsCache)
@@ -166,7 +192,8 @@ func handleGetMetrics(req *cwRequest, c *middleware.Context) {
 		}
 	} else {
 		var err error
-		if namespaceMetrics, err = getMetricsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, getAllMetrics); err != nil {
+		assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
+		if namespaceMetrics, err = getMetricsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, assumeRoleArn, getAllMetrics); err != nil {
 			c.JsonApiErr(500, "Unable to call AWS API", err)
 			return
 		}
@@ -199,7 +226,8 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 		}
 	} else {
 		var err error
-		if dimensionValues, err = getDimensionsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, getAllMetrics); err != nil {
+		assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
+		if dimensionValues, err = getDimensionsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, assumeRoleArn, getAllMetrics); err != nil {
 			c.JsonApiErr(500, "Unable to call AWS API", err)
 			return
 		}
@@ -214,10 +242,10 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 	c.JSON(200, result)
 }
 
-func getAllMetrics(region string, namespace string, database string) (cloudwatch.ListMetricsOutput, error) {
+func getAllMetrics(region string, namespace string, database string, assumeRoleArn string) (cloudwatch.ListMetricsOutput, error) {
 	cfg := &aws.Config{
 		Region:      aws.String(region),
-		Credentials: getCredentials(database),
+		Credentials: getCredentials(database, region, assumeRoleArn),
 	}
 
 	svc := cloudwatch.New(session.New(cfg), cfg)
@@ -244,8 +272,8 @@ func getAllMetrics(region string, namespace string, database string) (cloudwatch
 
 var metricsCacheLock sync.Mutex
 
-func getMetricsForCustomMetrics(region string, namespace string, database string, getAllMetrics func(string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
-	result, err := getAllMetrics(region, namespace, database)
+func getMetricsForCustomMetrics(region string, namespace string, database string, assumeRoleArn string, getAllMetrics func(string, string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+	result, err := getAllMetrics(region, namespace, database, assumeRoleArn)
 	if err != nil {
 		return []string{}, err
 	}
@@ -282,8 +310,8 @@ func getMetricsForCustomMetrics(region string, namespace string, database string
 
 var dimensionsCacheLock sync.Mutex
 
-func getDimensionsForCustomMetrics(region string, namespace string, database string, getAllMetrics func(string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
-	result, err := getAllMetrics(region, namespace, database)
+func getDimensionsForCustomMetrics(region string, namespace string, database string, assumeRoleArn string, getAllMetrics func(string, string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+	result, err := getAllMetrics(region, namespace, database, assumeRoleArn)
 	if err != nil {
 		return []string{}, err
 	}

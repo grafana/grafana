@@ -62,14 +62,20 @@
 	</div>
 
 	<div class="search-button-row">
-		<button class="btn btn-inverse pull-left" ng-click="ctrl.newDashboard()" ng-show="ctrl.contextSrv.isEditor">
+		<a class="btn btn-inverse pull-left" href="dashboard/new" ng-show="ctrl.contextSrv.isEditor" ng-click="ctrl.isOpen = false;">
 			<i class="fa fa-plus"></i>
-			New
-		</button>
-		<a class="btn btn-inverse pull-left" href="import/dashboard" ng-show="ctrl.contextSrv.isEditor">
-			<i class="fa fa-download"></i>
+			Create New
+		</a>
+
+		<a class="btn btn-inverse pull-left" href="dashboard/new/?editview=import" ng-show="ctrl.contextSrv.isEditor" ng-click="ctrl.isOpen = false;">
+			<i class="fa fa-upload"></i>
 			Import
 		</a>
-		<div class="clearfix"></div>
+
+		<a class="pull-right search-button-row-explore-link" target="_blank" href="https://grafana.net/dashboards?utm_source=grafana_search">
+      Find dashboards on
+		</a>
+
+ 		<div class="clearfix"></div>
 	</div>
 </div>

@@ -22,7 +22,9 @@ type Context struct {
 	Session SessionStore
 
 	IsSignedIn     bool
+	IsRenderCall   bool
 	AllowAnonymous bool
+	Logger         log.Logger
 }
 
 func GetContextHandler() macaron.Handler {
@@ -33,6 +35,7 @@ func GetContextHandler() macaron.Handler {
 			Session:        GetSession(),
 			IsSignedIn:     false,
 			AllowAnonymous: false,
+			Logger:         log.New("context"),
 		}
 
 		// the order in which these are tested are important
@@ -40,13 +43,16 @@ func GetContextHandler() macaron.Handler {
 		// then init session and look for userId in session
 		// then look for api key in session (special case for render calls via api)
 		// then test if anonymous access is enabled
-		if initContextWithApiKey(ctx) ||
+		if initContextWithRenderAuth(ctx) ||
+			initContextWithApiKey(ctx) ||
 			initContextWithBasicAuth(ctx) ||
 			initContextWithAuthProxy(ctx) ||
 			initContextWithUserSessionCookie(ctx) ||
-			initContextWithApiKeyFromSession(ctx) ||
 			initContextWithAnonymousUser(ctx) {
 		}
+
+		ctx.Logger = log.New("context", "userId", ctx.UserId, "orgId", ctx.OrgId, "uname", ctx.Login)
+		ctx.Data["ctx"] = ctx
 
 		c.Map(ctx)
 	}
@@ -75,7 +81,7 @@ func initContextWithAnonymousUser(ctx *Context) bool {
 func initContextWithUserSessionCookie(ctx *Context) bool {
 	// initialize session
 	if err := ctx.Session.Start(ctx); err != nil {
-		log.Error(3, "Failed to start session", err)
+		ctx.Logger.Error("Failed to start session", "error", err)
 		return false
 	}
 
@@ -86,7 +92,7 @@ func initContextWithUserSessionCookie(ctx *Context) bool {
 
 	query := m.GetSignedInUserQuery{UserId: userId}
 	if err := bus.Dispatch(&query); err != nil {
-		log.Error(3, "Failed to get user with id %v", userId)
+		ctx.Logger.Error("Failed to get user with id", "userId", userId)
 		return false
 	} else {
 		ctx.SignedInUser = query.Result
@@ -171,45 +177,13 @@ func initContextWithBasicAuth(ctx *Context) bool {
 	}
 }
 
-// special case for panel render calls with api key
-func initContextWithApiKeyFromSession(ctx *Context) bool {
-	keyId := ctx.Session.Get(SESS_KEY_APIKEY)
-	if keyId == nil {
-		return false
-	}
-
-	keyQuery := m.GetApiKeyByIdQuery{ApiKeyId: keyId.(int64)}
-	if err := bus.Dispatch(&keyQuery); err != nil {
-		log.Error(3, "Failed to get api key by id", err)
-		return false
-	} else {
-		apikey := keyQuery.Result
-
-		ctx.IsSignedIn = true
-		ctx.SignedInUser = &m.SignedInUser{}
-		ctx.OrgRole = apikey.Role
-		ctx.ApiKeyId = apikey.Id
-		ctx.OrgId = apikey.OrgId
-		return true
-	}
-}
-
 // Handle handles and logs error by given status.
 func (ctx *Context) Handle(status int, title string, err error) {
 	if err != nil {
-		log.Error(4, "%s: %v", title, err)
+		ctx.Logger.Error(title, "error", err)
 		if setting.Env != setting.PROD {
 			ctx.Data["ErrorMsg"] = err
 		}
-	}
-
-	switch status {
-	case 200:
-		metrics.M_Page_Status_200.Inc(1)
-	case 404:
-		metrics.M_Page_Status_404.Inc(1)
-	case 500:
-		metrics.M_Page_Status_500.Inc(1)
 	}
 
 	ctx.Data["Title"] = title
@@ -218,9 +192,7 @@ func (ctx *Context) Handle(status int, title string, err error) {
 
 func (ctx *Context) JsonOK(message string) {
 	resp := make(map[string]interface{})
-
 	resp["message"] = message
-
 	ctx.JSON(200, resp)
 }
 
@@ -232,7 +204,7 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 	resp := make(map[string]interface{})
 
 	if err != nil {
-		log.Error(4, "%s: %v", message, err)
+		ctx.Logger.Error(message, "error", err)
 		if setting.Env != setting.PROD {
 			resp["error"] = err.Error()
 		}
@@ -240,10 +212,8 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 
 	switch status {
 	case 404:
-		metrics.M_Api_Status_404.Inc(1)
 		resp["message"] = "Not Found"
 	case 500:
-		metrics.M_Api_Status_500.Inc(1)
 		resp["message"] = "Internal Server Error"
 	}
 
@@ -256,4 +226,8 @@ func (ctx *Context) JsonApiErr(status int, message string, err error) {
 
 func (ctx *Context) HasUserRole(role m.RoleType) bool {
 	return ctx.OrgRole.Includes(role)
+}
+
+func (ctx *Context) TimeRequest(timer metrics.Timer) {
+	ctx.Data["perfmon.timer"] = timer
 }

@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
 type ldapAuther struct {
@@ -29,7 +30,7 @@ func (a *ldapAuther) Dial() error {
 	var err error
 	var certPool *x509.CertPool
 	if a.server.RootCACert != "" {
-		certPool := x509.NewCertPool()
+		certPool = x509.NewCertPool()
 		for _, caCertFile := range strings.Split(a.server.RootCACert, " ") {
 			if pem, err := ioutil.ReadFile(caCertFile); err != nil {
 				return err
@@ -48,7 +49,16 @@ func (a *ldapAuther) Dial() error {
 				ServerName:         host,
 				RootCAs:            certPool,
 			}
-			a.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
+			if a.server.StartTLS {
+				a.conn, err = ldap.Dial("tcp", address)
+				if err == nil {
+					if err = a.conn.StartTLS(tlsCfg); err == nil {
+						return nil
+					}
+				}
+			} else {
+				a.conn, err = ldap.DialTLS("tcp", address, tlsCfg)
+			}
 		} else {
 			a.conn, err = ldap.Dial("tcp", address)
 		}
@@ -123,8 +133,10 @@ func (a *ldapAuther) getGrafanaUserFor(ldapUser *ldapUserInfo) (*m.User, error) 
 	// get user from grafana db
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: ldapUser.Username}
 	if err := bus.Dispatch(&userQuery); err != nil {
-		if err == m.ErrUserNotFound {
+		if err == m.ErrUserNotFound && setting.LdapAllowSignup {
 			return a.createGrafanaUser(ldapUser)
+		} else if err == m.ErrUserNotFound {
+			return nil, ErrInvalidCredentials
 		} else {
 			return nil, err
 		}
@@ -164,6 +176,7 @@ func (a *ldapAuther) syncUserInfo(user *m.User, ldapUser *ldapUserInfo) error {
 
 func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 	if len(a.server.LdapGroups) == 0 {
+		log.Warn("Ldap: no group mappings defined")
 		return nil
 	}
 
@@ -219,7 +232,8 @@ func (a *ldapAuther) syncOrgRoles(user *m.User, ldapUser *ldapUserInfo) error {
 
 		// add role
 		cmd := m.AddOrgUserCommand{UserId: user.Id, Role: group.OrgRole, OrgId: group.OrgId}
-		if err := bus.Dispatch(&cmd); err != nil {
+		err := bus.Dispatch(&cmd)
+		if err != nil && err != m.ErrOrgNotFound {
 			return err
 		}
 
@@ -290,7 +304,7 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 				a.server.Attr.Name,
 				a.server.Attr.MemberOf,
 			},
-			Filter: strings.Replace(a.server.SearchFilter, "%s", username, -1),
+			Filter: strings.Replace(a.server.SearchFilter, "%s", ldap.EscapeFilter(username), -1),
 		}
 
 		searchResult, err = a.conn.Search(&searchReq)
@@ -323,7 +337,7 @@ func (a *ldapAuther) searchForUser(username string) (*ldapUserInfo, error) {
 			if a.server.GroupSearchFilterUserAttribute == "" {
 				filter_replace = getLdapAttr(a.server.Attr.Username, searchResult)
 			}
-			filter := strings.Replace(a.server.GroupSearchFilter, "%s", filter_replace, -1)
+			filter := strings.Replace(a.server.GroupSearchFilter, "%s", ldap.EscapeFilter(filter_replace), -1)
 
 			if ldapCfg.VerboseLogging {
 				log.Info("LDAP: Searching for user's groups: %s", filter)

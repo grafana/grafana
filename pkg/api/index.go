@@ -1,6 +1,9 @@
 package api
 
 import (
+	"fmt"
+	"strings"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -21,6 +24,25 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	}
 	prefs := prefsQuery.Result
 
+	// Read locale from acccept-language
+	acceptLang := c.Req.Header.Get("Accept-Language")
+	locale := "en-US"
+
+	if len(acceptLang) > 0 {
+		parts := strings.Split(acceptLang, ",")
+		locale = parts[0]
+	}
+
+	appUrl := setting.AppUrl
+	appSubUrl := setting.AppSubUrl
+
+	// special case when doing localhost call from phantomjs
+	if c.IsRenderCall {
+		appUrl = fmt.Sprintf("%s://localhost:%s", setting.Protocol, setting.HttpPort)
+		appSubUrl = ""
+		settings["appSubUrl"] = ""
+	}
+
 	var data = dtos.IndexViewData{
 		User: &dtos.CurrentUser{
 			Id:             c.UserId,
@@ -35,12 +57,17 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			IsGrafanaAdmin: c.IsGrafanaAdmin,
 			LightTheme:     prefs.Theme == "light",
 			Timezone:       prefs.Timezone,
+			Locale:         locale,
 		},
-		Settings:           settings,
-		AppUrl:             setting.AppUrl,
-		AppSubUrl:          setting.AppSubUrl,
-		GoogleAnalyticsId:  setting.GoogleAnalyticsId,
-		GoogleTagManagerId: setting.GoogleTagManagerId,
+		Settings:                settings,
+		AppUrl:                  appUrl,
+		AppSubUrl:               appSubUrl,
+		GoogleAnalyticsId:       setting.GoogleAnalyticsId,
+		GoogleTagManagerId:      setting.GoogleTagManagerId,
+		BuildVersion:            setting.BuildVersion,
+		BuildCommit:             setting.BuildCommit,
+		NewGrafanaVersion:       plugins.GrafanaLatestVersion,
+		NewGrafanaVersionExists: plugins.GrafanaHasUpdate,
 	}
 
 	if setting.DisableGravatar {
@@ -65,7 +92,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 	if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Divider: true})
 		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "New", Icon: "fa fa-plus", Url: setting.AppSubUrl + "/dashboard/new"})
-		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "Import", Icon: "fa fa-download", Url: setting.AppSubUrl + "/import/dashboard"})
+		dashboardChildNavs = append(dashboardChildNavs, &dtos.NavLink{Text: "Import", Icon: "fa fa-download", Url: setting.AppSubUrl + "/dashboard/new/?editview=import"})
 	}
 
 	data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
@@ -74,6 +101,20 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		Url:      setting.AppSubUrl + "/",
 		Children: dashboardChildNavs,
 	})
+
+	if c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR {
+		alertChildNavs := []*dtos.NavLink{
+			{Text: "Alert List", Url: setting.AppSubUrl + "/alerting/list"},
+			{Text: "Notifications", Url: setting.AppSubUrl + "/alerting/notifications"},
+		}
+
+		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
+			Text:     "Alerting",
+			Icon:     "icon-gf icon-gf-alert",
+			Url:      setting.AppSubUrl + "/alerting/list",
+			Children: alertChildNavs,
+		})
+	}
 
 	if c.OrgRole == m.ROLE_ADMIN {
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
@@ -124,7 +165,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 				}
 			}
 
-			if c.OrgRole == m.ROLE_ADMIN {
+			if len(appLink.Children) > 0 && c.OrgRole == m.ROLE_ADMIN {
 				appLink.Children = append(appLink.Children, &dtos.NavLink{Divider: true})
 				appLink.Children = append(appLink.Children, &dtos.NavLink{Text: "Plugin Config", Icon: "fa fa-cog", Url: setting.AppSubUrl + "/plugins/" + plugin.Id + "/edit"})
 			}

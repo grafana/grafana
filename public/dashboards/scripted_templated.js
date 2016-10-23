@@ -47,6 +47,7 @@ dashboard.templating = {
       refresh: true,
       options: [],
       current: null,
+      type: 'custom'
     },
     {
       name: 'test2',
@@ -54,6 +55,7 @@ dashboard.templating = {
       refresh: true,
       options: [],
       current: null,
+      type: 'custom'
     }
   ]
 };

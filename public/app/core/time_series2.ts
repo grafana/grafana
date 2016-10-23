@@ -31,6 +31,8 @@ export default class TimeSeries {
   allIsZero: boolean;
   decimals: number;
   scaledDecimals: number;
+  hasMsResolution: boolean;
+  isOutsideRange: boolean;
 
   lines: any;
   bars: any;
@@ -54,6 +56,7 @@ export default class TimeSeries {
     this.stats = {};
     this.legend = true;
     this.unit = opts.unit;
+    this.hasMsResolution = this.isMsResolutionNeeded();
   }
 
   applySeriesOverrides(overrides) {
@@ -173,8 +176,8 @@ export default class TimeSeries {
 
   isMsResolutionNeeded() {
     for (var i = 0; i < this.datapoints.length; i++) {
-      if (this.datapoints[i][0] !== null) {
-        var timestamp = this.datapoints[i][0].toString();
+      if (this.datapoints[i][1] !== null) {
+        var timestamp = this.datapoints[i][1].toString();
         if (timestamp.length === 13 && (timestamp % 1000) !== 0) {
           return true;
         }

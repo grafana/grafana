@@ -1,16 +1,22 @@
-----
-page_title: Cloudwatch
-page_description: Cloudwatch grafana datasource documentation
-page_keywords: Cloudwatch, grafana, documentation, datasource, docs
----
++++
+title = "AWS CloudWatch"
+description = "Guide for using CloudWatch in Grafana"
+keywords = ["grafana", "cloudwatch", "guide"]
+type = "docs"
+[menu.docs]
+name = "AWS Cloudwatch"
+identifier = "cloudwatch"
+parent = "datasources"
+weight = 10
++++
 
-# CloudWatch
+# Using AWS CloudWatch in Grafana
 
 Grafana ships with built in support for CloudWatch. You just have to add it as a data source and you will
 be ready to build dashboards for you CloudWatch metrics.
 
 ## Adding the data source
-![](/img/cloudwatch/cloudwatch_add.png)
+![](img/docs/cloudwatch/cloudwatch_add.png)
 
 1. Open the side menu by clicking the the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
@@ -26,6 +32,8 @@ Name | The data source name, important that this is the same as in Grafana v1.x 
 Default | Default data source means that it will be pre-selected for new panels.
 Credentials profile name | Specify the name of the profile to use (if you use `~/aws/credentials` file), leave blank for default. This option was introduced in Grafana 2.5.1
 Default Region | Used in query editor to set region (can be changed on per query basis)
+Custom Metrics namespace | Specify the CloudWatch namespace of Custom metrics
+Assume Role Arn | Specify the ARN of the role to assume
 
 ## Authentication
 
@@ -50,7 +58,7 @@ Example content:
 
 ## Metric Query Editor
 
-![](/img/cloudwatch/query_editor.png)
+![](img/docs/cloudwatch/query_editor.png)
 
 You need to specify a namespace, metric, at least one stat, and at least one dimension.
 
@@ -75,7 +83,7 @@ Example dimension queries which will return list of resources for individual AWS
 
 Service | Query
 ------- | -----
-EBS | `dimension_values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)`
+ELB | `dimension_values(us-east-1,AWS/ELB,RequestCount,LoadBalancerName)`
 ElastiCache | `dimension_values(us-east-1,AWS/ElastiCache,CPUUtilization,CacheClusterId)`
 RedShift | `dimension_values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdentifier)`
 RDS | `dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)`
@@ -91,12 +99,12 @@ Example `ec2_instance_attribute()` query
 
     ec2_instance_attribute(us-east-1, InstanceId, { "tag:Environment": [ "production" ] })
 
-![](/img/v2/cloudwatch_templating.png)
+![](img/docs/v2/cloudwatch_templating.png)
 
 ## Cost
 
-It's worth to mention that Amazon will charge you for CloudWatch API usage. CloudWatch costs
-$0.01 per 1,000 GetMetricStatistics or ListMetrics requests. For each query Grafana will
+Amazon provides 1 million CloudWatch API requests each month at no additional charge. Past this,
+it costs $0.01 per 1,000 GetMetricStatistics or ListMetrics requests. For each query Grafana will
 issue a GetMetricStatistics request and every time you pick a dimension in the query editor
 Grafana will issue a ListMetrics request.
 

@@ -19,6 +19,7 @@ func init() {
 	bus.AddHandler("sql", UpdateUser)
 	bus.AddHandler("sql", ChangeUserPassword)
 	bus.AddHandler("sql", GetUserByLogin)
+	bus.AddHandler("sql", GetUserByEmail)
 	bus.AddHandler("sql", SetUsingOrg)
 	bus.AddHandler("sql", GetUserProfile)
 	bus.AddHandler("sql", GetSignedInUser)
@@ -128,7 +129,11 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			}
 
 			if setting.AutoAssignOrg && !user.IsAdmin {
-				orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
+				if len(cmd.DefaultOrgRole) > 0 {
+					orgUser.Role = m.RoleType(cmd.DefaultOrgRole)
+				} else {
+					orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
+				}
 			}
 
 			if _, err = sess.Insert(&orgUser); err != nil {
@@ -161,18 +166,48 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 	}
 
 	user := new(m.User)
-	if strings.Contains(query.LoginOrEmail, "@") {
-		user = &m.User{Email: query.LoginOrEmail}
-	} else {
-		user = &m.User{Login: query.LoginOrEmail}
+
+	// Try and find the user by login first.
+	// It's not sufficient to assume that a LoginOrEmail with an "@" is an email.
+	user = &m.User{Login: query.LoginOrEmail}
+	has, err := x.Get(user)
+
+	if err != nil {
+		return err
 	}
 
-	has, err := x.Get(user)
+	if has == false && strings.Contains(query.LoginOrEmail, "@") {
+		// If the user wasn't found, and it contains an "@" fallback to finding the
+		// user by email.
+		user = &m.User{Email: query.LoginOrEmail}
+		has, err = x.Get(user)
+	}
 
 	if err != nil {
 		return err
 	} else if has == false {
 		return m.ErrUserNotFound
+	}
+
+	query.Result = user
+
+	return nil
+}
+
+func GetUserByEmail(query *m.GetUserByEmailQuery) error {
+	if query.Email == "" {
+		return m.ErrUserNotFound
+	}
+
+	user := new(m.User)
+
+	user = &m.User{Email: query.Email}
+	has, err := x.Get(user)
+
+	if err != nil {
+		return err
+	} else if has == false {
+		return  m.ErrUserNotFound
 	}
 
 	query.Result = user

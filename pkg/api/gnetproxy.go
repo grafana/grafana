@@ -5,9 +5,11 @@ import (
 	"net"
 	"net/http"
 	"net/http/httputil"
+	"net/url"
 	"time"
 
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -22,16 +24,19 @@ var gNetProxyTransport = &http.Transport{
 }
 
 func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
-	director := func(req *http.Request) {
-		req.URL.Scheme = "https"
-		req.URL.Host = "grafana.net"
-		req.Host = "grafana.net"
+	url, _ := url.Parse(setting.GrafanaNetUrl)
 
-		req.URL.Path = util.JoinUrlFragments("https://grafana.net/api", proxyPath)
+	director := func(req *http.Request) {
+		req.URL.Scheme = url.Scheme
+		req.URL.Host = url.Host
+		req.Host = url.Host
+
+		req.URL.Path = util.JoinUrlFragments(url.Path+"/api", proxyPath)
 
 		// clear cookie headers
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
+		req.Header.Del("Authorization")
 	}
 
 	return &httputil.ReverseProxy{Director: director}

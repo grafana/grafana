@@ -13,17 +13,23 @@ define([
   module.service('timeSrv', function($rootScope, $timeout, $routeParams, timer) {
     var self = this;
 
+    // default time
+    this.time = {from: '6h', to: 'now'};
+
+    $rootScope.$on('zoom-out', function(e, factor) { self.zoomOut(factor); });
+
     this.init = function(dashboard) {
       timer.cancel_all();
 
       this.dashboard = dashboard;
       this.time = dashboard.time;
+      this.refresh = dashboard.refresh;
 
       this._initTimeFromUrl();
       this._parseTime();
 
-      if(this.dashboard.refresh) {
-        this.setAutoRefresh(this.dashboard.refresh);
+      if(this.refresh) {
+        this.setAutoRefresh(this.refresh);
       }
     };
 
@@ -50,7 +56,7 @@ define([
 
       if (!isNaN(value)) {
         var epoch = parseInt(value);
-        return moment(epoch);
+        return moment.utc(epoch);
       }
 
       return null;
@@ -63,17 +69,19 @@ define([
       if ($routeParams.to) {
         this.time.to = this._parseUrlParam($routeParams.to) || this.time.to;
       }
+      if ($routeParams.refresh) {
+        this.refresh = $routeParams.refresh || this.refresh;
+      }
     };
 
     this.setAutoRefresh = function (interval) {
       this.dashboard.refresh = interval;
       if (interval) {
-        var _i = kbn.interval_to_ms(interval);
-        var wait_ms = _i - (Date.now() % _i);
+        var interval_ms = kbn.interval_to_ms(interval);
         $timeout(function () {
-          self.start_scheduled_refresh(_i);
+          self.start_scheduled_refresh(interval_ms);
           self.refreshDashboard();
-        }, wait_ms);
+        }, interval_ms);
       } else {
         this.cancel_scheduled_refresh();
       }
@@ -113,10 +121,7 @@ define([
     };
 
     this.timeRangeForUrl = function() {
-      var range = this.timeRange(false);
-      if (_.isString(range.to) && range.to.indexOf('now')) {
-        range = this.timeRange();
-      }
+      var range = this.timeRange().raw;
 
       if (moment.isMoment(range.from)) { range.from = range.from.valueOf(); }
       if (moment.isMoment(range.to)) { range.to = range.to.valueOf(); }
@@ -124,17 +129,38 @@ define([
       return range;
     };
 
-    this.timeRange = function(parse) {
+    this.timeRange = function() {
       // make copies if they are moment  (do not want to return out internal moment, because they are mutable!)
-      var from = moment.isMoment(this.time.from) ? moment(this.time.from) : this.time.from ;
-      var to = moment.isMoment(this.time.to) ? moment(this.time.to) : this.time.to ;
+      var range = {
+        from: moment.isMoment(this.time.from) ? moment(this.time.from) : this.time.from,
+        to: moment.isMoment(this.time.to) ? moment(this.time.to) : this.time.to,
+      };
 
-      if (parse !== false) {
-        from = dateMath.parse(from, false);
-        to = dateMath.parse(to, true);
+      range = {
+        from: dateMath.parse(range.from, false),
+        to: dateMath.parse(range.to, true),
+        raw: range
+      };
+
+      return range;
+    };
+
+    this.zoomOut = function(factor) {
+      var range = this.timeRange();
+
+      var timespan = (range.to.valueOf() - range.from.valueOf());
+      var center = range.to.valueOf() - timespan/2;
+
+      var to = (center + (timespan*factor)/2);
+      var from = (center - (timespan*factor)/2);
+
+      if (to > Date.now() && range.to <= Date.now()) {
+        var offset = to - Date.now();
+        from = from - offset;
+        to = Date.now();
       }
 
-      return {from: from, to: to};
+      this.setTime({from: moment.utc(from), to: moment.utc(to) });
     };
 
   });

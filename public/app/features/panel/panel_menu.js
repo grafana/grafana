@@ -12,6 +12,7 @@ function (angular, $, _, Tether) {
     .directive('panelMenu', function($compile, linkSrv) {
       var linkTemplate =
           '<span class="panel-title drag-handle pointer">' +
+            '<span class="icon-gf panel-alert-icon"></span>' +
             '<span class="panel-title-text drag-handle">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>' +
             '<span class="panel-links-btn"><i class="fa fa-external-link"></i></span>' +
             '<span class="panel-time-info" ng-show="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>' +
@@ -87,7 +88,8 @@ function (angular, $, _, Tether) {
 
           $scope.$watchCollection('ctrl.panel.links', function(newValue) {
             var showIcon = (newValue ? newValue.length > 0 : false) && ctrl.panel.title !== '';
-            $panelLinksBtn.toggle(showIcon);
+            // cannot use toggle here, only works for attached elements
+            $panelLinksBtn.css({display: showIcon ? 'inline' : 'none'});
           });
 
           function dismiss(time, force) {

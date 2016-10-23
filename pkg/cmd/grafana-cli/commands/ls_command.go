@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	"github.com/fatih/color"
-	"github.com/grafana/grafana/pkg/cmd/grafana-cli/log"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 	s "github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 )
@@ -17,7 +17,7 @@ var validateLsCommand = func(pluginDir string) error {
 		return errors.New("missing path flag")
 	}
 
-	log.Debug("plugindir: " + pluginDir + "\n")
+	logger.Debug("plugindir: " + pluginDir + "\n")
 	pluginDirInfo, err := s.IoHelper.Stat(pluginDir)
 
 	if err != nil {
@@ -32,7 +32,7 @@ var validateLsCommand = func(pluginDir string) error {
 }
 
 func lsCommand(c CommandLine) error {
-	pluginDir := c.GlobalString("pluginsDir")
+	pluginDir := c.PluginDirectory()
 	if err := validateLsCommand(pluginDir); err != nil {
 		return err
 	}
@@ -40,11 +40,11 @@ func lsCommand(c CommandLine) error {
 	plugins := ls_getPlugins(pluginDir)
 
 	if len(plugins) > 0 {
-		log.Info("installed plugins:\n")
+		logger.Info("installed plugins:\n")
 	}
 
 	for _, plugin := range plugins {
-		log.Infof("%s %s %s \n", plugin.Id, color.YellowString("@"), plugin.Info.Version)
+		logger.Infof("%s %s %s \n", plugin.Id, color.YellowString("@"), plugin.Info.Version)
 	}
 
 	return nil

@@ -19,6 +19,9 @@ func Register(r *macaron.Macaron) {
 	quota := middleware.Quota
 	bind := binding.Bind
 
+	// automatically set HEAD for every GET
+	r.SetAutoHead(true)
+
 	// not logged in views
 	r.Get("/", reqSignedIn, Index)
 	r.Get("/logout", Logout)
@@ -34,6 +37,7 @@ func Register(r *macaron.Macaron) {
 	r.Get("/org/", reqSignedIn, Index)
 	r.Get("/org/new", reqSignedIn, Index)
 	r.Get("/datasources/", reqSignedIn, Index)
+	r.Get("/datasources/new", reqSignedIn, Index)
 	r.Get("/datasources/edit/*", reqSignedIn, Index)
 	r.Get("/org/users/", reqSignedIn, Index)
 	r.Get("/org/apikeys/", reqSignedIn, Index)
@@ -54,10 +58,15 @@ func Register(r *macaron.Macaron) {
 	r.Get("/plugins/:id/page/:page", reqSignedIn, Index)
 
 	r.Get("/dashboard/*", reqSignedIn, Index)
+	r.Get("/dashboard-solo/snapshot/*", Index)
 	r.Get("/dashboard-solo/*", reqSignedIn, Index)
+	r.Get("/import/dashboard", reqSignedIn, Index)
+	r.Get("/dashboards/*", reqSignedIn, Index)
 
 	r.Get("/playlists/", reqSignedIn, Index)
 	r.Get("/playlists/*", reqSignedIn, Index)
+	r.Get("/alerting/", reqSignedIn, Index)
+	r.Get("/alerting/*", reqSignedIn, Index)
 
 	// sign up
 	r.Get("/signup", Index)
@@ -115,6 +124,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/:id", wrap(GetUserById))
 			r.Get("/:id/orgs", wrap(GetUserOrgList))
 			r.Put("/:id", bind(m.UpdateUserCommand{}), wrap(UpdateUser))
+			r.Post("/:id/using/:orgId", wrap(UpdateUserActiveOrg))
 		}, reqGrafanaAdmin)
 
 		// org information available to all users.
@@ -193,9 +203,9 @@ func Register(r *macaron.Macaron) {
 
 		r.Get("/plugins", wrap(GetPluginList))
 		r.Get("/plugins/:pluginId/settings", wrap(GetPluginSettingById))
+		r.Get("/plugins/:pluginId/readme", wrap(GetPluginReadme))
 
 		r.Group("/plugins", func() {
-			r.Get("/:pluginId/readme", wrap(GetPluginReadme))
 			r.Get("/:pluginId/dashboards/", wrap(GetPluginDashboards))
 			r.Post("/:pluginId/settings", bind(m.UpdatePluginSettingCmd{}), wrap(UpdatePluginSetting))
 		}, reqOrgAdmin)
@@ -207,9 +217,9 @@ func Register(r *macaron.Macaron) {
 		// Dashboard
 		r.Group("/dashboards", func() {
 			r.Combo("/db/:slug").Get(GetDashboard).Delete(DeleteDashboard)
-			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), PostDashboard)
+			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
 			r.Get("/file/:file", GetDashboardFromJsonFile)
-			r.Get("/home", GetHomeDashboard)
+			r.Get("/home", wrap(GetHomeDashboard))
 			r.Get("/tags", GetDashboardTags)
 			r.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
 		})
@@ -234,7 +244,35 @@ func Register(r *macaron.Macaron) {
 		r.Get("/search/", Search)
 
 		// metrics
-		r.Get("/metrics/test", GetTestMetrics)
+		r.Post("/tsdb/query", bind(dtos.MetricRequest{}), wrap(QueryMetrics))
+		r.Get("/tsdb/testdata/scenarios", wrap(GetTestDataScenarios))
+
+		// metrics
+		r.Get("/metrics", wrap(GetInternalMetrics))
+
+		r.Group("/alerts", func() {
+			r.Post("/test", bind(dtos.AlertTestCommand{}), wrap(AlertTest))
+			r.Post("/:alertId/pause", bind(dtos.PauseAlertCommand{}), wrap(PauseAlert), reqEditorRole)
+			r.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
+			r.Get("/", wrap(GetAlerts))
+			r.Get("/states-for-dashboard", wrap(GetAlertStatesForDashboard))
+		})
+
+		r.Get("/alert-notifications", wrap(GetAlertNotifications))
+
+		r.Group("/alert-notifications", func() {
+			r.Post("/test", bind(dtos.NotificationTestCommand{}), wrap(NotificationTest))
+			r.Post("/", bind(m.CreateAlertNotificationCommand{}), wrap(CreateAlertNotification))
+			r.Put("/:notificationId", bind(m.UpdateAlertNotificationCommand{}), wrap(UpdateAlertNotification))
+			r.Get("/:notificationId", wrap(GetAlertNotificationById))
+			r.Delete("/:notificationId", wrap(DeleteAlertNotification))
+		}, reqEditorRole)
+
+		r.Get("/annotations", wrap(GetAnnotations))
+		r.Post("/annotations/mass-delete", reqOrgAdmin, bind(dtos.DeleteAnnotationsCmd{}), wrap(DeleteAnnotations))
+
+		// error test
+		r.Get("/metrics/error", wrap(GenerateError))
 
 	}, reqSignedIn)
 

@@ -69,7 +69,7 @@
 			</div>
 		</div>
 
-		<div class="gf-form" ng-if="ctrl.tsdbVersion == 2">
+		<div class="gf-form" ng-if="ctrl.tsdbVersion >= 2">
 			<label class="gf-form-label query-keyword width-6">Fill</label>
 			<div class="gf-form-select-wrapper">
 				<select ng-model="ctrl.target.downsampleFillPolicy" class="gf-form-input"
@@ -81,6 +81,7 @@
 
 		<gf-form-switch class="gf-form"
 										label="Disable downsampling"
+                    label-class="query-keyword"
 										checked="ctrl.target.disableDownsampling"
 										on-change="ctrl.targetBlur()">
 		</gf-form-switch>
@@ -90,7 +91,7 @@
 		</div>
 	</div>
 
-	<div class="gf-form-inline" ng-if="ctrl.tsdbVersion == 2">
+	<div class="gf-form-inline" ng-if="ctrl.tsdbVersion >= 2">
 		<div class="gf-form">
 
 			<label class="gf-form-label query-keyword width-8">
@@ -125,7 +126,7 @@
 			</div>
 
 			<div class="gf-form">
-				<label class="gf-form-label">Type</label>
+				<label class="gf-form-label query-keyword">Type</label>
 				<div class="gf-form-select-wrapper">
 					<select ng-model="ctrl.target.currentFilterType" class="gf-form-input" ng-options="filType for filType in ctrl.filterTypes">
 					</select>
@@ -137,7 +138,11 @@
 				</input>
 			</div>
 
-			<gf-form-switch class="gf-form" label="Group by" checked="ctrl.target.currentFilterGroupBy" on-change="ctrl.targetBlur()">
+      <gf-form-switch class="gf-form"
+                    label="Group by" 
+                    label-class="query-keyword"
+                    checked="ctrl.target.currentFilterGroupBy"
+                    on-change="ctrl.targetBlur()">
 			</gf-form-switch>
 
 			<div class="gf-form" ng-show="ctrl.addFilterMode">
@@ -146,7 +151,6 @@
 						<i class="fa fa-warning"></i>
 					</a>
 				</label>
-
 				<label class="gf-form-label">
 					<a ng-click="ctrl.addFilter()" ng-hide="ctrl.errors.filters">add filter</a>
 					<a ng-click="ctrl.closeAddFilterMode()">
@@ -166,7 +170,7 @@
 		<div class="gf-form">
 			<label class="gf-form-label query-keyword width-8">
 				Tags
-				<info-popover mode="right-normal" ng-if="ctrl.tsdbVersion == 2">
+				<info-popover mode="right-normal" ng-if="ctrl.tsdbVersion >= 2">
 					Please use filters, tags are deprecated in opentsdb 2.2
 				</info-popover>
 			</label>
@@ -223,12 +227,12 @@
 		</gf-form-switch>
 
 		<gf-form-switch ng-hide="!ctrl.target.shouldComputeRate"
-										class="gf-form" label="Counter" checked="ctrl.target.isCounter" on-change="ctrl.targetBlur()">
+										class="gf-form" label="Counter" label-class="query-keyword" checked="ctrl.target.isCounter" on-change="ctrl.targetBlur()">
 		</gf-form-switch>
 
 
 		<div class="gf-form" ng-hide="!ctrl.target.isCounter || !ctrl.target.shouldComputeRate">
-			<label class="gf-form-label">Counter Max</label>
+			<label class="gf-form-label query-keyword">Counter Max</label>
 			<input type="text" class="gf-form-input"
 					 	 ng-disabled="!ctrl.target.shouldComputeRate"
 						 ng-model="ctrl.target.counterMax" spellcheck='false'
@@ -236,7 +240,7 @@
 						 ng-blur="ctrl.targetBlur()">
 			</input>
 
-			<label class="gf-form-label">Reset Value</label>
+			<label class="gf-form-label query-keyword">Reset Value</label>
 			<input type="text" class="tight-form-input input-small"
 					   ng-disabled="!ctrl.target.shouldComputeRate"
 						 ng-model="ctrl.target.counterResetValue" spellcheck='false'

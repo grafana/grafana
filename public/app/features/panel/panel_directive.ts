@@ -6,7 +6,7 @@ import $ from 'jquery';
 var module = angular.module('grafana.directives');
 
 var panelTemplate = `
-  <div class="panel-container" ng-class="{'panel-transparent': ctrl.panel.transparent}">
+  <div class="panel-container">
     <div class="panel-header">
       <span class="alert-error panel-error small pointer" ng-if="ctrl.error" ng-click="ctrl.openInspector()">
         <span data-placement="top" bs-tooltip="ctrl.error">
@@ -36,7 +36,7 @@ var panelTemplate = `
 
         <ul class="gf-tabs">
           <li class="gf-tabs-item" ng-repeat="tab in ::ctrl.editorTabs">
-            <a class="gf-tabs-link" ng-click="ctrl.editorTabIndex = $index" ng-class="{active: ctrl.editorTabIndex === $index}">
+            <a class="gf-tabs-link" ng-click="ctrl.changeTab($index)" ng-class="{active: ctrl.editorTabIndex === $index}">
               {{::tab.title}}
             </a>
           </li>
@@ -65,6 +65,44 @@ module.directive('grafanaPanel', function() {
     link: function(scope, elem) {
       var panelContainer = elem.find('.panel-container');
       var ctrl = scope.ctrl;
+
+      // the reason for handling these classes this way is for performance
+      // limit the watchers on panels etc
+      var transparentLastState;
+      var lastHasAlertRule;
+      var lastAlertState;
+      var hasAlertRule;
+
+      ctrl.events.on('render', () => {
+        if (transparentLastState !== ctrl.panel.transparent) {
+          panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
+          transparentLastState = ctrl.panel.transparent;
+        }
+
+        hasAlertRule = ctrl.panel.alert !== undefined;
+        if (lastHasAlertRule !== hasAlertRule) {
+          panelContainer.toggleClass('panel-has-alert', hasAlertRule);
+
+          lastHasAlertRule = hasAlertRule;
+        }
+
+        if (ctrl.alertState) {
+          if (lastAlertState) {
+            panelContainer.removeClass('panel-alert-state--' + lastAlertState);
+          }
+
+          if (ctrl.alertState.state === 'ok' || ctrl.alertState.state === 'alerting') {
+            panelContainer.addClass('panel-alert-state--' + ctrl.alertState.state);
+          }
+
+          lastAlertState = ctrl.alertState.state;
+        } else if (lastAlertState) {
+          panelContainer.removeClass('panel-alert-state--' + lastAlertState);
+          lastAlertState = null;
+        }
+
+      });
+
       scope.$watchGroup(['ctrl.fullscreen', 'ctrl.containerHeight'], function() {
         panelContainer.css({minHeight: ctrl.containerHeight});
         elem.toggleClass('panel-fullscreen', ctrl.fullscreen ? true : false);

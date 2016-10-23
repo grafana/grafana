@@ -45,7 +45,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   };
 
   /** @ngInject */
-  constructor($scope, $injector, private annotationsSrv) {
+  constructor($scope, $injector, private annotationsSrv, private $sanitize) {
     super($scope, $injector);
     this.pageIndex = 0;
 
@@ -78,7 +78,8 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     if (this.panel.transform === 'annotations') {
       this.setTimeQueryStart();
-      return this.annotationsSrv.getAnnotations(this.dashboard).then(annotations => {
+      return this.annotationsSrv.getAnnotations({dashboard: this.dashboard, panel: this.panel, range: this.range})
+      .then(annotations => {
         return {data: annotations};
       });
     }
@@ -139,7 +140,8 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   exportCsv() {
-    FileExport.exportTableDataToCsv(this.table);
+    var renderer = new TableRenderer(this.panel, this.table, this.dashboard.isTimezoneUtc(), this.$sanitize);
+    FileExport.exportTableDataToCsv(renderer.render_values());
   }
 
   link(scope, elem, attrs, ctrl) {
@@ -159,7 +161,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     function appendTableRows(tbodyElem) {
-      var renderer = new TableRenderer(panel, data, ctrl.dashboard.isTimezoneUtc());
+      var renderer = new TableRenderer(panel, data, ctrl.dashboard.isTimezoneUtc(), ctrl.$sanitize);
       tbodyElem.empty();
       tbodyElem.html(renderer.render(ctrl.pageIndex));
     }

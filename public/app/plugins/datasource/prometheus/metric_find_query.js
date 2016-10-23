@@ -1,13 +1,13 @@
 define([
-  'lodash',
-  'moment',
+  'lodash'
 ],
-function (_, moment) {
+function (_) {
   'use strict';
 
-  function PrometheusMetricFindQuery(datasource, query) {
+  function PrometheusMetricFindQuery(datasource, query, timeSrv) {
     this.datasource = datasource;
     this.query = query;
+    this.range = timeSrv.timeRange();
   }
 
   PrometheusMetricFindQuery.prototype.process = function() {
@@ -51,7 +51,11 @@ function (_, moment) {
         });
       });
     } else {
-      url = '/api/v1/series?match[]=' + encodeURIComponent(metric);
+      var start = this.datasource.getPrometheusTime(this.range.from, false);
+      var end = this.datasource.getPrometheusTime(this.range.to, true);
+      url = '/api/v1/series?match[]=' + encodeURIComponent(metric)
+        + '&start=' + start
+        + '&end=' + end;
 
       return this.datasource._request('GET', url)
       .then(function(result) {
@@ -86,7 +90,8 @@ function (_, moment) {
   };
 
   PrometheusMetricFindQuery.prototype.queryResultQuery = function(query) {
-    var url = '/api/v1/query?query=' + encodeURIComponent(query) + '&time=' + (moment().valueOf() / 1000);
+    var end = this.datasource.getPrometheusTime(this.range.to, true);
+    var url = '/api/v1/query?query=' + encodeURIComponent(query) + '&time=' + end;
 
     return this.datasource._request('GET', url)
     .then(function(result) {
@@ -107,7 +112,11 @@ function (_, moment) {
   };
 
   PrometheusMetricFindQuery.prototype.metricNameAndLabelsQuery = function(query) {
-    var url = '/api/v1/series?match[]=' + encodeURIComponent(query);
+    var start = this.datasource.getPrometheusTime(this.range.from, false);
+    var end = this.datasource.getPrometheusTime(this.range.to, true);
+    var url = '/api/v1/series?match[]=' + encodeURIComponent(query)
+      + '&start=' + start
+      + '&end=' + end;
 
     var self = this;
     return this.datasource._request('GET', url)

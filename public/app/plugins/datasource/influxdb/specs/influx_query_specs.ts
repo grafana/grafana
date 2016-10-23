@@ -101,6 +101,19 @@ describe('InfluxQuery', function() {
     });
   });
 
+  describe('query with value condition', function() {
+    it('should not quote value', function() {
+      var query = new InfluxQuery({
+        measurement: 'cpu',
+        groupBy: [],
+        tags: [{key: 'value', value: '5', operator: '>'}]
+      }, templateSrv, {});
+
+      var queryText = query.render();
+      expect(queryText).to.be('SELECT mean("value") FROM "cpu" WHERE "value" > 5 AND $timeFilter');
+    });
+  });
+
   describe('series with groupByTag', function() {
     it('should generate correct query', function() {
       var query = new InfluxQuery({
@@ -222,6 +235,19 @@ describe('InfluxQuery', function() {
       query.addSelectPart(query.selectModels[0], 'math');
       expect(query.target.select[0].length).to.be(3);
       expect(query.target.select[0][2].type).to.be('math');
+    });
+
+    describe('when render adhoc filters', function() {
+      it('should generate correct query segment', function() {
+        var query = new InfluxQuery({measurement: 'cpu', }, templateSrv, {});
+
+        var queryText = query.renderAdhocFilters([
+          {key: 'key1', operator: '=', value: 'value1'},
+          {key: 'key2', operator: '!=', value: 'value2'},
+        ]);
+
+        expect(queryText).to.be('"key1" = \'value1\' AND "key2" != \'value2\'');
+      });
     });
 
   });

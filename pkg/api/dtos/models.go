@@ -34,6 +34,7 @@ type CurrentUser struct {
 	IsGrafanaAdmin bool       `json:"isGrafanaAdmin"`
 	GravatarUrl    string     `json:"gravatarUrl"`
 	Timezone       string     `json:"timezone"`
+	Locale         string     `json:"locale"`
 }
 
 type DashboardMeta struct {
@@ -95,13 +96,10 @@ func (slice DataSourceList) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
 
-type MetricQueryResultDto struct {
-	Data []MetricQueryResultDataDto `json:"data"`
-}
-
-type MetricQueryResultDataDto struct {
-	Target     string       `json:"target"`
-	DataPoints [][2]float64 `json:"datapoints"`
+type MetricRequest struct {
+	From    string             `json:"from"`
+	To      string             `json:"to"`
+	Queries []*simplejson.Json `json:"queries"`
 }
 
 type UserStars struct {

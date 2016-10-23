@@ -50,7 +50,7 @@ function (angular, _, queryDef) {
       $scope.isFirst = $scope.index === 0;
       $scope.isSingle = metricAggs.length === 1;
       $scope.settingsLinkText = '';
-      $scope.aggDef = _.findWhere($scope.metricAggTypes, {value: $scope.agg.type});
+      $scope.aggDef = _.find($scope.metricAggTypes, {value: $scope.agg.type});
 
       if (queryDef.isPipelineAgg($scope.agg.type)) {
         $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'select metric';
@@ -68,6 +68,11 @@ function (angular, _, queryDef) {
       }
 
       switch($scope.agg.type) {
+        case 'cardinality': {
+          var precision_threshold = $scope.agg.settings.precision_threshold || '';
+          $scope.settingsLinkText = 'Precision threshold: ' + precision_threshold;
+          break;
+        }
         case 'percentiles': {
           $scope.agg.settings.percents = $scope.agg.settings.percents || [25,50,75,95,99];
           $scope.settingsLinkText = 'Values: ' + $scope.agg.settings.percents.join(',');
@@ -81,7 +86,7 @@ function (angular, _, queryDef) {
 
           var stats = _.reduce($scope.agg.meta, function(memo, val, key) {
             if (val) {
-              var def = _.findWhere($scope.extendedStats, {value: key});
+              var def = _.find($scope.extendedStats, {value: key});
               memo.push(def.text);
             }
             return memo;

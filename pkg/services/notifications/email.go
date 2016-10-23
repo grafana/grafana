@@ -6,19 +6,12 @@ import (
 )
 
 type Message struct {
-	To      []string
-	From    string
-	Subject string
-	Body    string
-	Massive bool
-	Info    string
-}
-
-// create mail content
-func (m *Message) Content() string {
-	contentType := "text/html; charset=UTF-8"
-	content := "From: " + m.From + "\r\nSubject: " + m.Subject + "\r\nContent-Type: " + contentType + "\r\n\r\n" + m.Body
-	return content
+	To           []string
+	From         string
+	Subject      string
+	Body         string
+	Info         string
+	EmbededFiles []string
 }
 
 func setDefaultTemplateData(data map[string]interface{}, u *m.User) {
