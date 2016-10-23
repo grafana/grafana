@@ -7,7 +7,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AlertStatusCtrl', function ($scope, alertMgrSrv) {
+  module.controller('AlertStatusCtrl', function ($scope, alertMgrSrv, contextSrv) {
     var alertRows = [];
 
     $scope.init = function () {
@@ -20,6 +20,7 @@ function (angular) {
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: false},
           dashboard: {
+            system: contextSrv.system,
             title: "触发报警",
             rows: alertRows,
             time: {from: "now-2h", to: "now"}

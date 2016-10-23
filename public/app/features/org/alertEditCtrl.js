@@ -23,7 +23,8 @@ function (angular, _) {
       $scope.isNew = !$scope.alertDef;
       if ($scope.isNew) {
         $scope.alertDef = {};
-        $scope.alertDef.service = "com.test";
+        $scope.alertDef.org = contextSrv.user.orgId;
+        $scope.alertDef.service = contextSrv.system;
         $scope.alertDef.alertDetails = {};
         $scope.alertDef.alertDetails.cluster = "cluster1";
         $scope.alertDef.alertDetails.hosts = null;
@@ -44,6 +45,7 @@ function (angular, _) {
         $scope.alertDef.modificationTime = milliseconds;
       }
       $scope.alertDef.org = contextSrv.user.orgId;
+      $scope.alertDef.service = contextSrv.system;
 
       alertMgrSrv.save($scope.alertDef).then(function onSuccess() {
         $location.path("alerts");
