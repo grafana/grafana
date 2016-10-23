@@ -146,45 +146,6 @@ function (angular, _, config) {
     };
   });
 
-  module.directive('panelWidth', function() {
-
-    return function(scope, element) {
-      var fullscreen = false;
-
-      function updateWidth() {
-        if (!fullscreen) {
-          element[0].style.width = ((scope.panel.span / 1.2) * 10) + '%';
-        }
-      }
-
-      scope.onAppEvent('panel-fullscreen-enter', function(evt, info) {
-        fullscreen = true;
-
-        if (scope.panel.id !== info.panelId) {
-          element.hide();
-        } else {
-          element[0].style.width = '100%';
-        }
-      });
-
-      scope.onAppEvent('panel-fullscreen-exit', function(evt, info) {
-        fullscreen = false;
-
-        if (scope.panel.id !== info.panelId) {
-          element.show();
-        }
-
-        updateWidth();
-      });
-
-      scope.$watch('panel.span', updateWidth);
-
-      if (fullscreen) {
-        element.hide();
-      }
-    };
-  });
-
   module.directive('panelDropZone', function() {
     return function(scope, element) {
       scope.$on("ANGULAR_DRAG_START", function() {

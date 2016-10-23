@@ -205,17 +205,43 @@ div.flot-text {
 // Dashboard row header
 //
 
+.dash-row {
+  display: flex;
+}
+
+.dash-row-handle-column {
+  width: 2rem;
+  background: $page-bg;
+  display: flex;
+  flex-direction: column;
+}
+
+.dash-row-move-handle {
+  background: url($btn-drag-image) no-repeat 50% 50%;
+  background-size: 8px;
+  flex-grow: 1;
+  cursor: move;
+}
+
+.dash-row-resize-handle {
+}
+
+.dash-row-content {
+  flex-grow: 1;
+}
+
 .dash-row-header {
   display: flex;
   flex-direction: row;
   text-align: left;
   align-items: center;
+  background: $page-bg;
+  margin-right: $panel-margin;
 }
 
 .dash-row-header-title {
-  font-size: $font-size-h3;
   font-family: $headings-font-family;
-  padding: $spacer $spacer $spacer $spacer/2;
+  padding: 0.7rem;
 }
 
 .dash-row-header-settings {
@@ -226,34 +252,24 @@ div.flot-text {
   flex-grow: 100;
   text-align: right;
   margin-right: 0.6rem;
+  font-size: $font-size-sm;
+  line-height: 2.5rem;
+  a {
+    color: $text-muted;
+  }
+  &:hover a {
+    color: $link-color;
+  }
 }
 
-.dash-row-header-collapse-toggle {
-  flex-grow: 100;
-  text-align: right;
-  display: none;
-  margin-right: $spacer/2;
-}
 
 .dash-edit-mode {
-//   .dash-row {
-//     background: $dash-row-background;
-//     box-shadow: $dash-row-shadow;
-//     padding: 0 ($spacer/4) ($spacer/2) ($spacer/4);
-//     margin-bottom: $spacer;
-// }
+  .dash-row {
+    margin-bottom: $spacer;
+  }
 
-.dash-row {
-  background: lighten($body-bg, 1%);
-  box-shadow: inset 15px 0px 0px 0px #262626;
-  padding: 0 ($spacer/4) ($spacer/2) ($spacer*2);
-  margin-left: 5px;
-  margin-bottom: $spacer;
-}
-
-  .dash-row-header-collapse-toggle,
-  .dash-row-header-settings {
-    display: block;
+  .panels-wrapper {
+    padding: $panel-margin*2 0 0 $panel-margin;
   }
 }
 

@@ -31,7 +31,7 @@ function (coreModule) {
       meta: { canStar: false, canShare: false },
       dashboard: {
         title: "New dashboard",
-        rows: [{ height: '250px', panels:[] }]
+        rows: [{title: 'Dashboard Row', height: '250px', panels:[] }]
       },
     }, $scope);
   });

@@ -62,8 +62,8 @@
 		</ul>
 	</li>
 	<li>
-		<a ng-click="dashboard.editMode()"  ng-show="!dashboard.editMode" bs-tooltip="'Build Mode <br> CTRL+B'" data-placement="bottom"><i class="fa fa-wrench"></i></a>
-		<a ng-click="!dashboard.editMode()" ng-show="dashboard.editMode" bs-tooltip="'Build Mode <br> CTRL+B'" data-placement="bottom" style="color: #33B5E5;"><i class="fa fa-wrench fa-wrench-close" style="color: #33B5E5;"></i> Leave Build Mode </a>
+		<a ng-click="dashboard.editMode = true;"  ng-show="!dashboard.editMode" bs-tooltip="'Build Mode <br> CTRL+B'" data-placement="bottom"><i class="fa fa-wrench"></i></a>
+		<a ng-click="dashboard.editMode = false;" ng-show="dashboard.editMode" bs-tooltip="'Build Mode <br> CTRL+B'" data-placement="bottom" style="color: #33B5E5;"><i class="fa fa-wrench fa-wrench-close" style="color: #33B5E5;"></i> Leave Build Mode </a>
 	</li>
 </ul>
 
