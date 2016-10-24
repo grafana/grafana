@@ -159,7 +159,7 @@ module.directive('panelResizer', function($rootScope) {
         }
 
         scope.$apply(function() {
-         // ctrl.render();
+          ctrl.render();
         });
       }
 
