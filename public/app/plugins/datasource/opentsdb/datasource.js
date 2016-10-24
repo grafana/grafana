@@ -425,6 +425,10 @@ function (angular, _, dateMath) {
         }
       }
 
+      if (target.explicitTags) {
+        query.explicitTags = true;
+      }
+
       return query;
     }
 
