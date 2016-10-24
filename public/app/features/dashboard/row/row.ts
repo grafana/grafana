@@ -10,7 +10,7 @@ export class DashRowCtrl {
   panelPlugins;
 
    /** @ngInject */
-  constructor(private $scope, private $rootScope) {
+  constructor(private $scope, private $rootScope, private $timeout) {
     this.panelPlugins = config.panels;
   }
 
@@ -34,6 +34,9 @@ export class DashRowCtrl {
 
   addPanel(panel) {
     this.dashboard.addPanel(panel, this.row);
+    this.$timeout(() => {
+      this.$scope.$broadcast('render');
+    });
   }
 
   editRow() {
