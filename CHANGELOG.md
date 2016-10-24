@@ -11,6 +11,7 @@
 * **Database**: Allow database config using one propertie, closes [#5456](https://github.com/grafana/grafana/pull/5456)
 * **Graphite**: Add support for groupByNodes, closes [#5613](https://github.com/grafana/grafana/pull/5613)
 * **Influxdb**: Add support for elapsed(), closes [#5827](https://github.com/grafana/grafana/pull/5827)
+* **OpenTSDB**: Add support for explicitTags for OpenTSDB>=2.3, closes [#6360](https://github.com/grafana/grafana/pull/6361)
 * **OAuth**: Add support for generic oauth, closes [#4718](https://github.com/grafana/grafana/pull/4718)
 * **Cloudwatch**: Add support to expand multi select template variable, closes [#5003](https://github.com/grafana/grafana/pull/5003)
 * **Graph Panel**: Now supports flexible lower/upper bounds on Y-Max and Y-Min, PR [#5720](https://github.com/grafana/grafana/pull/5720)
