@@ -1,5 +1,6 @@
 define([
-  'angular'
+  'angular',
+  'lodash',
 ],
 function (angular) {
   'use strict';

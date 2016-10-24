@@ -49,6 +49,7 @@ function (angular, _) {
         $scope.alertDef.modificationTime = milliseconds;
       }
       $scope.alertDef.org = contextSrv.user.orgId;
+      $scope.alertDef.service = contextSrv.system;
 
       alertMgrSrv.save($scope.alertDef).then(function onSuccess() {
         $location.path("alerts");
