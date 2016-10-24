@@ -26,7 +26,6 @@ export class DashboardCtrl {
     $timeout) {
 
       $scope.editor = { index: 0 };
-      $scope.panels = config.panels;
 
       var resizeEventTimeout;
 
@@ -107,22 +106,12 @@ export class DashboardCtrl {
         $rootScope.$broadcast('refresh');
       };
 
-      $scope.addRow = function(dash, row) {
-        dash.rows.push(row);
-      };
-
       $scope.addRowDefault = function() {
-        $scope.resetRow();
-        $scope.row.title = 'New row';
-        $scope.addRow($scope.dashboard, $scope.row);
-      };
-
-      $scope.resetRow = function() {
-        $scope.row = {
-          title: '',
+        $scope.dashboard.rows.push({
+          title: 'New row',
+          panels: [],
           height: '250px',
-          editable: true,
-        };
+        });
       };
 
       $scope.showJsonEditor = function(evt, options) {
@@ -130,24 +119,6 @@ export class DashboardCtrl {
         editScope.object = options.object;
         editScope.updateHandler = options.updateHandler;
         $scope.appEvent('show-dash-editor', { src: 'public/app/partials/edit_json.html', scope: editScope });
-      };
-
-      $scope.onDrop = function(panelId, row, dropTarget) {
-        var info = $scope.dashboard.getPanelInfoById(panelId);
-        if (dropTarget) {
-          var dropInfo = $scope.dashboard.getPanelInfoById(dropTarget.id);
-          dropInfo.row.panels[dropInfo.index] = info.panel;
-          info.row.panels[info.index] = dropTarget;
-          var dragSpan = info.panel.span;
-          info.panel.span = dropTarget.span;
-          dropTarget.span = dragSpan;
-        } else {
-          info.row.panels.splice(info.index, 1);
-          info.panel.span = 12 - $scope.dashboard.rowSpan(row);
-          row.panels.push(info.panel);
-        }
-
-        $rootScope.$broadcast('render');
       };
 
       $scope.registerWindowResizeEvent = function() {
@@ -166,7 +137,6 @@ export class DashboardCtrl {
     }
 
     init(dashboard) {
-      this.$scope.resetRow();
       this.$scope.registerWindowResizeEvent();
       this.$scope.onAppEvent('show-json-editor', this.$scope.showJsonEditor);
       this.$scope.onAppEvent('template-variable-value-updated', this.$scope.templateVariableUpdated);

@@ -384,7 +384,6 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         if (!annotations || annotations.length === 0) {
           return;
         }
-        console.log(annotations);
 
         var types = {};
         types['$__alerting'] = {

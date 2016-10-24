@@ -211,7 +211,7 @@ div.flot-text {
 
 .dash-row-handle-column {
   width: 2rem;
-  background: $page-bg;
+  background: $input-label-bg;
   display: flex;
   flex-direction: column;
 }
@@ -235,7 +235,7 @@ div.flot-text {
   flex-direction: row;
   text-align: left;
   align-items: center;
-  background: $page-bg;
+  background: $input-label-bg;
   margin-right: $panel-margin;
 }
 
