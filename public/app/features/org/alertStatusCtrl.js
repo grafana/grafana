@@ -14,6 +14,9 @@ function (angular) {
         $scope.alertRows = response.data;
       });
     };
+    $scope.resetCurrentThreshold = function (alertDetails) {
+      alertMgrSrv.resetCurrentThreshold(alertDetails);
+    };
     $scope.init();
   });
 });

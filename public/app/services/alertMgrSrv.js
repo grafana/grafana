@@ -16,6 +16,8 @@ function (angular) {
     var alertStatusUrl = "";
     var alertAssociationUrl = "";
 
+    this.currentCritialThreshold = 0;
+    this.currentWarningThreshold = 0;
     this.init = function() {
       backendSrv.get('/api/alertsource').then(function(result) {
         // TODO: add current user's org name as filters. Otherwise, he will see all alerts not in his org.
@@ -93,6 +95,11 @@ function (angular) {
         },
         headers: {'Content-Type': 'text/plain'},
       });
+    };
+
+    this.resetCurrentThreshold = function (alertDetial) {
+      self.currentWarningThreshold = alertDetial.warn.threshold;
+      self.currentCritialThreshold = alertDetial.crit.threshold;
     };
   });
 });

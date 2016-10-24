@@ -21,40 +21,18 @@ function (angular, _) {
           var normalizedMetricMap = {};
           $scope.correlatedMetrics = correlatedMetrics;
           for (var m in correlatedMetrics) {
-            var s = m.split(".");
-            var postfix = s[s.length-1];
-            if (postfix === 'min' ||
-                postfix === 'max' ||
-                postfix === 'p99' ||
-                postfix === 'p999') {
-              var normalizedMetric = s.slice(0, s.length-1).join(".");
-              if (normalizedMetric in normalizedMetricMap) {
-                normalizedMetricMap[normalizedMetric].push(
-                  {
-                    metric: m,
-                    hosts: correlatedMetrics[m]
-                  });
-              } else {
-                normalizedMetricMap[normalizedMetric] = [
+            if (m in normalizedMetricMap) {
+              normalizedMetricMap[m].push(
                 {
-                  metric: m,
+                  metric: _.getMetricName(m),
+                  hosts: correlatedMetrics[m]
+                });
+            } else {
+              normalizedMetricMap[m] = [
+                {
+                  metric: _.getMetricName(m),
                   hosts: correlatedMetrics[m]
                 }];
-              }
-            } else {
-              if (m in normalizedMetricMap) {
-                normalizedMetricMap[m].push(
-                  {
-                    metric: m,
-                    hosts: correlatedMetrics[m]
-                  });
-              } else {
-                normalizedMetricMap[m] = [
-                  {
-                    metric: m,
-                    hosts: correlatedMetrics[m]
-                  }];
-              }
             }
           }
           for (var metric in normalizedMetricMap) {
@@ -105,6 +83,19 @@ function (angular, _) {
               total: true,
               show: true,
               values: true
+            },
+            grid: {
+              leftLogBase: 1,
+              leftMax: null,
+              leftMin: null,
+              rightLogBase: 1,
+              rightMax: null,
+              rightMin: null,
+              threshold1: alertMgrSrv.currentCritialThreshold,
+              threshold1Color: "rgba(216, 169, 27, 0.61)",
+              threshold2: alertMgrSrv.currentWarningThreshold,
+              threshold2Color: "rgba(251, 0, 0, 0.57)",
+              thresholdLine: true
             }
           }
         ]
@@ -140,22 +131,22 @@ function (angular, _) {
       var flag = true;
 
       _.each($scope.dashboard.rows[0].panels[0].targets,function(target) {
-        if(target.metric === metricName){
+        if(target.metric === _.getMetricName(metricName)){
           target.hide = !target.hide;
           flag = false;
         }
       });
       if(flag) {
         var target = {
-          "aggregator":"sum",
+          "aggregator":"avg",
           "currentTagKey":"",
           "currentTagValue":"",
           "downsampleAggregator":"avg",
-          "downsampleInterval":"",
+          "downsampleInterval":"1m",
           "errors":{},
           "hide":false,
           "isCounter":false,
-          "metric":metricName,
+          "metric":_.getMetricName(metricName),
           "shouldComputeRate":false,
           "tags":{"host":metricNameMap[metricName][0]}
         };

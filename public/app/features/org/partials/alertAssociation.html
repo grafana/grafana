@@ -82,7 +82,7 @@
             <div controls controls-row>
               <label class="span3 checkbox" ng-repeat="(metricsName, metricsValue) in correlatedMetrics">
                 <input ng-checked="$index == 0 " type="checkbox" ng-click="addQuery(metricsName)">
-                {{metricsName}}</input>
+                {{_.getMetricName(metricsName)}}</input>
               </label>
             </div>
           </div>

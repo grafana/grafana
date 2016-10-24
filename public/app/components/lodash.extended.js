@@ -28,5 +28,12 @@ function () {
     }
   });
 
+  _.getMetricName = function (metricName) {
+    var elem = metricName.split(".");
+    if(elem.length != 3){
+      return metricName;
+    }
+    return elem[2];
+  };
   return _;
 });

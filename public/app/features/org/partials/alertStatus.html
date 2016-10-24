@@ -32,7 +32,7 @@
             {{alertDetail.status.monitoredEntity}}
           </td>
           <td style="width:40%">
-            {{alertDetail.metric}}
+            {{_.getMetricName(alertDetail.metric)}}
           </td>
           <td style="width:40%">
             {{alertDetail.definition.alertDetails.crit.threshold}}
@@ -41,7 +41,7 @@
             {{alertDetail.status.level}}
           </td>
           <td style="width: 10%">
-            <a href="/alerts/association/{{alertDetail.metric}}/{{alertDetail.status.monitoredEntity}}/{{correlationThreshold}}" class="btn btn-mini btn-primary">
+            <a href="/alerts/association/{{alertDetail.metric}}/{{alertDetail.status.monitoredEntity}}/{{correlationThreshold}}" class="btn btn-mini btn-primary" ng-click="resetCurrentThreshold(alertDetail.definition.alertDetails)">
               <i class="fa fa-signal"></i>
               相关联指标
             </a>
