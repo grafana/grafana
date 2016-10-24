@@ -7,15 +7,19 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('OnCallersCtrl', function($scope, oncallerMgrSrv, alertSrv) {
+  module.controller('OnCallersCtrl', function($scope, oncallerMgrSrv, alertSrv, backendSrv, contextSrv) {
 
     $scope.init = function() {
       oncallerMgrSrv.load().then(function onSuccess(response) {
         $scope.oncallerDefList = response.data;
+        $scope.orgName = contextSrv.user.orgName;
       }, function onFailed(response) {
         $scope.err = response.message || "Request failed";
         $scope.status = response.status;
       });
+    };
+    $scope.getSystemName = function (id) {
+      return backendSrv.getSystemById(id);
     };
 
     $scope.remove = function(oncallerOrg, oncallerService) {

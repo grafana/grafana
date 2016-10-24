@@ -34,11 +34,11 @@ function (angular) {
     };
 
     $scope.updateSystems = function() {
-      backendSrv.put('/api/org/system', {System: $scope.systems});
+      backendSrv.put('/api/org/system', {System: $scope.systems}).then(backendSrv.updateSystemsMap());
     };
 
     $scope.addSystem = function() {
-      backendSrv.post('/api/org/system', {SystemsName: [$scope.newSystemName]}).then($scope.getOrgInfo);
+      backendSrv.post('/api/org/system', {SystemsName: [$scope.newSystemName]}).then($scope.getOrgInfo).then(backendSrv.updateSystemsMap());
     };
 
     $scope.init();

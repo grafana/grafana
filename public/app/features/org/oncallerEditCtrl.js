@@ -6,10 +6,14 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('OnCallerEditCtrl', function($scope, $routeParams, $location, oncallerMgrSrv, alertSrv) {
+  module.controller('OnCallerEditCtrl', function($scope, $routeParams, $location, oncallerMgrSrv, alertSrv, contextSrv, backendSrv) {
 
     $scope.init = function() {
-      $scope.oncallerDef = oncallerMgrSrv.get($routeParams.id);
+      $scope.oncallerDef = oncallerMgrSrv.get($routeParams.id) || {};
+      $scope.oncallerDef.org = contextSrv.user.orgId;
+      $scope.oncallerDef.service = contextSrv.system;
+      $scope.orgName = contextSrv.user.orgName;
+      $scope.serviceName = backendSrv.getSystemById(contextSrv.system);
       $scope.isNew = !$scope.oncallerDef;
     };
 

@@ -34,9 +34,7 @@ function (angular, _) {
         $scope.alertDef.alertDetails.hostQuery.metricQueries = [];
       }
       $scope.orgName = contextSrv.user.orgName;
-      backendSrv.getSystemById(contextSrv.system).then(function (system) {
-        $scope.serviceName = system;
-      });
+      $scope.serviceName = backendSrv.getSystemById(contextSrv.system);
     };
 
     $scope.saveChanges = function() {

@@ -8,7 +8,7 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('backendSrv', function($http, alertSrv, $timeout) {
+  module.service('backendSrv', function($http, alertSrv, $timeout, contextSrv) {
     var self = this;
 
     this.get = function(url, params) {
@@ -128,15 +128,23 @@ function (angular, _, config) {
     };
 
     this.getSystemById = function (id) {
+      var sys = '';
+      _.each(contextSrv.systemsMap, function (system) {
+        if (system.Id == id) {
+          sys = system.SystemsName;
+        }
+      });
+      return sys;
+    };
+
+    //update system cache when systems change
+    this.updateSystemsMap = function() {
       return this.get("/api/user/system").then(function (systems) {
-        var sys = '';
-        _.each(systems, function (system) {
-          if (system.Id == id) {
-            sys = system.SystemsName;
-          }
-        });
-        return sys;
-      })
-    }
+        contextSrv.systemsMap = systems;
+      });
+    };
+    this.updateSystemId = function(id) {
+      contextSrv.system = id;
+    };
   });
 });

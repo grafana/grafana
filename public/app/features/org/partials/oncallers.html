@@ -21,12 +21,12 @@
         <td></td>
       </tr>
       <tr ng-repeat="oncallerDef in oncallerDefList">
-        <td style="width:1%">
+        <td style="width:30%">
           <i class="fa fa-phone"></i> &nbsp;
-          {{oncallerDef.org}}
+          {{orgName}}
         </td>
         <td style="width:90%">
-          {{oncallerDef.service}}
+          {{getSystemName(oncallerDef.service)}}
         </td>
         <td style="width: 1%">
           <a href="oncallers/edit/{{oncallerDef.org}}:{{oncallerDef.service}}" class="btn btn-inverse btn-mini">

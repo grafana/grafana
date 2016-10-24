@@ -19,6 +19,7 @@ function (angular) {
     this.currentCritialThreshold = 0;
     this.currentWarningThreshold = 0;
     this.init = function() {
+      backendSrv.updateSystemsMap();
       backendSrv.get('/api/alertsource').then(function(result) {
         // TODO: add current user's org name as filters. Otherwise, he will see all alerts not in his org.
         alertUrlRoot = result.alert.alert_urlroot;
