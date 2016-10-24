@@ -159,19 +159,28 @@ module.directive('panelResizer', function($rootScope) {
         }
 
         scope.$apply(function() {
-          ctrl.render();
+         // ctrl.render();
         });
       }
 
       function dragEndHandler() {
+        ctrl.panel.span = Math.round(ctrl.panel.span);
+        if (lastPanel) {
+          lastPanel.span = Math.round(lastPanel.span);
+        }
+
         // if close to 12
         var rowSpan = ctrl.dashboard.rowSpan(ctrl.row);
         if (rowSpan < 12 && rowSpan > 11) {
           lastPanel.span +=  12 - rowSpan;
         }
 
-        scope.$apply(function() {
-          $rootScope.$broadcast('render');
+        // first digest to propagate panel width change
+        // then render
+        $rootScope.$apply(function() {
+          setTimeout(function() {
+            $rootScope.$broadcast('render');
+          });
         });
 
         $('body').off('mousemove', moveHandler);
