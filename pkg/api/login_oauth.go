@@ -53,7 +53,11 @@ func OAuthLogin(ctx *middleware.Context) {
 	if code == "" {
 		state := GenStateString()
 		ctx.Session.Set(middleware.SESS_KEY_OAUTH_STATE, state)
-		ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
+		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
+			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
+		}else{
+			ctx.Redirect(connect.AuthCodeURL(state, oauth2.SetParam("hd", setting.OAuthService.OAuthInfos[name].HostedDomain), oauth2.AccessTypeOnline));
+		}
 		return
 	}
 
