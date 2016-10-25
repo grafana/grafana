@@ -210,7 +210,7 @@ div.flot-text {
 }
 
 .dash-row-handle-column {
-  width: 2rem;
+  min-width: 1.5rem;
   background: $input-label-bg;
   display: flex;
   flex-direction: column;
@@ -235,8 +235,8 @@ div.flot-text {
   flex-direction: row;
   text-align: left;
   align-items: center;
-  background: $input-label-bg;
   margin-right: $panel-margin;
+  margin-left: $gf-form-margin;
 }
 
 .dash-row-header-title {

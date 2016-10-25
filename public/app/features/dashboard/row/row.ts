@@ -1,6 +1,9 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
+import $ from 'jquery';
+import angular from 'angular';
+
 import config from 'app/core/config';
 import {coreModule, appEvents} from 'app/core/core';
 
@@ -12,6 +15,7 @@ export class DashRowCtrl {
    /** @ngInject */
   constructor(private $scope, private $rootScope, private $timeout) {
     this.panelPlugins = config.panels;
+    this.row.title = this.row.title || 'Row title';
   }
 
   onDrop(panelId, dropTarget) {
@@ -30,6 +34,10 @@ export class DashRowCtrl {
     }
 
     this.$rootScope.$broadcast('render');
+  }
+
+  onDragEnter(data) {
+    console.log('drag enter', data);
   }
 
   addPanel(panel) {
