@@ -1,0 +1,42 @@
+<div class="dash-row-options">
+
+  <div class="tabbed-view-header">
+    <h2 class="tabbed-view-title">
+      Row Options
+    </h2>
+
+    <button class="tabbed-view-close-btn" ng-click="ctrl.onClose()">
+      <i class="fa fa-remove"></i>
+    </button>
+  </div>
+
+  <br>
+
+  <div class="gf-form-group">
+    <div class="gf-form-inline">
+
+      <div class="gf-form">
+        <span class="gf-form-label width-6">Title</span>
+        <input type="text" class="gf-form-input max-width-14" ng-model='ctrl.row.title'></input>
+      </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-6">Height</span>
+        <input type="text" class="gf-form-input max-width-8" ng-model='ctrl.row.height'></input>
+      </div>
+      <gf-form-switch class="gf-form" label="Show Title" tooltip="Check to always show row title" checked="ctrl.row.showTitle">
+      </gf-form-switch>
+    </div>
+  </div>
+
+  <h5 class="section-heading">Row Templating</h5>
+
+  <div class="gf-form-group">
+    <div class="gf-form">
+      <span class="gf-form-label">Repeat Row</span>
+      <div class="gf-form-select-wrapper max-width-10">
+        <select class="gf-form-input" ng-model="row.repeat" ng-options="f.name as f.name for f in dashboard.templating.list">
+          <option value=""></option>
+      </div>
+    </div>
+  </div>
+</div>

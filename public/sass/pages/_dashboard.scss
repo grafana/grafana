@@ -202,32 +202,10 @@ div.flot-text {
 }
 
 //
-// Dashboard row header
+// Dashboard row
 //
 
 .dash-row {
-  display: flex;
-}
-
-.dash-row-handle-column {
-  min-width: 1.5rem;
-  background: $input-label-bg;
-  display: flex;
-  flex-direction: column;
-}
-
-.dash-row-move-handle {
-  background: url($btn-drag-image) no-repeat 50% 50%;
-  background-size: 8px;
-  flex-grow: 1;
-  cursor: move;
-}
-
-.dash-row-resize-handle {
-}
-
-.dash-row-content {
-  flex-grow: 1;
 }
 
 .dash-row-header {
@@ -244,10 +222,6 @@ div.flot-text {
   padding: 0.7rem;
 }
 
-.dash-row-header-settings {
-  display: block;
-}
-
 .dash-row-header-chevron {
   flex-grow: 100;
   text-align: right;
@@ -262,7 +236,6 @@ div.flot-text {
   }
 }
 
-
 .dash-edit-mode {
   .dash-row {
     margin-bottom: $spacer;
@@ -273,14 +246,24 @@ div.flot-text {
   }
 }
 
-.fa.fa-wrench-close:after {
-  content: "";
-  position: absolute;
-  width: .22rem;
-  height: 33.421356%;
-  top: 19px;
-  display: block;
-  background: #33B5E5;
-  left: 181px;
-  transform: translate(-50%, 0) rotate(-45deg);
+.dash-row-options {
+  background: $panel-bg;
+  margin: 0 $panel-margin*2 0 $panel-margin;
+  padding: $spacer*2;
+}
+
+.dash-row-options-close-btn {
+  float: right;
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+  border: none;
+  padding: ($tabs-padding-top + $tabs-top-margin) $spacer $tabs-padding-bottom;
+  i {
+    font-size: 120%;
+  }
+  color: $text-color;
+  &:hover {
+    color: $white;
+  }
 }

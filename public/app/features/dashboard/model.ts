@@ -34,6 +34,7 @@ export class DashboardModel {
   gnetId: any;
   meta: any;
   events: any;
+  editMode: boolean;
 
   constructor(data, meta) {
     if (!data) {
@@ -171,12 +172,22 @@ export class DashboardModel {
     row.panels.push(panel);
   }
 
-  isSubmenuFeaturesEnabled() {
+  toggleEditMode() {
+    this.editMode = !this.editMode;
+    this.updateSubmenuVisibility();
+  }
+
+  updateSubmenuVisibility() {
+    if (this.editMode) {
+      this.meta.submenuEnabled = true;
+      return;
+    }
+
     var visableTemplates = _.filter(this.templating.list, function(template) {
       return template.hideVariable === undefined || template.hideVariable === false;
     });
 
-    return visableTemplates.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
+    this.meta.submenuEnabled = visableTemplates.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
   }
 
   getPanelInfoById(panelId) {

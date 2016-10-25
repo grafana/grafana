@@ -56,7 +56,7 @@ export class VariableEditorCtrl {
       if ($scope.isValid()) {
         $scope.variables.push($scope.current);
         $scope.update();
-        $scope.updateSubmenuVisibility();
+        $scope.dashboard.updateSubmenuVisibility();
       }
     };
 
@@ -110,7 +110,7 @@ export class VariableEditorCtrl {
       $scope.current = variableSrv.createVariableFromModel(clone);
       $scope.variables.push($scope.current);
       $scope.current.name = 'copy_of_'+variable.name;
-      $scope.updateSubmenuVisibility();
+      $scope.dashboard.updateSubmenuVisibility();
     };
 
     $scope.update = function() {

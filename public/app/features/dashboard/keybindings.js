@@ -44,7 +44,7 @@ function(angular, $) {
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+b', function() {
-        scope.dashboard.editMode = !scope.dashboard.editMode;
+        scope.dashboard.toggleEditMode();
       }, { inputDisabled: true });
 
       keyboardManager.bind('ctrl+s', function(evt) {

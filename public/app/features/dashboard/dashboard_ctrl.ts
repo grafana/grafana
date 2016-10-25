@@ -64,7 +64,7 @@ export class DashboardCtrl {
 
           dashboardKeybindings.shortcuts($scope);
 
-          $scope.updateSubmenuVisibility();
+          $scope.dashboard.updateSubmenuVisibility();
           $scope.setWindowTitleAndTheme();
 
           $scope.appEvent("dashboard-initialized", $scope.dashboard);
@@ -92,10 +92,6 @@ export class DashboardCtrl {
 
       $scope.templateVariableUpdated = function() {
         dynamicDashboardSrv.process();
-      };
-
-      $scope.updateSubmenuVisibility = function() {
-        $scope.submenuEnabled = $scope.dashboard.isSubmenuFeaturesEnabled();
       };
 
       $scope.setWindowTitleAndTheme = function() {

@@ -7,6 +7,8 @@ import angular from 'angular';
 import config from 'app/core/config';
 import {coreModule, appEvents} from 'app/core/core';
 
+import './options';
+
 export class DashRowCtrl {
   dashboard: any;
   row: any;
@@ -47,11 +49,9 @@ export class DashRowCtrl {
     });
   }
 
-  editRow() {
-    // this.appEvent('show-dash-editor', {
-    //   src: 'public/app/partials/roweditor.html',
-    //   scope: this.$scope.$new()
-    // });
+  setHeight(height) {
+    this.row.height = height;
+    this.$scope.$broadcast('render');
   }
 
   addPanelDefault(type) {
@@ -85,6 +85,36 @@ export class DashRowCtrl {
         this.dashboard.rows = _.without(this.dashboard.rows, this.row);
       }
     });
+  }
+
+  moveRow(direction) {
+    var rowsList = this.dashboard.rows;
+    var rowIndex = _.indexOf(rowsList, this.row);
+    var newIndex = rowIndex;
+    switch (direction) {
+      case 'up': {
+        newIndex = rowIndex - 1;
+        break;
+      }
+      case 'down': {
+        newIndex = rowIndex + 1;
+        break;
+      }
+      case 'top': {
+        newIndex = 0;
+        break;
+      }
+      case 'bottom': {
+        newIndex = rowsList.length - 1;
+        break;
+      }
+      default: {
+        newIndex = rowIndex;
+      }
+    }
+    if (newIndex >= 0 && newIndex <= (rowsList.length - 1)) {
+      _.move(rowsList, rowIndex, newIndex);
+    }
   }
 }
 
@@ -122,7 +152,6 @@ coreModule.directive('dashRow', rowDirective);
 
 
 coreModule.directive('panelWidth', function($rootScope) {
-
   return function(scope, element) {
     var fullscreen = false;
 

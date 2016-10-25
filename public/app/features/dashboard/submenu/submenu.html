@@ -1,4 +1,11 @@
 <div class="submenu-controls gf-form-query">
+
+  <div class="gf-form submenu-item" ng-if="ctrl.variables.length === 0">
+    <a class="gf-form-label" ng-click="ctrl.openEditView('templating')">
+      Add Templating
+    </a>
+  </div>
+
   <div ng-repeat="variable in ctrl.variables" ng-hide="variable.hide === 2" class="submenu-item gf-form-inline">
     <div class="gf-form">
       <label class="gf-form-label template-variable" ng-hide="variable.hide === 1">
@@ -7,6 +14,12 @@
       <value-select-dropdown ng-if="variable.type !== 'adhoc'" variable="variable" on-updated="ctrl.variableUpdated(variable)" get-values-for-tag="ctrl.getValuesForTag(variable, tagKey)"></value-select-dropdown>
     </div>
     <ad-hoc-filters ng-if="variable.type === 'adhoc'" variable="variable"></ad-hoc-filters>
+  </div>
+
+  <div class="gf-form submenu-item" ng-if="ctrl.dashboard.annotations.list.length === 0">
+    <a class="gf-form-label" ng-click="ctrl.openEditView('annotations')">
+      Add Annotations
+    </a>
   </div>
 
   <div ng-if="ctrl.dashboard.annotations.list.length > 0">
@@ -20,6 +33,12 @@
 
   <div ng-if="ctrl.dashboard.links.length > 0" >
     <dash-links-container links="ctrl.dashboard.links" class="gf-form-inline"></dash-links-container>
+  </div>
+
+  <div class="gf-form" ng-if="ctrl.dashboard.editMode" ng-click="ctrl.exitBuildMode();">
+    <button class="btn btn-primary gf-form-btn">
+      Exit Build Mode
+    </button>
   </div>
 
   <div class="clearfix"></div>
