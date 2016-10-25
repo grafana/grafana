@@ -7,9 +7,10 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('AnomalyCtrl', function ($scope, healthSrv) {
+    module.controller('AnomalyCtrl', function ($scope, healthSrv, backendSrv, contextSrv) {
 
       $scope.reload = function () {
+        $scope.system = backendSrv.getSystemById(contextSrv.system);
         healthSrv.load().then(function (data) {
           $scope.applicationHealth = Math.floor(data.health);
           $scope.includeMetricsData = floor(data.includedMetricHealths);

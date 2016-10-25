@@ -58,11 +58,7 @@ define([
     };
 
     module.controller('AnomalyMetric', function ($scope, healthSrv, $routeParams, $timeout, contextSrv) {
-        var tmpMetricName1 = $routeParams.metric;
-        var tmpIndex1 = tmpMetricName1.indexOf(".");
-        var tmpMetricName2 = tmpMetricName1.substring(tmpIndex1+1);
-        var tmpIndex2 = tmpMetricName2.indexOf(".");
-        var metricName = tmpMetricName2.substring(tmpIndex2+1);
+        var metricName = $routeParams.metric;
 
         $scope.init = function () {
           var anomalyList = healthSrv.anomalyMetricsData;
@@ -108,6 +104,7 @@ define([
         }
 
         function setPanelMetaHost(panelDef, metric, hostname) {
+          metric = _.getMetricName(metric);
           var alias = metric + ".anomaly{host=" + hostname + "}";
           var panel = panelDef.panels[0];
           panel.title = metric + "指标异常情况";

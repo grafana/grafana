@@ -6,7 +6,7 @@
 
 <div class="page-container" style="float: left;width: 93%">
   <div class="page" style="float: left;">
-    <h2>售后系统</h2>
+    <h2>{{system}}</h2>
     <h4>参与总体计算指标<span class="btn btn-small btn-success">健康值:{{applicationHealth}}%</span></h4>
 
     <div ng-if="includeMetricsData.length === 0">
@@ -22,7 +22,7 @@
       <tr ng-repeat="anomalyDef in includeMetricsData">
         <td style="width:1%">
           <i class="fa fa-bell"></i> &nbsp;
-          {{anomalyDef.metric}}
+          {{_.getMetricName(anomalyDef.metric)}}
         </td>
         <td style="width:70%;padding: 20px 50px 0px 10px;">
           <div class="progress progress-striped active">
@@ -59,7 +59,7 @@
       <tr ng-repeat="anomalyDef in excludeMetricsData">
         <td style="width:1%">
           <i class="fa fa-check-square-o"></i> &nbsp;
-          {{anomalyDef.metric}}
+          {{_.getMetricName(anomalyDef.metric)}}
         </td>
         <td style="width:50%;padding: 20px 50px 0px 10px;">
           <div class="progress progress-striped active">
