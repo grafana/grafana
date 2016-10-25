@@ -12,6 +12,7 @@ import (
 type SocialGoogle struct {
 	*oauth2.Config
 	allowedDomains []string
+	hostedDomain   string
 	apiUrl         string
 	allowSignup    bool
 }
