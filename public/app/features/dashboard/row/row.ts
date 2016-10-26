@@ -5,36 +5,23 @@ import $ from 'jquery';
 import angular from 'angular';
 
 import config from 'app/core/config';
-import {coreModule, appEvents} from 'app/core/core';
+import {coreModule} from 'app/core/core';
 
 import './options';
 
 export class DashRowCtrl {
   dashboard: any;
   row: any;
-  panelPlugins;
-  addPanelSegment;
+  showOptions: boolean;
 
-   /** @ngInject */
+  /** @ngInject */
   constructor(private $scope, private $rootScope, private $timeout, private uiSegmentSrv, private $q) {
-    this.panelPlugins = config.panels;
-    console.log(this.panelPlugins);
-
     this.row.title = this.row.title || 'Row title';
-    this.addPanelSegment = uiSegmentSrv.newSegment({
-      value: 'add',
-      custom: 'false',
-      html: 'Add Panel <i class="fa fa-plus"></i>',
-      renderer: (item, defaultHighlighter) => {
-        return '<img src="' + item.img + '">' + defaultHighlighter(item.text);
-      }
-    });
-  }
 
-  getPanels() {
-    return this.$q.when(_.map(config.panels, panel => {
-      return this.uiSegmentSrv.newSegment({value: panel.name});
-    }));
+    if (this.row.isNew) {
+      this.showOptions = true;
+      delete this.row.isNew;
+    }
   }
 
   onDrop(panelId, dropTarget) {
@@ -55,49 +42,9 @@ export class DashRowCtrl {
     this.$rootScope.$broadcast('render');
   }
 
-  addPanel(panel) {
-    this.dashboard.addPanel(panel, this.row);
-    this.$timeout(() => {
-      this.$scope.$broadcast('render');
-    });
-  }
-
   setHeight(height) {
     this.row.height = height;
     this.$scope.$broadcast('render');
-  }
-
-  addPanelDefault(type) {
-    var defaultSpan = 12;
-    var _as = 12 - this.dashboard.rowSpan(this.row);
-
-    var panel = {
-      title: config.new_panel_title,
-      error: false,
-      span: _as < defaultSpan && _as > 0 ? _as : defaultSpan,
-      editable: true,
-      type: type,
-      isNew: true,
-    };
-
-    this.addPanel(panel);
-  }
-
-  deleteRow() {
-    if (!this.row.panels.length) {
-      this.dashboard.rows = _.without(this.dashboard.rows, this.row);
-      return;
-    }
-
-    appEvents.emit('confirm-modal', {
-      title: 'Delete',
-      text: 'Are you sure you want to delete this row?',
-      icon: 'fa-trash',
-      yesText: 'Delete',
-      onConfirm: () => {
-        this.dashboard.rows = _.without(this.dashboard.rows, this.row);
-      }
-    });
   }
 
   moveRow(direction) {

@@ -107,6 +107,7 @@ export class DashboardCtrl {
           title: 'New row',
           panels: [],
           height: '250px',
+          isNew: true,
         });
       };
 

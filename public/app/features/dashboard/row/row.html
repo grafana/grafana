@@ -1,70 +1,25 @@
-<div class="dash-row-header gf-form-inline" ng-if="ctrl.dashboard.editMode">
-  <div class="gf-form gf-form--grow dropdown">
-    <a class="btn gf-form-btn btn-inverse dropdown-toggle" data-toggle="dropdown">
-      <span>{{ctrl.row.title}}</span>
-      <i class="fa fa-caret-down"></i>
+<div class="dash-row-header">
+  <a class="dash-row-header-title" ng-click="ctrl.showOptions = !ctrl.showOptions">
+    <span ng-class="ctrl.row.titleSize">{{ctrl.row.title}}</span>
+    <i class="fa fa-caret-down"></i>
+  </a>
+
+  <div class="dash-row-header-spacer">
+  </div>
+
+  <div class="dash-row-collapse-toggle" ng-click="ctrl.row.collapse = !ctrl.row.collapse">
+    <a class="pointer">
+      <i class="fa fa-chevron-down" ng-show="!ctrl.row.collapse"></i>
+      <i class="fa fa-chevron-right" ng-show="ctrl.row.collapse"></i>
     </a>
-
-    <ul class="dropdown-menu" role="menu" aria-labelledby="drop1">
-      <li>
-        <a ng-click="ctrl.showOptions = !ctrl.showOptions">Options</a>
-      </li>
-      <li class="dropdown-submenu">
-        <a href="javascript:void(0);">Height</a>
-        <ul class="dropdown-menu">
-          <li><a ng-click="ctrl.setHeight('25px')">25 px</a></li>
-          <li><a ng-click="ctrl.setHeight('100px')">100 px</a></li>
-          <li><a ng-click="ctrl.setHeight('150px')">150 px</a></li>
-          <li><a ng-click="ctrl.setHeight('200px')">200 px</a></li>
-          <li><a ng-click="ctrl.setHeight('250px')">250 px</a></li>
-          <li><a ng-click="ctrl.setHeight('300px')">300 px</a></li>
-          <li><a ng-click="ctrl.setHeight('350px')">350 px</a></li>
-          <li><a ng-click="ctrl.setHeight('450px')">450 px</a></li>
-          <li><a ng-click="ctrl.setHeight('500px')">500 px</a></li>
-          <li><a ng-click="ctrl.setHeight('600px')">600 px</a></li>
-          <li><a ng-click="ctrl.setHeight('700px')">700 px</a></li>
-        </ul>
-      </li>
-      <li class="dropdown-submenu">
-        <a href="javascript:void(0);">Move</a>
-        <ul class="dropdown-menu">
-          <li><a ng-click="ctrl.Move('up')">Up</a></li>
-          <li><a ng-click="ctrl.Move('down')">Down</a></li>
-          <li><a ng-click="ctrl.Move('top')">To Top</a></li>
-          <li><a ng-click="ctrl.Move('bottom')">To Bottom</a></li>
-        </ul>
-      </li>
-      <li>
-        <a ng-click="ctrl.deleteRow()">Delete</a>
-      </li>
-    </ul>
-
-    <a class="btn gf-form-btn btn-inverse" ng-click="ctrl.addPanelMode=!ctrl.addPanelMode">
-      Add Panel
-      <i class="fa fa-plus"></i>
-    </a>
-
-    <div class="gf-form-label gf-form-label--grow text-right" ng-click="ctrl.row.collapse = !ctrl.row.collapse">
-      <a class="pointer">
-        <i class="fa fa-chevron-down" ng-show="!ctrl.row.collapse"></i>
-        <i class="fa fa-chevron-right" ng-show="ctrl.row.collapse"></i>
-      </a>
-    </div>
   </div>
 </div>
 
 <div ng-if="ctrl.showOptions">
-  <dash-row-options row="ctrl.row" on-close="ctrl.showOptions = false;"></dash-row-options>
+  <dash-row-options row-ctrl="ctrl"></dash-row-options>
 </div>
 
 <div class="panels-wrapper" ng-if="!ctrl.row.collapse">
-  <div class="add-panel-container" ng-if="ctrl.addPanelMode">
-    <div class="add-panel-item" ng-repeat="panel in ctrl.panelPlugins">
-      <img class="add-panel-item-img" ng-src="{{panel.info.logos.small}}"></img>
-      <div class="add-panel-item-name">{{panel.name}}</div>
-    </div>
-  </div>
-
   <div ng-repeat="panel in ctrl.row.panels track by panel.id" class="panel" ui-draggable="!ctrl.dashboard.meta.fullscreen" drag="panel.id" ui-on-drop="ctrl.onDrop($data, panel)" drag-handle-class="drag-handle" panel-width>
     <plugin-component type="panel" class="panel-margin">
     </plugin-component>

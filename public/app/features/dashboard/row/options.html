@@ -1,42 +1,77 @@
 <div class="dash-row-options">
 
-  <div class="tabbed-view-header">
-    <h2 class="tabbed-view-title">
-      Row Options
-    </h2>
+  <div class="edit-tab-with-sidemenu">
+    <aside class="edit-sidemenu-aside">
+      <ul class="edit-sidemenu">
+        <li ng-class="{active: ctrl.subTabIndex === 0}">
+          <a ng-click="ctrl.subTabIndex = 0">Add Panel</a>
+        </li>
+        <li ng-class="{active: ctrl.subTabIndex === 1}">
+          <a ng-click="ctrl.subTabIndex = 1">Row Options</a>
+        </li>
+        <li ng-class="{active: ctrl.subTabIndex === 2}">
+          <a ng-click="ctrl.deleteRow()">Delete</a>
+        </li>
+      </ul>
+    </aside>
 
-    <button class="tabbed-view-close-btn" ng-click="ctrl.onClose()">
-      <i class="fa fa-remove"></i>
-    </button>
-  </div>
-
-  <br>
-
-  <div class="gf-form-group">
-    <div class="gf-form-inline">
-
-      <div class="gf-form">
-        <span class="gf-form-label width-6">Title</span>
-        <input type="text" class="gf-form-input max-width-14" ng-model='ctrl.row.title'></input>
+    <div class="edit-tab-content" ng-if="ctrl.subTabIndex === 0">
+      <h5 class="section-heading">Add Panel</h5>
+      <div class="gf-form-inline">
+        <div class="gf-form">
+          <span class="gf-form-label width-6">Search</span>
+          <input type="text" class="gf-form-input max-width-14" ng-model='ctrl.panelSearch' give-focus='true' ng-keydown="ctrl.keyDown($event)" ng-change="ctrl.panelSearchChanged()"></input>
+        </div>
       </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-6">Height</span>
-        <input type="text" class="gf-form-input max-width-8" ng-model='ctrl.row.height'></input>
+
+      <div class="add-panel-panels-wrapper">
+        <div class="add-panel-panels">
+          <div class="add-panel-item" ng-repeat="panel in ctrl.panelHits" ng-class="{active: $index === ctrl.activeIndex}" ng-click="ctrl.addPanel(panel)">
+            <img class="add-panel-item-img" ng-src="{{panel.info.logos.small}}"></img>
+            <div class="add-panel-item-name">{{panel.name}}</div>
+          </div>
+        </div>
       </div>
-      <gf-form-switch class="gf-form" label="Show Title" tooltip="Check to always show row title" checked="ctrl.row.showTitle">
-      </gf-form-switch>
+
     </div>
-  </div>
 
-  <h5 class="section-heading">Row Templating</h5>
+    <div class="edit-tab-content" ng-if="ctrl.subTabIndex === 1">
+      <div class="gf-form-group">
+        <h5 class="section-heading">Options</h5>
+        <div class="gf-form-inline">
+          <div class="gf-form">
+            <span class="gf-form-label width-6">Title</span>
+            <input type="text" class="gf-form-input max-width-14" ng-model='ctrl.row.title'></input>
+          </div>
+          <div class="gf-form">
+            <label class="gf-form-label width-6">Size</label>
+            <div class="gf-form-select-wrapper">
+              <select class="input-small gf-form-input" ng-model="ctrl.row.titleSize" ng-options="f for f in ctrl.fontSizes"></select>
+            </div>
+          </div>
+          <gf-form-switch class="gf-form" label="Show" checked="ctrl.row.showTitle">
+          </gf-form-switch>
+        </div>
+        <div class="gf-form-inline">
+          <div class="gf-form">
+            <span class="gf-form-label width-6">Height</span>
+            <input type="text" class="gf-form-input max-width-14" ng-model='ctrl.row.height'></input>
+          </div>
+        </div>
+      </div>
 
-  <div class="gf-form-group">
-    <div class="gf-form">
-      <span class="gf-form-label">Repeat Row</span>
-      <div class="gf-form-select-wrapper max-width-10">
-        <select class="gf-form-input" ng-model="row.repeat" ng-options="f.name as f.name for f in dashboard.templating.list">
-          <option value=""></option>
+      <h5 class="section-heading">Row Templating</h5>
+
+      <div class="gf-form-group">
+        <div class="gf-form">
+          <span class="gf-form-label">Repeat Row</span>
+          <div class="gf-form-select-wrapper max-width-10">
+            <select class="gf-form-input" ng-model="row.repeat" ng-options="f.name as f.name for f in dashboard.templating.list">
+              <option value=""></option>
+          </div>
+        </div>
       </div>
     </div>
+
   </div>
 </div>
