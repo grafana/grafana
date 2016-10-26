@@ -92,44 +92,45 @@ func (mg *Migrator) Start() error {
 
 		mg.Logger.Debug("Executing", "sql", sql)
 
-		if err := mg.exec(m); err != nil {
-			mg.Logger.Error("Exec failed", "error", err, "sql", sql)
-			record.Error = err.Error()
-			mg.x.Insert(&record)
+		err := mg.inTransaction(func(sess *xorm.Session) error {
+
+			if err := mg.exec(m, sess); err != nil {
+				mg.Logger.Error("Exec failed", "error", err, "sql", sql)
+				record.Error = err.Error()
+				sess.Insert(&record)
+				return err
+			} else {
+				record.Success = true
+				sess.Insert(&record)
+			}
+
+			return nil
+		})
+
+		if err != nil {
 			return err
-		} else {
-			record.Success = true
-			mg.x.Insert(&record)
 		}
 	}
 
 	return nil
 }
 
-func (mg *Migrator) exec(m Migration) error {
+func (mg *Migrator) exec(m Migration, sess *xorm.Session) error {
 	mg.Logger.Info("Executing migration", "id", m.Id())
 
-	err := mg.inTransaction(func(sess *xorm.Session) error {
-
-		condition := m.GetCondition()
-		if condition != nil {
-			sql, args := condition.Sql(mg.dialect)
-			results, err := sess.Query(sql, args...)
-			if err != nil || len(results) == 0 {
-				mg.Logger.Info("Skipping migration condition not fulfilled", "id", m.Id())
-				return sess.Rollback()
-			}
+	condition := m.GetCondition()
+	if condition != nil {
+		sql, args := condition.Sql(mg.dialect)
+		results, err := sess.Query(sql, args...)
+		if err != nil || len(results) == 0 {
+			mg.Logger.Info("Skipping migration condition not fulfilled", "id", m.Id())
+			return sess.Rollback()
 		}
+	}
 
-		_, err := sess.Exec(m.Sql(mg.dialect))
-		if err != nil {
-			mg.Logger.Error("Executing migration failed", "id", m.Id(), "error", err)
-			return err
-		}
-		return nil
-	})
-
+	_, err := sess.Exec(m.Sql(mg.dialect))
 	if err != nil {
+		mg.Logger.Error("Executing migration failed", "id", m.Id(), "error", err)
 		return err
 	}
 

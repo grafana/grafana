@@ -9,6 +9,7 @@ export class User {
   isGrafanaAdmin: any;
   isSignedIn: any;
   orgRole: any;
+  timezone: string;
 
   constructor() {
     if (config.bootData.user) {

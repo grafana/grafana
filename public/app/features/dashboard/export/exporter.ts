@@ -13,7 +13,8 @@ export class DashboardExporter {
 
   makeExportable(dash) {
     var dynSrv = new DynamicDashboardSrv();
-    dynSrv.process(dash, {cleanUpOnly: true});
+    dynSrv.init(dash, {variables: dash.templating.list});
+    dynSrv.process({cleanUpOnly: true});
 
     dash.id = null;
 
@@ -24,6 +25,10 @@ export class DashboardExporter {
 
     var templateizeDatasourceUsage = obj => {
       promises.push(this.datasourceSrv.get(obj.datasource).then(ds => {
+        if (ds.meta.builtIn) {
+          return;
+        }
+
         var refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
         datasources[refName] = {
           name: refName,
@@ -46,9 +51,17 @@ export class DashboardExporter {
 
     // check up panel data sources
     for (let row of dash.rows) {
-      _.each(row.panels, (panel) => {
+      for (let panel of row.panels) {
         if (panel.datasource !== undefined) {
           templateizeDatasourceUsage(panel);
+        }
+
+        if (panel.targets) {
+          for (let target of panel.targets) {
+            if (target.datasource !== undefined) {
+              templateizeDatasourceUsage(target);
+            }
+          }
         }
 
         var panelDef = config.panels[panel.type];
@@ -60,7 +73,7 @@ export class DashboardExporter {
             version: panelDef.info.version,
           };
         }
-      });
+      }
     }
 
     // templatize template vars

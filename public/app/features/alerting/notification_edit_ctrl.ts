@@ -7,6 +7,8 @@ import config from 'app/core/config';
 
 export class AlertNotificationEditCtrl {
   model: any;
+  theForm: any;
+  testSeverity: string = "critical";
 
   /** @ngInject */
   constructor(private $routeParams, private backendSrv, private $scope, private $location) {
@@ -15,7 +17,10 @@ export class AlertNotificationEditCtrl {
     } else {
       this.model = {
         type: 'email',
-        settings: {}
+        settings: {
+          httpMethod: 'POST'
+        },
+        isDefault: false
       };
     }
   }
@@ -31,6 +36,10 @@ export class AlertNotificationEditCtrl {
   }
 
   save() {
+    if (!this.theForm.$valid) {
+      return;
+    }
+
     if (this.model.id) {
       this.backendSrv.put(`/api/alert-notifications/${this.model.id}`, this.model).then(res => {
         this.model = res;
@@ -38,14 +47,31 @@ export class AlertNotificationEditCtrl {
       });
     } else {
       this.backendSrv.post(`/api/alert-notifications`, this.model).then(res => {
-        this.$location.path('alerting/notification/' + res.id + '/edit');
         this.$scope.appEvent('alert-success', ['Notification created', '']);
+        this.$location.path('alerting/notifications');
       });
     }
   }
 
   typeChanged() {
     this.model.settings = {};
+  }
+
+  testNotification() {
+    if (!this.theForm.$valid) {
+      return;
+    }
+
+    var payload = {
+      name: this.model.name,
+      type: this.model.type,
+      settings: this.model.settings,
+    };
+
+    this.backendSrv.post(`/api/alert-notifications/test`, payload)
+      .then(res => {
+        this.$scope.appEvent('alert-succes', ['Test notification sent', '']);
+      });
   }
 }
 

@@ -17,7 +17,7 @@
 				</button>
 			</div>
 
-      <form name="loginForm" class="login-form gf-form-group" ng-show="allowUserPassLogin">
+      <form name="loginForm" class="login-form gf-form-group" ng-hide="disableLoginForm">
 				<div class="gf-form" ng-if="loginMode">
 					<span class="gf-form-label width-7">User</span>
 					<input type="text" name="username" class="gf-form-input max-width-14" required ng-model='formModel.user' placeholder={{loginHint}}>
@@ -40,7 +40,7 @@
 			</form>
 
 			<div ng-if="loginMode">
-				<div class="text-center login-divider" ng-show="oauthEnabled && allowUserPassLogin">
+				<div class="text-center login-divider" ng-show="oauthEnabled && !disableLoginForm">
 					<div class="login-divider-line">
 						<span class="login-divider-text">
 							Or login with
@@ -51,20 +51,27 @@
 				<div class="clearfix"></div>
 
 				<div class="login-oauth text-center" ng-show="oauthEnabled">
-					<a class="btn btn-large btn-google" href="login/google" target="_self" ng-if="googleAuthEnabled">
+					<a class="btn btn-large btn-google" href="login/google" target="_self" ng-if="oauth.google">
 						<i class="fa fa-google"></i>
 						with Google
 					</a>
-					<a class="btn btn-large btn-github" href="login/github" target="_self" ng-if="githubAuthEnabled">
+					<a class="btn btn-large btn-github" href="login/github" target="_self" ng-if="oauth.github">
 						<i class="fa fa-github"></i>
 						with Github
+					</a>
+					<a class="btn btn-large btn-grafana-net" href="login/grafananet" target="_self" ng-if="oauth.grafananet">
+						with <span>Grafana.net</span>
+					</a>
+					<a class="btn btn-large btn-generic-oauth" href="login/generic_oauth" target="_self" ng-if="oauth.generic_oauth">
+						<i class="fa fa-gear"></i>
+						with {{oauth.generic_oauth.name}}
 					</a>
 				</div>
 			</div>
 
 			<div class="clearfix"></div>
 
-			<div class="text-center password-recovery" ng-show="allowUserPassLogin">
+			<div class="text-center password-recovery" ng-hide="disableLoginForm">
 				<div class="text-center">
 					<a href="user/password/send-reset-email">
 						Forgot your password?

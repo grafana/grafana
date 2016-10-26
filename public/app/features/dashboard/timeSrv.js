@@ -13,6 +13,9 @@ define([
   module.service('timeSrv', function($rootScope, $timeout, $routeParams, timer) {
     var self = this;
 
+    // default time
+    this.time = {from: '6h', to: 'now'};
+
     $rootScope.$on('zoom-out', function(e, factor) { self.zoomOut(factor); });
 
     this.init = function(dashboard) {
@@ -74,12 +77,11 @@ define([
     this.setAutoRefresh = function (interval) {
       this.dashboard.refresh = interval;
       if (interval) {
-        var _i = kbn.interval_to_ms(interval);
-        var wait_ms = _i - (Date.now() % _i);
+        var interval_ms = kbn.interval_to_ms(interval);
         $timeout(function () {
-          self.start_scheduled_refresh(_i);
+          self.start_scheduled_refresh(interval_ms);
           self.refreshDashboard();
-        }, wait_ms);
+        }, interval_ms);
       } else {
         this.cancel_scheduled_refresh();
       }
@@ -119,10 +121,7 @@ define([
     };
 
     this.timeRangeForUrl = function() {
-      var range = this.timeRange(false);
-      if (_.isString(range.to) && range.to.indexOf('now')) {
-        range = this.timeRange();
-      }
+      var range = this.timeRange().raw;
 
       if (moment.isMoment(range.from)) { range.from = range.from.valueOf(); }
       if (moment.isMoment(range.to)) { range.to = range.to.valueOf(); }
@@ -130,17 +129,20 @@ define([
       return range;
     };
 
-    this.timeRange = function(parse) {
+    this.timeRange = function() {
       // make copies if they are moment  (do not want to return out internal moment, because they are mutable!)
-      var from = moment.isMoment(this.time.from) ? moment(this.time.from) : this.time.from ;
-      var to = moment.isMoment(this.time.to) ? moment(this.time.to) : this.time.to ;
+      var range = {
+        from: moment.isMoment(this.time.from) ? moment(this.time.from) : this.time.from,
+        to: moment.isMoment(this.time.to) ? moment(this.time.to) : this.time.to,
+      };
 
-      if (parse !== false) {
-        from = dateMath.parse(from, false);
-        to = dateMath.parse(to, true);
-      }
+      range = {
+        from: dateMath.parse(range.from, false),
+        to: dateMath.parse(range.to, true),
+        raw: range
+      };
 
-      return {from: from, to: to};
+      return range;
     };
 
     this.zoomOut = function(factor) {

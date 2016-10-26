@@ -38,3 +38,46 @@
     top: 2px;
   }
 }
+
+.panel-has-alert {
+  .panel-alert-icon:before {
+    content: "\e611";
+    position: relative;
+    top: 1px;
+    left: -3px;
+  }
+}
+
+.panel-alert-state {
+  &--alerting {
+    animation: alerting-panel 2s 0s infinite;
+    opacity: 1;
+
+    .panel-alert-icon:before {
+      color: $critical;
+      content: "\e610";
+    }
+  }
+
+  &--ok {
+    box-shadow: 0 0 5px rgba(0,200,0,10.8);
+    .panel-alert-icon:before {
+      color: $online;
+      content: "\e611";
+    }
+  }
+}
+
+@keyframes alerting-panel {
+  0% {
+    box-shadow: none;
+  }
+  50% {
+    box-shadow: 0 0 10px $critical;
+  }
+  100% {
+    box-shadow: none;
+  }
+}
+
+

@@ -5,25 +5,22 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"gopkg.in/guregu/null.v3"
 )
 
 var (
-	defaultTypes   []string = []string{"gt", "lt"}
-	rangedTypes    []string = []string{"within_range", "outside_range"}
-	paramlessTypes []string = []string{"no_value"}
+	defaultTypes []string = []string{"gt", "lt"}
+	rangedTypes  []string = []string{"within_range", "outside_range"}
 )
 
 type AlertEvaluator interface {
-	Eval(timeSeries *tsdb.TimeSeries, reducedValue float64) bool
+	Eval(reducedValue null.Float) bool
 }
 
-type ParameterlessEvaluator struct {
-	Type string
-}
+type NoDataEvaluator struct{}
 
-func (e *ParameterlessEvaluator) Eval(series *tsdb.TimeSeries, reducedValue float64) bool {
-	return len(series.Points) == 0
+func (e *NoDataEvaluator) Eval(reducedValue null.Float) bool {
+	return reducedValue.Valid == false
 }
 
 type ThresholdEvaluator struct {
@@ -31,7 +28,7 @@ type ThresholdEvaluator struct {
 	Threshold float64
 }
 
-func newThresholdEvaludator(typ string, model *simplejson.Json) (*ThresholdEvaluator, error) {
+func newThresholdEvaluator(typ string, model *simplejson.Json) (*ThresholdEvaluator, error) {
 	params := model.Get("params").MustArray()
 	if len(params) == 0 {
 		return nil, alerting.ValidationError{Reason: "Evaluator missing threshold parameter"}
@@ -47,14 +44,16 @@ func newThresholdEvaludator(typ string, model *simplejson.Json) (*ThresholdEvalu
 	return defaultEval, nil
 }
 
-func (e *ThresholdEvaluator) Eval(series *tsdb.TimeSeries, reducedValue float64) bool {
+func (e *ThresholdEvaluator) Eval(reducedValue null.Float) bool {
+	if reducedValue.Valid == false {
+		return false
+	}
+
 	switch e.Type {
 	case "gt":
-		return reducedValue > e.Threshold
+		return reducedValue.Float64 > e.Threshold
 	case "lt":
-		return reducedValue < e.Threshold
-	case "no_value":
-		return len(series.Points) == 0
+		return reducedValue.Float64 < e.Threshold
 	}
 
 	return false
@@ -88,12 +87,18 @@ func newRangedEvaluator(typ string, model *simplejson.Json) (*RangedEvaluator, e
 	return rangedEval, nil
 }
 
-func (e *RangedEvaluator) Eval(series *tsdb.TimeSeries, reducedValue float64) bool {
+func (e *RangedEvaluator) Eval(reducedValue null.Float) bool {
+	if reducedValue.Valid == false {
+		return false
+	}
+
+	floatValue := reducedValue.Float64
+
 	switch e.Type {
 	case "within_range":
-		return (e.Lower < reducedValue && e.Upper > reducedValue) || (e.Upper < reducedValue && e.Lower > reducedValue)
+		return (e.Lower < floatValue && e.Upper > floatValue) || (e.Upper < floatValue && e.Lower > floatValue)
 	case "outside_range":
-		return (e.Upper < reducedValue && e.Lower < reducedValue) || (e.Upper > reducedValue && e.Lower > reducedValue)
+		return (e.Upper < floatValue && e.Lower < floatValue) || (e.Upper > floatValue && e.Lower > floatValue)
 	}
 
 	return false
@@ -106,18 +111,18 @@ func NewAlertEvaluator(model *simplejson.Json) (AlertEvaluator, error) {
 	}
 
 	if inSlice(typ, defaultTypes) {
-		return newThresholdEvaludator(typ, model)
+		return newThresholdEvaluator(typ, model)
 	}
 
 	if inSlice(typ, rangedTypes) {
 		return newRangedEvaluator(typ, model)
 	}
 
-	if inSlice(typ, paramlessTypes) {
-		return &ParameterlessEvaluator{Type: typ}, nil
+	if typ == "no_data" {
+		return &NoDataEvaluator{}, nil
 	}
 
-	return nil, alerting.ValidationError{Reason: "Evaludator invalid evaluator type"}
+	return nil, alerting.ValidationError{Reason: "Evaluator invalid evaluator type: " + typ}
 }
 
 func inSlice(a string, list []string) bool {

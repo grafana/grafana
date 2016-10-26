@@ -15,7 +15,8 @@ export class DashboardCtrl {
     private $rootScope,
     dashboardKeybindings,
     timeSrv,
-    templateValuesSrv,
+    variableSrv,
+    alertingSrv,
     dashboardSrv,
     unsavedChangesSrv,
     dynamicDashboardSrv,
@@ -43,15 +44,18 @@ export class DashboardCtrl {
 
         // init services
         timeSrv.init(dashboard);
+        alertingSrv.init(dashboard, data.alerts);
 
         // template values service needs to initialize completely before
         // the rest of the dashboard can load
-        templateValuesSrv.init(dashboard)
+        variableSrv.init(dashboard)
         // template values failes are non fatal
         .catch($scope.onInitFailed.bind(this, 'Templating init failed', false))
         // continue
         .finally(function() {
-          dynamicDashboardSrv.init(dashboard);
+          dynamicDashboardSrv.init(dashboard, variableSrv);
+          dynamicDashboardSrv.process();
+
           unsavedChangesSrv.init(dashboard, $scope);
 
           $scope.dashboard = dashboard;
@@ -87,8 +91,7 @@ export class DashboardCtrl {
       };
 
       $scope.templateVariableUpdated = function() {
-        console.log('dynamic update');
-        dynamicDashboardSrv.update($scope.dashboard);
+        dynamicDashboardSrv.process();
       };
 
       $scope.updateSubmenuVisibility = function() {

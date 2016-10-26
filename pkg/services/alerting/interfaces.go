@@ -3,7 +3,7 @@ package alerting
 import "time"
 
 type EvalHandler interface {
-	Eval(context *EvalContext)
+	Eval(evalContext *EvalContext)
 }
 
 type Scheduler interface {
@@ -12,9 +12,13 @@ type Scheduler interface {
 }
 
 type Notifier interface {
-	Notify(alertResult *EvalContext)
+	Notify(evalContext *EvalContext) error
 	GetType() string
 	NeedsImage() bool
+	PassesFilter(rule *Rule) bool
+
+	GetNotifierId() int64
+	GetIsDefault() bool
 }
 
 type Condition interface {

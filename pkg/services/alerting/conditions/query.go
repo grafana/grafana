@@ -2,6 +2,8 @@ package conditions
 
 import (
 	"fmt"
+	"strings"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -32,34 +34,42 @@ type AlertQuery struct {
 }
 
 func (c *QueryCondition) Eval(context *alerting.EvalContext) {
-	seriesList, err := c.executeQuery(context)
+	timeRange := tsdb.NewTimeRange(c.Query.From, c.Query.To)
+	seriesList, err := c.executeQuery(context, timeRange)
 	if err != nil {
 		context.Error = err
 		return
 	}
 
+	emptySerieCount := 0
 	for _, series := range seriesList {
 		reducedValue := c.Reducer.Reduce(series)
-		evalMatch := c.Evaluator.Eval(series, reducedValue)
+		evalMatch := c.Evaluator.Eval(reducedValue)
+
+		if reducedValue.Valid == false {
+			emptySerieCount++
+			continue
+		}
 
 		if context.IsTestRun {
 			context.Logs = append(context.Logs, &alerting.ResultLogEntry{
-				Message: fmt.Sprintf("Condition[%d]: Eval: %v, Metric: %s, Value: %1.3f", c.Index, evalMatch, series.Name, reducedValue),
+				Message: fmt.Sprintf("Condition[%d]: Eval: %v, Metric: %s, Value: %1.3f", c.Index, evalMatch, series.Name, reducedValue.Float64),
 			})
 		}
 
 		if evalMatch {
 			context.EvalMatches = append(context.EvalMatches, &alerting.EvalMatch{
 				Metric: series.Name,
-				Value:  reducedValue,
+				Value:  reducedValue.Float64,
 			})
 		}
-
-		context.Firing = evalMatch
 	}
+
+	context.NoDataFound = emptySerieCount == len(seriesList)
+	context.Firing = len(context.EvalMatches) > 0
 }
 
-func (c *QueryCondition) executeQuery(context *alerting.EvalContext) (tsdb.TimeSeriesSlice, error) {
+func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *tsdb.TimeRange) (tsdb.TimeSeriesSlice, error) {
 	getDsInfo := &m.GetDataSourceByIdQuery{
 		Id:    c.Query.DatasourceId,
 		OrgId: context.Rule.OrgId,
@@ -69,10 +79,10 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext) (tsdb.TimeS
 		return nil, fmt.Errorf("Could not find datasource")
 	}
 
-	req := c.getRequestForAlertRule(getDsInfo.Result)
+	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange)
 	result := make(tsdb.TimeSeriesSlice, 0)
 
-	resp, err := c.HandleRequest(req)
+	resp, err := c.HandleRequest(context.Ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("tsdb.HandleRequest() error %v", err)
 	}
@@ -95,16 +105,13 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext) (tsdb.TimeS
 	return result, nil
 }
 
-func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource) *tsdb.Request {
+func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRange *tsdb.TimeRange) *tsdb.Request {
 	req := &tsdb.Request{
-		TimeRange: tsdb.TimeRange{
-			From: c.Query.From,
-			To:   c.Query.To,
-		},
+		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
 			{
 				RefId: "A",
-				Query: c.Query.Model.Get("target").MustString(),
+				Model: c.Query.Model,
 				DataSource: &tsdb.DataSourceInfo{
 					Id:                datasource.Id,
 					Name:              datasource.Name,
@@ -116,6 +123,7 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource) *tsdb.
 					BasicAuth:         datasource.BasicAuth,
 					BasicAuthUser:     datasource.BasicAuthUser,
 					BasicAuthPassword: datasource.BasicAuthPassword,
+					JsonData:          datasource.JsonData,
 				},
 			},
 		},
@@ -134,6 +142,15 @@ func NewQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 	condition.Query.Model = queryJson.Get("model")
 	condition.Query.From = queryJson.Get("params").MustArray()[1].(string)
 	condition.Query.To = queryJson.Get("params").MustArray()[2].(string)
+
+	if err := validateFromValue(condition.Query.From); err != nil {
+		return nil, err
+	}
+
+	if err := validateToValue(condition.Query.To); err != nil {
+		return nil, err
+	}
+
 	condition.Query.DatasourceId = queryJson.Get("datasourceId").MustInt64()
 
 	reducerJson := model.Get("reducer")
@@ -147,4 +164,27 @@ func NewQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 
 	condition.Evaluator = evaluator
 	return &condition, nil
+}
+
+func validateFromValue(from string) error {
+	fromRaw := strings.Replace(from, "now-", "", 1)
+
+	_, err := time.ParseDuration("-" + fromRaw)
+	return err
+}
+
+func validateToValue(to string) error {
+	if to == "now" {
+		return nil
+	} else if strings.HasPrefix(to, "now-") {
+		withoutNow := strings.Replace(to, "now-", "", 1)
+
+		_, err := time.ParseDuration("-" + withoutNow)
+		if err == nil {
+			return nil
+		}
+	}
+
+	_, err := time.ParseDuration(to)
+	return err
 }

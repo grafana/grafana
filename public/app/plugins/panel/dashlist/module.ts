@@ -112,7 +112,7 @@ class DashListCtrl extends PanelCtrl {
       return Promise.resolve();
     }
 
-    var dashIds = _.first(impressions.getDashboardOpened(), this.panel.limit);
+    var dashIds = _.take(impressions.getDashboardOpened(), this.panel.limit);
     return this.backendSrv.search({dashboardIds: dashIds, limit: this.panel.limit}).then(result => {
       this.groups[1].list = dashIds.map(orderId => {
         return _.find(result, dashboard => {

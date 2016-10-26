@@ -18,8 +18,8 @@ type Rule struct {
 	Frequency     int64
 	Name          string
 	Message       string
+	NoDataState   m.NoDataOption
 	State         m.AlertStateType
-	Severity      m.AlertSeverityType
 	Conditions    []Condition
 	Notifications []int64
 }
@@ -43,17 +43,27 @@ var unitMultiplier = map[string]int{
 	"h": 3600,
 }
 
-func getTimeDurationStringToSeconds(str string) int64 {
+func getTimeDurationStringToSeconds(str string) (int64, error) {
 	multiplier := 1
 
-	value, _ := strconv.Atoi(ValueFormatRegex.FindAllString(str, 1)[0])
+	matches := ValueFormatRegex.FindAllString(str, 1)
+
+	if len(matches) <= 0 {
+		return 0, fmt.Errorf("Frequency could not be parsed")
+	}
+
+	value, err := strconv.Atoi(matches[0])
+	if err != nil {
+		return 0, err
+	}
+
 	unit := UnitFormatRegex.FindAllString(str, 1)[0]
 
 	if val, ok := unitMultiplier[unit]; ok {
 		multiplier = val
 	}
 
-	return int64(value * multiplier)
+	return int64(value * multiplier), nil
 }
 
 func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
@@ -65,8 +75,8 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	model.Name = ruleDef.Name
 	model.Message = ruleDef.Message
 	model.Frequency = ruleDef.Frequency
-	model.Severity = ruleDef.Severity
 	model.State = ruleDef.State
+	model.NoDataState = m.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
 
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)

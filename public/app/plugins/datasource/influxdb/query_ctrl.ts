@@ -191,8 +191,8 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.target.rawQuery = !this.target.rawQuery;
   }
 
-  getMeasurements() {
-    var query = this.queryBuilder.buildExploreQuery('MEASUREMENTS');
+  getMeasurements(measurementFilter) {
+    var query = this.queryBuilder.buildExploreQuery('MEASUREMENTS', undefined, measurementFilter);
     return this.datasource.metricFindQuery(query)
       .then(this.transformToSegments(true))
       .catch(this.handleQueryError.bind(this));

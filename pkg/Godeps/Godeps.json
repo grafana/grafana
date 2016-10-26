@@ -1,9 +1,0 @@
-{
-	"ImportPath": "github.com/grafana/grafana/pkg",
-	"GoVersion": "go1.6",
-	"GodepVersion": "v60",
-	"Packages": [
-		"./pkg/..."
-	],
-	"Deps": []
-}

@@ -100,10 +100,7 @@ Parser.prototype = {
   },
 
   metricExpression: function() {
-    if (!this.match('templateStart') &&
-        !this.match('identifier') &&
-          !this.match('number') &&
-            !this.match('{')) {
+    if (!this.match('templateStart') && !this.match('identifier') && !this.match('number') && !this.match('{')) {
       return null;
     }
 

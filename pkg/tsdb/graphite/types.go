@@ -1,6 +1,8 @@
 package graphite
 
+import "github.com/grafana/grafana/pkg/tsdb"
+
 type TargetResponseDTO struct {
-	Target     string       `json:"target"`
-	DataPoints [][2]float64 `json:"datapoints"`
+	Target     string                `json:"target"`
+	DataPoints tsdb.TimeSeriesPoints `json:"datapoints"`
 }

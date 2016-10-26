@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	m "github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -20,23 +20,28 @@ func TestAlertRuleModel(t *testing.T) {
 		})
 
 		Convey("Can parse seconds", func() {
-			seconds := getTimeDurationStringToSeconds("10s")
+			seconds, _ := getTimeDurationStringToSeconds("10s")
 			So(seconds, ShouldEqual, 10)
 		})
 
 		Convey("Can parse minutes", func() {
-			seconds := getTimeDurationStringToSeconds("10m")
+			seconds, _ := getTimeDurationStringToSeconds("10m")
 			So(seconds, ShouldEqual, 600)
 		})
 
 		Convey("Can parse hours", func() {
-			seconds := getTimeDurationStringToSeconds("1h")
+			seconds, _ := getTimeDurationStringToSeconds("1h")
 			So(seconds, ShouldEqual, 3600)
 		})
 
 		Convey("defaults to seconds", func() {
-			seconds := getTimeDurationStringToSeconds("1o")
+			seconds, _ := getTimeDurationStringToSeconds("1o")
 			So(seconds, ShouldEqual, 1)
+		})
+
+		Convey("should return err for empty string", func() {
+			_, err := getTimeDurationStringToSeconds("")
+			So(err, ShouldNotBeNil)
 		})
 
 		Convey("can construct alert rule model", func() {
@@ -45,6 +50,7 @@ func TestAlertRuleModel(t *testing.T) {
 				"name": "name2",
 				"description": "desc2",
 				"handler": 0,
+				"noDataMode": "critical",
 				"enabled": true,
 				"frequency": "60s",
         "conditions": [
@@ -63,7 +69,7 @@ func TestAlertRuleModel(t *testing.T) {
 			alertJSON, jsonErr := simplejson.NewJson([]byte(json))
 			So(jsonErr, ShouldBeNil)
 
-			alert := &models.Alert{
+			alert := &m.Alert{
 				Id:          1,
 				OrgId:       1,
 				DashboardId: 1,
@@ -80,6 +86,11 @@ func TestAlertRuleModel(t *testing.T) {
 			Convey("Can read notifications", func() {
 				So(len(alertRule.Notifications), ShouldEqual, 2)
 			})
+			/*
+				Convey("Can read noDataMode", func() {
+					So(len(alertRule.NoDataMode), ShouldEqual, m.AlertStateCritical)
+				})
+			*/
 		})
 	})
 }

@@ -47,10 +47,11 @@ var (
 	BuildStamp   int64
 
 	// Paths
-	LogsPath    string
-	HomePath    string
-	DataPath    string
-	PluginsPath string
+	LogsPath       string
+	HomePath       string
+	DataPath       string
+	PluginsPath    string
+	CustomInitPath = "conf/custom.ini"
 
 	// Log settings.
 	LogModes   []string
@@ -77,9 +78,11 @@ var (
 	DataProxyWhiteList    map[string]bool
 
 	// Snapshots
-	ExternalSnapshotUrl  string
-	ExternalSnapshotName string
-	ExternalEnabled      bool
+	ExternalSnapshotUrl   string
+	ExternalSnapshotName  string
+	ExternalEnabled       bool
+	SnapShotTTLDays       int
+	SnapShotRemoveExpired bool
 
 	// User settings
 	AllowUserSignUp    bool
@@ -89,7 +92,7 @@ var (
 	VerifyEmailEnabled bool
 	LoginHint          string
 	DefaultTheme       string
-	AllowUserPassLogin bool
+	DisableLoginForm   bool
 
 	// Http auth
 	AdminUser     string
@@ -131,8 +134,9 @@ var (
 	GoogleTagManagerId string
 
 	// LDAP
-	LdapEnabled    bool
-	LdapConfigFile string
+	LdapEnabled     bool
+	LdapConfigFile  string
+	LdapAllowSignup bool = true
 
 	// SMTP email settings
 	Smtp SmtpSettings
@@ -141,7 +145,7 @@ var (
 	Quota QuotaSettings
 
 	// Alerting
-	AlertingEnabled bool
+	ExecuteAlerts bool
 
 	// logger
 	logger log.Logger
@@ -312,7 +316,7 @@ func evalConfigValues() {
 
 func loadSpecifedConfigFile(configFile string) error {
 	if configFile == "" {
-		configFile = filepath.Join(HomePath, "conf/custom.ini")
+		configFile = filepath.Join(HomePath, CustomInitPath)
 		// return without error if custom file does not exist
 		if !pathExists(configFile) {
 			return nil
@@ -457,7 +461,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	Env = Cfg.Section("").Key("app_mode").MustString("development")
 	InstanceName = Cfg.Section("").Key("instance_name").MustString("unknown_instance_name")
-	PluginsPath = Cfg.Section("paths").Key("plugins").String()
+	PluginsPath = makeAbsolute(Cfg.Section("paths").Key("plugins").String(), HomePath)
 
 	server := Cfg.Section("server")
 	AppUrl, AppSubUrl = parseAppUrlAndSubUrl(server)
@@ -494,6 +498,8 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ExternalSnapshotUrl = snapshots.Key("external_snapshot_url").String()
 	ExternalSnapshotName = snapshots.Key("external_snapshot_name").String()
 	ExternalEnabled = snapshots.Key("external_enabled").MustBool(true)
+	SnapShotRemoveExpired = snapshots.Key("snapshot_remove_expired").MustBool(true)
+	SnapShotTTLDays = snapshots.Key("snapshot_TTL_days").MustInt(90)
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
@@ -513,7 +519,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
 	LoginHint = users.Key("login_hint").String()
 	DefaultTheme = users.Key("default_theme").String()
-	AllowUserPassLogin = users.Key("allow_user_pass_login").MustBool(true)
+
+	// auth
+	auth := Cfg.Section("auth")
+	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -543,9 +552,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 	ldapSec := Cfg.Section("auth.ldap")
 	LdapEnabled = ldapSec.Key("enabled").MustBool(false)
 	LdapConfigFile = ldapSec.Key("config_file").String()
+	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 
 	alerting := Cfg.Section("alerting")
-	AlertingEnabled = alerting.Key("enabled").MustBool(false)
+	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
 
 	readSessionConfig()
 	readSmtpSettings()
@@ -555,7 +565,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 		log.Warn("require_email_validation is enabled but smpt is disabled")
 	}
 
-	GrafanaNetUrl = Cfg.Section("grafana.net").Key("url").MustString("https://grafana.net")
+	GrafanaNetUrl = Cfg.Section("grafana_net").Key("url").MustString("https://grafana.net")
 
 	imageUploadingSection := Cfg.Section("external_image_storage")
 	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("internal")

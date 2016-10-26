@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"net/http"
 
-	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
@@ -80,7 +79,7 @@ func Json(status int, body interface{}) *NormalResponse {
 func ApiSuccess(message string) *NormalResponse {
 	resp := make(map[string]interface{})
 	resp["message"] = message
-	return Respond(200, resp)
+	return Json(200, resp)
 }
 
 func ApiError(status int, message string, err error) *NormalResponse {
@@ -88,10 +87,8 @@ func ApiError(status int, message string, err error) *NormalResponse {
 
 	switch status {
 	case 404:
-		metrics.M_Api_Status_404.Inc(1)
 		data["message"] = "Not Found"
 	case 500:
-		metrics.M_Api_Status_500.Inc(1)
 		data["message"] = "Internal Server Error"
 	}
 

@@ -1,5 +1,6 @@
 define([
   './dashboard_ctrl',
+  './alerting_srv',
   './dashboardLoaderSrv',
   './dashnav/dashnav',
   './submenu/submenu',
@@ -7,7 +8,7 @@ define([
   './rowCtrl',
   './shareModalCtrl',
   './shareSnapshotCtrl',
-  './dashboardSrv',
+  './dashboard_srv',
   './keybindings',
   './viewStateSrv',
   './timeSrv',
@@ -20,4 +21,5 @@ define([
   './import/dash_import',
   './export/export_modal',
   './dash_list_ctrl',
+  './ad_hoc_filters',
 ], function () {});

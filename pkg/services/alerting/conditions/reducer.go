@@ -1,52 +1,74 @@
 package conditions
 
-import "github.com/grafana/grafana/pkg/tsdb"
+import (
+	"math"
+
+	"github.com/grafana/grafana/pkg/tsdb"
+	"gopkg.in/guregu/null.v3"
+)
 
 type QueryReducer interface {
-	Reduce(timeSeries *tsdb.TimeSeries) float64
+	Reduce(timeSeries *tsdb.TimeSeries) null.Float
 }
 
 type SimpleReducer struct {
 	Type string
 }
 
-func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) float64 {
-	var value float64 = 0
+func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) null.Float {
+	if len(series.Points) == 0 {
+		return null.FloatFromPtr(nil)
+	}
+
+	value := float64(0)
+	allNull := true
 
 	switch s.Type {
 	case "avg":
 		for _, point := range series.Points {
-			value += point[0]
+			if point[0].Valid {
+				value += point[0].Float64
+				allNull = false
+			}
 		}
 		value = value / float64(len(series.Points))
 	case "sum":
 		for _, point := range series.Points {
-			value += point[0]
+			if point[0].Valid {
+				value += point[0].Float64
+				allNull = false
+			}
 		}
 	case "min":
-		for i, point := range series.Points {
-			if i == 0 {
-				value = point[0]
-			}
-
-			if value > point[0] {
-				value = point[0]
+		value = math.MaxFloat64
+		for _, point := range series.Points {
+			if point[0].Valid {
+				allNull = false
+				if value > point[0].Float64 {
+					value = point[0].Float64
+				}
 			}
 		}
 	case "max":
+		value = -math.MaxFloat64
 		for _, point := range series.Points {
-			if value < point[0] {
-				value = point[0]
+			if point[0].Valid {
+				allNull = false
+				if value < point[0].Float64 {
+					value = point[0].Float64
+				}
 			}
 		}
-	case "mean":
-		meanPosition := int64(len(series.Points) / 2)
-		value = series.Points[meanPosition][0]
 	case "count":
 		value = float64(len(series.Points))
+		allNull = false
 	}
 
-	return value
+	if allNull {
+		return null.FloatFromPtr(nil)
+	}
+
+	return null.FloatFrom(value)
 }
 
 func NewSimpleReducer(typ string) *SimpleReducer {

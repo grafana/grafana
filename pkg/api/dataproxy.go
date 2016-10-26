@@ -95,6 +95,13 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
+	if ds.Type == m.DS_INFLUXDB {
+		if c.Query("db") != ds.Database {
+			c.JsonApiErr(403, "Datasource is not configured to allow this database", nil)
+			return
+		}
+	}
+
 	targetUrl, _ := url.Parse(ds.Url)
 	if len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[targetUrl.Host]; !exists {
@@ -104,6 +111,22 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	}
 
 	proxyPath := c.Params("*")
+
+	if ds.Type == m.DS_ES {
+		if c.Req.Request.Method == "DELETE" {
+			c.JsonApiErr(403, "Deletes not allowed on proxied Elasticsearch datasource", nil)
+			return
+		}
+		if c.Req.Request.Method == "PUT" {
+			c.JsonApiErr(403, "Puts not allowed on proxied Elasticsearch datasource", nil)
+			return
+		}
+		if c.Req.Request.Method == "POST" && proxyPath != "_msearch" {
+			c.JsonApiErr(403, "Posts not allowed on proxied Elasticsearch datasource except on /_msearch", nil)
+			return
+		}
+	}
+
 	proxy := NewReverseProxy(ds, proxyPath, targetUrl)
 	proxy.Transport = dataProxyTransport
 	proxy.ServeHTTP(c.Resp, c.Req.Request)

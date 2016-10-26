@@ -1,114 +1,89 @@
 package alerting
 
-// func TestAlertNotificationExtraction(t *testing.T) {
-// 	Convey("Notifier tests", t, func() {
-// 		Convey("rules for sending notifications", func() {
-// 			dummieNotifier := NotifierImpl{}
-//
-// 			result := &AlertResult{
-// 				State: alertstates.Critical,
-// 			}
-//
-// 			notifier := &Notification{
-// 				Name:         "Test Notifier",
-// 				Type:         "TestType",
-// 				SendCritical: true,
-// 				SendWarning:  true,
-// 			}
-//
-// 			Convey("Should send notification", func() {
-// 				So(dummieNotifier.ShouldDispath(result, notifier), ShouldBeTrue)
-// 			})
-//
-// 			Convey("warn:false and state:warn should not send", func() {
-// 				result.State = alertstates.Warn
-// 				notifier.SendWarning = false
-// 				So(dummieNotifier.ShouldDispath(result, notifier), ShouldBeFalse)
-// 			})
-// 		})
-//
-// 		Convey("Parsing alert notification from settings", func() {
-// 			Convey("Parsing email", func() {
-// 				Convey("empty settings should return error", func() {
-// 					json := `{ }`
-//
-// 					settingsJSON, _ := simplejson.NewJson([]byte(json))
-// 					model := &m.AlertNotification{
-// 						Name:     "ops",
-// 						Type:     "email",
-// 						Settings: settingsJSON,
-// 					}
-//
-// 					_, err := NewNotificationFromDBModel(model)
-// 					So(err, ShouldNotBeNil)
-// 				})
-//
-// 				Convey("from settings", func() {
-// 					json := `
-// 				{
-// 					"to": "ops@grafana.org"
-// 				}`
-//
-// 					settingsJSON, _ := simplejson.NewJson([]byte(json))
-// 					model := &m.AlertNotification{
-// 						Name:     "ops",
-// 						Type:     "email",
-// 						Settings: settingsJSON,
-// 					}
-//
-// 					not, err := NewNotificationFromDBModel(model)
-//
-// 					So(err, ShouldBeNil)
-// 					So(not.Name, ShouldEqual, "ops")
-// 					So(not.Type, ShouldEqual, "email")
-// 					So(reflect.TypeOf(not.Notifierr).Elem().String(), ShouldEqual, "alerting.EmailNotifier")
-//
-// 					email := not.Notifierr.(*EmailNotifier)
-// 					So(email.To, ShouldEqual, "ops@grafana.org")
-// 				})
-// 			})
-//
-// 			Convey("Parsing webhook", func() {
-// 				Convey("empty settings should return error", func() {
-// 					json := `{ }`
-//
-// 					settingsJSON, _ := simplejson.NewJson([]byte(json))
-// 					model := &m.AlertNotification{
-// 						Name:     "ops",
-// 						Type:     "webhook",
-// 						Settings: settingsJSON,
-// 					}
-//
-// 					_, err := NewNotificationFromDBModel(model)
-// 					So(err, ShouldNotBeNil)
-// 				})
-//
-// 				Convey("from settings", func() {
-// 					json := `
-// 				{
-// 					"url": "http://localhost:3000",
-// 					"username": "username",
-// 					"password": "password"
-// 				}`
-//
-// 					settingsJSON, _ := simplejson.NewJson([]byte(json))
-// 					model := &m.AlertNotification{
-// 						Name:     "slack",
-// 						Type:     "webhook",
-// 						Settings: settingsJSON,
-// 					}
-//
-// 					not, err := NewNotificationFromDBModel(model)
-//
-// 					So(err, ShouldBeNil)
-// 					So(not.Name, ShouldEqual, "slack")
-// 					So(not.Type, ShouldEqual, "webhook")
-// 					So(reflect.TypeOf(not.Notifierr).Elem().String(), ShouldEqual, "alerting.WebhookNotifier")
-//
-// 					webhook := not.Notifierr.(*WebhookNotifier)
-// 					So(webhook.Url, ShouldEqual, "http://localhost:3000")
-// 				})
-// 			})
-// 		})
-// 	})
-// }
+import (
+	"testing"
+
+	"fmt"
+
+	"github.com/grafana/grafana/pkg/models"
+	m "github.com/grafana/grafana/pkg/models"
+	. "github.com/smartystreets/goconvey/convey"
+)
+
+type FakeNotifier struct {
+	FakeMatchResult bool
+}
+
+func (fn *FakeNotifier) GetType() string {
+	return "FakeNotifier"
+}
+
+func (fn *FakeNotifier) NeedsImage() bool {
+	return true
+}
+
+func (n *FakeNotifier) GetNotifierId() int64 {
+	return 0
+}
+
+func (n *FakeNotifier) GetIsDefault() bool {
+	return false
+}
+
+func (fn *FakeNotifier) Notify(alertResult *EvalContext) error { return nil }
+
+func (fn *FakeNotifier) PassesFilter(rule *Rule) bool {
+	return fn.FakeMatchResult
+}
+
+func TestAlertNotificationExtraction(t *testing.T) {
+
+	Convey("Notifier tests", t, func() {
+		Convey("none firing alerts", func() {
+			ctx := &EvalContext{
+				Firing: false,
+				Rule: &Rule{
+					State: m.AlertStateAlerting,
+				},
+			}
+			notifier := &FakeNotifier{FakeMatchResult: false}
+
+			So(shouldUseNotification(notifier, ctx), ShouldBeTrue)
+		})
+
+		Convey("execution error cannot be ignored", func() {
+			ctx := &EvalContext{
+				Firing: true,
+				Error:  fmt.Errorf("I used to be a programmer just like you"),
+				Rule: &Rule{
+					State: m.AlertStateOK,
+				},
+			}
+			notifier := &FakeNotifier{FakeMatchResult: false}
+
+			So(shouldUseNotification(notifier, ctx), ShouldBeTrue)
+		})
+
+		Convey("firing alert that match", func() {
+			ctx := &EvalContext{
+				Firing: true,
+				Rule: &Rule{
+					State: models.AlertStateAlerting,
+				},
+			}
+			notifier := &FakeNotifier{FakeMatchResult: true}
+
+			So(shouldUseNotification(notifier, ctx), ShouldBeTrue)
+		})
+
+		Convey("firing alert that dont match", func() {
+			ctx := &EvalContext{
+				Firing: true,
+				Rule:   &Rule{State: m.AlertStateOK},
+			}
+			notifier := &FakeNotifier{FakeMatchResult: false}
+
+			So(shouldUseNotification(notifier, ctx), ShouldBeFalse)
+		})
+	})
+}
