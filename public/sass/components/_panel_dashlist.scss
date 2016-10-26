@@ -24,3 +24,101 @@
     background-color: $tight-form-func-bg;
   }
 }
+
+.dashlist-flex-container {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: row;
+  background-color: $tight-form-bg;
+  padding: 20px;
+}
+
+.dashlist-panel-CTA-flex-container--left {
+  flex-grow: 2;
+  align-items: center;
+}
+
+.dashlist-panel-CTA-flex-container--right {
+  padding-left: 1rem;
+  border-left: solid 1px black;
+}
+
+.dashlist-panel-CTA-items {
+  text-align: left;
+  margin: 10px 0;
+}
+
+p.dashlist-blurb{
+     font-size:14px;
+     color: $text-color;
+     margin: 0;
+}
+
+a.dashlist-blurb{
+     font-size:14px;
+     color: $text-color;
+     margin: 0;
+}
+
+a.dashlist-blurb:hover{
+     text-decoration: underline;
+}
+
+.dashlist-blurb-success {
+  color: $text-color-weak;
+  text-decoration: line-through;
+}
+
+a.dashlist-blurb-upcoming {
+  color: $text-color-weak;
+}
+
+.dashlist-icon-active {
+  color: $brand-primary;
+  -webkit-text-fill-color: transparent;
+  background: $brand-gradient;
+  -webkit-background-clip: text;
+  text-decoration:none;
+  font-size: 20px;
+  vertical-align: sub;
+}
+
+.dashlist-icon-upcoming {
+  color: $text-color-weak;
+  text-decoration:none;
+  font-size: 20px;
+  vertical-align: sub;
+}
+
+.rt-dashboard-icon-warning {
+  color: $text-color-strong;
+  text-decoration:none;
+  font-size: 20px;
+  vertical-align: sub;
+}
+
+.dashlist-icon-success {
+  color: $online;
+  font-size: 24px;
+  text-decoration:none;
+  vertical-align: sub;
+}
+
+.dashlist-icons-container {
+  width: 30px;
+  display: inline-block;
+  margin-right: 5px;
+  text-align: center;
+  vertical-align: top;
+}
+
+.dashlist-icons-container--active:before {
+  border-top: 1px solid black;
+  margin-left: -1em;
+  padding-left: 2em;
+}
+
+p.dashlist-next-up-blurb {
+  color: $text-color-weak;
+  max-width: 375px;
+}
