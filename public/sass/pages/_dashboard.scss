@@ -239,7 +239,6 @@ div.flot-text {
 .dash-edit-mode {
   .dash-row {
   }
-
   .panels-wrapper {
     padding: $panel-margin*2 0 0 $panel-margin;
   }
@@ -265,4 +264,31 @@ div.flot-text {
   &:hover {
     color: $white;
   }
+}
+
+.add-panel-container {
+  display: flex;
+  flex-direction: row;
+}
+
+.add-panel-item {
+  background: $panel-bg;
+  padding: $spacer;
+  min-width: 10rem;
+  max-width: 10rem;
+  text-align: center;
+  margin: $panel-margin;
+  &:hover {
+    box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 5px rgba(82,168,236,10.8)
+  }
+}
+
+.add-panel-item-name {
+  text-overflow: ellipsis;
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.add-panel-item-img {
+  width: 3.5rem;
 }

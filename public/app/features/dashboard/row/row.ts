@@ -13,11 +13,28 @@ export class DashRowCtrl {
   dashboard: any;
   row: any;
   panelPlugins;
+  addPanelSegment;
 
    /** @ngInject */
-  constructor(private $scope, private $rootScope, private $timeout) {
+  constructor(private $scope, private $rootScope, private $timeout, private uiSegmentSrv, private $q) {
     this.panelPlugins = config.panels;
+    console.log(this.panelPlugins);
+
     this.row.title = this.row.title || 'Row title';
+    this.addPanelSegment = uiSegmentSrv.newSegment({
+      value: 'add',
+      custom: 'false',
+      html: 'Add Panel <i class="fa fa-plus"></i>',
+      renderer: (item, defaultHighlighter) => {
+        return '<img src="' + item.img + '">' + defaultHighlighter(item.text);
+      }
+    });
+  }
+
+  getPanels() {
+    return this.$q.when(_.map(config.panels, panel => {
+      return this.uiSegmentSrv.newSegment({value: panel.name});
+    }));
   }
 
   onDrop(panelId, dropTarget) {
@@ -36,10 +53,6 @@ export class DashRowCtrl {
     }
 
     this.$rootScope.$broadcast('render');
-  }
-
-  onDragEnter(data) {
-    console.log('drag enter', data);
   }
 
   addPanel(panel) {

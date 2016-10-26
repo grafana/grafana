@@ -1,4 +1,4 @@
-<div class="dash-row-header" ng-if="ctrl.dashboard.editMode">
+<div class="dash-row-header gf-form-inline" ng-if="ctrl.dashboard.editMode">
   <div class="gf-form gf-form--grow dropdown">
     <a class="btn gf-form-btn btn-inverse dropdown-toggle" data-toggle="dropdown">
       <span>{{ctrl.row.title}}</span>
@@ -39,9 +39,10 @@
       </li>
     </ul>
 
-    <label class="btn gf-form-btn btn-inverse">
-      Add Panel <i class="fa fa-plus"></i>
-    </label>
+    <a class="btn gf-form-btn btn-inverse" ng-click="ctrl.addPanelMode=!ctrl.addPanelMode">
+      Add Panel
+      <i class="fa fa-plus"></i>
+    </a>
 
     <div class="gf-form-label gf-form-label--grow text-right" ng-click="ctrl.row.collapse = !ctrl.row.collapse">
       <a class="pointer">
@@ -57,7 +58,14 @@
 </div>
 
 <div class="panels-wrapper" ng-if="!ctrl.row.collapse">
-  <div ng-repeat="panel in ctrl.row.panels track by panel.id" class="panel" ui-draggable="!ctrl.dashboard.meta.fullscreen" drag="panel.id" ui-on-drop="ctrl.onDrop($data, panel)" drag-handle-class="drag-handle" panel-width ui-on-drag-enter="ctrl.onDragEnter($data)">
+  <div class="add-panel-container" ng-if="ctrl.addPanelMode">
+    <div class="add-panel-item" ng-repeat="panel in ctrl.panelPlugins">
+      <img class="add-panel-item-img" ng-src="{{panel.info.logos.small}}"></img>
+      <div class="add-panel-item-name">{{panel.name}}</div>
+    </div>
+  </div>
+
+  <div ng-repeat="panel in ctrl.row.panels track by panel.id" class="panel" ui-draggable="!ctrl.dashboard.meta.fullscreen" drag="panel.id" ui-on-drop="ctrl.onDrop($data, panel)" drag-handle-class="drag-handle" panel-width>
     <plugin-component type="panel" class="panel-margin">
     </plugin-component>
   </div>
