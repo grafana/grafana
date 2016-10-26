@@ -211,19 +211,40 @@ div.flot-text {
 .dash-row-header {
   display: flex;
   flex-direction: row;
-  text-align: left;
-  align-items: center;
   margin-right: $panel-margin;
   margin-left: $gf-form-margin;
+  border-bottom: $panel-border;
 }
 
 .dash-row-header-title {
-  font-family: $headings-font-family;
   padding: 0.7rem;
+  i {
+    font-size: 0.9rem;
+    position: relative;
+    top: 2px;
+    left: 1px;
+    color: $text-muted;
+  }
 }
 
-.dash-row-header-chevron {
-  flex-grow: 100;
+.dash-row-header-add-panel {
+  padding: 0.7rem;
+  i {
+    font-size: 0.9rem;
+    position: relative;
+    top: 2px;
+    left: 1px;
+    color: $text-muted;
+  }
+}
+
+.dash-row-header-spacer {
+  flex: 50;
+}
+
+.dash-row-collapse-toggle {
+  flex-grow: 30;
+  cursor: pointer;
   text-align: right;
   margin-right: 0.6rem;
   font-size: $font-size-sm;
@@ -247,7 +268,7 @@ div.flot-text {
 .dash-row-options {
   background: $panel-bg;
   margin: 0 $panel-margin*2 0 $panel-margin;
-  padding: $spacer*2;
+  padding: $spacer*1.5;
 }
 
 .dash-row-options-close-btn {
@@ -266,18 +287,20 @@ div.flot-text {
   }
 }
 
-.add-panel-container {
-  display: flex;
-  flex-direction: row;
+.add-panel-panels {
 }
 
 .add-panel-item {
-  background: $panel-bg;
+  background: $input-label-bg;
   padding: $spacer;
   min-width: 10rem;
   max-width: 10rem;
   text-align: center;
-  margin: $panel-margin;
+  margin: $gf-form-margin;
+  float: left;
+  cursor: pointer;
+
+  &.active,
   &:hover {
     box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 5px rgba(82,168,236,10.8)
   }
