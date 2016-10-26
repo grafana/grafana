@@ -176,7 +176,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       });
 
       // add wildcard option
-      altSegments.unshift(this.uiSegmentSr.newSegment('*'));
+      altSegments.unshift(this.uiSegmentSrv.newSegment('*'));
       return altSegments;
     }).catch(err => {
       appEvents.emit('alert-error', ['Error', err]);
