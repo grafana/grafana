@@ -16,6 +16,7 @@ function (_) {
       window_title_prefix           : 'CloudInsight - ',
       panels                        : {
         'graph':      { path: 'app/panels/graph',      name: '图表' },
+        'table':      { path: 'app/panels/table',      name: '表格' },
         'singlestat': { path: 'app/panels/singlestat', name: '状态图' },
         'text':       { path: 'app/panels/text',       name: '文字' },
         'dashlist':   { path: 'app/panels/dashlist',   name: '图表列' },
