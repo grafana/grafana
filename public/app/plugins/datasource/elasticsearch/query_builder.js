@@ -251,7 +251,7 @@ function (queryDef) {
   };
 
   ElasticQueryBuilder.prototype.getTermsQuery = function(queryDef) {
-    var query, queryPath;
+    var query;
 
     if (this.esVersion >= 5) {
       query = {
@@ -262,7 +262,15 @@ function (queryDef) {
           }
         }
       };
-      queryPath = query.query.bool.must;
+
+      if (queryDef.query) {
+        query.query.bool.must.push({
+          "query_string": {
+            "analyze_wildcard": true,
+            "query": queryDef.query,
+          }
+        });
+      }
 
     } else {
       query = {
@@ -277,16 +285,15 @@ function (queryDef) {
           }
         }
       };
-      queryPath = query.query.filtered.query;
-    }
 
-    if (queryDef.query) {
-      queryPath = {
-        "query_string": {
-          "analyze_wildcard": true,
-          "query": queryDef.query,
-        }
-      };
+      if (queryDef.query) {
+        query.query.filtered.query = {
+          "query_string": {
+            "analyze_wildcard": true,
+            "query": queryDef.query,
+          }
+        };
+      }
     }
 
     query.aggs =  {
