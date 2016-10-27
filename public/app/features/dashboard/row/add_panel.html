@@ -1,5 +1,24 @@
 <div class="dash-row-options">
 
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <span class="gf-form-label">Panel search</span>
+      <input type="text" class="gf-form-input max-width-14" ng-model='ctrl.panelSearch' give-focus='true' ng-keydown="ctrl.keyDown($event)" ng-change="ctrl.panelSearchChanged()"></input>
+    </div>
+  </div>
+
+  <div class="add-panel-panels-scroll">
+    <div class="add-panel-panels">
+      <div class="add-panel-item" ng-repeat="panel in ctrl.panelHits" ng-class="{active: $index === ctrl.activeIndex}" ng-click="ctrl.addPanel(panel)">
+        <img class="add-panel-item-img" ng-src="{{panel.info.logos.small}}"></img>
+        <div class="add-panel-item-name">{{panel.name}}</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="edit-tab-content" ng-if="ctrl.subTabIndex === 1">
   <div class="gf-form-group">
     <h5 class="section-heading">Options</h5>
     <div class="gf-form-inline">

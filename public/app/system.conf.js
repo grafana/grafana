@@ -2,6 +2,7 @@ System.config({
   defaultJSExtenions: true,
   baseURL: 'public',
   paths: {
+    'virtual-scroll': 'vendor/npm/virtual-scroll/src/index.js',
     'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',
     'tether': 'vendor/npm/tether/dist/js/tether.js',
     'eventemitter3': 'vendor/npm/eventemitter3/index.js',
@@ -52,6 +53,10 @@ System.config({
   },
 
   meta: {
+    'vendor/npm/virtual-scroll/src/indx.js': {
+      format: 'cjs',
+      exports: 'VirtualScroll',
+    },
     'vendor/angular/angular.js': {
       format: 'global',
       deps: ['jquery'],

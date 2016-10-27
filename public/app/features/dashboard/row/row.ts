@@ -8,18 +8,19 @@ import config from 'app/core/config';
 import {coreModule} from 'app/core/core';
 
 import './options';
+import './add_panel';
 
 export class DashRowCtrl {
   dashboard: any;
   row: any;
-  showOptions: boolean;
+  dropView: number;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private $timeout, private uiSegmentSrv, private $q) {
     this.row.title = this.row.title || 'Row title';
 
     if (this.row.isNew) {
-      this.showOptions = true;
+      this.dropView = 1;
       delete this.row.isNew;
     }
   }
@@ -75,6 +76,19 @@ export class DashRowCtrl {
     if (newIndex >= 0 && newIndex <= (rowsList.length - 1)) {
       _.move(rowsList, rowIndex, newIndex);
     }
+  }
+
+  toggleCollapse() {
+    this.dropView = 0;
+    this.row.collapse = !this.row.collapse;
+  }
+
+  showAddPanel() {
+    this.dropView = this.dropView === 1 ? 0 : 1;
+  }
+
+  showRowOptions() {
+    this.dropView = this.dropView === 2 ? 0 : 2;
   }
 }
 

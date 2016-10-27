@@ -206,24 +206,54 @@ div.flot-text {
 //
 
 .dash-row {
+  border-left: 1px solid $dark-2;
 }
 
 .dash-row-header {
+  position: relative;
   display: flex;
   flex-direction: row;
   margin-right: $panel-margin;
   margin-left: $gf-form-margin;
-  border-bottom: $panel-border;
+  border-bottom: 1px solid $dark-4;
+
+  &:hover {
+    .dash-row-header-actions {
+      display: block;
+    }
+  }
 }
 
 .dash-row-header-title {
-  padding: 0.7rem;
-  i {
-    font-size: 0.9rem;
-    position: relative;
-    top: 2px;
-    left: 1px;
+  padding: 0.6rem;
+
+  .dash-row-collapse-toggle {
+    font-size: $font-size-sm;
     color: $text-muted;
+    position: relative;
+    left: -5px;
+  }
+
+  &:hover {
+    .dash-row-collapse-toggle {
+      color: $link-color;
+    }
+  }
+}
+
+.dash-row-header-actions {
+  position: absolute;
+  display: none;
+  color: $text-muted;
+  font-size: $font-size-sm;
+  bottom: 5px;
+  right: 1rem;
+  a {
+    color: $text-muted;
+    padding-left: 1rem;
+    &:hover {
+      color: $link-hover-color;
+    }
   }
 }
 
@@ -242,20 +272,6 @@ div.flot-text {
   flex: 50;
 }
 
-.dash-row-collapse-toggle {
-  flex-grow: 30;
-  cursor: pointer;
-  text-align: right;
-  margin-right: 0.6rem;
-  font-size: $font-size-sm;
-  line-height: 2.5rem;
-  a {
-    color: $text-muted;
-  }
-  &:hover a {
-    color: $link-color;
-  }
-}
 
 .dash-edit-mode {
   .dash-row {
@@ -287,17 +303,23 @@ div.flot-text {
   }
 }
 
+.add-panel-panels-scroll {
+  width: 100%;
+  overflow: hidden;
+}
+
 .add-panel-panels {
+  display: flex;
+  flex-direction: row;
 }
 
 .add-panel-item {
   background: $input-label-bg;
   padding: $spacer;
-  min-width: 10rem;
-  max-width: 10rem;
+  min-width: 9rem;
+  max-width: 9rem;
   text-align: center;
   margin: $gf-form-margin;
-  float: left;
   cursor: pointer;
 
   &.active,
@@ -313,5 +335,5 @@ div.flot-text {
 }
 
 .add-panel-item-img {
-  width: 3.5rem;
+  width: 3rem;
 }

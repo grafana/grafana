@@ -31,6 +31,8 @@ module.exports = function(config) {
         'tether-drop/**/*',
         'tether-drop/**/*',
         'remarkable/dist/*',
+        'remarkable/dist/*',
+        'virtual-scroll/**/*',
       ],
       dest: '<%= srcDir %>/vendor/npm'
     }

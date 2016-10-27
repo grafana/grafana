@@ -1,21 +1,27 @@
 <div class="dash-row-header">
-  <a class="dash-row-header-title" ng-click="ctrl.showOptions = !ctrl.showOptions">
+  <a class="dash-row-header-title" ng-click="ctrl.toggleCollapse()">
+    <span class="dash-row-collapse-toggle pointer">
+      <i class="fa fa-chevron-down" ng-show="!ctrl.row.collapse"></i>
+      <i class="fa fa-chevron-right" ng-show="ctrl.row.collapse"></i>
+    </span>
     <span ng-class="ctrl.row.titleSize">{{ctrl.row.title}}</span>
-    <i class="fa fa-caret-down"></i>
   </a>
 
   <div class="dash-row-header-spacer">
   </div>
 
-  <div class="dash-row-collapse-toggle" ng-click="ctrl.row.collapse = !ctrl.row.collapse">
-    <a class="pointer">
-      <i class="fa fa-chevron-down" ng-show="!ctrl.row.collapse"></i>
-      <i class="fa fa-chevron-right" ng-show="ctrl.row.collapse"></i>
-    </a>
+  <div class="dash-row-header-actions">
+    <a class="pointer" ng-click="ctrl.showAddPanel()">Add Panel <i class="fa fa-plus"></i></a>
+    <a class="pointer" ng-click="ctrl.showRowOptions()">Row Options <i class="fa fa-cog"></i></a>
   </div>
 </div>
 
-<div ng-if="ctrl.showOptions">
+
+<div ng-if="ctrl.dropView === 1">
+  <dash-row-add-panel row-ctrl="ctrl"></dash-row-add-panel>
+</div>
+
+<div ng-if="ctrl.dropView === 2">
   <dash-row-options row-ctrl="ctrl"></dash-row-options>
 </div>
 

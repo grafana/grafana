@@ -79,6 +79,7 @@
     "tether": "^1.2.0",
     "tether-drop": "^1.4.2",
     "tslint": "^3.4.0",
-    "typescript": "^1.7.5"
+    "typescript": "^1.7.5",
+    "virtual-scroll": "^1.1.1"
   }
 }
