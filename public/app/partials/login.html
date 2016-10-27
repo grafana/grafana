@@ -62,6 +62,10 @@
 					<a class="btn btn-large btn-grafana-net" href="login/grafananet" target="_self" ng-if="oauth.grafananet">
 						with <span>Grafana.net</span>
 					</a>
+          <a class="btn btn-large btn-cloudfoundry" href="login/cloudfoundry" target="_self" ng-if="oauth.cloudfoundry">
+						<i class="fa fa-gear"></i>
+						with {{oauth.cloudfoundry.name}}
+					</a>
 					<a class="btn btn-large btn-generic-oauth" href="login/generic_oauth" target="_self" ng-if="oauth.generic_oauth">
 						<i class="fa fa-gear"></i>
 						with {{oauth.generic_oauth.name}}

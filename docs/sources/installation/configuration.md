@@ -378,6 +378,24 @@ You may allow users to sign-up via Google authentication by setting the
 user successfully authenticating via Google authentication will be
 automatically signed up.
 
+## [auth.cloudfoundry]
+
+CloudFoundry UAA-based authentication.
+
+### allowed_organizations
+
+Require an active organization membership for at least one of the given
+organizations and spaces in your CloudFoundry installation. You can restrict access to Grafana by particular space membership adding its name to an organization name followed by `/`. For example:
+
+    enabled = true
+    allow_sign_up = true
+    client_id = some_id
+    client_secret = some_secret
+    scopes = cloud_controller.read cloud_controller.write
+    uaa_url = https://uaa.yourcloudfoundry.com
+    api_url = https://api.yourcloudfoundry.com
+    allowed_organizations = system myorg/production myorg/staging
+
 ## [auth.generic_oauth]
 
 This option could be used if have your own oauth service.

@@ -11,11 +11,11 @@ import (
 )
 
 type BasicUserInfo struct {
-	Name     string
-	Email    string
-	Login    string
-	Company  string
-	Role     string
+	Name    string
+	Email   string
+	Login   string
+	Company string
+	Role    string
 }
 
 type SocialConnector interface {
@@ -38,7 +38,7 @@ func NewOAuthService() {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
-	allOauthes := []string{"github", "google", "generic_oauth", "grafananet"}
+	allOauthes := []string{"github", "google", "generic_oauth", "grafananet", "cloudfoundry"}
 
 	for _, name := range allOauthes {
 		sec := setting.Cfg.Section("auth." + name)
@@ -99,6 +99,37 @@ func NewOAuthService() {
 			}
 		}
 
+		// CloudFoundry
+		if name == "cloudfoundry" {
+			uaaUrl := sec.Key("uaa_url").String()
+			config.Endpoint = oauth2.Endpoint{
+				AuthURL:  uaaUrl + "/oauth/authorize",
+				TokenURL: uaaUrl + "/oauth/token",
+			}
+
+			allowedOrgsRaw := sec.Key("allowed_organizations").Strings(" ")
+			allowedOrgs := map[string][]string{}
+			for _, org := range allowedOrgsRaw {
+				chunks := strings.SplitN(org, "/", 2)
+
+				if _, ok := allowedOrgs[chunks[0]]; !ok {
+					allowedOrgs[chunks[0]] = make([]string, 0)
+				}
+
+				if len(chunks) == 2 && chunks[1] != "" {
+					allowedOrgs[chunks[0]] = append(allowedOrgs[chunks[0]], chunks[1])
+				}
+			}
+
+			SocialMap["cloudfoundry"] = &CFOAuth{
+				Config:      &config,
+				uaaUrl:      uaaUrl,
+				apiUrl:      info.ApiUrl,
+				allowSignUp: info.AllowSignup,
+				allowedOrgs: allowedOrgs,
+			}
+		}
+
 		// Generic - Uses the same scheme as Github.
 		if name == "generic_oauth" {
 			SocialMap["generic_oauth"] = &GenericOAuth{
@@ -115,12 +146,12 @@ func NewOAuthService() {
 			config = oauth2.Config{
 				ClientID:     info.ClientId,
 				ClientSecret: info.ClientSecret,
-				Endpoint:     oauth2.Endpoint{
-					AuthURL:      setting.GrafanaNetUrl + "/oauth2/authorize",
-					TokenURL:     setting.GrafanaNetUrl + "/api/oauth2/token",
+				Endpoint: oauth2.Endpoint{
+					AuthURL:  setting.GrafanaNetUrl + "/oauth2/authorize",
+					TokenURL: setting.GrafanaNetUrl + "/api/oauth2/token",
 				},
-				RedirectURL:  strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
-				Scopes:       info.Scopes,
+				RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
+				Scopes:      info.Scopes,
 			}
 
 			SocialMap["grafananet"] = &SocialGrafanaNet{
