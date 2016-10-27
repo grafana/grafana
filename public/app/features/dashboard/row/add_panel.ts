@@ -90,9 +90,10 @@ export class AddPanelCtrl {
     this.rowCtrl.dropView = 0;
     this.dashboard.addPanel(panel, this.row);
     this.$timeout(() => {
-      this.$rootScope.appEvent('panel-change-view', {
-        fullscreen: true, edit: true, panelId: panel.id
-      });
+      this.$rootScope.broadcast('render');
+      //this.$rootScope.appEvent('panel-change-view', {
+      //  fullscreen: true, edit: true, panelId: panel.id
+      //});
     });
   }
 }
