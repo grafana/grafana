@@ -1,6 +1,9 @@
 package tsdb
 
-import "errors"
+import (
+	"context"
+	"errors"
+)
 
 type Batch struct {
 	DataSourceId int64
@@ -20,7 +23,7 @@ func newBatch(dsId int64, queries QuerySlice) *Batch {
 	}
 }
 
-func (bg *Batch) process(context *QueryContext) {
+func (bg *Batch) process(ctx context.Context, queryContext *QueryContext) {
 	executor := getExecutorFor(bg.Queries[0].DataSource)
 
 	if executor == nil {
@@ -32,13 +35,13 @@ func (bg *Batch) process(context *QueryContext) {
 		for _, query := range bg.Queries {
 			result.QueryResults[query.RefId] = &QueryResult{Error: result.Error}
 		}
-		context.ResultsChan <- result
+		queryContext.ResultsChan <- result
 		return
 	}
 
-	res := executor.Execute(bg.Queries, context)
+	res := executor.Execute(ctx, bg.Queries, queryContext)
 	bg.Done = true
-	context.ResultsChan <- res
+	queryContext.ResultsChan <- res
 }
 
 func (bg *Batch) addQuery(query *Query) {

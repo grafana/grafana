@@ -18,6 +18,7 @@ func init() {
 	bus.AddHandler("sql", GetAllAlertQueryHandler)
 	bus.AddHandler("sql", SetAlertState)
 	bus.AddHandler("sql", GetAlertStatesForDashboard)
+	bus.AddHandler("sql", PauseAlertRule)
 }
 
 func GetAlertById(query *m.GetAlertByIdQuery) error {
@@ -45,13 +46,23 @@ func GetAllAlertQueryHandler(query *m.GetAllAlertsQuery) error {
 	return nil
 }
 
+func deleteAlertByIdInternal(alertId int64, reason string, sess *xorm.Session) error {
+	sqlog.Debug("Deleting alert", "id", alertId, "reason", reason)
+
+	if _, err := sess.Exec("DELETE FROM alert WHERE id = ?", alertId); err != nil {
+		return err
+	}
+
+	if _, err := sess.Exec("DELETE FROM annotation WHERE alert_id = ?", alertId); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func DeleteAlertById(cmd *m.DeleteAlertCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		if _, err := sess.Exec("DELETE FROM alert WHERE id = ?", cmd.AlertId); err != nil {
-			return err
-		}
-
-		return nil
+		return deleteAlertByIdInternal(cmd.AlertId, "DeleteAlertCommand", sess)
 	})
 }
 
@@ -109,12 +120,7 @@ func DeleteAlertDefinition(dashboardId int64, sess *xorm.Session) error {
 	sess.Where("dashboard_id = ?", dashboardId).Find(&alerts)
 
 	for _, alert := range alerts {
-		_, err := sess.Exec("DELETE FROM alert WHERE id = ? ", alert.Id)
-		if err != nil {
-			return err
-		}
-
-		sqlog.Debug("Alert deleted (due to dashboard deletion)", "name", alert.Name, "id", alert.Id)
+		deleteAlertByIdInternal(alert.Id, "Dashboard deleted", sess)
 	}
 
 	return nil
@@ -194,12 +200,7 @@ func deleteMissingAlerts(alerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *xorm
 		}
 
 		if missing {
-			_, err := sess.Exec("DELETE FROM alert WHERE id = ?", missingAlert.Id)
-			if err != nil {
-				return err
-			}
-
-			sqlog.Debug("Alert deleted", "name", missingAlert.Name, "id", missingAlert.Id)
+			deleteAlertByIdInternal(missingAlert.Id, "Removed from dashboard", sess)
 		}
 	}
 
@@ -237,6 +238,31 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 		} else {
 			alert.ExecutionError = cmd.Error
 		}
+
+		sess.Id(alert.Id).Update(&alert)
+		return nil
+	})
+}
+
+func PauseAlertRule(cmd *m.PauseAlertCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		alert := m.Alert{}
+
+		has, err := x.Where("id = ? AND org_id=?", cmd.AlertId, cmd.OrgId).Get(&alert)
+
+		if err != nil {
+			return err
+		} else if !has {
+			return fmt.Errorf("Could not find alert")
+		}
+
+		var newState m.AlertStateType
+		if cmd.Paused {
+			newState = m.AlertStatePaused
+		} else {
+			newState = m.AlertStateNoData
+		}
+		alert.State = newState
 
 		sess.Id(alert.Id).Update(&alert)
 		return nil

@@ -1,6 +1,7 @@
 package graphite
 
 import (
+	"context"
 	"crypto/tls"
 	"encoding/json"
 	"fmt"
@@ -10,6 +11,8 @@ import (
 	"path"
 	"strings"
 	"time"
+
+	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
@@ -26,7 +29,7 @@ func NewGraphiteExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
 
 var (
 	glog       log.Logger
-	HttpClient http.Client
+	HttpClient *http.Client
 )
 
 func init() {
@@ -37,13 +40,13 @@ func init() {
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
 
-	HttpClient = http.Client{
+	HttpClient = &http.Client{
 		Timeout:   time.Duration(15 * time.Second),
 		Transport: tr,
 	}
 }
 
-func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	formData := url.Values{
@@ -54,7 +57,11 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 	}
 
 	for _, query := range queries {
-		formData["target"] = []string{query.Model.Get("target").MustString()}
+		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
+			formData["target"] = []string{fullTarget}
+		} else {
+			formData["target"] = []string{query.Model.Get("target").MustString()}
+		}
 	}
 
 	if setting.Env == setting.DEV {
@@ -66,7 +73,8 @@ func (e *GraphiteExecutor) Execute(queries tsdb.QuerySlice, context *tsdb.QueryC
 		result.Error = err
 		return result
 	}
-	res, err := HttpClient.Do(req)
+
+	res, err := ctxhttp.Do(ctx, HttpClient, req)
 	if err != nil {
 		result.Error = err
 		return result

@@ -122,7 +122,7 @@ export class DataSourceEditCtrl {
       });
     }
 
-    saveChanges(test) {
+    saveChanges() {
       if (!this.editForm.$valid) {
         return;
       }

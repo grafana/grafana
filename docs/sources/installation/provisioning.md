@@ -1,20 +1,23 @@
----
-page_title: Provisioning
-page_description: Grafana provisioning
-page_keywords: grafana, provisioning, documentation
----
++++
+title = "Installing via provisioning tools"
+description = "Guide to install Grafana via provisioning tools like puppet & chef"
+keywords = ["grafana", "provisioning", "documentation", "puppet", "chef", "ansible"]
+type = "docs"
+[menu.docs]
+parent = "installation"
+weight = 8
++++
 
-# Provisioning
+
+# Installing via provisioning tools
 
 Here are links for how to install Grafana (and some include Graphite or
 InfluxDB as well) via a provisioning system. These are not maintained by
 any core Grafana team member and might be out of date.
 
-Some of the linked cookbooks/manifests/etc. will install and configure Grafana 2.x, while some will only install the older Grafana 1.x versions. They've been broken apart below for your convenience.
-
 ### Puppet
 
-* [forge.puppetlabs.com/bfraser/grafana](https://forge.puppetlabs.com/bfraser/grafana) **Note:** The current version works with Grafana 2.x. To install older versions of Grafana use the 1.x series of releases.
+* [forge.puppetlabs.com/bfraser/grafana](https://forge.puppetlabs.com/bfraser/grafana)
 
 ### Ansible
 
@@ -25,6 +28,6 @@ Some of the linked cookbooks/manifests/etc. will install and configure Grafana 2
 
 ### Chef
 
-* [github.com/JonathanTron/chef-grafana](https://github.com/JonathanTron/chef-grafana) **Note:** The current version works with Grafana 2.x. To install older versions of Grafana use the 1.x series of releases.
+* [github.com/JonathanTron/chef-grafana](https://github.com/JonathanTron/chef-grafana)
 * [github.com/Nordstrom/grafana2-cookbook](https://github.com/Nordstrom/grafana2-cookbook)
 

@@ -1,12 +1,15 @@
----
-page_title: Installing on Windows
-page_description: Grafana Installation guide for Windows
-page_keywords: grafana, installation, windows guide
----
++++
+title = "Installing on Windows"
+description = "Installing Grafana on Windows"
+keywords = ["grafana", "configuration", "documentation", "windows"]
+type = "docs"
+[menu.docs]
+parent = "installation"
+weight = 3
++++
+
 
 # Installing on Windows
-
-## Download
 
 Description | Download
 ------------ | -------------
@@ -29,7 +32,7 @@ command line. If you want to run Grafana as windows service, download
 [NSSM](https://nssm.cc/). It is very easy add Grafana as a Windows
 service using that tool.
 
-Read more about the [configuration options](/installation/configuration).
+Read more about the [configuration options]({{< relref "configuration.md" >}}).
 
 ## Building on Windows
 

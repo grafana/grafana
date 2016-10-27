@@ -384,10 +384,36 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         if (!annotations || annotations.length === 0) {
           return;
         }
+        console.log(annotations);
 
         var types = {};
+        types['$__alerting'] = {
+          color: 'rgba(237, 46, 24, 1)',
+          position: 'BOTTOM',
+          markerSize: 5,
+        };
+
+        types['$__ok'] = {
+          color: 'rgba(11, 237, 50, 1)',
+          position: 'BOTTOM',
+          markerSize: 5,
+        };
+
+        types['$__no_data'] = {
+          color: 'rgba(150, 150, 150, 1)',
+          position: 'BOTTOM',
+          markerSize: 5,
+        };
+
+        types['$__execution_error'] = ['$__no_data'];
+
         for (var i = 0; i < annotations.length; i++) {
           var item = annotations[i];
+          if (item.newState) {
+            console.log(item.newState);
+            item.eventType = '$__' + item.newState;
+            continue;
+          }
 
           if (!types[item.source.name]) {
             types[item.source.name] = {

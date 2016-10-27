@@ -93,7 +93,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     steppedLine: false,
     // tooltip options
     tooltip       : {
-      value_type: 'cumulative',
+      value_type: 'individual',
       shared: true,
       sort: 0,
       msResolution: false,
@@ -133,10 +133,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Axes', axesEditorComponent, 2);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
     this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
+    this.addEditorTab('Alert', alertTab, 5);
 
-    if (config.alertingEnabled) {
-      this.addEditorTab('Alert', alertTab, 5);
-    }
     this.subTabIndex = 0;
   }
 

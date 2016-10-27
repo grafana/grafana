@@ -1,6 +1,7 @@
 package conditions
 
 import (
+	"context"
 	"testing"
 
 	null "gopkg.in/guregu/null.v3"
@@ -137,7 +138,7 @@ func (ctx *queryConditionTestContext) exec() {
 
 	ctx.condition = condition
 
-	condition.HandleRequest = func(req *tsdb.Request) (*tsdb.Response, error) {
+	condition.HandleRequest = func(context context.Context, req *tsdb.Request) (*tsdb.Response, error) {
 		return &tsdb.Response{
 			Results: map[string]*tsdb.QueryResult{
 				"A": {Series: ctx.series},

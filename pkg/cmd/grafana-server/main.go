@@ -20,6 +20,8 @@ import (
 	_ "github.com/grafana/grafana/pkg/services/alerting/conditions"
 	_ "github.com/grafana/grafana/pkg/services/alerting/notifiers"
 	_ "github.com/grafana/grafana/pkg/tsdb/graphite"
+	_ "github.com/grafana/grafana/pkg/tsdb/influxdb"
+	_ "github.com/grafana/grafana/pkg/tsdb/opentsdb"
 	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
 	_ "github.com/grafana/grafana/pkg/tsdb/testdata"
 )
@@ -101,8 +103,10 @@ func writePIDFile() {
 
 func listenToSystemSignals(server models.GrafanaServer) {
 	signalChan := make(chan os.Signal, 1)
+	ignoreChan := make(chan os.Signal, 1)
 	code := 0
 
+	signal.Notify(ignoreChan, syscall.SIGHUP)
 	signal.Notify(signalChan, os.Interrupt, os.Kill, syscall.SIGTERM)
 
 	select {

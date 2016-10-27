@@ -252,6 +252,7 @@ func Register(r *macaron.Macaron) {
 
 		r.Group("/alerts", func() {
 			r.Post("/test", bind(dtos.AlertTestCommand{}), wrap(AlertTest))
+			r.Post("/:alertId/pause", bind(dtos.PauseAlertCommand{}), wrap(PauseAlert), reqEditorRole)
 			r.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
 			r.Get("/", wrap(GetAlerts))
 			r.Get("/states-for-dashboard", wrap(GetAlertStatesForDashboard))
@@ -265,9 +266,10 @@ func Register(r *macaron.Macaron) {
 			r.Put("/:notificationId", bind(m.UpdateAlertNotificationCommand{}), wrap(UpdateAlertNotification))
 			r.Get("/:notificationId", wrap(GetAlertNotificationById))
 			r.Delete("/:notificationId", wrap(DeleteAlertNotification))
-		}, reqOrgAdmin)
+		}, reqEditorRole)
 
 		r.Get("/annotations", wrap(GetAnnotations))
+		r.Post("/annotations/mass-delete", reqOrgAdmin, bind(dtos.DeleteAnnotationsCmd{}), wrap(DeleteAnnotations))
 
 		// error test
 		r.Get("/metrics/error", wrap(GenerateError))

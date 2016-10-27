@@ -44,3 +44,19 @@ func GetAnnotations(c *middleware.Context) Response {
 
 	return Json(200, result)
 }
+
+func DeleteAnnotations(c *middleware.Context, cmd dtos.DeleteAnnotationsCmd) Response {
+	repo := annotations.GetRepository()
+
+	err := repo.Delete(&annotations.DeleteParams{
+		AlertId:     cmd.PanelId,
+		DashboardId: cmd.DashboardId,
+		PanelId:     cmd.PanelId,
+	})
+
+	if err != nil {
+		return ApiError(500, "Failed to delete annotations", err)
+	}
+
+	return ApiSuccess("Annotations deleted")
+}

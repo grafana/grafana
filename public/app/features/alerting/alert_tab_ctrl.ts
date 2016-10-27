@@ -59,7 +59,7 @@ export class AlertTabCtrl {
       this.panelCtrl.render();
     });
 
-       // build notification model
+    // build notification model
     this.notifications = [];
     this.alertNotifications = [];
     this.alertHistory = [];
@@ -156,7 +156,7 @@ export class AlertTabCtrl {
 
     for (let addedNotification of alert.notifications) {
       var model = _.find(this.notifications, {id: addedNotification.id});
-      if (model) {
+      if (model && model.isDefault === false) {
         model.iconClass = this.getNotificationIcon(model.type);
         this.alertNotifications.push(model);
       }
@@ -231,7 +231,7 @@ export class AlertTabCtrl {
       this.datasourceSrv.get(datasourceName).then(ds => {
         if (!ds.meta.alerting) {
           this.error = 'The datasource does not support alerting queries';
-        } else if (this.templateSrv.variableExists(foundTarget.target)) {
+        } else if (ds.targetContainsTemplate(foundTarget)) {
           this.error = 'Template variables are not supported in alert queries';
         } else {
           this.error = '';
@@ -315,6 +315,7 @@ export class AlertTabCtrl {
         this.alert = null;
         this.panel.thresholds = [];
         this.conditionModels = [];
+        this.panelCtrl.alertState = null;
         this.panelCtrl.render();
       }
     });
@@ -349,6 +350,24 @@ export class AlertTabCtrl {
     }
 
     this.evaluatorParamsChanged();
+  }
+
+  clearHistory() {
+    appEvents.emit('confirm-modal', {
+      title: 'Delete Alert History',
+      text: 'Are you sure you want to remove all history & annotations for this alert?',
+      icon: 'fa-trash',
+      yesText: 'Yes',
+      onConfirm: () => {
+        this.backendSrv.post('/api/annotations/mass-delete', {
+          dashboardId: this.panelCtrl.dashboard.id,
+          panelId: this.panel.id,
+        }).then(res => {
+          this.alertHistory = [];
+          this.panelCtrl.refresh();
+        });
+      }
+    });
   }
 
   test() {

@@ -82,7 +82,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange)
 	result := make(tsdb.TimeSeriesSlice, 0)
 
-	resp, err := c.HandleRequest(req)
+	resp, err := c.HandleRequest(context.Ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("tsdb.HandleRequest() error %v", err)
 	}
@@ -123,6 +123,7 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRa
 					BasicAuth:         datasource.BasicAuth,
 					BasicAuthUser:     datasource.BasicAuthUser,
 					BasicAuthPassword: datasource.BasicAuthPassword,
+					JsonData:          datasource.JsonData,
 				},
 			},
 		},

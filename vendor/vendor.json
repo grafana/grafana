@@ -61,8 +61,20 @@
 			"path": "golang.org/x/sync/errgroup",
 			"revision": "316e794f7b5e3df4e95175a45a5fb8b12f85cb4f",
 			"revisionTime": "2016-07-15T18:54:39Z"
-    },
-    {
+		},
+		{
+			"checksumSHA1": "6IzzHO9p32aHJhMYMwijccDUIVA=",
+			"path": "gopkg.in/alexcesaro/quotedprintable.v3",
+			"revision": "2caba252f4dc53eaf6b553000885530023f54623",
+			"revisionTime": "2015-07-16T17:19:45Z"
+		},
+		{
+			"checksumSHA1": "iq5WdjScmTU+LfNoerLuwcnXpdM=",
+			"path": "gopkg.in/gomail.v2",
+			"revision": "81ebce5c23dfd25c6c67194b37d3dd3f338c98b1",
+			"revisionTime": "2016-04-11T21:29:32Z"
+		},
+		{
 			"checksumSHA1": "PoHLopxwkiXxa3uVhezeq/qJ/Vo=",
 			"path": "gopkg.in/guregu/null.v3",
 			"revision": "41961cea0328defc5f95c1c473f89ebf0d1813f6",

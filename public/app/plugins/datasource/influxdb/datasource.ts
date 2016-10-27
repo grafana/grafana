@@ -139,6 +139,24 @@ export default class InfluxDatasource {
     });
   };
 
+  targetContainsTemplate(target) {
+    for (let group of target.groupBy) {
+      for (let param of group.params) {
+        if (this.templateSrv.variableExists(param)) {
+          return true;
+        }
+      }
+    }
+
+    for (let i in target.tags) {
+      if (this.templateSrv.variableExists(target.tags[i].value)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
   metricFindQuery(query) {
     var interpolated = this.templateSrv.replace(query, null, 'regex');
 

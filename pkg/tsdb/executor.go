@@ -1,7 +1,9 @@
 package tsdb
 
+import "context"
+
 type Executor interface {
-	Execute(queries QuerySlice, context *QueryContext) *BatchResult
+	Execute(ctx context.Context, queries QuerySlice, query *QueryContext) *BatchResult
 }
 
 var registry map[string]GetExecutorFn

@@ -29,7 +29,10 @@
         <div class="card-item card-item--alert">
           <div class="card-item-header">
             <div class="card-item-type">
-              <a class="card-item-cog" href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert" bs-tooltip="'Edit alert rule'">
+              <a class="card-item-cog" bs-tooltip="'Pausing an alert rule prevents it from executing'" ng-click="ctrl.pauseAlertRule(alert.id)">
+								<i class="fa fa-pause"></i>
+							</a>
+							<a class="card-item-cog" href="dashboard/{{alert.dashboardUri}}?panelId={{alert.panelId}}&fullscreen&edit&tab=alert" bs-tooltip="'Edit alert rule'">
                 <i class="icon-gf icon-gf-settings"></i>
               </a>
             </div>

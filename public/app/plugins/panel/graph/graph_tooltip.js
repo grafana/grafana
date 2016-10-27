@@ -41,7 +41,7 @@ function ($, _) {
     };
 
     this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
-      var value, i, series, hoverIndex, hoverDistance, pointTime;
+      var value, i, series, hoverIndex, hoverDistance, pointTime, yaxis;
       var results = [];
 
       //now we know the current X (j) position for X and Y values
@@ -51,12 +51,12 @@ function ($, _) {
         series = seriesList[i];
 
         if (!series.data.length || (panel.legend.hideEmpty && series.allIsNull)) {
-          results.push({ hidden: true });
+          results.push({ hidden: true, value: 0, yaxis: 0 });
           continue;
         }
 
         if (!series.data.length || (panel.legend.hideZero && series.allIsZero)) {
-          results.push({ hidden: true });
+          results.push({ hidden: true, value: 0, yaxis: 0 });
           continue;
         }
 
@@ -85,13 +85,20 @@ function ($, _) {
           hoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
         }
 
+        yaxis = 0;
+        if (series.yaxis) {
+          yaxis = series.yaxis.n;
+        }
+
         results.push({
           value: value,
           hoverIndex: hoverIndex,
           color: series.color,
           label: series.label,
           time: pointTime,
-          distance: hoverDistance
+          distance: hoverDistance,
+          yaxis: yaxis,
+          index: i
         });
       }
 
@@ -142,10 +149,8 @@ function ($, _) {
 
         seriesHtml = '';
 
-        absoluteTime = dashboard.formatDate(seriesHoverInfo.time, tooltipFormat);
-
         // Dynamically reorder the hovercard for the current time point if the
-        // option is enabled.
+        // option is enabled, sort by yaxis by default.
         if (panel.tooltip.sort === 2) {
           seriesHoverInfo.sort(function(a, b) {
             return b.value - a.value;
@@ -154,7 +159,13 @@ function ($, _) {
           seriesHoverInfo.sort(function(a, b) {
             return a.value - b.value;
           });
+        } else {
+          seriesHoverInfo.sort(function(a, b) {
+            return a.yaxis - b.yaxis;
+          });
         }
+
+        var distance, time;
 
         for (i = 0; i < seriesHoverInfo.length; i++) {
           hoverInfo = seriesHoverInfo[i];
@@ -163,21 +174,27 @@ function ($, _) {
             continue;
           }
 
+          if (! distance || hoverInfo.distance < distance) {
+            distance = hoverInfo.distance;
+            time = hoverInfo.time;
+          }
+
           var highlightClass = '';
           if (item && i === item.seriesIndex) {
             highlightClass = 'graph-tooltip-list-item--highlight';
           }
 
-          series = seriesList[i];
+          series = seriesList[hoverInfo.index];
 
           value = series.formatValue(hoverInfo.value);
 
           seriesHtml += '<div class="graph-tooltip-list-item ' + highlightClass + '"><div class="graph-tooltip-series-name">';
           seriesHtml += '<i class="fa fa-minus" style="color:' + hoverInfo.color +';"></i> ' + hoverInfo.label + ':</div>';
           seriesHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
-          plot.highlight(i, hoverInfo.hoverIndex);
+          plot.highlight(hoverInfo.index, hoverInfo.hoverIndex);
         }
 
+        absoluteTime = dashboard.formatDate(time, tooltipFormat);
         self.showTooltip(absoluteTime, seriesHtml, pos);
       }
       // single series tooltip

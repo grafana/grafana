@@ -1,17 +1,19 @@
 package prometheus
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"regexp"
 	"strings"
 	"time"
 
+	"gopkg.in/guregu/null.v3"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/prometheus/client_golang/api/prometheus"
 	pmodel "github.com/prometheus/common/model"
-	"golang.org/x/net/context"
 )
 
 type PrometheusExecutor struct {
@@ -45,17 +47,17 @@ func (e *PrometheusExecutor) getClient() (prometheus.QueryAPI, error) {
 	return prometheus.NewQueryAPI(client), nil
 }
 
-func (e *PrometheusExecutor) Execute(queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	client, err := e.getClient()
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 
 	query, err := parseQuery(queries, queryContext)
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 
 	timeRange := prometheus.Range{
@@ -64,15 +66,15 @@ func (e *PrometheusExecutor) Execute(queries tsdb.QuerySlice, queryContext *tsdb
 		Step:  query.Step,
 	}
 
-	value, err := client.QueryRange(context.Background(), query.Expr, timeRange)
+	value, err := client.QueryRange(ctx, query.Expr, timeRange)
 
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 
 	queryResult, err := parseResponse(value, query)
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 	result.QueryResults = queryResult
 	return result
@@ -82,8 +84,10 @@ func formatLegend(metric pmodel.Metric, query *PrometheusQuery) string {
 	reg, _ := regexp.Compile(`\{\{\s*(.+?)\s*\}\}`)
 
 	result := reg.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
-		ind := strings.Replace(strings.Replace(string(in), "{{", "", 1), "}}", "", 1)
-		if val, exists := metric[pmodel.LabelName(ind)]; exists {
+		labelName := strings.Replace(string(in), "{{", "", 1)
+		labelName = strings.Replace(labelName, "}}", "", 1)
+		labelName = strings.TrimSpace(labelName)
+		if val, exists := metric[pmodel.LabelName(labelName)]; exists {
 			return []byte(val)
 		}
 
@@ -145,7 +149,7 @@ func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb
 		}
 
 		for _, k := range v.Values {
-			series.Points = append(series.Points, tsdb.NewTimePoint(float64(k.Value), float64(k.Timestamp.Unix()*1000)))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(float64(k.Value)), float64(k.Timestamp.Unix()*1000)))
 		}
 
 		queryRes.Series = append(queryRes.Series, &series)
@@ -155,7 +159,8 @@ func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb
 	return queryResults, nil
 }
 
+/*
 func resultWithError(result *tsdb.BatchResult, err error) *tsdb.BatchResult {
 	result.Error = err
 	return result
-}
+}*/

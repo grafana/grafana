@@ -95,6 +95,13 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
+	if ds.Type == m.DS_INFLUXDB {
+		if c.Query("db") != ds.Database {
+			c.JsonApiErr(403, "Datasource is not configured to allow this database", nil)
+			return
+		}
+	}
+
 	targetUrl, _ := url.Parse(ds.Url)
 	if len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[targetUrl.Host]; !exists {

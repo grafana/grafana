@@ -13,7 +13,8 @@ export class DashboardExporter {
 
   makeExportable(dash) {
     var dynSrv = new DynamicDashboardSrv();
-    dynSrv.process(dash, {cleanUpOnly: true});
+    dynSrv.init(dash, {variables: dash.templating.list});
+    dynSrv.process({cleanUpOnly: true});
 
     dash.id = null;
 

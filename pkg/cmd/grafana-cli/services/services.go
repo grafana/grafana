@@ -35,11 +35,11 @@ func Init(version string) {
 }
 
 func ListAllPlugins(repoUrl string) (m.PluginRepo, error) {
-	body, err := createRequest(repoUrl, "repo")
+	body, err := sendRequest(repoUrl, "repo")
 
 	if err != nil {
-		logger.Info("Failed to create request", "error", err)
-		return m.PluginRepo{}, fmt.Errorf("Failed to create request. error: %v", err)
+		logger.Info("Failed to send request", "error", err)
+		return m.PluginRepo{}, fmt.Errorf("Failed to send request. error: %v", err)
 	}
 
 	if err != nil {
@@ -112,11 +112,11 @@ func RemoveInstalledPlugin(pluginPath, pluginName string) error {
 }
 
 func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
-	body, err := createRequest(repoUrl, "repo", pluginId)
+	body, err := sendRequest(repoUrl, "repo", pluginId)
 
 	if err != nil {
-		logger.Info("Failed to create request", "error", err)
-		return m.Plugin{}, fmt.Errorf("Failed to create request. error: %v", err)
+		logger.Info("Failed to send request", "error", err)
+		return m.Plugin{}, fmt.Errorf("Failed to send request. error: %v", err)
 	}
 
 	if err != nil {
@@ -133,7 +133,7 @@ func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
 	return data, nil
 }
 
-func createRequest(repoUrl string, subPaths ...string) ([]byte, error) {
+func sendRequest(repoUrl string, subPaths ...string) ([]byte, error) {
 	u, _ := url.Parse(repoUrl)
 	for _, v := range subPaths {
 		u.Path = path.Join(u.Path, v)
@@ -149,6 +149,13 @@ func createRequest(repoUrl string, subPaths ...string) ([]byte, error) {
 	}
 
 	res, err := HttpClient.Do(req)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	if res.StatusCode/100 != 2 {
+		return []byte{}, fmt.Errorf("Api returned invalid status: %s", res.Status)
+	}
 
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()

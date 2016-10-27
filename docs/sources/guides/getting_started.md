@@ -1,8 +1,13 @@
----
-page_title: Getting started
-page_description: Getting started
-page_keywords: grafana, guide, documentation
----
++++
+title = "Getting Started"
+description = "Getting started with Grafana guide"
+keywords = ["grafana", "intro", "guide", "started"]
+type = "docs"
+[menu.docs]
+name = "Getting Started"
+identifier = "getting_started_guide"
+parent = "guides"
++++
 
 # Getting started
 This guide will help you get started and acquainted with Grafana. It assumes you have a working Grafana server up and running and have added at least one [Data Source](/datasources/overview).
@@ -10,14 +15,14 @@ This guide will help you get started and acquainted with Grafana. It assumes you
 ## Beginner guides
 Watch the 10min [beginners guide to building dashboards](https://www.youtube.com/watch?v=sKNZMtoSHN4&index=7&list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2) to get a quick intro to setting up Dashboards and Panels.
 
-##Basic Concepts
+## Basic Concepts
 Read the [Basic Concepts](/guides/basic_concepts) document to get a crash course in key Grafana concepts.
 
 ### Top header
 
 Let's start with creating a new Dashboard. You can find the new Dashboard link at the bottom of the Dashboard picker. You now have a blank Dashboard.
 
-<img class="no-shadow" src="/img/v2/v2_top_nav_annotated.png">
+<img class="no-shadow" src="img/docs/v2/v2_top_nav_annotated.png">
 
 The image above shows you the top header for a Dashboard.
 
@@ -29,12 +34,12 @@ The image above shows you the top header for a Dashboard.
 6. Settings: Manage Dashboard settings and features such as Templating and Annotations.
 
 ## Dashboards, Panels, Rows, the building blocks of Grafana...
-Dashboards are at the core of what Grafana is all about. Dashboards are composed of individual Panels arranged on a number of Rows. Grafana ships with a variety of Panels. Grafana makes it easy to construct the right queries, and customize the display properties so that you can create the perfect Dashboard for your need. Each Panel can interact with data from any configured Grafana Data Source (currently InfluxDB, Graphite, OpenTSDB, and KairosDB). The [Core Concepts](/guides/basic_concepts) guide explores these key ideas in detail.
+Dashboards are at the core of what Grafana is all about. Dashboards are composed of individual Panels arranged on a number of Rows. Grafana ships with a variety of Panels. Grafana makes it easy to construct the right queries, and customize the display properties so that you can create the perfect Dashboard for your need. Each Panel can interact with data from any configured Grafana Data Source (currently InfluxDB, Graphite, OpenTSDB, and KairosDB). The [Basic Concepts](/guides/basic_concepts) guide explores these key ideas in detail.
 
 
 ## Adding & Editing Graphs and Panels
 
-![](/img/v2/graph_metrics_tab_graphite.png)
+![](img/docs/v2/graph_metrics_tab_graphite.png)
 
 1. You add panels via row menu. The row menu is the green icon to the left of each row.
 2. To edit the graph you click on the graph title to open the panel menu, then `Edit`.
@@ -43,8 +48,7 @@ Dashboards are at the core of what Grafana is all about. Dashboards are composed
 When you click the `Metrics` tab, you are presented with a Query Editor that is specific to the Panel Data Source. Use the Query Editor to build your queries and Grafana will visualize them in real time.
 
 
-
-<img src="/img/v2/dashboard_annotated.png" class="no-shadow">
+<img src="img/docs/v2/dashboard_annotated.png" class="no-shadow">
 
 1. Zoom out time range
 2. Time picker dropdown. Here you can access relative time range options, auto refresh options and set custom absolute time ranges.
@@ -57,7 +61,7 @@ When you click the `Metrics` tab, you are presented with a Query Editor that is 
 
 You can Drag-and-Drop Panels within and between Rows. Click and hold the Panel title, and drag it to its new location. You can also easily resize panels by clicking the (-) and (+) icons.
 
-![](/img/animated_gifs/drag_drop.gif)
+![](img/docs/animated_gifs/drag_drop.gif)
 
 ## Tips and shortcuts
 

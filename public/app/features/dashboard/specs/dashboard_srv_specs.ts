@@ -6,7 +6,7 @@ describe('dashboardSrv', function() {
   var _dashboardSrv;
 
   beforeEach(() => {
-    _dashboardSrv = new DashboardSrv();
+    _dashboardSrv = new DashboardSrv({}, {}, {});
   });
 
   describe('when creating new dashboard with defaults only', function() {
@@ -221,11 +221,11 @@ describe('dashboardSrv', function() {
 
     it('graph thresholds should be migrated', function() {
       expect(graph.thresholds.length).to.be(2);
-      expect(graph.thresholds[0].op).to.be('>');
-      expect(graph.thresholds[0].value).to.be(400);
-      expect(graph.thresholds[0].fillColor).to.be('red');
-      expect(graph.thresholds[1].value).to.be(200);
-      expect(graph.thresholds[1].fillColor).to.be('yellow');
+      expect(graph.thresholds[0].op).to.be('gt');
+      expect(graph.thresholds[0].value).to.be(200);
+      expect(graph.thresholds[0].fillColor).to.be('yellow');
+      expect(graph.thresholds[1].value).to.be(400);
+      expect(graph.thresholds[1].fillColor).to.be('red');
     });
   });
 

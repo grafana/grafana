@@ -1,8 +1,10 @@
----
-page_title: Building from source
-page_description: Building from source Grafana.
-page_keywords: grafana, build, contribute, documentation
----
++++
+title = "Building from source"
+type = "docs"
+[menu.docs]
+parent = "installation"
+weight = 5
++++
 
 # Building Grafana from source
 
@@ -24,7 +26,7 @@ go get github.com/grafana/grafana
 ## Building the backend
 ```
 cd $GOPATH/src/github.com/grafana/grafana
-go run build.go setup              
+go run build.go setup
 go run build.go build              # (or 'go build ./pkg/cmd/grafana-server')
 ```
 

@@ -3,7 +3,7 @@
 [Website](http://grafana.org) |
 [Twitter](https://twitter.com/grafana) |
 [IRC](https://webchat.freenode.net/?channels=grafana) |
-![](https://brandfolder.com/api/favicon/icon?size=16&domain=www.slack.com)
+[![Slack](https://brandfolder.com/api/favicon/icon?size=16&domain=www.slack.com)](http://slack.raintank.io)
 [Slack](http://slack.raintank.io) |
 [Email](mailto:contact@grafana.org)
 
@@ -74,7 +74,7 @@ Be sure to read the [getting started guide](http://docs.grafana.org/guides/getti
 
 ## Run from master
 If you want to build a package yourself, or contribute. Here is a guide for how to do that. You can always find
-the latest master builds [here](http://grafana.org/download/builds)
+the latest master builds [here](http://grafana.org/builds)
 
 ### Dependencies
 
@@ -87,11 +87,11 @@ the latest master builds [here](http://grafana.org/download/builds)
 go get github.com/grafana/grafana
 ```
 
-Since imports of dependencies use the absolute path github.com/grafana/grafana within the $GOPATH,
-you will need to put your version of the code in $GOPATH/src/github.com/grafana/grafana to be able
+Since imports of dependencies use the absolute path `github.com/grafana/grafana` within the `$GOPATH`,
+you will need to put your version of the code in `$GOPATH/src/github.com/grafana/grafana` to be able
 to develop and build grafana on a cloned repository. To do so, you can clone your forked repository
-directly to $GOPATH/src/github.com/grafana or you can create a symbolic link from your version
-of the code to $GOPATH/src/github.com/grafana/grafana. The last options makes it possible to change
+directly to `$GOPATH/src/github.com/grafana` or you can create a symbolic link from your version
+of the code to `$GOPATH/src/github.com/grafana/grafana`. The last options makes it possible to change
 easily the grafana repository you want to build.
 ```bash
 go get github.com/*your_account*/grafana
@@ -108,7 +108,7 @@ go run build.go build
 
 ### Building frontend assets
 
-To build less to css for the frontend you will need a recent version of of **node (v4+)**,
+To build less to css for the frontend you will need a recent version of **node (v4+)**,
 npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```bash
@@ -135,7 +135,7 @@ bra run
 ./bin/grafana-server
 ```
 
-Open grafana in your browser (default http://localhost:3000) and login with admin user (default user/pass = admin/admin).
+Open grafana in your browser (default: `http://localhost:3000`) and login with admin user (default: `user/pass = admin/admin`).
 
 ### Dev config
 
@@ -147,7 +147,7 @@ You only need to add the options you want to override. Config files are applied 
 3. custom.ini
 
 ## Create a pull request
-Before or after you create a pull request, sign the [contributor license agreement](http://grafana.org/docs/contributing/cla.html).
+Before or after you create a pull request, sign the [contributor license agreement](http://docs.grafana.org/project/cla/).
 
 ## Contribute
 If you have any idea for an improvement or found a bug do not hesitate to open an issue.
