@@ -219,6 +219,8 @@ div.flot-text {
   &:hover {
     .dash-row-header-actions {
       display: block;
+      opacity: 0;
+      animation: fadeIn 150ms linear 100ms forwards;
     }
   }
 
@@ -387,7 +389,7 @@ div.flot-text {
   border-left: $panel-border;
   border-bottom: $panel-border;
   border-right: $panel-border;
-  margin: 0;
+  margin: 0 0 $panel-margin*2 0;
   padding: $panel-margin*2;
   box-shadow: 0px 3px 7px -3px $black;
 }
@@ -396,12 +398,21 @@ div.flot-text {
   border-left: $panel-border;
   border-bottom: $panel-border;
   border-right: $panel-border;
-  margin: 0;
+  margin: 0 0 $panel-margin*2 0;
   padding: $panel-margin*2;
   // display: flex;
   // align-items: flex-start;
   // position: relative;
   box-shadow: 0px 3px 7px -3px $black;
+}
+
+.dash-edit-mode {
+  .dash-row-options {
+    margin-bottom: 0;
+  }
+  .dash-row-add-panel {
+    margin-bottom: 0;
+  }
 }
 
 .add-panel-panels-scroll {
@@ -440,3 +451,16 @@ div.flot-text {
 .add-panel-item-img {
   width: 2rem;
 }
+
+// Animations
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
