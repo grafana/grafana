@@ -28,15 +28,15 @@ function (coreModule) {
 
   coreModule.default.controller('NewDashboardCtrl', function($scope) {
     $scope.initDashboard({
-      meta: { canStar: false, canShare: false },
+      meta: { canStar: false, canShare: false, isNew: true },
       dashboard: {
         title: "New dashboard",
+        isNew: true,
         rows: [
           {
             title: 'Dashboard Row',
             height: '250px',
             panels:[],
-            isNew: true,
           }
         ]
       },

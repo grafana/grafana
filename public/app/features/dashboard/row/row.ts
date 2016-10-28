@@ -19,7 +19,7 @@ export class DashRowCtrl {
   constructor(private $scope, private $rootScope, private $timeout, private uiSegmentSrv, private $q) {
     this.row.title = this.row.title || 'Row title';
 
-    if (this.row.isNew) {
+    if (this.dashboard.meta.isNew) {
       this.dropView = 1;
       delete this.row.isNew;
     }
