@@ -45,11 +45,6 @@ div.flot-text {
   background-color: $panel-bg;
   position: relative;
   border: $panel-border;
-  &:hover {
-    .panel-actions {
-      display: block;
-    }
-  }
 
   &.panel-transparent {
     background-color: transparent;
@@ -221,11 +216,6 @@ div.flot-text {
   margin-right: $panel-margin;
   margin-left: 0;
 
-  &:hover {
-    .dash-row-header-actions {
-      display: block;
-    }
-  }
 
   .h1 { font-size: 2.7rem; font-style: normal; line-height: 4rem }
   .h2 { font-size: 2.4rem; line-height: 3.5rem; }
@@ -312,6 +302,11 @@ div.flot-text {
 .dash-edit-mode {
   .dash-row-header {
     display: flex;
+    &:hover {
+      .dash-row-header-actions {
+        display: block;
+      }
+    }
   }
   .dash-row {
     border-left: 1px solid $dark-4;
