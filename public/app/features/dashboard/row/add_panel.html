@@ -1,9 +1,8 @@
 <div class="dash-row-add-panel">
 
-  <div class="gf-form-inline">
+  <div class="gf-form-inline dash-row-add-panel-form">
     <div class="gf-form">
-      <!-- <span class="gf&#45;form&#45;label">Panel search</span> -->
-      <input type="text" class="gf-form-input max-width-14" ng-model='ctrl.panelSearch' give-focus='true' ng-keydown="ctrl.keyDown($event)" ng-change="ctrl.panelSearchChanged()" placeholder="panel search filter"></input>
+      <input type="text" class="gf-form-input max-width-14" ng-model='ctrl.panelSearch' give-focus='true' ng-keydown="ctrl.keyDown($event)" ng-change="ctrl.panelSearchChanged()" placeholder="panel search filter" ng-blur="ctrl.panelSearchBlur()"></input>
     </div>
   </div>
 

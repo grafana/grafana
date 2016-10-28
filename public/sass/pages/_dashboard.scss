@@ -216,13 +216,20 @@ div.flot-text {
   flex-direction: row;
   margin-right: $panel-margin;
   margin-left: 0;
-  border-bottom: 1px solid $dark-4;
+  // border-bottom: 1px solid $dark-4;
 
   &:hover {
     .dash-row-header-actions {
       display: block;
     }
   }
+
+  .h1 { font-size: $font-size-h1; }
+  .h2 { font-size: $font-size-h2; }
+  .h3 { font-size: $font-size-h3; }
+  .h4 { font-size: $font-size-h4; }
+  .h5 { font-size: $font-size-h5; }
+  .h6 { font-size: $font-size-h6; }
 }
 
 .dash-row-header-title {
@@ -280,7 +287,6 @@ div.flot-text {
   .dash-row {
   }
   .panels-wrapper {
-    padding: $panel-margin*2 0 0 $panel-margin;
   }
 }
 
@@ -302,7 +308,8 @@ div.flot-text {
 
 .dash-row-options {
   background: $panel-bg;
-  margin: 0 0 $panel-margin 0;
+  border: $panel-border;
+  margin: 0 0 $panel-margin*2 $panel-margin;
   padding: $spacer*1.5;
 }
 
@@ -311,6 +318,13 @@ div.flot-text {
   padding: $panel-margin;
   display: flex;
   align-items: flex-start;
+  position: relative;
+}
+
+.dash-row-add-panel-form {
+  position: absolute;
+  width: 200px;
+  top: -34px;
 }
 
 .add-panel-panels-scroll {

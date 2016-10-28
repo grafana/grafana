@@ -27,7 +27,7 @@ export class AddPanelCtrl {
 
   keyDown(evt) {
     if (evt.keyCode === 27) {
-      this.rowCtrl.showOptions = false;
+      this.rowCtrl.dropView = 0;
       return;
     }
 
@@ -45,6 +45,12 @@ export class AddPanelCtrl {
         this.addPanel(selectedPanel);
       }
     }
+  }
+
+  panelSearchBlur() {
+    this.$timeout(() => {
+      this.rowCtrl.dropView = 0;
+    }, 400);
   }
 
   moveSelection(direction) {
@@ -90,7 +96,7 @@ export class AddPanelCtrl {
     this.rowCtrl.dropView = 0;
     this.dashboard.addPanel(panel, this.row);
     this.$timeout(() => {
-      this.$rootScope.broadcast('render');
+      this.$rootScope.$broadcast('render');
       //this.$rootScope.appEvent('panel-change-view', {
       //  fullscreen: true, edit: true, panelId: panel.id
       //});
