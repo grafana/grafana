@@ -48,9 +48,9 @@ export class AddPanelCtrl {
   }
 
   panelSearchBlur() {
-    this.$timeout(() => {
-      this.rowCtrl.dropView = 0;
-    }, 400);
+    // this.$timeout(() => {
+    //   this.rowCtrl.dropView = 0;
+    // }, 400);
   }
 
   moveSelection(direction) {

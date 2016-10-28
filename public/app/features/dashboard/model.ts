@@ -65,6 +65,10 @@ export class DashboardModel {
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
 
+    if (this.id === null) {
+      this.editMode = true;
+    }
+
     this.updateSchema(data);
     this.initMeta(meta);
   }

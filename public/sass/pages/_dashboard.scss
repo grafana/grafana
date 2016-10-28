@@ -206,7 +206,6 @@ div.flot-text {
 //
 
 .dash-row {
-  border-left: 1px solid $dark-4;
   display: block;
 }
 
@@ -216,7 +215,6 @@ div.flot-text {
   flex-direction: row;
   margin-right: $panel-margin;
   margin-left: 0;
-  // border-bottom: 1px solid $dark-4;
 
   &:hover {
     .dash-row-header-actions {
@@ -224,16 +222,15 @@ div.flot-text {
     }
   }
 
-  .h1 { font-size: $font-size-h1; }
-  .h2 { font-size: $font-size-h2; }
-  .h3 { font-size: $font-size-h3; }
-  .h4 { font-size: $font-size-h4; }
-  .h5 { font-size: $font-size-h5; }
-  .h6 { font-size: $font-size-h6; }
+  .h1 { font-size: 3rem; font-style: normal; }
+  .h2 { font-size: 2.5rem; }
+  .h3 { font-size: 2rem; }
+  .h4 { font-size: 1.7rem; }
+  .h5 { font-size: 1.4rem; }
+  .h6 { font-size: 1rem }
 }
 
 .dash-row-header-title {
-  border-top: 1px solid $dark-4;
   padding: 0.6rem;
 
   .dash-row-collapse-toggle {
@@ -285,8 +282,13 @@ div.flot-text {
 
 .dash-edit-mode {
   .dash-row {
+    border-left: 1px solid $dark-4;
+  }
+  .dash-row-header-title {
+    border-top: 1px solid $dark-4;
   }
   .panels-wrapper {
+    margin-left: $panel-margin;
   }
 }
 
@@ -309,13 +311,13 @@ div.flot-text {
 .dash-row-options {
   background: $panel-bg;
   border: $panel-border;
-  margin: 0 0 $panel-margin*2 $panel-margin;
+  margin: 0 0 $panel-margin*2 $panel-margin*2;
   padding: $spacer*1.5;
 }
 
 .dash-row-add-panel {
   margin: 0;
-  padding: $panel-margin;
+  padding: $panel-margin*2;
   display: flex;
   align-items: flex-start;
   position: relative;
@@ -325,6 +327,7 @@ div.flot-text {
   position: absolute;
   width: 200px;
   top: -34px;
+  left: 5px;
 }
 
 .add-panel-panels-scroll {

@@ -1,4 +1,4 @@
-<div class="dash-row-header">
+<div class="dash-row-header" ng-if="ctrl.dashboard.editMode || ctrl.row.showTitle">
   <a class="dash-row-header-title" ng-click="ctrl.toggleCollapse()">
     <span class="dash-row-collapse-toggle pointer">
       <i class="fa fa-chevron-down" ng-show="!ctrl.row.collapse"></i>

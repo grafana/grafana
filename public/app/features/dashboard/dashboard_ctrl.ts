@@ -40,7 +40,6 @@ export class DashboardCtrl {
       $scope.setupDashboardInternal = function(data) {
         var dashboard = dashboardSrv.create(data.dashboard, data.meta);
         dashboardSrv.setCurrent(dashboard);
-        dashboard.editMode = true;
 
         // init services
         timeSrv.init(dashboard);
