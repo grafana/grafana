@@ -57,6 +57,10 @@ div.flot-text {
   }
 }
 
+.add-row-panel-hint {
+  display: none;
+}
+
 .panel-content {
   padding: 0px 10px 5px 10px;
 }
@@ -212,6 +216,7 @@ div.flot-text {
 .dash-row-header {
   position: relative;
   display: flex;
+  display: none;
   flex-direction: row;
   margin-right: $panel-margin;
   margin-left: 0;
@@ -222,9 +227,9 @@ div.flot-text {
     }
   }
 
-  .h1 { font-size: 3rem; font-style: normal; }
-  .h2 { font-size: 2.5rem; }
-  .h3 { font-size: 2rem; }
+  .h1 { font-size: 2.7rem; font-style: normal; line-height: 4rem }
+  .h2 { font-size: 2.4rem; line-height: 3.5rem; }
+  .h3 { font-size: 2.0rem; line-height: 3rem;}
   .h4 { font-size: 1.7rem; }
   .h5 { font-size: 1.4rem; }
   .h6 { font-size: 1rem }
@@ -265,6 +270,30 @@ div.flot-text {
   }
 }
 
+.dash-row-show-options {
+  .dash-row-header-actions {
+    display: block;
+  }
+  .dash-row-header-action-show-options {
+    color: $link-color;
+  }
+}
+
+.dash-row-show-add-panel {
+  .dash-row-header-actions {
+    display: block;
+  }
+  .dash-row-header-action--add-panel {
+    color: $link-color;
+  }
+}
+
+.dash-row-show-title {
+  .dash-row-header {
+    display: block;
+  }
+}
+
 .dash-row-header-add-panel {
   padding: 0.7rem;
   i {
@@ -281,6 +310,9 @@ div.flot-text {
 }
 
 .dash-edit-mode {
+  .dash-row-header {
+    display: block;
+  }
   .dash-row {
     border-left: 1px solid $dark-4;
   }
@@ -289,6 +321,9 @@ div.flot-text {
   }
   .panels-wrapper {
     margin-left: $panel-margin;
+  }
+  .add-row-panel-hint {
+    display: block;
   }
 }
 
@@ -321,13 +356,6 @@ div.flot-text {
   display: flex;
   align-items: flex-start;
   position: relative;
-}
-
-.dash-row-add-panel-form {
-  position: absolute;
-  width: 200px;
-  top: -34px;
-  left: 5px;
 }
 
 .add-panel-panels-scroll {

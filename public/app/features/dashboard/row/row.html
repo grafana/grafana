@@ -1,4 +1,4 @@
-<div class="dash-row-header" ng-if="ctrl.dashboard.editMode || ctrl.row.showTitle">
+<div class="dash-row-header">
   <a class="dash-row-header-title" ng-click="ctrl.toggleCollapse()">
     <span class="dash-row-collapse-toggle pointer">
       <i class="fa fa-chevron-down" ng-show="!ctrl.row.collapse"></i>
@@ -11,11 +11,18 @@
   </div>
 
   <div class="dash-row-header-actions">
-    <a class="pointer" ng-click="ctrl.showAddPanel()">Add Panel <i class="fa fa-plus"></i></a>
-    <a class="pointer" ng-click="ctrl.showRowOptions()">Row Options <i class="fa fa-cog"></i></a>
+    <a class="pointer dash-row-header-action-add-panel" ng-click="ctrl.showAddPanel()">
+      Add Panel
+      <i class="fa fa-plus" ng-hide="ctrl.dropView===1"></i>
+      <i class="fa fa-remove" ng-show="ctrl.dropView===1"></i>
+    </a>
+    <a class="pointer dash-row-header-action-show-options" ng-click="ctrl.showRowOptions()">
+      Row Options
+      <i class="fa fa-cog" ng-hide="ctrl.dropView===2"></i>
+      <i class="fa fa-remove" ng-show="ctrl.dropView===2"></i>
+    </a>
   </div>
 </div>
-
 
 <div ng-if="ctrl.dropView === 1">
   <dash-row-add-panel row-ctrl="ctrl"></dash-row-add-panel>

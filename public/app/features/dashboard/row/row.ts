@@ -104,8 +104,11 @@ export function rowDirective($rootScope) {
       row: "=",
     },
     link: function(scope, element) {
-      scope.$watchGroup(['ctrl.row.collapse', 'ctrl.row.height'], function() {
+      scope.$watchGroup(['ctrl.row.collapse', 'ctrl.row.height', 'ctrl.row.showTitle', 'ctrl.dropView'], function() {
         element.css({minHeight: scope.ctrl.row.collapse ? '5px' : scope.ctrl.row.height});
+        element.toggleClass('dash-row-show-title', scope.ctrl.row.showTitle === true);
+        element.toggleClass('dash-row-show-options', scope.ctrl.dropView === 2);
+        element.toggleClass('dash-row-show-add-panel', scope.ctrl.dropView === 1);
       });
 
       $rootScope.onAppEvent('panel-fullscreen-enter', function(evt, info) {
@@ -184,21 +187,3 @@ coreModule.directive('panelDropZone', function($timeout) {
   };
 });
 
-coreModule.directive('rowHeight', function() {
-  return function(scope, element) {
-    scope.$watchGroup(['row.collapse', 'row.height'], function() {
-      element.css({ minHeight: scope.row.collapse ? '5px' : scope.row.height });
-    });
-
-    scope.onAppEvent('panel-fullscreen-enter', function(evt, info) {
-      var hasPanel = _.find(scope.row.panels, {id: info.panelId});
-      if (!hasPanel) {
-        element.hide();
-      }
-    });
-
-    scope.onAppEvent('panel-fullscreen-exit', function() {
-      element.show();
-    });
-  };
-});

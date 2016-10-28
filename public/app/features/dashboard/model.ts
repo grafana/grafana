@@ -187,11 +187,11 @@ export class DashboardModel {
       return;
     }
 
-    var visableTemplates = _.filter(this.templating.list, function(template) {
-      return template.hideVariable === undefined || template.hideVariable === false;
+    var visibleVars = _.filter(this.templating.list, function(template) {
+      return template.hide !== 2;
     });
 
-    this.meta.submenuEnabled = visableTemplates.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
+    this.meta.submenuEnabled = visibleVars.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
   }
 
   getPanelInfoById(panelId) {

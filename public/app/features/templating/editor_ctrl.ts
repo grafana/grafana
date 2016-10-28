@@ -146,7 +146,7 @@ export class VariableEditorCtrl {
     $scope.removeVariable = function(variable) {
       var index = _.indexOf($scope.variables, variable);
       $scope.variables.splice(index, 1);
-      $scope.updateSubmenuVisibility();
+      $scope.dashboard.updateSubmenuVisibility();
     };
   }
 }

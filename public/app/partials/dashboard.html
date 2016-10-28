@@ -10,11 +10,11 @@
 
 		<div class="clearfix"></div>
 
-    <dash-row class="dash-row" ng-repeat="row in dashboard.rows" row="row" dashboard="dashboard" row-height>
+    <dash-row class="dash-row" ng-repeat="row in dashboard.rows" row="row" dashboard="dashboard">
     </dash-row>
 	</div>
 
-	<div ng-show='dashboardMeta.canEdit' class="row-fluid add-row-panel-hint" ng-hide="dashboard.meta.fullscreen">
+	<div ng-show='dashboardMeta.canEdit' class="row-fluid add-row-panel-hint">
 		<div class="span12" style="text-align:right;">
 			<span style="margin-right: 10px;" ng-click="addRowDefault()" class="pointer btn btn-secondary btn-small">
 				<span><i class="fa fa-plus"></i> ADD ROW</span>
