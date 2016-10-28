@@ -183,3 +183,22 @@ coreModule.directive('panelDropZone', function($timeout) {
     });
   };
 });
+
+coreModule.directive('rowHeight', function() {
+  return function(scope, element) {
+    scope.$watchGroup(['row.collapse', 'row.height'], function() {
+      element.css({ minHeight: scope.row.collapse ? '5px' : scope.row.height });
+    });
+
+    scope.onAppEvent('panel-fullscreen-enter', function(evt, info) {
+      var hasPanel = _.find(scope.row.panels, {id: info.panelId});
+      if (!hasPanel) {
+        element.hide();
+      }
+    });
+
+    scope.onAppEvent('panel-fullscreen-exit', function() {
+      element.show();
+    });
+  };
+});

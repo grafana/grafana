@@ -1,8 +1,7 @@
-<div dash-class ng-if="dashboard">
+<div dash-class ng-if="dashboard" >
 	<dashnav></dashnav>
 
 	<div class="dashboard-container">
-
 		<div dash-editor-view></div>
 		<dashboard-search></dashboard-search>
 		<div class="clearfix"></div>
@@ -11,9 +10,8 @@
 
 		<div class="clearfix"></div>
 
-    <dash-row class="dash-row" ng-repeat="row in dashboard.rows" row="row" dashboard="dashboard">
+    <dash-row class="dash-row" ng-repeat="row in dashboard.rows" row="row" dashboard="dashboard" row-height>
     </dash-row>
-
 	</div>
 
 	<div ng-show='dashboardMeta.canEdit' class="row-fluid add-row-panel-hint" ng-hide="dashboard.meta.fullscreen">
