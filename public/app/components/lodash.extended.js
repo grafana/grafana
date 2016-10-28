@@ -28,12 +28,16 @@ function () {
     }
   });
 
+  /*
+   A metric is in the format of <orgId>.<sysId>.<metric short name>.
+   Note that a metric short name may also have '.' in it.
+  */
   _.getMetricName = function (metricName) {
     var elem = metricName.split(".");
-    if(elem.length != 3){
+    if(elem.length < 3){
       return metricName;
     }
-    return elem[2];
+    return metricName.substring(metricName.indexOf(elem[2]));
   };
   return _;
 });
