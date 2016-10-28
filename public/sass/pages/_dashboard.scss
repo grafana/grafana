@@ -290,7 +290,7 @@ div.flot-text {
 
 .dash-row-show-title {
   .dash-row-header {
-    display: block;
+    display: flex;
   }
 }
 
@@ -311,7 +311,7 @@ div.flot-text {
 
 .dash-edit-mode {
   .dash-row-header {
-    display: block;
+    display: flex;
   }
   .dash-row {
     border-left: 1px solid $dark-4;
