@@ -121,7 +121,7 @@
     border-bottom: 1px solid $dark-4;
     width: 15px;
     position: absolute;
-    margin: 0 0 0 -12px;
+    margin: 0 0 0 -5px;
     bottom: 0;
   }
   .add-row-panel-hint {
@@ -210,17 +210,5 @@
 
 .add-panel-item-img {
   width: 2rem;
-}
-
-// Animations
-
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-
-  to {
-    opacity: 1;
-  }
 }
 
