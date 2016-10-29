@@ -84,6 +84,7 @@ export class DashRowCtrl {
   }
 
   showAddPanel() {
+    this.row.collapse = false;
     this.dropView = this.dropView === 1 ? 0 : 1;
   }
 
@@ -104,11 +105,8 @@ export function rowDirective($rootScope) {
       row: "=",
     },
     link: function(scope, element) {
-      scope.$watchGroup(['ctrl.row.collapse', 'ctrl.row.height', 'ctrl.row.showTitle', 'ctrl.dropView'], function() {
+      scope.$watchGroup(['ctrl.row.height'], function() {
         element.css({minHeight: scope.ctrl.row.collapse ? '5px' : scope.ctrl.row.height});
-        element.toggleClass('dash-row-show-title', scope.ctrl.row.showTitle === true);
-        element.toggleClass('dash-row-show-options', scope.ctrl.dropView === 2);
-        element.toggleClass('dash-row-show-add-panel', scope.ctrl.dropView === 1);
       });
 
       $rootScope.onAppEvent('panel-fullscreen-enter', function(evt, info) {
