@@ -105,7 +105,7 @@ export function rowDirective($rootScope) {
       row: "=",
     },
     link: function(scope, element) {
-      scope.$watchGroup(['ctrl.row.height'], function() {
+      scope.$watchGroup(['ctrl.row.collapse', 'ctrl.row.height'], function() {
         element.css({minHeight: scope.ctrl.row.collapse ? '5px' : scope.ctrl.row.height});
       });
 
