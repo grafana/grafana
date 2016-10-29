@@ -216,6 +216,13 @@ div.flot-text {
   margin-right: $panel-margin;
   margin-left: 0;
 
+  &:hover {
+    .dash-row-header-actions {
+      display: block;
+      opacity: 0;
+      animation: fadeIn 150ms linear 100ms forwards;
+    }
+  }
 
   .h1 { font-size: 2.7rem; font-style: normal; line-height: 4rem }
   .h2 { font-size: 2.4rem; line-height: 3.5rem; }
@@ -267,6 +274,9 @@ div.flot-text {
   .dash-row-header-action-show-options {
     color: $link-color;
   }
+  .dash-row-header {
+    border-bottom: none;
+  }
 }
 
 .dash-row-show-add-panel {
@@ -275,6 +285,9 @@ div.flot-text {
   }
   .dash-row-header-action--add-panel {
     color: $link-color;
+  }
+  .dash-row-header {
+    border-bottom: none;
   }
 }
 
@@ -302,21 +315,55 @@ div.flot-text {
 .dash-edit-mode {
   .dash-row-header {
     display: flex;
-    &:hover {
-      .dash-row-header-actions {
-        display: block;
-      }
+    border-bottom: 1px solid $dark-4;
+    border-right: 1px solid $dark-4;
+    margin-right: 0;
+    .dash-row-header-actions {
+      display: block;
     }
   }
+  .dash-row-show-add-panel {
+    .dash-row-header {
+      border-bottom: none;
+    }
+   }
+  .dash-row-show-options {
+    .dash-row-header {
+      border-bottom: none;
+    }
+   }
+  .dash-row-header::after {
+    content: ' ';
+    border-top: 1px solid $dark-4;
+    width: 15px;
+    position: relative;
+  }
   .dash-row {
-    border-left: 1px solid $dark-4;
+    margin-bottom: $spacer*2;
   }
   .dash-row-header-title {
+    border-left: 1px solid $dark-4;
+  }
+  .dash-row-header-title::before {
+    content: ' ';
     border-top: 1px solid $dark-4;
+    width: 15px;
+    position: absolute;
+    margin: -9px 0 0 -9px;
   }
   .panels-wrapper {
-    margin-left: $panel-margin;
+    padding: $panel-margin*2 $panel-margin 0 $panel-margin*2;
+    border-left: 1px solid $dark-4;
+    border-right: 1px solid $dark-4;
   }
+  .panels-wrapper::after {
+      content: ' ';
+      border-bottom: 1px solid $dark-4;
+      width: 15px;
+      position: absolute;
+      margin: 0 0 0 -12px;
+    }
+
   .add-row-panel-hint {
     display: block;
   }
@@ -339,18 +386,33 @@ div.flot-text {
 }
 
 .dash-row-options {
-  background: $panel-bg;
-  border: $panel-border;
-  margin: 0 0 $panel-margin*2 $panel-margin*2;
-  padding: $spacer*1.5;
+  border-left: $panel-border;
+  border-bottom: $panel-border;
+  border-right: $panel-border;
+  margin: 0 0 $panel-margin*2 0;
+  padding: $panel-margin*2;
+  box-shadow: 0px 3px 7px -3px $black;
 }
 
 .dash-row-add-panel {
-  margin: 0;
+  border-left: $panel-border;
+  border-bottom: $panel-border;
+  border-right: $panel-border;
+  margin: 0 0 $panel-margin*2 0;
   padding: $panel-margin*2;
   // display: flex;
   // align-items: flex-start;
   // position: relative;
+  box-shadow: 0px 3px 7px -3px $black;
+}
+
+.dash-edit-mode {
+  .dash-row-options {
+    margin-bottom: 0;
+  }
+  .dash-row-add-panel {
+    margin-bottom: 0;
+  }
 }
 
 .add-panel-panels-scroll {
@@ -383,8 +445,22 @@ div.flot-text {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
+  font-size: $font-size-sm;
 }
 
 .add-panel-item-img {
-  width: 3rem;
+  width: 2rem;
 }
+
+// Animations
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
