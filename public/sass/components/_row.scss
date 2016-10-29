@@ -65,6 +65,11 @@
   }
 }
 
+a.dash-row-header-actions--tight {
+  padding-left: 1px;
+  padding-right: 1px;
+}
+
 .dash-row-header-add-panel {
   padding: 0.7rem;
   i {
@@ -121,7 +126,7 @@
     border-bottom: 1px solid $dark-4;
     width: 15px;
     position: absolute;
-    margin: 0 0 0 -12px;
+    margin: 0 0 0 -6px;
     bottom: 0;
   }
   .add-row-panel-hint {
