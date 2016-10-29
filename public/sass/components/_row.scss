@@ -44,14 +44,24 @@
   position: absolute;
   color: $text-muted;
   font-size: $font-size-sm;
-  bottom: 5px;
+  bottom: 0px;
   right: 1rem;
   a {
+    display: inline-block;
+    padding: 6px 11px;
     color: $text-muted;
     padding-left: 1rem;
     &:hover {
       color: $link-hover-color;
     }
+  }
+  a.active {
+    color: $link-color;
+    background: $panel-bg;
+    border: $panel-border;
+    border-bottom: none;
+    position: relative;
+    top: 1px;
   }
 }
 
