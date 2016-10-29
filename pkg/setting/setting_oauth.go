@@ -6,6 +6,7 @@ type OAuthInfo struct {
 	AuthUrl, TokenUrl      string
 	Enabled                bool
 	AllowedDomains         []string
+	HostedDomain           string
 	ApiUrl                 string
 	AllowSignup            bool
 	Name                   string

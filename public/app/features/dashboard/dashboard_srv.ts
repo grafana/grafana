@@ -28,6 +28,10 @@ export class DashboardSrv {
       return Promise.resolve();
     }
 
+    if (this.dash.title === 'New dashboard') {
+      return this.saveDashboardAs();
+    }
+
     var clone = this.dash.getSaveModelClone();
 
     return this.backendSrv.saveDashboard(clone, options).then(data => {

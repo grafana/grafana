@@ -30,7 +30,10 @@ func (db *Mysql) AutoIncrStr() string {
 }
 
 func (db *Mysql) BooleanStr(value bool) string {
-	return strconv.FormatBool(value)
+	if value {
+    return "1"
+  }
+  return "0"
 }
 
 func (db *Mysql) SqlType(c *Column) string {
