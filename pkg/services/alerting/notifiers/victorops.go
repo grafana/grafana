@@ -27,10 +27,13 @@ func NewVictoropsNotifier(model *models.AlertNotification) (alerting.Notifier, e
 		return nil, alerting.ValidationError{Reason: "Could not find victorops url property in settings"}
 	}
 
+	alertOnExecError := model.Settings.Get("alertOnExecError").MustBool()
+
 	return &VictoropsNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
-		URL:          url,
-		log:          log.New("alerting.notifier.victorops"),
+		NotifierBase:     NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		URL:              url,
+		AlertOnExecError: alertOnExecError,
+		log:              log.New("alerting.notifier.victorops"),
 	}, nil
 }
 
@@ -39,13 +42,14 @@ func NewVictoropsNotifier(model *models.AlertNotification) (alerting.Notifier, e
 // Victorops specifications (http://victorops.force.com/knowledgebase/articles/Integration/Alert-Ingestion-API-Documentation/)
 type VictoropsNotifier struct {
 	NotifierBase
-	URL string
-	log log.Logger
+	URL              string
+	AlertOnExecError bool
+	log              log.Logger
 }
 
 // Notify sends notification to Victorops via POST to URL endpoint
 func (this *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
-	this.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
+	this.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.Id, "notification", this.Name, "url", this.URL, "foo", this.AlertOnExecError)
 	metrics.M_Alerting_Notification_Sent_Victorops.Inc(1)
 
 	fields := make([]map[string]interface{}, 0)
@@ -72,6 +76,12 @@ func (this *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	messageType := evalContext.Rule.State
 	if evalContext.Rule.State == models.AlertStateAlerting { // translate 'Alerting' to 'CRITICAL' (Victorops analog)
 		messageType = AlertStateCritical
+	}
+
+	if evalContext.Rule.State == models.AlertStateExecError && !this.AlertOnExecError {
+		return nil
+	} else {
+		return nil
 	}
 
 	body := map[string]interface{}{
