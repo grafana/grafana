@@ -190,7 +190,7 @@ coreModule.directive('panelDropZone', function($timeout) {
         }
 
         var dropZoneSpan = 12 - scope.ctrl.dashboard.rowSpan(scope.ctrl.row);
-        if (dropZoneSpan > 1) {
+        if (dropZoneSpan > 0) {
           if (indrag)  {
             return showPanel(dropZoneSpan, 'Drop Here');
           } else {
@@ -209,14 +209,9 @@ coreModule.directive('panelDropZone', function($timeout) {
       hidePanel();
     }
 
-    row.events.on('panel-added', updateState);
-    row.events.on('span-changed', updateState);
+    row.events.on('span-changed', updateState, scope);
 
-    scope.$on('$destroy', () => {
-      row.events.off('panel-added', updateState);
-      row.events.off('span-changed', updateState);
-    });
-    // scope.$watchGroup(['ctrl.row.panels.length', 'ctrl.dashboard.editMode', 'ctrl.row.span'], updateState);
+    scope.$watchGroup(['ctrl.dashboard.editMode'], updateState);
 
     scope.$on("ANGULAR_DRAG_START", function() {
       indrag = true;

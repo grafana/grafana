@@ -157,6 +157,8 @@ module.directive('panelResizer', function($rootScope) {
           }
         }
 
+        ctrl.row.panelSpanChanged();
+
         scope.$apply(function() {
           ctrl.render();
         });
@@ -173,6 +175,8 @@ module.directive('panelResizer', function($rootScope) {
         if (rowSpan < 12 && rowSpan > 11) {
           lastPanel.span +=  12 - rowSpan;
         }
+
+        ctrl.row.panelSpanChanged();
 
         // first digest to propagate panel width change
         // then render

@@ -193,6 +193,8 @@ export class PanelCtrl {
 
   updateColumnSpan(span) {
     this.panel.span = Math.min(Math.max(Math.floor(this.panel.span + span), 1), 12);
+    this.row.panelSpanChanged();
+
     this.$timeout(() => {
       this.render();
     });
@@ -205,7 +207,7 @@ export class PanelCtrl {
       icon: 'fa-trash',
       yesText: 'Remove',
       onConfirm: () => {
-        this.row.panels = _.without(this.row.panels, this.panel);
+        this.row.removePanel(this.panel);
       }
     });
   }

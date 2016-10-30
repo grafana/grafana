@@ -165,24 +165,8 @@ export class DashboardModel {
   };
 
   addPanel(panel, row) {
-    var rowSpan = this.rowSpan(row);
-    var panelCount = row.panels.length;
-    var space = (12 - rowSpan) - panel.span;
     panel.id = this.getNextPanelId();
-
-    // try to make room of there is no space left
-    if (space <= 0) {
-      if (panelCount === 1) {
-        row.panels[0].span = 6;
-        panel.span = 6;
-      } else if (panelCount === 2) {
-        row.panels[0].span = 4;
-        row.panels[1].span = 4;
-        panel.span = 4;
-      }
-    }
-
-    row.panels.push(panel);
+    row.addPanel(panel);
   }
 
   toggleEditMode() {
