@@ -53,6 +53,20 @@ define([
               downsampleAggregator: "avg",
               downsampleInterval: "15m",
               tags: tag
+            },
+            {
+              aggregator: "avg",
+              metric: targetMetricName+".prediction.min",
+              downsampleAggregator: "avg",
+              downsampleInterval: "15m",
+              tags: tag
+            },
+            {
+              aggregator: "avg",
+              metric: targetMetricName+".prediction.max",
+              downsampleAggregator: "avg",
+              downsampleInterval: "15m",
+              tags: tag
             }
           ],
           seriesOverrides: [
