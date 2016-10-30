@@ -13,7 +13,7 @@ define([
         {
           title: '指标健康异常状况',
           type: 'graph',
-          fill: 1,
+          fill: 0,
           height: "500px",
           linewidth: 2,
           targets: [
@@ -25,22 +25,48 @@ define([
               tags: {host: ""}
             },
             {
-              anomaly: true,
               aggregator: "avg",
               metric: "",
               downsampleAggregator: "avg",
               downsampleInterval: "15m",
               tags: {host: ""}
-
-            }
+            },
+            {
+              aggregator: "avg",
+              metric: "",
+              downsampleAggregator: "avg",
+              downsampleInterval: "15m",
+              tags: {host: ""}
+            },
+            {
+              aggregator: "avg",
+              metric: "",
+              downsampleAggregator: "avg",
+              downsampleInterval: "15m",
+              tags: {host: ""}
+            },
           ],
           seriesOverrides: [
             {
               alias: "",
               color: "#BF1B00",
               lines: false,
-              pointradius: 4,
+              pointradius: 2,
               points: true
+            },
+            {
+              alias: "",
+              color: "#FDFCFF",
+              linewidth: "0",
+              fill: "10",
+              zindex: "-1"
+            },
+            {
+              alias: "",
+              color: "#008000",
+              zindex: "-2",
+              fill: "1",
+              linewidth: "0",
             }
           ],
           legend: {
@@ -112,7 +138,15 @@ define([
           panel.targets[0].tags.host = hostname;
           panel.targets[1].metric = metric + ".anomaly";
           panel.targets[1].tags.host = hostname;
+          panel.targets[2].metric = metric + ".prediction.min";
+          panel.targets[2].tags.host = hostname;
+          panel.targets[3].metric = metric + ".prediction.max";
+          panel.targets[3].tags.host = hostname;
+
           panel.seriesOverrides[0].alias = alias;
+          panel.seriesOverrides[1].alias = metric + ".prediction.min{host=" + hostname + "}";
+          panel.seriesOverrides[2].alias = metric + ".prediction.max{host=" + hostname + "}";
+
           return panelMeta;
         }
 

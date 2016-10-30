@@ -78,13 +78,16 @@ define([
             {
               alias: targetMetricName + ".prediction.min{host=" + tag.host + "}",
               color: "#FDFCFF",
-              bars: true,
+              linewidth:"0",
+              fill:"10",
+              zindex: "-1"
             },
             {
               alias: targetMetricName + ".prediction.max{host=" + tag.host + "}",
               color: "#008000",
-              bars: true,
-              zindex: "-2"
+              zindex: "-2",
+              fill:"2",
+              linewidth: "0",
             }
           ],
           legend: {
