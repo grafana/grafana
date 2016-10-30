@@ -12,16 +12,15 @@ function(angular, _) {
     function Tracker(dashboard, scope) {
       var self = this;
 
-      this.original = dashboard.getSaveModelClone();
       this.current = dashboard;
       this.originalPath = $location.path();
       this.scope = scope;
 
       // register events
       scope.onAppEvent('dashboard-saved', function() {
-        self.original = self.current.getSaveModelClone();
-        self.originalPath = $location.path();
-      });
+        this.original = this.current.getSaveModelClone();
+        this.originalPath = $location.path();
+      }.bind(this));
 
       $window.onbeforeunload = function() {
         if (self.ignoreChanges()) { return; }
@@ -44,6 +43,11 @@ function(angular, _) {
           });
         }
       });
+
+      // wait for different services to patch the dashboard (missing properties)
+      $timeout(function() {
+        self.original = dashboard.getSaveModelClone();
+      }, 1000);
     }
 
     var p = Tracker.prototype;
@@ -153,8 +157,7 @@ function(angular, _) {
 
     this.Tracker = Tracker;
     this.init = function(dashboard, scope) {
-      // wait for different services to patch the dashboard (missing properties)
-      $timeout(function() { new Tracker(dashboard, scope); }, 1200);
+      new Tracker(dashboard, scope);
     };
   });
 });

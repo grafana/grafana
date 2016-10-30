@@ -247,6 +247,13 @@ export class DashboardModel {
       moment.utc(date).format(format);
   }
 
+  destroy() {
+    this.events.removeAllListeners();
+    for (let row of this.rows) {
+      row.events.removeAllListeners();
+    }
+  }
+
   getRelativeTime(date) {
     date = moment.isMoment(date) ? date : moment(date);
 

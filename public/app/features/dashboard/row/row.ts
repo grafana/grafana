@@ -212,7 +212,11 @@ coreModule.directive('panelDropZone', function($timeout) {
     row.events.on('panel-added', updateState);
     row.events.on('span-changed', updateState);
 
-    //scope.$watchGroup(['ctrl.row.panels.length', 'ctrl.dashboard.editMode', 'ctrl.row.span'], updateState);
+    scope.$on('$destroy', () => {
+      row.events.off('panel-added', updateState);
+      row.events.off('span-changed', updateState);
+    });
+    // scope.$watchGroup(['ctrl.row.panels.length', 'ctrl.dashboard.editMode', 'ctrl.row.span'], updateState);
 
     scope.$on("ANGULAR_DRAG_START", function() {
       indrag = true;

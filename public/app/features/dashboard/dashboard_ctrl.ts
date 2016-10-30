@@ -117,9 +117,10 @@ export class DashboardCtrl {
           $timeout.cancel(resizeEventTimeout);
           resizeEventTimeout = $timeout(function() { $scope.$broadcast('render'); }, 200);
         });
-        var unbind = $scope.$on('$destroy', function() {
+
+        $scope.$on('$destroy', function() {
           angular.element(window).unbind('resize');
-          unbind();
+          $scope.dashboard.destroy();
         });
       };
 
@@ -129,10 +130,10 @@ export class DashboardCtrl {
     }
 
     init(dashboard) {
-      this.$scope.registerWindowResizeEvent();
       this.$scope.onAppEvent('show-json-editor', this.$scope.showJsonEditor);
       this.$scope.onAppEvent('template-variable-value-updated', this.$scope.templateVariableUpdated);
       this.$scope.setupDashboard(dashboard);
+      this.$scope.registerWindowResizeEvent();
     }
 }
 
