@@ -18,7 +18,6 @@ export class DashboardModel {
   style: any;
   timezone: any;
   editable: any;
-  hideControls: any;
   sharedCrosshair: any;
   rows: any;
   time: any;
@@ -51,7 +50,6 @@ export class DashboardModel {
     this.style = data.style || "dark";
     this.timezone = data.timezone || '';
     this.editable = data.editable !== false;
-    this.hideControls = data.hideControls || false;
     this.sharedCrosshair = data.sharedCrosshair || false;
     this.rows = data.rows || [];
     this.time = data.time || { from: 'now-6h', to: 'now' };
@@ -72,7 +70,6 @@ export class DashboardModel {
   }
 
   private initMeta(meta) {
-    console.log(meta);
     meta = meta || {};
 
     meta.canShare = meta.canShare !== false;
@@ -84,7 +81,6 @@ export class DashboardModel {
       meta.canEdit = false;
       meta.canDelete = false;
       meta.canSave = false;
-      this.hideControls = true;
     }
 
     this.meta = meta;

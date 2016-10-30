@@ -165,6 +165,13 @@ div.flot-text {
   display: none;
   .panel-container {
     border: 1px solid $dark-3;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    color: $text-muted;
+    font-weight: bold;
+    background: repeating-linear-gradient(-128deg, #111, #111 10px, #191919 10px, #222 20px);
   }
 }
 

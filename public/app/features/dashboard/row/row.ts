@@ -106,7 +106,7 @@ export function rowDirective($rootScope) {
     },
     link: function(scope, element) {
       scope.$watchGroup(['ctrl.row.collapse', 'ctrl.row.height'], function() {
-        element.css({minHeight: scope.ctrl.row.collapse ? '5px' : scope.ctrl.row.height});
+        element.find('.panels-wrapper').css({minHeight: scope.ctrl.row.collapse ? '5px' : scope.ctrl.row.height});
       });
 
       $rootScope.onAppEvent('panel-fullscreen-enter', function(evt, info) {
@@ -167,20 +167,61 @@ coreModule.directive('panelWidth', function($rootScope) {
 
 coreModule.directive('panelDropZone', function($timeout) {
   return function(scope, element) {
-    scope.$on("ANGULAR_DRAG_START", function() {
-      $timeout(function() {
-        var dropZoneSpan = 12 - scope.ctrl.dashboard.rowSpan(scope.ctrl.row);
+    var row = scope.ctrl.row;
+    var indrag = false;
+    var textEl = element.find('.panel-drop-zone-text');
 
-        if (dropZoneSpan > 0) {
-          element.find('.panel-container').css('height', scope.ctrl.row.height);
-          element[0].style.width = ((dropZoneSpan / 1.2) * 10) + '%';
-          element.show();
+    function showPanel(span, text) {
+      element.find('.panel-container').css('height', row.height);
+      element[0].style.width = ((span / 1.2) * 10) + '%';
+      textEl.text(text);
+      element.show();
+    }
+
+    function hidePanel() {
+      element.hide();
+      // element.removeClass('panel-drop-zone--empty');
+    }
+
+    function updateState() {
+      if (scope.ctrl.dashboard.editMode) {
+        if (row.panels.length === 0 && indrag === false) {
+          return showPanel(12, 'Empty Space');
         }
-      });
+
+        var dropZoneSpan = 12 - scope.ctrl.dashboard.rowSpan(scope.ctrl.row);
+        if (dropZoneSpan > 1) {
+          if (indrag)  {
+            return showPanel(dropZoneSpan, 'Drop Here');
+          } else {
+            return showPanel(dropZoneSpan, 'Empty Space');
+          }
+        }
+      }
+
+      if (indrag === true) {
+        return showPanel(dropZoneSpan, 'Drop Here');
+      }
+
+      hidePanel();
+    }
+
+    scope.$watchGroup(['ctrl.row.panels.length', 'ctrl.dashboard.editMode', 'ctrl.row.span'], updateState);
+
+    scope.$on("ANGULAR_DRAG_START", function() {
+      indrag = true;
+      updateState();
+      // $timeout(function() {
+      //   var dropZoneSpan = 12 - scope.ctrl.dashboard.rowSpan(scope.ctrl.row);
+      //   if (dropZoneSpan > 0) {
+      //     showPanel(dropZoneSpan, 'Panel Drop Zone');
+      //   }
+      // });
     });
 
     scope.$on("ANGULAR_DRAG_END", function() {
-      element.hide();
+      indrag = false;
+      updateState();
     });
   };
 });
