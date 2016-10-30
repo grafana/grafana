@@ -102,12 +102,7 @@ export class DashboardCtrl {
       };
 
       $scope.addRowDefault = function() {
-        $scope.dashboard.rows.push({
-          title: 'New row',
-          panels: [],
-          height: '250px',
-          isNew: true,
-        });
+        $scope.dashboard.addEmptyRow();
       };
 
       $scope.showJsonEditor = function(evt, options) {
@@ -122,8 +117,9 @@ export class DashboardCtrl {
           $timeout.cancel(resizeEventTimeout);
           resizeEventTimeout = $timeout(function() { $scope.$broadcast('render'); }, 200);
         });
-        $scope.$on('$destroy', function() {
+        var unbind = $scope.$on('$destroy', function() {
           angular.element(window).unbind('resize');
+          unbind();
         });
       };
 

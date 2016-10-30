@@ -11,8 +11,9 @@ function(angular, $) {
 
     this.shortcuts = function(scope) {
 
-      scope.$on('$destroy', function() {
+      var unbindDestroy = scope.$on('$destroy', function() {
         keyboardManager.unbindAll();
+        unbindDestroy();
       });
 
       var helpModalScope = null;
@@ -28,7 +29,11 @@ function(angular, $) {
           keyboard: false
         });
 
-        helpModalScope.$on('$destroy', function() { helpModalScope = null; });
+        var unbindModalDestroy = helpModalScope.$on('$destroy', function() {
+          helpModalScope = null;
+          unbindModalDestroy();
+        });
+
         $q.when(helpModal).then(function(modalEl) { modalEl.modal('show'); });
 
       }, { inputDisabled: true });

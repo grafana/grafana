@@ -19,7 +19,7 @@ export class DashRowCtrl {
   constructor(private $scope, private $rootScope, private $timeout, private uiSegmentSrv, private $q) {
     this.row.title = this.row.title || 'Row title';
 
-    if (this.row.isNew) {
+    if (this.dashboard.meta.isNew) {
       this.dropView = 1;
       delete this.row.isNew;
     }
@@ -200,19 +200,16 @@ coreModule.directive('panelDropZone', function($timeout) {
       }
 
       if (indrag === true) {
-        var dropZoneSpan = 12 - scope.ctrl.dashboard.rowSpan(scope.ctrl.row);
-        if (dropZoneSpan > 1) {
-          return showPanel(dropZoneSpan, 'Drop Here');
-        }
+        return showPanel(dropZoneSpan, 'Drop Here');
       }
 
       hidePanel();
     }
 
-    row.events.on('panel-added', updateState);
-    row.events.on('span-changed', updateState);
+    scope.row.events.on('panel-added', updateState);
+    scope.row.events.on('span-changed', updateState);
 
-    //scope.$watchGroup(['ctrl.row.panels.length', 'ctrl.dashboard.editMode', 'ctrl.row.span'], updateState);
+    scope.$watchGroup(['ctrl.row.panels.length', 'ctrl.dashboard.editMode', 'ctrl.row.span'], updateState);
 
     scope.$on("ANGULAR_DRAG_START", function() {
       indrag = true;
@@ -226,7 +223,6 @@ coreModule.directive('panelDropZone', function($timeout) {
     });
 
     scope.$on("ANGULAR_DRAG_END", function() {
-      console.log('drag end');
       indrag = false;
       updateState();
     });

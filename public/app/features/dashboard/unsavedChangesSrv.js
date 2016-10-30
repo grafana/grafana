@@ -65,6 +65,7 @@ function(angular, _) {
       dash.time = 0;
       dash.refresh = 0;
       dash.schemaVersion = 0;
+      dash.editMode = false;
 
       // filter row and panels properties that should be ignored
       dash.rows = _.filter(dash.rows, function(row) {

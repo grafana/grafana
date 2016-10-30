@@ -100,7 +100,6 @@ module.directive('grafanaPanel', function() {
           panelContainer.removeClass('panel-alert-state--' + lastAlertState);
           lastAlertState = null;
         }
-
       });
 
       scope.$watchGroup(['ctrl.fullscreen', 'ctrl.containerHeight'], function() {
@@ -189,8 +188,9 @@ module.directive('panelResizer', function($rootScope) {
 
       elem.on('mousedown', dragStartHandler);
 
-      scope.$on("$destroy", function() {
+      var unbind = scope.$on("$destroy", function() {
         elem.off('mousedown', dragStartHandler);
+        unbind();
       });
     }
   };

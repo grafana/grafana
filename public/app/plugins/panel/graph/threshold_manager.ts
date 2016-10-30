@@ -153,8 +153,8 @@ export class ThresholdManager {
       this.renderHandle(1, this.height-30);
     }
 
-    this.placeholder.off('mousedown', '.alert-handle');
-    this.placeholder.on('mousedown', '.alert-handle', this.initDragging.bind(this));
+    // this.placeholder.off('mousedown', '.alert-handle');
+    // this.placeholder.on('mousedown', '.alert-handle', this.initDragging.bind(this));
     this.needsCleanup = true;
   }
 

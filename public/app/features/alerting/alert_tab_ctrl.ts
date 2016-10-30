@@ -52,11 +52,12 @@ export class AlertTabCtrl {
     var thresholdChangedEventHandler = this.graphThresholdChanged.bind(this);
     this.panelCtrl.events.on('threshold-changed', thresholdChangedEventHandler);
 
-   // set panel alert edit mode
-    this.$scope.$on("$destroy", () => {
+    // set panel alert edit mode
+    var unbind = this.$scope.$on("$destroy", () => {
       this.panelCtrl.events.off("threshold-changed", thresholdChangedEventHandler);
       this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
+      unbind();
     });
 
     // build notification model

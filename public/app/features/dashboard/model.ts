@@ -6,8 +6,8 @@ import moment from 'moment';
 import _ from 'lodash';
 import $ from 'jquery';
 
-import {Emitter} from 'app/core/core';
-import {contextSrv} from 'app/core/services/context_srv';
+import {Emitter, contextSrv} from 'app/core/core';
+import {DashboardRow} from './row/row_model';
 
 export class DashboardModel {
   id: any;
@@ -19,7 +19,7 @@ export class DashboardModel {
   timezone: any;
   editable: any;
   sharedCrosshair: any;
-  rows: any;
+  rows: DashboardRow[];
   time: any;
   timepicker: any;
   templating: any;
@@ -51,7 +51,6 @@ export class DashboardModel {
     this.timezone = data.timezone || '';
     this.editable = data.editable !== false;
     this.sharedCrosshair = data.sharedCrosshair || false;
-    this.rows = data.rows || [];
     this.time = data.time || { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker || {};
     this.templating = this.ensureListExist(data.templating);
@@ -63,10 +62,15 @@ export class DashboardModel {
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
 
+    this.rows = [];
+    if (data.rows) {
+      for (let row of data.rows) {
+        this.rows.push(new DashboardRow(row));
+      }
+    }
+
     this.updateSchema(data);
     this.initMeta(meta);
-
-    this.editMode = this.meta.isNew;
   }
 
   private initMeta(meta) {
@@ -84,6 +88,7 @@ export class DashboardModel {
     }
 
     this.meta = meta;
+    this.editMode = this.meta.isNew;
   }
 
   // cleans meta data and other non peristent state
@@ -91,16 +96,25 @@ export class DashboardModel {
     // temp remove stuff
     var events = this.events;
     var meta = this.meta;
+    var rows = this.rows;
     delete this.events;
     delete this.meta;
 
+    // prepare save model
+    this.rows = _.map(this.rows, row => row.getSaveModel());
     events.emit('prepare-save-model');
+
     var copy = $.extend(true, {}, this);
 
     // restore properties
     this.events = events;
     this.meta = meta;
+    this.rows = rows;
     return copy;
+  }
+
+  addEmptyRow() {
+    this.rows.push(new DashboardRow({isNew: true}));
   }
 
   private ensureListExist(data) {

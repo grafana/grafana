@@ -50,7 +50,12 @@ export class PanelCtrl {
 
     $scope.$on("refresh", () => this.refresh());
     $scope.$on("render", () => this.render());
-    $scope.$on("$destroy", () => this.events.emit('panel-teardown'));
+
+    var unbindDestroy = $scope.$on("$destroy", () => {
+      this.events.emit('panel-teardown');
+      this.events.removeAllListeners();
+      unbindDestroy();
+    });
   }
 
   init() {

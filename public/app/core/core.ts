@@ -42,6 +42,8 @@ import './filters/filters';
 import coreModule from './core_module';
 import appEvents from './app_events';
 import colors from './utils/colors';
+import {assignModelProperties} from './utils/model_utils';
+import {contextSrv} from './services/context_srv';
 
 
 export {
@@ -62,4 +64,6 @@ export {
   queryPartEditorDirective,
   WizardFlow,
   colors,
+  assignModelProperties,
+  contextSrv,
 };

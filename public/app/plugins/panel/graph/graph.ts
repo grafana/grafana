@@ -34,6 +34,16 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
       var rootScope = scope.$root;
       var panelWidth = 0;
       var thresholdManager = new ThresholdManager(ctrl);
+      var plot;
+
+      ctrl.events.on('panel-teardown', () => {
+        thresholdManager = null;
+
+        if (plot) {
+          plot.destroy();
+          plot = null;
+        }
+      });
 
       rootScope.onAppEvent('setCrosshair', function(event, info) {
         // do not need to to this if event is from this panel
@@ -42,7 +52,6 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         }
 
         if (dashboard.sharedCrosshair) {
-          var plot = elem.data().plot;
           if (plot) {
             plot.setCrosshair({ x: info.pos.x, y: info.pos.y });
           }
@@ -50,10 +59,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
       }, scope);
 
       rootScope.onAppEvent('clearCrosshair', function() {
-        var plot = elem.data().plot;
-        if (plot) {
-          plot.clearCrosshair();
-        }
+        plot.clearCrosshair();
       }, scope);
 
       // Receive render events
@@ -287,7 +293,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
 
         function callPlot(incrementRenderCounter) {
           try {
-            $.plot(elem, sortedSeries, options);
+            plot = $.plot(elem, sortedSeries, options);
             if (ctrl.renderError) {
               delete ctrl.error;
               delete ctrl.inspector;
@@ -529,9 +535,9 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         return "%H:%M";
       }
 
-      new GraphTooltip(elem, dashboard, scope, function() {
-        return sortedSeries;
-      });
+      // new GraphTooltip(elem, dashboard, scope, function() {
+      //   return sortedSeries;
+      // });
 
       elem.bind("plotselected", function (event, ranges) {
         scope.$apply(function() {
