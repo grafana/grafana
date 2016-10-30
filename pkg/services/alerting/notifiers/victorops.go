@@ -49,7 +49,7 @@ type VictoropsNotifier struct {
 
 // Notify sends notification to Victorops via POST to URL endpoint
 func (this *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
-	this.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.Id, "notification", this.Name, "url", this.URL, "foo", this.AlertOnExecError)
+	this.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.Id, "notification")
 	metrics.M_Alerting_Notification_Sent_Victorops.Inc(1)
 
 	fields := make([]map[string]interface{}, 0)
@@ -79,8 +79,6 @@ func (this *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 	}
 
 	if evalContext.Rule.State == models.AlertStateExecError && !this.AlertOnExecError {
-		return nil
-	} else {
 		return nil
 	}
 
