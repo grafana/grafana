@@ -22,7 +22,6 @@ export class DashboardRow {
   };
 
   constructor(private model) {
-    console.log(model.isNew);
     assignModelProperties(this, model, this.defaults);
     this.events = new Emitter();
     this.updateRowSpan();
@@ -63,6 +62,11 @@ export class DashboardRow {
         this.panels[0].span = 4;
         this.panels[1].span = 4;
         panel.span = 4;
+      } else if (panelCount === 3) {
+        this.panels[0].span = 3;
+        this.panels[1].span = 3;
+        this.panels[2].span = 3;
+        panel.span = 3;
       }
     }
 
@@ -77,6 +81,10 @@ export class DashboardRow {
 
     this.events.emit('panel-removed', panel);
     this.panelSpanChanged();
+  }
+
+  movePanel(fromIndex, toIndex) {
+    this.panels.splice(toIndex, 0, this.panels.splice(fromIndex, 1)[0]);
   }
 }
 

@@ -8,7 +8,12 @@
 
   <div class="add-panel-panels-scroll">
     <div class="add-panel-panels">
-      <div class="add-panel-item" ng-repeat="panel in ctrl.panelHits" ng-class="{active: $index === ctrl.activeIndex}" ng-click="ctrl.addPanel(panel)">
+      <div class="add-panel-item"
+					ng-repeat="panel in ctrl.panelHits"
+					ng-class="{active: $index === ctrl.activeIndex}"
+					ng-click="ctrl.addPanel(panel)"
+					ui-draggable="ctrl.dashboard.editMode"
+					drag="panel.id">
         <img class="add-panel-item-img" ng-src="{{panel.info.logos.small}}"></img>
         <div class="add-panel-item-name">{{panel.name}}</div>
       </div>

@@ -26,21 +26,61 @@ export class DashRowCtrl {
   }
 
   onDrop(panelId, dropTarget) {
-    var info = this.dashboard.getPanelInfoById(panelId);
-    if (dropTarget) {
-      var dropInfo = this.dashboard.getPanelInfoById(dropTarget.id);
-      dropInfo.row.panels[dropInfo.index] = info.panel;
-      info.row.panels[info.index] = dropTarget;
-      var dragSpan = info.panel.span;
-      info.panel.span = dropTarget.span;
-      dropTarget.span = dragSpan;
+    var dragObject;
+
+    // if string it's a panel type
+    if (_.isString(panelId)) {
+      // setup new panel
+      dragObject = {
+        row: this.row,
+        panel: {
+          title: config.new_panel_title,
+          type: panelId,
+          id: this.dashboard.getNextPanelId(),
+        },
+        isNew: true,
+      };
     } else {
-      info.row.panels.splice(info.index, 1);
-      info.panel.span = 12 - this.dashboard.rowSpan(this.row);
-      this.row.panels.push(info.panel);
+      dragObject = this.dashboard.getPanelInfoById(panelId);
     }
 
-    this.$rootScope.$broadcast('render');
+    if (dropTarget) {
+      dropTarget = this.dashboard.getPanelInfoById(dropTarget.id);
+      // if draging new panel onto existing panel split it
+      if (dragObject.isNew) {
+        dragObject.panel.span = dropTarget.panel.span = dropTarget.panel.span/2;
+        // insert after
+        dropTarget.row.panels.splice(dropTarget.index+1, 0, dragObject.panel);
+      } else if (this.row === dragObject.row) {
+        // just move element
+        this.row.movePanel(dropTarget.index, dragObject.index);
+      } else {
+        // split drop target space
+        dragObject.panel.span = dropTarget.panel.span = dropTarget.panel.span/2;
+        // insert after
+        dropTarget.row.panels.splice(dropTarget.index+1, 0, dragObject.panel);
+        // remove from source row
+        dragObject.row.removePanel(dragObject.panel);
+      }
+      // dropInfo.row.panels[dropInfo.index] = info.panel;
+      // info.row.panels[info.index] = dropTarget;
+      // var dragSpan = info.panel.span;
+      // info.panel.span = dropTarget.span;
+      // dropTarget.span = dragSpan;
+    } else {
+      dragObject.panel.span = 12 - this.row.span;
+      this.row.panels.push(dragObject.panel);
+
+      // if not new remove from source row
+      if (!dragObject.isNew) {
+        dragObject.row.removePanel(dragObject.panel);
+      }
+    }
+
+    this.row.panelSpanChanged();
+    this.$timeout(() => {
+      this.$rootScope.$broadcast('render');
+    });
   }
 
   setHeight(height) {
@@ -216,16 +256,9 @@ coreModule.directive('panelDropZone', function($timeout) {
     scope.$on("ANGULAR_DRAG_START", function() {
       indrag = true;
       updateState();
-      // $timeout(function() {
-      //   var dropZoneSpan = 12 - scope.ctrl.dashboard.rowSpan(scope.ctrl.row);
-      //   if (dropZoneSpan > 0) {
-      //     showPanel(dropZoneSpan, 'Panel Drop Zone');
-      //   }
-      // });
     });
 
     scope.$on("ANGULAR_DRAG_END", function() {
-      console.log('drag end');
       indrag = false;
       updateState();
     });

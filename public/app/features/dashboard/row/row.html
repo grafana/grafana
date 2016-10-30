@@ -53,7 +53,7 @@
 </div>
 
 <div class="panels-wrapper" ng-if="!ctrl.row.collapse">
-  <div ng-repeat="panel in ctrl.row.panels track by panel.id" class="panel" ui-draggable="!ctrl.dashboard.meta.fullscreen" drag="panel.id" ui-on-drop="ctrl.onDrop($data, panel)" drag-handle-class="drag-handle" panel-width>
+  <div ng-repeat="panel in ctrl.row.panels track by panel.id" class="panel" ui-draggable="ctrl.dashboard.editMode" drag="panel.id" ui-on-drop="ctrl.onDrop($data, panel)" drag-handle-class="drag-handle" panel-width>
     <plugin-component type="panel" class="panel-margin">
     </plugin-component>
   </div>
