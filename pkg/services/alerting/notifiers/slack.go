@@ -89,6 +89,7 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"ts":          time.Now().Unix(),
 			},
 		},
+		"parse": "full", // to linkify urls, users and channels in alert message.
 	}
 
 	//recipient override
