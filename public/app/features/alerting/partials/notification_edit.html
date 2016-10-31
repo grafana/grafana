@@ -63,6 +63,13 @@
         <span class="gf-form-label width-6">Url</span>
         <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Slack incoming webhook url"></input>
       </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-6">Recipient</span>
+        <input type="text" class="gf-form-input max-width-30"
+          ng-model="ctrl.model.settings.recipient"
+          placeholder="Override default channel or user, use #channel-name or @username">
+        </input>
+      </div>
     </div>
 
     <div class="gf-form-group section" ng-if="ctrl.model.type === 'email'">
