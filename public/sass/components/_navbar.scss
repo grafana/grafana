@@ -77,17 +77,17 @@
   }
 
   img {
-    width: 30px;
+    width: 40px;
     position: relative;
-    top: -1px;
+    top: 3px;
   }
 
   .navbar-brand-btn-background {
     display: inline-block;
-    border: 1px solid $body-bg;
+    //border: 1px solid $body-bg;
     padding: 4px;
-    border-radius: 50%;
-    background: $iconContainerBackground;
+    //border-radius: 50%;
+    //background: $iconContainerBackground;
     width: 40px;
     height: 40px;
   }
