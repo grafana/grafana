@@ -1,16 +1,22 @@
-----
-page_title: Cloudwatch
-page_description: Cloudwatch grafana datasource documentation
-page_keywords: Cloudwatch, grafana, documentation, datasource, docs
----
++++
+title = "AWS CloudWatch"
+description = "Guide for using CloudWatch in Grafana"
+keywords = ["grafana", "cloudwatch", "guide"]
+type = "docs"
+[menu.docs]
+name = "AWS Cloudwatch"
+identifier = "cloudwatch"
+parent = "datasources"
+weight = 10
++++
 
-# CloudWatch
+# Using AWS CloudWatch in Grafana
 
 Grafana ships with built in support for CloudWatch. You just have to add it as a data source and you will
 be ready to build dashboards for you CloudWatch metrics.
 
 ## Adding the data source
-![](/img/cloudwatch/cloudwatch_add.png)
+![](img/docs/cloudwatch/cloudwatch_add.png)
 
 1. Open the side menu by clicking the the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
@@ -52,7 +58,7 @@ Example content:
 
 ## Metric Query Editor
 
-![](/img/cloudwatch/query_editor.png)
+![](img/docs/cloudwatch/query_editor.png)
 
 You need to specify a namespace, metric, at least one stat, and at least one dimension.
 
@@ -93,7 +99,7 @@ Example `ec2_instance_attribute()` query
 
     ec2_instance_attribute(us-east-1, InstanceId, { "tag:Environment": [ "production" ] })
 
-![](/img/v2/cloudwatch_templating.png)
+![](img/docs/v2/cloudwatch_templating.png)
 
 ## Cost
 

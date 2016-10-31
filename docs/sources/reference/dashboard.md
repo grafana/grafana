@@ -1,12 +1,14 @@
-----
-page_title: Dashboard JSON
-page_description: Dashboard JSON Reference
-page_keywords: grafana, dashboard, json, documentation
----
++++
+title = "JSON Model"
+keywords = ["grafana", "dashboard", "documentation", "json", "model"]
+type = "docs"
+[menu.docs]
+name = "JSON Model"
+parent = "dashboard_features"
+weight = 100
++++
 
 # Dashboard JSON
-
-## Overview
 
 A dashboard in Grafana is represented by a JSON object, which stores metadata of its dashboard. Dashboard metadata includes dashboard properties, metadata from rows, panels, template variables, panel queries, etc.
 

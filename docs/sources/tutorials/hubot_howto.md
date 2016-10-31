@@ -1,9 +1,11 @@
----
-page_title: How To integrate Hubot and Grafana
-page_description: Hubot Grafana install guide
-page_keywords: grafana, tutorials, hubot, slack, hipchat, setup, install, config
-author: Torkel Ödegaard
----
++++
+title = "How To integrate Hubot and Grafana"
+type = "docs"
+keywords = ["grafana", "tutorials", "hubot", "slack", "hipchat", "setup", "install", "config"]
+[menu.docs]
+parent = "tutorials"
+weight = 10
++++
 
 # How to integrate Hubot with Grafana
 
@@ -20,7 +22,7 @@ take you to the graph.
 > is so Hipchat and Slack can show them reliably (they require the image to be publicly available).
 
 <div class="text-center">
-  <img src="/img/tutorials/hubot_grafana.png" class="center"></a>
+  <img src="img/tutorials/hubot_grafana.png" class="center"></a>
 </div>
 
 ## What is Hubot?
@@ -68,7 +70,7 @@ To verify that this feature works try the `Direct link to rendered image` link i
 If you do not get an image when opening this link verify that the required font packages are installed for phantomjs to work.
 
 ### Grafana API Key
-<img src="/img/v2/orgdropdown_api_keys.png" style="width: 150px" class="right"></img>
+<img src="img/v2/orgdropdown_api_keys.png" style="width: 150px" class="right"></img>
 You need to set the environment variable `HUBOT_GRAFANA_API_KEY` to a Grafana API Key.
 You can add these from the API Keys page which you find in the Organization dropdown.
 
@@ -113,7 +115,7 @@ Now you can add an alias like this:
 
 <div class="text-center">
   Using the alias:<br>
-  <img src="/img/tutorials/hubot_grafana2.png" class="center"></a>
+  <img src="img/tutorials/hubot_grafana2.png" class="center"></a>
 </div>
 
 ## Summary
