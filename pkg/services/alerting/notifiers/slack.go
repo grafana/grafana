@@ -22,9 +22,12 @@ func NewSlackNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 		return nil, alerting.ValidationError{Reason: "Could not find url property in settings"}
 	}
 
+	recipient := model.Settings.Get("recipient").MustString()
+
 	return &SlackNotifier{
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		Url:          url,
+		Recipient:		recipient,
 		log:          log.New("alerting.notifier.slack"),
 	}, nil
 }
@@ -32,6 +35,7 @@ func NewSlackNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 type SlackNotifier struct {
 	NotifierBase
 	Url string
+	Recipient string
 	log log.Logger
 }
 
@@ -85,6 +89,12 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"ts":          time.Now().Unix(),
 			},
 		},
+		"parse": "full", // to linkify urls, users and channels in alert message.
+	}
+
+	//recipient override
+	if this.Recipient != "" {
+		body["channel"] = this.Recipient
 	}
 
 	data, _ := json.Marshal(&body)
