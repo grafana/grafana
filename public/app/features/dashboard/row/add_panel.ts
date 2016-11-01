@@ -81,13 +81,13 @@ export class AddPanelCtrl {
 
   addPanel(panelPluginInfo) {
     var defaultSpan = 12;
-    var _as = 12 - this.dashboard.rowSpan(this.row);
+    var span = 12 - this.row.span;
 
     var panel = {
       id: null,
       title: config.new_panel_title,
       error: false,
-      span: _as < defaultSpan && _as > 0 ? _as : defaultSpan,
+      span: span < defaultSpan && span > 0 ? span : defaultSpan,
       editable: true,
       type: panelPluginInfo.id,
       isNew: true,

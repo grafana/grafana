@@ -143,7 +143,8 @@ module.directive('panelResizer', function($rootScope) {
         ctrl.panel.span = originalWidth + (((e.pageX - handleOffset.left) / maxWidth) * 12);
         ctrl.panel.span = Math.min(Math.max(ctrl.panel.span, 1), 12);
 
-        var rowSpan = ctrl.dashboard.rowSpan(ctrl.row);
+        ctrl.row.updateRowSpan();
+        var rowSpan = ctrl.row.span;
 
         // auto adjust other panels
         if (Math.floor(rowSpan) < 14) {
@@ -168,12 +169,6 @@ module.directive('panelResizer', function($rootScope) {
         ctrl.panel.span = Math.round(ctrl.panel.span);
         if (lastPanel) {
           lastPanel.span = Math.round(lastPanel.span);
-        }
-
-        // if close to 12
-        var rowSpan = ctrl.dashboard.rowSpan(ctrl.row);
-        if (rowSpan < 12 && rowSpan > 11) {
-          lastPanel.span +=  12 - rowSpan;
         }
 
         ctrl.row.panelSpanChanged();

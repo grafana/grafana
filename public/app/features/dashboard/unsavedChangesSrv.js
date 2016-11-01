@@ -9,7 +9,7 @@ function(angular, _) {
 
   module.service('unsavedChangesSrv', function($rootScope, $q, $location, $timeout, contextSrv, $window) {
 
-    function Tracker(dashboard, scope) {
+    function Tracker(dashboard, scope, originalCopyDelay) {
       var self = this;
 
       this.current = dashboard;
@@ -44,10 +44,14 @@ function(angular, _) {
         }
       });
 
-      // wait for different services to patch the dashboard (missing properties)
-      $timeout(function() {
+      if (originalCopyDelay) {
+        $timeout(function() {
+          // wait for different services to patch the dashboard (missing properties)
+          self.original = dashboard.getSaveModelClone();
+        }, originalCopyDelay);
+      } else {
         self.original = dashboard.getSaveModelClone();
-      }, 1000);
+      }
     }
 
     var p = Tracker.prototype;
@@ -157,7 +161,7 @@ function(angular, _) {
 
     this.Tracker = Tracker;
     this.init = function(dashboard, scope) {
-      new Tracker(dashboard, scope);
+      return new Tracker(dashboard, scope, 1000);
     };
   });
 });

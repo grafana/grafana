@@ -158,12 +158,6 @@ export class DashboardModel {
     return null;
   }
 
-  rowSpan(row) {
-    return _.reduce(row.panels, function(p,v) {
-      return p + v.span;
-    },0);
-  };
-
   addPanel(panel, row) {
     panel.id = this.getNextPanelId();
     row.addPanel(panel);
@@ -540,6 +534,7 @@ export class DashboardModel {
         // update graph yaxes changes
         panelUpgrades.push(function(panel) {
           if (panel.type !== 'graph') { return; }
+          if (!panel.grid) { return; }
 
           panel.thresholds = [];
           var t1: any = {}, t2: any = {};
