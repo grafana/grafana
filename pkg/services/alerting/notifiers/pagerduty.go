@@ -19,24 +19,44 @@ func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error)
 		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}
 	}
 
+	alertingStates := make([]m.AlertStateType, 0)
+	alertingStates = append(alertingStates, m.AlertStateAlerting)
+	if model.Settings.Get("alertOnExecError").MustBool() {
+		alertingStates = append(alertingStates, m.AlertStateExecError)
+	}
+	if model.Settings.Get("alertOnNoData").MustBool() {
+		alertingStates = append(alertingStates, m.AlertStateNoData)
+	}
+
 	return &PagerdutyNotifier{
-		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
-		Key:          key,
-		log:          log.New("alerting.notifier.pagerduty"),
+		NotifierBase:	    NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		Key:              key,
+		AlertingStates:   alertingStates,
+		log:              log.New("alerting.notifier.pagerduty"),
 	}, nil
 }
 
 type PagerdutyNotifier struct {
 	NotifierBase
-	Key        string
-	log        log.Logger
+	Key        				string
+	AlertingStates	  []m.AlertStateType
+	log        				log.Logger
 }
 
 func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Notifying Pagerduty")
 	metrics.M_Alerting_Notification_Sent_PagerDuty.Inc(1)
 
-		if evalContext.Rule.State == m.AlertStateAlerting {
+	shouldNotify := false
+
+	for _, state := range this.AlertingStates {
+		if evalContext.Rule.State == state {
+			shouldNotify = true
+			break
+		}
+	}
+
+	if shouldNotify {
 
 		// Pagerduty Events API URL
 		pgEventsUrl := "https://events.pagerduty.com/generic/2010-04-15/create_event.json"
