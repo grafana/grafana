@@ -25,6 +25,7 @@ func Init(version string) {
 	grafanaVersion = version
 
 	tr := &http.Transport{
+		Proxy:           http.ProxyFromEnvironment,
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
 	}
 
