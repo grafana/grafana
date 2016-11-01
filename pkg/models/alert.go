@@ -16,7 +16,7 @@ const (
 	AlertStatePaused    	 AlertStateType = "paused"
 	AlertStateAlerting     AlertStateType = "alerting"
 	AlertStateOK           AlertStateType = "ok"
-	AlertStateInitialized  AlertStateType = "initialized"
+	AlertStatePending      AlertStateType = "pending"
 )
 
 const (
@@ -27,7 +27,7 @@ const (
 )
 
 func (s AlertStateType) IsValid() bool {
-	return s == AlertStateOK || s == AlertStateNoData || s == AlertStateExecError || s == AlertStatePaused || s == AlertStateInitialized
+	return s == AlertStateOK || s == AlertStateNoData || s == AlertStateExecError || s == AlertStatePaused || s == AlertStatePending
 }
 
 func (s NoDataOption) IsValid() bool {
