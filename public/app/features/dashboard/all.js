@@ -22,5 +22,6 @@ define([
   './export/export_modal',
   './dash_list_ctrl',
   './ad_hoc_filters',
-  './row/row',
+  './row/row_ctrl',
+  './repeat_option/repeat_option',
 ], function () {});

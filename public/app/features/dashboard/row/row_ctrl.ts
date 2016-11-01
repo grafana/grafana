@@ -1,11 +1,9 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import $ from 'jquery';
-import angular from 'angular';
 
 import config from 'app/core/config';
-import {coreModule} from 'app/core/core';
+import {coreModule, appEvents} from 'app/core/core';
 
 import './options';
 import './add_panel';
@@ -19,28 +17,63 @@ export class DashRowCtrl {
   constructor(private $scope, private $rootScope, private $timeout, private uiSegmentSrv, private $q) {
     this.row.title = this.row.title || 'Row title';
 
-    if (this.dashboard.meta.isNew) {
+    if (this.row.isNew) {
       this.dropView = 1;
       delete this.row.isNew;
     }
   }
 
   onDrop(panelId, dropTarget) {
-    var info = this.dashboard.getPanelInfoById(panelId);
-    if (dropTarget) {
-      var dropInfo = this.dashboard.getPanelInfoById(dropTarget.id);
-      dropInfo.row.panels[dropInfo.index] = info.panel;
-      info.row.panels[info.index] = dropTarget;
-      var dragSpan = info.panel.span;
-      info.panel.span = dropTarget.span;
-      dropTarget.span = dragSpan;
+    var dragObject;
+
+    // if string it's a panel type
+    if (_.isString(panelId)) {
+      // setup new panel
+      dragObject = {
+        row: this.row,
+        panel: {
+          title: config.new_panel_title,
+          type: panelId,
+          id: this.dashboard.getNextPanelId(),
+        },
+        isNew: true,
+      };
     } else {
-      info.row.panels.splice(info.index, 1);
-      info.panel.span = 12 - this.dashboard.rowSpan(this.row);
-      this.row.panels.push(info.panel);
+      dragObject = this.dashboard.getPanelInfoById(panelId);
     }
 
-    this.$rootScope.$broadcast('render');
+    if (dropTarget) {
+      dropTarget = this.dashboard.getPanelInfoById(dropTarget.id);
+      // if draging new panel onto existing panel split it
+      if (dragObject.isNew) {
+        dragObject.panel.span = dropTarget.panel.span = dropTarget.panel.span/2;
+        // insert after
+        dropTarget.row.panels.splice(dropTarget.index+1, 0, dragObject.panel);
+      } else if (this.row === dragObject.row) {
+        // just move element
+        this.row.movePanel(dropTarget.index, dragObject.index);
+      } else {
+        // split drop target space
+        dragObject.panel.span = dropTarget.panel.span = dropTarget.panel.span/2;
+        // insert after
+        dropTarget.row.panels.splice(dropTarget.index+1, 0, dragObject.panel);
+        // remove from source row
+        dragObject.row.removePanel(dragObject.panel);
+      }
+    } else {
+      dragObject.panel.span = 12 - this.row.span;
+      this.row.panels.push(dragObject.panel);
+
+      // if not new remove from source row
+      if (!dragObject.isNew) {
+        dragObject.row.removePanel(dragObject.panel);
+      }
+    }
+
+    this.row.panelSpanChanged();
+    this.$timeout(() => {
+      this.$rootScope.$broadcast('render');
+    });
   }
 
   setHeight(height) {
@@ -51,28 +84,8 @@ export class DashRowCtrl {
   moveRow(direction) {
     var rowsList = this.dashboard.rows;
     var rowIndex = _.indexOf(rowsList, this.row);
-    var newIndex = rowIndex;
-    switch (direction) {
-      case 'up': {
-        newIndex = rowIndex - 1;
-        break;
-      }
-      case 'down': {
-        newIndex = rowIndex + 1;
-        break;
-      }
-      case 'top': {
-        newIndex = 0;
-        break;
-      }
-      case 'bottom': {
-        newIndex = rowsList.length - 1;
-        break;
-      }
-      default: {
-        newIndex = rowIndex;
-      }
-    }
+    var newIndex = rowIndex + direction;
+
     if (newIndex >= 0 && newIndex <= (rowsList.length - 1)) {
       _.move(rowsList, rowIndex, newIndex);
     }
@@ -93,7 +106,7 @@ export class DashRowCtrl {
   }
 }
 
-export function rowDirective($rootScope) {
+coreModule.directive('dashRow', function($rootScope) {
   return {
     restrict: 'E',
     templateUrl: 'public/app/features/dashboard/row/row.html',
@@ -121,10 +134,7 @@ export function rowDirective($rootScope) {
       }, scope);
     }
   };
-}
-
-coreModule.directive('dashRow', rowDirective);
-
+});
 
 coreModule.directive('panelWidth', function($rootScope) {
   return function(scope, element) {
@@ -180,7 +190,6 @@ coreModule.directive('panelDropZone', function($timeout) {
 
     function hidePanel() {
       element.hide();
-      // element.removeClass('panel-drop-zone--empty');
     }
 
     function updateState() {
@@ -190,7 +199,7 @@ coreModule.directive('panelDropZone', function($timeout) {
         }
 
         var dropZoneSpan = 12 - scope.ctrl.dashboard.rowSpan(scope.ctrl.row);
-        if (dropZoneSpan > 1) {
+        if (dropZoneSpan > 0) {
           if (indrag)  {
             return showPanel(dropZoneSpan, 'Drop Here');
           } else {
@@ -200,26 +209,22 @@ coreModule.directive('panelDropZone', function($timeout) {
       }
 
       if (indrag === true) {
-        return showPanel(dropZoneSpan, 'Drop Here');
+        var dropZoneSpan = 12 - scope.ctrl.dashboard.rowSpan(scope.ctrl.row);
+        if (dropZoneSpan > 1) {
+          return showPanel(dropZoneSpan, 'Drop Here');
+        }
       }
 
       hidePanel();
     }
 
-    scope.row.events.on('panel-added', updateState);
-    scope.row.events.on('span-changed', updateState);
+    row.events.on('span-changed', updateState, scope);
 
-    scope.$watchGroup(['ctrl.row.panels.length', 'ctrl.dashboard.editMode', 'ctrl.row.span'], updateState);
+    scope.$watchGroup(['ctrl.dashboard.editMode'], updateState);
 
     scope.$on("ANGULAR_DRAG_START", function() {
       indrag = true;
       updateState();
-      // $timeout(function() {
-      //   var dropZoneSpan = 12 - scope.ctrl.dashboard.rowSpan(scope.ctrl.row);
-      //   if (dropZoneSpan > 0) {
-      //     showPanel(dropZoneSpan, 'Panel Drop Zone');
-      //   }
-      // });
     });
 
     scope.$on("ANGULAR_DRAG_END", function() {

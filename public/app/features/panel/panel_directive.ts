@@ -139,7 +139,7 @@ module.directive('panelResizer', function($rootScope) {
       }
 
       function moveHandler(e) {
-        ctrl.row.height = originalHeight + (e.pageY - handleOffset.top);
+        ctrl.row.height = Math.round(originalHeight + (e.pageY - handleOffset.top));
         ctrl.panel.span = originalWidth + (((e.pageX - handleOffset.left) / maxWidth) * 12);
         ctrl.panel.span = Math.min(Math.max(ctrl.panel.span, 1), 12);
 

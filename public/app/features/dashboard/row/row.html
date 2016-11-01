@@ -5,7 +5,7 @@
         <i class="fa fa-chevron-down" ng-show="!ctrl.row.collapse"></i>
         <i class="fa fa-chevron-right" ng-show="ctrl.row.collapse"></i>
       </span>
-      <span ng-class="ctrl.row.titleSize">{{ctrl.row.title}}</span>
+      <span ng-class="ctrl.row.titleSize">{{ctrl.row.title | interpolateTemplateVars:this}}</span>
     </a>
 
     <div class="dash-row-header-spacer">
@@ -22,10 +22,10 @@
         <i class="fa fa-cog" ng-hide="ctrl.dropView===2"></i>
         <i class="fa fa-remove" ng-show="ctrl.dropView===2"></i>
       </a>
-      <a class="pointer dash-row-header-actions--tight" bs-tooltip="'Move row up'">
+      <a class="pointer dash-row-header-actions--tight" bs-tooltip="'Move row up'" ng-click="ctrl.moveRow(-1)">
         <i class="fa fa-arrow-up"></i>
       </a>
-      <a class="pointer dash-row-header-actions--tight" bs-tooltip="'Move row down'">
+      <a class="pointer dash-row-header-actions--tight" bs-tooltip="'Move row down'" ng-click="ctrl.moveRow(1)">
         <i class="fa fa-arrow-down"></i>
       </a>
     </div>
@@ -47,7 +47,7 @@
         <i class="fa fa-chevron-down" ng-show="!ctrl.row.collapse"></i>
         <i class="fa fa-chevron-right" ng-show="ctrl.row.collapse"></i>
       </span>
-      <span ng-class="ctrl.row.titleSize">{{ctrl.row.title}}</span>
+      <span ng-class="ctrl.row.titleSize">{{ctrl.row.title | interpolateTemplateVars:this}}</span>
     </a>
   </div>
 </div>

@@ -11,6 +11,7 @@ export class DashboardRow {
   titleSize: any;
   events: Emitter;
   span: number;
+  height: number;
 
   defaults = {
     title: 'Dashboard Row',
@@ -19,6 +20,9 @@ export class DashboardRow {
     titleSize: 'h6',
     height: 250,
     isNew: false,
+    repeat: null,
+    repeatRowId: null,
+    repeatIteration: null,
   };
 
   constructor(private model) {
@@ -85,6 +89,17 @@ export class DashboardRow {
 
   movePanel(fromIndex, toIndex) {
     this.panels.splice(toIndex, 0, this.panels.splice(fromIndex, 1)[0]);
+  }
+
+  destroy() {
+    this.events.removeAllListeners();
+  }
+
+  copyPropertiesFromRowSource(source) {
+    this.height = source.height;
+    this.title = source.title;
+    this.showTitle = source.showTitle;
+    this.titleSize = source.titleSize;
   }
 }
 

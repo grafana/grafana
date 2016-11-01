@@ -1,6 +1,5 @@
 <div class="dash-row-options">
 	<div class="gf-form section">
-		<!-- <h5 class="section&#45;heading">Options</h5> -->
 		<div class="gf-form-inline">
 			<div class="gf-form">
 				<span class="gf-form-label width-6">Row Title</span>
@@ -24,15 +23,22 @@
 	</div>
 
 	<div class="gf-form section">
-		<!-- <h5 class="section&#45;heading">Row Templating</h5> -->
-
 		<div class="gf-form">
 			<span class="gf-form-label">Repeat Row</span>
-			<div class="gf-form-select-wrapper max-width-10">
-				<select class="gf-form-input" ng-model="row.repeat" ng-options="f.name as f.name for f in dashboard.templating.list">
-					<option value=""></option>
-			</div>
+      <dash-repeat-option model="ctrl.row"></dash-repeat-option>
 		</div>
 	</div>
+
+  <div class="clearfix"></div>
+
+  <div class="pull-right">
+    <button class="btn btn-danger btn-small" ng-click="ctrl.removeRow()">
+      <i class="fa fa-trash"></i>
+      Delete row
+    </button>
+  </div>
+
+  <div class="clearfix"></div>
+
 </div>
 

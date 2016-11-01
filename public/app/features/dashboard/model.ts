@@ -6,7 +6,7 @@ import moment from 'moment';
 import _ from 'lodash';
 import $ from 'jquery';
 
-import {Emitter, contextSrv} from 'app/core/core';
+import {Emitter, contextSrv, appEvents} from 'app/core/core';
 import {DashboardRow} from './row/row_model';
 
 export class DashboardModel {
@@ -169,6 +169,27 @@ export class DashboardModel {
     row.addPanel(panel);
   }
 
+  removeRow(row, force?) {
+    var index = _.indexOf(this.rows, row);
+
+    if (!row.panels.length || force) {
+      this.rows.splice(index, 1);
+      row.destroy();
+      return;
+    }
+
+    appEvents.emit('confirm-modal', {
+      title: 'Delete',
+      text: 'Are you sure you want to delete this row?',
+      icon: 'fa-trash',
+      yesText: 'Delete',
+      onConfirm: () => {
+        this.rows.splice(index, 1);
+        row.destroy();
+      }
+    });
+  }
+
   toggleEditMode() {
     this.editMode = !this.editMode;
     this.updateSubmenuVisibility();
@@ -234,7 +255,7 @@ export class DashboardModel {
   destroy() {
     this.events.removeAllListeners();
     for (let row of this.rows) {
-      row.events.removeAllListeners();
+      row.destroy();
     }
   }
 
