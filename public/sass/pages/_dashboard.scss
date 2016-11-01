@@ -124,11 +124,11 @@ div.flot-text {
   z-index: 500;
   position: absolute;
   background: $tight-form-func-bg;
-  border: 1px solid black;
+  border: $panel-menu-border;
 
   .panel-menu-row {
     white-space: nowrap;
-    border-bottom: 1px solid black;
+    border-bottom: $panel-menu-border;
     &:last-child {
       border-bottom: none;
     }
@@ -140,7 +140,7 @@ div.flot-text {
 
   .panel-menu-link {
     display: inline-block;
-    border-right: 1px solid black;
+    border-right: $panel-menu-border;
     &:last-child {
       border: none;
     }
@@ -164,14 +164,14 @@ div.flot-text {
 .panel-drop-zone {
   display: none;
   .panel-container {
-    border: 1px solid $dark-3;
+    border: $panel-border;
     display: flex;
     justify-content: center;
     flex-direction: column;
     text-align: center;
     color: $text-color-faint;
     font-weight: bold;
-    background: repeating-linear-gradient(-128deg, #111, #111 10px, #191919 10px, #222 20px);
+    background: $panel-drop-zone-bg;
   }
 }
 

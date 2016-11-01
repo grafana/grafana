@@ -90,6 +90,8 @@ $component-active-bg:    $brand-primary !default;
 // -------------------------
 $panel-bg: 				      $dark-2;
 $panel-border:  	      solid 1px $dark-3;
+$panel-drop-zone-bg:    repeating-linear-gradient(-128deg, #111, #111 10px, #191919 10px, #222 20px);
+$panel-menu-border:     solid 1px black;
 
 $divider-border-color:        #555;
 
@@ -280,3 +282,6 @@ $dash-row-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0,
 // footer
 $footer-link-color:   $gray-1;
 $footer-link-hover:   $gray-4;
+
+// Dashboard row
+$dash-row-border-color: $dark-4

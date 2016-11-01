@@ -58,7 +58,7 @@
   a.active {
     color: $link-color;
     background: $panel-bg;
-    border: $panel-border;
+    border: 1px solid $dash-row-border-color;
     border-bottom: none;
     position: relative;
     top: 1px;
@@ -93,13 +93,13 @@ a.dash-row-header-actions--tight {
 .dash-edit-mode {
   .dash-row-header {
     display: flex;
-    border-bottom: 1px solid $dark-4;
-    border-right: 1px solid $dark-4;
+    border-bottom: 1px solid $dash-row-border-color;
+    border-right: 1px solid $dash-row-border-color;
     margin-right: 0;
   }
   .dash-row-header::after {
     content: ' ';
-    border-top: 1px solid $dark-4;
+    border-top: 1px solid $dash-row-border-color;
     width: 15px;
     position: relative;
   }
@@ -107,23 +107,23 @@ a.dash-row-header-actions--tight {
     margin-bottom: $spacer;
   }
   .dash-row-header-title {
-    border-left: 1px solid $dark-4;
+    border-left: 1px solid $dash-row-border-color;
   }
   .dash-row-header-title::before {
     content: ' ';
-    border-top: 1px solid $dark-4;
+    border-top: 1px solid $dash-row-border-color;
     width: 15px;
     position: absolute;
     margin: -9px 0 0 -9px;
   }
   .panels-wrapper {
     padding: $panel-margin*2 $panel-margin 0 $panel-margin;
-    border-left: 1px solid $dark-4;
-    border-right: 1px solid $dark-4;
+    border-left: 1px solid $dash-row-border-color;
+    border-right: 1px solid $dash-row-border-color;
   }
   .panels-wrapper::after {
     content: ' ';
-    border-bottom: 1px solid $dark-4;
+    border-bottom: 1px solid $dash-row-border-color;
     width: 15px;
     position: absolute;
     margin: 0 0 0 -6px;
@@ -152,22 +152,20 @@ a.dash-row-header-actions--tight {
 
 .dash-row-options {
   background:  $panel-bg;
-  border-left: $panel-border;
-  border-bottom: $panel-border;
-  border-right: $panel-border;
+  border-left: 1px solid $dash-row-border-color;
+  border-bottom: 1px solid $dash-row-border-color;
+  border-right: 1px solid $dash-row-border-color;
   margin: 0 0 $panel-margin*2 0;
   padding: $panel-margin*2;
-  box-shadow: 0px 3px 7px -3px $black;
 }
 
 .dash-row-add-panel {
   background:  $panel-bg;
-  border-left: $panel-border;
-  border-bottom: $panel-border;
-  border-right: $panel-border;
+  border-left: 1px solid $dash-row-border-color;
+  border-bottom: 1px solid $dash-row-border-color;
+  border-right: 1px solid $dash-row-border-color;
   margin: 0 0 $panel-margin*2 0;
   padding: $panel-margin*2;
-  box-shadow: 0px 3px 7px -3px $black;
   display: flex;
 }
 
