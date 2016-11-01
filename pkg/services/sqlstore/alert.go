@@ -260,7 +260,7 @@ func PauseAlertRule(cmd *m.PauseAlertCommand) error {
 		if cmd.Paused {
 			newState = m.AlertStatePaused
 		} else {
-			newState = m.AlertStateNoData
+			newState = m.AlertStatePending
 		}
 		alert.State = newState
 
