@@ -74,6 +74,14 @@ module.directive('grafanaPanel', function($rootScope) {
       var hasAlertRule;
       var lastHeight = 0;
 
+      // set initial height
+      if (!ctrl.containerHeight) {
+        console.log('setting initial height');
+        ctrl.calculatePanelHeight();
+        panelContainer.css({minHeight: ctrl.containerHeight});
+        lastHeight = ctrl.containerHeight;
+      }
+
       ctrl.events.on('render', () => {
         if (lastHeight !== ctrl.containerHeight) {
           panelContainer.css({minHeight: ctrl.containerHeight});
