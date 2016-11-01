@@ -173,7 +173,7 @@ func upsertAlerts(existingAlerts []*m.Alert, cmd *m.SaveAlertsCommand, sess *xor
 		} else {
 			alert.Updated = time.Now()
 			alert.Created = time.Now()
-			alert.State = m.AlertStateNoData
+			alert.State = m.AlertStatePending
 			alert.NewStateDate = time.Now()
 
 			_, err := sess.Insert(alert)
@@ -260,7 +260,7 @@ func PauseAlertRule(cmd *m.PauseAlertCommand) error {
 		if cmd.Paused {
 			newState = m.AlertStatePaused
 		} else {
-			newState = m.AlertStateNoData
+			newState = m.AlertStatePending
 		}
 		alert.State = newState
 
