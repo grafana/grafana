@@ -12,6 +12,7 @@ export class DashRowCtrl {
   dashboard: any;
   row: any;
   dropView: number;
+  editMode: boolean;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private $timeout, private uiSegmentSrv, private $q) {
@@ -21,6 +22,12 @@ export class DashRowCtrl {
       this.dropView = 1;
       delete this.row.isNew;
     }
+
+    this.dashboard.events.on('edit-mode-changed', this.editModeChanged.bind(this), $scope);
+  }
+
+  editModeChanged() {
+    this.editMode = this.dashboard.editMode;
   }
 
   onDrop(panelId, dropTarget) {
@@ -107,13 +114,18 @@ export class DashRowCtrl {
   }
 
   onMenuAddPanel() {
-    this.dashboard.toggleEditMode();
+    this.editMode = true;
     this.dropView = 1;
   }
 
   onMenuRowOptions() {
-    this.dashboard.toggleEditMode();
+    this.editMode = true;
     this.dropView = 2;
+  }
+
+  closeDropView() {
+    this.dropView = 0;
+    this.editMode = this.dashboard.editMode;
   }
 
   onMenuDeleteRow() {
@@ -208,7 +220,7 @@ coreModule.directive('panelDropZone', function($timeout) {
     }
 
     function updateState() {
-      if (scope.ctrl.dashboard.editMode) {
+      if (scope.ctrl.editMode) {
         if (row.panels.length === 0 && indrag === false) {
           return showPanel(12, 'Empty Space');
         }
@@ -234,8 +246,7 @@ coreModule.directive('panelDropZone', function($timeout) {
     }
 
     row.events.on('span-changed', updateState, scope);
-
-    scope.$watchGroup(['ctrl.dashboard.editMode'], updateState);
+    scope.$watchGroup(['ctrl.editMode'], updateState);
 
     scope.$on("ANGULAR_DRAG_START", function() {
       indrag = true;

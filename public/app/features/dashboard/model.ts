@@ -192,6 +192,7 @@ export class DashboardModel {
 
     this.editMode = !this.editMode;
     this.updateSubmenuVisibility();
+    this.events.emit('edit-mode-changed', this.editMode);
   }
 
   setPanelFocus(id) {

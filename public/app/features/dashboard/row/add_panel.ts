@@ -93,7 +93,7 @@ export class AddPanelCtrl {
       isNew: true,
     };
 
-    this.rowCtrl.dropView = 0;
+    this.rowCtrl.closeDropView();
     this.dashboard.addPanel(panel, this.row);
     this.$timeout(() => {
       this.$rootScope.$broadcast('render');

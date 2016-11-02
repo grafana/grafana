@@ -1,4 +1,4 @@
-<div ng-if="ctrl.dashboard.editMode">
+<div ng-if="ctrl.editMode">
   <div class="dash-row-header">
     <a class="dash-row-header-title" ng-click="ctrl.toggleCollapse()">
       <span class="dash-row-collapse-toggle pointer">
@@ -40,7 +40,7 @@
   </div>
 </div>
 
-<div ng-if="!ctrl.dashboard.editMode">
+<div ng-if="!ctrl.editMode">
   <div class="row-open">
     <div class='row-tab dropdown' ng-show="dashboardMeta.canEdit" ng-hide="dashboard.meta.fullscreen">
       <span class="row-tab-button dropdown-toggle" data-toggle="dropdown">
