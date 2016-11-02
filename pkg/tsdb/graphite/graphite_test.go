@@ -43,5 +43,21 @@ func TestGraphiteFunctions(t *testing.T) {
 
 		})
 
+		/*
+		   		Convey("should not override query", func() {
+
+		       	timeRange := formatTimeRange("app.grafana.*.dashboards.views.1M.count")
+		       	So(timeRange, ShouldEqual, "app.grafana.*.dashboards.views.1M.count")
+
+		   		})
+
+		   		Convey("should not override query", func() {
+
+		       	timeRange := formatTimeRange("app.grafana.*.dashboards.views.1m.count")
+		       	So(timeRange, ShouldEqual, "app.grafana.*.dashboards.views.1m.count")
+
+		   		})
+
+		*/
 	})
 }
