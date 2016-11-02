@@ -53,7 +53,7 @@ define([
               lines: false,
               pointradius: 2,
               points: true
-            },
+            }/*,
             {
               alias: "",
               color: "#FDFCFF",
@@ -67,7 +67,7 @@ define([
               zindex: "-2",
               fill: "1",
               linewidth: "0",
-            }
+            }*/
           ],
           legend: {
             alignAsTable: true,
@@ -144,8 +144,8 @@ define([
           panel.targets[3].tags.host = hostname;
 
           panel.seriesOverrides[0].alias = alias;
-          panel.seriesOverrides[1].alias = metric + ".prediction.min{host=" + hostname + "}";
-          panel.seriesOverrides[2].alias = metric + ".prediction.max{host=" + hostname + "}";
+          //panel.seriesOverrides[1].alias = metric + ".prediction.min{host=" + hostname + "}";
+          //panel.seriesOverrides[2].alias = metric + ".prediction.max{host=" + hostname + "}";
 
           return panelMeta;
         }

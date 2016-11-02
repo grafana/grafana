@@ -53,7 +53,7 @@ define([
               downsampleAggregator: "avg",
               downsampleInterval: "15m",
               tags: tag
-            },
+            }/*,
             {
               aggregator: "avg",
               metric: targetMetricName+".prediction.min",
@@ -67,14 +67,14 @@ define([
               downsampleAggregator: "avg",
               downsampleInterval: "15m",
               tags: tag
-            }
+            }*/
           ],
           seriesOverrides: [
             {
               alias: targetMetricName + ".prediction{host=" + tag.host + "}",
               color: "#F9D9F9",
               zindex: "-1"
-            },
+            }/*,
             {
               alias: targetMetricName + ".prediction.min{host=" + tag.host + "}",
               color: "#FDFCFF",
@@ -88,7 +88,7 @@ define([
               zindex: "-2",
               fill:"2",
               linewidth: "0",
-            }
+            }*/
           ],
           legend: {
             alignAsTable: true,
