@@ -47,7 +47,7 @@ func TestPagerdutyNotifier(t *testing.T) {
 				So(pagerdutyNotifier.Name, ShouldEqual, "pagerduty_testing")
 				So(pagerdutyNotifier.Type, ShouldEqual, "pagerduty")
 				So(pagerdutyNotifier.Key, ShouldEqual, "abcdefgh0123456789")
-				So(pagerdutyNotifier.AlertOnExecError, ShouldContain, true)
+				So(pagerdutyNotifier.AlertOnExecError, ShouldEqual, true)
 			})
 
 		})
