@@ -58,7 +58,7 @@ export class DashRowCtrl {
         // insert after
         dropTarget.row.panels.splice(dropTarget.index+1, 0, dragObject.panel);
         // remove from source row
-        dragObject.row.removePanel(dragObject.panel);
+        dragObject.row.removePanel(dragObject.panel, false);
       }
     } else {
       dragObject.panel.span = 12 - this.row.span;
@@ -66,7 +66,7 @@ export class DashRowCtrl {
 
       // if not new remove from source row
       if (!dragObject.isNew) {
-        dragObject.row.removePanel(dragObject.panel);
+        dragObject.row.removePanel(dragObject.panel, false);
       }
     }
 
@@ -103,6 +103,20 @@ export class DashRowCtrl {
 
   showRowOptions() {
     this.dropView = this.dropView === 2 ? 0 : 2;
+  }
+
+  onMenuAddPanel() {
+    this.dashboard.toggleEditMode();
+    this.dropView = 1;
+  }
+
+  onMenuRowOptions() {
+    this.dashboard.toggleEditMode();
+    this.dropView = 2;
+  }
+
+  onMenuDeleteRow() {
+    this.dashboard.removeRow(this.row);
   }
 }
 

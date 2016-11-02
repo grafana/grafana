@@ -215,3 +215,45 @@ a.dash-row-header-actions--tight {
   width: 2rem;
 }
 
+
+// Legacy mode
+.row-tab {
+  .dropdown-menu-right {
+    top: 0;
+    left: 33px;
+  }
+}
+
+.row-tab-button {
+  padding: 0px;
+  cursor: pointer;
+  vertical-align: middle;
+  width: 30px;
+  height: 30px;
+  text-align: center;
+  display: inline-block;
+  line-height: 30px;
+  background: $btn-success-bg;
+  color: rgba(255,255,255,.90);
+}
+
+.row-button {
+  width: 24px;
+  float: left;
+  cursor: pointer;
+  line-height: 31px;
+  background-color: $blue-dark;
+}
+
+.row-open {
+  margin-top: 1px;
+  left: -22px;
+  position: absolute;
+  z-index: 100;
+  transition: .10s left;
+  transition-delay: .05s;
+
+  &:hover {
+    left: 0px;
+  }
+}

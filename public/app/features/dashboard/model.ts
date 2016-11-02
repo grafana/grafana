@@ -185,8 +185,18 @@ export class DashboardModel {
   }
 
   toggleEditMode() {
+    if (!this.meta.canEdit) {
+      console.log('Not allowed to edit dashboard');
+      return;
+    }
+
     this.editMode = !this.editMode;
     this.updateSubmenuVisibility();
+  }
+
+  setPanelFocus(id) {
+    console.log('setting focus panel id', id);
+    this.meta.focusPanelId = id;
   }
 
   updateSubmenuVisibility() {

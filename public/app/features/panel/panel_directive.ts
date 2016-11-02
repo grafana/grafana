@@ -74,6 +74,16 @@ module.directive('grafanaPanel', function($rootScope) {
       var hasAlertRule;
       var lastHeight = 0;
 
+      function mouseEnter() {
+        panelContainer.toggleClass('panel-hover-highlight', true);
+        ctrl.dashboard.setPanelFocus(ctrl.panel.id);
+      }
+
+      function mouseLeave() {
+        panelContainer.toggleClass('panel-hover-highlight', false);
+        ctrl.dashboard.setPanelFocus(0);
+      }
+
       // set initial height
       if (!ctrl.containerHeight) {
         ctrl.calculatePanelHeight();
@@ -122,6 +132,13 @@ module.directive('grafanaPanel', function($rootScope) {
           lastFullscreen = ctrl.fullscreen;
         }
       }, scope);
+
+      panelContainer.on('mouseenter', mouseEnter);
+      panelContainer.on('mouseleave', mouseLeave);
+
+      scope.$on('$destroy', function() {
+        panelContainer.off();
+      });
     }
   };
 });

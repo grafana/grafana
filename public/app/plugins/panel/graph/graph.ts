@@ -59,7 +59,9 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
       }, scope);
 
       rootScope.onAppEvent('clearCrosshair', function() {
-        plot.clearCrosshair();
+        if (plot) {
+          plot.clearCrosshair();
+        }
       }, scope);
 
       // Receive render events
@@ -535,7 +537,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         return "%H:%M";
       }
 
-      new GraphTooltip(elem, dashboard, scope, function() {
+      var tooltip = new GraphTooltip(elem, dashboard, scope, function() {
         return sortedSeries;
       });
 
@@ -546,6 +548,12 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
             to    : moment.utc(ranges.xaxis.to),
           });
         });
+      });
+
+      scope.$on('$destroy', function() {
+        tooltip.destroy();
+        elem.off();
+        elem.remove();
       });
     }
   };

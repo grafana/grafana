@@ -97,6 +97,22 @@ export class KeybindingSrv {
       scope.appEvent('quick-snapshot');
     });
 
+    this.bind('e', () => {
+      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
+        this.$rootScope.appEvent('panel-change-view', {
+          fullscreen: true, edit: true, panelId: dashboard.meta.focusPanelId
+        });
+      }
+    });
+
+    this.bind('d', () => {
+      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
+        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        panelInfo.row.removePanel(panelInfo.panel);
+        dashboard.meta.focusPanelId = 0;
+      }
+    });
+
     this.bind('esc', () => {
       var popups = $('.popover.in');
       if (popups.length > 0) {

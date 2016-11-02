@@ -1,8 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-import {Emitter, contextSrv} from 'app/core/core';
-import {assignModelProperties} from 'app/core/core';
+import {Emitter, contextSrv, appEvents, assignModelProperties} from 'app/core/core';
 
 export class DashboardRow {
   panels: any;
@@ -79,10 +78,23 @@ export class DashboardRow {
     this.panelSpanChanged();
   }
 
-  removePanel(panel) {
+  removePanel(panel, ask?) {
+    console.log('remove panel');
+    if (ask !== false) {
+      appEvents.emit('confirm-modal', {
+        title: 'Remove Panel',
+        text: 'Are you sure you want to remove this panel?',
+        icon: 'fa-trash',
+        yesText: 'Remove',
+        onConfirm: () => {
+          this.removePanel(panel, false);
+        }
+      });
+      return;
+    }
+
     var index = _.indexOf(this.panels, panel);
     this.panels.splice(index, 1);
-
     this.events.emit('panel-removed', panel);
     this.panelSpanChanged();
   }
