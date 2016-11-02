@@ -84,9 +84,12 @@ function (angular, _, $) {
 
     DashboardViewState.prototype.update = function(state) {
       // implement toggle logic
-      if (this.state.fullscreen && state.fullscreen) {
-        if (this.state.edit === state.edit) {
-          state.fullscreen = !state.fullscreen;
+      if (state.toggle) {
+        delete state.toggle;
+        if (this.state.fullscreen && state.fullscreen) {
+          if (this.state.edit === state.edit) {
+            state.fullscreen = !state.fullscreen;
+          }
         }
       }
 
@@ -163,7 +166,7 @@ function (angular, _, $) {
       if (!render) { return false;}
 
       $timeout(function() {
-        if (self.oldTimeRange && self.oldTimeRange !== ctrl.range) {
+        if (self.oldTimeRange !== ctrl.range) {
           self.$scope.broadcastRefresh();
         } else {
           self.$scope.$broadcast('render');

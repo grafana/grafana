@@ -100,7 +100,10 @@ export class KeybindingSrv {
     this.bind('e', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
         this.$rootScope.appEvent('panel-change-view', {
-          fullscreen: true, edit: true, panelId: dashboard.meta.focusPanelId
+          fullscreen: true,
+          edit: true,
+          panelId: dashboard.meta.focusPanelId,
+          toggle: true
         });
       }
     });
@@ -108,7 +111,10 @@ export class KeybindingSrv {
     this.bind('v', () => {
       if (dashboard.meta.focusPanelId) {
         this.$rootScope.appEvent('panel-change-view', {
-          fullscreen: true, edit: null, panelId: dashboard.meta.focusPanelId
+          fullscreen: true,
+          edit: null,
+          panelId: dashboard.meta.focusPanelId,
+          toggle: true,
         });
       }
     });

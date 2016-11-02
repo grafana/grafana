@@ -33,9 +33,9 @@ module.exports = function(config, grunt) {
 
       // copy ts file also used by source maps
       //changes changed file source to that of the changed file
-      var option = 'typescript.build.src';
-      var result = filepath;
-      grunt.config(option, result);
+      grunt.config('typescript.build.src', filepath);
+      grunt.config('tslint.source.files.src', filepath);
+
       grunt.task.run('typescript:build');
       grunt.task.run('tslint');
     }

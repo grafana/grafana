@@ -111,7 +111,6 @@ export class PanelCtrl {
   changeTab(newIndex) {
     this.editorTabIndex = newIndex;
     var route = this.$injector.get('$route');
-
     route.current.params.tab = this.editorTabs[newIndex].title.toLowerCase();
     route.updateParams();
   }
