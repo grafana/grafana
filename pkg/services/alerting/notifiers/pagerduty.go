@@ -19,54 +19,37 @@ func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error)
 		return nil, alerting.ValidationError{Reason: "Could not find integration key property in settings"}
 	}
 
-	alertingStates := make([]m.AlertStateType, 0)
-	alertingStates = append(alertingStates, m.AlertStateAlerting)
-	if model.Settings.Get("alertOnExecError").MustBool() {
-		alertingStates = append(alertingStates, m.AlertStateExecError)
-	}
-	if model.Settings.Get("alertOnNoData").MustBool() {
-		alertingStates = append(alertingStates, m.AlertStateNoData)
-	}
-
 	return &PagerdutyNotifier{
-		NotifierBase:	    NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		NotifierBase:     NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		Key:              key,
-		AlertingStates:   alertingStates,
+		AlertOnExecError: model.Settings.Get("alertOnExecError").MustBool(),
 		log:              log.New("alerting.notifier.pagerduty"),
 	}, nil
 }
 
 type PagerdutyNotifier struct {
 	NotifierBase
-	Key        				string
-	AlertingStates	  []m.AlertStateType
-	log        				log.Logger
+	Key              string
+	AlertOnExecError bool
+	log              log.Logger
 }
 
 func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Notifying Pagerduty")
 	metrics.M_Alerting_Notification_Sent_PagerDuty.Inc(1)
 
-	shouldNotify := false
-
-	for _, state := range this.AlertingStates {
-		if evalContext.Rule.State == state {
-			shouldNotify = true
-			break
-		}
-	}
-
-	if shouldNotify {
+	if (evalContext.Rule.State == m.AlertStateAlerting) ||
+		((this.AlertOnExecError) && (evalContext.Rule.State == m.AlertStateExecError)) {
 
 		// Pagerduty Events API URL
 		pgEventsUrl := "https://events.pagerduty.com/generic/2010-04-15/create_event.json"
 
 		bodyJSON := simplejson.New()
 		bodyJSON.Set("service_key", this.Key)
-		bodyJSON.Set("description", evalContext.Rule.Name + "-" + evalContext.Rule.Message)
+		bodyJSON.Set("description", evalContext.Rule.Name+"-"+evalContext.Rule.Message)
 		bodyJSON.Set("client", "Grafana")
 		bodyJSON.Set("event_type", "trigger")
-		
+
 		ruleUrl, err := evalContext.GetRuleUrl()
 		if err != nil {
 			this.log.Error("Failed get rule link", "error", err)
