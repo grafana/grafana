@@ -11,6 +11,7 @@ import (
 	"path"
 	"strings"
 	"time"
+	"regexp"
 
 	"golang.org/x/net/context/ctxhttp"
 
@@ -58,9 +59,9 @@ func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 
 	for _, query := range queries {
 		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
-			formData["target"] = []string{fullTarget}
+			formData["target"] = []string{fixIntervalFormat(fullTarget)}
 		} else {
-			formData["target"] = []string{query.Model.Get("target").MustString()}
+			formData["target"] = []string{fixIntervalFormat(query.Model.Get("target").MustString())}
 		}
 	}
 
@@ -149,4 +150,18 @@ func formatTimeRange(input string) string {
 		return input
 	}
 	return strings.Replace(strings.Replace(input, "m", "min", -1), "M", "mon", -1)
+}
+
+func fixIntervalFormat(target string) string {
+	rMinute := regexp.MustCompile("'(\\d+)m'")
+	rMin := regexp.MustCompile("m")
+	target = rMinute.ReplaceAllStringFunc(target, func(m string) string {
+		return rMin.ReplaceAllString(m, "min")
+	})
+	rMonth := regexp.MustCompile("'(\\d+)M'")
+	rMon := regexp.MustCompile("M")
+	target = rMonth.ReplaceAllStringFunc(target, func(M string) string {
+		return rMon.ReplaceAllString(M, "mon")
+	})
+	return target
 }
