@@ -2,7 +2,6 @@ package graphite
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -10,7 +9,6 @@ import (
 	"net/url"
 	"path"
 	"strings"
-	"time"
 
 	"golang.org/x/net/context/ctxhttp"
 
@@ -36,14 +34,7 @@ func init() {
 	glog = log.New("tsdb.graphite")
 	tsdb.RegisterExecutor("graphite", NewGraphiteExecutor)
 
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	HttpClient = &http.Client{
-		Timeout:   time.Duration(15 * time.Second),
-		Transport: tr,
-	}
+	HttpClient = tsdb.GetDefaultClient()
 }
 
 func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {

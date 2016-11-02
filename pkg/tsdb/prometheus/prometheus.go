@@ -3,7 +3,6 @@ package prometheus
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -25,8 +24,7 @@ func NewPrometheusExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
 }
 
 var (
-	plog       log.Logger
-	HttpClient http.Client
+	plog log.Logger
 )
 
 func init() {
