@@ -6,7 +6,7 @@ import (
 )
 
 func TestGraphiteFunctions(t *testing.T) {
-	Convey("Testing Graphite Executor", t, func() {
+	Convey("Testing Graphite Functions", t, func() {
 
 		Convey("formatting time range for now", func() {
 

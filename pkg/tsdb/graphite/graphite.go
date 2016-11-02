@@ -9,9 +9,9 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"strings"
 	"time"
-	"regexp"
 
 	"golang.org/x/net/context/ctxhttp"
 
@@ -153,15 +153,16 @@ func formatTimeRange(input string) string {
 }
 
 func fixIntervalFormat(target string) string {
-	rMinute := regexp.MustCompile("'(\\d+)m'")
+	rMinute := regexp.MustCompile(`'(\d+)m'`)
 	rMin := regexp.MustCompile("m")
 	target = rMinute.ReplaceAllStringFunc(target, func(m string) string {
 		return rMin.ReplaceAllString(m, "min")
 	})
-	rMonth := regexp.MustCompile("'(\\d+)M'")
+	rMonth := regexp.MustCompile(`'(\d+)M'`)
 	rMon := regexp.MustCompile("M")
 	target = rMonth.ReplaceAllStringFunc(target, func(M string) string {
 		return rMon.ReplaceAllString(M, "mon")
 	})
+	glog.Debug("Graphite Query", "target", target)
 	return target
 }
