@@ -155,7 +155,7 @@ export class PanelCtrl {
     if (this.fullscreen) {
       var docHeight = $(window).height();
       var editHeight = Math.floor(docHeight * 0.4);
-      var fullscreenHeight = Math.floor(docHeight * 0.6);
+      var fullscreenHeight = Math.floor(docHeight * 0.8);
       this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
     } else {
       this.containerHeight = this.panel.height || this.row.height;

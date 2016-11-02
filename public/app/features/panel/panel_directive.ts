@@ -133,11 +133,11 @@ module.directive('grafanaPanel', function($rootScope) {
         }
       }, scope);
 
-      panelContainer.on('mouseenter', mouseEnter);
-      panelContainer.on('mouseleave', mouseLeave);
+      elem.on('mouseenter', mouseEnter);
+      elem.on('mouseleave', mouseLeave);
 
       scope.$on('$destroy', function() {
-        panelContainer.off();
+        elem.off();
       });
     }
   };

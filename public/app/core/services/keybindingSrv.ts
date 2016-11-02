@@ -11,7 +11,7 @@ export class KeybindingSrv {
   helpModal: boolean;
 
   /** @ngInject */
-  constructor(private $rootScope, private $modal, private $location) {
+  constructor(private $rootScope, private $modal, private $location, private contextSrv) {
     // clear out all shortcuts on route change
     $rootScope.$on('$routeChangeSuccess', () => {
       Mousetrap.reset();
@@ -26,6 +26,7 @@ export class KeybindingSrv {
   setupGlobal() {
     this.bind("?", this.showHelpModal);
     this.bind("g h", this.goToHome);
+    this.bind("g a", this.openAlerting);
     this.bind("g p", this.goToProfile);
     this.bind("s s", this.openSearchStarred);
     this.bind(['f'], this.openSearch);
@@ -39,12 +40,16 @@ export class KeybindingSrv {
     this.$rootScope.appEvent('show-dash-search');
   }
 
+  openAlerting() {
+    this.$location.url("/alerting");
+  }
+
   goToHome() {
-    this.$location.path("/");
+    this.$location.url("/");
   }
 
   goToProfile() {
-    this.$location.path("/profile");
+    this.$location.url("/profile");
   }
 
   showHelpModal() {
