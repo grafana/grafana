@@ -83,6 +83,13 @@ function (angular, _, $) {
     };
 
     DashboardViewState.prototype.update = function(state) {
+      // implement toggle logic
+      if (this.state.fullscreen && state.fullscreen) {
+        if (this.state.edit === state.edit) {
+          state.fullscreen = !state.fullscreen;
+        }
+      }
+
       // remember if editStateChanged
       this.editStateChanged = state.edit !== this.state.edit;
 

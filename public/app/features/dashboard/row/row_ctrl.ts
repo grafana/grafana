@@ -70,6 +70,7 @@ export class DashRowCtrl {
       }
     }
 
+    this.dropView = 0;
     this.row.panelSpanChanged();
     this.$timeout(() => {
       this.$rootScope.$broadcast('render');

@@ -105,6 +105,14 @@ export class KeybindingSrv {
       }
     });
 
+    this.bind('v', () => {
+      if (dashboard.meta.focusPanelId) {
+        this.$rootScope.appEvent('panel-change-view', {
+          fullscreen: true, edit: null, panelId: dashboard.meta.focusPanelId
+        });
+      }
+    });
+
     this.bind('d', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
         var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
