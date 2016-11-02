@@ -5,7 +5,6 @@ define([
   './dashnav/dashnav',
   './submenu/submenu',
   './saveDashboardAsCtrl',
-  './rowCtrl',
   './shareModalCtrl',
   './shareSnapshotCtrl',
   './dashboard_srv',
