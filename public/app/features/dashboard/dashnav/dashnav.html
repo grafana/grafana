@@ -52,7 +52,12 @@
 	<li ng-if="::showSettingsMenu" class="dropdown">
 		<a class="pointer" ng-click="hideTooltip($event)" bs-tooltip="'Manage dashboard'" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-cog"></i></a>
 		<ul class="dropdown-menu">
-			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="dashboard.toggleEditMode();">Enter Build Mode</a></li>
+			<li ng-if="dashboardMeta.canEdit" class="dropdown-menu-item-with-shortcut">
+        <a class="pointer" ng-click="dashboard.toggleEditMode();">
+          Build Mode
+          <span class="dropdown-menu-item-shortcut">b</span>
+        </a>
+      </li>
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('settings');">Settings</a></li>
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('annotations');">Annotations</a></li>
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('templating');">Templating</a></li>

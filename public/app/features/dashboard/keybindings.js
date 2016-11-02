@@ -48,7 +48,7 @@ function(angular, $) {
         scope.broadcastRefresh();
       }, { inputDisabled: true });
 
-      keyboardManager.bind('ctrl+b', function() {
+      keyboardManager.bind('b', function() {
         scope.dashboard.toggleEditMode();
       }, { inputDisabled: true });
 
