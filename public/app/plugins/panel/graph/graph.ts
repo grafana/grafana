@@ -535,9 +535,9 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         return "%H:%M";
       }
 
-      // new GraphTooltip(elem, dashboard, scope, function() {
-      //   return sortedSeries;
-      // });
+      new GraphTooltip(elem, dashboard, scope, function() {
+        return sortedSeries;
+      });
 
       elem.bind("plotselected", function (event, ranges) {
         scope.$apply(function() {

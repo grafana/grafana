@@ -29,7 +29,7 @@ export class SearchCtrl {
     this.isOpen = this.ignoreClose;
   }
 
-  openSearch() {
+  openSearch(evt, payload) {
     if (this.isOpen) {
       this.isOpen = false;
       return;
@@ -42,6 +42,10 @@ export class SearchCtrl {
     this.query = { query: '', tag: [], starred: false };
     this.currentSearchId = 0;
     this.ignoreClose = true;
+
+    if (payload && payload.starred) {
+      this.query.starred = true;
+    }
 
     this.$timeout(() => {
       this.ignoreClose = false;

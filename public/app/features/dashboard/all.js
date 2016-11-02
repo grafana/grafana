@@ -9,7 +9,6 @@ define([
   './shareModalCtrl',
   './shareSnapshotCtrl',
   './dashboard_srv',
-  './keybindings',
   './viewStateSrv',
   './timeSrv',
   './unsavedChangesSrv',

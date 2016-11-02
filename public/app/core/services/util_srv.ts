@@ -8,6 +8,7 @@ import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
 
 export class UtilSrv {
+  modalScope: any;
 
   /** @ngInject */
   constructor(private $rootScope, private $modal) {
@@ -18,9 +19,15 @@ export class UtilSrv {
   }
 
   showModal(options) {
+    if (this.modalScope && this.modalScope.dismiss) {
+      this.modalScope.dismiss();
+    }
+
     if (options.model) {
-      options.scope = this.$rootScope.$new();
+      options.scope = this.modalScope = this.$rootScope.$new();
       options.scope.model = options.model;
+    } else {
+      this.modalScope = options.scope;
     }
 
     var modal = this.$modal({

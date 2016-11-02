@@ -13,7 +13,7 @@ export class DashboardCtrl {
   constructor(
     private $scope,
     private $rootScope,
-    dashboardKeybindings,
+    keybindingSrv,
     timeSrv,
     variableSrv,
     alertingSrv,
@@ -61,7 +61,7 @@ export class DashboardCtrl {
           $scope.dashboardMeta = dashboard.meta;
           $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
 
-          dashboardKeybindings.shortcuts($scope);
+          keybindingSrv.setupDashboardBindings($scope, dashboard);
 
           $scope.dashboard.updateSubmenuVisibility();
           $scope.setWindowTitleAndTheme();

@@ -3,6 +3,7 @@ System.config({
   baseURL: 'public',
   paths: {
     'virtual-scroll': 'vendor/npm/virtual-scroll/src/index.js',
+    'mousetrap': 'vendor/npm/mousetrap/mousetrap.js',
     'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',
     'tether': 'vendor/npm/tether/dist/js/tether.js',
     'eventemitter3': 'vendor/npm/eventemitter3/index.js',
@@ -65,6 +66,10 @@ System.config({
     'vendor/npm/eventemitter3/index.js': {
       format: 'cjs',
       exports: 'EventEmitter'
+    },
+    'vendor/npm/mousetrap/mousetrap.js': {
+      format: 'global',
+      exports: 'Mousetrap'
     },
   }
 });
