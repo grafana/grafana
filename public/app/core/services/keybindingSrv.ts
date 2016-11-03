@@ -85,6 +85,10 @@ export class KeybindingSrv {
       scope.broadcastRefresh();
     });
 
+    this.bind('ctrl+h', () => {
+      dashboard.hideControls = !dashboard.hideControls;
+    });
+
     this.bind(['ctrl+s', 'command+s'], () => {
       scope.appEvent('save-dashboard');
     });

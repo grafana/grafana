@@ -18,12 +18,22 @@
   .dashnav-refresh-action,
   .dashnav-zoom-out,
   .dashnav-action-icons,
+  .dash-row-menu,
   .dashnav-move-timeframe  {
     display: none;
   }
 
   .grafana-menu-stop-playlist {
     display: list-item;
+  }
+}
+
+.hide-controls {
+  .add-row-panel-hint {
+    display: none;
+  }
+  .dash-row-menu {
+    display: none;
   }
 }
 
