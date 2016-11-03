@@ -88,7 +88,6 @@ export class DashboardModel {
     }
 
     this.meta = meta;
-    this.editMode = this.meta.isNew;
   }
 
   // cleans meta data and other non peristent state

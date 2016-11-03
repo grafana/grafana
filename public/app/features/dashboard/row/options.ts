@@ -19,10 +19,6 @@ export class RowOptionsCtrl {
     this.dashboard = this.rowCtrl.dashboard;
     this.row.titleSize = this.row.titleSize || 'h6';
   }
-
-  removeRow() {
-    this.dashboard.removeRow(this.row);
-  }
 }
 
 export function rowOptionsDirective() {

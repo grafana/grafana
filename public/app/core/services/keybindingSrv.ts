@@ -79,9 +79,9 @@ export class KeybindingSrv {
   }
 
   setupDashboardBindings(scope, dashboard) {
-    this.bind('b', () => {
-      dashboard.toggleEditMode();
-    });
+    // this.bind('b', () => {
+    //   dashboard.toggleEditMode();
+    // });
 
     this.bind('ctrl+o', () => {
       dashboard.sharedCrosshair = !dashboard.sharedCrosshair;

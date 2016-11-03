@@ -97,21 +97,12 @@ export class DashRowCtrl {
     this.row.collapse = !this.row.collapse;
   }
 
-  showAddPanel() {
-    this.row.collapse = false;
-    if (this.dropView === 1) {
-      this.closeDropView();
-    } else {
-      this.dropView = 1;
-    }
+  onMenuAddPanel() {
+    this.dropView = 1;
   }
 
-  showRowOptions() {
-    if (this.dropView === 2) {
-      this.closeDropView();
-    } else {
-      this.dropView = 2;
-    }
+  onMenuRowOptions() {
+    this.dropView = 2;
   }
 
   closeDropView() {
