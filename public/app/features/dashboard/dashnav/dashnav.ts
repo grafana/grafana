@@ -34,10 +34,7 @@ export class DashNavCtrl {
     };
 
     $scope.showHelpModal = function() {
-      $scope.appEvent('show-modal', {
-        src: 'public/app/partials/help_modal.html',
-        model: {}
-      });
+      $scope.appEvent('show-modal', {templateHtml: '<help-modal></help-modal>'});
     };
 
     $scope.starDashboard = function() {

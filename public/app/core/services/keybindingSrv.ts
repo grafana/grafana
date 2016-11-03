@@ -59,10 +59,7 @@ export class KeybindingSrv {
   }
 
   showHelpModal() {
-    appEvents.emit('show-modal', {
-      src: 'public/app/partials/help_modal.html',
-      model: {}
-    });
+   appEvents.emit('show-modal', {templateHtml: '<help-modal></help-modal>'});
   }
 
   bind(keyArg, fn) {

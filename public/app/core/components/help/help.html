@@ -1,13 +1,13 @@
 <div class="modal-body">
 	<div class="modal-header">
 		<h2 class="modal-header-title">
-			<i class="fa fa-keyboard-o"></i>
+			<i class="fa fa-question-circle"></i>
 			<span class="p-l-1">Help</span>
 		</h2>
 
 		<ul class="gf-tabs">
-			<li class="gf-tabs-item" ng-repeat="tab in ['Shortcuts', 'Tips', 'Docs']">
-				<a class="gf-tabs-link" ng-click="editor.index = $index" ng-class="{active: editor.index === $index}">
+			<li class="gf-tabs-item" ng-repeat="tab in ['Shortcuts']">
+				<a class="gf-tabs-link" ng-click="ctrl.tabindex = $index" ng-class="{active: ctrl.tabindex === $index}">
 					{{::tab}}
 				</a>
 			</li>
@@ -68,4 +68,3 @@
 	</div>
 
 </div>
-

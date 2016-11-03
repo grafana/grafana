@@ -45,6 +45,7 @@ import colors from './utils/colors';
 import {assignModelProperties} from './utils/model_utils';
 import {contextSrv} from './services/context_srv';
 import {KeybindingSrv} from './services/keybindingSrv';
+import {helpModal} from './components/help/help';
 
 
 export {
@@ -68,4 +69,5 @@ export {
   assignModelProperties,
   contextSrv,
   KeybindingSrv,
+  helpModal,
 };

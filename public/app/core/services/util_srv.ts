@@ -23,12 +23,12 @@ export class UtilSrv {
       this.modalScope.dismiss();
     }
 
-    if (options.model) {
+    if (options.model || !options.scope) {
       options.scope = this.modalScope = this.$rootScope.$new();
       options.scope.model = options.model;
-    } else {
-      this.modalScope = options.scope;
     }
+
+    this.modalScope = options.scope;
 
     var modal = this.$modal({
       modalClass: options.modalClass,
