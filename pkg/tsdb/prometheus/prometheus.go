@@ -156,9 +156,3 @@ func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb
 	queryResults["A"] = queryRes
 	return queryResults, nil
 }
-
-/*
-func resultWithError(result *tsdb.BatchResult, err error) *tsdb.BatchResult {
-	result.Error = err
-	return result
-}*/
