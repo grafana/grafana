@@ -13,12 +13,12 @@
   margin-right: $panel-margin;
   margin-left: 0;
 
-  .h1 { font-size: 2.7rem; font-style: normal; line-height: 4rem }
-  .h2 { font-size: 2.4rem; line-height: 3.5rem; }
-  .h3 { font-size: 2.0rem; line-height: 3rem;}
-  .h4 { font-size: 1.7rem; }
-  .h5 { font-size: 1.4rem; }
-  .h6 { font-size: 1rem }
+  .h1 { font-size: 2.7rem; font-style: normal; line-height: 4rem; font-weight: 300; }
+  .h2 { font-size: 2.4rem; line-height: 3.5rem; font-weight: 300; }
+  .h3 { font-size: 2.0rem; line-height: 3rem; font-weight: 300;}
+  .h4 { font-size: 1.7rem; font-weight: 300;}
+  .h5 { font-size: 1.4rem; font-weight: 300;}
+  .h6 { font-size: 1rem; font-weight: 300; }
 }
 
 .dash-row-header-title {
