@@ -25,8 +25,9 @@ func TestPrometheus(t *testing.T) {
 
 		Convey("build full serie name", func() {
 			metric := map[p.LabelName]p.LabelValue{
-				p.LabelName("app"):    p.LabelValue("backend"),
-				p.LabelName("device"): p.LabelValue("mobile"),
+				p.LabelName(p.MetricNameLabel): p.LabelValue("http_request_total"),
+				p.LabelName("app"):             p.LabelValue("backend"),
+				p.LabelName("device"):          p.LabelValue("mobile"),
 			}
 
 			query := &PrometheusQuery{
