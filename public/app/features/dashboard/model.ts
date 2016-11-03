@@ -22,6 +22,7 @@ export class DashboardModel {
   rows: DashboardRow[];
   time: any;
   timepicker: any;
+  hideControls: any;
   templating: any;
   annotations: any;
   refresh: any;
@@ -51,6 +52,7 @@ export class DashboardModel {
     this.timezone = data.timezone || '';
     this.editable = data.editable !== false;
     this.sharedCrosshair = data.sharedCrosshair || false;
+    this.hideControls = data.hideControls || false;
     this.time = data.time || { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker || {};
     this.templating = this.ensureListExist(data.templating);
