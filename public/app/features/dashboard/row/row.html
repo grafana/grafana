@@ -1,4 +1,4 @@
-<div ng-if="ctrl.editMode">
+<div ng-if="ctrl.dashboard.editMode">
   <div class="dash-row-header">
     <a class="dash-row-header-title" ng-click="ctrl.toggleCollapse()">
       <span class="dash-row-collapse-toggle pointer">
@@ -40,27 +40,12 @@
   </div>
 </div>
 
-<div ng-if="!ctrl.editMode">
-  <div class="row-open">
-    <div class='row-tab dropdown' ng-show="dashboardMeta.canEdit" ng-hide="dashboard.meta.fullscreen">
-      <span class="row-tab-button dropdown-toggle" data-toggle="dropdown">
-        <i class="fa fa-bars"></i>
-      </span>
-      <ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="drop1">
-        <li>
-          <a ng-click="ctrl.onMenuAddPanel()">Add Panel</a>
-        </li>
-        <li>
-          <a ng-click="ctrl.onMenuRowOptions()">Row Options</a>
-        </li>
-        <li>
-          <a ng-click="ctrl.onMenuDeleteRow()">Delete row</a>
-        </li>
-      </ul>
-    </div>
+<div ng-if="!ctrl.dashboard.editMode">
+  <div class="dash-row-expand-toggle" ng-if="!ctrl.row.collapse && !ctrl.row.showTitle" ng-click="ctrl.toggleCollapse()">
+		<i class="fa fa-chevron-down"></i>
   </div>
 
-  <div class="dash-row-header" ng-if="ctrl.showtitle">
+  <div class="dash-row-header" ng-if="ctrl.row.showTitle || ctrl.row.collapse">
     <a class="dash-row-header-title" ng-click="ctrl.toggleCollapse()">
       <span class="dash-row-collapse-toggle pointer">
         <i class="fa fa-chevron-down" ng-show="!ctrl.row.collapse"></i>

@@ -12,7 +12,6 @@ export class DashRowCtrl {
   dashboard: any;
   row: any;
   dropView: number;
-  editMode: boolean;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private $timeout, private uiSegmentSrv, private $q) {
@@ -22,12 +21,6 @@ export class DashRowCtrl {
       this.dropView = 1;
       delete this.row.isNew;
     }
-
-    this.dashboard.events.on('edit-mode-changed', this.editModeChanged.bind(this), $scope);
-  }
-
-  editModeChanged() {
-    this.editMode = this.dashboard.editMode;
   }
 
   onDrop(panelId, dropTarget) {
@@ -58,7 +51,7 @@ export class DashRowCtrl {
         dropTarget.row.panels.splice(dropTarget.index+1, 0, dragObject.panel);
       } else if (this.row === dragObject.row) {
         // just move element
-        this.row.movePanel(dropTarget.index, dragObject.index);
+        this.row.movePanel(dragObject.index, dropTarget.index);
       } else {
         // split drop target space
         dragObject.panel.span = dropTarget.panel.span = dropTarget.panel.span/2;
@@ -100,32 +93,29 @@ export class DashRowCtrl {
   }
 
   toggleCollapse() {
-    this.dropView = 0;
+    this.closeDropView();
     this.row.collapse = !this.row.collapse;
   }
 
   showAddPanel() {
     this.row.collapse = false;
-    this.dropView = this.dropView === 1 ? 0 : 1;
+    if (this.dropView === 1) {
+      this.closeDropView();
+    } else {
+      this.dropView = 1;
+    }
   }
 
   showRowOptions() {
-    this.dropView = this.dropView === 2 ? 0 : 2;
-  }
-
-  onMenuAddPanel() {
-    this.editMode = true;
-    this.dropView = 1;
-  }
-
-  onMenuRowOptions() {
-    this.editMode = true;
-    this.dropView = 2;
+    if (this.dropView === 2) {
+      this.closeDropView();
+    } else {
+      this.dropView = 2;
+    }
   }
 
   closeDropView() {
     this.dropView = 0;
-    this.editMode = this.dashboard.editMode;
   }
 
   onMenuDeleteRow() {
@@ -205,6 +195,7 @@ coreModule.directive('panelWidth', function($rootScope) {
 coreModule.directive('panelDropZone', function($timeout) {
   return function(scope, element) {
     var row = scope.ctrl.row;
+    var dashboard = scope.ctrl.dashboard;
     var indrag = false;
     var textEl = element.find('.panel-drop-zone-text');
 
@@ -220,7 +211,7 @@ coreModule.directive('panelDropZone', function($timeout) {
     }
 
     function updateState() {
-      if (scope.ctrl.editMode) {
+      if (scope.ctrl.dashboard.editMode) {
         if (row.panels.length === 0 && indrag === false) {
           return showPanel(12, 'Empty Space');
         }
@@ -246,7 +237,7 @@ coreModule.directive('panelDropZone', function($timeout) {
     }
 
     row.events.on('span-changed', updateState, scope);
-    scope.$watchGroup(['ctrl.editMode'], updateState);
+    dashboard.events.emit('edit-mode-changed', updateState, scope);
 
     scope.$on("ANGULAR_DRAG_START", function() {
       indrag = true;

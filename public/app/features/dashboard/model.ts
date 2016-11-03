@@ -196,7 +196,6 @@ export class DashboardModel {
   }
 
   setPanelFocus(id) {
-    console.log('setting focus panel id', id);
     this.meta.focusPanelId = id;
   }
 

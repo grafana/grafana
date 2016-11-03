@@ -169,15 +169,6 @@ a.dash-row-header-actions--tight {
   display: flex;
 }
 
-.dash-edit-mode {
-  .dash-row-options {
-    margin-bottom: 0;
-  }
-  .dash-row-add-panel {
-    margin-bottom: 0;
-  }
-}
-
 .add-panel-panels-scroll {
   width: 100%;
   overflow: hidden;
@@ -215,6 +206,23 @@ a.dash-row-header-actions--tight {
   width: 2rem;
 }
 
+.dash-row-expand-toggle {
+  margin-top: -3px;
+  left: 1px;
+  position: absolute;
+  z-index: 100;
+  transition: .10s left;
+  transition-delay: .05s;
+  width: 15px;
+  font-size: 60%;
+  color: $text-muted;
+  cursor: pointer;
+  height: 100%;
+
+  &:hover {
+    color: $link-color;
+  }
+}
 
 // Legacy mode
 .row-tab {
@@ -235,14 +243,6 @@ a.dash-row-header-actions--tight {
   line-height: 30px;
   background: $btn-success-bg;
   color: rgba(255,255,255,.90);
-}
-
-.row-button {
-  width: 24px;
-  float: left;
-  cursor: pointer;
-  line-height: 31px;
-  background-color: $blue-dark;
 }
 
 .row-open {

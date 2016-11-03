@@ -198,6 +198,7 @@ div.flot-text {
   width: 15px;
   height: 15px;
   display: block;
+  color: $panel-bg;
 }
 
 .dashboard-header {
@@ -211,3 +212,15 @@ div.flot-text {
   }
 }
 
+.dash-edit-mode {
+  .resize-panel-handle {
+    color: $text-color-faint;
+    overflow: hidden;
+    &:before {
+      left: initial;
+      right: -5px;
+      bottom: 0px;
+      position: absolute;
+    }
+  }
+}
