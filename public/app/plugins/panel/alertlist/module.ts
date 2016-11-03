@@ -27,6 +27,8 @@ class AlertListPanel extends PanelCtrl {
     stateFilter: []
   };
 
+  panelContentHeight: string;
+
   /** @ngInject */
   constructor($scope, $injector, private $location, private backendSrv, private timeSrv, private templateSrv) {
     super($scope, $injector);
@@ -54,7 +56,16 @@ class AlertListPanel extends PanelCtrl {
     this.onRender();
   }
 
+  setContentHeight() {
+    var height = this.$scope.ctrl.row.height.replace("px", "");
+    var panelHeaderHeight = 31;
+    var contentHeight = parseInt(height) - panelHeaderHeight;
+
+    this.panelContentHeight = "max-height: " + contentHeight + "px;";
+  }
+
   onRender() {
+    this.setContentHeight();
     if (this.panel.show === 'current') {
       this.getCurrentAlertState();
     }
