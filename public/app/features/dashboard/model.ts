@@ -172,8 +172,8 @@ export class DashboardModel {
     }
 
     appEvents.emit('confirm-modal', {
-      title: 'Delete',
-      text: 'Are you sure you want to delete this row?',
+      title: 'Remove Row',
+      text: 'Are you sure you want to remove this row?',
       icon: 'fa-trash',
       yesText: 'Delete',
       onConfirm: () => {
