@@ -104,6 +104,7 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				panelQuery := findPanelQueryByRefId(panel, queryRefId)
 
 				if panelQuery == nil {
+					e.log.Error("Query not found", "panel", alert.PanelId, "queryRefId", queryRefId)
 					return nil, ValidationError{Reason: "Alert refers to query that cannot be found"}
 				}
 
