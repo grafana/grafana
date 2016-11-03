@@ -52,10 +52,6 @@ div.flot-text {
   }
 }
 
-.add-row-panel-hint {
-  display: none;
-}
-
 .panel-content {
   padding: 0px 10px 5px 10px;
 }
@@ -212,15 +208,13 @@ div.flot-text {
   }
 }
 
-.dash-edit-mode {
-  .resize-panel-handle {
-    color: $text-color-faint;
-    overflow: hidden;
-    &:before {
-      left: initial;
-      right: -5px;
-      bottom: 0px;
-      position: absolute;
-    }
+.resize-panel-handle {
+  color: $text-color-faint;
+  overflow: hidden;
+  &:before {
+    left: initial;
+    right: -5px;
+    bottom: 0px;
+    position: absolute;
   }
 }

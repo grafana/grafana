@@ -3,6 +3,7 @@
   display: block;
   display: flex;
   flex-direction: column;
+  position: relative;
 }
 
 .dash-row-header {
@@ -103,77 +104,68 @@
   width: 2rem;
 }
 
+$dash-row-menu-animation-speed: 0.20s;
+
 .dash-row-menu-container {
   position: absolute;
-  left: -120px;
-  background: $panel-bg;
-  width: 130px;
-  transition: .30s left;
-  transition-delay: .05s;
+  top: 0px;
+  transform: translate(-131px, 0);
+  transition: $dash-row-menu-animation-speed ease-out 0.5s;
   z-index: 100;
+  display: flex;
+  flex-direction: row;
 
   &:hover {
-    left: 0px;
+    transform: translate(-$panel-margin, 0);
+    transition: $dash-row-menu-animation-speed ease-in 0.05s;
     z-index: 101;
-    box-shadow: $search-shadow;
+
+    .dash-row-menu-grip {
+      opacity: 0;
+      transition: $dash-row-menu-animation-speed ease-in 0.05s;
+    }
+
+    &.transition-hide {
+      transform: translate(-131px, 0);
+      transition: 0.0s ease-in 0s;
+    }
   }
 }
 
 .dash-row-menu {
+  border-top: $panel-border;
+  border-bottom: $panel-border;
   list-style: none;
+  flex-grow: 1;
+  box-shadow: $search-shadow;
+  background: $side-menu-bg;
+
   li a {
-    display: inline-block;
+    display: block;
     white-space: nowrap;
     color: $text-muted;
     font-size: $font-size-sm;
-    padding: 0.4rem 1rem;
+    padding: $spacer/2 $spacer;
+    border-left: 2px solid $side-menu-bg;
+    i {
+      display: inline-block;
+      padding-right: $spacer/2;
+    }
+
     &:hover {
+      @include left-brand-border-gradient();
       color: $link-color;
       background: $input-label-bg;
     }
   }
 }
 
-.dash-row-menu--affordance {
-  float: right;
-  font-size: 130%;
-  margin-top: 7px;
-  color: $text-color-faint;
-  margin-right: -7px;
-  opacity: 1;
-  transition: .30s opacity forwards;
-}
-
-// Legacy mode
-.row-tab {
-  .dropdown-menu-right {
-    top: 0;
-    left: 33px;
-  }
-}
-
-.row-tab-button {
-  padding: 0px;
-  cursor: pointer;
-  vertical-align: middle;
-  width: 30px;
-  height: 30px;
+.dash-row-menu-grip {
   text-align: center;
-  display: inline-block;
-  line-height: 30px;
-  background: $btn-success-bg;
-  color: rgba(255,255,255,.90);
+  font-size: 130%;
+  color: $text-color-faint;
+  opacity: 1;
+  transition: $dash-row-menu-animation-speed ease-out 0.5s;
+  width: 1rem;
 }
 
-.row-open {
-  margin-top: 1px;
-  left: -24px;
-  position: absolute;
-  z-index: 100;
-  transition: .10s left;
-  transition-delay: .05s;
-
-  &:hover {
-    left: 0px;
-  }
-}

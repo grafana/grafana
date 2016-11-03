@@ -1,10 +1,9 @@
-<div class="dash-row-menu-container" id="dash-row-menu-container-id" ng-hide="dashboard.meta.fullscreen">
-	<ul class="dash-row-menu" role="menu" aria-labelledby="drop1">
+<div class="dash-row-menu-container" data-click-hide>
+	<ul class="dash-row-menu" role="menu">
 		<li>
 			<a ng-click="ctrl.onMenuAddPanel()">
 				<i class="fa fa-plus"></i> Add Panel
 			</a>
-			<i class="icon-gf icon-gf-bulk_action dash-row-menu--affordance" id="dash-row-menu--affordance-id"></i>
 		</li>
 		<li>
 			<a ng-click="ctrl.onMenuRowOptions()">
@@ -27,6 +26,9 @@
 			</a>
 		</li>
 	</ul>
+  <div class="dash-row-menu-grip">
+    <i class="fa fa-ellipsis-v"></i>
+  </div>
 </div>
 
 <div class="dash-row-header" ng-if="ctrl.row.showTitle || ctrl.row.collapse">

@@ -14,7 +14,7 @@ export class DashRowCtrl {
   dropView: number;
 
   /** @ngInject */
-  constructor(private $scope, private $rootScope, private $timeout, private uiSegmentSrv, private $q) {
+  constructor(private $scope, private $rootScope, private $timeout) {
     this.row.title = this.row.title || 'Row title';
 
     if (this.row.isNew) {
@@ -202,18 +202,16 @@ coreModule.directive('panelDropZone', function($timeout) {
     }
 
     function updateState() {
-      if (scope.ctrl.dashboard.editMode) {
-        if (row.panels.length === 0 && indrag === false) {
-          return showPanel(12, 'Empty Space');
-        }
+      if (row.panels.length === 0 && indrag === false) {
+        return showPanel(12, 'Empty Space');
+      }
 
-        var dropZoneSpan = 12 - row.span;
-        if (dropZoneSpan > 0) {
-          if (indrag)  {
-            return showPanel(dropZoneSpan, 'Drop Here');
-          } else {
-            return showPanel(dropZoneSpan, 'Empty Space');
-          }
+      var dropZoneSpan = 12 - row.span;
+      if (dropZoneSpan > 0) {
+        if (indrag)  {
+          return showPanel(dropZoneSpan, 'Drop Here');
+        } else {
+          return showPanel(dropZoneSpan, 'Empty Space');
         }
       }
 
@@ -228,7 +226,6 @@ coreModule.directive('panelDropZone', function($timeout) {
     }
 
     row.events.on('span-changed', updateState, scope);
-    dashboard.events.emit('edit-mode-changed', updateState, scope);
 
     scope.$on("ANGULAR_DRAG_START", function() {
       indrag = true;
@@ -239,6 +236,8 @@ coreModule.directive('panelDropZone', function($timeout) {
       indrag = false;
       updateState();
     });
+
+    updateState();
   };
 });
 
