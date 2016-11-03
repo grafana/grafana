@@ -163,6 +163,5 @@ func fixIntervalFormat(target string) string {
 	target = rMonth.ReplaceAllStringFunc(target, func(M string) string {
 		return rMon.ReplaceAllString(M, "mon")
 	})
-	glog.Debug("Graphite Query", "target", target)
 	return target
 }

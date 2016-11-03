@@ -31,33 +31,31 @@ func TestGraphiteFunctions(t *testing.T) {
 
 		Convey("fix interval format in query for 1m", func() {
 
-			timeRange := formatTimeRange("aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1m'), 4)")
+			timeRange := fixIntervalFormat("aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1m'), 4)")
 			So(timeRange, ShouldEqual, "aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1min'), 4)")
 
 		})
 
 		Convey("fix interval format in query for 1M", func() {
 
-			timeRange := formatTimeRange("aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1M'), 4)")
+			timeRange := fixIntervalFormat("aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1M'), 4)")
 			So(timeRange, ShouldEqual, "aliasByNode(hitcount(averageSeries(app.grafana.*.dashboards.views.count), '1mon'), 4)")
 
 		})
 
-		/*
-		   		Convey("should not override query", func() {
+		Convey("should not override query for 1M", func() {
 
-		       	timeRange := formatTimeRange("app.grafana.*.dashboards.views.1M.count")
-		       	So(timeRange, ShouldEqual, "app.grafana.*.dashboards.views.1M.count")
+			timeRange := fixIntervalFormat("app.grafana.*.dashboards.views.1M.count")
+			So(timeRange, ShouldEqual, "app.grafana.*.dashboards.views.1M.count")
 
-		   		})
+		})
 
-		   		Convey("should not override query", func() {
+		Convey("should not override query for 1m", func() {
 
-		       	timeRange := formatTimeRange("app.grafana.*.dashboards.views.1m.count")
-		       	So(timeRange, ShouldEqual, "app.grafana.*.dashboards.views.1m.count")
+			timeRange := fixIntervalFormat("app.grafana.*.dashboards.views.1m.count")
+			So(timeRange, ShouldEqual, "app.grafana.*.dashboards.views.1m.count")
 
-		   		})
+		})
 
-		*/
 	})
 }
