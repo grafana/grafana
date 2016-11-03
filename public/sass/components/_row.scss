@@ -114,13 +114,15 @@
 
   &:hover {
     left: 0px;
+    z-index: 101;
+    box-shadow: $search-shadow;
   }
 }
 
 .dash-row-menu {
   list-style: none;
   li a {
-    display: block;
+    display: inline-block;
     white-space: nowrap;
     color: $text-muted;
     font-size: $font-size-sm;
@@ -130,6 +132,16 @@
       background: $input-label-bg;
     }
   }
+}
+
+.dash-row-menu--affordance {
+  float: right;
+  font-size: 130%;
+  margin-top: 7px;
+  color: $text-color-faint;
+  margin-right: -7px;
+  opacity: 1;
+  transition: .30s opacity forwards;
 }
 
 // Legacy mode
