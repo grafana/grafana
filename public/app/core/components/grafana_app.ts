@@ -120,10 +120,11 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
         // hide it right away
         var clickAutoHide = target.closest('[data-click-hide]');
         if (clickAutoHide.length) {
-          clickAutoHide.toggleClass('transition-hide');
+          var clickAutoHideParent = clickAutoHide.parent();
+          clickAutoHide.detach();
           setTimeout(function() {
-            clickAutoHide.toggleClass('transition-hide');
-          }, 1000);
+            clickAutoHideParent.append(clickAutoHide);
+          }, 100);
         }
 
         if (target.parents('.dash-playlist-actions').length === 0) {

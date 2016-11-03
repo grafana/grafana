@@ -110,7 +110,7 @@ $dash-row-menu-animation-speed: 0.20s;
   position: absolute;
   top: 0px;
   transform: translate(-131px, 0);
-  transition: $dash-row-menu-animation-speed ease-out 0.5s;
+  transition: 0.1s ease-out 0.4s;
   z-index: 100;
   display: flex;
   flex-direction: row;
@@ -123,11 +123,6 @@ $dash-row-menu-animation-speed: 0.20s;
     .dash-row-menu-grip {
       opacity: 0;
       transition: $dash-row-menu-animation-speed ease-in 0.05s;
-    }
-
-    &.transition-hide {
-      transform: translate(-131px, 0);
-      transition: 0.0s ease-in 0s;
     }
   }
 }
