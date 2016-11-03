@@ -17,6 +17,7 @@ class AlertListPanel extends PanelCtrl {
     {text: 'Recent state changes', value: 'changes'}
   ];
 
+  contentHeight: string;
   stateFilter: any = {};
   currentAlerts: any = [];
   alertHistory: any = [];
@@ -27,7 +28,6 @@ class AlertListPanel extends PanelCtrl {
     stateFilter: []
   };
 
-  contentHeight: string;
 
   /** @ngInject */
   constructor($scope, $injector, private $location, private backendSrv, private timeSrv, private templateSrv) {
