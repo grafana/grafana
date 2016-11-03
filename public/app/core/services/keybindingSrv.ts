@@ -9,6 +9,7 @@ import Mousetrap from 'mousetrap';
 
 export class KeybindingSrv {
   helpModal: boolean;
+  bindings: any;
 
   /** @ngInject */
   constructor(private $rootScope, private $modal, private $location, private contextSrv) {
@@ -29,7 +30,7 @@ export class KeybindingSrv {
     this.bind("g a", this.openAlerting);
     this.bind("g p", this.goToProfile);
     this.bind("s s", this.openSearchStarred);
-    this.bind(['f'], this.openSearch);
+    this.bind('f', this.openSearch);
   }
 
   openSearchStarred() {
@@ -102,6 +103,7 @@ export class KeybindingSrv {
       scope.appEvent('quick-snapshot');
     });
 
+    // edit panel
     this.bind('e', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
         this.$rootScope.appEvent('panel-change-view', {
@@ -113,6 +115,7 @@ export class KeybindingSrv {
       }
     });
 
+    // view panel
     this.bind('v', () => {
       if (dashboard.meta.focusPanelId) {
         this.$rootScope.appEvent('panel-change-view', {
@@ -124,6 +127,7 @@ export class KeybindingSrv {
       }
     });
 
+    // delete panel
     this.bind('d', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
         var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);

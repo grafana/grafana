@@ -171,7 +171,13 @@ a.dash-row-header-actions--tight {
 
 .add-panel-panels-scroll {
   width: 100%;
-  overflow: hidden;
+  overflow: auto;
+
+  &::-webkit-scrollbar {
+    display: none
+  }
+
+  -ms-overflow-style: none;
 }
 
 .add-panel-panels {

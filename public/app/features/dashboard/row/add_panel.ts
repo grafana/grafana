@@ -4,8 +4,6 @@ import _ from 'lodash';
 
 import config from 'app/core/config';
 import {coreModule, appEvents} from 'app/core/core';
-// import VirtualScroll from 'virtual-scroll';
-// console.log(VirtualScroll);
 
 export class AddPanelCtrl {
   row: any;
