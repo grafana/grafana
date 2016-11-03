@@ -8,11 +8,12 @@ import (
 )
 
 type conditionStub struct {
-	firing bool
+	firing  bool
+	matches []*EvalMatch
 }
 
-func (c *conditionStub) Eval(context *EvalContext) {
-	context.Firing = c.firing
+func (c *conditionStub) Eval(context *EvalContext) (*ConditionResult, error) {
+	return &ConditionResult{Firing: c.firing, EvalMatches: c.matches}, nil
 }
 
 func TestAlertingExecutor(t *testing.T) {
@@ -30,10 +31,10 @@ func TestAlertingExecutor(t *testing.T) {
 			So(context.Firing, ShouldEqual, true)
 		})
 
-		Convey("Show return false with not passing condition", func() {
+		Convey("Show return false with not passing asdf", func() {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
-					&conditionStub{firing: true},
+					&conditionStub{firing: true, matches: []*EvalMatch{&EvalMatch{}, &EvalMatch{}}},
 					&conditionStub{firing: false},
 				},
 			})

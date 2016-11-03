@@ -33,16 +33,17 @@ type AlertQuery struct {
 	To           string
 }
 
-func (c *QueryCondition) Eval(context *alerting.EvalContext) {
+func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.ConditionResult, error) {
 	timeRange := tsdb.NewTimeRange(c.Query.From, c.Query.To)
+
 	seriesList, err := c.executeQuery(context, timeRange)
 	if err != nil {
-		context.Error = err
-		return
+		return nil, err
 	}
 
 	emptySerieCount := 0
 	evalMatchCount := 0
+	var matches []*alerting.EvalMatch
 	for _, series := range seriesList {
 		reducedValue := c.Reducer.Reduce(series)
 		evalMatch := c.Evaluator.Eval(reducedValue)
@@ -60,15 +61,19 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) {
 
 		if evalMatch {
 			evalMatchCount++
-			context.EvalMatches = append(context.EvalMatches, &alerting.EvalMatch{
+
+			matches = append(matches, &alerting.EvalMatch{
 				Metric: series.Name,
 				Value:  reducedValue.Float64,
 			})
 		}
 	}
 
-	context.NoDataFound = emptySerieCount == len(seriesList)
-	context.Firing = evalMatchCount > 0
+	return &alerting.ConditionResult{
+		Firing:      evalMatchCount > 0,
+		NoDataFound: emptySerieCount == len(seriesList),
+		EvalMatches: matches,
+	}, nil
 }
 
 func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *tsdb.TimeRange) (tsdb.TimeSeriesSlice, error) {
