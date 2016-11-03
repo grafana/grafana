@@ -1,6 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import $ from 'jquery';
+import _ from 'lodash';
 
 import coreModule from 'app/core/core_module';
 import appEvents from 'app/core/app_events';
@@ -9,10 +10,15 @@ import Mousetrap from 'mousetrap';
 
 export class KeybindingSrv {
   helpModal: boolean;
-  bindings: any;
 
   /** @ngInject */
-  constructor(private $rootScope, private $modal, private $location, private contextSrv) {
+  constructor(
+    private $rootScope,
+    private $modal,
+    private $location,
+    private contextSrv,
+    private $timeout) {
+
     // clear out all shortcuts on route change
     $rootScope.$on('$routeChangeSuccess', () => {
       Mousetrap.reset();
@@ -23,9 +29,8 @@ export class KeybindingSrv {
     this.setupGlobal();
   }
 
-
   setupGlobal() {
-    this.bind("?", this.showHelpModal);
+    this.bind(['?', 'h'], this.showHelpModal);
     this.bind("g h", this.goToHome);
     this.bind("g a", this.openAlerting);
     this.bind("g p", this.goToProfile);
@@ -54,7 +59,6 @@ export class KeybindingSrv {
   }
 
   showHelpModal() {
-    console.log('showing help modal');
     appEvents.emit('show-modal', {
       src: 'public/app/partials/help_modal.html',
       model: {}
@@ -67,6 +71,11 @@ export class KeybindingSrv {
       evt.stopPropagation();
       return this.$rootScope.$apply(fn.bind(this));
     });
+  }
+
+  showDashEditView(view) {
+    var search = _.extend(this.$location.search(), {editview: view});
+    this.$location.search(search);
   }
 
   setupDashboardBindings(scope, dashboard) {
@@ -82,11 +91,6 @@ export class KeybindingSrv {
     this.bind(['ctrl+s', 'command+s'], () => {
       scope.appEvent('save-dashboard');
     });
-
-    this.bind('r', () => {
-      scope.broadcastRefresh();
-    });
-
     this.bind('ctrl+z', () => {
       scope.appEvent('zoom-out');
     });
@@ -128,12 +132,35 @@ export class KeybindingSrv {
     });
 
     // delete panel
-    this.bind('d', () => {
+    this.bind('r', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
         var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
         panelInfo.row.removePanel(panelInfo.panel);
         dashboard.meta.focusPanelId = 0;
       }
+    });
+
+    // delete panel
+    this.bind('s', () => {
+      if (dashboard.meta.focusPanelId) {
+        var shareScope =  scope.$new();
+        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        shareScope.panel = panelInfo.panel;
+        shareScope.dashboard = dashboard;
+
+        appEvents.emit('show-modal', {
+          src: 'public/app/features/dashboard/partials/shareModal.html',
+          scope: shareScope
+        });
+      }
+    });
+
+    this.bind('d r', () => {
+      scope.broadcastRefresh();
+    });
+
+    this.bind('d s', () => {
+      this.showDashEditView('settings');
     });
 
     this.bind('esc', () => {
