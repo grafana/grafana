@@ -244,7 +244,7 @@ function (angular, _, dateMath) {
 
       var interpolated;
       try {
-        interpolated = templateSrv.replace(query, {}, "distributed");
+        interpolated = templateSrv.replace(query, {}, 'distributed');
       }
       catch (err) {
         return $q.reject(err);
