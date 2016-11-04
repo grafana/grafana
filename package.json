@@ -15,7 +15,7 @@
     "es6-promise": "^3.0.2",
     "es6-shim": "^0.35.1",
     "expect.js": "~0.2.0",
-    "glob": "~3.2.7",
+    "glob": "~7.1.1",
     "grunt": "~0.4.0",
     "grunt-angular-templates": "^0.5.5",
     "grunt-cli": "~0.1.13",
