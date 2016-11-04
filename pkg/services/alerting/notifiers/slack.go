@@ -27,16 +27,16 @@ func NewSlackNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	return &SlackNotifier{
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		Url:          url,
-		Recipient:		recipient,
+		Recipient:    recipient,
 		log:          log.New("alerting.notifier.slack"),
 	}, nil
 }
 
 type SlackNotifier struct {
 	NotifierBase
-	Url string
+	Url       string
 	Recipient string
-	log log.Logger
+	log       log.Logger
 }
 
 func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
