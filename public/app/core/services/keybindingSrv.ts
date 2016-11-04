@@ -66,6 +66,7 @@ export class KeybindingSrv {
     Mousetrap.bind(keyArg, evt => {
       evt.preventDefault();
       evt.stopPropagation();
+      evt.returnValue = false;
       return this.$rootScope.$apply(fn.bind(this));
     });
   }
@@ -80,31 +81,32 @@ export class KeybindingSrv {
     //   dashboard.toggleEditMode();
     // });
 
-    this.bind('ctrl+o', () => {
+    this.bind('mod+o', () => {
       dashboard.sharedCrosshair = !dashboard.sharedCrosshair;
       scope.broadcastRefresh();
     });
 
-    this.bind('ctrl+h', () => {
+    this.bind('mod+h', () => {
       dashboard.hideControls = !dashboard.hideControls;
     });
 
-    this.bind(['ctrl+s', 'command+s'], () => {
+    this.bind('mod+s', e => {
       scope.appEvent('save-dashboard');
     });
-    this.bind('ctrl+z', () => {
+
+    this.bind('t z', () => {
       scope.appEvent('zoom-out');
     });
 
-    this.bind('left', () => {
+    this.bind('t left', () => {
       scope.appEvent('shift-time-backward');
     });
 
-    this.bind('right', () => {
+    this.bind('t right', () => {
       scope.appEvent('shift-time-forward');
     });
 
-    this.bind('ctrl+i', () => {
+    this.bind('mod+i', () => {
       scope.appEvent('quick-snapshot');
     });
 
@@ -133,7 +135,7 @@ export class KeybindingSrv {
     });
 
     // delete panel
-    this.bind('r', () => {
+    this.bind('p r', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
         var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
         panelInfo.row.removePanel(panelInfo.panel);
@@ -141,8 +143,26 @@ export class KeybindingSrv {
       }
     });
 
-    // delete panel
-    this.bind('s', () => {
+    // delete row
+    this.bind('r r', () => {
+      if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
+        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        dashboard.removeRow(panelInfo.row);
+        dashboard.meta.focusPanelId = 0;
+      }
+    });
+
+    // collapse row
+    this.bind('r c', () => {
+      if (dashboard.meta.focusPanelId) {
+        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        panelInfo.row.toggleCollapse();
+        dashboard.meta.focusPanelId = 0;
+      }
+    });
+
+    // share panel
+    this.bind('p s', () => {
       if (dashboard.meta.focusPanelId) {
         var shareScope =  scope.$new();
         var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);

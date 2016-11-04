@@ -23,12 +23,14 @@ export class UtilSrv {
       this.modalScope.dismiss();
     }
 
-    if (options.model || !options.scope) {
-      options.scope = this.modalScope = this.$rootScope.$new();
-      options.scope.model = options.model;
-    }
-
     this.modalScope = options.scope;
+
+    if (options.model) {
+      this.modalScope = this.$rootScope.$new();
+      this.modalScope.model = options.model;
+    } else if (!this.modalScope) {
+      this.modalScope = this.$rootScope.$new();
+    }
 
     var modal = this.$modal({
       modalClass: options.modalClass,
@@ -36,7 +38,7 @@ export class UtilSrv {
       templateHtml: options.templateHtml,
       persist: false,
       show: false,
-      scope: options.scope,
+      scope: this.modalScope,
       keyboard: false,
       backdrop: options.backdrop
     });

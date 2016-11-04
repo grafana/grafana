@@ -127,6 +127,7 @@ coreModule.directive('dashRow', function($rootScope) {
     },
     link: function(scope, element) {
       scope.$watchGroup(['ctrl.row.collapse', 'ctrl.row.height'], function() {
+        element.toggleClass('dash-row--collapse', scope.ctrl.row.collapse);
         element.find('.panels-wrapper').css({minHeight: scope.ctrl.row.collapse ? '5px' : scope.ctrl.row.height});
       });
 

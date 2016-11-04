@@ -11,6 +11,7 @@ export class DashboardRow {
   events: Emitter;
   span: number;
   height: number;
+  collapse: boolean;
 
   defaults = {
     title: 'Dashboard Row',
@@ -22,6 +23,7 @@ export class DashboardRow {
     repeat: null,
     repeatRowId: null,
     repeatIteration: null,
+    collapse: false,
   };
 
   constructor(private model) {
@@ -79,7 +81,6 @@ export class DashboardRow {
   }
 
   removePanel(panel, ask?) {
-    console.log('remove panel');
     if (ask !== false) {
       appEvents.emit('confirm-modal', {
         title: 'Remove Panel',
@@ -112,6 +113,10 @@ export class DashboardRow {
     this.title = source.title;
     this.showTitle = source.showTitle;
     this.titleSize = source.titleSize;
+  }
+
+  toggleCollapse() {
+    this.collapse = !this.collapse;
   }
 }
 
