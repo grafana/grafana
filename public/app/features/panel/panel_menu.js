@@ -14,6 +14,7 @@ function (angular, $, _, Tether) {
           '<span class="panel-title drag-handle pointer">' +
             '<span class="icon-gf panel-alert-icon"></span>' +
             '<span class="panel-title-text drag-handle">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>' +
+            '<span class="panel-help-text"><i class="fa fa-info-circle"></i></span>' +
             '<span class="panel-links-btn"><i class="fa fa-external-link"></i></span>' +
             '<span class="panel-time-info" ng-show="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>' +
           '</span>';
@@ -77,6 +78,7 @@ function (angular, $, _, Tether) {
         link: function($scope, elem) {
           var $link = $(linkTemplate);
           var $panelLinksBtn = $link.find(".panel-links-btn");
+          var $helpTextDrop = $link.find(".panel-help-text");
           var $panelContainer = elem.parents(".panel-container");
           var menuScope = null;
           var ctrl = $scope.ctrl;
@@ -90,6 +92,11 @@ function (angular, $, _, Tether) {
             var showIcon = (newValue ? newValue.length > 0 : false) && ctrl.panel.title !== '';
             // cannot use toggle here, only works for attached elements
             $panelLinksBtn.css({display: showIcon ? 'inline' : 'none'});
+          });
+
+          $scope.$watch('ctrl.panel.helpText', function(helpText) {
+            var showHelpText = (helpText ? helpText.length > 0 : false) && ctrl.panel.title !== '';
+            $helpTextDrop.css({display: showHelpText ? 'inline' : 'none'});
           });
 
           function dismiss(time, force) {
