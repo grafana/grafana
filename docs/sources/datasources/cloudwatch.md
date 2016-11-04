@@ -25,6 +25,7 @@ be ready to build dashboards for you CloudWatch metrics.
 
 3. Click the `Add new` link in the top header.
 4. Select `CloudWatch` from the dropdown.
+    > NOTE: If at any moment you have issues with getting this datasource to work and grafana is giving you undescriptive errors then dont forget to check your log file (try looking in /var/log/grafana/).
 
 Name | Description
 ------------ | -------------
@@ -47,6 +48,7 @@ Checkout AWS docs on [IAM Roles](http://docs.aws.amazon.com/AWSEC2/latest/UserGu
 ### AWS credentials file
 
 Create a file at `~/.aws/credentials`. That is the `HOME` path for user running grafana-server.
+    > NOTE: If you think you have the credentials file in the right place but it is still not working then you might try moving your .aws file to '/usr/share/grafana/' and make sure your credentials file has at most 0644 permissions.
 
 Example content:
 
