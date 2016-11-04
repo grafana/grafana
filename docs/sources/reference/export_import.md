@@ -17,7 +17,7 @@ Dashboards are exported in Grafana JSON format, and contain everything you need 
 
 The export feature is accessed from the share menu.
 
-<img src="img/docs/v31/export_menu.png">
+<img src="/img/docs/v31/export_menu.png">
 
 ### Making a dashboard portable
 
@@ -31,12 +31,12 @@ the dashboard, and will also be added as an required input when the dashboard is
 
 To import a dashboard open dashboard search and then hit the import button.
 
-<img src="img/docs/v31/import_step1.png">
+<img src="/img/docs/v31/import_step1.png">
 
 From here you can upload a dashboard json file, paste a [Grafana.net](https://grafana.net) dashboard
 url or paste dashboard json text directly into the text area.
 
-<img src="img/docs/v31/import_step2.png">
+<img src="/img/docs/v31/import_step2.png">
 
 In step 2 of the import process Grafana will let you change the name of the dashboard, pick what
 data source you want the dashboard to use and specify any metric prefixes (if the dashboard use any).
@@ -45,7 +45,7 @@ data source you want the dashboard to use and specify any metric prefixes (if th
 
 Find dashboads for common server applications at [Grafana.net/dashboards](https://grafana.net/dashboards).
 
-<img src="img/docs/v31/gnet_dashboards_list.png">
+<img src="/img/docs/v31/gnet_dashboards_list.png">
 
 ## Import & Sharing with Grafana 2.x or 3.0
 
