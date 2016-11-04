@@ -35,11 +35,17 @@ export class KeybindingSrv {
     this.bind("g a", this.openAlerting);
     this.bind("g p", this.goToProfile);
     this.bind("s s", this.openSearchStarred);
+    this.bind('s o', this.openSearch);
+    this.bind('s t', this.openSearchTags);
     this.bind('f', this.openSearch);
   }
 
   openSearchStarred() {
     this.$rootScope.appEvent('show-dash-search', {starred: true});
+  }
+
+  openSearchTags() {
+    this.$rootScope.appEvent('show-dash-search', {tagsMode: true});
   }
 
   openSearch() {
@@ -143,6 +149,21 @@ export class KeybindingSrv {
       }
     });
 
+    // share panel
+    this.bind('p s', () => {
+      if (dashboard.meta.focusPanelId) {
+        var shareScope =  scope.$new();
+        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
+        shareScope.panel = panelInfo.panel;
+        shareScope.dashboard = dashboard;
+
+        appEvents.emit('show-modal', {
+          src: 'public/app/features/dashboard/partials/shareModal.html',
+          scope: shareScope
+        });
+      }
+    });
+
     // delete row
     this.bind('r r', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
@@ -158,21 +179,6 @@ export class KeybindingSrv {
         var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
         panelInfo.row.toggleCollapse();
         dashboard.meta.focusPanelId = 0;
-      }
-    });
-
-    // share panel
-    this.bind('p s', () => {
-      if (dashboard.meta.focusPanelId) {
-        var shareScope =  scope.$new();
-        var panelInfo = dashboard.getPanelInfoById(dashboard.meta.focusPanelId);
-        shareScope.panel = panelInfo.panel;
-        shareScope.dashboard = dashboard;
-
-        appEvents.emit('show-modal', {
-          src: 'public/app/features/dashboard/partials/shareModal.html',
-          scope: shareScope
-        });
       }
     });
 

@@ -16,6 +16,13 @@ export class UtilSrv {
 
   init() {
     appEvents.on('show-modal', this.showModal.bind(this), this.$rootScope);
+    appEvents.on('hide-modal', this.hideModal.bind(this), this.$rootScope);
+  }
+
+  hideModal() {
+    if (this.modalScope && this.modalScope.dismiss) {
+      this.modalScope.dismiss();
+    }
   }
 
   showModal(options) {

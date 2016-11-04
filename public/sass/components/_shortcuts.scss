@@ -1,6 +1,31 @@
 .shortcut-table {
-  td { padding: 3px; }
-  th:last-child { text-align: left; }
-  td:first-child { text-align: right; }
+  th {
+    font-weight: normal;
+    font-size: $font-size-h5;
+    font-style: italic;
+    text-align: left;
+  }
+
+  td:nth-child(2) {
+    text-align: left;
+    color: $text-muted;
+    width: 99%;
+    padding: 0.38rem 1rem;
+  }
+
+  td:first-child {
+    white-space: nowrap;
+    width: 1%;
+    text-align: right;
+    color: $text-color;
+  }
+
+  margin-bottom: $spacer;
+}
+
+.shortcut-table-key {
+  word-spacing: 5px;
+  padding: 0.2rem 0.5rem;
+  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
 }
 
