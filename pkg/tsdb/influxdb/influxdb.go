@@ -2,13 +2,11 @@ package influxdb
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 	"path"
-	"time"
 
 	"golang.org/x/net/context/ctxhttp"
 
@@ -41,14 +39,7 @@ func init() {
 	glog = log.New("tsdb.influxdb")
 	tsdb.RegisterExecutor("influxdb", NewInfluxDBExecutor)
 
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	HttpClient = &http.Client{
-		Timeout:   time.Duration(15 * time.Second),
-		Transport: tr,
-	}
+	HttpClient = tsdb.GetDefaultClient()
 }
 
 func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {

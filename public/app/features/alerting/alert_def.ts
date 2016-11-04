@@ -87,6 +87,13 @@ function getStateDisplayModel(state) {
         stateClass: 'alert-state-paused'
       };
     }
+    case 'pending': {
+      return {
+        text: 'PENDING',
+        iconClass: "fa fa-exclamation",
+        stateClass: 'alert-state-warning'
+      };
+    }
   }
 }
 

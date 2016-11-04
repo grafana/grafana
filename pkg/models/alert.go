@@ -11,11 +11,12 @@ type AlertSeverityType string
 type NoDataOption string
 
 const (
-	AlertStateNoData    AlertStateType = "no_data"
-	AlertStateExecError AlertStateType = "execution_error"
-	AlertStatePaused    AlertStateType = "paused"
-	AlertStateAlerting  AlertStateType = "alerting"
-	AlertStateOK        AlertStateType = "ok"
+	AlertStateNoData    	 AlertStateType = "no_data"
+	AlertStateExecError 	 AlertStateType = "execution_error"
+	AlertStatePaused    	 AlertStateType = "paused"
+	AlertStateAlerting     AlertStateType = "alerting"
+	AlertStateOK           AlertStateType = "ok"
+	AlertStatePending      AlertStateType = "pending"
 )
 
 const (
@@ -26,7 +27,7 @@ const (
 )
 
 func (s AlertStateType) IsValid() bool {
-	return s == AlertStateOK || s == AlertStateNoData || s == AlertStateExecError || s == AlertStatePaused
+	return s == AlertStateOK || s == AlertStateNoData || s == AlertStateExecError || s == AlertStatePaused || s == AlertStatePending
 }
 
 func (s NoDataOption) IsValid() bool {

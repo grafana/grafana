@@ -86,7 +86,12 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			handler.log.Error("Failed to save annotation for new alert state", "error", err)
 		}
 
-		handler.notifier.Notify(evalContext)
+		if (oldState == m.AlertStatePending) && (evalContext.Rule.State == m.AlertStateOK) {
+			handler.log.Info("Notfication not sent", "oldState", oldState, "newState", evalContext.Rule.State)
+		} else {
+			handler.notifier.Notify(evalContext)
+		}
+
 	}
 
 	return nil
@@ -98,6 +103,8 @@ func (handler *DefaultResultHandler) shouldUpdateAlertState(evalContext *EvalCon
 
 func countStateResult(state m.AlertStateType) {
 	switch state {
+	case m.AlertStatePending:
+		metrics.M_Alerting_Result_State_Pending.Inc(1)
 	case m.AlertStateAlerting:
 		metrics.M_Alerting_Result_State_Alerting.Inc(1)
 	case m.AlertStateOK:

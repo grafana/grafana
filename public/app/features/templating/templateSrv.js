@@ -95,6 +95,9 @@ function (angular, _, kbn) {
           }
           return value.join('|');
         }
+        case "distributed": {
+          return this.distributeVariable(value, variable.name);
+        }
         default:  {
           if (typeof value === 'string') {
             return value;
@@ -208,6 +211,17 @@ function (angular, _, kbn) {
           params['var-' + variable.name] = variable.getValueForUrl();
         }
       });
+    };
+
+    this.distributeVariable = function(value, variable) {
+      value = _.map(value, function(val, index) {
+        if (index !== 0) {
+          return variable + "=" + val;
+        } else {
+          return val;
+        }
+      });
+      return value.join(',');
     };
 
   });

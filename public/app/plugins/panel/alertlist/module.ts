@@ -17,6 +17,7 @@ class AlertListPanel extends PanelCtrl {
     {text: 'Recent state changes', value: 'changes'}
   ];
 
+  contentHeight: string;
   stateFilter: any = {};
   currentAlerts: any = [];
   alertHistory: any = [];
@@ -26,6 +27,7 @@ class AlertListPanel extends PanelCtrl {
     limit: 10,
     stateFilter: []
   };
+
 
   /** @ngInject */
   constructor($scope, $injector, private $location, private backendSrv, private timeSrv, private templateSrv) {
@@ -55,6 +57,7 @@ class AlertListPanel extends PanelCtrl {
   }
 
   onRender() {
+    this.contentHeight = "max-height: " + this.height + "px;";
     if (this.panel.show === 'current') {
       this.getCurrentAlertState();
     }

@@ -99,7 +99,7 @@ func createDialer() (*gomail.Dialer, error) {
 		tlsconfig.Certificates = []tls.Certificate{cert}
 	}
 
-	d := gomail.NewPlainDialer(host, iPort, setting.Smtp.User, setting.Smtp.Password)
+	d := gomail.NewDialer(host, iPort, setting.Smtp.User, setting.Smtp.Password)
 	d.TLSConfig = tlsconfig
 	return d, nil
 }
