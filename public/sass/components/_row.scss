@@ -57,7 +57,7 @@
 .dash-row-dropview {
   position: relative;
   background:  $panel-bg;
-  border: 1px solid $dash-row-border-color;
+  border: $panel-border;
   margin: 0 $panel-margin $panel-margin*2 $panel-margin;
   padding: $panel-margin*2;
   display: flex;
