@@ -28,7 +28,7 @@ func NewResultHandler() *DefaultResultHandler {
 }
 
 func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
-	oldState := evalContext.Rule.State
+	evalContext.PrevAlertState = evalContext.Rule.State
 
 	executionError := ""
 	annotationData := simplejson.New()
@@ -51,8 +51,8 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 	}
 
 	countStateResult(evalContext.Rule.State)
-	if handler.shouldUpdateAlertState(evalContext, oldState) {
-		handler.log.Info("New state change", "alertId", evalContext.Rule.Id, "newState", evalContext.Rule.State, "oldState", oldState)
+	if evalContext.ShouldUpdateAlertState() {
+		handler.log.Info("New state change", "alertId", evalContext.Rule.Id, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
 
 		cmd := &m.SetAlertStateCommand{
 			AlertId:  evalContext.Rule.Id,
@@ -76,7 +76,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			Title:       evalContext.Rule.Name,
 			Text:        evalContext.GetStateModel().Text,
 			NewState:    string(evalContext.Rule.State),
-			PrevState:   string(oldState),
+			PrevState:   string(evalContext.PrevAlertState),
 			Epoch:       time.Now().Unix(),
 			Data:        annotationData,
 		}
@@ -86,19 +86,14 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			handler.log.Error("Failed to save annotation for new alert state", "error", err)
 		}
 
-		if (oldState == m.AlertStatePending) && (evalContext.Rule.State == m.AlertStateOK) {
-			handler.log.Info("Notfication not sent", "oldState", oldState, "newState", evalContext.Rule.State)
-		} else {
+		if evalContext.ShouldSendNotification() {
 			handler.notifier.Notify(evalContext)
+		} else {
+			handler.log.Info("Notfication not sent", "prev state", evalContext.PrevAlertState, "new state", evalContext.Rule.State)
 		}
-
 	}
 
 	return nil
-}
-
-func (handler *DefaultResultHandler) shouldUpdateAlertState(evalContext *EvalContext, oldState m.AlertStateType) bool {
-	return evalContext.Rule.State != oldState
 }
 
 func countStateResult(state m.AlertStateType) {

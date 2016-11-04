@@ -11,17 +11,18 @@ import (
 )
 
 type Rule struct {
-	Id            int64
-	OrgId         int64
-	DashboardId   int64
-	PanelId       int64
-	Frequency     int64
-	Name          string
-	Message       string
-	NoDataState   m.NoDataOption
-	State         m.AlertStateType
-	Conditions    []Condition
-	Notifications []int64
+	Id                  int64
+	OrgId               int64
+	DashboardId         int64
+	PanelId             int64
+	Frequency           int64
+	Name                string
+	Message             string
+	NoDataState         m.NoDataOption
+	ExecutionErrorState m.NoDataOption
+	State               m.AlertStateType
+	Conditions          []Condition
+	Notifications       []int64
 }
 
 type ValidationError struct {

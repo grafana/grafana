@@ -26,6 +26,7 @@ type EvalContext struct {
 	ImagePublicUrl  string
 	ImageOnDiskPath string
 	NoDataFound     bool
+	PrevAlertState  m.AlertStateType
 
 	Ctx context.Context
 }
@@ -61,6 +62,36 @@ func (c *EvalContext) GetStateModel() *StateDescription {
 	default:
 		panic("Unknown rule state " + c.Rule.State)
 	}
+}
+
+func (c *EvalContext) ShouldUpdateAlertState() bool {
+	return c.Rule.State != c.PrevAlertState
+}
+
+func (c *EvalContext) ShouldSendNotification() bool {
+	if (c.PrevAlertState == m.AlertStatePending) && (c.Rule.State == m.AlertStateOK) {
+		return false
+	}
+
+	alertState := c.Rule.State
+
+	if c.NoDataFound {
+		if c.Rule.NoDataState == m.NoDataKeepState {
+			return false
+		}
+
+		alertState = c.Rule.NoDataState.ToAlertState()
+	}
+
+	if c.Error != nil {
+		if c.Rule.ExecutionErrorState == m.NoDataKeepState {
+			return false
+		}
+
+		alertState = c.Rule.ExecutionErrorState.ToAlertState()
+	}
+
+	return alertState != c.PrevAlertState
 }
 
 func (a *EvalContext) GetDurationMs() float64 {
