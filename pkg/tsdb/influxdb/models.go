@@ -7,6 +7,7 @@ type Query struct {
 	Tags         []*Tag
 	GroupBy      []*QueryPart
 	Selects      []*Select
+	RawQuery     string
 
 	Interval string
 }

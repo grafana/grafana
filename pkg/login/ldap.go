@@ -30,7 +30,7 @@ func (a *ldapAuther) Dial() error {
 	var err error
 	var certPool *x509.CertPool
 	if a.server.RootCACert != "" {
-		certPool := x509.NewCertPool()
+		certPool = x509.NewCertPool()
 		for _, caCertFile := range strings.Split(a.server.RootCACert, " ") {
 			if pem, err := ioutil.ReadFile(caCertFile); err != nil {
 				return err

@@ -6,9 +6,13 @@ type OAuthInfo struct {
 	AuthUrl, TokenUrl      string
 	Enabled                bool
 	AllowedDomains         []string
+	HostedDomain           string
 	ApiUrl                 string
 	AllowSignup            bool
 	Name                   string
+	TlsClientCert          string
+	TlsClientKey           string
+	TlsClientCa            string
 }
 
 type OAuther struct {

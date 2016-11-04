@@ -19,6 +19,7 @@ func init() {
 	bus.AddHandler("sql", UpdateUser)
 	bus.AddHandler("sql", ChangeUserPassword)
 	bus.AddHandler("sql", GetUserByLogin)
+	bus.AddHandler("sql", GetUserByEmail)
 	bus.AddHandler("sql", SetUsingOrg)
 	bus.AddHandler("sql", GetUserProfile)
 	bus.AddHandler("sql", GetSignedInUser)
@@ -186,6 +187,27 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 		return err
 	} else if has == false {
 		return m.ErrUserNotFound
+	}
+
+	query.Result = user
+
+	return nil
+}
+
+func GetUserByEmail(query *m.GetUserByEmailQuery) error {
+	if query.Email == "" {
+		return m.ErrUserNotFound
+	}
+
+	user := new(m.User)
+
+	user = &m.User{Email: query.Email}
+	has, err := x.Get(user)
+
+	if err != nil {
+		return err
+	} else if has == false {
+		return  m.ErrUserNotFound
 	}
 
 	query.Result = user

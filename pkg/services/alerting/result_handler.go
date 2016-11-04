@@ -30,34 +30,35 @@ func NewResultHandler() *DefaultResultHandler {
 func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 	oldState := evalContext.Rule.State
 
-	exeuctionError := ""
+	executionError := ""
 	annotationData := simplejson.New()
 	if evalContext.Error != nil {
 		handler.log.Error("Alert Rule Result Error", "ruleId", evalContext.Rule.Id, "error", evalContext.Error)
 		evalContext.Rule.State = m.AlertStateExecError
-		exeuctionError = evalContext.Error.Error()
-		annotationData.Set("errorMessage", exeuctionError)
+		executionError = evalContext.Error.Error()
+		annotationData.Set("errorMessage", executionError)
 	} else if evalContext.Firing {
 		evalContext.Rule.State = m.AlertStateAlerting
 		annotationData = simplejson.NewFromAny(evalContext.EvalMatches)
 	} else {
-		// handle no data case
 		if evalContext.NoDataFound {
-			evalContext.Rule.State = evalContext.Rule.NoDataState
+			if evalContext.Rule.NoDataState != m.NoDataKeepState {
+				evalContext.Rule.State = evalContext.Rule.NoDataState.ToAlertState()
+			}
 		} else {
 			evalContext.Rule.State = m.AlertStateOK
 		}
 	}
 
 	countStateResult(evalContext.Rule.State)
-	if evalContext.Rule.State != oldState {
+	if handler.shouldUpdateAlertState(evalContext, oldState) {
 		handler.log.Info("New state change", "alertId", evalContext.Rule.Id, "newState", evalContext.Rule.State, "oldState", oldState)
 
 		cmd := &m.SetAlertStateCommand{
 			AlertId:  evalContext.Rule.Id,
 			OrgId:    evalContext.Rule.OrgId,
 			State:    evalContext.Rule.State,
-			Error:    exeuctionError,
+			Error:    executionError,
 			EvalData: annotationData,
 		}
 
@@ -85,14 +86,25 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			handler.log.Error("Failed to save annotation for new alert state", "error", err)
 		}
 
-		handler.notifier.Notify(evalContext)
+		if (oldState == m.AlertStatePending) && (evalContext.Rule.State == m.AlertStateOK) {
+			handler.log.Info("Notfication not sent", "oldState", oldState, "newState", evalContext.Rule.State)
+		} else {
+			handler.notifier.Notify(evalContext)
+		}
+
 	}
 
 	return nil
 }
 
+func (handler *DefaultResultHandler) shouldUpdateAlertState(evalContext *EvalContext, oldState m.AlertStateType) bool {
+	return evalContext.Rule.State != oldState
+}
+
 func countStateResult(state m.AlertStateType) {
 	switch state {
+	case m.AlertStatePending:
+		metrics.M_Alerting_Result_State_Pending.Inc(1)
 	case m.AlertStateAlerting:
 		metrics.M_Alerting_Result_State_Alerting.Inc(1)
 	case m.AlertStateOK:

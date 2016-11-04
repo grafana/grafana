@@ -1,8 +1,12 @@
-----
-page_title: Scripted dashboards
-page_description: Scripted dashboards
-page_keywords: grafana, scripted, guide, documentation
----
++++
+title = "Scripted Dashboards"
+keywords = ["grafana", "dashboard", "documentation", "scripted"]
+type = "docs"
+[menu.docs]
+parent = "dashboard_features"
+weight = 9
++++
+
 
 # Scripted Dashboards
 

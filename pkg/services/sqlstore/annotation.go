@@ -84,3 +84,17 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 
 	return items, nil
 }
+
+func (r *SqlAnnotationRepo) Delete(params *annotations.DeleteParams) error {
+	return inTransaction(func(sess *xorm.Session) error {
+
+		sql := "DELETE FROM annotation WHERE dashboard_id = ? AND panel_id = ?"
+
+		_, err := sess.Exec(sql, params.DashboardId, params.PanelId)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+}

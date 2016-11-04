@@ -83,6 +83,19 @@ function (angular, _, $) {
     };
 
     DashboardViewState.prototype.update = function(state) {
+      // implement toggle logic
+      if (state.toggle) {
+        delete state.toggle;
+        if (this.state.fullscreen && state.fullscreen) {
+          if (this.state.edit === state.edit) {
+            state.fullscreen = !state.fullscreen;
+          }
+        }
+      }
+
+      // remember if editStateChanged
+      this.editStateChanged = state.edit !== this.state.edit;
+
       _.extend(this.state, state);
       this.dashboard.meta.fullscreen = this.state.fullscreen;
 
@@ -115,7 +128,7 @@ function (angular, _, $) {
 
         if (this.fullscreenPanel) {
           // if already fullscreen
-          if (this.fullscreenPanel === panelScope) {
+          if (this.fullscreenPanel === panelScope && this.editStateChanged === false) {
             return;
           } else {
             this.leaveFullscreen(false);
@@ -146,6 +159,7 @@ function (angular, _, $) {
 
       ctrl.editMode = false;
       ctrl.fullscreen = false;
+      ctrl.dashboard.editMode = this.oldDashboardEditMode;
 
       this.$scope.appEvent('panel-fullscreen-exit', {panelId: ctrl.panel.id});
 
@@ -154,9 +168,8 @@ function (angular, _, $) {
       $timeout(function() {
         if (self.oldTimeRange !== ctrl.range) {
           self.$scope.broadcastRefresh();
-        }
-        else {
-          ctrl.render();
+        } else {
+          self.$scope.$broadcast('render');
         }
         delete self.fullscreenPanel;
       });
@@ -168,8 +181,10 @@ function (angular, _, $) {
       ctrl.editMode = this.state.edit && this.dashboard.meta.canEdit;
       ctrl.fullscreen = true;
 
+      this.oldDashboardEditMode = this.dashboard.editMode;
       this.oldTimeRange = ctrl.range;
       this.fullscreenPanel = panelScope;
+      this.dashboard.editMode = false;
 
       $(window).scrollTop(0);
 
@@ -194,8 +209,9 @@ function (angular, _, $) {
         }
       }
 
-      panelScope.$on('$destroy', function() {
+      var unbind = panelScope.$on('$destroy', function() {
         self.panelScopes = _.without(self.panelScopes, panelScope);
+        unbind();
       });
     };
 

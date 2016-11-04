@@ -4,8 +4,13 @@
   flex-direction: row;
 }
 
+.edit-tab-content {
+  flex-grow: 1;
+  min-width: 0;
+}
+
 .edit-sidemenu-aside {
-  width: 16rem;
+  min-width: 15rem;
 }
 
 .edit-sidemenu {

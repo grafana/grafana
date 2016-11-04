@@ -26,7 +26,6 @@ type EvalContext struct {
 	ImagePublicUrl  string
 	ImageOnDiskPath string
 	NoDataFound     bool
-	RetryCount      int
 
 	Ctx context.Context
 }
@@ -107,6 +106,5 @@ func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
 		Logs:        make([]*ResultLogEntry, 0),
 		EvalMatches: make([]*EvalMatch, 0),
 		log:         log.New("alerting.evalContext"),
-		RetryCount:  0,
 	}
 }

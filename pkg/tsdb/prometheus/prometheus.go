@@ -3,7 +3,6 @@ package prometheus
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"regexp"
 	"strings"
 	"time"
@@ -25,8 +24,7 @@ func NewPrometheusExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
 }
 
 var (
-	plog       log.Logger
-	HttpClient http.Client
+	plog log.Logger
 )
 
 func init() {
@@ -83,9 +81,15 @@ func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlic
 func formatLegend(metric pmodel.Metric, query *PrometheusQuery) string {
 	reg, _ := regexp.Compile(`\{\{\s*(.+?)\s*\}\}`)
 
+	if query.LegendFormat == "" {
+		return metric.String()
+	}
+
 	result := reg.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
-		ind := strings.Replace(strings.Replace(string(in), "{{", "", 1), "}}", "", 1)
-		if val, exists := metric[pmodel.LabelName(ind)]; exists {
+		labelName := strings.Replace(string(in), "{{", "", 1)
+		labelName = strings.Replace(labelName, "}}", "", 1)
+		labelName = strings.TrimSpace(labelName)
+		if val, exists := metric[pmodel.LabelName(labelName)]; exists {
 			return []byte(val)
 		}
 
@@ -108,10 +112,7 @@ func parseQuery(queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) (*Prom
 		return nil, err
 	}
 
-	format, err := queryModel.Model.Get("legendFormat").String()
-	if err != nil {
-		return nil, err
-	}
+	format := queryModel.Model.Get("legendFormat").MustString("")
 
 	start, err := queryContext.TimeRange.ParseFrom()
 	if err != nil {
@@ -156,9 +157,3 @@ func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb
 	queryResults["A"] = queryRes
 	return queryResults, nil
 }
-
-/*
-func resultWithError(result *tsdb.BatchResult, err error) *tsdb.BatchResult {
-	result.Error = err
-	return result
-}*/

@@ -18,9 +18,7 @@
 	<div class="gf-form-inline">
 		<div class="gf-form max-width-21">
 			<span class="gf-form-label width-8">Repeat Panel</span>
-			<select class="gf-form-input" ng-model="ctrl.panel.repeat" ng-options="f.name as f.name for f in ctrl.dashboard.templating.list">
-				<option value=""></option>
-			</select>
+      <dash-repeat-option model="ctrl.panel"></dash-repeat-option>
 		</div>
 		<div class="gf-form">
 			<span class="gf-form-label width-6">Min span</span>

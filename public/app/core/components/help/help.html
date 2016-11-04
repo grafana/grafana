@@ -1,9 +1,17 @@
 <div class="modal-body">
 	<div class="modal-header">
 		<h2 class="modal-header-title">
-			<i class="fa fa-keyboard-o"></i>
-			<span class="p-l-1">Keyboard shortcuts</span>
+			<i class="fa fa-question-circle"></i>
+			<span class="p-l-1">Help</span>
 		</h2>
+
+		<ul class="gf-tabs">
+			<li class="gf-tabs-item" ng-repeat="tab in ['Shortcuts']">
+				<a class="gf-tabs-link" ng-click="ctrl.tabindex = $index" ng-class="{active: ctrl.tabindex === $index}">
+					{{::tab}}
+				</a>
+			</li>
+		</ul>
 
 		<a class="modal-header-close" ng-click="dismiss();">
 			<i class="fa fa-remove"></i>
@@ -60,4 +68,3 @@
 	</div>
 
 </div>
-

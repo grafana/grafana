@@ -2,13 +2,11 @@ package influxdb
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 	"path"
-	"time"
 
 	"golang.org/x/net/context/ctxhttp"
 
@@ -41,14 +39,7 @@ func init() {
 	glog = log.New("tsdb.influxdb")
 	tsdb.RegisterExecutor("influxdb", NewInfluxDBExecutor)
 
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	HttpClient = &http.Client{
-		Timeout:   time.Duration(15 * time.Second),
-		Transport: tr,
-	}
+	HttpClient = tsdb.GetDefaultClient()
 }
 
 func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
@@ -91,7 +82,8 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 
 func (e *InfluxDBExecutor) getQuery(queries tsdb.QuerySlice, context *tsdb.QueryContext) (string, error) {
 	for _, v := range queries {
-		query, err := e.QueryParser.Parse(v.Model)
+
+		query, err := e.QueryParser.Parse(v.Model, e.DataSourceInfo)
 		if err != nil {
 			return "", err
 		}
@@ -123,8 +115,13 @@ func (e *InfluxDBExecutor) createRequest(query string) (*http.Request, error) {
 	req.URL.RawQuery = params.Encode()
 
 	req.Header.Set("User-Agent", "Grafana")
+
 	if e.BasicAuth {
 		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
+	}
+
+	if e.User != "" {
+		req.SetBasicAuth(e.User, e.Password)
 	}
 
 	glog.Debug("Influxdb request", "url", req.URL.String())

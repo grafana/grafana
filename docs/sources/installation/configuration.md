@@ -1,8 +1,14 @@
----
-page_title: Configuration
-page_description: Configuration guide for Grafana.
-page_keywords: grafana, configuration, documentation
----
++++
+title = "Configuration"
+description = "Configuration Docs"
+keywords = ["grafana", "configuration", "documentation"]
+type = "docs"
+[menu.docs]
+name = "Configuration"
+identifier = "config"
+parent = "admin"
+weight = 1
++++
 
 # Configuration
 
@@ -386,8 +392,11 @@ browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
     scopes =
     auth_url =
     token_url =
+    api_url =
     allowed_domains = mycompany.com mycompany.org
     allow_sign_up = false
+
+Set api_url to the resource that returns basic user info.
 
 <hr>
 

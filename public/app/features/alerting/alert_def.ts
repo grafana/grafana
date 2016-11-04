@@ -40,6 +40,7 @@ var noDataModes = [
   {text: 'OK', value: 'ok'},
   {text: 'Alerting', value: 'alerting'},
   {text: 'No Data', value: 'no_data'},
+  {text: 'Keep Last', value: 'keep_last'},
 ];
 
 function createReducerPart(model) {
@@ -84,6 +85,13 @@ function getStateDisplayModel(state) {
         text: 'paused',
         iconClass: "fa fa-pause",
         stateClass: 'alert-state-paused'
+      };
+    }
+    case 'pending': {
+      return {
+        text: 'PENDING',
+        iconClass: "fa fa-exclamation",
+        stateClass: 'alert-state-warning'
       };
     }
   }

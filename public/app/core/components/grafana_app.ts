@@ -116,6 +116,17 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
           return;
         }
 
+        // for stuff that animates, slides out etc, clicking it needs to
+        // hide it right away
+        var clickAutoHide = target.closest('[data-click-hide]');
+        if (clickAutoHide.length) {
+          var clickAutoHideParent = clickAutoHide.parent();
+          clickAutoHide.detach();
+          setTimeout(function() {
+            clickAutoHideParent.append(clickAutoHide);
+          }, 100);
+        }
+
         if (target.parents('.dash-playlist-actions').length === 0) {
           playlistSrv.stop();
         }

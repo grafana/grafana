@@ -77,12 +77,11 @@ define([
     this.setAutoRefresh = function (interval) {
       this.dashboard.refresh = interval;
       if (interval) {
-        var _i = kbn.interval_to_ms(interval);
-        var wait_ms = _i - (Date.now() % _i);
+        var interval_ms = kbn.interval_to_ms(interval);
         $timeout(function () {
-          self.start_scheduled_refresh(_i);
+          self.start_scheduled_refresh(interval_ms);
           self.refreshDashboard();
-        }, wait_ms);
+        }, interval_ms);
       } else {
         this.cancel_scheduled_refresh();
       }

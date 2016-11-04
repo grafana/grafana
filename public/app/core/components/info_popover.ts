@@ -44,8 +44,9 @@ export function infoPopover() {
           }
         });
 
-        scope.$on('$destroy', function() {
+        var unbind = scope.$on('$destroy', function() {
           drop.destroy();
+          unbind();
         });
 
       });

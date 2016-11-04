@@ -10,6 +10,15 @@ import (
 type QueryBuilder struct{}
 
 func (qb *QueryBuilder) Build(query *Query, queryContext *tsdb.QueryContext) (string, error) {
+	if query.RawQuery != "" {
+		q := query.RawQuery
+
+		q = strings.Replace(q, "$timeFilter", qb.renderTimeFilter(query, queryContext), 1)
+		q = strings.Replace(q, "$interval", tsdb.CalculateInterval(queryContext.TimeRange), 1)
+
+		return q, nil
+	}
+
 	res := qb.renderSelectors(query, queryContext)
 	res += qb.renderMeasurement(query)
 	res += qb.renderWhereClause(query)
@@ -58,7 +67,7 @@ func (qb *QueryBuilder) renderSelectors(query *Query, queryContext *tsdb.QueryCo
 
 		stk := ""
 		for _, s := range *sel {
-			stk = s.Render(queryContext, stk)
+			stk = s.Render(query, queryContext, stk)
 		}
 		selectors = append(selectors, stk)
 	}
@@ -100,7 +109,7 @@ func (qb *QueryBuilder) renderGroupBy(query *Query, queryContext *tsdb.QueryCont
 			groupBy += " "
 		}
 
-		groupBy += group.Render(queryContext, "")
+		groupBy += group.Render(query, queryContext, "")
 	}
 
 	return groupBy

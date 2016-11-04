@@ -1,10 +1,15 @@
-----
-page_title: User API
-page_description: Grafana User API Reference
-page_keywords: grafana, admin, http, api, documentation, user
----
++++
+title = "User HTTP API "
+description = "Grafana User HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "user"]
+aliases = ["/http_api/user/"]
+type = "docs"
+[menu.docs]
+name = "Users"
+parent = "http_api"
++++
 
-# User API
+# User HTTP resources / actions
 
 ## Search Users
 

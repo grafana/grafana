@@ -36,6 +36,7 @@ func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
 		// clear cookie headers
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
+		req.Header.Del("Authorization")
 	}
 
 	return &httputil.ReverseProxy{Director: director}

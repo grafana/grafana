@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
 
@@ -168,15 +167,14 @@ func (s *SocialGithub) FetchOrganizations(client *http.Client) ([]string, error)
 	return logins, nil
 }
 
-func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *SocialGithub) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	var data struct {
 		Id    int    `json:"id"`
-		Name  string `json:"login"`
+		Login string `json:"login"`
 		Email string `json:"email"`
 	}
 
 	var err error
-	client := s.Client(oauth2.NoContext, token)
 	r, err := client.Get(s.apiUrl)
 	if err != nil {
 		return nil, err
@@ -189,8 +187,8 @@ func (s *SocialGithub) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 	}
 
 	userInfo := &BasicUserInfo{
-		Identity: strconv.Itoa(data.Id),
-		Name:     data.Name,
+		Name:     data.Login,
+		Login:    data.Login,
 		Email:    data.Email,
 	}
 

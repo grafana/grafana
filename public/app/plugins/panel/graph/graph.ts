@@ -34,6 +34,16 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
       var rootScope = scope.$root;
       var panelWidth = 0;
       var thresholdManager = new ThresholdManager(ctrl);
+      var plot;
+
+      ctrl.events.on('panel-teardown', () => {
+        thresholdManager = null;
+
+        if (plot) {
+          plot.destroy();
+          plot = null;
+        }
+      });
 
       rootScope.onAppEvent('setCrosshair', function(event, info) {
         // do not need to to this if event is from this panel
@@ -42,7 +52,6 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         }
 
         if (dashboard.sharedCrosshair) {
-          var plot = elem.data().plot;
           if (plot) {
             plot.setCrosshair({ x: info.pos.x, y: info.pos.y });
           }
@@ -50,7 +59,6 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
       }, scope);
 
       rootScope.onAppEvent('clearCrosshair', function() {
-        var plot = elem.data().plot;
         if (plot) {
           plot.clearCrosshair();
         }
@@ -287,7 +295,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
 
         function callPlot(incrementRenderCounter) {
           try {
-            $.plot(elem, sortedSeries, options);
+            plot = $.plot(elem, sortedSeries, options);
             if (ctrl.renderError) {
               delete ctrl.error;
               delete ctrl.inspector;
@@ -386,8 +394,33 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         }
 
         var types = {};
+        types['$__alerting'] = {
+          color: 'rgba(237, 46, 24, 1)',
+          position: 'BOTTOM',
+          markerSize: 5,
+        };
+
+        types['$__ok'] = {
+          color: 'rgba(11, 237, 50, 1)',
+          position: 'BOTTOM',
+          markerSize: 5,
+        };
+
+        types['$__no_data'] = {
+          color: 'rgba(150, 150, 150, 1)',
+          position: 'BOTTOM',
+          markerSize: 5,
+        };
+
+        types['$__execution_error'] = ['$__no_data'];
+
         for (var i = 0; i < annotations.length; i++) {
           var item = annotations[i];
+          if (item.newState) {
+            console.log(item.newState);
+            item.eventType = '$__' + item.newState;
+            continue;
+          }
 
           if (!types[item.source.name]) {
             types[item.source.name] = {
@@ -504,7 +537,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         return "%H:%M";
       }
 
-      new GraphTooltip(elem, dashboard, scope, function() {
+      var tooltip = new GraphTooltip(elem, dashboard, scope, function() {
         return sortedSeries;
       });
 
@@ -515,6 +548,12 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
             to    : moment.utc(ranges.xaxis.to),
           });
         });
+      });
+
+      scope.$on('$destroy', function() {
+        tooltip.destroy();
+        elem.off();
+        elem.remove();
       });
     }
   };

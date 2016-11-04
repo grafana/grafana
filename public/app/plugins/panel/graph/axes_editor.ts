@@ -39,6 +39,7 @@ export class AxesEditorCtrl {
       {text: 'Max', value: 'min'},
       {text: 'Total', value: 'total'},
       {text: 'Count', value: 'count'},
+      {text: 'Current', value: 'current'},
     ];
 
     if (this.panel.xaxis.mode === 'custom') {
