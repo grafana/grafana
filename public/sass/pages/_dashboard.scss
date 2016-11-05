@@ -13,58 +13,7 @@
   color: $variable;
 }
 
-.playlist-active {
-  @include hide-controls();
 
-  .dashnav-refresh-action,
-  .dashnav-zoom-out,
-  .dashnav-action-icons,
-  .dashnav-move-timeframe  {
-    display: none;
-  }
-
-  .grafana-menu-stop-playlist {
-    display: list-item;
-  }
-}
-
-.hide-controls {
-  @include hide-controls();
-}
-
-.page-kiosk-mode {
-  @include hide-controls();
-  dashnav {
-    display: none;
-  }
-}
-
-.user-activity-low {
-  @include hide-controls();
-  .dashnav-refresh-action,
-  .dashnav-zoom-out,
-  .dashnav-action-icons,
-  .dashnav-move-timeframe  {
-    opacity: 0;
-    transition: opacity 1.5s ease-in-out;
-  }
-
-  // navbar buttons
-  .navbar-inner {
-    background: transparent;
-    transition: background 1.5s ease-in-out;
-  }
-  .navbar-brand-btn,
-  .navbar-page-btn {
-    border: none;
-    background: transparent;
-    .fa, .icon-gf {
-      opacity: 0;
-      transition: opacity 1s ease-in-out;
-      transition: opacity 1.5s ease-in-out;
-    }
-  }
-}
 
 div.flot-text {
   color: $text-color !important;
