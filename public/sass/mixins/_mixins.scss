@@ -351,3 +351,14 @@
   border-left: 0;
   border-bottom: 1px solid transparent;
 }
+
+@mixin hide-controls() {
+  .add-row-panel-hint,
+  .dash-row-menu {
+    display: none;
+  }
+  .resize-panel-handle,
+  .panel-drop-zone {
+    visibility: hidden;
+  }
+}

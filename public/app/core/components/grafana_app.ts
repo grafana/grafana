@@ -109,6 +109,48 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
         $("#tooltip, .tooltip").remove();
       });
 
+      // handle kiosk mode
+      appEvents.on('toggle-kiosk-mode', () => {
+        body.toggleClass('page-kiosk-mode');
+      });
+
+      // handle in active view state class
+      var lastActivity = new Date().getTime();
+      var activeUser = true;
+      var inActiveTimeLimit = 2 * 60 * 1000;
+
+      function checkForInActiveUser() {
+        if (!activeUser) {
+          return;
+        }
+        // only go to activity low mode on dashboard page
+        if (!body.hasClass('page-dashboard')) {
+          return;
+        }
+
+        if ((new Date().getTime() - lastActivity) > inActiveTimeLimit) {
+          activeUser = false;
+          body.addClass('user-activity-low');
+        }
+      }
+
+      function userActivityDetected() {
+        lastActivity = new Date().getTime();
+        if (!activeUser) {
+          activeUser = true;
+          body.removeClass('user-activity-low');
+        }
+      }
+
+      body.mousemove(userActivityDetected);
+      body.keydown(userActivityDetected);
+      setInterval(checkForInActiveUser, 1000);
+
+      appEvents.on('toggle-view-mode', () => {
+        lastActivity = 0;
+        checkForInActiveUser();
+      });
+
       // handle document clicks that should hide things
       body.click(function(evt) {
         var target = $(evt.target);

@@ -190,6 +190,14 @@ export class KeybindingSrv {
       this.showDashEditView('settings');
     });
 
+    this.bind('d k', () => {
+      appEvents.emit('toggle-kiosk-mode');
+    });
+
+    this.bind('d v', () => {
+      appEvents.emit('toggle-view-mode');
+    });
+
     this.bind('esc', () => {
       var popups = $('.popover.in');
       if (popups.length > 0) {

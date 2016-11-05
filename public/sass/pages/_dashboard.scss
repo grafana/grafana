@@ -14,11 +14,11 @@
 }
 
 .playlist-active {
-  .add-row-panel-hint,
+  @include hide-controls();
+
   .dashnav-refresh-action,
   .dashnav-zoom-out,
   .dashnav-action-icons,
-  .dash-row-menu,
   .dashnav-move-timeframe  {
     display: none;
   }
@@ -29,15 +29,40 @@
 }
 
 .hide-controls {
-  .add-row-panel-hint {
+  @include hide-controls();
+}
+
+.page-kiosk-mode {
+  @include hide-controls();
+  dashnav {
     display: none;
   }
-  .dash-row-menu {
-    display: none;
+}
+
+.user-activity-low {
+  @include hide-controls();
+  .dashnav-refresh-action,
+  .dashnav-zoom-out,
+  .dashnav-action-icons,
+  .dashnav-move-timeframe  {
+    opacity: 0;
+    transition: opacity 1.5s ease-in-out;
   }
-  .resize-panel-handle,
-  .panel-drop-zone {
-    visibility: hidden;
+
+  // navbar buttons
+  .navbar-inner {
+    background: transparent;
+    transition: background 1.5s ease-in-out;
+  }
+  .navbar-brand-btn,
+  .navbar-page-btn {
+    border: none;
+    background: transparent;
+    .fa, .icon-gf {
+      opacity: 0;
+      transition: opacity 1s ease-in-out;
+      transition: opacity 1.5s ease-in-out;
+    }
   }
 }
 
