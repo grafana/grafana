@@ -35,6 +35,7 @@
   .dash-row-menu {
     display: none;
   }
+  .resize-panel-handle,
   .panel-drop-zone {
     visibility: hidden;
   }
@@ -207,7 +208,15 @@ div.flot-text {
   width: 15px;
   height: 15px;
   display: block;
-  color: $panel-bg;
+  color: $text-color-faint;
+  overflow: hidden;
+
+  &:before {
+    left: initial;
+    right: -5px;
+    bottom: 0px;
+    position: absolute;
+  }
 }
 
 .dashboard-header {
@@ -221,13 +230,4 @@ div.flot-text {
   }
 }
 
-.resize-panel-handle {
-  color: $text-color-faint;
-  overflow: hidden;
-  &:before {
-    left: initial;
-    right: -5px;
-    bottom: 0px;
-    position: absolute;
-  }
-}
+
