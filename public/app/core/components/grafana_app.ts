@@ -107,6 +107,11 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
           body.addClass(pageClass);
         }
         $("#tooltip, .tooltip").remove();
+
+        // check for kiosk url param
+        if (data.params.kiosk) {
+          appEvents.emit('toggle-kiosk-mode');
+        }
       });
 
       // handle kiosk mode
@@ -117,7 +122,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
       // handle in active view state class
       var lastActivity = new Date().getTime();
       var activeUser = true;
-      var inActiveTimeLimit = 2 * 60 * 1000;
+      var inActiveTimeLimit = 60 * 1000;
 
       function checkForInActiveUser() {
         if (!activeUser) {

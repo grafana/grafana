@@ -73,14 +73,20 @@
       transition: opacity 1.5s ease-in-out;
     }
   }
+
   .navbar-page-btn {
     border: none;
-    margin-left: -35px;
+    transform: translate3d(-50px, 0, 0);
     background: transparent;
-    transition: margin-left 1.5s ease-in-out;
+    transition: transform 1.5s ease-in-out;
     .icon-gf {
       opacity: 0;
       transition: opacity 1.5s ease-in-out;
     }
+  }
+
+  .gf-timepicker-nav-btn {
+    transform: translate3d(40px, 0, 0);
+    transition: transform 1.5s ease-in-out;
   }
 }

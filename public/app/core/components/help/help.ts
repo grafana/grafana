@@ -19,6 +19,15 @@ export class HelpCtrl {
         {keys: ['s', 't'], description: 'Open search in tags view'},
         {keys: ['esc'], description: 'Exit edit/setting views'},
       ],
+      'Dashboard': [
+        {keys: ['mod+s'], description: 'Save dashboard'},
+        {keys: ['mod+h'], description: 'Hide row controls'},
+        {keys: ['d', 'r'], description: 'Refresh all panels'},
+        {keys: ['d', 's'], description: 'Dashboard settings'},
+        {keys: ['d', 'v'], description: 'Toggle in-active / view mode'},
+        {keys: ['d', 'k'], description: 'Toggle kiosk mode (hides top nav)'},
+        {keys: ['mod+o'], description: 'Toggle shared graph crosshair'},
+      ],
       'Focused Panel': [
         {keys: ['e'], description: 'Toggle panel edit view'},
         {keys: ['v'], description: 'Toggle panel fullscreen view'},
@@ -28,13 +37,6 @@ export class HelpCtrl {
       'Focused Row': [
         {keys: ['r', 'c'], description: 'Collapse Row'},
         {keys: ['r', 'r'], description: 'Remove Row'},
-      ],
-      'Dashboard': [
-        {keys: ['mod+s'], description: 'Save dashboard'},
-        {keys: ['mod+h'], description: 'Hide row controls'},
-        {keys: ['d', 'r'], description: 'Refresh all panels'},
-        {keys: ['d', 's'], description: 'Dashboard settings'},
-        {keys: ['mod+o'], description: 'Toggle shared graph crosshair'},
       ],
       'Time Range': [
         {keys: ['t', 'z'], description: 'Zoom out time range'},
