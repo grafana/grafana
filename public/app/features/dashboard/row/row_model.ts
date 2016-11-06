@@ -44,11 +44,11 @@ export class DashboardRow {
     }
   }
 
-  panelSpanChanged() {
+  panelSpanChanged(alwaysSendEvent?) {
     var oldSpan = this.span;
     this.updateRowSpan();
 
-    if (oldSpan !== this.span) {
+    if (alwaysSendEvent || oldSpan !== this.span) {
       this.events.emit('span-changed');
     }
   }
