@@ -579,3 +579,25 @@ Enabled to automatically remove expired snapshots
 
 ### remove snapshots after 90 days
 Time to live for snapshots.
+
+## [external_image_storage]
+These options control how images should be made public so they can be shared on services like slack.
+
+### provider
+You can choose between (s3, webdav)
+
+## [external_image_storage.s3]
+
+### bucket_url
+
+### access_key
+
+### secret_key
+
+## [external_image_storage.webdav]
+
+### url
+
+### username
+
+### password
