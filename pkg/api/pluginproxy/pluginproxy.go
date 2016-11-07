@@ -88,7 +88,7 @@ func NewApiPluginProxy(ctx *middleware.Context, proxyPath string, route *plugins
 			}
 
 			for key, value := range headers {
-				log.Info("setting key %v value %v", key, value[0])
+				log.Trace("setting key %v value %v", key, value[0])
 				req.Header.Set(key, value[0])
 			}
 		}

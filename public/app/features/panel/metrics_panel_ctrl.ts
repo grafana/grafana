@@ -12,9 +12,10 @@ import * as dateMath from 'app/core/utils/datemath';
 import {Subject} from 'vendor/npm/rxjs/Subject';
 
 class MetricsPanelCtrl extends PanelCtrl {
-  error: boolean;
+  error: any;
   loading: boolean;
   datasource: any;
+  datasourceName: any;
   $q: any;
   $timeout: any;
   datasourceSrv: any;
@@ -24,10 +25,10 @@ class MetricsPanelCtrl extends PanelCtrl {
   range: any;
   rangeRaw: any;
   interval: any;
+  intervalMs: any;
   resolution: any;
   timeInfo: any;
   skipDataOnInit: boolean;
-  datasources: any[];
   dataStream: any;
   dataSubscription: any;
 
@@ -52,7 +53,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   private onInitMetricsPanelEditMode() {
     this.addEditorTab('Metrics', 'public/app/partials/metrics.html');
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
-    this.datasources = this.datasourceSrv.getMetricSources();
   }
 
   private onMetricsPanelRefresh() {
@@ -65,7 +65,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       var data = this.panel.snapshotData;
       // backward compatability
       if (!_.isArray(data)) {
-        data = data;
+        data = data.data;
       }
 
       this.events.emit('data-snapshot-load', data);
@@ -81,22 +81,30 @@ class MetricsPanelCtrl extends PanelCtrl {
     delete this.error;
     this.loading = true;
 
+    this.updateTimeRange();
+
     // load datasource service
     this.setTimeQueryStart();
     this.datasourceSrv.get(this.panel.datasource)
     .then(this.issueQueries.bind(this))
     .then(this.handleQueryResult.bind(this))
     .catch(err => {
+      // if cancelled  keep loading set to true
+      if (err.cancelled) {
+        console.log('Panel request cancelled', err);
+        return;
+      }
+
       this.loading = false;
-      this.error = err.message || "Timeseries data request error";
+      this.error = err.message || "Request Error";
       this.inspector = {error: err};
       this.events.emit('data-error', err);
       console.log('Panel data error:', err);
     });
   }
 
+
   setTimeQueryStart() {
-    this.timing = {};
     this.timing.queryStart = new Date().getTime();
   }
 
@@ -106,7 +114,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   updateTimeRange() {
     this.range = this.timeSrv.timeRange();
-    this.rangeRaw = this.timeSrv.timeRange(false);
+    this.rangeRaw = this.range.raw;
 
     this.applyPanelTimeOverrides();
 
@@ -116,10 +124,23 @@ class MetricsPanelCtrl extends PanelCtrl {
       this.resolution = Math.ceil($(window).width() * (this.panel.span / 12));
     }
 
-    var panelInterval = this.panel.interval;
-    var datasourceInterval = (this.datasource || {}).interval;
-    this.interval = kbn.calculateInterval(this.range, this.resolution, panelInterval || datasourceInterval);
+    this.calculateInterval();
   };
+
+  calculateInterval() {
+    var intervalOverride = this.panel.interval;
+
+    // if no panel interval check datasource
+    if (intervalOverride) {
+      intervalOverride = this.templateSrv.replace(intervalOverride, this.panel.scopedVars);
+    } else if (this.datasource && this.datasource.interval) {
+      intervalOverride = this.datasource.interval;
+    }
+
+    var res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
+    this.interval = res.interval;
+    this.intervalMs = res.intervalMs;
+  }
 
   applyPanelTimeOverrides() {
     this.timeInfo = '';
@@ -165,7 +186,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   };
 
   issueQueries(datasource) {
-    this.updateTimeRange();
     this.datasource = datasource;
 
     if (!this.panel.targets || this.panel.targets.length === 0) {
@@ -177,6 +197,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       range: this.range,
       rangeRaw: this.rangeRaw,
       interval: this.interval,
+      intervalMs: this.intervalMs,
       targets: this.panel.targets,
       format: this.panel.renderer === 'png' ? 'png' : 'json',
       maxDataPoints: this.resolution,
@@ -199,6 +220,11 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     if (this.dashboard.snapshot) {
       this.panel.snapshotData = result.data;
+    }
+
+    if (!result || !result.data) {
+      console.log('Data source query result invalid, missing data field:', result);
+      result = {data: []};
     }
 
     return this.events.emit('data-received', result.data);
@@ -235,7 +261,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (datasource.meta.mixed) {
       _.each(this.panel.targets, target => {
         target.datasource = this.panel.datasource;
-        if (target.datasource === null) {
+        if (!target.datasource) {
           target.datasource = config.defaultDatasource;
         }
       });
@@ -246,18 +272,9 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     this.panel.datasource = datasource.value;
+    this.datasourceName = datasource.name;
     this.datasource = null;
     this.refresh();
-  }
-
-  addDataQuery(datasource) {
-    var target: any = {};
-
-    if (datasource) {
-      target.datasource = datasource.name;
-    }
-
-    this.panel.targets.push(target);
   }
 }
 

@@ -24,7 +24,16 @@ func GetPluginSettings(orgId int64) (map[string]*m.PluginSettingInfoDTO, error) 
 		}
 
 		// default to enabled true
-		opt := &m.PluginSettingInfoDTO{Enabled: true}
+		opt := &m.PluginSettingInfoDTO{
+			PluginId: pluginDef.Id,
+			OrgId:    orgId,
+			Enabled:  true,
+		}
+
+		// apps are disabled by default
+		if pluginDef.Type == PluginTypeApp {
+			opt.Enabled = false
+		}
 
 		// if it's included in app check app settings
 		if pluginDef.IncludedInAppId != "" {

@@ -96,7 +96,7 @@ Will return the dashboard given the dashboard slug. Slug is the url friendly ver
         "isStarred": false,
         "slug": "production-overview"
       },
-      "model": {
+      "dashboard": {
         "id": null,
         "title": "Production Overview",
         "tags": [ "templated" ],
@@ -191,7 +191,7 @@ Will return the home dashboard.
 
 `GET /api/dashboards/tags`
 
-Get all tabs of dashboards
+Get all tags of dashboards
 
 **Example Request**:
 

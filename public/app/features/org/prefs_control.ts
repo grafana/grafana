@@ -49,26 +49,25 @@ export class PrefsControlCtrl {
 }
 
 var template = `
-<form name="ctrl.prefsForm" class="gf-form-group">
+<form name="ctrl.prefsForm" class="section gf-form-group">
   <h3 class="page-heading">Preferences</h3>
 
   <div class="gf-form">
-    <span class="gf-form-label width-9">UI Theme</span>
+    <span class="gf-form-label width-10">UI Theme</span>
     <div class="gf-form-select-wrapper max-width-20">
       <select class="gf-form-input" ng-model="ctrl.prefs.theme" ng-options="f.value as f.text for f in ctrl.themes"></select>
     </div>
   </div>
 
   <div class="gf-form">
-    <span class="gf-form-label width-9">Home Dashboard</span>
-    <dashboard-selector
-        class="gf-form-select-wrapper max-width-20"
-        model="ctrl.prefs.homeDashboardId">
+    <span class="gf-form-label width-10">Home Dashboard</span>
+    <dashboard-selector class="gf-form-select-wrapper max-width-20 gf-form-select-wrapper--has-help-icon"
+                        model="ctrl.prefs.homeDashboardId">
     </dashboard-selector>
   </div>
 
   <div class="gf-form">
-    <label class="gf-form-label width-9">Timezone</label>
+    <label class="gf-form-label width-10">Timezone</label>
     <div class="gf-form-select-wrapper max-width-20">
       <select class="gf-form-input" ng-model="ctrl.prefs.timezone" ng-options="f.value as f.text for f in ctrl.timezones"></select>
     </div>

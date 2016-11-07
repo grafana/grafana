@@ -1,0 +1,414 @@
+{
+  "version": "2.0",
+  "service": "<p>This is a test of the welcome page front matter.</p>",
+  "operations": {
+    "CancelJob": "<p>Cancels the specified job. Note that you can only cancel a job before its <code>JobState</code> value changes to <code>PreparingAppliance</code>. Requesting the <code>ListJobs</code> or <code>DescribeJob</code> action will return a job's <code>JobState</code> as part of the response element data returned.</p>",
+    "CreateAddress": "<p>Creates an address for a Snowball to be shipped to. </p> <p>Addresses are validated at the time of creation. The address you provide must be located within the serviceable area of your region. If the address is invalid or unsupported, then an exception is thrown.</p>",
+    "CreateJob": "<p>Creates a job to import or export data between Amazon S3 and your on-premises data center. Note that your AWS account must have the right trust policies and permissions in place to create a job for Snowball. For more information, see <a>api-reference-policies</a>.</p>",
+    "DescribeAddress": "<p>Takes an <code>AddressId</code> and returns specific details about that address in the form of an <code>Address</code> object.</p>",
+    "DescribeAddresses": "<p>Returns a specified number of <code>ADDRESS</code> objects. Calling this API in one of the US regions will return addresses from the list of all addresses associated with this account in all US regions.</p>",
+    "DescribeJob": "<p>Returns information about a specific job including shipping information, job status, and other important metadata.</p>",
+    "GetJobManifest": "<p>Returns a link to an Amazon S3 presigned URL for the manifest file associated with the specified <code>JobId</code> value. You can access the manifest file for up to 60 minutes after this request has been made. To access the manifest file after 60 minutes have passed, you'll have to make another call to the <code>GetJobManifest</code> action.</p> <p>The manifest is an encrypted file that you can download after your job enters the <code>WithCustomer</code> status. The manifest is decrypted by using the <code>UnlockCode</code> code value, when you pass both values to the Snowball through the Snowball client when the client is started for the first time.</p> <p>As a best practice, we recommend that you don't save a copy of an <code>UnlockCode</code> value in the same location as the manifest file for that job. Saving these separately helps prevent unauthorized parties from gaining access to the Snowball associated with that job.</p> <p>Note that the credentials of a given job, including its manifest file and unlock code, expire 90 days after the job is created.</p>",
+    "GetJobUnlockCode": "<p>Returns the <code>UnlockCode</code> code value for the specified job. A particular <code>UnlockCode</code> value can be accessed for up to 90 days after the associated job has been created.</p> <p>The <code>UnlockCode</code> value is a 29-character code with 25 alphanumeric characters and 4 hyphens. This code is used to decrypt the manifest file when it is passed along with the manifest to the Snowball through the Snowball client when the client is started for the first time.</p> <p>As a best practice, we recommend that you don't save a copy of the <code>UnlockCode</code> in the same location as the manifest file for that job. Saving these separately helps prevent unauthorized parties from gaining access to the Snowball associated with that job.</p>",
+    "GetSnowballUsage": "<p>Returns information about the Snowball service limit for your account, and also the number of Snowballs your account has in use.</p> <p>Note that the default service limit for the number of Snowballs that you can have at one time is 1. If you want to increase your service limit, contact AWS Support.</p>",
+    "ListJobs": "<p>Returns an array of <code>JobListEntry</code> objects of the specified length. Each <code>JobListEntry</code> object contains a job's state, a job's ID, and a value that indicates whether the job is a job part, in the case of export jobs. Calling this API action in one of the US regions will return jobs from the list of all jobs associated with this account in all US regions.</p>",
+    "UpdateJob": "<p>While a job's <code>JobState</code> value is <code>New</code>, you can update some of the information associated with a job. Once the job changes to a different job state, usually within 60 minutes of the job being created, this action is no longer available.</p>"
+  },
+  "shapes": {
+    "Address": {
+      "base": "<p>The address that you want the Snowball or Snowballs associated with a specific job to be shipped to. Addresses are validated at the time of creation. The address you provide must be located within the serviceable area of your region. Although no individual elements of the <code>Address</code> are required, if the address is invalid or unsupported, then an exception is thrown.</p>",
+      "refs": {
+        "AddressList$member": null,
+        "CreateAddressRequest$Address": "<p>The address that you want the Snowball shipped to.</p>",
+        "DescribeAddressResult$Address": "<p>The address that you want the Snowball or Snowballs associated with a specific job to be shipped to.</p>"
+      }
+    },
+    "AddressId": {
+      "base": null,
+      "refs": {
+        "Address$AddressId": "<p>The unique ID for an address.</p>",
+        "CreateJobRequest$AddressId": "<p>The ID for the address that you want the Snowball shipped to.</p>",
+        "DescribeAddressRequest$AddressId": "<p>The automatically generated ID for a specific address.</p>",
+        "JobMetadata$AddressId": "<p>The ID for the address that you want the Snowball shipped to.</p>",
+        "UpdateJobRequest$AddressId": "<p>The ID of the updated <a>Address</a> object.</p>"
+      }
+    },
+    "AddressList": {
+      "base": null,
+      "refs": {
+        "DescribeAddressesResult$Addresses": "<p>The Snowball shipping addresses that were created for this account.</p>"
+      }
+    },
+    "Boolean": {
+      "base": null,
+      "refs": {
+        "JobListEntry$IsMaster": "<p>A value that indicates that this job is a master job. A master job represents a successful request to create an export job. Master jobs aren't associated with any Snowballs. Instead, each master job will have at least one job part, and each job part is associated with a Snowball. It might take some time before the job parts associated with a particular master job are listed, because they are created after the master job is created.</p>",
+        "Notification$NotifyAll": "<p>Any change in job state will trigger a notification for this job.</p>"
+      }
+    },
+    "CancelJobRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CancelJobResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateAddressRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateAddressResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateJobRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "CreateJobResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DataTransfer": {
+      "base": "<p>Defines the real-time status of a Snowball's data transfer while the appliance is at AWS. Note that this data is only available while a job has a <code>JobState</code> value of <code>InProgress</code>, for both import and export jobs.</p>",
+      "refs": {
+        "JobMetadata$DataTransferProgress": "<p>A value that defines the real-time status of a Snowball's data transfer while the appliance is at AWS. Note that this data is only available while a job has a <code>JobState</code> value of <code>InProgress</code>, for both import and export jobs.</p>"
+      }
+    },
+    "DescribeAddressRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeAddressResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeAddressesRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeAddressesResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeJobRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "DescribeJobResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetJobManifestRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetJobManifestResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetJobUnlockCodeRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetJobUnlockCodeResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetSnowballUsageRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "GetSnowballUsageResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "Integer": {
+      "base": null,
+      "refs": {
+        "GetSnowballUsageResult$SnowballLimit": "<p>The service limit for number of Snowballs this account can have at once. The default service limit is 1 (one).</p>",
+        "GetSnowballUsageResult$SnowballsInUse": "<p>The number of Snowballs that this account is currently using.</p>"
+      }
+    },
+    "InvalidAddressException": {
+      "base": "<p>The address provided was invalid. Check the address with your region's carrier, and try again.</p>",
+      "refs": {
+      }
+    },
+    "InvalidJobStateException": {
+      "base": "<p>The action can't be performed because the job's current state doesn't allow that action to be performed.</p>",
+      "refs": {
+      }
+    },
+    "InvalidResourceException": {
+      "base": "<p>The specified resource can't be found. Check the information you provided in your last request, and try again.</p>",
+      "refs": {
+      }
+    },
+    "JobId": {
+      "base": null,
+      "refs": {
+        "CancelJobRequest$JobId": "<p>The 39 character job ID for the job that you want to cancel, for example <code>JID123e4567-e89b-12d3-a456-426655440000</code>.</p>",
+        "CreateJobResult$JobId": "<p>The automatically generated ID for a job, for example <code>JID123e4567-e89b-12d3-a456-426655440000</code>.</p>",
+        "DescribeJobRequest$JobId": "<p>The automatically generated ID for a job, for example <code>JID123e4567-e89b-12d3-a456-426655440000</code>.</p>",
+        "GetJobManifestRequest$JobId": "<p>The ID for a job that you want to get the manifest file for, for example <code>JID123e4567-e89b-12d3-a456-426655440000</code>.</p>",
+        "GetJobUnlockCodeRequest$JobId": "<p>The ID for the job that you want to get the <code>UnlockCode</code> value for, for example <code>JID123e4567-e89b-12d3-a456-426655440000</code>.</p>",
+        "UpdateJobRequest$JobId": "<p>The job ID of the job that you want to update, for example <code>JID123e4567-e89b-12d3-a456-426655440000</code>.</p>"
+      }
+    },
+    "JobListEntry": {
+      "base": "<p>Each <code>JobListEntry</code> object contains a job's state, a job's ID, and a value that indicates whether the job is a job part, in the case of an export job.</p>",
+      "refs": {
+        "JobListEntryList$member": null
+      }
+    },
+    "JobListEntryList": {
+      "base": null,
+      "refs": {
+        "ListJobsResult$JobListEntries": "<p>Each <code>JobListEntry</code> object contains a job's state, a job's ID, and a value that indicates whether the job is a job part, in the case of export jobs. </p>"
+      }
+    },
+    "JobLogs": {
+      "base": "<p>Contains job logs. Whenever Snowball is used to import data into or export data out of Amazon S3, you'll have the option of downloading a PDF job report. Job logs are returned as a part of the response syntax of the <code>DescribeJob</code> action in the <code>JobMetadata</code> data type. The job logs can be accessed for up to 60 minutes after this request has been made. To access any of the job logs after 60 minutes have passed, you'll have to make another call to the <code>DescribeJob</code> action.</p> <p>For import jobs, the PDF job report becomes available at the end of the import process. For export jobs, your job report typically becomes available while the Snowball for your job part is being delivered to you.</p> <p>The job report provides you insight into the state of your Amazon S3 data transfer. The report includes details about your job or job part for your records.</p> <p>For deeper visibility into the status of your transferred objects, you can look at the two associated logs: a success log and a failure log. The logs are saved in comma-separated value (CSV) format, and the name of each log includes the ID of the job or job part that the log describes.</p>",
+      "refs": {
+        "JobMetadata$JobLogInfo": "<p>Links to Amazon S3 presigned URLs for the job report and logs. For import jobs, the PDF job report becomes available at the end of the import process. For export jobs, your job report typically becomes available while the Snowball for your job part is being delivered to you.</p>"
+      }
+    },
+    "JobMetadata": {
+      "base": "<p>Contains information about a specific job including shipping information, job status, and other important metadata. This information is returned as a part of the response syntax of the <code>DescribeJob</code> action.</p>",
+      "refs": {
+        "DescribeJobResult$JobMetadata": "<p>Information about a specific job, including shipping information, job status, and other important metadata. </p>",
+        "JobMetadataList$member": null
+      }
+    },
+    "JobMetadataList": {
+      "base": null,
+      "refs": {
+        "DescribeJobResult$SubJobMetadata": "<p>Information about a specific job part (in the case of an export job), including shipping information, job status, and other important metadata. </p>"
+      }
+    },
+    "JobResource": {
+      "base": "<p>Contains an array of <code>S3Resource</code> objects. Each <code>S3Resource</code> object represents an Amazon S3 bucket that your transferred data will be exported from or imported into.</p>",
+      "refs": {
+        "CreateJobRequest$Resources": "<p>Defines the Amazon S3 buckets associated with this job.</p> <p>With <code>IMPORT</code> jobs, you specify the bucket or buckets that your transferred data will be imported into.</p> <p>With <code>EXPORT</code> jobs, you specify the bucket or buckets that your transferred data will be exported from. Optionally, you can also specify a <code>KeyRange</code> value. If you choose to export a range, you define the length of the range by providing either an inclusive <code>BeginMarker</code> value, an inclusive <code>EndMarker</code> value, or both. Ranges are UTF-8 binary sorted.</p>",
+        "JobMetadata$Resources": "<p>An array of <code>S3Resource</code> objects. Each <code>S3Resource</code> object represents an Amazon S3 bucket that your transferred data will be exported from or imported into.</p>",
+        "UpdateJobRequest$Resources": "<p>The updated <a>S3Resource</a> object (for a single Amazon S3 bucket or key range), or the updated <a>JobResource</a> object (for multiple buckets or key ranges). </p>"
+      }
+    },
+    "JobState": {
+      "base": null,
+      "refs": {
+        "JobListEntry$JobState": "<p>The current state of this job.</p>",
+        "JobMetadata$JobState": "<p>The current state of the jobs.</p>",
+        "JobStateList$member": null
+      }
+    },
+    "JobStateList": {
+      "base": null,
+      "refs": {
+        "Notification$JobStatesToNotify": "<p>The list of job states that will trigger a notification for this job.</p>"
+      }
+    },
+    "JobType": {
+      "base": null,
+      "refs": {
+        "CreateJobRequest$JobType": "<p>Defines the type of job that you're creating. </p>",
+        "JobMetadata$JobType": "<p>The type of job.</p>"
+      }
+    },
+    "KMSRequestFailedException": {
+      "base": "<p>The provided AWS Key Management Service key lacks the permissions to perform the specified <a>CreateJob</a> or <a>UpdateJob</a> action.</p>",
+      "refs": {
+      }
+    },
+    "KeyRange": {
+      "base": "<p>Contains a key range. For export jobs, a <code>S3Resource</code> object can have an optional <code>KeyRange</code> value. The length of the range is defined at job creation, and has either an inclusive <code>BeginMarker</code>, an inclusive <code>EndMarker</code>, or both. Ranges are UTF-8 binary sorted.</p>",
+      "refs": {
+        "S3Resource$KeyRange": "<p>For export jobs, you can provide an optional <code>KeyRange</code> within a specific Amazon S3 bucket. The length of the range is defined at job creation, and has either an inclusive <code>BeginMarker</code>, an inclusive <code>EndMarker</code>, or both. Ranges are UTF-8 binary sorted.</p>"
+      }
+    },
+    "KmsKeyARN": {
+      "base": null,
+      "refs": {
+        "CreateJobRequest$KmsKeyARN": "<p>The <code>KmsKeyARN</code> that you want to associate with this job. <code>KmsKeyARN</code>s are created using the <a href=\"http://docs.aws.amazon.com/kms/latest/APIReference/API_CreateKey.html\">CreateKey</a> AWS Key Management Service (KMS) API action.</p>",
+        "JobMetadata$KmsKeyARN": "<p>The Amazon Resource Name (ARN) for the AWS Key Management Service (AWS KMS) key associated with this job. This ARN was created using the <code>CreateKey</code> API action in AWS KMS.</p>"
+      }
+    },
+    "ListJobsRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListJobsResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ListLimit": {
+      "base": null,
+      "refs": {
+        "DescribeAddressesRequest$MaxResults": "<p>The number of <code>ADDRESS</code> objects to return.</p>",
+        "ListJobsRequest$MaxResults": "<p>The number of <code>JobListEntry</code> objects to return.</p>"
+      }
+    },
+    "Long": {
+      "base": null,
+      "refs": {
+        "DataTransfer$BytesTransferred": "<p>The number of bytes transferred between a Snowball and Amazon S3.</p>",
+        "DataTransfer$ObjectsTransferred": "<p>The number of objects transferred between a Snowball and Amazon S3.</p>",
+        "DataTransfer$TotalBytes": "<p>The total bytes of data for a transfer between a Snowball and Amazon S3. This value is set to 0 (zero) until all the keys that will be transferred have been listed.</p>",
+        "DataTransfer$TotalObjects": "<p>The total number of objects for a transfer between a Snowball and Amazon S3. This value is set to 0 (zero) until all the keys that will be transferred have been listed.</p>"
+      }
+    },
+    "Notification": {
+      "base": "<p>The Amazon Simple Notification Service (Amazon SNS) notification settings associated with a specific job. The <code>Notification</code> object is returned as a part of the response syntax of the <code>DescribeJob</code> action in the <code>JobMetadata</code> data type.</p> <p>When the notification settings are defined during job creation, you can choose to notify based on a specific set of job states using the <code>JobStatesToNotify</code> array of strings, or you can specify that you want to have Amazon SNS notifications sent out for all job states with <code>NotifyAll</code> set to true.</p>",
+      "refs": {
+        "CreateJobRequest$Notification": "<p>Defines the Amazon Simple Notification Service (Amazon SNS) notification settings for this job.</p>",
+        "JobMetadata$Notification": "<p>The Amazon Simple Notification Service (Amazon SNS) notification settings associated with a specific job. The <code>Notification</code> object is returned as a part of the response syntax of the <code>DescribeJob</code> action in the <code>JobMetadata</code> data type.</p>",
+        "UpdateJobRequest$Notification": "<p>The new or updated <a>Notification</a> object.</p>"
+      }
+    },
+    "ResourceARN": {
+      "base": null,
+      "refs": {
+        "S3Resource$BucketArn": "<p>The Amazon Resource Name (ARN) of an Amazon S3 bucket.</p>"
+      }
+    },
+    "RoleARN": {
+      "base": null,
+      "refs": {
+        "CreateJobRequest$RoleARN": "<p>The <code>RoleARN</code> that you want to associate with this job. <code>RoleArn</code>s are created using the <a href=\"http://docs.aws.amazon.com/IAM/latest/APIReference/API_CreateRole.html\">CreateRole</a> AWS Identity and Access Management (IAM) API action.</p>",
+        "JobMetadata$RoleARN": "<p>The role ARN associated with this job. This ARN was created using the <code>CreateRole</code> API action in AWS Identity and Access Management (IAM).</p>",
+        "UpdateJobRequest$RoleARN": "<p>The new role Amazon Resource Name (ARN) that you want to associate with this job. To create a role ARN, use the <a href=\"http://docs.aws.amazon.com/IAM/latest/APIReference/API_CreateRole.html\">CreateRole</a> AWS Identity and Access Management (IAM) API action.</p>"
+      }
+    },
+    "S3Resource": {
+      "base": "<p>Each <code>S3Resource</code> object represents an Amazon S3 bucket that your transferred data will be exported from or imported into. For export jobs, this object can have an optional <code>KeyRange</code> value. The length of the range is defined at job creation, and has either an inclusive <code>BeginMarker</code>, an inclusive <code>EndMarker</code>, or both. Ranges are UTF-8 binary sorted.</p>",
+      "refs": {
+        "S3ResourceList$member": null
+      }
+    },
+    "S3ResourceList": {
+      "base": null,
+      "refs": {
+        "JobResource$S3Resources": "<p>An array of <code>S3Resource</code> objects.</p>"
+      }
+    },
+    "Shipment": {
+      "base": "<p>The <code>Status</code> and <code>TrackingNumber</code> information for an inbound or outbound shipment.</p>",
+      "refs": {
+        "ShippingDetails$InboundShipment": "<p>The <code>Status</code> and <code>TrackingNumber</code> values for a Snowball being delivered to the address that you specified for a particular job.</p>",
+        "ShippingDetails$OutboundShipment": "<p>The <code>Status</code> and <code>TrackingNumber</code> values for a Snowball being returned to AWS for a particular job.</p>"
+      }
+    },
+    "ShippingDetails": {
+      "base": "<p>A job's shipping information, including inbound and outbound tracking numbers and shipping speed options.</p>",
+      "refs": {
+        "JobMetadata$ShippingDetails": "<p>A job's shipping information, including inbound and outbound tracking numbers and shipping speed options.</p>"
+      }
+    },
+    "ShippingOption": {
+      "base": null,
+      "refs": {
+        "CreateJobRequest$ShippingOption": "<p>The shipping speed for this job. Note that this speed does not dictate how soon you'll get the Snowball, rather it represents how quickly the Snowball moves to its destination while in transit. Regional shipping speeds are as follows:</p> <ul> <li> <p>In Australia, you have access to express shipping. Typically, Snowballs shipped express are delivered in about a day.</p> </li> <li> <p>In the European Union (EU), you have access to express shipping. Typically, Snowballs shipped express are delivered in about a day. In addition, most countries in the EU have access to standard shipping, which typically takes less than a week, one way.</p> </li> <li> <p>In India, Snowballs are delivered in one to seven days.</p> </li> <li> <p>In the US, you have access to one-day shipping and two-day shipping.</p> </li> </ul>",
+        "ShippingDetails$ShippingOption": "<p>The shipping speed for a particular job. Note that this speed does not dictate how soon you'll get the Snowball from the job's creation date. This speed represents how quickly it moves to its destination while in transit. Regional shipping speeds are as follows:</p> <ul> <li> <p>In Australia, you have access to express shipping. Typically, Snowballs shipped express are delivered in about a day.</p> </li> <li> <p>In the European Union (EU), you have access to express shipping. Typically, Snowballs shipped express are delivered in about a day. In addition, most countries in the EU have access to standard shipping, which typically takes less than a week, one way.</p> </li> <li> <p>In India, Snowballs are delivered in one to seven days.</p> </li> <li> <p>In the United States of America (US), you have access to one-day shipping and two-day shipping.</p> </li> </ul>",
+        "UpdateJobRequest$ShippingOption": "<p>The updated shipping option value of this job's <a>ShippingDetails</a> object.</p>"
+      }
+    },
+    "SnowballCapacity": {
+      "base": null,
+      "refs": {
+        "CreateJobRequest$SnowballCapacityPreference": "<p>If your job is being created in one of the US regions, you have the option of specifying what size Snowball you'd like for this job. In all other regions, Snowballs come with 80 TB in storage capacity.</p>",
+        "JobMetadata$SnowballCapacityPreference": "<p>The Snowball capacity preference for this job, specified at job creation. In US regions, you can choose between 50 TB and 80 TB Snowballs. All other regions use 80 TB capacity Snowballs.</p>",
+        "UpdateJobRequest$SnowballCapacityPreference": "<p>The updated <code>SnowballCapacityPreference</code> of this job's <a>JobMetadata</a> object. Note that the 50 TB Snowballs are only available in the US regions.</p>"
+      }
+    },
+    "SnsTopicARN": {
+      "base": null,
+      "refs": {
+        "Notification$SnsTopicARN": "<p>The new SNS <code>TopicArn</code> that you want to associate with this job. You can create Amazon Resource Names (ARNs) for topics by using the <a href=\"http://docs.aws.amazon.com/sns/latest/api/API_CreateTopic.html\">CreateTopic</a> Amazon SNS API action.</p> <p>Note that you can subscribe email addresses to an Amazon SNS topic through the AWS Management Console, or by using the <a href=\"http://docs.aws.amazon.com/sns/latest/api/API_Subscribe.html\">Subscribe</a> AWS Simple Notification Service (SNS) API action.</p>"
+      }
+    },
+    "String": {
+      "base": null,
+      "refs": {
+        "Address$Name": "<p>The name of a person to receive a Snowball at an address.</p>",
+        "Address$Company": "<p>The name of the company to receive a Snowball at an address.</p>",
+        "Address$Street1": "<p>The first line in a street address that a Snowball is to be delivered to.</p>",
+        "Address$Street2": "<p>The second line in a street address that a Snowball is to be delivered to.</p>",
+        "Address$Street3": "<p>The third line in a street address that a Snowball is to be delivered to.</p>",
+        "Address$City": "<p>The city in an address that a Snowball is to be delivered to.</p>",
+        "Address$StateOrProvince": "<p>The state or province in an address that a Snowball is to be delivered to.</p>",
+        "Address$PrefectureOrDistrict": "<p>The prefecture or district in an address that a Snowball is to be delivered to.</p>",
+        "Address$Landmark": "<p>A landmark listed in an address that a Snowball is to be delivered to.</p>",
+        "Address$Country": "<p>The country in an address that a Snowball is to be delivered to.</p>",
+        "Address$PostalCode": "<p>The postal code in an address that a Snowball is to be delivered to.</p>",
+        "Address$PhoneNumber": "<p>The phone number associated with an address that a Snowball is to be delivered to.</p>",
+        "CreateAddressResult$AddressId": "<p>The automatically generated ID for a specific address. You'll use this ID when you create a job to specify which address you want the Snowball for that job shipped to.</p>",
+        "CreateJobRequest$Description": "<p>Defines an optional description of this specific job, for example <code>Important Photos 2016-08-11</code>.</p>",
+        "DescribeAddressesRequest$NextToken": "<p>HTTP requests are stateless. To identify what object comes \"next\" in the list of <code>ADDRESS</code> objects, you have the option of specifying a value for <code>NextToken</code> as the starting point for your list of returned addresses.</p>",
+        "DescribeAddressesResult$NextToken": "<p>HTTP requests are stateless. If you use the automatically generated <code>NextToken</code> value in your next <code>DescribeAddresses</code> call, your list of returned addresses will start from this point in the array.</p>",
+        "GetJobManifestResult$ManifestURI": "<p>The Amazon S3 presigned URL for the manifest file associated with the specified <code>JobId</code> value.</p>",
+        "GetJobUnlockCodeResult$UnlockCode": "<p>The <code>UnlockCode</code> value for the specified job. The <code>UnlockCode</code> value can be accessed for up to 90 days after the job has been created.</p>",
+        "InvalidAddressException$Message": null,
+        "InvalidJobStateException$Message": null,
+        "InvalidResourceException$Message": null,
+        "JobListEntry$JobId": "<p>The automatically generated ID for a job, for example <code>JID123e4567-e89b-12d3-a456-426655440000</code>.</p>",
+        "JobLogs$JobCompletionReportURI": "<p>A link to an Amazon S3 presigned URL where the job completion report is located.</p>",
+        "JobLogs$JobSuccessLogURI": "<p>A link to an Amazon S3 presigned URL where the job success log is located.</p>",
+        "JobLogs$JobFailureLogURI": "<p>A link to an Amazon S3 presigned URL where the job failure log is located.</p>",
+        "JobMetadata$JobId": "<p>The automatically generated ID for a job, for example <code>JID123e4567-e89b-12d3-a456-426655440000</code>.</p>",
+        "JobMetadata$Description": "<p>The description of the job, provided at job creation.</p>",
+        "KMSRequestFailedException$Message": null,
+        "KeyRange$BeginMarker": "<p>The key that starts an optional key range for an export job. Ranges are inclusive and UTF-8 binary sorted.</p>",
+        "KeyRange$EndMarker": "<p>The key that ends an optional key range for an export job. Ranges are inclusive and UTF-8 binary sorted.</p>",
+        "ListJobsRequest$NextToken": "<p>HTTP requests are stateless. To identify what object comes \"next\" in the list of <code>JobListEntry</code> objects, you have the option of specifying <code>NextToken</code> as the starting point for your returned list.</p>",
+        "ListJobsResult$NextToken": "<p>HTTP requests are stateless. If you use this automatically generated <code>NextToken</code> value in your next <code>ListJobs</code> call, your returned <code>JobListEntry</code> objects will start from this point in the array.</p>",
+        "Shipment$Status": "<p>Status information for a shipment. Valid statuses include <code>NEW</code>, <code>IN_TRANSIT</code>, and <code>DELIVERED</code>.</p>",
+        "Shipment$TrackingNumber": "<p>The tracking number for this job. Using this tracking number with your region's carrier's website, you can track a Snowball as the carrier transports it.</p> <p>For India, the carrier is Amazon Logistics. For all other regions, UPS is the carrier.</p>",
+        "UnsupportedAddressException$Message": null,
+        "UpdateJobRequest$Description": "<p>The updated description of this job's <a>JobMetadata</a> object.</p>"
+      }
+    },
+    "Timestamp": {
+      "base": null,
+      "refs": {
+        "JobMetadata$CreationDate": "<p>The creation date for this job.</p>"
+      }
+    },
+    "UnsupportedAddressException": {
+      "base": "<p>The address is either outside the serviceable area for your region, or an error occurred. Check the address with your region's carrier and try again. If the issue persists, contact AWS Support.</p>",
+      "refs": {
+      }
+    },
+    "UpdateJobRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "UpdateJobResult": {
+      "base": null,
+      "refs": {
+      }
+    }
+  }
+}

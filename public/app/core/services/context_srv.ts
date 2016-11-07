@@ -9,6 +9,7 @@ export class User {
   isGrafanaAdmin: any;
   isSignedIn: any;
   orgRole: any;
+  timezone: string;
 
   constructor() {
     if (config.bootData.user) {
@@ -25,7 +26,6 @@ export class ContextSrv {
   isGrafanaAdmin: any;
   isEditor: any;
   sidemenu: any;
-  lightTheme: any;
 
   constructor() {
     this.pinned = store.getBool('grafana.sidemenu.pinned', false);
@@ -41,7 +41,6 @@ export class ContextSrv {
     }
 
     this.version = config.buildInfo.version;
-    this.lightTheme = false;
     this.user = new User();
     this.isSignedIn = this.user.isSignedIn;
     this.isGrafanaAdmin = this.user.isGrafanaAdmin;

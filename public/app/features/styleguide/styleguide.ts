@@ -10,10 +10,10 @@ class StyleGuideCtrl {
   buttonSizes = ['btn-small', '', 'btn-large'];
   buttonVariants = ['-', '-outline-'];
   page: any;
-  pages = ['colors', 'buttons', 'forms', 'dashboard', 'query-editors'];
+  pages = ['colors', 'buttons'];
 
   /** @ngInject **/
-  constructor(private $http, $routeParams) {
+  constructor(private $http, private $routeParams, private $location) {
     this.theme = config.bootData.user.lightTheme ? 'light': 'dark';
     this.page = {};
 
@@ -37,8 +37,11 @@ class StyleGuideCtrl {
   }
 
   switchTheme() {
-    var other = this.theme === 'dark' ? 'light' : 'dark';
-    window.location.href = window.location.href + '?theme=' + other;
+    this.$routeParams.theme = this.theme === 'dark' ? 'light' : 'dark';
+    this.$location.search(this.$routeParams);
+    setTimeout(() => {
+      window.location.href = window.location.href;
+    });
   }
 
 }

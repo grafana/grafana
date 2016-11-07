@@ -5,6 +5,7 @@ import config from 'app/core/config';
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from '../../core_module';
+import appEvents from 'app/core/app_events';
 
 export class SearchCtrl {
   isOpen: boolean;
@@ -28,7 +29,7 @@ export class SearchCtrl {
     this.isOpen = this.ignoreClose;
   }
 
-  openSearch() {
+  openSearch(evt, payload) {
     if (this.isOpen) {
       this.isOpen = false;
       return;
@@ -42,10 +43,21 @@ export class SearchCtrl {
     this.currentSearchId = 0;
     this.ignoreClose = true;
 
+    if (payload && payload.starred) {
+      this.query.starred = true;
+    }
+
+    if (payload && payload.tagsMode) {
+      return this.$timeout(() => {
+        this.ignoreClose = false;
+        this.giveSearchFocus = this.giveSearchFocus + 1;
+        this.getTags();
+      }, 100);
+    }
+
     this.$timeout(() => {
       this.ignoreClose = false;
       this.giveSearchFocus = this.giveSearchFocus + 1;
-      this.query.query = '';
       this.search();
     }, 100);
   }
@@ -148,9 +160,6 @@ export class SearchCtrl {
     this.searchDashboards();
   };
 
-  newDashboard() {
-    this.$location.url('dashboard/new');
-  };
 }
 
 export function searchDirective() {

@@ -1,9 +1,11 @@
-define([
+define( [
 	"../var/support"
 ], function( support ) {
 
-support.focusinBubbles = "onfocusin" in window;
+"use strict";
+
+support.focusin = "onfocusin" in window;
 
 return support;
 
-});
+} );

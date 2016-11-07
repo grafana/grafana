@@ -1,0 +1,102 @@
+{
+  "version": "2.0",
+  "service": "<fullname>AWS Marketplace Metering Service</fullname> <p>This reference provides descriptions of the low-level AWS Marketplace Metering Service API. </p> <p>AWS Marketplace sellers can use this API to submit usage data for custom usage dimensions.</p> <p><b>Submitting Metering Records</b></p> <ul> <li> <p><i>MeterUsage</i>- Submits the metering record for a Marketplace product.</p> </li> </ul>",
+  "operations": {
+    "MeterUsage": "<p>API to emit metering records. For identical requests, the API is idempotent. It simply returns the metering record ID. </p>"
+  },
+  "shapes": {
+    "Boolean": {
+      "base": null,
+      "refs": {
+        "MeterUsageRequest$DryRun": "<p>Checks whether you have the permissions required for the action, but does not make the request. If you have the permissions, the request returns DryRunOperation; otherwise, it returns UnauthorizedException. </p>"
+      }
+    },
+    "DuplicateRequestException": {
+      "base": "<p>A metering record has already been emitted by the same EC2 instance for the given {usageDimension, timestamp} with a different usageQuantity. </p>",
+      "refs": {
+      }
+    },
+    "InternalServiceErrorException": {
+      "base": "<p>An internal error has occurred. Retry your request. If the problem persists, post a message with details on the AWS forums.</p>",
+      "refs": {
+      }
+    },
+    "InvalidEndpointRegionException": {
+      "base": "<p>The endpoint being called is in a region different from your EC2 instance. The region of the Metering service endpoint and the region of the EC2 instance must match.</p>",
+      "refs": {
+      }
+    },
+    "InvalidProductCodeException": {
+      "base": "<p>The product code passed does not match the product code used for publishing the product.</p>",
+      "refs": {
+      }
+    },
+    "InvalidUsageDimensionException": {
+      "base": "<p>The usage dimension does not match one of the UsageDimensions associated with products.</p>",
+      "refs": {
+      }
+    },
+    "MeterUsageRequest": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "MeterUsageResult": {
+      "base": null,
+      "refs": {
+      }
+    },
+    "ProductCode": {
+      "base": null,
+      "refs": {
+        "MeterUsageRequest$ProductCode": "<p>Product code is used to uniquely identify a product in AWS Marketplace. The product code should be the same as the one used during the publishing of a new product.</p>"
+      }
+    },
+    "String": {
+      "base": null,
+      "refs": {
+        "MeterUsageResult$MeteringRecordId": null
+      }
+    },
+    "ThrottlingException": {
+      "base": "<p>The calls to the MeterUsage API are throttled.</p>",
+      "refs": {
+      }
+    },
+    "Timestamp": {
+      "base": null,
+      "refs": {
+        "MeterUsageRequest$Timestamp": "<p>Timestamp of the hour, recorded in UTC. The seconds and milliseconds portions of the timestamp will be ignored. </p>"
+      }
+    },
+    "TimestampOutOfBoundsException": {
+      "base": "<p>The timestamp value passed in the meterUsage() is out of allowed range.</p>",
+      "refs": {
+      }
+    },
+    "UsageDimension": {
+      "base": null,
+      "refs": {
+        "MeterUsageRequest$UsageDimension": "<p>It will be one of the 'fcp dimension name' provided during the publishing of the product.</p>"
+      }
+    },
+    "UsageQuantity": {
+      "base": null,
+      "refs": {
+        "MeterUsageRequest$UsageQuantity": "<p>Consumption value for the hour.</p>"
+      }
+    },
+    "errorMessage": {
+      "base": null,
+      "refs": {
+        "DuplicateRequestException$message": null,
+        "InternalServiceErrorException$message": null,
+        "InvalidEndpointRegionException$message": null,
+        "InvalidProductCodeException$message": null,
+        "InvalidUsageDimensionException$message": null,
+        "ThrottlingException$message": null,
+        "TimestampOutOfBoundsException$message": null
+      }
+    }
+  }
+}

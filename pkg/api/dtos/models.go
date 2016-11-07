@@ -34,23 +34,25 @@ type CurrentUser struct {
 	IsGrafanaAdmin bool       `json:"isGrafanaAdmin"`
 	GravatarUrl    string     `json:"gravatarUrl"`
 	Timezone       string     `json:"timezone"`
+	Locale         string     `json:"locale"`
 }
 
 type DashboardMeta struct {
-	IsStarred  bool      `json:"isStarred,omitempty"`
-	IsHome     bool      `json:"isHome,omitempty"`
-	IsSnapshot bool      `json:"isSnapshot,omitempty"`
-	Type       string    `json:"type,omitempty"`
-	CanSave    bool      `json:"canSave"`
-	CanEdit    bool      `json:"canEdit"`
-	CanStar    bool      `json:"canStar"`
-	Slug       string    `json:"slug"`
-	Expires    time.Time `json:"expires"`
-	Created    time.Time `json:"created"`
-	Updated    time.Time `json:"updated"`
-	UpdatedBy  string    `json:"updatedBy"`
-	CreatedBy  string    `json:"createdBy"`
-	Version    int       `json:"version"`
+	IsStarred          bool      `json:"isStarred,omitempty"`
+	IsHome             bool      `json:"isHome,omitempty"`
+	IsSnapshot         bool      `json:"isSnapshot,omitempty"`
+	Type               string    `json:"type,omitempty"`
+	CanSave            bool      `json:"canSave"`
+	CanEdit            bool      `json:"canEdit"`
+	CanStar            bool      `json:"canStar"`
+	Slug               string    `json:"slug"`
+	Expires            time.Time `json:"expires"`
+	Created            time.Time `json:"created"`
+	Updated            time.Time `json:"updated"`
+	UpdatedBy          string    `json:"updatedBy"`
+	CreatedBy          string    `json:"createdBy"`
+	Version            int       `json:"version"`
+	HistoricalVersions []int  	 `json:"historicalVersions"`
 }
 
 type DashboardFullWithMeta struct {
@@ -95,13 +97,10 @@ func (slice DataSourceList) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
 
-type MetricQueryResultDto struct {
-	Data []MetricQueryResultDataDto `json:"data"`
-}
-
-type MetricQueryResultDataDto struct {
-	Target     string       `json:"target"`
-	DataPoints [][2]float64 `json:"datapoints"`
+type MetricRequest struct {
+	From    string             `json:"from"`
+	To      string             `json:"to"`
+	Queries []*simplejson.Json `json:"queries"`
 }
 
 type UserStars struct {

@@ -2,7 +2,6 @@
 // Tooltips
 // --------------------------------------------------
 
-
 // Base class
 .tooltip {
   position: absolute;
@@ -27,6 +26,7 @@
   text-align: center;
   text-decoration: none;
   background-color: $tooltipBackground;
+  border-radius: 2px;
 }
 
 // Arrows
@@ -37,6 +37,7 @@
   border-color: transparent;
   border-style: solid;
 }
+
 .tooltip {
   &.top .tooltip-arrow {
     bottom: 0;

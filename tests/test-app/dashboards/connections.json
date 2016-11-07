@@ -8,7 +8,7 @@
   ],
 
   "title": "Nginx Connections",
-  "revision": "1.5",
+  "revision": 25,
   "schemaVersion": 11,
   "tags": ["tag1", "tag2"],
   "number_array": [1,2,3,10.33],

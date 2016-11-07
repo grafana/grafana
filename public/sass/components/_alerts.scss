@@ -6,8 +6,10 @@
 // Base styles
 // -------------------------
 
+
+
 .alert {
-  padding: 8px 35px 13px 14px;
+  padding: 0.5rem 2rem 0.5rem 1rem;
   margin-bottom: $line-height-base;
   text-shadow: 0 1px 0 rgba(255,255,255,.5);
   background-color: $state-warning-bg;

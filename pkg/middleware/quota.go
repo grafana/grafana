@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"gopkg.in/macaron.v1"
@@ -35,10 +34,8 @@ func QuotaReached(c *Context, target string) (bool, error) {
 		return false, err
 	}
 
-	log.Debug(fmt.Sprintf("checking quota for %s in scopes %v", target, scopes))
-
 	for _, scope := range scopes {
-		log.Debug(fmt.Sprintf("checking scope %s", scope.Name))
+		c.Logger.Debug("Checking quota", "target", target, "scope", scope)
 
 		switch scope.Name {
 		case "global":
@@ -51,7 +48,7 @@ func QuotaReached(c *Context, target string) (bool, error) {
 			if target == "session" {
 				usedSessions := getSessionCount()
 				if int64(usedSessions) > scope.DefaultLimit {
-					log.Debug(fmt.Sprintf("%d sessions active, limit is %d", usedSessions, scope.DefaultLimit))
+					c.Logger.Debug("Sessions limit reached", "active", usedSessions, "limit", scope.DefaultLimit)
 					return true, nil
 				}
 				continue

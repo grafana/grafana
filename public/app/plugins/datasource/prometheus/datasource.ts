@@ -10,7 +10,7 @@ import PrometheusMetricFindQuery from './metric_find_query';
 var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
 /** @ngInject */
-export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateSrv, timeSrv) {
   this.type = 'prometheus';
   this.editorSrc = 'app/features/prometheus/partials/query.editor.html';
   this.name = instanceSettings.name;
@@ -21,10 +21,11 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   this.withCredentials = instanceSettings.withCredentials;
   this.lastErrors = {};
 
-  this._request = function(method, url) {
+  this._request = function(method, url, requestId) {
     var options: any = {
       url: this.url + url,
-      method: method
+      method: method,
+      requestId: requestId,
     };
 
     if (this.basicAuth || this.withCredentials) {
@@ -39,40 +40,51 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return backendSrv.datasourceRequest(options);
   };
 
-  function regexEscape(value) {
+  function prometheusSpecialRegexEscape(value) {
     return value.replace(/[\\^$*+?.()|[\]{}]/g, '\\\\$&');
   }
 
-  function interpolateQueryExpr(value, variable, defaultFormatFn) {
+  this.interpolateQueryExpr = function(value, variable, defaultFormatFn) {
     // if no multi or include all do not regexEscape
     if (!variable.multi && !variable.includeAll) {
       return value;
     }
 
     if (typeof value === 'string') {
-      return regexEscape(value);
+      return prometheusSpecialRegexEscape(value);
     }
 
-    var escapedValues = _.map(value, regexEscape);
+    var escapedValues = _.map(value, prometheusSpecialRegexEscape);
     return escapedValues.join('|');
+  };
+
+  this.targetContainsTemplate = function(target) {
+    return templateSrv.variableExists(target.expr);
   };
 
   // Called once per panel (graph)
   this.query = function(options) {
-    var start = getPrometheusTime(options.range.from, false);
-    var end = getPrometheusTime(options.range.to, true);
+    var self = this;
+    var start = this.getPrometheusTime(options.range.from, false);
+    var end = this.getPrometheusTime(options.range.to, true);
 
     var queries = [];
+    var activeTargets = [];
+
     options = _.clone(options);
-    _.each(options.targets, _.bind(function(target) {
+
+    _.each(options.targets, target => {
       if (!target.expr || target.hide) {
         return;
       }
 
-      var query: any = {};
-      query.expr = templateSrv.replace(target.expr, options.scopedVars, interpolateQueryExpr);
+      activeTargets.push(target);
 
-      var interval = target.interval || options.interval;
+      var query: any = {};
+      query.expr = templateSrv.replace(target.expr, options.scopedVars, self.interpolateQueryExpr);
+      query.requestId = options.panelId + target.refId;
+
+      var interval = templateSrv.replace(target.interval, options.scopedVars) || options.interval;
       var intervalFactor = target.intervalFactor || 1;
       target.step = query.step = this.calculateInterval(interval, intervalFactor);
       var range = Math.ceil(end - start);
@@ -83,7 +95,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       }
 
       queries.push(query);
-    }, this));
+    });
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
@@ -92,13 +104,11 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       return d.promise;
     }
 
-    var allQueryPromise = _.map(queries, _.bind(function(query) {
+    var allQueryPromise = _.map(queries, query => {
       return this.performTimeSeriesQuery(query, start, end);
-    }, this));
+    });
 
-    var self = this;
-    return $q.all(allQueryPromise)
-    .then(function(allResponse) {
+    return $q.all(allQueryPromise).then(function(allResponse) {
       var result = [];
 
       _.each(allResponse, function(response, index) {
@@ -107,9 +117,8 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
           throw response.error;
         }
         delete self.lastErrors.query;
-
         _.each(response.data.data.result, function(metricData) {
-          result.push(self.transformMetricData(metricData, options.targets[index], start, end));
+          result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
         });
       });
 
@@ -118,8 +127,12 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   };
 
   this.performTimeSeriesQuery = function(query, start, end) {
+    if (start > end) {
+      throw { message: 'Invalid time range' };
+    }
+
     var url = '/api/v1/query_range?query=' + encodeURIComponent(query.expr) + '&start=' + start + '&end=' + end + '&step=' + query.step;
-    return this._request('GET', url);
+    return this._request('GET', url, query.requestId);
   };
 
   this.performSuggestQuery = function(query) {
@@ -137,12 +150,12 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
     var interpolated;
     try {
-      interpolated = templateSrv.replace(query);
+      interpolated = templateSrv.replace(query, {}, this.interpolateQueryExpr);
     } catch (err) {
       return $q.reject(err);
     }
 
-    var metricFindQuery = new PrometheusMetricFindQuery(this, interpolated);
+    var metricFindQuery = new PrometheusMetricFindQuery(this, interpolated, timeSrv);
     return metricFindQuery.process();
   };
 
@@ -157,7 +170,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
     var interpolated;
     try {
-      interpolated = templateSrv.replace(expr);
+      interpolated = templateSrv.replace(expr, {}, this.interpolateQueryExpr);
     } catch (err) {
       return $q.reject(err);
     }
@@ -166,9 +179,11 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       expr: interpolated,
       step: '60s'
     };
-    var start = getPrometheusTime(options.range.from, false);
-    var end = getPrometheusTime(options.range.to, true);
+
+    var start = this.getPrometheusTime(options.range.from, false);
+    var end = this.getPrometheusTime(options.range.to, true);
     var self = this;
+
     return this.performTimeSeriesQuery(query, start, end).then(function(results) {
       var eventList = [];
       tagKeys = tagKeys.split(',');
@@ -176,7 +191,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       _.each(results.data.data.result, function(series) {
         var tags = _.chain(series.metric)
         .filter(function(v, k) {
-          return _.contains(tagKeys, k);
+          return _.includes(tagKeys, k);
         }).value();
 
         _.each(series.values, function(value) {
@@ -250,41 +265,32 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       return this.getOriginalMetricName(labelData);
     }
 
-    return this.renderTemplate(options.legendFormat, labelData) || '{}';
+    return this.renderTemplate(templateSrv.replace(options.legendFormat), labelData) || '{}';
   };
 
-  this.renderTemplate = function(format, data) {
-    var originalSettings = _.templateSettings;
-    _.templateSettings = {
-      interpolate: /\{\{(.+?)\}\}/g
-    };
-
-    var template = _.template(templateSrv.replace(format));
-    var result;
-    try {
-      result = template(data);
-    } catch (e) {
-      result = null;
-    }
-
-    _.templateSettings = originalSettings;
-
-    return result;
+  this.renderTemplate = function(aliasPattern, aliasData) {
+    var aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
+    return aliasPattern.replace(aliasRegex, function(match, g1) {
+      if (aliasData[g1]) {
+        return aliasData[g1];
+      }
+      return g1;
+    });
   };
 
   this.getOriginalMetricName = function(labelData) {
     var metricName = labelData.__name__ || '';
     delete labelData.__name__;
-    var labelPart = _.map(_.pairs(labelData), function(label) {
+    var labelPart = _.map(_.toPairs(labelData), function(label) {
       return label[0] + '="' + label[1] + '"';
     }).join(',');
     return metricName + '{' + labelPart + '}';
   };
 
-  function getPrometheusTime(date, roundUp): number {
+  this.getPrometheusTime = function(date, roundUp) {
     if (_.isString(date)) {
       date = dateMath.parse(date, roundUp);
     }
     return Math.ceil(date.valueOf() / 1000);
-  }
+  };
 }

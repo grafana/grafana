@@ -76,8 +76,6 @@ func (app *AppPlugin) initApp() {
 		}
 	}
 
-	app.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + app.Id + "/edit"
-
 	// slugify pages
 	for _, include := range app.Includes {
 		if include.Slug == "" {

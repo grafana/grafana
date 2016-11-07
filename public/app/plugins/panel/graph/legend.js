@@ -49,7 +49,6 @@ function (angular, _, $) {
               position: 'bottom center',
               template: '<gf-color-picker></gf-color-picker>',
               model: {
-                autoClose: true,
                 series: series,
                 toggleAxis: function() {
                   ctrl.toggleAxis(series);

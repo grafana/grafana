@@ -22,7 +22,8 @@ const (
 
 // Typed errors
 var (
-	ErrDataSourceNotFound = errors.New("Data source not found")
+	ErrDataSourceNotFound   = errors.New("Data source not found")
+	ErrDataSourceNameExists = errors.New("Data source with same name already exists")
 )
 
 type DsAccess string
@@ -131,13 +132,13 @@ type GetDataSourcesQuery struct {
 type GetDataSourceByIdQuery struct {
 	Id     int64
 	OrgId  int64
-	Result DataSource
+	Result *DataSource
 }
 
 type GetDataSourceByNameQuery struct {
 	Name   string
 	OrgId  int64
-	Result DataSource
+	Result *DataSource
 }
 
 // ---------------------

@@ -1,3 +1,0 @@
-#ignore
--timeout=1s
--coverpkg=github.com/smartystreets/goconvey/convey/assertions,github.com/smartystreets/goconvey/convey/assertions/oglematchers

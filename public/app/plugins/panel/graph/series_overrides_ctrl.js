@@ -59,6 +59,7 @@ define([
         openOn: 'click',
         template: '<gf-color-picker></gf-color-picker>',
         model: {
+          autoClose: true,
           colorSelected: $scope.colorSelected,
         },
         onClose: function() {
@@ -104,7 +105,7 @@ define([
     $scope.addOverrideOption('Stack', 'stack', [true, false, 'A', 'B', 'C', 'D']);
     $scope.addOverrideOption('Color', 'color', ['change']);
     $scope.addOverrideOption('Y-axis', 'yaxis', [1, 2]);
-    $scope.addOverrideOption('Z-index', 'zindex', [-1,-2,-3,0,1,2,3]);
+    $scope.addOverrideOption('Z-index', 'zindex', [-3,-2,-1,0,1,2,3]);
     $scope.addOverrideOption('Transform', 'transform', ['negative-Y']);
     $scope.addOverrideOption('Legend', 'legend', [true, false]);
     $scope.updateCurrentOverrides();

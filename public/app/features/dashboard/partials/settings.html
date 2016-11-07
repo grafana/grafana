@@ -4,7 +4,7 @@
 	</h2>
 
 	<ul class="gf-tabs">
-		<li class="gf-tabs-item" ng-repeat="tab in ::['General', 'Rows', 'Links', 'Time picker', 'Metadata']">
+		<li class="gf-tabs-item" ng-repeat="tab in ::['General', 'Rows', 'Links', 'Time picker', 'Metadata', 'History']">
 			<a class="gf-tabs-link" ng-click="editor.index = $index" ng-class="{active: editor.index === $index}">
 				{{::tab}}
 			</a>
@@ -22,11 +22,18 @@
 		<div class="gf-form-group section">
       <h5 class="section-heading">Details</h5>
 			<div class="gf-form">
-				<label class="gf-form-label width-7">Title</label>
-				<input type="text" class="gf-form-input width-25" ng-model='dashboard.title'></input>
+				<label class="gf-form-label width-7">Name</label>
+				<input type="text" class="gf-form-input width-30" ng-model='dashboard.title'></input>
 			</div>
-			<div class="gf-form">
-				<label class="gf-form-label width-7">Tags<tip>Press enter to a add tag</tip></label>
+      <div class="gf-form">
+				<label class="gf-form-label width-7">Description</label>
+				<input type="text" class="gf-form-input width-30" ng-model='dashboard.description'></input>
+			</div>
+      <div class="gf-form">
+				<label class="gf-form-label width-7">
+          Tags
+          <info-popover mode="right-normal">Press enter to add a tag</info-popover>
+        </label>
 				<bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="add tags">
 				</bootstrap-tagsinput>
 			</div>
@@ -46,19 +53,19 @@
                         label="Editable"
                         tooltip="Uncheck, then save and reload to disable all dashboard editing"
                         checked="dashboard.editable"
-                        label-class="width-10">
+                        label-class="width-11">
         </gf-form-switch>
-        <gf-form-switch class="gf-form"
+				<gf-form-switch class="gf-form"
                         label="Hide Controls"
                         tooltip="Hide row controls. Shortcut: CTRL+H"
                         checked="dashboard.hideControls"
-                        label-class="width-10">
+                        label-class="width-11">
         </gf-form-switch>
         <gf-form-switch class="gf-form"
                         label="Shared Crosshair"
                         tooltip="Shared Crosshair line on all graphs. Shortcut: CTRL+O"
                         checked="dashboard.sharedCrosshair"
-                        label-class="width-10">
+                        label-class="width-11">
         </gf-form-switch>
       </div>
     </div>
@@ -83,7 +90,7 @@
 					<button class="btn btn-inverse gf-from-btn" ng-click="_.move(dashboard.rows,$index,$index+1)">
 						<i ng-class="{'invisible': $last}" class="fa fa-arrow-down"></i>
 					</button>
-					<button class="btn btn-inverse gf-form-btn" click="dashboard.rows = _.without(dashboard.rows,row)">
+					<button class="btn btn-inverse gf-form-btn" ng-click="dashboard.rows = _.without(dashboard.rows,row)">
 						<i class="fa fa-trash"></i>
 					</button>
 				</div>
@@ -104,7 +111,7 @@
 		<div class="gf-form-group">
 			<div class="gf-form">
 				<span class="gf-form-label width-10">Last updated at:</span>
-				<span class="gf-form-label width-18">{{formatDate(dashboardMeta.updated)}}</span>
+				<span class="gf-form-label width-18">{{dashboard.formatDate(dashboardMeta.updated)}}</span>
 			</div>
 			<div class="gf-form">
 				<span class="gf-form-label width-10">Last updated by:</span>
@@ -112,7 +119,7 @@
 			</div>
 			<div class="gf-form">
 				<span class="gf-form-label width-10">Created at:</span>
-				<span class="gf-form-label width-18">{{formatDate(dashboardMeta.created)}}&nbsp;</span>
+				<span class="gf-form-label width-18">{{dashboard.formatDate(dashboardMeta.created)}}&nbsp;</span>
 			</div>
 			<div class="gf-form">
 				<span class="gf-form-label width-10">Created by:</span>
@@ -124,5 +131,21 @@
 			</div>
 		</div>
 	</div>
-</div>
 
+  <div ng-if="editor.index == 5">
+      <h5 class="section-heading">Available Versions</h5>
+      <div class="gf-form">
+        <label class="gf-form-label width-7">Version</label>
+        <div class="gf-form-select-wrapper">
+          <select ng-model="dashboardMeta.selectedHistoricalVersion" class='gf-form-input' ng-options="v for v in dashboardMeta.historicalVersions"></select>
+        </div>
+        <div class="gf-form-button-wrapper">
+          <button class="btn btn-inverse gf-form-btn" ng-click="openDashboardFromHistory()">Open</button>
+        </div>
+        <div class="gf-form-button-wrapper">
+          <button class="btn btn-inverse gf-form-btn" ng-click="restoreDashboardFromHistory()">Restore</button>
+        </div>
+      </div>
+  </div>
+
+</div>

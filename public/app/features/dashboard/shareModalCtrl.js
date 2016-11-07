@@ -8,7 +8,7 @@ function (angular, _, require, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, $element, templateSrv, linkSrv) {
+  module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, templateSrv, linkSrv) {
 
     $scope.options = { forCurrent: true, includeTemplateVars: true, theme: 'current' };
     $scope.editor = { index: $scope.tabIndex || 0};
@@ -22,11 +22,15 @@ function (angular, _, require, config) {
         $scope.modalTitle = 'Share Panel';
         $scope.tabs.push({title: 'Embed', src: 'shareEmbed.html'});
       } else {
-        $scope.modalTitle = 'Share Dashboard';
+        $scope.modalTitle = 'Share';
       }
 
       if (!$scope.dashboard.meta.isSnapshot) {
-        $scope.tabs.push({title: 'Snapshot sharing', src: 'shareSnapshot.html'});
+        $scope.tabs.push({title: 'Snapshot', src: 'shareSnapshot.html'});
+      }
+
+      if (!$scope.dashboard.meta.isSnapshot && !$scope.modeSharePanel) {
+        $scope.tabs.push({title: 'Export', src: 'shareExport.html'});
       }
 
       $scope.buildUrl();
@@ -70,12 +74,12 @@ function (angular, _, require, config) {
       $scope.shareUrl = linkSrv.addParamsToUrl(baseUrl, params);
 
       var soloUrl = $scope.shareUrl;
-      soloUrl = soloUrl.replace('/dashboard/', '/dashboard-solo/');
-      soloUrl = soloUrl.replace("&fullscreen", "");
+      soloUrl = soloUrl.replace(config.appSubUrl + '/dashboard/', config.appSubUrl + '/dashboard-solo/');
+      soloUrl = soloUrl.replace("&fullscreen", "").replace("&edit", "");
 
       $scope.iframeHtml = '<iframe src="' + soloUrl + '" width="450" height="200" frameborder="0"></iframe>';
 
-      $scope.imageUrl = soloUrl.replace('/dashboard-solo/', '/render/dashboard-solo/');
+      $scope.imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
     };

@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path"
 	"path/filepath"
@@ -10,6 +11,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/annotations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrations"
 	"github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 	"github.com/grafana/grafana/pkg/setting"
@@ -40,8 +42,8 @@ var (
 	}
 
 	mysqlConfig MySQLConfig
-
-	UseSQLite3 bool
+	UseSQLite3  bool
+	sqlog       log.Logger = log.New("sqlstore")
 )
 
 func EnsureAdminUser() {
@@ -74,38 +76,30 @@ func NewEngine() {
 	x, err := getEngine()
 
 	if err != nil {
-		log.Fatal(3, "Sqlstore: Fail to connect to database: %v", err)
+		sqlog.Crit("Fail to connect to database", "error", err)
+		os.Exit(1)
 	}
 
-	err = SetEngine(x, setting.Env == setting.DEV)
+	err = SetEngine(x)
 
 	if err != nil {
-		log.Fatal(3, "fail to initialize orm engine: %v", err)
+		sqlog.Error("Fail to initialize orm engine", "error", err)
+		os.Exit(1)
 	}
 }
 
-func SetEngine(engine *xorm.Engine, enableLog bool) (err error) {
+func SetEngine(engine *xorm.Engine) (err error) {
 	x = engine
 	dialect = migrator.NewDialect(x.DriverName())
 
 	migrator := migrator.NewMigrator(x)
-	migrator.LogLevel = log.INFO
 	migrations.AddMigrations(migrator)
 
 	if err := migrator.Start(); err != nil {
 		return fmt.Errorf("Sqlstore::Migration failed err: %v\n", err)
 	}
 
-	if enableLog {
-		logPath := path.Join(setting.LogsPath, "xorm.log")
-		os.MkdirAll(path.Dir(logPath), os.ModePerm)
-
-		f, err := os.Create(logPath)
-		if err != nil {
-			return fmt.Errorf("sqlstore.init(fail to create xorm.log): %v", err)
-		}
-		x.Logger = xorm.NewSimpleLogger(f)
-	}
+	annotations.SetRepository(&SqlAnnotationRepo{})
 
 	return nil
 }
@@ -158,23 +152,41 @@ func getEngine() (*xorm.Engine, error) {
 		return nil, fmt.Errorf("Unknown database type: %s", DbCfg.Type)
 	}
 
-	log.Info("Database: %v", DbCfg.Type)
-
+	sqlog.Info("Initializing DB", "dbtype", DbCfg.Type)
 	return xorm.NewEngine(DbCfg.Type, cnnstr)
 }
 
 func LoadConfig() {
 	sec := setting.Cfg.Section("database")
 
-	DbCfg.Type = sec.Key("type").String()
+	cfgURL := sec.Key("url").String()
+	if len(cfgURL) != 0 {
+		dbURL, _ := url.Parse(cfgURL)
+		DbCfg.Type = dbURL.Scheme
+		DbCfg.Host = dbURL.Host
+
+		pathSplit := strings.Split(dbURL.Path, "/")
+		if len(pathSplit) > 1 {
+			DbCfg.Name = pathSplit[1]
+		}
+
+		userInfo := dbURL.User
+		if userInfo != nil {
+			DbCfg.User = userInfo.Username()
+			DbCfg.Pwd, _ = userInfo.Password()
+		}
+	} else {
+		DbCfg.Type = sec.Key("type").String()
+		DbCfg.Host = sec.Key("host").String()
+		DbCfg.Name = sec.Key("name").String()
+		DbCfg.User = sec.Key("user").String()
+		if len(DbCfg.Pwd) == 0 {
+			DbCfg.Pwd = sec.Key("password").String()
+		}
+	}
+
 	if DbCfg.Type == "sqlite3" {
 		UseSQLite3 = true
-	}
-	DbCfg.Host = sec.Key("host").String()
-	DbCfg.Name = sec.Key("name").String()
-	DbCfg.User = sec.Key("user").String()
-	if len(DbCfg.Pwd) == 0 {
-		DbCfg.Pwd = sec.Key("password").String()
 	}
 	DbCfg.SslMode = sec.Key("ssl_mode").String()
 	DbCfg.Path = sec.Key("path").MustString("data/grafana.db")

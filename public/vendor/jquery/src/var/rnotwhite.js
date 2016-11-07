@@ -1,3 +1,5 @@
-define(function() {
-	return (/\S+/g);
-});
+define( function() {
+	"use strict";
+
+	return ( /\S+/g );
+} );

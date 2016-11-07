@@ -19,6 +19,8 @@ func init() {
 	bus.AddHandler("sql", SearchDashboards)
 	bus.AddHandler("sql", GetDashboardTags)
 	bus.AddHandler("sql", GetDashboardSlugById)
+	bus.AddHandler("sql", GetDashboardsByPluginId)
+	bus.AddHandler("sql", GetHistoricalVersions)
 }
 
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
@@ -44,6 +46,11 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 				} else {
 					return m.ErrDashboardVersionMismatch
 				}
+			}
+
+			// do not allow plugin dashboard updates without overwrite flag
+			if existing.PluginId != "" && cmd.Overwrite == false {
+				return m.UpdatePluginDashboardError{PluginId: existing.PluginId}
 			}
 		}
 
@@ -78,7 +85,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			return m.ErrDashboardNotFound
 		}
 
-		// delete existing tabs
+		// delete existing tags
 		_, err = sess.Exec("DELETE FROM dashboard_tag WHERE dashboard_id=?", dash.Id)
 		if err != nil {
 			return err
@@ -92,6 +99,19 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 					return err
 				}
 			}
+		}
+
+		// saving dashboard in history table
+		history := m.DashboardHistory{
+			DashboardVersion: dash.Version,
+			DashboardId:      dash.Id,
+			Updated:          dash.Updated,
+			UpdatedBy:        dash.UpdatedBy,
+			Data:             dash.Data,
+		}
+		_, err = sess.Insert(&history)
+		if err != nil {
+			return err
 		}
 
 		cmd.Result = dash
@@ -216,7 +236,7 @@ func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
 func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 	return inTransaction2(func(sess *session) error {
 		dashboard := m.Dashboard{Slug: cmd.Slug, OrgId: cmd.OrgId}
-		has, err := x.Get(&dashboard)
+		has, err := sess.Get(&dashboard)
 		if err != nil {
 			return err
 		} else if has == false {
@@ -227,6 +247,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			"DELETE FROM dashboard_tag WHERE dashboard_id = ? ",
 			"DELETE FROM star WHERE dashboard_id = ? ",
 			"DELETE FROM dashboard WHERE id = ?",
+			"DELETE FROM dashboard_history WHERE dashboard_id = ?",
 		}
 
 		for _, sql := range deletes {
@@ -234,6 +255,10 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			if err != nil {
 				return err
 			}
+		}
+
+		if err := DeleteAlertDefinition(dashboard.Id, sess.Session); err != nil {
+			return nil
 		}
 
 		return nil
@@ -245,10 +270,23 @@ func GetDashboards(query *m.GetDashboardsQuery) error {
 		return m.ErrCommandValidationFailed
 	}
 
-	var dashboards = make([]m.Dashboard, 0)
+	var dashboards = make([]*m.Dashboard, 0)
 
 	err := x.In("id", query.DashboardIds).Find(&dashboards)
-	query.Result = &dashboards
+	query.Result = dashboards
+
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func GetDashboardsByPluginId(query *m.GetDashboardsByPluginIdQuery) error {
+	var dashboards = make([]*m.Dashboard, 0)
+
+	err := x.Where("org_id=? AND plugin_id=?", query.OrgId, query.PluginId).Find(&dashboards)
+	query.Result = dashboards
 
 	if err != nil {
 		return err
@@ -274,5 +312,18 @@ func GetDashboardSlugById(query *m.GetDashboardSlugByIdQuery) error {
 	}
 
 	query.Result = slug.Slug
+	return nil
+}
+
+func GetHistoricalVersions(query *m.GetDashboardHistoryQuery) error {
+	var dashboardHistory = make([]*m.DashboardHistory, 0)
+
+	err := x.Cols("dashboard_version").Where("dashboard_id", query.Id).Find(&dashboardHistory)
+	query.Result = dashboardHistory
+
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

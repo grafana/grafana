@@ -5,6 +5,7 @@ function (coreModule) {
   "use strict";
 
   coreModule.default.controller('LoadDashboardCtrl', function($scope, $routeParams, dashboardLoaderSrv, backendSrv, $location) {
+    $scope.appEvent("dashboard-fetch-start");
 
     if (!$routeParams.slug) {
       backendSrv.get('/api/dashboards/home').then(function(homeDash) {
@@ -25,24 +26,19 @@ function (coreModule) {
 
   });
 
-  coreModule.default.controller('DashFromImportCtrl', function($scope, $location, alertSrv) {
-    if (!window.grafanaImportDashboard) {
-      alertSrv.set('Not found', 'Cannot reload page with unsaved imported dashboard', 'warning', 7000);
-      $location.path('');
-      return;
-    }
-    $scope.initDashboard({
-      meta: { canShare: false, canStar: false },
-      dashboard: window.grafanaImportDashboard
-    }, $scope);
-  });
-
   coreModule.default.controller('NewDashboardCtrl', function($scope) {
     $scope.initDashboard({
-      meta: { canStar: false, canShare: false },
+      meta: { canStar: false, canShare: false, isNew: true },
       dashboard: {
         title: "New dashboard",
-        rows: [{ height: '250px', panels:[] }]
+        rows: [
+          {
+            title: 'Dashboard Row',
+            height: '250px',
+            panels:[],
+            isNew: true,
+          }
+        ]
       },
     }, $scope);
   });
