@@ -33,12 +33,13 @@ type EvalContext struct {
 
 func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
 	return &EvalContext{
-		Ctx:         alertCtx,
-		StartTime:   time.Now(),
-		Rule:        rule,
-		Logs:        make([]*ResultLogEntry, 0),
-		EvalMatches: make([]*EvalMatch, 0),
-		log:         log.New("alerting.evalContext"),
+		Ctx:            alertCtx,
+		StartTime:      time.Now(),
+		Rule:           rule,
+		Logs:           make([]*ResultLogEntry, 0),
+		EvalMatches:    make([]*EvalMatch, 0),
+		log:            log.New("alerting.evalContext"),
+		PrevAlertState: rule.State,
 	}
 }
 

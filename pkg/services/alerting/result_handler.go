@@ -59,8 +59,6 @@ func (handler *DefaultResultHandler) GetStateFromEvaluation(evalContext *EvalCon
 }
 
 func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
-	evalContext.PrevAlertState = evalContext.Rule.State
-
 	executionError := ""
 	annotationData := simplejson.New()
 
