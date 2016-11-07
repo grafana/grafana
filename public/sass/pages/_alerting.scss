@@ -50,7 +50,8 @@
 
 .panel-alert-state {
   &--alerting {
-    animation: alerting-panel 2s 0s infinite;
+    background-color: mix($critical,$panel-bg, 3%);
+    animation: alerting-panel 2.5s 0s infinite;
     opacity: 1;
 
     .panel-alert-icon:before {
@@ -70,14 +71,12 @@
 
 @keyframes alerting-panel {
   0% {
-    box-shadow: none;
+    box-shadow: 0 0 10px rgba($critical,0.5);
   }
   50% {
-    box-shadow: 0 0 10px $critical;
+    box-shadow: 0 0 15px $critical;
   }
   100% {
-    box-shadow: none;
+    box-shadow: 0 0 10px rgba($critical,0.5);
   }
 }
-
-
