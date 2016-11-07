@@ -22,7 +22,6 @@ func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error)
 	return &PagerdutyNotifier{
 		NotifierBase:     NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		Key:              key,
-		AlertOnExecError: model.Settings.Get("alertOnExecError").MustBool(),
 		log:              log.New("alerting.notifier.pagerduty"),
 	}, nil
 }
@@ -30,7 +29,6 @@ func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error)
 type PagerdutyNotifier struct {
 	NotifierBase
 	Key              string
-	AlertOnExecError bool
 	log              log.Logger
 }
 
@@ -38,8 +36,7 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Notifying Pagerduty")
 	metrics.M_Alerting_Notification_Sent_PagerDuty.Inc(1)
 
-	if (evalContext.Rule.State == m.AlertStateAlerting) ||
-		((this.AlertOnExecError) && (evalContext.Rule.State == m.AlertStateExecError)) {
+	if evalContext.Rule.State == m.AlertStateAlerting {
 
 		// Pagerduty Events API URL
 		pgEventsUrl := "https://events.pagerduty.com/generic/2010-04-15/create_event.json"

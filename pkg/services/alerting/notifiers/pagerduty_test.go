@@ -26,11 +26,10 @@ func TestPagerdutyNotifier(t *testing.T) {
 				So(err, ShouldNotBeNil)
 			})
 
-			Convey("settings with alertOnExecError should trigger incident", func() {
+			Convey("settings should trigger incident", func() {
 				json := `
 				{
-          "integrationKey": "abcdefgh0123456789",
-          "alertOnExecError": true
+          "integrationKey": "abcdefgh0123456789"
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -47,7 +46,6 @@ func TestPagerdutyNotifier(t *testing.T) {
 				So(pagerdutyNotifier.Name, ShouldEqual, "pagerduty_testing")
 				So(pagerdutyNotifier.Type, ShouldEqual, "pagerduty")
 				So(pagerdutyNotifier.Key, ShouldEqual, "abcdefgh0123456789")
-				So(pagerdutyNotifier.AlertOnExecError, ShouldEqual, true)
 			})
 
 		})
