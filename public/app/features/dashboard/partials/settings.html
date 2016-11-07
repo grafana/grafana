@@ -137,7 +137,7 @@
       <div class="gf-form">
         <label class="gf-form-label width-7">Version</label>
         <div class="gf-form-select-wrapper">
-          <select ng-model="dashboardMeta.selectedHistoricalVersion" class='gf-form-input' ng-options="f.value as f.text for f in dashboardMeta.historicalVersions"></select>
+          <select ng-model="dashboardMeta.selectedHistoricalVersion" class='gf-form-input' ng-options="v for v in dashboardMeta.historicalVersions"></select>
         </div>
         <div class="gf-form-button-wrapper">
           <button class="btn btn-inverse gf-form-btn" ng-click="openDashboardFromHistory()">Open</button>

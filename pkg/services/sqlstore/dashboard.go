@@ -6,7 +6,6 @@ import (
 
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -317,13 +316,14 @@ func GetDashboardSlugById(query *m.GetDashboardSlugByIdQuery) error {
 }
 
 func GetHistoricalVersions(query *m.GetDashboardHistoryQuery) error {
-	var rawSql = `SELECT dashboard_version from dashboard_history WHERE dashboard_id=?`
+	var dashboardHistory = make([]*m.DashboardHistory, 0)
 
-	query.Result = make([]*int64, 0)
-	sess := x.Sql(rawSql, query.Id)
-	err := sess.Find(&query.Result)
+	err := x.Cols("dashboard_version").Where("dashboard_id", query.Id).Find(&dashboardHistory)
+	query.Result = dashboardHistory
 
-	log.Info("%v", err)
+	if err != nil {
+		return err
+	}
 
-	return err
+	return nil
 }

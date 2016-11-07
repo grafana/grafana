@@ -52,7 +52,7 @@ type DashboardMeta struct {
 	UpdatedBy          string    `json:"updatedBy"`
 	CreatedBy          string    `json:"createdBy"`
 	Version            int       `json:"version"`
-	HistoricalVersions []*int64  `json:"historicalVersions"`
+	HistoricalVersions []int  	 `json:"historicalVersions"`
 }
 
 type DashboardFullWithMeta struct {

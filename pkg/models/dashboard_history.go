@@ -18,6 +18,5 @@ type DashboardHistory struct {
 
 type GetDashboardHistoryQuery struct {
 	Id int64
-
-	Result []*int64
+	Result []*DashboardHistory
 }

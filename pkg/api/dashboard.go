@@ -94,12 +94,14 @@ func getUserLogin(userId int64) string {
 	}
 }
 
-func getHistoricalVersions(id int64) []*int64 {
+func getHistoricalVersions(id int64) []int {
 	query := m.GetDashboardHistoryQuery{Id: id}
 	err := bus.Dispatch(&query)
-	historyVersions := make([]*int64, 0)
+	historyVersions := make([]int, len(query.Result))
 	if err == nil {
-		historyVersions = query.Result
+		for i := 0; i<len(query.Result); i++ {
+			historyVersions[i] = query.Result[i].DashboardVersion
+		}
 	}
 	return historyVersions
 }
