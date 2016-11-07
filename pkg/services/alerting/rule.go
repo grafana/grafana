@@ -11,17 +11,18 @@ import (
 )
 
 type Rule struct {
-	Id            int64
-	OrgId         int64
-	DashboardId   int64
-	PanelId       int64
-	Frequency     int64
-	Name          string
-	Message       string
-	NoDataState   m.NoDataOption
-	State         m.AlertStateType
-	Conditions    []Condition
-	Notifications []int64
+	Id                  int64
+	OrgId               int64
+	DashboardId         int64
+	PanelId             int64
+	Frequency           int64
+	Name                string
+	Message             string
+	NoDataState         m.NoDataOption
+	ExecutionErrorState m.ExecutionErrorOption
+	State               m.AlertStateType
+	Conditions          []Condition
+	Notifications       []int64
 }
 
 type ValidationError struct {
@@ -77,6 +78,7 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 	model.Frequency = ruleDef.Frequency
 	model.State = ruleDef.State
 	model.NoDataState = m.NoDataOption(ruleDef.Settings.Get("noDataState").MustString("no_data"))
+	model.ExecutionErrorState = m.ExecutionErrorOption(ruleDef.Settings.Get("executionErrorState").MustString("alerting"))
 
 	for _, v := range ruleDef.Settings.Get("notifications").MustArray() {
 		jsonModel := simplejson.NewFromAny(v)

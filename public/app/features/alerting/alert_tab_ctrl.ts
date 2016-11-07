@@ -19,6 +19,7 @@ export class AlertTabCtrl {
   conditionModels: any;
   evalFunctions: any;
   noDataModes: any;
+  executionErrorModes: any;
   addNotificationSegment;
   notifications;
   alertNotifications;
@@ -42,6 +43,7 @@ export class AlertTabCtrl {
     this.evalFunctions = alertDef.evalFunctions;
     this.conditionTypes = alertDef.conditionTypes;
     this.noDataModes = alertDef.noDataModes;
+    this.executionErrorModes = alertDef.executionErrorModes;
     this.appSubUrl = config.appSubUrl;
   }
 
@@ -140,6 +142,7 @@ export class AlertTabCtrl {
     }
 
     alert.noDataState = alert.noDataState || 'no_data';
+    alert.executionErrorState = alert.executionErrorState || 'alerting';
     alert.frequency = alert.frequency || '60s';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
