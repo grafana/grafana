@@ -27,27 +27,52 @@ func NewResultHandler() *DefaultResultHandler {
 	}
 }
 
+func (handler *DefaultResultHandler) GetStateFromEvaluation(evalContext *EvalContext) m.AlertStateType {
+	if evalContext.Error != nil {
+		handler.log.Error("Alert Rule Result Error",
+			"ruleId", evalContext.Rule.Id,
+			"name", evalContext.Rule.Name,
+			"error", evalContext.Error,
+			"changing state to", evalContext.Rule.ExecutionErrorState.ToAlertState())
+
+		if evalContext.Rule.ExecutionErrorState == m.ExecutionErrorKeepState {
+			return evalContext.PrevAlertState
+		} else {
+			return evalContext.Rule.ExecutionErrorState.ToAlertState()
+		}
+	} else if evalContext.Firing {
+		return m.AlertStateAlerting
+	} else if evalContext.NoDataFound {
+		handler.log.Info("Alert Rule returned no data",
+			"ruleId", evalContext.Rule.Id,
+			"name", evalContext.Rule.Name,
+			"changing state to", evalContext.Rule.NoDataState.ToAlertState())
+
+		if evalContext.Rule.NoDataState == m.NoDataKeepState {
+			return evalContext.PrevAlertState
+		} else {
+			return evalContext.Rule.NoDataState.ToAlertState()
+		}
+	}
+
+	return m.AlertStateOK
+}
+
 func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 	evalContext.PrevAlertState = evalContext.Rule.State
 
 	executionError := ""
 	annotationData := simplejson.New()
+
+	evalContext.Rule.State = handler.GetStateFromEvaluation(evalContext)
+
 	if evalContext.Error != nil {
-		handler.log.Error("Alert Rule Result Error", "ruleId", evalContext.Rule.Id, "error", evalContext.Error)
-		evalContext.Rule.State = m.AlertStateExecError
 		executionError = evalContext.Error.Error()
 		annotationData.Set("errorMessage", executionError)
-	} else if evalContext.Firing {
-		evalContext.Rule.State = m.AlertStateAlerting
+	}
+
+	if evalContext.Firing {
 		annotationData = simplejson.NewFromAny(evalContext.EvalMatches)
-	} else {
-		if evalContext.NoDataFound {
-			if evalContext.Rule.NoDataState != m.NoDataKeepState {
-				evalContext.Rule.State = evalContext.Rule.NoDataState.ToAlertState()
-			}
-		} else {
-			evalContext.Rule.State = m.AlertStateOK
-		}
 	}
 
 	countStateResult(evalContext.Rule.State)
@@ -88,8 +113,6 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 
 		if evalContext.ShouldSendNotification() {
 			handler.notifier.Notify(evalContext)
-		} else {
-			handler.log.Info("Notfication not sent", "prev state", evalContext.PrevAlertState, "new state", evalContext.Rule.State)
 		}
 	}
 
@@ -108,7 +131,5 @@ func countStateResult(state m.AlertStateType) {
 		metrics.M_Alerting_Result_State_Paused.Inc(1)
 	case m.AlertStateNoData:
 		metrics.M_Alerting_Result_State_NoData.Inc(1)
-	case m.AlertStateExecError:
-		metrics.M_Alerting_Result_State_ExecError.Inc(1)
 	}
 }

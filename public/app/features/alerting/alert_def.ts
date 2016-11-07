@@ -37,17 +37,20 @@ var reducerTypes = [
 ];
 
 var noDataModes = [
-  {text: 'OK', value: 'ok'},
   {text: 'Alerting', value: 'alerting'},
   {text: 'No Data', value: 'no_data'},
-  {text: 'Keep Last', value: 'keep_last'},
+  {text: 'Keep Last State', value: 'keep_state'},
+];
+
+var executionErrorModes = [
+  {text: 'Alerting', value: 'alerting'},
+  {text: 'Keep Last State', value: 'keep_state'},
 ];
 
 function createReducerPart(model) {
   var def = new QueryPartDef({type: model.type, defaultParams: []});
   return new QueryPart(model, def);
 }
-
 
 function getStateDisplayModel(state) {
   switch (state) {
@@ -113,6 +116,7 @@ export default {
   conditionTypes: conditionTypes,
   evalFunctions: evalFunctions,
   noDataModes: noDataModes,
+  executionErrorModes: executionErrorModes,
   reducerTypes: reducerTypes,
   createReducerPart: createReducerPart,
   joinEvalMatches: joinEvalMatches,

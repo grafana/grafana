@@ -31,6 +31,17 @@ type EvalContext struct {
 	Ctx context.Context
 }
 
+func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
+	return &EvalContext{
+		Ctx:         alertCtx,
+		StartTime:   time.Now(),
+		Rule:        rule,
+		Logs:        make([]*ResultLogEntry, 0),
+		EvalMatches: make([]*EvalMatch, 0),
+		log:         log.New("alerting.evalContext"),
+	}
+}
+
 type StateDescription struct {
 	Color string
 	Text  string
@@ -48,11 +59,6 @@ func (c *EvalContext) GetStateModel() *StateDescription {
 		return &StateDescription{
 			Color: "#888888",
 			Text:  "No Data",
-		}
-	case m.AlertStateExecError:
-		return &StateDescription{
-			Color: "#000",
-			Text:  "Execution Error",
 		}
 	case m.AlertStateAlerting:
 		return &StateDescription{
@@ -73,25 +79,7 @@ func (c *EvalContext) ShouldSendNotification() bool {
 		return false
 	}
 
-	alertState := c.Rule.State
-
-	if c.NoDataFound {
-		if c.Rule.NoDataState == m.NoDataKeepState {
-			return false
-		}
-
-		alertState = c.Rule.NoDataState.ToAlertState()
-	}
-
-	if c.Error != nil {
-		if c.Rule.ExecutionErrorState == m.NoDataKeepState {
-			return false
-		}
-
-		alertState = c.Rule.ExecutionErrorState.ToAlertState()
-	}
-
-	return alertState != c.PrevAlertState
+	return true
 }
 
 func (a *EvalContext) GetDurationMs() float64 {
@@ -126,16 +114,5 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 	} else {
 		ruleUrl := fmt.Sprintf("%sdashboard/db/%s?fullscreen&edit&tab=alert&panelId=%d", setting.AppUrl, slug, c.Rule.PanelId)
 		return ruleUrl, nil
-	}
-}
-
-func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
-	return &EvalContext{
-		Ctx:         alertCtx,
-		StartTime:   time.Now(),
-		Rule:        rule,
-		Logs:        make([]*ResultLogEntry, 0),
-		EvalMatches: make([]*EvalMatch, 0),
-		log:         log.New("alerting.evalContext"),
 	}
 }

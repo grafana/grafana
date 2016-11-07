@@ -82,10 +82,19 @@
 
 			<div class="gf-form-group">
 				<div class="gf-form">
-          <span class="gf-form-label">If no data points or all values are null</span>
+          <span class="gf-form-label width-18">If no data points or all values are null</span>
           <span class="gf-form-label query-keyword">SET STATE TO</span>
 					<div class="gf-form-select-wrapper">
 						<select class="gf-form-input" ng-model="ctrl.alert.noDataState" ng-options="f.value as f.text for f in ctrl.noDataModes">
+						</select>
+					</div>
+				</div>
+
+				<div class="gf-form">
+          <span class="gf-form-label width-18">If query exeuction throws an error</span>
+          <span class="gf-form-label query-keyword">SET STATE TO</span>
+					<div class="gf-form-select-wrapper">
+						<select class="gf-form-input" ng-model="ctrl.alert.executionErrorState" ng-options="f.value as f.text for f in ctrl.executionErrorModes">
 						</select>
 					</div>
 				</div>
