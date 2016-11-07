@@ -43,7 +43,7 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 		bodyJSON := simplejson.New()
 		bodyJSON.Set("service_key", this.Key)
-		bodyJSON.Set("description", evalContext.Rule.Name+"-"+evalContext.Rule.Message)
+		bodyJSON.Set("description", evalContext.Rule.Name + " - " + evalContext.Rule.Message)
 		bodyJSON.Set("client", "Grafana")
 		bodyJSON.Set("event_type", "trigger")
 
