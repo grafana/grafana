@@ -71,7 +71,7 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 			HttpMethod: "POST",
 		}
 
-		if err := bus.Dispatch(cmd); err != nil {
+		if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 			this.log.Error("Failed to send notification to Pagerduty", "error", err, "body", string(body))
 		}
 
