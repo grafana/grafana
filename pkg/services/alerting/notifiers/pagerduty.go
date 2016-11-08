@@ -13,6 +13,10 @@ func init() {
 	alerting.RegisterNotifier("pagerduty", NewPagerdutyNotifier)
 }
 
+var (
+	pagerdutyEventApiUrl string = "https://events.pagerduty.com/generic/2010-04-15/create_event.json"
+)
+
 func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	key := model.Settings.Get("integrationKey").MustString()
 	if key == "" {
@@ -20,16 +24,16 @@ func NewPagerdutyNotifier(model *m.AlertNotification) (alerting.Notifier, error)
 	}
 
 	return &PagerdutyNotifier{
-		NotifierBase:     NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
-		Key:              key,
-		log:              log.New("alerting.notifier.pagerduty"),
+		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		Key:          key,
+		log:          log.New("alerting.notifier.pagerduty"),
 	}, nil
 }
 
 type PagerdutyNotifier struct {
 	NotifierBase
-	Key              string
-	log              log.Logger
+	Key string
+	log log.Logger
 }
 
 func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
@@ -37,13 +41,9 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	metrics.M_Alerting_Notification_Sent_PagerDuty.Inc(1)
 
 	if evalContext.Rule.State == m.AlertStateAlerting {
-
-		// Pagerduty Events API URL
-		pgEventsUrl := "https://events.pagerduty.com/generic/2010-04-15/create_event.json"
-
 		bodyJSON := simplejson.New()
 		bodyJSON.Set("service_key", this.Key)
-		bodyJSON.Set("description", evalContext.Rule.Name + " - " + evalContext.Rule.Message)
+		bodyJSON.Set("description", evalContext.Rule.Name+" - "+evalContext.Rule.Message)
 		bodyJSON.Set("client", "Grafana")
 		bodyJSON.Set("event_type", "trigger")
 
@@ -66,7 +66,7 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 		body, _ := bodyJSON.MarshalJSON()
 
 		cmd := &m.SendWebhook{
-			Url:        pgEventsUrl,
+			Url:        pagerdutyEventApiUrl,
 			Body:       string(body),
 			HttpMethod: "POST",
 		}
