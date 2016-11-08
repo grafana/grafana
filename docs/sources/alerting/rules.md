@@ -1,5 +1,5 @@
 +++
-title = "Alerting Engine Rules Guide"
+title = "Alerting Engine & Rules Guide"
 description = "Configuring Alert Rules"
 keywords = ["grafana", "alerting", "guide", "rules"]
 type = "docs"
