@@ -102,7 +102,10 @@ Mention | make it possible to include a mention in the slack notification sent b
 
 To set up PagerDuty, all you have to do is to provide an api key.
 
-> Our pagerduty integration only support trigger events at the moment. You have to resolve them by yourself.
+Setting | Description
+---------- | -----------
+Integration Key | Integration key for pagerduty.
+Auto resolve incidents | Resolve incidents in pagerduty once the alert goes back to ok
 
 
 # Enable images in notifications {#external-image-store}
