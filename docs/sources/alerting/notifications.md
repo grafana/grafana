@@ -62,10 +62,10 @@ Using this notification you could integrated Grafana into any system you choose,
 To set up slack you need to configure an incoming webhook url at slack. You can follow their guide for how to do that https://api.slack.com/incoming-webhooks
 If you want to include screenshots of the firing alerts in the slack messages you have to configure the [external image destination](/alerting/notifications/#graph-screenshots-in-notifiations) in Grafana. 
 
-
-The `recipient setting` allows you to override the slack recipient.<br />
-The `mention setting` make it possible to include a mention in the slack notification sent by Grafana. Ex @here or @channel
-
+Setting | Description
+---------- | -----------
+Recipient | allows you to override the slack recipient.
+Mention | make it possible to include a mention in the slack notification sent by Grafana. Ex @here or @channel
 
 ### Pagerduty
 To set up pagerduty, all you have to do is to provide an api key. 
