@@ -25,31 +25,12 @@ to add and configure a `notification` object. This is done from the Alerting/Not
 On the notifications list page hit the `New Notification` button to go the the page where you
 can configure and setup a new notification.
 
-You you specify name and type, and type specific options. You can also test the notification to make
+You specify name and type, and type specific options. You can also test the notification to make
 sure it's working and setup correctly.
-
-<!-- You can reach this page from the Alerting submenu or Alert List page header. -->
-<!-- When you configure a notification you can have it be a global notifiations, meaning -->
-<!-- it will be sent for all alerts within Grafana. This is useful to make sure you won’t miss to configure -->
-<!-- notifications for an alert.  You can find the alert notification page in the main menu under alerting. -->
-<!--  -->
-
-<!-- ## Add a notifications to an Alert -->
-<!-- You can add and remove notifications from an alert by going to the `Notifications` sub menu in the alerting tab. -->
-<!--  -->
-<!--  -->
-<!-- <img class="no-shadow" src="/img/docs/v4/alerttab_notifications_submenu.png"> -->
-<!--  -->
-<!--  -->
-<!-- Click the `+` button to add a new notification and the `x` to remove. Notifications with a blue backgrounds are enabled by default for all alerts and cannot be modified from this view. -->
-<!--  -->
-<!--  -->
-<!-- <img class="no-shadow" src="/img/docs/v4/add_remove_notifications.png"> -->
-<!--  -->
 
 ### Send on all alerts
 
-This option will make this notification used for all alert rules, existing and new.
+When checked this option will make this notification used for all alert rules, existing and new.
 
 ## Supported notification types
 
@@ -61,12 +42,25 @@ To enable email notification you have to setup [SMTP settings](/installation/con
 in the Grafana config. Email notification will upload an image of the alert graph to an
 external image destination if available or fallback on attaching the image in the email.
 
+### Slack
+
+{{< imgbox max-width="40%" img="/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
+
+To set up slack you need to configure an incoming webhook url at slack. You can follow their guide for how
+to do that https://api.slack.com/incoming-webhooks If you want to include screenshots of the firing alerts
+in the slack messages you have to configure the [external image destination](#external-image-store) in Grafana.
+
+Setting | Description
+---------- | -----------
+Recipient | allows you to override the slack recipient.
+Mention | make it possible to include a mention in the slack notification sent by Grafana. Ex @here or @channel
+
 ### Webhook
 
 The webhook notification is a simple way to send information about an state change over HTTP to a custom endpoint.
 Using this notification you could integrated Grafana into any system you choose, by yourself.
 
-Example json schema:
+Example json body:
 ```json
 {
   "title": "My alert",
@@ -84,19 +78,6 @@ Example json schema:
   ]
 }
 ```
-
-### Slack
-
-{{< imgbox max-width="40%" img="/img/docs/v4/slack_notification.png" caption="Alerting Slack Notification" >}}
-
-To set up slack you need to configure an incoming webhook url at slack. You can follow their guide for how
-to do that https://api.slack.com/incoming-webhooks If you want to include screenshots of the firing alerts
-in the slack messages you have to configure the [external image destination](#external-image-store) in Grafana.
-
-Setting | Description
----------- | -----------
-Recipient | allows you to override the slack recipient.
-Mention | make it possible to include a mention in the slack notification sent by Grafana. Ex @here or @channel
 
 ### PagerDuty
 
@@ -118,9 +99,5 @@ Amazon S3 for this and Webdav. So to set that up you need to configure the
 config file.
 
 This is not an optional requirement, you can get slack and email notifications without setting this up.
-
-
-
-
 
 
