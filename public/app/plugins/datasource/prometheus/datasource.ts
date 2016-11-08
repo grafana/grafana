@@ -85,13 +85,16 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       query.requestId = options.panelId + target.refId;
 
       var interval = templateSrv.replace(target.interval, options.scopedVars) || options.interval;
+      query.instant = (interval === "0");
       var intervalFactor = target.intervalFactor || 1;
-      target.step = query.step = this.calculateInterval(interval, intervalFactor);
-      var range = Math.ceil(end - start);
-      // Prometheus drop query if range/step > 11000
-      // calibrate step if it is too big
-      if (query.step !== 0 && range / query.step > 11000) {
-        target.step = query.step = Math.ceil(range / 11000);
+      if (!query.instant) {
+        target.step = query.step = this.calculateInterval(interval, intervalFactor);
+        var range = Math.ceil(end - start);
+        // Prometheus drop query if range/step > 11000
+        // calibrate step if it is too big
+        if (query.step !== 0 && range / query.step > 11000) {
+          target.step = query.step = Math.ceil(range / 11000);
+        }
       }
 
       queries.push(query);
@@ -105,7 +108,11 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     }
 
     var allQueryPromise = _.map(queries, query => {
-      return this.performTimeSeriesQuery(query, start, end);
+      if (!query.instant) {
+        return this.performTimeSeriesQuery(query, start, end);
+      } else {
+        return this.performInstantQuery(query, end);
+      }
     });
 
     return $q.all(allQueryPromise).then(function(allResponse) {
@@ -118,7 +125,11 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
         }
         delete self.lastErrors.query;
         _.each(response.data.data.result, function(metricData) {
-          result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
+          if (response.data.data.resultType === 'matrix') {
+            result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
+          } else if (response.data.data.resultType === 'vector') {
+            result.push(self.transformInstantMetricData(metricData, activeTargets[index]));
+          }
         });
       });
 
@@ -132,6 +143,12 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     }
 
     var url = '/api/v1/query_range?query=' + encodeURIComponent(query.expr) + '&start=' + start + '&end=' + end + '&step=' + query.step;
+    return this._request('GET', url, query.requestId);
+  };
+
+  this.performInstantQuery = function(query, time) {
+
+    var url = '/api/v1/query?query=' + encodeURIComponent(query.expr) + '&time=' + time;
     return this._request('GET', url, query.requestId);
   };
 
@@ -256,6 +273,16 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     for (var t = baseTimestamp; t <= endTimestamp; t += stepMs) {
       dps.push([null, t]);
     }
+
+    return { target: metricLabel, datapoints: dps };
+  };
+
+  this.transformInstantMetricData = function(md, options) {
+    var dps = [],
+      metricLabel = null;
+
+    metricLabel = this.createMetricLabel(md.metric, options);
+    dps.push([parseFloat(md.value[1]), md.value[0] * 1000]);
 
     return { target: metricLabel, datapoints: dps };
   };
