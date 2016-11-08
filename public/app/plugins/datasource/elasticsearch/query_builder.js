@@ -102,7 +102,12 @@ function (queryDef) {
     query.size = 500;
     query.sort = {};
     query.sort[this.timeField] = {order: 'desc', unmapped_type: 'boolean'};
-    query.fields = ["*", "_source"];
+
+    // fields field not supported on ES 5.x
+    if (this.esVersion < 5) {
+      query.fields = ["*", "_source"];
+    }
+
     query.script_fields = {},
     query.fielddata_fields = [this.timeField];
     return query;
