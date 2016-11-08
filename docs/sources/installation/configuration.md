@@ -601,7 +601,15 @@ secret key. ex AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 ### url
 Url to where Grafana will send PUT request with images
+
 ### username
 basic auth username
+
 ### password
 basic auth password
+
+## [alerting]
+
+### execute_alerts = true
+
+Makes it possible to turn off alert rule execution.

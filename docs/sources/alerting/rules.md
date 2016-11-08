@@ -1,0 +1,131 @@
++++
+title = "Alerting Engine Rules Guide"
+description = "Configuring Alert Rules"
+keywords = ["grafana", "alerting", "guide", "rules"]
+type = "docs"
+[menu.docs]
+name = "Engine & Rules"
+parent = "alerting"
+weight = 1
++++
+
+# Alerting Engine & Rules Guide
+
+> Alerting is only available in Grafana v4.0 and above.
+
+## Introduction
+
+{{< imgbox max-width="40%" img="/img/docs/v4/drag_handles_gif.gif" caption="Alerting overview" >}}
+
+Alerting in Grafana allows you to attach rules to your graph panels. When you save the dashboard
+Grafana will extract the alert rules into a seperate alert rule storage and schedule them for evaluation.
+
+In the alert tab of the graph panel you can configure how often the alert rule should be evaluated
+and the conditions that need to be met for the alert to change state and trigger its
+[notifications]({{< relref "/notifications.md" >}}).
+
+## Execution
+
+The alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
+of core Grafana. We have not implemented clustering for this scheduler yet, so if you run multiple
+instances of grafana-server you have to make sure [execute_alerts]({{< relref "/installation/configuration.md#alerting" >}})
+is true on only one instance or otherwise you will get duplicated notifications.
+
+<div class="clearfix"></div>
+
+## Rule Config
+
+{{< imgbox max-width="40%" img="/img/docs/v4/alerting_conditions.png" caption="Alerting Conditions" >}}
+
+Currently only the graph panel supports alert rules but this will be added to the **Singlestat** and **Table**
+panels as well in a future release. The rule config allows you to specify a name, how often the rule
+should be evaluated and a series of conditions that all need to be true for the alert to fire.
+
+### Name & Evaluation interval
+
+Here you can specify the name of the alert rule and how often the scheduler should evaluate the alert rule.
+
+### Conditions
+
+Currently the only condition type that exists is a `Query` condition that allows you to
+specify a query letter, time range and an aggregation function. The letter refers to
+a query you already have added in the **Metrics** tab. The result from the query and the aggregation function is
+a single value that is then used in the threshold check. The query used in an alert rule cannot
+contain any template variables. Currently we only support `AND` operator between conditions.
+
+We plan to add other condition types in the future, like `Other Alert`, where you can include the state
+of another alert in your conditions, and `Time Of Day`.
+
+#### Multiple Series
+
+If a query returns multiple series then the aggregation function and threshold check will be evaluated for each series.
+What Grafana does not do currently is track alert rule state **per series**. This has implications that is exemplified
+in the scenario below.
+
+- Alert condition with query that returns 2 series: **server1** and **server2**
+- **server1** series cause the alert rule to fire and switch to state `Alerting`
+- Notifications are sent out with message:  _load peaking (server1)_
+- In a subsequence evaluation of the same alert rule the **server2** series also cause the alert rule to fire
+- No new notifications are sent as the alert rule is already in state `Alerting`.
+
+So as you can see from the above scenario Grafana will not send out notifications when other series cause the alert
+to fire if the rule already is in state ´Alerting`. To improve support for queries that return multiple series
+we plan to track state **per series** in a future release.
+
+### No Data / Null values
+
+Below you condition you can configure how the rule evaluation engine should handle queries that return no data or only null valued
+data.
+
+No Data Option | Description
+------------ | -------------
+NoData | Set alert rule state to `NoData`
+Alerting | Set alert rule state to `Alerting`
+Keep Last State | Keep the current alert rule state, what ever it is.
+
+### Execution errors or timeouts
+
+The last option is how to handle execution or timeout errors.
+
+Error or timeout option | Description
+------------ | -------------
+Alerting | Set alert rule state to `Alerting`
+Keep Last State | Keep the current alert rule state, what ever it is.
+
+If you an unreliable time series store that where queries sometime timesout or fail randomly you can set this option
+t `Keep Last State` to basically ignore them.
+
+## Troubleshooting
+
+{{< imgbox max-width="40%" img="/img/docs/v4/alert_test_rule.png" caption="Test Rule" >}}
+
+First level of troubleshooting you can do is hit the **Test Rule** button. You will get result back that you can expand
+to the point where you can see the raw data that was returned form your query.
+
+Further troubleshooting can also be done by inspecting the grafana-server log. If it's not an error or for some reason
+the log does not say anything you can enable debug logging for some relevant components. This is done
+in grafana's ini config file.
+
+Example showing loggers that could be relevant when troubleshooting alerting.
+
+```ini
+[log]
+filters = alerting.scheduler:debug \
+          alerting.engine:debug \
+          alerting.resultHandler:debug \
+          alerting.evalHandler:debug \
+          alerting.evalContext:debug \
+          alerting.extractor:debug \
+          alerting.notifier:debug \
+          alerting.notifier.slack:debug \
+          alerting.notifier.pagerduty:debug \
+          alerting.notifier.email:debug \
+          alerting.notifier.webhook:debug \
+          tsdb.graphite:debug \
+          tsdb.prometheus:debug \
+          tsdb.opentsdb:debug \
+          tsdb.influxdb:debug \
+```
+
+If you want to see raw query sent to Graphite and raw response in log you also have to set grafana.ini option `app_mode` to
+`development`.
