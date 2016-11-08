@@ -3,6 +3,7 @@ package influxdb
 import (
 	"encoding/json"
 	"fmt"
+	"regexp"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -11,17 +12,25 @@ import (
 
 type ResponseParser struct{}
 
-func (rp *ResponseParser) Parse(response *Response) *tsdb.QueryResult {
+var (
+	legendFormat *regexp.Regexp
+)
+
+func init() {
+	legendFormat = regexp.MustCompile(`\[\[(\w+?)*\]\]*|\$\s*(\w+?)*`)
+}
+
+func (rp *ResponseParser) Parse(response *Response, query *Query) *tsdb.QueryResult {
 	queryRes := tsdb.NewQueryResult()
 
 	for _, result := range response.Results {
-		queryRes.Series = append(queryRes.Series, rp.transformRows(result.Series, queryRes)...)
+		queryRes.Series = append(queryRes.Series, rp.transformRows(result.Series, queryRes, query)...)
 	}
 
 	return queryRes
 }
 
-func (rp *ResponseParser) transformRows(rows []Row, queryResult *tsdb.QueryResult) tsdb.TimeSeriesSlice {
+func (rp *ResponseParser) transformRows(rows []Row, queryResult *tsdb.QueryResult, query *Query) tsdb.TimeSeriesSlice {
 	var result tsdb.TimeSeriesSlice
 
 	for _, row := range rows {
@@ -38,7 +47,7 @@ func (rp *ResponseParser) transformRows(rows []Row, queryResult *tsdb.QueryResul
 				}
 			}
 			result = append(result, &tsdb.TimeSeries{
-				Name:   rp.formatSerieName(row, column),
+				Name:   rp.formatSerieName(row, column, query),
 				Points: points,
 			})
 		}
@@ -47,7 +56,41 @@ func (rp *ResponseParser) transformRows(rows []Row, queryResult *tsdb.QueryResul
 	return result
 }
 
-func (rp *ResponseParser) formatSerieName(row Row, column string) string {
+func (rp *ResponseParser) formatSerieName(row Row, column string, query *Query) string {
+	if query.Alias == "" {
+		return rp.buildSerieNameFromQuery(row, column)
+	}
+
+	result := legendFormat.ReplaceAllFunc([]byte(query.Alias), func(in []byte) []byte {
+		aliasFormat := string(in)
+		aliasFormat = strings.Replace(aliasFormat, "[[", "", 1)
+		aliasFormat = strings.Replace(aliasFormat, "]]", "", 1)
+		aliasFormat = strings.Replace(aliasFormat, "$", "", 1)
+
+		if aliasFormat == "m" || aliasFormat == "measurement" {
+			return []byte(query.Measurement)
+		}
+		if aliasFormat == "col" {
+			return []byte(column)
+		}
+
+		if !strings.HasPrefix(aliasFormat, "tag_") {
+			return in
+		}
+
+		tagKey := strings.Replace(aliasFormat, "tag_", "", 1)
+		tagValue, exist := row.Tags[tagKey]
+		if exist {
+			return []byte(tagValue)
+		}
+
+		return in
+	})
+
+	return string(result)
+}
+
+func (rp *ResponseParser) buildSerieNameFromQuery(row Row, column string) string {
 	var tags []string
 
 	for k, v := range row.Tags {
