@@ -55,7 +55,7 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 		bodyJSON.Set("client_url", ruleUrl)
 
 		if evalContext.ImagePublicUrl != "" {
-			var contexts []interface{}
+			contexts := make([]interface{}, 1)
 			imageJSON := simplejson.New()
 			imageJSON.Set("type", "image")
 			imageJSON.Set("src", evalContext.ImagePublicUrl)
