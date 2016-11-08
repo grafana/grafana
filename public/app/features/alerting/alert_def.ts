@@ -34,6 +34,7 @@ var reducerTypes = [
   {text: 'max()', value: 'max'},
   {text: 'sum()' , value: 'sum'},
   {text: 'count()', value: 'count'},
+  {text: 'last()', value: 'last'},
 ];
 
 var noDataModes = [
