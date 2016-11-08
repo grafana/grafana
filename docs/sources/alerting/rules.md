@@ -127,5 +127,5 @@ filters = alerting.scheduler:debug \
           tsdb.influxdb:debug \
 ```
 
-If you want to see raw query sent to Graphite and raw response in log you also have to set grafana.ini option `app_mode` to
+If you want to log raw query sent to your TSDB and raw response in log you also have to set grafana.ini option `app_mode` to
 `development`.
