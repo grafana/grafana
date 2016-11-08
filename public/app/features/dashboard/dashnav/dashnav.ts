@@ -33,6 +33,10 @@ export class DashNavCtrl {
       $location.search(search);
     };
 
+    $scope.showHelpModal = function() {
+      $scope.appEvent('show-modal', {templateHtml: '<help-modal></help-modal>'});
+    };
+
     $scope.starDashboard = function() {
       if ($scope.dashboardMeta.isStarred) {
         backendSrv.delete('/api/user/stars/dashboard/' + $scope.dashboard.id).then(function() {

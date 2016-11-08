@@ -35,6 +35,12 @@ func TestSimpleReducer(t *testing.T) {
 			result := testReducer("count", 1, 2, 3000)
 			So(result, ShouldEqual, float64(3))
 		})
+
+		Convey("last", func() {
+			result := testReducer("last", 1, 2, 3000)
+			So(result, ShouldEqual, float64(3000))
+		})
+
 	})
 }
 

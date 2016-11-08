@@ -12,6 +12,10 @@ function ($, _) {
 
     var $tooltip = $('<div id="tooltip" class="graph-tooltip">');
 
+    this.destroy = function() {
+      $tooltip.remove();
+    };
+
     this.findHoverIndexFromDataPoints = function(posX, series, last) {
       var ps = series.datapoints.pointsize;
       var initial = last*ps;

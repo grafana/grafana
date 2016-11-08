@@ -51,18 +51,13 @@ describe('dashboardSrv', function() {
       dashboard = _dashboardSrv.create({});
     });
 
-    it('row span should sum spans', function() {
-      var spanLeft = dashboard.rowSpan({ panels: [{ span: 2 }, { span: 3 }] });
-      expect(spanLeft).to.be(5);
-    });
-
     it('adding default should split span in half', function() {
-      dashboard.rows = [{ panels: [{ span: 12, id: 7 }] }];
-      dashboard.addPanel({span: 4}, dashboard.rows[0]);
+      dashboard.addEmptyRow();
+      dashboard.rows[0].addPanel({span: 12});
+      dashboard.rows[0].addPanel({span: 12});
 
       expect(dashboard.rows[0].panels[0].span).to.be(6);
       expect(dashboard.rows[0].panels[1].span).to.be(6);
-      expect(dashboard.rows[0].panels[1].id).to.be(8);
     });
 
     it('duplicate panel should try to add it to same row', function() {

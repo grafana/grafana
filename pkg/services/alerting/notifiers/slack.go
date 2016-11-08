@@ -23,20 +23,23 @@ func NewSlackNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	recipient := model.Settings.Get("recipient").MustString()
+	mention := model.Settings.Get("mention").MustString()
 
 	return &SlackNotifier{
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		Url:          url,
-		Recipient:		recipient,
+		Recipient:    recipient,
+		Mention:      mention,
 		log:          log.New("alerting.notifier.slack"),
 	}, nil
 }
 
 type SlackNotifier struct {
 	NotifierBase
-	Url string
+	Url       string
 	Recipient string
-	log log.Logger
+	Mention   string
+	log       log.Logger
 }
 
 func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
@@ -70,9 +73,9 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 		})
 	}
 
-	message := ""
+	message := this.Mention
 	if evalContext.Rule.State != m.AlertStateOK { //dont add message when going back to alert state ok.
-		message = evalContext.Rule.Message
+		message += " " + evalContext.Rule.Message
 	}
 
 	body := map[string]interface{}{

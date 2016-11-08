@@ -3,6 +3,8 @@ package alerting
 import (
 	"errors"
 
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -104,7 +106,8 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				panelQuery := findPanelQueryByRefId(panel, queryRefId)
 
 				if panelQuery == nil {
-					return nil, ValidationError{Reason: "Alert refes to query that cannot be found"}
+					reason := fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found", alert.PanelId, queryRefId)
+					return nil, ValidationError{Reason: reason}
 				}
 
 				dsName := ""

@@ -29,7 +29,7 @@ function (angular, _, require, config) {
         $scope.tabs.push({title: 'Snapshot', src: 'shareSnapshot.html'});
       }
 
-      if (!$scope.dashboard.meta.isSnapshot) {
+      if (!$scope.dashboard.meta.isSnapshot && !$scope.modeSharePanel) {
         $scope.tabs.push({title: 'Export', src: 'shareExport.html'});
       }
 
