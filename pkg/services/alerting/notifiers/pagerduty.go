@@ -65,7 +65,7 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 		body, _ := bodyJSON.MarshalJSON()
 
-		cmd := &m.SendWebhook{
+		cmd := &m.SendWebhookSync{
 			Url:        pagerdutyEventApiUrl,
 			Body:       string(body),
 			HttpMethod: "POST",
