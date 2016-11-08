@@ -68,8 +68,10 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 
 	var response Response
 	dec := json.NewDecoder(resp.Body)
+	defer resp.Body.Close()
 	dec.UseNumber()
 	err = dec.Decode(&response)
+
 	if err != nil {
 		return result.WithError(err)
 	}
