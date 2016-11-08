@@ -90,6 +90,7 @@ export class AlertTabCtrl {
       case "email": return "fa fa-envelope";
       case "slack": return "fa fa-slack";
       case "webhook": return "fa fa-cubes";
+      case "pagerduty": return "fa fa-bullhorn";
     }
   }
 
