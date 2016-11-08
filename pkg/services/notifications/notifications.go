@@ -31,7 +31,6 @@ func Init() error {
 
 	bus.AddCtxHandler("email", sendEmailCommandHandlerSync)
 
-	bus.AddHandler("webhook", sendWebhook)
 	bus.AddCtxHandler("webhook", SendWebhookSync)
 
 	bus.AddEventListener(signUpStartedHandler)
@@ -67,18 +66,6 @@ func SendWebhookSync(ctx context.Context, cmd *m.SendWebhookSync) error {
 		Body:       cmd.Body,
 		HttpMethod: cmd.HttpMethod,
 	})
-}
-
-func sendWebhook(cmd *m.SendWebhook) error {
-	addToWebhookQueue(&Webhook{
-		Url:        cmd.Url,
-		User:       cmd.User,
-		Password:   cmd.Password,
-		Body:       cmd.Body,
-		HttpMethod: cmd.HttpMethod,
-	})
-
-	return nil
 }
 
 func subjectTemplateFunc(obj map[string]interface{}, value string) string {
