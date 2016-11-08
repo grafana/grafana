@@ -18,7 +18,7 @@ weight = 1
 {{< imgbox max-width="40%" img="/img/docs/v4/drag_handles_gif.gif" caption="Alerting overview" >}}
 
 Alerting in Grafana allows you to attach rules to your graph panels. When you save the dashboard
-Grafana will extract the alert rules into a seperate alert rule storage and schedule them for evaluation.
+Grafana will extract the alert rules into a separate alert rule storage and schedule them for evaluation.
 
 In the alert tab of the graph panel you can configure how often the alert rule should be evaluated
 and the conditions that need to be met for the alert to change state and trigger its
@@ -92,7 +92,7 @@ Error or timeout option | Description
 Alerting | Set alert rule state to `Alerting`
 Keep Last State | Keep the current alert rule state, what ever it is.
 
-If you an unreliable time series store that where queries sometime timesout or fail randomly you can set this option
+If you an unreliable time series store that where queries sometime timeout or fail randomly you can set this option
 t `Keep Last State` to basically ignore them.
 
 ## Troubleshooting
@@ -104,7 +104,7 @@ to the point where you can see the raw data that was returned form your query.
 
 Further troubleshooting can also be done by inspecting the grafana-server log. If it's not an error or for some reason
 the log does not say anything you can enable debug logging for some relevant components. This is done
-in grafana's ini config file.
+in Grafana's ini config file.
 
 Example showing loggers that could be relevant when troubleshooting alerting.
 
