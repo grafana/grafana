@@ -17,18 +17,23 @@ weight = 1
 
 {{< imgbox max-width="40%" img="/img/docs/v4/drag_handles_gif.gif" caption="Alerting overview" >}}
 
-Alerting in Grafana allows you to attach rules to your graph panels. When you save the dashboard
+Alerting in Grafana allows you to attach rules to your dashboard panels. When you save the dashboard
 Grafana will extract the alert rules into a separate alert rule storage and schedule them for evaluation.
 
 In the alert tab of the graph panel you can configure how often the alert rule should be evaluated
 and the conditions that need to be met for the alert to change state and trigger its
-[notifications]({{< relref "/notifications.md" >}}).
+[notifications]({{< relref "notifications.md" >}}).
 
 ## Execution
 
 The alert rules are evaluated in the Grafana backend in a scheduler and query execution engine that is part
-of core Grafana. We have not implemented clustering for this scheduler yet, so if you run multiple
-instances of grafana-server you have to make sure [execute_alerts]({{< relref "/installation/configuration.md#alerting" >}})
+of core Grafana. Only some data soures are supported right now. They include `Graphite`, `Prometheus`,
+`InfluxDB` and `OpenTSDB`.
+
+### Clustering
+
+We have not implemented clustering yet. So if you run multiple instances of grafana-server
+you have to make sure [execute_alerts]({{< relref "/installation/configuration.md#alerting" >}})
 is true on only one instance or otherwise you will get duplicated notifications.
 
 <div class="clearfix"></div>
@@ -38,8 +43,7 @@ is true on only one instance or otherwise you will get duplicated notifications.
 {{< imgbox max-width="40%" img="/img/docs/v4/alerting_conditions.png" caption="Alerting Conditions" >}}
 
 Currently only the graph panel supports alert rules but this will be added to the **Singlestat** and **Table**
-panels as well in a future release. The rule config allows you to specify a name, how often the rule
-should be evaluated and a series of conditions that all need to be true for the alert to fire.
+panels as well in a future release.
 
 ### Name & Evaluation interval
 
@@ -94,6 +98,14 @@ Keep Last State | Keep the current alert rule state, what ever it is.
 
 If you an unreliable time series store that where queries sometime timeout or fail randomly you can set this option
 t `Keep Last State` to basically ignore them.
+
+## Notifications
+
+In alert tab you can also specify alert rule notifications along with a detailed messsage about the alert rule.
+The message can contain anything, information about how you might solve the issue, link to runbook etc.
+
+The actual notifications are configured and shared between multiple alerts. Read the
+[Notifications]({{< relref "notifications.md" >}}) guide for how to configure and setup notifications.
 
 ## Troubleshooting
 
