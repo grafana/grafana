@@ -13,6 +13,7 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *tsdb.DataSo
 	policy := model.Get("policy").MustString("default")
 	rawQuery := model.Get("query").MustString("")
 	interval := model.Get("interval").MustString("")
+	alias := model.Get("alias").MustString("")
 
 	measurement := model.Get("measurement").MustString("")
 
@@ -52,6 +53,7 @@ func (qp *InfluxdbQueryParser) Parse(model *simplejson.Json, dsInfo *tsdb.DataSo
 		Selects:      selects,
 		RawQuery:     rawQuery,
 		Interval:     interval,
+		Alias:        alias,
 	}, nil
 }
 
