@@ -74,8 +74,8 @@
         <div class="gf-form-inline">
           <div class="gf-form gf-form--grow">
             <label class="gf-form-label width-15">Name</label>
-            <input type="text" class="gf-form-input" ng-model="ctrl.dash.title" give-focus="true" ng-change="ctrl.titleChanged()" ng-class="{'validation-error': ctrl.nameExists}">
-            <label class="gf-form-label text-success" ng-if="!ctrl.nameExists">
+            <input type="text" class="gf-form-input" ng-model="ctrl.dash.title" give-focus="true" ng-change="ctrl.titleChanged()" ng-class="{'validation-error': ctrl.nameExists || !ctrl.dash.title}">
+            <label class="gf-form-label text-success" ng-if="!ctrl.nameExists && ctrl.dash.title">
               <i class="fa fa-check"></i>
             </label>
           </div>
@@ -86,6 +86,15 @@
             <label class="gf-form-label text-warning gf-form-label--grow">
               <i class="fa fa-warning"></i>
               A Dashboard with the same name already exists
+            </label>
+          </div>
+        </div>
+
+        <div class="gf-form-inline" ng-if="!ctrl.dash.title">
+          <div class="gf-form offset-width-15 gf-form--grow">
+            <label class="gf-form-label text-warning gf-form-label--grow">
+              <i class="fa fa-warning"></i>
+              A Dashboard should have a name
             </label>
           </div>
         </div>

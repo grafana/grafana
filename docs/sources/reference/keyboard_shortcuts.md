@@ -15,7 +15,7 @@ No mouse? No problem. Grafana has extensive keyboard shortcuts to allow you to n
 
 Press `Shift`+`?` to open the keyboard shortcut dialog from anywhere within the dashboard views.
 
-<img class="no-shadow" src="img/docs/v2/Grafana-Keyboard-Shortcuts.gif" style="width:80%;">
+<img class="no-shadow" src="/img/docs/v2/Grafana-Keyboard-Shortcuts.gif" style="width:80%;">
 
 
 |Shortcut|Action|

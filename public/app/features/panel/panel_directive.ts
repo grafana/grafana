@@ -56,7 +56,7 @@ var panelTemplate = `
   </div>
 `;
 
-module.directive('grafanaPanel', function() {
+module.directive('grafanaPanel', function($rootScope) {
   return {
     restrict: 'E',
     template: panelTemplate,
@@ -72,8 +72,31 @@ module.directive('grafanaPanel', function() {
       var lastHasAlertRule;
       var lastAlertState;
       var hasAlertRule;
+      var lastHeight = 0;
+
+      function mouseEnter() {
+        panelContainer.toggleClass('panel-hover-highlight', true);
+        ctrl.dashboard.setPanelFocus(ctrl.panel.id);
+      }
+
+      function mouseLeave() {
+        panelContainer.toggleClass('panel-hover-highlight', false);
+        ctrl.dashboard.setPanelFocus(0);
+      }
+
+      // set initial height
+      if (!ctrl.containerHeight) {
+        ctrl.calculatePanelHeight();
+        panelContainer.css({minHeight: ctrl.containerHeight});
+        lastHeight = ctrl.containerHeight;
+      }
 
       ctrl.events.on('render', () => {
+        if (lastHeight !== ctrl.containerHeight) {
+          panelContainer.css({minHeight: ctrl.containerHeight});
+          lastHeight = ctrl.containerHeight;
+        }
+
         if (transparentLastState !== ctrl.panel.transparent) {
           panelContainer.toggleClass('panel-transparent', ctrl.panel.transparent === true);
           transparentLastState = ctrl.panel.transparent;
@@ -100,12 +123,21 @@ module.directive('grafanaPanel', function() {
           panelContainer.removeClass('panel-alert-state--' + lastAlertState);
           lastAlertState = null;
         }
-
       });
 
-      scope.$watchGroup(['ctrl.fullscreen', 'ctrl.containerHeight'], function() {
-        panelContainer.css({minHeight: ctrl.containerHeight});
-        elem.toggleClass('panel-fullscreen', ctrl.fullscreen ? true : false);
+      var lastFullscreen;
+      $rootScope.onAppEvent('panel-change-view', function(evt, payload) {
+        if (lastFullscreen !== ctrl.fullscreen) {
+          elem.toggleClass('panel-fullscreen', ctrl.fullscreen ? true : false);
+          lastFullscreen = ctrl.fullscreen;
+        }
+      }, scope);
+
+      elem.on('mouseenter', mouseEnter);
+      elem.on('mouseleave', mouseLeave);
+
+      scope.$on('$destroy', function() {
+        elem.off();
       });
     }
   };
@@ -114,7 +146,7 @@ module.directive('grafanaPanel', function() {
 module.directive('panelResizer', function($rootScope) {
   return {
     restrict: 'E',
-    template: '<span class="resize-panel-handle"></span>',
+    template: '<span class="resize-panel-handle fa fa-signal"></span>',
     link: function(scope, elem) {
       var resizing = false;
       var lastPanel;
@@ -140,11 +172,12 @@ module.directive('panelResizer', function($rootScope) {
       }
 
       function moveHandler(e) {
-        ctrl.row.height = originalHeight + (e.pageY - handleOffset.top);
+        ctrl.row.height = Math.round(originalHeight + (e.pageY - handleOffset.top));
         ctrl.panel.span = originalWidth + (((e.pageX - handleOffset.left) / maxWidth) * 12);
         ctrl.panel.span = Math.min(Math.max(ctrl.panel.span, 1), 12);
 
-        var rowSpan = ctrl.dashboard.rowSpan(ctrl.row);
+        ctrl.row.updateRowSpan();
+        var rowSpan = ctrl.row.span;
 
         // auto adjust other panels
         if (Math.floor(rowSpan) < 14) {
@@ -158,6 +191,8 @@ module.directive('panelResizer', function($rootScope) {
           }
         }
 
+        ctrl.row.panelSpanChanged(true);
+
         scope.$apply(function() {
           ctrl.render();
         });
@@ -169,15 +204,10 @@ module.directive('panelResizer', function($rootScope) {
           lastPanel.span = Math.round(lastPanel.span);
         }
 
-        // if close to 12
-        var rowSpan = ctrl.dashboard.rowSpan(ctrl.row);
-        if (rowSpan < 12 && rowSpan > 11) {
-          lastPanel.span +=  12 - rowSpan;
-        }
-
         // first digest to propagate panel width change
         // then render
         $rootScope.$apply(function() {
+          ctrl.row.panelSpanChanged();
           setTimeout(function() {
             $rootScope.$broadcast('render');
           });
@@ -189,8 +219,9 @@ module.directive('panelResizer', function($rootScope) {
 
       elem.on('mousedown', dragStartHandler);
 
-      scope.$on("$destroy", function() {
+      var unbind = scope.$on("$destroy", function() {
         elem.off('mousedown', dragStartHandler);
+        unbind();
       });
     }
   };

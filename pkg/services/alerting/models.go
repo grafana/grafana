@@ -14,9 +14,9 @@ type ResultLogEntry struct {
 }
 
 type EvalMatch struct {
-	Value  float64
-	Metric string
-	Tags   map[string]string
+	Value  float64           `json:"value"`
+	Metric string            `json:"metric"`
+	Tags   map[string]string `json:"tags"`
 }
 
 type Level struct {

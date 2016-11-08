@@ -23,10 +23,15 @@ export class Emitter {
     this.emitter.on(name, handler);
 
     if (scope) {
-      scope.$on('$destroy', () => {
+      var unbind = scope.$on('$destroy', () => {
         this.emitter.off(name, handler);
+        unbind();
       });
     }
+  }
+
+  removeAllListeners(evt?) {
+    this.emitter.removeAllListeners(evt);
   }
 
   off(name, handler) {

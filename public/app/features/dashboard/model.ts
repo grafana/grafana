@@ -6,8 +6,8 @@ import moment from 'moment';
 import _ from 'lodash';
 import $ from 'jquery';
 
-import {Emitter} from 'app/core/core';
-import {contextSrv} from 'app/core/services/context_srv';
+import {Emitter, contextSrv, appEvents} from 'app/core/core';
+import {DashboardRow} from './row/row_model';
 
 export class DashboardModel {
   id: any;
@@ -18,11 +18,11 @@ export class DashboardModel {
   style: any;
   timezone: any;
   editable: any;
-  hideControls: any;
   sharedCrosshair: any;
-  rows: any;
+  rows: DashboardRow[];
   time: any;
   timepicker: any;
+  hideControls: any;
   templating: any;
   annotations: any;
   refresh: any;
@@ -34,6 +34,7 @@ export class DashboardModel {
   gnetId: any;
   meta: any;
   events: any;
+  editMode: boolean;
 
   constructor(data, meta) {
     if (!data) {
@@ -50,9 +51,8 @@ export class DashboardModel {
     this.style = data.style || "dark";
     this.timezone = data.timezone || '';
     this.editable = data.editable !== false;
-    this.hideControls = data.hideControls || false;
     this.sharedCrosshair = data.sharedCrosshair || false;
-    this.rows = data.rows || [];
+    this.hideControls = data.hideControls || false;
     this.time = data.time || { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker || {};
     this.templating = this.ensureListExist(data.templating);
@@ -63,6 +63,13 @@ export class DashboardModel {
     this.version = data.version || 0;
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
+
+    this.rows = [];
+    if (data.rows) {
+      for (let row of data.rows) {
+        this.rows.push(new DashboardRow(row));
+      }
+    }
 
     this.updateSchema(data);
     this.initMeta(meta);
@@ -80,7 +87,6 @@ export class DashboardModel {
       meta.canEdit = false;
       meta.canDelete = false;
       meta.canSave = false;
-      this.hideControls = true;
     }
 
     this.meta = meta;
@@ -91,16 +97,25 @@ export class DashboardModel {
     // temp remove stuff
     var events = this.events;
     var meta = this.meta;
+    var rows = this.rows;
     delete this.events;
     delete this.meta;
 
+    // prepare save model
+    this.rows = _.map(this.rows, row => row.getSaveModel());
     events.emit('prepare-save-model');
+
     var copy = $.extend(true, {}, this);
 
     // restore properties
     this.events = events;
     this.meta = meta;
+    this.rows = rows;
     return copy;
+  }
+
+  addEmptyRow() {
+    this.rows.push(new DashboardRow({isNew: true}));
   }
 
   private ensureListExist(data) {
@@ -144,39 +159,58 @@ export class DashboardModel {
     return null;
   }
 
-  rowSpan(row) {
-    return _.reduce(row.panels, function(p,v) {
-      return p + v.span;
-    },0);
-  };
-
   addPanel(panel, row) {
-    var rowSpan = this.rowSpan(row);
-    var panelCount = row.panels.length;
-    var space = (12 - rowSpan) - panel.span;
     panel.id = this.getNextPanelId();
-
-    // try to make room of there is no space left
-    if (space <= 0) {
-      if (panelCount === 1) {
-        row.panels[0].span = 6;
-        panel.span = 6;
-      } else if (panelCount === 2) {
-        row.panels[0].span = 4;
-        row.panels[1].span = 4;
-        panel.span = 4;
-      }
-    }
-
-    row.panels.push(panel);
+    row.addPanel(panel);
   }
 
-  isSubmenuFeaturesEnabled() {
-    var visableTemplates = _.filter(this.templating.list, function(template) {
-      return template.hideVariable === undefined || template.hideVariable === false;
+  removeRow(row, force?) {
+    var index = _.indexOf(this.rows, row);
+
+    if (!row.panels.length || force) {
+      this.rows.splice(index, 1);
+      row.destroy();
+      return;
+    }
+
+    appEvents.emit('confirm-modal', {
+      title: 'Remove Row',
+      text: 'Are you sure you want to remove this row?',
+      icon: 'fa-trash',
+      yesText: 'Delete',
+      onConfirm: () => {
+        this.rows.splice(index, 1);
+        row.destroy();
+      }
+    });
+  }
+
+  toggleEditMode() {
+    if (!this.meta.canEdit) {
+      console.log('Not allowed to edit dashboard');
+      return;
+    }
+
+    this.editMode = !this.editMode;
+    this.updateSubmenuVisibility();
+    this.events.emit('edit-mode-changed', this.editMode);
+  }
+
+  setPanelFocus(id) {
+    this.meta.focusPanelId = id;
+  }
+
+  updateSubmenuVisibility() {
+    if (this.editMode) {
+      this.meta.submenuEnabled = true;
+      return;
+    }
+
+    var visibleVars = _.filter(this.templating.list, function(template) {
+      return template.hide !== 2;
     });
 
-    return visableTemplates.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
+    this.meta.submenuEnabled = visibleVars.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
   }
 
   getPanelInfoById(panelId) {
@@ -221,6 +255,13 @@ export class DashboardModel {
     return this.timezone === 'browser' ?
       moment(date).format(format) :
       moment.utc(date).format(format);
+  }
+
+  destroy() {
+    this.events.removeAllListeners();
+    for (let row of this.rows) {
+      row.destroy();
+    }
   }
 
   getRelativeTime(date) {
@@ -504,6 +545,7 @@ export class DashboardModel {
         // update graph yaxes changes
         panelUpgrades.push(function(panel) {
           if (panel.type !== 'graph') { return; }
+          if (!panel.grid) { return; }
 
           panel.thresholds = [];
           var t1: any = {}, t2: any = {};

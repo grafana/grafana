@@ -22,7 +22,7 @@ Read the [Basic Concepts](/guides/basic_concepts) document to get a crash course
 
 Let's start with creating a new Dashboard. You can find the new Dashboard link at the bottom of the Dashboard picker. You now have a blank Dashboard.
 
-<img class="no-shadow" src="img/docs/v2/v2_top_nav_annotated.png">
+<img class="no-shadow" src="/img/docs/v2/v2_top_nav_annotated.png">
 
 The image above shows you the top header for a Dashboard.
 
@@ -39,7 +39,7 @@ Dashboards are at the core of what Grafana is all about. Dashboards are composed
 
 ## Adding & Editing Graphs and Panels
 
-![](img/docs/v2/graph_metrics_tab_graphite.png)
+![](/img/docs/v2/graph_metrics_tab_graphite.png)
 
 1. You add panels via row menu. The row menu is the green icon to the left of each row.
 2. To edit the graph you click on the graph title to open the panel menu, then `Edit`.
@@ -48,7 +48,7 @@ Dashboards are at the core of what Grafana is all about. Dashboards are composed
 When you click the `Metrics` tab, you are presented with a Query Editor that is specific to the Panel Data Source. Use the Query Editor to build your queries and Grafana will visualize them in real time.
 
 
-<img src="img/docs/v2/dashboard_annotated.png" class="no-shadow">
+<img src="/img/docs/v2/dashboard_annotated.png" class="no-shadow">
 
 1. Zoom out time range
 2. Time picker dropdown. Here you can access relative time range options, auto refresh options and set custom absolute time ranges.
@@ -61,7 +61,7 @@ When you click the `Metrics` tab, you are presented with a Query Editor that is 
 
 You can Drag-and-Drop Panels within and between Rows. Click and hold the Panel title, and drag it to its new location. You can also easily resize panels by clicking the (-) and (+) icons.
 
-![](img/docs/animated_gifs/drag_drop.gif)
+![](/img/docs/animated_gifs/drag_drop.gif)
 
 ## Tips and shortcuts
 
@@ -78,16 +78,4 @@ You can Drag-and-Drop Panels within and between Rows. Click and hold the Panel t
 * Ctrl+F Opens the dashboard finder / search
 * Ctrl+H Hides all controls (good for tv displays)
 * Hit Escape to exit graph when in fullscreen or edit mode
-
-
-
-
-
-
-
-
-
-
-
-
 

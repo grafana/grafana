@@ -3,6 +3,7 @@ import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/co
 import _ from 'lodash';
 import config from 'app/core/config';
 import {DashboardExporter} from '../export/exporter';
+import {DashboardModel} from '../model';
 
 describe('given dashboard with repeated panels', function() {
   var dash, exported;
@@ -77,6 +78,7 @@ describe('given dashboard with repeated panels', function() {
       info: {version: "1.1.0"}
     };
 
+    dash = new DashboardModel(dash, {});
     var exporter = new DashboardExporter(datasourceSrvStub);
     exporter.makeExportable(dash).then(clean => {
       exported = clean;

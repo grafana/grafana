@@ -21,6 +21,12 @@ type Notifier interface {
 	GetIsDefault() bool
 }
 
+type ConditionResult struct {
+	Firing      bool
+	NoDataFound bool
+	EvalMatches []*EvalMatch
+}
+
 type Condition interface {
-	Eval(result *EvalContext)
+	Eval(result *EvalContext) (*ConditionResult, error)
 }

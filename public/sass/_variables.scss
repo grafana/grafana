@@ -80,7 +80,7 @@ $enable-flex: false;
 // Typography
 // -------------------------
 
-$font-family-sans-serif:   "Helvetica Neue", Helvetica, Arial, sans-serif;
+$font-family-sans-serif:   "Open Sans", Helvetica, Arial, sans-serif;
 $font-family-serif:        Georgia, "Times New Roman", Times, serif;
 $font-family-monospace:    Menlo, Monaco, Consolas, "Courier New", monospace;
 $font-family-base:         $font-family-sans-serif !default;
@@ -161,7 +161,7 @@ $table-sm-cell-padding:         .3rem !default;
 // Forms
 $input-padding-x:                .75rem !default;
 $input-padding-y:                .6rem !default;
-$input-line-height:              1.42rem !default;
+$input-line-height:              1.35rem !default;
 
 $input-btn-border-width:         1px;
 $input-border-radius:            0 $border-radius $border-radius 0 !default;

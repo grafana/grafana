@@ -51,6 +51,7 @@ func NewOAuthService() {
 			ApiUrl:         sec.Key("api_url").String(),
 			Enabled:        sec.Key("enabled").MustBool(),
 			AllowedDomains: sec.Key("allowed_domains").Strings(" "),
+			HostedDomain:   sec.Key("hosted_domain").String(),
 			AllowSignup:    sec.Key("allow_sign_up").MustBool(),
 			Name:           sec.Key("name").MustString(name),
 			TlsClientCert:  sec.Key("tls_client_cert").String(),
@@ -92,6 +93,7 @@ func NewOAuthService() {
 			SocialMap["google"] = &SocialGoogle{
 				Config:               &config,
 				allowedDomains:       info.AllowedDomains,
+				hostedDomain:         info.HostedDomain,
 				apiUrl:               info.ApiUrl,
 				allowSignup:          info.AllowSignup,
 			}
