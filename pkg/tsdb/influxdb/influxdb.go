@@ -11,6 +11,7 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -50,7 +51,9 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		return result.WithError(err)
 	}
 
-	glog.Debug("Influxdb query", "raw query", query)
+	if setting.Env == setting.DEV {
+		glog.Debug("Influxdb query", "raw query", query)
+	}
 
 	req, err := e.createRequest(query)
 	if err != nil {
