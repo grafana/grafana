@@ -279,8 +279,14 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
             break;
           }
           default: {
-            if (data.length && data[0].stats.timeStep) {
-              options.series.bars.barWidth = data[0].stats.timeStep / 1.5;
+            var width;
+            for (let i = 0; i < data.length; i++) {
+              if (data[i].stats.timeStep && (width == null || (data[i].stats.timeStep / 1.5) < width)) {
+                width = data[i].stats.timeStep / 1.5;
+              }
+            }
+            if (width) {
+              options.series.bars.barWidth = width;
             }
             addTimeAxis(options);
             break;

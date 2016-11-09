@@ -2,7 +2,7 @@ define([
   'jquery',
   'lodash'
 ],
-function ($, _) {
+function ($) {
   'use strict';
 
   function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
@@ -21,7 +21,8 @@ function ($, _) {
       var initial = last*ps;
       var len = series.datapoints.points.length;
       for (var j = initial; j < len; j += ps) {
-        if (series.datapoints.points[j] > posX) {
+        if ((series.datapoints.points[initial] != null && series.datapoints.points[j] == null && ! series.lines.steps)
+            || series.datapoints.points[j] > posX) {
           return Math.max(j - ps,  0)/ps;
         }
       }
@@ -51,6 +52,8 @@ function ($, _) {
       //now we know the current X (j) position for X and Y values
       var last_value = 0; //needed for stacked values
 
+      var minDistance, minTime;
+
       for (i = 0; i < seriesList.length; i++) {
         series = seriesList[i];
 
@@ -65,8 +68,15 @@ function ($, _) {
         }
 
         hoverIndex = this.findHoverIndexFromData(pos.x, series);
-        hoverDistance = Math.abs(pos.x - series.data[hoverIndex][0]);
+        hoverDistance = pos.x - series.data[hoverIndex][0];
         pointTime = series.data[hoverIndex][0];
+
+        if (! minDistance
+            || (hoverDistance >=0 && (hoverDistance < minDistance || minDistance < 0))
+            || (hoverDistance < 0 && hoverDistance > minDistance)) {
+          minDistance = hoverDistance;
+          minTime = pointTime;
+        }
 
         if (series.stack) {
           if (panel.tooltip.value_type === 'individual') {
@@ -107,7 +117,7 @@ function ($, _) {
       }
 
       // Find point which closer to pointer
-      results.time = _.min(results, 'distance').time;
+      results.time = minTime;
 
       return results;
     };
@@ -153,6 +163,8 @@ function ($, _) {
 
         seriesHtml = '';
 
+        absoluteTime = dashboard.formatDate(seriesHoverInfo.time, tooltipFormat);
+
         // Dynamically reorder the hovercard for the current time point if the
         // option is enabled, sort by yaxis by default.
         if (panel.tooltip.sort === 2) {
@@ -169,18 +181,11 @@ function ($, _) {
           });
         }
 
-        var distance, time;
-
         for (i = 0; i < seriesHoverInfo.length; i++) {
           hoverInfo = seriesHoverInfo[i];
 
           if (hoverInfo.hidden) {
             continue;
-          }
-
-          if (! distance || hoverInfo.distance < distance) {
-            distance = hoverInfo.distance;
-            time = hoverInfo.time;
           }
 
           var highlightClass = '';
@@ -198,7 +203,6 @@ function ($, _) {
           plot.highlight(hoverInfo.index, hoverInfo.hoverIndex);
         }
 
-        absoluteTime = dashboard.formatDate(time, tooltipFormat);
         self.showTooltip(absoluteTime, seriesHtml, pos);
       }
       // single series tooltip
