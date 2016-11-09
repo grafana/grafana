@@ -2,23 +2,34 @@
   <div class="dashlist-section">
     <h6 class="dashlist-section-header">
       Getting Started with Grafana
-      <button class="dashlist-CTA-close-btn"><i class="fa fa-remove"></i></button>
+      <button class="dashlist-CTA-close-btn" ng-click="ctrl.dismiss()">
+        <i class="fa fa-remove"></i>
+      </button>
     </h6>
-    <ul class="progress-tracker progress-tracker--text progress-tracker--center">
-      <li class="progress-step is-complete">
+    <ul class="progress-tracker progress-tracker--text progress-tracker--center" ng-if="ctrl.checksDone">
+      <li class="progress-step completed">
         <span class="progress-marker"><i class="icon-gf icon-gf-check gettingstarted-icon-success"></i></span>
         <span class="progress-text"><span class="gettingstarted-blurb-success">Install Grafana</span></span>
       </li>
-      <li class="progress-step is-active">
+      <li class="progress-step active" ng-if="!ctrl.hasDatasources">
         <span class="progress-marker"><i class="icon-gf icon-gf-datasources gettingstarted-icon-active"></i></span>
         <span class="progress-text">
           <a href="#" class="gettingstarted-blurb">Create your first data source.</a>
           <button class="btn btn-success btn-small">Add Data Source</button>
         </span>
       </li>
-      <li class="progress-step">
+      <li class="progress-step completed" ng-if="ctrl.hasDatasources">
+        <span class="progress-marker"><i class="icon-gf icon-gf-check gettingstarted-icon-success"></i></span>
+        <span class="progress-text">
+          <span class="gettingstarted-blurb-success">Create your first data source.</span>
+        </span>
+      </li>
+      <li class="progress-step active" ng-if="ctrl.hasDatasources">
         <span class="progress-marker"><i class="icon-gf icon-gf-dashboard gettingstarted-icon-upcoming"></i></span>
-        <span class="progress-text"><a href="#" class="gettingstarted-blurb-upcoming">Create your first dashboard.</a></span>
+        <span class="progress-text">
+          <a href="#" class="gettingstarted-blurb-upcoming">Create your first dashboard.</a>
+          <button class="btn btn-success btn-small">Add Data Source</button>
+        </span>
       </li>
       <li class="progress-step">
         <span class="progress-marker"><i class="icon-gf icon-gf-users gettingstarted-icon-upcoming"></i></span>

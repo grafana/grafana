@@ -58,6 +58,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			LightTheme:     prefs.Theme == "light",
 			Timezone:       prefs.Timezone,
 			Locale:         locale,
+			HelpFlags1:     c.HelpFlags1,
 		},
 		Settings:                settings,
 		AppUrl:                  appUrl,

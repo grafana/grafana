@@ -74,7 +74,9 @@ export class BackendSrv {
     return this.$http(options).then(results => {
       if (options.method !== 'GET') {
         if (results && results.data.message) {
-          this.alertSrv.set(results.data.message, '', 'success', 3000);
+          if (options.showSuccessAlert !== false) {
+            this.alertSrv.set(results.data.message, '', 'success', 3000);
+          }
         }
       }
       return results.data;

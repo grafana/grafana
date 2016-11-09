@@ -113,6 +113,9 @@ func Register(r *macaron.Macaron) {
 
 			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), wrap(ChangeUserPassword))
 			r.Get("/quotas", wrap(GetUserQuotas))
+			r.Put("/helpflags/:id", wrap(SetHelpFlag))
+			// For dev purpose
+			r.Get("/helpflags/clear", wrap(ClearHelpFlags))
 
 			r.Get("/preferences", wrap(GetUserPreferences))
 			r.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), wrap(UpdateUserPreferences))
