@@ -72,7 +72,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 					Result{
 						Series: []Row{
 							{
-								Name:    "cpu",
+								Name:    "cpu.upc",
 								Columns: []string{"time", "mean", "sum"},
 								Tags:    map[string]string{"datacenter": "America"},
 								Values: [][]interface{}{
@@ -112,6 +112,20 @@ func TestInfluxdbResponseParser(t *testing.T) {
 					result := parser.Parse(response, query)
 
 					So(result.Series[0].Name, ShouldEqual, "alias America")
+				})
+
+				Convey("segment alias", func() {
+					query := &Query{Alias: "alias $1"}
+					result := parser.Parse(response, query)
+
+					So(result.Series[0].Name, ShouldEqual, "alias upc")
+				})
+
+				Convey("segment position out of bound", func() {
+					query := &Query{Alias: "alias $5"}
+					result := parser.Parse(response, query)
+
+					So(result.Series[0].Name, ShouldEqual, "alias $5")
 				})
 			})
 

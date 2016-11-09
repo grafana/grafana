@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -61,6 +62,8 @@ func (rp *ResponseParser) formatSerieName(row Row, column string, query *Query) 
 		return rp.buildSerieNameFromQuery(row, column)
 	}
 
+	nameSegment := strings.Split(row.Name, ".")
+
 	result := legendFormat.ReplaceAllFunc([]byte(query.Alias), func(in []byte) []byte {
 		aliasFormat := string(in)
 		aliasFormat = strings.Replace(aliasFormat, "[[", "", 1)
@@ -72,6 +75,11 @@ func (rp *ResponseParser) formatSerieName(row Row, column string, query *Query) 
 		}
 		if aliasFormat == "col" {
 			return []byte(column)
+		}
+
+		pos, err := strconv.Atoi(aliasFormat)
+		if err == nil && len(nameSegment) >= pos {
+			return []byte(nameSegment[pos])
 		}
 
 		if !strings.HasPrefix(aliasFormat, "tag_") {
