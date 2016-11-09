@@ -73,7 +73,7 @@ in the scenario below.
 - No new notifications are sent as the alert rule is already in state `Alerting`.
 
 So as you can see from the above scenario Grafana will not send out notifications when other series cause the alert
-to fire if the rule already is in state ´Alerting`. To improve support for queries that return multiple series
+to fire if the rule already is in state `Alerting`. To improve support for queries that return multiple series
 we plan to track state **per series** in a future release.
 
 ### No Data / Null values
@@ -106,6 +106,12 @@ The message can contain anything, information about how you might solve the issu
 
 The actual notifications are configured and shared between multiple alerts. Read the
 [Notifications]({{< relref "notifications.md" >}}) guide for how to configure and setup notifications.
+
+## Alert State History & Annotations
+
+Alert state changes are recorded in the internal annotation table in Grafana's database. The state changes
+are visualized as annotations in the alert rule's graph panel. You can also go into the `State history`
+submenu in the alert tab to view & clear state history.
 
 ## Troubleshooting
 
