@@ -23,7 +23,7 @@ with Grafana being unable to query Graphite, OpenTSDB or InfluxDB.  You
 might not be able to get metric name completion or the graph might show
 an error like this:
 
-![](img/docs/v1/graph_timestore_error.png)
+![](/img/docs/v1/graph_timestore_error.png)
 
 For some types of errors, the `View details` link will show you error
 details. For many types of HTTP connection errors, however, there is very
@@ -31,7 +31,7 @@ little information. The best way to troubleshoot these issues is use
 the [Chrome developer tools](https://developer.chrome.com/devtools/index).
 By pressing `F12` you can bring up the chrome dev tools.
 
-![](img/docs/v1/toubleshooting_chrome_dev_tools.png)
+![](/img/docs/v1/toubleshooting_chrome_dev_tools.png)
 
 There are two important tabs in the Chrome developer tools: `Network`
 and `Console`. The `Console` tab will show you Javascript errors and
@@ -49,7 +49,7 @@ chrome console error, request and response information from the
 
 ### Inspecting Grafana metric requests
 
-![](img/docs/v1/toubleshooting_chrome_dev_tools_network.png)
+![](/img/docs/v1/toubleshooting_chrome_dev_tools_network.png)
 
 After opening the Chrome developer tools for the first time the
 `Network` tab is empty. You will need to refresh the page to get

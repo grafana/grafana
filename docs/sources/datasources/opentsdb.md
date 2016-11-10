@@ -11,7 +11,7 @@ weight = 5
 
 # Using OpenTSDB in Grafana
 
-{{< docs-imagebox img="img/docs/v2/add_OpenTSDB.png" max-width="14rem" >}}
+{{< docs-imagebox img="/img/docs/v2/add_OpenTSDB.png" max-width="14rem" >}}
 
 The newest release of Grafana adds additional functionality when using an OpenTSDB Data source.
 
@@ -37,7 +37,7 @@ Open a graph in edit mode by click the title. Query editor will differ if the da
 
   > Note: While using Opentsdb 2.2 datasource, make sure you use either Filters or Tags as they are mutually exclusive. If used together, might give you weird results.
 
-![](img/docs/v2/opentsdb_query_editor.png)
+![](/img/docs/v2/opentsdb_query_editor.png)
 
 ### Auto complete suggestions
 As soon as you start typing metric names, tag names and tag values , you should see highlighted auto complete suggestions for them.

@@ -27,32 +27,55 @@ func NewResultHandler() *DefaultResultHandler {
 	}
 }
 
-func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
-	oldState := evalContext.Rule.State
-
-	executionError := ""
-	annotationData := simplejson.New()
+func (handler *DefaultResultHandler) GetStateFromEvaluation(evalContext *EvalContext) m.AlertStateType {
 	if evalContext.Error != nil {
-		handler.log.Error("Alert Rule Result Error", "ruleId", evalContext.Rule.Id, "error", evalContext.Error)
-		evalContext.Rule.State = m.AlertStateExecError
-		executionError = evalContext.Error.Error()
-		annotationData.Set("errorMessage", executionError)
-	} else if evalContext.Firing {
-		evalContext.Rule.State = m.AlertStateAlerting
-		annotationData = simplejson.NewFromAny(evalContext.EvalMatches)
-	} else {
-		if evalContext.NoDataFound {
-			if evalContext.Rule.NoDataState != m.NoDataKeepState {
-				evalContext.Rule.State = evalContext.Rule.NoDataState.ToAlertState()
-			}
+		handler.log.Error("Alert Rule Result Error",
+			"ruleId", evalContext.Rule.Id,
+			"name", evalContext.Rule.Name,
+			"error", evalContext.Error,
+			"changing state to", evalContext.Rule.ExecutionErrorState.ToAlertState())
+
+		if evalContext.Rule.ExecutionErrorState == m.ExecutionErrorKeepState {
+			return evalContext.PrevAlertState
 		} else {
-			evalContext.Rule.State = m.AlertStateOK
+			return evalContext.Rule.ExecutionErrorState.ToAlertState()
+		}
+	} else if evalContext.Firing {
+		return m.AlertStateAlerting
+	} else if evalContext.NoDataFound {
+		handler.log.Info("Alert Rule returned no data",
+			"ruleId", evalContext.Rule.Id,
+			"name", evalContext.Rule.Name,
+			"changing state to", evalContext.Rule.NoDataState.ToAlertState())
+
+		if evalContext.Rule.NoDataState == m.NoDataKeepState {
+			return evalContext.PrevAlertState
+		} else {
+			return evalContext.Rule.NoDataState.ToAlertState()
 		}
 	}
 
+	return m.AlertStateOK
+}
+
+func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
+	executionError := ""
+	annotationData := simplejson.New()
+
+	evalContext.Rule.State = handler.GetStateFromEvaluation(evalContext)
+
+	if evalContext.Error != nil {
+		executionError = evalContext.Error.Error()
+		annotationData.Set("errorMessage", executionError)
+	}
+
+	if evalContext.Firing {
+		annotationData = simplejson.NewFromAny(evalContext.EvalMatches)
+	}
+
 	countStateResult(evalContext.Rule.State)
-	if handler.shouldUpdateAlertState(evalContext, oldState) {
-		handler.log.Info("New state change", "alertId", evalContext.Rule.Id, "newState", evalContext.Rule.State, "oldState", oldState)
+	if evalContext.ShouldUpdateAlertState() {
+		handler.log.Info("New state change", "alertId", evalContext.Rule.Id, "newState", evalContext.Rule.State, "prev state", evalContext.PrevAlertState)
 
 		cmd := &m.SetAlertStateCommand{
 			AlertId:  evalContext.Rule.Id,
@@ -76,7 +99,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			Title:       evalContext.Rule.Name,
 			Text:        evalContext.GetStateModel().Text,
 			NewState:    string(evalContext.Rule.State),
-			PrevState:   string(oldState),
+			PrevState:   string(evalContext.PrevAlertState),
 			Epoch:       time.Now().Unix(),
 			Data:        annotationData,
 		}
@@ -86,19 +109,12 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 			handler.log.Error("Failed to save annotation for new alert state", "error", err)
 		}
 
-		if (oldState == m.AlertStatePending) && (evalContext.Rule.State == m.AlertStateOK) {
-			handler.log.Info("Notfication not sent", "oldState", oldState, "newState", evalContext.Rule.State)
-		} else {
+		if evalContext.ShouldSendNotification() {
 			handler.notifier.Notify(evalContext)
 		}
-
 	}
 
 	return nil
-}
-
-func (handler *DefaultResultHandler) shouldUpdateAlertState(evalContext *EvalContext, oldState m.AlertStateType) bool {
-	return evalContext.Rule.State != oldState
 }
 
 func countStateResult(state m.AlertStateType) {
@@ -113,7 +129,5 @@ func countStateResult(state m.AlertStateType) {
 		metrics.M_Alerting_Result_State_Paused.Inc(1)
 	case m.AlertStateNoData:
 		metrics.M_Alerting_Result_State_NoData.Inc(1)
-	case m.AlertStateExecError:
-		metrics.M_Alerting_Result_State_ExecError.Inc(1)
 	}
 }

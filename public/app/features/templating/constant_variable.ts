@@ -16,6 +16,7 @@ export class ConstantVariable implements Variable {
     label: '',
     query: '',
     current: {},
+    options: [],
   };
 
   /** @ngInject **/

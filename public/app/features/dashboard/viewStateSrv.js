@@ -83,6 +83,16 @@ function (angular, _, $) {
     };
 
     DashboardViewState.prototype.update = function(state) {
+      // implement toggle logic
+      if (state.toggle) {
+        delete state.toggle;
+        if (this.state.fullscreen && state.fullscreen) {
+          if (this.state.edit === state.edit) {
+            state.fullscreen = !state.fullscreen;
+          }
+        }
+      }
+
       // remember if editStateChanged
       this.editStateChanged = state.edit !== this.state.edit;
 
@@ -149,13 +159,14 @@ function (angular, _, $) {
 
       ctrl.editMode = false;
       ctrl.fullscreen = false;
+      ctrl.dashboard.editMode = this.oldDashboardEditMode;
 
       this.$scope.appEvent('panel-fullscreen-exit', {panelId: ctrl.panel.id});
 
       if (!render) { return false;}
 
       $timeout(function() {
-        if (self.oldTimeRange && self.oldTimeRange !== ctrl.range) {
+        if (self.oldTimeRange !== ctrl.range) {
           self.$scope.broadcastRefresh();
         } else {
           self.$scope.$broadcast('render');
@@ -170,8 +181,10 @@ function (angular, _, $) {
       ctrl.editMode = this.state.edit && this.dashboard.meta.canEdit;
       ctrl.fullscreen = true;
 
+      this.oldDashboardEditMode = this.dashboard.editMode;
       this.oldTimeRange = ctrl.range;
       this.fullscreenPanel = panelScope;
+      this.dashboard.editMode = false;
 
       $(window).scrollTop(0);
 
@@ -196,8 +209,9 @@ function (angular, _, $) {
         }
       }
 
-      panelScope.$on('$destroy', function() {
+      var unbind = panelScope.$on('$destroy', function() {
         self.panelScopes = _.without(self.panelScopes, panelScope);
+        unbind();
       });
     };
 

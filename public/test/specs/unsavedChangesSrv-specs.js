@@ -77,7 +77,8 @@ define([
     });
 
     it('Should ignore row repeats', function() {
-      dash.rows.push({repeatRowId: 10});
+      dash.addEmptyRow();
+      dash.rows[1].repeatRowId = 10;
       expect(tracker.hasChanges()).to.be(false);
     });
 

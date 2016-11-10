@@ -62,6 +62,15 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 	case "count":
 		value = float64(len(series.Points))
 		allNull = false
+	case "last":
+		points := series.Points
+		for i := len(points) - 1; i >= 0; i-- {
+			if points[i][0].Valid {
+				value = points[i][0].Float64
+				allNull = false
+				break
+			}
+		}
 	}
 
 	if allNull {

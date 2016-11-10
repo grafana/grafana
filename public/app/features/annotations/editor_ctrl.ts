@@ -67,8 +67,8 @@ export class AnnotationsEditorCtrl {
     this.annotations.push(this.currentAnnotation);
     this.reset();
     this.mode = 'list';
-    this.$scope.updateSubmenuVisibility();
     this.$scope.broadcastRefresh();
+    this.$scope.dashboard.updateSubmenuVisibility();
   };
 
   removeAnnotation(annotation) {

@@ -10,7 +10,9 @@ import (
 
 type FakeCondition struct{}
 
-func (f *FakeCondition) Eval(context *EvalContext) {}
+func (f *FakeCondition) Eval(context *EvalContext) (*ConditionResult, error) {
+	return &ConditionResult{}, nil
+}
 
 func TestAlertRuleModel(t *testing.T) {
 	Convey("Testing alert rule", t, func() {

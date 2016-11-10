@@ -290,12 +290,12 @@
                 sendData = angular.fromJson(sendData);
 
                 var dropOffset = calculateDropOffset(e);
-                
+
                 var position = dropOffset ? {
                     x: dropOffset.x - sendData.offset.x,
                     y: dropOffset.y - sendData.offset.y
                 } : null;
-                
+
                 determineEffectAllowed(e);
 
                 var uiOnDropFn = $parse(attr.uiOnDrop);
@@ -305,7 +305,7 @@
                 element.removeClass(dragEnterClass);
                 dragging = 0;
             }
-            
+
             function isDragChannelAccepted(dragChannel, dropChannel) {
                 if (dropChannel === '*') {
                     return true;

@@ -3,6 +3,8 @@ package influxdb
 import (
 	"testing"
 
+	"strings"
+
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -82,6 +84,42 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			rawQuery, err := builder.Build(query, queryContext)
 			So(err, ShouldBeNil)
 			So(rawQuery, ShouldEqual, `Raw query`)
+		})
+
+		Convey("can render normal tags without operator", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: "", Value: `value`, Key: "key"}}}
+
+			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" = 'value'`)
+		})
+
+		Convey("can render regex tags without operator", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: "", Value: `/value/`, Key: "key"}}}
+
+			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" =~ /value/`)
+		})
+
+		Convey("can render regex tags", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: "=~", Value: `/value/`, Key: "key"}}}
+
+			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" =~ /value/`)
+		})
+
+		Convey("can render number tags", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: "=", Value: "10001", Key: "key"}}}
+
+			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" = 10001`)
+		})
+
+		Convey("can render number tags with decimals", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: "=", Value: "10001.1", Key: "key"}}}
+
+			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" = 10001.1`)
+		})
+
+		Convey("can render string tags", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: "=", Value: "value", Key: "key"}}}
+
+			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" = 'value'`)
 		})
 	})
 }

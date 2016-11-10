@@ -5,6 +5,7 @@ import angular from 'angular';
 import _ from 'lodash';
 
 import coreModule from 'app/core/core_module';
+import {DashboardRow} from './row/row_model';
 
 export class DynamicDashboardSrv {
   iteration: number;
@@ -45,7 +46,7 @@ export class DynamicDashboardSrv {
         }
       } else if (row.repeatRowId && row.repeatIteration !== this.iteration) {
         // clean up old left overs
-        this.dashboard.rows.splice(i, 1);
+        this.dashboard.removeRow(row, true);
         i = i - 1;
         continue;
       }
@@ -80,12 +81,14 @@ export class DynamicDashboardSrv {
       row = this.dashboard.rows[i];
       if (row.repeatRowId === sourceRowId && row.repeatIteration !== this.iteration) {
         copy = row;
+        copy.copyPropertiesFromRowSource(sourceRow);
         break;
       }
     }
 
     if (!copy) {
-      copy = angular.copy(sourceRow);
+      var modelCopy = angular.copy(sourceRow.getSaveModel());
+      copy = new DashboardRow(modelCopy);
       this.dashboard.rows.splice(sourceRowIndex + repeatIndex, 0, copy);
 
       // set new panel ids

@@ -2,9 +2,16 @@ package influxdb
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
+	"regexp"
+
 	"github.com/grafana/grafana/pkg/tsdb"
+)
+
+var (
+	regexpOperatorPattern *regexp.Regexp = regexp.MustCompile(`^\/.*\/$`)
 )
 
 type QueryBuilder struct{}
@@ -42,7 +49,28 @@ func (qb *QueryBuilder) renderTags(query *Query) []string {
 			str += " "
 		}
 
-		res = append(res, fmt.Sprintf(`%s"%s" %s '%s'`, str, tag.Key, tag.Operator, tag.Value))
+		//If the operator is missing we fall back to sensible defaults
+		if tag.Operator == "" {
+			if regexpOperatorPattern.Match([]byte(tag.Value)) {
+				tag.Operator = "=~"
+			} else {
+				tag.Operator = "="
+			}
+		}
+
+		textValue := ""
+		numericValue, err := strconv.ParseFloat(tag.Value, 64)
+
+		// quote value unless regex or number
+		if tag.Operator == "=~" || tag.Operator == "!~" {
+			textValue = tag.Value
+		} else if err == nil {
+			textValue = fmt.Sprintf("%v", numericValue)
+		} else {
+			textValue = fmt.Sprintf("'%s'", tag.Value)
+		}
+
+		res = append(res, fmt.Sprintf(`%s"%s" %s %s`, str, tag.Key, tag.Operator, textValue))
 	}
 
 	return res

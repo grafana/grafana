@@ -15,7 +15,6 @@ export class AlertListCtrl {
     {text: 'OK', value: 'ok'},
     {text: 'Alerting', value: 'alerting'},
     {text: 'No Data', value: 'no_data'},
-    {text: 'Execution Error', value: 'execution_error'},
   ];
 
   filters = {
