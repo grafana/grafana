@@ -84,11 +84,8 @@ export class AddPanelCtrl {
     var panel = {
       id: null,
       title: config.new_panel_title,
-      error: false,
       span: span < defaultSpan && span > 0 ? span : defaultSpan,
-      editable: true,
       type: panelPluginInfo.id,
-      isNew: true,
     };
 
     this.rowCtrl.closeDropView();

@@ -88,4 +88,8 @@ func addUserMigrations(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Drop old table user_v1", NewDropTableMigration("user_v1"))
+
+	mg.AddMigration("Add column help_flags1 to user table", NewAddColumnMigration(userV2, &Column{
+		Name: "help_flags1", Type: DB_BigInt, Nullable: false, Default: "0",
+	}))
 }
