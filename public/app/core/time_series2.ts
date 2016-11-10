@@ -115,6 +115,8 @@ export default class TimeSeries {
       currentValue = this.datapoints[i][0];
       currentTime = this.datapoints[i][1];
 
+      // Due to missing values we could have different timeStep all along the series
+      // so we have to find the minimum one (could occur with aggregators such as ZimSum)
       if (i>0) {
         var previousTime = this.datapoints[i-1][1];
         if (!this.stats.timeStep || currentTime - previousTime < this.stats.timeStep) {
