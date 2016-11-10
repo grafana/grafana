@@ -86,16 +86,34 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 			So(rawQuery, ShouldEqual, `Raw query`)
 		})
 
-		Convey("can render regex tags", func() {
-			query := &Query{Tags: []*Tag{&Tag{Operator: "=~", Value: "value", Key: "key"}}}
+		Convey("can render normal tags without operator", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: "", Value: `value`, Key: "key"}}}
 
-			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" =~ value`)
+			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" = 'value'`)
+		})
+
+		Convey("can render regex tags without operator", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: "", Value: `/value/`, Key: "key"}}}
+
+			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" =~ /value/`)
+		})
+
+		Convey("can render regex tags", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: "=~", Value: `/value/`, Key: "key"}}}
+
+			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" =~ /value/`)
 		})
 
 		Convey("can render number tags", func() {
-			query := &Query{Tags: []*Tag{&Tag{Operator: "=", Value: "1", Key: "key"}}}
+			query := &Query{Tags: []*Tag{&Tag{Operator: "=", Value: "10001", Key: "key"}}}
 
-			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" = 1`)
+			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" = 10001`)
+		})
+
+		Convey("can render number tags with decimals", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: "=", Value: "10001.1", Key: "key"}}}
+
+			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" = 10001.1`)
 		})
 
 		Convey("can render string tags", func() {
