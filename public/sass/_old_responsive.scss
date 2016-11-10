@@ -32,6 +32,10 @@
   .page-container {
     padding: ($spacer * 1) ($spacer * 2);
   }
+
+  .dash-row-menu-container {
+    display: none;
+  }
 }
 
 @include media-breakpoint-down(xs) {

@@ -135,7 +135,7 @@ describe('grafanaGraph', function() {
     });
 
     it('should set barWidth', function() {
-      expect(ctx.plotOptions.series.bars.barWidth).to.be(10/1.5);
+      expect(ctx.plotOptions.series.bars.barWidth).to.be(1/1.5);
     });
   });
 

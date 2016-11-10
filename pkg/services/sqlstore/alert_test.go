@@ -47,7 +47,7 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(err2, ShouldBeNil)
 			So(alert.Name, ShouldEqual, "Alerting title")
 			So(alert.Message, ShouldEqual, "Alerting message")
-			So(alert.State, ShouldEqual, "no_data")
+			So(alert.State, ShouldEqual, "pending")
 			So(alert.Frequency, ShouldEqual, 1)
 		})
 
@@ -77,7 +77,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				So(query.Result[0].Name, ShouldEqual, "Name")
 
 				Convey("Alert state should not be updated", func() {
-					So(query.Result[0].State, ShouldEqual, "no_data")
+					So(query.Result[0].State, ShouldEqual, "pending")
 				})
 			})
 

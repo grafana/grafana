@@ -2,6 +2,7 @@ package influxdb
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -42,7 +43,18 @@ func (qb *QueryBuilder) renderTags(query *Query) []string {
 			str += " "
 		}
 
-		res = append(res, fmt.Sprintf(`%s"%s" %s '%s'`, str, tag.Key, tag.Operator, tag.Value))
+		value := tag.Value
+		nValue, err := strconv.ParseFloat(tag.Value, 64)
+
+		if tag.Operator == "=~" || tag.Operator == "!~" {
+			value = fmt.Sprintf("%s", value)
+		} else if err == nil {
+			value = fmt.Sprintf("%v", nValue)
+		} else {
+			value = fmt.Sprintf("'%s'", value)
+		}
+
+		res = append(res, fmt.Sprintf(`%s"%s" %s %s`, str, tag.Key, tag.Operator, value))
 	}
 
 	return res

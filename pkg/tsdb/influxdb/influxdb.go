@@ -2,17 +2,16 @@ package influxdb
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"net/http"
 	"net/url"
 	"path"
-	"time"
 
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -41,14 +40,7 @@ func init() {
 	glog = log.New("tsdb.influxdb")
 	tsdb.RegisterExecutor("influxdb", NewInfluxDBExecutor)
 
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	HttpClient = &http.Client{
-		Timeout:   time.Duration(15 * time.Second),
-		Transport: tr,
-	}
+	HttpClient = tsdb.GetDefaultClient()
 }
 
 func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
@@ -59,7 +51,9 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		return result.WithError(err)
 	}
 
-	glog.Debug("Influxdb query", "raw query", query)
+	if setting.Env == setting.DEV {
+		glog.Debug("Influxdb query", "raw query", query)
+	}
 
 	req, err := e.createRequest(query)
 	if err != nil {
@@ -77,8 +71,10 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 
 	var response Response
 	dec := json.NewDecoder(resp.Body)
+	defer resp.Body.Close()
 	dec.UseNumber()
 	err = dec.Decode(&response)
+
 	if err != nil {
 		return result.WithError(err)
 	}

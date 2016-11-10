@@ -34,6 +34,16 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
       var rootScope = scope.$root;
       var panelWidth = 0;
       var thresholdManager = new ThresholdManager(ctrl);
+      var plot;
+
+      ctrl.events.on('panel-teardown', () => {
+        thresholdManager = null;
+
+        if (plot) {
+          plot.destroy();
+          plot = null;
+        }
+      });
 
       rootScope.onAppEvent('setCrosshair', function(event, info) {
         // do not need to to this if event is from this panel
@@ -42,7 +52,6 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         }
 
         if (dashboard.sharedCrosshair) {
-          var plot = elem.data().plot;
           if (plot) {
             plot.setCrosshair({ x: info.pos.x, y: info.pos.y });
           }
@@ -50,7 +59,6 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
       }, scope);
 
       rootScope.onAppEvent('clearCrosshair', function() {
-        var plot = elem.data().plot;
         if (plot) {
           plot.clearCrosshair();
         }
@@ -175,6 +183,22 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         }
       }
 
+      function getMinTimeStepOfSeries(data) {
+        var min = 100000000000;
+
+        for (let i = 0; i < data.length; i++) {
+          if (!data[i].stats.timeStep) {
+            continue;
+          }
+
+          if (data[i].stats.timeStep < min) {
+            min = data[i].stats.timeStep;
+          }
+        }
+
+        return min;
+      }
+
       // Function for rendering panel
       function render_panel() {
         panelWidth =  elem.width();
@@ -271,8 +295,8 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
             break;
           }
           default: {
-            if (data.length && data[0].stats.timeStep) {
-              options.series.bars.barWidth = data[0].stats.timeStep / 1.5;
+            if (panel.bars) {
+              options.series.bars.barWidth = getMinTimeStepOfSeries(data) / 1.5;
             }
             addTimeAxis(options);
             break;
@@ -287,7 +311,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
 
         function callPlot(incrementRenderCounter) {
           try {
-            $.plot(elem, sortedSeries, options);
+            plot = $.plot(elem, sortedSeries, options);
             if (ctrl.renderError) {
               delete ctrl.error;
               delete ctrl.inspector;
@@ -384,7 +408,6 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         if (!annotations || annotations.length === 0) {
           return;
         }
-        console.log(annotations);
 
         var types = {};
         types['$__alerting'] = {
@@ -530,7 +553,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         return "%H:%M";
       }
 
-      new GraphTooltip(elem, dashboard, scope, function() {
+      var tooltip = new GraphTooltip(elem, dashboard, scope, function() {
         return sortedSeries;
       });
 
@@ -541,6 +564,12 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
             to    : moment.utc(ranges.xaxis.to),
           });
         });
+      });
+
+      scope.$on('$destroy', function() {
+        tooltip.destroy();
+        elem.off();
+        elem.remove();
       });
     }
   };

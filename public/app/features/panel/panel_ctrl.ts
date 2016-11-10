@@ -50,7 +50,10 @@ export class PanelCtrl {
 
     $scope.$on("refresh", () => this.refresh());
     $scope.$on("render", () => this.render());
-    $scope.$on("$destroy", () => this.events.emit('panel-teardown'));
+    $scope.$on("$destroy", () => {
+      this.events.emit('panel-teardown');
+      this.events.removeAllListeners();
+    });
   }
 
   init() {
@@ -108,7 +111,6 @@ export class PanelCtrl {
   changeTab(newIndex) {
     this.editorTabIndex = newIndex;
     var route = this.$injector.get('$route');
-
     route.current.params.tab = this.editorTabs[newIndex].title.toLowerCase();
     route.updateParams();
   }
@@ -153,7 +155,7 @@ export class PanelCtrl {
     if (this.fullscreen) {
       var docHeight = $(window).height();
       var editHeight = Math.floor(docHeight * 0.4);
-      var fullscreenHeight = Math.floor(docHeight * 0.6);
+      var fullscreenHeight = Math.floor(docHeight * 0.8);
       this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
     } else {
       this.containerHeight = this.panel.height || this.row.height;
@@ -190,21 +192,15 @@ export class PanelCtrl {
 
   updateColumnSpan(span) {
     this.panel.span = Math.min(Math.max(Math.floor(this.panel.span + span), 1), 12);
+    this.row.panelSpanChanged();
+
     this.$timeout(() => {
       this.render();
     });
   }
 
   removePanel() {
-    this.publishAppEvent('confirm-modal', {
-      title: 'Remove Panel',
-      text: 'Are you sure you want to remove this panel?',
-      icon: 'fa-trash',
-      yesText: 'Remove',
-      onConfirm: () => {
-        this.row.panels = _.without(this.row.panels, this.panel);
-      }
-    });
+    this.row.removePanel(this.panel);
   }
 
   editPanelJson() {

@@ -339,7 +339,7 @@ your Grafana instance. For example
     scopes = user:email,read:org
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
-    allow_sign_up = false
+    allow_sign_up = true
     # space-delimited organization names
     allowed_organizations = github google
 
@@ -579,3 +579,37 @@ Enabled to automatically remove expired snapshots
 
 ### remove snapshots after 90 days
 Time to live for snapshots.
+
+## [external_image_storage]
+These options control how images should be made public so they can be shared on services like slack.
+
+### provider
+You can choose between (s3, webdav). If left empty Grafana will ignore the upload action.
+
+## [external_image_storage.s3]
+
+### bucket_url
+bucket url for s3. ex http://grafana.s3.amazonaws.com/
+
+### access_key
+access key. ex AAAAAAAAAAAAAAAAAAAA
+
+### secret_key
+secret key. ex AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+## [external_image_storage.webdav]
+
+### url
+Url to where Grafana will send PUT request with images
+
+### username
+basic auth username
+
+### password
+basic auth password
+
+## [alerting]
+
+### execute_alerts = true
+
+Makes it possible to turn off alert rule execution.

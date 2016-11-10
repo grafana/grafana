@@ -52,3 +52,13 @@ declare module 'eventemitter3' {
   var config: any;
   export default config;
 }
+
+declare module 'virtual-scroll' {
+  var config: any;
+  export default config;
+}
+
+declare module 'mousetrap' {
+  var config: any;
+  export default config;
+}
