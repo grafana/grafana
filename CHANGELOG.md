@@ -2,6 +2,7 @@
 
 ### Bugfixes
 * **Graph Panel**: Bar width if bars was only used in series override, [#6528](https://github.com/grafana/grafana/issues/6528)
+* **UI/Browser**: Fixed issue with page/view header gradient border not showing in Safari, [#6530](https://github.com/grafana/grafana/issues/6530)
 
 # 4.0-beta1 (2016-11-09)
 
