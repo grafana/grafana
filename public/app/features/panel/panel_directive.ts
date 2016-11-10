@@ -191,7 +191,7 @@ module.directive('panelResizer', function($rootScope) {
           }
         }
 
-        ctrl.row.panelSpanChanged();
+        ctrl.row.panelSpanChanged(true);
 
         scope.$apply(function() {
           ctrl.render();

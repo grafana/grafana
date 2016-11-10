@@ -47,10 +47,17 @@ export class SearchCtrl {
       this.query.starred = true;
     }
 
+    if (payload && payload.tagsMode) {
+      return this.$timeout(() => {
+        this.ignoreClose = false;
+        this.giveSearchFocus = this.giveSearchFocus + 1;
+        this.getTags();
+      }, 100);
+    }
+
     this.$timeout(() => {
       this.ignoreClose = false;
       this.giveSearchFocus = this.giveSearchFocus + 1;
-      this.query.query = '';
       this.search();
     }, 100);
   }

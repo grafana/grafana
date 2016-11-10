@@ -13,32 +13,7 @@
   color: $variable;
 }
 
-.playlist-active {
-  .add-row-panel-hint,
-  .dashnav-refresh-action,
-  .dashnav-zoom-out,
-  .dashnav-action-icons,
-  .dash-row-menu,
-  .dashnav-move-timeframe  {
-    display: none;
-  }
 
-  .grafana-menu-stop-playlist {
-    display: list-item;
-  }
-}
-
-.hide-controls {
-  .add-row-panel-hint {
-    display: none;
-  }
-  .dash-row-menu {
-    display: none;
-  }
-  .panel-drop-zone {
-    visibility: hidden;
-  }
-}
 
 div.flot-text {
   color: $text-color !important;
@@ -47,6 +22,15 @@ div.flot-text {
 .panel {
   display: inline-block;
   float: left;
+
+  &--solo {
+    .resize-panel-handle {
+      display: none;
+    }
+    .panel-container {
+      border: none;
+    }
+  }
 }
 
 .panel-margin {
@@ -207,7 +191,15 @@ div.flot-text {
   width: 15px;
   height: 15px;
   display: block;
-  color: $panel-bg;
+  color: $text-color-faint;
+  overflow: hidden;
+
+  &:before {
+    left: initial;
+    right: -5px;
+    bottom: 0px;
+    position: absolute;
+  }
 }
 
 .dashboard-header {
@@ -218,16 +210,5 @@ div.flot-text {
     display: inline-block;
     @include brand-bottom-border();
     padding: 0.5rem .5rem .2rem .5rem;
-  }
-}
-
-.resize-panel-handle {
-  color: $text-color-faint;
-  overflow: hidden;
-  &:before {
-    left: initial;
-    right: -5px;
-    bottom: 0px;
-    position: absolute;
   }
 }

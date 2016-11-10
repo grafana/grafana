@@ -66,7 +66,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     // fill factor
     fill          : 1,
     // line width in pixels
-    linewidth     : 2,
+    linewidth     : 1,
     // show hide points
     points        : false,
     // point radius in pixels

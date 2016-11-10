@@ -24,12 +24,14 @@ func NewPrometheusExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
 }
 
 var (
-	plog log.Logger
+	plog         log.Logger
+	legendFormat *regexp.Regexp
 )
 
 func init() {
 	plog = log.New("tsdb.prometheus")
 	tsdb.RegisterExecutor("prometheus", NewPrometheusExecutor)
+	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
 func (e *PrometheusExecutor) getClient() (prometheus.QueryAPI, error) {
@@ -79,13 +81,11 @@ func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlic
 }
 
 func formatLegend(metric pmodel.Metric, query *PrometheusQuery) string {
-	reg, _ := regexp.Compile(`\{\{\s*(.+?)\s*\}\}`)
-
 	if query.LegendFormat == "" {
 		return metric.String()
 	}
 
-	result := reg.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
+	result := legendFormat.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
 		labelName := strings.Replace(string(in), "{{", "", 1)
 		labelName = strings.Replace(labelName, "}}", "", 1)
 		labelName = strings.TrimSpace(labelName)

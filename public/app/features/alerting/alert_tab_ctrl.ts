@@ -19,6 +19,7 @@ export class AlertTabCtrl {
   conditionModels: any;
   evalFunctions: any;
   noDataModes: any;
+  executionErrorModes: any;
   addNotificationSegment;
   notifications;
   alertNotifications;
@@ -42,6 +43,7 @@ export class AlertTabCtrl {
     this.evalFunctions = alertDef.evalFunctions;
     this.conditionTypes = alertDef.conditionTypes;
     this.noDataModes = alertDef.noDataModes;
+    this.executionErrorModes = alertDef.executionErrorModes;
     this.appSubUrl = config.appSubUrl;
   }
 
@@ -53,11 +55,10 @@ export class AlertTabCtrl {
     this.panelCtrl.events.on('threshold-changed', thresholdChangedEventHandler);
 
     // set panel alert edit mode
-    var unbind = this.$scope.$on("$destroy", () => {
+    this.$scope.$on("$destroy", () => {
       this.panelCtrl.events.off("threshold-changed", thresholdChangedEventHandler);
       this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
-      unbind();
     });
 
     // build notification model
@@ -89,6 +90,7 @@ export class AlertTabCtrl {
       case "email": return "fa fa-envelope";
       case "slack": return "fa fa-slack";
       case "webhook": return "fa fa-cubes";
+      case "pagerduty": return "fa fa-bullhorn";
     }
   }
 
@@ -141,6 +143,7 @@ export class AlertTabCtrl {
     }
 
     alert.noDataState = alert.noDataState || 'no_data';
+    alert.executionErrorState = alert.executionErrorState || 'alerting';
     alert.frequency = alert.frequency || '60s';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];

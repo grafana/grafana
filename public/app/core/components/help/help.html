@@ -1,70 +1,48 @@
 <div class="modal-body">
 	<div class="modal-header">
 		<h2 class="modal-header-title">
-			<i class="fa fa-question-circle"></i>
-			<span class="p-l-1">Help</span>
+			<i class="fa fa-keyboard"></i>
+			<span class="p-l-1">Shortcuts</span>
 		</h2>
 
-		<ul class="gf-tabs">
-			<li class="gf-tabs-item" ng-repeat="tab in ['Shortcuts']">
-				<a class="gf-tabs-link" ng-click="ctrl.tabindex = $index" ng-class="{active: ctrl.tabindex === $index}">
-					{{::tab}}
-				</a>
-			</li>
-		</ul>
+		<!-- <ul class="gf&#45;tabs"> -->
+		<!-- 	<li class="gf&#45;tabs&#45;item" ng&#45;repeat="tab in ['Shortcuts']"> -->
+		<!-- 		<a class="gf&#45;tabs&#45;link" ng&#45;click="ctrl.tabindex = $index" ng&#45;class="{active: ctrl.tabIndex === $index}"> -->
+		<!-- 			{{::tab}} -->
+		<!-- 		</a> -->
+		<!-- 	</li> -->
+		<!-- </ul> -->
 
-		<a class="modal-header-close" ng-click="dismiss();">
+		<a class="modal-header-close" ng-click="ctrl.dismiss();">
 			<i class="fa fa-remove"></i>
 		</a>
 	</div>
 
-	<div class="modal-content">
-		<table class="shortcut-table">
-			<tr>
-				<th></th>
-				<th style="text-align: left;">Dashboard wide shortcuts</th>
-			</tr>
-			<tr>
-				<td style="text-align: right;"><span class="label label-info">ESC</span></td>
-				<td>Exit fullscreen edit/view mode, close search or any editor view</td>
-			</tr>
-			<tr>
-				<td><span class="label label-info">F</span></td>
-				<td>Open dashboard search view (also contains import/playlist controls)</td>
-			</tr>
-			<tr>
-				<td><span class="label label-info">R</span></td>
-				<td>Refresh (Fetches new data and rerenders panels)</td>
-			</tr>
-			<tr>
-				<td><span class="label label-info">left arrow key</span></td>
-				<td>Shift time backward</td>
-			</tr>
-			<tr>
-				<td><span class="label label-info">right arrow key</span></td>
-				<td>Shift time forward</td>
-			</tr>
-			<tr>
-				<td><span class="label label-info">CTRL+S</span></td>
-				<td>Save dashboard</td>
-			</tr>
-			<tr>
-				<td><span class="label label-info">CTRL+H</span></td>
-				<td>Hide row controls</td>
-			</tr>
-			<tr>
-				<td><span class="label label-info">CTRL+Z</span></td>
-				<td>Zoom out</td>
-			</tr>
-			<tr>
-				<td><span class="label label-info">CTRL+I</span></td>
-				<td>Quick snapshot</td>
-			</tr>
-			<tr>
-				<td><span class="label label-info">CTRL+O</span></td>
-				<td>Enable/Disable shared graph crosshair</td>
-			</tr>
-		</table>
+	<div class="modal-content help-modal">
+
+		<p class="small" style="position: absolute; top: 48px; right: 10px">
+			<span class="shortcut-table-key">mod</span> =
+			<span class="muted">CTRL on windows or linux and CMD key on Mac</span>
+		</p>
+
+		<div ng-repeat="(category, shortcuts) in ctrl.shortcuts" class="shortcut-category">
+			<table class="shortcut-table">
+				<tbody>
+					<tr>
+						<th class="shortcut-table-category-header" colspan="2">{{category}}</th>
+					</tr>
+					<tr ng-repeat="shortcut in shortcuts">
+						<td class="shortcut-table-keys">
+              <span class="shortcut-table-key" ng-repeat="key in shortcut.keys track by $index" ng-bind-html="key">
+              </span>
+            </td>
+						<td class="shortcut-table-description">{{shortcut.description}}</td>
+					</tr>
+					<tbody>
+			</table>
+		</div>
+
+		<div class="clearfix"></div>
 	</div>
 
 </div>

@@ -8,7 +8,7 @@ page_keywords: grafana, kairosdb, documentation
 Grafana v2.1 brings initial support for KairosDB Datasources. While the process of adding the datasource is similar to adding a Graphite or OpenTSDB datasource type, Kairos DB does have a few different options for building queries.
 
 ## Adding the data source to Grafana
-![](img/v2/add_KairosDB.jpg)
+![](/img/v2/add_KairosDB.jpg)
 
 1. Open the side menu by clicking the the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
@@ -30,7 +30,7 @@ Access | Proxy = access via Grafana backend, Direct = access directly from brows
 ## Query editor
 Open a graph in edit mode by click the title.
 
-![](img/v2/kairos_query_editor.jpg)
+![](/img/v2/kairos_query_editor.jpg)
 
 For details on KairosDB metric queries checkout the official.
 - [Query Metrics - KairosDB 0.9.4 documentation](http://kairosdb.github.io/kairosdocs/restapi/QueryMetrics.html).

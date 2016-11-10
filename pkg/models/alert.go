@@ -9,32 +9,44 @@ import (
 type AlertStateType string
 type AlertSeverityType string
 type NoDataOption string
+type ExecutionErrorOption string
 
 const (
-	AlertStateNoData    	 AlertStateType = "no_data"
-	AlertStateExecError 	 AlertStateType = "execution_error"
-	AlertStatePaused    	 AlertStateType = "paused"
-	AlertStateAlerting     AlertStateType = "alerting"
-	AlertStateOK           AlertStateType = "ok"
-	AlertStatePending      AlertStateType = "pending"
+	AlertStateNoData   AlertStateType = "no_data"
+	AlertStatePaused   AlertStateType = "paused"
+	AlertStateAlerting AlertStateType = "alerting"
+	AlertStateOK       AlertStateType = "ok"
+	AlertStatePending  AlertStateType = "pending"
 )
 
 const (
 	NoDataSetNoData   NoDataOption = "no_data"
 	NoDataSetAlerting NoDataOption = "alerting"
-	NoDataSetOK       NoDataOption = "ok"
 	NoDataKeepState   NoDataOption = "keep_state"
 )
 
+const (
+	ExecutionErrorSetAlerting ExecutionErrorOption = "alerting"
+	ExecutionErrorKeepState   ExecutionErrorOption = "keep_state"
+)
+
 func (s AlertStateType) IsValid() bool {
-	return s == AlertStateOK || s == AlertStateNoData || s == AlertStateExecError || s == AlertStatePaused || s == AlertStatePending
+	return s == AlertStateOK || s == AlertStateNoData || s == AlertStatePaused || s == AlertStatePending
 }
 
 func (s NoDataOption) IsValid() bool {
-	return s == NoDataSetNoData || s == NoDataSetAlerting || s == NoDataSetOK || s == NoDataKeepState
+	return s == NoDataSetNoData || s == NoDataSetAlerting || s == NoDataKeepState
 }
 
 func (s NoDataOption) ToAlertState() AlertStateType {
+	return AlertStateType(s)
+}
+
+func (s ExecutionErrorOption) IsValid() bool {
+	return s == ExecutionErrorSetAlerting || s == ExecutionErrorKeepState
+}
+
+func (s ExecutionErrorOption) ToAlertState() AlertStateType {
 	return AlertStateType(s)
 }
 

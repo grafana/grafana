@@ -1,8 +1,8 @@
 +++
-title = "Grafana Installation"
+title = "Grafana Documentation Site"
 description = "Install guide for Grafana"
 keywords = ["grafana", "installation", "documentation"]
-type = "docs_root"
+type = "docs"
 [menu.docs]
 name = "Welcome to the Docs"
 identifier = "root"

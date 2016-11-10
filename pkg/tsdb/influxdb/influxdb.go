@@ -11,13 +11,13 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type InfluxDBExecutor struct {
 	*tsdb.DataSourceInfo
 	QueryParser    *InfluxdbQueryParser
-	QueryBuilder   *QueryBuilder
 	ResponseParser *ResponseParser
 }
 
@@ -25,7 +25,6 @@ func NewInfluxDBExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
 	return &InfluxDBExecutor{
 		DataSourceInfo: dsInfo,
 		QueryParser:    &InfluxdbQueryParser{},
-		QueryBuilder:   &QueryBuilder{},
 		ResponseParser: &ResponseParser{},
 	}
 }
@@ -50,9 +49,16 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		return result.WithError(err)
 	}
 
-	glog.Debug("Influxdb query", "raw query", query)
+	rawQuery, err := query.Build(context)
+	if err != nil {
+		return result.WithError(err)
+	}
 
-	req, err := e.createRequest(query)
+	if setting.Env == setting.DEV {
+		glog.Debug("Influxdb query", "raw query", rawQuery)
+	}
+
+	req, err := e.createRequest(rawQuery)
 	if err != nil {
 		return result.WithError(err)
 	}
@@ -68,35 +74,32 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 
 	var response Response
 	dec := json.NewDecoder(resp.Body)
+	defer resp.Body.Close()
 	dec.UseNumber()
 	err = dec.Decode(&response)
+
 	if err != nil {
 		return result.WithError(err)
 	}
 
 	result.QueryResults = make(map[string]*tsdb.QueryResult)
-	result.QueryResults["A"] = e.ResponseParser.Parse(&response)
+	result.QueryResults["A"] = e.ResponseParser.Parse(&response, query)
 
 	return result
 }
 
-func (e *InfluxDBExecutor) getQuery(queries tsdb.QuerySlice, context *tsdb.QueryContext) (string, error) {
+func (e *InfluxDBExecutor) getQuery(queries tsdb.QuerySlice, context *tsdb.QueryContext) (*Query, error) {
 	for _, v := range queries {
 
 		query, err := e.QueryParser.Parse(v.Model, e.DataSourceInfo)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		rawQuery, err := e.QueryBuilder.Build(query, context)
-		if err != nil {
-			return "", err
-		}
-
-		return rawQuery, nil
+		return query, nil
 	}
 
-	return "", fmt.Errorf("query request contains no queries")
+	return nil, fmt.Errorf("query request contains no queries")
 }
 
 func (e *InfluxDBExecutor) createRequest(query string) (*http.Request, error) {
