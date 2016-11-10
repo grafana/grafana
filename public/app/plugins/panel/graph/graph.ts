@@ -460,7 +460,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
           show: panel.yaxes[0].show,
           index: 1,
           logBase: panel.yaxes[0].logBase || 1,
-          max: 100, // correct later
+          max: null
         };
 
         options.yaxes.push(defaults);
@@ -472,6 +472,8 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
           secondY.logBase = panel.yaxes[1].logBase || 1;
           secondY.position = 'right';
           options.yaxes.push(secondY);
+
+          applyLogScale(options.yaxes[1], data);
           configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? "percent" : panel.yaxes[1].format);
         }
 
