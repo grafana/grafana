@@ -25,7 +25,8 @@ class AlertListPanel extends PanelCtrl {
   panelDefaults = {
     show: 'current',
     limit: 10,
-    stateFilter: []
+    stateFilter: [],
+    onlyAlertsOnDashboard: false
   };
 
 
@@ -71,8 +72,12 @@ class AlertListPanel extends PanelCtrl {
     var params: any = {
       limit: this.panel.limit,
       type: 'alert',
-      newState: this.panel.stateFilter
+      newState: this.panel.stateFilter,
     };
+
+    if (this.panel.onlyAlertsOnDashboard) {
+      params.dashboardId = this.dashboard.id;
+    }
 
     params.from = dateMath.parse(this.dashboard.time.from).unix() * 1000;
     params.to = dateMath.parse(this.dashboard.time.to).unix() * 1000;
@@ -92,6 +97,10 @@ class AlertListPanel extends PanelCtrl {
     var params: any = {
       state: this.panel.stateFilter
     };
+
+    if (this.panel.onlyAlertsOnDashboard) {
+      params.dashboardId = this.dashboard.id;
+    }
 
     this.backendSrv.get(`/api/alerts`, params)
       .then(res => {
