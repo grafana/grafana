@@ -26,8 +26,21 @@ type EvalContext struct {
 	ImagePublicUrl  string
 	ImageOnDiskPath string
 	NoDataFound     bool
+	PrevAlertState  m.AlertStateType
 
 	Ctx context.Context
+}
+
+func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
+	return &EvalContext{
+		Ctx:            alertCtx,
+		StartTime:      time.Now(),
+		Rule:           rule,
+		Logs:           make([]*ResultLogEntry, 0),
+		EvalMatches:    make([]*EvalMatch, 0),
+		log:            log.New("alerting.evalContext"),
+		PrevAlertState: rule.State,
+	}
 }
 
 type StateDescription struct {
@@ -48,11 +61,6 @@ func (c *EvalContext) GetStateModel() *StateDescription {
 			Color: "#888888",
 			Text:  "No Data",
 		}
-	case m.AlertStateExecError:
-		return &StateDescription{
-			Color: "#000",
-			Text:  "Execution Error",
-		}
 	case m.AlertStateAlerting:
 		return &StateDescription{
 			Color: "#D63232",
@@ -61,6 +69,18 @@ func (c *EvalContext) GetStateModel() *StateDescription {
 	default:
 		panic("Unknown rule state " + c.Rule.State)
 	}
+}
+
+func (c *EvalContext) ShouldUpdateAlertState() bool {
+	return c.Rule.State != c.PrevAlertState
+}
+
+func (c *EvalContext) ShouldSendNotification() bool {
+	if (c.PrevAlertState == m.AlertStatePending) && (c.Rule.State == m.AlertStateOK) {
+		return false
+	}
+
+	return true
 }
 
 func (a *EvalContext) GetDurationMs() float64 {
@@ -95,16 +115,5 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 	} else {
 		ruleUrl := fmt.Sprintf("%sdashboard/db/%s?fullscreen&edit&tab=alert&panelId=%d", setting.AppUrl, slug, c.Rule.PanelId)
 		return ruleUrl, nil
-	}
-}
-
-func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
-	return &EvalContext{
-		Ctx:         alertCtx,
-		StartTime:   time.Now(),
-		Rule:        rule,
-		Logs:        make([]*ResultLogEntry, 0),
-		EvalMatches: make([]*EvalMatch, 0),
-		log:         log.New("alerting.evalContext"),
 	}
 }

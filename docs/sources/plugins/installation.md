@@ -34,9 +34,14 @@ List available plugins
 grafana-cli plugins list-remote
 ```
 
-Install a plugin type
+Install the latest version of a plugin
 ```
 grafana-cli plugins install <plugin-id>
+```
+
+Install a specific version of a plugin
+```
+grafana-cli plugins install <plugin-id> <version>
 ```
 
 List installed plugins

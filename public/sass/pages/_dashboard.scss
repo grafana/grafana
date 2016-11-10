@@ -13,98 +13,7 @@
   color: $variable;
 }
 
-.row-tab {
-  .dropdown-menu-right {
-    top: 0;
-    left: 33px;
-  }
-}
 
-.row-tab-button {
-  padding: 0px;
-  cursor: pointer;
-  vertical-align: middle;
-  width: 30px;
-  height: 30px;
-  text-align: center;
-  display: inline-block;
-  line-height: 30px;
-  background: $btn-success-bg;
-  color: rgba(255,255,255,.90);
-}
-
-.row-button {
-  width: 24px;
-  float: left;
-  cursor: pointer;
-  line-height: 31px;
-  background-color: $blue-dark;
-}
-
-.row-text {
-  white-space: nowrap;
-  text-transform: uppercase;
-  font-weight: bold;
-  font-size: 0.9em;
-  text-align: center;
-  line-height: 31px;
-  height: 31px;
-}
-
-.row-close {
-  padding: 0px;
-  margin: 0px;
-  background: $panel-bg;
-  text-align: center;
-}
-
-.row-close-buttons {
-  position: absolute;
-  left: 0;
-}
-
-.row-open {
-  margin-top: 5px;
-  left: -30px;
-  position: absolute;
-  z-index: 100;
-  transition: .10s left;
-  transition-delay: .10s;
-
-  &:hover {
-    left: -12px;
-  }
-}
-
-.row-control-inner {
-  padding:0px;
-  margin:0px;
-  position:relative;
-}
-
-.hide-controls {
-  padding: 0;
-  .row-tab {
-    display: none;
-  }
-  .add-row-panel-hint {
-    display: none;
-  }
-}
-
-.playlist-active {
-  .add-row-panel-hint,
-  .dashnav-refresh-action,
-  .dashnav-zoom-out,
-  .dashnav-action-icons,
-  .dashnav-move-timeframe  {
-    display: none;
-  }
-
-  .grafana-menu-stop-playlist {
-    display: list-item;
-  }
-}
 
 div.flot-text {
   color: $text-color !important;
@@ -113,6 +22,15 @@ div.flot-text {
 .panel {
   display: inline-block;
   float: left;
+
+  &--solo {
+    .resize-panel-handle {
+      display: none;
+    }
+    .panel-container {
+      border: none;
+    }
+  }
 }
 
 .panel-margin {
@@ -124,11 +42,6 @@ div.flot-text {
   background-color: $panel-bg;
   position: relative;
   border: $panel-border;
-  &:hover {
-    .panel-actions {
-      display: block;
-    }
-  }
 
   &.panel-transparent {
     background-color: transparent;
@@ -204,11 +117,11 @@ div.flot-text {
   z-index: 500;
   position: absolute;
   background: $tight-form-func-bg;
-  border: 1px solid black;
+  border: $panel-menu-border;
 
   .panel-menu-row {
     white-space: nowrap;
-    border-bottom: 1px solid black;
+    border-bottom: $panel-menu-border;
     &:last-child {
       border-bottom: none;
     }
@@ -220,7 +133,7 @@ div.flot-text {
 
   .panel-menu-link {
     display: inline-block;
-    border-right: 1px solid black;
+    border-right: $panel-menu-border;
     &:last-child {
       border: none;
     }
@@ -232,7 +145,11 @@ div.flot-text {
 }
 
 .panel-highlight  {
-  box-shadow: inset 0 1px 1px rgba(0,0,0,.075),0 0 5px rgba(82,168,236,10.8)
+  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236,10.8)
+}
+
+.panel-hover-highlight  {
+  box-shadow: inset 0 1px 1px rgba(0,0,0,0.025), 0 0 1px rgba(82,168,236,0.5)
 }
 
 .on-drag-hover {
@@ -244,7 +161,14 @@ div.flot-text {
 .panel-drop-zone {
   display: none;
   .panel-container {
-    border: 1px solid $dark-3;
+    border: $panel-border;
+    display: flex;
+    justify-content: center;
+    flex-direction: column;
+    text-align: center;
+    color: $text-color-faint;
+    font-weight: bold;
+    background: $panel-drop-zone-bg;
   }
 }
 
@@ -260,13 +184,22 @@ div.flot-text {
 }
 
 .resize-panel-handle {
-  cursor: se-resize;
+  cursor: nwse-resize;
   position: absolute;
   bottom: 0;
   right: 0;
   width: 15px;
   height: 15px;
   display: block;
+  color: $text-color-faint;
+  overflow: hidden;
+
+  &:before {
+    left: initial;
+    right: -5px;
+    bottom: 0px;
+    position: absolute;
+  }
 }
 
 .dashboard-header {

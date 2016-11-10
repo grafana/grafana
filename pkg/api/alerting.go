@@ -175,10 +175,10 @@ func GetAlertNotifications(c *middleware.Context) Response {
 		return ApiError(500, "Failed to get alert notifications", err)
 	}
 
-	var result []dtos.AlertNotification
+	result := make([]*dtos.AlertNotification, 0)
 
 	for _, notification := range query.Result {
-		result = append(result, dtos.AlertNotification{
+		result = append(result, &dtos.AlertNotification{
 			Id:        notification.Id,
 			Name:      notification.Name,
 			Type:      notification.Type,
@@ -264,7 +264,7 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 		return ApiError(500, "", err)
 	}
 
-	var response models.AlertStateType = models.AlertStateNoData
+	var response models.AlertStateType = models.AlertStatePending
 	pausedState := "un paused"
 	if cmd.Paused {
 		response = models.AlertStatePaused

@@ -26,13 +26,17 @@ function (angular, $) {
     };
 
     $scope.initPanelScope = function() {
-      $scope.row = {
-        height: $(window).height() + 'px',
+      var panelInfo = $scope.dashboard.getPanelInfoById(panelId);
+
+      // fake row ctrl scope
+      $scope.ctrl = {
+        row: panelInfo.row,
+        dashboard: $scope.dashboard,
       };
 
-      $scope.test = "Hej";
+      $scope.ctrl.row.height = $(window).height();
+      $scope.panel = panelInfo.panel;
       $scope.$index = 0;
-      $scope.panel = $scope.dashboard.getPanelById(panelId);
 
       if (!$scope.panel) {
         $scope.appEvent('alert-error', ['Panel not found', '']);

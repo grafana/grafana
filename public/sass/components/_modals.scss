@@ -20,7 +20,7 @@
 
 // Base modal
 .modal {
-  position: fixed;
+  position: absolute;
   z-index: $zindex-modal;
   width: 100%;
 	background-color: $panel-bg;
@@ -173,3 +173,5 @@
     text-overflow: ellipsis;
   }
 }
+
+

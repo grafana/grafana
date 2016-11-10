@@ -20,8 +20,12 @@ func NewEvalHandler() *DefaultEvalHandler {
 }
 
 func (e *DefaultEvalHandler) Eval(context *EvalContext) {
+	firing := true
 	for _, condition := range context.Rule.Conditions {
-		condition.Eval(context)
+		cr, err := condition.Eval(context)
+		if err != nil {
+			context.Error = err
+		}
 
 		// break if condition could not be evaluated
 		if context.Error != nil {
@@ -29,11 +33,15 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 		}
 
 		// break if result has not triggered yet
-		if context.Firing == false {
+		if cr.Firing == false {
+			firing = false
 			break
 		}
+
+		context.EvalMatches = append(context.EvalMatches, cr.EvalMatches...)
 	}
 
+	context.Firing = firing
 	context.EndTime = time.Now()
 	elapsedTime := context.EndTime.Sub(context.StartTime) / time.Millisecond
 	metrics.M_Alerting_Exeuction_Time.Update(elapsedTime)

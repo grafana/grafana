@@ -54,7 +54,7 @@ $body-color:   		 	    $gray-4;
 $text-color:   	   		  $gray-4;
 $text-color-strong: 	  $white;
 $text-color-weak: 		  $gray-2;
-$text-color-faint:      $gray-1;
+$text-color-faint:      $dark-5;
 $text-color-emphasis: 	$gray-5;
 
 $text-shadow-strong: 1px 1px 4px $black;
@@ -88,8 +88,10 @@ $component-active-bg:    $brand-primary !default;
 
 // Panel
 // -------------------------
-$panel-bg: 				 $dark-2;
-$panel-border:  	 solid 1px $dark-3;
+$panel-bg: 				      $dark-2;
+$panel-border:  	      solid 1px $dark-3;
+$panel-drop-zone-bg:    repeating-linear-gradient(-128deg, #111, #111 10px, #191919 10px, #222 20px);
+$panel-menu-border:     solid 1px black;
 
 $divider-border-color:        #555;
 
@@ -263,7 +265,7 @@ $tooltipBackground:       $popover-help-bg;
 $tooltipArrowWidth:       5px;
 $tooltipArrowColor:       $tooltipBackground;
 $tooltipLinkColor:        $link-color;
-$graph-tooltip-bg:        $dark-4;
+$graph-tooltip-bg:        $dark-1;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';
@@ -276,3 +278,4 @@ $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .3)
 // footer
 $footer-link-color:   $gray-1;
 $footer-link-hover:   $gray-4;
+

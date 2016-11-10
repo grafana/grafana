@@ -2,19 +2,17 @@ package opentsdb
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"path"
 	"strconv"
 	"strings"
-	"time"
 
 	"golang.org/x/net/context/ctxhttp"
 
+	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"encoding/json"
 
 	"gopkg.in/guregu/null.v3"
 
@@ -40,14 +38,7 @@ func init() {
 	plog = log.New("tsdb.opentsdb")
 	tsdb.RegisterExecutor("opentsdb", NewOpenTsdbExecutor)
 
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	HttpClient = &http.Client{
-		Timeout:   time.Duration(15 * time.Second),
-		Transport: tr,
-	}
+	HttpClient = tsdb.GetDefaultClient()
 }
 
 func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
@@ -58,9 +49,9 @@ func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 	tsdbQuery.Start = queryContext.TimeRange.GetFromAsMsEpoch()
 	tsdbQuery.End = queryContext.TimeRange.GetToAsMsEpoch()
 
-  for _ , query := range queries {
-  	metric := e.buildMetric(query)
-  	tsdbQuery.Queries = append(tsdbQuery.Queries, metric)
+	for _, query := range queries {
+		metric := e.buildMetric(query)
+		tsdbQuery.Queries = append(tsdbQuery.Queries, metric)
 	}
 
 	if setting.Env == setting.DEV {
@@ -104,7 +95,7 @@ func (e *OpenTsdbExecutor) createRequest(data OpenTsdbQuery) (*http.Request, err
 	if e.BasicAuth {
 		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
 	}
-	
+
 	return req, err
 }
 
@@ -152,61 +143,61 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 	return queryResults, nil
 }
 
-func (e *OpenTsdbExecutor) buildMetric(query *tsdb.Query) (map[string]interface{}) {
+func (e *OpenTsdbExecutor) buildMetric(query *tsdb.Query) map[string]interface{} {
 
 	metric := make(map[string]interface{})
 
-		// Setting metric and aggregator		
-		metric["metric"] = query.Model.Get("metric").MustString()
-		metric["aggregator"] = query.Model.Get("aggregator").MustString()
+	// Setting metric and aggregator
+	metric["metric"] = query.Model.Get("metric").MustString()
+	metric["aggregator"] = query.Model.Get("aggregator").MustString()
 
-		// Setting downsampling options
-		disableDownsampling := query.Model.Get("disableDownsampling").MustBool()
-		if !disableDownsampling {
-			downsampleInterval := query.Model.Get("downsampleInterval").MustString()
-			if downsampleInterval == "" {
-				downsampleInterval = "1m"  //default value for blank
-			}
-			downsample :=  downsampleInterval + "-" + query.Model.Get("downsampleAggregator").MustString()
-			if query.Model.Get("downsampleFillPolicy").MustString() != "none" {
-				metric["downsample"] = downsample + "-" + query.Model.Get("downsampleFillPolicy").MustString()
-			} else {
-				metric["downsample"] = downsample
-			}
+	// Setting downsampling options
+	disableDownsampling := query.Model.Get("disableDownsampling").MustBool()
+	if !disableDownsampling {
+		downsampleInterval := query.Model.Get("downsampleInterval").MustString()
+		if downsampleInterval == "" {
+			downsampleInterval = "1m" //default value for blank
+		}
+		downsample := downsampleInterval + "-" + query.Model.Get("downsampleAggregator").MustString()
+		if query.Model.Get("downsampleFillPolicy").MustString() != "none" {
+			metric["downsample"] = downsample + "-" + query.Model.Get("downsampleFillPolicy").MustString()
+		} else {
+			metric["downsample"] = downsample
+		}
+	}
+
+	// Setting rate options
+	if query.Model.Get("shouldComputeRate").MustBool() {
+
+		metric["rate"] = true
+		rateOptions := make(map[string]interface{})
+		rateOptions["counter"] = query.Model.Get("isCounter").MustBool()
+
+		counterMax, counterMaxCheck := query.Model.CheckGet("counterMax")
+		if counterMaxCheck {
+			rateOptions["counterMax"] = counterMax.MustFloat64()
 		}
 
-		// Setting rate options
-		if query.Model.Get("shouldComputeRate").MustBool() {
-			
-			metric["rate"] = true
-			rateOptions := make(map[string]interface{})
-			rateOptions["counter"] = query.Model.Get("isCounter").MustBool()
-
-			counterMax, counterMaxCheck := query.Model.CheckGet("counterMax")
-			if counterMaxCheck {
-				rateOptions["counterMax"] = counterMax.MustFloat64()
-			}
-			
-			resetValue, resetValueCheck := query.Model.CheckGet("counterResetValue")
-			if resetValueCheck {
-				rateOptions["resetValue"] = resetValue.MustFloat64()
-			}
-
-			metric["rateOptions"] = rateOptions
+		resetValue, resetValueCheck := query.Model.CheckGet("counterResetValue")
+		if resetValueCheck {
+			rateOptions["resetValue"] = resetValue.MustFloat64()
 		}
 
-		// Setting tags
-		tags, tagsCheck := query.Model.CheckGet("tags")
-		if tagsCheck && len(tags.MustMap()) > 0 {
-			metric["tags"] = tags.MustMap()
-		}
+		metric["rateOptions"] = rateOptions
+	}
 
-		// Setting filters
-		filters, filtersCheck := query.Model.CheckGet("filters")
-		if filtersCheck && len(filters.MustArray()) > 0 {
-			metric["filters"] = filters.MustArray()
-		}
+	// Setting tags
+	tags, tagsCheck := query.Model.CheckGet("tags")
+	if tagsCheck && len(tags.MustMap()) > 0 {
+		metric["tags"] = tags.MustMap()
+	}
 
-		return metric
+	// Setting filters
+	filters, filtersCheck := query.Model.CheckGet("filters")
+	if filtersCheck && len(filters.MustArray()) > 0 {
+		metric["filters"] = filters.MustArray()
+	}
+
+	return metric
 
 }
