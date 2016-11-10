@@ -8,6 +8,7 @@ type Query struct {
 	GroupBy      []*QueryPart
 	Selects      []*Select
 	RawQuery     string
+	Alias        string
 
 	Interval string
 }

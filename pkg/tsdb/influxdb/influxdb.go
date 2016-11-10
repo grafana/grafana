@@ -51,11 +51,16 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		return result.WithError(err)
 	}
 
-	if setting.Env == setting.DEV {
-		glog.Debug("Influxdb query", "raw query", query)
+	rawQuery, err := e.QueryBuilder.Build(query, context)
+	if err != nil {
+		return result.WithError(err)
 	}
 
-	req, err := e.createRequest(query)
+	if setting.Env == setting.DEV {
+		glog.Debug("Influxdb query", "raw query", rawQuery)
+	}
+
+	req, err := e.createRequest(rawQuery)
 	if err != nil {
 		return result.WithError(err)
 	}
@@ -80,28 +85,23 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 	}
 
 	result.QueryResults = make(map[string]*tsdb.QueryResult)
-	result.QueryResults["A"] = e.ResponseParser.Parse(&response)
+	result.QueryResults["A"] = e.ResponseParser.Parse(&response, query)
 
 	return result
 }
 
-func (e *InfluxDBExecutor) getQuery(queries tsdb.QuerySlice, context *tsdb.QueryContext) (string, error) {
+func (e *InfluxDBExecutor) getQuery(queries tsdb.QuerySlice, context *tsdb.QueryContext) (*Query, error) {
 	for _, v := range queries {
 
 		query, err := e.QueryParser.Parse(v.Model, e.DataSourceInfo)
 		if err != nil {
-			return "", err
+			return nil, err
 		}
 
-		rawQuery, err := e.QueryBuilder.Build(query, context)
-		if err != nil {
-			return "", err
-		}
-
-		return rawQuery, nil
+		return query, nil
 	}
 
-	return "", fmt.Errorf("query request contains no queries")
+	return nil, fmt.Errorf("query request contains no queries")
 }
 
 func (e *InfluxDBExecutor) createRequest(query string) (*http.Request, error) {
