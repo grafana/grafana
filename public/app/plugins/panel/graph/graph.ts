@@ -183,6 +183,8 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         }
       }
 
+      // Series could have different timeSteps,
+      // let's find the smallest one so that bars are correctly rendered.
       function getMinTimeStepOfSeries(data) {
         var min = 100000000000;
 
