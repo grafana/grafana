@@ -78,9 +78,12 @@ charts or filled areas).
                 i = 0, j = 0, l, m;
 
             while (true) {
+                // browse all points from the current series and from the previous series
                 if (i >= points.length && j >= otherpoints.length)
                     break;
 
+                // newpoints will replace current series with
+                // as many points as different timestamps we have in the 2 (current & previous) series
                 l = newpoints.length;
                 px = points[i + keyOffset];
                 py = points[i + accumulateOffset];
@@ -89,30 +92,32 @@ charts or filled areas).
                 bottom = 0;
 
                 if (i < points.length && px == null) {
-                    // ignore point
+                    // let's ignore null points from current series, nothing to do with them
                     i += ps;
                 }
                 else if (j < otherpoints.length && qx == null) {
-                    // ignore point
+                    // let's ignore null points from previous series, nothing to do with them
                     j += otherps;
                 }
                 else if (i >= points.length) {
-                    // take the remaining points from the previous series
+                    // no more points in the current series, simply take the remaining points
+                    // from the previous series so that next series will correctly stack
                     for (m = 0; m < ps; ++m)
                         newpoints.push(otherpoints[j + m]);
                     bottom = qy;
                     j += otherps;
                 }
                 else if (j >= otherpoints.length) {
-                    // take the remaining points from the current series
+                    // no more points in the previous series, of course let's take
+                    // the remaining points from the current series
                     for (m = 0; m < ps; ++m)
                         newpoints.push(points[i + m]);
                     i += ps;
                 }
                 else {
-                    // cases where we actually got two points
+                    // next available points from current and previous series have the same timestamp
                     if (px == qx) {
-                        // take the point from the current series and skip the previous' one
+                        // so take the point from the current series and skip the previous' one
                         for (m = 0; m < ps; ++m)
                             newpoints.push(points[i + m]);
 
@@ -122,8 +127,9 @@ charts or filled areas).
                         i += ps;
                         j += otherps;
                     }
+                    // next available point with the smallest timestamp is from the previous series
                     else if (px > qx) {
-                        // take the point from the previous series so that the next series can stack over it
+                        // so take the point from the previous series so that next series will correctly stack
                         for (m = 0; m < ps; ++m)
                             newpoints.push(otherpoints[j + m]);
 
@@ -135,8 +141,9 @@ charts or filled areas).
 
                         j += otherps;
                     }
-                    else { // px < qx
-                        // take the point from the current series
+                    // (px < qx) next available point with the smallest timestamp is from the current series
+                    else {
+                        // so of course let's take the point from the current series
                         for (m = 0; m < ps; ++m)
                             newpoints.push(points[i + m]);
 

@@ -1210,7 +1210,7 @@ Licensed under the MIT license.
                         // middle point has same y
                         points[k + 1] = points[k - ps + 1] || 0;
 
-                        // if series has null values, let's give the last correct value a nice step
+                        // if series has null values, let's give the last !null value a nice step
                         if(nullify)
                         	points[k] = p[0];
 
