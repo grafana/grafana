@@ -17,7 +17,7 @@ var (
 type QueryBuilder struct{}
 
 func (qb *QueryBuilder) Build(query *Query, queryContext *tsdb.QueryContext) (string, error) {
-	if query.RawQuery != "" {
+	if query.UseRawQuery && query.RawQuery != "" {
 		q := query.RawQuery
 
 		q = strings.Replace(q, "$timeFilter", qb.renderTimeFilter(query, queryContext), 1)

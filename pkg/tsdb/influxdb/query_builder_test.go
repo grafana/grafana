@@ -79,6 +79,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 				GroupBy:     []*QueryPart{groupBy1, groupBy3},
 				Interval:    "10s",
 				RawQuery:    "Raw query",
+				UseRawQuery: true,
 			}
 
 			rawQuery, err := builder.Build(query, queryContext)
