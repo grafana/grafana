@@ -1,12 +1,20 @@
-.gettingstarted-flex-item {
-  align-items: center;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
+
+// Colours
+$progress-color-dark:       $panel-bg !default;
+$progress-color:            $panel-bg !default;
+$progress-color-light:      $panel-bg !default;
+$progress-color-grey-light: $body-bg !default;
+$progress-color-grey:       $iconContainerBackground !default;
+$progress-color-grey-dark:  $iconContainerBackground !default;
+
+// Sizing
+$marker-size:               60px !default;
+$marker-size-half:          ($marker-size / 2);
+$path-height:               4px !default;
+$path-position:             $marker-size-half - ($path-height / 2);
+
 
 .gettingstarted-blurb-copy {
-  font-size: $font-size-base;
   margin-bottom: $spacer/2;
   text-align: center;
 }
@@ -46,55 +54,22 @@
   vertical-align: sub;
 }
 
-.dashlist-CTA-close-btn {
+.dashlist-cta-close-btn {
+  color: $text-color-weak;
   float: right;
   padding: 0;
   margin: 0 2px 0 0;
   background-color: transparent;
   border: none;
+
   i {
     font-size: 80%;
   }
-  color: $text-color-weak;
+
   &:hover {
     color: $white;
   }
 }
-
-// Colours
-$progress-color-dark:       $panel-bg !default;
-$progress-color:            $panel-bg !default;
-$progress-color-light:      $panel-bg !default;
-$progress-color-grey-light: $body-bg !default;
-$progress-color-grey:       $iconContainerBackground !default;
-$progress-color-grey-dark:  $iconContainerBackground !default;
-
-// Sizing
-$progress-tracker-padding:  5px !default;
-
-$marker-size:               60px !default;
-$marker-size-half:          ($marker-size / 2);
-$marker-size-third:         ($marker-size / 3);
-$marker-size-quarter:       ($marker-size / 4);
-$marker-spacing:            10px !default;
-
-$path-height:               4px !default;
-$path-position:             $marker-size-half - ($path-height / 2);
-
-$text-padding:              $marker-size-half !default;
-$text-padding-X:            $marker-size-third !default;
-$text-padding-Y:            5px !default;
-$text-padding--vertical:    $marker-size + $marker-size-half !default;
-
-// Only needed for short text version, the word size should be the width of the widest word without padding.
-$word-size:                     54px !default;
-$progress-tracker-word-padding: ($word-size + $text-padding-X + $marker-size-half) / 2;
-
-// Animations/Transitions
-$animation-duration:        0.3s !default;
-$ripple-color:              rgba(0, 0, 0, 0.3) !default;
-
-// ----- Elements -----
 
 // Container element
 .progress-tracker {
@@ -105,78 +80,71 @@ $ripple-color:              rgba(0, 0, 0, 0.3) !default;
 }
 
 // Step container that creates lines between steps
-  .progress-step {
-    display: block;
-    position: relative;
-    flex: 1 1 0%;
-    margin: 0;
-    padding: 0;
-    min-width: $marker-size; // For a flexbox bug in firefox that wont allow the text overflow on the text
+.progress-step {
+  display: block;
+  position: relative;
+  flex: 1 1 0%;
+  margin: 0;
+  padding: 0;
+  min-width: $marker-size; // For a flexbox bug in firefox that wont allow the text overflow on the text
 
-    // Stops the last step growing
-    &:last-child {
-      flex-grow: 0;
-    }
-
-    // Path between markers, this is not created for the last step
-    &:not(:last-child)::after {
-      content: '';
-      display: block;
-      position: absolute;
-      z-index: 1;
-      top: $path-position;
-      bottom: $path-position;
-      right: - $marker-size-half;
-      width: 100%;
-      height: $path-height;
-      transition: background-color $animation-duration;
-    }
-
-    // Active state
-    &.is-active {
-      .progress-title {
-        font-weight: 400;
-      }
-    }
-
-    > a {
-      display: block;
-    }
-
+  // Stops the last step growing
+  &:last-child {
+    flex-grow: 0;
   }
 
-// Progress marker
-    .progress-marker {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      position: relative;
-      z-index: 20;
-      width: $marker-size;
-      height: $marker-size;
-      padding-bottom: 2px; // To align text within the marker
-      color: #fff;
+  // Path between markers, this is not created for the last step
+  &:not(:last-child)::after {
+    content: '';
+    display: block;
+    position: absolute;
+    z-index: 1;
+    top: $path-position;
+    bottom: $path-position;
+    right: - $marker-size-half;
+    width: 100%;
+    height: $path-height;
+  }
+
+  // Active state
+  &.active {
+    .progress-title {
       font-weight: 400;
-      border: 2px solid transparent;
-      border-radius: 50%;
-      transition: background-color, border-color;
-      transition-duration: $animation-duration;
     }
+  }
+
+  > a {
+    display: block;
+  }
+
+}
+
+// Progress marker
+.progress-marker {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  width: $marker-size;
+  height: $marker-size;
+  padding-bottom: 2px; // To align text within the marker
+  z-index: 20;
+  background-color: $panel-bg;
+}
 
 
 // Progress text
-  .progress-text {
-    display: block;
-    padding: $text-padding-Y $text-padding-X;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-    .progress-title {
-      margin-top: 0;
-    }
+.progress-text {
+  display: block;
+  padding: $spacer;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
+.progress-title {
+  margin-top: 0;
+}
 
-// Step state mixin - The first arugment is required and the rest are optional, if you pass in null the value will not be changed.
 @mixin progress-state($marker-color-bg, $marker-color-border: null, $marker-color-text: null, $path-color: null, $text-color: null) {
   .progress-marker {
     color: $marker-color-text;
@@ -188,251 +156,42 @@ $ripple-color:              rgba(0, 0, 0, 0.3) !default;
     background-color: $path-color;
   }
 
-  .progress-text, .progress-step > a .progress-text {
+  .progress-text,
+  .progress-text a {
     color: $text-color;
   }
 }
 
-
 // States
-  .progress-step {
-    // Inactive - Default state
-    @include progress-state($progress-color, null, #fff, $progress-color-grey-light, $progress-color-grey-dark);
+.progress-step {
+  text-align: center;
 
-    // Active state
-    &.active {
-      @include progress-state($progress-color);
-    }
-
-    // Complete state
-    &.completed {
-      @include progress-state($progress-color-dark, $path-color: $progress-color-grey);
-    }
-
-    // Hover state
-    &:hover {
-      @include progress-state($progress-color-light);
-    }
+  // Active state
+  &.active {
+    @include progress-state($progress-color);
   }
 
-// ----- Modifiers -----
-
-// Center align markers and text
-.progress-tracker--center {
-
-  .progress-step {
-    text-align: center;
-
-    &:last-child {
-      flex-grow: 1;
-    }
-
-    &::after {
-      right: -50%;
-    }
+  &.completed {
+    @include progress-state($progress-color-dark, $path-color: $progress-color-grey);
   }
 
-    .progress-marker {
-      margin-left: auto;
-      margin-right: auto;
-    }
-}
-
-
-// Right align markers and text
-.progress-tracker--right {
-
-  .progress-step {
-    text-align: right;
-
-    &:last-child {
-      flex-grow: 1;
-    }
-
-    &::after {
-      right: calc(-100% + #{$marker-size-half});
-    }
+  &:hover {
+    @include progress-state($progress-color-light);
   }
 
-    .progress-marker {
-      margin-left: auto;
-    }
-}
-
-
-// Border around steps (Only for use without text)
-.progress-tracker--border {
-  padding: $progress-tracker-padding;
-  border: 2px solid $progress-color-grey;
-  border-radius: $marker-size + ($progress-tracker-padding * 2);
-}
-
-
-// Spaces between markers
-.progress-tracker--spaced {
-
-  .progress-step {
-
-    &::after {
-      width: calc(100% - #{$marker-size + ($marker-spacing * 2)});
-      margin-right: ($marker-size-half + $marker-spacing);
-    }
+  &:last-child {
+    flex-grow: 1;
   }
 
-}
-
-
-// Word below markers
-.progress-tracker--word {
-  padding-right: $progress-tracker-word-padding;
-  overflow: hidden;
-
-  .progress-text {
-    display: inline-block;
-    white-space: nowrap;
-  }
-
-    .progress-title {
-      margin: 0;
-    }
-
-}
-
-
-.progress-tracker--word-center {
-  padding-right: $progress-tracker-word-padding;
-  padding-left: $progress-tracker-word-padding;
-
-  .progress-text {
-    padding-right: 0;
-    padding-left: 0;
-    transform: translateX(calc(-50% + #{$marker-size-half}));
-  }
-
-}
-
-
-.progress-tracker--word-right {
-  padding-right: 0;
-  padding-left: $progress-tracker-word-padding;
-
-  .progress-text {
-    padding-left: 0;
-    transform: translateX(calc(-100% + #{$marker-size}));
-  }
-
-}
-
-
-// Text below markers
-.progress-tracker--text {
-
-  .progress-step {
-
-    &:last-child {
-      flex-grow: 1;
-    }
-  }
-
-}
-
-
-// Text above markers
-.progress-tracker--text-top {
-
-  .progress-step::after {
-    top: auto;
-  }
-
-    .progress-text {
-      height: 100%;
-    }
-
-    .progress-marker {
-      bottom: $marker-size;
-    }
-
-}
-
-
-// Text inline with markers
-.progress-tracker--text-inline {
-
-  .progress-step {
-    display: flex;
-  }
-
-    .progress-text {
-      position: relative;
-      z-index: 30;
-      max-width: 70%;
-      white-space: nowrap;
-      padding-top: 0;
-      padding-bottom: 0;
-      background-color: #fff;
-    }
-
-      .progress-title {
-        margin: 0;
-      }
-
-}
-
-
-// Square markers
-.progress-tracker--square {
-
-  .progress-step {
-    padding-top: 0;
-  }
-
-    .progress-marker {
-      transform: scaleX(0.33) translateY(- $path-position);
-      border-radius: 0;
-    }
-
-}
-
-
-// Overflow on small screens
-@media (max-width: 399px) {
-  .progress-tracker-mobile {
-    overflow-x: auto;
-
-    .progress-tracker {
-      min-width: 200%;
-    }
+  &::after {
+    right: -50%;
   }
 }
 
-
-// Vertical layout
-.progress-tracker--vertical {
-  flex-direction: column;
-
-  .progress-step {
-    flex: 1 1 auto;
-
-    &::after {
-      right: auto;
-      top: $marker-size-half;
-      left: $path-position;
-      width: $path-height;
-      height: 100%;
-    }
-  }
-
-    .progress-marker {
-      position: absolute;
-      left: 0;
-    }
-
-    .progress-text {
-      padding-top: $marker-size-quarter;
-      padding-left: $text-padding--vertical;
-    }
-
-    .progress-step:not(:last-child) .progress-text {
-      padding-bottom: $text-padding--vertical;
-    }
+.progress-marker {
+  margin-left: auto;
+  margin-right: auto;
 }
+
+
+
