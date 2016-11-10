@@ -50,7 +50,6 @@
 
 .panel-alert-state {
   &--alerting {
-    background-color: mix($critical,$panel-bg, 3%);
     animation: alerting-panel 1.6s cubic-bezier(1,.1,.73,1) 0s infinite alternate;
     box-shadow: 0 0 10px rgba($critical,0.5);
     opacity: 1;

@@ -13,7 +13,9 @@ weight = 3
 
 Description | Download
 ------------ | -------------
-Stable Zip package for Windows | [grafana.3.1.1.windows-x64.zip](https://grafanarel.s3.amazonaws.com/winbuilds/dist/grafana-3.1.1.windows-x64.zip)
+Latest stable package for Windows | [grafana.3.1.1.windows-x64.zip](https://grafanarel.s3.amazonaws.com/winbuilds/dist/grafana-3.1.1.windows-x64.zip)
+Latest beta package for Windows | [grafana.4.0.0-beta1.windows-x64.zip](https://grafanarel.s3.amazonaws.com/builds/grafana-4.0.0-beta1.windows-x64.zip)
+
 
 ## Configure
 

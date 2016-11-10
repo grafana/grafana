@@ -59,34 +59,34 @@
   .dashnav-action-icons,
   .dashnav-move-timeframe  {
     opacity: 0;
-    transition: opacity 1.5s ease-in-out;
+    transition: all 1.5s ease-in-out 1s;
   }
 
   // navbar buttons
   .navbar-brand-btn,
   .navbar-inner {
-    border: none;
+    border-color: transparent;
     background: transparent;
-    transition: background 1.5s ease-in-out;
+    transition: all 1.5s ease-in-out 1s;
     .fa {
       opacity: 0;
-      transition: opacity 1.5s ease-in-out;
+      transition: all 1.5s ease-in-out 1s;
     }
   }
 
   .navbar-page-btn {
-    border: none;
-    transform: translate3d(-50px, 0, 0);
+    border-color: transparent;
     background: transparent;
-    transition: transform 1.5s ease-in-out;
+    transform: translate3d(-50px, 0, 0);
+    transition: all 1.5s ease-in-out 1s;
     .icon-gf {
       opacity: 0;
-      transition: opacity 1.5s ease-in-out;
+      transition: all 1.5s ease-in-out 1s;
     }
   }
 
   .gf-timepicker-nav-btn {
     transform: translate3d(40px, 0, 0);
-    transition: transform 1.5s ease-in-out;
+    transition: transform 1.5s ease-in-out 1s;
   }
 }

@@ -5,7 +5,13 @@ import (
 	"strconv"
 	"strings"
 
+	"regexp"
+
 	"github.com/grafana/grafana/pkg/tsdb"
+)
+
+var (
+	regexpOperatorPattern *regexp.Regexp = regexp.MustCompile(`^\/.*\/$`)
 )
 
 type QueryBuilder struct{}
@@ -43,18 +49,28 @@ func (qb *QueryBuilder) renderTags(query *Query) []string {
 			str += " "
 		}
 
-		value := tag.Value
-		nValue, err := strconv.ParseFloat(tag.Value, 64)
-
-		if tag.Operator == "=~" || tag.Operator == "!~" {
-			value = fmt.Sprintf("%s", value)
-		} else if err == nil {
-			value = fmt.Sprintf("%v", nValue)
-		} else {
-			value = fmt.Sprintf("'%s'", value)
+		//If the operator is missing we fall back to sensible defaults
+		if tag.Operator == "" {
+			if regexpOperatorPattern.Match([]byte(tag.Value)) {
+				tag.Operator = "=~"
+			} else {
+				tag.Operator = "="
+			}
 		}
 
-		res = append(res, fmt.Sprintf(`%s"%s" %s %s`, str, tag.Key, tag.Operator, value))
+		textValue := ""
+		numericValue, err := strconv.ParseFloat(tag.Value, 64)
+
+		// quote value unless regex or number
+		if tag.Operator == "=~" || tag.Operator == "!~" {
+			textValue = tag.Value
+		} else if err == nil {
+			textValue = fmt.Sprintf("%v", numericValue)
+		} else {
+			textValue = fmt.Sprintf("'%s'", tag.Value)
+		}
+
+		res = append(res, fmt.Sprintf(`%s"%s" %s %s`, str, tag.Key, tag.Operator, textValue))
 	}
 
 	return res

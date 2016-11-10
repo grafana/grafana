@@ -57,7 +57,7 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 	}
 
 	if setting.Env == setting.DEV {
-		glog.Debug("Influxdb query", "raw query", query)
+		glog.Debug("Influxdb query", "raw query", rawQuery)
 	}
 
 	req, err := e.createRequest(rawQuery)

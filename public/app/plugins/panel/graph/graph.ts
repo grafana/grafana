@@ -183,6 +183,24 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         }
       }
 
+      // Series could have different timeSteps,
+      // let's find the smallest one so that bars are correctly rendered.
+      function getMinTimeStepOfSeries(data) {
+        var min = Number.MAX_VALUE;
+
+        for (let i = 0; i < data.length; i++) {
+          if (!data[i].stats.timeStep) {
+            continue;
+          }
+
+          if (data[i].stats.timeStep < min) {
+            min = data[i].stats.timeStep;
+          }
+        }
+
+        return min;
+      }
+
       // Function for rendering panel
       function render_panel() {
         panelWidth =  elem.width();
@@ -279,9 +297,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
             break;
           }
           default: {
-            if (data.length && data[0].stats.timeStep) {
-              options.series.bars.barWidth = data[0].stats.timeStep / 1.5;
-            }
+            options.series.bars.barWidth = getMinTimeStepOfSeries(data) / 1.5;
             addTimeAxis(options);
             break;
           }
