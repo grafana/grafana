@@ -115,6 +115,15 @@ export default class TimeSeries {
       currentValue = this.datapoints[i][0];
       currentTime = this.datapoints[i][1];
 
+      // Due to missing values we could have different timeStep all along the series
+      // so we have to find the minimum one (could occur with aggregators such as ZimSum)
+      if (i>0) {
+        var previousTime = this.datapoints[i-1][1];
+        if (!this.stats.timeStep || currentTime - previousTime < this.stats.timeStep) {
+          this.stats.timeStep = currentTime - previousTime;
+        }
+      }
+
       if (currentValue === null) {
         if (ignoreNulls) { continue; }
         if (nullAsZero) {
@@ -143,10 +152,6 @@ export default class TimeSeries {
       }
 
       result.push([currentTime, currentValue]);
-    }
-
-    if (this.datapoints.length >= 2) {
-      this.stats.timeStep = this.datapoints[1][1] - this.datapoints[0][1];
     }
 
     if (this.stats.max === -Number.MAX_VALUE) { this.stats.max = null; }
