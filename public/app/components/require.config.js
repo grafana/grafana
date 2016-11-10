@@ -22,6 +22,7 @@ require.config({
     'angular-ui':             'vendor/angular-ui/ui-bootstrap-tpls',
     timepicker:               'vendor/angular-other/timepicker',
     datepicker:               'vendor/angular-other/datepicker',
+    slider:                   'vendor/angular-other/nouislider.min',
     bindonce:                 'vendor/angular-bindonce/bindonce',
     crypto:                   'vendor/crypto.min',
     spectrum:                 'vendor/spectrum',

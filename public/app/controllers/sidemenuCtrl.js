@@ -115,22 +115,22 @@ function (angular, _, $, config) {
 
     $scope.setupSystemMenu = function () {
       $scope.mainLinks.push({
-        text: "系统仪表盘",
+        text: "智能分析面板",
         icon: "fa fa-fw fa-th-large",
         href: $scope.getUrl(contextSrv.dashboardLink)
       });
 
       $scope.mainLinks.push({
-        text: "实时报警分析",
+        text: "报警&关联分析",
         icon: "fa fa-fw fa-bell",
-        href: $scope.getUrl("/alerts")
+        href: $scope.getUrl("/alerts/status")
       });
 
-      $scope.mainLinks.push({
-        text: "实时报警通知",
-        icon: "fa fa-fw fa-phone",
-        href: $scope.getUrl("/oncallers")
-      });
+      // $scope.mainLinks.push({
+      //   text: "实时报警通知",
+      //   icon: "fa fa-fw fa-phone",
+      //   href: $scope.getUrl("/oncallers")
+      // });
 
       $scope.mainLinks.push({
         text: "实时健康分析",
@@ -144,11 +144,11 @@ function (angular, _, $, config) {
         href: $scope.getUrl("/analysis")
       });
 
-      $scope.mainLinks.push({
-        text: "日志管理查询",
-        icon: "fa fa-fw fa-search",
-        href: $scope.getUrl("/logs")
-      });
+      // $scope.mainLinks.push({
+      //   text: "日志管理查询",
+      //   icon: "fa fa-fw fa-search",
+      //   href: $scope.getUrl("/logs")
+      // });
 
       $scope.mainLinks.push({
         text: "返回主页",

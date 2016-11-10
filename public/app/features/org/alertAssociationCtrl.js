@@ -1,8 +1,9 @@
 define([
   'angular',
   'lodash',
+  'slider',
 ],
-function (angular, _) {
+function (angular, _, noUiSlider) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -12,6 +13,7 @@ function (angular, _) {
     var alertMetric = $routeParams.metric;
     var alertHost = $routeParams.host;
     var distance = $routeParams.distance;
+    $scope.correlationThreshold = distance;
     $scope.yaxisNumber = 3;
     $scope.init = function() {
       alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
@@ -44,20 +46,23 @@ function (angular, _) {
           }
         }
       }).then(function() {
-        $scope.createAssociatedMetricGraphPanel(associatedMetricRows[0].associatedMetrics[0]);
+        if (associatedMetricRows[0]) {
+          $scope.isAssociation = true;
+          $scope.createAssociatedMetricGraphPanel(associatedMetricRows[0].associatedMetrics[0]);
+        } else {
+          $scope.isAssociation = false;
+          $scope.createAlertMetricsGraph(_.getMetricName(alertMetric), alertHost);
+        }
       });
     };
 
-    $scope.createAssociatedMetricGraphPanel = function(associatedMetrics) {
-      var hostTag = associatedMetrics.hosts[0] || "*";
-      var title = associatedMetrics.metric || "can no found any metric";
-
-      var rowMeta = {
+    $scope.getRowPanelMeta = function (hostTag, metric) {
+      return {
         title: "test for anmoly",
         height: '300px',
         panels: [
           {
-            title: title,
+            title: metric,
             error: false,
             span: 12,
             editable: false,
@@ -67,19 +72,19 @@ function (angular, _) {
             targets: [
               {
                 aggregator: "avg",
-                metric: associatedMetrics.metric,
+                metric: metric,
                 downsampleAggregator: "avg",
                 downsampleInterval: "1m",
                 tags: {host: hostTag}
               }
             ],
             'y-axis': false,
-            legend:{
+            legend: {
               alignAsTable: true,
               avg: true,
               min: true,
               max: true,
-              current:true,
+              current: true,
               total: true,
               show: true,
               values: true
@@ -100,6 +105,34 @@ function (angular, _) {
           }
         ]
       };
+    };
+
+    $scope.createAlertMetricsGraph = function (metrics, host) {
+      $scope.initDashboard({
+        meta: {canStar: false, canShare: false, canEdit: false},
+        dashboard: {
+          system: contextSrv.system,
+          title: "相关联指标",
+          id: metrics,
+          rows: [$scope.getRowPanelMeta(host, metrics)],
+          time: {from: "now-2h", to: "now"}
+        }
+      }, $scope);
+    };
+
+    $scope.flushResult = function () {
+      alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
+        if (!_.isEmpty(response.data)) {
+          $scope.init();
+        } else {
+          $scope.appEvent('alert-warning', ['抱歉', '运算还在进行']);
+        }
+      })
+    };
+
+    $scope.createAssociatedMetricGraphPanel = function(associatedMetrics) {
+      var hostTag = associatedMetrics.hosts[0] || "*";
+      var rowMeta = $scope.getRowPanelMeta(hostTag, associatedMetrics.metric)
 
       $scope.host = alertHost;
 
@@ -110,7 +143,7 @@ function (angular, _) {
           title: "相关联指标",
           id: alertMetric,
           rows: [rowMeta],
-          time: {from: "now-2h", to: "now"}
+          time: {from: "now-1d", to: "now"}
         }
       }, $scope);
       $timeout(function() {
@@ -161,6 +194,30 @@ function (angular, _) {
       $scope.dashboard.meta.canSave = false;
     };
 
+    $scope.resetCorrelation = function () {
+      $location.path("alerts/association/" + alertMetric + "/" + alertHost + "/" + Math.floor($scope.thresholdSlider.get()));
+    };
+
     $scope.init();
+  });
+
+  angular.module('grafana.directives').directive('slider', function() {
+    return {
+      restrict: 'A',
+      scope: false,
+      link: function (scope, element) {
+        noUiSlider.create(element[0], {
+          start: scope.$parent.correlationThreshold,
+          connect: [true, false],
+          tooltips: true,
+          step: 10,
+          range: {
+            'min': 10,
+            'max': 500
+          }
+        });
+        scope.$parent.thresholdSlider = element[0].noUiSlider;
+      }
+    };
   });
 });

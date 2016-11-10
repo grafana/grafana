@@ -12,24 +12,19 @@
   </ul>
 </topnav>
 
-<div ng-if="!dashboard.rows.length">
-  <h2 align="center">采集数据正在努力为您计算,请耐心等待30s</h2>
+<div ng-if="!isAssociation">
+  <h3 align="center">关联性分析结果尚未计算完成 <btn class="btn btn-small btn-primary" ng-click="flushResult()">刷新结果</btn></h3>
 </div>
 
-<div ng-if="dashboard.rows.length > 0" class="page-container" style="padding: 20px 20px 20px 20px;">
+<div ng-if="isAssociation" class="page-container" style="padding: 20px 20px 20px 20px;">
   <h2>调整相关性分析参数</h2>
   <table class="grafana-options-table">
     <tr>
       <td><strong>调整阈值</strong></td>
-      <td><input ng-model="correlationThreshold" placeholder="默认100 调整阈值越小越好"></td>
+      <td><div class="sliders" slider></div></td>
       <td>
-        <span ng-show="!correlationThreshold.length"  class="btn btn-inverse">
-          调整阈值越小越好
-        </span>
-        <span ng-show="correlationThreshold.length" class="btn btn-success">
-            <a href="alerts/association/{{ dashboard.id }}/{{ host }}/{{ correlationThreshold }}">
-              <i class="fa fa-edit"></i> 过滤结果
-            </a>
+        <span ng-click="resetCorrelation()" class="btn btn-primary">
+          <i class="fa fa-edit"></i>过滤结果
         </span>
       </td>
     </tr>
@@ -76,7 +71,7 @@
           <panel-loader type="panel.type" class="panel-margin"></panel-loader>
         </div>
 
-        <div class="page-container panel" style="padding: 20px 20px 20px 20px;">
+        <div ng-if="isAssociation" class="page-container panel" style="padding: 20px 20px 20px 20px;">
           <h2>挑选相似值进行对比</h2>
           <div class="panel grafana-options-table">
             <div controls controls-row>
