@@ -10,7 +10,7 @@ import "./directives/grafana_version_check";
 import "./directives/metric_segment";
 import "./directives/misc";
 import "./directives/ng_model_on_blur";
-import "./directives/password_strenght";
+import "./directives/password_strength";
 import "./directives/spectrum_picker";
 import "./directives/tags";
 import "./directives/value_select_dropdown";
