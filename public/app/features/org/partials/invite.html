@@ -9,7 +9,7 @@
 	</h3>
 
 	<div class="modal-tagline">
-		Send invite or add existing Grafana users to the organization
+    发送邀请到新用户或者邀请已经注册的用户到公司:
 		<span class="highlight-word">{{contextSrv.user.orgName}}</span>
 	</div>
 
@@ -28,10 +28,10 @@
 							<input type="text" ng-model="invite.loginOrEmail" required class="input-large tight-form-input" placeholder="email@test.com">
 						</li>
 						<li class="tight-form-item">
-							用户名
+							姓名
 						</li>
 						<li>
-							<input type="text" ng-model="invite.name" class="input-large tight-form-input" placeholder="name (optional)">
+							<input type="text" ng-model="invite.name" class="input-large tight-form-input" placeholder="姓名">
 						</li>
 
 						<li class="tight-form-item">
@@ -60,15 +60,15 @@
 			</div>
 
 			<div style="text-align: left; margin-top: 6px;">
-				<a ng-click="addInvite()">+ Invite another</a>
+				<a ng-click="addInvite()">+ 新增一个</a>
 				<div class="form-inline" style="margin-top: 20px">
-					<editor-checkbox text="Skip sending invite email" model="options.skipEmails" change="targetBlur()"></editor-checkbox>
+					<editor-checkbox text="不发送邀请邮件" model="options.skipEmails" change="targetBlur()"></editor-checkbox>
 				</div>
 			</div>
 
 			<div class="" style="margin-top: 30px; margin-bottom: 20px;">
-				<button type="button" class="btn btn-inverse" ng-click="dismiss()">Cancel</button>
-				<button type="submit" class="btn btn-success" ng-click="sendInvites();">Invite Users</button>
+				<button type="button" class="btn btn-inverse" ng-click="dismiss()">取消</button>
+				<button type="submit" class="btn btn-success" ng-click="sendInvites();">邀请用户</button>
 
 			</div>
 		</div>
