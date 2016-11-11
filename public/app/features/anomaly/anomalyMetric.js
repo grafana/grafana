@@ -51,23 +51,19 @@ define([
               alias: "",
               color: "#BF1B00",
               lines: false,
-              pointradius: 2,
+              pointradius: 3,
               points: true
-            }/*,
+            },
             {
               alias: "",
-              color: "#FDFCFF",
-              linewidth: "0",
-              fill: "10",
+              color: "#E5AC0E",
               zindex: "-1"
             },
             {
               alias: "",
-              color: "#008000",
-              zindex: "-2",
-              fill: "1",
-              linewidth: "0",
-            }*/
+              color: "#BF1B00",
+              zindex: "-1"
+            }
           ],
           legend: {
             alignAsTable: true,
@@ -144,8 +140,8 @@ define([
           panel.targets[3].tags.host = hostname;
 
           panel.seriesOverrides[0].alias = alias;
-          //panel.seriesOverrides[1].alias = metric + ".prediction.min{host=" + hostname + "}";
-          //panel.seriesOverrides[2].alias = metric + ".prediction.max{host=" + hostname + "}";
+          panel.seriesOverrides[1].alias = metric + ".prediction.min{host=" + hostname + "}";
+          panel.seriesOverrides[2].alias = metric + ".prediction.max{host=" + hostname + "}";
 
           return panelMeta;
         }
