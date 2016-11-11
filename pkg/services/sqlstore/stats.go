@@ -39,7 +39,11 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("playlist") + `
-      ) AS playlist_count
+      ) AS playlist_count,
+      (
+        SELECT COUNT(*)
+        FROM ` + dialect.Quote("alert") + `
+      ) AS alert_count
 			`
 
 	var stats m.SystemStats

@@ -5,6 +5,7 @@ type SystemStats struct {
 	UserCount      int64
 	OrgCount       int64
 	PlaylistCount  int64
+	AlertCount     int64
 }
 
 type DataSourceStats struct {
