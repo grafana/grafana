@@ -12,5 +12,6 @@ define([
   './admin/all',
   './decompose/all',
   './logs/all',
-  './analysis/all'
+  './analysis/all',
+  './health/all'
 ], function () {});

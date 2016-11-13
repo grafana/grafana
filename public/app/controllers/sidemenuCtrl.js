@@ -126,6 +126,12 @@ function (angular, _, $, config) {
         href: $scope.getUrl("/alerts/status")
       });
 
+      $scope.mainLinks.push({
+        text: "实时健康状态",
+        icon: "fa fa-fw fa-ambulance",
+        href: $scope.getUrl("/health")
+      });
+
       // $scope.mainLinks.push({
       //   text: "实时报警通知",
       //   icon: "fa fa-fw fa-phone",
@@ -133,7 +139,7 @@ function (angular, _, $, config) {
       // });
 
       $scope.mainLinks.push({
-        text: "实时健康分析",
+        text: "自动异常检测",
         icon: "fa fa-fw fa-stethoscope",
         href: $scope.getUrl("/anomaly")
       });
@@ -171,6 +177,7 @@ function (angular, _, $, config) {
                   || currentPath.indexOf('/analysis') == 0
                   || currentPath.indexOf('/logs') == 0
                   || currentPath.indexOf('/decompose') == 0
+                  || currentPath.indexOf('/health') == 0
       ) {
         if (contextSrv.system == 0){
           $location.url("/");

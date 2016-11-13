@@ -196,6 +196,10 @@ define([
         templateUrl: 'app/partials/install.html',
         controller : 'AnalysisCtrl',
       })
+      .when('/health', {
+        templateUrl: 'app/features/health/partials/systemHealth.html',
+        controller: 'SystemHealthCtrl',
+      })
       .otherwise({
         templateUrl: 'app/partials/error.html',
         controller: 'ErrorCtrl'
