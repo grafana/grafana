@@ -25,7 +25,24 @@ func NewTokenClient() *TokenClient {
 	}
 }
 
-func (client *TokenClient) GetTokenData(ctx context.Context, datasource *tsdb.DataSourceInfo) (*TokenResponse, error) {
+var cache map[int64]*TokenBody = map[int64]*TokenBody{}
+
+//Replace this stupid cache with internal cache from grafana master before merging
+func (client *TokenClient) GetTokenData(ctx context.Context, datasource *tsdb.DataSourceInfo) (*TokenBody, error) {
+	_, excist := cache[datasource.Id]
+	if !excist {
+		b, err := client.RequestTokenData(ctx, datasource)
+		if err != nil {
+			return nil, err
+		}
+
+		cache[datasource.Id] = b
+	}
+
+	return cache[datasource.Id], nil
+}
+
+func (client *TokenClient) RequestTokenData(ctx context.Context, datasource *tsdb.DataSourceInfo) (*TokenBody, error) {
 	u, _ := url.Parse(datasource.Url)
 	u.Path = path.Join(u.Path, "token")
 
@@ -57,5 +74,9 @@ func (client *TokenClient) GetTokenData(ctx context.Context, datasource *tsdb.Da
 		return nil, err
 	}
 
-	return result, nil
+	if !result.Success {
+		return nil, fmt.Errorf("Request failed for unknown reason.")
+	}
+
+	return &result.Body, nil
 }

@@ -18,11 +18,10 @@ func TestTokenClient(t *testing.T) {
 
 		client := NewTokenClient()
 
-		body, err := client.GetTokenData(context.TODO(), dsInfo)
+		body, err := client.RequestTokenData(context.TODO(), dsInfo)
 
 		So(err, ShouldBeNil)
-		So(len(body.Body.Functions), ShouldBeGreaterThan, 1)
-		So(len(body.Body.Metrics), ShouldBeGreaterThan, 1)
-		So(body.Success, ShouldBeTrue)
+		So(len(body.Functions), ShouldBeGreaterThan, 1)
+		So(len(body.Metrics), ShouldBeGreaterThan, 1)
 	})
 }

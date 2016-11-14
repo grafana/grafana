@@ -16,8 +16,6 @@ func TestMQEQueryParser(t *testing.T) {
 			JsonData: simplejson.New(),
 		}
 
-		queryContext := &tsdb.QueryContext{}
-
 		Convey("can parse simple mqe model", func() {
 			json := `
       {
@@ -39,15 +37,19 @@ func TestMQEQueryParser(t *testing.T) {
 
 			query, err := parser.Parse(modelJson, dsInfo)
 			So(err, ShouldBeNil)
+			So(query.UseRawQuery, ShouldBeFalse)
 
-			rawQuery := query.Build(queryContext)
-			So(rawQuery, ShouldEqual, "")
+			So(len(query.Apps), ShouldEqual, 0)
+			So(query.Hosts[0], ShouldEqual, "staples-lab-1")
+			So(query.Metrics[0].Metric, ShouldEqual, "os.cpu.all*")
 		})
 
 		Convey("can parse multi serie mqe model", func() {
 			json := `
       {
-        "apps": [],
+        "apps": [
+          "demoapp"
+        ],
         "hosts": [
           "staples-lab-1"
         ],
@@ -65,8 +67,53 @@ func TestMQEQueryParser(t *testing.T) {
         "addHostToAlias": true
       }
       `
+			modelJson, err := simplejson.NewJson([]byte(json))
+			So(err, ShouldBeNil)
 
-			So(json, ShouldNotBeNil)
+			query, err := parser.Parse(modelJson, dsInfo)
+			So(err, ShouldBeNil)
+			So(query.UseRawQuery, ShouldBeFalse)
+			So(query.Apps[0], ShouldEqual, "demoapp")
+			So(query.Metrics[0].Metric, ShouldEqual, "os.cpu.all.active_percentage")
+			So(query.Metrics[1].Metric, ShouldEqual, "os.disk.sda.io_time")
+		})
+
+		Convey("can parse raw query", func() {
+			json := `
+      {
+        "addAppToAlias": true,
+        "addHostToAlias": true,
+        "apps": [],
+        "hosts": [
+          "staples-lab-1"
+        ],
+        "metrics": [
+          {
+            "alias": "cpu active",
+            "metric": "os.cpu.all.active_percentage"
+          },
+          {
+            "alias": "disk sda time",
+            "metric": "os.disk.sda.io_time"
+          }
+        ],
+        "rawQuery": true,
+        "query": "raw-query",
+        "refId": "A",
+        "addAppToAlias": true,
+        "addHostToAlias": true
+      }
+      `
+			modelJson, err := simplejson.NewJson([]byte(json))
+			So(err, ShouldBeNil)
+
+			query, err := parser.Parse(modelJson, dsInfo)
+			So(err, ShouldBeNil)
+
+			So(query.UseRawQuery, ShouldBeTrue)
+			So(query.RawQuery, ShouldEqual, "raw-query")
+			So(query.AddAppToAlias, ShouldBeTrue)
+			So(query.AddHostToAlias, ShouldBeTrue)
 		})
 	})
 }

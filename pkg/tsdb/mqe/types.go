@@ -4,10 +4,20 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
+type MQEMetric struct {
+	Metric string
+	Alias  string
+}
+
 type MQEQuery struct {
-	Metrics []string
+	Metrics []MQEMetric
 	Hosts   []string
 	Apps    []string
+
+	AddAppToAlias  bool
+	AddHostToAlias bool
+	UseRawQuery    bool
+	RawQuery       string
 }
 
 func (q *MQEQuery) Build(queryContext *tsdb.QueryContext) string {
