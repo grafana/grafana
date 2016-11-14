@@ -275,7 +275,12 @@ export default class InfluxDatasource {
       }
       date = dateMath.parse(date, roundUp);
     }
-    return (date.valueOf() / 1000).toFixed(0) + 's';
+
+    var secs = date.valueOf() / 1000;
+    if(roundUp) {
+      secs += 1;
+    }
+    return secs.toFixed(0) + 's';
   }
 }
 
