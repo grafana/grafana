@@ -277,7 +277,7 @@ export default class InfluxDatasource {
     }
 
     var secs = date.valueOf() / 1000;
-    if(roundUp) {
+    if (roundUp) {
       secs += 1;
     }
     return secs.toFixed(0) + 's';
