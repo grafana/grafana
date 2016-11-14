@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	regexpOperatorPattern *regexp.Regexp = regexp.MustCompile(`^\/.*\/$`)
+	regexpOperatorPattern    *regexp.Regexp = regexp.MustCompile(`^\/.*\/$`)
+	regexpMeasurementPattern *regexp.Regexp = regexp.MustCompile(`^\/.*\/$`)
 )
 
 func (query *Query) Build(queryContext *tsdb.QueryContext) (string, error) {
@@ -108,7 +109,14 @@ func (query *Query) renderMeasurement() string {
 	} else {
 		policy = `"` + query.Policy + `".`
 	}
-	return fmt.Sprintf(` FROM %s"%s"`, policy, query.Measurement)
+
+	measurement := query.Measurement
+
+	if !regexpMeasurementPattern.Match([]byte(measurement)) {
+		measurement = fmt.Sprintf(`"%s"`, measurement)
+	}
+
+	return fmt.Sprintf(` FROM %s%s`, policy, measurement)
 }
 
 func (query *Query) renderWhereClause() string {

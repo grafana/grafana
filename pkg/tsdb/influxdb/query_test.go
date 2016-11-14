@@ -120,5 +120,17 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 
 			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 'value'`)
 		})
+
+		Convey("can render regular measurement", func() {
+			query := &Query{Measurement: `apa`, Policy: "policy"}
+
+			So(query.renderMeasurement(), ShouldEqual, ` FROM "policy"."apa"`)
+		})
+
+		Convey("can render regexp measurement", func() {
+			query := &Query{Measurement: `/apa/`, Policy: "policy"}
+
+			So(query.renderMeasurement(), ShouldEqual, ` FROM "policy"./apa/`)
+		})
 	})
 }
