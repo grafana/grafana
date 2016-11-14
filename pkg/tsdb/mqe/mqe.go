@@ -29,5 +29,6 @@ func init() {
 }
 
 func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
+
 	return &tsdb.BatchResult{}
 }

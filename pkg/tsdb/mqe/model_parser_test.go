@@ -16,6 +16,8 @@ func TestMQEQueryParser(t *testing.T) {
 			JsonData: simplejson.New(),
 		}
 
+		queryContext := &tsdb.QueryContext{}
+
 		Convey("can parse simple mqe model", func() {
 			json := `
       {
@@ -23,10 +25,9 @@ func TestMQEQueryParser(t *testing.T) {
         "hosts": [
           "staples-lab-1"
         ],
-        "metric": "$metric_cpu",
         "metrics": [
           {
-            "metric": "$metric_cpu"
+            "metric": "os.cpu.all*"
           }
         ],
         "rawQuery": "",
@@ -36,9 +37,11 @@ func TestMQEQueryParser(t *testing.T) {
 			modelJson, err := simplejson.NewJson([]byte(json))
 			So(err, ShouldBeNil)
 
-			res, err := parser.Parse(modelJson, dsInfo)
+			query, err := parser.Parse(modelJson, dsInfo)
 			So(err, ShouldBeNil)
-			So(res.Interval, ShouldEqual, ">20s")
+
+			rawQuery := query.Build(queryContext)
+			So(rawQuery, ShouldEqual, "")
 		})
 
 		Convey("can parse multi serie mqe model", func() {
@@ -62,6 +65,8 @@ func TestMQEQueryParser(t *testing.T) {
         "addHostToAlias": true
       }
       `
+
+			So(json, ShouldNotBeNil)
 		})
 	})
 }
