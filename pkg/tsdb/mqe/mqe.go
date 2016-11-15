@@ -30,5 +30,15 @@ func init() {
 
 func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
 
+	availableSeries, _ := NewTokenClient().GetTokenData(ctx, e.DataSourceInfo)
+	glog.Info("available series", availableSeries)
+
+  //query, _ := &MQEQueryParser{}.Parse()
+
+
+
+  //fetch all available serienames
+	//expaned parsed model into multiple queries
+
 	return &tsdb.BatchResult{}
 }
