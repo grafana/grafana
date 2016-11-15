@@ -13,7 +13,7 @@ function (_) {
      */
     var defaults = {
       datasources                   : {},
-      window_title_prefix           : 'CloudInsight - ',
+      window_title_prefix           : '大数据监控 - ',
       panels                        : {
         'graph':      { path: 'app/panels/graph',      name: '图表' },
         'table':      { path: 'app/panels/table',      name: '表格' },
