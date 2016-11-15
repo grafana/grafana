@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/wangy1931/grafana/pkg/util"
+  "fmt"
 )
 
 var ErrInvalidApiKey = errors.New("Invalid Api Key")
@@ -26,7 +27,7 @@ func New(orgId int64, name string) KeyGenResult {
 
 	jsonKey.OrgId = orgId
 	jsonKey.Name = name
-	jsonKey.Key = util.GetRandomString(32)
+	jsonKey.Key = util.GetRandomString(16)
 
 	result := KeyGenResult{}
 	result.HashedKey = util.EncodePassword(jsonKey.Key, name)
