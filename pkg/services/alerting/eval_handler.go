@@ -32,10 +32,11 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 			break
 		}
 
-		// break if result has not triggered yet
-		if cr.Firing == false {
-			firing = false
-			break
+		// calculating Firing based on operator
+		if cr.Operator == "or" {
+			firing = firing || cr.Firing
+		} else {
+			firing = firing && cr.Firing
 		}
 
 		context.EvalMatches = append(context.EvalMatches, cr.EvalMatches...)
