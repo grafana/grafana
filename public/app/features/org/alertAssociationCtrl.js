@@ -185,7 +185,7 @@ function (angular, _, noUiSlider) {
         };
         $scope.dashboard.rows[0].panels[0].targets.push(target);
         var seriesOverride = {
-          "alias":metricName+"{host"+"="+target.tags.host+"}",
+          "alias":_.getMetricName(metricName)+"{host"+"="+target.tags.host+"}",
           "yaxis": $scope.yaxisNumber++
         };
         $scope.dashboard.rows[0].panels[0].seriesOverrides.push(seriesOverride);
