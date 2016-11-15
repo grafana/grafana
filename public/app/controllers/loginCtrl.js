@@ -78,7 +78,7 @@ function (angular, config) {
         if (result.redirectUrl) {
           window.location.href = result.redirectUrl;
         } else {
-          window.location.href = config.appSubUrl + '/';
+          window.location.href = document.URL + '/';
         }
       });
     };
