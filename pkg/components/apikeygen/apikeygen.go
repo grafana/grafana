@@ -6,7 +6,6 @@ import (
 	"errors"
 
 	"github.com/wangy1931/grafana/pkg/util"
-  "fmt"
 )
 
 var ErrInvalidApiKey = errors.New("Invalid Api Key")
