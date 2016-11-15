@@ -195,7 +195,7 @@ function ($) {
           }
 
           var highlightClass = '';
-          if (item && i === item.seriesIndex) {
+          if (item && hoverInfo.index === item.seriesIndex) {
             highlightClass = 'graph-tooltip-list-item--highlight';
           }
 
