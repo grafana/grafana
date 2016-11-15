@@ -47,7 +47,7 @@ func AddSystem(cmd *m.AddSystemsCommand) error {
       apiEntity.Name = strconv.FormatInt(entity.Id,16)
       apiEntity.Role = m.ROLE_ADMIN
       newKeyInfo := apikeygen.New(apiEntity.OrgId, apiEntity.Name)
-      apiEntity.Key = newKeyInfo.HashedKey
+      apiEntity.Key = newKeyInfo.ClientSecret
       err = AddApiKey(&apiEntity)
     }
     return err
