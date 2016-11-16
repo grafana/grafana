@@ -3,14 +3,11 @@ package mqe
 import (
 	"testing"
 
-	"time"
-
 	"net/http"
 	"strings"
 
 	"io/ioutil"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -20,36 +17,19 @@ var (
 
 func TestMQEResponseParser(t *testing.T) {
 	Convey("MQE response parser", t, func() {
-		parser := &MQEResponseParser{}
+		parser := NewResponseParser()
 
 		Convey("Can parse response", func() {
 			response := &http.Response{
 				StatusCode: 200,
 				Body:       ioutil.NopCloser(strings.NewReader(dummieJson)),
 			}
-			_, err := parser.Parse(response)
+			res, err := parser.Parse(response)
 			So(err, ShouldBeNil)
+			So(len(res.Series), ShouldEqual, 2)
+			So(len(res.Series[0].Points), ShouldEqual, 11)
 		})
 	})
-}
-
-type MQEResponse struct {
-	Success bool               `json:"success"`
-	Name    string             `json:"name"`
-	Body    []MQEResponseSerie `json:"body"`
-}
-
-type ResponseTimeRange struct {
-	Start      time.Time     `json:"start"`
-	End        time.Time     `json:"end"`
-	Resolution time.Duration `json:"Resolution"`
-}
-
-type MQEResponseSerie struct {
-	Query  string            `json:"query"`
-	Name   string            `json:"name"`
-	Type   string            `json:"type"`
-	Series []simplejson.Json `json:"series"`
 }
 
 func init() {
