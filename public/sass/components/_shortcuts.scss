@@ -6,6 +6,8 @@
 }
 
 .shortcut-table {
+  margin-bottom: $spacer;
+
   .shortcut-table-category-header {
     font-weight: normal;
     font-size: $font-size-h6;
@@ -26,8 +28,6 @@
     text-align: right;
     color: $text-color;
   }
-
-  margin-bottom: $spacer;
 }
 
 .shortcut-table-key {
