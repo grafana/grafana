@@ -5,6 +5,8 @@ import (
 
 	"strings"
 
+	"regexp"
+
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -25,32 +27,37 @@ type MQEQuery struct {
 	RawQuery    string
 }
 
+var (
+	containsWildcardPattern *regexp.Regexp = regexp.MustCompile(`\*`)
+)
+
 //`os.disk.sda.io_time` where host in ('staples-lab-1') from 1479197578194 to 1479219178194
 func (q *MQEQuery) Build(availableSeries []string) ([]string, error) {
 	var queries []string
 	where := q.buildWhereClause()
 
-	var metrics []
+	var metrics []string
 
 	for _, v := range q.Metrics {
-    if noStar {
-				metrics = append(metrics, v)
-
-      continue
-    }
-
-		for _, a := range availableSeries {
-			if match {
-				metrics = append(metrics, a)
-			}
+		if !containsWildcardPattern.Match([]byte(v.Metric)) {
+			metrics = append(metrics, v.Metric)
+			continue
 		}
+
+		/*
+			for _, a := range availableSeries {
+				if match {
+					metrics = append(metrics, a)
+				}
+			}
+		*/
 	}
 
-	for _, v := range metrics {
+	for _, metric := range metrics {
 		queries = append(queries,
 			fmt.Sprintf(
 				"`%s` %s from %v to %v",
-				v.Metric,
+				metric,
 				where,
 				q.TimeRange.GetFromAsMsEpoch(),
 				q.TimeRange.GetToAsMsEpoch()))
@@ -70,16 +77,16 @@ func (q *MQEQuery) buildWhereClause() string {
 
 	if hasApps {
 		apps := strings.Join(q.Apps, "', '")
-		where += fmt.Sprintf(" apps in ('%s')", apps)
+		where += fmt.Sprintf("app in ('%s')", apps)
 	}
 
 	if hasHosts && hasApps {
-		where += " and"
+		where += " and "
 	}
 
 	if hasHosts {
 		hosts := strings.Join(q.Hosts, "', '")
-		where += fmt.Sprintf(" hosts in ('%s')", hosts)
+		where += fmt.Sprintf("host in ('%s')", hosts)
 	}
 
 	return where

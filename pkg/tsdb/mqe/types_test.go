@@ -12,11 +12,11 @@ import (
 )
 
 func TestWildcardExpansion(t *testing.T) {
-	availableMetrics := map[string]bool{
-		"os.cpu.all.idle": true,
-		"os.cpu.1.idle":   true,
-		"os.cpu.2.idle":   true,
-		"os.cpu.3.idle":   true,
+	availableMetrics := []string{
+		"os.cpu.all.idle",
+		"os.cpu.1.idle",
+		"os.cpu.2.idle",
+		"os.cpu.3.idle",
 	}
 
 	now := time.Now()
@@ -47,8 +47,8 @@ func TestWildcardExpansion(t *testing.T) {
 			expandeQueries, err := query.Build(availableMetrics)
 			So(err, ShouldBeNil)
 			So(len(expandeQueries), ShouldEqual, 2)
-			So(expandeQueries[0], ShouldEqual, fmt.Sprintf("`os.cpu.3.idle` where host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
-			So(expandeQueries[1], ShouldEqual, fmt.Sprintf("`os.cpu.2.idle` where host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
+			So(expandeQueries[0], ShouldEqual, fmt.Sprintf("`os.cpu.3.idle` where app in ('demoapp-1', 'demoapp-2') and host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
+			So(expandeQueries[1], ShouldEqual, fmt.Sprintf("`os.cpu.2.idle` where app in ('demoapp-1', 'demoapp-2') and host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
 		})
 
 		Convey("Containg wildcard series", func() {
