@@ -6,7 +6,6 @@ import "./directives/dash_class";
 import "./directives/confirm_click";
 import "./directives/dash_edit_link";
 import "./directives/dropdown_typeahead";
-import "./directives/grafana_version_check";
 import "./directives/metric_segment";
 import "./directives/misc";
 import "./directives/ng_model_on_blur";
