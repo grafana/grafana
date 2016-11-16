@@ -30,11 +30,15 @@ func TestWildcardExpansion(t *testing.T) {
 				Metrics: []MQEMetric{
 					MQEMetric{
 						Metric: "os.cpu.3.idle",
-						Alias:  "cpu on core 3",
+						Alias:  "",
 					},
 					MQEMetric{
 						Metric: "os.cpu.2.idle",
-						Alias:  "cpu on core 2",
+						Alias:  "",
+					},
+					MQEMetric{
+						Metric: "os.cpu.1.idle",
+						Alias:  "cpu",
 					},
 				},
 				Hosts:          []string{"staples-lab-1", "staples-lab-2"},
@@ -46,9 +50,10 @@ func TestWildcardExpansion(t *testing.T) {
 
 			expandeQueries, err := query.Build(availableMetrics)
 			So(err, ShouldBeNil)
-			So(len(expandeQueries), ShouldEqual, 2)
+			So(len(expandeQueries), ShouldEqual, 3)
 			So(expandeQueries[0], ShouldEqual, fmt.Sprintf("`os.cpu.3.idle` where app in ('demoapp-1', 'demoapp-2') and host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
 			So(expandeQueries[1], ShouldEqual, fmt.Sprintf("`os.cpu.2.idle` where app in ('demoapp-1', 'demoapp-2') and host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
+			So(expandeQueries[2], ShouldEqual, fmt.Sprintf("`os.cpu.1.idle` {cpu} where app in ('demoapp-1', 'demoapp-2') and host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
 		})
 
 		Convey("Containg wildcard series", func() {

@@ -33,14 +33,10 @@ var (
 )
 
 func (q *MQEQuery) Build(availableSeries []string) ([]string, error) {
-	var queries []string
-	where := q.buildWhereClause()
-
-	var metrics []string
-
+	var metrics []MQEMetric
 	for _, v := range q.Metrics {
 		if !containsWildcardPattern.Match([]byte(v.Metric)) {
-			metrics = append(metrics, v.Metric)
+			metrics = append(metrics, v)
 			continue
 		}
 
@@ -55,16 +51,28 @@ func (q *MQEQuery) Build(availableSeries []string) ([]string, error) {
 		//TODO: this lookup should be cached
 		for _, a := range availableSeries {
 			if mp.Match([]byte(a)) {
-				metrics = append(metrics, a)
+				metrics = append(metrics, MQEMetric{
+					Metric: a,
+					Alias:  v.Alias,
+				})
 			}
 		}
 	}
 
+	var queries []string
+	where := q.buildWhereClause()
+
 	for _, metric := range metrics {
+		alias := ""
+		if metric.Alias != "" {
+			alias = fmt.Sprintf(" {%s}", metric.Alias)
+		}
+
 		queries = append(queries,
 			fmt.Sprintf(
-				"`%s` %s from %v to %v",
-				metric,
+				"`%s`%s %s from %v to %v",
+				metric.Metric,
+				alias,
 				where,
 				q.TimeRange.GetFromAsMsEpoch(),
 				q.TimeRange.GetToAsMsEpoch()))
