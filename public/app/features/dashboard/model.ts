@@ -240,6 +240,7 @@ export class DashboardModel {
     delete newPanel.repeatIteration;
     delete newPanel.repeatPanelId;
     delete newPanel.scopedVars;
+    delete newPanel.alert;
 
     row.addPanel(newPanel);
     return newPanel;
