@@ -122,7 +122,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
       // handle in active view state class
       var lastActivity = new Date().getTime();
       var activeUser = true;
-      var inActiveTimeLimit = 60 * 1000;
+      var inActiveTimeLimit = 10 * 1000;
 
       function checkForInActiveUser() {
         if (!activeUser) {
@@ -147,9 +147,14 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
         }
       }
 
+      // mouse and keyboard is user activity
       body.mousemove(userActivityDetected);
       body.keydown(userActivityDetected);
-      setInterval(checkForInActiveUser, 1000);
+      // treat tab change as activity
+      document.addEventListener('visibilitychange', userActivityDetected);
+
+      // check every 2 seconds
+      setInterval(checkForInActiveUser, 2000);
 
       appEvents.on('toggle-view-mode', () => {
         lastActivity = 0;
