@@ -8,15 +8,15 @@
 
     <title>Grafana</title>
 
-		<link href='[[.AppSubUrl]]/public/css/fonts.min.css' rel='stylesheet' type='text/css'>
+		<link href='[[.AppStaticUrl]]/css/fonts.min.css' rel='stylesheet' type='text/css'>
 
 		[[if .User.LightTheme]]
-		  <link rel="stylesheet" href="[[.AppSubUrl]]/public/css/grafana.light.min.css">
+		  <link rel="stylesheet" href="[[.AppStaticUrl]]/css/grafana.light.min.css">
 		[[else]]
-		  <link rel="stylesheet" href="[[.AppSubUrl]]/public/css/grafana.dark.min.css">
+		  <link rel="stylesheet" href="[[.AppStaticUrl]]/css/grafana.dark.min.css">
 		[[end]]
 
-    <link rel="icon" type="image/png" href="[[.AppSubUrl]]/public/img/fav32.png">
+    <link rel="icon" type="image/png" href="[[.AppStaticUrl]]/img/fav32.png">
 		<base href="[[.AppSubUrl]]/" />
 
 	</head>
@@ -84,11 +84,11 @@
 		};
 	</script>
 
-	<!-- build:js [[.AppSubUrl]]/public/app/boot.js -->
-	<script src="[[.AppSubUrl]]/public/vendor/npm/es6-shim/es6-shim.js"></script>
-	<script src="[[.AppSubUrl]]/public/vendor/npm/systemjs/dist/system.src.js"></script>
-	<script src="[[.AppSubUrl]]/public/app/system.conf.js"></script>
-	<script src="[[.AppSubUrl]]/public/app/boot.js"></script>
+	<!-- build:js [[.AppStaticUrl]]/app/boot.js -->
+	<script src="[[.AppStaticUrl]]/vendor/npm/es6-shim/es6-shim.js"></script>
+	<script src="[[.AppStaticUrl]]/vendor/npm/systemjs/dist/system.src.js"></script>
+	<script src="[[.AppStaticUrl]]/app/system.conf.js"></script>
+	<script src="[[.AppStaticUrl]]/app/boot.js"></script>
 	<!-- endbuild -->
 
 	[[if .GoogleAnalyticsId]]

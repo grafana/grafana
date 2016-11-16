@@ -5,6 +5,7 @@ type IndexViewData struct {
 	Settings                map[string]interface{}
 	AppUrl                  string
 	AppSubUrl               string
+	AppStaticUrl            string
 	GoogleAnalyticsId       string
 	GoogleTagManagerId      string
 	MainNavLinks            []*NavLink

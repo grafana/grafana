@@ -35,12 +35,15 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	appUrl := setting.AppUrl
 	appSubUrl := setting.AppSubUrl
+	appStaticUrl := setting.AppStaticUrl
 
 	// special case when doing localhost call from phantomjs
 	if c.IsRenderCall {
 		appUrl = fmt.Sprintf("%s://localhost:%s", setting.Protocol, setting.HttpPort)
 		appSubUrl = ""
+		appStaticUrl = "public"
 		settings["appSubUrl"] = ""
+		settings["appStaticUrl"] = "public"
 	}
 
 	var data = dtos.IndexViewData{
@@ -62,6 +65,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		Settings:                settings,
 		AppUrl:                  appUrl,
 		AppSubUrl:               appSubUrl,
+		AppStaticUrl:            appStaticUrl,
 		GoogleAnalyticsId:       setting.GoogleAnalyticsId,
 		GoogleTagManagerId:      setting.GoogleTagManagerId,
 		BuildVersion:            setting.BuildVersion,
