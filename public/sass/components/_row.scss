@@ -74,12 +74,11 @@
 .add-panel-panels-scroll {
   width: 100%;
   overflow: auto;
+  -ms-overflow-style: none;
 
   &::-webkit-scrollbar {
     display: none
   }
-
-  -ms-overflow-style: none;
 }
 
 .add-panel-panels {
