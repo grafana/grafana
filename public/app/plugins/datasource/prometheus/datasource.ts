@@ -6,6 +6,7 @@ import moment from 'moment';
 
 import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
+import * as promTemplate from './template';
 
 var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
@@ -269,13 +270,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   };
 
   this.renderTemplate = function(aliasPattern, aliasData) {
-    var aliasRegex = /\{\{\s*(.+?)\s*\}\}/g;
-    return aliasPattern.replace(aliasRegex, function(match, g1) {
-      if (aliasData[g1]) {
-        return aliasData[g1];
-      }
-      return g1;
-    });
+    return promTemplate.renderTemplate(aliasPattern, aliasData);
   };
 
   this.getOriginalMetricName = function(labelData) {
