@@ -78,10 +78,10 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
       } else {
         period = kbn.interval_to_seconds(templateSrv.replace(target.period, options.scopedVars));
       }
-      if (query.period < 60) {
+      if (period < 60) {
         period = 60;
       }
-      if (range / query.period >= 1440) {
+      if (range / period >= 1440) {
         period = Math.ceil(range / 1440 / 60) * 60;
       }
 

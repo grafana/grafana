@@ -4,7 +4,7 @@ description = "Feature & improvement highlights for Grafana v3.1"
 keywords = ["grafana", "new", "documentation", "3.1"]
 type = "docs"
 [menu.docs]
-name = "Version 3.1 (Latest)"
+name = "Version 3.1"
 identifier = "v3.1"
 parent = "whatsnew"
 weight = 1

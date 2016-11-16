@@ -101,6 +101,7 @@ func sendUsageStats() {
 	metrics["stats.plugins.apps.count"] = len(plugins.Apps)
 	metrics["stats.plugins.panels.count"] = len(plugins.Panels)
 	metrics["stats.plugins.datasources.count"] = len(plugins.DataSources)
+	metrics["stats.alerts.count"] = statsQuery.Result.AlertCount
 
 	dsStats := m.GetDataSourceStatsQuery{}
 	if err := bus.Dispatch(&dsStats); err != nil {

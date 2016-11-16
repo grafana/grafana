@@ -21,7 +21,9 @@ function ($) {
       var initial = last*ps;
       var len = series.datapoints.points.length;
       for (var j = initial; j < len; j += ps) {
+        // Special case of a non stepped line, highlight the very last point just before a null point
         if ((series.datapoints.points[initial] != null && series.datapoints.points[j] == null && ! series.lines.steps)
+            //normal case
             || series.datapoints.points[j] > posX) {
           return Math.max(j - ps,  0)/ps;
         }
@@ -58,11 +60,13 @@ function ($) {
         series = seriesList[i];
 
         if (!series.data.length || (panel.legend.hideEmpty && series.allIsNull)) {
+          // Init value & yaxis so that it does not brake series sorting
           results.push({ hidden: true, value: 0, yaxis: 0 });
           continue;
         }
 
         if (!series.data.length || (panel.legend.hideZero && series.allIsZero)) {
+          // Init value & yaxis so that it does not brake series sorting
           results.push({ hidden: true, value: 0, yaxis: 0 });
           continue;
         }
@@ -71,6 +75,7 @@ function ($) {
         hoverDistance = pos.x - series.data[hoverIndex][0];
         pointTime = series.data[hoverIndex][0];
 
+        // Take the closest point before the cursor, or if it does not exist, the closest after
         if (! minDistance
             || (hoverDistance >=0 && (hoverDistance < minDistance || minDistance < 0))
             || (hoverDistance < 0 && hoverDistance > minDistance)) {
@@ -99,6 +104,7 @@ function ($) {
           hoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
         }
 
+        // Be sure we have a yaxis so that it does not brake series sorting
         yaxis = 0;
         if (series.yaxis) {
           yaxis = series.yaxis.n;
@@ -116,7 +122,7 @@ function ($) {
         });
       }
 
-      // Find point which closer to pointer
+      // Time of the point closer to pointer
       results.time = minTime;
 
       return results;
@@ -189,7 +195,7 @@ function ($) {
           }
 
           var highlightClass = '';
-          if (item && i === item.seriesIndex) {
+          if (item && hoverInfo.index === item.seriesIndex) {
             highlightClass = 'graph-tooltip-list-item--highlight';
           }
 

@@ -39,7 +39,11 @@ func GetSystemStats(query *m.GetSystemStatsQuery) error {
       (
         SELECT COUNT(*)
         FROM ` + dialect.Quote("playlist") + `
-      ) AS playlist_count
+      ) AS playlist_count,
+      (
+        SELECT COUNT(*)
+        FROM ` + dialect.Quote("alert") + `
+      ) AS alert_count
 			`
 
 	var stats m.SystemStats
@@ -85,7 +89,11 @@ func GetAdminStats(query *m.GetAdminStatsQuery) error {
       (
         SELECT COUNT(DISTINCT ` + dialect.Quote("dashboard_id") + ` )
         FROM ` + dialect.Quote("star") + `
-      ) AS starred_db_count
+      ) AS starred_db_count,
+      (
+        SELECT COUNT(*)
+        FROM ` + dialect.Quote("alert") + `
+      ) AS alert_count
       `
 
 	var stats m.AdminStats

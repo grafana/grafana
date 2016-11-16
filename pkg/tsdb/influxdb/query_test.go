@@ -12,7 +12,6 @@ import (
 func TestInfluxdbQueryBuilder(t *testing.T) {
 
 	Convey("Influxdb query builder", t, func() {
-		builder := QueryBuilder{}
 
 		qp1, _ := NewQueryPart("field", []string{"value"})
 		qp2, _ := NewQueryPart("mean", []string{})
@@ -37,7 +36,7 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 				Interval:    "10s",
 			}
 
-			rawQuery, err := builder.Build(query, queryContext)
+			rawQuery, err := query.Build(queryContext)
 			So(err, ShouldBeNil)
 			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "policy"."cpu" WHERE time > now() - 5m GROUP BY time(10s) fill(null)`)
 		})
@@ -51,23 +50,22 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 				Interval:    "5s",
 			}
 
-			rawQuery, err := builder.Build(query, queryContext)
+			rawQuery, err := query.Build(queryContext)
 			So(err, ShouldBeNil)
 			So(rawQuery, ShouldEqual, `SELECT mean("value") FROM "cpu" WHERE "hostname" = 'server1' OR "hostname" = 'server2' AND time > now() - 5m GROUP BY time(5s), "datacenter" fill(null)`)
 		})
 
 		Convey("can render time range", func() {
 			query := Query{}
-			builder := &QueryBuilder{}
 			Convey("render from: 2h to now-1h", func() {
 				query := Query{}
 				queryContext := &tsdb.QueryContext{TimeRange: tsdb.NewTimeRange("2h", "now-1h")}
-				So(builder.renderTimeFilter(&query, queryContext), ShouldEqual, "time > now() - 2h and time < now() - 1h")
+				So(query.renderTimeFilter(queryContext), ShouldEqual, "time > now() - 2h and time < now() - 1h")
 			})
 
 			Convey("render from: 10m", func() {
 				queryContext := &tsdb.QueryContext{TimeRange: tsdb.NewTimeRange("10m", "now")}
-				So(builder.renderTimeFilter(&query, queryContext), ShouldEqual, "time > now() - 10m")
+				So(query.renderTimeFilter(queryContext), ShouldEqual, "time > now() - 10m")
 			})
 		})
 
@@ -79,29 +77,60 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 				GroupBy:     []*QueryPart{groupBy1, groupBy3},
 				Interval:    "10s",
 				RawQuery:    "Raw query",
+				UseRawQuery: true,
 			}
 
-			rawQuery, err := builder.Build(query, queryContext)
+			rawQuery, err := query.Build(queryContext)
 			So(err, ShouldBeNil)
 			So(rawQuery, ShouldEqual, `Raw query`)
 		})
 
-		Convey("can render regex tags", func() {
-			query := &Query{Tags: []*Tag{&Tag{Operator: "=~", Value: "value", Key: "key"}}}
+		Convey("can render normal tags without operator", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: "", Value: `value`, Key: "key"}}}
 
-			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" =~ value`)
+			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 'value'`)
+		})
+
+		Convey("can render regex tags without operator", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: "", Value: `/value/`, Key: "key"}}}
+
+			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" =~ /value/`)
+		})
+
+		Convey("can render regex tags", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: "=~", Value: `/value/`, Key: "key"}}}
+
+			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" =~ /value/`)
 		})
 
 		Convey("can render number tags", func() {
-			query := &Query{Tags: []*Tag{&Tag{Operator: "=", Value: "1", Key: "key"}}}
+			query := &Query{Tags: []*Tag{&Tag{Operator: "=", Value: "10001", Key: "key"}}}
 
-			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" = 1`)
+			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 10001`)
+		})
+
+		Convey("can render number tags with decimals", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: "=", Value: "10001.1", Key: "key"}}}
+
+			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 10001.1`)
 		})
 
 		Convey("can render string tags", func() {
 			query := &Query{Tags: []*Tag{&Tag{Operator: "=", Value: "value", Key: "key"}}}
 
-			So(strings.Join(builder.renderTags(query), ""), ShouldEqual, `"key" = 'value'`)
+			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 'value'`)
+		})
+
+		Convey("can render regular measurement", func() {
+			query := &Query{Measurement: `apa`, Policy: "policy"}
+
+			So(query.renderMeasurement(), ShouldEqual, ` FROM "policy"."apa"`)
+		})
+
+		Convey("can render regexp measurement", func() {
+			query := &Query{Measurement: `/apa/`, Policy: "policy"}
+
+			So(query.renderMeasurement(), ShouldEqual, ` FROM "policy"./apa/`)
 		})
 	})
 }
