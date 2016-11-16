@@ -4,6 +4,7 @@ import (
 	"errors"
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -43,12 +44,10 @@ type DataSource struct {
 	BasicAuth         bool
 	BasicAuthUser     string
 	BasicAuthPassword string
-	TlsAuth           bool
-	TlsClientCert     string
-	TlsClientKey      string
 	WithCredentials   bool
 	IsDefault         bool
 	JsonData          *simplejson.Json
+	SecureJsonData    securejsondata.SecureJsonData
 
 	Created time.Time
 	Updated time.Time
@@ -80,22 +79,20 @@ func IsKnownDataSourcePlugin(dsType string) bool {
 
 // Also acts as api DTO
 type AddDataSourceCommand struct {
-	Name              string           `json:"name" binding:"Required"`
-	Type              string           `json:"type" binding:"Required"`
-	Access            DsAccess         `json:"access" binding:"Required"`
-	Url               string           `json:"url"`
-	Password          string           `json:"password"`
-	Database          string           `json:"database"`
-	User              string           `json:"user"`
-	BasicAuth         bool             `json:"basicAuth"`
-	BasicAuthUser     string           `json:"basicAuthUser"`
-	BasicAuthPassword string           `json:"basicAuthPassword"`
-	TlsAuth           bool             `json:"tlsAuth"`
-	TlsClientCert     string           `json:"tlsClientCert"`
-	TlsClientKey      string           `json:"tlsClientKey"`
-	WithCredentials   bool             `json:"withCredentials"`
-	IsDefault         bool             `json:"isDefault"`
-	JsonData          *simplejson.Json `json:"jsonData"`
+	Name              string            `json:"name" binding:"Required"`
+	Type              string            `json:"type" binding:"Required"`
+	Access            DsAccess          `json:"access" binding:"Required"`
+	Url               string            `json:"url"`
+	Password          string            `json:"password"`
+	Database          string            `json:"database"`
+	User              string            `json:"user"`
+	BasicAuth         bool              `json:"basicAuth"`
+	BasicAuthUser     string            `json:"basicAuthUser"`
+	BasicAuthPassword string            `json:"basicAuthPassword"`
+	WithCredentials   bool              `json:"withCredentials"`
+	IsDefault         bool              `json:"isDefault"`
+	JsonData          *simplejson.Json  `json:"jsonData"`
+	SecureJsonData    map[string]string `json:"secureJsonData"`
 
 	OrgId int64 `json:"-"`
 
@@ -104,22 +101,20 @@ type AddDataSourceCommand struct {
 
 // Also acts as api DTO
 type UpdateDataSourceCommand struct {
-	Name              string           `json:"name" binding:"Required"`
-	Type              string           `json:"type" binding:"Required"`
-	Access            DsAccess         `json:"access" binding:"Required"`
-	Url               string           `json:"url"`
-	Password          string           `json:"password"`
-	User              string           `json:"user"`
-	Database          string           `json:"database"`
-	BasicAuth         bool             `json:"basicAuth"`
-	BasicAuthUser     string           `json:"basicAuthUser"`
-	BasicAuthPassword string           `json:"basicAuthPassword"`
-	TlsAuth           bool             `json:"tlsAuth"`
-	TlsClientCert     string           `json:"tlsClientCert"`
-	TlsClientKey      string           `json:"tlsClientKey"`
-	WithCredentials   bool             `json:"withCredentials"`
-	IsDefault         bool             `json:"isDefault"`
-	JsonData          *simplejson.Json `json:"jsonData"`
+	Name              string            `json:"name" binding:"Required"`
+	Type              string            `json:"type" binding:"Required"`
+	Access            DsAccess          `json:"access" binding:"Required"`
+	Url               string            `json:"url"`
+	Password          string            `json:"password"`
+	User              string            `json:"user"`
+	Database          string            `json:"database"`
+	BasicAuth         bool              `json:"basicAuth"`
+	BasicAuthUser     string            `json:"basicAuthUser"`
+	BasicAuthPassword string            `json:"basicAuthPassword"`
+	WithCredentials   bool              `json:"withCredentials"`
+	IsDefault         bool              `json:"isDefault"`
+	JsonData          *simplejson.Json  `json:"jsonData"`
+	SecureJsonData    map[string]string `json:"secureJsonData"`
 
 	OrgId int64 `json:"-"`
 	Id    int64 `json:"-"`

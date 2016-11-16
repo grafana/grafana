@@ -102,14 +102,8 @@ func addDataSourceMigration(mg *Migrator) {
 		Name: "with_credentials", Type: DB_Bool, Nullable: false, Default: "0",
 	}))
 
-	// add columns to activate TLS client auth option
-	mg.AddMigration("Add column tls_auth", NewAddColumnMigration(tableV2, &Column{
-		Name: "tls_auth", Type: DB_Bool, Nullable: false, Default: "0",
-	}))
-	mg.AddMigration("Add column tls_client_cert", NewAddColumnMigration(tableV2, &Column{
-		Name: "tls_client_cert", Type: DB_NVarchar, Length: 255, Nullable: true,
-	}))
-	mg.AddMigration("Add column tls_client_key", NewAddColumnMigration(tableV2, &Column{
-		Name: "tls_client_key", Type: DB_NVarchar, Length: 255, Nullable: true,
+	// add column that can store TLS client auth data
+	mg.AddMigration("Add secure json data column", NewAddColumnMigration(tableV2, &Column{
+		Name: "secure_json_data", Type: DB_Text, Nullable: true,
 	}))
 }

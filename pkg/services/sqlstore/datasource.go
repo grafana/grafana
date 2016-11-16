@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	m "github.com/grafana/grafana/pkg/models"
 
 	"github.com/go-xorm/xorm"
@@ -80,11 +81,9 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			BasicAuth:         cmd.BasicAuth,
 			BasicAuthUser:     cmd.BasicAuthUser,
 			BasicAuthPassword: cmd.BasicAuthPassword,
-			TlsAuth:           cmd.TlsAuth,
-			TlsClientCert:     cmd.TlsClientCert,
-			TlsClientKey:      cmd.TlsClientKey,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
+			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
 			Created:           time.Now(),
 			Updated:           time.Now(),
 		}
@@ -129,17 +128,14 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			BasicAuth:         cmd.BasicAuth,
 			BasicAuthUser:     cmd.BasicAuthUser,
 			BasicAuthPassword: cmd.BasicAuthPassword,
-			TlsAuth:           cmd.TlsAuth,
-			TlsClientCert:     cmd.TlsClientCert,
-			TlsClientKey:      cmd.TlsClientKey,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
+			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
 			Updated:           time.Now(),
 		}
 
 		sess.UseBool("is_default")
 		sess.UseBool("basic_auth")
-		sess.UseBool("tls_auth")
 		sess.UseBool("with_credentials")
 
 		_, err := sess.Where("id=? and org_id=?", ds.Id, ds.OrgId).Update(ds)

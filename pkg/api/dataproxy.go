@@ -17,7 +17,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func dataProxyTransport(ds *m.DataSource) (*http.Transport, error) {
+func DataProxyTransport(ds *m.DataSource) (*http.Transport, error) {
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -30,8 +30,17 @@ func dataProxyTransport(ds *m.DataSource) (*http.Transport, error) {
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
-	if ds.TlsAuth {
-		cert, err := tls.LoadX509KeyPair(ds.TlsClientCert, ds.TlsClientKey)
+	var tlsAuth bool
+	var err error
+	if ds.JsonData != nil {
+		tlsAuth, err = ds.JsonData.Get("tlsAuth").Bool()
+	}
+
+	if err == nil && tlsAuth {
+		transport.TLSClientConfig.InsecureSkipVerify = false
+
+		decrypted := ds.SecureJsonData.Decrypt()
+		cert, err := tls.X509KeyPair([]byte(decrypted["tlsClientCert"]), []byte(decrypted["tlsClientKey"]))
 		if err != nil {
 			return nil, err
 		}
@@ -141,7 +150,7 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	}
 
 	proxy := NewReverseProxy(ds, proxyPath, targetUrl)
-	proxy.Transport, err = dataProxyTransport(ds)
+	proxy.Transport, err = DataProxyTransport(ds)
 	if err != nil {
 		c.JsonApiErr(400, "Unable to load TLS certificate", err)
 		return
