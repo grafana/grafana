@@ -115,6 +115,3 @@ type TokenResponse struct {
 	Success bool
 	Body    TokenBody
 }
-
-type MQEResponse struct {
-}

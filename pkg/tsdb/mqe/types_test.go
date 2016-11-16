@@ -24,22 +24,12 @@ func TestWildcardExpansion(t *testing.T) {
 	to := now.UnixNano() / int64(time.Millisecond)
 
 	Convey("Can expanding query", t, func() {
-
 		Convey("Without wildcard series", func() {
 			query := &MQEQuery{
 				Metrics: []MQEMetric{
-					MQEMetric{
-						Metric: "os.cpu.3.idle",
-						Alias:  "",
-					},
-					MQEMetric{
-						Metric: "os.cpu.2.idle",
-						Alias:  "",
-					},
-					MQEMetric{
-						Metric: "os.cpu.1.idle",
-						Alias:  "cpu",
-					},
+					MQEMetric{Metric: "os.cpu.3.idle", Alias: ""},
+					MQEMetric{Metric: "os.cpu.2.idle", Alias: ""},
+					MQEMetric{Metric: "os.cpu.1.idle", Alias: "cpu"},
 				},
 				Hosts:          []string{"staples-lab-1", "staples-lab-2"},
 				Apps:           []string{"demoapp-1", "demoapp-2"},
@@ -59,10 +49,7 @@ func TestWildcardExpansion(t *testing.T) {
 		Convey("Containg wildcard series", func() {
 			query := &MQEQuery{
 				Metrics: []MQEMetric{
-					MQEMetric{
-						Metric: "os.cpu*",
-						Alias:  "cpu on core *",
-					},
+					MQEMetric{Metric: "os.cpu*", Alias: ""},
 				},
 				Hosts:          []string{"staples-lab-1"},
 				AddAppToAlias:  false,
@@ -78,7 +65,6 @@ func TestWildcardExpansion(t *testing.T) {
 			So(expandeQueries[1], ShouldEqual, fmt.Sprintf("`os.cpu.1.idle` where host in ('staples-lab-1') from %v to %v", from, to))
 			So(expandeQueries[2], ShouldEqual, fmt.Sprintf("`os.cpu.2.idle` where host in ('staples-lab-1') from %v to %v", from, to))
 			So(expandeQueries[3], ShouldEqual, fmt.Sprintf("`os.cpu.3.idle` where host in ('staples-lab-1') from %v to %v", from, to))
-
 		})
 	})
 }
