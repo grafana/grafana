@@ -62,7 +62,9 @@ describe('dashboardSrv', function() {
 
     it('duplicate panel should try to add it to same row', function() {
       var panel = { span: 4, attr: '123', id: 10 };
-      dashboard.rows = [{ panels: [panel] }];
+
+      dashboard.addEmptyRow();
+      dashboard.rows[0].addPanel(panel);
       dashboard.duplicatePanel(panel, dashboard.rows[0]);
 
       expect(dashboard.rows[0].panels[0].span).to.be(4);
@@ -73,7 +75,9 @@ describe('dashboardSrv', function() {
 
     it('duplicate panel should remove repeat data', function() {
       var panel = { span: 4, attr: '123', id: 10, repeat: 'asd', scopedVars: { test: 'asd' }};
-      dashboard.rows = [{ panels: [panel] }];
+
+      dashboard.addEmptyRow();
+      dashboard.rows[0].addPanel(panel);
       dashboard.duplicatePanel(panel, dashboard.rows[0]);
 
       expect(dashboard.rows[0].panels[1].repeat).to.be(undefined);
