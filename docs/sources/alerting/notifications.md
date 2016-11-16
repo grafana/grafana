@@ -98,6 +98,6 @@ Amazon S3 for this and Webdav. So to set that up you need to configure the
 [external image uploader](/installation/configuration/#external-image-storage) in your grafana-server ini
 config file.
 
-This is not an optional requirement, you can get slack and email notifications without setting this up.
+This is an optional requirement, you can get slack and email notifications without setting this up.
 
 
