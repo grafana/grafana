@@ -7,6 +7,7 @@ import (
 
 	"regexp"
 
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -31,7 +32,6 @@ var (
 	containsWildcardPattern *regexp.Regexp = regexp.MustCompile(`\*`)
 )
 
-//`os.disk.sda.io_time` where host in ('staples-lab-1') from 1479197578194 to 1479219178194
 func (q *MQEQuery) Build(availableSeries []string) ([]string, error) {
 	var queries []string
 	where := q.buildWhereClause()
@@ -44,13 +44,20 @@ func (q *MQEQuery) Build(availableSeries []string) ([]string, error) {
 			continue
 		}
 
-		/*
-			for _, a := range availableSeries {
-				if match {
-					metrics = append(metrics, a)
-				}
+		m := strings.Replace(v.Metric, "*", ".*", -1)
+		mp, err := regexp.Compile(m)
+
+		if err != nil {
+			log.Error2("failed to compile regex for ", "metric", m)
+			continue
+		}
+
+		//TODO: this lookup should be cached
+		for _, a := range availableSeries {
+			if mp.Match([]byte(a)) {
+				metrics = append(metrics, a)
 			}
-		*/
+		}
 	}
 
 	for _, metric := range metrics {
