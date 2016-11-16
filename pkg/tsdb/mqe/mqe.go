@@ -35,12 +35,12 @@ var (
 
 func init() {
 	glog = log.New("tsdb.mqe")
-	tsdb.RegisterExecutor("mqe", NewMQEExecutor)
+	tsdb.RegisterExecutor("mqe-datasource", NewMQEExecutor)
 
 	HttpClient = tsdb.GetDefaultClient()
 }
 
-func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
+func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
 	availableSeries, err := NewTokenClient().GetTokenData(ctx, e.DataSourceInfo)
@@ -48,11 +48,9 @@ func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, cont
 		return result.WithError(err)
 	}
 
-	glog.Info("available series", availableSeries)
-
 	var mqeQueries []*MQEQuery
 	for _, v := range queries {
-		q, err := e.QueryParser.Parse(v.Model, e.DataSourceInfo)
+		q, err := e.QueryParser.Parse(v.Model, e.DataSourceInfo, queryContext)
 		if err != nil {
 			return result.WithError(err)
 		}
@@ -88,6 +86,7 @@ func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, cont
 		asdf.Series = append(asdf.Series, series.Series...)
 	}
 
+	result.QueryResults = make(map[string]*tsdb.QueryResult)
 	result.QueryResults["A"] = asdf
 
 	return result

@@ -7,9 +7,8 @@ import (
 
 type MQEQueryParser struct{}
 
-func (qp *MQEQueryParser) Parse(model *simplejson.Json, dsInfo *tsdb.DataSourceInfo) (*MQEQuery, error) {
-	query := &MQEQuery{}
-
+func (qp *MQEQueryParser) Parse(model *simplejson.Json, dsInfo *tsdb.DataSourceInfo, queryContext *tsdb.QueryContext) (*MQEQuery, error) {
+	query := &MQEQuery{TimeRange: queryContext.TimeRange}
 	query.AddAppToAlias = model.Get("addAppToAlias").MustBool(false)
 	query.AddHostToAlias = model.Get("addHostToAlias").MustBool(false)
 	query.UseRawQuery = model.Get("rawQuery").MustBool(false)

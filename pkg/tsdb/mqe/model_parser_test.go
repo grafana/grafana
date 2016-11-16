@@ -12,9 +12,8 @@ func TestMQEQueryParser(t *testing.T) {
 	Convey("MQE query parser", t, func() {
 		parser := &MQEQueryParser{}
 
-		dsInfo := &tsdb.DataSourceInfo{
-			JsonData: simplejson.New(),
-		}
+		dsInfo := &tsdb.DataSourceInfo{JsonData: simplejson.New()}
+		queryContext := &tsdb.QueryContext{}
 
 		Convey("can parse simple mqe model", func() {
 			json := `
@@ -35,7 +34,7 @@ func TestMQEQueryParser(t *testing.T) {
 			modelJson, err := simplejson.NewJson([]byte(json))
 			So(err, ShouldBeNil)
 
-			query, err := parser.Parse(modelJson, dsInfo)
+			query, err := parser.Parse(modelJson, dsInfo, queryContext)
 			So(err, ShouldBeNil)
 			So(query.UseRawQuery, ShouldBeFalse)
 
@@ -70,7 +69,7 @@ func TestMQEQueryParser(t *testing.T) {
 			modelJson, err := simplejson.NewJson([]byte(json))
 			So(err, ShouldBeNil)
 
-			query, err := parser.Parse(modelJson, dsInfo)
+			query, err := parser.Parse(modelJson, dsInfo, queryContext)
 			So(err, ShouldBeNil)
 			So(query.UseRawQuery, ShouldBeFalse)
 			So(query.Apps[0], ShouldEqual, "demoapp")
@@ -107,7 +106,7 @@ func TestMQEQueryParser(t *testing.T) {
 			modelJson, err := simplejson.NewJson([]byte(json))
 			So(err, ShouldBeNil)
 
-			query, err := parser.Parse(modelJson, dsInfo)
+			query, err := parser.Parse(modelJson, dsInfo, queryContext)
 			So(err, ShouldBeNil)
 
 			So(query.UseRawQuery, ShouldBeTrue)
