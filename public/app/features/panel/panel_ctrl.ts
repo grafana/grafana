@@ -188,6 +188,9 @@ export class PanelCtrl {
 
   duplicate() {
     this.dashboard.duplicatePanel(this.panel, this.row);
+    this.$timeout(() => {
+      this.$scope.$root.$broadcast('render');
+    });
   }
 
   updateColumnSpan(span) {
