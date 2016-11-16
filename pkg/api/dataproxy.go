@@ -2,6 +2,7 @@ package api
 
 import (
 	"crypto/tls"
+	"crypto/x509"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -40,6 +41,15 @@ func DataProxyTransport(ds *m.DataSource) (*http.Transport, error) {
 		transport.TLSClientConfig.InsecureSkipVerify = false
 
 		decrypted := ds.SecureJsonData.Decrypt()
+
+		if len(decrypted["tlsCACert"]) > 0 {
+			caPool := x509.NewCertPool()
+			ok := caPool.AppendCertsFromPEM([]byte(decrypted["tlsCACert"]))
+			if ok {
+				transport.TLSClientConfig.RootCAs = caPool
+			}
+		}
+
 		cert, err := tls.X509KeyPair([]byte(decrypted["tlsClientCert"]), []byte(decrypted["tlsClientKey"]))
 		if err != nil {
 			return nil, err
