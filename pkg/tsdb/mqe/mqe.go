@@ -14,6 +14,16 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
+/*
+
+  TODO:
+  * response serie names
+  * response serie names with tags
+  * response serie names with wildcards
+  * real caching
+
+*/
+
 type MQEExecutor struct {
 	*tsdb.DataSourceInfo
 	QueryParser    *MQEQueryParser

@@ -13,11 +13,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-// wildcard as alias
-// add host to alias
-// add app to alias
-// regular alias
-
 func NewResponseParser() *MQEResponseParser {
 	return &MQEResponseParser{
 		log: log.New("tsdb.mqe"),
@@ -68,7 +63,7 @@ func (parser *MQEResponseParser) Parse(res *http.Response) (*tsdb.QueryResult, e
 	var data *MQEResponse = &MQEResponse{}
 	err = json.Unmarshal(body, data)
 	if err != nil {
-		parser.log.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
+		parser.log.Info("Failed to unmarshal mqe response", "error", err, "status", res.Status, "body", string(body))
 		return nil, err
 	}
 
@@ -77,20 +72,17 @@ func (parser *MQEResponseParser) Parse(res *http.Response) (*tsdb.QueryResult, e
 	}
 
 	var series tsdb.TimeSeriesSlice
-	for _, v := range data.Body {
-		for _, k := range v.Series {
-			serie := &tsdb.TimeSeries{
-				Name: v.Name,
-			}
+	for _, body := range data.Body {
+		for _, mqeSerie := range body.Series {
+			serie := &tsdb.TimeSeries{Name: body.Name}
 
-			for i, value := range k.Values {
-				timestamp := v.TimeRange.Start + int64(i)*v.TimeRange.Resolution
+			for i, value := range mqeSerie.Values {
+				timestamp := body.TimeRange.Start + int64(i)*body.TimeRange.Resolution
 				serie.Points = append(serie.Points, tsdb.NewTimePoint(value, float64(timestamp)))
 			}
 
 			series = append(series, serie)
 		}
-
 	}
 
 	return &tsdb.QueryResult{Series: series}, nil
