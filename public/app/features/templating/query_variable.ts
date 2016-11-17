@@ -47,7 +47,7 @@ export class QueryVariable implements Variable {
     assignModelProperties(this, model, this.defaults);
   }
 
-  getModel() {
+  getSaveModel() {
     // copy back model properties to model
     assignModelProperties(this.model, this, this.defaults);
     return this.model;

@@ -34,7 +34,7 @@ export class IntervalVariable implements Variable {
     this.refresh = 2;
   }
 
-  getModel() {
+  getSaveModel() {
     assignModelProperties(this.model, this, this.defaults);
     return this.model;
   }

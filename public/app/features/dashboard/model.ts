@@ -98,12 +98,14 @@ export class DashboardModel {
     var events = this.events;
     var meta = this.meta;
     var rows = this.rows;
+    var variables = this.templating.list;
+
     delete this.events;
     delete this.meta;
 
     // prepare save model
-    this.rows = _.map(this.rows, row => row.getSaveModel());
-    events.emit('prepare-save-model');
+    this.rows = _.map(rows, row => row.getSaveModel());
+    this.templating.list = _.map(variables, variable => variable.getSaveModel());
 
     var copy = $.extend(true, {}, this);
 
@@ -111,6 +113,8 @@ export class DashboardModel {
     this.events = events;
     this.meta = meta;
     this.rows = rows;
+    this.templating.list = variables;
+
     return copy;
   }
 

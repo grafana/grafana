@@ -25,7 +25,7 @@ describe('QueryVariable', function() {
       variable.regex = 'asd';
       variable.sort = 50;
 
-      var model = variable.getModel();
+      var model = variable.getSaveModel();
       expect(model.options.length).to.be(1);
       expect(model.options[0].text).to.be('test');
       expect(model.datasource).to.be('google');
