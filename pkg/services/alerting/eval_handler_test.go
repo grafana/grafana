@@ -30,7 +30,7 @@ func TestAlertingExecutor(t *testing.T) {
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, true)
-			So(context.FiringEval, ShouldEqual, "true = true")
+			So(context.ConditionEvals, ShouldEqual, "true = true")
 		})
 
 		Convey("Show return false with not passing asdf", func() {
@@ -43,7 +43,7 @@ func TestAlertingExecutor(t *testing.T) {
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, false)
-			So(context.FiringEval, ShouldEqual, "[true AND false] = false")
+			So(context.ConditionEvals, ShouldEqual, "[true AND false] = false")
 		})
 
 		Convey("Show return true if any of the condition is passing with OR operator", func() {
@@ -56,7 +56,7 @@ func TestAlertingExecutor(t *testing.T) {
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, true)
-			So(context.FiringEval, ShouldEqual, "[true OR false] = true")
+			So(context.ConditionEvals, ShouldEqual, "[true OR false] = true")
 		})
 
 		Convey("Show return false if any of the condition is failing with AND operator", func() {
@@ -69,7 +69,7 @@ func TestAlertingExecutor(t *testing.T) {
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, false)
-			So(context.FiringEval, ShouldEqual, "[true AND false] = false")
+			So(context.ConditionEvals, ShouldEqual, "[true AND false] = false")
 		})
 
 		Convey("Show return true if one condition is failing with nested OR operator", func() {
@@ -83,7 +83,7 @@ func TestAlertingExecutor(t *testing.T) {
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, true)
-			So(context.FiringEval, ShouldEqual, "[[true AND true] OR false] = true")
+			So(context.ConditionEvals, ShouldEqual, "[[true AND true] OR false] = true")
 		})
 
 		Convey("Show return false if one condition is passing with nested OR operator", func() {
@@ -97,7 +97,7 @@ func TestAlertingExecutor(t *testing.T) {
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, false)
-			So(context.FiringEval, ShouldEqual, "[[true AND false] OR false] = false")
+			So(context.ConditionEvals, ShouldEqual, "[[true AND false] OR false] = false")
 		})
 
 		Convey("Show return false if a condition is failing with nested AND operator", func() {
@@ -111,7 +111,7 @@ func TestAlertingExecutor(t *testing.T) {
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, false)
-			So(context.FiringEval, ShouldEqual, "[[true AND false] AND true] = false")
+			So(context.ConditionEvals, ShouldEqual, "[[true AND false] AND true] = false")
 		})
 
 		Convey("Show return true if a condition is passing with nested OR operator", func() {
@@ -125,7 +125,7 @@ func TestAlertingExecutor(t *testing.T) {
 
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, true)
-			So(context.FiringEval, ShouldEqual, "[[true OR false] OR true] = true")
+			So(context.ConditionEvals, ShouldEqual, "[[true OR false] OR true] = true")
 		})
 	})
 }

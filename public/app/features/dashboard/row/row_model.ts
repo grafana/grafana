@@ -34,6 +34,9 @@ export class DashboardRow {
 
   getSaveModel() {
     assignModelProperties(this.model, this, this.defaults);
+
+    // remove properties that dont server persisted purpose
+    delete this.model.isNew;
     return this.model;
   }
 

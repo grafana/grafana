@@ -119,8 +119,8 @@ func AlertTest(c *middleware.Context, dto dtos.AlertTestCommand) Response {
 	res := backendCmd.Result
 
 	dtoRes := &dtos.AlertTestResult{
-		Firing:     res.Firing,
-		FiringEval: res.FiringEval,
+		Firing:         res.Firing,
+		ConditionEvals: res.ConditionEvals,
 	}
 
 	if res.Error != nil {

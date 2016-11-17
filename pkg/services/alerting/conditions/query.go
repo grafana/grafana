@@ -173,7 +173,7 @@ func NewQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 	condition.Evaluator = evaluator
 
 	operatorJson := model.Get("operator")
-	operator := operatorJson.Get("type").MustString()
+	operator := operatorJson.Get("type").MustString("and")
 	condition.Operator = operator
 
 	return &condition, nil
