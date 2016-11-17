@@ -122,7 +122,7 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
       // handle in active view state class
       var lastActivity = new Date().getTime();
       var activeUser = true;
-      var inActiveTimeLimit = 10 * 1000;
+      var inActiveTimeLimit = 60 * 1000;
 
       function checkForInActiveUser() {
         if (!activeUser) {

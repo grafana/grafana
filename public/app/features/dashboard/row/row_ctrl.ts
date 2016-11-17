@@ -19,7 +19,6 @@ export class DashRowCtrl {
 
     if (this.row.isNew) {
       this.dropView = 1;
-      delete this.row.isNew;
     }
   }
 
@@ -36,7 +35,6 @@ export class DashRowCtrl {
           type: panelId,
           id: this.dashboard.getNextPanelId(),
         },
-        isNew: true,
       };
     } else {
       dragObject = this.dashboard.getPanelInfoById(panelId);
