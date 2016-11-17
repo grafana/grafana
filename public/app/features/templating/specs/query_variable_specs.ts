@@ -41,7 +41,6 @@ describe('QueryVariable', function() {
       var model = variable.getSaveModel();
       expect(model.options.length).to.be(0);
     });
-
   });
 });
 

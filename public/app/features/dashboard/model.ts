@@ -105,7 +105,7 @@ export class DashboardModel {
 
     // prepare save model
     this.rows = _.map(rows, row => row.getSaveModel());
-    this.templating.list = _.map(variables, variable => variable.getSaveModel());
+    this.templating.list = _.map(variables, variable => variable.getSaveModel ? variable.getSaveModel() : variable);
 
     var copy = $.extend(true, {}, this);
 
