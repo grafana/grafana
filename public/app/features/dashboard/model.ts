@@ -233,7 +233,6 @@ export class DashboardModel {
   }
 
   duplicatePanel(panel, row) {
-    var rowIndex = _.indexOf(this.rows, row);
     var newPanel = angular.copy(panel);
     newPanel.id = this.getNextPanelId();
 
@@ -241,9 +240,9 @@ export class DashboardModel {
     delete newPanel.repeatIteration;
     delete newPanel.repeatPanelId;
     delete newPanel.scopedVars;
+    delete newPanel.alert;
 
-    var currentRow = this.rows[rowIndex];
-    currentRow.panels.push(newPanel);
+    row.addPanel(newPanel);
     return newPanel;
   }
 

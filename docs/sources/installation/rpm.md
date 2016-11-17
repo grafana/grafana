@@ -141,6 +141,18 @@ those options.
 - [OpenTSDB]({{< relref "datasources/opentsdb.md" >}})
 - [Prometheus]({{< relref "datasources/prometheus.md" >}})
 
+### Server side image rendering
+
+Server side image (png) rendering is a feature that is optional but very useful when sharing visualizations,
+for example in alert notifications.
+
+If the image is missing text make sure you have font packages installed.
+
+```
+yum install fontconfig
+yum install freetype*
+yum install urw-fonts
+```
 
 ## Installing from binary tar file
 

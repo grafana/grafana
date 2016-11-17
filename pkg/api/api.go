@@ -307,4 +307,5 @@ func Register(r *macaron.Macaron) {
 
 	InitAppPluginRoutes(r)
 
+	r.NotFound(NotFoundHandler)
 }

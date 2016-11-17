@@ -64,6 +64,8 @@ export class DynamicDashboardSrv {
           j = j - 1;
         }
       }
+
+      row.panelSpanChanged();
     }
   }
 
