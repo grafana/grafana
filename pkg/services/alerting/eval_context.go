@@ -18,6 +18,7 @@ type EvalContext struct {
 	Logs            []*ResultLogEntry
 	Error           error
 	Description     string
+	FiringEval      string
 	StartTime       time.Time
 	EndTime         time.Time
 	Rule            *Rule

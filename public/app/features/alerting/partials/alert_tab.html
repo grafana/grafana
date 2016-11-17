@@ -38,7 +38,7 @@
 				<h5 class="section-heading">Conditions</h5>
 				<div class="gf-form-inline" ng-repeat="conditionModel in ctrl.conditionModels">
 					<div class="gf-form">
-						<span class="gf-form-label query-keyword width-5" ng-if="$index">AND</span>
+						<metric-segment-model css-class="query-keyword" ng-if="$index" property="conditionModel.operator.type" options="ctrl.evalOperators" custom="false"></metric-segment-model>
 						<span class="gf-form-label query-keyword width-5" ng-if="$index===0">WHEN</span>
 					</div>
           <div class="gf-form">

@@ -18,6 +18,7 @@ export class AlertTabCtrl {
   alert: any;
   conditionModels: any;
   evalFunctions: any;
+  evalOperators: any;
   noDataModes: any;
   executionErrorModes: any;
   addNotificationSegment;
@@ -41,6 +42,7 @@ export class AlertTabCtrl {
     this.$scope.ctrl = this;
     this.subTabIndex = 0;
     this.evalFunctions = alertDef.evalFunctions;
+    this.evalOperators = alertDef.evalOperators;
     this.conditionTypes = alertDef.conditionTypes;
     this.noDataModes = alertDef.noDataModes;
     this.executionErrorModes = alertDef.executionErrorModes;
@@ -194,6 +196,7 @@ export class AlertTabCtrl {
       query: {params: ['A', '5m', 'now']},
       reducer: {type: 'avg', params: []},
       evaluator: {type: 'gt', params: [null]},
+      operator: {type: 'and'},
     };
   }
 
@@ -250,6 +253,7 @@ export class AlertTabCtrl {
     cm.queryPart = new QueryPart(source.query, alertDef.alertQueryDef);
     cm.reducerPart = alertDef.createReducerPart(source.reducer);
     cm.evaluator = source.evaluator;
+    cm.operator = source.operator;
 
     return cm;
   }
