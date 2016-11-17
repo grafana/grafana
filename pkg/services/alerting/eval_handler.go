@@ -47,7 +47,7 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 		if i > 0 {
 			firingEval = "[" + firingEval + " " + operator + " " + strconv.FormatBool(cr.Firing) + "]"
 		} else {
-			firingEval = "[" + strconv.FormatBool(firing) + "]"
+			firingEval = strconv.FormatBool(firing)
 		}
 
 		context.EvalMatches = append(context.EvalMatches, cr.EvalMatches...)
