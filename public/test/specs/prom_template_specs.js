@@ -9,6 +9,8 @@ define([
       'baz': 'quux',
       'before': '  right',
       'after': 'left  ',
+      'host': 'foo.west-coast',
+      'cluster': 'west-coast',
     });
   };
 
@@ -24,6 +26,27 @@ define([
 
         expect(one('{{ downright invalid }}')).to.be('downright invalid');
         expect(one('{{ unrecognised }}')).to.be('unrecognised');
+      });
+
+      it('can do a simple replace', function() {
+        expect(one('{{ foo | replace("a", "ee") }}')).to.be('beer');
+        expect(one('{{ "foo" | replace("oo", "d") }}')).to.be('fd');
+      });
+
+      it('can do a chained replace', function() {
+        expect(one(
+            '{{ foo | replace("a", "ee") | replace("er", "an") }}'))
+            .to.be('bean');
+      });
+
+      it('can do a replace with vars', function() {
+        expect(one('{{ host | replace(cluster, "ee") }}'))
+            .to.be('foo.ee');
+      });
+
+
+      it('can do percentages', function() {
+        expect(one('{{ "0.5" | toPercent() }}')).to.be('50%');
       });
     });
   });
