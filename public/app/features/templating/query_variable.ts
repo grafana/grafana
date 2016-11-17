@@ -50,6 +50,12 @@ export class QueryVariable implements Variable {
   getSaveModel() {
     // copy back model properties to model
     assignModelProperties(this.model, this, this.defaults);
+
+    // remove options
+    if (this.refresh !== 0) {
+      this.model.options = [];
+    }
+
     return this.model;
   }
 

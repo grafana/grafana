@@ -33,7 +33,15 @@ describe('QueryVariable', function() {
       expect(model.sort).to.be(50);
     });
 
-  });
+    it('if refresh != 0 then remove options in presisted mode', () => {
+      var variable = new QueryVariable({}, null, null, null, null);
+      variable.options = [{text: 'test'}];
+      variable.refresh = 1;
 
+      var model = variable.getSaveModel();
+      expect(model.options.length).to.be(0);
+    });
+
+  });
 });
 

@@ -9,6 +9,7 @@
 
 ### Enhancements
 * **Singlestat**: Support repeated template variables in prefix/postfix [#6595](https://github.com/grafana/grafana/issues/6595)
+* **Templating**: Don't persist variable options with refresh option [#6586](https://github.com/grafana/grafana/issues/6586)
 
 # 4.0-beta1 (2016-11-09)
 

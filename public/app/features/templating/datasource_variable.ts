@@ -32,6 +32,12 @@ export class DatasourceVariable implements Variable {
 
   getSaveModel() {
     assignModelProperties(this.model, this, this.defaults);
+
+    // dont persist options
+    if (this.refresh !== 0) {
+      this.model.options = [];
+    }
+
     return this.model;
   }
 
