@@ -67,7 +67,7 @@ func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, quer
 		rawQueries = append(rawQueries, queries...)
 	}
 
-	asdf := &tsdb.QueryResult{}
+	queryResult := &tsdb.QueryResult{}
 	for _, v := range rawQueries {
 		glog.Info("Mqe executor", "query", v)
 
@@ -83,11 +83,11 @@ func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, quer
 			return result.WithError(err)
 		}
 
-		asdf.Series = append(asdf.Series, series.Series...)
+		queryResult.Series = append(queryResult.Series, series.Series...)
 	}
 
 	result.QueryResults = make(map[string]*tsdb.QueryResult)
-	result.QueryResults["A"] = asdf
+	result.QueryResults["A"] = queryResult
 
 	return result
 }

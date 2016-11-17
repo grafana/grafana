@@ -27,7 +27,13 @@ func TestMQEResponseParser(t *testing.T) {
 			res, err := parser.Parse(response)
 			So(err, ShouldBeNil)
 			So(len(res.Series), ShouldEqual, 2)
-			So(len(res.Series[0].Points), ShouldEqual, 11)
+			So(len(res.Series[0].Points), ShouldEqual, 14)
+
+			startTime := 1479287280000
+			for i := 0; i < 11; i++ {
+				So(res.Series[0].Points[i][0].Float64, ShouldEqual, i+1)
+				So(res.Series[0].Points[i][1].Float64, ShouldEqual, startTime+(i*30000))
+			}
 		})
 	})
 }
@@ -47,7 +53,7 @@ func init() {
               "app": "demoapp",
               "host": "staples-lab-1"
             },
-            "values": [1,2,3,4,5,6,7,8,9,10,11]
+            "values": [1,2,3,4,5,6,7,8,9,10,11, null, null, null]
           },
           {
             "tagset": {

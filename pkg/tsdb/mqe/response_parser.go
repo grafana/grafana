@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	null "gopkg.in/guregu/null.v3"
 
@@ -32,9 +31,9 @@ type MQEResponse struct {
 }
 
 type ResponseTimeRange struct {
-	Start      int64         `json:"start"`
-	End        int64         `json:"end"`
-	Resolution time.Duration `json:"Resolution"`
+	Start      int64 `json:"start"`
+	End        int64 `json:"end"`
+	Resolution int64 `json:"Resolution"`
 }
 
 type MQEResponseSerie struct {
@@ -84,10 +83,9 @@ func (parser *MQEResponseParser) Parse(res *http.Response) (*tsdb.QueryResult, e
 				Name: v.Name,
 			}
 
-			startTime := time.Unix(v.TimeRange.Start*1000, 0)
-			for i, l := range k.Values {
-				timestamp := startTime.Add(time.Duration(int64(v.TimeRange.Resolution) * int64(i)))
-				serie.Points = append(serie.Points, tsdb.NewTimePoint(l, float64(timestamp.UnixNano()/int64(time.Millisecond))))
+			for i, value := range k.Values {
+				timestamp := v.TimeRange.Start + int64(i)*v.TimeRange.Resolution
+				serie.Points = append(serie.Points, tsdb.NewTimePoint(value, float64(timestamp)))
 			}
 
 			series = append(series, serie)
