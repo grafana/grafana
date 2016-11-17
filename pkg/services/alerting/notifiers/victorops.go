@@ -49,8 +49,14 @@ type VictoropsNotifier struct {
 
 // Notify sends notification to Victorops via POST to URL endpoint
 func (this *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
-	this.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.Id, "notification")
+	this.log.Info("Executing victorops notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
 	metrics.M_Alerting_Notification_Sent_Victorops.Inc(1)
+
+	ruleUrl, err := evalContext.GetRuleUrl()
+	if err != nil {
+		this.log.Error("Failed get rule link", "error", err)
+		return err
+	}
 
 	fields := make([]map[string]interface{}, 0)
 	fieldLimitCount := 4
@@ -78,23 +84,19 @@ func (this *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		messageType = AlertStateCritical
 	}
 
-	if evalContext.Rule.State == models.AlertStateExecError && !this.AlertOnExecError {
-		return nil
-	}
-
 	body := map[string]interface{}{
 		"message_type":     messageType,
 		"entity_id":        evalContext.Rule.Name,
 		"timestamp":        time.Now().Unix(),
 		"state_start_time": evalContext.StartTime.Unix(),
-		"state_message":    evalContext.Rule.Message,
+		"state_message":    evalContext.Rule.Message + "\n" + ruleUrl,
 		"monitoring_tool":  "Grafana v" + setting.BuildVersion,
 	}
 
 	data, _ := json.Marshal(&body)
-	cmd := &models.SendWebhook{Url: this.URL, Body: string(data)}
+	cmd := &models.SendWebhookSync{Url: this.URL, Body: string(data)}
 
-	if err := bus.Dispatch(cmd); err != nil {
+	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		this.log.Error("Failed to send victorops notification", "error", err, "webhook", this.Name)
 	}
 
