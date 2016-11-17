@@ -36,6 +36,7 @@ type AlertTestCommand struct {
 
 type AlertTestResult struct {
 	Firing      bool                  `json:"firing"`
+	FiringEval  string                `json:"firingEvaluation"`
 	TimeMs      string                `json:"timeMs"`
 	Error       string                `json:"error,omitempty"`
 	EvalMatches []*EvalMatch          `json:"matches,omitempty"`
