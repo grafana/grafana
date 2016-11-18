@@ -32,7 +32,6 @@ $path-position:             $marker-size-half - ($path-height / 2);
 .gettingstarted-blurb-success {
   @extend .gettingstarted-blurb-copy;
   color: $text-color-weak;
-  text-decoration: line-through;
 }
 
 .gettingstarted-blurb-upcoming {
@@ -40,19 +39,6 @@ $path-position:             $marker-size-half - ($path-height / 2);
   color: $text-color-weak;
 }
 
-.gettingstarted-icon-upcoming {
-  color: $text-color-weak;
-  text-decoration:none;
-  font-size: 35px;
-  vertical-align: sub;
-}
-
-.gettingstarted-icon-success {
-  color: $online;
-  font-size: 35px;
-  text-decoration:none;
-  vertical-align: sub;
-}
 
 .dashlist-cta-close-btn {
   color: $text-color-weak;
@@ -81,20 +67,18 @@ $path-position:             $marker-size-half - ($path-height / 2);
 
 // Step container that creates lines between steps
 .progress-step {
-  display: block;
+  text-align: center;
   position: relative;
   flex: 1 1 0%;
   margin: 0;
   padding: 0;
-  min-width: $marker-size; // For a flexbox bug in firefox that wont allow the text overflow on the text
+  color: $text-color-weak;
 
-  // Stops the last step growing
-  &:last-child {
-    flex-grow: 0;
-  }
+  // For a flexbox bug in firefox that wont allow the text overflow on the text
+  min-width: $marker-size;
 
-  // Path between markers, this is not created for the last step
-  &:not(:last-child)::after {
+   &::after {
+    right: -50%;
     content: '';
     display: block;
     position: absolute;
@@ -104,19 +88,48 @@ $path-position:             $marker-size-half - ($path-height / 2);
     right: - $marker-size-half;
     width: 100%;
     height: $path-height;
+    background: $progress-color-grey-light;
+  }
+
+  &:last-child {
+    &::after {
+      right: 50%;
+    }
   }
 
   // Active state
   &.active {
+    .progress-step-cta {
+      display: inline-block;
+    }
     .progress-title {
       font-weight: 400;
     }
   }
 
-  > a {
-    display: block;
-  }
+  &.completed {
+    .progress-marker {
+      color: $online;
 
+      // change icon to check
+      .icon-gf::before {
+        content: "\e604";
+      }
+    }
+    .progress-text {
+      text-decoration: line-through;
+    }
+
+    &::after {
+      background: $progress-color-grey;
+    }
+  }
+}
+
+.progress-step-cta {
+  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-sm, $btn-border-radius);
+  @include buttonBackground($btn-success-bg, $btn-success-bg-hl);
+  display: none;
 }
 
 // Progress marker
@@ -130,8 +143,12 @@ $path-position:             $marker-size-half - ($path-height / 2);
   padding-bottom: 2px; // To align text within the marker
   z-index: 20;
   background-color: $panel-bg;
+  margin-left: auto;
+  margin-right: auto;
+  color: $text-color-weak;
+  font-size: 35px;
+  vertical-align: sub;
 }
-
 
 // Progress text
 .progress-text {
@@ -141,56 +158,11 @@ $path-position:             $marker-size-half - ($path-height / 2);
   text-overflow: ellipsis;
 }
 
-.progress-title {
-  margin-top: 0;
-}
-
-@mixin progress-state($marker-color-bg, $marker-color-border: null, $marker-color-text: null, $path-color: null, $text-color: null) {
-  .progress-marker {
-    color: $marker-color-text;
-    background-color: $marker-color-bg;
-    border-color: $marker-color-border;
-  }
-
-  &::after {
-    background-color: $path-color;
-  }
-
-  .progress-text,
-  .progress-text a {
-    color: $text-color;
-  }
-}
-
-// States
-.progress-step {
-  text-align: center;
-
-  // Active state
-  &.active {
-    @include progress-state($progress-color);
-  }
-
-  &.completed {
-    @include progress-state($progress-color-dark, $path-color: $progress-color-grey);
-  }
-
-  &:hover {
-    @include progress-state($progress-color-light);
-  }
-
-  &:last-child {
-    flex-grow: 1;
-  }
-
-  &::after {
-    right: -50%;
-  }
-}
-
 .progress-marker {
-  margin-left: auto;
-  margin-right: auto;
+  color: $text-color-weak;
+  text-decoration:none;
+  font-size: 35px;
+  vertical-align: sub;
 }
 
 

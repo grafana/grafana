@@ -6,8 +6,8 @@ import {contextSrv} from 'app/core/core';
 
 class GettingStartedPanelCtrl extends PanelCtrl {
   static templateUrl = 'public/app/plugins/panel/gettingstarted/module.html';
-  hasDatasources: boolean;
   checksDone: boolean;
+  step: number;
 
   /** @ngInject **/
   constructor($scope, $injector, private backendSrv, private datasourceSrv) {
@@ -24,8 +24,28 @@ class GettingStartedPanelCtrl extends PanelCtrl {
       return item.meta.builtIn === false;
     });
 
-    this.hasDatasources = datasources.length > 0;
-    this.checksDone = true;
+    this.step = 2;
+    if (datasources.length === 0) {
+      this.checksDone = true;
+      return;
+    }
+
+    this.step = 3;
+    this.backendSrv.search({limit: 1}).then(result => {
+      if (result.length === 0) {
+        this.checksDone = true;
+        return;
+      }
+
+      this.step = 4;
+      this.checksDone = true;
+    });
+  }
+
+  getStateClass(step) {
+    if (step === this.step) { return 'active'; }
+    if (step < this.step) { return 'completed'; }
+    return '';
   }
 
   dismiss() {

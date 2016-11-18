@@ -1,4 +1,4 @@
-<div class="dashlist">
+<div class="dashlist" ng-if="ctrl.checksDone">
   <div class="dashlist-section">
     <h6 class="dashlist-section-header">
       Getting Started with Grafana
@@ -6,38 +6,30 @@
         <i class="fa fa-remove"></i>
       </button>
     </h6>
-    <ul class="progress-tracker" ng-if="ctrl.checksDone">
+    <ul class="progress-tracker">
       <li class="progress-step completed">
-        <span class="progress-marker"><i class="icon-gf icon-gf-check gettingstarted-icon-success"></i></span>
-        <span class="progress-text"><span class="gettingstarted-blurb-success">Install Grafana</span></span>
+        <span class="progress-marker"><i class="icon-gf icon-gf-check"></i></span>
+        <span class="progress-text">Install Grafana</span>
       </li>
-      <li class="progress-step active" ng-if="!ctrl.hasDatasources">
-        <span class="progress-marker"><i class="icon-gf icon-gf-datasources gettingstarted-icon-active"></i></span>
-        <span class="progress-text">
-          <a href="#" class="gettingstarted-blurb">Create your first data source.</a>
-          <button class="btn btn-success btn-small">Add Data Source</button>
-        </span>
+      <li class="progress-step" ng-class="ctrl.getStateClass(2)">
+        <span class="progress-marker"><i class="icon-gf icon-gf-datasources"></i></span>
+        <span class="progress-text">Create your first data source</span>
+        <a class="btn progress-step-cta" href="datasources/new?gettingstarted">Add Data Source</a>
       </li>
-      <li class="progress-step completed" ng-if="ctrl.hasDatasources">
-        <span class="progress-marker"><i class="icon-gf icon-gf-check gettingstarted-icon-success"></i></span>
-        <span class="progress-text">
-          <span class="gettingstarted-blurb-success">Create your first data source.</span>
-        </span>
-      </li>
-      <li class="progress-step active" ng-if="ctrl.hasDatasources">
-        <span class="progress-marker"><i class="icon-gf icon-gf-dashboard gettingstarted-icon-upcoming"></i></span>
-        <span class="progress-text">
-          <a href="#" class="gettingstarted-blurb-upcoming">Create your first dashboard.</a>
-          <button class="btn btn-success btn-small">Add Data Source</button>
-        </span>
+      <li class="progress-step" ng-class="ctrl.getStateClass(3)">
+        <span class="progress-marker"><i class="icon-gf icon-gf-dashboard"></i></span>
+        <span class="progress-text">Create your first dashboard.</span>
+        <a class="btn progress-step-cta" href="dashboard/new?gettingstarted">New Dashboard</a>
       </li>
       <li class="progress-step">
-        <span class="progress-marker"><i class="icon-gf icon-gf-users gettingstarted-icon-upcoming"></i></span>
-        <span class="progress-text"><a href="#" class="gettingstarted-blurb-upcoming">Invite your team.</a></span>
+        <span class="progress-marker"><i class="icon-gf icon-gf-users"></i></span>
+        <span class="progress-text">Invite your team.</span>
+        <a class="btn progress-step-cta" href="org/users?gettingstarted">Invite Users</a>
       </li>
       <li class="progress-step">
-        <span class="progress-marker"><i class="icon-gf icon-gf-apps gettingstarted-icon-upcoming"></i></span>
-        <span class="progress-text"><a href="#" class="gettingstarted-blurb-upcoming">Install apps & plugins</a></span>
+        <span class="progress-marker"><i class="icon-gf icon-gf-apps"></i></span>
+        <span class="progress-text">Install apps &amp; plugins</span>
+        <a class="btn progress-step-cta" href="https://grafana.net/plugins?utm_source=grafana_getting_started">Explore Plugins</a>
       </li>
     </ul>
   </div>
