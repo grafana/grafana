@@ -26,8 +26,9 @@ function ($) {
         }
       }
       // Special case of a non stepped line, highlight the very last point just before a null point
-      while(!series.lines.steps && series.datapoints.points[initial] != null && j>0 && series.datapoints.points[j-ps] == null)
+      while(!series.lines.steps && series.datapoints.points[initial] != null && j>0 && series.datapoints.points[j-ps] == null) {
         j-=ps;
+      }
       return Math.max(j - ps,  0)/ps;
     };
 
