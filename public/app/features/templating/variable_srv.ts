@@ -20,11 +20,8 @@ export class VariableSrv {
     this.dashboard = dashboard;
 
     // create working class models representing variables
-    this.variables = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
+    this.variables = dashboard.templating.list = dashboard.templating.list.map(this.createVariableFromModel.bind(this));
     this.templateSrv.init(this.variables);
-
-    // register event to sync back to persisted model
-    this.dashboard.events.on('prepare-save-model', this.syncToDashboardModel.bind(this));
 
     // init variables
     for (let variable of this.variables) {
@@ -97,12 +94,6 @@ export class VariableSrv {
     var variable = this.createVariableFromModel(model);
     this.variables.push(this.createVariableFromModel(variable));
     return variable;
-  }
-
-  syncToDashboardModel() {
-    this.dashboard.templating.list = this.variables.map(variable => {
-      return variable.getModel();
-    });
   }
 
   updateOptions(variable) {

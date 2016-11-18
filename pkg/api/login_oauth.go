@@ -96,7 +96,7 @@ func OAuthLogin(ctx *middleware.Context) {
 		}
 		sslcli := &http.Client{Transport: tr}
 
-		oauthCtx = context.TODO()
+		oauthCtx = context.Background()
 		oauthCtx = context.WithValue(oauthCtx, oauth2.HTTPClient, sslcli)
 	}
 
@@ -106,6 +106,8 @@ func OAuthLogin(ctx *middleware.Context) {
 		ctx.Handle(500, "login.OAuthLogin(NewTransportWithCode)", err)
 		return
 	}
+	// token.TokenType was defaulting to "bearer", which is out of spec, so we explicitly set to "Bearer"
+	token.TokenType = "Bearer"
 
 	ctx.Logger.Debug("OAuthLogin Got token")
 

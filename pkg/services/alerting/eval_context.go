@@ -17,7 +17,7 @@ type EvalContext struct {
 	EvalMatches     []*EvalMatch
 	Logs            []*ResultLogEntry
 	Error           error
-	Description     string
+	ConditionEvals  string
 	StartTime       time.Time
 	EndTime         time.Time
 	Rule            *Rule

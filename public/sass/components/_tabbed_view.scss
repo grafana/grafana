@@ -38,10 +38,10 @@
   background-color: transparent;
   border: none;
   padding: ($tabs-padding-top + $tabs-top-margin) $spacer $tabs-padding-bottom;
+  color: $text-color;
   i {
     font-size: 120%;
   }
-  color: $text-color;
   &:hover {
     color: $white;
   }

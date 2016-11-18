@@ -5,6 +5,7 @@ type SystemStats struct {
 	UserCount      int64
 	OrgCount       int64
 	PlaylistCount  int64
+	AlertCount     int64
 }
 
 type DataSourceStats struct {
@@ -29,6 +30,7 @@ type AdminStats struct {
 	DataSourceCount int `json:"data_source_count"`
 	PlaylistCount   int `json:"playlist_count"`
 	StarredDbCount  int `json:"starred_db_count"`
+	AlertCount      int `json:"alert_count"`
 }
 
 type GetAdminStatsQuery struct {
