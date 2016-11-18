@@ -70,6 +70,7 @@ func TestDataSourceProxy(t *testing.T) {
 
 		json := simplejson.New()
 		json.Set("tlsAuth", true)
+		json.Set("tlsAuthWithCACert", true)
 		ds := m.DataSource{
 			Url:      "htttp://k8s:8001",
 			Type:     "Kubernetes",
