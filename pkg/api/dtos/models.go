@@ -81,6 +81,14 @@ type DataSource struct {
 	IsDefault         bool              `json:"isDefault"`
 	JsonData          *simplejson.Json  `json:"jsonData,omitempty"`
 	SecureJsonData    map[string]string `json:"secureJsonData,omitempty"`
+	TLSAuth           TLSAuth           `json:"tlsAuth,omitempty"`
+}
+
+// TLSAuth is used to show if TLS certs have been uploaded already
+type TLSAuth struct {
+	CACertSet     bool `json:"tlsCACertSet"`
+	ClientCertSet bool `json:"tlsClientCertSet"`
+	ClientKeySet  bool `json:"tlsClientKeySet"`
 }
 
 type DataSourceList []DataSource
