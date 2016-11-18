@@ -31,18 +31,18 @@ func DataProxyTransport(ds *m.DataSource) (*http.Transport, error) {
 		TLSHandshakeTimeout: 10 * time.Second,
 	}
 
-	var tlsAuth bool
-	var err error
+	var tlsAuth, tlsAuthWithCACert bool
 	if ds.JsonData != nil {
-		tlsAuth, err = ds.JsonData.Get("tlsAuth").Bool()
+		tlsAuth = ds.JsonData.Get("tlsAuth").MustBool(false)
+		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
 	}
 
-	if err == nil && tlsAuth {
+	if tlsAuth {
 		transport.TLSClientConfig.InsecureSkipVerify = false
 
 		decrypted := ds.SecureJsonData.Decrypt()
 
-		if len(decrypted["tlsCACert"]) > 0 {
+		if tlsAuthWithCACert && len(decrypted["tlsCACert"]) > 0 {
 			caPool := x509.NewCertPool()
 			ok := caPool.AppendCertsFromPEM([]byte(decrypted["tlsCACert"]))
 			if ok {
