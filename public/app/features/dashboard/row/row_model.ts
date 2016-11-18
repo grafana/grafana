@@ -19,6 +19,7 @@ export class DashboardRow {
     showTitle: false,
     titleSize: 'h6',
     height: 250,
+    isNew: false,
     repeat: null,
     repeatRowId: null,
     repeatIteration: null,
