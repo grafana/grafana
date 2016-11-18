@@ -50,6 +50,11 @@ func init() {
 	HttpClient = tsdb.GetDefaultClient()
 }
 
+type QueryToSend struct {
+	RawQuery string
+	QueryRef *MQEQuery
+}
+
 func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
@@ -67,7 +72,7 @@ func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, quer
 		mqeQueries = append(mqeQueries, q)
 	}
 
-	var rawQueries []string
+	var rawQueries []QueryToSend
 	for _, v := range mqeQueries {
 		queries, err := v.Build(availableSeries.Metrics)
 		if err != nil {
@@ -81,14 +86,14 @@ func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, quer
 	for _, v := range rawQueries {
 		glog.Info("Mqe executor", "query", v)
 
-		req, err := e.createRequest(v)
+		req, err := e.createRequest(v.RawQuery)
 
 		resp, err := ctxhttp.Do(ctx, HttpClient, req)
 		if err != nil {
 			return result.WithError(err)
 		}
 
-		series, err := e.ResponseParser.Parse(resp)
+		series, err := e.ResponseParser.Parse(resp, v.QueryRef)
 		if err != nil {
 			return result.WithError(err)
 		}

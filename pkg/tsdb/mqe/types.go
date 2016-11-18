@@ -32,11 +32,27 @@ var (
 	containsWildcardPattern *regexp.Regexp = regexp.MustCompile(`\*`)
 )
 
-func (q *MQEQuery) Build(availableSeries []string) ([]string, error) {
-	var metrics []MQEMetric
+func (q *MQEQuery) Build(availableSeries []string) ([]QueryToSend, error) {
+	var queriesToSend []QueryToSend
+	where := q.buildWhereClause()
+
 	for _, v := range q.Metrics {
 		if !containsWildcardPattern.Match([]byte(v.Metric)) {
-			metrics = append(metrics, v)
+			alias := ""
+			if v.Alias != "" {
+				alias = fmt.Sprintf(" {%s}", v.Alias)
+			}
+			rawQuery := fmt.Sprintf(
+				"`%s`%s %s from %v to %v",
+				v.Metric,
+				alias,
+				where,
+				q.TimeRange.GetFromAsMsEpoch(),
+				q.TimeRange.GetToAsMsEpoch())
+			queriesToSend = append(queriesToSend, QueryToSend{
+				RawQuery: rawQuery,
+				QueryRef: q,
+			})
 			continue
 		}
 
@@ -51,34 +67,27 @@ func (q *MQEQuery) Build(availableSeries []string) ([]string, error) {
 		//TODO: this lookup should be cached
 		for _, a := range availableSeries {
 			if mp.Match([]byte(a)) {
-				metrics = append(metrics, MQEMetric{
-					Metric: a,
-					Alias:  v.Alias,
+				alias := ""
+				if v.Alias != "" {
+					alias = fmt.Sprintf(" {%s}", v.Alias)
+				}
+
+				rawQuery := fmt.Sprintf(
+					"`%s`%s %s from %v to %v",
+					a,
+					alias,
+					where,
+					q.TimeRange.GetFromAsMsEpoch(),
+					q.TimeRange.GetToAsMsEpoch())
+
+				queriesToSend = append(queriesToSend, QueryToSend{
+					RawQuery: rawQuery,
+					QueryRef: q,
 				})
 			}
 		}
 	}
-
-	var queries []string
-	where := q.buildWhereClause()
-
-	for _, metric := range metrics {
-		alias := ""
-		if metric.Alias != "" {
-			alias = fmt.Sprintf(" {%s}", metric.Alias)
-		}
-
-		queries = append(queries,
-			fmt.Sprintf(
-				"`%s`%s %s from %v to %v",
-				metric.Metric,
-				alias,
-				where,
-				q.TimeRange.GetFromAsMsEpoch(),
-				q.TimeRange.GetToAsMsEpoch()))
-	}
-
-	return queries, nil
+	return queriesToSend, nil
 }
 
 func (q *MQEQuery) buildWhereClause() string {

@@ -20,15 +20,20 @@ func TestMQEResponseParser(t *testing.T) {
 		parser := NewResponseParser()
 
 		Convey("Can parse response", func() {
+			queryRef := &MQEQuery{
+				AddAppToAlias:  true,
+				AddHostToAlias: true,
+			}
+
 			response := &http.Response{
 				StatusCode: 200,
 				Body:       ioutil.NopCloser(strings.NewReader(dummieJson)),
 			}
-			res, err := parser.Parse(response)
+			res, err := parser.Parse(response, queryRef)
 			So(err, ShouldBeNil)
 			So(len(res.Series), ShouldEqual, 2)
 			So(len(res.Series[0].Points), ShouldEqual, 14)
-
+			So(res.Series[0].Name, ShouldEqual, "demoapp staples-lab-1 os.disk.sda3.weighted_io_time")
 			startTime := 1479287280000
 			for i := 0; i < 11; i++ {
 				So(res.Series[0].Points[i][0].Float64, ShouldEqual, i+1)

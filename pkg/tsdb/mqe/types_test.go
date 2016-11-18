@@ -41,9 +41,9 @@ func TestWildcardExpansion(t *testing.T) {
 			expandeQueries, err := query.Build(availableMetrics)
 			So(err, ShouldBeNil)
 			So(len(expandeQueries), ShouldEqual, 3)
-			So(expandeQueries[0], ShouldEqual, fmt.Sprintf("`os.cpu.3.idle` where app in ('demoapp-1', 'demoapp-2') and host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
-			So(expandeQueries[1], ShouldEqual, fmt.Sprintf("`os.cpu.2.idle` where app in ('demoapp-1', 'demoapp-2') and host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
-			So(expandeQueries[2], ShouldEqual, fmt.Sprintf("`os.cpu.1.idle` {cpu} where app in ('demoapp-1', 'demoapp-2') and host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
+			So(expandeQueries[0].RawQuery, ShouldEqual, fmt.Sprintf("`os.cpu.3.idle` where app in ('demoapp-1', 'demoapp-2') and host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
+			So(expandeQueries[1].RawQuery, ShouldEqual, fmt.Sprintf("`os.cpu.2.idle` where app in ('demoapp-1', 'demoapp-2') and host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
+			So(expandeQueries[2].RawQuery, ShouldEqual, fmt.Sprintf("`os.cpu.1.idle` {cpu} where app in ('demoapp-1', 'demoapp-2') and host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
 		})
 
 		Convey("Containg wildcard series", func() {
@@ -61,10 +61,10 @@ func TestWildcardExpansion(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(len(expandeQueries), ShouldEqual, 4)
 
-			So(expandeQueries[0], ShouldEqual, fmt.Sprintf("`os.cpu.all.idle` where host in ('staples-lab-1') from %v to %v", from, to))
-			So(expandeQueries[1], ShouldEqual, fmt.Sprintf("`os.cpu.1.idle` where host in ('staples-lab-1') from %v to %v", from, to))
-			So(expandeQueries[2], ShouldEqual, fmt.Sprintf("`os.cpu.2.idle` where host in ('staples-lab-1') from %v to %v", from, to))
-			So(expandeQueries[3], ShouldEqual, fmt.Sprintf("`os.cpu.3.idle` where host in ('staples-lab-1') from %v to %v", from, to))
+			So(expandeQueries[0].RawQuery, ShouldEqual, fmt.Sprintf("`os.cpu.all.idle` where host in ('staples-lab-1') from %v to %v", from, to))
+			So(expandeQueries[1].RawQuery, ShouldEqual, fmt.Sprintf("`os.cpu.1.idle` where host in ('staples-lab-1') from %v to %v", from, to))
+			So(expandeQueries[2].RawQuery, ShouldEqual, fmt.Sprintf("`os.cpu.2.idle` where host in ('staples-lab-1') from %v to %v", from, to))
+			So(expandeQueries[3].RawQuery, ShouldEqual, fmt.Sprintf("`os.cpu.3.idle` where host in ('staples-lab-1') from %v to %v", from, to))
 		})
 	})
 }

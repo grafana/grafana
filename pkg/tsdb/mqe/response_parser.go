@@ -48,7 +48,7 @@ type MQEResponseParser struct {
 	log log.Logger
 }
 
-func (parser *MQEResponseParser) Parse(res *http.Response) (*tsdb.QueryResult, error) {
+func (parser *MQEResponseParser) Parse(res *http.Response, queryRef *MQEQuery) (*tsdb.QueryResult, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
 	if err != nil {
@@ -74,7 +74,18 @@ func (parser *MQEResponseParser) Parse(res *http.Response) (*tsdb.QueryResult, e
 	var series tsdb.TimeSeriesSlice
 	for _, body := range data.Body {
 		for _, mqeSerie := range body.Series {
-			serie := &tsdb.TimeSeries{Name: body.Name}
+			namePrefix := ""
+
+			for key, value := range mqeSerie.Tagset {
+				if key == "app" && queryRef.AddAppToAlias {
+					namePrefix += value + " "
+				}
+				if key == "host" && queryRef.AddHostToAlias {
+					namePrefix += value + " "
+				}
+			}
+
+			serie := &tsdb.TimeSeries{Name: namePrefix + body.Name}
 
 			for i, value := range mqeSerie.Values {
 				timestamp := body.TimeRange.Start + int64(i)*body.TimeRange.Resolution
