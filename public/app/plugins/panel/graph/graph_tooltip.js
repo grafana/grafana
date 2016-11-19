@@ -21,15 +21,14 @@ function ($) {
       var initial = last*ps;
       var len = series.datapoints.points.length;
       for (var j = initial; j < len; j += ps) {
-        if (series.datapoints.points[j] > posX) {
-          break;
+        // Special case of a non stepped line, highlight the very last point just before a null point
+        if ((!series.lines.steps && series.datapoints.points[initial] != null && series.datapoints.points[j] == null)
+            //normal case
+            || series.datapoints.points[j] > posX) {
+          return Math.max(j - ps,  0)/ps;
         }
       }
-      // Special case of a non stepped line, highlight the very last point just before a null point
-      while(!series.lines.steps && series.datapoints.points[initial] != null && j>0 && series.datapoints.points[j-ps] == null) {
-        j-=ps;
-      }
-      return Math.max(j - ps,  0)/ps;
+      return j/ps - 1;
     };
 
     this.findHoverIndexFromData = function(posX, series) {
