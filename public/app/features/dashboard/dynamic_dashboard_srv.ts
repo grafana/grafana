@@ -12,12 +12,12 @@ export class DynamicDashboardSrv {
   dashboard: any;
   variables: any;
 
-  init(dashboard, variableSrv) {
+  init(dashboard) {
     this.dashboard = dashboard;
-    this.variables = variableSrv.variables;
+    this.variables = dashboard.templating.list;
   }
 
-  process(options) {
+  process(options?) {
     if (this.dashboard.snapshot || this.variables.length === 0) {
       return;
     }
@@ -31,6 +31,8 @@ export class DynamicDashboardSrv {
     // cleanup scopedVars
     for (i = 0; i < this.dashboard.rows.length; i++) {
       row = this.dashboard.rows[i];
+      delete row.scopedVars;
+
       for (j = 0; j < row.panels.length; j++) {
         delete row.panels[j].scopedVars;
       }
@@ -64,6 +66,8 @@ export class DynamicDashboardSrv {
           j = j - 1;
         }
       }
+
+      row.panelSpanChanged();
     }
   }
 

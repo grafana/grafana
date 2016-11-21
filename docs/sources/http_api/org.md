@@ -85,6 +85,34 @@ page_keywords: grafana, admin, http, api, documentation, orgs, organisation
       }
     }
 
+## Create Organisation
+
+`POST /api/org`
+
+**Example Request**:
+
+    POST /api/org HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+    {
+      "name":"New Org."
+    }
+
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+
+    {
+      "orgId":"1",
+      "message":"Organization created"
+    }
+
+
+
 ## Update current Organisation
 
 `PUT /api/org`

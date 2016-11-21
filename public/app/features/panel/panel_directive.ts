@@ -68,8 +68,8 @@ module.directive('grafanaPanel', function($rootScope) {
 
       // the reason for handling these classes this way is for performance
       // limit the watchers on panels etc
-      var transparentLastState;
-      var lastHasAlertRule;
+      var transparentLastState = false;
+      var lastHasAlertRule = false;
       var lastAlertState;
       var hasAlertRule;
       var lastHeight = 0;
@@ -89,6 +89,12 @@ module.directive('grafanaPanel', function($rootScope) {
         ctrl.calculatePanelHeight();
         panelContainer.css({minHeight: ctrl.containerHeight});
         lastHeight = ctrl.containerHeight;
+      }
+
+      // set initial transparency
+      if (ctrl.panel.transparent) {
+        transparentLastState = true;
+        panelContainer.addClass('panel-transparent', true);
       }
 
       ctrl.events.on('render', () => {

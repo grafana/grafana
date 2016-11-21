@@ -2,7 +2,6 @@ package influxdb
 
 import (
 	"fmt"
-	"strconv"
 	"strings"
 
 	"regexp"
@@ -58,13 +57,12 @@ func (query *Query) renderTags() []string {
 		}
 
 		textValue := ""
-		numericValue, err := strconv.ParseFloat(tag.Value, 64)
 
 		// quote value unless regex or number
 		if tag.Operator == "=~" || tag.Operator == "!~" {
 			textValue = tag.Value
-		} else if err == nil {
-			textValue = fmt.Sprintf("%v", numericValue)
+		} else if tag.Operator == "<" || tag.Operator == ">" {
+			textValue = tag.Value
 		} else {
 			textValue = fmt.Sprintf("'%s'", tag.Value)
 		}

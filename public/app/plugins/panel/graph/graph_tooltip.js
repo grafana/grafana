@@ -22,7 +22,7 @@ function ($) {
       var len = series.datapoints.points.length;
       for (var j = initial; j < len; j += ps) {
         // Special case of a non stepped line, highlight the very last point just before a null point
-        if ((series.datapoints.points[initial] != null && series.datapoints.points[j] == null && ! series.lines.steps)
+        if ((!series.lines.steps && series.datapoints.points[initial] != null && series.datapoints.points[j] == null)
             //normal case
             || series.datapoints.points[j] > posX) {
           return Math.max(j - ps,  0)/ps;
@@ -195,7 +195,7 @@ function ($) {
           }
 
           var highlightClass = '';
-          if (item && i === item.seriesIndex) {
+          if (item && hoverInfo.index === item.seriesIndex) {
             highlightClass = 'graph-tooltip-list-item--highlight';
           }
 

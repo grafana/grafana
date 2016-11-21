@@ -35,11 +35,12 @@ type AlertTestCommand struct {
 }
 
 type AlertTestResult struct {
-	Firing      bool                  `json:"firing"`
-	TimeMs      string                `json:"timeMs"`
-	Error       string                `json:"error,omitempty"`
-	EvalMatches []*EvalMatch          `json:"matches,omitempty"`
-	Logs        []*AlertTestResultLog `json:"logs,omitempty"`
+	Firing         bool                  `json:"firing"`
+	ConditionEvals string                `json:"conditionEvals"`
+	TimeMs         string                `json:"timeMs"`
+	Error          string                `json:"error,omitempty"`
+	EvalMatches    []*EvalMatch          `json:"matches,omitempty"`
+	Logs           []*AlertTestResultLog `json:"logs,omitempty"`
 }
 
 type AlertTestResultLog struct {
