@@ -55,7 +55,10 @@ Currently the only condition type that exists is a `Query` condition that allows
 specify a query letter, time range and an aggregation function. The letter refers to
 a query you already have added in the **Metrics** tab. The result from the query and the aggregation function is
 a single value that is then used in the threshold check. The query used in an alert rule cannot
-contain any template variables. Currently we only support `AND` operator between conditions.
+contain any template variables. Currently we only support `AND` and `OR` operators between conditions and they are executed serially.
+For example, we have 3 conditions in the following order:
+`condition:A(evaluates to: TRUE) OR condition:B(evaluates to: FALSE) AND condition:C(evaluates to: TRUE)`
+so the result will be calculated as ((TRUE OR FALSE) AND TRUE) = TRUE.
 
 We plan to add other condition types in the future, like `Other Alert`, where you can include the state
 of another alert in your conditions, and `Time Of Day`.

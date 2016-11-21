@@ -55,10 +55,8 @@ func (n *RootNotifier) Notify(context *EvalContext) error {
 		return nil
 	}
 
-	err = n.uploadImage(context)
-	if err != nil {
-		n.log.Error("Failed to upload alert panel image", "error", err)
-		return err
+	if err = n.uploadImage(context); err != nil {
+		n.log.Error("Failed to upload alert panel image.", "error", err)
 	}
 
 	return n.sendNotifications(context, notifiers)

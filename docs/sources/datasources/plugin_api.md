@@ -30,11 +30,5 @@ Even though the data source type name is with lowercase `g`, the directive uses 
 that is how angular directives needs to be named in order to match an element with name `<metric-query-editor-graphite />`.
 You also specify the query controller here instead of in the query.editor.html partial like before.
 
-### query.editor.html
-
-This partial needs to be updated, remove the `np-repeat` this is done in the outer partial now,m the query.editor.html
-should only render a single query. Take a look at the Graphite or InfluxDB partials for `query.editor.html` for reference.
-You should also add a `tight-form-item` with `{{target.refId}}`, all queries needs to be assigned a letter (`refId`).
-These query reference letters are going to be utilized in a later feature.
 
 

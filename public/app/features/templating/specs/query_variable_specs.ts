@@ -25,7 +25,7 @@ describe('QueryVariable', function() {
       variable.regex = 'asd';
       variable.sort = 50;
 
-      var model = variable.getModel();
+      var model = variable.getSaveModel();
       expect(model.options.length).to.be(1);
       expect(model.options[0].text).to.be('test');
       expect(model.datasource).to.be('google');
@@ -33,7 +33,14 @@ describe('QueryVariable', function() {
       expect(model.sort).to.be(50);
     });
 
-  });
+    it('if refresh != 0 then remove options in presisted mode', () => {
+      var variable = new QueryVariable({}, null, null, null, null);
+      variable.options = [{text: 'test'}];
+      variable.refresh = 1;
 
+      var model = variable.getSaveModel();
+      expect(model.options.length).to.be(0);
+    });
+  });
 });
 

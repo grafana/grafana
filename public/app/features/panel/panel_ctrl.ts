@@ -54,6 +54,12 @@ export class PanelCtrl {
       this.events.emit('panel-teardown');
       this.events.removeAllListeners();
     });
+
+    // we should do something interesting
+    // with newly added panels
+    if (this.panel.isNew) {
+      delete this.panel.isNew;
+    }
   }
 
   init() {
@@ -188,6 +194,9 @@ export class PanelCtrl {
 
   duplicate() {
     this.dashboard.duplicatePanel(this.panel, this.row);
+    this.$timeout(() => {
+      this.$scope.$root.$broadcast('render');
+    });
   }
 
   updateColumnSpan(span) {

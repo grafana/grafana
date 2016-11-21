@@ -187,6 +187,7 @@ func (ctx *Context) Handle(status int, title string, err error) {
 	}
 
 	ctx.Data["Title"] = title
+	ctx.Data["AppSubUrl"] = setting.AppSubUrl
 	ctx.HTML(status, strconv.Itoa(status))
 }
 

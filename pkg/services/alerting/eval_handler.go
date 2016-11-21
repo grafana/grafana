@@ -1,6 +1,8 @@
 package alerting
 
 import (
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
@@ -21,7 +23,10 @@ func NewEvalHandler() *DefaultEvalHandler {
 
 func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 	firing := true
-	for _, condition := range context.Rule.Conditions {
+	conditionEvals := ""
+
+	for i := 0; i < len(context.Rule.Conditions); i++ {
+		condition := context.Rule.Conditions[i]
 		cr, err := condition.Eval(context)
 		if err != nil {
 			context.Error = err
@@ -32,15 +37,23 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 			break
 		}
 
-		// break if result has not triggered yet
-		if cr.Firing == false {
-			firing = false
-			break
+		// calculating Firing based on operator
+		if cr.Operator == "or" {
+			firing = firing || cr.Firing
+		} else {
+			firing = firing && cr.Firing
+		}
+
+		if i > 0 {
+			conditionEvals = "[" + conditionEvals + " " + strings.ToUpper(cr.Operator) + " " + strconv.FormatBool(cr.Firing) + "]"
+		} else {
+			conditionEvals = strconv.FormatBool(firing)
 		}
 
 		context.EvalMatches = append(context.EvalMatches, cr.EvalMatches...)
 	}
 
+	context.ConditionEvals = conditionEvals + " = " + strconv.FormatBool(firing)
 	context.Firing = firing
 	context.EndTime = time.Now()
 	elapsedTime := context.EndTime.Sub(context.StartTime) / time.Millisecond

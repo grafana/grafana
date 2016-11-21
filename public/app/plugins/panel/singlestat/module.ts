@@ -208,11 +208,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       }
 
       // Add $__name variable for using in prefix or postfix
-      data.scopedVars = {
-        __name: {
-          value: this.series[0].label
-        }
-      };
+      data.scopedVars = _.extend({}, this.panel.scopedVars);
+      data.scopedVars["__name"] = {value: this.series[0].label};
     }
 
     // check value to text mappings if its enabled
@@ -526,7 +523,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       elem.toggleClass('pointer', panel.links.length > 0);
 
       if (panel.links.length > 0) {
-        linkInfo = linkSrv.getPanelLinkAnchorInfo(panel.links[0], panel.scopedVars);
+        linkInfo = linkSrv.getPanelLinkAnchorInfo(panel.links[0], data.scopedVars);
       } else {
         linkInfo = null;
       }

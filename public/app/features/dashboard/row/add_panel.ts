@@ -45,12 +45,6 @@ export class AddPanelCtrl {
     }
   }
 
-  panelSearchBlur() {
-    // this.$timeout(() => {
-    //   this.rowCtrl.dropView = 0;
-    // }, 400);
-  }
-
   moveSelection(direction) {
     var max = this.panelHits.length;
     var newIndex = this.activeIndex + direction;

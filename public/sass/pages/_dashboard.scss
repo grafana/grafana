@@ -172,6 +172,12 @@ div.flot-text {
   }
 }
 
+.panel-in-fullscreen {
+  .panel-drop-zone {
+    display: none !important;
+  }
+}
+
 .panel-time-info {
   font-weight: bold;
   float: right;
