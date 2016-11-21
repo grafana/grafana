@@ -1,4 +1,4 @@
-# 4.0-beta2 (unrelased)
+# 4.0-beta2 (2016-11-21)
 
 ### Bugfixes
 * **Graph Panel**: Log base scale on right Y-axis had no effect, max value calc was not applied, [#6534](https://github.com/grafana/grafana/issues/6534)
