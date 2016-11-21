@@ -17,6 +17,20 @@ function (angular) {
     $scope.resetCurrentThreshold = function (alertDetails) {
       alertMgrSrv.resetCurrentThreshold(alertDetails);
     };
+
+    $scope.handleAlert = function () {
+      $scope.appEvent('show-modal', {
+        src: './app/partials/handle_alert.html',
+        modalClass: 'modal-no-header confirm-modal',
+        scope: $scope.$new()
+      });
+    };
+
+    $scope.random = function () {
+      // There would be something problems when render the page;
+      return Math.floor(Math.random() * 100) + 20;
+    };
+
     $scope.init();
   });
 });

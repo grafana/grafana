@@ -1,6 +1,7 @@
 <topnav title="告警管理" icon="fa fa-fw fa-bell" subnav="true">
   <ul class="nav">
     <li><a href="alerts/status">总览</a></li>
+    <li><a href="alerts/history">历史告警</a></li>
     <li ng-class="{active: isNew}"><a href="alerts/new">新建报警规则</a></li>
     <li class="active" ng-show="!isNew"><a href="alerts/edit/{{current.name}}">编辑</a></li>
     <li><a href="alerts">状态</a></li>

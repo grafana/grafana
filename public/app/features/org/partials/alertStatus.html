@@ -1,6 +1,7 @@
 <topnav title="告警管理" icon="fa fa-fw fa-bell" subnav="true">
   <ul class="nav">
     <li class="active"><a href="alerts/status">总览</a></li>
+    <li><a href="alerts/history">历史告警</a></li>
     <li><a href="alerts/new">新建报警规则</a></li>
     <li><a href="alerts">状态</a></li>
   </ul>
@@ -8,7 +9,7 @@
 
 <div class="page-container">
     <div class="page">
-      <h2>告警指标状态</h2>
+      <h2>告警指标状态 <span style="font-size: 12px">实时</span></h2>
 
       <div ng-if="alertRows.length === 0">
         <em>系统一切正常</em>
@@ -16,11 +17,12 @@
       <table class="grafana-options-table" ng-if="alertRows.length > 0">
         <tr>
           <td><strong>名称</strong></td>
-          <td><strong>报警范围</strong></td>
+          <td><strong>应用名称</strong></td>
           <td><strong>报警指标</strong></td>
-          <td><strong>报警阈值</strong></td>
-          <td><string>报警级别</string></td>
-          <td></td>
+          <td><strong>报警值/阈值</strong></td>
+          <td><strong>当前值</strong></td>
+          <td><strong>报警级别</strong></td>
+          <td><strong>报警时间</strong></td>
           <td></td>
         </tr>
         <tr ng-repeat="alertDetail in alertRows">
@@ -35,15 +37,24 @@
             {{_.getMetricName(alertDetail.metric)}}
           </td>
           <td style="width:40%">
-            {{alertDetail.definition.alertDetails.crit.threshold}}
+            <strong>{{random()}}</strong>/{{alertDetail.definition.alertDetails.crit.threshold}}
+          </td>
+          <td style="width:40%">
+            {{random()}}
           </td>
           <td style="width:40%">
             {{alertDetail.status.level}}
+          </td>
+          <td style="width:40%">
+            2016.11.21
           </td>
           <td style="width: 10%">
             <a href="/alerts/association/{{alertDetail.metric}}/{{alertDetail.status.monitoredEntity}}/{{correlationThreshold}}" class="btn btn-mini btn-primary" ng-click="resetCurrentThreshold(alertDetail.definition.alertDetails)">
               <i class="fa fa-signal"></i>
               关联性分析
+            </a>
+            <a class="btn btn-mini btn-success" ng-click="handleAlert(this)">
+              处理警告
             </a>
           </td>
           <!--<td style="width: 10%">-->

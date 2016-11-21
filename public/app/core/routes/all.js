@@ -75,6 +75,11 @@ define([
         controller : 'AlertStatusCtrl',
         resolve: loadOrgBundle,
       })
+      .when('/alerts/history', {
+        templateUrl: 'app/features/org/partials/alertHistory.html',
+        controller : 'AlertHistoryCtrl',
+        resolve: loadOrgBundle,
+      })
       .when('/alerts/association/:metric/:host/:distance', {
         templateUrl: 'app/features/org/partials/alertAssociation.html',
         controller : 'AlertAssociationCtrl',

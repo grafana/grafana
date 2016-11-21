@@ -12,4 +12,5 @@ define([
   './userInviteCtrl',
   './orgApiKeysCtrl',
   './orgDetailsCtrl',
+  './alertHistoryCtrl',
 ], function () {});
