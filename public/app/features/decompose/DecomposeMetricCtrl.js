@@ -19,7 +19,7 @@ define([
               title: "test for anmoly",
               panels: getDecomposeMetric(window.decomposeTarget),
             }],
-            time: {from: "now-1d", to: "now"}
+            time: {from: "now-1d", to: "now+5h"}
           }
         }, $scope);
 
