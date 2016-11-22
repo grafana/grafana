@@ -139,6 +139,7 @@ describe('CloudWatchDatasource', function() {
             ]
           }
         ],
+        getVariableName: function (e) { return 'instance_id'; },
         variableExists: function (e) { return true; },
         containsVariable: function (str, variableName) { return str.indexOf('$' + variableName) !== -1; }
       };
@@ -156,7 +157,7 @@ describe('CloudWatchDatasource', function() {
         }
       ];
 
-      var result = ctx.ds.expandTemplateVariable(targets, templateSrv);
+      var result = ctx.ds.expandTemplateVariable(targets, {}, templateSrv);
       expect(result[0].dimensions.InstanceId).to.be('i-34567890');
     });
   });
