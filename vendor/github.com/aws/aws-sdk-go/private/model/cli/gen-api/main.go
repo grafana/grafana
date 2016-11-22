@@ -1,3 +1,5 @@
+// +build codegen
+
 // Command aws-gen-gocli parses a JSON description of an AWS API and generates a
 // Go file containing a client for the API.
 //
@@ -220,10 +222,16 @@ func writeServiceFile(g *generateInfo) error {
 
 // writeInterfaceFile writes out the service interface file.
 func writeInterfaceFile(g *generateInfo) error {
+	const pkgDoc = `
+// Package %s provides an interface to enable mocking the %s service client
+// for testing your code.
+//
+// It is important to note that this interface will have breaking changes
+// when the service model is updated and adds new API operations, paginators,
+// and waiters.`
 	return writeGoFile(filepath.Join(g.PackageDir, g.API.InterfacePackageName(), "interface.go"),
 		codeLayout,
-		fmt.Sprintf("\n// Package %s provides an interface for the %s.",
-			g.API.InterfacePackageName(), g.API.Metadata.ServiceFullName),
+		fmt.Sprintf(pkgDoc, g.API.InterfacePackageName(), g.API.Metadata.ServiceFullName),
 		g.API.InterfacePackageName(),
 		g.API.InterfaceGoCode(),
 	)

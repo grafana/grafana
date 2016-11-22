@@ -160,7 +160,7 @@ func (sv sortedValues) Less(i, j int) bool { return sv[i].String() < sv[j].Strin
 func buildMap(value reflect.Value, buf *bytes.Buffer, tag reflect.StructTag) error {
 	buf.WriteString("{")
 
-	var sv sortedValues = value.MapKeys()
+	sv := sortedValues(value.MapKeys())
 	sort.Sort(sv)
 
 	for i, k := range sv {

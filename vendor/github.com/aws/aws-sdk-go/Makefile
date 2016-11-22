@@ -5,10 +5,13 @@ LINTIGNORESTUTTER='service/[^/]+/(api|service)\.go:.+(and that stutters)'
 LINTIGNOREINFLECT='service/[^/]+/(api|service)\.go:.+method .+ should be '
 LINTIGNOREINFLECTS3UPLOAD='service/s3/s3manager/upload\.go:.+struct field SSEKMSKeyId should be '
 LINTIGNOREDEPS='vendor/.+\.go'
+UNIT_TEST_TAGS="example codegen"
 
-SDK_WITH_VENDOR_PKGS=$(shell go list ./... | grep -v "/vendor/src")
+SDK_WITH_VENDOR_PKGS=$(shell go list -tags ${UNIT_TEST_TAGS} ./... | grep -v "/vendor/src")
 SDK_ONLY_PKGS=$(shell go list ./... | grep -v "/vendor/")
+SDK_UNIT_TEST_ONLY_PKGS=$(shell go list -tags ${UNIT_TEST_TAGS} ./... | grep -v "/vendor/")
 SDK_GO_1_4=$(shell go version | grep "go1.4")
+SDK_GO_1_5=$(shell go version | grep "go1.5")
 SDK_GO_VERSION=$(shell go version | awk '''{print $$3}''' | tr -d '''\n''')
 
 all: get-deps generate unit
@@ -50,11 +53,11 @@ build:
 
 unit: get-deps-tests build verify
 	@echo "go test SDK and vendor packages"
-	@go test -tags $(SDK_ONLY_PKGS)
+	@go test -tags ${UNIT_TEST_TAGS} $(SDK_UNIT_TEST_ONLY_PKGS)
 
 unit-with-race-cover: get-deps-tests build verify
 	@echo "go test SDK and vendor packages"
-	@go test -tags -race -cpu=1,2,4 $(SDK_ONLY_PKGS)
+	@go test -tags ${UNIT_TEST_TAGS} -race -cpu=1,2,4 $(SDK_UNIT_TEST_ONLY_PKGS)
 
 integration: get-deps-tests integ-custom smoke-tests performance
 
@@ -101,20 +104,18 @@ verify: get-deps-verify lint vet
 
 lint:
 	@echo "go lint SDK and vendor packages"
-	@lint=`if [ -z "${SDK_GO_1_4}" ]; then  golint ./...; else echo "skipping golint"; fi`; \
+	@lint=`if [ \( -z "${SDK_GO_1_4}" \) -a \( -z "${SDK_GO_1_5}" \) ]; then  golint ./...; else echo "skipping golint"; fi`; \
 	lint=`echo "$$lint" | grep -E -v -e ${LINTIGNOREDOT} -e ${LINTIGNOREDOC} -e ${LINTIGNORECONST} -e ${LINTIGNORESTUTTER} -e ${LINTIGNOREINFLECT} -e ${LINTIGNOREDEPS} -e ${LINTIGNOREINFLECTS3UPLOAD}`; \
 	echo "$$lint"; \
 	if [ "$$lint" != "" ] && [ "$$lint" != "skipping golint" ]; then exit 1; fi
 
 SDK_BASE_FOLDERS=$(shell ls -d */ | grep -v vendor | grep -v awsmigrate)
-ifneq (,$(findstring go1.5, ${SDK_GO_VERSION}))
-	GO_VET_CMD=go tool vet --all -shadow
+ifneq (,$(findstring go1.4, ${SDK_GO_VERSION}))
+	GO_VET_CMD=echo skipping go vet, ${SDK_GO_VERSION}
 else ifneq (,$(findstring go1.6, ${SDK_GO_VERSION}))
 	GO_VET_CMD=go tool vet --all -shadow -example=false
-else ifneq (,$(findstring devel, ${SDK_GO_VERSION}))
-	GO_VET_CMD=go tool vet --all -shadow -tests=false
 else
-	GO_VET_CMD=echo skipping go vet, ${SDK_GO_VERSION}
+	GO_VET_CMD=go tool vet --all -shadow
 endif
 
 vet:
@@ -129,10 +130,11 @@ get-deps-tests:
 	go get github.com/gucumber/gucumber/cmd/gucumber
 	go get github.com/stretchr/testify
 	go get github.com/smartystreets/goconvey
+	go get golang.org/x/net/html
 
 get-deps-verify:
 	@echo "go get SDK verification utilities"
-	@if [ -z "${SDK_GO_1_4}" ]; then  go get github.com/golang/lint/golint; else echo "skipped getting golint"; fi
+	@if [ \( -z "${SDK_GO_1_4}" \) -a \( -z "${SDK_GO_1_5}" \) ]; then  go get github.com/golang/lint/golint; else echo "skipped getting golint"; fi
 
 bench:
 	@echo "go bench SDK packages"
@@ -144,9 +146,12 @@ bench-protocol:
 
 docs:
 	@echo "generate SDK docs"
-	rm -rf doc && bundle install && bundle exec yard
 	@# This env variable, DOCS, is for internal use
-	@if [ -n "$(AWS_DOC_GEN_TOOL)" ]; then echo "For internal use. Subject to change."; $(AWS_DOC_GEN_TOOL) `pwd`; fi
+	@if [ -z ${AWS_DOC_GEN_TOOL} ]; then\
+		rm -rf doc && bundle install && bundle exec yard;\
+	else\
+		$(AWS_DOC_GEN_TOOL) `pwd`;\
+	fi
 
 api_info:
 	@go run private/model/cli/api-info/api-info.go
