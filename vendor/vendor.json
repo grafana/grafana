@@ -307,6 +307,14 @@
 			"versionExact": "v1.5.8"
 		},
 		{
+			"checksumSHA1": "cVyhKIRI2gQrgpn5qrBeAqErmWM=",
+			"path": "github.com/go-ini/ini",
+			"revision": "6e4869b434bd001f6983749881c7ead3545887d8",
+			"revisionTime": "2016-08-27T06:11:18Z",
+			"version": "v1.21.1",
+			"versionExact": "v1.21.1"
+		},
+		{
 			"checksumSHA1": "SMUvX2B8eoFd9wnPofwBKlN6btE=",
 			"path": "github.com/prometheus/client_golang/api/prometheus",
 			"revision": "5636dc67ae776adf5590da7349e70fbb9559972d",
