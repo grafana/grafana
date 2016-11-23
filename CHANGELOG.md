@@ -1,3 +1,8 @@
+# 4.0-stable (unrelased)
+
+### Bugfixes
+* **Server-side rendering**: Fixed address used when rendering panel via phantomjs and using non default http_addr config [#6660](https://github.com/grafana/grafana/issues/6660)
+
 # 4.0-beta2 (2016-11-21)
 
 ### Bugfixes
