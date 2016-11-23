@@ -2,6 +2,7 @@
 
 ### Bugfixes
 * **Server-side rendering**: Fixed address used when rendering panel via phantomjs and using non default http_addr config [#6660](https://github.com/grafana/grafana/issues/6660)
+* **Graph panel**: Fixed graph panel tooltip sort order issue [#6648](https://github.com/grafana/grafana/issues/6648)
 
 # 4.0-beta2 (2016-11-21)
 

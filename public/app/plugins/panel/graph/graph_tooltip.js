@@ -181,10 +181,6 @@ function ($) {
           seriesHoverInfo.sort(function(a, b) {
             return a.value - b.value;
           });
-        } else {
-          seriesHoverInfo.sort(function(a, b) {
-            return a.yaxis - b.yaxis;
-          });
         }
 
         for (i = 0; i < seriesHoverInfo.length; i++) {
