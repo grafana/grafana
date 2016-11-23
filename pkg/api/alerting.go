@@ -103,6 +103,10 @@ func GetAlerts(c *middleware.Context) Response {
 
 // POST /api/alerts/test
 func AlertTest(c *middleware.Context, dto dtos.AlertTestCommand) Response {
+	if _, idErr := dto.Dashboard.Get("id").Int64(); idErr != nil {
+		return ApiError(400, "The dashboard needs to be saved at least once before you can test an alert rule", nil)
+	}
+
 	backendCmd := alerting.AlertTestCommand{
 		OrgId:     c.OrgId,
 		Dashboard: dto.Dashboard,
