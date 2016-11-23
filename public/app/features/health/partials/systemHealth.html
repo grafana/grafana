@@ -56,3 +56,22 @@
 
   <p>友情建议: 您的系统正在一个繁忙的状态,需要时刻留意你的系统同时使用自动异常检测确认问题</p>
 </div>
+
+<div class="page-container" style="padding: 20px 20px 20px 20px;">
+  <div class="page">
+    <h3>不参与总体健康计算指标</h3>
+    <p>共有{{excludeMetricLength}}个指标不参与健康值计算</p>
+    <table class="grafana-options-table">
+
+      <td ng-repeat="anomalyDef in excludeMetricsData | limitTo : 4"> {{_.getMetricName(anomalyDef.metric)}}</td>
+      <td>.....等等</td>
+      <td>
+        <a ng-click="changeExcludeMetrics()" class="btn btn-inverse btn-mini">
+        <i class="fa fa-pencil-square-o"></i>
+          修改
+        </a>
+      </td>
+    </table>
+
+  </div>
+</div>

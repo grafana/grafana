@@ -74,8 +74,9 @@ define([
       }
     }
 
-    module.controller('SystemHealthCtrl', function ($scope, contextSrv, healthSrv, backendSrv) {
+    module.controller('SystemHealthCtrl', function ($scope, contextSrv, healthSrv, backendSrv, $rootScope) {
       $scope.init = function () {
+        $scope.system = backendSrv.getSystemById(contextSrv.system);
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: false},
           dashboard: {
@@ -87,10 +88,25 @@ define([
           }
         }, $scope);
 
-        $scope.system = backendSrv.getSystemById(contextSrv.system);
+        $scope.reload();
+      };
+
+      $scope.reload = function() {
         healthSrv.load().then(function (data) {
           $scope.applicationHealth = Math.floor(data.health);
           $scope.leveal = getLeveal($scope.applicationHealth);
+
+          $scope.includeMetricsData = healthSrv.floor(data.includedMetricHealths);
+          $scope.excludeMetricsData = healthSrv.floor(data.excludedMetricHealths);
+          $scope.excludeMetricLength = _.size($scope.excludeMetricsData);
+        });
+      };
+
+      $scope.changeExcludeMetrics = function () {
+        $scope.appEvent('show-modal', {
+          src: './app/partials/exclude_metrics.html',
+          modalClass: 'modal-no-header confirm-modal',
+          scope: $scope.$new(),
         });
       };
 

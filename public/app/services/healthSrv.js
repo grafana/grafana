@@ -63,5 +63,11 @@ define([
         });
       };
 
+      this.floor = function (metrics) {
+        _.each(metrics, function (metric) {
+          metric.health = Math.floor(metric.health);
+        });
+        return metrics;
+      };
     });
   });

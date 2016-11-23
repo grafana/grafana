@@ -1,0 +1,54 @@
+<div class="modal-body" ng-controller="ExcludeMetricsModal" ng-init="init()">
+
+  <a class="modal-close" ng-click="dismiss();">
+    <i class="fa fa-remove"></i>
+  </a>
+
+  <h3>
+    修改不参与健康值计算指标
+  </h3>
+
+  <form>
+    <div style="display: inline-block">
+      <div class="tight-form-container">
+        <div class="tight-form">
+          <ul class="tight-form-list">
+            <li>
+              <select ng-model="excludeMetric">
+                <option ng-repeat="anomalyDef in excludeMetricsData" value="{{anomalyDef.metric}}">
+                  {{_.getMetricName(anomalyDef.metric)}}
+                </option>
+              </select>
+            </li>
+            <li>
+              <a ng-click="exclude()" class="btn btn-inverse btn-mini">
+                <i class="fa fa-ban"></i>
+                剔除
+              </a>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <table class="grafana-options-table ng-scope">
+        <tr>
+          <td>指标名称</td>
+          <td>操作</td>
+        </tr>
+        <tr ng-repeat="anomalyDef in includeMetricsData">
+          <td>{{_.getMetricName(anomalyDef.metric)}}</td>
+          <td>
+            <a ng-click="include(anomalyDef.metric)" class="btn btn-inverse btn-mini">
+              <i class="fa fa-check"></i>
+              增加
+            </a>
+          </td>
+        </tr>
+      </table>
+      <div class="" style="margin-top: 30px; margin-bottom: 20px;">
+        <button type="button" class="btn btn-inverse" ng-click="dismiss()">取消</button>
+      </div>
+    </div>
+  </form>
+</div>
+
+

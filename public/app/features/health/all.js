@@ -1,3 +1,4 @@
 define([
-  "./systemHealthCtrl"
+  "./systemHealthCtrl",
+  "./excludeMetricsModal"
 ], function () {});
