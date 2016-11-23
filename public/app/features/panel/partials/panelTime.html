@@ -38,9 +38,28 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
+    <div class="tight-form">
+      <ul class="tight-form-list">
+        <li class="tight-form-item tight-form-item-icon">
+          <i class="fa fa-clock-o"></i>
+        </li>
+        <li class="tight-form-item" style="width: 178px">
+          <strong>提前时间偏移量</strong>
+        </li>
+        <li class="tight-form-item" style="width: 50px">
+          提前
+        </li>
+        <li>
+          <input type="text" class="input-small tight-form-input last" placeholder="1h"
+                 empty-to-null ng-model="panel.timeForward" valid-time-span
+                 ng-change="get_data()" ng-model-onblur>
+        </li>
+      </ul>
+      <div class="clearfix"></div>
+    </div>
 		<div class="tight-form">
 			<ul class="tight-form-list">
-				<li class="tight-form-item tight-form-item-icon">
+				<li class`="tight-form-item tight-form-item-icon">
 					<i class="fa fa-clock-o"></i>
 				</li>
 				<li class="tight-form-item" style="width: 178px">
