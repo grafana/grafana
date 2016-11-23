@@ -15,7 +15,7 @@
           <ul class="tight-form-list">
             <li>
               <select ng-model="excludeMetric">
-                <option ng-repeat="anomalyDef in excludeMetricsData" value="{{anomalyDef.metric}}">
+                <option ng-repeat="anomalyDef in includeMetricsData" value="{{anomalyDef.metric}}">
                   {{_.getMetricName(anomalyDef.metric)}}
                 </option>
               </select>
@@ -34,12 +34,12 @@
           <td>指标名称</td>
           <td>操作</td>
         </tr>
-        <tr ng-repeat="anomalyDef in includeMetricsData">
+        <tr ng-repeat="anomalyDef in excludeMetricsData">
           <td>{{_.getMetricName(anomalyDef.metric)}}</td>
           <td>
             <a ng-click="include(anomalyDef.metric)" class="btn btn-inverse btn-mini">
               <i class="fa fa-check"></i>
-              增加
+              参与计算
             </a>
           </td>
         </tr>
