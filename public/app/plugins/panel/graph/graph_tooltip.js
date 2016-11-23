@@ -123,7 +123,7 @@ function ($) {
       }
 
       // Contat the 3 sub-arrays
-      var results = results[0].concat(results[1],results[2]);
+      results = results[0].concat(results[1],results[2]);
 
       // Time of the point closer to pointer
       results.time = minTime;
