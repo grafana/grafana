@@ -122,11 +122,13 @@ function ($) {
         });
       }
 
-      // Time of the point closer to pointer
-      results[0].time = minTime;
+      // Contat the 3 sub-arrays
+      var results = results[0].concat(results[1],results[2]);
 
-      // Contat and return the 3 sub-arrays
-      return results[0].concat(results[1],results[2]);
+      // Time of the point closer to pointer
+      results.time = minTime;
+
+      return results;
     };
 
     elem.mouseleave(function () {
