@@ -192,18 +192,23 @@ func handleGetMetrics(req *cwRequest, c *middleware.Context) {
 		}
 	} else {
 		var err error
-		assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
-		accessKey := req.DataSource.JsonData.Get("accessKey").MustString()
-		secretKey := req.DataSource.JsonData.Get("secretKey").MustString()
+		/*
+			    assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
+					accessKey := req.DataSource.JsonData.Get("accessKey").MustString()
+					secretKey := req.DataSource.JsonData.Get("secretKey").MustString()
 
-		cwData := &CloudwatchDatasource{
-			AssumeRoleArn: assumeRoleArn,
-			Region:        req.Region,
-			Namespace:     reqParam.Parameters.Namespace,
-			Profile:       req.DataSource.Database,
-			AccessKey:     accessKey,
-			SecretKey:     secretKey,
-		}
+					cwData := &datasourceInfo{
+						AssumeRoleArn: assumeRoleArn,
+						Region:        req.Region,
+						Namespace:     reqParam.Parameters.Namespace,
+						Profile:       req.DataSource.Database,
+						AccessKey:     accessKey,
+						SecretKey:     secretKey,
+					}
+		*/
+
+		cwData := req.GetDatasourceInfo()
+		cwData.Namespace = reqParam.Parameters.Namespace
 
 		if namespaceMetrics, err = getMetricsForCustomMetrics(cwData, getAllMetrics); err != nil {
 			c.JsonApiErr(500, "Unable to call AWS API", err)
@@ -242,7 +247,7 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 		accessKey := req.DataSource.JsonData.Get("accessKey").MustString()
 		secretKey := req.DataSource.JsonData.Get("secretKey").MustString()
 
-		cwDatasource := &CloudwatchDatasource{
+		cwDatasource := &datasourceInfo{
 			Region:        req.Region,
 			Namespace:     reqParam.Parameters.Namespace,
 			Profile:       req.DataSource.Database,
@@ -265,7 +270,7 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 	c.JSON(200, result)
 }
 
-func getAllMetrics(cwData *CloudwatchDatasource) (cloudwatch.ListMetricsOutput, error) {
+func getAllMetrics(cwData *datasourceInfo) (cloudwatch.ListMetricsOutput, error) {
 	cfg := &aws.Config{
 		Region:      aws.String(cwData.Region),
 		Credentials: getCredentials(cwData),
@@ -295,8 +300,8 @@ func getAllMetrics(cwData *CloudwatchDatasource) (cloudwatch.ListMetricsOutput, 
 
 var metricsCacheLock sync.Mutex
 
-func getMetricsForCustomMetrics(cwDatasource *CloudwatchDatasource, getAllMetrics func(*CloudwatchDatasource) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
-	result, err := getAllMetrics(cwDatasource)
+func getMetricsForCustomMetrics(dsInfo *datasourceInfo, getAllMetrics func(*datasourceInfo) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+	result, err := getAllMetrics(dsInfo)
 	if err != nil {
 		return []string{}, err
 	}
@@ -304,37 +309,37 @@ func getMetricsForCustomMetrics(cwDatasource *CloudwatchDatasource, getAllMetric
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
-	if _, ok := customMetricsMetricsMap[cwDatasource.Profile]; !ok {
-		customMetricsMetricsMap[cwDatasource.Profile] = make(map[string]map[string]*CustomMetricsCache)
+	if _, ok := customMetricsMetricsMap[dsInfo.Profile]; !ok {
+		customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*CustomMetricsCache)
 	}
-	if _, ok := customMetricsMetricsMap[cwDatasource.Profile][cwDatasource.Region]; !ok {
-		customMetricsMetricsMap[cwDatasource.Profile][cwDatasource.Region] = make(map[string]*CustomMetricsCache)
+	if _, ok := customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region]; !ok {
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*CustomMetricsCache)
 	}
-	if _, ok := customMetricsMetricsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace]; !ok {
-		customMetricsMetricsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace] = &CustomMetricsCache{}
-		customMetricsMetricsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Cache = make([]string, 0)
+	if _, ok := customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace]; !ok {
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace] = &CustomMetricsCache{}
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
 	}
 
-	if customMetricsMetricsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Expire.After(time.Now()) {
-		return customMetricsMetricsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Cache, nil
+	if customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire.After(time.Now()) {
+		return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
 	}
-	customMetricsMetricsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Cache = make([]string, 0)
-	customMetricsMetricsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Expire = time.Now().Add(5 * time.Minute)
+	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
+	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire = time.Now().Add(5 * time.Minute)
 
 	for _, metric := range result.Metrics {
-		if isDuplicate(customMetricsMetricsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Cache, *metric.MetricName) {
+		if isDuplicate(customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *metric.MetricName) {
 			continue
 		}
-		customMetricsMetricsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Cache = append(customMetricsMetricsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Cache, *metric.MetricName)
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = append(customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *metric.MetricName)
 	}
 
-	return customMetricsMetricsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Cache, nil
+	return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
 }
 
 var dimensionsCacheLock sync.Mutex
 
-func getDimensionsForCustomMetrics(cwDatasource *CloudwatchDatasource, getAllMetrics func(*CloudwatchDatasource) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
-	result, err := getAllMetrics(cwDatasource)
+func getDimensionsForCustomMetrics(dsInfo *datasourceInfo, getAllMetrics func(*datasourceInfo) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+	result, err := getAllMetrics(dsInfo)
 	if err != nil {
 		return []string{}, err
 	}
@@ -342,33 +347,33 @@ func getDimensionsForCustomMetrics(cwDatasource *CloudwatchDatasource, getAllMet
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 
-	if _, ok := customMetricsDimensionsMap[cwDatasource.Profile]; !ok {
-		customMetricsDimensionsMap[cwDatasource.Profile] = make(map[string]map[string]*CustomMetricsCache)
+	if _, ok := customMetricsDimensionsMap[dsInfo.Profile]; !ok {
+		customMetricsDimensionsMap[dsInfo.Profile] = make(map[string]map[string]*CustomMetricsCache)
 	}
-	if _, ok := customMetricsDimensionsMap[cwDatasource.Profile][cwDatasource.Region]; !ok {
-		customMetricsDimensionsMap[cwDatasource.Profile][cwDatasource.Region] = make(map[string]*CustomMetricsCache)
+	if _, ok := customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region]; !ok {
+		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*CustomMetricsCache)
 	}
-	if _, ok := customMetricsDimensionsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace]; !ok {
-		customMetricsDimensionsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace] = &CustomMetricsCache{}
-		customMetricsDimensionsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Cache = make([]string, 0)
+	if _, ok := customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace]; !ok {
+		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace] = &CustomMetricsCache{}
+		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
 	}
 
-	if customMetricsDimensionsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Expire.After(time.Now()) {
-		return customMetricsDimensionsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Cache, nil
+	if customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire.After(time.Now()) {
+		return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
 	}
-	customMetricsDimensionsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Cache = make([]string, 0)
-	customMetricsDimensionsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Expire = time.Now().Add(5 * time.Minute)
+	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
+	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire = time.Now().Add(5 * time.Minute)
 
 	for _, metric := range result.Metrics {
 		for _, dimension := range metric.Dimensions {
-			if isDuplicate(customMetricsDimensionsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Cache, *dimension.Name) {
+			if isDuplicate(customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *dimension.Name) {
 				continue
 			}
-			customMetricsDimensionsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Cache = append(customMetricsDimensionsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Cache, *dimension.Name)
+			customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = append(customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *dimension.Name)
 		}
 	}
 
-	return customMetricsDimensionsMap[cwDatasource.Profile][cwDatasource.Region][cwDatasource.Namespace].Cache, nil
+	return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
 }
 
 func isDuplicate(nameList []string, target string) bool {

@@ -11,13 +11,13 @@ import (
 func TestCloudWatchMetrics(t *testing.T) {
 
 	Convey("When calling getMetricsForCustomMetrics", t, func() {
-		dsInfo := &CloudwatchDatasource{
+		dsInfo := &datasourceInfo{
 			Region:        "us-east-1",
 			Namespace:     "Foo",
 			Profile:       "default",
 			AssumeRoleArn: "",
 		}
-		f := func(dsInfo *CloudwatchDatasource) (cloudwatch.ListMetricsOutput, error) {
+		f := func(dsInfo *datasourceInfo) (cloudwatch.ListMetricsOutput, error) {
 			return cloudwatch.ListMetricsOutput{
 				Metrics: []*cloudwatch.Metric{
 					{
@@ -39,13 +39,13 @@ func TestCloudWatchMetrics(t *testing.T) {
 	})
 
 	Convey("When calling getDimensionsForCustomMetrics", t, func() {
-		dsInfo := &CloudwatchDatasource{
+		dsInfo := &datasourceInfo{
 			Region:        "us-east-1",
 			Namespace:     "Foo",
 			Profile:       "default",
 			AssumeRoleArn: "",
 		}
-		f := func(dsInfo *CloudwatchDatasource) (cloudwatch.ListMetricsOutput, error) {
+		f := func(dsInfo *datasourceInfo) (cloudwatch.ListMetricsOutput, error) {
 			return cloudwatch.ListMetricsOutput{
 				Metrics: []*cloudwatch.Metric{
 					{

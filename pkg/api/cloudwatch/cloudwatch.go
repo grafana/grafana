@@ -33,6 +33,30 @@ type cwRequest struct {
 	DataSource *m.DataSource
 }
 
+type datasourceInfo struct {
+	Profile       string
+	Region        string
+	AssumeRoleArn string
+	Namespace     string
+
+	AccessKey string
+	SecretKey string
+}
+
+func (req *cwRequest) GetDatasourceInfo() *datasourceInfo {
+	assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
+	accessKey := req.DataSource.JsonData.Get("accessKey").MustString()
+	secretKey := req.DataSource.JsonData.Get("secretKey").MustString()
+
+	return &datasourceInfo{
+		AssumeRoleArn: assumeRoleArn,
+		Region:        req.Region,
+		Profile:       req.DataSource.Database,
+		AccessKey:     accessKey,
+		SecretKey:     secretKey,
+	}
+}
+
 func init() {
 	actionHandlers = map[string]actionHandler{
 		"GetMetricStatistics":     handleGetMetricStatistics,
@@ -53,21 +77,11 @@ type cache struct {
 	expiration *time.Time
 }
 
-type CloudwatchDatasource struct {
-	Profile       string
-	Region        string
-	AssumeRoleArn string
-	Namespace     string
-
-	AccessKey string
-	SecretKey string
-}
-
 var awsCredentialCache map[string]cache = make(map[string]cache)
 var credentialCacheLock sync.RWMutex
 
-func getCredentials(cwDatasource *CloudwatchDatasource) *credentials.Credentials {
-	cacheKey := cwDatasource.Profile + ":" + cwDatasource.AssumeRoleArn
+func getCredentials(dsInfo *datasourceInfo) *credentials.Credentials {
+	cacheKey := dsInfo.Profile + ":" + dsInfo.AssumeRoleArn
 	credentialCacheLock.RLock()
 	if _, ok := awsCredentialCache[cacheKey]; ok {
 		if awsCredentialCache[cacheKey].expiration != nil &&
@@ -84,9 +98,9 @@ func getCredentials(cwDatasource *CloudwatchDatasource) *credentials.Credentials
 	sessionToken := ""
 	var expiration *time.Time
 	expiration = nil
-	if strings.Index(cwDatasource.AssumeRoleArn, "arn:aws:iam:") == 0 {
+	if strings.Index(dsInfo.AssumeRoleArn, "arn:aws:iam:") == 0 {
 		params := &sts.AssumeRoleInput{
-			RoleArn:         aws.String(cwDatasource.AssumeRoleArn),
+			RoleArn:         aws.String(dsInfo.AssumeRoleArn),
 			RoleSessionName: aws.String("GrafanaSession"),
 			DurationSeconds: aws.Int64(900),
 		}
@@ -95,11 +109,11 @@ func getCredentials(cwDatasource *CloudwatchDatasource) *credentials.Credentials
 		stsCreds := credentials.NewChainCredentials(
 			[]credentials.Provider{
 				&credentials.EnvProvider{},
-				&credentials.SharedCredentialsProvider{Filename: "", Profile: cwDatasource.Profile},
+				&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
 				&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(stsSess), ExpiryWindow: 5 * time.Minute},
 			})
 		stsConfig := &aws.Config{
-			Region:      aws.String(cwDatasource.Region),
+			Region:      aws.String(dsInfo.Region),
 			Credentials: stsCreds,
 		}
 
@@ -127,10 +141,10 @@ func getCredentials(cwDatasource *CloudwatchDatasource) *credentials.Credentials
 			}},
 			&credentials.EnvProvider{},
 			&credentials.StaticProvider{Value: credentials.Value{
-				AccessKeyID:     cwDatasource.AccessKey,
-				SecretAccessKey: cwDatasource.SecretKey,
+				AccessKeyID:     dsInfo.AccessKey,
+				SecretAccessKey: dsInfo.SecretKey,
 			}},
-			&credentials.SharedCredentialsProvider{Filename: "", Profile: cwDatasource.Profile},
+			&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
 			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
 		})
 
@@ -145,19 +159,9 @@ func getCredentials(cwDatasource *CloudwatchDatasource) *credentials.Credentials
 }
 
 func getAwsConfig(req *cwRequest) *aws.Config {
-	assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
-	accessKey := req.DataSource.JsonData.Get("accessKey").MustString()
-	secretKey := req.DataSource.JsonData.Get("secretKey").MustString()
-
 	cfg := &aws.Config{
-		Region: aws.String(req.Region),
-		Credentials: getCredentials(&CloudwatchDatasource{
-			AccessKey:     accessKey,
-			SecretKey:     secretKey,
-			Region:        req.Region,
-			Profile:       req.DataSource.Database,
-			AssumeRoleArn: assumeRoleArn,
-		}),
+		Region:      aws.String(req.Region),
+		Credentials: getCredentials(req.GetDatasourceInfo()),
 	}
 	return cfg
 }
