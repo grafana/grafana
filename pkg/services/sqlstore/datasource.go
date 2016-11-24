@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	m "github.com/grafana/grafana/pkg/models"
 
 	"github.com/go-xorm/xorm"
@@ -82,6 +83,7 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			BasicAuthPassword: cmd.BasicAuthPassword,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
+			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
 			Created:           time.Now(),
 			Updated:           time.Now(),
 		}
@@ -128,6 +130,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			BasicAuthPassword: cmd.BasicAuthPassword,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
+			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
 			Updated:           time.Now(),
 		}
 

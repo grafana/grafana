@@ -64,22 +64,31 @@ type DashboardRedirect struct {
 }
 
 type DataSource struct {
-	Id                int64            `json:"id"`
-	OrgId             int64            `json:"orgId"`
-	Name              string           `json:"name"`
-	Type              string           `json:"type"`
-	TypeLogoUrl       string           `json:"typeLogoUrl"`
-	Access            m.DsAccess       `json:"access"`
-	Url               string           `json:"url"`
-	Password          string           `json:"password"`
-	User              string           `json:"user"`
-	Database          string           `json:"database"`
-	BasicAuth         bool             `json:"basicAuth"`
-	BasicAuthUser     string           `json:"basicAuthUser"`
-	BasicAuthPassword string           `json:"basicAuthPassword"`
-	WithCredentials   bool             `json:"withCredentials"`
-	IsDefault         bool             `json:"isDefault"`
-	JsonData          *simplejson.Json `json:"jsonData,omitempty"`
+	Id                int64             `json:"id"`
+	OrgId             int64             `json:"orgId"`
+	Name              string            `json:"name"`
+	Type              string            `json:"type"`
+	TypeLogoUrl       string            `json:"typeLogoUrl"`
+	Access            m.DsAccess        `json:"access"`
+	Url               string            `json:"url"`
+	Password          string            `json:"password"`
+	User              string            `json:"user"`
+	Database          string            `json:"database"`
+	BasicAuth         bool              `json:"basicAuth"`
+	BasicAuthUser     string            `json:"basicAuthUser"`
+	BasicAuthPassword string            `json:"basicAuthPassword"`
+	WithCredentials   bool              `json:"withCredentials"`
+	IsDefault         bool              `json:"isDefault"`
+	JsonData          *simplejson.Json  `json:"jsonData,omitempty"`
+	SecureJsonData    map[string]string `json:"secureJsonData,omitempty"`
+	TLSAuth           TLSAuth           `json:"tlsAuth,omitempty"`
+}
+
+// TLSAuth is used to show if TLS certs have been uploaded already
+type TLSAuth struct {
+	CACertSet     bool `json:"tlsCACertSet"`
+	ClientCertSet bool `json:"tlsClientCertSet"`
+	ClientKeySet  bool `json:"tlsClientKeySet"`
 }
 
 type DataSourceList []DataSource
