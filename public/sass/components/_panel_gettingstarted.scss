@@ -14,32 +14,6 @@ $path-height:               4px !default;
 $path-position:             $marker-size-half - ($path-height / 2);
 
 
-.gettingstarted-blurb-copy {
-  margin-bottom: $spacer/2;
-  text-align: center;
-}
-
-.gettingstarted-blurb {
-  @extend .gettingstarted-blurb-copy;
-  color: $text-color;
-  display: block;
-
-  &:hover{
-    text-decoration: underline;
-  }
-}
-
-.gettingstarted-blurb-success {
-  @extend .gettingstarted-blurb-copy;
-  color: $text-color-weak;
-}
-
-.gettingstarted-blurb-upcoming {
-  @extend .gettingstarted-blurb-copy;
-  color: $text-color-weak;
-}
-
-
 .dashlist-cta-close-btn {
   color: $text-color-weak;
   float: right;
@@ -105,6 +79,19 @@ $path-position:             $marker-size-half - ($path-height / 2);
     .progress-title {
       font-weight: 400;
     }
+    .progress-text {
+      display: none;
+    }
+
+    .progress-marker {
+      .icon-gf {
+        color: $brand-primary;
+        -webkit-text-fill-color: transparent;
+        background: $brand-gradient;
+        -webkit-background-clip: text;
+        text-decoration:none;
+      }
+    }
   }
 
   &.completed {
@@ -145,6 +132,7 @@ $path-position:             $marker-size-half - ($path-height / 2);
   background-color: $panel-bg;
   margin-left: auto;
   margin-right: auto;
+  margin-bottom: $spacer;
   color: $text-color-weak;
   font-size: 35px;
   vertical-align: sub;
@@ -153,7 +141,6 @@ $path-position:             $marker-size-half - ($path-height / 2);
 // Progress text
 .progress-text {
   display: block;
-  padding: $spacer;
   overflow: hidden;
   text-overflow: ellipsis;
 }

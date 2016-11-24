@@ -24,6 +24,34 @@ class GettingStartedPanelCtrl extends PanelCtrl {
     this.stepIndex = 0;
     this.steps = [];
 
+    if (!contextSrv.hasRole('Admin')) {
+      this.steps.push({
+        cta: 'Basic Concepts Guide',
+        icon: 'fa fa-file-text-o',
+        href: 'http://docs.grafana.org/guides/basic_concepts/',
+        check: () => $q.when(false),
+        cssClass: 'active',
+      });
+
+      this.steps.push({
+        cta: 'Getting Started Guide',
+        icon: 'fa fa-file-text-o',
+        href: 'http://docs.grafana.org/guides/getting_started/',
+        check: () => $q.when(false),
+        cssClass: 'active',
+      });
+
+      this.steps.push({
+        cta: 'Building a dashboard',
+        icon: 'fa fa-film',
+        href: 'http://docs.grafana.org/tutorials/screencasts/',
+        check: () => $q.when(false),
+        cssClass: 'active',
+      });
+
+      return;
+    }
+
     this.steps.push({
       title: 'Install Grafana',
       icon: 'icon-gf icon-gf-check',
