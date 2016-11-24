@@ -192,21 +192,6 @@ func handleGetMetrics(req *cwRequest, c *middleware.Context) {
 		}
 	} else {
 		var err error
-		/*
-			    assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
-					accessKey := req.DataSource.JsonData.Get("accessKey").MustString()
-					secretKey := req.DataSource.JsonData.Get("secretKey").MustString()
-
-					cwData := &datasourceInfo{
-						AssumeRoleArn: assumeRoleArn,
-						Region:        req.Region,
-						Namespace:     reqParam.Parameters.Namespace,
-						Profile:       req.DataSource.Database,
-						AccessKey:     accessKey,
-						SecretKey:     secretKey,
-					}
-		*/
-
 		cwData := req.GetDatasourceInfo()
 		cwData.Namespace = reqParam.Parameters.Namespace
 
@@ -243,19 +228,10 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 		}
 	} else {
 		var err error
-		assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
-		accessKey := req.DataSource.JsonData.Get("accessKey").MustString()
-		secretKey := req.DataSource.JsonData.Get("secretKey").MustString()
+		dsInfo := req.GetDatasourceInfo()
+		dsInfo.Namespace = reqParam.Parameters.Namespace
 
-		cwDatasource := &datasourceInfo{
-			Region:        req.Region,
-			Namespace:     reqParam.Parameters.Namespace,
-			Profile:       req.DataSource.Database,
-			AssumeRoleArn: assumeRoleArn,
-			AccessKey:     accessKey,
-			SecretKey:     secretKey,
-		}
-		if dimensionValues, err = getDimensionsForCustomMetrics(cwDatasource, getAllMetrics); err != nil {
+		if dimensionValues, err = getDimensionsForCustomMetrics(dsInfo, getAllMetrics); err != nil {
 			c.JsonApiErr(500, "Unable to call AWS API", err)
 			return
 		}

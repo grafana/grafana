@@ -215,5 +215,11 @@ func convertModelToDtos(ds *m.DataSource) dtos.DataSource {
 		dto.TLSAuth.ClientKeySet = len(ds.SecureJsonData["tlsClientKey"]) > 0
 	}
 
+	for k, v := range ds.SecureJsonData {
+		if len(v) > 0 {
+			dto.EncryptedFields = append(dto.EncryptedFields, k)
+		}
+	}
+
 	return dto
 }
