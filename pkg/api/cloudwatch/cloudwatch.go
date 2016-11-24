@@ -45,8 +45,17 @@ type datasourceInfo struct {
 
 func (req *cwRequest) GetDatasourceInfo() *datasourceInfo {
 	assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
-	accessKey := req.DataSource.JsonData.Get("accessKey").MustString()
-	secretKey := req.DataSource.JsonData.Get("secretKey").MustString()
+	accessKey := ""
+	secretKey := ""
+
+	for key, value := range req.DataSource.SecureJsonData.Decrypt() {
+		if key == "accessKey" {
+			accessKey = value
+		}
+		if key == "secretKey" {
+			secretKey = value
+		}
+	}
 
 	return &datasourceInfo{
 		AssumeRoleArn: assumeRoleArn,
