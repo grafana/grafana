@@ -20,6 +20,7 @@ function(angular, _) {
       scope.onAppEvent('dashboard-saved', function() {
         this.original = this.current.getSaveModelClone();
         this.originalPath = $location.path();
+        this.goto_next();
       }.bind(this));
 
       $window.onbeforeunload = function() {
