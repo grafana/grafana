@@ -80,6 +80,9 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			BasicAuth:         cmd.BasicAuth,
 			BasicAuthUser:     cmd.BasicAuthUser,
 			BasicAuthPassword: cmd.BasicAuthPassword,
+			TlsAuth:           cmd.TlsAuth,
+			TlsClientCert:     cmd.TlsClientCert,
+			TlsClientKey:      cmd.TlsClientKey,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
 			Created:           time.Now(),
@@ -126,6 +129,9 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			BasicAuth:         cmd.BasicAuth,
 			BasicAuthUser:     cmd.BasicAuthUser,
 			BasicAuthPassword: cmd.BasicAuthPassword,
+			TlsAuth:           cmd.TlsAuth,
+			TlsClientCert:     cmd.TlsClientCert,
+			TlsClientKey:      cmd.TlsClientKey,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
 			Updated:           time.Now(),
@@ -133,6 +139,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 
 		sess.UseBool("is_default")
 		sess.UseBool("basic_auth")
+		sess.UseBool("tls_auth")
 		sess.UseBool("with_credentials")
 
 		_, err := sess.Where("id=? and org_id=?", ds.Id, ds.OrgId).Update(ds)
