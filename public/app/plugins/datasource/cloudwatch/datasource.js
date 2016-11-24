@@ -357,6 +357,7 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
       var periodMs = options.period * 1000;
 
       return _.map(options.statistics, function(stat) {
+        var extended = !_.includes(self.standardStatistics, stat);
         var dps = [];
         var lastTimestamp = null;
         _.chain(md.Datapoints)
@@ -369,7 +370,11 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
             dps.push([null, lastTimestamp + periodMs]);
           }
           lastTimestamp = timestamp;
-          dps.push([dp[stat], timestamp]);
+          if (!extended) {
+            dps.push([dp[stat], timestamp]);
+          } else {
+            dps.push([dp.ExtendedStatistics[stat], timestamp]);
+          }
         })
         .value();
 
