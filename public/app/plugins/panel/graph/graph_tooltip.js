@@ -41,10 +41,11 @@ function ($) {
       return j - 1;
     };
 
-    this.showTooltip = function(absoluteTime, innerHtml, pos) {
-      var body = '<div class="graph-tooltip-time">'+ absoluteTime + '</div>';
-      body += innerHtml + '</div>';
-      $tooltip.html(body).place_tt(pos.pageX + 20, pos.pageY);
+    this.showTooltip = function(absoluteTime, innerHtml, pos, xMode) {
+      if (xMode === 'time') {
+        innerHtml = '<div class="graph-tooltip-time">'+ absoluteTime + '</div>' + innerHtml;
+      }
+      $tooltip.html(innerHtml).place_tt(pos.pageX + 20, pos.pageY);
     };
 
     this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
@@ -148,6 +149,8 @@ function ($) {
     elem.bind("plothover", function (event, pos, item) {
       var plot = elem.data().plot;
       var plotData = plot.getData();
+      var xAxes = plot.getXAxes();
+      var xMode = xAxes[0].options.mode;
       var seriesList = getSeriesFn();
       var group, value, absoluteTime, hoverInfo, i, series, seriesHtml, tooltipFormat;
 
@@ -208,7 +211,7 @@ function ($) {
           plot.highlight(hoverInfo.index, hoverInfo.hoverIndex);
         }
 
-        self.showTooltip(absoluteTime, seriesHtml, pos);
+        self.showTooltip(absoluteTime, seriesHtml, pos, xMode);
       }
       // single series tooltip
       else if (item) {
@@ -229,7 +232,7 @@ function ($) {
 
         group += '<div class="graph-tooltip-value">' + value + '</div>';
 
-        self.showTooltip(absoluteTime, group, pos);
+        self.showTooltip(absoluteTime, group, pos, xMode);
       }
       // no hit
       else {
