@@ -49,7 +49,8 @@ function ($) {
 
     this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
       var value, i, series, hoverIndex, hoverDistance, pointTime, yaxis;
-      var results = [];
+      // 3 sub-arrays, 1st for hidden series, 2nd for left yaxis, 3rd for right yaxis.
+      var results = [[],[],[]];
 
       //now we know the current X (j) position for X and Y values
       var last_value = 0; //needed for stacked values
@@ -60,14 +61,14 @@ function ($) {
         series = seriesList[i];
 
         if (!series.data.length || (panel.legend.hideEmpty && series.allIsNull)) {
-          // Init value & yaxis so that it does not brake series sorting
-          results.push({ hidden: true, value: 0, yaxis: 0 });
+          // Init value so that it does not brake series sorting
+          results[0].push({ hidden: true, value: 0 });
           continue;
         }
 
         if (!series.data.length || (panel.legend.hideZero && series.allIsZero)) {
-          // Init value & yaxis so that it does not brake series sorting
-          results.push({ hidden: true, value: 0, yaxis: 0 });
+          // Init value so that it does not brake series sorting
+          results[0].push({ hidden: true, value: 0 });
           continue;
         }
 
@@ -110,17 +111,19 @@ function ($) {
           yaxis = series.yaxis.n;
         }
 
-        results.push({
+        results[yaxis].push({
           value: value,
           hoverIndex: hoverIndex,
           color: series.color,
           label: series.label,
           time: pointTime,
           distance: hoverDistance,
-          yaxis: yaxis,
           index: i
         });
       }
+
+      // Contat the 3 sub-arrays
+      results = results[0].concat(results[1],results[2]);
 
       // Time of the point closer to pointer
       results.time = minTime;
@@ -172,7 +175,7 @@ function ($) {
         absoluteTime = dashboard.formatDate(seriesHoverInfo.time, tooltipFormat);
 
         // Dynamically reorder the hovercard for the current time point if the
-        // option is enabled, sort by yaxis by default.
+        // option is enabled.
         if (panel.tooltip.sort === 2) {
           seriesHoverInfo.sort(function(a, b) {
             return b.value - a.value;
