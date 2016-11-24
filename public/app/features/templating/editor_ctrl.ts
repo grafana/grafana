@@ -106,7 +106,7 @@ export class VariableEditorCtrl {
     };
 
     $scope.duplicate = function(variable) {
-      var clone = _.cloneDeep(variable.getModel());
+      var clone = _.cloneDeep(variable.getSaveModel());
       $scope.current = variableSrv.createVariableFromModel(clone);
       $scope.variables.push($scope.current);
       $scope.current.name = 'copy_of_'+variable.name;

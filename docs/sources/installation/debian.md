@@ -15,7 +15,7 @@ weight = 1
 Description | Download
 ------------ | -------------
 Stable for Debian-based Linux | [3.1.1 (x86-64 deb)](https://grafanarel.s3.amazonaws.com/builds/grafana_3.1.1-1470047149_amd64.deb)
-Latest Beta for Debian-based Linux | [4.0.0-beta1 (x86-64 deb)](https://grafanarel.s3.amazonaws.com/builds/grafana_4.0.0-1478693311beta1_amd64.deb)
+Latest Beta for Debian-based Linux | [4.0.0-beta2 (x86-64 deb)](https://grafanarel.s3.amazonaws.com/builds/grafana_4.0.0-1479719016beta2_amd64.deb)
 
 ## Install Stable
 
@@ -27,9 +27,9 @@ $ sudo dpkg -i grafana_3.1.1-1470047149_amd64.deb
 
 ## Install Latest Beta
 
-    $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_4.0.0-1478693311beta1_amd64.deb
+    $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_4.0.0-1479719016beta2_amd64.deb
     $ sudo apt-get install -y adduser libfontconfig
-    $ sudo dpkg -i grafana_4.0.0-1478693311beta1_amd64.deb
+    $ sudo dpkg -i grafana_4.0.0-1479719016beta2_amd64.deb
 
 ## APT Repository
 
@@ -139,5 +139,3 @@ To configure Grafana add a configuration file named `custom.ini` to the
 Start Grafana by executing `./bin/grafana-server web`. The `grafana-server`
 binary needs the working directory to be the root install directory (where the
 binary and the `public` folder is located).
-
-

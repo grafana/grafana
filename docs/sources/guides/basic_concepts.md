@@ -29,7 +29,7 @@ Each Organization can have one or more Data Sources.
 
 All Dashboards are owned by a particular Organization.
 
- > Note: It is important to remember that most metric databases to not provide any sort of per-user series authentication. Therefore, in Grafana, Data Sources and Dashboards are available to all Users in a particular Organization.
+ > Note: It is important to remember that most metric databases do not provide any sort of per-user series authentication. Therefore, in Grafana, Data Sources and Dashboards are available to all Users in a particular Organization.
 
 For more details on the user model for Grafana, please refer to [Admin](/reference/admin/)
 

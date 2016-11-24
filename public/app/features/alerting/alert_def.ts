@@ -40,6 +40,7 @@ var reducerTypes = [
   {text: 'sum()' , value: 'sum'},
   {text: 'count()', value: 'count'},
   {text: 'last()', value: 'last'},
+  {text: 'median()', value: 'median'},
 ];
 
 var noDataModes = [

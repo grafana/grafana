@@ -23,6 +23,7 @@ func NewEvalHandler() *DefaultEvalHandler {
 
 func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 	firing := true
+	noDataFound := true
 	conditionEvals := ""
 
 	for i := 0; i < len(context.Rule.Conditions); i++ {
@@ -40,8 +41,10 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 		// calculating Firing based on operator
 		if cr.Operator == "or" {
 			firing = firing || cr.Firing
+			noDataFound = noDataFound || cr.NoDataFound
 		} else {
 			firing = firing && cr.Firing
+			noDataFound = noDataFound && cr.NoDataFound
 		}
 
 		if i > 0 {
@@ -55,6 +58,7 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 
 	context.ConditionEvals = conditionEvals + " = " + strconv.FormatBool(firing)
 	context.Firing = firing
+	context.NoDataFound = noDataFound
 	context.EndTime = time.Now()
 	elapsedTime := context.EndTime.Sub(context.StartTime) / time.Millisecond
 	metrics.M_Alerting_Exeuction_Time.Update(elapsedTime)

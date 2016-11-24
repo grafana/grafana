@@ -11,10 +11,11 @@ type conditionStub struct {
 	firing   bool
 	operator string
 	matches  []*EvalMatch
+	noData   bool
 }
 
 func (c *conditionStub) Eval(context *EvalContext) (*ConditionResult, error) {
-	return &ConditionResult{Firing: c.firing, EvalMatches: c.matches, Operator: c.operator}, nil
+	return &ConditionResult{Firing: c.firing, EvalMatches: c.matches, Operator: c.operator, NoDataFound: c.noData}, nil
 }
 
 func TestAlertingExecutor(t *testing.T) {
@@ -126,6 +127,42 @@ func TestAlertingExecutor(t *testing.T) {
 			handler.Eval(context)
 			So(context.Firing, ShouldEqual, true)
 			So(context.ConditionEvals, ShouldEqual, "[[true OR false] OR true] = true")
+		})
+
+		Convey("Should return no data if one condition has nodata", func() {
+			context := NewEvalContext(context.TODO(), &Rule{
+				Conditions: []Condition{
+					&conditionStub{operator: "and", noData: true},
+				},
+			})
+
+			handler.Eval(context)
+			So(context.Firing, ShouldEqual, false)
+			So(context.NoDataFound, ShouldBeTrue)
+		})
+
+		Convey("Should return no data if both conditions have no data and using AND", func() {
+			context := NewEvalContext(context.TODO(), &Rule{
+				Conditions: []Condition{
+					&conditionStub{operator: "and", noData: true},
+					&conditionStub{operator: "and", noData: false},
+				},
+			})
+
+			handler.Eval(context)
+			So(context.NoDataFound, ShouldBeFalse)
+		})
+
+		Convey("Should not return no data if both conditions have no data and using OR", func() {
+			context := NewEvalContext(context.TODO(), &Rule{
+				Conditions: []Condition{
+					&conditionStub{operator: "or", noData: true},
+					&conditionStub{operator: "or", noData: false},
+				},
+			})
+
+			handler.Eval(context)
+			So(context.NoDataFound, ShouldBeTrue)
 		})
 	})
 }

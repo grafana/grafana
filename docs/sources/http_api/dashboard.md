@@ -1,8 +1,13 @@
-----
-page_title: Dashboard API
-page_description: Grafana Dashboard API Reference
-page_keywords: grafana, admin, http, api, documentation, dashboard
----
++++
+title = "Dashboard HTTP API "
+description = "Grafana Dashboard HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "dashboard"]
+aliases = ["/http_api/dashboard/"]
+type = "docs"
+[menu.docs]
+name = "Dashboard"
+parent = "http_api"
++++
 
 # Dashboard API
 

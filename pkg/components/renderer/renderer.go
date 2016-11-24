@@ -35,7 +35,12 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		executable = executable + ".exe"
 	}
 
-	url := fmt.Sprintf("%s://localhost:%s/%s", setting.Protocol, setting.HttpPort, params.Path)
+	localAddress := "localhost"
+	if setting.HttpAddr != setting.DEFAULT_HTTP_ADDR {
+		localAddress = setting.HttpAddr
+	}
+
+	url := fmt.Sprintf("%s://%s:%s/%s", setting.Protocol, localAddress, setting.HttpPort, params.Path)
 
 	binPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, executable))
 	scriptPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, "render.js"))

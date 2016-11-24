@@ -143,7 +143,14 @@ function(angular, _) {
       };
 
       modalScope.save = function() {
-        tracker.scope.$emit('save-dashboard');
+        var cancel = $rootScope.$on('dashboard-saved', function() {
+          cancel();
+          $timeout(function() {
+            tracker.goto_next();
+          });
+        });
+
+        $rootScope.$emit('save-dashboard');
       };
 
       $rootScope.appEvent('show-modal', {
