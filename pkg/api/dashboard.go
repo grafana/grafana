@@ -120,6 +120,16 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		cmd.UserId = c.UserId
 	}
 
+	validateAlertsCmd := alerting.ValidateDashboardAlertsCommand{
+		OrgId:     c.OrgId,
+		UserId:    c.UserId,
+		Dashboard: cmd.Result,
+	}
+
+	if err := bus.Dispatch(&validateAlertsCmd); err != nil {
+		return ApiError(500, "Invalid alert data. Cannot save dashboard", err)
+	}
+
 	dash := cmd.GetDashboardModel()
 	if dash.Id == 0 {
 		limitReached, err := middleware.QuotaReached(c, "dashboard")
