@@ -28,6 +28,11 @@ var evalFunctions = [
   {text: 'HAS NO VALUE' , value: 'no_value'}
 ];
 
+var evalOperators = [
+  {text: 'OR', value: 'or'},
+  {text: 'AND', value: 'and'},
+];
+
 var reducerTypes = [
   {text: 'avg()', value: 'avg'},
   {text: 'min()', value: 'min'},
@@ -35,6 +40,7 @@ var reducerTypes = [
   {text: 'sum()' , value: 'sum'},
   {text: 'count()', value: 'count'},
   {text: 'last()', value: 'last'},
+  {text: 'median()', value: 'median'},
 ];
 
 var noDataModes = [
@@ -116,6 +122,7 @@ export default {
   getStateDisplayModel: getStateDisplayModel,
   conditionTypes: conditionTypes,
   evalFunctions: evalFunctions,
+  evalOperators: evalOperators,
   noDataModes: noDataModes,
   executionErrorModes: executionErrorModes,
   reducerTypes: reducerTypes,

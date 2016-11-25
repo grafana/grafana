@@ -1,8 +1,13 @@
-----
-page_title: Snapshot API
-page_description: Grafana Snapshot API Reference
-page_keywords: grafana, admin, http, api, documentation, snapshot, dashboard
----
++++
+title = "HTTP Snapshot API "
+description = "Grafana HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "snapshot"]
+aliases = ["/http_api/snapshot/"]
+type = "docs"
+[menu.docs]
+name = "Snapshot"
+parent = "http_api"
++++
 
 # Snapshot API
 

@@ -41,6 +41,20 @@ func TestSimpleReducer(t *testing.T) {
 			So(result, ShouldEqual, float64(3000))
 		})
 
+		Convey("median odd amount of numbers", func() {
+			result := testReducer("median", 1, 2, 3000)
+			So(result, ShouldEqual, float64(2))
+		})
+
+		Convey("median even amount of numbers", func() {
+			result := testReducer("median", 1, 2, 4, 3000)
+			So(result, ShouldEqual, float64(3))
+		})
+
+		Convey("median with one values", func() {
+			result := testReducer("median", 1)
+			So(result, ShouldEqual, float64(1))
+		})
 	})
 }
 

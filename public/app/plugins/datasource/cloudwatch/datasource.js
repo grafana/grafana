@@ -37,7 +37,8 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
         query.dimensions = self.convertDimensionFormat(target.dimensions, options.scopedVars);
         query.statistics = target.statistics;
 
-        var period = this._getPeriod(target, query, options, start, end);
+        var now = Math.round(Date.now() / 1000);
+        var period = this._getPeriod(target, query, options, start, end, now);
         target.period = period;
         query.period = period;
 
@@ -67,22 +68,30 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
       });
     };
 
-    this._getPeriod = function(target, query, options, start, end) {
+    this._getPeriod = function(target, query, options, start, end, now) {
       var period;
       var range = end - start;
 
-      if (!target.period) {
+      var daySec = 60 * 60 * 24;
+      var periodUnit = 60;
+      if (now - start > (daySec * 15)) { // until 63 days ago
+        periodUnit = period = 60 * 5;
+      } else if (now - start > (daySec * 63)) { // until 455 days ago
+        periodUnit = period = 60 * 60;
+      } else if (now - start > (daySec * 455)) { // over 455 days, should return error, but try to long period
+        periodUnit = period = 60 * 60;
+      } else if (!target.period) {
         period = (query.namespace === 'AWS/EC2') ? 300 : 60;
       } else if (/^\d+$/.test(target.period)) {
         period = parseInt(target.period, 10);
       } else {
         period = kbn.interval_to_seconds(templateSrv.replace(target.period, options.scopedVars));
       }
-      if (query.period < 60) {
+      if (period < 60) {
         period = 60;
       }
-      if (range / query.period >= 1440) {
-        period = Math.ceil(range / 1440 / 60) * 60;
+      if (range / period >= 1440) {
+        period = Math.ceil(range / 1440 / periodUnit) * periodUnit;
       }
 
       return period;

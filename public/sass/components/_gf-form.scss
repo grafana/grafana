@@ -79,6 +79,10 @@ $gf-form-margin: 0.25rem;
   }
 }
 
+.gf-form-textarea {
+  max-width: 650px;
+}
+
 .gf-form-input {
   display: block;
   width: 100%;
@@ -248,6 +252,10 @@ $gf-form-margin: 0.25rem;
 
   &--right-normal {
     float: right;
+  }
+
+  &--header {
+    margin-bottom: $gf-form-margin
   }
 }
 

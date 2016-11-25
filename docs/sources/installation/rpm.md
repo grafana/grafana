@@ -15,7 +15,7 @@ weight = 2
 Description | Download
 ------------ | -------------
 Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [3.1.1 (x86-64 rpm)](https://grafanarel.s3.amazonaws.com/builds/grafana-3.1.1-1470047149.x86_64.rpm)
-Latest Beta for CentOS / Fedora / OpenSuse / Redhat Linux | [4.0.0-beta1 (x86-64 rpm)](https://grafanarel.s3.amazonaws.com/builds/grafana-4.0.0-1478693311beta1.x86_64.rpm)
+Latest Beta for CentOS / Fedora / OpenSuse / Redhat Linux | [4.0.0-beta2 (x86-64 rpm)](https://grafanarel.s3.amazonaws.com/builds/grafana-4.0.0-1479719016beta2.x86_64.rpm)
 
 ## Install Stable
 
@@ -36,18 +36,18 @@ Or install manually using `rpm`.
 
 ## Or Install Latest Beta
 
-    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-4.0.0-1478693311beta1.x86_64.rpm
+    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-4.0.0-1479719016beta2.x86_64.rpm
 
 Or install manually using `rpm`.
 
 #### On CentOS / Fedora / Redhat:
 
     $ sudo yum install initscripts fontconfig
-    $ sudo rpm -Uvh grafana-4.0.0-1478693311beta1.x86_64.rpm
+    $ sudo rpm -Uvh grafana-4.0.0-1479719016beta2.x86_64.rpm
 
 #### On OpenSuse:
 
-    $ sudo rpm -i --nodeps grafana-4.0.0-1478693311beta1.x86_64.rpm
+    $ sudo rpm -i --nodeps grafana-4.0.0-1479719016beta2.x86_64.rpm
 
 ## Install via YUM Repository
 
@@ -141,6 +141,18 @@ those options.
 - [OpenTSDB]({{< relref "datasources/opentsdb.md" >}})
 - [Prometheus]({{< relref "datasources/prometheus.md" >}})
 
+### Server side image rendering
+
+Server side image (png) rendering is a feature that is optional but very useful when sharing visualizations,
+for example in alert notifications.
+
+If the image is missing text make sure you have font packages installed.
+
+```
+yum install fontconfig
+yum install freetype*
+yum install urw-fonts
+```
 
 ## Installing from binary tar file
 

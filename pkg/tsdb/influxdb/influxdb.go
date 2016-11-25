@@ -82,6 +82,10 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		return result.WithError(err)
 	}
 
+	if response.Err != nil {
+		return result.WithError(response.Err)
+	}
+
 	result.QueryResults = make(map[string]*tsdb.QueryResult)
 	result.QueryResults["A"] = e.ResponseParser.Parse(&response, query)
 

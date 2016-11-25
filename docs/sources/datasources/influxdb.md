@@ -116,9 +116,9 @@ the hosts variable only show hosts from the current selected region with a query
 SHOW TAG VALUES WITH KEY = "hostname"  WHERE region =~ /$region/
 ```
 
-> Always you `regex values` or `regex wildcard` for All format or multi select format.
+> Always use `regex values` or `regex wildcard` for All format or multi select format.
 
-![](img/docs/influxdb/templating_simple_ex1.png)
+![](/img/docs/influxdb/templating_simple_ex1.png)
 
 ## Annotations
 Annotations allows you to overlay rich event information on top of graphs.

@@ -1,15 +1,21 @@
-----
-page_title: HTTP API
-page_description: Grafana HTTP API Reference
-page_keywords: grafana, admin, http, api, documentation
----
++++
+title = "HTTP API "
+description = "Grafana HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "overview"]
+aliases = ["/http_api/overview/"]
+type = "docs"
+[menu.docs]
+name = "Overview"
+parent = "http_api"
++++
+
 
 # HTTP API Reference
 
 The Grafana backend exposes an HTTP API, the same API is used by the frontend to do everything from saving
 dashboards, creating users and updating data sources.
 
-###Supported HTTP APIs:
+## Supported HTTP APIs:
 
 * [Authentication API](/http_api/auth/)
 * [Dashboard API](/http_api/dashboard/)

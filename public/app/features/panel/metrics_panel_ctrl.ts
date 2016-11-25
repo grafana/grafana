@@ -252,6 +252,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       },
       complete: () => {
         console.log('panel: observer got complete');
+        this.dataStream = null;
       }
     });
   }

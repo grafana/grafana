@@ -20,6 +20,8 @@ const opDeleteAlarms = "DeleteAlarms"
 // value can be used to capture response data after the request's "Send" method
 // is called.
 //
+// See DeleteAlarms for usage and error information.
+//
 // Creating a request object using this method should be used when you want to inject
 // custom logic into the request's lifecycle using a custom handler, or if you want to
 // access properties on the request object before or after sending the request. If
@@ -56,7 +58,21 @@ func (c *CloudWatch) DeleteAlarmsRequest(input *DeleteAlarmsInput) (req *request
 	return
 }
 
-// Deletes all specified alarms. In the event of an error, no alarms are deleted.
+// DeleteAlarms API operation for Amazon CloudWatch.
+//
+// Deletes the specified alarms. In the event of an error, no alarms are deleted.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation DeleteAlarms for usage and error information.
+//
+// Returned Error Codes:
+//   * ResourceNotFound
+//   The named resource does not exist.
+//
 func (c *CloudWatch) DeleteAlarms(input *DeleteAlarmsInput) (*DeleteAlarmsOutput, error) {
 	req, out := c.DeleteAlarmsRequest(input)
 	err := req.Send()
@@ -69,6 +85,8 @@ const opDescribeAlarmHistory = "DescribeAlarmHistory"
 // client's request for the DescribeAlarmHistory operation. The "output" return
 // value can be used to capture response data after the request's "Send" method
 // is called.
+//
+// See DescribeAlarmHistory for usage and error information.
 //
 // Creating a request object using this method should be used when you want to inject
 // custom logic into the request's lifecycle using a custom handler, or if you want to
@@ -110,12 +128,26 @@ func (c *CloudWatch) DescribeAlarmHistoryRequest(input *DescribeAlarmHistoryInpu
 	return
 }
 
-// Retrieves history for the specified alarm. Filter alarms by date range or
-// item type. If an alarm name is not specified, Amazon CloudWatch returns histories
-// for all of the owner's alarms.
+// DescribeAlarmHistory API operation for Amazon CloudWatch.
 //
-//  Amazon CloudWatch retains the history of an alarm for two weeks, whether
-// or not you delete the alarm.
+// Retrieves the history for the specified alarm. You can filter the results
+// by date range or item type. If an alarm name is not specified, the histories
+// for all alarms are returned.
+//
+// Note that Amazon CloudWatch retains the history of an alarm even if you delete
+// the alarm.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation DescribeAlarmHistory for usage and error information.
+//
+// Returned Error Codes:
+//   * InvalidNextToken
+//   The next token specified is invalid.
+//
 func (c *CloudWatch) DescribeAlarmHistory(input *DescribeAlarmHistoryInput) (*DescribeAlarmHistoryOutput, error) {
 	req, out := c.DescribeAlarmHistoryRequest(input)
 	err := req.Send()
@@ -153,6 +185,8 @@ const opDescribeAlarms = "DescribeAlarms"
 // client's request for the DescribeAlarms operation. The "output" return
 // value can be used to capture response data after the request's "Send" method
 // is called.
+//
+// See DescribeAlarms for usage and error information.
 //
 // Creating a request object using this method should be used when you want to inject
 // custom logic into the request's lifecycle using a custom handler, or if you want to
@@ -194,9 +228,23 @@ func (c *CloudWatch) DescribeAlarmsRequest(input *DescribeAlarmsInput) (req *req
 	return
 }
 
-// Retrieves alarms with the specified names. If no name is specified, all alarms
-// for the user are returned. Alarms can be retrieved by using only a prefix
-// for the alarm name, the alarm state, or a prefix for any action.
+// DescribeAlarms API operation for Amazon CloudWatch.
+//
+// Retrieves the specified alarms. If no alarms are specified, all alarms are
+// returned. Alarms can be retrieved by using only a prefix for the alarm name,
+// the alarm state, or a prefix for any action.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation DescribeAlarms for usage and error information.
+//
+// Returned Error Codes:
+//   * InvalidNextToken
+//   The next token specified is invalid.
+//
 func (c *CloudWatch) DescribeAlarms(input *DescribeAlarmsInput) (*DescribeAlarmsOutput, error) {
 	req, out := c.DescribeAlarmsRequest(input)
 	err := req.Send()
@@ -235,6 +283,8 @@ const opDescribeAlarmsForMetric = "DescribeAlarmsForMetric"
 // value can be used to capture response data after the request's "Send" method
 // is called.
 //
+// See DescribeAlarmsForMetric for usage and error information.
+//
 // Creating a request object using this method should be used when you want to inject
 // custom logic into the request's lifecycle using a custom handler, or if you want to
 // access properties on the request object before or after sending the request. If
@@ -269,8 +319,17 @@ func (c *CloudWatch) DescribeAlarmsForMetricRequest(input *DescribeAlarmsForMetr
 	return
 }
 
-// Retrieves all alarms for a single metric. Specify a statistic, period, or
-// unit to filter the set of alarms further.
+// DescribeAlarmsForMetric API operation for Amazon CloudWatch.
+//
+// Retrieves the alarms for the specified metric. Specify a statistic, period,
+// or unit to filter the results.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation DescribeAlarmsForMetric for usage and error information.
 func (c *CloudWatch) DescribeAlarmsForMetric(input *DescribeAlarmsForMetricInput) (*DescribeAlarmsForMetricOutput, error) {
 	req, out := c.DescribeAlarmsForMetricRequest(input)
 	err := req.Send()
@@ -283,6 +342,8 @@ const opDisableAlarmActions = "DisableAlarmActions"
 // client's request for the DisableAlarmActions operation. The "output" return
 // value can be used to capture response data after the request's "Send" method
 // is called.
+//
+// See DisableAlarmActions for usage and error information.
 //
 // Creating a request object using this method should be used when you want to inject
 // custom logic into the request's lifecycle using a custom handler, or if you want to
@@ -320,8 +381,17 @@ func (c *CloudWatch) DisableAlarmActionsRequest(input *DisableAlarmActionsInput)
 	return
 }
 
-// Disables actions for the specified alarms. When an alarm's actions are disabled
-// the alarm's state may change, but none of the alarm's actions will execute.
+// DisableAlarmActions API operation for Amazon CloudWatch.
+//
+// Disables the actions for the specified alarms. When an alarm's actions are
+// disabled, the alarm actions do not execute when the alarm state changes.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation DisableAlarmActions for usage and error information.
 func (c *CloudWatch) DisableAlarmActions(input *DisableAlarmActionsInput) (*DisableAlarmActionsOutput, error) {
 	req, out := c.DisableAlarmActionsRequest(input)
 	err := req.Send()
@@ -334,6 +404,8 @@ const opEnableAlarmActions = "EnableAlarmActions"
 // client's request for the EnableAlarmActions operation. The "output" return
 // value can be used to capture response data after the request's "Send" method
 // is called.
+//
+// See EnableAlarmActions for usage and error information.
 //
 // Creating a request object using this method should be used when you want to inject
 // custom logic into the request's lifecycle using a custom handler, or if you want to
@@ -371,7 +443,16 @@ func (c *CloudWatch) EnableAlarmActionsRequest(input *EnableAlarmActionsInput) (
 	return
 }
 
-// Enables actions for the specified alarms.
+// EnableAlarmActions API operation for Amazon CloudWatch.
+//
+// Enables the actions for the specified alarms.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation EnableAlarmActions for usage and error information.
 func (c *CloudWatch) EnableAlarmActions(input *EnableAlarmActionsInput) (*EnableAlarmActionsOutput, error) {
 	req, out := c.EnableAlarmActionsRequest(input)
 	err := req.Send()
@@ -384,6 +465,8 @@ const opGetMetricStatistics = "GetMetricStatistics"
 // client's request for the GetMetricStatistics operation. The "output" return
 // value can be used to capture response data after the request's "Send" method
 // is called.
+//
+// See GetMetricStatistics for usage and error information.
 //
 // Creating a request object using this method should be used when you want to inject
 // custom logic into the request's lifecycle using a custom handler, or if you want to
@@ -419,38 +502,61 @@ func (c *CloudWatch) GetMetricStatisticsRequest(input *GetMetricStatisticsInput)
 	return
 }
 
+// GetMetricStatistics API operation for Amazon CloudWatch.
+//
 // Gets statistics for the specified metric.
 //
-//  The maximum number of data points that can be queried is 50,850, whereas
-// the maximum number of data points returned from a single GetMetricStatistics
-// request is 1,440. If you make a request that generates more than 1,440 data
-// points, Amazon CloudWatch returns an error. In such a case, you can alter
-// the request by narrowing the specified time range or increasing the specified
-// period. A period can be as short as one minute (60 seconds) or as long as
-// one day (86,400 seconds). Alternatively, you can make multiple requests across
-// adjacent time ranges. GetMetricStatistics does not return the data in chronological
-// order.
+// Amazon CloudWatch retains metric data as follows:
 //
-//  Amazon CloudWatch aggregates data points based on the length of the period
-// that you specify. For example, if you request statistics with a one-minute
-// granularity, Amazon CloudWatch aggregates data points with time stamps that
-// fall within the same one-minute period. In such a case, the data points queried
-// can greatly outnumber the data points returned.
+//    * Data points with a period of 60 seconds (1 minute) are available for
+//    15 days
 //
-//  The following examples show various statistics allowed by the data point
-// query maximum of 50,850 when you call GetMetricStatistics on Amazon EC2 instances
-// with detailed (one-minute) monitoring enabled:
+//    * Data points with a period of 300 seconds (5 minute) are available for
+//    63 days
 //
-//   Statistics for up to 400 instances for a span of one hour
+//    * Data points with a period of 3600 seconds (1 hour) are available for
+//    455 days (15 months)
 //
-//   Statistics for up to 35 instances over a span of 24 hours
+// Note that CloudWatch started retaining 5-minute and 1-hour metric data as
+// of 9 July 2016.
 //
-//   Statistics for up to 2 instances over a span of 2 weeks
+// The maximum number of data points returned from a single call is 1,440. If
+// you request more than 1,440 data points, Amazon CloudWatch returns an error.
+// To reduce the number of data points, you can narrow the specified time range
+// and make multiple requests across adjacent time ranges, or you can increase
+// the specified period. A period can be as short as one minute (60 seconds).
+// Note that data points are not returned in chronological order.
 //
-//    For information about the namespace, metric names, and dimensions that
-// other Amazon Web Services products use to send metrics to CloudWatch, go
-// to Amazon CloudWatch Metrics, Namespaces, and Dimensions Reference (http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html)
-// in the Amazon CloudWatch Developer Guide.
+// Amazon CloudWatch aggregates data points based on the length of the period
+// that you specify. For example, if you request statistics with a one-hour
+// period, Amazon CloudWatch aggregates all data points with time stamps that
+// fall within each one-hour period. Therefore, the number of values aggregated
+// by CloudWatch is larger than the number of data points returned.
+//
+// For a list of metrics and dimensions supported by AWS services, see the Amazon
+// CloudWatch Metrics and Dimensions Reference (http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CW_Support_For_AWS.html)
+// in the Amazon CloudWatch User Guide.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation GetMetricStatistics for usage and error information.
+//
+// Returned Error Codes:
+//   * InvalidParameterValue
+//   The value of an input parameter is bad or out-of-range.
+//
+//   * MissingParameter
+//   An input parameter that is required is missing.
+//
+//   * InvalidParameterCombination
+//   Parameters that cannot be used together were used together.
+//
+//   * InternalServiceError
+//   Request processing has failed due to some unknown error, exception, or failure.
+//
 func (c *CloudWatch) GetMetricStatistics(input *GetMetricStatisticsInput) (*GetMetricStatisticsOutput, error) {
 	req, out := c.GetMetricStatisticsRequest(input)
 	err := req.Send()
@@ -463,6 +569,8 @@ const opListMetrics = "ListMetrics"
 // client's request for the ListMetrics operation. The "output" return
 // value can be used to capture response data after the request's "Send" method
 // is called.
+//
+// See ListMetrics for usage and error information.
 //
 // Creating a request object using this method should be used when you want to inject
 // custom logic into the request's lifecycle using a custom handler, or if you want to
@@ -504,16 +612,32 @@ func (c *CloudWatch) ListMetricsRequest(input *ListMetricsInput) (req *request.R
 	return
 }
 
-// Returns a list of valid metrics stored for the AWS account owner. Returned
-// metrics can be used with GetMetricStatistics to obtain statistical data for
-// a given metric.
+// ListMetrics API operation for Amazon CloudWatch.
 //
-//   Up to 500 results are returned for any one call. To retrieve further results,
-// use returned NextToken values with subsequent ListMetrics operations.
+// List the specified metrics. You can use the returned metrics with GetMetricStatistics
+// to obtain statistical data.
 //
-//    If you create a metric with PutMetricData, allow up to fifteen minutes
-// for the metric to appear in calls to ListMetrics. Statistics about the metric,
-// however, are available sooner using GetMetricStatistics.
+// Up to 500 results are returned for any one call. To retrieve additional results,
+// use the returned token with subsequent calls.
+//
+// After you create a metric, allow up to fifteen minutes before the metric
+// appears. Statistics about the metric, however, are available sooner using
+// GetMetricStatistics.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation ListMetrics for usage and error information.
+//
+// Returned Error Codes:
+//   * InternalServiceError
+//   Request processing has failed due to some unknown error, exception, or failure.
+//
+//   * InvalidParameterValue
+//   The value of an input parameter is bad or out-of-range.
+//
 func (c *CloudWatch) ListMetrics(input *ListMetricsInput) (*ListMetricsOutput, error) {
 	req, out := c.ListMetricsRequest(input)
 	err := req.Send()
@@ -552,6 +676,8 @@ const opPutMetricAlarm = "PutMetricAlarm"
 // value can be used to capture response data after the request's "Send" method
 // is called.
 //
+// See PutMetricAlarm for usage and error information.
+//
 // Creating a request object using this method should be used when you want to inject
 // custom logic into the request's lifecycle using a custom handler, or if you want to
 // access properties on the request object before or after sending the request. If
@@ -588,46 +714,62 @@ func (c *CloudWatch) PutMetricAlarmRequest(input *PutMetricAlarmInput) (req *req
 	return
 }
 
-// Creates or updates an alarm and associates it with the specified Amazon CloudWatch
-// metric. Optionally, this operation can associate one or more Amazon SNS resources
+// PutMetricAlarm API operation for Amazon CloudWatch.
+//
+// Creates or updates an alarm and associates it with the specified metric.
+// Optionally, this operation can associate one or more Amazon SNS resources
 // with the alarm.
 //
-//  When this operation creates an alarm, the alarm state is immediately set
-// to INSUFFICIENT_DATA. The alarm is evaluated and its StateValue is set appropriately.
-// Any actions associated with the StateValue are then executed.
+// When this operation creates an alarm, the alarm state is immediately set
+// to INSUFFICIENT_DATA. The alarm is evaluated and its state is set appropriately.
+// Any actions associated with the state are then executed.
 //
-//  When updating an existing alarm, its StateValue is left unchanged, but
-// it completely overwrites the alarm's previous configuration.
+// When you update an existing alarm, its state is left unchanged, but the update
+// completely overwrites the previous configuration of the alarm.
 //
-//   If you are using an AWS Identity and Access Management (IAM) account to
-// create or modify an alarm, you must have the following Amazon EC2 permissions:
+// If you are an AWS Identity and Access Management (IAM) user, you must have
+// Amazon EC2 permissions for some operations:
 //
-//    ec2:DescribeInstanceStatus and ec2:DescribeInstances for all alarms on
-// Amazon EC2 instance status metrics.
+//    * ec2:DescribeInstanceStatus and ec2:DescribeInstances for all alarms
+//    on EC2 instance status metrics
 //
-//    ec2:StopInstances for alarms with stop actions.
+//    * ec2:StopInstances for alarms with stop actions
 //
-//    ec2:TerminateInstances for alarms with terminate actions.
+//    * ec2:TerminateInstances for alarms with terminate actions
 //
-//    ec2:DescribeInstanceRecoveryAttribute, and ec2:RecoverInstances for alarms
-// with recover actions.
+//    * ec2:DescribeInstanceRecoveryAttribute and ec2:RecoverInstances for alarms
+//    with recover actions
 //
-//   If you have read/write permissions for Amazon CloudWatch but not for Amazon
-// EC2, you can still create an alarm but the stop or terminate actions won't
-// be performed on the Amazon EC2 instance. However, if you are later granted
-// permission to use the associated Amazon EC2 APIs, the alarm actions you created
-// earlier will be performed. For more information about IAM permissions, see
-// Permissions and Policies (http://docs.aws.amazon.com/IAM/latest/UserGuide/PermissionsAndPolicies.html)
-// in Using IAM.
+// If you have read/write permissions for Amazon CloudWatch but not for Amazon
+// EC2, you can still create an alarm, but the stop or terminate actions won't
+// be performed. However, if you are later granted the required permissions,
+// the alarm actions that you created earlier will be performed.
 //
-// If you are using an IAM role (e.g., an Amazon EC2 instance profile), you
-// cannot stop or terminate the instance using alarm actions. However, you can
-// still see the alarm state and perform any other actions such as Amazon SNS
-// notifications or Auto Scaling policies.
+// If you are using an IAM role (for example, an Amazon EC2 instance profile),
+// you cannot stop or terminate the instance using alarm actions. However, you
+// can still see the alarm state and perform any other actions such as Amazon
+// SNS notifications or Auto Scaling policies.
 //
 // If you are using temporary security credentials granted using the AWS Security
 // Token Service (AWS STS), you cannot stop or terminate an Amazon EC2 instance
 // using alarm actions.
+//
+// Note that you must create at least one stop, terminate, or reboot alarm using
+// the Amazon EC2 or CloudWatch console to create the EC2ActionsAccess IAM role.
+// After this IAM role is created, you can create stop, terminate, or reboot
+// alarms using a command-line interface or an API.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation PutMetricAlarm for usage and error information.
+//
+// Returned Error Codes:
+//   * LimitExceeded
+//   The quota for alarms for this customer has already been reached.
+//
 func (c *CloudWatch) PutMetricAlarm(input *PutMetricAlarmInput) (*PutMetricAlarmOutput, error) {
 	req, out := c.PutMetricAlarmRequest(input)
 	err := req.Send()
@@ -640,6 +782,8 @@ const opPutMetricData = "PutMetricData"
 // client's request for the PutMetricData operation. The "output" return
 // value can be used to capture response data after the request's "Send" method
 // is called.
+//
+// See PutMetricData for usage and error information.
 //
 // Creating a request object using this method should be used when you want to inject
 // custom logic into the request's lifecycle using a custom handler, or if you want to
@@ -677,23 +821,47 @@ func (c *CloudWatch) PutMetricDataRequest(input *PutMetricDataInput) (req *reque
 	return
 }
 
+// PutMetricData API operation for Amazon CloudWatch.
+//
 // Publishes metric data points to Amazon CloudWatch. Amazon CloudWatch associates
 // the data points with the specified metric. If the specified metric does not
 // exist, Amazon CloudWatch creates the metric. When Amazon CloudWatch creates
 // a metric, it can take up to fifteen minutes for the metric to appear in calls
 // to ListMetrics.
 //
-//  Each PutMetricData request is limited to 8 KB in size for HTTP GET requests
+// Each PutMetricData request is limited to 8 KB in size for HTTP GET requests
 // and is limited to 40 KB in size for HTTP POST requests.
 //
-//  Although the Value parameter accepts numbers of type Double, Amazon CloudWatch
+// Although the Value parameter accepts numbers of type Double, Amazon CloudWatch
 // rejects values that are either too small or too large. Values must be in
 // the range of 8.515920e-109 to 1.174271e+108 (Base 10) or 2e-360 to 2e360
 // (Base 2). In addition, special values (e.g., NaN, +Infinity, -Infinity) are
 // not supported.
 //
-//  Data that is timestamped 24 hours or more in the past may take in excess
-// of 48 hours to become available from submission time using GetMetricStatistics.
+// Data points with time stamps from 24 hours ago or longer can take at least
+// 48 hours to become available for GetMetricStatistics from the time they are
+// submitted.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation PutMetricData for usage and error information.
+//
+// Returned Error Codes:
+//   * InvalidParameterValue
+//   The value of an input parameter is bad or out-of-range.
+//
+//   * MissingParameter
+//   An input parameter that is required is missing.
+//
+//   * InvalidParameterCombination
+//   Parameters that cannot be used together were used together.
+//
+//   * InternalServiceError
+//   Request processing has failed due to some unknown error, exception, or failure.
+//
 func (c *CloudWatch) PutMetricData(input *PutMetricDataInput) (*PutMetricDataOutput, error) {
 	req, out := c.PutMetricDataRequest(input)
 	err := req.Send()
@@ -706,6 +874,8 @@ const opSetAlarmState = "SetAlarmState"
 // client's request for the SetAlarmState operation. The "output" return
 // value can be used to capture response data after the request's "Send" method
 // is called.
+//
+// See SetAlarmState for usage and error information.
 //
 // Creating a request object using this method should be used when you want to inject
 // custom logic into the request's lifecycle using a custom handler, or if you want to
@@ -743,36 +913,51 @@ func (c *CloudWatch) SetAlarmStateRequest(input *SetAlarmStateInput) (req *reque
 	return
 }
 
+// SetAlarmState API operation for Amazon CloudWatch.
+//
 // Temporarily sets the state of an alarm for testing purposes. When the updated
-// StateValue differs from the previous value, the action configured for the
-// appropriate state is invoked. For example, if your alarm is configured to
-// send an Amazon SNS message when an alarm is triggered, temporarily changing
-// the alarm's state to ALARM sends an Amazon SNS message. The alarm returns
-// to its actual state (often within seconds). Because the alarm state change
-// happens very quickly, it is typically only visible in the alarm's History
-// tab in the Amazon CloudWatch console or through DescribeAlarmHistory.
+// state differs from the previous value, the action configured for the appropriate
+// state is invoked. For example, if your alarm is configured to send an Amazon
+// SNS message when an alarm is triggered, temporarily changing the alarm state
+// to ALARM sends an Amazon SNS message. The alarm returns to its actual state
+// (often within seconds). Because the alarm state change happens very quickly,
+// it is typically only visible in the alarm's History tab in the Amazon CloudWatch
+// console or through DescribeAlarmHistory.
+//
+// Returns awserr.Error for service API and SDK errors. Use runtime type assertions
+// with awserr.Error's Code and Message methods to get detailed information about
+// the error.
+//
+// See the AWS API reference guide for Amazon CloudWatch's
+// API operation SetAlarmState for usage and error information.
+//
+// Returned Error Codes:
+//   * ResourceNotFound
+//   The named resource does not exist.
+//
+//   * InvalidFormat
+//   Data was not syntactically valid JSON.
+//
 func (c *CloudWatch) SetAlarmState(input *SetAlarmStateInput) (*SetAlarmStateOutput, error) {
 	req, out := c.SetAlarmStateRequest(input)
 	err := req.Send()
 	return out, err
 }
 
-// The AlarmHistoryItem data type contains descriptive information about the
-// history of a specific alarm. If you call DescribeAlarmHistory, Amazon CloudWatch
-// returns this data type as part of the DescribeAlarmHistoryResult data type.
+// Represents the history of a specific alarm.
 type AlarmHistoryItem struct {
 	_ struct{} `type:"structure"`
 
 	// The descriptive name for the alarm.
 	AlarmName *string `min:"1" type:"string"`
 
-	// Machine-readable data about the alarm in JSON format.
+	// Data about the alarm, in JSON format.
 	HistoryData *string `min:"1" type:"string"`
 
 	// The type of alarm history item.
 	HistoryItemType *string `type:"string" enum:"HistoryItemType"`
 
-	// A human-readable summary of the alarm history.
+	// A summary of the alarm history, in text format.
 	HistorySummary *string `min:"1" type:"string"`
 
 	// The time stamp for the alarm history item.
@@ -789,31 +974,64 @@ func (s AlarmHistoryItem) GoString() string {
 	return s.String()
 }
 
-// The Datapoint data type encapsulates the statistical data that Amazon CloudWatch
-// computes from metric data.
+// SetAlarmName sets the AlarmName field's value.
+func (s *AlarmHistoryItem) SetAlarmName(v string) *AlarmHistoryItem {
+	s.AlarmName = &v
+	return s
+}
+
+// SetHistoryData sets the HistoryData field's value.
+func (s *AlarmHistoryItem) SetHistoryData(v string) *AlarmHistoryItem {
+	s.HistoryData = &v
+	return s
+}
+
+// SetHistoryItemType sets the HistoryItemType field's value.
+func (s *AlarmHistoryItem) SetHistoryItemType(v string) *AlarmHistoryItem {
+	s.HistoryItemType = &v
+	return s
+}
+
+// SetHistorySummary sets the HistorySummary field's value.
+func (s *AlarmHistoryItem) SetHistorySummary(v string) *AlarmHistoryItem {
+	s.HistorySummary = &v
+	return s
+}
+
+// SetTimestamp sets the Timestamp field's value.
+func (s *AlarmHistoryItem) SetTimestamp(v time.Time) *AlarmHistoryItem {
+	s.Timestamp = &v
+	return s
+}
+
+// Encapsulates the statistical data that Amazon CloudWatch computes from metric
+// data.
 type Datapoint struct {
 	_ struct{} `type:"structure"`
 
-	// The average of metric values that correspond to the datapoint.
+	// The average of the metric values that correspond to the data point.
 	Average *float64 `type:"double"`
 
-	// The maximum of the metric value used for the datapoint.
+	// The percentile statistic for the data point.
+	ExtendedStatistics map[string]*float64 `type:"map"`
+
+	// The maximum metric value for the data point.
 	Maximum *float64 `type:"double"`
 
-	// The minimum metric value used for the datapoint.
+	// The minimum metric value for the data point.
 	Minimum *float64 `type:"double"`
 
 	// The number of metric values that contributed to the aggregate value of this
-	// datapoint.
+	// data point.
 	SampleCount *float64 `type:"double"`
 
-	// The sum of metric values used for the datapoint.
+	// The sum of the metric values for the data point.
 	Sum *float64 `type:"double"`
 
-	// The time stamp used for the datapoint.
+	// The time stamp used for the data point.
 	Timestamp *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
-	// The standard unit used for the datapoint.
+	// The standard unit for the data point.
 	Unit *string `type:"string" enum:"StandardUnit"`
 }
 
@@ -827,11 +1045,60 @@ func (s Datapoint) GoString() string {
 	return s.String()
 }
 
-// Describes the inputs for DeleteAlarms.
+// SetAverage sets the Average field's value.
+func (s *Datapoint) SetAverage(v float64) *Datapoint {
+	s.Average = &v
+	return s
+}
+
+// SetExtendedStatistics sets the ExtendedStatistics field's value.
+func (s *Datapoint) SetExtendedStatistics(v map[string]*float64) *Datapoint {
+	s.ExtendedStatistics = v
+	return s
+}
+
+// SetMaximum sets the Maximum field's value.
+func (s *Datapoint) SetMaximum(v float64) *Datapoint {
+	s.Maximum = &v
+	return s
+}
+
+// SetMinimum sets the Minimum field's value.
+func (s *Datapoint) SetMinimum(v float64) *Datapoint {
+	s.Minimum = &v
+	return s
+}
+
+// SetSampleCount sets the SampleCount field's value.
+func (s *Datapoint) SetSampleCount(v float64) *Datapoint {
+	s.SampleCount = &v
+	return s
+}
+
+// SetSum sets the Sum field's value.
+func (s *Datapoint) SetSum(v float64) *Datapoint {
+	s.Sum = &v
+	return s
+}
+
+// SetTimestamp sets the Timestamp field's value.
+func (s *Datapoint) SetTimestamp(v time.Time) *Datapoint {
+	s.Timestamp = &v
+	return s
+}
+
+// SetUnit sets the Unit field's value.
+func (s *Datapoint) SetUnit(v string) *Datapoint {
+	s.Unit = &v
+	return s
+}
+
 type DeleteAlarmsInput struct {
 	_ struct{} `type:"structure"`
 
-	// A list of alarms to be deleted.
+	// The alarms to be deleted.
+	//
+	// AlarmNames is a required field
 	AlarmNames []*string `type:"list" required:"true"`
 }
 
@@ -858,6 +1125,12 @@ func (s *DeleteAlarmsInput) Validate() error {
 	return nil
 }
 
+// SetAlarmNames sets the AlarmNames field's value.
+func (s *DeleteAlarmsInput) SetAlarmNames(v []*string) *DeleteAlarmsInput {
+	s.AlarmNames = v
+	return s
+}
+
 type DeleteAlarmsOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -872,7 +1145,6 @@ func (s DeleteAlarmsOutput) GoString() string {
 	return s.String()
 }
 
-// Describes the inputs for DescribeAlarmHistory.
 type DescribeAlarmHistoryInput struct {
 	_ struct{} `type:"structure"`
 
@@ -922,14 +1194,49 @@ func (s *DescribeAlarmHistoryInput) Validate() error {
 	return nil
 }
 
-// The output for DescribeAlarmHistory.
+// SetAlarmName sets the AlarmName field's value.
+func (s *DescribeAlarmHistoryInput) SetAlarmName(v string) *DescribeAlarmHistoryInput {
+	s.AlarmName = &v
+	return s
+}
+
+// SetEndDate sets the EndDate field's value.
+func (s *DescribeAlarmHistoryInput) SetEndDate(v time.Time) *DescribeAlarmHistoryInput {
+	s.EndDate = &v
+	return s
+}
+
+// SetHistoryItemType sets the HistoryItemType field's value.
+func (s *DescribeAlarmHistoryInput) SetHistoryItemType(v string) *DescribeAlarmHistoryInput {
+	s.HistoryItemType = &v
+	return s
+}
+
+// SetMaxRecords sets the MaxRecords field's value.
+func (s *DescribeAlarmHistoryInput) SetMaxRecords(v int64) *DescribeAlarmHistoryInput {
+	s.MaxRecords = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeAlarmHistoryInput) SetNextToken(v string) *DescribeAlarmHistoryInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetStartDate sets the StartDate field's value.
+func (s *DescribeAlarmHistoryInput) SetStartDate(v time.Time) *DescribeAlarmHistoryInput {
+	s.StartDate = &v
+	return s
+}
+
 type DescribeAlarmHistoryOutput struct {
 	_ struct{} `type:"structure"`
 
-	// A list of alarm histories in JSON format.
+	// The alarm histories, in JSON format.
 	AlarmHistoryItems []*AlarmHistoryItem `type:"list"`
 
-	// A string that marks the start of the next batch of returned results.
+	// The token that marks the start of the next batch of returned results.
 	NextToken *string `type:"string"`
 }
 
@@ -943,25 +1250,44 @@ func (s DescribeAlarmHistoryOutput) GoString() string {
 	return s.String()
 }
 
-// Describes the inputs for DescribeAlarmsForMetric.
+// SetAlarmHistoryItems sets the AlarmHistoryItems field's value.
+func (s *DescribeAlarmHistoryOutput) SetAlarmHistoryItems(v []*AlarmHistoryItem) *DescribeAlarmHistoryOutput {
+	s.AlarmHistoryItems = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeAlarmHistoryOutput) SetNextToken(v string) *DescribeAlarmHistoryOutput {
+	s.NextToken = &v
+	return s
+}
+
 type DescribeAlarmsForMetricInput struct {
 	_ struct{} `type:"structure"`
 
-	// The list of dimensions associated with the metric. If the metric has any
-	// associated dimensions, you must specify them in order for the DescribeAlarmsForMetric
-	// to succeed.
+	// The dimensions associated with the metric. If the metric has any associated
+	// dimensions, you must specify them in order for the call to succeed.
 	Dimensions []*Dimension `type:"list"`
 
+	// The percentile statistic for the metric. Specify a value between p0.0 and
+	// p100.
+	ExtendedStatistic *string `type:"string"`
+
 	// The name of the metric.
+	//
+	// MetricName is a required field
 	MetricName *string `min:"1" type:"string" required:"true"`
 
 	// The namespace of the metric.
+	//
+	// Namespace is a required field
 	Namespace *string `min:"1" type:"string" required:"true"`
 
-	// The period in seconds over which the statistic is applied.
+	// The period, in seconds, over which the statistic is applied.
 	Period *int64 `min:"60" type:"integer"`
 
-	// The statistic for the metric.
+	// The statistic for the metric, other than percentiles. For percentile statistics,
+	// use ExtendedStatistics.
 	Statistic *string `type:"string" enum:"Statistic"`
 
 	// The unit for the metric.
@@ -1013,11 +1339,52 @@ func (s *DescribeAlarmsForMetricInput) Validate() error {
 	return nil
 }
 
-// The output for DescribeAlarmsForMetric.
+// SetDimensions sets the Dimensions field's value.
+func (s *DescribeAlarmsForMetricInput) SetDimensions(v []*Dimension) *DescribeAlarmsForMetricInput {
+	s.Dimensions = v
+	return s
+}
+
+// SetExtendedStatistic sets the ExtendedStatistic field's value.
+func (s *DescribeAlarmsForMetricInput) SetExtendedStatistic(v string) *DescribeAlarmsForMetricInput {
+	s.ExtendedStatistic = &v
+	return s
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *DescribeAlarmsForMetricInput) SetMetricName(v string) *DescribeAlarmsForMetricInput {
+	s.MetricName = &v
+	return s
+}
+
+// SetNamespace sets the Namespace field's value.
+func (s *DescribeAlarmsForMetricInput) SetNamespace(v string) *DescribeAlarmsForMetricInput {
+	s.Namespace = &v
+	return s
+}
+
+// SetPeriod sets the Period field's value.
+func (s *DescribeAlarmsForMetricInput) SetPeriod(v int64) *DescribeAlarmsForMetricInput {
+	s.Period = &v
+	return s
+}
+
+// SetStatistic sets the Statistic field's value.
+func (s *DescribeAlarmsForMetricInput) SetStatistic(v string) *DescribeAlarmsForMetricInput {
+	s.Statistic = &v
+	return s
+}
+
+// SetUnit sets the Unit field's value.
+func (s *DescribeAlarmsForMetricInput) SetUnit(v string) *DescribeAlarmsForMetricInput {
+	s.Unit = &v
+	return s
+}
+
 type DescribeAlarmsForMetricOutput struct {
 	_ struct{} `type:"structure"`
 
-	// A list of information for each alarm with the specified metric.
+	// The information for each alarm with the specified metric.
 	MetricAlarms []*MetricAlarm `type:"list"`
 }
 
@@ -1031,18 +1398,23 @@ func (s DescribeAlarmsForMetricOutput) GoString() string {
 	return s.String()
 }
 
-// Describes the inputs for DescribeAlarms.
+// SetMetricAlarms sets the MetricAlarms field's value.
+func (s *DescribeAlarmsForMetricOutput) SetMetricAlarms(v []*MetricAlarm) *DescribeAlarmsForMetricOutput {
+	s.MetricAlarms = v
+	return s
+}
+
 type DescribeAlarmsInput struct {
 	_ struct{} `type:"structure"`
 
 	// The action name prefix.
 	ActionPrefix *string `min:"1" type:"string"`
 
-	// The alarm name prefix. AlarmNames cannot be specified if this parameter is
+	// The alarm name prefix. You cannot specify AlarmNames if this parameter is
 	// specified.
 	AlarmNamePrefix *string `min:"1" type:"string"`
 
-	// A list of alarm names to retrieve information for.
+	// The names of the alarms.
 	AlarmNames []*string `type:"list"`
 
 	// The maximum number of alarm descriptions to retrieve.
@@ -1085,14 +1457,49 @@ func (s *DescribeAlarmsInput) Validate() error {
 	return nil
 }
 
-// The output for DescribeAlarms.
+// SetActionPrefix sets the ActionPrefix field's value.
+func (s *DescribeAlarmsInput) SetActionPrefix(v string) *DescribeAlarmsInput {
+	s.ActionPrefix = &v
+	return s
+}
+
+// SetAlarmNamePrefix sets the AlarmNamePrefix field's value.
+func (s *DescribeAlarmsInput) SetAlarmNamePrefix(v string) *DescribeAlarmsInput {
+	s.AlarmNamePrefix = &v
+	return s
+}
+
+// SetAlarmNames sets the AlarmNames field's value.
+func (s *DescribeAlarmsInput) SetAlarmNames(v []*string) *DescribeAlarmsInput {
+	s.AlarmNames = v
+	return s
+}
+
+// SetMaxRecords sets the MaxRecords field's value.
+func (s *DescribeAlarmsInput) SetMaxRecords(v int64) *DescribeAlarmsInput {
+	s.MaxRecords = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeAlarmsInput) SetNextToken(v string) *DescribeAlarmsInput {
+	s.NextToken = &v
+	return s
+}
+
+// SetStateValue sets the StateValue field's value.
+func (s *DescribeAlarmsInput) SetStateValue(v string) *DescribeAlarmsInput {
+	s.StateValue = &v
+	return s
+}
+
 type DescribeAlarmsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// A list of information for the specified alarms.
+	// The information for the specified alarms.
 	MetricAlarms []*MetricAlarm `type:"list"`
 
-	// A string that marks the start of the next batch of returned results.
+	// The token that marks the start of the next batch of returned results.
 	NextToken *string `type:"string"`
 }
 
@@ -1106,17 +1513,30 @@ func (s DescribeAlarmsOutput) GoString() string {
 	return s.String()
 }
 
-// The Dimension data type further expands on the identity of a metric using
-// a Name, Value pair.
-//
-// For examples that use one or more dimensions, see PutMetricData.
+// SetMetricAlarms sets the MetricAlarms field's value.
+func (s *DescribeAlarmsOutput) SetMetricAlarms(v []*MetricAlarm) *DescribeAlarmsOutput {
+	s.MetricAlarms = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *DescribeAlarmsOutput) SetNextToken(v string) *DescribeAlarmsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// Expands the identity of a metric.
 type Dimension struct {
 	_ struct{} `type:"structure"`
 
 	// The name of the dimension.
+	//
+	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
 
-	// The value representing the dimension measurement
+	// The value representing the dimension measurement.
+	//
+	// Value is a required field
 	Value *string `min:"1" type:"string" required:"true"`
 }
 
@@ -1152,17 +1572,28 @@ func (s *Dimension) Validate() error {
 	return nil
 }
 
-// The DimensionFilter data type is used to filter ListMetrics results.
+// SetName sets the Name field's value.
+func (s *Dimension) SetName(v string) *Dimension {
+	s.Name = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *Dimension) SetValue(v string) *Dimension {
+	s.Value = &v
+	return s
+}
+
+// Represents filters for a dimension.
 type DimensionFilter struct {
 	_ struct{} `type:"structure"`
 
 	// The dimension name to be matched.
+	//
+	// Name is a required field
 	Name *string `min:"1" type:"string" required:"true"`
 
 	// The value of the dimension to be matched.
-	//
-	//  Specifying a Name without specifying a Value returns all values associated
-	// with that Name.
 	Value *string `min:"1" type:"string"`
 }
 
@@ -1195,10 +1626,24 @@ func (s *DimensionFilter) Validate() error {
 	return nil
 }
 
+// SetName sets the Name field's value.
+func (s *DimensionFilter) SetName(v string) *DimensionFilter {
+	s.Name = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *DimensionFilter) SetValue(v string) *DimensionFilter {
+	s.Value = &v
+	return s
+}
+
 type DisableAlarmActionsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The names of the alarms to disable actions for.
+	// The names of the alarms.
+	//
+	// AlarmNames is a required field
 	AlarmNames []*string `type:"list" required:"true"`
 }
 
@@ -1225,6 +1670,12 @@ func (s *DisableAlarmActionsInput) Validate() error {
 	return nil
 }
 
+// SetAlarmNames sets the AlarmNames field's value.
+func (s *DisableAlarmActionsInput) SetAlarmNames(v []*string) *DisableAlarmActionsInput {
+	s.AlarmNames = v
+	return s
+}
+
 type DisableAlarmActionsOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1239,11 +1690,12 @@ func (s DisableAlarmActionsOutput) GoString() string {
 	return s.String()
 }
 
-// Describes the inputs for EnableAlarmActions.
 type EnableAlarmActionsInput struct {
 	_ struct{} `type:"structure"`
 
-	// The names of the alarms to enable actions for.
+	// The names of the alarms.
+	//
+	// AlarmNames is a required field
 	AlarmNames []*string `type:"list" required:"true"`
 }
 
@@ -1270,6 +1722,12 @@ func (s *EnableAlarmActionsInput) Validate() error {
 	return nil
 }
 
+// SetAlarmNames sets the AlarmNames field's value.
+func (s *EnableAlarmActionsInput) SetAlarmNames(v []*string) *EnableAlarmActionsInput {
+	s.AlarmNames = v
+	return s
+}
+
 type EnableAlarmActionsOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1284,50 +1742,84 @@ func (s EnableAlarmActionsOutput) GoString() string {
 	return s.String()
 }
 
-// Describes the inputs for GetMetricStatistics.
 type GetMetricStatisticsInput struct {
 	_ struct{} `type:"structure"`
 
-	// A list of dimensions describing qualities of the metric.
+	// The dimensions. CloudWatch treats each unique combination of dimensions as
+	// a separate metric. You can't retrieve statistics using combinations of dimensions
+	// that were not specially published. You must specify the same dimensions that
+	// were used when the metrics were created. For an example, see Dimension Combinations
+	// (http://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/cloudwatch_concepts.html#dimension-combinations)
+	// in the Amazon CloudWatch User Guide.
 	Dimensions []*Dimension `type:"list"`
 
-	// The time stamp to use for determining the last datapoint to return. The value
-	// specified is exclusive; results will include datapoints up to the time stamp
-	// specified. The time stamp must be in ISO 8601 UTC format (e.g., 2014-09-03T23:00:00Z).
+	// The time stamp that determines the last data point to return.
+	//
+	// The value specified is exclusive; results will include data points up to
+	// the specified time stamp. The time stamp must be in ISO 8601 UTC format (for
+	// example, 2016-10-10T23:00:00Z).
+	//
+	// EndTime is a required field
 	EndTime *time.Time `type:"timestamp" timestampFormat:"iso8601" required:"true"`
 
+	// The percentile statistics. Specify values between p0.0 and p100.
+	ExtendedStatistics []*string `min:"1" type:"list"`
+
 	// The name of the metric, with or without spaces.
+	//
+	// MetricName is a required field
 	MetricName *string `min:"1" type:"string" required:"true"`
 
 	// The namespace of the metric, with or without spaces.
+	//
+	// Namespace is a required field
 	Namespace *string `min:"1" type:"string" required:"true"`
 
-	// The granularity, in seconds, of the returned datapoints. A Period can be
-	// as short as one minute (60 seconds) or as long as one day (86,400 seconds),
-	// and must be a multiple of 60. The default value is 60.
+	// The granularity, in seconds, of the returned data points. A period can be
+	// as short as one minute (60 seconds) and must be a multiple of 60. The default
+	// value is 60.
+	//
+	// If the StartTime parameter specifies a time stamp that is greater than 15
+	// days ago, you must specify the period as follows or no data points in that
+	// time range is returned:
+	//
+	//    * Start time between 15 and 63 days ago - Use a multiple of 300 seconds
+	//    (5 minutes).
+	//
+	//    * Start time greater than 63 days ago - Use a multiple of 3600 seconds
+	//    (1 hour).
+	//
+	// Period is a required field
 	Period *int64 `min:"60" type:"integer" required:"true"`
 
-	// The time stamp to use for determining the first datapoint to return. The
-	// value specified is inclusive; results include datapoints with the time stamp
-	// specified. The time stamp must be in ISO 8601 UTC format (e.g., 2014-09-03T23:00:00Z).
+	// The time stamp that determines the first data point to return. Note that
+	// start times are evaluated relative to the time that CloudWatch receives the
+	// request.
 	//
-	//  The specified start time is rounded down to the nearest value. Datapoints
-	// are returned for start times up to two weeks in the past. Specified start
-	// times that are more than two weeks in the past will not return datapoints
-	// for metrics that are older than two weeks.
+	// The value specified is inclusive; results include data points with the specified
+	// time stamp. The time stamp must be in ISO 8601 UTC format (for example, 2016-10-03T23:00:00Z).
 	//
-	// Data that is timestamped 24 hours or more in the past may take in excess
-	// of 48 hours to become available from submission time using GetMetricStatistics.
+	// CloudWatch rounds the specified time stamp as follows:
+	//
+	//    * Start time less than 15 days ago - Round down to the nearest whole minute.
+	//    For example, 12:32:34 is rounded down to 12:32:00.
+	//
+	//    * Start time between 15 and 63 days ago - Round down to the nearest 5-minute
+	//    clock interval. For example, 12:32:34 is rounded down to 12:30:00.
+	//
+	//    * Start time greater than 63 days ago - Round down to the nearest 1-hour
+	//    clock interval. For example, 12:32:34 is rounded down to 12:00:00.
+	//
+	// StartTime is a required field
 	StartTime *time.Time `type:"timestamp" timestampFormat:"iso8601" required:"true"`
 
-	// The metric statistics to return. For information about specific statistics
-	// returned by GetMetricStatistics, see Statistics (http://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/cloudwatch_concepts.html#Statistic)
-	// in the Amazon CloudWatch Developer Guide.
-	Statistics []*string `min:"1" type:"list" required:"true"`
+	// The metric statistics, other than percentile. For percentile statistics,
+	// use ExtendedStatistic.
+	Statistics []*string `min:"1" type:"list"`
 
-	// The specific unit for a given metric. Metrics may be reported in multiple
-	// units. Not supplying a unit results in all units being returned. If the metric
-	// only ever reports one unit, specifying a unit will have no effect.
+	// The unit for a given metric. Metrics may be reported in multiple units. Not
+	// supplying a unit results in all units being returned. If the metric only
+	// ever reports one unit, specifying a unit has no effect.
 	Unit *string `type:"string" enum:"StandardUnit"`
 }
 
@@ -1346,6 +1838,9 @@ func (s *GetMetricStatisticsInput) Validate() error {
 	invalidParams := request.ErrInvalidParams{Context: "GetMetricStatisticsInput"}
 	if s.EndTime == nil {
 		invalidParams.Add(request.NewErrParamRequired("EndTime"))
+	}
+	if s.ExtendedStatistics != nil && len(s.ExtendedStatistics) < 1 {
+		invalidParams.Add(request.NewErrParamMinLen("ExtendedStatistics", 1))
 	}
 	if s.MetricName == nil {
 		invalidParams.Add(request.NewErrParamRequired("MetricName"))
@@ -1368,9 +1863,6 @@ func (s *GetMetricStatisticsInput) Validate() error {
 	if s.StartTime == nil {
 		invalidParams.Add(request.NewErrParamRequired("StartTime"))
 	}
-	if s.Statistics == nil {
-		invalidParams.Add(request.NewErrParamRequired("Statistics"))
-	}
 	if s.Statistics != nil && len(s.Statistics) < 1 {
 		invalidParams.Add(request.NewErrParamMinLen("Statistics", 1))
 	}
@@ -1391,14 +1883,67 @@ func (s *GetMetricStatisticsInput) Validate() error {
 	return nil
 }
 
-// The output for GetMetricStatistics.
+// SetDimensions sets the Dimensions field's value.
+func (s *GetMetricStatisticsInput) SetDimensions(v []*Dimension) *GetMetricStatisticsInput {
+	s.Dimensions = v
+	return s
+}
+
+// SetEndTime sets the EndTime field's value.
+func (s *GetMetricStatisticsInput) SetEndTime(v time.Time) *GetMetricStatisticsInput {
+	s.EndTime = &v
+	return s
+}
+
+// SetExtendedStatistics sets the ExtendedStatistics field's value.
+func (s *GetMetricStatisticsInput) SetExtendedStatistics(v []*string) *GetMetricStatisticsInput {
+	s.ExtendedStatistics = v
+	return s
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *GetMetricStatisticsInput) SetMetricName(v string) *GetMetricStatisticsInput {
+	s.MetricName = &v
+	return s
+}
+
+// SetNamespace sets the Namespace field's value.
+func (s *GetMetricStatisticsInput) SetNamespace(v string) *GetMetricStatisticsInput {
+	s.Namespace = &v
+	return s
+}
+
+// SetPeriod sets the Period field's value.
+func (s *GetMetricStatisticsInput) SetPeriod(v int64) *GetMetricStatisticsInput {
+	s.Period = &v
+	return s
+}
+
+// SetStartTime sets the StartTime field's value.
+func (s *GetMetricStatisticsInput) SetStartTime(v time.Time) *GetMetricStatisticsInput {
+	s.StartTime = &v
+	return s
+}
+
+// SetStatistics sets the Statistics field's value.
+func (s *GetMetricStatisticsInput) SetStatistics(v []*string) *GetMetricStatisticsInput {
+	s.Statistics = v
+	return s
+}
+
+// SetUnit sets the Unit field's value.
+func (s *GetMetricStatisticsInput) SetUnit(v string) *GetMetricStatisticsInput {
+	s.Unit = &v
+	return s
+}
+
 type GetMetricStatisticsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// The datapoints for the specified metric.
+	// The data points for the specified metric.
 	Datapoints []*Datapoint `type:"list"`
 
-	// A label describing the specified metric.
+	// A label for the specified metric.
 	Label *string `type:"string"`
 }
 
@@ -1412,11 +1957,22 @@ func (s GetMetricStatisticsOutput) GoString() string {
 	return s.String()
 }
 
-// Describes the inputs for ListMetrics.
+// SetDatapoints sets the Datapoints field's value.
+func (s *GetMetricStatisticsOutput) SetDatapoints(v []*Datapoint) *GetMetricStatisticsOutput {
+	s.Datapoints = v
+	return s
+}
+
+// SetLabel sets the Label field's value.
+func (s *GetMetricStatisticsOutput) SetLabel(v string) *GetMetricStatisticsOutput {
+	s.Label = &v
+	return s
+}
+
 type ListMetricsInput struct {
 	_ struct{} `type:"structure"`
 
-	// A list of dimensions to filter against.
+	// The dimensions to filter against.
 	Dimensions []*DimensionFilter `type:"list"`
 
 	// The name of the metric to filter against.
@@ -1466,14 +2022,37 @@ func (s *ListMetricsInput) Validate() error {
 	return nil
 }
 
-// The output for ListMetrics.
+// SetDimensions sets the Dimensions field's value.
+func (s *ListMetricsInput) SetDimensions(v []*DimensionFilter) *ListMetricsInput {
+	s.Dimensions = v
+	return s
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *ListMetricsInput) SetMetricName(v string) *ListMetricsInput {
+	s.MetricName = &v
+	return s
+}
+
+// SetNamespace sets the Namespace field's value.
+func (s *ListMetricsInput) SetNamespace(v string) *ListMetricsInput {
+	s.Namespace = &v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListMetricsInput) SetNextToken(v string) *ListMetricsInput {
+	s.NextToken = &v
+	return s
+}
+
 type ListMetricsOutput struct {
 	_ struct{} `type:"structure"`
 
-	// A list of metrics used to generate statistics for an AWS account.
+	// The metrics.
 	Metrics []*Metric `type:"list"`
 
-	// A string that marks the start of the next batch of returned results.
+	// The token that marks the start of the next batch of returned results.
 	NextToken *string `type:"string"`
 }
 
@@ -1487,17 +2066,23 @@ func (s ListMetricsOutput) GoString() string {
 	return s.String()
 }
 
-// The Metric data type contains information about a specific metric. If you
-// call ListMetrics, Amazon CloudWatch returns information contained by this
-// data type.
-//
-// The example in the Examples section publishes two metrics named buffers
-// and latency. Both metrics are in the examples namespace. Both metrics have
-// two dimensions, InstanceID and InstanceType.
+// SetMetrics sets the Metrics field's value.
+func (s *ListMetricsOutput) SetMetrics(v []*Metric) *ListMetricsOutput {
+	s.Metrics = v
+	return s
+}
+
+// SetNextToken sets the NextToken field's value.
+func (s *ListMetricsOutput) SetNextToken(v string) *ListMetricsOutput {
+	s.NextToken = &v
+	return s
+}
+
+// Represents a specific metric.
 type Metric struct {
 	_ struct{} `type:"structure"`
 
-	// A list of dimensions associated with the metric.
+	// The dimensions for the metric.
 	Dimensions []*Dimension `type:"list"`
 
 	// The name of the metric.
@@ -1517,18 +2102,34 @@ func (s Metric) GoString() string {
 	return s.String()
 }
 
-// The MetricAlarm data type represents an alarm. You can use PutMetricAlarm
-// to create or update an alarm.
+// SetDimensions sets the Dimensions field's value.
+func (s *Metric) SetDimensions(v []*Dimension) *Metric {
+	s.Dimensions = v
+	return s
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *Metric) SetMetricName(v string) *Metric {
+	s.MetricName = &v
+	return s
+}
+
+// SetNamespace sets the Namespace field's value.
+func (s *Metric) SetNamespace(v string) *Metric {
+	s.Namespace = &v
+	return s
+}
+
+// Represents an alarm.
 type MetricAlarm struct {
 	_ struct{} `type:"structure"`
 
-	// Indicates whether actions should be executed during any changes to the alarm's
+	// Indicates whether actions should be executed during any changes to the alarm
 	// state.
 	ActionsEnabled *bool `type:"boolean"`
 
-	// The list of actions to execute when this alarm transitions into an ALARM
-	// state from any other state. Each action is specified as an Amazon Resource
-	// Name (ARN).
+	// The actions to execute when this alarm transitions to the ALARM state from
+	// any other state. Each action is specified as an Amazon Resource Name (ARN).
 	AlarmActions []*string `type:"list"`
 
 	// The Amazon Resource Name (ARN) of the alarm.
@@ -1537,62 +2138,64 @@ type MetricAlarm struct {
 	// The time stamp of the last update to the alarm configuration.
 	AlarmConfigurationUpdatedTimestamp *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
-	// The description for the alarm.
+	// The description of the alarm.
 	AlarmDescription *string `type:"string"`
 
 	// The name of the alarm.
 	AlarmName *string `min:"1" type:"string"`
 
-	// The arithmetic operation to use when comparing the specified Statistic and
-	// Threshold. The specified Statistic value is used as the first operand.
+	// The arithmetic operation to use when comparing the specified statistic and
+	// threshold. The specified statistic value is used as the first operand.
 	ComparisonOperator *string `type:"string" enum:"ComparisonOperator"`
 
-	// The list of dimensions associated with the alarm's associated metric.
+	// The dimensions for the metric associated with the alarm.
 	Dimensions []*Dimension `type:"list"`
 
 	// The number of periods over which data is compared to the specified threshold.
 	EvaluationPeriods *int64 `min:"1" type:"integer"`
 
-	// The list of actions to execute when this alarm transitions into an INSUFFICIENT_DATA
+	// The percentile statistic for the metric associated with the alarm. Specify
+	// a value between p0.0 and p100.
+	ExtendedStatistic *string `type:"string"`
+
+	// The actions to execute when this alarm transitions to the INSUFFICIENT_DATA
 	// state from any other state. Each action is specified as an Amazon Resource
 	// Name (ARN).
-	//
-	//  The current WSDL lists this attribute as UnknownActions.
 	InsufficientDataActions []*string `type:"list"`
 
-	// The name of the alarm's metric.
+	// The name of the metric associated with the alarm.
 	MetricName *string `min:"1" type:"string"`
 
-	// The namespace of alarm's associated metric.
+	// The namespace of the metric associated with the alarm.
 	Namespace *string `min:"1" type:"string"`
 
-	// The list of actions to execute when this alarm transitions into an OK state
-	// from any other state. Each action is specified as an Amazon Resource Name
-	// (ARN).
+	// The actions to execute when this alarm transitions to the OK state from any
+	// other state. Each action is specified as an Amazon Resource Name (ARN).
 	OKActions []*string `type:"list"`
 
-	// The period in seconds over which the statistic is applied.
+	// The period, in seconds, over which the statistic is applied.
 	Period *int64 `min:"60" type:"integer"`
 
-	// A human-readable explanation for the alarm's state.
+	// An explanation for the alarm state, in text format.
 	StateReason *string `type:"string"`
 
-	// An explanation for the alarm's state in machine-readable JSON format
+	// An explanation for the alarm state, in JSON format.
 	StateReasonData *string `type:"string"`
 
-	// The time stamp of the last update to the alarm's state.
+	// The time stamp of the last update to the alarm state.
 	StateUpdatedTimestamp *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
 	// The state value for the alarm.
 	StateValue *string `type:"string" enum:"StateValue"`
 
-	// The statistic to apply to the alarm's associated metric.
+	// The statistic for the metric associated with the alarm, other than percentile.
+	// For percentile statistics, use ExtendedStatistic.
 	Statistic *string `type:"string" enum:"Statistic"`
 
-	// The value against which the specified statistic is compared.
+	// The value to compare with the specified statistic.
 	Threshold *float64 `type:"double"`
 
-	// The unit of the alarm's associated metric.
+	// The unit of the metric associated with the alarm.
 	Unit *string `type:"string" enum:"StandardUnit"`
 }
 
@@ -1606,25 +2209,156 @@ func (s MetricAlarm) GoString() string {
 	return s.String()
 }
 
-// The MetricDatum data type encapsulates the information sent with PutMetricData
-// to either create a new metric or add new values to be aggregated into an
-// existing metric.
+// SetActionsEnabled sets the ActionsEnabled field's value.
+func (s *MetricAlarm) SetActionsEnabled(v bool) *MetricAlarm {
+	s.ActionsEnabled = &v
+	return s
+}
+
+// SetAlarmActions sets the AlarmActions field's value.
+func (s *MetricAlarm) SetAlarmActions(v []*string) *MetricAlarm {
+	s.AlarmActions = v
+	return s
+}
+
+// SetAlarmArn sets the AlarmArn field's value.
+func (s *MetricAlarm) SetAlarmArn(v string) *MetricAlarm {
+	s.AlarmArn = &v
+	return s
+}
+
+// SetAlarmConfigurationUpdatedTimestamp sets the AlarmConfigurationUpdatedTimestamp field's value.
+func (s *MetricAlarm) SetAlarmConfigurationUpdatedTimestamp(v time.Time) *MetricAlarm {
+	s.AlarmConfigurationUpdatedTimestamp = &v
+	return s
+}
+
+// SetAlarmDescription sets the AlarmDescription field's value.
+func (s *MetricAlarm) SetAlarmDescription(v string) *MetricAlarm {
+	s.AlarmDescription = &v
+	return s
+}
+
+// SetAlarmName sets the AlarmName field's value.
+func (s *MetricAlarm) SetAlarmName(v string) *MetricAlarm {
+	s.AlarmName = &v
+	return s
+}
+
+// SetComparisonOperator sets the ComparisonOperator field's value.
+func (s *MetricAlarm) SetComparisonOperator(v string) *MetricAlarm {
+	s.ComparisonOperator = &v
+	return s
+}
+
+// SetDimensions sets the Dimensions field's value.
+func (s *MetricAlarm) SetDimensions(v []*Dimension) *MetricAlarm {
+	s.Dimensions = v
+	return s
+}
+
+// SetEvaluationPeriods sets the EvaluationPeriods field's value.
+func (s *MetricAlarm) SetEvaluationPeriods(v int64) *MetricAlarm {
+	s.EvaluationPeriods = &v
+	return s
+}
+
+// SetExtendedStatistic sets the ExtendedStatistic field's value.
+func (s *MetricAlarm) SetExtendedStatistic(v string) *MetricAlarm {
+	s.ExtendedStatistic = &v
+	return s
+}
+
+// SetInsufficientDataActions sets the InsufficientDataActions field's value.
+func (s *MetricAlarm) SetInsufficientDataActions(v []*string) *MetricAlarm {
+	s.InsufficientDataActions = v
+	return s
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *MetricAlarm) SetMetricName(v string) *MetricAlarm {
+	s.MetricName = &v
+	return s
+}
+
+// SetNamespace sets the Namespace field's value.
+func (s *MetricAlarm) SetNamespace(v string) *MetricAlarm {
+	s.Namespace = &v
+	return s
+}
+
+// SetOKActions sets the OKActions field's value.
+func (s *MetricAlarm) SetOKActions(v []*string) *MetricAlarm {
+	s.OKActions = v
+	return s
+}
+
+// SetPeriod sets the Period field's value.
+func (s *MetricAlarm) SetPeriod(v int64) *MetricAlarm {
+	s.Period = &v
+	return s
+}
+
+// SetStateReason sets the StateReason field's value.
+func (s *MetricAlarm) SetStateReason(v string) *MetricAlarm {
+	s.StateReason = &v
+	return s
+}
+
+// SetStateReasonData sets the StateReasonData field's value.
+func (s *MetricAlarm) SetStateReasonData(v string) *MetricAlarm {
+	s.StateReasonData = &v
+	return s
+}
+
+// SetStateUpdatedTimestamp sets the StateUpdatedTimestamp field's value.
+func (s *MetricAlarm) SetStateUpdatedTimestamp(v time.Time) *MetricAlarm {
+	s.StateUpdatedTimestamp = &v
+	return s
+}
+
+// SetStateValue sets the StateValue field's value.
+func (s *MetricAlarm) SetStateValue(v string) *MetricAlarm {
+	s.StateValue = &v
+	return s
+}
+
+// SetStatistic sets the Statistic field's value.
+func (s *MetricAlarm) SetStatistic(v string) *MetricAlarm {
+	s.Statistic = &v
+	return s
+}
+
+// SetThreshold sets the Threshold field's value.
+func (s *MetricAlarm) SetThreshold(v float64) *MetricAlarm {
+	s.Threshold = &v
+	return s
+}
+
+// SetUnit sets the Unit field's value.
+func (s *MetricAlarm) SetUnit(v string) *MetricAlarm {
+	s.Unit = &v
+	return s
+}
+
+// Encapsulates the information sent to either create a metric or add new values
+// to be aggregated into an existing metric.
 type MetricDatum struct {
 	_ struct{} `type:"structure"`
 
-	// A list of dimensions associated with the metric. Note, when using the Dimensions
-	// value in a query, you need to append .member.N to it (e.g., Dimensions.member.N).
+	// The dimensions associated with the metric.
 	Dimensions []*Dimension `type:"list"`
 
 	// The name of the metric.
+	//
+	// MetricName is a required field
 	MetricName *string `min:"1" type:"string" required:"true"`
 
-	// A set of statistical values describing the metric.
+	// The statistical values for the metric.
 	StatisticValues *StatisticSet `type:"structure"`
 
-	// The time stamp used for the metric in ISO 8601 Universal Coordinated Time
-	// (UTC) format. If not specified, the default value is set to the time the
-	// metric data was received.
+	// The time the metric data was received, expressed as the number of milliseconds
+	// since Jan 1, 1970 00:00:00 UTC.
 	Timestamp *time.Time `type:"timestamp" timestampFormat:"iso8601"`
 
 	// The unit of the metric.
@@ -1632,11 +2366,11 @@ type MetricDatum struct {
 
 	// The value for the metric.
 	//
-	//  Although the Value parameter accepts numbers of type Double, Amazon CloudWatch
+	// Although the parameter accepts numbers of type Double, Amazon CloudWatch
 	// rejects values that are either too small or too large. Values must be in
 	// the range of 8.515920e-109 to 1.174271e+108 (Base 10) or 2e-360 to 2e360
-	// (Base 2). In addition, special values (e.g., NaN, +Infinity, -Infinity) are
-	// not supported.
+	// (Base 2). In addition, special values (for example, NaN, +Infinity, -Infinity)
+	// are not supported.
 	Value *float64 `type:"double"`
 }
 
@@ -1681,107 +2415,143 @@ func (s *MetricDatum) Validate() error {
 	return nil
 }
 
-// Describes the inputs for PutMetricAlarm.
+// SetDimensions sets the Dimensions field's value.
+func (s *MetricDatum) SetDimensions(v []*Dimension) *MetricDatum {
+	s.Dimensions = v
+	return s
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *MetricDatum) SetMetricName(v string) *MetricDatum {
+	s.MetricName = &v
+	return s
+}
+
+// SetStatisticValues sets the StatisticValues field's value.
+func (s *MetricDatum) SetStatisticValues(v *StatisticSet) *MetricDatum {
+	s.StatisticValues = v
+	return s
+}
+
+// SetTimestamp sets the Timestamp field's value.
+func (s *MetricDatum) SetTimestamp(v time.Time) *MetricDatum {
+	s.Timestamp = &v
+	return s
+}
+
+// SetUnit sets the Unit field's value.
+func (s *MetricDatum) SetUnit(v string) *MetricDatum {
+	s.Unit = &v
+	return s
+}
+
+// SetValue sets the Value field's value.
+func (s *MetricDatum) SetValue(v float64) *MetricDatum {
+	s.Value = &v
+	return s
+}
+
 type PutMetricAlarmInput struct {
 	_ struct{} `type:"structure"`
 
-	// Indicates whether or not actions should be executed during any changes to
-	// the alarm's state.
+	// Indicates whether actions should be executed during any changes to the alarm
+	// state.
 	ActionsEnabled *bool `type:"boolean"`
 
-	// The list of actions to execute when this alarm transitions into an ALARM
-	// state from any other state. Each action is specified as an Amazon Resource
-	// Name (ARN).
+	// The actions to execute when this alarm transitions to the ALARM state from
+	// any other state. Each action is specified as an Amazon Resource Name (ARN).
 	//
-	// Valid Values: arn:aws:automate:region (e.g., us-east-1):ec2:stop | arn:aws:automate:region
-	// (e.g., us-east-1):ec2:terminate | arn:aws:automate:region (e.g., us-east-1):ec2:recover
+	// Valid Values: arn:aws:automate:region:ec2:stop | arn:aws:automate:region:ec2:terminate
+	// | arn:aws:automate:region:ec2:recover
 	//
 	// Valid Values (for use with IAM roles): arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Stop/1.0
 	// | arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Terminate/1.0
 	// | arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Reboot/1.0
-	//
-	//  Note: You must create at least one stop, terminate, or reboot alarm using
-	// the Amazon EC2 or CloudWatch console to create the EC2ActionsAccess IAM role
-	// for the first time. After this IAM role is created, you can create stop,
-	// terminate, or reboot alarms using the CLI.
 	AlarmActions []*string `type:"list"`
 
 	// The description for the alarm.
 	AlarmDescription *string `type:"string"`
 
-	// The descriptive name for the alarm. This name must be unique within the user's
-	// AWS account
+	// The name for the alarm. This name must be unique within the AWS account.
+	//
+	// AlarmName is a required field
 	AlarmName *string `min:"1" type:"string" required:"true"`
 
-	// The arithmetic operation to use when comparing the specified Statistic and
-	// Threshold. The specified Statistic value is used as the first operand.
+	// The arithmetic operation to use when comparing the specified statistic and
+	// threshold. The specified statistic value is used as the first operand.
+	//
+	// ComparisonOperator is a required field
 	ComparisonOperator *string `type:"string" required:"true" enum:"ComparisonOperator"`
 
-	// The dimensions for the alarm's associated metric.
+	// The dimensions for the metric associated with the alarm.
 	Dimensions []*Dimension `type:"list"`
 
 	// The number of periods over which data is compared to the specified threshold.
+	//
+	// EvaluationPeriods is a required field
 	EvaluationPeriods *int64 `min:"1" type:"integer" required:"true"`
 
-	// The list of actions to execute when this alarm transitions into an INSUFFICIENT_DATA
+	// The percentile statistic for the metric associated with the alarm. Specify
+	// a value between p0.0 and p100.
+	ExtendedStatistic *string `type:"string"`
+
+	// The actions to execute when this alarm transitions to the INSUFFICIENT_DATA
 	// state from any other state. Each action is specified as an Amazon Resource
 	// Name (ARN).
 	//
-	// Valid Values: arn:aws:automate:region (e.g., us-east-1):ec2:stop | arn:aws:automate:region
-	// (e.g., us-east-1):ec2:terminate | arn:aws:automate:region (e.g., us-east-1):ec2:recover
+	// Valid Values: arn:aws:automate:region:ec2:stop | arn:aws:automate:region:ec2:terminate
+	// | arn:aws:automate:region:ec2:recover
 	//
 	// Valid Values (for use with IAM roles): arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Stop/1.0
 	// | arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Terminate/1.0
 	// | arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Reboot/1.0
-	//
-	//  Note: You must create at least one stop, terminate, or reboot alarm using
-	// the Amazon EC2 or CloudWatch console to create the EC2ActionsAccess IAM role
-	// for the first time. After this IAM role is created, you can create stop,
-	// terminate, or reboot alarms using the CLI.
 	InsufficientDataActions []*string `type:"list"`
 
-	// The name for the alarm's associated metric.
+	// The name for the metric associated with the alarm.
+	//
+	// MetricName is a required field
 	MetricName *string `min:"1" type:"string" required:"true"`
 
-	// The namespace for the alarm's associated metric.
+	// The namespace for the metric associated with the alarm.
+	//
+	// Namespace is a required field
 	Namespace *string `min:"1" type:"string" required:"true"`
 
-	// The list of actions to execute when this alarm transitions into an OK state
-	// from any other state. Each action is specified as an Amazon Resource Name
-	// (ARN).
+	// The actions to execute when this alarm transitions to an OK state from any
+	// other state. Each action is specified as an Amazon Resource Name (ARN).
 	//
-	// Valid Values: arn:aws:automate:region (e.g., us-east-1):ec2:stop | arn:aws:automate:region
-	// (e.g., us-east-1):ec2:terminate | arn:aws:automate:region (e.g., us-east-1):ec2:recover
+	// Valid Values: arn:aws:automate:region:ec2:stop | arn:aws:automate:region:ec2:terminate
+	// | arn:aws:automate:region:ec2:recover
 	//
 	// Valid Values (for use with IAM roles): arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Stop/1.0
 	// | arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Terminate/1.0
 	// | arn:aws:swf:us-east-1:{customer-account}:action/actions/AWS_EC2.InstanceId.Reboot/1.0
-	//
-	//  Note: You must create at least one stop, terminate, or reboot alarm using
-	// the Amazon EC2 or CloudWatch console to create the EC2ActionsAccess IAM role
-	// for the first time. After this IAM role is created, you can create stop,
-	// terminate, or reboot alarms using the CLI.
 	OKActions []*string `type:"list"`
 
-	// The period in seconds over which the specified statistic is applied.
+	// The period, in seconds, over which the specified statistic is applied.
+	//
+	// Period is a required field
 	Period *int64 `min:"60" type:"integer" required:"true"`
 
-	// The statistic to apply to the alarm's associated metric.
-	Statistic *string `type:"string" required:"true" enum:"Statistic"`
+	// The statistic for the metric associated with the alarm, other than percentile.
+	// For percentile statistics, use ExtendedStatistic.
+	Statistic *string `type:"string" enum:"Statistic"`
 
 	// The value against which the specified statistic is compared.
+	//
+	// Threshold is a required field
 	Threshold *float64 `type:"double" required:"true"`
 
-	// The statistic's unit of measure. For example, the units for the Amazon EC2
-	// NetworkIn metric are Bytes because NetworkIn tracks the number of bytes that
-	// an instance receives on all network interfaces. You can also specify a unit
-	// when you create a custom metric. Units help provide conceptual meaning to
-	// your data. Metric data points that specify a unit of measure, such as Percent,
-	// are aggregated separately.
+	// The unit of measure for the statistic. For example, the units for the Amazon
+	// EC2 NetworkIn metric are Bytes because NetworkIn tracks the number of bytes
+	// that an instance receives on all network interfaces. You can also specify
+	// a unit when you create a custom metric. Units help provide conceptual meaning
+	// to your data. Metric data points that specify a unit of measure, such as
+	// Percent, are aggregated separately.
 	//
-	//  Note: If you specify a unit, you must use a unit that is appropriate for
-	// the metric. Otherwise, this can cause an Amazon CloudWatch alarm to get stuck
-	// in the INSUFFICIENT DATA state.
+	// If you specify a unit, you must use a unit that is appropriate for the metric.
+	// Otherwise, the Amazon CloudWatch alarm can get stuck in the INSUFFICIENT
+	// DATA state.
 	Unit *string `type:"string" enum:"StandardUnit"`
 }
 
@@ -1831,9 +2601,6 @@ func (s *PutMetricAlarmInput) Validate() error {
 	if s.Period != nil && *s.Period < 60 {
 		invalidParams.Add(request.NewErrParamMinValue("Period", 60))
 	}
-	if s.Statistic == nil {
-		invalidParams.Add(request.NewErrParamRequired("Statistic"))
-	}
 	if s.Threshold == nil {
 		invalidParams.Add(request.NewErrParamRequired("Threshold"))
 	}
@@ -1854,6 +2621,102 @@ func (s *PutMetricAlarmInput) Validate() error {
 	return nil
 }
 
+// SetActionsEnabled sets the ActionsEnabled field's value.
+func (s *PutMetricAlarmInput) SetActionsEnabled(v bool) *PutMetricAlarmInput {
+	s.ActionsEnabled = &v
+	return s
+}
+
+// SetAlarmActions sets the AlarmActions field's value.
+func (s *PutMetricAlarmInput) SetAlarmActions(v []*string) *PutMetricAlarmInput {
+	s.AlarmActions = v
+	return s
+}
+
+// SetAlarmDescription sets the AlarmDescription field's value.
+func (s *PutMetricAlarmInput) SetAlarmDescription(v string) *PutMetricAlarmInput {
+	s.AlarmDescription = &v
+	return s
+}
+
+// SetAlarmName sets the AlarmName field's value.
+func (s *PutMetricAlarmInput) SetAlarmName(v string) *PutMetricAlarmInput {
+	s.AlarmName = &v
+	return s
+}
+
+// SetComparisonOperator sets the ComparisonOperator field's value.
+func (s *PutMetricAlarmInput) SetComparisonOperator(v string) *PutMetricAlarmInput {
+	s.ComparisonOperator = &v
+	return s
+}
+
+// SetDimensions sets the Dimensions field's value.
+func (s *PutMetricAlarmInput) SetDimensions(v []*Dimension) *PutMetricAlarmInput {
+	s.Dimensions = v
+	return s
+}
+
+// SetEvaluationPeriods sets the EvaluationPeriods field's value.
+func (s *PutMetricAlarmInput) SetEvaluationPeriods(v int64) *PutMetricAlarmInput {
+	s.EvaluationPeriods = &v
+	return s
+}
+
+// SetExtendedStatistic sets the ExtendedStatistic field's value.
+func (s *PutMetricAlarmInput) SetExtendedStatistic(v string) *PutMetricAlarmInput {
+	s.ExtendedStatistic = &v
+	return s
+}
+
+// SetInsufficientDataActions sets the InsufficientDataActions field's value.
+func (s *PutMetricAlarmInput) SetInsufficientDataActions(v []*string) *PutMetricAlarmInput {
+	s.InsufficientDataActions = v
+	return s
+}
+
+// SetMetricName sets the MetricName field's value.
+func (s *PutMetricAlarmInput) SetMetricName(v string) *PutMetricAlarmInput {
+	s.MetricName = &v
+	return s
+}
+
+// SetNamespace sets the Namespace field's value.
+func (s *PutMetricAlarmInput) SetNamespace(v string) *PutMetricAlarmInput {
+	s.Namespace = &v
+	return s
+}
+
+// SetOKActions sets the OKActions field's value.
+func (s *PutMetricAlarmInput) SetOKActions(v []*string) *PutMetricAlarmInput {
+	s.OKActions = v
+	return s
+}
+
+// SetPeriod sets the Period field's value.
+func (s *PutMetricAlarmInput) SetPeriod(v int64) *PutMetricAlarmInput {
+	s.Period = &v
+	return s
+}
+
+// SetStatistic sets the Statistic field's value.
+func (s *PutMetricAlarmInput) SetStatistic(v string) *PutMetricAlarmInput {
+	s.Statistic = &v
+	return s
+}
+
+// SetThreshold sets the Threshold field's value.
+func (s *PutMetricAlarmInput) SetThreshold(v float64) *PutMetricAlarmInput {
+	s.Threshold = &v
+	return s
+}
+
+// SetUnit sets the Unit field's value.
+func (s *PutMetricAlarmInput) SetUnit(v string) *PutMetricAlarmInput {
+	s.Unit = &v
+	return s
+}
+
 type PutMetricAlarmOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1868,18 +2731,20 @@ func (s PutMetricAlarmOutput) GoString() string {
 	return s.String()
 }
 
-// Describes the inputs for PutMetricData.
 type PutMetricDataInput struct {
 	_ struct{} `type:"structure"`
 
-	// A list of data describing the metric.
+	// The data for the metric.
+	//
+	// MetricData is a required field
 	MetricData []*MetricDatum `type:"list" required:"true"`
 
 	// The namespace for the metric data.
 	//
-	//  You cannot specify a namespace that begins with "AWS/". Namespaces that
-	// begin with "AWS/" are reserved for other Amazon Web Services products that
-	// send metrics to Amazon CloudWatch.
+	// You cannot specify a namespace that begins with "AWS/". Namespaces that begin
+	// with "AWS/" are reserved for use by Amazon Web Services products.
+	//
+	// Namespace is a required field
 	Namespace *string `min:"1" type:"string" required:"true"`
 }
 
@@ -1922,6 +2787,18 @@ func (s *PutMetricDataInput) Validate() error {
 	return nil
 }
 
+// SetMetricData sets the MetricData field's value.
+func (s *PutMetricDataInput) SetMetricData(v []*MetricDatum) *PutMetricDataInput {
+	s.MetricData = v
+	return s
+}
+
+// SetNamespace sets the Namespace field's value.
+func (s *PutMetricDataInput) SetNamespace(v string) *PutMetricDataInput {
+	s.Namespace = &v
+	return s
+}
+
 type PutMetricDataOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -1936,23 +2813,26 @@ func (s PutMetricDataOutput) GoString() string {
 	return s.String()
 }
 
-// Describes the inputs for SetAlarmState.
 type SetAlarmStateInput struct {
 	_ struct{} `type:"structure"`
 
-	// The descriptive name for the alarm. This name must be unique within the user's
-	// AWS account. The maximum length is 255 characters.
+	// The name for the alarm. This name must be unique within the AWS account.
+	// The maximum length is 255 characters.
+	//
+	// AlarmName is a required field
 	AlarmName *string `min:"1" type:"string" required:"true"`
 
-	// The reason that this alarm is set to this specific state (in human-readable
-	// text format)
+	// The reason that this alarm is set to this specific state, in text format.
+	//
+	// StateReason is a required field
 	StateReason *string `type:"string" required:"true"`
 
-	// The reason that this alarm is set to this specific state (in machine-readable
-	// JSON format)
+	// The reason that this alarm is set to this specific state, in JSON format.
 	StateReasonData *string `type:"string"`
 
 	// The value of the state.
+	//
+	// StateValue is a required field
 	StateValue *string `type:"string" required:"true" enum:"StateValue"`
 }
 
@@ -1988,6 +2868,30 @@ func (s *SetAlarmStateInput) Validate() error {
 	return nil
 }
 
+// SetAlarmName sets the AlarmName field's value.
+func (s *SetAlarmStateInput) SetAlarmName(v string) *SetAlarmStateInput {
+	s.AlarmName = &v
+	return s
+}
+
+// SetStateReason sets the StateReason field's value.
+func (s *SetAlarmStateInput) SetStateReason(v string) *SetAlarmStateInput {
+	s.StateReason = &v
+	return s
+}
+
+// SetStateReasonData sets the StateReasonData field's value.
+func (s *SetAlarmStateInput) SetStateReasonData(v string) *SetAlarmStateInput {
+	s.StateReasonData = &v
+	return s
+}
+
+// SetStateValue sets the StateValue field's value.
+func (s *SetAlarmStateInput) SetStateValue(v string) *SetAlarmStateInput {
+	s.StateValue = &v
+	return s
+}
+
 type SetAlarmStateOutput struct {
 	_ struct{} `type:"structure"`
 }
@@ -2002,21 +2906,28 @@ func (s SetAlarmStateOutput) GoString() string {
 	return s.String()
 }
 
-// The StatisticSet data type describes the StatisticValues component of MetricDatum,
-// and represents a set of statistics that describes a specific metric.
+// Represents a set of statistics that describes a specific metric.
 type StatisticSet struct {
 	_ struct{} `type:"structure"`
 
 	// The maximum value of the sample set.
+	//
+	// Maximum is a required field
 	Maximum *float64 `type:"double" required:"true"`
 
 	// The minimum value of the sample set.
+	//
+	// Minimum is a required field
 	Minimum *float64 `type:"double" required:"true"`
 
 	// The number of samples used for the statistic set.
+	//
+	// SampleCount is a required field
 	SampleCount *float64 `type:"double" required:"true"`
 
 	// The sum of values for the sample set.
+	//
+	// Sum is a required field
 	Sum *float64 `type:"double" required:"true"`
 }
 
@@ -2052,101 +2963,162 @@ func (s *StatisticSet) Validate() error {
 	return nil
 }
 
+// SetMaximum sets the Maximum field's value.
+func (s *StatisticSet) SetMaximum(v float64) *StatisticSet {
+	s.Maximum = &v
+	return s
+}
+
+// SetMinimum sets the Minimum field's value.
+func (s *StatisticSet) SetMinimum(v float64) *StatisticSet {
+	s.Minimum = &v
+	return s
+}
+
+// SetSampleCount sets the SampleCount field's value.
+func (s *StatisticSet) SetSampleCount(v float64) *StatisticSet {
+	s.SampleCount = &v
+	return s
+}
+
+// SetSum sets the Sum field's value.
+func (s *StatisticSet) SetSum(v float64) *StatisticSet {
+	s.Sum = &v
+	return s
+}
+
 const (
-	// @enum ComparisonOperator
+	// ComparisonOperatorGreaterThanOrEqualToThreshold is a ComparisonOperator enum value
 	ComparisonOperatorGreaterThanOrEqualToThreshold = "GreaterThanOrEqualToThreshold"
-	// @enum ComparisonOperator
+
+	// ComparisonOperatorGreaterThanThreshold is a ComparisonOperator enum value
 	ComparisonOperatorGreaterThanThreshold = "GreaterThanThreshold"
-	// @enum ComparisonOperator
+
+	// ComparisonOperatorLessThanThreshold is a ComparisonOperator enum value
 	ComparisonOperatorLessThanThreshold = "LessThanThreshold"
-	// @enum ComparisonOperator
+
+	// ComparisonOperatorLessThanOrEqualToThreshold is a ComparisonOperator enum value
 	ComparisonOperatorLessThanOrEqualToThreshold = "LessThanOrEqualToThreshold"
 )
 
 const (
-	// @enum HistoryItemType
+	// HistoryItemTypeConfigurationUpdate is a HistoryItemType enum value
 	HistoryItemTypeConfigurationUpdate = "ConfigurationUpdate"
-	// @enum HistoryItemType
+
+	// HistoryItemTypeStateUpdate is a HistoryItemType enum value
 	HistoryItemTypeStateUpdate = "StateUpdate"
-	// @enum HistoryItemType
+
+	// HistoryItemTypeAction is a HistoryItemType enum value
 	HistoryItemTypeAction = "Action"
 )
 
 const (
-	// @enum StandardUnit
+	// StandardUnitSeconds is a StandardUnit enum value
 	StandardUnitSeconds = "Seconds"
-	// @enum StandardUnit
+
+	// StandardUnitMicroseconds is a StandardUnit enum value
 	StandardUnitMicroseconds = "Microseconds"
-	// @enum StandardUnit
+
+	// StandardUnitMilliseconds is a StandardUnit enum value
 	StandardUnitMilliseconds = "Milliseconds"
-	// @enum StandardUnit
+
+	// StandardUnitBytes is a StandardUnit enum value
 	StandardUnitBytes = "Bytes"
-	// @enum StandardUnit
+
+	// StandardUnitKilobytes is a StandardUnit enum value
 	StandardUnitKilobytes = "Kilobytes"
-	// @enum StandardUnit
+
+	// StandardUnitMegabytes is a StandardUnit enum value
 	StandardUnitMegabytes = "Megabytes"
-	// @enum StandardUnit
+
+	// StandardUnitGigabytes is a StandardUnit enum value
 	StandardUnitGigabytes = "Gigabytes"
-	// @enum StandardUnit
+
+	// StandardUnitTerabytes is a StandardUnit enum value
 	StandardUnitTerabytes = "Terabytes"
-	// @enum StandardUnit
+
+	// StandardUnitBits is a StandardUnit enum value
 	StandardUnitBits = "Bits"
-	// @enum StandardUnit
+
+	// StandardUnitKilobits is a StandardUnit enum value
 	StandardUnitKilobits = "Kilobits"
-	// @enum StandardUnit
+
+	// StandardUnitMegabits is a StandardUnit enum value
 	StandardUnitMegabits = "Megabits"
-	// @enum StandardUnit
+
+	// StandardUnitGigabits is a StandardUnit enum value
 	StandardUnitGigabits = "Gigabits"
-	// @enum StandardUnit
+
+	// StandardUnitTerabits is a StandardUnit enum value
 	StandardUnitTerabits = "Terabits"
-	// @enum StandardUnit
+
+	// StandardUnitPercent is a StandardUnit enum value
 	StandardUnitPercent = "Percent"
-	// @enum StandardUnit
+
+	// StandardUnitCount is a StandardUnit enum value
 	StandardUnitCount = "Count"
-	// @enum StandardUnit
+
+	// StandardUnitBytesSecond is a StandardUnit enum value
 	StandardUnitBytesSecond = "Bytes/Second"
-	// @enum StandardUnit
+
+	// StandardUnitKilobytesSecond is a StandardUnit enum value
 	StandardUnitKilobytesSecond = "Kilobytes/Second"
-	// @enum StandardUnit
+
+	// StandardUnitMegabytesSecond is a StandardUnit enum value
 	StandardUnitMegabytesSecond = "Megabytes/Second"
-	// @enum StandardUnit
+
+	// StandardUnitGigabytesSecond is a StandardUnit enum value
 	StandardUnitGigabytesSecond = "Gigabytes/Second"
-	// @enum StandardUnit
+
+	// StandardUnitTerabytesSecond is a StandardUnit enum value
 	StandardUnitTerabytesSecond = "Terabytes/Second"
-	// @enum StandardUnit
+
+	// StandardUnitBitsSecond is a StandardUnit enum value
 	StandardUnitBitsSecond = "Bits/Second"
-	// @enum StandardUnit
+
+	// StandardUnitKilobitsSecond is a StandardUnit enum value
 	StandardUnitKilobitsSecond = "Kilobits/Second"
-	// @enum StandardUnit
+
+	// StandardUnitMegabitsSecond is a StandardUnit enum value
 	StandardUnitMegabitsSecond = "Megabits/Second"
-	// @enum StandardUnit
+
+	// StandardUnitGigabitsSecond is a StandardUnit enum value
 	StandardUnitGigabitsSecond = "Gigabits/Second"
-	// @enum StandardUnit
+
+	// StandardUnitTerabitsSecond is a StandardUnit enum value
 	StandardUnitTerabitsSecond = "Terabits/Second"
-	// @enum StandardUnit
+
+	// StandardUnitCountSecond is a StandardUnit enum value
 	StandardUnitCountSecond = "Count/Second"
-	// @enum StandardUnit
+
+	// StandardUnitNone is a StandardUnit enum value
 	StandardUnitNone = "None"
 )
 
 const (
-	// @enum StateValue
+	// StateValueOk is a StateValue enum value
 	StateValueOk = "OK"
-	// @enum StateValue
+
+	// StateValueAlarm is a StateValue enum value
 	StateValueAlarm = "ALARM"
-	// @enum StateValue
+
+	// StateValueInsufficientData is a StateValue enum value
 	StateValueInsufficientData = "INSUFFICIENT_DATA"
 )
 
 const (
-	// @enum Statistic
+	// StatisticSampleCount is a Statistic enum value
 	StatisticSampleCount = "SampleCount"
-	// @enum Statistic
+
+	// StatisticAverage is a Statistic enum value
 	StatisticAverage = "Average"
-	// @enum Statistic
+
+	// StatisticSum is a Statistic enum value
 	StatisticSum = "Sum"
-	// @enum Statistic
+
+	// StatisticMinimum is a Statistic enum value
 	StatisticMinimum = "Minimum"
-	// @enum Statistic
+
+	// StatisticMaximum is a Statistic enum value
 	StatisticMaximum = "Maximum"
 )

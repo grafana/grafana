@@ -413,7 +413,7 @@ Set to `true` to enable LDAP integration (default: `false`)
 ### config_file
 Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
 
-> For details on LDAP Configuration, go to the [LDAP Integration](ldap.md) page.
+> For details on LDAP Configuration, go to the [LDAP Integration]({{< relref "ldap.md" >}}) page.
 
 <hr>
 

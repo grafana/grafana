@@ -40,7 +40,6 @@ export class GrafanaApp {
 
   init() {
     var app = angular.module('grafana', []);
-    app.constant('grafanaVersion', "@grafanaVersion@");
 
     moment.locale(config.bootData.user.locale);
 

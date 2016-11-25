@@ -10,7 +10,7 @@ export interface Variable {
   dependsOn(variable);
   setValueFromUrl(urlValue);
   getValueForUrl();
-  getModel();
+  getSaveModel();
 }
 
 export var variableTypes = {};
