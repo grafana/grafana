@@ -48,12 +48,6 @@ populate the template variable to a desired value from the link.
 The metrics tab defines what series data and sources to render.  Each datasource provides different
 options.
 
-### Graphite
-
-### InfluxDB
-
-### OpenTSDB
-
 ## Axes & Grid
 
 ![](/img/docs/v2/graph_axes_grid_options.png)
