@@ -17,12 +17,13 @@ dashboards, creating users and updating data sources.
 
 ## Supported HTTP APIs:
 
-* [Authentication API](/http_api/auth/)
-* [Dashboard API](/http_api/dashboard/)
-* [Data Source API](/http_api/data_source/)
-* [Organisation API](/http_api/org/)
-* [User API](/http_api/user/)
-* [Admin API](/http_api/admin/)
-* [Snapshot API](/http_api/snapshot/)
-* [Preferences API](/http_api/preferences/)
-* [Other API](/http_api/other/)
+
+* [Authentication API]({{< relref "auth.md" >}})
+* [Dashboard API]({{< relref "dashboard.md" >}})
+* [Data Source API]({{< relref "data_source.md" >}})
+* [Organisation API]({{< relref "org.md" >}})
+* [User API]({{< relref "user.md" >}})
+* [Admin API]({{< relref "admin.md" >}})
+* [Snapshot API]({{< relref "snapshot.md" >}})
+* [Preferences API]({{< relref "preferences.md" >}})
+* [Other API]({{< relref "other.md" >}})

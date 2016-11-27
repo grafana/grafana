@@ -18,12 +18,12 @@ The query language and capabilities of each Data Source are obviously very diffe
 ## Supported Data Sources
 The following datasources are officially supported:
 
-* [Graphite](/datasources/graphite/)
-* [Elasticsearch](/datasources/elasticsearch/)
-* [CloudWatch](/datasources/cloudwatch/)
-* [InfluxDB](/datasources/influxdb/)
-* [OpenTSDB](/datasources/opentsdb/)
-* [Prometheus](/datasources/prometheus)
+* [Graphite]({{< relref "graphite.md" >}})
+* [Elasticsearch]({{< relref "elasticsearch.md" >}})
+* [CloudWatch]({{< relref "cloudwatch.md" >}})
+* [InfluxDB]({{< relref "influxdb.md" >}})
+* [OpenTSDB]({{< relref "opentsdb.md" >}})
+* [Prometheus]({{< relref "prometheus.md" >}})
 
 ## Data source plugins
 
