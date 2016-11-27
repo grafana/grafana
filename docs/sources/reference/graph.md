@@ -71,9 +71,6 @@ The ``Left Y`` and ``Right Y`` can be customized using:
 
 Axes can also be hidden by unchecking the appropriate box from `Show Axis`.
 
-Thresholds allow you to add arbitrary lines or sections to the graph to make it easier to see when
-the graph crosses a particular threshold.
-
 ### Legend
 
 The legend hand be hidden by checking the ``Show`` checkbox.  If it's shown, it can be
@@ -102,6 +99,12 @@ It is just the sum of all data points received by Grafana.
 ![](/img/docs/v2/graph_display_styles.png)
 
 Display styles controls properties of the graph.
+
+### Thresholds
+
+Thresholds allow you to add arbitrary lines or sections to the graph to make it easier to see when
+the graph crosses a particular threshold.
+
 
 ### Chart Options
 
