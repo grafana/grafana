@@ -325,10 +325,11 @@ func loadSpecifedConfigFile(configFile string) error {
 	}
 
 	userConfig, err := ini.Load(configFile)
-	userConfig.BlockMode = false
 	if err != nil {
 		return fmt.Errorf("Failed to parse %v, %v", configFile, err)
 	}
+
+	userConfig.BlockMode = false
 
 	for _, section := range userConfig.Sections() {
 		for _, key := range section.Keys() {
