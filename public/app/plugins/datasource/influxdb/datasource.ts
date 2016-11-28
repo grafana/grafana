@@ -250,8 +250,10 @@ export default class InfluxDatasource {
   };
 
   getTimeFilter(options) {
-    var from = this.getInfluxTime(options.rangeRaw.from, false);
-    var until = this.getInfluxTime(options.rangeRaw.to, true);
+    var inMS = elapsed < (5 * 60000);
+
+    var from = this.getInfluxTime(options.rangeRaw.from, false, inMS);
+    var until = this.getInfluxTime(options.rangeRaw.to, true, inMS);
     var fromIsAbsolute = from[from.length-1] === 's';
 
     if (until === 'now()' && !fromIsAbsolute) {
@@ -261,7 +263,7 @@ export default class InfluxDatasource {
     return 'time > ' + from + ' and time < ' + until;
   }
 
-  getInfluxTime(date, roundUp) {
+  getInfluxTime(date, roundUp, inMS) {
     if (_.isString(date)) {
       if (date === 'now') {
         return 'now()';
@@ -275,7 +277,11 @@ export default class InfluxDatasource {
       }
       date = dateMath.parse(date, roundUp);
     }
-    return date.valueOf() + 'ms';
+
+    if (inMS) {
+      return date.valueOf() + 'ms';
+    }
+    return (date.valueOf() / 1000).toFixed(0) + 's';
   }
 }
 
