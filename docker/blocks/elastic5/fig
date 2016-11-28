@@ -1,0 +1,11 @@
+# You need to run sysctl -w vm.max_map_count=262144 on the host machine
+
+elasticsearch5:
+  image: elasticsearch:5
+  #command: elasticsearch -Des.network.host=0.0.0.0
+  command: elasticsearch
+  ports:
+    - "9200:9200"
+    - "9300:9300"
+ # volumes:
+ # - ./blocks/elastic/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml
