@@ -6,6 +6,10 @@ import (
 	"github.com/aws/aws-sdk-go/private/waiter"
 )
 
+// WaitUntilAlarmExists uses the CloudWatch API operation
+// DescribeAlarms to wait for a condition to be met before returning.
+// If the condition is not meet within the max attempt window an error will
+// be returned.
 func (c *CloudWatch) WaitUntilAlarmExists(input *DescribeAlarmsInput) error {
 	waiterCfg := waiter.Config{
 		Operation:   "DescribeAlarms",

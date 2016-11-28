@@ -23,6 +23,7 @@ type QueryCondition struct {
 	Query         AlertQuery
 	Reducer       QueryReducer
 	Evaluator     AlertEvaluator
+	Operator      string
 	HandleRequest tsdb.HandleRequestFunc
 }
 
@@ -72,6 +73,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 	return &alerting.ConditionResult{
 		Firing:      evalMatchCount > 0,
 		NoDataFound: emptySerieCount == len(seriesList),
+		Operator:    c.Operator,
 		EvalMatches: matches,
 	}, nil
 }
@@ -168,8 +170,12 @@ func NewQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 	if err != nil {
 		return nil, err
 	}
-
 	condition.Evaluator = evaluator
+
+	operatorJson := model.Get("operator")
+	operator := operatorJson.Get("type").MustString("and")
+	condition.Operator = operator
+
 	return &condition, nil
 }
 

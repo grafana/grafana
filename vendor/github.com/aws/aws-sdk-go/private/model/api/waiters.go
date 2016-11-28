@@ -1,3 +1,5 @@
+// +build codegen
+
 package api
 
 import (
@@ -6,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"sort"
+	"strings"
 	"text/template"
 )
 
@@ -96,7 +99,16 @@ func (a *WaitAcceptor) ExpectedString() string {
 	}
 }
 
-var tplWaiter = template.Must(template.New("waiter").Parse(`
+var waiterTmpls = template.Must(template.New("waiterTmpls").Parse(`
+{{ define "docstring" -}}
+// WaitUntil{{ .Name }} uses the {{ .Operation.API.NiceName }} API operation
+// {{ .OperationName }} to wait for a condition to be met before returning.
+// If the condition is not meet within the max attempt window an error will
+// be returned.
+{{- end }}
+
+{{ define "waiter" }}
+{{ template "docstring" . }}
 func (c *{{ .Operation.API.StructName }}) WaitUntil{{ .Name }}(input {{ .Operation.InputRef.GoType }}) error {
 	waiterCfg  := waiter.Config{
 		Operation:   "{{ .OperationName }}",
@@ -120,12 +132,28 @@ func (c *{{ .Operation.API.StructName }}) WaitUntil{{ .Name }}(input {{ .Operati
 	}
 	return w.Wait()
 }
+{{- end }}
+
+{{ define "waiter interface" }}
+WaitUntil{{ .Name }}({{ .Operation.InputRef.GoTypeWithPkgName }}) error
+{{- end }}
 `))
+
+// InterfaceSignature returns a string representing the Waiter's interface
+// function signature.
+func (w *Waiter) InterfaceSignature() string {
+	var buf bytes.Buffer
+	if err := waiterTmpls.ExecuteTemplate(&buf, "waiter interface", w); err != nil {
+		panic(err)
+	}
+
+	return strings.TrimSpace(buf.String())
+}
 
 // GoCode returns the generated Go code for an individual waiter.
 func (w *Waiter) GoCode() string {
 	var buf bytes.Buffer
-	if err := tplWaiter.Execute(&buf, w); err != nil {
+	if err := waiterTmpls.ExecuteTemplate(&buf, "waiter", w); err != nil {
 		panic(err)
 	}
 

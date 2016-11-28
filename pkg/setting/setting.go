@@ -24,8 +24,9 @@ import (
 type Scheme string
 
 const (
-	HTTP  Scheme = "http"
-	HTTPS Scheme = "https"
+	HTTP              Scheme = "http"
+	HTTPS             Scheme = "https"
+	DEFAULT_HTTP_ADDR string = "0.0.0.0"
 )
 
 const (
@@ -324,10 +325,11 @@ func loadSpecifedConfigFile(configFile string) error {
 	}
 
 	userConfig, err := ini.Load(configFile)
-	userConfig.BlockMode = false
 	if err != nil {
 		return fmt.Errorf("Failed to parse %v, %v", configFile, err)
 	}
+
+	userConfig.BlockMode = false
 
 	for _, section := range userConfig.Sections() {
 		for _, key := range section.Keys() {
@@ -359,11 +361,11 @@ func loadConfiguration(args *CommandLineArgs) {
 	configFiles = append(configFiles, defaultConfigFile)
 
 	Cfg, err = ini.Load(defaultConfigFile)
-	Cfg.BlockMode = false
-
 	if err != nil {
 		log.Fatal(3, "Failed to parse defaults.ini, %v", err)
 	}
+
+	Cfg.BlockMode = false
 
 	// command line props
 	commandLineProps := getCommandLineProperties(args.Args)
@@ -474,7 +476,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	}
 
 	Domain = server.Key("domain").MustString("localhost")
-	HttpAddr = server.Key("http_addr").MustString("0.0.0.0")
+	HttpAddr = server.Key("http_addr").MustString(DEFAULT_HTTP_ADDR)
 	HttpPort = server.Key("http_port").MustString("3000")
 	RouterLogging = server.Key("router_logging").MustBool(false)
 	EnableGzip = server.Key("enable_gzip").MustBool(false)

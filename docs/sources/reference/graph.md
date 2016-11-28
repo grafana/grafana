@@ -48,12 +48,6 @@ populate the template variable to a desired value from the link.
 The metrics tab defines what series data and sources to render.  Each datasource provides different
 options.
 
-### Graphite
-
-### InfluxDB
-
-### OpenTSDB
-
 ## Axes & Grid
 
 ![](/img/docs/v2/graph_axes_grid_options.png)
@@ -70,9 +64,6 @@ The ``Left Y`` and ``Right Y`` can be customized using:
 - ``Label`` - The Y axis label (default "")
 
 Axes can also be hidden by unchecking the appropriate box from `Show Axis`.
-
-Thresholds allow you to add arbitrary lines or sections to the graph to make it easier to see when
-the graph crosses a particular threshold.
 
 ### Legend
 
@@ -102,6 +93,12 @@ It is just the sum of all data points received by Grafana.
 ![](/img/docs/v2/graph_display_styles.png)
 
 Display styles controls properties of the graph.
+
+### Thresholds
+
+Thresholds allow you to add arbitrary lines or sections to the graph to make it easier to see when
+the graph crosses a particular threshold.
+
 
 ### Chart Options
 

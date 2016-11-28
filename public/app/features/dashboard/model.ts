@@ -98,12 +98,14 @@ export class DashboardModel {
     var events = this.events;
     var meta = this.meta;
     var rows = this.rows;
+    var variables = this.templating.list;
+
     delete this.events;
     delete this.meta;
 
     // prepare save model
-    this.rows = _.map(this.rows, row => row.getSaveModel());
-    events.emit('prepare-save-model');
+    this.rows = _.map(rows, row => row.getSaveModel());
+    this.templating.list = _.map(variables, variable => variable.getSaveModel ? variable.getSaveModel() : variable);
 
     var copy = $.extend(true, {}, this);
 
@@ -111,6 +113,8 @@ export class DashboardModel {
     this.events = events;
     this.meta = meta;
     this.rows = rows;
+    this.templating.list = variables;
+
     return copy;
   }
 
@@ -233,7 +237,6 @@ export class DashboardModel {
   }
 
   duplicatePanel(panel, row) {
-    var rowIndex = _.indexOf(this.rows, row);
     var newPanel = angular.copy(panel);
     newPanel.id = this.getNextPanelId();
 
@@ -241,9 +244,9 @@ export class DashboardModel {
     delete newPanel.repeatIteration;
     delete newPanel.repeatPanelId;
     delete newPanel.scopedVars;
+    delete newPanel.alert;
 
-    var currentRow = this.rows[rowIndex];
-    currentRow.panels.push(newPanel);
+    row.addPanel(newPanel);
     return newPanel;
   }
 
@@ -490,8 +493,6 @@ export class DashboardModel {
             templateVariable.hide = 2;
           } else if (templateVariable.hideLabel) {
             templateVariable.hide = 1;
-          } else {
-            templateVariable.hide = 0;
           }
         });
       }

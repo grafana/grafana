@@ -420,11 +420,11 @@ function($, _, moment) {
   kbn.valueFormats.bps    = kbn.formatBuilders.decimalSIPrefix('bps');
   kbn.valueFormats.Bps    = kbn.formatBuilders.decimalSIPrefix('Bps');
   kbn.valueFormats.KBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 1);
-  kbn.valueFormats.Kbits  = kbn.formatBuilders.decimalSIPrefix('bits', 1);
+  kbn.valueFormats.Kbits  = kbn.formatBuilders.decimalSIPrefix('bps', 1);
   kbn.valueFormats.MBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 2);
-  kbn.valueFormats.Mbits  = kbn.formatBuilders.decimalSIPrefix('bits', 2);
+  kbn.valueFormats.Mbits  = kbn.formatBuilders.decimalSIPrefix('bps', 2);
   kbn.valueFormats.GBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 3);
-  kbn.valueFormats.Gbits  = kbn.formatBuilders.decimalSIPrefix('bits', 3);
+  kbn.valueFormats.Gbits  = kbn.formatBuilders.decimalSIPrefix('bps', 3);
 
   // Throughput
   kbn.valueFormats.ops  = kbn.formatBuilders.simpleCountUnit('ops');

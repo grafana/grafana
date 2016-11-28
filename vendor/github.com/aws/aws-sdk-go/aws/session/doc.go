@@ -66,7 +66,7 @@ through code instead of being driven by environment variables only.
 Use NewSessionWithOptions when you want to provide the config profile, or
 override the shared config state (AWS_SDK_LOAD_CONFIG).
 
-	// Equivalent to session.New
+	// Equivalent to session.NewSession()
 	sess, err := session.NewSessionWithOptions(session.Options{})
 
 	// Specify profile to load for the session's config
@@ -84,12 +84,6 @@ override the shared config state (AWS_SDK_LOAD_CONFIG).
 	sess, err := session.NewSessionWithOptions(session.Options{
 		SharedConfigState: SharedConfigEnable,
 	})
-
-Deprecated "New" function
-
-The New session function has been deprecated because it does not provide good
-way to return errors that occur when loading the configuration files and values.
-Because of this, the NewWithError
 
 Adding Handlers
 

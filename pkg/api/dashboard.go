@@ -131,6 +131,16 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		}
 	}
 
+	validateAlertsCmd := alerting.ValidateDashboardAlertsCommand{
+		OrgId:     c.OrgId,
+		UserId:    c.UserId,
+		Dashboard: dash,
+	}
+
+	if err := bus.Dispatch(&validateAlertsCmd); err != nil {
+		return ApiError(500, "Invalid alert data. Cannot save dashboard", err)
+	}
+
 	err := bus.Dispatch(&cmd)
 	if err != nil {
 		if err == m.ErrDashboardWithSameNameExists {

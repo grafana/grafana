@@ -24,6 +24,7 @@ type Notifier interface {
 type ConditionResult struct {
 	Firing      bool
 	NoDataFound bool
+	Operator    string
 	EvalMatches []*EvalMatch
 }
 

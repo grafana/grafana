@@ -15,6 +15,7 @@ export class SubmenuCtrl {
               private $location) {
     this.annotations = this.dashboard.templating.list;
     this.variables = this.variableSrv.variables;
+    console.log(this.variables);
   }
 
   annotationStateChanged() {

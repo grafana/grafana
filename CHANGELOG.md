@@ -1,9 +1,29 @@
-# 4.0-beta2 (unrelased)
+# 4.0-stable (unreleased)
+
+### Bugfixes
+* **Server-side rendering**: Fixed address used when rendering panel via phantomjs and using non default http_addr config [#6660](https://github.com/grafana/grafana/issues/6660)
+* **Graph panel**: Fixed graph panel tooltip sort order issue [#6648](https://github.com/grafana/grafana/issues/6648)
+* **Unsaved changes**: You now navigate to the intended page after saving in the unsaved changes dialog [#6675](https://github.com/grafana/grafana/issues/6675)
+* **TLS Client Auth**: Support for TLS client authentication for datasource proxies [#2316](https://github.com/grafana/grafana/issues/2316)
+* **Alerts out of sync**: Saving dashboards with broken alerts causes sync problem[#6576](https://github.com/grafana/grafana/issues/6576)
+* **Alerting**: Saving an alert with condition "HAS NO DATA" throws an error[#6701](https://github.com/grafana/grafana/issues/6701)
+* **Config**: Improve error message when parsing broken config file [#6731](https://github.com/grafana/grafana/issues/6731)
+* **Table**: Render empty dates as - instead of current date [#6728](https://github.com/grafana/grafana/issues/6728)
+
+# 4.0-beta2 (2016-11-21)
 
 ### Bugfixes
 * **Graph Panel**: Log base scale on right Y-axis had no effect, max value calc was not applied, [#6534](https://github.com/grafana/grafana/issues/6534)
 * **Graph Panel**: Bar width if bars was only used in series override, [#6528](https://github.com/grafana/grafana/issues/6528)
 * **UI/Browser**: Fixed issue with page/view header gradient border not showing in Safari, [#6530](https://github.com/grafana/grafana/issues/6530)
+* **Cloudwatch**: Fixed cloudwatch datasource requesting to many datapoints, [#6544](https://github.com/grafana/grafana/issues/6544)
+* **UX**: Panel Drop zone visible after duplicating panel, and when entering fullscreen/edit view, [#6598](https://github.com/grafana/grafana/issues/6598)
+* **Templating**: Newly added variable was not visible directly only after dashboard reload, [#6622](https://github.com/grafana/grafana/issues/6622)
+
+### Enhancements
+* **Singlestat**: Support repeated template variables in prefix/postfix [#6595](https://github.com/grafana/grafana/issues/6595)
+* **Templating**: Don't persist variable options with refresh option [#6586](https://github.com/grafana/grafana/issues/6586)
+* **Alerting**: Add ability to have OR conditions (and mixing AND & OR) [#6579](https://github.com/grafana/grafana/issues/6579)
 
 # 4.0-beta1 (2016-11-09)
 

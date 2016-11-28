@@ -61,6 +61,12 @@ func prettify(v reflect.Value, indent int, buf *bytes.Buffer) {
 
 		buf.WriteString("\n" + strings.Repeat(" ", indent) + "}")
 	case reflect.Slice:
+		strtype := v.Type().String()
+		if strtype == "[]uint8" {
+			fmt.Fprintf(buf, "<binary> len %d", v.Len())
+			break
+		}
+
 		nl, id, id2 := "", "", ""
 		if v.Len() > 3 {
 			nl, id, id2 = "\n", strings.Repeat(" ", indent), strings.Repeat(" ", indent+2)
