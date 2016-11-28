@@ -47,6 +47,10 @@ export class TableRenderer {
 
     if (style.type === 'date') {
       return v => {
+        if (v === undefined || v === null) {
+          return '-';
+        }
+
         if (_.isArray(v)) { v = v[0]; }
         var date = moment(v);
         if (this.isUtc) {
