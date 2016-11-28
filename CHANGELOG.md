@@ -8,6 +8,7 @@
 * **Alerts out of sync**: Saving dashboards with broken alerts causes sync problem[#6576](https://github.com/grafana/grafana/issues/6576)
 * **Alerting**: Saving an alert with condition "HAS NO DATA" throws an error[#6701](https://github.com/grafana/grafana/issues/6701)
 * **Config**: Improve error message when parsing broken config file [#6731](https://github.com/grafana/grafana/issues/6731)
+* **Table**: Render empty dates as - instead of current date [#6728](https://github.com/grafana/grafana/issues/6728)
 
 # 4.0-beta2 (2016-11-21)
 
