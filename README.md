@@ -79,7 +79,7 @@ the latest master builds [here](http://grafana.org/builds)
 
 ### Dependencies
 
-- Go 1.7
+- Go 1.7.3
 - NodeJS v4+
 
 ### Get Code
