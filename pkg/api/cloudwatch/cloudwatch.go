@@ -33,6 +33,39 @@ type cwRequest struct {
 	DataSource *m.DataSource
 }
 
+type datasourceInfo struct {
+	Profile       string
+	Region        string
+	AssumeRoleArn string
+	Namespace     string
+
+	AccessKey string
+	SecretKey string
+}
+
+func (req *cwRequest) GetDatasourceInfo() *datasourceInfo {
+	assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
+	accessKey := ""
+	secretKey := ""
+
+	for key, value := range req.DataSource.SecureJsonData.Decrypt() {
+		if key == "accessKey" {
+			accessKey = value
+		}
+		if key == "secretKey" {
+			secretKey = value
+		}
+	}
+
+	return &datasourceInfo{
+		AssumeRoleArn: assumeRoleArn,
+		Region:        req.Region,
+		Profile:       req.DataSource.Database,
+		AccessKey:     accessKey,
+		SecretKey:     secretKey,
+	}
+}
+
 func init() {
 	actionHandlers = map[string]actionHandler{
 		"GetMetricStatistics":     handleGetMetricStatistics,
@@ -56,8 +89,8 @@ type cache struct {
 var awsCredentialCache map[string]cache = make(map[string]cache)
 var credentialCacheLock sync.RWMutex
 
-func getCredentials(profile string, region string, assumeRoleArn string) *credentials.Credentials {
-	cacheKey := profile + ":" + assumeRoleArn
+func getCredentials(dsInfo *datasourceInfo) *credentials.Credentials {
+	cacheKey := dsInfo.Profile + ":" + dsInfo.AssumeRoleArn
 	credentialCacheLock.RLock()
 	if _, ok := awsCredentialCache[cacheKey]; ok {
 		if awsCredentialCache[cacheKey].expiration != nil &&
@@ -74,9 +107,9 @@ func getCredentials(profile string, region string, assumeRoleArn string) *creden
 	sessionToken := ""
 	var expiration *time.Time
 	expiration = nil
-	if strings.Index(assumeRoleArn, "arn:aws:iam:") == 0 {
+	if strings.Index(dsInfo.AssumeRoleArn, "arn:aws:iam:") == 0 {
 		params := &sts.AssumeRoleInput{
-			RoleArn:         aws.String(assumeRoleArn),
+			RoleArn:         aws.String(dsInfo.AssumeRoleArn),
 			RoleSessionName: aws.String("GrafanaSession"),
 			DurationSeconds: aws.Int64(900),
 		}
@@ -85,13 +118,14 @@ func getCredentials(profile string, region string, assumeRoleArn string) *creden
 		stsCreds := credentials.NewChainCredentials(
 			[]credentials.Provider{
 				&credentials.EnvProvider{},
-				&credentials.SharedCredentialsProvider{Filename: "", Profile: profile},
+				&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
 				&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(stsSess), ExpiryWindow: 5 * time.Minute},
 			})
 		stsConfig := &aws.Config{
-			Region:      aws.String(region),
+			Region:      aws.String(dsInfo.Region),
 			Credentials: stsCreds,
 		}
+
 		svc := sts.New(session.New(stsConfig), stsConfig)
 		resp, err := svc.AssumeRole(params)
 		if err != nil {
@@ -115,9 +149,14 @@ func getCredentials(profile string, region string, assumeRoleArn string) *creden
 				SessionToken:    sessionToken,
 			}},
 			&credentials.EnvProvider{},
-			&credentials.SharedCredentialsProvider{Filename: "", Profile: profile},
+			&credentials.StaticProvider{Value: credentials.Value{
+				AccessKeyID:     dsInfo.AccessKey,
+				SecretAccessKey: dsInfo.SecretKey,
+			}},
+			&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
 			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
 		})
+
 	credentialCacheLock.Lock()
 	awsCredentialCache[cacheKey] = cache{
 		credential: creds,
@@ -129,10 +168,9 @@ func getCredentials(profile string, region string, assumeRoleArn string) *creden
 }
 
 func getAwsConfig(req *cwRequest) *aws.Config {
-	assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	cfg := &aws.Config{
 		Region:      aws.String(req.Region),
-		Credentials: getCredentials(req.DataSource.Database, req.Region, assumeRoleArn),
+		Credentials: getCredentials(req.GetDatasourceInfo()),
 	}
 	return cfg
 }
