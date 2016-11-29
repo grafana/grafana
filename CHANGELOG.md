@@ -1,3 +1,10 @@
+# 4.1-beta (unreleased)
+
+### Bugfixes
+* **API**: HTTP API for deleting org returning incorrect message for a non-existing org [#6679](https://github.com/grafana/grafana/issues/6679)
+
+### Enhancements
+
 # 4.0-stable (2016-11-29)
 
 ### Bugfixes
