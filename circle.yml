@@ -24,7 +24,7 @@ test:
 
 deployment:
   master:
-    branch: master
+    branch: v4.0.x
     owner: grafana
     commands:
       - ./scripts/trigger_grafana_packer.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN}
