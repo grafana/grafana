@@ -121,6 +121,10 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	}
 
 	dash := cmd.GetDashboardModel()
+	// Check if Title is empty
+	if dash.Title == "" {
+		return ApiError(400, m.ErrDashboardTitleEmpty.Error(), nil)
+	}
 	if dash.Id == 0 {
 		limitReached, err := middleware.QuotaReached(c, "dashboard")
 		if err != nil {
