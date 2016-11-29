@@ -91,6 +91,7 @@ export class AlertTabCtrl {
     switch (type) {
       case "email": return "fa fa-envelope";
       case "slack": return "fa fa-slack";
+      case "victorops": return "fa fa-pagelines";
       case "webhook": return "fa fa-cubes";
       case "pagerduty": return "fa fa-bullhorn";
     }
