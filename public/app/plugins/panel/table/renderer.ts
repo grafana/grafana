@@ -45,6 +45,12 @@ export class TableRenderer {
       return this.defaultCellFormater;
     }
 
+    if (style.type === 'hidden') {
+      return v => {
+        return undefined;
+      };
+    }
+
     if (style.type === 'date') {
       return v => {
         if (v === undefined || v === null) {
@@ -121,6 +127,13 @@ export class TableRenderer {
     var widthHack = '';
     if (addWidthHack) {
       widthHack = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].text + '</div>';
+    }
+
+    if (value === undefined) {
+      style = ' style="display:none;"';
+      this.table.columns[columnIndex].hidden = true;
+    } else {
+      this.table.columns[columnIndex].hidden = false;
     }
 
     return '<td' + style + '>' + value + widthHack + '</td>';
