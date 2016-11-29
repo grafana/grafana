@@ -176,7 +176,6 @@ func UpdateOrgAddress(cmd *m.UpdateOrgAddressCommand) error {
 
 func DeleteOrg(cmd *m.DeleteOrgCommand) error {
 	return inTransaction2(func(sess *session) error {
-		//Check if organization exists
 		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.Id); err != nil {
 			return err
 		} else if len(res) != 1 {
