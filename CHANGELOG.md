@@ -8,6 +8,7 @@
 * **Postgres**: Add support for Certs for Postgres database [#6655](https://github.com/grafana/grafana/issues/6655)
 * **Victorops**: Add VictorOps Notification Integration [#6411](https://github.com/grafana/grafana/issues/6411)
 * **Singlestat**: New aggregation on singlestat panel [#6740](https://github.com/grafana/grafana/pull/6740)
+* **Cloudwatch**: Make it possible to specify access and secret key on the data source config page [#6697](https://github.com/grafana/grafana/issues/6697)
 
 # 4.0-stable (2016-11-29)
 
