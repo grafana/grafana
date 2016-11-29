@@ -27,13 +27,10 @@ func NewVictoropsNotifier(model *models.AlertNotification) (alerting.Notifier, e
 		return nil, alerting.ValidationError{Reason: "Could not find victorops url property in settings"}
 	}
 
-	alertOnExecError := model.Settings.Get("alertOnExecError").MustBool()
-
 	return &VictoropsNotifier{
-		NotifierBase:     NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
-		URL:              url,
-		AlertOnExecError: alertOnExecError,
-		log:              log.New("alerting.notifier.victorops"),
+		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		URL:          url,
+		log:          log.New("alerting.notifier.victorops"),
 	}, nil
 }
 
@@ -42,9 +39,8 @@ func NewVictoropsNotifier(model *models.AlertNotification) (alerting.Notifier, e
 // Victorops specifications (http://victorops.force.com/knowledgebase/articles/Integration/Alert-Ingestion-API-Documentation/)
 type VictoropsNotifier struct {
 	NotifierBase
-	URL              string
-	AlertOnExecError bool
-	log              log.Logger
+	URL string
+	log log.Logger
 }
 
 // Notify sends notification to Victorops via POST to URL endpoint
