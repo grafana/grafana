@@ -23,7 +23,7 @@ test:
      - bash scripts/circle-test.sh
 
 deployment:
-  master:
+  v4.0.x:
     branch: v4.0.x
     owner: grafana
     commands:
