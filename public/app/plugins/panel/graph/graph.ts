@@ -194,8 +194,8 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
             continue;
           }
 
-          if (((panel.bars && (typeof data[i].bars.show === 'undefined' || data[i].bars.show)) ||
-               (!panel.bars && typeof data[i].bars.show !== 'undefined' && data[i].bars.show)) &&
+          if (((panel.bars && (typeof data[i].bars === 'undefined' || typeof data[i].bars.show === 'undefined' || data[i].bars.show)) ||
+               (!panel.bars && typeof data[i].bars !== 'undefined' && typeof data[i].bars.show !== 'undefined' && data[i].bars.show)) &&
               data[i].stats.timeStep < min) {
             min = data[i].stats.timeStep;
           }
