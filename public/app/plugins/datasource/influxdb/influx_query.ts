@@ -154,27 +154,35 @@ export default class InfluxQuery {
         value = this.templateSrv.replace(value, this.scopedVars);
       }
       if (operator !== '>' && operator !== '<') {
-        value = "'" + value.replace(/\\/g, '\\\\') + "'";
+        //value = "'" + value.replace(/\\/g, '\\\\') + "'";
+        value = value.replace(/\\/g, '\\\\');
       }
     } else if (interpolate) {
-      value = this.templateSrv.replace(value, this.scopedVars, 'regex');
+      //value = this.templateSrv.replace(value, this.scopedVars, 'regex');
+      value = this.templateSrv.replace(value, this.scopedVars, 'glob');
     }
 
-    return str + '"' + tag.key + '" ' + operator + ' ' + value;
+    //return str + '"' + tag.key + '" ' + operator + ' ' + value;
+    return str + tag.key + ' ' + operator + ' ' + value;
   }
 
   getMeasurementAndPolicy(interpolate) {
     var policy = this.target.policy;
     var measurement = this.target.measurement || 'measurement';
 
-    if (!measurement.match('^/.*/')) {
-      measurement = '"' + measurement+ '"';
-    } else if (interpolate) {
-      measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
+    //if (!measurement.match('^/.*/')) {
+    //  measurement = '"' + measurement+ '"';
+    //} else if (interpolate) {
+    //  measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
+    //}
+
+    if (interpolate) {
+      measurement = this.templateSrv.replace(measurement, this.scopedVars, 'glob');
     }
 
     if (policy !== 'default') {
-      policy = '"' + this.target.policy + '".';
+      //policy = '"' + this.target.policy + '".';
+      policy = this.target.policy + '.';
     } else {
       policy = "";
     }
@@ -193,7 +201,8 @@ export default class InfluxQuery {
     }
 
     var escapedValues = _.map(value, kbn.regexEscape);
-    return escapedValues.join('|');
+    //return escapedValues.join('|');
+    return escapedValues.join(',');
   };
 
   render(interpolate?) {

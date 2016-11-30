@@ -92,11 +92,11 @@ export function functionRenderer(part, innerExpr) {
         value = '$interval';
       }
     }
-    if (paramType.quote === 'single') {
-      return "'" + value + "'";
-    } else if (paramType.quote === 'double') {
-      return '"' + value + '"';
-    }
+    //if (paramType.quote === 'single') {
+    //  return "'" + value + "'";
+    //} else if (paramType.quote === 'double') {
+    //  return '"' + value + '"';
+    //}
 
     return value;
   });
@@ -117,7 +117,8 @@ export function identityRenderer(part, innerExpr) {
 }
 
 export function quotedIdentityRenderer(part, innerExpr) {
-  return '"' + part.params[0] + '"';
+  //return '"' + part.params[0] + '"';
+  return part.params[0];
 }
 
 
