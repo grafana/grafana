@@ -194,7 +194,8 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
             continue;
           }
 
-          if (((panel.bars && data[i].bars.show !== false) || (!panel.bars && data[i].bars.show === true)) &&
+          if (((panel.bars && (typeof data[i].bars.show === 'undefined' || data[i].bars.show)) ||
+               (!panel.bars && typeof data[i].bars.show !== 'undefined' && data[i].bars.show)) &&
               data[i].stats.timeStep < min) {
             min = data[i].stats.timeStep;
           }
