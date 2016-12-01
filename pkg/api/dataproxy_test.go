@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/url"
 	"testing"
+	"time"
 
 	. "github.com/smartystreets/goconvey/convey"
 
@@ -93,9 +94,12 @@ func TestDataSourceProxy(t *testing.T) {
 		json := simplejson.New()
 		json.Set("tlsAuth", true)
 		json.Set("tlsAuthWithCACert", true)
+
+		t := time.Now()
 		ds := m.DataSource{
-			Url:  "http://k8s:8001",
-			Type: "Kubernetes",
+			Url:     "http://k8s:8001",
+			Type:    "Kubernetes",
+			Updated: t.Add(-2 * time.Minute),
 		}
 
 		transport, err := DataProxyTransport(&ds)
@@ -111,6 +115,7 @@ func TestDataSourceProxy(t *testing.T) {
 			"tlsClientCert": util.Encrypt([]byte(clientCert), "password"),
 			"tlsClientKey":  util.Encrypt([]byte(clientKey), "password"),
 		}
+		ds.Updated = t.Add(-1 * time.Minute)
 
 		transport, err = DataProxyTransport(&ds)
 		So(err, ShouldBeNil)
@@ -122,6 +127,7 @@ func TestDataSourceProxy(t *testing.T) {
 
 		ds.JsonData = nil
 		ds.SecureJsonData = map[string][]byte{}
+		ds.Updated = t
 
 		transport, err = DataProxyTransport(&ds)
 		So(err, ShouldBeNil)
@@ -138,7 +144,7 @@ func clearCache() {
 	ptc.Lock()
 	defer ptc.Unlock()
 
-	ptc.cache = make(map[int64]*http.Transport)
+	ptc.cache = make(map[int64]cachedTransport)
 }
 
 const caCert string = `-----BEGIN CERTIFICATE-----
