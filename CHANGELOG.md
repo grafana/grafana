@@ -11,6 +11,9 @@
 * **Cloudwatch**: Make it possible to specify access and secret key on the data source config page [#6697](https://github.com/grafana/grafana/issues/6697)
 * **Table**: Added Hidden Column Style for Table Panel [#5677](https://github.com/grafana/grafana/pull/5677)
 
+# 4.0.1 (unreleased)
+* **Metrics**: Fixes nil pointer dereference on my arm build [#6749](https://github.com/grafana/grafana/issues/6749)
+
 # 4.0-stable (2016-11-29)
 
 ### Bugfixes
