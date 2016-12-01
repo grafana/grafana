@@ -7,6 +7,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
+	"time"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -16,6 +18,7 @@ import (
 func TestDataSourceProxy(t *testing.T) {
 
 	Convey("When getting graphite datasource proxy", t, func() {
+		clearCache()
 		ds := m.DataSource{Url: "htttp://graphite:8080", Type: m.DS_GRAPHITE}
 		targetUrl, err := url.Parse(ds.Url)
 		proxy := NewReverseProxy(&ds, "/render", targetUrl)
@@ -38,6 +41,7 @@ func TestDataSourceProxy(t *testing.T) {
 	})
 
 	Convey("When getting influxdb datasource proxy", t, func() {
+		clearCache()
 		ds := m.DataSource{
 			Type:     m.DS_INFLUXDB_08,
 			Url:      "http://influxdb:8083",
@@ -65,36 +69,106 @@ func TestDataSourceProxy(t *testing.T) {
 		})
 	})
 
+	Convey("When caching a datasource proxy", t, func() {
+		clearCache()
+		ds := m.DataSource{
+			Id:      1,
+			Url:     "http://k8s:8001",
+			Type:    "Kubernetes",
+			Updated: time.Now(),
+		}
+
+		t1, err := DataProxyTransport(&ds)
+		So(err, ShouldBeNil)
+
+		t2, err := DataProxyTransport(&ds)
+		So(err, ShouldBeNil)
+
+		Convey("Should be using the cached proxy", func() {
+			So(t2, ShouldEqual, t1)
+		})
+	})
+
+	Convey("When updating a cached datasource proxy", t, func() {
+		clearCache()
+		ds := m.DataSource{
+			Id:      1,
+			Url:     "http://k8s:8001",
+			Type:    "Kubernetes",
+			Updated: time.Now().AddDate(0, 0, -1),
+		}
+
+		t1, err := DataProxyTransport(&ds)
+		So(err, ShouldBeNil)
+
+		updatedDs := m.DataSource{
+			Id:      1,
+			Url:     "http://k8s:8001",
+			Type:    "Kubernetes",
+			Updated: time.Now(),
+		}
+
+		t2, err := DataProxyTransport(&updatedDs)
+		So(err, ShouldBeNil)
+
+		Convey("Should not be using the cached proxy", func() {
+			So(t2, ShouldNotEqual, t1)
+		})
+	})
+
 	Convey("When getting kubernetes datasource proxy", t, func() {
+		clearCache()
 		setting.SecretKey = "password"
 
 		json := simplejson.New()
 		json.Set("tlsAuth", true)
 		json.Set("tlsAuthWithCACert", true)
 		ds := m.DataSource{
-			Url:      "htttp://k8s:8001",
-			Type:     "Kubernetes",
-			JsonData: json,
-			SecureJsonData: map[string][]byte{
-				"tlsCACert":     util.Encrypt([]byte(caCert), "password"),
-				"tlsClientCert": util.Encrypt([]byte(clientCert), "password"),
-				"tlsClientKey":  util.Encrypt([]byte(clientKey), "password"),
-			},
+			Url:  "http://k8s:8001",
+			Type: "Kubernetes",
 		}
-		targetUrl, err := url.Parse(ds.Url)
-		proxy := NewReverseProxy(&ds, "", targetUrl)
-		proxy.Transport, err = DataProxyTransport(&ds)
+
+		transport, err := DataProxyTransport(&ds)
 		So(err, ShouldBeNil)
 
-		transport, ok := proxy.Transport.(*http.Transport)
+		Convey("Should have no cert", func() {
+			So(transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, true)
+		})
+
+		ds.JsonData = json
+		ds.SecureJsonData = map[string][]byte{
+			"tlsCACert":     util.Encrypt([]byte(caCert), "password"),
+			"tlsClientCert": util.Encrypt([]byte(clientCert), "password"),
+			"tlsClientKey":  util.Encrypt([]byte(clientKey), "password"),
+		}
+
+		transport, err = DataProxyTransport(&ds)
+		So(err, ShouldBeNil)
 
 		Convey("Should add cert", func() {
-			So(ok, ShouldBeTrue)
 			So(transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, false)
 			So(len(transport.TLSClientConfig.Certificates), ShouldEqual, 1)
 		})
+
+		ds.JsonData = nil
+		ds.SecureJsonData = map[string][]byte{}
+
+		transport, err = DataProxyTransport(&ds)
+		So(err, ShouldBeNil)
+
+		Convey("Should remove cert", func() {
+			So(transport.TLSClientConfig.InsecureSkipVerify, ShouldEqual, true)
+			So(len(transport.TLSClientConfig.Certificates), ShouldEqual, 0)
+		})
 	})
 
+}
+
+func clearCache() {
+	ptc.Lock()
+	defer ptc.Unlock()
+
+	ptc.cache = make(map[int64]*cachedTransport)
 }
 
 const caCert string = `-----BEGIN CERTIFICATE-----

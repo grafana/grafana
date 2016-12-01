@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
@@ -18,7 +19,34 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type cachedTransport struct {
+	transport *http.Transport
+	updated   time.Time
+}
+
+type proxyTransportCache struct {
+	cache map[int64]*cachedTransport
+	sync.Mutex
+}
+
+var ptc = proxyTransportCache{
+	cache: make(map[int64]*cachedTransport),
+}
+
 func DataProxyTransport(ds *m.DataSource) (*http.Transport, error) {
+	ptc.Lock()
+	defer ptc.Unlock()
+
+	var tlsAuth, tlsAuthWithCACert bool
+	if ds.JsonData != nil {
+		tlsAuth = ds.JsonData.Get("tlsAuth").MustBool(false)
+		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
+	}
+
+	if t, present := ptc.cache[ds.Id]; present && t.transport.TLSClientConfig.InsecureSkipVerify != tlsAuth && t.updated == ds.Updated {
+		return t.transport, nil
+	}
+
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -29,12 +57,6 @@ func DataProxyTransport(ds *m.DataSource) (*http.Transport, error) {
 			KeepAlive: 30 * time.Second,
 		}).Dial,
 		TLSHandshakeTimeout: 10 * time.Second,
-	}
-
-	var tlsAuth, tlsAuthWithCACert bool
-	if ds.JsonData != nil {
-		tlsAuth = ds.JsonData.Get("tlsAuth").MustBool(false)
-		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
 	}
 
 	if tlsAuth {
@@ -56,6 +78,12 @@ func DataProxyTransport(ds *m.DataSource) (*http.Transport, error) {
 		}
 		transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
 	}
+
+	ptc.cache[ds.Id] = &cachedTransport{
+		transport: transport,
+		updated:   ds.Updated,
+	}
+
 	return transport, nil
 }
 
