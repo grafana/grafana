@@ -19,13 +19,18 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type cachedTransport struct {
+	transport *http.Transport
+	updated   time.Time
+}
+
 type proxyTransportCache struct {
-	cache map[int64]*http.Transport
+	cache map[int64]*cachedTransport
 	sync.Mutex
 }
 
 var ptc = proxyTransportCache{
-	cache: make(map[int64]*http.Transport),
+	cache: make(map[int64]*cachedTransport),
 }
 
 func DataProxyTransport(ds *m.DataSource) (*http.Transport, error) {
@@ -38,8 +43,8 @@ func DataProxyTransport(ds *m.DataSource) (*http.Transport, error) {
 		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
 	}
 
-	if t, present := ptc.cache[ds.Id]; present && t.TLSClientConfig.InsecureSkipVerify != tlsAuth {
-		return t, nil
+	if t, present := ptc.cache[ds.Id]; present && t.transport.TLSClientConfig.InsecureSkipVerify != tlsAuth && t.updated == ds.Updated {
+		return t.transport, nil
 	}
 
 	transport := &http.Transport{
@@ -74,7 +79,10 @@ func DataProxyTransport(ds *m.DataSource) (*http.Transport, error) {
 		transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
 	}
 
-	ptc.cache[ds.Id] = transport
+	ptc.cache[ds.Id] = &cachedTransport{
+		transport: transport,
+		updated:   ds.Updated,
+	}
 
 	return transport, nil
 }

@@ -7,6 +7,8 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
+	"time"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -70,9 +72,10 @@ func TestDataSourceProxy(t *testing.T) {
 	Convey("When caching a datasource proxy", t, func() {
 		clearCache()
 		ds := m.DataSource{
-			Id:   1,
-			Url:  "http://k8s:8001",
-			Type: "Kubernetes",
+			Id:      1,
+			Url:     "http://k8s:8001",
+			Type:    "Kubernetes",
+			Updated: time.Now(),
 		}
 
 		t1, err := DataProxyTransport(&ds)
@@ -83,6 +86,33 @@ func TestDataSourceProxy(t *testing.T) {
 
 		Convey("Should be using the cached proxy", func() {
 			So(t2, ShouldEqual, t1)
+		})
+	})
+
+	Convey("When updating a cached datasource proxy", t, func() {
+		clearCache()
+		ds := m.DataSource{
+			Id:      1,
+			Url:     "http://k8s:8001",
+			Type:    "Kubernetes",
+			Updated: time.Now().AddDate(0, 0, -1),
+		}
+
+		t1, err := DataProxyTransport(&ds)
+		So(err, ShouldBeNil)
+
+		updatedDs := m.DataSource{
+			Id:      1,
+			Url:     "http://k8s:8001",
+			Type:    "Kubernetes",
+			Updated: time.Now(),
+		}
+
+		t2, err := DataProxyTransport(&updatedDs)
+		So(err, ShouldBeNil)
+
+		Convey("Should not be using the cached proxy", func() {
+			So(t2, ShouldNotEqual, t1)
 		})
 	})
 
@@ -138,7 +168,7 @@ func clearCache() {
 	ptc.Lock()
 	defer ptc.Unlock()
 
-	ptc.cache = make(map[int64]*http.Transport)
+	ptc.cache = make(map[int64]*cachedTransport)
 }
 
 const caCert string = `-----BEGIN CERTIFICATE-----
