@@ -16,6 +16,20 @@ func TestSimpleReducer(t *testing.T) {
 			So(result, ShouldEqual, float64(2))
 		})
 
+		Convey("avg of none null data", func() {
+			reducer := NewSimpleReducer("avg")
+			series := &tsdb.TimeSeries{
+				Name: "test time serie",
+			}
+
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(3), 1))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 2))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 3))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(3), 4))
+
+			So(reducer.Reduce(series).Float64, ShouldEqual, float64(3))
+		})
+
 		Convey("sum", func() {
 			result := testReducer("sum", 1, 2, 3)
 			So(result, ShouldEqual, float64(6))
