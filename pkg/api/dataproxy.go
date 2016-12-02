@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"sync"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
@@ -18,7 +19,29 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+type proxyTransportCache struct {
+	cache map[int64]cachedTransport
+	sync.Mutex
+}
+
+type cachedTransport struct {
+	updated time.Time
+
+	*http.Transport
+}
+
+var ptc = proxyTransportCache{
+	cache: make(map[int64]cachedTransport),
+}
+
 func DataProxyTransport(ds *m.DataSource) (*http.Transport, error) {
+	ptc.Lock()
+	defer ptc.Unlock()
+
+	if t, present := ptc.cache[ds.Id]; present && ds.Updated.Equal(t.updated) {
+		return t.Transport, nil
+	}
+
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			InsecureSkipVerify: true,
@@ -56,6 +79,12 @@ func DataProxyTransport(ds *m.DataSource) (*http.Transport, error) {
 		}
 		transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
 	}
+
+	ptc.cache[ds.Id] = cachedTransport{
+		Transport: transport,
+		updated:   ds.Updated,
+	}
+
 	return transport, nil
 }
 
