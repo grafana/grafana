@@ -90,6 +90,8 @@ func init() {
 			queryRes := tsdb.NewQueryResult()
 
 			stringInput := query.Model.Get("stringInput").MustString()
+			stringInput = strings.Replace(stringInput, " ", "", -1)
+
 			values := []null.Float{}
 			for _, strVal := range strings.Split(stringInput, ",") {
 				if strVal == "null" {
