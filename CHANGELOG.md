@@ -13,6 +13,7 @@
 
 # 4.0.1 (unreleased)
 * **Metrics**: Fixes nil pointer dereference on my arm build [#6749](https://github.com/grafana/grafana/issues/6749)
+* **Data proxy**: Fixes a tcp pooling issue in the datasource reverse proxy [#6759](https://github.com/grafana/grafana/issues/6759)
 
 # 4.0-stable (2016-11-29)
 
