@@ -13,7 +13,7 @@
 
 # 4.0.1 (2016-12-02)
 
-** Notice ** 
+> **Notice**  
 4.0.0 had serious connection pooling issue when using a data source in proxy access. This bug caused lots of resource issues 
 due to too many connections/file handles on the data source backend. This problem is fixed in this release. 
 
