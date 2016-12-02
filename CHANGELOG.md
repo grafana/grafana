@@ -11,7 +11,13 @@
 * **Cloudwatch**: Make it possible to specify access and secret key on the data source config page [#6697](https://github.com/grafana/grafana/issues/6697)
 * **Table**: Added Hidden Column Style for Table Panel [#5677](https://github.com/grafana/grafana/pull/5677)
 
-# 4.0.1 (unreleased)
+# 4.0.1 (2016-12-02)
+
+** Notice ** 
+4.0.0 had serious connection pooling issue when using a data source in proxy access. This bug caused lots of resource issues 
+due to too many connections/file handles on the data source backend. This problem is fixed in this release. 
+
+### Bugfixes
 * **Metrics**: Fixes nil pointer dereference on my arm build [#6749](https://github.com/grafana/grafana/issues/6749)
 * **Data proxy**: Fixes a tcp pooling issue in the datasource reverse proxy [#6759](https://github.com/grafana/grafana/issues/6759)
 
