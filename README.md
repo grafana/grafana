@@ -155,10 +155,6 @@ If you have any idea for an improvement or found a bug do not hesitate to open a
 And if you have time clone this repo and submit a pull request and help me make Grafana
 the kickass metrics & devops dashboard we all dream about!
 
-Before creating a pull request be sure that "grunt test" runs without any style or unit test errors, also
-please [sign the CLA](http://docs.grafana.org/project/cla/)
-
 ## License
-
 Grafana is distributed under Apache 2.0 License.
 Work in progress Grafana 2.0 (with included Grafana backend)
