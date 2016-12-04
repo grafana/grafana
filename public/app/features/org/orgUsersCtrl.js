@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('OrgUsersCtrl', function($scope, $http, backendSrv) {
+  module.controller('OrgUsersCtrl', function($scope, backendSrv) {
 
     $scope.user = {
       loginOrEmail: '',
