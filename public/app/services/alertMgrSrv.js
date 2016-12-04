@@ -8,29 +8,18 @@ function (angular) {
 
   var module = angular.module('grafana.services');
 
-  module.service('alertMgrSrv', function($http, alertSrv, backendSrv) {
+  module.service('alertMgrSrv', function(alertSrv, backendSrv) {
     this.alertDefMap = {};
     var self = this;
-    var alertUrlRoot = "";
-    var alertDefUrl = "";
-    var alertStatusUrl = "";
-    var alertAssociationUrl = "";
+    var alertDefUrl = "/alert/definition";
+    var alertStatusUrl = "/alert/status";
+    var alertAssociationUrl = "/alert/correlation";
 
     this.currentCritialThreshold = 0;
     this.currentWarningThreshold = 0;
-    this.init = function() {
-      backendSrv.updateSystemsMap();
-      backendSrv.get('/api/alertsource').then(function(result) {
-        // TODO: add current user's org name as filters. Otherwise, he will see all alerts not in his org.
-        alertUrlRoot = result.alert.alert_urlroot;
-        alertDefUrl = alertUrlRoot + "/alert/" + "definition";
-        alertStatusUrl = alertUrlRoot + "/alert/" + "status";
-        alertAssociationUrl = alertUrlRoot + "/alert/" + "correlation";
-      });
-    };
 
     this.load = function() {
-      return $http({
+      return backendSrv.alertD({
         method: "get",
         url: alertDefUrl,
       }).then(function onSuccess(response) {
@@ -46,7 +35,7 @@ function (angular) {
     };
 
     this.save = function(alertDef) {
-      return $http({
+      return backendSrv.alertD({
         method: "post",
         url: alertDefUrl,
         data: angular.toJson(alertDef),
@@ -55,7 +44,7 @@ function (angular) {
     };
 
     this.remove = function(alertId) {
-      return $http({
+      return backendSrv.alertD({
         method: "delete",
         url: alertDefUrl,
         params: {id: alertId},
@@ -68,7 +57,7 @@ function (angular) {
     };
 
     this.loadTriggeredAlerts = function() {
-      return $http({
+      return backendSrv.alertD({
         method: "get",
         url: alertStatusUrl,
         params: {} // TODO: filtered by "org" and "service".
@@ -76,7 +65,7 @@ function (angular) {
     };
 
     this.loadAssociatedMetrics = function(alertMetric, alertHost, threshold) {
-      return $http({
+      return backendSrv.alertD({
         method: "get",
         url: alertAssociationUrl,
         params: {metric: alertMetric, host: alertHost, distance: threshold}
@@ -84,7 +73,7 @@ function (angular) {
     };
 
     this.resetCorrelation = function(alertMetric, alertHost, backtrackSteps, advancedSteps) {
-      return $http({
+      return backendSrv.alertD({
         method: "post",
         url: alertAssociationUrl,
         params: {

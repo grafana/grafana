@@ -4,6 +4,8 @@ import (
 	"github.com/wangy1931/grafana/pkg/middleware"
   "github.com/wangy1931/grafana/pkg/setting"
   "github.com/wangy1931/grafana/pkg/log"
+  m "github.com/wangy1931/grafana/pkg/models"
+  "net/url"
 )
 
 func GetAlertSource(c *middleware.Context) {
@@ -17,6 +19,15 @@ func GetAlertSource(c *middleware.Context) {
   c.JSON(200, alert)
 }
 
+func ProxyAlertDataSourceRequest(c *middleware.Context) {
+  ds := m.DataSource{
+    Type: "",
+  }
+  targetUrl, _ := url.Parse(setting.Alert.AlertUrlRoot)
+  proxy := NewReverseProxy(&ds, "/healthsummary?org=" + c.OrgName, targetUrl)
+  proxy.Transport = dataProxyTransport
+  proxy.ServeHTTP(c.RW(), c.Req.Request)
+}
 /*
 func GetAlertSource(c *middleware.Context) {
 	query := m.GetAlertSourceQuery{OrgId: c.OrgId}

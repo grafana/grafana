@@ -11,18 +11,10 @@ function (angular) {
   module.service('oncallerMgrSrv', function($http, alertSrv, backendSrv, contextSrv) {
     this.oncallerDefMap = {};
     var self = this;
-    var alertUrlRoot = "";
-    var oncallerUrl = "";
-
-    this.init = function() {
-      backendSrv.get('/api/alertsource').then(function(result) {
-        alertUrlRoot = result.alert.alert_urlroot;
-        oncallerUrl = alertUrlRoot + "/oncaller/" + "definition";
-      });
-    };
+    var oncallerUrl = "/oncaller/definition";
 
     this.load = function() {
-      return $http({
+      return backendSrv.alertD({
         method: "get",
         url: oncallerUrl,
       }).then(function onSuccess(response) {
@@ -39,7 +31,7 @@ function (angular) {
 
     this.save = function(oncallerDef) {
       oncallerDef.org = contextSrv.user.orgId;
-      return $http({
+      return backendSrv.alertD({
         method: "post",
         url: oncallerUrl,
         data: angular.toJson(oncallerDef),
@@ -48,7 +40,7 @@ function (angular) {
     };
 
     this.remove = function(oncallerOrg, oncallerService) {
-      return $http({
+      return backendSrv.alertD({
         method: "delete",
         url: oncallerUrl,
         params: {org: oncallerOrg, service: oncallerService},

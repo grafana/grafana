@@ -146,8 +146,9 @@ func Register(r *macaron.Macaron) {
 		}, reqGrafanaAdmin)
 
 		// auth api keys
+    //TODO you can check username -->get user system --> get key
+    r.Get("/auth/keys/", wrap(GetApiKeys))
 		r.Group("/auth/keys", func() {
-			r.Get("/", wrap(GetApiKeys))
 			r.Post("/", quota("api_key"), bind(m.AddApiKeyCommand{}), wrap(AddApiKey))
 			r.Delete("/:id", wrap(DeleteApiKey))
 		}, regOrgAdmin)
@@ -165,6 +166,7 @@ func Register(r *macaron.Macaron) {
 		// Alert source
 		r.Group("/alertsource", func() {
 			r.Get("/", GetAlertSource)
+      r.Get("/healthsummary", ProxyAlertDataSourceRequest)
 		})
 
 		r.Get("/frontend/settings/", GetFrontendSettings)

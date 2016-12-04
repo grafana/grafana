@@ -6,7 +6,7 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('OrgDetailsCtrl', function($scope, $http, backendSrv, contextSrv) {
+  module.controller('OrgDetailsCtrl', function($scope, backendSrv, contextSrv) {
 
     $scope.init = function() {
       $scope.getOrgInfo();

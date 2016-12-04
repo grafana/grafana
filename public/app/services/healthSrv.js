@@ -9,19 +9,14 @@ define([
     var module = angular.module('grafana.services');
 
     module.service('healthSrv', function ($http, backendSrv) {
-      var anomalyListUrl = "";
-      this.anomalyUrlRoot = "";
+      var anomalyListUrl = "/anomaly";
+      var excludeAnomaly = "/anomaly/exclude";
+      var includeAnomaly = "/anomaly/include";
+      var mainHealthList = "/api/alertsource/healthsummary";
       this.anomalyMetricsData = [];
       var _this = this;
-
-      this.init = function () {
-        backendSrv.get('/api/alertsource').then(function (result) {
-          _this.anomalyUrlRoot = result.alert.alert_urlroot;
-          anomalyListUrl = _this.anomalyUrlRoot + "/anomaly";
-        });
-      };
       this.load = function () {
-        return $http({
+        return backendSrv.alertD({
           method: "get",
           url: anomalyListUrl
         }).then(function onSuccess(response) {
@@ -33,9 +28,9 @@ define([
       };
 
       this.exclude = function (metricName) {
-        $http({
+        backendSrv.alertD({
           method: "post",
-          url: anomalyListUrl + "/exclude",
+          url: excludeAnomaly,
           params: {
             metric: metricName
           }
@@ -43,24 +38,17 @@ define([
       };
 
       this.include = function (metricName) {
-        $http({
+        backendSrv.alertD({
           method: "post",
-          url: anomalyListUrl + "/include",
+          url: includeAnomaly,
           params: {
             metric: metricName
           }
         });
       };
 
-      this.healthSummary = function (orgName) {
-        return $http({
-          method: "get",
-          url: _this.anomalyUrlRoot + "/healthsummary",
-          params: {
-            org: orgName
-          },
-          timeout: 2000
-        });
+      this.healthSummary = function () {
+        return backendSrv.get(mainHealthList);
       };
 
       this.floor = function (metrics) {

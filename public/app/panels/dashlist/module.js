@@ -67,7 +67,7 @@ function (angular, app, _, config, PanelMeta) {
       }
 
       return backendSrv.search(params).then(function (result) {
-        healthSrv.healthSummary(contextSrv.user.orgName).then(function onSuccess(healthResult) {
+        healthSrv.healthSummary().then(function onSuccess(healthResult) {
           mappingHealth(result, healthResult.data);
           $scope.dashList = result;
           $scope.panelRenderingComplete();

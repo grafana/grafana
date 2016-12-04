@@ -16,14 +16,8 @@ define([
       //would be hard code for a while
       $scope.services = ["Hadoop", "zookeeper", "JMX", "Mysql"];
       $scope.platform = ["Window", "Linux"];
-      $scope.init = function () {
-        backendSrv.get('/api/auth/keys').then(function (tokens) {
-          $scope.tokens = tokens;
-        });
-      };
-
       $scope.changeToken = function () {
-        _.each($scope.tokens, function (token) {
+        _.each(backendSrv.tokens, function (token) {
           if (token.name == $scope.installSelect.system) {
             $scope.token = token.key;
           }

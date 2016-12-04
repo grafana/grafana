@@ -7,7 +7,7 @@ function (angular, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('NewOrgCtrl', function ($scope, $http, backendSrv) {
+  module.controller('NewOrgCtrl', function ($scope, backendSrv) {
 
     $scope.newOrg = {name: ''};
     $scope.newSystems = [{name: "默认系统"}];

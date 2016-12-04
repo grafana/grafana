@@ -10,6 +10,8 @@ function (angular, _, config) {
 
   module.service('backendSrv', function($http, alertSrv, $timeout, contextSrv) {
     var self = this;
+    this.alertDUrl;
+    this.tokens = null;
 
     this.get = function(url, params) {
       return this.request({ method: 'GET', url: url, params: params });
@@ -139,12 +141,39 @@ function (angular, _, config) {
 
     //update system cache when systems change
     this.updateSystemsMap = function() {
+      this.get('/api/auth/keys').then(function (tokens) {
+        self.tokens = tokens;
+      });
+
       return this.get("/api/user/system").then(function (systems) {
         contextSrv.systemsMap = systems;
       });
     };
+
     this.updateSystemId = function(id) {
       contextSrv.system = id;
+    };
+
+    this.initAlertDUrl = function () {
+      this.get('/api/alertsource').then(function (result) {
+        self.alertDUrl = result.alert.alert_urlroot;
+      });
+    };
+
+    this.getToken = function () {
+      return _.chain(self.tokens).filter({'name': contextSrv.system}).first().pick('key').value();
+    };
+
+    this.alertD = function (options) {
+      if (_.isEmpty(options.params)) {
+        options.params = {};
+      }
+      options.url = self.alertDUrl + options.url;
+      options.params.token = this.getToken();
+      if (_.isEmpty(options.params.token)) {
+        alertSrv.set("错误", "无法获取TOKEN", "warning", 4000);
+      }
+      return this.datasourceRequest(options);
     };
   });
 });
