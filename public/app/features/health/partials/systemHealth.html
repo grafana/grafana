@@ -17,7 +17,7 @@
       <span>{{leveal}}</span>
     </div>
     <br>
-    <p>自动检测到所有<strong>237</strong>个指标中: 告警指标 <strong>3</strong>个  异常指标 <strong>10</strong>个 <tip>健康值=(告警指标个数/定义规则总数)*50% + (异常指标/所有指标) * 50%</tip></p>
+    <p>自动检测到所有<strong>{{ summary.numMetrics }}</strong>个指标中: 告警指标 <strong>{{ summary.numAlertsTriggered }}</strong>个  异常指标 <strong>{{ summary.numAnomalyMetrics }}</strong>个 <tip>健康值=(告警指标个数/定义规则总数)*50% + (异常指标/所有指标) * 50%</tip></p>
   </div>
 
   <div class="main-view-container">

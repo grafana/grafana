@@ -95,7 +95,7 @@ define([
         healthSrv.load().then(function (data) {
           $scope.applicationHealth = Math.floor(data.health);
           $scope.leveal = getLeveal($scope.applicationHealth);
-
+          $scope.summary = data;
           $scope.includeMetricsData = healthSrv.floor(data.includedMetricHealths);
           $scope.excludeMetricsData = healthSrv.floor(data.excludedMetricHealths);
           $scope.excludeMetricLength = _.size($scope.excludeMetricsData);

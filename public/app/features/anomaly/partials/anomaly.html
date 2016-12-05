@@ -7,7 +7,7 @@
 <div class="page-container" style="float: left;width: 93%">
   <div class="page" style="float: left; max-width: 700px">
     <h2>自动异常探测 <span style="font-size: 17px">{{system}}</span></h2>
-    <p>自动检测到所有<strong>237</strong>个指标中: 计算扫描了数据点有 <strong>19582</strong>个  异常指标 <strong>10</strong>个  异常点总共有 <strong>67</strong>个 <tip>通过全局扫描,并根据历史记录来自动检测异常点信息</tip></p>
+    <p>自动检测到所有<strong>{{ summary.numMetrics }}</strong>个指标中: 计算扫描了数据点有 <strong>{{ summary.numDataPoints }}</strong>个  异常指标 <strong>{{ summary.numAnomalyMetrics }}</strong>个  异常点总共有 <strong>{{ summary.numAnomaliesInCache }}</strong>个 <tip>通过全局扫描,并根据历史记录来自动检测异常点信息</tip></p>
 
     <div ng-if="includeMetricsData.length === 0">
       <em>系统一切正常</em>
