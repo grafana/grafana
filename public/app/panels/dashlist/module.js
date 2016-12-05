@@ -68,7 +68,7 @@ function (angular, app, _, config, PanelMeta) {
 
       return backendSrv.search(params).then(function (result) {
         healthSrv.healthSummary().then(function onSuccess(healthResult) {
-          mappingHealth(result, healthResult.data);
+          mappingHealth(result, healthResult);
           $scope.dashList = result;
           $scope.panelRenderingComplete();
         }, function onFailed() {
