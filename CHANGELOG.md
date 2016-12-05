@@ -13,6 +13,9 @@
 
 # 4.0.2 (unreleased)
 
+### Enhancements
+* **Playlist**: Add support for kiosk mode [#6727](https://github.com/grafana/grafana/issues/6727)
+
 ### Bugfixes
 * **Alerting**: Add alert message to webhook notifications [#6807](https://github.com/grafana/grafana/issues/6807)
 * **PNG Rendering**: Fix for server side rendering when using non default http addr bind and domain setting [#6813](https://github.com/grafana/grafana/issues/6813)
