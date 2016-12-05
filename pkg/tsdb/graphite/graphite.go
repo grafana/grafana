@@ -20,10 +20,13 @@ import (
 
 type GraphiteExecutor struct {
 	*tsdb.DataSourceInfo
+	HttpClient *http.Client
 }
 
 func NewGraphiteExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
-	return &GraphiteExecutor{dsInfo}
+	return &GraphiteExecutor{
+		DataSourceInfo: dsInfo,
+	}
 }
 
 var (
