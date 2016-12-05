@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"time"
 
 	"golang.org/x/net/context/ctxhttp"
 
@@ -22,8 +21,10 @@ type Webhook struct {
 	HttpMethod string
 }
 
-var webhookQueue chan *Webhook
-var webhookLog log.Logger
+var (
+	webhookQueue chan *Webhook
+	webhookLog   log.Logger
+)
 
 func initWebhookQueue() {
 	webhookLog = log.New("notifications.webhook")
@@ -47,24 +48,22 @@ func processWebhookQueue() {
 func sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
 	webhookLog.Debug("Sending webhook", "url", webhook.Url, "http method", webhook.HttpMethod)
 
-	client := &http.Client{
-		Timeout: time.Duration(10 * time.Second),
-	}
-
 	if webhook.HttpMethod == "" {
 		webhook.HttpMethod = http.MethodPost
 	}
 
 	request, err := http.NewRequest(webhook.HttpMethod, webhook.Url, bytes.NewReader([]byte(webhook.Body)))
-	if webhook.User != "" && webhook.Password != "" {
-		request.Header.Add("Authorization", util.GetBasicAuthHeader(webhook.User, webhook.Password))
-	}
-
 	if err != nil {
 		return err
 	}
 
-	resp, err := ctxhttp.Do(ctx, client, request)
+	request.Header.Add("Content-Type", "application/json")
+	request.Header.Add("User-Agent", "Grafana")
+	if webhook.User != "" && webhook.Password != "" {
+		request.Header.Add("Authorization", util.GetBasicAuthHeader(webhook.User, webhook.Password))
+	}
+
+	resp, err := ctxhttp.Do(ctx, http.DefaultClient, request)
 	if err != nil {
 		return err
 	}
@@ -73,11 +72,11 @@ func sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
 		return nil
 	}
 
+	defer resp.Body.Close()
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		return err
 	}
-	defer resp.Body.Close()
 
 	webhookLog.Debug("Webhook failed", "statuscode", resp.Status, "body", string(body))
 	return fmt.Errorf("Webhook response status %v", resp.Status)
