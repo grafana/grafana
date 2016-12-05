@@ -25,6 +25,7 @@ function (angular, _, kbn) {
     this.updateTemplateData = function() {
       this._index = {};
       this._filters = {};
+      this._adhocVariables = {};
 
       for (var i = 0; i < this.variables.length; i++) {
         var variable = this.variables[i];
