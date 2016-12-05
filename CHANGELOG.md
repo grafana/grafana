@@ -15,6 +15,7 @@
 
 ### Bugfixes
 * **Alerting**: Add alert message to webhook notifications [#6807](https://github.com/grafana/grafana/issues/6807)
+* **Webhooks**: Add content type json to outgoing webhooks [#6822](https://github.com/grafana/grafana/issues/6822)
 
 # 4.0.1 (2016-12-02)
 
