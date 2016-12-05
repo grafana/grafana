@@ -15,12 +15,13 @@
 
 ### Bugfixes
 * **Alerting**: Add alert message to webhook notifications [#6807](https://github.com/grafana/grafana/issues/6807)
+* **PNG Rendering**: Fix for server side rendering when using non default http addr bind and domain setting [#6813](https://github.com/grafana/grafana/issues/6813)
 
 # 4.0.1 (2016-12-02)
 
-> **Notice**  
-4.0.0 had serious connection pooling issue when using a data source in proxy access. This bug caused lots of resource issues 
-due to too many connections/file handles on the data source backend. This problem is fixed in this release. 
+> **Notice**
+4.0.0 had serious connection pooling issue when using a data source in proxy access. This bug caused lots of resource issues
+due to too many connections/file handles on the data source backend. This problem is fixed in this release.
 
 ### Bugfixes
 * **Metrics**: Fixes nil pointer dereference on my arm build [#6749](https://github.com/grafana/grafana/issues/6749)
