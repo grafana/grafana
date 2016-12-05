@@ -24,6 +24,19 @@ var ptc = proxyTransportCache{
 	cache: make(map[int64]cachedTransport),
 }
 
+func (ds *DataSource) GetHttpClient() (*http.Client, error) {
+	transport, err := ds.GetHttpTransport()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &http.Client{
+		Timeout:   time.Duration(30 * time.Second),
+		Transport: transport,
+	}, nil
+}
+
 func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 	ptc.Lock()
 	defer ptc.Unlock()
@@ -41,7 +54,10 @@ func (ds *DataSource) GetHttpTransport() (*http.Transport, error) {
 			Timeout:   30 * time.Second,
 			KeepAlive: 30 * time.Second,
 		}).Dial,
-		TLSHandshakeTimeout: 10 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
 	}
 
 	var tlsAuth, tlsAuthWithCACert bool

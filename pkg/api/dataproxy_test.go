@@ -12,7 +12,6 @@ import (
 
 func TestDataSourceProxy(t *testing.T) {
 	Convey("When getting graphite datasource proxy", t, func() {
-		//clearCache()
 		ds := m.DataSource{Url: "htttp://graphite:8080", Type: m.DS_GRAPHITE}
 		targetUrl, err := url.Parse(ds.Url)
 		proxy := NewReverseProxy(&ds, "/render", targetUrl)
@@ -35,7 +34,6 @@ func TestDataSourceProxy(t *testing.T) {
 	})
 
 	Convey("When getting influxdb datasource proxy", t, func() {
-		//clearCache()
 		ds := m.DataSource{
 			Type:     m.DS_INFLUXDB_08,
 			Url:      "http://influxdb:8083",
