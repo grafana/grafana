@@ -132,11 +132,11 @@ function (angular, _, $, config) {
         href: $scope.getUrl("/health")
       });
 
-      // $scope.mainLinks.push({
-      //   text: "实时报警通知",
-      //   icon: "fa fa-fw fa-phone",
-      //   href: $scope.getUrl("/oncallers")
-      // });
+      $scope.mainLinks.push({
+        text: "实时报警通知",
+        icon: "fa fa-fw fa-phone",
+        href: $scope.getUrl("/oncallers")
+      });
 
       $scope.mainLinks.push({
         text: "自动异常检测",
