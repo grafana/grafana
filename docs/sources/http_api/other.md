@@ -1,8 +1,14 @@
-----
-page_title: Other APIs
-page_description: Grafana Other API Reference
-page_keywords: grafana, admin, http, api, documentation, dashboards
----
++++
+title = "Other HTTP API "
+description = "Grafana Other HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "other"]
+aliases = ["/http_api/other/"]
+type = "docs"
+[menu.docs]
+name = "Other"
+parent = "http_api"
++++
+
 
 # Frontend Settings API
 

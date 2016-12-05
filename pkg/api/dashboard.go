@@ -121,6 +121,10 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	}
 
 	dash := cmd.GetDashboardModel()
+	// Check if Title is empty
+	if dash.Title == "" {
+		return ApiError(400, m.ErrDashboardTitleEmpty.Error(), nil)
+	}
 	if dash.Id == 0 {
 		limitReached, err := middleware.QuotaReached(c, "dashboard")
 		if err != nil {
@@ -129,6 +133,16 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		if limitReached {
 			return ApiError(403, "Quota reached", nil)
 		}
+	}
+
+	validateAlertsCmd := alerting.ValidateDashboardAlertsCommand{
+		OrgId:     c.OrgId,
+		UserId:    c.UserId,
+		Dashboard: dash,
+	}
+
+	if err := bus.Dispatch(&validateAlertsCmd); err != nil {
+		return ApiError(500, "Invalid alert data. Cannot save dashboard", err)
 	}
 
 	err := bus.Dispatch(&cmd)

@@ -1,3 +1,5 @@
+// +build codegen
+
 // Command aws-gen-goendpoints parses a JSON description of the AWS endpoint
 // discovery logic and generates a Go file which returns an endpoint.
 //

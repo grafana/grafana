@@ -493,8 +493,6 @@ export class DashboardModel {
             templateVariable.hide = 2;
           } else if (templateVariable.hideLabel) {
             templateVariable.hide = 1;
-          } else {
-            templateVariable.hide = 0;
           }
         });
       }

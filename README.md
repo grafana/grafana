@@ -17,7 +17,7 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 - [What's New in Grafana 2.1](http://docs.grafana.org/guides/whats-new-in-v2-1/)
 - [What's New in Grafana 2.5](http://docs.grafana.org/guides/whats-new-in-v2-5/)
 - [What's New in Grafana 3.0](http://docs.grafana.org/guides/whats-new-in-v3/)
-- [What's New in Grafana 4.0 Beta](http://docs.grafana.org/guides/whats-new-in-v4/)
+- [What's New in Grafana 4.0](http://docs.grafana.org/guides/whats-new-in-v4/)
 
 ## Features
 ### Graphite Target Editor
@@ -79,7 +79,7 @@ the latest master builds [here](http://grafana.org/builds)
 
 ### Dependencies
 
-- Go 1.7
+- Go 1.7.3
 - NodeJS v4+
 
 ### Get Code
@@ -155,10 +155,6 @@ If you have any idea for an improvement or found a bug do not hesitate to open a
 And if you have time clone this repo and submit a pull request and help me make Grafana
 the kickass metrics & devops dashboard we all dream about!
 
-Before creating a pull request be sure that "grunt test" runs without any style or unit test errors, also
-please [sign the CLA](http://docs.grafana.org/project/cla/)
-
 ## License
-
 Grafana is distributed under Apache 2.0 License.
 Work in progress Grafana 2.0 (with included Grafana backend)

@@ -13,7 +13,7 @@ dev environment. Grafana ships with its own required backend server; also comple
 
 ## Dependencies
 
-- [Go 1.7](https://golang.org/dl/)
+- [Go 1.7.3](https://golang.org/dl/)
 - [NodeJS](https://nodejs.org/download/)
 
 ## Get Code
@@ -91,6 +91,3 @@ Learn more about Grafana config options in the [Configuration section](/installa
 
 ## Create a pull requests
 Please contribute to the Grafana project and submit a pull request! Build new features, write or update documentation, fix bugs and generally make Grafana even more awesome.
-
-Before or after you create a pull request, sign the [contributor license agreement](/project/cla.html).
-Together we can build amazing software faster.

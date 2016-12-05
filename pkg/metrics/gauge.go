@@ -61,9 +61,10 @@ func (NilGauge) Value() int64 { return 0 }
 
 // StandardGauge is the standard implementation of a Gauge and uses the
 // sync/atomic package to manage a single int64 value.
+// atomic needs 64-bit aligned memory which is ensure for first word
 type StandardGauge struct {
-	*MetricMeta
 	value int64
+	*MetricMeta
 }
 
 // Snapshot returns a read-only copy of the gauge.

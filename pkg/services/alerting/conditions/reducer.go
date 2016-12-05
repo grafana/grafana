@@ -3,6 +3,8 @@ package conditions
 import (
 	"math"
 
+	"sort"
+
 	"github.com/grafana/grafana/pkg/tsdb"
 	"gopkg.in/guregu/null.v3"
 )
@@ -25,13 +27,17 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 
 	switch s.Type {
 	case "avg":
+		validPointsCount := 0
 		for _, point := range series.Points {
 			if point[0].Valid {
 				value += point[0].Float64
+				validPointsCount += 1
 				allNull = false
 			}
 		}
-		value = value / float64(len(series.Points))
+		if validPointsCount > 0 {
+			value = value / float64(validPointsCount)
+		}
 	case "sum":
 		for _, point := range series.Points {
 			if point[0].Valid {
@@ -69,6 +75,23 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 				value = points[i][0].Float64
 				allNull = false
 				break
+			}
+		}
+	case "median":
+		var values []float64
+		for _, v := range series.Points {
+			if v[0].Valid {
+				allNull = false
+				values = append(values, v[0].Float64)
+			}
+		}
+		if len(values) >= 1 {
+			sort.Float64s(values)
+			length := len(values)
+			if length%2 == 1 {
+				value = values[(length-1)/2]
+			} else {
+				value = (values[(length/2)-1] + values[length/2]) / 2
 			}
 		}
 	}

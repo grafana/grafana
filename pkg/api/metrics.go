@@ -69,6 +69,10 @@ func GetInternalMetrics(c *middleware.Context) Response {
 		metricName := m.Name() + m.StringifyTags()
 
 		switch metric := m.(type) {
+		case metrics.Gauge:
+			resp[metricName] = map[string]interface{}{
+				"value": metric.Value(),
+			}
 		case metrics.Counter:
 			resp[metricName] = map[string]interface{}{
 				"count": metric.Count(),

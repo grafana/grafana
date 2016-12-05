@@ -127,7 +127,7 @@ func (e *InfluxDBExecutor) createRequest(query string) (*http.Request, error) {
 		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
 	}
 
-	if e.User != "" {
+	if !e.BasicAuth && e.User != "" {
 		req.SetBasicAuth(e.User, e.Password)
 	}
 

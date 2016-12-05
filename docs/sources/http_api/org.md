@@ -1,8 +1,14 @@
-----
-page_title: Organisation API
-page_description: Grafana Organisation API Reference
-page_keywords: grafana, admin, http, api, documentation, orgs, organisation
----
++++
+title = "Organisation HTTP API "
+description = "Grafana Organisation HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "organisation"]
+aliases = ["/http_api/organisation/"]
+type = "docs"
+[menu.docs]
+name = "Organisation"
+parent = "http_api"
++++
+
 
 # Organisation API
 
