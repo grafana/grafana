@@ -403,6 +403,12 @@
 			"path": "gopkg.in/guregu/null.v3",
 			"revision": "41961cea0328defc5f95c1c473f89ebf0d1813f6",
 			"revisionTime": "2016-02-28T00:53:16Z"
+		},
+		{
+			"checksumSHA1": "MDALZuBmVjIc0+2ylXuTh/rW7RY=",
+			"path": "gopkg.in/unrolled/secure.v1",
+			"revision": "a60f385df7d2b42d3562114b25eb4a71884f62d2",
+			"revisionTime": "2016-10-31T17:00:06Z"
 		}
 	],
 	"rootPath": "github.com/grafana/grafana"
