@@ -193,10 +193,17 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
           if (!data[i].stats.timeStep) {
             continue;
           }
+          if (panel.bars) {
+            if (typeof data[i].bars !== 'undefined' && typeof data[i].bars.show !== 'undefined' && !data[i].bars.show) {
+              continue;
+            }
+          } else {
+            if (typeof data[i].bars === 'undefined' || typeof data[i].bars.show === 'undefined' || !data[i].bars.show) {
+              continue;
+            }
+          }
 
-          if (((panel.bars && (typeof data[i].bars === 'undefined' || typeof data[i].bars.show === 'undefined' || data[i].bars.show)) ||
-               (!panel.bars && typeof data[i].bars !== 'undefined' && typeof data[i].bars.show !== 'undefined' && data[i].bars.show)) &&
-              data[i].stats.timeStep < min) {
+          if (data[i].stats.timeStep < min) {
             min = data[i].stats.timeStep;
           }
         }
