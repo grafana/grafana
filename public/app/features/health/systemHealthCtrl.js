@@ -37,7 +37,7 @@ define([
               "downsampleAggregator": "avg",
               "downsampleInterval": "1m",
               "errors": {},
-              "metric": "test_health",
+              "metric": "SystemHealth",
             }
           ],
           "title": "历史健康指数趋势",
@@ -74,7 +74,7 @@ define([
       }
     }
 
-    module.controller('SystemHealthCtrl', function ($scope, contextSrv, healthSrv, backendSrv, $rootScope) {
+    module.controller('SystemHealthCtrl', function ($scope, contextSrv, healthSrv, backendSrv) {
       $scope.init = function () {
         $scope.system = backendSrv.getSystemById(contextSrv.system);
         $scope.initDashboard({
