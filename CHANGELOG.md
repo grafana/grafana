@@ -12,6 +12,8 @@
 * **Table**: Added Hidden Column Style for Table Panel [#5677](https://github.com/grafana/grafana/pull/5677)
 
 # 4.0.2 (unreleased)
+
+### Bugfixes
 * **Alerting**: Add alert message to webhook notifications [#6807](https://github.com/grafana/grafana/issues/6807)
 
 # 4.0.1 (2016-12-02)
