@@ -22,7 +22,7 @@
   phantom.addCookie({
     'name': 'renderKey',
     'value': params.renderKey,
-    'domain': 'localhost',
+    'domain': params.domain,
   });
 
   page.viewportSize = {
