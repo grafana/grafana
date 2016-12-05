@@ -16,6 +16,7 @@ import (
 
 	"github.com/go-macaron/session"
 	"gopkg.in/ini.v1"
+	"gopkg.in/unrolled/secure.v1"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
@@ -77,6 +78,7 @@ var (
 	DisableGravatar       bool
 	EmailCodeValidMinutes int
 	DataProxyWhiteList    map[string]bool
+	Secure                secure.Options
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -494,6 +496,24 @@ func NewConfigContext(args *CommandLineArgs) error {
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+
+	Secure = secure.Options{
+		AllowedHosts:            security.Key("allowed_hosts").Strings(" "),
+		SSLRedirect:             security.Key("ssl_redirect").MustBool(false),
+		SSLTemporaryRedirect:    security.Key("ssl_temporary_redirect").MustBool(false),
+		SSLHost:                 security.Key("ssl_host").String(),
+		STSSeconds:              security.Key("sts_seconds").MustInt64(0),
+		STSIncludeSubdomains:    security.Key("sts_include_subdomains").MustBool(false),
+		STSPreload:              security.Key("sts_preload").MustBool(false),
+		ForceSTSHeader:          security.Key("force_sts_header").MustBool(false),
+		FrameDeny:               security.Key("frame_deny").MustBool(false),
+		CustomFrameOptionsValue: security.Key("custom_frame_options_value").String(),
+		ContentTypeNosniff:      security.Key("content_type_no_sniff").MustBool(false),
+		BrowserXssFilter:        security.Key("browser_xss_filter").MustBool(false),
+		ContentSecurityPolicy:   security.Key("content_security_policy").String(),
+		PublicKey:               security.Key("public_key").String(),
+		IsDevelopment:           Env != PROD,
+	}
 
 	// read snapshots settings
 	snapshots := Cfg.Section("snapshots")

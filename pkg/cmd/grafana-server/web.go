@@ -26,6 +26,7 @@ func newMacaron() *macaron.Macaron {
 
 	m.Use(middleware.Logger())
 	m.Use(middleware.Recovery())
+	m.Use(middleware.Secure(setting.Secure))
 
 	if setting.EnableGzip {
 		m.Use(middleware.Gziper())
