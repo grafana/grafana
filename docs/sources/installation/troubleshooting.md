@@ -56,3 +56,8 @@ After opening the Chrome developer tools for the first time the
 requests to show.  For some type of errors, especially CORS-related,
 there might not be a response at all.
 
+### Firewalls and Intrusion Prevention Systems
+
+Grafana is sending queries with SQL-like syntax to your datasources.
+Intrusion Prevention Systems (IPS) are likely to block this traffic.
+Make sure you configure your firewall accordingly.
