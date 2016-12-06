@@ -4,5 +4,5 @@ elasticsearch5:
   image: elasticsearch:5
   command: elasticsearch
   ports:
-    - "9200:9200"
-    - "9300:9300"
+    - "10200:9200"
+    - "10300:9300"

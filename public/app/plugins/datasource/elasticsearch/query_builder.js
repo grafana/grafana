@@ -76,23 +76,13 @@ function (queryDef) {
 
     for (var i = 0; i < aggDef.settings.filters.length; i++) {
       var query = aggDef.settings.filters[i].query;
-      if (this.esVersion >= 5) {
-        filterObj[query] = {
-          query_string: {
-            query: query,
-            analyze_wildcard: true
-          }
-        };
-      } else {
-        filterObj[query] = {
-          query: {
-            query_string: {
-              query: query,
-              analyze_wildcard: true
-            }
-          }
-        };
-      }
+
+      filterObj[query] = {
+        query_string: {
+          query: query,
+          analyze_wildcard: true
+        }
+      };
     }
 
     return filterObj;
@@ -119,12 +109,7 @@ function (queryDef) {
     }
 
     var i, filter, condition, must;
-
-    if (this.esVersion >= 5) {
-      must = query.query.bool.must;
-    } else {
-      must = query.query.filtered.filter.bool.must;
-    }
+    must = query.query.bool.must;
 
     for (i = 0; i < adhocFilters.length; i++) {
       filter = adhocFilters[i];
@@ -143,42 +128,21 @@ function (queryDef) {
 
     var i, nestedAggs, metric;
     var query = {};
-    if (this.esVersion >= 5) {
-      query = {
-        "size": 0,
-        "query": {
-          "bool": {
-            "must": [
-              {"range": this.getRangeFilter()},
-              {"query_string": {
-                "analyze_wildcard": true,
-                "query": '$lucene_query'
-                }
-              }
-            ]
-          }
-        }
-      };
-    } else {
-      query = {
-        "size": 0,
-        "query": {
-          "filtered": {
-            "query": {
-              "query_string": {
-                "analyze_wildcard": true,
-                "query": '$lucene_query',
-              }
-            },
-            "filter": {
-              "bool": {
-                "must": [{"range": this.getRangeFilter()}]
+    query = {
+      "size": 0,
+      "query": {
+        "bool": {
+          "must": [
+            {"range": this.getRangeFilter()},
+            {"query_string": {
+              "analyze_wildcard": true,
+              "query": '$lucene_query'
               }
             }
-          }
+          ]
         }
-      };
-    }
+      }
+    };
 
     this.addAdhocFilters(query, adhocFilters);
 
@@ -258,47 +222,22 @@ function (queryDef) {
   ElasticQueryBuilder.prototype.getTermsQuery = function(queryDef) {
     var query;
 
-    if (this.esVersion >= 5) {
-      query = {
-        "size": 0,
-        "query": {
-          "bool": {
-            "must": [{"range": this.getRangeFilter()}]
-          }
+    query = {
+      "size": 0,
+      "query": {
+        "bool": {
+          "must": [{"range": this.getRangeFilter()}]
         }
-      };
-
-      if (queryDef.query) {
-        query.query.bool.must.push({
-          "query_string": {
-            "analyze_wildcard": true,
-            "query": queryDef.query,
-          }
-        });
       }
+    };
 
-    } else {
-      query = {
-        "size": 0,
-        "query": {
-          "filtered": {
-            "filter": {
-              "bool": {
-                "must": [{"range": this.getRangeFilter()}]
-              }
-            }
-          }
+    if (queryDef.query) {
+      query.query.bool.must.push({
+        "query_string": {
+          "analyze_wildcard": true,
+          "query": queryDef.query,
         }
-      };
-
-      if (queryDef.query) {
-        query.query.filtered.query = {
-          "query_string": {
-            "analyze_wildcard": true,
-            "query": queryDef.query,
-          }
-        };
-      }
+      });
     }
 
     query.aggs =  {

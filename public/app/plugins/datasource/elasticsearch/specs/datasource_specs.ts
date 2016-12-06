@@ -77,7 +77,7 @@ describe('ElasticDatasource', function() {
 
     it('should json escape lucene query', function() {
       var body = angular.fromJson(parts[1]);
-      expect(body.query.filtered.query.query_string.query).to.be('escape\\:test');
+      expect(body.query.bool.must[1].query_string.query).to.be('escape\\:test');
     });
   });
 
