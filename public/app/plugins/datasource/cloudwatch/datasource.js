@@ -16,6 +16,13 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
     this.supportMetrics = true;
     this.proxyUrl = instanceSettings.url;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
+    this.standardStatistics = [
+      'Average',
+      'Maximum',
+      'Minimum',
+      'Sum',
+      'SampleCount'
+    ];
 
     var self = this;
     this.query = function(options) {
@@ -98,6 +105,8 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
     };
 
     this.performTimeSeriesQuery = function(query, start, end) {
+      var statistics = _.filter(query.statistics, function(s) { return _.includes(self.standardStatistics, s); });
+      var extendedStatistics = _.reject(query.statistics, function(s) { return _.includes(self.standardStatistics, s); });
       return this.awsRequest({
         region: query.region,
         action: 'GetMetricStatistics',
@@ -105,7 +114,8 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
           namespace: query.namespace,
           metricName: query.metricName,
           dimensions: query.dimensions,
-          statistics: query.statistics,
+          statistics: statistics,
+          extendedStatistics: extendedStatistics,
           startTime: start,
           endTime: end,
           period: query.period
@@ -268,10 +278,19 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
     };
 
     this.performDescribeAlarmsForMetric = function(region, namespace, metricName, dimensions, statistic, period) {
+      var s = _.includes(self.standardStatistics, statistic) ? statistic : '';
+      var es = _.includes(self.standardStatistics, statistic) ? '' : statistic;
       return this.awsRequest({
         region: region,
         action: 'DescribeAlarmsForMetric',
-        parameters: { namespace: namespace, metricName: metricName, dimensions: dimensions, statistic: statistic, period: period }
+        parameters: {
+          namespace: namespace,
+          metricName: metricName,
+          dimensions: dimensions,
+          statistic: s,
+          extendedStatistic: es,
+          period: period
+        }
       });
     };
 
@@ -338,6 +357,7 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
       var periodMs = options.period * 1000;
 
       return _.map(options.statistics, function(stat) {
+        var extended = !_.includes(self.standardStatistics, stat);
         var dps = [];
         var lastTimestamp = null;
         _.chain(md.Datapoints)
@@ -350,7 +370,11 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
             dps.push([null, lastTimestamp + periodMs]);
           }
           lastTimestamp = timestamp;
-          dps.push([dp[stat], timestamp]);
+          if (!extended) {
+            dps.push([dp[stat], timestamp]);
+          } else {
+            dps.push([dp.ExtendedStatistics[stat], timestamp]);
+          }
         })
         .value();
 

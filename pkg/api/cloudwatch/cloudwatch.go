@@ -181,25 +181,33 @@ func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
 
 	reqParam := &struct {
 		Parameters struct {
-			Namespace  string                  `json:"namespace"`
-			MetricName string                  `json:"metricName"`
-			Dimensions []*cloudwatch.Dimension `json:"dimensions"`
-			Statistics []*string               `json:"statistics"`
-			StartTime  int64                   `json:"startTime"`
-			EndTime    int64                   `json:"endTime"`
-			Period     int64                   `json:"period"`
+			Namespace          string                  `json:"namespace"`
+			MetricName         string                  `json:"metricName"`
+			Dimensions         []*cloudwatch.Dimension `json:"dimensions"`
+			Statistics         []*string               `json:"statistics"`
+			ExtendedStatistics []*string               `json:"extendedStatistics"`
+			StartTime          int64                   `json:"startTime"`
+			EndTime            int64                   `json:"endTime"`
+			Period             int64                   `json:"period"`
 		} `json:"parameters"`
 	}{}
 	json.Unmarshal(req.Body, reqParam)
 
 	params := &cloudwatch.GetMetricStatisticsInput{
-		Namespace:  aws.String(reqParam.Parameters.Namespace),
-		MetricName: aws.String(reqParam.Parameters.MetricName),
-		Dimensions: reqParam.Parameters.Dimensions,
-		Statistics: reqParam.Parameters.Statistics,
-		StartTime:  aws.Time(time.Unix(reqParam.Parameters.StartTime, 0)),
-		EndTime:    aws.Time(time.Unix(reqParam.Parameters.EndTime, 0)),
-		Period:     aws.Int64(reqParam.Parameters.Period),
+		Namespace:          aws.String(reqParam.Parameters.Namespace),
+		MetricName:         aws.String(reqParam.Parameters.MetricName),
+		Dimensions:         reqParam.Parameters.Dimensions,
+		Statistics:         reqParam.Parameters.Statistics,
+		ExtendedStatistics: reqParam.Parameters.ExtendedStatistics,
+		StartTime:          aws.Time(time.Unix(reqParam.Parameters.StartTime, 0)),
+		EndTime:            aws.Time(time.Unix(reqParam.Parameters.EndTime, 0)),
+		Period:             aws.Int64(reqParam.Parameters.Period),
+	}
+	if len(reqParam.Parameters.Statistics) != 0 {
+		params.Statistics = reqParam.Parameters.Statistics
+	}
+	if len(reqParam.Parameters.ExtendedStatistics) != 0 {
+		params.ExtendedStatistics = reqParam.Parameters.ExtendedStatistics
 	}
 
 	resp, err := svc.GetMetricStatistics(params)
@@ -292,11 +300,12 @@ func handleDescribeAlarmsForMetric(req *cwRequest, c *middleware.Context) {
 
 	reqParam := &struct {
 		Parameters struct {
-			Namespace  string                  `json:"namespace"`
-			MetricName string                  `json:"metricName"`
-			Dimensions []*cloudwatch.Dimension `json:"dimensions"`
-			Statistic  string                  `json:"statistic"`
-			Period     int64                   `json:"period"`
+			Namespace         string                  `json:"namespace"`
+			MetricName        string                  `json:"metricName"`
+			Dimensions        []*cloudwatch.Dimension `json:"dimensions"`
+			Statistic         string                  `json:"statistic"`
+			ExtendedStatistic string                  `json:"extendedStatistic"`
+			Period            int64                   `json:"period"`
 		} `json:"parameters"`
 	}{}
 	json.Unmarshal(req.Body, reqParam)
@@ -311,6 +320,9 @@ func handleDescribeAlarmsForMetric(req *cwRequest, c *middleware.Context) {
 	}
 	if reqParam.Parameters.Statistic != "" {
 		params.Statistic = aws.String(reqParam.Parameters.Statistic)
+	}
+	if reqParam.Parameters.ExtendedStatistic != "" {
+		params.ExtendedStatistic = aws.String(reqParam.Parameters.ExtendedStatistic)
 	}
 
 	resp, err := svc.DescribeAlarmsForMetric(params)
