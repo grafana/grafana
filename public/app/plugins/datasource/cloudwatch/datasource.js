@@ -31,7 +31,7 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
 
       var queries = [];
       options = angular.copy(options);
-      options.targets = this.expandTemplateVariable(options.targets, templateSrv);
+      options.targets = this.expandTemplateVariable(options.targets, options.scopedVars, templateSrv);
       _.each(options.targets, function(target) {
         if (target.hide || !target.namespace || !target.metricName || _.isEmpty(target.statistics)) {
           return;
@@ -412,12 +412,12 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
       return str.indexOf('$' + variableName) !== -1;
     };
 
-    this.expandTemplateVariable = function(targets, templateSrv) {
+    this.expandTemplateVariable = function(targets, scopedVars, templateSrv) {
       var self = this;
       return _.chain(targets)
       .map(function(target) {
         var dimensionKey = _.findKey(target.dimensions, function(v) {
-          return templateSrv.variableExists(v);
+          return templateSrv.variableExists(v) && !_.has(scopedVars, templateSrv.getVariableName(v));
         });
 
         if (dimensionKey) {

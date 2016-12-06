@@ -112,10 +112,18 @@ function (angular, _, kbn) {
       this._grafanaVariables[name] = value;
     };
 
-    this.variableExists = function(expression) {
+    this.getVariableName = function(expression) {
       this._regex.lastIndex = 0;
       var match = this._regex.exec(expression);
-      return match && (self._index[match[1] || match[2]] !== void 0);
+      if (!match) {
+        return null;
+      }
+      return match[1] || match[2];
+    };
+
+    this.variableExists = function(expression) {
+      var name = this.getVariableName(expression);
+      return name && (self._index[name] !== void 0);
     };
 
     this.highlightVariablesAsHtml = function(str) {
