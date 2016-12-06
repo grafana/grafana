@@ -9,18 +9,17 @@ import 'jquery.flot.fillbelow';
 import 'jquery.flot.crosshair';
 import './jquery.flot.events';
 
-import angular from 'angular';
 import $ from 'jquery';
-import moment from 'moment';
 import _ from 'lodash';
+import moment from 'moment';
 import kbn from   'app/core/utils/kbn';
+import {appEvents, coreModule} from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import {ThresholdManager} from './threshold_manager';
 
-var module = angular.module('grafana.directives');
 var labelWidthCache = {};
 
-module.directive('grafanaGraph', function($rootScope, timeSrv) {
+coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
   return {
     restrict: 'A',
     template: '',
@@ -28,7 +27,9 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
       var ctrl = scope.ctrl;
       var dashboard = ctrl.dashboard;
       var panel = ctrl.panel;
-      var data, annotations;
+      var data;
+      var annotations;
+      var plot;
       var sortedSeries;
       var legendSideLastValue = null;
       var rootScope = scope.$root;
@@ -37,8 +38,8 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
       var tooltip = new GraphTooltip(elem, dashboard, scope, function() {
         return sortedSeries;
       });
-      var plot;
 
+      // panel events
       ctrl.events.on('panel-teardown', () => {
         thresholdManager = null;
 
@@ -48,39 +49,6 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         }
       });
 
-      rootScope.onAppEvent('setCrosshair', function(event, info) {
-        // do not need to to this if event is from this panel
-        if (info.scope === scope) {
-          return;
-        }
-
-        if (dashboard.sharedCrosshair) {
-          if (plot) {
-            plot.setCrosshair({ x: info.pos.x, y: info.pos.y });
-          }
-        }
-      }, scope);
-
-      rootScope.onAppEvent('clearCrosshair', function() {
-        if (plot) {
-          plot.clearCrosshair();
-        }
-      }, scope);
-
-      rootScope.onAppEvent('setTooltip', function(event, info) {
-        // do not need to to this if event is from this panel
-        // or another panel is in fullscreen mode
-        if (info.scope === scope || ctrl.otherPanelInFullscreenMode()) {
-          return;
-        }
-        tooltip.setTooltip(info.pos);
-      }, scope);
-
-      rootScope.onAppEvent('clearTooltip', function() {
-        tooltip.clearTooltip();
-      }, scope);
-
-      // Receive render events
       ctrl.events.on('render', function(renderData) {
         data = renderData || data;
         if (!data) {
@@ -89,6 +57,27 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         annotations = ctrl.annotations;
         render_panel();
       });
+
+      // global events
+      appEvents.on('graph-hover', function(evt) {
+        // ignore other graph hover events if shared tooltip is disabled
+        if (!dashboard.sharedCrosshair) {
+          return;
+        }
+
+        // ignore if we are the emitter
+        if (!plot || evt.panel.id === panel.id || ctrl.otherPanelInFullscreenMode()) {
+          return;
+        }
+
+        tooltip.show(evt.pos);
+      }, scope);
+
+      appEvents.on('graph-hover-clear', function(event, info) {
+        if (plot) {
+          tooltip.clear(plot);
+        }
+      }, scope);
 
       function getLegendHeight(panelHeight) {
         if (!panel.legend.show || panel.legend.rightSide) {
@@ -288,7 +277,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
             color: '#666'
           },
           crosshair: {
-            mode: panel.tooltip.shared || dashboard.sharedCrosshair ? "x" : null
+            mode: 'x'
           }
         };
 

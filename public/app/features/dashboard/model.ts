@@ -19,7 +19,6 @@ export class DashboardModel {
   timezone: any;
   editable: any;
   sharedCrosshair: any;
-  sharedTooltip: any;
   rows: DashboardRow[];
   time: any;
   timepicker: any;
@@ -53,7 +52,6 @@ export class DashboardModel {
     this.timezone = data.timezone || '';
     this.editable = data.editable !== false;
     this.sharedCrosshair = data.sharedCrosshair || false;
-    this.sharedTooltip = data.sharedTooltip || false;
     this.hideControls = data.hideControls || false;
     this.time = data.time || { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker || {};

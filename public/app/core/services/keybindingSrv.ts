@@ -89,6 +89,7 @@ export class KeybindingSrv {
 
     this.bind('mod+o', () => {
       dashboard.sharedCrosshair = !dashboard.sharedCrosshair;
+      appEvents.emit('graph-hover-clear');
       scope.broadcastRefresh();
     });
 
