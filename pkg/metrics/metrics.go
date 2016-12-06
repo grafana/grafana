@@ -46,6 +46,7 @@ var (
 	M_Alerting_Notification_Sent_Webhook   Counter
 	M_Alerting_Notification_Sent_PagerDuty Counter
 	M_Alerting_Notification_Sent_Victorops Counter
+	M_Alerting_Notification_Sent_OpsGenie  Counter
 
 	// Timers
 	M_DataSource_ProxyReq_Timer Timer
@@ -110,6 +111,7 @@ func initMetricVars(settings *MetricSettings) {
 	M_Alerting_Notification_Sent_Webhook = RegCounter("alerting.notifications_sent", "type", "webhook")
 	M_Alerting_Notification_Sent_PagerDuty = RegCounter("alerting.notifications_sent", "type", "pagerduty")
 	M_Alerting_Notification_Sent_Victorops = RegCounter("alerting.notifications_sent", "type", "victorops")
+	M_Alerting_Notification_Sent_OpsGenie = RegCounter("alerting.notifications_sent", "type", "opsgenie")
 
 	// Timers
 	M_DataSource_ProxyReq_Timer = RegTimer("api.dataproxy.request.all")
