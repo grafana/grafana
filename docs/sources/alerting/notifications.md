@@ -91,7 +91,7 @@ Auto resolve incidents | Resolve incidents in pagerduty once the alert goes back
 
 # Enable images in notifications {#external-image-store}
 
-Grafan can render the panel associated with the alert rule and include that in the notification. Some types
+Grafana can render the panel associated with the alert rule and include that in the notification. Some types
 of notifications require that this image be publicly accessable (Slack for example). In order to support
 images in notifications like Slack Grafana can upload the image to an image store. It currently supports
 Amazon S3 for this and Webdav. So to set that up you need to configure the
