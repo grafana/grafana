@@ -14,6 +14,7 @@ function (angular, $, _, Tether) {
           '<span class="panel-title drag-handle pointer">' +
             '<span class="icon-gf panel-alert-icon"></span>' +
             '<span class="panel-title-text drag-handle">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>' +
+            '<span class="panel-help-text"><info-popover mode="bold">{{ctrl.panel.helpText}}</info-popover></span>' +
             '<span class="panel-links-btn"><i class="fa fa-external-link"></i></span>' +
             '<span class="panel-time-info" ng-show="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>' +
           '</span>';
