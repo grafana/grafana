@@ -10,7 +10,7 @@ function ($) {
     var ctrl = scope.ctrl;
     var panel = ctrl.panel;
 
-    var $tooltip = $('<div id="tooltip" class="graph-tooltip">');
+    var $tooltip = $('<div class="graph-tooltip">');
 
     this.destroy = function() {
       $tooltip.remove();
@@ -141,12 +141,32 @@ function ($) {
         }
       }
 
+      if (dashboard.sharedTooltip) {
+        ctrl.publishAppEvent('clearTooltip');
+      }
+
       if (dashboard.sharedCrosshair) {
         ctrl.publishAppEvent('clearCrosshair');
       }
     });
 
     elem.bind("plothover", function (event, pos, item) {
+      if (dashboard.sharedCrosshair) {
+        ctrl.publishAppEvent('setCrosshair', {pos: pos, scope: scope});
+      }
+
+      if (dashboard.sharedTooltip) {
+        pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
+        ctrl.publishAppEvent('setTooltip', {pos: pos, scope: scope});
+      }
+      self.setTooltip(pos, item);
+    });
+
+    this.clearTooltip = function() {
+      $tooltip.detach();
+    };
+
+    this.setTooltip = function(pos, item) {
       var plot = elem.data().plot;
       var plotData = plot.getData();
       var xAxes = plot.getXAxes();
@@ -154,8 +174,16 @@ function ($) {
       var seriesList = getSeriesFn();
       var group, value, absoluteTime, hoverInfo, i, series, seriesHtml, tooltipFormat;
 
-      if (dashboard.sharedCrosshair) {
-        ctrl.publishAppEvent('setCrosshair', {pos: pos, scope: scope});
+      // if panelRelY is defined another panel wants us to show a tooltip
+      // get pageX from position on x axis and pageY from relative position in original panel
+      if (pos.panelRelY !== undefined) {
+        var pointOffset = plot.pointOffset({x: pos.x});
+        if (Number.isNaN(pointOffset.left) || pointOffset.left < 0) {
+          $tooltip.detach();
+          return;
+        }
+        pos.pageX = elem.offset().left + pointOffset.left;
+        pos.pageY = elem.offset().top + elem.height() * pos.panelRelY;
       }
 
       if (seriesList.length === 0) {
@@ -238,7 +266,7 @@ function ($) {
       else {
         $tooltip.detach();
       }
-    });
+    };
   }
 
   return GraphTooltip;
