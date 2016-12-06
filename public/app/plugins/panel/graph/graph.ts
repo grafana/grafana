@@ -185,12 +185,22 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
 
       // Series could have different timeSteps,
       // let's find the smallest one so that bars are correctly rendered.
+      // In addition, only take series which are rendered as bars for this.
       function getMinTimeStepOfSeries(data) {
         var min = Number.MAX_VALUE;
 
         for (let i = 0; i < data.length; i++) {
           if (!data[i].stats.timeStep) {
             continue;
+          }
+          if (panel.bars) {
+            if (data[i].bars && data[i].bars.show === false) {
+              continue;
+            }
+          } else {
+            if (typeof data[i].bars === 'undefined' || typeof data[i].bars.show === 'undefined' || !data[i].bars.show) {
+              continue;
+            }
           }
 
           if (data[i].stats.timeStep < min) {
