@@ -28,7 +28,7 @@ describe('ElasticDatasource', function() {
 
   describe('When testing datasource with index pattern', function() {
     beforeEach(function() {
-      createDatasource({url: 'http://es.com', index: '[asd-]YYYY.MM.DD', jsonData: {interval: 'Daily'}});
+      createDatasource({url: 'http://es.com', index: '[asd-]YYYY.MM.DD', jsonData: {interval: 'Daily', esVersion: '2'}});
     });
 
     it('should translate index pattern to current day', function() {
@@ -50,7 +50,7 @@ describe('ElasticDatasource', function() {
     var requestOptions, parts, header;
 
     beforeEach(function() {
-      createDatasource({url: 'http://es.com', index: '[asd-]YYYY.MM.DD', jsonData: {interval: 'Daily'}});
+      createDatasource({url: 'http://es.com', index: '[asd-]YYYY.MM.DD', jsonData: {interval: 'Daily', esVersion: '2'}});
 
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
@@ -85,7 +85,7 @@ describe('ElasticDatasource', function() {
     var requestOptions, parts, header;
 
     beforeEach(function() {
-      createDatasource({url: 'http://es.com', index: 'test'});
+      createDatasource({url: 'http://es.com', index: 'test', jsonData: {esVersion: '2'}});
 
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
