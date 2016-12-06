@@ -48,7 +48,7 @@ define([
       };
 
       this.healthSummary = function () {
-        return backendSrv.get(mainHealthList);
+        return backendSrv.request({ method: 'GET', url: mainHealthList, timeout: 2000});
       };
 
       this.floor = function (metrics) {
