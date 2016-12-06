@@ -101,7 +101,11 @@ export class KeybindingSrv {
     });
 
     this.bind('t z', () => {
-      scope.appEvent('zoom-out');
+      scope.appEvent('zoom-out', 2);
+    });
+
+    this.bind('ctrl+z', () => {
+      scope.appEvent('zoom-out', 2);
     });
 
     this.bind('t left', () => {
