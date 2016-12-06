@@ -194,7 +194,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
             continue;
           }
           if (panel.bars) {
-            if (typeof data[i].bars !== 'undefined' && typeof data[i].bars.show !== 'undefined' && !data[i].bars.show) {
+            if (data[i].bars && data[i].bars.show === false) {
               continue;
             }
           } else {
