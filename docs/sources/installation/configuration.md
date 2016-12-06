@@ -170,7 +170,7 @@ The database user (not applicable for `sqlite3`).
 
 ### password
 
-The database user's password (not applicable for `sqlite3`).
+The database user's password (not applicable for `sqlite3`). If the password contains `#` or `;` you have to wrap it with trippel quotes. Ex `"""#password;"""`
 
 ### ssl_mode
 
