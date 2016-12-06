@@ -20,6 +20,22 @@ describe('ElasticQueryBuilder', function() {
     expect(query.aggs["1"].date_histogram.extended_bounds.min).to.be("$timeFrom");
   });
 
+  it('with defaults on es5.x', function() {
+    var builder_5x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 5
+    });
+
+    var query = builder_5x.build({
+      metrics: [{type: 'Count', id: '0'}],
+      timeField: '@timestamp',
+      bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '1'}],
+    });
+
+    expect(query.query.bool.must[0].range["@timestamp"].gte).to.be("$timeFrom");
+    expect(query.aggs["1"].date_histogram.extended_bounds.min).to.be("$timeFrom");
+  });
+
   it('with multiple bucket aggs', function() {
     var query = builder.build({
       metrics: [{type: 'count', id: '1'}],
@@ -140,6 +156,34 @@ describe('ElasticQueryBuilder', function() {
 
     expect(query.aggs["2"].filters.filters["@metric:cpu"].query.query_string.query).to.be("@metric:cpu");
     expect(query.aggs["2"].filters.filters["@metric:logins.count"].query.query_string.query).to.be("@metric:logins.count");
+    expect(query.aggs["2"].aggs["4"].date_histogram.field).to.be("@timestamp");
+  });
+
+  it('with filters aggs on es5.x', function() {
+    var builder_5x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 5
+    });
+    var query = builder_5x.build({
+      metrics: [{type: 'count', id: '1'}],
+      timeField: '@timestamp',
+      bucketAggs: [
+        {
+          id: '2',
+          type: 'filters',
+          settings: {
+            filters: [
+              {query: '@metric:cpu' },
+              {query: '@metric:logins.count' },
+            ]
+          }
+        },
+        {type: 'date_histogram', field: '@timestamp', id: '4'}
+      ],
+    });
+
+    expect(query.aggs["2"].filters.filters["@metric:cpu"].query_string.query).to.be("@metric:cpu");
+    expect(query.aggs["2"].filters.filters["@metric:logins.count"].query_string.query).to.be("@metric:logins.count");
     expect(query.aggs["2"].aggs["4"].date_histogram.field).to.be("@timestamp");
   });
 

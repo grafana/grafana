@@ -28,7 +28,8 @@ function (queryDef) {
       return queryNode;
     }
 
-    queryNode.terms.size = parseInt(aggDef.settings.size, 10);
+    queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 500 : parseInt(aggDef.settings.size, 10);
+
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
       queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
@@ -75,14 +76,23 @@ function (queryDef) {
 
     for (var i = 0; i < aggDef.settings.filters.length; i++) {
       var query = aggDef.settings.filters[i].query;
-      filterObj[query] = {
-        query: {
+      if (this.esVersion >= 5) {
+        filterObj[query] = {
           query_string: {
             query: query,
             analyze_wildcard: true
           }
-        }
-      };
+        };
+      } else {
+        filterObj[query] = {
+          query: {
+            query_string: {
+              query: query,
+              analyze_wildcard: true
+            }
+          }
+        };
+      }
     }
 
     return filterObj;
@@ -92,7 +102,12 @@ function (queryDef) {
     query.size = 500;
     query.sort = {};
     query.sort[this.timeField] = {order: 'desc', unmapped_type: 'boolean'};
-    query.fields = ["*", "_source"];
+
+    // fields field not supported on ES 5.x
+    if (this.esVersion < 5) {
+      query.fields = ["*", "_source"];
+    }
+
     query.script_fields = {},
     query.fielddata_fields = [this.timeField];
     return query;
@@ -103,8 +118,13 @@ function (queryDef) {
       return;
     }
 
-    var i, filter, condition;
-    var must = query.query.filtered.filter.bool.must;
+    var i, filter, condition, must;
+
+    if (this.esVersion >= 5) {
+      must = query.query.bool.must;
+    } else {
+      must = query.query.filtered.filter.bool.must;
+    }
 
     for (i = 0; i < adhocFilters.length; i++) {
       filter = adhocFilters[i];
@@ -122,24 +142,43 @@ function (queryDef) {
     target.timeField =  this.timeField;
 
     var i, nestedAggs, metric;
-    var query = {
-      "size": 0,
-      "query": {
-        "filtered": {
-          "query": {
-            "query_string": {
-              "analyze_wildcard": true,
-              "query": '$lucene_query',
-            }
-          },
-          "filter": {
-            "bool": {
-              "must": [{"range": this.getRangeFilter()}]
+    var query = {};
+    if (this.esVersion >= 5) {
+      query = {
+        "size": 0,
+        "query": {
+          "bool": {
+            "must": [
+              {"range": this.getRangeFilter()},
+              {"query_string": {
+                "analyze_wildcard": true,
+                "query": '$lucene_query'
+                }
+              }
+            ]
+          }
+        }
+      };
+    } else {
+      query = {
+        "size": 0,
+        "query": {
+          "filtered": {
+            "query": {
+              "query_string": {
+                "analyze_wildcard": true,
+                "query": '$lucene_query',
+              }
+            },
+            "filter": {
+              "bool": {
+                "must": [{"range": this.getRangeFilter()}]
+              }
             }
           }
         }
-      }
-    };
+      };
+    }
 
     this.addAdhocFilters(query, adhocFilters);
 
@@ -217,33 +256,56 @@ function (queryDef) {
   };
 
   ElasticQueryBuilder.prototype.getTermsQuery = function(queryDef) {
-    var query = {
-      "size": 0,
-      "query": {
-        "filtered": {
-          "filter": {
-            "bool": {
-              "must": [{"range": this.getRangeFilter()}]
+    var query;
+
+    if (this.esVersion >= 5) {
+      query = {
+        "size": 0,
+        "query": {
+          "bool": {
+            "must": [{"range": this.getRangeFilter()}]
+          }
+        }
+      };
+
+      if (queryDef.query) {
+        query.query.bool.must.push({
+          "query_string": {
+            "analyze_wildcard": true,
+            "query": queryDef.query,
+          }
+        });
+      }
+
+    } else {
+      query = {
+        "size": 0,
+        "query": {
+          "filtered": {
+            "filter": {
+              "bool": {
+                "must": [{"range": this.getRangeFilter()}]
+              }
             }
           }
         }
-      }
-    };
-
-    if (queryDef.query) {
-      query.query.filtered.query = {
-        "query_string": {
-          "analyze_wildcard": true,
-          "query": queryDef.query,
-        }
       };
+
+      if (queryDef.query) {
+        query.query.filtered.query = {
+          "query_string": {
+            "analyze_wildcard": true,
+            "query": queryDef.query,
+          }
+        };
+      }
     }
 
     query.aggs =  {
       "1": {
         "terms": {
           "field": queryDef.field,
-          "size": 0,
+          "size": 500,
           "order": {
             "_term": "asc"
           }
