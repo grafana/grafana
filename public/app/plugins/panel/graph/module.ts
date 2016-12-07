@@ -88,7 +88,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       avg: false
     },
     // how null points should be handled
-    nullPointMode : 'connected',
+    nullPointMode : 'null',
     // staircase line mode
     steppedLine: false,
     // tooltip options
