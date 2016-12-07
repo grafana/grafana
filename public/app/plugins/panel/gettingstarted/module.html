@@ -8,8 +8,8 @@
     </h6>
     <ul class="progress-tracker">
       <li class="progress-step" ng-repeat="step in ctrl.steps" ng-class="step.cssClass">
-        <span class="progress-marker"><i class="{{step.icon}}"></i></span>
-        <span class="progress-text">{{step.title}}</span>
+        <a class="progress-marker" ng-href="{{step.href}}"><i class="{{step.icon}}"></i></a>
+        <a class="progress-text" ng-href="{{step.href}}">{{step.title}}</a>
         <a class="btn progress-step-cta" ng-href="{{step.href}}">{{step.cta}}</a>
       </li>
     </ul>
