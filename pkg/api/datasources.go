@@ -5,10 +5,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/plugins"
-	//"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
 )
 

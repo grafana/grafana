@@ -17,28 +17,36 @@ import (
 	"gopkg.in/guregu/null.v3"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type OpenTsdbExecutor struct {
-	*tsdb.DataSourceInfo
+	*models.DataSource
+	httpClient *http.Client
 }
 
-func NewOpenTsdbExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
-	return &OpenTsdbExecutor{dsInfo}
+func NewOpenTsdbExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
+	httpClient, err := datasource.GetHttpClient()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &OpenTsdbExecutor{
+		DataSource: datasource,
+		httpClient: httpClient,
+	}, nil
 }
 
 var (
-	plog       log.Logger
-	HttpClient *http.Client
+	plog log.Logger
 )
 
 func init() {
 	plog = log.New("tsdb.opentsdb")
 	tsdb.RegisterExecutor("opentsdb", NewOpenTsdbExecutor)
-
-	HttpClient = tsdb.GetDefaultClient()
 }
 
 func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
@@ -64,7 +72,7 @@ func (e *OpenTsdbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		return result
 	}
 
-	res, err := ctxhttp.Do(ctx, HttpClient, req)
+	res, err := ctxhttp.Do(ctx, e.httpClient, req)
 	if err != nil {
 		result.Error = err
 		return result

@@ -119,21 +119,9 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRa
 		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
 			{
-				RefId: "A",
-				Model: c.Query.Model,
-				DataSource: &tsdb.DataSourceInfo{
-					Id:                datasource.Id,
-					Name:              datasource.Name,
-					PluginId:          datasource.Type,
-					Url:               datasource.Url,
-					User:              datasource.User,
-					Password:          datasource.Password,
-					Database:          datasource.Database,
-					BasicAuth:         datasource.BasicAuth,
-					BasicAuthUser:     datasource.BasicAuthUser,
-					BasicAuthPassword: datasource.BasicAuthPassword,
-					JsonData:          datasource.JsonData,
-				},
+				RefId:      "A",
+				Model:      c.Query.Model,
+				DataSource: datasource,
 			},
 		},
 	}

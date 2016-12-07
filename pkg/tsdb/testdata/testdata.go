@@ -4,19 +4,20 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type TestDataExecutor struct {
-	*tsdb.DataSourceInfo
+	*models.DataSource
 	log log.Logger
 }
 
-func NewTestDataExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
+func NewTestDataExecutor(dsInfo *models.DataSource) (tsdb.Executor, error) {
 	return &TestDataExecutor{
-		DataSourceInfo: dsInfo,
-		log:            log.New("tsdb.testdata"),
-	}
+		DataSource: dsInfo,
+		log:        log.New("tsdb.testdata"),
+	}, nil
 }
 
 func init() {
