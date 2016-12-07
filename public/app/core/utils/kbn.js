@@ -631,16 +631,45 @@ function($, _, moment) {
     }
   };
 
-  kbn.toDuration = function(size, timeScale) {
-    return moment.duration(size, timeScale);
+  kbn.toDuration = function(size, decimals, timeScale) {
+    var units = ["year", "month", "day", "hour", "minute", "second", "millisecond"];
+    var string = [];
+
+    var pushToString = function(value, unit) {
+      if (value !== 1) {
+        unit += "s";
+      }
+      string.push(value + " " + unit);
+    };
+
+    var duration = moment.duration(size, timeScale);
+    while (units.length > 0) {
+      var u = units.shift();
+      var v = duration.get(u);
+      if (v) {
+        pushToString(v, u);
+        break;
+      }
+    }
+    for (var i = 0; i < decimals && i < units.length; i++) {
+      var uu = units[i];
+      var vv = duration.get(uu);
+      pushToString(vv, uu);
+    }
+    // if everything is 0 display "0 $timeScale"
+    if (!string.length) {
+      pushToString(duration.get(timeScale), timeScale);
+    }
+
+    return string.join(", ");
   };
 
-  kbn.valueFormats.dtdurationms = function(size) {
-    return kbn.toDuration(size, 'ms').humanize();
+  kbn.valueFormats.dtdurationms = function(size, decimals) {
+    return kbn.toDuration(size, decimals, 'millisecond');
   };
 
-  kbn.valueFormats.dtdurations = function(size) {
-    return kbn.toDuration(size, 's').humanize();
+  kbn.valueFormats.dtdurations = function(size, decimals) {
+    return kbn.toDuration(size, decimals, 'second');
   };
 
   ///// FORMAT MENU /////
