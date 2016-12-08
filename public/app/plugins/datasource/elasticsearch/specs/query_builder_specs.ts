@@ -138,8 +138,8 @@ describe('ElasticQueryBuilder', function() {
       ],
     });
 
-    expect(query.aggs["2"].filters.filters["@metric:cpu"].query.query_string.query).to.be("@metric:cpu");
-    expect(query.aggs["2"].filters.filters["@metric:logins.count"].query.query_string.query).to.be("@metric:logins.count");
+    expect(query.aggs["2"].filters.filters["@metric:cpu"].query_string.query).to.be("@metric:cpu");
+    expect(query.aggs["2"].filters.filters["@metric:logins.count"].query_string.query).to.be("@metric:logins.count");
     expect(query.aggs["2"].aggs["4"].date_histogram.field).to.be("@timestamp");
   });
 
