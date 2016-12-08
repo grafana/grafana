@@ -58,6 +58,10 @@ func (this *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 		bodyJSON.Set("imageUrl", evalContext.ImagePublicUrl)
 	}
 
+	if evalContext.Rule.Message != "" {
+		bodyJSON.Set("message", evalContext.Rule.Message)
+	}
+
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &m.SendWebhookSync{

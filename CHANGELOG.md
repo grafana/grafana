@@ -1,9 +1,53 @@
-# 4.0-stable (unrelased)
+# 4.1-beta (unreleased)
+
+### Enhancements
+* **Postgres**: Add support for Certs for Postgres database [#6655](https://github.com/grafana/grafana/issues/6655)
+* **Victorops**: Add VictorOps notification integration [#6411](https://github.com/grafana/grafana/issues/6411)
+* **Opsgenie**: Add OpsGenie notification integratiion (by [@kylemcc](https://github.com/kylemcc)) [#6687](https://github.com/grafana/grafana/issues/6687)
+* **Singlestat**: New aggregation on singlestat panel [#6740](https://github.com/grafana/grafana/pull/6740)
+* **Cloudwatch**: Make it possible to specify access and secret key on the data source config page [#6697](https://github.com/grafana/grafana/issues/6697)
+* **Table**: Added Hidden Column Style for Table Panel [#5677](https://github.com/grafana/grafana/pull/5677)
+* **Graph**: Shared crosshair option renamed to shared tooltip, shows tooltip on all graphs as you hover over one graph. [#1578](https://github.com/grafana/grafana/pull/1578), [#6274](https://github.com/grafana/grafana/pull/6274)
+* **Elasticsearch**: Added support for Missing option (bucket) for terms aggregation [#4244](https://github.com/grafana/grafana/pull/4244), thx @shanielh
+
+### Bugfixes
+* **API**: HTTP API for deleting org returning incorrect message for a non-existing org [#6679](https://github.com/grafana/grafana/issues/6679)
+* **Dashboard**: Posting empty dashboard result in corrupted dashboard [#5443](https://github.com/grafana/grafana/issues/5443)
+
+# 4.0.2 (unreleased)
+
+### Enhancements
+* **Playlist**: Add support for kiosk mode [#6727](https://github.com/grafana/grafana/issues/6727)
+
+### Bugfixes
+* **Alerting**: Add alert message to webhook notifications [#6807](https://github.com/grafana/grafana/issues/6807)
+* **PNG Rendering**: Fix for server side rendering when using non default http addr bind and domain setting [#6813](https://github.com/grafana/grafana/issues/6813)
+* **PNG Rendering**: Fix for server side rendering when setting enforce_domain to true [#6769](https://github.com/grafana/grafana/issues/6769)
+* **Webhooks**: Add content type json to outgoing webhooks [#6822](https://github.com/grafana/grafana/issues/6822)
+* **Keyboard shortcut**: Fixed zoom out shortcut [#6837](https://github.com/grafana/grafana/issues/6837)
+* **Webdav**: Adds basic auth headers to webdav uploader [#6779](https://github.com/grafana/grafana/issues/6779)
+
+# 4.0.1 (2016-12-02)
+
+> **Notice**
+4.0.0 had serious connection pooling issue when using a data source in proxy access. This bug caused lots of resource issues
+due to too many connections/file handles on the data source backend. This problem is fixed in this release.
+
+### Bugfixes
+* **Metrics**: Fixes nil pointer dereference on my arm build [#6749](https://github.com/grafana/grafana/issues/6749)
+* **Data proxy**: Fixes a tcp pooling issue in the datasource reverse proxy [#6759](https://github.com/grafana/grafana/issues/6759)
+
+# 4.0-stable (2016-11-29)
 
 ### Bugfixes
 * **Server-side rendering**: Fixed address used when rendering panel via phantomjs and using non default http_addr config [#6660](https://github.com/grafana/grafana/issues/6660)
 * **Graph panel**: Fixed graph panel tooltip sort order issue [#6648](https://github.com/grafana/grafana/issues/6648)
 * **Unsaved changes**: You now navigate to the intended page after saving in the unsaved changes dialog [#6675](https://github.com/grafana/grafana/issues/6675)
+* **TLS Client Auth**: Support for TLS client authentication for datasource proxies [#2316](https://github.com/grafana/grafana/issues/2316)
+* **Alerts out of sync**: Saving dashboards with broken alerts causes sync problem[#6576](https://github.com/grafana/grafana/issues/6576)
+* **Alerting**: Saving an alert with condition "HAS NO DATA" throws an error[#6701](https://github.com/grafana/grafana/issues/6701)
+* **Config**: Improve error message when parsing broken config file [#6731](https://github.com/grafana/grafana/issues/6731)
+* **Table**: Render empty dates as - instead of current date [#6728](https://github.com/grafana/grafana/issues/6728)
 
 # 4.0-beta2 (2016-11-21)
 
@@ -19,6 +63,7 @@
 * **Singlestat**: Support repeated template variables in prefix/postfix [#6595](https://github.com/grafana/grafana/issues/6595)
 * **Templating**: Don't persist variable options with refresh option [#6586](https://github.com/grafana/grafana/issues/6586)
 * **Alerting**: Add ability to have OR conditions (and mixing AND & OR) [#6579](https://github.com/grafana/grafana/issues/6579)
+* **InfluxDB**: Fix for Ad-Hoc Filters variable & changing dashboards [#6821](https://github.com/grafana/grafana/issues/6821)
 
 # 4.0-beta1 (2016-11-09)
 

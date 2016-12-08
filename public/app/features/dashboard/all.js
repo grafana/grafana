@@ -13,7 +13,6 @@ define([
   './unsavedChangesSrv',
   './timepicker/timepicker',
   './graphiteImportCtrl',
-  './importCtrl',
   './impression_store',
   './upload',
   './import/dash_import',

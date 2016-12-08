@@ -80,7 +80,6 @@ export class DataSourceEditCtrl {
       this.backendSrv.get('/api/datasources/' + id).then(ds => {
         this.isNew = false;
         this.current = ds;
-
         if (datasourceCreated) {
           datasourceCreated = false;
           this.testDatasource();

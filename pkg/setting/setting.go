@@ -325,10 +325,11 @@ func loadSpecifedConfigFile(configFile string) error {
 	}
 
 	userConfig, err := ini.Load(configFile)
-	userConfig.BlockMode = false
 	if err != nil {
 		return fmt.Errorf("Failed to parse %v, %v", configFile, err)
 	}
+
+	userConfig.BlockMode = false
 
 	for _, section := range userConfig.Sections() {
 		for _, key := range section.Keys() {
@@ -359,9 +360,18 @@ func loadConfiguration(args *CommandLineArgs) {
 	defaultConfigFile := path.Join(HomePath, "conf/defaults.ini")
 	configFiles = append(configFiles, defaultConfigFile)
 
+	// check if config file exists
+	if _, err := os.Stat(defaultConfigFile); os.IsNotExist(err) {
+		fmt.Println("Grafana-server Init Failed: Could not find config defaults, make sure homepath command line parameter is set or working directory is homepath")
+		os.Exit(1)
+	}
+
+	// load defaults
 	Cfg, err = ini.Load(defaultConfigFile)
 	if err != nil {
-		log.Fatal(3, "Failed to parse defaults.ini, %v", err)
+		fmt.Println(fmt.Sprintf("Failed to parse defaults.ini, %v", err))
+		os.Exit(1)
+		return
 	}
 
 	Cfg.BlockMode = false

@@ -139,6 +139,7 @@ describe('CloudWatchDatasource', function() {
             ]
           }
         ],
+        getVariableName: function (e) { return 'instance_id'; },
         variableExists: function (e) { return true; },
         containsVariable: function (str, variableName) { return str.indexOf('$' + variableName) !== -1; }
       };
@@ -156,8 +157,69 @@ describe('CloudWatchDatasource', function() {
         }
       ];
 
-      var result = ctx.ds.expandTemplateVariable(targets, templateSrv);
+      var result = ctx.ds.expandTemplateVariable(targets, {}, templateSrv);
       expect(result[0].dimensions.InstanceId).to.be('i-34567890');
+    });
+  });
+
+  describe('When performing CloudWatch query for extended statistics', function() {
+    var requestParams;
+
+    var query = {
+      range: { from: 'now-1h', to: 'now' },
+      targets: [
+        {
+          region: 'us-east-1',
+          namespace: 'AWS/ApplicationELB',
+          metricName: 'TargetResponseTime',
+          dimensions: {
+            LoadBalancer: 'lb',
+            TargetGroup: 'tg'
+          },
+          statistics: ['p90.00'],
+          period: 300
+        }
+      ]
+    };
+
+    var response = {
+      Datapoints: [
+        {
+          ExtendedStatistics: {
+            'p90.00': 1
+          },
+          Timestamp: 'Wed Dec 31 1969 16:00:00 GMT-0800 (PST)'
+        },
+        {
+          ExtendedStatistics: {
+            'p90.00': 2
+          },
+          Timestamp: 'Wed Dec 31 1969 16:05:00 GMT-0800 (PST)'
+        },
+        {
+          ExtendedStatistics: {
+            'p90.00': 5
+          },
+          Timestamp: 'Wed Dec 31 1969 16:15:00 GMT-0800 (PST)'
+        }
+      ],
+      Label: 'TargetResponseTime'
+    };
+
+    beforeEach(function() {
+      ctx.backendSrv.datasourceRequest = function(params) {
+        requestParams = params;
+        return ctx.$q.when({data: response});
+      };
+    });
+
+    it('should return series list', function(done) {
+      ctx.ds.query(query).then(function(result) {
+        expect(result.data[0].target).to.be('TargetResponseTime_p90.00');
+        expect(result.data[0].datapoints[0][0]).to.be(response.Datapoints[0].ExtendedStatistics['p90.00']);
+        done();
+      });
+      ctx.$rootScope.$apply();
     });
   });
 

@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -12,7 +12,7 @@ func TestInfluxdbQueryParser(t *testing.T) {
 	Convey("Influxdb query parser", t, func() {
 
 		parser := &InfluxdbQueryParser{}
-		dsInfo := &tsdb.DataSourceInfo{
+		dsInfo := &models.DataSource{
 			JsonData: simplejson.New(),
 		}
 

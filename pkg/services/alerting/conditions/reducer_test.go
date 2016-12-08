@@ -11,11 +11,6 @@ import (
 
 func TestSimpleReducer(t *testing.T) {
 	Convey("Test simple reducer by calculating", t, func() {
-		Convey("avg", func() {
-			result := testReducer("avg", 1, 2, 3)
-			So(result, ShouldEqual, float64(2))
-		})
-
 		Convey("sum", func() {
 			result := testReducer("sum", 1, 2, 3)
 			So(result, ShouldEqual, float64(6))
@@ -54,6 +49,25 @@ func TestSimpleReducer(t *testing.T) {
 		Convey("median with one values", func() {
 			result := testReducer("median", 1)
 			So(result, ShouldEqual, float64(1))
+		})
+
+		Convey("avg", func() {
+			result := testReducer("avg", 1, 2, 3)
+			So(result, ShouldEqual, float64(2))
+		})
+
+		Convey("avg of number values and null values should ignore nulls", func() {
+			reducer := NewSimpleReducer("avg")
+			series := &tsdb.TimeSeries{
+				Name: "test time serie",
+			}
+
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(3), 1))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 2))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 3))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(3), 4))
+
+			So(reducer.Reduce(series).Float64, ShouldEqual, float64(3))
 		})
 	})
 }

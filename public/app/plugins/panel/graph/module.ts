@@ -88,7 +88,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       avg: false
     },
     // how null points should be handled
-    nullPointMode : 'connected',
+    nullPointMode : 'null',
     // staircase line mode
     steppedLine: false,
     // tooltip options
@@ -96,7 +96,6 @@ class GraphCtrl extends MetricsPanelCtrl {
       value_type: 'individual',
       shared: true,
       sort: 0,
-      msResolution: false,
     },
     // time overrides
     timeFrom: null,

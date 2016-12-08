@@ -53,6 +53,11 @@
 		<input type="text" class="gf-form-input max-width-12" ng-change="onChangeInternal()" ng-model="agg.settings.model" blur="onChange()" spellcheck='false'>
 	</div>
 
+	<div class="gf-form offset-width-7" ng-if="agg.type === 'moving_avg'">
+		<label class="gf-form-label width-10">Predict</label>
+		<input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.predict" ng-blur="onChangeInternal()" spellcheck='false'>
+	</div>
+
 	<div class="gf-form offset-width-7" ng-if="agg.type === 'percentiles'">
 		<label class="gf-form-label width-10">Percentiles</label>
 		<input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.percents" array-join ng-blur="onChange()"></input>
