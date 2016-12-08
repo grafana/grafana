@@ -117,7 +117,7 @@ func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) Resp
 		return ApiError(500, "Failed to update datasource", err)
 	}
 
-	return Json(200, "Datasource updated")
+	return Json(200, util.DynMap{"message": "Datasource updated"})
 }
 
 func fillWithSecureJsonData(cmd *m.UpdateDataSourceCommand) error {
