@@ -11,40 +11,42 @@ export class SideMenuCtrl {
   user: any;
   mainLinks: any;
   orgMenu: any;
-  systemSection: any;
-  grafanaVersion: any;
   appSubUrl: string;
+  loginUrl: string;
+  orgFilter: string;
+  orgItems: any;
+  orgs: any;
+  maxShownOrgs: number;
 
   /** @ngInject */
-  constructor(private $scope, private $location, private contextSrv, private backendSrv) {
+  constructor(private $scope, private $location, private contextSrv, private backendSrv, private $element) {
     this.isSignedIn = contextSrv.isSignedIn;
     this.user = contextSrv.user;
     this.appSubUrl = config.appSubUrl;
     this.showSignout = this.contextSrv.isSignedIn && !config['authProxyEnabled'];
-    this.updateMenu();
+    this.maxShownOrgs = 10;
+
+    this.mainLinks = config.bootData.mainNavLinks;
+    this.openUserDropdown();
+    this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
 
     this.$scope.$on('$routeChangeSuccess', () => {
-      this.updateMenu();
       if (!this.contextSrv.pinned) {
         this.contextSrv.sidemenu = false;
       }
+      this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
     });
+
+    this.orgFilter = '';
   }
 
  getUrl(url) {
    return config.appSubUrl + url;
  }
 
- setupMainNav() {
-   this.mainLinks = config.bootData.mainNavLinks.map(item => {
-     return {text: item.text, icon: item.icon, img: item.img, url: this.getUrl(item.url)};
-   });
- }
-
  openUserDropdown() {
    this.orgMenu = [
      {section: 'You', cssClass: 'dropdown-menu-title'},
-     {text: 'Preferences', url: this.getUrl('/profile')},
      {text: 'Profile', url: this.getUrl('/profile')},
    ];
 
@@ -56,93 +58,45 @@ export class SideMenuCtrl {
      this.orgMenu.push({section: this.user.orgName, cssClass: 'dropdown-menu-title'});
      this.orgMenu.push({
        text: "Preferences",
-       url: this.getUrl("/org"),
+       url: this.getUrl("/org")
      });
      this.orgMenu.push({
        text: "Users",
-       url: this.getUrl("/org/users"),
+       url: this.getUrl("/org/users")
      });
      this.orgMenu.push({
        text: "API Keys",
-       url: this.getUrl("/org/apikeys"),
+       url: this.getUrl("/org/apikeys")
      });
    }
 
    this.orgMenu.push({cssClass: "divider"});
-
-   if (this.contextSrv.isGrafanaAdmin) {
-     this.orgMenu.push({text: "Grafana adminstration", icon: "fa fa-fw fa-cogs", url: this.getUrl("/admin/settings")});
-   }
-
    this.backendSrv.get('/api/user/orgs').then(orgs => {
-     orgs.forEach(org => {
-       if (org.orgId === this.contextSrv.user.orgId) {
-         return;
-       }
+     this.orgs = orgs;
+     this.loadOrgsItems();
+   });
+ }
 
-       this.orgMenu.push({
+ loadOrgsItems(){
+   this.orgItems = [];
+   this.orgs.forEach(org => {
+     if (org.orgId === this.contextSrv.user.orgId) {
+       return;
+     }
+
+     if (this.orgItems.length < this.maxShownOrgs && (this.orgFilter === '' || org.name.indexOf(this.orgFilter) !== -1)){
+       this.orgItems.push({
          text: "Switch to " + org.name,
          icon: "fa fa-fw fa-random",
-         click: () => {
-           this.switchOrg(org.orgId);
-         }
+         url: this.getUrl('/profile/switch-org/' + org.orgId),
+         target: '_self'
        });
-     });
-
-     if (config.allowOrgCreate) {
-       this.orgMenu.push({text: "New organization", icon: "fa fa-fw fa-plus", url: this.getUrl('/org/new')});
      }
    });
- }
-
- switchOrg(orgId) {
-   this.backendSrv.post('/api/user/using/' + orgId).then(() => {
-     window.location.href = window.location.href;
-   });
- };
-
- setupAdminNav() {
-   this.systemSection = true;
-   this.grafanaVersion = config.buildInfo.version;
-
-   this.mainLinks.push({
-     text: "System info",
-     icon: "fa fa-fw fa-info",
-     url: this.getUrl("/admin/settings"),
-   });
-
-   this.mainLinks.push({
-     text: "Stats",
-     icon: "fa fa-fw fa-bar-chart",
-     url: this.getUrl("/admin/stats"),
-   });
-
-   this.mainLinks.push({
-     text: "Users",
-     icon: "fa fa-fw fa-user",
-     url: this.getUrl("/admin/users"),
-   });
-
-   this.mainLinks.push({
-     text: "Organizations",
-     icon: "fa fa-fw fa-users",
-     url: this.getUrl("/admin/orgs"),
-   });
-
- }
-
- updateMenu() {
-   this.systemSection = false;
-   this.mainLinks = [];
-   this.orgMenu = [];
-
-   var currentPath = this.$location.path();
-   if (currentPath.indexOf('/admin') === 0) {
-     this.setupAdminNav();
-   } else {
-     this.setupMainNav();
+   if (config.allowOrgCreate) {
+     this.orgItems.push({text: "New organization", icon: "fa fa-fw fa-plus", url: this.getUrl('/org/new')});
    }
- };
+ }
 }
 
 export function sideMenuDirective() {
@@ -153,6 +107,22 @@ export function sideMenuDirective() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {},
+    link: function(scope, elem) {
+      // hack to hide dropdown menu
+      elem.on('click.dropdown', '.dropdown-menu a', function(evt) {
+        var menu = $(evt.target).parents('.dropdown-menu');
+        var parent = menu.parent();
+        menu.detach();
+
+        setTimeout(function() {
+          parent.append(menu);
+        }, 100);
+      });
+
+      scope.$on("$destory", function() {
+        elem.off('click.dropdown');
+      });
+    }
   };
 }
 

@@ -3,37 +3,38 @@
 import _ from 'lodash';
 import {PanelCtrl} from 'app/plugins/sdk';
 
- // Set and populate defaults
-var panelDefaults = {
-  mode    : "markdown", // 'html', 'markdown', 'text'
-  content : "# title",
-};
-
 export class TextPanelCtrl extends PanelCtrl {
   static templateUrl = `public/app/plugins/panel/text/module.html`;
 
-  converter: any;
+  remarkable: any;
   content: string;
+  // Set and populate defaults
+  panelDefaults = {
+    mode    : "markdown", // 'html', 'markdown', 'text'
+    content : "# title",
+  };
 
-  /** @ngInject */
+  /** @ngInject **/
   constructor($scope, $injector, private templateSrv, private $sce) {
     super($scope, $injector);
 
-    _.defaults(this.panel, panelDefaults);
+    _.defaults(this.panel, this.panelDefaults);
+
+    this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
+    this.events.on('refresh', this.onRefresh.bind(this));
+    this.events.on('render', this.onRender.bind(this));
   }
 
-  initEditMode() {
-    super.initEditMode();
-    this.icon = 'fa fa-text-width';
+  onInitEditMode() {
     this.addEditorTab('Options', 'public/app/plugins/panel/text/editor.html');
     this.editorTabIndex = 1;
   }
 
-  refresh() {
+  onRefresh() {
     this.render();
   }
 
-  render() {
+  onRender() {
     if (this.panel.mode === 'markdown') {
       this.renderMarkdown(this.panel.content);
     } else if (this.panel.mode === 'html') {
@@ -54,21 +55,16 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 
   renderMarkdown(content) {
-    var text = content
-    .replace(/&/g, '&amp;')
-    .replace(/>/g, '&gt;')
-    .replace(/</g, '&lt;');
-
-    if (this.converter) {
-      this.updateContent(this.converter.makeHtml(text));
-    } else {
-      System.import('vendor/showdown').then(Showdown => {
-        this.converter = new Showdown.converter();
+    if (!this.remarkable) {
+      return System.import('remarkable').then(Remarkable => {
+        this.remarkable = new Remarkable();
         this.$scope.$apply(() => {
-          this.updateContent(this.converter.makeHtml(text));
+          this.updateContent(this.remarkable.render(content));
         });
       });
     }
+
+    this.updateContent(this.remarkable.render(content));
   }
 
   updateContent(html) {

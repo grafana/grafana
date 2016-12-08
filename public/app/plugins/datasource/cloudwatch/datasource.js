@@ -3,8 +3,10 @@ define([
   'lodash',
   'moment',
   'app/core/utils/datemath',
+  'app/core/utils/kbn',
+  './annotation_query',
 ],
-function (angular, _, moment, dateMath) {
+function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
   'use strict';
 
   /** @ngInject */
@@ -15,13 +17,15 @@ function (angular, _, moment, dateMath) {
     this.proxyUrl = instanceSettings.url;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
 
+    var self = this;
     this.query = function(options) {
-      var start = convertToCloudWatchTime(options.range.from, false);
-      var end = convertToCloudWatchTime(options.range.to, true);
+      var start = self.convertToCloudWatchTime(options.range.from, false);
+      var end = self.convertToCloudWatchTime(options.range.to, true);
 
       var queries = [];
       options = angular.copy(options);
-      _.each(options.targets, _.bind(function(target) {
+      options.targets = this.expandTemplateVariable(options.targets, templateSrv);
+      _.each(options.targets, function(target) {
         if (target.hide || !target.namespace || !target.metricName || _.isEmpty(target.statistics)) {
           return;
         }
@@ -30,18 +34,16 @@ function (angular, _, moment, dateMath) {
         query.region = templateSrv.replace(target.region, options.scopedVars);
         query.namespace = templateSrv.replace(target.namespace, options.scopedVars);
         query.metricName = templateSrv.replace(target.metricName, options.scopedVars);
-        query.dimensions = convertDimensionFormat(target.dimensions, options.scopedVars);
+        query.dimensions = self.convertDimensionFormat(target.dimensions, options.scopedVars);
         query.statistics = target.statistics;
 
-        var range = end - start;
-        query.period = parseInt(target.period, 10) || (query.namespace === 'AWS/EC2' ? 300 : 60);
-        if (range / query.period >= 1440) {
-          query.period = Math.ceil(range / 1440 / 60) * 60;
-        }
-        target.period = query.period;
+        var now = Math.round(Date.now() / 1000);
+        var period = this._getPeriod(target, query, options, start, end, now);
+        target.period = period;
+        query.period = period;
 
         queries.push(query);
-      }, this));
+      }.bind(this));
 
       // No valid targets, return the empty result to save a round trip.
       if (_.isEmpty(queries)) {
@@ -52,18 +54,47 @@ function (angular, _, moment, dateMath) {
 
       var allQueryPromise = _.map(queries, function(query) {
         return this.performTimeSeriesQuery(query, start, end);
-      }, this);
+      }.bind(this));
 
       return $q.all(allQueryPromise).then(function(allResponse) {
         var result = [];
 
         _.each(allResponse, function(response, index) {
-          var metrics = transformMetricData(response, options.targets[index]);
+          var metrics = transformMetricData(response, options.targets[index], options.scopedVars);
           result = result.concat(metrics);
         });
 
-        return { data: result };
+        return {data: result};
       });
+    };
+
+    this._getPeriod = function(target, query, options, start, end, now) {
+      var period;
+      var range = end - start;
+
+      var daySec = 60 * 60 * 24;
+      var periodUnit = 60;
+      if (now - start > (daySec * 15)) { // until 63 days ago
+        periodUnit = period = 60 * 5;
+      } else if (now - start > (daySec * 63)) { // until 455 days ago
+        periodUnit = period = 60 * 60;
+      } else if (now - start > (daySec * 455)) { // over 455 days, should return error, but try to long period
+        periodUnit = period = 60 * 60;
+      } else if (!target.period) {
+        period = (query.namespace === 'AWS/EC2') ? 300 : 60;
+      } else if (/^\d+$/.test(target.period)) {
+        period = parseInt(target.period, 10);
+      } else {
+        period = kbn.interval_to_seconds(templateSrv.replace(target.period, options.scopedVars));
+      }
+      if (period < 60) {
+        period = 60;
+      }
+      if (range / period >= 1440) {
+        period = Math.ceil(range / 1440 / periodUnit) * periodUnit;
+      }
+
+      return period;
     };
 
     this.performTimeSeriesQuery = function(query, start, end) {
@@ -117,18 +148,18 @@ function (angular, _, moment, dateMath) {
         parameters: {
           namespace: templateSrv.replace(namespace),
           metricName: templateSrv.replace(metricName),
-          dimensions: convertDimensionFormat(filterDimensions, {}),
+          dimensions: this.convertDimensionFormat(filterDimensions, {}),
         }
       };
 
       return this.awsRequest(request).then(function(result) {
         return _.chain(result.Metrics)
-        .pluck('Dimensions')
+        .map('Dimensions')
         .flatten()
         .filter(function(dimension) {
           return dimension !== null && dimension.Name === dimensionKey;
         })
-        .pluck('Value')
+        .map('Value')
         .uniq()
         .sortBy()
         .map(function(value) {
@@ -141,7 +172,7 @@ function (angular, _, moment, dateMath) {
       return this.awsRequest({
         region: region,
         action: 'DescribeInstances',
-        parameters: { filter: filters, instanceIds: instanceIds }
+        parameters: { filters: filters, instanceIds: instanceIds }
       });
     };
 
@@ -203,7 +234,37 @@ function (angular, _, moment, dateMath) {
         });
       }
 
+      var ec2InstanceAttributeQuery = query.match(/^ec2_instance_attribute\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
+      if (ec2InstanceAttributeQuery) {
+        region = templateSrv.replace(ec2InstanceAttributeQuery[1]);
+        var filterJson = JSON.parse(templateSrv.replace(ec2InstanceAttributeQuery[3]));
+        var filters = _.map(filterJson, function(values, name) {
+          return {
+            Name: name,
+            Values: values
+          };
+        });
+        var targetAttributeName = templateSrv.replace(ec2InstanceAttributeQuery[2]);
+
+        return this.performEC2DescribeInstances(region, filters, null).then(function(result) {
+          var attributes = _.chain(result.Reservations)
+          .map(function(reservations) {
+            return _.map(reservations.Instances, targetAttributeName);
+          })
+          .flatten().uniq().sortBy().value();
+          return transformSuggestData(attributes);
+        });
+      }
+
       return $q.when([]);
+    };
+
+    this.performDescribeAlarms = function(region, actionPrefix, alarmNamePrefix, alarmNames, stateValue) {
+      return this.awsRequest({
+        region: region,
+        action: 'DescribeAlarms',
+        parameters: { actionPrefix: actionPrefix, alarmNamePrefix: alarmNamePrefix, alarmNames: alarmNames, stateValue: stateValue }
+      });
     };
 
     this.performDescribeAlarmsForMetric = function(region, namespace, metricName, dimensions, statistic, period) {
@@ -223,55 +284,8 @@ function (angular, _, moment, dateMath) {
     };
 
     this.annotationQuery = function(options) {
-      var annotation = options.annotation;
-      var region = templateSrv.replace(annotation.region);
-      var namespace = templateSrv.replace(annotation.namespace);
-      var metricName = templateSrv.replace(annotation.metricName);
-      var dimensions = convertDimensionFormat(annotation.dimensions);
-      var statistics = _.map(annotation.statistics, function(s) { return templateSrv.replace(s); });
-      var period = annotation.period || '300';
-      period = parseInt(period, 10);
-
-      if (!region || !namespace || !metricName || _.isEmpty(statistics)) { return $q.when([]); }
-
-      var d = $q.defer();
-      var self = this;
-      var allQueryPromise = _.map(statistics, function(statistic) {
-        return self.performDescribeAlarmsForMetric(region, namespace, metricName, dimensions, statistic, period);
-      });
-      $q.all(allQueryPromise).then(function(alarms) {
-        var eventList = [];
-
-        var start = convertToCloudWatchTime(options.range.from, false);
-        var end = convertToCloudWatchTime(options.range.to, true);
-        _.chain(alarms)
-        .pluck('MetricAlarms')
-        .flatten()
-        .each(function(alarm) {
-          if (!alarm) {
-            d.resolve(eventList);
-            return;
-          }
-
-          self.performDescribeAlarmHistory(region, alarm.AlarmName, start, end).then(function(history) {
-            _.each(history.AlarmHistoryItems, function(h) {
-              var event = {
-                annotation: annotation,
-                time: Date.parse(h.Timestamp),
-                title: h.AlarmName,
-                tags: [h.HistoryItemType],
-                text: h.HistorySummary
-              };
-
-              eventList.push(event);
-            });
-
-            d.resolve(eventList);
-          });
-        });
-      });
-
-      return d.promise;
+      var annotationQuery = new CloudWatchAnnotationQuery(this, options.annotation, $q, templateSrv);
+      return annotationQuery.process(options.range.from, options.range.to);
     };
 
     this.testDatasource = function() {
@@ -302,17 +316,27 @@ function (angular, _, moment, dateMath) {
       return this.defaultRegion;
     };
 
-    function transformMetricData(md, options) {
+    function transformMetricData(md, options, scopedVars) {
       var aliasRegex = /\{\{(.+?)\}\}/g;
       var aliasPattern = options.alias || '{{metric}}_{{stat}}';
       var aliasData = {
-        region: templateSrv.replace(options.region),
-        namespace: templateSrv.replace(options.namespace),
-        metric: templateSrv.replace(options.metricName),
+        region: templateSrv.replace(options.region, scopedVars),
+        namespace: templateSrv.replace(options.namespace, scopedVars),
+        metric: templateSrv.replace(options.metricName, scopedVars),
       };
-      _.extend(aliasData, options.dimensions);
+
+      var aliasDimensions = {};
+
+      _.each(_.keys(options.dimensions), function(origKey) {
+        var key = templateSrv.replace(origKey, scopedVars);
+        var value = templateSrv.replace(options.dimensions[origKey], scopedVars);
+        aliasDimensions[key] = value;
+      });
+
+      _.extend(aliasData, aliasDimensions);
 
       var periodMs = options.period * 1000;
+
       return _.map(options.statistics, function(stat) {
         var dps = [];
         var lastTimestamp = null;
@@ -327,7 +351,8 @@ function (angular, _, moment, dateMath) {
           }
           lastTimestamp = timestamp;
           dps.push([dp[stat], timestamp]);
-        });
+        })
+        .value();
 
         aliasData.stat = stat;
         var seriesName = aliasPattern.replace(aliasRegex, function(match, g1) {
@@ -341,21 +366,62 @@ function (angular, _, moment, dateMath) {
       });
     }
 
-    function convertToCloudWatchTime(date, roundUp) {
+    this.getExpandedVariables = function(target, dimensionKey, variable) {
+      /* if the all checkbox is marked we should add all values to the targets */
+      var allSelected = _.find(variable.options, {'selected': true, 'text': 'All'});
+      return _.chain(variable.options)
+      .filter(function(v) {
+        if (allSelected) {
+          return v.text !== 'All';
+        } else {
+          return v.selected;
+        }
+      })
+      .map(function(v) {
+        var t = angular.copy(target);
+        t.dimensions[dimensionKey] = v.value;
+        return t;
+      }).value();
+    };
+
+    this.containsVariable = function (str, variableName) {
+      return str.indexOf('$' + variableName) !== -1;
+    };
+
+    this.expandTemplateVariable = function(targets, templateSrv) {
+      var self = this;
+      return _.chain(targets)
+      .map(function(target) {
+        var dimensionKey = _.findKey(target.dimensions, function(v) {
+          return templateSrv.variableExists(v);
+        });
+
+        if (dimensionKey) {
+          var variable = _.find(templateSrv.variables, function(variable) {
+            return self.containsVariable(target.dimensions[dimensionKey], variable.name);
+          });
+          return self.getExpandedVariables(target, dimensionKey, variable);
+        } else {
+          return [target];
+        }
+      }).flatten().value();
+    };
+
+    this.convertToCloudWatchTime = function(date, roundUp) {
       if (_.isString(date)) {
         date = dateMath.parse(date, roundUp);
       }
       return Math.round(date.valueOf() / 1000);
-    }
+    };
 
-    function convertDimensionFormat(dimensions, scopedVars) {
+    this.convertDimensionFormat = function(dimensions, scopedVars) {
       return _.map(dimensions, function(value, key) {
         return {
           Name: templateSrv.replace(key, scopedVars),
           Value: templateSrv.replace(value, scopedVars)
         };
       });
-    }
+    };
 
   }
 

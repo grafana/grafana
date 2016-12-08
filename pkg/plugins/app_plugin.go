@@ -4,41 +4,27 @@ import (
 	"encoding/json"
 	"strings"
 
+	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 )
-
-type AppPluginPage struct {
-	Name    string          `json:"name"`
-	Url     string          `json:"url"`
-	ReqRole models.RoleType `json:"reqRole"`
-}
 
 type AppPluginCss struct {
 	Light string `json:"light"`
 	Dark  string `json:"dark"`
 }
 
-type AppIncludeInfo struct {
-	Name string `json:"name"`
-	Type string `json:"type"`
-	Id   string `json:"id"`
-}
-
 type AppPlugin struct {
 	FrontendPluginBase
-	Css      *AppPluginCss     `json:"css"`
-	Pages    []AppPluginPage   `json:"pages"`
-	Routes   []*AppPluginRoute `json:"routes"`
-	Includes []AppIncludeInfo  `json:"-"`
+	Routes []*AppPluginRoute `json:"routes"`
 
-	Pinned  bool `json:"-"`
-	Enabled bool `json:"-"`
+	FoundChildPlugins []*PluginInclude `json:"-"`
+	Pinned            bool             `json:"-"`
 }
 
 type AppPluginRoute struct {
 	Path            string                 `json:"path"`
 	Method          string                 `json:"method"`
-	ReqSignedIn     bool                   `json:"reqSignedIn"`
 	ReqGrafanaAdmin bool                   `json:"reqGrafanaAdmin"`
 	ReqRole         models.RoleType        `json:"reqRole"`
 	Url             string                 `json:"url"`
@@ -55,19 +41,22 @@ func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 		return err
 	}
 
-	if app.Css != nil {
-		app.Css.Dark = evalRelativePluginUrlPath(app.Css.Dark, app.Id)
-		app.Css.Light = evalRelativePluginUrlPath(app.Css.Light, app.Id)
+	if err := app.registerPlugin(pluginDir); err != nil {
+		return err
 	}
 
-	app.PluginDir = pluginDir
+	Apps[app.Id] = app
+	return nil
+}
+
+func (app *AppPlugin) initApp() {
 	app.initFrontendPlugin()
 
 	// check if we have child panels
 	for _, panel := range Panels {
 		if strings.HasPrefix(panel.PluginDir, app.PluginDir) {
-			panel.IncludedInAppId = app.Id
-			app.Includes = append(app.Includes, AppIncludeInfo{
+			panel.setPathsBasedOnApp(app)
+			app.FoundChildPlugins = append(app.FoundChildPlugins, &PluginInclude{
 				Name: panel.Name,
 				Id:   panel.Id,
 				Type: panel.Type,
@@ -75,6 +64,28 @@ func (app *AppPlugin) Load(decoder *json.Decoder, pluginDir string) error {
 		}
 	}
 
-	Apps[app.Id] = app
-	return nil
+	// check if we have child datasources
+	for _, ds := range DataSources {
+		if strings.HasPrefix(ds.PluginDir, app.PluginDir) {
+			ds.setPathsBasedOnApp(app)
+			app.FoundChildPlugins = append(app.FoundChildPlugins, &PluginInclude{
+				Name: ds.Name,
+				Id:   ds.Id,
+				Type: ds.Type,
+			})
+		}
+	}
+
+	// slugify pages
+	for _, include := range app.Includes {
+		if include.Slug == "" {
+			include.Slug = slug.Make(include.Name)
+		}
+		if include.Type == "page" && include.DefaultNav {
+			app.DefaultNavUrl = setting.AppSubUrl + "/plugins/" + app.Id + "/page/" + include.Slug
+		}
+		if include.Type == "dashboard" && include.DefaultNav {
+			app.DefaultNavUrl = setting.AppSubUrl + "/dashboard/db/" + include.Slug
+		}
+	}
 }

@@ -3,6 +3,7 @@
 import {describe, beforeEach, it, sinon, expect, angularMocks} from '../../../../../test/lib/common';
 
 import angular from 'angular';
+import moment from 'moment';
 import {GraphCtrl} from '../module';
 import helpers from '../../../../../test/specs/helpers';
 
@@ -14,33 +15,59 @@ describe('GraphCtrl', function() {
 
   beforeEach(ctx.providePhase());
   beforeEach(ctx.createPanelController(GraphCtrl));
+  beforeEach(() => {
+    ctx.ctrl.annotationsPromise = Promise.resolve({});
+    ctx.ctrl.updateTimeRange();
+  });
 
-  describe('get_data with 2 series', function() {
+  describe('when time series are outside range', function() {
+
     beforeEach(function() {
-      ctx.annotationsSrv.getAnnotations = sinon.stub().returns(ctx.$q.when([]));
-      ctx.datasource.query = sinon.stub().returns(ctx.$q.when({
-        data: [
-          { target: 'test.cpu1', datapoints: [[1, 10]]},
-          { target: 'test.cpu2', datapoints: [[1, 10]]}
-        ]
-      }));
-      ctx.ctrl.render = sinon.spy();
-      ctx.ctrl.refreshData(ctx.datasource);
-      ctx.scope.$digest();
+      var data = [
+        {target: 'test.cpu1', datapoints: [[45, 1234567890], [60, 1234567899]]},
+      ];
+
+      ctx.ctrl.range = {from: moment().valueOf(), to: moment().valueOf()};
+      ctx.ctrl.onDataReceived(data);
     });
 
-    it('should send time series to render', function() {
-      var data = ctx.ctrl.render.getCall(0).args[0];
-      expect(data.length).to.be(2);
-    });
-
-    describe('get_data failure following success', function() {
-      beforeEach(function() {
-        ctx.datasource.query = sinon.stub().returns(ctx.$q.reject('Datasource Error'));
-        ctx.ctrl.refreshData(ctx.datasource);
-        ctx.scope.$digest();
-      });
-
+    it('should set datapointsOutside', function() {
+      expect(ctx.ctrl.datapointsOutside).to.be(true);
     });
   });
+
+  describe('when time series are inside range', function() {
+    beforeEach(function() {
+      var range = {
+        from: moment().subtract(1, 'days').valueOf(),
+        to: moment().valueOf()
+      };
+
+      var data = [
+        {target: 'test.cpu1', datapoints: [[45, range.from + 1000], [60, range.from + 10000]]},
+      ];
+
+      ctx.ctrl.range = range;
+      ctx.ctrl.onDataReceived(data);
+    });
+
+    it('should set datapointsOutside', function() {
+      expect(ctx.ctrl.datapointsOutside).to.be(false);
+    });
+  });
+
+  describe('datapointsCount given 2 series', function() {
+    beforeEach(function() {
+      var data = [
+        {target: 'test.cpu1', datapoints: [[45, 1234567890], [60, 1234567899]]},
+        {target: 'test.cpu2', datapoints: [[45, 1234567890]]},
+      ];
+      ctx.ctrl.onDataReceived(data);
+    });
+
+    it('should set datapointsCount to sum of datapoints', function() {
+      expect(ctx.ctrl.datapointsCount).to.be(3);
+    });
+  });
+
 });

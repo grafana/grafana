@@ -1,16 +1,17 @@
 package dtos
 
 type IndexViewData struct {
-	User               *CurrentUser
-	Settings           map[string]interface{}
-	AppUrl             string
-	AppSubUrl          string
-	GoogleAnalyticsId  string
-	GoogleTagManagerId string
-
-	PluginCss     []*PluginCss
-	PluginModules []string
-	MainNavLinks  []*NavLink
+	User                    *CurrentUser
+	Settings                map[string]interface{}
+	AppUrl                  string
+	AppSubUrl               string
+	GoogleAnalyticsId       string
+	GoogleTagManagerId      string
+	MainNavLinks            []*NavLink
+	BuildVersion            string
+	BuildCommit             string
+	NewGrafanaVersionExists bool
+	NewGrafanaVersion       string
 }
 
 type PluginCss struct {
@@ -19,8 +20,10 @@ type PluginCss struct {
 }
 
 type NavLink struct {
-	Text string `json:"text"`
-	Icon string `json:"icon"`
-	Img  string `json:"img"`
-	Url  string `json:"url"`
+	Text     string     `json:"text,omitempty"`
+	Icon     string     `json:"icon,omitempty"`
+	Img      string     `json:"img,omitempty"`
+	Url      string     `json:"url,omitempty"`
+	Divider  bool       `json:"divider,omitempty"`
+	Children []*NavLink `json:"children,omitempty"`
 }

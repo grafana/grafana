@@ -9,6 +9,7 @@ export class UnknownPanelCtrl extends PanelCtrl {
   constructor($scope, $injector) {
     super($scope, $injector);
   }
+
 }
 
 

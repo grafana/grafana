@@ -84,7 +84,7 @@ func CreateOrg(c *middleware.Context, cmd m.CreateOrgCommand) Response {
 	cmd.UserId = c.UserId
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrOrgNameTaken {
-			return ApiError(400, "Organization name taken", err)
+			return ApiError(409, "Organization name taken", err)
 		}
 		return ApiError(500, "Failed to create organization", err)
 	}
@@ -152,6 +152,9 @@ func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgId int64) Respons
 // GET /api/orgs/:orgId
 func DeleteOrgById(c *middleware.Context) Response {
 	if err := bus.Dispatch(&m.DeleteOrgCommand{Id: c.ParamsInt64(":orgId")}); err != nil {
+		if err == m.ErrOrgNotFound {
+			return ApiError(404, "Failed to delete organization. ID not found", nil)
+		}
 		return ApiError(500, "Failed to update organization", err)
 	}
 	return ApiSuccess("Organization deleted")

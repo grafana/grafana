@@ -54,7 +54,7 @@ define([
 
         config.panels['test'] = {info: {}};
         self.ctrl = $controller(Ctrl, {$scope: self.scope}, {
-          panel: self.panel, dashboard: self.dashboard
+          panel: self.panel, dashboard: self.dashboard, row: {}
         });
       });
     };
@@ -138,6 +138,10 @@ define([
     this.replace = function(target) {
       return target;
     };
+
+    this.setTime = function(time) {
+      this.time = time;
+    };
   }
 
   function ContextSrvStub() {
@@ -151,9 +155,10 @@ define([
     this.templateSettings = { interpolate : /\[\[([\s\S]+?)\]\]/g };
     this.data = {};
     this.replace = function(text) {
-      return _.template(text, this.data,  this.templateSettings);
+      return _.template(text, this.templateSettings)(this.data);
     };
     this.init = function() {};
+    this.getAdhocFilters = function() { return []; };
     this.fillVariableValuesForUrl = function() {};
     this.updateTemplateData = function() { };
     this.variableExists = function() { return false; };

@@ -1,22 +1,23 @@
 <div ng-controller="GraphiteImportCtrl" ng-init="init()">
 
 	<div ng-if="datasources.length > 0">
-		<h2 style="margin-top: 30px;">Load dashboard from Graphite-Web</h2>
+		<h2 class="page-heading">Load dashboard from Graphite-Web</h2>
 
-		<div class="tight-form last">
-			<ul class="tight-form-list">
-				<li class="tight-form-item" style="width: 150px">
-					<strong>Data source</strong>
-				</li>
-				<li>
-					<select type="text" ng-model="options.sourceName" class="input-medium tight-form-input" ng-options="f for f in datasources">
-					</select>
-				</li>
-				<li style="float: right">
-					<button class="btn btn-inverse tight-form-btn" ng-click="listAll()">List dashboards</button>
-				</li>
-				<div class="clearfix"></div>
-			</ul>
+		<div class="gf-form-group">
+			<div class="gf-form-inline">
+				<div class="gf-form">
+					<span class="gf-form-label width-10">Data source</span>
+				</div>
+				<div class="gf-form">
+					<div class="gf-form-select-wrapper">
+						<select type="text" ng-model="options.sourceName" class="gf-form-input gf-size-auto" ng-options="f for f in datasources">
+						</select>
+					</div>
+				</div>
+				<div class="gf-form">
+					<button class="btn btn-success pull-right" ng-click="listAll()">List dashboards</button>
+				</div>
+			</div>
 		</div>
 
 		<table class="grafana-options-table" style="margin-top: 20px;">

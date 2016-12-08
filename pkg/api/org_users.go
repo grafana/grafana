@@ -38,6 +38,9 @@ func addOrgUserHelper(cmd m.AddOrgUserCommand) Response {
 	cmd.UserId = userToAdd.Id
 
 	if err := bus.Dispatch(&cmd); err != nil {
+		if err == m.ErrOrgUserAlreadyAdded {
+			return ApiError(409, "User is already member of this organization", nil)
+		}
 		return ApiError(500, "Could not add user to organization", err)
 	}
 

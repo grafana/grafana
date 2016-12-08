@@ -17,15 +17,16 @@ export function navbarDirective() {
     templateUrl: 'public/app/core/components/navbar/navbar.html',
     controller: NavbarCtrl,
     bindToController: true,
-    controllerAs: 'ctrl',
     transclude: true,
+    controllerAs: 'ctrl',
     scope: {
       title: "@",
       titleUrl: "@",
+      iconUrl: "@",
     },
     link: function(scope, elem, attrs, ctrl) {
       ctrl.icon = attrs.icon;
-      ctrl.subnav = attrs.subnav;
+      elem.addClass('navbar');
     }
   };
 }

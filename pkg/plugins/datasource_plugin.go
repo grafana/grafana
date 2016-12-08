@@ -4,12 +4,12 @@ import "encoding/json"
 
 type DataSourcePlugin struct {
 	FrontendPluginBase
-	DefaultMatchFormat string `json:"defaultMatchFormat"`
-	Annotations        bool   `json:"annotations"`
-	Metrics            bool   `json:"metrics"`
-	BuiltIn            bool   `json:"builtIn"`
-	Mixed              bool   `json:"mixed"`
-	App                string `json:"app"`
+	Annotations bool   `json:"annotations"`
+	Metrics     bool   `json:"metrics"`
+	Alerting    bool   `json:"alerting"`
+	BuiltIn     bool   `json:"builtIn"`
+	Mixed       bool   `json:"mixed"`
+	App         string `json:"app"`
 }
 
 func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
@@ -17,9 +17,10 @@ func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
 		return err
 	}
 
-	p.PluginDir = pluginDir
-	p.initFrontendPlugin()
-	DataSources[p.Id] = p
+	if err := p.registerPlugin(pluginDir); err != nil {
+		return err
+	}
 
+	DataSources[p.Id] = p
 	return nil
 }

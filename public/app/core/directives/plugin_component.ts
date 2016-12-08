@@ -23,7 +23,16 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     });
   }
 
+  function relativeTemplateUrlToAbs(templateUrl, baseUrl) {
+    if (!templateUrl) { return undefined; }
+    if (templateUrl.indexOf('public') === 0) { return templateUrl; }
+    return baseUrl + '/' + templateUrl;
+  }
+
   function getPluginComponentDirective(options) {
+    // handle relative template urls for plugin templates
+    options.Component.templateUrl = relativeTemplateUrlToAbs(options.Component.templateUrl, options.baseUrl);
+
     return function() {
       return {
         templateUrl: options.Component.templateUrl,
@@ -49,7 +58,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     var componentInfo: any = {
       name: 'panel-plugin-' + scope.panel.type,
       bindings: {dashboard: "=", panel: "=", row: "="},
-      attrs: {dashboard: "dashboard", panel: "panel", row: "row"},
+      attrs: {dashboard: "ctrl.dashboard", panel: "panel", row: "ctrl.row"},
     };
 
     var panelElemName = 'panel-' + scope.panel.type;
@@ -74,6 +83,10 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         });
       }
 
+      if (panelInfo) {
+        PanelCtrl.templateUrl = relativeTemplateUrlToAbs(PanelCtrl.templateUrl, panelInfo.baseUrl);
+      }
+
       PanelCtrl.templatePromise = getTemplate(PanelCtrl).then(template => {
         PanelCtrl.templateUrl = null;
         PanelCtrl.template = `<grafana-panel ctrl="ctrl">${template}</grafana-panel>`;
@@ -94,6 +107,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
 
           return System.import(ds.meta.module).then(dsModule => {
             return {
+              baseUrl: ds.meta.baseUrl,
               name: 'query-ctrl-' + ds.meta.id,
               bindings: {target: "=", panelCtrl: "=", datasource: "="},
               attrs: {"target": "target", "panel-ctrl": "ctrl", datasource: "datasource"},
@@ -111,6 +125,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
             }
 
             return {
+              baseUrl: ds.meta.baseUrl,
               name: 'query-options-ctrl-' + ds.meta.id,
               bindings: {panelCtrl: "="},
               attrs: {"panel-ctrl": "ctrl"},
@@ -121,34 +136,56 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       }
       // Annotations
       case "annotations-query-ctrl": {
-        return System.import(scope.currentDatasource.meta.module).then(function(dsModule) {
+        return System.import(scope.ctrl.currentDatasource.meta.module).then(function(dsModule) {
           return {
-            name: 'annotations-query-ctrl-' + scope.currentDatasource.meta.id,
+            baseUrl: scope.ctrl.currentDatasource.meta.baseUrl,
+            name: 'annotations-query-ctrl-' + scope.ctrl.currentDatasource.meta.id,
             bindings: {annotation: "=", datasource: "="},
-            attrs: {"annotation": "currentAnnotation", datasource: "currentDatasource"},
+            attrs: {"annotation": "ctrl.currentAnnotation", datasource: "ctrl.currentDatasource"},
             Component: dsModule.AnnotationsQueryCtrl,
           };
         });
       }
-      // ConfigCtrl
+      // Datasource ConfigCtrl
       case 'datasource-config-ctrl': {
-        return System.import(scope.datasourceMeta.module).then(function(dsModule) {
+        var dsMeta = scope.ctrl.datasourceMeta;
+        return System.import(dsMeta.module).then(function(dsModule): any {
+          if (!dsModule.ConfigCtrl) {
+            return {notFound: true};
+          }
+
           return {
-            name: 'ds-config-' + scope.datasourceMeta.id,
+            baseUrl: dsMeta.baseUrl,
+            name: 'ds-config-' + dsMeta.id,
             bindings: {meta: "=", current: "="},
-            attrs: {meta: "datasourceMeta", current: "current"},
+            attrs: {meta: "ctrl.datasourceMeta", current: "ctrl.current"},
             Component: dsModule.ConfigCtrl,
           };
         });
       }
       // AppConfigCtrl
       case 'app-config-ctrl': {
-        return System.import(scope.ctrl.appModel.module).then(function(appModule) {
+        let model = scope.ctrl.model;
+        return System.import(model.module).then(function(appModule) {
           return {
-            name: 'app-config-' + scope.ctrl.appModel.appId,
+            baseUrl: model.baseUrl,
+            name: 'app-config-' + model.id,
             bindings: {appModel: "=", appEditCtrl: "="},
-            attrs: {"app-model": "ctrl.appModel", "app-edit-ctrl": "ctrl"},
+            attrs: {"app-model": "ctrl.model", "app-edit-ctrl": "ctrl"},
             Component: appModule.ConfigCtrl,
+          };
+        });
+      }
+      // App Page
+      case 'app-page': {
+        let appModel = scope.ctrl.appModel;
+        return System.import(appModel.module).then(function(appModule) {
+          return {
+            baseUrl: appModel.baseUrl,
+            name: 'app-page-' + appModel.appId + '-' + scope.ctrl.page.slug,
+            bindings: {appModel: "="},
+            attrs: {"app-model": "ctrl.appModel"},
+            Component: appModule[scope.ctrl.page.component],
           };
         });
       }
@@ -169,9 +206,15 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
     });
 
     $compile(child)(scope);
-
     elem.empty();
-    elem.append(child);
+
+    // let a binding digest cycle complete before adding to dom
+    setTimeout(function() {
+      elem.append(child);
+      scope.$applyAsync(function() {
+        scope.$broadcast('refresh');
+      });
+    });
   }
 
   function registerPluginComponent(scope, elem, attrs, componentInfo) {
@@ -201,7 +244,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         registerPluginComponent(scope, elem, attrs, componentInfo);
       }).catch(err => {
         $rootScope.appEvent('alert-error', ['Plugin Error', err.message || err]);
-        console.log('Plugin componnet error', err);
+        console.log('Plugin component error', err);
       });
     }
   };

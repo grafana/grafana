@@ -51,7 +51,7 @@ function (angular, _, coreModule) {
         });
 
         // convert values to text
-        var currentTexts = _.pluck(selectedAndNotInTag, 'text');
+        var currentTexts = _.map(selectedAndNotInTag, 'text');
 
         // join texts
         vm.linkText = currentTexts.join(' + ');
@@ -167,7 +167,7 @@ function (angular, _, coreModule) {
       _.each(vm.tags, function(tag) {
         if (tag.selected)  {
           _.each(tag.values, function(value) {
-            if (!_.findWhere(vm.selectedValues, {value: value})) {
+            if (!_.find(vm.selectedValues, {value: value})) {
               tag.selected = false;
             }
           });
@@ -175,12 +175,11 @@ function (angular, _, coreModule) {
       });
 
       vm.selectedTags = _.filter(vm.tags, {selected: true});
-      vm.variable.current.value = _.pluck(vm.selectedValues, 'value');
-      vm.variable.current.text = _.pluck(vm.selectedValues, 'text').join(' + ');
+      vm.variable.current.value = _.map(vm.selectedValues, 'value');
+      vm.variable.current.text = _.map(vm.selectedValues, 'text').join(' + ');
       vm.variable.current.tags = vm.selectedTags;
 
-      // only single value
-      if (vm.selectedValues.length === 1) {
+      if (!vm.variable.multi) {
         vm.variable.current.value = vm.selectedValues[0].value;
       }
 
@@ -237,7 +236,7 @@ function (angular, _, coreModule) {
         var inputEl = elem.find('input');
 
         function openDropdown() {
-          inputEl.css('width', Math.max(linkEl.width(), 30) + 'px');
+          inputEl.css('width', Math.max(linkEl.width(), 80) + 'px');
 
           inputEl.show();
           linkEl.hide();

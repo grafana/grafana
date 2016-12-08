@@ -1,4 +1,4 @@
-define([
+define( [
 	"./core",
 	"./attributes/attr",
 	"./attributes/prop",
@@ -6,6 +6,8 @@ define([
 	"./attributes/val"
 ], function( jQuery ) {
 
+"use strict";
+
 // Return jQuery for attributes-only inclusion
 return jQuery;
-});
+} );

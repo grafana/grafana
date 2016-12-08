@@ -25,12 +25,17 @@ public/css/*.min.css
 *.swp
 .idea/
 *.iml
+.vscode/
 
 /data/*
 /bin/*
 
 conf/custom.ini
 fig.yml
+docker-compose.yml
 profile.cov
 /grafana
 .notouch
+/pkg/cmd/grafana-cli/grafana-cli
+/pkg/cmd/grafana-server/grafana-server
+/examples/*/dist

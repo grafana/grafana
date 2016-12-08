@@ -18,6 +18,7 @@ type Dialect interface {
 	SupportEngine() bool
 	LikeStr() string
 	Default(col *Column) string
+	BooleanStr(bool) string
 
 	CreateIndexSql(tableName string, index *Index) string
 	CreateTableSql(table *Table) string

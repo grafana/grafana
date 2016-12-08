@@ -101,4 +101,9 @@ func addDataSourceMigration(mg *Migrator) {
 	mg.AddMigration("Add column with_credentials", NewAddColumnMigration(tableV2, &Column{
 		Name: "with_credentials", Type: DB_Bool, Nullable: false, Default: "0",
 	}))
+
+	// add column that can store TLS client auth data
+	mg.AddMigration("Add secure json data column", NewAddColumnMigration(tableV2, &Column{
+		Name: "secure_json_data", Type: DB_Text, Nullable: true,
+	}))
 }

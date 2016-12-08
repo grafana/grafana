@@ -8,6 +8,7 @@ module.exports = function(grunt) {
     'jscs',
     'tslint',
     'clean:release',
+    'copy:node_modules',
     'copy:public_to_gen',
     'typescript:build',
     'karma:test',
@@ -58,7 +59,7 @@ module.exports = function(grunt) {
     });
     grunt.config('copy.backend_files', {
       expand: true,
-      src: ['conf/defaults.ini', 'conf/sample.ini', 'vendor/**/*', 'scripts/*'],
+      src: ['conf/defaults.ini', 'conf/sample.ini', 'vendor/phantomjs/*', 'scripts/*'],
       options: { mode: true},
       dest: '<%= tempDir %>'
     });

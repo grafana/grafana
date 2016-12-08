@@ -1,50 +1,94 @@
 define([
   'jquery',
   'lodash',
+  'moment'
 ],
-function($, _) {
+function($, _, moment) {
   'use strict';
 
   var kbn = {};
   kbn.valueFormats = {};
 
+  kbn.regexEscape = function(value) {
+    return value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&');
+  };
+
   ///// HELPER FUNCTIONS /////
 
   kbn.round_interval = function(interval) {
     switch (true) {
-    // 0.5s
-    case (interval <= 500):
-      return 100;       // 0.1s
-    // 5s
-    case (interval <= 5000):
+    // 0.015s
+    case (interval <= 15):
+      return 10;      // 0.01s
+    // 0.035s
+    case (interval <= 35):
+      return 20;      // 0.02s
+    // 0.075s
+    case (interval <= 75):
+      return 50;       // 0.05s
+    // 0.15s
+    case (interval <= 150):
+      return 100;      // 0.1s
+    // 0.35s
+    case (interval <= 350):
+      return 200;      // 0.2s
+    // 0.75s
+    case (interval <= 750):
+      return 500;       // 0.5s
+    // 1.5s
+    case (interval <= 1500):
       return 1000;      // 1s
+    // 3.5s
+    case (interval <= 3500):
+      return 2000;      // 2s
     // 7.5s
     case (interval <= 7500):
       return 5000;      // 5s
-    // 15s
-    case (interval <= 15000):
+    // 12.5s
+    case (interval <= 12500):
       return 10000;     // 10s
+    // 17.5s
+    case (interval <= 17500):
+      return 15000;     // 15s
+    // 25s
+    case (interval <= 25000):
+      return 20000;     // 20s
     // 45s
     case (interval <= 45000):
       return 30000;     // 30s
-    // 3m
-    case (interval <= 180000):
+    // 1.5m
+    case (interval <= 90000):
       return 60000;     // 1m
-    // 9m
+    // 3.5m
+    case (interval <= 210000):
+      return 120000;    // 2m
+    // 7.5m
     case (interval <= 450000):
       return 300000;    // 5m
-    // 20m
-    case (interval <= 1200000):
+    // 12.5m
+    case (interval <= 750000):
       return 600000;    // 10m
+    // 12.5m
+    case (interval <= 1050000):
+      return 900000;    // 15m
+    // 25m
+    case (interval <= 1500000):
+      return 1200000;   // 20m
     // 45m
     case (interval <= 2700000):
       return 1800000;   // 30m
-    // 2h
-    case (interval <= 7200000):
+    // 1.5h
+    case (interval <= 5400000):
       return 3600000;   // 1h
-    // 6h
-    case (interval <= 21600000):
+    // 2.5h
+    case (interval <= 9000000):
+      return 7200000;   // 2h
+    // 4.5h
+    case (interval <= 16200000):
       return 10800000;  // 3h
+    // 9h
+    case (interval <= 32400000):
+      return 21600000;  // 6h
     // 24h
     case (interval <= 86400000):
       return 43200000;  // 12h
@@ -106,7 +150,7 @@ function($, _) {
     return str;
   };
 
-  kbn.interval_regex = /(\d+(?:\.\d+)?)([Mwdhmsy])/;
+  kbn.interval_regex = /(\d+(?:\.\d+)?)(ms|[Mwdhmsy])/;
 
   // histogram & trends
   kbn.intervals_in_seconds = {
@@ -116,7 +160,8 @@ function($, _) {
     d: 86400,
     h: 3600,
     m: 60,
-    s: 1
+    s: 1,
+    ms: 0.001
   };
 
   kbn.calculateInterval = function(range, resolution, userInterval) {
@@ -129,7 +174,10 @@ function($, _) {
         lowLimitMs = kbn.interval_to_ms(lowLimitInterval);
       }
       else {
-        return userInterval;
+        return {
+          intervalMs: kbn.interval_to_ms(userInterval),
+          interval: userInterval,
+        };
       }
     }
 
@@ -138,13 +186,16 @@ function($, _) {
       intervalMs = lowLimitMs;
     }
 
-    return kbn.secondsToHms(intervalMs / 1000);
+    return {
+      intervalMs: intervalMs,
+      interval: kbn.secondsToHms(intervalMs / 1000),
+    };
   };
 
   kbn.describe_interval = function (string) {
     var matches = string.match(kbn.interval_regex);
     if (!matches || !_.has(kbn.intervals_in_seconds, matches[2])) {
-      throw new Error('Invalid interval string, expexcting a number followed by one of "Mwdhmsy"');
+      throw new Error('Invalid interval string, expecting a number followed by one of "Mwdhmsy"');
     } else {
       return {
         sec: kbn.intervals_in_seconds[matches[2]],
@@ -327,45 +378,76 @@ function($, _) {
     return kbn.toFixed(100*size, decimals) + '%';
   };
 
+  /* Formats the value to hex. Uses float if specified decimals are not 0.
+   * There are two options, one with 0x, and one without */
+
+  kbn.valueFormats.hex = function(value, decimals) {
+    if (value == null) { return ""; }
+    return parseFloat(kbn.toFixed(value, decimals)).toString(16).toUpperCase();
+  };
+
+  kbn.valueFormats.hex0x = function(value, decimals) {
+    if (value == null) { return ""; }
+    var hexString = kbn.valueFormats.hex(value, decimals);
+    if (hexString.substring(0,1) === "-") {
+      return "-0x" + hexString.substring(1);
+    }
+    return "0x" + hexString;
+  };
+
   // Currencies
   kbn.valueFormats.currencyUSD = kbn.formatBuilders.currency('$');
   kbn.valueFormats.currencyGBP = kbn.formatBuilders.currency('£');
   kbn.valueFormats.currencyEUR = kbn.formatBuilders.currency('€');
   kbn.valueFormats.currencyJPY = kbn.formatBuilders.currency('¥');
 
-  // Data
+  // Data (Binary)
   kbn.valueFormats.bits   = kbn.formatBuilders.binarySIPrefix('b');
   kbn.valueFormats.bytes  = kbn.formatBuilders.binarySIPrefix('B');
   kbn.valueFormats.kbytes = kbn.formatBuilders.binarySIPrefix('B', 1);
   kbn.valueFormats.mbytes = kbn.formatBuilders.binarySIPrefix('B', 2);
   kbn.valueFormats.gbytes = kbn.formatBuilders.binarySIPrefix('B', 3);
 
+  // Data (Decimal)
+  kbn.valueFormats.decbits   = kbn.formatBuilders.decimalSIPrefix('b');
+  kbn.valueFormats.decbytes  = kbn.formatBuilders.decimalSIPrefix('B');
+  kbn.valueFormats.deckbytes = kbn.formatBuilders.decimalSIPrefix('B', 1);
+  kbn.valueFormats.decmbytes = kbn.formatBuilders.decimalSIPrefix('B', 2);
+  kbn.valueFormats.decgbytes = kbn.formatBuilders.decimalSIPrefix('B', 3);
+
   // Data Rate
   kbn.valueFormats.pps    = kbn.formatBuilders.decimalSIPrefix('pps');
   kbn.valueFormats.bps    = kbn.formatBuilders.decimalSIPrefix('bps');
   kbn.valueFormats.Bps    = kbn.formatBuilders.decimalSIPrefix('Bps');
   kbn.valueFormats.KBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 1);
-  kbn.valueFormats.Kbits  = kbn.formatBuilders.decimalSIPrefix('bits', 1);
+  kbn.valueFormats.Kbits  = kbn.formatBuilders.decimalSIPrefix('bps', 1);
   kbn.valueFormats.MBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 2);
-  kbn.valueFormats.Mbits  = kbn.formatBuilders.decimalSIPrefix('bits', 2);
+  kbn.valueFormats.Mbits  = kbn.formatBuilders.decimalSIPrefix('bps', 2);
   kbn.valueFormats.GBs    = kbn.formatBuilders.decimalSIPrefix('Bs', 3);
-  kbn.valueFormats.Gbits  = kbn.formatBuilders.decimalSIPrefix('bits', 3);
+  kbn.valueFormats.Gbits  = kbn.formatBuilders.decimalSIPrefix('bps', 3);
 
   // Throughput
   kbn.valueFormats.ops  = kbn.formatBuilders.simpleCountUnit('ops');
   kbn.valueFormats.rps  = kbn.formatBuilders.simpleCountUnit('rps');
   kbn.valueFormats.wps  = kbn.formatBuilders.simpleCountUnit('wps');
   kbn.valueFormats.iops = kbn.formatBuilders.simpleCountUnit('iops');
+  kbn.valueFormats.opm = kbn.formatBuilders.simpleCountUnit('opm');
+  kbn.valueFormats.rpm = kbn.formatBuilders.simpleCountUnit('rpm');
+  kbn.valueFormats.wpm = kbn.formatBuilders.simpleCountUnit('wpm');
 
   // Energy
-  kbn.valueFormats.watt   = kbn.formatBuilders.decimalSIPrefix('W');
-  kbn.valueFormats.kwatt  = kbn.formatBuilders.decimalSIPrefix('W', 1);
-  kbn.valueFormats.watth  = kbn.formatBuilders.decimalSIPrefix('Wh');
-  kbn.valueFormats.kwatth = kbn.formatBuilders.decimalSIPrefix('Wh', 1);
-  kbn.valueFormats.joule  = kbn.formatBuilders.decimalSIPrefix('J');
-  kbn.valueFormats.ev     = kbn.formatBuilders.decimalSIPrefix('eV');
-  kbn.valueFormats.amp    = kbn.formatBuilders.decimalSIPrefix('A');
-  kbn.valueFormats.volt   = kbn.formatBuilders.decimalSIPrefix('V');
+  kbn.valueFormats.watt         = kbn.formatBuilders.decimalSIPrefix('W');
+  kbn.valueFormats.kwatt        = kbn.formatBuilders.decimalSIPrefix('W', 1);
+  kbn.valueFormats.voltamp      = kbn.formatBuilders.decimalSIPrefix('VA');
+  kbn.valueFormats.kvoltamp     = kbn.formatBuilders.decimalSIPrefix('VA', 1);
+  kbn.valueFormats.voltampreact = kbn.formatBuilders.decimalSIPrefix('var');
+  kbn.valueFormats.watth        = kbn.formatBuilders.decimalSIPrefix('Wh');
+  kbn.valueFormats.kwatth       = kbn.formatBuilders.decimalSIPrefix('Wh', 1);
+  kbn.valueFormats.joule        = kbn.formatBuilders.decimalSIPrefix('J');
+  kbn.valueFormats.ev           = kbn.formatBuilders.decimalSIPrefix('eV');
+  kbn.valueFormats.amp          = kbn.formatBuilders.decimalSIPrefix('A');
+  kbn.valueFormats.volt         = kbn.formatBuilders.decimalSIPrefix('V');
+  kbn.valueFormats.dBm          = kbn.formatBuilders.decimalSIPrefix('dBm');
 
   // Temperature
   kbn.valueFormats.celsius   = kbn.formatBuilders.fixedUnit('°C');
@@ -427,6 +509,19 @@ function($, _) {
 
   kbn.valueFormats.s = function(size, decimals, scaledDecimals) {
     if (size === null) { return ""; }
+
+    // Less than 1 µs, devide in ns
+    if (Math.abs(size) < 0.000001) {
+      return kbn.toFixedScaled(size * 1.e9, decimals, scaledDecimals - decimals, -9, " ns");
+    }
+    // Less than 1 ms, devide in µs
+    if (Math.abs(size) < 0.001) {
+      return kbn.toFixedScaled(size * 1.e6, decimals, scaledDecimals - decimals, -6, " µs");
+    }
+    // Less than 1 second, devide in ms
+    if (Math.abs(size) < 1) {
+      return kbn.toFixedScaled(size * 1.e3, decimals, scaledDecimals - decimals, -3, " ms");
+    }
 
     if (Math.abs(size) < 60) {
       return kbn.toFixed(size, decimals) + " s";
@@ -536,6 +631,18 @@ function($, _) {
     }
   };
 
+  kbn.toDuration = function(size, timeScale) {
+    return moment.duration(size, timeScale);
+  };
+
+  kbn.valueFormats.dtdurationms = function(size) {
+    return kbn.toDuration(size, 'ms').humanize();
+  };
+
+  kbn.valueFormats.dtdurations = function(size) {
+    return kbn.toDuration(size, 's').humanize();
+  };
+
   ///// FORMAT MENU /////
 
   kbn.getUnitFormats = function() {
@@ -550,6 +657,8 @@ function($, _) {
           {text: 'Humidity (%H)',     value: 'humidity'   },
           {text: 'ppm',               value: 'ppm'        },
           {text: 'decibel',           value: 'dB'         },
+          {text: 'hexadecimal (0x)',  value: 'hex0x'      },
+          {text: 'hexadecimal',       value: 'hex'        },
         ]
       },
       {
@@ -572,16 +681,28 @@ function($, _) {
           {text: 'minutes (m)',       value: 'm'    },
           {text: 'hours (h)',         value: 'h'    },
           {text: 'days (d)',          value: 'd'    },
+          {text: 'duration (ms)',     value: 'dtdurationms' },
+          {text: 'duration (s)',      value: 'dtdurations' }
         ]
       },
       {
-        text: 'data',
+        text: 'data (IEC)',
         submenu: [
           {text: 'bits',      value: 'bits'  },
           {text: 'bytes',     value: 'bytes' },
-          {text: 'kilobytes', value: 'kbytes'},
-          {text: 'megabytes', value: 'mbytes'},
-          {text: 'gigabytes', value: 'gbytes'},
+          {text: 'kibibytes', value: 'kbytes'},
+          {text: 'mebibytes', value: 'mbytes'},
+          {text: 'gibibytes', value: 'gbytes'},
+        ]
+      },
+      {
+        text: 'data (Metric)',
+        submenu: [
+          {text: 'bits',      value: 'decbits'  },
+          {text: 'bytes',     value: 'decbytes' },
+          {text: 'kilobytes', value: 'deckbytes'},
+          {text: 'megabytes', value: 'decmbytes'},
+          {text: 'gigabytes', value: 'decgbytes'},
         ]
       },
       {
@@ -590,12 +711,12 @@ function($, _) {
           {text: 'packets/sec', value: 'pps'},
           {text: 'bits/sec',    value: 'bps'},
           {text: 'bytes/sec',   value: 'Bps'},
-          {text: 'kilobites/sec', value: 'Kbits'},
+          {text: 'kilobits/sec', value: 'Kbits'},
           {text: 'kilobytes/sec',    value: 'KBs'},
-          {text: 'megabites/sec', value: 'Mbits'},
+          {text: 'megabits/sec', value: 'Mbits'},
           {text: 'megabytes/sec',    value: 'MBs'},
           {text: 'gigabytes/sec',   value: 'GBs'},
-          {text: 'gigabites/sec',   value: 'Gbits'},
+          {text: 'gigabits/sec',   value: 'Gbits'},
         ]
       },
       {
@@ -605,6 +726,9 @@ function($, _) {
           {text: 'reads/sec (rps)',     value: 'rps' },
           {text: 'writes/sec (wps)',    value: 'wps' },
           {text: 'I/O ops/sec (iops)',  value: 'iops'},
+          {text: 'ops/min (opm)',       value: 'opm' },
+          {text: 'reads/min (rpm)',     value: 'rpm' },
+          {text: 'writes/min (wpm)',    value: 'wpm' },
         ]
       },
       {
@@ -636,14 +760,18 @@ function($, _) {
       {
         text: 'energy',
         submenu: [
-          {text: 'watt (W)',            value: 'watt'  },
-          {text: 'kilowatt (kW)',       value: 'kwatt' },
-          {text: 'watt-hour (Wh)',      value: 'watth' },
-          {text: 'kilowatt-hour (kWh)', value: 'kwatth'},
-          {text: 'joule (J)',           value: 'joule' },
-          {text: 'electron volt (eV)',  value: 'ev'    },
-          {text: 'Ampere (A)',          value: 'amp'   },
-          {text: 'Volt (V)',            value: 'volt'  },
+          {text: 'watt (W)',                   value: 'watt'        },
+          {text: 'kilowatt (kW)',              value: 'kwatt'       },
+          {text: 'volt-ampere (VA)',           value: 'voltamp'     },
+          {text: 'kilovolt-ampere (kVA)',      value: 'kvoltamp'    },
+          {text: 'volt-ampere reactive (var)', value: 'voltampreact'},
+          {text: 'watt-hour (Wh)',             value: 'watth'       },
+          {text: 'kilowatt-hour (kWh)',        value: 'kwatth'      },
+          {text: 'joule (J)',                  value: 'joule'       },
+          {text: 'electron volt (eV)',         value: 'ev'          },
+          {text: 'Ampere (A)',                 value: 'amp'         },
+          {text: 'Volt (V)',                   value: 'volt'        },
+          {text: 'Decibel-milliwatt (dBm)',    value: 'dBm'         },
         ]
       },
       {

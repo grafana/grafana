@@ -1,0 +1,170 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Backbone Test Suite</title>
+    <link rel="stylesheet" href="../node_modules/qunitjs/qunit/qunit.css">
+  </head>
+  <body>
+    <script>
+      // Avoid reporting tests to Sauce Labs when script errors occur.
+      if (location.port == '9001') {
+        window.onerror = function(message) {
+          if (window.QUnit) {
+            QUnit.config.done.length = 0;
+          }
+          global_test_results = { 'message': message };
+        };
+      }
+    </script>
+    <script src="../node_modules/qunitjs/qunit/qunit.js"></script>
+    <script src="../node_modules/qunit-extras/qunit-extras.js"></script>
+    <script src="../vendor/json-js/json2.js"></script>
+    <script src="../node_modules/platform/platform.js"></script>
+    <script src="./asset/test-ui.js"></script>
+    <script src="../lodash.js"></script>
+    <script>
+      QUnit.config.asyncRetries = 10;
+      QUnit.config.hidepassed = true;
+
+      var mixinPrereqs = (function() {
+        var aliasToReal = {
+          'indexBy': 'keyBy',
+          'invoke': 'invokeMap'
+        };
+
+        var keyMap = {
+          'rest': 'tail'
+        };
+
+        var lodash = _.noConflict();
+
+        return function(_) {
+          lodash.defaultsDeep(_, { 'templateSettings': lodash.templateSettings });
+          lodash.mixin(_, lodash.pick(lodash, lodash.difference([
+            'countBy',
+            'debounce',
+            'difference',
+            'find',
+            'findIndex',
+            'findLastIndex',
+            'groupBy',
+            'includes',
+            'invert',
+            'invokeMap',
+            'keyBy',
+            'omit',
+            'partition',
+            'reduceRight',
+            'reject',
+            'sample',
+            'without'
+          ], lodash.functions(_))));
+
+          lodash.forOwn(keyMap, function(realName, otherName) {
+            _[otherName] = lodash[realName];
+            _.prototype[otherName] = lodash.prototype[realName];
+          });
+
+          lodash.forOwn(aliasToReal, function(realName, alias) {
+            _[alias] = _[realName];
+            _.prototype[alias] = _.prototype[realName];
+          });
+        };
+      }());
+
+      // Load prerequisite scripts.
+      document.write(ui.urlParams.loader == 'none'
+        ? '<script src="' + ui.buildPath + '"><\/script>'
+        : '<script data-dojo-config="async:1" src="' + ui.loaderPath + '"><\/script>'
+      );
+    </script>
+    <script>
+      if (ui.urlParams.loader == 'none') {
+        mixinPrereqs(_);
+        document.write([
+          '<script src="../node_modules/jquery/dist/jquery.js"><\/script>',
+          '<script src="../vendor/backbone/backbone.js"><\/script>',
+          '<script src="../vendor/backbone/test/setup/dom-setup.js"><\/script>',
+          '<script src="../vendor/backbone/test/setup/environment.js"><\/script>',
+          '<script src="../vendor/backbone/test/noconflict.js"><\/script>',
+          '<script src="../vendor/backbone/test/events.js"><\/script>',
+          '<script src="../vendor/backbone/test/model.js"><\/script>',
+          '<script src="../vendor/backbone/test/collection.js"><\/script>',
+          '<script src="../vendor/backbone/test/router.js"><\/script>',
+          '<script src="../vendor/backbone/test/view.js"><\/script>',
+          '<script src="../vendor/backbone/test/sync.js"><\/script>'
+        ].join('\n'));
+      }
+    </script>
+    <script>
+      (function() {
+        if (window.curl) {
+          curl.config({ 'apiName': 'require' });
+        }
+        if (!window.require) {
+          return;
+        }
+        var reBasename = /[\w.-]+$/,
+            basePath = ('//' + location.host + location.pathname.replace(reBasename, '')).replace(/\btest\/$/, ''),
+            modulePath = ui.buildPath.replace(/\.js$/, ''),
+            locationPath = modulePath.replace(reBasename, '').replace(/^\/|\/$/g, ''),
+            moduleMain = modulePath.match(reBasename)[0],
+            uid = +new Date;
+
+        function getConfig() {
+          var result = {
+            'baseUrl': './',
+            'urlArgs': 't=' + uid++,
+            'waitSeconds': 0,
+            'paths': {
+              'backbone': '../vendor/backbone/backbone',
+              'jquery': '../node_modules/jquery/dist/jquery'
+            },
+            'packages': [{
+              'name': 'test',
+              'location': '../vendor/backbone/test',
+              'config': {
+                // Work around no global being exported.
+                'exports': 'QUnit',
+                'loader': 'curl/loader/legacy'
+              }
+            }]
+          };
+
+          if (ui.isModularize) {
+            result.packages.push({
+              'name': 'underscore',
+              'location': locationPath,
+              'main': moduleMain
+            });
+          } else {
+            result.paths.underscore = modulePath;
+          }
+          return result;
+        }
+
+        QUnit.config.autostart = false;
+
+        require(getConfig(), ['underscore'], function(lodash) {
+          mixinPrereqs(lodash);
+          require(getConfig(), ['backbone'], function() {
+            require(getConfig(), [
+              'test/setup/dom-setup',
+              'test/setup/environment',
+              'test/noconflict',
+              'test/events',
+              'test/model',
+              'test/collection',
+              'test/router',
+              'test/view',
+              'test/sync'
+            ], function() {
+              QUnit.start();
+            });
+          });
+        });
+      }());
+    </script>
+  </body>
+</html>

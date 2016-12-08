@@ -14,6 +14,7 @@ describe('PrometheusDatasource', function() {
     ctx.$httpBackend =  $httpBackend;
     ctx.$rootScope = $rootScope;
     ctx.ds = $injector.instantiate(PrometheusDatasource, {instanceSettings: instanceSettings});
+    $httpBackend.when('GET', /\.html$/).respond('');
   }));
 
   describe('When querying prometheus with one target using query editor target spec', function() {
@@ -114,47 +115,6 @@ describe('PrometheusDatasource', function() {
       expect(results.data[1].datapoints[1][0]).to.be(null);
       expect(results.data[1].datapoints[3][1]).to.be((start + step * 3) * 1000);
       expect(results.data[1].datapoints[3][0]).to.be(null);
-    });
-  });
-  describe('When performing metricFindQuery', function() {
-    var results;
-    var response;
-    it('label_values(resource) should generate label search query', function() {
-      response = {
-        status: "success",
-        data: ["value1", "value2", "value3"]
-      };
-      ctx.$httpBackend.expect('GET', 'proxied/api/v1/label/resource/values').respond(response);
-      ctx.ds.metricFindQuery('label_values(resource)').then(function(data) { results = data; });
-      ctx.$httpBackend.flush();
-      ctx.$rootScope.$apply();
-      expect(results.length).to.be(3);
-    });
-    it('label_values(metric, resource) should generate series query', function() {
-      response = {
-        status: "success",
-        data: [
-          {__name__: "metric", resource: "value1"},
-          {__name__: "metric", resource: "value2"},
-          {__name__: "metric", resource: "value3"}
-        ]
-      };
-      ctx.$httpBackend.expect('GET', 'proxied/api/v1/series?match[]=metric').respond(response);
-      ctx.ds.metricFindQuery('label_values(metric, resource)').then(function(data) { results = data; });
-      ctx.$httpBackend.flush();
-      ctx.$rootScope.$apply();
-      expect(results.length).to.be(3);
-    });
-    it('metrics(metric.*) should generate metric name query', function() {
-      response = {
-        status: "success",
-        data: ["metric1","metric2","metric3","nomatch"]
-      };
-      ctx.$httpBackend.expect('GET', 'proxied/api/v1/label/__name__/values').respond(response);
-      ctx.ds.metricFindQuery('metrics(metric.*)').then(function(data) { results = data; });
-      ctx.$httpBackend.flush();
-      ctx.$rootScope.$apply();
-      expect(results.length).to.be(3);
     });
   });
   describe('When performing annotationQuery', function() {
