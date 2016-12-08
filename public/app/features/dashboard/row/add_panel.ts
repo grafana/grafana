@@ -18,9 +18,15 @@ export class AddPanelCtrl {
   constructor(private $scope, private $timeout, private $rootScope) {
     this.row = this.rowCtrl.row;
     this.dashboard = this.rowCtrl.dashboard;
-    this.allPanels = _.orderBy(_.map(config.panels, item => item), 'sort');
-    this.panelHits = this.allPanels;
     this.activeIndex = 0;
+
+    this.allPanels = _.chain(config.panels)
+      .filter({hideFromList: false})
+      .map(item => item)
+      .orderBy('sort')
+      .value();
+
+    this.panelHits = this.allPanels;
   }
 
   keyDown(evt) {

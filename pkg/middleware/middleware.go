@@ -229,6 +229,10 @@ func (ctx *Context) HasUserRole(role m.RoleType) bool {
 	return ctx.OrgRole.Includes(role)
 }
 
+func (ctx *Context) HasHelpFlag(flag m.HelpFlags1) bool {
+	return ctx.HelpFlags1.HasFlag(flag)
+}
+
 func (ctx *Context) TimeRequest(timer metrics.Timer) {
 	ctx.Data["perfmon.timer"] = timer
 }

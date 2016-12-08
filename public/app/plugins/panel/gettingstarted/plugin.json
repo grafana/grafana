@@ -3,6 +3,8 @@
   "name": "Getting Started",
   "id": "gettingstarted",
 
+  "hideFromList": true,
+
   "info": {
     "author": {
       "name": "Grafana Project",

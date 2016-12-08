@@ -90,7 +90,6 @@ $path-position:             $marker-size-half - ($path-height / 2);
     .progress-text {
       display: none;
     }
-
     .progress-marker {
       .icon-gf {
         color: $brand-primary;
@@ -113,9 +112,6 @@ $path-position:             $marker-size-half - ($path-height / 2);
     }
     .progress-text {
       text-decoration: line-through;
-      &:hover {
-        color: $text-color-weak;
-      }
     }
     &::after {
       background: $progress-color-grey-light;

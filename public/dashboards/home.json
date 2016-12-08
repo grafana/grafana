@@ -9,7 +9,7 @@
   "sharedCrosshair": false,
   "rows": [
    {
-      "title": "Row title",
+      "title": "Home Dashboard",
       "collapse": false,
       "editable": true,
       "height": "25px",
@@ -25,14 +25,6 @@
           "title": "",
           "transparent": true,
           "type": "text"
-        },
-        {
-          "id": 8,
-          "links": [],
-          "span": 12,
-          "title": "",
-          "transparent": false,
-          "type": "gettingstarted"
         }
      ]
    },

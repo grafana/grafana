@@ -8,6 +8,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
@@ -216,7 +217,26 @@ func GetHomeDashboard(c *middleware.Context) Response {
 		return ApiError(500, "Failed to load home dashboard", err)
 	}
 
+	if c.HasUserRole(m.ROLE_ADMIN) && !c.HasHelpFlag(m.HelpFlagGettingStartedPanelDismissed) {
+		addGettingStartedPanelToHomeDashboard(dash.Dashboard)
+	}
+
 	return Json(200, &dash)
+}
+
+func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
+	rows := dash.Get("rows").MustArray()
+	row := simplejson.NewFromAny(rows[0])
+
+	newpanel := simplejson.NewFromAny(map[string]interface{}{
+		"type": "gettingstarted",
+		"id":   123123,
+		"span": 12,
+	})
+
+	panels := row.Get("panels").MustArray()
+	panels = append(panels, newpanel)
+	row.Set("panels", panels)
 }
 
 func GetDashboardFromJsonFile(c *middleware.Context) {
