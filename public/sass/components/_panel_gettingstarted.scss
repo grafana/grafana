@@ -142,9 +142,6 @@ $path-position:             $marker-size-half - ($path-height / 2);
   color: $text-color-weak;
   font-size: 35px;
   vertical-align: sub;
-  &:hover {
-    color: $link-hover-color;
-  }
 }
 
 // Progress text
@@ -153,9 +150,6 @@ $path-position:             $marker-size-half - ($path-height / 2);
   overflow: hidden;
   text-overflow: ellipsis;
   color: $text-muted;
-  &:hover {
-    color: $link-hover-color;
-  }
 }
 
 .progress-marker {
@@ -163,4 +157,15 @@ $path-position:             $marker-size-half - ($path-height / 2);
   text-decoration:none;
   font-size: 35px;
   vertical-align: sub;
+}
+
+a.progress-link {
+  &:hover {
+    .progress-marker, .progress-text {
+      color: $link-hover-color;
+    }
+  &:hover .progress-marker.completed {
+      color: $online;
+    }
+  }
 }
