@@ -1,5 +1,5 @@
 +++
-title = "Singletat Panel"
+title = "Singlestat Panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "singlestat"]
 type = "docs"
 [menu.docs]
