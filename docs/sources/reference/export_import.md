@@ -9,7 +9,7 @@ weight = 8
 
 # Export and Import
 
-Grafana Dashboads can easily be exported and imported, either from the UI or from the HTTP API.
+Grafana Dashboards can easily be exported and imported, either from the UI or from the HTTP API.
 
 ## Exporting a dashboard
 
@@ -22,9 +22,9 @@ The export feature is accessed from the share menu.
 ### Making a dashboard portable
 
 If you want to export a dashboard for others to use then it could be a good idea to
-add template variables for things like a metric prefix (use contant variable) and server name.
+add template variables for things like a metric prefix (use constant variable) and server name.
 
-A template varible of the type `Constant` will automatically be hidden in
+A template variable of the type `Constant` will automatically be hidden in
 the dashboard, and will also be added as an required input when the dashboard is imported.
 
 ## Importing a dashboard
@@ -43,7 +43,7 @@ data source you want the dashboard to use and specify any metric prefixes (if th
 
 ## Discover dashboards on Grafana.net
 
-Find dashboads for common server applications at [Grafana.net/dashboards](https://grafana.net/dashboards).
+Find dashboards for common server applications at [Grafana.net/dashboards](https://grafana.net/dashboards).
 
 <img src="/img/docs/v31/gnet_dashboards_list.png">
 
