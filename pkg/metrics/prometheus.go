@@ -82,7 +82,7 @@ func (this *PrometheusPublisher) Publish(metrics []Metric) {
 			for k := range percentileLabels {
 				percentileLabelKeys = append(percentileLabelKeys, k)
 			}
-			for i, t := range []string{"0.25", "0.75", "0.90", "0.99"} {
+			for i, t := range []string{"0.25", "0.75", "0.9", "0.99"} {
 				entry := this.registerAndGetGauge(metricName, percentileLabelKeys)
 				percentileLabels["quantile"] = t
 
@@ -91,7 +91,7 @@ func (this *PrometheusPublisher) Publish(metrics []Metric) {
 					entry.With(percentileLabels).Set(float64(percentiles[i]))
 				case "0.75":
 					entry.With(percentileLabels).Set(float64(percentiles[i]))
-				case "0.90":
+				case "0.9":
 					entry.With(percentileLabels).Set(float64(percentiles[i]))
 				case "0.99":
 					entry.With(percentileLabels).Set(float64(percentiles[i]))
