@@ -95,5 +95,11 @@ describe('ElasticQueryDef', function() {
               expect(queryDef.getMetricAggTypes(2).length).to.be(11);
           });
       });
+
+      describe('using esversion 5', function() {
+          it('should get pipeline aggs', function() {
+              expect(queryDef.getMetricAggTypes(5).length).to.be(11);
+          });
+      });
   });
 });
