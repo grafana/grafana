@@ -14,7 +14,8 @@
         "noImplicitReturns":false,
         "noImplicitThis":false,
         "noImplicitUseStrict":false,
-        "noUnusedLocals":false
+        "noUnusedLocals":false,
+        "moduleResolution": "classic"
     },
     "include": [
         "public/app/**/*.ts"

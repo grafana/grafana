@@ -10,7 +10,6 @@
     "url": "http://github.com/grafana/grafana.git"
   },
   "devDependencies": {
-    "@types/rx": "^2.5.34",
     "autoprefixer": "^6.4.0",
     "es6-promise": "^3.0.2",
     "es6-shim": "^0.35.1",
@@ -51,7 +50,7 @@
     "mocha": "3.2.0",
     "phantomjs-prebuilt": "^2.1.13",
     "reflect-metadata": "0.1.8",
-    "rxjs": "5.0.0-rc.5",
+    "rxjs": "^5.0.0-rc.5",
     "sass-lint": "^1.10.2",
     "systemjs": "0.19.41",
     "zone.js": "^0.7.2"
