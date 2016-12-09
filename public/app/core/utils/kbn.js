@@ -1,9 +1,8 @@
 define([
   'jquery',
-  'lodash',
-  'moment'
+  'lodash'
 ],
-function($, _, moment) {
+function($, _) {
   'use strict';
 
   var kbn = {};
@@ -631,16 +630,50 @@ function($, _, moment) {
     }
   };
 
-  kbn.toDuration = function(size, timeScale) {
-    return moment.duration(size, timeScale);
+  kbn.toDuration = function(size, decimals, timeScale) {
+    if (size === null) { return ""; }
+    if (size === 0) { return "0 " + timeScale + "s"; }
+    if (size < 0) { return kbn.toDuration(-size, decimals, timeScale) + " ago"; }
+
+    var units = [
+      {short: "y",  long: "year"},
+      {short: "M",  long: "month"},
+      {short: "w",  long: "week"},
+      {short: "d",  long: "day"},
+      {short: "h",  long: "hour"},
+      {short: "m",  long: "minute"},
+      {short: "s",  long: "second"},
+      {short: "ms", long: "millisecond"}
+    ];
+    // convert $size to milliseconds
+    // intervals_in_seconds uses seconds (duh), convert them to milliseconds here to minimize floating point errors
+    size *= kbn.intervals_in_seconds[units.find(function(e) { return e.long === timeScale; }).short] * 1000;
+
+    var string = [];
+     // after first value >= 1 print only $decimals more
+    var decrementDecimals = false;
+    for (var i = 0; i < units.length && decimals >= 0; i++) {
+      var interval = kbn.intervals_in_seconds[units[i].short] * 1000;
+      var value = size / interval;
+      if (value >= 1 || decrementDecimals) {
+        decrementDecimals = true;
+        var floor = Math.floor(value);
+        var unit = units[i].long + (floor !== 1 ? "s" : "");
+        string.push(floor + " " + unit);
+        size = size % interval;
+        decimals--;
+      }
+    }
+
+    return string.join(", ");
   };
 
-  kbn.valueFormats.dtdurationms = function(size) {
-    return kbn.toDuration(size, 'ms').humanize();
+  kbn.valueFormats.dtdurationms = function(size, decimals) {
+    return kbn.toDuration(size, decimals, 'millisecond');
   };
 
-  kbn.valueFormats.dtdurations = function(size) {
-    return kbn.toDuration(size, 's').humanize();
+  kbn.valueFormats.dtdurations = function(size, decimals) {
+    return kbn.toDuration(size, decimals, 'second');
   };
 
   ///// FORMAT MENU /////
