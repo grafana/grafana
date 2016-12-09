@@ -17,9 +17,7 @@ export class DashExportCtrl {
   constructor(private backendSrv, dashboardSrv, datasourceSrv, $scope) {
     this.exporter = new DashboardExporter(datasourceSrv);
 
-    var current = dashboardSrv.getCurrent().getSaveModelClone();
-
-    this.exporter.makeExportable(current).then(dash => {
+    this.exporter.makeExportable(dashboardSrv.getCurrent()).then(dash => {
       $scope.$apply(() => {
         this.dash = dash;
       });

@@ -40,7 +40,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return backendSrv.datasourceRequest(options);
   };
 
-  function regexEscape(value) {
+  function prometheusSpecialRegexEscape(value) {
     return value.replace(/[\\^$*+?.()|[\]{}]/g, '\\\\$&');
   }
 
@@ -51,28 +51,33 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     }
 
     if (typeof value === 'string') {
-      return regexEscape(value);
+      return prometheusSpecialRegexEscape(value);
     }
 
-    var escapedValues = _.map(value, regexEscape);
+    var escapedValues = _.map(value, prometheusSpecialRegexEscape);
     return escapedValues.join('|');
   };
 
-  var HTTP_REQUEST_ABORTED = -1;
+  this.targetContainsTemplate = function(target) {
+    return templateSrv.variableExists(target.expr);
+  };
+
   // Called once per panel (graph)
   this.query = function(options) {
     var self = this;
-    var start = getPrometheusTime(options.range.from, false);
-    var end = getPrometheusTime(options.range.to, true);
+    var start = this.getPrometheusTime(options.range.from, false);
+    var end = this.getPrometheusTime(options.range.to, true);
 
     var queries = [];
     var activeTargets = [];
 
     options = _.clone(options);
-    _.each(options.targets, _.bind(function(target) {
+
+    _.each(options.targets, target => {
       if (!target.expr || target.hide) {
         return;
       }
+
       activeTargets.push(target);
 
       var query: any = {};
@@ -90,7 +95,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       }
 
       queries.push(query);
-    }, this));
+    });
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
@@ -99,9 +104,9 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       return d.promise;
     }
 
-    var allQueryPromise = _.map(queries, _.bind(function(query) {
+    var allQueryPromise = _.map(queries, query => {
       return this.performTimeSeriesQuery(query, start, end);
-    }, this));
+    });
 
     return $q.all(allQueryPromise).then(function(allResponse) {
       var result = [];
@@ -112,7 +117,6 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
           throw response.error;
         }
         delete self.lastErrors.query;
-
         _.each(response.data.data.result, function(metricData) {
           result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
         });
@@ -123,6 +127,10 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   };
 
   this.performTimeSeriesQuery = function(query, start, end) {
+    if (start > end) {
+      throw { message: 'Invalid time range' };
+    }
+
     var url = '/api/v1/query_range?query=' + encodeURIComponent(query.expr) + '&start=' + start + '&end=' + end + '&step=' + query.step;
     return this._request('GET', url, query.requestId);
   };
@@ -172,8 +180,8 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       step: '60s'
     };
 
-    var start = getPrometheusTime(options.range.from, false);
-    var end = getPrometheusTime(options.range.to, true);
+    var start = this.getPrometheusTime(options.range.from, false);
+    var end = this.getPrometheusTime(options.range.to, true);
     var self = this;
 
     return this.performTimeSeriesQuery(query, start, end).then(function(results) {
@@ -183,7 +191,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       _.each(results.data.data.result, function(series) {
         var tags = _.chain(series.metric)
         .filter(function(v, k) {
-          return _.contains(tagKeys, k);
+          return _.includes(tagKeys, k);
         }).value();
 
         _.each(series.values, function(value) {
@@ -257,7 +265,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       return this.getOriginalMetricName(labelData);
     }
 
-    return this.renderTemplate(options.legendFormat, labelData) || '{}';
+    return this.renderTemplate(templateSrv.replace(options.legendFormat), labelData) || '{}';
   };
 
   this.renderTemplate = function(aliasPattern, aliasData) {
@@ -273,16 +281,16 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   this.getOriginalMetricName = function(labelData) {
     var metricName = labelData.__name__ || '';
     delete labelData.__name__;
-    var labelPart = _.map(_.pairs(labelData), function(label) {
+    var labelPart = _.map(_.toPairs(labelData), function(label) {
       return label[0] + '="' + label[1] + '"';
     }).join(',');
     return metricName + '{' + labelPart + '}';
   };
 
-  function getPrometheusTime(date, roundUp): number {
+  this.getPrometheusTime = function(date, roundUp) {
     if (_.isString(date)) {
       date = dateMath.parse(date, roundUp);
     }
     return Math.ceil(date.valueOf() / 1000);
-  }
+  };
 }

@@ -1,8 +1,13 @@
-----
-page_title: Authentication API
-page_description: Grafana HTTP API Reference
-page_keywords: grafana, admin, http, api, documentation
----
++++
+title = "Authentication HTTP API "
+description = "Grafana Authentication HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "authentication"]
+aliases = ["/http_api/authentication/"]
+type = "docs"
+[menu.docs]
+name = "Authentication"
+parent = "http_api"
++++
 
 # Authentication API
 

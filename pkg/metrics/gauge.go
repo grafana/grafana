@@ -24,16 +24,16 @@ func NewGauge(meta *MetricMeta) Gauge {
 	}
 }
 
-func RegGauge(meta *MetricMeta) Gauge {
-	g := NewGauge(meta)
-	MetricStats.Register(g)
-	return g
+func RegGauge(name string, tagStrings ...string) Gauge {
+	tr := NewGauge(NewMetricMeta(name, tagStrings))
+	MetricStats.Register(tr)
+	return tr
 }
 
 // GaugeSnapshot is a read-only copy of another Gauge.
 type GaugeSnapshot struct {
-	*MetricMeta
 	value int64
+	*MetricMeta
 }
 
 // Snapshot returns the snapshot.
@@ -61,9 +61,10 @@ func (NilGauge) Value() int64 { return 0 }
 
 // StandardGauge is the standard implementation of a Gauge and uses the
 // sync/atomic package to manage a single int64 value.
+// atomic needs 64-bit aligned memory which is ensure for first word
 type StandardGauge struct {
-	*MetricMeta
 	value int64
+	*MetricMeta
 }
 
 // Snapshot returns a read-only copy of the gauge.

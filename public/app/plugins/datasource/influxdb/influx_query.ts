@@ -2,6 +2,7 @@
 
 import _ from 'lodash';
 import queryPart from './query_part';
+import kbn from 'app/core/utils/kbn';
 
 export default class InfluxQuery {
   target: any;
@@ -155,7 +156,7 @@ export default class InfluxQuery {
       if (operator !== '>' && operator !== '<') {
         value = "'" + value.replace(/\\/g, '\\\\') + "'";
       }
-    } else if (interpolate){
+    } else if (interpolate) {
       value = this.templateSrv.replace(value, this.scopedVars, 'regex');
     }
 
@@ -181,12 +182,26 @@ export default class InfluxQuery {
     return policy + measurement;
   }
 
+  interpolateQueryStr(value, variable, defaultFormatFn) {
+    // if no multi or include all do not regexEscape
+    if (!variable.multi && !variable.includeAll) {
+      return value;
+    }
+
+    if (typeof value === 'string') {
+      return kbn.regexEscape(value);
+    }
+
+    var escapedValues = _.map(value, kbn.regexEscape);
+    return escapedValues.join('|');
+  };
+
   render(interpolate?) {
     var target = this.target;
 
     if (target.rawQuery) {
       if (interpolate) {
-        return this.templateSrv.replace(target.query, this.scopedVars, 'regex');
+        return this.templateSrv.replace(target.query, this.scopedVars, this.interpolateQueryStr);
       } else {
         return target.query;
       }
@@ -235,5 +250,12 @@ export default class InfluxQuery {
     }
 
     return query;
+  }
+
+  renderAdhocFilters(filters) {
+    var conditions = _.map(filters, (tag, index) => {
+      return this.renderTagCondition(tag, index, false);
+    });
+    return conditions.join(' ');
   }
 }

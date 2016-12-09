@@ -22,6 +22,7 @@ type User struct {
 	Company       string
 	EmailVerified bool
 	Theme         string
+	HelpFlags1    HelpFlags1
 
 	IsAdmin bool
 	OrgId   int64
@@ -44,15 +45,16 @@ func (u *User) NameOrFallback() string {
 // COMMANDS
 
 type CreateUserCommand struct {
-	Email         string
-	Login         string
-	Name          string
-	Company       string
-	OrgName       string
-	Password      string
-	EmailVerified bool
-	IsAdmin       bool
-	SkipOrgSetup  bool
+	Email          string
+	Login          string
+	Name           string
+	Company        string
+	OrgName        string
+	Password       string
+	EmailVerified  bool
+	IsAdmin        bool
+	SkipOrgSetup   bool
+	DefaultOrgRole string
 
 	Result User
 }
@@ -93,6 +95,11 @@ type SetUsingOrgCommand struct {
 type GetUserByLoginQuery struct {
 	LoginOrEmail string
 	Result       *User
+}
+
+type GetUserByEmailQuery struct {
+	Email  string
+	Result *User
 }
 
 type GetUserByIdQuery struct {
@@ -138,6 +145,7 @@ type SignedInUser struct {
 	Email          string
 	ApiKeyId       int64
 	IsGrafanaAdmin bool
+	HelpFlags1     HelpFlags1
 }
 
 type UserProfileDTO struct {

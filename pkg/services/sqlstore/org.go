@@ -176,6 +176,11 @@ func UpdateOrgAddress(cmd *m.UpdateOrgAddressCommand) error {
 
 func DeleteOrg(cmd *m.DeleteOrgCommand) error {
 	return inTransaction2(func(sess *session) error {
+		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.Id); err != nil {
+			return err
+		} else if len(res) != 1 {
+			return m.ErrOrgNotFound
+		}
 
 		deletes := []string{
 			"DELETE FROM star WHERE EXISTS (SELECT 1 FROM dashboard WHERE org_id = ? AND star.dashboard_id = dashboard.id)",

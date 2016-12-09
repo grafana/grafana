@@ -33,6 +33,39 @@ type cwRequest struct {
 	DataSource *m.DataSource
 }
 
+type datasourceInfo struct {
+	Profile       string
+	Region        string
+	AssumeRoleArn string
+	Namespace     string
+
+	AccessKey string
+	SecretKey string
+}
+
+func (req *cwRequest) GetDatasourceInfo() *datasourceInfo {
+	assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
+	accessKey := ""
+	secretKey := ""
+
+	for key, value := range req.DataSource.SecureJsonData.Decrypt() {
+		if key == "accessKey" {
+			accessKey = value
+		}
+		if key == "secretKey" {
+			secretKey = value
+		}
+	}
+
+	return &datasourceInfo{
+		AssumeRoleArn: assumeRoleArn,
+		Region:        req.Region,
+		Profile:       req.DataSource.Database,
+		AccessKey:     accessKey,
+		SecretKey:     secretKey,
+	}
+}
+
 func init() {
 	actionHandlers = map[string]actionHandler{
 		"GetMetricStatistics":     handleGetMetricStatistics,
@@ -56,8 +89,8 @@ type cache struct {
 var awsCredentialCache map[string]cache = make(map[string]cache)
 var credentialCacheLock sync.RWMutex
 
-func getCredentials(profile string, region string, assumeRoleArn string) *credentials.Credentials {
-	cacheKey := profile + ":" + assumeRoleArn
+func getCredentials(dsInfo *datasourceInfo) *credentials.Credentials {
+	cacheKey := dsInfo.Profile + ":" + dsInfo.AssumeRoleArn
 	credentialCacheLock.RLock()
 	if _, ok := awsCredentialCache[cacheKey]; ok {
 		if awsCredentialCache[cacheKey].expiration != nil &&
@@ -74,9 +107,9 @@ func getCredentials(profile string, region string, assumeRoleArn string) *creden
 	sessionToken := ""
 	var expiration *time.Time
 	expiration = nil
-	if strings.Index(assumeRoleArn, "arn:aws:iam:") == 0 {
+	if strings.Index(dsInfo.AssumeRoleArn, "arn:aws:iam:") == 0 {
 		params := &sts.AssumeRoleInput{
-			RoleArn:         aws.String(assumeRoleArn),
+			RoleArn:         aws.String(dsInfo.AssumeRoleArn),
 			RoleSessionName: aws.String("GrafanaSession"),
 			DurationSeconds: aws.Int64(900),
 		}
@@ -85,13 +118,14 @@ func getCredentials(profile string, region string, assumeRoleArn string) *creden
 		stsCreds := credentials.NewChainCredentials(
 			[]credentials.Provider{
 				&credentials.EnvProvider{},
-				&credentials.SharedCredentialsProvider{Filename: "", Profile: profile},
+				&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
 				&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(stsSess), ExpiryWindow: 5 * time.Minute},
 			})
 		stsConfig := &aws.Config{
-			Region:      aws.String(region),
+			Region:      aws.String(dsInfo.Region),
 			Credentials: stsCreds,
 		}
+
 		svc := sts.New(session.New(stsConfig), stsConfig)
 		resp, err := svc.AssumeRole(params)
 		if err != nil {
@@ -115,9 +149,14 @@ func getCredentials(profile string, region string, assumeRoleArn string) *creden
 				SessionToken:    sessionToken,
 			}},
 			&credentials.EnvProvider{},
-			&credentials.SharedCredentialsProvider{Filename: "", Profile: profile},
+			&credentials.StaticProvider{Value: credentials.Value{
+				AccessKeyID:     dsInfo.AccessKey,
+				SecretAccessKey: dsInfo.SecretKey,
+			}},
+			&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
 			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
 		})
+
 	credentialCacheLock.Lock()
 	awsCredentialCache[cacheKey] = cache{
 		credential: creds,
@@ -129,10 +168,9 @@ func getCredentials(profile string, region string, assumeRoleArn string) *creden
 }
 
 func getAwsConfig(req *cwRequest) *aws.Config {
-	assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	cfg := &aws.Config{
 		Region:      aws.String(req.Region),
-		Credentials: getCredentials(req.DataSource.Database, req.Region, assumeRoleArn),
+		Credentials: getCredentials(req.GetDatasourceInfo()),
 	}
 	return cfg
 }
@@ -143,25 +181,33 @@ func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
 
 	reqParam := &struct {
 		Parameters struct {
-			Namespace  string                  `json:"namespace"`
-			MetricName string                  `json:"metricName"`
-			Dimensions []*cloudwatch.Dimension `json:"dimensions"`
-			Statistics []*string               `json:"statistics"`
-			StartTime  int64                   `json:"startTime"`
-			EndTime    int64                   `json:"endTime"`
-			Period     int64                   `json:"period"`
+			Namespace          string                  `json:"namespace"`
+			MetricName         string                  `json:"metricName"`
+			Dimensions         []*cloudwatch.Dimension `json:"dimensions"`
+			Statistics         []*string               `json:"statistics"`
+			ExtendedStatistics []*string               `json:"extendedStatistics"`
+			StartTime          int64                   `json:"startTime"`
+			EndTime            int64                   `json:"endTime"`
+			Period             int64                   `json:"period"`
 		} `json:"parameters"`
 	}{}
 	json.Unmarshal(req.Body, reqParam)
 
 	params := &cloudwatch.GetMetricStatisticsInput{
-		Namespace:  aws.String(reqParam.Parameters.Namespace),
-		MetricName: aws.String(reqParam.Parameters.MetricName),
-		Dimensions: reqParam.Parameters.Dimensions,
-		Statistics: reqParam.Parameters.Statistics,
-		StartTime:  aws.Time(time.Unix(reqParam.Parameters.StartTime, 0)),
-		EndTime:    aws.Time(time.Unix(reqParam.Parameters.EndTime, 0)),
-		Period:     aws.Int64(reqParam.Parameters.Period),
+		Namespace:          aws.String(reqParam.Parameters.Namespace),
+		MetricName:         aws.String(reqParam.Parameters.MetricName),
+		Dimensions:         reqParam.Parameters.Dimensions,
+		Statistics:         reqParam.Parameters.Statistics,
+		ExtendedStatistics: reqParam.Parameters.ExtendedStatistics,
+		StartTime:          aws.Time(time.Unix(reqParam.Parameters.StartTime, 0)),
+		EndTime:            aws.Time(time.Unix(reqParam.Parameters.EndTime, 0)),
+		Period:             aws.Int64(reqParam.Parameters.Period),
+	}
+	if len(reqParam.Parameters.Statistics) != 0 {
+		params.Statistics = reqParam.Parameters.Statistics
+	}
+	if len(reqParam.Parameters.ExtendedStatistics) != 0 {
+		params.ExtendedStatistics = reqParam.Parameters.ExtendedStatistics
 	}
 
 	resp, err := svc.GetMetricStatistics(params)
@@ -254,11 +300,12 @@ func handleDescribeAlarmsForMetric(req *cwRequest, c *middleware.Context) {
 
 	reqParam := &struct {
 		Parameters struct {
-			Namespace  string                  `json:"namespace"`
-			MetricName string                  `json:"metricName"`
-			Dimensions []*cloudwatch.Dimension `json:"dimensions"`
-			Statistic  string                  `json:"statistic"`
-			Period     int64                   `json:"period"`
+			Namespace         string                  `json:"namespace"`
+			MetricName        string                  `json:"metricName"`
+			Dimensions        []*cloudwatch.Dimension `json:"dimensions"`
+			Statistic         string                  `json:"statistic"`
+			ExtendedStatistic string                  `json:"extendedStatistic"`
+			Period            int64                   `json:"period"`
 		} `json:"parameters"`
 	}{}
 	json.Unmarshal(req.Body, reqParam)
@@ -273,6 +320,9 @@ func handleDescribeAlarmsForMetric(req *cwRequest, c *middleware.Context) {
 	}
 	if reqParam.Parameters.Statistic != "" {
 		params.Statistic = aws.String(reqParam.Parameters.Statistic)
+	}
+	if reqParam.Parameters.ExtendedStatistic != "" {
+		params.ExtendedStatistic = aws.String(reqParam.Parameters.ExtendedStatistic)
 	}
 
 	resp, err := svc.DescribeAlarmsForMetric(params)

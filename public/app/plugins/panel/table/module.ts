@@ -78,7 +78,8 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     if (this.panel.transform === 'annotations') {
       this.setTimeQueryStart();
-      return this.annotationsSrv.getAnnotations(this.dashboard).then(annotations => {
+      return this.annotationsSrv.getAnnotations({dashboard: this.dashboard, panel: this.panel, range: this.range})
+      .then(annotations => {
         return {data: annotations};
       });
     }
@@ -211,8 +212,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     elem.on('click', '.table-panel-page-link', switchPage);
 
-    scope.$on('$destroy', function() {
+    var unbindDestroy = scope.$on('$destroy', function() {
       elem.off('click', '.table-panel-page-link');
+      unbindDestroy();
     });
 
     ctrl.events.on('render', function(renderData) {

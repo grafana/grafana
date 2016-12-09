@@ -8,11 +8,13 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
+	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -120,6 +122,10 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 	}
 
 	dash := cmd.GetDashboardModel()
+	// Check if Title is empty
+	if dash.Title == "" {
+		return ApiError(400, m.ErrDashboardTitleEmpty.Error(), nil)
+	}
 	if dash.Id == 0 {
 		limitReached, err := middleware.QuotaReached(c, "dashboard")
 		if err != nil {
@@ -128,6 +134,16 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		if limitReached {
 			return ApiError(403, "Quota reached", nil)
 		}
+	}
+
+	validateAlertsCmd := alerting.ValidateDashboardAlertsCommand{
+		OrgId:     c.OrgId,
+		UserId:    c.UserId,
+		Dashboard: dash,
+	}
+
+	if err := bus.Dispatch(&validateAlertsCmd); err != nil {
+		return ApiError(500, "Invalid alert data. Cannot save dashboard", err)
 	}
 
 	err := bus.Dispatch(&cmd)
@@ -150,6 +166,16 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 			return Json(404, util.DynMap{"status": "not-found", "message": err.Error()})
 		}
 		return ApiError(500, "Failed to save dashboard", err)
+	}
+
+	alertCmd := alerting.UpdateDashboardAlertsCommand{
+		OrgId:     c.OrgId,
+		UserId:    c.UserId,
+		Dashboard: cmd.Result,
+	}
+
+	if err := bus.Dispatch(&alertCmd); err != nil {
+		return ApiError(500, "Failed to save alerts", err)
 	}
 
 	c.TimeRequest(metrics.M_Api_Dashboard_Save)
@@ -191,7 +217,26 @@ func GetHomeDashboard(c *middleware.Context) Response {
 		return ApiError(500, "Failed to load home dashboard", err)
 	}
 
+	if c.HasUserRole(m.ROLE_ADMIN) && !c.HasHelpFlag(m.HelpFlagGettingStartedPanelDismissed) {
+		addGettingStartedPanelToHomeDashboard(dash.Dashboard)
+	}
+
 	return Json(200, &dash)
+}
+
+func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
+	rows := dash.Get("rows").MustArray()
+	row := simplejson.NewFromAny(rows[0])
+
+	newpanel := simplejson.NewFromAny(map[string]interface{}{
+		"type": "gettingstarted",
+		"id":   123123,
+		"span": 12,
+	})
+
+	panels := row.Get("panels").MustArray()
+	panels = append(panels, newpanel)
+	row.Set("panels", panels)
 }
 
 func GetDashboardFromJsonFile(c *middleware.Context) {

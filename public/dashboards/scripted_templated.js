@@ -25,7 +25,9 @@ var ARGS;
 // Intialize a skeleton with nothing but a rows array and service object
 dashboard = {
   rows : [],
+  schemaVersion: 13,
 };
+
 
 // Set a title
 dashboard.title = 'Scripted and templated dash';
@@ -39,23 +41,22 @@ dashboard.time = {
 };
 
 dashboard.templating = {
-  enable: true,
   list: [
     {
       name: 'test',
       query: 'apps.backend.*',
-      refresh: true,
-      options: [],
-      current: null,
-      type: 'custom'
+      refresh: 1,
+      type: 'query',
+      datasource: null,
+      hide: 2,
     },
     {
       name: 'test2',
       query: '*',
-      refresh: true,
-      options: [],
-      current: null,
-      type: 'custom'
+      refresh: 1,
+      type: 'query',
+      datasource: null,
+      hide: 2,
     }
   ]
 };

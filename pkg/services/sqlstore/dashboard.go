@@ -233,6 +233,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			"DELETE FROM dashboard_tag WHERE dashboard_id = ? ",
 			"DELETE FROM star WHERE dashboard_id = ? ",
 			"DELETE FROM dashboard WHERE id = ?",
+			"DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?",
 		}
 
 		for _, sql := range deletes {
@@ -240,6 +241,10 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			if err != nil {
 				return err
 			}
+		}
+
+		if err := DeleteAlertDefinition(dashboard.Id, sess.Session); err != nil {
+			return nil
 		}
 
 		return nil

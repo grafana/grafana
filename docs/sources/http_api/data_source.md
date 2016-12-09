@@ -1,8 +1,14 @@
-----
-page_title: Data source API
-page_description: Grafana Data source API Reference
-page_keywords: grafana, admin, http, api, documentation, datasource
----
++++
+title = "Data source HTTP API "
+description = "Grafana Data source HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "data source"]
+aliases = ["/http_api/datasource/"]
+type = "docs"
+[menu.docs]
+name = "Data source"
+parent = "http_api"
++++
+
 
 # Data source API
 

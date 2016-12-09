@@ -254,6 +254,15 @@ register({
   renderer: functionRenderer,
 });
 
+register({
+  type: 'elapsed',
+  addStrategy: addTransformationStrategy,
+  category: categories.Transformations,
+  params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
+  defaultParams: ['10s'],
+  renderer: functionRenderer,
+});
+
 // Selectors
 register({
   type: 'bottom',

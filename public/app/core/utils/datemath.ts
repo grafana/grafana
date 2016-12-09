@@ -93,7 +93,7 @@ export function parseDateMath(mathString, time, roundUp?) {
     }
     unit = mathString.charAt(i++);
 
-    if (!_.contains(units, unit)) {
+    if (!_.includes(units, unit)) {
       return undefined;
     } else {
       if (type === 0) {

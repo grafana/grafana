@@ -28,7 +28,7 @@
   float: left;
   font-style: italic;
   padding-top: 0.5rem;
-  margin: 0 $spacer*3 0 $spacer*1.5;
+  margin: 0 $spacer*3 0 $spacer*1;
 }
 
 .tabbed-view-close-btn {
@@ -38,17 +38,17 @@
   background-color: transparent;
   border: none;
   padding: ($tabs-padding-top + $tabs-top-margin) $spacer $tabs-padding-bottom;
+  color: $text-color;
   i {
     font-size: 120%;
   }
-  color: $text-color;
   &:hover {
     color: $white;
   }
 }
 
 .tabbed-view-body {
-  padding: $spacer*1.5;
+  padding: $spacer*2;
   min-height: 250px;
 }
 

@@ -23,10 +23,10 @@ function (_, $, coreModule) {
         getOptions: "&",
         onChange: "&",
       },
-      link: function($scope, elem, attrs) {
+      link: function($scope, elem) {
         var $input = $(inputTemplate);
-        var $button = $(attrs.styleMode === 'select' ? selectTemplate : linkTemplate);
         var segment = $scope.segment;
+        var $button = $(segment.selectMode ? selectTemplate : linkTemplate);
         var options = null;
         var cancelBlur = null;
         var linkMode = true;
@@ -40,10 +40,10 @@ function (_, $, coreModule) {
           }
 
           $scope.$apply(function() {
-            var selected = _.findWhere($scope.altSegments, { value: value });
+            var selected = _.find($scope.altSegments, {value: value});
             if (selected) {
               segment.value = selected.value;
-              segment.html = selected.html;
+              segment.html = selected.html || selected.value;
               segment.fake = false;
               segment.expandable = selected.expandable;
             }
@@ -76,10 +76,8 @@ function (_, $, coreModule) {
         };
 
         $scope.source = function(query, callback) {
-          if (options) { return options; }
-
           $scope.$apply(function() {
-            $scope.getOptions().then(function(altSegments) {
+            $scope.getOptions({ measurementFilter: query }).then(function(altSegments) {
               $scope.altSegments = altSegments;
               options = _.map($scope.altSegments, function(alt) { return alt.value; });
 
@@ -113,7 +111,7 @@ function (_, $, coreModule) {
           if (str[0] === '/') { str = str.substring(1); }
           if (str[str.length - 1] === '/') { str = str.substring(0, str.length-1); }
           try {
-            return item.toLowerCase().match(str);
+            return item.toLowerCase().match(str.toLowerCase());
           } catch(e) {
             return false;
           }
@@ -138,7 +136,7 @@ function (_, $, coreModule) {
 
         $button.click(function() {
           options = null;
-          $input.css('width', ($button.width() + 16) + 'px');
+          $input.css('width', (Math.max($button.width(), 80) + 16) + 'px');
 
           $button.hide();
           $input.show();
@@ -172,31 +170,42 @@ function (_, $, coreModule) {
       },
       link: {
         pre: function postLink($scope, elem, attrs) {
+          var cachedOptions;
 
           $scope.valueToSegment = function(value) {
-            var option = _.findWhere($scope.options, {value: value});
+            var option = _.find($scope.options, {value: value});
             var segment = {
               cssClass: attrs.cssClass,
               custom: attrs.custom,
               value: option ? option.text : value,
+              selectMode: attrs.selectMode,
             };
+
             return uiSegmentSrv.newSegment(segment);
           };
 
           $scope.getOptionsInternal = function() {
             if ($scope.options) {
-              var optionSegments = _.map($scope.options, function(option) {
-                return uiSegmentSrv.newSegment({value: option.text});
-              });
-              return $q.when(optionSegments);
+              cachedOptions = $scope.options;
+              return $q.when(_.map($scope.options, function(option) {
+                return {value: option.text};
+              }));
             } else {
-              return $scope.getOptions();
+              return $scope.getOptions().then(function(options) {
+                cachedOptions = options;
+                return  _.map(options, function(option) {
+                  if (option.html) {
+                    return option;
+                  }
+                  return {value: option.text};
+                });
+              });
             }
           };
 
           $scope.onSegmentChange = function() {
-            if ($scope.options) {
-              var option = _.findWhere($scope.options, {text: $scope.segment.value});
+            if (cachedOptions) {
+              var option = _.find(cachedOptions, {text: $scope.segment.value});
               if (option && option.value !== $scope.property) {
                 $scope.property = option.value;
               } else if (attrs.custom !== 'false') {

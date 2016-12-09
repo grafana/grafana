@@ -10,6 +10,8 @@ import (
 
 func TestGraphitePublisher(t *testing.T) {
 
+	setting.CustomInitPath = "conf/does_not_exist.ini"
+
 	Convey("Test graphite prefix replacement", t, func() {
 		var err error
 		err = setting.NewConfigContext(&setting.CommandLineArgs{
@@ -67,7 +69,6 @@ func TestGraphitePublisher(t *testing.T) {
 
 		_, err = setting.Cfg.NewSection("metrics.graphite")
 
-		setting.InstanceName = "hostname.with.dots.com"
 		publisher, err := CreateGraphitePublisher()
 
 		So(err, ShouldBeNil)

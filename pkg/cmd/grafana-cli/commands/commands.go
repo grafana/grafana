@@ -45,7 +45,7 @@ func runPluginCommand(command func(commandLine CommandLine) error) func(context 
 		cmd := &contextCommandLine{context}
 		if err := command(cmd); err != nil {
 			logger.Errorf("\n%s: ", color.RedString("Error"))
-			logger.Errorf("%s\n\n", err)
+			logger.Errorf("%s %s\n\n", color.RedString("✗"), err)
 
 			cmd.ShowHelp()
 			os.Exit(1)

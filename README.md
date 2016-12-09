@@ -3,7 +3,7 @@
 [Website](http://grafana.org) |
 [Twitter](https://twitter.com/grafana) |
 [IRC](https://webchat.freenode.net/?channels=grafana) |
-![](https://brandfolder.com/api/favicon/icon?size=16&domain=www.slack.com)
+[![Slack](https://brandfolder.com/api/favicon/icon?size=16&domain=www.slack.com)](http://slack.raintank.io)
 [Slack](http://slack.raintank.io) |
 [Email](mailto:contact@grafana.org)
 
@@ -17,6 +17,7 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 - [What's New in Grafana 2.1](http://docs.grafana.org/guides/whats-new-in-v2-1/)
 - [What's New in Grafana 2.5](http://docs.grafana.org/guides/whats-new-in-v2-5/)
 - [What's New in Grafana 3.0](http://docs.grafana.org/guides/whats-new-in-v3/)
+- [What's New in Grafana 4.0](http://docs.grafana.org/guides/whats-new-in-v4/)
 
 ## Features
 ### Graphite Target Editor
@@ -74,13 +75,12 @@ Be sure to read the [getting started guide](http://docs.grafana.org/guides/getti
 
 ## Run from master
 If you want to build a package yourself, or contribute. Here is a guide for how to do that. You can always find
-the latest master builds [here](http://grafana.org/download/builds)
+the latest master builds [here](http://grafana.org/builds)
 
 ### Dependencies
 
-- Go 1.5
+- Go 1.7.3
 - NodeJS v4+
-- [Godep](https://github.com/tools/godep)
 
 ### Get Code
 
@@ -88,29 +88,28 @@ the latest master builds [here](http://grafana.org/download/builds)
 go get github.com/grafana/grafana
 ```
 
-Since imports of dependencies use the absolute path github.com/grafana/grafana within the $GOPATH,
-you will need to put your version of the code in $GOPATH/src/github.com/grafana/grafana to be able
+Since imports of dependencies use the absolute path `github.com/grafana/grafana` within the `$GOPATH`,
+you will need to put your version of the code in `$GOPATH/src/github.com/grafana/grafana` to be able
 to develop and build grafana on a cloned repository. To do so, you can clone your forked repository
-directly to $GOPATH/src/github.com/grafana or you can create a symbolic link from your version
-of the code to $GOPATH/src/github.com/grafana/grafana. The last options makes it possible to change
+directly to `$GOPATH/src/github.com/grafana` or you can create a symbolic link from your version
+of the code to `$GOPATH/src/github.com/grafana/grafana`. The last options makes it possible to change
 easily the grafana repository you want to build.
 ```bash
 go get github.com/*your_account*/grafana
 mkdir $GOPATH/src/github.com/grafana
-ln -s  github.com/*your_account*/grafana $GOPATH/src/github.com/grafana/grafana
+ln -s  $GOPATH/src/github.com/*your_account*/grafana $GOPATH/src/github.com/grafana/grafana
 ```
 
 ### Building the backend
 ```bash
 cd $GOPATH/src/github.com/grafana/grafana
-go run build.go setup            (only needed once to install godep)
-godep restore                    (will pull down all golang lib dependencies in your current GOPATH)
+go run build.go setup
 go run build.go build
 ```
 
 ### Building frontend assets
 
-To build less to css for the frontend you will need a recent version of of **node (v4+)**,
+To build less to css for the frontend you will need a recent version of **node (v4+)**,
 npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```bash
@@ -126,7 +125,7 @@ grunt watch
 ```
 
 ### Recompile backend on source change
-To rebuild on source change (requires that you executed godep restore)
+To rebuild on source change.
 ```bash
 go get github.com/Unknwon/bra
 bra run
@@ -137,7 +136,7 @@ bra run
 ./bin/grafana-server
 ```
 
-Open grafana in your browser (default http://localhost:3000) and login with admin user (default user/pass = admin/admin).
+Open grafana in your browser (default: `http://localhost:3000`) and login with admin user (default: `user/pass = admin/admin`).
 
 ### Dev config
 
@@ -149,17 +148,13 @@ You only need to add the options you want to override. Config files are applied 
 3. custom.ini
 
 ## Create a pull request
-Before or after you create a pull request, sign the [contributor license agreement](http://grafana.org/docs/contributing/cla.html).
+Before or after you create a pull request, sign the [contributor license agreement](http://docs.grafana.org/project/cla/).
 
 ## Contribute
 If you have any idea for an improvement or found a bug do not hesitate to open an issue.
 And if you have time clone this repo and submit a pull request and help me make Grafana
 the kickass metrics & devops dashboard we all dream about!
 
-Before creating a pull request be sure that "grunt test" runs without any style or unit test errors, also
-please [sign the CLA](http://docs.grafana.org/project/cla/)
-
 ## License
-
 Grafana is distributed under Apache 2.0 License.
 Work in progress Grafana 2.0 (with included Grafana backend)

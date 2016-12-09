@@ -28,7 +28,8 @@ var customMetricsDimensionsMap map[string]map[string]map[string]*CustomMetricsCa
 
 func init() {
 	metricsMap = map[string][]string{
-		"AWS/ApplicationELB": {"ActiveConnectionCount", "ClientTLSNegotiationErrorCount", "HealthyHostCount", "HTTPCode_ELB_4XX_Count", "HTTPCode_ELB_5XX_Count", "HTTPCode_Target_2XX_Count", "HTTPCode_Target_3XX_Count", "HTTPCode_Target_4XX_Count", "HTTPCode_Target_5XX_Count", "NewConnectionCount", "ProcessedBytes", "RejectedConnectionCount", "RequestCount", "TargetConnectionErrorCount", "TargetResponseTime", "TargetTLSNegotiationErrorCount", "UnhealthyHostCount"},
+		"AWS/ApiGateway":     {"4XXError", "5XXError", "CacheHitCount", "CacheMissCount", "Count", "IntegrationLatency", "Latency"},
+		"AWS/ApplicationELB": {"ActiveConnectionCount", "ClientTLSNegotiationErrorCount", "HealthyHostCount", "HTTPCode_ELB_4XX_Count", "HTTPCode_ELB_5XX_Count", "HTTPCode_Target_2XX_Count", "HTTPCode_Target_3XX_Count", "HTTPCode_Target_4XX_Count", "HTTPCode_Target_5XX_Count", "NewConnectionCount", "ProcessedBytes", "RejectedConnectionCount", "RequestCount", "TargetConnectionErrorCount", "TargetResponseTime", "TargetTLSNegotiationErrorCount", "UnHealthyHostCount"},
 		"AWS/AutoScaling":    {"GroupMinSize", "GroupMaxSize", "GroupDesiredCapacity", "GroupInServiceInstances", "GroupPendingInstances", "GroupStandbyInstances", "GroupTerminatingInstances", "GroupTotalInstances"},
 		"AWS/Billing":        {"EstimatedCharges"},
 		"AWS/CloudFront":     {"Requests", "BytesDownloaded", "BytesUploaded", "TotalErrorRate", "4xxErrorRate", "5xxErrorRate"},
@@ -66,27 +67,32 @@ func init() {
 			"CoreNodesRunning", "CoreNodesPending", "LiveDataNodes", "MRTotalNodes", "MRActiveNodes", "MRLostNodes", "MRUnhealthyNodes", "MRDecommissionedNodes", "MRRebootedNodes",
 			"S3BytesWritten", "S3BytesRead", "HDFSUtilization", "HDFSBytesRead", "HDFSBytesWritten", "MissingBlocks", "CorruptBlocks", "TotalLoad", "MemoryTotalMB", "MemoryReservedMB", "MemoryAvailableMB", "MemoryAllocatedMB", "PendingDeletionBlocks", "UnderReplicatedBlocks", "DfsPendingReplicationBlocks", "CapacityRemainingGB",
 			"HbaseBackupFailed", "MostRecentBackupDuration", "TimeSinceLastSuccessfulBackup"},
-		"AWS/ES":       {"ClusterStatus.green", "ClusterStatus.yellow", "ClusterStatus.red", "Nodes", "SearchableDocuments", "DeletedDocuments", "CPUUtilization", "FreeStorageSpace", "JVMMemoryPressure", "AutomatedSnapshotFailure", "MasterCPUUtilization", "MasterFreeStorageSpace", "MasterJVMMemoryPressure", "ReadLatency", "WriteLatency", "ReadThroughput", "WriteThroughput", "DiskQueueLength", "ReadIOPS", "WriteIOPS"},
-		"AWS/Events":   {"Invocations", "FailedInvocations", "TriggeredRules", "MatchedEvents", "ThrottledRules"},
-		"AWS/Kinesis":  {"GetRecords.Bytes", "GetRecords.IteratorAge", "GetRecords.IteratorAgeMilliseconds", "GetRecords.Latency", "GetRecords.Records", "GetRecords.Success", "IncomingBytes", "IncomingRecords", "PutRecord.Bytes", "PutRecord.Latency", "PutRecord.Success", "PutRecords.Bytes", "PutRecords.Latency", "PutRecords.Records", "PutRecords.Success", "ReadProvisionedThroughputExceeded", "WriteProvisionedThroughputExceeded", "IteratorAgeMilliseconds", "OutgoingBytes", "OutgoingRecords"},
-		"AWS/Lambda":   {"Invocations", "Errors", "Duration", "Throttles"},
-		"AWS/Logs":     {"IncomingBytes", "IncomingLogEvents", "ForwardedBytes", "ForwardedLogEvents", "DeliveryErrors", "DeliveryThrottling"},
-		"AWS/ML":       {"PredictCount", "PredictFailureCount"},
-		"AWS/OpsWorks": {"cpu_idle", "cpu_nice", "cpu_system", "cpu_user", "cpu_waitio", "load_1", "load_5", "load_15", "memory_buffers", "memory_cached", "memory_free", "memory_swap", "memory_total", "memory_used", "procs"},
-		"AWS/Redshift": {"CPUUtilization", "DatabaseConnections", "HealthStatus", "MaintenanceMode", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "PercentageDiskSpaceUsed", "ReadIOPS", "ReadLatency", "ReadThroughput", "WriteIOPS", "WriteLatency", "WriteThroughput"},
-		"AWS/RDS":      {"BinLogDiskUsage", "CPUUtilization", "CPUCreditUsage", "CPUCreditBalance", "DatabaseConnections", "DiskQueueDepth", "FreeableMemory", "FreeStorageSpace", "ReplicaLag", "SwapUsage", "ReadIOPS", "WriteIOPS", "ReadLatency", "WriteLatency", "ReadThroughput", "WriteThroughput", "NetworkReceiveThroughput", "NetworkTransmitThroughput"},
-		"AWS/Route53":  {"HealthCheckStatus", "HealthCheckPercentageHealthy", "ConnectionTime", "SSLHandshakeTime", "TimeToFirstByte"},
-		"AWS/S3":       {"BucketSizeBytes", "NumberOfObjects"},
-		"AWS/SNS":      {"NumberOfMessagesPublished", "PublishSize", "NumberOfNotificationsDelivered", "NumberOfNotificationsFailed"},
-		"AWS/SQS":      {"NumberOfMessagesSent", "SentMessageSize", "NumberOfMessagesReceived", "NumberOfEmptyReceives", "NumberOfMessagesDeleted", "ApproximateNumberOfMessagesDelayed", "ApproximateNumberOfMessagesVisible", "ApproximateNumberOfMessagesNotVisible"},
+		"AWS/ES":               {"ClusterStatus.green", "ClusterStatus.yellow", "ClusterStatus.red", "Nodes", "SearchableDocuments", "DeletedDocuments", "CPUUtilization", "FreeStorageSpace", "JVMMemoryPressure", "AutomatedSnapshotFailure", "MasterCPUUtilization", "MasterFreeStorageSpace", "MasterJVMMemoryPressure", "ReadLatency", "WriteLatency", "ReadThroughput", "WriteThroughput", "DiskQueueLength", "ReadIOPS", "WriteIOPS"},
+		"AWS/Events":           {"Invocations", "FailedInvocations", "TriggeredRules", "MatchedEvents", "ThrottledRules"},
+		"AWS/Firehose":         {"DeliveryToElasticsearch.Bytes", "DeliveryToElasticsearch.Records", "DeliveryToElasticsearch.Success", "DeliveryToRedshift.Bytes", "DeliveryToRedshift.Records", "DeliveryToRedshift.Success", "DeliveryToS3.Bytes", "DeliveryToS3.DataFreshness", "DeliveryToS3.Records", "DeliveryToS3.Success", "IncomingBytes", "IncomingRecords", "DescribeDeliveryStream.Latency", "DescribeDeliveryStream.Requests", "ListDeliveryStreams.Latency", "ListDeliveryStreams.Requests", "PutRecord.Bytes", "PutRecord.Latency", "PutRecord.Requests", "PutRecordBatch.Bytes", "PutRecordBatch.Latency", "PutRecordBatch.Records", "PutRecordBatch.Requests", "UpdateDeliveryStream.Latency", "UpdateDeliveryStream.Requests"},
+		"AWS/IoT":              {"PublishIn.Success", "PublishOut.Success", "Subscribe.Success", "Ping.Success", "Connect.Success", "GetThingShadow.Accepted"},
+		"AWS/Kinesis":          {"GetRecords.Bytes", "GetRecords.IteratorAge", "GetRecords.IteratorAgeMilliseconds", "GetRecords.Latency", "GetRecords.Records", "GetRecords.Success", "IncomingBytes", "IncomingRecords", "PutRecord.Bytes", "PutRecord.Latency", "PutRecord.Success", "PutRecords.Bytes", "PutRecords.Latency", "PutRecords.Records", "PutRecords.Success", "ReadProvisionedThroughputExceeded", "WriteProvisionedThroughputExceeded", "IteratorAgeMilliseconds", "OutgoingBytes", "OutgoingRecords"},
+		"AWS/KinesisAnalytics": {"Bytes", "MillisBehindLatest", "Records", "Success"},
+		"AWS/Lambda":           {"Invocations", "Errors", "Duration", "Throttles"},
+		"AWS/Logs":             {"IncomingBytes", "IncomingLogEvents", "ForwardedBytes", "ForwardedLogEvents", "DeliveryErrors", "DeliveryThrottling"},
+		"AWS/ML":               {"PredictCount", "PredictFailureCount"},
+		"AWS/OpsWorks":         {"cpu_idle", "cpu_nice", "cpu_system", "cpu_user", "cpu_waitio", "load_1", "load_5", "load_15", "memory_buffers", "memory_cached", "memory_free", "memory_swap", "memory_total", "memory_used", "procs"},
+		"AWS/Redshift":         {"CPUUtilization", "DatabaseConnections", "HealthStatus", "MaintenanceMode", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "PercentageDiskSpaceUsed", "ReadIOPS", "ReadLatency", "ReadThroughput", "WriteIOPS", "WriteLatency", "WriteThroughput"},
+		"AWS/RDS":              {"ActiveTransactions", "AuroraBinlogReplicaLag", "AuroraReplicaLag", "AuroraReplicaLagMaximum", "AuroraReplicaLagMinimum", "BinLogDiskUsage", "BlockedTransactions", "BufferCacheHitRatio", "CommitLatency", "CommitThroughput", "CPUCreditBalance", "CPUCreditUsage", "CPUUtilization", "DatabaseConnections", "DDLLatency", "DDLThroughput", "Deadlocks", "DiskQueueDepth", "DMLLatency", "DMLThroughput", "FailedSqlStatements", "FreeableMemory", "FreeStorageSpace", "LoginFailures", "NetworkReceiveThroughput", "NetworkTransmitThroughput", "ReadIOPS", "ReadLatency", "ReadThroughput", "ReplicaLag", "ResultSetCacheHitRatio", "SelectLatency", "SelectThroughput", "SwapUsage", "TotalConnections", "VolumeReadIOPS", "VolumeWriteIOPS", "WriteIOPS", "WriteLatency", "WriteThroughput"},
+		"AWS/Route53":          {"HealthCheckStatus", "HealthCheckPercentageHealthy", "ConnectionTime", "SSLHandshakeTime", "TimeToFirstByte"},
+		"AWS/S3":               {"BucketSizeBytes", "NumberOfObjects"},
+		"AWS/SNS":              {"NumberOfMessagesPublished", "PublishSize", "NumberOfNotificationsDelivered", "NumberOfNotificationsFailed"},
+		"AWS/SQS":              {"NumberOfMessagesSent", "SentMessageSize", "NumberOfMessagesReceived", "NumberOfEmptyReceives", "NumberOfMessagesDeleted", "ApproximateNumberOfMessagesDelayed", "ApproximateNumberOfMessagesVisible", "ApproximateNumberOfMessagesNotVisible"},
 		"AWS/StorageGateway": {"CacheHitPercent", "CachePercentUsed", "CachePercentDirty", "CloudBytesDownloaded", "CloudDownloadLatency", "CloudBytesUploaded", "UploadBufferFree", "UploadBufferPercentUsed", "UploadBufferUsed", "QueuedWrites", "ReadBytes", "ReadTime", "TotalCacheSize", "WriteBytes", "WriteTime", "TimeSinceLastRecoveryPoint", "WorkingStorageFree", "WorkingStoragePercentUsed", "WorkingStorageUsed",
 			"CacheHitPercent", "CachePercentUsed", "CachePercentDirty", "ReadBytes", "ReadTime", "WriteBytes", "WriteTime", "QueuedWrites"},
 		"AWS/SWF": {"DecisionTaskScheduleToStartTime", "DecisionTaskStartToCloseTime", "DecisionTasksCompleted", "StartedDecisionTasksTimedOutOnClose", "WorkflowStartToCloseTime", "WorkflowsCanceled", "WorkflowsCompleted", "WorkflowsContinuedAsNew", "WorkflowsFailed", "WorkflowsTerminated", "WorkflowsTimedOut",
 			"ActivityTaskScheduleToCloseTime", "ActivityTaskScheduleToStartTime", "ActivityTaskStartToCloseTime", "ActivityTasksCanceled", "ActivityTasksCompleted", "ActivityTasksFailed", "ScheduledActivityTasksTimedOutOnClose", "ScheduledActivityTasksTimedOutOnStart", "StartedActivityTasksTimedOutOnClose", "StartedActivityTasksTimedOutOnHeartbeat"},
 		"AWS/WAF":        {"AllowedRequests", "BlockedRequests", "CountedRequests"},
 		"AWS/WorkSpaces": {"Available", "Unhealthy", "ConnectionAttempt", "ConnectionSuccess", "ConnectionFailure", "SessionLaunchTime", "InSessionLatency", "SessionDisconnect"},
+		"KMS":            {"SecondsUntilKeyMaterialExpiration"},
 	}
 	dimensionsMap = map[string][]string{
+		"AWS/ApiGateway":       {"ApiName", "Method", "Resource", "Stage"},
 		"AWS/ApplicationELB":   {"LoadBalancer", "TargetGroup", "AvailabilityZone"},
 		"AWS/AutoScaling":      {"AutoScalingGroupName"},
 		"AWS/Billing":          {"ServiceName", "LinkedAccount", "Currency"},
@@ -104,7 +110,10 @@ func init() {
 		"AWS/ElasticMapReduce": {"ClusterId", "JobFlowId", "JobId"},
 		"AWS/ES":               {"ClientId", "DomainName"},
 		"AWS/Events":           {"RuleName"},
+		"AWS/Firehose":         {},
+		"AWS/IoT":              {"Protocol"},
 		"AWS/Kinesis":          {"StreamName", "ShardID"},
+		"AWS/KinesisAnalytics": {"Flow", "Id", "Application"},
 		"AWS/Lambda":           {"FunctionName", "Resource", "Version", "Alias"},
 		"AWS/Logs":             {"LogGroupName", "DestinationType", "FilterName"},
 		"AWS/ML":               {"MLModelId", "RequestMode"},
@@ -119,6 +128,7 @@ func init() {
 		"AWS/SWF":              {"Domain", "WorkflowTypeName", "WorkflowTypeVersion", "ActivityTypeName", "ActivityTypeVersion"},
 		"AWS/WAF":              {"Rule", "WebACL"},
 		"AWS/WorkSpaces":       {"DirectoryId", "WorkspaceId"},
+		"KMS":                  {"KeyId"},
 	}
 
 	customMetricsMetricsMap = make(map[string]map[string]map[string]*CustomMetricsCache)
@@ -130,7 +140,7 @@ func init() {
 func handleGetRegions(req *cwRequest, c *middleware.Context) {
 	regions := []string{
 		"ap-northeast-1", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "cn-north-1",
-		"eu-central-1", "eu-west-1", "sa-east-1", "us-east-1", "us-west-1", "us-west-2",
+		"eu-central-1", "eu-west-1", "sa-east-1", "us-east-1", "us-west-1", "us-west-2", "us-gov-west-1",
 	}
 
 	result := []interface{}{}
@@ -182,8 +192,10 @@ func handleGetMetrics(req *cwRequest, c *middleware.Context) {
 		}
 	} else {
 		var err error
-		assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
-		if namespaceMetrics, err = getMetricsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, assumeRoleArn, getAllMetrics); err != nil {
+		cwData := req.GetDatasourceInfo()
+		cwData.Namespace = reqParam.Parameters.Namespace
+
+		if namespaceMetrics, err = getMetricsForCustomMetrics(cwData, getAllMetrics); err != nil {
 			c.JsonApiErr(500, "Unable to call AWS API", err)
 			return
 		}
@@ -216,8 +228,10 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 		}
 	} else {
 		var err error
-		assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
-		if dimensionValues, err = getDimensionsForCustomMetrics(req.Region, reqParam.Parameters.Namespace, req.DataSource.Database, assumeRoleArn, getAllMetrics); err != nil {
+		dsInfo := req.GetDatasourceInfo()
+		dsInfo.Namespace = reqParam.Parameters.Namespace
+
+		if dimensionValues, err = getDimensionsForCustomMetrics(dsInfo, getAllMetrics); err != nil {
 			c.JsonApiErr(500, "Unable to call AWS API", err)
 			return
 		}
@@ -232,16 +246,16 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 	c.JSON(200, result)
 }
 
-func getAllMetrics(region string, namespace string, database string, assumeRoleArn string) (cloudwatch.ListMetricsOutput, error) {
+func getAllMetrics(cwData *datasourceInfo) (cloudwatch.ListMetricsOutput, error) {
 	cfg := &aws.Config{
-		Region:      aws.String(region),
-		Credentials: getCredentials(database, region, assumeRoleArn),
+		Region:      aws.String(cwData.Region),
+		Credentials: getCredentials(cwData),
 	}
 
 	svc := cloudwatch.New(session.New(cfg), cfg)
 
 	params := &cloudwatch.ListMetricsInput{
-		Namespace: aws.String(namespace),
+		Namespace: aws.String(cwData.Namespace),
 	}
 
 	var resp cloudwatch.ListMetricsOutput
@@ -262,8 +276,8 @@ func getAllMetrics(region string, namespace string, database string, assumeRoleA
 
 var metricsCacheLock sync.Mutex
 
-func getMetricsForCustomMetrics(region string, namespace string, database string, assumeRoleArn string, getAllMetrics func(string, string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
-	result, err := getAllMetrics(region, namespace, database, assumeRoleArn)
+func getMetricsForCustomMetrics(dsInfo *datasourceInfo, getAllMetrics func(*datasourceInfo) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+	result, err := getAllMetrics(dsInfo)
 	if err != nil {
 		return []string{}, err
 	}
@@ -271,37 +285,37 @@ func getMetricsForCustomMetrics(region string, namespace string, database string
 	metricsCacheLock.Lock()
 	defer metricsCacheLock.Unlock()
 
-	if _, ok := customMetricsMetricsMap[database]; !ok {
-		customMetricsMetricsMap[database] = make(map[string]map[string]*CustomMetricsCache)
+	if _, ok := customMetricsMetricsMap[dsInfo.Profile]; !ok {
+		customMetricsMetricsMap[dsInfo.Profile] = make(map[string]map[string]*CustomMetricsCache)
 	}
-	if _, ok := customMetricsMetricsMap[database][region]; !ok {
-		customMetricsMetricsMap[database][region] = make(map[string]*CustomMetricsCache)
+	if _, ok := customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region]; !ok {
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*CustomMetricsCache)
 	}
-	if _, ok := customMetricsMetricsMap[database][region][namespace]; !ok {
-		customMetricsMetricsMap[database][region][namespace] = &CustomMetricsCache{}
-		customMetricsMetricsMap[database][region][namespace].Cache = make([]string, 0)
+	if _, ok := customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace]; !ok {
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace] = &CustomMetricsCache{}
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
 	}
 
-	if customMetricsMetricsMap[database][region][namespace].Expire.After(time.Now()) {
-		return customMetricsMetricsMap[database][region][namespace].Cache, nil
+	if customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire.After(time.Now()) {
+		return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
 	}
-	customMetricsMetricsMap[database][region][namespace].Cache = make([]string, 0)
-	customMetricsMetricsMap[database][region][namespace].Expire = time.Now().Add(5 * time.Minute)
+	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
+	customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire = time.Now().Add(5 * time.Minute)
 
 	for _, metric := range result.Metrics {
-		if isDuplicate(customMetricsMetricsMap[database][region][namespace].Cache, *metric.MetricName) {
+		if isDuplicate(customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *metric.MetricName) {
 			continue
 		}
-		customMetricsMetricsMap[database][region][namespace].Cache = append(customMetricsMetricsMap[database][region][namespace].Cache, *metric.MetricName)
+		customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = append(customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *metric.MetricName)
 	}
 
-	return customMetricsMetricsMap[database][region][namespace].Cache, nil
+	return customMetricsMetricsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
 }
 
 var dimensionsCacheLock sync.Mutex
 
-func getDimensionsForCustomMetrics(region string, namespace string, database string, assumeRoleArn string, getAllMetrics func(string, string, string, string) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
-	result, err := getAllMetrics(region, namespace, database, assumeRoleArn)
+func getDimensionsForCustomMetrics(dsInfo *datasourceInfo, getAllMetrics func(*datasourceInfo) (cloudwatch.ListMetricsOutput, error)) ([]string, error) {
+	result, err := getAllMetrics(dsInfo)
 	if err != nil {
 		return []string{}, err
 	}
@@ -309,33 +323,33 @@ func getDimensionsForCustomMetrics(region string, namespace string, database str
 	dimensionsCacheLock.Lock()
 	defer dimensionsCacheLock.Unlock()
 
-	if _, ok := customMetricsDimensionsMap[database]; !ok {
-		customMetricsDimensionsMap[database] = make(map[string]map[string]*CustomMetricsCache)
+	if _, ok := customMetricsDimensionsMap[dsInfo.Profile]; !ok {
+		customMetricsDimensionsMap[dsInfo.Profile] = make(map[string]map[string]*CustomMetricsCache)
 	}
-	if _, ok := customMetricsDimensionsMap[database][region]; !ok {
-		customMetricsDimensionsMap[database][region] = make(map[string]*CustomMetricsCache)
+	if _, ok := customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region]; !ok {
+		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region] = make(map[string]*CustomMetricsCache)
 	}
-	if _, ok := customMetricsDimensionsMap[database][region][namespace]; !ok {
-		customMetricsDimensionsMap[database][region][namespace] = &CustomMetricsCache{}
-		customMetricsDimensionsMap[database][region][namespace].Cache = make([]string, 0)
+	if _, ok := customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace]; !ok {
+		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace] = &CustomMetricsCache{}
+		customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
 	}
 
-	if customMetricsDimensionsMap[database][region][namespace].Expire.After(time.Now()) {
-		return customMetricsDimensionsMap[database][region][namespace].Cache, nil
+	if customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire.After(time.Now()) {
+		return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
 	}
-	customMetricsDimensionsMap[database][region][namespace].Cache = make([]string, 0)
-	customMetricsDimensionsMap[database][region][namespace].Expire = time.Now().Add(5 * time.Minute)
+	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = make([]string, 0)
+	customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Expire = time.Now().Add(5 * time.Minute)
 
 	for _, metric := range result.Metrics {
 		for _, dimension := range metric.Dimensions {
-			if isDuplicate(customMetricsDimensionsMap[database][region][namespace].Cache, *dimension.Name) {
+			if isDuplicate(customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *dimension.Name) {
 				continue
 			}
-			customMetricsDimensionsMap[database][region][namespace].Cache = append(customMetricsDimensionsMap[database][region][namespace].Cache, *dimension.Name)
+			customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache = append(customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, *dimension.Name)
 		}
 	}
 
-	return customMetricsDimensionsMap[database][region][namespace].Cache, nil
+	return customMetricsDimensionsMap[dsInfo.Profile][dsInfo.Region][dsInfo.Namespace].Cache, nil
 }
 
 func isDuplicate(nameList []string, target string) bool {

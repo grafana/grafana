@@ -1,10 +1,14 @@
----
-page_title: Plugin development guide
-page_description: Plugin development for Grafana
-page_keywords: grafana, plugins, documentation, development
----
++++
+title = "Developer Guide"
+type = "docs"
+aliases = ["/plugins/datasources/", "/plugins/apps/", "/plugins/panels/"]
+[menu.docs]
+name = "Developer Guide"
+parent = "plugins"
+weight = 5
++++
 
-# Plugin development
+# Developer Guide
 
 From grafana 3.0 it's very easy to develop your own plugins and share them with other grafana users.
 
@@ -32,6 +36,7 @@ will be expected to export different things. You can find what's expected for [d
 and [apps](./apps.md) plugins in the documentation.
 
 ## Start developing your plugin
+
 There are three ways that you can start developing a Grafana plugin.
 
 1. Setup a Grafana development environment. [(described here)](http://docs.grafana.org/project/building_from_source/) and place your plugin in the ```data/plugins``` folder.
@@ -45,8 +50,11 @@ the folder contains a subfolder named dist. In that case grafana will mount the 
 This makes it possible to have both built and src content in the same plugin git repo.
 
 ## Examples
+
 We currently have three different examples that you can fork/download to get started developing your grafana plugin.
 
  - [simple-json-datasource](https://github.com/grafana/simple-json-datasource) (small datasource plugin for querying json data from backends)
- - [piechart-panel](https://github.com/grafana/piechart-panel)
  - [example-app](https://github.com/grafana/example-app)
+ - [clock-panel](https://github.com/grafana/clock-panel)
+ - [singlestat-panel](https://github.com/grafana/grafana/blob/master/public/app/plugins/panel/singlestat/module.ts)
+ - [piechart-panel](https://github.com/grafana/piechart-panel)

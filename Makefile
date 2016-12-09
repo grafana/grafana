@@ -1,17 +1,28 @@
 all: deps build
 
-deps:
+deps-go:
 	go run build.go setup
-	godep restore
+
+deps-js:
 	npm install
 
-build:
+deps: deps-go deps-js
+
+build-go:
 	go run build.go build
+
+build-js:
 	npm run build
 
-test:
-	godep go test -v ./pkg/...
+build: build-go build-js
+
+test-go:
+	go test -v ./pkg/...
+
+test-js:
 	npm test
+
+test: test-go test-js
 
 run:
 	./bin/grafana-server

@@ -1,7 +1,11 @@
-page_title: Keyboard Shortcuts
-page_description: Keyboard Shortcuts for Grafana
-page_keywords: grafana, export, import, documentation
----
++++
+title = "Keyboard shortcuts"
+keywords = ["grafana", "dashboard", "documentation", "shortcuts"]
+type = "docs"
+[menu.docs]
+parent = "dashboard_features"
+weight = 8
++++
 
 # Keyboard Shortcuts
 
@@ -11,7 +15,7 @@ No mouse? No problem. Grafana has extensive keyboard shortcuts to allow you to n
 
 Press `Shift`+`?` to open the keyboard shortcut dialog from anywhere within the dashboard views.
 
-<img class="no-shadow" src="/img/v2/Grafana-Keyboard-Shortcuts.gif" style="width:80%;">
+<img class="no-shadow" src="/img/docs/v2/Grafana-Keyboard-Shortcuts.gif" style="width:80%;">
 
 
 |Shortcut|Action|

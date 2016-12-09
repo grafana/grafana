@@ -5,6 +5,7 @@ package main
 import (
 	"bytes"
 	"crypto/md5"
+	"crypto/sha1"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -25,16 +26,21 @@ var (
 	versionRe = regexp.MustCompile(`-[0-9]{1,3}-g[0-9a-f]{5,10}`)
 	goarch    string
 	goos      string
+	gocc      string
+	gocxx     string
+	cgo       string
+	pkgArch   string
 	version   string = "v1"
 	// deb & rpm does not support semver so have to handle their version a little differently
 	linuxPackageVersion   string = "v1"
 	linuxPackageIteration string = ""
 	race                  bool
+	phjsToRelease         string
 	workingDir            string
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
 )
 
-const minGoVersion = 1.3
+const minGoVersion = 1.7
 
 func main() {
 	log.SetOutput(os.Stdout)
@@ -47,6 +53,11 @@ func main() {
 
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
+	flag.StringVar(&gocc, "cc", "", "CC")
+	flag.StringVar(&gocxx, "cxx", "", "CXX")
+	flag.StringVar(&cgo, "cgo-enabled", "", "CGO_ENABLED")
+	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
+	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
 	flag.BoolVar(&race, "race", race, "Use race detector")
 	flag.Parse()
 
@@ -73,19 +84,26 @@ func main() {
 			grunt("test")
 
 		case "package":
-			grunt("release", fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration))
+			grunt(gruntBuildArg("release")...)
 			createLinuxPackages()
+			sha1FilesInDist()
 
 		case "pkg-rpm":
-			grunt("release")
+			grunt(gruntBuildArg("release")...)
 			createRpmPackages()
+			sha1FilesInDist()
 
 		case "pkg-deb":
-			grunt("release")
+			grunt(gruntBuildArg("release")...)
 			createDebPackages()
+			sha1FilesInDist()
+
+    case "sha1-dist":
+      sha1FilesInDist()
 
 		case "latest":
 			makeLatestDistCopies()
+			sha1FilesInDist()
 
 		case "clean":
 			clean()
@@ -258,6 +276,10 @@ func createPackage(options linuxPackageOptions) {
 		"-p", "./dist",
 	}
 
+	if pkgArch != "" {
+		args = append(args, "-a", pkgArch)
+	}
+
 	if linuxPackageIteration != "" {
 		args = append(args, "--iteration", linuxPackageIteration)
 	}
@@ -307,11 +329,20 @@ func grunt(params ...string) {
 	runPrint("./node_modules/.bin/grunt", params...)
 }
 
+func gruntBuildArg(task string) []string {
+	args := []string{task, fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration)}
+	if pkgArch != "" {
+		args = append(args, fmt.Sprintf("--arch=%v", pkgArch))
+	}
+	if phjsToRelease != "" {
+		args = append(args, fmt.Sprintf("--phjsToRelease=%v", phjsToRelease))
+	}
+	return args
+}
+
 func setup() {
-	runPrint("go", "get", "-v", "github.com/tools/godep")
-	runPrint("go", "get", "-v", "github.com/blang/semver")
-	runPrint("go", "get", "-v", "github.com/mattn/go-sqlite3")
-	runPrint("go", "install", "-v", "github.com/mattn/go-sqlite3")
+	runPrint("go", "get", "-v", "github.com/kardianos/govendor")
+	runPrint("go", "install", "-v", "./pkg/cmd/grafana-server")
 }
 
 func test(pkg string) {
@@ -366,7 +397,6 @@ func rmr(paths ...string) {
 }
 
 func clean() {
-	rmr("bin", "Godeps/_workspace/pkg", "Godeps/_workspace/bin")
 	rmr("dist")
 	rmr("tmp")
 	rmr(filepath.Join(os.Getenv("GOPATH"), fmt.Sprintf("pkg/%s_%s/github.com/grafana", goos, goarch)))
@@ -383,13 +413,15 @@ func setBuildEnv() {
 	if goarch == "386" {
 		os.Setenv("GO386", "387")
 	}
-	wd, err := os.Getwd()
-	if err != nil {
-		log.Println("Warning: can't determine current dir:", err)
-		log.Println("Build might not work as expected")
+	if cgo != "" {
+		os.Setenv("CGO_ENABLED", cgo)
 	}
-	os.Setenv("GOPATH", fmt.Sprintf("%s%c%s", filepath.Join(wd, "Godeps", "_workspace"), os.PathListSeparator, os.Getenv("GOPATH")))
-	log.Println("GOPATH=" + os.Getenv("GOPATH"))
+	if gocc != "" {
+		os.Setenv("CC", gocc)
+	}
+	if gocxx != "" {
+		os.Setenv("CXX", gocxx)
+	}
 }
 
 func getGitSha() string {
@@ -466,6 +498,41 @@ func md5File(file string) error {
 	}
 
 	out, err := os.Create(file + ".md5")
+	if err != nil {
+		return err
+	}
+
+	_, err = fmt.Fprintf(out, "%x\n", h.Sum(nil))
+	if err != nil {
+		return err
+	}
+
+	return out.Close()
+}
+
+func sha1FilesInDist() {
+	filepath.Walk("./dist", func(path string, f os.FileInfo, err error) error {
+		if strings.Contains(path, ".sha1") == false {
+			sha1File(path)
+		}
+		return nil
+	})
+}
+
+func sha1File(file string) error {
+	fd, err := os.Open(file)
+	if err != nil {
+		return err
+	}
+	defer fd.Close()
+
+	h := sha1.New()
+	_, err = io.Copy(h, fd)
+	if err != nil {
+		return err
+	}
+
+	out, err := os.Create(file + ".sha1")
 	if err != nil {
 		return err
 	}

@@ -1,33 +1,37 @@
----
-page_title: Installing on RPM-based Linux
-page_description: Grafana Installation guide for Centos, Fedora, OpenSuse, Redhat.
-page_keywords: grafana, installation, centos, fedora, opensuse, redhat, guide
----
++++
+title = "Installing on RPM-based Linux"
+description = "Grafana Installation guide for Centos, Fedora, OpenSuse, Redhat."
+keywords = ["grafana", "installation", "documentation", "centos", "fedora", "opensuse", "redhat"]
+type = "docs"
+[menu.docs]
+name = "Installing on Centos / Redhat"
+identifier = "rpm"
+parent = "installation"
+weight = 2
++++
 
 # Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)
 
-## Download
-
 Description | Download
 ------------ | -------------
-Stable .RPM for CentOS / Fedora / OpenSuse / Redhat Linux | [3.1.1 (x86-64 rpm)](https://grafanarel.s3.amazonaws.com/builds/grafana-3.1.1-1470047149.x86_64.rpm)
+Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [4.0.2 (x86-64 rpm)](https://grafanarel.s3.amazonaws.com/builds/grafana-4.0.2-1481203731.x86_64.rpm)
 
-## Install Latest Stable
+## Install Stable
 
 You can install Grafana using Yum directly.
 
-    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-3.1.1-1470047149.x86_64.rpm
+    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-4.0.2-1481203731.x86_64.rpm
 
 Or install manually using `rpm`.
 
 #### On CentOS / Fedora / Redhat:
 
     $ sudo yum install initscripts fontconfig
-    $ sudo rpm -Uvh grafana-3.1.1-1470047149.x86_64.rpm
+    $ sudo rpm -Uvh grafana-4.0.2-1481203731.x86_64.rpm
 
 #### On OpenSuse:
 
-    $ sudo rpm -i --nodeps grafana-3.1.1-1470047149.x86_64.rpm
+    $ sudo rpm -i --nodeps grafana-4.0.2-1481203731.x86_64.rpm
 
 ## Install via YUM Repository
 
@@ -106,18 +110,46 @@ By default Grafana will log to `/var/log/grafana`
 
 The default configuration specifies a sqlite3 database located at
 `/var/lib/grafana/grafana.db`. Please backup this database before
-upgrades. You can also use MySQL or Postgres as the Grafana database, as detailed on [the configuration page](configuration.md#database).
+upgrades. You can also use MySQL or Postgres as the Grafana database, as detailed on [the configuration page]({{< relref "configuration.md#database" >}}).
 
 ## Configuration
 
 The configuration file is located at `/etc/grafana/grafana.ini`.  Go the
-[Configuration](/installation/configuration) page for details on all
+[Configuration]({{< relref "configuration.md" >}}) page for details on all
 those options.
 
 ### Adding data sources
 
-- [Graphite](../datasources/graphite.md)
-- [InfluxDB](../datasources/influxdb.md)
-- [OpenTSDB](../datasources/opentsdb.md)
+- [Graphite]({{< relref "datasources/graphite.md" >}})
+- [InfluxDB]({{< relref "datasources/influxdb.md" >}})
+- [OpenTSDB]({{< relref "datasources/opentsdb.md" >}})
+- [Prometheus]({{< relref "datasources/prometheus.md" >}})
 
+### Server side image rendering
+
+Server side image (png) rendering is a feature that is optional but very useful when sharing visualizations,
+for example in alert notifications.
+
+If the image is missing text make sure you have font packages installed.
+
+```
+yum install fontconfig
+yum install freetype*
+yum install urw-fonts
+```
+
+## Installing from binary tar file
+
+Download [the latest `.tar.gz` file](http://grafana.org/download) and
+extract it.  This will extract into a folder named after the version you
+downloaded. This folder contains all files required to run Grafana.  There are
+no init scripts or install scripts in this package.
+
+To configure Grafana add a configuration file named `custom.ini` to the
+`conf` folder and override any of the settings defined in
+`conf/defaults.ini`.
+
+Start Grafana by executing `./bin/grafana-server web`. The `grafana-server`
+binary needs the working directory to be the root install directory (where the
+binary and the `public` folder is located).
 

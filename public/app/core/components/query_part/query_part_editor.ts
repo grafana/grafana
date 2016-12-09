@@ -5,33 +5,34 @@ import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 
 var template = `
-<div class="tight-form-func-controls">
-  <span class="pointer fa fa-remove" ng-click="removeActionInternal()"></span>
-</div>
-
-<a ng-click="toggleControls()" class="query-part-name">{{part.def.type}}</a>
+<div class="dropdown cascade-open">
+<a ng-click="showActionsMenu()" class="query-part-name pointer dropdown-toggle" data-toggle="dropdown">{{part.def.type}}</a>
 <span>(</span><span class="query-part-parameters"></span><span>)</span>
+<ul class="dropdown-menu">
+  <li ng-repeat="action in partActions">
+    <a ng-click="triggerPartAction(action)">{{action.text}}</a>
+  </li>
+</ul>
 `;
 
   /** @ngInject */
 export function queryPartEditorDirective($compile, templateSrv) {
 
-  var paramTemplate = '<input type="text" style="display:none"' +
-    ' class="input-mini tight-form-func-param"></input>';
+  var paramTemplate = '<input type="text" class="hide input-mini tight-form-func-param"></input>';
+
   return {
     restrict: 'E',
     template: template,
     scope: {
       part: "=",
-      removeAction: "&",
-      partUpdated: "&",
-      getOptions: "&",
+      handleEvent: "&",
     },
     link: function postLink($scope, elem) {
       var part = $scope.part;
       var partDef = part.def;
       var $paramsContainer = elem.find('.query-part-parameters');
-      var $controlsContainer = elem.find('.tight-form-func-controls');
+
+      $scope.partActions = [];
 
       function clickFuncParam(paramIndex) {
         /*jshint validthis:true */
@@ -63,7 +64,9 @@ export function queryPartEditorDirective($compile, templateSrv) {
           $link.html(templateSrv.highlightVariablesAsHtml(newValue));
 
           part.updateParam($input.val(), paramIndex);
-          $scope.$apply($scope.partUpdated);
+          $scope.$apply(() => {
+            $scope.handleEvent({$event: {name: 'part-param-changed'}});
+          });
         }
 
         $input.hide();
@@ -91,7 +94,7 @@ export function queryPartEditorDirective($compile, templateSrv) {
           if (param.options) { return param.options; }
 
           $scope.$apply(function() {
-            $scope.getOptions().then(function(result) {
+            $scope.handleEvent({$event: {name: 'get-param-options'}}).then(function(result) {
               var dynamicOptions = _.map(result, function(op) { return op.value; });
               callback(dynamicOptions);
             });
@@ -124,24 +127,14 @@ export function queryPartEditorDirective($compile, templateSrv) {
         };
       }
 
-      $scope.toggleControls = function() {
-        var targetDiv = elem.closest('.tight-form');
-
-        if (elem.hasClass('show-function-controls')) {
-          elem.removeClass('show-function-controls');
-          targetDiv.removeClass('has-open-function');
-          $controlsContainer.hide();
-          return;
-        }
-
-        elem.addClass('show-function-controls');
-        targetDiv.addClass('has-open-function');
-        $controlsContainer.show();
+      $scope.showActionsMenu = function() {
+        $scope.handleEvent({$event: {name: 'get-part-actions'}}).then(res => {
+          $scope.partActions = res;
+        });
       };
 
-      $scope.removeActionInternal = function() {
-        $scope.toggleControls();
-        $scope.removeAction();
+      $scope.triggerPartAction = function(action) {
+        $scope.handleEvent({$event: {name: 'action', action: action}});
       };
 
       function addElementsAndCompile() {

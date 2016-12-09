@@ -1,13 +1,19 @@
----
-page_title: OpenTSDB Guide
-page_description: OpenTSDB guide for Grafana
-page_keywords: grafana, opentsdb, documentation
----
++++
+title = "Using OpenTSDB in Grafana"
+description = "Guide for using OpenTSDB in Grafana"
+keywords = ["grafana", "opentsdb", "guide"]
+type = "docs"
+[menu.docs]
+name = "OpenTSDB"
+parent = "datasources"
+weight = 5
++++
 
-# OpenTSDB Guide
+# Using OpenTSDB in Grafana
+
+{{< docs-imagebox img="/img/docs/v2/add_OpenTSDB.png" max-width="14rem" >}}
+
 The newest release of Grafana adds additional functionality when using an OpenTSDB Data source.
-
-![](/img/v2/add_OpenTSDB.png)
 
 1. Open the side menu by clicking the the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
@@ -31,7 +37,7 @@ Open a graph in edit mode by click the title. Query editor will differ if the da
 
   > Note: While using Opentsdb 2.2 datasource, make sure you use either Filters or Tags as they are mutually exclusive. If used together, might give you weird results.
 
-![](/img/v2/opentsdb_query_editor.png)
+![](/img/docs/v2/opentsdb_query_editor.png)
 
 ### Auto complete suggestions
 As soon as you start typing metric names, tag names and tag values , you should see highlighted auto complete suggestions for them.
@@ -55,7 +61,7 @@ If you do not see template variables being populated in `Preview of values` sect
 
 One template variable can be used to filter tag values for another template varible. Very importantly, the order of the parameters matter in tag_values function. First parameter is the metric name, second parameter is the tag key for which you need to find tag values, and after that all other dependent template variables. Some examples are mentioned below to make nested template queries work successfully.
 
-    tag_values(cpu, hostname, env=$env)                   // return tag values for cpu metric, selected env tag value and tag key hostname 
+    tag_values(cpu, hostname, env=$env)                   // return tag values for cpu metric, selected env tag value and tag key hostname
     tag_values(cpu, hostanme, env=$env, region=$region)   // return tag values for cpu metric, selected env tag value, selected region tag value and tag key hostname
 
 > Note: This is required for the OpenTSDB `lookup` api to work.

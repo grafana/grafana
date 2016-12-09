@@ -1,4 +1,4 @@
-<div ng-controller="TemplateEditorCtrl" ng-init="init()">
+<div ng-controller="VariableEditorCtrl" ng-init="init()">
 	<div class="tabbed-view-header">
 		<h2 class="tabbed-view-title">
 			Templating
@@ -70,33 +70,23 @@
 			</div>
 		</div>
 
-		<div ng-if="mode === 'edit' || mode === 'new'">
+		<form ng-if="mode === 'edit' || mode === 'new'" name="ctrl.form">
 			<h5 class="section-heading">Variable</h5>
 			<div class="gf-form-group">
 				<div class="gf-form-inline">
 					<div class="gf-form max-width-19">
 						<span class="gf-form-label width-6">Name</span>
-						<input type="text" class="gf-form-input" placeholder="name" ng-model='current.name'></input>
+						<input type="text" class="gf-form-input" placeholder="name" ng-model='current.name' required></input>
 					</div>
 					<div class="gf-form max-width-19">
 						<span class="gf-form-label width-6">
               Type
               <info-popover mode="right-normal">
-                <dl>
-                  <dt>Query</dt>
-                  <dd>Variable values are fetched from a metric names query to a data source</dd>
-                  <dt>Interval</dt>
-                  <dd>Timespan variable type</dd>
-                  <dt>Datasource</dt>
-                  <dd>Dynamically switch data sources using this type of variable</dd>
-                  <dt>Custom</dt>
-                  <dd>Define variable values manually</dd>
-                </dl>
-                <a href="http://docs.grafana.org/reference/templating" target="_blank">Templating docs</a>
+								{{variableTypes[current.type].description}}
               </info-popover>
             </span>
 						<div class="gf-form-select-wrapper max-width-17">
-							<select class="gf-form-input" ng-model="current.type" ng-options="f.value as f.text for f in variableTypes" ng-change="typeChanged()"></select>
+							<select class="gf-form-input" ng-model="current.type" ng-options="k as v.name for (k, v) in variableTypes" ng-change="typeChanged()"></select>
 						</div>
 					</div>
         </div>
@@ -112,15 +102,14 @@
 						</div>
 					</div>
 				</div>
-
 			</div>
 
-			<div ng-show="current.type === 'interval'" class="gf-form-group">
+			<div ng-if="current.type === 'interval'" class="gf-form-group">
         <h5 class="section-heading">Interval Options</h5>
 
 				<div class="gf-form">
 					<span class="gf-form-label width-9">Values</span>
-					<input type="text" class="gf-form-input" placeholder="name" ng-model='current.query' placeholder="1m,10m,1h,6h,1d,7d" ng-model-onblur ng-change="runQuery()"></input>
+					<input type="text" class="gf-form-input" placeholder="name" ng-model='current.query' placeholder="1m,10m,1h,6h,1d,7d" ng-model-onblur ng-change="runQuery()" required></input>
 				</div>
 				<div class="gf-form">
 					<span class="gf-form-label width-9">Auto option</span>
@@ -144,15 +133,15 @@
 				</div>
 			</div>
 
-			<div ng-show="current.type === 'custom'" class="gf-form-group">
+			<div ng-if="current.type === 'custom'" class="gf-form-group">
         <h5 class="section-heading">Custom Options</h5>
 				<div class="gf-form">
-					<span class="gf-form-label width-13">Values separated by comma</span>
-					<input type="text" class="gf-form-input" ng-model='current.query' ng-blur="runQuery()" placeholder="1, 10, 20, myvalue"></input>
+					<span class="gf-form-label width-14">Values separated by comma</span>
+					<input type="text" class="gf-form-input" ng-model='current.query' ng-blur="runQuery()" placeholder="1, 10, 20, myvalue" required></input>
 				</div>
 			</div>
 
-			<div ng-show="current.type === 'constant'" class="gf-form-group">
+			<div ng-if="current.type === 'constant'" class="gf-form-group">
         <h5 class="section-heading">Constant options</h5>
 				<div class="gf-form">
 					<span class="gf-form-label">Value</span>
@@ -160,14 +149,14 @@
 				</div>
 			</div>
 
-			<div ng-show="current.type === 'query'" class="gf-form-group">
+			<div ng-if="current.type === 'query'" class="gf-form-group">
         <h5 class="section-heading">Query Options</h5>
 
         <div class="gf-form-inline">
           <div class="gf-form max-width-21">
-            <span class="gf-form-label width-7" ng-show="current.type === 'query'">Data source</span>
+            <span class="gf-form-label width-7">Data source</span>
             <div class="gf-form-select-wrapper max-width-14">
-              <select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources"></select>
+              <select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources" required></select>
             </div>
           </div>
           <div class="gf-form max-width-21">
@@ -181,10 +170,10 @@
               <select class="gf-form-input" ng-model="current.refresh" ng-options="f.value as f.text for f in refreshOptions"></select>
             </div>
           </div>
-        </div>
-        <div class="gf-form">
+				</div>
+				<div class="gf-form">
           <span class="gf-form-label width-7">Query</span>
-          <input type="text" class="gf-form-input" ng-model='current.query' placeholder="metric name or tags query" ng-model-onblur ng-change="runQuery()"></input>
+          <input type="text" class="gf-form-input" ng-model='current.query' placeholder="metric name or tags query" ng-model-onblur ng-change="runQuery()" required></input>
         </div>
         <div class="gf-form">
           <span class="gf-form-label width-7">
@@ -195,15 +184,26 @@
           </span>
           <input type="text" class="gf-form-input" ng-model='current.regex' placeholder="/.*-(.*)-.*/" ng-model-onblur ng-change="runQuery()"></input>
         </div>
-      </div>
+				<div class="gf-form max-width-21">
+					<span class="gf-form-label width-7">
+						Sort
+						<info-popover mode="right-normal">
+							How to sort the values of this variable.
+						</info-popover>
+					</span>
+					<div class="gf-form-select-wrapper max-width-14">
+						<select class="gf-form-input" ng-model="current.sort" ng-options="f.value as f.text for f in sortOptions" ng-change="runQuery()"></select>
+					</div>
+				</div>
+			</div>
 
-      <div ng-show="current.type === 'datasource'" class="gf-form-group">
-        <h5 class="section-heading">Data source options</h5>
+			<div ng-show="current.type === 'datasource'" class="gf-form-group">
+				<h5 class="section-heading">Data source options</h5>
 
-        <div class="gf-form">
-          <label class="gf-form-label width-12">Type</label>
-          <div class="gf-form-select-wrapper max-width-18">
-            <select class="gf-form-input" ng-model="current.query" ng-options="f.value as f.text for f in datasourceTypes" ng-change="runQuery()"></select>
+				<div class="gf-form">
+					<label class="gf-form-label width-12">Type</label>
+					<div class="gf-form-select-wrapper max-width-18">
+						<select class="gf-form-input" ng-model="current.query" ng-options="f.value as f.text for f in datasourceTypes" ng-change="runQuery()"></select>
           </div>
         </div>
 
@@ -222,8 +222,18 @@
         </div>
       </div>
 
-      <div class="section gf-form-group" ng-show="showSelectionOptions()">
-        <h5 class="section-heading">Selection Options</h5>
+			<div ng-if="current.type === 'adhoc'" class="gf-form-group">
+        <h5 class="section-heading">Options</h5>
+				<div class="gf-form max-width-21">
+					<span class="gf-form-label width-8">Data source</span>
+					<div class="gf-form-select-wrapper max-width-14">
+						<select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources" required ng-change="validate()"></select>
+					</div>
+				</div>
+			</div>
+
+			<div class="section gf-form-group" ng-show="variableTypes[current.type].supportsMulti">
+				<h5 class="section-heading">Selection Options</h5>
         <div class="section">
           <gf-form-switch class="gf-form"
                           label="Multi-value"
@@ -260,7 +270,7 @@
         </div>
       </div>
 
-      <div class="gf-form-group">
+      <div class="gf-form-group" ng-show="current.options.length">
         <h5>Preview of values (shows max 20)</h5>
         <div class="gf-form-inline">
           <div class="gf-form" ng-repeat="option in current.options | limitTo: 20">
@@ -268,12 +278,17 @@
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="gf-form-button-row p-y-0">
-      <button type="button" class="btn btn-success" ng-show="mode === 'edit'" ng-click="update();">Update</button>
-      <button type="button" class="btn btn-success" ng-show="mode === 'new'" ng-click="add();">Add</button>
-    </div>
-  </div>
+			<div class="alert alert-info gf-form-group" ng-if="infoText">
+				{{infoText}}
+			</div>
+
+			<div class="gf-form-button-row p-y-0">
+				<button type="submit" class="btn btn-success" ng-show="mode === 'edit'" ng-click="update();">Update</button>
+				<button type="submit" class="btn btn-success" ng-show="mode === 'new'" ng-click="add();">Add</button>
+			</div>
+
+		</form>
+	</div>
 </div>
 

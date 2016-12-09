@@ -1,9 +1,11 @@
----
-page_title: How To integrate Hubot and Grafana
-page_description: Hubot Grafana install guide
-page_keywords: grafana, tutorials, hubot, slack, hipchat, setup, install, config
-author: Torkel Ödegaard
----
++++
+title = "How To integrate Hubot and Grafana"
+type = "docs"
+keywords = ["grafana", "tutorials", "hubot", "slack", "hipchat", "setup", "install", "config"]
+[menu.docs]
+parent = "tutorials"
+weight = 10
++++
 
 # How to integrate Hubot with Grafana
 

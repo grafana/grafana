@@ -12,11 +12,11 @@ grunt karma:dev
 
 ### Run tests for backend assets before commit
 ```
-test -z "$(gofmt -s -l . | grep -v Godeps/_workspace/src/ | tee /dev/stderr)"
+test -z "$(gofmt -s -l . | grep -v -E 'vendor/(github.com|golang.org|gopkg.in)' | tee /dev/stderr)"
 ```
 
 ### Run tests for frontend assets before commit
 ```
-grunt test
-godep go test -v ./pkg/...
+npm test
+go test -v ./pkg/...
 ```

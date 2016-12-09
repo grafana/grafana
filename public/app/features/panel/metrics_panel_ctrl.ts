@@ -25,6 +25,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   range: any;
   rangeRaw: any;
   interval: any;
+  intervalMs: any;
   resolution: any;
   timeInfo: any;
   skipDataOnInit: boolean;
@@ -80,6 +81,8 @@ class MetricsPanelCtrl extends PanelCtrl {
     delete this.error;
     this.loading = true;
 
+    this.updateTimeRange();
+
     // load datasource service
     this.setTimeQueryStart();
     this.datasourceSrv.get(this.panel.datasource)
@@ -100,6 +103,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     });
   }
 
+
   setTimeQueryStart() {
     this.timing.queryStart = new Date().getTime();
   }
@@ -110,7 +114,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   updateTimeRange() {
     this.range = this.timeSrv.timeRange();
-    this.rangeRaw = this.timeSrv.timeRange(false);
+    this.rangeRaw = this.range.raw;
 
     this.applyPanelTimeOverrides();
 
@@ -120,10 +124,23 @@ class MetricsPanelCtrl extends PanelCtrl {
       this.resolution = Math.ceil($(window).width() * (this.panel.span / 12));
     }
 
-    var panelInterval = this.panel.interval;
-    var datasourceInterval = (this.datasource || {}).interval;
-    this.interval = kbn.calculateInterval(this.range, this.resolution, panelInterval || datasourceInterval);
+    this.calculateInterval();
   };
+
+  calculateInterval() {
+    var intervalOverride = this.panel.interval;
+
+    // if no panel interval check datasource
+    if (intervalOverride) {
+      intervalOverride = this.templateSrv.replace(intervalOverride, this.panel.scopedVars);
+    } else if (this.datasource && this.datasource.interval) {
+      intervalOverride = this.datasource.interval;
+    }
+
+    var res = kbn.calculateInterval(this.range, this.resolution, intervalOverride);
+    this.interval = res.interval;
+    this.intervalMs = res.intervalMs;
+  }
 
   applyPanelTimeOverrides() {
     this.timeInfo = '';
@@ -169,7 +186,6 @@ class MetricsPanelCtrl extends PanelCtrl {
   };
 
   issueQueries(datasource) {
-    this.updateTimeRange();
     this.datasource = datasource;
 
     if (!this.panel.targets || this.panel.targets.length === 0) {
@@ -181,6 +197,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       range: this.range,
       rangeRaw: this.rangeRaw,
       interval: this.interval,
+      intervalMs: this.intervalMs,
       targets: this.panel.targets,
       format: this.panel.renderer === 'png' ? 'png' : 'json',
       maxDataPoints: this.resolution,
@@ -235,6 +252,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       },
       complete: () => {
         console.log('panel: observer got complete');
+        this.dataStream = null;
       }
     });
   }
@@ -244,7 +262,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (datasource.meta.mixed) {
       _.each(this.panel.targets, target => {
         target.datasource = this.panel.datasource;
-        if (target.datasource === null) {
+        if (!target.datasource) {
           target.datasource = config.defaultDatasource;
         }
       });

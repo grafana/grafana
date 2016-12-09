@@ -3,6 +3,8 @@ define( [
 	"./var/rnotwhite"
 ], function( jQuery, rnotwhite ) {
 
+"use strict";
+
 // Convert String-formatted options into Object-formatted ones
 function createOptions( options ) {
 	var object = {};
@@ -191,7 +193,7 @@ jQuery.Callbacks = function( options ) {
 			// Abort any pending executions
 			lock: function() {
 				locked = queue = [];
-				if ( !memory ) {
+				if ( !memory && !firing ) {
 					list = memory = "";
 				}
 				return this;

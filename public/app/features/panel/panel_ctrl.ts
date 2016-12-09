@@ -50,7 +50,16 @@ export class PanelCtrl {
 
     $scope.$on("refresh", () => this.refresh());
     $scope.$on("render", () => this.render());
-    $scope.$on("$destroy", () => this.events.emit('panel-teardown'));
+    $scope.$on("$destroy", () => {
+      this.events.emit('panel-teardown');
+      this.events.removeAllListeners();
+    });
+
+    // we should do something interesting
+    // with newly added panels
+    if (this.panel.isNew) {
+      delete this.panel.isNew;
+    }
   }
 
   init() {
@@ -95,10 +104,10 @@ export class PanelCtrl {
     this.editModeInitiated = true;
     this.events.emit('init-edit-mode', null);
 
-    var routeParams = this.$injector.get('$routeParams');
-    if (routeParams.editorTab) {
+    var urlTab = (this.$injector.get('$routeParams').tab || '').toLowerCase();
+    if (urlTab) {
       this.editorTabs.forEach((tab, i) => {
-        if (tab.title === routeParams.editorTab) {
+        if (tab.title.toLowerCase() === urlTab) {
           this.editorTabIndex = i;
         }
       });
@@ -108,8 +117,7 @@ export class PanelCtrl {
   changeTab(newIndex) {
     this.editorTabIndex = newIndex;
     var route = this.$injector.get('$route');
-
-    route.current.params.editorTab = this.editorTabs[newIndex].title;
+    route.current.params.tab = this.editorTabs[newIndex].title.toLowerCase();
     route.updateParams();
   }
 
@@ -152,8 +160,8 @@ export class PanelCtrl {
   calculatePanelHeight() {
     if (this.fullscreen) {
       var docHeight = $(window).height();
-      var editHeight = Math.floor(docHeight * 0.3);
-      var fullscreenHeight = Math.floor(docHeight * 0.7);
+      var editHeight = Math.floor(docHeight * 0.4);
+      var fullscreenHeight = Math.floor(docHeight * 0.8);
       this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
     } else {
       this.containerHeight = this.panel.height || this.row.height;
@@ -186,25 +194,22 @@ export class PanelCtrl {
 
   duplicate() {
     this.dashboard.duplicatePanel(this.panel, this.row);
+    this.$timeout(() => {
+      this.$scope.$root.$broadcast('render');
+    });
   }
 
   updateColumnSpan(span) {
     this.panel.span = Math.min(Math.max(Math.floor(this.panel.span + span), 1), 12);
+    this.row.panelSpanChanged();
+
     this.$timeout(() => {
       this.render();
     });
   }
 
   removePanel() {
-    this.publishAppEvent('confirm-modal', {
-      title: 'Remove Panel',
-      text: 'Are you sure you want to remove this panel?',
-      icon: 'fa-trash',
-      yesText: 'Remove',
-      onConfirm: () => {
-        this.row.panels = _.without(this.row.panels, this.panel);
-      }
-    });
+    this.row.removePanel(this.panel);
   }
 
   editPanelJson() {
@@ -242,7 +247,7 @@ export class PanelCtrl {
     var modalScope = this.$scope.$new();
     modalScope.panel = this.panel;
     modalScope.dashboard = this.dashboard;
-    modalScope.inspector = angular.copy(this.inspector);
+    modalScope.inspector = $.extend(true, {}, this.inspector);
 
     this.publishAppEvent('show-modal', {
       src: 'public/app/partials/inspector.html',

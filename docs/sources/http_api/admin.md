@@ -1,10 +1,19 @@
-----
-page_title: Admin APIs
-page_description: Grafana Admin API Reference
-page_keywords: grafana, admin, http, api, documentation
----
++++
+title = "Admin HTTP API "
+description = "Grafana Admin HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "admin"]
+aliases = ["/http_api/admin/"]
+type = "docs"
+[menu.docs]
+name = "Admin"
+parent = "http_api"
++++
 
 # Admin API
+
+The admin http API does not currently work with an api token. Api Token's are currently only linked to an organization and organization role. They cannot given
+the permission of server admin, only user's can be given that permission. So in order to use these API calls you will have to use basic auth and Grafana user
+with Grafana admin permission.
 
 ## Settings
 
@@ -15,7 +24,6 @@ page_keywords: grafana, admin, http, api, documentation
     GET /api/admin/settings
     Accept: application/json
     Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
@@ -171,7 +179,6 @@ page_keywords: grafana, admin, http, api, documentation
     GET /api/admin/stats
     Accept: application/json
     Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
@@ -201,7 +208,6 @@ Create new user
     POST /api/admin/users HTTP/1.1
     Accept: application/json
     Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
     {
       "name":"User",
@@ -228,7 +234,6 @@ Change password for specific user
     PUT /api/admin/users/2/password HTTP/1.1
     Accept: application/json
     Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
@@ -246,7 +251,6 @@ Change password for specific user
     PUT /api/admin/users/2/permissions HTTP/1.1
     Accept: application/json
     Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 
@@ -264,7 +268,6 @@ Change password for specific user
     DELETE /api/admin/users/2 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
-    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 **Example Response**:
 

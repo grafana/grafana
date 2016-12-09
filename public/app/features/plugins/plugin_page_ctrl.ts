@@ -24,7 +24,7 @@ export class AppPageCtrl {
 
   initPage(app) {
     this.appModel = app;
-    this.page = _.findWhere(app.includes, {slug: this.$routeParams.slug});
+    this.page = _.find(app.includes, {slug: this.$routeParams.slug});
     this.appLogoUrl = app.info.logos.small;
 
     pluginInfoCache[this.pluginId] = app;

@@ -26,6 +26,18 @@ func ValidateOrgPlaylist(c *middleware.Context) {
 		c.JsonApiErr(403, "You are not allowed to edit/view playlist", nil)
 		return
 	}
+
+	items, itemsErr := LoadPlaylistItemDTOs(id)
+
+	if itemsErr != nil {
+		c.JsonApiErr(404, "Playlist items not found", err)
+		return
+	}
+
+	if len(items) == 0 {
+		c.JsonApiErr(404, "Playlist is empty", itemsErr)
+		return
+	}
 }
 
 func SearchPlaylists(c *middleware.Context) Response {

@@ -1,8 +1,6 @@
 package api
 
 import (
-	"crypto/tls"
-	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -16,16 +14,6 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
-
-var dataProxyTransport = &http.Transport{
-	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	Proxy:           http.ProxyFromEnvironment,
-	Dial: (&net.Dialer{
-		Timeout:   30 * time.Second,
-		KeepAlive: 30 * time.Second,
-	}).Dial,
-	TLSHandshakeTimeout: 10 * time.Second,
-}
 
 func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
@@ -77,7 +65,7 @@ func getDatasource(id int64, orgId int64) (*m.DataSource, error) {
 		return nil, err
 	}
 
-	return &query.Result, nil
+	return query.Result, nil
 }
 
 func ProxyDataSourceRequest(c *middleware.Context) {
@@ -95,6 +83,13 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
+	if ds.Type == m.DS_INFLUXDB {
+		if c.Query("db") != ds.Database {
+			c.JsonApiErr(403, "Datasource is not configured to allow this database", nil)
+			return
+		}
+	}
+
 	targetUrl, _ := url.Parse(ds.Url)
 	if len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[targetUrl.Host]; !exists {
@@ -104,8 +99,28 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	}
 
 	proxyPath := c.Params("*")
+
+	if ds.Type == m.DS_ES {
+		if c.Req.Request.Method == "DELETE" {
+			c.JsonApiErr(403, "Deletes not allowed on proxied Elasticsearch datasource", nil)
+			return
+		}
+		if c.Req.Request.Method == "PUT" {
+			c.JsonApiErr(403, "Puts not allowed on proxied Elasticsearch datasource", nil)
+			return
+		}
+		if c.Req.Request.Method == "POST" && proxyPath != "_msearch" {
+			c.JsonApiErr(403, "Posts not allowed on proxied Elasticsearch datasource except on /_msearch", nil)
+			return
+		}
+	}
+
 	proxy := NewReverseProxy(ds, proxyPath, targetUrl)
-	proxy.Transport = dataProxyTransport
+	proxy.Transport, err = ds.GetHttpTransport()
+	if err != nil {
+		c.JsonApiErr(400, "Unable to load TLS certificate", err)
+		return
+	}
 	proxy.ServeHTTP(c.Resp, c.Req.Request)
 	c.Resp.Header().Del("Set-Cookie")
 }

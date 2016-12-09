@@ -9,7 +9,7 @@ import {DashboardExporter} from '../export/exporter';
 export class DashNavCtrl {
 
   /** @ngInject */
-  constructor($scope, $rootScope, alertSrv, $location, playlistSrv, backendSrv, $timeout, datasourceSrv) {
+  constructor($scope, $rootScope, dashboardSrv, $location, playlistSrv, backendSrv, $timeout, datasourceSrv) {
 
     $scope.init = function() {
       $scope.onAppEvent('save-dashboard', $scope.saveDashboard);
@@ -31,6 +31,10 @@ export class DashNavCtrl {
     $scope.openEditView = function(editview) {
       var search = _.extend($location.search(), {editview: editview});
       $location.search(search);
+    };
+
+    $scope.showHelpModal = function() {
+      $scope.appEvent('show-modal', {templateHtml: '<help-modal></help-modal>'});
     };
 
     $scope.starDashboard = function() {
@@ -71,96 +75,35 @@ export class DashNavCtrl {
     $scope.makeEditable = function() {
       $scope.dashboard.editable = true;
 
-      var clone = $scope.dashboard.getSaveModelClone();
-
-      backendSrv.saveDashboard(clone, {overwrite: false}).then(function(data) {
-        $scope.dashboard.version = data.version;
-        $scope.appEvent('dashboard-saved', $scope.dashboard);
-        $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
-
+      return dashboardSrv.saveDashboard({makeEditable: true, overwrite: false}).then(function() {
         // force refresh whole page
         window.location.href = window.location.href;
-      }, $scope.handleSaveDashError);
+      });
     };
 
     $scope.saveDashboard = function(options) {
-      if ($scope.dashboardMeta.canSave === false) {
-        return;
-      }
-
-      var clone = $scope.dashboard.getSaveModelClone();
-
-      backendSrv.saveDashboard(clone, options).then(function(data) {
-        $scope.dashboard.version = data.version;
-        $scope.appEvent('dashboard-saved', $scope.dashboard);
-
-        var dashboardUrl = '/dashboard/db/' + data.slug;
-
-        if (dashboardUrl !== $location.path()) {
-          $location.url(dashboardUrl);
-        }
-
-        $scope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
-      }, $scope.handleSaveDashError);
-    };
-
-    $scope.handleSaveDashError = function(err) {
-      if (err.data && err.data.status === "version-mismatch") {
-        err.isHandled = true;
-
-        $scope.appEvent('confirm-modal', {
-          title: 'Conflict',
-          text: 'Someone else has updated this dashboard.',
-          text2: 'Would you still like to save this dashboard?',
-          yesText: "Save & Overwrite",
-          icon: "fa-warning",
-          onConfirm: function() {
-            $scope.saveDashboard({overwrite: true});
-          }
-        });
-      }
-
-      if (err.data && err.data.status === "name-exists") {
-        err.isHandled = true;
-
-        $scope.appEvent('confirm-modal', {
-          title: 'Conflict',
-          text: 'Dashboard with the same name exists.',
-          text2: 'Would you still like to save this dashboard?',
-          yesText: "Save & Overwrite",
-          icon: "fa-warning",
-          onConfirm: function() {
-            $scope.saveDashboard({overwrite: true});
-          }
-        });
-      }
-
-      if (err.data && err.data.status === "plugin-dashboard") {
-        err.isHandled = true;
-
-        $scope.appEvent('confirm-modal', {
-          title: 'Plugin Dashboard',
-          text: err.data.message,
-          text2: 'Your changes will be lost when you update the plugin. Use Save As to create custom version.',
-          yesText: "Overwrite",
-          icon: "fa-warning",
-          altActionText: "Save As",
-          onAltAction: function() {
-            $scope.saveDashboardAs();
-          },
-          onConfirm: function() {
-            $scope.saveDashboard({overwrite: true});
-          }
-        });
-      }
+      return dashboardSrv.saveDashboard(options);
     };
 
     $scope.deleteDashboard = function() {
+      var confirmText = "";
+      var text2 = $scope.dashboard.title;
+      var alerts = $scope.dashboard.rows.reduce((memo, row) => {
+        memo += row.panels.filter(panel => panel.alert).length;
+        return memo;
+      }, 0);
+
+      if (alerts > 0) {
+        confirmText = 'DELETE';
+        text2 = `This dashboad contains ${alerts} alerts. Deleting this dashboad will also delete those alerts`;
+      }
+
       $scope.appEvent('confirm-modal', {
         title: 'Delete',
         text: 'Do you want to delete this dashboard?',
-        text2: $scope.dashboard.title,
+        text2: text2,
         icon: 'fa-trash',
+        confirmText: confirmText,
         yesText: 'Delete',
         onConfirm: function() {
           $scope.deleteDashboardConfirmed();
@@ -176,16 +119,7 @@ export class DashNavCtrl {
     };
 
     $scope.saveDashboardAs = function() {
-      var newScope = $rootScope.$new();
-      newScope.clone = $scope.dashboard.getSaveModelClone();
-      newScope.clone.editable = true;
-      newScope.clone.hideControls = false;
-
-      $scope.appEvent('show-modal', {
-        src: 'public/app/features/dashboard/partials/saveDashboardAs.html',
-        scope: newScope,
-        modalClass: 'modal--narrow'
-      });
+      return dashboardSrv.saveDashboardAs();
     };
 
     $scope.viewJson = function() {

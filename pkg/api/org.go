@@ -152,6 +152,9 @@ func updateOrgAddressHelper(form dtos.UpdateOrgAddressForm, orgId int64) Respons
 // GET /api/orgs/:orgId
 func DeleteOrgById(c *middleware.Context) Response {
 	if err := bus.Dispatch(&m.DeleteOrgCommand{Id: c.ParamsInt64(":orgId")}); err != nil {
+		if err == m.ErrOrgNotFound {
+			return ApiError(404, "Failed to delete organization. ID not found", nil)
+		}
 		return ApiError(500, "Failed to update organization", err)
 	}
 	return ApiSuccess("Organization deleted")

@@ -36,6 +36,10 @@ func (db *Postgres) AutoIncrStr() string {
 	return ""
 }
 
+func (db *Postgres) BooleanStr(value bool) string {
+	return strconv.FormatBool(value)
+}
+
 func (b *Postgres) Default(col *Column) string {
 	if col.Type == DB_Bool {
 		if col.Default == "0" {

@@ -13,6 +13,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   var loadOrgBundle = new BundleLoader('app/features/org/all');
   var loadPluginsBundle = new BundleLoader('app/features/plugins/all');
   var loadAdminBundle = new BundleLoader('app/features/admin/admin');
+  var loadAlertingBundle = new BundleLoader('app/features/alerting/all');
 
   $routeProvider
   .when('/', {
@@ -42,10 +43,6 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/dashboards/list', {
     templateUrl: 'public/app/features/dashboard/partials/dash_list.html',
     controller : 'DashListCtrl',
-  })
-  .when('/dashboards/migrate', {
-    templateUrl: 'public/app/features/dashboard/partials/migrate.html',
-    controller : 'DashboardImportCtrl',
   })
   .when('/datasources', {
     templateUrl: 'public/app/features/plugins/partials/ds_list.html',
@@ -188,13 +185,37 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controllerAs: 'ctrl',
     resolve: loadPluginsBundle,
   })
-  .when('/global-alerts', {
-    templateUrl: 'public/app/features/dashboard/partials/globalAlerts.html',
-  })
   .when('/styleguide/:page?', {
     controller: 'StyleGuideCtrl',
     controllerAs: 'ctrl',
     templateUrl: 'public/app/features/styleguide/styleguide.html',
+  })
+  .when('/alerting', {
+    redirectTo: '/alerting/list'
+  })
+  .when('/alerting/list', {
+    templateUrl: 'public/app/features/alerting/partials/alert_list.html',
+    controller: 'AlertListCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadAlertingBundle,
+  })
+  .when('/alerting/notifications', {
+    templateUrl: 'public/app/features/alerting/partials/notifications_list.html',
+    controller: 'AlertNotificationsListCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadAlertingBundle,
+  })
+  .when('/alerting/notification/new', {
+    templateUrl: 'public/app/features/alerting/partials/notification_edit.html',
+    controller: 'AlertNotificationEditCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadAlertingBundle,
+  })
+  .when('/alerting/notification/:id/edit', {
+    templateUrl: 'public/app/features/alerting/partials/notification_edit.html',
+    controller: 'AlertNotificationEditCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadAlertingBundle,
   })
   .otherwise({
     templateUrl: 'public/app/partials/error.html',

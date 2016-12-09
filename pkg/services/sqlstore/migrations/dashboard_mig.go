@@ -120,4 +120,9 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Add index for plugin_id in dashboard", NewAddIndexMigration(dashboardV2, &Index{
 		Cols: []string{"org_id", "plugin_id"}, Type: IndexType,
 	}))
+
+	// dashboard_id index for dashboard_tag table
+	mg.AddMigration("Add index for dashboard_id in dashboard_tag", NewAddIndexMigration(dashboardTagV1, &Index{
+		Cols: []string{"dashboard_id"}, Type: IndexType,
+	}))
 }
