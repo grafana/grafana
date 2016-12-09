@@ -1,9 +1,8 @@
 define([
   'jquery',
-  'lodash',
-  'moment'
+  'lodash'
 ],
-function($, _, moment) {
+function($, _) {
   'use strict';
 
   var kbn = {};
@@ -632,33 +631,38 @@ function($, _, moment) {
   };
 
   kbn.toDuration = function(size, decimals, timeScale) {
-    var units = ["year", "month", "day", "hour", "minute", "second", "millisecond"];
+    if (size === null) { return ""; }
+    if (size === 0) { return "0 " + timeScale + "s"; }
+    if (size < 0) { return kbn.toDuration(-size, decimals, timeScale) + " ago"; }
+
+    var units = [
+      {short: "y",  long: "year"},
+      {short: "M",  long: "month"},
+      {short: "w",  long: "week"},
+      {short: "d",  long: "day"},
+      {short: "h",  long: "hour"},
+      {short: "m",  long: "minute"},
+      {short: "s",  long: "second"},
+      {short: "ms", long: "millisecond"}
+    ];
+    // convert $size to milliseconds
+    // intervals_in_seconds uses seconds (duh), convert them to milliseconds here to minimize floating point errors
+    size *= kbn.intervals_in_seconds[units.find(function(e) { return e.long === timeScale; }).short] * 1000;
+
     var string = [];
-
-    var pushToString = function(value, unit) {
-      if (value !== 1) {
-        unit += "s";
+     // after first value >= 1 print only $decimals more
+    var decrementDecimals = false;
+    for (var i = 0; i < units.length && decimals >= 0; i++) {
+      var interval = kbn.intervals_in_seconds[units[i].short] * 1000;
+      var value = size / interval;
+      if (value >= 1 || decrementDecimals) {
+        decrementDecimals = true;
+        var floor = Math.floor(value);
+        var unit = units[i].long + (floor !== 1 ? "s" : "");
+        string.push(floor + " " + unit);
+        size = size % interval;
+        decimals--;
       }
-      string.push(value + " " + unit);
-    };
-
-    var duration = moment.duration(size, timeScale);
-    while (units.length > 0) {
-      var u = units.shift();
-      var v = duration.get(u);
-      if (v) {
-        pushToString(v, u);
-        break;
-      }
-    }
-    for (var i = 0; i < decimals && i < units.length; i++) {
-      var uu = units[i];
-      var vv = duration.get(uu);
-      pushToString(vv, uu);
-    }
-    // if everything is 0 display "0 $timeScale"
-    if (!string.length) {
-      pushToString(duration.get(timeScale), timeScale);
     }
 
     return string.join(", ");
