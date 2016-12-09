@@ -5,10 +5,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/plugins"
-	//"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -118,7 +117,7 @@ func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) Resp
 		return ApiError(500, "Failed to update datasource", err)
 	}
 
-	return Json(200, "Datasource updated")
+	return Json(200, util.DynMap{"message": "Datasource updated"})
 }
 
 func fillWithSecureJsonData(cmd *m.UpdateDataSourceCommand) error {

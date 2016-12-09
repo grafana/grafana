@@ -10,6 +10,7 @@ export class User {
   isSignedIn: any;
   orgRole: any;
   timezone: string;
+  helpFlags1: number;
 
   constructor() {
     if (config.bootData.user) {

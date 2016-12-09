@@ -180,3 +180,34 @@ func SearchUsers(c *middleware.Context) Response {
 
 	return Json(200, query.Result)
 }
+
+func SetHelpFlag(c *middleware.Context) Response {
+	flag := c.ParamsInt64(":id")
+
+	bitmask := &c.HelpFlags1
+	bitmask.AddFlag(m.HelpFlags1(flag))
+
+	cmd := m.SetUserHelpFlagCommand{
+		UserId:     c.UserId,
+		HelpFlags1: *bitmask,
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to update help flag", err)
+	}
+
+	return Json(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+}
+
+func ClearHelpFlags(c *middleware.Context) Response {
+	cmd := m.SetUserHelpFlagCommand{
+		UserId:     c.UserId,
+		HelpFlags1: m.HelpFlags1(0),
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to update help flag", err)
+	}
+
+	return Json(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+}

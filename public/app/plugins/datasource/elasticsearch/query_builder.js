@@ -49,6 +49,10 @@ function (queryDef) {
       }
     }
 
+    if (aggDef.settings.missing) {
+      queryNode.terms.missing = aggDef.settings.missing;
+    }
+
     return queryNode;
   };
 
@@ -63,6 +67,10 @@ function (queryDef) {
 
     if (esAgg.interval === 'auto') {
       esAgg.interval = "$interval";
+    }
+
+    if (settings.missing) {
+      esAgg.missing = settings.missing;
     }
 
     return esAgg;
