@@ -22,7 +22,6 @@ export class ElasticConfigCtrl {
   ];
 
   esVersions = [
-    {name: '1.x', value: 1},
     {name: '2.x', value: 2},
     {name: '5.x', value: 5},
   ];

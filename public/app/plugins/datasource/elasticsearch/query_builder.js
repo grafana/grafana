@@ -11,11 +11,11 @@ function (queryDef) {
 
   ElasticQueryBuilder.prototype.getRangeFilter = function() {
     var filter = {};
-    filter[this.timeField] = {"gte": "$timeFrom", "lte": "$timeTo"};
-
-    if (this.esVersion >= 2) {
-      filter[this.timeField]["format"] = "epoch_millis";
-    }
+    filter[this.timeField] = {
+      gte: "$timeFrom",
+      lte: "$timeTo",
+      format: "epoch_millis",
+    };
 
     return filter;
   };
@@ -59,13 +59,10 @@ function (queryDef) {
     esAgg.field = this.timeField;
     esAgg.min_doc_count = settings.min_doc_count || 0;
     esAgg.extended_bounds = {min: "$timeFrom", max: "$timeTo"};
+    esAgg.format = "epoch_millis";
 
     if (esAgg.interval === 'auto') {
       esAgg.interval = "$interval";
-    }
-
-    if (this.esVersion >= 2) {
-      esAgg.format = "epoch_millis";
     }
 
     return esAgg;
@@ -108,14 +105,13 @@ function (queryDef) {
       return;
     }
 
-    var i, filter, condition, must;
-    must = query.query.bool.must;
+    var i, filter, condition;
 
     for (i = 0; i < adhocFilters.length; i++) {
       filter = adhocFilters[i];
       condition = {};
       condition[filter.key] = filter.value;
-      must.push({"term": condition});
+      query.query.bool.must.push({"term": condition});
     }
   };
 
