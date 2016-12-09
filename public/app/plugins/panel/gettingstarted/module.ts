@@ -20,6 +20,9 @@ class GettingStartedPanelCtrl extends PanelCtrl {
     this.steps.push({
       title: 'Install Grafana',
       icon: 'icon-gf icon-gf-check',
+      href: 'http://docs.grafana.org/',
+      target: '_blank',
+      note: 'Review the installation docs',
       check: () => $q.when(true),
     });
 
