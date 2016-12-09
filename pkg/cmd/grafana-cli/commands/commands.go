@@ -90,10 +90,10 @@ var pluginCommands = []cli.Command{
 	},
 }
 
-var userCommands = []cli.Command{
+var adminCommands = []cli.Command{
 	{
-		Name:   "reset-admin",
-		Usage:  "reset-admin <new password>",
+		Name:   "reset-admin-password",
+		Usage:  "reset-admin-password <new password>",
 		Action: runDbCommand(resetPasswordCommand),
 	},
 }
@@ -105,8 +105,8 @@ var Commands = []cli.Command{
 		Subcommands: pluginCommands,
 	},
 	{
-		Name:        "user",
-		Usage:       "",
-		Subcommands: userCommands,
+		Name:        "admin",
+		Usage:       "Grafana admin commands",
+		Subcommands: adminCommands,
 	},
 }

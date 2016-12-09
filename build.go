@@ -73,6 +73,10 @@ func main() {
 		case "setup":
 			setup()
 
+    case "build-cli":
+      clean()
+      build("grafana-cli", "./pkg/cmd/grafana-cli", []string{})
+
 		case "build":
 			clean()
 			for _, binary := range binaries {

@@ -15,8 +15,9 @@ const AdminUserId = 1
 func resetPasswordCommand(c CommandLine) error {
 	newPassword := c.Args().First()
 
-	if len(newPassword) < 4 {
-		return fmt.Errorf("New password too short")
+	password := models.Password(newPassword)
+	if password.IsWeak() {
+		return fmt.Errorf("New password is too short")
 	}
 
 	userQuery := models.GetUserByIdQuery{Id: AdminUserId}
@@ -36,6 +37,7 @@ func resetPasswordCommand(c CommandLine) error {
 		return fmt.Errorf("Failed to update user password")
 	}
 
+	logger.Infof("\n")
 	logger.Infof("Admin password changed successfully %s", color.GreenString("✔"))
 
 	return nil

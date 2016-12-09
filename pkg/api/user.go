@@ -157,8 +157,9 @@ func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) 
 		return ApiError(401, "Invalid old password", nil)
 	}
 
-	if len(cmd.NewPassword) < 4 {
-		return ApiError(400, "New password too short", nil)
+	password := m.Password(cmd.NewPassword)
+	if password.IsWeak() {
+		return ApiError(400, "New password is too short", nil)
 	}
 
 	cmd.UserId = c.UserId

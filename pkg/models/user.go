@@ -10,6 +10,12 @@ var (
 	ErrUserNotFound = errors.New("User not found")
 )
 
+type Password string
+
+func (p Password) IsWeak() bool {
+	return len(p) <= 4
+}
+
 type User struct {
 	Id            int64
 	Version       int
