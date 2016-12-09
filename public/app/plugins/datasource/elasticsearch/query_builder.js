@@ -70,7 +70,6 @@ function (queryDef) {
 
   ElasticQueryBuilder.prototype.getFiltersAgg = function(aggDef) {
     var filterObj = {};
-
     for (var i = 0; i < aggDef.settings.filters.length; i++) {
       var query = aggDef.settings.filters[i].query;
 
@@ -106,7 +105,6 @@ function (queryDef) {
     }
 
     var i, filter, condition;
-
     for (i = 0; i < adhocFilters.length; i++) {
       filter = adhocFilters[i];
       condition = {};
@@ -123,8 +121,7 @@ function (queryDef) {
     target.timeField =  this.timeField;
 
     var i, nestedAggs, metric;
-    var query = {};
-    query = {
+    var query = {
       "size": 0,
       "query": {
         "bool": {
@@ -216,9 +213,7 @@ function (queryDef) {
   };
 
   ElasticQueryBuilder.prototype.getTermsQuery = function(queryDef) {
-    var query;
-
-    query = {
+    var query = {
       "size": 0,
       "query": {
         "bool": {
