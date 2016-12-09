@@ -1,0 +1,153 @@
+<div class="editor-row" style="margin-top: 10px;">
+
+<div  ng-repeat="target in panel.targets"
+      style="margin-bottom: 10px;"
+      ng-class="{'tight-form-disabled': target.hide}"
+      ng-controller="GnocchiQueryCtrl"
+      ng-init="init()">
+
+    <div class="tight-form">
+        <ul class="tight-form-list pull-right">
+            <li ng-show="target.error" class="tight-form-item">
+                <a bs-tooltip="target.error" style="color: rgb(229, 189, 28)" role="menuitem">
+                    <i class="fa fa-warning"></i>
+                </a>
+            </li>
+            <li class="tight-form-item">
+                <a class="pointer" tabindex="1" ng-click="toggleQueryMode()">
+                    <i class="fa fa-pencil"></i>
+                </a>
+            </li>
+            <li class="tight-form-item last">
+                <a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+                    <i class="fa fa-remove"></i>
+                </a>
+            </li>
+        </ul>
+
+        <ul class="tight-form-list">
+            <li>
+                <a class="tight-form-item"
+                   ng-click="target.hide = !target.hide; get_data();"
+                   role="menuitem">
+                    <i class="fa fa-eye"></i>
+                </a>
+            </li>
+        </ul>
+
+        <ul class="tight-form-list" role="menu">
+            <li class="tight-form-item last">
+                <span ng-show="target.queryMode === 'resource_search'">Measurements of a metric of multiple resources</span>
+                <span ng-show="target.queryMode === 'resource_aggregation'">Aggregated measurements of a metric across resources</span>
+                <span ng-show="target.queryMode === 'resource'">Measurements of a metric of a resource</span>
+                <span ng-show="target.queryMode === 'metric'">Measurements of a metric</span>
+            </li>
+        </ul>
+        <div class="clearfix"></div>
+        <ul class="tight-form-list" role="menu" ng-show="['resource_search', 'resource_aggregation'].indexOf(target.queryMode) >= 0">
+            <li class="tight-form-item">Query</li>
+            <li>
+                <input type="text"
+                       class="input-xxlarge tight-form-input"
+                       ng-model="target.resource_search"
+                       spellcheck='false'
+                       placeholder="json query"
+                       data-min-length=0
+                       ng-model-onblur
+                       ng-blur="targetBlur()"
+                       >
+            </li>
+        </ul>
+        <div class="clearfix"></div>
+        <ul class="tight-form-list" role="menu">
+            <li class="tight-form-item" style="width: 122px" ng-show="target.queryMode === 'resource'">
+                Resource ID
+            </li>
+            <li ng-show="target.queryMode === 'resource'">
+                <input type="text"
+                       class="input-large tight-form-input"
+                       ng-model="target.resource_id"
+                       spellcheck='false'
+                       bs-typeahead="suggestResourceIDs"
+                       placeholder="resource id"
+                       data-min-length=0 data-items=100
+                       ng-model-onblur
+                       ng-blur="targetBlur()"
+                       >
+            </li>
+
+
+                <li class="tight-form-item" style="width: 122px" ng-show="target.queryMode === 'metric'">
+                    Metric ID
+                </li>
+                <li ng-show="target.queryMode === 'metric'">
+                    <input type="text"
+                           class="input-large tight-form-input"
+                           ng-model="target.metric_id"
+                           spellcheck='false'
+                           bs-typeahead="suggestMetricIDs"
+                           placeholder="metric id"
+                           data-min-length=0 data-items=100
+                           ng-model-onblur
+                           ng-blur="targetBlur()"
+                           >
+                </li>
+
+                    <li class="tight-form-item" style="width: 122px" ng-show="['resource', 'resource_search', 'resource_aggregation'].indexOf(target.queryMode) >= 0">
+                        Resource type
+                    </li>
+                    <li ng-show="['resource', 'resource_search', 'resource_aggregation'].indexOf(target.queryMode) >= 0">
+                        <input type="text"
+                               class="input-large tight-form-input"
+                               ng-model="target.resource_type"
+                               spellcheck='false'
+                               placeholder="generic"
+                               data-min-length=0 data-items=100
+                               ng-model-onblur
+                               ng-blur="targetBlur()"
+                               >
+                    </li>
+
+                        <li class="tight-form-item" style="width: 122px" ng-show="['resource', 'resource_search', 'resource_aggregation'].indexOf(target.queryMode) >= 0">Metric name</li>
+                        <li ng-show="['resource', 'resource_search', 'resource_aggregation'].indexOf(target.queryMode) >= 0">
+                            <input type="text"
+                                   class="input-large tight-form-input"
+                                   ng-model="target.metric_name"
+                                   spellcheck='false'
+                                   bs-typeahead="suggestMetricNames"
+                                   placeholder="metric name"
+                                   data-min-length=0 data-items=100
+                                   ng-model-onblur
+                                   ng-blur="targetBlur()"
+                                   >
+                        </li>
+                            <li class="tight-form-item">
+                                Aggregator
+                            </li>
+                            <li>
+                                <select ng-model="target.aggregator"
+                                        class="tight-form-input input-small"
+                                        ng-options="agg for agg in aggregators"
+                                        ng-change="targetBlur()">
+                                </select>
+                            </li>
+                            <li class="tight-form-item" style="width: 122px" ng-show="['resource', 'resource_search', 'resource_aggregation'].indexOf(target.queryMode) >= 0">
+                                Label <span ng-show="target.queryMode !== 'resource_aggregation'">attribute</span>
+                            </li>
+                            <li ng-show="['resource', 'resource_search', 'resource_aggregation'].indexOf(target.queryMode) >= 0">
+                                <input type="text"
+                                       class="input-large tight-form-input"
+                                       ng-model="target.label"
+                                       spellcheck='false'
+                                       placeholder="id"
+                                       data-min-length=0
+                                       ng-model-onblur
+                                       ng-blur="targetBlur()"
+                                       >
+                            </li>
+        </ul>
+
+        <div class="clearfix"></div>
+    </div>
+</div>
+</div>
