@@ -10,9 +10,18 @@
         "module": "system",
         "noEmitOnError": true,
         "emitDecoratorMetadata": true,
-        "experimentalDecorators": true
+        "experimentalDecorators": true,
+        "noImplicitReturns":false,
+        "noImplicitThis":false,
+        "noImplicitUseStrict":false,
+        "noUnusedLocals":false
     },
-    "files": [
+    "include": [
         "public/app/**/*.ts"
+    ],
+    "exclude": [
+        "public/vendor/**/*",
+        "public/**/*.d.ts"
     ]
+
 }

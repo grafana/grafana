@@ -6,7 +6,7 @@ module.exports = function(grunt) {
     'jshint:source',
     'jshint:tests',
     'jscs',
-    'tslint',
+    'exec:tslint',
     'clean:release',
     'copy:node_modules',
     'copy:public_to_gen',
