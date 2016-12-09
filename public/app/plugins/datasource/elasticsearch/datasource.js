@@ -89,8 +89,10 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         "bool": {
           "must": [
             { "range": range },
-            { "query_string": {
-              "query": queryInterpolated }
+            {
+              "query_string": {
+                "query": queryInterpolated
+              }
             }
           ]
         }
