@@ -205,7 +205,7 @@ function (_, $, coreModule) {
 
           $scope.onSegmentChange = function() {
             if (cachedOptions) {
-              var option = _.find(cachedOptions, {text: $scope.segment.value});
+              var option = _.find(cachedOptions, {value: $scope.segment.value});
               if (option && option.value !== $scope.property) {
                 $scope.property = option.value;
               } else if (attrs.custom !== 'false') {
