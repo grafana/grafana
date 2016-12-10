@@ -10,7 +10,7 @@ module.exports = function(grunt) {
     'clean:release',
     'copy:node_modules',
     'copy:public_to_gen',
-    'typescript:build',
+    'exec:tscompile',
     'karma:test',
     'phantomjs',
     'css',
