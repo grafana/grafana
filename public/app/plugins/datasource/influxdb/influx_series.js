@@ -89,7 +89,7 @@ function (_, TableModel) {
         if (column === 'sequence_number') { return; }
         if (!titleCol) { titleCol = index; }
         if (column === self.annotation.titleColumn) { titleCol = index; return; }
-        if (_.contains(tagsColumn.split(","), column)) { tagsCol.push(index); return; }
+        if (_.includes(self.annotation.tagsColumn.replace(' ', '').split(","), column)) { tagsCol.push(index); return; }
         if (column === self.annotation.textColumn) { textCol = index; return; }
       });
 
