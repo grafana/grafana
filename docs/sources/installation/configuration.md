@@ -394,7 +394,7 @@ browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
     token_url =
     api_url =
     allowed_domains = mycompany.com mycompany.org
-    allow_sign_up = false
+    allow_sign_up = true
 
 Set api_url to the resource that returns basic user info.
 
