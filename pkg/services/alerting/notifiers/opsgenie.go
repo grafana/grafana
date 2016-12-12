@@ -112,6 +112,7 @@ func (this *OpsGenieNotifier) closeAlert(evalContext *alerting.EvalContext) erro
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		this.log.Error("Failed to send notification to OpsGenie", "error", err, "body", string(body))
+		return err
 	}
 
 	return nil
