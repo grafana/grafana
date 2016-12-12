@@ -1,12 +1,8 @@
 package tsdb
 
 import (
-	"crypto/tls"
-	"net"
-	"net/http"
-	"time"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	"gopkg.in/guregu/null.v3"
 )
 
@@ -14,7 +10,7 @@ type Query struct {
 	RefId         string
 	Model         *simplejson.Json
 	Depends       []string
-	DataSource    *DataSourceInfo
+	DataSource    *models.DataSource
 	Results       []*TimeSeries
 	Exclude       bool
 	MaxDataPoints int64
@@ -31,41 +27,6 @@ type Request struct {
 type Response struct {
 	BatchTimings []*BatchTiming          `json:"timings"`
 	Results      map[string]*QueryResult `json:"results"`
-}
-
-type DataSourceInfo struct {
-	Id                int64
-	Name              string
-	PluginId          string
-	Url               string
-	Password          string
-	User              string
-	Database          string
-	BasicAuth         bool
-	BasicAuthUser     string
-	BasicAuthPassword string
-	JsonData          *simplejson.Json
-}
-
-func (ds *DataSourceInfo) GetDefaultClient() *http.Client {
-	tr := &http.Transport{
-		Proxy: http.ProxyFromEnvironment,
-		DialContext: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).DialContext,
-		MaxIdleConns:          100,
-		IdleConnTimeout:       90 * time.Second,
-		TLSHandshakeTimeout:   10 * time.Second,
-		ExpectContinueTimeout: 1 * time.Second,
-
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	return &http.Client{
-		Timeout:   time.Duration(30 * time.Second),
-		Transport: tr,
-	}
 }
 
 type BatchTiming struct {

@@ -2,12 +2,13 @@ package mqe
 
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type MQEQueryParser struct{}
 
-func (qp *MQEQueryParser) Parse(model *simplejson.Json, dsInfo *tsdb.DataSourceInfo, queryContext *tsdb.QueryContext) (*MQEQuery, error) {
+func (qp *MQEQueryParser) Parse(model *simplejson.Json, dsInfo *models.DataSource, queryContext *tsdb.QueryContext) (*MQEQuery, error) {
 	query := &MQEQuery{TimeRange: queryContext.TimeRange}
 	query.AddAppToAlias = model.Get("addAppToAlias").MustBool(false)
 	query.AddHostToAlias = model.Get("addHostToAlias").MustBool(false)

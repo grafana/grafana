@@ -1,5 +1,5 @@
 +++
-title = "Singletat Panel"
+title = "Singlestat Panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "singlestat"]
 type = "docs"
 [menu.docs]
@@ -23,7 +23,15 @@ The singlestat panel has a normal query editor to allow you define your exact me
 
 1. `Big Value`: Big Value refers to how we display the main stat for the Singlestat Panel. This is always a single value that is displayed in the Panel in between two strings, `Prefix` and  `Suffix`. The single number is calculated by choosing a function (min,max,average,current,total) of your metric query. This functions reduces your query into a single numeric value.
 2. `Font Size`: You can use this section to select the font size of the different texts in the Singlestat Panel, i.e. prefix, value and postfix.
-3. `Values`: The Value fields let you set the function (min, max, average, current, total) that your entire query is reduced into a single value with. You can also set the font size of the Value field and font-size (as a %) of the metric query that the Panel is configured with. This reduces the entire query into a single summary value that is displayed.
+3. `Values`: The Value fields let you set the function (min, max, average, current, total, first, delta, range) that your entire query is reduced into a single value with. You can also set the font size of the Value field and font-size (as a %) of the metric query that the Panel is configured with. This reduces the entire query into a single summary value that is displayed.
+   * `min` - The smallest value in the series
+   * `max` - The largest value in the series
+   * `average` - The average of all the non-null values in the series
+   * `current` - The last value in the series. If the series ends on null the previous value will be used.
+   * `total` - The sum of all the non-null values in the series
+   * `first` - The first value in the series
+   * `delta` - The total incremental increase (of a counter) in the series. An attempt is made to account for counter resets, but this will only be accurate for single instance metrics. Used to show total counter increase in time series.
+   * `range` - The difference between 'min' and 'max'. Useful the show the range of change for a gauge.
 4. `Postfixes`: The Postfix fields let you define a custom label and font-size (as a %) to appear *after* the value
 5. `Units`: Units are appended to the the Singlestat  within the panel, and will respect the color and threshold settings for the value.
 6. `Decimals`: The Decimal field allows you to override the automatic decimal precision, and set it explicitly.

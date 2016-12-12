@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
@@ -25,29 +26,33 @@ import (
 */
 
 type MQEExecutor struct {
-	*tsdb.DataSourceInfo
+	*models.DataSource
 	QueryParser    *MQEQueryParser
 	ResponseParser *MQEResponseParser
+	HttpClient     *http.Client
 }
 
-func NewMQEExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
+func NewMQEExecutor(dsInfo *models.DataSource) (tsdb.Executor, error) {
+	httpclient, err := dsInfo.GetHttpClient()
+	if err != nil {
+		return nil, err
+	}
+
 	return &MQEExecutor{
-		DataSourceInfo: dsInfo,
+		DataSource:     dsInfo,
 		QueryParser:    &MQEQueryParser{},
 		ResponseParser: &MQEResponseParser{},
-	}
+		HttpClient:     httpclient,
+	}, nil
 }
 
 var (
-	glog       log.Logger
-	HttpClient *http.Client
+	glog log.Logger
 )
 
 func init() {
 	glog = log.New("tsdb.mqe")
 	tsdb.RegisterExecutor("mqe-datasource", NewMQEExecutor)
-
-	HttpClient = tsdb.GetDefaultClient()
 }
 
 type QueryToSend struct {
@@ -58,14 +63,14 @@ type QueryToSend struct {
 func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
-	availableSeries, err := NewTokenClient().GetTokenData(ctx, e.DataSourceInfo)
+	availableSeries, err := NewTokenClient(e.HttpClient).GetTokenData(ctx, e.DataSource)
 	if err != nil {
 		return result.WithError(err)
 	}
 
 	var mqeQueries []*MQEQuery
 	for _, v := range queries {
-		q, err := e.QueryParser.Parse(v.Model, e.DataSourceInfo, queryContext)
+		q, err := e.QueryParser.Parse(v.Model, e.DataSource, queryContext)
 		if err != nil {
 			return result.WithError(err)
 		}
@@ -88,7 +93,7 @@ func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, quer
 
 		req, err := e.createRequest(v.RawQuery)
 
-		resp, err := ctxhttp.Do(ctx, HttpClient, req)
+		resp, err := ctxhttp.Do(ctx, e.HttpClient, req)
 		if err != nil {
 			return result.WithError(err)
 		}

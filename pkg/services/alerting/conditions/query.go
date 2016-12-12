@@ -23,6 +23,7 @@ type QueryCondition struct {
 	Query         AlertQuery
 	Reducer       QueryReducer
 	Evaluator     AlertEvaluator
+	Operator      string
 	HandleRequest tsdb.HandleRequestFunc
 }
 
@@ -72,6 +73,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 	return &alerting.ConditionResult{
 		Firing:      evalMatchCount > 0,
 		NoDataFound: emptySerieCount == len(seriesList),
+		Operator:    c.Operator,
 		EvalMatches: matches,
 	}, nil
 }
@@ -117,21 +119,9 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRa
 		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
 			{
-				RefId: "A",
-				Model: c.Query.Model,
-				DataSource: &tsdb.DataSourceInfo{
-					Id:                datasource.Id,
-					Name:              datasource.Name,
-					PluginId:          datasource.Type,
-					Url:               datasource.Url,
-					User:              datasource.User,
-					Password:          datasource.Password,
-					Database:          datasource.Database,
-					BasicAuth:         datasource.BasicAuth,
-					BasicAuthUser:     datasource.BasicAuthUser,
-					BasicAuthPassword: datasource.BasicAuthPassword,
-					JsonData:          datasource.JsonData,
-				},
+				RefId:      "A",
+				Model:      c.Query.Model,
+				DataSource: datasource,
 			},
 		},
 	}
@@ -168,8 +158,12 @@ func NewQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 	if err != nil {
 		return nil, err
 	}
-
 	condition.Evaluator = evaluator
+
+	operatorJson := model.Get("operator")
+	operator := operatorJson.Get("type").MustString("and")
+	condition.Operator = operator
+
 	return &condition, nil
 }
 

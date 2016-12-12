@@ -110,6 +110,7 @@ function(angular, _) {
       _.each(dash.templating.list, function(value) {
         value.current = null;
         value.options = null;
+        value.filters = null;
       });
     };
 
@@ -143,7 +144,14 @@ function(angular, _) {
       };
 
       modalScope.save = function() {
-        tracker.scope.$emit('save-dashboard');
+        var cancel = $rootScope.$on('dashboard-saved', function() {
+          cancel();
+          $timeout(function() {
+            tracker.goto_next();
+          });
+        });
+
+        $rootScope.$emit('save-dashboard');
       };
 
       $rootScope.appEvent('show-modal', {

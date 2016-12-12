@@ -49,6 +49,63 @@ define([
         expect(series.stats.avg).to.be(6.333333333333333);
       });
 
+      it('the delta value should account for nulls', function() {
+        series = new TimeSeries({
+                 datapoints: [[1,2],[3,3],[null,4],[10,5],[15,6]]
+               });
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.delta).to.be(14);
+      });
+
+      it('the delta value should account for nulls on first', function() {
+        series = new TimeSeries({
+                 datapoints: [[null,2],[1,3],[10,4],[15,5]]
+               });
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.delta).to.be(14);
+      });
+
+      it('the delta value should account for nulls on last', function() {
+        series = new TimeSeries({
+                 datapoints: [[1,2],[5,3],[10,4],[null,5]]
+               });
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.delta).to.be(9);
+      });
+
+      it('the delta value should account for resets', function() {
+        series = new TimeSeries({
+                 datapoints: [[1,2],[5,3],[10,4],[0,5],[10,6]]
+               });
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.delta).to.be(19);
+      });
+
+      it('the delta value should account for resets on last', function() {
+        series = new TimeSeries({
+                 datapoints: [[1,2],[2,3],[10,4],[8,5]]
+               });
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.delta).to.be(17);
+      });
+
+      it('the range value should be max - min', function() {
+        series = new TimeSeries(testData);
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.range).to.be(9);
+      });
+
+      it('first value should ingone nulls', function() {
+        series = new TimeSeries(testData);
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.first).to.be(1);
+        series = new TimeSeries({
+                 datapoints: [[null,2],[1,3],[10,4],[8,5]]
+               });
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.first).to.be(1);
+      });
+
       it('with null as zero style, average value should treat nulls as 0', function() {
         series = new TimeSeries(testData);
         series.getFlotPairs('null as zero', yAxisFormats);

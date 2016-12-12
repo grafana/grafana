@@ -106,13 +106,19 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 		Convey("can render number tags", func() {
 			query := &Query{Tags: []*Tag{&Tag{Operator: "=", Value: "10001", Key: "key"}}}
 
-			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 10001`)
+			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = '10001'`)
 		})
 
-		Convey("can render number tags with decimals", func() {
-			query := &Query{Tags: []*Tag{&Tag{Operator: "=", Value: "10001.1", Key: "key"}}}
+		Convey("can render numbers less then condition tags", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: "<", Value: "10001", Key: "key"}}}
 
-			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 10001.1`)
+			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" < 10001`)
+		})
+
+		Convey("can render number greather then condition tags", func() {
+			query := &Query{Tags: []*Tag{&Tag{Operator: ">", Value: "10001", Key: "key"}}}
+
+			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" > 10001`)
 		})
 
 		Convey("can render string tags", func() {

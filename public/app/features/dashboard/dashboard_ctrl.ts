@@ -52,7 +52,7 @@ export class DashboardCtrl {
         .catch($scope.onInitFailed.bind(this, 'Templating init failed', false))
         // continue
         .finally(function() {
-          dynamicDashboardSrv.init(dashboard, variableSrv);
+          dynamicDashboardSrv.init(dashboard);
           dynamicDashboardSrv.process();
 
           unsavedChangesSrv.init(dashboard, $scope);

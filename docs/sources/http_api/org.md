@@ -1,8 +1,14 @@
-----
-page_title: Organisation API
-page_description: Grafana Organisation API Reference
-page_keywords: grafana, admin, http, api, documentation, orgs, organisation
----
++++
+title = "Organisation HTTP API "
+description = "Grafana Organisation HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "organisation"]
+aliases = ["/http_api/organisation/"]
+type = "docs"
+[menu.docs]
+name = "Organisation"
+parent = "http_api"
++++
+
 
 # Organisation API
 
@@ -87,11 +93,11 @@ page_keywords: grafana, admin, http, api, documentation, orgs, organisation
 
 ## Create Organisation
 
-`POST /api/org`
+`POST /api/orgs`
 
 **Example Request**:
 
-    POST /api/org HTTP/1.1
+    POST /api/orgs HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk

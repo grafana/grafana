@@ -33,7 +33,11 @@ export class DashboardRow {
   }
 
   getSaveModel() {
+    this.model = {};
     assignModelProperties(this.model, this, this.defaults);
+
+    // remove properties that dont server persisted purpose
+    delete this.model.isNew;
     return this.model;
   }
 
@@ -82,10 +86,18 @@ export class DashboardRow {
 
   removePanel(panel, ask?) {
     if (ask !== false) {
+      var text2, confirmText;
+      if (panel.alert) {
+        text2 = "Panel includes an alert rule, removing panel will also remove alert rule";
+        confirmText = "YES";
+      }
+
       appEvents.emit('confirm-modal', {
         title: 'Remove Panel',
         text: 'Are you sure you want to remove this panel?',
+        text2: text2,
         icon: 'fa-trash',
+        confirmText: confirmText,
         yesText: 'Remove',
         onConfirm: () => {
           this.removePanel(panel, false);

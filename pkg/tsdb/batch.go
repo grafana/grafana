@@ -1,9 +1,6 @@
 package tsdb
 
-import (
-	"context"
-	"errors"
-)
+import "context"
 
 type Batch struct {
 	DataSourceId int64
@@ -24,12 +21,12 @@ func newBatch(dsId int64, queries QuerySlice) *Batch {
 }
 
 func (bg *Batch) process(ctx context.Context, queryContext *QueryContext) {
-	executor := getExecutorFor(bg.Queries[0].DataSource)
+	executor, err := getExecutorFor(bg.Queries[0].DataSource)
 
-	if executor == nil {
+	if err != nil {
 		bg.Done = true
 		result := &BatchResult{
-			Error:        errors.New("Could not find executor for data source type: " + bg.Queries[0].DataSource.PluginId),
+			Error:        err,
 			QueryResults: make(map[string]*QueryResult),
 		}
 		for _, query := range bg.Queries {

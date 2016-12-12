@@ -4,19 +4,21 @@ import (
 	"context"
 	"testing"
 
+	"net/http"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 func TestTokenClient(t *testing.T) {
 	SkipConvey("Token client", t, func() {
-		dsInfo := &tsdb.DataSourceInfo{
+		dsInfo := &models.DataSource{
 			JsonData: simplejson.New(),
 			Url:      "",
 		}
 
-		client := NewTokenClient()
+		client := NewTokenClient(http.DefaultClient)
 
 		body, err := client.RequestTokenData(context.TODO(), dsInfo)
 

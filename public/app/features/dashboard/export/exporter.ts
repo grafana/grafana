@@ -11,19 +11,40 @@ export class DashboardExporter {
   constructor(private datasourceSrv) {
   }
 
-  makeExportable(dash) {
+  makeExportable(dashboard) {
     var dynSrv = new DynamicDashboardSrv();
-    dynSrv.init(dash, {variables: dash.templating.list});
+
+    // clean up repeated rows and panels,
+    // this is done on the live real dashboard instance, not on a clone
+    // so we need to undo this
+    // this is pretty hacky and needs to be changed
+    dynSrv.init(dashboard);
     dynSrv.process({cleanUpOnly: true});
 
-    dash.id = null;
+    var saveModel = dashboard.getSaveModelClone();
+    saveModel.id = null;
+
+    // undo repeat cleanup
+    dynSrv.process();
 
     var inputs = [];
     var requires = {};
     var datasources = {};
     var promises = [];
+    var variableLookup: any = {};
+
+    for (let variable of saveModel.templating.list) {
+      variableLookup[variable.name] = variable;
+    }
 
     var templateizeDatasourceUsage = obj => {
+      // ignore data source properties that contain a variable
+      if (obj.datasource && obj.datasource.indexOf('$') === 0) {
+        if (variableLookup[obj.datasource.substring(1)]){
+          return;
+        }
+      }
+
       promises.push(this.datasourceSrv.get(obj.datasource).then(ds => {
         if (ds.meta.builtIn) {
           return;
@@ -50,7 +71,7 @@ export class DashboardExporter {
     };
 
     // check up panel data sources
-    for (let row of dash.rows) {
+    for (let row of saveModel.rows) {
       for (let panel of row.panels) {
         if (panel.datasource !== undefined) {
           templateizeDatasourceUsage(panel);
@@ -77,7 +98,7 @@ export class DashboardExporter {
     }
 
     // templatize template vars
-    for (let variable of dash.templating.list) {
+    for (let variable of saveModel.templating.list) {
       if (variable.type === 'query') {
         templateizeDatasourceUsage(variable);
         variable.options = [];
@@ -87,7 +108,7 @@ export class DashboardExporter {
     }
 
     // templatize annotations vars
-    for (let annotationDef of dash.annotations.list) {
+    for (let annotationDef of saveModel.annotations.list) {
       templateizeDatasourceUsage(annotationDef);
     }
 
@@ -105,7 +126,7 @@ export class DashboardExporter {
       });
 
       // templatize constants
-      for (let variable of dash.templating.list) {
+      for (let variable of saveModel.templating.list) {
         if (variable.type === 'constant') {
           var refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
           inputs.push({
@@ -133,7 +154,7 @@ export class DashboardExporter {
       newObj["__inputs"] = inputs;
       newObj["__requires"] = requires;
 
-      _.defaults(newObj, dash);
+      _.defaults(newObj, saveModel);
 
       return newObj;
     }).catch(err => {

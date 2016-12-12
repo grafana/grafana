@@ -35,7 +35,12 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		executable = executable + ".exe"
 	}
 
-	url := fmt.Sprintf("%s://localhost:%s/%s", setting.Protocol, setting.HttpPort, params.Path)
+	localDomain := "localhost"
+	if setting.HttpAddr != setting.DEFAULT_HTTP_ADDR {
+		localDomain = setting.HttpAddr
+	}
+
+	url := fmt.Sprintf("%s://%s:%s/%s", setting.Protocol, localDomain, setting.HttpPort, params.Path)
 
 	binPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, executable))
 	scriptPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, "render.js"))
@@ -47,12 +52,13 @@ func RenderToPng(params *RenderOpts) (string, error) {
 
 	cmdArgs := []string{
 		"--ignore-ssl-errors=true",
+		"--web-security=false",
 		scriptPath,
 		"url=" + url,
 		"width=" + params.Width,
 		"height=" + params.Height,
 		"png=" + pngPath,
-		"domain=" + setting.Domain,
+		"domain=" + localDomain,
 		"renderKey=" + renderKey,
 	}
 

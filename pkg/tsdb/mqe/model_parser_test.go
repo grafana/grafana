@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
@@ -12,7 +13,7 @@ func TestMQEQueryParser(t *testing.T) {
 	Convey("MQE query parser", t, func() {
 		parser := &MQEQueryParser{}
 
-		dsInfo := &tsdb.DataSourceInfo{JsonData: simplejson.New()}
+		dsInfo := &models.DataSource{JsonData: simplejson.New()}
 		queryContext := &tsdb.QueryContext{}
 
 		Convey("can parse simple mqe model", func() {

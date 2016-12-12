@@ -1,16 +1,18 @@
 define([
   'jquery',
-  'lodash'
+  'app/core/core',
 ],
-function ($) {
+function ($, core) {
   'use strict';
+
+  var appEvents = core.appEvents;
 
   function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
     var self = this;
     var ctrl = scope.ctrl;
     var panel = ctrl.panel;
 
-    var $tooltip = $('<div id="tooltip" class="graph-tooltip">');
+    var $tooltip = $('<div class="graph-tooltip">');
 
     this.destroy = function() {
       $tooltip.remove();
@@ -22,7 +24,7 @@ function ($) {
       var len = series.datapoints.points.length;
       for (var j = initial; j < len; j += ps) {
         // Special case of a non stepped line, highlight the very last point just before a null point
-        if ((series.datapoints.points[initial] != null && series.datapoints.points[j] == null && ! series.lines.steps)
+        if ((!series.lines.steps && series.datapoints.points[initial] != null && series.datapoints.points[j] == null)
             //normal case
             || series.datapoints.points[j] > posX) {
           return Math.max(j - ps,  0)/ps;
@@ -41,15 +43,17 @@ function ($) {
       return j - 1;
     };
 
-    this.showTooltip = function(absoluteTime, innerHtml, pos) {
-      var body = '<div class="graph-tooltip-time">'+ absoluteTime + '</div>';
-      body += innerHtml + '</div>';
-      $tooltip.html(body).place_tt(pos.pageX + 20, pos.pageY);
+    this.renderAndShow = function(absoluteTime, innerHtml, pos, xMode) {
+      if (xMode === 'time') {
+        innerHtml = '<div class="graph-tooltip-time">'+ absoluteTime + '</div>' + innerHtml;
+      }
+      $tooltip.html(innerHtml).place_tt(pos.pageX + 20, pos.pageY);
     };
 
     this.getMultiSeriesPlotHoverInfo = function(seriesList, pos) {
       var value, i, series, hoverIndex, hoverDistance, pointTime, yaxis;
-      var results = [];
+      // 3 sub-arrays, 1st for hidden series, 2nd for left yaxis, 3rd for right yaxis.
+      var results = [[],[],[]];
 
       //now we know the current X (j) position for X and Y values
       var last_value = 0; //needed for stacked values
@@ -60,14 +64,14 @@ function ($) {
         series = seriesList[i];
 
         if (!series.data.length || (panel.legend.hideEmpty && series.allIsNull)) {
-          // Init value & yaxis so that it does not brake series sorting
-          results.push({ hidden: true, value: 0, yaxis: 0 });
+          // Init value so that it does not brake series sorting
+          results[0].push({ hidden: true, value: 0 });
           continue;
         }
 
         if (!series.data.length || (panel.legend.hideZero && series.allIsZero)) {
-          // Init value & yaxis so that it does not brake series sorting
-          results.push({ hidden: true, value: 0, yaxis: 0 });
+          // Init value so that it does not brake series sorting
+          results[0].push({ hidden: true, value: 0 });
           continue;
         }
 
@@ -110,17 +114,19 @@ function ($) {
           yaxis = series.yaxis.n;
         }
 
-        results.push({
+        results[yaxis].push({
           value: value,
           hoverIndex: hoverIndex,
           color: series.color,
           label: series.label,
           time: pointTime,
           distance: hoverDistance,
-          yaxis: yaxis,
           index: i
         });
       }
+
+      // Contat the 3 sub-arrays
+      results = results[0].concat(results[1],results[2]);
 
       // Time of the point closer to pointer
       results.time = minTime;
@@ -136,20 +142,43 @@ function ($) {
           plot.unhighlight();
         }
       }
-
-      if (dashboard.sharedCrosshair) {
-        ctrl.publishAppEvent('clearCrosshair');
-      }
+      appEvents.emit('graph-hover-clear');
     });
 
     elem.bind("plothover", function (event, pos, item) {
+      self.show(pos, item);
+
+      // broadcast to other graph panels that we are hovering!
+      pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
+      appEvents.emit('graph-hover', {pos: pos, panel: panel});
+    });
+
+    this.clear = function(plot) {
+      $tooltip.detach();
+      plot.clearCrosshair();
+    };
+
+    this.show = function(pos, item) {
       var plot = elem.data().plot;
       var plotData = plot.getData();
+      var xAxes = plot.getXAxes();
+      var xMode = xAxes[0].options.mode;
       var seriesList = getSeriesFn();
+      var allSeriesMode = panel.tooltip.shared;
       var group, value, absoluteTime, hoverInfo, i, series, seriesHtml, tooltipFormat;
 
-      if (dashboard.sharedCrosshair) {
-        ctrl.publishAppEvent('setCrosshair', {pos: pos, scope: scope});
+      // if panelRelY is defined another panel wants us to show a tooltip
+      // get pageX from position on x axis and pageY from relative position in original panel
+      if (pos.panelRelY) {
+        var pointOffset = plot.pointOffset({x: pos.x});
+        if (Number.isNaN(pointOffset.left) || pointOffset.left < 0) {
+          $tooltip.detach();
+          return;
+        }
+        pos.pageX = elem.offset().left + pointOffset.left;
+        pos.pageY = elem.offset().top + elem.height() * pos.panelRelY;
+        plot.setCrosshair(pos);
+        allSeriesMode = true;
       }
 
       if (seriesList.length === 0) {
@@ -162,7 +191,7 @@ function ($) {
         tooltipFormat = 'YYYY-MM-DD HH:mm:ss';
       }
 
-      if (panel.tooltip.shared) {
+      if (allSeriesMode) {
         plot.unhighlight();
 
         var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
@@ -172,7 +201,7 @@ function ($) {
         absoluteTime = dashboard.formatDate(seriesHoverInfo.time, tooltipFormat);
 
         // Dynamically reorder the hovercard for the current time point if the
-        // option is enabled, sort by yaxis by default.
+        // option is enabled.
         if (panel.tooltip.sort === 2) {
           seriesHoverInfo.sort(function(a, b) {
             return b.value - a.value;
@@ -180,10 +209,6 @@ function ($) {
         } else if (panel.tooltip.sort === 1) {
           seriesHoverInfo.sort(function(a, b) {
             return a.value - b.value;
-          });
-        } else {
-          seriesHoverInfo.sort(function(a, b) {
-            return a.yaxis - b.yaxis;
           });
         }
 
@@ -209,7 +234,7 @@ function ($) {
           plot.highlight(hoverInfo.index, hoverInfo.hoverIndex);
         }
 
-        self.showTooltip(absoluteTime, seriesHtml, pos);
+        self.renderAndShow(absoluteTime, seriesHtml, pos, xMode);
       }
       // single series tooltip
       else if (item) {
@@ -230,13 +255,13 @@ function ($) {
 
         group += '<div class="graph-tooltip-value">' + value + '</div>';
 
-        self.showTooltip(absoluteTime, group, pos);
+        self.renderAndShow(absoluteTime, group, pos, xMode);
       }
       // no hit
       else {
         $tooltip.detach();
       }
-    });
+    };
   }
 
   return GraphTooltip;

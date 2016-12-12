@@ -21,7 +21,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   invalidGaugeRange: boolean;
   panel: any;
   events: any;
-  valueNameOptions: any[] = ['min','max','avg', 'current', 'total', 'name'];
+  valueNameOptions: any[] = ['min','max','avg', 'current', 'total', 'name', 'first', 'delta', 'range'];
 
   // Set and populate defaults
   panelDefaults = {

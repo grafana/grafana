@@ -15,6 +15,7 @@ var (
 	ErrDashboardSnapshotNotFound   = errors.New("Dashboard snapshot not found")
 	ErrDashboardWithSameNameExists = errors.New("A dashboard with the same name already exists")
 	ErrDashboardVersionMismatch    = errors.New("The dashboard has been changed by someone else")
+	ErrDashboardTitleEmpty         = errors.New("Dashboard title cannot be empty")
 )
 
 type UpdatePluginDashboardError struct {

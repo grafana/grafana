@@ -11,34 +11,40 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type InfluxDBExecutor struct {
-	*tsdb.DataSourceInfo
+	*models.DataSource
 	QueryParser    *InfluxdbQueryParser
 	ResponseParser *ResponseParser
+	HttpClient     *http.Client
 }
 
-func NewInfluxDBExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
+func NewInfluxDBExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
+	httpClient, err := datasource.GetHttpClient()
+
+	if err != nil {
+		return nil, err
+	}
+
 	return &InfluxDBExecutor{
-		DataSourceInfo: dsInfo,
+		DataSource:     datasource,
 		QueryParser:    &InfluxdbQueryParser{},
 		ResponseParser: &ResponseParser{},
-	}
+		HttpClient:     httpClient,
+	}, nil
 }
 
 var (
-	glog       log.Logger
-	HttpClient *http.Client
+	glog log.Logger
 )
 
 func init() {
 	glog = log.New("tsdb.influxdb")
 	tsdb.RegisterExecutor("influxdb", NewInfluxDBExecutor)
-
-	HttpClient = tsdb.GetDefaultClient()
 }
 
 func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
@@ -63,7 +69,7 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		return result.WithError(err)
 	}
 
-	resp, err := ctxhttp.Do(ctx, HttpClient, req)
+	resp, err := ctxhttp.Do(ctx, e.HttpClient, req)
 	if err != nil {
 		return result.WithError(err)
 	}
@@ -95,7 +101,7 @@ func (e *InfluxDBExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 func (e *InfluxDBExecutor) getQuery(queries tsdb.QuerySlice, context *tsdb.QueryContext) (*Query, error) {
 	for _, v := range queries {
 
-		query, err := e.QueryParser.Parse(v.Model, e.DataSourceInfo)
+		query, err := e.QueryParser.Parse(v.Model, e.DataSource)
 		if err != nil {
 			return nil, err
 		}
@@ -127,7 +133,7 @@ func (e *InfluxDBExecutor) createRequest(query string) (*http.Request, error) {
 		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
 	}
 
-	if e.User != "" {
+	if !e.BasicAuth && e.User != "" {
 		req.SetBasicAuth(e.User, e.Password)
 	}
 

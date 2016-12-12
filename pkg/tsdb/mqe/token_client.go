@@ -12,23 +12,25 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 type TokenClient struct {
-	tlog log.Logger
+	tlog       log.Logger
+	HttpClient *http.Client
 }
 
-func NewTokenClient() *TokenClient {
+func NewTokenClient(httpClient *http.Client) *TokenClient {
 	return &TokenClient{
-		tlog: log.New("tsdb.mqe.tokenclient"),
+		tlog:       log.New("tsdb.mqe.tokenclient"),
+		HttpClient: httpClient,
 	}
 }
 
 var cache map[int64]*TokenBody = map[int64]*TokenBody{}
 
 //Replace this stupid cache with internal cache from grafana master before merging
-func (client *TokenClient) GetTokenData(ctx context.Context, datasource *tsdb.DataSourceInfo) (*TokenBody, error) {
+func (client *TokenClient) GetTokenData(ctx context.Context, datasource *models.DataSource) (*TokenBody, error) {
 	_, excist := cache[datasource.Id]
 	if !excist {
 		b, err := client.RequestTokenData(ctx, datasource)
@@ -42,7 +44,7 @@ func (client *TokenClient) GetTokenData(ctx context.Context, datasource *tsdb.Da
 	return cache[datasource.Id], nil
 }
 
-func (client *TokenClient) RequestTokenData(ctx context.Context, datasource *tsdb.DataSourceInfo) (*TokenBody, error) {
+func (client *TokenClient) RequestTokenData(ctx context.Context, datasource *models.DataSource) (*TokenBody, error) {
 	u, _ := url.Parse(datasource.Url)
 	u.Path = path.Join(u.Path, "token")
 
@@ -51,7 +53,7 @@ func (client *TokenClient) RequestTokenData(ctx context.Context, datasource *tsd
 		client.tlog.Info("Failed to create request", "error", err)
 	}
 
-	res, err := ctxhttp.Do(ctx, HttpClient, req)
+	res, err := ctxhttp.Do(ctx, client.HttpClient, req)
 	if err != nil {
 		return nil, err
 	}

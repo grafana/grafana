@@ -1,8 +1,13 @@
-----
-page_title: Preferences API
-page_description: Grafana Preferences API Reference
-page_keywords: grafana, preferences, http, api, documentation
----
++++
+title = "HTTP Preferences API "
+description = "Grafana HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "preferences"]
+aliases = ["/http_api/preferences/"]
+type = "docs"
+[menu.docs]
+name = "Preferences"
+parent = "http_api"
++++
 
 # User and Org Preferences API
 
