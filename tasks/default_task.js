@@ -16,13 +16,13 @@ module.exports = function(grunt) {
   grunt.registerTask('default', [
     'jscs',
     'jshint',
-    'tslint',
+    'exec:tslint',
     'clean:gen',
     'copy:node_modules',
     'copy:public_to_gen',
     'phantomjs',
     'css',
-    'typescript:build'
+    'exec:tscompile'
   ]);
 
   grunt.registerTask('test', ['default', 'karma:test', 'no-only-tests']);

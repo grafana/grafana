@@ -135,9 +135,10 @@ function (queryDef) {
         "bool": {
           "must": [
             {"range": this.getRangeFilter()},
-            {"query_string": {
-              "analyze_wildcard": true,
-              "query": '$lucene_query'
+            {
+              "query_string": {
+                "analyze_wildcard": true,
+                "query": '$lucene_query'
               }
             }
           ]
