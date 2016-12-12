@@ -6,7 +6,6 @@
         "noImplicitAny": false,
         "target": "es5",
         "rootDir": "public/",
-        "sourceRoot": "public/",
         "module": "system",
         "noEmitOnError": true,
         "emitDecoratorMetadata": true,
