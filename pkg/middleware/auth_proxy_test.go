@@ -17,7 +17,7 @@ func TestAuthProxyWithLdapEnabled(t *testing.T) {
 		setting.AuthProxyLdapSyncTtl = 60
 
 		servers := []*login.LdapServerConf{{Host: "127.0.0.1"}}
-		login.ldapCfg = login.LdapConfig{Servers: servers}
+		login.LdapCfg = login.LdapConfig{Servers: servers}
 		mockLdapAuther := mockLdapAuthenticator{}
 
 		login.NewLdapAuthenticator = func(server *login.LdapServerConf) login.ILdapAuther {

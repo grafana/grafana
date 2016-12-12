@@ -5,6 +5,7 @@
 * **Dashboard**: Posting empty dashboard result in corrupted dashboard [#5443](https://github.com/grafana/grafana/issues/5443)
 
 ### Enhancements
+* **Login**: Allow role and organisation mapping with ldap after Proxy auth. [#6895](https://github.com/grafana/grafana/pull/6895)
 * **Postgres**: Add support for Certs for Postgres database [#6655](https://github.com/grafana/grafana/issues/6655)
 * **Victorops**: Add VictorOps Notification Integration [#6411](https://github.com/grafana/grafana/issues/6411)
 * **Singlestat**: New aggregation on singlestat panel [#6740](https://github.com/grafana/grafana/pull/6740)

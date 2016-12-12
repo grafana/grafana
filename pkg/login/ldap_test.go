@@ -1,6 +1,7 @@
 package login
 
 import (
+	"crypto/tls"
 	"testing"
 
 	"github.com/go-ldap/ldap"
@@ -286,6 +287,10 @@ func (c *mockLdapConn) setSearchResult(result *ldap.SearchResult) {
 func (c *mockLdapConn) Search(*ldap.SearchRequest) (*ldap.SearchResult, error) {
 	c.searchCalled = true
 	return c.result, nil
+}
+
+func (c *mockLdapConn) StartTLS(*tls.Config) error {
+    return nil
 }
 
 func ldapAutherScenario(desc string, fn scenarioFunc) {
