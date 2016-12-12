@@ -650,7 +650,7 @@ function($, _) {
     size *= kbn.intervals_in_seconds[units.find(function(e) { return e.long === timeScale; }).short] * 1000;
 
     var string = [];
-     // after first value >= 1 print only $decimals more
+    // after first value >= 1 print only $decimals more
     var decrementDecimals = false;
     for (var i = 0; i < units.length && decimals >= 0; i++) {
       var interval = kbn.intervals_in_seconds[units[i].short] * 1000;
