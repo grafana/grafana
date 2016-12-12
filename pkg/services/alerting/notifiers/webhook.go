@@ -74,6 +74,7 @@ func (this *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		this.log.Error("Failed to send webhook", "error", err, "webhook", this.Name)
+		return err
 	}
 
 	return nil
