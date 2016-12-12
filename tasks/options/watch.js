@@ -64,8 +64,8 @@ module.exports = function(config, grunt) {
           grunt.config('typescript.build.src', filepath);
           grunt.config('tslint.source.files.src', filepath);
 
-          grunt.task.run('typescript:build');
-          grunt.task.run('tslint');
+          grunt.task.run('exec:tscompile');
+          grunt.task.run('exec:tslint');
         }
 
         done();
