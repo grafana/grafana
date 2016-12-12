@@ -69,6 +69,7 @@ Example json body:
   "ruleUrl": "http://url.to.grafana/db/dashboard/my_dashboard?panelId=2",
   "state": "Alerting",
   "imageUrl": "http://s3.image.url",
+  "message": "Load is peaking. Make sure the traffic is real and spin up more webfronts",
   "evalMatches": [
     {
       "metric": "requests",
