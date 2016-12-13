@@ -315,6 +315,12 @@
 			"versionExact": "v1.21.1"
 		},
 		{
+			"checksumSHA1": "8z32QKTSDusa4QQyunKE4kyYXZ8=",
+			"path": "github.com/patrickmn/go-cache",
+			"revision": "e7a9def80f35fe1b170b7b8b68871d59dea117e1",
+			"revisionTime": "2016-11-25T23:48:19Z"
+		},
+		{
 			"checksumSHA1": "SMUvX2B8eoFd9wnPofwBKlN6btE=",
 			"path": "github.com/prometheus/client_golang/api/prometheus",
 			"revision": "5636dc67ae776adf5590da7349e70fbb9559972d",

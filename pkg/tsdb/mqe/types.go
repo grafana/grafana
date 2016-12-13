@@ -11,13 +11,13 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-type MQEMetric struct {
+type Metric struct {
 	Metric string
 	Alias  string
 }
 
-type MQEQuery struct {
-	Metrics        []MQEMetric
+type Query struct {
+	Metrics        []Metric
 	Hosts          []string
 	Apps           []string
 	AddAppToAlias  bool
@@ -32,7 +32,7 @@ var (
 	containsWildcardPattern *regexp.Regexp = regexp.MustCompile(`\*`)
 )
 
-func (q *MQEQuery) Build(availableSeries []string) ([]QueryToSend, error) {
+func (q *Query) Build(availableSeries []string) ([]QueryToSend, error) {
 	var queriesToSend []QueryToSend
 	where := q.buildWhereClause()
 
@@ -90,7 +90,7 @@ func (q *MQEQuery) Build(availableSeries []string) ([]QueryToSend, error) {
 	return queriesToSend, nil
 }
 
-func (q *MQEQuery) buildWhereClause() string {
+func (q *Query) buildWhereClause() string {
 	hasApps := len(q.Apps) > 0
 	hasHosts := len(q.Hosts) > 0
 

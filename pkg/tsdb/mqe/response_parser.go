@@ -13,8 +13,8 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func NewResponseParser() *MQEResponseParser {
-	return &MQEResponseParser{
+func NewResponseParser() *ResponseParser {
+	return &ResponseParser{
 		log: log.New("tsdb.mqe"),
 	}
 }
@@ -44,11 +44,11 @@ type MQESerie struct {
 	Tagset map[string]string `json:"tagset"`
 }
 
-type MQEResponseParser struct {
+type ResponseParser struct {
 	log log.Logger
 }
 
-func (parser *MQEResponseParser) Parse(res *http.Response, queryRef *MQEQuery) (*tsdb.QueryResult, error) {
+func (parser *ResponseParser) Parse(res *http.Response, queryRef *Query) (*tsdb.QueryResult, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
 	if err != nil {
@@ -63,12 +63,12 @@ func (parser *MQEResponseParser) Parse(res *http.Response, queryRef *MQEQuery) (
 	var data *MQEResponse = &MQEResponse{}
 	err = json.Unmarshal(body, data)
 	if err != nil {
-		parser.log.Info("Failed to unmarshal mqe response", "error", err, "status", res.Status, "body", string(body))
+		parser.log.Info("Failed to unmarshal response", "error", err, "status", res.Status, "body", string(body))
 		return nil, err
 	}
 
 	if !data.Success {
-		return nil, fmt.Errorf("MQE request failed.")
+		return nil, fmt.Errorf("Request failed.")
 	}
 
 	var series tsdb.TimeSeriesSlice

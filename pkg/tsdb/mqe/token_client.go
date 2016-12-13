@@ -8,15 +8,25 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"time"
 
 	"golang.org/x/net/context/ctxhttp"
 
+	"strconv"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/patrickmn/go-cache"
 )
 
+var tokenCache *cache.Cache
+
+func init() {
+	tokenCache = cache.New(5*time.Minute, 30*time.Second)
+}
+
 type TokenClient struct {
-	tlog       log.Logger
+	log        log.Logger
 	Datasource *models.DataSource
 	HttpClient *http.Client
 }
@@ -25,27 +35,30 @@ func NewTokenClient(datasource *models.DataSource) *TokenClient {
 	httpClient, _ := datasource.GetHttpClient()
 
 	return &TokenClient{
-		tlog:       log.New("tsdb.mqe.tokenclient"),
+		log:        log.New("tsdb.mqe.tokenclient"),
 		Datasource: datasource,
 		HttpClient: httpClient,
 	}
 }
 
-var cache map[int64]*TokenBody = map[int64]*TokenBody{}
-
-//Replace this stupid cache with internal cache from grafana master before merging
 func (client *TokenClient) GetTokenData(ctx context.Context) (*TokenBody, error) {
-	_, excist := cache[client.Datasource.Id]
-	if !excist {
-		b, err := client.RequestTokenData(ctx)
-		if err != nil {
-			return nil, err
-		}
+	key := strconv.FormatInt(client.Datasource.Id, 10)
 
-		cache[client.Datasource.Id] = b
+	item, found := tokenCache.Get(key)
+	if found {
+		if result, ok := item.(*TokenBody); ok {
+			return result, nil
+		}
 	}
 
-	return cache[client.Datasource.Id], nil
+	b, err := client.RequestTokenData(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenCache.Set(key, b, cache.DefaultExpiration)
+
+	return b, nil
 }
 
 func (client *TokenClient) RequestTokenData(ctx context.Context) (*TokenBody, error) {
@@ -54,7 +67,7 @@ func (client *TokenClient) RequestTokenData(ctx context.Context) (*TokenBody, er
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
 	if err != nil {
-		client.tlog.Info("Failed to create request", "error", err)
+		client.log.Info("Failed to create request", "error", err)
 	}
 
 	res, err := ctxhttp.Do(ctx, client.HttpClient, req)
@@ -69,14 +82,14 @@ func (client *TokenClient) RequestTokenData(ctx context.Context) (*TokenBody, er
 	}
 
 	if res.StatusCode/100 != 2 {
-		client.tlog.Info("Request failed", "status", res.Status, "body", string(body))
+		client.log.Info("Request failed", "status", res.Status, "body", string(body))
 		return nil, fmt.Errorf("Request failed status: %v", res.Status)
 	}
 
 	var result *TokenResponse
 	err = json.Unmarshal(body, &result)
 	if err != nil {
-		client.tlog.Info("Failed to unmarshal graphite response", "error", err, "status", res.Status, "body", string(body))
+		client.log.Info("Failed to unmarshal response", "error", err, "status", res.Status, "body", string(body))
 		return nil, err
 	}
 

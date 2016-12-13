@@ -12,19 +12,20 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 /*
   TODO:
-  * response serie names with wildcards
-  * real caching
+  * performance. outgoing requests in pararell.
+  * frontend plugin. targetContainsTemplates
 */
 
 type MQEExecutor struct {
 	*models.DataSource
-	queryParser    *MQEQueryParser
-	responseParser *MQEResponseParser
+	queryParser    *QueryParser
+	responseParser *ResponseParser
 	httpClient     *http.Client
 	log            log.Logger
 	tokenClient    *TokenClient
@@ -52,7 +53,7 @@ func init() {
 
 type QueryToSend struct {
 	RawQuery string
-	QueryRef *MQEQuery
+	QueryRef *Query
 }
 
 func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
@@ -63,7 +64,7 @@ func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, quer
 		return result.WithError(err)
 	}
 
-	var mqeQueries []*MQEQuery
+	var mqeQueries []*Query
 	for _, v := range queries {
 		q, err := e.queryParser.Parse(v.Model, e.DataSource, queryContext)
 		if err != nil {
@@ -82,9 +83,13 @@ func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, quer
 		rawQueries = append(rawQueries, queries...)
 	}
 
+	e.log.Debug("Sending request", "url", e.DataSource.Url)
+
 	queryResult := &tsdb.QueryResult{}
 	for _, v := range rawQueries {
-		e.log.Info("Mqe executor", "query", v)
+		if setting.Env == setting.DEV {
+			e.log.Debug("Executing", "query", v)
+		}
 
 		req, err := e.createRequest(v.RawQuery)
 
@@ -108,7 +113,11 @@ func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, quer
 }
 
 func (e *MQEExecutor) createRequest(query string) (*http.Request, error) {
-	u, _ := url.Parse(e.Url)
+	u, err := url.Parse(e.Url)
+	if err != nil {
+		return nil, err
+	}
+
 	u.Path = path.Join(u.Path, "query")
 
 	payload := simplejson.New()
@@ -131,6 +140,5 @@ func (e *MQEExecutor) createRequest(query string) (*http.Request, error) {
 		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
 	}
 
-	e.log.Debug("Mqe request", "url", req.URL.String())
 	return req, nil
 }

@@ -25,11 +25,11 @@ func TestWildcardExpansion(t *testing.T) {
 
 	Convey("Can expanding query", t, func() {
 		Convey("Without wildcard series", func() {
-			query := &MQEQuery{
-				Metrics: []MQEMetric{
-					MQEMetric{Metric: "os.cpu.3.idle", Alias: ""},
-					MQEMetric{Metric: "os.cpu.2.idle", Alias: ""},
-					MQEMetric{Metric: "os.cpu.1.idle", Alias: "cpu"},
+			query := &Query{
+				Metrics: []Metric{
+					Metric{Metric: "os.cpu.3.idle", Alias: ""},
+					Metric{Metric: "os.cpu.2.idle", Alias: ""},
+					Metric{Metric: "os.cpu.1.idle", Alias: "cpu"},
 				},
 				Hosts:          []string{"staples-lab-1", "staples-lab-2"},
 				Apps:           []string{"demoapp-1", "demoapp-2"},
@@ -47,9 +47,9 @@ func TestWildcardExpansion(t *testing.T) {
 		})
 
 		Convey("Containg wildcard series", func() {
-			query := &MQEQuery{
-				Metrics: []MQEMetric{
-					MQEMetric{Metric: "os.cpu*", Alias: ""},
+			query := &Query{
+				Metrics: []Metric{
+					Metric{Metric: "os.cpu*", Alias: ""},
 				},
 				Hosts:          []string{"staples-lab-1"},
 				AddAppToAlias:  false,

@@ -11,7 +11,7 @@ import (
 
 func TestMQEQueryParser(t *testing.T) {
 	Convey("MQE query parser", t, func() {
-		parser := &MQEQueryParser{}
+		parser := &QueryParser{}
 
 		dsInfo := &models.DataSource{JsonData: simplejson.New()}
 		queryContext := &tsdb.QueryContext{}

@@ -20,7 +20,7 @@ func TestMQEResponseParser(t *testing.T) {
 		parser := NewResponseParser()
 
 		Convey("Can parse response", func() {
-			queryRef := &MQEQuery{
+			queryRef := &Query{
 				AddAppToAlias:  true,
 				AddHostToAlias: true,
 			}

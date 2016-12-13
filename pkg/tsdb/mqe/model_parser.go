@@ -6,14 +6,14 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-func NewQueryParser() *MQEQueryParser {
-	return &MQEQueryParser{}
+func NewQueryParser() *QueryParser {
+	return &QueryParser{}
 }
 
-type MQEQueryParser struct{}
+type QueryParser struct{}
 
-func (qp *MQEQueryParser) Parse(model *simplejson.Json, dsInfo *models.DataSource, queryContext *tsdb.QueryContext) (*MQEQuery, error) {
-	query := &MQEQuery{TimeRange: queryContext.TimeRange}
+func (qp *QueryParser) Parse(model *simplejson.Json, dsInfo *models.DataSource, queryContext *tsdb.QueryContext) (*Query, error) {
+	query := &Query{TimeRange: queryContext.TimeRange}
 	query.AddAppToAlias = model.Get("addAppToAlias").MustBool(false)
 	query.AddHostToAlias = model.Get("addHostToAlias").MustBool(false)
 	query.UseRawQuery = model.Get("rawQuery").MustBool(false)
@@ -22,11 +22,11 @@ func (qp *MQEQueryParser) Parse(model *simplejson.Json, dsInfo *models.DataSourc
 	query.Apps = model.Get("apps").MustStringArray([]string{})
 	query.Hosts = model.Get("hosts").MustStringArray([]string{})
 
-	var metrics []MQEMetric
+	var metrics []Metric
 	var err error
 	for _, metricsObj := range model.Get("metrics").MustArray() {
 		metricJson := simplejson.NewFromAny(metricsObj)
-		var m MQEMetric
+		var m Metric
 
 		m.Alias = metricJson.Get("alias").MustString("")
 		m.Metric, err = metricJson.Get("metric").String()
