@@ -76,6 +76,7 @@ func (parser *MQEResponseParser) Parse(res *http.Response, queryRef *MQEQuery) (
 		for _, mqeSerie := range body.Series {
 			namePrefix := ""
 
+			//append predefined tags to seriename
 			for key, value := range mqeSerie.Tagset {
 				if key == "app" && queryRef.AddAppToAlias {
 					namePrefix += value + " "

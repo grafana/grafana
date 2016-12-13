@@ -16,13 +16,9 @@ import (
 )
 
 /*
-
   TODO:
-  * response serie names
-  * response serie names with tags
   * response serie names with wildcards
   * real caching
-
 */
 
 type MQEExecutor struct {
