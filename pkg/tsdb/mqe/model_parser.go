@@ -6,6 +6,10 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
+func NewQueryParser() *MQEQueryParser {
+	return &MQEQueryParser{}
+}
+
 type MQEQueryParser struct{}
 
 func (qp *MQEQueryParser) Parse(model *simplejson.Json, dsInfo *models.DataSource, queryContext *tsdb.QueryContext) (*MQEQuery, error) {

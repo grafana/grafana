@@ -4,8 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"net/http"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
@@ -18,9 +16,9 @@ func TestTokenClient(t *testing.T) {
 			Url:      "",
 		}
 
-		client := NewTokenClient(http.DefaultClient)
+		client := NewTokenClient(dsInfo)
 
-		body, err := client.RequestTokenData(context.TODO(), dsInfo)
+		body, err := client.RequestTokenData(context.TODO())
 
 		So(err, ShouldBeNil)
 		//So(len(body.Functions), ShouldBeGreaterThan, 1)

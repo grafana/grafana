@@ -23,9 +23,11 @@ import (
 
 type MQEExecutor struct {
 	*models.DataSource
-	QueryParser    *MQEQueryParser
-	ResponseParser *MQEResponseParser
-	HttpClient     *http.Client
+	queryParser    *MQEQueryParser
+	responseParser *MQEResponseParser
+	httpClient     *http.Client
+	log            log.Logger
+	tokenClient    *TokenClient
 }
 
 func NewMQEExecutor(dsInfo *models.DataSource) (tsdb.Executor, error) {
@@ -36,18 +38,15 @@ func NewMQEExecutor(dsInfo *models.DataSource) (tsdb.Executor, error) {
 
 	return &MQEExecutor{
 		DataSource:     dsInfo,
-		QueryParser:    &MQEQueryParser{},
-		ResponseParser: &MQEResponseParser{},
-		HttpClient:     httpclient,
+		httpClient:     httpclient,
+		log:            log.New("tsdb.mqe"),
+		queryParser:    NewQueryParser(),
+		responseParser: NewResponseParser(),
+		tokenClient:    NewTokenClient(dsInfo),
 	}, nil
 }
 
-var (
-	glog log.Logger
-)
-
 func init() {
-	glog = log.New("tsdb.mqe")
 	tsdb.RegisterExecutor("mqe-datasource", NewMQEExecutor)
 }
 
@@ -59,14 +58,14 @@ type QueryToSend struct {
 func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) *tsdb.BatchResult {
 	result := &tsdb.BatchResult{}
 
-	availableSeries, err := NewTokenClient(e.HttpClient).GetTokenData(ctx, e.DataSource)
+	availableSeries, err := e.tokenClient.GetTokenData(ctx)
 	if err != nil {
 		return result.WithError(err)
 	}
 
 	var mqeQueries []*MQEQuery
 	for _, v := range queries {
-		q, err := e.QueryParser.Parse(v.Model, e.DataSource, queryContext)
+		q, err := e.queryParser.Parse(v.Model, e.DataSource, queryContext)
 		if err != nil {
 			return result.WithError(err)
 		}
@@ -85,16 +84,16 @@ func (e *MQEExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, quer
 
 	queryResult := &tsdb.QueryResult{}
 	for _, v := range rawQueries {
-		glog.Info("Mqe executor", "query", v)
+		e.log.Info("Mqe executor", "query", v)
 
 		req, err := e.createRequest(v.RawQuery)
 
-		resp, err := ctxhttp.Do(ctx, e.HttpClient, req)
+		resp, err := ctxhttp.Do(ctx, e.httpClient, req)
 		if err != nil {
 			return result.WithError(err)
 		}
 
-		series, err := e.ResponseParser.Parse(resp, v.QueryRef)
+		series, err := e.responseParser.Parse(resp, v.QueryRef)
 		if err != nil {
 			return result.WithError(err)
 		}
@@ -132,6 +131,6 @@ func (e *MQEExecutor) createRequest(query string) (*http.Request, error) {
 		req.SetBasicAuth(e.BasicAuthUser, e.BasicAuthPassword)
 	}
 
-	glog.Debug("Mqe request", "url", req.URL.String())
+	e.log.Debug("Mqe request", "url", req.URL.String())
 	return req, nil
 }

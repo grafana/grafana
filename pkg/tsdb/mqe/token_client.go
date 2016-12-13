@@ -17,12 +17,16 @@ import (
 
 type TokenClient struct {
 	tlog       log.Logger
+	Datasource *models.DataSource
 	HttpClient *http.Client
 }
 
-func NewTokenClient(httpClient *http.Client) *TokenClient {
+func NewTokenClient(datasource *models.DataSource) *TokenClient {
+	httpClient, _ := datasource.GetHttpClient()
+
 	return &TokenClient{
 		tlog:       log.New("tsdb.mqe.tokenclient"),
+		Datasource: datasource,
 		HttpClient: httpClient,
 	}
 }
@@ -30,22 +34,22 @@ func NewTokenClient(httpClient *http.Client) *TokenClient {
 var cache map[int64]*TokenBody = map[int64]*TokenBody{}
 
 //Replace this stupid cache with internal cache from grafana master before merging
-func (client *TokenClient) GetTokenData(ctx context.Context, datasource *models.DataSource) (*TokenBody, error) {
-	_, excist := cache[datasource.Id]
+func (client *TokenClient) GetTokenData(ctx context.Context) (*TokenBody, error) {
+	_, excist := cache[client.Datasource.Id]
 	if !excist {
-		b, err := client.RequestTokenData(ctx, datasource)
+		b, err := client.RequestTokenData(ctx)
 		if err != nil {
 			return nil, err
 		}
 
-		cache[datasource.Id] = b
+		cache[client.Datasource.Id] = b
 	}
 
-	return cache[datasource.Id], nil
+	return cache[client.Datasource.Id], nil
 }
 
-func (client *TokenClient) RequestTokenData(ctx context.Context, datasource *models.DataSource) (*TokenBody, error) {
-	u, _ := url.Parse(datasource.Url)
+func (client *TokenClient) RequestTokenData(ctx context.Context) (*TokenBody, error) {
+	u, _ := url.Parse(client.Datasource.Url)
 	u.Path = path.Join(u.Path, "token")
 
 	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
