@@ -39,5 +39,12 @@ func readSettings() *MetricSettings {
 		settings.Publishers = append(settings.Publishers, graphitePublisher)
 	}
 
+	if prometheusPublisher, err := CreatePrometheusPublisher(); err != nil {
+		metricsLogger.Error("Failed to init Prometheus metric publisher", "error", err)
+	} else if prometheusPublisher != nil {
+		metricsLogger.Info("Metrics publisher initialized", "type", "prometheus")
+		settings.Publishers = append(settings.Publishers, prometheusPublisher)
+	}
+
 	return settings
 }
