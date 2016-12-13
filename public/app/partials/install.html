@@ -39,7 +39,7 @@
 
     <h3>安装命令</h3>
     <div class="tight-form last" ng-if="installSelect.system != 0">
-        <p style="word-break: break-all">sudo ORG_TOKEN={{token}} METRIC_SERVER_HOST=server1 AGENT_URL=https://github.com/wangy1931/tcollector/releases/download/1.0.0-cloudwiz-agent.beta.2/agent.tar.gz bash -c "$(curl -L https://github.com/wangy1931/tcollector/releases/download/1.0.0-cloudwiz-agent-deploy.beta.2/deploy_agent.sh)"</p>
+        <p style="word-break: break-all">sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}} METRIC_SERVER_HOST={{metricsServer}} AGENT_URL=https://github.com/wangy1931/tcollector/deploy/releases/RedHat/agent.tar.gz bash -c "$(curl -L https://github.com/wangy1931/tcollector/releases/download/1.0.0-cloudwiz-agent-deploy.beta.2/deploy_agent.sh)"</p>
     </div>
   </div>
 </div>
