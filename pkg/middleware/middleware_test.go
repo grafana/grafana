@@ -9,6 +9,7 @@ import (
 
 	"github.com/go-macaron/session"
 	"github.com/grafana/grafana/pkg/bus"
+	l "github.com/grafana/grafana/pkg/login"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -55,6 +56,10 @@ func TestMiddlewareContext(t *testing.T) {
 					Password: util.EncodePassword("myPass", "salt"),
 					Salt:     "salt",
 				}
+				return nil
+			})
+
+			bus.AddHandler("test", func(loginUserQuery *l.LoginUserQuery) error {
 				return nil
 			})
 
