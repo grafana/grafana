@@ -9,6 +9,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/apikeygen"
 	"github.com/grafana/grafana/pkg/log"
+	l "github.com/grafana/grafana/pkg/login"
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -137,6 +138,7 @@ func initContextWithApiKey(ctx *Context) bool {
 }
 
 func initContextWithBasicAuth(ctx *Context) bool {
+
 	if !setting.BasicAuthEnabled {
 		return false
 	}
@@ -160,9 +162,9 @@ func initContextWithBasicAuth(ctx *Context) bool {
 
 	user := loginQuery.Result
 
-	// validate password
-	if util.EncodePassword(password, user.Salt) != user.Password {
-		ctx.JsonApiErr(401, "Invalid username or password", nil)
+	loginUserQuery := l.LoginUserQuery{Username: username, Password: password, User: user}
+	if err := bus.Dispatch(&loginUserQuery); err != nil {
+		ctx.JsonApiErr(401, "Invalid username or password", err)
 		return true
 	}
 
