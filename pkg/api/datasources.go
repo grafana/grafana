@@ -206,17 +206,12 @@ func convertModelToDtos(ds *m.DataSource) dtos.DataSource {
 		WithCredentials:   ds.WithCredentials,
 		IsDefault:         ds.IsDefault,
 		JsonData:          ds.JsonData,
-	}
-
-	if len(ds.SecureJsonData) > 0 {
-		dto.TLSAuth.CACertSet = len(ds.SecureJsonData["tlsCACert"]) > 0
-		dto.TLSAuth.ClientCertSet = len(ds.SecureJsonData["tlsClientCert"]) > 0
-		dto.TLSAuth.ClientKeySet = len(ds.SecureJsonData["tlsClientKey"]) > 0
+		SecureJsonFields:  map[string]bool{},
 	}
 
 	for k, v := range ds.SecureJsonData {
 		if len(v) > 0 {
-			dto.EncryptedFields = append(dto.EncryptedFields, k)
+			dto.SecureJsonFields[k] = true
 		}
 	}
 

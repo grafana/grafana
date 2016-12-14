@@ -14,7 +14,7 @@ var defaults = {
   url: '',
   access: 'proxy',
   jsonData: {},
-  encryptedFields: []
+  secureJsonFields: {},
 };
 
 var datasourceCreated = false;
