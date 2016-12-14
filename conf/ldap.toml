@@ -1,5 +1,6 @@
-# Set to true to log user information returned from LDAP
-verbose_logging = false
+# To troubleshoot and get more log info enable ldap debug logging in grafana.ini
+# [log]
+# filters = ldap:debug
 
 [[servers]]
 # Ldap server host (specify multiple hosts space separated)

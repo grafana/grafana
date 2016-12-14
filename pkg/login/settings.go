@@ -11,8 +11,7 @@ import (
 )
 
 type LdapConfig struct {
-	Servers        []*LdapServerConf `toml:"servers"`
-	VerboseLogging bool              `toml:"verbose_logging"`
+	Servers []*LdapServerConf `toml:"servers"`
 }
 
 type LdapServerConf struct {

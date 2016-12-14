@@ -34,10 +34,11 @@ type ldapAuther struct {
 	server            *LdapServerConf
 	conn              ILdapConn
 	requireSecondBind bool
+	log               log.Logger
 }
 
 var NewLdapAuthenticator = func(server *LdapServerConf) ILdapAuther {
-	return &ldapAuther{server: server}
+	return &ldapAuther{server: server, log: log.New("ldap")}
 }
 
 var ldapDial = func(network, addr string) (ILdapConn, error) {
@@ -103,9 +104,7 @@ func (a *ldapAuther) Login(query *LoginUserQuery) error {
 	if ldapUser, err := a.searchForUser(query.Username); err != nil {
 		return err
 	} else {
-		if LdapCfg.VerboseLogging {
-			log.Info("Ldap User Info: %s", spew.Sdump(ldapUser))
-		}
+		a.log.Debug("Ldap User found", "info", spew.Sdump(ldapUser))
 
 		// check if a second user bind is needed
 		if a.requireSecondBind {
@@ -144,7 +143,7 @@ func (a *ldapAuther) SyncSignedInUser(signedInUser *m.SignedInUser) error {
 	}
 
 	if ldapUser, err := a.searchForUser(signedInUser.Login); err != nil {
-		log.Info("ERROR while searching for user in ldap %#v", err)
+		a.log.Error("Failed searching for user in ldap", "error", err)
 
 		return err
 	} else {
@@ -152,9 +151,7 @@ func (a *ldapAuther) SyncSignedInUser(signedInUser *m.SignedInUser) error {
 			return err
 		}
 
-		if LdapCfg.VerboseLogging {
-			log.Info("Ldap User Info: %s", spew.Sdump(ldapUser))
-		}
+		a.log.Debug("Got Ldap User Info", "user", spew.Sdump(ldapUser))
 	}
 
 	return nil
@@ -187,7 +184,7 @@ func (a *ldapAuther) GetGrafanaUserFor(ldapUser *LdapUserInfo) (*m.User, error) 
 	}
 
 	if !access {
-		log.Info("Ldap Auth: user %s does not belong in any of the specified ldap groups, ldapUser groups: %v", ldapUser.Username, ldapUser.MemberOf)
+		a.log.Info("Ldap Auth: user does not belong in any of the specified ldap groups", "username", ldapUser.Username, "groups", ldapUser.MemberOf)
 		return nil, ErrInvalidCredentials
 	}
 
@@ -197,6 +194,7 @@ func (a *ldapAuther) GetGrafanaUserFor(ldapUser *LdapUserInfo) (*m.User, error) 
 		if err == m.ErrUserNotFound && setting.LdapAllowSignup {
 			return a.createGrafanaUser(ldapUser)
 		} else if err == m.ErrUserNotFound {
+			a.log.Warn("Not allowing LDAP login, user not found in internal user database, and ldap allow signup = false")
 			return nil, ErrInvalidCredentials
 		} else {
 			return nil, err
@@ -226,7 +224,7 @@ func (a *ldapAuther) syncUserInfo(user *m.User, ldapUser *LdapUserInfo) error {
 		return nil
 	}
 
-	log.Info("Ldap: Syncing user info %s", ldapUser.Username)
+	a.log.Debug("Syncing user info", "username", ldapUser.Username)
 	updateCmd := m.UpdateUserCommand{}
 	updateCmd.UserId = user.Id
 	updateCmd.Login = user.Login
@@ -237,7 +235,7 @@ func (a *ldapAuther) syncUserInfo(user *m.User, ldapUser *LdapUserInfo) error {
 
 func (a *ldapAuther) SyncOrgRoles(user *m.User, ldapUser *LdapUserInfo) error {
 	if len(a.server.LdapGroups) == 0 {
-		log.Warn("Ldap: no group mappings defined")
+		a.log.Warn("No group mappings defined")
 		return nil
 	}
 
@@ -308,9 +306,7 @@ func (a *ldapAuther) SyncOrgRoles(user *m.User, ldapUser *LdapUserInfo) error {
 func (a *ldapAuther) serverBind() error {
 	// bind_dn and bind_password to bind
 	if err := a.conn.Bind(a.server.BindDN, a.server.BindPassword); err != nil {
-		if LdapCfg.VerboseLogging {
-			log.Info("LDAP initial bind failed, %v", err)
-		}
+		a.log.Info("LDAP initial bind failed, %v", err)
 
 		if ldapErr, ok := err.(*ldap.Error); ok {
 			if ldapErr.ResultCode == 49 {
@@ -325,9 +321,7 @@ func (a *ldapAuther) serverBind() error {
 
 func (a *ldapAuther) secondBind(ldapUser *LdapUserInfo, userPassword string) error {
 	if err := a.conn.Bind(ldapUser.DN, userPassword); err != nil {
-		if LdapCfg.VerboseLogging {
-			log.Info("LDAP second bind failed, %v", err)
-		}
+		a.log.Info("Second bind failed", "error", err)
 
 		if ldapErr, ok := err.(*ldap.Error); ok {
 			if ldapErr.ResultCode == 49 {
@@ -352,9 +346,7 @@ func (a *ldapAuther) initialBind(username, userPassword string) error {
 	}
 
 	if err := a.conn.Bind(bindPath, userPassword); err != nil {
-		if LdapCfg.VerboseLogging {
-			log.Info("LDAP initial bind failed, %v", err)
-		}
+		a.log.Info("Initial bind failed", "error", err)
 
 		if ldapErr, ok := err.(*ldap.Error); ok {
 			if ldapErr.ResultCode == 49 {
@@ -418,9 +410,7 @@ func (a *ldapAuther) searchForUser(username string) (*LdapUserInfo, error) {
 			}
 			filter := strings.Replace(a.server.GroupSearchFilter, "%s", ldap.EscapeFilter(filter_replace), -1)
 
-			if LdapCfg.VerboseLogging {
-				log.Info("LDAP: Searching for user's groups: %s", filter)
-			}
+			a.log.Info("Searching for user's groups", "filter", filter)
 
 			groupSearchReq := ldap.SearchRequest{
 				BaseDN:       groupSearchBase,
