@@ -48,7 +48,7 @@ type ResponseParser struct {
 	log log.Logger
 }
 
-func (parser *ResponseParser) Parse(res *http.Response, queryRef *Query) (*tsdb.QueryResult, error) {
+func (parser *ResponseParser) Parse(res *http.Response, queryRef *Query) ([]*tsdb.TimeSeries, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
 	if err != nil {
@@ -71,7 +71,7 @@ func (parser *ResponseParser) Parse(res *http.Response, queryRef *Query) (*tsdb.
 		return nil, fmt.Errorf("Request failed.")
 	}
 
-	var series tsdb.TimeSeriesSlice
+	var series []*tsdb.TimeSeries
 	for _, body := range data.Body {
 		for _, mqeSerie := range body.Series {
 			namePrefix := ""
@@ -97,5 +97,5 @@ func (parser *ResponseParser) Parse(res *http.Response, queryRef *Query) (*tsdb.
 		}
 	}
 
-	return &tsdb.QueryResult{Series: series}, nil
+	return series, nil
 }
