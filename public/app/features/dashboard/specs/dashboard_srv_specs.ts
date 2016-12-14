@@ -215,7 +215,7 @@ describe('dashboardSrv', function() {
     });
 
     it('dashboard schema version should be set to latest', function() {
-      expect(model.schemaVersion).to.be(13);
+      expect(model.schemaVersion).to.be(14);
     });
 
     it('graph thresholds should be migrated', function() {
