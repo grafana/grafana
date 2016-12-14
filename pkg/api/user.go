@@ -30,6 +30,14 @@ func getUserUserProfile(userId int64) Response {
 
 // POST /api/user
 func UpdateSignedInUser(c *middleware.Context, cmd m.UpdateUserCommand) Response {
+	if setting.AuthProxyEnabled {
+		if setting.AuthProxyHeaderProperty == "email" && cmd.Email != c.Email {
+			return ApiError(400, "Not allowed to change email when auth proxy is using email property", nil)
+		}
+		if setting.AuthProxyHeaderProperty == "username" && cmd.Login != c.Login {
+			return ApiError(400, "Not allowed to change username when auth proxy is using username property", nil)
+		}
+	}
 	cmd.UserId = c.UserId
 	return handleUpdateUser(cmd)
 }
@@ -146,6 +154,10 @@ func ChangeActiveOrgAndRedirectToHome(c *middleware.Context) {
 }
 
 func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) Response {
+	if setting.LdapEnabled || setting.AuthProxyEnabled {
+		return ApiError(400, "Not allowed to change password when LDAP or Auth Proxy is enabled", nil)
+	}
+
 	userQuery := m.GetUserByIdQuery{Id: c.UserId}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
