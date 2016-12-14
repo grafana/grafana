@@ -61,5 +61,5 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 	context.NoDataFound = noDataFound
 	context.EndTime = time.Now()
 	elapsedTime := context.EndTime.Sub(context.StartTime) / time.Millisecond
-	metrics.M_Alerting_Exeuction_Time.Update(elapsedTime)
+	metrics.M_Alerting_Execution_Time.Update(elapsedTime)
 }
