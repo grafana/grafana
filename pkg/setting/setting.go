@@ -139,6 +139,19 @@ var (
 	LdapConfigFile  string
 	LdapAllowSignup bool = true
 
+	// Keystone
+	KeystoneEnabled          bool
+	KeystoneURL              string
+	KeystoneDefaultDomain    string
+	KeystoneDefaultRole      string
+	KeystoneViewerRoles      []string
+	KeystoneReadEditorRoles  []string
+	KeystoneEditorRoles      []string
+	KeystoneAdminRoles       []string
+	KeystoneGlobalAdminRoles []string
+	KeystoneVerifySSLCert    bool
+	KeystoneRootCAPEMFile    string
+
 	// SMTP email settings
 	Smtp SmtpSettings
 
@@ -567,6 +580,20 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	alerting := Cfg.Section("alerting")
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
+
+	keystone := Cfg.Section("auth.keystone")
+	KeystoneEnabled = keystone.Key("enabled").MustBool(false)
+	KeystoneURL = keystone.Key("auth_url").String()
+	KeystoneDefaultDomain = keystone.Key("default_domain").String()
+	KeystoneDefaultRole = keystone.Key("default_role").String()
+	KeystoneViewerRoles = strings.Split(keystone.Key("viewer_roles").String(), ",")
+	KeystoneReadEditorRoles = strings.Split(keystone.Key("read_editor_roles").String(), ",")
+	KeystoneEditorRoles = strings.Split(keystone.Key("editor_roles").String(), ",")
+	KeystoneAdminRoles = strings.Split(keystone.Key("admin_roles").String(), ",")
+	KeystoneGlobalAdminRoles = strings.Split(keystone.Key("global_admin_roles").String(), ",")
+
+	KeystoneVerifySSLCert = keystone.Key("verify_ssl_cert").MustBool(true)
+	KeystoneRootCAPEMFile = keystone.Key("root_ca_pem_file").String()
 
 	readSessionConfig()
 	readSmtpSettings()
