@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -237,6 +238,24 @@ func addGettingStartedPanelToHomeDashboard(dash *simplejson.Json) {
 	panels := row.Get("panels").MustArray()
 	panels = append(panels, newpanel)
 	row.Set("panels", panels)
+}
+
+func GetDashboardScriptFromFile(c *middleware.Context) {
+	file := c.Params(":file")
+
+	script := search.GetDashboardScriptFromFile(file)
+	if script == nil {
+		c.JsonApiErr(404, "Dashboard script not found", nil)
+		return
+	}
+
+	data, err := ioutil.ReadFile(script.Path)
+	if err != nil {
+		c.JsonApiErr(404, "Could not load script file", nil)
+		return
+	}
+
+	c.RawData(200, data)
 }
 
 func GetDashboardFromJsonFile(c *middleware.Context) {
