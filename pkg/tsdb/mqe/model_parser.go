@@ -39,5 +39,20 @@ func (qp *QueryParser) Parse(model *simplejson.Json, dsInfo *models.DataSource, 
 
 	query.Metrics = metrics
 
+	var functions []Function
+	for _, functionListObj := range model.Get("functionList").MustArray() {
+		functionListJson := simplejson.NewFromAny(functionListObj)
+		var f Function
+
+		f.Func = functionListJson.Get("func").MustString("")
+		if err != nil {
+			return nil, err
+		}
+
+		functions = append(functions, f)
+	}
+
+	query.FunctionList = functions
+
 	return query, nil
 }

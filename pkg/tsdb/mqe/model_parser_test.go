@@ -61,6 +61,14 @@ func TestMQEQueryParser(t *testing.T) {
             "metric": "os.disk.sda.io_time"
           }
         ],
+        "functionList": [
+          {
+            "func": "aggregate.min"
+          },
+          {
+             "func": "aggregate.max"
+          }
+        ],
         "rawQuery": "",
         "refId": "A",
         "addClusterToAlias": true,
@@ -76,6 +84,8 @@ func TestMQEQueryParser(t *testing.T) {
 			So(query.Cluster[0], ShouldEqual, "demoapp")
 			So(query.Metrics[0].Metric, ShouldEqual, "os.cpu.all.active_percentage")
 			So(query.Metrics[1].Metric, ShouldEqual, "os.disk.sda.io_time")
+			So(query.FunctionList[0].Func, ShouldEqual, "aggregate.min")
+			So(query.FunctionList[1].Func, ShouldEqual, "aggregate.max")
 		})
 
 		Convey("can parse raw query", func() {

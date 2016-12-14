@@ -16,10 +16,15 @@ type Metric struct {
 	Alias  string
 }
 
+type Function struct {
+	Func string
+}
+
 type Query struct {
 	Metrics           []Metric
 	Hosts             []string
 	Cluster           []string
+	FunctionList      []Function
 	AddClusterToAlias bool
 	AddHostToAlias    bool
 
@@ -35,6 +40,7 @@ var (
 func (q *Query) Build(availableSeries []string) ([]QueryToSend, error) {
 	var queriesToSend []QueryToSend
 	where := q.buildWhereClause()
+	functions := q.buildFunctionList()
 
 	for _, v := range q.Metrics {
 		if !containsWildcardPattern.Match([]byte(v.Metric)) {
@@ -42,9 +48,11 @@ func (q *Query) Build(availableSeries []string) ([]QueryToSend, error) {
 			if v.Alias != "" {
 				alias = fmt.Sprintf(" {%s}", v.Alias)
 			}
+
 			rawQuery := fmt.Sprintf(
-				"`%s`%s %s from %v to %v",
+				"`%s`%s%s %s from %v to %v",
 				v.Metric,
+				functions,
 				alias,
 				where,
 				q.TimeRange.GetFromAsMsEpoch(),
@@ -73,8 +81,9 @@ func (q *Query) Build(availableSeries []string) ([]QueryToSend, error) {
 				}
 
 				rawQuery := fmt.Sprintf(
-					"`%s`%s %s from %v to %v",
+					"`%s`%s%s %s from %v to %v",
 					a,
+					functions,
 					alias,
 					where,
 					q.TimeRange.GetFromAsMsEpoch(),
@@ -88,6 +97,15 @@ func (q *Query) Build(availableSeries []string) ([]QueryToSend, error) {
 		}
 	}
 	return queriesToSend, nil
+}
+
+func (q *Query) buildFunctionList() string {
+	functions := ""
+	for _, v := range q.FunctionList {
+		functions = fmt.Sprintf("%s|%s", functions, v.Func)
+	}
+
+	return functions
 }
 
 func (q *Query) buildWhereClause() string {
