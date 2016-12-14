@@ -23,13 +23,12 @@ import (
 	_ "github.com/mattn/go-sqlite3"
 )
 
-
 type DatabaseConfig struct {
-  Type, Host, Name, User, Pwd, Path, SslMode string
-  CaCertPath     string
-  ClientKeyPath  string
-  ClientCertPath string
-  ServerCertName string
+	Type, Host, Name, User, Pwd, Path, SslMode string
+	CaCertPath                                 string
+	ClientKeyPath                              string
+	ClientCertPath                             string
+	ServerCertName                             string
 }
 
 var (
@@ -38,10 +37,10 @@ var (
 
 	HasEngine bool
 
-  DbCfg DatabaseConfig
+	DbCfg DatabaseConfig
 
-	UseSQLite3  bool
-	sqlog       log.Logger = log.New("sqlstore")
+	UseSQLite3 bool
+	sqlog      log.Logger = log.New("sqlstore")
 )
 
 func EnsureAdminUser() {
@@ -187,9 +186,9 @@ func LoadConfig() {
 		UseSQLite3 = true
 	}
 	DbCfg.SslMode = sec.Key("ssl_mode").String()
-  DbCfg.CaCertPath = sec.Key("ca_cert_path").String()
-  DbCfg.ClientKeyPath = sec.Key("client_key_path").String()
-  DbCfg.ClientCertPath = sec.Key("client_cert_path").String()
-  DbCfg.ServerCertName = sec.Key("server_cert_name").String()
+	DbCfg.CaCertPath = sec.Key("ca_cert_path").String()
+	DbCfg.ClientKeyPath = sec.Key("client_key_path").String()
+	DbCfg.ClientCertPath = sec.Key("client_cert_path").String()
+	DbCfg.ServerCertName = sec.Key("server_cert_name").String()
 	DbCfg.Path = sec.Key("path").MustString("data/grafana.db")
 }

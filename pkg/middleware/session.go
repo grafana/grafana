@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	SESS_KEY_USERID = "uid"
+	SESS_KEY_USERID      = "uid"
 	SESS_KEY_OAUTH_STATE = "state"
 )
 

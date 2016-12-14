@@ -55,8 +55,8 @@ func OAuthLogin(ctx *middleware.Context) {
 		ctx.Session.Set(middleware.SESS_KEY_OAUTH_STATE, state)
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
-		}else{
-			ctx.Redirect(connect.AuthCodeURL(state, oauth2.SetParam("hd", setting.OAuthService.OAuthInfos[name].HostedDomain), oauth2.AccessTypeOnline));
+		} else {
+			ctx.Redirect(connect.AuthCodeURL(state, oauth2.SetParam("hd", setting.OAuthService.OAuthInfos[name].HostedDomain), oauth2.AccessTypeOnline))
 		}
 		return
 	}
@@ -90,8 +90,8 @@ func OAuthLogin(ctx *middleware.Context) {
 		tr := &http.Transport{
 			TLSClientConfig: &tls.Config{
 				InsecureSkipVerify: true,
-				Certificates: []tls.Certificate{cert},
-				RootCAs: caCertPool,
+				Certificates:       []tls.Certificate{cert},
+				RootCAs:            caCertPool,
 			},
 		}
 		sslcli := &http.Client{Transport: tr}
