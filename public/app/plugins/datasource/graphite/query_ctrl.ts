@@ -161,7 +161,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
     return this.datasource.metricFindQuery(query).then(segments => {
       var altSegments = _.map(segments, segment => {
-        return this.uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
+        return this.uiSegmentSrv.newSegment({value: segment.text, expandable: segment.expandable});
       });
 
       if (altSegments.length === 0) { return altSegments; }
