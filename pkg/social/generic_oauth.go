@@ -181,12 +181,12 @@ func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	}
 
 	userInfo := &BasicUserInfo{
-		Name:     data.Name,
-		Login:    data.Login,
-		Email:    data.Email,
+		Name:  data.Name,
+		Login: data.Login,
+		Email: data.Email,
 	}
 
-	if (userInfo.Email == "" && data.Attributes["email:primary"] != nil) {
+	if userInfo.Email == "" && data.Attributes["email:primary"] != nil {
 		userInfo.Email = data.Attributes["email:primary"][0]
 	}
 
@@ -197,11 +197,11 @@ func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 		}
 	}
 
-	if (userInfo.Login == "" && data.Username != "") {
+	if userInfo.Login == "" && data.Username != "" {
 		userInfo.Login = data.Username
 	}
 
-	if (userInfo.Login == "") {
+	if userInfo.Login == "" {
 		userInfo.Login = data.Email
 	}
 
