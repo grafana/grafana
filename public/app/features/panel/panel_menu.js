@@ -9,14 +9,25 @@ function (angular, $, _, Tether) {
 
   angular
     .module('grafana.directives')
-    .directive('panelMenu', function($compile, linkSrv) {
+    .directive('panelMenu', function($sanitize, $compile, linkSrv) {
       var linkTemplate =
           '<span class="panel-title drag-handle pointer">' +
             '<span class="icon-gf panel-alert-icon"></span>' +
             '<span class="panel-title-text drag-handle">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>' +
+            '<span class="panel-help-text"><info-popover mode="bold">{{ctrl.panel.helpText}}</info-popover></span>' +
             '<span class="panel-links-btn"><i class="fa fa-external-link"></i></span>' +
             '<span class="panel-time-info" ng-show="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>' +
           '</span>';
+
+      function sanitizeString(str) {
+        try {
+          return $sanitize(str);
+        }
+        catch(err) {
+          console.log('Could not sanitize annotation string, html escaping instead');
+          return _.escape(str);
+        }
+      }
 
       function createExternalLinkMenu(ctrl) {
         var template = '<div class="panel-menu small">';
@@ -78,6 +89,7 @@ function (angular, $, _, Tether) {
           var $link = $(linkTemplate);
           var $panelLinksBtn = $link.find(".panel-links-btn");
           var $panelContainer = elem.parents(".panel-container");
+          var $panelHelpDrop = $link.find(".panel-help-text");
           var menuScope = null;
           var ctrl = $scope.ctrl;
           var timeout = null;
@@ -90,6 +102,12 @@ function (angular, $, _, Tether) {
             var showIcon = (newValue ? newValue.length > 0 : false) && ctrl.panel.title !== '';
             // cannot use toggle here, only works for attached elements
             $panelLinksBtn.css({display: showIcon ? 'inline' : 'none'});
+          });
+
+          $scope.$watch('ctrl.panel.helpText', function(helpText) {
+            helpText = sanitizeString(helpText);
+            var showIcon = (helpText ? helpText.length > 0 : false) && ctrl.panel.title !== '';
+            $panelHelpDrop.css({display: showIcon ? 'inline' : 'none'});
           });
 
           function dismiss(time, force) {
