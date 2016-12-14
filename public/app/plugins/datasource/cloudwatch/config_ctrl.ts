@@ -12,6 +12,7 @@ export class CloudWatchConfigCtrl {
 
   /** @ngInject */
   constructor($scope) {
+    debugger;
     this.current.jsonData.timeField = this.current.jsonData.timeField || '@timestamp';
     this.current.jsonData.authType = this.current.jsonData.authType || 'credentials';
 

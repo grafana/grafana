@@ -13,7 +13,8 @@ var defaults = {
   type: 'graphite',
   url: '',
   access: 'proxy',
-  jsonData: {}
+  jsonData: {},
+  encryptedFields: []
 };
 
 var datasourceCreated = false;
