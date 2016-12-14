@@ -17,11 +17,11 @@ type Metric struct {
 }
 
 type Query struct {
-	Metrics        []Metric
-	Hosts          []string
-	Apps           []string
-	AddAppToAlias  bool
-	AddHostToAlias bool
+	Metrics           []Metric
+	Hosts             []string
+	Cluster           []string
+	AddClusterToAlias bool
+	AddHostToAlias    bool
 
 	TimeRange   *tsdb.TimeRange
 	UseRawQuery bool
@@ -91,7 +91,7 @@ func (q *Query) Build(availableSeries []string) ([]QueryToSend, error) {
 }
 
 func (q *Query) buildWhereClause() string {
-	hasApps := len(q.Apps) > 0
+	hasApps := len(q.Cluster) > 0
 	hasHosts := len(q.Hosts) > 0
 
 	where := ""
@@ -100,8 +100,8 @@ func (q *Query) buildWhereClause() string {
 	}
 
 	if hasApps {
-		apps := strings.Join(q.Apps, "', '")
-		where += fmt.Sprintf("app in ('%s')", apps)
+		apps := strings.Join(q.Cluster, "', '")
+		where += fmt.Sprintf("cluster in ('%s')", apps)
 	}
 
 	if hasHosts && hasApps {

@@ -78,7 +78,7 @@ func (parser *ResponseParser) Parse(res *http.Response, queryRef *Query) ([]*tsd
 
 			//append predefined tags to seriename
 			for key, value := range mqeSerie.Tagset {
-				if key == "app" && queryRef.AddAppToAlias {
+				if key == "cluster" && queryRef.AddClusterToAlias {
 					namePrefix += value + " "
 				}
 				if key == "host" && queryRef.AddHostToAlias {

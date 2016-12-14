@@ -14,12 +14,12 @@ type QueryParser struct{}
 
 func (qp *QueryParser) Parse(model *simplejson.Json, dsInfo *models.DataSource, queryContext *tsdb.QueryContext) (*Query, error) {
 	query := &Query{TimeRange: queryContext.TimeRange}
-	query.AddAppToAlias = model.Get("addAppToAlias").MustBool(false)
+	query.AddClusterToAlias = model.Get("addClusterToAlias").MustBool(false)
 	query.AddHostToAlias = model.Get("addHostToAlias").MustBool(false)
 	query.UseRawQuery = model.Get("rawQuery").MustBool(false)
 	query.RawQuery = model.Get("query").MustString("")
 
-	query.Apps = model.Get("apps").MustStringArray([]string{})
+	query.Cluster = model.Get("cluster").MustStringArray([]string{})
 	query.Hosts = model.Get("hosts").MustStringArray([]string{})
 
 	var metrics []Metric

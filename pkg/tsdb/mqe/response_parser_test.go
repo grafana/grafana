@@ -21,8 +21,8 @@ func TestMQEResponseParser(t *testing.T) {
 
 		Convey("Can parse response", func() {
 			queryRef := &Query{
-				AddAppToAlias:  true,
-				AddHostToAlias: true,
+				AddClusterToAlias: true,
+				AddHostToAlias:    true,
 			}
 
 			response := &http.Response{
@@ -55,14 +55,14 @@ func init() {
         "series": [
           {
             "tagset": {
-              "app": "demoapp",
+              "cluster": "demoapp",
               "host": "staples-lab-1"
             },
             "values": [1,2,3,4,5,6,7,8,9,10,11, null, null, null]
           },
           {
             "tagset": {
-              "app": "demoapp",
+              "cluster": "demoapp",
               "host": "staples-lab-2"
             },
             "values": [11,10,9,8,7,6,5,4,3,2,1]
@@ -77,7 +77,7 @@ func init() {
     ],
     "metadata": {
       "description": {
-        "app": [
+        "cluster": [
           "demoapp"
         ],
         "host": [

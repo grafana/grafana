@@ -19,7 +19,7 @@ func TestMQEQueryParser(t *testing.T) {
 		Convey("can parse simple mqe model", func() {
 			json := `
       {
-        "apps": [],
+        "cluster": [],
         "hosts": [
           "staples-lab-1"
         ],
@@ -39,7 +39,7 @@ func TestMQEQueryParser(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(query.UseRawQuery, ShouldBeFalse)
 
-			So(len(query.Apps), ShouldEqual, 0)
+			So(len(query.Cluster), ShouldEqual, 0)
 			So(query.Hosts[0], ShouldEqual, "staples-lab-1")
 			So(query.Metrics[0].Metric, ShouldEqual, "os.cpu.all*")
 		})
@@ -47,7 +47,7 @@ func TestMQEQueryParser(t *testing.T) {
 		Convey("can parse multi serie mqe model", func() {
 			json := `
       {
-        "apps": [
+        "cluster": [
           "demoapp"
         ],
         "hosts": [
@@ -63,7 +63,7 @@ func TestMQEQueryParser(t *testing.T) {
         ],
         "rawQuery": "",
         "refId": "A",
-        "addAppToAlias": true,
+        "addClusterToAlias": true,
         "addHostToAlias": true
       }
       `
@@ -73,7 +73,7 @@ func TestMQEQueryParser(t *testing.T) {
 			query, err := parser.Parse(modelJson, dsInfo, queryContext)
 			So(err, ShouldBeNil)
 			So(query.UseRawQuery, ShouldBeFalse)
-			So(query.Apps[0], ShouldEqual, "demoapp")
+			So(query.Cluster[0], ShouldEqual, "demoapp")
 			So(query.Metrics[0].Metric, ShouldEqual, "os.cpu.all.active_percentage")
 			So(query.Metrics[1].Metric, ShouldEqual, "os.disk.sda.io_time")
 		})
@@ -81,9 +81,9 @@ func TestMQEQueryParser(t *testing.T) {
 		Convey("can parse raw query", func() {
 			json := `
       {
-        "addAppToAlias": true,
+        "addClusterToAlias": true,
         "addHostToAlias": true,
-        "apps": [],
+        "cluster": [],
         "hosts": [
           "staples-lab-1"
         ],
@@ -99,9 +99,7 @@ func TestMQEQueryParser(t *testing.T) {
         ],
         "rawQuery": true,
         "query": "raw-query",
-        "refId": "A",
-        "addAppToAlias": true,
-        "addHostToAlias": true
+        "refId": "A"
       }
       `
 			modelJson, err := simplejson.NewJson([]byte(json))
@@ -112,7 +110,7 @@ func TestMQEQueryParser(t *testing.T) {
 
 			So(query.UseRawQuery, ShouldBeTrue)
 			So(query.RawQuery, ShouldEqual, "raw-query")
-			So(query.AddAppToAlias, ShouldBeTrue)
+			So(query.AddClusterToAlias, ShouldBeTrue)
 			So(query.AddHostToAlias, ShouldBeTrue)
 		})
 	})
