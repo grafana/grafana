@@ -179,6 +179,11 @@ function ($, core) {
         pos.pageY = elem.offset().top + elem.height() * pos.panelRelY;
         plot.setCrosshair(pos);
         allSeriesMode = true;
+
+        if (dashboard.sharedCrosshairModeOnly()) {
+          // if only crosshair mode we are done
+          return;
+        }
       }
 
       if (seriesList.length === 0) {

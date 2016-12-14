@@ -61,7 +61,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
       // global events
       appEvents.on('graph-hover', function(evt) {
         // ignore other graph hover events if shared tooltip is disabled
-        if (!dashboard.sharedCrosshair) {
+        if (!dashboard.sharedTooltipModeEnabled()) {
           return;
         }
 

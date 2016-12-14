@@ -18,7 +18,7 @@ export class DashboardModel {
   style: any;
   timezone: any;
   editable: any;
-  sharedCrosshair: any;
+  graphTooltip: any;
   rows: DashboardRow[];
   time: any;
   timepicker: any;
@@ -51,7 +51,7 @@ export class DashboardModel {
     this.style = data.style || "dark";
     this.timezone = data.timezone || '';
     this.editable = data.editable !== false;
-    this.sharedCrosshair = data.sharedCrosshair || false;
+    this.graphTooltip = data.graphTooltip || false;
     this.hideControls = data.hideControls || false;
     this.time = data.time || { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker || {};
@@ -267,6 +267,18 @@ export class DashboardModel {
     }
   }
 
+  cycleGraphTooltip() {
+    this.graphTooltip = (this.graphTooltip + 1) % 3;
+  }
+
+  sharedTooltipModeEnabled() {
+    return this.graphTooltip !== 0;
+  }
+
+  sharedCrosshairModeOnly() {
+    return this.graphTooltip === 1;
+  }
+
   getRelativeTime(date) {
     date = moment.isMoment(date) ? date : moment(date);
 
@@ -297,7 +309,7 @@ export class DashboardModel {
     var i, j, k;
     var oldVersion = this.schemaVersion;
     var panelUpgrades = [];
-    this.schemaVersion = 13;
+    this.schemaVersion = 14;
 
     if (oldVersion === this.schemaVersion) {
       return;
@@ -600,6 +612,10 @@ export class DashboardModel {
           delete panel.grid.threshold2Color;
           delete panel.grid.thresholdLine;
         });
+      }
+
+      if (oldVersion < 14) {
+        this.graphTooltip = old.sharedCrosshair ? 1 : 0;
       }
 
       if (panelUpgrades.length === 0) {

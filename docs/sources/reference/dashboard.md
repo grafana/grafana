@@ -33,7 +33,7 @@ When a user creates a new dashboard, a new dashboard JSON object is initialized 
   "timezone": "browser",
   "editable": true,
   "hideControls": false,
-  "sharedCrosshair": false,
+  "graphTooltip": 1,
   "rows": [],
   "time": {
     "from": "now-6h",
@@ -65,7 +65,7 @@ Each field in the dashboard JSON is explained below with its usage:
 | **timezone** | timezone of dashboard, i.e. `utc` or `browser` |
 | **editable** | whether a dashboard is editable or not |
 | **hideControls** | whether row controls on the left in green are hidden or not |
-| **sharedCrosshair** | TODO |
+| **graphTooltip** | TODO |
 | **rows** | row metadata, see [rows section](/docs/sources/reference/dashboard.md/#rows) for details |
 | **time** | time range for dashboard, i.e. last 6 hours, last 7 days, etc |
 | **timepicker** | timepicker metadata, see [timepicker section](/docs/sources/reference/dashboard.md/#timepicker) for details |
