@@ -50,7 +50,7 @@ var (
 
 	// Timers
 	M_DataSource_ProxyReq_Timer Timer
-	M_Alerting_Exeuction_Time   Timer
+	M_Alerting_Execution_Time Timer
 
 	// StatTotals
 	M_Alerting_Active_Alerts Gauge
@@ -115,7 +115,7 @@ func initMetricVars(settings *MetricSettings) {
 
 	// Timers
 	M_DataSource_ProxyReq_Timer = RegTimer("api.dataproxy.request.all")
-	M_Alerting_Exeuction_Time = RegTimer("alerting.execution_time")
+	M_Alerting_Execution_Time = RegTimer("alerting.execution_time")
 
 	// StatTotals
 	M_Alerting_Active_Alerts = RegGauge("alerting.active_alerts")
