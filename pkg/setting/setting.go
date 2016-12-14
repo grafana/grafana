@@ -108,6 +108,8 @@ var (
 	AuthProxyHeaderName     string
 	AuthProxyHeaderProperty string
 	AuthProxyAutoSignUp     bool
+	AuthProxyLdapSyncTtl    int
+	AuthProxyWhitelist      string
 
 	// Basic Auth
 	BasicAuthEnabled bool
@@ -546,7 +548,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 	AuthProxyHeaderName = authProxy.Key("header_name").String()
 	AuthProxyHeaderProperty = authProxy.Key("header_property").String()
 	AuthProxyAutoSignUp = authProxy.Key("auto_sign_up").MustBool(true)
+	AuthProxyLdapSyncTtl = authProxy.Key("ldap_sync_ttl").MustInt()
+	AuthProxyWhitelist = authProxy.Key("whitelist").String()
 
+	// basic auth
 	authBasic := Cfg.Section("auth.basic")
 	BasicAuthEnabled = authBasic.Key("enabled").MustBool(true)
 
