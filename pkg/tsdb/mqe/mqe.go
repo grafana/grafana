@@ -9,12 +9,6 @@ import (
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
-/*
-  TODO:
-  * performance. outgoing requests in pararell.
-  * frontend plugin. targetContainsTemplates
-*/
-
 type MQEExecutor struct {
 	*models.DataSource
 	queryParser *QueryParser
