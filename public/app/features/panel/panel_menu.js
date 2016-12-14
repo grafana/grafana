@@ -14,7 +14,7 @@ function (angular, $, _, Tether) {
           '<span class="panel-title drag-handle pointer">' +
             '<span class="icon-gf panel-alert-icon"></span>' +
             '<span class="panel-title-text drag-handle">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>' +
-            '<span class="panel-help-text"><info-popover mode="bold">{{ctrl.panel.helpText}}</info-popover></span>' +
+            '<span class="panel-help-text"><info-popover mode="bold">{{ctrl.panel.description}}</info-popover></span>' +
             '<span class="panel-links-btn"><i class="fa fa-external-link"></i></span>' +
             '<span class="panel-time-info" ng-show="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>' +
           '</span>';
@@ -104,9 +104,9 @@ function (angular, $, _, Tether) {
             $panelLinksBtn.css({display: showIcon ? 'inline' : 'none'});
           });
 
-          $scope.$watch('ctrl.panel.helpText', function(helpText) {
-            helpText = sanitizeString(helpText);
-            var showIcon = (helpText ? helpText.length > 0 : false) && ctrl.panel.title !== '';
+          $scope.$watch('ctrl.panel.description', function(description) {
+            description = sanitizeString(description);
+            var showIcon = (description ? description.length > 0 : false) && ctrl.panel.title !== '';
             $panelHelpDrop.css({display: showIcon ? 'inline' : 'none'});
           });
 
