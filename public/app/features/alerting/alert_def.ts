@@ -20,6 +20,14 @@ var conditionTypes = [
   {text: 'Query', value: 'query'},
 ];
 
+var alertStateSortScore = {
+  alerting: 1,
+  no_data: 2,
+  pending: 3,
+  ok: 4,
+  paused: 5,
+};
+
 var evalFunctions = [
   {text: 'IS ABOVE', value: 'gt'},
   {text: 'IS BELOW', value: 'lt'},
@@ -129,4 +137,5 @@ export default {
   reducerTypes: reducerTypes,
   createReducerPart: createReducerPart,
   joinEvalMatches: joinEvalMatches,
+  alertStateSortScore: alertStateSortScore,
 };

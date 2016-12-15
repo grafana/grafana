@@ -11,6 +11,12 @@
       <span class="gf-form-label width-8">Max items</span>
       <input type="text" class="gf-form-input max-width-15" ng-model="ctrl.panel.limit" ng-change="ctrl.onRender()" />
     </div>
+    <div class="gf-form" ng-show="ctrl.panel.show === 'current'">
+      <span class="gf-form-label width-8">Sort order</span>
+      <div class="gf-form-select-wrapper max-width-15">
+        <select class="gf-form-input" ng-model="ctrl.panel.sortOrder" ng-options="f.value as f.text for f in ctrl.sortOrderOptions" ng-change="ctrl.onRender()"></select>
+      </div>
+    </div>
     <gf-form-switch class="gf-form" label="Alerts from this dashboard" label-class="width-18" checked="ctrl.panel.onlyAlertsOnDashboard" on-change="ctrl.updateStateFilter()"></gf-form-switch>
   </div>
   <div class="section gf-form-group">
