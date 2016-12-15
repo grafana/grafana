@@ -24,6 +24,10 @@ func (s *SocialGrafanaNet) Type() int {
 	return int(models.GRAFANANET)
 }
 
+func (s *SocialGrafanaNet) Scopes() []string {
+	return s.Config.Scopes
+}
+
 func (s *SocialGrafanaNet) IsEmailAllowed(email string) bool {
 	return true
 }

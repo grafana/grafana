@@ -32,6 +32,10 @@ func (s *SocialGithub) Type() int {
 	return int(models.GITHUB)
 }
 
+func (s *SocialGithub) Scopes() []string {
+	return s.Config.Scopes
+}
+
 func (s *SocialGithub) IsEmailAllowed(email string) bool {
 	return isEmailAllowed(email, s.allowedDomains)
 }
