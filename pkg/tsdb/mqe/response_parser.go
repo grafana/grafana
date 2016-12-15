@@ -81,6 +81,8 @@ func (parser *ResponseParser) Parse(res *http.Response, queryRef *Query) ([]*tsd
 				if key == "cluster" && queryRef.AddClusterToAlias {
 					namePrefix += value + " "
 				}
+			}
+			for key, value := range mqeSerie.Tagset {
 				if key == "host" && queryRef.AddHostToAlias {
 					namePrefix += value + " "
 				}

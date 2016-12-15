@@ -47,6 +47,7 @@ var noDataModes = [
   {text: 'Alerting', value: 'alerting'},
   {text: 'No Data', value: 'no_data'},
   {text: 'Keep Last State', value: 'keep_state'},
+  {text: 'Ok', value: 'ok'},
 ];
 
 var executionErrorModes = [

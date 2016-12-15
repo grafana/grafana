@@ -94,7 +94,7 @@ func createDialer() (*gomail.Dialer, error) {
 	if setting.Smtp.CertFile != "" {
 		cert, err := tls.LoadX509KeyPair(setting.Smtp.CertFile, setting.Smtp.KeyFile)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Could not load cert or key file. error: %v", err)
 		}
 		tlsconfig.Certificates = []tls.Certificate{cert}
 	}
