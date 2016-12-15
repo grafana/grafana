@@ -259,10 +259,11 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 
 //POST /api/alerts/:alertId/pause
 func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
+	alertId := c.ParamsInt64("alertId")
 	cmd := models.PauseAlertCommand{
-		OrgId:   c.OrgId,
-		AlertId: c.ParamsInt64("alertId"),
-		Paused:  dto.Paused,
+		OrgId:    c.OrgId,
+		AlertIds: []int64{alertId},
+		Paused:   dto.Paused,
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -277,9 +278,72 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	}
 
 	result := map[string]interface{}{
-		"alertId": cmd.AlertId,
+		"alertId": alertId,
 		"state":   response,
 		"message": "alert " + pausedState,
+	}
+
+	return Json(200, result)
+}
+
+func existInSlice(slice []int64, value int64) bool {
+	for _, v := range slice {
+		if v == value {
+			return true
+		}
+	}
+	return false
+}
+
+//POST /api/alerts/pause
+func PauseAlerts(c *middleware.Context, dto dtos.PauseAlertsCommand) Response {
+	cmd := &models.GetAllAlertsQuery{}
+	if err := bus.Dispatch(cmd); err != nil {
+		return ApiError(500, "", err)
+	}
+
+	var alertsToUpdate []int64
+	skipFilter := len(dto.DataSourceIds) == 0
+	for _, alert := range cmd.Result {
+		if skipFilter {
+			alertsToUpdate = append(alertsToUpdate, alert.Id)
+			continue
+		}
+
+		alert, err := alerting.NewRuleFromDBAlert(alert)
+		if err != nil {
+			return ApiError(500, "", err)
+		}
+
+		for _, v := range alert.Conditions {
+			id, exist := v.GetDatsourceId()
+			if exist && existInSlice(dto.DataSourceIds, *id) {
+				alertsToUpdate = append(alertsToUpdate, alert.Id)
+			}
+		}
+	}
+
+	updateCmd := models.PauseAlertCommand{
+		OrgId:    c.OrgId,
+		AlertIds: alertsToUpdate,
+		Paused:   dto.Paused,
+	}
+
+	if err := bus.Dispatch(&updateCmd); err != nil {
+		return ApiError(500, "", err)
+	}
+
+	var response models.AlertStateType = models.AlertStatePending
+	pausedState := "un paused"
+	if updateCmd.Paused {
+		response = models.AlertStatePaused
+		pausedState = "paused"
+	}
+
+	result := map[string]interface{}{
+		"state":          response,
+		"message":        "alert " + pausedState,
+		"alertsAffected": updateCmd.ResultCount,
 	}
 
 	return Json(200, result)

@@ -34,6 +34,10 @@ type AlertQuery struct {
 	To           string
 }
 
+func (c *QueryCondition) GetDatsourceId() (datasourceId *int64, exist bool) {
+	return &c.Query.DatasourceId, true
+}
+
 func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.ConditionResult, error) {
 	timeRange := tsdb.NewTimeRange(c.Query.From, c.Query.To)
 

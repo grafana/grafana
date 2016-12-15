@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"time"
 
+	"strings"
+
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
@@ -246,25 +248,32 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 
 func PauseAlertRule(cmd *m.PauseAlertCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		alert := m.Alert{}
+		var buffer bytes.Buffer
+		params := make([]interface{}, 0)
+		buffer.WriteString(`UPDATE alert SET state = ?`)
 
-		has, err := x.Where("id = ? AND org_id=?", cmd.AlertId, cmd.OrgId).Get(&alert)
+		alertIdCount := len(cmd.AlertIds)
+		if alertIdCount == 1 {
+			buffer.WriteString(` WHERE id = ?`)
+		} else if alertIdCount > 1 {
+			buffer.WriteString(` WHERE id IN (?` + strings.Repeat(",?", len(cmd.AlertIds)-1) + `)`)
+		}
 
+		if cmd.Paused {
+			params = append(params, string(m.AlertStatePaused))
+		} else {
+			params = append(params, string(m.AlertStatePending))
+		}
+
+		for _, v := range cmd.AlertIds {
+			params = append(params, v)
+		}
+
+		res, err := sess.Exec(buffer.String(), params...)
 		if err != nil {
 			return err
-		} else if !has {
-			return fmt.Errorf("Could not find alert")
 		}
-
-		var newState m.AlertStateType
-		if cmd.Paused {
-			newState = m.AlertStatePaused
-		} else {
-			newState = m.AlertStatePending
-		}
-		alert.State = newState
-
-		sess.Id(alert.Id).Update(&alert)
+		cmd.ResultCount, _ = res.RowsAffected()
 		return nil
 	})
 }
