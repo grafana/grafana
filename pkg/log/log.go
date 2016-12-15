@@ -122,7 +122,7 @@ var logLevels = map[string]log15.Lvl{
 }
 
 func getLogLevelFromConfig(key string, defaultName string, cfg *ini.File) (string, log15.Lvl) {
-	levelName := cfg.Section(key).Key("level").MustString("info")
+	levelName := cfg.Section(key).Key("level").MustString(defaultName)
 	levelName = strings.ToLower(levelName)
 	level := getLogLevelFromString(levelName)
 	return levelName, level
