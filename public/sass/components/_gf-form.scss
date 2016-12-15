@@ -244,6 +244,10 @@ $gf-form-margin: 0.25rem;
   padding-left: $spacer;
   color: $text-color-weak;
 
+  &--bold {
+    color: $text-color-emphasis;
+  }
+
   &--right-absolute {
     position: absolute;
     right: $spacer;
