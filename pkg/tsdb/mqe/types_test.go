@@ -49,6 +49,28 @@ func TestWildcardExpansion(t *testing.T) {
 			So(expandeQueries[2].RawQuery, ShouldEqual, fmt.Sprintf("`os.cpu.1.idle`|aggregate.min {cpu} where cluster in ('demoapp-1', 'demoapp-2') and host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
 		})
 
+		Convey("With two aggregate functions", func() {
+			query := &Query{
+				Metrics: []Metric{
+					Metric{Metric: "os.cpu.3.idle", Alias: ""},
+				},
+				Hosts:             []string{"staples-lab-1", "staples-lab-2"},
+				Cluster:           []string{"demoapp-1", "demoapp-2"},
+				AddClusterToAlias: false,
+				AddHostToAlias:    false,
+				FunctionList: []Function{
+					Function{Func: "aggregate.min"},
+					Function{Func: "aggregate.max"},
+				},
+				TimeRange: &tsdb.TimeRange{Now: now, From: "5m", To: "now"},
+			}
+
+			expandeQueries, err := query.Build(availableMetrics)
+			So(err, ShouldBeNil)
+			So(len(expandeQueries), ShouldEqual, 1)
+			So(expandeQueries[0].RawQuery, ShouldEqual, fmt.Sprintf("`os.cpu.3.idle`|aggregate.min|aggregate.max where cluster in ('demoapp-1', 'demoapp-2') and host in ('staples-lab-1', 'staples-lab-2') from %v to %v", from, to))
+		})
+
 		Convey("Containg wildcard series", func() {
 			query := &Query{
 				Metrics: []Metric{
