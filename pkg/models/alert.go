@@ -20,9 +20,10 @@ const (
 )
 
 const (
+	NoDataSetOK       NoDataOption = "ok"
 	NoDataSetNoData   NoDataOption = "no_data"
-	NoDataSetAlerting NoDataOption = "alerting"
 	NoDataKeepState   NoDataOption = "keep_state"
+	NoDataSetAlerting NoDataOption = "alerting"
 )
 
 const (
@@ -35,7 +36,7 @@ func (s AlertStateType) IsValid() bool {
 }
 
 func (s NoDataOption) IsValid() bool {
-	return s == NoDataSetNoData || s == NoDataSetAlerting || s == NoDataKeepState
+	return s == NoDataSetNoData || s == NoDataSetAlerting || s == NoDataKeepState || s == NoDataSetOK
 }
 
 func (s NoDataOption) ToAlertState() AlertStateType {
