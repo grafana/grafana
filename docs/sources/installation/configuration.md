@@ -221,6 +221,68 @@ Default is `false`.
 
 <hr />
 
+## [security.http]
+
+For details, see https://github.com/unrolled/secure.
+
+### allowed_hosts
+
+List of fully qualified domain names that are allowed; if empty, allow any and all host names.
+
+### ssl_direct
+
+Only allow HTTPS requests
+
+### ssl_temporary_redirect
+
+Use 302 for SSL redirect
+
+### ssl_host
+
+SSL redirect host; use same host if not set
+
+### sts_seconds
+
+Max age of Strict-Transport-Security header; header is not sent if not set
+
+### sts_include_subdomains
+
+Append `includeSubdomains` flag to Strict-Transport-Security header
+
+### sts_preload
+
+Append `preload` flag to Strict-Transport-Security header
+
+### force_sts_header
+
+Include Strict-Transport-Security with HTTP requests
+
+### frame_deny
+
+Add the X-Frame-Options header with the value of `DENY`
+
+### custom_frame_options_value
+
+Set custom X-Frame-Options header value
+
+### content_type_no_sniff
+
+Add the X-Content-Type-Options header with the value `nosniff`
+
+### browser_xss_filter
+
+Add the X-XSS-Protection header with the value `1; mode=block`
+
+### content_security_policy
+
+Set Content-Security-Policy header value
+
+### public_key
+
+Set Public-Key-Pins header value
+
+<hr />
+
 ## [users]
 
 ### allow_sign_up

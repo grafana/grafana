@@ -497,21 +497,23 @@ func NewConfigContext(args *CommandLineArgs) error {
 	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 
+	// read secure headers settings
+	headers := Cfg.Section("security.http")
 	Secure = secure.Options{
-		AllowedHosts:            security.Key("allowed_hosts").Strings(" "),
-		SSLRedirect:             security.Key("ssl_redirect").MustBool(false),
-		SSLTemporaryRedirect:    security.Key("ssl_temporary_redirect").MustBool(false),
-		SSLHost:                 security.Key("ssl_host").String(),
-		STSSeconds:              security.Key("sts_seconds").MustInt64(0),
-		STSIncludeSubdomains:    security.Key("sts_include_subdomains").MustBool(false),
-		STSPreload:              security.Key("sts_preload").MustBool(false),
-		ForceSTSHeader:          security.Key("force_sts_header").MustBool(false),
-		FrameDeny:               security.Key("frame_deny").MustBool(false),
-		CustomFrameOptionsValue: security.Key("custom_frame_options_value").String(),
-		ContentTypeNosniff:      security.Key("content_type_no_sniff").MustBool(false),
-		BrowserXssFilter:        security.Key("browser_xss_filter").MustBool(false),
-		ContentSecurityPolicy:   security.Key("content_security_policy").String(),
-		PublicKey:               security.Key("public_key").String(),
+		AllowedHosts:            headers.Key("allowed_hosts").Strings(" "),
+		SSLRedirect:             headers.Key("ssl_redirect").MustBool(false),
+		SSLTemporaryRedirect:    headers.Key("ssl_temporary_redirect").MustBool(false),
+		SSLHost:                 headers.Key("ssl_host").String(),
+		STSSeconds:              headers.Key("sts_seconds").MustInt64(0),
+		STSIncludeSubdomains:    headers.Key("sts_include_subdomains").MustBool(false),
+		STSPreload:              headers.Key("sts_preload").MustBool(false),
+		ForceSTSHeader:          headers.Key("force_sts_header").MustBool(false),
+		FrameDeny:               headers.Key("frame_deny").MustBool(false),
+		CustomFrameOptionsValue: headers.Key("custom_frame_options_value").String(),
+		ContentTypeNosniff:      headers.Key("content_type_no_sniff").MustBool(false),
+		BrowserXssFilter:        headers.Key("browser_xss_filter").MustBool(false),
+		ContentSecurityPolicy:   headers.Key("content_security_policy").String(),
+		PublicKey:               headers.Key("public_key").String(),
 		IsDevelopment:           Env != PROD,
 	}
 
