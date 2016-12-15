@@ -49,7 +49,9 @@ func (qp *QueryParser) Parse(model *simplejson.Json, dsInfo *models.DataSource, 
 			return nil, err
 		}
 
-		functions = append(functions, f)
+		if f.Func != "" {
+			functions = append(functions, f)
+		}
 	}
 
 	query.FunctionList = functions
