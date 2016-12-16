@@ -34,7 +34,7 @@ type AlertQuery struct {
 	To           string
 }
 
-func (c *QueryCondition) GetDatsourceId() (datasourceId *int64, exist bool) {
+func (c *QueryCondition) GetDatasourceId() (datasourceId *int64, exist bool) {
 	return &c.Query.DatasourceId, true
 }
 

@@ -288,15 +288,17 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 
 //POST /api/alerts/pause
 func PauseAlerts(c *middleware.Context, dto dtos.PauseAlertsCommand) Response {
-	alertIdsToUpdate, err := getAlertIdsToUpdate(dto)
-	if err != nil {
-		return ApiError(500, "Failed to pause alerts", err)
+	updateCmd := models.PauseAlertCommand{
+		OrgId:  c.OrgId,
+		Paused: dto.Paused,
 	}
 
-	updateCmd := models.PauseAlertCommand{
-		OrgId:    c.OrgId,
-		AlertIds: alertIdsToUpdate,
-		Paused:   dto.Paused,
+	if len(dto.DataSourceIds) > 0 {
+		alertIdsToUpdate, err := getAlertIdsToUpdate(dto)
+		if err != nil {
+			return ApiError(500, "Failed to pause alerts", err)
+		}
+		updateCmd.AlertIds = alertIdsToUpdate
 	}
 
 	if err := bus.Dispatch(&updateCmd); err != nil {
@@ -326,20 +328,14 @@ func getAlertIdsToUpdate(pauseAlertCmd dtos.PauseAlertsCommand) ([]int64, error)
 	}
 
 	var alertIdsToUpdate []int64
-	updateAllAlerts := len(pauseAlertCmd.DataSourceIds) == 0
 	for _, alert := range cmd.Result {
-		if updateAllAlerts {
-			alertIdsToUpdate = append(alertIdsToUpdate, alert.Id)
-			continue
-		}
-
 		alert, err := alerting.NewRuleFromDBAlert(alert)
 		if err != nil {
 			return nil, err
 		}
 
 		for _, condition := range alert.Conditions {
-			id, exist := condition.GetDatsourceId()
+			id, exist := condition.GetDatasourceId()
 			if exist && existInSlice(pauseAlertCmd.DataSourceIds, *id) {
 				alertIdsToUpdate = append(alertIdsToUpdate, alert.Id)
 			}

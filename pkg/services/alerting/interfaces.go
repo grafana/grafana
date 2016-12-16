@@ -30,5 +30,5 @@ type ConditionResult struct {
 
 type Condition interface {
 	Eval(result *EvalContext) (*ConditionResult, error)
-	GetDatsourceId() (datasourceId *int64, exist bool)
+	GetDatasourceId() (datasourceId *int64, exist bool)
 }

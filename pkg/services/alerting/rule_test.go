@@ -14,6 +14,10 @@ func (f *FakeCondition) Eval(context *EvalContext) (*ConditionResult, error) {
 	return &ConditionResult{}, nil
 }
 
+func (c *FakeCondition) GetDatasourceId() (datasourceId *int64, exist bool) {
+	return nil, false
+}
+
 func TestAlertRuleModel(t *testing.T) {
 	Convey("Testing alert rule", t, func() {
 

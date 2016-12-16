@@ -18,6 +18,10 @@ func (c *conditionStub) Eval(context *EvalContext) (*ConditionResult, error) {
 	return &ConditionResult{Firing: c.firing, EvalMatches: c.matches, Operator: c.operator, NoDataFound: c.noData}, nil
 }
 
+func (c *conditionStub) GetDatasourceId() (datasourceId *int64, exist bool) {
+	return nil, false
+}
+
 func TestAlertingExecutor(t *testing.T) {
 	Convey("Test alert execution", t, func() {
 		handler := NewEvalHandler()
