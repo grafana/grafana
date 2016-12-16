@@ -154,9 +154,9 @@ module.directive('grafanaPanel', function($rootScope) {
 
           infoDrop = new Drop({
             target: cornerInfoElem[0],
-            content: ctrl.error || ctrl.panel.description,
+            content: ctrl.getPanelInfoContent.bind(ctrl),
             position: 'right middle',
-            classes: 'drop-help',
+            classes: ctrl.error ? 'drop-error' : 'drop-help',
             openOn: 'hover',
             hoverOpenDelay: 400,
           });

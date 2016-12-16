@@ -5,6 +5,7 @@ import _ from 'lodash';
 import angular from 'angular';
 import $ from 'jquery';
 import {profiler} from 'app/core/profiler';
+import Remarkable from 'remarkable';
 
 const TITLE_HEIGHT = 25;
 const EMPTY_TITLE_HEIGHT = 9;
@@ -244,6 +245,25 @@ export class PanelCtrl {
     });
   }
 
+  getPanelInfoContent() {
+    var markdown = this.error || this.panel.description;
+    var linkSrv = this.$injector.get('linkSrv');
+    var templateSrv = this.$injector.get('templateSrv');
+    var interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
+    var html = new Remarkable().render(interpolatedMarkdown);
+
+    if (this.panel.links && this.panel.links.length > 0) {
+      html += '<ul>';
+      for (let link of this.panel.links) {
+        var info = linkSrv.getPanelLinkAnchorInfo(link, this.panel.scopedVars);
+        html += '<li><a class="panel-menu-link" href="' + info.href + '" target="' + info.target + '">' + info.title + '</a></li>';
+      }
+      html += '</ul>';
+    }
+
+    return html;
+  }
+
   openInfo() {
     var modalScope = this.$scope.$new();
     modalScope.panel = this.panel;
@@ -256,6 +276,7 @@ export class PanelCtrl {
         scope: modalScope
       });
     } else {
+      modalScope.html = this.getPanelInfoContent();
       this.publishAppEvent('show-modal', {
         src: 'public/app/features/dashboard/partials/panel_info.html',
         scope: modalScope
