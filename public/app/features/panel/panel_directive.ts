@@ -159,7 +159,7 @@ module.directive('grafanaPanel', function($rootScope) {
             position: 'right middle',
             classes: ctrl.error ? 'drop-error' : 'drop-help',
             openOn: 'hover',
-            hoverOpenDelay: 400,
+            hoverOpenDelay: 100,
           });
         }
       }
