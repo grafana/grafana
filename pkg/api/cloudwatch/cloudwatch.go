@@ -194,14 +194,12 @@ func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
 	json.Unmarshal(req.Body, reqParam)
 
 	params := &cloudwatch.GetMetricStatisticsInput{
-		Namespace:          aws.String(reqParam.Parameters.Namespace),
-		MetricName:         aws.String(reqParam.Parameters.MetricName),
-		Dimensions:         reqParam.Parameters.Dimensions,
-		Statistics:         reqParam.Parameters.Statistics,
-		ExtendedStatistics: reqParam.Parameters.ExtendedStatistics,
-		StartTime:          aws.Time(time.Unix(reqParam.Parameters.StartTime, 0)),
-		EndTime:            aws.Time(time.Unix(reqParam.Parameters.EndTime, 0)),
-		Period:             aws.Int64(reqParam.Parameters.Period),
+		Namespace:  aws.String(reqParam.Parameters.Namespace),
+		MetricName: aws.String(reqParam.Parameters.MetricName),
+		Dimensions: reqParam.Parameters.Dimensions,
+		StartTime:  aws.Time(time.Unix(reqParam.Parameters.StartTime, 0)),
+		EndTime:    aws.Time(time.Unix(reqParam.Parameters.EndTime, 0)),
+		Period:     aws.Int64(reqParam.Parameters.Period),
 	}
 	if len(reqParam.Parameters.Statistics) != 0 {
 		params.Statistics = reqParam.Parameters.Statistics
