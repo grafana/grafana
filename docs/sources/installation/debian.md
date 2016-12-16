@@ -3,7 +3,7 @@ title = "Installing on Debian / Ubuntu"
 description = "Install guide for Grafana"
 keywords = ["grafana", "installation", "documentation"]
 type = "docs"
-aliases = ["/installation/installation/"]
+aliases = ["/installation/installation/debian"]
 [menu.docs]
 name = "Installing on Ubuntu / Debian"
 identifier = "debian"
