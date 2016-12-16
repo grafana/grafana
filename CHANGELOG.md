@@ -22,6 +22,7 @@
 * **Dashboard**: Posting empty dashboard result in corrupted dashboard [#5443](https://github.com/grafana/grafana/issues/5443)
 * **Logging**: Fixed logging level confing issue [#6978](https://github.com/grafana/grafana/issues/6978)
 * **Notifications**: Remove html escaping the email subject. [#6905](https://github.com/grafana/grafana/issues/6905)
+* **Influxdb**: Fixes broken field dropdown when using template vars as measurement. [#6473](https://github.com/grafana/grafana/issues/6473)
 
 # 4.0.2 (2016-12-08)
 
