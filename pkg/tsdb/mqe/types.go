@@ -42,61 +42,52 @@ func (q *Query) Build(availableSeries []string) ([]QueryToSend, error) {
 	where := q.buildWhereClause()
 	functions := q.buildFunctionList()
 
-	for _, v := range q.Metrics {
-		if !containsWildcardPattern.Match([]byte(v.Metric)) {
-			alias := ""
-			if v.Alias != "" {
-				alias = fmt.Sprintf(" {%s}", v.Alias)
-			}
+	for _, metric := range q.Metrics {
+		alias := ""
+		if metric.Alias != "" {
+			alias = fmt.Sprintf(" {%s}", metric.Alias)
+		}
 
-			rawQuery := fmt.Sprintf(
-				"`%s`%s%s %s from %v to %v",
-				v.Metric,
-				functions,
-				alias,
-				where,
-				q.TimeRange.GetFromAsMsEpoch(),
-				q.TimeRange.GetToAsMsEpoch())
+		if !containsWildcardPattern.Match([]byte(metric.Metric)) {
+			rawQuery := q.renderQuerystring(metric.Metric, functions, alias, where, q.TimeRange)
 			queriesToSend = append(queriesToSend, QueryToSend{
 				RawQuery: rawQuery,
 				QueryRef: q,
 			})
-			continue
-		}
+		} else {
+			m := strings.Replace(metric.Metric, "*", ".*", -1)
+			mp, err := regexp.Compile(m)
 
-		m := strings.Replace(v.Metric, "*", ".*", -1)
-		mp, err := regexp.Compile(m)
+			if err != nil {
+				log.Error2("failed to compile regex for ", "metric", m)
+				continue
+			}
 
-		if err != nil {
-			log.Error2("failed to compile regex for ", "metric", m)
-			continue
-		}
-
-		//TODO: this lookup should be cached
-		for _, a := range availableSeries {
-			if mp.Match([]byte(a)) {
-				alias := ""
-				if v.Alias != "" {
-					alias = fmt.Sprintf(" {%s}", v.Alias)
+			//TODO: this lookup should be cached
+			for _, wildcardMatch := range availableSeries {
+				if mp.Match([]byte(wildcardMatch)) {
+					rawQuery := q.renderQuerystring(wildcardMatch, functions, alias, where, q.TimeRange)
+					queriesToSend = append(queriesToSend, QueryToSend{
+						RawQuery: rawQuery,
+						QueryRef: q,
+					})
 				}
-
-				rawQuery := fmt.Sprintf(
-					"`%s`%s%s %s from %v to %v",
-					a,
-					functions,
-					alias,
-					where,
-					q.TimeRange.GetFromAsMsEpoch(),
-					q.TimeRange.GetToAsMsEpoch())
-
-				queriesToSend = append(queriesToSend, QueryToSend{
-					RawQuery: rawQuery,
-					QueryRef: q,
-				})
 			}
 		}
 	}
+
 	return queriesToSend, nil
+}
+
+func (q *Query) renderQuerystring(path, functions, alias, where string, timerange *tsdb.TimeRange) string {
+	return fmt.Sprintf(
+		"`%s`%s%s %s from %v to %v",
+		path,
+		functions,
+		alias,
+		where,
+		q.TimeRange.GetFromAsMsEpoch(),
+		q.TimeRange.GetToAsMsEpoch())
 }
 
 func (q *Query) buildFunctionList() string {
