@@ -18,6 +18,7 @@ import (
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/aws/aws-sdk-go/service/sts"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -194,14 +195,12 @@ func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
 	json.Unmarshal(req.Body, reqParam)
 
 	params := &cloudwatch.GetMetricStatisticsInput{
-		Namespace:          aws.String(reqParam.Parameters.Namespace),
-		MetricName:         aws.String(reqParam.Parameters.MetricName),
-		Dimensions:         reqParam.Parameters.Dimensions,
-		Statistics:         reqParam.Parameters.Statistics,
-		ExtendedStatistics: reqParam.Parameters.ExtendedStatistics,
-		StartTime:          aws.Time(time.Unix(reqParam.Parameters.StartTime, 0)),
-		EndTime:            aws.Time(time.Unix(reqParam.Parameters.EndTime, 0)),
-		Period:             aws.Int64(reqParam.Parameters.Period),
+		Namespace:  aws.String(reqParam.Parameters.Namespace),
+		MetricName: aws.String(reqParam.Parameters.MetricName),
+		Dimensions: reqParam.Parameters.Dimensions,
+		StartTime:  aws.Time(time.Unix(reqParam.Parameters.StartTime, 0)),
+		EndTime:    aws.Time(time.Unix(reqParam.Parameters.EndTime, 0)),
+		Period:     aws.Int64(reqParam.Parameters.Period),
 	}
 	if len(reqParam.Parameters.Statistics) != 0 {
 		params.Statistics = reqParam.Parameters.Statistics
@@ -215,6 +214,7 @@ func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return
 	}
+	metrics.M_Aws_CloudWatch_GetMetricStatistics.Inc(1)
 
 	c.JSON(200, resp)
 }
@@ -241,6 +241,7 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 	var resp cloudwatch.ListMetricsOutput
 	err := svc.ListMetricsPages(params,
 		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+			metrics.M_Aws_CloudWatch_ListMetrics.Inc(1)
 			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
 			for _, metric := range metrics {
 				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))

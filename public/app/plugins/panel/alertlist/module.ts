@@ -17,6 +17,12 @@ class AlertListPanel extends PanelCtrl {
     {text: 'Recent state changes', value: 'changes'}
   ];
 
+  sortOrderOptions = [
+    {text: 'Alphabetical (asc)', value: 1},
+    {text: 'Alphabetical (desc)', value: 2},
+    {text: 'Importance', value: 3},
+  ];
+
   contentHeight: string;
   stateFilter: any = {};
   currentAlerts: any = [];
@@ -26,9 +32,9 @@ class AlertListPanel extends PanelCtrl {
     show: 'current',
     limit: 10,
     stateFilter: [],
-    onlyAlertsOnDashboard: false
+    onlyAlertsOnDashboard: false,
+    sortOrder: 1
   };
-
 
   /** @ngInject */
   constructor($scope, $injector, private $location, private backendSrv, private timeSrv, private templateSrv) {
@@ -42,6 +48,19 @@ class AlertListPanel extends PanelCtrl {
     for (let key in this.panel.stateFilter) {
       this.stateFilter[this.panel.stateFilter[key]] = true;
     }
+  }
+
+  sortResult(alerts) {
+    if (this.panel.sortOrder === 3) {
+      return _.sortBy(alerts, a => { return alertDef.alertStateSortScore[a.state]; });
+    }
+
+    var result = _.sortBy(alerts, a => { return a.name.toLowerCase();});
+    if (this.panel.sortOrder === 2) {
+      result.reverse();
+    }
+
+    return result;
   }
 
   updateStateFilter() {
@@ -104,11 +123,11 @@ class AlertListPanel extends PanelCtrl {
 
     this.backendSrv.get(`/api/alerts`, params)
       .then(res => {
-        this.currentAlerts = _.map(res, al => {
+        this.currentAlerts = this.sortResult(_.map(res, al => {
           al.stateModel = alertDef.getStateDisplayModel(al.state);
           al.newStateDateAgo = moment(al.newStateDate).fromNow().replace(" ago", "");
           return al;
-        });
+        }));
       });
   }
 

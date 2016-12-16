@@ -7,6 +7,7 @@ var ErrInvalidEmailCode = errors.New("Invalid or expired email code")
 type SendEmailCommand struct {
 	To           []string
 	Template     string
+	Subject      string
 	Data         map[string]interface{}
 	Info         string
 	EmbededFiles []string
