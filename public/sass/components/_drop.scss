@@ -32,6 +32,10 @@ $easing: cubic-bezier(0, 0, 0.265, 1.00);
   ul {
     padding-left: $spacer;
   }
+
+  a {
+    text-decoration: underline;
+  }
 }
 
 .drop-hide-out-of-bounds {

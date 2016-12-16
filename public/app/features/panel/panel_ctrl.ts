@@ -245,7 +245,20 @@ export class PanelCtrl {
     });
   }
 
-  getPanelInfoContent() {
+  getInfoMode() {
+    if (this.error) {
+      return 'error';
+    }
+    if (!!this.panel.description) {
+      return 'info';
+    }
+    if (this.panel.links.length > 0) {
+      return 'links';
+    }
+    return '';
+  }
+
+  getInfoContent() {
     var markdown = this.error || this.panel.description;
     var linkSrv = this.$injector.get('linkSrv');
     var templateSrv = this.$injector.get('templateSrv');
@@ -276,7 +289,7 @@ export class PanelCtrl {
         scope: modalScope
       });
     } else {
-      modalScope.html = this.getPanelInfoContent();
+      modalScope.html = this.getInfoContent();
       this.publishAppEvent('show-modal', {
         src: 'public/app/features/dashboard/partials/panel_info.html',
         scope: modalScope

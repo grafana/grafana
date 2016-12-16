@@ -95,15 +95,19 @@ div.flot-text {
   position: absolute;
   display: none;
   left: 0;
-  padding: 0px 17px 6px 5px;
+  width: 27px;
+  height: 27px;
   top: 0;
   z-index: 10;
-  i {
+
+  .fa {
     position: relative;
     top: -2px;
+    left: -5px;
+    font-size: 90%;
   }
 
-  &--has-desc {
+  &--info {
     display: block;
     background: $blue-dark;
     .fa:before {
@@ -111,7 +115,18 @@ div.flot-text {
     }
   }
 
-  &--has-error {
+  &--links {
+    display: block;
+    background: $blue-dark;
+    .fa {
+      left: -3px;
+    }
+    .fa:before {
+      content: "\f08e";
+    }
+  }
+
+  &--error {
     display: block;
     background: $errorBackground !important;
     .fa:before {
@@ -124,9 +139,9 @@ div.flot-text {
   width: 0;
   height: 0;
   position: absolute;
-  border-left: 31px solid transparent;
-  border-right: 30px solid transparent;
-  border-bottom: 31px solid $panel-bg;
+  border-left: 27px solid transparent;
+  border-right: 0px solid transparent;
+  border-bottom: 26px solid $panel-bg;
   left: 0;
   bottom: 0;
 }

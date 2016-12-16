@@ -65,7 +65,7 @@ module.directive('grafanaPanel', function($rootScope) {
     scope: { ctrl: "=" },
     link: function(scope, elem) {
       var panelContainer = elem.find('.panel-container');
-      var cornerInfoElem = elem.find('.panel-info-corner');
+      var cornerInfoElem = elem.find('.panel-info-corner')[0];
       var ctrl = scope.ctrl;
       var infoDrop;
 
@@ -142,26 +142,28 @@ module.directive('grafanaPanel', function($rootScope) {
         }
       }, scope);
 
-      // panel corner info
-      scope.$watchGroup(['ctrl.error', 'ctrl.panel.description'], function() {
-        cornerInfoElem.toggleClass('panel-info-corner--has-desc', !!ctrl.panel.description);
-        cornerInfoElem.toggleClass('panel-info-corner--has-error', !!ctrl.error);
+      function updatePanelCornerInfo() {
+        var cornerMode = ctrl.getInfoMode();
+        cornerInfoElem.className = 'panel-info-corner + panel-info-corner--' + cornerMode;
 
-        if (ctrl.error || ctrl.panel.description) {
+        if (cornerMode) {
           if (infoDrop) {
             infoDrop.destroy();
           }
 
           infoDrop = new Drop({
-            target: cornerInfoElem[0],
-            content: ctrl.getPanelInfoContent.bind(ctrl),
+            target: cornerInfoElem,
+            content: ctrl.getInfoContent.bind(ctrl),
             position: 'right middle',
             classes: ctrl.error ? 'drop-error' : 'drop-help',
             openOn: 'hover',
             hoverOpenDelay: 400,
           });
         }
-      });
+      }
+
+      scope.$watchGroup(['ctrl.error', 'ctrl.panel.description'], updatePanelCornerInfo);
+      scope.$watchCollection('ctrl.panel.links', updatePanelCornerInfo);
 
       elem.on('mouseenter', mouseEnter);
       elem.on('mouseleave', mouseLeave);
