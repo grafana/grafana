@@ -71,7 +71,7 @@ Name | Description
 ------- | --------
 `regions()` | Returns a list of regions AWS provides their service.
 `namespaces()` | Returns a list of namespaces CloudWatch support.
-`metrics(namespace)` | Returns a list of metrics in the namespace.
+`metrics(namespace, [region])` | Returns a list of metrics in the namespace. (specify region for custom metrics)
 `dimension_keys(namespace)` | Returns a list of dimension keys in the namespace.
 `dimension_values(region, namespace, metric, dimension_key)` | Returns a list of dimension values matching the specified `region`, `namespace`, `metric` and `dimension_key`.
 `ebs_volume_ids(region, instance_id)` | Returns a list of volume id matching the specified `region`, `instance_id`.
