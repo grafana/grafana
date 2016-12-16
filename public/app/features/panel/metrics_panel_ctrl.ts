@@ -12,7 +12,6 @@ import * as dateMath from 'app/core/utils/datemath';
 import {Subject} from 'vendor/npm/rxjs/Subject';
 
 class MetricsPanelCtrl extends PanelCtrl {
-  error: any;
   loading: boolean;
   datasource: any;
   datasourceName: any;

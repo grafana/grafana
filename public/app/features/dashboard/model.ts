@@ -51,7 +51,7 @@ export class DashboardModel {
     this.style = data.style || "dark";
     this.timezone = data.timezone || '';
     this.editable = data.editable !== false;
-    this.graphTooltip = data.graphTooltip || false;
+    this.graphTooltip = data.graphTooltip || 0;
     this.hideControls = data.hideControls || false;
     this.time = data.time || { from: 'now-6h', to: 'now' };
     this.timepicker = data.timepicker || {};
@@ -272,7 +272,7 @@ export class DashboardModel {
   }
 
   sharedTooltipModeEnabled() {
-    return this.graphTooltip !== 0;
+    return this.graphTooltip > 0;
   }
 
   sharedCrosshairModeOnly() {

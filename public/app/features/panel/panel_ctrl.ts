@@ -5,6 +5,7 @@ import _ from 'lodash';
 import angular from 'angular';
 import $ from 'jquery';
 import {profiler} from 'app/core/profiler';
+import Remarkable from 'remarkable';
 
 const TITLE_HEIGHT = 25;
 const EMPTY_TITLE_HEIGHT = 9;
@@ -15,6 +16,7 @@ import {Emitter} from 'app/core/core';
 
 export class PanelCtrl {
   panel: any;
+  error: any;
   row: any;
   dashboard: any;
   editorTabIndex: number;
@@ -243,15 +245,57 @@ export class PanelCtrl {
     });
   }
 
-  openInspector() {
+  getInfoMode() {
+    if (this.error) {
+      return 'error';
+    }
+    if (!!this.panel.description) {
+      return 'info';
+    }
+    if (this.panel.links.length > 0) {
+      return 'links';
+    }
+    return '';
+  }
+
+  getInfoContent() {
+    var markdown = this.error || this.panel.description;
+    var linkSrv = this.$injector.get('linkSrv');
+    var templateSrv = this.$injector.get('templateSrv');
+    var interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
+    var html = '<div class="markdown-html">';
+
+    html += new Remarkable().render(interpolatedMarkdown);
+
+    if (this.panel.links && this.panel.links.length > 0) {
+      html += '<ul>';
+      for (let link of this.panel.links) {
+        var info = linkSrv.getPanelLinkAnchorInfo(link, this.panel.scopedVars);
+        html += '<li><a class="panel-menu-link" href="' + info.href + '" target="' + info.target + '">' + info.title + '</a></li>';
+      }
+      html += '</ul>';
+    }
+
+    return html + '</div>';
+  }
+
+  openInfo() {
     var modalScope = this.$scope.$new();
     modalScope.panel = this.panel;
     modalScope.dashboard = this.dashboard;
-    modalScope.inspector = $.extend(true, {}, this.inspector);
 
-    this.publishAppEvent('show-modal', {
-      src: 'public/app/partials/inspector.html',
-      scope: modalScope
-    });
+    if (this.error) {
+      modalScope.inspector = $.extend(true, {}, this.inspector);
+      this.publishAppEvent('show-modal', {
+        src: 'public/app/features/dashboard/partials/inspector.html',
+        scope: modalScope
+      });
+    } else {
+      modalScope.html = this.getInfoContent();
+      this.publishAppEvent('show-modal', {
+        src: 'public/app/features/dashboard/partials/panel_info.html',
+        scope: modalScope
+      });
+    }
   }
 }

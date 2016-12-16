@@ -73,6 +73,11 @@ div.flot-text {
   display: none;
 }
 
+.panel-help-text {
+  margin-left: 10px;
+  display: none;
+}
+
 .panel-loading {
   position:absolute;
   top: -3px;
@@ -84,26 +89,59 @@ div.flot-text {
   text-align: center;
 }
 
-.panel-error {
-  color: $white;
+.panel-info-corner {
+  color: $text-color;
+  cursor: pointer;
   position: absolute;
+  display: none;
   left: 0;
-  padding: 0px 17px 6px 5px;
+  width: 27px;
+  height: 27px;
   top: 0;
   z-index: 10;
-  i {
+
+  .fa {
     position: relative;
     top: -2px;
+    left: -5px;
+    font-size: 90%;
+  }
+
+  &--info {
+    display: block;
+    background: $blue-dark;
+    .fa:before {
+      content: "\f129";
+    }
+  }
+
+  &--links {
+    display: block;
+    background: $blue-dark;
+    .fa {
+      left: -3px;
+    }
+    .fa:before {
+      content: "\f08e";
+    }
+  }
+
+  &--error {
+    display: block;
+    background: $errorBackground !important;
+    .fa:before {
+      content: "\f12a";
+    }
   }
 }
 
-.panel-error-arrow {
+.panel-info-corner-inner {
   width: 0;
   height: 0;
   position: absolute;
-  border-left: 31px solid transparent;
-  border-right: 30px solid transparent;
-  border-bottom: 27px solid $panel-bg;
+  border-left: 27px solid transparent;
+  border-right: 0px solid transparent;
+  border-bottom: 26px solid $panel-bg;
   left: 0;
   bottom: 0;
 }
