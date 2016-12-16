@@ -3,7 +3,7 @@ title = "Installation"
 description = "Install guide for Grafana"
 keywords = ["grafana", "installation", "documentation"]
 type = "docs"
-aliases = ["installation/installation"]
+aliases = ["installation/installation/"]
 [menu.docs]
 name = "Installation"
 identifier = "installation"
@@ -11,12 +11,12 @@ identifier = "installation"
 
 ## Installing Grafana
 
-- [Installing on Debian / Ubuntu](installation/debian)
-- [Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)](installation/rpm)
-- [Installing on Mac OS X](installation/mac)
-- [Installing on Windows](installation/windows)
-- [Installing on Docker](installation/docker)
-- [Installing using Provisioning (Chef, Puppet, Salt, Ansible, etc)](installation/provisioning)
+- [Installing on Debian / Ubuntu](debian)
+- [Installing on RPM-based Linux (CentOS, Fedora, OpenSuse, RedHat)](rpm)
+- [Installing on Mac OS X](mac)
+- [Installing on Windows](windows)
+- [Installing on Docker](docker)
+- [Installing using Provisioning (Chef, Puppet, Salt, Ansible, etc)](provisioning)
 - [Nightly Builds](http://grafana.org/builds)
 
 
