@@ -263,7 +263,9 @@ export class PanelCtrl {
     var linkSrv = this.$injector.get('linkSrv');
     var templateSrv = this.$injector.get('templateSrv');
     var interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
-    var html = new Remarkable().render(interpolatedMarkdown);
+    var html = '<div class="markdown-html">';
+
+    html += new Remarkable().render(interpolatedMarkdown);
 
     if (this.panel.links && this.panel.links.length > 0) {
       html += '<ul>';
@@ -274,7 +276,7 @@ export class PanelCtrl {
       html += '</ul>';
     }
 
-    return html;
+    return html + '</div>';
   }
 
   openInfo() {

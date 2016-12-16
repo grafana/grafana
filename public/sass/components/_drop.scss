@@ -29,12 +29,11 @@ $easing: cubic-bezier(0, 0, 0.265, 1.00);
 }
 
 .drop-help {
-  ul {
-    padding-left: $spacer;
-  }
-
   a {
-    text-decoration: underline;
+    color: $white;
+    &:hover {
+      color: darken($white, 10%);
+    }
   }
 }
 
