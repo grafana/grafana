@@ -286,51 +286,21 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	return Json(200, result)
 }
 
-func existInSlice(slice []int64, value int64) bool {
-	for _, v := range slice {
-		if v == value {
-			return true
-		}
-	}
-	return false
-}
-
 //POST /api/alerts/pause
 func PauseAlerts(c *middleware.Context, dto dtos.PauseAlertsCommand) Response {
-	cmd := &models.GetAllAlertsQuery{}
-	if err := bus.Dispatch(cmd); err != nil {
-		return ApiError(500, "", err)
-	}
-
-	var alertsToUpdate []int64
-	skipFilter := len(dto.DataSourceIds) == 0
-	for _, alert := range cmd.Result {
-		if skipFilter {
-			alertsToUpdate = append(alertsToUpdate, alert.Id)
-			continue
-		}
-
-		alert, err := alerting.NewRuleFromDBAlert(alert)
-		if err != nil {
-			return ApiError(500, "", err)
-		}
-
-		for _, v := range alert.Conditions {
-			id, exist := v.GetDatsourceId()
-			if exist && existInSlice(dto.DataSourceIds, *id) {
-				alertsToUpdate = append(alertsToUpdate, alert.Id)
-			}
-		}
+	alertIdsToUpdate, err := getAlertIdsToUpdate(dto)
+	if err != nil {
+		return ApiError(500, "Failed to pause alerts", err)
 	}
 
 	updateCmd := models.PauseAlertCommand{
 		OrgId:    c.OrgId,
-		AlertIds: alertsToUpdate,
+		AlertIds: alertIdsToUpdate,
 		Paused:   dto.Paused,
 	}
 
 	if err := bus.Dispatch(&updateCmd); err != nil {
-		return ApiError(500, "", err)
+		return ApiError(500, "Failed to pause alerts", err)
 	}
 
 	var response models.AlertStateType = models.AlertStatePending
@@ -347,4 +317,43 @@ func PauseAlerts(c *middleware.Context, dto dtos.PauseAlertsCommand) Response {
 	}
 
 	return Json(200, result)
+}
+
+func getAlertIdsToUpdate(pauseAlertCmd dtos.PauseAlertsCommand) ([]int64, error) {
+	cmd := &models.GetAllAlertsQuery{}
+	if err := bus.Dispatch(cmd); err != nil {
+		return nil, err
+	}
+
+	var alertIdsToUpdate []int64
+	updateAllAlerts := len(pauseAlertCmd.DataSourceIds) == 0
+	for _, alert := range cmd.Result {
+		if updateAllAlerts {
+			alertIdsToUpdate = append(alertIdsToUpdate, alert.Id)
+			continue
+		}
+
+		alert, err := alerting.NewRuleFromDBAlert(alert)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, condition := range alert.Conditions {
+			id, exist := condition.GetDatsourceId()
+			if exist && existInSlice(pauseAlertCmd.DataSourceIds, *id) {
+				alertIdsToUpdate = append(alertIdsToUpdate, alert.Id)
+			}
+		}
+	}
+
+	return alertIdsToUpdate, nil
+}
+
+func existInSlice(slice []int64, value int64) bool {
+	for _, v := range slice {
+		if v == value {
+			return true
+		}
+	}
+	return false
 }
