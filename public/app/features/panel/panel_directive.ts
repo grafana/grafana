@@ -2,16 +2,17 @@
 
 import angular from 'angular';
 import $ from 'jquery';
+import _ from 'lodash';
+import Drop from 'tether-drop';
 
 var module = angular.module('grafana.directives');
 
 var panelTemplate = `
   <div class="panel-container">
     <div class="panel-header">
-      <span class="alert-error panel-error small pointer" ng-if="ctrl.error" ng-click="ctrl.openInspector()">
-        <span data-placement="top" bs-tooltip="ctrl.error">
-          <i class="fa fa-exclamation"></i><span class="panel-error-arrow"></span>
-        </span>
+      <span class="panel-info-corner" ng-click="ctrl.openInfo()">
+        <i class="fa"></i>
+        <span class="panel-info-corner-inner"></span>
       </span>
 
       <span class="panel-loading" ng-show="ctrl.loading">
@@ -64,7 +65,9 @@ module.directive('grafanaPanel', function($rootScope) {
     scope: { ctrl: "=" },
     link: function(scope, elem) {
       var panelContainer = elem.find('.panel-container');
+      var cornerInfoElem = elem.find('.panel-info-corner');
       var ctrl = scope.ctrl;
+      var infoDrop;
 
       // the reason for handling these classes this way is for performance
       // limit the watchers on panels etc
@@ -139,11 +142,36 @@ module.directive('grafanaPanel', function($rootScope) {
         }
       }, scope);
 
+      // panel corner info
+      scope.$watchGroup(['ctrl.error', 'ctrl.panel.description'], function() {
+        cornerInfoElem.toggleClass('panel-info-corner--has-desc', !!ctrl.panel.description);
+        cornerInfoElem.toggleClass('panel-info-corner--has-error', !!ctrl.error);
+
+        if (ctrl.error || ctrl.panel.description) {
+          if (infoDrop) {
+            infoDrop.destroy();
+          }
+
+          infoDrop = new Drop({
+            target: cornerInfoElem[0],
+            content: ctrl.error || ctrl.panel.description,
+            position: 'right middle',
+            classes: 'drop-help',
+            openOn: 'hover',
+            hoverOpenDelay: 400,
+          });
+        }
+      });
+
       elem.on('mouseenter', mouseEnter);
       elem.on('mouseleave', mouseLeave);
 
       scope.$on('$destroy', function() {
         elem.off();
+
+        if (infoDrop) {
+          infoDrop.destroy();
+        }
       });
     }
   };
@@ -229,6 +257,21 @@ module.directive('panelResizer', function($rootScope) {
         elem.off('mousedown', dragStartHandler);
         unbind();
       });
+    }
+  };
+});
+
+module.directive('panelHelpCorner', function($rootScope) {
+  return {
+    restrict: 'E',
+    template: `
+      <span class="alert-error panel-error small pointer" ng-if="ctrl.error" ng-click="ctrl.openInspector()">
+        <span data-placement="top" bs-tooltip="ctrl.error">
+          <i class="fa fa-exclamation"></i><span class="panel-error-arrow"></span>
+        </span>
+      </span>
+    `,
+    link: function(scope, elem) {
     }
   };
 });

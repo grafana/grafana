@@ -75,7 +75,7 @@ div.flot-text {
 
 .panel-help-text {
   margin-left: 10px;
-  display: none; 
+  display: none;
 }
 
 .panel-loading {
@@ -89,9 +89,11 @@ div.flot-text {
   text-align: center;
 }
 
-.panel-error {
-  color: $white;
+.panel-info-corner {
+  color: $text-color;
+  cursor: pointer;
   position: absolute;
+  display: none;
   left: 0;
   padding: 0px 17px 6px 5px;
   top: 0;
@@ -100,15 +102,31 @@ div.flot-text {
     position: relative;
     top: -2px;
   }
+
+  &--has-desc {
+    display: block;
+    background: $blue-dark;
+    .fa:before {
+      content: "\f129";
+    }
+  }
+
+  &--has-error {
+    display: block;
+    background: $errorBackground !important;
+    .fa:before {
+      content: "\f12a";
+    }
+  }
 }
 
-.panel-error-arrow {
+.panel-info-corner-inner {
   width: 0;
   height: 0;
   position: absolute;
   border-left: 31px solid transparent;
   border-right: 30px solid transparent;
-  border-bottom: 27px solid $panel-bg;
+  border-bottom: 31px solid $panel-bg;
   left: 0;
   bottom: 0;
 }

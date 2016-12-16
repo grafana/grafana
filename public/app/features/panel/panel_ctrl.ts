@@ -15,6 +15,7 @@ import {Emitter} from 'app/core/core';
 
 export class PanelCtrl {
   panel: any;
+  error: any;
   row: any;
   dashboard: any;
   editorTabIndex: number;
@@ -243,15 +244,22 @@ export class PanelCtrl {
     });
   }
 
-  openInspector() {
+  openInfo() {
     var modalScope = this.$scope.$new();
     modalScope.panel = this.panel;
     modalScope.dashboard = this.dashboard;
-    modalScope.inspector = $.extend(true, {}, this.inspector);
 
-    this.publishAppEvent('show-modal', {
-      src: 'public/app/partials/inspector.html',
-      scope: modalScope
-    });
+    if (this.error) {
+      modalScope.inspector = $.extend(true, {}, this.inspector);
+      this.publishAppEvent('show-modal', {
+        src: 'public/app/features/dashboard/partials/inspector.html',
+        scope: modalScope
+      });
+    } else {
+      this.publishAppEvent('show-modal', {
+        src: 'public/app/features/dashboard/partials/panel_info.html',
+        scope: modalScope
+      });
+    }
   }
 }

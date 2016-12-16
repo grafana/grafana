@@ -15,7 +15,6 @@ $easing: cubic-bezier(0, 0, 0.265, 1.00);
   &.drop-open {
     display: block;
   }
-
  }
 
 .drop-element, .drop-element * {
@@ -41,6 +40,7 @@ $easing: cubic-bezier(0, 0, 0.265, 1.00);
     display: none;
   }
 }
+
 @include drop-theme("help", $popover-help-bg, $popover-help-color);
 @include drop-theme("popover", $popover-bg, $popover-color);
 
