@@ -258,8 +258,13 @@ export class PanelCtrl {
     return '';
   }
 
-  getInfoContent() {
-    var markdown = this.error || this.panel.description;
+  getInfoContent(options) {
+    var markdown = this.panel.description;
+
+    if (options.mode === 'tooltip') {
+      markdown = this.error || this.panel.description;
+    }
+
     var linkSrv = this.$injector.get('linkSrv');
     var templateSrv = this.$injector.get('templateSrv');
     var interpolatedMarkdown = templateSrv.replace(markdown, this.panel.scopedVars);
@@ -279,23 +284,16 @@ export class PanelCtrl {
     return html + '</div>';
   }
 
-  openInfo() {
+  openInspector() {
     var modalScope = this.$scope.$new();
     modalScope.panel = this.panel;
     modalScope.dashboard = this.dashboard;
+    modalScope.panelInfoHtml = this.getInfoContent({mode: 'inspector'});
 
-    if (this.error) {
-      modalScope.inspector = $.extend(true, {}, this.inspector);
-      this.publishAppEvent('show-modal', {
-        src: 'public/app/features/dashboard/partials/inspector.html',
-        scope: modalScope
-      });
-    } else {
-      modalScope.html = this.getInfoContent();
-      this.publishAppEvent('show-modal', {
-        src: 'public/app/features/dashboard/partials/panel_info.html',
-        scope: modalScope
-      });
-    }
+    modalScope.inspector = $.extend(true, {}, this.inspector);
+    this.publishAppEvent('show-modal', {
+      src: 'public/app/features/dashboard/partials/inspector.html',
+      scope: modalScope
+    });
   }
 }

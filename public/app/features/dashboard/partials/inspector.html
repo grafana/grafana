@@ -1,12 +1,12 @@
 <div class="modal-body" ng-controller="InspectCtrl" ng-init="init()">
 	<div class="modal-header">
 		<h2 class="modal-header-title">
-			<i class="fa fa-frown-o"></i>
+			<i class="fa fa-info-circle"></i>
 			<span class="p-l-1">Inspector</span>
 		</h2>
 
 		<ul class="gf-tabs">
-			<li class="gf-tabs-item" ng-repeat="tab in ['Request', 'Response', 'JS Error']">
+			<li class="gf-tabs-item" ng-repeat="tab in ['Panel Description', 'Request', 'Response', 'JS Error']">
 				<a class="gf-tabs-link" ng-click="editor.index = $index" ng-class="{active: editor.index === $index}">
 					{{::tab}}
 				</a>
@@ -19,8 +19,10 @@
 	</div>
 
 	<div class="modal-content">
+		<div ng-if="editor.index == 0" ng-bind-html="panelInfoHtml">
+		</div>
 
-		<div ng-if="editor.index == 0">
+		<div ng-if="editor.index == 1">
 			<h5 class="section-heading">Request details</h5>
 			<table class="filter-table gf-form-group">
 				<tr>
@@ -54,14 +56,14 @@
 			</table>
 		</div>
 
-		<div ng-if="editor.index == 1">
+		<div ng-if="editor.index == 2">
 			<h5 ng-show="message">{{message}}</h5>
  			<pre class="small">
 {{response}}
 			</pre>
 		</div>
 
-		<div ng-if="editor.index == 2">
+		<div ng-if="editor.index == 3">
 
 			<label>Message:</label>
 <pre>

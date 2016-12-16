@@ -10,7 +10,7 @@ var module = angular.module('grafana.directives');
 var panelTemplate = `
   <div class="panel-container">
     <div class="panel-header">
-      <span class="panel-info-corner" ng-click="ctrl.openInfo()">
+      <span class="panel-info-corner">
         <i class="fa"></i>
         <span class="panel-info-corner-inner"></span>
       </span>
@@ -65,7 +65,7 @@ module.directive('grafanaPanel', function($rootScope) {
     scope: { ctrl: "=" },
     link: function(scope, elem) {
       var panelContainer = elem.find('.panel-container');
-      var cornerInfoElem = elem.find('.panel-info-corner')[0];
+      var cornerInfoElem = elem.find('.panel-info-corner');
       var ctrl = scope.ctrl;
       var infoDrop;
 
@@ -144,7 +144,7 @@ module.directive('grafanaPanel', function($rootScope) {
 
       function updatePanelCornerInfo() {
         var cornerMode = ctrl.getInfoMode();
-        cornerInfoElem.className = 'panel-info-corner + panel-info-corner--' + cornerMode;
+        cornerInfoElem[0].className = 'panel-info-corner + panel-info-corner--' + cornerMode;
 
         if (cornerMode) {
           if (infoDrop) {
@@ -152,8 +152,10 @@ module.directive('grafanaPanel', function($rootScope) {
           }
 
           infoDrop = new Drop({
-            target: cornerInfoElem,
-            content: ctrl.getInfoContent.bind(ctrl),
+            target: cornerInfoElem[0],
+            content: function() {
+              return ctrl.getInfoContent({mode: 'tooltip'});
+            },
             position: 'right middle',
             classes: ctrl.error ? 'drop-error' : 'drop-help',
             openOn: 'hover',
@@ -165,11 +167,17 @@ module.directive('grafanaPanel', function($rootScope) {
       scope.$watchGroup(['ctrl.error', 'ctrl.panel.description'], updatePanelCornerInfo);
       scope.$watchCollection('ctrl.panel.links', updatePanelCornerInfo);
 
+      cornerInfoElem.on('click', function() {
+        infoDrop.close();
+        scope.$apply(ctrl.openInspector.bind(ctrl));
+      });
+
       elem.on('mouseenter', mouseEnter);
       elem.on('mouseleave', mouseLeave);
 
       scope.$on('$destroy', function() {
         elem.off();
+        cornerInfoElem.off();
 
         if (infoDrop) {
           infoDrop.destroy();
