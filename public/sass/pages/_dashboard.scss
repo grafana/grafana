@@ -103,13 +103,13 @@ div.flot-text {
   .fa {
     position: relative;
     top: -4px;
-    left: -5px;
+    left: -6px;
     font-size: 75%;
   }
 
   &--info {
     display: block;
-    background: mix($panel-bg, $body-bg, 35%);
+    background: lighten($panel-bg, 4%);
     .fa:before {
       content: "\f129";
     }
@@ -117,9 +117,9 @@ div.flot-text {
 
   &--links {
     display: block;
-    background: mix($panel-bg, $body-bg, 35%);
+    background: lighten($panel-bg, 4%);
     .fa {
-      left: -3px;
+      left: -5px;
     }
     .fa:before {
       content: "\f08e";
@@ -128,6 +128,7 @@ div.flot-text {
 
   &--error {
     display: block;
+    color: $text-color;
     background: $errorBackground !important;
     .fa:before {
       content: "\f12a";
