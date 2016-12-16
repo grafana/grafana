@@ -90,7 +90,7 @@ div.flot-text {
 }
 
 .panel-info-corner {
-  color: $text-color;
+  color: $text-muted;
   cursor: pointer;
   position: absolute;
   display: none;
@@ -102,14 +102,14 @@ div.flot-text {
 
   .fa {
     position: relative;
-    top: -2px;
+    top: -4px;
     left: -5px;
-    font-size: 90%;
+    font-size: 75%;
   }
 
   &--info {
     display: block;
-    background: $blue-dark;
+    background: mix($panel-bg, $body-bg, 35%);
     .fa:before {
       content: "\f129";
     }
@@ -117,7 +117,7 @@ div.flot-text {
 
   &--links {
     display: block;
-    background: $blue-dark;
+    background: mix($panel-bg, $body-bg, 35%);
     .fa {
       left: -3px;
     }
