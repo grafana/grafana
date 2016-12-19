@@ -290,7 +290,7 @@ func (c *mockLdapConn) Search(*ldap.SearchRequest) (*ldap.SearchResult, error) {
 }
 
 func (c *mockLdapConn) StartTLS(*tls.Config) error {
-    return nil
+	return nil
 }
 
 func ldapAutherScenario(desc string, fn scenarioFunc) {
