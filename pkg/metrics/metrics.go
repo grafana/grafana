@@ -50,7 +50,7 @@ var (
 
 	// Timers
 	M_DataSource_ProxyReq_Timer Timer
-	M_Alerting_Execution_Time Timer
+	M_Alerting_Execution_Time   Timer
 
 	// StatTotals
 	M_Alerting_Active_Alerts Gauge

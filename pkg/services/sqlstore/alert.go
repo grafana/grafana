@@ -3,9 +3,8 @@ package sqlstore
 import (
 	"bytes"
 	"fmt"
-	"time"
-
 	"strings"
+	"time"
 
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
@@ -21,6 +20,7 @@ func init() {
 	bus.AddHandler("sql", SetAlertState)
 	bus.AddHandler("sql", GetAlertStatesForDashboard)
 	bus.AddHandler("sql", PauseAlertRule)
+	bus.AddHandler("sql", PauseAllAlertRule)
 }
 
 func GetAlertById(query *m.GetAlertByIdQuery) error {
@@ -230,6 +230,10 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 			return fmt.Errorf("Could not find alert")
 		}
 
+		if alert.State == m.AlertStatePaused {
+			return m.ErrCannotChangeStateOnPausedAlert
+		}
+
 		alert.State = cmd.State
 		alert.StateChanges += 1
 		alert.NewStateDate = time.Now()
@@ -248,6 +252,10 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 
 func PauseAlertRule(cmd *m.PauseAlertCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
+		if len(cmd.AlertIds) == 0 {
+			return fmt.Errorf("command contains no alertids")
+		}
+
 		var buffer bytes.Buffer
 		params := make([]interface{}, 0)
 
@@ -258,14 +266,30 @@ func PauseAlertRule(cmd *m.PauseAlertCommand) error {
 			params = append(params, string(m.AlertStatePending))
 		}
 
-		if len(cmd.AlertIds) > 0 {
-			buffer.WriteString(` WHERE id IN (?` + strings.Repeat(",?", len(cmd.AlertIds)-1) + `)`)
-			for _, v := range cmd.AlertIds {
-				params = append(params, v)
-			}
+		buffer.WriteString(` WHERE id IN (?` + strings.Repeat(",?", len(cmd.AlertIds)-1) + `)`)
+		for _, v := range cmd.AlertIds {
+			params = append(params, v)
 		}
 
 		res, err := sess.Exec(buffer.String(), params...)
+		if err != nil {
+			return err
+		}
+		cmd.ResultCount, _ = res.RowsAffected()
+		return nil
+	})
+}
+
+func PauseAllAlertRule(cmd *m.PauseAllAlertCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		var newState string
+		if cmd.Paused {
+			newState = string(m.AlertStatePaused)
+		} else {
+			newState = string(m.AlertStatePending)
+		}
+
+		res, err := sess.Exec(`UPDATE alert SET state = ?`, newState)
 		if err != nil {
 			return err
 		}

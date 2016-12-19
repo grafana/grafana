@@ -3,6 +3,8 @@ package models
 import (
 	"time"
 
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
@@ -29,6 +31,10 @@ const (
 const (
 	ExecutionErrorSetAlerting ExecutionErrorOption = "alerting"
 	ExecutionErrorKeepState   ExecutionErrorOption = "keep_state"
+)
+
+var (
+	ErrCannotChangeStateOnPausedAlert error = fmt.Errorf("Cannot change state on pause alert")
 )
 
 func (s AlertStateType) IsValid() bool {
@@ -134,6 +140,11 @@ type SaveAlertsCommand struct {
 type PauseAlertCommand struct {
 	OrgId       int64
 	AlertIds    []int64
+	ResultCount int64
+	Paused      bool
+}
+
+type PauseAllAlertCommand struct {
 	ResultCount int64
 	Paused      bool
 }

@@ -256,7 +256,6 @@ func Register(r *macaron.Macaron) {
 		r.Group("/alerts", func() {
 			r.Post("/test", bind(dtos.AlertTestCommand{}), wrap(AlertTest))
 			r.Post("/:alertId/pause", bind(dtos.PauseAlertCommand{}), wrap(PauseAlert), reqEditorRole)
-			r.Post("/pause", bind(dtos.PauseAlertsCommand{}), wrap(PauseAlerts), reqGrafanaAdmin)
 			r.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
 			r.Get("/", wrap(GetAlerts))
 			r.Get("/states-for-dashboard", wrap(GetAlertStatesForDashboard))
@@ -290,6 +289,7 @@ func Register(r *macaron.Macaron) {
 		r.Get("/users/:id/quotas", wrap(GetUserQuotas))
 		r.Put("/users/:id/quotas/:target", bind(m.UpdateUserQuotaCmd{}), wrap(UpdateUserQuota))
 		r.Get("/stats", AdminGetStats)
+		r.Post("/pause-all-alerts", bind(dtos.PauseAllAlertsCommand{}), wrap(PauseAlerts))
 	}, reqGrafanaAdmin)
 
 	// rendering
