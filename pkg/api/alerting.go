@@ -305,7 +305,7 @@ func PauseAllAlerts(c *middleware.Context, dto dtos.PauseAllAlertsCommand) Respo
 
 	result := map[string]interface{}{
 		"state":          response,
-		"message":        "alert " + pausedState,
+		"message":        "alerts " + pausedState,
 		"alertsAffected": updateCmd.ResultCount,
 	}
 
