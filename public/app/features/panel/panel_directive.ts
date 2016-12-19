@@ -144,7 +144,7 @@ module.directive('grafanaPanel', function($rootScope) {
 
       function updatePanelCornerInfo() {
         var cornerMode = ctrl.getInfoMode();
-        cornerInfoElem[0].className = 'panel-info-corner + panel-info-corner--' + cornerMode;
+        cornerInfoElem[0].className = 'panel-info-corner panel-info-corner--' + cornerMode;
 
         if (cornerMode) {
           if (infoDrop) {

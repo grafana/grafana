@@ -9,7 +9,7 @@ module.exports = function(grunt) {
     'concat:cssFonts',
     'styleguide',
     'sasslint',
-    'postcss'
+    'postcss',
     ]
   );
 
