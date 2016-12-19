@@ -250,23 +250,19 @@ func PauseAlertRule(cmd *m.PauseAlertCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		var buffer bytes.Buffer
 		params := make([]interface{}, 0)
+
 		buffer.WriteString(`UPDATE alert SET state = ?`)
-
-		alertIdCount := len(cmd.AlertIds)
-		if alertIdCount == 1 {
-			buffer.WriteString(` WHERE id = ?`)
-		} else if alertIdCount > 1 {
-			buffer.WriteString(` WHERE id IN (?` + strings.Repeat(",?", len(cmd.AlertIds)-1) + `)`)
-		}
-
 		if cmd.Paused {
 			params = append(params, string(m.AlertStatePaused))
 		} else {
 			params = append(params, string(m.AlertStatePending))
 		}
 
-		for _, v := range cmd.AlertIds {
-			params = append(params, v)
+		if len(cmd.AlertIds) > 0 {
+			buffer.WriteString(` WHERE id IN (?` + strings.Repeat(",?", len(cmd.AlertIds)-1) + `)`)
+			for _, v := range cmd.AlertIds {
+				params = append(params, v)
+			}
 		}
 
 		res, err := sess.Exec(buffer.String(), params...)
