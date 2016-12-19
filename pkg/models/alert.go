@@ -138,9 +138,10 @@ type SaveAlertsCommand struct {
 }
 
 type PauseAlertCommand struct {
-	OrgId   int64
-	AlertId int64
-	Paused  bool
+	OrgId       int64
+	AlertIds    []int64
+	ResultCount int64
+	Paused      bool
 }
 
 type PauseAllAlertCommand struct {

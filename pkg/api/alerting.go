@@ -259,10 +259,11 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 
 //POST /api/alerts/:alertId/pause
 func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
+	alertId := c.ParamsInt64("alertId")
 	cmd := models.PauseAlertCommand{
-		OrgId:   c.OrgId,
-		AlertId: c.ParamsInt64("alertId"),
-		Paused:  dto.Paused,
+		OrgId:    c.OrgId,
+		AlertIds: []int64{alertId},
+		Paused:   dto.Paused,
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -277,7 +278,7 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	}
 
 	result := map[string]interface{}{
-		"alertId": c.ParamsInt64("alertId"),
+		"alertId": alertId,
 		"state":   response,
 		"message": "alert " + pausedState,
 	}
