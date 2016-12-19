@@ -286,8 +286,8 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	return Json(200, result)
 }
 
-//POST /api/alerts/pause
-func PauseAlerts(c *middleware.Context, dto dtos.PauseAllAlertsCommand) Response {
+//POST /api/admin/pause-all-alerts
+func PauseAllAlerts(c *middleware.Context, dto dtos.PauseAllAlertsCommand) Response {
 	updateCmd := models.PauseAllAlertCommand{
 		Paused: dto.Paused,
 	}

@@ -55,7 +55,7 @@ func TestAlertingDataAccess(t *testing.T) {
 					Paused: true,
 				}
 
-				err = PauseAllAlertRule(cmd)
+				err = PauseAllAlerts(cmd)
 				So(err, ShouldBeNil)
 
 				Convey("cannot updated paused alert", func() {

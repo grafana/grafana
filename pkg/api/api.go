@@ -289,7 +289,7 @@ func Register(r *macaron.Macaron) {
 		r.Get("/users/:id/quotas", wrap(GetUserQuotas))
 		r.Put("/users/:id/quotas/:target", bind(m.UpdateUserQuotaCmd{}), wrap(UpdateUserQuota))
 		r.Get("/stats", AdminGetStats)
-		r.Post("/pause-all-alerts", bind(dtos.PauseAllAlertsCommand{}), wrap(PauseAlerts))
+		r.Post("/pause-all-alerts", bind(dtos.PauseAllAlertsCommand{}), wrap(PauseAllAlerts))
 	}, reqGrafanaAdmin)
 
 	// rendering
