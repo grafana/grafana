@@ -16,6 +16,7 @@
 * **LDAP**: Now works with Auth Proxy, role and organisation mapping & sync will regularly be performed. [#6895](https://github.com/grafana/grafana/pull/6895), thx [@Seuf](https://github.com/seuf)
 * **Alerting**: Adds OK as no data option. [#6866](https://github.com/grafana/grafana/issues/6866)
 * **Alert list**: Order alerts based on state. [#6676](https://github.com/grafana/grafana/issues/6676)
+* **Alerting**: Add api endpoint for pausing all alerts. [#6589](https://github.com/grafana/grafana/issues/6589)
 
 ### Bugfixes
 * **API**: HTTP API for deleting org returning incorrect message for a non-existing org [#6679](https://github.com/grafana/grafana/issues/6679)
