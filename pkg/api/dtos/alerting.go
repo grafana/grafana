@@ -64,3 +64,7 @@ type PauseAlertCommand struct {
 	AlertId int64 `json:"alertId"`
 	Paused  bool  `json:"paused"`
 }
+
+type PauseAllAlertsCommand struct {
+	Paused bool `json:"paused"`
+}

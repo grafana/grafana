@@ -259,10 +259,11 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 
 //POST /api/alerts/:alertId/pause
 func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
+	alertId := c.ParamsInt64("alertId")
 	cmd := models.PauseAlertCommand{
-		OrgId:   c.OrgId,
-		AlertId: c.ParamsInt64("alertId"),
-		Paused:  dto.Paused,
+		OrgId:    c.OrgId,
+		AlertIds: []int64{alertId},
+		Paused:   dto.Paused,
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -277,9 +278,35 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	}
 
 	result := map[string]interface{}{
-		"alertId": cmd.AlertId,
+		"alertId": alertId,
 		"state":   response,
 		"message": "alert " + pausedState,
+	}
+
+	return Json(200, result)
+}
+
+//POST /api/admin/pause-all-alerts
+func PauseAllAlerts(c *middleware.Context, dto dtos.PauseAllAlertsCommand) Response {
+	updateCmd := models.PauseAllAlertCommand{
+		Paused: dto.Paused,
+	}
+
+	if err := bus.Dispatch(&updateCmd); err != nil {
+		return ApiError(500, "Failed to pause alerts", err)
+	}
+
+	var response models.AlertStateType = models.AlertStatePending
+	pausedState := "un paused"
+	if updateCmd.Paused {
+		response = models.AlertStatePaused
+		pausedState = "paused"
+	}
+
+	result := map[string]interface{}{
+		"state":          response,
+		"message":        "alert " + pausedState,
+		"alertsAffected": updateCmd.ResultCount,
 	}
 
 	return Json(200, result)
