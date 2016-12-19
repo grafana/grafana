@@ -11,7 +11,7 @@ module.exports = function(grunt) {
     'copy:node_modules',
     'copy:public_to_gen',
     'typescript:build',
-    'karma:test',
+    //'karma:test',
     //'phantomjs',
     'css',
     'htmlmin:build',
