@@ -1,4 +1,4 @@
-# 4.1-beta1 (2016-12-20)
+# 4.1-beta1 (2016-12-21)
 
 ### Enhancements
 * **Postgres**: Add support for Certs for Postgres database [#6655](https://github.com/grafana/grafana/issues/6655)
