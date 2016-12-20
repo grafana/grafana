@@ -252,7 +252,7 @@ export class PanelCtrl {
     if (!!this.panel.description) {
       return 'info';
     }
-    if (this.panel.links.length > 0) {
+    if (this.panel.links && this.panel.links.length) {
       return 'links';
     }
     return '';
