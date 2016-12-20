@@ -46,6 +46,7 @@ type LdapAttributeMap struct {
 type LdapGroupToOrgRole struct {
 	GroupDN string     `toml:"group_dn"`
 	OrgId   int64      `toml:"org_id"`
+	OrgIds  []int64    `toml:"org_ids"`
 	OrgRole m.RoleType `toml:"org_role"`
 }
 

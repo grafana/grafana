@@ -252,6 +252,26 @@ func (a *ldapAuther) SyncOrgRoles(user *m.User, ldapUser *LdapUserInfo) error {
 		handledOrgIds[org.OrgId] = true
 
 		for _, group := range a.server.LdapGroups {
+			// Check for configured org_ids
+			for _, orgId := range group.OrgIds {
+				if org.OrgId != orgId {
+					continue
+				}
+				if ldapUser.isMemberOf(group.GroupDN) {
+					match = true
+					a.log.Debug("Org id found for DN", "info", group.GroupDN)
+					if org.Role != group.OrgRole {
+						// update role
+						cmd := m.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: user.Id, Role: group.OrgRole}
+	                                        if err := bus.Dispatch(&cmd); err != nil {
+		                                        return err
+			                        }
+				        }
+					// ignore subsequent ldap group mapping matches
+	                                break
+		                }
+			}
+
 			if org.OrgId != group.OrgId {
 				continue
 			}
@@ -284,6 +304,19 @@ func (a *ldapAuther) SyncOrgRoles(user *m.User, ldapUser *LdapUserInfo) error {
 		if !ldapUser.isMemberOf(group.GroupDN) {
 			continue
 		}
+		// add role for all organizations
+		for _, orgId := range group.OrgIds {
+			if _, exists := handledOrgIds[orgId]; exists {
+				continue
+			}
+			cmd := m.AddOrgUserCommand{UserId: user.Id, Role: group.OrgRole, OrgId: orgId}
+			err := bus.Dispatch(&cmd)
+			if err != nil && err != m.ErrOrgNotFound {
+				return err
+			}
+			handledOrgIds[orgId] = true
+		}
+
 
 		if _, exists := handledOrgIds[group.OrgId]; exists {
 			continue
