@@ -190,7 +190,7 @@ module.directive('grafanaPanel', function($rootScope) {
 module.directive('panelResizer', function($rootScope) {
   return {
     restrict: 'E',
-    template: '<span class="resize-panel-handle fa fa-signal"></span>',
+    template: '<span class="resize-panel-handle icon-gf icon-gf-grabber"></span>',
     link: function(scope, elem) {
       var resizing = false;
       var lastPanel;
