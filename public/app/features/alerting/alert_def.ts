@@ -10,7 +10,7 @@ var alertQueryDef = new QueryPartDef({
   type: 'query',
   params: [
     {name: "queryRefId", type: 'string', dynamicLookup: true},
-    {name: "from", type: "string", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']},
+    {name: "from", type: "string", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h', '24h', '48h']},
     {name: "to", type: "string", options: ['now']},
   ],
   defaultParams: ['#A', '5m', 'now', 'avg']
