@@ -7,6 +7,7 @@ export class TextPanelCtrl extends PanelCtrl {
   static templateUrl = `public/app/plugins/panel/text/module.html`;
 
   remarkable: any;
+  asciidoctor: any;
   content: string;
   // Set and populate defaults
   panelDefaults = {
@@ -41,6 +42,8 @@ export class TextPanelCtrl extends PanelCtrl {
       this.updateContent(this.panel.content);
     } else if (this.panel.mode === 'text') {
       this.renderText(this.panel.content);
+    } else if (this.panel.mode === 'asciidoc(tor)') {
+      this.renderAsciidoc(this.panel.content);
     }
     this.renderingCompleted();
   }
@@ -65,6 +68,19 @@ export class TextPanelCtrl extends PanelCtrl {
     }
 
     this.updateContent(this.remarkable.render(content));
+  }
+
+  renderAsciidoc(content) {
+    if (!this.asciidoctor) {
+      return System.import('asciidoctor.js').then(mod => {
+        this.asciidoctor = mod();
+        this.$scope.$apply(() => {
+          this.updateContent(this.asciidoctor.convert(content));
+        });
+      });
+    }
+
+    this.updateContent(this.asciidoctor.convert(content));
   }
 
   updateContent(html) {

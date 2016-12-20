@@ -32,6 +32,7 @@ module.exports = function(config) {
         'tether-drop/**/*',
         'remarkable/dist/*',
         'remarkable/dist/*',
+        'asciidoctor.js/dist/*',
         'virtual-scroll/**/*',
         'mousetrap/**/*',
       ],
