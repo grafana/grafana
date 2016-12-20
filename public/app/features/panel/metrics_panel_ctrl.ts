@@ -47,6 +47,14 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     this.events.on('refresh', this.onMetricsPanelRefresh.bind(this));
     this.events.on('init-edit-mode', this.onInitMetricsPanelEditMode.bind(this));
+    this.events.on('panel-teardown', this.onPanelTearDown.bind(this));
+  }
+
+  private onPanelTearDown() {
+    if (this.dataSubscription) {
+      this.dataSubscription.unsubscribe();
+      this.dataSubscription = null;
+    }
   }
 
   private onInitMetricsPanelEditMode() {
