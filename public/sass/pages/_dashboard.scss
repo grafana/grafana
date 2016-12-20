@@ -231,17 +231,17 @@ div.flot-text {
 .resize-panel-handle {
   cursor: nwse-resize;
   position: absolute;
+  font-size: 10px;
   bottom: 0;
   right: 0;
   width: 15px;
   height: 15px;
   display: block;
   color: $text-color-faint;
-  overflow: hidden;
 
   &:before {
     left: initial;
-    right: -5px;
+    right: -1px;
     bottom: 0px;
     position: absolute;
   }
