@@ -137,7 +137,6 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 			if err == nil && alert.ValidToSave() {
 				alerts = append(alerts, alert)
 			} else {
-				e.log.Error("Failed to extract alerts from dashboard", "error", err)
 				return nil, err
 			}
 		}
