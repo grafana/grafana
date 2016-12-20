@@ -315,6 +315,12 @@
 			"versionExact": "v1.21.1"
 		},
 		{
+			"checksumSHA1": "B4bk7vdV9aD7AhrtATXfgEacdqE=",
+			"path": "github.com/gorilla/websocket",
+			"revision": "3ab3a8b8831546bd18fd182c20687ca853b2bb13",
+			"revisionTime": "2016-12-15T22:53:35Z"
+		},
+		{
 			"checksumSHA1": "8z32QKTSDusa4QQyunKE4kyYXZ8=",
 			"path": "github.com/patrickmn/go-cache",
 			"revision": "e7a9def80f35fe1b170b7b8b68871d59dea117e1",
