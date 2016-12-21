@@ -249,7 +249,7 @@ register({
 register({
   type: 'fill',
   category: groupByTimeFunctions,
-  params: [{ name: "fill", type: "string", options: ['none', 'null', '0', 'previous'] }],
+  params: [{ name: "fill", type: "string", options: ['none', 'null', '0', 'previous', 'linear'] }],
   defaultParams: ['null'],
   renderer: functionRenderer,
 });
