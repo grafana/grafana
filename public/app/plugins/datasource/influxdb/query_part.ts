@@ -241,8 +241,9 @@ register({
 register({
   type: 'time',
   category: groupByTimeFunctions,
-  params: [{ name: "interval", type: "time", options: ['auto', '1s', '10s', '1m', '5m', '10m', '15m', '1h'] }],
-  defaultParams: ['auto'],
+  params: [{ name: "interval", type: "time", options: ['auto', '1s', '10s', '1m', '5m', '10m', '15m', '1h'] },
+    { name: "offset", type: "time", options: ['auto', '1s', '10s', '1m', '5m', '10m', '15m', '1h'] }],
+  defaultParams: ['auto', 'auto'],
   renderer: functionRenderer,
 });
 
@@ -260,6 +261,25 @@ register({
   category: categories.Transformations,
   params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
   defaultParams: ['10s'],
+  renderer: functionRenderer,
+});
+
+// predictions
+register({
+  type: 'holt_winters',
+  addStrategy: addTransformationStrategy,
+  category: categories.Predictions,
+  params: [{ name: "number", type: "number", options: [5, 10, 20, 30, 40]}, { name: "season", type: "number", options: [0, 1, 2, 5, 10]}],
+  defaultParams: [10, 2],
+  renderer: functionRenderer,
+});
+
+register({
+  type: 'holt_winters_with_fit',
+  addStrategy: addTransformationStrategy,
+  category: categories.Predictions,
+  params: [{ name: "number", type: "number", options: [5, 10, 20, 30, 40]}, { name: "season", type: "number", options: [0, 1, 2, 5, 10]}],
+  defaultParams: [10, 2],
   renderer: functionRenderer,
 });
 
