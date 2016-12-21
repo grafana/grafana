@@ -26,6 +26,11 @@
 * **Notifications**: Remove html escaping the email subject. [#6905](https://github.com/grafana/grafana/issues/6905)
 * **Influxdb**: Fixes broken field dropdown when using template vars as measurement. [#6473](https://github.com/grafana/grafana/issues/6473)
 
+# 4.0.3 (unreleased)
+
+### Bugfixes
+* **Influxdb**: Handles time(auto) the same way as time($interval) [#6997](https://github.com/grafana/grafana/issues/6997)
+
 # 4.0.2 (2016-12-08)
 
 ### Enhancements
