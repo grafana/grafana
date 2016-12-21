@@ -28,9 +28,11 @@ $ sudo dpkg -i grafana_4.0.2-1481203731_amd64.deb
 
 ## Install Latest Beta
 
+```
 $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_4.1.0-1482230757beta1_amd64.deb
 $ sudo apt-get install -y adduser libfontconfig
 $ sudo dpkg -i grafana_4.1.0-1482230757beta1_amd64.deb
+```
 
 ## APT Repository
 
