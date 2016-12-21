@@ -15,6 +15,7 @@ var categories = {
   Aggregations: [],
   Selectors: [],
   Transformations: [],
+  Predictions: [],
   Math: [],
   Aliasing: [],
   Fields: [],
