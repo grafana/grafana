@@ -37,8 +37,16 @@ func TestInfluxdbQueryPart(t *testing.T) {
 			So(res, ShouldEqual, "bottom(value, 3)")
 		})
 
-		Convey("render time", func() {
+		Convey("render time with $interval", func() {
 			part, err := NewQueryPart("time", []string{"$interval"})
+			So(err, ShouldBeNil)
+
+			res := part.Render(query, queryContext, "")
+			So(res, ShouldEqual, "time(200ms)")
+		})
+
+		Convey("render time with auto", func() {
+			part, err := NewQueryPart("time", []string{"auto"})
 			So(err, ShouldBeNil)
 
 			res := part.Render(query, queryContext, "")

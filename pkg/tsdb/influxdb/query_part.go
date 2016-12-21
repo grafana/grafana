@@ -111,7 +111,7 @@ func getDefinedInterval(query *Query, queryContext *tsdb.QueryContext) string {
 
 func functionRenderer(query *Query, queryContext *tsdb.QueryContext, part *QueryPart, innerExpr string) string {
 	for i, param := range part.Params {
-		if param == "$interval" {
+		if param == "$interval" || param == "auto" {
 			if query.Interval != "" {
 				part.Params[i] = getDefinedInterval(query, queryContext)
 			} else {
