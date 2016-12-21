@@ -1,6 +1,8 @@
 package live
 
 import (
+	"context"
+	"net/http"
 	"sync"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -8,21 +10,48 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-type StreamManagerImpl struct {
+type StreamManager struct {
 	log           log.Logger
 	streams       map[string]*Stream
 	streamRWMutex *sync.RWMutex
+	hub           *hub
 }
 
-func NewStreamManager() m.StreamManager {
-	return &StreamManagerImpl{
-		log:           log.New("live.stream.manager"),
+func NewStreamManager() *StreamManager {
+	return &StreamManager{
+		hub:           newHub(),
+		log:           log.New("stream.manager"),
 		streams:       make(map[string]*Stream),
 		streamRWMutex: &sync.RWMutex{},
 	}
 }
 
-func (s *StreamManagerImpl) GetStreamList() m.StreamList {
+func (sm *StreamManager) Run(context context.Context) {
+	log.Info("Initializing Stream Manager")
+
+	go func() {
+		sm.hub.run(context)
+		log.Info("Stopped Stream Manager")
+	}()
+}
+
+func (sm *StreamManager) Serve(w http.ResponseWriter, r *http.Request) {
+	sm.log.Info("Upgrading to WebSocket")
+
+	ws, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		sm.log.Error("Failed to upgrade connection to WebSocket", "error", err)
+		return
+	}
+
+	c := newConnection(ws, sm.hub)
+	sm.hub.register <- c
+
+	go c.writePump()
+	c.readPump()
+}
+
+func (s *StreamManager) GetStreamList() m.StreamList {
 	list := make(m.StreamList, 0)
 
 	for _, stream := range s.streams {
@@ -34,7 +63,7 @@ func (s *StreamManagerImpl) GetStreamList() m.StreamList {
 	return list
 }
 
-func (s *StreamManagerImpl) Push(packet *m.StreamPacket) {
+func (s *StreamManager) Push(packet *m.StreamPacket) {
 	stream, exist := s.streams[packet.Stream]
 
 	if !exist {

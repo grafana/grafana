@@ -1,6 +1,8 @@
 package live
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -23,22 +25,26 @@ type streamSubscription struct {
 	remove bool
 }
 
-var h = hub{
-	connections:   make(map[*connection]bool),
-	streams:       make(map[string]map[*connection]bool),
-	register:      make(chan *connection),
-	unregister:    make(chan *connection),
-	streamChannel: make(chan *dtos.StreamMessage),
-	subChannel:    make(chan *streamSubscription),
-	log:           log.New("live.hub"),
+func newHub() *hub {
+	return &hub{
+		connections:   make(map[*connection]bool),
+		streams:       make(map[string]map[*connection]bool),
+		register:      make(chan *connection),
+		unregister:    make(chan *connection),
+		streamChannel: make(chan *dtos.StreamMessage),
+		subChannel:    make(chan *streamSubscription),
+		log:           log.New("stream.hub"),
+	}
 }
 
 func (h *hub) removeConnection() {
 }
 
-func (h *hub) run() {
+func (h *hub) run(ctx context.Context) {
 	for {
 		select {
+		case <-ctx.Done():
+			return
 		case c := <-h.register:
 			h.connections[c] = true
 			h.log.Info("New connection", "total", len(h.connections))
@@ -49,7 +55,7 @@ func (h *hub) run() {
 				delete(h.connections, c)
 				close(c.send)
 			}
-		// hand stream subscriptions
+			// hand stream subscriptions
 		case sub := <-h.subChannel:
 			h.log.Info("Subscribing", "channel", sub.name, "remove", sub.remove)
 			subscribers, exists := h.streams[sub.name]
