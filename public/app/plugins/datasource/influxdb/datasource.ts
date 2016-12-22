@@ -93,12 +93,18 @@ export default class InfluxDatasource {
       var seriesList = [];
       for (i = 0; i < data.results.length; i++) {
         var result = data.results[i];
-        if (!result || !result.series) { continue; }
-
         var target = queryTargets[i];
         var alias = target.alias;
         if (alias) {
           alias = this.templateSrv.replace(target.alias, options.scopedVars);
+        }
+
+        // no data was returned. add place holder for legend if alias was provided
+        if (!result || !result.series) {
+          if (alias) {
+            seriesList.push({ target: alias, datapoints: [] });
+          }
+          continue;
         }
 
         var influxSeries = new InfluxSeries({ series: data.results[i].series, alias: alias });
