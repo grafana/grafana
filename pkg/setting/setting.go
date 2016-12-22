@@ -14,8 +14,9 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/go-macaron/session"
 	"gopkg.in/ini.v1"
+
+	"github.com/go-macaron/session"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"
@@ -157,7 +158,10 @@ var (
 	GrafanaNetUrl string
 
 	// S3 temp image store
+	S3TempImageStoreRegion    string
 	S3TempImageStoreBucketUrl string
+	S3TempImageStoreAcl       string
+	S3TempImageStoreExpires   string
 	S3TempImageStoreAccessKey string
 	S3TempImageStoreSecretKey string
 
