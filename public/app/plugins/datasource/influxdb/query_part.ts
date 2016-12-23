@@ -174,6 +174,15 @@ register({
 });
 
 register({
+  type: 'mode',
+  addStrategy: replaceAggregationAddStrategy,
+  category: categories.Aggregations,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+register({
   type: 'sum',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
@@ -226,6 +235,15 @@ register({
   category: categories.Transformations,
   params: [{ name: "window", type: "number", options: [5, 10, 20, 30, 40]}],
   defaultParams: [10],
+  renderer: functionRenderer,
+});
+
+register({
+  type: 'cumulative_sum',
+  addStrategy: addTransformationStrategy,
+  category: categories.Transformations,
+  params: [],
+  defaultParams: [],
   renderer: functionRenderer,
 });
 
