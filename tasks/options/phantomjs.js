@@ -6,6 +6,10 @@ module.exports = function(config,grunt) {
     var dest = './vendor/phantomjs/phantomjs';
     var confDir = './node_modules/phantomjs-prebuilt/lib/';
 
+    if (process.platform === "win32") {
+      dest += ".exe";
+    }
+
     src = config.phjs
 
     if (!src){
