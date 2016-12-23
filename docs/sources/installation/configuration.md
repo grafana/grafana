@@ -248,7 +248,10 @@ organization to be created for that new user.
 
 The role new users will be assigned for the main organization (if the
 above setting is set to true).  Defaults to `Viewer`, other valid
-options are `Admin` and `Editor` and `Read-Only Editor`.
+options are `Admin` and `Editor` and `Read Only Editor`. e.g. :
+
+`auto_assign_org_role = Read Only Editor`
+
 
 <hr>
 
