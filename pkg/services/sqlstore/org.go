@@ -122,6 +122,13 @@ func CreateOrg(cmd *m.CreateOrgCommand) error {
 func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 	return inTransaction2(func(sess *session) error {
 
+		orgQuery := &m.GetOrgByIdQuery{Id: cmd.OrgId}
+
+		orgDoesntExists := GetOrgById(orgQuery)
+		if orgDoesntExists == m.ErrOrgNotFound {
+			return m.ErrOrgNotFound
+		}
+
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, cmd.OrgId, sess); err != nil {
 			return err
 		} else if isNameTaken {
