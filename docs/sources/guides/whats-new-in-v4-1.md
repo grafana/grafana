@@ -55,7 +55,7 @@ Once the `access key` and `secret key` have been saved the user will no longer b
 
 ## Upgrade & Breaking changes
 
-Elasticsearch 1.x is no longer supported. Please upgrade to Elasticsearch 2.x or 5.x. Otherwise Grafan 4.1.0-beta1 contains no breaking changes.
+Elasticsearch 1.x is no longer supported. Please upgrade to Elasticsearch 2.x or 5.x. Otherwise Grafana 4.1.0-beta1 contains no breaking changes.
 
 ## Changelog
 
