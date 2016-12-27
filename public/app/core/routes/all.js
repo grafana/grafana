@@ -6,9 +6,9 @@ define([
 ], function(angular, coreModule, BundleLoader) {
   "use strict";
 
-  coreModule.config(function($routeProvider, $locationProvider) {
+  coreModule.config(function($routeProvider, $locationProvider, $compileProvider) {
     $locationProvider.html5Mode(true);
-
+    $compileProvider.aHrefSanitizationWhitelist(/^\s*(https?|ftp|mailto|data|chrome-extension):/);
     var loadOrgBundle = new BundleLoader.BundleLoader('app/features/org/all');
 
     $routeProvider

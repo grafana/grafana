@@ -60,7 +60,7 @@ function (angular) {
       return backendSrv.alertD({
         method: "get",
         url: alertStatusUrl,
-        params: {} // TODO: filtered by "org" and "service".
+        params: {}
       });
     };
 

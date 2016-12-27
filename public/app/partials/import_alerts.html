@@ -1,0 +1,36 @@
+<div class="modal-body" ng-controller="ImportAlertsCtrl">
+
+  <a class="modal-close" ng-click="dismiss();">
+    <i class="fa fa-remove"></i>
+  </a>
+
+  <h3>
+    导入报警配置文件
+  </h3>
+
+  <form name="systemForm">
+    <div style="display: inline-block">
+      <div class="tight-form-container">
+
+        <div class="editor-row">
+          <div class="section">
+            <div class="editor-option">
+              <form>
+                <input type="file" id="alertUpload"/><br>
+              </form>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="" style="margin-top: 30px; margin-bottom: 20px;">
+        <button type="button" class="btn btn-inverse" ng-click="dismiss()">取消</button>
+        <button type="submit" class="btn btn-success" ng-click="importJson()">导入</button>
+
+      </div>
+    </div>
+  </form>
+</div>
+
+

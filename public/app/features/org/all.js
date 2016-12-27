@@ -13,4 +13,5 @@ define([
   './orgApiKeysCtrl',
   './orgDetailsCtrl',
   './alertHistoryCtrl',
+  './importAlertsCtrl'
 ], function () {});

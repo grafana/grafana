@@ -1,6 +1,5 @@
 define([
   'angular',
-  'lodash',
 ],
 function (angular) {
   'use strict';
@@ -12,6 +11,7 @@ function (angular) {
     $scope.init = function() {
       alertMgrSrv.load().then(function onSuccess(response) {
         $scope.alertDefList = response.data;
+        $scope.exportJson = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(response.data));
       }, function onFailed(response) {
         $scope.err = response.message || "Request failed";
         $scope.status = response.status;
@@ -35,6 +35,15 @@ function (angular) {
             alertSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 10000);
           });
         }
+      });
+    };
+
+    $scope.importAlerts = function () {
+      var modalScope = $scope.$new();
+      $scope.appEvent('show-modal', {
+        src: './app/partials/import_alerts.html',
+        modalClass: 'modal-no-header confirm-modal',
+        scope: modalScope
       });
     };
 
