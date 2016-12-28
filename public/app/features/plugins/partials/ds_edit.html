@@ -46,6 +46,16 @@
 						<select class="gf-form-input" ng-model="ctrl.current.type" ng-options="v.id as v.name for v in ctrl.types" ng-change="ctrl.typeChanged()"></select>
 					</div>
 				</div>
+
+				<div class="gf-form-inline">
+					<div class="gf-form">
+						<span class="gf-form-label width-7">Min refresh</span>
+						<input class="gf-form-input max-width-7" type="text" ng-model="ctrl.current.jsonData.minAutoRefreshInterval" placeholder="42s" pattern="(\d+)(ms|s|m|h|d|w|M|y)">
+						<info-popover offset="0px -135px" mode="right-absolute">
+						  My data source minimum interval for auto-refresh (e.g. 10s, 1m, 1h, 1d)
+						</info-popover>
+					</div>
+				</div>
 			</div>
 
 			<rebuild-on-change property="ctrl.datasourceMeta.id">
