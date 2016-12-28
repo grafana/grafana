@@ -248,9 +248,13 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 }
 
 func getAllMetrics(cwData *datasourceInfo) (cloudwatch.ListMetricsOutput, error) {
+	creds, err := getCredentials(cwData)
+	if err != nil {
+		return cloudwatch.ListMetricsOutput{}, err
+	}
 	cfg := &aws.Config{
 		Region:      aws.String(cwData.Region),
-		Credentials: getCredentials(cwData),
+		Credentials: creds,
 	}
 
 	svc := cloudwatch.New(session.New(cfg), cfg)
@@ -260,7 +264,7 @@ func getAllMetrics(cwData *datasourceInfo) (cloudwatch.ListMetricsOutput, error)
 	}
 
 	var resp cloudwatch.ListMetricsOutput
-	err := svc.ListMetricsPages(params,
+	err = svc.ListMetricsPages(params,
 		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
 			metrics.M_Aws_CloudWatch_ListMetrics.Inc(1)
 			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
