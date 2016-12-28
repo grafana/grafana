@@ -32,7 +32,7 @@ func TestRabbitMQNotifier(t *testing.T) {
           "hostaddress": "rabbitmq",
           "username":"guest",
           "password":"guest",
-          "vhost":"Live"
+          "vhost":"Live",
           "exchange":"alerts"
 				}`
 
@@ -48,7 +48,7 @@ func TestRabbitMQNotifier(t *testing.T) {
 
         So(err, ShouldBeNil)
         So(rabbitmqNotifier.Name, ShouldEqual, "ops")
-        So(rabbitmqNotifier.Type, ShouldEqual, "email")
+        So(rabbitmqNotifier.Type, ShouldEqual, "rabbitmq")
         So(rabbitmqNotifier.HostAddress, ShouldEqual, "rabbitmq")
         So(rabbitmqNotifier.Username, ShouldEqual, "guest")
         So(rabbitmqNotifier.Password, ShouldEqual, "guest")

@@ -25,11 +25,16 @@ type RabbitMQNotifier struct {
 }
 
 func NewRabbitMQNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+  if model.Settings == nil {
+    return nil, alerting.ValidationError{Reason: "No Settings Supplied"}
+  }
+
   hostAddress := model.Settings.Get("hostaddress").MustString()
   username := model.Settings.Get("username").MustString()
   password := model.Settings.Get("password").MustString()
   vhost := model.Settings.Get("vhost").MustString()
   exchange := model.Settings.Get("exchange").MustString()
+
 
   if hostAddress == "" {
     return nil, alerting.ValidationError{Reason: "Could not find host address in settings"}
