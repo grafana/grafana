@@ -10,8 +10,8 @@ Grafana v2.1 brings initial support for KairosDB Datasources. While the process 
 ## Adding the data source to Grafana
 ![](/img/v2/add_KairosDB.jpg)
 
-1. Open the side menu by clicking the the Grafana icon in the top header. 
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.    
+1. Open the side menu by clicking the the Grafana icon in the top header.
+2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 
     > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
 

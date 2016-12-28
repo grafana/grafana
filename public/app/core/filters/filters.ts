@@ -60,8 +60,8 @@ coreModule.filter('noXml', function() {
 coreModule.filter('interpolateTemplateVars', function (templateSrv) {
   var filterFunc: any = function(text, scope) {
     var scopedVars;
-    if (scope.ctrl && scope.ctrl.panel) {
-      scopedVars = scope.ctrl.panel.scopedVars;
+    if (scope.ctrl) {
+      scopedVars = (scope.ctrl.panel || scope.ctrl.row).scopedVars;
     } else {
       scopedVars = scope.row.scopedVars;
     }

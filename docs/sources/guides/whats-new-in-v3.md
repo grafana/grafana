@@ -1,8 +1,14 @@
----
-page_title: What's New in Grafana v3.0
-page_description: What's new in Grafana v3.0
-page_keywords: grafana, new, changes, features, documentation
----
++++
+title = "What's New in Grafana v3.0"
+description = "Feature & improvement highlights for Grafana v3.0"
+keywords = ["grafana", "new", "documentation", "3.0"]
+type = "docs"
+[menu.docs]
+name = "Version 3.0"
+identifier = "v3.0"
+parent = "whatsnew"
+weight = 2
++++
 
 # What's New in Grafana v3.0
 
@@ -37,7 +43,7 @@ entire experience right within Grafana.
 
 ## Grafana.net
 
-<img src="/img/v3/grafana_net_tour.png">
+<img src="/img/docs/v3/grafana_net_tour.png">
 
 [Grafana.net](https://grafana.net) offers a central repository where the community can come together to discover, create and
 share plugins (data sources, panels, apps) and dashboards.
@@ -96,7 +102,7 @@ periodically and remotely.
 You can also make Playlists dynamic by using Dashboard **tags** to
 define the Playlist.
 
-<img src="/img/v3/playlist.png">
+<img src="/img/docs/v3/playlist.png">
 
 ## Improved UI
 
@@ -116,11 +122,11 @@ are literally hundreds of UI improvements and refinements.
 
 Here’s the new side menu in action:
 
-<img src="/img/v3/menu.gif">
+<img src="/img/docs/v3/menu.gif">
 
 And here's the new look for Dashboard settings:
 
-<img src="/img/v3/dashboard_settings.png">
+<img src="/img/docs/v3/dashboard_settings.png">
 
 Check out the <a href="http://play.grafana.org" target="_blank">Play
 Site</a> to get a feel for some of the UI changes.
@@ -132,7 +138,7 @@ over the link and click the annotation text. This feature is very
 useful for linking to particular commits or tickets where more
 detailed information can be presented to the user.
 
-<img src="/img/v3/annotation_links.gif">
+<img src="/img/docs/v3/annotation_links.gif">
 
 ## Data source variables
 
@@ -140,11 +146,11 @@ This has been a top requested feature for very long we are exited to finally pro
 this feature. You can now add a new `Data source` type variable. That will
 automatically be filled with instance names of your data sources.
 
-<img src="/img/v3/data_source_variable.png">
+<img src="/img/docs/v3/data_source_variable.png">
 
 You can then use this variable as the panel data source:
 
-<img src="/img/v3/data_source_variable_use.png">
+<img src="/img/docs/v3/data_source_variable_use.png">
 
 This will allow you to quickly change data source server and reuse the
 same dashboard for different instances of your metrics backend. For example
@@ -162,7 +168,7 @@ The Prometheus Data Source now supports annotations.
 ### InfluxDB
 
 You can now select the InfluxDB policy from the query editor.
-<img src="/img/v3/influxdb_policy.png">
+<img src="/img/docs/v3/influxdb_policy.png">
 
 Grafana 3.0 also comes with support for InfluxDB 0.11 and InfluxDB 0.12.
 
@@ -195,23 +201,23 @@ are a couple that I incurage you try!
 
 #### [Clock Panel](https://grafana.net/plugins/grafana-clock-panel)
 Support's both current time and count down mode.
-<img src="/img/v3/clock_panel.png">
+<img src="/img/docs/v3/clock_panel.png">
 
 #### [Pie Chart Panel](https://grafana.net/plugins/grafana-piechart-panel)
 A simple pie chart panel is now available as an external plugin.
-<img src="/img/v3/pie_chart_panel.png">
+<img src="/img/docs/v3/pie_chart_panel.png">
 
 #### [WorldPing App](https://grafana.net/plugins/raintank-worldping-app)
 This is full blown Grafana App that adds new panels, data sources and pages to give
 feature rich global performance monitoring directly from your on-prem Grafana.
 
-<img src="/img/v3/wP-Screenshot-dash-web.png">
+<img src="/img/docs/v3/wP-Screenshot-dash-web.png">
 
 #### [Zabbix App](https://grafana.net/plugins/alexanderzobnin-zabbix-app)
 This app contains the already very pouplar Zabbix data source plugin, 2 dashboards and a triggers panel. It is
 created and maintained by [Alexander Zobnin](https://github.com/alexanderzobnin/grafana-zabbix).
 
-<img src="/img/v3/zabbix_app.png">
+<img src="/img/docs/v3/zabbix_app.png">
 
 Checkout the full list of plugins on [Grafana.net](https://grafana.net/plugins)
 

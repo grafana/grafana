@@ -5,6 +5,7 @@ import "github.com/grafana/grafana/pkg/components/simplejson"
 type Repository interface {
 	Save(item *Item) error
 	Find(query *ItemQuery) ([]*Item, error)
+	Delete(params *DeleteParams) error
 }
 
 type ItemQuery struct {
@@ -18,6 +19,12 @@ type ItemQuery struct {
 	NewState    []string `json:"newState"`
 
 	Limit int64 `json:"alertId"`
+}
+
+type DeleteParams struct {
+	AlertId     int64 `json:"alertId"`
+	DashboardId int64 `json:"dashboardId"`
+	PanelId     int64 `json:"panelId"`
 }
 
 var repositoryInstance Repository

@@ -2,6 +2,7 @@
 
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
+import {assignModelProperties} from 'app/core/core';
 
 export interface Variable {
   setValue(option);
@@ -9,16 +10,13 @@ export interface Variable {
   dependsOn(variable);
   setValueFromUrl(urlValue);
   getValueForUrl();
-  getModel();
+  getSaveModel();
 }
 
 export var variableTypes = {};
-
-export function assignModelProperties(target, source, defaults) {
-  _.forEach(defaults, function(value, key) {
-    target[key] = source[key] === undefined ? value : source[key];
-  });
-}
+export {
+  assignModelProperties
+};
 
 export function containsVariable(...args: any[]) {
   var variableName = args[args.length-1];

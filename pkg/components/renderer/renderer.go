@@ -18,7 +18,7 @@ import (
 )
 
 type RenderOpts struct {
-	Url     string
+	Path    string
 	Width   string
 	Height  string
 	Timeout string
@@ -28,14 +28,19 @@ type RenderOpts struct {
 var rendererLog log.Logger = log.New("png-renderer")
 
 func RenderToPng(params *RenderOpts) (string, error) {
-	rendererLog.Info("Rendering", "url", params.Url)
+	rendererLog.Info("Rendering", "path", params.Path)
 
 	var executable = "phantomjs"
 	if runtime.GOOS == "windows" {
 		executable = executable + ".exe"
 	}
 
-	params.Url = fmt.Sprintf("%s://localhost:%s/%s", setting.Protocol, setting.HttpPort, params.Url)
+	localDomain := "localhost"
+	if setting.HttpAddr != setting.DEFAULT_HTTP_ADDR {
+		localDomain = setting.HttpAddr
+	}
+
+	url := fmt.Sprintf("%s://%s:%s/%s", setting.Protocol, localDomain, setting.HttpPort, params.Path)
 
 	binPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, executable))
 	scriptPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, "render.js"))
@@ -47,12 +52,13 @@ func RenderToPng(params *RenderOpts) (string, error) {
 
 	cmdArgs := []string{
 		"--ignore-ssl-errors=true",
+		"--web-security=false",
 		scriptPath,
-		"url=" + params.Url,
+		"url=" + url,
 		"width=" + params.Width,
 		"height=" + params.Height,
 		"png=" + pngPath,
-		"domain=" + setting.Domain,
+		"domain=" + localDomain,
 		"renderKey=" + renderKey,
 	}
 

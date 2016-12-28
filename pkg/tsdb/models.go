@@ -1,12 +1,16 @@
 package tsdb
 
-import "github.com/grafana/grafana/pkg/components/simplejson"
+import (
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/models"
+	"gopkg.in/guregu/null.v3"
+)
 
 type Query struct {
 	RefId         string
 	Model         *simplejson.Json
 	Depends       []string
-	DataSource    *DataSourceInfo
+	DataSource    *models.DataSource
 	Results       []*TimeSeries
 	Exclude       bool
 	MaxDataPoints int64
@@ -25,19 +29,6 @@ type Response struct {
 	Results      map[string]*QueryResult `json:"results"`
 }
 
-type DataSourceInfo struct {
-	Id                int64
-	Name              string
-	PluginId          string
-	Url               string
-	Password          string
-	User              string
-	Database          string
-	BasicAuth         bool
-	BasicAuthUser     string
-	BasicAuthPassword string
-}
-
 type BatchTiming struct {
 	TimeElapsed int64
 }
@@ -48,6 +39,11 @@ type BatchResult struct {
 	Timings      *BatchTiming
 }
 
+func (br *BatchResult) WithError(err error) *BatchResult {
+	br.Error = err
+	return br
+}
+
 type QueryResult struct {
 	Error  error           `json:"error"`
 	RefId  string          `json:"refId"`
@@ -55,13 +51,35 @@ type QueryResult struct {
 }
 
 type TimeSeries struct {
-	Name   string        `json:"name"`
-	Points [][2]*float64 `json:"points"`
+	Name   string           `json:"name"`
+	Points TimeSeriesPoints `json:"points"`
 }
 
+type TimePoint [2]null.Float
+type TimeSeriesPoints []TimePoint
 type TimeSeriesSlice []*TimeSeries
 
-func NewTimeSeries(name string, points [][2]*float64) *TimeSeries {
+func NewQueryResult() *QueryResult {
+	return &QueryResult{
+		Series: make(TimeSeriesSlice, 0),
+	}
+}
+
+func NewTimePoint(value null.Float, timestamp float64) TimePoint {
+	return TimePoint{value, null.FloatFrom(timestamp)}
+}
+
+func NewTimeSeriesPointsFromArgs(values ...float64) TimeSeriesPoints {
+	points := make(TimeSeriesPoints, 0)
+
+	for i := 0; i < len(values); i += 2 {
+		points = append(points, NewTimePoint(null.FloatFrom(values[i]), values[i+1]))
+	}
+
+	return points
+}
+
+func NewTimeSeries(name string, points TimeSeriesPoints) *TimeSeries {
 	return &TimeSeries{
 		Name:   name,
 		Points: points,

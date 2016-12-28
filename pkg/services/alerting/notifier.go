@@ -2,6 +2,9 @@ package alerting
 
 import (
 	"errors"
+	"fmt"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/imguploader"
@@ -32,48 +35,62 @@ func (n *RootNotifier) PassesFilter(rule *Rule) bool {
 	return false
 }
 
-func (n *RootNotifier) Notify(context *EvalContext) {
-	n.log.Info("Sending notifications for", "ruleId", context.Rule.Id)
+func (n *RootNotifier) GetNotifierId() int64 {
+	return 0
+}
 
+func (n *RootNotifier) GetIsDefault() bool {
+	return false
+}
+
+func (n *RootNotifier) Notify(context *EvalContext) error {
 	notifiers, err := n.getNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
 	if err != nil {
-		n.log.Error("Failed to read notifications", "error", err)
-		return
+		return err
 	}
+
+	n.log.Info("Sending notifications for", "ruleId", context.Rule.Id, "sent count", len(notifiers))
 
 	if len(notifiers) == 0 {
-		return
+		return nil
 	}
 
-	err = n.uploadImage(context)
-	if err != nil {
-		n.log.Error("Failed to upload alert panel image", "error", err)
+	if err = n.uploadImage(context); err != nil {
+		n.log.Error("Failed to upload alert panel image.", "error", err)
 	}
 
-	n.sendNotifications(notifiers, context)
+	return n.sendNotifications(context, notifiers)
 }
 
-func (n *RootNotifier) sendNotifications(notifiers []Notifier, context *EvalContext) {
+func (n *RootNotifier) sendNotifications(context *EvalContext, notifiers []Notifier) error {
+	g, _ := errgroup.WithContext(context.Ctx)
+
 	for _, notifier := range notifiers {
-		n.log.Info("Sending notification", "firing", context.Firing, "type", notifier.GetType())
-		go notifier.Notify(context)
+		not := notifier //avoid updating scope variable in go routine
+		n.log.Info("Sending notification", "type", not.GetType(), "id", not.GetNotifierId(), "isDefault", not.GetIsDefault())
+		g.Go(func() error { return not.Notify(context) })
 	}
+
+	return g.Wait()
 }
 
-func (n *RootNotifier) uploadImage(context *EvalContext) error {
-	uploader, _ := imguploader.NewImageUploader()
-
-	imageUrl, err := context.GetImageUrl()
+func (n *RootNotifier) uploadImage(context *EvalContext) (err error) {
+	uploader, err := imguploader.NewImageUploader()
 	if err != nil {
 		return err
 	}
 
 	renderOpts := &renderer.RenderOpts{
-		Url:     imageUrl,
 		Width:   "800",
 		Height:  "400",
 		Timeout: "30",
 		OrgId:   context.Rule.OrgId,
+	}
+
+	if slug, err := context.GetDashboardSlug(); err != nil {
+		return err
+	} else {
+		renderOpts.Path = fmt.Sprintf("dashboard-solo/db/%s?&panelId=%d", slug, context.Rule.PanelId)
 	}
 
 	if imagePath, err := renderer.RenderToPng(renderOpts); err != nil {

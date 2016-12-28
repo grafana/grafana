@@ -1,9 +1,3 @@
----
-page_title: Plugin datasources
-page_description: Datasource plugins for Grafana
-page_keywords: grafana, plugins, documentation
----
-
 
 # Datasources
 
@@ -43,7 +37,7 @@ The Datasource should contain the following functions.
 ```
 query(options) //used by panels to get data
 testDatasource() //used by datasource configuration page to make sure the connection is working
-annotationsQuery(options) // used dashboards to get annotations
+annotationsQuery(options) // used by dashboards to get annotations
 metricFindQuery(options) // used by query editor to get metric suggestions.
 ```
 

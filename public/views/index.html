@@ -64,13 +64,13 @@
 							<a href="http://grafana.org" target="_blank">Grafana</a>
 							<span>v[[.BuildVersion]] (commit: [[.BuildCommit]])</span>
 						</li>
-						<li>
-							[[if .NewGrafanaVersionExists]]
+						[[if .NewGrafanaVersionExists]]
+							<li>
 								<a href="http://grafana.org/download" target="_blank" bs-tooltip="'[[.NewGrafanaVersion]]'">
 									New version available!
 								</a>
-							[[end]]
-						</li>
+							</li>
+						[[end]]
 					</ul>
 				</div>
 			</footer>

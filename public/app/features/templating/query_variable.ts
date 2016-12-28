@@ -24,6 +24,7 @@ export class QueryVariable implements Variable {
 
   defaults = {
     type: 'query',
+    label: null,
     query: '',
     regex: '',
     sort: 0,
@@ -46,9 +47,15 @@ export class QueryVariable implements Variable {
     assignModelProperties(this, model, this.defaults);
   }
 
-  getModel() {
+  getSaveModel() {
     // copy back model properties to model
     assignModelProperties(this.model, this, this.defaults);
+
+    // remove options
+    if (this.refresh !== 0) {
+      this.model.options = [];
+    }
+
     return this.model;
   }
 

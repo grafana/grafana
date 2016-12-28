@@ -35,11 +35,12 @@ type AlertTestCommand struct {
 }
 
 type AlertTestResult struct {
-	Firing      bool                  `json:"firing"`
-	TimeMs      string                `json:"timeMs"`
-	Error       string                `json:"error,omitempty"`
-	EvalMatches []*EvalMatch          `json:"matches,omitempty"`
-	Logs        []*AlertTestResultLog `json:"logs,omitempty"`
+	Firing         bool                  `json:"firing"`
+	ConditionEvals string                `json:"conditionEvals"`
+	TimeMs         string                `json:"timeMs"`
+	Error          string                `json:"error,omitempty"`
+	EvalMatches    []*EvalMatch          `json:"matches,omitempty"`
+	Logs           []*AlertTestResultLog `json:"logs,omitempty"`
 }
 
 type AlertTestResultLog struct {
@@ -57,4 +58,13 @@ type NotificationTestCommand struct {
 	Name     string           `json:"name"`
 	Type     string           `json:"type"`
 	Settings *simplejson.Json `json:"settings"`
+}
+
+type PauseAlertCommand struct {
+	AlertId int64 `json:"alertId"`
+	Paused  bool  `json:"paused"`
+}
+
+type PauseAllAlertsCommand struct {
+	Paused bool `json:"paused"`
 }

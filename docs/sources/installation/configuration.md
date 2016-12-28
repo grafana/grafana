@@ -1,8 +1,14 @@
----
-page_title: Configuration
-page_description: Configuration guide for Grafana.
-page_keywords: grafana, configuration, documentation
----
++++
+title = "Configuration"
+description = "Configuration Docs"
+keywords = ["grafana", "configuration", "documentation"]
+type = "docs"
+[menu.docs]
+name = "Configuration"
+identifier = "config"
+parent = "admin"
+weight = 1
++++
 
 # Configuration
 
@@ -30,6 +36,9 @@ using environment variables using the syntax:
 Where the section name is the text within the brackets. Everything
 should be upper case, `.` should be replaced by `_`. For example, given these configuration settings:
 
+    # default section
+    instance_name = ${HOSTNAME}
+
     [security]
     admin_user = admin
 
@@ -39,6 +48,7 @@ should be upper case, `.` should be replaced by `_`. For example, given these co
 
 Then you can override them using:
 
+    export GF_DEFAULT_INSTANCE_NAME=my-instance
     export GF_SECURITY_ADMIN_USER=true
     export GF_AUTH_GOOGLE_CLIENT_SECRET=newS3cretKey
 
@@ -134,6 +144,10 @@ Grafana needs a database to store users and dashboards (and other
 things). By default it is configured to use `sqlite3` which is an
 embedded database (included in the main Grafana binary).
 
+### url
+Use either URL or or the other fields below to configure the database
+Example: `mysql://user:secret@host:port/database`
+
 ### type
 
 Either `mysql`, `postgres` or `sqlite3`, it's your choice.
@@ -160,7 +174,7 @@ The database user (not applicable for `sqlite3`).
 
 ### password
 
-The database user's password (not applicable for `sqlite3`).
+The database user's password (not applicable for `sqlite3`). If the password contains `#` or `;` you have to wrap it with trippel quotes. Ex `"""#password;"""`
 
 ### ssl_mode
 
@@ -234,7 +248,18 @@ organization to be created for that new user.
 
 The role new users will be assigned for the main organization (if the
 above setting is set to true).  Defaults to `Viewer`, other valid
-options are `Admin` and `Editor` and `Read-Only Editor`.
+options are `Admin` and `Editor` and `Read Only Editor`. e.g. :
+
+`auto_assign_org_role = Read Only Editor`
+
+
+<hr>
+
+## [auth]
+
+### disable_login_form
+
+Set to true to disable (hide) the login form, useful if you use OAuth, defaults to false.
 
 <hr>
 
@@ -271,6 +296,7 @@ example:
 
     [auth.github]
     enabled = true
+    allow_sign_up = true
     client_id = YOUR_GITHUB_APP_CLIENT_ID
     client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
     scopes = user:email
@@ -305,7 +331,7 @@ Grafana instance. For example:
     team_ids = 150,300
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
-    allow_sign_up = false
+    allow_sign_up = true
 
 ### allowed_organizations
 
@@ -321,7 +347,7 @@ your Grafana instance. For example
     scopes = user:email,read:org
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
-    allow_sign_up = false
+    allow_sign_up = true
     # space-delimited organization names
     allowed_organizations = github google
 
@@ -349,7 +375,7 @@ Secret. Specify these in the Grafana configuration file. For example:
     auth_url = https://accounts.google.com/o/oauth2/auth
     token_url = https://accounts.google.com/o/oauth2/token
     allowed_domains = mycompany.com mycompany.org
-    allow_sign_up = false
+    allow_sign_up = true
 
 Restart the Grafana back-end. You should now see a Google login button
 on the login page. You can now login or sign up with your Google
@@ -374,8 +400,11 @@ browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
     scopes =
     auth_url =
     token_url =
+    api_url =
     allowed_domains = mycompany.com mycompany.org
-    allow_sign_up = false
+    allow_sign_up = true
+
+Set api_url to the resource that returns basic user info.
 
 <hr>
 
@@ -392,7 +421,7 @@ Set to `true` to enable LDAP integration (default: `false`)
 ### config_file
 Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
 
-> For details on LDAP Configuration, go to the [LDAP Integration](ldap.md) page.
+> For details on LDAP Configuration, go to the [LDAP Integration]({{< relref "ldap.md" >}}) page.
 
 <hr>
 
@@ -484,6 +513,33 @@ Grafana backend index those json dashboards which will make them appear in regul
 ### path
 The full path to a directory containing your json dashboards.
 
+## [smtp]
+Email server settings.
+
+### enabled
+defaults to false
+
+### host
+defaults to localhost:25
+
+### user
+In case of SMTP auth, defaults to `empty`
+
+### password
+In case of SMTP auth, defaults to `empty`
+
+### cert_file
+File path to a cert file, defaults to `empty`
+
+### key_file
+File path to a key file, defaults to `empty`
+
+### skip_verify
+Verify SSL for smtp server? defaults to `false`
+
+### from_address
+Address used when sending out emails, defaults to `admin@grafana.localhost`
+
 ## [log]
 
 ### mode
@@ -493,7 +549,7 @@ Use space to separate multiple modes, e.g. "console file"
 ### level
 Either "debug", "info", "warn", "error", "critical", default is "info"
 
-### filter
+### filters
 optional settings to set different levels for specific loggers.
 Ex `filters = sqlstore:debug`
 
@@ -525,3 +581,43 @@ Set root url to a Grafana instance where you want to publish external snapshots 
 
 ### external_snapshot_name
 Set name for external snapshot button. Defaults to `Publish to snapshot.raintank.io`
+
+### remove expired snapshot
+Enabled to automatically remove expired snapshots
+
+### remove snapshots after 90 days
+Time to live for snapshots.
+
+## [external_image_storage]
+These options control how images should be made public so they can be shared on services like slack.
+
+### provider
+You can choose between (s3, webdav). If left empty Grafana will ignore the upload action.
+
+## [external_image_storage.s3]
+
+### bucket_url
+bucket url for s3. ex http://grafana.s3.amazonaws.com/
+
+### access_key
+access key. ex AAAAAAAAAAAAAAAAAAAA
+
+### secret_key
+secret key. ex AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+## [external_image_storage.webdav]
+
+### url
+Url to where Grafana will send PUT request with images
+
+### username
+basic auth username
+
+### password
+basic auth password
+
+## [alerting]
+
+### execute_alerts = true
+
+Makes it possible to turn off alert rule execution.

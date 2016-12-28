@@ -139,6 +139,24 @@ export default class InfluxDatasource {
     });
   };
 
+  targetContainsTemplate(target) {
+    for (let group of target.groupBy) {
+      for (let param of group.params) {
+        if (this.templateSrv.variableExists(param)) {
+          return true;
+        }
+      }
+    }
+
+    for (let i in target.tags) {
+      if (this.templateSrv.variableExists(target.tags[i].value)) {
+        return true;
+      }
+    }
+
+    return false;
+  };
+
   metricFindQuery(query) {
     var interpolated = this.templateSrv.replace(query, null, 'regex');
 
@@ -234,7 +252,7 @@ export default class InfluxDatasource {
   getTimeFilter(options) {
     var from = this.getInfluxTime(options.rangeRaw.from, false);
     var until = this.getInfluxTime(options.rangeRaw.to, true);
-    var fromIsAbsolute = from[from.length-1] === 's';
+    var fromIsAbsolute = from[from.length-1] === 'ms';
 
     if (until === 'now()' && !fromIsAbsolute) {
       return 'time > ' + from;
@@ -257,7 +275,8 @@ export default class InfluxDatasource {
       }
       date = dateMath.parse(date, roundUp);
     }
-    return (date.valueOf() / 1000).toFixed(0) + 's';
+
+    return date.valueOf() + 'ms';
   }
 }
 

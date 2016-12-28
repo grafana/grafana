@@ -6,8 +6,6 @@
 // Base styles
 // -------------------------
 
-
-
 .alert {
   padding: 0.5rem 2rem 0.5rem 1rem;
   margin-bottom: $line-height-base;
@@ -30,9 +28,11 @@
 .alert-error {
   background-color: $errorBackground;
 }
+
 .alert-info {
   background-color: $infoBackground;
 }
+
 .alert-warning {
   background-color: $state-warning-bg;
 }

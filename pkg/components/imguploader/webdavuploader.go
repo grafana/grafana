@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"path"
-	"time"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -19,14 +18,17 @@ type WebdavUploader struct {
 }
 
 func (u *WebdavUploader) Upload(pa string) (string, error) {
-	client := http.Client{Timeout: time.Duration(10 * time.Second)}
-
 	url, _ := url.Parse(u.url)
 	url.Path = path.Join(url.Path, util.GetRandomString(20)+".png")
 
 	imgData, err := ioutil.ReadFile(pa)
 	req, err := http.NewRequest("PUT", url.String(), bytes.NewReader(imgData))
-	res, err := client.Do(req)
+
+	if u.username != "" {
+		req.SetBasicAuth(u.username, u.password)
+	}
+
+	res, err := http.DefaultClient.Do(req)
 
 	if err != nil {
 		return "", err

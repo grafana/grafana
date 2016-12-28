@@ -1,12 +1,14 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/grafana/grafana/pkg/tsdb/testdata"
 	"github.com/grafana/grafana/pkg/util"
@@ -24,14 +26,14 @@ func QueryMetrics(c *middleware.Context, reqDto dtos.MetricRequest) Response {
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 			IntervalMs:    query.Get("intervalMs").MustInt64(1000),
 			Model:         query,
-			DataSource: &tsdb.DataSourceInfo{
-				Name:     "Grafana TestDataDB",
-				PluginId: "grafana-testdata-datasource",
+			DataSource: &models.DataSource{
+				Name: "Grafana TestDataDB",
+				Type: "grafana-testdata-datasource",
 			},
 		})
 	}
 
-	resp, err := tsdb.HandleRequest(request)
+	resp, err := tsdb.HandleRequest(context.TODO(), request)
 	if err != nil {
 		return ApiError(500, "Metric request error", err)
 	}
@@ -48,6 +50,7 @@ func GetTestDataScenarios(c *middleware.Context) Response {
 			"id":          scenario.Id,
 			"name":        scenario.Name,
 			"description": scenario.Description,
+			"stringInput": scenario.StringInput,
 		})
 	}
 
@@ -67,6 +70,10 @@ func GetInternalMetrics(c *middleware.Context) Response {
 		metricName := m.Name() + m.StringifyTags()
 
 		switch metric := m.(type) {
+		case metrics.Gauge:
+			resp[metricName] = map[string]interface{}{
+				"value": metric.Value(),
+			}
 		case metrics.Counter:
 			resp[metricName] = map[string]interface{}{
 				"count": metric.Count(),

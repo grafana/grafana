@@ -12,7 +12,6 @@ import * as dateMath from 'app/core/utils/datemath';
 import {Subject} from 'vendor/npm/rxjs/Subject';
 
 class MetricsPanelCtrl extends PanelCtrl {
-  error: any;
   loading: boolean;
   datasource: any;
   datasourceName: any;
@@ -131,7 +130,9 @@ class MetricsPanelCtrl extends PanelCtrl {
     var intervalOverride = this.panel.interval;
 
     // if no panel interval check datasource
-    if (!intervalOverride && this.datasource && this.datasource.interval) {
+    if (intervalOverride) {
+      intervalOverride = this.templateSrv.replace(intervalOverride, this.panel.scopedVars);
+    } else if (this.datasource && this.datasource.interval) {
       intervalOverride = this.datasource.interval;
     }
 
@@ -250,6 +251,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       },
       complete: () => {
         console.log('panel: observer got complete');
+        this.dataStream = null;
       }
     });
   }

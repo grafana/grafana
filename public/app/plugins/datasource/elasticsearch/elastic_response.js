@@ -171,6 +171,9 @@ function (_, queryDef) {
           } else {
             props["filter"] = nameIndex;
           }
+          if (bucket.key_as_string) {
+            props[aggDef.field] = bucket.key_as_string;
+          }
           this.processBuckets(bucket, target, seriesList, docs, props, depth+1);
         }
       }

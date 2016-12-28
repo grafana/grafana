@@ -16,6 +16,7 @@ export class ConstantVariable implements Variable {
     label: '',
     query: '',
     current: {},
+    options: [],
   };
 
   /** @ngInject **/
@@ -23,7 +24,7 @@ export class ConstantVariable implements Variable {
     assignModelProperties(this, model, this.defaults);
   }
 
-  getModel() {
+  getSaveModel() {
     assignModelProperties(this.model, this, this.defaults);
     return this.model;
   }

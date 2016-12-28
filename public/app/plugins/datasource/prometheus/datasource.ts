@@ -58,6 +58,10 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     return escapedValues.join('|');
   };
 
+  this.targetContainsTemplate = function(target) {
+    return templateSrv.variableExists(target.expr);
+  };
+
   // Called once per panel (graph)
   this.query = function(options) {
     var self = this;
@@ -123,6 +127,10 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   };
 
   this.performTimeSeriesQuery = function(query, start, end) {
+    if (start > end) {
+      throw { message: 'Invalid time range' };
+    }
+
     var url = '/api/v1/query_range?query=' + encodeURIComponent(query.expr) + '&start=' + start + '&end=' + end + '&step=' + query.step;
     return this._request('GET', url, query.requestId);
   };

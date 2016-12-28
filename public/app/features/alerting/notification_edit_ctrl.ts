@@ -7,7 +7,7 @@ import config from 'app/core/config';
 
 export class AlertNotificationEditCtrl {
   model: any;
-  showTest: boolean = false;
+  theForm: any;
   testSeverity: string = "critical";
 
   /** @ngInject */
@@ -18,7 +18,8 @@ export class AlertNotificationEditCtrl {
       this.model = {
         type: 'email',
         settings: {
-          severityFilter: 'none'
+          httpMethod: 'POST',
+          autoResolve: true,
         },
         isDefault: false
       };
@@ -36,6 +37,10 @@ export class AlertNotificationEditCtrl {
   }
 
   save() {
+    if (!this.theForm.$valid) {
+      return;
+    }
+
     if (this.model.id) {
       this.backendSrv.put(`/api/alert-notifications/${this.model.id}`, this.model).then(res => {
         this.model = res;
@@ -53,11 +58,11 @@ export class AlertNotificationEditCtrl {
     this.model.settings = {};
   }
 
-  toggleTest() {
-    this.showTest = !this.showTest;
-  }
-
   testNotification() {
+    if (!this.theForm.$valid) {
+      return;
+    }
+
     var payload = {
       name: this.model.name,
       type: this.model.type,

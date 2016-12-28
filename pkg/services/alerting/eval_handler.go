@@ -1,15 +1,12 @@
 package alerting
 
 import (
-	"fmt"
+	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
-)
-
-var (
-	MaxRetries int = 1
 )
 
 type DefaultEvalHandler struct {
@@ -20,65 +17,49 @@ type DefaultEvalHandler struct {
 func NewEvalHandler() *DefaultEvalHandler {
 	return &DefaultEvalHandler{
 		log:             log.New("alerting.evalHandler"),
-		alertJobTimeout: time.Second * 10,
+		alertJobTimeout: time.Second * 5,
 	}
 }
 
 func (e *DefaultEvalHandler) Eval(context *EvalContext) {
-	go e.eval(context)
+	firing := true
+	noDataFound := true
+	conditionEvals := ""
 
-	select {
-	case <-time.After(e.alertJobTimeout):
-		context.Error = fmt.Errorf("Execution timed out after %v", e.alertJobTimeout)
-		context.EndTime = time.Now()
-		e.log.Debug("Job Execution timeout", "alertId", context.Rule.Id, "timeout setting", e.alertJobTimeout)
-		e.retry(context)
-	case <-context.DoneChan:
-		e.log.Debug("Job Execution done", "timeMs", context.GetDurationMs(), "alertId", context.Rule.Id, "firing", context.Firing)
-
-		if context.Error != nil {
-			e.retry(context)
+	for i := 0; i < len(context.Rule.Conditions); i++ {
+		condition := context.Rule.Conditions[i]
+		cr, err := condition.Eval(context)
+		if err != nil {
+			context.Error = err
 		}
-	}
-}
-
-func (e *DefaultEvalHandler) retry(context *EvalContext) {
-	e.log.Debug("Retrying eval exeuction", "alertId", context.Rule.Id)
-
-	if context.RetryCount < MaxRetries {
-		context.DoneChan = make(chan bool, 1)
-		context.CancelChan = make(chan bool, 1)
-		context.RetryCount++
-		e.Eval(context)
-	}
-}
-
-func (e *DefaultEvalHandler) eval(context *EvalContext) {
-	defer func() {
-		if err := recover(); err != nil {
-			e.log.Error("Alerting rule eval panic", "error", err, "stack", log.Stack(1))
-			if panicErr, ok := err.(error); ok {
-				context.Error = panicErr
-			}
-		}
-	}()
-
-	for _, condition := range context.Rule.Conditions {
-		condition.Eval(context)
 
 		// break if condition could not be evaluated
 		if context.Error != nil {
 			break
 		}
 
-		// break if result has not triggered yet
-		if context.Firing == false {
-			break
+		// calculating Firing based on operator
+		if cr.Operator == "or" {
+			firing = firing || cr.Firing
+			noDataFound = noDataFound || cr.NoDataFound
+		} else {
+			firing = firing && cr.Firing
+			noDataFound = noDataFound && cr.NoDataFound
 		}
+
+		if i > 0 {
+			conditionEvals = "[" + conditionEvals + " " + strings.ToUpper(cr.Operator) + " " + strconv.FormatBool(cr.Firing) + "]"
+		} else {
+			conditionEvals = strconv.FormatBool(firing)
+		}
+
+		context.EvalMatches = append(context.EvalMatches, cr.EvalMatches...)
 	}
 
+	context.ConditionEvals = conditionEvals + " = " + strconv.FormatBool(firing)
+	context.Firing = firing
+	context.NoDataFound = noDataFound
 	context.EndTime = time.Now()
 	elapsedTime := context.EndTime.Sub(context.StartTime) / time.Millisecond
-	metrics.M_Alerting_Exeuction_Time.Update(elapsedTime)
-	context.DoneChan <- true
+	metrics.M_Alerting_Execution_Time.Update(elapsedTime)
 }

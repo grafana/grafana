@@ -13,9 +13,10 @@ export class DashboardCtrl {
   constructor(
     private $scope,
     private $rootScope,
-    dashboardKeybindings,
+    keybindingSrv,
     timeSrv,
     variableSrv,
+    alertingSrv,
     dashboardSrv,
     unsavedChangesSrv,
     dynamicDashboardSrv,
@@ -25,7 +26,6 @@ export class DashboardCtrl {
     $timeout) {
 
       $scope.editor = { index: 0 };
-      $scope.panels = config.panels;
 
       var resizeEventTimeout;
 
@@ -43,6 +43,7 @@ export class DashboardCtrl {
 
         // init services
         timeSrv.init(dashboard);
+        alertingSrv.init(dashboard, data.alerts);
 
         // template values service needs to initialize completely before
         // the rest of the dashboard can load
@@ -52,15 +53,17 @@ export class DashboardCtrl {
         // continue
         .finally(function() {
           dynamicDashboardSrv.init(dashboard);
+          dynamicDashboardSrv.process();
+
           unsavedChangesSrv.init(dashboard, $scope);
 
           $scope.dashboard = dashboard;
           $scope.dashboardMeta = dashboard.meta;
           $scope.dashboardViewState = dashboardViewStateSrv.create($scope);
 
-          dashboardKeybindings.shortcuts($scope);
+          keybindingSrv.setupDashboardBindings($scope, dashboard);
 
-          $scope.updateSubmenuVisibility();
+          $scope.dashboard.updateSubmenuVisibility();
           $scope.setWindowTitleAndTheme();
 
           $scope.appEvent("dashboard-initialized", $scope.dashboard);
@@ -87,11 +90,7 @@ export class DashboardCtrl {
       };
 
       $scope.templateVariableUpdated = function() {
-        dynamicDashboardSrv.update($scope.dashboard);
-      };
-
-      $scope.updateSubmenuVisibility = function() {
-        $scope.submenuEnabled = $scope.dashboard.isSubmenuFeaturesEnabled();
+        dynamicDashboardSrv.process();
       };
 
       $scope.setWindowTitleAndTheme = function() {
@@ -102,22 +101,8 @@ export class DashboardCtrl {
         $rootScope.$broadcast('refresh');
       };
 
-      $scope.addRow = function(dash, row) {
-        dash.rows.push(row);
-      };
-
       $scope.addRowDefault = function() {
-        $scope.resetRow();
-        $scope.row.title = 'New row';
-        $scope.addRow($scope.dashboard, $scope.row);
-      };
-
-      $scope.resetRow = function() {
-        $scope.row = {
-          title: '',
-          height: '250px',
-          editable: true,
-        };
+        $scope.dashboard.addEmptyRow();
       };
 
       $scope.showJsonEditor = function(evt, options) {
@@ -127,31 +112,15 @@ export class DashboardCtrl {
         $scope.appEvent('show-dash-editor', { src: 'public/app/partials/edit_json.html', scope: editScope });
       };
 
-      $scope.onDrop = function(panelId, row, dropTarget) {
-        var info = $scope.dashboard.getPanelInfoById(panelId);
-        if (dropTarget) {
-          var dropInfo = $scope.dashboard.getPanelInfoById(dropTarget.id);
-          dropInfo.row.panels[dropInfo.index] = info.panel;
-          info.row.panels[info.index] = dropTarget;
-          var dragSpan = info.panel.span;
-          info.panel.span = dropTarget.span;
-          dropTarget.span = dragSpan;
-        } else {
-          info.row.panels.splice(info.index, 1);
-          info.panel.span = 12 - $scope.dashboard.rowSpan(row);
-          row.panels.push(info.panel);
-        }
-
-        $rootScope.$broadcast('render');
-      };
-
       $scope.registerWindowResizeEvent = function() {
         angular.element(window).bind('resize', function() {
           $timeout.cancel(resizeEventTimeout);
           resizeEventTimeout = $timeout(function() { $scope.$broadcast('render'); }, 200);
         });
+
         $scope.$on('$destroy', function() {
           angular.element(window).unbind('resize');
+          $scope.dashboard.destroy();
         });
       };
 
@@ -161,11 +130,10 @@ export class DashboardCtrl {
     }
 
     init(dashboard) {
-      this.$scope.resetRow();
-      this.$scope.registerWindowResizeEvent();
       this.$scope.onAppEvent('show-json-editor', this.$scope.showJsonEditor);
       this.$scope.onAppEvent('template-variable-value-updated', this.$scope.templateVariableUpdated);
       this.$scope.setupDashboard(dashboard);
+      this.$scope.registerWindowResizeEvent();
     }
 }
 

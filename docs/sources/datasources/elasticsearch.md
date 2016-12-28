@@ -1,17 +1,23 @@
-----
-page_title: Elasticsearch
-page_description: Elasticsearch grafana datasource documentation
-page_keywords: Elasticsearch, grafana, kibana, documentation, datasource, docs
----
++++
+title = "Using Elasticsearch in Grafana"
+description = "Guide for using Elasticsearch in Grafana"
+keywords = ["grafana", "elasticsearch", "guide"]
+type = "docs"
+[menu.docs]
+name = "Elasticsearch"
+parent = "datasources"
+weight = 3
++++
 
-# Elasticsearch
+# Using Elasticsearch in Grafana
 
 Grafana ships with advanced support for Elasticsearch. You can do many types of
 simple or complex elasticsearch queries to visualize logs or metrics stored in elasticsearch. You can
 also annotate your graphs with log events stored in elasticsearch.
 
 ## Adding the data source
-![](/img/v2/add_Graphite.jpg)
+
+![](/img/docs/v2/add_Graphite.jpg)
 
 1. Open the side menu by clicking the the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
@@ -41,14 +47,14 @@ Elasticsearch from the browser. You do this by specifying these to options in yo
 
 ### Index settings
 
-![](/img/elasticsearch/elasticsearch_ds_details.png)
+![](/img/docs/elasticsearch/elasticsearch_ds_details.png)
 
 Here you can specify a default for the `time field` and specify the name of your elasticsearch index. You can use
 a time pattern for the index name or a wildcard.
 
 ## Metric Query editor
 
-![](/img/elasticsearch/query_editor.png)
+![](/img/docs/elasticsearch/query_editor.png)
 
 The Elasticsearch query editor allows you to select multiple metrics and group by multiple terms or filters. Use the plus and minus icons to the right to add / remove
 metrics or group bys. Some metrics and group by have options, click the option text to expand the the row to view and edit metric or group by options.
@@ -60,7 +66,7 @@ If you have Elasticsearch 2.x and Grafana 2.6 or above then you can use pipeline
 to hide metrics from appearing in the graph. This is useful for metrics you only have in the query to be used
 in a pipeline metric.
 
-![](/img/elasticsearch/pipeline_metrics_editor.png)
+![](/img/docs/elasticsearch/pipeline_metrics_editor.png)
 
 ## Templating
 
@@ -85,8 +91,4 @@ The Elasticsearch datasource supports two types of queries you can use to fill t
 ### Multi format / All format
 Use lucene format.
 
-
-
-## Annotations
-TODO
 

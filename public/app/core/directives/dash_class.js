@@ -10,8 +10,6 @@ function (_, $, coreModule) {
     return {
       link: function($scope, elem) {
 
-        var lastHideControlsVal;
-
         $scope.onAppEvent('panel-fullscreen-enter', function() {
           elem.toggleClass('panel-in-fullscreen', true);
         });
@@ -20,13 +18,13 @@ function (_, $, coreModule) {
           elem.toggleClass('panel-in-fullscreen', false);
         });
 
+        var lastHideControlsVal;
         $scope.$watch('dashboard.hideControls', function() {
           if (!$scope.dashboard) {
             return;
           }
 
-          var hideControls = $scope.dashboard.hideControls || $scope.playlist_active;
-
+          var hideControls = $scope.dashboard.hideControls;
           if (lastHideControlsVal !== hideControls) {
             elem.toggleClass('hide-controls', hideControls);
             lastHideControlsVal = hideControls;

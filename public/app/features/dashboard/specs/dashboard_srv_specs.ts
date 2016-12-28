@@ -6,7 +6,7 @@ describe('dashboardSrv', function() {
   var _dashboardSrv;
 
   beforeEach(() => {
-    _dashboardSrv = new DashboardSrv();
+    _dashboardSrv = new DashboardSrv({}, {}, {});
   });
 
   describe('when creating new dashboard with defaults only', function() {
@@ -51,23 +51,20 @@ describe('dashboardSrv', function() {
       dashboard = _dashboardSrv.create({});
     });
 
-    it('row span should sum spans', function() {
-      var spanLeft = dashboard.rowSpan({ panels: [{ span: 2 }, { span: 3 }] });
-      expect(spanLeft).to.be(5);
-    });
-
     it('adding default should split span in half', function() {
-      dashboard.rows = [{ panels: [{ span: 12, id: 7 }] }];
-      dashboard.addPanel({span: 4}, dashboard.rows[0]);
+      dashboard.addEmptyRow();
+      dashboard.rows[0].addPanel({span: 12});
+      dashboard.rows[0].addPanel({span: 12});
 
       expect(dashboard.rows[0].panels[0].span).to.be(6);
       expect(dashboard.rows[0].panels[1].span).to.be(6);
-      expect(dashboard.rows[0].panels[1].id).to.be(8);
     });
 
     it('duplicate panel should try to add it to same row', function() {
       var panel = { span: 4, attr: '123', id: 10 };
-      dashboard.rows = [{ panels: [panel] }];
+
+      dashboard.addEmptyRow();
+      dashboard.rows[0].addPanel(panel);
       dashboard.duplicatePanel(panel, dashboard.rows[0]);
 
       expect(dashboard.rows[0].panels[0].span).to.be(4);
@@ -78,7 +75,9 @@ describe('dashboardSrv', function() {
 
     it('duplicate panel should remove repeat data', function() {
       var panel = { span: 4, attr: '123', id: 10, repeat: 'asd', scopedVars: { test: 'asd' }};
-      dashboard.rows = [{ panels: [panel] }];
+
+      dashboard.addEmptyRow();
+      dashboard.rows[0].addPanel(panel);
       dashboard.duplicatePanel(panel, dashboard.rows[0]);
 
       expect(dashboard.rows[0].panels[1].repeat).to.be(undefined);
@@ -216,16 +215,16 @@ describe('dashboardSrv', function() {
     });
 
     it('dashboard schema version should be set to latest', function() {
-      expect(model.schemaVersion).to.be(13);
+      expect(model.schemaVersion).to.be(14);
     });
 
     it('graph thresholds should be migrated', function() {
       expect(graph.thresholds.length).to.be(2);
-      expect(graph.thresholds[0].op).to.be('>');
-      expect(graph.thresholds[0].value).to.be(400);
-      expect(graph.thresholds[0].fillColor).to.be('red');
-      expect(graph.thresholds[1].value).to.be(200);
-      expect(graph.thresholds[1].fillColor).to.be('yellow');
+      expect(graph.thresholds[0].op).to.be('gt');
+      expect(graph.thresholds[0].value).to.be(200);
+      expect(graph.thresholds[0].fillColor).to.be('yellow');
+      expect(graph.thresholds[1].value).to.be(400);
+      expect(graph.thresholds[1].fillColor).to.be('red');
     });
   });
 

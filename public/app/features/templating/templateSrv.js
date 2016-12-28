@@ -25,6 +25,7 @@ function (angular, _, kbn) {
     this.updateTemplateData = function() {
       this._index = {};
       this._filters = {};
+      this._adhocVariables = {};
 
       for (var i = 0; i < this.variables.length; i++) {
         var variable = this.variables[i];
@@ -95,6 +96,9 @@ function (angular, _, kbn) {
           }
           return value.join('|');
         }
+        case "distributed": {
+          return this.distributeVariable(value, variable.name);
+        }
         default:  {
           if (typeof value === 'string') {
             return value;
@@ -108,10 +112,18 @@ function (angular, _, kbn) {
       this._grafanaVariables[name] = value;
     };
 
-    this.variableExists = function(expression) {
+    this.getVariableName = function(expression) {
       this._regex.lastIndex = 0;
       var match = this._regex.exec(expression);
-      return match && (self._index[match[1] || match[2]] !== void 0);
+      if (!match) {
+        return null;
+      }
+      return match[1] || match[2];
+    };
+
+    this.variableExists = function(expression) {
+      var name = this.getVariableName(expression);
+      return name && (self._index[name] !== void 0);
     };
 
     this.highlightVariablesAsHtml = function(str) {
@@ -208,6 +220,17 @@ function (angular, _, kbn) {
           params['var-' + variable.name] = variable.getValueForUrl();
         }
       });
+    };
+
+    this.distributeVariable = function(value, variable) {
+      value = _.map(value, function(val, index) {
+        if (index !== 0) {
+          return variable + "=" + val;
+        } else {
+          return val;
+        }
+      });
+      return value.join(',');
     };
 
   });

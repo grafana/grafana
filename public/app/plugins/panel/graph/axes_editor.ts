@@ -36,9 +36,10 @@ export class AxesEditorCtrl {
     this.xAxisStatOptions =  [
       {text: 'Avg', value: 'avg'},
       {text: 'Min', value: 'min'},
-      {text: 'Max', value: 'min'},
+      {text: 'Max', value: 'max'},
       {text: 'Total', value: 'total'},
       {text: 'Count', value: 'count'},
+      {text: 'Current', value: 'current'},
     ];
 
     if (this.panel.xaxis.mode === 'custom') {
@@ -58,7 +59,9 @@ export class AxesEditorCtrl {
   }
 
   xAxisOptionChanged()  {
-    this.panelCtrl.processor.setPanelDefaultsForNewXAxisMode();
+    if (!this.panel.xaxis.values || !this.panel.xaxis.values[0]){
+      this.panelCtrl.processor.setPanelDefaultsForNewXAxisMode();
+    }
     this.panelCtrl.onDataReceived(this.panelCtrl.dataList);
   }
 

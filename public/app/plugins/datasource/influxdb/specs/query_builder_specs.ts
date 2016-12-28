@@ -88,6 +88,12 @@ describe('InfluxQueryBuilder', function() {
       expect(query).to.be('SHOW FIELD KEYS FROM "cpu"');
     });
 
+    it('should build show field query with regexp', function() {
+      var builder = new InfluxQueryBuilder({measurement: '/$var/', tags: [{key: 'app', value: 'email'}]});
+      var query = builder.buildExploreQuery('FIELDS');
+      expect(query).to.be('SHOW FIELD KEYS FROM /$var/');
+    });
+
     it('should build show retention policies query', function() {
       var builder = new InfluxQueryBuilder({measurement: 'cpu', tags: []}, 'site');
       var query = builder.buildExploreQuery('RETENTION POLICIES');

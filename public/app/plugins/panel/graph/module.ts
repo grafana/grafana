@@ -22,6 +22,9 @@ class GraphCtrl extends MetricsPanelCtrl {
   hiddenSeries: any = {};
   seriesList: any = [];
   dataList: any = [];
+  annotations: any = [];
+  alertState: any;
+
   annotationsPromise: any;
   datapointsCount: number;
   datapointsOutside: boolean;
@@ -63,7 +66,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     // fill factor
     fill          : 1,
     // line width in pixels
-    linewidth     : 2,
+    linewidth     : 1,
     // show hide points
     points        : false,
     // point radius in pixels
@@ -85,15 +88,14 @@ class GraphCtrl extends MetricsPanelCtrl {
       avg: false
     },
     // how null points should be handled
-    nullPointMode : 'connected',
+    nullPointMode : 'null',
     // staircase line mode
     steppedLine: false,
     // tooltip options
     tooltip       : {
-      value_type: 'cumulative',
+      value_type: 'individual',
       shared: true,
       sort: 0,
-      msResolution: false,
     },
     // time overrides
     timeFrom: null,
@@ -130,10 +132,8 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.addEditorTab('Axes', axesEditorComponent, 2);
     this.addEditorTab('Legend', 'public/app/plugins/panel/graph/tab_legend.html', 3);
     this.addEditorTab('Display', 'public/app/plugins/panel/graph/tab_display.html', 4);
+    this.addEditorTab('Alert', alertTab, 5);
 
-    if (config.alertingEnabled) {
-      this.addEditorTab('Alert', alertTab, 5);
-    }
     this.subTabIndex = 0;
   }
 
@@ -167,11 +167,11 @@ class GraphCtrl extends MetricsPanelCtrl {
 
   onDataError(err) {
     this.seriesList = [];
+    this.annotations = [];
     this.render([]);
   }
 
   onDataReceived(dataList) {
-
     this.dataList = dataList;
     this.seriesList = this.processor.getSeriesList({dataList: dataList, range: this.range});
 
@@ -186,9 +186,10 @@ class GraphCtrl extends MetricsPanelCtrl {
       }
     }
 
-    this.annotationsPromise.then(annotations => {
+    this.annotationsPromise.then(result => {
       this.loading = false;
-      this.seriesList.annotations = annotations;
+      this.alertState = result.alertState;
+      this.annotations = result.annotations;
       this.render(this.seriesList);
     }, () => {
       this.loading = false;

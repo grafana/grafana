@@ -175,17 +175,17 @@ function (angular, _, coreModule) {
         // Foreach keys in label (split on +)
         for (var i = 0, l = keys.length; k = keys[i], i < l; i++) {
           switch (k) {
-          case 'ctrl':
-          case 'control':
-            kp++;
-            modifiers.ctrl.wanted = true;
-            break;
-          case 'shift':
-          case 'alt':
-          case 'meta':
-            kp++;
-            modifiers[k].wanted = true;
-            break;
+            case 'ctrl':
+            case 'control':
+              kp++;
+              modifiers.ctrl.wanted = true;
+              break;
+            case 'shift':
+            case 'alt':
+            case 'meta':
+              kp++;
+              modifiers[k].wanted = true;
+              break;
           }
 
           if (k.length > 1) { // If it is a special key

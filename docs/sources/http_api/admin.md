@@ -1,8 +1,13 @@
-----
-page_title: Admin APIs
-page_description: Grafana Admin API Reference
-page_keywords: grafana, admin, http, api, documentation
----
++++
+title = "Admin HTTP API "
+description = "Grafana Admin HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "admin"]
+aliases = ["/http_api/admin/"]
+type = "docs"
+[menu.docs]
+name = "Admin"
+parent = "http_api"
++++
 
 # Admin API
 

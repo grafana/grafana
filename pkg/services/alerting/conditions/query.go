@@ -23,6 +23,7 @@ type QueryCondition struct {
 	Query         AlertQuery
 	Reducer       QueryReducer
 	Evaluator     AlertEvaluator
+	Operator      string
 	HandleRequest tsdb.HandleRequestFunc
 }
 
@@ -33,40 +34,48 @@ type AlertQuery struct {
 	To           string
 }
 
-func (c *QueryCondition) Eval(context *alerting.EvalContext) {
+func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.ConditionResult, error) {
 	timeRange := tsdb.NewTimeRange(c.Query.From, c.Query.To)
+
 	seriesList, err := c.executeQuery(context, timeRange)
 	if err != nil {
-		context.Error = err
-		return
+		return nil, err
 	}
 
 	emptySerieCount := 0
+	evalMatchCount := 0
+	var matches []*alerting.EvalMatch
 	for _, series := range seriesList {
 		reducedValue := c.Reducer.Reduce(series)
 		evalMatch := c.Evaluator.Eval(reducedValue)
 
-		if reducedValue == nil {
+		if reducedValue.Valid == false {
 			emptySerieCount++
 			continue
 		}
 
 		if context.IsTestRun {
 			context.Logs = append(context.Logs, &alerting.ResultLogEntry{
-				Message: fmt.Sprintf("Condition[%d]: Eval: %v, Metric: %s, Value: %1.3f", c.Index, evalMatch, series.Name, *reducedValue),
+				Message: fmt.Sprintf("Condition[%d]: Eval: %v, Metric: %s, Value: %1.3f", c.Index, evalMatch, series.Name, reducedValue.Float64),
 			})
 		}
 
 		if evalMatch {
-			context.EvalMatches = append(context.EvalMatches, &alerting.EvalMatch{
+			evalMatchCount++
+
+			matches = append(matches, &alerting.EvalMatch{
 				Metric: series.Name,
-				Value:  *reducedValue,
+				Value:  reducedValue.Float64,
 			})
 		}
 	}
 
-	context.NoDataFound = emptySerieCount == len(seriesList)
-	context.Firing = len(context.EvalMatches) > 0
+	return &alerting.ConditionResult{
+		Firing:      evalMatchCount > 0,
+		NoDataFound: emptySerieCount == len(seriesList),
+		Operator:    c.Operator,
+		EvalMatches: matches,
+	}, nil
 }
 
 func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *tsdb.TimeRange) (tsdb.TimeSeriesSlice, error) {
@@ -82,7 +91,7 @@ func (c *QueryCondition) executeQuery(context *alerting.EvalContext, timeRange *
 	req := c.getRequestForAlertRule(getDsInfo.Result, timeRange)
 	result := make(tsdb.TimeSeriesSlice, 0)
 
-	resp, err := c.HandleRequest(req)
+	resp, err := c.HandleRequest(context.Ctx, req)
 	if err != nil {
 		return nil, fmt.Errorf("tsdb.HandleRequest() error %v", err)
 	}
@@ -110,20 +119,9 @@ func (c *QueryCondition) getRequestForAlertRule(datasource *m.DataSource, timeRa
 		TimeRange: timeRange,
 		Queries: []*tsdb.Query{
 			{
-				RefId: "A",
-				Model: c.Query.Model,
-				DataSource: &tsdb.DataSourceInfo{
-					Id:                datasource.Id,
-					Name:              datasource.Name,
-					PluginId:          datasource.Type,
-					Url:               datasource.Url,
-					User:              datasource.User,
-					Password:          datasource.Password,
-					Database:          datasource.Database,
-					BasicAuth:         datasource.BasicAuth,
-					BasicAuthUser:     datasource.BasicAuthUser,
-					BasicAuthPassword: datasource.BasicAuthPassword,
-				},
+				RefId:      "A",
+				Model:      c.Query.Model,
+				DataSource: datasource,
 			},
 		},
 	}
@@ -160,8 +158,12 @@ func NewQueryCondition(model *simplejson.Json, index int) (*QueryCondition, erro
 	if err != nil {
 		return nil, err
 	}
-
 	condition.Evaluator = evaluator
+
+	operatorJson := model.Get("operator")
+	operator := operatorJson.Get("type").MustString("and")
+	condition.Operator = operator
+
 	return &condition, nil
 }
 
@@ -184,5 +186,6 @@ func validateToValue(to string) error {
 		}
 	}
 
-	return fmt.Errorf("cannot parse to value %s", to)
+	_, err := time.ParseDuration(to)
+	return err
 }

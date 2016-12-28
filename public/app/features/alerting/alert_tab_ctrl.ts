@@ -6,6 +6,7 @@ import {QueryPart} from 'app/core/components/query_part/query_part';
 import alertDef from './alert_def';
 import config from 'app/core/config';
 import moment from 'moment';
+import appEvents from 'app/core/app_events';
 
 export class AlertTabCtrl {
   panel: any;
@@ -17,7 +18,9 @@ export class AlertTabCtrl {
   alert: any;
   conditionModels: any;
   evalFunctions: any;
+  evalOperators: any;
   noDataModes: any;
+  executionErrorModes: any;
   addNotificationSegment;
   notifications;
   alertNotifications;
@@ -39,25 +42,26 @@ export class AlertTabCtrl {
     this.$scope.ctrl = this;
     this.subTabIndex = 0;
     this.evalFunctions = alertDef.evalFunctions;
+    this.evalOperators = alertDef.evalOperators;
     this.conditionTypes = alertDef.conditionTypes;
     this.noDataModes = alertDef.noDataModes;
+    this.executionErrorModes = alertDef.executionErrorModes;
     this.appSubUrl = config.appSubUrl;
   }
 
   $onInit() {
     this.addNotificationSegment = this.uiSegmentSrv.newPlusButton();
 
-    this.initModel();
-    this.validateModel();
+    // subscribe to graph threshold handle changes
+    var thresholdChangedEventHandler = this.graphThresholdChanged.bind(this);
+    this.panelCtrl.events.on('threshold-changed', thresholdChangedEventHandler);
 
     // set panel alert edit mode
     this.$scope.$on("$destroy", () => {
+      this.panelCtrl.events.off("threshold-changed", thresholdChangedEventHandler);
       this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
     });
-
-    // subscribe to graph threshold handle changes
-    this.panelCtrl.events.on('threshold-changed', this.graphThresholdChanged.bind(this));
 
     // build notification model
     this.notifications = [];
@@ -67,21 +71,8 @@ export class AlertTabCtrl {
     return this.backendSrv.get('/api/alert-notifications').then(res => {
       this.notifications = res;
 
-      _.each(this.alert.notifications, item => {
-        var model = _.find(this.notifications, {id: item.id});
-        if (model) {
-          model.iconClass = this.getNotificationIcon(model.type);
-          this.alertNotifications.push(model);
-        }
-      });
-
-      _.each(this.notifications, item => {
-        if (item.isDefault) {
-          item.iconClass = this.getNotificationIcon(item.type);
-          item.bgColor = "#00678b";
-          this.alertNotifications.push(item);
-        }
-      });
+      this.initModel();
+      this.validateModel();
     });
   }
 
@@ -100,7 +91,10 @@ export class AlertTabCtrl {
     switch (type) {
       case "email": return "fa fa-envelope";
       case "slack": return "fa fa-slack";
+      case "victorops": return "fa fa-pagelines";
       case "webhook": return "fa fa-cubes";
+      case "pagerduty": return "fa fa-bullhorn";
+      case "opsgenie": return "fa fa-bell";
     }
   }
 
@@ -142,9 +136,8 @@ export class AlertTabCtrl {
   }
 
   initModel() {
-    var alert = this.alert = this.panel.alert = this.panel.alert || {enabled: false};
-
-    if (!this.alert.enabled) {
+    var alert = this.alert = this.panel.alert;
+    if (!alert) {
       return;
     }
 
@@ -154,6 +147,7 @@ export class AlertTabCtrl {
     }
 
     alert.noDataState = alert.noDataState || 'no_data';
+    alert.executionErrorState = alert.executionErrorState || 'alerting';
     alert.frequency = alert.frequency || '60s';
     alert.handler = alert.handler || 1;
     alert.notifications = alert.notifications || [];
@@ -167,6 +161,22 @@ export class AlertTabCtrl {
     }, []);
 
     ThresholdMapper.alertToGraphThresholds(this.panel);
+
+    for (let addedNotification of alert.notifications) {
+      var model = _.find(this.notifications, {id: addedNotification.id});
+      if (model && model.isDefault === false) {
+        model.iconClass = this.getNotificationIcon(model.type);
+        this.alertNotifications.push(model);
+      }
+    }
+
+    for (let notification of this.notifications) {
+      if (notification.isDefault) {
+        notification.iconClass = this.getNotificationIcon(notification.type);
+        notification.bgColor = "#00678b";
+        this.alertNotifications.push(notification);
+      }
+    }
 
     this.panelCtrl.editingThresholds = true;
     this.panelCtrl.render();
@@ -188,11 +198,12 @@ export class AlertTabCtrl {
       query: {params: ['A', '5m', 'now']},
       reducer: {type: 'avg', params: []},
       evaluator: {type: 'gt', params: [null]},
+      operator: {type: 'and'},
     };
   }
 
   validateModel() {
-    if (!this.alert.enabled) {
+    if (!this.alert) {
       return;
     }
 
@@ -229,7 +240,7 @@ export class AlertTabCtrl {
       this.datasourceSrv.get(datasourceName).then(ds => {
         if (!ds.meta.alerting) {
           this.error = 'The datasource does not support alerting queries';
-        } else if (this.templateSrv.variableExists(foundTarget.target)) {
+        } else if (ds.targetContainsTemplate(foundTarget)) {
           this.error = 'Template variables are not supported in alert queries';
         } else {
           this.error = '';
@@ -244,6 +255,7 @@ export class AlertTabCtrl {
     cm.queryPart = new QueryPart(source.query, alertDef.alertQueryDef);
     cm.reducerPart = alertDef.createReducerPart(source.reducer);
     cm.evaluator = source.evaluator;
+    cm.operator = source.operator;
 
     return cm;
   }
@@ -302,14 +314,25 @@ export class AlertTabCtrl {
   }
 
   delete() {
-    this.alert = this.panel.alert = {enabled: false};
-    this.panel.thresholds = [];
-    this.conditionModels = [];
-    this.panelCtrl.render();
+    appEvents.emit('confirm-modal', {
+      title: 'Delete Alert',
+      text: 'Are you sure you want to delete this alert rule?',
+      text2: 'You need to save dashboard for the delete to take effect',
+      icon: 'fa-trash',
+      yesText: 'Delete',
+      onConfirm: () => {
+        delete this.panel.alert;
+        this.alert = null;
+        this.panel.thresholds = [];
+        this.conditionModels = [];
+        this.panelCtrl.alertState = null;
+        this.panelCtrl.render();
+      }
+    });
   }
 
   enable() {
-    this.alert.enabled = true;
+    this.panel.alert = {};
     this.initModel();
   }
 
@@ -337,6 +360,24 @@ export class AlertTabCtrl {
     }
 
     this.evaluatorParamsChanged();
+  }
+
+  clearHistory() {
+    appEvents.emit('confirm-modal', {
+      title: 'Delete Alert History',
+      text: 'Are you sure you want to remove all history & annotations for this alert?',
+      icon: 'fa-trash',
+      yesText: 'Yes',
+      onConfirm: () => {
+        this.backendSrv.post('/api/annotations/mass-delete', {
+          dashboardId: this.panelCtrl.dashboard.id,
+          panelId: this.panel.id,
+        }).then(res => {
+          this.alertHistory = [];
+          this.panelCtrl.refresh();
+        });
+      }
+    });
   }
 
   test() {

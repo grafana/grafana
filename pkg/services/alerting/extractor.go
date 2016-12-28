@@ -3,6 +3,8 @@ package alerting
 import (
 	"errors"
 
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
@@ -74,10 +76,15 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				continue
 			}
 
+			// backward compatability check, can be removed later
 			enabled, hasEnabled := jsonAlert.CheckGet("enabled")
-
-			if !hasEnabled || !enabled.MustBool() {
+			if hasEnabled && enabled.MustBool() == false {
 				continue
+			}
+
+			frequency, err := getTimeDurationStringToSeconds(jsonAlert.Get("frequency").MustString())
+			if err != nil {
+				return nil, ValidationError{Reason: "Could not parse frequency"}
 			}
 
 			alert := &m.Alert{
@@ -88,7 +95,7 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				Name:        jsonAlert.Get("name").MustString(),
 				Handler:     jsonAlert.Get("handler").MustInt64(),
 				Message:     jsonAlert.Get("message").MustString(),
-				Frequency:   getTimeDurationStringToSeconds(jsonAlert.Get("frequency").MustString()),
+				Frequency:   frequency,
 			}
 
 			for _, condition := range jsonAlert.Get("conditions").MustArray() {
@@ -99,7 +106,8 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				panelQuery := findPanelQueryByRefId(panel, queryRefId)
 
 				if panelQuery == nil {
-					return nil, ValidationError{Reason: "Alert refes to query that cannot be found"}
+					reason := fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found", alert.PanelId, queryRefId)
+					return nil, ValidationError{Reason: reason}
 				}
 
 				dsName := ""
@@ -115,17 +123,20 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 					jsonQuery.SetPath([]string{"datasourceId"}, datasource.Id)
 				}
 
+				if interval, err := panel.Get("interval").String(); err == nil {
+					panelQuery.Set("interval", interval)
+				}
+
 				jsonQuery.Set("model", panelQuery.Interface())
 			}
 
 			alert.Settings = jsonAlert
 
 			// validate
-			_, err := NewRuleFromDBAlert(alert)
+			_, err = NewRuleFromDBAlert(alert)
 			if err == nil && alert.ValidToSave() {
 				alerts = append(alerts, alert)
 			} else {
-				e.log.Error("Failed to extract alerts from dashboard", "error", err)
 				return nil, err
 			}
 		}

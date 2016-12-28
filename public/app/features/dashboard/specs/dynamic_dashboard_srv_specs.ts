@@ -20,6 +20,7 @@ function dynamicDashScenario(desc, func)  {
 
       beforeEach(angularMocks.inject(function(dashboardSrv) {
         ctx.dashboardSrv = dashboardSrv;
+
         var model = {
           rows: [],
           templating: { list: [] }
@@ -29,6 +30,7 @@ function dynamicDashScenario(desc, func)  {
         ctx.dash = ctx.dashboardSrv.create(model);
         ctx.dynamicDashboardSrv = new DynamicDashboardSrv();
         ctx.dynamicDashboardSrv.init(ctx.dash);
+        ctx.dynamicDashboardSrv.process();
         ctx.rows = ctx.dash.rows;
       }));
     };
@@ -78,7 +80,7 @@ dynamicDashScenario('given dashboard with panel repeat', function(ctx) {
     beforeEach(function() {
       repeatedPanelAfterIteration1 = ctx.rows[0].panels[1];
       ctx.rows[0].panels[0].fill = 10;
-      ctx.dynamicDashboardSrv.update(ctx.dash);
+      ctx.dynamicDashboardSrv.process();
     });
 
     it('should have reused same panel instances', function() {
@@ -102,7 +104,7 @@ dynamicDashScenario('given dashboard with panel repeat', function(ctx) {
         options: [{text: 'se1', value: 'se1', selected: true}]
       });
       ctx.rows[0].panels[0].repeat = "server";
-      ctx.dynamicDashboardSrv.update(ctx.dash);
+      ctx.dynamicDashboardSrv.process();
     });
 
     it('should remove scopedVars value for last variable', function() {
@@ -117,7 +119,7 @@ dynamicDashScenario('given dashboard with panel repeat', function(ctx) {
   describe('After a second iteration and selected values reduced', function() {
     beforeEach(function() {
       ctx.dash.templating.list[0].options[1].selected = false;
-      ctx.dynamicDashboardSrv.update(ctx.dash);
+      ctx.dynamicDashboardSrv.process();
     });
 
     it('should clean up repeated panel', function() {
@@ -128,7 +130,7 @@ dynamicDashScenario('given dashboard with panel repeat', function(ctx) {
   describe('After a second iteration and panel repeat is turned off', function() {
     beforeEach(function() {
       ctx.rows[0].panels[0].repeat = null;
-      ctx.dynamicDashboardSrv.update(ctx.dash);
+      ctx.dynamicDashboardSrv.process();
     });
 
     it('should clean up repeated panel', function() {
@@ -199,7 +201,7 @@ dynamicDashScenario('given dashboard with row repeat', function(ctx) {
     beforeEach(function() {
       repeatedRowAfterFirstIteration = ctx.rows[1];
       ctx.rows[0].height = 500;
-      ctx.dynamicDashboardSrv.update(ctx.dash);
+      ctx.dynamicDashboardSrv.process();
     });
 
     it('should still only have 2 rows', function() {
@@ -218,7 +220,7 @@ dynamicDashScenario('given dashboard with row repeat', function(ctx) {
   describe('After a second iteration and selected values reduced', function() {
     beforeEach(function() {
       ctx.dash.templating.list[0].options[1].selected = false;
-      ctx.dynamicDashboardSrv.update(ctx.dash);
+      ctx.dynamicDashboardSrv.process();
     });
 
     it('should remove repeated second row', function() {

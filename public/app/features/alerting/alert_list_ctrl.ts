@@ -15,7 +15,6 @@ export class AlertListCtrl {
     {text: 'OK', value: 'ok'},
     {text: 'Alerting', value: 'alerting'},
     {text: 'No Data', value: 'no_data'},
-    {text: 'Execution Error', value: 'execution_error'},
   ];
 
   filters = {
@@ -23,7 +22,7 @@ export class AlertListCtrl {
   };
 
   /** @ngInject */
-  constructor(private backendSrv, private $location) {
+  constructor(private backendSrv, private $location, private $scope) {
     var params = $location.search();
     this.filters.state = params.state || null;
     this.loadAlerts();
@@ -40,6 +39,19 @@ export class AlertListCtrl {
         alert.newStateDateAgo = moment(alert.newStateDate).fromNow().replace(" ago", "");
         return alert;
       });
+    });
+  }
+
+  pauseAlertRule(alertId: any) {
+    var alert = _.find(this.alerts, {id: alertId});
+
+    var payload = {
+      paused: alert.state !== "paused"
+    };
+
+    this.backendSrv.post(`/api/alerts/${alert.id}/pause`, payload).then(result => {
+      alert.state = result.state;
+      alert.stateModel = alertDef.getStateDisplayModel(result.state);
     });
   }
 
