@@ -173,13 +173,7 @@ export default class InfluxQuery {
       measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
     }
 
-    if (policy !== 'default') {
-      policy = '"' + this.target.policy + '".';
-    } else {
-      policy = "";
-    }
-
-    return policy + measurement;
+    return '"' + this.target.policy + '".' + measurement;
   }
 
   interpolateQueryStr(value, variable, defaultFormatFn) {
