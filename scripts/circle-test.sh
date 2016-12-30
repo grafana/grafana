@@ -1,7 +1,4 @@
 #!/bin/bash
-
-
-
 function exit_if_fail {
     command=$@
     echo "Executing '$command'"
@@ -13,7 +10,6 @@ function exit_if_fail {
     fi
 }
 
-
 cd /home/ubuntu/.go_workspace/src/github.com/grafana/grafana
 
 rm -rf node_modules
@@ -23,7 +19,8 @@ npm install
 exit_if_fail npm test
 exit_if_fail npm run coveralls
 
-test -z "$(gofmt -s -l ./pkg/... | tee /dev/stderr)"
+#test -z "$(gofmt -s -l ./pkg/... | tee /dev/stderr)"
+exit_if_fail test -z "$(gofmt -s -l ./pkg/... | tee /dev/stderr)"
 
 exit_if_fail go run build.go setup
 exit_if_fail go run build.go build
