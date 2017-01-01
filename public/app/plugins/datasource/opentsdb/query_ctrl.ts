@@ -72,6 +72,8 @@ export class OpenTsQueryCtrl extends QueryCtrl {
       .then(this.getTextValues)
       .then(callback);
     };
+
+    this.parseQuery();
   }
 
   targetBlur() {
@@ -210,4 +212,30 @@ export class OpenTsQueryCtrl extends QueryCtrl {
 
     return errs;
   }
+
+  toggleEditorMode() {
+    this.target.textEditor = !this.target.textEditor;
+    try {
+      this.parseQuery();
+    } catch (err) {
+      console.log('query parsing error');
+    }
+  }
+
+  parseQuery() {
+    if (!this.target.textEditor) {
+      console.log('textEditor is false');
+    } else {
+      console.log('textEditor is true');
+      this.target.target = this.target.aggregator + ':' + this.target.metric;
+      if (_.size(this.target.tags) > 0) {
+        this.target.target += '{';
+        for (var key in this.target.tags) {
+          this.target.target += key + '=' + this.target.tags[key];
+        }
+        this.target.target += '}';
+      }
+    }
+  }
+
 }

@@ -27,8 +27,12 @@ function (angular, _, dateMath) {
       var qs = [];
 
       _.each(options.targets, function(target) {
+        /*
         if (!target.metric) { return; }
         qs.push(convertTargetToQuery(target, options));
+        */
+        if (!target.target) { return; }
+        qs.push(target.target);
       });
 
       var queries = _.compact(qs);
@@ -123,9 +127,13 @@ function (angular, _, dateMath) {
     };
 
     this.performTimeSeriesQuery = function(queries, start, end) {
+
+      var reqParams = {start: start, global_anotations: true, m: queries};
+
       var msResolution = false;
       if (this.tsdbResolution === 2) {
         msResolution = true;
+        reqParams.ms = true;
       }
       var reqBody = {
         start: start,
@@ -135,11 +143,13 @@ function (angular, _, dateMath) {
       };
       if (this.tsdbVersion === 3) {
         reqBody.showQuery = true;
+        reqParams.show_query = true;
       }
 
       // Relative queries (e.g. last hour) don't include an end time
       if (end) {
         reqBody.end = end;
+        reqParams.end = end;
       }
 
       var options = {
@@ -149,7 +159,8 @@ function (angular, _, dateMath) {
       };
 
       this._addCredentialOptions(options);
-      return backendSrv.datasourceRequest(options);
+      //return backendSrv.datasourceRequest(options);
+      return this._get('/api/query', reqParams);
     };
 
     this.suggestTagKeys = function(metric) {
@@ -366,6 +377,7 @@ function (angular, _, dateMath) {
       return label;
     }
 
+    /*
     function convertTargetToQuery(target, options) {
       if (!target.metric || target.hide) {
         return null;
@@ -431,6 +443,7 @@ function (angular, _, dateMath) {
 
       return query;
     }
+    */
 
     function mapMetricsToTargets(metrics, options, tsdbVersion) {
       var interpolatedTagValue;
