@@ -223,18 +223,8 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   }
 
   parseQuery() {
-    if (!this.target.textEditor) {
-      console.log('textEditor is false');
-    } else {
-      console.log('textEditor is true');
-      this.target.target = this.target.aggregator + ':' + this.target.metric;
-      if (_.size(this.target.tags) > 0) {
-        this.target.target += '{';
-        for (var key in this.target.tags) {
-          this.target.target += key + '=' + this.target.tags[key];
-        }
-        this.target.target += '}';
-      }
+    if (this.target.metric && !this.target.target) {
+      this.target = this.datasource.convertMetricToTarget(this.target);
     }
   }
 

@@ -25,13 +25,19 @@ function (angular, _, dateMath) {
       var start = convertToTSDBTime(options.rangeRaw.from, false);
       var end = convertToTSDBTime(options.rangeRaw.to, true);
       var qs = [];
-
+      var self = this;
       _.each(options.targets, function(target) {
         /*
         if (!target.metric) { return; }
         qs.push(convertTargetToQuery(target, options));
         */
-        if (!target.target) { return; }
+        if (!target.target) {
+          if (!target.metric) {
+            return;
+          } else {
+            target = self.convertMetricToTarget(target);
+          }
+        }
         qs.push(target.target);
       });
 
@@ -70,6 +76,20 @@ function (angular, _, dateMath) {
         }.bind(this));
         return { data: result };
       }.bind(this));
+    };
+
+    this.convertMetricToTarget = function(target) {
+      if (target.metric) {
+        target.target = 'm=' + target.aggregator + ':' + target.metric;
+        if (_.size(target.tags) > 0) {
+          target.target += '{';
+          for (var key in target.tags) {
+            target.target += key + '=' + target.tags[key];
+          }
+          target.target += '}';
+        }
+      }
+      return target;
     };
 
     this.annotationQuery = function(options) {
@@ -128,12 +148,15 @@ function (angular, _, dateMath) {
 
     this.performTimeSeriesQuery = function(queries, start, end) {
 
-      var reqParams = {start: start, global_anotations: true, m: queries};
+      var reqParams = 'start=' + start + '&global_anotations=true';
+      _.each(queries, function(query) {
+        reqParams += '&' + query;
+      });
 
       var msResolution = false;
       if (this.tsdbResolution === 2) {
         msResolution = true;
-        reqParams.ms = true;
+        reqParams += '&ms=true';
       }
       var reqBody = {
         start: start,
@@ -143,24 +166,22 @@ function (angular, _, dateMath) {
       };
       if (this.tsdbVersion === 3) {
         reqBody.showQuery = true;
-        reqParams.show_query = true;
+        reqParams += '&show_query=true';
       }
 
       // Relative queries (e.g. last hour) don't include an end time
       if (end) {
         reqBody.end = end;
-        reqParams.end = end;
+        reqParams += '&end=' + end;
       }
 
       var options = {
-        method: 'POST',
-        url: this.url + '/api/query',
-        data: reqBody
+        method: 'GET',
+        url: this.url + '/api/query?' + reqParams
       };
 
       this._addCredentialOptions(options);
-      //return backendSrv.datasourceRequest(options);
-      return this._get('/api/query', reqParams);
+      return backendSrv.datasourceRequest(options);
     };
 
     this.suggestTagKeys = function(metric) {
@@ -474,6 +495,7 @@ function (angular, _, dateMath) {
       date = dateMath.parse(date, roundUp);
       return date.valueOf();
     }
+
   }
 
   return {
