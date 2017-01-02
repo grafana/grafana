@@ -31,10 +31,6 @@ func (n *RootNotifier) NeedsImage() bool {
 	return false
 }
 
-func (n *RootNotifier) PassesFilter(rule *Rule) bool {
-	return false
-}
-
 func (n *RootNotifier) GetNotifierId() int64 {
 	return 0
 }
