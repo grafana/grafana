@@ -48,7 +48,7 @@
     "karma-phantomjs-launcher": "1.0.2",
     "load-grunt-tasks": "3.5.2",
     "mocha": "3.2.0",
-    "phantomjs-prebuilt": "^2.1.13",
+    "phantomjs-prebuilt": "^2.1.14",
     "reflect-metadata": "0.1.8",
     "rxjs": "^5.0.0-rc.5",
     "sass-lint": "^1.10.2",

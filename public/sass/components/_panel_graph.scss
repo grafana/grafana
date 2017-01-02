@@ -297,16 +297,18 @@
 
 .left-yaxis-label {
   top: 50%;
-  left: -5px;
-  transform: rotate(-90deg);
-  transform-origin: left top;
+  left: 0;
+  transform: translateX(-50%) translateY(-50%) rotate(-90deg);
+  // this is needed for phantomsjs 2.1
+  -webkit-transform: translateX(-50%) translateY(-50%) rotate(-90deg);
 }
 
 .right-yaxis-label {
   top: 50%;
-  right: -5px;
-  transform: rotate(90deg);
-  transform-origin: right top;
+  right: 0;
+  transform: translateX(50%) translateY(-50%) rotate(90deg);
+  // this is needed for phantomsjs 2.1
+  -webkit-transform: translateX(50%) translateY(-50%) rotate(90deg);
 }
 
 .axisLabel {
