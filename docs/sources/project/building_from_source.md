@@ -40,7 +40,8 @@ To build less to css for the frontend you will need a recent version of node (v0
 npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```
-npm install
+npm install -g yarn
+yarn install
 npm install -g grunt-cli
 grunt
 ```
