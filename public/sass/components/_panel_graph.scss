@@ -87,6 +87,7 @@
 .graph-legend-table {
   overflow-y: auto;
   overflow-x: hidden;
+  display: table;
 
   .graph-legend-series {
     display: table-row;
