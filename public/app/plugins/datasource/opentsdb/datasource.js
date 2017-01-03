@@ -27,10 +27,6 @@ function (angular, _, dateMath) {
       var qs = [];
       var self = this;
       _.each(options.targets, function(target) {
-        /*
-        if (!target.metric) { return; }
-        qs.push(convertTargetToQuery(target, options));
-        */
         if (!target.target) {
           if (!target.metric) {
             return;
@@ -76,20 +72,6 @@ function (angular, _, dateMath) {
         }.bind(this));
         return { data: result };
       }.bind(this));
-    };
-
-    this.convertMetricToTarget = function(target) {
-      if (target.metric) {
-        target.target = 'm=' + target.aggregator + ':' + target.metric;
-        if (_.size(target.tags) > 0) {
-          target.target += '{';
-          for (var key in target.tags) {
-            target.target += key + '=' + target.tags[key];
-          }
-          target.target += '}';
-        }
-      }
-      return target;
     };
 
     this.annotationQuery = function(options) {
@@ -397,6 +379,39 @@ function (angular, _, dateMath) {
 
       return label;
     }
+
+    this.convertMetricToTarget = function(target) {
+      if (target.metric) {
+        target.target = 'm=' + target.aggregator + ':';
+        if (target.shouldComputeRate) {
+          target.target += 'rate';
+          if (target.isCounter) {
+            target.target += '{dropcounter';
+            console.log(target.counterMax);
+            console.log(target.counterMax.length);
+            if (target.counterMax && target.counterMax.length) {
+              console.log('Hola');
+              target.target += ',' + parseInt(target.counterMax);
+            }
+            if (target.counterResetValue && target.counterResetValue.length) {
+              console.log('Hola2');
+              target.target += ',' + parseInt(target.counterResetValue);
+            }
+            target.target += '}';
+          }
+          target.target += ':';
+        }
+        target.target += target.metric;
+        if (_.size(target.tags) > 0) {
+          target.target += '{';
+          for (var key in target.tags) {
+            target.target += key + '=' + target.tags[key];
+          }
+          target.target += '}';
+        }
+      }
+      return target;
+    };
 
     /*
     function convertTargetToQuery(target, options) {

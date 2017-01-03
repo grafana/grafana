@@ -77,6 +77,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   }
 
   targetBlur() {
+    this.parseQuery();
     this.errors = this.validateTarget();
     this.refresh();
   }
@@ -223,7 +224,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
   }
 
   parseQuery() {
-    if (this.target.metric && !this.target.target) {
+    if (this.target.metric) {
       this.target = this.datasource.convertMetricToTarget(this.target);
     }
   }
