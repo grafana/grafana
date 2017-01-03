@@ -73,7 +73,6 @@ type Alert struct {
 	Frequency      int64
 
 	EvalData     *simplejson.Json
-	EvalDate     time.Time
 	NewStateDate time.Time
 	StateChanges int
 
