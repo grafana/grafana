@@ -238,6 +238,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           'long': 'number',
           'date': 'date',
           'string': 'string',
+          'text': 'text',
           'nested': 'nested'
         };
 
