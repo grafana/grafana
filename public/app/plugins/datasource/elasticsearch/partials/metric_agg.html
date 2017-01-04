@@ -50,13 +50,23 @@
 
 	<div class="gf-form offset-width-7" ng-if="agg.type === 'moving_avg'">
 		<label class="gf-form-label width-10">Model</label>
-		<input type="text" class="gf-form-input max-width-12" ng-change="onChangeInternal()" ng-model="agg.settings.model" blur="onChange()" spellcheck='false'>
-	</div>
+                <metric-segment-model property="agg.settings.model" options="movingAvgModelTypes" on-change="onChangeClearInternal()" custom="false" css-class="width-12"></metric-segment-model>
+        </div>
 
 	<div class="gf-form offset-width-7" ng-if="agg.type === 'moving_avg'">
 		<label class="gf-form-label width-10">Predict</label>
 		<input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.predict" ng-blur="onChangeInternal()" spellcheck='false'>
 	</div>
+
+
+	<div class="gf-form offset-width-7" ng-if="agg.type === 'moving_avg'" ng-repeat="setting in modelSettings">
+		<label class="gf-form-label width-10">{{setting.text}}</label>
+		<input type="number" class="gf-form-input max-width-12" ng-model="agg.settings.settings[setting.value]" ng-blur="onChangeInternal()" spellcheck='false'>
+        </div>
+
+	<gf-form-switch ng-if="agg.type === 'moving_avg' && agg.settings.model == 'holt_winters'" class="gf-form offset-width-7" label="Pad" label-class="width-10" checked="agg.settings.settings.pad" on-change="onChangeInternal()"></gf-form-switch>
+
+	<gf-form-switch ng-if="agg.type === 'moving_avg' && (agg.settings.model == 'ewma' || agg.settings.model == 'holt_winters' || agg.settings.model == 'holt')" class="gf-form offset-width-7" label="Minimize" label-class="width-10" checked="agg.settings.minimize" on-change="onChangeInternal()"></gf-form-switch>
 
 	<div class="gf-form offset-width-7" ng-if="agg.type === 'percentiles'">
 		<label class="gf-form-label width-10">Percentiles</label>
