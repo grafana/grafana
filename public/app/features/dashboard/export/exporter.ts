@@ -3,6 +3,7 @@
 import config from 'app/core/config';
 import angular from 'angular';
 import _ from 'lodash';
+import sortByKeys from 'app/core/utils/sort_by_keys';
 
 import {DynamicDashboardSrv} from '../dynamic_dashboard_srv';
 
@@ -145,18 +146,14 @@ export class DashboardExporter {
         }
       }
 
-      requires = _.map(requires, req =>  {
-        return req;
-      });
-
       // make inputs and requires a top thing
       var newObj = {};
       newObj["__inputs"] = inputs;
-      newObj["__requires"] = requires;
+      newObj["__requires"] = _.sortBy(requires, ['id']);
 
       _.defaults(newObj, saveModel);
 
-      return newObj;
+      return sortByKeys(newObj);
     }).catch(err => {
       console.log('Export failed:', err);
       return {
