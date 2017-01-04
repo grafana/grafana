@@ -158,7 +158,6 @@ var (
 	GrafanaNetUrl string
 
 	// S3 temp image store
-	S3TempImageStoreRegion    string
 	S3TempImageStoreBucketUrl string
 	S3TempImageStoreAcl       string
 	S3TempImageStoreExpires   string

@@ -2,6 +2,7 @@ package imguploader
 
 import (
 	"fmt"
+	"regexp"
 	"time"
 
 	"github.com/grafana/grafana/pkg/setting"
@@ -27,19 +28,24 @@ func NewImageUploader() (ImageUploader, error) {
 			return nil, err
 		}
 
-		region := s3sec.Key("region").MustString("")
 		bucket := s3sec.Key("bucket_url").MustString("")
-		acl := s3sec.Key("acl").MustString("")
+		acl := s3sec.Key("acl").MustString("public-read")
 		expires := s3sec.Key("expires").MustString("")
 		accessKey := s3sec.Key("access_key").MustString("")
 		secretKey := s3sec.Key("secret_key").MustString("")
 
-		if region == "" {
-			return nil, fmt.Errorf("Could not find region setting for image.uploader.s3")
-		}
-
-		if bucket == "" {
+		region := ""
+		rBucket := regexp.MustCompile(`https?:\/\/(.*)\.s3(-([^.]+))?\.amazonaws\.com\/?`)
+		matches := rBucket.FindStringSubmatch(bucket)
+		if len(matches) == 0 {
 			return nil, fmt.Errorf("Could not find bucket setting for image.uploader.s3")
+		} else {
+			bucket = matches[1]
+			if matches[3] != "" {
+				region = matches[3]
+			} else {
+				region = "us-east-1"
+			}
 		}
 
 		if acl == "" {

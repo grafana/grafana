@@ -2,8 +2,6 @@ package imguploader
 
 import (
 	"os"
-	"regexp"
-	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
@@ -54,14 +52,8 @@ func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
 		Credentials: creds,
 	}
 
-	bucket := u.bucket
-	if strings.Index(bucket, "http://") >= 0 || strings.Index(bucket, "https://") >= 0 {
-		rBucket := regexp.MustCompile(`https?:\/\/(.*)\.s3(-[^.]+)?\.amazonaws\.com\/`)
-		matches := rBucket.FindStringSubmatch(bucket)
-		bucket = matches[1]
-	}
 	key := util.GetRandomString(20) + ".png"
-	log.Debug("Uploading image to s3", "bucket = ", bucket, ", key = ", key)
+	log.Debug("Uploading image to s3", "bucket = ", u.bucket, ", key = ", key)
 
 	file, err := os.Open(imageDiskPath)
 	if err != nil {
@@ -70,7 +62,7 @@ func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
 
 	svc := s3.New(session.New(cfg), cfg)
 	params := &s3.PutObjectInput{
-		Bucket:      aws.String(bucket),
+		Bucket:      aws.String(u.bucket),
 		Key:         aws.String(key),
 		ACL:         aws.String(u.acl),
 		Body:        file,
@@ -82,7 +74,7 @@ func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
 	}
 
 	if u.acl == "public-read" || u.acl == "public-read-write" {
-		return "https://" + bucket + ".s3.amazonaws.com/" + key, nil
+		return "https://" + u.bucket + ".s3.amazonaws.com/" + key, nil
 	}
 
 	expireDuration, err := time.ParseDuration(u.expires)
@@ -90,7 +82,7 @@ func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
 		return "", err
 	}
 	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
-		Bucket: aws.String(bucket),
+		Bucket: aws.String(u.bucket),
 		Key:    aws.String(key),
 	})
 	if err != nil {

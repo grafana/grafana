@@ -19,8 +19,7 @@ func TestImageUploaderFactory(t *testing.T) {
 			setting.ImageUploadProvider = "s3"
 
 			s3sec, err := setting.Cfg.GetSection("external_image_storage.s3")
-			s3sec.NewKey("region", "region")
-			s3sec.NewKey("bucket_url", "bucket_url")
+			s3sec.NewKey("bucket_url", "https://foo.bar.baz.s3-us-east-2.amazonaws.com")
 			s3sec.NewKey("acl", "private")
 			s3sec.NewKey("expires", "15m")
 			s3sec.NewKey("access_key", "access_key")
@@ -32,8 +31,8 @@ func TestImageUploaderFactory(t *testing.T) {
 			original, ok := uploader.(*S3Uploader)
 
 			So(ok, ShouldBeTrue)
-			So(original.region, ShouldEqual, "region")
-			So(original.bucket, ShouldEqual, "bucket_url")
+			So(original.region, ShouldEqual, "us-east-2")
+			So(original.bucket, ShouldEqual, "foo.bar.baz")
 			So(original.acl, ShouldEqual, "private")
 			So(original.expires, ShouldEqual, "15m")
 			So(original.accessKey, ShouldEqual, "access_key")
