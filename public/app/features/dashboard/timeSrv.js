@@ -75,7 +75,12 @@ define([
     };
 
     this.setAutoRefresh = function (interval) {
-      this.dashboard.refresh = interval;
+      if ($routeParams.refresh) {
+        this.dashboard.refresh = $routeParams.refresh;
+      }
+      else {
+        this.dashboard.refresh = interval;
+      }
       if (interval) {
         var interval_ms = kbn.interval_to_ms(interval);
         $timeout(function () {
