@@ -191,6 +191,11 @@ class MetricsPanelCtrl extends PanelCtrl {
       return this.$q.when([]);
     }
 
+    var self = this;
+    _.each(this.panel.targets, function(target) {
+      target.continuous = self.panel.continuous || false;
+    });
+
     var metricsQuery = {
       panelId: this.panel.id,
       range: this.range,
