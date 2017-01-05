@@ -22,6 +22,11 @@ function (angular, _, $, config) {
         href: $scope.getUrl("/"),
       });
 
+      $scope.mainLinks.push({
+        text: "探针状态",
+        icon: "fa fa-fw fa-crosshairs",
+        href: $scope.getUrl("/summary"),
+      });
       /*
       if (contextSrv.hasRole('Admin')) {
         $scope.mainLinks.push({

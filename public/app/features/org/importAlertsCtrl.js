@@ -5,7 +5,7 @@ define([
   function (angular, _) {
     'use strict';
     var module = angular.module('grafana.controllers');
-    module.controller('ImportAlertsCtrl', function($q, $scope, alertMgrSrv, alertSrv, contextSrv) {
+    module.controller('ImportAlertsCtrl', function ($q, $scope, alertMgrSrv, alertSrv, contextSrv) {
       $scope.importJson = function () {
         var files = angular.element("#alertUpload")[0].files;
         for (var i = 0, f; f = files[i]; i++) {
@@ -35,8 +35,8 @@ define([
                   });
                   promiseArr.push(p);
                 });
-                $q.all(promiseArr).then(function(values){
-                  if(values.length == alertDefs.length){
+                $q.all(promiseArr).then(function (values) {
+                  if (values.length == alertDefs.length) {
                     $scope.init();
                     $scope.dismiss();
                     $scope.appEvent('alert-success', ['导入成功', '共导入' + alertDefs.length + '个报警设置']);

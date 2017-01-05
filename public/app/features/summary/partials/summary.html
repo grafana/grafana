@@ -1,0 +1,51 @@
+<topnav section="探针状态" icon="fa fa-fw fa-crosshairs">
+
+</topnav>
+<div class="page-container">
+  <td class="page">
+    <h2>总体情况</h2>
+    <h4>请选择需要查看的服务和系统,即产生相应概要信息</h4>
+    <div class="tight-form last">
+      <ul class="tight-form-list">
+        <li class="tight-form-item" style="width: 100px">
+          服务
+        </li>
+        <li>
+          <select ng-model="summarySelect.services" class="input-small tight-form-input" ng-change="changeSelect()">
+            <option ng-repeat="(key, value) in services" value="{{key}}">{{value}}</option>
+          </select>
+        </li>
+      </ul>
+      <ul class="tight-form-list">
+        <li class="tight-form-item" style="width: 100px">
+          子系统
+        </li>
+        <li ng-controller="SystemCtrl" ng-init="init()">
+          <select ng-model="summarySelect.system" class="input-small tight-form-input" ng-change="changeSelect()">
+            <option ng-repeat="sys in systems" value="{{sys.Id}}">{{sys.SystemsName}}</option>
+          </select>
+        </li>
+        <li>
+        </li>
+      </ul>
+      <div class="clearfix"></div>
+    </div>
+
+
+    <table class="grafana-options-table form-inline" ng-if="summaryList.length!=0">
+      <tr>
+        <th>主机名</th>
+        <th ng-repeat="(key,value) in tableHeader[summarySelect.services]">{{key}}</th>
+      </tr>
+
+      <tbody ng-repeat="summary in summaryList">
+      <tr ng-repeat="content in summary.content">
+        <td>{{summary.tag.host}}</td>
+        <td ng-repeat="(key,value) in tableHeader[summarySelect.services]">{{content[value]}}</td>
+      </tr>
+      </tbody>
+    </table>
+
+</div>
+</div>
+

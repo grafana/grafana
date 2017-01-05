@@ -17,6 +17,11 @@ define([
         controller : 'LoadDashboardCtrl',
         reloadOnSearch: false,
       })
+      .when('/summary', {
+        templateUrl: 'app/features/summary/partials/summary.html',
+        controller: 'SummaryCtrl',
+        reloadOnSearch: false,
+      })
       .when('/dashboard/:type/:slug', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'LoadDashboardCtrl',

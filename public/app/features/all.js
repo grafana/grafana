@@ -13,5 +13,6 @@ define([
   './decompose/all',
   './logs/all',
   './analysis/all',
-  './health/all'
+  './health/all',
+  './summary/summaryCtrl'
 ], function () {});
