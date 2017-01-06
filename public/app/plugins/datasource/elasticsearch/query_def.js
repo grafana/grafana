@@ -73,7 +73,7 @@ function (_) {
       'moving_avg' : [
         {text: 'window', default: 5},
         {text: 'model', default: 'simple'},
-        {text: 'predict', default: 0}
+        {text: 'predict', default: undefined}
       ],
       'derivative': [
         {text: 'unit', default: undefined},
