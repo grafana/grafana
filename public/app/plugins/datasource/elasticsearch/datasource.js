@@ -239,6 +239,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           'date': 'date',
           'string': 'string',
           'text': 'text',
+          'scaled_float': 'number',
           'nested': 'nested'
         };
 
