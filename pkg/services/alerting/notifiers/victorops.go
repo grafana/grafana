@@ -16,7 +16,19 @@ import (
 const AlertStateCritical = "CRITICAL"
 
 func init() {
-	alerting.RegisterNotifier("victorops", NewVictoropsNotifier)
+	alerting.RegisterNotifier(&alerting.NotifierPlugin{
+		Type:        "victorops",
+		Name:        "VictorOps",
+		Description: "Sends notifications to VictorOps",
+		Factory:     NewVictoropsNotifier,
+		OptionsTemplate: `
+      <h3 class="page-heading">VictorOps settings</h3>
+      <div class="gf-form">
+        <span class="gf-form-label width-6">Url</span>
+        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="VictorOps url"></input>
+      </div>
+    `,
+	})
 }
 
 // NewVictoropsNotifier creates an instance of VictoropsNotifier that

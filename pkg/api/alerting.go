@@ -172,6 +172,10 @@ func DelAlert(c *middleware.Context) Response {
 	return Json(200, resp)
 }
 
+func GetAlertNotifiers(c *middleware.Context) Response {
+	return Json(200, alerting.GetNotifiers())
+}
+
 func GetAlertNotifications(c *middleware.Context) Response {
 	query := &models.GetAllAlertNotificationsQuery{OrgId: c.OrgId}
 
