@@ -1,5 +1,8 @@
 # 4.2.0 (unreleased)
 
+## Enhancements
+* **Alerting**: Added Telegram alert notifier [#7098](https://github.com/grafana/grafana/pull/7098), thx [@leonoff](https://github.com/leonoff)
+
 # 4.0.0 (unreleased)
 
 ### Bugfixes
