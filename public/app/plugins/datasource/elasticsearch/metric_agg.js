@@ -29,6 +29,7 @@ function (angular, _, queryDef) {
     $scope.metricAggTypes = queryDef.getMetricAggTypes($scope.esVersion);
     $scope.extendedStats = queryDef.extendedStats;
     $scope.pipelineAggOptions = [];
+    $scope.modelSettingsValues = {};
 
     $scope.init = function() {
       $scope.agg = metricAggs[$scope.index];
@@ -95,6 +96,12 @@ function (angular, _, queryDef) {
           $scope.settingsLinkText = 'Stats: ' + stats.join(', ');
           break;
         }
+        case 'moving_avg': {
+          $scope.movingAvgModelTypes = queryDef.movingAvgModelOptions;
+          $scope.modelSettings = queryDef.getMovingAvgSettings($scope.agg.settings.model, true);
+          $scope.updateMovingAvgModelSettings();
+          break;
+        }
         case 'raw_document': {
           $scope.target.metrics = [$scope.agg];
           $scope.target.bucketAggs = [];
@@ -124,6 +131,25 @@ function (angular, _, queryDef) {
     };
 
     $scope.onChangeInternal = function() {
+      $scope.onChange();
+    };
+
+    $scope.updateMovingAvgModelSettings = function () {
+      var modelSettingsKeys = [];
+      var modelSettings = queryDef.getMovingAvgSettings($scope.agg.settings.model, false);
+      for (var i=0; i < modelSettings.length; i++) {
+        modelSettingsKeys.push(modelSettings[i].value);
+      }
+
+      for (var key in $scope.agg.settings.settings) {
+        if (($scope.agg.settings.settings[key] === null) || (modelSettingsKeys.indexOf(key) === -1)) {
+          delete $scope.agg.settings.settings[key];
+        }
+      }
+    };
+
+    $scope.onChangeClearInternal = function() {
+      delete $scope.agg.settings.minimize;
       $scope.onChange();
     };
 

@@ -231,6 +231,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
     this.getFields = function(query) {
       return this._get('/_mapping').then(function(result) {
+
         var typeMap = {
           'float': 'number',
           'double': 'number',
@@ -238,13 +239,28 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           'long': 'number',
           'date': 'date',
           'string': 'string',
-          'text': 'text',
+          'text': 'string',
+          'scaled_float': 'number',
           'nested': 'nested'
         };
+
+        function shouldAddField(obj, key, query) {
+          if (key[0] === '_') {
+            return false;
+          }
+
+          if (!query.type) {
+            return true;
+          }
+
+          // equal query type filter, or via typemap translation
+          return query.type === obj.type || query.type === typeMap[obj.type];
+        }
 
         // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
         var fieldNameParts = [];
         var fields = {};
+
         function getFieldsRecursively(obj) {
           for (var key in obj) {
             var subObj = obj[key];
@@ -257,10 +273,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
               var fieldName = fieldNameParts.concat(key).join('.');
 
               // Hide meta-fields and check field type
-              if (key[0] !== '_' &&
-                  (!query.type ||
-                   query.type && typeMap[subObj.type] === query.type)) {
-
+              if (shouldAddField(subObj, key, query)) {
                 fields[fieldName] = {
                   text: fieldName,
                   type: subObj.type
