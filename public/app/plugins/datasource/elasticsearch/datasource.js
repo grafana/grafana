@@ -219,6 +219,38 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         return $q.when([]);
       }
 
+      // convert interval string to milliseconds
+      var intervalToSecond = function (intervalString) {
+        if (!intervalString) {
+          return 1;
+        } else {
+          var interval = parseInt(intervalString);
+          if (isNaN(interval)) {
+            return 1;
+          } else  {
+            var lastIndex = intervalString.length - 1;
+            var unit = intervalString.slice(lastIndex);
+            var scale = 1;
+            switch (unit) {
+              case 'd':
+                scale = 86400;
+                break;
+              case 'h':
+                scale = 3600;
+                break;
+              case 'm':
+                scale = 60;
+                break;
+              default:
+                scale = 1;
+            }
+            return interval * scale;
+          }
+        }
+      };
+
+      // intervalSecond: interval in seconds
+      payload = payload.replace(/\$intervalSecond/g, intervalToSecond(options.interval));
       payload = payload.replace(/\$interval/g, options.interval);
       payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
       payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
