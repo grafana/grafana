@@ -1,6 +1,6 @@
 machine:
   node:
-    version: 5.11.1
+    version: 6.9.2
   environment:
     GOPATH: "/home/ubuntu/.go_workspace"
     ORG_PATH: "github.com/grafana"

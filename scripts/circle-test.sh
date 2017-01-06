@@ -13,8 +13,8 @@ function exit_if_fail {
 cd /home/ubuntu/.go_workspace/src/github.com/grafana/grafana
 
 rm -rf node_modules
-npm install -g npm
-npm install
+npm install -g yarn
+yarn install
 
 exit_if_fail npm test
 exit_if_fail npm run coveralls
