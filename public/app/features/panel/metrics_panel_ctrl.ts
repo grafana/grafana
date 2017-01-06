@@ -4,6 +4,7 @@ import config from 'app/core/config';
 import $ from 'jquery';
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
+import moment from 'moment';
 import {PanelCtrl} from './panel_ctrl';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
@@ -154,12 +155,24 @@ class MetricsPanelCtrl extends PanelCtrl {
       }
 
       if (_.isString(this.rangeRaw.from)) {
-        var timeFromDate = dateMath.parse(timeFromInfo.from);
         this.timeInfo = timeFromInfo.display;
         this.rangeRaw.from = timeFromInfo.from;
         this.rangeRaw.to = timeFromInfo.to;
-        this.range.from = timeFromDate;
+        this.range.from = dateMath.parse(timeFromInfo.from);
         this.range.to = dateMath.parse(timeFromInfo.to);
+      } else if (moment.isMoment(this.rangeRaw.from)) {
+        var isLast = (timeFromInterpolated.indexOf('+') !== 0);
+        var timeFrom = timeFromInterpolated;
+        if (isLast) {
+          timeFrom = '-' + timeFrom;
+          this.range.from = dateMath.parseDateMath(timeFrom, this.range.to.clone());
+          this.range.to = this.range.to;
+        } else {
+          this.range.from = this.range.to;
+          this.range.to = dateMath.parseDateMath(timeFrom, this.range.to.clone());
+        }
+        this.rangeRaw = this.range;
+        this.timeInfo = timeFrom;
       }
     }
 
