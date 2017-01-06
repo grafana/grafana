@@ -30,7 +30,7 @@ func NewImageUploader() (ImageUploader, error) {
 
 		bucket := s3sec.Key("bucket_url").MustString("")
 		acl := s3sec.Key("acl").MustString("public-read")
-		expires := s3sec.Key("expires").MustString("")
+		expires := s3sec.Key("expires").MustString("15m")
 		accessKey := s3sec.Key("access_key").MustString("")
 		secretKey := s3sec.Key("secret_key").MustString("")
 
