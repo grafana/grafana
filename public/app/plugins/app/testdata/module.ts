@@ -5,6 +5,7 @@ export class ConfigCtrl {
 
   appEditCtrl: any;
 
+  /** @ngInject **/
   constructor(private backendSrv) {
     this.appEditCtrl.setPreUpdateHook(this.initDatasource.bind(this));
   }
