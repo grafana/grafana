@@ -220,8 +220,10 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       }
 
       // intervalSec: interval in seconds
-      payload = payload.replace(/\$intervalSec/g, kbn.interval_to_seconds(options.interval));
-      payload = payload.replace(/\$intervalMs/g, kbn.interval_to_ms(options.interval));
+      if (options.interval && options.interval.match(kbn.interval_regex)) {
+        payload = payload.replace(/\$intervalSec/g, kbn.interval_to_seconds(options.interval));
+        payload = payload.replace(/\$intervalMs/g, kbn.interval_to_ms(options.interval));
+      }
       payload = payload.replace(/\$interval/g, options.interval);
       payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
       payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
