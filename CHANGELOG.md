@@ -3,7 +3,7 @@
 ## Enhancements
 * **Alerting**: Added Telegram alert notifier [#7098](https://github.com/grafana/grafana/pull/7098), thx [@leonoff](https://github.com/leonoff)
 
-# 4.0.0 (unreleased)
+# 4.1.0 (unreleased)
 
 ### Bugfixes
 * **Server side PNG rendering**: Fixed issue with y-axis label rotation in phantomjs rendered images [#6924](https://github.com/grafana/grafana/issues/6924)
