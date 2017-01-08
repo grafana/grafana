@@ -18,24 +18,24 @@
 		</div>
 
 	</div>
-	<div ng-show="ctrl.target.queryType == 'expression'">
+	<div ng-show="ctrl.target.queryType == 'gexp'">
 		<div class="gf-form-inline">
-			<div class="gf-form max-width-20">
+			<div class="gf-form">
 				<label class="gf-form-label query-keyword width-8">
-					Expression
+					GExp
 				</label>
-				<input type="text" class="gf-form-input" ng-model="ctrl.target.expression"
-							 spellcheck='false' placeholder="expression" ng-blur="ctrl.targetBlur()">
+				<input type="text" class="gf-form-input width-30" ng-model="ctrl.target.gexp"
+							 spellcheck='false' placeholder="gexp" ng-blur="ctrl.targetBlur()">
 				</input>
 			</div>
-			<div class="gf-form max-width-20">
+			<div class="gf-form">
 				<label class="gf-form-label query-keyword width-6">
 					Alias:
 				</label>
 				<input  type="text" class="gf-form-input"
-		   					ng-model="ctrl.target.expressionAlias"
+		   					ng-model="ctrl.target.gexpAlias"
 								spellcheck='false'
-								placeholder="expression alias"
+								placeholder="gexp alias"
 								ng-blur="ctrl.targetBlur()">
 				</input>
 			</div>

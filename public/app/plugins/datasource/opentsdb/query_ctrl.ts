@@ -30,7 +30,7 @@ export class OpenTsQueryCtrl extends QueryCtrl {
     this.aggregators = ['avg', 'sum', 'min', 'max', 'dev', 'zimsum', 'mimmin', 'mimmax'];
     this.fillPolicies = ['none', 'nan', 'null', 'zero'];
     this.filterTypes = ['wildcard','iliteral_or','not_iliteral_or','not_literal_or','iwildcard','literal_or','regexp'];
-    this.queryTypes = ['metric','expression'];
+    this.queryTypes = ['metric','gexp'];
 
     this.tsdbVersion = this.datasource.tsdbVersion;
 
@@ -243,10 +243,10 @@ export class OpenTsQueryCtrl extends QueryCtrl {
         }
         text += '}';
       }
-    } else if (this.target.queryType === 'expression' && this.target.expression) {
-      text += 'Expression: ' + this.target.expression;
+    } else if (this.target.queryType === 'gexp' && this.target.gexp) {
+      text += 'GExp: ' + this.target.gexp;
     } else {
-      text = 'No metric or expression';
+      text = 'No metric or gexp';
     }
     return text;
   }
