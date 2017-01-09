@@ -1,7 +1,9 @@
 package models
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 )
 
@@ -35,6 +37,26 @@ func (r RoleType) Includes(other RoleType) bool {
 	}
 
 	return r == other
+}
+
+func (r *RoleType) UnmarshalJSON(data []byte) error {
+	var str string
+	err := json.Unmarshal(data, &str)
+	if err != nil {
+		return err
+	}
+
+	*r = RoleType(str)
+
+	if (*r).IsValid() == false {
+		if (*r) != "" {
+			return errors.New(fmt.Sprintf("JSON validation error: invalid role value: %s", *r))
+		}
+
+		*r = ROLE_VIEWER
+	}
+
+	return nil
 }
 
 type OrgUser struct {

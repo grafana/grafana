@@ -39,6 +39,7 @@ export class TablePanelEditorCtrl {
       {text: 'Number', value: 'number'},
       {text: 'String', value: 'string'},
       {text: 'Date', value: 'date'},
+      {text: 'Hidden', value: 'hidden'}
     ];
     this.fontSizes = ['80%', '90%', '100%', '110%', '120%', '130%', '150%', '160%', '180%', '200%', '220%', '250%'];
     this.dateFormats = [
@@ -71,7 +72,7 @@ export class TablePanelEditorCtrl {
 
   addColumn() {
     var columns = transformers[this.panel.transform].getColumns(this.panelCtrl.dataRaw);
-    var column = _.findWhere(columns, {text: this.addColumnSegment.value});
+    var column = _.find(columns, {text: this.addColumnSegment.value});
 
     if (column) {
       this.panel.columns.push(column);

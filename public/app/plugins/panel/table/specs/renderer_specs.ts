@@ -11,7 +11,9 @@ describe('when rendering table', () => {
       {text: 'Value'},
       {text: 'Colored'},
       {text: 'Undefined'},
-      {text: 'String'}
+      {text: 'String'},
+      {text: 'United', unit: 'bps'},
+      {text: 'Sanitized'},
     ];
 
     var panel = {
@@ -40,15 +42,45 @@ describe('when rendering table', () => {
         {
           pattern: 'String',
           type: 'string',
+        },
+        {
+          pattern: 'United',
+          type: 'number',
+          unit: 'ms',
+          decimals: 2,
+        },
+        {
+          pattern: 'Sanitized',
+          type: 'string',
+          sanitize: true,
         }
       ]
     };
 
-    var renderer = new TableRenderer(panel, table, 'utc');
+    var sanitize = function(value) {
+      return 'sanitized';
+    };
+
+    var renderer = new TableRenderer(panel, table, 'utc', sanitize);
 
     it('time column should be formated', () => {
       var html = renderer.renderCell(0, 1388556366666);
-      expect(html).to.be('<td>2014-01-01T06:06:06+00:00</td>');
+      expect(html).to.be('<td>2014-01-01T06:06:06Z</td>');
+    });
+
+    it('undefined time column should be rendered as -', () => {
+      var html = renderer.renderCell(0, undefined);
+      expect(html).to.be('<td>-</td>');
+    });
+
+    it('null time column should be rendered as -', () => {
+      var html = renderer.renderCell(0, null);
+      expect(html).to.be('<td>-</td>');
+    });
+
+    it('number column with unit specified should ignore style unit', () => {
+      var html = renderer.renderCell(5, 1230);
+      expect(html).to.be('<td>1.23 kbps</td>');
     });
 
     it('number column should be formated', () => {
@@ -62,8 +94,8 @@ describe('when rendering table', () => {
     });
 
     it('colored cell should have style', () => {
-        var html = renderer.renderCell(2, 40);
-        expect(html).to.be('<td style="color:green">40.0</td>');
+      var html = renderer.renderCell(2, 40);
+      expect(html).to.be('<td style="color:green">40.0</td>');
     });
 
     it('colored cell should have style', () => {
@@ -94,6 +126,11 @@ describe('when rendering table', () => {
     it('undefined value should render as -', () => {
       var html = renderer.renderCell(3, undefined);
       expect(html).to.be('<td></td>');
+    });
+
+    it('sanitized value should render as', () => {
+      var html = renderer.renderCell(6, 'text <a href="http://google.com">link</a>');
+      expect(html).to.be('<td>sanitized</td>');
     });
   });
 });

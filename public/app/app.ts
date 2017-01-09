@@ -14,6 +14,7 @@ import $ from 'jquery';
 import angular from 'angular';
 import config from 'app/core/config';
 import _ from 'lodash';
+import moment from 'moment';
 import {coreModule} from './core/core';
 
 export class GrafanaApp {
@@ -39,9 +40,17 @@ export class GrafanaApp {
 
   init() {
     var app = angular.module('grafana', []);
-    app.constant('grafanaVersion', "@grafanaVersion@");
 
-    app.config(($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $provide) => {
+    moment.locale(config.bootData.user.locale);
+
+    app.config(($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $httpProvider, $provide) => {
+
+      if (config.buildInfo.env !== 'development') {
+        $compileProvider.debugInfoEnabled(false);
+      }
+
+      $httpProvider.useApplyAsync(true);
+
       this.registerFunctions.controller = $controllerProvider.register;
       this.registerFunctions.directive  = $compileProvider.directive;
       this.registerFunctions.factory    = $provide.factory;

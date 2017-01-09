@@ -24,12 +24,14 @@ export class TimePickerCtrl {
   refresh: any;
   isOpen: boolean;
   isUtc: boolean;
+  firstDayOfWeek: number;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private timeSrv) {
     $scope.ctrl = this;
 
-    $rootScope.onAppEvent('zoom-out', () => this.zoom(2), $scope);
+    $rootScope.onAppEvent('shift-time-forward', () => this.move(1), $scope);
+    $rootScope.onAppEvent('shift-time-backward', () => this.move(-1), $scope);
     $rootScope.onAppEvent('refresh', () => this.init(), $scope);
     $rootScope.onAppEvent('dash-editor-hidden', () => this.isOpen = false, $scope);
 
@@ -41,10 +43,12 @@ export class TimePickerCtrl {
 
     _.defaults(this.panel, TimePickerCtrl.defaults);
 
-    var time = angular.copy(this.timeSrv.timeRange());
-    var timeRaw = angular.copy(this.timeSrv.timeRange(false));
+    this.firstDayOfWeek = moment.localeData().firstDayOfWeek();
 
-    if (this.dashboard.timezone === 'browser') {
+    var time = angular.copy(this.timeSrv.timeRange());
+    var timeRaw = angular.copy(time.raw);
+
+    if (!this.dashboard.isTimezoneUtc()) {
       time.from.local();
       time.to.local();
       if (moment.isMoment(timeRaw.from)) {
@@ -70,21 +74,31 @@ export class TimePickerCtrl {
   }
 
   zoom(factor) {
+    this.$rootScope.appEvent('zoom-out', 2);
+  }
+
+  move(direction) {
     var range = this.timeSrv.timeRange();
 
-    var timespan = (range.to.valueOf() - range.from.valueOf());
-    var center = range.to.valueOf() - timespan/2;
-
-    var to = (center + (timespan*factor)/2);
-    var from = (center - (timespan*factor)/2);
-
-    if (to > Date.now() && range.to <= Date.now()) {
-      var offset = to - Date.now();
-      from = from - offset;
-      to = Date.now();
+    var timespan = (range.to.valueOf() - range.from.valueOf()) / 2;
+    var to, from;
+    if (direction === -1) {
+      to = range.to.valueOf() - timespan;
+      from = range.from.valueOf() - timespan;
+    } else if (direction === 1) {
+      to = range.to.valueOf() + timespan;
+      from = range.from.valueOf() + timespan;
+      if (to > Date.now() && range.to < Date.now()) {
+        to = Date.now();
+        from = range.from.valueOf();
+      }
+    } else {
+      to = range.to.valueOf();
+      from = range.from.valueOf();
     }
 
     this.timeSrv.setTime({from: moment.utc(from), to: moment.utc(to) });
+
   }
 
   openDropdown() {
@@ -125,7 +139,7 @@ export class TimePickerCtrl {
   }
 
   getAbsoluteMomentForTimezone(jsDate) {
-    return this.dashboard.timezone === 'browser' ? moment(jsDate) : moment(jsDate).utc();
+    return this.dashboard.isTimezoneUtc() ? moment(jsDate).utc() : moment(jsDate);
   }
 
   setRelativeFilter(timespan) {

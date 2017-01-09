@@ -10,8 +10,8 @@ Grafana v2.1 brings initial support for KairosDB Datasources. While the process 
 ## Adding the data source to Grafana
 ![](/img/v2/add_KairosDB.jpg)
 
-1. Open the side menu by clicking the the Grafana icon in the top header. 
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.    
+1. Open the side menu by clicking the the Grafana icon in the top header.
+2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 
     > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
 
@@ -25,12 +25,12 @@ Name | Description
 Name | The data source name, important that this is the same as in Grafana v1.x if you plan to import old dashboards.
 Default | Default data source means that it will be pre-selected for new panels.
 Url | The http protocol, ip and port of your kairosdb server (default port is usually 8080)
-Access | Proxy = access via Grafana backend, Direct = access directory from browser.
+Access | Proxy = access via Grafana backend, Direct = access directly from browser.
 
 ## Query editor
 Open a graph in edit mode by click the title.
 
-![](/img/v2/kairos_query_editor.png)
+![](/img/v2/kairos_query_editor.jpg)
 
 For details on KairosDB metric queries checkout the official.
 - [Query Metrics - KairosDB 0.9.4 documentation](http://kairosdb.github.io/kairosdocs/restapi/QueryMetrics.html).

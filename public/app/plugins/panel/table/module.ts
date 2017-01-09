@@ -10,33 +10,6 @@ import {transformDataToTable} from './transformers';
 import {tablePanelEditor} from './editor';
 import {TableRenderer} from './renderer';
 
-var panelDefaults = {
-  targets: [{}],
-  transform: 'timeseries_to_columns',
-  pageSize: null,
-  showHeader: true,
-  styles: [
-    {
-      type: 'date',
-      pattern: 'Time',
-      dateFormat: 'YYYY-MM-DD HH:mm:ss',
-    },
-    {
-      unit: 'short',
-      type: 'number',
-      decimals: 2,
-      colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
-      colorMode: null,
-      pattern: '/.*/',
-      thresholds: [],
-    }
-  ],
-  columns: [],
-  scroll: true,
-  fontSize: '100%',
-  sort: {col: 0, desc: true},
-};
-
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
@@ -44,8 +17,35 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   dataRaw: any;
   table: any;
 
+  panelDefaults = {
+    targets: [{}],
+    transform: 'timeseries_to_columns',
+    pageSize: null,
+    showHeader: true,
+    styles: [
+      {
+        type: 'date',
+        pattern: 'Time',
+        dateFormat: 'YYYY-MM-DD HH:mm:ss',
+      },
+      {
+        unit: 'short',
+        type: 'number',
+        decimals: 2,
+        colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
+        colorMode: null,
+        pattern: '/.*/',
+        thresholds: [],
+      }
+    ],
+    columns: [],
+    scroll: true,
+    fontSize: '100%',
+    sort: {col: 0, desc: true},
+  };
+
   /** @ngInject */
-  constructor($scope, $injector, private annotationsSrv) {
+  constructor($scope, $injector, private annotationsSrv, private $sanitize) {
     super($scope, $injector);
     this.pageIndex = 0;
 
@@ -56,11 +56,11 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       delete this.panel.fields;
     }
 
-    _.defaults(this.panel, panelDefaults);
+    _.defaults(this.panel, this.panelDefaults);
 
     this.events.on('data-received', this.onDataReceived.bind(this));
     this.events.on('data-error', this.onDataError.bind(this));
-    this.events.on('data-snapshot-load', this.onDataSnapshotLoad.bind(this));
+    this.events.on('data-snapshot-load', this.onDataReceived.bind(this));
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
     this.events.on('init-panel-actions', this.onInitPanelActions.bind(this));
   }
@@ -77,17 +77,14 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.pageIndex = 0;
 
     if (this.panel.transform === 'annotations') {
-      return this.annotationsSrv.getAnnotations(this.dashboard).then(annotations => {
-        this.dataRaw = annotations;
-        this.render();
+      this.setTimeQueryStart();
+      return this.annotationsSrv.getAnnotations({dashboard: this.dashboard, panel: this.panel, range: this.range})
+      .then(annotations => {
+        return {data: annotations};
       });
     }
 
     return super.issueQueries(datasource);
-  }
-
-  onDataSnapshotLoad(data) {
-    this.onDataReceived(data.data);
   }
 
   onDataError(err) {
@@ -114,12 +111,21 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       }
     }
 
+    this.render();
+  }
+
+  render() {
     this.table = transformDataToTable(this.dataRaw, this.panel);
     this.table.sort(this.panel.sort);
-    this.render(this.table);
+    return super.render(this.table);
   }
 
   toggleColumnSort(col, colIndex) {
+    // remove sort flag from current column
+    if (this.table.columns[this.panel.sort.col]) {
+      this.table.columns[this.panel.sort.col].sort = false;
+    }
+
     if (this.panel.sort.col === colIndex) {
       if (this.panel.sort.desc) {
         this.panel.sort.desc = false;
@@ -130,12 +136,12 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       this.panel.sort.col = colIndex;
       this.panel.sort.desc = true;
     }
-
     this.render();
   }
 
   exportCsv() {
-    FileExport.exportTableDataToCsv(this.table);
+    var renderer = new TableRenderer(this.panel, this.table, this.dashboard.isTimezoneUtc(), this.$sanitize);
+    FileExport.exportTableDataToCsv(renderer.render_values());
   }
 
   link(scope, elem, attrs, ctrl) {
@@ -155,7 +161,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     function appendTableRows(tbodyElem) {
-      var renderer = new TableRenderer(panel, data, ctrl.dashboard.timezone);
+      var renderer = new TableRenderer(panel, data, ctrl.dashboard.isTimezoneUtc(), ctrl.$sanitize);
       tbodyElem.empty();
       tbodyElem.html(renderer.render(ctrl.pageIndex));
     }
@@ -206,8 +212,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     elem.on('click', '.table-panel-page-link', switchPage);
 
-    scope.$on('$destroy', function() {
+    var unbindDestroy = scope.$on('$destroy', function() {
       elem.off('click', '.table-panel-page-link');
+      unbindDestroy();
     });
 
     ctrl.events.on('render', function(renderData) {
@@ -215,6 +222,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       if (data) {
         renderPanel();
       }
+      ctrl.renderingCompleted();
     });
   }
 }

@@ -1,5 +1,5 @@
 [Unit]
-Description=Starts and stops a single grafana instance on this system
+Description=Grafana instance
 Documentation=http://docs.grafana.org
 Wants=network-online.target
 After=network-online.target

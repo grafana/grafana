@@ -6,28 +6,29 @@
 					<i class="icon-gf icon-gf-dashboard"></i>
 				</td>
 				<td>
-					<a href="dashboard/{{dash.installedUri}}" ng-show="dash.installed">
+					<a href="dashboard/{{dash.importedUri}}" ng-show="dash.imported">
 						{{dash.title}}
 					</a>
-					<span ng-show="!dash.installed">
+					<span ng-show="!dash.imported">
 						{{dash.title}}
 					</span>
 				</td>
 				<td>
-					v{{dash.revision}}
-				</td>
-				<td ng-if="dash.installed">
-					Imported v{{dash.installedRevision}}
+          <span>
+            Revision: {{dash.revision}}
+            <span ng-if="dash.imported" class="small">(Imported: {{dash.importedRevision}})</span>
+          <span>
 				</td>
 				<td style="text-align: right">
-					<button class="btn btn-secondary" ng-click="ctrl.import(dash, false)" ng-show="!dash.installed">
+					<button class="btn btn-secondary btn-small" ng-click="ctrl.import(dash, false)" ng-show="!dash.imported">
 						Import
 					</button>
-					<button class="btn btn-secondary" ng-click="ctrl.import(dash, true)" ng-show="dash.installed">
-						Re-Import
+					<button class="btn btn-secondary btn-small" ng-click="ctrl.import(dash, true)" ng-show="dash.imported">
+            <span ng-if="dash.revision !== dash.importedRevision">Update</span>
+            <span ng-if="dash.revision === dash.importedRevision">Re-import</span>
 					</button>
-					<button class="btn btn-danger" ng-click="ctrl.remove(dash)" ng-show="dash.installed">
-						Delete
+					<button class="btn btn-danger btn-small" ng-click="ctrl.remove(dash)" ng-show="dash.imported">
+						<i class="fa fa-trash"></i>
 					</button>
 				</td>
 			</tr>

@@ -9,6 +9,7 @@ import moment from 'moment';
 import gfunc from './gfunc';
 import {Parser} from './parser';
 import {QueryCtrl} from 'app/plugins/sdk';
+import appEvents from 'app/core/app_events';
 
 export class GraphiteQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
@@ -141,7 +142,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
         }
       }
     }).catch(err => {
-      this.error = err.message || 'Failed to issue metric query';
+      appEvents.emit('alert-error', ['Error', err]);
     });
   }
 
@@ -160,7 +161,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
     return this.datasource.metricFindQuery(query).then(segments => {
       var altSegments = _.map(segments, segment => {
-        return this.uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
+        return this.uiSegmentSrv.newSegment({value: segment.text, expandable: segment.expandable});
       });
 
       if (altSegments.length === 0) { return altSegments; }
@@ -178,7 +179,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       altSegments.unshift(this.uiSegmentSrv.newSegment('*'));
       return altSegments;
     }).catch(err => {
-      this.error = err.message || 'Failed to issue metric query';
+      appEvents.emit('alert-error', ['Error', err]);
       return [];
     });
   }
@@ -208,17 +209,40 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
+  updateModelTarget() {
+    // render query
+    var metricPath = this.getSegmentPathUpTo(this.segments.length);
+    this.target.target = _.reduce(this.functions, this.wrapFunction, metricPath);
+
+    // render nested query
+    var targetsByRefId = _.keyBy(this.panelCtrl.panel.targets, 'refId');
+    var nestedSeriesRefRegex = /\#([A-Z])/g;
+    var targetWithNestedQueries = this.target.target.replace(nestedSeriesRefRegex, (match, g1) => {
+      var target  = targetsByRefId[g1];
+      if (!target) {
+        return match;
+      }
+
+      return target.targetFull || target.target;
+    });
+
+    delete this.target.targetFull;
+    if (this.target.target !== targetWithNestedQueries) {
+      this.target.targetFull = targetWithNestedQueries;
+    }
+  }
+
   targetChanged() {
     if (this.error) {
       return;
     }
 
     var oldTarget = this.target.target;
-    var target = this.getSegmentPathUpTo(this.segments.length);
-    this.target.target = _.reduce(this.functions, this.wrapFunction, target);
+    this.updateModelTarget();
 
     if (this.target.target !== oldTarget) {
-      if (this.segments[this.segments.length - 1].value !== 'select metric') {
+      var lastSegment = this.segments.length > 0 ? this.segments[this.segments.length - 1] : {};
+      if (lastSegment.value !== 'select metric') {
         this.panelCtrl.refresh();
       }
     }

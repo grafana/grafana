@@ -1,8 +1,13 @@
-----
-page_title: Authentication API
-page_description: Grafana HTTP API Reference
-page_keywords: grafana, admin, http, api, documentation
----
++++
+title = "Authentication HTTP API "
+description = "Grafana Authentication HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "authentication"]
+aliases = ["/http_api/authentication/"]
+type = "docs"
+[menu.docs]
+name = "Authentication"
+parent = "http_api"
++++
 
 # Authentication API
 
@@ -13,7 +18,7 @@ Currently you can authenticate via an `API Token` or via a `Session cookie` (acq
 ## Basic Auth
 
 If basic auth is enabled (it is enabled by default) you can authenticate your HTTP request via
-standard basic auth.
+standard basic auth. Basic auth will also authenticate LDAP users.
 
 curl example:
 ```

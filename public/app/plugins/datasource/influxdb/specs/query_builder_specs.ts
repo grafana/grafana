@@ -37,6 +37,24 @@ describe('InfluxQueryBuilder', function() {
       expect(query).to.be('SHOW MEASUREMENTS');
     });
 
+    it('should have no conditions in measurement query for query with no tags and empty query', function() {
+      var builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
+      var query = builder.buildExploreQuery('MEASUREMENTS', undefined, '');
+      expect(query).to.be('SHOW MEASUREMENTS');
+    });
+
+    it('should have WITH MEASUREMENT in measurement query for non-empty query with no tags', function() {
+      var builder = new InfluxQueryBuilder({ measurement: '', tags: [] });
+      var query = builder.buildExploreQuery('MEASUREMENTS', undefined, 'something');
+      expect(query).to.be('SHOW MEASUREMENTS WITH MEASUREMENT =~ /something/');
+    });
+
+    it('should have WITH MEASUREMENT WHERE in measurement query for non-empty query with tags', function() {
+          var builder = new InfluxQueryBuilder({ measurement: '', tags: [{key: 'app', value: 'email'}] });
+          var query = builder.buildExploreQuery('MEASUREMENTS', undefined, 'something');
+          expect(query).to.be("SHOW MEASUREMENTS WITH MEASUREMENT =~ /something/ WHERE \"app\" = 'email'");
+    });
+
     it('should have where condition in measurement query for query with tags', function() {
       var builder = new InfluxQueryBuilder({measurement: '', tags: [{key: 'app', value: 'email'}]});
       var query = builder.buildExploreQuery('MEASUREMENTS');
@@ -68,6 +86,12 @@ describe('InfluxQueryBuilder', function() {
       var builder = new InfluxQueryBuilder({measurement: 'cpu', tags: [{key: 'app', value: 'email'}]});
       var query = builder.buildExploreQuery('FIELDS');
       expect(query).to.be('SHOW FIELD KEYS FROM "cpu"');
+    });
+
+    it('should build show field query with regexp', function() {
+      var builder = new InfluxQueryBuilder({measurement: '/$var/', tags: [{key: 'app', value: 'email'}]});
+      var query = builder.buildExploreQuery('FIELDS');
+      expect(query).to.be('SHOW FIELD KEYS FROM /$var/');
     });
 
     it('should build show retention policies query', function() {

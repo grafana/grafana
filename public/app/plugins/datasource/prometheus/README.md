@@ -1,4 +1,4 @@
-# CloudWatch Datasource -  Native Plugin
+# Prometheus Datasource -  Native Plugin
 
 Grafana ships with **built in** support for Prometheus, the open-source service monitoring system and time series database.
 

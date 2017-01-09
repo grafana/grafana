@@ -4,16 +4,15 @@
 			<div class="gf-form">
 				<span class="gf-form-label"><i class="fa fa-wrench"></i></span>
 				<span class="gf-form-label width-11">Group by time interval</span>
-				<input type="text" class="gf-form-input" ng-model="ctrl.panelCtrl.panel.interval" ng-blur="ctrl.panelCtrl.refresh();"
+				<input type="text" class="gf-form-input width-16" ng-model="ctrl.panelCtrl.panel.interval" ng-blur="ctrl.panelCtrl.refresh();"
 				spellcheck='false' placeholder="example: >10s">
-				<span class="gf-form-label"><i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >60s'" data-placement="right"></i></span>
+				<info-popover mode="right-absolute">
+          Set a low limit by having a greater sign: example: >60s
+        </info-popover>
 			</div>
 		</div>
 		<div class="gf-form-inline">
 			<div class="gf-form">
-				<!--span class="gf-form-label">
-					<i class="fa fa-info-circle"></i>
-				</span-->
 				<span class="gf-form-label width-10">
 					<a ng-click="ctrl.panelCtrl.toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
 						<i class="fa fa-info-circle"></i>
@@ -23,7 +22,7 @@
 				<span class="gf-form-label width-10">
 					<a ng-click="ctrl.panelCtrl.toggleEditorHelp(2)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
 					<i class="fa fa-info-circle"></i>
-						&nbsp;stacking &amp; and fill
+						&nbsp;stacking &amp; fill
 					</a>
 				</span>
 				<span class="gf-form-label width-10">
@@ -38,14 +37,14 @@
 </section>
 
 <div class="editor-row">
-	<div class="pull-left" style="margin-top: 30px;">
+	<div class="pull-left">
 
 		<div class="grafana-info-box span6" ng-if="ctrl.panelCtrl.editorHelpIndex === 1">
 			<h5>Alias patterns</h5>
 			<ul>
 				<li>$m = replaced with measurement name</li>
 				<li>$measurement = replaced with measurement name</li>
-				<li>$1 - $9 = replaced with part of measurement name (if you seperate your measurement name with dots)</li>
+				<li>$1 - $9 = replaced with part of measurement name (if you separate your measurement name with dots)</li>
 				<li>$col = replaced with column name</li>
 				<li>$tag_hostname = replaced with the value of the hostname tag</li>
 				<li>You can also use [[tag_hostname]] pattern replacement syntax</li>

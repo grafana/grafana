@@ -11,12 +11,14 @@ import (
 )
 
 type ImportDashboardCommand struct {
-	Path   string                 `json:"string"`
-	Inputs []ImportDashboardInput `json:"inputs"`
+	Dashboard *simplejson.Json
+	Path      string
+	Inputs    []ImportDashboardInput
+	Overwrite bool
 
-	OrgId    int64  `json:"-"`
-	UserId   int64  `json:"-"`
-	PluginId string `json:"-"`
+	OrgId    int64
+	UserId   int64
+	PluginId string
 	Result   *PluginDashboardInfoDTO
 }
 
@@ -40,17 +42,15 @@ func init() {
 }
 
 func ImportDashboard(cmd *ImportDashboardCommand) error {
-	plugin, exists := Plugins[cmd.PluginId]
-
-	if !exists {
-		return PluginNotFoundError{cmd.PluginId}
-	}
-
 	var dashboard *m.Dashboard
 	var err error
 
-	if dashboard, err = loadPluginDashboard(plugin, cmd.Path); err != nil {
-		return err
+	if cmd.PluginId != "" {
+		if dashboard, err = loadPluginDashboard(cmd.PluginId, cmd.Path); err != nil {
+			return err
+		}
+	} else {
+		dashboard = m.NewDashboardFromJson(cmd.Dashboard)
 	}
 
 	evaluator := &DashTemplateEvaluator{
@@ -67,6 +67,8 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 		Dashboard: generatedDash,
 		OrgId:     cmd.OrgId,
 		UserId:    cmd.UserId,
+		Overwrite: cmd.Overwrite,
+		PluginId:  cmd.PluginId,
 	}
 
 	if err := bus.Dispatch(&saveCmd); err != nil {
@@ -74,13 +76,13 @@ func ImportDashboard(cmd *ImportDashboardCommand) error {
 	}
 
 	cmd.Result = &PluginDashboardInfoDTO{
-		PluginId:          cmd.PluginId,
-		Title:             dashboard.Title,
-		Path:              cmd.Path,
-		Revision:          dashboard.GetString("revision", "1.0"),
-		InstalledUri:      "db/" + saveCmd.Result.Slug,
-		InstalledRevision: dashboard.GetString("revision", "1.0"),
-		Installed:         true,
+		PluginId:         cmd.PluginId,
+		Title:            dashboard.Title,
+		Path:             cmd.Path,
+		Revision:         dashboard.Data.Get("revision").MustInt64(1),
+		ImportedUri:      "db/" + saveCmd.Result.Slug,
+		ImportedRevision: dashboard.Data.Get("revision").MustInt64(1),
+		Imported:         true,
 	}
 
 	return nil
@@ -108,7 +110,7 @@ func (this *DashTemplateEvaluator) findInput(varName string, varType string) *Im
 func (this *DashTemplateEvaluator) Eval() (*simplejson.Json, error) {
 	this.result = simplejson.New()
 	this.variables = make(map[string]string)
-	this.varRegex, _ = regexp.Compile(`(\$\{\w+\})`)
+	this.varRegex, _ = regexp.Compile(`(\$\{.+\})`)
 
 	// check that we have all inputs we need
 	for _, inputDef := range this.template.Get("__inputs").MustArray() {

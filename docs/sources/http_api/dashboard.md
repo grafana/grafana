@@ -1,8 +1,13 @@
-----
-page_title: Dashboard API
-page_description: Grafana Dashboard API Reference
-page_keywords: grafana, admin, http, api, documentation, dashboard
----
++++
+title = "Dashboard HTTP API "
+description = "Grafana Dashboard HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "dashboard"]
+aliases = ["/http_api/dashboard/"]
+type = "docs"
+[menu.docs]
+name = "Dashboard"
+parent = "http_api"
++++
 
 # Dashboard API
 
@@ -96,7 +101,7 @@ Will return the dashboard given the dashboard slug. Slug is the url friendly ver
         "isStarred": false,
         "slug": "production-overview"
       },
-      "model": {
+      "dashboard": {
         "id": null,
         "title": "Production Overview",
         "tags": [ "templated" ],
@@ -191,7 +196,7 @@ Will return the home dashboard.
 
 `GET /api/dashboards/tags`
 
-Get all tabs of dashboards
+Get all tags of dashboards
 
 **Example Request**:
 

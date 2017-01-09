@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	m "github.com/grafana/grafana/pkg/models"
 
 	"github.com/go-xorm/xorm"
@@ -19,27 +20,31 @@ func init() {
 }
 
 func GetDataSourceById(query *m.GetDataSourceByIdQuery) error {
-	sess := x.Limit(100, 0).Where("org_id=? AND id=?", query.OrgId, query.Id)
-	has, err := sess.Get(&query.Result)
+	datasource := m.DataSource{OrgId: query.OrgId, Id: query.Id}
+	has, err := x.Get(&datasource)
 
 	if !has {
 		return m.ErrDataSourceNotFound
 	}
+
+	query.Result = &datasource
 	return err
 }
 
 func GetDataSourceByName(query *m.GetDataSourceByNameQuery) error {
-	sess := x.Limit(100, 0).Where("org_id=? AND name=?", query.OrgId, query.Name)
-	has, err := sess.Get(&query.Result)
+	datasource := m.DataSource{OrgId: query.OrgId, Name: query.Name}
+	has, err := x.Get(&datasource)
 
 	if !has {
 		return m.ErrDataSourceNotFound
 	}
+
+	query.Result = &datasource
 	return err
 }
 
 func GetDataSources(query *m.GetDataSourcesQuery) error {
-	sess := x.Limit(100, 0).Where("org_id=?", query.OrgId).Asc("name")
+	sess := x.Limit(1000, 0).Where("org_id=?", query.OrgId).Asc("name")
 
 	query.Result = make([]*m.DataSource, 0)
 	return sess.Find(&query.Result)
@@ -56,6 +61,13 @@ func DeleteDataSource(cmd *m.DeleteDataSourceCommand) error {
 func AddDataSource(cmd *m.AddDataSourceCommand) error {
 
 	return inTransaction(func(sess *xorm.Session) error {
+		existing := m.DataSource{OrgId: cmd.OrgId, Name: cmd.Name}
+		has, _ := sess.Get(&existing)
+
+		if has {
+			return m.ErrDataSourceNameExists
+		}
+
 		ds := &m.DataSource{
 			OrgId:             cmd.OrgId,
 			Name:              cmd.Name,
@@ -71,6 +83,7 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			BasicAuthPassword: cmd.BasicAuthPassword,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
+			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
 			Created:           time.Now(),
 			Updated:           time.Now(),
 		}
@@ -117,6 +130,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			BasicAuthPassword: cmd.BasicAuthPassword,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
+			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
 			Updated:           time.Now(),
 		}
 

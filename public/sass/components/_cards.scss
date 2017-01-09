@@ -64,6 +64,13 @@
     font-size: 11px;
     padding: 2px 6px;
   }
+
+  &--alert {
+    padding: 0.5rem 1rem;
+    .card-item-name a {
+      font-size: $font-size-h5;
+    }
+  }
 }
 
 .card-item-body {
@@ -75,12 +82,26 @@
   overflow: hidden;
 }
 
+.card-item-cog {
+  font-size: 130%;
+  position: relative;
+  top: 1rem;
+  color: $text-muted;
+}
+
 .card-item-header {
+  margin-bottom: $spacer;
+}
+
+.card-item-type {
   color: $text-color-weak;
   text-transform: uppercase;
-  margin-bottom: $spacer;
   font-size: $font-size-sm;
   font-weight: bold;
+}
+
+.card-item-notice {
+  font-size: $font-size-sm;
 }
 
 .card-item-name {
@@ -97,7 +118,25 @@
   width: 100%;
 }
 
+.card-item-sub-name--header {
+  color: $text-color-weak;
+  text-transform: uppercase;
+  margin-bottom: $spacer;
+  font-size: $font-size-sm;
+  font-weight: bold;
+}
+
 .card-list-layout-grid {
+
+  .card-item-type {
+    display: inline-block;
+  }
+
+  .card-item-notice {
+    font-size: $font-size-sm;
+    display: inline-block;
+    margin-left: $spacer;
+  }
 
   .card-item-header-action {
     float: right;
@@ -106,6 +145,10 @@
   .card-item-wrapper {
     width: 100%;
     padding: 0 1.5rem 1.5rem 0rem;
+  }
+
+  .card-item-wrapper--clickable {
+    cursor: pointer;
   }
 
   .card-item-figure {
@@ -138,7 +181,7 @@
       .card-item-wrapper {
         width: 50%;
       }
-    }    
+    }
   }
 }
 
@@ -149,6 +192,10 @@
     width: 100%;
   }
 
+  .card-item-wrapper--clickable {
+    cursor: pointer;
+  }
+
   .card-item {
     border-bottom: .2rem solid $page-bg;
     border-radius: 0;
@@ -157,6 +204,7 @@
 
   .card-item-header {
     float: right;
+    text-align: right;
   }
 
   .card-item-figure {
@@ -178,4 +226,3 @@
     margin-right: 0;
   }
 }
-

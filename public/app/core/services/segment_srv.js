@@ -19,15 +19,19 @@ function (angular, _, coreModule) {
 
       if (_.isString(options)) {
         this.value = options;
-        this.html = $sce.trustAsHtml(this.value);
+        this.html = $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(this.value));
         return;
       }
+
+      // temp hack to work around legacy inconsistency in segment model
+      this.text = options.value;
 
       this.cssClass = options.cssClass;
       this.custom = options.custom;
       this.type = options.type;
       this.fake = options.fake;
       this.value = options.value;
+      this.selectMode = options.selectMode;
       this.type = options.type;
       this.expandable = options.expandable;
       this.html = options.html || $sce.trustAsHtml(templateSrv.highlightVariablesAsHtml(this.value));
@@ -78,7 +82,7 @@ function (angular, _, coreModule) {
     this.transformToSegments = function(addTemplateVars, variableTypeFilter) {
       return function(results) {
         var segments = _.map(results, function(segment) {
-          return self.newSegment({ value: segment.text, expandable: segment.expandable });
+          return self.newSegment({value: segment.text, expandable: segment.expandable});
         });
 
         if (addTemplateVars) {

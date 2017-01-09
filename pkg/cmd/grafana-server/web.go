@@ -18,12 +18,14 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
+var logger log.Logger
+
 func newMacaron() *macaron.Macaron {
 	macaron.Env = setting.Env
 	m := macaron.New()
 
 	m.Use(middleware.Logger())
-	m.Use(macaron.Recovery())
+	m.Use(middleware.Recovery())
 
 	if setting.EnableGzip {
 		m.Use(middleware.Gziper())
@@ -31,7 +33,7 @@ func newMacaron() *macaron.Macaron {
 
 	for _, route := range plugins.StaticRoutes {
 		pluginRoute := path.Join("/public/plugins/", route.PluginId)
-		log.Info("Plugins: Adding route %s -> %s", pluginRoute, route.Directory)
+		logger.Debug("Plugins: Adding route", "route", pluginRoute, "dir", route.Directory)
 		mapStatic(m, route.Directory, "", pluginRoute)
 	}
 
@@ -44,12 +46,14 @@ func newMacaron() *macaron.Macaron {
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
+	m.Use(middleware.GetContextHandler())
+	m.Use(middleware.Sessioner(&setting.SessionOptions))
+	m.Use(middleware.RequestMetrics())
+
+	// needs to be after context handler
 	if setting.EnforceDomain {
 		m.Use(middleware.ValidateHostHeader(setting.Domain))
 	}
-
-	m.Use(middleware.GetContextHandler())
-	m.Use(middleware.Sessioner(&setting.SessionOptions))
 
 	return m
 }
@@ -75,24 +79,29 @@ func mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {
 	))
 }
 
-func StartServer() {
+func StartServer() int {
+	logger = log.New("server")
 
 	var err error
 	m := newMacaron()
 	api.Register(m)
 
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
-	log.Info("Listen: %v://%s%s", setting.Protocol, listenAddr, setting.AppSubUrl)
+	logger.Info("Server Listening", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl)
 	switch setting.Protocol {
 	case setting.HTTP:
 		err = http.ListenAndServe(listenAddr, m)
 	case setting.HTTPS:
 		err = http.ListenAndServeTLS(listenAddr, setting.CertFile, setting.KeyFile, m)
 	default:
-		log.Fatal(4, "Invalid protocol: %s", setting.Protocol)
+		logger.Error("Invalid protocol", "protocol", setting.Protocol)
+		return 1
 	}
 
 	if err != nil {
-		log.Fatal(4, "Fail to start server: %v", err)
+		logger.Error("Fail to start server", "error", err)
+		return 1
 	}
+
+	return 0
 }

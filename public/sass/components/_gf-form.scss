@@ -6,9 +6,25 @@ $gf-form-margin: 0.25rem;
   flex-direction: row;
   align-items: center;
   text-align: left;
+  position: relative;
+  font-size: $font-size-sm;
 
-  .cr1 {
-    margin-left: 8px;
+  &--offset-1 {
+    margin-left: $spacer;
+  }
+
+  &--grow {
+    flex-grow: 1;
+  }
+}
+
+.gf-form-disabled {
+  color: $text-color-weak;
+
+  .query-keyword,
+  a,
+  .gf-form-input {
+    color: $text-color-weak;
   }
 }
 
@@ -21,10 +37,6 @@ $gf-form-margin: 0.25rem;
   flex-direction: row;
   flex-wrap: wrap;
   align-content: flex-start;
-
-  .gf-form-flex {
-    flex-grow: 1;
-  }
 }
 
 .gf-form-button-row {
@@ -37,7 +49,6 @@ $gf-form-margin: 0.25rem;
 .gf-form-label {
   padding: $input-padding-y $input-padding-x;
   margin-right: $gf-form-margin;
-  line-height: $input-line-height;
   flex-shrink: 0;
 
   background-color: $input-label-bg;
@@ -47,6 +58,12 @@ $gf-form-margin: 0.25rem;
 
   border: $input-btn-border-width solid transparent;
   @include border-radius($label-border-radius-sm);
+
+
+  &--grow {
+    flex-grow: 1;
+    min-height: 2.60rem;
+  }
 }
 
 .gf-form-checkbox {
@@ -60,6 +77,10 @@ $gf-form-margin: 0.25rem;
     padding: $input-padding-y 0.4rem;
     line-height: $input-line-height;
   }
+}
+
+.gf-form-textarea {
+  max-width: 650px;
 }
 
 .gf-form-input {
@@ -85,6 +106,11 @@ $gf-form-margin: 0.25rem;
     display: none;
   }
 
+  &.gf-input-small {
+    padding: $input-padding-y/3 $input-padding-x/3;
+    font-size: $font-size-xs;
+  }
+
   // Customize the `:focus` state to imitate native WebKit styles.
   @include form-control-focus();
 
@@ -106,6 +132,21 @@ $gf-form-margin: 0.25rem;
   }
 
   &.gf-size-auto { width: auto; }
+
+  &--dropdown {
+    padding-right: $input-padding-x*2;
+
+    &::after {
+      position: absolute;
+      top: 35%;
+      right: $input-padding-x;
+      background-color: transparent;
+      color: $input-color;
+      font: normal normal normal $font-size-sm/1 FontAwesome;
+      content: '\f0d7';
+      pointer-events: none;
+    }
+  }
 }
 
 .gf-form-select-wrapper {
@@ -126,9 +167,13 @@ $gf-form-margin: 0.25rem;
       color: transparent;
       text-shadow: 0 0 0 $text-color;
     }
+
+    &.ng-empty {
+      color: $text-color-weak;
+    }
   }
 
-  &:after {
+  &::after {
     position: absolute;
     top: 35%;
     right: $input-padding-x/2;
@@ -138,6 +183,12 @@ $gf-form-margin: 0.25rem;
     content: '\f0d7';
     pointer-events: none;
   }
+
+  &--has-help-icon {
+    &::after {
+      right: $input-padding-x*3;
+    }
+  }
 }
 
 .gf-form--v-stretch {
@@ -145,9 +196,14 @@ $gf-form-margin: 0.25rem;
 }
 
 .gf-form-btn {
-  margin-right: $gf-form-margin;
   padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
   line-height: $input-line-height;
+  font-size: $font-size-sm;
+  box-shadow: none;
+  border: $input-btn-border-width solid transparent;
+  @include border-radius($label-border-radius-sm);
+
   flex-shrink: 0;
   flex-grow: 0;
 }
@@ -171,7 +227,7 @@ $gf-form-margin: 0.25rem;
   background-color: $input-bg;
   padding-right: $input-padding-x;
 
-  &:after {
+  &::after {
     position: absolute;
     top: 35%;
     right: $input-padding-x/2;
@@ -181,4 +237,33 @@ $gf-form-margin: 0.25rem;
     content: '\f0d7';
     pointer-events: none;
   }
+}
+
+.gf-form-help-icon {
+  flex-grow: 0;
+  padding-left: $spacer;
+  color: $text-color-weak;
+
+  &--bold {
+    color: $text-color-emphasis;
+    padding-left: 0;
+  }
+
+  &--right-absolute {
+    position: absolute;
+    right: $spacer;
+    top: 8px;
+  }
+
+  &--right-normal {
+    float: right;
+  }
+
+  &--header {
+    margin-bottom: $gf-form-margin
+  }
+}
+
+select.gf-form-input ~ .gf-form-help-icon {
+  right: 10px;
 }

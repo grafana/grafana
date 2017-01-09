@@ -235,7 +235,7 @@ function ($, _, angular, Drop) {
       top = o.top + this._plot.height();
       left = xaxis.p2c(event.min) + o.left;
 
-      var line = $('<div class="events_line"></div>').css({
+      var line = $('<div class="events_line flot-temp-elem"></div>').css({
         "position": "absolute",
         "opacity": 0.8,
         "left": left + 'px',

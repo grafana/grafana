@@ -46,9 +46,12 @@ function popoverSrv($compile, $rootScope) {
     drop.on('close', () => {
       popoverScope.dismiss({fromDropClose: true});
       destroyDrop();
+      if (options.onClose) {
+        options.onClose();
+      }
     });
 
-    drop.open();
+    setTimeout(() => { drop.open(); }, 10);
   };
 }
 

@@ -81,6 +81,13 @@ function (_, $) {
   });
 
   addFuncDef({
+    name: 'stddevSeries',
+    params: optionalSeriesRefArgs,
+    defaultParams: [''],
+    category: categories.Calculate,
+  });
+
+  addFuncDef({
     name: 'divideSeries',
     params: optionalSeriesRefArgs,
     defaultParams: ['#A'],
@@ -253,6 +260,23 @@ function (_, $) {
       }
     ],
     defaultParams: [3, "sum"]
+  });
+
+  addFuncDef({
+    name: "groupByNodes",
+    category: categories.Special,
+    params: [
+      {
+        name: "function",
+        type: "string",
+        options: ['sum', 'avg', 'maxSeries']
+      },
+      { name: "node", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+    ],
+    defaultParams: ["sum", 3]
   });
 
   addFuncDef({
@@ -664,7 +688,7 @@ function (_, $) {
 
       return "'" + value + "'";
 
-    }, this);
+    }.bind(this));
 
     if (metricExp) {
       parameters.unshift(metricExp);
@@ -687,7 +711,7 @@ function (_, $) {
     if (this._hasMultipleParamsInString(strValue, index)) {
       _.each(strValue.split(','), function(partVal, idx) {
         this.updateParam(partVal.trim(), idx);
-      }, this);
+      }.bind(this));
       return;
     }
 

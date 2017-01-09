@@ -1,10 +1,10 @@
 @font-face {
     font-family: 'grafana-icons';
-    src:    url('../fonts/grafana-icons.eot?h6rv8b');
-    src:    url('../fonts/grafana-icons.eot?h6rv8b#iefix') format('embedded-opentype'),
-        url('../fonts/grafana-icons.ttf?h6rv8b') format('truetype'),
-        url('../fonts/grafana-icons.woff?h6rv8b') format('woff'),
-        url('../fonts/grafana-icons.svg?h6rv8b#grafana-icons') format('svg');
+    src:    url('../fonts/grafana-icons.eot?okx5td');
+    src:    url('../fonts/grafana-icons.eot?okx5td#iefix') format('embedded-opentype'),
+        url('../fonts/grafana-icons.ttf?okx5td') format('truetype'),
+        url('../fonts/grafana-icons.woff?okx5td') format('woff'),
+        url('../fonts/grafana-icons.svg?okx5td#grafana-icons') format('svg');
     font-weight: normal;
     font-style: normal;
 }
@@ -31,7 +31,7 @@
 .icon-gf-raintank_wordmark:before {
     content: "\e600";
 }
-.icon-gf-raintank_icn:before {
+.micon-gf-raintank_icn:before {
     content: "\e601";
 }
 .icon-gf-raintank_r-icn:before {
@@ -61,6 +61,9 @@
 .icon-gf-endpoint:before {
     content: "\e609";
 }
+.icon-gf-page:before {
+    content: "\e908";
+}
 .icon-gf-filter:before {
     content: "\e60a";
 }
@@ -76,7 +79,8 @@
 .icon-gf-jump-to-dashboard:before {
     content: "\e60d";
 }
-.icon-gf-warn:before {
+.icon-gf-warn,
+.icon-gf-warning:before {
     content: "\e60e";
 }
 .icon-gf-nodata:before {
@@ -84,6 +88,9 @@
 }
 .icon-gf-critical:before {
     content: "\e610";
+}
+.icon-gf-crit:before {
+  content: "\e610";
 }
 .icon-gf-online:before {
     content: "\e611";
@@ -112,9 +119,6 @@
 .icon-gf-save:before {
     content: "\e614";
 }
-.icon-gf-settings:before {
-    content: "\e615";
-}
 .icon-gf-share:before {
     content: "\e616";
 }
@@ -124,10 +128,13 @@
 .icon-gf-search:before {
     content: "\e618";
 }
-.icon-gf-tag-add:before {
+.icon-gf-settings:before {
+    content: "\e615";
+}
+.icon-gf-add:before {
     content: "\e619";
 }
-.icon-gf-tag-remove:before {
+.icon-gf-remove:before {
     content: "\e61a";
 }
 .icon-gf-video:before {
@@ -136,6 +143,9 @@
 .icon-gf-bulk_action:before {
     content: "\e61c";
 }
+.icon-gf-grabber:before {
+  content: "\e90b";
+} 
 .icon-gf-users:before {
     content: "\e622";
 }
@@ -169,17 +179,16 @@
 .icon-gf-scale:before {
     content: "\e906";
 }
-.icon-gf-litmus:before {
+.icon-gf-pending:before {
+    content: "\e909";
+}
+.icon-gf-verified:before {
+    content: "\e90a";
+}
+.icon-gf-worldping:before {
     content: "\e627";
 }
 .icon-gf-grafana_wordmark:before {
     content: "\e903";
-}
-
-.icon-gf-app:before {
-  content: "\e902";
-}
-.icon-gf-datasource:before {
-  content: "\e607";
 }
 

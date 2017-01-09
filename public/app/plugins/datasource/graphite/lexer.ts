@@ -134,13 +134,7 @@ for (var i = 0; i < 128; i++) {
     i >= 97 && i <= 122;  // a-z
 }
 
-var identifierPartTable = [];
-
-for (var i2 = 0; i2 < 128; i2++) {
-  identifierPartTable[i2] =
-    identifierStartTable[i2] || // $, _, A-Z, a-z
-    i2 >= 48 && i2 <= 57;        // 0-9
-}
+var identifierPartTable = identifierStartTable;
 
 export function Lexer(expression) {
   this.input = expression;
@@ -423,256 +417,260 @@ Lexer.prototype = {
     if (char === '-') {
       value += char;
       index += 1;
-    char = this.peek(index);
-      }
+      char = this.peek(index);
+    }
 
-      // Numbers must start either with a decimal digit or a point.
-      if (char !== "." && !isDecimalDigit(char)) {
-        return null;
-      }
+    // Numbers must start either with a decimal digit or a point.
+    if (char !== "." && !isDecimalDigit(char)) {
+      return null;
+    }
 
-      if (char !== ".") {
-        value += this.peek(index);
-        index += 1;
-        char = this.peek(index);
+    if (char !== ".") {
+      value += this.peek(index);
+      index += 1;
+      char = this.peek(index);
 
-        if (value === "0") {
-          // Base-16 numbers.
-          if (char === "x" || char === "X") {
-            index += 1;
-            value += char;
-
-            while (index < length) {
-              char = this.peek(index);
-              if (!isHexDigit(char)) {
-                break;
-              }
-              value += char;
-              index += 1;
-            }
-
-            if (value.length <= 2) { // 0x
-              return {
-                type: 'number',
-                value: value,
-                isMalformed: true,
-                pos: this.char
-              };
-            }
-
-            if (index < length) {
-              char = this.peek(index);
-              if (isIdentifierStart(char)) {
-                return null;
-              }
-            }
-
-            return {
-              type: 'number',
-              value: value,
-              base: 16,
-              isMalformed: false,
-              pos: this.char
-            };
-          }
-
-          // Base-8 numbers.
-          if (isOctalDigit(char)) {
-            index += 1;
-            value += char;
-            bad = false;
-
-            while (index < length) {
-              char = this.peek(index);
-
-              // Numbers like '019' (note the 9) are not valid octals
-              // but we still parse them and mark as malformed.
-
-              if (isDecimalDigit(char)) {
-                bad = true;
-              } else if (!isOctalDigit(char)) {
-                break;
-              }
-              value += char;
-              index += 1;
-            }
-
-            if (index < length) {
-              char = this.peek(index);
-              if (isIdentifierStart(char)) {
-                return null;
-              }
-            }
-
-            return {
-              type: 'number',
-              value: value,
-              base: 8,
-              isMalformed: false
-            };
-          }
-
-          // Decimal numbers that start with '0' such as '09' are illegal
-          // but we still parse them and return as malformed.
-
-          if (isDecimalDigit(char)) {
-            index += 1;
-            value += char;
-          }
-        }
-
-        while (index < length) {
-          char = this.peek(index);
-          if (!isDecimalDigit(char)) {
-            break;
-          }
+      if (value === "0") {
+        // Base-16 numbers.
+        if (char === "x" || char === "X") {
+          index += 1;
           value += char;
-          index += 1;
-        }
-      }
-
-      // Decimal digits.
-
-      if (char === ".") {
-        value += char;
-        index += 1;
-
-        while (index < length) {
-          char = this.peek(index);
-          if (!isDecimalDigit(char)) {
-            break;
-          }
-          value += char;
-          index += 1;
-        }
-      }
-
-      // Exponent part.
-
-      if (char === "e" || char === "E") {
-        value += char;
-        index += 1;
-        char = this.peek(index);
-
-        if (char === "+" || char === "-") {
-          value += this.peek(index);
-          index += 1;
-        }
-
-        char = this.peek(index);
-        if (isDecimalDigit(char)) {
-          value += char;
-          index += 1;
 
           while (index < length) {
             char = this.peek(index);
-            if (!isDecimalDigit(char)) {
+            if (!isHexDigit(char)) {
               break;
             }
             value += char;
             index += 1;
           }
-        } else {
-          return null;
-        }
-      }
 
-      if (index < length) {
-        char = this.peek(index);
-        if (!this.isPunctuator(char)) {
-          return null;
-        }
-      }
+          if (value.length <= 2) { // 0x
+            return {
+              type: 'number',
+              value: value,
+              isMalformed: true,
+              pos: this.char
+            };
+          }
 
-      return {
-        type: 'number',
-        value: value,
-        base: 10,
-        pos: this.char,
-        isMalformed: !isFinite(+value)
-      };
-    },
+          if (index < length) {
+            char = this.peek(index);
+            if (isIdentifierStart(char)) {
+              return null;
+            }
+          }
 
-    isPunctuator: function (ch1) {
-      switch (ch1) {
-        case ".":
-          case "(":
-          case ")":
-          case ",":
-          case "{":
-          case "}":
-          return true;
-      }
-
-      return false;
-    },
-
-    scanPunctuator: function () {
-      var ch1 = this.peek();
-
-      if (this.isPunctuator(ch1)) {
-        return {
-          type: ch1,
-          value: ch1,
-          pos: this.char
-        };
-      }
-
-      return null;
-    },
-
-    /*
-     * Extract a string out of the next sequence of characters and/or
-     * lines or return 'null' if its not possible. Since strings can
-     * span across multiple lines this method has to move the char
-     * pointer.
-     *
-     * This method recognizes pseudo-multiline JavaScript strings:
-     *
-     *   var str = "hello\
-     *   world";
-     */
-    scanStringLiteral: function () {
-      /*jshint loopfunc:true */
-      var quote = this.peek();
-
-      // String must start with a quote.
-      if (quote !== "\"" && quote !== "'") {
-        return null;
-      }
-
-      var value = "";
-
-      this.skip();
-
-      while (this.peek() !== quote) {
-        if (this.peek() === "") { // End Of Line
           return {
-            type: 'string',
+            type: 'number',
             value: value,
-            isUnclosed: true,
-            quote: quote,
+            base: 16,
+            isMalformed: false,
             pos: this.char
           };
         }
 
-        var char = this.peek();
-        var jump = 1; // A length of a jump, after we're done
-        // parsing this character.
+        // Base-8 numbers.
+        if (isOctalDigit(char)) {
+          index += 1;
+          value += char;
+          bad = false;
 
-        value += char;
-        this.skip(jump);
+          while (index < length) {
+            char = this.peek(index);
+
+            // Numbers like '019' (note the 9) are not valid octals
+            // but we still parse them and mark as malformed.
+
+            if (isDecimalDigit(char)) {
+              bad = true;
+            } if (!isOctalDigit(char)) {
+              // if the char is a non punctuator then its not a valid number
+              if (!this.isPunctuator(char)) {
+                return null;
+              }
+              break;
+            }
+            value += char;
+            index += 1;
+          }
+
+          if (index < length) {
+            char = this.peek(index);
+            if (isIdentifierStart(char)) {
+              return null;
+            }
+          }
+
+          return {
+            type: 'number',
+            value: value,
+            base: 8,
+            isMalformed: bad
+          };
+        }
+
+        // Decimal numbers that start with '0' such as '09' are illegal
+        // but we still parse them and return as malformed.
+
+        if (isDecimalDigit(char)) {
+          index += 1;
+          value += char;
+        }
       }
 
-      this.skip();
+      while (index < length) {
+        char = this.peek(index);
+        if (!isDecimalDigit(char)) {
+          break;
+        }
+        value += char;
+        index += 1;
+      }
+    }
+
+    // Decimal digits.
+
+    if (char === ".") {
+      value += char;
+      index += 1;
+
+      while (index < length) {
+        char = this.peek(index);
+        if (!isDecimalDigit(char)) {
+          break;
+        }
+        value += char;
+        index += 1;
+      }
+    }
+
+    // Exponent part.
+
+    if (char === "e" || char === "E") {
+      value += char;
+      index += 1;
+      char = this.peek(index);
+
+      if (char === "+" || char === "-") {
+        value += this.peek(index);
+        index += 1;
+      }
+
+      char = this.peek(index);
+      if (isDecimalDigit(char)) {
+        value += char;
+        index += 1;
+
+        while (index < length) {
+          char = this.peek(index);
+          if (!isDecimalDigit(char)) {
+            break;
+          }
+          value += char;
+          index += 1;
+        }
+      } else {
+        return null;
+      }
+    }
+
+    if (index < length) {
+      char = this.peek(index);
+      if (!this.isPunctuator(char)) {
+        return null;
+      }
+    }
+
+    return {
+      type: 'number',
+      value: value,
+      base: 10,
+      pos: this.char,
+      isMalformed: !isFinite(+value)
+    };
+  },
+
+  isPunctuator: function (ch1) {
+    switch (ch1) {
+      case ".":
+        case "(":
+        case ")":
+        case ",":
+        case "{":
+        case "}":
+        return true;
+    }
+
+    return false;
+  },
+
+  scanPunctuator: function () {
+    var ch1 = this.peek();
+
+    if (this.isPunctuator(ch1)) {
       return {
-        type: 'string',
-        value: value,
-        isUnclosed: false,
-        quote: quote,
+        type: ch1,
+        value: ch1,
         pos: this.char
       };
-    },
+    }
 
-  };
+    return null;
+  },
+
+  /*
+   * Extract a string out of the next sequence of characters and/or
+   * lines or return 'null' if its not possible. Since strings can
+   * span across multiple lines this method has to move the char
+   * pointer.
+   *
+   * This method recognizes pseudo-multiline JavaScript strings:
+   *
+   *   var str = "hello\
+   *   world";
+   */
+  scanStringLiteral: function () {
+    /*jshint loopfunc:true */
+    var quote = this.peek();
+
+    // String must start with a quote.
+    if (quote !== "\"" && quote !== "'") {
+      return null;
+    }
+
+    var value = "";
+
+    this.skip();
+
+    while (this.peek() !== quote) {
+      if (this.peek() === "") { // End Of Line
+        return {
+          type: 'string',
+          value: value,
+          isUnclosed: true,
+          quote: quote,
+          pos: this.char
+        };
+      }
+
+      var char = this.peek();
+      var jump = 1; // A length of a jump, after we're done
+      // parsing this character.
+
+      value += char;
+      this.skip(jump);
+    }
+
+    this.skip();
+    return {
+      type: 'string',
+      value: value,
+      isUnclosed: false,
+      quote: quote,
+      pos: this.char
+    };
+  },
+
+};
 

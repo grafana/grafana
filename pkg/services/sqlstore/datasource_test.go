@@ -12,8 +12,6 @@ import (
 )
 
 func InitTestDB(t *testing.T) {
-
-	t.Log("InitTestDB")
 	x, err := xorm.NewEngine(sqlutil.TestDB_Sqlite3.DriverName, sqlutil.TestDB_Sqlite3.ConnStr)
 	//x, err := xorm.NewEngine(sqlutil.TestDB_Mysql.DriverName, sqlutil.TestDB_Mysql.ConnStr)
 	//x, err := xorm.NewEngine(sqlutil.TestDB_Postgres.DriverName, sqlutil.TestDB_Postgres.ConnStr)
@@ -24,7 +22,7 @@ func InitTestDB(t *testing.T) {
 
 	sqlutil.CleanDB(x)
 
-	if err := SetEngine(x, false); err != nil {
+	if err := SetEngine(x); err != nil {
 		t.Fatal(err)
 	}
 }
@@ -43,6 +41,7 @@ func TestDataAccess(t *testing.T) {
 
 			err := AddDataSource(&m.AddDataSourceCommand{
 				OrgId:    10,
+				Name:     "laban",
 				Type:     m.DS_INFLUXDB,
 				Access:   m.DS_ACCESS_DIRECT,
 				Url:      "http://test",
@@ -65,15 +64,19 @@ func TestDataAccess(t *testing.T) {
 
 		Convey("Given a datasource", func() {
 
-			AddDataSource(&m.AddDataSourceCommand{
+			err := AddDataSource(&m.AddDataSourceCommand{
 				OrgId:  10,
+				Name:   "nisse",
 				Type:   m.DS_GRAPHITE,
 				Access: m.DS_ACCESS_DIRECT,
 				Url:    "http://test",
 			})
+			So(err, ShouldBeNil)
 
 			query := m.GetDataSourcesQuery{OrgId: 10}
-			GetDataSources(&query)
+			err = GetDataSources(&query)
+			So(err, ShouldBeNil)
+
 			ds := query.Result[0]
 
 			Convey("Can delete datasource", func() {

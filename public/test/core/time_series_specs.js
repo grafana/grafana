@@ -49,6 +49,63 @@ define([
         expect(series.stats.avg).to.be(6.333333333333333);
       });
 
+      it('the delta value should account for nulls', function() {
+        series = new TimeSeries({
+                 datapoints: [[1,2],[3,3],[null,4],[10,5],[15,6]]
+               });
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.delta).to.be(14);
+      });
+
+      it('the delta value should account for nulls on first', function() {
+        series = new TimeSeries({
+                 datapoints: [[null,2],[1,3],[10,4],[15,5]]
+               });
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.delta).to.be(14);
+      });
+
+      it('the delta value should account for nulls on last', function() {
+        series = new TimeSeries({
+                 datapoints: [[1,2],[5,3],[10,4],[null,5]]
+               });
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.delta).to.be(9);
+      });
+
+      it('the delta value should account for resets', function() {
+        series = new TimeSeries({
+                 datapoints: [[1,2],[5,3],[10,4],[0,5],[10,6]]
+               });
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.delta).to.be(19);
+      });
+
+      it('the delta value should account for resets on last', function() {
+        series = new TimeSeries({
+                 datapoints: [[1,2],[2,3],[10,4],[8,5]]
+               });
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.delta).to.be(17);
+      });
+
+      it('the range value should be max - min', function() {
+        series = new TimeSeries(testData);
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.range).to.be(9);
+      });
+
+      it('first value should ingone nulls', function() {
+        series = new TimeSeries(testData);
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.first).to.be(1);
+        series = new TimeSeries({
+                 datapoints: [[null,2],[1,3],[10,4],[8,5]]
+               });
+        series.getFlotPairs('null', yAxisFormats);
+        expect(series.stats.first).to.be(1);
+      });
+
       it('with null as zero style, average value should treat nulls as 0', function() {
         series = new TimeSeries(testData);
         series.getFlotPairs('null as zero', yAxisFormats);
@@ -56,7 +113,39 @@ define([
       });
     });
 
-    describe('can detect if serie contains ms precision', function() {
+    describe('When checking if ms resolution is needed', function() {
+      describe('msResolution with second resolution timestamps', function() {
+        beforeEach(function() {
+          series = new TimeSeries({datapoints: [[45, 1234567890], [60, 1234567899]]});
+        });
+
+        it('should set hasMsResolution to false', function() {
+          expect(series.hasMsResolution).to.be(false);
+        });
+      });
+
+      describe('msResolution with millisecond resolution timestamps', function() {
+        beforeEach(function() {
+          series = new TimeSeries({datapoints: [[55, 1236547890001], [90, 1234456709000]]});
+        });
+
+        it('should show millisecond resolution tooltip', function() {
+          expect(series.hasMsResolution).to.be(true);
+        });
+      });
+
+      describe('msResolution with millisecond resolution timestamps but with trailing zeroes', function() {
+        beforeEach(function() {
+          series = new TimeSeries({datapoints: [[45, 1234567890000], [60, 1234567899000]]});
+        });
+
+        it('should not show millisecond resolution tooltip', function() {
+          expect(series.hasMsResolution).to.be(false);
+        });
+      });
+    });
+
+    describe('can detect if series contains ms precision', function() {
       var fakedata;
 
       beforeEach(function() {
@@ -64,13 +153,13 @@ define([
       });
 
       it('missing datapoint with ms precision', function() {
-        fakedata.datapoints[0] = [1234567890000, 1337];
+        fakedata.datapoints[0] = [1337, 1234567890000];
         series = new TimeSeries(fakedata);
         expect(series.isMsResolutionNeeded()).to.be(false);
       });
 
       it('contains datapoint with ms precision', function() {
-        fakedata.datapoints[0] = [1236547890001, 1337];
+        fakedata.datapoints[0] = [1337, 1236547890001];
         series = new TimeSeries(fakedata);
         expect(series.isMsResolutionNeeded()).to.be(true);
       });

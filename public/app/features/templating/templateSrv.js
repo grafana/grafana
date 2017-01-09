@@ -1,10 +1,9 @@
 define([
   'angular',
   'lodash',
-  './editorCtrl',
-  './templateValuesSrv',
+  'app/core/utils/kbn',
 ],
-function (angular, _) {
+function (angular, _, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -16,6 +15,7 @@ function (angular, _) {
     this._index = {};
     this._texts = {};
     this._grafanaVariables = {};
+    this._adhocVariables = {};
 
     this.init = function(variables) {
       this.variables = variables;
@@ -24,23 +24,51 @@ function (angular, _) {
 
     this.updateTemplateData = function() {
       this._index = {};
+      this._filters = {};
+      this._adhocVariables = {};
 
       for (var i = 0; i < this.variables.length; i++) {
         var variable = this.variables[i];
+
+        // add adhoc filters to it's own index
+        if (variable.type === 'adhoc') {
+          this._adhocVariables[variable.datasource] = variable;
+          continue;
+        }
+
         if (!variable.current || !variable.current.isNone && !variable.current.value) {
           continue;
         }
+
         this._index[variable.name] = variable;
       }
     };
 
-    function regexEscape(value) {
-      return value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&');
-    }
+    this.variableInitialized = function(variable) {
+      this._index[variable.name] = variable;
+    };
+
+    this.getAdhocFilters = function(datasourceName) {
+      var variable = this._adhocVariables[datasourceName];
+      if (variable) {
+        return variable.filters || [];
+      }
+      return [];
+    };
 
     function luceneEscape(value) {
       return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, "\\$1");
     }
+
+    this.luceneFormat = function(value) {
+      if (typeof value === 'string') {
+        return luceneEscape(value);
+      }
+      var quotedValues = _.map(value, function(val) {
+        return '\"' + luceneEscape(val) + '\"';
+      });
+      return '(' + quotedValues.join(' OR ') + ')';
+    };
 
     this.formatValue = function(value, format, variable) {
       // for some scopedVars there is no variable
@@ -53,26 +81,23 @@ function (angular, _) {
       switch(format) {
         case "regex": {
           if (typeof value === 'string') {
-            return regexEscape(value);
+            return kbn.regexEscape(value);
           }
 
-          var escapedValues = _.map(value, regexEscape);
-          return escapedValues.join('|');
+          var escapedValues = _.map(value, kbn.regexEscape);
+          return '(' + escapedValues.join('|') + ')';
         }
         case "lucene": {
-          if (typeof value === 'string') {
-            return luceneEscape(value);
-          }
-          var quotedValues = _.map(value, function(val) {
-            return '\"' + luceneEscape(val) + '\"';
-          });
-          return '(' + quotedValues.join(' OR ') + ')';
+          return this.luceneFormat(value, format, variable);
         }
         case "pipe": {
           if (typeof value === 'string') {
             return value;
           }
           return value.join('|');
+        }
+        case "distributed": {
+          return this.distributeVariable(value, variable.name);
         }
         default:  {
           if (typeof value === 'string') {
@@ -87,17 +112,18 @@ function (angular, _) {
       this._grafanaVariables[name] = value;
     };
 
-    this.variableExists = function(expression) {
+    this.getVariableName = function(expression) {
       this._regex.lastIndex = 0;
       var match = this._regex.exec(expression);
-      return match && (self._index[match[1] || match[2]] !== void 0);
+      if (!match) {
+        return null;
+      }
+      return match[1] || match[2];
     };
 
-    this.containsVariable = function(str, variableName) {
-      if (!str) {
-        return false;
-      }
-      return str.indexOf('$' + variableName) !== -1 || str.indexOf('[[' + variableName + ']]') !== -1;
+    this.variableExists = function(expression) {
+      var name = this.getVariableName(expression);
+      return name && (self._index[name] !== void 0);
     };
 
     this.highlightVariablesAsHtml = function(str) {
@@ -152,6 +178,10 @@ function (angular, _) {
         value = variable.current.value;
         if (self.isAllValue(value)) {
           value = self.getAllValue(variable);
+          // skip formating of custom all values
+          if (variable.allValue) {
+            return value;
+          }
         }
 
         var res = self.formatValue(value, format, variable);
@@ -184,19 +214,23 @@ function (angular, _) {
 
     this.fillVariableValuesForUrl = function(params, scopedVars) {
       _.each(this.variables, function(variable) {
-        var current = variable.current;
-        var value = current.value;
-
-        if (current.text === 'All') {
-          value = 'All';
-        }
-
         if (scopedVars && scopedVars[variable.name] !== void 0) {
-          value = scopedVars[variable.name].value;
+          params['var-' + variable.name] = scopedVars[variable.name].value;
+        } else {
+          params['var-' + variable.name] = variable.getValueForUrl();
         }
-
-        params['var-' + variable.name] = value;
       });
+    };
+
+    this.distributeVariable = function(value, variable) {
+      value = _.map(value, function(val, index) {
+        if (index !== 0) {
+          return variable + "=" + val;
+        } else {
+          return val;
+        }
+      });
+      return value.join(',');
     };
 
   });

@@ -1,12 +1,14 @@
-----
-page_title: Dashboard JSON
-page_description: Dashboard JSON Reference
-page_keywords: grafana, dashboard, json, documentation
----
++++
+title = "JSON Model"
+keywords = ["grafana", "dashboard", "documentation", "json", "model"]
+type = "docs"
+[menu.docs]
+name = "JSON Model"
+parent = "dashboard_features"
+weight = 100
++++
 
 # Dashboard JSON
-
-## Overview
 
 A dashboard in Grafana is represented by a JSON object, which stores metadata of its dashboard. Dashboard metadata includes dashboard properties, metadata from rows, panels, template variables, panel queries, etc.
 
@@ -26,13 +28,12 @@ When a user creates a new dashboard, a new dashboard JSON object is initialized 
 {
   "id": null,
   "title": "New dashboard",
-  "originalTitle": "New dashboard",
   "tags": [],
   "style": "dark",
   "timezone": "browser",
   "editable": true,
   "hideControls": false,
-  "sharedCrosshair": false,
+  "graphTooltip": 1,
   "rows": [],
   "time": {
     "from": "now-6h",
@@ -59,13 +60,12 @@ Each field in the dashboard JSON is explained below with its usage:
 | ---- | ----- |
 | **id** | unique dashboard id, an integer |
 | **title** | current title of dashboard |
-| **originalTitle** | title of dashboard when saved for the first time |
 | **tags** | tags associated with dashboard, an array of strings |
 | **style** | theme of dashboard, i.e. `dark` or `light` |
 | **timezone** | timezone of dashboard, i.e. `utc` or `browser` |
 | **editable** | whether a dashboard is editable or not |
 | **hideControls** | whether row controls on the left in green are hidden or not |
-| **sharedCrosshair** | TODO |
+| **graphTooltip** | TODO |
 | **rows** | row metadata, see [rows section](/docs/sources/reference/dashboard.md/#rows) for details |
 | **time** | time range for dashboard, i.e. last 6 hours, last 7 days, etc |
 | **timepicker** | timepicker metadata, see [timepicker section](/docs/sources/reference/dashboard.md/#timepicker) for details |

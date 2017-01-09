@@ -5,7 +5,6 @@
 }
 
 .singlestat-panel-value-container {
-  padding: 20px;
   display: table-cell;
   vertical-align: middle;
   text-align: center;
@@ -46,6 +45,10 @@
   tr:last-child td {
     border: none;
   }
+}
+
+#flotGagueValue0 {
+  font-weight: bold; //please dont hurt me for this!
 }
 
 

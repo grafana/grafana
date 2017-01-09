@@ -4,6 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -29,6 +30,14 @@ func getUserUserProfile(userId int64) Response {
 
 // POST /api/user
 func UpdateSignedInUser(c *middleware.Context, cmd m.UpdateUserCommand) Response {
+	if setting.AuthProxyEnabled {
+		if setting.AuthProxyHeaderProperty == "email" && cmd.Email != c.Email {
+			return ApiError(400, "Not allowed to change email when auth proxy is using email property", nil)
+		}
+		if setting.AuthProxyHeaderProperty == "username" && cmd.Login != c.Login {
+			return ApiError(400, "Not allowed to change username when auth proxy is using username property", nil)
+		}
+	}
 	cmd.UserId = c.UserId
 	return handleUpdateUser(cmd)
 }
@@ -37,6 +46,24 @@ func UpdateSignedInUser(c *middleware.Context, cmd m.UpdateUserCommand) Response
 func UpdateUser(c *middleware.Context, cmd m.UpdateUserCommand) Response {
 	cmd.UserId = c.ParamsInt64(":id")
 	return handleUpdateUser(cmd)
+}
+
+//POST /api/users/:id/using/:orgId
+func UpdateUserActiveOrg(c *middleware.Context) Response {
+	userId := c.ParamsInt64(":id")
+	orgId := c.ParamsInt64(":orgId")
+
+	if !validateUsingOrg(userId, orgId) {
+		return ApiError(401, "Not a valid organization", nil)
+	}
+
+	cmd := m.SetUsingOrgCommand{UserId: userId, OrgId: orgId}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed change active organization", err)
+	}
+
+	return ApiSuccess("Active organization changed")
 }
 
 func handleUpdateUser(cmd m.UpdateUserCommand) Response {
@@ -109,7 +136,28 @@ func UserSetUsingOrg(c *middleware.Context) Response {
 	return ApiSuccess("Active organization changed")
 }
 
+// GET /profile/switch-org/:id
+func ChangeActiveOrgAndRedirectToHome(c *middleware.Context) {
+	orgId := c.ParamsInt64(":id")
+
+	if !validateUsingOrg(c.UserId, orgId) {
+		NotFoundHandler(c)
+	}
+
+	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgId}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		NotFoundHandler(c)
+	}
+
+	c.Redirect(setting.AppSubUrl + "/")
+}
+
 func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) Response {
+	if setting.LdapEnabled || setting.AuthProxyEnabled {
+		return ApiError(400, "Not allowed to change password when LDAP or Auth Proxy is enabled", nil)
+	}
+
 	userQuery := m.GetUserByIdQuery{Id: c.UserId}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
@@ -121,8 +169,9 @@ func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) 
 		return ApiError(401, "Invalid old password", nil)
 	}
 
-	if len(cmd.NewPassword) < 4 {
-		return ApiError(400, "New password too short", nil)
+	password := m.Password(cmd.NewPassword)
+	if password.IsWeak() {
+		return ApiError(400, "New password is too short", nil)
 	}
 
 	cmd.UserId = c.UserId
@@ -143,4 +192,35 @@ func SearchUsers(c *middleware.Context) Response {
 	}
 
 	return Json(200, query.Result)
+}
+
+func SetHelpFlag(c *middleware.Context) Response {
+	flag := c.ParamsInt64(":id")
+
+	bitmask := &c.HelpFlags1
+	bitmask.AddFlag(m.HelpFlags1(flag))
+
+	cmd := m.SetUserHelpFlagCommand{
+		UserId:     c.UserId,
+		HelpFlags1: *bitmask,
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to update help flag", err)
+	}
+
+	return Json(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+}
+
+func ClearHelpFlags(c *middleware.Context) Response {
+	cmd := m.SetUserHelpFlagCommand{
+		UserId:     c.UserId,
+		HelpFlags1: m.HelpFlags1(0),
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to update help flag", err)
+	}
+
+	return Json(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
 }

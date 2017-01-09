@@ -31,6 +31,8 @@ export default class TimeSeries {
   allIsZero: boolean;
   decimals: number;
   scaledDecimals: number;
+  hasMsResolution: boolean;
+  isOutsideRange: boolean;
 
   lines: any;
   bars: any;
@@ -42,6 +44,7 @@ export default class TimeSeries {
   fillBelowTo: any;
   transform: any;
   flotpairs: any;
+  unit: any;
 
   constructor(opts) {
     this.datapoints = opts.datapoints;
@@ -52,6 +55,8 @@ export default class TimeSeries {
     this.valueFormater = kbn.valueFormats.none;
     this.stats = {};
     this.legend = true;
+    this.unit = opts.unit;
+    this.hasMsResolution = this.isMsResolutionNeeded();
   }
 
   applySeriesOverrides(overrides) {
@@ -97,6 +102,10 @@ export default class TimeSeries {
     this.stats.min = Number.MAX_VALUE;
     this.stats.avg = null;
     this.stats.current = null;
+    this.stats.first = null;
+    this.stats.delta = 0;
+    this.stats.range = null;
+    this.stats.timeStep = Number.MAX_VALUE;
     this.allIsNull = true;
     this.allIsZero = true;
 
@@ -105,10 +114,23 @@ export default class TimeSeries {
     var currentTime;
     var currentValue;
     var nonNulls = 0;
+    var previousTime;
+    var previousValue = 0;
+    var previousDeltaUp = true;
 
     for (var i = 0; i < this.datapoints.length; i++) {
       currentValue = this.datapoints[i][0];
       currentTime = this.datapoints[i][1];
+
+      // Due to missing values we could have different timeStep all along the series
+      // so we have to find the minimum one (could occur with aggregators such as ZimSum)
+      if (previousTime !== undefined) {
+        let timeStep = currentTime - previousTime;
+        if (timeStep < this.stats.timeStep) {
+          this.stats.timeStep = timeStep;
+        }
+      }
+      previousTime = currentTime;
 
       if (currentValue === null) {
         if (ignoreNulls) { continue; }
@@ -131,6 +153,24 @@ export default class TimeSeries {
         if (currentValue < this.stats.min) {
           this.stats.min = currentValue;
         }
+        if (this.stats.first === null){
+          this.stats.first = currentValue;
+        }else{
+          if (previousValue > currentValue) {   // counter reset
+            previousDeltaUp = false;
+            if (i === this.datapoints.length-1) {  // reset on last
+                this.stats.delta += currentValue;
+            }
+          }else{
+            if (previousDeltaUp) {
+              this.stats.delta += currentValue - previousValue;    // normal increment
+            } else {
+              this.stats.delta += currentValue;   // account for counter reset
+            }
+            previousDeltaUp = true;
+          }
+        }
+        previousValue = currentValue;
       }
 
       if (currentValue !== 0) {
@@ -138,10 +178,6 @@ export default class TimeSeries {
       }
 
       result.push([currentTime, currentValue]);
-    }
-
-    if (this.datapoints.length >= 2) {
-      this.stats.timeStep = this.datapoints[1][1] - this.datapoints[0][1];
     }
 
     if (this.stats.max === -Number.MAX_VALUE) { this.stats.max = null; }
@@ -153,6 +189,9 @@ export default class TimeSeries {
       if (this.stats.current === null && result.length > 1) {
         this.stats.current = result[result.length-2][1];
       }
+    }
+    if (this.stats.max !== null && this.stats.min !== null) {
+      this.stats.range = this.stats.max - this.stats.min;
     }
 
     this.stats.count = result.length;
@@ -170,9 +209,9 @@ export default class TimeSeries {
   }
 
   isMsResolutionNeeded() {
-    for (var i = 0; i<this.datapoints.length; i++) {
-      if (this.datapoints[i][0] !== null) {
-        var timestamp = this.datapoints[i][0].toString();
+    for (var i = 0; i < this.datapoints.length; i++) {
+      if (this.datapoints[i][1] !== null) {
+        var timestamp = this.datapoints[i][1].toString();
         if (timestamp.length === 13 && (timestamp % 1000) !== 0) {
           return true;
         }

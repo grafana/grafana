@@ -1,17 +1,23 @@
----
-page_title: LDAP Integration
-page_description: LDAP Integration guide for Grafana.
-page_keywords: grafana, ldap, configuration, documentation, integration
----
++++
+title = "LDAP Authentication"
+description = "Grafana LDAP Authentication Guide "
+keywords = ["grafana", "configuration", "documentation", "ldap"]
+type = "docs"
+[menu.docs]
+name = "LDAP Authentication"
+identifier = "ldap"
+parent = "admin"
+weight = 2
++++
 
-# LDAP Integration
+# LDAP Authentication
 
 Grafana (2.1 and newer) ships with a strong LDAP integration feature. The LDAP integration in Grafana allows your
 Grafana users to login with their LDAP credentials. You can also specify mappings between LDAP
 group memberships and Grafana Organization user roles.
 
 ## Configuration
-You turn on LDAP in the [main config file](../configuration/#authldap) as well as specify the path to the LDAP
+You turn on LDAP in the [main config file]({{< relref "configuration.md#auth-ldap" >}}) as well as specify the path to the LDAP
 specific configuration file (default: `/etc/grafana/ldap.toml`).
 
 ### Example config
@@ -27,6 +33,8 @@ host = "127.0.0.1"
 port = 389
 # Set to true if ldap server supports TLS
 use_ssl = false
+# Set to true if connect ldap server with STARTTLS pattern (create connection in insecure, then upgrade to secure connection with TLS)
+start_tls = false
 # set to true if you want to skip ssl cert validation
 ssl_skip_verify = false
 # set to the path to your root CA certificate or leave unset to use system defaults
@@ -35,6 +43,7 @@ ssl_skip_verify = false
 # Search user bind dn
 bind_dn = "cn=admin,dc=grafana,dc=org"
 # Search user bind password
+# If the password contains # or ; you have to wrap it with trippel quotes. Ex """#password;"""
 bind_password = 'grafana'
 
 # User search filter, for example "(cn=%s)" or "(sAMAccountName=%s)" or "(uid=%s)"

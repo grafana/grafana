@@ -1,10 +1,18 @@
 define([
   'angular',
+  'lodash',
   '../core_module',
   'app/core/config',
 ],
-function (angular, coreModule, config) {
+function (angular, _, coreModule, config) {
   'use strict';
+
+  var failCodes = {
+    "1000": "Required team membership not fulfilled",
+    "1001": "Required organization membership not fulfilled",
+    "1002": "Required email domain not fulfilled",
+    "1003": "Login provider denied login request",
+  };
 
   coreModule.default.controller('LoginCtrl', function($scope, backendSrv, contextSrv, $location) {
     $scope.formModel = {
@@ -15,9 +23,10 @@ function (angular, coreModule, config) {
 
     contextSrv.sidemenu = false;
 
-    $scope.googleAuthEnabled = config.googleAuthEnabled;
-    $scope.githubAuthEnabled = config.githubAuthEnabled;
-    $scope.oauthEnabled = config.githubAuthEnabled || config.googleAuthEnabled;
+    $scope.oauth = config.oauth;
+    $scope.oauthEnabled = _.keys(config.oauth).length > 0;
+
+    $scope.disableLoginForm = config.disableLoginForm;
     $scope.disableUserSignUp = config.disableUserSignUp;
     $scope.loginHint     = config.loginHint;
 
@@ -28,18 +37,11 @@ function (angular, coreModule, config) {
       $scope.$watch("loginMode", $scope.loginModeChanged);
 
       var params = $location.search();
-      if (params.failedMsg) {
-        $scope.appEvent('alert-warning', ['Login Failed', params.failedMsg]);
+      if (params.failCode) {
+        $scope.appEvent('alert-warning', ['Login Failed', failCodes[params.failCode]]);
         delete params.failedMsg;
         $location.search(params);
       }
-    };
-
-    // build info view model
-    $scope.buildInfo = {
-      version: config.buildInfo.version,
-      commit: config.buildInfo.commit,
-      buildstamp: new Date(config.buildInfo.buildstamp * 1000)
     };
 
     $scope.submit = function() {
@@ -76,7 +78,12 @@ function (angular, coreModule, config) {
       }
 
       backendSrv.post('/login', $scope.formModel).then(function(result) {
-        if (result.redirectUrl) {
+        var params = $location.search();
+
+        if (params.redirect && params.redirect[0] === '/') {
+          window.location.href = config.appSubUrl + params.redirect;
+        }
+        else if (result.redirectUrl) {
           window.location.href = result.redirectUrl;
         } else {
           window.location.href = config.appSubUrl + '/';

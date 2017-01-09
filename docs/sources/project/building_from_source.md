@@ -1,8 +1,10 @@
----
-page_title: Building from source
-page_description: Building from source Grafana.
-page_keywords: grafana, build, contribute, documentation
----
++++
+title = "Building from source"
+type = "docs"
+[menu.docs]
+parent = "installation"
+weight = 5
++++
 
 # Building Grafana from source
 
@@ -11,7 +13,7 @@ dev environment. Grafana ships with its own required backend server; also comple
 
 ## Dependencies
 
-- [Go 1.5](https://golang.org/dl/)
+- [Go 1.7.3](https://golang.org/dl/)
 - [NodeJS](https://nodejs.org/download/)
 
 ## Get Code
@@ -24,9 +26,8 @@ go get github.com/grafana/grafana
 ## Building the backend
 ```
 cd $GOPATH/src/github.com/grafana/grafana
-go run build.go setup              # (only needed once to install godep)
-$GOPATH/bin/godep restore          # (will pull down all golang lib dependencies in your current GOPATH)
-go run build.go build              # (or 'go build .')
+go run build.go setup
+go run build.go build              # (or 'go build ./pkg/cmd/grafana-server')
 ```
 
 #### Building on Windows
@@ -39,13 +40,14 @@ To build less to css for the frontend you will need a recent version of node (v0
 npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```
-npm install
+npm install -g yarn
+yarn install
 npm install -g grunt-cli
 grunt
 ```
 
 ## Recompile backend on source change
-To rebuild on source change (requires that you executed godep restore)
+To rebuild on source change
 ```
 go get github.com/Unknwon/bra
 bra run
@@ -63,9 +65,10 @@ If you built it with `go build .`, run `./grafana`
 Open grafana in your browser (default [http://localhost:3000](http://localhost:3000)) and login with admin user (default user/pass = admin/admin).
 
 ## Developing for Grafana
-To add features, customize your config, etc, you'll need to rebuild on source change (requires that you executed [godep restore](#build-the-backend), as outlined above).
+To add features, customize your config, etc, you'll need to rebuild on source change.
 ```
 go get github.com/Unknwon/bra
+
 bra run
 ```
 You'll also need to run `grunt watch` to watch for changes to the front-end.
@@ -89,6 +92,3 @@ Learn more about Grafana config options in the [Configuration section](/installa
 
 ## Create a pull requests
 Please contribute to the Grafana project and submit a pull request! Build new features, write or update documentation, fix bugs and generally make Grafana even more awesome.
-
-Before or after you create a pull request, sign the [contributor license agreement](/project/cla.html).
-Together we can build amazing software faster.

@@ -5,9 +5,18 @@ page_keywords: grafana, plugins, documentation
 ---
 
 
++++
+title = "Installing Plugins"
+type = "docs"
+[menu.docs]
+parent = "plugins"
+weight = 1
++++
+
+
 # Panels
 
-Panels are the main bulding block of dashboards.
+Panels are the main building blocks of dashboards.
 
 ## Panel development
 

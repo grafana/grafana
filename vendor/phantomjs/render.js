@@ -12,17 +12,17 @@
     params[parts[1]] = parts[2];
   });
 
-  var usage = "url=<url> png=<filename> width=<width> height=<height> cookiename=<cookiename> sessionid=<sessionid> domain=<domain>";
+  var usage = "url=<url> png=<filename> width=<width> height=<height> renderKey=<key>";
 
-  if (!params.url || !params.png || !params.cookiename || ! params.sessionid || !params.domain) {
+  if (!params.url || !params.png ||  !params.renderKey || !params.domain) {
     console.log(usage);
     phantom.exit();
   }
 
   phantom.addCookie({
-    'name': params.cookiename,
-    'value': params.sessionid,
-    'domain': params.domain
+    'name': 'renderKey',
+    'value': params.renderKey,
+    'domain': params.domain,
   });
 
   page.viewportSize = {
@@ -35,20 +35,31 @@
   page.open(params.url, function (status) {
     // console.log('Loading a web page: ' + params.url + ' status: ' + status);
 
-    function checkIsReady() {
-      var canvas = page.evaluate(function() {
-        if (!window.angular) { return false; }
-        var body = window.angular.element(document.body);   // 1
-        if (!body.scope) { return false; }
+    page.onError = function(msg, trace) {
+      var msgStack = ['ERROR: ' + msg];
+      if (trace && trace.length) {
+        msgStack.push('TRACE:');
+        trace.forEach(function(t) {
+          msgStack.push(' -> ' + t.file + ': ' + t.line + (t.function ? ' (in function "' + t.function +'")' : ''));
+        });
+      }
+      console.error(msgStack.join('\n'));
+    };
 
-        var rootScope = body.scope();
+    function checkIsReady() {
+      var panelsRendered = page.evaluate(function() {
+        if (!window.angular) { return false; }
+        var body = window.angular.element(document.body);
+        if (!body.injector) { return false; }
+        if (!body.injector()) { return false; }
+
+        var rootScope = body.injector().get('$rootScope');
         if (!rootScope) {return false;}
-        if (!rootScope.performance) { return false; }
-        var panelsToLoad = window.angular.element('div.panel').length;
-        return rootScope.performance.panelsRendered >= panelsToLoad;
+        var panels = angular.element('div.panel:visible').length;
+        return rootScope.panelsRendered >= panels;
       });
 
-      if (canvas || tries === 1000) {
+      if (panelsRendered || tries === 1000) {
         var bb = page.evaluate(function () {
           return document.getElementsByClassName("main-view")[0].getBoundingClientRect();
         });
@@ -59,6 +70,7 @@
           width:  bb.width,
           height: bb.height
         };
+
         page.render(params.png);
         phantom.exit();
       }

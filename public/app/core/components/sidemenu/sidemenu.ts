@@ -12,6 +12,11 @@ export class SideMenuCtrl {
   mainLinks: any;
   orgMenu: any;
   appSubUrl: string;
+  loginUrl: string;
+  orgFilter: string;
+  orgItems: any;
+  orgs: any;
+  maxShownOrgs: number;
 
   /** @ngInject */
   constructor(private $scope, private $location, private contextSrv, private backendSrv, private $element) {
@@ -19,16 +24,20 @@ export class SideMenuCtrl {
     this.user = contextSrv.user;
     this.appSubUrl = config.appSubUrl;
     this.showSignout = this.contextSrv.isSignedIn && !config['authProxyEnabled'];
+    this.maxShownOrgs = 10;
 
     this.mainLinks = config.bootData.mainNavLinks;
     this.openUserDropdown();
+    this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
 
     this.$scope.$on('$routeChangeSuccess', () => {
       if (!this.contextSrv.pinned) {
         this.contextSrv.sidemenu = false;
       }
+      this.loginUrl = 'login?redirect=' + encodeURIComponent(this.$location.path());
     });
 
+    this.orgFilter = '';
   }
 
  getUrl(url) {
@@ -49,46 +58,45 @@ export class SideMenuCtrl {
      this.orgMenu.push({section: this.user.orgName, cssClass: 'dropdown-menu-title'});
      this.orgMenu.push({
        text: "Preferences",
-       url: this.getUrl("/org"),
+       url: this.getUrl("/org")
      });
      this.orgMenu.push({
        text: "Users",
-       url: this.getUrl("/org/users"),
+       url: this.getUrl("/org/users")
      });
      this.orgMenu.push({
        text: "API Keys",
-       url: this.getUrl("/org/apikeys"),
+       url: this.getUrl("/org/apikeys")
      });
    }
 
    this.orgMenu.push({cssClass: "divider"});
-
    this.backendSrv.get('/api/user/orgs').then(orgs => {
-     orgs.forEach(org => {
-       if (org.orgId === this.contextSrv.user.orgId) {
-         return;
-       }
-
-       this.orgMenu.push({
-         text: "Switch to " + org.name,
-         icon: "fa fa-fw fa-random",
-         click: () => {
-           this.switchOrg(org.orgId);
-         }
-       });
-     });
-
-     if (config.allowOrgCreate) {
-       this.orgMenu.push({text: "New organization", icon: "fa fa-fw fa-plus", url: this.getUrl('/org/new')});
-     }
+     this.orgs = orgs;
+     this.loadOrgsItems();
    });
  }
 
- switchOrg(orgId) {
-   this.backendSrv.post('/api/user/using/' + orgId).then(() => {
-     window.location.href = `${config.appSubUrl}/`;
+ loadOrgsItems(){
+   this.orgItems = [];
+   this.orgs.forEach(org => {
+     if (org.orgId === this.contextSrv.user.orgId) {
+       return;
+     }
+
+     if (this.orgItems.length < this.maxShownOrgs && (this.orgFilter === '' || org.name.indexOf(this.orgFilter) !== -1)){
+       this.orgItems.push({
+         text: "Switch to " + org.name,
+         icon: "fa fa-fw fa-random",
+         url: this.getUrl('/profile/switch-org/' + org.orgId),
+         target: '_self'
+       });
+     }
    });
- };
+   if (config.allowOrgCreate) {
+     this.orgItems.push({text: "New organization", icon: "fa fa-fw fa-plus", url: this.getUrl('/org/new')});
+   }
+ }
 }
 
 export function sideMenuDirective() {

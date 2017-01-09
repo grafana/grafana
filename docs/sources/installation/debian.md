@@ -1,34 +1,50 @@
----
-page_title: Installing on Debian / Ubuntu
-page_description: Grafana Installation guide for Debian / Ubuntu.
-page_keywords: grafana, installation, debian, ubuntu, guide
----
++++
+title = "Installing on Debian / Ubuntu"
+description = "Install guide for Grafana"
+keywords = ["grafana", "installation", "documentation"]
+type = "docs"
+aliases = ["/installation/installation/debian"]
+[menu.docs]
+name = "Installing on Ubuntu / Debian"
+identifier = "debian"
+parent = "installation"
+weight = 1
++++
 
 # Installing on Debian / Ubuntu
 
-## Download
-
 Description | Download
 ------------ | -------------
-.deb for Debian-based Linux | [grafana_2.6.0_amd64.deb](https://grafanarel.s3.amazonaws.com/builds/grafana_2.6.0_amd64.deb)
+Stable for Debian-based Linux | [4.0.2 (x86-64 deb)](https://grafanarel.s3.amazonaws.com/builds/grafana_4.0.2-1481203731_amd64.deb)
+Latest beta for Debian-based Linux | [4.1.0-beta1 (x86-64 deb)](https://grafanarel.s3.amazonaws.com/builds/grafana_4.1.0-1482230757beta1_amd64.deb)
 
-## Install
+## Install Stable
 
-    $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_2.6.0_amd64.deb
-    $ sudo apt-get install -y adduser libfontconfig
-    $ sudo dpkg -i grafana_2.6.0_amd64.deb
+```
+$ wget https://grafanarel.s3.amazonaws.com/builds/grafana_4.0.2-1481203731_amd64.deb
+$ sudo apt-get install -y adduser libfontconfig
+$ sudo dpkg -i grafana_4.0.2-1481203731_amd64.deb
+```
+
+## Install Latest Beta
+
+```
+$ wget https://grafanarel.s3.amazonaws.com/builds/grafana_4.1.0-1482230757beta1_amd64.deb
+$ sudo apt-get install -y adduser libfontconfig
+$ sudo dpkg -i grafana_4.1.0-1482230757beta1_amd64.deb
+```
 
 ## APT Repository
 
 Add the following line to your `/etc/apt/sources.list` file.
 
-    deb https://packagecloud.io/grafana/stable/debian/ wheezy main
+    deb https://packagecloud.io/grafana/stable/debian/ jessie main
 
 Use the above line even if you are on Ubuntu or another Debian version.
 There is also a testing repository if you want beta or release
 candidates.
 
-    deb https://packagecloud.io/grafana/testing/debian/ wheezy main
+    deb https://packagecloud.io/grafana/testing/debian/ jessie main
 
 Then add the [Package Cloud](https://packagecloud.io/grafana) key. This
 allows you to install signed packages.
@@ -68,7 +84,7 @@ is `3000` and default user and group is `admin`.
 
 To configure the Grafana server to start at boot time:
 
-    $ sudo update-rc.d grafana-server defaults 95 10
+    $ sudo update-rc.d grafana-server defaults
 
 ## Start the server (via systemd)
 
@@ -97,23 +113,24 @@ By default Grafana will log to `/var/log/grafana`
 
 The default configuration specifies a sqlite3 database located at
 `/var/lib/grafana/grafana.db`. Please backup this database before
-upgrades. You can also use MySQL or Postgres as the Grafana database, as detailed on [the configuration page](configuration.md#database).
+upgrades. You can also use MySQL or Postgres as the Grafana database, as detailed on [the configuration page]({{< relref "configuration.md#database" >}}).
 
 ## Configuration
 
 The configuration file is located at `/etc/grafana/grafana.ini`.  Go the
-[Configuration](/installation/configuration) page for details on all
+[Configuration]({{< relref "configuration.md" >}}) page for details on all
 those options.
 
 ### Adding data sources
 
-- [Graphite](../datasources/graphite.md)
-- [InfluxDB](../datasources/influxdb.md)
-- [OpenTSDB](../datasources/opentsdb.md)
+- [Graphite]({{< relref "datasources/graphite.md" >}})
+- [InfluxDB]({{< relref "datasources/influxdb.md" >}})
+- [OpenTSDB]({{< relref "datasources/opentsdb.md" >}})
+- [Prometheus]({{< relref "datasources/prometheus.md" >}})
 
 ## Installing from binary tar file
 
-Download [the latest `.tar.gz` file](http://grafana.org/download/builds) and
+Download [the latest `.tar.gz` file](http://grafana.org/download) and
 extract it.  This will extract into a folder named after the version you
 downloaded. This folder contains all files required to run Grafana.  There are
 no init scripts or install scripts in this package.
@@ -125,5 +142,3 @@ To configure Grafana add a configuration file named `custom.ini` to the
 Start Grafana by executing `./bin/grafana-server web`. The `grafana-server`
 binary needs the working directory to be the root install directory (where the
 binary and the `public` folder is located).
-
-

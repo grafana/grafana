@@ -116,6 +116,7 @@ func (this *service) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if avatar.Expired() {
 		if err := avatar.Update(); err != nil {
 			log.Trace("avatar update error: %v", err)
+			avatar = this.notFound
 		}
 	}
 

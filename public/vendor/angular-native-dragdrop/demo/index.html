@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html ng-app="app">
+
+  <head>
+    <meta charset="utf-8" />
+    <title>Angular DragDrop (Demo)</title>
+    <script>document.write('<base href="' + document.location + '" />');</script>
+    <link rel="stylesheet" href="css/styles.css" />
+    <script data-require="angular.js@1.4.x" src="https://ajax.googleapis.com/ajax/libs/angularjs/1.4.3/angular.js" data-semver="1.4.3"></script>
+    <script src="http://pc035860.github.io/angular-highlightjs/angular-highlightjs.min.js"></script>
+    <script src="js/app.js"></script>
+    <script src="../draganddrop.js"></script>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.5/css/bootstrap.min.css" rel="stylesheet">
+  </head>
+
+  <body >
+    <div class="container">
+        <div class="row topRow">
+            <h4 class="heading">
+                Drag and drop between the two lists.
+            </h4>
+        </div>
+        
+        <h3>Beasts</h3>
+        
+        <p>Left column of beasts is not draggable and accepts both beasts and priests</p>
+        
+        <hr>
+        
+        <div class="row" ng-controller="MainCtrl">
+            <div class="col-xs-6">
+                <ul ui-on-drop="onDrop($event,$data,men)" drag-enter-class="on-drag-enter-custom"
+                    drop-channel="beasts,priests"
+                    drop-validate="dropValidateHandler($drop, $event, $data)">
+                    <li ui-draggable="false" drag="man" drag-channel="beasts"
+                        on-drop-success="dropSuccessHandler($event,$index,men)"
+                        ng-repeat="man in men track by $index">
+                        {{man}}
+                    </li>
+                </ul>
+            </div>
+            <div class="col-xs-6">
+                <ul ui-on-drop="onDrop($event,$data,women)"
+                    drop-channel="beasts"
+                    drop-validate="dropValidateHandler($drop, $event, $data)">
+                    <li ui-draggable="true" drag="woman" drag-channel="beasts"
+                        on-drop-success="dropSuccessHandler($event,$index,women)"
+                        on-drop-failure="dropFailureHandler($event,$index,women)"
+                        ng-repeat="woman in women track by $index">
+                        {{woman}}
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <hr>
+        
+        <h3>Priests</h3>
+        
+        <hr>
+        
+        <div class="row" ng-controller="MainCtrl">
+            <div class="col-xs-6">
+                <ul ui-on-drop="onDrop($event,$data,men)"
+                    drop-channel="priests"
+                    drop-validate="dropValidateHandler($drop, $event, $data)">
+                    <li ui-draggable="true" drag="man"
+                        drag-channel="priests"
+                        on-drop-success="dropSuccessHandler($event,$index,men)"
+                        ng-repeat="man in men track by $index">
+                        {{man}}
+                    </li>
+                </ul>
+            </div>
+            <div class="col-xs-6">
+                <ul ui-on-drop="onDrop($event,$data,women)"
+                    drop-channel="priests"
+                    drop-validate="dropValidateHandler($drop, $event, $data)">
+                    <li ui-draggable="true" drag="woman"
+                        drag-channel="priests"
+                        on-drop-success="dropSuccessHandler($event,$index,women)"
+                        ng-repeat="woman in women track by $index">
+                        {{woman}}
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <hr>
+        
+        <h3>Terrorists</h3>
+        
+        <p>Each terrorist list item accepts a new terrorist. Shows inserting into a particular
+        position in an array.</p>
+        
+        <hr>
+        
+        
+        <div class="row" ng-controller="MainCtrl">
+            <div class="col-xs-6">
+                <ul>
+                    <li ui-draggable="true" drag="man"
+                        drag-channel="terrorists2"
+                        drop-validate="dropValidateHandler($drop, $event, $data)"
+                    drag-hover-class="on-drag-hover-custom"
+                    on-drop-success="dropSuccessHandler($event,$index,men)"
+                    ui-on-drop="onDrop($event,$data,men,$index)" drop-channel="terrorists1"
+                    ng-repeat="man in men track by $index">
+                        {{man}}
+                    </li>
+                </ul>
+            </div>
+            <div class="col-xs-6">
+                <ul>
+                    <li ui-draggable="true" drag="woman"
+                        drag-channel="terrorists1"
+                        drop-validate="dropValidateHandler($drop, $event, $data)"
+                    drag-hover-class="on-drag-hover-custom"
+                    ui-on-drop="onDrop($event,$data,women,$index)" drop-channel="terrorists2"
+                    on-drop-success="dropSuccessHandler($event,$index,women)"
+                    ng-repeat="woman in women track by $index">
+                        {{woman}}
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <hr>
+
+        <h3>Custom Drag Image</h3>
+
+        <p>You may specify a drag-image-element-id to use as the drag image. You can use the
+            <a href="http://www.kryogenix.org/code/browser/custom-drag-image.html" target="_blank">ghost image</a>
+            technique for the custom drag image.</p>
+
+        <hr>
+
+
+        <div class="row" ng-controller="MainCtrl">
+            <div class="col-xs-6">
+                <ul>
+                    <li ui-draggable="true" drag="man"
+                        drag-channel="customImage2"
+                        drop-validate="dropValidateHandler($drop, $event, $data)"
+                        drag-hover-class="on-drag-hover-custom"
+                        drag-image-element-id="getCustomDragElementId($index)"
+                        on-drop-success="dropSuccessHandler($event,$index,men)"
+                        ui-on-drop="onDrop($event,$data,men,$index)"
+                        drop-channel="customImage1"
+                        ng-repeat="man in men track by $index">
+                        {{man}}
+                    </li>
+                </ul>
+            </div>
+            <div class="col-xs-6">
+                <ul>
+                    <li ui-draggable="true" drag="woman"
+                        drag-channel="customImage1"
+                        drop-validate="dropValidateHandler($drop, $event, $data)"
+                        drag-hover-class="on-drag-hover-custom"
+                        drag-image-element-id="getCustomDragElementId($index)"
+                        ui-on-drop="onDrop($event,$data,women,$index)"
+                        drop-channel="customImage2"
+                        on-drop-success="dropSuccessHandler($event,$index,women)"
+                        ng-repeat="woman in women track by $index">
+                        {{woman}}
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div id="customDrag0" class="alert alert-info" style="max-width: 200px">Custom drag image #1</div>
+        <div id="customDrag1" class="alert alert-danger" style="position: absolute; top: 0; right: 0; z-index: -2; max-width: 200px">Custom drag image #2</div>
+        <div id="coverUp" style="position: absolute; top: 0; right: 0; z-index: -1; background-color: white; width: 200px; height: 60px"></div>
+    </div>
+  </body>
+
+</html>

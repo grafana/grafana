@@ -27,7 +27,7 @@ $white:            #fff;
 // -------------------------
 $blue:                  #33B5E5;
 $blue-dark:             #005f81;
-$green:                 #669900;
+$green:                 #609000;
 $red:                   #CC3900;
 $yellow:                #ECBB13;
 $pink:                  #FF4444;
@@ -43,7 +43,7 @@ $brand-danger:          $red;
 // Status colors
 // -------------------------
 $online:                #10a345;
-$warn:                  #ffc03c;
+$warn:                  #F79520;
 $critical:              #ed2e18;
 
 // Scaffolding
@@ -54,7 +54,7 @@ $body-color:   		 	    $gray-4;
 $text-color:   	   		  $gray-4;
 $text-color-strong: 	  $white;
 $text-color-weak: 		  $gray-2;
-$text-color-faint:      $gray-1;
+$text-color-faint:      $dark-5;
 $text-color-emphasis: 	$gray-5;
 
 $text-shadow-strong: 1px 1px 4px $black;
@@ -66,15 +66,16 @@ $page-gradient: linear-gradient(60deg, transparent 70%, darken($page-bg, 4%) 98%
 
 // Links
 // -------------------------
-$link-color:              darken($white,11%);
-$link-color-disabled:     darken($link-color,30%);
+$link-color:              darken($white, 11%);
+$link-color-disabled:     darken($link-color, 30%);
 $link-hover-color:        $white;
+$external-link-color:     $blue;
 
 // Typography
 // -------------------------
 $headings-color:       darken($white,11%);
 $abbr-border-color: 	 $gray-3 !default;
-$text-muted: 			     darken($link-color,30%);
+$text-muted: 			     $text-color-weak;
 
 $blockquote-small-color:  $gray-3 !default;
 $blockquote-border-color: $gray-4 !default;
@@ -87,20 +88,24 @@ $component-active-bg:    $brand-primary !default;
 
 // Panel
 // -------------------------
-$panel-bg: 				 $dark-2;
-$panel-border: 			 solid 1px $dark-3;
+$panel-bg: 				      $dark-2;
+$panel-border:  	      solid 1px $dark-3;
+$panel-drop-zone-bg:    repeating-linear-gradient(-128deg, #111, #111 10px, #191919 10px, #222 20px);
+$panel-menu-border:     solid 1px black;
 
-$divider-border-color:  #555;
+$divider-border-color:        #555;
 
 // Graphite Target Editor
-$tight-form-border:     #050505;
+$tight-form-border:   #050505;
 $tight-form-bg:     	$dark-3;
 
 $tight-form-func-bg: 		    #333;
 $tight-form-func-highlight-bg:  #444;
 
 $modal-background: $black;
-$code-tag-bg: #444;
+$code-tag-bg:      $dark-5;
+$code-tag-border:  lighten($code-tag-bg, 2%);
+
 
 // Lists
 $grafanaListBackground:  	  $dark-3;
@@ -148,6 +153,11 @@ $btn-link-color:              $gray-3;
 
 $iconContainerBackground:	    $black;
 
+$btn-divider-left:   $dark-4;
+$btn-divider-right:  $dark-2;
+
+$btn-drag-image: '../img/grab_dark.svg';
+
 // Forms
 // -------------------------
 $input-bg:                       $dark-4;
@@ -160,6 +170,7 @@ $input-border-focus:             $input-border-color !default;
 $input-box-shadow-focus:         rgba(102,175,233,.6) !default;
 $input-color-placeholder:        $gray-1 !default;
 $input-label-bg:				         $dark-3;
+$input-invalid-border-color:     lighten($red, 5%);
 
 // Search
 $search-shadow: 0 0 35px 0 $body-bg;
@@ -179,7 +190,6 @@ $dropdownLinkColorActive:       $white;
 
 $dropdownLinkBackgroundActive:  $dark-4;
 $dropdownLinkBackgroundHover:   $dark-4;
-
 
 // COMPONENT VARIABLES
 // --------------------------------------------------
@@ -228,25 +238,17 @@ $paginationActiveBackground:          $blue;
 
 // Form states and alerts
 // -------------------------
-$state-warning-text:      darken(#c09853, 10%);
+$state-warning-text:      $warn;
 $state-warning-bg:        $brand-warning;
 
-$errorText:               #b94a48;
+$errorText:               #E84D4D;
 $errorBackground:         $btn-danger-bg;
 
-$successText:             #468847;
+$successText:             #12D95A;
 $successBackground:       $btn-success-bg;
 
 $infoText:                $blue-dark;
 $infoBackground:          $blue-dark;
-
-// Tooltips and popovers
-// -------------------------
-$tooltipColor:            $white;
-$tooltipBackground:       rgb(58, 57, 57);
-$tooltipArrowWidth:       5px;
-$tooltipArrowColor:       $tooltipBackground;
-$tooltipLinkColor:        $link-color;
 
 // popover
 $popover-bg:         $dark-4;
@@ -254,6 +256,16 @@ $popover-color:      $text-color;
 
 $popover-help-bg:         $btn-secondary-bg;
 $popover-help-color:      $text-color;
+
+
+// Tooltips and popovers
+// -------------------------
+$tooltipColor:            $popover-help-color;
+$tooltipBackground:       $popover-help-bg;
+$tooltipArrowWidth:       5px;
+$tooltipArrowColor:       $tooltipBackground;
+$tooltipLinkColor:        $link-color;
+$graph-tooltip-bg:        $dark-1;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';
@@ -263,4 +275,7 @@ $card-background: linear-gradient(135deg, #2f2f2f, #262626);
 $card-background-hover: linear-gradient(135deg, #343434, #262626);
 $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .3);
 
+// footer
+$footer-link-color:   $gray-1;
+$footer-link-hover:   $gray-4;
 

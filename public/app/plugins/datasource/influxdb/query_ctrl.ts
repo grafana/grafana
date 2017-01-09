@@ -1,8 +1,5 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import './query_part_editor';
-import './query_part_editor';
-
 import angular from 'angular';
 import _ from 'lodash';
 import InfluxQueryBuilder from './query_builder';
@@ -108,23 +105,55 @@ export class InfluxQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
-  removeGroupByPart(part, index) {
-    this.queryModel.removeGroupByPart(part, index);
-    this.panelCtrl.refresh();
-  }
-
   addSelectPart(selectParts, cat, subitem) {
     this.queryModel.addSelectPart(selectParts, subitem.value);
     this.panelCtrl.refresh();
   }
 
-  removeSelectPart(selectParts, part) {
-    this.queryModel.removeSelectPart(selectParts, part);
-    this.panelCtrl.refresh();
+  handleSelectPartEvent(selectParts, part, evt) {
+    switch (evt.name) {
+      case "get-param-options": {
+        var fieldsQuery = this.queryBuilder.buildExploreQuery('FIELDS');
+        return this.datasource.metricFindQuery(fieldsQuery)
+        .then(this.transformToSegments(true))
+        .catch(this.handleQueryError.bind(this));
+      }
+      case "part-param-changed": {
+        this.panelCtrl.refresh();
+        break;
+      }
+      case "action": {
+        this.queryModel.removeSelectPart(selectParts, part);
+        this.panelCtrl.refresh();
+        break;
+      }
+      case "get-part-actions": {
+        return this.$q.when([{text: 'Remove', value: 'remove-part'}]);
+      }
+    }
   }
 
-  selectPartUpdated() {
-    this.panelCtrl.refresh();
+  handleGroupByPartEvent(part, index, evt) {
+    switch (evt.name) {
+      case "get-param-options": {
+        var tagsQuery = this.queryBuilder.buildExploreQuery('TAG_KEYS');
+        return this.datasource.metricFindQuery(tagsQuery)
+        .then(this.transformToSegments(true))
+        .catch(this.handleQueryError.bind(this));
+      }
+      case "part-param-changed": {
+        this.panelCtrl.refresh();
+        break;
+      }
+      case "action": {
+        this.queryModel.removeGroupByPart(part, index);
+        this.panelCtrl.refresh();
+        break;
+      }
+      case "get-part-actions": {
+        return this.$q.when([{text: 'Remove', value: 'remove-part'}]);
+      }
+    }
   }
 
   fixTagSegments() {
@@ -154,30 +183,19 @@ export class InfluxQueryCtrl extends QueryCtrl {
   }
 
   toggleEditorMode() {
-    this.target.query = this.queryModel.render(false);
+    try {
+      this.target.query = this.queryModel.render(false);
+    } catch (err) {
+      console.log('query render error');
+    }
     this.target.rawQuery = !this.target.rawQuery;
   }
 
-  getMeasurements() {
-    var query = this.queryBuilder.buildExploreQuery('MEASUREMENTS');
+  getMeasurements(measurementFilter) {
+    var query = this.queryBuilder.buildExploreQuery('MEASUREMENTS', undefined, measurementFilter);
     return this.datasource.metricFindQuery(query)
       .then(this.transformToSegments(true))
       .catch(this.handleQueryError.bind(this));
-  }
-
-  getPartOptions(part) {
-    if (part.def.type === 'field') {
-      var fieldsQuery = this.queryBuilder.buildExploreQuery('FIELDS');
-      return this.datasource.metricFindQuery(fieldsQuery)
-      .then(this.transformToSegments(true))
-      .catch(this.handleQueryError.bind(this));
-    }
-    if (part.def.type === 'tag') {
-      var tagsQuery = this.queryBuilder.buildExploreQuery('TAG_KEYS');
-      return this.datasource.metricFindQuery(tagsQuery)
-      .then(this.transformToSegments(true))
-      .catch(this.handleQueryError.bind(true));
-    }
   }
 
   handleQueryError(err) {
@@ -193,7 +211,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
       if (addTemplateVars) {
         for (let variable of this.templateSrv.variables) {
-          segments.unshift(this.uiSegmentSrv.newSegment({ type: 'template', value: '/$' + variable.name + '$/', expandable: true }));
+          segments.unshift(this.uiSegmentSrv.newSegment({ type: 'template', value: '/^$' + variable.name + '$/', expandable: true }));
         }
       }
 
@@ -210,7 +228,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
       if (/^\/.*\/$/.test(nextValue)) {
         return this.$q.when(this.uiSegmentSrv.newOperators(['=~', '!~']));
       } else {
-        return this.$q.when(this.uiSegmentSrv.newOperators(['=', '<>', '<', '>']));
+        return this.$q.when(this.uiSegmentSrv.newOperators(['=', '!=', '<>', '<', '>']));
       }
     }
 
@@ -239,11 +257,6 @@ export class InfluxQueryCtrl extends QueryCtrl {
     return this.datasource.metricFindQuery(fieldsQuery)
     .then(this.transformToSegments(false))
     .catch(this.handleQueryError);
-  }
-
-  setFill(fill) {
-    this.target.fill = fill;
-    this.panelCtrl.refresh();
   }
 
   tagSegmentUpdated(segment, index) {
@@ -316,5 +329,8 @@ export class InfluxQueryCtrl extends QueryCtrl {
       return '=';
     }
   }
-}
 
+  getCollapsedText() {
+    return this.queryModel.render(false);
+  }
+}

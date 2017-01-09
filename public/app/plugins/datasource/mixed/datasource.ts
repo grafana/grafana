@@ -25,7 +25,7 @@ class MixedDatasource {
     });
 
     return this.$q.all(promises).then(function(results) {
-      return { data: _.flatten(_.pluck(results, 'data')) };
+      return { data: _.flatten(_.map(results, 'data')) };
     });
   }
 }
