@@ -239,4 +239,16 @@ describe('templateSrv', function() {
       expect(target).to.be('Server: All, period: 13m');
     });
   });
+
+  describe('built in interval variables', function() {
+    beforeEach(function() {
+      initTemplateSrv([]);
+    });
+
+    it('should replace $interval_ms with interval milliseconds', function() {
+      var target = _templateSrv.replace('10 * $interval_ms', {"interval_ms": {text: "100", value: "100"}});
+      expect(target).to.be('10 * 100');
+    });
+
+  });
 });

@@ -100,10 +100,10 @@ function (angular, _, kbn) {
           return this.distributeVariable(value, variable.name);
         }
         default:  {
-          if (typeof value === 'string') {
-            return value;
+          if (_.isArray(value)) {
+            return '{' + value.join(',') + '}';
           }
-          return '{' + value.join(',') + '}';
+          return value;
         }
       }
     };
