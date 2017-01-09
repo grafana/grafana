@@ -31,7 +31,7 @@ function (angular, _, sdk, dateMath, kbn) {
       url: this.url + '/api/v1/health/check',
       method: 'GET'
     }).then(function(response) {
-      if (response.status === 204) {
+      if (response.status === 204 || response.status === 200) {
         return { status: "success", message: "Data source is working", title: "Success" };
       }
     });
