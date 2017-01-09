@@ -23,7 +23,7 @@ This API can also be used to create, update and delete alert notifications.
 
 **Example Request**:
 
-    GET /api/org HTTP/1.1
+    GET /api/alerts HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -52,7 +52,7 @@ This API can also be used to create, update and delete alert notifications.
 
 **Example Request**:
 
-    GET /api/org HTTP/1.1
+    GET /api/alerts/1 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -80,7 +80,7 @@ This API can also be used to create, update and delete alert notifications.
 
 **Example Request**:
 
-    GET /api/org HTTP/1.1
+    POST /api/alerts/1/pause HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -106,7 +106,7 @@ This API can also be used to create, update and delete alert notifications.
 
 **Example Request**:
 
-    GET /api/org HTTP/1.1
+    GET /api/alert-notifications HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -131,7 +131,7 @@ This API can also be used to create, update and delete alert notifications.
 
 **Example Request**:
 
-    GET /api/org HTTP/1.1
+    POST /api/alerts-notifications HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -140,8 +140,8 @@ This API can also be used to create, update and delete alert notifications.
       "name": "new alert notification",  //Required
       "type":  "email", //Required
       "isDefault": false,
-      "settings": { 
-        "addresses: "carl@grafana.com;dev@grafana.com"
+      "settings": {
+        "addresses": "carl@grafana.com;dev@grafana.com"
       }
     }
     
@@ -166,7 +166,7 @@ This API can also be used to create, update and delete alert notifications.
 
 **Example Request**:
 
-    GET /api/org HTTP/1.1
+    PUT /api/alerts-notifications/1 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -198,11 +198,11 @@ This API can also be used to create, update and delete alert notifications.
 
 ## Delete alert notification
 
-`DELETE /api/alerts-notifications/1`
+`DELETE /api/alerts-notifications/:notificationId`
 
 **Example Request**:
 
-    GET /api/org HTTP/1.1
+    DELETE /api/alerts-notifications/1 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
