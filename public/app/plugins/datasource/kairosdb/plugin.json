@@ -1,0 +1,34 @@
+{
+  "id": "kairosdb",
+  "name": "KairosDB",
+  "type": "datasource",
+
+  "metrics": true,
+  "annotations": false,
+  "alerting": true,
+  "staticRoot": ".",
+
+  "info": {
+    "description": "datasource plugin for KairosDB",
+    "author": {
+      "name": "Raintank Inc.",
+      "url": "http://raintank.io"
+    },
+    "keywords": ["kairosdb", "cassandra"],
+    "logos": {
+      "small": "img/kairosdb_logo_small.png",
+      "large": "img/kairosdb_logo_large.png"
+    },
+    "links": [
+      {"name": "GitHub", "url": "https://github.com/grafana/kairosdb-datasource"},
+      {"name": "License", "url": "https://github.com/grafana/kairosdb-datasource/blob/master/LICENSE"}
+    ],
+    "version": "1.0.1",
+    "updated": "2016-02-10"
+  },
+
+  "dependencies": {
+    "grafanaVersion": "3.x.x",
+    "plugins": [ ]
+  }
+}

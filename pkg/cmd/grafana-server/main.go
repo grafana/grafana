@@ -23,6 +23,7 @@ import (
 	_ "github.com/grafana/grafana/pkg/tsdb/influxdb"
 	_ "github.com/grafana/grafana/pkg/tsdb/mqe"
 	_ "github.com/grafana/grafana/pkg/tsdb/opentsdb"
+	_ "github.com/grafana/grafana/pkg/tsdb/kairosdb"
 	_ "github.com/grafana/grafana/pkg/tsdb/prometheus"
 	_ "github.com/grafana/grafana/pkg/tsdb/testdata"
 )
