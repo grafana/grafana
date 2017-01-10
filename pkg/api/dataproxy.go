@@ -2,7 +2,6 @@ package api
 
 import (
 	"bytes"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
@@ -133,17 +132,14 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 }
 
 func outputToAuditLog(dataSourceType string, c *middleware.Context) {
-	auditLogger := log.New("data-proxy-audit", "userId", c.UserId, "orgId", c.OrgId, "uname", c.Login)
+	auditLogger := log.New("data-proxy-audit", "userid", c.UserId, "orgid", c.OrgId, "username", c.Login)
 
-	bodyString := ""
+	var body string
 	if c.Req.Request.Body != nil {
-		reqBody := c.Req.Request.Body
-		buffer, _ := ioutil.ReadAll(reqBody)
-
+		buffer, _ := ioutil.ReadAll(c.Req.Request.Body)
 		c.Req.Request.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
-		bodyString = string(buffer)
+		body = string(buffer)
 	}
 
-	logFormat := "Datasource: %s, URI: %s, Method: %s, Body: %s"
-	auditLogger.Info(fmt.Sprintf(logFormat, dataSourceType, c.Req.RequestURI, c.Req.Request.Method, bodyString))
+	auditLogger.Info("Proxying incoming request", "datasource", dataSourceType, "uri", c.Req.RequestURI, "method", c.Req.Request.Method, "body", body)
 }
