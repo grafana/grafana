@@ -97,6 +97,9 @@ function (angular, _, kbn) {
           return value.join('|');
         }
         case "distributed": {
+          if (typeof value === 'string') {
+            return value;
+          }
           return this.distributeVariable(value, variable.name);
         }
         default:  {

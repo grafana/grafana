@@ -150,6 +150,11 @@ describe('templateSrv', function() {
       expect(result).to.be('test,build=test2');
     });
 
+    it('multi value and distributed should render when not string', function() {
+      var result = _templateSrv.formatValue(['test'], 'distributed', { name: 'build' });
+      expect(result).to.be('test');
+    });
+
     it('slash should be properly escaped in regex format', function() {
       var result = _templateSrv.formatValue('Gi3/14', 'regex');
       expect(result).to.be('Gi3\\/14');
