@@ -66,6 +66,7 @@
   },
   "license": "Apache-2.0",
   "dependencies": {
+    "asciidoctor.js": "^1.5.5-3",
     "eventemitter3": "^2.0.2",
     "gaze": "^1.1.2",
     "grunt-jscs": "3.0.1",

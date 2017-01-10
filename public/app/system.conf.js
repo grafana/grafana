@@ -5,6 +5,8 @@ System.config({
     'virtual-scroll': 'vendor/npm/virtual-scroll/src/index.js',
     'mousetrap': 'vendor/npm/mousetrap/mousetrap.js',
     'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',
+    'asciidoctor.js': 'vendor/npm/asciidoctor.js/dist/asciidoctor.js',
+    'opal-runtime': 'vendor/npm/opal-runtime/src/index.js',
     'tether': 'vendor/npm/tether/dist/js/tether.js',
     'eventemitter3': 'vendor/npm/eventemitter3/index.js',
     'tether-drop': 'vendor/npm/tether-drop/dist/js/drop.js',
@@ -54,6 +56,10 @@ System.config({
   },
 
   meta: {
+    'vendor/npm/asciidoctor.js/dist/asciidoctor.js': {
+      format: 'global',
+      deps: ['opal-runtime']
+    },
     'vendor/npm/virtual-scroll/src/indx.js': {
       format: 'cjs',
       exports: 'VirtualScroll',

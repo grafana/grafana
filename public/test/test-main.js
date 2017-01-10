@@ -13,6 +13,8 @@
       'mousetrap': 'vendor/npm/mousetrap/mousetrap.js',
       'eventemitter3': 'vendor/npm/eventemitter3/index.js',
       'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',
+      'asciidoctor.js': 'vendor/npm/asciidoctor.js/dist/asciidoctor.js',
+      'opal-runtime': 'vendor/npm/opal-runtime/src/index.js',
       'tether': 'vendor/npm/tether/dist/js/tether.js',
       'tether-drop': 'vendor/npm/tether-drop/dist/js/drop.js',
       'moment': 'vendor/moment.js',
@@ -54,6 +56,10 @@
     },
 
     meta: {
+      'vendor/npm/asciidoctor.js/dist/asciidoctor.js': {
+        format: 'global',
+        deps: ['opal-runtime']
+      },
       'vendor/angular/angular.js': {
         format: 'global',
         deps: ['jquery'],
