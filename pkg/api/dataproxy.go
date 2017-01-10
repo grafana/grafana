@@ -1,6 +1,9 @@
 package api
 
 import (
+	"bytes"
+	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -8,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -115,12 +119,31 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		}
 	}
 
+	outputToAuditLog(ds.Type, c)
+
 	proxy := NewReverseProxy(ds, proxyPath, targetUrl)
 	proxy.Transport, err = ds.GetHttpTransport()
 	if err != nil {
 		c.JsonApiErr(400, "Unable to load TLS certificate", err)
 		return
 	}
+
 	proxy.ServeHTTP(c.Resp, c.Req.Request)
 	c.Resp.Header().Del("Set-Cookie")
+}
+
+func outputToAuditLog(dataSourceType string, c *middleware.Context) {
+	auditLogger := log.New("data-proxy-audit", "userId", c.UserId, "orgId", c.OrgId, "uname", c.Login)
+
+	bodyString := ""
+	if c.Req.Request.Body != nil {
+		reqBody := c.Req.Request.Body
+		buffer, _ := ioutil.ReadAll(reqBody)
+
+		c.Req.Request.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
+		bodyString = string(buffer)
+	}
+
+	logFormat := "Datasource: %s, URI: %s, Method: %s, Body: %s"
+	auditLogger.Info(fmt.Sprintf(logFormat, dataSourceType, c.Req.RequestURI, c.Req.Request.Method, bodyString))
 }
