@@ -143,6 +143,7 @@ with Grafana admin permission.
         "protocol":"http",
         "root_url":"%(protocol)s://%(domain)s:%(http_port)s/",
         "router_logging":"true",
+        "audit_logging":"true",
         "static_root_path":"public"
       },
       "session":{
