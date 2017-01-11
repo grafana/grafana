@@ -85,9 +85,11 @@
 }
 
 .graph-legend-table {
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: table;
+  tbody {
+    display: block;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
 
   .graph-legend-series {
     display: table-row;
