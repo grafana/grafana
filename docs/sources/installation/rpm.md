@@ -15,24 +15,24 @@ weight = 2
 
 Description | Download
 ------------ | -------------
-Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [4.1.0 (x86-64 rpm)](https://grafanarel.s3.amazonaws.com/builds/grafana-4.1.0-1484056345.x86_64.rpm)
+Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [4.1.0 (x86-64 rpm)](https://grafanarel.s3.amazonaws.com/builds/grafana-4.1.0-1484127817.x86_64.rpm)
 
 ## Install Stable
 
 You can install Grafana using Yum directly.
 
-    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-4.1.0-1484056345.x86_64.rpm
+    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-4.1.0-1484127817.x86_64.rpm
 
 Or install manually using `rpm`.
 
 #### On CentOS / Fedora / Redhat:
 
     $ sudo yum install initscripts fontconfig
-    $ sudo rpm -Uvh grafana-4.1.0-1484056345.x86_64.rpm
+    $ sudo rpm -Uvh grafana-4.1.0-1484127817.x86_64.rpm
 
 #### On OpenSuse:
 
-    $ sudo rpm -i --nodeps grafana-4.1.0-1484056345.x86_64.rpm
+    $ sudo rpm -i --nodeps grafana-4.1.0-1484127817.x86_64.rpm
 
 ## Install via YUM Repository
 
