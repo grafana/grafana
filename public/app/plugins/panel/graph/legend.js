@@ -2,11 +2,14 @@ define([
   'angular',
   'lodash',
   'jquery',
+  'app/core/core',
   'jquery.flot',
   'jquery.flot.time',
 ],
-function (angular, _, $) {
+function (angular, _, $, core) {
   'use strict';
+
+  var appEvents = core.appEvents;
 
   var module = angular.module('grafana.directives');
 
@@ -68,6 +71,26 @@ function (angular, _, $) {
           ctrl.toggleSeries(seriesInfo, e);
         }
 
+        function removeHighlight(e) {
+          var el = $(e.currentTarget);
+          var index = getSeriesIndexForElement(el);
+          var seriesInfo = seriesList[index];
+          appEvents.emit('graph-unhighlight', {
+            panel: panel,
+            series: seriesInfo
+          });
+        }
+
+        function toggleHighlightSeries(e) {
+          var el = $(e.currentTarget);
+          var index = getSeriesIndexForElement(el);
+          var seriesInfo = seriesList[index];
+          appEvents.emit('graph-highlight', {
+            panel: panel,
+            series: seriesInfo
+          });
+        }
+
         function sortLegend(e) {
           var el = $(e.currentTarget);
           var stat = el.data('stat');
@@ -110,6 +133,8 @@ function (angular, _, $) {
             elem.append($container);
             $container.on('click', '.graph-legend-icon', openColorSelector);
             $container.on('click', '.graph-legend-alias', toggleSeries);
+            $container.on('mouseenter', '.graph-legend-alias', toggleHighlightSeries);
+            $container.on('mouseleave', '.graph-legend-alias', removeHighlight);
             $container.on('click', 'th', sortLegend);
             firstRender = false;
           }
