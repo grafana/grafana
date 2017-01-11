@@ -65,7 +65,7 @@ var (
 	SshPort            int
 	CertFile, KeyFile  string
 	RouterLogging      bool
-	AuditLogging       bool
+	DataProxyLogging       bool
 	StaticRootPath     string
 	EnableGzip         bool
 	EnforceDomain      bool
@@ -491,7 +491,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	HttpAddr = server.Key("http_addr").MustString(DEFAULT_HTTP_ADDR)
 	HttpPort = server.Key("http_port").MustString("3000")
 	RouterLogging = server.Key("router_logging").MustBool(false)
-	AuditLogging = server.Key("audit_logging").MustBool(false)
+	DataProxyLogging = server.Key("data_proxy_logging").MustBool(false)
 	EnableGzip = server.Key("enable_gzip").MustBool(false)
 	EnforceDomain = server.Key("enforce_domain").MustBool(false)
 	StaticRootPath = makeAbsolute(server.Key("static_root_path").String(), HomePath)

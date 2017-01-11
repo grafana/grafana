@@ -125,15 +125,15 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
-	auditLog(ds.Type, c)
+	proxyLog(ds.Type, c)
 
 	proxy.ServeHTTP(c.Resp, c.Req.Request)
 	c.Resp.Header().Del("Set-Cookie")
 }
 
-func auditLog(dataSourceType string, c *middleware.Context) {
-	if setting.AuditLogging {
-		auditLogger := log.New("data-proxy-audit", "userid", c.UserId, "orgid", c.OrgId, "username", c.Login)
+func proxyLog(dataSourceType string, c *middleware.Context) {
+	if setting.DataProxyLogging {
+		auditLogger := log.New("data-proxy-log", "userid", c.UserId, "orgid", c.OrgId, "username", c.Login)
 
 		var body string
 		if c.Req.Request.Body != nil {
@@ -142,6 +142,6 @@ func auditLog(dataSourceType string, c *middleware.Context) {
 			body = string(buffer)
 		}
 
-		auditLogger.Warn("Proxying incoming request", "datasource", dataSourceType, "uri", c.Req.RequestURI, "method", c.Req.Request.Method, "body", body)
+		auditLogger.Info("Proxying incoming request", "datasource", dataSourceType, "uri", c.Req.RequestURI, "method", c.Req.Request.Method, "body", body)
 	}
 }
