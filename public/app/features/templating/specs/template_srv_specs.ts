@@ -245,8 +245,8 @@ describe('templateSrv', function() {
       initTemplateSrv([]);
     });
 
-    it('should replace $interval_ms with interval milliseconds', function() {
-      var target = _templateSrv.replace('10 * $interval_ms', {"interval_ms": {text: "100", value: "100"}});
+    it('should replace $__interval_ms with interval milliseconds', function() {
+      var target = _templateSrv.replace('10 * $__interval_ms', {"__interval_ms": {text: "100", value: "100"}});
       expect(target).to.be('10 * 100');
     });
 

@@ -42,6 +42,10 @@ function (angular, _, kbn) {
 
         this._index[variable.name] = variable;
       }
+
+      // default built ins
+      this._index['__interval'] = {text: '1s', value: '1s'};
+      this._index['__interval_ms'] = {text: '100', value: '100'};
     };
 
     this.variableInitialized = function(variable) {

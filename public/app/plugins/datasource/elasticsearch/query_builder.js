@@ -66,7 +66,7 @@ function (queryDef) {
     esAgg.format = "epoch_millis";
 
     if (esAgg.interval === 'auto') {
-      esAgg.interval = "$interval";
+      esAgg.interval = "$__interval";
     }
 
     if (settings.missing) {
