@@ -8,7 +8,7 @@
   "hideControls": false,
   "links": [],
   "refresh": false,
-  "revision": 7,
+  "revision": 8,
   "rows": [
     {
       "collapse": false,
@@ -860,6 +860,90 @@
           "datasource": "Grafana TestData",
           "decimals": 3,
           "fill": 1,
+          "id": 20,
+          "legend": {
+            "alignAsTable": true,
+            "avg": true,
+            "current": true,
+            "max": true,
+            "min": true,
+            "show": true,
+            "total": true,
+            "values": true
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "refId": "A",
+              "scenarioId": "csv_metric_values",
+              "stringInput": "1,20,90,30,5,0",
+              "target": ""
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Legend Table Single Series Should Take Minium Height",
+          "tooltip": {
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Dashboard Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse": false,
+      "height": 250,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "Grafana TestData",
+          "decimals": 3,
+          "fill": 1,
           "id": 16,
           "legend": {
             "alignAsTable": true,
@@ -1360,5 +1444,5 @@
   },
   "timezone": "browser",
   "title": "TestData - Graph Panel Last 1h",
-  "version": 6
+  "version": 2
 }
