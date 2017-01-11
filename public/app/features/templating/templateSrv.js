@@ -17,6 +17,11 @@ function (angular, _, kbn) {
     this._grafanaVariables = {};
     this._adhocVariables = {};
 
+    // default built ins
+    this._builtIns = {};
+    this._builtIns['__interval'] = {text: '1s', value: '1s'};
+    this._builtIns['__interval_ms'] = {text: '100', value: '100'};
+
     this.init = function(variables) {
       this.variables = variables;
       this.updateTemplateData();
@@ -43,9 +48,6 @@ function (angular, _, kbn) {
         this._index[variable.name] = variable;
       }
 
-      // default built ins
-      this._index['__interval'] = {text: '1s', value: '1s'};
-      this._index['__interval_ms'] = {text: '100', value: '100'};
     };
 
     this.variableInitialized = function(variable) {
@@ -136,7 +138,7 @@ function (angular, _, kbn) {
       str = _.escape(str);
       this._regex.lastIndex = 0;
       return str.replace(this._regex, function(match, g1, g2) {
-        if (self._index[g1 || g2]) {
+        if (self._index[g1 || g2] || self._builtIns[g1 || g2]) {
           return '<span class="template-variable">' + match + '</span>';
         }
         return match;
