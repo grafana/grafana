@@ -644,6 +644,7 @@ Licensed under the MIT license.
         plot.setData = setData;
         plot.setupGrid = setupGrid;
         plot.draw = draw;
+        plot.drawSeries = drawSeries;
         plot.getPlaceholder = function() { return placeholder; };
         plot.getCanvas = function() { return surface.element; };
         plot.getPlotOffset = function() { return plotOffset; };
@@ -672,6 +673,7 @@ Licensed under the MIT license.
         plot.highlight = highlight;
         plot.unhighlight = unhighlight;
         plot.triggerRedrawOverlay = triggerRedrawOverlay;
+        plot.drawOverlay = drawOverlay;
         plot.pointOffset = function(point) {
             return {
                 left: parseInt(xaxes[axisNumber(point, "x") - 1].p2c(+point.x) + plotOffset.left, 10),
@@ -1898,7 +1900,7 @@ Licensed under the MIT license.
 
             for (var i = 0; i < series.length; ++i) {
                 executeHooks(hooks.drawSeries, [ctx, series[i]]);
-                drawSeries(series[i]);
+                drawSeries(series[i], ctx);
             }
 
             executeHooks(hooks.draw, [ctx]);
@@ -2246,16 +2248,16 @@ Licensed under the MIT license.
             });
         }
 
-        function drawSeries(series) {
+        function drawSeries(series, ctx) {
             if (series.lines.show)
-                drawSeriesLines(series);
+                drawSeriesLines(series, ctx);
             if (series.bars.show)
-                drawSeriesBars(series);
+                drawSeriesBars(series, ctx);
             if (series.points.show)
-                drawSeriesPoints(series);
+                drawSeriesPoints(series, ctx);
         }
 
-        function drawSeriesLines(series) {
+        function drawSeriesLines(series, ctx) {
             function plotLine(datapoints, xoffset, yoffset, axisx, axisy) {
                 var points = datapoints.points,
                     ps = datapoints.pointsize,
@@ -2509,7 +2511,7 @@ Licensed under the MIT license.
             ctx.restore();
         }
 
-        function drawSeriesPoints(series) {
+        function drawSeriesPoints(series, ctx) {
             function plotPoints(datapoints, radius, fillStyle, offset, shadow, axisx, axisy, symbol) {
                 var points = datapoints.points, ps = datapoints.pointsize;
 
@@ -2677,7 +2679,7 @@ Licensed under the MIT license.
             }
         }
 
-        function drawSeriesBars(series) {
+        function drawSeriesBars(series, ctx) {
             function plotBars(datapoints, barLeft, barRight, fillStyleCallback, axisx, axisy) {
                 var points = datapoints.points, ps = datapoints.pointsize;
 
@@ -3023,7 +3025,7 @@ Licensed under the MIT license.
 
                 if (hi.series.bars.show)
                     drawBarHighlight(hi.series, hi.point);
-                else
+                else if (hi.series.points.show)
                     drawPointHighlight(hi.series, hi.point);
             }
             octx.restore();
