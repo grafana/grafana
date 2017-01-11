@@ -198,7 +198,7 @@ function (angular, _, $) {
 
             var topPadding = 6;
             var tbodyElem = $('<tbody></tbody>');
-            tbodyElem.css("height", maxHeight - topPadding);
+            tbodyElem.css("max-height", maxHeight - topPadding);
             tbodyElem.append(tableHeaderElem);
             tbodyElem.append(seriesElements);
             $container.append(tbodyElem);
