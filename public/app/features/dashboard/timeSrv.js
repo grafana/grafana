@@ -10,7 +10,7 @@ define([
 
   var module = angular.module('grafana.services');
 
-  module.service('timeSrv', function($rootScope, $timeout, $routeParams, timer) {
+  module.service('timeSrv', function($rootScope, $timeout, $routeParams, timer, contextSrv) {
     var self = this;
 
     // default time
@@ -95,7 +95,9 @@ define([
       self.cancel_scheduled_refresh();
       self.refresh_timer = timer.register($timeout(function () {
         self.start_scheduled_refresh(after_ms);
-        self.refreshDashboard();
+        if (contextSrv.isGrafanaVisible()) {
+          self.refreshDashboard();
+        }
       }, after_ms));
     };
 
