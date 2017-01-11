@@ -159,8 +159,6 @@ var (
 
 	// S3 temp image store
 	S3TempImageStoreBucketUrl string
-	S3TempImageStoreAcl       string
-	S3TempImageStoreExpires   string
 	S3TempImageStoreAccessKey string
 	S3TempImageStoreSecretKey string
 

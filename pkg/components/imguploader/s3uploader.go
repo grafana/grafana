@@ -18,18 +18,16 @@ type S3Uploader struct {
 	region    string
 	bucket    string
 	acl       string
-	expires   string
 	secretKey string
 	accessKey string
 	log       log.Logger
 }
 
-func NewS3Uploader(region, bucket, acl, expires, accessKey, secretKey string) *S3Uploader {
+func NewS3Uploader(region, bucket, acl, accessKey, secretKey string) *S3Uploader {
 	return &S3Uploader{
 		region:    region,
 		bucket:    bucket,
 		acl:       acl,
-		expires:   expires,
 		accessKey: accessKey,
 		secretKey: secretKey,
 		log:       log.New("s3uploader"),
@@ -73,25 +71,5 @@ func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
 		return "", err
 	}
 
-	if u.acl == "public-read" || u.acl == "public-read-write" {
-		return "https://" + u.bucket + ".s3.amazonaws.com/" + key, nil
-	}
-
-	expireDuration, err := time.ParseDuration(u.expires)
-	if err != nil {
-		return "", err
-	}
-	req, _ := svc.GetObjectRequest(&s3.GetObjectInput{
-		Bucket: aws.String(u.bucket),
-		Key:    aws.String(key),
-	})
-	if err != nil {
-		return "", err
-	}
-	imageUrl, err := req.Presign(expireDuration)
-	if err != nil {
-		return "", err
-	}
-
-	return imageUrl, nil
+	return "https://" + u.bucket + ".s3.amazonaws.com/" + key, nil
 }
