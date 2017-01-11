@@ -2,7 +2,9 @@ package influxdb
 
 import (
 	"fmt"
+	"strconv"
 	"strings"
+	"time"
 
 	"regexp"
 
@@ -15,22 +17,51 @@ var (
 )
 
 func (query *Query) Build(queryContext *tsdb.QueryContext) (string, error) {
+	var res string
+
 	if query.UseRawQuery && query.RawQuery != "" {
-		q := query.RawQuery
-
-		q = strings.Replace(q, "$timeFilter", query.renderTimeFilter(queryContext), 1)
-		q = strings.Replace(q, "$interval", tsdb.CalculateInterval(queryContext.TimeRange), 1)
-
-		return q, nil
+		res = query.RawQuery
+	} else {
+		res = query.renderSelectors(queryContext)
+		res += query.renderMeasurement()
+		res += query.renderWhereClause()
+		res += query.renderTimeFilter(queryContext)
+		res += query.renderGroupBy(queryContext)
 	}
 
-	res := query.renderSelectors(queryContext)
-	res += query.renderMeasurement()
-	res += query.renderWhereClause()
-	res += query.renderTimeFilter(queryContext)
-	res += query.renderGroupBy(queryContext)
+	interval, err := getDefinedInterval(query, queryContext)
+	if err != nil {
+		return "", err
+	}
 
+	res = strings.Replace(res, "$timeFilter", query.renderTimeFilter(queryContext), 1)
+	res = strings.Replace(res, "$interval", interval.Text, 1)
+	res = strings.Replace(res, "$__interval_ms", strconv.FormatInt(interval.Value.Nanoseconds()/int64(time.Millisecond), 10), 1)
+	res = strings.Replace(res, "$__interval", interval.Text, 1)
 	return res, nil
+}
+
+func getDefinedInterval(query *Query, queryContext *tsdb.QueryContext) (*tsdb.Interval, error) {
+	defaultInterval := tsdb.CalculateInterval(queryContext.TimeRange)
+
+	if query.Interval == "" {
+		return &defaultInterval, nil
+	}
+
+	setInterval := strings.Replace(strings.Replace(query.Interval, "<", "", 1), ">", "", 1)
+	parsedSetInterval, err := time.ParseDuration(setInterval)
+
+	if err != nil {
+		return nil, err
+	}
+
+	if strings.Contains(query.Interval, ">") {
+		if defaultInterval.Value > parsedSetInterval {
+			return &defaultInterval, nil
+		}
+	}
+
+	return &tsdb.Interval{Value: parsedSetInterval, Text: setInterval}, nil
 }
 
 func (query *Query) renderTags() []string {

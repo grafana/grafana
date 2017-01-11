@@ -2,6 +2,7 @@ package imguploader
 
 import (
 	"fmt"
+	"regexp"
 
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -30,19 +31,21 @@ func NewImageUploader() (ImageUploader, error) {
 		accessKey := s3sec.Key("access_key").MustString("")
 		secretKey := s3sec.Key("secret_key").MustString("")
 
-		if bucket == "" {
+		region := ""
+		rBucket := regexp.MustCompile(`https?:\/\/(.*)\.s3(-([^.]+))?\.amazonaws\.com\/?`)
+		matches := rBucket.FindStringSubmatch(bucket)
+		if len(matches) == 0 {
 			return nil, fmt.Errorf("Could not find bucket setting for image.uploader.s3")
+		} else {
+			bucket = matches[1]
+			if matches[3] != "" {
+				region = matches[3]
+			} else {
+				region = "us-east-1"
+			}
 		}
 
-		if accessKey == "" {
-			return nil, fmt.Errorf("Could not find accessKey setting for image.uploader.s3")
-		}
-
-		if secretKey == "" {
-			return nil, fmt.Errorf("Could not find secretKey setting for image.uploader.s3")
-		}
-
-		return NewS3Uploader(bucket, accessKey, secretKey), nil
+		return NewS3Uploader(region, bucket, "public-read", accessKey, secretKey), nil
 	case "webdav":
 		webdavSec, err := setting.Cfg.GetSection("external_image_storage.webdav")
 		if err != nil {

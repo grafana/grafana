@@ -14,8 +14,9 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/go-macaron/session"
 	"gopkg.in/ini.v1"
+
+	"github.com/go-macaron/session"
 
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/util"

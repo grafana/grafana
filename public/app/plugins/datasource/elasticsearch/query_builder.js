@@ -66,7 +66,7 @@ function (queryDef) {
     esAgg.format = "epoch_millis";
 
     if (esAgg.interval === 'auto') {
-      esAgg.interval = "$interval";
+      esAgg.interval = "$__interval";
     }
 
     if (settings.missing) {
@@ -121,7 +121,7 @@ function (queryDef) {
     }
   };
 
-  ElasticQueryBuilder.prototype.build = function(target, adhocFilters) {
+  ElasticQueryBuilder.prototype.build = function(target, adhocFilters, queryString) {
     // make sure query has defaults;
     target.metrics = target.metrics || [{ type: 'count', id: '1' }];
     target.dsType = 'elasticsearch';
@@ -138,7 +138,7 @@ function (queryDef) {
             {
               "query_string": {
                 "analyze_wildcard": true,
-                "query": '$lucene_query'
+                "query": queryString,
               }
             }
           ]
