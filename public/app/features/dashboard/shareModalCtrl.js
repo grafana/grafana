@@ -88,11 +88,8 @@ function (angular, _, require, config) {
 
   module.directive('clipboardButton',function() {
     return function(scope, elem) {
-      require(['vendor/zero_clipboard'], function(ZeroClipboard) {
-        ZeroClipboard.config({
-          swfPath: config.appSubUrl + '/public/vendor/zero_clipboard.swf'
-        });
-        new ZeroClipboard(elem[0]);
+      require(['vendor/clipboard/dist/clipboard'], function(Clipboard) {
+        new Clipboard(elem[0]);
       });
     };
   });
