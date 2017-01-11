@@ -197,15 +197,9 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         target = options.targets[i];
         if (target.hide) {continue;}
 
-        var queryObj = this.queryBuilder.build(target, adhocFilters);
+        var queryString = templateSrv.replace(target.query || '*', options.scopedVars, 'lucene');
+        var queryObj = this.queryBuilder.build(target, adhocFilters, queryString);
         var esQuery = angular.toJson(queryObj);
-        var luceneQuery = target.query || '*';
-        luceneQuery = templateSrv.replace(luceneQuery, options.scopedVars, 'lucene');
-        luceneQuery = angular.toJson(luceneQuery);
-
-        // remove inner quotes
-        luceneQuery = luceneQuery.substr(1, luceneQuery.length - 2);
-        esQuery = esQuery.replace("$lucene_query", luceneQuery);
 
         var searchType = (queryObj.size === 0 && this.esVersion < 5) ? 'count' : 'query_then_fetch';
         var header = this.getQueryHeader(searchType, options.range.from, options.range.to);
@@ -219,7 +213,6 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         return $q.when([]);
       }
 
-      payload = payload.replace(/\$interval/g, options.interval);
       payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
       payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
       payload = templateSrv.replace(payload, options.scopedVars);

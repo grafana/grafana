@@ -191,6 +191,13 @@ class MetricsPanelCtrl extends PanelCtrl {
       return this.$q.when([]);
     }
 
+    // make shallow copy of scoped vars,
+    // and add built in variables interval and interval_ms
+    var scopedVars = Object.assign({}, this.panel.scopedVars, {
+      "__interval":     {text: this.interval,   value: this.interval},
+      "__interval_ms":  {text: this.intervalMs, value: this.intervalMs},
+    });
+
     var metricsQuery = {
       panelId: this.panel.id,
       range: this.range,
@@ -200,7 +207,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       targets: this.panel.targets,
       format: this.panel.renderer === 'png' ? 'png' : 'json',
       maxDataPoints: this.resolution,
-      scopedVars: this.panel.scopedVars,
+      scopedVars: scopedVars,
       cacheTimeout: this.panel.cacheTimeout
     };
 
