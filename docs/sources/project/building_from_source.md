@@ -41,7 +41,7 @@ npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```
 npm install -g yarn
-yarn install
+yarn install --pure-lockfile
 npm install -g grunt-cli
 grunt
 ```

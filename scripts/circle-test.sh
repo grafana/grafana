@@ -14,7 +14,7 @@ cd /home/ubuntu/.go_workspace/src/github.com/grafana/grafana
 
 rm -rf node_modules
 npm install -g yarn
-yarn install
+yarn install --pure-lockfile
 
 exit_if_fail npm test
 exit_if_fail npm run coveralls

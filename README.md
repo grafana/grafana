@@ -115,7 +115,7 @@ npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```bash
 npm install -g yarn
-yarn install
+yarn install --pure-lockfile
 npm run build
 ```
 
