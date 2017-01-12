@@ -1,18 +1,34 @@
 define([
     'angular',
-    'lodash'
+    'lodash',
+    'app/core/utils/datemath'
   ],
-  function (angular, _) {
+  function (angular, _, dateMath) {
     'use strict';
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('SummaryCtrl', function ($scope, backendSrv, contextSrv) {
+    module.controller('SummaryCtrl', function ($scope, backendSrv, contextSrv, datasourceSrv) {
+      $scope.init = function () {
+        $scope.datasource = null;
+        _.each(datasourceSrv.getAll(), function (ds) {
+          if (ds.type === 'opentsdb') {
+            datasourceSrv.get(ds.name).then(function (datasource) {
+              $scope.datasource = datasource;
+            });
+          }
+        });
+      };
 
-      $scope.services = {"collect": "探针状态", "service": "服务状态"};
+      if (contextSrv.isGrafanaAdmin) {
+        $scope.services = {"collect": "探针状态", "config": "探针配置", "service": "服务状况"};
+      } else {
+        $scope.services = {"collect": "探针状态", "service": "服务状况"};
+      }
       $scope.summarySelect = {
         system: 0,
-        services: ""
+        services: "",
+        currentTagValue: ""
       };
 
       $scope.summaryList = [];
@@ -25,10 +41,16 @@ define([
           "探针版本": "version",
           "Commit id": "commitId"
         },
-        "service": {
+        "config": {
           "服务名称": "service",
           "是否正在运行": "enable",
           "间隔": "interval"
+        },
+        "service": {
+          "服务名称": "service",
+          // "版本": "version",
+          "状态": "state",
+          // "运行时间": "running_time"
         }
       };
 
@@ -43,6 +65,51 @@ define([
         });
       };
 
+      $scope.getServices = function () {
+
+        var alias = {
+          "hadoop.datanode": "Hadoop DataNode",
+          "hadoop.namenode": "Hadoop NameNode",
+          "hbase.master": "Hbase Master",
+          "hbase.regionserver": "Hbase RegionServer",
+          "kafka": "Kafka",
+          "mysql": "Mysql",
+          "spark": "Spark",
+          "storm": "Storm",
+          "yarn": "Yarn",
+          "zookeeper": "Zookeeper"
+        };
+
+        var queries = [];
+        _.each(Object.keys(alias), function (key) {
+          queries.push({
+            "metric": contextSrv.user.orgId + "." + $scope.summarySelect.system + "." + key + ".state",
+            "aggregator": "sum",
+            "downsample": "1h-sum",
+            "tags": {"host": $scope.summarySelect.currentTagValue}
+          })
+        });
+
+        $scope.serviceList = [];
+        $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-1h', false).valueOf(), null).then(function (response) {
+          $scope.summaryList = response;
+          _.each(response.data, function (metricData) {
+            _.each(Object.keys(alias), function (key) {
+              if (metricData.metric.indexOf(key) > 0) {
+                var metric = {"host": metricData.tags.host};
+                metric.alias = alias[key];
+                if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
+                  metric.state = "异常";
+                } else {
+                  metric.state = "正常";
+                }
+                $scope.serviceList.push(metric);
+              }
+            });
+          });
+        });
+      };
+
       $scope.changeSelect = function () {
         var query = {};
         if ($scope.summarySelect.system == 0 || $scope.summarySelect.services == "")
@@ -52,12 +119,27 @@ define([
         if ($scope.summarySelect.services == "collect") {
           query['metrics'] = "collector.summary";
           $scope.getSummary(query);
-          //host? port? another tag?
-        } else if ($scope.summarySelect.services == "service") {
+        } else if ($scope.summarySelect.services == "config") {
           query['metrics'] = "collector.service";
           $scope.getSummary(query);
+        } else if ($scope.summarySelect.services == "service" && $scope.summarySelect.currentTagValue != "") {
+          $scope.getServices();
         }
-        return; //do nothing;
-      }
+        return;
+      };
+
+      $scope.getTextValues = function (metricFindResult) {
+        return _.map(metricFindResult, function (value) {
+          return value.text;
+        });
+      };
+
+      $scope.suggestTagValues = function (query, callback) {
+        $scope.datasource.metricFindQuery('suggest_tagv(' + query + ')')
+          .then($scope.getTextValues)
+          .then(callback);
+      };
+
+      $scope.init();
     });
   });

@@ -11,7 +11,7 @@
           服务
         </li>
         <li>
-          <select ng-model="summarySelect.services" class="input-small tight-form-input" ng-change="changeSelect()">
+          <select ng-model="summarySelect.services" class="input-small tight-form-input">
             <option ng-repeat="(key, value) in services" value="{{key}}">{{value}}</option>
           </select>
         </li>
@@ -21,11 +21,24 @@
           子系统
         </li>
         <li ng-controller="SystemCtrl" ng-init="init()">
-          <select ng-model="summarySelect.system" class="input-small tight-form-input" ng-change="changeSelect()">
+          <select ng-model="summarySelect.system" class="input-small tight-form-input">
             <option ng-repeat="sys in systems" value="{{sys.Id}}">{{sys.SystemsName}}</option>
           </select>
         </li>
+      </ul>
+      <ul class="tight-form-list" ng-if="summarySelect.services == 'service'">
+        <li class="tight-form-item">
+          主机名
+        </li>
         <li>
+          <input type="text" class="input-small tight-form-input ng-pristine ng-untouched ng-valid" spellcheck="false"
+                 bs-typeahead="suggestTagValues" ng-model="summarySelect.currentTagValue" placeholder="value"
+                 data-provide="typeahead" >
+        </li>
+      </ul>
+      <ul class="tight-form-list">
+        <li class="tight-form-item">
+          <button ng-click="changeSelect()" class="pull-right btn btn-success">查询</button>
         </li>
       </ul>
       <div class="clearfix"></div>
@@ -38,10 +51,20 @@
         <th ng-repeat="(key,value) in tableHeader[summarySelect.services]">{{key}}</th>
       </tr>
 
-      <tbody ng-repeat="summary in summaryList">
+      <tbody ng-repeat="summary in summaryList" ng-if="summarySelect.services != 'service'">
       <tr ng-repeat="content in summary.content">
         <td>{{summary.tag.host}}</td>
         <td ng-repeat="(key,value) in tableHeader[summarySelect.services]">{{content[value]}}</td>
+      </tr>
+      </tbody>
+
+      <tbody ng-if="summarySelect.services == 'service'">
+      <tr ng-repeat="service in serviceList">
+        <td>{{service.host}}</td>
+        <td>{{service.alias}}</td>
+        <td>{{service.version}}</td>
+        <td>{{service.state}}</td>
+        <td>{{service.runningTime}}</td>
       </tr>
       </tbody>
     </table>
