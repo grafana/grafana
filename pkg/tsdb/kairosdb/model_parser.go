@@ -43,23 +43,53 @@ func (mp *KairosDbMetricParser) Parse(model *simplejson.Json) map[string]interfa
 
 	// Setting aggregators
 	horizontalAggregators, aggsCheck := model.CheckGet("horizontalAggregators")
-	count := len(horizontalAggregators.MustArray())
-	if aggsCheck && count > 0 {
+	
+	if aggsCheck && len(horizontalAggregators.MustArray()) > 0 {
 
-		aggregators := make([]interface{}, count)
+		aggregators := make([]interface{}, len(horizontalAggregators.MustArray()))
 
 		for i, aggrObj := range horizontalAggregators.MustArray() {
 
-			aggrModel := simplejson.NewFromAny(aggrObj)
-			aggregator := mp.parseAggregator(aggrModel)
+			aggrJson := simplejson.NewFromAny(aggrObj)
+			aggregator := mp.parseAggregator(aggrJson)
 
-			aggregators[i] = aggregator			
+			aggregators[i] = aggregator
 		}
 		metric["aggregators"] = aggregators
 	}
 
 	// Setting group by
+	var groupBy []interface{}
 
+	if groupByTags, groupByTagsCheck := model.CheckGet("groupByTags"); groupByTagsCheck {
+
+		gt := make(map[string]interface{})
+		gt["name"] = "tags"
+		gt["tags"] = groupByTags.MustArray()
+
+		groupBy = append(groupBy, gt)
+
+	}
+
+	groupByOther, groupByOtherCheck := model.CheckGet("nonTagGroupBys")
+	
+	if groupByOtherCheck && len(groupByOther.MustArray()) > 0 {
+		for _, groupByObj := range groupByOther.MustArray() {
+			
+			gbJson := simplejson.NewFromAny(groupByObj)
+			
+			if gbJson.Get("name").MustString() == "time" {
+				rangeSize, _ := convertToSamplingInterval(gbJson.Get("range_size").MustString())
+				gbJson.Set("range_size", rangeSize)
+				
+			}
+			
+			groupBy = append(groupBy, gbJson.MustMap())
+		}
+	}
+
+	metric["group_by"] = groupBy
+	
 	// Setting tags
 	tags, tagsCheck := model.CheckGet("tags")
 	if tagsCheck && len(tags.MustMap()) > 0 {
@@ -70,12 +100,12 @@ func (mp *KairosDbMetricParser) Parse(model *simplejson.Json) map[string]interfa
 
 }
 
-func (mp *KairosDbMetricParser) parseAggregator(aggrModel *simplejson.Json) map[string]interface{} {
+func (mp *KairosDbMetricParser) parseAggregator(aggrJson *simplejson.Json) map[string]interface{} {
 	aggregator := make(map[string]interface{})
 
-	aggregator["name"] = aggrModel.Get("name").MustString()
+	aggregator["name"] = aggrJson.Get("name").MustString()
 
-	samplingRate, samplingRateCheck := aggrModel.CheckGet("sampling_rate")
+	samplingRate, samplingRateCheck := aggrJson.CheckGet("sampling_rate")
 	if samplingRateCheck {
 		aggregator["align_sampling"] = true
 
@@ -87,11 +117,11 @@ func (mp *KairosDbMetricParser) parseAggregator(aggrModel *simplejson.Json) map[
 		}
 	}
 	// @todo: fix sampler aggregator
-	if unit, unitCheck := aggrModel.CheckGet("unit"); unitCheck {
+	if unit, unitCheck := aggrJson.CheckGet("unit"); unitCheck {
 		aggregator["unit"] = unit.MustString() + "s"
 	}
 
-	factor, factorCheck := aggrModel.CheckGet("factor")
+	factor, factorCheck := aggrJson.CheckGet("factor")
 	if factorCheck && aggregator["name"] == "div" {
 		aggregator["divisor"], _ = strconv.ParseFloat(factor.MustString(), 64)
 
@@ -100,11 +130,11 @@ func (mp *KairosDbMetricParser) parseAggregator(aggrModel *simplejson.Json) map[
 
 	}
 	
-	if percentile, percentileCheck := aggrModel.CheckGet("percentile"); percentileCheck {
+	if percentile, percentileCheck := aggrJson.CheckGet("percentile"); percentileCheck {
 		aggregator["percentile"], _ = strconv.ParseFloat(percentile.MustString(), 64)
 	}
 
-	if trim, trimCheck := aggrModel.CheckGet("trim"); trimCheck {
+	if trim, trimCheck := aggrJson.CheckGet("trim"); trimCheck {
 		aggregator["trim"] = trim.MustString()
 	}
 
