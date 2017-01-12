@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"path"
-	//"strconv"
 	"strings"
 
 	"golang.org/x/net/context/ctxhttp"
@@ -24,6 +23,7 @@ import (
 
 type KairosDbExecutor struct {
 	*models.DataSource
+	MetricParser    *KairosDbMetricParser
 	httpClient *http.Client
 }
 
@@ -36,6 +36,7 @@ func NewKairosDbExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
 
 	return &KairosDbExecutor{
 		DataSource: datasource,
+		MetricParser: &KairosDbMetricParser{},
 		httpClient: httpClient,
 	}, nil
 }
@@ -58,8 +59,8 @@ func (e *KairosDbExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 	tsdbQuery.End = queryContext.TimeRange.GetToAsMsEpoch()
 
 	for _, query := range queries {
-		name := e.buildMetric(query)
-		tsdbQuery.Metric = append(tsdbQuery.Metric, name)
+		metric := e.MetricParser.Parse(query.Model)
+		tsdbQuery.Metric = append(tsdbQuery.Metric, metric)
 	}
 
 	if setting.Env == setting.DEV {
@@ -149,83 +150,7 @@ func (e *KairosDbExecutor) parseResponse(query KairosDbQuery, res *http.Response
 		}
 	}
 
-/*
-	for _, val := range data {
-		series := tsdb.TimeSeries{
-			Name: val.Metric,
-		}
-
-		for timeString, value := range val.DataPoints {
-			timestamp, err := strconv.ParseFloat(timeString, 64)
-			if err != nil {
-				plog.Info("Failed to unmarshal KairosDb timestamp", "timestamp", timeString)
-				return nil, err
-			}
-			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(value), timestamp))
-		}
-
-		queryRes.Series = append(queryRes.Series, &series)
-	}
-*/
 	queryResults["A"] = queryRes
 	return queryResults, nil
 }
 
-func (e *KairosDbExecutor) buildMetric(query *tsdb.Query) map[string]interface{} {
-
-	metric := make(map[string]interface{})
-
-	// Setting metric and aggregator
-	metric["name"] = query.Model.Get("metric").MustString()
-	metric["aggregator"] = query.Model.Get("aggregator").MustString()
-
-	// Setting downsampling options
-	disableDownsampling := query.Model.Get("disableDownsampling").MustBool()
-	if !disableDownsampling {
-		downsampleInterval := query.Model.Get("downsampleInterval").MustString()
-		if downsampleInterval == "" {
-			downsampleInterval = "1m" //default value for blank
-		}
-		downsample := downsampleInterval + "-" + query.Model.Get("downsampleAggregator").MustString()
-		if query.Model.Get("downsampleFillPolicy").MustString() != "none" {
-			metric["downsample"] = downsample + "-" + query.Model.Get("downsampleFillPolicy").MustString()
-		} else {
-			metric["downsample"] = downsample
-		}
-	}
-
-	// Setting rate options
-	if query.Model.Get("shouldComputeRate").MustBool() {
-
-		metric["rate"] = true
-		rateOptions := make(map[string]interface{})
-		rateOptions["counter"] = query.Model.Get("isCounter").MustBool()
-
-		counterMax, counterMaxCheck := query.Model.CheckGet("counterMax")
-		if counterMaxCheck {
-			rateOptions["counterMax"] = counterMax.MustFloat64()
-		}
-
-		resetValue, resetValueCheck := query.Model.CheckGet("counterResetValue")
-		if resetValueCheck {
-			rateOptions["resetValue"] = resetValue.MustFloat64()
-		}
-
-		metric["rateOptions"] = rateOptions
-	}
-
-	// Setting tags
-	tags, tagsCheck := query.Model.CheckGet("tags")
-	if tagsCheck && len(tags.MustMap()) > 0 {
-		metric["tags"] = tags.MustMap()
-	}
-
-	// Setting filters
-	filters, filtersCheck := query.Model.CheckGet("filters")
-	if filtersCheck && len(filters.MustArray()) > 0 {
-		metric["filters"] = filters.MustArray()
-	}
-
-	return metric
-
-}

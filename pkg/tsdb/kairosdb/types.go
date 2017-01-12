@@ -15,3 +15,4 @@ type KairosDbResponse struct {
 		SampleSize int `json:"sample_size"`
 	} `json:"queries"`
 }
+
