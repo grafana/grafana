@@ -104,6 +104,7 @@ export default class TimeSeries {
     this.stats.current = null;
     this.stats.first = null;
     this.stats.delta = 0;
+    this.stats.diff = null;
     this.stats.range = null;
     this.stats.timeStep = Number.MAX_VALUE;
     this.allIsNull = true;
@@ -192,6 +193,9 @@ export default class TimeSeries {
     }
     if (this.stats.max !== null && this.stats.min !== null) {
       this.stats.range = this.stats.max - this.stats.min;
+    }
+    if (this.stats.current !== null && this.stats.first !== null) {
+      this.stats.diff = this.stats.current - this.stats.first;
     }
 
     this.stats.count = result.length;
