@@ -26,7 +26,7 @@ The singlestat panel has a normal query editor to allow you define your exact me
 3. `Values`: The Value fields let you set the function (min, max, average, current, total, first, delta, range) that your entire query is reduced into a single value with. You can also set the font size of the Value field and font-size (as a %) of the metric query that the Panel is configured with. This reduces the entire query into a single summary value that is displayed.
    * `min` - The smallest value in the series
    * `max` - The largest value in the series
-   * `average` - The average of all the non-null values in the series
+   * `avg` - The average of all the non-null values in the series
    * `current` - The last value in the series. If the series ends on null the previous value will be used.
    * `total` - The sum of all the non-null values in the series
    * `first` - The first value in the series
