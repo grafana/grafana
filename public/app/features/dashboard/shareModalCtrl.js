@@ -91,7 +91,13 @@ function (angular, _, $, require, config) {
     return function(scope, elem) {
       require(['vendor/clipboard/dist/clipboard'], function(Clipboard) {
         $.fn.modal.Constructor.prototype.enforceFocus = function() {}; // see https://github.com/zenorocha/clipboard.js/issues/155
-        new Clipboard(elem[0]);
+        scope.clipboard = new Clipboard(elem[0]);
+      });
+
+      scope.$on('$destroy', function() {
+        if (scope.clipboard) {
+          scope.clipboard.destroy();
+        }
       });
     };
   });
