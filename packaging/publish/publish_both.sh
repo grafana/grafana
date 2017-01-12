@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
-deb_ver=4.1.0-1484056345
-rpm_ver=4.1.0-1484056345
+deb_ver=4.1.1-1484211277
+rpm_ver=4.1.1-1484211277
 
 wget https://grafanarel.s3.amazonaws.com/builds/grafana_${deb_ver}_amd64.deb
 
