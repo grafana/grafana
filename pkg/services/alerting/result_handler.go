@@ -27,42 +27,9 @@ func NewResultHandler() *DefaultResultHandler {
 	}
 }
 
-func (handler *DefaultResultHandler) GetStateFromEvaluation(evalContext *EvalContext) m.AlertStateType {
-	if evalContext.Error != nil {
-		handler.log.Error("Alert Rule Result Error",
-			"ruleId", evalContext.Rule.Id,
-			"name", evalContext.Rule.Name,
-			"error", evalContext.Error,
-			"changing state to", evalContext.Rule.ExecutionErrorState.ToAlertState())
-
-		if evalContext.Rule.ExecutionErrorState == m.ExecutionErrorKeepState {
-			return evalContext.PrevAlertState
-		} else {
-			return evalContext.Rule.ExecutionErrorState.ToAlertState()
-		}
-	} else if evalContext.Firing {
-		return m.AlertStateAlerting
-	} else if evalContext.NoDataFound {
-		handler.log.Info("Alert Rule returned no data",
-			"ruleId", evalContext.Rule.Id,
-			"name", evalContext.Rule.Name,
-			"changing state to", evalContext.Rule.NoDataState.ToAlertState())
-
-		if evalContext.Rule.NoDataState == m.NoDataKeepState {
-			return evalContext.PrevAlertState
-		} else {
-			return evalContext.Rule.NoDataState.ToAlertState()
-		}
-	}
-
-	return m.AlertStateOK
-}
-
 func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 	executionError := ""
 	annotationData := simplejson.New()
-
-	evalContext.Rule.State = handler.GetStateFromEvaluation(evalContext)
 
 	if evalContext.Error != nil {
 		executionError = evalContext.Error.Error()

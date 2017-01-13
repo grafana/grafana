@@ -411,12 +411,6 @@
 			"path": "gopkg.in/gomail.v2",
 			"revision": "81ebce5c23dfd25c6c67194b37d3dd3f338c98b1",
 			"revisionTime": "2016-04-11T21:29:32Z"
-		},
-		{
-			"checksumSHA1": "PoHLopxwkiXxa3uVhezeq/qJ/Vo=",
-			"path": "gopkg.in/guregu/null.v3",
-			"revision": "41961cea0328defc5f95c1c473f89ebf0d1813f6",
-			"revisionTime": "2016-02-28T00:53:16Z"
 		}
 	],
 	"rootPath": "github.com/grafana/grafana"
