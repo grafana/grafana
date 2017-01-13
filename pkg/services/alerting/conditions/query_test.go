@@ -4,9 +4,8 @@ import (
 	"context"
 	"testing"
 
-	null "gopkg.in/guregu/null.v3"
-
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -70,6 +69,26 @@ func TestQueryCondition(t *testing.T) {
 
 				So(err, ShouldBeNil)
 				So(cr.Firing, ShouldBeTrue)
+			})
+
+			Convey("No series", func() {
+				Convey("Should set NoDataFound when condition is gt", func() {
+					ctx.series = tsdb.TimeSeriesSlice{}
+					cr, err := ctx.exec()
+
+					So(err, ShouldBeNil)
+					So(cr.Firing, ShouldBeFalse)
+					So(cr.NoDataFound, ShouldBeTrue)
+				})
+
+				Convey("Should be firing when condition is no_value", func() {
+					ctx.evaluator = `{"type": "no_value", "params": []}`
+					ctx.series = tsdb.TimeSeriesSlice{}
+					cr, err := ctx.exec()
+
+					So(err, ShouldBeNil)
+					So(cr.Firing, ShouldBeTrue)
+				})
 			})
 
 			Convey("Empty series", func() {

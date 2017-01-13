@@ -3,10 +3,10 @@ package conditions
 import (
 	"testing"
 
-	"gopkg.in/guregu/null.v3"
-
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func evalutorScenario(json string, reducedValue float64, datapoints ...float64) bool {

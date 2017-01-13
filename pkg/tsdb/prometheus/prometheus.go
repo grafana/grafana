@@ -7,10 +7,9 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/guregu/null.v3"
-
 	"net/http"
 
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"

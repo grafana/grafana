@@ -3,10 +3,10 @@ package conditions
 import (
 	"testing"
 
-	"gopkg.in/guregu/null.v3"
-
-	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 func TestSimpleReducer(t *testing.T) {
@@ -64,7 +64,6 @@ func TestSimpleReducer(t *testing.T) {
 			}
 
 			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 1))
-
 			So(reducer.Reduce(series).Valid, ShouldEqual, false)
 		})
 
