@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"regexp"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
@@ -52,8 +53,16 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 		}
 
 		// clear cookie headers
+		cookie := req.Header.Get("Cookie")
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
+
+		if cookie != "" {
+			re := regexp.MustCompile("grafana_[^;]*;")
+			cookie = re.ReplaceAllString(cookie, "")
+
+			req.Header.Add("Cookie", cookie)
+		}
 	}
 
 	return &httputil.ReverseProxy{Director: director, FlushInterval: time.Millisecond * 200}
