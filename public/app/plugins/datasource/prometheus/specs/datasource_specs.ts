@@ -9,6 +9,8 @@ describe('PrometheusDatasource', function() {
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
+  beforeEach(ctx.providePhase(['timeSrv']));
+
   beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
     ctx.$q = $q;
     ctx.$httpBackend =  $httpBackend;

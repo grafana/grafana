@@ -8,7 +8,7 @@ function (angular, _, $) {
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardViewStateSrv', function($location, $timeout, templateSrv, contextSrv, timeSrv) {
+  module.factory('dashboardViewStateSrv', function($location, $timeout) {
 
     // represents the transient view state
     // like fullscreen panel & edit
@@ -24,15 +24,6 @@ function (angular, _, $) {
           self.update({ fullscreen: false });
         }
       };
-
-      // update url on time range change
-      $scope.onAppEvent('time-range-changed', function() {
-        var urlParams = $location.search();
-        var urlRange = timeSrv.timeRangeForUrl();
-        urlParams.from = urlRange.from;
-        urlParams.to = urlRange.to;
-        $location.search(urlParams);
-      });
 
       $scope.onAppEvent('$routeUpdate', function() {
         var urlState = self.getQueryStringState();
@@ -82,7 +73,7 @@ function (angular, _, $) {
       return urlState;
     };
 
-    DashboardViewState.prototype.update = function(state) {
+    DashboardViewState.prototype.update = function(state, fromRouteUpdated) {
       // implement toggle logic
       if (state.toggle) {
         delete state.toggle;
@@ -113,7 +104,12 @@ function (angular, _, $) {
         delete this.state.tab;
       }
 
-      $location.search(this.serializeToUrl());
+      // do not update url params if we are here
+      // from routeUpdated event
+      if (fromRouteUpdated !== true) {
+        $location.search(this.serializeToUrl());
+      }
+
       this.syncState();
     };
 

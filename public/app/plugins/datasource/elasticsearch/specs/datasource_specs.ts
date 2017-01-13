@@ -11,7 +11,7 @@ describe('ElasticDatasource', function() {
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
+  beforeEach(ctx.providePhase(['templateSrv', 'backendSrv', 'timeSrv']));
 
   beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
     ctx.$q = $q;

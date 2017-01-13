@@ -92,7 +92,6 @@ define([
     self.timeSrv = new TimeSrvStub();
     self.datasourceSrv = {};
     self.backendSrv = {};
-    self.$location = {};
     self.$routeParams = {};
 
     this.providePhase = function(mocks) {
@@ -104,10 +103,11 @@ define([
     };
 
     this.createService = function(name) {
-      return inject(function($q, $rootScope, $httpBackend, $injector) {
+      return inject(function($q, $rootScope, $httpBackend, $injector, $location) {
         self.$q = $q;
         self.$rootScope = $rootScope;
         self.$httpBackend =  $httpBackend;
+        self.$location = $location;
 
         self.$rootScope.onAppEvent = function() {};
         self.$rootScope.appEvent = function() {};
