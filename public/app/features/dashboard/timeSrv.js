@@ -87,6 +87,10 @@ define([
       }
     };
 
+    this.getRefreshInterval = function () {
+      return this.dashboard.refresh;
+    };
+
     this.refreshDashboard = function() {
       $rootScope.$broadcast('refresh');
     };

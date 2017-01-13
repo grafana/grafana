@@ -15,7 +15,7 @@ describe('PrometheusMetricFindQuery', function() {
     ctx.$q = $q;
     ctx.$httpBackend =  $httpBackend;
     ctx.$rootScope = $rootScope;
-    ctx.ds = $injector.instantiate(PrometheusDatasource, {instanceSettings: instanceSettings});
+    ctx.ds = $injector.instantiate(PrometheusDatasource, {instanceSettings: instanceSettings, timeSrv: ctx.timeSrv});
     $httpBackend.when('GET', /\.html$/).respond('');
   }));
 

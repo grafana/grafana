@@ -142,6 +142,10 @@ define([
     this.setTime = function(time) {
       this.time = time;
     };
+
+    this.getRefreshInterval = function() {
+      return undefined;
+    };
   }
 
   function ContextSrvStub() {

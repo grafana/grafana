@@ -53,6 +53,8 @@ function (_) {
     } else {
       var start = this.datasource.getPrometheusTime(this.range.from, false);
       var end = this.datasource.getPrometheusTime(this.range.to, true);
+      start = this.datasource.alignTime(start, end - start);
+      end = this.datasource.alignTime(end, end - start);
       url = '/api/v1/series?match[]=' + encodeURIComponent(metric)
         + '&start=' + start
         + '&end=' + end;
@@ -114,6 +116,8 @@ function (_) {
   PrometheusMetricFindQuery.prototype.metricNameAndLabelsQuery = function(query) {
     var start = this.datasource.getPrometheusTime(this.range.from, false);
     var end = this.datasource.getPrometheusTime(this.range.to, true);
+    start = this.datasource.alignTime(start, end - start);
+    end = this.datasource.alignTime(end, end - start);
     var url = '/api/v1/series?match[]=' + encodeURIComponent(query)
       + '&start=' + start
       + '&end=' + end;
