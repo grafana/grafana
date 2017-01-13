@@ -37,6 +37,7 @@ type AlertTestCommand struct {
 
 type AlertTestResult struct {
 	Firing         bool                  `json:"firing"`
+	State          m.AlertStateType      `json:"state"`
 	ConditionEvals string                `json:"conditionEvals"`
 	TimeMs         string                `json:"timeMs"`
 	Error          string                `json:"error,omitempty"`
