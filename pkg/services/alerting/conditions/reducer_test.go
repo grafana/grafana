@@ -57,6 +57,17 @@ func TestSimpleReducer(t *testing.T) {
 			So(result, ShouldEqual, float64(2))
 		})
 
+		Convey("avg with only nulls", func() {
+			reducer := NewSimpleReducer("avg")
+			series := &tsdb.TimeSeries{
+				Name: "test time serie",
+			}
+
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 1))
+
+			So(reducer.Reduce(series).Valid, ShouldEqual, false)
+		})
+
 		Convey("avg of number values and null values should ignore nulls", func() {
 			reducer := NewSimpleReducer("avg")
 			series := &tsdb.TimeSeries{

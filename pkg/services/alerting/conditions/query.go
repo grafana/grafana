@@ -51,7 +51,6 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 
 		if reducedValue.Valid == false {
 			emptySerieCount++
-			continue
 		}
 
 		if context.IsTestRun {

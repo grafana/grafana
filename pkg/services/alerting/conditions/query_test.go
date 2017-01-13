@@ -73,6 +73,17 @@ func TestQueryCondition(t *testing.T) {
 			})
 
 			Convey("Empty series", func() {
+				Convey("Should set Firing if eval match", func() {
+					ctx.evaluator = `{"type": "no_value", "params": []}`
+					ctx.series = tsdb.TimeSeriesSlice{
+						tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs()),
+					}
+					cr, err := ctx.exec()
+
+					So(err, ShouldBeNil)
+					So(cr.Firing, ShouldBeTrue)
+				})
+
 				Convey("Should set NoDataFound both series are empty", func() {
 					ctx.series = tsdb.TimeSeriesSlice{
 						tsdb.NewTimeSeries("test1", tsdb.NewTimeSeriesPointsFromArgs()),
