@@ -87,8 +87,9 @@ func (mp *KairosDbMetricParser) Parse(model *simplejson.Json) map[string]interfa
 			groupBy = append(groupBy, gbJson.MustMap())
 		}
 	}
-
-	metric["group_by"] = groupBy
+	if groupBy != nil {
+		metric["group_by"] = groupBy
+	}
 	
 	// Setting tags
 	tags, tagsCheck := model.CheckGet("tags")
