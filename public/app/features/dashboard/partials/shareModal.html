@@ -69,6 +69,15 @@
 	</div>
 </script>
 
+<script type="text/ng-template" id="renderImageOptions.html">
+	<div class="gf-form-group">
+		<gf-form-switch class="gf-form"
+			label="Use browser time offset in image" label-class="width-18" switch-class="max-width-6"
+			checked="options.browserTimeOffset" on-change="buildUrl()">
+		</gf-form-switch>
+	</div>
+</script>
+
 <script type="text/ng-template" id="shareLink.html">
 	<div class="share-modal-header">
 		<div class="share-modal-big-icon">
@@ -91,6 +100,7 @@
 					</div>
 				</div>
 			</div>
+			<div ng-include src="'renderImageOptions.html'"></div>
 			<div class="gf-form" ng-show="modeSharePanel">
 				<a href="{{imageUrl}}" target="_blank"><i class="fa fa-camera"></i> Direct link rendered image</a>
 			</div>
