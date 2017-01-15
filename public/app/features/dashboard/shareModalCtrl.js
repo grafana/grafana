@@ -11,7 +11,7 @@ function (angular, _, $, require, config) {
 
   module.controller('ShareModalCtrl', function($scope, $rootScope, $location, $timeout, timeSrv, templateSrv, linkSrv) {
 
-    $scope.options = { forCurrent: true, includeTemplateVars: true, theme: 'current' };
+    $scope.options = { forCurrent: true, includeTemplateVars: true, browserTimeOffset: false, theme: 'current' };
     $scope.editor = { index: $scope.tabIndex || 0};
 
     $scope.init = function() {
@@ -83,6 +83,13 @@ function (angular, _, $, require, config) {
       $scope.imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
+      if ($scope.options.browserTimeOffset) {
+        var offsetMinutes = new Date().getTimezoneOffset(); // Negative if ahead of UTC
+        var sign = offsetMinutes < 0 ? '+' : '-';
+        var hours = ('0' + Math.abs(offsetMinutes) / 60).slice(-2);
+        var minutes = ('0' + Math.abs(offsetMinutes) % 60).slice(-2);
+        $scope.imageUrl += '&timeOffset=' + encodeURIComponent(sign + hours + minutes);
+      }
     };
 
   });

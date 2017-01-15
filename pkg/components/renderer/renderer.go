@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"regexp"
 	"runtime"
 	"time"
 
@@ -15,17 +16,43 @@ import (
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+	"strings"
 )
 
 type RenderOpts struct {
-	Path    string
-	Width   string
-	Height  string
-	Timeout string
-	OrgId   int64
+	Path       string
+	Width      string
+	Height     string
+	Timeout    string
+	OrgId      int64
+	TimeOffset string
 }
 
 var rendererLog log.Logger = log.New("png-renderer")
+
+func isoTimeOffsetToPosixTz(isoOffset string) string {
+	re := regexp.MustCompile(`^([+-])([0-1][0-9]|2[0-4])([0-5][0-9])$`)
+	results := re.FindStringSubmatch(isoOffset)
+	if results == nil {
+		return ""
+	}
+	sign := "+"
+	if results[1] == "+" {
+		sign = "-"  // "+" is west and "-" is east in POSIX TZ
+	}
+	return fmt.Sprintf("SOMEWHERE%s%s:%s", sign, results[2], results[3])
+}
+
+func appendEnviron(baseEnviron []string, name string, value string) []string {
+	results := make([]string, 0)
+	prefix := fmt.Sprintf("%s=", name)
+	for _, v := range baseEnviron {
+		if !strings.HasPrefix(v, prefix) {
+			results = append(results, v)
+		}
+	}
+	return append(results, fmt.Sprintf("%s=%s", name, value))
+}
 
 func RenderToPng(params *RenderOpts) (string, error) {
 	rendererLog.Info("Rendering", "path", params.Path)
@@ -71,6 +98,12 @@ func RenderToPng(params *RenderOpts) (string, error) {
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		return "", err
+	}
+
+	tz := isoTimeOffsetToPosixTz(params.TimeOffset)
+	if tz != "" {
+		baseEnviron := os.Environ()
+		cmd.Env = appendEnviron(baseEnviron, "TZ", tz)
 	}
 
 	err = cmd.Start()
