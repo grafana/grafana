@@ -43,34 +43,9 @@
 				<div class="row text-center">
 					<ul>
 						<li>
-							<a href="http://docs.grafana.org" target="_blank">
-								<i class="fa fa-file-code-o"></i>
-								Docs
-							</a>
+							<span>GrafCrunch</span>
+							<span>v[[.BuildVersion]]</span>
 						</li>
-						<li>
-							<a href="https://grafana.net/support/plans" target="_blank">
-								<i class="fa fa-support"></i>
-								Support Plans
-							</a>
-						</li>
-						<li>
-							<a href="http://grafana.org/community" target="_blank">
-								<i class="fa fa-comments-o"></i>
-								Community
-							</a>
-						</li>
-						<li>
-							<a href="http://grafana.org" target="_blank">Grafana</a>
-							<span>v[[.BuildVersion]] (commit: [[.BuildCommit]])</span>
-						</li>
-						[[if .NewGrafanaVersionExists]]
-							<li>
-								<a href="http://grafana.org/download" target="_blank" bs-tooltip="'[[.NewGrafanaVersion]]'">
-									New version available!
-								</a>
-							</li>
-						[[end]]
 					</ul>
 				</div>
 			</footer>

@@ -3,7 +3,7 @@
 	<div class="login-box">
 
 		<div class="login-box-logo">
-			<img src="img/logo_transparent_200x75.png">
+			<img src="public/img/logo_transparent_200x75.png">
 		</div>
 
     <div class="login-inner-box">
@@ -32,7 +32,7 @@
 				</div>
 
 				<div class="gf-form-button-row">
-					<button type="submit" class="btn btn-large p-x-3" ng-click="submit();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
+					<button type="submit" class="btn p-x-3" ng-click="submit();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
 						{{submitBtnText}}
 					</button>
 				</div>
@@ -68,21 +68,9 @@
 				</div>
 			</div>
 
-<!--
-    <div class="row" style="margin-top: 40px">
-        <div class="text-center">
-            <a href="user/password/send-reset-email">
-                Forgot your password?
-            </a>
-        </div>
-    </div>
--->
+			<div class="clearfix"></div>
 
-		<div class="row" style="margin-top: 50px">
-			<div class="version-footer text-center small">
-				GrafCrunch version: {{buildInfo.version}},
-        build date: {{buildInfo.buildstamp | date: 'yyyy-MM-dd HH:mm:ss' }}
-			</div>
 		</div>
 
 	</div>
+</div>
