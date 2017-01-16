@@ -122,6 +122,7 @@ function joinEvalMatches(matches, separator: string) {
       res.push(ev.metric + '=' + ev.value);
     }
 
+    // For backwards compatibility . Should be be able to remove this after ~2017-06-01
     if (ev.Metric !== undefined && ev.Value !== undefined) {
       res.push(ev.Metric + '=' + ev.Value);
     }
