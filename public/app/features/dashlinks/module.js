@@ -21,7 +21,7 @@ function (angular, _) {
     return {
       restrict: 'E',
       controller: 'DashLinkEditorCtrl',
-      templateUrl: 'app/features/dashlinks/editor.html',
+      templateUrl: 'public/app/features/dashlinks/editor.html',
       link: function() {
       }
     };
@@ -44,16 +44,18 @@ function (angular, _) {
       restrict: 'E',
       link: function(scope, elem) {
         var link = scope.link;
-        var template = '<div class="submenu-item dropdown">' +
-          '<a class="pointer dash-nav-link" data-placement="bottom"' +
+        var template = '<div class="gf-form">' +
+          '<a class="pointer gf-form-label" data-placement="bottom"' +
           (link.asDropdown ? ' ng-click="fillDropdown(link)" data-toggle="dropdown"'  : "") + '>' +
           '<i></i> <span></span></a>';
 
         if (link.asDropdown) {
           template += '<ul class="dropdown-menu" role="menu">' +
-            '<li ng-repeat="dash in link.searchHits"><a href="{{dash.url}}"><i class="fa fa-th-large"></i> {{dash.title}}</a></li>' +
+            '<li ng-repeat="dash in link.searchHits"><a href="{{dash.url}}">{{dash.title}}</a></li>' +
             '</ul>';
         }
+
+        template += '</div>';
 
         elem.html(template);
         $compile(elem.contents())(scope);
@@ -159,7 +161,7 @@ function (angular, _) {
     };
 
     updateDashLinks();
-    $rootScope.onAppEvent('dash-links-updated', updateDashLinks, $rootScope);
+    $rootScope.onAppEvent('dash-links-updated', updateDashLinks, $scope);
   });
 
   module.controller('DashLinkEditorCtrl', function($scope, $rootScope) {
@@ -169,7 +171,7 @@ function (angular, _) {
 
     $scope.addLink = function() {
       $scope.dashboard.links.push({ type: 'dashboards', icon: 'external link' });
-      $scope.updateSubmenuVisibility();
+      $scope.dashboard.updateSubmenuVisibility();
       $scope.updated();
     };
 
@@ -184,7 +186,7 @@ function (angular, _) {
 
     $scope.deleteLink = function(index) {
       $scope.dashboard.links.splice(index, 1);
-      $scope.updateSubmenuVisibility();
+      $scope.dashboard.updateSubmenuVisibility();
       $scope.updated();
     };
 

@@ -3,16 +3,19 @@ package middleware
 import (
 	"time"
 
-	"github.com/Unknwon/macaron"
-	"github.com/macaron-contrib/session"
-	_ "github.com/macaron-contrib/session/mysql"
-	_ "github.com/macaron-contrib/session/postgres"
-	_ "github.com/macaron-contrib/session/redis"
+	"github.com/go-macaron/session"
+	_ "github.com/go-macaron/session/memcache"
+	_ "github.com/go-macaron/session/mysql"
+	_ "github.com/go-macaron/session/postgres"
+	_ "github.com/go-macaron/session/redis"
+	"gopkg.in/macaron.v1"
 )
 
 const (
-	SESS_KEY_USERID = "uid"
-	SESS_KEY_APIKEY = "apikey_id" // used fror render requests with api keys
+	SESS_KEY_USERID       = "uid"
+	SESS_KEY_OAUTH_STATE  = "state"
+	SESS_KEY_APIKEY       = "apikey_id" // used for render requests with api keys
+	SESS_KEY_LASTLDAPSYNC = "last_ldap_sync"
 )
 
 var sessionManager *session.Manager

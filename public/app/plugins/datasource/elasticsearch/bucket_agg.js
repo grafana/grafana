@@ -8,6 +8,20 @@ function (angular, _, queryDef) {
 
   var module = angular.module('grafana.directives');
 
+  module.directive('elasticBucketAgg', function() {
+    return {
+      templateUrl: 'public/app/plugins/datasource/elasticsearch/partials/bucket_agg.html',
+      controller: 'ElasticBucketAggCtrl',
+      restrict: 'E',
+      scope: {
+        target: "=",
+        index: "=",
+        onChange: "&",
+        getFields: "&",
+      }
+    };
+  });
+
   module.controller('ElasticBucketAggCtrl', function($scope, uiSegmentSrv, $q, $rootScope) {
     var bucketAggs = $scope.target.bucketAggs;
 
@@ -46,6 +60,10 @@ function (angular, _, queryDef) {
           $scope.agg.query = '*';
           break;
         }
+        case 'geohash_grid': {
+          $scope.agg.settings.precision = 3;
+          break;
+        }
       }
 
       $scope.validateModel();
@@ -55,7 +73,7 @@ function (angular, _, queryDef) {
     $scope.validateModel = function() {
       $scope.index = _.indexOf(bucketAggs, $scope.agg);
       $scope.isFirst = $scope.index === 0;
-      $scope.isLast = $scope.index === bucketAggs.length - 1;
+      $scope.bucketAggCount = bucketAggs.length;
 
       var settingsLinkText = "";
       var settings = $scope.agg.settings || {};
@@ -63,7 +81,7 @@ function (angular, _, queryDef) {
       switch($scope.agg.type) {
         case 'terms': {
           settings.order = settings.order || "asc";
-          settings.size = settings.size || "0";
+          settings.size = settings.size || "10";
           settings.orderBy = settings.orderBy || "_term";
 
           if (settings.size !== '0') {
@@ -95,7 +113,25 @@ function (angular, _, queryDef) {
           settings.min_doc_count = settings.min_doc_count || 0;
           $scope.agg.field = $scope.target.timeField;
           settingsLinkText = 'Interval: ' + settings.interval;
-          settingsLinkText += ', Min Doc Count: ' + settings.min_doc_count;
+
+          if (settings.min_doc_count > 0) {
+            settingsLinkText += ', Min Doc Count: ' + settings.min_doc_count;
+          }
+
+          if (settings.trimEdges === undefined || settings.trimEdges < 0) {
+            settings.trimEdges = 0;
+          }
+
+          if (settings.trimEdges && settings.trimEdges > 0) {
+            settingsLinkText += ', Trim edges: ' + settings.trimEdges;
+          }
+          break;
+        }
+        case 'geohash_grid': {
+          // limit precision to 7
+          settings.precision = Math.max(Math.min(settings.precision, 7), 1);
+          settingsLinkText = 'Precision: ' + settings.precision;
+          break;
         }
       }
 

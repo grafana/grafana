@@ -1,10 +1,9 @@
 define([
   'angular',
   'lodash',
-  './editorCtrl',
-  './templateValuesSrv',
+  'app/core/utils/kbn',
 ],
-function (angular, _) {
+function (angular, _, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -13,9 +12,10 @@ function (angular, _) {
     var self = this;
 
     this._regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
-    this._values = {};
+    this._index = {};
     this._texts = {};
     this._grafanaVariables = {};
+    this._adhocVariables = {};
 
     this.init = function(variables) {
       this.variables = variables;
@@ -23,38 +23,87 @@ function (angular, _) {
     };
 
     this.updateTemplateData = function() {
-      this._values = {};
-      this._texts = {};
+      this._index = {};
+      this._filters = {};
+      this._adhocVariables = {};
 
-      _.each(this.variables, function(variable) {
-        if (!variable.current || !variable.current.isNone && !variable.current.value) { return; }
+      for (var i = 0; i < this.variables.length; i++) {
+        var variable = this.variables[i];
 
-        this._values[variable.name] = this.renderVariableValue(variable);
-        this._texts[variable.name] = variable.current.text;
-      }, this);
+        // add adhoc filters to it's own index
+        if (variable.type === 'adhoc') {
+          this._adhocVariables[variable.datasource] = variable;
+          continue;
+        }
+
+        if (!variable.current || !variable.current.isNone && !variable.current.value) {
+          continue;
+        }
+
+        this._index[variable.name] = variable;
+      }
     };
 
-    this.renderVariableValue = function(variable) {
-      var value = variable.current.value;
-      if (_.isString(value)) {
-        return value;
-      } else {
-        switch(variable.multiFormat) {
-          case "regex values": {
-            return '(' + value.join('|') + ')';
+    this.variableInitialized = function(variable) {
+      this._index[variable.name] = variable;
+    };
+
+    this.getAdhocFilters = function(datasourceName) {
+      var variable = this._adhocVariables[datasourceName];
+      if (variable) {
+        return variable.filters || [];
+      }
+      return [];
+    };
+
+    function luceneEscape(value) {
+      return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, "\\$1");
+    }
+
+    this.luceneFormat = function(value) {
+      if (typeof value === 'string') {
+        return luceneEscape(value);
+      }
+      var quotedValues = _.map(value, function(val) {
+        return '\"' + luceneEscape(val) + '\"';
+      });
+      return '(' + quotedValues.join(' OR ') + ')';
+    };
+
+    this.formatValue = function(value, format, variable) {
+      // for some scopedVars there is no variable
+      variable = variable || {};
+
+      if (typeof format === 'function') {
+        return format(value, variable, this.formatValue);
+      }
+
+      switch(format) {
+        case "regex": {
+          if (typeof value === 'string') {
+            return kbn.regexEscape(value);
           }
-          case "lucene": {
-            var quotedValues = _.map(value, function(val) {
-              return '\\\"' + val + '\\\"';
-            });
-            return '(' + quotedValues.join(' OR ') + ')';
+
+          var escapedValues = _.map(value, kbn.regexEscape);
+          return '(' + escapedValues.join('|') + ')';
+        }
+        case "lucene": {
+          return this.luceneFormat(value, format, variable);
+        }
+        case "pipe": {
+          if (typeof value === 'string') {
+            return value;
           }
-          case "pipe": {
-            return value.join('|');
+          return value.join('|');
+        }
+        case "distributed": {
+          return this.distributeVariable(value, variable.name);
+        }
+        default:  {
+          if (typeof value === 'string') {
+            return value;
           }
-          default:  {
-            return '{' + value.join(',') + '}';
-          }
+          return '{' + value.join(',') + '}';
         }
       }
     };
@@ -63,17 +112,18 @@ function (angular, _) {
       this._grafanaVariables[name] = value;
     };
 
-    this.variableExists = function(expression) {
+    this.getVariableName = function(expression) {
       this._regex.lastIndex = 0;
       var match = this._regex.exec(expression);
-      return match && (self._values[match[1] || match[2]] !== void 0);
+      if (!match) {
+        return null;
+      }
+      return match[1] || match[2];
     };
 
-    this.containsVariable = function(str, variableName) {
-      if (!str) {
-        return false;
-      }
-      return str.indexOf('$' + variableName) !== -1 || str.indexOf('[[' + variableName + ']]') !== -1;
+    this.variableExists = function(expression) {
+      var name = this.getVariableName(expression);
+      return name && (self._index[name] !== void 0);
     };
 
     this.highlightVariablesAsHtml = function(str) {
@@ -82,37 +132,71 @@ function (angular, _) {
       str = _.escape(str);
       this._regex.lastIndex = 0;
       return str.replace(this._regex, function(match, g1, g2) {
-        if (self._values[g1 || g2]) {
+        if (self._index[g1 || g2]) {
           return '<span class="template-variable">' + match + '</span>';
         }
         return match;
       });
     };
 
-    this.replace = function(target, scopedVars) {
+    this.getAllValue = function(variable) {
+      if (variable.allValue) {
+        return variable.allValue;
+      }
+      var values = [];
+      for (var i = 1; i < variable.options.length; i++) {
+        values.push(variable.options[i].value);
+      }
+      return values;
+    };
+
+    this.replace = function(target, scopedVars, format) {
       if (!target) { return target; }
 
-      var value;
+      var variable, systemValue, value;
       this._regex.lastIndex = 0;
 
       return target.replace(this._regex, function(match, g1, g2) {
+        variable = self._index[g1 || g2];
+
         if (scopedVars) {
           value = scopedVars[g1 || g2];
-          if (value) { return value.value; }
+          if (value) {
+            return self.formatValue(value.value, format, variable);
+          }
         }
 
-        value = self._values[g1 || g2];
-        if (!value) { return match; }
+        if (!variable) {
+          return match;
+        }
 
-        return self._grafanaVariables[value] || value;
+        systemValue = self._grafanaVariables[variable.current.value];
+        if (systemValue) {
+          return self.formatValue(systemValue, format, variable);
+        }
+
+        value = variable.current.value;
+        if (self.isAllValue(value)) {
+          value = self.getAllValue(variable);
+          // skip formating of custom all values
+          if (variable.allValue) {
+            return value;
+          }
+        }
+
+        var res = self.formatValue(value, format, variable);
+        return res;
       });
+    };
+
+    this.isAllValue = function(value) {
+      return value === '$__all' || Array.isArray(value) && value[0] === '$__all';
     };
 
     this.replaceWithText = function(target, scopedVars) {
       if (!target) { return target; }
 
-      var value;
-      var text;
+      var variable;
       this._regex.lastIndex = 0;
 
       return target.replace(this._regex, function(match, g1, g2) {
@@ -121,29 +205,32 @@ function (angular, _) {
           if (option) { return option.text; }
         }
 
-        value = self._values[g1 || g2];
-        text = self._texts[g1 || g2];
-        if (!value) { return match; }
+        variable = self._index[g1 || g2];
+        if (!variable) { return match; }
 
-        return self._grafanaVariables[value] || text;
+        return self._grafanaVariables[variable.current.value] || variable.current.text;
       });
     };
 
     this.fillVariableValuesForUrl = function(params, scopedVars) {
       _.each(this.variables, function(variable) {
-        var current = variable.current;
-        var value = current.value;
-
-        if (current.text === 'All') {
-          value = 'All';
-        }
-
         if (scopedVars && scopedVars[variable.name] !== void 0) {
-          value = scopedVars[variable.name].value;
+          params['var-' + variable.name] = scopedVars[variable.name].value;
+        } else {
+          params['var-' + variable.name] = variable.getValueForUrl();
         }
-
-        params['var-' + variable.name] = value;
       });
+    };
+
+    this.distributeVariable = function(value, variable) {
+      value = _.map(value, function(val, index) {
+        if (index !== 0) {
+          return variable + "=" + val;
+        } else {
+          return val;
+        }
+      });
+      return value.join(',');
     };
 
   });

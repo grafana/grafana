@@ -15,7 +15,7 @@ function (angular, _) {
         },
         restrict: 'E',
         controller: 'PanelLinksEditorCtrl',
-        templateUrl: 'app/features/panellinks/module.html',
+        templateUrl: 'public/app/features/panellinks/module.html',
         link: function() {
         }
       };
@@ -41,7 +41,7 @@ function (angular, _) {
 
       $scope.dashboardChanged = function(link) {
         backendSrv.search({query: link.dashboard}).then(function(hits) {
-          var dashboard = _.findWhere(hits, {title: link.dashboard});
+          var dashboard = _.find(hits, {title: link.dashboard});
           if (dashboard) {
             link.dashUri = dashboard.uri;
             link.title = dashboard.title;
@@ -52,6 +52,5 @@ function (angular, _) {
       $scope.deleteLink = function(link) {
         $scope.panel.links = _.without($scope.panel.links, link);
       };
-
     });
 });

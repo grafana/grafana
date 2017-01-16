@@ -20,19 +20,24 @@ const (
 )
 
 func LoginView(c *middleware.Context) {
-	if err := setIndexViewData(c); err != nil {
+	viewData, err := setIndexViewData(c)
+	if err != nil {
 		c.Handle(500, "Failed to get settings", err)
 		return
 	}
 
-	settings := c.Data["Settings"].(map[string]interface{})
-	settings["googleAuthEnabled"] = setting.OAuthService.Google
-	settings["githubAuthEnabled"] = setting.OAuthService.GitHub
-	settings["disableUserSignUp"] = !setting.AllowUserSignUp
-	settings["loginHint"] = setting.LoginHint
+	enabledOAuths := make(map[string]interface{})
+	for key, oauth := range setting.OAuthService.OAuthInfos {
+		enabledOAuths[key] = map[string]string{"name": oauth.Name}
+	}
+
+	viewData.Settings["oauth"] = enabledOAuths
+	viewData.Settings["disableUserSignUp"] = !setting.AllowUserSignUp
+	viewData.Settings["loginHint"] = setting.LoginHint
+	viewData.Settings["disableLoginForm"] = setting.DisableLoginForm
 
 	if !tryLoginUsingRememberCookie(c) {
-		c.HTML(200, VIEW_INDEX)
+		c.HTML(200, VIEW_INDEX, viewData)
 		return
 	}
 
@@ -133,8 +138,10 @@ func loginUserWithUser(user *m.User, c *middleware.Context) {
 	}
 
 	days := 86400 * setting.LogInRememberDays
-	c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
-	c.SetSuperSecureCookie(util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
+	if days > 0 {
+		c.SetCookie(setting.CookieUserName, user.Login, days, setting.AppSubUrl+"/")
+		c.SetSuperSecureCookie(util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName, user.Login, days, setting.AppSubUrl+"/")
+	}
 
 	c.Session.Set(middleware.SESS_KEY_USERID, user.Id)
 }

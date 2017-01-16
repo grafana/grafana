@@ -18,6 +18,12 @@ func AddMigrations(mg *Migrator) {
 	addApiKeyMigrations(mg)
 	addDashboardSnapshotMigrations(mg)
 	addQuotaMigration(mg)
+	addAppSettingsMigration(mg)
+	addSessionMigration(mg)
+	addPlaylistMigrations(mg)
+	addPreferencesMigrations(mg)
+	addAlertMigrations(mg)
+	addAnnotationMig(mg)
 }
 
 func addMigrationLogMigrations(mg *Migrator) {

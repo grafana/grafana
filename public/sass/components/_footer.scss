@@ -1,0 +1,38 @@
+.page-dashboard .footer {
+	display: none;
+}
+
+.footer {
+  color: $footer-link-color;
+  padding: 5rem 0 1rem 0;
+  font-size: $font-size-xs;
+  width: 98%;  /* was causing horiz scrollbars - need to examine */
+
+  a {
+    color: $footer-link-color;
+
+    &:hover {
+      color: $footer-link-hover;
+    }
+  }
+
+  ul {
+    list-style: none;
+  }
+
+  li {
+    display: inline-block;
+    padding-right: 2px;
+    &::after {
+      content: ' | ';
+      padding-left: 2px;
+    }
+  }
+
+  li:last-child {
+    &::after {
+      padding-left: 0;
+      content: '';
+    }
+  }
+}

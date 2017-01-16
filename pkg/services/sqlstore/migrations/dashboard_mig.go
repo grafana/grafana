@@ -92,4 +92,37 @@ func addDashboardMigration(mg *Migrator) {
 		Sqlite("SELECT 0 WHERE 0;").
 		Postgres("SELECT 0;").
 		Mysql("ALTER TABLE dashboard MODIFY data MEDIUMTEXT;"))
+
+	// add column to store updater of a dashboard
+	mg.AddMigration("Add column updated_by in dashboard - v2", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "updated_by", Type: DB_Int, Nullable: true,
+	}))
+
+	// add column to store creator of a dashboard
+	mg.AddMigration("Add column created_by in dashboard - v2", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "created_by", Type: DB_Int, Nullable: true,
+	}))
+
+	// add column to store gnetId
+	mg.AddMigration("Add column gnetId in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "gnet_id", Type: DB_BigInt, Nullable: true,
+	}))
+
+	mg.AddMigration("Add index for gnetId in dashboard", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"gnet_id"}, Type: IndexType,
+	}))
+
+	// add column to store plugin_id
+	mg.AddMigration("Add column plugin_id in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "plugin_id", Type: DB_NVarchar, Nullable: true, Length: 255,
+	}))
+
+	mg.AddMigration("Add index for plugin_id in dashboard", NewAddIndexMigration(dashboardV2, &Index{
+		Cols: []string{"org_id", "plugin_id"}, Type: IndexType,
+	}))
+
+	// dashboard_id index for dashboard_tag table
+	mg.AddMigration("Add index for dashboard_id in dashboard_tag", NewAddIndexMigration(dashboardTagV1, &Index{
+		Cols: []string{"dashboard_id"}, Type: IndexType,
+	}))
 }

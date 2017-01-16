@@ -29,28 +29,25 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	datasources := make(map[string]interface{})
 	var defaultDatasource string
 
+	enabledPlugins, err := plugins.GetEnabledPlugins(c.OrgId)
+	if err != nil {
+		return nil, err
+	}
+
 	for _, ds := range orgDataSources {
 		url := ds.Url
 
-    var dsMap = map[string]interface{}{
-      "type": ds.Type,
-      "name": ds.Name,
-      "url":  url,
-    }
-
 		if ds.Access == m.DS_ACCESS_PROXY {
-			url = setting.AppSubUrl + "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
+			url = "/api/datasources/proxy/" + strconv.FormatInt(ds.Id, 10)
+		}
 
-      if ds.Type == m.DS_NETCRUNCH {
-        dsMap["id"] = ds.Id
-        dsMap["username"] = ds.User
-        dsMap["password"] = ds.Password
-        dsMap["url"] = url
-        dsMap["serverURL"] = ds.Url
-      }
-    }
+		var dsMap = map[string]interface{}{
+			"type": ds.Type,
+			"name": ds.Name,
+			"url":  url,
+		}
 
-		meta, exists := plugins.DataSources[ds.Type]
+		meta, exists := enabledPlugins.DataSources[ds.Type]
 		if !exists {
 			log.Error(3, "Could not find plugin definition for data source: %v", ds.Type)
 			continue
@@ -62,7 +59,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			defaultDatasource = ds.Name
 		}
 
-		if len(ds.JsonData) > 0 {
+		if ds.JsonData != nil {
 			dsMap["jsonData"] = ds.JsonData
 		}
 
@@ -92,6 +89,10 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			dsMap["index"] = ds.Database
 		}
 
+		if ds.Type == m.DS_INFLUXDB {
+			dsMap["database"] = ds.Database
+		}
+
 		if ds.Type == m.DS_PROMETHEUS {
 			// add unproxied server URL for link to Prometheus web UI
 			dsMap["directUrl"] = ds.Url
@@ -104,6 +105,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	grafanaDatasourceMeta, _ := plugins.DataSources["grafana"]
 	datasources["-- Grafana --"] = map[string]interface{}{
 		"type": "grafana",
+		"name": "-- Grafana --",
 		"meta": grafanaDatasourceMeta,
 	}
 
@@ -117,19 +119,57 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		defaultDatasource = "-- Grafana --"
 	}
 
+	panels := map[string]interface{}{}
+	for _, panel := range enabledPlugins.Panels {
+		panels[panel.Id] = map[string]interface{}{
+			"module":       panel.Module,
+			"baseUrl":      panel.BaseUrl,
+			"name":         panel.Name,
+			"id":           panel.Id,
+			"info":         panel.Info,
+			"hideFromList": panel.HideFromList,
+			"sort":         getPanelSort(panel.Id),
+		}
+	}
+
 	jsonObj := map[string]interface{}{
 		"defaultDatasource": defaultDatasource,
 		"datasources":       datasources,
+		"panels":            panels,
 		"appSubUrl":         setting.AppSubUrl,
 		"allowOrgCreate":    (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
+		"authProxyEnabled":  setting.AuthProxyEnabled,
+		"ldapEnabled":       setting.LdapEnabled,
 		"buildInfo": map[string]interface{}{
-			"version":    setting.BuildVersion,
-			"commit":     setting.BuildCommit,
-			"buildstamp": setting.BuildStamp,
+			"version":       setting.BuildVersion,
+			"commit":        setting.BuildCommit,
+			"buildstamp":    setting.BuildStamp,
+			"latestVersion": plugins.GrafanaLatestVersion,
+			"hasUpdate":     plugins.GrafanaHasUpdate,
+			"env":           setting.Env,
 		},
 	}
 
 	return jsonObj, nil
+}
+
+func getPanelSort(id string) int {
+	sort := 100
+	switch id {
+	case "graph":
+		sort = 1
+	case "singlestat":
+		sort = 2
+	case "table":
+		sort = 3
+	case "text":
+		sort = 4
+	case "alertlist":
+		sort = 5
+	case "dashlist":
+		sort = 6
+	}
+	return sort
 }
 
 func GetFrontendSettings(c *middleware.Context) {

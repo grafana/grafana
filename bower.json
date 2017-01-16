@@ -13,14 +13,13 @@
     "tests"
   ],
   "dependencies": {
-    "jquery": "~2.1.4",
-    "angular": "~1.4.3",
-    "angular-route": "~1.4.3",
-    "angular-mocks": "~1.4.3",
-    "angular-sanitize": "~1.4.3",
-    "angular-native-dragdrop": "~1.1.1",
-    "angular-bindonce": "~0.3.3",
-    "requirejs": "~2.1.18",
-    "requirejs-text": "~2.0.14"
+    "jquery": "3.1.0",
+    "lodash": "4.15.0",
+    "angular": "1.5.8",
+    "angular-route": "1.5.8",
+    "angular-mocks": "1.5.8",
+    "angular-sanitize": "1.5.8",
+    "angular-native-dragdrop": "1.2.2",
+    "angular-bindonce": "0.3.3"
   }
 }

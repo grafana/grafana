@@ -1,27 +1,33 @@
-///<amd-dependency path="app/plugins/datasource/graphite/datasource" />
-///<amd-dependency path="test/specs/helpers" name="helpers" />
 
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
-declare var helpers: any;
+import helpers from 'test/specs/helpers';
+import {GraphiteDatasource} from "../datasource";
 
 describe('graphiteDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
+  var instanceSettings: any = {url: [''], name: 'graphiteProd'};
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
-
   beforeEach(ctx.providePhase(['backendSrv']));
-  beforeEach(ctx.createService('GraphiteDatasource'));
+  beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
+    ctx.$q = $q;
+    ctx.$httpBackend =  $httpBackend;
+    ctx.$rootScope = $rootScope;
+    ctx.$injector = $injector;
+    $httpBackend.when('GET', /\.html$/).respond('');
+  }));
 
   beforeEach(function() {
-    ctx.ds = new ctx.service({ url: [''] });
+    ctx.ds = ctx.$injector.instantiate(GraphiteDatasource, {instanceSettings: instanceSettings});
   });
 
   describe('When querying influxdb with one target using query editor target spec', function() {
     var query = {
-    rangeRaw: { from: 'now-1h', to: 'now' },
-    targets: [{ target: 'prod1.count' }, {target: 'prod2.count'}],
-    maxDataPoints: 500,
+      panelId: 3,
+      rangeRaw: { from: 'now-1h', to: 'now' },
+      targets: [{ target: 'prod1.count' }, {target: 'prod2.count'}],
+      maxDataPoints: 500,
     };
 
     var results;
@@ -39,6 +45,10 @@ describe('graphiteDatasource', function() {
 
     it('should generate the correct query', function() {
       expect(requestOptions.url).to.be('/render');
+    });
+
+    it('should set unique requestId', function() {
+      expect(requestOptions.requestId).to.be('graphiteProd.panelId.3');
     });
 
     it('should query correctly', function() {
@@ -66,6 +76,12 @@ describe('graphiteDatasource', function() {
   });
 
   describe('building graphite params', function() {
+    it('should return empty array if no targets', function() {
+      var results = ctx.ds.buildGraphiteParams({
+        targets: [{}]
+      });
+      expect(results.length).to.be(0);
+    });
 
     it('should uri escape targets', function() {
       var results = ctx.ds.buildGraphiteParams({

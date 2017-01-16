@@ -1,8 +1,6 @@
-///<amd-dependency path="app/plugins/datasource/graphite/gfunc" name="gfunc" />
 
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
-
-declare var gfunc: any;
+import {describe, it, expect} from 'test/lib/common';
+import gfunc from '../gfunc';
 
 describe('when creating func instance from func names', function() {
   it('should return func instance', function() {

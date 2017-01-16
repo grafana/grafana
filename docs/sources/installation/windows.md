@@ -1,16 +1,20 @@
----
-page_title: Installing on Windows
-page_description: Grafana Installation guide for Windows
-page_keywords: grafana, installation, windows guide
----
++++
+title = "Installing on Windows"
+description = "Installing Grafana on Windows"
+keywords = ["grafana", "configuration", "documentation", "windows"]
+type = "docs"
+[menu.docs]
+parent = "installation"
+weight = 3
++++
+
 
 # Installing on Windows
 
-## Download
-
 Description | Download
 ------------ | -------------
-Zip package for Windows | [grafana.2.5.0.windows-x64.zip](https://grafanarel.s3.amazonaws.com/winbuilds/dist/grafana-2.5.0.windows-x64.zip)
+Latest stable package for Windows | [grafana.4.0.2.windows-x64.zip](https://grafanarel.s3.amazonaws.com/builds/grafana-4.0.2.windows-x64.zip)
+Latest beta package for Windows | [grafana.4.1.0-beta1.windows-x64.zip](https://grafanarel.s3.amazonaws.com/builds/grafana-4.1.0-beta1.windows-x64.zip)
 
 ## Configure
 
@@ -29,7 +33,7 @@ command line. If you want to run Grafana as windows service, download
 [NSSM](https://nssm.cc/). It is very easy add Grafana as a Windows
 service using that tool.
 
-Read more about the [configuration options](/installation/configuration).
+Read more about the [configuration options]({{< relref "configuration.md" >}}).
 
 ## Building on Windows
 

@@ -3,28 +3,43 @@
 package log
 
 import (
-	"encoding/json"
 	"errors"
 	"log/syslog"
+	"os"
+
+	"github.com/inconshreveable/log15"
+	"gopkg.in/ini.v1"
 )
 
-type SyslogWriter struct {
+type SysLogHandler struct {
 	syslog   *syslog.Writer
-	Network  string `json:"network"`
-	Address  string `json:"address"`
-	Facility string `json:"facility"`
-	Tag      string `json:"tag"`
+	Network  string
+	Address  string
+	Facility string
+	Tag      string
+	Format   log15.Format
 }
 
-func NewSyslog() LoggerInterface {
-	return new(SyslogWriter)
-}
-
-func (sw *SyslogWriter) Init(config string) error {
-	if err := json.Unmarshal([]byte(config), sw); err != nil {
-		return err
+func NewSyslog(sec *ini.Section, format log15.Format) *SysLogHandler {
+	handler := &SysLogHandler{
+		Format: log15.LogfmtFormat(),
 	}
 
+	handler.Format = format
+	handler.Network = sec.Key("network").MustString("")
+	handler.Address = sec.Key("address").MustString("")
+	handler.Facility = sec.Key("facility").MustString("local7")
+	handler.Tag = sec.Key("tag").MustString("")
+
+	if err := handler.Init(); err != nil {
+		Root.Error("Failed to init syslog log handler", "error", err)
+		os.Exit(1)
+	}
+
+	return handler
+}
+
+func (sw *SysLogHandler) Init() error {
 	prio, err := parseFacility(sw.Facility)
 	if err != nil {
 		return err
@@ -39,22 +54,22 @@ func (sw *SyslogWriter) Init(config string) error {
 	return nil
 }
 
-func (sw *SyslogWriter) WriteMsg(msg string, skip, level int) error {
+func (sw *SysLogHandler) Log(r *log15.Record) error {
 	var err error
 
-	switch level {
-	case TRACE, DEBUG:
+	msg := string(sw.Format.Format(r))
+
+	switch r.Lvl {
+	case log15.LvlDebug:
 		err = sw.syslog.Debug(msg)
-	case INFO:
+	case log15.LvlInfo:
 		err = sw.syslog.Info(msg)
-	case WARN:
+	case log15.LvlWarn:
 		err = sw.syslog.Warning(msg)
-	case ERROR:
+	case log15.LvlError:
 		err = sw.syslog.Err(msg)
-	case CRITICAL:
+	case log15.LvlCrit:
 		err = sw.syslog.Crit(msg)
-	case FATAL:
-		err = sw.syslog.Alert(msg)
 	default:
 		err = errors.New("invalid syslog level")
 	}
@@ -62,11 +77,9 @@ func (sw *SyslogWriter) WriteMsg(msg string, skip, level int) error {
 	return err
 }
 
-func (sw *SyslogWriter) Destroy() {
+func (sw *SysLogHandler) Close() {
 	sw.syslog.Close()
 }
-
-func (sw *SyslogWriter) Flush() {}
 
 var facilities = map[string]syslog.Priority{
 	"user":   syslog.LOG_USER,
@@ -88,8 +101,4 @@ func parseFacility(facility string) (syslog.Priority, error) {
 	}
 
 	return prio, nil
-}
-
-func init() {
-	Register("syslog", NewSyslog)
 }

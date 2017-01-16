@@ -1,0 +1,122 @@
+//
+// Buttons
+// --------------------------------------------------
+
+// Base styles
+// --------------------------------------------------
+
+// Core
+.btn {
+  display: inline-block;
+  font-weight: $btn-font-weight;
+  line-height: $btn-line-height;
+  font-size: $font-size-base;
+  text-align: center;
+  vertical-align: middle;
+  cursor: pointer;
+  border: $input-btn-border-width solid transparent;
+
+  @include button-size($btn-padding-y, $btn-padding-x, $font-size-base, $btn-border-radius);
+
+  &,
+  &:active,
+  &.active {
+    &:focus,
+    &.focus {
+      @include tab-focus();
+    }
+  }
+
+  @include hover-focus {
+    text-decoration: none;
+  }
+  &.focus {
+    text-decoration: none;
+  }
+
+  &:active,
+  &.active {
+    background-image: none;
+    outline: 0;
+  }
+
+  &.disabled,
+  &:disabled {
+    cursor: $cursor-disabled;
+    opacity: .65;
+    @include box-shadow(none);
+  }
+}
+
+// Button Sizes
+// --------------------------------------------------
+
+// Large
+.btn-large {
+  @include button-size($btn-padding-y-lg, $btn-padding-x-lg, $font-size-lg, $btn-border-radius);
+}
+
+.btn-small {
+  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-sm, $btn-border-radius);
+}
+
+.btn-mini {
+  @include button-size($btn-padding-y-sm, $btn-padding-x-sm, $font-size-xs, $btn-border-radius);
+}
+
+.btn-link {
+  color: $btn-link-color;
+}
+
+// Set the backgrounds
+// -------------------------
+.btn-primary {
+  @include buttonBackground($btn-primary-bg, $btn-primary-bg-hl);
+}
+.btn-secondary {
+  @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+}
+// Warning appears are orange
+.btn-warning {
+  @include buttonBackground($btn-warning-bg, $btn-warning-bg-hl);
+}
+// Danger and error appear as red
+.btn-danger {
+  @include buttonBackground($btn-danger-bg, $btn-danger-bg-hl);
+}
+// Success appears as green
+.btn-success {
+  @include buttonBackground($btn-success-bg, $btn-success-bg-hl);
+}
+// Info appears as a neutral blue
+.btn-secondary {
+  @include buttonBackground($btn-secondary-bg, $btn-secondary-bg-hl);
+}
+// Inverse appears as dark gray
+.btn-inverse {
+  @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
+  //background: $card-background;
+  box-shadow: $card-shadow;
+  //border: 1px solid $tight-form-func-highlight-bg;
+}
+
+.btn-outline-primary {
+  @include button-outline-variant($btn-primary-bg);
+}
+.btn-outline-secondary {
+  @include button-outline-variant($btn-secondary-bg);
+}
+.btn-outline-inverse {
+  @include button-outline-variant($btn-inverse-bg);
+}
+.btn-outline-success {
+  @include button-outline-variant($btn-success-bg);
+}
+.btn-outline-warning {
+  @include button-outline-variant($btn-warning-bg);
+}
+.btn-outline-danger {
+  @include button-outline-variant($btn-danger-bg);
+}
+
+

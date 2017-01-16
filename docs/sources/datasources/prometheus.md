@@ -1,17 +1,24 @@
-----
-page_title: Prometheus query guide
-page_description: Prometheus query guide
-page_keywords: grafana, prometheus, metrics, query, documentation
----
++++
+title = "Using Prometheus in Grafana"
+description = "Guide for using Prometheus in Grafana"
+keywords = ["grafana", "prometheus", "guide"]
+type = "docs"
+[menu.docs]
+name = "Prometheus"
+parent = "datasources"
+weight = 2
++++
 
-# Prometheus
+
+# Using Prometheus in Grafana
+
 Grafana includes support for Prometheus Datasources. While the process of adding the datasource is similar to adding a Graphite or OpenTSDB datasource type, Prometheus does have a few different options for building queries.
 
 ## Adding the data source to Grafana
 ![](/img/v2/add_Prometheus.png)
 
-1. Open the side menu by clicking the the Grafana icon in the top header. 
-2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.    
+1. Open the side menu by clicking the the Grafana icon in the top header.
+2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 
     > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
 
@@ -23,7 +30,7 @@ Name | Description
 Name | The data source name, important that this is the same as in Grafana v1.x if you plan to import old dashboards.
 Default | Default data source means that it will be pre-selected for new panels.
 Url | The http protocol, ip and port of you Prometheus server (default port is usually 9090)
-Access | Proxy = access via Grafana backend, Direct = access directory from browser.
+Access | Proxy = access via Grafana backend, Direct = access directly from browser.
 Basic Auth | Enable basic authentication to the Prometheus datasource.
 User | Name of your Prometheus user
 Password | Database user's password
@@ -48,8 +55,11 @@ Name | Description
 `label_values(label)` | Returns a list of label values for the `label` in every metric.
 `label_values(metric, label)` | Returns a list of label values for the `label` in the specified metric.
 `metrics(metric)` | Returns a list of metrics matching the specified `metric` regex.
+`query_result(query)` | Returns a list of Prometheus query result for the `query`.
 
 For details of `metric names` & `label names`, and `label values`, please refer to the [Prometheus documentation](http://prometheus.io/docs/concepts/data_model/#metric-names-and-labels).
+
+> Note: The part of queries is incompatible with the version before 2.6, if you specify like `foo.*`, please change like `metrics(foo.*)`.
 
 You can create a template variable in Grafana and have that variable filled with values from any Prometheus metric exploration query.
 You can then use this variable in your Prometheus metric queries.

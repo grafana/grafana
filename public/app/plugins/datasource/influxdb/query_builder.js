@@ -4,17 +4,9 @@ define([
 function (_) {
   'use strict';
 
-  function InfluxQueryBuilder(target, queryModel) {
+  function InfluxQueryBuilder(target, database) {
     this.target = target;
-    this.model = queryModel;
-
-    if (target.groupByTags) {
-      target.groupBy = [{type: 'time', interval: 'auto'}];
-      for (var i in target.groupByTags) {
-        target.groupBy.push({type: 'tag', key: target.groupByTags[i]});
-      }
-      delete target.groupByTags;
-    }
+    this.database = database;
   }
 
   function renderTagCondition (tag, index) {
@@ -33,8 +25,8 @@ function (_) {
       }
     }
 
-    // quote value unless regex
-    if (operator !== '=~' && operator !== '!~') {
+    // quote value unless regex or number
+    if (operator !== '=~' && operator !== '!~' && isNaN(+value)) {
       value = "'" + value + "'";
     }
 
@@ -47,7 +39,7 @@ function (_) {
     return this.target.rawQuery ? this._modifyRawQuery() : this._buildQuery();
   };
 
-  p.buildExploreQuery = function(type, withKey) {
+  p.buildExploreQuery = function(type, withKey, withMeasurementFilter) {
     var query;
     var measurement;
 
@@ -59,8 +51,18 @@ function (_) {
       measurement = this.target.measurement;
     } else if (type === 'MEASUREMENTS') {
       query = 'SHOW MEASUREMENTS';
+      if (withMeasurementFilter)
+      {
+        query += ' WITH MEASUREMENT =~ /' + withMeasurementFilter +'/';
+      }
     } else if (type === 'FIELDS') {
-      query = 'SHOW FIELD KEYS FROM "' + this.target.measurement + '"';
+      if (!this.target.measurement.match('^/.*/')) {
+        return 'SHOW FIELD KEYS FROM "' + this.target.measurement + '"';
+      } else {
+        return 'SHOW FIELD KEYS FROM ' + this.target.measurement;
+      }
+    } else if (type === 'RETENTION POLICIES') {
+      query = 'SHOW RETENTION POLICIES on "' + this.database + '"';
       return query;
     }
 

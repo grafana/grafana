@@ -6,7 +6,7 @@ define([
 function (angular, _, coreModule) {
   'use strict';
 
-  coreModule.service('timer', function($timeout) {
+  coreModule.default.service('timer', function($timeout) {
     // This service really just tracks a list of $timeout promises to give us a
     // method for cancelling them all when we need to
 

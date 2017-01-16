@@ -3,25 +3,25 @@ define([
   'lodash',
   'app/core/utils/datemath',
   'moment',
-  './directives',
-  './queryCtrl',
 ],
 function (angular, _, dateMath) {
   'use strict';
 
-  var module = angular.module('grafana.services');
-
-  module.factory('OpenTSDBDatasource', function($q, backendSrv, templateSrv) {
-
-    function OpenTSDBDatasource(datasource) {
-      this.type = 'opentsdb';
-      this.url = datasource.url;
-      this.name = datasource.name;
-      this.supportMetrics = true;
-    }
+  /** @ngInject */
+  function OpenTsDatasource(instanceSettings, $q, backendSrv, templateSrv) {
+    this.type = 'opentsdb';
+    this.url = instanceSettings.url;
+    this.name = instanceSettings.name;
+    this.withCredentials = instanceSettings.withCredentials;
+    this.basicAuth = instanceSettings.basicAuth;
+    instanceSettings.jsonData = instanceSettings.jsonData || {};
+    this.tsdbVersion = instanceSettings.jsonData.tsdbVersion || 1;
+    this.tsdbResolution = instanceSettings.jsonData.tsdbResolution || 1;
+    this.supportMetrics = true;
+    this.tagKeys = {};
 
     // Called once per panel (graph)
-    OpenTSDBDatasource.prototype.query = function(options) {
+    this.query = function(options) {
       var start = convertToTSDBTime(options.rangeRaw.from, false);
       var end = convertToTSDBTime(options.rangeRaw.to, true);
       var qs = [];
@@ -42,29 +42,100 @@ function (angular, _, dateMath) {
 
       var groupByTags = {};
       _.each(queries, function(query) {
-        _.each(query.tags, function(val, key) {
-          groupByTags[key] = true;
-        });
+        if (query.filters && query.filters.length > 0) {
+          _.each(query.filters, function(val) {
+            groupByTags[val.tagk] = true;
+          });
+        } else {
+          _.each(query.tags, function(val, key) {
+            groupByTags[key] = true;
+          });
+        }
       });
 
       return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
-        var metricToTargetMapping = mapMetricsToTargets(response.data, options);
+        var metricToTargetMapping = mapMetricsToTargets(response.data, options, this.tsdbVersion);
         var result = _.map(response.data, function(metricData, index) {
           index = metricToTargetMapping[index];
           if (index === -1) {
             index = 0;
           }
-          return transformMetricData(metricData, groupByTags, options.targets[index], options);
-        });
+          this._saveTagKeys(metricData);
+
+          return transformMetricData(metricData, groupByTags, options.targets[index], options, this.tsdbResolution);
+        }.bind(this));
         return { data: result };
-      });
+      }.bind(this));
     };
 
-    OpenTSDBDatasource.prototype.performTimeSeriesQuery = function(queries, start, end) {
+    this.annotationQuery = function(options) {
+      var start = convertToTSDBTime(options.rangeRaw.from, false);
+      var end = convertToTSDBTime(options.rangeRaw.to, true);
+      var qs = [];
+      var eventList = [];
+
+      qs.push({ aggregator:"sum", metric:options.annotation.target });
+
+      var queries = _.compact(qs);
+
+      return this.performTimeSeriesQuery(queries, start, end).then(function(results) {
+        if(results.data[0]) {
+          var annotationObject = results.data[0].annotations;
+          if(options.annotation.isGlobal){
+            annotationObject = results.data[0].globalAnnotations;
+          }
+          if(annotationObject) {
+            _.each(annotationObject, function(annotation) {
+              var event = {
+                title: annotation.description,
+                time: Math.floor(annotation.startTime) * 1000,
+                text: annotation.notes,
+                annotation: options.annotation
+              };
+
+              eventList.push(event);
+            });
+          }
+        }
+        return eventList;
+
+      }.bind(this));
+    };
+
+    this.targetContainsTemplate = function(target) {
+      if (target.filters && target.filters.length > 0) {
+        for (var i = 0; i < target.filters.length; i++) {
+          if (templateSrv.variableExists(target.filters[i].filter)) {
+            return true;
+          }
+        }
+      }
+
+      if (target.tags && Object.keys(target.tags).length > 0) {
+        for (var tagKey in target.tags) {
+          if (templateSrv.variableExists(target.tags[tagKey])) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    };
+
+    this.performTimeSeriesQuery = function(queries, start, end) {
+      var msResolution = false;
+      if (this.tsdbResolution === 2) {
+        msResolution = true;
+      }
       var reqBody = {
         start: start,
-        queries: queries
+        queries: queries,
+        msResolution: msResolution,
+        globalAnnotations: true
       };
+      if (this.tsdbVersion === 3) {
+        reqBody.showQuery = true;
+      }
 
       // Relative queries (e.g. last hour) don't include an end time
       if (end) {
@@ -77,21 +148,46 @@ function (angular, _, dateMath) {
         data: reqBody
       };
 
+      this._addCredentialOptions(options);
       return backendSrv.datasourceRequest(options);
     };
 
-    OpenTSDBDatasource.prototype._performSuggestQuery = function(query, type) {
+    this.suggestTagKeys = function(metric) {
+      return $q.when(this.tagKeys[metric] || []);
+    };
+
+    this._saveTagKeys = function(metricData) {
+      var tagKeys = Object.keys(metricData.tags);
+      _.each(metricData.aggregateTags, function(tag) {
+        tagKeys.push(tag);
+      });
+
+      this.tagKeys[metricData.metric] = tagKeys;
+    };
+
+    this._performSuggestQuery = function(query, type) {
       return this._get('/api/suggest', {type: type, q: query, max: 1000}).then(function(result) {
         return result.data;
       });
     };
 
-    OpenTSDBDatasource.prototype._performMetricKeyValueLookup = function(metric, key) {
-      if(!metric || !key) {
+    this._performMetricKeyValueLookup = function(metric, keys) {
+
+      if(!metric || !keys) {
         return $q.when([]);
       }
 
-      var m = metric + "{" + key + "=*}";
+      var keysArray = keys.split(",").map(function(key) {
+        return key.trim();
+      });
+      var key = keysArray[0];
+      var keysQuery = key + "=*";
+
+      if (keysArray.length > 1) {
+        keysQuery += "," + keysArray.splice(1).join(",");
+      }
+
+      var m = metric + "{" + keysQuery + "}";
 
       return this._get('/api/search/lookup', {m: m, limit: 3000}).then(function(result) {
         result = result.data.results;
@@ -105,7 +201,7 @@ function (angular, _, dateMath) {
       });
     };
 
-    OpenTSDBDatasource.prototype._performMetricKeyLookup = function(metric) {
+    this._performMetricKeyLookup = function(metric) {
       if(!metric) { return $q.when([]); }
 
       return this._get('/api/search/lookup', {m: metric, limit: 1000}).then(function(result) {
@@ -122,20 +218,33 @@ function (angular, _, dateMath) {
       });
     };
 
-    OpenTSDBDatasource.prototype._get = function(relativeUrl, params) {
-      return backendSrv.datasourceRequest({
+    this._get = function(relativeUrl, params) {
+      var options = {
         method: 'GET',
         url: this.url + relativeUrl,
         params: params,
-      });
+      };
+
+      this._addCredentialOptions(options);
+
+      return backendSrv.datasourceRequest(options);
     };
 
-    OpenTSDBDatasource.prototype.metricFindQuery = function(query) {
+    this._addCredentialOptions = function(options) {
+      if (this.basicAuth || this.withCredentials) {
+        options.withCredentials = true;
+      }
+      if (this.basicAuth) {
+        options.headers = {"Authorization": this.basicAuth};
+      }
+    };
+
+    this.metricFindQuery = function(query) {
       if (!query) { return $q.when([]); }
 
       var interpolated;
       try {
-        interpolated = templateSrv.replace(query);
+        interpolated = templateSrv.replace(query, {}, 'distributed');
       }
       catch (err) {
         return $q.reject(err);
@@ -149,7 +258,7 @@ function (angular, _, dateMath) {
 
       var metrics_regex = /metrics\((.*)\)/;
       var tag_names_regex = /tag_names\((.*)\)/;
-      var tag_values_regex = /tag_values\((.*),\s?(.*)\)/;
+      var tag_values_regex = /tag_values\((.*?),\s?(.*)\)/;
       var tag_names_suggest_regex = /suggest_tagk\((.*)\)/;
       var tag_values_suggest_regex = /suggest_tagv\((.*)\)/;
 
@@ -181,17 +290,17 @@ function (angular, _, dateMath) {
       return $q.when([]);
     };
 
-    OpenTSDBDatasource.prototype.testDatasource = function() {
+    this.testDatasource = function() {
       return this._performSuggestQuery('cpu', 'metrics').then(function () {
         return { status: "success", message: "Data source is working", title: "Success" };
       });
     };
 
     var aggregatorsPromise = null;
-    OpenTSDBDatasource.prototype.getAggregators = function() {
+    this.getAggregators = function() {
       if (aggregatorsPromise) { return aggregatorsPromise; }
 
-      aggregatorsPromise =  this._get('/api/aggregators').then(function(result) {
+      aggregatorsPromise = this._get('/api/aggregators').then(function(result) {
         if (result.data && _.isArray(result.data)) {
           return result.data.sort();
         }
@@ -200,14 +309,31 @@ function (angular, _, dateMath) {
       return aggregatorsPromise;
     };
 
-    function transformMetricData(md, groupByTags, target, options) {
+    var filterTypesPromise = null;
+    this.getFilterTypes = function() {
+      if (filterTypesPromise) { return filterTypesPromise; }
+
+      filterTypesPromise = this._get('/api/config/filters').then(function(result) {
+        if (result.data) {
+          return Object.keys(result.data).sort();
+        }
+        return [];
+      });
+      return filterTypesPromise;
+    };
+
+    function transformMetricData(md, groupByTags, target, options, tsdbResolution) {
       var metricLabel = createMetricLabel(md, target, groupByTags, options);
       var dps = [];
 
       // TSDB returns datapoints has a hash of ts => value.
       // Can't use _.pairs(invert()) because it stringifies keys/values
       _.each(md.dps, function (v, k) {
-        dps.push([v, k * 1000]);
+        if (tsdbResolution === 2) {
+          dps.push([v, k * 1]);
+        } else {
+          dps.push([v, k * 1000]);
+        }
       });
 
       return { target: metricLabel, datapoints: dps };
@@ -226,7 +352,7 @@ function (angular, _, dateMath) {
       var tagData = [];
 
       if (!_.isEmpty(md.tags)) {
-        _.each(_.pairs(md.tags), function(tag) {
+        _.each(_.toPairs(md.tags), function(tag) {
           if (_.has(groupByTags, tag[0])) {
             tagData.push(tag[0] + "=" + tag[1]);
           }
@@ -277,28 +403,53 @@ function (angular, _, dateMath) {
         }
 
         query.downsample = interval + "-" + target.downsampleAggregator;
+
+        if (target.downsampleFillPolicy && target.downsampleFillPolicy !== "none") {
+          query.downsample += "-" + target.downsampleFillPolicy;
+        }
       }
 
-      query.tags = angular.copy(target.tags);
-      if(query.tags){
-        for(var key in query.tags){
-          query.tags[key] = templateSrv.replace(query.tags[key], options.scopedVars);
+      if (target.filters && target.filters.length > 0) {
+        query.filters = angular.copy(target.filters);
+        if(query.filters){
+          for(var filter_key in query.filters){
+            query.filters[filter_key].filter = templateSrv.replace(query.filters[filter_key].filter, options.scopedVars, 'pipe');
+          }
         }
+      } else {
+        query.tags = angular.copy(target.tags);
+        if(query.tags){
+          for(var tag_key in query.tags){
+            query.tags[tag_key] = templateSrv.replace(query.tags[tag_key], options.scopedVars, 'pipe');
+          }
+        }
+      }
+
+      if (target.explicitTags) {
+        query.explicitTags = true;
       }
 
       return query;
     }
 
-    function mapMetricsToTargets(metrics, options) {
+    function mapMetricsToTargets(metrics, options, tsdbVersion) {
       var interpolatedTagValue;
       return _.map(metrics, function(metricData) {
-        return _.findIndex(options.targets, function(target) {
-          return target.metric === metricData.metric &&
-            _.all(target.tags, function(tagV, tagK) {
-            interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars);
-            return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
+        if (tsdbVersion === 3) {
+          return metricData.query.index;
+        } else {
+          return _.findIndex(options.targets, function(target) {
+            if (target.filters && target.filters.length > 0) {
+              return target.metric === metricData.metric;
+            } else {
+              return target.metric === metricData.metric &&
+              _.every(target.tags, function(tagV, tagK) {
+                interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars, 'pipe');
+                return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
+              });
+            }
           });
-        });
+        }
       });
     }
 
@@ -310,8 +461,9 @@ function (angular, _, dateMath) {
       date = dateMath.parse(date, roundUp);
       return date.valueOf();
     }
+  }
 
-    return OpenTSDBDatasource;
-  });
-
+  return {
+    OpenTsDatasource: OpenTsDatasource
+  };
 });

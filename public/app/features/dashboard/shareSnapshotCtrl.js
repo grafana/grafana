@@ -29,13 +29,24 @@ function (angular, _) {
       {text: 'Public on the web', value: 3},
     ];
 
-    $scope.externalUrl = '//snapshots-origin.raintank.io';
+    $scope.init = function() {
+      backendSrv.get('/api/snapshot/shared-options').then(function(options) {
+        $scope.externalUrl = options['externalSnapshotURL'];
+        $scope.sharingButtonText = options['externalSnapshotName'];
+        $scope.externalEnabled = options['externalEnabled'];
+      });
+    };
+
     $scope.apiUrl = '/api/snapshots';
 
     $scope.createSnapshot = function(external) {
       $scope.dashboard.snapshot = {
         timestamp: new Date()
       };
+
+      if (!external) {
+        $scope.dashboard.snapshot.originalUrl = $location.absUrl();
+      }
 
       $scope.loading = true;
       $scope.snapshot.external = external;
@@ -53,6 +64,7 @@ function (angular, _) {
 
       var cmdData = {
         dashboard: dash,
+        name: dash.title,
         expires: $scope.snapshot.expires,
       };
 
@@ -94,12 +106,22 @@ function (angular, _) {
         panel.links = [];
         panel.datasource = null;
       });
-      // remove annotations
-      dash.annotations.list = [];
+      // remove annotation queries
+      dash.annotations.list = _.chain(dash.annotations.list)
+      .filter(function(annotation) {
+        return annotation.enable;
+      })
+      .map(function(annotation) {
+        return {
+          name: annotation.name,
+          enable: annotation.enable,
+          snapshotData: annotation.snapshotData
+        };
+      }).value();
       // remove template queries
       _.each(dash.templating.list, function(variable) {
         variable.query = "";
-        variable.options = [];
+        variable.options = variable.current;
         variable.refresh = false;
       });
 
@@ -114,6 +136,9 @@ function (angular, _) {
       delete $scope.dashboard.snapshot;
       $scope.dashboard.forEachPanel(function(panel) {
         delete panel.snapshotData;
+      });
+      _.each($scope.dashboard.annotations.list, function(annotation) {
+        delete annotation.snapshotData;
       });
     };
 

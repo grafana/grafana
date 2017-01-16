@@ -4,7 +4,7 @@ define([
 function (coreModule) {
   'use strict';
 
-  coreModule.directive('confirmClick', function() {
+  coreModule.default.directive('confirmClick', function() {
     return {
       restrict: 'A',
       link: function(scope, elem, attrs) {

@@ -1,0 +1,26 @@
+<div class="gf-form-group">
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label">Mode</span>
+			<span class="gf-form-select-wrapper">
+				<select class="gf-form-input" ng-model="ctrl.panel.mode" ng-options="f for f in ['html','markdown','text']"></select>
+			</span>
+		</div>
+
+		<div class="gf-form" ng-show="ctrl.panel.mode == 'text'">
+			<span class="gf-form-label">Font Size</span>
+			<span class="gf-form-select-wrapper">
+				<select class="gf-form-input" ng-model="ctrl.panel.style['font-size']" ng-options="f for f in ['6pt','7pt','8pt','10pt','12pt','14pt','16pt','18pt','20pt','24pt','28pt','32pt','36pt','42pt','48pt','52pt','60pt','72pt']"></select>
+			</span>
+		</div>
+	</div>
+</div>
+
+<h3 class="page-heading">Content</h3>
+
+<span ng-show="ctrl.panel.mode == 'markdown'">
+	(This area uses <a target="_blank" href="http://en.wikipedia.org/wiki/Markdown">Markdown</a>. HTML is not supported)
+</span>
+
+<textarea class="gf-form-input" ng-model="ctrl.panel.content" rows="20" style="width:95%" ng-change="ctrl.render()" ng-model-onblur>
+</textarea>

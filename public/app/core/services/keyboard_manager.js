@@ -8,7 +8,7 @@ function (angular, _, coreModule) {
 
   // This service was based on OpenJS library available in BSD License
   // http://www.openjs.com/scripts/events/keyboard_shortcuts/index.php
-  coreModule.factory('keyboardManager', ['$window', '$timeout', function ($window, $timeout) {
+  coreModule.default.factory('keyboardManager', ['$window', '$timeout', function ($window, $timeout) {
     var keyboardManagerService = {};
 
     var defaultOpt = {
@@ -175,17 +175,17 @@ function (angular, _, coreModule) {
         // Foreach keys in label (split on +)
         for (var i = 0, l = keys.length; k = keys[i], i < l; i++) {
           switch (k) {
-          case 'ctrl':
-          case 'control':
-            kp++;
-            modifiers.ctrl.wanted = true;
-            break;
-          case 'shift':
-          case 'alt':
-          case 'meta':
-            kp++;
-            modifiers[k].wanted = true;
-            break;
+            case 'ctrl':
+            case 'control':
+              kp++;
+              modifiers.ctrl.wanted = true;
+              break;
+            case 'shift':
+            case 'alt':
+            case 'meta':
+              kp++;
+              modifiers[k].wanted = true;
+              break;
           }
 
           if (k.length > 1) { // If it is a special key

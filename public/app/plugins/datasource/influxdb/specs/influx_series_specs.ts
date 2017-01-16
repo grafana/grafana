@@ -1,11 +1,7 @@
-///<amd-dependency path="app/plugins/datasource/influxdb/influx_series" name="InfluxSeries"/>
-
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
-
-declare var InfluxSeries: any;
+import InfluxSeries from '../influx_series';
 
 describe('when generating timeseries from influxdb response', function() {
-
   describe('given multiple fields for series', function() {
     var options = {
       alias: '',
@@ -71,6 +67,7 @@ describe('when generating timeseries from influxdb response', function() {
 
     });
   });
+
   describe('given measurement with default fieldname', function() {
     var options = { series: [
       {
@@ -99,6 +96,7 @@ describe('when generating timeseries from influxdb response', function() {
     });
 
   });
+
   describe('given two series', function() {
     var options = {
       alias: '',
@@ -192,9 +190,9 @@ describe('when generating timeseries from influxdb response', function() {
       series: [
         {
           name: 'app.prod.server1.count',
-          tags:  {},
-          columns: ['time', 'datacenter', 'value'],
-          values: [[1431946625000, 'America', 10], [1431946626000, 'EU', 12]]
+          tags:  {datacenter: 'Africa', server: 'server2'},
+          columns: ['time', 'value2', 'value'],
+          values: [[1431946625000, 23, 10], [1431946626000, 25, 12]]
         }
       ]
     };
@@ -204,10 +202,63 @@ describe('when generating timeseries from influxdb response', function() {
       var table = series.getTable();
 
       expect(table.type).to.be('table');
-      expect(table.columns.length).to.be(3);
-      expect(table.rows[0]).to.eql([1431946625000, 'America', 10]);
+      expect(table.columns.length).to.be(5);
+      expect(table.rows[0]).to.eql([1431946625000, 'Africa', 'server2', 23, 10]);
     });
   });
 
+  describe('given annotation response', function() {
+    describe('with empty tagsColumn', function() {
+      var options = {
+        alias: '',
+        annotation: {},
+        series: [
+          {
+            name: "logins.count",
+            tags:  {datacenter: 'Africa', server: 'server2'},
+            columns: ["time", "datacenter", "hostname", "source", "value"],
+            values: [
+              [1481549440372, "America", "10.1.100.10", "backend", 215.7432653659507],
+            ]
+          }
+        ]
+      };
+
+      it('should multiple tags', function() {
+        var series = new InfluxSeries(options);
+        var annotations = series.getAnnotations();
+
+        expect(annotations[0].tags.length).to.be(0);
+      });
+    });
+
+    describe('given annotation response', function() {
+      var options = {
+        alias: '',
+        annotation: {
+          tagsColumn: 'datacenter, source'
+        },
+        series: [
+          {
+            name: "logins.count",
+            tags:  {datacenter: 'Africa', server: 'server2'},
+            columns: ["time", "datacenter", "hostname", "source", "value"],
+            values: [
+              [1481549440372, "America", "10.1.100.10", "backend", 215.7432653659507],
+            ]
+          }
+        ]
+      };
+
+      it('should multiple tags', function() {
+        var series = new InfluxSeries(options);
+        var annotations = series.getAnnotations();
+
+        expect(annotations[0].tags.length).to.be(2);
+        expect(annotations[0].tags[0]).to.be('America');
+        expect(annotations[0].tags[1]).to.be('backend');
+      });
+    });
+  });
 });
 

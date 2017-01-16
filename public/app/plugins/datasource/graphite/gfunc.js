@@ -43,7 +43,7 @@ function (_, $) {
   addFuncDef({
     name: 'perSecond',
     category: categories.Transform,
-    params: [],
+    params: [{ name: "max value", type: "int", optional: true }],
     defaultParams: [],
   });
 
@@ -77,6 +77,13 @@ function (_, $) {
     name: 'diffSeries',
     params: optionalSeriesRefArgs,
     defaultParams: ['#A'],
+    category: categories.Calculate,
+  });
+
+  addFuncDef({
+    name: 'stddevSeries',
+    params: optionalSeriesRefArgs,
+    defaultParams: [''],
     category: categories.Calculate,
   });
 
@@ -256,6 +263,23 @@ function (_, $) {
   });
 
   addFuncDef({
+    name: "groupByNodes",
+    category: categories.Special,
+    params: [
+      {
+        name: "function",
+        type: "string",
+        options: ['sum', 'avg', 'maxSeries']
+      },
+      { name: "node", type: "int", options: [0,1,2,3,4,5,6,7,8,9,10,12] },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+      { name: "node", type: "int", options: [0,-1,-2,-3,-4,-5,-6,-7], optional: true },
+    ],
+    defaultParams: ["sum", 3]
+  });
+
+  addFuncDef({
     name: 'aliasByNode',
     category: categories.Special,
     params: [
@@ -279,7 +303,9 @@ function (_, $) {
 
   addFuncDef({
     name: 'sortByName',
-    category: categories.Special
+    category: categories.Special,
+    params: [{ name: "natural", type: "select", options: ["true", "false"], optional: true }],
+    defaultParams: ["false"]
   });
 
   addFuncDef({
@@ -517,6 +543,13 @@ function (_, $) {
   });
 
   addFuncDef({
+    name: "grep",
+    category: categories.Filter,
+    params: [{ name: "grep", type: 'string' }],
+    defaultParams: ['grep']
+  });
+
+  addFuncDef({
     name: 'highestCurrent',
     category: categories.Filter,
     params: [{ name: "count", type: "int" }],
@@ -655,7 +688,7 @@ function (_, $) {
 
       return "'" + value + "'";
 
-    }, this);
+    }.bind(this));
 
     if (metricExp) {
       parameters.unshift(metricExp);
@@ -678,7 +711,7 @@ function (_, $) {
     if (this._hasMultipleParamsInString(strValue, index)) {
       _.each(strValue.split(','), function(partVal, idx) {
         this.updateParam(partVal.trim(), idx);
-      }, this);
+      }.bind(this));
       return;
     }
 

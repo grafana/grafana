@@ -1,106 +1,107 @@
-<div class="gf-box-header">
-	<div class="gf-box-title">
-		<i class="fa fa-cogs"></i>
+<div class="tabbed-view-header">
+	<h2 class="tabbed-view-title">
 		Settings
-	</div>
+	</h2>
 
-	<div ng-model="editor.index" bs-tabs style="text-transform:capitalize;">
-		<div ng-repeat="tab in ['General', 'Rows', 'Links', 'Time picker']" data-title="{{tab}}">
-		</div>
-	</div>
+	<ul class="gf-tabs">
+		<li class="gf-tabs-item" ng-repeat="tab in ::['General', 'Rows', 'Links', 'Time picker', 'Metadata']">
+			<a class="gf-tabs-link" ng-click="editor.index = $index" ng-class="{active: editor.index === $index}">
+				{{::tab}}
+			</a>
+		</li>
+	</ul>
 
-	<button class="gf-box-header-close-btn" ng-click="dismiss();">
+	<button class="tabbed-view-close-btn" ng-click="dismiss();">
 		<i class="fa fa-remove"></i>
 	</button>
 </div>
 
-<div class="gf-box-body" style="padding-bottom: 50px;">
+<div class="tabbed-view-body">
 	<div ng-if="editor.index == 0">
-		<div class="editor-row">
-			<div class="tight-form-section">
-				<h5>Dashboard info</h5>
-				<div class="tight-form">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 90px">
-							Title
-						</li>
-						<li>
-							<input type="text" class="input-xlarge tight-form-input" ng-model='dashboard.title'></input>
-						</li>
-						<li class="tight-form-item">
-							Tags
-							<tip>Press enter to a add tag</tip>
-						</li>
-						<li>
-							<bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="add tags">
-							</bootstrap-tagsinput>
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-				<div class="tight-form last">
-					<ul class="tight-form-list">
-						<li class="tight-form-item" style="width: 90px">
-							Timezone
-						</li>
-						<li>
-							<select ng-model="dashboard.timezone" class='input-small tight-form-input' ng-options="f for f in ['browser','utc']"></select>
-						</li>
-					</ul>
-					<div class="clearfix"></div>
+
+		<div class="gf-form-group section">
+      <h5 class="section-heading">Details</h5>
+			<div class="gf-form">
+				<label class="gf-form-label width-7">Name</label>
+				<input type="text" class="gf-form-input width-30" ng-model='dashboard.title'></input>
+			</div>
+      <div class="gf-form">
+				<label class="gf-form-label width-7">Description</label>
+				<input type="text" class="gf-form-input width-30" ng-model='dashboard.description'></input>
+			</div>
+      <div class="gf-form">
+				<label class="gf-form-label width-7">
+          Tags
+          <info-popover mode="right-normal">Press enter to add a tag</info-popover>
+        </label>
+				<bootstrap-tagsinput ng-model="dashboard.tags" tagclass="label label-tag" placeholder="add tags">
+				</bootstrap-tagsinput>
+			</div>
+
+			<div class="gf-form">
+				<label class="gf-form-label width-7">Timezone</label>
+				<div class="gf-form-select-wrapper">
+					<select ng-model="dashboard.timezone" class='gf-form-input' ng-options="f.value as f.text for f in [{value: '', text: 'Default'}, {value: 'browser', text: 'Local browser time'},{value: 'utc', text: 'UTC'}]" ng-change="timezoneChanged()"></select>
 				</div>
 			</div>
 		</div>
 
-		<div class="editor-row">
-			<div class="tight-form-section">
-				<h5>Toggles</h5>
-				<div class="tight-form last">
-					<ul class="tight-form-list">
-						<li class="tight-form-item">
-							<editor-checkbox text="Editable" model="dashboard.editable"></editor-checkbox>
-						</li>
-						<li class="tight-form-item">
-							<editor-checkbox text="Hide Controls (CTRL+H)" model="dashboard.hideControls"></editor-checkbox>
-						</li>
-						<li class="tight-form-item last">
-							<editor-checkbox text="Shared Crosshair (CTRL+O)" model="dashboard.sharedCrosshair"></editor-checkbox>
-						</li>
-					</ul>
-					<div class="clearfix"></div>
-				</div>
-			</div>
-		</div>
+    <div class="section">
+      <h5 class="section-heading">Toggles</h5>
+      <div class="gf-form-group">
+        <gf-form-switch class="gf-form"
+                        label="Editable"
+                        tooltip="Uncheck, then save and reload to disable all dashboard editing"
+                        checked="dashboard.editable"
+                        label-class="width-11">
+        </gf-form-switch>
+				<gf-form-switch class="gf-form"
+                        label="Hide Controls"
+                        tooltip="Hide row controls. Shortcut: CTRL+H or CMD+H"
+                        checked="dashboard.hideControls"
+                        label-class="width-11">
+        </gf-form-switch>
+      </div>
+    </div>
+
+    <div class="section">
+      <h5 class="section-heading">Panel Options</h5>
+      <div class="gf-form">
+        <label class="gf-form-label width-11">
+          Graph Tooltip
+          <info-popover mode="right-normal">
+            Cycle between options using Shortcut: CTRL+O or CMD+O
+          </info-popover>
+        </label>
+        <div class="gf-form-select-wrapper">
+          <select ng-model="dashboard.graphTooltip" class='gf-form-input' ng-options="f.value as f.text for f in [{value: 0, text: 'Default'}, {value: 1, text: 'Shared crosshair'},{value: 2, text: 'Shared Tooltip'}]"></select>
+        </div>
+      </div>
+    </div>
+
 	</div>
 
 	<div ng-if="editor.index == 1">
-		<div class="editor-row">
-			<div class="tight-form-section">
-				<h5>Rows settings</h5>
-				<div class="tight-form-container">
-					<div class="tight-form" ng-repeat="row in dashboard.rows">
-						<ul class="tight-form-list">
-							<li class="tight-form-item">
-								Title
-							</li>
-							<li>
-								<input type="text" class="input tight-form-input" style="width: 400px;" ng-model='row.title'></input>
-							</li>
-							<li class="tight-form-item">
-								<editor-checkbox text="Show title" model="row.showTitle"></editor-checkbox>
-							</li>
-							<li class="tight-form-item last">
-								<i ng-click="_.move(dashboard.rows,$index,$index-1)" ng-class="{'invisible': $first}" class="pointer fa fa-arrow-up"></i>
-							</li>
-							<li class="tight-form-item last">
-								<i ng-click="_.move(dashboard.rows,$index,$index+1)" ng-class="{'invisible': $last}" class="pointer fa fa-fw fa-arrow-down"></i>
-							</li>
-							<li class="tight-form-item last">
-								<i ng-click="dashboard.rows = _.without(dashboard.rows,row)" class="pointer fa fa-remove"></i>
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
+		<h5 class="section-heading">Rows settings</h5>
+
+		<div class="gf-form-group">
+			<div class="gf-form-inline" ng-repeat="row in dashboard.rows">
+				<div class="gf-form">
+					<span class="gf-form-label">Title</span>
+					<input type="text" class="gf-form-input max-width-14" ng-model='row.title'></input>
+				</div>
+				<gf-form-switch class="gf-form" label="Show title" checked="row.showTitle" switch-class="max-width-6"></gf-form-switch>
+
+				<div class="gf-form">
+					<button class="btn btn-inverse gf-form-btn" ng-click="_.move(dashboard.rows,$index,$index-1)">
+						<i ng-class="{'invisible': $first}" class="fa fa-arrow-up"></i>
+					</button>
+					<button class="btn btn-inverse gf-from-btn" ng-click="_.move(dashboard.rows,$index,$index+1)">
+						<i ng-class="{'invisible': $last}" class="fa fa-arrow-down"></i>
+					</button>
+					<button class="btn btn-inverse gf-form-btn" ng-click="dashboard.rows = _.without(dashboard.rows,row)">
+						<i class="fa fa-trash"></i>
+					</button>
 				</div>
 			</div>
 		</div>
@@ -114,17 +115,29 @@
 		<gf-time-picker-settings dashboard="dashboard"></gf-time-picker-settings>
 	</div>
 
-</div>
-
-<div class="clearfix"></div>
-</div>
-
-<div class="gf-box-footer">
-	<div class="grafana-version-info" ng-show="editor.index === 0">
-		<span class="editor-option small">
-			GrafCrunch version: {{contextSrv.version}} &nbsp;&nbsp;
-		</span>
-		<span grafana-version-check>
-		</span>
+	<div ng-if="editor.index == 4">
+		<h5 class="section-heading">Dashboard info</h5>
+		<div class="gf-form-group">
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Last updated at:</span>
+				<span class="gf-form-label width-18">{{dashboard.formatDate(dashboardMeta.updated)}}</span>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Last updated by:</span>
+				<span class="gf-form-label width-18">{{dashboardMeta.updatedBy}}&nbsp;</span>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Created at:</span>
+				<span class="gf-form-label width-18">{{dashboard.formatDate(dashboardMeta.created)}}&nbsp;</span>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Created by:</span>
+				<span class="gf-form-label width-18">{{dashboardMeta.createdBy}}&nbsp;</span>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Current version:</span>
+				<span class="gf-form-label width-18">{{dashboardMeta.version}}&nbsp;</span>
+			</div>
+		</div>
 	</div>
 </div>

@@ -2,6 +2,7 @@ package login
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/BurntSushi/toml"
 	"github.com/grafana/grafana/pkg/log"
@@ -10,14 +11,14 @@ import (
 )
 
 type LdapConfig struct {
-	Servers        []*LdapServerConf `toml:"servers"`
-	VerboseLogging bool              `toml:"verbose_logging"`
+	Servers []*LdapServerConf `toml:"servers"`
 }
 
 type LdapServerConf struct {
 	Host          string           `toml:"host"`
 	Port          int              `toml:"port"`
 	UseSSL        bool             `toml:"use_ssl"`
+	StartTLS      bool             `toml:"start_tls"`
 	SkipVerifySSL bool             `toml:"ssl_skip_verify"`
 	RootCACert    string           `toml:"root_ca_cert"`
 	BindDN        string           `toml:"bind_dn"`
@@ -27,8 +28,9 @@ type LdapServerConf struct {
 	SearchFilter  string   `toml:"search_filter"`
 	SearchBaseDNs []string `toml:"search_base_dns"`
 
-	GroupSearchFilter  string   `toml:"group_search_filter"`
-	GroupSearchBaseDNs []string `toml:"group_search_base_dns"`
+	GroupSearchFilter              string   `toml:"group_search_filter"`
+	GroupSearchFilterUserAttribute string   `toml:"group_search_filter_user_attribute"`
+	GroupSearchBaseDNs             []string `toml:"group_search_base_dns"`
 
 	LdapGroups []*LdapGroupToOrgRole `toml:"group_mappings"`
 }
@@ -47,26 +49,29 @@ type LdapGroupToOrgRole struct {
 	OrgRole m.RoleType `toml:"org_role"`
 }
 
-var ldapCfg LdapConfig
+var LdapCfg LdapConfig
+var ldapLogger log.Logger = log.New("ldap")
 
 func loadLdapConfig() {
 	if !setting.LdapEnabled {
 		return
 	}
 
-	log.Info("Login: Ldap enabled, reading config file: %s", setting.LdapConfigFile)
+	ldapLogger.Info("Ldap enabled, reading config file", "file", setting.LdapConfigFile)
 
-	_, err := toml.DecodeFile(setting.LdapConfigFile, &ldapCfg)
+	_, err := toml.DecodeFile(setting.LdapConfigFile, &LdapCfg)
 	if err != nil {
-		log.Fatal(3, "Failed to load ldap config file: %s", err)
+		ldapLogger.Crit("Failed to load ldap config file", "error", err)
+		os.Exit(1)
 	}
 
-	if len(ldapCfg.Servers) == 0 {
-		log.Fatal(3, "ldap enabled but no ldap servers defined in config file: %s", setting.LdapConfigFile)
+	if len(LdapCfg.Servers) == 0 {
+		ldapLogger.Crit("ldap enabled but no ldap servers defined in config file")
+		os.Exit(1)
 	}
 
 	// set default org id
-	for _, server := range ldapCfg.Servers {
+	for _, server := range LdapCfg.Servers {
 		assertNotEmptyCfg(server.SearchFilter, "search_filter")
 		assertNotEmptyCfg(server.SearchBaseDNs, "search_base_dns")
 
@@ -82,11 +87,13 @@ func assertNotEmptyCfg(val interface{}, propName string) {
 	switch v := val.(type) {
 	case string:
 		if v == "" {
-			log.Fatal(3, "LDAP config file is missing option: %s", propName)
+			ldapLogger.Crit("LDAP config file is missing option", "option", propName)
+			os.Exit(1)
 		}
 	case []string:
 		if len(v) == 0 {
-			log.Fatal(3, "LDAP config file is missing option: %s", propName)
+			ldapLogger.Crit("LDAP config file is missing option", "option", propName)
+			os.Exit(1)
 		}
 	default:
 		fmt.Println("unknown")

@@ -1,22 +1,23 @@
-///<reference path="../../headers/require/require.d.ts" />
+///<reference path="../../headers/common.d.ts" />
 
 export class BundleLoader {
   lazy: any;
-  loadingDefer: any;
 
   constructor(bundleName) {
+    var defer = null;
+
     this.lazy = ["$q", "$route", "$rootScope", ($q, $route, $rootScope) => {
-      if (this.loadingDefer) {
-        return this.loadingDefer.promise;
+      if (defer) {
+        return defer.promise;
       }
 
-      this.loadingDefer = $q.defer();
+      defer = $q.defer();
 
-      require([bundleName], () => {
-        this.loadingDefer.resolve();
+      System.import(bundleName).then(() => {
+        defer.resolve();
       });
 
-      return this.loadingDefer.promise;
+      return defer.promise;
     }];
 
   }

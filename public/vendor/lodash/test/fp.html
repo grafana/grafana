@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>lodash-fp Test Suite</title>
+    <link rel="stylesheet" href="../node_modules/qunitjs/qunit/qunit.css">
+  </head>
+  <body>
+    <script>
+      // Avoid reporting tests to Sauce Labs when script errors occur.
+      if (location.port == '9001') {
+        window.onerror = function(message) {
+          if (window.QUnit) {
+            QUnit.config.done.length = 0;
+          }
+          global_test_results = { 'message': message };
+        };
+      }
+    </script>
+    <script src="../lodash.js"></script>
+    <script src="../dist/lodash.fp.js"></script>
+    <script src="../dist/mapping.fp.js"></script>
+    <script src="../node_modules/qunitjs/qunit/qunit.js"></script>
+    <script src="../node_modules/qunit-extras/qunit-extras.js"></script>
+    <script src="../node_modules/platform/platform.js"></script>
+    <script src="./test-fp.js"></script>
+    <div id="qunit"></div>
+    <script>
+      // Set a more readable browser name.
+      window.onload = function() {
+        var timeoutId = setInterval(function() {
+          var ua = document.getElementById('qunit-userAgent');
+          if (ua) {
+            ua.innerHTML = platform;
+            clearInterval(timeoutId);
+          }
+        }, 16);
+      };
+    </script>
+  </body>
+</html>

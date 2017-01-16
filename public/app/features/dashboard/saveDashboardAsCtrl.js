@@ -12,6 +12,16 @@ function (angular) {
       $scope.clone.id = null;
       $scope.clone.editable = true;
       $scope.clone.title = $scope.clone.title + " Copy";
+
+      // remove alerts
+      $scope.clone.rows.forEach(function(row) {
+        row.panels.forEach(function(panel) {
+          delete panel.alert;
+        });
+      });
+
+      // remove auto update
+      delete $scope.clone.autoUpdate;
     };
 
     function saveDashboard(options) {
@@ -37,8 +47,9 @@ function (angular) {
           err.isHandled = true;
 
           $scope.appEvent('confirm-modal', {
-            title: 'Another dashboard with the same name exists',
-            text: "Would you still like to save this dashboard?",
+            title: 'Conflict',
+            text: 'Dashboard with the same name exists.',
+            text2: 'Would you still like to save this dashboard?',
             yesText: "Save & Overwrite",
             icon: "fa-warning",
             onConfirm: function() {

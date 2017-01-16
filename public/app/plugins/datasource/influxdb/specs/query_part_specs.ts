@@ -1,7 +1,7 @@
 
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
-import queryPart = require('../query_part');
+import queryPart from '../query_part';
 
 describe('InfluxQueryPart', () => {
 
@@ -14,6 +14,15 @@ describe('InfluxQueryPart', () => {
 
       expect(part.text).to.be('derivative(10s)');
       expect(part.render('mean(value)')).to.be('derivative(mean(value), 10s)');
+    });
+
+    it('should nest spread function', () => {
+      var part = queryPart.create({
+        type: 'spread'
+      });
+
+      expect(part.text).to.be('spread()');
+      expect(part.render('value')).to.be('spread(value)');
     });
 
     it('should handle suffirx parts', () => {

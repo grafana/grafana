@@ -81,7 +81,7 @@ function (_, TableModel) {
     _.each(this.series, function (series) {
       var titleCol = null;
       var timeCol = null;
-      var tagsCol = null;
+      var tagsCol = [];
       var textCol = null;
 
       _.each(series.columns, function(column, index) {
@@ -89,7 +89,7 @@ function (_, TableModel) {
         if (column === 'sequence_number') { return; }
         if (!titleCol) { titleCol = index; }
         if (column === self.annotation.titleColumn) { titleCol = index; return; }
-        if (column === self.annotation.tagsColumn) { tagsCol = index; return; }
+        if (_.includes((self.annotation.tagsColumn || '').replace(' ', '').split(","), column)) { tagsCol.push(index); return; }
         if (column === self.annotation.textColumn) { textCol = index; return; }
       });
 
@@ -98,7 +98,7 @@ function (_, TableModel) {
           annotation: self.annotation,
           time: + new Date(value[timeCol]),
           title: value[titleCol],
-          tags: value[tagsCol],
+          tags: tagsCol.map(function(t) { return value[t]; }),
           text: value[textCol]
         };
 
@@ -110,7 +110,7 @@ function (_, TableModel) {
   };
 
   p.getTable = function() {
-    var table = new TableModel();
+    var table = new TableModel.default();
     var self = this;
     var i, j;
 
@@ -133,14 +133,18 @@ function (_, TableModel) {
       if (series.values) {
         for (i = 0; i < series.values.length; i++) {
           var values = series.values[i];
+          var reordered = [values[0]];
           if (series.tags) {
             for (var key in series.tags) {
               if (series.tags.hasOwnProperty(key)) {
-                values.splice(1, 0, series.tags[key]);
+                reordered.push(series.tags[key]);
               }
             }
           }
-          table.rows.push(values);
+          for (j = 1; j < values.length; j++) {
+            reordered.push(values[j]);
+          }
+          table.rows.push(reordered);
         }
       }
     });

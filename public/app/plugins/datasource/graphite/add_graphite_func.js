@@ -11,10 +11,10 @@ function (angular, _, $, gfunc) {
     .module('grafana.directives')
     .directive('graphiteAddFunc', function($compile) {
       var inputTemplate = '<input type="text"'+
-                            ' class="tight-form-input input-medium tight-form-input"' +
+                            ' class="gf-form-input"' +
                             ' spellcheck="false" style="display:none"></input>';
 
-      var buttonTemplate = '<a  class="tight-form-item tight-form-func dropdown-toggle"' +
+      var buttonTemplate = '<a  class="gf-form-label query-part dropdown-toggle"' +
                               ' tabindex="1" gf-dropdown="functionMenu" data-toggle="dropdown">' +
                               '<i class="fa fa-plus"></i></a>';
 
@@ -22,6 +22,7 @@ function (angular, _, $, gfunc) {
         link: function($scope, elem) {
           var categories = gfunc.getCategories();
           var allFunctions = getAllFunctionNames(categories);
+          var ctrl = $scope.ctrl;
 
           $scope.functionMenu = createFunctionDropDownMenu(categories);
 
@@ -48,7 +49,7 @@ function (angular, _, $, gfunc) {
               }
 
               $scope.$apply(function() {
-                $scope.addFunction(funcDef);
+                ctrl.addFunction(funcDef);
               });
 
               $input.trigger('blur');
@@ -98,7 +99,7 @@ function (angular, _, $, gfunc) {
         submenu: _.map(list, function(value) {
           return {
             text: value.name,
-            click: "addFunction('" + value.name + "')",
+            click: "ctrl.addFunction('" + value.name + "')",
           };
         })
       };

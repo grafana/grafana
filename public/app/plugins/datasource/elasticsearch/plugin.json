@@ -1,18 +1,25 @@
 {
-  "pluginType": "datasource",
+  "type": "datasource",
   "name": "Elasticsearch",
+  "id": "elasticsearch",
 
-  "type": "elasticsearch",
-  "serviceName": "ElasticDatasource",
-
-  "module": "app/plugins/datasource/elasticsearch/datasource",
-
-  "partials": {
-    "config": "app/plugins/datasource/elasticsearch/partials/config.html",
-    "annotations": "app/plugins/datasource/elasticsearch/partials/annotations.editor.html"
+  "info": {
+    "description": "Elasticsearch Data Source for Grafana",
+    "author": {
+      "name": "Grafana Project",
+      "url": "http://grafana.org"
+    },
+    "keywords": ["elasticsearch"],
+    "logos": {
+      "small": "img/logo_large.png",
+      "large": "img/logo_large.png"
+    },
+    "links": [
+      {"name": "elastic.co", "url": "https://www.elastic.co/products/elasticsearch"}
+    ],
+    "version": "3.0.0"
   },
 
-  "defaultMatchFormat": "lucene",
   "annotations": true,
   "metrics": true
 }

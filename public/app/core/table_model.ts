@@ -1,5 +1,5 @@
 
-class TableModel {
+export default class TableModel {
   columns: any[];
   rows: any[];
   type: string;
@@ -32,8 +32,8 @@ class TableModel {
     if (options.desc) {
       this.rows.reverse();
       this.columns[options.col].desc = true;
+    } else {
+      this.columns[options.col].desc = false;
     }
   }
 }
-
-export = TableModel;
