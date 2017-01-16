@@ -321,7 +321,7 @@ func loadSpecifedConfigFile(configFile string) error {
 	if configFile == "" {
 		configFile = filepath.Join(HomePath, CustomInitPath)
 		// return without error if custom file does not exist
-		if !pathExists(configFile) {
+		if !PathExists(configFile) {
 			return nil
 		}
 	}
@@ -404,7 +404,7 @@ func loadConfiguration(args *CommandLineArgs) {
 	initLogging()
 }
 
-func pathExists(path string) bool {
+func PathExists(path string) bool {
 	_, err := os.Stat(path)
 	if err == nil {
 		return true
@@ -423,12 +423,12 @@ func setHomePath(args *CommandLineArgs) {
 
 	HomePath, _ = filepath.Abs(".")
 	// check if homepath is correct
-	if pathExists(filepath.Join(HomePath, "conf/defaults.ini")) {
+	if PathExists(filepath.Join(HomePath, "conf/defaults.ini")) {
 		return
 	}
 
 	// try down one path
-	if pathExists(filepath.Join(HomePath, "../conf/defaults.ini")) {
+	if PathExists(filepath.Join(HomePath, "../conf/defaults.ini")) {
 		HomePath = filepath.Join(HomePath, "../")
 	}
 }

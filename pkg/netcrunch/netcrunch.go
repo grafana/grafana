@@ -110,7 +110,7 @@ func getDefaultNetCrunchDataSource(netCrunchSettings NetCrunchServerSettings) mo
   }
 }
 
-func getDataSourceByName(datasourceName string, orgID int64) (models.DataSource, bool) {
+func getDataSourceByName(datasourceName string, orgID int64) (*models.DataSource, bool) {
   query := models.GetDataSourceByNameQuery {
     Name: datasourceName,
     OrgId: orgID,
@@ -139,7 +139,7 @@ func addDataSource(datasource models.DataSource, orgId int64) bool {
   return (bus.Dispatch(&command) == nil)
 }
 
-func updateDataSource(datasource models.DataSource, orgId int64) bool {
+func updateDataSource(datasource *models.DataSource, orgId int64) bool {
   command := models.UpdateDataSourceCommand {
     Id:                datasource.Id,
     OrgId:             orgId,
