@@ -139,9 +139,10 @@ func logProxyRequest(dataSourceType string, c *middleware.Context) {
 		return
 	}
 
-		var body string
-		if c.Req.Request.Body != nil {
-			buffer, _ := ioutil.ReadAll(c.Req.Request.Body)
+	var body string
+	if c.Req.Request.Body != nil {
+		buffer, err := ioutil.ReadAll(c.Req.Request.Body)
+		if err == nil {
 			c.Req.Request.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
 			body = string(buffer)
 		}
