@@ -68,9 +68,9 @@
   }
 
   .search-item {
+    word-wrap: break-word;
     display: block;
     padding: 3px 10px;
-    white-space: nowrap;
     background-color: $grafanaListBackground;
     margin-bottom: 4px;
 
