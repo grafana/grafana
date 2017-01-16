@@ -90,7 +90,6 @@ function (angular, _, $, require, config) {
   module.directive('clipboardButton',function() {
     return function(scope, elem) {
       require(['vendor/clipboard/dist/clipboard'], function(Clipboard) {
-        $.fn.modal.Constructor.prototype.enforceFocus = function() {}; // see https://github.com/zenorocha/clipboard.js/issues/155
         scope.clipboard = new Clipboard(elem[0]);
       });
 
