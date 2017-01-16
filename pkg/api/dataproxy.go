@@ -18,6 +18,10 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
+var (
+	auditLogger log.Logger = log.New("data-proxy-log")
+)
+
 func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
 		req.URL.Scheme = targetUrl.Scheme
@@ -133,7 +137,6 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 
 func proxyLog(dataSourceType string, c *middleware.Context) {
 	if setting.DataProxyLogging {
-		auditLogger := log.New("data-proxy-log", "userid", c.UserId, "orgid", c.OrgId, "username", c.Login)
 
 		var body string
 		if c.Req.Request.Body != nil {
@@ -142,6 +145,13 @@ func proxyLog(dataSourceType string, c *middleware.Context) {
 			body = string(buffer)
 		}
 
-		auditLogger.Info("Proxying incoming request", "datasource", dataSourceType, "uri", c.Req.RequestURI, "method", c.Req.Request.Method, "body", body)
+		auditLogger.Info("Proxying incoming request",
+			"userid", c.UserId,
+			"orgid", c.OrgId,
+			"username", c.Login,
+			"datasource", dataSourceType,
+			"uri", c.Req.RequestURI,
+			"method", c.Req.Request.Method,
+			"body", body)
 	}
 }
