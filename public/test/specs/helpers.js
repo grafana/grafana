@@ -162,6 +162,7 @@ define([
     this.fillVariableValuesForUrl = function() {};
     this.updateTemplateData = function() { };
     this.variableExists = function() { return false; };
+    this.variableInitialized = function() { };
     this.highlightVariablesAsHtml = function(str) { return str; };
     this.setGrafanaVariable = function(name, value) {
       this.data[name] = value;
