@@ -74,6 +74,7 @@ You can also use raw queries & regular expressions to extract anything you might
 
 ### Using templated variables in queries
 
-When the `Include All` option or `Multi-Value` option is enabled, Grafana converts the labels from plain text to a regex compatible string. If your labels include special values such as `.` or `/`, you will need to use the `=~` or regex match in your Prometheus query. For example, a query for ALERTS, a template query of `label(ALERTS,instance)` and an instance value of `http://example.com` would become `ALERTS{instance=~$instance}` instead of `ALERTS{instance=$instance}`.
+When the `Include All` option or `Multi-Value` option is enabled, Grafana converts the labels from plain text to a regex compatible string. 
+Which means you have to use `=~` instead of `=` in your Prometheus queries. For example `ALERTS{instance=~$instance}` instead of `ALERTS{instance=$instance}`.
 
 ![](/img/v2/prometheus_templating.png)
