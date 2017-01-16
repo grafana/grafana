@@ -10,6 +10,8 @@ import (
   "github.com/grafana/grafana/pkg/setting"
   "github.com/grafana/grafana/pkg/bus"
   "github.com/grafana/grafana/pkg/models"
+  "github.com/grafana/grafana/pkg/components/simplejson"
+  "strings"
 )
 
 type NetCrunchServerSettings struct {
@@ -90,23 +92,41 @@ func readNetCrunchServerSettings() (NetCrunchServerSettings, error) {
   }
 }
 
+func getNetCrunchServerSimpleUrl(netCrunchSettings NetCrunchServerSettings) string {
+  return netCrunchSettings.Host + ":" + netCrunchSettings.Port
+}
+
 func getNetCrunchServerUrl(netCrunchSettings NetCrunchServerSettings) string {
-  return netCrunchSettings.Protocol + "://" + netCrunchSettings.Host + ":" + netCrunchSettings.Port
+  return netCrunchSettings.Protocol + "://" + getNetCrunchServerSimpleUrl(netCrunchSettings)
+}
+
+func createDatasourceJsonData(netCrunchSettings NetCrunchServerSettings) *simplejson.Json {
+  jsonDataBuffer := simplejson.New()
+
+  jsonDataBuffer.Set("simpleUrl", getNetCrunchServerSimpleUrl(netCrunchSettings))
+  jsonDataBuffer.Set("isSSL", (strings.Compare(strings.ToUpper(netCrunchSettings.Protocol), "HTTPS") == 0))
+  jsonDataBuffer.Set("user", netCrunchSettings.User)
+  jsonDataBuffer.Set("password", netCrunchSettings.Password)
+
+  return jsonDataBuffer
 }
 
 func getDefaultNetCrunchDataSource(netCrunchSettings NetCrunchServerSettings) models.DataSource {
+  jsonDataBuffer := createDatasourceJsonData(netCrunchSettings)
+
   return models.DataSource {
     Name:               "NetCrunch",
     Type:               models.DS_NETCRUNCH,
     Access:             models.DS_ACCESS_PROXY,
     Url:                getNetCrunchServerUrl(netCrunchSettings),
-    User:               netCrunchSettings.User,
-    Password:           netCrunchSettings.Password,
+    User:               "",
+    Password:           "",
     Database:           "",
     BasicAuth:          false,
     BasicAuthUser:      "",
     BasicAuthPassword:  "",
     IsDefault:          true,
+    JsonData:           jsonDataBuffer,
   }
 }
 
@@ -135,6 +155,7 @@ func addDataSource(datasource models.DataSource, orgId int64) bool {
     BasicAuthPassword: datasource.BasicAuthPassword,
     WithCredentials:   datasource.WithCredentials,
     IsDefault:         datasource.IsDefault,
+    JsonData:          datasource.JsonData,
   }
   return (bus.Dispatch(&command) == nil)
 }
@@ -155,6 +176,7 @@ func updateDataSource(datasource *models.DataSource, orgId int64) bool {
     BasicAuthPassword: datasource.BasicAuthPassword,
     WithCredentials:   datasource.WithCredentials,
     IsDefault:         datasource.IsDefault,
+    JsonData:          datasource.JsonData,
   }
   return (bus.Dispatch(&command) == nil)
 }
@@ -164,8 +186,7 @@ func updateNetCrunchDatasource(netCrunchSettings NetCrunchServerSettings, orgId 
 
   if found {
     datasource.Url = getNetCrunchServerUrl(netCrunchSettings)
-    datasource.User = netCrunchSettings.User
-    datasource.Password = netCrunchSettings.Password
+    datasource.JsonData = createDatasourceJsonData(netCrunchSettings)
     return updateDataSource(datasource, orgId)
   } else {
     datasource := getDefaultNetCrunchDataSource(netCrunchSettings)
