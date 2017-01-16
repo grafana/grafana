@@ -24,6 +24,7 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/social"
+	"github.com/grafana/grafana/pkg/netcrunch"
 )
 
 func NewGrafanaServer() models.GrafanaServer {
@@ -57,6 +58,7 @@ func (g *GrafanaServerImpl) Start() {
 	social.NewOAuthService()
 	eventpublisher.Init()
 	plugins.Init()
+	netcrunch.Init()
 
 	// init alerting
 	if setting.ExecuteAlerts {
