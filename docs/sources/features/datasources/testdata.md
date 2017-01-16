@@ -1,26 +1,25 @@
 +++
-title = "Testdata Panel"
+title = "Grafana TestData"
 keywords = ["grafana", "dashboard", "documentation", "panels", "testdata"]
 type = "docs"
 [menu.docs]
-name = "Test data"
+name = "Grafana TestData"
 parent = "datasources"
 weight = 2
 +++
 
 
-# Test data Panel
+# Grafana TestData 
 
-    > NOTE: This panel is disable by default. 
+    > NOTE: This plugin is disable by default. 
 
-## Purpose
 The purpose of this data sources is to make it easier to create fake data for any panel. 
 Using `Grafana TestData` you can build your own time series and have any panel render it. 
 This make is much easier to verify functionally since the data can be shared very 
 
 ## Enable 
 
-`Grafana TestData` is not enabled by default. To enable it you have to go to `/plugins/testdata/edit` and click the enable button.
+`Grafana TestData` is not enabled by default. To enable it you have to go to `/plugins/testdata/edit` and click the enable button to enable it for each server.
 
 ## Create mock data.
 
