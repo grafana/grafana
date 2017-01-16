@@ -12,7 +12,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-  "github.com/grafana/grafana/pkg/netcrunch"
+	"github.com/grafana/grafana/pkg/netcrunch"
 )
 
 const (
@@ -87,13 +87,13 @@ func tryLoginUsingRememberCookie(c *middleware.Context) bool {
 
 func LoginApiPing(c *middleware.Context) {
 	if !tryLoginUsingRememberCookie(c) {
-    initialized, err := netcrunch.CheckInitializationSuccess()
+  	    	initialized, err := netcrunch.CheckInitializationSuccess()
 
-    if ((err == nil) && (!initialized)) {
-      c.JsonApiErr(401, "Default credentials for fresh installation: User: admin Password: admin", nil)
-    } else {
-      c.JsonApiErr(401, "Unauthorized", nil)
-    }
+	    	if ((err == nil) && (!initialized)) {
+	      		c.JsonApiErr(401, "Default credentials for fresh installation: User: admin Password: admin", nil)
+	    	} else {
+	      		c.JsonApiErr(401, "Unauthorized", nil)
+	    	}
 		return
 	}
 

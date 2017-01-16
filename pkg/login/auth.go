@@ -8,7 +8,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-  "github.com/grafana/grafana/pkg/netcrunch"
+	"github.com/grafana/grafana/pkg/netcrunch"
 )
 
 var (
