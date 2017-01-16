@@ -133,8 +133,14 @@ func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 			Updated: time.Now(),
 		}
 
-		if _, err := sess.Id(cmd.OrgId).Update(&org); err != nil {
+		affectedRows, err := sess.Id(cmd.OrgId).Update(&org)
+
+		if err != nil {
 			return err
+		}
+
+		if affectedRows == 0 {
+			return m.ErrOrgNotFound
 		}
 
 		sess.publishAfterCommit(&events.OrgUpdated{

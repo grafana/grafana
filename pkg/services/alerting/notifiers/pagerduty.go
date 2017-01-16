@@ -12,7 +12,28 @@ import (
 )
 
 func init() {
-	alerting.RegisterNotifier("pagerduty", NewPagerdutyNotifier)
+	alerting.RegisterNotifier(&alerting.NotifierPlugin{
+		Type:        "pagerduty",
+		Name:        "PagerDuty",
+		Description: "Sends notifications to PagerDuty",
+		Factory:     NewPagerdutyNotifier,
+		OptionsTemplate: `
+      <h3 class="page-heading">PagerDuty settings</h3>
+      <div class="gf-form">
+        <span class="gf-form-label width-14">Integration Key</span>
+        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.integrationKey" placeholder="Pagerduty integeration Key"></input>
+      </div>
+      <div class="gf-form">
+        <gf-form-switch
+           class="gf-form"
+           label="Auto resolve incidents"
+           label-class="width-14"
+           checked="ctrl.model.settings.autoResolve"
+           tooltip="Resolve incidents in pagerduty once the alert goes back to ok.">
+        </gf-form-switch>
+      </div>
+    `,
+	})
 }
 
 var (
@@ -89,6 +110,7 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		this.log.Error("Failed to send notification to Pagerduty", "error", err, "body", string(body))
+		return err
 	}
 
 	return nil

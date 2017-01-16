@@ -45,7 +45,7 @@ export default class InfluxDatasource {
 
   query(options) {
     var timeFilter = this.getTimeFilter(options);
-    var scopedVars = options.scopedVars ? _.cloneDeep(options.scopedVars) : {};
+    var scopedVars = options.scopedVars;
     var targets = _.cloneDeep(options.targets);
     var queryTargets = [];
     var queryModel;
@@ -56,8 +56,8 @@ export default class InfluxDatasource {
 
       queryTargets.push(target);
 
-      // build query
-      scopedVars.interval = {value: target.interval || options.interval};
+      // backward compatability
+      scopedVars.interval = scopedVars.__interval;
 
       queryModel = new InfluxQuery(target, this.templateSrv, scopedVars);
       return queryModel.render(true);
@@ -252,7 +252,7 @@ export default class InfluxDatasource {
   getTimeFilter(options) {
     var from = this.getInfluxTime(options.rangeRaw.from, false);
     var until = this.getInfluxTime(options.rangeRaw.to, true);
-    var fromIsAbsolute = from[from.length-1] === 's';
+    var fromIsAbsolute = from[from.length-1] === 'ms';
 
     if (until === 'now()' && !fromIsAbsolute) {
       return 'time > ' + from;
@@ -275,7 +275,8 @@ export default class InfluxDatasource {
       }
       date = dateMath.parse(date, roundUp);
     }
-    return (date.valueOf() / 1000).toFixed(0) + 's';
+
+    return date.valueOf() + 'ms';
   }
 }
 

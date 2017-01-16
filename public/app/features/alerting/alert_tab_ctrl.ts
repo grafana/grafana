@@ -94,6 +94,7 @@ export class AlertTabCtrl {
       case "victorops": return "fa fa-pagelines";
       case "webhook": return "fa fa-cubes";
       case "pagerduty": return "fa fa-bullhorn";
+      case "opsgenie": return "fa fa-bell";
     }
   }
 

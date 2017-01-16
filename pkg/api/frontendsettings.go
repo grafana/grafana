@@ -122,12 +122,13 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 	panels := map[string]interface{}{}
 	for _, panel := range enabledPlugins.Panels {
 		panels[panel.Id] = map[string]interface{}{
-			"module":  panel.Module,
-			"baseUrl": panel.BaseUrl,
-			"name":    panel.Name,
-			"id":      panel.Id,
-			"info":    panel.Info,
-			"sort":    getPanelSort(panel.Id),
+			"module":       panel.Module,
+			"baseUrl":      panel.BaseUrl,
+			"name":         panel.Name,
+			"id":           panel.Id,
+			"info":         panel.Info,
+			"hideFromList": panel.HideFromList,
+			"sort":         getPanelSort(panel.Id),
 		}
 	}
 
@@ -138,6 +139,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		"appSubUrl":         setting.AppSubUrl,
 		"allowOrgCreate":    (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":  setting.AuthProxyEnabled,
+		"ldapEnabled":       setting.LdapEnabled,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,

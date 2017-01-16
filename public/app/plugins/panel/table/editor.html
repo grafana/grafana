@@ -26,9 +26,9 @@
 	<div class="section gf-form-group">
 		<h5 class="section-heading">Table Display</h5>
 		<div class="gf-form-inline">
-			<div class="gf-form max-width-17">
-				<label class="gf-form-label width-11">Pagination (Page size)</label>
-				<input type="number" class="gf-form-input"
+			<div class="gf-form">
+				<label class="gf-form-label width-8">Rows per page</label>
+				<input type="number" class="gf-form-input width-6"
 					placeholder="100" data-placement="right"
 					ng-model="editor.panel.pageSize"
 					ng-change="editor.render()"
@@ -103,9 +103,9 @@
       </div>
 
       <div class="gf-form-inline" ng-if="style.type === 'number'">
-        <div class="gf-form max-width-17 offset-width-8">
+        <div class="gf-form offset-width-8">
           <label class="gf-form-label width-8">Thresholds<tip>Comma separated values</tip></label>
-          <input type="text" class="gf-form-input" ng-model="style.thresholds" placeholder="50,80" ng-blur="editor.render()" array-join ng-model-onblur>
+          <input type="text" class="gf-form-input width-10" ng-model="style.thresholds" placeholder="50,80" ng-blur="editor.render()" array-join ng-model-onblur>
         </div>
         <div class="gf-form">
           <label class="gf-form-label width-5">Colors</label>

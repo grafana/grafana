@@ -4,7 +4,7 @@ deps-go:
 	go run build.go setup
 
 deps-js:
-	npm install
+	yarn install --pure-lockfile
 
 deps: deps-go deps-js
 

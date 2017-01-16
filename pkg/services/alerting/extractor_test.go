@@ -110,6 +110,34 @@ func TestAlertRuleExtraction(t *testing.T) {
       ]
       }`
 
+		Convey("Extractor should not modify the original json", func() {
+			dashJson, err := simplejson.NewJson([]byte(json))
+			So(err, ShouldBeNil)
+
+			dash := m.NewDashboardFromJson(dashJson)
+
+			getTarget := func(j *simplejson.Json) string {
+				rowObj := j.Get("rows").MustArray()[0]
+				row := simplejson.NewFromAny(rowObj)
+				panelObj := row.Get("panels").MustArray()[0]
+				panel := simplejson.NewFromAny(panelObj)
+				conditionObj := panel.Get("alert").Get("conditions").MustArray()[0]
+				condition := simplejson.NewFromAny(conditionObj)
+				return condition.Get("query").Get("model").Get("target").MustString()
+			}
+
+			Convey("Dashboard json rows.panels.alert.query.model.target should be empty", func() {
+				So(getTarget(dashJson), ShouldEqual, "")
+			})
+
+			extractor := NewDashAlertExtractor(dash, 1)
+			_, _ = extractor.GetAlerts()
+
+			Convey("Dashboard json should not be updated after extracting rules", func() {
+				So(getTarget(dashJson), ShouldEqual, "")
+			})
+		})
+
 		Convey("Parsing and validating dashboard containing graphite alerts", func() {
 
 			dashJson, err := simplejson.NewJson([]byte(json))

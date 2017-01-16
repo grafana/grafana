@@ -214,4 +214,75 @@ define([
       expect(str).to.be('-0x41.8');
     });
   });
+
+  describe('duration', function() {
+    it('null', function() {
+      var str = kbn.toDuration(null, 0, "millisecond");
+      expect(str).to.be('');
+    });
+    it('0 milliseconds', function() {
+      var str = kbn.toDuration(0, 0, "millisecond");
+      expect(str).to.be('0 milliseconds');
+    });
+    it('1 millisecond', function() {
+      var str = kbn.toDuration(1, 0, "millisecond");
+      expect(str).to.be('1 millisecond');
+    });
+    it('-1 millisecond', function() {
+      var str = kbn.toDuration(-1, 0, "millisecond");
+      expect(str).to.be('1 millisecond ago');
+    });
+    it('seconds', function() {
+      var str = kbn.toDuration(1, 0, "second");
+      expect(str).to.be('1 second');
+    });
+    it('minutes', function() {
+      var str = kbn.toDuration(1, 0, "minute");
+      expect(str).to.be('1 minute');
+    });
+    it('hours', function() {
+      var str = kbn.toDuration(1, 0, "hour");
+      expect(str).to.be('1 hour');
+    });
+    it('days', function() {
+      var str = kbn.toDuration(1, 0, "day");
+      expect(str).to.be('1 day');
+    });
+    it('weeks', function() {
+      var str = kbn.toDuration(1, 0, "week");
+      expect(str).to.be('1 week');
+    });
+    it('months', function() {
+      var str = kbn.toDuration(1, 0, "month");
+      expect(str).to.be('1 month');
+    });
+    it('years', function() {
+      var str = kbn.toDuration(1, 0, "year");
+      expect(str).to.be('1 year');
+    });
+    it('decimal days', function() {
+      var str = kbn.toDuration(1.5, 2, "day");
+      expect(str).to.be('1 day, 12 hours, 0 minutes');
+    });
+    it('decimal months', function() {
+      var str = kbn.toDuration(1.5, 3, "month");
+      expect(str).to.be('1 month, 2 weeks, 1 day, 0 hours');
+    });
+    it('no decimals', function() {
+      var str = kbn.toDuration(38898367008, 0, "millisecond");
+      expect(str).to.be('1 year');
+    });
+    it('1 decimal', function() {
+      var str = kbn.toDuration(38898367008, 1, "millisecond");
+      expect(str).to.be('1 year, 2 months');
+    });
+    it('too many decimals', function() {
+      var str = kbn.toDuration(38898367008, 20, "millisecond");
+      expect(str).to.be('1 year, 2 months, 3 weeks, 4 days, 5 hours, 6 minutes, 7 seconds, 8 milliseconds');
+    });
+    it('floating point error', function() {
+      var str = kbn.toDuration(36993906007, 8, "millisecond");
+      expect(str).to.be('1 year, 2 months, 0 weeks, 3 days, 4 hours, 5 minutes, 6 seconds, 7 milliseconds');
+    });
+  });
 });

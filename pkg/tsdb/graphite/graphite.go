@@ -14,28 +14,36 @@ import (
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type GraphiteExecutor struct {
-	*tsdb.DataSourceInfo
+	*models.DataSource
+	HttpClient *http.Client
 }
 
-func NewGraphiteExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
-	return &GraphiteExecutor{dsInfo}
+func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
+	httpClient, err := datasource.GetHttpClient()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &GraphiteExecutor{
+		DataSource: datasource,
+		HttpClient: httpClient,
+	}, nil
 }
 
 var (
-	glog       log.Logger
-	HttpClient *http.Client
+	glog log.Logger
 )
 
 func init() {
 	glog = log.New("tsdb.graphite")
 	tsdb.RegisterExecutor("graphite", NewGraphiteExecutor)
-
-	HttpClient = tsdb.GetDefaultClient()
 }
 
 func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
@@ -66,7 +74,7 @@ func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		return result
 	}
 
-	res, err := ctxhttp.Do(ctx, HttpClient, req)
+	res, err := ctxhttp.Do(ctx, e.HttpClient, req)
 	if err != nil {
 		result.Error = err
 		return result

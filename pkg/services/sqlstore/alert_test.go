@@ -39,6 +39,37 @@ func TestAlertingDataAccess(t *testing.T) {
 			So(err, ShouldBeNil)
 		})
 
+		Convey("Can set new states", func() {
+			Convey("new state ok", func() {
+				cmd := &m.SetAlertStateCommand{
+					AlertId: 1,
+					State:   m.AlertStateOK,
+				}
+
+				err = SetAlertState(cmd)
+				So(err, ShouldBeNil)
+			})
+
+			Convey("can pause alert", func() {
+				cmd := &m.PauseAllAlertCommand{
+					Paused: true,
+				}
+
+				err = PauseAllAlerts(cmd)
+				So(err, ShouldBeNil)
+
+				Convey("cannot updated paused alert", func() {
+					cmd := &m.SetAlertStateCommand{
+						AlertId: 1,
+						State:   m.AlertStateOK,
+					}
+
+					err = SetAlertState(cmd)
+					So(err, ShouldNotBeNil)
+				})
+			})
+		})
+
 		Convey("Can read properties", func() {
 			alertQuery := m.GetAlertsQuery{DashboardId: testDash.Id, PanelId: 1, OrgId: 1}
 			err2 := HandleAlertsQuery(&alertQuery)

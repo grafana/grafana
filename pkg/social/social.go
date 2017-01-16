@@ -11,11 +11,11 @@ import (
 )
 
 type BasicUserInfo struct {
-	Name     string
-	Email    string
-	Login    string
-	Company  string
-	Role     string
+	Name    string
+	Email   string
+	Login   string
+	Company string
+	Role    string
 }
 
 type SocialConnector interface {
@@ -91,11 +91,11 @@ func NewOAuthService() {
 		// Google.
 		if name == "google" {
 			SocialMap["google"] = &SocialGoogle{
-				Config:               &config,
-				allowedDomains:       info.AllowedDomains,
-				hostedDomain:         info.HostedDomain,
-				apiUrl:               info.ApiUrl,
-				allowSignup:          info.AllowSignup,
+				Config:         &config,
+				allowedDomains: info.AllowedDomains,
+				hostedDomain:   info.HostedDomain,
+				apiUrl:         info.ApiUrl,
+				allowSignup:    info.AllowSignup,
 			}
 		}
 
@@ -115,12 +115,12 @@ func NewOAuthService() {
 			config = oauth2.Config{
 				ClientID:     info.ClientId,
 				ClientSecret: info.ClientSecret,
-				Endpoint:     oauth2.Endpoint{
-					AuthURL:      setting.GrafanaNetUrl + "/oauth2/authorize",
-					TokenURL:     setting.GrafanaNetUrl + "/api/oauth2/token",
+				Endpoint: oauth2.Endpoint{
+					AuthURL:  setting.GrafanaNetUrl + "/oauth2/authorize",
+					TokenURL: setting.GrafanaNetUrl + "/api/oauth2/token",
 				},
-				RedirectURL:  strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
-				Scopes:       info.Scopes,
+				RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
+				Scopes:      info.Scopes,
 			}
 
 			SocialMap["grafananet"] = &SocialGrafanaNet{

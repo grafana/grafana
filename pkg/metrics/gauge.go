@@ -32,8 +32,8 @@ func RegGauge(name string, tagStrings ...string) Gauge {
 
 // GaugeSnapshot is a read-only copy of another Gauge.
 type GaugeSnapshot struct {
-	*MetricMeta
 	value int64
+	*MetricMeta
 }
 
 // Snapshot returns the snapshot.

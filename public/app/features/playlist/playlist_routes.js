@@ -1,4 +1,4 @@
-  define([
+define([
   'angular',
   'app/core/config',
   'lodash'

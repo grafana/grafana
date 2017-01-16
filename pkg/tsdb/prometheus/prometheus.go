@@ -7,20 +7,31 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/guregu/null.v3"
+	"net/http"
 
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/prometheus/client_golang/api/prometheus"
 	pmodel "github.com/prometheus/common/model"
 )
 
 type PrometheusExecutor struct {
-	*tsdb.DataSourceInfo
+	*models.DataSource
+	Transport *http.Transport
 }
 
-func NewPrometheusExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
-	return &PrometheusExecutor{dsInfo}
+func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.Executor, error) {
+	transport, err := dsInfo.GetHttpTransport()
+	if err != nil {
+		return nil, err
+	}
+
+	return &PrometheusExecutor{
+		DataSource: dsInfo,
+		Transport:  transport,
+	}, nil
 }
 
 var (
@@ -36,7 +47,8 @@ func init() {
 
 func (e *PrometheusExecutor) getClient() (prometheus.QueryAPI, error) {
 	cfg := prometheus.Config{
-		Address: e.DataSourceInfo.Url,
+		Address:   e.DataSource.Url,
+		Transport: e.Transport,
 	}
 
 	client, err := prometheus.New(cfg)

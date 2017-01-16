@@ -57,16 +57,25 @@
         </gf-form-switch>
 				<gf-form-switch class="gf-form"
                         label="Hide Controls"
-                        tooltip="Hide row controls. Shortcut: CTRL+H"
+                        tooltip="Hide row controls. Shortcut: CTRL+H or CMD+H"
                         checked="dashboard.hideControls"
                         label-class="width-11">
         </gf-form-switch>
-        <gf-form-switch class="gf-form"
-                        label="Shared Crosshair"
-                        tooltip="Shared Crosshair line on all graphs. Shortcut: CTRL+O"
-                        checked="dashboard.sharedCrosshair"
-                        label-class="width-11">
-        </gf-form-switch>
+      </div>
+    </div>
+
+    <div class="section">
+      <h5 class="section-heading">Panel Options</h5>
+      <div class="gf-form">
+        <label class="gf-form-label width-11">
+          Graph Tooltip
+          <info-popover mode="right-normal">
+            Cycle between options using Shortcut: CTRL+O or CMD+O
+          </info-popover>
+        </label>
+        <div class="gf-form-select-wrapper">
+          <select ng-model="dashboard.graphTooltip" class='gf-form-input' ng-options="f.value as f.text for f in [{value: 0, text: 'Default'}, {value: 1, text: 'Shared crosshair'},{value: 2, text: 'Shared Tooltip'}]"></select>
+        </div>
       </div>
     </div>
 

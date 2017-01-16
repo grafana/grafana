@@ -80,6 +80,7 @@ func sendEmailCommandHandlerSync(ctx context.Context, cmd *m.SendEmailCommandSyn
 		Template:     cmd.Template,
 		To:           cmd.To,
 		EmbededFiles: cmd.EmbededFiles,
+		Subject:      cmd.Subject,
 	})
 
 	if err != nil {
