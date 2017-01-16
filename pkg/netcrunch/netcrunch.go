@@ -218,6 +218,7 @@ func upgrade() {
   UpgradeFileName := getUpgradeFileName()
   VersionFileName := getVersionFileName()
   UpgradeMarkerFileName := getUpgradeMarkerFileName()
+  uLog := log.New("GrafCrunch upgrader")
 
   if (setting.PathExists(UpgradeFileName)) {
     if (loadUpgradeFile(UpgradeFileName)) {
@@ -226,22 +227,24 @@ func upgrade() {
         if (err == nil) {
           if (updateNetCrunchDatasources(netCrunchSettings) &&
               writeVersionFile(VersionFileName) && removeFile(UpgradeFileName)) {
-            log.Info("NetCrunch: Upgrade")
+            uLog.Info("GrafCrunch: Upgrade")
 
             if (setting.PathExists(UpgradeMarkerFileName)) {
               SetInitializationSuccess()
               removeFile(UpgradeMarkerFileName)
             }
           } else {
-            log.Info("NetCrunch: Upgrade error")
+            uLog.Info("GrafCrunch: Upgrade error")
           }
         } else {
-          log.Info("NetCrunch: Upgrade error")
+          uLog.Info("GrafCrunch: Upgrade error")
         }
       }
     } else {
-      log.Info("NetCrunch: Upgrade error")
+      uLog.Info("GrafCrunch: Upgrade error")
     }
+  } else {
+    writeVersionFile(VersionFileName)
   }
 }
 
@@ -267,10 +270,11 @@ func SetInitializationSuccess() bool {
 
 func Init() {
   StatusesFileName := getStatusesFileName()
+  iLog := log.New("Initializing GrafCrunch")
 
   if (setting.PathExists(StatusesFileName)) {
     if (!loadStatusesFile(StatusesFileName)) {
-      log.Info("NetCrunch: Failed to load statuses")
+      iLog.Info("NetCrunch: Failed to load statuses")
     }
   } else {
     DefaultStatusesFile := ini.Empty()
@@ -278,9 +282,9 @@ func Init() {
     DefaultStatusesFile.Section("Initialization").NewKey("success", "false")
     if (writeStatusesFile(StatusesFileName, DefaultStatusesFile) &&
         loadStatusesFile(StatusesFileName)) {
-      log.Info("NetCrunch: Statuses created")
+      iLog.Info("NetCrunch: Statuses created")
     } else {
-      log.Info("NetCrunch: Statuses creation error")
+      iLog.Info("NetCrunch: Statuses creation error")
     }
   }
 
