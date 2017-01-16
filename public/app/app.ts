@@ -44,6 +44,8 @@ export class GrafanaApp {
     moment.locale(config.bootData.user.locale);
 
     app.config(($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $httpProvider, $provide) => {
+      // pre assing bindings before constructor calls
+      $compileProvider.preAssignBindingsEnabled(true);
 
       if (config.buildInfo.env !== 'development') {
         $compileProvider.debugInfoEnabled(false);
