@@ -229,7 +229,7 @@ For details, see https://github.com/unrolled/secure.
 
 List of fully qualified domain names that are allowed; if empty, allow any and all host names.
 
-### ssl_direct
+### ssl_redirect
 
 Only allow HTTPS requests
 
