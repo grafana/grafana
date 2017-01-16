@@ -1,6 +1,8 @@
 package api
 
 import (
+	"bytes"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -8,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -121,6 +124,24 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		c.JsonApiErr(400, "Unable to load TLS certificate", err)
 		return
 	}
+
+	proxyLog(ds.Type, c)
+
 	proxy.ServeHTTP(c.Resp, c.Req.Request)
 	c.Resp.Header().Del("Set-Cookie")
+}
+
+func proxyLog(dataSourceType string, c *middleware.Context) {
+	if setting.DataProxyLogging {
+		auditLogger := log.New("data-proxy-log", "userid", c.UserId, "orgid", c.OrgId, "username", c.Login)
+
+		var body string
+		if c.Req.Request.Body != nil {
+			buffer, _ := ioutil.ReadAll(c.Req.Request.Body)
+			c.Req.Request.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
+			body = string(buffer)
+		}
+
+		auditLogger.Info("Proxying incoming request", "datasource", dataSourceType, "uri", c.Req.RequestURI, "method", c.Req.Request.Method, "body", body)
+	}
 }
