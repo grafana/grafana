@@ -19,7 +19,7 @@ import (
 )
 
 var (
-	auditLogger log.Logger = log.New("data-proxy-log")
+	dataproxyLogger log.Logger = log.New("data-proxy-log")
 )
 
 func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
@@ -129,14 +129,15 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
-	proxyLog(ds.Type, c)
-
+	logProxyRequest(ds.Type, c)
 	proxy.ServeHTTP(c.Resp, c.Req.Request)
 	c.Resp.Header().Del("Set-Cookie")
 }
 
-func proxyLog(dataSourceType string, c *middleware.Context) {
-	if setting.DataProxyLogging {
+func logProxyRequest(dataSourceType string, c *middleware.Context) {
+	if !setting.DataProxyLogging {
+		return
+	}
 
 		var body string
 		if c.Req.Request.Body != nil {
@@ -144,14 +145,14 @@ func proxyLog(dataSourceType string, c *middleware.Context) {
 			c.Req.Request.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
 			body = string(buffer)
 		}
-
-		auditLogger.Info("Proxying incoming request",
-			"userid", c.UserId,
-			"orgid", c.OrgId,
-			"username", c.Login,
-			"datasource", dataSourceType,
-			"uri", c.Req.RequestURI,
-			"method", c.Req.Request.Method,
-			"body", body)
 	}
+
+	dataproxyLogger.Info("Proxying incoming request",
+		"userid", c.UserId,
+		"orgid", c.OrgId,
+		"username", c.Login,
+		"datasource", dataSourceType,
+		"uri", c.Req.RequestURI,
+		"method", c.Req.Request.Method,
+		"body", body)
 }
