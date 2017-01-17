@@ -23,6 +23,10 @@ type NetCrunchServerSettings struct {
   Password    string  `json:"password"`
 }
 
+const (
+  NETCRUNCH_APP_ID string = "grafana-netcrunch"
+)
+
 var (
   UpgradeFile *ini.File
   StatusesFile *ini.File
@@ -235,11 +239,11 @@ func removeFile(fileName string) bool {
   return (err == nil)
 }
 
-func upgrade() {
+func upgradeToGC92(VersionFileName string) (bool, error) {
+  UPGRADE_ERROR_MSG := "Upgrade error"
   UpgradeFileName := getUpgradeFileName()
-  VersionFileName := getVersionFileName()
   UpgradeMarkerFileName := getUpgradeMarkerFileName()
-  uLog := log.New("GrafCrunch upgrader")
+  uLog := log.New("GrafCrunch upgrader from 9.0")
 
   if (setting.PathExists(UpgradeFileName)) {
     if (loadUpgradeFile(UpgradeFileName)) {
@@ -248,23 +252,44 @@ func upgrade() {
         if (err == nil) {
           if (updateNetCrunchDatasources(netCrunchSettings) &&
               writeVersionFile(VersionFileName) && removeFile(UpgradeFileName)) {
-            uLog.Info("GrafCrunch: Upgrade")
-
+            uLog.Info("Upgrade successful")
             if (setting.PathExists(UpgradeMarkerFileName)) {
               SetInitializationSuccess()
               removeFile(UpgradeMarkerFileName)
             }
+            return true, nil
           } else {
-            uLog.Info("GrafCrunch: Upgrade error")
+            uLog.Info(UPGRADE_ERROR_MSG)
+            return false, errors.New(UPGRADE_ERROR_MSG)
           }
         } else {
-          uLog.Info("GrafCrunch: Upgrade error")
+          uLog.Info(UPGRADE_ERROR_MSG)
+          return false, errors.New(UPGRADE_ERROR_MSG)
         }
       }
     } else {
-      uLog.Info("GrafCrunch: Upgrade error")
+      uLog.Info(UPGRADE_ERROR_MSG)
+      return false, errors.New(UPGRADE_ERROR_MSG)
     }
-  } else {
+  }
+
+  return false, nil
+}
+
+func upgradeToGC94() {
+}
+
+func upgrade() {
+  VersionFileName := getVersionFileName()
+  upgraded, err := upgradeToGC92(VersionFileName)
+
+  if (err == nil) {
+    if (upgraded == true) {
+      upgradeToGC94()
+    } else {
+      // Read previous version
+      // Perform upgrade
+    }
     writeVersionFile(VersionFileName)
   }
 }
