@@ -20,6 +20,11 @@
 * **Alertlist**: Only show scrollbar when required [#7269](https://github.com/grafana/grafana/issues/7269)
 * **SMTP**: Set LocalName to hostname [#7223](https://github.com/grafana/grafana/issues/7223)
 
+# 4.1.2 (unreleased)
+
+### Bugfixes 
+* **Table**: Fixes broken annotation rendering mode in the table panel [#7268](https://github.com/grafana/grafana/issues/7268)
+
 # 4.1.1 (2017-01-11)
 
 ### Bugfixes
