@@ -168,6 +168,19 @@ class TimeSrv {
     return range;
   }
 
+  timeRangeForKibanaUrl() {
+    var range = this.timeRange().raw;
+    var mode = "quick";
+
+    if (moment.isMoment(range.from) || moment.isMoment(range.to)) {
+      range.from = "'" + dateMath.parse(range.from, false).toJSON() + "'";
+      range.to = "'" + dateMath.parse(range.to, true).toJSON() + "'";
+      mode = "absolute";
+    }
+
+    return "(time:(from:" + range.from + ",mode:" + mode + ",to:" + range.to + "))";
+  }
+
   timeRange() {
     // make copies if they are moment  (do not want to return out internal moment, because they are mutable!)
     var raw = {
