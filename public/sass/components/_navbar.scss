@@ -79,15 +79,13 @@
   img {
     width: 100%;
     position: relative;
-    border-radius: 20px;
   }
 
   .navbar-brand-btn-background {
     display: inline-block;
-    border: 1px solid $body-bg;
+    border: 1px solid $navbarBrandBorderColor;
     padding: 1px;
-    border-radius: 50%;
-    background: $iconContainerBackground;
+    background: $navbarBrandBackground;
     width: 40px;
     height: 40px;
   }

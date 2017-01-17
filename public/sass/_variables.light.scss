@@ -63,6 +63,7 @@ $text-color-weak: 	    $gray-3;
 $text-color-faint:      $gray-4;
 $text-color-emphasis: 	$dark-5;
 
+
 $text-shadow-strong: none;
 $text-shadow-faint: none;
 
@@ -245,6 +246,8 @@ $navbarLinkBackgroundActive:      darken($navbarBackground, 6.5%);
 $navbarDropdownShadow:            inset 0px 4px 7px -4px darken($body-bg, 20%);
 
 $navbarBrandColor:                $navbarLinkColor;
+$navbarBrandBackground:           #C0C0C0;
+$navbarBrandBorderColor:          black;
 
 $navbarButtonBackground:          lighten($navbarBackground, 3%);
 $navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
