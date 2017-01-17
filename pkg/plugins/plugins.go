@@ -77,6 +77,8 @@ func Init() error {
 	}
 
 	go StartPluginUpdateChecker()
+	go updateAppDashboards()
+
 	return nil
 }
 

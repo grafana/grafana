@@ -64,6 +64,13 @@
     font-size: 11px;
     padding: 2px 6px;
   }
+
+  &--alert {
+    padding: 0.5rem 1rem;
+    .card-item-name a {
+      font-size: $font-size-h5;
+    }
+  }
 }
 
 .card-item-body {
@@ -73,6 +80,13 @@
 
 .card-item-details {
   overflow: hidden;
+}
+
+.card-item-cog {
+  font-size: 130%;
+  position: relative;
+  top: 1rem;
+  color: $text-muted;
 }
 
 .card-item-header {

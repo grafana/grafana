@@ -74,7 +74,9 @@ export class BackendSrv {
     return this.$http(options).then(results => {
       if (options.method !== 'GET') {
         if (results && results.data.message) {
-          this.alertSrv.set(results.data.message, '', 'success', 3000);
+          if (options.showSuccessAlert !== false) {
+            this.alertSrv.set(results.data.message, '', 'success', 3000);
+          }
         }
       }
       return results.data;
@@ -114,6 +116,10 @@ export class BackendSrv {
     var requestIsLocal = options.url.indexOf('/') === 0;
     var firstAttempt = options.retry === 0;
 
+    if (requestIsLocal && !options.hasSubUrl && options.retry === 0) {
+      options.url = config.appSubUrl + options.url;
+    }
+
     if (requestIsLocal && options.headers && options.headers.Authorization) {
       options.headers['X-DS-Authorization'] = options.headers.Authorization;
       delete options.headers.Authorization;
@@ -138,7 +144,8 @@ export class BackendSrv {
       //populate error obj on Internal Error
       if (_.isString(err.data) && err.status === 500) {
         err.data = {
-          error: err.statusText
+          error: err.statusText,
+          response: err.data,
         };
       }
 

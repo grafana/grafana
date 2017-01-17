@@ -1,6 +1,6 @@
 define([
   'app/features/dashboard/unsavedChangesSrv',
-  'app/features/dashboard/dashboardSrv'
+  'app/features/dashboard/dashboard_srv'
 ], function() {
   'use strict';
 
@@ -14,6 +14,7 @@ define([
     var dash;
     var scope;
 
+    beforeEach(module('grafana.core'));
     beforeEach(module('grafana.services'));
     beforeEach(module(function($provide) {
       $provide.value('contextSrv', _contextSrvStub);
@@ -76,7 +77,8 @@ define([
     });
 
     it('Should ignore row repeats', function() {
-      dash.rows.push({repeatRowId: 10});
+      dash.addEmptyRow();
+      dash.rows[1].repeatRowId = 10;
       expect(tracker.hasChanges()).to.be(false);
     });
 

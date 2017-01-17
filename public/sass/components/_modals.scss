@@ -20,7 +20,7 @@
 
 // Base modal
 .modal {
-  position: fixed;
+  position: absolute;
   z-index: $zindex-modal;
   width: 100%;
 	background-color: $panel-bg;
@@ -67,6 +67,7 @@
 
 .modal-content {
   padding: $spacer*2;
+  min-height: $spacer*15;
 }
 
 // Remove bottom margin if need be
@@ -105,7 +106,7 @@
   }
 
   .confirm-modal-text2 {
-    font-size: $font-size-h5;
+    font-size: $font-size-root;
     padding-top: $spacer;
   }
 
@@ -113,6 +114,13 @@
     margin-bottom: $spacer;
     button {
       margin-right: $spacer/2;
+    }
+  }
+
+  .modal-content-confirm-text {
+    margin-bottom: 2rem;
+    span {
+      text-align: center;
     }
   }
 }
@@ -166,3 +174,5 @@
     text-overflow: ellipsis;
   }
 }
+
+

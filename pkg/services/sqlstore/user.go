@@ -19,6 +19,7 @@ func init() {
 	bus.AddHandler("sql", UpdateUser)
 	bus.AddHandler("sql", ChangeUserPassword)
 	bus.AddHandler("sql", GetUserByLogin)
+	bus.AddHandler("sql", GetUserByEmail)
 	bus.AddHandler("sql", SetUsingOrg)
 	bus.AddHandler("sql", GetUserProfile)
 	bus.AddHandler("sql", GetSignedInUser)
@@ -27,6 +28,7 @@ func init() {
 	bus.AddHandler("sql", DeleteUser)
 	bus.AddHandler("sql", SetUsingOrg)
 	bus.AddHandler("sql", UpdateUserPermissions)
+	bus.AddHandler("sql", SetUserHelpFlag)
 }
 
 func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *session) (int64, error) {
@@ -128,7 +130,11 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			}
 
 			if setting.AutoAssignOrg && !user.IsAdmin {
-				orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
+				if len(cmd.DefaultOrgRole) > 0 {
+					orgUser.Role = m.RoleType(cmd.DefaultOrgRole)
+				} else {
+					orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
+				}
 			}
 
 			if _, err = sess.Insert(&orgUser); err != nil {
@@ -177,6 +183,27 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 		user = &m.User{Email: query.LoginOrEmail}
 		has, err = x.Get(user)
 	}
+
+	if err != nil {
+		return err
+	} else if has == false {
+		return m.ErrUserNotFound
+	}
+
+	query.Result = user
+
+	return nil
+}
+
+func GetUserByEmail(query *m.GetUserByEmailQuery) error {
+	if query.Email == "" {
+		return m.ErrUserNotFound
+	}
+
+	user := new(m.User)
+
+	user = &m.User{Email: query.Email}
+	has, err := x.Get(user)
 
 	if err != nil {
 		return err
@@ -282,6 +309,7 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 	                u.email        as email,
 	                u.login        as login,
 									u.name         as name,
+									u.help_flags1  as help_flags1,
 	                org.name       as org_name,
 	                org_user.role  as org_role,
 	                org.id         as org_id
@@ -352,5 +380,22 @@ func UpdateUserPermissions(cmd *m.UpdateUserPermissionsCommand) error {
 		sess.UseBool("is_admin")
 		_, err := sess.Id(user.Id).Update(&user)
 		return err
+	})
+}
+
+func SetUserHelpFlag(cmd *m.SetUserHelpFlagCommand) error {
+	return inTransaction2(func(sess *session) error {
+
+		user := m.User{
+			Id:         cmd.UserId,
+			HelpFlags1: cmd.HelpFlags1,
+			Updated:    time.Now(),
+		}
+
+		if _, err := sess.Id(cmd.UserId).Cols("help_flags1").Update(&user); err != nil {
+			return err
+		}
+
+		return nil
 	})
 }

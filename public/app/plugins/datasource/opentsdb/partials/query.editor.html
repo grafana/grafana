@@ -249,6 +249,11 @@
 			</input>
 		</div>
 
+		<div class="gf-form" ng-if="ctrl.tsdbVersion > 2">
+			<gf-form-switch class="gf-form" label="Explicit tags" label-class="width-8 query-keyword" checked="ctrl.target.explicitTags" on-change="ctrl.targetBlur()">
+			</gf-form-switch>
+		</div>
+
 		<div class="gf-form gf-form--grow">
 			<div class="gf-form-label gf-form-label--grow"></div>
 		</div>

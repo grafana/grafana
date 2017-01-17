@@ -9,19 +9,18 @@ function(angular, _) {
 
   module.service('unsavedChangesSrv', function($rootScope, $q, $location, $timeout, contextSrv, $window) {
 
-    function Tracker(dashboard, scope) {
+    function Tracker(dashboard, scope, originalCopyDelay) {
       var self = this;
 
-      this.original = dashboard.getSaveModelClone();
       this.current = dashboard;
       this.originalPath = $location.path();
       this.scope = scope;
 
       // register events
       scope.onAppEvent('dashboard-saved', function() {
-        self.original = self.current.getSaveModelClone();
-        self.originalPath = $location.path();
-      });
+        this.original = this.current.getSaveModelClone();
+        this.originalPath = $location.path();
+      }.bind(this));
 
       $window.onbeforeunload = function() {
         if (self.ignoreChanges()) { return; }
@@ -44,6 +43,15 @@ function(angular, _) {
           });
         }
       });
+
+      if (originalCopyDelay) {
+        $timeout(function() {
+          // wait for different services to patch the dashboard (missing properties)
+          self.original = dashboard.getSaveModelClone();
+        }, originalCopyDelay);
+      } else {
+        self.original = dashboard.getSaveModelClone();
+      }
     }
 
     var p = Tracker.prototype;
@@ -65,6 +73,7 @@ function(angular, _) {
       dash.time = 0;
       dash.refresh = 0;
       dash.schemaVersion = 0;
+      dash.editMode = false;
 
       // filter row and panels properties that should be ignored
       dash.rows = _.filter(dash.rows, function(row) {
@@ -101,6 +110,7 @@ function(angular, _) {
       _.each(dash.templating.list, function(value) {
         value.current = null;
         value.options = null;
+        value.filters = null;
       });
     };
 
@@ -111,8 +121,8 @@ function(angular, _) {
       this.cleanDashboardFromIgnoredChanges(current);
       this.cleanDashboardFromIgnoredChanges(original);
 
-      var currentTimepicker = _.findWhere(current.nav, { type: 'timepicker' });
-      var originalTimepicker = _.findWhere(original.nav, { type: 'timepicker' });
+      var currentTimepicker = _.find(current.nav, { type: 'timepicker' });
+      var originalTimepicker = _.find(original.nav, { type: 'timepicker' });
 
       if (currentTimepicker && originalTimepicker) {
         currentTimepicker.now = originalTimepicker.now;
@@ -134,7 +144,14 @@ function(angular, _) {
       };
 
       modalScope.save = function() {
-        tracker.scope.$emit('save-dashboard');
+        var cancel = $rootScope.$on('dashboard-saved', function() {
+          cancel();
+          $timeout(function() {
+            tracker.goto_next();
+          });
+        });
+
+        $rootScope.$emit('save-dashboard');
       };
 
       $rootScope.appEvent('show-modal', {
@@ -152,8 +169,7 @@ function(angular, _) {
 
     this.Tracker = Tracker;
     this.init = function(dashboard, scope) {
-      // wait for different services to patch the dashboard (missing properties)
-      $timeout(function() { new Tracker(dashboard, scope); }, 1200);
+      return new Tracker(dashboard, scope, 1000);
     };
   });
 });

@@ -1,8 +1,13 @@
----
-page_title: Installing on Mac OS X
-page_description: Grafana Installation guide for Mac OS X
-page_keywords: grafana, installation, mac, osx, guide
----
++++
+title = "Installing on Mac"
+description = "Installing Grafana on Mac"
+keywords = ["grafana", "configuration", "documentation", "mac", "homebrew", "osx"]
+type = "docs"
+[menu.docs]
+parent = "installation"
+weight = 4
++++
+
 
 # Installing on Mac
 
@@ -11,28 +16,30 @@ Installation can be done using [homebrew](http://brew.sh/)
 Install latest stable:
 
 ```
-brew install grafana/grafana/grafana
+brew update
+brew install grafana
 ```
 
 To start grafana look at the command printed after the homebrew install completes.
 
-You can also add the grafana as tap.
+To upgrade use the reinstall command
 
 ```
-brew tap grafana/grafana
-brew install grafana
+brew update
+brew reinstall grafana
 ```
 
-Install latest unstable from master:
+-------------
+
+You can also install the latest unstable grafana from git:
+
 
 ```
 brew install --HEAD grafana/grafana/grafana
 ```
 
-To upgrade use the reinstall command
+To upgrade grafana if you've installed from HEAD:
 
 ```
 brew reinstall --HEAD grafana/grafana/grafana
 ```
-
-

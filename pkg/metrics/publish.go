@@ -15,6 +15,7 @@ import (
 )
 
 var metricsLogger log.Logger = log.New("metrics")
+var metricPublishCounter int64 = 0
 
 func Init() {
 	settings := readSettings()
@@ -45,9 +46,30 @@ func sendMetrics(settings *MetricSettings) {
 		return
 	}
 
+	updateTotalStats()
+
 	metrics := MetricStats.GetSnapshots()
 	for _, publisher := range settings.Publishers {
 		publisher.Publish(metrics)
+	}
+}
+
+func updateTotalStats() {
+
+	// every interval also publish totals
+	metricPublishCounter++
+	if metricPublishCounter%10 == 0 {
+		// get stats
+		statsQuery := m.GetSystemStatsQuery{}
+		if err := bus.Dispatch(&statsQuery); err != nil {
+			metricsLogger.Error("Failed to get system stats", "error", err)
+			return
+		}
+
+		M_StatTotal_Dashboards.Update(statsQuery.Result.DashboardCount)
+		M_StatTotal_Users.Update(statsQuery.Result.UserCount)
+		M_StatTotal_Playlists.Update(statsQuery.Result.PlaylistCount)
+		M_StatTotal_Orgs.Update(statsQuery.Result.OrgCount)
 	}
 }
 
@@ -79,6 +101,7 @@ func sendUsageStats() {
 	metrics["stats.plugins.apps.count"] = len(plugins.Apps)
 	metrics["stats.plugins.panels.count"] = len(plugins.Panels)
 	metrics["stats.plugins.datasources.count"] = len(plugins.DataSources)
+	metrics["stats.alerts.count"] = statsQuery.Result.AlertCount
 
 	dsStats := m.GetDataSourceStatsQuery{}
 	if err := bus.Dispatch(&dsStats); err != nil {

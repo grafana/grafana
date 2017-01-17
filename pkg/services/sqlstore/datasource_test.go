@@ -41,6 +41,7 @@ func TestDataAccess(t *testing.T) {
 
 			err := AddDataSource(&m.AddDataSourceCommand{
 				OrgId:    10,
+				Name:     "laban",
 				Type:     m.DS_INFLUXDB,
 				Access:   m.DS_ACCESS_DIRECT,
 				Url:      "http://test",
@@ -63,15 +64,19 @@ func TestDataAccess(t *testing.T) {
 
 		Convey("Given a datasource", func() {
 
-			AddDataSource(&m.AddDataSourceCommand{
+			err := AddDataSource(&m.AddDataSourceCommand{
 				OrgId:  10,
+				Name:   "nisse",
 				Type:   m.DS_GRAPHITE,
 				Access: m.DS_ACCESS_DIRECT,
 				Url:    "http://test",
 			})
+			So(err, ShouldBeNil)
 
 			query := m.GetDataSourcesQuery{OrgId: 10}
-			GetDataSources(&query)
+			err = GetDataSources(&query)
+			So(err, ShouldBeNil)
+
 			ds := query.Result[0]
 
 			Convey("Can delete datasource", func() {

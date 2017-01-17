@@ -1,8 +1,14 @@
-----
-page_title: Data source API
-page_description: Grafana Data source API Reference
-page_keywords: grafana, admin, http, api, documentation, datasource
----
++++
+title = "Data source HTTP API "
+description = "Grafana Data source HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "data source"]
+aliases = ["/http_api/datasource/"]
+type = "docs"
+[menu.docs]
+name = "Data source"
+parent = "http_api"
++++
+
 
 # Data source API
 
@@ -152,7 +158,7 @@ page_keywords: grafana, admin, http, api, documentation, datasource
     HTTP/1.1 200
     Content-Type: application/json
 
-    {"id":1,"message":"Datasource added"}
+    {"id":1,"message":"Datasource added", "name": "test_datasource"}
 
 ## Update an existing data source
 
@@ -187,7 +193,7 @@ page_keywords: grafana, admin, http, api, documentation, datasource
     HTTP/1.1 200
     Content-Type: application/json
 
-    {"message":"Datasource updated"}
+    {"message":"Datasource updated", "id": 1, "name": "test_datasource"}
 
 ## Delete an existing data source
 

@@ -174,6 +174,15 @@ register({
 });
 
 register({
+  type: 'mode',
+  addStrategy: replaceAggregationAddStrategy,
+  category: categories.Aggregations,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+register({
   type: 'sum',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
@@ -230,6 +239,15 @@ register({
 });
 
 register({
+  type: 'cumulative_sum',
+  addStrategy: addTransformationStrategy,
+  category: categories.Transformations,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+register({
   type: 'stddev',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
@@ -249,8 +267,17 @@ register({
 register({
   type: 'fill',
   category: groupByTimeFunctions,
-  params: [{ name: "fill", type: "string", options: ['none', 'null', '0', 'previous'] }],
+  params: [{ name: "fill", type: "string", options: ['none', 'null', '0', 'previous', 'linear'] }],
   defaultParams: ['null'],
+  renderer: functionRenderer,
+});
+
+register({
+  type: 'elapsed',
+  addStrategy: addTransformationStrategy,
+  category: categories.Transformations,
+  params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
+  defaultParams: ['10s'],
   renderer: functionRenderer,
 });
 

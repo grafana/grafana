@@ -1,10 +1,9 @@
 define([
   'angular',
   'lodash',
-  './editorCtrl',
-  './templateValuesSrv',
+  'app/core/utils/kbn',
 ],
-function (angular, _) {
+function (angular, _, kbn) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -16,6 +15,12 @@ function (angular, _) {
     this._index = {};
     this._texts = {};
     this._grafanaVariables = {};
+    this._adhocVariables = {};
+
+    // default built ins
+    this._builtIns = {};
+    this._builtIns['__interval'] = {text: '1s', value: '1s'};
+    this._builtIns['__interval_ms'] = {text: '100', value: '100'};
 
     this.init = function(variables) {
       this.variables = variables;
@@ -24,19 +29,38 @@ function (angular, _) {
 
     this.updateTemplateData = function() {
       this._index = {};
+      this._filters = {};
+      this._adhocVariables = {};
 
       for (var i = 0; i < this.variables.length; i++) {
         var variable = this.variables[i];
+
+        // add adhoc filters to it's own index
+        if (variable.type === 'adhoc') {
+          this._adhocVariables[variable.datasource] = variable;
+          continue;
+        }
+
         if (!variable.current || !variable.current.isNone && !variable.current.value) {
           continue;
         }
+
         this._index[variable.name] = variable;
       }
+
     };
 
-    function regexEscape(value) {
-      return value.replace(/[\\^$*+?.()|[\]{}\/]/g, '\\$&');
-    }
+    this.variableInitialized = function(variable) {
+      this._index[variable.name] = variable;
+    };
+
+    this.getAdhocFilters = function(datasourceName) {
+      var variable = this._adhocVariables[datasourceName];
+      if (variable) {
+        return variable.filters || [];
+      }
+      return [];
+    };
 
     function luceneEscape(value) {
       return value.replace(/([\!\*\+\-\=<>\s\&\|\(\)\[\]\{\}\^\~\?\:\\/"])/g, "\\$1");
@@ -63,10 +87,10 @@ function (angular, _) {
       switch(format) {
         case "regex": {
           if (typeof value === 'string') {
-            return regexEscape(value);
+            return kbn.regexEscape(value);
           }
 
-          var escapedValues = _.map(value, regexEscape);
+          var escapedValues = _.map(value, kbn.regexEscape);
           return '(' + escapedValues.join('|') + ')';
         }
         case "lucene": {
@@ -78,11 +102,17 @@ function (angular, _) {
           }
           return value.join('|');
         }
-        default:  {
+        case "distributed": {
           if (typeof value === 'string') {
             return value;
           }
-          return '{' + value.join(',') + '}';
+          return this.distributeVariable(value, variable.name);
+        }
+        default:  {
+          if (_.isArray(value)) {
+            return '{' + value.join(',') + '}';
+          }
+          return value;
         }
       }
     };
@@ -91,21 +121,18 @@ function (angular, _) {
       this._grafanaVariables[name] = value;
     };
 
-    this.variableExists = function(expression) {
+    this.getVariableName = function(expression) {
       this._regex.lastIndex = 0;
       var match = this._regex.exec(expression);
-      return match && (self._index[match[1] || match[2]] !== void 0);
+      if (!match) {
+        return null;
+      }
+      return match[1] || match[2];
     };
 
-    this.containsVariable = function(str, variableName) {
-      if (!str) {
-        return false;
-      }
-
-      variableName = regexEscape(variableName);
-      var findVarRegex = new RegExp('\\$(' + variableName + ')(?:\\W|$)|\\[\\[(' + variableName + ')\\]\\]', 'g');
-      var match = findVarRegex.exec(str);
-      return match !== null;
+    this.variableExists = function(expression) {
+      var name = this.getVariableName(expression);
+      return name && (self._index[name] !== void 0);
     };
 
     this.highlightVariablesAsHtml = function(str) {
@@ -114,7 +141,7 @@ function (angular, _) {
       str = _.escape(str);
       this._regex.lastIndex = 0;
       return str.replace(this._regex, function(match, g1, g2) {
-        if (self._index[g1 || g2]) {
+        if (self._index[g1 || g2] || self._builtIns[g1 || g2]) {
           return '<span class="template-variable">' + match + '</span>';
         }
         return match;
@@ -196,19 +223,23 @@ function (angular, _) {
 
     this.fillVariableValuesForUrl = function(params, scopedVars) {
       _.each(this.variables, function(variable) {
-        var current = variable.current;
-        var value = current.value;
-
-        if (current.text === 'All') {
-          value = 'All';
-        }
-
         if (scopedVars && scopedVars[variable.name] !== void 0) {
-          value = scopedVars[variable.name].value;
+          params['var-' + variable.name] = scopedVars[variable.name].value;
+        } else {
+          params['var-' + variable.name] = variable.getValueForUrl();
         }
-
-        params['var-' + variable.name] = value;
       });
+    };
+
+    this.distributeVariable = function(value, variable) {
+      value = _.map(value, function(val, index) {
+        if (index !== 0) {
+          return variable + "=" + val;
+        } else {
+          return val;
+        }
+      });
+      return value.join(',');
     };
 
   });

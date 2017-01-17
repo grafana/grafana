@@ -1,8 +1,11 @@
-----
-page_title: Sharing
-page_description: Sharing
-page_keywords: grafana, sharing, guide, documentation
----
++++
+title = "Sharing"
+keywords = ["grafana", "dashboard", "documentation", "sharing"]
+type = "docs"
+[menu.docs]
+parent = "dashboard_features"
+weight = 6
++++
 
 # Sharing features
 Grafana provides a number of ways to share a dashboard or a specific panel to other users within your
@@ -19,7 +22,7 @@ A dashboard snapshot is an instant way to share an interactive dashboard publicl
 (metric, template and annotation) and panel links, leaving only the visible metric data and series names embedded into your dashboard. Dashboard
 snapshots can be accessed by anyone who has the link and can reach the URL.
 
-![](/img/v2/dashboard_snapshot_dialog.png)
+![](/img/docs/v2/dashboard_snapshot_dialog.png)
 
 ### Publish snapshots
 You can publish snapshots to you local instance or to [snapshot.raintank.io](http://snapshot.raintank.io). The later is a free service

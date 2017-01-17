@@ -1,40 +1,57 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
-	"math/rand"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/grafana/grafana/pkg/tsdb/testdata"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetTestMetrics(c *middleware.Context) Response {
-	from := c.QueryInt64("from")
-	to := c.QueryInt64("to")
-	maxDataPoints := c.QueryInt64("maxDataPoints")
-	stepInSeconds := (to - from) / maxDataPoints
+// POST /api/tsdb/query
+func QueryMetrics(c *middleware.Context, reqDto dtos.MetricRequest) Response {
+	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
 
-	result := dtos.MetricQueryResultDto{}
-	result.Data = make([]dtos.MetricQueryResultDataDto, 1)
+	request := &tsdb.Request{TimeRange: timeRange}
 
-	for seriesIndex := range result.Data {
-		points := make([][2]float64, maxDataPoints)
-		walker := rand.Float64() * 100
-		time := from
+	for _, query := range reqDto.Queries {
+		request.Queries = append(request.Queries, &tsdb.Query{
+			RefId:         query.Get("refId").MustString("A"),
+			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
+			IntervalMs:    query.Get("intervalMs").MustInt64(1000),
+			Model:         query,
+			DataSource: &models.DataSource{
+				Name: "Grafana TestDataDB",
+				Type: "grafana-testdata-datasource",
+			},
+		})
+	}
 
-		for i := range points {
-			points[i][0] = walker
-			points[i][1] = float64(time)
-			walker += rand.Float64() - 0.5
-			time += stepInSeconds
-		}
+	resp, err := tsdb.HandleRequest(context.TODO(), request)
+	if err != nil {
+		return ApiError(500, "Metric request error", err)
+	}
 
-		result.Data[seriesIndex].Target = "test-series-" + strconv.Itoa(seriesIndex)
-		result.Data[seriesIndex].DataPoints = points
+	return Json(200, &resp)
+}
+
+// GET /api/tsdb/testdata/scenarios
+func GetTestDataScenarios(c *middleware.Context) Response {
+	result := make([]interface{}, 0)
+
+	for _, scenario := range testdata.ScenarioRegistry {
+		result = append(result, map[string]interface{}{
+			"id":          scenario.Id,
+			"name":        scenario.Name,
+			"description": scenario.Description,
+			"stringInput": scenario.StringInput,
+		})
 	}
 
 	return Json(200, &result)
@@ -53,6 +70,10 @@ func GetInternalMetrics(c *middleware.Context) Response {
 		metricName := m.Name() + m.StringifyTags()
 
 		switch metric := m.(type) {
+		case metrics.Gauge:
+			resp[metricName] = map[string]interface{}{
+				"value": metric.Value(),
+			}
 		case metrics.Counter:
 			resp[metricName] = map[string]interface{}{
 				"count": metric.Count(),

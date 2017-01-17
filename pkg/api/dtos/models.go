@@ -22,18 +22,20 @@ type LoginCommand struct {
 }
 
 type CurrentUser struct {
-	IsSignedIn     bool       `json:"isSignedIn"`
-	Id             int64      `json:"id"`
-	Login          string     `json:"login"`
-	Email          string     `json:"email"`
-	Name           string     `json:"name"`
-	LightTheme     bool       `json:"lightTheme"`
-	OrgId          int64      `json:"orgId"`
-	OrgName        string     `json:"orgName"`
-	OrgRole        m.RoleType `json:"orgRole"`
-	IsGrafanaAdmin bool       `json:"isGrafanaAdmin"`
-	GravatarUrl    string     `json:"gravatarUrl"`
-	Timezone       string     `json:"timezone"`
+	IsSignedIn     bool         `json:"isSignedIn"`
+	Id             int64        `json:"id"`
+	Login          string       `json:"login"`
+	Email          string       `json:"email"`
+	Name           string       `json:"name"`
+	LightTheme     bool         `json:"lightTheme"`
+	OrgId          int64        `json:"orgId"`
+	OrgName        string       `json:"orgName"`
+	OrgRole        m.RoleType   `json:"orgRole"`
+	IsGrafanaAdmin bool         `json:"isGrafanaAdmin"`
+	GravatarUrl    string       `json:"gravatarUrl"`
+	Timezone       string       `json:"timezone"`
+	Locale         string       `json:"locale"`
+	HelpFlags1     m.HelpFlags1 `json:"helpFlags1"`
 }
 
 type DashboardMeta struct {
@@ -79,6 +81,7 @@ type DataSource struct {
 	WithCredentials   bool             `json:"withCredentials"`
 	IsDefault         bool             `json:"isDefault"`
 	JsonData          *simplejson.Json `json:"jsonData,omitempty"`
+	SecureJsonFields  map[string]bool  `json:"secureJsonFields"`
 }
 
 type DataSourceList []DataSource
@@ -95,13 +98,10 @@ func (slice DataSourceList) Swap(i, j int) {
 	slice[i], slice[j] = slice[j], slice[i]
 }
 
-type MetricQueryResultDto struct {
-	Data []MetricQueryResultDataDto `json:"data"`
-}
-
-type MetricQueryResultDataDto struct {
-	Target     string       `json:"target"`
-	DataPoints [][2]float64 `json:"datapoints"`
+type MetricRequest struct {
+	From    string             `json:"from"`
+	To      string             `json:"to"`
+	Queries []*simplejson.Json `json:"queries"`
 }
 
 type UserStars struct {

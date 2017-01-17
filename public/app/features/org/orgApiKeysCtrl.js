@@ -30,6 +30,7 @@ function (angular) {
 
         var modalScope = $scope.$new(true);
         modalScope.key = result.key;
+        modalScope.rootPath = window.location.origin + $scope.$root.appSubUrl;
 
         $scope.appEvent('show-modal', {
           src: 'public/app/features/org/partials/apikeyModal.html',

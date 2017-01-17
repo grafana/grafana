@@ -55,7 +55,7 @@
 							</a>
 						</li>
 						<li>
-							<a href="https://grafana.org/community" target="_blank">
+							<a href="http://grafana.org/community" target="_blank">
 								<i class="fa fa-comments-o"></i>
 								Community
 							</a>
@@ -64,18 +64,17 @@
 							<a href="http://grafana.org" target="_blank">Grafana</a>
 							<span>v[[.BuildVersion]] (commit: [[.BuildCommit]])</span>
 						</li>
-						<li>
-							[[if .NewGrafanaVersionExists]]
+						[[if .NewGrafanaVersionExists]]
+							<li>
 								<a href="http://grafana.org/download" target="_blank" bs-tooltip="'[[.NewGrafanaVersion]]'">
 									New version available!
 								</a>
-							[[end]]
-						</li>
+							</li>
+						[[end]]
 					</ul>
 				</div>
 			</footer>
 		</grafana-app>
-  </body>
 
 	<script>
 		window.grafanaBootData = {
@@ -122,4 +121,6 @@
 		})(window,document,'script','dataLayer','[[.GoogleTagManagerId]]');</script>
 		<!-- End Google Tag Manager -->
 	[[end]]
+
+	</body>
 </html>

@@ -19,51 +19,12 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
-	"net/http"
 	"runtime"
 
 	"gopkg.in/macaron.v1"
 
-	"github.com/go-macaron/inject"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
-)
-
-const (
-	panicHtml = `<html>
-<head><title>PANIC: %s</title>
-<meta charset="utf-8" />
-<style type="text/css">
-html, body {
-	font-family: "Roboto", sans-serif;
-	color: #333333;
-	background-color: #ea5343;
-	margin: 0px;
-}
-h1 {
-	color: #d04526;
-	background-color: #ffffff;
-	padding: 20px;
-	border-bottom: 1px dashed #2b3848;
-}
-pre {
-	margin: 20px;
-	padding: 20px;
-	border: 2px solid #2b3848;
-	background-color: #ffffff;
-	white-space: pre-wrap;       /* css-3 */
-	white-space: -moz-pre-wrap;  /* Mozilla, since 1999 */
-	white-space: -pre-wrap;      /* Opera 4-6 */
-	white-space: -o-pre-wrap;    /* Opera 7 */
-	word-wrap: break-word;       /* Internet Explorer 5.5+ */
-}
-</style>
-</head><body>
-<h1>PANIC</h1>
-<pre style="font-weight: bold;">%s</pre>
-<pre>%s</pre>
-</body>
-</html>`
 )
 
 var (
@@ -151,21 +112,34 @@ func Recovery() macaron.Handler {
 
 				panicLogger.Error("Request error", "error", err, "stack", string(stack))
 
-				// Lookup the current responsewriter
-				val := c.GetVal(inject.InterfaceOf((*http.ResponseWriter)(nil)))
-				res := val.Interface().(http.ResponseWriter)
+				c.Data["Title"] = "Server Error"
+				c.Data["AppSubUrl"] = setting.AppSubUrl
 
-				// respond with panic message while in development mode
-				var body []byte
+				if theErr, ok := err.(error); ok {
+					c.Data["Title"] = theErr.Error()
+				}
+
 				if setting.Env == setting.DEV {
-					res.Header().Set("Content-Type", "text/html")
-					body = []byte(fmt.Sprintf(panicHtml, err, err, stack))
+					c.Data["ErrorMsg"] = string(stack)
 				}
 
-				res.WriteHeader(http.StatusInternalServerError)
-				if nil != body {
-					res.Write(body)
-				}
+				c.HTML(500, "500")
+
+				// // Lookup the current responsewriter
+				// val := c.GetVal(inject.InterfaceOf((*http.ResponseWriter)(nil)))
+				// res := val.Interface().(http.ResponseWriter)
+				//
+				// // respond with panic message while in development mode
+				// var body []byte
+				// if setting.Env == setting.DEV {
+				// 	res.Header().Set("Content-Type", "text/html")
+				// 	body = []byte(fmt.Sprintf(panicHtml, err, err, stack))
+				// }
+				//
+				// res.WriteHeader(http.StatusInternalServerError)
+				// if nil != body {
+				// 	res.Write(body)
+				// }
 			}
 		}()
 

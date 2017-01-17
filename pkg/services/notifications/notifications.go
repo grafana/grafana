@@ -1,7 +1,7 @@
 package notifications
 
 import (
-	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"html/template"
@@ -23,10 +23,15 @@ var tmplWelcomeOnSignUp = "welcome_on_signup.html"
 
 func Init() error {
 	initMailQueue()
+	initWebhookQueue()
 
 	bus.AddHandler("email", sendResetPasswordEmail)
 	bus.AddHandler("email", validateResetPasswordCode)
 	bus.AddHandler("email", sendEmailCommandHandler)
+
+	bus.AddCtxHandler("email", sendEmailCommandHandlerSync)
+
+	bus.AddCtxHandler("webhook", SendWebhookSync)
 
 	bus.AddEventListener(signUpStartedHandler)
 	bus.AddEventListener(signUpCompletedHandler)
@@ -53,55 +58,48 @@ func Init() error {
 	return nil
 }
 
+func SendWebhookSync(ctx context.Context, cmd *m.SendWebhookSync) error {
+	return sendWebRequestSync(ctx, &Webhook{
+		Url:        cmd.Url,
+		User:       cmd.User,
+		Password:   cmd.Password,
+		Body:       cmd.Body,
+		HttpMethod: cmd.HttpMethod,
+	})
+}
+
 func subjectTemplateFunc(obj map[string]interface{}, value string) string {
 	obj["value"] = value
 	return ""
 }
 
-func sendEmailCommandHandler(cmd *m.SendEmailCommand) error {
-	if !setting.Smtp.Enabled {
-		return errors.New("Grafana mailing/smtp options not configured, contact your Grafana admin")
-	}
-
-	var buffer bytes.Buffer
-	var err error
-	var subjectText interface{}
-
-	data := cmd.Data
-	if data == nil {
-		data = make(map[string]interface{}, 10)
-	}
-
-	setDefaultTemplateData(data, nil)
-	err = mailTemplates.ExecuteTemplate(&buffer, cmd.Template, data)
-	if err != nil {
-		return err
-	}
-
-	subjectData := data["Subject"].(map[string]interface{})
-	subjectText, hasSubject := subjectData["value"]
-
-	if !hasSubject {
-		return errors.New(fmt.Sprintf("Missing subject in Template %s", cmd.Template))
-	}
-
-	subjectTmpl, err := template.New("subject").Parse(subjectText.(string))
-	if err != nil {
-		return err
-	}
-
-	var subjectBuffer bytes.Buffer
-	err = subjectTmpl.ExecuteTemplate(&subjectBuffer, "subject", data)
-	if err != nil {
-		return err
-	}
-
-	addToMailQueue(&Message{
-		To:      cmd.To,
-		From:    setting.Smtp.FromAddress,
-		Subject: subjectBuffer.String(),
-		Body:    buffer.String(),
+func sendEmailCommandHandlerSync(ctx context.Context, cmd *m.SendEmailCommandSync) error {
+	message, err := buildEmailMessage(&m.SendEmailCommand{
+		Data:         cmd.Data,
+		Info:         cmd.Info,
+		Template:     cmd.Template,
+		To:           cmd.To,
+		EmbededFiles: cmd.EmbededFiles,
+		Subject:      cmd.Subject,
 	})
+
+	if err != nil {
+		return err
+	}
+
+	_, err = send(message)
+
+	return err
+}
+
+func sendEmailCommandHandler(cmd *m.SendEmailCommand) error {
+	message, err := buildEmailMessage(cmd)
+
+	if err != nil {
+		return err
+	}
+
+	addToMailQueue(message)
 
 	return nil
 }

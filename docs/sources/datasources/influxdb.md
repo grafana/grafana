@@ -1,19 +1,20 @@
-----
-page_title: InfluxDB query guide
-page_description: InfluxDB query guide
-page_keywords: grafana, influxdb, metrics, query, documentation
----
++++
+title = "Using InfluxDB in Grafana"
+description = "Guide for using InfluxDB in Grafana"
+keywords = ["grafana", "influxdb", "guide"]
+type = "docs"
+[menu.docs]
+name = "InfluxDB"
+parent = "datasources"
+weight = 3
++++
 
-# InfluxDB
+# Using InfluxDB in Grafana
 
-There are currently two separate datasources for InfluxDB in Grafana: InfluxDB 0.8.x and InfluxDB 0.9.x.
-The API and capabilities of InfluxDB 0.9.x are completely different from InfluxDB 0.8.x which is why Grafana handles
-them as different data sources.
-
-InfluxDB 0.9 is rapidly evolving and we continue to track its API. InfluxDB 0.8 is no longer maintained by InfluxDB Inc, but we provide support as a convenience to existing users.
+Grafana ships with very feature rich data source plugin for InfluxDB. Supporting a feature rich query editor, annotation and templating queries.
 
 ## Adding the data source
-![](/img/v2/add_Influx.jpg)
+![](/img/docs/v2/add_Influx.jpg)
 
 1. Open the side menu by clicking the the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
@@ -40,7 +41,7 @@ Password | Database user's password
 
 ## Query Editor
 
-![](/img/influxdb/editor_v3.png)
+![](/assets/img/blog/v2.6/influxdb_editor_v3.gif)
 
 You find the InfluxDB editor in the metrics tab in Graph or Singlestat panel's edit mode. You enter edit mode by clicking the
 panel title, then edit. The editor allows you to select metrics and tags.
@@ -59,7 +60,7 @@ In the `SELECT` row you can specify what fields and functions you want to use. I
 group by time you need an aggregation function. Some functions like derivative require an aggregation function.
 
 The editor tries simplify and unify this part of the query. For example:
-![](/img/influxdb/select_editor.png)
+![](/img/docs/influxdb/select_editor.png)
 
 The above will generate the following InfluxDB `SELECT` clause:
 
@@ -92,7 +93,7 @@ You can switch to raw query mode by clicking hamburger icon and then `Switch edi
 
 ### Table query / raw data
 
-![](/img/influxdb/raw_data.png)
+![](/assets/img/blog/v2.6/table_influxdb_logs.png)
 
 You can remove the group by time by clicking on the `time` part and then the `x` icon. You can
 change the option `Format As` to `Table` if you want to show raw data in the `Table` panel.
@@ -115,9 +116,9 @@ the hosts variable only show hosts from the current selected region with a query
 SHOW TAG VALUES WITH KEY = "hostname"  WHERE region =~ /$region/
 ```
 
-> Always you `regex values` or `regex wildcard` for All format or multi select format.
+> Always use `regex values` or `regex wildcard` for All format or multi select format.
 
-![](/img/influxdb/templating_simple_ex1.png)
+![](/img/docs/influxdb/templating_simple_ex1.png)
 
 ## Annotations
 Annotations allows you to overlay rich event information on top of graphs.

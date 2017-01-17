@@ -11,19 +11,45 @@ export class DashboardExporter {
   constructor(private datasourceSrv) {
   }
 
-  makeExportable(dash) {
+  makeExportable(dashboard) {
     var dynSrv = new DynamicDashboardSrv();
-    dynSrv.process(dash, {cleanUpOnly: true});
 
-    dash.id = null;
+    // clean up repeated rows and panels,
+    // this is done on the live real dashboard instance, not on a clone
+    // so we need to undo this
+    // this is pretty hacky and needs to be changed
+    dynSrv.init(dashboard);
+    dynSrv.process({cleanUpOnly: true});
+
+    var saveModel = dashboard.getSaveModelClone();
+    saveModel.id = null;
+
+    // undo repeat cleanup
+    dynSrv.process();
 
     var inputs = [];
     var requires = {};
     var datasources = {};
     var promises = [];
+    var variableLookup: any = {};
+
+    for (let variable of saveModel.templating.list) {
+      variableLookup[variable.name] = variable;
+    }
 
     var templateizeDatasourceUsage = obj => {
+      // ignore data source properties that contain a variable
+      if (obj.datasource && obj.datasource.indexOf('$') === 0) {
+        if (variableLookup[obj.datasource.substring(1)]){
+          return;
+        }
+      }
+
       promises.push(this.datasourceSrv.get(obj.datasource).then(ds => {
+        if (ds.meta.builtIn) {
+          return;
+        }
+
         var refName = 'DS_' + ds.name.replace(' ', '_').toUpperCase();
         datasources[refName] = {
           name: refName,
@@ -45,10 +71,18 @@ export class DashboardExporter {
     };
 
     // check up panel data sources
-    for (let row of dash.rows) {
-      _.each(row.panels, (panel) => {
+    for (let row of saveModel.rows) {
+      for (let panel of row.panels) {
         if (panel.datasource !== undefined) {
           templateizeDatasourceUsage(panel);
+        }
+
+        if (panel.targets) {
+          for (let target of panel.targets) {
+            if (target.datasource !== undefined) {
+              templateizeDatasourceUsage(target);
+            }
+          }
         }
 
         var panelDef = config.panels[panel.type];
@@ -60,11 +94,11 @@ export class DashboardExporter {
             version: panelDef.info.version,
           };
         }
-      });
+      }
     }
 
     // templatize template vars
-    for (let variable of dash.templating.list) {
+    for (let variable of saveModel.templating.list) {
       if (variable.type === 'query') {
         templateizeDatasourceUsage(variable);
         variable.options = [];
@@ -74,7 +108,7 @@ export class DashboardExporter {
     }
 
     // templatize annotations vars
-    for (let annotationDef of dash.annotations.list) {
+    for (let annotationDef of saveModel.annotations.list) {
       templateizeDatasourceUsage(annotationDef);
     }
 
@@ -92,7 +126,7 @@ export class DashboardExporter {
       });
 
       // templatize constants
-      for (let variable of dash.templating.list) {
+      for (let variable of saveModel.templating.list) {
         if (variable.type === 'constant') {
           var refName = 'VAR_' + variable.name.replace(' ', '_').toUpperCase();
           inputs.push({
@@ -111,18 +145,14 @@ export class DashboardExporter {
         }
       }
 
-      requires = _.map(requires, req =>  {
-        return req;
-      });
-
       // make inputs and requires a top thing
       var newObj = {};
       newObj["__inputs"] = inputs;
-      newObj["__requires"] = requires;
+      newObj["__requires"] = _.sortBy(requires, ['id']);
 
-      _.defaults(newObj, dash);
-
+      _.defaults(newObj, saveModel);
       return newObj;
+
     }).catch(err => {
       console.log('Export failed:', err);
       return {

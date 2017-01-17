@@ -6,6 +6,7 @@
   "defaultMatchFormat": "regex values",
   "metrics": true,
   "annotations": true,
+  "alerting": true,
 
   "info": {
     "author": {
