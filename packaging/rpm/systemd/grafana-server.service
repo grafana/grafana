@@ -8,6 +8,7 @@ After=network-online.target
 EnvironmentFile=/etc/sysconfig/grafana-server
 User=grafana
 Group=grafana
+UMask=${UMASK}
 Type=simple
 Restart=on-failure
 WorkingDirectory=/usr/share/grafana

@@ -36,9 +36,9 @@ CONF_FILE=$CONF_DIR/grafana.ini
 MAX_OPEN_FILES=10000
 PID_FILE=/var/run/$NAME.pid
 DAEMON=/usr/sbin/$NAME
+UMASK=0027
 
-
-umask 0027
+umask $UMASK
 
 if [ `id -u` -ne 0 ]; then
 	echo "You need root privileges to run this script"
@@ -84,7 +84,7 @@ case "$1" in
 	fi
 
 	# Start Daemon
-	start-stop-daemon --start -b --chdir "$WORK_DIR" --user "$GRAFANA_USER" -c "$GRAFANA_USER" --pidfile "$PID_FILE" --exec $DAEMON -- $DAEMON_OPTS
+	start-stop-daemon --start -b --chdir "$WORK_DIR" --umask $UMASK --user "$GRAFANA_USER" -c "$GRAFANA_USER" --pidfile "$PID_FILE" --exec $DAEMON -- $DAEMON_OPTS
 	return=$?
 	if [ $return -eq 0 ]
 	then
