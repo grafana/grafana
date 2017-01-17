@@ -41,13 +41,13 @@ describe('SingleStatCtrl', function() {
       ctx.datapoints = [[10,1], [20,2]];
     });
 
-    it('Should use series avg as default main value', function() {
-      expect(ctx.data.value).to.be(15);
-      expect(ctx.data.valueRounded).to.be(15);
+    it('Should use series current as default main value', function() {
+      expect(ctx.data.value).to.be(20);
+      expect(ctx.data.valueRounded).to.be(20);
     });
 
     it('should set formated falue', function() {
-      expect(ctx.data.valueFormated).to.be('15');
+      expect(ctx.data.valueFormated).to.be('20');
     });
   });
 
@@ -57,7 +57,7 @@ describe('SingleStatCtrl', function() {
       ctx.ctrl.panel.valueName = 'name';
     });
 
-    it('Should use series avg as default main value', function() {
+    it('Should use series current as default main value', function() {
       expect(ctx.data.value).to.be(0);
       expect(ctx.data.valueRounded).to.be(0);
     });
@@ -73,7 +73,7 @@ describe('SingleStatCtrl', function() {
     });
 
     it('Should be rounded', function() {
-      expect(ctx.data.value).to.be(99.999495);
+      expect(ctx.data.value).to.be(99.99999);
       expect(ctx.data.valueRounded).to.be(100);
     });
 

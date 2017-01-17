@@ -47,7 +47,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     ],
     mappingType: 1,
     nullPointMode: 'connected',
-    valueName: 'avg',
+    valueName: 'current',
     prefixFontSize: '50%',
     valueFontSize: '80%',
     postfixFontSize: '50%',
