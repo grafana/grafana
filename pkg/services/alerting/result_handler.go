@@ -31,13 +31,17 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 	executionError := ""
 	annotationData := simplejson.New()
 
+	if evalContext.Firing {
+		annotationData = simplejson.NewFromAny(evalContext.EvalMatches)
+	}
+
 	if evalContext.Error != nil {
 		executionError = evalContext.Error.Error()
 		annotationData.Set("errorMessage", executionError)
 	}
 
-	if evalContext.Firing {
-		annotationData = simplejson.NewFromAny(evalContext.EvalMatches)
+	if evalContext.NoDataFound {
+		annotationData.Set("no_data", true)
 	}
 
 	countStateResult(evalContext.Rule.State)

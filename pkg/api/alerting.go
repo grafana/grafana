@@ -75,6 +75,7 @@ func GetAlerts(c *middleware.Context) Response {
 			State:          alert.State,
 			NewStateDate:   alert.NewStateDate,
 			ExecutionError: alert.ExecutionError,
+			EvalData:       alert.EvalData,
 		})
 	}
 
