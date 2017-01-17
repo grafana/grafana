@@ -222,7 +222,7 @@ func createRpmPackages() {
 		defaultFileSrc: "packaging/rpm/sysconfig/grafana-server",
 		systemdFileSrc: "packaging/rpm/systemd/grafana-server.service",
 
-		depends: []string{"initscripts", "fontconfig"},
+		depends: []string{"/sbin/service", "fontconfig"},
 	})
 }
 
