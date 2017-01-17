@@ -68,9 +68,9 @@ class GraphCtrl extends MetricsPanelCtrl {
     // line width in pixels
     linewidth     : 1,
     // show hide points
-    points        : false,
+    points        : true,
     // point radius in pixels
-    pointradius   : 5,
+    pointradius   : 1,
     // show hide bars
     bars          : false,
     // enable/disable stacking
