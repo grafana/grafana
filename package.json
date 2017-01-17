@@ -62,6 +62,8 @@
   "scripts": {
     "build": "grunt",
     "test": "grunt test",
+    "release": "grunt release",
+    "watch": "grunt watch",
     "coveralls": "grunt karma:coveralls && rm -rf ./coverage"
   },
   "license": "Apache License",
