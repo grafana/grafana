@@ -18,6 +18,7 @@
 * **Alerting**: Fixes missing support for no_data and execution error when testing alerts [#7149](https://github.com/grafana/grafana/issues/7149)
 * **Dashboard**: Avoid duplicate data in dashboard json for panels with alerts [#7256](https://github.com/grafana/grafana/pull/7256)
 * **Alertlist**: Only show scrollbar when required [#7269](https://github.com/grafana/grafana/issues/7269)
+* **SMTP**: Set LocalName to hostname [#7223](https://github.com/grafana/grafana/issues/7223)
 
 # 4.1.1 (2017-01-11)
 
