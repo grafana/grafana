@@ -64,6 +64,7 @@ public/css/*.min.css
 .vscode/
 
 /data/*
+!/data/plugins
 /bin/*
 
 conf/custom.ini

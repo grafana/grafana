@@ -1,0 +1,1927 @@
+{
+  "id": null,
+  "title": "Windows Server Template",
+  "description": "Windows Server Template",
+  "tags": [
+    "netcrunch",
+    "windows server monitoring"
+  ],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": false,
+  "sharedCrosshair": true,
+  "hideControls": false,
+  "time": {
+    "from": "now-3h",
+    "to": "now"
+  },
+  "timepicker": {
+    "refresh_intervals": [
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "templating": {
+    "list": [
+      {
+        "type": "datasource",
+        "name": "netCrunchDatasource",
+        "hide": 0,
+        "label": "NetCrunch Datasource",
+        "regex": "^(?!default$)[\\w\\W\\s]+$",
+        "query": "grafana-netcrunch-datasource",
+        "refresh": 1
+      },
+      {
+        "type" : "query",
+        "label" : "Windows Server",
+        "query" : "nodes.windows.server",
+        "regex" : "",
+        "sort" : 0,
+        "datasource" : "$netCrunchDatasource",
+        "refresh" : 2,
+        "hide" : 0,
+        "name" : "windowsServer",
+        "multi" : false,
+        "includeAll" : false,
+        "allValue" : null,
+        "tagsQuery" : null,
+        "tagValuesQuery" : null
+      }
+    ]
+  },
+  "annotations": {
+    "list": []
+  },
+  "refresh": "30s",
+  "schemaVersion": 13,
+  "version": 0,
+  "links": [],
+  "gnetId": null,
+  "rows": [
+    {
+      "collapse" : false,
+      "height" : 150,
+      "isNew" : false,
+      "panels" : [
+        {
+          "content" : "#### Windows Server Monitoring\n\n",
+          "editable" : false,
+          "error" : false,
+          "height" : "125px",
+          "id" : 1,
+          "isNew" : true,
+          "links" : [],
+          "mode" : "markdown",
+          "span" : 2,
+          "title" : "Description",
+          "transparent" : true,
+          "type" : "text"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 2,
+          "editable": false,
+          "error": false,
+          "format": "ms",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 2,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "PING|Check Time",
+              "localVars": {
+                "counterReady": true,
+                "nodeReady": true,
+                "processingCounter": false,
+                "processingNode": false,
+                "showOptions": false
+              },
+              "nodeID": "$windowsServer",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "10,20",
+          "title": "PING\\Check Time",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 2,
+          "editable": false,
+          "error": false,
+          "format": "percent",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 3,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "Processor|% Processor Time|_Total",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$windowsServer",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "50,80",
+          "title": "Processor(_Total)\\% Processor Time",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current",
+          "scopedVars": {
+            "maxDataPoints": 200,
+            "rawData": false,
+            "setMaxDataPoints": false
+          }
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 2,
+          "editable": false,
+          "error": false,
+          "format": "percent",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 4,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "Memory|% Committed Bytes In Use",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$windowsServer",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "75,90",
+          "title": "Memory\\% Committed Bytes In Use",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current",
+          "scopedVars": {
+            "maxDataPoints": 200,
+            "rawData": false,
+            "setMaxDataPoints": false
+          }
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 2,
+          "editable": false,
+          "error": false,
+          "format": "decmbytes",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 5,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "Memory|Available MBytes",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$windowsServer",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "300,500",
+          "title": "Memory\\Available MBytes",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current",
+          "scopedVars": {
+            "maxDataPoints": 200,
+            "rawData": false,
+            "setMaxDataPoints": false
+          }
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 2,
+          "editable": false,
+          "error": false,
+          "format": "percent",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 6,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "Paging File|% Usage|_Total",
+              "localVars": {
+                "counterReady": true,
+                "nodeReady": true,
+                "processingCounter": false,
+                "processingNode": false,
+                "showOptions": false
+              },
+              "nodeID": "$windowsServer",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "50,80",
+          "title": "Paging File(_Total)\\% Usage",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Stats Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse" : false,
+      "height" : 150,
+      "isNew" : false,
+      "panels" : [
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 2,
+          "editable": false,
+          "error": false,
+          "format": "percent",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 7,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "Processor|% Privileged Time|_Total",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$windowsServer",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "50,75",
+          "title": "Processor(_Total)\\% Privileged Time",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 0,
+          "editable": false,
+          "error": false,
+          "format": "none",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 8,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "System|Processor Queue Length",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$windowsServer",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "3,7",
+          "title": "System\\Processor Queue Length",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 0,
+          "editable": false,
+          "error": false,
+          "format": "percent",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 9,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "LogicalDisk|% Free Space|C:",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$windowsServer",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "10,30",
+          "title": "LogicalDisk(C:)\\% Free Space",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 0,
+          "editable": false,
+          "error": false,
+          "format": "none",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 10,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "Server|Server Sessions",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$windowsServer",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "20, 50",
+          "title": "Server\\Server Sessions",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 0,
+          "editable": false,
+          "error": false,
+          "format": "none",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 11,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "TCPv4|Connections Established",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$windowsServer",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "20, 50",
+          "title": "TCPv4\\Connections Established",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current",
+          "scopedVars": {
+            "maxDataPoints": 200,
+            "rawData": false,
+            "setMaxDataPoints": false
+          }
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 0,
+          "editable": false,
+          "error": false,
+          "format": "none",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 12,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "TCPv6|Connections Established",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$windowsServer",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "300,500",
+          "title": "TCPv6\\Connections Established",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current"
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Stats Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse" : false,
+      "height" : 150,
+      "isNew" : false,
+      "panels" : [
+        {
+          "id": 13,
+          "title": "Processor Time - Total",
+          "error": false,
+          "span": 6,
+          "editable": false,
+          "type": "graph",
+          "isNew": true,
+          "targets": [
+            {
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "alias": "% Processor Time",
+              "series": {
+                "min": false,
+                "avg": true,
+                "max": false,
+                "avail": false,
+                "delta": false,
+                "equal": false,
+                "distr": false
+              },
+              "refId": "A",
+              "nodeID": "$windowsServer",
+              "counterDataComplete": true,
+              "counterName": "Processor|% Processor Time|_Total"
+            },
+            {
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "alias": "% Privileged Time",
+              "series": {
+                "min": false,
+                "avg": true,
+                "max": false,
+                "avail": false,
+                "delta": false,
+                "equal": false,
+                "distr": false
+              },
+              "refId": "B",
+              "nodeID": "$windowsServer",
+              "counterDataComplete": true,
+              "counterName": "Processor|% Privileged Time|_Total"
+            },
+            {
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "alias": "% User Time",
+              "series": {
+                "min": false,
+                "avg": true,
+                "max": false,
+                "avail": false,
+                "delta": false,
+                "equal": false,
+                "distr": false
+              },
+              "refId": "C",
+              "nodeID": "$windowsServer",
+              "counterDataComplete": true,
+              "counterName": "Processor|% User Time|_Total"
+            }
+          ],
+          "datasource": "$netCrunchDatasource",
+          "renderer": "flot",
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "percent"
+            },
+            {
+              "label": null,
+              "show": false,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true,
+            "mode": "time",
+            "name": null,
+            "values": []
+          },
+          "lines": true,
+          "fill": 1,
+          "linewidth": 1,
+          "points": true,
+          "pointradius": 1,
+          "bars": false,
+          "stack": false,
+          "percentage": false,
+          "legend": {
+            "show": false,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false,
+            "alignAsTable": false,
+            "hideEmpty": true
+          },
+          "nullPointMode": "null",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "individual",
+            "shared": true,
+            "sort": 0,
+            "msResolution": false
+          },
+          "timeFrom": null,
+          "timeShift": null,
+          "aliasColors": {},
+          "seriesOverrides": [],
+          "thresholds": [
+            {
+              "value": 50,
+              "colorMode": "warning",
+              "op": "gt",
+              "fill": true,
+              "line": true
+            },
+            {
+              "value": 80,
+              "colorMode": "critical",
+              "op": "gt",
+              "fill": true,
+              "line": true
+            }
+          ],
+          "scopedVars": {
+            "maxDataPoints": 150,
+            "rawData": false,
+            "setMaxDataPoints": false
+          },
+          "links": [],
+          "height": "200px"
+        },
+        {
+          "id": 14,
+          "title": "Memory in use",
+          "error": false,
+          "span": 6,
+          "editable": false,
+          "type": "graph",
+          "isNew": true,
+          "targets": [
+            {
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": true
+              },
+              "alias": "% Memory in use",
+              "series": {
+                "min": true,
+                "avg": true,
+                "max": true,
+                "avail": false,
+                "delta": false,
+                "equal": false,
+                "distr": false
+              },
+              "refId": "A",
+              "nodeID": "$windowsServer",
+              "counterDataComplete": true,
+              "counterName": "Memory|% Committed Bytes In Use"
+            }
+          ],
+          "datasource": "$netCrunchDatasource",
+          "renderer": "flot",
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "percent"
+            },
+            {
+              "label": null,
+              "show": false,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "short"
+            }
+          ],
+          "xaxis": {
+            "show": true,
+            "mode": "time",
+            "name": null,
+            "values": []
+          },
+          "lines": true,
+          "fill": 1,
+          "linewidth": 1,
+          "points": true,
+          "pointradius": 1,
+          "bars": false,
+          "stack": false,
+          "percentage": false,
+          "legend": {
+            "show": false,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false,
+            "alignAsTable": false,
+            "hideEmpty": true
+          },
+          "nullPointMode": "null",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "individual",
+            "shared": true,
+            "sort": 0,
+            "msResolution": false
+          },
+          "timeFrom": null,
+          "timeShift": null,
+          "aliasColors": {},
+          "seriesOverrides": [
+            {
+              "alias": "% Memory in use\\Max",
+              "fillBelowTo": "% Memory in use\\Min",
+              "lines": false,
+              "points": false,
+              "color": "#7EB26D"
+            },
+            {
+              "alias": "% Memory in use\\Min",
+              "lines": false,
+              "points": false,
+              "color": "#7EB26D"
+            },
+            {
+              "alias": "% Memory in use\\Avg",
+              "fill": 0
+            }
+          ],
+          "thresholds": [
+            {
+              "value": 75,
+              "colorMode": "warning",
+              "op": "gt",
+              "fill": true,
+              "line": true
+            },
+            {
+              "value": 90,
+              "colorMode": "critical",
+              "op": "gt",
+              "fill": true,
+              "line": true
+            }
+          ],
+          "links": [],
+          "height": "200px",
+          "scopedVars": {
+            "maxDataPoints": 200,
+            "rawData": false,
+            "setMaxDataPoints": false
+          }
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Graphs Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse" : false,
+      "height" : 150,
+      "isNew" : false,
+      "panels" : [
+        {
+          "id": 15,
+          "title": "Physical Disk Total",
+          "error": false,
+          "span": 4,
+          "editable": false,
+          "type": "graph",
+          "isNew": true,
+          "targets": [
+            {
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "alias": "% Total Disk Free Space",
+              "series": {
+                "min": false,
+                "avg": true,
+                "max": false,
+                "avail": false,
+                "delta": false,
+                "equal": false,
+                "distr": false
+              },
+              "refId": "D",
+              "nodeID": "$windowsServer",
+              "counterDataComplete": true,
+              "counterName": "LogicalDisk|% Free Space|_Total",
+              "hide": false
+            },
+            {
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "alias": "% Total Disk Time",
+              "series": {
+                "min": false,
+                "avg": true,
+                "max": false,
+                "avail": false,
+                "delta": false,
+                "equal": false,
+                "distr": false
+              },
+              "refId": "E",
+              "nodeID": "$windowsServer",
+              "counterDataComplete": true,
+              "counterName": "PhysicalDisk|% Disk Time|_Total",
+              "hide": false
+            }
+          ],
+          "datasource": "$netCrunchDatasource",
+          "renderer": "flot",
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "percent"
+            },
+            {
+              "label": null,
+              "show": false,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "percent"
+            }
+          ],
+          "xaxis": {
+            "show": true,
+            "mode": "time",
+            "name": null,
+            "values": []
+          },
+          "lines": true,
+          "fill": 1,
+          "linewidth": 1,
+          "points": true,
+          "pointradius": 1,
+          "bars": false,
+          "stack": false,
+          "percentage": false,
+          "legend": {
+            "show": false,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false,
+            "alignAsTable": false,
+            "hideEmpty": true
+          },
+          "nullPointMode": "null",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "individual",
+            "shared": true,
+            "sort": 0,
+            "msResolution": false
+          },
+          "timeFrom": null,
+          "timeShift": null,
+          "aliasColors": {},
+          "seriesOverrides": [],
+          "thresholds": [],
+          "links": [],
+          "height": "200px",
+          "decimals": 2
+        },
+        {
+          "id": 16,
+          "title": "Physical Disk Total Performance",
+          "error": false,
+          "span": 4,
+          "editable": false,
+          "type": "graph",
+          "isNew": true,
+          "targets": [
+            {
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "alias": "Average Disk Reads/sec",
+              "series": {
+                "min": false,
+                "avg": true,
+                "max": false,
+                "avail": false,
+                "delta": false,
+                "equal": false,
+                "distr": false
+              },
+              "refId": "D",
+              "nodeID": "$windowsServer",
+              "counterDataComplete": true,
+              "counterName": "PhysicalDisk|Avg. Disk sec/Read|_Total",
+              "hide": false
+            },
+            {
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "alias": "Average Disk Writes/sec",
+              "series": {
+                "min": false,
+                "avg": true,
+                "max": false,
+                "avail": false,
+                "delta": false,
+                "equal": false,
+                "distr": false
+              },
+              "refId": "A",
+              "nodeID": "$windowsServer",
+              "counterDataComplete": true,
+              "counterName": "PhysicalDisk|Avg. Disk sec/Write|_Total",
+              "hide": false
+            },
+            {
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "alias": "Average Disk Queue Length",
+              "series": {
+                "min": false,
+                "avg": true,
+                "max": false,
+                "avail": false,
+                "delta": false,
+                "equal": false,
+                "distr": false
+              },
+              "refId": "B",
+              "nodeID": "$windowsServer",
+              "counterDataComplete": true,
+              "counterName": "PhysicalDisk|Avg. Disk Queue Length|_Total",
+              "hide": false
+            }
+          ],
+          "datasource": "$netCrunchDatasource",
+          "renderer": "flot",
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "none"
+            },
+            {
+              "label": null,
+              "show": false,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "percent"
+            }
+          ],
+          "xaxis": {
+            "show": true,
+            "mode": "time",
+            "name": null,
+            "values": []
+          },
+          "lines": true,
+          "fill": 1,
+          "linewidth": 1,
+          "points": true,
+          "pointradius": 1,
+          "bars": false,
+          "stack": false,
+          "percentage": false,
+          "legend": {
+            "show": false,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false,
+            "alignAsTable": false,
+            "hideEmpty": true
+          },
+          "nullPointMode": "null",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "individual",
+            "shared": true,
+            "sort": 0,
+            "msResolution": false
+          },
+          "timeFrom": null,
+          "timeShift": null,
+          "aliasColors": {},
+          "seriesOverrides": [],
+          "thresholds": [],
+          "links": [],
+          "height": "200px",
+          "decimals": 2,
+          "scopedVars": {
+            "maxDataPoints": 200,
+            "rawData": false,
+            "setMaxDataPoints": false
+          }
+        },
+        {
+          "id": 17,
+          "title": "Connections",
+          "error": false,
+          "span": 4,
+          "editable": false,
+          "type": "graph",
+          "isNew": true,
+          "targets": [
+            {
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "alias": "Connections Established - TCPv4",
+              "series": {
+                "min": false,
+                "avg": true,
+                "max": false,
+                "avail": false,
+                "delta": false,
+                "equal": false,
+                "distr": false
+              },
+              "refId": "D",
+              "nodeID": "$windowsServer",
+              "counterDataComplete": true,
+              "counterName": "TCPv4|Connections Established",
+              "hide": false
+            },
+            {
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "alias": "Connections Established - TCPv6",
+              "series": {
+                "min": false,
+                "avg": true,
+                "max": false,
+                "avail": false,
+                "delta": false,
+                "equal": false,
+                "distr": false
+              },
+              "refId": "A",
+              "nodeID": "$windowsServer",
+              "counterDataComplete": true,
+              "counterName": "TCPv6|Connections Established",
+              "hide": false
+            },
+            {
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "alias": "Server Sessions",
+              "series": {
+                "min": false,
+                "avg": true,
+                "max": false,
+                "avail": false,
+                "delta": false,
+                "equal": false,
+                "distr": false
+              },
+              "refId": "B",
+              "nodeID": "$windowsServer",
+              "counterDataComplete": true,
+              "counterName": "Server|Server Sessions",
+              "hide": false
+            }
+          ],
+          "datasource": "$netCrunchDatasource",
+          "renderer": "flot",
+          "yaxes": [
+            {
+              "label": null,
+              "show": true,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "none"
+            },
+            {
+              "label": null,
+              "show": false,
+              "logBase": 1,
+              "min": null,
+              "max": null,
+              "format": "none"
+            }
+          ],
+          "xaxis": {
+            "show": true,
+            "mode": "time",
+            "name": null,
+            "values": []
+          },
+          "lines": true,
+          "fill": 1,
+          "linewidth": 1,
+          "points": true,
+          "pointradius": 1,
+          "bars": false,
+          "stack": false,
+          "percentage": false,
+          "legend": {
+            "show": false,
+            "values": false,
+            "min": false,
+            "max": false,
+            "current": false,
+            "total": false,
+            "avg": false,
+            "alignAsTable": false,
+            "hideEmpty": true
+          },
+          "nullPointMode": "null",
+          "steppedLine": false,
+          "tooltip": {
+            "value_type": "individual",
+            "shared": true,
+            "sort": 0,
+            "msResolution": false
+          },
+          "timeFrom": null,
+          "timeShift": null,
+          "aliasColors": {},
+          "seriesOverrides": [],
+          "thresholds": [],
+          "links": [],
+          "height": "200px",
+          "decimals": 0
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Graphs Row",
+      "titleSize": "h6"
+    }
+  ]
+}

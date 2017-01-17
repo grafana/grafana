@@ -1,0 +1,59 @@
+{
+  "type": "app",
+  "name": "NetCrunch",
+  "id": "grafana-netcrunch",
+
+  "css": {
+    "dark": "css/dark.css",
+    "light": "css/light.css"
+  },
+
+  "info": {
+    "description": "NetCrunch App for Grafana",
+    "author": {
+      "name": "AdRem Software, Inc., New York, NY",
+      "url": "https://www.adremsoft.com"
+    },
+    "keywords": ["netcrunch", "adrem"],
+    "logos": {
+      "small": "images/small-logo.png",
+      "large": "images/large-logo.png"
+    },
+    "links": [
+      {"name": "AdRem Software", "url": "https://www.adremsoft.com"},
+      {"name": "Project site", "url": "https://github.com/adremsoft/grafana-netcrunch-plugin"},
+      {"name": "License & Terms", "url": "https://github.com/adremsoft/grafana-netcrunch-plugin/blob/master/LICENSE"}
+    ],
+    "version": "1.0.0",
+    "updated": "2017-01-10"
+  },
+
+  "includes": [
+    {"type": "datasource", "name": "NetCrunch"},
+    {"type": "dashboard",
+     "name": "Windows Workstation Template",
+     "path": "dashboards/windows-workstation-template.json",
+     "addToNav": true
+    },
+    {"type": "dashboard",
+      "name": "Windows Server Template",
+      "path": "dashboards/windows-server-template.json",
+      "addToNav": true
+    },
+    {"type": "dashboard",
+      "name": "Linux Template",
+      "path": "dashboards/linux-template.json",
+      "addToNav": true
+    },
+    {"type": "dashboard",
+      "name": "ESX Template",
+      "path": "dashboards/esx-template.json",
+      "addToNav": true
+    }
+  ],
+
+  "dependencies": {
+    "grafanaVersion": "4.x.x",
+    "plugins": []
+  }
+}

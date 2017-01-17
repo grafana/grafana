@@ -1,0 +1,1900 @@
+{
+  "id" : null,
+  "title" : "Linux Template",
+  "description" : "Linux Template",
+  "tags" : [
+    "netcrunch",
+    "linux monitoring"
+  ],
+  "style" : "dark",
+  "timezone" : "browser",
+  "editable" : false,
+  "sharedCrosshair" : true,
+  "hideControls" : false,
+  "time" : {
+    "from" : "now-3h",
+    "to" : "now"
+  },
+  "timepicker" : {
+    "refresh_intervals" : [
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options" : [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "templating" : {
+    "list" : [
+      {
+        "type" : "datasource",
+        "name" : "netCrunchDatasource",
+        "hide" : 0,
+        "label" : "NetCrunch Datasource",
+        "regex" : "^(?!default$)[\\w\\W\\s]+$",
+        "query" : "grafana-netcrunch-datasource",
+        "refresh" : 1
+      },
+      {
+        "type" : "query",
+        "label" : "Linux",
+        "query" : "nodes.linux",
+        "regex" : "",
+        "sort" : 0,
+        "datasource" : "$netCrunchDatasource",
+        "refresh" : 2,
+        "hide" : 0,
+        "name" : "linuxNode",
+        "multi" : false,
+        "includeAll" : false,
+        "allValue" : null,
+        "tagsQuery" : null,
+        "tagValuesQuery" : null
+      }
+    ]
+  },
+  "annotations" : {
+    "list" : []
+  },
+  "refresh" : "30s",
+  "schemaVersion" : 13,
+  "version" : 0,
+  "links" : [],
+  "gnetId" : null,
+  "rows" : [
+    {
+      "collapse" : false,
+      "height" : 150,
+      "isNew" : false,
+      "panels" : [
+        {
+          "content" : "#### Linux Monitoring\n\n",
+          "editable" : false,
+          "error" : false,
+          "height" : "125px",
+          "id" : 1,
+          "isNew" : true,
+          "links" : [],
+          "mode" : "markdown",
+          "span" : 2,
+          "title" : "Description",
+          "transparent" : true,
+          "type" : "text"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 2,
+          "editable": false,
+          "error": false,
+          "format": "ms",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 2,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "PING|Check Time",
+              "localVars": {
+                "counterReady": true,
+                "nodeReady": true,
+                "processingCounter": false,
+                "processingNode": false,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "10,20",
+          "title": "PING\\Check Time",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 2,
+          "editable": false,
+          "error": false,
+          "format": "percent",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 3,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "Processor|% Utilization|_Total",
+              "localVars": {
+                "counterReady": true,
+                "nodeReady": true,
+                "processingCounter": false,
+                "processingNode": false,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "50,80",
+          "title": "Processor(_Total)\\% Utilization",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 2,
+          "editable": false,
+          "error": false,
+          "format": "percent",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 4,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "Processor|% System Time|_Total",
+              "localVars": {
+                "counterReady": true,
+                "nodeReady": true,
+                "processingCounter": false,
+                "processingNode": false,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "50,80",
+          "title": "Processor(_Total)\\% System Time",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current"
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 0,
+          "editable": false,
+          "error": false,
+          "format": "none",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 5,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "Processes|Running",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "",
+          "title": "Processes\\Running",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current",
+          "scopedVars": {
+            "maxDataPoints": 200,
+            "rawData": false,
+            "setMaxDataPoints": false
+          }
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(50, 172, 45, 0.97)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(245, 54, 54, 0.9)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 0,
+          "editable": false,
+          "error": false,
+          "format": "none",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 6,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "Processes|Sleeping",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "",
+          "title": "Processes\\Sleeping",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current",
+          "scopedVars": {
+            "maxDataPoints": 200,
+            "rawData": false,
+            "setMaxDataPoints": false
+          }
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Stats Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse" : false,
+      "height" : 150,
+      "isNew" : false,
+      "panels" : [
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 2,
+          "editable": false,
+          "error": false,
+          "format": "percent",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 7,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "Memory|% Available",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "10,25",
+          "title": "Memory\\% Available",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current",
+          "scopedVars": {
+            "maxDataPoints": 200,
+            "rawData": false,
+            "setMaxDataPoints": false
+          }
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 2,
+          "editable": false,
+          "error": false,
+          "format": "percent",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 8,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "Memory|% Available for Processes",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "10,25",
+          "title": "Memory\\% Available for Processes",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current",
+          "scopedVars": {
+            "maxDataPoints": 200,
+            "rawData": false,
+            "setMaxDataPoints": false
+          }
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 2,
+          "editable": false,
+          "error": false,
+          "format": "percent",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 9,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "Swap|% Available",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "10,25",
+          "title": "Swap\\% Available",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current",
+          "scopedVars": {
+            "maxDataPoints": 200,
+            "rawData": false,
+            "setMaxDataPoints": false
+          }
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": true,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 2,
+          "editable": false,
+          "error": false,
+          "format": "percent",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 10,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "Volume|% Free Space|_Total",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "10,30",
+          "title": "Volume(_Total)\\% Free Space",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current",
+          "scopedVars": {
+            "maxDataPoints": 200,
+            "rawData": false,
+            "setMaxDataPoints": false
+          }
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 0,
+          "editable": false,
+          "error": false,
+          "format": "none",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 11,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "System|Users",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "",
+          "title": "System\\Users",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current",
+          "scopedVars": {
+            "maxDataPoints": 200,
+            "rawData": false,
+            "setMaxDataPoints": false
+          }
+        },
+        {
+          "cacheTimeout": null,
+          "colorBackground": false,
+          "colorValue": false,
+          "colors": [
+            "rgba(245, 54, 54, 0.9)",
+            "rgba(237, 129, 40, 0.89)",
+            "rgba(50, 172, 45, 0.97)"
+          ],
+          "datasource": "$netCrunchDatasource",
+          "decimals": 0,
+          "editable": false,
+          "error": false,
+          "format": "none",
+          "gauge": {
+            "maxValue": 10,
+            "minValue": 2,
+            "show": false,
+            "thresholdLabels": false,
+            "thresholdMarkers": true
+          },
+          "height": "125px",
+          "id": 12,
+          "interval": null,
+          "isNew": true,
+          "links": [],
+          "mappingType": 1,
+          "mappingTypes": [
+            {
+              "name": "value to text",
+              "value": 1
+            },
+            {
+              "name": "range to text",
+              "value": 2
+            }
+          ],
+          "maxDataPoints": 100,
+          "nullPointMode": "connected",
+          "nullText": null,
+          "postfix": "",
+          "postfixFontSize": "50%",
+          "prefix": "",
+          "prefixFontSize": "50%",
+          "rangeMaps": [
+            {
+              "from": "null",
+              "text": "N/A",
+              "to": "null"
+            }
+          ],
+          "span": 2,
+          "sparkline": {
+            "fillColor": "rgba(31, 118, 189, 0.18)",
+            "full": false,
+            "lineColor": "rgb(31, 120, 193)",
+            "show": true
+          },
+          "targets": [
+            {
+              "alias": "",
+              "counterDataComplete": true,
+              "counterName": "TCP|Sockets Connected",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": "",
+          "title": "TCP\\Sockets Connected",
+          "type": "singlestat",
+          "valueFontSize": "100%",
+          "valueMaps": [
+            {
+              "op": "=",
+              "text": "N/A",
+              "value": "null"
+            }
+          ],
+          "valueName": "current",
+          "scopedVars": {
+            "maxDataPoints": 200,
+            "rawData": false,
+            "setMaxDataPoints": false
+          }
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Stats Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse" : false,
+      "height" : 150,
+      "isNew" : false,
+      "panels" : [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "$netCrunchDatasource",
+          "editable": false,
+          "error": false,
+          "fill": 1,
+          "height": "200px",
+          "id": 13,
+          "isNew": true,
+          "legend": {
+            "alignAsTable": false,
+            "avg": false,
+            "current": false,
+            "hideEmpty": true,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 1,
+          "points": true,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "Processor(_Total)\\% System Time",
+              "counterDataComplete": true,
+              "counterName": "Processor|% System Time|_Total",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            },
+            {
+              "alias": "Processor(_Total)\\% Utilization",
+              "counterDataComplete": true,
+              "counterName": "Processor|% Utilization|_Total",
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "B",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            }
+          ],
+          "thresholds": [
+            {
+              "colorMode": "warning",
+              "fill": true,
+              "line": true,
+              "op": "gt",
+              "value": 50
+            },
+            {
+              "colorMode": "critical",
+              "fill": true,
+              "line": true,
+              "op": "gt",
+              "value": 80
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Processor\\% Utilization",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "percent",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "short",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "$netCrunchDatasource",
+          "editable": false,
+          "error": false,
+          "fill": 1,
+          "height": "200px",
+          "id": 14,
+          "isNew": true,
+          "legend": {
+            "alignAsTable": false,
+            "avg": false,
+            "current": false,
+            "hideEmpty": true,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 1,
+          "points": true,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "Memory\\% Available for Processes\\Max",
+              "color": "#7EB26D",
+              "fillBelowTo": "Memory\\% Available for Processes\\Min",
+              "lines": false,
+              "points": false
+            },
+            {
+              "alias": "Memory\\% Available for Processes\\Min",
+              "color": "#7EB26D",
+              "lines": false,
+              "points": false
+            },
+            {
+              "alias": "Memory\\% Available for Processes\\Avg",
+              "color": "#7EB26D",
+              "fill": 0
+            },
+            {
+              "alias": "Memory\\% Available\\Max",
+              "color": "#EAB839",
+              "fillBelowTo": "Memory\\% Available\\Min",
+              "lines": false,
+              "points": false
+            },
+            {
+              "alias": "Memory\\% Available\\Min",
+              "color": "#EAB839",
+              "lines": false,
+              "points": false
+            },
+            {
+              "alias": "Memory\\% Available\\Avg",
+              "color": "#EAB839",
+              "fill": 0
+            }
+          ],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "Memory\\% Available for Processes",
+              "counterDataComplete": true,
+              "counterName": "Memory|% Available for Processes",
+              "hide": false,
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": true,
+                "min": true
+              }
+            },
+            {
+              "alias": "Memory\\% Available",
+              "counterDataComplete": true,
+              "counterName": "Memory|% Available",
+              "hide": false,
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "B",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": true,
+                "min": true
+              }
+            }
+          ],
+          "thresholds": [
+            {
+              "colorMode": "warning",
+              "fill": true,
+              "line": true,
+              "op": "lt",
+              "value": 25
+            },
+            {
+              "colorMode": "critical",
+              "fill": true,
+              "line": true,
+              "op": "lt",
+              "value": 10
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Memory\\% Available",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "percent",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "percent",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            }
+          ]
+        }
+      ],
+      "repeat": null,
+      "repeatIteration": null,
+      "repeatRowId": null,
+      "showTitle": false,
+      "title": "Graphs Row",
+      "titleSize": "h6"
+    },
+    {
+      "collapse" : false,
+      "height" : 150,
+      "isNew" : false,
+      "panels" : [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "$netCrunchDatasource",
+          "decimals": 2,
+          "editable": false,
+          "error": false,
+          "fill": 1,
+          "height": "200px",
+          "id": 15,
+          "isNew": true,
+          "legend": {
+            "alignAsTable": false,
+            "avg": false,
+            "current": false,
+            "hideEmpty": true,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 1,
+          "points": true,
+          "renderer": "flot",
+          "seriesOverrides": [
+            {
+              "alias": "Volume(_Total)\\% Free Space\\Max",
+              "fillBelowTo": "Volume(_Total)\\% Free Space\\Min",
+              "lines": true,
+              "points": false,
+              "color": "#7EB26D",
+              "fill": 0
+            },
+            {
+              "alias": "Volume(_Total)\\% Free Space\\Min",
+              "lines": false,
+              "points": false,
+              "color": "#7EB26D",
+              "fill": 0
+            },
+            {
+              "alias": "Volume(_Total)\\% Free Space\\Avg",
+              "color": "#7EB26D",
+              "fill": 0
+            }
+          ],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "Volume(_Total)\\% Free Space",
+              "counterDataComplete": true,
+              "counterName": "Volume|% Free Space|_Total",
+              "hide": false,
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": true,
+                "counterReady": false,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "D",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": true,
+                "min": true
+              }
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Volume(_Total)\\% Free Space",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "percent",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "percent",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "$netCrunchDatasource",
+          "decimals": 0,
+          "editable": false,
+          "error": false,
+          "fill": 1,
+          "height": "200px",
+          "id": 16,
+          "isNew": true,
+          "legend": {
+            "alignAsTable": false,
+            "avg": false,
+            "current": false,
+            "hideEmpty": true,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 1,
+          "points": true,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "Processes\\Running",
+              "counterDataComplete": true,
+              "counterName": "Processes|Running",
+              "hide": false,
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            },
+            {
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": false,
+                "counterReady": true,
+                "showOptions": false
+              },
+              "alias": "Processes\\Sleeping",
+              "series": {
+                "min": false,
+                "avg": true,
+                "max": false,
+                "avail": false,
+                "delta": false,
+                "equal": false,
+                "distr": false
+              },
+              "refId": "B",
+              "nodeID": "$linuxNode",
+              "counterDataComplete": true,
+              "counterName": "Processes|Sleeping"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Processes",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "none",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "percent",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": "$netCrunchDatasource",
+          "decimals": 0,
+          "editable": false,
+          "error": false,
+          "fill": 1,
+          "height": "200px",
+          "id": 17,
+          "isNew": true,
+          "legend": {
+            "alignAsTable": false,
+            "avg": false,
+            "current": false,
+            "hideEmpty": true,
+            "max": false,
+            "min": false,
+            "show": false,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 1,
+          "links": [],
+          "nullPointMode": "null",
+          "percentage": false,
+          "pointradius": 1,
+          "points": true,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "alias": "System\\Users",
+              "counterDataComplete": true,
+              "counterName": "System|Users",
+              "hide": false,
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": true,
+                "counterReady": false,
+                "showOptions": false
+              },
+              "nodeID": "$linuxNode",
+              "refId": "A",
+              "series": {
+                "avail": false,
+                "avg": true,
+                "delta": false,
+                "distr": false,
+                "equal": false,
+                "max": false,
+                "min": false
+              }
+            },
+            {
+              "localVars": {
+                "processingNode": false,
+                "nodeReady": true,
+                "processingCounter": true,
+                "counterReady": false,
+                "showOptions": false
+              },
+              "alias": "TCP\\Sockets Connected",
+              "series": {
+                "min": false,
+                "avg": true,
+                "max": false,
+                "avail": false,
+                "delta": false,
+                "equal": false,
+                "distr": false
+              },
+              "refId": "B",
+              "nodeID": "$linuxNode",
+              "counterDataComplete": true,
+              "counterName": "TCP|Sockets Connected"
+            }
+          ],
+          "thresholds": [],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Users & Connections",
+          "tooltip": {
+            "msResolution": false,
+            "shared": true,
+            "sort": 0,
+            "value_type": "individual"
+          },
+          "type": "graph",
+          "xaxis": {
+            "mode": "time",
+            "name": null,
+            "show": true,
+            "values": []
+          },
+          "yaxes": [
+            {
+              "format": "none",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": true
+            },
+            {
+              "format": "percent",
+              "label": null,
+              "logBase": 1,
+              "max": null,
+              "min": null,
+              "show": false
+            }
+          ]
+        }
+      ],
+      "repeat" : null,
+      "repeatIteration" : null,
+      "repeatRowId" : null,
+      "showTitle" : false,
+      "title" : "Graphs Row",
+      "titleSize" : "h6"
+    }
+  ]
+}
