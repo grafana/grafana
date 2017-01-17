@@ -217,7 +217,8 @@ func GetHomeDashboard(c *middleware.Context) Response {
 		return ApiError(500, "Failed to load home dashboard", err)
 	}
 
-	if c.HasUserRole(m.ROLE_ADMIN) && !c.HasHelpFlag(m.HelpFlagGettingStartedPanelDismissed) {
+	if c.HasUserRole(m.ROLE_ADMIN) && !c.HasHelpFlag(m.HelpFlagGettingStartedPanelDismissed) &&
+	   !m.DisableGettingStartedPanel {
 		addGettingStartedPanelToHomeDashboard(dash.Dashboard)
 	}
 

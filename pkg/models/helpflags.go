@@ -5,6 +5,7 @@ type HelpFlags1 uint64
 const (
 	HelpFlagGettingStartedPanelDismissed HelpFlags1 = 1 << iota
 	HelpFlagDashboardHelp1
+	DisableGettingStartedPanel bool = true
 )
 
 func (f HelpFlags1) HasFlag(flag HelpFlags1) bool { return f&flag != 0 }
