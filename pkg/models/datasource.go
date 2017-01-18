@@ -15,7 +15,6 @@ const (
 	DS_ES            = "elasticsearch"
 	DS_OPENTSDB      = "opentsdb"
 	DS_CLOUDWATCH    = "cloudwatch"
-  	DS_NETCRUNCH     = "grafana-netcrunch-datasource"
 	DS_KAIROSDB      = "kairosdb"
 	DS_PROMETHEUS    = "prometheus"
 	DS_ACCESS_DIRECT = "direct"

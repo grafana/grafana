@@ -13,6 +13,7 @@ import (
   "github.com/grafana/grafana/pkg/models"
   "github.com/grafana/grafana/pkg/components/simplejson"
   "github.com/grafana/grafana/pkg/plugins"
+  "github.com/hashicorp/go-version"
 )
 
 type NetCrunchServerSettings struct {
@@ -26,6 +27,8 @@ type NetCrunchServerSettings struct {
 
 const (
   NETCRUNCH_APP_PLUGIN_ID string = "grafana-netcrunch"
+  DS_NETCRUNCH_OLD     		 = "netcrunch"
+  DS_NETCRUNCH     		 = "grafana-netcrunch-datasource"
 )
 
 var (
@@ -121,7 +124,7 @@ func getDefaultNetCrunchDataSource(netCrunchSettings NetCrunchServerSettings) mo
 
   return models.DataSource {
     Name:               "NetCrunch",
-    Type:               models.DS_NETCRUNCH,
+    Type:               DS_NETCRUNCH,
     Access:             models.DS_ACCESS_PROXY,
     Url:                getNetCrunchServerUrl(netCrunchSettings),
     User:               "",
@@ -252,6 +255,11 @@ func writeVersionFile(fileName string) bool {
   return (ioutil.WriteFile(fileName, version, 0644) == nil)
 }
 
+func readVersionFile(fileName string) (string, error) {
+  content, err := ioutil.ReadFile(fileName)
+  return strings.TrimSpace(string(content)), err
+}
+
 func writeStatusesFile(fileName string, statuses *ini.File) bool {
   return (statuses.SaveTo(fileName) == nil)
 }
@@ -299,6 +307,7 @@ func upgradeToGC92(VersionFileName string) (bool, error) {
 }
 
 func upgradeToGC94() {
+  // Convert NetCrunch datasources
 }
 
 func initNetCrunchPlugin() {
@@ -320,6 +329,29 @@ func initNetCrunchPlugin() {
   }
 }
 
+func formatVersion(ver string) string {
+  if (strings.Count(ver, ".") == 3) {
+    return ver[0:strings.LastIndex(ver, ".")]
+  }
+  return ver
+}
+
+func compareVersions(version1 string, version2 string) (int64, error) {
+  ver1, err1 := version.NewVersion(formatVersion(version1))
+  ver2, err2 := version.NewVersion(formatVersion(version2))
+
+  if ((err1 != nil) || (err2 != nil)) {
+    return 0, errors.New("Version error")
+  }
+
+  if ver1.LessThan(ver2) {
+    return -1, nil
+  } else if ver1.GreaterThan(ver2) {
+    return 1, nil
+  }
+  return 0, nil
+}
+
 func upgrade() {
   VersionFileName := getVersionFileName()
   upgraded, err := upgradeToGC92(VersionFileName)
@@ -328,9 +360,12 @@ func upgrade() {
     if (upgraded == true) {
       upgradeToGC94()
     } else {
-      // Read previous version
-      // Perform upgrade
-      initNetCrunchPlugin()
+      versionFileContent, err := readVersionFile(VersionFileName)
+      if (err == nil) {
+	if compare, err := compareVersions(versionFileContent, "9.4.0"); ((compare < 0) && (err == nil)) {
+  	  upgradeToGC94()
+	}
+      }
     }
     writeVersionFile(VersionFileName)
   }
@@ -377,4 +412,5 @@ func Init() {
   }
 
   upgrade()
+  initNetCrunchPlugin()
 }
