@@ -177,6 +177,11 @@ function ($, core) {
         }
         pos.pageX = elem.offset().left + pointOffset.left;
         pos.pageY = elem.offset().top + elem.height() * pos.panelRelY;
+        var isVisible = pos.pageY >= $(window).scrollTop() && pos.pageY <= $(window).innerHeight() + $(window).scrollTop();
+        if (!isVisible) {
+          self.clear(plot);
+          return;
+        }
         plot.setCrosshair(pos);
         allSeriesMode = true;
 
