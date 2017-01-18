@@ -15,9 +15,13 @@ function (angular, _, kbn) {
         var params = {};
 
         if (link.keepTime) {
-          var range = timeSrv.timeRangeForUrl();
-          params['from'] = range.from;
-          params['to'] = range.to;
+          if(link.kibanaFormat) {
+            params['_g'] = timeSrv.timeRangeForKibanaUrl();
+          } else {
+            var range = timeSrv.timeRangeForUrl();
+            params['from'] = range.from;
+            params['to'] = range.to;
+          }
         }
 
         if (link.includeVars) {
@@ -94,9 +98,13 @@ function (angular, _, kbn) {
         var params = {};
 
         if (link.keepTime) {
-          var range = timeSrv.timeRangeForUrl();
-          params['from'] = range.from;
-          params['to'] = range.to;
+          if(link.kibanaFormat) {
+            params['_g'] = timeSrv.timeRangeForKibanaUrl();
+          } else {
+            var range = timeSrv.timeRangeForUrl();
+            params['from'] = range.from;
+            params['to'] = range.to;
+          }
         }
 
         if (link.includeVars) {

@@ -101,6 +101,7 @@ function (angular, _) {
             title: linkDef.title,
             tags: linkDef.tags,
             keepTime: linkDef.keepTime,
+            kibanaFormat: linkDef.kibanaFormat,
             includeVars: linkDef.includeVars,
             icon: "fa fa-bars",
             asDropdown: true
@@ -118,6 +119,7 @@ function (angular, _) {
           tooltip: linkDef.tooltip,
           target: linkDef.targetBlank ? "_blank" : "_self",
           keepTime: linkDef.keepTime,
+          kibanaFormat: linkDef.kibanaFormat,
           includeVars: linkDef.includeVars,
         }]);
       }
@@ -143,6 +145,7 @@ function (angular, _) {
               url: 'dashboard/' + dash.uri,
               icon: 'fa fa-th-large',
               keepTime: link.keepTime,
+              kibanaFormat: link.kibanaFormat,
               includeVars: link.includeVars
             });
           }
