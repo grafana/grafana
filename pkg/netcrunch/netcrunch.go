@@ -3,6 +3,7 @@ package netcrunch
 import (
   "os"
   "errors"
+  "strings"
   "path/filepath"
   "io/ioutil"
   "gopkg.in/ini.v1"
@@ -11,7 +12,7 @@ import (
   "github.com/grafana/grafana/pkg/bus"
   "github.com/grafana/grafana/pkg/models"
   "github.com/grafana/grafana/pkg/components/simplejson"
-  "strings"
+  "github.com/grafana/grafana/pkg/plugins"
 )
 
 type NetCrunchServerSettings struct {
@@ -24,7 +25,7 @@ type NetCrunchServerSettings struct {
 }
 
 const (
-  NETCRUNCH_APP_ID string = "grafana-netcrunch"
+  NETCRUNCH_APP_PLUGIN_ID string = "grafana-netcrunch"
 )
 
 var (
@@ -185,7 +186,7 @@ func updateDataSource(datasource *models.DataSource, orgId int64) bool {
   return (bus.Dispatch(&command) == nil)
 }
 
-func updateNetCrunchDatasource(netCrunchSettings NetCrunchServerSettings, orgId int64) bool {
+func updateNetCrunchDefaultDatasource(netCrunchSettings NetCrunchServerSettings, orgId int64) bool {
   datasource, found := getDataSourceByName("NetCrunch", orgId)
 
   if found {
@@ -210,19 +211,40 @@ func getOrgs () ([]*models.OrgDTO, bool) {
   return query.Result, (err == nil)
 }
 
-func updateNetCrunchDatasources(netCrunchSettings NetCrunchServerSettings) bool {
+func updateNetCrunchDefaultDatasources(netCrunchSettings NetCrunchServerSettings) bool {
 
   result := true
   orgs, found := getOrgs()
 
   if found {
     for index := range orgs {
-      if (updateNetCrunchDatasource(netCrunchSettings, orgs[index].Id) == false) {
+      if (updateNetCrunchDefaultDatasource(netCrunchSettings, orgs[index].Id) == false) {
         result = false;
       }
     }
   }
   return result
+}
+
+func getNetCrunchPluginByOrg(orgId int64) (*models.PluginSetting, bool) {
+  query := models.GetPluginSettingByIdQuery {
+    PluginId: NETCRUNCH_APP_PLUGIN_ID,
+    OrgId: orgId,
+  }
+
+  err := bus.Dispatch(&query)
+  return query.Result, (err == nil)
+}
+
+func enableNetCrunchPluginForOrg(orgId int64) bool {
+  command := models.UpdatePluginSettingCmd {
+    PluginId:      NETCRUNCH_APP_PLUGIN_ID,
+    OrgId:         orgId,
+    Enabled:       true,
+    Pinned:        true,
+  }
+
+  return (bus.Dispatch(&command) == nil)
 }
 
 func writeVersionFile(fileName string) bool {
@@ -243,16 +265,16 @@ func upgradeToGC92(VersionFileName string) (bool, error) {
   UPGRADE_ERROR_MSG := "Upgrade error"
   UpgradeFileName := getUpgradeFileName()
   UpgradeMarkerFileName := getUpgradeMarkerFileName()
-  uLog := log.New("GrafCrunch upgrader from 9.0")
+  uLog := log.New("GrafCrunch upgrader")
 
   if (setting.PathExists(UpgradeFileName)) {
     if (loadUpgradeFile(UpgradeFileName)) {
       if (!setting.PathExists(VersionFileName)) {
         netCrunchSettings, err := readNetCrunchServerSettings()
         if (err == nil) {
-          if (updateNetCrunchDatasources(netCrunchSettings) &&
+          if (updateNetCrunchDefaultDatasources(netCrunchSettings) &&
               writeVersionFile(VersionFileName) && removeFile(UpgradeFileName)) {
-            uLog.Info("Upgrade successful")
+            uLog.Info("Upgrade successful to 9.2")
             if (setting.PathExists(UpgradeMarkerFileName)) {
               SetInitializationSuccess()
               removeFile(UpgradeMarkerFileName)
@@ -279,6 +301,25 @@ func upgradeToGC92(VersionFileName string) (bool, error) {
 func upgradeToGC94() {
 }
 
+func initNetCrunchPlugin() {
+  pLog := log.New("plugins")
+
+  if netCrunchPlugin, exist := plugins.Plugins[NETCRUNCH_APP_PLUGIN_ID]; exist {
+    netCrunchPlugin.IsCorePlugin = true
+
+    if orgs, found := getOrgs(); found {
+      for index := range orgs {
+        pluginSetting, err := getNetCrunchPluginByOrg(orgs[index].Id)
+
+        if (!err && (pluginSetting == nil)) {
+          enableNetCrunchPluginForOrg(orgs[index].Id)
+          pLog.Info("Enabling NetCrunch Plugin for " + orgs[index].Name)
+        }
+      }
+    }
+  }
+}
+
 func upgrade() {
   VersionFileName := getVersionFileName()
   upgraded, err := upgradeToGC92(VersionFileName)
@@ -289,6 +330,7 @@ func upgrade() {
     } else {
       // Read previous version
       // Perform upgrade
+      initNetCrunchPlugin()
     }
     writeVersionFile(VersionFileName)
   }
