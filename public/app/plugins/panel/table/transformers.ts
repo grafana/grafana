@@ -125,12 +125,12 @@ transformers['annotations'] = {
     model.columns.push({text: 'Text'});
     model.columns.push({text: 'Tags'});
 
-    if (!data || data.length === 0) {
+    if (!data || !data.annotations || data.annotations.length === 0) {
       return;
     }
 
-    for (var i = 0; i < data.length; i++) {
-      var evt = data[i];
+    for (var i = 0; i < data.annotations.length; i++) {
+      var evt = data.annotations[i];
       model.rows.push([evt.min, evt.title, evt.text, evt.tags]);
     }
   }

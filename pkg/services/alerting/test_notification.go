@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
@@ -63,12 +64,12 @@ func evalMatchesBasedOnState() []*EvalMatch {
 	matches := make([]*EvalMatch, 0)
 	matches = append(matches, &EvalMatch{
 		Metric: "High value",
-		Value:  100,
+		Value:  null.FloatFrom(100),
 	})
 
 	matches = append(matches, &EvalMatch{
 		Metric: "Higher Value",
-		Value:  200,
+		Value:  null.FloatFrom(200),
 	})
 
 	return matches

@@ -22,7 +22,7 @@ function (angular, _, coreModule) {
       $timeout.cancel(promise);
     };
 
-    this.cancel_all = function() {
+    this.cancelAll = function() {
       _.each(timers, function(t) {
         $timeout.cancel(t);
       });

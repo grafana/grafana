@@ -8,6 +8,7 @@ import $ from 'jquery';
 
 import {Emitter, contextSrv, appEvents} from 'app/core/core';
 import {DashboardRow} from './row/row_model';
+import sortByKeys from 'app/core/utils/sort_by_keys';
 
 export class DashboardModel {
   id: any;
@@ -36,7 +37,7 @@ export class DashboardModel {
   events: any;
   editMode: boolean;
 
-  constructor(data, meta) {
+  constructor(data, meta?) {
     if (!data) {
       data = {};
     }
@@ -107,7 +108,10 @@ export class DashboardModel {
     this.rows = _.map(rows, row => row.getSaveModel());
     this.templating.list = _.map(variables, variable => variable.getSaveModel ? variable.getSaveModel() : variable);
 
+    // make clone
     var copy = $.extend(true, {}, this);
+    //  sort clone
+    copy = sortByKeys(copy);
 
     // restore properties
     this.events = events;

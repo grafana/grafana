@@ -116,14 +116,19 @@ function getStateDisplayModel(state) {
   }
 }
 
-function joinEvalMatches(matches, seperator: string) {
+function joinEvalMatches(matches, separator: string) {
   return _.reduce(matches, (res, ev)=> {
+    if (ev.metric !== undefined && ev.value !== undefined) {
+      res.push(ev.metric + '=' + ev.value);
+    }
+
+    // For backwards compatibility . Should be be able to remove this after ~2017-06-01
     if (ev.Metric !== undefined && ev.Value !== undefined) {
-      res.push(ev.Metric + "=" + ev.Value);
+      res.push(ev.Metric + '=' + ev.Value);
     }
 
     return res;
-  }, []).join(seperator);
+  }, []).join(separator);
 }
 
 export default {

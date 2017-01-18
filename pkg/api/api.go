@@ -262,6 +262,7 @@ func Register(r *macaron.Macaron) {
 		})
 
 		r.Get("/alert-notifications", wrap(GetAlertNotifications))
+		r.Get("/alert-notifiers", wrap(GetAlertNotifiers))
 
 		r.Group("/alert-notifications", func() {
 			r.Post("/test", bind(dtos.NotificationTestCommand{}), wrap(NotificationTest))

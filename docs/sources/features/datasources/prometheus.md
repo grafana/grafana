@@ -72,4 +72,9 @@ label_values(hostname)
 
 You can also use raw queries & regular expressions to extract anything you might need.
 
+### Using templated variables in queries
+
+When the `Include All` option or `Multi-Value` option is enabled, Grafana converts the labels from plain text to a regex compatible string. 
+Which means you have to use `=~` instead of `=` in your Prometheus queries. For example `ALERTS{instance=~$instance}` instead of `ALERTS{instance=$instance}`.
+
 ![](/img/v2/prometheus_templating.png)

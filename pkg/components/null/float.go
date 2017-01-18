@@ -96,6 +96,16 @@ func (f Float) MarshalText() ([]byte, error) {
 	return []byte(strconv.FormatFloat(f.Float64, 'f', -1, 64)), nil
 }
 
+// MarshalText implements encoding.TextMarshaler.
+// It will encode a blank string if this Float is null.
+func (f Float) String() string {
+	if !f.Valid {
+		return "null"
+	}
+
+	return fmt.Sprintf("%1.3f", f.Float64)
+}
+
 // SetValid changes this Float's value and also sets it to be non-null.
 func (f *Float) SetValid(n float64) {
 	f.Float64 = n

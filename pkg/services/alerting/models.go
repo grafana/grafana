@@ -1,5 +1,7 @@
 package alerting
 
+import "github.com/grafana/grafana/pkg/components/null"
+
 type Job struct {
 	Offset     int64
 	OffsetWait bool
@@ -14,7 +16,7 @@ type ResultLogEntry struct {
 }
 
 type EvalMatch struct {
-	Value  float64           `json:"value"`
+	Value  null.Float        `json:"value"`
 	Metric string            `json:"metric"`
 	Tags   map[string]string `json:"tags"`
 }

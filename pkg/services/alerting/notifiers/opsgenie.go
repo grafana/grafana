@@ -13,7 +13,28 @@ import (
 )
 
 func init() {
-	alerting.RegisterNotifier("opsgenie", NewOpsGenieNotifier)
+	alerting.RegisterNotifier(&alerting.NotifierPlugin{
+		Type:        "opsgenie",
+		Name:        "OpsGenie",
+		Description: "Sends notifications to OpsGenie",
+		Factory:     NewOpsGenieNotifier,
+		OptionsTemplate: `
+      <h3 class="page-heading">OpsGenie settings</h3>
+      <div class="gf-form">
+        <span class="gf-form-label width-14">API Key</span>
+        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.apiKey" placeholder="OpsGenie API Key"></input>
+      </div>
+      <div class="gf-form">
+        <gf-form-switch
+           class="gf-form"
+           label="Auto close incidents"
+           label-class="width-14"
+           checked="ctrl.model.settings.autoClose"
+           tooltip="Automatically close alerts in OpseGenie once the alert goes back to ok.">
+        </gf-form-switch>
+      </div>
+    `,
+	})
 }
 
 var (

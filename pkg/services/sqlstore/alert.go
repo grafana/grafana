@@ -113,6 +113,12 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 		return err
 	}
 
+	for i, _ := range alerts {
+		if alerts[i].ExecutionError == " " {
+			alerts[i].ExecutionError = ""
+		}
+	}
+
 	query.Result = alerts
 	return nil
 }

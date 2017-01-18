@@ -73,7 +73,7 @@ function (angular, _, queryDef) {
     $scope.validateModel = function() {
       $scope.index = _.indexOf(bucketAggs, $scope.agg);
       $scope.isFirst = $scope.index === 0;
-      $scope.isLast = $scope.index === bucketAggs.length - 1;
+      $scope.bucketAggCount = bucketAggs.length;
 
       var settingsLinkText = "";
       var settings = $scope.agg.settings || {};

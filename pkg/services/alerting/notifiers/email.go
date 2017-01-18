@@ -13,7 +13,21 @@ import (
 )
 
 func init() {
-	alerting.RegisterNotifier("email", NewEmailNotifier)
+	alerting.RegisterNotifier(&alerting.NotifierPlugin{
+		Type:        "email",
+		Name:        "Email",
+		Description: "Sends notifications using Grafana server configured STMP settings",
+		Factory:     NewEmailNotifier,
+		OptionsTemplate: `
+      <h3 class="page-heading">Email addresses</h3>
+      <div class="gf-form">
+         <textarea rows="7" class="gf-form-input width-25" required ng-model="ctrl.model.settings.addresses"></textarea>
+      </div>
+      <div class="gf-form">
+      <span>You can enter multiple email addresses using a ";" separator</span>
+      </div>
+    `,
+	})
 }
 
 type EmailNotifier struct {
