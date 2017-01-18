@@ -138,10 +138,20 @@ func getDefaultNetCrunchDataSource(netCrunchSettings NetCrunchServerSettings) mo
   }
 }
 
-func getDataSourceByName(datasourceName string, orgID int64) (*models.DataSource, bool) {
+func getDataSourceByName(datasourceName string, orgId int64) (*models.DataSource, bool) {
   query := models.GetDataSourceByNameQuery {
     Name: datasourceName,
-    OrgId: orgID,
+    OrgId: orgId,
+  }
+
+  err := bus.Dispatch(&query)
+  return query.Result, (err == nil)
+}
+
+func getDatasourcesForOrg(orgId int64) ([]*models.DataSource, bool) {
+
+  query := models.GetDataSourcesQuery {
+    OrgId: orgId,
   }
 
   err := bus.Dispatch(&query)
@@ -194,6 +204,7 @@ func updateNetCrunchDefaultDatasource(netCrunchSettings NetCrunchServerSettings,
 
   if found {
     datasource.Url = getNetCrunchServerUrl(netCrunchSettings)
+    datasource.Type = DS_NETCRUNCH
     datasource.JsonData = createDatasourceJsonData(netCrunchSettings)
     return updateDataSource(datasource, orgId)
   } else {
@@ -306,8 +317,42 @@ func upgradeToGC92(VersionFileName string) (bool, error) {
   return false, nil
 }
 
+func convertNetCrunchDatasourceToGC94(datasource *models.DataSource) *models.DataSource{
+  urlParts := strings.Split(datasource.Url, "://")
+  protocol := urlParts[0]
+  simpleUrl := urlParts[1]
+
+  jsonDataBuffer := simplejson.New()
+  jsonDataBuffer.Set("simpleUrl", simpleUrl)
+  jsonDataBuffer.Set("isSSL", (strings.Compare(strings.ToUpper(protocol), "HTTPS") == 0))
+  jsonDataBuffer.Set("user", datasource.User)
+  jsonDataBuffer.Set("password", datasource.Password)
+
+  datasource.Type = DS_NETCRUNCH
+  datasource.JsonData = jsonDataBuffer
+
+  return datasource
+}
+
 func upgradeToGC94() {
-  // Convert NetCrunch datasources
+  uLog := log.New("GrafCrunch upgrader")
+  orgs, orgsFound := getOrgs()
+
+  if orgsFound {
+    for orgsIndex := range orgs {
+      datasources, datasourcesFound := getDatasourcesForOrg(orgs[orgsIndex].Id)
+      if datasourcesFound {
+        for datasourceIndex := range datasources {
+          if (strings.Compare(datasources[datasourceIndex].Type, DS_NETCRUNCH_OLD) == 0) {
+            updateDataSource(convertNetCrunchDatasourceToGC94(datasources[datasourceIndex]), orgs[orgsIndex].Id)
+            uLog.Info("Datasource " + datasources[datasourceIndex].Name + " for " +
+                      orgs[orgsIndex].Name + " has been upgraded")
+          }
+        }
+      }
+    }
+  }
+  uLog.Info("Upgrade successful to 9.4")
 }
 
 func initNetCrunchPlugin() {
