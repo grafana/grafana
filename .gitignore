@@ -5,7 +5,6 @@ coverage/
 awsconfig
 build-windows.cmd
 /dist
-/packaging/windows/install-script.iss
 /packaging/windows/dest
 /packaging/windows/release
 /packaging/windows/SetupTools/SetupTools.cfg
