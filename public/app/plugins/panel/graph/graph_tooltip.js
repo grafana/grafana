@@ -181,8 +181,8 @@ function ($, core) {
       // get pageX from position on x axis and pageY from relative position in original panel
       if (pos.panelRelY) {
         var pointOffset = plot.pointOffset({x: pos.x});
-        if (Number.isNaN(pointOffset.left) || pointOffset.left < 0) {
-          $tooltip.detach();
+        if (Number.isNaN(pointOffset.left) || pointOffset.left < 0 || pointOffset.left > elem.width()) {
+          self.clear(plot);
           return;
         }
         pos.pageX = elem.offset().left + pointOffset.left;
