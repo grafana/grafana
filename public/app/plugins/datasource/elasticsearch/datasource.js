@@ -87,7 +87,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var queryInterpolated = templateSrv.replace(queryString, {}, 'lucene');
       var query = {
         "bool": {
-          "must": [
+          "filter": [
             { "range": range },
             {
               "query_string": {

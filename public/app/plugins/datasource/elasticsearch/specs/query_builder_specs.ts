@@ -16,7 +16,7 @@ describe('ElasticQueryBuilder', function() {
       bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '1'}],
     });
 
-    expect(query.query.bool.must[0].range["@timestamp"].gte).to.be("$timeFrom");
+    expect(query.query.bool.filter[0].range["@timestamp"].gte).to.be("$timeFrom");
     expect(query.aggs["1"].date_histogram.extended_bounds.min).to.be("$timeFrom");
   });
 
@@ -32,7 +32,7 @@ describe('ElasticQueryBuilder', function() {
       bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '1'}],
     });
 
-    expect(query.query.bool.must[0].range["@timestamp"].gte).to.be("$timeFrom");
+    expect(query.query.bool.filter[0].range["@timestamp"].gte).to.be("$timeFrom");
     expect(query.aggs["1"].date_histogram.extended_bounds.min).to.be("$timeFrom");
   });
 
@@ -258,6 +258,6 @@ describe('ElasticQueryBuilder', function() {
       {key: 'key1', operator: '=', value: 'value1'}
     ]);
 
-    expect(query.query.bool.must[2].term["key1"]).to.be("value1");
+    expect(query.query.bool.filter[2].term["key1"]).to.be("value1");
   });
 });
