@@ -79,6 +79,7 @@ Root: HKLM64; Subkey: "Software\AdRem\GrafCrunch\1.0"; ValueType: string; ValueN
 [INI]
 Filename: {#ConfigINI}; Section: {#PathConfigSection}; Key: "data"; String: {#GrafCrunchProgramData}; Flags: createkeyifdoesntexist
 Filename: {#ConfigINI}; Section: {#PathConfigSection}; Key: "logs"; String: {#GrafCrunchProgramData}\log; Flags: createkeyifdoesntexist
+Filename: {#ConfigINI}; Section: {#PathConfigSection}; Key: "plugins"; String: {#GrafCrunchProgramData}\plugins; Flags: createkeyifdoesntexist
 
 Filename: {#ConfigINI}; Section: {#GrafCrunchServerSection}; Key: "http_port"; String: "{code:GetGrafCrunchServerConfig|Port}"; Flags: createkeyifdoesntexist
 Filename: {#ConfigINI}; Section: {#GrafCrunchServerSection}; Key: "domain"; String: "{code:GetGrafCrunchServerConfig|Domain}"; Flags: createkeyifdoesntexist
@@ -102,8 +103,11 @@ Source: {#NOTICE}; DestDir: "{app}"; Flags: ignoreversion
 Source: "GrafCrunchGuard\Win64\Release\GrafCrunchGuard.exe"; DestDir: "{app}\bin\"; DestName: "GCGuard.exe"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "RunGrafCrunch\Win64\Release\RunGrafCrunch.exe"; DestDir: "{app}\bin\"; DestName: "GCRun.exe"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\bin\grafana-server.exe"; DestDir: "{app}\bin\"; DestName: "GCServer.exe"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dest\bin\grafana-cli.exe"; DestDir: "{app}\bin\"; DestName: "grafana-cli.exe"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\conf\*"; DestDir: "{app}\conf\"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dest\data\plugins\*"; DestDir: "{#GrafCrunchProgramData}\plugins"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\public\*"; DestDir: "{app}\public\"; Flags: ignoreversion recursesubdirs createallsubdirs
+Source: "dest\scripts\*"; DestDir: "{app}\scripts\"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "dest\vendor\*"; DestDir: "{app}\vendor\"; Flags: ignoreversion recursesubdirs createallsubdirs
 Source: "{#GrafCrunchClientURL}"; DestDir: "{app}"; Flags: ignoreversion
 
