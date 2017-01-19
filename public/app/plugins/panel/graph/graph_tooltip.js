@@ -165,6 +165,7 @@ function ($, core) {
     this.clear = function(plot) {
       $tooltip.detach();
       plot.clearCrosshair();
+      plot.unhighlight();
     };
 
     this.show = function(pos, item) {
