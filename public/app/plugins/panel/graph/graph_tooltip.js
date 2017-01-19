@@ -34,13 +34,22 @@ function ($, core) {
     };
 
     this.findHoverIndexFromData = function(posX, series) {
-      var len = series.data.length;
-      for (var j = 0; j < len; j++) {
-        if (series.data[j][0] > posX) {
-          return Math.max(j - 1,  0);
+      var lower = 0;
+      var upper = series.data.length - 1;
+      var middle;
+      while (true) {
+        if (lower > upper) {
+          return Math.max(upper, 0);
+        }
+        middle = Math.floor((lower + upper) / 2);
+        if (series.data[middle][0] === posX) {
+          return middle;
+        } else if (series.data[middle][0] < posX) {
+          lower = middle + 1;
+        } else { //if (series.data[middle][0] > posX) {
+          upper = middle - 1;
         }
       }
-      return j - 1;
     };
 
     this.renderAndShow = function(absoluteTime, innerHtml, pos, xMode) {
