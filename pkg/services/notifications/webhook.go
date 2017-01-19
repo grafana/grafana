@@ -19,6 +19,7 @@ type Webhook struct {
 	Password   string
 	Body       string
 	HttpMethod string
+	HttpHeader map[string]string
 }
 
 var (
@@ -61,6 +62,12 @@ func sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
 	request.Header.Add("User-Agent", "Grafana")
 	if webhook.User != "" && webhook.Password != "" {
 		request.Header.Add("Authorization", util.GetBasicAuthHeader(webhook.User, webhook.Password))
+	}
+
+	if len(webhook.HttpHeader) != 0 {
+		for k, v := range webhook.HttpHeader {
+			request.Header.Set(k, v)
+		}
 	}
 
 	resp, err := ctxhttp.Do(ctx, http.DefaultClient, request)

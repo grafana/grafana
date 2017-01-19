@@ -45,6 +45,7 @@ var (
 	M_Alerting_Notification_Sent_Email     Counter
 	M_Alerting_Notification_Sent_Webhook   Counter
 	M_Alerting_Notification_Sent_PagerDuty Counter
+	M_Alerting_Notification_Sent_LINE      Counter
 	M_Alerting_Notification_Sent_Victorops Counter
 	M_Alerting_Notification_Sent_OpsGenie  Counter
 	M_Alerting_Notification_Sent_Telegram  Counter
@@ -118,6 +119,7 @@ func initMetricVars(settings *MetricSettings) {
 	M_Alerting_Notification_Sent_OpsGenie = RegCounter("alerting.notifications_sent", "type", "opsgenie")
 	M_Alerting_Notification_Sent_Telegram = RegCounter("alerting.notifications_sent", "type", "telegram")
 	M_Alerting_Notification_Sent_Sensu = RegCounter("alerting.notifications_sent", "type", "sensu")
+	M_Alerting_Notification_Sent_LINE = RegCounter("alerting.notifications_sent", "type", "LINE")
 
 	M_Aws_CloudWatch_GetMetricStatistics = RegCounter("aws.cloudwatch.get_metric_statistics")
 	M_Aws_CloudWatch_ListMetrics = RegCounter("aws.cloudwatch.list_metrics")
