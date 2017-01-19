@@ -63,9 +63,9 @@ module.exports = function(grunt) {
       options: { mode: true},
       dest: '<%= tempDir %>'
     });
-    grunt.config('copy.netcrunch_filters', {
+    grunt.config('copy.netcrunch_plugin', {
       expand: true,
-      src: ['public/app/plugins/datasource/netcrunch/filters/netCrunchCommonFilters.js'],
+      src: ['data/plugins/grafana-netcrunch/**/*'],
       options: { mode: true},
       dest: '<%= tempDir %>'
     });
@@ -80,7 +80,7 @@ module.exports = function(grunt) {
     grunt.task.run('copy:public_gen_to_temp');
     grunt.task.run('copy:backend_bin');
     grunt.task.run('copy:backend_files');
-    grunt.task.run('copy:netcrunch_filters');
+    grunt.task.run('copy:netcrunch_plugin');
     grunt.task.run('copy:windows_installer');
   });
 
