@@ -37,7 +37,7 @@ The Datasource should contain the following functions.
 ```
 query(options) //used by panels to get data
 testDatasource() //used by datasource configuration page to make sure the connection is working
-annotationsQuery(options) // used by dashboards to get annotations
+annotationQuery(options) // used by dashboards to get annotations
 metricFindQuery(options) // used by query editor to get metric suggestions.
 ```
 
@@ -119,7 +119,7 @@ An array of
 
 ### Annotation Query
 
-Request object passed to datasource.annotationsQuery function
+Request object passed to datasource.annotationQuery function
 ```json
 {
   "range": { "from": "2016-03-04T04:07:55.144Z", "to": "2016-03-04T07:07:55.144Z" },
@@ -172,4 +172,4 @@ Requires a static template or templateUrl variable which will be rendered as the
 
 A javascript class that will be instantiated and treated as an Angular controller when the user choose this type of datasource in the templating menu in the dashboard.
 
-Requires a static template or templateUrl variable which will be rendered as the view for this controller. The fields that are bound to this controller is then sent to the Database objects annotationsQuery function.
+Requires a static template or templateUrl variable which will be rendered as the view for this controller. The fields that are bound to this controller is then sent to the Database objects annotationQuery function.
