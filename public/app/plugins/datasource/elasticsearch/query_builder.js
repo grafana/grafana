@@ -49,6 +49,10 @@ function (queryDef) {
       }
     }
 
+    if (aggDef.settings.min_doc_count !== void 0) {
+      queryNode.terms.min_doc_count = parseInt(aggDef.settings.min_doc_count, 10);
+    }
+
     if (aggDef.settings.missing) {
       queryNode.terms.missing = aggDef.settings.missing;
     }
