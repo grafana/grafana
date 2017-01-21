@@ -117,7 +117,7 @@ function (queryDef) {
       filter = adhocFilters[i];
       condition = {};
       condition[filter.key] = filter.value;
-      query.query.bool.must.push({"term": condition});
+      query.query.bool.filter.push({"term": condition});
     }
   };
 
@@ -133,7 +133,7 @@ function (queryDef) {
       "size": 0,
       "query": {
         "bool": {
-          "must": [
+          "filter": [
             {"range": this.getRangeFilter()},
             {
               "query_string": {
@@ -226,13 +226,13 @@ function (queryDef) {
       "size": 0,
       "query": {
         "bool": {
-          "must": [{"range": this.getRangeFilter()}]
+          "filter": [{"range": this.getRangeFilter()}]
         }
       }
     };
 
     if (queryDef.query) {
-      query.query.bool.must.push({
+      query.query.bool.filter.push({
         "query_string": {
           "analyze_wildcard": true,
           "query": queryDef.query,
