@@ -29,7 +29,6 @@ function (queryDef) {
     }
 
     queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 500 : parseInt(aggDef.settings.size, 10);
-
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
       queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
@@ -243,19 +242,26 @@ function (queryDef) {
         }
       });
     }
-
+    var size = 500;
+    if(queryDef.size){
+      if(this.esVersion >= 5 && queryDef.size !== 0) {
+        size = queryDef.size;
+      }
+      else if(this.esVersion < 5) {
+        size = queryDef.size;
+      }
+    }
     query.aggs =  {
       "1": {
         "terms": {
           "field": queryDef.field,
-          "size": 500,
+          "size": size,
           "order": {
             "_term": "asc"
           }
         },
       }
     };
-
     return query;
   };
 
