@@ -59,9 +59,8 @@
     "npm": "2.14.x"
   },
   "scripts": {
-    "build": "grunt",
-    "test": "grunt test",
-    "coveralls": "grunt karma:coveralls && rm -rf ./coverage"
+    "build": "./node_modules/grunt-cli/bin/grunt",
+    "test": "./node_modules/grunt-cli/bin/grunt test"
   },
   "license": "Apache-2.0",
   "dependencies": {
