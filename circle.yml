@@ -19,6 +19,7 @@ machine:
 dependencies:
   cache_directories:
     - "~/docker"
+    - "~/download"
   override:
     - rm -rf ${GOPATH}/src/${REPO_PATH}
     - mkdir -p ${GOPATH}/src/${ORG_PATH}
