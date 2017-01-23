@@ -603,9 +603,9 @@
           "colorBackground": false,
           "colorValue": true,
           "colors": [
-            "rgba(245, 54, 54, 0.9)",
+            "rgba(50, 172, 45, 0.97)",
             "rgba(237, 129, 40, 0.89)",
-            "rgba(50, 172, 45, 0.97)"
+            "rgba(245, 54, 54, 0.9)"
           ],
           "datasource": "$netCrunchDatasource",
           "decimals": 2,
@@ -660,7 +660,7 @@
             {
               "alias": "",
               "counterDataComplete": true,
-              "counterName": "Memory|% Available",
+              "counterName": "Memory|% Used by Processes",
               "localVars": {
                 "processingNode": false,
                 "nodeReady": true,
@@ -681,8 +681,8 @@
               }
             }
           ],
-          "thresholds": "10,25",
-          "title": "Memory\\% Available",
+          "thresholds": "75,90",
+          "title": "Memory\\% Used by Processes",
           "type": "singlestat",
           "valueFontSize": "100%",
           "valueMaps": [
