@@ -12,6 +12,7 @@
     paths: {
       'mousetrap': 'vendor/npm/mousetrap/mousetrap.js',
       'eventemitter3': 'vendor/npm/eventemitter3/index.js',
+      'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',
       'tether': 'vendor/npm/tether/dist/js/tether.js',
       'tether-drop': 'vendor/npm/tether-drop/dist/js/drop.js',
       'moment': 'vendor/moment.js',

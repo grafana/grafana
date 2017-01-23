@@ -1,6 +1,10 @@
 package tsdb
 
-import "context"
+import (
+	"context"
+
+	"github.com/grafana/grafana/pkg/models"
+)
 
 type FakeExecutor struct {
 	results   map[string]*QueryResult
@@ -9,11 +13,11 @@ type FakeExecutor struct {
 
 type ResultsFn func(context *QueryContext) *QueryResult
 
-func NewFakeExecutor(dsInfo *DataSourceInfo) *FakeExecutor {
+func NewFakeExecutor(dsInfo *models.DataSource) (*FakeExecutor, error) {
 	return &FakeExecutor{
 		results:   make(map[string]*QueryResult),
 		resultsFn: make(map[string]ResultsFn),
-	}
+	}, nil
 }
 
 func (e *FakeExecutor) Execute(ctx context.Context, queries QuerySlice, context *QueryContext) *BatchResult {

@@ -93,11 +93,11 @@ parent = "http_api"
 
 ## Create Organisation
 
-`POST /api/org`
+`POST /api/orgs`
 
 **Example Request**:
 
-    POST /api/org HTTP/1.1
+    POST /api/orgs HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk

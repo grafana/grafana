@@ -158,7 +158,7 @@ parent = "http_api"
     HTTP/1.1 200
     Content-Type: application/json
 
-    {"id":1,"message":"Datasource added"}
+    {"id":1,"message":"Datasource added", "name": "test_datasource"}
 
 ## Update an existing data source
 
@@ -193,7 +193,7 @@ parent = "http_api"
     HTTP/1.1 200
     Content-Type: application/json
 
-    {"message":"Datasource updated"}
+    {"message":"Datasource updated", "id": 1, "name": "test_datasource"}
 
 ## Delete an existing data source
 

@@ -5,8 +5,8 @@ import (
 
 	"sort"
 
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"gopkg.in/guregu/null.v3"
 )
 
 type QueryReducer interface {
@@ -27,13 +27,17 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 
 	switch s.Type {
 	case "avg":
+		validPointsCount := 0
 		for _, point := range series.Points {
 			if point[0].Valid {
 				value += point[0].Float64
+				validPointsCount += 1
 				allNull = false
 			}
 		}
-		value = value / float64(len(series.Points))
+		if validPointsCount > 0 {
+			value = value / float64(validPointsCount)
+		}
 	case "sum":
 		for _, point := range series.Points {
 			if point[0].Valid {
@@ -90,7 +94,6 @@ func (s *SimpleReducer) Reduce(series *tsdb.TimeSeries) null.Float {
 				value = (values[(length/2)-1] + values[length/2]) / 2
 			}
 		}
-
 	}
 
 	if allNull {

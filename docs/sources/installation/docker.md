@@ -29,7 +29,7 @@ container:
     $ docker run -d -p 3000:3000 \
         -v /var/lib/grafana:/var/lib/grafana \
         -e "GF_SECURITY_ADMIN_PASSWORD=secret" \
-        grafana/grafana:develop
+        grafana/grafana
 
 In the above example I map the data folder and sets a configuration option via
 an `ENV` instruction.

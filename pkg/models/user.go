@@ -10,6 +10,12 @@ var (
 	ErrUserNotFound = errors.New("User not found")
 )
 
+type Password string
+
+func (p Password) IsWeak() bool {
+	return len(p) <= 4
+}
+
 type User struct {
 	Id            int64
 	Version       int
@@ -22,6 +28,7 @@ type User struct {
 	Company       string
 	EmailVerified bool
 	Theme         string
+	HelpFlags1    HelpFlags1
 
 	IsAdmin bool
 	OrgId   int64
@@ -144,6 +151,7 @@ type SignedInUser struct {
 	Email          string
 	ApiKeyId       int64
 	IsGrafanaAdmin bool
+	HelpFlags1     HelpFlags1
 }
 
 type UserProfileDTO struct {

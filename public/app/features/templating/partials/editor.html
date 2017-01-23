@@ -111,14 +111,14 @@
 					<span class="gf-form-label width-9">Values</span>
 					<input type="text" class="gf-form-input" placeholder="name" ng-model='current.query' placeholder="1m,10m,1h,6h,1d,7d" ng-model-onblur ng-change="runQuery()" required></input>
 				</div>
-				<div class="gf-form">
-					<span class="gf-form-label width-9">Auto option</span>
-					<editor-checkbox text="Enable" model="current.auto" change="runQuery()"></editor-checkbox>
-				</div>
+
 				<div class="gf-form-inline">
+					<gf-form-switch class="gf-form" label="Auto Option" label-class="width-9" checked="current.auto" on-change="runQuery()">
+					</gf-form-switch>
+
 					<div class="gf-form">
 						<span class="gf-form-label width-9" ng-show="current.auto">
-							Auto steps <tip>How many times should the current time range be divided to calculate the value</tip>
+							Step count <tip>How many times should the current time range be divided to calculate the value</tip>
 						</span>
 						<div class="gf-form-select-wrapper max-width-10" ng-show="current.auto">
 							<select class="gf-form-input" ng-model="current.auto_count" ng-options="f for f in [2,3,4,5,10,20,30,40,50,100,200,300,400,500]" ng-change="runQuery()"></select>
@@ -257,27 +257,26 @@
 
       <div class="gf-form-group" ng-if="current.type === 'query'">
         <h5>Value groups/tags (Experimental feature)</h5>
-        <div class="gf-form">
-          <editor-checkbox text="Enable" model="current.useTags" change="runQuery()"></editor-checkbox>
-        </div>
-        <div class="gf-form last" ng-if="current.useTags">
-          <span class="gf-form-label width-10">Tags query</span>
-          <input type="text" class="gf-form-input" ng-model='current.tagsQuery' placeholder="metric name or tags query" ng-model-onblur></input>
-        </div>
-        <div class="gf-form" ng-if="current.useTags">
-          <li class="gf-form-label width-10">Tag values query</li>
-          <input type="text" class="gf-form-input" ng-model='current.tagValuesQuery' placeholder="apps.$tag.*" ng-model-onblur></input>
-        </div>
-      </div>
+				<gf-form-switch class="gf-form" label="Enabled" label-class="width-10" checked="current.useTags" on-change="runQuery()">
+				</gf-form-switch>
+				<div class="gf-form last" ng-if="current.useTags">
+					<span class="gf-form-label width-10">Tags query</span>
+					<input type="text" class="gf-form-input" ng-model='current.tagsQuery' placeholder="metric name or tags query" ng-model-onblur></input>
+				</div>
+				<div class="gf-form" ng-if="current.useTags">
+					<li class="gf-form-label width-10">Tag values query</li>
+					<input type="text" class="gf-form-input" ng-model='current.tagValuesQuery' placeholder="apps.$tag.*" ng-model-onblur></input>
+				</div>
+			</div>
 
-      <div class="gf-form-group" ng-show="current.options.length">
-        <h5>Preview of values (shows max 20)</h5>
-        <div class="gf-form-inline">
-          <div class="gf-form" ng-repeat="option in current.options | limitTo: 20">
-            <span class="gf-form-label">{{option.text}}</span>
-          </div>
-        </div>
-      </div>
+			<div class="gf-form-group" ng-show="current.options.length">
+				<h5>Preview of values (shows max 20)</h5>
+				<div class="gf-form-inline">
+					<div class="gf-form" ng-repeat="option in current.options | limitTo: 20">
+						<span class="gf-form-label">{{option.text}}</span>
+					</div>
+				</div>
+			</div>
 
 			<div class="alert alert-info gf-form-group" ng-if="infoText">
 				{{infoText}}

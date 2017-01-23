@@ -1,16 +1,18 @@
 define([
   'jquery',
-  'lodash'
+  'app/core/core',
 ],
-function ($) {
+function ($, core) {
   'use strict';
+
+  var appEvents = core.appEvents;
 
   function GraphTooltip(elem, dashboard, scope, getSeriesFn) {
     var self = this;
     var ctrl = scope.ctrl;
     var panel = ctrl.panel;
 
-    var $tooltip = $('<div id="tooltip" class="graph-tooltip">');
+    var $tooltip = $('<div class="graph-tooltip">');
 
     this.destroy = function() {
       $tooltip.remove();
@@ -41,7 +43,7 @@ function ($) {
       return j - 1;
     };
 
-    this.showTooltip = function(absoluteTime, innerHtml, pos, xMode) {
+    this.renderAndShow = function(absoluteTime, innerHtml, pos, xMode) {
       if (xMode === 'time') {
         innerHtml = '<div class="graph-tooltip-time">'+ absoluteTime + '</div>' + innerHtml;
       }
@@ -140,22 +142,48 @@ function ($) {
           plot.unhighlight();
         }
       }
-
-      if (dashboard.sharedCrosshair) {
-        ctrl.publishAppEvent('clearCrosshair');
-      }
+      appEvents.emit('graph-hover-clear');
     });
 
     elem.bind("plothover", function (event, pos, item) {
+      self.show(pos, item);
+
+      // broadcast to other graph panels that we are hovering!
+      pos.panelRelY = (pos.pageY - elem.offset().top) / elem.height();
+      appEvents.emit('graph-hover', {pos: pos, panel: panel});
+    });
+
+    this.clear = function(plot) {
+      $tooltip.detach();
+      plot.clearCrosshair();
+    };
+
+    this.show = function(pos, item) {
       var plot = elem.data().plot;
       var plotData = plot.getData();
       var xAxes = plot.getXAxes();
       var xMode = xAxes[0].options.mode;
       var seriesList = getSeriesFn();
+      var allSeriesMode = panel.tooltip.shared;
       var group, value, absoluteTime, hoverInfo, i, series, seriesHtml, tooltipFormat;
 
-      if (dashboard.sharedCrosshair) {
-        ctrl.publishAppEvent('setCrosshair', {pos: pos, scope: scope});
+      // if panelRelY is defined another panel wants us to show a tooltip
+      // get pageX from position on x axis and pageY from relative position in original panel
+      if (pos.panelRelY) {
+        var pointOffset = plot.pointOffset({x: pos.x});
+        if (Number.isNaN(pointOffset.left) || pointOffset.left < 0) {
+          $tooltip.detach();
+          return;
+        }
+        pos.pageX = elem.offset().left + pointOffset.left;
+        pos.pageY = elem.offset().top + elem.height() * pos.panelRelY;
+        plot.setCrosshair(pos);
+        allSeriesMode = true;
+
+        if (dashboard.sharedCrosshairModeOnly()) {
+          // if only crosshair mode we are done
+          return;
+        }
       }
 
       if (seriesList.length === 0) {
@@ -168,7 +196,7 @@ function ($) {
         tooltipFormat = 'YYYY-MM-DD HH:mm:ss';
       }
 
-      if (panel.tooltip.shared) {
+      if (allSeriesMode) {
         plot.unhighlight();
 
         var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
@@ -211,7 +239,7 @@ function ($) {
           plot.highlight(hoverInfo.index, hoverInfo.hoverIndex);
         }
 
-        self.showTooltip(absoluteTime, seriesHtml, pos, xMode);
+        self.renderAndShow(absoluteTime, seriesHtml, pos, xMode);
       }
       // single series tooltip
       else if (item) {
@@ -232,13 +260,13 @@ function ($) {
 
         group += '<div class="graph-tooltip-value">' + value + '</div>';
 
-        self.showTooltip(absoluteTime, group, pos, xMode);
+        self.renderAndShow(absoluteTime, group, pos, xMode);
       }
       // no hit
       else {
         $tooltip.detach();
       }
-    });
+    };
   }
 
   return GraphTooltip;

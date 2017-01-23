@@ -21,6 +21,10 @@ export class QueryVariable implements Variable {
   name: string;
   multi: boolean;
   includeAll: boolean;
+  useTags: boolean;
+  tagsQuery: string;
+  tagValuesQuery: string;
+  tags: any[];
 
   defaults = {
     type: 'query',
@@ -37,8 +41,10 @@ export class QueryVariable implements Variable {
     allValue: null,
     options: [],
     current: {},
-    tagsQuery: null,
-    tagValuesQuery: null,
+    tags: [],
+    useTags: false,
+    tagsQuery: "",
+    tagValuesQuery: "",
   };
 
   /** @ngInject **/
@@ -77,7 +83,35 @@ export class QueryVariable implements Variable {
   updateOptions() {
     return this.datasourceSrv.get(this.datasource)
     .then(this.updateOptionsFromMetricFindQuery.bind(this))
+    .then(this.updateTags.bind(this))
     .then(this.variableSrv.validateVariableSelectionState.bind(this.variableSrv, this));
+  }
+
+  updateTags(datasource) {
+    if (this.useTags) {
+      return datasource.metricFindQuery(this.tagsQuery).then(results => {
+        this.tags = [];
+        for (var i = 0; i < results.length; i++) {
+          this.tags.push(results[i].text);
+        }
+        return datasource;
+      });
+    } else {
+      delete this.tags;
+    }
+
+    return datasource;
+  }
+
+  getValuesForTag(tagKey) {
+    return this.datasourceSrv.get(this.datasource).then(datasource => {
+      var query = this.tagValuesQuery.replace('$tag', tagKey);
+      return datasource.metricFindQuery(query).then(function (results) {
+        return _.map(results, function(value) {
+          return value.text;
+        });
+      });
+    });
   }
 
   updateOptionsFromMetricFindQuery(datasource) {
@@ -147,11 +181,11 @@ export class QueryVariable implements Variable {
     } else if (sortType === 2) {
       options = _.sortBy(options, function(opt) {
         var matches = opt.text.match(/.*?(\d+).*/);
-        if (!matches) {
-          return 0;
-        } else {
-          return parseInt(matches[1], 10);
-        }
+  if (!matches) {
+    return 0;
+  } else {
+    return parseInt(matches[1], 10);
+  }
       });
     }
 

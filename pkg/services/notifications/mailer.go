@@ -94,13 +94,14 @@ func createDialer() (*gomail.Dialer, error) {
 	if setting.Smtp.CertFile != "" {
 		cert, err := tls.LoadX509KeyPair(setting.Smtp.CertFile, setting.Smtp.KeyFile)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("Could not load cert or key file. error: %v", err)
 		}
 		tlsconfig.Certificates = []tls.Certificate{cert}
 	}
 
 	d := gomail.NewDialer(host, iPort, setting.Smtp.User, setting.Smtp.Password)
 	d.TLSConfig = tlsconfig
+	d.LocalName = setting.InstanceName
 	return d, nil
 }
 
@@ -111,7 +112,6 @@ func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
 
 	var buffer bytes.Buffer
 	var err error
-	var subjectText interface{}
 
 	data := cmd.Data
 	if data == nil {
@@ -124,28 +124,34 @@ func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
 		return nil, err
 	}
 
-	subjectData := data["Subject"].(map[string]interface{})
-	subjectText, hasSubject := subjectData["value"]
+	subject := cmd.Subject
+	if cmd.Subject == "" {
+		var subjectText interface{}
+		subjectData := data["Subject"].(map[string]interface{})
+		subjectText, hasSubject := subjectData["value"]
 
-	if !hasSubject {
-		return nil, errors.New(fmt.Sprintf("Missing subject in Template %s", cmd.Template))
-	}
+		if !hasSubject {
+			return nil, errors.New(fmt.Sprintf("Missing subject in Template %s", cmd.Template))
+		}
 
-	subjectTmpl, err := template.New("subject").Parse(subjectText.(string))
-	if err != nil {
-		return nil, err
-	}
+		subjectTmpl, err := template.New("subject").Parse(subjectText.(string))
+		if err != nil {
+			return nil, err
+		}
 
-	var subjectBuffer bytes.Buffer
-	err = subjectTmpl.ExecuteTemplate(&subjectBuffer, "subject", data)
-	if err != nil {
-		return nil, err
+		var subjectBuffer bytes.Buffer
+		err = subjectTmpl.ExecuteTemplate(&subjectBuffer, "subject", data)
+		if err != nil {
+			return nil, err
+		}
+
+		subject = subjectBuffer.String()
 	}
 
 	return &Message{
 		To:           cmd.To,
 		From:         setting.Smtp.FromAddress,
-		Subject:      subjectBuffer.String(),
+		Subject:      subject,
 		Body:         buffer.String(),
 		EmbededFiles: cmd.EmbededFiles,
 	}, nil

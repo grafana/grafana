@@ -6,8 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/guregu/null.v3"
-
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -90,6 +89,8 @@ func init() {
 			queryRes := tsdb.NewQueryResult()
 
 			stringInput := query.Model.Get("stringInput").MustString()
+			stringInput = strings.Replace(stringInput, " ", "", -1)
+
 			values := []null.Float{}
 			for _, strVal := range strings.Split(stringInput, ",") {
 				if strVal == "null" {

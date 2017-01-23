@@ -10,14 +10,15 @@
 Grafana is an open source, feature rich metrics dashboard and graph editor for
 Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 
-![](http://grafana.org/assets/img/start_page_bg.png)
+![](http://grafana.org/assets/img/features/dashboard_ex1.png)
 
 - [Install instructions](http://docs.grafana.org/installation/)
 - [What's New in Grafana 2.0](http://docs.grafana.org/guides/whats-new-in-v2/)
 - [What's New in Grafana 2.1](http://docs.grafana.org/guides/whats-new-in-v2-1/)
 - [What's New in Grafana 2.5](http://docs.grafana.org/guides/whats-new-in-v2-5/)
 - [What's New in Grafana 3.0](http://docs.grafana.org/guides/whats-new-in-v3/)
-- [What's New in Grafana 4.0 Beta](http://docs.grafana.org/guides/whats-new-in-v4/)
+- [What's New in Grafana 4.0](http://docs.grafana.org/guides/whats-new-in-v4/)
+- [What's New in Grafana 4.1](http://docs.grafana.org/guides/whats-new-in-v4-1/)
 
 ## Features
 ### Graphite Target Editor
@@ -79,7 +80,7 @@ the latest master builds [here](http://grafana.org/builds)
 
 ### Dependencies
 
-- Go 1.7
+- Go 1.7.3
 - NodeJS v4+
 
 ### Get Code
@@ -113,7 +114,8 @@ To build less to css for the frontend you will need a recent version of **node (
 npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```bash
-npm install
+npm install -g yarn
+yarn install --pure-lockfile
 npm run build
 ```
 
@@ -155,10 +157,6 @@ If you have any idea for an improvement or found a bug do not hesitate to open a
 And if you have time clone this repo and submit a pull request and help me make Grafana
 the kickass metrics & devops dashboard we all dream about!
 
-Before creating a pull request be sure that "grunt test" runs without any style or unit test errors, also
-please [sign the CLA](http://docs.grafana.org/project/cla/)
-
 ## License
-
 Grafana is distributed under Apache 2.0 License.
 Work in progress Grafana 2.0 (with included Grafana backend)

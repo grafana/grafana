@@ -2,7 +2,7 @@ define([
   'angular',
   'app/core/config',
 ],
-function (angular) {
+function (angular, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -10,6 +10,8 @@ function (angular) {
   module.controller('ChangePasswordCtrl', function($scope, backendSrv, $location) {
 
     $scope.command = {};
+    $scope.authProxyEnabled = config.authProxyEnabled;
+    $scope.ldapEnabled = config.ldapEnabled;
 
     $scope.changePassword = function() {
       if (!$scope.userForm.$valid) { return; }

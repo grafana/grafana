@@ -1,9 +1,8 @@
 package api
 
 import (
-	"crypto/tls"
-	"crypto/x509"
-	"net"
+	"bytes"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -11,6 +10,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -18,46 +18,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func DataProxyTransport(ds *m.DataSource) (*http.Transport, error) {
-	transport := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			InsecureSkipVerify: true,
-		},
-		Proxy: http.ProxyFromEnvironment,
-		Dial: (&net.Dialer{
-			Timeout:   30 * time.Second,
-			KeepAlive: 30 * time.Second,
-		}).Dial,
-		TLSHandshakeTimeout: 10 * time.Second,
-	}
-
-	var tlsAuth, tlsAuthWithCACert bool
-	if ds.JsonData != nil {
-		tlsAuth = ds.JsonData.Get("tlsAuth").MustBool(false)
-		tlsAuthWithCACert = ds.JsonData.Get("tlsAuthWithCACert").MustBool(false)
-	}
-
-	if tlsAuth {
-		transport.TLSClientConfig.InsecureSkipVerify = false
-
-		decrypted := ds.SecureJsonData.Decrypt()
-
-		if tlsAuthWithCACert && len(decrypted["tlsCACert"]) > 0 {
-			caPool := x509.NewCertPool()
-			ok := caPool.AppendCertsFromPEM([]byte(decrypted["tlsCACert"]))
-			if ok {
-				transport.TLSClientConfig.RootCAs = caPool
-			}
-		}
-
-		cert, err := tls.X509KeyPair([]byte(decrypted["tlsClientCert"]), []byte(decrypted["tlsClientKey"]))
-		if err != nil {
-			return nil, err
-		}
-		transport.TLSClientConfig.Certificates = []tls.Certificate{cert}
-	}
-	return transport, nil
-}
+var (
+	dataproxyLogger log.Logger = log.New("data-proxy-log")
+)
 
 func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
@@ -160,11 +123,37 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	}
 
 	proxy := NewReverseProxy(ds, proxyPath, targetUrl)
-	proxy.Transport, err = DataProxyTransport(ds)
+	proxy.Transport, err = ds.GetHttpTransport()
 	if err != nil {
 		c.JsonApiErr(400, "Unable to load TLS certificate", err)
 		return
 	}
+
+	logProxyRequest(ds.Type, c)
 	proxy.ServeHTTP(c.Resp, c.Req.Request)
 	c.Resp.Header().Del("Set-Cookie")
+}
+
+func logProxyRequest(dataSourceType string, c *middleware.Context) {
+	if !setting.DataProxyLogging {
+		return
+	}
+
+	var body string
+	if c.Req.Request.Body != nil {
+		buffer, err := ioutil.ReadAll(c.Req.Request.Body)
+		if err == nil {
+			c.Req.Request.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
+			body = string(buffer)
+		}
+	}
+
+	dataproxyLogger.Info("Proxying incoming request",
+		"userid", c.UserId,
+		"orgid", c.OrgId,
+		"username", c.Login,
+		"datasource", dataSourceType,
+		"uri", c.Req.RequestURI,
+		"method", c.Req.Request.Method,
+		"body", body)
 }

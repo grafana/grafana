@@ -73,9 +73,9 @@ func GetAlerts(c *middleware.Context) Response {
 			Name:           alert.Name,
 			Message:        alert.Message,
 			State:          alert.State,
-			EvalDate:       alert.EvalDate,
 			NewStateDate:   alert.NewStateDate,
 			ExecutionError: alert.ExecutionError,
+			EvalData:       alert.EvalData,
 		})
 	}
 
@@ -121,10 +121,10 @@ func AlertTest(c *middleware.Context, dto dtos.AlertTestCommand) Response {
 	}
 
 	res := backendCmd.Result
-
 	dtoRes := &dtos.AlertTestResult{
 		Firing:         res.Firing,
 		ConditionEvals: res.ConditionEvals,
+		State:          res.Rule.State,
 	}
 
 	if res.Error != nil {
@@ -171,6 +171,10 @@ func DelAlert(c *middleware.Context) Response {
 
 	var resp = map[string]interface{}{"alertId": alertId}
 	return Json(200, resp)
+}
+
+func GetAlertNotifiers(c *middleware.Context) Response {
+	return Json(200, alerting.GetNotifiers())
 }
 
 func GetAlertNotifications(c *middleware.Context) Response {
@@ -259,10 +263,11 @@ func NotificationTest(c *middleware.Context, dto dtos.NotificationTestCommand) R
 
 //POST /api/alerts/:alertId/pause
 func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
+	alertId := c.ParamsInt64("alertId")
 	cmd := models.PauseAlertCommand{
-		OrgId:   c.OrgId,
-		AlertId: c.ParamsInt64("alertId"),
-		Paused:  dto.Paused,
+		OrgId:    c.OrgId,
+		AlertIds: []int64{alertId},
+		Paused:   dto.Paused,
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -277,9 +282,35 @@ func PauseAlert(c *middleware.Context, dto dtos.PauseAlertCommand) Response {
 	}
 
 	result := map[string]interface{}{
-		"alertId": cmd.AlertId,
+		"alertId": alertId,
 		"state":   response,
 		"message": "alert " + pausedState,
+	}
+
+	return Json(200, result)
+}
+
+//POST /api/admin/pause-all-alerts
+func PauseAllAlerts(c *middleware.Context, dto dtos.PauseAllAlertsCommand) Response {
+	updateCmd := models.PauseAllAlertCommand{
+		Paused: dto.Paused,
+	}
+
+	if err := bus.Dispatch(&updateCmd); err != nil {
+		return ApiError(500, "Failed to pause alerts", err)
+	}
+
+	var response models.AlertStateType = models.AlertStatePending
+	pausedState := "un paused"
+	if updateCmd.Paused {
+		response = models.AlertStatePaused
+		pausedState = "paused"
+	}
+
+	result := map[string]interface{}{
+		"state":          response,
+		"message":        "alerts " + pausedState,
+		"alertsAffected": updateCmd.ResultCount,
 	}
 
 	return Json(200, result)

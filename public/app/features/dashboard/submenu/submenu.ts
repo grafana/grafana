@@ -15,15 +15,10 @@ export class SubmenuCtrl {
               private $location) {
     this.annotations = this.dashboard.templating.list;
     this.variables = this.variableSrv.variables;
-    console.log(this.variables);
   }
 
   annotationStateChanged() {
     this.$rootScope.$broadcast('refresh');
-  }
-
-  getValuesForTag(variable, tagKey) {
-    return this.variableSrv.getValuesForTag(variable, tagKey);
   }
 
   variableUpdated(variable) {

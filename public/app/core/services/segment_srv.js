@@ -23,6 +23,9 @@ function (angular, _, coreModule) {
         return;
       }
 
+      // temp hack to work around legacy inconsistency in segment model
+      this.text = options.value;
+
       this.cssClass = options.cssClass;
       this.custom = options.custom;
       this.type = options.type;
@@ -79,7 +82,7 @@ function (angular, _, coreModule) {
     this.transformToSegments = function(addTemplateVars, variableTypeFilter) {
       return function(results) {
         var segments = _.map(results, function(segment) {
-          return self.newSegment({ value: segment.text, expandable: segment.expandable });
+          return self.newSegment({value: segment.text, expandable: segment.expandable});
         });
 
         if (addTemplateVars) {

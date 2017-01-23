@@ -9,35 +9,6 @@
   }
 }
 
-.playlist-active {
-  @include hide-controls();
-
-  .navbar-inner {
-    background: transparent;
-  }
-  .navbar-brand-btn,
-  .navbar-page-btn {
-    border: none;
-    background: transparent;
-    .fa, .icon-gf {
-      opacity: 0;
-    }
-  }
-
-  .dashnav-refresh-action,
-  .dashnav-zoom-out,
-  .dashnav-action-icons,
-  .dashnav-move-timeframe  {
-    display: none;
-  }
-
-  .dash-playlist-actions {
-    a {
-      color: $text-color-faint !important;
-    }
-  }
-}
-
 .hide-controls {
   @include hide-controls();
 }
@@ -49,6 +20,7 @@
   }
 }
 
+.playlist-active,
 .user-activity-low {
   .add-row-panel-hint,
   .dash-row-menu-container,
@@ -57,6 +29,8 @@
   .dashnav-refresh-action,
   .dashnav-zoom-out,
   .dashnav-action-icons,
+  .panel-info-corner--info,
+  .panel-info-corner--links,
   .dashnav-move-timeframe  {
     opacity: 0;
     transition: all 1.5s ease-in-out 1s;
@@ -88,5 +62,14 @@
   .gf-timepicker-nav-btn {
     transform: translate3d(40px, 0, 0);
     transition: transform 1.5s ease-in-out 1s;
+  }
+}
+
+.playlist-active {
+  .dash-playlist-actions  {
+    .fa {
+      opacity: 1;
+      color: $text-color-faint !important;
+    }
   }
 }

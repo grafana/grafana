@@ -13,6 +13,14 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
+type NotifierPlugin struct {
+	Type            string          `json:"type"`
+	Name            string          `json:"name"`
+	Description     string          `json:"description"`
+	OptionsTemplate string          `json:"optionsTemplate"`
+	Factory         NotifierFactory `json:"-"`
+}
+
 type RootNotifier struct {
 	log log.Logger
 }
@@ -130,12 +138,12 @@ func (n *RootNotifier) getNotifiers(orgId int64, notificationIds []int64, contex
 }
 
 func (n *RootNotifier) createNotifierFor(model *m.AlertNotification) (Notifier, error) {
-	factory, found := notifierFactories[model.Type]
+	notifierPlugin, found := notifierFactories[model.Type]
 	if !found {
 		return nil, errors.New("Unsupported notification type")
 	}
 
-	return factory(model)
+	return notifierPlugin.Factory(model)
 }
 
 func shouldUseNotification(notifier Notifier, context *EvalContext) bool {
@@ -152,8 +160,18 @@ func shouldUseNotification(notifier Notifier, context *EvalContext) bool {
 
 type NotifierFactory func(notification *m.AlertNotification) (Notifier, error)
 
-var notifierFactories map[string]NotifierFactory = make(map[string]NotifierFactory)
+var notifierFactories map[string]*NotifierPlugin = make(map[string]*NotifierPlugin)
 
-func RegisterNotifier(typeName string, factory NotifierFactory) {
-	notifierFactories[typeName] = factory
+func RegisterNotifier(plugin *NotifierPlugin) {
+	notifierFactories[plugin.Type] = plugin
+}
+
+func GetNotifiers() []*NotifierPlugin {
+	list := make([]*NotifierPlugin, 0)
+
+	for _, value := range notifierFactories {
+		list = append(list, value)
+	}
+
+	return list
 }

@@ -130,14 +130,8 @@ export class DataProcessor {
 
     let fields = [];
     var firstItem = dataList[0];
-    if (firstItem.type === 'docs'){
-      if (firstItem.datapoints.length === 0) {
-        return [];
-      }
-
-      let fieldParts = [];
-
-      function getPropertiesRecursive(obj) {
+    let fieldParts = [];
+    function getPropertiesRecursive(obj) {
         _.forEach(obj, (value, key) => {
           if (_.isObject(value)) {
             fieldParts.push(key);
@@ -150,8 +144,11 @@ export class DataProcessor {
           }
         });
         fieldParts.pop();
+    }
+    if (firstItem.type === 'docs'){
+      if (firstItem.datapoints.length === 0) {
+        return [];
       }
-
       getPropertiesRecursive(firstItem.datapoints[0]);
       return fields;
     }
@@ -166,7 +163,7 @@ export class DataProcessor {
         return [
           {text: 'Avg', value: 'avg'},
           {text: 'Min', value: 'min'},
-          {text: 'Max', value: 'min'},
+          {text: 'Max', value: 'max'},
           {text: 'Total', value: 'total'},
           {text: 'Count', value: 'count'},
         ];

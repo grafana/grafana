@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 )
 
-func makeCert(tlsPoolName string, config MySQLConfig) (*tls.Config, error) {
+func makeCert(tlsPoolName string, config DatabaseConfig) (*tls.Config, error) {
 	rootCertPool := x509.NewCertPool()
 	pem, err := ioutil.ReadFile(config.CaCertPath)
 	if err != nil {

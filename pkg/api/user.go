@@ -30,6 +30,14 @@ func getUserUserProfile(userId int64) Response {
 
 // POST /api/user
 func UpdateSignedInUser(c *middleware.Context, cmd m.UpdateUserCommand) Response {
+	if setting.AuthProxyEnabled {
+		if setting.AuthProxyHeaderProperty == "email" && cmd.Email != c.Email {
+			return ApiError(400, "Not allowed to change email when auth proxy is using email property", nil)
+		}
+		if setting.AuthProxyHeaderProperty == "username" && cmd.Login != c.Login {
+			return ApiError(400, "Not allowed to change username when auth proxy is using username property", nil)
+		}
+	}
 	cmd.UserId = c.UserId
 	return handleUpdateUser(cmd)
 }
@@ -146,6 +154,10 @@ func ChangeActiveOrgAndRedirectToHome(c *middleware.Context) {
 }
 
 func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) Response {
+	if setting.LdapEnabled || setting.AuthProxyEnabled {
+		return ApiError(400, "Not allowed to change password when LDAP or Auth Proxy is enabled", nil)
+	}
+
 	userQuery := m.GetUserByIdQuery{Id: c.UserId}
 
 	if err := bus.Dispatch(&userQuery); err != nil {
@@ -157,8 +169,9 @@ func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) 
 		return ApiError(401, "Invalid old password", nil)
 	}
 
-	if len(cmd.NewPassword) < 4 {
-		return ApiError(400, "New password too short", nil)
+	password := m.Password(cmd.NewPassword)
+	if password.IsWeak() {
+		return ApiError(400, "New password is too short", nil)
 	}
 
 	cmd.UserId = c.UserId
@@ -179,4 +192,35 @@ func SearchUsers(c *middleware.Context) Response {
 	}
 
 	return Json(200, query.Result)
+}
+
+func SetHelpFlag(c *middleware.Context) Response {
+	flag := c.ParamsInt64(":id")
+
+	bitmask := &c.HelpFlags1
+	bitmask.AddFlag(m.HelpFlags1(flag))
+
+	cmd := m.SetUserHelpFlagCommand{
+		UserId:     c.UserId,
+		HelpFlags1: *bitmask,
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to update help flag", err)
+	}
+
+	return Json(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
+}
+
+func ClearHelpFlags(c *middleware.Context) Response {
+	cmd := m.SetUserHelpFlagCommand{
+		UserId:     c.UserId,
+		HelpFlags1: m.HelpFlags1(0),
+	}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to update help flag", err)
+	}
+
+	return Json(200, &util.DynMap{"message": "Help flag set", "helpFlags1": cmd.HelpFlags1})
 }

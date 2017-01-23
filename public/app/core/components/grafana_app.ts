@@ -73,6 +73,9 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
       var ignoreSideMenuHide;
       var body = $('body');
 
+      // see https://github.com/zenorocha/clipboard.js/issues/155
+      $.fn.modal.Constructor.prototype.enforceFocus = function() {};
+
       // handle sidemenu open state
       scope.$watch('contextSrv.sidemenu', newVal => {
         if (newVal !== undefined) {

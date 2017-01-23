@@ -1,11 +1,11 @@
 machine:
   node:
-    version: 5.11.1
+    version: 6.9.2
   environment:
     GOPATH: "/home/ubuntu/.go_workspace"
     ORG_PATH: "github.com/grafana"
     REPO_PATH: "${ORG_PATH}/grafana"
-    GODIST: "go1.7.3.linux-amd64.tar.gz"
+    GODIST: "go1.7.4.linux-amd64.tar.gz"
   post:
     - mkdir -p download
     - test -e download/$GODIST || curl -o download/$GODIST https://storage.googleapis.com/golang/$GODIST
@@ -22,10 +22,10 @@ test:
   override:
      - bash scripts/circle-test.sh
 
-deployment:
-  master:
-    branch: master
-    owner: grafana
-    commands:
-      - ./scripts/trigger_grafana_packer.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN}
-      - ./scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN}
+# deployment:
+#   master:
+#     branch: master
+#     owner: grafana
+#     commands:
+#       - ./scripts/trigger_grafana_packer.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN}
+#       - ./scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN}

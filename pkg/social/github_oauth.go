@@ -187,9 +187,9 @@ func (s *SocialGithub) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	}
 
 	userInfo := &BasicUserInfo{
-		Name:     data.Login,
-		Login:    data.Login,
-		Email:    data.Email,
+		Name:  data.Login,
+		Login: data.Login,
+		Email: data.Email,
 	}
 
 	if !s.IsTeamMember(client) {

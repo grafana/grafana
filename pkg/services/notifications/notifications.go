@@ -65,6 +65,7 @@ func SendWebhookSync(ctx context.Context, cmd *m.SendWebhookSync) error {
 		Password:   cmd.Password,
 		Body:       cmd.Body,
 		HttpMethod: cmd.HttpMethod,
+		HttpHeader: cmd.HttpHeader,
 	})
 }
 
@@ -80,6 +81,7 @@ func sendEmailCommandHandlerSync(ctx context.Context, cmd *m.SendEmailCommandSyn
 		Template:     cmd.Template,
 		To:           cmd.To,
 		EmbededFiles: cmd.EmbededFiles,
+		Subject:      cmd.Subject,
 	})
 
 	if err != nil {

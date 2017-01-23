@@ -110,6 +110,7 @@ function(angular, _) {
       _.each(dash.templating.list, function(value) {
         value.current = null;
         value.options = null;
+        value.filters = null;
       });
     };
 

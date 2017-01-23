@@ -46,13 +46,14 @@ func newMacaron() *macaron.Macaron {
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
-	if setting.EnforceDomain {
-		m.Use(middleware.ValidateHostHeader(setting.Domain))
-	}
-
 	m.Use(middleware.GetContextHandler())
 	m.Use(middleware.Sessioner(&setting.SessionOptions))
 	m.Use(middleware.RequestMetrics())
+
+	// needs to be after context handler
+	if setting.EnforceDomain {
+		m.Use(middleware.ValidateHostHeader(setting.Domain))
+	}
 
 	return m
 }

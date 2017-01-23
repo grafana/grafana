@@ -3,9 +3,9 @@ package conditions
 import (
 	"encoding/json"
 
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"gopkg.in/guregu/null.v3"
 )
 
 var (
@@ -17,9 +17,9 @@ type AlertEvaluator interface {
 	Eval(reducedValue null.Float) bool
 }
 
-type NoDataEvaluator struct{}
+type NoValueEvaluator struct{}
 
-func (e *NoDataEvaluator) Eval(reducedValue null.Float) bool {
+func (e *NoValueEvaluator) Eval(reducedValue null.Float) bool {
 	return reducedValue.Valid == false
 }
 
@@ -118,8 +118,8 @@ func NewAlertEvaluator(model *simplejson.Json) (AlertEvaluator, error) {
 		return newRangedEvaluator(typ, model)
 	}
 
-	if typ == "no_data" {
-		return &NoDataEvaluator{}, nil
+	if typ == "no_value" {
+		return &NoValueEvaluator{}, nil
 	}
 
 	return nil, alerting.ValidationError{Reason: "Evaluator invalid evaluator type: " + typ}

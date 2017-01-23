@@ -1,16 +1,17 @@
 <navbar icon="icon-gf icon-gf-alert" title="Alerting" title-url="alerting">
 	<a href="alerting/notifications" class="navbar-page-btn">
-		<i class="fa fa-fw fa-envelope-o"></i>
-		Notifications
+		<i class="fa fa-fw fa-rss"></i>
+		Notification channels
 	</a>
 </navbar>
 
-<div class="page-container" >
+<div class="page-container">
   <div class="page-header">
-    <h1>Alert notification</h1>
+    <h1 ng-show="ctrl.model.id">Edit Channel</h1>
+    <h1 ng-show="!ctrl.model.id">New Channel</h1>
   </div>
 
-  <form name="ctrl.theForm">
+  <form name="ctrl.theForm" ng-if="ctrl.notifiers">
     <div class="gf-form-group">
       <div class="gf-form">
         <span class="gf-form-label width-12">Name</span>
@@ -19,7 +20,7 @@
       <div class="gf-form">
         <span class="gf-form-label width-12">Type</span>
         <div class="gf-form-select-wrapper width-15">
-          <select class="gf-form-input" ng-model="ctrl.model.type" ng-options="t for t in ['webhook', 'email', 'slack', 'pagerduty']" ng-change="ctrl.typeChanged(notification, $index)">
+          <select class="gf-form-input" ng-model="ctrl.model.type" ng-options="t.type as t.name for t in ctrl.notifiers" ng-change="ctrl.typeChanged(notification, $index)">
           </select>
         </div>
       </div>
@@ -34,84 +35,7 @@
       </div>
     </div>
 
-    <div class="gf-form-group" ng-if="ctrl.model.type === 'webhook'">
-      <h3 class="page-heading">Webhook settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Url</span>
-        <input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Http Method</span>
-        <div class="gf-form-select-wrapper width-14">
-          <select class="gf-form-input" ng-model="ctrl.model.settings.httpMethod" ng-options="t for t in ['POST', 'PUT']">
-          </select>
-        </div>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Username</span>
-        <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.username"></input>
-      </div>
-      <div class="gf-form">
-        <span class="gf-form-label width-10">Password</span>
-        <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.password"></input>
-      </div>
-    </div>
-
-    <div class="gf-form-group" ng-if="ctrl.model.type === 'slack'">
-      <h3 class="page-heading">Slack settings</h3>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Url</span>
-        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Slack incoming webhook url"></input>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Recipient</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.recipient"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Override default channel or user, use #channel-name or @username
-        </info-popover>
-      </div>
-      <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Mention</span>
-        <input type="text"
-          class="gf-form-input max-width-30"
-          ng-model="ctrl.model.settings.mention"
-          data-placement="right">
-        </input>
-        <info-popover mode="right-absolute">
-          Mention a user or a group using @ when notifying in a channel
-        </info-popover>
-      </div>
-    </div>
-
-    <div class="gf-form-group section" ng-if="ctrl.model.type === 'email'">
-      <h3 class="page-heading">Email addresses</h3>
-      <div class="gf-form">
-        <textarea rows="7" class="gf-form-input width-25" required ng-model="ctrl.model.settings.addresses"></textarea>
-      </div>
-      <div class="gf-form">
-        <span>You can enter multiple email addresses using a ";" separator</span>
-      </div>
-    </div>
-
-    <div class="gf-form-group" ng-if="ctrl.model.type === 'pagerduty'">
-      <h3 class="page-heading">Pagerduty settings</h3>
-      <div class="gf-form">
-        <span class="gf-form-label width-14">Integration Key</span>
-        <input type="text" required class="gf-form-input max-width-22" ng-model="ctrl.model.settings.integrationKey" placeholder="Pagerduty integeration Key"></input>
-      </div>
-      <div class="gf-form">
-        <gf-form-switch
-           class="gf-form"
-           label="Auto resolve incidents"
-           label-class="width-14"
-           checked="ctrl.model.settings.autoResolve"
-           tooltip="Resolve incidents in pagerduty once the alert goes back to ok.">
-        </gf-form-switch>
-      </div>
+    <div class="gf-form-group" ng-include src="ctrl.notifierTemplateId">
     </div>
 
     <div class="gf-form-group">

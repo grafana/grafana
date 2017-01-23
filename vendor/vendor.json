@@ -299,6 +299,14 @@
 			"versionExact": "v1.5.8"
 		},
 		{
+			"checksumSHA1": "HtKiIAPKsBg2s1c5ytRkdZ/lqO8=",
+			"path": "github.com/aws/aws-sdk-go/service/s3",
+			"revision": "898c81ba64b9a467379d35e3fabad133beae0ee4",
+			"revisionTime": "2016-11-18T23:08:35Z",
+			"version": "v1.5.8",
+			"versionExact": "v1.5.8"
+		},
+		{
 			"checksumSHA1": "ouwhxcAsIYQ6oJbMRdLW/Ys/iyg=",
 			"path": "github.com/aws/aws-sdk-go/service/sts",
 			"revision": "898c81ba64b9a467379d35e3fabad133beae0ee4",
@@ -313,6 +321,12 @@
 			"revisionTime": "2016-08-27T06:11:18Z",
 			"version": "v1.21.1",
 			"versionExact": "v1.21.1"
+		},
+		{
+			"checksumSHA1": "8z32QKTSDusa4QQyunKE4kyYXZ8=",
+			"path": "github.com/patrickmn/go-cache",
+			"revision": "e7a9def80f35fe1b170b7b8b68871d59dea117e1",
+			"revisionTime": "2016-11-25T23:48:19Z"
 		},
 		{
 			"checksumSHA1": "SMUvX2B8eoFd9wnPofwBKlN6btE=",
@@ -397,12 +411,6 @@
 			"path": "gopkg.in/gomail.v2",
 			"revision": "81ebce5c23dfd25c6c67194b37d3dd3f338c98b1",
 			"revisionTime": "2016-04-11T21:29:32Z"
-		},
-		{
-			"checksumSHA1": "PoHLopxwkiXxa3uVhezeq/qJ/Vo=",
-			"path": "gopkg.in/guregu/null.v3",
-			"revision": "41961cea0328defc5f95c1c473f89ebf0d1813f6",
-			"revisionTime": "2016-02-28T00:53:16Z"
 		}
 	],
 	"rootPath": "github.com/grafana/grafana"

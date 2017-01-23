@@ -117,6 +117,7 @@ coreModule.directive('jsonNode', ['ajsRecursiveDirectiveHelper', function jsonNo
         var isArray = utils.is(scope.value, 'Array');
         scope.preview = isArray ? '[ ' : '{ ';
         utils.forKeys(scope.value, function jsonNodeDirectiveLinkForKeys(key, value) {
+          if (value === null) { scope.value[key] = 'null'; }
           if (isArray) {
             scope.preview += value + ', ';
           } else {

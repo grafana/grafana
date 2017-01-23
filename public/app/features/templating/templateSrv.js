@@ -17,6 +17,11 @@ function (angular, _, kbn) {
     this._grafanaVariables = {};
     this._adhocVariables = {};
 
+    // default built ins
+    this._builtIns = {};
+    this._builtIns['__interval'] = {text: '1s', value: '1s'};
+    this._builtIns['__interval_ms'] = {text: '100', value: '100'};
+
     this.init = function(variables) {
       this.variables = variables;
       this.updateTemplateData();
@@ -25,6 +30,7 @@ function (angular, _, kbn) {
     this.updateTemplateData = function() {
       this._index = {};
       this._filters = {};
+      this._adhocVariables = {};
 
       for (var i = 0; i < this.variables.length; i++) {
         var variable = this.variables[i];
@@ -41,6 +47,7 @@ function (angular, _, kbn) {
 
         this._index[variable.name] = variable;
       }
+
     };
 
     this.variableInitialized = function(variable) {
@@ -96,13 +103,16 @@ function (angular, _, kbn) {
           return value.join('|');
         }
         case "distributed": {
-          return this.distributeVariable(value, variable.name);
-        }
-        default:  {
           if (typeof value === 'string') {
             return value;
           }
-          return '{' + value.join(',') + '}';
+          return this.distributeVariable(value, variable.name);
+        }
+        default:  {
+          if (_.isArray(value)) {
+            return '{' + value.join(',') + '}';
+          }
+          return value;
         }
       }
     };
@@ -111,10 +121,18 @@ function (angular, _, kbn) {
       this._grafanaVariables[name] = value;
     };
 
-    this.variableExists = function(expression) {
+    this.getVariableName = function(expression) {
       this._regex.lastIndex = 0;
       var match = this._regex.exec(expression);
-      return match && (self._index[match[1] || match[2]] !== void 0);
+      if (!match) {
+        return null;
+      }
+      return match[1] || match[2];
+    };
+
+    this.variableExists = function(expression) {
+      var name = this.getVariableName(expression);
+      return name && (self._index[name] !== void 0);
     };
 
     this.highlightVariablesAsHtml = function(str) {
@@ -123,7 +141,7 @@ function (angular, _, kbn) {
       str = _.escape(str);
       this._regex.lastIndex = 0;
       return str.replace(this._regex, function(match, g1, g2) {
-        if (self._index[g1 || g2]) {
+        if (self._index[g1 || g2] || self._builtIns[g1 || g2]) {
           return '<span class="template-variable">' + match + '</span>';
         }
         return match;

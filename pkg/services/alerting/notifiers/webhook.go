@@ -10,7 +10,35 @@ import (
 )
 
 func init() {
-	alerting.RegisterNotifier("webhook", NewWebHookNotifier)
+	alerting.RegisterNotifier(&alerting.NotifierPlugin{
+		Type:        "webhook",
+		Name:        "webhook",
+		Description: "Sends HTTP POST request to a URL",
+		Factory:     NewWebHookNotifier,
+		OptionsTemplate: `
+      <h3 class="page-heading">Webhook settings</h3>
+      <div class="gf-form">
+        <span class="gf-form-label width-10">Url</span>
+        <input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url"></input>
+      </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-10">Http Method</span>
+        <div class="gf-form-select-wrapper width-14">
+          <select class="gf-form-input" ng-model="ctrl.model.settings.httpMethod" ng-options="t for t in ['POST', 'PUT']">
+          </select>
+        </div>
+      </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-10">Username</span>
+        <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.username"></input>
+      </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-10">Password</span>
+        <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.password"></input>
+      </div>
+    `,
+	})
+
 }
 
 func NewWebHookNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
@@ -22,7 +50,7 @@ func NewWebHookNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	return &WebhookNotifier{
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		Url:          url,
-		User:         model.Settings.Get("user").MustString(),
+		User:         model.Settings.Get("username").MustString(),
 		Password:     model.Settings.Get("password").MustString(),
 		HttpMethod:   model.Settings.Get("httpMethod").MustString("POST"),
 		log:          log.New("alerting.notifier.webhook"),
@@ -58,6 +86,10 @@ func (this *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 		bodyJSON.Set("imageUrl", evalContext.ImagePublicUrl)
 	}
 
+	if evalContext.Rule.Message != "" {
+		bodyJSON.Set("message", evalContext.Rule.Message)
+	}
+
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &m.SendWebhookSync{
@@ -70,6 +102,7 @@ func (this *WebhookNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		this.log.Error("Failed to send webhook", "error", err, "webhook", this.Name)
+		return err
 	}
 
 	return nil

@@ -88,7 +88,8 @@ export class KeybindingSrv {
     // });
 
     this.bind('mod+o', () => {
-      dashboard.sharedCrosshair = !dashboard.sharedCrosshair;
+      dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
+      appEvents.emit('graph-hover-clear');
       scope.broadcastRefresh();
     });
 
@@ -101,7 +102,11 @@ export class KeybindingSrv {
     });
 
     this.bind('t z', () => {
-      scope.appEvent('zoom-out');
+      scope.appEvent('zoom-out', 2);
+    });
+
+    this.bind('ctrl+z', () => {
+      scope.appEvent('zoom-out', 2);
     });
 
     this.bind('t left', () => {

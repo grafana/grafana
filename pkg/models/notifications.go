@@ -7,6 +7,7 @@ var ErrInvalidEmailCode = errors.New("Invalid or expired email code")
 type SendEmailCommand struct {
 	To           []string
 	Template     string
+	Subject      string
 	Data         map[string]interface{}
 	Info         string
 	EmbededFiles []string
@@ -22,6 +23,7 @@ type SendWebhookSync struct {
 	Password   string
 	Body       string
 	HttpMethod string
+	HttpHeader map[string]string
 }
 
 type SendResetPasswordEmailCommand struct {

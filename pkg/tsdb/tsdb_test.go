@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -15,9 +16,9 @@ func TestMetricQuery(t *testing.T) {
 		Convey("Given 3 queries for 2 data sources", func() {
 			request := &Request{
 				Queries: QuerySlice{
-					{RefId: "A", DataSource: &DataSourceInfo{Id: 1}},
-					{RefId: "B", DataSource: &DataSourceInfo{Id: 1}},
-					{RefId: "C", DataSource: &DataSourceInfo{Id: 2}},
+					{RefId: "A", DataSource: &models.DataSource{Id: 1}},
+					{RefId: "B", DataSource: &models.DataSource{Id: 1}},
+					{RefId: "C", DataSource: &models.DataSource{Id: 2}},
 				},
 			}
 
@@ -32,9 +33,9 @@ func TestMetricQuery(t *testing.T) {
 		Convey("Given query 2 depends on query 1", func() {
 			request := &Request{
 				Queries: QuerySlice{
-					{RefId: "A", DataSource: &DataSourceInfo{Id: 1}},
-					{RefId: "B", DataSource: &DataSourceInfo{Id: 2}},
-					{RefId: "C", DataSource: &DataSourceInfo{Id: 3}, Depends: []string{"A", "B"}},
+					{RefId: "A", DataSource: &models.DataSource{Id: 1}},
+					{RefId: "B", DataSource: &models.DataSource{Id: 2}},
+					{RefId: "C", DataSource: &models.DataSource{Id: 3}, Depends: []string{"A", "B"}},
 				},
 			}
 
@@ -56,7 +57,7 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When executing request with one query", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
 			},
 		}
 
@@ -75,8 +76,8 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When executing one request with two queries from same data source", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
-				{RefId: "B", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
+				{RefId: "B", DataSource: &models.DataSource{Id: 1, Type: "test"}},
 			},
 		}
 
@@ -101,9 +102,9 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When executing one request with three queries from different datasources", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
-				{RefId: "B", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
-				{RefId: "C", DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}},
+				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
+				{RefId: "B", DataSource: &models.DataSource{Id: 1, Type: "test"}},
+				{RefId: "C", DataSource: &models.DataSource{Id: 2, Type: "test"}},
 			},
 		}
 
@@ -118,7 +119,7 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When query uses data source of unknown type", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", DataSource: &DataSourceInfo{Id: 1, PluginId: "asdasdas"}},
+				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "asdasdas"}},
 			},
 		}
 
@@ -130,10 +131,10 @@ func TestMetricQuery(t *testing.T) {
 		req := &Request{
 			Queries: QuerySlice{
 				{
-					RefId: "A", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"},
+					RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"},
 				},
 				{
-					RefId: "B", DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}, Depends: []string{"A"},
+					RefId: "B", DataSource: &models.DataSource{Id: 2, Type: "test"}, Depends: []string{"A"},
 				},
 			},
 		}
@@ -167,9 +168,9 @@ func TestMetricQuery(t *testing.T) {
 }
 
 func registerFakeExecutor() *FakeExecutor {
-	executor := NewFakeExecutor(nil)
-	RegisterExecutor("test", func(dsInfo *DataSourceInfo) Executor {
-		return executor
+	executor, _ := NewFakeExecutor(nil)
+	RegisterExecutor("test", func(dsInfo *models.DataSource) (Executor, error) {
+		return executor, nil
 	})
 
 	return executor

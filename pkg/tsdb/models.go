@@ -1,15 +1,16 @@
 package tsdb
 
 import (
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"gopkg.in/guregu/null.v3"
+	"github.com/grafana/grafana/pkg/models"
 )
 
 type Query struct {
 	RefId         string
 	Model         *simplejson.Json
 	Depends       []string
-	DataSource    *DataSourceInfo
+	DataSource    *models.DataSource
 	Results       []*TimeSeries
 	Exclude       bool
 	MaxDataPoints int64
@@ -26,20 +27,6 @@ type Request struct {
 type Response struct {
 	BatchTimings []*BatchTiming          `json:"timings"`
 	Results      map[string]*QueryResult `json:"results"`
-}
-
-type DataSourceInfo struct {
-	Id                int64
-	Name              string
-	PluginId          string
-	Url               string
-	Password          string
-	User              string
-	Database          string
-	BasicAuth         bool
-	BasicAuthUser     string
-	BasicAuthPassword string
-	JsonData          *simplejson.Json
 }
 
 type BatchTiming struct {

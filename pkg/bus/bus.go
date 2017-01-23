@@ -7,7 +7,7 @@ import (
 )
 
 type HandlerFunc interface{}
-type CtxHandlerFunc func() 
+type CtxHandlerFunc func()
 type Msg interface{}
 
 type Bus interface {

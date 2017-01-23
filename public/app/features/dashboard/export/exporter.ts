@@ -145,18 +145,14 @@ export class DashboardExporter {
         }
       }
 
-      requires = _.map(requires, req =>  {
-        return req;
-      });
-
       // make inputs and requires a top thing
       var newObj = {};
       newObj["__inputs"] = inputs;
-      newObj["__requires"] = requires;
+      newObj["__requires"] = _.sortBy(requires, ['id']);
 
       _.defaults(newObj, saveModel);
-
       return newObj;
+
     }).catch(err => {
       console.log('Export failed:', err);
       return {

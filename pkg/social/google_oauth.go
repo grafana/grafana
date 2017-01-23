@@ -45,8 +45,8 @@ func (s *SocialGoogle) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 		return nil, err
 	}
 	return &BasicUserInfo{
-		Name:     data.Name,
-		Email:    data.Email,
-		Login:    data.Email,
+		Name:  data.Name,
+		Email: data.Email,
+		Login: data.Email,
 	}, nil
 }

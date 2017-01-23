@@ -5,10 +5,9 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/plugins"
-	//"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
 )
 
@@ -101,7 +100,7 @@ func AddDataSource(c *middleware.Context, cmd m.AddDataSourceCommand) {
 		return
 	}
 
-	c.JSON(200, util.DynMap{"message": "Datasource added", "id": cmd.Result.Id})
+	c.JSON(200, util.DynMap{"message": "Datasource added", "id": cmd.Result.Id, "name": cmd.Result.Name})
 }
 
 func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) Response {
@@ -118,7 +117,7 @@ func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) Resp
 		return ApiError(500, "Failed to update datasource", err)
 	}
 
-	return Json(200, "Datasource updated")
+	return Json(200, util.DynMap{"message": "Datasource updated", "id": cmd.Id, "name": cmd.Name})
 }
 
 func fillWithSecureJsonData(cmd *m.UpdateDataSourceCommand) error {
@@ -207,12 +206,13 @@ func convertModelToDtos(ds *m.DataSource) dtos.DataSource {
 		WithCredentials:   ds.WithCredentials,
 		IsDefault:         ds.IsDefault,
 		JsonData:          ds.JsonData,
+		SecureJsonFields:  map[string]bool{},
 	}
 
-	if len(ds.SecureJsonData) > 0 {
-		dto.TLSAuth.CACertSet = len(ds.SecureJsonData["tlsCACert"]) > 0
-		dto.TLSAuth.ClientCertSet = len(ds.SecureJsonData["tlsClientCert"]) > 0
-		dto.TLSAuth.ClientKeySet = len(ds.SecureJsonData["tlsClientKey"]) > 0
+	for k, v := range ds.SecureJsonData {
+		if len(v) > 0 {
+			dto.SecureJsonFields[k] = true
+		}
 	}
 
 	return dto

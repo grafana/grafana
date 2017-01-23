@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"bytes"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/go-xorm/xorm"
@@ -18,7 +19,8 @@ func init() {
 	bus.AddHandler("sql", GetAllAlertQueryHandler)
 	bus.AddHandler("sql", SetAlertState)
 	bus.AddHandler("sql", GetAlertStatesForDashboard)
-	bus.AddHandler("sql", PauseAlertRule)
+	bus.AddHandler("sql", PauseAlert)
+	bus.AddHandler("sql", PauseAllAlerts)
 }
 
 func GetAlertById(query *m.GetAlertByIdQuery) error {
@@ -109,6 +111,12 @@ func HandleAlertsQuery(query *m.GetAlertsQuery) error {
 	alerts := make([]*m.Alert, 0)
 	if err := x.Sql(sql.String(), params...).Find(&alerts); err != nil {
 		return err
+	}
+
+	for i, _ := range alerts {
+		if alerts[i].ExecutionError == " " {
+			alerts[i].ExecutionError = ""
+		}
 	}
 
 	query.Result = alerts
@@ -228,6 +236,10 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 			return fmt.Errorf("Could not find alert")
 		}
 
+		if alert.State == m.AlertStatePaused {
+			return m.ErrCannotChangeStateOnPausedAlert
+		}
+
 		alert.State = cmd.State
 		alert.StateChanges += 1
 		alert.NewStateDate = time.Now()
@@ -244,27 +256,50 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 	})
 }
 
-func PauseAlertRule(cmd *m.PauseAlertCommand) error {
+func PauseAlert(cmd *m.PauseAlertCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		alert := m.Alert{}
+		if len(cmd.AlertIds) == 0 {
+			return fmt.Errorf("command contains no alertids")
+		}
 
-		has, err := x.Where("id = ? AND org_id=?", cmd.AlertId, cmd.OrgId).Get(&alert)
+		var buffer bytes.Buffer
+		params := make([]interface{}, 0)
 
+		buffer.WriteString(`UPDATE alert SET state = ?`)
+		if cmd.Paused {
+			params = append(params, string(m.AlertStatePaused))
+		} else {
+			params = append(params, string(m.AlertStatePending))
+		}
+
+		buffer.WriteString(` WHERE id IN (?` + strings.Repeat(",?", len(cmd.AlertIds)-1) + `)`)
+		for _, v := range cmd.AlertIds {
+			params = append(params, v)
+		}
+
+		res, err := sess.Exec(buffer.String(), params...)
 		if err != nil {
 			return err
-		} else if !has {
-			return fmt.Errorf("Could not find alert")
 		}
+		cmd.ResultCount, _ = res.RowsAffected()
+		return nil
+	})
+}
 
-		var newState m.AlertStateType
+func PauseAllAlerts(cmd *m.PauseAllAlertCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		var newState string
 		if cmd.Paused {
-			newState = m.AlertStatePaused
+			newState = string(m.AlertStatePaused)
 		} else {
-			newState = m.AlertStatePending
+			newState = string(m.AlertStatePending)
 		}
-		alert.State = newState
 
-		sess.Id(alert.Id).Update(&alert)
+		res, err := sess.Exec(`UPDATE alert SET state = ?`, newState)
+		if err != nil {
+			return err
+		}
+		cmd.ResultCount, _ = res.RowsAffected()
 		return nil
 	})
 }
