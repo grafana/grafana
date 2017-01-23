@@ -33,8 +33,8 @@ RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
 ENV GOPATH /go
 ENV PATH /go/bin:$PATH
 
-ADD build.sh /tmp/
+ADD ./scripts/build/build.sh /tmp/
 
 WORKDIR /tmp/
 
-CMD ["./build.sh"]
+CMD ["build.sh"]
