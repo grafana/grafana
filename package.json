@@ -42,7 +42,6 @@
     "karma": "1.3.0",
     "karma-chrome-launcher": "~2.0.0",
     "karma-coverage": "1.1.1",
-    "karma-coveralls": "1.1.2",
     "karma-expect": "~1.1.3",
     "karma-mocha": "~1.3.0",
     "karma-phantomjs-launcher": "1.0.2",

@@ -1,4 +1,4 @@
-[Grafana](http://grafana.org) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) [![Coverage Status](https://coveralls.io/repos/grafana/grafana/badge.png)](https://coveralls.io/r/grafana/grafana)
+[Grafana](http://grafana.org) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) 
 ================
 [Website](http://grafana.org) |
 [Twitter](https://twitter.com/grafana) |
