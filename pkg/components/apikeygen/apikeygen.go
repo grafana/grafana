@@ -26,7 +26,7 @@ func New(orgId int64, name string) KeyGenResult {
 
 	jsonKey.OrgId = orgId
 	jsonKey.Name = name
-	jsonKey.Key = util.GetRandomString(16)
+	jsonKey.Key = util.GetRandomString(32)
 
 	result := KeyGenResult{}
 	result.HashedKey = util.EncodePassword(jsonKey.Key, name)
