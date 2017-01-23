@@ -441,12 +441,15 @@ function($, _) {
   kbn.valueFormats.voltamp      = kbn.formatBuilders.decimalSIPrefix('VA');
   kbn.valueFormats.kvoltamp     = kbn.formatBuilders.decimalSIPrefix('VA', 1);
   kbn.valueFormats.voltampreact = kbn.formatBuilders.decimalSIPrefix('var');
+  kbn.valueFormats.kvoltampreact = kbn.formatBuilders.decimalSIPrefix('var', 1);
   kbn.valueFormats.watth        = kbn.formatBuilders.decimalSIPrefix('Wh');
   kbn.valueFormats.kwatth       = kbn.formatBuilders.decimalSIPrefix('Wh', 1);
   kbn.valueFormats.joule        = kbn.formatBuilders.decimalSIPrefix('J');
   kbn.valueFormats.ev           = kbn.formatBuilders.decimalSIPrefix('eV');
   kbn.valueFormats.amp          = kbn.formatBuilders.decimalSIPrefix('A');
+  kbn.valueFormats.kamp         = kbn.formatBuilders.decimalSIPrefix('A', 1);
   kbn.valueFormats.volt         = kbn.formatBuilders.decimalSIPrefix('V');
+  kbn.valueFormats.kvolt        = kbn.formatBuilders.decimalSIPrefix('V', 1);
   kbn.valueFormats.dBm          = kbn.formatBuilders.decimalSIPrefix('dBm');
 
   // Temperature
@@ -800,12 +803,15 @@ function($, _) {
           {text: 'volt-ampere (VA)',           value: 'voltamp'     },
           {text: 'kilovolt-ampere (kVA)',      value: 'kvoltamp'    },
           {text: 'volt-ampere reactive (var)', value: 'voltampreact'},
+          {text: 'kilovolt-ampere reactive (kvar)', value: 'kvoltampreact'},
           {text: 'watt-hour (Wh)',             value: 'watth'       },
           {text: 'kilowatt-hour (kWh)',        value: 'kwatth'      },
           {text: 'joule (J)',                  value: 'joule'       },
           {text: 'electron volt (eV)',         value: 'ev'          },
           {text: 'Ampere (A)',                 value: 'amp'         },
+          {text: 'Kiloampere (kA)',            value: 'kamp'        },
           {text: 'Volt (V)',                   value: 'volt'        },
+          {text: 'Kilovolt (kV)',              value: 'kvolt'       },
           {text: 'Decibel-milliwatt (dBm)',    value: 'dBm'         },
         ]
       },
