@@ -69,6 +69,38 @@ parent = "http_api"
       "isGrafanaAdmin": true
     }
 
+## Get single user by Username(login) or Email
+
+    `GET /api/users/loginoremail/:loginOrEmail`
+
+    **Example Request using the email option**:
+
+        GET /api/loginoremail/user@mygraf.com HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+    **Example Request using the username option**:
+        GET /api/loginoremail/admin HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+    **Example Response**:
+
+        HTTP/1.1 200
+        Content-Type: application/json
+
+        {
+          "email": "user@mygraf.com"
+          "name": "admin",
+          "login": "admin",
+          "theme": "light",
+          "orgId": 1,
+          "isGrafanaAdmin": true
+        }
+
+
 ## User Update
 
 `PUT /api/users/:id`

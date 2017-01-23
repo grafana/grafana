@@ -126,6 +126,7 @@ func Register(r *macaron.Macaron) {
 			r.Get("/", wrap(SearchUsers))
 			r.Get("/:id", wrap(GetUserById))
 			r.Get("/:id/orgs", wrap(GetUserOrgList))
+			r.Get("/loginoremail/:loginOrEmail", wrap(GetUserByLoginOrEmail))
 			r.Put("/:id", bind(m.UpdateUserCommand{}), wrap(UpdateUser))
 			r.Post("/:id/using/:orgId", wrap(UpdateUserActiveOrg))
 		}, reqGrafanaAdmin)
