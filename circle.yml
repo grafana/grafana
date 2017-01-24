@@ -37,8 +37,8 @@ deployment:
       - pip install awscli
       - ./scripts/build/build_container.sh
       - ./scripts/build/deploy.sh
+      - ./scripts/build/sign_packages.sh
       - aws s3 sync ./dist s3://$NIGHTLY_BUCKET_NAME
-      #- ./scripts/build/sign_packages.sh
       #- ./scripts/trigger_grafana_docker_build.sh ${TRIGGER_GRAFANA_DOCKER_CIRCLECI_TOKEN}
   gh_tag:
     tag: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
