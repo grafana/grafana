@@ -31,7 +31,7 @@ test:
 
 deployment:
   gh_branch:
-    branch: master
+    branch: new_deploy
     owner: grafana
     commands:
       - pip install awscli
