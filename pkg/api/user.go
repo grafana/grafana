@@ -31,9 +31,9 @@ func getUserUserProfile(userId int64) Response {
 	return Json(200, query.Result)
 }
 
-// GET /api/users/loginoremail/:loginOrEmail
+// GET /api/users/lookup
 func GetUserByLoginOrEmail(c *middleware.Context) Response {
-	query := m.GetUserByLoginQuery{LoginOrEmail: c.QueryEscape("loginOrEmail")}
+	query := m.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
 	if err := bus.Dispatch(&query); err != nil {
 		if err == m.ErrUserNotFound {
 			return ApiError(404, m.ErrUserNotFound.Error(), nil)
