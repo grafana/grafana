@@ -23,6 +23,8 @@ export GOPATH=`pwd`
 go get github.com/grafana/grafana
 ```
 
+You may see an error such as: `package github.com/grafana/grafana: no buildable Go source files`. This is just a warning, and you can proceed with the directions.
+
 ## Building the backend
 ```
 cd $GOPATH/src/github.com/grafana/grafana
