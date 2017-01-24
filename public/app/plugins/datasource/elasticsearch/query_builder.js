@@ -244,12 +244,7 @@ function (queryDef) {
     }
     var size = 500;
     if(queryDef.size){
-      if(this.esVersion >= 5 && queryDef.size !== 0) {
-        size = queryDef.size;
-      }
-      else if(this.esVersion < 5) {
-        size = queryDef.size;
-      }
+      size = queryDef.size;
     }
     query.aggs =  {
       "1": {
