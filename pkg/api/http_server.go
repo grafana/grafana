@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
@@ -75,7 +76,26 @@ func (hs *HttpServer) listenAndServeTLS(listenAddr, certfile, keyfile string) er
 		return fmt.Errorf(`Cannot find SSL key_file at %v`, setting.KeyFile)
 	}
 
-	return http.ListenAndServeTLS(listenAddr, setting.CertFile, setting.KeyFile, hs.macaron)
+	tlsCfg := &tls.Config{
+		MinVersion:               TLSVersionMap[setting.TLSMinVersion],
+		PreferServerCipherSuites: setting.TLSPreferServerCipherSuites,
+	}
+	if setting.TLSCipherSuites != "" {
+		ciphers, err := ParseCiphers(setting.TLSCipherSuites)
+		if err != nil {
+			return fmt.Errorf("Invalid value for 'tls_cipher_suites': %v", err)
+		}
+		tlsCfg.CipherSuites = ciphers
+	}
+
+	srv := &http.Server{
+		Addr:         listenAddr,
+		Handler:      hs.macaron,
+		TLSConfig:    tlsCfg,
+		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
+	}
+
+	return srv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
 }
 
 func (hs *HttpServer) newMacaron() *macaron.Macaron {

@@ -60,16 +60,19 @@ var (
 	LogConfigs []util.DynMap
 
 	// Http server options
-	Protocol           Scheme
-	Domain             string
-	HttpAddr, HttpPort string
-	SshPort            int
-	CertFile, KeyFile  string
-	RouterLogging      bool
-	DataProxyLogging   bool
-	StaticRootPath     string
-	EnableGzip         bool
-	EnforceDomain      bool
+	Protocol                    Scheme
+	Domain                      string
+	HttpAddr, HttpPort          string
+	SshPort                     int
+	CertFile, KeyFile           string
+	TLSMinVersion               string
+	TLSCipherSuites             string
+	TLSPreferServerCipherSuites bool
+	RouterLogging               bool
+	DataProxyLogging            bool
+	StaticRootPath              string
+	EnableGzip                  bool
+	EnforceDomain               bool
 
 	// Security settings.
 	SecretKey             string
@@ -487,6 +490,9 @@ func NewConfigContext(args *CommandLineArgs) error {
 		Protocol = HTTPS
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
+		TLSMinVersion = server.Key("tls_min_version").In("tls10", []string{"tls10", "tls11", "tls12"})
+		TLSCipherSuites = server.Key("tls_cipher_suites").String()
+		TLSPreferServerCipherSuites = server.Key("tls_prefer_server_cipher_suites").MustBool(false)
 	}
 
 	Domain = server.Key("domain").MustString("localhost")
