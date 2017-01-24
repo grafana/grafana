@@ -21,6 +21,9 @@ RUN /bin/bash -l -c "rvm use 2.1.9 --default"
 RUN curl --silent --location https://rpm.nodesource.com/setup_6.x | bash -
 RUN yum install -y nodejs --nogpgcheck
 
+RUN wget https://dl.yarnpkg.com/rpm/yarn.repo -O /etc/yum.repos.d/yarn.repo
+RUN yum install -y yarn --nogpgcheck
+
 ENV GOLANG_VERSION 1.7.4
 
 RUN wget https://storage.googleapis.com/golang/go1.7.4.linux-amd64.tar.gz

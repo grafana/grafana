@@ -37,6 +37,7 @@ deployment:
       - pip install awscli
       - ./scripts/build/build_container.sh
       - ./scripts/build/deploy.sh
+      #- ./scripts/build/sign_packages.sh
       #- aws s3 sync ./dist s3://$BUCKET_NAME
       #- ./scripts/trigger_grafana_docker_build.sh ${TRIGGER_GRAFANA_DOCKER_CIRCLECI_TOKEN}
   gh_tag:
@@ -44,10 +45,10 @@ deployment:
     owner: grafana
     commands:
       - echo lets release stuff!
+      - pip install awscli
+      - ./scripts/build/build_container.sh
+      - ./scripts/build/deploy.sh
       #- ./scripts/build/sign_packages.sh
-#   master:
-#     branch: master
-#     owner: grafana
-#     commands:
-#       - ./scripts/trigger_grafana_packer.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN}
-#       - ./scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN}
+      #- aws s3 sync ./dist s3://$BUCKET_NAME
+      #- ./scripts/trigger_grafana_docker_build.sh ${TRIGGER_GRAFANA_DOCKER_CIRCLECI_TOKEN}
+

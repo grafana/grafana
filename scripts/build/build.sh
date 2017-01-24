@@ -10,14 +10,18 @@ REPO_PATH=$GOPATH/src/github.com/grafana/grafana
 mkdir -p /go/src/github.com/grafana
 cd /go/src/github.com/grafana
 
-echo "CIRCLE BRANCH: ${CIRCLE_BRANCH}"
-
-git clone --depth 1 https://github.com/grafana/grafana.git -b $CIRCLE_BRANCH
-
-cd $REPO_PATH
+if [ -n "${CIRCLE_TAG}" ]; then
+  echo "Building from tag ${CIRCLE_TAG}"
+  git clone --depth 1 https://github.com/grafana/grafana.git -b $CIRCLE_BRANCH
+  cd $REPO_PATH
+else
+  echo "Building from branch ${CIRCLE_BRANCH}"
+  git clone --depth 1 https://github.com/grafana/grafana.git
+  cd $REPO_PATH
+  git checkout $CIRCLE_TAG
+fi
 
 go run build.go build
-npm install -g yarn
 yarn install --pure-lockfile
 
 source /etc/profile.d/rvm.sh
