@@ -1,12 +1,11 @@
 FROM centos:6.6
 
-RUN yum install -y yum-plugin-ovl
-RUN yum install -y initscripts curl tar gcc libc6-dev git gcc-c++ openssl-devel
-RUN yum install -y g++ make automake autoconf curl-devel zlib-devel httpd-devel apr-devel apr-util-devel sqlite-devel
-RUN yum install -y wget yum-utils bzip2 bzip2-devel
-RUN yum install -y fontconfig freetype freetype-devel fontconfig-devel libstdc++
-RUN yum install -y rpm-build patch readline readline-devel libtool bison lzma
-RUN yum install -y which tar
+RUN yum install -y yum-plugin-ovl initscripts curl tar gcc libc6-dev git gcc-c++ openssl-devel \
+    yum install -y g++ make automake autoconf curl-devel zlib-devel httpd-devel apr-devel apr-util-devel sqlite-devel \
+    yum install -y wget yum-utils bzip2 bzip2-devel \
+    yum install -y fontconfig freetype freetype-devel fontconfig-devel libstdc++ \
+    yum install -y rpm-build patch readline readline-devel libtool bison lzma \
+    yum install -y which tar
 
 # Install RUBY 1.9.3
 # install necessary utilities
@@ -34,8 +33,8 @@ RUN mkdir -p /go/src /go/bin && chmod -R 777 /go
 ENV GOPATH /go
 ENV PATH /go/bin:$PATH
 
-ADD build.sh /tmp/
+ADD ./build.sh /tmp/
 
 WORKDIR /tmp/
 
-CMD ["build.sh"]
+CMD ["./build.sh"]

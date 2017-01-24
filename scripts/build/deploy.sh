@@ -2,7 +2,11 @@
 
 mkdir -p dist
 
+echo "Circle branch: ${CIRCLE_BRANCH}"
+echo "Circle tag: ${CIRCLE_TAG}"
+echo "dist: $(pwd)/dist"
 docker run -i -t --name gfbuild \
   -v $(pwd)/dist:/tmp/dist \
-  -e "GRAFANA_BRANCH=${CIRCLE_BRANCH}" \
+  -e "CIRCLE_BRANCH=${CIRCLE_BRANCH}" \
+  -e "CIRCLE_TAG=${CIRCLE_BRANCH}" \
   grafana/buildcontainer

@@ -3,6 +3,9 @@
 docker info && docker version
 mkdir -p ~/docker
 
+echo "Circle branch: ${CIRCLE_BRANCH}"
+echo "Circle tag: ${CIRCLE_TAG}"
+
 # try to load docker container from cache
 if [[ -e ~/docker/centos.tar ]]; then
   docker load -i ~/docker/centos.tar;

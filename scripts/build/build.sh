@@ -10,11 +10,9 @@ REPO_PATH=$GOPATH/src/github.com/grafana/grafana
 mkdir -p /go/src/github.com/grafana
 cd /go/src/github.com/grafana
 
-echo "Grafana branch!!"
-echo $GRAFANA_BRANCH
-echo "GRAFANA BRANCH: ${GRAFANA_BRANCH}"
+echo "CIRCLE BRANCH: ${CIRCLE_BRANCH}"
 
-git clone --depth 1 https://github.com/grafana/grafana.git -b $GRAFANA_BRANCH
+git clone --depth 1 https://github.com/grafana/grafana.git -b $CIRCLE_BRANCH
 
 cd $REPO_PATH
 
