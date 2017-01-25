@@ -28,6 +28,41 @@
 ## Create dashboard
 ![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/master/doc/movies/create-dashboard.gif)
 
+## Create template dashboard
+
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/master/doc/images/create-template-1.png)
+
+### Add datasource variable
+
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/master/doc/images/create-template-2.png)
+
+### Add node variable
+
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/master/doc/images/create-template-3.png)
+
+Query option for variable is used for filtering nodes by type and should has one of values:
+
+* nodes.windows
+* nodes.windows.server
+* nodes.windows.workstation
+* nodes.linux
+* nodes.bsd
+* nodes.macos
+* nodes.solaris
+* nodes.esx
+* nodes.xenserver
+* nodes.unix
+* nodes.novell
+* nodes.ibm
+
+### View of variables
+
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/master/doc/images/create-template-4.png)
+
+### Define a metric of template
+
+![Image Title](https://raw.githubusercontent.com/adremsoft/grafana-netcrunch-plugin/master/doc/images/create-template-5.png)
+
 ## Changelog
 
 ### v1.0.0
