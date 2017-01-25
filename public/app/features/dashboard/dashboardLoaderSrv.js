@@ -59,7 +59,7 @@ function (angular, moment, _, $, kbn, dateMath, impressionStore) {
     };
 
     this._loadScriptedDashboard = function(file) {
-      var url = 'public/dashboards/'+file.replace(/\.(?!js)/,"/") + '?' + new Date().getTime();
+      var url = 'api/dashboards/script/'+file.replace(/\.(?!js)/,"/") + '?' + new Date().getTime();
 
       return $http({ url: url, method: "GET" })
       .then(this._executeScript).then(function(result) {

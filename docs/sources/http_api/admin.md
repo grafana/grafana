@@ -84,6 +84,9 @@ with Grafana admin permission.
         "enabled":"false",
         "path":"/var/lib/grafana/dashboards"
       },
+      "dashboards.scripts":{
+        "path":"public/dashboards"
+      },
       "database":{
         "host":"127.0.0.1:0000",
         "name":"grafana",

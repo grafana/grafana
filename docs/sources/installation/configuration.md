@@ -513,6 +513,14 @@ Grafana backend index those json dashboards which will make them appear in regul
 ### path
 The full path to a directory containing your json dashboards.
 
+## [dashboards.scripts]
+
+If you have a system that automatically builds scripted dashboards as js files you can enable this feature to have the
+Grafana backend index those scripted dashboards so they are available to use.
+
+### path
+The full path to a directory containing your dashboard scripts.
+
 ## [smtp]
 Email server settings.
 

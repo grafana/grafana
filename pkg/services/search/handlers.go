@@ -11,10 +11,16 @@ import (
 )
 
 var jsonDashIndex *JsonDashIndex
+var dashboardScriptIndex *DashboardScriptIndex
 
 func Init() {
 	bus.AddHandler("search", searchHandler)
 
+	initJsonDash()
+	initScriptedDash()
+}
+
+func initJsonDash() {
 	jsonIndexCfg, _ := setting.Cfg.GetSection("dashboards.json")
 
 	if jsonIndexCfg == nil {
@@ -33,6 +39,23 @@ func Init() {
 		jsonDashIndex = NewJsonDashIndex(jsonFilesPath)
 		go jsonDashIndex.updateLoop()
 	}
+}
+
+func initScriptedDash() {
+	cfg, _ := setting.Cfg.GetSection("dashboards.scripts")
+
+	if cfg == nil {
+		log.Fatal("Config section missing: dashboards.scripts")
+		return
+	}
+
+	filesPath := cfg.Key("path").String()
+	if !filepath.IsAbs(filesPath) {
+		filesPath = filepath.Join(setting.HomePath, filesPath)
+	}
+
+	dashboardScriptIndex = NewDashboardScriptIndex(filesPath)
+	go dashboardScriptIndex.updateLoop()
 }
 
 func searchHandler(query *Query) error {
@@ -132,4 +155,12 @@ func GetDashboardFromJsonIndex(filename string) *m.Dashboard {
 		return nil
 	}
 	return jsonDashIndex.GetDashboard(filename)
+}
+
+func GetDashboardScriptFromFile(filename string) *DashboardScript {
+	if dashboardScriptIndex == nil {
+		return nil
+	}
+
+	return dashboardScriptIndex.GetScript(filename)
 }
