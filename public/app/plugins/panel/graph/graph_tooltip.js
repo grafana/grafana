@@ -46,7 +46,7 @@ function ($, core) {
           return middle;
         } else if (series.data[middle][0] < posX) {
           lower = middle + 1;
-        } else { //if (series.data[middle][0] > posX) {
+        } else {
           upper = middle - 1;
         }
       }
