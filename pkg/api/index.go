@@ -18,7 +18,7 @@ func setIndexViewData(c *middleware.Context) error {
 		Login:          c.Login,
 		Email:          c.Email,
 		Name:           c.Name,
-		LightTheme:     c.Theme == "light",
+		LightTheme:     c.Theme != "drak",
 		OrgId:          c.OrgId,
 		OrgName:        c.OrgName,
 		OrgRole:        c.OrgRole,
