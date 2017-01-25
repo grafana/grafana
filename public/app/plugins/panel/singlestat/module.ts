@@ -566,7 +566,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         if (!linkInfo) { return;}
 
         drilldownTooltip.text('click to go to: ' + linkInfo.title);
-        drilldownTooltip.place_tt(e.pageX+20, e.pageY-15);
+        drilldownTooltip.place_tt(e.pageX, e.pageY-50);
       });
     }
 
