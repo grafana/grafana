@@ -11,6 +11,7 @@
 * **Alerting**: Better information about why an alert triggered [#7035](https://github.com/grafana/grafana/issues/7035)
 * **LINE**: Add LINE as alerting notification channel [#7301](https://github.com/grafana/grafana/pull/7301), thx [#huydx](https://github.com/huydx)
 * **Elasticsearch**: Support for Min Doc Count options in Terms aggregation [#7324](https://github.com/grafana/grafana/pull/7324), thx [#lpic10](https://github.com/lpic10)
+* **Elasticsearch**: Term aggregation limit can now be changed in template queries [#7112](https://github.com/grafana/grafana/issues/7112), thx [#FFalcon](https://github.com/FFalcon)
 
 ## Tech
 
@@ -21,7 +22,6 @@
 * **Dashboard**: Avoid duplicate data in dashboard json for panels with alerts [#7256](https://github.com/grafana/grafana/pull/7256)
 * **Alertlist**: Only show scrollbar when required [#7269](https://github.com/grafana/grafana/issues/7269)
 * **SMTP**: Set LocalName to hostname [#7223](https://github.com/grafana/grafana/issues/7223)
-* **Elasticsearch**: Fix for alias patterns for terms that had numeric zero, fixes [#7323](https://github.com/grafana/grafana/issues/7323)
 
 # 4.1.2 (unreleased)
 
