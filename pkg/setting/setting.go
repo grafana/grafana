@@ -150,8 +150,8 @@ var (
 	Quota QuotaSettings
 
 	// Alerting
+	AlertingEnabled bool
 	ExecuteAlerts   bool
-	ShowAlertingUI  bool
 
 	// logger
 	logger log.Logger
@@ -579,8 +579,8 @@ func NewConfigContext(args *CommandLineArgs) error {
 	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 
 	alerting := Cfg.Section("alerting")
+	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
-	ShowAlertingUI = alerting.Key("show_alerting_ui").MustBool(true)
 
 	readSessionConfig()
 	readSmtpSettings()

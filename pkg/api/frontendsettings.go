@@ -140,7 +140,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		"allowOrgCreate":    (setting.AllowUserOrgCreate && c.IsSignedIn) || c.IsGrafanaAdmin,
 		"authProxyEnabled":  setting.AuthProxyEnabled,
 		"ldapEnabled":       setting.LdapEnabled,
-		"showAlertingUI":    setting.ShowAlertingUI,
+		"alertingEnabled":   setting.AlertingEnabled,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
