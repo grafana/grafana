@@ -150,7 +150,8 @@ var (
 	Quota QuotaSettings
 
 	// Alerting
-	ExecuteAlerts bool
+	ExecuteAlerts   bool
+	ShowAlertingUI  bool
 
 	// logger
 	logger log.Logger
@@ -579,6 +580,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	alerting := Cfg.Section("alerting")
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
+	ShowAlertingUI = alerting.Key("show_alerting_ui").MustBool(true)
 
 	readSessionConfig()
 	readSmtpSettings()
