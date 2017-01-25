@@ -73,9 +73,9 @@ func main() {
 		case "setup":
 			setup()
 
-    case "build-cli":
-      clean()
-      build("grafana-cli", "./pkg/cmd/grafana-cli", []string{})
+		case "build-cli":
+			clean()
+			build("grafana-cli", "./pkg/cmd/grafana-cli", []string{})
 
 		case "build":
 			clean()
@@ -102,8 +102,8 @@ func main() {
 			createDebPackages()
 			sha1FilesInDist()
 
-    case "sha1-dist":
-      sha1FilesInDist()
+		case "sha1-dist":
+			sha1FilesInDist()
 
 		case "latest":
 			makeLatestDistCopies()
@@ -222,7 +222,7 @@ func createRpmPackages() {
 		defaultFileSrc: "packaging/rpm/sysconfig/grafana-server",
 		systemdFileSrc: "packaging/rpm/systemd/grafana-server.service",
 
-		depends: []string{"initscripts", "fontconfig"},
+		depends: []string{"/sbin/service", "fontconfig"},
 	})
 }
 
