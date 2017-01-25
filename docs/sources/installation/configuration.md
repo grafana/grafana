@@ -618,6 +618,11 @@ basic auth password
 
 ## [alerting]
 
+### enabled
+Defaults to true. Set to false to disable alerting engine and hide Alerting from UI.
+
+### execute_alerts
+
 ### execute_alerts = true
 
 Makes it possible to turn off alert rule execution.
