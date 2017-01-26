@@ -89,6 +89,12 @@
           <li class="tight-form-item">
             阈值
           </li>
+          <li style="width:30px">
+            <select class="input-medium tight-form-input last"
+                    ng-model="alertDef.alertDetails.hostQuery.expression"
+                    ng-options="f for f in ['>', '<']">
+            </select>
+          </li>
           <li>
             <input type="text" class="tight-form-input input-medium" style="width: 139px"
                    ng-model='alertDef.alertDetails.crit.threshold' placeholder="critical threshold" required />
@@ -98,7 +104,7 @@
           </li>
           <li>
             <input type="text" class="tight-form-input input-medium last"
-                   ng-model='alertDef.alertDetails.crit.durarionMinutes' placeholder="critical duration" required />
+                   ng-model='alertDef.alertDetails.crit.durarionMinutes' placeholder="持续分钟" required />
           </li>
         </ul>
         <div class="clearfix"></div>
@@ -111,6 +117,8 @@
           <li class="tight-form-item">
             阈值
           </li>
+          <li  style="width:30px">
+          </li>
           <li>
             <input type="text" class="tight-form-input input-medium" style="width: 139px"
                    ng-model='alertDef.alertDetails.warn.threshold' placeholder="warn threshold" required />
@@ -120,7 +128,7 @@
           </li>
           <li>
             <input type="text" class="tight-form-input input-medium last"
-                   ng-model='alertDef.alertDetails.warn.durarionMinutes' placeholder="warn duration" required />
+                   ng-model='alertDef.alertDetails.warn.durarionMinutes' placeholder="持续分钟" required />
           </li>
         </ul>
         <div class="clearfix"></div>
