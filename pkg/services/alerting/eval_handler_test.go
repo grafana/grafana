@@ -39,7 +39,7 @@ func TestAlertingEvaluationHandler(t *testing.T) {
 		Convey("Show return false with not passing asdf", func() {
 			context := NewEvalContext(context.TODO(), &Rule{
 				Conditions: []Condition{
-					&conditionStub{firing: true, operator: "and", matches: []*EvalMatch{&EvalMatch{}, &EvalMatch{}}},
+					&conditionStub{firing: true, operator: "and", matches: []*EvalMatch{{}, {}}},
 					&conditionStub{firing: false, operator: "and"},
 				},
 			})

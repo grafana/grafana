@@ -1,21 +1,21 @@
 package notifiers
 
 import (
-	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/services/alerting"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/metrics"
-	"net/url"
 	"fmt"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
+	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
+	"net/url"
 )
 
 func init() {
 	alerting.RegisterNotifier(&alerting.NotifierPlugin{
-		Type: "LINE",
-		Name: "LINE",
+		Type:        "LINE",
+		Name:        "LINE",
 		Description: "Send notifications to LINE notify",
-		Factory: NewLINENotifier,
+		Factory:     NewLINENotifier,
 		OptionsTemplate: `
     <div class="gf-form-group">
       <h3 class="page-heading">LINE notify settings</h3>

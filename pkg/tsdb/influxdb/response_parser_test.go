@@ -19,7 +19,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 			response := &Response{
 				Results: []Result{
-					Result{
+					{
 						Series: []Row{
 							{
 								Name:    "cpu",
@@ -69,7 +69,7 @@ func TestInfluxdbResponseParser(t *testing.T) {
 
 			response := &Response{
 				Results: []Result{
-					Result{
+					{
 						Series: []Row{
 							{
 								Name:    "cpu.upc",

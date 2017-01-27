@@ -27,16 +27,16 @@ func TestWildcardExpansion(t *testing.T) {
 		Convey("Without wildcard series", func() {
 			query := &Query{
 				Metrics: []Metric{
-					Metric{Metric: "os.cpu.3.idle", Alias: ""},
-					Metric{Metric: "os.cpu.2.idle", Alias: ""},
-					Metric{Metric: "os.cpu.1.idle", Alias: "cpu"},
+					{Metric: "os.cpu.3.idle", Alias: ""},
+					{Metric: "os.cpu.2.idle", Alias: ""},
+					{Metric: "os.cpu.1.idle", Alias: "cpu"},
 				},
 				Hosts:             []string{"staples-lab-1", "staples-lab-2"},
 				Cluster:           []string{"demoapp-1", "demoapp-2"},
 				AddClusterToAlias: false,
 				AddHostToAlias:    false,
 				FunctionList: []Function{
-					Function{Func: "aggregate.min"},
+					{Func: "aggregate.min"},
 				},
 				TimeRange: &tsdb.TimeRange{Now: now, From: "5m", To: "now"},
 			}
@@ -52,15 +52,15 @@ func TestWildcardExpansion(t *testing.T) {
 		Convey("With two aggregate functions", func() {
 			query := &Query{
 				Metrics: []Metric{
-					Metric{Metric: "os.cpu.3.idle", Alias: ""},
+					{Metric: "os.cpu.3.idle", Alias: ""},
 				},
 				Hosts:             []string{"staples-lab-1", "staples-lab-2"},
 				Cluster:           []string{"demoapp-1", "demoapp-2"},
 				AddClusterToAlias: false,
 				AddHostToAlias:    false,
 				FunctionList: []Function{
-					Function{Func: "aggregate.min"},
-					Function{Func: "aggregate.max"},
+					{Func: "aggregate.min"},
+					{Func: "aggregate.max"},
 				},
 				TimeRange: &tsdb.TimeRange{Now: now, From: "5m", To: "now"},
 			}
@@ -74,7 +74,7 @@ func TestWildcardExpansion(t *testing.T) {
 		Convey("Containg wildcard series", func() {
 			query := &Query{
 				Metrics: []Metric{
-					Metric{Metric: "os.cpu*", Alias: ""},
+					{Metric: "os.cpu*", Alias: ""},
 				},
 				Hosts:             []string{"staples-lab-1"},
 				AddClusterToAlias: false,
