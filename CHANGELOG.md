@@ -22,6 +22,7 @@
 * **Dashboard**: Avoid duplicate data in dashboard json for panels with alerts [#7256](https://github.com/grafana/grafana/pull/7256)
 * **Alertlist**: Only show scrollbar when required [#7269](https://github.com/grafana/grafana/issues/7269)
 * **SMTP**: Set LocalName to hostname [#7223](https://github.com/grafana/grafana/issues/7223)
+* **Sidemenu**: Disable sign out in sidemenu for AuthProxyEnabled [#7377](https://github.com/grafana/grafana/pull/7377), thx [@solugebefola](https://github.com/solugebefola)
 
 # 4.1.2 (unreleased)
 
