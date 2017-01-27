@@ -128,43 +128,43 @@ func TestInfluxdbQueryBuilder(t *testing.T) {
 		})
 
 		Convey("can render normal tags without operator", func() {
-			query := &Query{Tags: []*Tag{&Tag{Operator: "", Value: `value`, Key: "key"}}}
+			query := &Query{Tags: []*Tag{{Operator: "", Value: `value`, Key: "key"}}}
 
 			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 'value'`)
 		})
 
 		Convey("can render regex tags without operator", func() {
-			query := &Query{Tags: []*Tag{&Tag{Operator: "", Value: `/value/`, Key: "key"}}}
+			query := &Query{Tags: []*Tag{{Operator: "", Value: `/value/`, Key: "key"}}}
 
 			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" =~ /value/`)
 		})
 
 		Convey("can render regex tags", func() {
-			query := &Query{Tags: []*Tag{&Tag{Operator: "=~", Value: `/value/`, Key: "key"}}}
+			query := &Query{Tags: []*Tag{{Operator: "=~", Value: `/value/`, Key: "key"}}}
 
 			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" =~ /value/`)
 		})
 
 		Convey("can render number tags", func() {
-			query := &Query{Tags: []*Tag{&Tag{Operator: "=", Value: "10001", Key: "key"}}}
+			query := &Query{Tags: []*Tag{{Operator: "=", Value: "10001", Key: "key"}}}
 
 			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = '10001'`)
 		})
 
 		Convey("can render numbers less then condition tags", func() {
-			query := &Query{Tags: []*Tag{&Tag{Operator: "<", Value: "10001", Key: "key"}}}
+			query := &Query{Tags: []*Tag{{Operator: "<", Value: "10001", Key: "key"}}}
 
 			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" < 10001`)
 		})
 
 		Convey("can render number greather then condition tags", func() {
-			query := &Query{Tags: []*Tag{&Tag{Operator: ">", Value: "10001", Key: "key"}}}
+			query := &Query{Tags: []*Tag{{Operator: ">", Value: "10001", Key: "key"}}}
 
 			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" > 10001`)
 		})
 
 		Convey("can render string tags", func() {
-			query := &Query{Tags: []*Tag{&Tag{Operator: "=", Value: "value", Key: "key"}}}
+			query := &Query{Tags: []*Tag{{Operator: "=", Value: "value", Key: "key"}}}
 
 			So(strings.Join(query.renderTags(), ""), ShouldEqual, `"key" = 'value'`)
 		})
