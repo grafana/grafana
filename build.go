@@ -90,7 +90,7 @@ func main() {
 		case "package":
 			grunt(gruntBuildArg("release")...)
 			createLinuxPackages()
-			sha1FilesInDist()
+			//sha1FilesInDist()
 
 		case "pkg-rpm":
 			grunt(gruntBuildArg("release")...)
@@ -107,7 +107,7 @@ func main() {
 
 		case "latest":
 			makeLatestDistCopies()
-			sha1FilesInDist()
+			//sha1FilesInDist()
 
 		case "clean":
 			clean()
@@ -516,8 +516,15 @@ func md5File(file string) error {
 
 func sha1FilesInDist() {
 	filepath.Walk("./dist", func(path string, f os.FileInfo, err error) error {
-		if strings.Contains(path, ".sha1") == false {
-			sha1File(path)
+		if path == "./dist" {
+      return nil
+    }
+
+    if strings.Contains(path, ".sha1") == false {
+			err := sha1File(path)
+      if err != nil {
+        log.Printf("Failed to create sha file. error: %v\n", err)
+      }
 		}
 		return nil
 	})

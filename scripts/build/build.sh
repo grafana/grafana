@@ -16,7 +16,7 @@ if [ -n "${CIRCLE_TAG}" ]; then
   cd $REPO_PATH
 else
   echo "Building from branch ${CIRCLE_BRANCH}"
-  git clone --depth 1 https://github.com/grafana/grafana.git
+  git clone https://github.com/grafana/grafana.git
   cd $REPO_PATH
   git checkout $CIRCLE_TAG
 fi
