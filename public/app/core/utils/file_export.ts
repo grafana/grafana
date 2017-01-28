@@ -50,7 +50,7 @@ export function exportSeriesListToCsvColumns(seriesList) {
 };
 
 export function exportTableDataToCsv(table) {
-    var text = '';
+    var text = 'sep=;\n';
     // add header
     _.each(table.columns, function(column) {
         text += column.text + ';';
