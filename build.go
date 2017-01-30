@@ -90,24 +90,20 @@ func main() {
 		case "package":
 			grunt(gruntBuildArg("release")...)
 			createLinuxPackages()
-			//sha1FilesInDist()
 
 		case "pkg-rpm":
 			grunt(gruntBuildArg("release")...)
 			createRpmPackages()
-			sha1FilesInDist()
 
 		case "pkg-deb":
 			grunt(gruntBuildArg("release")...)
 			createDebPackages()
-			sha1FilesInDist()
 
 		case "sha1-dist":
 			sha1FilesInDist()
 
 		case "latest":
 			makeLatestDistCopies()
-			//sha1FilesInDist()
 
 		case "clean":
 			clean()
