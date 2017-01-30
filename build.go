@@ -37,6 +37,7 @@ var (
 	race                  bool
 	phjsToRelease         string
 	workingDir            string
+	includeBuildNumber    bool     = true
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
 )
 
@@ -47,9 +48,6 @@ func main() {
 	log.SetFlags(0)
 
 	ensureGoPath()
-	readVersionFromPackageJson()
-
-	log.Printf("Version: %s, Linux Version: %s, Package Iteration: %s\n", version, linuxPackageVersion, linuxPackageIteration)
 
 	flag.StringVar(&goarch, "goarch", runtime.GOARCH, "GOARCH")
 	flag.StringVar(&goos, "goos", runtime.GOOS, "GOOS")
@@ -59,7 +57,12 @@ func main() {
 	flag.StringVar(&pkgArch, "pkg-arch", "", "PKG ARCH")
 	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
 	flag.BoolVar(&race, "race", race, "Use race detector")
+	flag.BoolVar(&includeBuildNumber, "includeBuildNumber", includeBuildNumber, "IncludeBuildNumber in package name")
 	flag.Parse()
+
+	readVersionFromPackageJson()
+
+	log.Printf("Version: %s, Linux Version: %s, Package Iteration: %s\n", version, linuxPackageVersion, linuxPackageIteration)
 
 	if flag.NArg() == 0 {
 		log.Println("Usage: go run build.go build")
@@ -153,7 +156,9 @@ func readVersionFromPackageJson() {
 	}
 
 	// add timestamp to iteration
-	linuxPackageIteration = fmt.Sprintf("%d%s", time.Now().Unix(), linuxPackageIteration)
+	if includeBuildNumber {
+		linuxPackageIteration = fmt.Sprintf("%d%s", time.Now().Unix(), linuxPackageIteration)
+	}
 }
 
 type linuxPackageOptions struct {
@@ -319,7 +324,12 @@ func grunt(params ...string) {
 }
 
 func gruntBuildArg(task string) []string {
-	args := []string{task, fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration)}
+	var args []string
+	if includeBuildNumber {
+		args = append(args, fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration))
+	} else {
+		args = append(args, fmt.Sprintf("--pkgVer=%v", linuxPackageVersion))
+	}
 	if pkgArch != "" {
 		args = append(args, fmt.Sprintf("--arch=%v", pkgArch))
 	}
