@@ -25,6 +25,11 @@ dependencies:
     - rm -rf ${GOPATH}/src/${REPO_PATH}
     - mkdir -p ${GOPATH}/src/${ORG_PATH}
     - cp -r ~/grafana ${GOPATH}/src/${ORG_PATH}
+  pre:
+    - pip install awscli
+    - sudo apt-get update; sudo apt-get install rpm; sudo apt-get install expect
+    - ./scripts/build/build_container.sh
+
 
 test:
   override:
@@ -32,11 +37,8 @@ test:
 
 deployment:
   gh_branch:
-    branch: new_master
+    branch: master
     commands:
-      - pip install awscli
-      - sudo apt-get update; sudo apt-get install rpm; sudo apt-get install expect
-      - ./scripts/build/build_container.sh
       - ./scripts/build/deploy.sh
       - ./scripts/build/sign_packages.sh
       - go run build.go sha1-dist
@@ -45,9 +47,6 @@ deployment:
   gh_tag:
     tag: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
     commands:
-      - pip install awscli
-      - sudo apt-get update; sudo apt-get install rpm; sudo apt-get install expect
-      - ./scripts/build/build_container.sh
       - ./scripts/build/deploy.sh
       - ./scripts/build/sign_packages.sh
       - go run build.go sha1-dist
