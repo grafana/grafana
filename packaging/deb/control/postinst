@@ -42,6 +42,12 @@ case "$1" in
 	chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
 	chmod 755 /var/log/grafana /var/lib/grafana
 
+  # copy user config files
+  if [ ! -f $CONF_FILE ]; then
+    cp /usr/share/grafana/conf/sample.ini $CONF_FILE
+    cp /usr/share/grafana/conf/ldap.toml /etc/grafana/ldap.toml
+  fi
+
 	# configuration files should not be modifiable by grafana user, as this can be a security issue
 	chown -Rh root:$GRAFANA_GROUP /etc/grafana/*
 	chmod 755 /etc/grafana

@@ -167,7 +167,6 @@ type linuxPackageOptions struct {
 	serverBinPath          string
 	cliBinPath             string
 	configDir              string
-	configFilePath         string
 	ldapFilePath           string
 	etcDefaultPath         string
 	etcDefaultFilePath     string
@@ -188,8 +187,6 @@ func createDebPackages() {
 		homeDir:                "/usr/share/grafana",
 		binPath:                "/usr/sbin",
 		configDir:              "/etc/grafana",
-		configFilePath:         "/etc/grafana/grafana.ini",
-		ldapFilePath:           "/etc/grafana/ldap.toml",
 		etcDefaultPath:         "/etc/default",
 		etcDefaultFilePath:     "/etc/default/grafana-server",
 		initdScriptFilePath:    "/etc/init.d/grafana-server",
@@ -210,8 +207,6 @@ func createRpmPackages() {
 		homeDir:                "/usr/share/grafana",
 		binPath:                "/usr/sbin",
 		configDir:              "/etc/grafana",
-		configFilePath:         "/etc/grafana/grafana.ini",
-		ldapFilePath:           "/etc/grafana/ldap.toml",
 		etcDefaultPath:         "/etc/sysconfig",
 		etcDefaultFilePath:     "/etc/sysconfig/grafana-server",
 		initdScriptFilePath:    "/etc/init.d/grafana-server",
@@ -256,10 +251,6 @@ func createPackage(options linuxPackageOptions) {
 	runPrint("cp", "-a", filepath.Join(workingDir, "tmp")+"/.", filepath.Join(packageRoot, options.homeDir))
 	// remove bin path
 	runPrint("rm", "-rf", filepath.Join(packageRoot, options.homeDir, "bin"))
-	// copy sample ini file to /etc/grafana
-	runPrint("cp", "conf/sample.ini", filepath.Join(packageRoot, options.configFilePath))
-	// copy sample ldap toml config file to /etc/grafana/ldap.toml
-	runPrint("cp", "conf/ldap.toml", filepath.Join(packageRoot, options.ldapFilePath))
 
 	args := []string{
 		"-s", "dir",
@@ -269,8 +260,6 @@ func createPackage(options linuxPackageOptions) {
 		"--url", "http://grafana.org",
 		"--license", "\"Apache 2.0\"",
 		"--maintainer", "contact@grafana.org",
-		"--config-files", options.configFilePath,
-		"--config-files", options.ldapFilePath,
 		"--config-files", options.initdScriptFilePath,
 		"--config-files", options.etcDefaultFilePath,
 		"--config-files", options.systemdServiceFilePath,
@@ -429,14 +418,10 @@ func setBuildEnv() {
 }
 
 func getGitSha() string {
-	v, err := runError("git", "describe", "--always", "--dirty")
+	v, err := runError("git", "rev-parse", "--short", "HEAD")
 	if err != nil {
 		return "unknown-dev"
 	}
-	v = versionRe.ReplaceAllFunc(v, func(s []byte) []byte {
-		s[0] = '+'
-		return s
-	})
 	return string(v)
 }
 
@@ -517,14 +502,14 @@ func md5File(file string) error {
 func sha1FilesInDist() {
 	filepath.Walk("./dist", func(path string, f os.FileInfo, err error) error {
 		if path == "./dist" {
-      return nil
-    }
+			return nil
+		}
 
-    if strings.Contains(path, ".sha1") == false {
+		if strings.Contains(path, ".sha1") == false {
 			err := sha1File(path)
-      if err != nil {
-        log.Printf("Failed to create sha file. error: %v\n", err)
-      }
+			if err != nil {
+				log.Printf("Failed to create sha file. error: %v\n", err)
+			}
 		}
 		return nil
 	})

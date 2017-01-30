@@ -38,6 +38,12 @@ if [ $1 -eq 1 ] ; then
     -c "grafana user" grafana
 	fi
 
+  # copy user config files
+  if [ ! -f $CONF_FILE ]; then
+    cp /usr/share/grafana/conf/sample.ini $CONF_FILE
+    cp /usr/share/grafana/conf/ldap.toml /etc/grafana/ldap.toml
+  fi
+
  	# Set user permissions on /var/log/grafana, /var/lib/grafana
 	mkdir -p /var/log/grafana /var/lib/grafana
 	chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
