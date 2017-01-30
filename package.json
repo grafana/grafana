@@ -29,7 +29,6 @@
     "grunt-contrib-watch": "^1.0.0",
     "grunt-exec": "^1.0.1",
     "grunt-filerev": "^2.3.1",
-    "grunt-git-describe": "~2.4.2",
     "grunt-karma": "~2.0.0",
     "grunt-ng-annotate": "^3.0.0",
     "grunt-notify": "^0.4.5",
