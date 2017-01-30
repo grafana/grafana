@@ -29,11 +29,11 @@ rvm use 2.1.9 --default
 
 gem install fpm -v 1.4
 
-if [ -n "${CIRCLE_TAG}" ]; then
-  go run build.go -includeBuildNumber=false package latest
-else
-  go run build.go package latest
-fi
+#if [ -n "${CIRCLE_TAG}" ]; then
+  #go run build.go -includeBuildNumber=false package latest
+#else
+go run build.go package latest
+#fi
 
 cp dist/* /tmp/dist/
 
