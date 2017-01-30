@@ -32,7 +32,7 @@ test:
 
 deployment:
   gh_branch:
-    branch: master
+    branch: new_master
     commands:
       - pip install awscli
       - sudo apt-get update; sudo apt-get install rpm; sudo apt-get install expect
