@@ -37,7 +37,7 @@ test:
 
 deployment:
   gh_branch:
-    branch: master
+    branch: new_master
     commands:
       - ./scripts/build/deploy.sh
       - ./scripts/build/sign_packages.sh
