@@ -20,7 +20,7 @@ func init() {
 		Type:        "telegram",
 		Name:        "Telegram",
 		Description: "Sends notifications to Telegram",
-		Factory:     NewOpsGenieNotifier,
+		Factory:     NewTelegramNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Telegram API settings</h3>
       <div class="gf-form">
