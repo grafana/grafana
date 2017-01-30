@@ -162,6 +162,12 @@ function ($, core) {
       appEvents.emit('graph-hover', {pos: pos, panel: panel});
     });
 
+    elem.bind("plotclick", function (event, pos, item) {
+      if (item) {
+        console.log(" - click point " + item.dataIndex + " in " + item.series.label, item);
+      }
+    });
+
     this.clear = function(plot) {
       $tooltip.detach();
       plot.clearCrosshair();
