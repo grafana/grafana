@@ -7,7 +7,7 @@ import {appEvents, coreModule} from 'app/core/core';
 
 export class AlertNotificationEditCtrl {
   theForm: any;
-  testSeverity: string = "critical";
+  testSeverity = "critical";
   notifiers: any;
   notifierTemplateId: string;
 
