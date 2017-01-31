@@ -6,41 +6,39 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"regexp"
 	"runtime"
 	"time"
 
 	"strconv"
 
+	"strings"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"strings"
 )
 
 type RenderOpts struct {
-	Path       string
-	Width      string
-	Height     string
-	Timeout    string
-	OrgId      int64
-	TimeOffset string
+	Path     string
+	Width    string
+	Height   string
+	Timeout  string
+	OrgId    int64
+	Timezone string
 }
 
 var rendererLog log.Logger = log.New("png-renderer")
 
 func isoTimeOffsetToPosixTz(isoOffset string) string {
-	re := regexp.MustCompile(`^([+-])([0-1][0-9]|2[0-4])([0-5][0-9])$`)
-	results := re.FindStringSubmatch(isoOffset)
-	if results == nil {
-		return ""
+	// invert offset
+	if strings.HasPrefix(isoOffset, "UTC+") {
+		return strings.Replace(isoOffset, "UTC+", "UTC-", 1)
 	}
-	sign := "+"
-	if results[1] == "+" {
-		sign = "-"  // "+" is west and "-" is east in POSIX TZ
+	if strings.HasPrefix(isoOffset, "UTC-") {
+		return strings.Replace(isoOffset, "UTC-", "UTC+", 1)
 	}
-	return fmt.Sprintf("SOMEWHERE%s%s:%s", sign, results[2], results[3])
+	return isoOffset
 }
 
 func appendEnviron(baseEnviron []string, name string, value string) []string {
@@ -100,10 +98,9 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		return "", err
 	}
 
-	tz := isoTimeOffsetToPosixTz(params.TimeOffset)
-	if tz != "" {
+	if params.Timezone != "" {
 		baseEnviron := os.Environ()
-		cmd.Env = appendEnviron(baseEnviron, "TZ", tz)
+		cmd.Env = appendEnviron(baseEnviron, "TZ", isoTimeOffsetToPosixTz(params.Timezone))
 	}
 
 	err = cmd.Start()
