@@ -93,6 +93,9 @@ func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if err == nil {
 		message = message + fmt.Sprintf("URL: %s\n", ruleUrl)
 	}
+	if evalContext.ImagePublicUrl != "" {
+		message = message + fmt.Sprintf("Image: %s\n", evalContext.ImagePublicUrl)
+	}
 	bodyJSON.Set("text", message)
 
 	url := fmt.Sprintf(telegeramApiUrl, this.BotToken, "sendMessage")
