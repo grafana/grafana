@@ -15,6 +15,7 @@ import (
 	"strings"
 
 	"gopkg.in/ini.v1"
+	"gopkg.in/unrolled/secure.v1"
 
 	"github.com/go-macaron/session"
 
@@ -79,6 +80,7 @@ var (
 	DisableGravatar       bool
 	EmailCodeValidMinutes int
 	DataProxyWhiteList    map[string]bool
+	Secure                secure.Options
 
 	// Snapshots
 	ExternalSnapshotUrl   string
@@ -513,6 +515,26 @@ func NewConfigContext(args *CommandLineArgs) error {
 	CookieUserName = security.Key("cookie_username").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
+
+	// read secure headers settings
+	headers := Cfg.Section("security.http")
+	Secure = secure.Options{
+		AllowedHosts:            headers.Key("allowed_hosts").Strings(" "),
+		SSLRedirect:             headers.Key("ssl_redirect").MustBool(false),
+		SSLTemporaryRedirect:    headers.Key("ssl_temporary_redirect").MustBool(false),
+		SSLHost:                 headers.Key("ssl_host").String(),
+		STSSeconds:              headers.Key("sts_seconds").MustInt64(0),
+		STSIncludeSubdomains:    headers.Key("sts_include_subdomains").MustBool(false),
+		STSPreload:              headers.Key("sts_preload").MustBool(false),
+		ForceSTSHeader:          headers.Key("force_sts_header").MustBool(false),
+		FrameDeny:               headers.Key("frame_deny").MustBool(false),
+		CustomFrameOptionsValue: headers.Key("custom_frame_options_value").String(),
+		ContentTypeNosniff:      headers.Key("content_type_no_sniff").MustBool(false),
+		BrowserXssFilter:        headers.Key("browser_xss_filter").MustBool(false),
+		ContentSecurityPolicy:   headers.Key("content_security_policy").String(),
+		PublicKey:               headers.Key("public_key").String(),
+		IsDevelopment:           Env != PROD,
+	}
 
 	// read snapshots settings
 	snapshots := Cfg.Section("snapshots")
