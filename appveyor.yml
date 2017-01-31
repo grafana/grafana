@@ -7,6 +7,7 @@ clone_folder: c:\gopath\src\github.com\grafana\grafana
 environment:
   nodejs_version: "6"
   GOPATH: c:\gopath
+  GOVERSION: 1.7.4
 
 install:
   # install nodejs and npm
@@ -14,6 +15,8 @@ install:
   - npm install -g yarn
   - yarn install --pure-lockfile
   - npm install -g grunt-cli
+  - appveyor DownloadFile https://storage.googleapis.com/golang/go%GOVERSION%.windows-amd64.zip
+  - 7z x go%GOVERSION%.windows-amd64.zip -y -oC:\ > NUL
   # install gcc (needed for sqlite3)
   - choco install -y --limit-output mingw
   - set PATH=C:\tools\mingw64\bin;%PATH%
@@ -22,12 +25,6 @@ install:
   - go version
   - go env
   - go run build.go setup
-
-before_build:
-  - cmd: if NOT "%buildTag%"=="" echo Building tag! %buildTag%
-  - cmd: if NOT "%buildTag%"=="" git fetch
-  - cmd: if NOT "%buildTag%"=="" git checkout %buildTag%
-  - cmd: echo Building tag? %buildTag%
 
 build_script:
   - go run build.go build
