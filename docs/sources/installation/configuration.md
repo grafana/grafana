@@ -605,6 +605,18 @@ access key. ex AAAAAAAAAAAAAAAAAAAA
 ### secret_key
 secret key. ex AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
+### region
+custom region (default 'us-east-1')
+
+### endpoint
+endpoint location ex http://s3.your.internal.cluster
+
+### disable_ssl
+set to true to disable SSL for endpoint. (default false)
+
+### public_url
+public url for screenshots ex https://grafana.your.domain.com (default https://endpoint/bucket)
+
 ## [external_image_storage.webdav]
 
 ### url

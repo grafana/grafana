@@ -15,22 +15,28 @@ import (
 )
 
 type S3Uploader struct {
-	region    string
-	bucket    string
-	acl       string
-	secretKey string
-	accessKey string
-	log       log.Logger
+	region     string
+	endpoint   string
+	publicUrl  string
+	disableSsl bool
+	bucket     string
+	acl        string
+	secretKey  string
+	accessKey  string
+	log        log.Logger
 }
 
-func NewS3Uploader(region, bucket, acl, accessKey, secretKey string) *S3Uploader {
+func NewS3Uploader(region, endpoint, publicUrl, bucket, acl, accessKey, secretKey string, disableSsl bool) *S3Uploader {
 	return &S3Uploader{
-		region:    region,
-		bucket:    bucket,
-		acl:       acl,
-		accessKey: accessKey,
-		secretKey: secretKey,
-		log:       log.New("s3uploader"),
+		region:     region,
+		endpoint:   endpoint,
+		publicUrl:  publicUrl,
+		disableSsl: disableSsl,
+		bucket:     bucket,
+		acl:        acl,
+		accessKey:  accessKey,
+		secretKey:  secretKey,
+		log:        log.New("s3uploader"),
 	}
 }
 
@@ -47,11 +53,13 @@ func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
 		})
 	cfg := &aws.Config{
 		Region:      aws.String(u.region),
+		Endpoint:    aws.String(u.endpoint),
+		DisableSSL:  aws.Bool(u.disableSsl),
 		Credentials: creds,
 	}
 
 	key := util.GetRandomString(20) + ".png"
-	log.Debug("Uploading image to s3", "bucket = ", u.bucket, ", key = ", key)
+	log.Debug("Uploading image to s3", "endpoint = ", u.endpoint, "bucket = ", u.bucket, ", key = ", key)
 
 	file, err := os.Open(imageDiskPath)
 	if err != nil {
@@ -71,5 +79,5 @@ func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
 		return "", err
 	}
 
-	return "https://" + u.bucket + ".s3.amazonaws.com/" + key, nil
+	return u.publicUrl + "/" + key, nil
 }
