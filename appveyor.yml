@@ -23,6 +23,12 @@ install:
   - go env
   - go run build.go setup
 
+before_build:
+  - cmd: if NOT "%buildTag%"=="" echo Building tag! %buildTag%
+  - cmd: if NOT "%buildTag%"=="" git fetch
+  - cmd: if NOT "%buildTag%"=="" git checkout %buildTag%
+  - cmd: echo Building tag? %buildTag%
+
 build_script:
   - go run build.go build
   - grunt release
@@ -32,7 +38,17 @@ build_script:
 artifacts:
   - path: grafana-*windows-*.*
     name: binzip
+    type: zip
 
 deploy:
   - provider: Environment
-    name: GrafanaBuildsS3
+    name: GrafanaReleaseMaster
+    on:
+      buildType: master
+
+  - provider: Environment
+    name: GrafanaReleaseRelease
+    on:
+      buildType: release
+
+
