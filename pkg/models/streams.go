@@ -1,6 +1,8 @@
 package models
 
-import "gopkg.in/guregu/null.v3"
+import (
+	"github.com/grafana/grafana/pkg/components/null"
+)
 
 type TimePoint [2]null.Float
 type TimeSeriesPoints []TimePoint
