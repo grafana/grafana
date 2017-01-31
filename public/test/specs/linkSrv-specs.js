@@ -1,5 +1,6 @@
 define([
   'lodash',
+  'app/features/dashboard/all',
   'app/features/panellinks/linkSrv'
 ], function(_) {
   'use strict';

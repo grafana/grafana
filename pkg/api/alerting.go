@@ -73,9 +73,9 @@ func GetAlerts(c *middleware.Context) Response {
 			Name:           alert.Name,
 			Message:        alert.Message,
 			State:          alert.State,
-			EvalDate:       alert.EvalDate,
 			NewStateDate:   alert.NewStateDate,
 			ExecutionError: alert.ExecutionError,
+			EvalData:       alert.EvalData,
 		})
 	}
 
@@ -121,10 +121,10 @@ func AlertTest(c *middleware.Context, dto dtos.AlertTestCommand) Response {
 	}
 
 	res := backendCmd.Result
-
 	dtoRes := &dtos.AlertTestResult{
 		Firing:         res.Firing,
 		ConditionEvals: res.ConditionEvals,
+		State:          res.Rule.State,
 	}
 
 	if res.Error != nil {
@@ -171,6 +171,10 @@ func DelAlert(c *middleware.Context) Response {
 
 	var resp = map[string]interface{}{"alertId": alertId}
 	return Json(200, resp)
+}
+
+func GetAlertNotifiers(c *middleware.Context) Response {
+	return Json(200, alerting.GetNotifiers())
 }
 
 func GetAlertNotifications(c *middleware.Context) Response {

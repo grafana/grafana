@@ -6,8 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/guregu/null.v3"
-
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 )

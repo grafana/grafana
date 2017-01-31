@@ -4,7 +4,7 @@
     "company": "Coding Instinct AB"
   },
   "name": "grafana",
-  "version": "4.1.0-pre1",
+  "version": "4.2.0-pre1",
   "repository": {
     "type": "git",
     "url": "http://github.com/grafana/grafana.git"
@@ -29,7 +29,6 @@
     "grunt-contrib-watch": "^1.0.0",
     "grunt-exec": "^1.0.1",
     "grunt-filerev": "^2.3.1",
-    "grunt-git-describe": "~2.4.2",
     "grunt-karma": "~2.0.0",
     "grunt-ng-annotate": "^3.0.0",
     "grunt-notify": "^0.4.5",
@@ -42,13 +41,12 @@
     "karma": "1.3.0",
     "karma-chrome-launcher": "~2.0.0",
     "karma-coverage": "1.1.1",
-    "karma-coveralls": "1.1.2",
     "karma-expect": "~1.1.3",
     "karma-mocha": "~1.3.0",
     "karma-phantomjs-launcher": "1.0.2",
     "load-grunt-tasks": "3.5.2",
     "mocha": "3.2.0",
-    "phantomjs-prebuilt": "^2.1.13",
+    "phantomjs-prebuilt": "^2.1.14",
     "reflect-metadata": "0.1.8",
     "rxjs": "^5.0.0-rc.5",
     "sass-lint": "^1.10.2",
@@ -60,9 +58,8 @@
     "npm": "2.14.x"
   },
   "scripts": {
-    "build": "grunt",
-    "test": "grunt test",
-    "coveralls": "grunt karma:coveralls && rm -rf ./coverage"
+    "build": "./node_modules/grunt-cli/bin/grunt",
+    "test": "./node_modules/grunt-cli/bin/grunt test"
   },
   "license": "Apache-2.0",
   "dependencies": {
@@ -78,7 +75,7 @@
     "sinon": "1.17.6",
     "systemjs-builder": "^0.15.34",
     "tether": "^1.4.0",
-    "tether-drop": "git://github.com/torkelo/drop",
+    "tether-drop": "https://github.com/torkelo/drop",
     "tslint": "^4.0.2",
     "typescript": "^2.1.4",
     "virtual-scroll": "^1.1.1"

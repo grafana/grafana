@@ -57,6 +57,7 @@ div.flot-text {
   min-height: 9px;
   padding-top: 4px;
   cursor: pointer;
+  word-wrap: break-word;
 }
 
 .panel-title {
@@ -68,16 +69,6 @@ div.flot-text {
   display: block;
 }
 
-.panel-links-btn {
-  margin-left: 10px;
-  display: none;
-}
-
-.panel-help-text {
-  margin-left: 10px;
-  display: none;
-}
-
 .panel-loading {
   position:absolute;
   top: -3px;
@@ -87,6 +78,23 @@ div.flot-text {
 
 .panel-header {
   text-align: center;
+}
+
+
+.panel-info-corner-inner {
+  width: 0;
+  height: 0;
+  position: absolute;
+  left: 0;
+  bottom: 0;
+}
+
+@mixin panel-corner-color($corner-bg) {
+  .panel-info-corner-inner {
+    border-left: 27px solid $corner-bg;
+    border-right: none;
+    border-bottom: 27px solid transparent;
+  }
 }
 
 .panel-info-corner {
@@ -105,11 +113,12 @@ div.flot-text {
     top: -4px;
     left: -6px;
     font-size: 75%;
+    z-index: 1000;
   }
 
   &--info {
     display: block;
-    background: lighten($panel-bg, 4%);
+    @include panel-corner-color(lighten($panel-bg, 4%));
     .fa:before {
       content: "\f129";
     }
@@ -117,7 +126,7 @@ div.flot-text {
 
   &--links {
     display: block;
-    background: lighten($panel-bg, 4%);
+    @include panel-corner-color(lighten($panel-bg, 4%));
     .fa {
       left: -5px;
     }
@@ -129,22 +138,11 @@ div.flot-text {
   &--error {
     display: block;
     color: $text-color;
-    background: $errorBackground !important;
+    @include panel-corner-color($errorBackground);
     .fa:before {
       content: "\f12a";
     }
   }
-}
-
-.panel-info-corner-inner {
-  width: 0;
-  height: 0;
-  position: absolute;
-  border-left: 27px solid transparent;
-  border-right: 0px solid transparent;
-  border-bottom: 26px solid $panel-bg;
-  left: 0;
-  bottom: 0;
 }
 
 .panel-full-edit {
@@ -231,17 +229,17 @@ div.flot-text {
 .resize-panel-handle {
   cursor: nwse-resize;
   position: absolute;
+  font-size: 10px;
   bottom: 0;
   right: 0;
   width: 15px;
   height: 15px;
   display: block;
   color: $text-color-faint;
-  overflow: hidden;
 
   &:before {
     left: initial;
-    right: -5px;
+    right: -1px;
     bottom: 0px;
     position: absolute;
   }

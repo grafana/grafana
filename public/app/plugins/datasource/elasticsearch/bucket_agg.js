@@ -73,7 +73,7 @@ function (angular, _, queryDef) {
     $scope.validateModel = function() {
       $scope.index = _.indexOf(bucketAggs, $scope.agg);
       $scope.isFirst = $scope.index === 0;
-      $scope.isLast = $scope.index === bucketAggs.length - 1;
+      $scope.bucketAggCount = bucketAggs.length;
 
       var settingsLinkText = "";
       var settings = $scope.agg.settings || {};
@@ -82,10 +82,15 @@ function (angular, _, queryDef) {
         case 'terms': {
           settings.order = settings.order || "asc";
           settings.size = settings.size || "10";
+          settings.min_doc_count = settings.min_doc_count || 0;
           settings.orderBy = settings.orderBy || "_term";
 
           if (settings.size !== '0') {
             settingsLinkText = queryDef.describeOrder(settings.order) + ' ' + settings.size + ', ';
+          }
+
+          if (settings.min_doc_count > 0) {
+            settingsLinkText += 'Min Doc Count: ' + settings.min_doc_count + ', ';
           }
 
           settingsLinkText += 'Order by: ' + queryDef.describeOrderBy(settings.orderBy, $scope.target);

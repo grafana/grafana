@@ -60,12 +60,25 @@ func findPanelQueryByRefId(panel *simplejson.Json, refId string) *simplejson.Jso
 	return nil
 }
 
+func copyJson(in *simplejson.Json) (*simplejson.Json, error) {
+	rawJson, err := in.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	return simplejson.NewJson(rawJson)
+}
+
 func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 	e.log.Debug("GetAlerts")
 
-	alerts := make([]*m.Alert, 0)
+	dashboardJson, err := copyJson(e.Dash.Data)
+	if err != nil {
+		return nil, err
+	}
 
-	for _, rowObj := range e.Dash.Data.Get("rows").MustArray() {
+	alerts := make([]*m.Alert, 0)
+	for _, rowObj := range dashboardJson.Get("rows").MustArray() {
 		row := simplejson.NewFromAny(rowObj)
 
 		for _, panelObj := range row.Get("panels").MustArray() {

@@ -302,7 +302,7 @@ describe('ElasticResponse', function() {
       targets = [{
         refId: 'A',
         metrics: [{type: 'count', id: '1'}],
-        alias: '{{term @host}} {{metric}} and!',
+        alias: '{{term @host}} {{metric}} and {{not_exist}} {{@host}}',
         bucketAggs: [
         {type: 'terms', field: '@host', id: '2'},
         {type: 'date_histogram', field: '@timestamp', id: '3'}
@@ -333,6 +333,16 @@ describe('ElasticResponse', function() {
                 doc_count: 10,
                 key: 'server2',
               },
+              {
+                "3": {
+                  buckets: [
+                  {doc_count: 2, key: 1000},
+                  {doc_count: 8, key: 2000}
+                  ]
+                },
+                doc_count: 10,
+                key: 0,
+              },
               ]
             }
           }
@@ -343,10 +353,11 @@ describe('ElasticResponse', function() {
     });
 
     it('should return 2 series', function() {
-      expect(result.data.length).to.be(2);
+      expect(result.data.length).to.be(3);
       expect(result.data[0].datapoints.length).to.be(2);
-      expect(result.data[0].target).to.be('server1 Count and!');
-      expect(result.data[1].target).to.be('server2 Count and!');
+      expect(result.data[0].target).to.be('server1 Count and {{not_exist}} server1');
+      expect(result.data[1].target).to.be('server2 Count and {{not_exist}} server2');
+      expect(result.data[2].target).to.be('0 Count and {{not_exist}} 0');
     });
   });
 

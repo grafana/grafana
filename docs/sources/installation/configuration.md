@@ -144,6 +144,10 @@ Grafana needs a database to store users and dashboards (and other
 things). By default it is configured to use `sqlite3` which is an
 embedded database (included in the main Grafana binary).
 
+### url
+Use either URL or or the other fields below to configure the database
+Example: `mysql://user:secret@host:port/database`
+
 ### type
 
 Either `mysql`, `postgres` or `sqlite3`, it's your choice.
@@ -244,7 +248,10 @@ organization to be created for that new user.
 
 The role new users will be assigned for the main organization (if the
 above setting is set to true).  Defaults to `Viewer`, other valid
-options are `Admin` and `Editor` and `Read-Only Editor`.
+options are `Admin` and `Editor` and `Read Only Editor`. e.g. :
+
+`auto_assign_org_role = Read Only Editor`
+
 
 <hr>
 
@@ -610,6 +617,11 @@ basic auth username
 basic auth password
 
 ## [alerting]
+
+### enabled
+Defaults to true. Set to false to disable alerting engine and hide Alerting from UI.
+
+### execute_alerts
 
 ### execute_alerts = true
 

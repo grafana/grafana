@@ -125,6 +125,8 @@ func (hs *HttpServer) registerRoutes() {
 			r.Get("/", wrap(SearchUsers))
 			r.Get("/:id", wrap(GetUserById))
 			r.Get("/:id/orgs", wrap(GetUserOrgList))
+			// query parameters /users/lookup?loginOrEmail=admin@example.com
+			r.Get("/lookup", wrap(GetUserByLoginOrEmail))
 			r.Put("/:id", bind(m.UpdateUserCommand{}), wrap(UpdateUser))
 			r.Post("/:id/using/:orgId", wrap(UpdateUserActiveOrg))
 		}, reqGrafanaAdmin)
@@ -261,6 +263,7 @@ func (hs *HttpServer) registerRoutes() {
 		})
 
 		r.Get("/alert-notifications", wrap(GetAlertNotifications))
+		r.Get("/alert-notifiers", wrap(GetAlertNotifiers))
 
 		r.Group("/alert-notifications", func() {
 			r.Post("/test", bind(dtos.NotificationTestCommand{}), wrap(NotificationTest))

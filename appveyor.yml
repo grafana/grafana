@@ -5,13 +5,14 @@ os: Windows Server 2012 R2
 clone_folder: c:\gopath\src\github.com\grafana\grafana
 
 environment:
-  nodejs_version: "5"
+  nodejs_version: "6"
   GOPATH: c:\gopath
 
 install:
   # install nodejs and npm
   - ps: Install-Product node $env:nodejs_version
-  - npm install
+  - npm install -g yarn
+  - yarn install --pure-lockfile
   - npm install -g grunt-cli
   # install gcc (needed for sqlite3)
   - choco install -y --limit-output mingw

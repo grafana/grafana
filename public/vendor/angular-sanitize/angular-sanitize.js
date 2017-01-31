@@ -1,5 +1,5 @@
 /**
- * @license AngularJS v1.5.8
+ * @license AngularJS v1.6.1
  * (c) 2010-2016 Google, Inc. http://angularjs.org
  * License: MIT
  */
@@ -63,7 +63,7 @@ var htmlSanitizeWriter;
  * @returns {string} Sanitized HTML.
  *
  * @example
-   <example module="sanitizeExample" deps="angular-sanitize.js">
+   <example module="sanitizeExample" deps="angular-sanitize.js" name="sanitize-service">
    <file name="index.html">
      <script>
          angular.module('sanitizeExample', ['ngSanitize'])
@@ -112,19 +112,19 @@ var htmlSanitizeWriter;
    </file>
    <file name="protractor.js" type="protractor">
      it('should sanitize the html snippet by default', function() {
-       expect(element(by.css('#bind-html-with-sanitize div')).getInnerHtml()).
+       expect(element(by.css('#bind-html-with-sanitize div')).getAttribute('innerHTML')).
          toBe('<p>an html\n<em>click here</em>\nsnippet</p>');
      });
 
      it('should inline raw snippet if bound to a trusted value', function() {
-       expect(element(by.css('#bind-html-with-trust div')).getInnerHtml()).
+       expect(element(by.css('#bind-html-with-trust div')).getAttribute('innerHTML')).
          toBe("<p style=\"color:blue\">an html\n" +
               "<em onmouseover=\"this.textContent='PWN3D!'\">click here</em>\n" +
               "snippet</p>");
      });
 
      it('should escape snippet without any filter', function() {
-       expect(element(by.css('#bind-default div')).getInnerHtml()).
+       expect(element(by.css('#bind-default div')).getAttribute('innerHTML')).
          toBe("&lt;p style=\"color:blue\"&gt;an html\n" +
               "&lt;em onmouseover=\"this.textContent='PWN3D!'\"&gt;click here&lt;/em&gt;\n" +
               "snippet&lt;/p&gt;");
@@ -133,11 +133,11 @@ var htmlSanitizeWriter;
      it('should update', function() {
        element(by.model('snippet')).clear();
        element(by.model('snippet')).sendKeys('new <b onclick="alert(1)">text</b>');
-       expect(element(by.css('#bind-html-with-sanitize div')).getInnerHtml()).
+       expect(element(by.css('#bind-html-with-sanitize div')).getAttribute('innerHTML')).
          toBe('new <b>text</b>');
-       expect(element(by.css('#bind-html-with-trust div')).getInnerHtml()).toBe(
+       expect(element(by.css('#bind-html-with-trust div')).getAttribute('innerHTML')).toBe(
          'new <b onclick="alert(1)">text</b>');
-       expect(element(by.css('#bind-default div')).getInnerHtml()).toBe(
+       expect(element(by.css('#bind-default div')).getAttribute('innerHTML')).toBe(
          "new &lt;b onclick=\"alert(1)\"&gt;text&lt;/b&gt;");
      });
    </file>
@@ -148,6 +148,7 @@ var htmlSanitizeWriter;
 /**
  * @ngdoc provider
  * @name $sanitizeProvider
+ * @this
  *
  * @description
  * Creates and configures {@link $sanitize} instance.
@@ -225,7 +226,7 @@ function $SanitizeProvider() {
   // Regular Expressions for parsing tags and attributes
   var SURROGATE_PAIR_REGEXP = /[\uD800-\uDBFF][\uDC00-\uDFFF]/g,
     // Match everything outside of normal chars and " (quote character)
-    NON_ALPHANUMERIC_REGEXP = /([^\#-~ |!])/g;
+    NON_ALPHANUMERIC_REGEXP = /([^#-~ |!])/g;
 
 
   // Good source of info about elements and attributes
@@ -234,36 +235,36 @@ function $SanitizeProvider() {
 
   // Safe Void Elements - HTML5
   // http://dev.w3.org/html5/spec/Overview.html#void-elements
-  var voidElements = toMap("area,br,col,hr,img,wbr");
+  var voidElements = toMap('area,br,col,hr,img,wbr');
 
   // Elements that you can, intentionally, leave open (and which close themselves)
   // http://dev.w3.org/html5/spec/Overview.html#optional-tags
-  var optionalEndTagBlockElements = toMap("colgroup,dd,dt,li,p,tbody,td,tfoot,th,thead,tr"),
-      optionalEndTagInlineElements = toMap("rp,rt"),
+  var optionalEndTagBlockElements = toMap('colgroup,dd,dt,li,p,tbody,td,tfoot,th,thead,tr'),
+      optionalEndTagInlineElements = toMap('rp,rt'),
       optionalEndTagElements = extend({},
                                               optionalEndTagInlineElements,
                                               optionalEndTagBlockElements);
 
   // Safe Block Elements - HTML5
-  var blockElements = extend({}, optionalEndTagBlockElements, toMap("address,article," +
-          "aside,blockquote,caption,center,del,dir,div,dl,figure,figcaption,footer,h1,h2,h3,h4,h5," +
-          "h6,header,hgroup,hr,ins,map,menu,nav,ol,pre,section,table,ul"));
+  var blockElements = extend({}, optionalEndTagBlockElements, toMap('address,article,' +
+          'aside,blockquote,caption,center,del,dir,div,dl,figure,figcaption,footer,h1,h2,h3,h4,h5,' +
+          'h6,header,hgroup,hr,ins,map,menu,nav,ol,pre,section,table,ul'));
 
   // Inline Elements - HTML5
-  var inlineElements = extend({}, optionalEndTagInlineElements, toMap("a,abbr,acronym,b," +
-          "bdi,bdo,big,br,cite,code,del,dfn,em,font,i,img,ins,kbd,label,map,mark,q,ruby,rp,rt,s," +
-          "samp,small,span,strike,strong,sub,sup,time,tt,u,var"));
+  var inlineElements = extend({}, optionalEndTagInlineElements, toMap('a,abbr,acronym,b,' +
+          'bdi,bdo,big,br,cite,code,del,dfn,em,font,i,img,ins,kbd,label,map,mark,q,ruby,rp,rt,s,' +
+          'samp,small,span,strike,strong,sub,sup,time,tt,u,var'));
 
   // SVG Elements
   // https://wiki.whatwg.org/wiki/Sanitization_rules#svg_Elements
   // Note: the elements animate,animateColor,animateMotion,animateTransform,set are intentionally omitted.
   // They can potentially allow for arbitrary javascript to be executed. See #11290
-  var svgElements = toMap("circle,defs,desc,ellipse,font-face,font-face-name,font-face-src,g,glyph," +
-          "hkern,image,linearGradient,line,marker,metadata,missing-glyph,mpath,path,polygon,polyline," +
-          "radialGradient,rect,stop,svg,switch,text,title,tspan");
+  var svgElements = toMap('circle,defs,desc,ellipse,font-face,font-face-name,font-face-src,g,glyph,' +
+          'hkern,image,linearGradient,line,marker,metadata,missing-glyph,mpath,path,polygon,polyline,' +
+          'radialGradient,rect,stop,svg,switch,text,title,tspan');
 
   // Blocked Elements (will be stripped)
-  var blockedElements = toMap("script,style");
+  var blockedElements = toMap('script,style');
 
   var validElements = extend({},
                                      voidElements,
@@ -272,7 +273,7 @@ function $SanitizeProvider() {
                                      optionalEndTagElements);
 
   //Attributes that have href and hence need to be sanitized
-  var uriAttrs = toMap("background,cite,href,longdesc,src,xlink:href");
+  var uriAttrs = toMap('background,cite,href,longdesc,src,xlink:href');
 
   var htmlAttrs = toMap('abbr,align,alt,axis,bgcolor,border,cellpadding,cellspacing,class,clear,' +
       'color,cols,colspan,compact,coords,dir,face,headers,height,hreflang,hspace,' +
@@ -315,9 +316,9 @@ function $SanitizeProvider() {
   (function(window) {
     var doc;
     if (window.document && window.document.implementation) {
-      doc = window.document.implementation.createHTMLDocument("inert");
+      doc = window.document.implementation.createHTMLDocument('inert');
     } else {
-      throw $sanitizeMinErr('noinert', "Can't create an inert html document");
+      throw $sanitizeMinErr('noinert', 'Can\'t create an inert html document');
     }
     var docElement = doc.documentElement || doc.getDocumentElement();
     var bodyElements = docElement.getElementsByTagName('body');
@@ -357,7 +358,7 @@ function $SanitizeProvider() {
     var mXSSAttempts = 5;
     do {
       if (mXSSAttempts === 0) {
-        throw $sanitizeMinErr('uinput', "Failed to sanitize html because the input is unstable");
+        throw $sanitizeMinErr('uinput', 'Failed to sanitize html because the input is unstable');
       }
       mXSSAttempts--;
 
@@ -382,7 +383,7 @@ function $SanitizeProvider() {
 
       var nextNode;
       if (!(nextNode = node.firstChild)) {
-      if (node.nodeType == 1) {
+        if (node.nodeType === 1) {
           handler.end(node.nodeName.toLowerCase());
         }
         nextNode = node.nextSibling;
@@ -391,7 +392,7 @@ function $SanitizeProvider() {
             node = node.parentNode;
             if (node === inertBodyElement) break;
             nextNode = node.nextSibling;
-          if (node.nodeType == 1) {
+            if (node.nodeType === 1) {
               handler.end(node.nodeName.toLowerCase());
             }
           }
@@ -400,7 +401,7 @@ function $SanitizeProvider() {
       node = nextNode;
     }
 
-    while (node = inertBodyElement.firstChild) {
+    while ((node = inertBodyElement.firstChild)) {
       inertBodyElement.removeChild(node);
     }
   }
@@ -481,6 +482,7 @@ function $SanitizeProvider() {
           out(tag);
           out('>');
         }
+        // eslint-disable-next-line eqeqeq
         if (tag == ignoreCurrentElement) {
           ignoreCurrentElement = false;
         }
@@ -502,27 +504,26 @@ function $SanitizeProvider() {
    * @param node Root element to process
    */
   function stripCustomNsAttrs(node) {
-    if (node.nodeType === window.Node.ELEMENT_NODE) {
-      var attrs = node.attributes;
-      for (var i = 0, l = attrs.length; i < l; i++) {
-        var attrNode = attrs[i];
-        var attrName = attrNode.name.toLowerCase();
-        if (attrName === 'xmlns:ns1' || attrName.lastIndexOf('ns1:', 0) === 0) {
-          node.removeAttributeNode(attrNode);
-          i--;
-          l--;
+    while (node) {
+      if (node.nodeType === window.Node.ELEMENT_NODE) {
+        var attrs = node.attributes;
+        for (var i = 0, l = attrs.length; i < l; i++) {
+          var attrNode = attrs[i];
+          var attrName = attrNode.name.toLowerCase();
+          if (attrName === 'xmlns:ns1' || attrName.lastIndexOf('ns1:', 0) === 0) {
+            node.removeAttributeNode(attrNode);
+            i--;
+            l--;
+          }
         }
       }
-    }
 
-    var nextNode = node.firstChild;
-    if (nextNode) {
-      stripCustomNsAttrs(nextNode);
-    }
+      var nextNode = node.firstChild;
+      if (nextNode) {
+        stripCustomNsAttrs(nextNode);
+      }
 
-    nextNode = node.nextSibling;
-    if (nextNode) {
-      stripCustomNsAttrs(nextNode);
+      node = node.nextSibling;
     }
   }
 }
@@ -568,7 +569,7 @@ angular.module('ngSanitize', []).provider('$sanitize', $SanitizeProvider);
    <span ng-bind-html="linky_expression | linky"></span>
  *
  * @example
-   <example module="linkyExample" deps="angular-sanitize.js">
+   <example module="linkyExample" deps="angular-sanitize.js" name="linky-filter">
      <file name="index.html">
        <div ng-controller="ExampleController">
        Snippet: <textarea ng-model="snippet" cols="60" rows="3"></textarea>
@@ -616,10 +617,10 @@ angular.module('ngSanitize', []).provider('$sanitize', $SanitizeProvider);
        angular.module('linkyExample', ['ngSanitize'])
          .controller('ExampleController', ['$scope', function($scope) {
            $scope.snippet =
-             'Pretty text with some links:\n'+
-             'http://angularjs.org/,\n'+
-             'mailto:us@somewhere.org,\n'+
-             'another@somewhere.org,\n'+
+             'Pretty text with some links:\n' +
+             'http://angularjs.org/,\n' +
+             'mailto:us@somewhere.org,\n' +
+             'another@somewhere.org,\n' +
              'and one more: ftp://127.0.0.1/.';
            $scope.snippetWithSingleURL = 'http://angularjs.org/';
          }]);

@@ -55,7 +55,7 @@ func (g *GrafanaServerImpl) Start() {
 	plugins.Init()
 
 	// init alerting
-	if setting.ExecuteAlerts {
+	if setting.AlertingEnabled && setting.ExecuteAlerts {
 		engine := alerting.NewEngine()
 		g.childRoutines.Go(func() error { return engine.Run(g.context) })
 	}

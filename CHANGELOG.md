@@ -1,4 +1,53 @@
-# 4.1-beta (unreleased)
+# 4.2.0 (unreleased)
+
+## Enhancements
+* **Alerting**: Added Telegram alert notifier [#7098](https://github.com/grafana/grafana/pull/7098), thx [@leonoff](https://github.com/leonoff)
+* **Templating**: Make $__interval and $__interval_ms global built in variables that can be used in by any datasource (in panel queries), closes [#7190](https://github.com/grafana/grafana/issues/7190), closes [#6582](https://github.com/grafana/grafana/issues/6582)
+* **S3 Image Store**: External s3 image store (used in alert notifications) now support AWS IAM Roles, closes [#6985](https://github.com/grafana/grafana/issues/6985), [#7058](https://github.com/grafana/grafana/issues/7058) thx [@mtanda](https://github.com/mtanda)
+* **Optimzation**: Never issue refresh event when Grafana tab is not visible [#7218](https://github.com/grafana/grafana/issues/7218), thx [@mtanda](https://github.com/mtanda)
+* **Browser History**: Browser back/forward now works time ranges / zoom, [#7259](https://github.com/grafana/grafana/issues/7259)
+* **SingleStat**: Implements diff aggregation method for singlestat [#7234](https://github.com/grafana/grafana/issues/7234), thx [@oliverpool](https://github.com/oliverpool)
+* **Dataproxy**: Added setting to enable more verbose logging in dataproxy [#7209](https://github.com/grafana/grafana/pull/7209), thx [@Ricky-N](https://github.com/Ricky-N)
+* **Alerting**: Better information about why an alert triggered [#7035](https://github.com/grafana/grafana/issues/7035)
+* **LINE**: Add LINE as alerting notification channel [#7301](https://github.com/grafana/grafana/pull/7301), thx [#huydx](https://github.com/huydx)
+* **Elasticsearch**: Support for Min Doc Count options in Terms aggregation [#7324](https://github.com/grafana/grafana/pull/7324), thx [#lpic10](https://github.com/lpic10)
+* **Elasticsearch**: Term aggregation limit can now be changed in template queries [#7112](https://github.com/grafana/grafana/issues/7112), thx [#FFalcon](https://github.com/FFalcon)
+
+## Tech
+
+* **Library Upgrade**: Upgraded angularjs from 1.5.8 to 1.6.1 [#7274](https://github.com/grafana/grafana/issues/7274)
+
+## Bugfixes
+* **Alerting**: Fixes missing support for no_data and execution error when testing alerts [#7149](https://github.com/grafana/grafana/issues/7149)
+* **Dashboard**: Avoid duplicate data in dashboard json for panels with alerts [#7256](https://github.com/grafana/grafana/pull/7256)
+* **Alertlist**: Only show scrollbar when required [#7269](https://github.com/grafana/grafana/issues/7269)
+* **SMTP**: Set LocalName to hostname [#7223](https://github.com/grafana/grafana/issues/7223)
+* **Sidemenu**: Disable sign out in sidemenu for AuthProxyEnabled [#7377](https://github.com/grafana/grafana/pull/7377), thx [@solugebefola](https://github.com/solugebefola)
+
+# 4.1.2 (unreleased)
+
+### Bugfixes
+* **Table**: Fixes broken annotation rendering mode in the table panel [#7268](https://github.com/grafana/grafana/issues/7268)
+
+# 4.1.1 (2017-01-11)
+
+### Bugfixes
+* **Graph Panel**: Fixed issue with legend height in table mode [#7221](https://github.com/grafana/grafana/issues/7221)
+
+# 4.1.0 (2017-01-11)
+
+### Bugfixes
+* **Server side PNG rendering**: Fixed issue with y-axis label rotation in phantomjs rendered images [#6924](https://github.com/grafana/grafana/issues/6924)
+* **Graph**: Fixed centering of y-axis label [#7099](https://github.com/grafana/grafana/issues/7099)
+* **Graph**: Fixed graph legend table mode and always visible scrollbar [#6828](https://github.com/grafana/grafana/issues/6828)
+* **Templating**: Fixed template variable value groups/tags feature [#6752](https://github.com/grafana/grafana/issues/6752)
+* **Webhook**: Fixed webhook username mismatch [#7195](https://github.com/grafana/grafana/pull/7195), thx [@theisenmark](https://github.com/theisenmark)
+* **Influxdb**: Handles time(auto) the same way as time($interval) [#6997](https://github.com/grafana/grafana/issues/6997)
+
+## Enhancements
+* **Elasticsearch**: Added support for all moving average options [#7154](https://github.com/grafana/grafana/pull/7154), thx [@vaibhavinbayarea](https://github.com/vaibhavinbayarea)
+
+# 4.1-beta1 (2016-12-21)
 
 ### Enhancements
 * **Postgres**: Add support for Certs for Postgres database [#6655](https://github.com/grafana/grafana/issues/6655)
@@ -17,6 +66,7 @@
 * **Alerting**: Adds OK as no data option. [#6866](https://github.com/grafana/grafana/issues/6866)
 * **Alert list**: Order alerts based on state. [#6676](https://github.com/grafana/grafana/issues/6676)
 * **Alerting**: Add api endpoint for pausing all alerts. [#6589](https://github.com/grafana/grafana/issues/6589)
+* **Panel**: Added help text for panels. [#4079](https://github.com/grafana/grafana/issues/4079), thx [@utkarshcmu](https://github.com/utkarshcmu)
 
 ### Bugfixes
 * **API**: HTTP API for deleting org returning incorrect message for a non-existing org [#6679](https://github.com/grafana/grafana/issues/6679)

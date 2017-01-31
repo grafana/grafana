@@ -111,7 +111,7 @@ func init() {
 		"AWS/ElasticMapReduce": {"ClusterId", "JobFlowId", "JobId"},
 		"AWS/ES":               {"ClientId", "DomainName"},
 		"AWS/Events":           {"RuleName"},
-		"AWS/Firehose":         {},
+		"AWS/Firehose":         {"DeliveryStreamName"},
 		"AWS/IoT":              {"Protocol"},
 		"AWS/Kinesis":          {"StreamName", "ShardID"},
 		"AWS/KinesisAnalytics": {"Flow", "Id", "Application"},
@@ -140,8 +140,8 @@ func init() {
 // Please update the region list in public/app/plugins/datasource/cloudwatch/partials/config.html
 func handleGetRegions(req *cwRequest, c *middleware.Context) {
 	regions := []string{
-		"ap-northeast-1", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "cn-north-1",
-		"eu-central-1", "eu-west-1", "sa-east-1", "us-east-1", "us-west-1", "us-west-2", "us-gov-west-1",
+		"ap-northeast-1", "ap-northeast-2", "ap-southeast-1", "ap-southeast-2", "ap-south-1", "ca-central-1", "cn-north-1",
+		"eu-central-1", "eu-west-1", "eu-west-2", "sa-east-1", "us-east-1", "us-east-2", "us-gov-west-1", "us-west-1", "us-west-2",
 	}
 
 	result := []interface{}{}
@@ -248,9 +248,13 @@ func handleGetDimensions(req *cwRequest, c *middleware.Context) {
 }
 
 func getAllMetrics(cwData *datasourceInfo) (cloudwatch.ListMetricsOutput, error) {
+	creds, err := getCredentials(cwData)
+	if err != nil {
+		return cloudwatch.ListMetricsOutput{}, err
+	}
 	cfg := &aws.Config{
 		Region:      aws.String(cwData.Region),
-		Credentials: getCredentials(cwData),
+		Credentials: creds,
 	}
 
 	svc := cloudwatch.New(session.New(cfg), cfg)
@@ -260,7 +264,7 @@ func getAllMetrics(cwData *datasourceInfo) (cloudwatch.ListMetricsOutput, error)
 	}
 
 	var resp cloudwatch.ListMetricsOutput
-	err := svc.ListMetricsPages(params,
+	err = svc.ListMetricsPages(params,
 		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
 			metrics.M_Aws_CloudWatch_ListMetrics.Inc(1)
 			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")

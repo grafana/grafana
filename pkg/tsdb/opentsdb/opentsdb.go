@@ -14,8 +14,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"gopkg.in/guregu/null.v3"
-
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"

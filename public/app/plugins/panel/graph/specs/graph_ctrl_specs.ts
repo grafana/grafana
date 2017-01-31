@@ -12,6 +12,9 @@ describe('GraphCtrl', function() {
 
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(angularMocks.module('grafana.controllers'));
+  beforeEach(angularMocks.module(function($compileProvider) {
+    $compileProvider.preAssignBindingsEnabled(true);
+  }));
 
   beforeEach(ctx.providePhase());
   beforeEach(ctx.createPanelController(GraphCtrl));

@@ -6,6 +6,7 @@ set -e
 
 startGrafana() {
   if [ -x /bin/systemctl ] ; then
+    /bin/systemctl daemon-reload
 		/bin/systemctl start grafana-server.service
 	elif [ -x /etc/init.d/grafana-server ] ; then
 		/etc/init.d/grafana-server start
@@ -36,6 +37,12 @@ if [ $1 -eq 1 ] ; then
     useradd -r -g grafana -d /usr/share/grafana -s /sbin/nologin \
     -c "grafana user" grafana
 	fi
+
+  # copy user config files
+  if [ ! -f $CONF_FILE ]; then
+    cp /usr/share/grafana/conf/sample.ini $CONF_FILE
+    cp /usr/share/grafana/conf/ldap.toml /etc/grafana/ldap.toml
+  fi
 
  	# Set user permissions on /var/log/grafana, /var/lib/grafana
 	mkdir -p /var/log/grafana /var/lib/grafana

@@ -87,7 +87,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       var queryInterpolated = templateSrv.replace(queryString, {}, 'lucene');
       var query = {
         "bool": {
-          "must": [
+          "filter": [
             { "range": range },
             {
               "query_string": {
@@ -168,6 +168,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
 
     this.testDatasource = function() {
+      timeSrv.setTime({ from: 'now-1m', to: 'now' });
       return this._get('/_stats').then(function() {
         return { status: "success", message: "Data source is working", title: "Success" };
       }, function(err) {
@@ -197,15 +198,9 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         target = options.targets[i];
         if (target.hide) {continue;}
 
-        var queryObj = this.queryBuilder.build(target, adhocFilters);
+        var queryString = templateSrv.replace(target.query || '*', options.scopedVars, 'lucene');
+        var queryObj = this.queryBuilder.build(target, adhocFilters, queryString);
         var esQuery = angular.toJson(queryObj);
-        var luceneQuery = target.query || '*';
-        luceneQuery = templateSrv.replace(luceneQuery, options.scopedVars, 'lucene');
-        luceneQuery = angular.toJson(luceneQuery);
-
-        // remove inner quotes
-        luceneQuery = luceneQuery.substr(1, luceneQuery.length - 2);
-        esQuery = esQuery.replace("$lucene_query", luceneQuery);
 
         var searchType = (queryObj.size === 0 && this.esVersion < 5) ? 'count' : 'query_then_fetch';
         var header = this.getQueryHeader(searchType, options.range.from, options.range.to);
@@ -219,7 +214,6 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         return $q.when([]);
       }
 
-      payload = payload.replace(/\$interval/g, options.interval);
       payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
       payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
       payload = templateSrv.replace(payload, options.scopedVars);
@@ -231,6 +225,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
     this.getFields = function(query) {
       return this._get('/_mapping').then(function(result) {
+
         var typeMap = {
           'float': 'number',
           'double': 'number',
@@ -238,12 +233,28 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           'long': 'number',
           'date': 'date',
           'string': 'string',
+          'text': 'string',
+          'scaled_float': 'number',
           'nested': 'nested'
         };
+
+        function shouldAddField(obj, key, query) {
+          if (key[0] === '_') {
+            return false;
+          }
+
+          if (!query.type) {
+            return true;
+          }
+
+          // equal query type filter, or via typemap translation
+          return query.type === obj.type || query.type === typeMap[obj.type];
+        }
 
         // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
         var fieldNameParts = [];
         var fields = {};
+
         function getFieldsRecursively(obj) {
           for (var key in obj) {
             var subObj = obj[key];
@@ -256,10 +267,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
               var fieldName = fieldNameParts.concat(key).join('.');
 
               // Hide meta-fields and check field type
-              if (key[0] !== '_' &&
-                  (!query.type ||
-                   query.type && typeMap[subObj.type] === query.type)) {
-
+              if (shouldAddField(subObj, key, query)) {
                 fields[fieldName] = {
                   text: fieldName,
                   type: subObj.type

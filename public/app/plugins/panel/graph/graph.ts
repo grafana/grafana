@@ -17,8 +17,6 @@ import {appEvents, coreModule} from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import {ThresholdManager} from './threshold_manager';
 
-var labelWidthCache = {};
-
 coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
   return {
     restrict: 'A',
@@ -119,16 +117,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         }
       }
 
-      function getLabelWidth(text, elem) {
-        var labelWidth = labelWidthCache[text];
-
-        if (!labelWidth) {
-          labelWidth = labelWidthCache[text] = elem.width();
-        }
-
-        return labelWidth;
-      }
-
       function drawHook(plot) {
         // Update legend values
         var yaxis = plot.getYAxes();
@@ -156,8 +144,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
           var yaxisLabel = $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>")
           .text(panel.yaxes[0].label)
           .appendTo(elem);
-
-          yaxisLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[0].label, yaxisLabel) / 2) + 'px';
         }
 
         // add right axis labels
@@ -165,8 +151,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
           var rightLabel = $("<div class='axisLabel right-yaxis-label flot-temp-elem'></div>")
           .text(panel.yaxes[1].label)
           .appendTo(elem);
-
-          rightLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[1].label, rightLabel) / 2) + 'px';
         }
 
         thresholdManager.draw(plot);

@@ -100,7 +100,7 @@ func AddDataSource(c *middleware.Context, cmd m.AddDataSourceCommand) {
 		return
 	}
 
-	c.JSON(200, util.DynMap{"message": "Datasource added", "id": cmd.Result.Id})
+	c.JSON(200, util.DynMap{"message": "Datasource added", "id": cmd.Result.Id, "name": cmd.Result.Name})
 }
 
 func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) Response {
@@ -117,7 +117,7 @@ func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) Resp
 		return ApiError(500, "Failed to update datasource", err)
 	}
 
-	return Json(200, util.DynMap{"message": "Datasource updated"})
+	return Json(200, util.DynMap{"message": "Datasource updated", "id": cmd.Id, "name": cmd.Name})
 }
 
 func fillWithSecureJsonData(cmd *m.UpdateDataSourceCommand) error {

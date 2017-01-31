@@ -5,10 +5,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	null "gopkg.in/guregu/null.v3"
-
 	"fmt"
 
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
