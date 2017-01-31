@@ -41,8 +41,8 @@ define([
 
         ctx.scope.init();
         var base = 'http://dashboards.grafana.com/render/dashboard-solo/db/my-dash';
-        var params = '?from=1000&to=2000&panelId=22&width=1000&height=500&tz=UTC%2B01%3A00';
-        expect(ctx.scope.imageUrl).to.be(base + params);
+        var params = '?from=1000&to=2000&panelId=22&width=1000&height=500&tz=UTC';
+        expect(ctx.scope.imageUrl).to.contain(base + params);
       });
 
       it('should remove panel id when no panel in scope', function() {
