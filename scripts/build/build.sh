@@ -24,11 +24,11 @@ fi
 echo "current dir: $(pwd)"
 
 if [ "$CIRCLE_TAG" != "" ]; then
-  echo "Building incremental build for master"
-  go run build.go build
-else
-  echo "Building a release"
+  echo "Building a release from tag $CIRCLE_TAG"
   go run build.go -includeBuildNumber=false build
+else
+  echo "Building incremental build for $CIRCLE_BRANCH"
+  go run build.go build
 fi
 
 yarn install --pure-lockfile
@@ -41,11 +41,11 @@ gem install fpm -v 1.4
 echo "current dir: $(pwd)"
 
 if [ "$CIRCLE_TAG" != "" ]; then
-  echo "Building incremental build for master"
-  go run build.go package latest
-else
-  echo "Building a release"
+  echo "Packaging a release from tag $CIRCLE_TAG"
   go run build.go -includeBuildNumber=false package latest
+else
+  echo "Packaging incremental build for $CIRCLE_BRANCH"
+  go run build.go package latest
 fi
 
 cp dist/* /tmp/dist/
