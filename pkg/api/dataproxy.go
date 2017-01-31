@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
+	"github.com/grafana/grafana/pkg/api/sqldb"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
@@ -85,11 +86,6 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
-	if ds.Type == m.DS_CLOUDWATCH {
-		cloudwatch.HandleRequest(c, ds)
-		return
-	}
-
 	if ds.Type == m.DS_INFLUXDB {
 		if c.Query("db") != ds.Database {
 			c.JsonApiErr(403, "Datasource is not configured to allow this database", nil)
@@ -97,12 +93,24 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		}
 	}
 
-	targetUrl, _ := url.Parse(ds.Url)
-	if len(setting.DataProxyWhiteList) > 0 {
-		if _, exists := setting.DataProxyWhiteList[targetUrl.Host]; !exists {
-			c.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
+	if ds.Type == m.DS_CLOUDWATCH {
+		cloudwatch.HandleRequest(c, ds)
+		return
+	}
+
+	if ds.Type == m.DS_SQLDB {
+		targetUrl, _ := url.Parse(ds.Url)
+		if !checkWhiteList(c, targetUrl.Host) {
 			return
 		}
+
+		sqldb.HandleRequest(c, ds)
+		return
+	}
+
+	targetUrl, _ := url.Parse(ds.Url)
+	if !checkWhiteList(c, targetUrl.Host) {
+		return
 	}
 
 	proxyPath := c.Params("*")
@@ -156,4 +164,15 @@ func logProxyRequest(dataSourceType string, c *middleware.Context) {
 		"uri", c.Req.RequestURI,
 		"method", c.Req.Request.Method,
 		"body", body)
+}
+
+func checkWhiteList(c *middleware.Context, host string) bool {
+	if host != "" && len(setting.DataProxyWhiteList) > 0 {
+		if _, exists := setting.DataProxyWhiteList[host]; !exists {
+			c.JsonApiErr(403, "Data proxy hostname and ip are not included in whitelist", nil)
+			return false
+		}
+	}
+
+	return true
 }
