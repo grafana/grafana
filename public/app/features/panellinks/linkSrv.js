@@ -15,12 +15,14 @@ function (angular, _, kbn) {
         var params = {};
 
         if (link.keepTime) {
-          if(link.kibanaFormat) {
-            params['_g'] = timeSrv.timeRangeForKibanaUrl();
-          } else {
-            var range = timeSrv.timeRangeForUrl();
-            params['from'] = range.from;
-            params['to'] = range.to;
+          switch (link.timeFormat) {
+            case "kibana":
+              params['_g'] = timeSrv.timeRangeForKibanaUrl();
+              break;
+            default:
+              var range = timeSrv.timeRangeForUrl();
+              params['from'] = range.from;
+              params['to'] = range.to;
           }
         }
 
@@ -98,12 +100,14 @@ function (angular, _, kbn) {
         var params = {};
 
         if (link.keepTime) {
-          if(link.kibanaFormat) {
-            params['_g'] = timeSrv.timeRangeForKibanaUrl();
-          } else {
-            var range = timeSrv.timeRangeForUrl();
-            params['from'] = range.from;
-            params['to'] = range.to;
+          switch (link.timeFormat) {
+            case "kibana":
+              params['_g'] = timeSrv.timeRangeForKibanaUrl();
+              break;
+            default:
+              var range = timeSrv.timeRangeForUrl();
+              params['from'] = range.from;
+              params['to'] = range.to;
           }
         }
 

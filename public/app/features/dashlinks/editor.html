@@ -65,7 +65,12 @@
 				<div class="gf-form">
 					<span class="gf-form-label width-6">Include</span>
 					<editor-checkbox text="Time range" model="link.keepTime" change="updated()"></editor-checkbox>
-          <editor-checkbox ng-show="link.keepTime" text="In Kibana format" model="link.kibanaFormat" change="updated()"></editor-checkbox>
+          <div class="gf-form" ng-show="link.keepTime">
+            <span class="gf-form-label width-10">Time format</span>
+            <div class="gf-form-select-wrapper gf-form--grow width-10">
+              <select class="gf-form-input" ng-model="link.timeFormat" ng-options="format for format in ['grafana','kibana']" ng-change="updated()"></select>
+            </div>
+          </div>
 					<editor-checkbox text="Variable values" model="link.includeVars" change="updated()"></editor-checkbox>
 					<editor-checkbox text="Open in new tab " model="link.targetBlank" change="updated()"></editor-checkbox>
 				</div>
