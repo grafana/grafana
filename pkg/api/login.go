@@ -35,6 +35,11 @@ func LoginView(c *middleware.Context) {
 	viewData.Settings["loginHint"] = setting.LoginHint
 	viewData.Settings["disableLoginForm"] = setting.DisableLoginForm
 
+	if loginError, ok := c.Session.Get("loginError").(string); ok {
+		c.Session.Set("loginError", "") // TODO: is there a proper way to delete a session var?
+		viewData.Settings["loginError"] = loginError
+	}
+
 	if !tryLoginUsingRememberCookie(c) {
 		c.HTML(200, VIEW_INDEX, viewData)
 		return

@@ -2,7 +2,6 @@ package social
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -21,11 +20,8 @@ type SocialGithub struct {
 }
 
 var (
-	ErrMissingTeamMembership = errors.New("User not a member of one of the required teams")
-)
-
-var (
-	ErrMissingOrganizationMembership = errors.New("User not a member of one of the required organizations")
+	ErrMissingTeamMembership         = &Error{"User not a member of one of the required teams"}
+	ErrMissingOrganizationMembership = &Error{"User not a member of one of the required organizations"}
 )
 
 func (s *SocialGithub) Type() int {
