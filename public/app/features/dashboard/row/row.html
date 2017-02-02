@@ -55,7 +55,8 @@
     </div>
   </div>
 
-  <div ng-repeat="panel in ctrl.row.panels track by panel.id" class="panel" ui-draggable="!ctrl.dashboard.meta.fullscreen" drag="panel.id" ui-on-drop="ctrl.onDrop($data, panel)" drag-handle-class="drag-handle" panel-width>
+  <div ng-repeat="panel in ctrl.row.panels track by panel.id" class="panel" ui-draggable="!ctrl.dashboard.meta.fullscreen"
+       drag="panel.id" ui-on-drop="ctrl.onDrop($data, panel)" drag-handle-class="drag-handle" ng-hide="panel.suppress" panel-width>
     <plugin-component type="panel" class="panel-margin">
     </plugin-component>
   </div>
