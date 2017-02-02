@@ -215,3 +215,11 @@ func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 
 	return userInfo, nil
 }
+
+func (s *GenericOAuth) Scopes() []string {
+	return s.Config.Scopes
+}
+
+func (s *GenericOAuth) TokenScopes(token *oauth2.Token) ([]string, error) {
+	return jwtTokenScopes(token.AccessToken)
+}

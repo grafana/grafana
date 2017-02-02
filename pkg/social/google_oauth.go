@@ -50,3 +50,13 @@ func (s *SocialGoogle) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 		Login: data.Email,
 	}, nil
 }
+
+func (s *SocialGoogle) Scopes() []string {
+	return s.Config.Scopes
+}
+
+func (s *SocialGoogle) TokenScopes(token *oauth2.Token) ([]string, error) {
+	// TODO: I wasn't able to determine how to extract scopes here
+	// token.Extra("id_token") is a JWS but it doesn't contain scope names
+	return s.Config.Scopes, nil
+}
