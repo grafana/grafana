@@ -38,6 +38,7 @@ var (
 	phjsToRelease         string
 	workingDir            string
 	includeBuildNumber    bool     = true
+	buildNumber           int      = 0
 	binaries              []string = []string{"grafana-server", "grafana-cli"}
 )
 
@@ -58,6 +59,7 @@ func main() {
 	flag.StringVar(&phjsToRelease, "phjs", "", "PhantomJS binary")
 	flag.BoolVar(&race, "race", race, "Use race detector")
 	flag.BoolVar(&includeBuildNumber, "includeBuildNumber", includeBuildNumber, "IncludeBuildNumber in package name")
+	flag.IntVar(&buildNumber, "buildNumber", 0, "Build number from CI system")
 	flag.Parse()
 
 	readVersionFromPackageJson()
@@ -157,7 +159,11 @@ func readVersionFromPackageJson() {
 
 	// add timestamp to iteration
 	if includeBuildNumber {
-		linuxPackageIteration = fmt.Sprintf("%d%s", time.Now().Unix(), linuxPackageIteration)
+		if buildNumber != 0 {
+			linuxPackageIteration = fmt.Sprintf("%d%s", buildNumber, linuxPackageIteration)
+		} else {
+			linuxPackageIteration = fmt.Sprintf("%d%s", time.Now().Unix(), linuxPackageIteration)
+		}
 	}
 }
 

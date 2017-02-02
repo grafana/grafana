@@ -25,10 +25,10 @@ echo "current dir: $(pwd)"
 
 if [ "$CIRCLE_TAG" != "" ]; then
   echo "Building a release from tag $CIRCLE_TAG"
-  go run build.go -includeBuildNumber=false build
+  go run build.go -buildNumber=${CIRCLE_BUILD_NUM} -includeBuildNumber=false build
 else
   echo "Building incremental build for $CIRCLE_BRANCH"
-  go run build.go build
+  go run build.go -buildNumber=${CIRCLE_BUILD_NUM} build
 fi
 
 yarn install --pure-lockfile
@@ -42,10 +42,10 @@ echo "current dir: $(pwd)"
 
 if [ "$CIRCLE_TAG" != "" ]; then
   echo "Packaging a release from tag $CIRCLE_TAG"
-  go run build.go -includeBuildNumber=false package latest
+  go run build.go -buildNumber=${CIRCLE_BUILD_NUM} -includeBuildNumber=false package latest
 else
   echo "Packaging incremental build for $CIRCLE_BRANCH"
-  go run build.go package latest
+  go run build.go -buildNumber=${CIRCLE_BUILD_NUM} package latest
 fi
 
 cp dist/* /tmp/dist/
