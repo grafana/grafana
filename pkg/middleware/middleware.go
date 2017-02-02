@@ -128,6 +128,9 @@ func initContextWithApiKey(ctx *Context) bool {
 			return true
 		}
 
+		// store key into cookie
+		ctx.SetCookie("grafana_persist_api_key", keyString, 20000, setting.AppSubUrl + "/")
+
 		ctx.IsSignedIn = true
 		ctx.SignedInUser = &m.SignedInUser{}
 		ctx.OrgRole = apikey.Role
