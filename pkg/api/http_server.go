@@ -77,17 +77,23 @@ func (hs *HttpServer) listenAndServeTLS(listenAddr, certfile, keyfile string) er
 	}
 
 	tlsCfg := &tls.Config{
-		MinVersion:               TLSVersionMap[setting.TLSMinVersion],
-		PreferServerCipherSuites: setting.TLSPreferServerCipherSuites,
+		MinVersion:               tls.VersionTLS12,
+		PreferServerCipherSuites: true,
+		CipherSuites: []uint16{
+			tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+		},
 	}
-	if setting.TLSCipherSuites != "" {
-		ciphers, err := ParseCiphers(setting.TLSCipherSuites)
-		if err != nil {
-			return fmt.Errorf("Invalid value for 'tls_cipher_suites': %v", err)
-		}
-		tlsCfg.CipherSuites = ciphers
-	}
-
 	srv := &http.Server{
 		Addr:         listenAddr,
 		Handler:      hs.macaron,

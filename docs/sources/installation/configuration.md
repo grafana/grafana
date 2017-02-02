@@ -134,23 +134,6 @@ Path to the certificate file (if `protocol` is set to `https`).
 
 Path to the certificate key file (if `protocol` is set to `https`).
 
-## tls_min_version
-
-The minimum supported version of TLS. Either `tls10`, `tls11` or `tls12`,
-default is `tls10`.
-
-## tls_cipher_suites
-
-The list of supported ciphersuites separated with comma.
-All available ciphersuites can be found [here](https://golang.org/src/crypto/tls/cipher_suites.go).
-
-## tls_prefer_server_cipher_suites
-
-Controls whether the server selects client's most preferred ciphersuite,
-or the server's most preferred ciphersuite. If `true` then the server's
-preference, as expressed in the order of elements in `tls_cipher_suites`,
-is used. Defaults to `false`.
-
 <hr />
 
 <hr />
