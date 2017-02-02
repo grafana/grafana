@@ -8,5 +8,5 @@ docker run -i -t --name gfbuild \
   -v $(pwd)/dist:/tmp/dist \
   -e "CIRCLE_BRANCH=${CIRCLE_BRANCH}" \
   -e "CIRCLE_TAG=${CIRCLE_TAG}" \
-  -e "CIRCLE_BUILD_NUM=${CIRCLE_BUILD_NUM}"
+  -e "CIRCLE_BUILD_NUM=${CIRCLE_BUILD_NUM}" \
   grafana/buildcontainer
