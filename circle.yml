@@ -44,6 +44,7 @@ deployment:
       - go run build.go sha1-dist
       - aws s3 sync ./dist s3://$BUCKET_NAME/master
       - ./scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} master
+      - ./scripts/trigger_docker_build.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN}
   gh_tag:
     tag: /^v[0-9]+(\.[0-9]+){2}(-.+|[^-.]*)$/
     commands:
