@@ -55,7 +55,7 @@ Vagrant.configure(2) do |config|
 	DOWNLOAD_DIR=/vagrant/.tmp/
 
 	# Update package manager
-	sudo apt-get update -qvagr
+	sudo apt-get update -q
 	# Installing basic essentials
 	sudo apt-get install -y build-essential checkinstall libssl-dev
 	sudo apt-get install -y git
