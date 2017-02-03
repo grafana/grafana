@@ -126,9 +126,7 @@ func (e *OpenTsdbExecutor) parseResponse(query OpenTsdbQuery, res *http.Response
 		if query.AliasFormat == "" {
 			series.Name = val.Metric
 		} else {
-			// Create function that sets name based on query.AliasFormat and val.Tags
-			// Please provide tests for that function.
-			// like https://github.com/grafana/grafana/blob/master/public/app/plugins/datasource/opentsdb/datasource.js#L342
+			series.Name = e.createSeriesLabel(val)
 		}
 
 		for timeString, value := range val.DataPoints {
@@ -217,4 +215,16 @@ func (e *OpenTsdbExecutor) buildMetric(query *tsdb.Query) map[string]interface{}
 	}
 
 	return metric
+}
+
+func (e *OpenTsdbExecutor) createSeriesLabel(res OpenTsdbResponse) string {
+	var label = res.Metric
+	if len(res.Tags) > 1 {
+		var tags []string
+		for k, v := range res.Tags {
+			tags = append(tags, k+"="+v)
+		}
+		label += "{" + strings.Join(tags, ",") + "}"
+	}
+	return label
 }
