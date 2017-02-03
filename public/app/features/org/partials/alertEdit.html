@@ -86,14 +86,14 @@
           <li class="tight-form-item" style="width: 80px">
             临界值
           </li>
-          <li class="tight-form-item">
-            阈值
-          </li>
           <li style="width:30px">
             <select class="input-medium tight-form-input last"
                     ng-model="alertDef.alertDetails.hostQuery.expression"
                     ng-options="f for f in ['>', '<']">
             </select>
+          </li>
+          <li class="tight-form-item">
+            阈值
           </li>
           <li>
             <input type="text" class="tight-form-input input-medium" style="width: 139px"
@@ -114,10 +114,10 @@
           <li class="tight-form-item" style="width: 80px">
             警告
           </li>
+          <li class="tight-form-item" style="width: 15px">{{alertDef.alertDetails.hostQuery.expression}}<li>
           <li class="tight-form-item">
             阈值
           </li>
-          <li  style="width:30px">
           </li>
           <li>
             <input type="text" class="tight-form-input input-medium" style="width: 139px"
