@@ -57,8 +57,9 @@ Vagrant.configure(2) do |config|
 	# Update package manager
 	sudo apt-get update -qvagr
 	# Installing basic essentials
-	sudo apt-get install -y git build-essential checkinstall libssl-dev
-	
+	sudo apt-get install -y build-essential checkinstall libssl-dev
+	sudo apt-get install -y git
+
 	echo Getting GoLang environment
 	GOLANG_PKG=go1.7.3.linux-amd64.tar.gz
 	if [ ! -f $DOWNLOAD_DIR$GOLANG_PKG ]; then
@@ -98,23 +99,23 @@ Vagrant.configure(2) do |config|
 	go get github.com/Unknwon/bra
 	
 	echo Updating the MOTD
-	echo "#########################" >> /etc/motd
-	echo "Grafana Build Environment" >> /etc/motd
-    echo "#########################" >> /etc/motd
-    echo "Checkout is available in two places (symlinked):" >> /etc/motd
-    echo "    1) $GOPATH/src/github.com/grafana/grafana" >> /etc/motd
-    echo "    2) /vagrant" >> /etc/motd
-    echo " " >> /etc/motd
-    echo "Common usage:" >> /etc/motd
-    echo "    cd $GOPATH/src/github.com/grafana/grafana" >> /etc/motd
-    echo "    go run build.go setup" >> /etc/motd
-    echo "    go run build.go build" >> /etc/motd
-    echo "    grunt" >> /etc/motd
-    echo "    bra run" >> /etc/motd
-    echo "    ./bin/grafana-server" >> /etc/motd
-    echo "    grunt watch" >> /etc/motd
-    echo "" >> /etc/motd
-    echo "See /vagrant/readme.md for more details" >> /etc/motd
+	echo "#########################" | sudo tee --append /etc/motd
+	echo "Grafana Build Environment" | sudo tee --append /etc/motd
+    echo "#########################" | sudo tee --append /etc/motd
+    echo "Checkout is available in two places (symlinked):" | sudo tee --append /etc/motd
+    echo "    1) $GOPATH/src/github.com/grafana/grafana" | sudo tee --append /etc/motd
+    echo "    2) /vagrant" | sudo tee --append /etc/motd
+    echo " " | sudo tee --append /etc/motd
+    echo "Common usage:" | sudo tee --append /etc/motd
+    echo "    cd $GOPATH/src/github.com/grafana/grafana" | sudo tee --append /etc/motd
+    echo "    go run build.go setup" | sudo tee --append /etc/motd
+    echo "    go run build.go build" | sudo tee --append /etc/motd
+    echo "    grunt" | sudo tee --append /etc/motd
+    echo "    bra run" | sudo tee --append /etc/motd
+    echo "    ./bin/grafana-server" | sudo tee --append /etc/motd
+    echo "    grunt watch" | sudo tee --append /etc/motd
+    echo "" | sudo tee --append /etc/motd
+    echo "See /vagrant/readme.md for more details" | sudo tee --append /etc/motd
   SHELL
   
 end
