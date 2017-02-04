@@ -86,6 +86,12 @@
           <li class="tight-form-item" style="width: 80px">
             临界值
           </li>
+          <li style="width:30px">
+            <select class="input-medium tight-form-input last"
+                    ng-model="alertDef.alertDetails.hostQuery.expression"
+                    ng-options="f for f in ['>', '<']">
+            </select>
+          </li>
           <li class="tight-form-item">
             阈值
           </li>
@@ -98,7 +104,7 @@
           </li>
           <li>
             <input type="text" class="tight-form-input input-medium last"
-                   ng-model='alertDef.alertDetails.crit.durarionMinutes' placeholder="critical duration" required />
+                   ng-model='alertDef.alertDetails.crit.durarionMinutes' placeholder="持续分钟" required />
           </li>
         </ul>
         <div class="clearfix"></div>
@@ -108,8 +114,10 @@
           <li class="tight-form-item" style="width: 80px">
             警告
           </li>
+          <li class="tight-form-item" style="width: 15px">{{alertDef.alertDetails.hostQuery.expression}}<li>
           <li class="tight-form-item">
             阈值
+          </li>
           </li>
           <li>
             <input type="text" class="tight-form-input input-medium" style="width: 139px"
@@ -120,7 +128,7 @@
           </li>
           <li>
             <input type="text" class="tight-form-input input-medium last"
-                   ng-model='alertDef.alertDetails.warn.durarionMinutes' placeholder="warn duration" required />
+                   ng-model='alertDef.alertDetails.warn.durarionMinutes' placeholder="持续分钟" required />
           </li>
         </ul>
         <div class="clearfix"></div>

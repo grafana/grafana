@@ -31,6 +31,7 @@ function (angular, _) {
         $scope.alertDef.alertDetails.membership = "*";
         $scope.alertDef.alertDetails.monitoringScope = "HOST";
         $scope.alertDef.alertDetails.hostQuery = {};
+        $scope.alertDef.alertDetails.hostQuery.expression = ">";
         $scope.alertDef.alertDetails.hostQuery.metricQueries = [];
       }
       $scope.orgName = contextSrv.user.orgName;
