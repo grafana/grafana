@@ -20,8 +20,7 @@
       </tr>
       <tr ng-repeat="anomalyDef in includeMetricsData">
         <td style="width:1%">
-          <i class="fa fa-bell"></i> &nbsp;
-          {{_.getMetricName(anomalyDef.metric)}}
+          <p style="width: 232px" class="max-width" title="{{_.getMetricName(anomalyDef.metric)}}"><i class="fa fa-bell"></i> &nbsp; {{_.getMetricName(anomalyDef.metric)}}</p>
         </td>
         <td style="width:70%;padding: 20px 50px 0px 10px;">
           <div class="progress progress-striped active">
