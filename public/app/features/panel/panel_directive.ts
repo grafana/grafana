@@ -1,9 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
-import $ from 'jquery';
-import _ from 'lodash';
-import Drop from 'tether-drop';
+import angular from "angular";
+import $ from "jquery";
+import Drop from "tether-drop";
 
 var module = angular.module('grafana.directives');
 
@@ -57,7 +56,7 @@ var panelTemplate = `
   </div>
 `;
 
-module.directive('grafanaPanel', function($rootScope) {
+module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
   return {
     restrict: 'E',
     template: panelTemplate,
@@ -181,6 +180,25 @@ module.directive('grafanaPanel', function($rootScope) {
 
         if (infoDrop) {
           infoDrop.destroy();
+        }
+      });
+
+      var getDataPromise = null;
+      scope.needsRefresh = false;
+
+      scope.isVisible = function () {
+        var position = panelContainer[0].getBoundingClientRect();
+        return (0 < position.top) && (position.top < window.innerHeight);
+      };
+
+      $document.bind('scroll', function () {
+        if (getDataPromise) {
+          $timeout.cancel(getDataPromise);
+        }
+        if (scope.needsRefresh) {
+          getDataPromise = $timeout(function () {
+            scope.ctrl.refresh();
+          }, 250);
         }
       });
     }

@@ -12,6 +12,8 @@ import * as dateMath from 'app/core/utils/datemath';
 import {Subject} from 'vendor/npm/rxjs/Subject';
 
 class MetricsPanelCtrl extends PanelCtrl {
+  scope: any;
+  needsRefresh: boolean;
   loading: boolean;
   datasource: any;
   datasourceName: any;
@@ -40,6 +42,8 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasourceSrv = $injector.get('datasourceSrv');
     this.timeSrv = $injector.get('timeSrv');
     this.templateSrv = $injector.get('templateSrv');
+    this.scope = $scope;
+    this.needsRefresh = false;
 
     if (!this.panel.targets) {
       this.panel.targets = [{}];
@@ -48,6 +52,10 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.events.on('refresh', this.onMetricsPanelRefresh.bind(this));
     this.events.on('init-edit-mode', this.onInitMetricsPanelEditMode.bind(this));
     this.events.on('panel-teardown', this.onPanelTearDown.bind(this));
+  }
+
+  private isRenderGraph () {
+    return window.location.href.indexOf("/dashboard-solo/") === 0;
   }
 
   private onPanelTearDown() {
@@ -65,6 +73,13 @@ class MetricsPanelCtrl extends PanelCtrl {
   private onMetricsPanelRefresh() {
     // ignore fetching data if another panel is in fullscreen
     if (this.otherPanelInFullscreenMode()) { return; }
+
+    if (!this.scope.$$childHead || (!this.scope.$$childHead.isVisible() && !this.isRenderGraph())) {
+      this.scope.$$childHead.needsRefresh = true;
+      return;
+    }
+
+    this.scope.$$childHead.needsRefresh = false;
 
     // if we have snapshot data use that
     if (this.panel.snapshotData) {
