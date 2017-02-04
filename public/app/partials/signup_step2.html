@@ -13,7 +13,7 @@
 
 			<div style="display: inline-block; margin-top: 25px; width: 300px">
 					<div class="editor-option">
-						<label class="small">Your email:</label>
+						<label class="small">您的邮箱:</label>
 						<span class="large">{{formModel.email}}</span>
 					</div>
 			</div>
@@ -24,7 +24,7 @@
 
 				<div style="display: inline-block; margin-bottom: 25px; width: 300px" ng-if="verifyEmailEnabled">
 					<div class="editor-option">
-						<label class="small">Email verification code: (sent to your email)</label>
+						<label class="small">请输入验证码: (已经发送到您的邮箱中)</label>
 						<input type="text" class="input input-xlarge text-center" ng-model="formModel.code" required></input>
 					</div>
 				</div>
@@ -36,7 +36,7 @@
 								公司名称
 							</li>
 							<li>
-								<input type="text" name="orgName" class="tight-form-input last" required ng-model='formModel.orgName' placeholder="Name your organization" style="width: 253px">
+								<input type="text" name="orgName" class="tight-form-input last" required ng-model='formModel.orgName' placeholder="您公司名称:如云兴维智" style="width: 253px">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -48,7 +48,7 @@
 								您的姓名
 							</li>
 							<li>
-								<input type="text" name="name" class="tight-form-input last" ng-model='formModel.name' placeholder="(optional)" style="width: 253px">
+								<input type="text" name="name" class="tight-form-input last" ng-model='formModel.name' placeholder="(选填)" style="width: 253px">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -59,7 +59,7 @@
 								账号
 							</li>
 							<li>
-								<input type="text" class="tight-form-input last" required ng-model='formModel.username' placeholder="Username" style="width: 253px" autocomplete="off">
+								<input type="text" class="tight-form-input last" required ng-model='formModel.username' placeholder="账号" style="width: 253px" autocomplete="off">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -71,7 +71,7 @@
 								密码
 							</li>
 							<li>
-								<input type="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 253px" placeholder="password" autocomplete="off">
+								<input type="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 253px" placeholder="密码" autocomplete="off">
 							</li>
 						</ul>
 						<div class="clearfix"></div>
@@ -84,7 +84,7 @@
 
 				<div class="login-submit-button-row">
 					<button type="submit" class="btn" ng-click="ctrl.submit();" ng-class="{'btn-inverse': !signUpForm.$valid, 'btn-primary': signUpForm.$valid}">
-						Continue
+						继续
 					</button>
 				</div>
 			</form>
