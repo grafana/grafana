@@ -97,8 +97,7 @@ export class BackendSrv {
   addCanceler(requestId, canceler) {
     if (requestId in this.inFlightRequests) {
       this.inFlightRequests[requestId].push(canceler);
-    }
-    else {
+    } else {
       this.inFlightRequests[requestId] = [canceler];
     }
   }
