@@ -1,8 +1,9 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import _ from "lodash";
-import config from "app/core/config";
-import coreModule from "app/core/core_module";
+import angular from 'angular';
+import _ from 'lodash';
+import config from 'app/core/config';
+import coreModule from 'app/core/core_module';
 
 export class BackendSrv {
   inFlightRequests = {};
