@@ -78,7 +78,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 
 		if context.IsTestRun {
 			context.Logs = append(context.Logs, &alerting.ResultLogEntry{
-				Message: fmt.Sprintf("Condition[%d]: Eval: %v, Query Returned No Series (reduced to null/no value)", evalMatch),
+				Message: fmt.Sprintf("Condition: Eval: %v, Query Returned No Series (reduced to null/no value)", evalMatch),
 			})
 		}
 
