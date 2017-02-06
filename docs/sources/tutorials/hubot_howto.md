@@ -22,15 +22,17 @@ take you to the graph.
 > is so Hipchat and Slack can show them reliably (they require the image to be publicly available).
 
 <div class="text-center">
-  <img src="/img/tutorials/hubot_grafana.png" class="center"></a>
+  <img src="/img/docs/tutorials/hubot_grafana.png" class="center"></a>
 </div>
 
 ## What is Hubot?
+
 [Hubot](https://hubot.github.com/) is an universal and extensible chat bot that can be used with many chat
 services and has a huge library of third party plugins that allow you to automate anything from your
 chat rooms.
 
 ## Install Hubot
+
 Hubot is very easy to install and host. If you do not already have a bot up and running please
 read the official [Getting Started With Hubot](https://hubot.github.com/docs/) guide.
 
@@ -63,6 +65,7 @@ The `hubot-grafana` plugin requires a number of environment variables to be set 
     export HUBOT_GRAFANA_S3_REGION=us-standard
 
 ### Grafana server side rendering
+
 The hubot plugin will take advantage of the Grafana server side rendering feature that can
 render any panel on the server using phantomjs. Grafana ships with a phantomjs binary (linux only).
 
@@ -70,11 +73,13 @@ To verify that this feature works try the `Direct link to rendered image` link i
 If you do not get an image when opening this link verify that the required font packages are installed for phantomjs to work.
 
 ### Grafana API Key
-<img src="/img/v2/orgdropdown_api_keys.png" style="width: 150px" class="right"></img>
+
+<img src="/img/docs/v2/orgdropdown_api_keys.png" style="width: 150px" class="right"></img>
 You need to set the environment variable `HUBOT_GRAFANA_API_KEY` to a Grafana API Key.
 You can add these from the API Keys page which you find in the Organization dropdown.
 
 ### Amazon S3
+
 The `S3` options are optional but for the images to work properly in services like Slack and Hipchat they need
 to publicly available. By specifying the `S3` options the hubot-grafana script will publish the rendered
 panel to `S3` and it will use that URL when it posts to Slack or Hipchat.
@@ -99,6 +104,7 @@ panel to `S3` and it will use that URL when it posts to Slack or Hipchat.
     - Get a templated dashboard with the `$host` parameter set to `carbon-a`
 
 ## Aliases
+
 Some of the hubot commands above can lengthy and you might have to remember the dashboard slug (url id).
 If you have a few favorite graphs you want to be able check up on often (let's say from your mobile) you
 can create hubot command aliases with the hubot script `hubot-alias`.
@@ -115,7 +121,7 @@ Now you can add an alias like this:
 
 <div class="text-center">
   Using the alias:<br>
-  <img src="/img/tutorials/hubot_grafana2.png" class="center"></a>
+  <img src="/img/docs/tutorials/hubot_grafana2.png" class="center"></a>
 </div>
 
 ## Summary
