@@ -18,9 +18,13 @@ yarn install --pure-lockfile
 
 exit_if_fail npm test
 
+echo "running go fmt"
 exit_if_fail test -z "$(gofmt -s -l ./pkg | tee /dev/stderr)"
-exit_if_fail go run build.go build
+
+echo "running go vet"
 exit_if_fail test -z "$(go vet ./pkg/... | tee /dev/stderr)"
+
+exit_if_fail go run build.go build
 exit_if_fail go test -v ./pkg/...
 
 
