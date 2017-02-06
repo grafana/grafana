@@ -42,9 +42,9 @@ those options.
 
 ## Data sources guides
 
-- [Graphite](datasources/graphite)
-- [Elasticsearch](datasources/elasticsearch)
-- [InfluxDB](datasources/influxdb)
-- [OpenTSDB](datasources/opentsdb)
+- [Graphite]({{< relref "features/datasources/graphite.md" >}})
+- [Elasticsearch]({{< relref "features/datasources/elasticsearch.md" >}})
+- [InfluxDB]({{< relref "features/datasources/influxdb.md" >}})
+- [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
 
 

@@ -121,10 +121,10 @@ those options.
 
 ### Adding data sources
 
-- [Graphite]({{< relref "datasources/graphite.md" >}})
-- [InfluxDB]({{< relref "datasources/influxdb.md" >}})
-- [OpenTSDB]({{< relref "datasources/opentsdb.md" >}})
-- [Prometheus]({{< relref "datasources/prometheus.md" >}})
+- [Graphite]({{< relref "features/datasources/graphite.md" >}})
+- [InfluxDB]({{< relref "features/datasources/influxdb.md" >}})
+- [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
+- [Prometheus]({{< relref "features/datasources/prometheus.md" >}})
 
 ### Server side image rendering
 

@@ -33,7 +33,7 @@ of core Grafana. Only some data soures are supported right now. They include `Gr
 ### Clustering
 
 We have not implemented clustering yet. So if you run multiple instances of grafana-server
-you have to make sure [execute_alerts]({{< relref "/installation/configuration.md#alerting" >}})
+you have to make sure [execute_alerts]({{< relref "installation/configuration.md#alerting" >}})
 is true on only one instance or otherwise you will get duplicated notifications.
 
 <div class="clearfix"></div>

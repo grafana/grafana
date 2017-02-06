@@ -3,6 +3,7 @@ title = "Using InfluxDB in Grafana"
 description = "Guide for using InfluxDB in Grafana"
 keywords = ["grafana", "influxdb", "guide"]
 type = "docs"
+aliases = ["/datasources/influxdb"]
 [menu.docs]
 name = "InfluxDB"
 parent = "datasources"

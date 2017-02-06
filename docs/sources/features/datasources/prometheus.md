@@ -3,6 +3,7 @@ title = "Using Prometheus in Grafana"
 description = "Guide for using Prometheus in Grafana"
 keywords = ["grafana", "prometheus", "guide"]
 type = "docs"
+aliases = ["/datasources/prometheus"]
 [menu.docs]
 name = "Prometheus"
 parent = "datasources"
@@ -74,7 +75,7 @@ You can also use raw queries & regular expressions to extract anything you might
 
 ### Using templated variables in queries
 
-When the `Include All` option or `Multi-Value` option is enabled, Grafana converts the labels from plain text to a regex compatible string. 
+When the `Include All` option or `Multi-Value` option is enabled, Grafana converts the labels from plain text to a regex compatible string.
 Which means you have to use `=~` instead of `=` in your Prometheus queries. For example `ALERTS{instance=~$instance}` instead of `ALERTS{instance=$instance}`.
 
 ![](/img/v2/prometheus_templating.png)
