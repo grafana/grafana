@@ -66,8 +66,8 @@ func (e *PrometheusExecutor) getClient() (prometheus.QueryAPI, error) {
 	if e.BasicAuth {
 		cfg.Transport = basicAuthTransport{
 			Transport: e.Transport,
-			username: e.BasicAuthUser,
-			password: e.BasicAuthPassword,
+			username:  e.BasicAuthUser,
+			password:  e.BasicAuthPassword,
 		}
 	}
 
