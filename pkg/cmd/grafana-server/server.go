@@ -95,17 +95,3 @@ func (g *GrafanaServerImpl) Shutdown(code int, reason string) {
 	log.Close()
 	os.Exit(code)
 }
-
-// implement context.Context
-func (g *GrafanaServerImpl) Deadline() (deadline time.Time, ok bool) {
-	return g.context.Deadline()
-}
-func (g *GrafanaServerImpl) Done() <-chan struct{} {
-	return g.context.Done()
-}
-func (g *GrafanaServerImpl) Err() error {
-	return g.context.Err()
-}
-func (g *GrafanaServerImpl) Value(key interface{}) interface{} {
-	return g.context.Value(key)
-}
