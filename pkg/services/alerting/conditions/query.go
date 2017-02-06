@@ -67,6 +67,7 @@ func (c *QueryCondition) Eval(context *alerting.EvalContext) (*alerting.Conditio
 			matches = append(matches, &alerting.EvalMatch{
 				Metric: series.Name,
 				Value:  reducedValue,
+				Tags:   series.Tags,
 			})
 		}
 	}
