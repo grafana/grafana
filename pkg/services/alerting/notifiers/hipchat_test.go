@@ -47,7 +47,7 @@ func TestHipChatNotifier(t *testing.T) {
 				So(hipchatNotifier.Type, ShouldEqual, "hipchat")
 				So(hipchatNotifier.Url, ShouldEqual, "http://google.com")
 				So(hipchatNotifier.ApiKey, ShouldEqual, "")
-				So(hipchatNotifier.RommId, ShouldEqual, "")
+				So(hipchatNotifier.RoomId, ShouldEqual, "")
 			})
 
 			Convey("from settings with Recipient and Mention", func() {
