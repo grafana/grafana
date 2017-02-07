@@ -111,7 +111,7 @@ func init() {
 		"AWS/ElasticMapReduce": {"ClusterId", "JobFlowId", "JobId"},
 		"AWS/ES":               {"ClientId", "DomainName"},
 		"AWS/Events":           {"RuleName"},
-		"AWS/Firehose":         {},
+		"AWS/Firehose":         {"DeliveryStreamName"},
 		"AWS/IoT":              {"Protocol"},
 		"AWS/Kinesis":          {"StreamName", "ShardID"},
 		"AWS/KinesisAnalytics": {"Flow", "Id", "Application"},

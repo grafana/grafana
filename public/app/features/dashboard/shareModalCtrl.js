@@ -1,10 +1,11 @@
 define(['angular',
   'lodash',
   'jquery',
+  'moment',
   'require',
   'app/core/config',
 ],
-function (angular, _, $, require, config) {
+function (angular, _, $, moment, require, config) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -83,6 +84,7 @@ function (angular, _, $, require, config) {
       $scope.imageUrl = soloUrl.replace(config.appSubUrl + '/dashboard-solo/', config.appSubUrl + '/render/dashboard-solo/');
       $scope.imageUrl += '&width=1000';
       $scope.imageUrl += '&height=500';
+      $scope.imageUrl += '&tz=UTC' + encodeURIComponent(moment().format("Z"));
     };
 
   });

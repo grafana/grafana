@@ -20,7 +20,7 @@ func init() {
 		Type:        "telegram",
 		Name:        "Telegram",
 		Description: "Sends notifications to Telegram",
-		Factory:     NewOpsGenieNotifier,
+		Factory:     NewTelegramNotifier,
 		OptionsTemplate: `
       <h3 class="page-heading">Telegram API settings</h3>
       <div class="gf-form">
@@ -92,6 +92,9 @@ func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 	ruleUrl, err := evalContext.GetRuleUrl()
 	if err == nil {
 		message = message + fmt.Sprintf("URL: %s\n", ruleUrl)
+	}
+	if evalContext.ImagePublicUrl != "" {
+		message = message + fmt.Sprintf("Image: %s\n", evalContext.ImagePublicUrl)
 	}
 	bodyJSON.Set("text", message)
 
