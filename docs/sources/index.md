@@ -24,27 +24,27 @@ other domains including industrial sensors, home automation, weather, and proces
 - [Installing using Provisioning (Chef, Puppet, Salt, Ansible, etc)](installation/provisioning)
 - [Nightly Builds](http://grafana.org/builds)
 
-For other platforms Read the [build from source]({{< relref "project/building_from_source.md" >}})
+For other platforms Read the [build from source]({{< relref "docs/project/building_from_source.md" >}})
 instructions for more information.
 
 ## Configuring Grafana
 
 The back-end web server has a number of configuration options. Go the
-[Configuration](/installation/configuration) page for details on all
+[Configuration]({{< relref "docs/installation/configuration.md" >}}) page for details on all
 those options.
 
 
 ## Getting started
 
-- [Getting Started](guides/getting_started)
-- [Basic Concepts](guides/basic_concepts)
-- [Screencasts](tutorials/screencasts)
+- [Getting Started]({{< relref "docs/guides/getting_started.md" >}})
+- [Basic Concepts]({{< relref "docs/guides/basic_concepts.md" >}})
+- [Screencasts]({{< relref "docs/tutorials/screencasts.md" >}})
 
 ## Data sources guides
 
-- [Graphite]({{< relref "features/datasources/graphite.md" >}})
-- [Elasticsearch]({{< relref "features/datasources/elasticsearch.md" >}})
-- [InfluxDB]({{< relref "features/datasources/influxdb.md" >}})
-- [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
+- [Graphite]({{< relref "docs/features/datasources/graphite.md" >}})
+- [Elasticsearch]({{< relref "docs/features/datasources/elasticsearch.md" >}})
+- [InfluxDB]({{< relref "docs/features/datasources/influxdb.md" >}})
+- [OpenTSDB]({{< relref "docs/features/datasources/opentsdb.md" >}})
 
 
