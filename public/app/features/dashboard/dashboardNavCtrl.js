@@ -56,6 +56,10 @@ function (angular, _) {
         return;
       }
 
+      if (!$scope.dashboard.system) {
+        $scope.appEvent('alert-warning', ['保存失败', '请选择子系统']);
+        return;
+      }
       var clone = $scope.dashboard.getSaveModelClone();
 
       backendSrv.saveDashboard(clone, options).then(function(data) {
@@ -132,6 +136,7 @@ function (angular, _) {
 
     $scope.exportDashboard = function() {
       var clone = $scope.dashboard.getSaveModelClone();
+      clone.system = 0;
       var blob = new Blob([angular.toJson(clone, true)], { type: "application/json;charset=utf-8" });
       window.saveAs(blob, $scope.dashboard.title + '-' + new Date().getTime());
     };
