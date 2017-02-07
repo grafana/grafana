@@ -109,7 +109,7 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	proxyPath := c.Params("*")
 
 	if ds.Type == m.DS_PROMETHEUS {
-		if !(c.Req.Request.Method == "GET" && strings.Index(proxyPath, "api/") == 0) {
+		if c.Req.Request.Method != http.MethodGet || !strings.HasPrefix(proxyPath, "api/") {
 			c.JsonApiErr(403, "GET is only allowed on proxied Prometheus datasource", nil)
 			return
 		}
