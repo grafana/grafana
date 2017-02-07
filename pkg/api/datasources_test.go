@@ -1,0 +1,124 @@
+package api
+
+import (
+	"encoding/json"
+	"net/http"
+	"net/http/httptest"
+	"path/filepath"
+	"testing"
+
+	m "github.com/grafana/grafana/pkg/models"
+	macaron "gopkg.in/macaron.v1"
+
+	"github.com/go-macaron/session"
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/middleware"
+	. "github.com/smartystreets/goconvey/convey"
+)
+
+const (
+	TestOrgID  = 1
+	TestUserID = 1
+)
+
+func TestDataSourcesProxy(t *testing.T) {
+	Convey("Given a user is logged in", t, func() {
+		loggedInUserScenario("When calling GET on", "/api/datasources/", func(sc *scenarioContext) {
+
+			// Stubs the database query
+			bus.AddHandler("test", func(query *m.GetDataSourcesQuery) error {
+				So(query.OrgId, ShouldEqual, TestOrgID)
+				query.Result = []*m.DataSource{
+					{Name: "mmm"},
+					{Name: "ZZZ"},
+					{Name: "BBB"},
+					{Name: "aaa"},
+				}
+				return nil
+			})
+
+			// handler func being tested
+			sc.handlerFunc = GetDataSources
+			sc.fakeReq("GET", "/api/datasources").exec()
+
+			respJSON := []map[string]interface{}{}
+			err := json.NewDecoder(sc.resp.Body).Decode(&respJSON)
+			So(err, ShouldBeNil)
+
+			Convey("should return list of datasources for org sorted alphabetically and case insensitively", func() {
+				So(respJSON[0]["name"], ShouldEqual, "aaa")
+				So(respJSON[1]["name"], ShouldEqual, "BBB")
+				So(respJSON[2]["name"], ShouldEqual, "mmm")
+				So(respJSON[3]["name"], ShouldEqual, "ZZZ")
+			})
+		})
+	})
+}
+
+func loggedInUserScenario(desc string, url string, fn scenarioFunc) {
+	Convey(desc+" "+url, func() {
+		defer bus.ClearBusHandlers()
+
+		sc := &scenarioContext{}
+		viewsPath, _ := filepath.Abs("../../public/views")
+
+		sc.m = macaron.New()
+		sc.m.Use(macaron.Renderer(macaron.RenderOptions{
+			Directory: viewsPath,
+			Delims:    macaron.Delims{Left: "[[", Right: "]]"},
+		}))
+
+		sc.m.Use(middleware.GetContextHandler())
+		sc.m.Use(middleware.Sessioner(&session.Options{}))
+
+		sc.defaultHandler = func(c *middleware.Context) {
+			sc.context = c
+			sc.context.UserId = TestUserID
+			sc.context.OrgId = TestOrgID
+			sc.context.OrgRole = m.ROLE_EDITOR
+			if sc.handlerFunc != nil {
+				sc.handlerFunc(sc.context)
+			}
+		}
+		sc.m.SetAutoHead(true)
+		sc.m.Get(url, sc.defaultHandler)
+
+		fn(sc)
+	})
+}
+
+func (sc *scenarioContext) fakeReq(method, url string) *scenarioContext {
+	sc.resp = httptest.NewRecorder()
+	req, err := http.NewRequest(method, url, nil)
+	So(err, ShouldBeNil)
+	sc.req = req
+
+	return sc
+}
+
+type scenarioContext struct {
+	m              *macaron.Macaron
+	context        *middleware.Context
+	resp           *httptest.ResponseRecorder
+	apiKey         string
+	authHeader     string
+	handlerFunc    handlerFunc
+	defaultHandler macaron.Handler
+
+	req *http.Request
+}
+
+func (sc *scenarioContext) exec() {
+	if sc.apiKey != "" {
+		sc.req.Header.Add("Authorization", "Bearer "+sc.apiKey)
+	}
+
+	if sc.authHeader != "" {
+		sc.req.Header.Add("Authorization", sc.authHeader)
+	}
+
+	sc.m.ServeHTTP(sc.resp, sc.req)
+}
+
+type scenarioFunc func(c *scenarioContext)
+type handlerFunc func(c *middleware.Context)

@@ -91,7 +91,7 @@ func (slice DataSourceList) Len() int {
 }
 
 func (slice DataSourceList) Less(i, j int) bool {
-	return slice[i].Name < slice[j].Name
+	return strings.ToLower(slice[i].Name) < strings.ToLower(slice[j].Name)
 }
 
 func (slice DataSourceList) Swap(i, j int) {
