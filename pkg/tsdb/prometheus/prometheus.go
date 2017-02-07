@@ -31,7 +31,7 @@ type basicAuthTransport struct {
 
 func (bat basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	req.SetBasicAuth(bat.username, bat.password)
-	return http.DefaultTransport.RoundTrip(req)
+	return bat.Transport.RoundTrip(req)
 }
 
 func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.Executor, error) {
