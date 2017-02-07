@@ -15,6 +15,7 @@
 * **LINE**: Adds image to notification message [#7417](https://github.com/grafana/grafana/pull/7417), thx [@Erliz](https://github.com/Erliz)
 * **Dataproxy**: Only allow get that begins with api/ to access Prometheus [#7459](https://github.com/grafana/grafana/pull/7459), thx [@mtanda](https://github.com/mtanda)
 
+
 ## Tech
 
 * **Library Upgrade**: Upgraded angularjs from 1.5.8 to 1.6.1 [#7274](https://github.com/grafana/grafana/issues/7274)
@@ -25,6 +26,7 @@
 * **Alertlist**: Only show scrollbar when required [#7269](https://github.com/grafana/grafana/issues/7269)
 * **SMTP**: Set LocalName to hostname [#7223](https://github.com/grafana/grafana/issues/7223)
 * **Sidemenu**: Disable sign out in sidemenu for AuthProxyEnabled [#7377](https://github.com/grafana/grafana/pull/7377), thx [@solugebefola](https://github.com/solugebefola)
+* **Prometheus**: Add support for basic auth in Prometheus tsdb package [#6799](https://github.com/grafana/grafana/issues/6799), thx [@hagen1778](https://github.com/hagen1778)
 
 # 4.1.2 (unreleased)
 
