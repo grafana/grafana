@@ -55,6 +55,7 @@ Then you can override them using:
 <hr />
 
 ## instance_name
+
 Set the name of the grafana-server instance. Used in logging and internal metrics and in
 clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use
@@ -145,6 +146,7 @@ things). By default it is configured to use `sqlite3` which is an
 embedded database (included in the main Grafana binary).
 
 ### url
+
 Use either URL or or the other fields below to configure the database
 Example: `mysql://user:secret@host:port/database`
 
@@ -231,7 +233,7 @@ Default is `false`.
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Defaults to `true`.  The admin user can still create
-users from the [Grafana Admin Pages](../reference/admin.md)
+users from the [Grafana Admin Pages](../../reference/admin)
 
 ### allow_org_create
 
