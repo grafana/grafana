@@ -7,7 +7,7 @@ DOCKER_DOCS_IMAGE := grafana/grafana-docs
 
 SOURCES_HOST_DIR := "$(shell pwd)/sources"
 
-DOCS_MOUNT := -v $(SOURCES_HOST_DIR):/site/content/docs
+DOCS_MOUNT := -v $(SOURCES_HOST_DIR):/site/content
 
 DOCKER_RUN_DOCS := docker run --rm -it $(DOCS_MOUNT) -e NOCACHE -p 3004:3004 -p 3005:3005
 
@@ -15,16 +15,16 @@ DOCKER_RUN_DOCS := docker run --rm -it $(DOCS_MOUNT) -e NOCACHE -p 3004:3004 -p 
 default: docs
 
 docs: docs-build
-	$(DOCKER_RUN_DOCS) $(DOCS_MOUNT) -e DOCKERHOST "$(DOCKER_DOCS_IMAGE)" /bin/bash -c "grunt && grunt connect --port=3004"
+	$(DOCKER_RUN_DOCS) $(DOCS_MOUNT) -e DOCKERHOST "$(DOCKER_DOCS_IMAGE)" /bin/bash -c "grunt --env=dev-docs && grunt connect --port=3004"
 
 test: docs-build
-	$(DOCKER_RUN_DOCS) $(DOCS_MOUNT) -e DOCKERHOST "$(DOCKER_DOCS_IMAGE)" /bin/bash -c "ls -la /site/content/docs"
+	$(DOCKER_RUN_DOCS) $(DOCS_MOUNT) -e DOCKERHOST "$(DOCKER_DOCS_IMAGE)" /bin/bash -c "ls -la /site/content"
 
 docs-watch: docs-build
 	$(DOCKER_RUN_DOCS) $(DOCS_MOUNT) -e DOCKERHOST "$(DOCKER_DOCS_IMAGE)" /bin/bash -c "grunt --env=dev-docs && grunt connect --port=3004 & grunt watch --port=3004 --env=dev-docs"
 
 publish: docs-build
-	$(DOCKER_RUN_DOCS) $(DOCS_MOUNT) -e DOCKERHOST "$(DOCKER_DOCS_IMAGE)" /bin/bash -c "./publish.sh staging-docs v3.1"
+	$(DOCKER_RUN_DOCS) $(DOCS_MOUNT) -e DOCKERHOST "$(DOCKER_DOCS_IMAGE)" /bin/bash -c "./publish.sh prod-docs v3.1"
 
 publish-prod: docs-build
 	$(DOCKER_RUN_DOCS) $(DOCS_MOUNT) -e DOCKERHOST "$(DOCKER_DOCS_IMAGE)" /bin/bash -c "./publish.sh prod-docs root"
