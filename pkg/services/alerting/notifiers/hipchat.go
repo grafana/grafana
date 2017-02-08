@@ -2,13 +2,15 @@ package notifiers
 
 import (
 	"encoding/json"
-	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/log"
-	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/alerting"
 	"strconv"
 	"strings"
-	"time"
+
+	"fmt"
+
+	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 func init() {
@@ -20,15 +22,15 @@ func init() {
 		OptionsTemplate: `
       <h3 class="page-heading">HipChat settings</h3>
 			      <div class="gf-form max-width-30">
-			        <span class="gf-form-label width-6">Hip Chat Url</span>
-			        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="HipChat URL"></input>
+			        <span class="gf-form-label width-8">Hip Chat Url</span>
+			        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="HipChat URL (ex https://grafana.hipchat.com)"></input>
 			      </div>
       <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">API Key</span>
+        <span class="gf-form-label width-8">API Key</span>
         <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.apikey" placeholder="HipChat API Key"></input>
       </div>
       <div class="gf-form max-width-30">
-        <span class="gf-form-label width-6">Room ID</span>
+        <span class="gf-form-label width-8">Room ID</span>
         <input type="text"
           class="gf-form-input max-width-30"
           ng-model="ctrl.model.settings.roomid"
@@ -40,7 +42,11 @@ func init() {
 
 }
 
-func NewHipChatNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
+const (
+	maxFieldCount int = 4
+)
+
+func NewHipChatNotifier(model *models.AlertNotification) (alerting.Notifier, error) {
 	url := model.Settings.Get("url").MustString()
 	if strings.HasSuffix(url, "/") {
 		url = url[:len(url)-1]
@@ -50,13 +56,13 @@ func NewHipChatNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 	}
 
 	apikey := model.Settings.Get("apikey").MustString()
-	roomid := model.Settings.Get("roomid").MustString()
+	roomId := model.Settings.Get("roomid").MustString()
 
 	return &HipChatNotifier{
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		Url:          url,
 		ApiKey:       apikey,
-		RoomId:       roomid,
+		RoomId:       roomId,
 		log:          log.New("alerting.notifier.hipchat"),
 	}, nil
 }
@@ -70,9 +76,6 @@ type HipChatNotifier struct {
 }
 
 func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
-	var message string
-	var color string
-
 	this.log.Info("Executing hipchat notification", "ruleId", evalContext.Rule.Id, "notification", this.Name)
 
 	ruleUrl, err := evalContext.GetRuleUrl()
@@ -81,9 +84,8 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	message = evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text + "<br><a href=" + ruleUrl + ">Check Dasboard</a>"
+	message := evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text + "<br><a href=" + ruleUrl + ">Check Dasboard</a>"
 	fields := make([]map[string]interface{}, 0)
-	fieldLimitCount := 4
 	message += "<br>"
 	for index, evt := range evalContext.EvalMatches {
 		message += evt.Metric + " :: " + strconv.FormatFloat(evt.Value.Float64, 'f', -1, 64) + "<br>"
@@ -92,7 +94,7 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 			"value": evt.Value,
 			"short": true,
 		})
-		if index > fieldLimitCount {
+		if index > maxFieldCount {
 			break
 		}
 	}
@@ -105,16 +107,17 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		})
 	}
 
-	if evalContext.Rule.State != m.AlertStateOK { //dont add message when going back to alert state ok.
+	if evalContext.Rule.State != models.AlertStateOK { //dont add message when going back to alert state ok.
 		message += " " + evalContext.Rule.Message
 	}
 	//HipChat has a set list of colors
+	var color string
 	switch evalContext.Rule.State {
-	case m.AlertStateOK:
+	case models.AlertStateOK:
 		color = "green"
-	case m.AlertStateNoData:
+	case models.AlertStateNoData:
 		color = "grey"
-	case m.AlertStateAlerting:
+	case models.AlertStateAlerting:
 		color = "red"
 	}
 
@@ -128,7 +131,7 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"icon": map[string]interface{}{
 			"url": "http://grafana.org/assets/img/fav32.png",
 		},
-		"date": time.Now().Unix(),
+		"date": evalContext.EndTime.Unix(),
 	}
 
 	body := map[string]interface{}{
@@ -138,9 +141,10 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"color":          color,
 		"card":           card,
 	}
-	hipUrl := this.Url + "/v2/room/" + this.RoomId + "/notification?auth_token=" + this.ApiKey
+
+	hipUrl := fmt.Sprintf("%s/v2/room/%s/notification?auth_token=%s", this.Url, this.RoomId, this.ApiKey)
 	data, _ := json.Marshal(&body)
-	cmd := &m.SendWebhookSync{Url: hipUrl, Body: string(data)}
+	cmd := &models.SendWebhookSync{Url: hipUrl, Body: string(data)}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
 		this.log.Error("Failed to send hipchat notification", "error", err, "webhook", this.Name)
