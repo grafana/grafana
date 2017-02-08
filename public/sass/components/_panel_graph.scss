@@ -267,6 +267,11 @@
   .graph-tooltip-series-name {
     display: table-cell;
     padding: 0.15rem;
+    max-width: 650px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+   }
+
   }
 
   .graph-tooltip-value {
