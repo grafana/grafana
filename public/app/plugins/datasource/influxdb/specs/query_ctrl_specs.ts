@@ -10,6 +10,9 @@ describe('InfluxDBQueryCtrl', function() {
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.controllers'));
   beforeEach(angularMocks.module('grafana.services'));
+  beforeEach(angularMocks.module(function($compileProvider) {
+    $compileProvider.preAssignBindingsEnabled(true);
+  }));
   beforeEach(ctx.providePhase());
 
   beforeEach(angularMocks.inject(($rootScope, $controller, $q) => {

@@ -52,11 +52,11 @@
               <div class="card-item-sub-name">
                 <span class="alert-list-item-state {{alert.stateModel.stateClass}}">
                   <i class="{{alert.stateModel.iconClass}}"></i>
-                  {{alert.stateModel.text}}
+                  {{alert.stateModel.text}} <span class="small muted" ng-show="alert.no_data">(due to no data)</span>
                 </span> for {{alert.newStateDateAgo}}
               </div>
-              <div class="small muted" ng-show="alert.executionError">
-                {{alert.executionError}}
+              <div class="small muted" ng-show="alert.executionError !== ''">
+                Error: "{{alert.executionError}}"
               </div>
             </div>
           </div>
@@ -64,6 +64,4 @@
       </li>
     </ol>
   </section>
-
 </div>
-

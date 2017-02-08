@@ -166,7 +166,7 @@ function (_, queryDef) {
         for (var nameIndex in esAgg.buckets) {
           bucket = esAgg.buckets[nameIndex];
           props = _.clone(props);
-          if (bucket.key) {
+          if (bucket.key !== void 0) {
             props[aggDef.field] = bucket.key;
           } else {
             props["filter"] = nameIndex;
@@ -199,7 +199,7 @@ function (_, queryDef) {
         var group = g1 || g2;
 
         if (group.indexOf('term ') === 0) { return series.props[group.substring(5)]; }
-        if (series.props[group]) { return series.props[group]; }
+        if (series.props[group] !== void 0) { return series.props[group]; }
         if (group === 'metric') { return metricName; }
         if (group === 'field') { return series.field; }
 

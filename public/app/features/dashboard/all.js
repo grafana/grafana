@@ -9,7 +9,7 @@ define([
   './shareSnapshotCtrl',
   './dashboard_srv',
   './viewStateSrv',
-  './timeSrv',
+  './time_srv',
   './unsavedChangesSrv',
   './timepicker/timepicker',
   './graphiteImportCtrl',

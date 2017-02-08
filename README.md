@@ -1,4 +1,4 @@
-[Grafana](http://grafana.org) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) [![Coverage Status](https://coveralls.io/repos/grafana/grafana/badge.png)](https://coveralls.io/r/grafana/grafana)
+[Grafana](http://grafana.org) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) 
 ================
 [Website](http://grafana.org) |
 [Twitter](https://twitter.com/grafana) |
@@ -18,7 +18,7 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 - [What's New in Grafana 2.5](http://docs.grafana.org/guides/whats-new-in-v2-5/)
 - [What's New in Grafana 3.0](http://docs.grafana.org/guides/whats-new-in-v3/)
 - [What's New in Grafana 4.0](http://docs.grafana.org/guides/whats-new-in-v4/)
-- [What's New in Grafana 4.1 beta](http://docs.grafana.org/guides/whats-new-in-v4-1/)
+- [What's New in Grafana 4.1](http://docs.grafana.org/guides/whats-new-in-v4-1/)
 
 ## Features
 ### Graphite Target Editor
@@ -110,11 +110,12 @@ go run build.go build
 
 ### Building frontend assets
 
-To build less to css for the frontend you will need a recent version of **node (v4+)**,
+To build less to css for the frontend you will need a recent version of **node (v6+)**,
 npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```bash
-npm install
+npm install -g yarn
+yarn install --pure-lockfile
 npm run build
 ```
 

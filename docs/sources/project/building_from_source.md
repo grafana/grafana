@@ -23,6 +23,8 @@ export GOPATH=`pwd`
 go get github.com/grafana/grafana
 ```
 
+You may see an error such as: `package github.com/grafana/grafana: no buildable Go source files`. This is just a warning, and you can proceed with the directions.
+
 ## Building the backend
 ```
 cd $GOPATH/src/github.com/grafana/grafana
@@ -40,7 +42,8 @@ To build less to css for the frontend you will need a recent version of node (v0
 npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```
-npm install
+npm install -g yarn
+yarn install --pure-lockfile
 npm install -g grunt-cli
 grunt
 ```

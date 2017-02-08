@@ -29,7 +29,6 @@ function (queryDef) {
     }
 
     queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 500 : parseInt(aggDef.settings.size, 10);
-
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
       queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
@@ -49,6 +48,10 @@ function (queryDef) {
       }
     }
 
+    if (aggDef.settings.min_doc_count !== void 0) {
+      queryNode.terms.min_doc_count = parseInt(aggDef.settings.min_doc_count, 10);
+    }
+
     if (aggDef.settings.missing) {
       queryNode.terms.missing = aggDef.settings.missing;
     }
@@ -66,7 +69,7 @@ function (queryDef) {
     esAgg.format = "epoch_millis";
 
     if (esAgg.interval === 'auto') {
-      esAgg.interval = "$interval";
+      esAgg.interval = "$__interval";
     }
 
     if (settings.missing) {
@@ -117,11 +120,11 @@ function (queryDef) {
       filter = adhocFilters[i];
       condition = {};
       condition[filter.key] = filter.value;
-      query.query.bool.must.push({"term": condition});
+      query.query.bool.filter.push({"term": condition});
     }
   };
 
-  ElasticQueryBuilder.prototype.build = function(target, adhocFilters) {
+  ElasticQueryBuilder.prototype.build = function(target, adhocFilters, queryString) {
     // make sure query has defaults;
     target.metrics = target.metrics || [{ type: 'count', id: '1' }];
     target.dsType = 'elasticsearch';
@@ -133,12 +136,12 @@ function (queryDef) {
       "size": 0,
       "query": {
         "bool": {
-          "must": [
+          "filter": [
             {"range": this.getRangeFilter()},
             {
               "query_string": {
                 "analyze_wildcard": true,
-                "query": '$lucene_query'
+                "query": queryString,
               }
             }
           ]
@@ -226,32 +229,34 @@ function (queryDef) {
       "size": 0,
       "query": {
         "bool": {
-          "must": [{"range": this.getRangeFilter()}]
+          "filter": [{"range": this.getRangeFilter()}]
         }
       }
     };
 
     if (queryDef.query) {
-      query.query.bool.must.push({
+      query.query.bool.filter.push({
         "query_string": {
           "analyze_wildcard": true,
           "query": queryDef.query,
         }
       });
     }
-
+    var size = 500;
+    if(queryDef.size){
+      size = queryDef.size;
+    }
     query.aggs =  {
       "1": {
         "terms": {
           "field": queryDef.field,
-          "size": 500,
+          "size": size,
           "order": {
             "_term": "asc"
           }
         },
       }
     };
-
     return query;
   };
 

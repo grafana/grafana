@@ -1,18 +1,26 @@
 package api
 
 import (
+	"bytes"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
+)
+
+var (
+	dataproxyLogger log.Logger = log.New("data-proxy-log")
 )
 
 func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
@@ -100,6 +108,13 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 
 	proxyPath := c.Params("*")
 
+	if ds.Type == m.DS_PROMETHEUS {
+		if c.Req.Request.Method != http.MethodGet || !strings.HasPrefix(proxyPath, "api/") {
+			c.JsonApiErr(403, "GET is only allowed on proxied Prometheus datasource", nil)
+			return
+		}
+	}
+
 	if ds.Type == m.DS_ES {
 		if c.Req.Request.Method == "DELETE" {
 			c.JsonApiErr(403, "Deletes not allowed on proxied Elasticsearch datasource", nil)
@@ -121,6 +136,32 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		c.JsonApiErr(400, "Unable to load TLS certificate", err)
 		return
 	}
+
+	logProxyRequest(ds.Type, c)
 	proxy.ServeHTTP(c.Resp, c.Req.Request)
 	c.Resp.Header().Del("Set-Cookie")
+}
+
+func logProxyRequest(dataSourceType string, c *middleware.Context) {
+	if !setting.DataProxyLogging {
+		return
+	}
+
+	var body string
+	if c.Req.Request.Body != nil {
+		buffer, err := ioutil.ReadAll(c.Req.Request.Body)
+		if err == nil {
+			c.Req.Request.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
+			body = string(buffer)
+		}
+	}
+
+	dataproxyLogger.Info("Proxying incoming request",
+		"userid", c.UserId,
+		"orgid", c.OrgId,
+		"username", c.Login,
+		"datasource", dataSourceType,
+		"uri", c.Req.RequestURI,
+		"method", c.Req.Request.Method,
+		"body", body)
 }

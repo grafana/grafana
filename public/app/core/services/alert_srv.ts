@@ -27,10 +27,9 @@ export class AlertSrv {
       this.set(alert[0], alert[1], 'success', 3000);
     }, this.$rootScope);
 
-    appEvents.on('alert-error', options => {
-      this.set(options[0], options[1], 'error', 7000);
-    });
-
+    appEvents.on('alert-warning', options => this.set(options[0], options[1], 'warning', 5000));
+    appEvents.on('alert-success', options => this.set(options[0], options[1], 'success', 3000));
+    appEvents.on('alert-error', options => this.set(options[0], options[1], 'error', 7000));
     appEvents.on('confirm-modal', this.showConfirmModal.bind(this));
   }
 

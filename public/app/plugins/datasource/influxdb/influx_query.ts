@@ -23,7 +23,7 @@ export default class InfluxQuery {
     target.resultFormat = target.resultFormat || 'time_series';
     target.tags = target.tags || [];
     target.groupBy = target.groupBy || [
-      {type: 'time', params: ['$interval']},
+      {type: 'time', params: ['$__interval']},
       {type: 'fill', params: ['null']},
     ];
     target.select = target.select || [[

@@ -32,12 +32,14 @@ var upgrader = websocket.Upgrader{
 }
 
 type connection struct {
+	hub  *hub
 	ws   *websocket.Conn
 	send chan []byte
 }
 
-func newConnection(ws *websocket.Conn) *connection {
+func newConnection(ws *websocket.Conn, hub *hub) *connection {
 	return &connection{
+		hub:  hub,
 		send: make(chan []byte, 256),
 		ws:   ws,
 	}
@@ -45,9 +47,10 @@ func newConnection(ws *websocket.Conn) *connection {
 
 func (c *connection) readPump() {
 	defer func() {
-		h.unregister <- c
+		c.hub.unregister <- c
 		c.ws.Close()
 	}()
+
 	c.ws.SetReadLimit(maxMessageSize)
 	c.ws.SetReadDeadline(time.Now().Add(pongWait))
 	c.ws.SetPongHandler(func(string) error { c.ws.SetReadDeadline(time.Now().Add(pongWait)); return nil })
@@ -80,9 +83,9 @@ func (c *connection) handleMessage(message []byte) {
 
 	switch msgType {
 	case "subscribe":
-		h.subChannel <- &streamSubscription{name: streamName, conn: c}
+		c.hub.subChannel <- &streamSubscription{name: streamName, conn: c}
 	case "unsubscribe":
-		h.subChannel <- &streamSubscription{name: streamName, conn: c, remove: true}
+		c.hub.subChannel <- &streamSubscription{name: streamName, conn: c, remove: true}
 	}
 
 }

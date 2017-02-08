@@ -4,18 +4,7 @@ set -e
 
 [ -f /etc/default/grafana-server ] && . /etc/default/grafana-server
 
-startGrafana() {
-  if [ -x /bin/systemctl ]; then
-    /bin/systemctl daemon-reload
-    /bin/systemctl restart grafana-server
-	elif [ -x "/etc/init.d/grafana-server" ]; then
-		if [ -x "`which invoke-rc.d 2>/dev/null`" ]; then
-			invoke-rc.d grafana-server restart || true
-		else
-			/etc/init.d/grafana-server restart || true
-		fi
-	fi
-}
+IS_UPGRADE=false
 
 case "$1" in
 	configure)
@@ -30,17 +19,16 @@ case "$1" in
 		"$GRAFANA_USER"
 	fi
 
-  if [ -x /opt/grafana/ ]; then
-    echo "### Upgrading Notice ### "
-    echo "-- New grafana install home is /usr/share/grafana"
-    echo "-- Please move sqlite3 database to /var/lib/grafana/"
-    echo "-- Notice: service name && binary changed to grafana-server"
-  fi
-
 	# Set user permissions on /var/log/grafana, /var/lib/grafana
 	mkdir -p /var/log/grafana /var/lib/grafana
 	chown -R $GRAFANA_USER:$GRAFANA_GROUP /var/log/grafana /var/lib/grafana
 	chmod 755 /var/log/grafana /var/lib/grafana
+
+  # copy user config files
+  if [ ! -f $CONF_FILE ]; then
+    cp /usr/share/grafana/conf/sample.ini $CONF_FILE
+    cp /usr/share/grafana/conf/ldap.toml /etc/grafana/ldap.toml
+  fi
 
 	# configuration files should not be modifiable by grafana user, as this can be a security issue
 	chown -Rh root:$GRAFANA_GROUP /etc/grafana/*
@@ -48,24 +36,40 @@ case "$1" in
 	find /etc/grafana -type f -exec chmod 640 {} ';'
 	find /etc/grafana -type d -exec chmod 755 {} ';'
 
-	# if $2 is set, this is an upgrade
-	if ( [ -n $2 ] && [ "$RESTART_ON_UPGRADE" = "true" ] ) ; then
-		startGrafana
-	# this is a fresh installation
-	elif [ -z $2 ] ; then
-        if [ -x /bin/systemctl ] ; then
-            echo "### NOT starting on installation, please execute the following statements to configure grafana to start automatically using systemd"
-            echo " sudo /bin/systemctl daemon-reload"
-            echo " sudo /bin/systemctl enable grafana-server"
-            echo "### You can start grafana-server by executing"
-            echo " sudo /bin/systemctl start grafana-server"
+  # If $1=configure and $2 is set, this is an upgrade
+  if [ "$2" != "" ]; then
+    IS_UPGRADE=true
+  fi
 
-        elif [ -x /usr/sbin/update-rc.d ] ; then
-            echo "### NOT starting grafana-server by default on bootup, please execute"
-            echo " sudo update-rc.d grafana-server defaults 95 10"
-            echo "### In order to start grafana-server, execute"
-            echo " sudo service grafana-server start"
-        fi
+  if [ "x$IS_UPGRADE" != "xtrue" ]; then
+    if command -v systemctl >/dev/null; then
+      echo "### NOT starting on installation, please execute the following statements to configure grafana to start automatically using systemd"
+      echo " sudo /bin/systemctl daemon-reload"
+      echo " sudo /bin/systemctl enable grafana-server"
+      echo "### You can start grafana-server by executing"
+      echo " sudo /bin/systemctl start grafana-server"
+    elif command -v update-rc.d >/dev/null; then
+      echo "### NOT starting grafana-server by default on bootup, please execute"
+      echo " sudo update-rc.d grafana-server defaults 95 10"
+      echo "### In order to start grafana-server, execute"
+      echo " sudo service grafana-server start"
+    fi
+  elif [ "$RESTART_ON_UPGRADE" = "true" ]; then
+
+    echo -n "Restarting grafana-server service..."
+
+    if command -v systemctl >/dev/null; then
+      systemctl daemon-reload
+      systemctl restart grafana-server || true
+    elif [ -x /etc/init.d/grafana-server ]; then
+      if command -v invoke-rc.d >/dev/null; then
+        invoke-rc.d grafana-server restart || true
+      else
+        /etc/init.d/grafana-server restart || true
+      fi
+    fi
+    echo " OK"
+
 	fi
 	;;
 esac

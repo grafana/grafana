@@ -12,6 +12,9 @@ describe('VariableSrv init', function() {
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.controllers'));
   beforeEach(angularMocks.module('grafana.services'));
+  beforeEach(angularMocks.module(function($compileProvider) {
+    $compileProvider.preAssignBindingsEnabled(true);
+  }));
 
   beforeEach(ctx.providePhase(['datasourceSrv', 'timeSrv', 'templateSrv', '$location']));
   beforeEach(angularMocks.inject(($rootScope, $q, $location, $injector) => {

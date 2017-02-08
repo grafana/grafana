@@ -136,7 +136,7 @@ export class QueryVariable implements Variable {
     options = [];
 
     if (this.regex) {
-      regex = kbn.stringToJsRegex(this.templateSrv.replace(this.regex));
+      regex = kbn.stringToJsRegex(this.templateSrv.replace(this.regex, {}, 'regex'));
     }
 
     for (i = 0; i < metricNames.length; i++) {

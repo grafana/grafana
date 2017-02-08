@@ -16,6 +16,9 @@ define([
 
     beforeEach(module('grafana.controllers'));
     beforeEach(module('grafana.services'));
+    beforeEach(module(function($compileProvider) {
+      $compileProvider.preAssignBindingsEnabled(true);
+    }));
 
     beforeEach(ctx.providePhase());
 
@@ -28,7 +31,7 @@ define([
         ctx.scope.panel = { id: 22 };
 
         ctx.scope.init();
-        expect(ctx.scope.shareUrl).to.be('http://server/#/test?from=1000&to=2000&panelId=22&fullscreen');
+        expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&panelId=22&fullscreen');
       });
 
       it('should generate render url', function() {
@@ -38,8 +41,8 @@ define([
 
         ctx.scope.init();
         var base = 'http://dashboards.grafana.com/render/dashboard-solo/db/my-dash';
-        var params = '?from=1000&to=2000&panelId=22&width=1000&height=500';
-        expect(ctx.scope.imageUrl).to.be(base + params);
+        var params = '?from=1000&to=2000&panelId=22&width=1000&height=500&tz=UTC';
+        expect(ctx.scope.imageUrl).to.contain(base + params);
       });
 
       it('should remove panel id when no panel in scope', function() {
@@ -48,7 +51,7 @@ define([
         ctx.scope.panel = null;
 
         ctx.scope.init();
-        expect(ctx.scope.shareUrl).to.be('http://server/#/test?from=1000&to=2000');
+        expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000');
       });
 
       it('should add theme when specified', function() {
@@ -57,7 +60,7 @@ define([
         ctx.scope.panel = null;
 
         ctx.scope.init();
-        expect(ctx.scope.shareUrl).to.be('http://server/#/test?from=1000&to=2000&theme=light');
+        expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&theme=light');
       });
 
       it('should include template variables in url', function() {
@@ -70,7 +73,7 @@ define([
         };
 
         ctx.scope.buildUrl();
-        expect(ctx.scope.shareUrl).to.be('http://server/#/test?from=1000&to=2000&var-app=mupp&var-server=srv-01');
+        expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&var-app=mupp&var-server=srv-01');
       });
 
     });
