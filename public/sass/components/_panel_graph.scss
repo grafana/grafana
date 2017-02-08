@@ -133,6 +133,9 @@
     padding-left: 7px;
     text-align: left;
     width: 95%;
+    max-width: 650px;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 
   .graph-legend-series:nth-child(odd) {
