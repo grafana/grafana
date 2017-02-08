@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/models"
 	macaron "gopkg.in/macaron.v1"
 
 	"github.com/go-macaron/session"
@@ -26,9 +26,9 @@ func TestDataSourcesProxy(t *testing.T) {
 		loggedInUserScenario("When calling GET on", "/api/datasources/", func(sc *scenarioContext) {
 
 			// Stubs the database query
-			bus.AddHandler("test", func(query *m.GetDataSourcesQuery) error {
+			bus.AddHandler("test", func(query *models.GetDataSourcesQuery) error {
 				So(query.OrgId, ShouldEqual, TestOrgID)
-				query.Result = []*m.DataSource{
+				query.Result = []*models.DataSource{
 					{Name: "mmm"},
 					{Name: "ZZZ"},
 					{Name: "BBB"},
@@ -75,7 +75,7 @@ func loggedInUserScenario(desc string, url string, fn scenarioFunc) {
 			sc.context = c
 			sc.context.UserId = TestUserID
 			sc.context.OrgId = TestOrgID
-			sc.context.OrgRole = m.ROLE_EDITOR
+			sc.context.OrgRole = models.ROLE_EDITOR
 			if sc.handlerFunc != nil {
 				sc.handlerFunc(sc.context)
 			}
@@ -100,23 +100,12 @@ type scenarioContext struct {
 	m              *macaron.Macaron
 	context        *middleware.Context
 	resp           *httptest.ResponseRecorder
-	apiKey         string
-	authHeader     string
 	handlerFunc    handlerFunc
 	defaultHandler macaron.Handler
-
-	req *http.Request
+	req            *http.Request
 }
 
 func (sc *scenarioContext) exec() {
-	if sc.apiKey != "" {
-		sc.req.Header.Add("Authorization", "Bearer "+sc.apiKey)
-	}
-
-	if sc.authHeader != "" {
-		sc.req.Header.Add("Authorization", sc.authHeader)
-	}
-
 	sc.m.ServeHTTP(sc.resp, sc.req)
 }
 
