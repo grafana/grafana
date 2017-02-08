@@ -24,6 +24,10 @@ func (s *GenericOAuth) Type() int {
 	return int(models.GENERIC)
 }
 
+func (s *GenericOAuth) Scopes() []string {
+	return s.Config.Scopes
+}
+
 func (s *GenericOAuth) IsEmailAllowed(email string) bool {
 	return isEmailAllowed(email, s.allowedDomains)
 }

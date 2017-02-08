@@ -5,11 +5,13 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
 	"net/http"
+	"strings"
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -109,6 +111,11 @@ func OAuthLogin(ctx *middleware.Context) {
 	// token.TokenType was defaulting to "bearer", which is out of spec, so we explicitly set to "Bearer"
 	token.TokenType = "Bearer"
 
+	if err := verifyScopes(token.AccessToken, connect.Scopes()); err != nil {
+		ctx.Handle(500, "login.OAuthLogin(verifyScopes)", err)
+		return
+	}
+
 	ctx.Logger.Debug("OAuthLogin Got token")
 
 	// set up oauth2 client
@@ -178,4 +185,51 @@ func OAuthLogin(ctx *middleware.Context) {
 	metrics.M_Api_Login_OAuth.Inc(1)
 
 	ctx.Redirect(setting.AppSubUrl + "/")
+}
+
+func verifyScopes(accessToken string, scopes []string) error {
+	if len(scopes) == 0 {
+		return nil
+	}
+
+	chunks := strings.Split(accessToken, ".")
+	if len(chunks) < 2 {
+		return errors.New("malformed token")
+	}
+
+	rawData := chunks[1]
+	if l := len(rawData) % 4; l > 0 {
+		rawData += strings.Repeat("=", 4-l)
+	}
+
+	tokenData, err := base64.URLEncoding.DecodeString(rawData)
+	if err != nil {
+		return err
+	}
+
+	var oauthToken struct {
+		Scopes []string `json:"scope"`
+	}
+
+	if err := json.Unmarshal(tokenData, &oauthToken); err != nil {
+		return err
+	}
+
+	var missing []string
+
+loop:
+	for _, scope := range scopes {
+		for _, s := range oauthToken.Scopes {
+			if scope == s {
+				continue loop
+			}
+		}
+		missing = append(missing, scope)
+	}
+
+	if len(missing) > 0 {
+		return fmt.Errorf("missing required scopes: %s", strings.Join(missing, ", "))
+	}
+
+	return nil
 }

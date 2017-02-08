@@ -21,6 +21,10 @@ func (s *SocialGoogle) Type() int {
 	return int(models.GOOGLE)
 }
 
+func (s *SocialGoogle) Scopes() []string {
+	return s.Config.Scopes
+}
+
 func (s *SocialGoogle) IsEmailAllowed(email string) bool {
 	return isEmailAllowed(email, s.allowedDomains)
 }
