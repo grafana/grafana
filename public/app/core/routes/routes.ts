@@ -113,6 +113,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/admin/users', {
     templateUrl: 'public/app/features/admin/partials/users.html',
     controller : 'AdminListUsersCtrl',
+    controllerAs: 'ctrl',
     resolve: loadAdminBundle,
   })
   .when('/admin/users/create', {
