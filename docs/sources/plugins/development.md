@@ -40,7 +40,7 @@ and [apps](./apps.md) plugins in the documentation.
 There are three ways that you can start developing a Grafana plugin.
 
 1. Setup a Grafana development environment. [(described here)](http://docs.grafana.org/project/building_from_source/) and place your plugin in the ```data/plugins``` folder.
-2. Install Grafana and place your plugin in the plugins directory which is set in your [config file]({{< relref "docs/installation/configuration.md" >}}). By default this is `/var/lib/grafana/plugins` on Linux systems.
+2. Install Grafana and place your plugin in the plugins directory which is set in your [config file]({{< relref "installation/configuration.md" >}}). By default this is `/var/lib/grafana/plugins` on Linux systems.
 3. Place your plugin directory anywhere you like and specify it grafana.ini.
 
 We encourage people to setup the full Grafana environment so that you can get inspiration from the rest of grafana code base.
