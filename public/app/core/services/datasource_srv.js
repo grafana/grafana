@@ -97,10 +97,19 @@ function (angular, _, coreModule, config) {
       }
 
       metricSources.sort(function(a, b) {
-        if (a.meta.builtIn || a.name > b.name) {
+        if (a.meta.builtIn) {
           return 1;
         }
-        if (a.name < b.name) {
+
+        if (b.meta.builtIn) {
+          return -1;
+        }
+
+        if (a.name.toLowerCase() > b.name.toLowerCase()) {
+          return 1;
+        }
+
+        if (a.name.toLowerCase() < b.name.toLowerCase()) {
           return -1;
         }
         return 0;
