@@ -123,6 +123,7 @@ func (hs *HttpServer) registerRoutes() {
 		// users (admin permission required)
 		r.Group("/users", func() {
 			r.Get("/", wrap(SearchUsers))
+			r.Get("/search", wrap(SearchUsersWithPaging))
 			r.Get("/:id", wrap(GetUserById))
 			r.Get("/:id/orgs", wrap(GetUserOrgList))
 			// query parameters /users/lookup?loginOrEmail=admin@example.com
@@ -195,7 +196,7 @@ func (hs *HttpServer) registerRoutes() {
 
 		// Data sources
 		r.Group("/datasources", func() {
-			r.Get("/", GetDataSources)
+			r.Get("/", wrap(GetDataSources))
 			r.Post("/", quota("data_source"), bind(m.AddDataSourceCommand{}), AddDataSource)
 			r.Put("/:id", bind(m.UpdateDataSourceCommand{}), wrap(UpdateDataSource))
 			r.Delete("/:id", DeleteDataSource)

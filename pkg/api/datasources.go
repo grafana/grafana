@@ -11,12 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetDataSources(c *middleware.Context) {
+func GetDataSources(c *middleware.Context) Response {
 	query := m.GetDataSourcesQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, "Failed to query datasources", err)
-		return
+		return ApiError(500, "Failed to query datasources", err)
 	}
 
 	result := make(dtos.DataSourceList, 0)
@@ -46,7 +45,8 @@ func GetDataSources(c *middleware.Context) {
 	}
 
 	sort.Sort(result)
-	c.JSON(200, result)
+
+	return Json(200, &result)
 }
 
 func GetDataSourceById(c *middleware.Context) Response {
