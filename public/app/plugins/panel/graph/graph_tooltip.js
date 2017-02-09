@@ -163,9 +163,7 @@ function ($, core) {
     });
 
     elem.bind("plotclick", function (event, pos, item) {
-      if (item) {
-        console.log(" - click point " + item.dataIndex + " in " + item.series.label, item);
-      }
+      appEvents.emit('graph-click', {pos: pos, panel: panel, item: item});
     });
 
     this.clear = function(plot) {
