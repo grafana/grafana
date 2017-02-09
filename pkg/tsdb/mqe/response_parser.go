@@ -154,7 +154,8 @@ func (parser *ResponseParser) wildcardAlias(body MQEResponseSerie, queryToSend Q
 }
 
 func (parser *ResponseParser) indexAlias(body MQEResponseSerie, queryToSend QueryToSend) string {
-	queryNameParts := strings.Split(body.Name, `.`)
+	queryNameParts := strings.Split(queryToSend.Metric.Metric, `.`)
+
 	name := indexAliasPattern.ReplaceAllStringFunc(queryToSend.Metric.Alias, func(in string) string {
 		positionName := strings.TrimSpace(strings.Replace(in, "$", "", 1))
 

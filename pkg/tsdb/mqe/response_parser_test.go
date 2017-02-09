@@ -75,7 +75,7 @@ func TestMQEResponseParser(t *testing.T) {
 						AddClusterToAlias: true,
 						AddHostToAlias:    true,
 					},
-					Metric: Metric{Alias: "$2 $3"},
+					Metric: Metric{Alias: "$2 $3", Metric: "os.disk.sda3.weighted_io_time"},
 				}
 				legend := parser.formatLegend(serie, mqeSerie, queryRef)
 				So(legend, ShouldEqual, "demoapp staples-lab-1 disk.sda3")
