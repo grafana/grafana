@@ -101,12 +101,13 @@ function (angular, _) {
             title: linkDef.title,
             tags: linkDef.tags,
             keepTime: linkDef.keepTime,
-            timeFormat: linkDef.timeFormat,
             includeVars: linkDef.includeVars,
             icon: "fa fa-bars",
             asDropdown: true
           }]);
         }
+
+        linkDef.timeFormat = null;
 
         return $scope.searchDashboards(linkDef, 7);
       }

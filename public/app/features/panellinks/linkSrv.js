@@ -100,6 +100,7 @@ function (angular, _, kbn) {
         var params = {};
 
         if (link.keepTime) {
+          link.timeFormat = link.type === 'dashboard' ? null : link.timeFormat;
           switch (link.timeFormat) {
             case "kibana":
               params['_g'] = timeSrv.timeRangeForKibanaUrl();
