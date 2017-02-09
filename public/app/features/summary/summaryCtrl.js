@@ -28,7 +28,7 @@ define([
       $scope.summarySelect = {
         system: 0,
         services: "",
-        currentTagValue: ""
+        currentTagValue: "*"
       };
 
       $scope.summaryList = [];
@@ -66,7 +66,6 @@ define([
       };
 
       $scope.getServices = function () {
-
         var alias = {
           "hadoop.datanode": "Hadoop DataNode",
           "hadoop.namenode": "Hadoop NameNode",
@@ -80,42 +79,48 @@ define([
           "zookeeper": "Zookeeper"
         };
 
-        var queries = [];
+        $scope.serviceList = [];
         _.each(Object.keys(alias), function (key) {
-          queries.push({
+          var queries = [{
             "metric": contextSrv.user.orgId + "." + $scope.summarySelect.system + "." + key + ".state",
             "aggregator": "sum",
             "downsample": "1h-sum",
             "tags": {"host": $scope.summarySelect.currentTagValue}
-          })
-        });
-
-        $scope.serviceList = [];
-        $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-1h', false).valueOf(), null).then(function (response) {
-          $scope.summaryList = response;
-          _.each(response.data, function (metricData) {
-            _.each(Object.keys(alias), function (key) {
-              if (metricData.metric.indexOf(key) > 0) {
-                var metric = {"host": metricData.tags.host};
-                metric.alias = alias[key];
-                if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
-                  metric.state = "异常";
-                } else {
-                  metric.state = "正常";
-                }
-                $scope.serviceList.push(metric);
+          }];
+          var metric = {};
+          metric.alias = alias[key];
+          $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-1h', false).valueOf(), null).then(function (response) {
+            $scope.summaryList = response;
+            var metricData = response.data[0];
+            metric.host = metricData.tags.host;
+            if (_.isObject(metricData)) {
+              if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
+                metric.state = "异常";
+              } else {
+                metric.state = "正常";
               }
-            });
+            }
+          }).catch(function (e) {
+            metric.state = "尚未工作";
           });
+          $scope.serviceList.push(metric);
         });
+      };
+
+      $scope.cleanup = function () {
+        $scope.serviceList = null;
+        $scope.summaryList = null;
+        $scope.warningScript = null;
       };
 
       $scope.changeSelect = function () {
         var query = {};
-        if ($scope.summarySelect.system == 0 || $scope.summarySelect.services == "")
+        if ($scope.summarySelect.system == 0 || $scope.summarySelect.services == ""){
+          $scope.warningScript = "请选择子系统";
           return;
-
+        }
         contextSrv.system = $scope.summarySelect.system;
+        $scope.warningScript = "抱歉, 没有任何数据返回";
         if ($scope.summarySelect.services == "collect") {
           query['metrics'] = "collector.summary";
           $scope.getSummary(query);
