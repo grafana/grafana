@@ -10,9 +10,9 @@ define([
     module.controller('AnalysisCtrl', function ($scope, $location, datasourceSrv) {
       $scope.init = function () {
         var targetObj = {
-          metric:"files_pending",
+          metric:"",
           currentTagKey:"host",
-          currentTagValue:"121.42.46.103"
+          currentTagValue:""
         };
         $scope.targetObj = targetObj;
         $scope.datasource = null;
