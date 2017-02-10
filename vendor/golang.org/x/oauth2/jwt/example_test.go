@@ -1,15 +1,17 @@
-// Copyright 2014 The oauth2 Authors. All rights reserved.
+// Copyright 2014 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
 package jwt_test
 
 import (
-	"golang.org/x/oauth2"
+	"context"
+
 	"golang.org/x/oauth2/jwt"
 )
 
 func ExampleJWTConfig() {
+	ctx := context.Background()
 	conf := &jwt.Config{
 		Email: "xxx@developer.com",
 		// The contents of your RSA private key or your PEM file
@@ -26,6 +28,6 @@ func ExampleJWTConfig() {
 	}
 	// Initiate an http.Client, the following GET request will be
 	// authorized and authenticated on the behalf of user@example.com.
-	client := conf.Client(oauth2.NoContext)
+	client := conf.Client(ctx)
 	client.Get("...")
 }
