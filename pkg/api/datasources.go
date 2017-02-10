@@ -68,7 +68,7 @@ func GetDataSourceById(c *middleware.Context) Response {
 	return Json(200, &dtos)
 }
 
-func DeleteDataSource(c *middleware.Context) {
+func DeleteDataSourceById(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
 	if id <= 0 {
@@ -76,7 +76,26 @@ func DeleteDataSource(c *middleware.Context) {
 		return
 	}
 
-	cmd := &m.DeleteDataSourceCommand{Id: id, OrgId: c.OrgId}
+	cmd := &m.DeleteDataSourceByIdCommand{Id: id, OrgId: c.OrgId}
+
+	err := bus.Dispatch(cmd)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to delete datasource", err)
+		return
+	}
+
+	c.JsonOK("Data source deleted")
+}
+
+func DeleteDataSourceByName(c *middleware.Context) {
+	name := c.Params(":name")
+
+	if name == "" {
+		c.JsonApiErr(400, "Missing valid datasource name", nil)
+		return
+	}
+
+	cmd := &m.DeleteDataSourceByNameCommand{Name: name, OrgId: c.OrgId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
