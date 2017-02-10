@@ -12,7 +12,7 @@ define([
       var anomalyListUrl = "/anomaly";
       var excludeAnomaly = "/anomaly/exclude";
       var includeAnomaly = "/anomaly/include";
-      var mainHealthList = "/api/alertsource/healthsummary";
+      var mainHealthList = "/healthsummary";
       this.anomalyMetricsData = [];
       var _this = this;
       this.load = function () {
@@ -48,7 +48,9 @@ define([
       };
 
       this.healthSummary = function () {
-        return backendSrv.request({ method: 'GET', url: mainHealthList, timeout: 2000});
+        return backendSrv.alertD({
+          method: 'GET', url: mainHealthList, timeout: 2000
+        });
       };
 
       this.floor = function (metrics) {

@@ -166,7 +166,6 @@ func Register(r *macaron.Macaron) {
 		// Alert source
 		r.Group("/alertsource", func() {
 			r.Get("/", GetAlertSource)
-      r.Get("/healthsummary", ProxyAlertDataSourceRequest)
 		})
 
 		r.Get("/frontend/settings/", GetFrontendSettings)

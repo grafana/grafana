@@ -8,7 +8,7 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('backendSrv', function($http, alertSrv, $timeout, contextSrv) {
+  module.service('backendSrv', function($http, alertSrv, $timeout, contextSrv, $q) {
     var self = this;
     this.alertDUrl;
     this.tokens = null;
@@ -161,7 +161,7 @@ function (angular, _, config) {
     };
 
     this.getToken = function () {
-      return _.chain(self.tokens).filter({'name': contextSrv.system}).first().pick('key').values().first().value();
+      return _.chain(self.tokens).filter({'name': contextSrv.system+""}).first().pick('key').values().first().value();
     };
 
     this.alertD = function (options) {
@@ -171,7 +171,10 @@ function (angular, _, config) {
       options.url = self.alertDUrl + options.url;
       options.params.token = this.getToken();
       if (_.isEmpty(options.params.token)) {
-        alertSrv.set("错误", "无法获取TOKEN", "warning", 4000);
+        alertSrv.set("错误,无法获取TOKEN", "请联系service@cloudwiz.cn", "warning", 4000);
+        var d = $q.defer();
+        d.resolve({});
+        return d.promise;
       }
       return this.datasourceRequest(options);
     };
