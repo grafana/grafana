@@ -28,6 +28,7 @@
 * **SMTP**: Set LocalName to hostname [#7223](https://github.com/grafana/grafana/issues/7223)
 * **Sidemenu**: Disable sign out in sidemenu for AuthProxyEnabled [#7377](https://github.com/grafana/grafana/pull/7377), thx [@solugebefola](https://github.com/solugebefola)
 * **Prometheus**: Add support for basic auth in Prometheus tsdb package [#6799](https://github.com/grafana/grafana/issues/6799), thx [@hagen1778](https://github.com/hagen1778)
+* **OAuth**: Redirect to original page when logging in with OAuth [#7513](https://github.com/grafana/grafana/issues/7513)
 
 # 4.1.2 (unreleased)
 
