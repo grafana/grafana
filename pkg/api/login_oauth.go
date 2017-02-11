@@ -100,6 +100,10 @@ func OAuthLogin(ctx *middleware.Context) {
 		oauthCtx = context.WithValue(oauthCtx, oauth2.HTTPClient, sslcli)
 	}
 
+	if name == "azure" {
+		oauth2.RegisterBrokenAuthHeaderProvider(setting.OAuthService.OAuthInfos[name].TokenUrl)
+	}
+
 	// get token from provider
 	token, err := connect.Exchange(oauthCtx, code)
 	if err != nil {
