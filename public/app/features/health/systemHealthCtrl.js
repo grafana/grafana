@@ -35,7 +35,7 @@ define([
             {
               "aggregator": "sum",
               "downsampleAggregator": "avg",
-              "downsampleInterval": "1m",
+              "downsampleInterval": "5m",
               "errors": {},
               "metric": "SystemHealth",
             }
