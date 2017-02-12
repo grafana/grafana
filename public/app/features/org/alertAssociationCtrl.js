@@ -9,14 +9,13 @@ function (angular, _, noUiSlider) {
   var module = angular.module('grafana.controllers');
 
   module.controller('AlertAssociationCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, $timeout, contextSrv) {
-    var associatedMetricRows = [];
     var alertMetric = $routeParams.metric;
     var alertHost = $routeParams.host;
     var distance = $routeParams.distance;
     $scope.correlationThreshold = distance;
     $scope.yaxisNumber = 3;
     $scope.init = function() {
-      alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
+      alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).success(function(response) {
         var correlationOfAlertMap = response.data;
         for (var host in correlationOfAlertMap) {
           //TODO only support one host
@@ -28,8 +27,8 @@ function (angular, _, noUiSlider) {
           }
           $scope.correlatedMetrics = correlatedMetrics;
         }
-      }).then(function() {
-        if (associatedMetricRows[0]) {
+      }).finally(function() {
+        if ($scope.correlatedMetrics.length > 1) {
           $scope.isAssociation = true;
         } else {
           $scope.isAssociation = false;
