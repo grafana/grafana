@@ -19,40 +19,22 @@ function (angular, _, noUiSlider) {
       alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
         var correlationOfAlertMap = response.data;
         for (var host in correlationOfAlertMap) {
+          //TODO only support one host
           var correlatedMetrics = correlationOfAlertMap[host];
-          var normalizedMetricMap = {};
-          $scope.correlatedMetrics = correlatedMetrics;
           for (var m in correlatedMetrics) {
-            if (m in normalizedMetricMap) {
-              normalizedMetricMap[m].push(
-                {
-                  metric: _.getMetricName(m),
-                  hosts: correlatedMetrics[m]
-                });
-            } else {
-              normalizedMetricMap[m] = [
-                {
-                  metric: _.getMetricName(m),
-                  hosts: correlatedMetrics[m]
-                }];
+            if(_.isEqual(m, alertMetric)){
+              delete correlatedMetrics[m]
             }
           }
-          for (var metric in normalizedMetricMap) {
-            var oneRow = {};
-            oneRow.height = '250px';
-            oneRow.panels = [];
-            oneRow.associatedMetrics = normalizedMetricMap[metric];
-            associatedMetricRows.push(oneRow);
-          }
+          $scope.correlatedMetrics = correlatedMetrics;
         }
       }).then(function() {
         if (associatedMetricRows[0]) {
           $scope.isAssociation = true;
-          $scope.createAssociatedMetricGraphPanel(associatedMetricRows[0].associatedMetrics[0]);
         } else {
           $scope.isAssociation = false;
-          $scope.createAlertMetricsGraph(_.getMetricName(alertMetric), alertHost);
         }
+        $scope.createAlertMetricsGraph(_.getMetricName(alertMetric), alertHost);
       });
     };
 
