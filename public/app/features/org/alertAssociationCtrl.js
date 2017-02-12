@@ -15,7 +15,7 @@ function (angular, _, noUiSlider) {
     $scope.correlationThreshold = distance;
     $scope.yaxisNumber = 3;
     $scope.init = function() {
-      alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).success(function(response) {
+      alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
         var correlationOfAlertMap = response.data;
         for (var host in correlationOfAlertMap) {
           //TODO only support one host
@@ -28,7 +28,7 @@ function (angular, _, noUiSlider) {
           $scope.correlatedMetrics = correlatedMetrics;
         }
       }).finally(function() {
-        if ($scope.correlatedMetrics.length > 1) {
+        if (!_.isEmpty($scope.correlatedMetrics) && $scope.correlatedMetrics.length > 1) {
           $scope.isAssociation = true;
         } else {
           $scope.isAssociation = false;
