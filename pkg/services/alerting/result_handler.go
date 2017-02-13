@@ -16,14 +16,14 @@ type ResultHandler interface {
 }
 
 type DefaultResultHandler struct {
-	notifier Notifier
+	notifier NotificationService
 	log      log.Logger
 }
 
 func NewResultHandler() *DefaultResultHandler {
 	return &DefaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
-		notifier: NewRootNotifier(),
+		notifier: NewNotificationService(),
 	}
 }
 
@@ -85,7 +85,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 		}
 
 		if evalContext.ShouldSendNotification() {
-			handler.notifier.Notify(evalContext)
+			handler.notifier.Send(evalContext)
 		}
 	}
 
