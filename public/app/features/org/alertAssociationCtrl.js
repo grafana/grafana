@@ -28,7 +28,7 @@ function (angular, _, noUiSlider) {
           $scope.correlatedMetrics = correlatedMetrics;
         }
       }).finally(function() {
-        if (!_.isEmpty($scope.correlatedMetrics) && $scope.correlatedMetrics.length > 1) {
+        if (!_.isEmpty($scope.correlatedMetrics)) {
           $scope.isAssociation = true;
         } else {
           $scope.isAssociation = false;
