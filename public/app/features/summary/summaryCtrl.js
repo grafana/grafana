@@ -87,23 +87,24 @@ define([
             "downsample": "1h-sum",
             "tags": {"host": $scope.summarySelect.currentTagValue}
           }];
-          var metric = {};
-          metric.alias = alias[key];
+
           $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-1h', false).valueOf(), null).then(function (response) {
             $scope.summaryList = response;
-            var metricData = response.data[0];
-            metric.host = metricData.tags.host;
-            if (_.isObject(metricData)) {
-              if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
-                metric.state = "异常";
-              } else {
-                metric.state = "正常";
+            _.each(response.data, function (metricData) {
+              var metric = {};
+              metric.host = metricData.tags.host;
+              if (_.isObject(metricData)) {
+                if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
+                  metric.state = "异常";
+                } else {
+                  metric.state = "正常";
+                }
               }
-            }
+              $scope.serviceList.push(metric);
+            });
           }).catch(function (e) {
-            metric.state = "尚未工作";
+            $scope.serviceList.push({"alias": alias[key], "state": "尚未工作"});
           });
-          $scope.serviceList.push(metric);
         });
       };
 

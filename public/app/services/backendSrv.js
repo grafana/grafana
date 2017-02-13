@@ -161,7 +161,7 @@ function (angular, _, config) {
     };
 
     this.getToken = function () {
-      return _.chain(self.tokens).filter({'name': contextSrv.system + ""}).first().pick('key').values().first().value();
+      return _.chain(self.tokens).filter({'name': contextSrv.system.toString()}).first().pick('key').values().first().value();
     };
 
     this.alertD = function (options) {
