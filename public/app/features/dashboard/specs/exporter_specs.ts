@@ -3,6 +3,7 @@ import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/co
 import _ from 'lodash';
 import config from 'app/core/config';
 import {DashboardExporter} from '../export/exporter';
+import {DashboardModel} from '../model';
 
 describe('given dashboard with repeated panels', function() {
   var dash, exported;
@@ -33,6 +34,14 @@ describe('given dashboard with repeated panels', function() {
       options: []
     });
 
+    dash.templating.list.push({
+      name: 'ds',
+      type: 'datasource',
+      query: 'testdb',
+      current: {value: 'prod', text: 'prod'},
+      options: []
+    });
+
     dash.annotations.list.push({
       name: 'logs',
       datasource: 'gfdb',
@@ -48,6 +57,7 @@ describe('given dashboard with repeated panels', function() {
           datasource: '-- Mixed --',
           targets: [{datasource: 'other'}],
         },
+        {id: 5, datasource: '$ds'},
       ]
     });
 
@@ -77,6 +87,7 @@ describe('given dashboard with repeated panels', function() {
       info: {version: "1.1.0"}
     };
 
+    dash = new DashboardModel(dash, {});
     var exporter = new DashboardExporter(datasourceSrvStub);
     exporter.makeExportable(dash).then(clean => {
       exported = clean;
@@ -85,7 +96,7 @@ describe('given dashboard with repeated panels', function() {
   });
 
   it('exported dashboard should not contain repeated panels', function() {
-    expect(exported.rows[0].panels.length).to.be(2);
+    expect(exported.rows[0].panels.length).to.be(3);
   });
 
   it('exported dashboard should not contain repeated rows', function() {

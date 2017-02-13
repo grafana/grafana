@@ -8,10 +8,7 @@
 .dropdown {
   position: relative;
 }
-.dropdown-toggle {
-  // The caret makes the toggle a bit too tall in IE7
-  *margin-bottom: -3px;
-}
+
 .dropdown-toggle:active,
 .open .dropdown-toggle {
   outline: 0;
@@ -257,4 +254,24 @@
 .typeahead {
   z-index: 1051;
   margin-top: 2px; // give it some space to breathe
+}
+
+.dropdown-menu-item-with-shortcut {
+  a {
+    min-width: 12rem;
+  }
+}
+
+.dropdown-menu-item-shortcut {
+  display: block;
+  float: right;
+  color: $text-muted;
+
+  &::before {
+    font-family: FontAwesome;
+    width: 2rem;
+    display: inline-block;
+    text-align: center;
+    content: "\f11c";
+  }
 }

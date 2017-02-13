@@ -62,7 +62,7 @@ $gf-form-margin: 0.25rem;
 
   &--grow {
     flex-grow: 1;
-    min-height: 2.70rem;
+    min-height: 2.60rem;
   }
 }
 
@@ -77,6 +77,10 @@ $gf-form-margin: 0.25rem;
     padding: $input-padding-y 0.4rem;
     line-height: $input-line-height;
   }
+}
+
+.gf-form-textarea {
+  max-width: 650px;
 }
 
 .gf-form-input {
@@ -196,6 +200,9 @@ $gf-form-margin: 0.25rem;
   margin-right: $gf-form-margin;
   line-height: $input-line-height;
   font-size: $font-size-sm;
+  box-shadow: none;
+  border: $input-btn-border-width solid transparent;
+  @include border-radius($label-border-radius-sm);
 
   flex-shrink: 0;
   flex-grow: 0;
@@ -237,6 +244,11 @@ $gf-form-margin: 0.25rem;
   padding-left: $spacer;
   color: $text-color-weak;
 
+  &--bold {
+    color: $text-color-emphasis;
+    padding-left: 0;
+  }
+
   &--right-absolute {
     position: absolute;
     right: $spacer;
@@ -245,6 +257,10 @@ $gf-form-margin: 0.25rem;
 
   &--right-normal {
     float: right;
+  }
+
+  &--header {
+    margin-bottom: $gf-form-margin
   }
 }
 

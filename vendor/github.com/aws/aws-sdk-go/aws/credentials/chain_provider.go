@@ -34,7 +34,7 @@ var (
 //
 // Example of ChainProvider to be used with an EnvProvider and EC2RoleProvider.
 // In this example EnvProvider will first check if any credentials are available
-// vai the environment variables. If there are none ChainProvider will check
+// via the environment variables. If there are none ChainProvider will check
 // the next Provider in the list, EC2RoleProvider in this case. If EC2RoleProvider
 // does not return any credentials ChainProvider will return the error
 // ErrNoValidProvidersFoundInChain

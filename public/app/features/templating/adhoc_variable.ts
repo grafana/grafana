@@ -26,7 +26,7 @@ export class AdhocVariable implements Variable {
     return Promise.resolve();
   }
 
-  getModel() {
+  getSaveModel() {
     assignModelProperties(this.model, this, this.defaults);
     return this.model;
   }

@@ -12,7 +12,7 @@ import {Emitter} from 'app/core/core';
 
 describe('grafanaGraph', function() {
 
-  beforeEach(angularMocks.module('grafana.directives'));
+  beforeEach(angularMocks.module('grafana.core'));
 
   function graphScenario(desc, func, elementWidth = 500)  {
     describe(desc, function() {
@@ -135,7 +135,7 @@ describe('grafanaGraph', function() {
     });
 
     it('should set barWidth', function() {
-      expect(ctx.plotOptions.series.bars.barWidth).to.be(10/1.5);
+      expect(ctx.plotOptions.series.bars.barWidth).to.be(1/1.5);
     });
   });
 

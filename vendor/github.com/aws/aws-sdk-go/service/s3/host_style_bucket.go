@@ -1,6 +1,7 @@
 package s3
 
 import (
+	"bytes"
 	"fmt"
 	"net/url"
 	"regexp"
@@ -37,14 +38,6 @@ var accelerateOpBlacklist = operationBlacklist{
 func updateEndpointForS3Config(r *request.Request) {
 	forceHostStyle := aws.BoolValue(r.Config.S3ForcePathStyle)
 	accelerate := aws.BoolValue(r.Config.S3UseAccelerate)
-	useDualStack := aws.BoolValue(r.Config.UseDualStack)
-
-	if useDualStack && accelerate {
-		r.Error = awserr.New("InvalidParameterException",
-			fmt.Sprintf("configuration aws.Config.UseDualStack is not compatible with aws.Config.Accelerate"),
-			nil)
-		return
-	}
 
 	if accelerate && accelerateOpBlacklist.Continue(r) {
 		if forceHostStyle {
@@ -75,6 +68,10 @@ func updateEndpointForHostStyle(r *request.Request) {
 	moveBucketToHost(r.HTTPRequest.URL, bucket)
 }
 
+var (
+	accelElem = []byte("s3-accelerate.dualstack.")
+)
+
 func updateEndpointForAccelerate(r *request.Request) {
 	bucket, ok := bucketNameFromReqParams(r.Params)
 	if !ok {
@@ -93,6 +90,22 @@ func updateEndpointForAccelerate(r *request.Request) {
 
 	// Change endpoint from s3(-[a-z0-1-])?.amazonaws.com to s3-accelerate.amazonaws.com
 	r.HTTPRequest.URL.Host = replaceHostRegion(r.HTTPRequest.URL.Host, "accelerate")
+
+	if aws.BoolValue(r.Config.UseDualStack) {
+		host := []byte(r.HTTPRequest.URL.Host)
+
+		// Strip region from hostname
+		if idx := bytes.Index(host, accelElem); idx >= 0 {
+			start := idx + len(accelElem)
+			if end := bytes.IndexByte(host[start:], '.'); end >= 0 {
+				end += start + 1
+				copy(host[start:], host[end:])
+				host = host[:len(host)-(end-start)]
+				r.HTTPRequest.URL.Host = string(host)
+			}
+		}
+	}
+
 	moveBucketToHost(r.HTTPRequest.URL, bucket)
 }
 

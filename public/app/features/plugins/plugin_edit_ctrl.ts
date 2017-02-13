@@ -27,7 +27,7 @@ export class PluginEditCtrl {
     this.model = {};
     this.pluginId = $routeParams.pluginId;
     this.tabIndex = 0;
-    this.tabs = ['Overview'];
+    this.tabs = ['Readme'];
 
     this.preUpdateHook = () => Promise.resolve();
     this.postUpdateHook = () => Promise.resolve();
@@ -48,13 +48,13 @@ export class PluginEditCtrl {
       });
 
       if (this.model.type === 'app') {
-        this.tabIndex = 1;
-        this.tabs.push('Config');
-
         this.hasDashboards = _.find(result.includes, {type: 'dashboard'});
         if (this.hasDashboards) {
-          this.tabs.push('Dashboards');
+          this.tabs.unshift('Dashboards');
         }
+
+        this.tabs.unshift('Config');
+        this.tabIndex = 0;
       }
 
       return this.initReadme();

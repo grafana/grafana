@@ -3,38 +3,72 @@ package prometheus
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"regexp"
 	"strings"
 	"time"
 
+	"net/http"
+
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
 	"github.com/prometheus/client_golang/api/prometheus"
 	pmodel "github.com/prometheus/common/model"
 )
 
 type PrometheusExecutor struct {
-	*tsdb.DataSourceInfo
+	*models.DataSource
+	Transport *http.Transport
 }
 
-func NewPrometheusExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
-	return &PrometheusExecutor{dsInfo}
+type basicAuthTransport struct {
+	*http.Transport
+
+	username string
+	password string
+}
+
+func (bat basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.SetBasicAuth(bat.username, bat.password)
+	return bat.Transport.RoundTrip(req)
+}
+
+func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.Executor, error) {
+	transport, err := dsInfo.GetHttpTransport()
+	if err != nil {
+		return nil, err
+	}
+
+	return &PrometheusExecutor{
+		DataSource: dsInfo,
+		Transport:  transport,
+	}, nil
 }
 
 var (
-	plog       log.Logger
-	HttpClient http.Client
+	plog         log.Logger
+	legendFormat *regexp.Regexp
 )
 
 func init() {
 	plog = log.New("tsdb.prometheus")
 	tsdb.RegisterExecutor("prometheus", NewPrometheusExecutor)
+	legendFormat = regexp.MustCompile(`\{\{\s*(.+?)\s*\}\}`)
 }
 
 func (e *PrometheusExecutor) getClient() (prometheus.QueryAPI, error) {
 	cfg := prometheus.Config{
-		Address: e.DataSourceInfo.Url,
+		Address:   e.DataSource.Url,
+		Transport: e.Transport,
+	}
+
+	if e.BasicAuth {
+		cfg.Transport = basicAuthTransport{
+			Transport: e.Transport,
+			username:  e.BasicAuthUser,
+			password:  e.BasicAuthPassword,
+		}
 	}
 
 	client, err := prometheus.New(cfg)
@@ -50,12 +84,12 @@ func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlic
 
 	client, err := e.getClient()
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 
 	query, err := parseQuery(queries, queryContext)
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 
 	timeRange := prometheus.Range{
@@ -67,23 +101,27 @@ func (e *PrometheusExecutor) Execute(ctx context.Context, queries tsdb.QuerySlic
 	value, err := client.QueryRange(ctx, query.Expr, timeRange)
 
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 
 	queryResult, err := parseResponse(value, query)
 	if err != nil {
-		return resultWithError(result, err)
+		return result.WithError(err)
 	}
 	result.QueryResults = queryResult
 	return result
 }
 
 func formatLegend(metric pmodel.Metric, query *PrometheusQuery) string {
-	reg, _ := regexp.Compile(`\{\{\s*(.+?)\s*\}\}`)
+	if query.LegendFormat == "" {
+		return metric.String()
+	}
 
-	result := reg.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
-		ind := strings.Replace(strings.Replace(string(in), "{{", "", 1), "}}", "", 1)
-		if val, exists := metric[pmodel.LabelName(ind)]; exists {
+	result := legendFormat.ReplaceAllFunc([]byte(query.LegendFormat), func(in []byte) []byte {
+		labelName := strings.Replace(string(in), "{{", "", 1)
+		labelName = strings.Replace(labelName, "}}", "", 1)
+		labelName = strings.TrimSpace(labelName)
+		if val, exists := metric[pmodel.LabelName(labelName)]; exists {
 			return []byte(val)
 		}
 
@@ -106,10 +144,7 @@ func parseQuery(queries tsdb.QuerySlice, queryContext *tsdb.QueryContext) (*Prom
 		return nil, err
 	}
 
-	format, err := queryModel.Model.Get("legendFormat").String()
-	if err != nil {
-		return nil, err
-	}
+	format := queryModel.Model.Get("legendFormat").MustString("")
 
 	start, err := queryContext.TimeRange.ParseFrom()
 	if err != nil {
@@ -142,10 +177,15 @@ func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb
 	for _, v := range data {
 		series := tsdb.TimeSeries{
 			Name: formatLegend(v.Metric, query),
+			Tags: map[string]string{},
+		}
+
+		for k, v := range v.Metric {
+			series.Tags[string(k)] = string(v)
 		}
 
 		for _, k := range v.Values {
-			series.Points = append(series.Points, tsdb.NewTimePoint(float64(k.Value), float64(k.Timestamp.Unix()*1000)))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(float64(k.Value)), float64(k.Timestamp.Unix()*1000)))
 		}
 
 		queryRes.Series = append(queryRes.Series, &series)
@@ -153,9 +193,4 @@ func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb
 
 	queryResults["A"] = queryRes
 	return queryResults, nil
-}
-
-func resultWithError(result *tsdb.BatchResult, err error) *tsdb.BatchResult {
-	result.Error = err
-	return result
 }

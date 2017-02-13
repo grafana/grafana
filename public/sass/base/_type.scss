@@ -290,3 +290,46 @@ a.external-link {
 .pointer {
   cursor: pointer;
 }
+
+.markdown-html {
+  img {
+    max-width: 100%;
+  }
+
+  ul {
+    padding-left: $spacer*1.5;
+    margin-bottom: $spacer;
+  }
+
+  table {
+    td, th {
+      padding: $spacer*.5 $spacer;
+    }
+    th {
+      font-weight: normal;
+      background: $table-bg-accent;
+    }
+  }
+
+  table, th, td {
+    border: 1px solid $table-border;
+    border-collapse: collapse;
+  }
+
+  a {
+    text-decoration: underline;
+    color: $external-link-color;
+    &:hover {
+      color: lighten($external-link-color, 10%);
+    }
+  }
+
+  p:last-child {
+    margin-bottom: 0;
+  }
+
+  ul:last-child {
+    margin-bottom: 0;
+  }
+}
+

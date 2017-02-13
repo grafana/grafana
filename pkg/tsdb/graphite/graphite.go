@@ -2,48 +2,48 @@ package graphite
 
 import (
 	"context"
-	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"path"
+	"regexp"
 	"strings"
-	"time"
 
 	"golang.org/x/net/context/ctxhttp"
 
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 type GraphiteExecutor struct {
-	*tsdb.DataSourceInfo
+	*models.DataSource
+	HttpClient *http.Client
 }
 
-func NewGraphiteExecutor(dsInfo *tsdb.DataSourceInfo) tsdb.Executor {
-	return &GraphiteExecutor{dsInfo}
+func NewGraphiteExecutor(datasource *models.DataSource) (tsdb.Executor, error) {
+	httpClient, err := datasource.GetHttpClient()
+
+	if err != nil {
+		return nil, err
+	}
+
+	return &GraphiteExecutor{
+		DataSource: datasource,
+		HttpClient: httpClient,
+	}, nil
 }
 
 var (
-	glog       log.Logger
-	HttpClient *http.Client
+	glog log.Logger
 )
 
 func init() {
 	glog = log.New("tsdb.graphite")
 	tsdb.RegisterExecutor("graphite", NewGraphiteExecutor)
-
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	}
-
-	HttpClient = &http.Client{
-		Timeout:   time.Duration(15 * time.Second),
-		Transport: tr,
-	}
 }
 
 func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, context *tsdb.QueryContext) *tsdb.BatchResult {
@@ -57,7 +57,11 @@ func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 	}
 
 	for _, query := range queries {
-		formData["target"] = []string{query.Model.Get("target").MustString()}
+		if fullTarget, err := query.Model.Get("targetFull").String(); err == nil {
+			formData["target"] = []string{fixIntervalFormat(fullTarget)}
+		} else {
+			formData["target"] = []string{fixIntervalFormat(query.Model.Get("target").MustString())}
+		}
 	}
 
 	if setting.Env == setting.DEV {
@@ -70,7 +74,7 @@ func (e *GraphiteExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice,
 		return result
 	}
 
-	res, err := ctxhttp.Do(ctx, HttpClient, req)
+	res, err := ctxhttp.Do(ctx, e.HttpClient, req)
 	if err != nil {
 		result.Error = err
 		return result
@@ -145,4 +149,18 @@ func formatTimeRange(input string) string {
 		return input
 	}
 	return strings.Replace(strings.Replace(input, "m", "min", -1), "M", "mon", -1)
+}
+
+func fixIntervalFormat(target string) string {
+	rMinute := regexp.MustCompile(`'(\d+)m'`)
+	rMin := regexp.MustCompile("m")
+	target = rMinute.ReplaceAllStringFunc(target, func(m string) string {
+		return rMin.ReplaceAllString(m, "min")
+	})
+	rMonth := regexp.MustCompile(`'(\d+)M'`)
+	rMon := regexp.MustCompile("M")
+	target = rMonth.ReplaceAllStringFunc(target, func(M string) string {
+		return rMon.ReplaceAllString(M, "mon")
+	})
+	return target
 }

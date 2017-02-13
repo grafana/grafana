@@ -17,9 +17,10 @@ export class ThresholdFormCtrl {
       this.disabled = true;
     }
 
-    $scope.$on("$destroy", () => {
+    var unbindDestroy = $scope.$on("$destroy", () => {
       this.panelCtrl.editingThresholds = false;
       this.panelCtrl.render();
+      unbindDestroy();
     });
 
     this.panelCtrl.editingThresholds = true;

@@ -34,7 +34,7 @@ export class CustomVariable implements Variable {
     return this.variableSrv.setOptionAsCurrent(this, option);
   }
 
-  getModel() {
+  getSaveModel() {
     assignModelProperties(this.model, this, this.defaults);
     return this.model;
   }

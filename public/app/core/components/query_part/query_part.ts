@@ -89,7 +89,7 @@ export function functionRenderer(part, innerExpr) {
     var paramType = part.def.params[index];
     if (paramType.type === 'time') {
       if (value === 'auto') {
-        value = '$interval';
+        value = '$__interval';
       }
     }
     if (paramType.quote === 'single') {

@@ -10,7 +10,9 @@
     baseURL: '/base/',
     defaultJSExtensions: true,
     paths: {
+      'mousetrap': 'vendor/npm/mousetrap/mousetrap.js',
       'eventemitter3': 'vendor/npm/eventemitter3/index.js',
+      'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',
       'tether': 'vendor/npm/tether/dist/js/tether.js',
       'tether-drop': 'vendor/npm/tether-drop/dist/js/drop.js',
       'moment': 'vendor/moment.js',
@@ -64,6 +66,10 @@
       'vendor/npm/eventemitter3/index.js': {
         format: 'cjs',
         exports: 'EventEmitter'
+      },
+      'vendor/npm/mousetrap/mousetrap.js': {
+        format: 'global',
+        exports: 'Mousetrap'
       },
     }
   });

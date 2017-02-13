@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 	m "github.com/grafana/grafana/pkg/models"
 
 	"github.com/go-xorm/xorm"
@@ -12,7 +13,8 @@ import (
 func init() {
 	bus.AddHandler("sql", GetDataSources)
 	bus.AddHandler("sql", AddDataSource)
-	bus.AddHandler("sql", DeleteDataSource)
+	bus.AddHandler("sql", DeleteDataSourceById)
+	bus.AddHandler("sql", DeleteDataSourceByName)
 	bus.AddHandler("sql", UpdateDataSource)
 	bus.AddHandler("sql", GetDataSourceById)
 	bus.AddHandler("sql", GetDataSourceByName)
@@ -49,10 +51,18 @@ func GetDataSources(query *m.GetDataSourcesQuery) error {
 	return sess.Find(&query.Result)
 }
 
-func DeleteDataSource(cmd *m.DeleteDataSourceCommand) error {
+func DeleteDataSourceById(cmd *m.DeleteDataSourceByIdCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		var rawSql = "DELETE FROM data_source WHERE id=? and org_id=?"
 		_, err := sess.Exec(rawSql, cmd.Id, cmd.OrgId)
+		return err
+	})
+}
+
+func DeleteDataSourceByName(cmd *m.DeleteDataSourceByNameCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		var rawSql = "DELETE FROM data_source WHERE name=? and org_id=?"
+		_, err := sess.Exec(rawSql, cmd.Name, cmd.OrgId)
 		return err
 	})
 }
@@ -82,6 +92,7 @@ func AddDataSource(cmd *m.AddDataSourceCommand) error {
 			BasicAuthPassword: cmd.BasicAuthPassword,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
+			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
 			Created:           time.Now(),
 			Updated:           time.Now(),
 		}
@@ -128,6 +139,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			BasicAuthPassword: cmd.BasicAuthPassword,
 			WithCredentials:   cmd.WithCredentials,
 			JsonData:          cmd.JsonData,
+			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
 			Updated:           time.Now(),
 		}
 

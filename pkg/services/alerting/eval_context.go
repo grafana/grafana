@@ -17,7 +17,7 @@ type EvalContext struct {
 	EvalMatches     []*EvalMatch
 	Logs            []*ResultLogEntry
 	Error           error
-	Description     string
+	ConditionEvals  string
 	StartTime       time.Time
 	EndTime         time.Time
 	Rule            *Rule
@@ -26,25 +26,21 @@ type EvalContext struct {
 	ImagePublicUrl  string
 	ImageOnDiskPath string
 	NoDataFound     bool
-	RetryCount      int
+	PrevAlertState  m.AlertStateType
 
-	Context context.Context
+	Ctx context.Context
 }
 
-func (evalContext *EvalContext) Deadline() (deadline time.Time, ok bool) {
-	return evalContext.Deadline()
-}
-
-func (evalContext *EvalContext) Done() <-chan struct{} {
-	return evalContext.Context.Done()
-}
-
-func (evalContext *EvalContext) Err() error {
-	return evalContext.Context.Err()
-}
-
-func (evalContext *EvalContext) Value(key interface{}) interface{} {
-	return evalContext.Context.Value(key)
+func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
+	return &EvalContext{
+		Ctx:            alertCtx,
+		StartTime:      time.Now(),
+		Rule:           rule,
+		Logs:           make([]*ResultLogEntry, 0),
+		EvalMatches:    make([]*EvalMatch, 0),
+		log:            log.New("alerting.evalContext"),
+		PrevAlertState: rule.State,
+	}
 }
 
 type StateDescription struct {
@@ -65,11 +61,6 @@ func (c *EvalContext) GetStateModel() *StateDescription {
 			Color: "#888888",
 			Text:  "No Data",
 		}
-	case m.AlertStateExecError:
-		return &StateDescription{
-			Color: "#000",
-			Text:  "Execution Error",
-		}
 	case m.AlertStateAlerting:
 		return &StateDescription{
 			Color: "#D63232",
@@ -78,6 +69,18 @@ func (c *EvalContext) GetStateModel() *StateDescription {
 	default:
 		panic("Unknown rule state " + c.Rule.State)
 	}
+}
+
+func (c *EvalContext) ShouldUpdateAlertState() bool {
+	return c.Rule.State != c.PrevAlertState
+}
+
+func (c *EvalContext) ShouldSendNotification() bool {
+	if (c.PrevAlertState == m.AlertStatePending) && (c.Rule.State == m.AlertStateOK) {
+		return false
+	}
+
+	return true
 }
 
 func (a *EvalContext) GetDurationMs() float64 {
@@ -103,22 +106,14 @@ func (c *EvalContext) GetDashboardSlug() (string, error) {
 }
 
 func (c *EvalContext) GetRuleUrl() (string, error) {
+	if c.IsTestRun {
+		return setting.AppUrl, nil
+	}
+
 	if slug, err := c.GetDashboardSlug(); err != nil {
 		return "", err
 	} else {
 		ruleUrl := fmt.Sprintf("%sdashboard/db/%s?fullscreen&edit&tab=alert&panelId=%d", setting.AppUrl, slug, c.Rule.PanelId)
 		return ruleUrl, nil
-	}
-}
-
-func NewEvalContext(alertCtx context.Context, rule *Rule) *EvalContext {
-	return &EvalContext{
-		Context:     alertCtx,
-		StartTime:   time.Now(),
-		Rule:        rule,
-		Logs:        make([]*ResultLogEntry, 0),
-		EvalMatches: make([]*EvalMatch, 0),
-		log:         log.New("alerting.evalContext"),
-		RetryCount:  0,
 	}
 }

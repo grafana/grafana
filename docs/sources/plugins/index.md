@@ -1,8 +1,11 @@
----
-page_title: Plugin overview
-page_description: Plugins for Grafana
-page_keywords: grafana, plugins, documentation
----
++++
+title = "Plugins"
+[menu.docs]
+name = "Plugins"
+identifier = "plugins"
+weight = 8
++++
+
 
 # Plugins
 

@@ -72,6 +72,7 @@ func Handlers() request.Handlers {
 	handlers.Build.PushBackNamed(corehandlers.SDKVersionUserAgentHandler)
 	handlers.Build.AfterEachFn = request.HandlerListStopOnError
 	handlers.Sign.PushBackNamed(corehandlers.BuildContentLengthHandler)
+	handlers.Send.PushBackNamed(corehandlers.ValidateReqSigHandler)
 	handlers.Send.PushBackNamed(corehandlers.SendHandler)
 	handlers.AfterRetry.PushBackNamed(corehandlers.AfterRetryHandler)
 	handlers.ValidateResponse.PushBackNamed(corehandlers.ValidateResponseHandler)

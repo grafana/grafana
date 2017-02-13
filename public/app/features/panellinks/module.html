@@ -3,60 +3,44 @@
 		Drilldown / detail link<tip>These links appear in the dropdown menu in the panel menu. </tip></h5>
 	</h5>
 
-	<div ng-repeat="link in panel.links" style="margin-top: 20px;">
-		<div class="gf-form-group">
-
-			<div class="gf-form-inline">
-				<div class="gf-form width-2">
-					<i class="fa fa-fw fa-unlink"></i>
-				</div>
-
-				<div class="gf-form">
-					<span class="gf-form-label width-7">Type</span>
-					<div class="gf-form-select-wrapper width-14">
-						<select class="gf-form-input" ng-model="link.type" ng-options="f for f in ['dashboard','absolute']"></select>
-					</div>
-				</div>
-
-				<div class="gf-form">
-					<span class="gf-form-label width-7" ng-show="link.type === 'dashboard'">Dashboard</span>
-					<input ng-show="link.type === 'dashboard'" type="text" ng-model="link.dashboard" bs-typeahead="searchDashboards" class="gf-form-input max-width-14" ng-blur="dashboardChanged(link)">
-
-					<span class="gf-form-label width-7" ng-show="link.type === 'absolute'">Url</span>
-					<input ng-show="link.type === 'absolute'" type="text" ng-model="link.url" class="gf-form-input max-width-14">
-				</div>
-
-				<div class="gf-form">
-					<button class="btn-inverse gf-form-btn btn-small" ng-click="deleteLink(link)"><i class="fa fa-trash"></i></button>
+	<div class="gf-form-group" ng-repeat="link in panel.links">
+		<div class="section">
+			<div class="gf-form max-width-25">
+				<span class="gf-form-label width-7">Type</span>
+				<div class="gf-form-select-wrapper gf-form--grow">
+					<select class="gf-form-input" ng-model="link.type" ng-options="f for f in ['dashboard','absolute']"></select>
 				</div>
 			</div>
 
-			<div class="gf-form-inline">
-				<div class="gf-form width-2">
-					<i class="fa fa-fw fa-unlink invisible"></i>
-				</div>
+			<div class="gf-form max-width-25">
+				<span class="gf-form-label width-7" ng-show="link.type === 'dashboard'">Dashboard</span>
+				<input ng-show="link.type === 'dashboard'" type="text" ng-model="link.dashboard" bs-typeahead="searchDashboards" class="gf-form-input" ng-blur="dashboardChanged(link)">
 
-				<div class="gf-form">
-					<div class="gf-form-label width-7">Title</div>
-					<input type="text" ng-model="link.title" class="gf-form-input">
-				</div>
-
-				<div class="gf-form">
-					<span class="gf-form-label width-7">Url params</span>
-					<input type="text" ng-model="link.params" class="gf-form-input">
-				</div>
+				<span class="gf-form-label width-7" ng-show="link.type === 'absolute'">Url</span>
+				<input ng-show="link.type === 'absolute'" type="text" ng-model="link.url" class="gf-form-input max-width-14">
 			</div>
 
-			<div class="gf-form-inline">
-				<div class="gf-form width-2">
-					<i class="fa fa-fw fa-unlink invisible"></i>
-				</div>
+			<div class="gf-form max-width-25">
+				<div class="gf-form-label width-7">Title</div>
+				<input type="text" ng-model="link.title" class="gf-form-input">
+			</div>
 
-				<div class="gf-form">
-					<editor-checkbox text="Keep current time range" model="link.keepTime"></editor-checkbox>
-					<editor-checkbox text="Add current variable values" model="link.includeVars"></editor-checkbox>
-					<editor-checkbox text="Open in new tab " model="link.targetBlank"></editor-checkbox>
-				</div>
+		</div>
+
+		<div class="section">
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Url params</span>
+				<input type="text" ng-model="link.params" class="gf-form-input width-10">
+			</div>
+
+			<gf-form-switch class="gf-form" label-class="width-10" label="Include time range" checked="link.keepTime"></gf-form-switch>
+			<gf-form-switch class="gf-form" label-class="width-10" label="Include variables" checked="link.includeVars"></gf-form-switch>
+			<gf-form-switch class="gf-form" label-class="width-10" label="Open in new tab " checked="link.targetBlank"></gf-form-switch>
+		</div>
+
+		<div class="section">
+			<div class="gf-form">
+				<button class="btn btn-inverse gf-form-btn" ng-click="deleteLink(link)"><i class="fa fa-trash"></i> Remove Link</button>
 			</div>
 		</div>
 	</div>

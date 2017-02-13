@@ -106,6 +106,13 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 	done := make(chan struct{})
 
 	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				e.log.Error("Alert Panic", "error", err, "stack", log.Stack(1))
+				close(done)
+			}
+		}()
+
 		e.evalHandler.Eval(evalContext)
 		e.resultHandler.Handle(evalContext)
 		close(done)

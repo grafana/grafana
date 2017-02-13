@@ -5,29 +5,25 @@ import "errors"
 var ErrInvalidEmailCode = errors.New("Invalid or expired email code")
 
 type SendEmailCommand struct {
-	To       []string
-	Template string
-	Data     map[string]interface{}
-	Massive  bool
-	Info     string
+	To           []string
+	Template     string
+	Subject      string
+	Data         map[string]interface{}
+	Info         string
+	EmbededFiles []string
 }
 
 type SendEmailCommandSync struct {
 	SendEmailCommand
 }
 
-type SendWebhook struct {
-	Url      string
-	User     string
-	Password string
-	Body     string
-}
-
 type SendWebhookSync struct {
-	Url      string
-	User     string
-	Password string
-	Body     string
+	Url        string
+	User       string
+	Password   string
+	Body       string
+	HttpMethod string
+	HttpHeader map[string]string
 }
 
 type SendResetPasswordEmailCommand struct {

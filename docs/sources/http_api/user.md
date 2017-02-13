@@ -1,10 +1,15 @@
-----
-page_title: User API
-page_description: Grafana User API Reference
-page_keywords: grafana, admin, http, api, documentation, user
----
++++
+title = "User HTTP API "
+description = "Grafana User HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "user"]
+aliases = ["/http_api/user/"]
+type = "docs"
+[menu.docs]
+name = "Users"
+parent = "http_api"
++++
 
-# User API
+# User HTTP resources / actions
 
 ## Search Users
 
@@ -63,6 +68,40 @@ page_keywords: grafana, admin, http, api, documentation, user
       "orgId": 1,
       "isGrafanaAdmin": true
     }
+
+## Get single user by Username(login) or Email
+
+    `GET /api/users/lookup`
+
+    **Parameter:** `loginOrEmail`
+
+    **Example Request using the email as option**:
+
+        GET /api/users/lookup?loginOrEmail=user@mygraf.com HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+    **Example Request using the username as option**:
+        GET /api/users/lookup?loginOrEmail=admin HTTP/1.1
+        Accept: application/json
+        Content-Type: application/json
+        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+    **Example Response**:
+
+        HTTP/1.1 200
+        Content-Type: application/json
+
+        {
+          "email": "user@mygraf.com"
+          "name": "admin",
+          "login": "admin",
+          "theme": "light",
+          "orgId": 1,
+          "isGrafanaAdmin": true
+        }
+
 
 ## User Update
 

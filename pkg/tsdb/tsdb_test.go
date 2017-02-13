@@ -4,10 +4,9 @@ import (
 	"context"
 	"testing"
 	"time"
-
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	. "github.com/smartystreets/goconvey/convey"
-)
+	"github.com/grafana/grafana/pkg/models"
+	"github.com/smartystreets/goconvey/convey"
 
 func TestMetricQuery(t *testing.T) {
 
@@ -188,9 +187,9 @@ func TestMetricQuery(t *testing.T) {
 }
 
 func registerFakeExecutor() *FakeExecutor {
-	executor := NewFakeExecutor(nil)
-	RegisterExecutor("test", func(dsInfo *DataSourceInfo) Executor {
-		return executor
+	executor, _ := NewFakeExecutor(nil)
+	RegisterExecutor("test", func(dsInfo *models.DataSource) (Executor, error) {
+		return executor, nil
 	})
 
 	return executor

@@ -212,8 +212,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
 
     elem.on('click', '.table-panel-page-link', switchPage);
 
-    scope.$on('$destroy', function() {
+    var unbindDestroy = scope.$on('$destroy', function() {
       elem.off('click', '.table-panel-page-link');
+      unbindDestroy();
     });
 
     ctrl.events.on('render', function(renderData) {

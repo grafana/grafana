@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
@@ -37,9 +38,7 @@ func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 		return err
 	}
 
-	notifier.sendNotifications(createTestEvalContext(), []Notifier{notifiers})
-
-	return nil
+	return notifier.sendNotifications(createTestEvalContext(), []Notifier{notifiers})
 }
 
 func createTestEvalContext() *EvalContext {
@@ -53,7 +52,6 @@ func createTestEvalContext() *EvalContext {
 
 	ctx := NewEvalContext(context.TODO(), testRule)
 	ctx.ImagePublicUrl = "http://grafana.org/assets/img/blog/mixed_styles.png"
-
 	ctx.IsTestRun = true
 	ctx.Firing = true
 	ctx.Error = nil
@@ -66,12 +64,12 @@ func evalMatchesBasedOnState() []*EvalMatch {
 	matches := make([]*EvalMatch, 0)
 	matches = append(matches, &EvalMatch{
 		Metric: "High value",
-		Value:  100,
+		Value:  null.FloatFrom(100),
 	})
 
 	matches = append(matches, &EvalMatch{
 		Metric: "Higher Value",
-		Value:  200,
+		Value:  null.FloatFrom(200),
 	})
 
 	return matches

@@ -10,7 +10,9 @@ import (
 
 type FakeCondition struct{}
 
-func (f *FakeCondition) Eval(context *EvalContext) {}
+func (f *FakeCondition) Eval(context *EvalContext) (*ConditionResult, error) {
+	return &ConditionResult{}, nil
+}
 
 func TestAlertRuleModel(t *testing.T) {
 	Convey("Testing alert rule", t, func() {
@@ -20,23 +22,28 @@ func TestAlertRuleModel(t *testing.T) {
 		})
 
 		Convey("Can parse seconds", func() {
-			seconds := getTimeDurationStringToSeconds("10s")
+			seconds, _ := getTimeDurationStringToSeconds("10s")
 			So(seconds, ShouldEqual, 10)
 		})
 
 		Convey("Can parse minutes", func() {
-			seconds := getTimeDurationStringToSeconds("10m")
+			seconds, _ := getTimeDurationStringToSeconds("10m")
 			So(seconds, ShouldEqual, 600)
 		})
 
 		Convey("Can parse hours", func() {
-			seconds := getTimeDurationStringToSeconds("1h")
+			seconds, _ := getTimeDurationStringToSeconds("1h")
 			So(seconds, ShouldEqual, 3600)
 		})
 
 		Convey("defaults to seconds", func() {
-			seconds := getTimeDurationStringToSeconds("1o")
+			seconds, _ := getTimeDurationStringToSeconds("1o")
 			So(seconds, ShouldEqual, 1)
+		})
+
+		Convey("should return err for empty string", func() {
+			_, err := getTimeDurationStringToSeconds("")
+			So(err, ShouldNotBeNil)
 		})
 
 		Convey("can construct alert rule model", func() {
@@ -81,11 +88,6 @@ func TestAlertRuleModel(t *testing.T) {
 			Convey("Can read notifications", func() {
 				So(len(alertRule.Notifications), ShouldEqual, 2)
 			})
-			/*
-				Convey("Can read noDataMode", func() {
-					So(len(alertRule.NoDataMode), ShouldEqual, m.AlertStateCritical)
-				})
-			*/
 		})
 	})
 }

@@ -1,8 +1,13 @@
-----
-page_title: Admin APIs
-page_description: Grafana Admin API Reference
-page_keywords: grafana, admin, http, api, documentation
----
++++
+title = "Admin HTTP API "
+description = "Grafana Admin HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "admin"]
+aliases = ["/http_api/admin/"]
+type = "docs"
+[menu.docs]
+name = "Admin"
+parent = "http_api"
++++
 
 # Admin API
 
@@ -138,6 +143,7 @@ with Grafana admin permission.
         "protocol":"http",
         "root_url":"%(protocol)s://%(domain)s:%(http_port)s/",
         "router_logging":"true",
+        "data_proxy_logging":"true",
         "static_root_path":"public"
       },
       "session":{
@@ -270,3 +276,20 @@ Change password for specific user
     Content-Type: application/json
 
     {message: "User deleted"}
+
+## Pause all alerts
+
+`DELETE /api/admin/pause-all-alerts`
+
+**Example Request**:
+
+    DELETE /api/admin/pause-all-alerts HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+
+    {state: "new state", message: "alerts pause/un paused", "alertsAffected": 100}    

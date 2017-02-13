@@ -22,7 +22,7 @@
   phantom.addCookie({
     'name': 'renderKey',
     'value': params.renderKey,
-    'domain': 'localhost',
+    'domain': params.domain,
   });
 
   page.viewportSize = {
@@ -55,7 +55,8 @@
 
         var rootScope = body.injector().get('$rootScope');
         if (!rootScope) {return false;}
-        return rootScope.panelsRendered;
+        var panels = angular.element('div.panel:visible').length;
+        return rootScope.panelsRendered >= panels;
       });
 
       if (panelsRendered || tries === 1000) {

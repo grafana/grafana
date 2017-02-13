@@ -111,7 +111,7 @@ func (m *EC2RoleProvider) Retrieve() (credentials.Value, error) {
 	}, nil
 }
 
-// A ec2RoleCredRespBody provides the shape for unmarshalling credential
+// A ec2RoleCredRespBody provides the shape for unmarshaling credential
 // request responses.
 type ec2RoleCredRespBody struct {
 	// Success State

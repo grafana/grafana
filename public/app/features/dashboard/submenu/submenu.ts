@@ -21,15 +21,20 @@ export class SubmenuCtrl {
     this.$rootScope.$broadcast('refresh');
   }
 
-  getValuesForTag(variable, tagKey) {
-    return this.variableSrv.getValuesForTag(variable, tagKey);
-  }
-
   variableUpdated(variable) {
     this.variableSrv.variableUpdated(variable).then(() => {
       this.$rootScope.$emit('template-variable-value-updated');
       this.$rootScope.$broadcast('refresh');
     });
+  }
+
+  openEditView(editview) {
+    var search = _.extend(this.$location.search(), {editview: editview});
+    this.$location.search(search);
+  }
+
+  exitBuildMode() {
+    this.dashboard.toggleEditMode();
   }
 }
 

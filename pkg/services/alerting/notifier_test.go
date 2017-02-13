@@ -22,6 +22,14 @@ func (fn *FakeNotifier) NeedsImage() bool {
 	return true
 }
 
+func (n *FakeNotifier) GetNotifierId() int64 {
+	return 0
+}
+
+func (n *FakeNotifier) GetIsDefault() bool {
+	return false
+}
+
 func (fn *FakeNotifier) Notify(alertResult *EvalContext) error { return nil }
 
 func (fn *FakeNotifier) PassesFilter(rule *Rule) bool {

@@ -13,7 +13,8 @@ var defaults = {
   type: 'graphite',
   url: '',
   access: 'proxy',
-  jsonData: {}
+  jsonData: {},
+  secureJsonFields: {},
 };
 
 var datasourceCreated = false;
@@ -28,6 +29,7 @@ export class DataSourceEditCtrl {
   tabIndex: number;
   hasDashboards: boolean;
   editForm: any;
+  gettingStarted: boolean;
 
   /** @ngInject */
   constructor(
@@ -46,10 +48,21 @@ export class DataSourceEditCtrl {
         if (this.$routeParams.id) {
           this.getDatasourceById(this.$routeParams.id);
         } else {
-          this.current = angular.copy(defaults);
-          this.typeChanged();
+          this.initNewDatasourceModel();
         }
       });
+    }
+
+    initNewDatasourceModel() {
+      this.current = angular.copy(defaults);
+
+      // We are coming from getting started
+      if (this.$location.search().gettingstarted) {
+        this.gettingStarted = true;
+        this.current.isDefault = true;
+      }
+
+      this.typeChanged();
     }
 
     loadDatasourceTypes() {
@@ -68,7 +81,6 @@ export class DataSourceEditCtrl {
       this.backendSrv.get('/api/datasources/' + id).then(ds => {
         this.isNew = false;
         this.current = ds;
-
         if (datasourceCreated) {
           datasourceCreated = false;
           this.testDatasource();

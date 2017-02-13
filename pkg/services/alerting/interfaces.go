@@ -16,8 +16,18 @@ type Notifier interface {
 	GetType() string
 	NeedsImage() bool
 	PassesFilter(rule *Rule) bool
+
+	GetNotifierId() int64
+	GetIsDefault() bool
+}
+
+type ConditionResult struct {
+	Firing      bool
+	NoDataFound bool
+	Operator    string
+	EvalMatches []*EvalMatch
 }
 
 type Condition interface {
-	Eval(result *EvalContext)
+	Eval(result *EvalContext) (*ConditionResult, error)
 }
