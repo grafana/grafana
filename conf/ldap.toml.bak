@@ -1,9 +1,10 @@
-# Set to true to log user information returned from LDAP
-verbose_logging = false
+# To troubleshoot and get more log info enable ldap debug logging in grafana.ini
+# [log]
+# filters = ldap:debug
 
 [[servers]]
 # Ldap server host (specify multiple hosts space separated)
-host = "ad.allstate.com"
+host = "127.0.0.1"
 # Default port is 389 or 636 if use_ssl = true
 port = 389
 # Set to true if ldap server supports TLS
@@ -16,15 +17,16 @@ ssl_skip_verify = false
 # root_ca_cert = /path/to/certificate.crt
 
 # Search user bind dn
-bind_dn = "CN=sys-metrix,OU=ServiceAccounts,OU=Common,OU=Corp,DC=ad,DC=allstate,DC=com"
+bind_dn = "cn=admin,dc=grafana,dc=org"
 # Search user bind password
-bind_password = 'OeAMz39d'
+# If the password contains # or ; you have to wrap it with trippel quotes. Ex """#password;"""
+bind_password = 'grafana'
 
 # User search filter, for example "(cn=%s)" or "(sAMAccountName=%s)" or "(uid=%s)"
-search_filter = "(sAMAccountName=%s)"
+search_filter = "(cn=%s)"
 
 # An array of base dns to search through
-search_base_dns = ["dc=ad,dc=allstate,dc=com"]
+search_base_dns = ["dc=grafana,dc=org"]
 
 # In POSIX LDAP schemas, without memberOf attribute a secondary query must be made for groups.
 # This is done by enabling group_search_filter below. You must also set member_of= "cn"
@@ -62,22 +64,22 @@ search_base_dns = ["dc=ad,dc=allstate,dc=com"]
 [servers.attributes]
 name = "givenName"
 surname = "sn"
-username = "sAMAccountName"
+username = "cn"
 member_of = "memberOf"
-email =  "mail"
+email =  "email"
 
-# # Map ldap groups to grafana org roles
-# [[servers.group_mappings]]
-# group_dn = "cn=admins,dc=grafana,dc=org"
-# org_role = "Admin"
-# # The Grafana organization database id, optional, if left out the default org (id 1) will be used
-# # org_id = 1
-#
-# [[servers.group_mappings]]
-# group_dn = "cn=users,dc=grafana,dc=org"
-# org_role = "Editor"
+# Map ldap groups to grafana org roles
+[[servers.group_mappings]]
+group_dn = "cn=admins,dc=grafana,dc=org"
+org_role = "Admin"
+# The Grafana organization database id, optional, if left out the default org (id 1) will be used
+# org_id = 1
+
+[[servers.group_mappings]]
+group_dn = "cn=users,dc=grafana,dc=org"
+org_role = "Editor"
 
 [[servers.group_mappings]]
 # If you want to match all (or no ldap groups) then you can use wildcard
 group_dn = "*"
-org_role = "Editor"
+org_role = "Viewer"
