@@ -93,6 +93,7 @@ define([
             _.each(response.data, function (metricData) {
               var metric = {};
               metric.host = metricData.tags.host;
+              metric.alias = alias[key];
               if (_.isObject(metricData)) {
                 if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
                   metric.state = "异常";
