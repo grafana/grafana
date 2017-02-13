@@ -111,6 +111,20 @@ export class DashRowCtrl {
   onMenuDeleteRow() {
     this.dashboard.removeRow(this.row);
   }
+
+  onCollapseAllRow() {
+    this.closeDropView();
+    this.dashboard.rows.forEach(function (row) {
+      row.collapse = true;
+    });
+  }
+
+  onExpandAllRow() {
+    this.closeDropView();
+    this.dashboard.rows.forEach(function (row) {
+      row.collapse = false;
+    });
+  }
 }
 
 coreModule.directive('dashRow', function($rootScope) {
