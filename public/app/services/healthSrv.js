@@ -13,6 +13,7 @@ define([
       var excludeAnomaly = "/anomaly/exclude";
       var includeAnomaly = "/anomaly/include";
       var mainHealthList = "/healthsummary";
+      var metricsType = "/metrictype";
       this.anomalyMetricsData = [];
       var _this = this;
       this.load = function () {
@@ -51,6 +52,15 @@ define([
         return backendSrv.alertD({
           method: 'GET', url: mainHealthList, timeout: 2000
         });
+      };
+
+      this.getMetricType = function (metrics) {
+        return backendSrv.alertD({
+          method: 'GET', url: metricsType, timeout: 2000,
+          params: {
+            names: metrics.join()
+          }
+        })
       };
 
       this.floor = function (metrics) {
