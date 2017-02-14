@@ -10,6 +10,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"net/url"
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -176,6 +177,12 @@ func OAuthLogin(ctx *middleware.Context) {
 	loginUserWithUser(userQuery.Result, ctx)
 
 	metrics.M_Api_Login_OAuth.Inc(1)
+
+	if redirectTo, _ := url.QueryUnescape(ctx.GetCookie("redirect_to")); len(redirectTo) > 0 {
+		ctx.SetCookie("redirect_to", "", -1, setting.AppSubUrl+"/")
+		ctx.Redirect(redirectTo)
+		return
+	}
 
 	ctx.Redirect(setting.AppSubUrl + "/")
 }

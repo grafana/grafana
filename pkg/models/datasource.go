@@ -120,8 +120,13 @@ type UpdateDataSourceCommand struct {
 	Id    int64 `json:"-"`
 }
 
-type DeleteDataSourceCommand struct {
+type DeleteDataSourceByIdCommand struct {
 	Id    int64
+	OrgId int64
+}
+
+type DeleteDataSourceByNameCommand struct {
+	Name  string
 	OrgId int64
 }
 
