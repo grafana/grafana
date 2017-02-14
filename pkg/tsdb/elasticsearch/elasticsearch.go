@@ -121,7 +121,7 @@ func (e *ElasticsearchExecutor) Execute(ctx context.Context, queries tsdb.QueryS
 			return result.WithError(fmt.Errorf("Failed to get metrics: %s (%s)", strconv.Quote(string(rBody)), resp.Status))
 		}
 
-		result.QueryResults[q.RefId], err = parseQueryResult(rBody)
+		result.QueryResults[q.RefId], err = parseQueryResult(rBody, getPreferredNamesForQueries(q))
 		if err != nil {
 			return result.WithError(err)
 		}
@@ -130,4 +130,32 @@ func (e *ElasticsearchExecutor) Execute(ctx context.Context, queries tsdb.QueryS
 	}
 
 	return result
+}
+
+func getPreferredNamesForQueries(query *tsdb.Query) NameMap {
+	names := NameMap{}
+	alias := query.Model.Get("alias").MustString("")
+
+	esRequestModel := &RequestModel{}
+	rawModel, err := query.Model.MarshalJSON()
+	if err != nil {
+		return names
+	}
+
+	err = json.Unmarshal(rawModel, esRequestModel)
+	if err != nil {
+		return names
+	}
+
+	for _, metric := range esRequestModel.Metrics {
+		if alias != "" {
+			names[metric.ID] = Name{
+				Value: alias,
+			}
+		} else {
+			names[metric.ID] = metric.GetName()
+		}
+	}
+
+	return names
 }

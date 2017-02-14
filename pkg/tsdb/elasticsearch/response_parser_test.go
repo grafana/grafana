@@ -146,22 +146,33 @@ func TestElasticserachQueryParser(t *testing.T) {
 	Convey("Elasticserach QueryBuilder query parsing", t, func() {
 
 		Convey("Parse ElasticSearch Query Results", func() {
-			queryResult, err := parseQueryResult([]byte(testResponseJSON))
+			names := NameMap{}
+			names["1"] = Name{
+				Value: "Average value",
+			}
+			names["3"] = Name{
+				Value:     "Moving Average",
+				Reference: "1",
+			}
+			queryResult, err := parseQueryResult([]byte(testResponseJSON), names)
 
 			So(err, ShouldBeNil)
 			So(queryResult, ShouldNotBeNil)
 			So(len(queryResult.Series), ShouldEqual, 2)
-			So(queryResult.Series[0].Name, ShouldEqual, "21")
-			So(queryResult.Series[1].Name, ShouldEqual, "23")
 		})
 
 		Convey("Parse ElasticSearch Nested Query Results", func() {
-			queryResult, err := parseQueryResult([]byte(testRecursiveResponseJSON))
+			names := NameMap{}
+			names["4"] = Name{
+				Value: "Test Name",
+			}
+
+			queryResult, err := parseQueryResult([]byte(testRecursiveResponseJSON), names)
 
 			So(err, ShouldBeNil)
 			So(queryResult, ShouldNotBeNil)
 			So(len(queryResult.Series), ShouldEqual, 1)
-			So(queryResult.Series[0].Name, ShouldEqual, "234")
+			So(queryResult.Series[0].Name, ShouldEqual, "Test Name")
 		})
 	})
 }

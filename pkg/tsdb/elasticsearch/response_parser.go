@@ -28,7 +28,7 @@ func joinMaps(left map[string]tsdb.TimeSeriesPoints, right map[string]tsdb.TimeS
 	return result
 }
 
-func parseSubQueryResults(parentAggregationKey string, bucketlist BucketList) (map[string]tsdb.TimeSeriesPoints, error) {
+func parseSubQueryResults(parentAggregationKey string, bucketlist BucketList, preferredNames NameMap) (map[string]tsdb.TimeSeriesPoints, error) {
 	timeSeries := map[string]tsdb.TimeSeriesPoints{}
 
 	for _, bucket := range bucketlist.Buckets {
@@ -76,7 +76,7 @@ func parseSubQueryResults(parentAggregationKey string, bucketlist BucketList) (m
 					nestedBucketList := BucketList{
 						Buckets: buckets,
 					}
-					nestedTimeSeries, err := parseSubQueryResults(fmt.Sprintf("%s%s", parentAggregationKey, key), nestedBucketList)
+					nestedTimeSeries, err := parseSubQueryResults(fmt.Sprintf("%s%s", parentAggregationKey, key), nestedBucketList, preferredNames)
 					if err != nil {
 						return timeSeries, err
 					}
@@ -88,11 +88,12 @@ func parseSubQueryResults(parentAggregationKey string, bucketlist BucketList) (m
 			}
 
 			if metricKey != "" {
-				innerKey := fmt.Sprintf("%s%s", parentAggregationKey, metricKey)
-				if _, ok := timeSeries[innerKey]; !ok {
-					timeSeries[innerKey] = make(tsdb.TimeSeriesPoints, 0)
+				name := preferredNames.GetName(metricKey)
+
+				if _, ok := timeSeries[name]; !ok {
+					timeSeries[name] = make(tsdb.TimeSeriesPoints, 0)
 				}
-				timeSeries[innerKey] = append(timeSeries[innerKey], valueRow)
+				timeSeries[name] = append(timeSeries[name], valueRow)
 			}
 		}
 	}
@@ -100,7 +101,7 @@ func parseSubQueryResults(parentAggregationKey string, bucketlist BucketList) (m
 	return timeSeries, nil
 }
 
-func parseQueryResult(response []byte) (*tsdb.QueryResult, error) {
+func parseQueryResult(response []byte, preferredNames NameMap) (*tsdb.QueryResult, error) {
 	queryRes := tsdb.NewQueryResult()
 
 	esSearchResult := &Response{}
@@ -112,7 +113,7 @@ func parseQueryResult(response []byte) (*tsdb.QueryResult, error) {
 
 	timeSeries := map[string]tsdb.TimeSeriesPoints{}
 	for aggregationID, buckets := range esSearchResult.Aggregations {
-		tSeries, err := parseSubQueryResults(aggregationID, buckets)
+		tSeries, err := parseSubQueryResults(aggregationID, buckets, preferredNames)
 		if err != nil {
 			return nil, err
 		}
