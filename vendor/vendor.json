@@ -423,6 +423,18 @@
 			"path": "gopkg.in/olivere/elastic.v3",
 			"revision": "9da4058517104766446811c87c0890f26c03d945",
 			"revisionTime": "2017-01-29T11:24:09Z"
+		},
+		{
+			"checksumSHA1": "lLdKOn9RPtFoTtPUNq5+sIInAiE=",
+			"path": "gopkg.in/olivere/elastic.v3/backoff",
+			"revision": "9da4058517104766446811c87c0890f26c03d945",
+			"revisionTime": "2017-01-29T11:24:09Z"
+		},
+		{
+			"checksumSHA1": "XQg6xG6l15Ke43KolthYYnVDCYo=",
+			"path": "gopkg.in/olivere/elastic.v3/uritemplates",
+			"revision": "9da4058517104766446811c87c0890f26c03d945",
+			"revisionTime": "2017-01-29T11:24:09Z"
 		}
 	],
 	"rootPath": "github.com/grafana/grafana"
