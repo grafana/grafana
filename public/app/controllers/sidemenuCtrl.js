@@ -23,6 +23,12 @@ function (angular, _, $, config) {
       });
 
       $scope.mainLinks.push({
+        text: "系统状况",
+        icon: "fa fa-fw fa-cubes",
+        href: $scope.getUrl("/service"),
+      });
+
+      $scope.mainLinks.push({
         text: "探针状态",
         icon: "fa fa-fw fa-crosshairs",
         href: $scope.getUrl("/summary"),

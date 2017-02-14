@@ -21,14 +21,13 @@ define([
       };
 
       if (contextSrv.isGrafanaAdmin) {
-        $scope.services = {"collect": "探针状态", "config": "探针配置", "service": "服务状况"};
+        $scope.services = {"collect": "探针状态", "config": "探针配置"};
       } else {
-        $scope.services = {"collect": "探针状态", "service": "服务状况"};
+        $scope.services = {"collect": "探针状态"};
       }
       $scope.summarySelect = {
         system: 0,
         services: "",
-        currentTagValue: "*"
       };
 
       $scope.summaryList = [];
@@ -45,12 +44,6 @@ define([
           "服务名称": "service",
           "是否正在运行": "enable",
           "间隔": "interval"
-        },
-        "service": {
-          "服务名称": "service",
-          // "版本": "version",
-          "状态": "state",
-          // "运行时间": "running_time"
         }
       };
 
@@ -65,52 +58,7 @@ define([
         });
       };
 
-      $scope.getServices = function () {
-        var alias = {
-          "hadoop.datanode": "Hadoop DataNode",
-          "hadoop.namenode": "Hadoop NameNode",
-          "hbase.master": "Hbase Master",
-          "hbase.regionserver": "Hbase RegionServer",
-          "kafka": "Kafka",
-          "mysql": "Mysql",
-          "spark": "Spark",
-          "storm": "Storm",
-          "yarn": "Yarn",
-          "zookeeper": "Zookeeper"
-        };
-
-        $scope.serviceList = [];
-        _.each(Object.keys(alias), function (key) {
-          var queries = [{
-            "metric": contextSrv.user.orgId + "." + $scope.summarySelect.system + "." + key + ".state",
-            "aggregator": "sum",
-            "downsample": "1h-sum",
-            "tags": {"host": $scope.summarySelect.currentTagValue}
-          }];
-
-          $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-1h', false).valueOf(), null).then(function (response) {
-            $scope.summaryList = response;
-            _.each(response.data, function (metricData) {
-              var metric = {};
-              metric.host = metricData.tags.host;
-              metric.alias = alias[key];
-              if (_.isObject(metricData)) {
-                if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
-                  metric.state = "异常";
-                } else {
-                  metric.state = "正常";
-                }
-              }
-              $scope.serviceList.push(metric);
-            });
-          }).catch(function (e) {
-            $scope.serviceList.push({"alias": alias[key], "state": "尚未工作"});
-          });
-        });
-      };
-
       $scope.cleanup = function () {
-        $scope.serviceList = null;
         $scope.summaryList = null;
         $scope.warningScript = null;
       };
@@ -129,8 +77,6 @@ define([
         } else if ($scope.summarySelect.services == "config") {
           query['metrics'] = "collector.service";
           $scope.getSummary(query);
-        } else if ($scope.summarySelect.services == "service" && $scope.summarySelect.currentTagValue != "") {
-          $scope.getServices();
         }
         return;
       };

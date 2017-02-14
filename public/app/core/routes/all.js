@@ -22,6 +22,11 @@ define([
         controller: 'SummaryCtrl',
         reloadOnSearch: false,
       })
+      .when('/service', {
+        templateUrl: 'app/features/summary/partials/service.html',
+        controller: 'ServiceCtrl',
+        reloadOnSearch: false,
+      })
       .when('/dashboard/:type/:slug', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'LoadDashboardCtrl',
