@@ -121,5 +121,5 @@ func (e *ElasticsearchExecutor) Execute(ctx context.Context, queries tsdb.QueryS
 		result.QueryResults[q.RefId].RefId = q.RefId
 	}
 
-	return result.WithError(fmt.Errorf("Elasticsearch Query Not Implemented"))
+	return result
 }

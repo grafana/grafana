@@ -35,13 +35,13 @@ func parseQueryResult(response []byte) (*tsdb.QueryResult, error) {
 				switch value.(type) {
 				case float64:
 					if key == "key" {
-						valueRow[0] = parseValue(value.(float64))
+						valueRow[1] = parseValue(value.(float64))
 					}
 				case map[string]interface{}:
 					cV := value.(map[string]interface{})
 					if cV["value"] != nil {
 						metricKey = key
-						valueRow[1] = parseValue(cV["value"].(float64))
+						valueRow[0] = parseValue(cV["value"].(float64))
 					}
 				}
 
