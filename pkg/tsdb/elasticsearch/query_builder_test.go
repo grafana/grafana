@@ -2,7 +2,8 @@ package elasticsearch
 
 import (
 	"encoding/json"
-	"fmt"
+	"reflect"
+	"strings"
 	"testing"
 	"time"
 
@@ -14,7 +15,7 @@ var testElasticsearchModelRequestJSON = `
 {
       "bucketAggs": [
         {
-          "field": "rfc460Timestamp",
+          "field": "timestamp",
           "id": "2",
           "settings": {
             "interval": "auto",
@@ -55,9 +56,9 @@ var testElasticsearchModelRequestJSON = `
           "type": "moving_avg"
         }
       ],
-      "query": "(rfc190Scope:globalriot.las2.ansible1.transformer.zabbix) AND (name_raw:system.transformer.ansible.count)",
+      "query": "(test:query) AND (name:sample)",
       "refId": "A",
-      "timeField": "rfc460Timestamp"
+      "timeField": "timestamp"
 }
 `
 
@@ -69,9 +70,9 @@ var testElasticsearchQueryJSON = `
       "filter": [
         {
           "range": {
-            "rfc460Timestamp": {
-              "gte": "1486999666201",
-              "lte": "1487003266201",
+            "timestamp": {
+              "gte": "<FROM_TIMESTAMP>",
+              "lte": "<TO_TIMESTAMP>",
               "format": "epoch_millis"
             }
           }
@@ -79,7 +80,7 @@ var testElasticsearchQueryJSON = `
         {
           "query_string": {
             "analyze_wildcard": true,
-            "query": "(rfc190Scope:globalriot.las2.ansible1.transformer.zabbix) AND (name_raw:system.transformer.ansible.count)"
+            "query": "(test:query) AND (name:sample)"
           }
         }
       ]
@@ -89,18 +90,21 @@ var testElasticsearchQueryJSON = `
     "2": {
       "date_histogram": {
         "interval": "5s",
-        "field": "rfc460Timestamp",
+        "field": "timestamp",
         "min_doc_count": 0,
         "extended_bounds": {
-          "min": "1486999666201",
-          "max": "1487003266201"
+          "min": "<FROM_TIMESTAMP>",
+          "max": "<TO_TIMESTAMP>"
         },
         "format": "epoch_millis"
       },
       "aggs": {
         "1": {
           "avg": {
-            "field": "value"
+            "field": "value",
+	            "script": {
+	              "inline": "_value * 2"
+	            }
           }
         },
         "3": {
@@ -120,7 +124,7 @@ func TestElasticserachQueryBuilder(t *testing.T) {
 	Convey("Elasticserach QueryBuilder query testing", t, func() {
 
 		Convey("Build test average metric with moving average", func() {
-			model := &ElasticsearchRequestModel{}
+			model := &RequestModel{}
 
 			err := json.Unmarshal([]byte(testElasticsearchModelRequestJSON), model)
 			So(err, ShouldBeNil)
@@ -131,21 +135,33 @@ func TestElasticserachQueryBuilder(t *testing.T) {
 				Now:  time.Now(),
 			}
 
-			queryJson, err := model.BuildQueryJson(testTimeRange)
+			queryJSON, err := model.buildQueryJSON(testTimeRange)
 			So(err, ShouldBeNil)
 
-			fmt.Println(queryJson)
-			var queryExpectedJsonInterface, queryJsonInterface interface{}
-			err = json.Unmarshal([]byte(testElasticsearchQueryJSON), &queryExpectedJsonInterface)
+			var queryExpectedJSONInterface, queryJSONInterface interface{}
+
+			err = json.Unmarshal([]byte(queryJSON), &queryJSONInterface)
 			So(err, ShouldBeNil)
 
-			err = json.Unmarshal([]byte(queryJson), &queryJsonInterface)
+			testElasticsearchQueryJSON = strings.Replace(
+				testElasticsearchQueryJSON,
+				"<FROM_TIMESTAMP>",
+				convertTimeToUnixNano(testTimeRange.From, testTimeRange.Now),
+				-1,
+			)
+
+			testElasticsearchQueryJSON = strings.Replace(
+				testElasticsearchQueryJSON,
+				"<TO_TIMESTAMP>",
+				convertTimeToUnixNano(testTimeRange.To, testTimeRange.Now),
+				-1,
+			)
+
+			err = json.Unmarshal([]byte(testElasticsearchQueryJSON), &queryExpectedJSONInterface)
 			So(err, ShouldBeNil)
 
-			//result := reflect.DeepEqual(queryExpectedJsonInterface, queryJsonInterface)
-
-			// TODO Fix this timestamp comparison
-			//So(result, ShouldBeTrue)
+			result := reflect.DeepEqual(queryExpectedJSONInterface, queryJSONInterface)
+			So(result, ShouldBeTrue)
 		})
 	})
 }

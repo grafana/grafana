@@ -3,7 +3,6 @@ package elasticsearch
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"strconv"
 	"time"
 
@@ -13,9 +12,10 @@ import (
 	"text/template"
 )
 
+// TemplateQueryModel provides the data container used by the elasticsearch JSON template
 type TemplateQueryModel struct {
 	TimeRange *tsdb.TimeRange
-	Model     *ElasticsearchRequestModel
+	Model     *RequestModel
 }
 
 var queryTemplate = `
@@ -39,7 +39,7 @@ var queryTemplate = `
   "aggs": {{ . | formatAggregates }}
 }`
 
-func convertTimeToUnixNano(rangeTime string) string {
+func convertTimeToUnixNano(rangeTime string, now time.Time) string {
 	if rangeTime == "now" {
 		rangeTime = "30s"
 	}
@@ -49,12 +49,12 @@ func convertTimeToUnixNano(rangeTime string) string {
 		return err.Error()
 	}
 
-	return strconv.FormatInt(time.Now().Add(duration).UnixNano()/1000/1000, 10)
+	return strconv.FormatInt(now.Add(duration).UnixNano()/1000/1000, 10)
 }
 
 func formatTimeRange(data TemplateQueryModel) string {
-	to := convertTimeToUnixNano(data.TimeRange.To)
-	from := convertTimeToUnixNano(data.TimeRange.From)
+	to := convertTimeToUnixNano(data.TimeRange.To, data.TimeRange.Now)
+	from := convertTimeToUnixNano(data.TimeRange.From, data.TimeRange.Now)
 
 	return fmt.Sprintf(`
     {
@@ -89,8 +89,8 @@ func formatAggregates(data TemplateQueryModel) string {
 		}
 
 		extendedBounds := simplejson.New()
-		extendedBounds.Set("min", convertTimeToUnixNano(data.TimeRange.From))
-		extendedBounds.Set("max", convertTimeToUnixNano(data.TimeRange.To))
+		extendedBounds.Set("min", convertTimeToUnixNano(data.TimeRange.From, data.TimeRange.Now))
+		extendedBounds.Set("max", convertTimeToUnixNano(data.TimeRange.To, data.TimeRange.Now))
 		bucketAggregates.Set("extended_bounds", extendedBounds.MustMap())
 
 		bucketAggregates.Set("format", "epoch_millis")
@@ -112,21 +112,21 @@ func formatAggregates(data TemplateQueryModel) string {
 			}
 
 			metricAggregate.Set(metric.Type, aggregate)
-			metricAggregates.Set(metric.Id, metricAggregate.MustMap())
+			metricAggregates.Set(metric.ID, metricAggregate.MustMap())
 		}
 		bucket.Set("aggs", metricAggregates.MustMap())
 
-		aggregates.Set(bAgg.Id, bucket.MustMap())
+		aggregates.Set(bAgg.ID, bucket.MustMap())
 	}
 
 	aggString, err := aggregates.MarshalJSON()
 	if err != nil {
-		log.Printf("%s %s\n", string(aggString), err.Error())
+		eslog.Error("%s %s\n", string(aggString), err.Error())
 	}
 	return string(aggString)
 }
 
-func (model *ElasticsearchRequestModel) BuildQueryJson(timeRange *tsdb.TimeRange) (string, error) {
+func (model *RequestModel) buildQueryJSON(timeRange *tsdb.TimeRange) (string, error) {
 
 	templateQueryModel := TemplateQueryModel{
 		TimeRange: timeRange,

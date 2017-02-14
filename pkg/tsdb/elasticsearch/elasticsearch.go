@@ -50,11 +50,15 @@ func getIndex(pattern string, interval string) string {
 }
 
 func (e *ElasticsearchExecutor) buildRequest(queryInfo *tsdb.Query, timeRange *tsdb.TimeRange) (*http.Request, error) {
-	index := getIndex(queryInfo.DataSource.Database, queryInfo.DataSource.JsonData.Get("interval").MustString())
+	interval, err := queryInfo.DataSource.JsonData.Get("interval").String()
+	if err != nil {
+		return nil, err
+	}
+	index := getIndex(queryInfo.DataSource.Database, interval)
 
-	esRequestUrl := fmt.Sprintf("%s/%s/_search", queryInfo.DataSource.Url, index)
+	esRequestURL := fmt.Sprintf("%s/%s/_search", queryInfo.DataSource.Url, index)
 
-	esRequestModel := &ElasticsearchRequestModel{}
+	esRequestModel := &RequestModel{}
 	rawModel, err := queryInfo.Model.MarshalJSON()
 	if err != nil {
 		return nil, err
@@ -65,13 +69,13 @@ func (e *ElasticsearchExecutor) buildRequest(queryInfo *tsdb.Query, timeRange *t
 		return nil, err
 	}
 
-	esRequestJSON, err := esRequestModel.BuildQueryJson(timeRange)
+	esRequestJSON, err := esRequestModel.buildQueryJSON(timeRange)
 	if err != nil {
 		return nil, err
 	}
 
 	reader := strings.NewReader(esRequestJSON)
-	req, err := http.NewRequest("GET", esRequestUrl, reader)
+	req, err := http.NewRequest("GET", esRequestURL, reader)
 	if err != nil {
 		return nil, err
 	}
@@ -88,9 +92,13 @@ func (e *ElasticsearchExecutor) Execute(ctx context.Context, queries tsdb.QueryS
 	result.QueryResults = make(map[string]*tsdb.QueryResult)
 
 	for _, q := range context.Queries {
+		esVersion, err := q.DataSource.JsonData.Get("esVersion").Int()
+		if err != nil {
+			return result.WithError(err)
+		}
 
-		if q.DataSource.JsonData.Get("esVersion").MustInt() != 2 {
-			return result.WithError(fmt.Errorf("Elasticsearch v%d not supported!", q.DataSource.JsonData.Get("esVersion")))
+		if esVersion != 2 {
+			return result.WithError(fmt.Errorf("Elasticsearch v%d not currently supported!", esVersion))
 		}
 
 		esRequest, err := e.buildRequest(q, context.TimeRange)

@@ -10,7 +10,7 @@ import (
 func parseQueryResult(response []byte) (*tsdb.QueryResult, error) {
 	queryRes := tsdb.NewQueryResult()
 
-	esSearchResult := &ElasticsearchResponse{}
+	esSearchResult := &Response{}
 	err := json.Unmarshal(response, esSearchResult)
 	if err != nil {
 		return nil, err
@@ -38,10 +38,10 @@ func parseQueryResult(response []byte) (*tsdb.QueryResult, error) {
 						valueRow[1] = parseValue(value.(float64))
 					}
 				case map[string]interface{}:
-					cV := value.(map[string]interface{})
-					if cV["value"] != nil {
+					valueMap := value.(map[string]interface{})
+					if valueMap["value"] != nil {
 						metricKey = key
-						valueRow[0] = parseValue(cV["value"].(float64))
+						valueRow[0] = parseValue(valueMap["value"].(float64))
 					}
 				}
 
@@ -59,7 +59,6 @@ func parseQueryResult(response []byte) (*tsdb.QueryResult, error) {
 		ts := &tsdb.TimeSeries{
 			Name:   id,
 			Points: series,
-			//Tags?
 		}
 		queryRes.Series = append(queryRes.Series, ts)
 	}
