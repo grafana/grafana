@@ -84,7 +84,7 @@ define([
 
           $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-1h', false).valueOf(), null).then(function (response) {
             if(_.isEmpty(response.data)){
-              throw err;
+              throw Error;
             }
             _.each(response.data, function (metricData) {
               var metric = {};

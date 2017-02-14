@@ -55,7 +55,34 @@ define([
           headers: {'Content-Type': 'text/plain'},
         }).then(function (response) {
           $scope.summaryList = response.data;
-        });
+        }).then(function () {
+          _.each($scope.summaryList, function (metric) {
+            var queries = [{
+              "metric": contextSrv.user.orgId + "." + $scope.summarySelect.system + ".collector.state",
+              "aggregator": "sum",
+              "downsample": "1h-sum",
+              "tags": {"host": metric.tag.host}
+            }];
+
+            $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-1h', false).valueOf(), null).then(function (response) {
+              if (_.isEmpty(response.data)) {
+                throw Error;
+              }
+              _.each(response.data, function (metricData) {
+                if (_.isObject(metricData)) {
+                  if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
+                    metric.state = "异常";
+                  } else {
+                    metric.state = "正常";
+                  }
+                }
+              });
+            }).catch(function () {
+              metric.state = "尚未工作";
+            });
+
+          });
+        })
       };
 
       $scope.cleanup = function () {

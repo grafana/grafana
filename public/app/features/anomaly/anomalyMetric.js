@@ -153,16 +153,13 @@ define([
               if (types[metirc] == "counter") {
                 panel.targets[0].shouldComputeRate = true;
                 panel.targets[0].downsampleAggregator = "max";
-                panel.targets[0].aggregator = "max";
               } else if (types[metirc] == "increment") {
                 panel.targets[0].shouldComputeRate = false;
                 panel.targets[0].downsampleAggregator = "sum";
-                panel.targets[0].aggregator = "sum";
               }
             });
 
           });
-          console.log(panelMeta);
           return panelMeta;
         }
 
