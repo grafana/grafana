@@ -15,17 +15,29 @@
 
     <table class="grafana-options-table" ng-if="oncallerDefList.length > 0">
       <tr>
+        <td><strong>运维人员</strong></td>
+        <td><strong>电话</strong></td>
+        <td><strong>邮箱</strong></td>
         <td><strong>组织</strong></td>
         <td><strong>服务名称</strong></td>
         <td></td>
         <td></td>
       </tr>
       <tr ng-repeat="oncallerDef in oncallerDefList">
-        <td style="width:30%">
+        <td style="width:10%">
           <i class="fa fa-phone"></i> &nbsp;
+          {{oncallerDef.name}}
+        </td>
+        <td style="width:30%">
+          {{oncallerDef.tel}}
+        </td>
+        <td style="width:30%">
+          {{oncallerDef.email}}
+        </td>
+        <td style="width:10%">
           {{orgName}}
         </td>
-        <td style="width:90%">
+        <td style="width:50%">
           {{getSystemName(oncallerDef.service)}}
         </td>
         <td style="width: 1%">
