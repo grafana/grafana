@@ -6,7 +6,7 @@ import (
 	. "github.com/smartystreets/goconvey/convey"
 )
 
-var testResponseJson = `
+var testResponseJSON = `
 {
   "took": 1588,
   "timed_out": false,
@@ -112,14 +112,53 @@ var testResponseJson = `
   }
 }`
 
+var testRecursiveResponseJSON = `
+{
+  "aggregations": {
+    "2": {
+      "buckets": [
+      {
+        "3": {
+          "buckets": [
+          { "4": {"value": 10}, "doc_count": 1, "key": 1000},
+          { "4": {"value": 12}, "doc_count": 3, "key": 2000}
+          ]
+        },
+        "doc_count": 4,
+        "key": "server1"
+      },
+      {
+        "3": {
+          "buckets": [
+          { "4": {"value": 20}, "doc_count": 1, "key": 1000},
+          { "4": {"value": 32}, "doc_count": 3, "key": 2000}
+          ]
+        },
+        "doc_count": 10,
+        "key": "server2"
+      }
+      ]
+    }
+  }
+}`
+
 func TestElasticserachQueryParser(t *testing.T) {
 	Convey("Elasticserach QueryBuilder query parsing", t, func() {
 
 		Convey("Parse ElasticSearch Query Results", func() {
-			queryResult, err := parseQueryResult([]byte(testResponseJson))
+			queryResult, err := parseQueryResult([]byte(testResponseJSON))
+
 			So(err, ShouldBeNil)
 			So(queryResult, ShouldNotBeNil)
 			So(len(queryResult.Series), ShouldEqual, 2)
+		})
+
+		Convey("Parse ElasticSearch Nested Query Results", func() {
+			queryResult, err := parseQueryResult([]byte(testRecursiveResponseJSON))
+
+			So(err, ShouldBeNil)
+			So(queryResult, ShouldNotBeNil)
+			So(len(queryResult.Series), ShouldEqual, 1)
 		})
 	})
 }
