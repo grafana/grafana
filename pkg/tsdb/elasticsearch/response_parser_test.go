@@ -1,10 +1,8 @@
 package elasticsearch
 
 import (
-	"fmt"
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -117,13 +115,10 @@ var testResponseJson = `
 func TestElasticserachQueryParser(t *testing.T) {
 	Convey("Elasticserach QueryBuilder query parsing", t, func() {
 
-		Convey("Parse ElasticSearch Requry Results", func() {
+		Convey("Parse ElasticSearch Query Results", func() {
 			queryResult, err := parseQueryResult([]byte(testResponseJson))
 			So(err, ShouldBeNil)
 			So(queryResult, ShouldNotBeNil)
-
-			qR := &tsdb.QueryResult{}
-			fmt.Println(qR)
 			So(len(queryResult.Series), ShouldEqual, 2)
 		})
 	})
