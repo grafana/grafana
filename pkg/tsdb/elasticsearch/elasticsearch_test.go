@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"context"
+	"strings"
 	"testing"
 	"time"
 
@@ -130,6 +131,6 @@ func TestElasticSearchConstructor(t *testing.T) {
 
 		result = e.Execute(ctx, queryContext.Queries, queryContext)
 		So(result.Error, ShouldNotBeNil)
-		So(result.Error.Error(), ShouldEqual, "Get http://test/test-index-*/_search: dial tcp: lookup test: no such host")
+		So(strings.HasPrefix(result.Error.Error(), "Get http://test/test-index-*/_search: dial tcp: lookup test"), ShouldBeTrue)
 	})
 }
