@@ -76,7 +76,7 @@ func parseSubQueryResults(parentAggregationKey string, bucketlist BucketList) (m
 					nestedBucketList := BucketList{
 						Buckets: buckets,
 					}
-					nestedTimeSeries, err := parseSubQueryResults(key, nestedBucketList)
+					nestedTimeSeries, err := parseSubQueryResults(fmt.Sprintf("%s%s", parentAggregationKey, key), nestedBucketList)
 					if err != nil {
 						return timeSeries, err
 					}

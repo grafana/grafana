@@ -151,6 +151,8 @@ func TestElasticserachQueryParser(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(queryResult, ShouldNotBeNil)
 			So(len(queryResult.Series), ShouldEqual, 2)
+			So(queryResult.Series[0].Name, ShouldEqual, "21")
+			So(queryResult.Series[1].Name, ShouldEqual, "23")
 		})
 
 		Convey("Parse ElasticSearch Nested Query Results", func() {
@@ -159,6 +161,7 @@ func TestElasticserachQueryParser(t *testing.T) {
 			So(err, ShouldBeNil)
 			So(queryResult, ShouldNotBeNil)
 			So(len(queryResult.Series), ShouldEqual, 1)
+			So(queryResult.Series[0].Name, ShouldEqual, "234")
 		})
 	})
 }
