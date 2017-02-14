@@ -58,6 +58,10 @@ func (e *ElasticsearchExecutor) buildRequest(queryInfo *tsdb.Query, timeRange *t
 
 	esRequestURL := fmt.Sprintf("%s/%s/_search", queryInfo.DataSource.Url, index)
 
+	if queryInfo.Model == nil {
+		return nil, fmt.Errorf("Invalid (nil) ES Request Model Provided!")
+	}
+
 	esRequestModel := &RequestModel{}
 	rawModel, err := queryInfo.Model.MarshalJSON()
 	if err != nil {
@@ -91,7 +95,19 @@ func (e *ElasticsearchExecutor) Execute(ctx context.Context, queries tsdb.QueryS
 	result := &tsdb.BatchResult{}
 	result.QueryResults = make(map[string]*tsdb.QueryResult)
 
+	if context == nil {
+		return result.WithError(fmt.Errorf("Nil Context provided to ElasticsearchExecutor"))
+	}
+
 	for _, q := range context.Queries {
+		if q.DataSource == nil {
+			return result.WithError(fmt.Errorf("Invalid (nil) DataSource Provided"))
+		}
+
+		if q.DataSource.JsonData == nil {
+			return result.WithError(fmt.Errorf("Invalid (nil) JsonData Provided"))
+		}
+
 		esVersion, err := q.DataSource.JsonData.Get("esVersion").Int()
 		if err != nil {
 			return result.WithError(err)
