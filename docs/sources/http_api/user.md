@@ -71,36 +71,35 @@ parent = "http_api"
 
 ## Get single user by Username(login) or Email
 
-    `GET /api/users/lookup`
+`GET /api/users/lookup?loginOrEmail=user@mygraf.com`
 
-    **Parameter:** `loginOrEmail`
+**Example Request using the email as option**:
 
-    **Example Request using the email as option**:
+    GET /api/users/lookup?loginOrEmail=user@mygraf.com HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
-        GET /api/users/lookup?loginOrEmail=user@mygraf.com HTTP/1.1
-        Accept: application/json
-        Content-Type: application/json
-        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+**Example Request using the username as option**:
+    
+    GET /api/users/lookup?loginOrEmail=admin HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
-    **Example Request using the username as option**:
-        GET /api/users/lookup?loginOrEmail=admin HTTP/1.1
-        Accept: application/json
-        Content-Type: application/json
-        Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+**Example Response**:
 
-    **Example Response**:
+    HTTP/1.1 200
+    Content-Type: application/json
 
-        HTTP/1.1 200
-        Content-Type: application/json
-
-        {
-          "email": "user@mygraf.com"
-          "name": "admin",
-          "login": "admin",
-          "theme": "light",
-          "orgId": 1,
-          "isGrafanaAdmin": true
-        }
+    {
+      "email": "user@mygraf.com"
+      "name": "admin",
+      "login": "admin",
+      "theme": "light",
+      "orgId": 1,
+      "isGrafanaAdmin": true
+    }
 
 
 ## User Update
