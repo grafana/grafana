@@ -543,7 +543,7 @@ Verify SSL for smtp server? defaults to `false`
 Address used when sending out emails, defaults to `admin@grafana.localhost`
 
 ### from_name
-Name to be used when sending out emails, defaults to `Grafana Admin`
+Name to be used when sending out emails, defaults to `Grafana`
 
 ## [log]
 

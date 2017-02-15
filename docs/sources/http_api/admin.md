@@ -158,7 +158,7 @@ with Grafana admin permission.
         "cert_file":"",
         "enabled":"false",
         "from_address":"admin@grafana.localhost",
-        "from_name":"Grafana Admin",
+        "from_name":"Grafana",
         "host":"localhost:25",
         "key_file":"",
         "password":"************",
