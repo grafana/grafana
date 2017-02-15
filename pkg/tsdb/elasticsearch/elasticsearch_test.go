@@ -2,7 +2,6 @@ package elasticsearch
 
 import (
 	"context"
-	"strings"
 	"testing"
 	"time"
 
@@ -114,10 +113,13 @@ func TestElasticSearchConstructor(t *testing.T) {
 				{
 					RefId: "A",
 					DataSource: &models.DataSource{
-						Url:      "http://test",
-						Database: "[test-index-]YYYY.MM.DD",
-						Id:       1,
-						JsonData: jsonData,
+						Url:               "http://test",
+						Database:          "[test-index-]YYYY.MM.DD",
+						Id:                1,
+						JsonData:          jsonData,
+						BasicAuth:         true,
+						BasicAuthUser:     "test-user",
+						BasicAuthPassword: "test-password",
 					},
 					Model: modelJson,
 				},
@@ -131,6 +133,5 @@ func TestElasticSearchConstructor(t *testing.T) {
 
 		result = e.Execute(ctx, queryContext.Queries, queryContext)
 		So(result.Error, ShouldNotBeNil)
-		So(strings.HasPrefix(result.Error.Error(), "Get http://test/test-index-*/_search: dial tcp: lookup test"), ShouldBeTrue)
 	})
 }

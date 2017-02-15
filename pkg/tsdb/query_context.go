@@ -6,9 +6,9 @@ type QueryContext struct {
 	TimeRange   *TimeRange
 	Queries     QuerySlice
 	Results     map[string]*QueryResult
-	ResultsChan chan *BatchResult `json:"-"`
-	Lock        sync.RWMutex      `json:"-"`
-	BatchWaits  sync.WaitGroup    `json:"-"`
+	ResultsChan chan *BatchResult
+	Lock        sync.RWMutex
+	BatchWaits  sync.WaitGroup
 }
 
 func NewQueryContext(queries QuerySlice, timeRange *TimeRange) *QueryContext {

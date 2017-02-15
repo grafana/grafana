@@ -107,7 +107,6 @@ func parseQueryResult(response []byte, preferredNames NameMap) (*tsdb.QueryResul
 	esSearchResult := &Response{}
 	err := json.Unmarshal(response, esSearchResult)
 	if err != nil {
-		fmt.Println(err.Error())
 		return nil, err
 	}
 
