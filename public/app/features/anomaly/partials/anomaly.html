@@ -20,13 +20,12 @@
       </tr>
       <tr ng-repeat="anomalyDef in includeMetricsData">
         <td style="width:1%">
-          <i class="fa fa-bell"></i> &nbsp;
-          {{_.getMetricName(anomalyDef.metric)}}
+          <p style="width: 232px" class="max-width" title="{{_.getMetricName(anomalyDef.metric)}}"><i class="fa fa-bell"></i> &nbsp; {{_.getMetricName(anomalyDef.metric)}}</p>
         </td>
         <td style="width:70%;padding: 20px 50px 0px 10px;">
           <div class="progress progress-striped active">
             <div class="bar bar-success" style="width:{{anomalyDef.health}}%;">
-              <span style="position: absolute;display: block;width: 300px;color:whitesmoke; ">异常指数:{{anomalyDef.health}} %</span>
+              <span style="position: absolute;display: block;width: 300px;color:whitesmoke; ">健康指数:{{anomalyDef.health}} %</span>
             </div>
             <div class="bar bar-danger" style="width:{{100-anomalyDef.health}}%;"></div>
           </div>

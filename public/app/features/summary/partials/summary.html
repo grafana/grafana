@@ -4,36 +4,26 @@
 <div class="page-container">
   <td class="page">
     <h2>总体情况</h2>
-    <h4>请选择需要查看的服务和系统,即产生相应概要信息</h4>
+    <h4>请选择需要查看的探针情况和服务状态,即产生相应概要信息<tip>服务状态: 探针是否能够获取服务信息, 状态为正常/异常/尚未启动.探针情况展示已部署探针的概要信息</tip></h4>
     <div class="tight-form last">
       <ul class="tight-form-list">
-        <li class="tight-form-item" style="width: 100px">
+        <li class="tight-form-item" style="width: 50px">
           服务
         </li>
         <li>
-          <select ng-model="summarySelect.services" class="input-small tight-form-input">
+          <select ng-model="summarySelect.services" class="input-small tight-form-input" ng-change="cleanup()">
             <option ng-repeat="(key, value) in services" value="{{key}}">{{value}}</option>
           </select>
         </li>
       </ul>
       <ul class="tight-form-list">
-        <li class="tight-form-item" style="width: 100px">
+        <li class="tight-form-item" style="width: 50px">
           子系统
         </li>
         <li ng-controller="SystemCtrl" ng-init="init()">
-          <select ng-model="summarySelect.system" class="input-small tight-form-input">
+          <select ng-model="summarySelect.system" class="input-small tight-form-input" ng-change="cleanup()">
             <option ng-repeat="sys in systems" value="{{sys.Id}}">{{sys.SystemsName}}</option>
           </select>
-        </li>
-      </ul>
-      <ul class="tight-form-list" ng-if="summarySelect.services == 'service'">
-        <li class="tight-form-item">
-          主机名
-        </li>
-        <li>
-          <input type="text" class="input-small tight-form-input ng-pristine ng-untouched ng-valid" spellcheck="false"
-                 bs-typeahead="suggestTagValues" ng-model="summarySelect.currentTagValue" placeholder="value"
-                 data-provide="typeahead" >
         </li>
       </ul>
       <ul class="tight-form-list">
@@ -44,29 +34,22 @@
       <div class="clearfix"></div>
     </div>
 
-
-    <table class="grafana-options-table form-inline" ng-if="summaryList.length!=0">
+    <p ng-if="!summaryList.length && !serviceList.length && summarySelect.services && warningScript">{{warningScript}}</p>
+    <table class="grafana-options-table form-inline" ng-if="summaryList.length">
       <tr>
         <th>主机名</th>
+        <th>运行状态</th>
         <th ng-repeat="(key,value) in tableHeader[summarySelect.services]">{{key}}</th>
       </tr>
 
       <tbody ng-repeat="summary in summaryList" ng-if="summarySelect.services != 'service'">
       <tr ng-repeat="content in summary.content">
         <td>{{summary.tag.host}}</td>
+        <td>{{summary.state}}</td>
         <td ng-repeat="(key,value) in tableHeader[summarySelect.services]">{{content[value]}}</td>
       </tr>
       </tbody>
 
-      <tbody ng-if="summarySelect.services == 'service'">
-      <tr ng-repeat="service in serviceList">
-        <td>{{service.host}}</td>
-        <td>{{service.alias}}</td>
-        <td>{{service.version}}</td>
-        <td>{{service.state}}</td>
-        <td>{{service.runningTime}}</td>
-      </tr>
-      </tbody>
     </table>
 
 </div>

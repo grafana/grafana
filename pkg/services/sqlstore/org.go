@@ -6,6 +6,8 @@ import (
 	"github.com/wangy1931/grafana/pkg/bus"
 	"github.com/wangy1931/grafana/pkg/events"
 	m "github.com/wangy1931/grafana/pkg/models"
+  "github.com/wangy1931/grafana/pkg/components/apikeygen"
+  "strconv"
 )
 
 func init() {
@@ -117,6 +119,14 @@ func CreateOrg(cmd *m.CreateOrgCommand) error {
 
 		_, err = sess.Insert(&user)
 		cmd.Result = org
+
+    apiEntity := m.AddApiKeyCommand{}
+    apiEntity.OrgId = org.Id
+    apiEntity.Name = strconv.FormatInt(0,10)
+    apiEntity.Role = m.ROLE_ADMIN
+    newKeyInfo := apikeygen.New(apiEntity.OrgId, apiEntity.Name)
+    apiEntity.Key = newKeyInfo.HashedKey
+    err = AddApiKey(&apiEntity)
 
 		sess.publishAfterCommit(&events.OrgCreated{
 			Timestamp: org.Created,

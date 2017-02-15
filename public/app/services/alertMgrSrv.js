@@ -39,7 +39,7 @@ function (angular) {
         method: "post",
         url: alertDefUrl,
         data: angular.toJson(alertDef),
-        headers: {'Content-Type': 'text/plain'},
+        headers: {'Content-Type': 'text/plain;application/json;charset=UTF-8'},
       });
     };
 

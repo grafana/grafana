@@ -143,6 +143,23 @@ define([
           panel.seriesOverrides[1].alias = metric + ".prediction.min{host=" + hostname + "}";
           panel.seriesOverrides[2].alias = metric + ".prediction.max{host=" + hostname + "}";
 
+          return setMetricType(panel, [metric]);
+        }
+
+        function setMetricType(panel, target) {
+          healthSrv.getMetricType(target).then(function (response) {
+            var types = response.data;
+            _.each(target, function (metirc) {
+              if (types[metirc] == "counter") {
+                panel.targets[0].shouldComputeRate = true;
+                panel.targets[0].downsampleAggregator = "max";
+              } else if (types[metirc] == "increment") {
+                panel.targets[0].shouldComputeRate = false;
+                panel.targets[0].downsampleAggregator = "sum";
+              }
+            });
+
+          });
           return panelMeta;
         }
 

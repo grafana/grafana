@@ -76,7 +76,7 @@
           <div class="panel grafana-options-table">
             <div controls controls-row>
               <label class="span3 checkbox" ng-repeat="(metricsName, metricsValue) in correlatedMetrics">
-                <input ng-checked="$index == 0 " type="checkbox" ng-click="addQuery(metricsName)">
+                <input type="checkbox" ng-click="addQuery(metricsName)">
                 {{_.getMetricName(metricsName)}}</input>
               </label>
             </div>
