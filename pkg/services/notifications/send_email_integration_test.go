@@ -18,6 +18,7 @@ func TestEmailIntegrationTest(t *testing.T) {
 		setting.Smtp.Enabled = true
 		setting.Smtp.TemplatesPattern = "emails/*.html"
 		setting.Smtp.FromAddress = "from@address.com"
+		setting.Smtp.FromName = "Grafana Admin"
 		setting.BuildVersion = "4.0.0"
 
 		err := Init()
