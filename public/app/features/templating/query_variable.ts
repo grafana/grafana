@@ -140,8 +140,13 @@ export class QueryVariable implements Variable {
     }
     for (i = 0; i < metricNames.length; i++) {
       var item = metricNames[i];
-      var value = item.value || item.text;
-      var text = item.text || item.value;
+      var text = item.text === undefined || item.text === null
+        ? item.value
+        : item.text;
+
+      var value = item.value === undefined || item.value === null
+        ? item.text
+        : item.value;
 
       if (_.isNumber(value)) {
         value = value.toString();
@@ -178,7 +183,7 @@ export class QueryVariable implements Variable {
     if (sortType === 1) {
       options = _.sortBy(options, 'text');
     } else if (sortType === 2) {
-      options = _.sortBy(options, function(opt) {
+      options = _.sortBy(options, (opt) => {
         var matches = opt.text.match(/.*?(\d+).*/);
         if (!matches || matches.length < 2) {
           return -1;

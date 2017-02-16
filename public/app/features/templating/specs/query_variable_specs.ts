@@ -51,20 +51,23 @@ describe('QueryVariable', () => {
       var input = [
         {text: '0', value: '0'},
         {text: '1', value: '1'},
-        {text: '', value: ''},
         {text: null, value: 3},
         {text: undefined, value: 4},
         {text: '5', value: null},
         {text: '6', value: undefined},
-        {text: null, value: '3'},
-        {text: undefined, value: '4'},
-        {text: 5, value: null},
-        {text: 6, value: undefined},
+        {text: null, value: '7'},
+        {text: undefined, value: '8'},
+        {text: 9, value: null},
+        {text: 10, value: undefined},
+        {text: '', value: undefined},
+        {text: undefined, value: ''},
       ];
 
       var result = variable.metricNamesToVariableValues(input);
       it('should return in same order', () => {
         var i = 0;
+
+        expect(result.length).to.be(11);
         expect(result[i++].text).to.be('');
         expect(result[i++].text).to.be('0');
         expect(result[i++].text).to.be('1');
