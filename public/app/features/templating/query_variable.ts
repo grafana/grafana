@@ -138,7 +138,6 @@ export class QueryVariable implements Variable {
     if (this.regex) {
       regex = kbn.stringToJsRegex(this.templateSrv.replace(this.regex, {}, 'regex'));
     }
-
     for (i = 0; i < metricNames.length; i++) {
       var item = metricNames[i];
       var value = item.value || item.text;
@@ -181,11 +180,11 @@ export class QueryVariable implements Variable {
     } else if (sortType === 2) {
       options = _.sortBy(options, function(opt) {
         var matches = opt.text.match(/.*?(\d+).*/);
-  if (!matches) {
-    return 0;
-  } else {
-    return parseInt(matches[1], 10);
-  }
+        if (!matches || matches.length < 2) {
+          return 0;
+        } else {
+          return parseInt(matches[1], 10);
+        }
       });
     }
 
