@@ -6,7 +6,7 @@ deps-go:
 deps-js:
 	yarn install --pure-lockfile --no-progress
 
-deps: deps-go deps-js
+deps: deps-js
 
 build-go:
 	go run build.go build
