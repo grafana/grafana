@@ -45,7 +45,7 @@ describe('QueryVariable', () => {
 
   describe('can convert and sort metric names',() => {
     var variable = new QueryVariable({}, null, null, null, null);
-    variable.sort = 51;
+    variable.sort = 3; // Numerical (asc)
 
     describe('can sort a mixed array of metric variables', () => {
       var input = [
@@ -63,15 +63,15 @@ describe('QueryVariable', () => {
       ];
 
       var result = variable.metricNamesToVariableValues(input);
-
       it('should return in same order', () => {
-        expect(result[0].text).to.be('0');
-        expect(result[1].text).to.be('1');
-        expect(result[2].text).to.be('');
-        expect(result[3].text).to.be('3');
-        expect(result[4].text).to.be('4');
-        expect(result[5].text).to.be('5');
-        expect(result[6].text).to.be('6');
+        var i = 0;
+        expect(result[i++].text).to.be('');
+        expect(result[i++].text).to.be('0');
+        expect(result[i++].text).to.be('1');
+        expect(result[i++].text).to.be('3');
+        expect(result[i++].text).to.be('4');
+        expect(result[i++].text).to.be('5');
+        expect(result[i++].text).to.be('6');
       });
     });
   });

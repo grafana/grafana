@@ -181,7 +181,7 @@ export class QueryVariable implements Variable {
       options = _.sortBy(options, function(opt) {
         var matches = opt.text.match(/.*?(\d+).*/);
         if (!matches || matches.length < 2) {
-          return 0;
+          return -1;
         } else {
           return parseInt(matches[1], 10);
         }
