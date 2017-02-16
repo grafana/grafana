@@ -20,16 +20,16 @@ function (angular, _, noUiSlider) {
         for (var host in correlationOfAlertMap) {
           //TODO only support one host
           var correlatedMetrics = correlationOfAlertMap[host];
-          for (var m in correlatedMetrics) {
-            if(_.isEqual(m, alertMetric)){
-              delete correlatedMetrics[m]
-            }
-          }
           $scope.correlatedMetrics = correlatedMetrics;
         }
       }).finally(function() {
         if (!_.isEmpty($scope.correlatedMetrics)) {
           $scope.isAssociation = true;
+          for (var m in $scope.correlatedMetrics) {
+            if(_.isEqual(m, alertMetric)){
+              delete $scope.correlatedMetrics[m];
+            }
+          }
         } else {
           $scope.isAssociation = false;
         }
@@ -108,12 +108,12 @@ function (angular, _, noUiSlider) {
         } else {
           $scope.appEvent('alert-warning', ['抱歉', '运算还在进行']);
         }
-      })
+      });
     };
 
     $scope.createAssociatedMetricGraphPanel = function(associatedMetrics) {
       var hostTag = associatedMetrics.hosts[0] || "*";
-      var rowMeta = $scope.getRowPanelMeta(hostTag, associatedMetrics.metric)
+      var rowMeta = $scope.getRowPanelMeta(hostTag, associatedMetrics.metric);
 
       $scope.host = alertHost;
 
