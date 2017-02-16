@@ -2,6 +2,7 @@ package elasticsearch
 
 import (
 	"bytes"
+	"encoding/json"
 	"fmt"
 	"strconv"
 	"time"
@@ -30,7 +31,7 @@ var queryTemplate = `
         {
           "query_string": {
             "analyze_wildcard": true,
-            "query": "{{ .Model.Query }}"
+            "query": {{ marshal .Model.Query }}
           }
         }
       ]
@@ -136,6 +137,10 @@ func (model *RequestModel) buildQueryJSON(timeRange *tsdb.TimeRange) (string, er
 	funcMap := template.FuncMap{
 		"formatTimeRange":  formatTimeRange,
 		"formatAggregates": formatAggregates,
+		"marshal": func(v interface{}) string {
+			a, _ := json.Marshal(v)
+			return string(a)
+		},
 	}
 
 	t, err := template.New("elasticsearchQuery").Funcs(funcMap).Parse(queryTemplate)
