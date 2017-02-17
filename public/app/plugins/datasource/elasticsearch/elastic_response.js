@@ -126,13 +126,13 @@ function (_, queryDef) {
               stats.std_deviation_bounds_lower = stats.std_deviation_bounds.lower;
 
               metricName = this._getMetricName(statName);
-              doc[metricName] = stats[statName];
+              doc[metricName+' '+metric.field] = stats[statName];
             }
             break;
           }
           default:  {
             metricName = this._getMetricName(metric.type);
-            doc[metricName] =bucket[metric.id].value;
+            doc[metricName+' '+metric.field] =bucket[metric.id].value;
             break;
           }
         }
