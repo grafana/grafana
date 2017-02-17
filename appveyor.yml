@@ -24,7 +24,7 @@ install:
   - echo %GOPATH%
   - go version
   - go env
-  - go run build.go setup
+  # - go run build.go setup
 
 build_script:
   - go run build.go build
