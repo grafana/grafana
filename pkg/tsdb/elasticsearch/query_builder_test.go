@@ -265,5 +265,13 @@ func TestElasticserachQueryBuilder(t *testing.T) {
 			result := reflect.DeepEqual(queryExpectedJSONInterface, queryJSONInterface)
 			So(result, ShouldBeTrue)
 		})
+
+		Convey("Test replace interval variables", func() {
+			testString := "$__interval and $__interval_ms but not __interval and __interval_ms get replaced with $__interval_ms"
+			result, err := replaceIntervalVariables(testString, "5m")
+			So(err, ShouldBeNil)
+
+			So(result, ShouldEqual, "5m and 300000 but not __interval and __interval_ms get replaced with 300000")
+		})
 	})
 }

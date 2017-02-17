@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -152,4 +153,17 @@ func (model *RequestModel) buildQueryJSON(timeRange *tsdb.TimeRange) (string, er
 	t.Execute(buffer, templateQueryModel)
 
 	return string(buffer.Bytes()), nil
+}
+
+func replaceIntervalVariables(data string, interval string) (string, error) {
+	duration, err := time.ParseDuration(interval)
+	if err != nil {
+		eslog.Error("Could not parse duration for interval replacement: %s", err.Error())
+	} else {
+		milliseconds := duration.Nanoseconds() / 1e6
+
+		data = strings.Replace(data, "$__interval_ms", fmt.Sprintf("%v", milliseconds), -1)
+	}
+
+	return strings.Replace(data, "$__interval", interval, -1), nil
 }

@@ -78,6 +78,7 @@ func (e *ElasticsearchExecutor) buildRequest(queryInfo *tsdb.Query, timeRange *t
 		return nil, err
 	}
 
+	esRequestJSON, _ = replaceIntervalVariables(esRequestJSON, interval)
 	reader := strings.NewReader(esRequestJSON)
 	req, err := http.NewRequest("GET", esRequestURL, reader)
 	if err != nil {
