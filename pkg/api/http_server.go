@@ -150,6 +150,7 @@ func (hs *HttpServer) newMacaron() *macaron.Macaron {
 	m.Use(middleware.GetContextHandler())
 	m.Use(middleware.Sessioner(&setting.SessionOptions))
 	m.Use(middleware.RequestMetrics())
+	m.Use(middleware.OrgRedirect())
 
 	// needs to be after context handler
 	if setting.EnforceDomain {

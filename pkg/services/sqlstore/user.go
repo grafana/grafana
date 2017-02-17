@@ -6,6 +6,8 @@ import (
 
 	"github.com/go-xorm/xorm"
 
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	m "github.com/grafana/grafana/pkg/models"
@@ -260,6 +262,20 @@ func ChangeUserPassword(cmd *m.ChangeUserPasswordCommand) error {
 }
 
 func SetUsingOrg(cmd *m.SetUsingOrgCommand) error {
+	getOrgsForUserCmd := &m.GetUserOrgListQuery{UserId: cmd.UserId}
+	GetUserOrgList(getOrgsForUserCmd)
+
+	valid := false
+	for _, other := range getOrgsForUserCmd.Result {
+		if other.OrgId == cmd.OrgId {
+			valid = true
+		}
+	}
+
+	if !valid {
+		return fmt.Errorf("user does not belong ot org")
+	}
+
 	return inTransaction(func(sess *xorm.Session) error {
 		user := m.User{}
 		sess.Id(cmd.UserId).Get(&user)
