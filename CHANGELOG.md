@@ -30,6 +30,7 @@
 ## Tech
 
 * **Library Upgrade**: Upgraded angularjs from 1.5.8 to 1.6.1 [#7274](https://github.com/grafana/grafana/issues/7274)
+* **Backend**: Grafana is now built using golang 1.8
 
 ## Bugfixes
 * **Alerting**: Fixes missing support for no_data and execution error when testing alerts [#7149](https://github.com/grafana/grafana/issues/7149)
