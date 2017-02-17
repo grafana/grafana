@@ -25,6 +25,8 @@ type HttpServer struct {
 	macaron       *macaron.Macaron
 	context       context.Context
 	streamManager *live.StreamManager
+
+	httpSrv *http.Server
 }
 
 func NewHttpServer() *HttpServer {
@@ -46,16 +48,31 @@ func (hs *HttpServer) Start(ctx context.Context) error {
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
 	hs.log.Info("Initializing HTTP Server", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl)
 
+	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: hs.macaron}
 	switch setting.Protocol {
 	case setting.HTTP:
-		err = http.ListenAndServe(listenAddr, hs.macaron)
+		err = hs.httpSrv.ListenAndServe()
+		if err == http.ErrServerClosed {
+			hs.log.Debug("server was shutdown gracefully")
+			return nil
+		}
 	case setting.HTTPS:
-		err = hs.listenAndServeTLS(listenAddr, setting.CertFile, setting.KeyFile)
+		err = hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
+		if err == http.ErrServerClosed {
+			hs.log.Debug("server was shutdown gracefully")
+			return nil
+		}
 	default:
 		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
 		err = errors.New("Invalid Protocol")
 	}
 
+	return err
+}
+
+func (hs *HttpServer) Shutdown(ctx context.Context) error {
+	err := hs.httpSrv.Shutdown(ctx)
+	hs.log.Info("stopped http server")
 	return err
 }
 
