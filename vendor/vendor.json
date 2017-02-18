@@ -329,6 +329,12 @@
 			"revisionTime": "2016-12-15T22:53:35Z"
 		},
 		{
+			"checksumSHA1": "1uZj7MlNRdYGBobarbojbWVa+CQ=",
+			"path": "github.com/leibowitz/moment",
+			"revision": "8548108dcca204a1110b99e5fec966817499fe84",
+			"revisionTime": "2016-04-19T13:10:28Z"
+		},
+		{
 			"checksumSHA1": "8z32QKTSDusa4QQyunKE4kyYXZ8=",
 			"path": "github.com/patrickmn/go-cache",
 			"revision": "e7a9def80f35fe1b170b7b8b68871d59dea117e1",

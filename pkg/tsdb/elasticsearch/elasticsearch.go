@@ -13,6 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
+	"github.com/leibowitz/moment"
 )
 
 var (
@@ -41,12 +42,43 @@ func init() {
 	tsdb.RegisterExecutor("elasticsearch", NewElasticsearchExecutor)
 }
 
-func getIndex(pattern string, interval string) string {
+func getIndex(pattern string, interval string, timeRange *tsdb.TimeRange) string {
 	if interval == "" {
 		return pattern
 	}
 
-	return fmt.Sprintf("%s*", strings.Split(strings.TrimLeft(pattern, "["), "]")[0])
+	indexes := []string{}
+	indexParts := strings.Split(strings.TrimLeft(pattern, "["), "]")
+	indexBase := indexParts[0]
+	if len(indexParts) <= 1 {
+		return pattern
+	}
+	indexDateFormat := indexParts[1]
+
+	start := moment.NewMoment(timeRange.MustGetFrom())
+	end := moment.NewMoment(timeRange.MustGetTo())
+
+	indexes = append(indexes, fmt.Sprintf("%s%s", indexBase, start.Format(indexDateFormat)))
+	for start.IsBefore(*end) {
+		switch interval {
+		case "Hourly":
+			start = start.AddHours(1)
+
+		case "Daily":
+			start = start.AddDay()
+
+		case "Weekly":
+			start = start.AddWeeks(1)
+
+		case "Monthly":
+			start = start.AddMonths(1)
+
+		case "Yearly":
+			start = start.AddYears(1)
+		}
+		indexes = append(indexes, fmt.Sprintf("%s%s", indexBase, start.Format(indexDateFormat)))
+	}
+	return strings.Join(indexes, ",")
 }
 
 func (e *ElasticsearchExecutor) buildRequest(queryInfo *tsdb.Query, timeRange *tsdb.TimeRange) (*http.Request, error) {
@@ -54,7 +86,7 @@ func (e *ElasticsearchExecutor) buildRequest(queryInfo *tsdb.Query, timeRange *t
 	if err != nil {
 		return nil, err
 	}
-	index := getIndex(queryInfo.DataSource.Database, interval)
+	index := getIndex(queryInfo.DataSource.Database, interval, timeRange)
 
 	esRequestURL := fmt.Sprintf("%s/%s/_search", queryInfo.DataSource.Url, index)
 

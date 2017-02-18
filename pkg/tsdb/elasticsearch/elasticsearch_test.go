@@ -78,14 +78,36 @@ func TestElasticGetPreferredNamesForQuery(t *testing.T) {
 func TestElasticsearchGetIndexList(t *testing.T) {
 	Convey("Test Elasticsearch getIndex ", t, func() {
 
-		Convey("Single Day", func() {
-			index := getIndex("[logstash-]YYYY.MM.DD", "Daily")
-			So(index, ShouldEqual, "logstash-*")
+		timeRange := &tsdb.TimeRange{
+			From: "48h",
+			To:   "now",
+			Now:  time.Date(2017, time.February, 18, 12, 0, 0, 0, time.Local),
+		}
+
+		Convey("Parse Interval Formats", func() {
+			So(getIndex("[logstash-]YYYY.MM.DD", "Daily", timeRange),
+				ShouldEqual, "logstash-2017.02.16,logstash-2017.02.17,logstash-2017.02.18")
+
+			timeRange.From = "3h"
+			So(getIndex("[logstash-]YYYY.MM.DD.HH", "Hourly", timeRange),
+				ShouldEqual, "logstash-2017.02.18.09,logstash-2017.02.18.10,logstash-2017.02.18.11,logstash-2017.02.18.12")
+
+			timeRange.From = "100h"
+			So(getIndex("[logstash-]YYYY.W", "Weekly", timeRange),
+				ShouldEqual, "logstash-2017.7,logstash-2017.8")
+
+			timeRange.From = "700h"
+			So(getIndex("[logstash-]YYYY.MM", "Monthly", timeRange),
+				ShouldEqual, "logstash-2017.01,logstash-2017.02")
+
+			timeRange.From = "10000h"
+			So(getIndex("[logstash-]YYYY", "Yearly", timeRange),
+				ShouldEqual, "logstash-2015,logstash-2016,logstash-2017")
 		})
 
 		Convey("No Interval", func() {
-			index := getIndex("logstash-*", "")
-			So(index, ShouldEqual, "logstash-*")
+			index := getIndex("logstash-test", "", timeRange)
+			So(index, ShouldEqual, "logstash-test")
 		})
 	})
 }
