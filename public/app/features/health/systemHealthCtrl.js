@@ -87,29 +87,11 @@ define([
             time: {from: "now-2h", to: "now"}
           }
         }, $scope);
-
-        $scope.reload();
-      };
-
-      $scope.reload = function() {
         healthSrv.load().then(function (data) {
           $scope.applicationHealth = Math.floor(data.health);
           $scope.leveal = getLeveal($scope.applicationHealth);
-          $scope.summary = data;
-          $scope.includeMetricsData = healthSrv.floor(data.includedMetricHealths);
-          $scope.excludeMetricsData = healthSrv.floor(data.excludedMetricHealths);
-          $scope.excludeMetricLength = _.size($scope.excludeMetricsData);
         });
       };
-
-      $scope.changeExcludeMetrics = function () {
-        $scope.appEvent('show-modal', {
-          src: './app/partials/exclude_metrics.html',
-          modalClass: 'modal-no-header confirm-modal',
-          scope: $scope.$new(),
-        });
-      };
-
       $scope.init();
     });
   });
