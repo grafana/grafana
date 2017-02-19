@@ -120,7 +120,28 @@ function (queryDef) {
       filter = adhocFilters[i];
       condition = {};
       condition[filter.key] = filter.value;
-      query.query.bool.filter.push({"term": condition});
+      switch(filter.operator){
+        case "=":
+          query.query.bool.filter.push({"term": condition});
+          break;
+        case "!=":
+          query.query.bool.filter.push({"bool": {"must_not": {"term": condition}}});
+          break;
+        case "<":
+          condition[filter.key] = {"lt": filter.value};
+          query.query.bool.filter.push({"range": condition});
+          break;
+        case ">":
+          condition[filter.key] = {"gt": filter.value};
+          query.query.bool.filter.push({"range": condition});
+          break;
+        case "=~":
+          query.query.bool.filter.push({"regexp": condition});
+          break;
+        case "!~":
+          query.query.bool.filter.push({"bool": {"must_not": {"regexp": condition}}});
+          break;
+      }
     }
   };
 
