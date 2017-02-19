@@ -7,6 +7,7 @@ import (
 	"io/ioutil"
 	"strconv"
 	"strings"
+	"time"
 
 	"net/http"
 
@@ -82,11 +83,11 @@ func getIndex(pattern string, interval string, timeRange *tsdb.TimeRange) string
 }
 
 func (e *ElasticsearchExecutor) buildRequest(queryInfo *tsdb.Query, timeRange *tsdb.TimeRange) (*http.Request, error) {
-	interval, err := queryInfo.DataSource.JsonData.Get("interval").String()
+	indexInterval, err := queryInfo.DataSource.JsonData.Get("interval").String()
 	if err != nil {
 		return nil, err
 	}
-	index := getIndex(queryInfo.DataSource.Database, interval, timeRange)
+	index := getIndex(queryInfo.DataSource.Database, indexInterval, timeRange)
 
 	esRequestURL := fmt.Sprintf("%s/%s/_search", queryInfo.DataSource.Url, index)
 
@@ -110,7 +111,12 @@ func (e *ElasticsearchExecutor) buildRequest(queryInfo *tsdb.Query, timeRange *t
 		return nil, err
 	}
 
-	esRequestJSON, _ = replaceIntervalVariables(esRequestJSON, interval)
+	interval := tsdb.CalculateInterval(timeRange)
+
+	esRequestJSON = strings.Replace(esRequestJSON, "$interval", interval.Text, 1)
+	esRequestJSON = strings.Replace(esRequestJSON, "$__interval_ms", strconv.FormatInt(interval.Value.Nanoseconds()/int64(time.Millisecond), 10), 1)
+	esRequestJSON = strings.Replace(esRequestJSON, "$__interval", interval.Text, 1)
+
 	reader := strings.NewReader(esRequestJSON)
 	req, err := http.NewRequest("GET", esRequestURL, reader)
 	if err != nil {
