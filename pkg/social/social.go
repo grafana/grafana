@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strings"
 
-	"golang.org/x/net/context"
+	"context"
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/setting"
