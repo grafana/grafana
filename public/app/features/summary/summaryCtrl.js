@@ -11,13 +11,21 @@ define([
     module.controller('SummaryCtrl', function ($scope, backendSrv, contextSrv, datasourceSrv) {
       $scope.init = function () {
         $scope.datasource = null;
-        _.each(datasourceSrv.getAll(), function (ds) {
-          if (ds.type === 'opentsdb') {
-            datasourceSrv.get(ds.name).then(function (datasource) {
-              $scope.datasource = datasource;
-            });
-          }
+        backendSrv.get("/api/user/system").then(function (system) {
+          $scope.systems = system;
+          $scope.summarySelect.system = system[0].Id;
+        }).then(function () {
+          _.each(datasourceSrv.getAll(), function (ds) {
+            if (ds.type === 'opentsdb') {
+              datasourceSrv.get(ds.name).then(function (datasource) {
+                $scope.datasource = datasource;
+              }).then(function () {
+                $scope.changeSelect();
+              });
+            }
+          });
         });
+
       };
 
       if (contextSrv.isGrafanaAdmin) {
@@ -27,7 +35,7 @@ define([
       }
       $scope.summarySelect = {
         system: 0,
-        services: "",
+        services: "collect",
       };
 
       $scope.summaryList = [];

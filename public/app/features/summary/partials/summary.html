@@ -12,7 +12,7 @@
         </li>
         <li>
           <select ng-model="summarySelect.services" class="input-small tight-form-input" ng-change="cleanup()">
-            <option ng-repeat="(key, value) in services" value="{{key}}">{{value}}</option>
+            <option ng-selected="$index == 0" ng-repeat="(key, value) in services" value="{{key}}">{{value}}</option>
           </select>
         </li>
       </ul>
@@ -22,7 +22,7 @@
         </li>
         <li ng-controller="SystemCtrl" ng-init="init()">
           <select ng-model="summarySelect.system" class="input-small tight-form-input" ng-change="cleanup()">
-            <option ng-repeat="sys in systems" value="{{sys.Id}}">{{sys.SystemsName}}</option>
+            <option ng-selected="$index == 0" ng-repeat="sys in systems" value="{{sys.Id}}">{{sys.SystemsName}}</option>
           </select>
         </li>
       </ul>
