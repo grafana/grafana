@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
@@ -11,8 +12,10 @@ import (
 
 func OrgRedirect() macaron.Handler {
 	return func(res http.ResponseWriter, req *http.Request, c *macaron.Context) {
-		orgId := c.QueryInt64("orgId")
-		if orgId == 0 {
+		orgIdValue := req.URL.Query().Get("orgId")
+		orgId, err := strconv.ParseInt(orgIdValue, 10, 32)
+
+		if err != nil || orgId == 0 {
 			return
 		}
 
