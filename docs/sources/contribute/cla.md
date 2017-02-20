@@ -8,85 +8,107 @@ parent = "contribute"
 weight = 1
 +++
 
-# Grafana Contributor License Agreement
+# Grafana Labs Contributor License Agreement
 
-## Why is this agreement necessary?
-We very much appreciate your wanting to contribute to Grafana,
-but we need to add you to the contributors list first.
+Thank you for your interest in contributing to a Grafana Labs Project ("We" or "Us").
 
+This contributor agreement ("Agreement") documents the rights granted by contributors to Us.
+To make this document effective, please sign it following the instructions at
+[cla-assistant](https://cla-assistant.io/grafana/grafana). This is a legally binding document,
+so please read it carefully before agreeing to it. The Agreement may cover more than
+one software project managed by Us.
 
-Note that the following agreement is not a transfer of copyright ownership,
-this simply is a license agreement for contributions. You also do not change
-your rights to use your own contributions for any other purpose.
+## 1. Definitions
 
+"You" (Individual) means the individual who Submits a Contribution to Us.
 
-For some background on why contributor license agreements are necessary,
-you can read FAQs from many other open source projects:
+"You" (Entity) means any Legal Entity on behalf of whom a Contribution has been received by Us. "Legal Entity" means an entity which is not a natural person. "Affiliates" means other Legal Entities that control, are controlled by, or under common control with that Legal Entity. For the purposes of this definition, "control" means (i) the power, direct or indirect, to cause the direction or management of such Legal Entity, whether by contract or otherwise, (ii) ownership of fifty percent (50%) or more of the outstanding shares or securities which vote to elect the management or other persons who direct such Legal Entity or (iii) beneficial ownership of such entity.
 
-- [Django's excellent CLA FAQ](https://www.djangoproject.com/foundation/cla/faq/)
-- [A well-written chapter from Karl Fogel's Producing Open Source Software on CLAs](http://producingoss.com/en/copyright-assignment.html)
-- [The Wikipedia article on CLAs](http://en.wikipedia.org/wiki/Contributor_license_agreement)
+"Contribution" means any work of authorship that is Submitted by You to Us in which You own or assert ownership of the Copyright. If You do not own the Copyright in the entire work of authorship, you must notify us at contact@grafana.com before Submitting  such a Contribution.
 
-This is part of the legal framework of the open-source ecosystem that adds some red tape,
-but protects both the contributor and the company / foundation behind the project.
-It also gives us the option to relicense the code with a more permissive license in the future.
+"Copyright" means all rights protecting works of authorship owned or controlled by You [or Your Affiliates], including copyright, moral and neighboring rights, as appropriate, for the full term of their existence including any extensions by You.
 
+"Material" means the work of authorship which is made available by Us to third parties. When this Agreement covers more than one software project, the Material means the work of authorship to which the Contribution was Submitted. After You Submit the Contribution, it may be included in the Material.
 
-If you have more questions, shoot us an [email](mailto:torkel@grafana.org) or drop by #grafana on IRC (freenode).
+"Submit" means any form of electronic, verbal, or written communication sent to Us or our representatives, including but not limited to electronic mailing lists, source code control systems, and issue tracking systems that are managed by, or on behalf of, Us for the purpose of discussing and improving the Material, but excluding communication that is conspicuously marked or otherwise designated in writing by You as "Not a Contribution."
 
-Many thanks to [RethinkDB](http://rethinkdb.com) for permission to re-use their CLA!
+"Submission Date" means the date on which You Submit a Contribution to Us.
 
-## Terms of the Agreement
+"Effective Date" means the date You execute this Agreement or the date You first Submit a Contribution to Us, whichever is earlier.
 
-<hr>
+"Media" means any portion of a Contribution which is not software.
 
-This Contributor License Agreement (“Agreement”) is entered into between Coding Instinct AB,
-a Swedish corporation (“Grafana,” “we” or “us” etc.) and you (as defined and further identified below).
-Accordingly, you hereby agree to the following terms for your past, present and future contributions
-submitted to Grafana:
+## 2. Grant of Rights
 
+### 2.1 Copyright License
 
-**1. Definitions:**
-<strong>(a)</strong> "You" (or "your") shall mean the contribution copyright owner (whether an individual or organization) or legal entity authorized by the copyright owner that is making this Agreement with Grafana.
+(a) You retain ownership of the Copyright in Your Contribution and have the same rights to use or license the Contribution which You would have had without entering into the Agreement.
 
+(b) To the maximum extent permitted by the relevant law, You grant to Us a perpetual, worldwide, non-exclusive, transferable, royalty-free, irrevocable license under the Copyright covering the Contribution, with the right to sublicense such rights through multiple tiers of sublicensees, to reproduce, modify, display, perform and distribute the Contribution as part of the Material; provided that this license is conditioned upon compliance with Section 2.3.
 
-<strong>(b)</strong> "Contribution(s)" shall mean the code, documentation or other original works of authorship, including any modifications or additions to an existing work, submitted by you to Grafana for inclusion in, or documentation of, any of the products or projects owned or managed by Grafana (the "work(s)"). For the purposes of this definition, "submitted" means any form of electronic, verbal, or written communication sent to Grafana or its representatives, including but not limited to communication on electronic mailing lists, source code control systems, and issue tracking systems that are managed by, or on behalf of, Grafana for the purpose of discussing and/or improving the work, but excluding communication that is conspicuously marked or otherwise designated in writing by you as "Not a Contribution."
+### 2.1 Copyright Assignment
 
-**2. Grant of Copyright License.**
-You hereby grant to Grafana and to recipients of software distributed by Grafana a perpetual, worldwide, non-exclusive, no-charge, royalty-free, irrevocable copyright license to reproduce, prepare derivative works of, publicly display, publicly perform, sublicense, and distribute your contributions and such derivative works.
+(a) At the time the Contribution is Submitted, You assign to Us all right, title, and interest worldwide in all Copyright covering the Contribution; provided that this transfer is conditioned upon compliance with Section 2.3.
 
+(b) To the extent that any of the rights in Section 2.1(a) cannot be assigned by You to Us, You grant to Us a perpetual, worldwide, exclusive, royalty-free, transferable, irrevocable license under such non-assigned rights, with rights to sublicense through multiple tiers of sublicensees, to practice such non-assigned rights, including, but not limited to, the right to reproduce, modify, display, perform and distribute the Contribution; provided that this license is conditioned upon compliance with Section 2.3.
 
-**3. Grant of Patent License.**
-With respect to any patents you own, or that you can license without payment to any third party, you hereby grant Grafana a perpetual, irrevocable, non-exclusive, worldwide, no-charge, royalty-free license to: (i) make, have made, use, sell, offer to sell, import, and otherwise distribute and exploit your contributions in whole or in part, alone or in combination with or included in any product, work or materials arising out of or relating to the Works to which your contributions were submitted; and (ii) sublicense these same rights to third parties through multiple levels of sublicensees or other licensing arrangements.
+\(c) To the extent that any of the rights in Section 2.1(a) can neither be assigned nor licensed by You to Us, You irrevocably waive and agree never to assert such rights against Us, any of our successors in interest, or any of our licensees, either direct or indirect; provided that this agreement not to assert is conditioned upon compliance with Section 2.3.
 
+(d) Upon such transfer of rights to Us, to the maximum extent possible, We immediately grant to You a perpetual, worldwide, non-exclusive, royalty-free, transferable, irrevocable license under such rights covering the Contribution, with rights to sublicense through multiple tiers of sublicensees, to reproduce, modify, display, perform, and distribute the Contribution. The intention of the parties is that this license will be as broad as possible and to provide You with rights as similar as possible to the owner of the rights that You transferred. This license back is limited to the Contribution and does not provide any rights to the Material.
 
-**4. Rights.**
-Except as set out above, you keep all right, title, and interest in your contribution. The rights that you grant to us under this agreement are effective on the date you first submitted a contribution to us, even if your submission took place before the date you entered this agreement.
+### 2.2 Patent License
 
+For patent claims including, without limitation, method, process, and apparatus claims which You [or Your Affiliates] own, control or have the right to grant, now or in the future, You grant to Us a perpetual, worldwide, non-exclusive, transferable, royalty-free, irrevocable patent license, with the right to sublicense these rights to multiple tiers of sublicensees, to make, have made, use, sell, offer for sale, import and otherwise transfer the Contribution and the Contribution in combination with the Material (and portions of such combination). This license is granted only to the extent that the exercise of the licensed rights infringes such patent claims; and provided that this license is conditioned upon compliance with Section 2.3.
 
-**5. You represent and warrant that:**
-<strong>(i)</strong> the contributions are an original work and that you can legally grant the rights set out in this agreement;
+## 2.3 Outbound License
 
+As a condition on the grant of rights in Sections 2.1 and 2.2, We agree to license the Contribution only under the terms of the license or licenses which We are using on the Submission Date for the Material or any licenses which are approved by the Open Source Initiative on or after the Effective Date, including both permissive and copyleft licenses, whether or not such licenses are subsequently disapproved (including any right to adopt any future version of a license if permitted).
 
-<strong>(ii)</strong> the contributions and Grafana’s exercise of any license rights granted hereunder, does not and will not, infringe the rights of any third party;
+In addition, We may use the following licenses for Media in the Contribution: GNU Free Documentation License v1.3, Creative Commons Attribution 3.0, or Creative Commons Attribution No Derivatives 3.0 (including any right to adopt any future version of a license if permitted).
 
+2.4 Moral Rights. If moral rights apply to the Contribution, to the maximum extent permitted by law, You waive and agree not to assert such moral rights against Us or our successors in interest, or any of our licensees, either direct or indirect.
 
-<strong>(iii)</strong> you are not aware of any pending or threatened claims, suits, actions, or charges pertaining to the contributions, including without limitation any claims or allegations that any or all of the contributions infringes, violates, or misappropriate the intellectual property rights of any third party (you further agree that you will notify Grafana immediately if you become aware of any such actual or potential claims, suits, actions, allegations or charges).
+2.5 Our Rights. You acknowledge that We are not obligated to use Your Contribution as part of the Material and may decide to include any Contribution We consider appropriate.
 
+2.6 Reservation of Rights. Any rights not expressly [assigned or] licensed under this section are expressly reserved by You.
 
-**6. Employer Rights.**
-If your employer(s) has rights to intellectual property that you create that includes your contributions, you represent and warrant that your employer has waived such rights for your contributions to Grafana, or that you have received permission to make contributions on behalf of that employer and that you are authorized to execute this agreement on behalf of your employer.
+## 3. Agreement
 
+You confirm that:
 
-**7. Support.**
-You are not expected to provide support for your contributions, except to the extent you desire to provide support. You may provide support for free, for a fee, or not at all. Except as set forth herein, and unless required by applicable law or agreed to in writing, you provide your contributions on an "as is" basis, without warranties or conditions of any kind.
+(a) You have the legal authority to enter into this Agreement.
 
+(b) You [or Your Affiliates] own the Copyright and patent claims covering the Contribution which are required to grant the rights under Section 2.
 
-**8. Enforcement.**
+\(c)(Individual) The grant of rights under Section 2 does not violate any grant of rights which You have made to third parties, including Your employer. If You are an employee, You have had Your employer approve this Agreement or sign the Entity version of this document. If You are less than eighteen years old, please have Your parents or guardian sign the Agreement.
 
-The failure of either party to enforce its rights under this agreement for any period shall not be construed as a waiver of such rights. No changes or modifications or waivers to this Agreement will be effective unless in writing and signed by both parties. In the event that any provision of this agreement shall be determined to be illegal or unenforceable, that provision will be limited or eliminated to the minimum extent necessary so that this agreement shall otherwise remain in full force and effect and enforceable. This agreement shall be governed by and construed in accordance with the laws of the State of California in the United States without regard to the conflicts of laws provisions thereof. In any action or proceeding to enforce rights under this agreement, the prevailing party will be entitled to recover costs and attorneys’ fees.
+\(c)(Entity) The grant of rights under Section 2 does not violate any grant of rights which You or Your Affiliates have made to third parties.
+
+## 4. Disclaimer
+
+EXCEPT FOR THE EXPRESS WARRANTIES IN SECTION 3, THE CONTRIBUTION IS PROVIDED "AS IS". MORE PARTICULARLY, ALL EXPRESS OR IMPLIED WARRANTIES INCLUDING, WITHOUT LIMITATION, ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT ARE EXPRESSLY DISCLAIMED BY YOU TO US [AND BY US TO YOU]. TO THE EXTENT THAT ANY SUCH WARRANTIES CANNOT BE DISCLAIMED, SUCH WARRANTY IS LIMITED IN DURATION TO THE MINIMUM PERIOD PERMITTED BY LAW.
+
+## 5. Consequential Damage Waiver
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, IN NO EVENT WILL YOU [OR US] BE LIABLE FOR ANY LOSS OF PROFITS, LOSS OF ANTICIPATED SAVINGS, LOSS OF DATA, INDIRECT, SPECIAL, INCIDENTAL, CONSEQUENTIAL AND EXEMPLARY DAMAGES ARISING OUT OF THIS AGREEMENT REGARDLESS OF THE LEGAL OR EQUITABLE THEORY (CONTRACT, TORT OR OTHERWISE) UPON WHICH THE CLAIM IS BASED.
+
+## 6. Miscellaneous
+
+6.1 This Agreement will be governed by and construed in accordance with the laws of [JURISDICTION] excluding its conflicts of law provisions. Under certain circumstances, the governing law in this section might be superseded by the United Nations Convention on Contracts for the International Sale of Goods ("UN Convention") and the parties intend to avoid the application of the UN Convention to this Agreement and, thus, exclude the application of the UN Convention in its entirety to this Agreement.
+
+6.2 This Agreement sets out the entire agreement between You and Us for Your Contributions to Us and overrides all other agreements or understandings.
+
+6.3 If You or We assign the rights or obligations received through this Agreement to a third party, as a condition of the assignment, that third party must agree in writing to abide by all the rights and obligations in the Agreement.
+
+6.4 The failure of either party to require performance by the other party of any provision of this Agreement in one situation shall not affect the right of a party to require such performance at any time in the future. A waiver of performance under a provision in one situation shall not be considered a waiver of the performance of the provision in the future or a waiver of the provision in its entirety.
+
+6.5 If any provision of this Agreement is found void and unenforceable, such provision will be replaced to the extent possible with a provision that comes closest to the meaning of the original provision and which is enforceable. The terms and conditions set forth in this Agreement shall apply notwithstanding any failure of essential purpose of this Agreement or any limited remedy to the maximum extent possible under law.
 
 ### Sign using CLA-Assistant
 
 [https://cla-assistant.io/grafana/grafana](https://cla-assistant.io/grafana/grafana)
 
+<br>
+<br>
+<br>
+This CLA aggreement is based on the [Harmony Contributor Aggrement Template (combined)](http://www.harmonyagreements.org/agreements.html), [Creative Commons Attribution 3.0 Unported License](https://creativecommons.org/licenses/by/3.0/)
