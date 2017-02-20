@@ -75,11 +75,11 @@
 
         <div ng-if="isAssociation" class="page-container panel" style="padding: 20px 20px 20px 20px;">
           <h2>挑选相似值进行对比</h2>
+          <p ng-if="correlatedMetrics.length">尝试将阈值调大, 匹配更多关联指标</p>
           <div class="panel grafana-options-table">
             <div controls controls-row>
               <label class="span3 checkbox" ng-repeat="(metricsName, metricsValue) in correlatedMetrics">
-                <input type="checkbox" ng-click="addQuery(metricsName)">
-                {{_.getMetricName(metricsName)}}</input>
+                <input type="checkbox" ng-click="addQuery(metricsName)"><p style="width: 200px" class="max-width" title="{{_.getMetricName(metricsName)}}">{{_.getMetricName(metricsName)}}</p></input>
               </label>
             </div>
           </div>
