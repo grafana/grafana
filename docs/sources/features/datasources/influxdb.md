@@ -23,7 +23,6 @@ Grafana ships with very feature rich data source plugin for InfluxDB. Supporting
     > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
 
 3. Click the `Add new` link in the top header.
-4. Select `InfluxDB 0.9.x` or `InfluxDB 0.8.x` from the dropdown.
 
 Name | Description
 ------------ | -------------

@@ -116,9 +116,11 @@ class TimeSrv {
     }
 
     // update url
-    var params = this.$location.search();
-    params.refresh = interval;
-    this.$location.search(params);
+    if (interval) {
+      var params = this.$location.search();
+      params.refresh = interval;
+      this.$location.search(params);
+    }
   }
 
   refreshDashboard() {

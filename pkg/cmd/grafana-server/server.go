@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"os"
-	"time"
 
 	"golang.org/x/sync/errgroup"
 
@@ -39,6 +38,8 @@ type GrafanaServerImpl struct {
 	shutdownFn    context.CancelFunc
 	childRoutines *errgroup.Group
 	log           log.Logger
+
+	httpServer *api.HttpServer
 }
 
 func (g *GrafanaServerImpl) Start() {
@@ -74,9 +75,9 @@ func (g *GrafanaServerImpl) Start() {
 }
 
 func (g *GrafanaServerImpl) startHttpServer() {
-	httpServer := api.NewHttpServer()
+	g.httpServer = api.NewHttpServer()
 
-	err := httpServer.Start(g.context)
+	err := g.httpServer.Start(g.context)
 
 	if err != nil {
 		g.log.Error("Fail to start server", "error", err)
@@ -88,24 +89,15 @@ func (g *GrafanaServerImpl) startHttpServer() {
 func (g *GrafanaServerImpl) Shutdown(code int, reason string) {
 	g.log.Info("Shutdown started", "code", code, "reason", reason)
 
+	err := g.httpServer.Shutdown(g.context)
+	if err != nil {
+		g.log.Error("Failed to shutdown server", "error", err)
+	}
+
 	g.shutdownFn()
-	err := g.childRoutines.Wait()
+	err = g.childRoutines.Wait()
 
 	g.log.Info("Shutdown completed", "reason", err)
 	log.Close()
 	os.Exit(code)
-}
-
-// implement context.Context
-func (g *GrafanaServerImpl) Deadline() (deadline time.Time, ok bool) {
-	return g.context.Deadline()
-}
-func (g *GrafanaServerImpl) Done() <-chan struct{} {
-	return g.context.Done()
-}
-func (g *GrafanaServerImpl) Err() error {
-	return g.context.Err()
-}
-func (g *GrafanaServerImpl) Value(key interface{}) interface{} {
-	return g.context.Value(key)
 }

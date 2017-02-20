@@ -150,7 +150,7 @@ func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
 
 	return &Message{
 		To:           cmd.To,
-		From:         setting.Smtp.FromAddress,
+		From:         fmt.Sprintf("%s <%s>", setting.Smtp.FromName, setting.Smtp.FromAddress),
 		Subject:      subject,
 		Body:         buffer.String(),
 		EmbededFiles: cmd.EmbededFiles,

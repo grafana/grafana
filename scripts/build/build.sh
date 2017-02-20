@@ -31,7 +31,7 @@ else
   go run build.go -buildNumber=${CIRCLE_BUILD_NUM} build
 fi
 
-yarn install --pure-lockfile
+yarn install --pure-lockfile --no-progress
 
 source /etc/profile.d/rvm.sh
 rvm use 2.1.9 --default

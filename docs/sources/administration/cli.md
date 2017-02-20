@@ -10,8 +10,7 @@ weight = 8
 
 # Grafana CLI
 
-Grafana cli is a small executable that is bundled with grafana server and is suppose to be
-executed on the same machine as grafana runs.
+Grafana cli is a small executable that is bundled with grafana server and is suppose to be executed on the same machine as grafana runs.
 
 ## Plugins
 

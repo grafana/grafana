@@ -8,11 +8,12 @@ import (
 
 	"io/ioutil"
 
+	"github.com/grafana/grafana/pkg/components/null"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
 var (
-	dummieJson string
+	testJson string
 )
 
 func TestMQEResponseParser(t *testing.T) {
@@ -20,14 +21,17 @@ func TestMQEResponseParser(t *testing.T) {
 		parser := NewResponseParser()
 
 		Convey("Can parse response", func() {
-			queryRef := &Query{
-				AddClusterToAlias: true,
-				AddHostToAlias:    true,
+			queryRef := QueryToSend{
+				QueryRef: &Query{
+					AddClusterToAlias: true,
+					AddHostToAlias:    true,
+				},
+				Metric: Metric{Alias: ""},
 			}
 
 			response := &http.Response{
 				StatusCode: 200,
-				Body:       ioutil.NopCloser(strings.NewReader(dummieJson)),
+				Body:       ioutil.NopCloser(strings.NewReader(testJson)),
 			}
 			res, err := parser.Parse(response, queryRef)
 			So(err, ShouldBeNil)
@@ -39,12 +43,64 @@ func TestMQEResponseParser(t *testing.T) {
 				So(res[0].Points[i][0].Float64, ShouldEqual, i+1)
 				So(res[0].Points[i][1].Float64, ShouldEqual, startTime+(i*30000))
 			}
+
+		})
+
+		Convey("Can format legend", func() {
+			mqeSerie := MQESerie{
+				Tagset: map[string]string{
+					"cluster": "demoapp",
+					"host":    "staples-lab-1",
+				},
+				Values: []null.Float{null.NewFloat(3, true)},
+			}
+
+			Convey("with empty alias", func() {
+				serie := MQEResponseSerie{Name: "os.disk.sda3.weighted_io_time"}
+				queryRef := QueryToSend{
+					QueryRef: &Query{
+						AddClusterToAlias: true,
+						AddHostToAlias:    true,
+					},
+					Metric: Metric{Alias: ""},
+				}
+				legend := parser.formatLegend(serie, mqeSerie, queryRef)
+				So(legend, ShouldEqual, "demoapp staples-lab-1 os.disk.sda3.weighted_io_time")
+			})
+
+			Convey("with index alias (ex $2 $3)", func() {
+				serie := MQEResponseSerie{Name: "os.disk.sda3.weighted_io_time"}
+				queryRef := QueryToSend{
+					QueryRef: &Query{
+						AddClusterToAlias: true,
+						AddHostToAlias:    true,
+					},
+					Metric: Metric{Alias: "$2 $3", Metric: "os.disk.sda3.weighted_io_time"},
+				}
+				legend := parser.formatLegend(serie, mqeSerie, queryRef)
+				So(legend, ShouldEqual, "demoapp staples-lab-1 disk.sda3")
+			})
+
+			Convey("with wildcard alias", func() {
+				serie := MQEResponseSerie{Name: "os.disk.sda3.weighted_io_time", Query: "os.disk.*"}
+
+				queryRef := QueryToSend{
+					QueryRef: &Query{
+						AddClusterToAlias: true,
+						AddHostToAlias:    true,
+					},
+					RawQuery: "os.disk.sda3.weighted_io_time",
+					Metric:   Metric{Alias: "*", Metric: "os.disk.*.weighted_io_time"},
+				}
+				legend := parser.formatLegend(serie, mqeSerie, queryRef)
+				So(legend, ShouldEqual, "demoapp staples-lab-1 sda3")
+			})
 		})
 	})
 }
 
 func init() {
-	dummieJson = `{
+	testJson = `{
     "success": true,
     "name": "select",
     "body": [

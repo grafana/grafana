@@ -1,27 +1,39 @@
 define([
   'angular',
-  '../core_module',
+  'jquery',
+  'app/core/core_module',
+  'app/core/config',
 ],
-function(angular, coreModule) {
+function(angular, $, coreModule, config) {
   'use strict';
 
   coreModule.default.service('googleAnalyticsSrv', function($rootScope, $location) {
-    var first = true;
+
+    function gaInit() {
+      $.getScript('https://www.google-analytics.com/analytics.js'); // jQuery shortcut
+      var ga = window.ga = window.ga || function () { (ga.q = ga.q || []).push(arguments); }; ga.l = +new Date;
+      ga('create', config.googleAnalyticsId, 'auto');
+      return ga;
+    }
 
     this.init = function() {
+
       $rootScope.$on('$viewContentLoaded', function() {
-        // skip first
-        if (first) {
-          first = false;
-          return;
-        }
-        window.ga('send', 'pageview', { page: $location.url() });
+        var track =  { page: $location.url() };
+
+        var ga = window.ga || gaInit();
+
+        ga('set', track);
+        ga('send', 'pageview');
       });
+
     };
 
   }).run(function(googleAnalyticsSrv) {
-    if (window.ga) {
+
+    if (config.googleAnalyticsId) {
       googleAnalyticsSrv.init();
     }
+
   });
 });

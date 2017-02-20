@@ -11,8 +11,8 @@
     },
     "keywords": ["elasticsearch"],
     "logos": {
-      "small": "img/logo_large.png",
-      "large": "img/logo_large.png"
+      "small": "img/elasticsearch.svg",
+      "large": "img/elasticsearch.svg"
     },
     "links": [
       {"name": "elastic.co", "url": "https://www.elastic.co/products/elasticsearch"}

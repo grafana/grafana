@@ -113,7 +113,7 @@ func (c *EvalContext) GetRuleUrl() (string, error) {
 	if slug, err := c.GetDashboardSlug(); err != nil {
 		return "", err
 	} else {
-		ruleUrl := fmt.Sprintf("%sdashboard/db/%s?fullscreen&edit&tab=alert&panelId=%d", setting.AppUrl, slug, c.Rule.PanelId)
+		ruleUrl := fmt.Sprintf("%sdashboard/db/%s?fullscreen&edit&tab=alert&panelId=%d&orgId=%d", setting.AppUrl, slug, c.Rule.PanelId, c.Rule.OrgId)
 		return ruleUrl, nil
 	}
 }
