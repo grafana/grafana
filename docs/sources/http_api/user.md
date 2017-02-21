@@ -13,7 +13,7 @@ parent = "http_api"
 
 ## Search Users
 
-`GET /api/users`
+`GET /api/users?perpage=10&page=1`
 
 **Example Request**:
 
@@ -21,6 +21,8 @@ parent = "http_api"
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`.
 
 **Example Response**:
 
@@ -43,6 +45,45 @@ parent = "http_api"
         "isAdmin": false
       }
     ]
+
+## Search Users with Paging
+
+`GET /api/users/search?perpage=10&page=1`
+
+**Example Request**:
+
+    GET /api/users/search?perpage=10&page=1 HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. The `totalCount` field in the response can be used for pagination of the user list E.g. if `totalCount` is equal to 100 users and the `perpage` parameter is set to 10 then there are 10 pages of users.
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+    {
+      "totalCount": 2,
+      "users": [
+        {
+          "id": 1,
+          "name": "Admin",
+          "login": "admin",
+          "email": "admin@mygraf.com",
+          "isAdmin": true
+        },
+        {
+          "id": 2,
+          "name": "User",
+          "login": "user",
+          "email": "user@mygraf.com",
+          "isAdmin": false
+        }
+      ],
+      "page": 1,
+      "perPage": 10
+    }
 
 ## Get single user by Id
 
