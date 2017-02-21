@@ -25,6 +25,7 @@ export class AlertTabCtrl {
   notifications;
   alertNotifications;
   error: string;
+  betaMessage: string;
   appSubUrl: string;
   alertHistory: any;
 
@@ -255,6 +256,8 @@ export class AlertTabCtrl {
         } else {
           this.error = '';
         }
+        this.betaMessage = ds.alertingBetaMessage;
+        console.log(this.betaMessage);
       });
     }
   }

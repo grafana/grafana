@@ -341,6 +341,12 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     this.getTagValues = function(options) {
       return this.getTerms({field: options.key, query: '*'});
     };
+
+    this.targetContainsTemplate = function() {
+      return false;
+    };
+
+    this.alertingBetaMessage = "Alerting support for Elasticsearch is in early alpha stage";
   }
 
   return {
