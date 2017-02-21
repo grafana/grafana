@@ -92,9 +92,9 @@ func TestElasticsearchGetIndexList(t *testing.T) {
 			So(getIndex("[logstash-]YYYY.MM.DD.HH", "Hourly", timeRange),
 				ShouldEqual, "logstash-2017.02.18.09,logstash-2017.02.18.10,logstash-2017.02.18.11,logstash-2017.02.18.12")
 
-			timeRange.From = "100h"
+			timeRange.From = "200h"
 			So(getIndex("[logstash-]YYYY.W", "Weekly", timeRange),
-				ShouldEqual, "logstash-2017.7,logstash-2017.8")
+				ShouldEqual, "logstash-2017.6,logstash-2017.7")
 
 			timeRange.From = "700h"
 			So(getIndex("[logstash-]YYYY.MM", "Monthly", timeRange),
