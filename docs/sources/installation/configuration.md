@@ -602,13 +602,18 @@ You can choose between (s3, webdav). If left empty Grafana will ignore the uploa
 ## [external_image_storage.s3]
 
 ### bucket_url
-bucket url for s3. ex http://grafana.s3.amazonaws.com/
+Bucket URL for S3. AWS region can be specified within URL or defaults to 'us-east-1', e.g. 
+- http://grafana.s3.amazonaws.com/
+- https://grafana.s3-ap-southeast-2.amazonaws.com/
+- https://grafana.s3-cn-north-1.amazonaws.com.cn
 
 ### access_key
-access key. ex AAAAAAAAAAAAAAAAAAAA
+Access key. e.g. AAAAAAAAAAAAAAAAAAAA
+
+Access key requires permissions to the S3 bucket for the 's3:PutObject' and 's3:PutObjectAcl' actions.
 
 ### secret_key
-secret key. ex AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 ## [external_image_storage.webdav]
 
