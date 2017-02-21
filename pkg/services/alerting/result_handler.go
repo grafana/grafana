@@ -61,6 +61,12 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 				handler.log.Error("Cannot change state on alert thats pause", "error", err)
 				return err
 			}
+
+			if err == m.ErrRequiresNewState {
+				handler.log.Info("Alert already updated")
+				return nil
+			}
+
 			handler.log.Error("Failed to save state", "error", err)
 		}
 
