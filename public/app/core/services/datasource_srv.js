@@ -21,6 +21,10 @@ function (angular, _, coreModule, config) {
 
       name = templateSrv.replace(name);
 
+      if (name === 'default') {
+        return this.get(config.defaultDatasource);
+      }
+
       if (this.datasources[name]) {
         return $q.when(this.datasources[name]);
       }
