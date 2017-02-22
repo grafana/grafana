@@ -73,7 +73,7 @@ var (
 	CookieUserName        string
 	CookieRememberName    string
 	DisableGravatar       bool
-  CorssDomain           bool
+  CorssDomain           string
 	EmailCodeValidMinutes int
 	DataProxyWhiteList    map[string]bool
 
@@ -418,7 +418,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	SecretKey = security.Key("secret_key").String()
 	LogInRememberDays = security.Key("login_remember_days").MustInt()
 	CookieUserName = security.Key("cookie_username").String()
-  CorssDomain = security.Key("cookies_cross_domain").MustBool()
+  CorssDomain = security.Key("cookies_cross_domain").String()
 	CookieRememberName = security.Key("cookie_remember_name").String()
 	DisableGravatar = security.Key("disable_gravatar").MustBool(true)
 
