@@ -188,14 +188,14 @@ export class KeybindingSrv {
     });
 
     // collapse all rows
-    this.bind('r C', () => {
+    this.bind('d C', () => {
       _.each(dashboard.rows, function(row) {
         row.collapse = true;
       });
     });
 
     // expand all rows
-    this.bind('r E', () => {
+    this.bind('d E', () => {
       _.each(dashboard.rows, function(row) {
         row.collapse = false;
       });
