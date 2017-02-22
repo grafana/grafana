@@ -2,7 +2,8 @@ define([
   './helpers',
   'app/features/dashboard/shareModalCtrl',
   'app/features/panellinks/linkSrv',
-], function(helpers) {
+  'app/core/config',
+], function(helpers, shareModalCtrl, linkSrv, config) {
   'use strict';
 
   describe('ShareModalCtrl', function() {
@@ -11,6 +12,14 @@ define([
     function setTime(range) {
       ctx.timeSrv.timeRange = sinon.stub().returns(range);
     }
+
+    beforeEach(function() {
+      config.bootData = {
+        user: {
+          orgId: 1
+        }
+      };
+    });
 
     setTime({ from: new Date(1000), to: new Date(2000) });
 
@@ -25,13 +34,12 @@ define([
     beforeEach(ctx.createControllerPhase('ShareModalCtrl'));
 
     describe('shareUrl with current time range and panel', function() {
-
       it('should generate share url absolute time', function() {
         ctx.$location.path('/test');
         ctx.scope.panel = { id: 22 };
 
         ctx.scope.init();
-        expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&panelId=22&fullscreen');
+        expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&orgId=1&panelId=22&fullscreen');
       });
 
       it('should generate render url', function() {
@@ -41,7 +49,7 @@ define([
 
         ctx.scope.init();
         var base = 'http://dashboards.grafana.com/render/dashboard-solo/db/my-dash';
-        var params = '?from=1000&to=2000&panelId=22&width=1000&height=500&tz=UTC';
+        var params = '?from=1000&to=2000&orgId=1&panelId=22&width=1000&height=500&tz=UTC';
         expect(ctx.scope.imageUrl).to.contain(base + params);
       });
 
@@ -51,7 +59,7 @@ define([
         ctx.scope.panel = null;
 
         ctx.scope.init();
-        expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000');
+        expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&orgId=1');
       });
 
       it('should add theme when specified', function() {
@@ -60,7 +68,7 @@ define([
         ctx.scope.panel = null;
 
         ctx.scope.init();
-        expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&theme=light');
+        expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&orgId=1&theme=light');
       });
 
       it('should include template variables in url', function() {
@@ -73,7 +81,7 @@ define([
         };
 
         ctx.scope.buildUrl();
-        expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&var-app=mupp&var-server=srv-01');
+        expect(ctx.scope.shareUrl).to.be('http://server/#!/test?from=1000&to=2000&orgId=1&var-app=mupp&var-server=srv-01');
       });
 
     });
