@@ -240,6 +240,10 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 			return m.ErrCannotChangeStateOnPausedAlert
 		}
 
+		if alert.State == cmd.State {
+			return m.ErrRequiresNewState
+		}
+
 		alert.State = cmd.State
 		alert.StateChanges += 1
 		alert.NewStateDate = time.Now()
