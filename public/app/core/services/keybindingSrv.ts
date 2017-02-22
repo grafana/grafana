@@ -189,16 +189,16 @@ export class KeybindingSrv {
 
     // collapse all rows
     this.bind('d C', () => {
-      _.each(dashboard.rows, function(row) {
+      for (let row of dashboard.rows) {
         row.collapse = true;
-      });
+      }
     });
 
     // expand all rows
     this.bind('d E', () => {
-      _.each(dashboard.rows, function(row) {
+      for (let row of dashboard.rows) {
         row.collapse = false;
-      });
+      }
     });
 
     this.bind('d r', () => {
