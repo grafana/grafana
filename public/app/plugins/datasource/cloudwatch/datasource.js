@@ -4,9 +4,10 @@ define([
   'moment',
   'app/core/utils/datemath',
   'app/core/utils/kbn',
+  'app/features/templating/variable',
   './annotation_query',
 ],
-function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
+function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnotationQuery) {
   'use strict';
 
   /** @ngInject */
@@ -408,10 +409,6 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
       }).value();
     };
 
-    this.containsVariable = function (str, variableName) {
-      return str.indexOf('$' + variableName) !== -1;
-    };
-
     this.expandTemplateVariable = function(targets, scopedVars, templateSrv) {
       var self = this;
       return _.chain(targets)
@@ -422,7 +419,7 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
 
         if (dimensionKey) {
           var variable = _.find(templateSrv.variables, function(variable) {
-            return self.containsVariable(target.dimensions[dimensionKey], variable.name);
+            return templatingVariable.containsVariable(target.dimensions[dimensionKey], variable.name);
           });
           return self.getExpandedVariables(target, dimensionKey, variable);
         } else {
