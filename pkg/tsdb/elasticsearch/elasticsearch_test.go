@@ -103,7 +103,7 @@ func TestElasticsearchGetIndexList(t *testing.T) {
 			timeRange.From = "10000h"
 			So(getIndex("[logstash-]YYYY", "Yearly", timeRange),
 				ShouldEqual, "logstash-2015,logstash-2016,logstash-2017")
-      
+
 		})
 
 		Convey("No Interval", func() {

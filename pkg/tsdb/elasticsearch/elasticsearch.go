@@ -62,23 +62,23 @@ func getIndex(pattern string, interval string, timeRange *tsdb.TimeRange) string
 	}
 
 	operations := map[string]TimeOperation{
-		"Hourly": TimeOperation{
+		"Hourly": {
 			StartOf:   func(m *moment.Moment) *moment.Moment { return m.StartOf("hour") },
 			Operation: func(m *moment.Moment) *moment.Moment { return m.AddHours(1) },
 		},
-		"Daily": TimeOperation{
+		"Daily": {
 			StartOf:   func(m *moment.Moment) *moment.Moment { return m.StartOfDay() },
 			Operation: func(m *moment.Moment) *moment.Moment { return m.AddDay() },
 		},
-		"Weekly": TimeOperation{
+		"Weekly": {
 			StartOf:   func(m *moment.Moment) *moment.Moment { return m.StartOfWeek() },
 			Operation: func(m *moment.Moment) *moment.Moment { return m.AddWeeks(1) },
 		},
-		"Monthly": TimeOperation{
+		"Monthly": {
 			StartOf:   func(m *moment.Moment) *moment.Moment { return m.StartOfMonth() },
 			Operation: func(m *moment.Moment) *moment.Moment { return m.AddMonths(1) },
 		},
-		"Yearly": TimeOperation{
+		"Yearly": {
 			StartOf:   func(m *moment.Moment) *moment.Moment { return m.StartOfYear() },
 			Operation: func(m *moment.Moment) *moment.Moment { return m.AddYears(1) },
 		},
