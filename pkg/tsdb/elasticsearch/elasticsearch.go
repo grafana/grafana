@@ -56,28 +56,46 @@ func getIndex(pattern string, interval string, timeRange *tsdb.TimeRange) string
 	}
 	indexDateFormat := indexParts[1]
 
-	start := moment.NewMoment(timeRange.MustGetFrom())
-	end := moment.NewMoment(timeRange.MustGetTo())
+	type TimeOperation struct {
+		StartOf   func(*moment.Moment) *moment.Moment
+		Operation func(*moment.Moment) *moment.Moment
+	}
 
-	indexes = append(indexes, fmt.Sprintf("%s%s", indexBase, start.Format(indexDateFormat)))
+	operations := map[string]TimeOperation{
+		"Hourly": TimeOperation{
+			StartOf:   func(m *moment.Moment) *moment.Moment { return m.StartOf("hour") },
+			Operation: func(m *moment.Moment) *moment.Moment { return m.AddHours(1) },
+		},
+		"Daily": TimeOperation{
+			StartOf:   func(m *moment.Moment) *moment.Moment { return m.StartOfDay() },
+			Operation: func(m *moment.Moment) *moment.Moment { return m.AddDay() },
+		},
+		"Weekly": TimeOperation{
+			StartOf:   func(m *moment.Moment) *moment.Moment { return m.StartOfWeek() },
+			Operation: func(m *moment.Moment) *moment.Moment { return m.AddWeeks(1) },
+		},
+		"Monthly": TimeOperation{
+			StartOf:   func(m *moment.Moment) *moment.Moment { return m.StartOfMonth() },
+			Operation: func(m *moment.Moment) *moment.Moment { return m.AddMonths(1) },
+		},
+		"Yearly": TimeOperation{
+			StartOf:   func(m *moment.Moment) *moment.Moment { return m.StartOfYear() },
+			Operation: func(m *moment.Moment) *moment.Moment { return m.AddYears(1) },
+		},
+	}
+
+	if _, ok := operations[interval]; !ok {
+		eslog.Error("Unknown ElasticSearch Interval: %s", interval)
+		return pattern
+	}
+
+	start := operations[interval].StartOf(moment.NewMoment(timeRange.MustGetFrom()).UTC())
+	end := operations[interval].StartOf(moment.NewMoment(timeRange.MustGetTo()).UTC())
+
+	indexes = append(indexes, fmt.Sprintf("%s%s", indexBase, start.UTC().Format(indexDateFormat)))
 	for start.IsBefore(*end) {
-		switch interval {
-		case "Hourly":
-			start = start.AddHours(1)
-
-		case "Daily":
-			start = start.AddDay()
-
-		case "Weekly":
-			start = start.AddWeeks(1)
-
-		case "Monthly":
-			start = start.AddMonths(1)
-
-		case "Yearly":
-			start = start.AddYears(1)
-		}
-		indexes = append(indexes, fmt.Sprintf("%s%s", indexBase, start.Format(indexDateFormat)))
+		start = operations[interval].Operation(start)
+		indexes = append(indexes, fmt.Sprintf("%s%s", indexBase, start.UTC().Format(indexDateFormat)))
 	}
 	return strings.Join(indexes, ",")
 }
@@ -145,15 +163,6 @@ func (e *ElasticsearchExecutor) Execute(ctx context.Context, queries tsdb.QueryS
 
 		if q.DataSource.JsonData == nil {
 			return result.WithError(fmt.Errorf("Invalid (nil) JsonData Provided"))
-		}
-
-		esVersion, err := q.DataSource.JsonData.Get("esVersion").Int()
-		if err != nil {
-			return result.WithError(err)
-		}
-
-		if esVersion != 2 {
-			return result.WithError(fmt.Errorf("Elasticsearch v%d not currently supported!", esVersion))
 		}
 
 		esRequest, err := e.buildRequest(q, context.TimeRange)
