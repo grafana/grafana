@@ -391,7 +391,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       });
     }
 
-    this.getExpandedVariables = function(target, dimensionKey, variable) {
+    this.getExpandedVariables = function(target, dimensionKey, variable, templateSrv) {
       /* if the all checkbox is marked we should add all values to the targets */
       var allSelected = _.find(variable.options, {'selected': true, 'text': 'All'});
       return _.chain(variable.options)
@@ -426,7 +426,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
           var variable = _.find(templateSrv.variables, function(variable) {
             return templatingVariable.containsVariable(target.dimensions[dimensionKey], variable.name);
           });
-          return self.getExpandedVariables(target, dimensionKey, multiVariable || variable);
+          return self.getExpandedVariables(target, dimensionKey, multiVariable || variable, templateSrv);
         } else {
           return [target];
         }

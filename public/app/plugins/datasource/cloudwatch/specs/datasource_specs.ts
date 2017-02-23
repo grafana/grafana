@@ -134,11 +134,18 @@ describe('CloudWatchDatasource', function() {
           {
             name: 'instance_id',
             options: [
-              { value: 'i-23456789', selected: false },
-              { value: 'i-34567890', selected: true }
+              { text: 'i-23456789', value: 'i-23456789', selected: false },
+              { text: 'i-34567890', value: 'i-34567890', selected: true }
             ]
           }
         ],
+        replace: function (target, scopedVars) {
+          if (target === '$instance_id' && scopedVars['instance_id']['text'] === 'i-34567890') {
+            return 'i-34567890';
+          } else {
+            return '';
+          }
+        },
         getVariableName: function (e) { return 'instance_id'; },
         variableExists: function (e) { return true; },
         containsVariable: function (str, variableName) { return str.indexOf('$' + variableName) !== -1; }
