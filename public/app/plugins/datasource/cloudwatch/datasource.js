@@ -404,7 +404,9 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       })
       .map(function(v) {
         var t = angular.copy(target);
-        t.dimensions[dimensionKey] = v.value;
+        var scopedVar = {};
+        scopedVar[variable.name] = v;
+        t.dimensions[dimensionKey] = templateSrv.replace(t.dimensions[dimensionKey], scopedVar);
         return t;
       }).value();
     };
@@ -418,10 +420,13 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
         });
 
         if (dimensionKey) {
+          var multiVariable = _.find(templateSrv.variables, function(variable) {
+            return templatingVariable.containsVariable(target.dimensions[dimensionKey], variable.name) && variable.multi;
+          });
           var variable = _.find(templateSrv.variables, function(variable) {
             return templatingVariable.containsVariable(target.dimensions[dimensionKey], variable.name);
           });
-          return self.getExpandedVariables(target, dimensionKey, variable);
+          return self.getExpandedVariables(target, dimensionKey, multiVariable || variable);
         } else {
           return [target];
         }
