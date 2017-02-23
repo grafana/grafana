@@ -5,7 +5,7 @@ package main
 import (
 	"bytes"
 	"crypto/md5"
-	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/json"
 	"flag"
 	"fmt"
@@ -105,8 +105,8 @@ func main() {
 			grunt(gruntBuildArg("release")...)
 			createDebPackages()
 
-		case "sha1-dist":
-			sha1FilesInDist()
+		case "sha-dist":
+			shaFilesInDist()
 
 		case "latest":
 			makeLatestDistCopies()
@@ -522,14 +522,14 @@ func md5File(file string) error {
 	return out.Close()
 }
 
-func sha1FilesInDist() {
+func shaFilesInDist() {
 	filepath.Walk("./dist", func(path string, f os.FileInfo, err error) error {
 		if path == "./dist" {
 			return nil
 		}
 
-		if strings.Contains(path, ".sha1") == false {
-			err := sha1File(path)
+		if strings.Contains(path, ".sha256") == false {
+			err := shaFile(path)
 			if err != nil {
 				log.Printf("Failed to create sha file. error: %v\n", err)
 			}
@@ -538,20 +538,20 @@ func sha1FilesInDist() {
 	})
 }
 
-func sha1File(file string) error {
+func shaFile(file string) error {
 	fd, err := os.Open(file)
 	if err != nil {
 		return err
 	}
 	defer fd.Close()
 
-	h := sha1.New()
+	h := sha256.New()
 	_, err = io.Copy(h, fd)
 	if err != nil {
 		return err
 	}
 
-	out, err := os.Create(file + ".sha1")
+	out, err := os.Create(file + ".sha256")
 	if err != nil {
 		return err
 	}
