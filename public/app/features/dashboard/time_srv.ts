@@ -96,9 +96,13 @@ class TimeSrv {
         this.initTimeFromUrl();
         this.setTime(this.time, true);
       }
-    } else {
+    } else if (this.timeHasChangedSinceLoad()) {
       this.setTime(this.timeAtLoad, true);
     }
+  }
+
+  private timeHasChangedSinceLoad() {
+    return this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to;
   }
 
   setAutoRefresh(interval) {
