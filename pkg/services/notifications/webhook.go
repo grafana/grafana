@@ -37,7 +37,7 @@ func processWebhookQueue() {
 	for {
 		select {
 		case webhook := <-webhookQueue:
-			err := sendWebRequestSync(context.TODO(), webhook)
+			err := sendWebRequestSync(context.Background(), webhook)
 
 			if err != nil {
 				webhookLog.Error("Failed to send webrequest ", "error", err)

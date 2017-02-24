@@ -98,7 +98,7 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 		}
 	}()
 
-	alertCtx, cancelFn := context.WithTimeout(context.TODO(), alertTimeout)
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertTimeout)
 
 	job.Running = true
 	evalContext := NewEvalContext(alertCtx, job.Rule)
