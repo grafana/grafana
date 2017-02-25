@@ -94,7 +94,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
             {
               "query_string": {
                 "query": queryInterpolated,
-		this.queryStringOptions
+                this.queryStringOptions
               }
             }
           ]

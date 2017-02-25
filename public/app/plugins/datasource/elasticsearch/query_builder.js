@@ -84,11 +84,12 @@ function (queryDef) {
     var filterObj = {};
     for (var i = 0; i < aggDef.settings.filters.length; i++) {
       var query = aggDef.settings.filters[i].query;
-
+      target.qsOptions = this.qsOptions || '"analyze_wildcard": true';
+      
       filterObj[query] = {
         query_string: {
-          query: query,
-	  this.qsOptions
+          target.qsOptions,
+          query: query
         }
       };
     }
@@ -152,6 +153,7 @@ function (queryDef) {
     target.dsType = 'elasticsearch';
     target.bucketAggs = target.bucketAggs || [{type: 'date_histogram', id: '2', settings: {interval: 'auto'}}];
     target.timeField =  this.timeField;
+    target.qsOptions = this.qsOptions || '"analyze_wildcard": true';
 
     var i, nestedAggs, metric;
     var query = {
@@ -162,7 +164,7 @@ function (queryDef) {
             {"range": this.getRangeFilter()},
             {
               "query_string": {
-                this.qsOptions
+                target..qsOptions,
                 "query": queryString,
               }
             }
