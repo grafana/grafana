@@ -7,6 +7,7 @@ function (queryDef) {
   function ElasticQueryBuilder(options) {
     this.timeField = options.timeField;
     this.esVersion = options.esVersion;
+    this.qsOptions = options.qsOptions;
   }
 
   ElasticQueryBuilder.prototype.getRangeFilter = function() {
@@ -87,7 +88,7 @@ function (queryDef) {
       filterObj[query] = {
         query_string: {
           query: query,
-          analyze_wildcard: true
+	  this.qsOptions
         }
       };
     }
@@ -161,7 +162,7 @@ function (queryDef) {
             {"range": this.getRangeFilter()},
             {
               "query_string": {
-                "analyze_wildcard": true,
+                this.qsOptions
                 "query": queryString,
               }
             }
@@ -258,7 +259,7 @@ function (queryDef) {
     if (queryDef.query) {
       query.query.bool.filter.push({
         "query_string": {
-          "analyze_wildcard": true,
+          this.qsOptions,
           "query": queryDef.query,
         }
       });
