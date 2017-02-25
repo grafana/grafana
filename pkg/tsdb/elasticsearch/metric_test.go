@@ -3,6 +3,8 @@ package elasticsearch
 import (
 	"testing"
 
+	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -64,6 +66,42 @@ func TestElasticsearchMetricGetName(t *testing.T) {
 			}
 
 			So(names.GetName("1"), ShouldEqual, "Moving Average Nested Value")
+		})
+	})
+}
+
+func TestGetFilteredMap(t *testing.T) {
+	Convey("Test ElasticSearch GetFilteredMap ", t, func() {
+		Convey("Filtered Metrics", func() {
+			testModelJSON := `
+		{
+					"metrics": [
+						{
+							"field": "value",
+							"id": "1",
+							"type": "avg",
+							"hide": true
+						},
+						{
+							"field": "1",
+							"id": "3",
+							"pipelineAgg": "1",
+							"type": "moving_avg"
+						}
+					]
+		}`
+			queries := &tsdb.Query{}
+			var err error
+			queries.Model, err = simplejson.NewJson([]byte(testModelJSON))
+			So(err, ShouldBeNil)
+
+			filters := getFilteredMetrics(queries)
+			So(len(filters), ShouldEqual, 2)
+
+			So(filters.Hide("3"), ShouldEqual, false)
+			So(filters.Hide("1"), ShouldEqual, true)
+			So(filters.Hide("???"), ShouldEqual, false)
+
 		})
 	})
 }

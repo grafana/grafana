@@ -154,7 +154,7 @@ func TestElasticserachQueryParser(t *testing.T) {
 				Value:     "Moving Average",
 				Reference: "1",
 			}
-			queryResult, err := parseQueryResult([]byte(testResponseJSON), names)
+			queryResult, err := parseQueryResult([]byte(testResponseJSON), names, FilterMap{})
 
 			So(err, ShouldBeNil)
 			So(queryResult, ShouldNotBeNil)
@@ -167,12 +167,25 @@ func TestElasticserachQueryParser(t *testing.T) {
 				Value: "Test Name",
 			}
 
-			queryResult, err := parseQueryResult([]byte(testRecursiveResponseJSON), names)
+			queryResult, err := parseQueryResult([]byte(testRecursiveResponseJSON), names, FilterMap{})
 
 			So(err, ShouldBeNil)
 			So(queryResult, ShouldNotBeNil)
 			So(len(queryResult.Series), ShouldEqual, 1)
 			So(queryResult.Series[0].Name, ShouldEqual, "Test Name")
+		})
+
+		Convey("Parse ElasticSearch Nested Query Results With Filter", func() {
+			names := NameMap{}
+			names["4"] = Name{
+				Value: "Test Name",
+			}
+
+			queryResult, err := parseQueryResult([]byte(testRecursiveResponseJSON), names, FilterMap{"4": true})
+
+			So(err, ShouldBeNil)
+			So(queryResult, ShouldNotBeNil)
+			So(len(queryResult.Series), ShouldEqual, 0)
 		})
 	})
 }
