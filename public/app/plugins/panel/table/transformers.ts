@@ -83,6 +83,7 @@ transformers['timeseries_aggregations'] = {
       {text: 'Total', value: 'total'},
       {text: 'Current', value: 'current'},
       {text: 'Count', value: 'count'},
+      {text: 'Counter increment', value: 'delta'},
     ];
   },
   transform: function(data, panel, model) {
