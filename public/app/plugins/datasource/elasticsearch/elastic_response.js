@@ -97,6 +97,33 @@ function (_, queryDef) {
     }
   };
 
+  ElasticResponse.prototype.processNestedAggregationDocs = function(esAgg, aggDef, target, seriesList, props) {
+    var metric, y, i, newSeries, bucket, value;
+
+    for (y = 0; y < target.metrics.length; y++) {
+      metric = target.metrics[y];
+      if (metric.hide) {
+        continue;
+      }
+
+      newSeries = { datapoints: [], metric: metric.type, field: metric.field, props: props};
+      for (i = 0; i < esAgg.buckets.length; i++) {
+        bucket = esAgg.buckets[i][aggDef.id]['nested_aggs'];
+        if (bucket !== undefined) {
+          value = bucket[metric.id];
+          if (value !== undefined) {
+            if (value.normalized_value) {
+              newSeries.datapoints.push([value.normalized_value, esAgg.buckets[i].key]);
+            } else {
+              newSeries.datapoints.push([value.value, esAgg.buckets[i].key]);
+            }
+          }
+        }
+      }
+      seriesList.push(newSeries);
+    }
+  };
+
   ElasticResponse.prototype.processAggregationDocs = function(esAgg, aggDef, target, docs, props) {
     var metric, y, i, bucket, metricName, doc;
 
@@ -145,31 +172,39 @@ function (_, queryDef) {
   // This is quite complex
   // neeed to recurise down the nested buckets to build series
   ElasticResponse.prototype.processBuckets = function(aggs, target, seriesList, docs, props, depth) {
-    var bucket, aggDef, esAgg, aggId;
+    var bucket, aggDef, aggDefNested, esAgg, aggId;
     var maxDepth = target.bucketAggs.length-1;
 
+    aggDefNested = _.find(target.bucketAggs, {type: "nested"});
+
     for (aggId in aggs) {
-      aggDef = _.find(target.bucketAggs, {id: aggId});
       esAgg = aggs[aggId];
 
-      if (!aggDef) {
-        continue;
-      }
-
-      if (depth === maxDepth) {
-        if (aggDef.type === 'date_histogram')  {
-          this.processMetrics(esAgg, target, seriesList, props);
-        } else {
-          this.processAggregationDocs(esAgg, aggDef, target, docs, props);
-        }
+      if (aggDefNested) {
+        this.processNestedAggregationDocs(esAgg, aggDefNested, target, seriesList, props);
       } else {
-        for (var nameIndex in esAgg.buckets) {
-          bucket = esAgg.buckets[nameIndex];
-          props = _.clone(props);
-          if (bucket.key !== void 0) {
-            props[aggDef.field] = bucket.key;
+        aggDef = _.find(target.bucketAggs, {id: aggId});
+
+        if (!aggDef) {
+          continue;
+        }
+
+        if (depth === maxDepth) {
+          if (aggDef.type === 'date_histogram')  {
+            this.processMetrics(esAgg, target, seriesList, props);
           } else {
-            props["filter"] = nameIndex;
+            this.processAggregationDocs(esAgg, aggDef, target, docs, props);
+          }
+        } else {
+          for (var nameIndex in esAgg.buckets) {
+            bucket = esAgg.buckets[nameIndex];
+            props = _.clone(props);
+            if (bucket.key) {
+              props[aggDef.field] = bucket.key;
+            } else {
+              props["filter"] = nameIndex;
+            }
+            this.processBuckets(bucket, target, seriesList, docs, props, depth+1);
           }
           if (bucket.key_as_string) {
             props[aggDef.field] = bucket.key_as_string;
@@ -293,7 +328,7 @@ function (_, queryDef) {
     if (err.root_cause && err.root_cause.length > 0 && err.root_cause[0].reason) {
       result.message = err.root_cause[0].reason;
     } else {
-      result.message = err.reason || 'Unkown elatic error response';
+      result.message = err.reason || 'Unknown elastic error response';
     }
 
     if (response.$$config) {
@@ -325,7 +360,6 @@ function (_, queryDef) {
         this.processBuckets(aggregations, target, tmpSeriesList, docs, {}, 0);
         this.trimDatapoints(tmpSeriesList, target);
         this.nameSeries(tmpSeriesList, target);
-
         for (var y = 0; y < tmpSeriesList.length; y++) {
           seriesList.push(tmpSeriesList[y]);
         }

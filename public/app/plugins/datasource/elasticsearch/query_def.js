@@ -22,6 +22,7 @@ function (_) {
     bucketAggTypes: [
       {text: "Terms",           value: 'terms', requiresField: true},
       {text: "Filters",         value: 'filters' },
+      {text: "Nested",          value: 'nested', requiresField: true},
       {text: "Geo Hash Grid",   value: 'geohash_grid', requiresField: true},
       {text: "Date Histogram",  value: 'date_histogram', requiresField: true},
     ],
