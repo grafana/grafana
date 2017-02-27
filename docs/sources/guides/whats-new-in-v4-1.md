@@ -7,7 +7,7 @@ type = "docs"
 name = "Version 4.1"
 identifier = "v4.1"
 parent = "whatsnew"
-weight = -1
+weight = 3
 +++
 
 
