@@ -290,10 +290,9 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         }
 
         // transform to array
-        var resp = _.map(fields, function(value) {
+        return _.map(fields, function(value) {
           return value;
         });
-        return resp;
       });
     };
 

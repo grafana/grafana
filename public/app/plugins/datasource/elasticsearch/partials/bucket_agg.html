@@ -7,7 +7,6 @@
 
 		<metric-segment-model property="agg.type" options="bucketAggTypes" on-change="onTypeChanged()" custom="false" css-class="width-10"></metric-segment-model>
 		<metric-segment-model ng-if="agg.field" property="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="width-12"></metric-segment-model>
-		<metric-segment-model ng-if="agg.settings.nested.path" property="agg.settings.nested.path" get-options="getFieldsNestedPath()" on-change="onChange()" css-class="width-12"></metric-segment-model>
 	</div>
 
 	<div class="gf-form gf-form--grow">
@@ -50,18 +49,6 @@
 				</info-popover>
 			</label>
 			<input class="gf-form-input max-width-12" type="number" ng-model="agg.settings.trimEdges" ng-change="onChangeInternal()">
-		</div>
-	</div>
-
-	<div ng-if="agg.type === 'nested'">
-		<div class="gf-form offset-width-7">
-			<label class="gf-form-label width-10">Nested Term</label>
-			<metric-segment-model property="agg.settings.nested.term" get-options="getFieldsNestedTerm()" on-change="onChangeInternal()" css-class="width-12" custom="true"></metric-segment-model>
-		</div>
-
-		<div class="gf-form offset-width-7">
-			<label class="gf-form-label width-10">Query</label>
-			<input type="text" class="gf-form-input max-width-12" ng-model="agg.settings.nested.query" spellcheck='false' placeholder="Nested string match query" ng-blur="onChangeInternal()">
 		</div>
 	</div>
 
