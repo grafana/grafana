@@ -11,6 +11,7 @@ type BucketAggregate struct {
 // Metric defines the metric being requested from elasticsearch
 type Metric struct {
 	Field             string                 `json:"field"`
+	Hide              bool                   `json:"hide"`
 	ID                string                 `json:"id"`
 	Meta              interface{}            `json:"meta"`
 	PipelineAggregate string                 `json:"pipelineAgg"`

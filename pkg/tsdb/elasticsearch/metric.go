@@ -24,6 +24,17 @@ type Name struct {
 // NameMap used to store overriden names from query context
 type NameMap map[string]Name
 
+// FilterMap provides the alert query filter status for Metrics; based on visible status on dashboard
+type FilterMap map[string]bool
+
+// Hide returns true if a metric should be hidden from check
+func (f FilterMap) Hide(key string) bool {
+	if hide, ok := f[key]; ok {
+		return hide
+	}
+	return false
+}
+
 // GetName returns the complete name, including any referenced names
 func (names NameMap) GetName(reference string) string {
 	if name, ok := names[reference]; ok {
