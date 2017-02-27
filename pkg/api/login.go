@@ -45,9 +45,10 @@ func LoginView(c *middleware.Context) {
 
 func tryLoginUsingRememberCookie(c *middleware.Context) bool {
 	// Check auto-login.
-	uname := c.GetCookie(setting.CookieUserName)
+	uname := c.GetCookie("grafana_user")
 	if len(uname) == 0 {
     log.Trace("uname length == 0 : %s", uname)
+    log.Trace("get cookie key : %s", setting.CookieUserName)
 		return false
 	}
 
