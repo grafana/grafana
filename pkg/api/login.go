@@ -47,6 +47,7 @@ func tryLoginUsingRememberCookie(c *middleware.Context) bool {
 	// Check auto-login.
 	uname := c.GetCookie(setting.CookieUserName)
 	if len(uname) == 0 {
+    log.Trace("uname length == 0 : %s", uname)
 		return false
 	}
 
@@ -62,6 +63,7 @@ func tryLoginUsingRememberCookie(c *middleware.Context) bool {
 
 	userQuery := m.GetUserByLoginQuery{LoginOrEmail: uname}
 	if err := bus.Dispatch(&userQuery); err != nil {
+    log.Trace("dispatch with err: %s", err)
 		return false
 	}
 
@@ -70,6 +72,7 @@ func tryLoginUsingRememberCookie(c *middleware.Context) bool {
 	// validate remember me cookie
 	if val, _ := c.GetSuperSecureCookie(
 		util.EncodeMd5(user.Rands+user.Password), setting.CookieRememberName); val != user.Login {
+    log.Trace("encode can't equal : %s", user.Login)
 		return false
 	}
 
