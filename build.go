@@ -20,6 +20,7 @@ import (
 	"strconv"
 	"strings"
 	"time"
+	"path"
 )
 
 var (
@@ -120,14 +121,24 @@ func main() {
 }
 
 func makeLatestDistCopies() {
-	rpmIteration := "-1"
-	if linuxPackageIteration != "" {
-		rpmIteration = linuxPackageIteration
+	files, err := ioutil.ReadDir("dist")
+	if err != nil {
+		log.Fatalf("failed to create latest copies. Cannot read from /dist")
 	}
 
-	runError("cp", fmt.Sprintf("dist/grafana_%v-%v_amd64.deb", linuxPackageVersion, linuxPackageIteration), "dist/grafana_latest_amd64.deb")
-	runError("cp", fmt.Sprintf("dist/grafana-%v-%v.x86_64.rpm", linuxPackageVersion, rpmIteration), "dist/grafana-latest-1.x86_64.rpm")
-	runError("cp", fmt.Sprintf("dist/grafana-%v-%v.linux-x64.tar.gz", linuxPackageVersion, linuxPackageIteration), "dist/grafana-latest.linux-x64.tar.gz")
+	latestMapping := map[string]string {
+		".deb": "dist/grafana_latest_amd64.deb",
+		".rpm": "dist/grafana-latest-1.x86_64.rpm",
+		".tar.gz": "dist/grafana-latest.linux-x64.tar.gz",
+	}
+
+	for _, file := range files {
+		for extension, fullName := range latestMapping {
+			if strings.HasSuffix(file.Name(), extension) {
+				runError("cp", path.Join("dist", file.Name()), fullName)
+			}
+		}
+	}
 }
 
 func readVersionFromPackageJson() {
@@ -332,9 +343,9 @@ func grunt(params ...string) {
 func gruntBuildArg(task string) []string {
 	args := []string{task}
 	if includeBuildNumber {
-		args = append(args, fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration))
+		args = append(args, fmt.Sprintf("--pkgVer=%v-%v", version, linuxPackageIteration))
 	} else {
-		args = append(args, fmt.Sprintf("--pkgVer=%v", linuxPackageVersion))
+		args = append(args, fmt.Sprintf("--pkgVer=%v", version))
 	}
 	if pkgArch != "" {
 		args = append(args, fmt.Sprintf("--arch=%v", pkgArch))
