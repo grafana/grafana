@@ -1,4 +1,11 @@
-# 4.2.0 (unreleased)
+# 4.3.0 (unreleased)
+
+
+# 4.2.0-beta2 (unreleased)
+## Minor Enhancements
+* **Templates**: Prevent use of the prefix `__` for templates in web UI [#7678](https://github.com/grafana/grafana/issues/7678)
+
+# 4.2.0-beta1 (2017-02-27)
 
 ## Enhancements
 * **Telegram**: Added Telegram alert notifier [#7098](https://github.com/grafana/grafana/pull/7098), thx [@leonoff](https://github.com/leonoff)
