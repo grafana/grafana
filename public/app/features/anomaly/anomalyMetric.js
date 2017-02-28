@@ -6,82 +6,80 @@ define([
     'use strict';
 
     var module = angular.module('grafana.controllers');
-    var panelMeta = {
-      title: "anomaly for metric",
-      height: '300px',
-      panels: [
-        {
-          title: '指标健康异常状况',
-          type: 'graph',
-          fill: 0,
-          height: "500px",
-          linewidth: 2,
-          targets: [
-            {
-              aggregator: "avg",
-              metric: "",
-              downsampleAggregator: "avg",
-              downsampleInterval: "15m",
-              tags: {host: ""}
-            },
-            {
-              aggregator: "avg",
-              metric: "",
-              downsampleAggregator: "avg",
-              downsampleInterval: "15m",
-              tags: {host: ""}
-            },
-            {
-              aggregator: "avg",
-              metric: "",
-              downsampleAggregator: "avg",
-              downsampleInterval: "15m",
-              tags: {host: ""}
-            },
-            {
-              aggregator: "avg",
-              metric: "",
-              downsampleAggregator: "avg",
-              downsampleInterval: "15m",
-              tags: {host: ""}
-            },
-          ],
-          seriesOverrides: [
-            {
-              alias: "",
-              color: "#BF1B00",
-              lines: false,
-              pointradius: 3,
-              points: true
-            },
-            {
-              alias: "",
-              color: "#E5AC0E",
-              zindex: "-1"
-            },
-            {
-              alias: "",
-              color: "#BF1B00",
-              zindex: "-1"
-            }
-          ],
-          legend: {
-            alignAsTable: true,
-            avg: true,
-            min: true,
-            max: true,
-            current: true,
-            total: true,
-            show: true,
-            values: true
-          }
-        }
-      ]
-    };
-
     module.controller('AnomalyMetric', function ($scope, healthSrv, $routeParams, $timeout, contextSrv) {
         var metricName = $routeParams.metric;
-
+        var panelMeta = {
+          title: "anomaly for metric",
+          height: '300px',
+          panels: [
+            {
+              title: '指标健康异常状况',
+              type: 'graph',
+              fill: 0,
+              height: "500px",
+              linewidth: 2,
+              targets: [
+                {
+                  aggregator: "avg",
+                  metric: "",
+                  downsampleAggregator: "avg",
+                  downsampleInterval: "15m",
+                  tags: {host: ""}
+                },
+                {
+                  aggregator: "avg",
+                  metric: "",
+                  downsampleAggregator: "avg",
+                  downsampleInterval: "15m",
+                  tags: {host: ""}
+                },
+                {
+                  aggregator: "avg",
+                  metric: "",
+                  downsampleAggregator: "avg",
+                  downsampleInterval: "15m",
+                  tags: {host: ""}
+                },
+                {
+                  aggregator: "avg",
+                  metric: "",
+                  downsampleAggregator: "avg",
+                  downsampleInterval: "15m",
+                  tags: {host: ""}
+                },
+              ],
+              seriesOverrides: [
+                {
+                  alias: "",
+                  color: "#BF1B00",
+                  lines: false,
+                  pointradius: 3,
+                  points: true
+                },
+                {
+                  alias: "",
+                  color: "#E5AC0E",
+                  zindex: "-1"
+                },
+                {
+                  alias: "",
+                  color: "#BF1B00",
+                  zindex: "-1"
+                }
+              ],
+              legend: {
+                alignAsTable: true,
+                avg: true,
+                min: true,
+                max: true,
+                current: true,
+                total: true,
+                show: true,
+                values: true
+              }
+            }
+          ]
+        };
         $scope.init = function () {
           var anomalyList = healthSrv.anomalyMetricsData;
           var hostList = getHostList(anomalyList, metricName);
