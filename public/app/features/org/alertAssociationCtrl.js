@@ -90,7 +90,7 @@ function (angular, _, noUiSlider) {
 
     $scope.createAlertMetricsGraph = function (metrics, host) {
       $scope.initDashboard({
-        meta: {canStar: false, canShare: false, canEdit: false},
+        meta: {canStar: false, canShare: false, canEdit: false, canSave: false},
         dashboard: {
           system: contextSrv.system,
           title: "相关联指标",
@@ -118,7 +118,7 @@ function (angular, _, noUiSlider) {
       $scope.host = alertHost;
 
       $scope.initDashboard({
-        meta: { canStar: false, canShare: false, canEdit: false },
+        meta: { canStar: false, canShare: false, canEdit: false , canSave: false},
         dashboard: {
           system: contextSrv.system,
           title: "相关联指标",

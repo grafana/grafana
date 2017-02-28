@@ -10,7 +10,7 @@ define([
     module.controller('DecomposeMetricCtrl', function ($scope, $timeout, contextSrv) {
       $scope.init = function () {
         $scope.initDashboard({
-          meta: {canStar: false, canShare: false, canEdit: true},
+          meta: {canStar: false, canShare: false, canEdit: true, canSave: false},
           dashboard: {
             system: contextSrv.system,
             title: "健康管理",
