@@ -1,13 +1,13 @@
 define([
-  './query_def'
+  './query_def',
 ],
 function (queryDef) {
   'use strict';
 
   function ElasticQueryBuilder(options) {
-    this.timeField = options.timeField;
-    this.esVersion = options.esVersion;
-    this.qsOptions = options.qsOptions;
+    this.timeField          = options.timeField;
+    this.esVersion          = options.esVersion;
+    this.queryStringOptions = options.queryStringOptions;
   }
 
   ElasticQueryBuilder.prototype.getRangeFilter = function() {
@@ -19,6 +19,11 @@ function (queryDef) {
     };
 
     return filter;
+  };
+
+  ElasticQueryBuilder.prototype.addQueryStringOptions = function(object) {
+    var qsOptions = JSON.parse(this.queryStringOptions) || {"query_string": {"analyze_wildcard": true}};
+    return Object.assign({}, object, qsOptions);
   };
 
   ElasticQueryBuilder.prototype.buildTermsAgg = function(aggDef, queryNode, target) {
@@ -84,16 +89,12 @@ function (queryDef) {
     var filterObj = {};
     for (var i = 0; i < aggDef.settings.filters.length; i++) {
       var query = aggDef.settings.filters[i].query;
-      target.qsOptions = this.qsOptions || '"analyze_wildcard": true';
-      
+
       filterObj[query] = {
-        query_string: {
-          target.qsOptions,
-          query: query
-        }
+        query_string:
+          this.addQueryStringOptions({"query": query})
       };
     }
-
     return filterObj;
   };
 
@@ -153,7 +154,6 @@ function (queryDef) {
     target.dsType = 'elasticsearch';
     target.bucketAggs = target.bucketAggs || [{type: 'date_histogram', id: '2', settings: {interval: 'auto'}}];
     target.timeField =  this.timeField;
-    target.qsOptions = this.qsOptions || '"analyze_wildcard": true';
 
     var i, nestedAggs, metric;
     var query = {
@@ -163,18 +163,14 @@ function (queryDef) {
           "filter": [
             {"range": this.getRangeFilter()},
             {
-              "query_string": {
-                target..qsOptions,
-                "query": queryString,
-              }
+              "query_string":
+                this.addQueryStringOptions({"query": queryString})
             }
           ]
         }
       }
     };
-
     this.addAdhocFilters(query, adhocFilters);
-
     // handle document query
     if (target.bucketAggs.length === 0) {
       metric = target.metrics[0];
@@ -260,12 +256,11 @@ function (queryDef) {
 
     if (queryDef.query) {
       query.query.bool.filter.push({
-        "query_string": {
-          this.qsOptions,
-          "query": queryDef.query,
-        }
+        "query_string":
+          this.addQueryStringOptions({"query": queryDef.query})
       });
     }
+
     var size = 500;
     if(queryDef.size){
       size = queryDef.size;

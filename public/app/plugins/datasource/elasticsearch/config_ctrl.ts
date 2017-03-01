@@ -10,6 +10,7 @@ export class ElasticConfigCtrl {
   /** @ngInject */
   constructor($scope) {
     this.current.jsonData.timeField = this.current.jsonData.timeField || '@timestamp';
+    this.current.jsonData.queryStringOptions = '{"analyze_wildcard": true,"lowercase_expanded_terms": false}';
   }
 
   indexPatternTypes = [
