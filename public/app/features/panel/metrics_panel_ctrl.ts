@@ -74,12 +74,13 @@ class MetricsPanelCtrl extends PanelCtrl {
     // ignore fetching data if another panel is in fullscreen
     if (this.otherPanelInFullscreenMode()) { return; }
 
-    if (!this.scope.$$childHead || (!this.scope.$$childHead.isVisible() && !this.isRenderGraph())) {
-      this.scope.$$childHead.needsRefresh = true;
-      return;
+    if (this.scope.ctrl.dashboard.loadOnScroll) {
+      if (!this.scope.$$childHead || (!this.scope.$$childHead.isVisible() && !this.isRenderGraph())) {
+        this.scope.$$childHead.needsRefresh = true;
+        return;
+      }
+      this.scope.$$childHead.needsRefresh = false;
     }
-
-    this.scope.$$childHead.needsRefresh = false;
 
     // if we have snapshot data use that
     if (this.panel.snapshotData) {

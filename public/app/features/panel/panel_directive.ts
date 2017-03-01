@@ -184,7 +184,6 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
         }
       });
 
-      var getDataPromise = null;
       scope.needsRefresh = false;
 
       scope.isVisible = function () {
@@ -192,16 +191,11 @@ module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
         return (0 < position.top) && (position.top < window.innerHeight);
       };
 
-      $document.bind('scroll', function () {
-        if (getDataPromise) {
-          $timeout.cancel(getDataPromise);
+      $document.bind('scroll', _.debounce(function () {
+        if (scope.ctrl.dashboard.loadOnScroll && scope.needsRefresh) {
+          scope.ctrl.refresh();
         }
-        if (scope.needsRefresh) {
-          getDataPromise = $timeout(function () {
-            scope.ctrl.refresh();
-          }, 250);
-        }
-      });
+      }, 250));
     }
   };
 });
