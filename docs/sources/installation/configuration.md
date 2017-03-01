@@ -457,7 +457,7 @@ session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
-- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=disable
+- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=require
 - **memcache:** ex:  127.0.0.1:11211
 - **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`
 
@@ -472,6 +472,17 @@ Mysql Example:
         `expiry`    INT(11) UNSIGNED NOT NULL,
         PRIMARY KEY (`key`)
     ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+    
+Postgres Example:
+
+    CREATE TABLE session (
+        key       CHAR(16) NOT NULL,
+        data      BYTEA,
+        expiry    INTEGER NOT NULL,
+        PRIMARY KEY (key)
+    );
+    
+Postgres valid `sslmode` are `disable`, `require` (default), `verify-ca`, and `verify-full`.
 
 ### cookie_name
 
