@@ -167,6 +167,18 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           if (scope.panel.rightYAxisLabel) { gridMargin.right = 20; }
         }
 
+        function bindClickHook(plot, eventHolder) {
+          eventHolder.dblclick(function () {
+            var newScope = scope.$new();
+            newScope.from = moment.utc(plot.getAxes().xaxis.min).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+            newScope.to = moment.utc(plot.getAxes().xaxis.max).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+            scope.appEvent('show-modal', {
+              src: './app/partials/elk.html',
+              modalClass: 'modal-no-header modal',
+              scope: newScope
+            });
+          });
+        }
         // Function for rendering panel
         function render_panel() {
           if (shouldAbortRender()) {
@@ -181,6 +193,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             hooks: {
               draw: [drawHook],
               processOffset: [processOffsetHook],
+              bindEvents: [bindClickHook],
             },
             legend: { show: false },
             series: {
