@@ -100,7 +100,8 @@ define([
               $scope.serviceList.push(metric);
             });
           }).catch(function () {
-            $scope.serviceList.push({"host": "尚未配置在任何主机上", "alias": alias[key], "state": "尚未工作"});
+            //nothing to do;
+            //$scope.serviceList.push({"host": "尚未配置在任何主机上", "alias": alias[key], "state": "尚未工作"});
           });
         });
       };
