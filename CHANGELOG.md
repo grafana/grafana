@@ -5,6 +5,9 @@
 ## Minor Enhancements
 * **Templates**: Prevent use of the prefix `__` for templates in web UI [#7678](https://github.com/grafana/grafana/issues/7678)
 
+## Bugfixes
+* **Webhook**: Use proxy settings from environment variables [#7710](https://github.com/grafana/grafana/issues/7710)
+
 # 4.2.0-beta1 (2017-02-27)
 
 ## Enhancements
