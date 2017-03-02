@@ -162,6 +162,9 @@ function (angular, _, queryDef) {
     };
 
     $scope.getFieldsInternal = function() {
+      if ($scope.agg.type === 'cardinality') {
+        return $scope.getFields();
+      }
       return $scope.getFields({$fieldType: 'number'});
     };
 
