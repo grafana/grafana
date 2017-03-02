@@ -81,7 +81,28 @@
         </ul>
         <div class="clearfix"></div>
       </div>
-      <div class="tight-form">
+      <div class="tight-form" ng-show="alertDef.alertDetails.hostQuery.expression==='?'">
+        <ul class="tight-form-list">
+          <li class="tight-form-item" style="width: 80px">
+            空值
+          </li>
+          <li style="width:30px">
+            <select class="tight-form-input"
+                    ng-model="alertDef.alertDetails.hostQuery.expression"
+                    ng-options="f for f in ['>', '<', '?']" style="width: 40px">
+            </select>
+          </li>
+          <li class="tight-form-item" style="width: 80px">
+            持续时间
+          </li>
+          <li>
+            <input type="text" class="tight-form-input input-medium last"
+                   ng-model='alertDef.alertDetails.crit.durarionMinutes' placeholder="持续分钟" required />
+          </li>
+        </ul>
+        <div class="clearfix"></div>
+      </div>
+      <div class="tight-form" ng-show="alertDef.alertDetails.hostQuery.expression!=='?'">
         <ul class="tight-form-list">
           <li class="tight-form-item" style="width: 80px">
             临界值
@@ -89,7 +110,7 @@
           <li style="width:30px">
             <select class="input-medium tight-form-input last"
                     ng-model="alertDef.alertDetails.hostQuery.expression"
-                    ng-options="f for f in ['>', '<']">
+                    ng-options="f for f in ['>', '<', '?']">
             </select>
           </li>
           <li class="tight-form-item">
@@ -109,7 +130,7 @@
         </ul>
         <div class="clearfix"></div>
       </div>
-      <div class="tight-form">
+      <div class="tight-form" ng-show="alertDef.alertDetails.hostQuery.expression!=='?'">
         <ul class="tight-form-list">
           <li class="tight-form-item" style="width: 80px">
             警告
