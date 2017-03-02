@@ -10,6 +10,7 @@ export class DatasourceVariable implements Variable {
   query: string;
   options: any;
   current: any;
+  multi: boolean;
   refresh: any;
 
  defaults = {
@@ -21,6 +22,7 @@ export class DatasourceVariable implements Variable {
     regex: '',
     options: [],
     query: '',
+    multi: false,
     refresh: 1,
   };
 
@@ -93,5 +95,6 @@ export class DatasourceVariable implements Variable {
 variableTypes['datasource'] = {
   name: 'Datasource',
   ctor: DatasourceVariable,
+  supportsMulti: true,
   description: 'Enabled you to dynamically switch the datasource for multiple panels',
 };
