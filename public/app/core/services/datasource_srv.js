@@ -14,12 +14,12 @@ function (angular, _, coreModule, config) {
       this.datasources = {};
     };
 
-    this.get = function(name) {
+    this.get = function(name, scopedDsVars) {
       if (!name) {
         return this.get(config.defaultDatasource);
       }
 
-      name = templateSrv.replace(name);
+      name = templateSrv.replace(name, scopedDsVars || {});
 
       if (name === 'default') {
         return this.get(config.defaultDatasource);
