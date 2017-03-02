@@ -129,10 +129,12 @@ describe('CloudWatchDatasource', function() {
     });
 
     it('should generate the correct targets by expanding template variables', function() {
+      var variableName = 'instance_id';
       var templateSrv = {
         variables: [
           {
             name: 'instance_id',
+            multi: true,
             options: [
               { text: 'i-23456789', value: 'i-23456789', selected: false },
               { text: 'i-34567890', value: 'i-34567890', selected: true }
@@ -146,7 +148,11 @@ describe('CloudWatchDatasource', function() {
             return '';
           }
         },
-        getVariableName: function (e) { return 'instance_id'; },
+        getVariableName: function (e) {
+          var result = variableName;
+          variableName = '';
+          return result;
+        },
         variableExists: function (e) { return true; },
         containsVariable: function (str, variableName) { return str.indexOf('$' + variableName) !== -1; }
       };
