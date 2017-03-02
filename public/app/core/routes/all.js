@@ -90,7 +90,7 @@ define([
         controller : 'AlertHistoryCtrl',
         resolve: loadOrgBundle,
       })
-      .when('/alerts/association/:metric/:host/:distance', {
+      .when('/alerts/association/:host/:distance/:metric*', {
         templateUrl: 'app/features/org/partials/alertAssociation.html',
         controller : 'AlertAssociationCtrl',
         resolve: loadOrgBundle,
@@ -114,7 +114,7 @@ define([
         templateUrl: 'app/features/anomaly/partials/anomaly.html',
         controller : 'AnomalyCtrl',
       })
-      .when('/anomaly/:metric', {
+      .when('/anomaly/:metric*', {
         templateUrl: 'app/features/anomaly/partials/anomalyMetric.html',
         controller : 'AnomalyMetric',
         reloadOnSearch: true

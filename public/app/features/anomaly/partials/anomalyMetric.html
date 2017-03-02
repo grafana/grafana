@@ -44,7 +44,7 @@
               <label class="span4 checkbox" ng-repeat="(hostname, health) in hosts">
                 <input ng-checked="$index == 0 " type="radio" ng-click="changeHost(hostname)" name="changeHost">
                 {{hostname}}</input> 健康指数:{{health}}
-                <a href="/alerts/association/{{dashboard.id}}/{{hostname}}/100">
+                <a href="/alerts/association/{{hostname}}/100/{{dashboard.id}}">
                   <span class="btn btn-mini btn-primary">
                    <i class="fa fa-signal">关联性分析</i>
                   </span>

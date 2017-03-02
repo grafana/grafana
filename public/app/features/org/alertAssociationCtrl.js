@@ -135,7 +135,7 @@ function (angular, _, noUiSlider) {
     $scope.resetCorrelation = function() {
       $scope.correlationThreshold = 50; // reset the threshold to default value
       alertMgrSrv.resetCorrelation(alertMetric, alertHost, $scope.correlationBefore, $scope.correlationAfter).then(function onSuccess() {
-        $location.path("alerts/association/" + alertMetric + "/" + alertHost + "/" + $scope.correlationThreshold);
+        $location.path("alerts/association/" + alertHost + "/" + $scope.correlationThreshold + "/" + alertMetric);
       }, function onFailed(response) {
         alertSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 10000);
       });
@@ -176,7 +176,7 @@ function (angular, _, noUiSlider) {
     };
 
     $scope.resetCorrelation = function () {
-      $location.path("alerts/association/" + alertMetric + "/" + alertHost + "/" + Math.floor($scope.thresholdSlider.get()));
+      $location.path("alerts/association/" + alertHost + "/" + Math.floor($scope.thresholdSlider.get()) + "/" + alertMetric);
     };
 
     $scope.init();
