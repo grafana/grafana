@@ -416,7 +416,18 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       return _.chain(targets)
       .map(function(target) {
         var dimensionKey = _.findKey(target.dimensions, function(v) {
-          return templateSrv.variableExists(v) && !_.has(scopedVars, templateSrv.getVariableName(v));
+          if (!templateSrv.variableExists(v)) {
+            return false;
+          }
+
+          var variableName;
+          while (variableName = templateSrv.getVariableName(v)) {
+            if (_.has(scopedVars, variableName)) {
+              return false;
+            }
+            v = v.replace('$' + variableName, '').replace('[[' + variableName + ']]', '');
+          }
+          return true;
         });
 
         if (dimensionKey) {
