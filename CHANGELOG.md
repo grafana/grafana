@@ -1,5 +1,7 @@
 # 4.3.0 (unreleased)
 
+## Minor Enchancements
+* **Threema**: Add emoji to Threema alert notifications [#7676](https://github.com/grafana/grafana/pull/7676) thx [@dbrgn](https://github.com/dbrgn)
 
 # 4.2.0-beta2 (unreleased)
 ## Minor Enhancements
