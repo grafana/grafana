@@ -10,7 +10,7 @@ function (angular, config, _, $, store) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, healthSrv, backendSrv, $rootScope, $controller, contextSrv) {
+  module.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, healthSrv, backendSrv, $rootScope, $controller, contextSrv, $location) {
 
     $scope.init = function() {
       $scope.contextSrv = contextSrv;
@@ -25,8 +25,11 @@ function (angular, config, _, $, store) {
 
       alertSrv.init();
       utilSrv.init();
-      backendSrv.initAlertDUrl();
-      backendSrv.updateSystemsMap();
+      
+      if ($location.path() !== '/login') {
+        backendSrv.initAlertDUrl();
+        backendSrv.updateSystemsMap();
+      }
       $scope.dashAlerts = alertSrv;
     };
 
