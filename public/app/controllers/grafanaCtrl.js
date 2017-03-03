@@ -25,7 +25,6 @@ function (angular, config, _, $, store) {
 
       alertSrv.init();
       utilSrv.init();
-      
       if ($location.path() !== '/login') {
         backendSrv.initAlertDUrl();
         backendSrv.updateSystemsMap();

@@ -1,7 +1,8 @@
 define([
-    'angular'
+    'angular',
+    'moment'
   ],
-  function (angular) {
+  function (angular, moment) {
     'use strict';
 
     var module = angular.module('grafana.controllers');
@@ -10,7 +11,6 @@ define([
       var snooze_url = "/alert/status/snooze";
       $scope.init = function () {
         $scope.snoozeMin = 120;
-
         $scope.moreMinutes = {
           "10": "10分钟",
           "30": "半小时",
@@ -21,6 +21,9 @@ define([
         };
 
         $scope.snooze = function () {
+          var relativeMin = (new Date().getTime() - $scope.alertDetails.status.levelChangedTime)/60000;
+          $scope.alertDetails.status.snoozeMinutes = $scope.snoozeMin + relativeMin;
+
           backendSrv.alertD({
             method: "post",
             url: snooze_url,
