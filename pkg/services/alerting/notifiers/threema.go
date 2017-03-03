@@ -126,9 +126,21 @@ func (notifier *ThreemaNotifier) Notify(evalContext *alerting.EvalContext) error
 	data.Set("to", notifier.RecipientID)
 	data.Set("secret", notifier.APISecret)
 
+	// Determine emoji
+	stateEmoji := ""
+	switch evalContext.Rule.State {
+	case m.AlertStateOK:
+		stateEmoji = "\u2705 " // White Heavy Check Mark
+	case m.AlertStateNoData:
+		stateEmoji = "\u2753 " // Black Question Mark Ornament
+	case m.AlertStateAlerting:
+		stateEmoji = "\u26A0 " // Warning sign
+	}
+
 	// Build message
-	message := fmt.Sprintf("%s\n\n*State:* %s\n*Message:* %s\n",
-		evalContext.GetNotificationTitle(), evalContext.Rule.Name, evalContext.Rule.Message)
+	message := fmt.Sprintf("%s%s\n\n*State:* %s\n*Message:* %s\n",
+		stateEmoji, evalContext.GetNotificationTitle(),
+		evalContext.Rule.Name, evalContext.Rule.Message)
 	ruleURL, err := evalContext.GetRuleUrl()
 	if err == nil {
 		message = message + fmt.Sprintf("*URL:* %s\n", ruleURL)
