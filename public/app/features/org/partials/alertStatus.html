@@ -23,6 +23,7 @@
           <td><strong>当前值</strong></td>
           <td><strong>报警级别</strong></td>
           <td><strong>报警时间</strong></td>
+          <td><strong>再次报警时间</strong><tip>如果报警没有解决, 将重复报警</tip></td>
           <td></td>
         </tr>
         <tr ng-repeat="alertDetail in alertRows">
@@ -46,12 +47,18 @@
             {{alertDetail.status.level}}
           </td>
           <td style="width:40%">
-            2016.11.21
+            {{formatDate(alertDetail.status.levelChangedTime)}}
+          </td>
+          <td style="width:40%">
+            {{timeFrom(alertDetail.status.levelChangedTime, alertDetail.status.snoozeMinutes)}}
           </td>
           <td style="width: 10%">
             <a href="/alerts/association/{{alertDetail.status.monitoredEntity}}/{{correlationThreshold}}/{{alertDetail.metric}}" class="btn btn-mini btn-primary" ng-click="resetCurrentThreshold(alertDetail.definition.alertDetails)">
               <i class="fa fa-signal"></i>
               关联性分析
+            </a>
+            <a class="btn btn-mini btn-success" ng-click="handleSnooze(alertDetail)">
+              延迟报警
             </a>
             <a class="btn btn-mini btn-success" ng-click="handleAlert(this)">
               处理警告

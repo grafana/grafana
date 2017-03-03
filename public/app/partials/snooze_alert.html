@@ -1,0 +1,29 @@
+<div class="modal-body" ng-controller="SnoozeCtrl" ng-init="init()">
+  <a class="modal-close" ng-click="dismiss();">
+    <i class="fa fa-remove"></i>
+  </a>
+  <h3>
+    延迟报警时间
+  </h3>
+  <form>
+    <div style="display: inline-block">
+      <div class="tight-form-container">
+        <div class="tight-form">
+          <ul class="tight-form-list">
+            <li>
+              <select ng-model="snoozeMin" class="input-large tight-form-input">
+                <option ng-selected="key==120" ng-repeat="(key, value) in moreMinutes" value="{{key}}">{{value}}
+                </option>
+              </select>
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="" style="margin-top: 30px; margin-bottom: 20px;">
+        <button type="button" class="btn btn-inverse" ng-click="dismiss()">取消</button>
+        <button type="submit" class="btn btn-success" ng-click="snooze();">延迟报警</button>
+      </div>
+    </div>
+  </form>
+</div>
