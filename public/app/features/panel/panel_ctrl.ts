@@ -92,6 +92,10 @@ export class PanelCtrl {
     this.changeView(true, false);
   }
 
+  switchView() {
+    this.changeView(!this.fullscreen, false);
+  }
+
   editPanel() {
     this.changeView(true, true);
   }
