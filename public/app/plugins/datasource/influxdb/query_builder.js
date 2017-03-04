@@ -25,12 +25,13 @@ function (_) {
       }
     }
 
-    // quote value unless regex or number
-    if (operator !== '=~' && operator !== '!~' && isNaN(+value)) {
-      value = "'" + value + "'";
-    }
+    //// quote value unless regex or number
+    //if (operator !== '=~' && operator !== '!~' && isNaN(+value)) {
+    //  value = "'" + value + "'";
+    //}
 
-    return str + '"' + tag.key + '" ' + operator + ' ' + value;
+    //return str + '"' + tag.key + '" ' + operator + ' ' + value;
+    return str + tag.key + ' ' + operator + ' ' + value;
   }
 
   var p = InfluxQueryBuilder.prototype;
@@ -62,19 +63,21 @@ function (_) {
         return 'SHOW FIELD KEYS FROM ' + this.target.measurement;
       }
     } else if (type === 'RETENTION POLICIES') {
-      query = 'SHOW RETENTION POLICIES on "' + this.database + '"';
+      //query = 'SHOW RETENTION POLICIES on "' + this.database + '"';
+      query = 'SHOW RETENTION POLICIES on ' + this.database;
       return query;
     }
 
     if (measurement) {
-      if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
-        measurement = '"' + measurement+ '"';
-      }
+      //if (!measurement.match('^/.*/') && !measurement.match(/^merge\(.*\)/)) {
+      //  measurement = '"' + measurement+ '"';
+      //}
       query += ' FROM ' + measurement;
     }
 
     if (withKey) {
-      query += ' WITH KEY = "' + withKey + '"';
+      //query += ' WITH KEY = "' + withKey + '"';
+      query += ' WITH KEY = ' + withKey;
     }
 
     if (this.target.tags && this.target.tags.length > 0) {

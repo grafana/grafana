@@ -37,14 +37,16 @@ function register(options: any) {
 var groupByTimeFunctions = [];
 
 function aliasRenderer(part, innerExpr) {
-  return innerExpr + ' AS ' + '"' + part.params[0] + '"';
+  //return innerExpr + ' AS ' + '"' + part.params[0] + '"';
+  return innerExpr + ' AS ' + part.params[0];
 }
 
 function fieldRenderer(part, innerExpr) {
   if (part.params[0] === '*')  {
     return '*';
   }
-  return '"' + part.params[0] + '"';
+  //return '"' + part.params[0] + '"';
+  return part.params[0];
 }
 
 function replaceAggregationAddStrategy(selectParts, partModel) {
