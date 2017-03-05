@@ -167,7 +167,7 @@ export default class InfluxQuery {
     var policy = this.target.policy;
     var measurement = this.target.measurement || 'measurement';
 
-    if (!measurement.match('^/.*/')) {
+    if (!measurement.match('^/.*/$')) {
       measurement = '"' + measurement+ '"';
     } else if (interpolate) {
       measurement = this.templateSrv.replace(measurement, this.scopedVars, 'regex');
