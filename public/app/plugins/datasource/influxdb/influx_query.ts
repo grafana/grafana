@@ -21,6 +21,7 @@ export default class InfluxQuery {
     target.policy = target.policy || 'default';
     target.dsType = 'influxdb';
     target.resultFormat = target.resultFormat || 'time_series';
+    target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
     target.groupBy = target.groupBy || [
       {type: 'time', params: ['$__interval']},

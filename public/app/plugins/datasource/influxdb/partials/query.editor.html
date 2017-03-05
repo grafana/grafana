@@ -72,11 +72,33 @@
 			</div>
 		</div>
 
+        <div class="gf-form-inline">
+            <div class="gf-form">
+                <label class="gf-form-label query-keyword width-9">ORDER BY time</label>
+                <div class="gf-form-select-wrapper">
+                    <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.orderByTime" ng-options="f.value as f.text for f in ctrl.orderByTime" ng-change="ctrl.refresh()"></select>
+                </div>
+            </div>
+
+            <div class="gf-form max-width-30">
+                <label class="gf-form-label query-keyword width-7">LIMIT</label>
+                <input type="text" class="gf-form-input" ng-model="ctrl.target.limit" spellcheck='false' placeholder="No Limit" ng-blur="ctrl.refresh()">
+            </div>
+
+            <div class="gf-form max-width-30">
+                <label class="gf-form-label query-keyword width-7">SLIMIT</label>
+                <input type="text" class="gf-form-input" ng-model="ctrl.target.slimit" spellcheck='false' placeholder="No Limit" ng-blur="ctrl.refresh()">
+            </div>
+            <div class="gf-form gf-form--grow">
+                <div class="gf-form-label gf-form-label--grow"></div>
+            </div>
+        </div>
+
 	</div>
 
 	<div class="gf-form-inline">
 		<div class="gf-form max-width-30">
-			<label class="gf-form-label query-keyword width-7">ALIAS BY</label>
+			<label class="gf-form-label query-keyword width-9">ALIAS BY</label>
 			<input type="text" class="gf-form-input" ng-model="ctrl.target.alias" spellcheck='false' placeholder="Naming pattern" ng-blur="ctrl.refresh()">
 		</div>
 		<div class="gf-form">
