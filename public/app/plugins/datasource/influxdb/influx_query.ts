@@ -250,6 +250,18 @@ export default class InfluxQuery {
       query += ' fill(' + target.fill + ')';
     }
 
+    if (target.orderByTime === 'DESC') {
+      query += ' ORDER BY time DESC';
+    }
+
+    if (target.limit) {
+      query += ' LIMIT ' + target.limit;
+    }
+
+    if (target.slimit) {
+      query += ' SLIMIT ' + target.slimit;
+    }
+
     return query;
   }
 
