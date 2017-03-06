@@ -22,7 +22,12 @@ function (queryDef) {
   };
 
   ElasticQueryBuilder.prototype.addQueryStringOptions = function(object) {
-    var qsOptions = JSON.parse(this.queryStringOptions) || {"query_string": {"analyze_wildcard": true}};
+    var qsOptions = {};
+    try {
+      qsOptions = JSON.parse(this.queryStringOptions);
+    } catch (e) {
+      qsOptions = {"query_string": {"analyze_wildcard": true}};
+    }
     return Object.assign({}, object, qsOptions);
   };
 
