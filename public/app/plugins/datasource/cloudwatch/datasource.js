@@ -420,13 +420,11 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
             return false;
           }
 
-          var variableName;
-          while (variableName = templateSrv.getVariableName(v)) {
+          templateSrv.getVariableNames(v).forEach(function(variableName) {
             if (_.has(scopedVars, variableName)) {
               return false;
             }
-            v = v.replace('$' + variableName, '').replace('[[' + variableName + ']]', '');
-          }
+          });
           return true;
         });
 
