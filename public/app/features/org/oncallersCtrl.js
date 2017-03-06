@@ -22,13 +22,13 @@ function (angular) {
       return backendSrv.getSystemById(id);
     };
 
-    $scope.remove = function(oncallerOrg, oncallerService) {
+    $scope.remove = function(oncallerOrg, oncallerService, oncallerId) {
       $scope.appEvent('confirm-modal', {
         title: '您确定要删除这个报警通知吗?',
         icon: 'fa-trash',
         yesText: 'Delete',
         onConfirm: function() {
-          oncallerMgrSrv.remove(oncallerOrg, oncallerService).then(function onSuccess() {
+          oncallerMgrSrv.remove(oncallerOrg, oncallerService, oncallerId).then(function onSuccess() {
             for (var i = $scope.oncallerDefList.length - 1; i >= 0; i--) {
               if (oncallerService === $scope.oncallerDefList[i].service) {
                 $scope.oncallerDefList.splice(i, 1);

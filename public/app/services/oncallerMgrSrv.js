@@ -39,11 +39,11 @@ function (angular) {
       });
     };
 
-    this.remove = function(oncallerOrg, oncallerService) {
+    this.remove = function(oncallerOrg, oncallerService, oncallerId) {
       return backendSrv.alertD({
         method: "delete",
         url: oncallerUrl,
-        params: {org: oncallerOrg, service: oncallerService},
+        params: {org: oncallerOrg, service: oncallerService, id:oncallerId},
         headers: {'Content-Type': 'text/plain'},
       });
     };
