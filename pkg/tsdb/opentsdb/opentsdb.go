@@ -190,6 +190,10 @@ func (e *OpenTsdbExecutor) buildMetric(query *tsdb.Query) map[string]interface{}
 			rateOptions["resetValue"] = resetValue.MustFloat64()
 		}
 
+		if !counterMaxCheck && (!resetValueCheck || resetValue.MustFloat64() == 0) {
+			rateOptions["dropcounter"] = true
+		}
+
 		metric["rateOptions"] = rateOptions
 	}
 
