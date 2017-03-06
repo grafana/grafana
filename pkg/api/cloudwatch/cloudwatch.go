@@ -114,7 +114,10 @@ func getCredentials(dsInfo *datasourceInfo) (*credentials.Credentials, error) {
 			DurationSeconds: aws.Int64(900),
 		}
 
-		stsSess := session.New()
+		stsSess, err := session.NewSession()
+		if err != nil {
+			return nil, err
+		}
 		stsCreds := credentials.NewChainCredentials(
 			[]credentials.Provider{
 				&credentials.EnvProvider{},
@@ -126,7 +129,11 @@ func getCredentials(dsInfo *datasourceInfo) (*credentials.Credentials, error) {
 			Credentials: stsCreds,
 		}
 
-		svc := sts.New(session.New(stsConfig), stsConfig)
+		sess, err := session.NewSession(stsConfig)
+		if err != nil {
+			return nil, err
+		}
+		svc := sts.New(sess, stsConfig)
 		resp, err := svc.AssumeRole(params)
 		if err != nil {
 			return nil, err
@@ -139,7 +146,10 @@ func getCredentials(dsInfo *datasourceInfo) (*credentials.Credentials, error) {
 		}
 	}
 
-	sess := session.New()
+	sess, err := session.NewSession()
+	if err != nil {
+		return nil, err
+	}
 	creds := credentials.NewChainCredentials(
 		[]credentials.Provider{
 			&credentials.StaticProvider{Value: credentials.Value{
@@ -185,7 +195,12 @@ func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return
 	}
-	svc := cloudwatch.New(session.New(cfg), cfg)
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		c.JsonApiErr(500, "Unable to call AWS API", err)
+		return
+	}
+	svc := cloudwatch.New(sess, cfg)
 
 	reqParam := &struct {
 		Parameters struct {
@@ -232,7 +247,12 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return
 	}
-	svc := cloudwatch.New(session.New(cfg), cfg)
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		c.JsonApiErr(500, "Unable to call AWS API", err)
+		return
+	}
+	svc := cloudwatch.New(sess, cfg)
 
 	reqParam := &struct {
 		Parameters struct {
@@ -273,7 +293,12 @@ func handleDescribeAlarms(req *cwRequest, c *middleware.Context) {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return
 	}
-	svc := cloudwatch.New(session.New(cfg), cfg)
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		c.JsonApiErr(500, "Unable to call AWS API", err)
+		return
+	}
+	svc := cloudwatch.New(sess, cfg)
 
 	reqParam := &struct {
 		Parameters struct {
@@ -316,7 +341,12 @@ func handleDescribeAlarmsForMetric(req *cwRequest, c *middleware.Context) {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return
 	}
-	svc := cloudwatch.New(session.New(cfg), cfg)
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		c.JsonApiErr(500, "Unable to call AWS API", err)
+		return
+	}
+	svc := cloudwatch.New(sess, cfg)
 
 	reqParam := &struct {
 		Parameters struct {
@@ -360,7 +390,12 @@ func handleDescribeAlarmHistory(req *cwRequest, c *middleware.Context) {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return
 	}
-	svc := cloudwatch.New(session.New(cfg), cfg)
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		c.JsonApiErr(500, "Unable to call AWS API", err)
+		return
+	}
+	svc := cloudwatch.New(sess, cfg)
 
 	reqParam := &struct {
 		Parameters struct {
@@ -396,7 +431,12 @@ func handleDescribeInstances(req *cwRequest, c *middleware.Context) {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return
 	}
-	svc := ec2.New(session.New(cfg), cfg)
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		c.JsonApiErr(500, "Unable to call AWS API", err)
+		return
+	}
+	svc := ec2.New(sess, cfg)
 
 	reqParam := &struct {
 		Parameters struct {
