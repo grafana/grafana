@@ -1,137 +1,149 @@
-
-.login-form {
-  width: 50%;
-  float: left;
-  margin-left: 25%;
-  margin-right: 25%;
-  padding-top: 25px;
-}
-
-.login-box {
-  width: 700px;
-  margin: 100px auto 0 auto;
-}
-
-.login-box-logo {
-  text-align: center;
-  padding-bottom: 50px;
-}
-
-
-.login-inner-box {
-  background: @grafanaPanelBackground;
-}
-
-.login-tab-header {
-  background: @grafanaTargetBackground;
-  text-align: center;
-}
-
-.btn-login-tab {
-  background: transparent;
-  border: none;
-  font-size: 15px;
-  padding: 10px 10px;
-
-  &.active {
-    background: darken(@grafanaTargetBackground, 5%);
-    color: @white;
-  }
-
-  &:focus {
-    outline: none;
-  }
-
+.login-box{
+  min-height: 700px;
+  overflow: hidden;
   font-weight: bold;
-  display: inline-block;
-  width: 170px;
-  color: @textColor;
 }
 
-.password-strength {
-  display: block;
-  width: 15%;
-  overflow: visible;
-  white-space: nowrap;
-  padding-top: 3px;
-  color: darken(@textColor, 20%);
-  border-top: 3px solid @red;
-  &.password-strength-ok {
-    width: 40%;
-    border-top: 3px solid lighten(@yellow, 10%);
-  }
-  &.password-strength-good {
-    width: 100%;
-    border-top: 3px solid lighten(@green, 10%);
-  }
+.btn-link-login,.btn-link-login:link,.btn-link-login:active,.btn-link-login:visited,.btn-link-login:hover{
+    color: @white;
+    text-align: center;
+    background: rgb(43,175,250);
+    text-decoration: none;
 }
 
-.login-submit-button-row {
-  text-align: center;
-  margin-top: 40px;
-  button {
-    padding: 9px 7px;
-    font-size: 14px;
-    font-weight: bold;
-    min-width: 150px;
-    display: inline-block;
-    border: 1px solid lighten(@btnInverseBackground, 10%);
-  }
-}
-
-.login-oauth {
-  margin-top: 30px;
-  padding: 10px;
-  background: @grafanaTargetBackground;
-  .btn-google {
-    background: #dd4b39;
-    color: white;
-  }
-  .btn-github {
-    background: #555;
-    color: white;
-  }
-}
-
-.signup-page-background {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 100%;
+.sign-header{
   width: 100%;
-  opacity: 0.3;
-  z-index: -1;
+  background: @white;
+  overflow: hidden;
+  border-bottom: 1px solid rgb(151,151,151);
+  img{
+    margin: 18px 19px 14px 29px;
+  }
+  span{
+    font-size: 36px;
+    font-weight: bold;
+    color: rgb(57,57,58);
+    margin-top: 43px;
+  }
+  a{
+    float: right;
+    font-size: 28px;
+    line-height: 75px;
+    width: 234px;
+    height: 75px;
+    border-radius: 8px;
+    margin-top: 16px;
+    margin-right: 84px;
+  }
 }
 
-.invite-box {
-  text-align: center;
-  border: 1px solid @grafanaTargetFuncBackground;
-	background-color: @grafanaPanelBackground;
-	position: fixed;
-  max-width: 800px;
+.login-inner-box{
+  position: absolute;
   left: 0;
   right: 0;
-  margin-left: auto;
-  margin-right: auto;
-  top: 20%;
+  top: 0;
+  bottom: 0;
+  margin: auto;
+}
 
-  .tight-form {
-    text-align: left;
+.login-form{
+  
+  &>label{
+    font-size: 24px;
+    line-height: 36px;
+    margin-bottom: 5px;
   }
-
-  h3 {
-    margin-top: 30px;
-  }
-
-  .modal-close {
-    float: right;
-    font-size: 140%;
-    padding: 10px;
-  }
-
-  .modal-tagline {
+  &>input{
     font-size: 16px;
+    width: 100%;
+    height: 42px;
+    border-radius: 5px;
+    border: 2px solid rgba(202,195,195,0.5);
+    box-shadow: 0 0 2px rgba(202,195,195,0.5);
+    -moz-box-shadow: 0 0 2px rgba(202,195,195,0.5);
+    -webkit-box-shadow: 0 0 2px rgba(202,195,195,0.5);
+  }
+  .pull-right{
+    font-size: 20px;
+    color: rgb(165,203,242);
+    margin-right: 9px;
+    margin-top: 10px;
   }
 }
+
+.btn-login-box{
+  text-align: center;
+  margin-top: 25px;
+}
+.btn-login{
+  margin: 0 auto;
+  font-size: 30px;
+  width: 260px;
+  height: 63px;
+  border-radius: 8px;
+  border: none;
+  outline: none;
+}
+
+.go-register{
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  margin-top: 42px;
+  margin-bottom: 143px;
+  height: 48px;
+  color: rgb(145,148,154);
+  a{
+    text-align: center;
+    line-height: 48px;
+    display: inline-block;
+    width: 160px;
+    border-radius: 8px;
+  }
+}
+
+.sign-footer{
+  width: 100%;
+  position: absolute;
+  bottom: 19px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: bold;
+  color: rgb(74,74,74);
+}
+
+/* 电脑的分辨率 */
+@media (min-width: 768px){
+
+  .sign-header{
+    img{
+      float: left;
+    }
+    span{
+      float: left;
+    }
+  }
+
+  .login-inner-box{
+      width: 360px;
+      height: 300px;
+  }
+}
+/* 横向放置的手机和竖向放置的平板之间的分辨率 */
+@media (max-width: 767px) { 
+  .sign-header{
+    text-align: center;
+    line-height: 105px;
+    img{
+      margin-top: 0;
+    }
+    a{
+      display: none;
+    }
+  }
+
+  .login-inner-box{
+      width: 80%;
+      height: 50%;
+  }
+ }
