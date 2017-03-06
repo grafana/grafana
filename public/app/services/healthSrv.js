@@ -29,7 +29,7 @@ define([
       };
 
       this.exclude = function (metricName) {
-        backendSrv.alertD({
+        return backendSrv.alertD({
           method: "post",
           url: excludeAnomaly,
           params: {
@@ -39,7 +39,7 @@ define([
       };
 
       this.include = function (metricName) {
-        backendSrv.alertD({
+        return backendSrv.alertD({
           method: "post",
           url: includeAnomaly,
           params: {

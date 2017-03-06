@@ -13,13 +13,15 @@ define([
       };
 
       $scope.exclude = function () {
-        healthSrv.exclude($scope.excludeMetric);
-        $scope.reload();
+        healthSrv.exclude($scope.excludeMetric).then(function () {
+          $scope.reload();
+        });
       };
 
       $scope.include = function (metricName) {
-        healthSrv.include(metricName);
-        $scope.reload();
+        healthSrv.include(metricName).then(function () {
+          $scope.reload();
+        });
       };
 
       $scope.init();

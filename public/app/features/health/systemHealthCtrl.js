@@ -90,6 +90,7 @@ define([
         healthSrv.load().then(function (data) {
           $scope.applicationHealth = Math.floor(data.health);
           $scope.leveal = getLeveal($scope.applicationHealth);
+          $scope.summary = data;
         });
       };
       $scope.init();

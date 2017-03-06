@@ -20,8 +20,9 @@ define([
       };
 
       $scope.exclude = function (metric) {
-        healthSrv.exclude(metric);
-        $scope.init();
+        healthSrv.exclude(metric).then(function () {
+          $scope.reload();
+        });
       };
 
       $scope.reload = function() {
