@@ -1,95 +1,28 @@
-<div class="container">
+<div class="login-box">
+    <header class="sign-header">
+        <img src="../../img/logo_login_64x72.png" alt="云兴维智" />
+        <span>云兴维智</span>
+        <a href="###" class="btn-link-login hidden-phone">联系我们</a>
+    </header>
+    <section class="login-inner-box">
+        <form name="loginForm" class="login-form">
+            <label>登录名：</label>
+            <input type="text" name="username" required ng-model="formModel.user" placeholder="邮箱／用户名" />
 
-	<div class="login-box">
+            <label>密码：<a href="user/password/send-reset-email" class="pull-right">忘记密码？</a></label>
+            <div class="clearfix"></div>
+            <input type="password" name="password" required ng-model="formModel.password" id="inputPassword" />
 
-		<div class="login-box-logo">
-			<img src="img/logo_transparent_200x75.png">
-		</div>
+            <div class="btn-login-box">
+                <button type="submit" class="btn-link-login btn-login" ng-click="submit();">登录</button>
+            </div>
 
-    <div class="login-inner-box">
-			<div class="login-tab-header">
-				<button class="btn-login-tab" ng-click="loginMode = true;" ng-class="{active: loginMode}">
-					登 录
-				</button>
-				<button class="btn-login-tab" ng-click="loginMode = false;" ng-class="{active: !loginMode}" ng-show="!disableUserSignUp">
-					注 册
-				</button>
-			</div>
+            <span class="help-block go-register">还没有用户名？<a href="signupfree" class="btn-link-login">免费注册</a></span>
 
-      <form name="loginForm" class="login-form" style="margin-top: 25px;">
-				<div class="tight-form-container">
-					<div class="tight-form" ng-if="loginMode">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 78px">
-								<strong>账号</strong>
-							</li>
-							<li>
-								<input type="text" name="username" class="tight-form-input last" required ng-model='formModel.user' placeholder="账号 或 邮箱" style="width: 253px">
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
-					<div class="tight-form" ng-if="loginMode">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 78px">
-								<strong>密码</strong>
-							</li>
-							<li>
-								<input type="password" name="password" class="tight-form-input last" required ng-model="formModel.password" id="inputPassword" style="width: 253px" placeholder="密码">
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
+        </form>
+    </section>
 
-					<div class="tight-form" ng-if="!loginMode">
-						<ul class="tight-form-list">
-							<li class="tight-form-item" style="width: 79px">
-								<strong>邮箱</strong>
-							</li>
-							<li>
-								<input type="email" class="tight-form-input last" required ng-model='formModel.email' placeholder="email" style="width: 253px">
-							</li>
-						</ul>
-						<div class="clearfix"></div>
-					</div>
-
-				</div>
-
-				<div class="login-submit-button-row">
-					<button type="submit" class="btn" ng-click="submit();" ng-class="{'btn-inverse': !loginForm.$valid, 'btn-primary': loginForm.$valid}">
-						{{submitBtnText}}
-					</button>
-				</div>
-			</form>
-
-			<div class="clearfix"></div>
-
-			<div class="login-oauth text-center">
-				<a class="btn btn-google" href="login/google" target="_self" ng-if="googleAuthEnabled">
-					<i class="fa fa-google"></i>
-					with Google
-				</a>
-				<a class="btn btn-github" href="login/github" target="_self" ng-if="githubAuthEnabled">
-					<i class="fa fa-github"></i>
-					with Github
-				</a>
-			</div>
-		</div>
-
-		<div class="row" style="margin-top: 40px">
-			<div class="text-center">
-				<a href="user/password/send-reset-email">
-					忘记密码?
-				</a>
-			</div>
-		</div>
-
-		<div class="row" style="margin-top: 50px">
-			<div class="version-footer text-center small">
-				Copyright CloudWiz
-			</div>
-		</div>
-
-	</div>
-
-
+    <footer class="sign-footer">
+        copyright &copy; 2017 云兴维智（北京）科技有限公司 | 京ICP备17008193号
+    </footer>
+</div>

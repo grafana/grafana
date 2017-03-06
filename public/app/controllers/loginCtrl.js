@@ -42,11 +42,7 @@ function (angular, config) {
     };
 
     $scope.submit = function() {
-      if ($scope.loginMode) {
         $scope.login();
-      } else {
-        $scope.signUp();
-      }
     };
 
     $scope.loginModeChanged = function(newValue) {
