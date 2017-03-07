@@ -147,3 +147,24 @@ func verifyUserSignUpEmail(email string, code string) (bool, Response) {
 
 	return true, nil
 }
+
+func ProposeToUse(c *middleware.Context, form dtos.ProposeUsers) Response {
+
+  createUserCmd := m.CreateProposeUserCommand{
+    Email:    form.Email,
+    Name:     form.Username,
+    Phone:    form.Phone,
+    Org:      form.OrgName,
+    Scale:    form.Scale,
+  }
+
+  if err := bus.Dispatch(&createUserCmd); err != nil {
+    return ApiError(500, "Failed to create propose user", err)
+  }
+
+  bus.Dispatch(&m.SendProposeUserEmail{})
+
+  return Json(200, util.DynMap{
+    "created": "success",
+  })
+}

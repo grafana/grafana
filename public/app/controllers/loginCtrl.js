@@ -42,7 +42,7 @@ function (angular, config) {
     };
 
     $scope.submit = function() {
-        $scope.login();
+      $scope.login();
     };
 
     $scope.loginModeChanged = function(newValue) {

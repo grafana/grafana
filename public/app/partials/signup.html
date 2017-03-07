@@ -26,25 +26,25 @@
                 <div class="control-group">
                     <label class="control-label" for="inputEmail">工作邮箱：</label>
                     <div class="controls">
-                        <input type="text" id="inputEmail" placeholder="例如：username@cloudwiz.cn">
+                        <input type="text" id="inputEmail" placeholder="例如：username@cloudwiz.cn" ng-model="formModel.email">
                     </div>
                 </div>
                 <div class="control-group">
                     <label class="control-label">姓名：</label>
                     <div class="controls">
-                        <input type="text">
+                        <input type="text" ng-model="formModel.username">
                     </div>
                 </div>
                 <div class="control-group">
                     <label class="control-label">公司名称：</label>
                     <div class="controls">
-                        <input type="text">
+                        <input type="text" ng-model="formModel.orgName">
                     </div>
                 </div>
                 <div class="control-group">
                     <label class="control-label">手机号：</label>
                     <div class="controls">
-                        <input type="text">
+                        <input type="text" ng-model="formModel.phone">
                     </div>
                 </div>
                 <div class="control-group">
@@ -64,7 +64,7 @@
                     <a href="###">隐私条款</a>
                 </div>
                 <div class="control-group">
-                    <button type="免费试用" class="btn-link-login btn-login">免费试用</button>
+                    <button type="免费试用" class="btn-link-login btn-login" ng-click="submit()">免费试用</button>
                 </div>
                 <div class="control-group go-login">
                     <strong>已有账户，请</strong>

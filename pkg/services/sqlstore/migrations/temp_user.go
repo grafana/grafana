@@ -29,10 +29,24 @@ func addTempUserMigrations(mg *Migrator) {
 		},
 	}
 
+	proposeUserV1 := Table{
+	  Name: "propose_user",
+	  Columns: []*Column{
+	    {Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+	    {Name: "email", Type: DB_NVarchar, Length: 255, Nullable: true},
+	    {Name: "name", Type: DB_NVarchar, Length: 255, Nullable: true},
+	    {Name: "phone", Type: DB_NVarchar, Length: 20, Nullable: true},
+	    {Name: "org", Type: DB_NVarchar, Length: 255, Nullable: true},
+	    {Name: "scale", Type: DB_NVarchar, Length: 20, Nullable: true},
+	    {Name: "status", Type: DB_Varchar, Length: 255},
+	    {Name: "created", Type: DB_DateTime},
+	  },
+	}
 	// addDropAllIndicesMigrations(mg, "v7", tempUserV1)
 	// mg.AddMigration("Drop old table tempUser v7", NewDropTableMigration("temp_user"))
 
 	// create table
 	mg.AddMigration("create temp user table v1-7", NewAddTableMigration(tempUserV1))
+	mg.AddMigration("create propose user table ", NewAddTableMigration(proposeUserV1))
 	addTableIndicesMigrations(mg, "v1-7", tempUserV1)
 }

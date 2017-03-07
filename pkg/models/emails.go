@@ -20,3 +20,8 @@ type ValidateResetPasswordCodeQuery struct {
 	Code   string
 	Result *User
 }
+
+//send some alert for ours
+type SendProposeUserEmail struct {
+
+}
