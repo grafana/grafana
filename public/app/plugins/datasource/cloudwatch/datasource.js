@@ -420,12 +420,9 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
             return false;
           }
 
-          templateSrv.getVariableNames(v).forEach(function(variableName) {
-            if (_.has(scopedVars, variableName)) {
-              return false;
-            }
+          return !templateSrv.getVariableNames(v).some(function(variableName) {
+            return _.has(scopedVars, variableName);
           });
-          return true;
         });
 
         if (dimensionKey) {
