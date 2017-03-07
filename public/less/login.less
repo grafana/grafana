@@ -1,4 +1,101 @@
-.login-box{
+// invite page
+.invite-box {
+    text-align: center;
+    border: 1px solid #e2e2e2;
+    background-color: #f9f9f9;
+    position: fixed;
+    max-width: 800px;
+    left: 0;
+    right: 0;
+    margin-left: auto;
+    margin-right: auto;
+    top: 20%;
+
+    h3 {
+        margin-top: 30px;
+    }
+
+    .modal-tagline {
+        font-size: 16px;
+    }
+}
+
+.password-strength {
+    display: block;
+    width: 15%;
+    overflow: visible;
+    white-space: nowrap;
+    padding-top: 3px;
+    color: #222;
+    border-top: 3px solid #ff4136;
+
+    &.password-strength-good {
+      width: 100%;
+      border-top: 3px solid #3dd441;
+    }
+
+    &.password-strength-ok {
+      width: 40%;
+      border-top: 3px solid #ffa04e;
+    }
+}
+
+// common page
+.login-box {
+    width: 700px;
+    margin: 100px auto 0;
+}
+
+.login-box-logo {
+    text-align: center;
+    padding-bottom: 50px;
+}
+
+.login-inner-box {
+    background: #f9f9f9;
+}
+
+.login-tab-header {
+    background: #efefef;
+    text-align: center;
+}
+
+.btn-login-tab {
+    background: transparent;
+    border: 0;
+    font-size: 15px;
+    padding: 10px;
+    font-weight: 700;
+    display: inline-block;
+    width: 170px;
+    color: #555;
+}
+
+.login-box .login-form {
+    width: 50%;
+    float: left;
+    margin-left: 25%;
+    margin-right: 25%;
+    padding-top: 25px;
+}
+
+.login-submit-button-row {
+    text-align: center;
+    margin-top: 40px;
+
+    button {
+      padding: 9px 7px;
+      font-size: 14px;
+      font-weight: 700;
+      min-width: 150px;
+      display: inline-block;
+      border: 1px solid #fff;
+  }
+}
+
+
+// login page
+.login-content{
   min-height: 700px;
   overflow: hidden;
   font-weight: bold;
@@ -13,20 +110,11 @@
 
 .sign-header{
   width: 100%;
+  height: 100px;
   background: @white;
   overflow: hidden;
   border-bottom: 1px solid rgb(151,151,151);
-  img{
-    margin: 18px 19px 14px 29px;
-  }
-  span{
-    font-size: 36px;
-    font-weight: bold;
-    color: rgb(57,57,58);
-    margin-top: 43px;
-  }
-  a{
-    float: right;
+  .btn-link-login{
     font-size: 28px;
     line-height: 75px;
     width: 234px;
@@ -35,9 +123,20 @@
     margin-top: 16px;
     margin-right: 84px;
   }
+  img{
+    margin: 0px 19px 14px 29px;
+  }
+  span{
+    display: inline-block;
+    height: 100%;
+    font-size: 36px;
+    font-weight: bold;
+    color: rgb(57,57,58);
+    margin-top: 43px;
+  }
 }
 
-.login-inner-box{
+.login-inner-content{
   position: absolute;
   left: 0;
   right: 0;
@@ -46,7 +145,7 @@
   margin: auto;
 }
 
-.login-form{
+.login-content-form{
   
   &>label{
     font-size: 24px;
@@ -114,17 +213,7 @@
 
 /* 电脑的分辨率 */
 @media (min-width: 768px){
-
-  .sign-header{
-    img{
-      float: left;
-    }
-    span{
-      float: left;
-    }
-  }
-
-  .login-inner-box{
+  .login-inner-content{
       width: 360px;
       height: 300px;
   }
@@ -133,17 +222,16 @@
 @media (max-width: 767px) { 
   .sign-header{
     text-align: center;
-    line-height: 105px;
-    img{
-      margin-top: 0;
+    .pull-left{
+      float: none;
     }
-    a{
+    .pull-right{
       display: none;
     }
   }
 
-  .login-inner-box{
+  .login-inner-content{
       width: 80%;
       height: 50%;
   }
- }
+}

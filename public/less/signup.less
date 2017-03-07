@@ -2,29 +2,30 @@
     width: 100%;
     height: 100vh;
     min-height: 800px;
-
     background: @white;
     font-weight: bold;
 }
 
 .signup-inner-box{
-    position: relative;
     margin-bottom: 200px;
+    background: linear-gradient(to right,rgb(43,175,250),rgba(102,214,252,0.8));
+    .container{
+        position: relative;
+        min-width: 1300px;
+    }
 }
 
 .signup-description{
     color: @white;
-    background: linear-gradient(to right,rgb(43,175,250),rgba(102,214,252,0.8));
     padding-top: 66px;
     padding-bottom: 50px;
     strong{
-        margin-left: 45px;
         font-size: 36px;
         line-height: 50px;
     }
     .signup-desc-list{
         margin-top: 74px;
-        margin-left: 85px;
+        margin-left: 40px;
         margin-bottom: 70px;
         font-size: 26px;
         line-height: 38px;
@@ -34,7 +35,6 @@
         font-weight: bold;
     }
     p{
-        margin-left: 45px;
         font-size: 28px;
         font-weight: bold;
         line-height: 30px;
@@ -45,8 +45,8 @@
 .signup-right{
     position: absolute;
     width: 550px;
-    top: 24px;
-    right: 68px;
+    top: 20px;
+    right: 0px;
     padding: 20px;
     background: rgba(244,244,244,0.71);
 }
@@ -83,12 +83,16 @@
         width: 270px;
         height: 27px;
     }
+
+    .controls>select{
+        width: 286px;
+        height: 36px;
+    }
      
 }
 
 .signup-accept{
     margin-bottom: 35px;
-
     strong{
         font-size: 18px;
     }
@@ -138,6 +142,12 @@
     .signup-box{
         background: linear-gradient(to right,rgb(43,175,250),rgba(102,214,252,0.8));
     }
+    .signup-inner-box{
+        background: none;
+    }
+    .signup-inner-box>.container{
+        min-width: 0px;
+    }
     .signup-description{
         display: none;
     }
@@ -153,9 +163,6 @@
  
 /* 横向放置的手机和竖向放置的平板之间的分辨率 */
 @media (max-width: 767px) {
-    .signup-box{
-        padding-bottom: 400px;
-    }
     .signup-right{
         position: static;
         min-width: auto;
@@ -170,5 +177,15 @@
                 width: auto;
             }
         }
+    }
+}
+
+@media (max-width:540px){
+     .signup-box{
+        overflow: scroll;
+        padding-bottom: 0px;
+    }
+    .signup-inner-box{
+        margin-bottom: 0px;
     }
 }
