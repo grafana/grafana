@@ -429,11 +429,11 @@ function($, _) {
   // Throughput
   kbn.valueFormats.opssec    = kbn.formatBuilders.simpleCountUnit('ops/s');
   kbn.valueFormats.readsec   = kbn.formatBuilders.simpleCountUnit('reads/s');
-  kbn.valueFormats.writesec  = kbn.formatBuilders.simpleCountUnit('writes/s');
+  kbn.valueFormats.writessec = kbn.formatBuilders.simpleCountUnit('writes/s');
   kbn.valueFormats.ioopssec  = kbn.formatBuilders.simpleCountUnit('I/O ops/s');
-  kbn.valueFormats.opsmin    = kbn.formatBuilders.simpleCountUnit('ops/m');
-  kbn.valueFormats.readsmin  = kbn.formatBuilders.simpleCountUnit('reads/m');
-  kbn.valueFormats.writesmin = kbn.formatBuilders.simpleCountUnit('writes/m');
+  kbn.valueFormats.opsmin    = kbn.formatBuilders.simpleCountUnit('ops/min');
+  kbn.valueFormats.readsmin  = kbn.formatBuilders.simpleCountUnit('reads/min');
+  kbn.valueFormats.writesmin = kbn.formatBuilders.simpleCountUnit('writes/min');
 
   // Energy
   kbn.valueFormats.watt         = kbn.formatBuilders.decimalSIPrefix('W');
@@ -780,9 +780,9 @@ function($, _) {
           {text: 'reads/sec (reads/s)',     value: 'readsec' },
           {text: 'writes/sec (writes/s)',   value: 'writessec' },
           {text: 'I/O ops/sec (I/O ops/s)', value: 'ioopssec'},
-          {text: 'ops/min (ops/m)',         value: 'opsmin' },
-          {text: 'reads/min (reads/m)',     value: 'readsmin' },
-          {text: 'writes/min (writes/m)',   value: 'writesmin' },
+          {text: 'ops/min (ops/min)',         value: 'opsmin' },
+          {text: 'reads/min (reads/min)',     value: 'readsmin' },
+          {text: 'writes/min (writes/min)',   value: 'writesmin' },
         ]
       },
       {

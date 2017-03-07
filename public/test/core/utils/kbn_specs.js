@@ -62,11 +62,11 @@ define([
   describeValueFormat('ns', 25, 1, 0, '25 ns');
   describeValueFormat('ns', 2558, 50, 0, '2.56 µs');
 
-  describeValueFormat('ops', 123, 1, 0, '123 ops');
-  describeValueFormat('rps', 456000, 1000, -1, '456K rps');
-  describeValueFormat('rps', 123456789, 1000000, 2, '123.457M rps');
-  describeValueFormat('wps', 789000000, 1000000, -1, '789M wps');
-  describeValueFormat('iops', 11000000000, 1000000000, -1, '11B iops');
+  describeValueFormat('opssec', 123, 1, 0, '123 ops/s');
+  describeValueFormat('readsec', 456000, 1000, -1, '456K reads/s');
+  describeValueFormat('readsec', 123456789, 1000000, 2, '123.457M reads/s');
+  describeValueFormat('writessec', 789000000, 1000000, -1, '789M writes/s');
+  describeValueFormat('ioopssec', 11000000000, 1000000000, -1, '11B I/O ops/s');
 
   describeValueFormat('s', 1.23456789e-7, 1e-10, 8, '123.5 ns');
   describeValueFormat('s', 1.23456789e-4, 1e-7, 5, '123.5 µs');
