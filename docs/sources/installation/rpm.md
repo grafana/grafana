@@ -16,6 +16,7 @@ weight = 2
 Description | Download
 ------------ | -------------
 Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [4.1.2 (x86-64 rpm)](https://grafanarel.s3.amazonaws.com/builds/grafana-4.1.2-1486989747.x86_64.rpm)
+Beta for CentOS / Fedora / OpenSuse / Redhat Linux | [4.2.0-beta1 (x86-64 rpm)](https://grafanarel.s3.amazonaws.com/builds/grafana-4.2.0-beta1.x86_64.rpm)
 
 ## Install Stable
 

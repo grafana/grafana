@@ -30,7 +30,7 @@ install:
 build_script:
   - go run build.go build
   - grunt release
-  - go run build.go sha1-dist
+  - go run build.go sha-dist
   - cp dist/* .
 
 artifacts:

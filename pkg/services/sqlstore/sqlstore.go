@@ -160,6 +160,9 @@ func getEngine() (*xorm.Engine, error) {
 		engine.SetMaxConns(DbCfg.MaxConn)
 		engine.SetMaxOpenConns(DbCfg.MaxOpenConn)
 		engine.SetMaxIdleConns(DbCfg.MaxIdleConn)
+		// engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
+		// engine.ShowSQL = true
+		// engine.ShowInfo = true
 	}
 	return engine, nil
 }

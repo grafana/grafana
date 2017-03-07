@@ -258,8 +258,11 @@ func getAllMetrics(cwData *datasourceInfo) (cloudwatch.ListMetricsOutput, error)
 		Region:      aws.String(cwData.Region),
 		Credentials: creds,
 	}
-
-	svc := cloudwatch.New(session.New(cfg), cfg)
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		return cloudwatch.ListMetricsOutput{}, err
+	}
+	svc := cloudwatch.New(sess, cfg)
 
 	params := &cloudwatch.ListMetricsInput{
 		Namespace: aws.String(cwData.Namespace),

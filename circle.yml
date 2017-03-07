@@ -33,7 +33,7 @@ dependencies:
 
 test:
   override:
-     - bash scripts/circle-test.sh
+    - bash scripts/circle-test.sh
 
 deployment:
   gh_branch:
@@ -41,7 +41,7 @@ deployment:
     commands:
       - ./scripts/build/deploy.sh
       - ./scripts/build/sign_packages.sh
-      - go run build.go sha1-dist
+      - go run build.go sha-dist
       - aws s3 sync ./dist s3://$BUCKET_NAME/master
       - ./scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} master
       - ./scripts/trigger_docker_build.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN}
@@ -50,7 +50,7 @@ deployment:
     commands:
       - ./scripts/build/deploy.sh
       - ./scripts/build/sign_packages.sh
-      - go run build.go sha1-dist
+      - go run build.go sha-dist
       - aws s3 sync ./dist s3://$BUCKET_NAME/release
       - ./scripts/trigger_windows_build.sh ${APPVEYOR_TOKEN} ${CIRCLE_SHA1} release
-
+      - ./scripts/trigger_docker_build.sh ${TRIGGER_GRAFANA_PACKER_CIRCLECI_TOKEN} ${CIRCLE_TAG}

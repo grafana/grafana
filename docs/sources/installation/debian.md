@@ -16,6 +16,7 @@ weight = 1
 Description | Download
 ------------ | -------------
 Stable for Debian-based Linux | [4.1.2 (x86-64 deb)](https://grafanarel.s3.amazonaws.com/builds/grafana_4.1.2-1486989747_amd64.deb)
+Beta for Debian-based Linux | [4.2.0-beta1 (x86-64 deb)](https://grafanarel.s3.amazonaws.com/builds/grafana_4.2.0-beta1_amd64.deb)
 
 ## Install Stable
 
@@ -23,6 +24,14 @@ Stable for Debian-based Linux | [4.1.2 (x86-64 deb)](https://grafanarel.s3.amazo
 $ wget https://grafanarel.s3.amazonaws.com/builds/grafana_4.1.2-1486989747_amd64.deb
 $ sudo apt-get install -y adduser libfontconfig
 $ sudo dpkg -i grafana_4.1.2-1486989747_amd64.deb
+```
+
+## Install Beta
+
+```
+$ wget https://grafanarel.s3.amazonaws.com/builds/grafana_4.2.0-beta1_amd64.deb
+$ sudo apt-get install -y adduser libfontconfig
+$ sudo dpkg -i grafana_4.2.0-beta1_amd64.deb
 ```
 
 ## APT Repository
