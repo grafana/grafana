@@ -57,7 +57,7 @@ var panelTemplate = `
   </div>
 `;
 
-module.directive('grafanaPanel', function($rootScope) {
+module.directive('grafanaPanel', function($rootScope, $document, $timeout) {
   return {
     restrict: 'E',
     template: panelTemplate,
@@ -183,6 +183,19 @@ module.directive('grafanaPanel', function($rootScope) {
           infoDrop.destroy();
         }
       });
+
+      scope.needsRefresh = false;
+
+      scope.isVisible = function () {
+        var position = panelContainer[0].getBoundingClientRect();
+        return (0 < position.top) && (position.top < window.innerHeight);
+      };
+
+      $document.bind('scroll', _.debounce(function () {
+        if (scope.ctrl.dashboard.loadOnScroll && scope.needsRefresh) {
+          scope.ctrl.refresh();
+        }
+      }, 250));
     }
   };
 });
