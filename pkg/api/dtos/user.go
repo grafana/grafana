@@ -13,6 +13,14 @@ type SignUpStep2Form struct {
 	OrgName  string `json:"orgName"`
 }
 
+type ProposeUsers struct {
+  Email    string `json:"email"`
+  Phone    string `json:"phone"`
+  Username string `json:"username"`
+  OrgName  string `json:"orgName"`
+  Scale    string `json:"scale"`
+}
+
 type AdminCreateUserForm struct {
 	Email    string `json:"email"`
 	Login    string `json:"login"`

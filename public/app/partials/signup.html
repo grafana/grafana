@@ -23,31 +23,30 @@
             <div class="signup-right">
                 <form class="form-horizontal signup-form">
                     <div class="control-group">
-                        <h2>申请试用</h2>
+                        <h2>免费试用</h2>
                         <h3>(30天期限)</h3>
                     </div>
                     <div class="control-group">
                         <label class="control-label" for="inputEmail">工作邮箱：</label>
                         <div class="controls">
-                            <input type="email" required id="inputEmail" placeholder="例如：username@cloudwiz.cn">
+                            <input type="email" id="inputEmail" placeholder="例如：username@cloudwiz.cn" ng-model="formModel.email">
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label">姓名：</label>
                         <div class="controls">
-                            <input type="text" required>
+                            <input type="text" ng-model="formModel.username">
                         </div>
                     </div>
                     <div class="control-group">
                         <label class="control-label">手机号：</label>
                         <div class="controls">
-                            <input type="text" required>
-                        </div>
+                            <input type="text" ng-model="formModel.phone">
                     </div>
                     <div class="control-group">
                         <label class="control-label">公司名称：</label>
                         <div class="controls">
-                            <input type="text">
+                            <input type="text" ng-model="formModel.orgName">
                         </div>
                     </div>
                     <div class="control-group">
@@ -62,13 +61,12 @@
                         </div>
                     </div>
                     
-                    
                     <div class="control-group signup-accept">
                         <strong>注册即代表同意</strong>
-                        <a href="###">隐私条款</a>
+                        <a href="javascript:void(0)">隐私条款</a>
                     </div>
                     <div class="control-group">
-                        <button class="btn-link-login btn-login">申请试用</button>
+                        <button type="申请试用" class="btn-link-login btn-login" ng-click="submit()">申请试用</button>
                     </div>
                     <div class="control-group go-login">
                         <strong>已有账户，请</strong>

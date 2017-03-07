@@ -8,6 +8,7 @@ define([
   './loginCtrl',
   './invitedCtrl',
   './signupCtrl',
+  './signupFreeCtrl',
   './resetPasswordCtrl',
   './sidemenuCtrl',
   './errorCtrl',
