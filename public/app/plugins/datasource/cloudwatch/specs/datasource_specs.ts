@@ -129,7 +129,6 @@ describe('CloudWatchDatasource', function() {
     });
 
     it('should generate the correct targets by expanding template variables', function() {
-      var variableName = 'instance_id';
       var templateSrv = {
         variables: [
           {
@@ -148,11 +147,8 @@ describe('CloudWatchDatasource', function() {
             return '';
           }
         },
-        getVariableName: function (e) {
-          var result = variableName;
-          variableName = '';
-          return result;
-        },
+        getVariableName: function (e) { return 'instance_id'; },
+        getVariableNames: function (e) { return [ 'instance_id' ]; },
         variableExists: function (e) { return true; },
         containsVariable: function (str, variableName) { return str.indexOf('$' + variableName) !== -1; }
       };
