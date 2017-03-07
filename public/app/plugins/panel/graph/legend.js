@@ -65,7 +65,9 @@ function (angular, _, $) {
           var el = $(e.currentTarget);
           var index = getSeriesIndexForElement(el);
           var seriesInfo = seriesList[index];
+          var scrollPosition = $($container.children('tbody')).scrollTop();
           ctrl.toggleSeries(seriesInfo, e);
+          $($container.children('tbody')).scrollTop(scrollPosition);
         }
 
         function sortLegend(e) {
