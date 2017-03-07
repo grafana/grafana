@@ -2,6 +2,7 @@
 
 ## Minor Enchancements
 * **Threema**: Add emoji to Threema alert notifications [#7676](https://github.com/grafana/grafana/pull/7676) thx [@dbrgn](https://github.com/dbrgn)
+* **Panels**: Support dm3 unit [#7695](https://github.com/grafana/grafana/issues/7695) thx [@mitjaziv](https://github.com/mitjaziv)
 
 # 4.2.0-beta2 (unreleased)
 ## Minor Enhancements
