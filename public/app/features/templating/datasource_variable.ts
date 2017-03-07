@@ -2,7 +2,7 @@
 
 import _ from 'lodash';
 import kbn from 'app/core/utils/kbn';
-import {Variable, assignModelProperties, variableTypes} from './variable';
+import {Variable, containsVariable, assignModelProperties, variableTypes} from './variable';
 import {VariableSrv} from './variable_srv';
 
 export class DatasourceVariable implements Variable {
@@ -25,7 +25,7 @@ export class DatasourceVariable implements Variable {
   };
 
   /** @ngInject **/
-  constructor(private model, private datasourceSrv, private variableSrv) {
+  constructor(private model, private datasourceSrv, private variableSrv, private templateSrv) {
     assignModelProperties(this, model, this.defaults);
     this.refresh = 1;
   }
@@ -48,7 +48,8 @@ export class DatasourceVariable implements Variable {
     var regex;
 
     if (this.regex) {
-      regex = kbn.stringToJsRegex(this.regex);
+      regex = this.templateSrv.replace(this.regex, null, 'regex');
+      regex = kbn.stringToJsRegex(regex);
     }
 
     for (var i = 0; i < sources.length; i++) {
@@ -74,6 +75,9 @@ export class DatasourceVariable implements Variable {
   }
 
   dependsOn(variable) {
+    if (this.regex) {
+      return containsVariable(this.regex, variable.name);
+    }
     return false;
   }
 
