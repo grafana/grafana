@@ -7,7 +7,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('LogIntegrateCtrl', function ($scope , contextSrv) {
+    module.controller('LogIntegrateCtrl', function ($scope, contextSrv) {
       var panelMeta = {
         "collapse": false,
         "editable": false,
@@ -65,8 +65,7 @@ define([
             },
             "timeFrom": null,
             "timeShift": null,
-            "targets": [
-            ],
+            "targets": [],
             "aliasColors": {},
             "seriesOverrides": []
           },
@@ -122,9 +121,7 @@ define([
             },
             "timeFrom": null,
             "timeShift": "2d",
-            "targets": [
-
-            ],
+            "targets": [],
             "aliasColors": {},
             "seriesOverrides": []
           },
@@ -180,9 +177,7 @@ define([
             },
             "timeFrom": null,
             "timeShift": null,
-            "targets": [
-
-            ],
+            "targets": [],
             "aliasColors": {},
             "seriesOverrides": []
           },
@@ -205,12 +200,12 @@ define([
       this.init = function (param) {
         panelMeta.panels[0].targets = param.targets;
         panelMeta.panels[1].targets = _.cloneDeep(param.targets);
-        _.each(panelMeta.panels[1].targets, function(target){
-          target.metric = target.metric +".seasonal"
+        _.each(panelMeta.panels[1].targets, function (target) {
+          target.metric = target.metric + ".seasonal"
         });
         panelMeta.panels[2].targets = _.cloneDeep(param.targets);
-        _.each(panelMeta.panels[2].targets, function(target){
-          target.metric = target.metric +".LB.percent"
+        _.each(panelMeta.panels[2].targets, function (target) {
+          target.metric = target.metric + ".LB.percent"
         });
         var service = param.title.split(".")[0] || "*";
         var host = param.targets[0].tags.host;
@@ -226,7 +221,7 @@ define([
             title: "整合分析",
             id: "123",
             rows: [panelMeta],
-            time: {from: param.from, to: param.to }
+            time: {from: param.from, to: param.to}
           }
         }, $scope);
       };
