@@ -3,18 +3,20 @@
 export default class AdminListUsersCtrl {
   users: any;
   pages = [];
-  perPage = 1000;
+  perPage = 50;
   page = 1;
   totalPages: number;
   showPaging = false;
+  query: any;
 
   /** @ngInject */
   constructor(private $scope, private backendSrv) {
+    this.query = '';
     this.getUsers();
   }
 
   getUsers() {
-    this.backendSrv.get(`/api/users/search?perpage=${this.perPage}&page=${this.page}`).then((result) => {
+    this.backendSrv.get(`/api/users/search?perpage=${this.perPage}&page=${this.page}&query=${this.query}`).then((result) => {
       this.users = result.users;
       this.page = result.page;
       this.perPage = result.perPage;
