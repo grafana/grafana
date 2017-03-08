@@ -42,11 +42,7 @@ function (angular, config) {
     };
 
     $scope.submit = function() {
-      if ($scope.loginMode) {
-        $scope.login();
-      } else {
-        $scope.signUp();
-      }
+      $scope.login();
     };
 
     $scope.loginModeChanged = function(newValue) {
@@ -82,6 +78,14 @@ function (angular, config) {
         }
       });
     };
+
+    $scope.contactUs = function() {
+      $scope.appEvent('confirm-modal', {
+        title: '请致电：17070866703 邮件：service@cloudwiz.cn',
+        icon: 'fa-bell',
+        yesText: '确定'
+      });
+    }
 
     $scope.init();
 

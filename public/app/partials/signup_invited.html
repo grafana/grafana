@@ -1,22 +1,19 @@
-<div class="container">
+<div>
+	<div ng-include="'app/partials/login_header.html'"></div>
 
 	<div class="signup-page-background">
 	</div>
 
 	<div class="login-box">
 
-		<div class="login-box-logo">
-			<img src="img/logo_transparent_200x75.png">
-		</div>
-
     <div class="invite-box">
-			<h3>
-				您好 {{greeting}}.
-			</h3>
+		<h3>
+			您好 {{greeting}}.
+		</h3>
 
-			<div class="modal-tagline">
-				<em>{{invitedBy}}</em> 向您发出了邀请, 加入 <span class="highlight-word">{{contextSrv.user.orgName}}</span></br>请您补全以下用户信息并进入系统:
-			</div>
+		<div class="modal-tagline">
+			<em>{{invitedBy}}</em> 向您发出了邀请, 加入 <span class="highlight-word">{{contextSrv.user.orgName}}</span></br>请您补全以下用户信息并进入系统:
+		</div>
 
       <form name="inviteForm" class="login-form">
 				<div class="tight-form-container">
@@ -81,13 +78,9 @@
 			<div class="clearfix"></div>
 		</div>
 
-    <div class="row" style="margin-top: 50px">
-      <div class="version-footer text-center small">
-        Copyright CloudWiz
-      </div>
-    </div>
-
 	</div>
+
+	<div ng-include="'app/partials/login_footer.html'"></div>
 
 </div>
 

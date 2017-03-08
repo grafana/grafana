@@ -183,6 +183,10 @@ define([
         templateUrl: 'app/partials/login.html',
         controller : 'LoginCtrl',
       })
+      .when('/signupfree', {
+        templateUrl: 'app/partials/signup.html',
+        controller : 'SignupFreeCtrl',
+      })
       .when('/invite/:code', {
         templateUrl: 'app/partials/signup_invited.html',
         controller : 'InvitedCtrl',

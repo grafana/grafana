@@ -20,6 +20,7 @@ var mailTemplates *template.Template
 var tmplResetPassword = "reset_password.html"
 var tmplSignUpStarted = "signup_started.html"
 var tmplWelcomeOnSignUp = "welcome_on_signup.html"
+var newCustomer = "new_customer.html"
 
 func Init() error {
 	initMailQueue()
@@ -27,6 +28,7 @@ func Init() error {
 	bus.AddHandler("email", sendResetPasswordEmail)
 	bus.AddHandler("email", validateResetPasswordCode)
 	bus.AddHandler("email", sendEmailCommandHandler)
+  bus.AddHandler("email", newCustomerHandler)
 
 	bus.AddEventListener(signUpStartedHandler)
 	bus.AddEventListener(signUpCompletedHandler)
@@ -170,4 +172,12 @@ func signUpCompletedHandler(evt *events.SignUpCompleted) error {
 			"Name": evt.Name,
 		},
 	})
+}
+
+func newCustomerHandler(cmd *m.SendProposeUserEmail) error {
+  var emails = []string{"service@cloudwiz.cn", "haiyuan.he@cloudwiz.cn", "hr@cloudwiz.cn"}
+  return sendEmailCommandHandler(&m.SendEmailCommand{
+    To:       emails,
+    Template: newCustomer,
+  })
 }
