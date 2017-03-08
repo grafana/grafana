@@ -32,7 +32,13 @@
 		</div>
 		<div class="gf-form">
 			<span class="gf-form-label width-8">Min span</span>
-			<select class="gf-form-input" ng-model="ctrl.panel.minSpan" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10,11,12]">
+			<select class="gf-form-input" ng-model="ctrl.panel.minSpan" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10,11,12]" ng-change="ctrl.compareRepeatSpans('min')">
+				<option value=""></option>
+			</select>
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label width-8">Max span</span>
+			<select class="gf-form-input" ng-model="ctrl.panel.maxSpan" ng-options="f for f in [1,2,3,4,5,6,7,8,9,10,11,12]" ng-change="ctrl.compareRepeatSpans('max')">
 				<option value=""></option>
 			</select>
 		</div>
