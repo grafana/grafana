@@ -74,7 +74,8 @@
 
 		<div class="gf-form-inline">
 			<div class="gf-form">
-				<label class="gf-form-label query-keyword width-9">ORDER BY time</label>
+				<label class="gf-form-label query-keyword width-7">ORDER BY</label>
+				<label class="gf-form-label query-part">time</label>
 				<div class="gf-form-select-wrapper">
 					<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.orderByTime" ng-options="f.value as f.text for f in ctrl.orderByTime" ng-change="ctrl.refresh()"></select>
 				</div>
@@ -97,7 +98,7 @@
 
 	<div class="gf-form-inline">
 		<div class="gf-form max-width-30">
-			<label class="gf-form-label query-keyword width-9">ALIAS BY</label>
+			<label class="gf-form-label query-keyword width-7">ALIAS BY</label>
 			<input type="text" class="gf-form-input" ng-model="ctrl.target.alias" spellcheck='false' placeholder="Naming pattern" ng-blur="ctrl.refresh()">
 		</div>
 		<div class="gf-form">
