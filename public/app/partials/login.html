@@ -1,11 +1,5 @@
 <div class="login-content">
-    <header class="sign-header">
-        <a href="login" class="pull-left">
-            <img src="../../img/logo_login_64x72.png" alt="云兴维智" />
-            <span>云兴维智</span>
-        </a>
-        <a href="javascript:void(0)" class="pull-right btn-link-login">联系我们</a>
-    </header>
+    <div ng-include="'app/partials/login_header.html'"></div>
     <section class="login-inner-content">
         <form name="loginForm" class="login-form login-content-form">
             <label>登录名：</label>
@@ -24,7 +18,5 @@
         </form>
     </section>
 
-    <footer class="sign-footer">
-        copyright &copy; 2017 云兴维智（北京）科技有限公司 | 京ICP备17008193号
-    </footer>
+    <div ng-include="'app/partials/login_footer.html'"></div>
 </div>

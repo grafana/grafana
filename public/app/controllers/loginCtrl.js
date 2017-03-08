@@ -79,6 +79,14 @@ function (angular, config) {
       });
     };
 
+    $scope.contactUs = function() {
+      $scope.appEvent('confirm-modal', {
+        title: '请致电：17070866703 邮件：service@cloudwiz.cn',
+        icon: 'fa-bell',
+        yesText: '确定'
+      });
+    }
+
     $scope.init();
 
   });
