@@ -19,7 +19,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
 
   var module = angular.module('grafana.directives');
 
-  module.directive('grafanaGraph', function($rootScope, timeSrv) {
+  module.directive('grafanaGraph', function($rootScope, timeSrv, $controller) {
     return {
       restrict: 'A',
       template: '<div> </div>',
@@ -169,14 +169,12 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
 
         function bindClickHook(plot, eventHolder) {
           eventHolder.dblclick(function () {
-            var newScope = scope.$new();
-            newScope.from = moment.utc(plot.getAxes().xaxis.min).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
-            newScope.to = moment.utc(plot.getAxes().xaxis.max).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
-            scope.appEvent('show-modal', {
-              src: './app/partials/elk.html',
-              modalClass: 'modal-no-header modal',
-              scope: newScope
-            });
+            var logParams = {};
+            logParams.title = plot.getData()[0].id;
+            logParams.targets = scope.panel.targets;
+            logParams.from = moment.utc(plot.getAxes().xaxis.min).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+            logParams.to = moment.utc(plot.getAxes().xaxis.max).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+            $controller('LogIntegrateCtrl', { $scope: $rootScope.mainScope}).init(logParams);
           });
         }
         // Function for rendering panel

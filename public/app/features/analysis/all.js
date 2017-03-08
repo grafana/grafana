@@ -1,3 +1,4 @@
 define([
-  './analysisCtrl'
+  './analysisCtrl',
+  './logIntegrateCtrl'
 ], function () {});

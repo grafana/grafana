@@ -164,9 +164,7 @@ func Register(r *macaron.Macaron) {
 		}, regOrgAdmin)
 
 		// Alert source
-		r.Group("/alertsource", func() {
-			r.Get("/", GetAlertSource)
-		})
+    r.Get("/customized_sources", GetCustomizedSource)
 
 		r.Get("/frontend/settings/", GetFrontendSettings)
 		r.Any("/datasources/proxy/:id/*", reqSignedIn, ProxyDataSourceRequest)

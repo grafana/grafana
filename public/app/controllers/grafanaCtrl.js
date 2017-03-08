@@ -26,13 +26,14 @@ function (angular, config, _, $, store) {
       alertSrv.init();
       utilSrv.init();
       if ($location.path() !== '/login') {
-        backendSrv.initAlertDUrl();
+        backendSrv.initCustomizedSources();
         backendSrv.updateSystemsMap();
       }
       $scope.dashAlerts = alertSrv;
     };
 
     $scope.initDashboard = function(dashboardData, viewScope) {
+      $rootScope.mainScope = viewScope;
       $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
       contextSrv.system = dashboardData.dashboard.system || 0
     };

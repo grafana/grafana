@@ -154,9 +154,10 @@ function (angular, _, config) {
       contextSrv.system = id;
     };
 
-    this.initAlertDUrl = function () {
-      this.get('/api/alertsource').then(function (result) {
-        self.alertDUrl = result.alert.alert_urlroot;
+    this.initCustomizedSources = function () {
+      this.get('/api/customized_sources').then(function (result) {
+        self.alertDUrl = result.alert;
+        contextSrv.elkUrl = result.elk;
       });
     };
 

@@ -1,0 +1,61 @@
+  <div class="grafana-row" ng-controller="RowCtrl"
+       ng-repeat="(row_name, row) in dashboard.rows" row-height>
+
+    <div class="row-control">
+      <div class="row-control-inner">
+        <div class="row-close" ng-show="row.collapse" data-placement="bottom" >
+          <div class="row-close-buttons">
+							<span class="row-button bgPrimary" ng-click="toggleRow(row)">
+								<i bs-tooltip="'Expand row'" data-placement="right" class="fa fa-caret-left pointer" ></i>
+							</span>
+          </div>
+          <div class="row-text pointer" ng-click="toggleRow(row)" ng-bind="row.title | interpolateTemplateVars:this"></div>
+        </div>
+      </div>
+
+      <div class="panels-wrapper" ng-if="!row.collapse">
+        <div class="row-text pointer" ng-click="toggleRow(row)" ng-if="row.showTitle" ng-bind="row.title | interpolateTemplateVars:this">
+        </div>
+
+
+        <div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel" ui-draggable="!dashboardViewState.fullscreen" drag="panel.id"
+             ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
+          <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+        </div>
+
+
+        <div class="page-container panel" style="padding: 20px 20px 20px 20px;">
+          <h2>请选择合适的机器进行查看</h2>
+          <div class="panel grafana-options-table">
+            <div controls controls-row>
+              <label class="span4 checkbox" ng-repeat="(hostname, health) in hosts">
+                <input ng-checked="$index == 0 " type="radio" ng-click="changeHost(hostname)" name="changeHost">
+                {{hostname}}</input> 健康指数:{{health}}
+                <a href="/alerts/association/{{hostname}}/100/{{dashboard.id}}">
+                  <span class="btn btn-mini btn-primary">
+                   <i class="fa fa-signal">关联性分析</i>
+                  </span>
+                </a>
+                <!-- <a href="http://localhost:5601/app/kibana#/discover?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-5d,mode:quick,to:now))&_a=(columns:!(message,type,host),index:'logstash-*',interval:auto,query:(query_string:(analyze_wildcard:!t,query:'*')),sort:!('@timestamp',desc))&indexPattern=logstash-*&type=histogram"
+                   target="_blank">
+                   <span class="btn btn-mini btn-primary">
+                    <i class="fa fa-signal">相关联日志</i>
+                   </span>
+                 </a>-->
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div panel-drop-zone class="panel panel-drop-zone" ui-on-drop="onDrop($data, row)" data-drop="true">
+          <div class="panel-container" style="background: transparent">
+            <div style="text-align: center">
+              <em>点击这里(drop here)</em>
+            </div>
+          </div>
+        </div>
+
+        <div class="clearfix"></div>
+      </div>
+    </div>
+  </div>

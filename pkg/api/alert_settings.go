@@ -6,13 +6,12 @@ import (
   "github.com/wangy1931/grafana/pkg/log"
 )
 
-func GetAlertSource(c *middleware.Context) {
+func GetCustomizedSource(c *middleware.Context) {
   log.Info("Alert Url: %v", setting.Alert.AlertUrlRoot)
-
+  log.Info("ELk Url : %v", setting.ElkSource.ElkSourceUrlRoot)
   alert := make(map[string]interface{})
-  jsonAlertUrl := make(map[string]interface{})
-  jsonAlertUrl["alert_urlroot"] = setting.Alert.AlertUrlRoot
-  alert["alert"] = jsonAlertUrl
+  alert["alert"] = setting.Alert.AlertUrlRoot
+  alert["elk"] = setting.ElkSource.ElkSourceUrlRoot
 
   c.JSON(200, alert)
 }
