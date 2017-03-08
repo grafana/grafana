@@ -4,6 +4,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import moment from 'moment';
 
+import kbn from 'app/core/utils/kbn';
 import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
 
@@ -179,11 +180,16 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       return $q.reject(err);
     }
 
+    var step = '60s';
+    if (annotation.step) {
+      step = templateSrv.replace(annotation.step);
+    }
+
     var start = this.getPrometheusTime(options.range.from, false);
     var end = this.getPrometheusTime(options.range.to, true);
     var query = {
       expr: interpolated,
-      step: this.adjustStep(60, Math.ceil(end - start)) + 's'
+      step: this.adjustStep(kbn.interval_to_seconds(step), Math.ceil(end - start)) + 's'
     };
 
     var self = this;
