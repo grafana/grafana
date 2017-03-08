@@ -15,7 +15,7 @@
                 <p>请联系我们：service@cloudwiz.cn</p>
             </div>
             <div class="signup-right">
-                <form class="form-horizontal signup-form">
+                <form name="signUpFrom" class="form-horizontal signup-form">
                     <div class="control-group">
                         <h2>申请试用</h2>
                         <h3>(30天期限)</h3>
@@ -47,7 +47,7 @@
                     <div class="control-group">
                         <label class="control-label">公司规模：</label>
                         <div class="controls">
-                            <select>
+                            <select required ng-model="formModel.scale">
                                 <option value="50">10~50</option>
                                 <option value="100">50~100</option>
                                 <option value="500">100~500</option>
@@ -55,7 +55,7 @@
                             </select>
                         </div>
                     </div>
-                    
+
                     <div class="control-group signup-accept">
                         <strong>注册即代表同意</strong>
                         <a href="javascript:void(0)">隐私条款</a>
@@ -70,7 +70,7 @@
                 </form>
             </div>
         </div>
-        
+
     </div>
     <div ng-include="'app/partials/login_footer.html'"></div>
 </div>

@@ -16,6 +16,9 @@ define([
       };
 
       $scope.submit = function () {
+        if (!$scope.signUpFrom.$valid) {
+          return;
+        }
         backendSrv.post('/api/user/signup/propose', $scope.formModel).then(function () {
           $scope.appEvent('alert-success', ['申请成功', "很快会有人与您联系, 请保持通话"]);
           $scope.formModel = {};
