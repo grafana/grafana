@@ -88,12 +88,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       var intervalFactor = target.intervalFactor || 1;
       target.step = query.step = this.calculateInterval(interval, intervalFactor);
       var range = Math.ceil(end - start);
-      // Prometheus drop query if range/step > 11000
-      // calibrate step if it is too big
-      if (query.step !== 0 && range / query.step > 11000) {
-        target.step = query.step = Math.ceil(range / 11000);
-      }
-
+      target.step = query.step = this.adjustStep(query.step, range);
       queries.push(query);
     });
 
@@ -124,6 +119,15 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
       return { data: result };
     });
+  };
+
+  this.adjustStep = function(step, range) {
+    // Prometheus drop query if range/step > 11000
+    // calibrate step if it is too big
+    if (step !== 0 && range / step > 11000) {
+      return Math.ceil(range / 11000);
+    }
+    return step;
   };
 
   this.performTimeSeriesQuery = function(query, start, end) {
@@ -175,15 +179,14 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       return $q.reject(err);
     }
 
-    var query = {
-      expr: interpolated,
-      step: '60s'
-    };
-
     var start = this.getPrometheusTime(options.range.from, false);
     var end = this.getPrometheusTime(options.range.to, true);
-    var self = this;
+    var query = {
+      expr: interpolated,
+      step: this.adjustStep(60, Math.ceil(end - start)) + 's'
+    };
 
+    var self = this;
     return this.performTimeSeriesQuery(query, start, end).then(function(results) {
       var eventList = [];
       tagKeys = tagKeys.split(',');
