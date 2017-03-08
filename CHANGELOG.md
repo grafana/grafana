@@ -1,7 +1,6 @@
 # 4.3.0 (unreleased)
 
 ## Minor Enchancements
-* **Admin**: Global User List: add search and pagination [#7469](https://github.com/grafana/grafana/issues/7469)
 
 # 4.2.0-beta2 (unreleased)
 ## Minor Enhancements
@@ -14,7 +13,8 @@
 * **OpenTSDB**: Pass dropcounter rate option if no max counter and no reset value or reset value as 0 is specified [#7743](https://github.com/grafana/grafana/pull/7743) thx [@r4um](https://github.com/r4um)
 * **Templating**: support full resolution for $interval variable [#7696](https://github.com/grafana/grafana/pull/7696) thx [@mtanda](https://github.com/mtanda)
 * **Elasticsearch**: Unique Count on string fields in ElasticSearch [#3536](https://github.com/grafana/grafana/issues/3536), thx [@pyro2927](https://github.com/pyro2927)
-* **Templating**: Data source template variable that refers to other variable in regex filter [#6365](https://github.com/grafana/grafana/issues/6365) thx [@rlodge](https://github.com/rlodge) 
+* **Templating**: Data source template variable that refers to other variable in regex filter [#6365](https://github.com/grafana/grafana/issues/6365) thx [@rlodge](https://github.com/rlodge)
+* **Admin**: Global User List: add search and pagination [#7469](https://github.com/grafana/grafana/issues/7469)
 
 ## Bugfixes
 * **Webhook**: Use proxy settings from environment variables [#7710](https://github.com/grafana/grafana/issues/7710)
