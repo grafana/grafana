@@ -36,7 +36,7 @@ You can leave the search query blank or specify a lucene query.
 If your elasticsearch document has a timestamp field other than `@timestamp` you will need to specify that. As well
 as the name for the fields that should be used for the annotation title, tags and text. Tags and text are optional.
 
-> **Note** The annotation timestamp field in elasticsearch need to be in UTC format.
+> **Note** The annotation timestamp field in elasticsearch needs to be in ISO 8601 format.
 
 ## InfluxDB Annotations
 ![](/img/docs/v2/annotations_influxdb.png)
