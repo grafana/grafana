@@ -144,7 +144,7 @@ function (angular, _, $, config) {
       });
 
       $scope.mainLinks.push({
-        text: "实时报警通知",
+        text: "实时告警通知",
         icon: "fa fa-fw fa-phone",
         href: $scope.getUrl("/oncallers")
       });

@@ -81,9 +81,11 @@ function (angular, config) {
 
     $scope.contactUs = function() {
       $scope.appEvent('confirm-modal', {
-        title: '请致电：17070866703 邮件：service@cloudwiz.cn',
+        title: '欢迎与我们联系',
+        text: '请致电：17070866703 <br/>邮 件：service@cloudwiz.cn',
         icon: 'fa-bell',
-        yesText: '确定'
+        yesText: '确定',
+        modalClass : 'contact-us',
       });
     }
 
