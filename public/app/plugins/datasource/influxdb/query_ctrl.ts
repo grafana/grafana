@@ -34,8 +34,8 @@ export class InfluxQueryCtrl extends QueryCtrl {
       {text: 'Table', value: 'table'},
     ];
     this.orderByTime = [
-      {text: 'Ascending', value: 'ASC'},
-      {text: 'Descending', value: 'DESC'},
+      {text: 'ASC', value: 'ASC'},
+      {text: 'DESC', value: 'DESC'},
     ];
 
     this.policySegment = uiSegmentSrv.newSegment(this.target.policy);
