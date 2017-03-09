@@ -266,8 +266,8 @@ export default class InfluxQuery {
       query += ' OFFSET ' + target.offset;
     }
 
-    if (target.offset) {
-      query += ' SOFFSET ' + target.offset;
+    if (target.soffset) {
+      query += ' SOFFSET ' + target.soffset;
     }
 
     return query;
