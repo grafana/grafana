@@ -71,7 +71,7 @@ function (angular, _) {
       var confirmModal = $modal({
         template: './app/partials/confirm_modal.html',
         persist: false,
-        modalClass: 'modal-no-header confirm-modal',
+        modalClass: 'modal-no-header confirm-modal '+payload.modalClass,
         show: false,
         scope: scope,
         keyboard: false
