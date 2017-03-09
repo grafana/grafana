@@ -372,7 +372,7 @@ function (angular, _, dateMath) {
       }
 
       var query = {
-        metric: templateSrv.replace(target.metric, options.scopedVars),
+        metric: templateSrv.replace(target.metric, options.scopedVars, 'pipe'),
         aggregator: "avg"
       };
 
