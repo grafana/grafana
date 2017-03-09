@@ -14,6 +14,12 @@
       Add new user
     </a>
   </div>
+  <div class="search-field-wrapper pull-right width-18">
+    <span style="position: relative;">
+      <input  type="text" placeholder="Find user by name/login/email" tabindex="1" give-focus="true"
+      ng-model="ctrl.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.getUsers()" />
+    </span>
+  </div>
   <div class="admin-list-table">
     <table class="filter-table form-inline">
       <thead>

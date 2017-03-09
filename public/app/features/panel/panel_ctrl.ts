@@ -35,6 +35,8 @@ export class PanelCtrl {
   containerHeight: any;
   events: Emitter;
   timing: any;
+  skippedLastRefresh: boolean;
+  isPanelVisible: any;
 
   constructor($scope, $injector) {
     this.$injector = $injector;
@@ -74,7 +76,18 @@ export class PanelCtrl {
     profiler.renderingCompleted(this.panel.id, this.timing);
   }
 
+  private isRenderingPng () {
+    return window.location.href.indexOf("/dashboard-solo/db") >= 0;
+  }
+
   refresh() {
+    if (!this.isPanelVisible() && !this.isRenderingPng() && !this.dashboard.snapshot) {
+      this.skippedLastRefresh = true;
+      return;
+    }
+
+    this.skippedLastRefresh = false;
+
     this.events.emit('refresh', null);
   }
 

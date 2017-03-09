@@ -12,6 +12,7 @@ import * as dateMath from 'app/core/utils/datemath';
 import {Subject} from 'vendor/npm/rxjs/Subject';
 
 class MetricsPanelCtrl extends PanelCtrl {
+  scope: any;
   loading: boolean;
   datasource: any;
   datasourceName: any;
@@ -40,6 +41,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasourceSrv = $injector.get('datasourceSrv');
     this.timeSrv = $injector.get('timeSrv');
     this.templateSrv = $injector.get('templateSrv');
+    this.scope = $scope;
 
     if (!this.panel.targets) {
       this.panel.targets = [{}];

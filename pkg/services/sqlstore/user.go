@@ -363,8 +363,12 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 	query.Result = m.SearchUserQueryResult{
 		Users: make([]*m.UserSearchHitDTO, 0),
 	}
+	queryWithWildcards := "%" + query.Query + "%"
+
 	sess := x.Table("user")
-	sess.Where("email LIKE ?", query.Query+"%")
+	if query.Query != "" {
+		sess.Where("email LIKE ? OR name LIKE ? OR login like ?", queryWithWildcards, queryWithWildcards, queryWithWildcards)
+	}
 	offset := query.Limit * (query.Page - 1)
 	sess.Limit(query.Limit, offset)
 	sess.Cols("id", "email", "name", "login", "is_admin")
@@ -373,7 +377,12 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 	}
 
 	user := m.User{}
-	count, err := x.Count(&user)
+
+	countSess := x.Table("user")
+	if query.Query != "" {
+		countSess.Where("email LIKE ? OR name LIKE ? OR login like ?", queryWithWildcards, queryWithWildcards, queryWithWildcards)
+	}
+	count, err := countSess.Count(&user)
 	query.Result.TotalCount = count
 	return err
 }
