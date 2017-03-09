@@ -180,11 +180,11 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         return (0 < position.top) && (position.top < window.innerHeight);
       };
 
-      const refreshOnScroll = _.debounce(function () {
+      const refreshOnScroll = function () {
         if (ctrl.skippedLastRefresh) {
           ctrl.refresh();
         }
-      }, 250);
+      };
 
       $document.on('scroll', refreshOnScroll);
 
