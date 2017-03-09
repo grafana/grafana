@@ -21,6 +21,7 @@ export default class InfluxQuery {
     target.policy = target.policy || 'default';
     target.dsType = 'influxdb';
     target.resultFormat = target.resultFormat || 'time_series';
+    target.orderByTime = target.orderByTime || 'ASC';
     target.tags = target.tags || [];
     target.groupBy = target.groupBy || [
       {type: 'time', params: ['$__interval']},
@@ -247,6 +248,18 @@ export default class InfluxQuery {
 
     if (target.fill) {
       query += ' fill(' + target.fill + ')';
+    }
+
+    if (target.orderByTime === 'DESC') {
+      query += ' ORDER BY time DESC';
+    }
+
+    if (target.limit) {
+      query += ' LIMIT ' + target.limit;
+    }
+
+    if (target.slimit) {
+      query += ' SLIMIT ' + target.slimit;
     }
 
     return query;
