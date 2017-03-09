@@ -262,6 +262,14 @@ export default class InfluxQuery {
       query += ' SLIMIT ' + target.slimit;
     }
 
+    if (target.offset) {
+      query += ' OFFSET ' + target.offset;
+    }
+
+    if (target.offset) {
+      query += ' SOFFSET ' + target.offset;
+    }
+
     return query;
   }
 
