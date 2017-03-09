@@ -3,6 +3,7 @@
 import angular from 'angular';
 import _ from 'lodash';
 import moment from 'moment';
+import './func_editor';
 
 import * as dateMath from 'app/core/utils/datemath';
 import {QueryCtrl} from 'app/plugins/sdk';
@@ -23,6 +24,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
     var target = this.target;
     target.expr = target.expr || '';
     target.intervalFactor = target.intervalFactor || 2;
+    target.textEditor = target.textEditor || false;
 
     this.metric = '';
     this.resolutions = _.map([1,2,3,4,5,10], function(f) {
@@ -54,6 +56,10 @@ class PrometheusQueryCtrl extends QueryCtrl {
       this.panelCtrl.refresh();
       this.updateLink();
     }
+  }
+
+  toggleEditorMode() {
+    this.target.textEditor = !this.target.textEditor;
   }
 
   updateLink() {
