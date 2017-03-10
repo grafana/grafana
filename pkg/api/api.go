@@ -200,6 +200,7 @@ func Register(r *macaron.Macaron) {
 		r.Delete("/users/:id", AdminDeleteUser)
 		r.Get("/users/:id/quotas", wrap(GetUserQuotas))
 		r.Put("/users/:id/quotas/:target", bind(m.UpdateUserQuotaCmd{}), wrap(UpdateUserQuota))
+		r.Get("/customer", wrap(GetAllCustomerUsers))
 	}, reqGrafanaAdmin)
 
 	// rendering

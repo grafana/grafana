@@ -168,3 +168,12 @@ func ProposeToUse(c *middleware.Context, form dtos.ProposeUsers) Response {
     "created": "success",
   })
 }
+
+func GetAllCustomerUsers(c *middleware.Context) Response {
+	customersCmd := m.GetAllProposeUsers{}
+	if err := bus.Dispatch(&customersCmd); err != nil {
+		return ApiError(500, "Failed to get propose users", err)
+	}
+
+	return Json(200, &customersCmd.Result)
+}

@@ -33,6 +33,13 @@ function (angular, _, $, config) {
         icon: "fa fa-fw fa-crosshairs",
         href: $scope.getUrl("/summary"),
       });
+      if (contextSrv.hasRole('Admin')) {
+        $scope.mainLinks.push({
+          text: "申请用户",
+          icon: "fa fa-fw fa-users",
+          href: $scope.getUrl("/customer"),
+        });
+      }
       /*
       if (contextSrv.hasRole('Admin')) {
         $scope.mainLinks.push({

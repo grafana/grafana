@@ -1,0 +1,28 @@
+<topnav section="申请用户" icon="fa fa-fw fa-users">
+
+</topnav>
+<div class="page-container">
+    <h2>申请注册的用户</h2>
+    <table class="grafana-options-table form-inline">
+        <tbody>
+        <tr>
+            <th>姓名</th>
+            <th>公司名称</th>
+            <th>用户邮箱</th>
+            <th>手机号</th>
+            <th>公司规模</th>
+            <th>申请时间</th>
+            <th>状态</th>
+        </tr>
+        <tr ng-repeat="customer in customers">
+            <td>{{customer.Name}}</td>
+            <td width="20%">{{customer.Org}}</td>
+            <td>{{customer.Email}}</td>
+            <td>{{customer.Phone}}</td>
+            <td>{{customer.Scale}}人以下</td>
+            <td>{{customer.Created}}</td>
+            <td>{{customer.Status}}</td>
+        </tr>
+        </tbody>
+    </table>
+</div>

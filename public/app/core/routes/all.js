@@ -219,6 +219,10 @@ define([
         templateUrl: 'app/features/health/partials/systemHealth.html',
         controller: 'SystemHealthCtrl',
       })
+      .when('/customer', {
+        templateUrl: 'app/features/summary/partials/customer.html',
+        controller: 'CustomerCtrl',
+      })
       .otherwise({
         templateUrl: 'app/partials/error.html',
         controller: 'ErrorCtrl'
