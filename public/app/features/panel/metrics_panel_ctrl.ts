@@ -44,8 +44,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.panel.suppress = false;
     this.scope = $scope;
 
-    
-
     if (!this.panel.targets) {
       this.panel.targets = [{}];
     }
