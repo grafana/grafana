@@ -8,6 +8,7 @@ import (
 	"github.com/codegangsta/cli"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/commands"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/cmd/grafana-cli/services"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/utils"
 )
 
@@ -15,6 +16,8 @@ var version = "master"
 
 func main() {
 	setupLogging()
+
+	services.Init(version)
 
 	app := cli.NewApp()
 	app.Name = "Grafana cli"

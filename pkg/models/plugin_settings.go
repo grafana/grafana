@@ -4,8 +4,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/grafana/grafana/pkg/setting"
-	"github.com/grafana/grafana/pkg/util"
+	"github.com/grafana/grafana/pkg/components/securejsondata"
 )
 
 var (
@@ -19,21 +18,11 @@ type PluginSetting struct {
 	Enabled        bool
 	Pinned         bool
 	JsonData       map[string]interface{}
-	SecureJsonData SecureJsonData
+	SecureJsonData securejsondata.SecureJsonData
 	PluginVersion  string
 
 	Created time.Time
 	Updated time.Time
-}
-
-type SecureJsonData map[string][]byte
-
-func (s SecureJsonData) Decrypt() map[string]string {
-	decrypted := make(map[string]string)
-	for key, data := range s {
-		decrypted[key] = string(util.Decrypt(data, setting.SecretKey))
-	}
-	return decrypted
 }
 
 // ----------------------
@@ -58,12 +47,8 @@ type UpdatePluginSettingVersionCmd struct {
 	OrgId         int64  `json:"-"`
 }
 
-func (cmd *UpdatePluginSettingCmd) GetEncryptedJsonData() SecureJsonData {
-	encrypted := make(SecureJsonData)
-	for key, data := range cmd.SecureJsonData {
-		encrypted[key] = util.Encrypt([]byte(data), setting.SecretKey)
-	}
-	return encrypted
+func (cmd *UpdatePluginSettingCmd) GetEncryptedJsonData() securejsondata.SecureJsonData {
+	return securejsondata.GetEncryptedJsonData(cmd.SecureJsonData)
 }
 
 // ---------------------

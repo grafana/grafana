@@ -1,0 +1,82 @@
+{
+  "version": 2,
+  "endpoints": {
+    "*/*": {
+      "endpoint": "{service}.{region}.amazonaws.com"
+    },
+    "cn-north-1/*": {
+      "endpoint": "{service}.{region}.amazonaws.com.cn",
+      "signatureVersion": "v4"
+    },
+    "cn-north-1/ec2metadata": {
+      "endpoint": "http://169.254.169.254/latest"
+    },
+    "us-gov-west-1/iam": {
+      "endpoint": "iam.us-gov.amazonaws.com"
+    },
+    "us-gov-west-1/sts": {
+      "endpoint": "sts.us-gov-west-1.amazonaws.com"
+    },
+    "us-gov-west-1/s3": {
+      "endpoint": "s3-{region}.amazonaws.com"
+    },
+    "us-gov-west-1/ec2metadata": {
+      "endpoint": "http://169.254.169.254/latest"
+    },
+    "*/budgets": {
+      "endpoint": "budgets.amazonaws.com",
+      "signingRegion": "us-east-1"
+    },
+    "*/cloudfront": {
+      "endpoint": "cloudfront.amazonaws.com",
+      "signingRegion": "us-east-1"
+    },
+    "*/cloudsearchdomain": {
+      "endpoint": "",
+      "signingRegion": "us-east-1"
+    },
+    "*/data.iot": {
+      "endpoint": "",
+      "signingRegion": "us-east-1"
+    },
+    "*/ec2metadata": {
+      "endpoint": "http://169.254.169.254/latest"
+    },
+    "*/iam": {
+      "endpoint": "iam.amazonaws.com",
+      "signingRegion": "us-east-1"
+    },
+    "*/importexport": {
+      "endpoint": "importexport.amazonaws.com",
+      "signingRegion": "us-east-1"
+    },
+    "*/route53": {
+      "endpoint": "route53.amazonaws.com",
+      "signingRegion": "us-east-1"
+    },
+    "*/sts": {
+      "endpoint": "sts.amazonaws.com",
+      "signingRegion": "us-east-1"
+    },
+    "*/waf": {
+      "endpoint": "waf.amazonaws.com",
+      "signingRegion": "us-east-1"
+    },
+    "us-east-1/sdb": {
+      "endpoint": "sdb.amazonaws.com",
+      "signingRegion": "us-east-1"
+    },
+    "*/s3": {
+      "endpoint": "s3-{region}.amazonaws.com"
+    },
+    "*/s3/dualstack": {
+      "endpoint": "s3.dualstack.{region}.amazonaws.com"
+    },
+    "us-east-1/s3": {
+      "endpoint": "s3.amazonaws.com"
+    },
+    "eu-central-1/s3": {
+      "endpoint": "{service}.{region}.amazonaws.com"
+    }
+  }
+}

@@ -2,73 +2,91 @@
 
 import angular from 'angular';
 import _ from 'lodash';
-import coreModule from '../../core/core_module';
 import config from 'app/core/config';
+import {appEvents, coreModule} from 'app/core/core';
 
 export class AlertNotificationEditCtrl {
+  theForm: any;
+  testSeverity = "critical";
+  notifiers: any;
+  notifierTemplateId: string;
+
   model: any;
-  showTest: boolean = false;
-  testSeverity: string = "critical";
+  defaults: any = {
+    type: 'email',
+    settings: {
+      httpMethod: 'POST',
+      autoResolve: true,
+      uploadImage: true,
+    },
+    isDefault: false
+  };
 
   /** @ngInject */
-  constructor(private $routeParams, private backendSrv, private $scope, private $location) {
-    if ($routeParams.id) {
-      this.loadNotification($routeParams.id);
-    } else {
-      this.model = {
-        type: 'email',
-        settings: {
-          severityFilter: 'none'
-        },
-        isDefault: false
-      };
-    }
-  }
+  constructor(private $routeParams, private backendSrv, private $location, private $templateCache) {
+    this.backendSrv.get(`/api/alert-notifiers`).then(notifiers => {
+      this.notifiers = notifiers;
 
-  loadNotification(id) {
-    this.backendSrv.get(`/api/alert-notifications/${id}`).then(result => {
-      this.model = result;
+      // add option templates
+      for (let notifier of this.notifiers) {
+        this.$templateCache.put(this.getNotifierTemplateId(notifier.type), notifier.optionsTemplate);
+      }
+
+      if (!this.$routeParams.id) {
+        return _.defaults(this.model, this.defaults);
+      }
+
+      return this.backendSrv.get(`/api/alert-notifications/${this.$routeParams.id}`).then(result => {
+        return result;
+      });
+    }).then(model => {
+      this.model = model;
+      this.notifierTemplateId = this.getNotifierTemplateId(this.model.type);
     });
   }
 
-  isNew() {
-    return this.model.id === undefined;
-  }
-
   save() {
+    if (!this.theForm.$valid) {
+      return;
+    }
+
     if (this.model.id) {
       this.backendSrv.put(`/api/alert-notifications/${this.model.id}`, this.model).then(res => {
         this.model = res;
-        this.$scope.appEvent('alert-success', ['Notification updated', '']);
+        appEvents.emit('alert-success', ['Notification updated', '']);
       });
     } else {
       this.backendSrv.post(`/api/alert-notifications`, this.model).then(res => {
-        this.$scope.appEvent('alert-success', ['Notification created', '']);
+        appEvents.emit('alert-success', ['Notification created', '']);
         this.$location.path('alerting/notifications');
       });
     }
   }
 
-  typeChanged() {
-    this.model.settings = {};
+  getNotifierTemplateId(type) {
+    return `notifier-options-${type}`;
   }
 
-  toggleTest() {
-    this.showTest = !this.showTest;
+  typeChanged() {
+    this.model.settings = {};
+    this.notifierTemplateId = this.getNotifierTemplateId(this.model.type);
   }
 
   testNotification() {
+    if (!this.theForm.$valid) {
+      return;
+    }
+
     var payload = {
       name: this.model.name,
       type: this.model.type,
       settings: this.model.settings,
-      severity: this.testSeverity
     };
 
     this.backendSrv.post(`/api/alert-notifications/test`, payload)
-      .then(res => {
-        this.$scope.appEvent('alert-succes', ['Test notification sent', '']);
-      });
+    .then(res => {
+      appEvents.emit('alert-succes', ['Test notification sent', '']);
+    });
   }
 }
 

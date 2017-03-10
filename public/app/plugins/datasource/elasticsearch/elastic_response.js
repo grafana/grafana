@@ -149,7 +149,7 @@ function (_, queryDef) {
     var maxDepth = target.bucketAggs.length-1;
 
     for (aggId in aggs) {
-      aggDef = _.findWhere(target.bucketAggs, {id: aggId});
+      aggDef = _.find(target.bucketAggs, {id: aggId});
       esAgg = aggs[aggId];
 
       if (!aggDef) {
@@ -166,10 +166,13 @@ function (_, queryDef) {
         for (var nameIndex in esAgg.buckets) {
           bucket = esAgg.buckets[nameIndex];
           props = _.clone(props);
-          if (bucket.key) {
+          if (bucket.key !== void 0) {
             props[aggDef.field] = bucket.key;
           } else {
             props["filter"] = nameIndex;
+          }
+          if (bucket.key_as_string) {
+            props[aggDef.field] = bucket.key_as_string;
           }
           this.processBuckets(bucket, target, seriesList, docs, props, depth+1);
         }
@@ -178,9 +181,9 @@ function (_, queryDef) {
   };
 
   ElasticResponse.prototype._getMetricName = function(metric) {
-    var metricDef = _.findWhere(queryDef.metricAggTypes, {value: metric});
+    var metricDef = _.find(queryDef.metricAggTypes, {value: metric});
     if (!metricDef)  {
-      metricDef = _.findWhere(queryDef.extendedStats, {value: metric});
+      metricDef = _.find(queryDef.extendedStats, {value: metric});
     }
 
     return metricDef ? metricDef.text : metric;
@@ -196,7 +199,7 @@ function (_, queryDef) {
         var group = g1 || g2;
 
         if (group.indexOf('term ') === 0) { return series.props[group.substring(5)]; }
-        if (series.props[group]) { return series.props[group]; }
+        if (series.props[group] !== void 0) { return series.props[group]; }
         if (group === 'metric') { return metricName; }
         if (group === 'field') { return series.field; }
 
@@ -205,7 +208,7 @@ function (_, queryDef) {
     }
 
     if (series.field && queryDef.isPipelineAgg(series.metric)) {
-      var appliedAgg = _.findWhere(target.metrics, { id: series.field });
+      var appliedAgg = _.find(target.metrics, { id: series.field });
       if (appliedAgg) {
         metricName += ' ' + queryDef.describeMetric(appliedAgg);
       } else {
@@ -233,8 +236,8 @@ function (_, queryDef) {
   };
 
   ElasticResponse.prototype.nameSeries = function(seriesList, target) {
-    var metricTypeCount = _.uniq(_.pluck(seriesList, 'metric')).length;
-    var fieldNameCount = _.uniq(_.pluck(seriesList, 'field')).length;
+    var metricTypeCount = _.uniq(_.map(seriesList, 'metric')).length;
+    var fieldNameCount = _.uniq(_.map(seriesList, 'field')).length;
 
     for (var i = 0; i < seriesList.length; i++) {
       var series = seriesList[i];
@@ -270,7 +273,7 @@ function (_, queryDef) {
   };
 
   ElasticResponse.prototype.trimDatapoints = function(aggregations, target) {
-    var histogram = _.findWhere(target.bucketAggs, { type: 'date_histogram'});
+    var histogram = _.find(target.bucketAggs, { type: 'date_histogram'});
 
     var shouldDropFirstAndLast = histogram && histogram.settings && histogram.settings.trimEdges;
     if (shouldDropFirstAndLast) {

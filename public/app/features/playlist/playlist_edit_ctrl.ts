@@ -8,8 +8,8 @@ import config from 'app/core/config';
 export class PlaylistEditCtrl {
   filteredDashboards: any = [];
   filteredTags: any = [];
-  searchQuery: string = '';
-  loading: boolean = false;
+  searchQuery = '';
+  loading = false;
   playlist: any = {
     interval: '5m',
   };
@@ -36,13 +36,13 @@ export class PlaylistEditCtrl {
 
   filterFoundPlaylistItems() {
     this.filteredDashboards = _.reject(this.dashboardresult, (playlistItem) => {
-      return _.findWhere(this.playlistItems, (listPlaylistItem) => {
+      return _.find(this.playlistItems, (listPlaylistItem) => {
         return parseInt(listPlaylistItem.value) === playlistItem.id;
       });
     });
 
     this.filteredTags = _.reject(this.tagresult, (tag) => {
-      return _.findWhere(this.playlistItems, (listPlaylistItem) => {
+      return _.find(this.playlistItems, (listPlaylistItem) => {
         return listPlaylistItem.value === tag.term;
       });
     });

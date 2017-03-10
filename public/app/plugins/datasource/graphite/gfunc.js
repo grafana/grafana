@@ -688,7 +688,7 @@ function (_, $) {
 
       return "'" + value + "'";
 
-    }, this);
+    }.bind(this));
 
     if (metricExp) {
       parameters.unshift(metricExp);
@@ -711,7 +711,7 @@ function (_, $) {
     if (this._hasMultipleParamsInString(strValue, index)) {
       _.each(strValue.split(','), function(partVal, idx) {
         this.updateParam(partVal.trim(), idx);
-      }, this);
+      }.bind(this));
       return;
     }
 

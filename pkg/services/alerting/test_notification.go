@@ -1,14 +1,17 @@
 package alerting
 
 import (
+	"context"
+
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
-	"github.com/grafana/grafana/pkg/models"
+	m "github.com/grafana/grafana/pkg/models"
 )
 
 type NotificationTestCommand struct {
-	Severity string
+	State    m.AlertStateType
 	Name     string
 	Type     string
 	Settings *simplejson.Json
@@ -20,9 +23,9 @@ func init() {
 }
 
 func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
-	notifier := NewRootNotifier()
+	notifier := newNotificationService()
 
-	model := &models.AlertNotification{
+	model := &m.AlertNotification{
 		Name:     cmd.Name,
 		Type:     cmd.Type,
 		Settings: cmd.Settings,
@@ -35,58 +38,40 @@ func handleNotificationTestCommand(cmd *NotificationTestCommand) error {
 		return err
 	}
 
-	severity := models.AlertSeverityType(cmd.Severity)
-	notifier.sendNotifications([]Notifier{notifiers}, createTestEvalContext(severity))
-
-	return nil
+	return notifier.sendNotifications(createTestEvalContext(cmd), []Notifier{notifiers})
 }
 
-func createTestEvalContext(severity models.AlertSeverityType) *EvalContext {
-	state := models.AlertStateOK
-	firing := false
-	if severity == models.AlertSeverityCritical {
-		state = models.AlertStateCritical
-		firing = true
-	}
-	if severity == models.AlertSeverityWarning {
-		state = models.AlertStateWarning
-		firing = true
-	}
-
+func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 	testRule := &Rule{
 		DashboardId: 1,
 		PanelId:     1,
 		Name:        "Test notification",
 		Message:     "Someone is testing the alert notification within grafana.",
-		State:       state,
-		Severity:    severity,
+		State:       m.AlertStateAlerting,
 	}
 
-	ctx := NewEvalContext(testRule)
-	ctx.ImagePublicUrl = "http://grafana.org/assets/img/blog/mixed_styles.png"
-
+	ctx := NewEvalContext(context.Background(), testRule)
+	if cmd.Settings.Get("uploadImage").MustBool(true) {
+		ctx.ImagePublicUrl = "http://grafana.org/assets/img/blog/mixed_styles.png"
+	}
 	ctx.IsTestRun = true
-	ctx.Firing = firing
+	ctx.Firing = true
 	ctx.Error = nil
-	ctx.EvalMatches = evalMatchesBasedOnSeverity(severity)
+	ctx.EvalMatches = evalMatchesBasedOnState()
 
 	return ctx
 }
 
-func evalMatchesBasedOnSeverity(severity models.AlertSeverityType) []*EvalMatch {
+func evalMatchesBasedOnState() []*EvalMatch {
 	matches := make([]*EvalMatch, 0)
-	if severity == models.AlertSeverityOK {
-		return matches
-	}
-
 	matches = append(matches, &EvalMatch{
 		Metric: "High value",
-		Value:  100,
+		Value:  null.FloatFrom(100),
 	})
 
 	matches = append(matches, &EvalMatch{
 		Metric: "Higher Value",
-		Value:  200,
+		Value:  null.FloatFrom(200),
 	})
 
 	return matches

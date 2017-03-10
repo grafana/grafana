@@ -3,51 +3,95 @@ package conditions
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 func TestSimpleReducer(t *testing.T) {
 	Convey("Test simple reducer by calculating", t, func() {
-		Convey("avg", func() {
-			result := *testReducer("avg", 1, 2, 3)
-			So(result, ShouldEqual, float64(2))
-		})
 
 		Convey("sum", func() {
-			result := *testReducer("sum", 1, 2, 3)
+			result := testReducer("sum", 1, 2, 3)
 			So(result, ShouldEqual, float64(6))
 		})
 
 		Convey("min", func() {
-			result := *testReducer("min", 3, 2, 1)
+			result := testReducer("min", 3, 2, 1)
 			So(result, ShouldEqual, float64(1))
 		})
 
 		Convey("max", func() {
-			result := *testReducer("max", 1, 2, 3)
+			result := testReducer("max", 1, 2, 3)
 			So(result, ShouldEqual, float64(3))
 		})
 
 		Convey("count", func() {
-			result := *testReducer("count", 1, 2, 3000)
+			result := testReducer("count", 1, 2, 3000)
 			So(result, ShouldEqual, float64(3))
+		})
+
+		Convey("last", func() {
+			result := testReducer("last", 1, 2, 3000)
+			So(result, ShouldEqual, float64(3000))
+		})
+
+		Convey("median odd amount of numbers", func() {
+			result := testReducer("median", 1, 2, 3000)
+			So(result, ShouldEqual, float64(2))
+		})
+
+		Convey("median even amount of numbers", func() {
+			result := testReducer("median", 1, 2, 4, 3000)
+			So(result, ShouldEqual, float64(3))
+		})
+
+		Convey("median with one values", func() {
+			result := testReducer("median", 1)
+			So(result, ShouldEqual, float64(1))
+		})
+
+		Convey("avg", func() {
+			result := testReducer("avg", 1, 2, 3)
+			So(result, ShouldEqual, float64(2))
+		})
+
+		Convey("avg with only nulls", func() {
+			reducer := NewSimpleReducer("avg")
+			series := &tsdb.TimeSeries{
+				Name: "test time serie",
+			}
+
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 1))
+			So(reducer.Reduce(series).Valid, ShouldEqual, false)
+		})
+
+		Convey("avg of number values and null values should ignore nulls", func() {
+			reducer := NewSimpleReducer("avg")
+			series := &tsdb.TimeSeries{
+				Name: "test time serie",
+			}
+
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(3), 1))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 2))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 3))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(3), 4))
+
+			So(reducer.Reduce(series).Float64, ShouldEqual, float64(3))
 		})
 	})
 }
 
-func testReducer(typ string, datapoints ...float64) *float64 {
+func testReducer(typ string, datapoints ...float64) float64 {
 	reducer := NewSimpleReducer(typ)
-	var timeserie [][2]*float64
-	dummieTimestamp := float64(521452145)
+	series := &tsdb.TimeSeries{
+		Name: "test time serie",
+	}
 
 	for idx := range datapoints {
-		timeserie = append(timeserie, [2]*float64{&datapoints[idx], &dummieTimestamp})
+		series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(datapoints[idx]), 1234134))
 	}
 
-	tsdb := &tsdb.TimeSeries{
-		Name:   "test time serie",
-		Points: timeserie,
-	}
-	return reducer.Reduce(tsdb)
+	return reducer.Reduce(series).Float64
 }

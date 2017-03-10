@@ -7,4 +7,5 @@ const (
 	GOOGLE
 	TWITTER
 	GENERIC
+	GRAFANANET
 )

@@ -50,7 +50,7 @@ export class SideMenuCtrl {
      {text: 'Profile', url: this.getUrl('/profile')},
    ];
 
-   if (this.isSignedIn) {
+   if (this.showSignout) {
      this.orgMenu.push({text: "Sign out", url: this.getUrl("/logout"), target: "_self"});
    }
 

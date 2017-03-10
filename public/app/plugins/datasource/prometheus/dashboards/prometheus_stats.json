@@ -154,7 +154,7 @@
             }
           ],
           "thresholds": "0,500,4000",
-          "title": "Interal Storage Queue Length",
+          "title": "Internal Storage Queue Length",
           "type": "singlestat",
           "valueFontSize": "70%",
           "valueMaps": [
@@ -478,7 +478,7 @@
           "steppedLine": false,
           "targets": [
             {
-              "expr": "prometheus_evaluator_duration_milliseconds{quantile!=\"0.01\", quantile!=\"0.05\"}",
+              "expr": "prometheus_evaluator_duration_seconds{quantile!=\"0.01\", quantile!=\"0.05\"}",
               "interval": "",
               "intervalFactor": 2,
               "legendFormat": "{{quantile}}",

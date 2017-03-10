@@ -36,20 +36,35 @@ var (
 	M_Api_Dashboard_Snapshot_External      Counter
 	M_Api_Dashboard_Snapshot_Get           Counter
 	M_Models_Dashboard_Insert              Counter
-	M_Alerting_Result_State_Critical       Counter
-	M_Alerting_Result_State_Warning        Counter
+	M_Alerting_Result_State_Alerting       Counter
 	M_Alerting_Result_State_Ok             Counter
 	M_Alerting_Result_State_Paused         Counter
-	M_Alerting_Result_State_Unknown        Counter
-	M_Alerting_Result_State_ExecutionError Counter
-	M_Alerting_Active_Alerts               Counter
+	M_Alerting_Result_State_NoData         Counter
+	M_Alerting_Result_State_Pending        Counter
 	M_Alerting_Notification_Sent_Slack     Counter
 	M_Alerting_Notification_Sent_Email     Counter
 	M_Alerting_Notification_Sent_Webhook   Counter
+	M_Alerting_Notification_Sent_PagerDuty Counter
+	M_Alerting_Notification_Sent_LINE      Counter
+	M_Alerting_Notification_Sent_Victorops Counter
+	M_Alerting_Notification_Sent_OpsGenie  Counter
+	M_Alerting_Notification_Sent_Telegram  Counter
+	M_Alerting_Notification_Sent_Threema   Counter
+	M_Alerting_Notification_Sent_Sensu     Counter
+	M_Alerting_Notification_Sent_Pushover  Counter
+	M_Aws_CloudWatch_GetMetricStatistics   Counter
+	M_Aws_CloudWatch_ListMetrics           Counter
 
 	// Timers
 	M_DataSource_ProxyReq_Timer Timer
-	M_Alerting_Exeuction_Time   Timer
+	M_Alerting_Execution_Time   Timer
+
+	// StatTotals
+	M_Alerting_Active_Alerts Gauge
+	M_StatTotal_Dashboards   Gauge
+	M_StatTotal_Users        Gauge
+	M_StatTotal_Orgs         Gauge
+	M_StatTotal_Playlists    Gauge
 )
 
 func initMetricVars(settings *MetricSettings) {
@@ -92,19 +107,35 @@ func initMetricVars(settings *MetricSettings) {
 
 	M_Models_Dashboard_Insert = RegCounter("models.dashboard.insert")
 
-	M_Alerting_Result_State_Critical = RegCounter("alerting.result", "state", "critical")
-	M_Alerting_Result_State_Warning = RegCounter("alerting.result", "state", "warning")
+	M_Alerting_Result_State_Alerting = RegCounter("alerting.result", "state", "alerting")
 	M_Alerting_Result_State_Ok = RegCounter("alerting.result", "state", "ok")
 	M_Alerting_Result_State_Paused = RegCounter("alerting.result", "state", "paused")
-	M_Alerting_Result_State_Unknown = RegCounter("alerting.result", "state", "unknown")
-	M_Alerting_Result_State_ExecutionError = RegCounter("alerting.result", "state", "execution_error")
+	M_Alerting_Result_State_NoData = RegCounter("alerting.result", "state", "no_data")
+	M_Alerting_Result_State_Pending = RegCounter("alerting.result", "state", "pending")
 
-	M_Alerting_Active_Alerts = RegCounter("alerting.active_alerts")
 	M_Alerting_Notification_Sent_Slack = RegCounter("alerting.notifications_sent", "type", "slack")
 	M_Alerting_Notification_Sent_Email = RegCounter("alerting.notifications_sent", "type", "email")
 	M_Alerting_Notification_Sent_Webhook = RegCounter("alerting.notifications_sent", "type", "webhook")
+	M_Alerting_Notification_Sent_PagerDuty = RegCounter("alerting.notifications_sent", "type", "pagerduty")
+	M_Alerting_Notification_Sent_Victorops = RegCounter("alerting.notifications_sent", "type", "victorops")
+	M_Alerting_Notification_Sent_OpsGenie = RegCounter("alerting.notifications_sent", "type", "opsgenie")
+	M_Alerting_Notification_Sent_Telegram = RegCounter("alerting.notifications_sent", "type", "telegram")
+	M_Alerting_Notification_Sent_Threema = RegCounter("alerting.notifications_sent", "type", "threema")
+	M_Alerting_Notification_Sent_Sensu = RegCounter("alerting.notifications_sent", "type", "sensu")
+	M_Alerting_Notification_Sent_LINE = RegCounter("alerting.notifications_sent", "type", "LINE")
+	M_Alerting_Notification_Sent_Pushover = RegCounter("alerting.notifications_sent", "type", "pushover")
+
+	M_Aws_CloudWatch_GetMetricStatistics = RegCounter("aws.cloudwatch.get_metric_statistics")
+	M_Aws_CloudWatch_ListMetrics = RegCounter("aws.cloudwatch.list_metrics")
 
 	// Timers
 	M_DataSource_ProxyReq_Timer = RegTimer("api.dataproxy.request.all")
-	M_Alerting_Exeuction_Time = RegTimer("alerting.execution_time")
+	M_Alerting_Execution_Time = RegTimer("alerting.execution_time")
+
+	// StatTotals
+	M_Alerting_Active_Alerts = RegGauge("alerting.active_alerts")
+	M_StatTotal_Dashboards = RegGauge("stat_totals", "stat", "dashboards")
+	M_StatTotal_Users = RegGauge("stat_totals", "stat", "users")
+	M_StatTotal_Orgs = RegGauge("stat_totals", "stat", "orgs")
+	M_StatTotal_Playlists = RegGauge("stat_totals", "stat", "playlists")
 }

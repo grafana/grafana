@@ -6,6 +6,8 @@ import (
 
 	"github.com/go-xorm/xorm"
 
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	m "github.com/grafana/grafana/pkg/models"
@@ -19,6 +21,7 @@ func init() {
 	bus.AddHandler("sql", UpdateUser)
 	bus.AddHandler("sql", ChangeUserPassword)
 	bus.AddHandler("sql", GetUserByLogin)
+	bus.AddHandler("sql", GetUserByEmail)
 	bus.AddHandler("sql", SetUsingOrg)
 	bus.AddHandler("sql", GetUserProfile)
 	bus.AddHandler("sql", GetSignedInUser)
@@ -27,6 +30,7 @@ func init() {
 	bus.AddHandler("sql", DeleteUser)
 	bus.AddHandler("sql", SetUsingOrg)
 	bus.AddHandler("sql", UpdateUserPermissions)
+	bus.AddHandler("sql", SetUserHelpFlag)
 }
 
 func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *session) (int64, error) {
@@ -128,7 +132,11 @@ func CreateUser(cmd *m.CreateUserCommand) error {
 			}
 
 			if setting.AutoAssignOrg && !user.IsAdmin {
-				orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
+				if len(cmd.DefaultOrgRole) > 0 {
+					orgUser.Role = m.RoleType(cmd.DefaultOrgRole)
+				} else {
+					orgUser.Role = m.RoleType(setting.AutoAssignOrgRole)
+				}
 			}
 
 			if _, err = sess.Insert(&orgUser); err != nil {
@@ -189,6 +197,27 @@ func GetUserByLogin(query *m.GetUserByLoginQuery) error {
 	return nil
 }
 
+func GetUserByEmail(query *m.GetUserByEmailQuery) error {
+	if query.Email == "" {
+		return m.ErrUserNotFound
+	}
+
+	user := new(m.User)
+
+	user = &m.User{Email: query.Email}
+	has, err := x.Get(user)
+
+	if err != nil {
+		return err
+	} else if has == false {
+		return m.ErrUserNotFound
+	}
+
+	query.Result = user
+
+	return nil
+}
+
 func UpdateUser(cmd *m.UpdateUserCommand) error {
 	return inTransaction2(func(sess *session) error {
 
@@ -233,6 +262,20 @@ func ChangeUserPassword(cmd *m.ChangeUserPasswordCommand) error {
 }
 
 func SetUsingOrg(cmd *m.SetUsingOrgCommand) error {
+	getOrgsForUserCmd := &m.GetUserOrgListQuery{UserId: cmd.UserId}
+	GetUserOrgList(getOrgsForUserCmd)
+
+	valid := false
+	for _, other := range getOrgsForUserCmd.Result {
+		if other.OrgId == cmd.OrgId {
+			valid = true
+		}
+	}
+
+	if !valid {
+		return fmt.Errorf("user does not belong ot org")
+	}
+
 	return inTransaction(func(sess *xorm.Session) error {
 		user := m.User{}
 		sess.Id(cmd.UserId).Get(&user)
@@ -282,6 +325,7 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 	                u.email        as email,
 	                u.login        as login,
 									u.name         as name,
+									u.help_flags1  as help_flags1,
 	                org.name       as org_name,
 	                org_user.role  as org_role,
 	                org.id         as org_id
@@ -316,12 +360,30 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 }
 
 func SearchUsers(query *m.SearchUsersQuery) error {
-	query.Result = make([]*m.UserSearchHitDTO, 0)
+	query.Result = m.SearchUserQueryResult{
+		Users: make([]*m.UserSearchHitDTO, 0),
+	}
+	queryWithWildcards := "%" + query.Query + "%"
+
 	sess := x.Table("user")
-	sess.Where("email LIKE ?", query.Query+"%")
-	sess.Limit(query.Limit, query.Limit*query.Page)
+	if query.Query != "" {
+		sess.Where("email LIKE ? OR name LIKE ? OR login like ?", queryWithWildcards, queryWithWildcards, queryWithWildcards)
+	}
+	offset := query.Limit * (query.Page - 1)
+	sess.Limit(query.Limit, offset)
 	sess.Cols("id", "email", "name", "login", "is_admin")
-	err := sess.Find(&query.Result)
+	if err := sess.Find(&query.Result.Users); err != nil {
+		return err
+	}
+
+	user := m.User{}
+
+	countSess := x.Table("user")
+	if query.Query != "" {
+		countSess.Where("email LIKE ? OR name LIKE ? OR login like ?", queryWithWildcards, queryWithWildcards, queryWithWildcards)
+	}
+	count, err := countSess.Count(&user)
+	query.Result.TotalCount = count
 	return err
 }
 
@@ -352,5 +414,22 @@ func UpdateUserPermissions(cmd *m.UpdateUserPermissionsCommand) error {
 		sess.UseBool("is_admin")
 		_, err := sess.Id(user.Id).Update(&user)
 		return err
+	})
+}
+
+func SetUserHelpFlag(cmd *m.SetUserHelpFlagCommand) error {
+	return inTransaction2(func(sess *session) error {
+
+		user := m.User{
+			Id:         cmd.UserId,
+			HelpFlags1: cmd.HelpFlags1,
+			Updated:    time.Now(),
+		}
+
+		if _, err := sess.Id(cmd.UserId).Cols("help_flags1").Update(&user); err != nil {
+			return err
+		}
+
+		return nil
 	})
 }

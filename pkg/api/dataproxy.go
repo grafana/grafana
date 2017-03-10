@@ -1,15 +1,17 @@
 package api
 
 import (
-	"crypto/tls"
-	"net"
+	"bytes"
+	"io/ioutil"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -17,15 +19,9 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var dataProxyTransport = &http.Transport{
-	TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
-	Proxy:           http.ProxyFromEnvironment,
-	Dial: (&net.Dialer{
-		Timeout:   30 * time.Second,
-		KeepAlive: 30 * time.Second,
-	}).Dial,
-	TLSHandshakeTimeout: 10 * time.Second,
-}
+var (
+	dataproxyLogger log.Logger = log.New("data-proxy-log")
+)
 
 func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *httputil.ReverseProxy {
 	director := func(req *http.Request) {
@@ -95,6 +91,13 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 		return
 	}
 
+	if ds.Type == m.DS_INFLUXDB {
+		if c.Query("db") != ds.Database {
+			c.JsonApiErr(403, "Datasource is not configured to allow this database", nil)
+			return
+		}
+	}
+
 	targetUrl, _ := url.Parse(ds.Url)
 	if len(setting.DataProxyWhiteList) > 0 {
 		if _, exists := setting.DataProxyWhiteList[targetUrl.Host]; !exists {
@@ -104,8 +107,61 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	}
 
 	proxyPath := c.Params("*")
+
+	if ds.Type == m.DS_PROMETHEUS {
+		if c.Req.Request.Method != http.MethodGet || !strings.HasPrefix(proxyPath, "api/") {
+			c.JsonApiErr(403, "GET is only allowed on proxied Prometheus datasource", nil)
+			return
+		}
+	}
+
+	if ds.Type == m.DS_ES {
+		if c.Req.Request.Method == "DELETE" {
+			c.JsonApiErr(403, "Deletes not allowed on proxied Elasticsearch datasource", nil)
+			return
+		}
+		if c.Req.Request.Method == "PUT" {
+			c.JsonApiErr(403, "Puts not allowed on proxied Elasticsearch datasource", nil)
+			return
+		}
+		if c.Req.Request.Method == "POST" && proxyPath != "_msearch" {
+			c.JsonApiErr(403, "Posts not allowed on proxied Elasticsearch datasource except on /_msearch", nil)
+			return
+		}
+	}
+
 	proxy := NewReverseProxy(ds, proxyPath, targetUrl)
-	proxy.Transport = dataProxyTransport
+	proxy.Transport, err = ds.GetHttpTransport()
+	if err != nil {
+		c.JsonApiErr(400, "Unable to load TLS certificate", err)
+		return
+	}
+
+	logProxyRequest(ds.Type, c)
 	proxy.ServeHTTP(c.Resp, c.Req.Request)
 	c.Resp.Header().Del("Set-Cookie")
+}
+
+func logProxyRequest(dataSourceType string, c *middleware.Context) {
+	if !setting.DataProxyLogging {
+		return
+	}
+
+	var body string
+	if c.Req.Request.Body != nil {
+		buffer, err := ioutil.ReadAll(c.Req.Request.Body)
+		if err == nil {
+			c.Req.Request.Body = ioutil.NopCloser(bytes.NewBuffer(buffer))
+			body = string(buffer)
+		}
+	}
+
+	dataproxyLogger.Info("Proxying incoming request",
+		"userid", c.UserId,
+		"orgid", c.OrgId,
+		"username", c.Login,
+		"datasource", dataSourceType,
+		"uri", c.Req.RequestURI,
+		"method", c.Req.Request.Method,
+		"body", body)
 }

@@ -90,13 +90,12 @@ func InstallPlugin(pluginName, version string, c CommandLine) error {
 
 	logger.Infof("%s Installed %s successfully \n", color.GreenString("✔"), plugin.Id)
 
-	/* Enable once we need support for downloading depedencies
 	res, _ := s.ReadPlugin(pluginFolder, pluginName)
-	for _, v := range res.Dependency.Plugins {
+	for _, v := range res.Dependencies.Plugins {
 		InstallPlugin(v.Id, version, c)
-		log.Infof("Installed dependency: %v ✔\n", v.Id)
+		logger.Infof("Installed dependency: %v ✔\n", v.Id)
 	}
-	*/
+
 	return err
 }
 

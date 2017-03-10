@@ -48,13 +48,13 @@ function (angular, _, $, coreModule) {
       }
 
       if (model.error.stack) {
-        $scope.editor.index = 2;
+        $scope.editor.index = 3;
         $scope.stack_trace = model.error.stack;
         $scope.message = model.error.message;
       }
 
       if (model.error.config && model.error.config.data) {
-        $scope.editor.index = 1;
+        $scope.editor.index = 2;
 
         if (_.isString(model.error.config.data)) {
           $scope.request_parameters = getParametersFromQueryString(model.error.config.data);

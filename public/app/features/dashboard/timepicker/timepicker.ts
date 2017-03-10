@@ -46,7 +46,7 @@ export class TimePickerCtrl {
     this.firstDayOfWeek = moment.localeData().firstDayOfWeek();
 
     var time = angular.copy(this.timeSrv.timeRange());
-    var timeRaw = angular.copy(this.timeSrv.timeRange(false));
+    var timeRaw = angular.copy(time.raw);
 
     if (!this.dashboard.isTimezoneUtc()) {
       time.from.local();
@@ -97,8 +97,7 @@ export class TimePickerCtrl {
       from = range.from.valueOf();
     }
 
-    this.timeSrv.setTime({from: moment.utc(from), to: moment.utc(to) });
-
+    this.timeSrv.setTime({from: moment.utc(from), to: moment.utc(to)});
   }
 
   openDropdown() {
@@ -126,7 +125,7 @@ export class TimePickerCtrl {
       this.timeSrv.setAutoRefresh(this.refresh.value);
     }
 
-    this.timeSrv.setTime(this.timeRaw, true);
+    this.timeSrv.setTime(this.timeRaw);
     this.$rootScope.appEvent('hide-dash-editor');
   }
 

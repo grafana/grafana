@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"path"
@@ -18,15 +19,30 @@ type WebdavUploader struct {
 	password string
 }
 
-func (u *WebdavUploader) Upload(pa string) (string, error) {
-	client := http.Client{Timeout: time.Duration(10 * time.Second)}
+var netTransport = &http.Transport{
+	Dial: (&net.Dialer{
+		Timeout: 60 * time.Second,
+	}).Dial,
+	TLSHandshakeTimeout: 5 * time.Second,
+}
 
+var netClient = &http.Client{
+	Timeout:   time.Second * 60,
+	Transport: netTransport,
+}
+
+func (u *WebdavUploader) Upload(pa string) (string, error) {
 	url, _ := url.Parse(u.url)
 	url.Path = path.Join(url.Path, util.GetRandomString(20)+".png")
 
 	imgData, err := ioutil.ReadFile(pa)
 	req, err := http.NewRequest("PUT", url.String(), bytes.NewReader(imgData))
-	res, err := client.Do(req)
+
+	if u.username != "" {
+		req.SetBasicAuth(u.username, u.password)
+	}
+
+	res, err := netClient.Do(req)
 
 	if err != nil {
 		return "", err

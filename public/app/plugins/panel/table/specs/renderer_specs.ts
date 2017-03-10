@@ -68,6 +68,16 @@ describe('when rendering table', () => {
       expect(html).to.be('<td>2014-01-01T06:06:06Z</td>');
     });
 
+    it('undefined time column should be rendered as -', () => {
+      var html = renderer.renderCell(0, undefined);
+      expect(html).to.be('<td>-</td>');
+    });
+
+    it('null time column should be rendered as -', () => {
+      var html = renderer.renderCell(0, null);
+      expect(html).to.be('<td>-</td>');
+    });
+
     it('number column with unit specified should ignore style unit', () => {
       var html = renderer.renderCell(5, 1230);
       expect(html).to.be('<td>1.23 kbps</td>');

@@ -2,13 +2,14 @@ define([
   'angular',
   'lodash',
   'jquery',
+  'app/core/config'
 ],
-function (angular, _, $) {
+function (angular, _, $, config) {
   'use strict';
 
   var module = angular.module('grafana.services');
 
-  module.factory('dashboardViewStateSrv', function($location, $timeout, templateSrv, contextSrv, timeSrv) {
+  module.factory('dashboardViewStateSrv', function($location, $timeout) {
 
     // represents the transient view state
     // like fullscreen panel & edit
@@ -24,19 +25,6 @@ function (angular, _, $) {
           self.update({ fullscreen: false });
         }
       };
-
-      // update url on time range change
-      $scope.onAppEvent('time-range-changed', function() {
-        var urlParams = $location.search();
-        var urlRange = timeSrv.timeRangeForUrl();
-        urlParams.from = urlRange.from;
-        urlParams.to = urlRange.to;
-        $location.search(urlParams);
-      });
-
-      $scope.onAppEvent('template-variable-value-updated', function() {
-        self.updateUrlParamsWithCurrentVariables();
-      });
 
       $scope.onAppEvent('$routeUpdate', function() {
         var urlState = self.getQueryStringState();
@@ -57,22 +45,6 @@ function (angular, _, $) {
       this.expandRowForPanel();
     }
 
-    DashboardViewState.prototype.updateUrlParamsWithCurrentVariables = function() {
-      // update url
-      var params = $location.search();
-      // remove variable params
-      _.each(params, function(value, key) {
-        if (key.indexOf('var-') === 0) {
-          delete params[key];
-        }
-      });
-
-      // add new values
-      templateSrv.fillVariableValuesForUrl(params);
-      // update url
-      $location.search(params);
-    };
-
     DashboardViewState.prototype.expandRowForPanel = function() {
       if (!this.state.panelId) { return; }
 
@@ -92,6 +64,7 @@ function (angular, _, $) {
       state.fullscreen = state.fullscreen ? true : null;
       state.edit =  (state.edit === "true" || state.edit === true) || null;
       state.editview = state.editview || null;
+      state.orgId = config.bootData.user.orgId;
       return state;
     };
 
@@ -102,7 +75,20 @@ function (angular, _, $) {
       return urlState;
     };
 
-    DashboardViewState.prototype.update = function(state) {
+    DashboardViewState.prototype.update = function(state, fromRouteUpdated) {
+      // implement toggle logic
+      if (state.toggle) {
+        delete state.toggle;
+        if (this.state.fullscreen && state.fullscreen) {
+          if (this.state.edit === state.edit) {
+            state.fullscreen = !state.fullscreen;
+          }
+        }
+      }
+
+      // remember if editStateChanged
+      this.editStateChanged = state.edit !== this.state.edit;
+
       _.extend(this.state, state);
       this.dashboard.meta.fullscreen = this.state.fullscreen;
 
@@ -120,7 +106,12 @@ function (angular, _, $) {
         delete this.state.tab;
       }
 
-      $location.search(this.serializeToUrl());
+      // do not update url params if we are here
+      // from routeUpdated event
+      if (fromRouteUpdated !== true) {
+        $location.search(this.serializeToUrl());
+      }
+
       this.syncState();
     };
 
@@ -135,7 +126,7 @@ function (angular, _, $) {
 
         if (this.fullscreenPanel) {
           // if already fullscreen
-          if (this.fullscreenPanel === panelScope) {
+          if (this.fullscreenPanel === panelScope && this.editStateChanged === false) {
             return;
           } else {
             this.leaveFullscreen(false);
@@ -166,6 +157,7 @@ function (angular, _, $) {
 
       ctrl.editMode = false;
       ctrl.fullscreen = false;
+      ctrl.dashboard.editMode = this.oldDashboardEditMode;
 
       this.$scope.appEvent('panel-fullscreen-exit', {panelId: ctrl.panel.id});
 
@@ -174,9 +166,8 @@ function (angular, _, $) {
       $timeout(function() {
         if (self.oldTimeRange !== ctrl.range) {
           self.$scope.broadcastRefresh();
-        }
-        else {
-          ctrl.render();
+        } else {
+          self.$scope.$broadcast('render');
         }
         delete self.fullscreenPanel;
       });
@@ -185,11 +176,13 @@ function (angular, _, $) {
     DashboardViewState.prototype.enterFullscreen = function(panelScope) {
       var ctrl = panelScope.ctrl;
 
-      ctrl.editMode = this.state.edit && this.$scope.dashboardMeta.canEdit;
+      ctrl.editMode = this.state.edit && this.dashboard.meta.canEdit;
       ctrl.fullscreen = true;
 
+      this.oldDashboardEditMode = this.dashboard.editMode;
       this.oldTimeRange = ctrl.range;
       this.fullscreenPanel = panelScope;
+      this.dashboard.editMode = false;
 
       $(window).scrollTop(0);
 
@@ -214,8 +207,9 @@ function (angular, _, $) {
         }
       }
 
-      panelScope.$on('$destroy', function() {
+      var unbind = panelScope.$on('$destroy', function() {
         self.panelScopes = _.without(self.panelScopes, panelScope);
+        unbind();
       });
     };
 

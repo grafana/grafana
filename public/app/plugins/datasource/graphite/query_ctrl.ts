@@ -128,6 +128,10 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     }
 
     var path = this.getSegmentPathUpTo(fromIndex + 1);
+    if (path === "") {
+      return Promise.resolve();
+    }
+
     return this.datasource.metricFindQuery(path).then(segments => {
       if (segments.length === 0) {
         if (path !== '') {
@@ -161,7 +165,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
     return this.datasource.metricFindQuery(query).then(segments => {
       var altSegments = _.map(segments, segment => {
-        return this.uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
+        return this.uiSegmentSrv.newSegment({value: segment.text, expandable: segment.expandable});
       });
 
       if (altSegments.length === 0) { return altSegments; }
@@ -209,17 +213,40 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     this.panelCtrl.refresh();
   }
 
+  updateModelTarget() {
+    // render query
+    var metricPath = this.getSegmentPathUpTo(this.segments.length);
+    this.target.target = _.reduce(this.functions, this.wrapFunction, metricPath);
+
+    // render nested query
+    var targetsByRefId = _.keyBy(this.panelCtrl.panel.targets, 'refId');
+    var nestedSeriesRefRegex = /\#([A-Z])/g;
+    var targetWithNestedQueries = this.target.target.replace(nestedSeriesRefRegex, (match, g1) => {
+      var target  = targetsByRefId[g1];
+      if (!target) {
+        return match;
+      }
+
+      return target.targetFull || target.target;
+    });
+
+    delete this.target.targetFull;
+    if (this.target.target !== targetWithNestedQueries) {
+      this.target.targetFull = targetWithNestedQueries;
+    }
+  }
+
   targetChanged() {
     if (this.error) {
       return;
     }
 
     var oldTarget = this.target.target;
-    var target = this.getSegmentPathUpTo(this.segments.length);
-    this.target.target = _.reduce(this.functions, this.wrapFunction, target);
+    this.updateModelTarget();
 
     if (this.target.target !== oldTarget) {
-      if (this.segments[this.segments.length - 1].value !== 'select metric') {
+      var lastSegment = this.segments.length > 0 ? this.segments[this.segments.length - 1] : {};
+      if (lastSegment.value !== 'select metric') {
         this.panelCtrl.refresh();
       }
     }

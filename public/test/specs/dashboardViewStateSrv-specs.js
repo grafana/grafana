@@ -1,6 +1,7 @@
 define([
-  'app/features/dashboard/viewStateSrv'
-], function() {
+  'app/features/dashboard/viewStateSrv',
+  'app/core/config'
+], function(viewStateSrv, config) {
   'use strict';
 
   describe('when updating view state', function() {
@@ -12,7 +13,13 @@ define([
         orgId: 19
       }
     };
-
+    beforeEach(function() {
+      config.bootData = {
+        user: {
+          orgId: 1
+        }
+      };
+    });
     beforeEach(module('grafana.services'));
     beforeEach(module(function($provide) {
       $provide.value('timeSrv', timeSrv);
@@ -31,7 +38,7 @@ define([
       it('should update querystring and view state', function() {
         var updateState = {fullscreen: true, edit: true, panelId: 1};
         viewState.update(updateState);
-        expect(location.search()).to.eql({fullscreen: true, edit: true, panelId: 1});
+        expect(location.search()).to.eql({fullscreen: true, edit: true, panelId: 1, orgId: 1});
         expect(viewState.dashboard.meta.fullscreen).to.be(true);
         expect(viewState.state.fullscreen).to.be(true);
       });
@@ -45,7 +52,5 @@ define([
         expect(viewState.state.fullscreen).to.be(null);
       });
     });
-
   });
-
 });

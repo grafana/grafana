@@ -3,8 +3,10 @@ package conditions
 import (
 	"testing"
 
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
 func evalutorScenario(json string, reducedValue float64, datapoints ...float64) bool {
@@ -14,7 +16,7 @@ func evalutorScenario(json string, reducedValue float64, datapoints ...float64) 
 	evaluator, err := NewAlertEvaluator(jsonModel)
 	So(err, ShouldBeNil)
 
-	return evaluator.Eval(&reducedValue)
+	return evaluator.Eval(null.FloatFrom(reducedValue))
 }
 
 func TestEvalutors(t *testing.T) {
@@ -42,15 +44,20 @@ func TestEvalutors(t *testing.T) {
 		So(evalutorScenario(`{"type": "outside_range", "params": [100, 1] }`, 50), ShouldBeFalse)
 	})
 
-	Convey("no_data", t, func() {
-		So(evalutorScenario(`{"type": "no_data", "params": [] }`, 50), ShouldBeFalse)
+	Convey("no_value", t, func() {
+		Convey("should be false if serie have values", func() {
+			So(evalutorScenario(`{"type": "no_value", "params": [] }`, 50), ShouldBeFalse)
+		})
 
-		jsonModel, err := simplejson.NewJson([]byte(`{"type": "no_data", "params": [] }`))
-		So(err, ShouldBeNil)
+		Convey("should be true when the serie have no value", func() {
+			jsonModel, err := simplejson.NewJson([]byte(`{"type": "no_value", "params": [] }`))
+			So(err, ShouldBeNil)
 
-		evaluator, err := NewAlertEvaluator(jsonModel)
-		So(err, ShouldBeNil)
+			evaluator, err := NewAlertEvaluator(jsonModel)
+			So(err, ShouldBeNil)
 
-		So(evaluator.Eval(nil), ShouldBeTrue)
+			So(evaluator.Eval(null.FloatFromPtr(nil)), ShouldBeTrue)
+
+		})
 	})
 }

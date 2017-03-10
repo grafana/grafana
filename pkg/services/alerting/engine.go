@@ -1,15 +1,16 @@
 package alerting
 
 import (
+	"context"
 	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/log"
+	"golang.org/x/sync/errgroup"
 )
 
 type Engine struct {
 	execQueue     chan *Job
-	resultQueue   chan *EvalContext
 	clock         clock.Clock
 	ticker        *Ticker
 	scheduler     Scheduler
@@ -23,7 +24,6 @@ func NewEngine() *Engine {
 	e := &Engine{
 		ticker:        NewTicker(time.Now(), time.Second*0, clock.New()),
 		execQueue:     make(chan *Job, 1000),
-		resultQueue:   make(chan *EvalContext, 1000),
 		scheduler:     NewScheduler(),
 		evalHandler:   NewEvalHandler(),
 		ruleReader:    NewRuleReader(),
@@ -34,20 +34,21 @@ func NewEngine() *Engine {
 	return e
 }
 
-func (e *Engine) Start() {
-	e.log.Info("Starting Alerting Engine")
+func (e *Engine) Run(ctx context.Context) error {
+	e.log.Info("Initializing Alerting")
 
-	go e.alertingTicker()
-	go e.execDispatcher()
-	go e.resultDispatcher()
+	alertGroup, ctx := errgroup.WithContext(ctx)
+
+	alertGroup.Go(func() error { return e.alertingTicker(ctx) })
+	alertGroup.Go(func() error { return e.runJobDispatcher(ctx) })
+
+	err := alertGroup.Wait()
+
+	e.log.Info("Stopped Alerting", "reason", err)
+	return err
 }
 
-func (e *Engine) Stop() {
-	close(e.execQueue)
-	close(e.resultQueue)
-}
-
-func (e *Engine) alertingTicker() {
+func (e *Engine) alertingTicker(grafanaCtx context.Context) error {
 	defer func() {
 		if err := recover(); err != nil {
 			e.log.Error("Scheduler Panic: stopping alertingTicker", "error", err, "stack", log.Stack(1))
@@ -58,6 +59,8 @@ func (e *Engine) alertingTicker() {
 
 	for {
 		select {
+		case <-grafanaCtx.Done():
+			return grafanaCtx.Err()
 		case tick := <-e.ticker.C:
 			// TEMP SOLUTION update rules ever tenth tick
 			if tickIndex%10 == 0 {
@@ -70,37 +73,65 @@ func (e *Engine) alertingTicker() {
 	}
 }
 
-func (e *Engine) execDispatcher() {
-	for job := range e.execQueue {
-		e.log.Debug("Starting executing alert rule", "alert id", job.Rule.Id)
-		go e.executeJob(job)
+func (e *Engine) runJobDispatcher(grafanaCtx context.Context) error {
+	dispatcherGroup, alertCtx := errgroup.WithContext(grafanaCtx)
+
+	for {
+		select {
+		case <-grafanaCtx.Done():
+			return dispatcherGroup.Wait()
+		case job := <-e.execQueue:
+			dispatcherGroup.Go(func() error { return e.processJob(alertCtx, job) })
+		}
 	}
 }
 
-func (e *Engine) executeJob(job *Job) {
+var (
+	unfinishedWorkTimeout time.Duration = time.Second * 5
+	alertTimeout          time.Duration = time.Second * 30
+)
+
+func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 	defer func() {
 		if err := recover(); err != nil {
-			e.log.Error("Execute Alert Panic", "error", err, "stack", log.Stack(1))
+			e.log.Error("Alert Panic", "error", err, "stack", log.Stack(1))
 		}
 	}()
+
+	alertCtx, cancelFn := context.WithTimeout(context.Background(), alertTimeout)
 
 	job.Running = true
-	context := NewEvalContext(job.Rule)
-	e.evalHandler.Eval(context)
-	job.Running = false
+	evalContext := NewEvalContext(alertCtx, job.Rule)
 
-	e.resultQueue <- context
-}
+	done := make(chan struct{})
 
-func (e *Engine) resultDispatcher() {
-	defer func() {
-		if err := recover(); err != nil {
-			e.log.Error("Panic in resultDispatcher", "error", err, "stack", log.Stack(1))
-		}
+	go func() {
+		defer func() {
+			if err := recover(); err != nil {
+				e.log.Error("Alert Panic", "error", err, "stack", log.Stack(1))
+				close(done)
+			}
+		}()
+
+		e.evalHandler.Eval(evalContext)
+		e.resultHandler.Handle(evalContext)
+		close(done)
 	}()
 
-	for result := range e.resultQueue {
-		e.log.Debug("Alert Rule Result", "ruleId", result.Rule.Id, "firing", result.Firing)
-		e.resultHandler.Handle(result)
+	var err error = nil
+	select {
+	case <-grafanaCtx.Done():
+		select {
+		case <-time.After(unfinishedWorkTimeout):
+			cancelFn()
+			err = grafanaCtx.Err()
+		case <-done:
+		}
+	case <-done:
 	}
+
+	e.log.Debug("Job Execution completed", "timeMs", evalContext.GetDurationMs(), "alertId", evalContext.Rule.Id, "name", evalContext.Rule.Name, "firing", evalContext.Firing)
+	job.Running = false
+	cancelFn()
+	return err
 }

@@ -29,6 +29,13 @@ func (db *Mysql) AutoIncrStr() string {
 	return "AUTO_INCREMENT"
 }
 
+func (db *Mysql) BooleanStr(value bool) string {
+	if value {
+		return "1"
+	}
+	return "0"
+}
+
 func (db *Mysql) SqlType(c *Column) string {
 	var res string
 	switch c.Type {

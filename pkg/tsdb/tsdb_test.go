@@ -1,9 +1,11 @@
 package tsdb
 
 import (
+	"context"
 	"testing"
 	"time"
 
+	"github.com/grafana/grafana/pkg/models"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -14,9 +16,9 @@ func TestMetricQuery(t *testing.T) {
 		Convey("Given 3 queries for 2 data sources", func() {
 			request := &Request{
 				Queries: QuerySlice{
-					{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1}},
-					{RefId: "B", Query: "asd", DataSource: &DataSourceInfo{Id: 1}},
-					{RefId: "C", Query: "asd", DataSource: &DataSourceInfo{Id: 2}},
+					{RefId: "A", DataSource: &models.DataSource{Id: 1}},
+					{RefId: "B", DataSource: &models.DataSource{Id: 1}},
+					{RefId: "C", DataSource: &models.DataSource{Id: 2}},
 				},
 			}
 
@@ -31,9 +33,9 @@ func TestMetricQuery(t *testing.T) {
 		Convey("Given query 2 depends on query 1", func() {
 			request := &Request{
 				Queries: QuerySlice{
-					{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1}},
-					{RefId: "B", Query: "asd", DataSource: &DataSourceInfo{Id: 2}},
-					{RefId: "C", Query: "#A / #B", DataSource: &DataSourceInfo{Id: 3}, Depends: []string{"A", "B"}},
+					{RefId: "A", DataSource: &models.DataSource{Id: 1}},
+					{RefId: "B", DataSource: &models.DataSource{Id: 2}},
+					{RefId: "C", DataSource: &models.DataSource{Id: 3}, Depends: []string{"A", "B"}},
 				},
 			}
 
@@ -55,14 +57,14 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When executing request with one query", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
 			},
 		}
 
 		fakeExecutor := registerFakeExecutor()
 		fakeExecutor.Return("A", TimeSeriesSlice{&TimeSeries{Name: "argh"}})
 
-		res, err := HandleRequest(req)
+		res, err := HandleRequest(context.TODO(), req)
 		So(err, ShouldBeNil)
 
 		Convey("Should return query results", func() {
@@ -74,8 +76,8 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When executing one request with two queries from same data source", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
-				{RefId: "B", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
+				{RefId: "B", DataSource: &models.DataSource{Id: 1, Type: "test"}},
 			},
 		}
 
@@ -83,7 +85,7 @@ func TestMetricQuery(t *testing.T) {
 		fakeExecutor.Return("A", TimeSeriesSlice{&TimeSeries{Name: "argh"}})
 		fakeExecutor.Return("B", TimeSeriesSlice{&TimeSeries{Name: "barg"}})
 
-		res, err := HandleRequest(req)
+		res, err := HandleRequest(context.TODO(), req)
 		So(err, ShouldBeNil)
 
 		Convey("Should return query results", func() {
@@ -100,13 +102,13 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When executing one request with three queries from different datasources", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
-				{RefId: "B", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
-				{RefId: "C", Query: "asd", DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}},
+				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
+				{RefId: "B", DataSource: &models.DataSource{Id: 1, Type: "test"}},
+				{RefId: "C", DataSource: &models.DataSource{Id: 2, Type: "test"}},
 			},
 		}
 
-		res, err := HandleRequest(req)
+		res, err := HandleRequest(context.TODO(), req)
 		So(err, ShouldBeNil)
 
 		Convey("Should have been batched in two requests", func() {
@@ -117,11 +119,11 @@ func TestMetricQuery(t *testing.T) {
 	Convey("When query uses data source of unknown type", t, func() {
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "asdasdas"}},
+				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "asdasdas"}},
 			},
 		}
 
-		_, err := HandleRequest(req)
+		_, err := HandleRequest(context.TODO(), req)
 		So(err, ShouldNotBeNil)
 	})
 
@@ -129,10 +131,10 @@ func TestMetricQuery(t *testing.T) {
 		req := &Request{
 			Queries: QuerySlice{
 				{
-					RefId: "A", Query: "asd", DataSource: &DataSourceInfo{Id: 1, PluginId: "test"},
+					RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"},
 				},
 				{
-					RefId: "B", Query: "#A / 2", DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}, Depends: []string{"A"},
+					RefId: "B", DataSource: &models.DataSource{Id: 2, Type: "test"}, Depends: []string{"A"},
 				},
 			},
 		}
@@ -152,7 +154,7 @@ func TestMetricQuery(t *testing.T) {
 				}}
 		})
 
-		res, err := HandleRequest(req)
+		res, err := HandleRequest(context.TODO(), req)
 		So(err, ShouldBeNil)
 
 		Convey("Should have been batched in two requests", func() {
@@ -166,9 +168,9 @@ func TestMetricQuery(t *testing.T) {
 }
 
 func registerFakeExecutor() *FakeExecutor {
-	executor := NewFakeExecutor(nil)
-	RegisterExecutor("test", func(dsInfo *DataSourceInfo) Executor {
-		return executor
+	executor, _ := NewFakeExecutor(nil)
+	RegisterExecutor("test", func(dsInfo *models.DataSource) (Executor, error) {
+		return executor, nil
 	})
 
 	return executor

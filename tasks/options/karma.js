@@ -15,18 +15,6 @@ module.exports = function(config) {
 
     test: {
       configFile: 'karma.conf.js',
-    },
-
-    coveralls: {
-      configFile: 'karma.conf.js',
-      reporters: ['dots','coverage','coveralls'],
-      preprocessors: {
-        'public/app/**/*.js': ['coverage']
-      },
-      coverageReporter: {
-        type: 'lcov',
-        dir: 'coverage/'
-      }
     }
   };
 };

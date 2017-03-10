@@ -3,6 +3,7 @@
 import {describe, beforeEach, it, sinon, expect, angularMocks} from '../../../../../test/lib/common';
 
 import angular from 'angular';
+import moment from 'moment';
 import {GraphCtrl} from '../module';
 import helpers from '../../../../../test/specs/helpers';
 
@@ -11,6 +12,9 @@ describe('GraphCtrl', function() {
 
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(angularMocks.module('grafana.controllers'));
+  beforeEach(angularMocks.module(function($compileProvider) {
+    $compileProvider.preAssignBindingsEnabled(true);
+  }));
 
   beforeEach(ctx.providePhase());
   beforeEach(ctx.createPanelController(GraphCtrl));
@@ -19,64 +23,53 @@ describe('GraphCtrl', function() {
     ctx.ctrl.updateTimeRange();
   });
 
-  describe('msResolution with second resolution timestamps', function() {
+  describe('when time series are outside range', function() {
+
     beforeEach(function() {
       var data = [
-        { target: 'test.cpu1', datapoints: [[45, 1234567890], [60, 1234567899]]},
-        { target: 'test.cpu2', datapoints: [[55, 1236547890], [90, 1234456709]]}
+        {target: 'test.cpu1', datapoints: [[45, 1234567890], [60, 1234567899]]},
       ];
-      ctx.ctrl.panel.tooltip.msResolution = false;
+
+      ctx.ctrl.range = {from: moment().valueOf(), to: moment().valueOf()};
       ctx.ctrl.onDataReceived(data);
     });
 
-    it('should not show millisecond resolution tooltip', function() {
-      expect(ctx.ctrl.panel.tooltip.msResolution).to.be(false);
+    it('should set datapointsOutside', function() {
+      expect(ctx.ctrl.dataWarning.title).to.be('Data points outside time range');
     });
   });
 
-  describe('msResolution with millisecond resolution timestamps', function() {
+  describe('when time series are inside range', function() {
     beforeEach(function() {
+      var range = {
+        from: moment().subtract(1, 'days').valueOf(),
+        to: moment().valueOf()
+      };
+
       var data = [
-        { target: 'test.cpu1', datapoints: [[45, 1234567890000], [60, 1234567899000]]},
-        { target: 'test.cpu2', datapoints: [[55, 1236547890001], [90, 1234456709000]]}
+        {target: 'test.cpu1', datapoints: [[45, range.from + 1000], [60, range.from + 10000]]},
       ];
-      ctx.ctrl.panel.tooltip.msResolution = false;
+
+      ctx.ctrl.range = range;
       ctx.ctrl.onDataReceived(data);
     });
 
-    it('should show millisecond resolution tooltip', function() {
-      expect(ctx.ctrl.panel.tooltip.msResolution).to.be(true);
+    it('should set datapointsOutside', function() {
+      expect(ctx.ctrl.dataWarning).to.be(null);
     });
   });
 
-  describe('msResolution with millisecond resolution timestamps but with trailing zeroes', function() {
+  describe('datapointsCount given 2 series', function() {
     beforeEach(function() {
       var data = [
-        { target: 'test.cpu1', datapoints: [[45, 1234567890000], [60, 1234567899000]]},
-        { target: 'test.cpu2', datapoints: [[55, 1236547890000], [90, 1234456709000]]}
+        {target: 'test.cpu1', datapoints: []},
+        {target: 'test.cpu2', datapoints: []},
       ];
-      ctx.ctrl.panel.tooltip.msResolution = false;
       ctx.ctrl.onDataReceived(data);
     });
 
-    it('should not show millisecond resolution tooltip', function() {
-      expect(ctx.ctrl.panel.tooltip.msResolution).to.be(false);
-    });
-  });
-
-  describe('msResolution with millisecond resolution timestamps in one of the series', function() {
-    beforeEach(function() {
-      var data = [
-        { target: 'test.cpu1', datapoints: [[45, 1234567890000], [60, 1234567899000]]},
-        { target: 'test.cpu2', datapoints: [[55, 1236547890010], [90, 1234456709000]]},
-        { target: 'test.cpu3', datapoints: [[65, 1236547890000], [120, 1234456709000]]}
-      ];
-      ctx.ctrl.panel.tooltip.msResolution = false;
-      ctx.ctrl.onDataReceived(data);
-    });
-
-    it('should show millisecond resolution tooltip', function() {
-      expect(ctx.ctrl.panel.tooltip.msResolution).to.be(true);
+    it('should set datapointsCount warning', function() {
+      expect(ctx.ctrl.dataWarning.title).to.be('No data points');
     });
   });
 

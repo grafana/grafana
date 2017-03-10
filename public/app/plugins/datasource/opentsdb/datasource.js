@@ -102,6 +102,26 @@ function (angular, _, dateMath) {
       }.bind(this));
     };
 
+    this.targetContainsTemplate = function(target) {
+      if (target.filters && target.filters.length > 0) {
+        for (var i = 0; i < target.filters.length; i++) {
+          if (templateSrv.variableExists(target.filters[i].filter)) {
+            return true;
+          }
+        }
+      }
+
+      if (target.tags && Object.keys(target.tags).length > 0) {
+        for (var tagKey in target.tags) {
+          if (templateSrv.variableExists(target.tags[tagKey])) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    };
+
     this.performTimeSeriesQuery = function(queries, start, end) {
       var msResolution = false;
       if (this.tsdbResolution === 2) {
@@ -224,7 +244,7 @@ function (angular, _, dateMath) {
 
       var interpolated;
       try {
-        interpolated = templateSrv.replace(query);
+        interpolated = templateSrv.replace(query, {}, 'distributed');
       }
       catch (err) {
         return $q.reject(err);
@@ -332,7 +352,7 @@ function (angular, _, dateMath) {
       var tagData = [];
 
       if (!_.isEmpty(md.tags)) {
-        _.each(_.pairs(md.tags), function(tag) {
+        _.each(_.toPairs(md.tags), function(tag) {
           if (_.has(groupByTags, tag[0])) {
             tagData.push(tag[0] + "=" + tag[1]);
           }
@@ -352,7 +372,7 @@ function (angular, _, dateMath) {
       }
 
       var query = {
-        metric: templateSrv.replace(target.metric, options.scopedVars),
+        metric: templateSrv.replace(target.metric, options.scopedVars, 'pipe'),
         aggregator: "avg"
       };
 
@@ -391,18 +411,22 @@ function (angular, _, dateMath) {
 
       if (target.filters && target.filters.length > 0) {
         query.filters = angular.copy(target.filters);
-        if(query.filters){
-          for(var filter_key in query.filters){
+        if (query.filters){
+          for (var filter_key in query.filters) {
             query.filters[filter_key].filter = templateSrv.replace(query.filters[filter_key].filter, options.scopedVars, 'pipe');
           }
         }
       } else {
         query.tags = angular.copy(target.tags);
-        if(query.tags){
-          for(var tag_key in query.tags){
+        if (query.tags){
+          for (var tag_key in query.tags) {
             query.tags[tag_key] = templateSrv.replace(query.tags[tag_key], options.scopedVars, 'pipe');
           }
         }
+      }
+
+      if (target.explicitTags) {
+        query.explicitTags = true;
       }
 
       return query;
@@ -419,7 +443,7 @@ function (angular, _, dateMath) {
               return target.metric === metricData.metric;
             } else {
               return target.metric === metricData.metric &&
-              _.all(target.tags, function(tagV, tagK) {
+              _.every(target.tags, function(tagV, tagK) {
                 interpolatedTagValue = templateSrv.replace(tagV, options.scopedVars, 'pipe');
                 return metricData.tags[tagK] === interpolatedTagValue || interpolatedTagValue === "*";
               });

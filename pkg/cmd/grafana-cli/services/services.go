@@ -1,35 +1,70 @@
 package services
 
 import (
+	"crypto/tls"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
+	"net"
+	"net/http"
+	"net/url"
 	"path"
+	"time"
 
-	"github.com/franela/goreq"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
 	m "github.com/grafana/grafana/pkg/cmd/grafana-cli/models"
 )
 
-var IoHelper m.IoUtil = IoUtilImp{}
+var (
+	IoHelper       m.IoUtil = IoUtilImp{}
+	HttpClient     http.Client
+	grafanaVersion string
+)
+
+func Init(version string) {
+	grafanaVersion = version
+
+	tr := &http.Transport{
+		Proxy: http.ProxyFromEnvironment,
+		DialContext: (&net.Dialer{
+			Timeout:   30 * time.Second,
+			KeepAlive: 30 * time.Second,
+		}).DialContext,
+		MaxIdleConns:          100,
+		IdleConnTimeout:       90 * time.Second,
+		TLSHandshakeTimeout:   10 * time.Second,
+		ExpectContinueTimeout: 1 * time.Second,
+
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
+	}
+
+	HttpClient = http.Client{
+		Timeout:   time.Duration(10 * time.Second),
+		Transport: tr,
+	}
+}
 
 func ListAllPlugins(repoUrl string) (m.PluginRepo, error) {
-	fullUrl := repoUrl + "/repo"
-	res, err := goreq.Request{Uri: fullUrl, MaxRedirects: 3}.Do()
+	body, err := sendRequest(repoUrl, "repo")
+
+	if err != nil {
+		logger.Info("Failed to send request", "error", err)
+		return m.PluginRepo{}, fmt.Errorf("Failed to send request. error: %v", err)
+	}
+
 	if err != nil {
 		return m.PluginRepo{}, err
 	}
-	if res.StatusCode != 200 {
-		return m.PluginRepo{}, fmt.Errorf("Could not access %s statuscode %v", fullUrl, res.StatusCode)
-	}
 
-	var resp m.PluginRepo
-	err = res.Body.FromJsonTo(&resp)
+	var data m.PluginRepo
+	err = json.Unmarshal(body, &data)
 	if err != nil {
-		return m.PluginRepo{}, errors.New("Could not load plugin data")
+		logger.Info("Failed to unmarshal graphite response error: %v", err)
+		return m.PluginRepo{}, err
 	}
 
-	return resp, nil
+	return data, nil
 }
 
 func ReadPlugin(pluginDir, pluginName string) (m.InstalledPlugin, error) {
@@ -88,21 +123,53 @@ func RemoveInstalledPlugin(pluginPath, pluginName string) error {
 }
 
 func GetPlugin(pluginId, repoUrl string) (m.Plugin, error) {
-	fullUrl := repoUrl + "/repo/" + pluginId
+	body, err := sendRequest(repoUrl, "repo", pluginId)
 
-	res, err := goreq.Request{Uri: fullUrl, MaxRedirects: 3}.Do()
+	if err != nil {
+		logger.Info("Failed to send request", "error", err)
+		return m.Plugin{}, fmt.Errorf("Failed to send request. error: %v", err)
+	}
+
 	if err != nil {
 		return m.Plugin{}, err
 	}
-	if res.StatusCode != 200 {
-		return m.Plugin{}, fmt.Errorf("Could not access %s statuscode %v", fullUrl, res.StatusCode)
-	}
 
-	var resp m.Plugin
-	err = res.Body.FromJsonTo(&resp)
+	var data m.Plugin
+	err = json.Unmarshal(body, &data)
 	if err != nil {
-		return m.Plugin{}, errors.New("Could not load plugin data")
+		logger.Info("Failed to unmarshal graphite response error: %v", err)
+		return m.Plugin{}, err
 	}
 
-	return resp, nil
+	return data, nil
+}
+
+func sendRequest(repoUrl string, subPaths ...string) ([]byte, error) {
+	u, _ := url.Parse(repoUrl)
+	for _, v := range subPaths {
+		u.Path = path.Join(u.Path, v)
+	}
+
+	req, err := http.NewRequest(http.MethodGet, u.String(), nil)
+
+	req.Header.Set("grafana-version", grafanaVersion)
+	req.Header.Set("User-Agent", "grafana "+grafanaVersion)
+
+	if err != nil {
+		return []byte{}, err
+	}
+
+	res, err := HttpClient.Do(req)
+	if err != nil {
+		return []byte{}, err
+	}
+
+	if res.StatusCode/100 != 2 {
+		return []byte{}, fmt.Errorf("Api returned invalid status: %s", res.Status)
+	}
+
+	body, err := ioutil.ReadAll(res.Body)
+	defer res.Body.Close()
+
+	return body, err
 }

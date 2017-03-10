@@ -1,8 +1,12 @@
----
-page_title: Playlist Guide
-page_description: Playlist guide for Grafana
-page_keywords: grafana, playlist, documentation
----
++++
+title = "Playlist"
+keywords = ["grafana", "dashboard", "documentation", "playlist"]
+type = "docs"
+[menu.docs]
+parent = "dashboard_features"
+weight = 4
++++
+
 
 # Playlist
 
@@ -12,9 +16,9 @@ Since Grafana automatically scales Dashboards to any resolution they're perfect 
 
 ## Creating a Playlist
 
-The Playlist feature can be accessed from Grafana's sidemenu. Click the 'Playlist' button from the sidemenu to access the Playlist functionality. When 'Playlist' button is clicked, playlist view will open up showing saved playlists and an option to create new playlists.
+{{< docs-imagebox img="/img/docs/v3/playlist.png" max-width="25rem" >}}
 
-<img src="/img/v3/playlist.png" class="no-shadow">
+The Playlist feature can be accessed from Grafana's sidemenu, in the Dashboard submenu.
 
 Click on "New Playlist" button to create a new playlist. Firstly, name your playlist and configure a time interval for Grafana to wait on a particular Dashboard before advancing to the next one on the Playlist.
 

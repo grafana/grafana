@@ -12,17 +12,17 @@
     params[parts[1]] = parts[2];
   });
 
-  var usage = "url=<url> png=<filename> width=<width> height=<height> cookiename=<cookiename> sessionid=<sessionid> domain=<domain>";
+  var usage = "url=<url> png=<filename> width=<width> height=<height> renderKey=<key>";
 
-  if (!params.url || !params.png || !params.cookiename || ! params.sessionid || !params.domain) {
+  if (!params.url || !params.png ||  !params.renderKey || !params.domain) {
     console.log(usage);
     phantom.exit();
   }
 
   phantom.addCookie({
-    'name': params.cookiename,
-    'value': params.sessionid,
-    'domain': params.domain
+    'name': 'renderKey',
+    'value': params.renderKey,
+    'domain': params.domain,
   });
 
   page.viewportSize = {
@@ -55,7 +55,8 @@
 
         var rootScope = body.injector().get('$rootScope');
         if (!rootScope) {return false;}
-        return rootScope.panelsRendered;
+        var panels = angular.element('div.panel:visible').length;
+        return rootScope.panelsRendered >= panels;
       });
 
       if (panelsRendered || tries === 1000) {

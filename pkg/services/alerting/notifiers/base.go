@@ -2,33 +2,31 @@ package notifiers
 
 import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
-	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/services/alerting"
 )
 
 type NotifierBase struct {
-	Name           string
-	Type           string
-	SeverityFilter models.AlertSeverityType
+	Name        string
+	Type        string
+	Id          int64
+	IsDeault    bool
+	UploadImage bool
 }
 
-func NewNotifierBase(name, notifierType string, model *simplejson.Json) NotifierBase {
-	base := NotifierBase{Name: name, Type: notifierType}
+func NewNotifierBase(id int64, isDefault bool, name, notifierType string, model *simplejson.Json) NotifierBase {
+	uploadImage := model.Get("uploadImage").MustBool(true)
 
-	severityFilter := models.AlertSeverityType(model.Get("severityFilter").MustString(""))
-
-	if severityFilter == models.AlertSeverityCritical || severityFilter == models.AlertSeverityWarning {
-		base.SeverityFilter = severityFilter
+	return NotifierBase{
+		Id:          id,
+		Name:        name,
+		IsDeault:    isDefault,
+		Type:        notifierType,
+		UploadImage: uploadImage,
 	}
-
-	return base
 }
 
-func (n *NotifierBase) MatchSeverity(result models.AlertSeverityType) bool {
-	if !n.SeverityFilter.IsValid() {
-		return true
-	}
-
-	return n.SeverityFilter == result
+func (n *NotifierBase) PassesFilter(rule *alerting.Rule) bool {
+	return true
 }
 
 func (n *NotifierBase) GetType() string {
@@ -36,5 +34,13 @@ func (n *NotifierBase) GetType() string {
 }
 
 func (n *NotifierBase) NeedsImage() bool {
-	return true
+	return n.UploadImage
+}
+
+func (n *NotifierBase) GetNotifierId() int64 {
+	return n.Id
+}
+
+func (n *NotifierBase) GetIsDefault() bool {
+	return n.IsDeault
 }

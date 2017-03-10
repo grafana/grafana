@@ -13,6 +13,9 @@ describe('GraphiteQueryCtrl', function() {
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.controllers'));
   beforeEach(angularMocks.module('grafana.services'));
+  beforeEach(angularMocks.module(function($compileProvider) {
+    $compileProvider.preAssignBindingsEnabled(true);
+  }));
 
   beforeEach(ctx.providePhase());
   beforeEach(angularMocks.inject(($rootScope, $controller, $q) => {
@@ -158,6 +161,29 @@ describe('GraphiteQueryCtrl', function() {
 
     it('should call panelCtrl.refresh', function() {
       expect(ctx.panelCtrl.refresh.called).to.be(true);
+    });
+  });
+
+  describe('when updating targets with nested query', function() {
+    beforeEach(function() {
+      ctx.ctrl.target.target = 'scaleToSeconds(#A)';
+      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.parseTarget();
+
+      ctx.ctrl.panelCtrl.panel.targets = [ {
+        target: 'nested.query.count',
+        refId: 'A'
+      }];
+
+      ctx.ctrl.updateModelTarget();
+    });
+
+    it('target should remain the same', function() {
+      expect(ctx.ctrl.target.target).to.be('scaleToSeconds(#A)');
+    });
+
+    it('targetFull should include nexted queries', function() {
+      expect(ctx.ctrl.target.targetFull).to.be('scaleToSeconds(nested.query.count)');
     });
   });
 });

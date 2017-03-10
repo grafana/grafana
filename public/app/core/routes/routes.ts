@@ -44,10 +44,6 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     templateUrl: 'public/app/features/dashboard/partials/dash_list.html',
     controller : 'DashListCtrl',
   })
-  .when('/dashboards/migrate', {
-    templateUrl: 'public/app/features/dashboard/partials/migrate.html',
-    controller : 'DashboardImportCtrl',
-  })
   .when('/datasources', {
     templateUrl: 'public/app/features/plugins/partials/ds_list.html',
     controller : 'DataSourcesCtrl',
@@ -117,6 +113,7 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
   .when('/admin/users', {
     templateUrl: 'public/app/features/admin/partials/users.html',
     controller : 'AdminListUsersCtrl',
+    controllerAs: 'ctrl',
     resolve: loadAdminBundle,
   })
   .when('/admin/users/create', {

@@ -132,62 +132,64 @@ define([
   describe('calculateInterval', function() {
     it('1h 100 resultion', function() {
       var range = { from: dateMath.parse('now-1h'), to: dateMath.parse('now') };
-      var str = kbn.calculateInterval(range, 100, null);
-      expect(str).to.be('30s');
+      var res = kbn.calculateInterval(range, 100, null);
+      expect(res.interval).to.be('30s');
     });
 
     it('10m 1600 resolution', function() {
       var range = { from: dateMath.parse('now-10m'), to: dateMath.parse('now') };
-      var str = kbn.calculateInterval(range, 1600, null);
-      expect(str).to.be('500ms');
+      var res = kbn.calculateInterval(range, 1600, null);
+      expect(res.interval).to.be('500ms');
+      expect(res.intervalMs).to.be(500);
     });
 
     it('fixed user interval', function() {
       var range = { from: dateMath.parse('now-10m'), to: dateMath.parse('now') };
-      var str = kbn.calculateInterval(range, 1600, '10s');
-      expect(str).to.be('10s');
+      var res = kbn.calculateInterval(range, 1600, '10s');
+      expect(res.interval).to.be('10s');
+      expect(res.intervalMs).to.be(10000);
     });
 
     it('short time range and user low limit', function() {
       var range = { from: dateMath.parse('now-10m'), to: dateMath.parse('now') };
-      var str = kbn.calculateInterval(range, 1600, '>10s');
-      expect(str).to.be('10s');
+      var res = kbn.calculateInterval(range, 1600, '>10s');
+      expect(res.interval).to.be('10s');
     });
 
     it('large time range and user low limit', function() {
-      var range = { from: dateMath.parse('now-14d'), to: dateMath.parse('now') };
-      var str = kbn.calculateInterval(range, 1000, '>10s');
-      expect(str).to.be('20m');
+      var range = {from: dateMath.parse('now-14d'), to: dateMath.parse('now')};
+      var res = kbn.calculateInterval(range, 1000, '>10s');
+      expect(res.interval).to.be('20m');
     });
-	
+
     it('10s 900 resolution and user low limit in ms', function() {
       var range = { from: dateMath.parse('now-10s'), to: dateMath.parse('now') };
-      var str = kbn.calculateInterval(range, 900, '>15ms');
-      expect(str).to.be('15ms');
+      var res = kbn.calculateInterval(range, 900, '>15ms');
+      expect(res.interval).to.be('15ms');
     });
   });
 
   describe('hex', function() {
-      it('positive integer', function() {
-	var str = kbn.valueFormats.hex(100, 0);
-	expect(str).to.be('64');
-      });
-      it('negative integer', function() {
-	var str = kbn.valueFormats.hex(-100, 0);
-	expect(str).to.be('-64');
-      });
-      it('null', function() {
-	var str = kbn.valueFormats.hex(null, 0);
-	expect(str).to.be('');
-      });
-      it('positive float', function() {
-	var str = kbn.valueFormats.hex(50.52, 1);
-	expect(str).to.be('32.8');
-      }); 
-      it('negative float', function() {
-	var str = kbn.valueFormats.hex(-50.333, 2);
-	expect(str).to.be('-32.547AE147AE14');
-      });
+    it('positive integer', function() {
+      var str = kbn.valueFormats.hex(100, 0);
+      expect(str).to.be('64');
+    });
+    it('negative integer', function() {
+      var str = kbn.valueFormats.hex(-100, 0);
+      expect(str).to.be('-64');
+    });
+    it('null', function() {
+      var str = kbn.valueFormats.hex(null, 0);
+      expect(str).to.be('');
+    });
+    it('positive float', function() {
+      var str = kbn.valueFormats.hex(50.52, 1);
+      expect(str).to.be('32.8');
+    });
+    it('negative float', function() {
+      var str = kbn.valueFormats.hex(-50.333, 2);
+      expect(str).to.be('-32.547AE147AE14');
+    });
   });
 
   describe('hex 0x', function() {
@@ -210,6 +212,77 @@ define([
     it('negative float', function() {
       var str = kbn.valueFormats.hex0x(-65.458, 1);
       expect(str).to.be('-0x41.8');
+    });
+  });
+
+  describe('duration', function() {
+    it('null', function() {
+      var str = kbn.toDuration(null, 0, "millisecond");
+      expect(str).to.be('');
+    });
+    it('0 milliseconds', function() {
+      var str = kbn.toDuration(0, 0, "millisecond");
+      expect(str).to.be('0 milliseconds');
+    });
+    it('1 millisecond', function() {
+      var str = kbn.toDuration(1, 0, "millisecond");
+      expect(str).to.be('1 millisecond');
+    });
+    it('-1 millisecond', function() {
+      var str = kbn.toDuration(-1, 0, "millisecond");
+      expect(str).to.be('1 millisecond ago');
+    });
+    it('seconds', function() {
+      var str = kbn.toDuration(1, 0, "second");
+      expect(str).to.be('1 second');
+    });
+    it('minutes', function() {
+      var str = kbn.toDuration(1, 0, "minute");
+      expect(str).to.be('1 minute');
+    });
+    it('hours', function() {
+      var str = kbn.toDuration(1, 0, "hour");
+      expect(str).to.be('1 hour');
+    });
+    it('days', function() {
+      var str = kbn.toDuration(1, 0, "day");
+      expect(str).to.be('1 day');
+    });
+    it('weeks', function() {
+      var str = kbn.toDuration(1, 0, "week");
+      expect(str).to.be('1 week');
+    });
+    it('months', function() {
+      var str = kbn.toDuration(1, 0, "month");
+      expect(str).to.be('1 month');
+    });
+    it('years', function() {
+      var str = kbn.toDuration(1, 0, "year");
+      expect(str).to.be('1 year');
+    });
+    it('decimal days', function() {
+      var str = kbn.toDuration(1.5, 2, "day");
+      expect(str).to.be('1 day, 12 hours, 0 minutes');
+    });
+    it('decimal months', function() {
+      var str = kbn.toDuration(1.5, 3, "month");
+      expect(str).to.be('1 month, 2 weeks, 1 day, 0 hours');
+    });
+    it('no decimals', function() {
+      var str = kbn.toDuration(38898367008, 0, "millisecond");
+      expect(str).to.be('1 year');
+    });
+    it('1 decimal', function() {
+      var str = kbn.toDuration(38898367008, 1, "millisecond");
+      expect(str).to.be('1 year, 2 months');
+    });
+    it('too many decimals', function() {
+      var str = kbn.toDuration(38898367008, 20, "millisecond");
+      expect(str).to.be('1 year, 2 months, 3 weeks, 4 days, 5 hours, 6 minutes, 7 seconds, 8 milliseconds');
+    });
+    it('floating point error', function() {
+      var str = kbn.toDuration(36993906007, 8, "millisecond");
+      expect(str).to.be('1 year, 2 months, 0 weeks, 3 days, 4 hours, 5 minutes, 6 seconds, 7 milliseconds');
     });
   });
 });

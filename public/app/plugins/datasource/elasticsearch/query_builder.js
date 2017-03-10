@@ -11,11 +11,11 @@ function (queryDef) {
 
   ElasticQueryBuilder.prototype.getRangeFilter = function() {
     var filter = {};
-    filter[this.timeField] = {"gte": "$timeFrom", "lte": "$timeTo"};
-
-    if (this.esVersion >= 2) {
-      filter[this.timeField]["format"] = "epoch_millis";
-    }
+    filter[this.timeField] = {
+      gte: "$timeFrom",
+      lte: "$timeTo",
+      format: "epoch_millis",
+    };
 
     return filter;
   };
@@ -28,7 +28,7 @@ function (queryDef) {
       return queryNode;
     }
 
-    queryNode.terms.size = parseInt(aggDef.settings.size, 10);
+    queryNode.terms.size = parseInt(aggDef.settings.size, 10) === 0 ? 500 : parseInt(aggDef.settings.size, 10);
     if (aggDef.settings.orderBy !== void 0) {
       queryNode.terms.order = {};
       queryNode.terms.order[aggDef.settings.orderBy] = aggDef.settings.order;
@@ -48,6 +48,14 @@ function (queryDef) {
       }
     }
 
+    if (aggDef.settings.min_doc_count !== void 0) {
+      queryNode.terms.min_doc_count = parseInt(aggDef.settings.min_doc_count, 10);
+    }
+
+    if (aggDef.settings.missing) {
+      queryNode.terms.missing = aggDef.settings.missing;
+    }
+
     return queryNode;
   };
 
@@ -58,13 +66,14 @@ function (queryDef) {
     esAgg.field = this.timeField;
     esAgg.min_doc_count = settings.min_doc_count || 0;
     esAgg.extended_bounds = {min: "$timeFrom", max: "$timeTo"};
+    esAgg.format = "epoch_millis";
 
     if (esAgg.interval === 'auto') {
-      esAgg.interval = "$interval";
+      esAgg.interval = "$__interval";
     }
 
-    if (this.esVersion >= 2) {
-      esAgg.format = "epoch_millis";
+    if (settings.missing) {
+      esAgg.missing = settings.missing;
     }
 
     return esAgg;
@@ -72,15 +81,13 @@ function (queryDef) {
 
   ElasticQueryBuilder.prototype.getFiltersAgg = function(aggDef) {
     var filterObj = {};
-
     for (var i = 0; i < aggDef.settings.filters.length; i++) {
       var query = aggDef.settings.filters[i].query;
+
       filterObj[query] = {
-        query: {
-          query_string: {
-            query: query,
-            analyze_wildcard: true
-          }
+        query_string: {
+          query: query,
+          analyze_wildcard: true
         }
       };
     }
@@ -92,13 +99,53 @@ function (queryDef) {
     query.size = 500;
     query.sort = {};
     query.sort[this.timeField] = {order: 'desc', unmapped_type: 'boolean'};
-    query.fields = ["*", "_source"];
+
+    // fields field not supported on ES 5.x
+    if (this.esVersion < 5) {
+      query.fields = ["*", "_source"];
+    }
+
     query.script_fields = {},
     query.fielddata_fields = [this.timeField];
     return query;
   };
 
-  ElasticQueryBuilder.prototype.build = function(target) {
+  ElasticQueryBuilder.prototype.addAdhocFilters = function(query, adhocFilters) {
+    if (!adhocFilters) {
+      return;
+    }
+
+    var i, filter, condition;
+    for (i = 0; i < adhocFilters.length; i++) {
+      filter = adhocFilters[i];
+      condition = {};
+      condition[filter.key] = filter.value;
+      switch(filter.operator){
+        case "=":
+          query.query.bool.filter.push({"term": condition});
+          break;
+        case "!=":
+          query.query.bool.filter.push({"bool": {"must_not": {"term": condition}}});
+          break;
+        case "<":
+          condition[filter.key] = {"lt": filter.value};
+          query.query.bool.filter.push({"range": condition});
+          break;
+        case ">":
+          condition[filter.key] = {"gt": filter.value};
+          query.query.bool.filter.push({"range": condition});
+          break;
+        case "=~":
+          query.query.bool.filter.push({"regexp": condition});
+          break;
+        case "!~":
+          query.query.bool.filter.push({"bool": {"must_not": {"regexp": condition}}});
+          break;
+      }
+    }
+  };
+
+  ElasticQueryBuilder.prototype.build = function(target, adhocFilters, queryString) {
     // make sure query has defaults;
     target.metrics = target.metrics || [{ type: 'count', id: '1' }];
     target.dsType = 'elasticsearch';
@@ -109,21 +156,21 @@ function (queryDef) {
     var query = {
       "size": 0,
       "query": {
-        "filtered": {
-          "query": {
-            "query_string": {
-              "analyze_wildcard": true,
-              "query": '$lucene_query',
+        "bool": {
+          "filter": [
+            {"range": this.getRangeFilter()},
+            {
+              "query_string": {
+                "analyze_wildcard": true,
+                "query": queryString,
+              }
             }
-          },
-          "filter": {
-            "bool": {
-              "must": [{"range": this.getRangeFilter()}]
-            }
-          }
+          ]
         }
       }
     };
+
+    this.addAdhocFilters(query, adhocFilters);
 
     // handle document query
     if (target.bucketAggs.length === 0) {
@@ -202,33 +249,35 @@ function (queryDef) {
     var query = {
       "size": 0,
       "query": {
-        "filtered": {
-          "query": {
-            "query_string": {
-              "analyze_wildcard": true,
-              "query": '$lucene_query',
-            }
-          },
-          "filter": {
-            "bool": {
-              "must": [{"range": this.getRangeFilter()}]
-            }
-          }
+        "bool": {
+          "filter": [{"range": this.getRangeFilter()}]
         }
       }
     };
+
+    if (queryDef.query) {
+      query.query.bool.filter.push({
+        "query_string": {
+          "analyze_wildcard": true,
+          "query": queryDef.query,
+        }
+      });
+    }
+    var size = 500;
+    if(queryDef.size){
+      size = queryDef.size;
+    }
     query.aggs =  {
       "1": {
         "terms": {
           "field": queryDef.field,
-          "size": 0,
+          "size": size,
           "order": {
             "_term": "asc"
           }
         },
       }
     };
-
     return query;
   };
 
