@@ -460,7 +460,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
           show: panel.yaxes[0].show,
           index: 1,
           logBase: panel.yaxes[0].logBase || 1,
-          max: null
+          min: panel.yaxes[0].min ? _.toNumber(panel.yaxes[0].min) : null,
+          max: panel.yaxes[0].max ? _.toNumber(panel.yaxes[0].max) : null,
         };
 
         options.yaxes.push(defaults);
@@ -471,12 +472,13 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
           secondY.show = panel.yaxes[1].show;
           secondY.logBase = panel.yaxes[1].logBase || 1;
           secondY.position = 'right';
+          secondY.min = panel.yaxes[1].min ? _.toNumber(panel.yaxes[1].min) : null;
+          secondY.max = panel.yaxes[1].max ? _.toNumber(panel.yaxes[1].max) : null;
           options.yaxes.push(secondY);
 
           applyLogScale(options.yaxes[1], data);
           configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? "percent" : panel.yaxes[1].format);
         }
-
         applyLogScale(options.yaxes[0], data);
         configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? "percent" : panel.yaxes[0].format);
       }
@@ -498,10 +500,10 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         for (i = 0; i < data.length; i++) {
           series = data[i];
           if (series.yaxis === axis.index) {
-            if (max === null || max < series.stats.max) {
+            if (!max || max < series.stats.max) {
               max = series.stats.max;
             }
-            if (min === null || min > series.stats.logmin) {
+            if (!min || min > series.stats.logmin) {
               min = series.stats.logmin;
             }
           }
@@ -510,27 +512,27 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         axis.transform = function(v) { return (v < Number.MIN_VALUE) ? null : Math.log(v) / Math.log(axis.logBase); };
         axis.inverseTransform  = function (v) { return Math.pow(axis.logBase,v); };
 
-        if (max === null && min === null) {
+        if (!max && !min) {
           max = axis.inverseTransform(+2);
           min = axis.inverseTransform(-2);
-        } else if (max === null) {
+        } else if (!max) {
           max = min*axis.inverseTransform(+4);
-        } else if (min === null) {
+        } else if (!min) {
           min = max*axis.inverseTransform(-4);
         }
 
-        if (axis.min !== null) {
+        if (axis.min) {
           min = axis.inverseTransform(Math.ceil(axis.transform(axis.min)));
         } else {
           min = axis.min = axis.inverseTransform(Math.floor(axis.transform(min)));
         }
-        if (axis.max !== null) {
+        if (axis.max) {
           max = axis.inverseTransform(Math.floor(axis.transform(axis.max)));
         } else {
           max = axis.max = axis.inverseTransform(Math.ceil(axis.transform(max)));
         }
 
-        if (min < Number.MIN_VALUE || max < Number.MIN_VALUE) {
+        if (!min || min < Number.MIN_VALUE || !max || max < Number.MIN_VALUE) {
           return;
         }
 
@@ -539,6 +541,13 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         for (nextTick = min; nextTick <= max; nextTick *= axis.logBase) {
           axis.ticks.push(nextTick);
         }
+        axis.tickDecimals = decimalPlaces(min);
+      }
+
+      function decimalPlaces(num) {
+        if (!num) { return 0; }
+
+        return (num.toString().split('.')[1] || []).length;
       }
 
       function configureAxisMode(axis, format) {

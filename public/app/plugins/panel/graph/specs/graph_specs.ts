@@ -121,8 +121,8 @@ describe('grafanaGraph', function() {
       });
       data[0].yaxis = 1;
       ctrl.panel.yaxes[1].logBase = 10;
-      ctrl.panel.yaxes[1].min = 0.05;
-      ctrl.panel.yaxes[1].max = 1500;
+      ctrl.panel.yaxes[1].min = '0.05';
+      ctrl.panel.yaxes[1].max = '1500';
       data[1] = new TimeSeries({
         datapoints: [[2000,1],[0.002,2],[0,3],[-1,4]],
         alias: 'seriesFixedscale',
@@ -139,12 +139,17 @@ describe('grafanaGraph', function() {
       expect(axisAutoscale.ticks.length).to.be(8);
       expect(axisAutoscale.ticks[0]).to.be(0.001);
       expect(axisAutoscale.ticks[7]).to.be(10000);
+      expect(axisAutoscale.tickDecimals).to.be(3);
+
+
       var axisFixedscale = ctx.plotOptions.yaxes[1];
       expect(axisFixedscale.min).to.be(0.05);
       expect(axisFixedscale.max).to.be(1500);
       expect(axisFixedscale.ticks.length).to.be(5);
       expect(axisFixedscale.ticks[0]).to.be(0.1);
       expect(axisFixedscale.ticks[4]).to.be(1000);
+      expect(axisFixedscale.tickDecimals).to.be(1);
+
     });
   });
 
