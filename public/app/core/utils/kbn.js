@@ -407,6 +407,7 @@ function($, _) {
   kbn.valueFormats.kbytes = kbn.formatBuilders.binarySIPrefix('B', 1);
   kbn.valueFormats.mbytes = kbn.formatBuilders.binarySIPrefix('B', 2);
   kbn.valueFormats.gbytes = kbn.formatBuilders.binarySIPrefix('B', 3);
+  kbn.valueFormats.tbytes = kbn.formatBuilders.binarySIPrefix('B', 4);
 
   // Data (Decimal)
   kbn.valueFormats.decbits   = kbn.formatBuilders.decimalSIPrefix('b');
@@ -414,6 +415,7 @@ function($, _) {
   kbn.valueFormats.deckbytes = kbn.formatBuilders.decimalSIPrefix('B', 1);
   kbn.valueFormats.decmbytes = kbn.formatBuilders.decimalSIPrefix('B', 2);
   kbn.valueFormats.decgbytes = kbn.formatBuilders.decimalSIPrefix('B', 3);
+  kbn.valueFormats.dectbytes = kbn.formatBuilders.decimalSIPrefix('B', 4);
 
   // Data Rate
   kbn.valueFormats.pps    = kbn.formatBuilders.decimalSIPrefix('pps');
@@ -747,6 +749,7 @@ function($, _) {
           {text: 'kibibytes', value: 'kbytes'},
           {text: 'mebibytes', value: 'mbytes'},
           {text: 'gibibytes', value: 'gbytes'},
+          {text: 'tebibytes', value: 'tbytes'},
         ]
       },
       {
@@ -757,6 +760,7 @@ function($, _) {
           {text: 'kilobytes', value: 'deckbytes'},
           {text: 'megabytes', value: 'decmbytes'},
           {text: 'gigabytes', value: 'decgbytes'},
+          {text: 'terabytes', value: 'dectbytes'},
         ]
       },
       {
