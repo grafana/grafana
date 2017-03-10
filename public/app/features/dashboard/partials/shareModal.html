@@ -148,6 +148,19 @@
 					</div>
 				</div>
 
+				<div ng-if="step === 1">
+					<p class="share-modal-info-text">
+						You may need to configure the timeout value if it takes a long time to collect your dashboard's metrics.
+					</p>
+				</div>
+
+				<div class="gf-form-group share-modal-options">
+					<div class="gf-form" ng-if="step === 1">
+						<span class="gf-form-label width-12">Timeout (seconds)</span>
+						<input type="number" ng-model="snapshot.timeoutSeconds" class="gf-form-input max-width-15" >
+					</div>
+				</div>
+
 				<div ng-if="step === 1" class="gf-form-button-row">
 					<button class="btn gf-form-btn width-10 btn-success" ng-click="createSnapshot()" ng-disabled="loading">
 						<i class="fa fa-save"></i>

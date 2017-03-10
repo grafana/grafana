@@ -15,24 +15,25 @@ weight = 2
 
 Description | Download
 ------------ | -------------
-Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [4.1.1 (x86-64 rpm)](https://grafanarel.s3.amazonaws.com/builds/grafana-4.1.1-1484211277.x86_64.rpm)
+Stable for CentOS / Fedora / OpenSuse / Redhat Linux | [4.1.2 (x86-64 rpm)](https://grafanarel.s3.amazonaws.com/builds/grafana-4.1.2-1486989747.x86_64.rpm)
+Beta for CentOS / Fedora / OpenSuse / Redhat Linux | [4.2.0-beta1 (x86-64 rpm)](https://grafanarel.s3.amazonaws.com/builds/grafana-4.2.0-beta1.x86_64.rpm)
 
 ## Install Stable
 
 You can install Grafana using Yum directly.
 
-    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-4.1.1-1484211277.x86_64.rpm
+    $ sudo yum install https://grafanarel.s3.amazonaws.com/builds/grafana-4.1.2-1486989747.x86_64.rpm
 
 Or install manually using `rpm`.
 
 #### On CentOS / Fedora / Redhat:
 
     $ sudo yum install initscripts fontconfig
-    $ sudo rpm -Uvh grafana-4.1.1-1484211277.x86_64.rpm
+    $ sudo rpm -Uvh grafana-4.1.2-1486989747.x86_64.rpm
 
 #### On OpenSuse:
 
-    $ sudo rpm -i --nodeps grafana-4.1.1-1484211277.x86_64.rpm
+    $ sudo rpm -i --nodeps grafana-4.1.2-1486989747.x86_64.rpm
 
 ## Install via YUM Repository
 
@@ -121,10 +122,10 @@ those options.
 
 ### Adding data sources
 
-- [Graphite]({{< relref "datasources/graphite.md" >}})
-- [InfluxDB]({{< relref "datasources/influxdb.md" >}})
-- [OpenTSDB]({{< relref "datasources/opentsdb.md" >}})
-- [Prometheus]({{< relref "datasources/prometheus.md" >}})
+- [Graphite]({{< relref "features/datasources/graphite.md" >}})
+- [InfluxDB]({{< relref "features/datasources/influxdb.md" >}})
+- [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
+- [Prometheus]({{< relref "features/datasources/prometheus.md" >}})
 
 ### Server side image rendering
 

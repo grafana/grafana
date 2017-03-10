@@ -51,6 +51,7 @@ function (angular, _, $, moment, require, config) {
       var range = timeSrv.timeRange();
       params.from = range.from.valueOf();
       params.to = range.to.valueOf();
+      params.orgId = config.bootData.user.orgId;
 
       if ($scope.options.includeTemplateVars) {
         templateSrv.fillVariableValuesForUrl(params);

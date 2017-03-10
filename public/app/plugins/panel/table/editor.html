@@ -21,6 +21,10 @@
 				<metric-segment segment="editor.addColumnSegment" get-options="editor.getColumnOptions()" on-change="editor.addColumn()"></metric-segment>
 			</div>
 		</div>
+    <gf-form-switch class="gf-form" label-class="width-10"
+                    label="Filter null values"
+                    checked="editor.panel.filterNull"
+                    on-change="editor.render()"></gf-form-switch>
 	</div>
 
 	<div class="section gf-form-group">

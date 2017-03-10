@@ -210,12 +210,46 @@ func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) 
 
 // GET /api/users
 func SearchUsers(c *middleware.Context) Response {
-	query := m.SearchUsersQuery{Query: "", Page: 0, Limit: 1000}
-	if err := bus.Dispatch(&query); err != nil {
+	query, err := searchUser(c)
+	if err != nil {
+		return ApiError(500, "Failed to fetch users", err)
+	}
+
+	return Json(200, query.Result.Users)
+}
+
+// GET /api/search
+func SearchUsersWithPaging(c *middleware.Context) Response {
+	query, err := searchUser(c)
+	if err != nil {
 		return ApiError(500, "Failed to fetch users", err)
 	}
 
 	return Json(200, query.Result)
+}
+
+func searchUser(c *middleware.Context) (*m.SearchUsersQuery, error) {
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+	page := c.QueryInt("page")
+
+	if page < 1 {
+		page = 1
+	}
+
+	searchQuery := c.Query("query")
+
+	query := &m.SearchUsersQuery{Query: searchQuery, Page: page, Limit: perPage}
+	if err := bus.Dispatch(query); err != nil {
+		return nil, err
+	}
+
+	query.Result.Page = page
+	query.Result.PerPage = perPage
+
+	return query, nil
 }
 
 func SetHelpFlag(c *middleware.Context) Response {

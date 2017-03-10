@@ -4,9 +4,11 @@ import (
 	"bytes"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/url"
 	"path"
+	"time"
 
 	"github.com/grafana/grafana/pkg/util"
 )
@@ -15,6 +17,18 @@ type WebdavUploader struct {
 	url      string
 	username string
 	password string
+}
+
+var netTransport = &http.Transport{
+	Dial: (&net.Dialer{
+		Timeout: 60 * time.Second,
+	}).Dial,
+	TLSHandshakeTimeout: 5 * time.Second,
+}
+
+var netClient = &http.Client{
+	Timeout:   time.Second * 60,
+	Transport: netTransport,
 }
 
 func (u *WebdavUploader) Upload(pa string) (string, error) {
@@ -28,7 +42,7 @@ func (u *WebdavUploader) Upload(pa string) (string, error) {
 		req.SetBasicAuth(u.username, u.password)
 	}
 
-	res, err := http.DefaultClient.Do(req)
+	res, err := netClient.Do(req)
 
 	if err != nil {
 		return "", err

@@ -2,8 +2,9 @@ define([
   'angular',
   'lodash',
   'jquery',
+  'app/core/config'
 ],
-function (angular, _, $) {
+function (angular, _, $, config) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -63,6 +64,7 @@ function (angular, _, $) {
       state.fullscreen = state.fullscreen ? true : null;
       state.edit =  (state.edit === "true" || state.edit === true) || null;
       state.editview = state.editview || null;
+      state.orgId = config.bootData.user.orgId;
       return state;
     };
 

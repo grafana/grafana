@@ -14,13 +14,15 @@ parent = "guides"
 This document is a “bottom up” introduction to basic concepts in Grafana, and can be used as a starting point to get familiar with core features.
 
 ### Data Source
+
 Grafana supports many different storage backends for your time series data (Data Source). Each Data Source has a specific Query Editor that is customized for the features and capabilities that the particular Data Source exposes.
 
-The following datasources are officially supported: [Graphite](/datasources/graphite/), [InfluxDB](/datasources/influxdb/), [OpenTSDB](/datasources/opentsdb/), [Prometheus](/datasources/prometheus/), [Elasticsearch](/datasources/elasticsearch/), [CloudWatch](/datasources/cloudwatch/), and [KairosDB](/datasources/kairosdb)
+The following datasources are officially supported: [Graphite]({{< relref "features/datasources/graphite.md" >}}), [InfluxDB]({{< relref "features/datasources/influxdb.md" >}}), [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}}), [Prometheus]({{< relref "features/datasources/prometheus.md" >}}), [Elasticsearch]({{< relref "features/datasources/elasticsearch.md" >}}), [CloudWatch]({{< relref "features/datasources/cloudwatch.md" >}}).
 
 The query language and capabilities of each Data Source are obviously very different. You can combine data from multiple Data Sources onto a single Dashboard, but each Panel is tied to a specific Data Source that belongs to a particular Organization.
 
 ### Organization
+
 Grafana supports multiple organizations in order to support a wide variety of deployment models, including using a single Grafana instance to provide service to multiple potentially untrusted Organizations.
 
 In many cases, Grafana will be deployed with a single Organization.
@@ -34,6 +36,7 @@ All Dashboards are owned by a particular Organization.
 For more details on the user model for Grafana, please refer to [Admin](/reference/admin/)
 
 ### User
+
 A User is a named account in Grafana. A user can belong to one or more Organizations, and can be assigned different levels of privileges through roles.
 
 Grafana supports a wide variety of internal and external ways for Users to authenticate themselves. These include from its own integrated database, from an external SQL server, or from an external LDAP server.

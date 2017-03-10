@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"fmt"
 	"net/http"
@@ -24,6 +25,8 @@ type HttpServer struct {
 	macaron       *macaron.Macaron
 	context       context.Context
 	streamManager *live.StreamManager
+
+	httpSrv *http.Server
 }
 
 func NewHttpServer() *HttpServer {
@@ -45,16 +48,31 @@ func (hs *HttpServer) Start(ctx context.Context) error {
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
 	hs.log.Info("Initializing HTTP Server", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl)
 
+	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: hs.macaron}
 	switch setting.Protocol {
 	case setting.HTTP:
-		err = http.ListenAndServe(listenAddr, hs.macaron)
+		err = hs.httpSrv.ListenAndServe()
+		if err == http.ErrServerClosed {
+			hs.log.Debug("server was shutdown gracefully")
+			return nil
+		}
 	case setting.HTTPS:
-		err = hs.listenAndServeTLS(listenAddr, setting.CertFile, setting.KeyFile)
+		err = hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
+		if err == http.ErrServerClosed {
+			hs.log.Debug("server was shutdown gracefully")
+			return nil
+		}
 	default:
 		hs.log.Error("Invalid protocol", "protocol", setting.Protocol)
 		err = errors.New("Invalid Protocol")
 	}
 
+	return err
+}
+
+func (hs *HttpServer) Shutdown(ctx context.Context) error {
+	err := hs.httpSrv.Shutdown(ctx)
+	hs.log.Info("stopped http server")
 	return err
 }
 
@@ -75,7 +93,32 @@ func (hs *HttpServer) listenAndServeTLS(listenAddr, certfile, keyfile string) er
 		return fmt.Errorf(`Cannot find SSL key_file at %v`, setting.KeyFile)
 	}
 
-	return http.ListenAndServeTLS(listenAddr, setting.CertFile, setting.KeyFile, hs.macaron)
+	tlsCfg := &tls.Config{
+		MinVersion:               tls.VersionTLS12,
+		PreferServerCipherSuites: true,
+		CipherSuites: []uint16{
+			tls.TLS_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+			tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
+			tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
+			tls.TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384,
+		},
+	}
+	srv := &http.Server{
+		Addr:         listenAddr,
+		Handler:      hs.macaron,
+		TLSConfig:    tlsCfg,
+		TLSNextProto: make(map[string]func(*http.Server, *tls.Conn, http.Handler), 0),
+	}
+
+	return srv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
 }
 
 func (hs *HttpServer) newMacaron() *macaron.Macaron {
@@ -107,6 +150,7 @@ func (hs *HttpServer) newMacaron() *macaron.Macaron {
 	m.Use(middleware.GetContextHandler())
 	m.Use(middleware.Sessioner(&setting.SessionOptions))
 	m.Use(middleware.RequestMetrics())
+	m.Use(middleware.OrgRedirect())
 
 	// needs to be after context handler
 	if setting.EnforceDomain {

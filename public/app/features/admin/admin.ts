@@ -1,4 +1,4 @@
-import  './adminListUsersCtrl';
+import  AdminListUsersCtrl from './admin_list_users_ctrl';
 import  './adminListOrgsCtrl';
 import  './adminEditOrgCtrl';
 import  './adminEditUserCtrl';
@@ -37,3 +37,4 @@ export class AdminStatsCtrl {
 coreModule.controller('AdminSettingsCtrl', AdminSettingsCtrl);
 coreModule.controller('AdminHomeCtrl', AdminHomeCtrl);
 coreModule.controller('AdminStatsCtrl', AdminStatsCtrl);
+coreModule.controller('AdminListUsersCtrl', AdminListUsersCtrl);

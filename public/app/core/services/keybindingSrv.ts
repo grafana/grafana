@@ -187,6 +187,20 @@ export class KeybindingSrv {
       }
     });
 
+    // collapse all rows
+    this.bind('d C', () => {
+      for (let row of dashboard.rows) {
+        row.collapse = true;
+      }
+    });
+
+    // expand all rows
+    this.bind('d E', () => {
+      for (let row of dashboard.rows) {
+        row.collapse = false;
+      }
+    });
+
     this.bind('d r', () => {
       scope.broadcastRefresh();
     });

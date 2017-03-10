@@ -11,14 +11,14 @@ type Repository interface {
 type ItemQuery struct {
 	OrgId       int64    `json:"orgId"`
 	From        int64    `json:"from"`
-	To          int64    `json:"from"`
+	To          int64    `json:"to"`
 	Type        ItemType `json:"type"`
 	AlertId     int64    `json:"alertId"`
 	DashboardId int64    `json:"dashboardId"`
 	PanelId     int64    `json:"panelId"`
 	NewState    []string `json:"newState"`
 
-	Limit int64 `json:"alertId"`
+	Limit int64 `json:"limit"`
 }
 
 type DeleteParams struct {
@@ -48,7 +48,7 @@ type Item struct {
 	OrgId       int64    `json:"orgId"`
 	DashboardId int64    `json:"dashboardId"`
 	PanelId     int64    `json:"panelId"`
-	CategoryId  int64    `json:"panelId"`
+	CategoryId  int64    `json:"categoryId"`
 	Type        ItemType `json:"type"`
 	Title       string   `json:"title"`
 	Text        string   `json:"text"`

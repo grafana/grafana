@@ -12,6 +12,7 @@ function (angular, _) {
     $scope.snapshot = {
       name: $scope.dashboard.title,
       expires: 0,
+      timeoutSeconds: 4,
     };
 
     $scope.step = 1;
@@ -55,7 +56,7 @@ function (angular, _) {
 
       $timeout(function() {
         $scope.saveSnapshot(external);
-      }, 4000);
+      }, $scope.snapshot.timeoutSeconds * 1000);
     };
 
     $scope.saveSnapshot = function(external) {

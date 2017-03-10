@@ -253,6 +253,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
             backgroundColor: null,
             borderWidth: 0,
             hoverable: true,
+            clickable: true,
             color: '#c8c8c8',
             margin: { left: 0, right: 0 },
           },

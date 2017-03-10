@@ -455,22 +455,6 @@ func validateStaticRootPath() error {
 	return fmt.Errorf("Failed to detect generated css or javascript files in static root (%s), have you executed default grunt task?", StaticRootPath)
 }
 
-// func readInstanceName() string {
-// 	hostname, _ := os.Hostname()
-// 	if hostname == "" {
-// 		hostname = "hostname_unknown"
-// 	}
-//
-// 	instanceName := Cfg.Section("").Key("instance_name").MustString("")
-// 	if instanceName = "" {
-// 		// set value as it might be used in other places
-// 		Cfg.Section("").Key("instance_name").SetValue(hostname)
-// 		instanceName = hostname
-// 	}
-//
-// 	return
-// }
-
 func NewConfigContext(args *CommandLineArgs) error {
 	setHomePath(args)
 	loadConfiguration(args)

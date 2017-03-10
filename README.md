@@ -80,7 +80,7 @@ the latest master builds [here](http://grafana.org/builds)
 
 ### Dependencies
 
-- Go 1.7.3
+- Go 1.8
 - NodeJS v4+
 
 ### Get Code
@@ -110,7 +110,7 @@ go run build.go build
 
 ### Building frontend assets
 
-To build less to css for the frontend you will need a recent version of **node (v4+)**,
+To build less to css for the frontend you will need a recent version of **node (v6+)**,
 npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```bash

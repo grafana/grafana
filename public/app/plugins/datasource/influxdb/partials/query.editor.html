@@ -72,6 +72,28 @@
 			</div>
 		</div>
 
+		<div class="gf-form-inline">
+			<div class="gf-form">
+				<label class="gf-form-label query-keyword width-7">ORDER BY</label>
+				<label class="gf-form-label query-part width-4">time</label>
+				<div class="gf-form-select-wrapper">
+					<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.orderByTime" ng-options="f.value as f.text for f in ctrl.orderByTime" ng-change="ctrl.refresh()"></select>
+				</div>
+			</div>
+
+			<div class="gf-form max-width-14">
+				<label class="gf-form-label query-keyword width-5">LIMIT</label>
+				<input type="text" class="gf-form-input width-9" ng-model="ctrl.target.limit" spellcheck='false' placeholder="No Limit" ng-blur="ctrl.refresh()">
+			</div>
+
+			<div class="gf-form max-width-14">
+				<label class="gf-form-label query-keyword width-5">SLIMIT</label>
+				<input type="text" class="gf-form-input width-9" ng-model="ctrl.target.slimit" spellcheck='false' placeholder="No Limit" ng-blur="ctrl.refresh()">
+			</div>
+			<div class="gf-form gf-form--grow">
+				<div class="gf-form-label gf-form-label--grow"></div>
+			</div>
+		</div>
 	</div>
 
 	<div class="gf-form-inline">

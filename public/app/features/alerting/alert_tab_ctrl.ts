@@ -104,6 +104,8 @@ export class AlertTabCtrl {
       case "webhook": return "fa fa-cubes";
       case "pagerduty": return "fa fa-bullhorn";
       case "opsgenie": return "fa fa-bell";
+      case "hipchat": return "fa fa-mail-forward";
+      case "pushover": return "fa fa-mobile";
     }
   }
 

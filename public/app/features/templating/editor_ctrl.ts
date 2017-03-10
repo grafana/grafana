@@ -10,6 +10,7 @@ export class VariableEditorCtrl {
   constructor(private $scope, private datasourceSrv, private variableSrv, templateSrv) {
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
+    $scope.namePattern = /^((?!__).)*$/;
 
     $scope.refreshOptions = [
       {value: 0, text: "Never"},
