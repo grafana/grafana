@@ -485,42 +485,59 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         if (axis.logBase === 1) {
           return;
         }
+        if (axis.min < Number.MIN_VALUE) {
+          axis.min = null;
+        }
+        if (axis.max < Number.MIN_VALUE) {
+          axis.max = null;
+        }
 
         var series, i;
-        var max = axis.max;
+        var max = axis.max, min = axis.min;
 
-        if (max === null) {
-          for (i = 0; i < data.length; i++) {
-            series = data[i];
-            if (series.yaxis === axis.index) {
-              if (max < series.stats.max) {
-                max = series.stats.max;
-              }
+        for (i = 0; i < data.length; i++) {
+          series = data[i];
+          if (series.yaxis === axis.index) {
+            if (max === null || max < series.stats.max) {
+              max = series.stats.max;
+            }
+            if (min === null || min > series.stats.logmin) {
+              min = series.stats.logmin;
             }
           }
-          if (max === void 0) {
-            max = Number.MAX_VALUE;
-          }
         }
 
-        axis.min = axis.min !== null ? axis.min : 0;
-        axis.ticks = [0, 1];
-        var nextTick = 1;
+        axis.transform = function(v) { return (v < Number.MIN_VALUE) ? null : Math.log(v) / Math.log(axis.logBase); };
+        axis.inverseTransform  = function (v) { return Math.pow(axis.logBase,v); };
 
-        while (true) {
-          nextTick = nextTick * axis.logBase;
-          axis.ticks.push(nextTick);
-          if (nextTick > max) {
-            break;
-          }
+        if (max === null && min === null) {
+          max = axis.inverseTransform(+2);
+          min = axis.inverseTransform(-2);
+        } else if (max === null) {
+          max = min*axis.inverseTransform(+4);
+        } else if (min === null) {
+          min = max*axis.inverseTransform(-4);
         }
 
-        if (axis.logBase === 10) {
-          axis.transform = function(v) { return Math.log(v+0.1); };
-          axis.inverseTransform  = function (v) { return Math.pow(10,v); };
+        if (axis.min !== null) {
+          min = axis.inverseTransform(Math.ceil(axis.transform(axis.min)));
         } else {
-          axis.transform = function(v) { return Math.log(v+0.1) / Math.log(axis.logBase); };
-          axis.inverseTransform  = function (v) { return Math.pow(axis.logBase,v); };
+          min = axis.min = axis.inverseTransform(Math.floor(axis.transform(min)));
+        }
+        if (axis.max !== null) {
+          max = axis.inverseTransform(Math.floor(axis.transform(axis.max)));
+        } else {
+          max = axis.max = axis.inverseTransform(Math.ceil(axis.transform(max)));
+        }
+
+        if (min < Number.MIN_VALUE || max < Number.MIN_VALUE) {
+          return;
+        }
+
+        axis.ticks = [];
+        var nextTick;
+        for (nextTick = min; nextTick <= max; nextTick *= axis.logBase) {
+          axis.ticks.push(nextTick);
         }
       }
 
