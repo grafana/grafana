@@ -25,7 +25,7 @@ function (angular, config, _, $, store) {
 
       alertSrv.init();
       utilSrv.init();
-      if ($location.path() !== '/login' || $location.path() !== '/signupfree') {
+      if (!($location.path() === '/login' || $location.path() === '/signupfree')) {
         backendSrv.initCustomizedSources();
         backendSrv.updateSystemsMap();
       }
