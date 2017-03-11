@@ -8,6 +8,7 @@
 
 ## Minor Enchancements
 
+* **Prometheus**: Make Prometheus query field a textarea [#7663](https://github.com/grafana/grafana/issues/7663), thx [@hagen1778](https://github.com/hagen1778)
 
 # 4.2.0-beta2 (unreleased)
 ## Minor Enhancements
