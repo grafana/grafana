@@ -35,7 +35,10 @@ func NewS3Uploader(region, bucket, acl, accessKey, secretKey string) *S3Uploader
 }
 
 func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
-	sess := session.New()
+	sess, err := session.NewSession()
+	if err != nil {
+		return "", err
+	}
 	creds := credentials.NewChainCredentials(
 		[]credentials.Provider{
 			&credentials.StaticProvider{Value: credentials.Value{
@@ -58,7 +61,11 @@ func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
 		return "", err
 	}
 
-	svc := s3.New(session.New(cfg), cfg)
+	sess, err = session.NewSession(cfg)
+	if err != nil {
+		return "", err
+	}
+	svc := s3.New(sess, cfg)
 	params := &s3.PutObjectInput{
 		Bucket:      aws.String(u.bucket),
 		Key:         aws.String(key),

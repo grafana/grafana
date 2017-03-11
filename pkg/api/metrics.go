@@ -33,7 +33,7 @@ func QueryMetrics(c *middleware.Context, reqDto dtos.MetricRequest) Response {
 		})
 	}
 
-	resp, err := tsdb.HandleRequest(context.TODO(), request)
+	resp, err := tsdb.HandleRequest(context.Background(), request)
 	if err != nil {
 		return ApiError(500, "Metric request error", err)
 	}

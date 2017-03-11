@@ -79,8 +79,16 @@ func TestDataAccess(t *testing.T) {
 
 			ds := query.Result[0]
 
-			Convey("Can delete datasource", func() {
-				err := DeleteDataSource(&m.DeleteDataSourceCommand{Id: ds.Id, OrgId: ds.OrgId})
+			Convey("Can delete datasource by id", func() {
+				err := DeleteDataSourceById(&m.DeleteDataSourceByIdCommand{Id: ds.Id, OrgId: ds.OrgId})
+				So(err, ShouldBeNil)
+
+				GetDataSources(&query)
+				So(len(query.Result), ShouldEqual, 0)
+			})
+
+			Convey("Can delete datasource by name", func() {
+				err := DeleteDataSourceByName(&m.DeleteDataSourceByNameCommand{Name: ds.Name, OrgId: ds.OrgId})
 				So(err, ShouldBeNil)
 
 				GetDataSources(&query)
@@ -88,7 +96,7 @@ func TestDataAccess(t *testing.T) {
 			})
 
 			Convey("Can not delete datasource with wrong orgId", func() {
-				err := DeleteDataSource(&m.DeleteDataSourceCommand{Id: ds.Id, OrgId: 123123})
+				err := DeleteDataSourceById(&m.DeleteDataSourceByIdCommand{Id: ds.Id, OrgId: 123123})
 				So(err, ShouldBeNil)
 
 				GetDataSources(&query)

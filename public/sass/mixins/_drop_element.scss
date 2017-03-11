@@ -12,6 +12,7 @@
       color: $theme-color;
       padding: 0.65rem;
       font-size: $font-size-sm;
+      word-wrap: break-word;
       max-width: 20rem;
 
       &:before {

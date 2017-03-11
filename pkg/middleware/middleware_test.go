@@ -326,6 +326,7 @@ func middlewareScenario(desc string, fn scenarioFunc) {
 		// mock out gc goroutine
 		startSessionGC = func() {}
 		sc.m.Use(Sessioner(&session.Options{}))
+		sc.m.Use(OrgRedirect())
 
 		sc.defaultHandler = func(c *Context) {
 			sc.context = c

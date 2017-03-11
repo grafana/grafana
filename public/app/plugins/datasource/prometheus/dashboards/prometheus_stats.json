@@ -154,7 +154,7 @@
             }
           ],
           "thresholds": "0,500,4000",
-          "title": "Interal Storage Queue Length",
+          "title": "Internal Storage Queue Length",
           "type": "singlestat",
           "valueFontSize": "70%",
           "valueMaps": [

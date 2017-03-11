@@ -5,6 +5,7 @@ import moment from 'moment';
 import flatten from '../../../core/utils/flatten';
 import TimeSeries from '../../../core/time_series2';
 import TableModel from '../../../core/table_model';
+import angular from "angular";
 
 var transformers = {};
 
@@ -219,7 +220,8 @@ transformers['json'] = {
 };
 
 function transformDataToTable(data, panel) {
-  var model = new TableModel();
+  var model = new TableModel(),
+    copyData = angular.copy(data);
 
   if (!data || data.length === 0) {
     return model;
@@ -230,7 +232,13 @@ function transformDataToTable(data, panel) {
     throw {message: 'Transformer ' + panel.transformer + ' not found'};
   }
 
-  transformer.transform(data, panel, model);
+  if (panel.filterNull) {
+    for (var i = 0; i < copyData.length; i++) {
+      copyData[i].datapoints = copyData[i].datapoints.filter((dp) => dp[0] != null);
+    }
+  }
+
+  transformer.transform(copyData, panel, model);
   return model;
 }
 

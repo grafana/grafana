@@ -6,12 +6,16 @@ define([
   describe("TimeSeries", function() {
     var points, series;
     var yAxisFormats = ['short', 'ms'];
-    var testData = {
-      alias: 'test',
-      datapoints: [
-        [1,2],[null,3],[10,4],[8,5]
-      ]
-    };
+    var testData;
+
+    beforeEach(function() {
+      testData = {
+        alias: 'test',
+        datapoints: [
+          [1,2],[null,3],[10,4],[8,5]
+        ]
+      };
+    });
 
     describe('when getting flot pairs', function() {
       it('with connected style, should ignore nulls', function() {
@@ -51,40 +55,40 @@ define([
 
       it('the delta value should account for nulls', function() {
         series = new TimeSeries({
-                 datapoints: [[1,2],[3,3],[null,4],[10,5],[15,6]]
-               });
+          datapoints: [[1,2],[3,3],[null,4],[10,5],[15,6]]
+        });
         series.getFlotPairs('null', yAxisFormats);
         expect(series.stats.delta).to.be(14);
       });
 
       it('the delta value should account for nulls on first', function() {
         series = new TimeSeries({
-                 datapoints: [[null,2],[1,3],[10,4],[15,5]]
-               });
+          datapoints: [[null,2],[1,3],[10,4],[15,5]]
+        });
         series.getFlotPairs('null', yAxisFormats);
         expect(series.stats.delta).to.be(14);
       });
 
       it('the delta value should account for nulls on last', function() {
         series = new TimeSeries({
-                 datapoints: [[1,2],[5,3],[10,4],[null,5]]
-               });
+          datapoints: [[1,2],[5,3],[10,4],[null,5]]
+        });
         series.getFlotPairs('null', yAxisFormats);
         expect(series.stats.delta).to.be(9);
       });
 
       it('the delta value should account for resets', function() {
         series = new TimeSeries({
-                 datapoints: [[1,2],[5,3],[10,4],[0,5],[10,6]]
-               });
+          datapoints: [[1,2],[5,3],[10,4],[0,5],[10,6]]
+        });
         series.getFlotPairs('null', yAxisFormats);
         expect(series.stats.delta).to.be(19);
       });
 
       it('the delta value should account for resets on last', function() {
         series = new TimeSeries({
-                 datapoints: [[1,2],[2,3],[10,4],[8,5]]
-               });
+          datapoints: [[1,2],[2,3],[10,4],[8,5]]
+        });
         series.getFlotPairs('null', yAxisFormats);
         expect(series.stats.delta).to.be(17);
       });

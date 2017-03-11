@@ -24,15 +24,20 @@
           </select>
         </div>
       </div>
-      <div class="gf-form">
-        <gf-form-switch
-           class="gf-form"
-           label="Send on all alerts"
-           label-class="width-12"
-           checked="ctrl.model.isDefault"
-           tooltip="Use this notification for all alerts">
-        </gf-form-switch>
-      </div>
+      <gf-form-switch
+          class="gf-form"
+          label="Send on all alerts"
+          label-class="width-12"
+          checked="ctrl.model.isDefault"
+          tooltip="Use this notification for all alerts">
+      </gf-form-switch>
+      <gf-form-switch
+          class="gf-form"
+          label="Include image"
+          label-class="width-12"
+          checked="ctrl.model.settings.uploadImage"
+          tooltip="Captures an image and include it in the notification">
+      </gf-form-switch>
     </div>
 
     <div class="gf-form-group" ng-include src="ctrl.notifierTemplateId">

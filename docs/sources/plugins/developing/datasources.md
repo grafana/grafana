@@ -1,3 +1,12 @@
++++
+title = "Developing Datasource Plugins"
+keywords = ["grafana", "plugins", "documentation"]
+type = "docs"
+[menu.docs]
+name = "Developing Datasource Plugins"
+parent = "developing"
+weight = 6
++++
 
 # Datasources
 
@@ -31,9 +40,11 @@ There are two datasource specific settings for the plugin.json
 These settings indicates what kind of data the plugin can deliver. At least one of them have to be true
 
 ## Datasource
+
 The javascript object that communicates with the database and transforms data to times series.
 
-The Datasource should contain the following functions.
+The Datasource should contain the following functions:
+
 ```
 query(options) //used by panels to get data
 testDatasource() //used by datasource configuration page to make sure the connection is working
@@ -41,9 +52,14 @@ annotationQuery(options) // used by dashboards to get annotations
 metricFindQuery(options) // used by query editor to get metric suggestions.
 ```
 
+### testDatasource
+
+When a user clicks on the *Save & Test* button when adding a new data source, the details are first saved to the database and then the `testDatasource` function that is defined in your data source plugin will be called. It is recommended that this function makes a query to the data source that will also test that the authentication details are correct. This is so the data source is correctly configured when the user tries to write a query in a new dashboard.
+
 ### Query
 
-Request object passed to datasource.query function
+Request object passed to datasource.query function:
+
 ```json
 {
   "range": { "from": "2015-12-22T03:06:13.851Z", "to": "2015-12-22T06:48:24.137Z" },
@@ -57,11 +73,12 @@ Request object passed to datasource.query function
 }
 ```
 
-There are two different kind of results for datasources.
-Time series and table. Time series is the most common format and is supported by all datasources and panels. Table format is only support by the Influxdb datasource and table panel. But we might see more of this in the future.
+There are two different kinds of results for datasources;
+time series and table. Time series is the most common format and is supported by all datasources and panels. Table format is only supported by the InfluxDB datasource and table panel. But we might see more of this in the future.
 
-Time series response from datasource.query
-An array of
+Time series response from datasource.query.
+An array of:
+
 ```json
 [
   {
@@ -81,8 +98,9 @@ An array of
 ]
 ```
 
-Table response from datasource.query
-An array of
+Table response from datasource.query.
+An array of:
+
 ```json
 [
   {
@@ -119,7 +137,8 @@ An array of
 
 ### Annotation Query
 
-Request object passed to datasource.annotationQuery function
+Request object passed to datasource.annotationQuery function:
+
 ```json
 {
   "range": { "from": "2016-03-04T04:07:55.144Z", "to": "2016-03-04T07:07:55.144Z" },
@@ -132,7 +151,8 @@ Request object passed to datasource.annotationQuery function
 }
 ```
 
-Expected result from datasource.annotationQuery
+Expected result from datasource.annotationQuery:
+
 ```json
 [
   {
@@ -152,24 +172,24 @@ Expected result from datasource.annotationQuery
 
 ## QueryCtrl
 
-A javascript class that will be instantiated and treated as an Angular controller when the user edits metrics in a panel. This class have to inherit from the app/plugins/sdk.QueryCtrl class.
+A JavaScript class that will be instantiated and treated as an Angular controller when the user edits metrics in a panel. This class has to inherit from the app/plugins/sdk.QueryCtrl class.
 
 Requires a static template or templateUrl variable which will be rendered as the view for this controller.
 
 ## ConfigCtrl
 
-A javascript class that will be instantiated and treated as an Angular controller when a user tries to edit or create a new datasource of this type.
+A JavaScript class that will be instantiated and treated as an Angular controller when a user tries to edit or create a new datasource of this type.
 
 Requires a static template or templateUrl variable which will be rendered as the view for this controller.
 
 ## QueryOptionsCtrl
 
-A javascript class that will be instantiated and treated as an Angular controller when the user edits metrics in a panel. This controller is responsible for handling panel wide settings for the datasource. Such as interval, rate and aggregations if needed.
+A JavaScript class that will be instantiated and treated as an Angular controller when the user edits metrics in a panel. This controller is responsible for handling panel wide settings for the datasource, such as interval, rate and aggregations if needed.
 
 Requires a static template or templateUrl variable which will be rendered as the view for this controller.
 
 ## AnnotationsQueryCtrl
 
-A javascript class that will be instantiated and treated as an Angular controller when the user choose this type of datasource in the templating menu in the dashboard.
+A JavaScript class that will be instantiated and treated as an Angular controller when the user choose this type of datasource in the templating menu in the dashboard.
 
-Requires a static template or templateUrl variable which will be rendered as the view for this controller. The fields that are bound to this controller is then sent to the Database objects annotationQuery function.
+Requires a static template or templateUrl variable which will be rendered as the view for this controller. The fields that are bound to this controller are then sent to the Database objects annotationQuery function.

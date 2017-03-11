@@ -40,6 +40,7 @@ func init() {
 
 type QueryToSend struct {
 	RawQuery string
+	Metric   Metric
 	QueryRef *Query
 }
 

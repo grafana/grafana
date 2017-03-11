@@ -66,6 +66,25 @@ $gf-form-margin: 0.25rem;
   }
 }
 
+.gf-form-error {
+  padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
+  flex-shrink: 0;
+
+  background-color: $input-label-bg;
+  display: block;
+  font-size: $font-size-sm;
+  margin-right: $gf-form-margin;
+
+  border: $input-btn-border-width solid $red;
+  @include border-radius($label-border-radius-sm);
+
+  &--grow {
+    flex-grow: 1;
+    min-height: 2.60rem;
+  }
+}
+
 .gf-form-checkbox {
   flex-shrink: 0;
   padding: $input-padding-y $input-padding-x;

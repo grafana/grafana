@@ -86,7 +86,7 @@ func (e *apiClient) spawnWorker(ctx context.Context, id int, jobs chan QueryToSe
 			return
 		}
 
-		series, err := e.responseParser.Parse(resp, query.QueryRef)
+		series, err := e.responseParser.Parse(resp, query)
 		if err != nil {
 			errors <- err
 			return

@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/go-macaron/session"
@@ -8,6 +9,7 @@ import (
 	_ "github.com/go-macaron/session/mysql"
 	_ "github.com/go-macaron/session/postgres"
 	_ "github.com/go-macaron/session/redis"
+	"github.com/grafana/grafana/pkg/log"
 	"gopkg.in/macaron.v1"
 )
 
@@ -22,10 +24,12 @@ var sessionManager *session.Manager
 var sessionOptions *session.Options
 var startSessionGC func()
 var getSessionCount func() int
+var sessionLogger = log.New("session")
 
 func init() {
 	startSessionGC = func() {
 		sessionManager.GC()
+		sessionLogger.Debug("Session GC")
 		time.AfterFunc(time.Duration(sessionOptions.Gclifetime)*time.Second, startSessionGC)
 	}
 	getSessionCount = func() int {
@@ -67,7 +71,9 @@ func Sessioner(options *session.Options) macaron.Handler {
 		panic(err)
 	}
 
-	go startSessionGC()
+	// start GC threads after some random seconds
+	rndSeconds := 10 + rand.Int63n(180)
+	time.AfterFunc(time.Duration(rndSeconds)*time.Second, startSessionGC)
 
 	return func(ctx *Context) {
 		ctx.Next()

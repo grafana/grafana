@@ -9,7 +9,7 @@ page_keywords: grafana, plugins, documentation
 title = "Installing Plugins"
 type = "docs"
 [menu.docs]
-parent = "plugins"
+parent = "developing"
 weight = 1
 +++
 
