@@ -13,10 +13,10 @@ function (angular, $, _, Tether) {
       var linkTemplate =
           '<span class="panel-title drag-handle pointer">' +
             '<span class="icon-gf panel-alert-icon"></span>' +
-            '<span title="There is points above Y-Max" class="panel-plot-info" ng-show="ctrl.panel.upperBoundary">' +
+            '<span title="There are points above Y-Max" class="panel-plot-info" ng-show="ctrl.panel.upperBoundary">' +
                '<i class="fa fa-arrow-circle-up"></i>' +
              '</span>' +
-            '<span title="There is points below Y-Min" class="panel-plot-info" ng-show="ctrl.panel.lowerBoundary">' +
+            '<span title="There are points below Y-Min" class="panel-plot-info" ng-show="ctrl.panel.lowerBoundary">' +
                '<i class="fa fa-arrow-circle-down"></i>' +
              '</span>' +
             '<span class="panel-title-text drag-handle">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>' +
