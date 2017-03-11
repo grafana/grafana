@@ -226,6 +226,17 @@ div.flot-text {
   right: 0;
 }
 
+.panel-plot-info {
+  font-weight: bold;
+  float: left;
+  margin-left: 15px;
+  color: $yellow;
+  font-size: 85%;
+  position: relative;
+  top: 0;
+  left: 0;
+}
+
 .resize-panel-handle {
   cursor: nwse-resize;
   position: absolute;

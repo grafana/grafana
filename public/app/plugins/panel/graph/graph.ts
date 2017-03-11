@@ -336,6 +336,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         } else {
           callPlot(true);
         }
+        checkBoundaries(panel);
       }
 
       function translateFillOption(fill) {
@@ -553,6 +554,28 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         }
 
         return "%H:%M";
+      }
+
+      function checkBoundaries(panel) {
+          var max, min, series, i, j;
+          panel.upperBoundary = false;
+          panel.lowerBoundary = false;
+
+          for (i = 0; i < panel.yaxes.length; i++) {
+            max = panel.yaxes[i].max;
+            min = panel.yaxes[i].min;
+            for (j = 0; j < data.length; j++) {
+              series = data[j];
+              if (max != null && series.stats.max > max) {
+                panel.upperBoundary = true;
+              }
+
+              if (min != null && series.stats.min < min) {
+                panel.lowerBoundary = true;
+              }
+            }
+          }
+
       }
 
       elem.bind("plotselected", function (event, ranges) {
