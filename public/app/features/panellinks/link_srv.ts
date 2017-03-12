@@ -75,7 +75,7 @@ export class LinkSrv {
     return info;
   }
 
-  getPanelLinkAnchorInfo(link, scopedVars) {
+  getPanelLinkAnchorInfo(link, scopedVars, activeSeriesTags) {
     var info: any = {};
     if (link.type === "absolute") {
       info.target = link.targetBlank ? "_blank" : "_self";
@@ -101,6 +101,16 @@ export class LinkSrv {
 
     if (link.includeVars) {
       this.templateSrv.fillVariableValuesForUrl(params, scopedVars);
+    }
+
+    if (link.tagMappings) {
+      _.each(link.tagMappings.split(','), function (map) {
+        var kv = map.split('=');
+        var values = _.map(activeSeriesTags, kv[1]);
+        if (values) {
+          params['var-' + kv[0]] = values;
+        }
+      });
     }
 
     info.href = this.addParamsToUrl(info.href, params);

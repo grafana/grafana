@@ -314,6 +314,10 @@ export class PanelCtrl {
     return "";
   }
 
+  getLinkHint() {
+    return {};
+  }
+
   getInfoContent(options) {
     var markdown = this.panel.description;
 
@@ -334,7 +338,11 @@ export class PanelCtrl {
     if (this.panel.links && this.panel.links.length > 0) {
       html += "<ul>";
       for (let link of this.panel.links) {
-        var info = linkSrv.getPanelLinkAnchorInfo(link, this.panel.scopedVars);
+        var info = linkSrv.getPanelLinkAnchorInfo(
+          link,
+          this.panel.scopedVars,
+          this.getLinkHint()
+        );
         html +=
           '<li><a class="panel-menu-link" href="' +
           info.href +

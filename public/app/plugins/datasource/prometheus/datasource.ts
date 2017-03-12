@@ -371,7 +371,7 @@ export class PrometheusDatasource {
       dps.push([null, t]);
     }
 
-    return { target: metricLabel, datapoints: dps };
+    return { target: metricLabel, tags: md.metric, datapoints: dps };
   }
 
   transformMetricDataToTable(md, resultCount: number, resultIndex: number) {

@@ -336,6 +336,15 @@ class GraphCtrl extends MetricsPanelCtrl {
       modalClass: "modal--narrow"
     });
   }
+
+  getLinkHint() {
+    var self = this;
+    return this.dataList.filter((data) => {
+      return !_.includes(self.hiddenSeries, data.target);
+    }).map((data) => {
+      return data.tags || {};
+    });
+  }
 }
 
 export { GraphCtrl, GraphCtrl as PanelCtrl };
