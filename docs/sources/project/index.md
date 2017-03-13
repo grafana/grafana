@@ -1,7 +1,8 @@
----
-title: the grafana project
-description: grafana project
-type: docs
----
+++
+title = "Project"
+type = "docs"
+identifier = "project"
+weight = 6
++++
 
 # Welcome to the grafana project
