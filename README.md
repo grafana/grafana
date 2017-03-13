@@ -2,7 +2,7 @@
 ================
 [Website](https://grafana.com) |
 [Twitter](https://twitter.com/grafana) |
-[Community / Forum](https://community.grafana.com)
+[Community & Forum](https://community.grafana.com)
 
 Grafana is an open source, feature rich metrics dashboard and graph editor for
 Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
