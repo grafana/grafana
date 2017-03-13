@@ -100,6 +100,7 @@ export default class TimeSeries {
     this.stats.total = 0;
     this.stats.max = -Number.MAX_VALUE;
     this.stats.min = Number.MAX_VALUE;
+    this.stats.logmin = Number.MAX_VALUE;
     this.stats.avg = null;
     this.stats.current = null;
     this.stats.first = null;
@@ -172,6 +173,11 @@ export default class TimeSeries {
           }
         }
         previousValue = currentValue;
+
+        if (currentValue < this.stats.logmin && currentValue > 0) {
+          this.stats.logmin = currentValue;
+        }
+
       }
 
       if (currentValue !== 0) {
