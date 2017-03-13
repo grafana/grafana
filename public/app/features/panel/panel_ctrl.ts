@@ -76,12 +76,8 @@ export class PanelCtrl {
     profiler.renderingCompleted(this.panel.id, this.timing);
   }
 
-  private isRenderingPng () {
-    return window.location.href.indexOf("/dashboard-solo/db") >= 0;
-  }
-
   refresh() {
-    if (!this.isPanelVisible() && !this.isRenderingPng() && !this.dashboard.snapshot) {
+    if (!this.isPanelVisible() && !this.dashboard.meta.soloMode && !this.dashboard.snapshot) {
       this.skippedLastRefresh = true;
       return;
     }

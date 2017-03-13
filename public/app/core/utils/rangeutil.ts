@@ -41,7 +41,7 @@ var rangeOptions = [
   { from: 'now-2d',   to: 'now',      display: 'Last 2 days',           section: 0 },
   { from: 'now-7d',   to: 'now',      display: 'Last 7 days',           section: 0 },
   { from: 'now-30d',  to: 'now',      display: 'Last 30 days',          section: 0 },
-  { from: 'now-60d',  to: 'now',      display: 'Last 60 days',          section: 0 },
+  { from: 'now-90d',  to: 'now',      display: 'Last 90 days',          section: 0 },
   { from: 'now-6M',   to: 'now',      display: 'Last 6 months',         section: 0 },
   { from: 'now-1y',   to: 'now',      display: 'Last 1 year',           section: 0 },
   { from: 'now-2y',   to: 'now',      display: 'Last 2 years',          section: 0 },
@@ -146,4 +146,3 @@ export function describeTimeRange(range) {
 
   return range.from.toString() + ' to ' + range.to.toString();
 }
-
