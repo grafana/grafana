@@ -2,10 +2,7 @@
 ================
 [Website](https://grafana.com) |
 [Twitter](https://twitter.com/grafana) |
-[IRC](https://webchat.freenode.net/?channels=grafana) |
-[![Slack](https://brandfolder.com/api/favicon/icon?size=16&domain=www.slack.com)](http://slack.raintank.io)
-[Slack](http://slack.raintank.io) |
-[Email](mailto:contact@grafana.org)
+[Community / Forum](https://community.grafana.com)
 
 Grafana is an open source, feature rich metrics dashboard and graph editor for
 Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
