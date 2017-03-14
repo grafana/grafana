@@ -8,7 +8,7 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q, $location) {
+  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q, $location, healthSrv) {
 
     this.init = function($scope) {
 
@@ -133,16 +133,18 @@ function (angular, _, config) {
         delete $scope.panelMeta.error;
         $scope.panelMeta.loading = true;
 
-        $scope.getCurrentDatasource().then(function(datasource) {
-          $scope.datasource = datasource;
-          return $scope.refreshData($scope.datasource) || $q.when({});
-        }).then(function() {
-          $scope.panelMeta.loading = false;
-        }, function(err) {
-          console.log('Panel data error:', err);
-          $scope.panelMeta.loading = false;
-          $scope.panelMeta.error = err.message || "Timeseries data request error";
-          $scope.inspector.error = err;
+        healthSrv.transformMetricType($scope.dashboard).then(function () {
+          $scope.getCurrentDatasource().then(function (datasource) {
+            $scope.datasource = datasource;
+            return $scope.refreshData($scope.datasource) || $q.when({});
+          }).then(function () {
+            $scope.panelMeta.loading = false;
+          }, function (err) {
+            console.log('Panel data error:', err);
+            $scope.panelMeta.loading = false;
+            $scope.panelMeta.error = err.message || "Timeseries data request error";
+            $scope.inspector.error = err;
+          });
         });
       };
 

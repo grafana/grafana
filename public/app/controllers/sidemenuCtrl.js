@@ -162,11 +162,12 @@ function (angular, _, $, config) {
         href: $scope.getUrl("/anomaly")
       });
 
-      $scope.mainLinks.push({
-        text: "长期分析预测",
-        icon: "fa fa-fw fa-line-chart",
-        href: $scope.getUrl("/analysis")
-      });
+      // sinoRails would need this
+      // $scope.mainLinks.push({
+      //   text: "长期分析预测",
+      //   icon: "fa fa-fw fa-line-chart",
+      //   href: $scope.getUrl("/analysis")
+      // });
 
       // $scope.mainLinks.push({
       //   text: "日志管理查询",
