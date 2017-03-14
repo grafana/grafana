@@ -261,10 +261,11 @@ func (a *ldapAuther) SyncOrgRoles(user *m.User, ldapUser *LdapUserInfo) error {
 					if setting.LdapAllowRoleSync {
 						// allow sync of org roles
 						cmd := m.UpdateOrgUserCommand{OrgId: org.OrgId, UserId: user.Id, Role: group.OrgRole}
+						
 						if err := bus.Dispatch(&cmd); err != nil {
 							return err
 						}
-					} 
+					}
 				}
 				// ignore subsequent ldap group mapping matches
 				break
