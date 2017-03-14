@@ -144,6 +144,7 @@ var (
 	LdapAllowSignup bool = true
 	LdapAllowRoleSync bool = true
 
+
 	// SMTP email settings
 	Smtp SmtpSettings
 
@@ -563,6 +564,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	LdapConfigFile = ldapSec.Key("config_file").String()
 	LdapAllowSignup = ldapSec.Key("allow_sign_up").MustBool(true)
 	LdapAllowRoleSync = ldapSec.Key("allow_role_sync").MustBool(true)
+
 
 	alerting := Cfg.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
