@@ -7,6 +7,7 @@ FROM grafana/docs-base:latest
 
 # COPY ./sources /site/content/docs/
 
+COPY config.toml /site
 COPY awsconfig /site
 
 VOLUME ["/site/content"]
