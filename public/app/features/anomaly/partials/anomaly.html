@@ -52,16 +52,14 @@
         <tip>剔除噪声值,减少对健康值的影响</tip>
       </p>
       <table class="grafana-options-table">
-
-        <td ng-repeat="anomalyDef in excludeMetricsData | limitTo : 4"> {{_.getMetricName(anomalyDef.metric)}}</td>
-        <td>.....等等</td>
-        <td>
-          <a ng-click="changeExcludeMetrics()" class="btn btn-inverse btn-mini">
-            <i class="fa fa-pencil-square-o"></i>
-            修改
-          </a>
-        </td>
+        <tr ng-repeat="anomalyDef in excludeMetricsData | limitTo : 4">
+          <td>{{_.getMetricName(anomalyDef.metric)}}</td>
+        </tr>
       </table>
+      <a ng-click="changeExcludeMetrics()" class="btn btn-inverse btn-mini">
+        <i class="fa fa-pencil-square-o"></i>
+        修改
+      </a>
     </div>
 
   </div>
