@@ -1,0 +1,39 @@
+<div class="gf-form-group">
+	<div class="gf-form">
+		<span class="gf-form-label">
+			<i class="fa fa-clock-o"></i>
+		</span>
+
+		<span class="gf-form-label width-12">Override relative time</span>
+		<span class="gf-form-label width-6">Last</span>
+
+		<input type="text" class="gf-form-input max-width-8" placeholder="1h"
+			empty-to-null ng-model="ctrl.panel.timeFrom" valid-time-span
+			ng-change="ctrl.refresh()" ng-model-onblur></input>
+	</div>
+
+	<div class="gf-form">
+		<span class="gf-form-label">
+			<i class="fa fa-clock-o"></i>
+		</span>
+		<span class="gf-form-label width-12">Add time shift</span>
+		<span class="gf-form-label width-6">Amount</span>
+		<input type="text" class="gf-form-input max-width-8" placeholder="1h"
+			empty-to-null ng-model="ctrl.panel.timeShift" valid-time-span
+			ng-change="ctrl.refresh()" ng-model-onblur></input>
+	</div>
+
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label">
+				<i class="fa fa-clock-o"></i>
+			</span>
+		</div>
+		<gf-form-switch class="gf-form max-width-30"
+			label="Hide time override info" label-class="width-12"
+			checked="ctrl.panel.hideTimeOverride" switch-class="max-width-6" on-change="ctrl.refresh()">
+		</gf-form-switch>
+	</div>
+</div>
+
+

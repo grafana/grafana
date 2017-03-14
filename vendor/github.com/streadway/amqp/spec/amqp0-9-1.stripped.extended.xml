@@ -1,0 +1,537 @@
+<?xml version="1.0"?>
+
+<!--
+     WARNING: Modified from the official 0-9-1 specification XML by
+     the addition of:
+     confirm.select and confirm.select-ok,
+     exchange.bind and exchange.bind-ok,
+     exchange.unbind and exchange.unbind-ok,
+     basic.nack,
+     the ability for the Server to send basic.ack, basic.nack and
+      basic.cancel to the client, and
+     the un-deprecation of exchange.declare{auto-delete} and exchange.declare{internal}
+
+     Modifications are (c) 2010-2013 VMware, Inc. and may be distributed
+     under the same BSD license as below.
+-->
+
+<!--
+Copyright (c) 2009 AMQP Working Group.
+All rights reserved.
+
+Redistribution and use in source and binary forms, with or without
+modification, are permitted provided that the following conditions
+are met:
+1. Redistributions of source code must retain the above copyright
+notice, this list of conditions and the following disclaimer.
+2. Redistributions in binary form must reproduce the above copyright
+notice, this list of conditions and the following disclaimer in the
+documentation and/or other materials provided with the distribution.
+3. The name of the author may not be used to endorse or promote products
+derived from this software without specific prior written permission.
+
+THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT
+NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
+DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
+THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
+(INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
+THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+-->
+<amqp major="0" minor="9" revision="1" port="5672">
+  <constant name="frame-method" value="1"/>
+  <constant name="frame-header" value="2"/>
+  <constant name="frame-body" value="3"/>
+  <constant name="frame-heartbeat" value="8"/>
+  <constant name="frame-min-size" value="4096"/>
+  <constant name="frame-end" value="206"/>
+  <constant name="reply-success" value="200"/>
+  <constant name="content-too-large" value="311" class="soft-error"/>
+  <constant name="no-route" value="312" class = "soft-error">
+    <doc>
+      Errata: Section 1.2 ought to define an exception 312 "No route", which used to
+      exist in 0-9 and is what RabbitMQ sends back with 'basic.return' when a
+      'mandatory' message cannot be delivered to any queue.
+    </doc>
+  </constant>
+  <constant name="no-consumers" value="313" class="soft-error"/>
+  <constant name="connection-forced" value="320" class="hard-error"/>
+  <constant name="invalid-path" value="402" class="hard-error"/>
+  <constant name="access-refused" value="403" class="soft-error"/>
+  <constant name="not-found" value="404" class="soft-error"/>
+  <constant name="resource-locked" value="405" class="soft-error"/>
+  <constant name="precondition-failed" value="406" class="soft-error"/>
+  <constant name="frame-error" value="501" class="hard-error"/>
+  <constant name="syntax-error" value="502" class="hard-error"/>
+  <constant name="command-invalid" value="503" class="hard-error"/>
+  <constant name="channel-error" value="504" class="hard-error"/>
+  <constant name="unexpected-frame" value="505" class="hard-error"/>
+  <constant name="resource-error" value="506" class="hard-error"/>
+  <constant name="not-allowed" value="530" class="hard-error"/>
+  <constant name="not-implemented" value="540" class="hard-error"/>
+  <constant name="internal-error" value="541" class="hard-error"/>
+  <domain name="class-id" type="short"/>
+  <domain name="consumer-tag" type="shortstr"/>
+  <domain name="delivery-tag" type="longlong"/>
+  <domain name="exchange-name" type="shortstr">
+    <assert check="length" value="127"/>
+    <assert check="regexp" value="^[a-zA-Z0-9-_.:]*$"/>
+  </domain>
+  <domain name="method-id" type="short"/>
+  <domain name="no-ack" type="bit"/>
+  <domain name="no-local" type="bit"/>
+  <domain name="no-wait" type="bit"/>
+  <domain name="path" type="shortstr">
+    <assert check="notnull"/>
+    <assert check="length" value="127"/>
+  </domain>
+  <domain name="peer-properties" type="table"/>
+  <domain name="queue-name" type="shortstr">
+    <assert check="length" value="127"/>
+    <assert check="regexp" value="^[a-zA-Z0-9-_.:]*$"/>
+  </domain>
+  <domain name="redelivered" type="bit"/>
+  <domain name="message-count" type="long"/>
+  <domain name="reply-code" type="short">
+    <assert check="notnull"/>
+  </domain>
+  <domain name="reply-text" type="shortstr">
+    <assert check="notnull"/>
+  </domain>
+  <domain name="bit" type="bit"/>
+  <domain name="octet" type="octet"/>
+  <domain name="short" type="short"/>
+  <domain name="long" type="long"/>
+  <domain name="longlong" type="longlong"/>
+  <domain name="shortstr" type="shortstr"/>
+  <domain name="longstr" type="longstr"/>
+  <domain name="timestamp" type="timestamp"/>
+  <domain name="table" type="table"/>
+  <class name="connection" handler="connection" index="10">
+    <chassis name="server" implement="MUST"/>
+    <chassis name="client" implement="MUST"/>
+    <method name="start" synchronous="1" index="10">
+      <chassis name="client" implement="MUST"/>
+      <response name="start-ok"/>
+      <field name="version-major" domain="octet"/>
+      <field name="version-minor" domain="octet"/>
+      <field name="server-properties" domain="peer-properties"/>
+      <field name="mechanisms" domain="longstr">
+        <assert check="notnull"/>
+      </field>
+      <field name="locales" domain="longstr">
+        <assert check="notnull"/>
+      </field>
+    </method>
+    <method name="start-ok" synchronous="1" index="11">
+      <chassis name="server" implement="MUST"/>
+      <field name="client-properties" domain="peer-properties"/>
+      <field name="mechanism" domain="shortstr">
+        <assert check="notnull"/>
+      </field>
+      <field name="response" domain="longstr">
+        <assert check="notnull"/>
+      </field>
+      <field name="locale" domain="shortstr">
+        <assert check="notnull"/>
+      </field>
+    </method>
+    <method name="secure" synchronous="1" index="20">
+      <chassis name="client" implement="MUST"/>
+      <response name="secure-ok"/>
+      <field name="challenge" domain="longstr"/>
+    </method>
+    <method name="secure-ok" synchronous="1" index="21">
+      <chassis name="server" implement="MUST"/>
+      <field name="response" domain="longstr">
+        <assert check="notnull"/>
+      </field>
+    </method>
+    <method name="tune" synchronous="1" index="30">
+      <chassis name="client" implement="MUST"/>
+      <response name="tune-ok"/>
+      <field name="channel-max" domain="short"/>
+      <field name="frame-max" domain="long"/>
+      <field name="heartbeat" domain="short"/>
+    </method>
+    <method name="tune-ok" synchronous="1" index="31">
+      <chassis name="server" implement="MUST"/>
+      <field name="channel-max" domain="short">
+        <assert check="notnull"/>
+        <assert check="le" method="tune" field="channel-max"/>
+      </field>
+      <field name="frame-max" domain="long"/>
+      <field name="heartbeat" domain="short"/>
+    </method>
+    <method name="open" synchronous="1" index="40">
+      <chassis name="server" implement="MUST"/>
+      <response name="open-ok"/>
+      <field name="virtual-host" domain="path"/>
+      <field name="reserved-1" type="shortstr" reserved="1"/>
+      <field name="reserved-2" type="bit" reserved="1"/>
+    </method>
+    <method name="open-ok" synchronous="1" index="41">
+      <chassis name="client" implement="MUST"/>
+      <field name="reserved-1" type="shortstr" reserved="1"/>
+    </method>
+    <method name="close" synchronous="1" index="50">
+      <chassis name="client" implement="MUST"/>
+      <chassis name="server" implement="MUST"/>
+      <response name="close-ok"/>
+      <field name="reply-code" domain="reply-code"/>
+      <field name="reply-text" domain="reply-text"/>
+      <field name="class-id" domain="class-id"/>
+      <field name="method-id" domain="method-id"/>
+    </method>
+    <method name="close-ok" synchronous="1" index="51">
+      <chassis name="client" implement="MUST"/>
+      <chassis name="server" implement="MUST"/>
+    </method>
+    <method name="blocked" index="60">
+      <chassis name="server" implement="MAY"/>
+      <field name="reason" type="shortstr"/>
+    </method>
+    <method name="unblocked" index="61">
+      <chassis name="server" implement="MAY"/>
+    </method>
+  </class>
+  <class name="channel" handler="channel" index="20">
+    <chassis name="server" implement="MUST"/>
+    <chassis name="client" implement="MUST"/>
+    <method name="open" synchronous="1" index="10">
+      <chassis name="server" implement="MUST"/>
+      <response name="open-ok"/>
+      <field name="reserved-1" type="shortstr" reserved="1"/>
+    </method>
+    <method name="open-ok" synchronous="1" index="11">
+      <chassis name="client" implement="MUST"/>
+      <field name="reserved-1" type="longstr" reserved="1"/>
+    </method>
+    <method name="flow" synchronous="1" index="20">
+      <chassis name="server" implement="MUST"/>
+      <chassis name="client" implement="MUST"/>
+      <response name="flow-ok"/>
+      <field name="active" domain="bit"/>
+    </method>
+    <method name="flow-ok" index="21">
+      <chassis name="server" implement="MUST"/>
+      <chassis name="client" implement="MUST"/>
+      <field name="active" domain="bit"/>
+    </method>
+    <method name="close" synchronous="1" index="40">
+      <chassis name="client" implement="MUST"/>
+      <chassis name="server" implement="MUST"/>
+      <response name="close-ok"/>
+      <field name="reply-code" domain="reply-code"/>
+      <field name="reply-text" domain="reply-text"/>
+      <field name="class-id" domain="class-id"/>
+      <field name="method-id" domain="method-id"/>
+    </method>
+    <method name="close-ok" synchronous="1" index="41">
+      <chassis name="client" implement="MUST"/>
+      <chassis name="server" implement="MUST"/>
+    </method>
+  </class>
+  <class name="exchange" handler="channel" index="40">
+    <chassis name="server" implement="MUST"/>
+    <chassis name="client" implement="MUST"/>
+    <method name="declare" synchronous="1" index="10">
+      <chassis name="server" implement="MUST"/>
+      <response name="declare-ok"/>
+      <field name="reserved-1" type="short" reserved="1"/>
+      <field name="exchange" domain="exchange-name">
+        <assert check="notnull"/>
+      </field>
+      <field name="type" domain="shortstr"/>
+      <field name="passive" domain="bit"/>
+      <field name="durable" domain="bit"/>
+      <field name="auto-delete" domain="bit"/>
+      <field name="internal" domain="bit"/>
+      <field name="no-wait" domain="no-wait"/>
+      <field name="arguments" domain="table"/>
+    </method>
+    <method name="declare-ok" synchronous="1" index="11">
+      <chassis name="client" implement="MUST"/>
+    </method>
+    <method name="delete" synchronous="1" index="20">
+      <chassis name="server" implement="MUST"/>
+      <response name="delete-ok"/>
+      <field name="reserved-1" type="short" reserved="1"/>
+      <field name="exchange" domain="exchange-name">
+        <assert check="notnull"/>
+      </field>
+      <field name="if-unused" domain="bit"/>
+      <field name="no-wait" domain="no-wait"/>
+    </method>
+    <method name="delete-ok" synchronous="1" index="21">
+      <chassis name="client" implement="MUST"/>
+    </method>
+    <method name="bind" synchronous="1" index="30">
+      <chassis name="server" implement="MUST"/>
+      <response name="bind-ok"/>
+      <field name="reserved-1" type="short" reserved="1"/>
+      <field name="destination" domain="exchange-name"/>
+      <field name="source" domain="exchange-name"/>
+      <field name="routing-key" domain="shortstr"/>
+      <field name="no-wait" domain="no-wait"/>
+      <field name="arguments" domain="table"/>
+    </method>
+    <method name="bind-ok" synchronous="1" index="31">
+      <chassis name="client" implement="MUST"/>
+    </method>
+    <method name="unbind" synchronous="1" index="40">
+      <chassis name="server" implement="MUST"/>
+      <response name="unbind-ok"/>
+      <field name="reserved-1" type="short" reserved="1"/>
+      <field name="destination" domain="exchange-name"/>
+      <field name="source" domain="exchange-name"/>
+      <field name="routing-key" domain="shortstr"/>
+      <field name="no-wait" domain="no-wait"/>
+      <field name="arguments" domain="table"/>
+    </method>
+    <method name="unbind-ok" synchronous="1" index="51">
+      <chassis name="client" implement="MUST"/>
+    </method>
+  </class>
+  <class name="queue" handler="channel" index="50">
+    <chassis name="server" implement="MUST"/>
+    <chassis name="client" implement="MUST"/>
+    <method name="declare" synchronous="1" index="10">
+      <chassis name="server" implement="MUST"/>
+      <response name="declare-ok"/>
+      <field name="reserved-1" type="short" reserved="1"/>
+      <field name="queue" domain="queue-name"/>
+      <field name="passive" domain="bit"/>
+      <field name="durable" domain="bit"/>
+      <field name="exclusive" domain="bit"/>
+      <field name="auto-delete" domain="bit"/>
+      <field name="no-wait" domain="no-wait"/>
+      <field name="arguments" domain="table"/>
+    </method>
+    <method name="declare-ok" synchronous="1" index="11">
+      <chassis name="client" implement="MUST"/>
+      <field name="queue" domain="queue-name">
+        <assert check="notnull"/>
+      </field>
+      <field name="message-count" domain="message-count"/>
+      <field name="consumer-count" domain="long"/>
+    </method>
+    <method name="bind" synchronous="1" index="20">
+      <chassis name="server" implement="MUST"/>
+      <response name="bind-ok"/>
+      <field name="reserved-1" type="short" reserved="1"/>
+      <field name="queue" domain="queue-name"/>
+      <field name="exchange" domain="exchange-name"/>
+      <field name="routing-key" domain="shortstr"/>
+      <field name="no-wait" domain="no-wait"/>
+      <field name="arguments" domain="table"/>
+    </method>
+    <method name="bind-ok" synchronous="1" index="21">
+      <chassis name="client" implement="MUST"/>
+    </method>
+    <method name="unbind" synchronous="1" index="50">
+      <chassis name="server" implement="MUST"/>
+      <response name="unbind-ok"/>
+      <field name="reserved-1" type="short" reserved="1"/>
+      <field name="queue" domain="queue-name"/>
+      <field name="exchange" domain="exchange-name"/>
+      <field name="routing-key" domain="shortstr"/>
+      <field name="arguments" domain="table"/>
+    </method>
+    <method name="unbind-ok" synchronous="1" index="51">
+      <chassis name="client" implement="MUST"/>
+    </method>
+    <method name="purge" synchronous="1" index="30">
+      <chassis name="server" implement="MUST"/>
+      <response name="purge-ok"/>
+      <field name="reserved-1" type="short" reserved="1"/>
+      <field name="queue" domain="queue-name"/>
+      <field name="no-wait" domain="no-wait"/>
+    </method>
+    <method name="purge-ok" synchronous="1" index="31">
+      <chassis name="client" implement="MUST"/>
+      <field name="message-count" domain="message-count"/>
+    </method>
+    <method name="delete" synchronous="1" index="40">
+      <chassis name="server" implement="MUST"/>
+      <response name="delete-ok"/>
+      <field name="reserved-1" type="short" reserved="1"/>
+      <field name="queue" domain="queue-name"/>
+      <field name="if-unused" domain="bit"/>
+      <field name="if-empty" domain="bit"/>
+      <field name="no-wait" domain="no-wait"/>
+    </method>
+    <method name="delete-ok" synchronous="1" index="41">
+      <chassis name="client" implement="MUST"/>
+      <field name="message-count" domain="message-count"/>
+    </method>
+  </class>
+  <class name="basic" handler="channel" index="60">
+    <chassis name="server" implement="MUST"/>
+    <chassis name="client" implement="MAY"/>
+    <field name="content-type" domain="shortstr"/>
+    <field name="content-encoding" domain="shortstr"/>
+    <field name="headers" domain="table"/>
+    <field name="delivery-mode" domain="octet"/>
+    <field name="priority" domain="octet"/>
+    <field name="correlation-id" domain="shortstr"/>
+    <field name="reply-to" domain="shortstr"/>
+    <field name="expiration" domain="shortstr"/>
+    <field name="message-id" domain="shortstr"/>
+    <field name="timestamp" domain="timestamp"/>
+    <field name="type" domain="shortstr"/>
+    <field name="user-id" domain="shortstr"/>
+    <field name="app-id" domain="shortstr"/>
+    <field name="reserved" domain="shortstr"/>
+    <method name="qos" synchronous="1" index="10">
+      <chassis name="server" implement="MUST"/>
+      <response name="qos-ok"/>
+      <field name="prefetch-size" domain="long"/>
+      <field name="prefetch-count" domain="short"/>
+      <field name="global" domain="bit"/>
+    </method>
+    <method name="qos-ok" synchronous="1" index="11">
+      <chassis name="client" implement="MUST"/>
+    </method>
+    <method name="consume" synchronous="1" index="20">
+      <chassis name="server" implement="MUST"/>
+      <response name="consume-ok"/>
+      <field name="reserved-1" type="short" reserved="1"/>
+      <field name="queue" domain="queue-name"/>
+      <field name="consumer-tag" domain="consumer-tag"/>
+      <field name="no-local" domain="no-local"/>
+      <field name="no-ack" domain="no-ack"/>
+      <field name="exclusive" domain="bit"/>
+      <field name="no-wait" domain="no-wait"/>
+      <field name="arguments" domain="table"/>
+    </method>
+    <method name="consume-ok" synchronous="1" index="21">
+      <chassis name="client" implement="MUST"/>
+      <field name="consumer-tag" domain="consumer-tag"/>
+    </method>
+    <method name="cancel" synchronous="1" index="30">
+      <chassis name="server" implement="MUST"/>
+      <chassis name="client" implement="SHOULD"/>
+      <response name="cancel-ok"/>
+      <field name="consumer-tag" domain="consumer-tag"/>
+      <field name="no-wait" domain="no-wait"/>
+    </method>
+    <method name="cancel-ok" synchronous="1" index="31">
+      <chassis name="client" implement="MUST"/>
+      <chassis name="server" implement="MAY"/>
+      <field name="consumer-tag" domain="consumer-tag"/>
+    </method>
+    <method name="publish" content="1" index="40">
+      <chassis name="server" implement="MUST"/>
+      <field name="reserved-1" type="short" reserved="1"/>
+      <field name="exchange" domain="exchange-name"/>
+      <field name="routing-key" domain="shortstr"/>
+      <field name="mandatory" domain="bit"/>
+      <field name="immediate" domain="bit"/>
+    </method>
+    <method name="return" content="1" index="50">
+      <chassis name="client" implement="MUST"/>
+      <field name="reply-code" domain="reply-code"/>
+      <field name="reply-text" domain="reply-text"/>
+      <field name="exchange" domain="exchange-name"/>
+      <field name="routing-key" domain="shortstr"/>
+    </method>
+    <method name="deliver" content="1" index="60">
+      <chassis name="client" implement="MUST"/>
+      <field name="consumer-tag" domain="consumer-tag"/>
+      <field name="delivery-tag" domain="delivery-tag"/>
+      <field name="redelivered" domain="redelivered"/>
+      <field name="exchange" domain="exchange-name"/>
+      <field name="routing-key" domain="shortstr"/>
+    </method>
+    <method name="get" synchronous="1" index="70">
+      <response name="get-ok"/>
+      <response name="get-empty"/>
+      <chassis name="server" implement="MUST"/>
+      <field name="reserved-1" type="short" reserved="1"/>
+      <field name="queue" domain="queue-name"/>
+      <field name="no-ack" domain="no-ack"/>
+    </method>
+    <method name="get-ok" synchronous="1" content="1" index="71">
+      <chassis name="client" implement="MAY"/>
+      <field name="delivery-tag" domain="delivery-tag"/>
+      <field name="redelivered" domain="redelivered"/>
+      <field name="exchange" domain="exchange-name"/>
+      <field name="routing-key" domain="shortstr"/>
+      <field name="message-count" domain="message-count"/>
+    </method>
+    <method name="get-empty" synchronous="1" index="72">
+      <chassis name="client" implement="MAY"/>
+      <field name="reserved-1" type="shortstr" reserved="1"/>
+    </method>
+    <method name="ack" index="80">
+      <chassis name="server" implement="MUST"/>
+      <chassis name="client" implement="MUST"/>
+      <field name="delivery-tag" domain="delivery-tag"/>
+      <field name="multiple" domain="bit"/>
+    </method>
+    <method name="reject" index="90">
+      <chassis name="server" implement="MUST"/>
+      <field name="delivery-tag" domain="delivery-tag"/>
+      <field name="requeue" domain="bit"/>
+    </method>
+    <method name="recover-async" index="100" deprecated="1">
+      <chassis name="server" implement="MAY"/>
+      <field name="requeue" domain="bit"/>
+    </method>
+    <method name="recover" synchronous="1" index="110">
+      <chassis name="server" implement="MUST"/>
+      <field name="requeue" domain="bit"/>
+    </method>
+    <method name="recover-ok" synchronous="1" index="111">
+      <chassis name="client" implement="MUST"/>
+    </method>
+    <method name="nack" index="120">
+      <chassis name="server" implement="MUST"/>
+      <chassis name="client" implement="MUST"/>
+      <field name="delivery-tag" domain="delivery-tag"/>
+      <field name="multiple" domain="bit"/>
+      <field name="requeue" domain="bit"/>
+    </method>
+  </class>
+  <class name="tx" handler="channel" index="90">
+    <chassis name="server" implement="SHOULD"/>
+    <chassis name="client" implement="MAY"/>
+    <method name="select" synchronous="1" index="10">
+      <chassis name="server" implement="MUST"/>
+      <response name="select-ok"/>
+    </method>
+    <method name="select-ok" synchronous="1" index="11">
+      <chassis name="client" implement="MUST"/>
+    </method>
+    <method name="commit" synchronous="1" index="20">
+      <chassis name="server" implement="MUST"/>
+      <response name="commit-ok"/>
+    </method>
+    <method name="commit-ok" synchronous="1" index="21">
+      <chassis name="client" implement="MUST"/>
+    </method>
+    <method name="rollback" synchronous="1" index="30">
+      <chassis name="server" implement="MUST"/>
+      <response name="rollback-ok"/>
+    </method>
+    <method name="rollback-ok" synchronous="1" index="31">
+      <chassis name="client" implement="MUST"/>
+    </method>
+  </class>
+  <class name="confirm" handler="channel" index="85">
+    <chassis name="server" implement="SHOULD"/>
+    <chassis name="client" implement="MAY"/>
+    <method name="select" synchronous="1" index="10">
+      <chassis name="server" implement="MUST"/>
+      <response name="select-ok"/>
+      <field name="nowait" type="bit"/>
+    </method>
+    <method name="select-ok" synchronous="1" index="11">
+      <chassis name="client" implement="MUST"/>
+    </method>
+  </class>
+</amqp>

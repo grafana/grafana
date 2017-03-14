@@ -1,0 +1,14 @@
+site_name: Angular Drag and Drop
+
+site_url: http://angular-dragdrop.github.io/angular-dragdrop/
+site_description: Project documentation for angular Drag and Drop.
+
+repo_url: https://github.com/angular-dragdrop/angular-dragdrop
+
+
+theme : flatly
+
+pages:
+- 'index.md'
+- 'getting-started.md'
+- 'examples.md'

@@ -1,0 +1,75 @@
+@mixin hide-controls() {
+  .add-row-panel-hint,
+  .dash-row-menu-container {
+    display: none;
+  }
+  .resize-panel-handle,
+  .panel-drop-zone {
+    visibility: hidden;
+  }
+}
+
+.hide-controls {
+  @include hide-controls();
+}
+
+.page-kiosk-mode {
+  @include hide-controls();
+  dashnav {
+    display: none;
+  }
+}
+
+.playlist-active,
+.user-activity-low {
+  .add-row-panel-hint,
+  .dash-row-menu-container,
+  .resize-panel-handle,
+  .panel-drop-zone
+  .dashnav-refresh-action,
+  .dashnav-zoom-out,
+  .dashnav-action-icons,
+  .panel-info-corner--info,
+  .panel-info-corner--links,
+  .dashnav-move-timeframe  {
+    opacity: 0;
+    transition: all 1.5s ease-in-out 1s;
+  }
+
+  // navbar buttons
+  .navbar-brand-btn,
+  .navbar-inner {
+    border-color: transparent;
+    background: transparent;
+    transition: all 1.5s ease-in-out 1s;
+    .fa {
+      opacity: 0;
+      transition: all 1.5s ease-in-out 1s;
+    }
+  }
+
+  .navbar-page-btn {
+    border-color: transparent;
+    background: transparent;
+    transform: translate3d(-50px, 0, 0);
+    transition: all 1.5s ease-in-out 1s;
+    .icon-gf {
+      opacity: 0;
+      transition: all 1.5s ease-in-out 1s;
+    }
+  }
+
+  .gf-timepicker-nav-btn {
+    transform: translate3d(40px, 0, 0);
+    transition: transform 1.5s ease-in-out 1s;
+  }
+}
+
+.playlist-active {
+  .dash-playlist-actions  {
+    .fa {
+      opacity: 1;
+      color: $text-color-faint !important;
+    }
+  }
+}

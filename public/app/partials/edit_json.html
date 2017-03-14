@@ -1,0 +1,21 @@
+<div ng-controller="JsonEditorCtrl">
+	<div class="tabbed-view-header">
+		<h2 class="tabbed-view-title">
+			JSON
+		</h2>
+
+		<button class="tabbed-view-close-btn" ng-click="dismiss()">
+			<i class="fa fa-remove"></i>
+		</button>
+	</div>
+
+	<div class="tabbed-view-body">
+		<div class="gf-form">
+			<textarea class="gf-form-input" ng-model="json" rows="20" spellcheck="false"></textarea>
+		</div>
+
+		<div class="gf-form-button-row">
+			<button type="button" class="btn btn-success" ng-show="canUpdate" ng-click="update(); dismiss();">Update</button>
+		</div>
+	</div>
+</div>

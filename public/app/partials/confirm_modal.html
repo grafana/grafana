@@ -1,0 +1,36 @@
+<div class="modal-body" ng-cloak>
+	<div class="modal-header">
+		<h2 class="modal-header-title">
+			<i class="fa {{icon}}"></i>
+			<span class="p-l-1">
+				{{title}}
+			</span>
+		</h2>
+
+		<a class="modal-header-close" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</a>
+	</div>
+
+	<div class="modal-content text-center">
+
+		<div class="confirm-modal-text">
+			{{text}}
+			<div class="confirm-modal-text2" ng-show="text2">
+				{{text2}}
+			</div>
+		</div>
+
+
+		<div class="modal-content-confirm-text" ng-if="confirmText">
+			<input type="text" class="gf-form-input width-16" style="display: inline-block;" placeholder="Type {{confirmText}} to confirm" ng-model="confirmInput" ng-change="updateConfirmText(confirmInput)">
+		</div>
+
+		<div class="confirm-modal-buttons">
+			<button type="button" class="btn btn-inverse" ng-click="dismiss()">{{noText}}</button>
+			<button type="button" class="btn btn-danger" ng-click="onConfirm();dismiss();" ng-disabled="!confirmTextValid" give-focus="true">{{yesText}}</button>
+			<button ng-show="onAltAction" type="button" class="btn btn-success" ng-click="dismiss();onAltAction();">{{altActionText}}</button>
+		</div>
+	</div>
+
+</div>

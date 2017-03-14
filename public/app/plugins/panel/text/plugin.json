@@ -1,0 +1,17 @@
+{
+  "type": "panel",
+  "name": "Text",
+  "id": "text",
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "http://grafana.org"
+},
+    "logos": {
+      "small": "img/icn-text-panel.svg",
+      "large": "img/icn-text-panel.svg"
+    }
+  }
+}
+

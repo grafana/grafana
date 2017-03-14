@@ -1,0 +1,70 @@
+{
+  "angular": {
+    "version":"1.1.5",
+    "license":"MIT"
+  },
+  "angular-dragdrop": {
+    "version":"1.0.4",
+    "license":"MIT"
+  },
+  "angular-strap": {
+    "version":"0.7.5",
+    "license":"MIT"
+  },
+  "bindonce": {
+    "version":"0.2.1",
+    "license":"MIT"
+  },
+  "datepicker": {
+    "version":"12/3/2013",
+    "license":"Apache 2.0"
+  },
+  "timepicker": {
+    "version":"0.2.6",
+    "license":"MIT"
+  },
+  "bootstrap": {
+    "version":"2.3.2",
+    "license":"Apache 2.0"
+  },
+  "elasticjs": {
+    "version":"1.1.1",
+    "license":"MIT"
+  },
+  "jquery": {
+    "version":"1.8.0",
+    "license":"MIT"
+  },
+  "jquery-ui": {
+    "version":"1.10.3",
+    "license":"MIT"
+  },
+  "flot": {
+    "version":"0.8.1",
+    "license":"MIT"
+  },
+  "require": {
+    "version":"2.1.8",
+    "license":"MIT"
+  },
+  "filesaver": {
+    "version":"2013-01-23",
+    "license":"MIT"
+  },
+  "modernizr": {
+    "version":"2.6.1",
+    "license":"MIT"
+  },
+  "moment": {
+    "version":"2.1.0",
+    "license":"MIT"
+  },
+  "timezone": {
+    "version":"2010",
+    "license":"Apache 2"
+  },
+  "underscore": {
+    "version":"1.5.1",
+    "license":"MIT"
+  }
+}

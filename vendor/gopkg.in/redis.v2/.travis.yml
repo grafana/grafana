@@ -1,0 +1,19 @@
+language: go
+
+services:
+- redis-server
+
+go:
+  - 1.1
+  - 1.2
+  - 1.3
+  - tip
+
+install:
+  - go get gopkg.in/bufio.v1
+  - go get gopkg.in/check.v1
+  - mkdir -p $HOME/gopath/src/gopkg.in
+  - ln -s `pwd` $HOME/gopath/src/gopkg.in/redis.v2
+
+before_script:
+  - redis-server testdata/sentinel.conf --sentinel &

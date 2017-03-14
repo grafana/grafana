@@ -1,0 +1,27 @@
+<query-editor-row query-ctrl="ctrl" has-text-edit-mode="true">
+
+	<div class="gf-form" ng-show="ctrl.target.textEditor">
+		<input type="text" class="gf-form-input" ng-model="ctrl.target.target" spellcheck="false" ng-blur="ctrl.refresh()"></input>
+	</div>
+
+  <div ng-hide="ctrl.target.textEditor">
+		<div class="gf-form-inline">
+      <div ng-repeat="segment in ctrl.segments" role="menuitem" class="gf-form">
+        <metric-segment segment="segment" get-options="ctrl.getAltSegments($index)" on-change="ctrl.segmentValueChanged(segment, $index)"></metric-segment>
+      </div>
+
+      <div ng-repeat="func in ctrl.functions" class="gf-form">
+        <span graphite-func-editor class="gf-form-label query-part"></span>
+      </div>
+
+      <div class="gf-form dropdown">
+        <span graphite-add-func></span>
+      </div>
+
+      <div class="gf-form gf-form--grow">
+				<div class="gf-form-label gf-form-label--grow"></div>
+			</div>
+    </div>
+  </div>
+
+</query-editor-row>

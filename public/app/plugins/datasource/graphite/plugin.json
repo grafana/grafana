@@ -1,0 +1,24 @@
+{
+  "name": "Graphite",
+  "type": "datasource",
+  "id": "graphite",
+
+  "includes": [
+    {"type": "dashboard", "name": "Graphite Carbon Metrics", "path": "dashboards/carbon_metrics.json"}
+  ],
+
+  "metrics": true,
+  "alerting": true,
+  "annotations": true,
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "http://grafana.org"
+    },
+    "logos": {
+      "small": "img/graphite_logo.png",
+      "large": "img/graphite_logo.png"
+    }
+  }
+}

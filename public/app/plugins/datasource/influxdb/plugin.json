@@ -1,0 +1,21 @@
+{
+  "type": "datasource",
+  "name": "InfluxDB",
+  "id": "influxdb",
+
+  "defaultMatchFormat": "regex values",
+  "metrics": true,
+  "annotations": true,
+  "alerting": true,
+
+  "info": {
+    "author": {
+      "name": "Grafana Project",
+      "url": "http://grafana.org"
+    },
+    "logos": {
+      "small": "img/influxdb_logo.svg",
+      "large": "img/influxdb_logo.svg"
+    }
+  }
+}

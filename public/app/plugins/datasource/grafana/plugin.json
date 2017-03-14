@@ -1,0 +1,9 @@
+{
+  "type": "datasource",
+  "name": "Grafana",
+  "id": "grafana",
+
+  "builtIn": true,
+  "annotations": true,
+  "metrics": true
+}

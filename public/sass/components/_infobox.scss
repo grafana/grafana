@@ -1,0 +1,23 @@
+.grafana-info-box::before {
+  content: "\f05a";
+  font-family:'FontAwesome';
+  position: absolute;
+  top: -13px;
+  left: -8px;
+  font-size: 20px;
+  color: $blue;
+}
+
+.grafana-info-box {
+  position: relative;
+  padding: 5px 20px;
+  background-color: $tight-form-bg;
+  border: 1px solid $tight-form-border;
+  h5 {
+    margin-top: 5px;
+  }
+  ul {
+    padding-left: $spacer;
+  }
+}
+

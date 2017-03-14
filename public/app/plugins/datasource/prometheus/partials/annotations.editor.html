@@ -1,0 +1,30 @@
+<div class="gf-form-group">
+	<div class="gf-form">
+		<span class="gf-form-label width-10">Search expression</span>
+		<input type="text" class="gf-form-input" ng-model='ctrl.annotation.expr' placeholder="ALERTS"></input>
+	</div>
+	<div class="gf-form">
+		<span class="gf-form-label width-10">step</span>
+		<input type="text" class="gf-form-input max-width-6" ng-model='ctrl.annotation.step' placeholder="60s"></input>
+	</div>
+</div>
+
+<div class="gf-form-group">
+	<h5 class="section-heading">Field formats</h6>
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<span class="gf-form-label width-5">Title</span>
+			<input type="text" class="gf-form-input max-width-9" ng-model='ctrl.annotation.titleFormat' placeholder="alertname"></input>
+		</div>
+		<div class="gf-form">
+			<span class="gf-form-label width-5">Tags</span>
+			<input type="text" class="gf-form-input max-width-9" ng-model='ctrl.annotation.tagKeys' placeholder="label1,label2"></input>
+		</div>
+		<div class="gf-form-inline">
+			<div class="gf-form">
+				<span class="gf-form-label width-5">Text</span>
+				<input type="text" class="gf-form-input max-width-9" ng-model='ctrl.annotation.textFormat' placeholder="instance"></input>
+			</div>
+		</div>
+	</div>
+</div>

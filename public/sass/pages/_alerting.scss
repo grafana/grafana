@@ -1,0 +1,75 @@
+.alert-state-paused,
+.alert-state-pending {
+  color: $text-muted;
+}
+
+.alert-state-ok {
+  color: $online;
+}
+
+.alert-state-warning {
+  color: $warn;
+}
+
+.alert-state-critical {
+  color: $critical;
+}
+
+.alert-notify-emails {
+  width: 400px;
+  border-right: 1px solid $black;
+}
+
+.alert-notify-emails .bootstrap-tagsinput {
+  width: 394px; // offset for 8px left padding and border width
+}
+
+.alert-notify-emails .bootstrap-tagsinput input {
+  border: 0;
+}
+
+// Alert List
+
+.alert-list-item-state {
+  font-weight: bold;
+  .icon-gf, .fa {
+    font-size: 120%;
+    position: relative;
+    top: 2px;
+  }
+}
+
+.panel-has-alert {
+  .panel-alert-icon:before {
+    content: "\e611";
+    position: relative;
+    top: 1px;
+    left: -3px;
+  }
+}
+
+.panel-alert-state {
+  &--alerting {
+    animation: alerting-panel 1.6s cubic-bezier(1,.1,.73,1) 0s infinite alternate;
+    box-shadow: 0 0 10px rgba($critical,0.5);
+    opacity: 1;
+
+    .panel-alert-icon:before {
+      color: $critical;
+      content: "\e610";
+    }
+  }
+
+  &--ok {
+    .panel-alert-icon:before {
+      color: $online;
+      content: "\e611";
+    }
+  }
+}
+
+@keyframes alerting-panel {
+  100% {
+    box-shadow: 0 0 15px $critical;
+  }
+}

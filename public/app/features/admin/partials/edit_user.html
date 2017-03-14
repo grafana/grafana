@@ -1,0 +1,97 @@
+<navbar icon="fa fa-fw fa-cogs" title="Admin" title-url="admin">
+	<a href="admin/users" class="navbar-page-btn">
+		<i class="icon-gf icon-gf-users"></i>
+		Users
+	</a>
+</navbar>
+
+<div class="page-container">
+	<div class="page-header">
+		<h1>Edit User</h1>
+	</div>
+
+	<form name="userForm" class="gf-form-group">
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Name</span>
+				<input type="text" required ng-model="user.name" class="gf-form-input max-width-25" >
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Email</span>
+				<input type="email" ng-model="user.email" class="gf-form-input max-width-25" >
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-10">Username</span>
+				<input type="text" ng-model="user.login" class="gf-form-input max-width-25" >
+			</div>
+
+			<div class="gf-form-button-row">
+				<button type="submit" class="btn btn-success" ng-click="update()" ng-show="!createMode">Update</button>
+			</div>
+	</form>
+
+	<h3 class="page-heading">Change password</h3>
+
+	<form name="passwordForm" class="gf-form-group">
+		<div class="gf-form">
+				<span class="gf-form-label width-10">New password</span>
+				<input type="password" required ng-minlength="4" ng-model="password" class="gf-form-input max-width-25">
+		</div>
+
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-click="setPassword()">Update</button>
+		</div>
+	</form>
+
+	<h3 class="page-heading">Permissions</h3>
+
+	<form name="passwordForm" class="gf-form-group">
+		<div class="gf-form" >
+			<editor-checkbox text="Grafana Admin" model="permissions.isGrafanaAdmin" style="line-height: 1.5rem;"></editor-checkbox>
+		</div>
+
+		<div class="gf-form-button-row">
+			<button type="submit" class="btn btn-success" ng-click="updatePermissions()">Update</button>
+		</div>
+	</form>
+
+	<h3 class="page-heading">Organizations</h3>
+
+	<form name="addOrgForm" class="gf-form-group">
+		<div class="gf-form-inline">
+			<div class="gf-form">
+				<span class="gf-form-label width-12">Add organization</span>
+				<input type="text" ng-model="newOrg.name" bs-typeahead="searchOrgs"	required class="gf-form-input max-width-20" placeholder="organization name">
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label">Role</span>
+				<select type="text" ng-model="newOrg.role" class="gf-form-input width-10" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']"></select>
+			</div>
+			<div class="gf-form">
+				<button class="btn btn-success gf-form-btn" ng-click="addOrgUser()">Add</button>
+			</div>
+		</div>
+	</form>
+
+	<table class="grafana-options-table">
+		<tr>
+			<th>Name</th>
+			<th>Role</th>
+			<th></th>
+		</tr>
+		<tr ng-repeat="org in orgs">
+			<td>
+				{{org.name}} <span class="label label-info" ng-show="org.orgId === user.orgId">Current</span>
+			</td>
+			<td>
+				<select type="text" ng-model="org.role" class="gf-form-input max-width-12" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor', 'Admin']" ng-change="updateOrgUser(org)">
+				</select>
+			</td>
+			<td style="width: 1%">
+				<a ng-click="removeOrgUser(org)" class="btn btn-danger btn-mini">
+					<i class="fa fa-remove"></i>
+				</a>
+			</td>
+		</tr>
+	</table>
+
+</div>
