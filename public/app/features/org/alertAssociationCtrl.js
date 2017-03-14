@@ -96,7 +96,7 @@ function (angular, _, noUiSlider) {
           title: "相关联指标",
           id: metrics,
           rows: [$scope.getRowPanelMeta(host, metrics)],
-          time: {from: "now-2h", to: "now"}
+          time: {from: "now-6h", to: "now"}
         }
       }, $scope);
     };
@@ -124,7 +124,7 @@ function (angular, _, noUiSlider) {
           title: "相关联指标",
           id: alertMetric,
           rows: [rowMeta],
-          time: {from: "now-1d", to: "now"}
+          time: {from: "now-6h", to: "now"}
         }
       }, $scope);
       $timeout(function() {
@@ -194,7 +194,7 @@ function (angular, _, noUiSlider) {
           step: 10,
           range: {
             'min': 10,
-            'max': 500
+            'max': 1000
           }
         });
         scope.$parent.thresholdSlider = element[0].noUiSlider;
