@@ -1,5 +1,5 @@
 Read before posting: 
-> **Questions** should be posted to [Community Forum](https://community.grafana.com). Please search there and here on GitHub for similar issues before creating a new issue. Checkout [FAQ](https://community.grafana.com/c/howto/faq) and [How to troubleshoot metric query issues](https://community.grafana.com/t/how-to-troubleshoot-metric-query-issues/50)
+**Questions** should be posted to [Community Forum](https://community.grafana.com). Please search there and here on GitHub for similar issues before creating a new issue. Checkout [FAQ](https://community.grafana.com/c/howto/faq) and [How to troubleshoot metric query issues](https://community.grafana.com/t/how-to-troubleshoot-metric-query-issues/50)
 
 Please prefix your title with [Bug] or [Feature request]. 
 
