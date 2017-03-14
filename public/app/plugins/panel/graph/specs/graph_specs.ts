@@ -113,15 +113,43 @@ describe('grafanaGraph', function() {
   });
 
   graphScenario('when logBase is log 10', function(ctx) {
-    ctx.setup(function(ctrl) {
+    ctx.setup(function(ctrl, data) {
       ctrl.panel.yaxes[0].logBase = 10;
+      data[0] = new TimeSeries({
+        datapoints: [[2000,1],[0.002,2],[0,3],[-1,4]],
+        alias: 'seriesAutoscale',
+      });
+      data[0].yaxis = 1;
+      ctrl.panel.yaxes[1].logBase = 10;
+      ctrl.panel.yaxes[1].min = '0.05';
+      ctrl.panel.yaxes[1].max = '1500';
+      data[1] = new TimeSeries({
+        datapoints: [[2000,1],[0.002,2],[0,3],[-1,4]],
+        alias: 'seriesFixedscale',
+      });
+      data[1].yaxis = 2;
     });
 
-    it('should apply axis transform and ticks', function() {
-      var axis = ctx.plotOptions.yaxes[0];
-      expect(axis.transform(100)).to.be(Math.log(100+0.1));
-      expect(axis.ticks[0]).to.be(0);
-      expect(axis.ticks[1]).to.be(1);
+    it('should apply axis transform, autoscaling (if necessary) and ticks', function() {
+      var axisAutoscale = ctx.plotOptions.yaxes[0];
+      expect(axisAutoscale.transform(100)).to.be(2);
+      expect(axisAutoscale.inverseTransform(-3)).to.be(0.001);
+      expect(axisAutoscale.min).to.be(0.001);
+      expect(axisAutoscale.max).to.be(10000);
+      expect(axisAutoscale.ticks.length).to.be(8);
+      expect(axisAutoscale.ticks[0]).to.be(0.001);
+      expect(axisAutoscale.ticks[7]).to.be(10000);
+      expect(axisAutoscale.tickDecimals).to.be(3);
+
+
+      var axisFixedscale = ctx.plotOptions.yaxes[1];
+      expect(axisFixedscale.min).to.be(0.05);
+      expect(axisFixedscale.max).to.be(1500);
+      expect(axisFixedscale.ticks.length).to.be(5);
+      expect(axisFixedscale.ticks[0]).to.be(0.1);
+      expect(axisFixedscale.ticks[4]).to.be(1000);
+      expect(axisFixedscale.tickDecimals).to.be(1);
+
     });
   });
 

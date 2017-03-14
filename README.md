@@ -1,16 +1,13 @@
-[Grafana](http://grafana.org) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) 
+[Grafana](https://grafana.com) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) 
 ================
-[Website](http://grafana.org) |
+[Website](https://grafana.com) |
 [Twitter](https://twitter.com/grafana) |
-[IRC](https://webchat.freenode.net/?channels=grafana) |
-[![Slack](https://brandfolder.com/api/favicon/icon?size=16&domain=www.slack.com)](http://slack.raintank.io)
-[Slack](http://slack.raintank.io) |
-[Email](mailto:contact@grafana.org)
+[Community & Forum](https://community.grafana.com)
 
 Grafana is an open source, feature rich metrics dashboard and graph editor for
 Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 
-![](http://grafana.org/assets/img/features/dashboard_ex1.png)
+![](http://docs.grafana.org/assets/img/features/dashboard_ex1.png)
 
 - [Install instructions](http://docs.grafana.org/installation/)
 - [What's New in Grafana 2.0](http://docs.grafana.org/guides/whats-new-in-v2/)
@@ -76,7 +73,7 @@ Be sure to read the [getting started guide](http://docs.grafana.org/guides/getti
 
 ## Run from master
 If you want to build a package yourself, or contribute. Here is a guide for how to do that. You can always find
-the latest master builds [here](http://grafana.org/builds)
+the latest master builds [here](https://grafana.com/grafana/download)
 
 ### Dependencies
 
