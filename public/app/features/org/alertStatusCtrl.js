@@ -11,6 +11,16 @@ function (angular, moment) {
     $scope.init = function () {
       $scope.correlationThreshold = 100;
       alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
+        for (var i = 0; i < response.data.length; i++) {
+          var alertDetail = response.data[i];
+          if (alertDetail.status.level === "CRITICAL") {
+            alertDetail.definition.alertDetails.threshold = alertDetail.definition.alertDetails.crit.threshold;
+          } else {
+            alertDetail.definition.alertDetails.threshold = alertDetail.definition.alertDetails.warn.threshold;
+          }
+          // Only show 2 digits. +0.00001 is to avoid floating point weirdness on rounding number.
+          alertDetail.status.triggeredValue = Math.round((alertDetail.status.triggeredValue + 0.00001) * 100) / 100;
+        }
         $scope.alertRows = response.data;
       });
     };

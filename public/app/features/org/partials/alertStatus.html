@@ -38,7 +38,7 @@
             {{_.getMetricName(alertDetail.metric)}}
           </td>
           <td style="width:40%">
-            <strong>{{random()}}</strong>/{{alertDetail.definition.alertDetails.crit.threshold}}
+            <strong>{{alertDetail.status.triggeredValue}}</strong>/{{alertDetail.definition.alertDetails.threshold}}
           </td>
           <td style="width:40%">
             {{random()}}
