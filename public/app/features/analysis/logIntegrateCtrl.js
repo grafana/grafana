@@ -197,7 +197,13 @@ define([
         "showTitle": false,
         "title": "New row"
       };
+
+      this.filterMetics = function(metric, index, array){
+        return !(/(anomaly|prediction.max|prediction.min|prediction.max.seasonal|prediction.seasonal|prediction.min.LB.percent)$/.test(metric.metric));
+      }
+
       this.init = function (param) {
+        patam.targets = param.targets.filter(this.filterMetics);
         panelMeta.panels[0].targets = param.targets;
         panelMeta.panels[1].targets = _.cloneDeep(param.targets);
         _.each(panelMeta.panels[1].targets, function (target) {
