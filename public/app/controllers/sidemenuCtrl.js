@@ -33,7 +33,7 @@ function (angular, _, $, config) {
         icon: "fa fa-fw fa-crosshairs",
         href: $scope.getUrl("/summary"),
       });
-      if (contextSrv.hasRole('Admin')) {
+      if (contextSrv.isGrafanaAdmin){
         $scope.mainLinks.push({
           text: "申请用户",
           icon: "fa fa-fw fa-users",
