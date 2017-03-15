@@ -223,6 +223,11 @@ define([
         templateUrl: 'app/features/summary/partials/customer.html',
         controller: 'CustomerCtrl',
       })
+      .when('/report', {
+        templateUrl: 'app/features/report/partials/report.html',
+        controller: 'ReportCtrl',
+        reloadOnSearch: false,
+      })
       .otherwise({
         templateUrl: 'app/partials/error.html',
         controller: 'ErrorCtrl'
