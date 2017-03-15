@@ -110,21 +110,24 @@
 
 .sign-header{
   width: 100%;
-  height: 100px;
+  height: 82px;
   background: @white;
   overflow: hidden;
   border-bottom: 1px solid rgb(151,151,151);
   .btn-link-login{
-    font-size: 28px;
-    line-height: 75px;
-    width: 234px;
-    height: 75px;
+    font-size: 22px;
+    line-height: 53px;
+    width: 175px;
+    height: 53px;
     border-radius: 8px;
-    margin-top: 16px;
     margin-right: 84px;
+  }
+  a{
+    margin-top: 16px;
   }
   img{
     margin: 0px 19px 14px 29px;
+    width: 48px;
   }
   span{
     display: inline-block;
@@ -132,7 +135,6 @@
     font-size: 36px;
     font-weight: bold;
     color: rgb(57,57,58);
-    margin-top: 43px;
   }
 }
 
@@ -191,6 +193,7 @@
   margin-top: 42px;
   margin-bottom: 143px;
   height: 48px;
+  line-height: 48px;
   color: rgb(145,148,154);
   a{
     text-align: center;
@@ -214,7 +217,7 @@
 /* 电脑的分辨率 */
 @media (min-width: 768px){
   .login-inner-content{
-      width: 360px;
+      width: 468px;
       height: 300px;
   }
 }
@@ -222,8 +225,12 @@
 @media (max-width: 767px) { 
   .sign-header{
     text-align: center;
+    img{
+      margin-left: 0;
+    }
     .pull-left{
       float: none;
+      line-height: 75px;
     }
     .pull-right{
       display: none;
