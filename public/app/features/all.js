@@ -16,5 +16,6 @@ define([
   './health/all',
   './summary/summaryCtrl',
   './summary/serviceCtrl',
-  './summary/customerCtrl'
+  './summary/customerCtrl',
+  './report/reportCtrl'
 ], function () {});
