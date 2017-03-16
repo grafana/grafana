@@ -90,8 +90,6 @@ class MetricsPanelCtrl extends PanelCtrl {
     delete this.error;
     this.loading = true;
 
-    this.updateTimeRange();
-
     // load datasource service
     this.setTimeQueryStart();
     this.datasourceSrv.get(this.panel.datasource)
@@ -196,6 +194,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
   issueQueries(datasource) {
     this.datasource = datasource;
+    this.updateTimeRange();
 
     if (!this.panel.targets || this.panel.targets.length === 0) {
       return this.$q.when([]);
