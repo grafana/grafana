@@ -8,13 +8,12 @@
 </topnav>
 
 <div class="page-container">
-    <div class="page">
       <h2>报警指标状态 <span style="font-size: 12px">实时</span></h2>
 
       <div ng-if="alertRows.length === 0">
         <em>系统一切正常</em>
       </div>
-      <table class="grafana-options-table" ng-if="alertRows.length > 0">
+      <table class="grafana-options-table table-block" ng-if="alertRows.length > 0">
         <tr>
           <td><strong>规则清楚</strong></td>
           <td><strong>主机名称</strong></td>
@@ -73,7 +72,4 @@
           <!--</td>-->
         </tr>
       </table>
-
-    </div>
-
 </div>
