@@ -199,7 +199,7 @@ define([
       };
 
       this.filterMetics = function(metric, index, array){
-        return !(/(anomaly|prediction.max|prediction.min|prediction.max.seasonal|prediction.seasonal|prediction.min.LB.percent)$/.test(metric.metric));
+        return !(/(anomaly|prediction.max|prediction.min|prediction.min.LB.percent|.seasonal|.trend|.noise|.prediction)$/.test(metric.metric));
       }
 
       this.init = function (param) {
