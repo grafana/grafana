@@ -39,7 +39,7 @@ function (angular, _, $, config) {
         icon: "fa fa-fw fa-list-alt",
         href: $scope.getUrl("/report"),
       });
-      
+
       if (contextSrv.isGrafanaAdmin) {
         $scope.mainLinks.push({
           text: "申请用户",

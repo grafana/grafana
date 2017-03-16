@@ -198,7 +198,7 @@ define([
         "title": "New row"
       };
 
-      this.filterMetics = function(metric, index, array){
+      this.filterMetics = function (metric, index, array) {
         return !(/(anomaly|prediction.max|prediction.min|prediction.min.LB.percent|.seasonal|.trend|.noise|.prediction)$/.test(metric.metric));
       }
 
