@@ -203,7 +203,7 @@ define([
       }
 
       this.init = function (param) {
-        patam.targets = param.targets.filter(this.filterMetics);
+        param.targets = param.targets.filter(this.filterMetics);
         panelMeta.panels[0].targets = param.targets;
         panelMeta.panels[1].targets = _.cloneDeep(param.targets);
         _.each(panelMeta.panels[1].targets, function (target) {
