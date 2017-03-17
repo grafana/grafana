@@ -1,8 +1,8 @@
 [Unit]
 Description=Grafana instance
 Documentation=http://docs.grafana.org
-Wants=network-online.target
-After=network-online.target
+Wants=network-online.target postgresql.service
+After=network-online.target postgresql.service
 
 [Service]
 EnvironmentFile=/etc/default/grafana-server
@@ -20,6 +20,7 @@ ExecStart=/usr/sbin/grafana-server                                \
 LimitNOFILE=10000
 TimeoutStopSec=20
 UMask=0027
+Restart=on-failure
 
 [Install]
 WantedBy=multi-user.target
