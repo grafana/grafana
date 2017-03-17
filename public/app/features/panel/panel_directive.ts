@@ -160,6 +160,7 @@ module.directive('grafanaPanel', function($rootScope) {
             classes: ctrl.error ? 'drop-error' : 'drop-help',
             openOn: 'hover',
             hoverOpenDelay: 100,
+            constrainToScrollParent: false,
           });
         }
       }
