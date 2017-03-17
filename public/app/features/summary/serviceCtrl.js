@@ -70,7 +70,10 @@ define([
           "storm": "Storm",
           "yarn": "Yarn",
           "zookeeper": "Zookeeper",
-          "tomcat": "Tomcat"
+          "tomcat": "Tomcat",
+          "opentsdb": "OpenTSDB",
+          "mongo3": "MongoDB 3.x",
+          "nginx": "Nginx"
         };
 
         $scope.serviceList = [];
