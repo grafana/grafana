@@ -29,6 +29,15 @@ type SocialConnector interface {
 	Client(ctx context.Context, t *oauth2.Token) *http.Client
 }
 
+// Implements authorization errors like required team or organization memberships
+type AuthError struct {
+	s string
+}
+
+func (e *AuthError) Error() string {
+	return e.s
+}
+
 var (
 	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)

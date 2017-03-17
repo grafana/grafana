@@ -5,6 +5,7 @@ import 'vendor/filesaver';
 import 'lodash-src';
 import 'angular-strap';
 import 'angular-route';
+import 'angular-cookies';
 import 'angular-sanitize';
 import 'angular-dragdrop';
 import 'angular-bindonce';
@@ -77,6 +78,7 @@ export class GrafanaApp {
     this.ngModuleDependencies = [
       'grafana.core',
       'ngRoute',
+      'ngCookies',
       'ngSanitize',
       '$strap.directives',
       'ang-drag-drop',

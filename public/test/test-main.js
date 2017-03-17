@@ -23,6 +23,7 @@
       'angular-mocks': 'vendor/angular-mocks/angular-mocks.js',
       "bootstrap":  "vendor/bootstrap/bootstrap.js",
       'angular-route':          'vendor/angular-route/angular-route.js',
+      'angular-cookies':        'vendor/angular-cookies/angular-cookies.js',
       'angular-sanitize':       'vendor/angular-sanitize/angular-sanitize.js',
       "angular-ui":             "vendor/angular-ui/ui-bootstrap-tpls.js",
       "angular-strap":          "vendor/angular-other/angular-strap.js",

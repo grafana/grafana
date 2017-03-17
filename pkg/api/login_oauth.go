@@ -23,11 +23,30 @@ import (
 	"github.com/grafana/grafana/pkg/social"
 )
 
+const COOKIE_LAST_ERROR = "grafana_last_error"
+
+const LOGIN_PATH = "/login"
+
 func GenStateString() string {
 	rnd := make([]byte, 32)
 	rand.Read(rnd)
 	return base64.StdEncoding.EncodeToString(rnd)
 }
+
+// Redirects to the specified path setting a cookie value to
+// the error message that can be used on frontend
+func redirectWithError(ctx *middleware.Context, path string, err error, v ...interface{}) {
+	ctx.Logger.Info(err.Error(), v...)
+	ctx.SetCookie(COOKIE_LAST_ERROR, err.Error())
+	ctx.Redirect(setting.AppSubUrl + path)
+}
+
+var (
+	ErrProviderDeniedRequest = errors.New("Login provider denied login request")
+	ErrEmailNotAllowed       = errors.New("Required email domain not fulfilled")
+	ErrSignUpNotAllowed      = errors.New("Signup is not allowed for this adapter")
+	ErrUsersQuotaReached     = errors.New("Users quota reached")
+)
 
 func OAuthLogin(ctx *middleware.Context) {
 	if setting.OAuthService == nil {
@@ -45,8 +64,7 @@ func OAuthLogin(ctx *middleware.Context) {
 	error := ctx.Query("error")
 	if error != "" {
 		errorDesc := ctx.Query("error_description")
-		ctx.Logger.Info("OAuthLogin Failed", "error", error, "errorDesc", errorDesc)
-		ctx.Redirect(setting.AppSubUrl + "/login?failCode=1003")
+		redirectWithError(ctx, LOGIN_PATH, ErrProviderDeniedRequest, "error", error, "errorDesc", errorDesc)
 		return
 	}
 
@@ -118,10 +136,8 @@ func OAuthLogin(ctx *middleware.Context) {
 	// get user info
 	userInfo, err := connect.UserInfo(client)
 	if err != nil {
-		if err == social.ErrMissingTeamMembership {
-			ctx.Redirect(setting.AppSubUrl + "/login?failCode=1000")
-		} else if err == social.ErrMissingOrganizationMembership {
-			ctx.Redirect(setting.AppSubUrl + "/login?failCode=1001")
+		if authErr, ok := err.(*social.AuthError); ok {
+			redirectWithError(ctx, LOGIN_PATH, authErr)
 		} else {
 			ctx.Handle(500, fmt.Sprintf("login.OAuthLogin(get info from %s)", name), err)
 		}
@@ -132,8 +148,7 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	// validate that the email is allowed to login to grafana
 	if !connect.IsEmailAllowed(userInfo.Email) {
-		ctx.Logger.Info("OAuth login attempt with unallowed email", "email", userInfo.Email)
-		ctx.Redirect(setting.AppSubUrl + "/login?failCode=1002")
+		redirectWithError(ctx, LOGIN_PATH, ErrEmailNotAllowed, "email", userInfo.Email)
 		return
 	}
 
@@ -143,7 +158,7 @@ func OAuthLogin(ctx *middleware.Context) {
 	// create account if missing
 	if err == m.ErrUserNotFound {
 		if !connect.IsSignupAllowed() {
-			ctx.Redirect(setting.AppSubUrl + "/login")
+			redirectWithError(ctx, LOGIN_PATH, ErrSignUpNotAllowed)
 			return
 		}
 		limitReached, err := middleware.QuotaReached(ctx, "user")
@@ -152,7 +167,7 @@ func OAuthLogin(ctx *middleware.Context) {
 			return
 		}
 		if limitReached {
-			ctx.Redirect(setting.AppSubUrl + "/login")
+			redirectWithError(ctx, LOGIN_PATH, ErrUsersQuotaReached)
 			return
 		}
 		cmd := m.CreateUserCommand{

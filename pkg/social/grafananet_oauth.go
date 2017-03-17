@@ -9,6 +9,8 @@ import (
 	"golang.org/x/oauth2"
 )
 
+var ErrGNMissingOrganizationMembership = &AuthError{"User not a member of one of the required organizations"}
+
 type SocialGrafanaNet struct {
 	*oauth2.Config
 	url                  string
@@ -77,7 +79,7 @@ func (s *SocialGrafanaNet) UserInfo(client *http.Client) (*BasicUserInfo, error)
 	}
 
 	if !s.IsOrganizationMember(data.Orgs) {
-		return nil, ErrMissingOrganizationMembership
+		return nil, ErrGNMissingOrganizationMembership
 	}
 
 	return userInfo, nil

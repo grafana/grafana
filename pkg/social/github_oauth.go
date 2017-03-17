@@ -2,7 +2,6 @@ package social
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -21,11 +20,8 @@ type SocialGithub struct {
 }
 
 var (
-	ErrMissingTeamMembership = errors.New("User not a member of one of the required teams")
-)
-
-var (
-	ErrMissingOrganizationMembership = errors.New("User not a member of one of the required organizations")
+	ErrGHMissingTeamMembership         = &AuthError{"User not a member of one of the required teams"}
+	ErrGHMissingOrganizationMembership = &AuthError{"User not a member of one of the required organizations"}
 )
 
 func (s *SocialGithub) Type() int {
@@ -193,11 +189,11 @@ func (s *SocialGithub) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	}
 
 	if !s.IsTeamMember(client) {
-		return nil, ErrMissingTeamMembership
+		return nil, ErrGHMissingTeamMembership
 	}
 
 	if !s.IsOrganizationMember(client) {
-		return nil, ErrMissingOrganizationMembership
+		return nil, ErrGHMissingOrganizationMembership
 	}
 
 	if userInfo.Email == "" {
