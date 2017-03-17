@@ -1,5 +1,5 @@
 +++
-title = "Grafana Documentation Site"
+title = "Docs Home"
 description = "Install guide for Grafana"
 keywords = ["grafana", "installation", "documentation"]
 type = "docs"

@@ -1,7 +1,7 @@
 
 baseurl = "http://localhost:3002/"
 languageCode = "en-us"
-title = "Grafana Docs"
+title = "Grafana Documentation"
 canonifyurls = true
 relativeURLs = false
 verbose = true
