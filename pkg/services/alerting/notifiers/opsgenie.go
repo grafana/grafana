@@ -30,7 +30,7 @@ func init() {
            label="Auto close incidents"
            label-class="width-14"
            checked="ctrl.model.settings.autoClose"
-           tooltip="Automatically close alerts in OpseGenie once the alert goes back to ok.">
+           tooltip="Automatically close alerts in OpsGenie once the alert goes back to ok.">
         </gf-form-switch>
       </div>
     `,
