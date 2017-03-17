@@ -87,7 +87,7 @@ This API can also be used to create, update and delete alert notifications.
 
     {
       "alertId": 1,
-      "paused: true
+      "paused": true
     }
 
 **Example Response**:
