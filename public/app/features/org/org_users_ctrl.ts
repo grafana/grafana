@@ -1,8 +1,8 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
+import config from 'app/core/config';
 import _ from 'lodash';
-import coreModule from '../../core/core_module';
+import coreModule from 'app/core/core_module';
 
 export class OrgUsersCtrl {
 
@@ -19,6 +19,8 @@ export class OrgUsersCtrl {
     };
     this.get();
     this.editor = { index: 0 };
+
+    $scope.disableInvites = config.disableLoginForm;
   }
 
   get() {
@@ -69,17 +71,20 @@ export class OrgUsersCtrl {
 
   openInviteModal() {
     var modalScope = this.$scope.$new();
-    modalScope.invitesSent = function() {
+    modalScope.invitesSent = () => {
       this.get();
     };
 
+    var src = !this.$scope.disableInvites
+      ? 'public/app/features/org/partials/invite.html'
+      : 'public/app/features/org/partials/addUser.html';
+
     this.$scope.appEvent('show-modal', {
-      src: 'public/app/features/org/partials/invite.html',
+      src: src,
       modalClass: 'invite-modal',
       scope: modalScope
     });
   }
-
 }
 
 coreModule.controller('OrgUsersCtrl', OrgUsersCtrl);
