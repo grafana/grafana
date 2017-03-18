@@ -23,5 +23,5 @@ type ValidateResetPasswordCodeQuery struct {
 
 //send some alert for ours
 type SendProposeUserEmail struct {
-
+	UserMeta CreateProposeUserCommand
 }

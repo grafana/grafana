@@ -162,7 +162,9 @@ func ProposeToUse(c *middleware.Context, form dtos.ProposeUsers) Response {
     return ApiError(500, "Failed to create propose user", err)
   }
 
-  bus.Dispatch(&m.SendProposeUserEmail{})
+  bus.Dispatch(&m.SendProposeUserEmail{
+	  UserMeta:createUserCmd,
+  })
 
   return Json(200, util.DynMap{
     "created": "success",

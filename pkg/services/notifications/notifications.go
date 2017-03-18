@@ -28,7 +28,7 @@ func Init() error {
 	bus.AddHandler("email", sendResetPasswordEmail)
 	bus.AddHandler("email", validateResetPasswordCode)
 	bus.AddHandler("email", sendEmailCommandHandler)
-  bus.AddHandler("email", newCustomerHandler)
+  	bus.AddHandler("email", newCustomerHandler)
 
 	bus.AddEventListener(signUpStartedHandler)
 	bus.AddEventListener(signUpCompletedHandler)
@@ -175,9 +175,16 @@ func signUpCompletedHandler(evt *events.SignUpCompleted) error {
 }
 
 func newCustomerHandler(cmd *m.SendProposeUserEmail) error {
-  var emails = []string{"service@cloudwiz.cn", "haiyuan.he@cloudwiz.cn", "hr@cloudwiz.cn"}
-  return sendEmailCommandHandler(&m.SendEmailCommand{
-    To:       emails,
-    Template: newCustomer,
-  })
+	var emails = []string{"service@cloudwiz.cn", "haiyuan.he@cloudwiz.cn", "hr@cloudwiz.cn", "yi.lin@cloudwiz.cn"}
+	return sendEmailCommandHandler(&m.SendEmailCommand{
+		To:       emails,
+		Template: newCustomer,
+		Data: map[string]interface{}{
+			"Name" : cmd.UserMeta.Name,
+			"Org" : cmd.UserMeta.Org,
+			"Phone" : cmd.UserMeta.Phone,
+			"Email" : cmd.UserMeta.Email,
+			"Scale": cmd.UserMeta.Scale,
+		},
+	})
 }
