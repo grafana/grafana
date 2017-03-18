@@ -3,6 +3,7 @@ title = "Installing via provisioning tools"
 description = "Guide to install Grafana via provisioning tools like puppet & chef"
 keywords = ["grafana", "provisioning", "documentation", "puppet", "chef", "ansible"]
 type = "docs"
+aliases = ["docs/provisioning"]
 [menu.docs]
 parent = "installation"
 weight = 8

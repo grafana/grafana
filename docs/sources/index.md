@@ -3,6 +3,7 @@ title = "Docs Home"
 description = "Install guide for Grafana"
 keywords = ["grafana", "installation", "documentation"]
 type = "docs"
+aliases = ["v1.1", "guides/reference/admin"]
 [menu.docs]
 name = "Welcome to the Docs"
 identifier = "root"
