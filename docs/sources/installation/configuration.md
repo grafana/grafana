@@ -612,7 +612,30 @@ Time to live for snapshots.
 These options control how images should be made public so they can be shared on services like slack.
 
 ### provider
-You can choose between (s3, webdav). If left empty Grafana will ignore the upload action.
+You can choose between (ceph, s3, webdav). If left empty Grafana will ignore the upload action.
+
+## [external_image_storage.ceph]
+
+### bucket
+bucket name ex grafana
+
+### access_key
+access key. ex AAAAAAAAAAAAAAAAAAAA
+
+### secret_key
+secret key. ex AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+### region
+custom region (default 'us-east-1')
+
+### endpoint
+endpoint location ex http://s3.your.internal.ceph.cluster
+
+### disable_ssl
+set to true to disable SSL for endpoint. (default false)
+
+### public_url
+public url for screenshots ex https://grafana.your.domain.com (default https://bucket.endpoint)
 
 ## [external_image_storage.s3]
 

@@ -10,6 +10,37 @@ import (
 
 func TestImageUploaderFactory(t *testing.T) {
 	Convey("Can create image uploader for ", t, func() {
+		Convey("CephImageUploader", func() {
+			var err error
+			setting.NewConfigContext(&setting.CommandLineArgs{
+				HomePath: "../../../",
+			})
+
+			setting.ImageUploadProvider = "ceph"
+
+			cephsec, err := setting.Cfg.GetSection("external_image_storage.ceph")
+			cephsec.NewKey("bucket", "grafana")
+			cephsec.NewKey("access_key", "access_key")
+			cephsec.NewKey("secret_key", "secret_key")
+			cephsec.NewKey("endpoint", "s3.ceph.cluster")
+			cephsec.NewKey("public_url", "https://grafana.my.domain.com")
+			cephsec.NewKey("disable_ssl", "true")
+
+			uploader, err := NewImageUploader()
+
+			So(err, ShouldBeNil)
+			original, ok := uploader.(*S3Uploader)
+
+			So(ok, ShouldBeTrue)
+			So(original.region, ShouldEqual, "us-east-1")
+			So(original.bucket, ShouldEqual, "grafana")
+			So(original.accessKey, ShouldEqual, "access_key")
+			So(original.secretKey, ShouldEqual, "secret_key")
+			So(original.endpoint, ShouldEqual, "s3.ceph.cluster")
+			So(original.publicUrl, ShouldEqual, "https://grafana.my.domain.com")
+			So(original.disableSsl, ShouldEqual, true)
+		})
+
 		Convey("S3ImageUploader", func() {
 			var err error
 			setting.NewConfigContext(&setting.CommandLineArgs{
