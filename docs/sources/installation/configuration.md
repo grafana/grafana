@@ -630,6 +630,18 @@ Access key requires permissions to the S3 bucket for the 's3:PutObject' and 's3:
 ### secret_key
 Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
+### region
+custom region (default 'us-east-1')
+
+### endpoint
+endpoint location ex http://s3.your.internal.cluster
+
+### disable_ssl
+set to true to disable SSL for endpoint. (default false)
+
+### public_url
+public url for screenshots ex https://grafana.your.domain.com (default https://endpoint/bucket)
+
 ## [external_image_storage.webdav]
 
 ### url
