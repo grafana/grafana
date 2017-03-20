@@ -10,6 +10,7 @@ export class OrgUsersCtrl {
   users: any;
   pendingInvites: any;
   editor: any;
+  showInviteUI: boolean;
 
   /** @ngInject */
   constructor(private $scope, private $http, private backendSrv) {
@@ -17,10 +18,10 @@ export class OrgUsersCtrl {
       loginOrEmail: '',
       role: 'Viewer',
     };
+
     this.get();
     this.editor = { index: 0 };
-
-    $scope.disableInvites = config.disableLoginForm;
+    this.showInviteUI = config.disableLoginForm === false;
   }
 
   get() {
@@ -52,17 +53,13 @@ export class OrgUsersCtrl {
 
   removeUserConfirmed(user) {
     this.backendSrv.delete('/api/org/users/' + user.userId)
-      .then(() => {
-        this.get();
-      });
+      .then(this.get.bind(this));
   }
 
   revokeInvite(invite, evt) {
     evt.stopPropagation();
     this.backendSrv.patch('/api/org/invites/' + invite.code + '/revoke')
-      .then(() => {
-        this.get();
-      });
+      .then(this.get.bind(this));
   }
 
   copyInviteToClipboard(evt) {
@@ -71,13 +68,11 @@ export class OrgUsersCtrl {
 
   openInviteModal() {
     var modalScope = this.$scope.$new();
-    modalScope.invitesSent = () => {
-      this.get();
-    };
+    modalScope.invitesSent = this.get.bind(this);
 
-    var src = !this.$scope.disableInvites
+    var src = this.showInviteUI
       ? 'public/app/features/org/partials/invite.html'
-      : 'public/app/features/org/partials/addUser.html';
+      : 'public/app/features/org/partials/add_user.html';
 
     this.$scope.appEvent('show-modal', {
       src: src,

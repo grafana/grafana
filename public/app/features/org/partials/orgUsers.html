@@ -6,13 +6,9 @@
 		<h1>Organization users</h1>
 
 		<div class="page-header-tabs">
-			<button class="btn btn-success" ng-click="ctrl.openInviteModal()" ng-show="!disableInvites">
+			<button class="btn btn-success" ng-click="ctrl.openInviteModal()">
 				<i class="fa fa-plus"></i>
-				Add or Invite
-			</button>
-			<button class="btn btn-success" ng-click="ctrl.openInviteModal()" ng-show="!!disableInvites">
-				<i class="fa fa-plus"></i>
-				Add
+        Add <span ng-show="ctrl.showInviteUI"> or Invite</span>
 			</button>
 
 			<ul class="gf-tabs">
@@ -21,7 +17,7 @@
 						Users ({{ctrl.users.length}})
 					</a>
 				</li>
-				<li class="gf-tabs-item" ng-show="!disableInvites">
+				<li class="gf-tabs-item" ng-show="ctrl.showInviteUI">
 					<a class="gf-tabs-link" ng-click="ctrl.editor.index = 1" ng-class="{active: ctrl.editor.index === 1}">
 						Pending Invitations ({{ctrl.pendingInvites.length}})
 					</a>
@@ -56,7 +52,7 @@
 		</table>
 	</div>
 
-	<div ng-if="ctrl.editor.index === 1 && !disableInvites">
+	<div ng-if="ctrl.editor.index === 1 && ctrl.showInviteUI">
 		<table class="filter-table form-inline">
 			<thead>
 				<tr>
