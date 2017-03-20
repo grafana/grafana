@@ -329,6 +329,12 @@
 			"revisionTime": "2016-12-15T22:53:35Z"
 		},
 		{
+			"checksumSHA1": "BM6ZlNJmtKy3GBoWwg2X55gnZ4A=",
+			"path": "github.com/klauspost/crc32",
+			"revision": "1bab8b35b6bb565f92cbc97939610af9369f942a",
+			"revisionTime": "2017-02-10T14:05:23Z"
+		},
+		{
 			"checksumSHA1": "8z32QKTSDusa4QQyunKE4kyYXZ8=",
 			"path": "github.com/patrickmn/go-cache",
 			"revision": "e7a9def80f35fe1b170b7b8b68871d59dea117e1",
