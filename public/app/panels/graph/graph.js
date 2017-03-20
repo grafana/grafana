@@ -170,7 +170,6 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
         function bindClickHook(plot, eventHolder) {
           eventHolder.dblclick(function () {
             var logParams = {};
-            logParams.title = plot.getData()[0].id;
             logParams.targets = scope.panel.targets;
             logParams.from = moment.utc(plot.getAxes().xaxis.min).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
             logParams.to = moment.utc(plot.getAxes().xaxis.max).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");

@@ -198,9 +198,9 @@ define([
         "title": "New row"
       };
 
-      this.filterMetics = function (metric, index, array) {
+      this.filterMetics = function (metric) {
         return !(/(anomaly|prediction.max|prediction.min|prediction.min.LB.percent|.seasonal|.trend|.noise|.prediction)$/.test(metric.metric));
-      }
+      };
 
       this.init = function (param) {
         param.targets = param.targets.filter(this.filterMetics);
@@ -213,12 +213,12 @@ define([
         _.each(panelMeta.panels[2].targets, function (target) {
           target.metric = target.metric + ".LB.percent"
         });
-        var service = param.title.split(".")[0] || "*";
-        var host = param.targets[0].tags.host;
+        var type = metricPrefix2Type(param.targets[0].metric.split(".")[0]);
+        var host = param.targets[0].tags.host == "*" ? "*" : "%22" + param.targets[0].tags.host + "%22";  // *  or 'centos24'
         var org = contextSrv.user.orgId;
         var system = contextSrv.system;
 
-        panelMeta.panels[3].content = "<iframe src=\"" + contextSrv.elkUrl + "/app/kibana#/discover?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:'" + param.from + "',mode:quick,to:'" + param.to + "'))&_a=(columns:!(_source),index:'1000" + org + "-" + system + "',interval:auto,query:(query_string:(analyze_wildcard:!t,query:'type: " + service + " AND host:" + host + "')),sort:!('@timestamp',desc))\" height=\"1000px\" width=\"100%\"></iframe>"
+        panelMeta.panels[3].content = "<iframe src=\"" + contextSrv.elkUrl + "/app/kibana#/discover?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:'" + param.from + "',mode:quick,to:'" + param.to + "'))&_a=(columns:!(_source),index:'1000" + org + "-" + system + "',interval:auto,query:(query_string:(analyze_wildcard:!t,query:'type:" + type + "%20AND%20host:" + host + "')),sort:!('@timestamp',desc))\" height=\"1000px\" width=\"100%\"></iframe>"
 
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: true, canSave: false},
@@ -231,5 +231,15 @@ define([
           }
         }, $scope);
       };
+
+      function metricPrefix2Type(prefix) {
+        if (_.isNull(prefix)) {
+          return "*"
+        }
+        if (/(iostat|cpu|df|net|proc)/.test(prefix)) {
+          return "system"
+        }
+        return prefix;
+      }
     });
   });
