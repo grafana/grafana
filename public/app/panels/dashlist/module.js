@@ -31,7 +31,7 @@ function (angular, app, _, config, PanelMeta) {
     var defaults = {
       mode: 'starred',
       query: '',
-      limit: 10,
+      limit: 100,
       tags: []
     };
 
