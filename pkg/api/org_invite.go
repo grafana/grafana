@@ -38,6 +38,10 @@ func AddOrgInvite(c *middleware.Context, inviteDto dtos.AddInviteForm) Response 
 		if err != m.ErrUserNotFound {
 			return ApiError(500, "Failed to query db for existing user check", err)
 		}
+
+		if setting.DisableLoginForm {
+			return ApiError(401, "User could not be found", nil)
+		}
 	} else {
 		return inviteExistingUserToOrg(c, userQuery.Result, &inviteDto)
 	}

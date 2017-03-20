@@ -142,6 +142,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		"ldapEnabled":       setting.LdapEnabled,
 		"alertingEnabled":   setting.AlertingEnabled,
 		"googleAnalyticsId": setting.GoogleAnalyticsId,
+		"disableLoginForm":  setting.DisableLoginForm,
 		"buildInfo": map[string]interface{}{
 			"version":       setting.BuildVersion,
 			"commit":        setting.BuildCommit,
