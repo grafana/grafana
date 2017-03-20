@@ -19,7 +19,7 @@ The plugin.json file is mandatory for all plugins. When Grafana starts it will s
 | id | unique name of the plugin - [conventions described in styleguide]({{< relref "code-styleguide.md" >}}) |
 | type | panel/datasource/app |
 | name | Human readable name of the plugin |
-| info.description | Description of plugin. Used for searching grafana net plugins |
+| info.description | Description of plugin. Used for searching grafana.com plugins |
 | info.author | |
 | info.keywords | plugin keywords. Used for search on grafana net|
 | info.logos | link to project logos |
