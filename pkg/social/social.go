@@ -38,7 +38,7 @@ func NewOAuthService() {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
-	allOauthes := []string{"github", "google", "generic_oauth", "grafananet"}
+	allOauthes := []string{"github", "google", "generic_oauth", "grafananet", "cloudfoundry"}
 
 	for _, name := range allOauthes {
 		sec := setting.Cfg.Section("auth." + name)
@@ -96,6 +96,37 @@ func NewOAuthService() {
 				hostedDomain:   info.HostedDomain,
 				apiUrl:         info.ApiUrl,
 				allowSignup:    info.AllowSignup,
+			}
+		}
+
+		// CloudFoundry
+		if name == "cloudfoundry" {
+			uaaUrl := sec.Key("uaa_url").String()
+			config.Endpoint = oauth2.Endpoint{
+				AuthURL:  uaaUrl + "/oauth/authorize",
+				TokenURL: uaaUrl + "/oauth/token",
+			}
+
+			allowedOrgsRaw := sec.Key("allowed_organizations").Strings(" ")
+			allowedOrgs := map[string][]string{}
+			for _, org := range allowedOrgsRaw {
+				chunks := strings.SplitN(org, "/", 2)
+
+				if _, ok := allowedOrgs[chunks[0]]; !ok {
+					allowedOrgs[chunks[0]] = make([]string, 0)
+				}
+
+				if len(chunks) == 2 && chunks[1] != "" {
+					allowedOrgs[chunks[0]] = append(allowedOrgs[chunks[0]], chunks[1])
+				}
+			}
+
+			SocialMap["cloudfoundry"] = &CFOAuth{
+				Config:      &config,
+				uaaUrl:      uaaUrl,
+				apiUrl:      info.ApiUrl,
+				allowSignUp: info.AllowSignup,
+				allowedOrgs: allowedOrgs,
 			}
 		}
 
