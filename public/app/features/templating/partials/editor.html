@@ -159,7 +159,9 @@
           <div class="gf-form max-width-21">
             <span class="gf-form-label width-7">Data source</span>
             <div class="gf-form-select-wrapper max-width-14">
-              <select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources" required></select>
+              <select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources" required>
+                <option value="" ng-if="false"></option>
+              </select>
             </div>
           </div>
           <div class="gf-form max-width-21">
@@ -230,7 +232,9 @@
         <div class="gf-form max-width-21">
           <span class="gf-form-label width-8">Data source</span>
           <div class="gf-form-select-wrapper max-width-14">
-            <select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources" required ng-change="validate()"></select>
+            <select class="gf-form-input" ng-model="current.datasource" ng-options="f.value as f.name for f in datasources" required ng-change="validate()">
+              <option value="" ng-if="false"></option>
+            </select>
           </div>
         </div>
       </div>
