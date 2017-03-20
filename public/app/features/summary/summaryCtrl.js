@@ -68,11 +68,11 @@ define([
             var queries = [{
               "metric": contextSrv.user.orgId + "." + $scope.summarySelect.system + ".collector.state",
               "aggregator": "sum",
-              "downsample": "1h-sum",
+              "downsample": "1m-sum",
               "tags": {"host": metric.tag.host}
             }];
 
-            $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-1h', false).valueOf(), null).then(function (response) {
+            $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-1m', false).valueOf(), null).then(function (response) {
               if (_.isEmpty(response.data)) {
                 throw Error;
               }
