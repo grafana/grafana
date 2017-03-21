@@ -12,7 +12,7 @@ func addQuotaMigration(mg *Migrator) {
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: DB_BigInt, Nullable: true},
 			{Name: "user_id", Type: DB_BigInt, Nullable: true},
-			{Name: "target", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "target", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "limit", Type: DB_BigInt, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},

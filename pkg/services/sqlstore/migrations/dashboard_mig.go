@@ -8,7 +8,7 @@ func addDashboardMigration(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "version", Type: DB_Int, Nullable: false},
-			{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "slug", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "data", Type: DB_Text, Nullable: false},
 			{Name: "account_id", Type: DB_BigInt, Nullable: false},
@@ -56,7 +56,7 @@ func addDashboardMigration(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "version", Type: DB_Int, Nullable: false},
-			{Name: "slug", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "slug", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "data", Type: DB_Text, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},

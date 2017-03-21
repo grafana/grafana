@@ -9,7 +9,7 @@ func addAppSettingsMigration(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: DB_BigInt, Nullable: true},
-			{Name: "plugin_id", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "plugin_id", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "enabled", Type: DB_Bool, Nullable: false},
 			{Name: "pinned", Type: DB_Bool, Nullable: false},
 			{Name: "json_data", Type: DB_Text, Nullable: true},

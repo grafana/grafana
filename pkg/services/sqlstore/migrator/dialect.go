@@ -102,7 +102,7 @@ func (b *BaseDialect) CreateTableSql(table *Table) string {
 
 	sql = sql[:len(sql)-2] + ")"
 	if b.dialect.SupportEngine() {
-		sql += " ENGINE=InnoDB DEFAULT CHARSET UTF8 "
+		sql += " ENGINE=InnoDB DEFAULT CHARSET utf8mb4 "
 	}
 
 	sql += ";"

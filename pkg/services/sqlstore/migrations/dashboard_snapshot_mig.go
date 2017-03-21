@@ -8,7 +8,7 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "key", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "key", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "dashboard", Type: DB_Text, Nullable: false},
 			{Name: "expires", Type: DB_DateTime, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
@@ -28,8 +28,8 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "key", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "delete_key", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "key", Type: DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "delete_key", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "user_id", Type: DB_BigInt, Nullable: false},
 			{Name: "external", Type: DB_Bool, Nullable: false},

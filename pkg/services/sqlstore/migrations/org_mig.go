@@ -8,7 +8,7 @@ func addOrgMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "version", Type: DB_Int, Nullable: false},
-			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "address1", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "address2", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "city", Type: DB_NVarchar, Length: 255, Nullable: true},

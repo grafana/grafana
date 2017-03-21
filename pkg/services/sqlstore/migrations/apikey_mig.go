@@ -8,7 +8,7 @@ func addApiKeyMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "account_id", Type: DB_BigInt, Nullable: false},
-			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "key", Type: DB_Varchar, Length: 64, Nullable: false},
 			{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
@@ -41,8 +41,8 @@ func addApiKeyMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
-			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "key", Type: DB_Varchar, Length: 255, Nullable: false},
+			{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "key", Type: DB_Varchar, Length: 190, Nullable: false},
 			{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},

@@ -8,8 +8,8 @@ func addUserMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "version", Type: DB_Int, Nullable: false},
-			{Name: "login", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "email", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "login", Type: DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "email", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "password", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "salt", Type: DB_NVarchar, Length: 50, Nullable: true},
@@ -47,8 +47,8 @@ func addUserMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "version", Type: DB_Int, Nullable: false},
-			{Name: "login", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "email", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "login", Type: DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "email", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "password", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "salt", Type: DB_NVarchar, Length: 50, Nullable: true},
