@@ -114,8 +114,12 @@
     &:hover {
       color: $link-hover-color;
     }
-    span {color: $brand-primary;}
-    img {vertical-align: top;}
+    span {
+      color: $brand-primary;
+    }
+    img {
+      vertical-align: top;
+    }
   }
 }
 
