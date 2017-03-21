@@ -132,6 +132,7 @@ function (angular, _, config) {
 
         delete $scope.panelMeta.error;
         $scope.panelMeta.loading = true;
+        $scope.panelMeta.info = false;
 
         healthSrv.transformMetricType($scope.dashboard).then(function () {
           $scope.getCurrentDatasource().then(function (datasource) {
@@ -139,6 +140,7 @@ function (angular, _, config) {
             return $scope.refreshData($scope.datasource) || $q.when({});
           }).then(function () {
             $scope.panelMeta.loading = false;
+            $scope.panelMeta.info = $scope.panel.info;
           }, function (err) {
             console.log('Panel data error:', err);
             $scope.panelMeta.loading = false;

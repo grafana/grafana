@@ -10,6 +10,12 @@
 			<i class="fa fa-spinner fa-spin"></i>
 		</span>
 
+		<span class="alert-info panel-help small pointer" config-modal="app/partials/inspector.html" ng-if="panelMeta.info">
+			<span data-placement="top" bs-tooltip="panelMeta.info">
+				<i class="fa fa-question"></i><span class="panel-help-arrow"></span>
+			</span>
+		</span>
+
 		<div class="panel-title-container drag-handle" panel-menu></div>
 	</div>
 
