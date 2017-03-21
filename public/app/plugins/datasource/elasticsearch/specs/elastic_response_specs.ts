@@ -508,6 +508,37 @@ describe('ElasticResponse', function() {
     });
   });
 
+  describe('Wilcard filter no group by time', function() {
+    beforeEach(function() {
+      targets = [{
+        refId: 'A',
+        metrics: [{type: 'cardinality', id: '1'}],
+        bucketAggs: [{id: '2', type: 'filters', query: '*', settings: {filters: [{query: '*'}]}}],
+      }];
+
+      response =  {
+        responses: [{
+          aggregations: {
+            "2": {
+              buckets: {
+                "*": {
+                  "1": { value: 314},
+                  doc_count: 1000,
+                }
+              }
+            }
+          }
+        }]
+      };
+
+      result = new ElasticResponse(targets, response).getTimeSeries();
+    });
+
+    it('should return table', function() {
+      expect(result.data.length).to.be(1);
+    });
+  });
+
   describe('Raw documents query', function() {
     beforeEach(function() {
       targets = [{ refId: 'A', metrics: [{type: 'raw_document', id: '1'}], bucketAggs: [] }];
