@@ -68,7 +68,7 @@
           </ul>
           <div class="clearfix"></div>
         </div>
-        <div class="tidy-form-box">
+        <div class="tidy-form-box" style="margin: 0 20px;">
           <ul class="tidy-form-list">
             <li class="tidy-form-item"><h4>报警描述</h4></li>
             <li><input type="text" class="input-xlarge tidy-form-input last"
@@ -143,7 +143,7 @@
               并且持续时间达
             </li>
             <li>
-              <input type="number" class="tidy-form-input last" style="width: 30px;"
+              <input type="number" min="0" class="tidy-form-input last" style="width: 30px;"
                     ng-model='alertDef.alertDetails.crit.durarionMinutes' 
                     ng-blur="refreshPreview();" required />
             </li>
@@ -172,7 +172,7 @@
               并且持续时间达
             </li>
             <li>
-              <input type="number" class="tidy-form-input last" style="width: 30px;"
+              <input type="number" min="0" class="tidy-form-input last" style="width: 30px;"
                     ng-model='alertDef.alertDetails.warn.durarionMinutes' required />
             </li>
             <li>分钟，则触发警告</li>

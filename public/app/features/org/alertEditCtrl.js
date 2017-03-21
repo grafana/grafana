@@ -101,7 +101,7 @@ function (angular, _) {
       }
       $scope.orgName = contextSrv.user.orgName;
       $scope.serviceName = backendSrv.getSystemById(contextSrv.system);
-     
+
       $scope.initDashboard({
         meta: {canStar: false, canShare: false, canEdit: false, canSave: false},
         dashboard: {
