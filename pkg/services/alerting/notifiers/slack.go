@@ -123,7 +123,7 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"fields":      fields,
 				"image_url":   evalContext.ImagePublicUrl,
 				"footer":      "Grafana v" + setting.BuildVersion,
-				"footer_icon": "http://grafana.org/assets/img/fav32.png",
+				"footer_icon": "https://grafana.com/assets/img/fav32.png",
 				"ts":          time.Now().Unix(),
 			},
 		},

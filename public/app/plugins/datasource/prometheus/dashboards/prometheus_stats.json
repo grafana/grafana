@@ -167,7 +167,7 @@
           "valueName": "current"
         },
         {
-          "content": "<img src=\"public/app/plugins/datasource/prometheus/img/prometheus_logo.svg\" alt=\"Prometheus logo\" style=\"height: 40px;\">\n<span style=\"font-family: 'Open Sans', 'Helvetica Neue', Helvetica; font-size: 25px;vertical-align: text-top;color: #bbbfc2;margin-left: 10px;\">Prometheus</span>\n\n<p style=\"margin-top: 10px;\">You're using Prometheus, an open-source systems monitoring and alerting toolkit originally built at SoundCloud. For more information, check out the <a href=\"http://www.grafana.org/\">Grafana</a> and <a href=\"http://prometheus.io/\">Prometheus</a> projects.</p>",
+          "content": "<img src=\"public/app/plugins/datasource/prometheus/img/prometheus_logo.svg\" alt=\"Prometheus logo\" style=\"height: 40px;\">\n<span style=\"font-family: 'Open Sans', 'Helvetica Neue', Helvetica; font-size: 25px;vertical-align: text-top;color: #bbbfc2;margin-left: 10px;\">Prometheus</span>\n\n<p style=\"margin-top: 10px;\">You're using Prometheus, an open-source systems monitoring and alerting toolkit originally built at SoundCloud. For more information, check out the <a href=\"https://grafana.com/\">Grafana</a> and <a href=\"http://prometheus.io/\">Prometheus</a> projects.</p>",
           "editable": true,
           "error": false,
           "id": 9,
@@ -563,7 +563,7 @@
       "title": "Grafana Docs",
       "tooltip": "",
       "type": "link",
-      "url": "http://www.grafana.org/docs"
+      "url": "http://docs.grafana.org/"
     },
     {
       "icon": "info",

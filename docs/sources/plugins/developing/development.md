@@ -12,7 +12,7 @@ weight = 1
 
 From grafana 3.0 it's very easy to develop your own plugins and share them with other grafana users.
 
-There are two blog posts about authoring a plugin that might also be of interest to any plugin authors, [Timing is Everything. Writing the Clock Panel Plugin for Grafana 3.0- part 1](http://grafana.org/blog/2016/04/08/timing-is-everything.-writing-the-clock-panel-plugin-for-grafana-3.0/) and [Timing is Everything. Editor Mode in Grafana 3.0 for the Clock Panel Plugin](http://grafana.org/blog/2016/04/15/timing-is-everything.-editor-mode-in-grafana-3.0-for-the-clock-panel-plugin/).
+There are two blog posts about authoring a plugin that might also be of interest to any plugin authors, [Timing is Everything. Writing the Clock Panel Plugin for Grafana 3.0- part 1](https://grafana.com/blog/2016/04/08/timing-is-everything.-writing-the-clock-panel-plugin-for-grafana-3.0/) and [Timing is Everything. Editor Mode in Grafana 3.0 for the Clock Panel Plugin](https://grafana.com/blog/2016/04/15/timing-is-everything.-editor-mode-in-grafana-3.0-for-the-clock-panel-plugin/).
 
 ## Short version
 

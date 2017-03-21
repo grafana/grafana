@@ -63,7 +63,7 @@ There are no dependencies except an external time series data store. For dashboa
 database (sqlite3) or you can use an external SQL data base like MySQL or Postgres.
 
 ## Installation
-Head to [grafana.org](http://docs.grafana.org/installation/) and [download](http://grafana.org/download/)
+Head to [grafana.org](http://docs.grafana.org/installation/) and [download](https://grafana.com/get)
 the latest release.
 
 If you have any problems please read the [troubleshooting guide](http://docs.grafana.org/installation/troubleshooting/).

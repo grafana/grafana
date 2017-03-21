@@ -17,6 +17,6 @@ identifier = "installation"
 - [Installing on Windows](windows)
 - [Installing on Docker](docker)
 - [Installing using Provisioning (Chef, Puppet, Salt, Ansible, etc)](provisioning)
-- [Nightly Builds](http://grafana.org/builds)
+- [Nightly Builds](https://grafana.com/grafana/download)
 
 
