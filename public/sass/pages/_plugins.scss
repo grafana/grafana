@@ -38,15 +38,12 @@
 }
 
 .get-more-plugins-link {
-  color: $text-muted;
+  color: $gray-3;
   font-size: $font-size-sm;
   position: relative;
   top: 1.2rem;
   &:hover {
     color: $link-hover-color;
-  }
-  span {
-    color: $brand-primary;
   }
   img {
     vertical-align: top;

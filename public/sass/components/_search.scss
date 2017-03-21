@@ -107,18 +107,15 @@
   }
 
   .search-button-row-explore-link {
-    color: $text-muted;
+    color: $gray-3;
     font-size: $font-size-sm;
     position: relative;
-    top: 0;
+    top: 1.0rem;
     &:hover {
       color: $link-hover-color;
     }
-    span {
-      color: $brand-primary;
-    }
     img {
-      vertical-align: top;
+      vertical-align: text-bottom;
     }
   }
 }
