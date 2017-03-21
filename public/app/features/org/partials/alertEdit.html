@@ -9,170 +9,218 @@
 </topnav>
 
 <div class="page-container">
-  <div class="page">
     <h2 ng-show="isNew">新建报警规则</h2>
     <h2 ng-show="!isNew">修改报警规则</h2>
 
-    <form name="editForm">
-      <div class="tight-form">
-        <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">id</li>
-          <li><li><input type="text" class="input-xxlarge tight-form-input last"
-                         ng-model="alertDef.id" placeholder="randomly generated" readonly>
-        </li></li>
-        </ul>
-        <div class="clearfix"></div>
-      </div>
-      <div class="tight-form">
-        <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">名称</li>
-          <li><li><input type="text" class="input-xxlarge tight-form-input last"
-                         ng-model="alertDef.name" placeholder="报警规则名称" required>
-          </li></li>
-        </ul>
-        <div class="clearfix"></div>
-      </div>
-      <div class="tight-form">
-        <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">描述</li>
-          <li><li><input type="text" class="input-xxlarge tight-form-input last"
-                         ng-model="alertDef.description" placeholder="报警规则描述信息" required>
-          </li></li>
-        </ul>
-        <div class="clearfix"></div>
-      </div>
-      <div class="tight-form">
-        <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">公司名称</li>
-          <li class="tight-form-item" style="width: 80px">{{orgName}}<li>
-          </li></li>
-        </ul>
-        <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">服务名称</li>
-          <li class="tight-form-item" style="width: 80px">{{serviceName}}<li>
-          </li></li>
-        </ul>
-        <div class="clearfix"></div>
-      </div>
+    <div class="main-view-container preview-panel">
+        <div class="grafana-row" ng-controller="RowCtrl"
+            ng-repeat="(row_name, row) in dashboard.rows" row-height>
 
-      <br>
-      <h5>规则详情设置</h5>
-      <div class="tight-form">
-        <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">
-            指标
-          </li>
-          <li>
-            <input type="text" class="tight-form-input input-xlarge"
-                   ng-model='alertDef.alertDetails.hostQuery.metricQueries[0].metric'
-                   spellcheck='false'
-                   bs-typeahead="suggestMetrics"
-                   placeholder="metric name" required />
-          </li>
-          <li class="tight-form-item">
-            预聚合 <tip>选择一分钟里面数据展示形式</tip>
-          </li>
-          <li>
-            <select class="input-medium tight-form-input last"
-                    ng-model="alertDef.alertDetails.hostQuery.metricQueries[0].aggregator"
-                    ng-options="f for f in ['AVG', 'MIN', 'MAX', 'SUM', 'P99', 'P999']">
-            </select>
-          </li>
-        </ul>
-        <div class="clearfix"></div>
-      </div>
-      <div class="tight-form">
-        <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">
-            临界值
-          </li>
-          <li style="width:30px">
-            <select class="input-medium tight-form-input last"
-                    ng-model="alertDef.alertDetails.hostQuery.expression"
-                    ng-options="f for f in ['>', '<', '?']">
-            </select>
-          </li>
-          <li class="tight-form-item">
-            阈值
-          </li>
-          <li>
-            <input type="text" class="tight-form-input input-medium" style="width: 139px"
-                   ng-model='alertDef.alertDetails.crit.threshold' placeholder="critical threshold" required ng-readonly="alertDef.alertDetails.hostQuery.expression==='?'"/>
-          </li>
-          <li class="tight-form-item" style="width: 120px">
-            持续时间
-          </li>
-          <li>
-            <input type="text" class="tight-form-input input-medium last"
-                   ng-model='alertDef.alertDetails.crit.durarionMinutes' placeholder="持续分钟" required />
-          </li>
-        </ul>
-        <div class="clearfix"></div>
-      </div>
-      <div class="tight-form">
-        <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">
-            警告
-          </li>
-          <li class="tight-form-item" style="width: 15px">{{alertDef.alertDetails.hostQuery.expression}}<li>
-          <li class="tight-form-item">
-            阈值
-          </li>
-          </li>
-          <li>
-            <input type="text" class="tight-form-input input-medium" style="width: 139px"
-                   ng-model='alertDef.alertDetails.warn.threshold' placeholder="warn threshold" required ng-readonly="alertDef.alertDetails.hostQuery.expression==='?'"/>
-          </li>
-          <li class="tight-form-item" style="width: 120px">
-            持续时间
-          </li>
-          <li>
-            <input type="text" class="tight-form-input input-medium last"
-                   ng-model='alertDef.alertDetails.warn.durarionMinutes' placeholder="持续分钟" required />
-          </li>
-        </ul>
-        <div class="clearfix"></div>
-      </div>
-      <div class="tight-form">
-        <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">集群</li>
-          <li><li><input type="text" class="input-xxlarge tight-form-input last"
-                         ng-model="alertDef.alertDetails.cluster" readonly>
-        </li></li>
-        </ul>
-        <div class="clearfix"></div>
-      </div>
-      <div class="tight-form">
-        <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">
-            Host List
-          </li>
-          <li>
-            <input type="text" class="tight-form-input input-xlarge"
-                 ng-model="alertDef.alertDetails.hosts" placeholder="null" readonly>
-          </li>
-          <li class="tight-form-item">
-            Host membership
-          </li>
-          <li>
-            <input type="text" class="tight-form-input input-medium" style="width: 138px"
-                 ng-model="alertDef.alertDetails.membership" placeholder="*" readonly>
-          </li>
-        </ul>
-        <div class="clearfix"></div>
-      </div>
-      <div class="tight-form">
-        <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 80px">监控范围</li>
-          <li>
-            <select class="input-medium tight-form-input last"
-                         ng-model="alertDef.alertDetails.monitoringScope"
-                         ng-options="f for f in ['HOST']" readonly>
-            </select>
-          </li>
-        </ul>
-        <div class="clearfix"></div>
-      </div>
+          <div class="row-control">
+            <div class="row-control-inner">
+              <div class="row-close" ng-show="row.collapse" data-placement="bottom">
+                <div class="row-close-buttons">
+                  <span class="row-button bgPrimary" ng-click="toggleRow(row)">
+                    <i bs-tooltip="'Expand row'" data-placement="right" class="fa fa-caret-left pointer"></i>
+                  </span>
+                </div>
+                <div class="row-text pointer" ng-click="toggleRow(row)"
+                    ng-bind="row.title | interpolateTemplateVars:this"></div>
+              </div>
+            </div>
+
+            <div class="panels-wrapper" ng-if="!row.collapse">
+              <div class="row-text pointer" ng-click="toggleRow(row)" ng-if="row.showTitle"
+                  ng-bind="row.title | interpolateTemplateVars:this">
+              </div>
+
+              <div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel"
+                  ui-draggable="!dashboardViewState.fullscreen" drag="panel.id"
+                  ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
+                <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+              </div>
+
+              <div class="clearfix"></div>
+            </div>
+          </div>
+        </div>
+    </div>
+
+    <form name="editForm" class="tidy-form">
+
+      <fieldset>
+        <h3>报警基本信息设置</h3>
+        <div class="tidy-form-box" ng-if="false">
+          <ul class="tidy-form-list">
+            <li class="tidy-form-item">id</li>
+            <li><input type="text" class="input-xlarge tidy-form-input last"
+                            ng-model="alertDef.id" placeholder="randomly generated" readonly>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="tidy-form-box">
+          <ul class="tidy-form-list">
+            <li class="tidy-form-item"><h4>报警名称</h4>/li>
+            <li><input type="text" class="input-xlarge tidy-form-input last"
+                            ng-model="alertDef.name" placeholder="报警规则名称" required>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="tidy-form-box">
+          <ul class="tidy-form-list">
+            <li class="tidy-form-item"><h4>报警描述</h4></li>
+            <li><input type="text" class="input-xlarge tidy-form-input last"
+                            ng-model="alertDef.description" placeholder="报警规则描述信息" required>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="tidy-form-box" ng-if="false">
+          <ul class="tidy-form-list">
+            <li class="tidy-form-item">公司名称</li>
+            <li class="tidy-form-item">{{orgName}}</li>
+          </ul>
+          <ul class="tidy-form-list">
+            <li class="tidy-form-item">服务名称</li>
+            <li class="tidy-form-item">{{serviceName}}</li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <h3>报警规则详情设置</h3>
+        <div class="tidy-form-box">
+          <ul class="tidy-form-list">
+            <li class="tidy-form-item">
+              <h4>指标名称</h4>
+            </li>
+            <li>
+              <input type="text" class="tidy-form-input input-xlarge"
+                    ng-blur="refreshPreview();"
+                    ng-model='alertDef.alertDetails.hostQuery.metricQueries[0].metric'
+                    spellcheck='false'
+                    bs-typeahead="suggestMetrics"
+                    placeholder="metric name" required />
+            </li>
+            <li class="tidy-form-item" style="margin:0 20px;">
+              <h4>聚合算法 <tip>选择一分钟里面数据展示形式</tip></h4>
+            </li>
+            <li>
+              <select class="input-medium tidy-form-input last"
+                      ng-change="refreshPreview()"
+                      ng-model="alertDef.alertDetails.hostQuery.metricQueries[0].aggregator"
+                      ng-options="f for f in ['AVG', 'MIN', 'MAX', 'SUM', 'P99', 'P999']">
+              </select>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="tidy-form-box">
+          <ul class="tidy-form-list">
+            <li class="tidy-form-item">
+              <h4>报警条件</h4>
+            </li>
+            <li>当指标值</li>
+            <li>
+              <select class="input-medium tidy-form-input last" style="width: 40px; margin: 0 5px; text-align: center;"
+                      ng-model="alertDef.alertDetails.hostQuery.expression"
+                      ng-options="f for f in ['>', '<', '?']">
+              </select>
+            </li>
+            <li class="tidy-form-item">
+              阈值
+            </li>
+            <li>
+              <input type="text" class="tidy-form-input input-medium" style="width: 139px"
+                    ng-model='alertDef.alertDetails.crit.threshold' 
+                    ng-blur="addThreshold(1)"
+                    placeholder="critical threshold" required ng-readonly="alertDef.alertDetails.hostQuery.expression==='?'"/>
+            </li>
+            <li class="tidy-form-item">
+              并且持续时间达
+            </li>
+            <li>
+              <input type="number" class="tidy-form-input last" style="width: 30px;"
+                    ng-model='alertDef.alertDetails.crit.durarionMinutes' 
+                    ng-blur="refreshPreview();" required />
+            </li>
+            <li>分钟，则触发紧急报警</li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="tidy-form-box">
+          <ul class="tidy-form-list">
+            <li class="tidy-form-item">
+              <h4>警告条件</h4>
+            </li>
+            <li>当指标值</li>
+            <li class="tidy-form-item" style="width: 40px; margin: 0 5px; text-align: center;">{{alertDef.alertDetails.hostQuery.expression}}<li>
+            <li class="tidy-form-item">
+              阈值
+            </li>
+            </li>
+            <li>
+              <input type="text" class="tidy-form-input input-medium" style="width: 139px"
+                    ng-model='alertDef.alertDetails.warn.threshold' 
+                    ng-blur="addThreshold(0)"
+                    placeholder="warn threshold" required ng-readonly="alertDef.alertDetails.hostQuery.expression==='?'"/>
+            </li>
+            <li class="tidy-form-item">
+              并且持续时间达
+            </li>
+            <li>
+              <input type="number" class="tidy-form-input last" style="width: 30px;"
+                    ng-model='alertDef.alertDetails.warn.durarionMinutes' required />
+            </li>
+            <li>分钟，则触发警告</li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="tidy-form-box" ng-if="false">
+          <ul class="tidy-form-list">
+            <li class="tidy-form-item">集群</li>
+            <li><input type="text" class="input-xlarge tidy-form-input last"
+                          ng-model="alertDef.alertDetails.cluster" readonly>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="tidy-form-box">
+          <ul class="tidy-form-list">
+            <li class="tidy-form-item">
+              <h4>Host List</h4>
+            </li>
+            <li>
+              <input type="text" class="tidy-form-input input-xlarge"
+                  ng-model="alertDef.alertDetails.hosts" placeholder="*" readonly>
+            </li>
+            <li class="tidy-form-item" style="margin:0 20px;">
+              <h4>Host membership</h4>
+            </li>
+            <li>
+              <input type="text" class="tidy-form-input input-xlarge"
+                  ng-model="alertDef.alertDetails.membership" placeholder="*" readonly>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="tidy-form-box" ng-if="false">
+          <ul class="tidy-form-list">
+            <li class="tidy-form-item">监控范围</li>
+            <li>
+              <select class="input-medium tidy-form-input last"
+                          ng-model="alertDef.alertDetails.monitoringScope"
+                          ng-options="f for f in ['HOST']" readonly>
+              </select>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+      </fieldset>
+      
 
       <div class="pull-right" style="margin-top: 35px">
         <button type="submit" class="btn btn-success" ng-show="isNew" ng-click="saveChanges()">增加</button>
@@ -181,5 +229,5 @@
       </div>
       <br>
     </form>
-  </div>
 </div>
+ 
