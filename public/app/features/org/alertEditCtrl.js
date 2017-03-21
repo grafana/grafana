@@ -101,7 +101,14 @@ function (angular, _) {
       }
       $scope.orgName = contextSrv.user.orgName;
       $scope.serviceName = backendSrv.getSystemById(contextSrv.system);
-
+      $scope.timeRange = [
+        {id:'2h',txt:'2小时之前'},
+        {id:'12h',txt:'12小时之前'},
+        {id:'24h',txt:'24小时之前'},
+        {id:'3d',txt:'3天之前'},
+        {id:'7d',txt:'1周之前'},
+      ];
+      $scope.timeSelected = "12h";
       $scope.initDashboard({
         meta: {canStar: false, canShare: false, canEdit: false, canSave: false},
         dashboard: {
@@ -109,7 +116,7 @@ function (angular, _) {
           title: "报警预览",
           id: "name",
           rows: [panelMeta],
-          time: {from: "now-2h", to: "now"}
+          time: {from: "now-12h", to: "now"}
         }
       }, $scope);
     };
@@ -132,6 +139,13 @@ function (angular, _) {
       panel.panels[0].targets[0].aggregator = detail.alertDetails.hostQuery.metricQueries[0].aggregator.toLowerCase();
       panel.panels[0].targets[0].downsampleAggregator = detail.alertDetails.hostQuery.metricQueries[0].aggregator.toLowerCase();
       panel.panels[0].targets[0].metric = detail.alertDetails.hostQuery.metricQueries[0].metric;
+    };
+
+    $scope.setTimeRange = function () {
+      $scope.dashboard.time.from = "now-" + $scope.timeSelected;
+      if($scope.alertDef.alertDetails.hostQuery.metricQueries[0].metric){
+        $scope.broadcastRefresh();
+      }
     };
 
     $scope.setCritThreshold = function (panel,detail) {
