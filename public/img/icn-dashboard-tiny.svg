@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 20.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="16px" height="16px" viewBox="0 0 16 16" style="enable-background:new 0 0 16 16;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:url(#SVGID_1_);}
+	.st1{fill:url(#SVGID_2_);}
+	.st2{fill:url(#SVGID_3_);}
+	.st3{fill:url(#SVGID_4_);}
+</style>
+<g>
+	<g>
+		<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="3.8684" y1="23.9248" x2="3.8684" y2="-0.5685">
+			<stop  offset="0" style="stop-color:#FFF200"/>
+			<stop  offset="1" style="stop-color:#F15A29"/>
+		</linearGradient>
+		<path class="st0" d="M5.9,7.4H1.8C1,7.4,0.4,6.8,0.4,6V1.9c0-0.8,0.6-1.4,1.4-1.4h4.2c0.8,0,1.4,0.6,1.4,1.4V6
+			C7.3,6.8,6.7,7.4,5.9,7.4z"/>
+	</g>
+	<g>
+		<linearGradient id="SVGID_2_" gradientUnits="userSpaceOnUse" x1="12.1316" y1="23.9248" x2="12.1316" y2="-0.5685">
+			<stop  offset="0" style="stop-color:#FFF200"/>
+			<stop  offset="1" style="stop-color:#F15A29"/>
+		</linearGradient>
+		<path class="st1" d="M14.2,7.4h-4.2C9.3,7.4,8.7,6.8,8.7,6V1.9c0-0.8,0.6-1.4,1.4-1.4h4.2c0.8,0,1.4,0.6,1.4,1.4V6
+			C15.6,6.8,15,7.4,14.2,7.4z"/>
+	</g>
+	<g>
+		<linearGradient id="SVGID_3_" gradientUnits="userSpaceOnUse" x1="3.8684" y1="23.9248" x2="3.8684" y2="-0.5685">
+			<stop  offset="0" style="stop-color:#FFF200"/>
+			<stop  offset="1" style="stop-color:#F15A29"/>
+		</linearGradient>
+		<path class="st2" d="M5.9,15.5H1.8c-0.8,0-1.4-0.6-1.4-1.4V10c0-0.8,0.6-1.4,1.4-1.4h4.2c0.8,0,1.4,0.6,1.4,1.4v4.2
+			C7.3,14.9,6.7,15.5,5.9,15.5z"/>
+	</g>
+	<g>
+		<linearGradient id="SVGID_4_" gradientUnits="userSpaceOnUse" x1="12.1316" y1="23.9248" x2="12.1316" y2="-0.5685">
+			<stop  offset="0" style="stop-color:#FFF200"/>
+			<stop  offset="1" style="stop-color:#F15A29"/>
+		</linearGradient>
+		<path class="st3" d="M14.2,15.5h-4.2c-0.8,0-1.4-0.6-1.4-1.4V10c0-0.8,0.6-1.4,1.4-1.4h4.2c0.8,0,1.4,0.6,1.4,1.4v4.2
+			C15.6,14.9,15,15.5,14.2,15.5z"/>
+	</g>
+</g>
+</svg>
