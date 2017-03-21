@@ -105,7 +105,7 @@
                     bs-typeahead="suggestMetrics"
                     placeholder="metric name" required />
             </li>
-            <li class="tidy-form-item margin-left-20">
+            <li class="tidy-form-item" style="margin:0 20px;">
               <h4>聚合算法 <tip>选择一分钟里面数据展示形式</tip></h4>
             </li>
             <li>
@@ -125,7 +125,7 @@
             </li>
             <li>当指标值</li>
             <li>
-              <select class="input-medium tidy-form-input last width-40"
+              <select class="input-medium tidy-form-input last" style="width: 40px; margin: 0 5px; text-align: center;"
                       ng-model="alertDef.alertDetails.hostQuery.expression"
                       ng-options="f for f in ['>', '<', '?']">
               </select>
@@ -157,7 +157,7 @@
               <h4>警告条件</h4>
             </li>
             <li>当指标值</li>
-            <li class="tidy-form-item width-40">{{alertDef.alertDetails.hostQuery.expression}}<li>
+            <li class="tidy-form-item" style="width: 40px; margin: 0 5px; text-align: center;">{{alertDef.alertDetails.hostQuery.expression}}<li>
             <li class="tidy-form-item">
               阈值
             </li>
@@ -197,7 +197,7 @@
               <input type="text" class="tidy-form-input input-xlarge"
                   ng-model="alertDef.alertDetails.hosts" placeholder="*" readonly>
             </li>
-            <li class="tidy-form-item margin-left-20">
+            <li class="tidy-form-item" style="margin:0 20px;">
               <h4>Host membership</h4>
             </li>
             <li>
