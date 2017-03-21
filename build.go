@@ -14,13 +14,13 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"regexp"
 	"runtime"
 	"strconv"
 	"strings"
 	"time"
-	"path"
 )
 
 var (
@@ -126,9 +126,9 @@ func makeLatestDistCopies() {
 		log.Fatalf("failed to create latest copies. Cannot read from /dist")
 	}
 
-	latestMapping := map[string]string {
-		".deb": "dist/grafana_latest_amd64.deb",
-		".rpm": "dist/grafana-latest-1.x86_64.rpm",
+	latestMapping := map[string]string{
+		".deb":    "dist/grafana_latest_amd64.deb",
+		".rpm":    "dist/grafana-latest-1.x86_64.rpm",
 		".tar.gz": "dist/grafana-latest.linux-x64.tar.gz",
 	}
 
@@ -285,6 +285,14 @@ func createPackage(options linuxPackageOptions) {
 		"--name", "grafana",
 		"--version", linuxPackageVersion,
 		"-p", "./dist",
+	}
+
+	if options.packageType == "rpm" {
+		args = append(args, "--rpm-posttrans", "packaging/rpm/control/posttrans")
+	}
+
+	if options.packageType == "deb" {
+		args = append(args, "--deb-no-default-config-files")
 	}
 
 	if pkgArch != "" {
