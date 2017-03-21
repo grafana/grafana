@@ -10,6 +10,7 @@ export class ProfileCtrl {
   orgs: any = [];
   userForm: any;
   showOrgsList = false;
+  readonlyLoginFields = config.disableLoginForm;
 
   /** @ngInject **/
   constructor(private backendSrv, private contextSrv, private $location) {

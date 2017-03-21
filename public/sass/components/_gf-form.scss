@@ -286,3 +286,10 @@ $gf-form-margin: 0.25rem;
 select.gf-form-input ~ .gf-form-help-icon {
   right: 10px;
 }
+
+.gf-form-icon--right-absolute {
+  position: absolute;
+  right: $spacer;
+  top: 10px;
+  color: $text-muted;
+}
