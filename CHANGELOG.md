@@ -798,7 +798,7 @@ Grafana 2.x is fundamentally different from 1.x; it now ships with an integrated
 
 # 1.8.0 (2014-09-22)
 
-Read this [blog post](http://grafana.org/blog/2014/09/11/grafana-1-8-0-rc1-released.html) for an overview of all improvements.
+Read this [blog post](https://grafana.com/blog/2014/09/11/grafana-1.8.0-rc1-released) for an overview of all improvements.
 
 **Fixes**
 - [Issue #802](https://github.com/grafana/grafana/issues/802). Annotations: Fix when using InfluxDB datasource

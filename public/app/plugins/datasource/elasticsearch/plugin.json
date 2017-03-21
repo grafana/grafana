@@ -7,7 +7,7 @@
     "description": "Elasticsearch Data Source for Grafana",
     "author": {
       "name": "Grafana Project",
-      "url": "http://grafana.org"
+      "url": "https://grafana.com"
     },
     "keywords": ["elasticsearch"],
     "logos": {
