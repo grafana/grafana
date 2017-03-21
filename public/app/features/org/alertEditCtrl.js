@@ -128,7 +128,7 @@ function (angular, _) {
         $scope.setWarnThreshold($scope.dashboard.rows[0],$scope.alertDef);
       }
       $scope.$broadcast('render');
-    }
+    };
 
     $scope.refreshPreview = function() {
       $scope.setTarget($scope.dashboard.rows[0],$scope.alertDef);
