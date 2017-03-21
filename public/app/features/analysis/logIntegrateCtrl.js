@@ -218,7 +218,7 @@ define([
         var org = contextSrv.user.orgId;
         var system = contextSrv.system;
 
-        panelMeta.panels[3].content = "<iframe src=\"" + contextSrv.elkUrl + "/app/kibana#/discover?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:'" + param.from + "',mode:quick,to:'" + param.to + "'))&_a=(columns:!(_source),index:'1000" + org + "-" + system + "',interval:auto,query:(query_string:(analyze_wildcard:!t,query:'type:" + type + "%20AND%20host:" + host + "')),sort:!('@timestamp',desc))\" height=\"1000px\" width=\"100%\"></iframe>"
+        panelMeta.panels[3].content = "<iframe src=\"" + contextSrv.elkUrl + "/app/kibana#/discover?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:'$time_from',mode:quick,to:'$time_to'))&_a=(columns:!(_source),index:'1000" + org + "-" + system + "',interval:auto,query:(query_string:(analyze_wildcard:!t,query:'type:" + type + "%20AND%20host:" + host + "')),sort:!('@timestamp',desc))\" height=\"1000px\" width=\"100%\"></iframe>"
 
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: true, canSave: false},
