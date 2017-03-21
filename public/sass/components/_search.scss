@@ -109,16 +109,13 @@
   .search-button-row-explore-link {
     color: $text-muted;
     font-size: $font-size-sm;
-    padding-right: 7rem;
-    background: url(../img/grafana_net_logo.svg);
-    background-size: 6.5rem;
-    background-repeat: no-repeat;
-    background-position: right;
     position: relative;
-    top: 0.8rem;
+    top: 0;
     &:hover {
       color: $link-hover-color;
     }
+    span {color: $brand-primary;}
+    img {vertical-align: top;}
   }
 }
 
