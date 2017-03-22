@@ -3,7 +3,9 @@ package cloudwatch
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 	"sync"
 	"time"
@@ -12,6 +14,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go/aws/credentials/endpointcreds"
 	"github.com/aws/aws-sdk-go/aws/ec2metadata"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
@@ -122,7 +125,7 @@ func getCredentials(dsInfo *datasourceInfo) (*credentials.Credentials, error) {
 			[]credentials.Provider{
 				&credentials.EnvProvider{},
 				&credentials.SharedCredentialsProvider{Filename: "", Profile: dsInfo.Profile},
-				&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(stsSess), ExpiryWindow: 5 * time.Minute},
+				remoteCredProvider(stsSess),
 			})
 		stsConfig := &aws.Config{
 			Region:      aws.String(dsInfo.Region),
@@ -174,6 +177,30 @@ func getCredentials(dsInfo *datasourceInfo) (*credentials.Credentials, error) {
 	credentialCacheLock.Unlock()
 
 	return creds, nil
+}
+
+func remoteCredProvider(sess *session.Session) credentials.Provider {
+	ecsCredURI := os.Getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
+
+	if len(ecsCredURI) > 0 {
+		return ecsCredProvider(sess, ecsCredURI)
+	}
+	return ec2RoleProvider(sess)
+}
+
+func ecsCredProvider(sess *session.Session, uri string) credentials.Provider {
+	const host = `169.254.170.2`
+
+	c := ec2metadata.New(sess)
+	return endpointcreds.NewProviderClient(
+		c.Client.Config,
+		c.Client.Handlers,
+		fmt.Sprintf("http://%s%s", host, uri),
+		func(p *endpointcreds.Provider) { p.ExpiryWindow = 5 * time.Minute })
+}
+
+func ec2RoleProvider(sess *session.Session) credentials.Provider {
+	return &ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute}
 }
 
 func getAwsConfig(req *cwRequest) (*aws.Config, error) {
