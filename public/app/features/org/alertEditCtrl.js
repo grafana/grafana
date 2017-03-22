@@ -46,8 +46,8 @@ function (angular, _) {
               "aggregator": "",
               "currentTagKey":"",
               "currentTagValue":"",
-              "downsampleAggregator": "",
-              "downsampleInterval":"1m",
+              "downsampleAggregator": "avg",
+              "downsampleInterval":"5m",
               "errors":{},
               "hide":false,
               "isCounter":false,
@@ -138,7 +138,6 @@ function (angular, _) {
 
     $scope.setTarget = function(panel,detail) {
       panel.panels[0].targets[0].aggregator = detail.alertDetails.hostQuery.metricQueries[0].aggregator.toLowerCase();
-      panel.panels[0].targets[0].downsampleAggregator = detail.alertDetails.hostQuery.metricQueries[0].aggregator.toLowerCase();
       panel.panels[0].targets[0].metric = detail.alertDetails.hostQuery.metricQueries[0].metric;
     };
 
