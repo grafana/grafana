@@ -13,8 +13,7 @@ weight = 3
 
 Description | Download
 ------------ | -------------
-Latest stable package for Windows | [grafana.4.1.2.windows-x64.zip](https://grafanarel.s3.amazonaws.com/builds/grafana-4.1.2.windows-x64.zip)
-Latest beta package for Windows | [grafana-4.2.0-beta1.windows-x64.zip](https://grafanarel.s3.amazonaws.com/builds/grafana-4.2.0-beta1.windows-x64.zip)
+Latest stable package for Windows | [grafana.4.2.0.windows-x64.zip](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana-4.2.0.windows-x64.zip)
 
 ## Configure
 
