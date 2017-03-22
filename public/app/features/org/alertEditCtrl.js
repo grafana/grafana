@@ -107,6 +107,7 @@ function (angular, _) {
         {id:'24h',txt:'24小时之前'},
         {id:'3d',txt:'3天之前'},
         {id:'7d',txt:'1周之前'},
+        {id:'1M',txt:'1月之前'},
       ];
       $scope.timeSelected = "12h";
       $scope.initDashboard({
