@@ -179,7 +179,7 @@ function (angular, _, $) {
           }
 
           if (panel.legend.alignAsTable) {
-            var maxHeight = scope.height || scope.row.height;
+            var maxHeight = scope.height || parseFloat(scope.row.height);
 
             if (!panel.legend.rightSide) {
               maxHeight = maxHeight/2;
