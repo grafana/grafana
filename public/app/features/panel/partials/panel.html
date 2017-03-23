@@ -10,6 +10,12 @@
 			<i class="fa fa-spinner fa-spin"></i>
 		</span>
 
+		<span class="alert-info panel-help small pointer" ng-mouseenter="isShowInfo($event)" ng-if="helpInfo.info">
+			<span data-placement="top">
+				<i class="fa fa-question"></i><span class="panel-help-arrow"></span>
+			</span>
+		</span>
+
 		<div class="panel-title-container drag-handle" panel-menu></div>
 	</div>
 
@@ -17,6 +23,12 @@
 		<ng-transclude></ng-transclude>
 	</div>
 	<panel-resizer></panel-resizer>
+	<div class="help-info" ng-if="helpInfo.info" ng-mouseleave="isShowInfo($event)">
+		<div>
+			<h2>{{helpInfo.title}}</h2>
+			<p ng-repeat="txt in helpInfo.context" ng-bind-html="txt"></p>
+		</div>
+	</div>
 </div>
 
 <div class="panel-full-edit" ng-if="editMode">

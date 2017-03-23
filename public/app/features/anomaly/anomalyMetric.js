@@ -18,6 +18,14 @@ define([
               fill: 0,
               height: "500px",
               linewidth: 2,
+              helpInfo: {
+                info: true,
+                title:'说明信息',
+                context: [
+                  '1. 红点标注的标识异常点,根据指标历史规律判断指标的值出现异常',
+                  '2. prediction.max 和prediction.min 是通过历史规律预测得到的指标上限和指标下限, 帮助您判断未来指标的走势和返回',
+                ]
+              },
               targets: [
                 {
                   aggregator: "avg",
