@@ -13,6 +13,11 @@
     <h2 ng-show="!isNew">修改报警规则</h2>
 
     <div class="main-view-container preview-panel">
+        <select class="pull-right" style="margin-top: 10px;margin-bottom: -10px; width: 100px;"
+                      ng-change="setTimeRange()"
+                      ng-model="timeSelected"
+                      ng-options="f.id as f.txt for f in timeRange">
+        </select>
         <div class="grafana-row" ng-controller="RowCtrl"
             ng-repeat="(row_name, row) in dashboard.rows" row-height>
 

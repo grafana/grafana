@@ -1,12 +1,11 @@
 define([
   'angular',
   'lodash',
-  'kbn',
   'jquery',
   'jquery.flot',
   'jquery.flot.time',
 ],
-function (angular, _, kbn, $) {
+function (angular, _, $) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph');
@@ -55,7 +54,9 @@ function (angular, _, kbn, $) {
           var el = $(e.currentTarget);
           var index = getSeriesIndexForElement(el);
           var seriesInfo = seriesList[index];
+          var scrollPosition = $($container.children('tbody')).scrollTop();
           scope.toggleSeries(seriesInfo, e);
+          $($container.children('tbody')).scrollTop(scrollPosition);
         }
 
         function sortLegend(e) {
@@ -102,8 +103,13 @@ function (angular, _, kbn, $) {
 
           $container.empty();
 
+          // Set min-width if side style and there is a value, otherwise remove the CSS propery
+          var width = panel.legend.rightSide && panel.legend.sideWidth ? panel.legend.sideWidth + "px" : "";
+          $container.css("min-width", width);
+
           $container.toggleClass('graph-legend-table', panel.legend.alignAsTable === true);
 
+          var tableHeaderElem;
           if (panel.legend.alignAsTable) {
             var header = '<tr>';
             header += '<th colspan="2" style="text-align:left"></th>';
@@ -115,7 +121,7 @@ function (angular, _, kbn, $) {
               header += getTableHeaderHtml('total');
             }
             header += '</tr>';
-            $container.append($(header));
+            tableHeaderElem = $(header);
           }
 
           if (panel.legend.sort) {
@@ -127,10 +133,12 @@ function (angular, _, kbn, $) {
             }
           }
 
+          var seriesElements = [];
+
           for (i = 0; i < seriesList.length; i++) {
             var series = seriesList[i];
 
-            // ignore empty series
+             // ignore empty series
             if (panel.legend.hideEmpty && series.allIsNull) {
               continue;
             }
@@ -166,7 +174,25 @@ function (angular, _, kbn, $) {
             }
 
             html += '</div>';
-            $container.append($(html));
+            seriesElements.push($(html));
+
+          }
+
+          if (panel.legend.alignAsTable) {
+            var maxHeight = scope.height || scope.row.height;
+
+            if (!panel.legend.rightSide) {
+              maxHeight = maxHeight/2;
+            }
+
+            var topPadding = 15;
+            var tbodyElem = $('<tbody></tbody>');
+            tbodyElem.css("max-height", maxHeight - topPadding);
+            tbodyElem.append(tableHeaderElem);
+            tbodyElem.append(seriesElements);
+            $container.append(tbodyElem);
+          } else {
+            $container.append(seriesElements);
           }
         }
       }
