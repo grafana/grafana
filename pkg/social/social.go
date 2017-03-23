@@ -29,6 +29,14 @@ type SocialConnector interface {
 	Client(ctx context.Context, t *oauth2.Token) *http.Client
 }
 
+type Error struct {
+	s string
+}
+
+func (e *Error) Error() string {
+	return e.s
+}
+
 var (
 	SocialBaseUrl = "/login/"
 	SocialMap     = make(map[string]SocialConnector)

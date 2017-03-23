@@ -23,6 +23,13 @@ import (
 	"github.com/grafana/grafana/pkg/social"
 )
 
+var (
+	ErrProviderDeniedRequest = errors.New("Login provider denied login request")
+	ErrEmailNotAllowed       = errors.New("Required email domain not fulfilled")
+	ErrSignUpNotAllowed      = errors.New("Signup is not allowed for this adapter")
+	ErrUsersQuotaReached     = errors.New("Users quota reached")
+)
+
 func GenStateString() string {
 	rnd := make([]byte, 32)
 	rand.Read(rnd)
@@ -45,8 +52,7 @@ func OAuthLogin(ctx *middleware.Context) {
 	error := ctx.Query("error")
 	if error != "" {
 		errorDesc := ctx.Query("error_description")
-		ctx.Logger.Info("OAuthLogin Failed", "error", error, "errorDesc", errorDesc)
-		ctx.Redirect(setting.AppSubUrl + "/login?failCode=1003")
+		redirectWithError(ctx, ErrProviderDeniedRequest, "error", error, "errorDesc", errorDesc)
 		return
 	}
 
@@ -118,10 +124,8 @@ func OAuthLogin(ctx *middleware.Context) {
 	// get user info
 	userInfo, err := connect.UserInfo(client)
 	if err != nil {
-		if err == social.ErrMissingTeamMembership {
-			ctx.Redirect(setting.AppSubUrl + "/login?failCode=1000")
-		} else if err == social.ErrMissingOrganizationMembership {
-			ctx.Redirect(setting.AppSubUrl + "/login?failCode=1001")
+		if sErr, ok := err.(*social.Error); ok {
+			redirectWithError(ctx, sErr)
 		} else {
 			ctx.Handle(500, fmt.Sprintf("login.OAuthLogin(get info from %s)", name), err)
 		}
@@ -132,8 +136,7 @@ func OAuthLogin(ctx *middleware.Context) {
 
 	// validate that the email is allowed to login to grafana
 	if !connect.IsEmailAllowed(userInfo.Email) {
-		ctx.Logger.Info("OAuth login attempt with unallowed email", "email", userInfo.Email)
-		ctx.Redirect(setting.AppSubUrl + "/login?failCode=1002")
+		redirectWithError(ctx, ErrEmailNotAllowed)
 		return
 	}
 
@@ -143,7 +146,7 @@ func OAuthLogin(ctx *middleware.Context) {
 	// create account if missing
 	if err == m.ErrUserNotFound {
 		if !connect.IsSignupAllowed() {
-			ctx.Redirect(setting.AppSubUrl + "/login")
+			redirectWithError(ctx, ErrSignUpNotAllowed)
 			return
 		}
 		limitReached, err := middleware.QuotaReached(ctx, "user")
@@ -152,7 +155,7 @@ func OAuthLogin(ctx *middleware.Context) {
 			return
 		}
 		if limitReached {
-			ctx.Redirect(setting.AppSubUrl + "/login")
+			redirectWithError(ctx, ErrUsersQuotaReached)
 			return
 		}
 		cmd := m.CreateUserCommand{
@@ -185,4 +188,11 @@ func OAuthLogin(ctx *middleware.Context) {
 	}
 
 	ctx.Redirect(setting.AppSubUrl + "/")
+}
+
+func redirectWithError(ctx *middleware.Context, err error, v ...interface{}) {
+	ctx.Logger.Info(err.Error(), v...)
+	// TODO: we can use the flash storage here once it's implemented
+	ctx.Session.Set("loginError", err.Error())
+	ctx.Redirect(setting.AppSubUrl + "/login")
 }
