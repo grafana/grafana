@@ -351,7 +351,7 @@ func grunt(params ...string) {
 func gruntBuildArg(task string) []string {
 	args := []string{task}
 	if includeBuildNumber {
-		args = append(args, fmt.Sprintf("--pkgVer=%v-%v", version, linuxPackageIteration))
+		args = append(args, fmt.Sprintf("--pkgVer=%v-%v", linuxPackageVersion, linuxPackageIteration))
 	} else {
 		args = append(args, fmt.Sprintf("--pkgVer=%v", version))
 	}
