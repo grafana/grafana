@@ -60,12 +60,13 @@ func Init() error {
 
 func SendWebhookSync(ctx context.Context, cmd *m.SendWebhookSync) error {
 	return sendWebRequestSync(ctx, &Webhook{
-		Url:        cmd.Url,
-		User:       cmd.User,
-		Password:   cmd.Password,
-		Body:       cmd.Body,
-		HttpMethod: cmd.HttpMethod,
-		HttpHeader: cmd.HttpHeader,
+		Url:         cmd.Url,
+		User:        cmd.User,
+		Password:    cmd.Password,
+		Body:        cmd.Body,
+		HttpMethod:  cmd.HttpMethod,
+		HttpHeader:  cmd.HttpHeader,
+		ContentType: cmd.ContentType,
 	})
 }
 

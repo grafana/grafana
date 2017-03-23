@@ -1,6 +1,10 @@
 package notifiers
 
 import (
+	"bytes"
+	"io"
+	"mime/multipart"
+	"os"
 	"strconv"
 	"strings"
 
@@ -64,9 +68,10 @@ func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	fields := make([]map[string]interface{}, 0)
 
 	for _, evt := range evalContext.EvalMatches {
+
 		fields = append(fields, map[string]interface{}{
 			"name":   evt.Metric,
-			"value":  evt.Value,
+			"value":  evt.Value.FullString(),
 			"inline": true,
 		})
 	}
@@ -78,10 +83,6 @@ func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	color, _ := strconv.ParseInt(strings.TrimLeft(evalContext.GetStateModel().Color, "#"), 16, 0)
 
-	image := map[string]interface{}{
-		"url": evalContext.ImagePublicUrl,
-	}
-
 	embed := simplejson.New()
 	embed.Set("title", evalContext.GetNotificationTitle())
 	//Discord takes integer for color
@@ -91,22 +92,80 @@ func (this *DiscordNotifier) Notify(evalContext *alerting.EvalContext) error {
 	embed.Set("type", "rich")
 	embed.Set("fields", fields)
 	embed.Set("footer", footer)
-	embed.Set("image", image)
+
+	var image = make(map[string]interface{})
+
+	var embeddedImage = false
+
+	if evalContext.ImagePublicUrl != "" {
+		image = map[string]interface{}{
+			"url": evalContext.ImagePublicUrl,
+		}
+		embed.Set("image", image)
+	} else {
+		image = map[string]interface{}{
+			"url": "attachment://graph.png",
+		}
+		embed.Set("image", image)
+		embeddedImage = true
+	}
 
 	bodyJSON.Set("embeds", []interface{}{embed})
 
-	body, _ := bodyJSON.MarshalJSON()
+	json, _ := bodyJSON.MarshalJSON()
 
-	this.log.Info("Message", string(body))
+	content_type := "application/json"
+
+	var body []byte
+
+	if embeddedImage {
+
+		var b bytes.Buffer
+
+		w := multipart.NewWriter(&b)
+
+		f, err := os.Open(evalContext.ImageOnDiskPath)
+
+		if err != nil {
+			this.log.Error("Can't open graph file", err)
+			return err
+		}
+
+		defer f.Close()
+
+		fw, err := w.CreateFormField("payload_json")
+		if err != nil {
+			return err
+		}
+
+		if _, err = fw.Write([]byte(string(json))); err != nil {
+			return err
+		}
+
+		fw, err = w.CreateFormFile("file", "graph.png")
+
+		if _, err = io.Copy(fw, f); err != nil {
+			return err
+		}
+
+		w.Close()
+
+		body = b.Bytes()
+		content_type = w.FormDataContentType()
+
+	} else {
+		body = json
+	}
 
 	cmd := &m.SendWebhookSync{
-		Url:        this.WebhookURL,
-		Body:       string(body),
-		HttpMethod: "POST",
+		Url:         this.WebhookURL,
+		Body:        string(body),
+		HttpMethod:  "POST",
+		ContentType: content_type,
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-		this.log.Error("Failed to send notification to Discord", "error", err, "body", string(body))
+		this.log.Error("Failed to send notification to Discord", "error", err)
 		return err
 	}
 

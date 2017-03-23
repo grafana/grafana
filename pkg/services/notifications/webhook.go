@@ -16,12 +16,13 @@ import (
 )
 
 type Webhook struct {
-	Url        string
-	User       string
-	Password   string
-	Body       string
-	HttpMethod string
-	HttpHeader map[string]string
+	Url         string
+	User        string
+	Password    string
+	Body        string
+	HttpMethod  string
+	HttpHeader  map[string]string
+	ContentType string
 }
 
 var netTransport = &http.Transport{
@@ -61,7 +62,7 @@ func processWebhookQueue() {
 }
 
 func sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
-	webhookLog.Debug("Sending webhook", "url", webhook.Url, "http method", webhook.HttpMethod)
+	webhookLog.Debug("Sending webhook", "url", webhook.Url, "http method", webhook.HttpMethod, "content type", webhook.ContentType)
 
 	if webhook.HttpMethod == "" {
 		webhook.HttpMethod = http.MethodPost
@@ -72,7 +73,11 @@ func sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
 		return err
 	}
 
-	request.Header.Add("Content-Type", "application/json")
+	if webhook.ContentType == "" {
+		webhook.ContentType = "application/json"
+	}
+
+	request.Header.Add("Content-Type", webhook.ContentType)
 	request.Header.Add("User-Agent", "Grafana")
 	if webhook.User != "" && webhook.Password != "" {
 		request.Header.Add("Authorization", util.GetBasicAuthHeader(webhook.User, webhook.Password))
