@@ -4,8 +4,10 @@ define([
   'lodash',
   'require',
   'app/components/panelmeta',
+  'moment',
+  'app/core/utils/datemath',
 ],
-function (angular, app, _, require, PanelMeta) {
+function (angular, app, _, require, PanelMeta, moment, dateMath) {
   'use strict';
 
   var converter;
@@ -93,7 +95,20 @@ function (angular, app, _, require, PanelMeta) {
 
     $scope.updateContent = function(html) {
       try {
-        $scope.content = $sce.trustAsHtml(templateSrv.replace(html, $scope.panel.scopedVars));
+        var scopedVars = _.clone($scope.panel.scopedVars || {});
+        var time = $scope.dashboard.time;
+        var from = "";
+        var to = "";
+        if (moment.isMoment(time.from)) {
+          from = time.from.utc().format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+          to = time.to.utc().format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+        } else {
+          from = dateMath.parse(time.from, false).utc().format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+          to = dateMath.parse(time.to, true).utc().format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+        }
+        scopedVars['time_from'] = {value: from};
+        scopedVars['time_to'] = {value: to};
+        $scope.content = $sce.trustAsHtml(templateSrv.replace(html, scopedVars));
       } catch(e) {
         console.log('Text panel error: ', e);
         $scope.content = $sce.trustAsHtml(html);
