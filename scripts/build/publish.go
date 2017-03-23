@@ -61,7 +61,7 @@ func main() {
 }
 
 func packageWalker(path string, f os.FileInfo, err error) error {
-	if f.Name() == "dist" || strings.Contains(f.Name(), "sha256") {
+	if f.Name() == "dist" || strings.Contains(f.Name(), "sha256") || strings.Contains(f.Name(), "latest") {
 		return nil
 	}
 
