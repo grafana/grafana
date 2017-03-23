@@ -140,7 +140,7 @@ function (angular, _, config) {
             return $scope.refreshData($scope.datasource) || $q.when({});
           }).then(function () {
             $scope.panelMeta.loading = false;
-            $scope.panelMeta.info = $scope.panel.info;
+            $scope.helpInfo = $scope.panel.helpInfo;
           }, function (err) {
             console.log('Panel data error:', err);
             $scope.panelMeta.loading = false;
@@ -148,6 +148,15 @@ function (angular, _, config) {
             $scope.inspector.error = err;
           });
         });
+      };
+
+      $scope.isShowInfo = function (event) {
+        var helpBody = $('.help-info');
+        if (event.type === "mouseenter") {
+          helpBody.addClass('active');
+        } else {
+          helpBody.removeClass('active');
+        }
       };
 
       if ($scope.refreshData) {
