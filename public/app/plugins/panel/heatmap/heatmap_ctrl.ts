@@ -158,7 +158,11 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       yBucketSize = this.panel.yAxis.splitFactor;
     } else {
       if (heatmapStats.max === heatmapStats.min) {
-        yBucketSize = heatmapStats.max / Y_BUCKET_NUMBER_DEFAULT;
+        if (heatmapStats.max) {
+          yBucketSize = heatmapStats.max / Y_BUCKET_NUMBER_DEFAULT;
+        } else {
+          yBucketSize = 1;
+        }
       } else {
         yBucketSize = (heatmapStats.max - heatmapStats.min) / yBucketNumber;
       }
