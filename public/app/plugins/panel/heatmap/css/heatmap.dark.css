@@ -1,0 +1,70 @@
+.axis text {
+}
+
+.axis {
+	font-family: "Open Sans", Helvetica, Arial, sans-serif;
+	font-size: smaller;
+	fill: #D8D9DA;
+}
+
+.axis path,
+.axis line {
+  fill: none;
+  stroke: #7B7B7B;
+  /*shape-rendering: crispEdges;*/
+}
+
+.axis .domain {
+	/*opacity: 0;*/
+}
+
+.tick line {
+	opacity: 0.4;
+	stroke: #7B7B7B;
+}
+
+.tick text {
+	fill: #D8D9DA;
+}
+
+.heatmap-panel {
+  cursor: crosshair;
+  padding: 0;
+}
+
+div.heatmap-tooltip {
+  position: absolute;
+  text-align: left;
+  min-width: 160px;
+  padding: 12px;
+  font-family: "Open Sans", Helvetica, Arial, sans-serif;
+  font-size: 13px;
+  background: #141414;
+  border: 0px;
+  border-radius: 8px;
+  pointer-events: none;
+}
+
+.card-highlighted:hover {
+	stroke: #D8D9DA;
+}
+
+rect.heatmap-card {
+  pointer-events: all;
+}
+
+.heatmap-histogram rect {
+  fill: #828282;
+}
+
+.heatmap-crosshair line {
+  stroke: #9a1010;
+  stroke-width: 1;
+}
+
+.heatmap-selection {
+  stroke-width: 1;
+  opacity: 0.3;
+  fill: #828282;
+  stroke: #D8D9DA;
+}
