@@ -52,7 +52,7 @@ export class HeatmapTooltip {
   add() {
     this.tooltip = d3.select("body")
       .append("div")
-      .attr("class", "heatmap-tooltip");
+      .attr("class", "heatmap-tooltip graph-tooltip grafana-tooltip");
   }
 
   destroy() {
@@ -82,7 +82,7 @@ export class HeatmapTooltip {
     let decimals = this.panel.tooltipDecimals || 5;
     let valueFormatter = this.valueFormatter(decimals);
 
-    let tooltipHtml = `<div><b>${time}</b></div>
+    let tooltipHtml = `<div class="graph-tooltip-time">${time}</div>
       <div class="heatmap-histogram"></div>`;
 
     if (yData) {
