@@ -220,7 +220,7 @@ export default class TimeSeries {
 
   isMsResolutionNeeded() {
     for (var i = 0; i < this.datapoints.length; i++) {
-      if (this.datapoints[i][1] !== null) {
+      if (this.datapoints[i][1]) {
         var timestamp = this.datapoints[i][1].toString();
         if (timestamp.length === 13 && (timestamp % 1000) !== 0) {
           return true;
