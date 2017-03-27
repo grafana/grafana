@@ -93,6 +93,8 @@ type SessionStore interface {
 	Set(interface{}, interface{}) error
 	// Get gets value by given key in session.
 	Get(interface{}) interface{}
+	// Delete deletes a key from session.
+	Delete(interface{}) interface{}
 	// ID returns current session ID.
 	ID() string
 	// Release releases session resource and save data to provider.
@@ -124,6 +126,13 @@ func (s *SessionWrapper) Set(k interface{}, v interface{}) error {
 func (s *SessionWrapper) Get(k interface{}) interface{} {
 	if s.session != nil {
 		return s.session.Get(k)
+	}
+	return nil
+}
+
+func (s *SessionWrapper) Delete(k interface{}) interface{} {
+	if s.session != nil {
+		return s.session.Delete(k)
 	}
 	return nil
 }
