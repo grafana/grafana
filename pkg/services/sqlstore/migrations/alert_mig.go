@@ -67,4 +67,19 @@ func addAlertMigrations(mg *Migrator) {
 	}))
 	mg.AddMigration("add index alert_notification org_id & name", NewAddIndexMigration(alert_notification, alert_notification.Indices[0]))
 
+	mg.AddMigration("Update alert table charset", NewTableCharsetMigration("alert", []*Column{
+		{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "message", Type: DB_Text, Nullable: false},
+		{Name: "state", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "settings", Type: DB_Text, Nullable: false},
+		{Name: "severity", Type: DB_Text, Nullable: false},
+		{Name: "execution_error", Type: DB_Text, Nullable: false},
+		{Name: "eval_data", Type: DB_Text, Nullable: true},
+	}))
+
+	mg.AddMigration("Update alert_notification table charset", NewTableCharsetMigration("alert_notification", []*Column{
+		{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
+		{Name: "type", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "settings", Type: DB_Text, Nullable: false},
+	}))
 }

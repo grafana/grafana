@@ -106,4 +106,18 @@ func addDataSourceMigration(mg *Migrator) {
 	mg.AddMigration("Add secure json data column", NewAddColumnMigration(tableV2, &Column{
 		Name: "secure_json_data", Type: DB_Text, Nullable: true,
 	}))
+
+	mg.AddMigration("Update data_source table charset", NewTableCharsetMigration(tableV2.Name, []*Column{
+		{Name: "type", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
+		{Name: "access", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "url", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "password", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "user", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "database", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "basic_auth_user", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "basic_auth_password", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "json_data", Type: DB_Text, Nullable: true},
+		{Name: "secure_json_data", Type: DB_Text, Nullable: true},
+	}))
 }

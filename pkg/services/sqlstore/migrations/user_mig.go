@@ -92,4 +92,15 @@ func addUserMigrations(mg *Migrator) {
 	mg.AddMigration("Add column help_flags1 to user table", NewAddColumnMigration(userV2, &Column{
 		Name: "help_flags1", Type: DB_BigInt, Nullable: false, Default: "0",
 	}))
+
+	mg.AddMigration("Update user table charset", NewTableCharsetMigration("user", []*Column{
+		{Name: "login", Type: DB_NVarchar, Length: 190, Nullable: false},
+		{Name: "email", Type: DB_NVarchar, Length: 190, Nullable: false},
+		{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "password", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "salt", Type: DB_NVarchar, Length: 50, Nullable: true},
+		{Name: "rands", Type: DB_NVarchar, Length: 50, Nullable: true},
+		{Name: "company", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "theme", Type: DB_NVarchar, Length: 255, Nullable: true},
+	}))
 }

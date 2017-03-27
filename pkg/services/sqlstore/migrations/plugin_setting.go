@@ -32,4 +32,10 @@ func addAppSettingsMigration(mg *Migrator) {
 		Name: "plugin_version", Type: DB_NVarchar, Nullable: true, Length: 50,
 	}))
 
+	mg.AddMigration("Update plugin_setting table charset", NewTableCharsetMigration("plugin_setting", []*Column{
+		{Name: "plugin_id", Type: DB_NVarchar, Length: 190, Nullable: false},
+		{Name: "json_data", Type: DB_Text, Nullable: true},
+		{Name: "secure_json_data", Type: DB_Text, Nullable: true},
+		{Name: "plugin_version", Type: DB_NVarchar, Nullable: true, Length: 50},
+	}))
 }

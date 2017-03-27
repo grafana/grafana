@@ -25,4 +25,8 @@ func addQuotaMigration(mg *Migrator) {
 
 	//-------  indexes ------------------
 	addTableIndicesMigrations(mg, "v1", quotaV1)
+
+	mg.AddMigration("Update quota table charset", NewTableCharsetMigration("quota", []*Column{
+		{Name: "target", Type: DB_NVarchar, Length: 190, Nullable: false},
+	}))
 }

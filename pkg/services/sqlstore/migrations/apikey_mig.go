@@ -72,4 +72,10 @@ func addApiKeyMigrations(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Drop old table api_key_v1", NewDropTableMigration("api_key_v1"))
+
+	mg.AddMigration("Update api_key table charset", NewTableCharsetMigration("api_key", []*Column{
+		{Name: "name", Type: DB_NVarchar, Length: 190, Nullable: false},
+		{Name: "key", Type: DB_Varchar, Length: 190, Nullable: false},
+		{Name: "role", Type: DB_NVarchar, Length: 255, Nullable: false},
+	}))
 }
