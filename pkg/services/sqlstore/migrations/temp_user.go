@@ -41,6 +41,7 @@ func addTempUserMigrations(mg *Migrator) {
 		{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: true},
 		{Name: "role", Type: DB_NVarchar, Length: 20, Nullable: true},
 		{Name: "code", Type: DB_NVarchar, Length: 255},
+		{Name: "status", Type: DB_Varchar, Length: 20},
 		{Name: "remote_addr", Type: DB_Varchar, Length: 255, Nullable: true},
 	}))
 }
