@@ -1,9 +1,11 @@
 .heatmap-canvas-wrapper {
-  position: relative;
+  // position: relative;
   cursor: crosshair;
 }
 
 .heatmap-panel {
+  position: relative;
+
   .axis .tick {
     text {
       fill: $text-color;

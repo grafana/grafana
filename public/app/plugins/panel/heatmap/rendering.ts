@@ -761,13 +761,19 @@ export default function link(scope, elem, attrs, ctrl) {
   }
 
   function render() {
-    if (!ctrl.data || _.isEmpty(ctrl.data.buckets)) { return; }
-
     data = ctrl.data;
     panel = ctrl.panel;
     timeRange = ctrl.range;
 
     if (setElementHeight()) {
+
+      // Draw default axes and return if no data
+      if (!data || _.isEmpty(data.buckets)) {
+        addHeatmapCanvas();
+        addAxes();
+        return;
+      }
+
       addHeatmap();
       scope.yScale = yScale;
       scope.xScale = xScale;

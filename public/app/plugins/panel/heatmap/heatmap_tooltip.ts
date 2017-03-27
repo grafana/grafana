@@ -33,6 +33,8 @@ export class HeatmapTooltip {
   }
 
   onMouseOver(e) {
+    if (!this.panel.tooltip.show || _.isEmpty(this.scope.ctrl.data.buckets)) { return; }
+
     if (!this.tooltip) {
       this.add();
       this.move(e);

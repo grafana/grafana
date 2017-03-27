@@ -103,6 +103,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   data: any;
   series: any;
   timeSrv: any;
+  dataWarning: any;
 
   constructor($scope, $injector, private $rootScope, timeSrv) {
     super($scope, $injector);
@@ -187,6 +188,29 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
   onDataReceived(dataList) {
     this.series = dataList.map(this.seriesHandler.bind(this));
+
+    this.dataWarning = null;
+    const datapointsCount = _.reduce(this.series, (sum, series) => {
+      return sum + series.datapoints.length;
+    }, 0);
+
+    if (datapointsCount === 0) {
+      this.dataWarning = {
+        title: 'No data points',
+        tip: 'No datapoints returned from data query'
+      };
+    } else {
+      for (let series of this.series) {
+        if (series.isOutsideRange) {
+          this.dataWarning = {
+            title: 'Data points outside time range',
+            tip: 'Can be caused by timezone mismatch or missing time filter in query',
+          };
+          break;
+        }
+      }
+    }
+
     this.render();
   }
 
@@ -196,13 +220,23 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   }
 
   seriesHandler(seriesData) {
-    var series = new TimeSeries({
+    let series = new TimeSeries({
       datapoints: seriesData.datapoints,
       alias: seriesData.target
     });
 
     series.flotpairs = series.getFlotPairs(this.panel.nullPointMode);
     series.minLog = getMinLog(series);
+
+    let datapoints = seriesData.datapoints || [];
+    if (datapoints && datapoints.length > 0) {
+      let last = datapoints[datapoints.length - 1][1];
+      let from = this.range.from;
+      if (last - from < -10000) {
+        series.isOutsideRange = true;
+      }
+    }
+
     return series;
   }
 
