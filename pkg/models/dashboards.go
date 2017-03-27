@@ -18,6 +18,14 @@ var (
 	ErrDashboardTitleEmpty         = errors.New("Dashboard title cannot be empty")
 )
 
+type PermissionType int
+
+const (
+	PERMISSION_EDIT           PermissionType = 4
+	PERMISSION_READ_ONLY_EDIT PermissionType = 2
+	PERMISSION_VIEW           PermissionType = 1
+)
+
 type UpdatePluginDashboardError struct {
 	PluginId string
 }
@@ -47,6 +55,8 @@ type Dashboard struct {
 
 	UpdatedBy int64
 	CreatedBy int64
+	ParentId  int64
+	IsFolder  bool
 
 	Title string
 	Data  *simplejson.Json
@@ -111,6 +121,8 @@ func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash.UpdatedBy = userId
 	dash.OrgId = cmd.OrgId
 	dash.PluginId = cmd.PluginId
+	dash.IsFolder = cmd.IsFolder
+	dash.ParentId = cmd.ParentId
 	dash.UpdateSlug()
 	return dash
 }
@@ -138,6 +150,8 @@ type SaveDashboardCommand struct {
 	OrgId        int64            `json:"-"`
 	RestoredFrom int              `json:"-"`
 	PluginId     string           `json:"-"`
+	ParentId  int64               `json:"parentId"`
+	IsFolder  bool                `json:"isFolder"`
 
 	Result *Dashboard
 }

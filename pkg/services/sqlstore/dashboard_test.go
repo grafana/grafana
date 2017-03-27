@@ -11,9 +11,11 @@ import (
 	"github.com/grafana/grafana/pkg/services/search"
 )
 
-func insertTestDashboard(title string, orgId int64, tags ...interface{}) *m.Dashboard {
+func insertTestDashboard(title string, orgId int64, parentId int64, isFolder bool, tags ...interface{}) *m.Dashboard {
 	cmd := m.SaveDashboardCommand{
-		OrgId: orgId,
+		OrgId:    orgId,
+		ParentId: parentId,
+		IsFolder: isFolder,
 		Dashboard: simplejson.NewFromAny(map[string]interface{}{
 			"id":    nil,
 			"title": title,
@@ -33,14 +35,23 @@ func TestDashboardDataAccess(t *testing.T) {
 		InitTestDB(t)
 
 		Convey("Given saved dashboard", func() {
-			savedDash := insertTestDashboard("test dash 23", 1, "prod", "webapp")
-			insertTestDashboard("test dash 45", 1, "prod")
-			insertTestDashboard("test dash 67", 1, "prod", "webapp")
+			savedFolder := insertTestDashboard("1 test dash folder", 1, 0, true, "prod", "webapp")
+			savedDash := insertTestDashboard("test dash 23", 1, savedFolder.Id, false, "prod", "webapp")
+			insertTestDashboard("test dash 45", 1, savedFolder.Id, false, "prod")
+			insertTestDashboard("test dash 67", 1, 0, false, "prod", "webapp")
 
 			Convey("Should return dashboard model", func() {
 				So(savedDash.Title, ShouldEqual, "test dash 23")
 				So(savedDash.Slug, ShouldEqual, "test-dash-23")
 				So(savedDash.Id, ShouldNotEqual, 0)
+				So(savedDash.IsFolder, ShouldBeFalse)
+				So(savedDash.ParentId, ShouldBeGreaterThan, 0)
+
+				So(savedFolder.Title, ShouldEqual, "1 test dash folder")
+				So(savedFolder.Slug, ShouldEqual, "1-test-dash-folder")
+				So(savedFolder.Id, ShouldNotEqual, 0)
+				So(savedFolder.IsFolder, ShouldBeTrue)
+				So(savedFolder.ParentId, ShouldEqual, 0)
 			})
 
 			Convey("Should be able to get dashboard", func() {
@@ -54,10 +65,11 @@ func TestDashboardDataAccess(t *testing.T) {
 
 				So(query.Result.Title, ShouldEqual, "test dash 23")
 				So(query.Result.Slug, ShouldEqual, "test-dash-23")
+				So(query.Result.IsFolder, ShouldBeFalse)
 			})
 
 			Convey("Should be able to delete dashboard", func() {
-				insertTestDashboard("delete me", 1, "delete this")
+				insertTestDashboard("delete me", 1, 0, false, "delete this")
 
 				dashboardSlug := slug.Make("delete me")
 
@@ -114,12 +126,45 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(len(query.Result), ShouldEqual, 1)
 				hit := query.Result[0]
 				So(len(hit.Tags), ShouldEqual, 2)
+				So(hit.Type, ShouldEqual, search.DashHitDB)
+				So(hit.ParentId, ShouldBeGreaterThan, 0)
+			})
+
+			Convey("Should be able to search for dashboard folder", func() {
+				query := search.FindPersistedDashboardsQuery{
+					Title: "1 test dash folder",
+					OrgId: 1,
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 1)
+				hit := query.Result[0]
+				So(hit.Type, ShouldEqual, search.DashHitFolder)
+			})
+
+			Convey("Should be able to browse dashboard folders", func() {
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:      1,
+					BrowseMode: true,
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 2)
+				hit := query.Result[0]
+				So(hit.Type, ShouldEqual, search.DashHitFolder)
+				So(len(hit.Dashboards), ShouldEqual, 2)
+				So(hit.Dashboards[0].Title, ShouldEqual, "test dash 23")
+
 			})
 
 			Convey("Should be able to search for dashboard by dashboard ids", func() {
 				Convey("should be able to find two dashboards by id", func() {
 					query := search.FindPersistedDashboardsQuery{
-						DashboardIds: []int{1, 2},
+						DashboardIds: []int{2, 3},
 						OrgId:        1,
 					}
 
@@ -171,7 +216,7 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Given two dashboards, one is starred dashboard by user 10, other starred by user 1", func() {
-				starredDash := insertTestDashboard("starred dash", 1)
+				starredDash := insertTestDashboard("starred dash", 1, 0, false)
 				StarDashboard(&m.StarDashboardCommand{
 					DashboardId: starredDash.Id,
 					UserId:      10,

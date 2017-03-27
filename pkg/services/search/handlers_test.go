@@ -19,6 +19,9 @@ func TestSearch(t *testing.T) {
 				&Hit{Id: 16, Title: "CCAA", Tags: []string{"BB", "AA"}},
 				&Hit{Id: 10, Title: "AABB", Tags: []string{"CC", "AA"}},
 				&Hit{Id: 15, Title: "BBAA", Tags: []string{"EE", "AA", "BB"}},
+				&Hit{Id: 17, Title: "FOLDER", Dashboards: []Hit{
+					{Id: 18, Title: "ZZAA", Tags: []string{"ZZ"}},
+				}},
 			}
 			return nil
 		})
@@ -54,6 +57,18 @@ func TestSearch(t *testing.T) {
 				So(len(query.Result), ShouldEqual, 2)
 				So(query.Result[0].Title, ShouldEqual, "BBAA")
 				So(query.Result[1].Title, ShouldEqual, "CCAA")
+			})
+
+		})
+
+		Convey("That returns result in browse mode", func() {
+			query.BrowseMode = true
+			err := searchHandler(&query)
+			So(err, ShouldBeNil)
+
+			Convey("should return correct results", func() {
+				So(query.Result[3].Title, ShouldEqual, "FOLDER")
+				So(len(query.Result[3].Dashboards), ShouldEqual, 1)
 			})
 
 		})

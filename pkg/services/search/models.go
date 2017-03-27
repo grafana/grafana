@@ -7,15 +7,18 @@ const (
 	DashHitHome     HitType = "dash-home"
 	DashHitJson     HitType = "dash-json"
 	DashHitScripted HitType = "dash-scripted"
+	DashHitFolder   HitType = "dash-folder"
 )
 
 type Hit struct {
-	Id        int64    `json:"id"`
-	Title     string   `json:"title"`
-	Uri       string   `json:"uri"`
-	Type      HitType  `json:"type"`
-	Tags      []string `json:"tags"`
-	IsStarred bool     `json:"isStarred"`
+	Id         int64    `json:"id"`
+	Title      string   `json:"title"`
+	Uri        string   `json:"uri"`
+	Type       HitType  `json:"type"`
+	Tags       []string `json:"tags"`
+	IsStarred  bool     `json:"isStarred"`
+	ParentId   int64    `json:"parentId"`
+	Dashboards []Hit    `json:"dashboards"`
 }
 
 type HitList []*Hit
@@ -32,6 +35,7 @@ type Query struct {
 	Limit        int
 	IsStarred    bool
 	DashboardIds []int
+	BrowseMode   bool
 
 	Result HitList
 }
@@ -42,6 +46,7 @@ type FindPersistedDashboardsQuery struct {
 	UserId       int64
 	IsStarred    bool
 	DashboardIds []int
+	BrowseMode   bool
 
 	Result HitList
 }

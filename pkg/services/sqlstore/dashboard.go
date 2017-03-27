@@ -148,13 +148,15 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 }
 
 type DashboardSearchProjection struct {
-	Id    int64
-	Title string
-	Slug  string
-	Term  string
+	Id       int64
+	Title    string
+	Slug     string
+	Term     string
+	IsFolder bool
+	ParentId int64
 }
 
-func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
+func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
@@ -162,7 +164,9 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 					  dashboard.id,
 					  dashboard.title,
 					  dashboard.slug,
-					  dashboard_tag.term
+					  dashboard_tag.term,
+            dashboard.is_folder,
+            dashboard.parent_id
 					FROM dashboard
 					LEFT OUTER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id`)
 
@@ -200,8 +204,16 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 1000"))
 
 	var res []DashboardSearchProjection
-
 	err := x.Sql(sql.String(), params...).Find(&res)
+	if err != nil {
+		return nil, err
+	}
+
+	return res, nil
+}
+
+func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
+	res, err := findDashboards(query)
 	if err != nil {
 		return err
 	}
@@ -213,11 +225,12 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 		hit, exists := hits[item.Id]
 		if !exists {
 			hit = &search.Hit{
-				Id:    item.Id,
-				Title: item.Title,
-				Uri:   "db/" + item.Slug,
-				Type:  search.DashHitDB,
-				Tags:  []string{},
+				Id:       item.Id,
+				Title:    item.Title,
+				Uri:      "db/" + item.Slug,
+				Type:     getHitType(item),
+				ParentId: item.ParentId,
+				Tags:     []string{},
 			}
 			query.Result = append(query.Result, hit)
 			hits[item.Id] = hit
@@ -227,7 +240,50 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 		}
 	}
 
+	if query.BrowseMode {
+		convertToDashboardFolders(query)
+	}
+
 	return err
+}
+
+func getHitType(item DashboardSearchProjection) search.HitType {
+	var hitType search.HitType
+	if item.IsFolder {
+		hitType = search.DashHitFolder
+	} else {
+		hitType = search.DashHitDB
+	}
+
+	return hitType
+}
+
+func convertToDashboardFolders(query *search.FindPersistedDashboardsQuery) error {
+	root := make(map[int64]*search.Hit)
+	var keys []int64
+
+	// Add dashboards and folders that should be at the root level
+	for _, item := range query.Result {
+		if item.Type == search.DashHitFolder || item.ParentId == 0 {
+			root[item.Id] = item
+			keys = append(keys, item.Id)
+		}
+	}
+
+	// Populate folders with their child dashboards
+	for _, item := range query.Result {
+		if item.Type == search.DashHitDB && item.ParentId > 0 {
+			root[item.ParentId].Dashboards = append(root[item.ParentId].Dashboards, *item)
+		}
+	}
+
+	query.Result = make([]*search.Hit, 0)
+
+	for _, key := range keys {
+		query.Result = append(query.Result, root[key])
+	}
+
+	return nil
 }
 
 func GetDashboardTags(query *m.GetDashboardTagsQuery) error {

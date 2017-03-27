@@ -14,6 +14,7 @@ func Search(c *middleware.Context) {
 	tags := c.QueryStrings("tag")
 	starred := c.Query("starred")
 	limit := c.QueryInt("limit")
+	browseMode := c.Query("browseMode")
 
 	if limit == 0 {
 		limit = 1000
@@ -35,6 +36,7 @@ func Search(c *middleware.Context) {
 		IsStarred:    starred == "true",
 		OrgId:        c.OrgId,
 		DashboardIds: dbids,
+		BrowseMode:   browseMode == "true",
 	}
 
 	err := bus.Dispatch(&searchQuery)

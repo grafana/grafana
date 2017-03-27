@@ -104,6 +104,8 @@ export class SearchCtrl {
     this.currentSearchId = this.currentSearchId + 1;
     var localSearchId = this.currentSearchId;
 
+    this.query.browseMode = this.queryHasNoFilters();
+
     return this.backendSrv.search(this.query).then((results) => {
       if (localSearchId < this.currentSearchId) { return; }
 

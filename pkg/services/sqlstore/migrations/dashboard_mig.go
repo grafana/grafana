@@ -136,4 +136,40 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("Update dashboard_tag table charset", NewTableCharsetMigration("dashboard_tag", []*Column{
 		{Name: "term", Type: DB_NVarchar, Length: 50, Nullable: false},
 	}))
+
+	// add column to store parent_id for dashboard folder structure
+	mg.AddMigration("Add column parent_id in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "parent_id", Type: DB_BigInt, Nullable: true,
+	}))
+
+	mg.AddMigration("Add column isFolder in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "is_folder", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
+
+	dashboardAclV1 := Table{
+		Name: "dashboard_acl",
+		Columns: []*Column{
+			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "org_id", Type: DB_BigInt},
+			{Name: "dashboard_id", Type: DB_BigInt},
+			{Name: "user_id", Type: DB_BigInt, Nullable: true},
+			{Name: "user_group_id", Type: DB_BigInt, Nullable: true},
+			{Name: "permissions", Type: DB_SmallInt, Default: "4"},
+			{Name: "created", Type: DB_DateTime, Nullable: false},
+			{Name: "updated", Type: DB_DateTime, Nullable: false},
+		},
+		Indices: []*Index{
+			{Cols: []string{"org_id"}},
+			{Cols: []string{"dashboard_id", "user_id"}, Type: UniqueIndex},
+			{Cols: []string{"dashboard_id", "user_group_id"}, Type: UniqueIndex},
+		},
+	}
+
+	mg.AddMigration("create dashboard  acl table", NewAddTableMigration(dashboardAclV1))
+
+	//-------  indexes ------------------
+	mg.AddMigration("add unique index dashboard_acl_org_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[0]))
+	mg.AddMigration("add unique index dashboard_acl_dashboard_id_user_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[1]))
+	mg.AddMigration("add unique index dashboard_acl_dashboard_id_group_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[2]))
+
 }

@@ -44,6 +44,7 @@ func searchHandler(query *Query) error {
 		IsStarred:    query.IsStarred,
 		OrgId:        query.OrgId,
 		DashboardIds: query.DashboardIds,
+		BrowseMode:   query.BrowseMode,
 	}
 
 	if err := bus.Dispatch(&dashQuery); err != nil {

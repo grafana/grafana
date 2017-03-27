@@ -12,7 +12,7 @@ func TestAlertingDataAccess(t *testing.T) {
 	Convey("Testing Alerting data access", t, func() {
 		InitTestDB(t)
 
-		testDash := insertTestDashboard("dashboard with alerts", 1, "alert")
+		testDash := insertTestDashboard("dashboard with alerts", 1, 0, false, "alert")
 
 		items := []*m.Alert{
 			{
