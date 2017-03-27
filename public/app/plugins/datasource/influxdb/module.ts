@@ -1,9 +1,6 @@
 import InfluxDatasource from './datasource';
 import {InfluxQueryCtrl} from './query_ctrl';
-
-class InfluxConfigCtrl {
-  static templateUrl = 'partials/config.html';
-}
+import {InfluxConfigCtrl} from './config_ctrl';
 
 class InfluxQueryOptionsCtrl {
   static templateUrl = 'partials/query.options.html';

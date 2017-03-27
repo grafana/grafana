@@ -13,6 +13,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
   queryModel: InfluxQuery;
   queryBuilder: any;
   groupBySegment: any;
+  dbSegment: any;
   resultFormats: any[];
   orderByTime: any[];
   policySegment: any;
@@ -39,6 +40,12 @@ export class InfluxQueryCtrl extends QueryCtrl {
     ];
 
     this.policySegment = uiSegmentSrv.newSegment(this.target.policy);
+
+    if (this.target.db) {
+      this.dbSegment = uiSegmentSrv.newSegment(this.target.db);
+    } else {
+      this.dbSegment = uiSegmentSrv.newFake(this.datasource.database);
+    }
 
     if (!this.target.measurement) {
       this.measurementSegment = uiSegmentSrv.newSelectMeasurement();
@@ -185,6 +192,18 @@ export class InfluxQueryCtrl extends QueryCtrl {
   policyChanged() {
     this.target.policy = this.policySegment.value;
     this.panelCtrl.refresh();
+  }
+
+  getDBSegments() {
+    var query = this.queryBuilder.buildExploreQuery('DATABASES');
+    return this.datasource.metricFindQuery(query)
+    .then(this.transformToSegments(false))
+    .catch(this.handleQueryError.bind(this));
+  }
+
+  dbChanged() {
+    this.target.db = this.dbSegment.value;
+    console.log( "CHANGE", this );
   }
 
   toggleEditorMode() {
