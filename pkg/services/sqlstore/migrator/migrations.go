@@ -204,7 +204,7 @@ func (m *CopyTableDataMigration) Sql(d Dialect) string {
 type TableCharsetMigration struct {
 	MigrationBase
 	tableName string
-	columns []*Column
+	columns   []*Column
 }
 
 func NewTableCharsetMigration(tableName string, columns []*Column) *TableCharsetMigration {

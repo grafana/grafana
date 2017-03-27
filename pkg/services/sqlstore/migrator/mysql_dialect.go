@@ -100,7 +100,7 @@ func (db *Mysql) UpdateTableSql(tableName string, columns []*Column) string {
 	statements = append(statements, "DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci")
 
 	for _, col := range columns {
-		statements = append(statements, "MODIFY " + col.StringNoPk(db))
+		statements = append(statements, "MODIFY "+col.StringNoPk(db))
 	}
 
 	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"

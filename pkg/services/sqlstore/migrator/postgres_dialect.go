@@ -118,7 +118,7 @@ func (db *Postgres) UpdateTableSql(tableName string, columns []*Column) string {
 	var statements = []string{}
 
 	for _, col := range columns {
-		statements = append(statements, "ALTER " + db.QuoteStr() + col.Name + db.QuoteStr() + " TYPE " + db.SqlType(col))
+		statements = append(statements, "ALTER "+db.QuoteStr()+col.Name+db.QuoteStr()+" TYPE "+db.SqlType(col))
 	}
 
 	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"
