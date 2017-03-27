@@ -29,7 +29,6 @@ type DatabaseConfig struct {
 	ClientKeyPath                              string
 	ClientCertPath                             string
 	ServerCertName                             string
-	MaxConn                                    int
 	MaxOpenConn                                int
 	MaxIdleConn                                int
 }
@@ -157,7 +156,6 @@ func getEngine() (*xorm.Engine, error) {
 	if err != nil {
 		return nil, err
 	} else {
-		engine.SetMaxConns(DbCfg.MaxConn)
 		engine.SetMaxOpenConns(DbCfg.MaxOpenConn)
 		engine.SetMaxIdleConns(DbCfg.MaxIdleConn)
 		// engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
@@ -191,7 +189,6 @@ func LoadConfig() {
 		DbCfg.Host = sec.Key("host").String()
 		DbCfg.Name = sec.Key("name").String()
 		DbCfg.User = sec.Key("user").String()
-		DbCfg.MaxConn = sec.Key("max_conn").MustInt(0)
 		DbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
 		DbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(0)
 		if len(DbCfg.Pwd) == 0 {
