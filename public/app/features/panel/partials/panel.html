@@ -26,7 +26,7 @@
 	<div class="help-info" ng-if="helpInfo.info" ng-mouseleave="isShowInfo($event)">
 		<div>
 			<h2>{{helpInfo.title}}</h2>
-			<p ng-repeat="txt in helpInfo.context" ng-bind-html="txt"></p>
+			<div ng-bind-html="helpInfo.context"></div>
 		</div>
 	</div>
 </div>
