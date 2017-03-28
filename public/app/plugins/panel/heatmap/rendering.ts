@@ -769,26 +769,30 @@ export default function link(scope, elem, attrs, ctrl) {
 
     if (setElementHeight()) {
 
-      // Draw default axes and return if no data
-      if (!data || _.isEmpty(data.buckets)) {
-        addHeatmapCanvas();
-        addAxes();
+      if (data) {
+        // Draw default axes and return if no data
+        if (_.isEmpty(data.buckets)) {
+          addHeatmapCanvas();
+          addAxes();
+          return;
+        }
+
+        addHeatmap();
+        scope.yScale = yScale;
+        scope.xScale = xScale;
+        scope.yAxisWidth = yAxisWidth;
+        scope.xAxisHeight = xAxisHeight;
+        scope.chartHeight = chartHeight;
+        scope.chartWidth = chartWidth;
+        scope.chartTop = chartTop;
+
+        // Register selection listeners
+        $heatmap.on("mousedown", onMouseDown);
+        $heatmap.on("mousemove", onMouseMove);
+        $heatmap.on("mouseleave", onMouseLeave);
+      } else {
         return;
       }
-
-      addHeatmap();
-      scope.yScale = yScale;
-      scope.xScale = xScale;
-      scope.yAxisWidth = yAxisWidth;
-      scope.xAxisHeight = xAxisHeight;
-      scope.chartHeight = chartHeight;
-      scope.chartWidth = chartWidth;
-      scope.chartTop = chartTop;
-
-      // Register selection listeners
-      $heatmap.on("mousedown", onMouseDown);
-      $heatmap.on("mousemove", onMouseMove);
-      $heatmap.on("mouseleave", onMouseLeave);
     }
 
     // Draw only if color editor is opened
