@@ -8,7 +8,7 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "key", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "key", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "dashboard", Type: DB_Text, Nullable: false},
 			{Name: "expires", Type: DB_DateTime, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
@@ -28,8 +28,8 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "key", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "delete_key", Type: DB_NVarchar, Length: 255, Nullable: false},
+			{Name: "key", Type: DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "delete_key", Type: DB_NVarchar, Length: 190, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "user_id", Type: DB_BigInt, Nullable: false},
 			{Name: "external", Type: DB_Bool, Nullable: false},
@@ -54,4 +54,12 @@ func addDashboardSnapshotMigrations(mg *Migrator) {
 		Sqlite("SELECT 0 WHERE 0;").
 		Postgres("SELECT 0;").
 		Mysql("ALTER TABLE dashboard_snapshot MODIFY dashboard MEDIUMTEXT;"))
+
+	mg.AddMigration("Update dashboard_snapshot table charset", NewTableCharsetMigration("dashboard_snapshot", []*Column{
+		{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "key", Type: DB_NVarchar, Length: 190, Nullable: false},
+		{Name: "delete_key", Type: DB_NVarchar, Length: 190, Nullable: false},
+		{Name: "external_url", Type: DB_NVarchar, Length: 255, Nullable: false},
+		{Name: "dashboard", Type: DB_MediumText, Nullable: false},
+	}))
 }

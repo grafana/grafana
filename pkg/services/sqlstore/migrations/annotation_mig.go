@@ -44,4 +44,14 @@ func addAnnotationMig(mg *Migrator) {
 	mg.AddMigration("add index annotation 2 v3", NewAddIndexMigration(table, table.Indices[2]))
 	mg.AddMigration("add index annotation 3 v3", NewAddIndexMigration(table, table.Indices[3]))
 	mg.AddMigration("add index annotation 4 v3", NewAddIndexMigration(table, table.Indices[4]))
+
+	mg.AddMigration("Update annotation table charset", NewTableCharsetMigration("annotation", []*Column{
+		{Name: "type", Type: DB_NVarchar, Length: 25, Nullable: false},
+		{Name: "title", Type: DB_Text, Nullable: false},
+		{Name: "text", Type: DB_Text, Nullable: false},
+		{Name: "metric", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "prev_state", Type: DB_NVarchar, Length: 25, Nullable: false},
+		{Name: "new_state", Type: DB_NVarchar, Length: 25, Nullable: false},
+		{Name: "data", Type: DB_Text, Nullable: false},
+	}))
 }
