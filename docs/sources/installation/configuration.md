@@ -267,6 +267,10 @@ options are `Admin` and `Editor` and `Read Only Editor`. e.g. :
 
 Set to true to disable (hide) the login form, useful if you use OAuth, defaults to false.
 
+### disable_signout_menu
+
+Set to true to disable the signout link in the side menu. useful if you use auth.proxy, defaults to false.
+
 <hr>
 
 ## [auth.anonymous]

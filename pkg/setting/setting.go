@@ -96,6 +96,7 @@ var (
 	LoginHint          string
 	DefaultTheme       string
 	DisableLoginForm   bool
+	DisableSignoutMenu bool
 
 	// Http auth
 	AdminUser     string
@@ -528,6 +529,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	// auth
 	auth := Cfg.Section("auth")
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
+	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
