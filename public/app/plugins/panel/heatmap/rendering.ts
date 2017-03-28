@@ -334,8 +334,10 @@ export default function link(scope, elem, attrs, ctrl) {
 
   function addHeatmapCanvas() {
     let heatmap_elem = $heatmap[0];
-    width = heatmap_elem.clientWidth - padding.right;
-    height = heatmap_elem.clientHeight - padding.bottom;
+
+    width = Math.floor($heatmap.width()) - padding.right;
+    height = Math.floor($heatmap.height()) - padding.bottom;
+
     cardPadding = panel.cards.cardPadding !== null ? panel.cards.cardPadding : CARD_PADDING;
     cardRound = panel.cards.cardRound !== null ? panel.cards.cardRound : CARD_ROUND;
 
