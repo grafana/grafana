@@ -17,5 +17,6 @@ define([
   './summary/summaryCtrl',
   './summary/serviceCtrl',
   './summary/customerCtrl',
-  './report/reportCtrl'
+  './report/reportCtrl',
+  './cluster/ClusterCtrl'
 ], function () {});

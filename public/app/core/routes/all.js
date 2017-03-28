@@ -228,6 +228,10 @@ define([
         controller: 'ReportCtrl',
         reloadOnSearch: false,
       })
+      .when('/cluster', {
+        templateUrl: 'app/features/cluster/partials/cluster.html',
+        controller: 'ClusterCtrl',
+      })
       .otherwise({
         templateUrl: 'app/partials/error.html',
         controller: 'ErrorCtrl'
