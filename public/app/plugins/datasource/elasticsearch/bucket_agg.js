@@ -50,6 +50,7 @@ function (angular, _, queryDef) {
 
       switch($scope.agg.type) {
         case 'date_histogram':
+        case 'histogram':
         case 'terms':  {
           delete $scope.agg.query;
           $scope.agg.field = 'select field';
@@ -129,6 +130,16 @@ function (angular, _, queryDef) {
 
           if (settings.trimEdges && settings.trimEdges > 0) {
             settingsLinkText += ', Trim edges: ' + settings.trimEdges;
+          }
+          break;
+        }
+        case 'histogram': {
+          settings.interval = settings.interval || 1000;
+          settings.min_doc_count = _.defaultTo(settings.min_doc_count, 1);
+          settingsLinkText = 'Interval: ' + settings.interval;
+
+          if (settings.min_doc_count > 0) {
+            settingsLinkText += ', Min Doc Count: ' + settings.min_doc_count;
           }
           break;
         }
