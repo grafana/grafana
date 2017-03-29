@@ -74,11 +74,11 @@ describe('grafanaHeatmap', function () {
             renderingCompleted: sinon.spy(),
             hiddenSeries: {},
             dashboard: {
-              getTimezone: sinon.stub().returns('browser')
+              getTimezone: sinon.stub().returns('utc')
             },
             range: {
-              from: moment(1422774000000),
-              to:   moment(1422774100000),
+              from: moment.utc("01 Mar 2017 10:00:00"),
+              to: moment.utc("01 Mar 2017 11:00:00"),
             },
           };
 
@@ -148,7 +148,14 @@ describe('grafanaHeatmap', function () {
 
     it('should draw correct X axis', function () {
       var xTicks = getTicks(ctx.element, ".axis-x");
-      expect(xTicks).to.eql(['10:00:00', '10:00:15', '10:00:30', '10:00:45', '10:01:00', '10:01:15', '10:01:30']);
+      let expectedTicks = [
+        formatLocalTime("01 Mar 2017 10:00:00"),
+        formatLocalTime("01 Mar 2017 10:15:00"),
+        formatLocalTime("01 Mar 2017 10:30:00"),
+        formatLocalTime("01 Mar 2017 10:45:00"),
+        formatLocalTime("01 Mar 2017 11:00:00")
+      ];
+      expect(xTicks).to.eql(expectedTicks);
     });
   });
 
@@ -248,4 +255,9 @@ function getTicks(element, axisSelector) {
     .map(function () {
       return this.textContent;
     }).get();
+}
+
+function formatLocalTime(timeStr) {
+  let format = "HH:mm";
+  return moment.utc(timeStr).local().format(format);
 }
