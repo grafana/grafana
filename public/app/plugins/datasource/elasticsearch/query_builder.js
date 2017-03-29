@@ -280,10 +280,12 @@ function (queryDef) {
         }
       });
     }
+
     var size = 500;
-    if(queryDef.size){
+    if (queryDef.size) {
       size = queryDef.size;
     }
+
     query.aggs =  {
       "1": {
         "terms": {
