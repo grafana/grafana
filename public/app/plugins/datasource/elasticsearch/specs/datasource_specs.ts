@@ -42,7 +42,7 @@ describe('ElasticDatasource', function() {
       ctx.$rootScope.$apply();
 
       var today = moment.utc().format("YYYY.MM.DD");
-      expect(requestOptions.url).to.be("http://es.com/asd-" + today + '/_stats');
+      expect(requestOptions.url).to.be("http://es.com/asd-" + today + '/_mapping');
     });
   });
 
