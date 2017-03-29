@@ -1,0 +1,8 @@
+{
+  "type": "datasource",
+  "name": "MySQL",
+  "id": "mysql",
+
+  "annotations": true,
+  "metrics": true
+}
