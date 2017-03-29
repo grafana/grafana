@@ -159,7 +159,6 @@ module.directive('grafanaPanel', function($rootScope, $document) {
             classes: ctrl.error ? 'drop-error' : 'drop-help',
             openOn: 'hover',
             hoverOpenDelay: 100,
-            remove: true,
             tetherOptions: {
               attachment: 'bottom left',
               targetAttachment: 'top left',
@@ -194,10 +193,6 @@ module.directive('grafanaPanel', function($rootScope, $document) {
       const refreshOnScroll = function () {
         if (ctrl.skippedLastRefresh) {
           ctrl.refresh();
-        }
-
-        if (infoDrop) {
-          infoDrop.position();
         }
       };
 
