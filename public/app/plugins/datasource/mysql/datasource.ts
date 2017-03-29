@@ -3,23 +3,25 @@
 import _ from 'lodash';
 
 export class MysqlDatasource {
+  id: any;
+  name: any;
 
   /** @ngInject */
-  constructor(private instanceSettings, private backendSrv) {
+  constructor(instanceSettings, private backendSrv) {
+    this.name = instanceSettings.name;
+    this.id = instanceSettings.id;
   }
 
   query(options) {
-    console.log('test');
-    console.log(this.instanceSettings);
     return this.backendSrv.post('/api/tsdb/query', {
       from: options.range.from.valueOf().toString(),
       to: options.range.to.valueOf().toString(),
       queries: [
         {
           "refId": "A",
-          "scenarioId": "random_walk",
           "intervalMs": options.intervalMs,
           "maxDataPoints": options.maxDataPoints,
+          "datasourceId": this.id,
         }
       ]
     }).then(res => {

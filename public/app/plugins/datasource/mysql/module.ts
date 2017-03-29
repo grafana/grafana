@@ -8,6 +8,10 @@ class MysqlQueryCtrl extends QueryCtrl {
   static templateUrl = 'partials/query.editor.html';
 }
 
+class InfluxConfigCtrl {
+  static templateUrl = 'partials/config.html';
+}
+
 export {
   MysqlDatasource,
   MysqlDatasource as Datasource,

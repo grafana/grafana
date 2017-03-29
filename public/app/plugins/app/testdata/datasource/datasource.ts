@@ -4,9 +4,12 @@ import _ from 'lodash';
 import angular from 'angular';
 
 class TestDataDatasource {
+  id: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $q) {}
+  constructor(instanceSettings, private backendSrv, private $q) {
+    this.id = instanceSettings.id;
+  }
 
   query(options) {
     var queries = _.filter(options.targets, item => {
@@ -19,6 +22,7 @@ class TestDataDatasource {
         maxDataPoints: options.maxDataPoints,
         stringInput: item.stringInput,
         jsonInput: angular.fromJson(item.jsonInput),
+        datasourceId: this.id,
       };
     });
 

@@ -42,6 +42,7 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		}
 
 		var dsMap = map[string]interface{}{
+			"id":   ds.Id,
 			"type": ds.Type,
 			"name": ds.Name,
 			"url":  url,
