@@ -198,12 +198,8 @@ define([
         "title": "New row"
       };
 
-      this.filterMetics = function (metric) {
-        return !(/(anomaly|prediction.max|prediction.min|prediction.min.LB.percent|.seasonal|.trend|.noise|.prediction)$/.test(metric.metric));
-      };
-
       this.init = function (param) {
-        param.targets = param.targets.filter(this.filterMetics);
+        param.targets = param.targets.filter(_.excludeMetricSuffix(filterMetics.metric));
         panelMeta.panels[0].targets = param.targets;
         panelMeta.panels[1].targets = _.cloneDeep(param.targets);
         _.each(panelMeta.panels[1].targets, function (target) {
