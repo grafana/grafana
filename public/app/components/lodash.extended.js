@@ -39,5 +39,9 @@ function () {
     }
     return metricName.substring(metricName.indexOf(elem[2]));
   };
+
+  _.excludeMetricSuffix = function (metricName) {
+    return !(/(anomaly|prediction.max|prediction.min|prediction.min.LB.percent|.seasonal|.trend|.noise|.prediction)$/.test(metricName));
+  };
   return _;
 });

@@ -35,7 +35,7 @@ define([
             "shared": true
           },
       };
-
+      
       var panelMetas = [
         {
           "collapse": false,
@@ -179,13 +179,9 @@ define([
           "title": ""
         }
       ];
-
-      $scope.filterMetics = function (metric) {
-        return !(/(anomaly|prediction.max|prediction.min|prediction.min.LB.percent|.seasonal|.trend|.noise|.prediction)$/.test(metric.metric));
-      };
-
+      
       $scope.init = function (param) {
-        param.targets = param.targets.filter(this.filterMetics);
+        param.targets = param.targets.filter(_.excludeMetricSuffix(filterMetics.metric));
         panelMetas[0].panels[0].targets = param.targets;
         panelMetas[1].panels[0].targets = _.cloneDeep(param.targets);
         _.each(panelMetas[1].panels[0].targets, function (target) {

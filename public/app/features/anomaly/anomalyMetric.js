@@ -9,114 +9,106 @@ define([
     module.controller('AnomalyMetric', function ($scope, healthSrv, $routeParams, $timeout, contextSrv) {
         var clusterId = $routeParams.clusterId;
         var panelMeta = {
-          title: "anomaly for metric",
-          height: '300px',
-          panels: [
-            {
-              title: '指标健康异常状况',
-              type: 'graph',
-              fill: 0,
-              height: "500px",
-              linewidth: 2,
-              helpInfo: {
+          title: '指标健康异常状况',
+          type: 'graph',
+          fill: 0,
+          height: "250px",
+          linewidth: 2,
+          helpInfo: {
                 info: true,
                 title:'说明信息',
-                context: [
-                  '1. 红点标注的标识异常点,根据指标历史规律判断指标的值出现异常',
-                  '2. prediction.max 和prediction.min 是通过历史规律预测得到的指标上限和指标下限, 帮助您判断未来指标的走势和返回',
-                ]
-              },
-              targets: [
-                {
-                  aggregator: "avg",
-                  metric: "",
-                  downsampleAggregator: "avg",
-                  downsampleInterval: "15m",
-                  tags: {host: ""}
-                },
-                {
-                  aggregator: "avg",
-                  metric: "",
-                  downsampleAggregator: "avg",
-                  downsampleInterval: "15m",
-                  tags: {host: ""}
-                },
-                {
-                  aggregator: "avg",
-                  metric: "",
-                  downsampleAggregator: "avg",
-                  downsampleInterval: "15m",
-                  tags: {host: ""}
-                },
-                {
-                  aggregator: "avg",
-                  metric: "",
-                  downsampleAggregator: "avg",
-                  downsampleInterval: "15m",
-                  tags: {host: ""}
-                },
-              ],
-              seriesOverrides: [
-                {
-                  alias: "",
-                  color: "#BF1B00",
-                  lines: false,
-                  pointradius: 3,
-                  points: true
-                },
-                {
-                  alias: "",
-                  color: "#E5AC0E",
-                  zindex: "-1"
-                },
-                {
-                  alias: "",
-                  color: "#BF1B00",
-                  zindex: "-1"
-                }
-              ],
-              legend: {
-                alignAsTable: true,
-                avg: true,
-                min: true,
-                max: true,
-                current: true,
-                total: true,
-                show: true,
-                values: true
-              }
+                context:
+                  '<p>1. 红点标注的标识异常点,根据指标历史规律判断指标的值出现异常</p>' +
+                  '<p>2. prediction.max 和prediction.min 是通过历史规律预测得到的指标上限和指标下限, 帮助您判断未来指标的走势和返回</p>',
+          },
+          targets: [
+            {
+              aggregator: "avg",
+              metric: "",
+              downsampleAggregator: "avg",
+              downsampleInterval: "15m",
+              tags: {host: ""}
+            },
+            {
+              aggregator: "avg",
+              metric: "",
+              downsampleAggregator: "avg",
+              downsampleInterval: "15m",
+              tags: {host: ""}
+            },
+            {
+              aggregator: "avg",
+              metric: "",
+              downsampleAggregator: "avg",
+              downsampleInterval: "15m",
+              tags: {host: ""}
+            },
+            {
+              aggregator: "avg",
+              metric: "",
+              downsampleAggregator: "avg",
+              downsampleInterval: "15m",
+              tags: {host: ""}
+            },
+          ],
+          seriesOverrides: [
+            {
+              alias: "",
+              color: "#BF1B00",
+              lines: false,
+              pointradius: 3,
+              points: true
+            },
+            {
+              alias: "",
+              color: "#E5AC0E",
+              zindex: "-1"
+            },
+            {
+              alias: "",
+              color: "#BF1B00",
+              zindex: "-1"
             }
-          ]
+          ],
+          legend: {
+            alignAsTable: true,
+            avg: true,
+            min: true,
+            max: true,
+            current: true,
+            total: true,
+            show: true,
+            values: true
+          }
         };
         $scope.init = function () {
           var anomalyList = healthSrv.anomalyMetricsData[clusterId];
-          var rows = [];
+          var panels = [];
           _.each(anomalyList.elements, function (element) {
-            rows.push(setPanelMetaHost(_.cloneDeep(panelMeta), element.metric, element.host))
+            panels.push(setPanelMetaHost(_.cloneDeep(panelMeta), element.metric, element.host))
           });
 
-          console.log(rows);
           $scope.initDashboard({
             meta: {canStar: false, canShare: false, canEdit: true, canSave: false},
             dashboard: {
               system: contextSrv.system,
               title: "健康管理",
               sharedCrosshair: true,
-              id: 123,
-              rows: rows,
+              id: Math.random(),
+              rows: [{
+                title: "anomaly for metric",
+                height: '250px',
+                panels: panels
+              }],
               time: {from: "now-1d", to: "now"}
             }
           }, $scope);
-
-          $timeout(function () {
-            $scope.$broadcast('render');
-          });
         };
 
         function setPanelMetaHost(panelDef, metric, hostname) {
           metric = _.getMetricName(metric);
           var alias = metric + ".anomaly{host=" + hostname + "}";
-          var panel = panelDef.panels[0];
+          var panel = panelDef;
           panel.title = metric + "指标异常情况";
           panel.targets[0].metric = metric;
           panel.targets[0].tags.host = hostname;
