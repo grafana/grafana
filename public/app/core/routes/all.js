@@ -114,7 +114,7 @@ define([
         templateUrl: 'app/features/anomaly/partials/anomaly.html',
         controller : 'AnomalyCtrl',
       })
-      .when('/anomaly/:metric*', {
+      .when('/anomaly/:clusterId', {
         templateUrl: 'app/features/anomaly/partials/anomalyMetric.html',
         controller : 'AnomalyMetric',
         reloadOnSearch: true
@@ -231,6 +231,10 @@ define([
       .when('/cluster', {
         templateUrl: 'app/features/cluster/partials/cluster.html',
         controller: 'ClusterCtrl',
+      })
+      .when('/integrate', {
+        templateUrl: 'app/features/analysis/partials/logIntegrate.html',
+        controller : 'LogIntegrateCtrl',
       })
       .otherwise({
         templateUrl: 'app/partials/error.html',
