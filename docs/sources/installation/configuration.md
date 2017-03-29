@@ -267,6 +267,10 @@ options are `Admin` and `Editor` and `Read Only Editor`. e.g. :
 
 Set to true to disable (hide) the login form, useful if you use OAuth, defaults to false.
 
+### disable_signout_menu
+
+Set to true to disable the signout link in the side menu. useful if you use auth.proxy, defaults to false.
+
 <hr>
 
 ## [auth.anonymous]
@@ -426,6 +430,11 @@ Set to `true` to enable LDAP integration (default: `false`)
 
 ### config_file
 Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
+
+### allow_sign_up
+
+Allow sign up should almost always be true (default) to allow new Grafana users to be created (if ldap authentication is ok). If set to
+false only pre-existing Grafana users will be able to login (if ldap authentication is ok).
 
 > For details on LDAP Configuration, go to the [LDAP Integration]({{< relref "ldap.md" >}}) page.
 

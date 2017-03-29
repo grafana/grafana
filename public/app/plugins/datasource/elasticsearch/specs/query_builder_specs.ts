@@ -249,6 +249,23 @@ describe('ElasticQueryBuilder', function() {
     expect(firstLevel.aggs["2"].derivative.buckets_path).to.be("3");
   });
 
+  it('with histogram', function() {
+    var query = builder.build({
+      metrics: [
+        {id: '1', type: 'count' },
+      ],
+      bucketAggs: [
+        {type: 'histogram', field: 'bytes', id: '3', settings: {interval: 10, min_doc_count: 2, missing: 5}}
+      ],
+    });
+
+    var firstLevel = query.aggs["3"];
+    expect(firstLevel.histogram.field).to.be('bytes');
+    expect(firstLevel.histogram.interval).to.be(10);
+    expect(firstLevel.histogram.min_doc_count).to.be(2);
+    expect(firstLevel.histogram.missing).to.be(5);
+  });
+
   it('with adhoc filters', function() {
     var query = builder.build({
       metrics: [{type: 'Count', id: '0'}],
