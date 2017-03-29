@@ -16,6 +16,7 @@ define([
       var metricsType = "/metrictype";
       this.anomalyMetricsData = [];
       var _this = this;
+      var dashboardId = -1;
       this.load = function () {
         return backendSrv.alertD({
           method: "get",
@@ -85,26 +86,33 @@ define([
       };
 
       this.transformMetricType = function (dashboard) {
+        var targets = {};
         var metricsTypeQueries = [];
         _.forEach(["/association", "/anomaly"], function (subString) {
-          if ($location.path().indexOf(subString) >= 0) {
+          if ($location.path().indexOf(subString) >= 0 && dashboardId != dashboard.id) {
             _.forEach(dashboard.rows, function (row) {
               _.forEach(row.panels, function (panel) {
                 _.forEach(panel.targets, function (target) {
-                  var q = _this.getMetricType(target.metric).then(function (response) {
-                    var types = response.data;
-                    if (types[target.metric] == "counter") {
-                      target.shouldComputeRate = true;
-                      target.downsampleAggregator = "max";
-                    } else if (types[target.metric] == "increment") {
-                      target.shouldComputeRate = false;
-                      target.downsampleAggregator = "sum";
-                    }
-                  });
-                  metricsTypeQueries.push(q);
+                  if (_.excludeMetricSuffix(target.metric)) {
+                    targets[target.metric] = target;
+                  }
                 });
               });
             });
+            var q = _this.getMetricsType(Object.keys(targets)).then(function (response) {
+              var types = response.data;
+              _.each(Object.keys(targets), function (key) {
+                if (types[key] == "counter") {
+                  targets[key].shouldComputeRate = true;
+                  targets[key].downsampleAggregator = "max";
+                } else if (types[key] == "increment") {
+                  targets[key].shouldComputeRate = false;
+                  targets[key].downsampleAggregator = "sum";
+                }
+              });
+            });
+            metricsTypeQueries.push(q);
+            dashboardId = dashboard.id;
           }
         });
         return $q.all(metricsTypeQueries);
