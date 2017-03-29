@@ -9,7 +9,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('ClusterCtrl', function ($scope, backendSrv, contextSrv, datasourceSrv) {
+    module.controller('ClusterCtrl', function ($scope, backendSrv) {
       $scope.init = function () {
         $scope.minX = -10;
         $scope.minY = -10;
@@ -41,9 +41,13 @@ define([
           }
         };
 
-        $.get('https://alert.cloudwiz.cn/correlation?token=f1d27ad686042380695b1e3e1f1826c0d907411b',function (res) {
-          $scope.initFlot(res);
+        backendSrv.alertD({
+          method: 'get',
+          url: '/correlation'
+        }).then(function(res) {
+          $scope.initFlot(res.data);
         });
+
       };
 
       $scope.setData = function (groups) {
@@ -96,11 +100,7 @@ define([
           }
         });
 
-        // now connect the two
-
         $("#cluster").bind("plotselected", function (event, ranges) {
-
-          // clamp the zooming to prevent eternal zoom
 
           if (ranges.xaxis.to - ranges.xaxis.from < 0.001) {
             ranges.xaxis.to = ranges.xaxis.from + 0.001;
@@ -110,34 +110,18 @@ define([
             ranges.yaxis.to = ranges.yaxis.from + 0.001;
           }
 
-          // do the zooming
-
           p = $.plot("#cluster", $scope.setData(metrics.groups),
             $.extend(true, {}, $scope.options, {
               xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to },
               yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to }
             })
           );
-
-          // don't fire event on the overview to prevent eternal loop
-
           overview.setSelection(ranges, true);
         });
 
         $("#overview").bind("plotselected", function (event, ranges) {
           p.setSelection(ranges);
         });
-
-        // $.each(p.getData(), function(i, el){
-        //   var pos = el.data[0];
-        //   var o = p.pointOffset({x: pos[0], y: pos[1]});
-        //   $('<div class="data-point-label">' + el.label + '</div>').css( {
-        //     position: 'absolute',
-        //     left: o.left + 4,
-        //     top: o.top - 43,
-        //     display: 'none'
-        //   }).appendTo(p.getPlaceholder()).fadeIn('slow');
-        // });
       };
       $scope.init();
     });
