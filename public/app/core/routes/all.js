@@ -228,6 +228,10 @@ define([
         controller: 'ReportCtrl',
         reloadOnSearch: false,
       })
+      .when('/integrate', {
+        templateUrl: 'app/features/analysis/partials/logIntegrate.html',
+        controller : 'LogIntegrateCtrl',
+      })
       .otherwise({
         templateUrl: 'app/partials/error.html',
         controller: 'ErrorCtrl'

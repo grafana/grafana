@@ -19,7 +19,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
 
   var module = angular.module('grafana.directives');
 
-  module.directive('grafanaGraph', function($rootScope, timeSrv, $controller) {
+  module.directive('grafanaGraph', function($rootScope, timeSrv, $controller, $location, integrateSrv) {
     return {
       restrict: 'A',
       template: '<div> </div>',
@@ -169,11 +169,10 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
 
         function bindClickHook(plot, eventHolder) {
           eventHolder.dblclick(function () {
-            var logParams = {};
-            logParams.targets = scope.panel.targets;
-            logParams.from = moment.utc(plot.getAxes().xaxis.min).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
-            logParams.to = moment.utc(plot.getAxes().xaxis.max).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
-            $controller('LogIntegrateCtrl', { $scope: $rootScope.mainScope}).init(logParams);
+            integrateSrv.format.targets = scope.panel.targets;
+            integrateSrv.format.from = moment.utc(plot.getAxes().xaxis.min).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+            integrateSrv.format.to = moment.utc(plot.getAxes().xaxis.max).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+            scope.$apply(function() { $location.path("/integrate"); });
           });
         }
         // Function for rendering panel

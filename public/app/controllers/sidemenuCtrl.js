@@ -204,6 +204,7 @@ function (angular, _, $, config) {
                   || currentPath.indexOf('/logs') == 0
                   || currentPath.indexOf('/decompose') == 0
                   || currentPath.indexOf('/health') == 0
+                  || currentPath.indexOf('/integrate') == 0
       ) {
         if (contextSrv.system == 0){
           $location.url("/");
