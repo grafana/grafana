@@ -18,5 +18,6 @@ define([
   './summary/serviceCtrl',
   './summary/customerCtrl',
   './report/reportCtrl',
+  './cluster/ClusterCtrl',
   './panelinfo/panelInfoEditCtrl'
 ], function () {});

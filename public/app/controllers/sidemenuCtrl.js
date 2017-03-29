@@ -169,6 +169,12 @@ function (angular, _, $, config) {
         href: $scope.getUrl("/anomaly")
       });
 
+      $scope.mainLinks.push({
+        text: "指标聚类分析",
+        icon: "fa fa-fw fa-area-chart",
+        href: $scope.getUrl("/cluster")
+      });
+
       // sinoRails would need this
       // $scope.mainLinks.push({
       //   text: "长期分析预测",
@@ -204,6 +210,7 @@ function (angular, _, $, config) {
                   || currentPath.indexOf('/logs') == 0
                   || currentPath.indexOf('/decompose') == 0
                   || currentPath.indexOf('/health') == 0
+                  || currentPath.indexOf('/cluster') == 0
                   || currentPath.indexOf('/integrate') == 0
       ) {
         if (contextSrv.system == 0){

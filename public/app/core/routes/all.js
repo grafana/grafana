@@ -228,6 +228,10 @@ define([
         controller: 'ReportCtrl',
         reloadOnSearch: false,
       })
+      .when('/cluster', {
+        templateUrl: 'app/features/cluster/partials/cluster.html',
+        controller: 'ClusterCtrl',
+      })
       .when('/integrate', {
         templateUrl: 'app/features/analysis/partials/logIntegrate.html',
         controller : 'LogIntegrateCtrl',
