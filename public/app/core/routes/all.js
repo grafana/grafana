@@ -114,7 +114,7 @@ define([
         templateUrl: 'app/features/anomaly/partials/anomaly.html',
         controller : 'AnomalyCtrl',
       })
-      .when('/anomaly/:metric*', {
+      .when('/anomaly/:clusterId', {
         templateUrl: 'app/features/anomaly/partials/anomalyMetric.html',
         controller : 'AnomalyMetric',
         reloadOnSearch: true

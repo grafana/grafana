@@ -7,7 +7,7 @@ define([
 
     var module = angular.module('grafana.controllers');
     module.controller('AnomalyMetric', function ($scope, healthSrv, $routeParams, $timeout, contextSrv) {
-        var metricName = $routeParams.metric;
+        var clusterId = $routeParams.clusterId;
         var panelMeta = {
           title: "anomaly for metric",
           height: '300px',
@@ -89,23 +89,21 @@ define([
           ]
         };
         $scope.init = function () {
-          var anomalyList = healthSrv.anomalyMetricsData;
-          var hostList = getHostList(anomalyList, metricName);
-          $scope.anomalyList = anomalyList;
-
-          _.each(anomalyList, function (host) {
-            if (host.metric === metricName) {
-              $scope.hosts = host.hostHealth;
-            }
+          var anomalyList = healthSrv.anomalyMetricsData[clusterId];
+          var rows = [];
+          _.each(anomalyList.elements, function (element) {
+            rows.push(setPanelMetaHost(_.cloneDeep(panelMeta), element.metric, element.host))
           });
 
+          console.log(rows);
           $scope.initDashboard({
             meta: {canStar: false, canShare: false, canEdit: true, canSave: false},
             dashboard: {
               system: contextSrv.system,
               title: "健康管理",
-              id: metricName,
-              rows: [setPanelMetaHost(panelMeta, metricName, hostList[0])],
+              sharedCrosshair: true,
+              id: 123,
+              rows: rows,
               time: {from: "now-1d", to: "now"}
             }
           }, $scope);
@@ -114,22 +112,6 @@ define([
             $scope.$broadcast('render');
           });
         };
-
-        $scope.changeHost = function (host) {
-          $scope.dashboard.rows = [setPanelMetaHost($scope.dashboard.rows[0], metricName, host)];
-          $scope.dashboard.meta.canSave = false;
-          $scope.broadcastRefresh();
-        };
-
-        function getHostList(anomalyList, metricName) {
-          var hosts = [];
-          _.each(anomalyList, function (metric) {
-            if (metric.metric === metricName) {
-              hosts = Object.keys(metric.hostHealth);
-            }
-          });
-          return hosts;
-        }
 
         function setPanelMetaHost(panelDef, metric, hostname) {
           metric = _.getMetricName(metric);
@@ -149,7 +131,7 @@ define([
           panel.seriesOverrides[1].alias = metric + ".prediction.min{host=" + hostname + "}";
           panel.seriesOverrides[2].alias = metric + ".prediction.max{host=" + hostname + "}";
 
-          return panelMeta;
+          return panelDef;
         }
 
         $scope.init();

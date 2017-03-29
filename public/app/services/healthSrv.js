@@ -9,7 +9,7 @@ define([
     var module = angular.module('grafana.services');
 
     module.service('healthSrv', function ($http, backendSrv, $location, $q) {
-      var anomalyListUrl = "/anomaly";
+      var anomalyListUrl = "/anomaly?by_groups=true";
       var excludeAnomaly = "/anomaly/exclude";
       var includeAnomaly = "/anomaly/include";
       var mainHealthList = "/healthsummary";
@@ -21,7 +21,6 @@ define([
           method: "get",
           url: anomalyListUrl
         }).then(function onSuccess(response) {
-          _this.anomalyMetricsData = response.data.includedMetricHealths.concat(response.data.excludedMetricHealths);
           return response.data;
         }, function onFailed(response) {
           return response;
@@ -36,6 +35,17 @@ define([
             metric: metricName
           }
         });
+      };
+
+      this.aggregateHealths = function (metricHostClusters) {
+        _.each(metricHostClusters, function (cluster) {
+          cluster.health = 0;
+          for (var i = 0; i < cluster.elements.length; i++) {
+            cluster.health += cluster.elements[i].health;
+          }
+          cluster.health = Math.floor(cluster.health / cluster.numElements);
+        });
+        return metricHostClusters;
       };
 
       this.include = function (metricName) {
