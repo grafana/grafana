@@ -151,11 +151,10 @@ function (angular, _, config) {
       };
 
       $scope.isShowInfo = function (event) {
-        var helpBody = $('.help-info');
         if (event.type === "mouseenter") {
-          helpBody.addClass('active');
+          $(event.target).parent().parent().parent().siblings().last().addClass('active');
         } else {
-          helpBody.removeClass('active');
+          $(event.target).removeClass('active');
         }
       };
 
