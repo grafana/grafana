@@ -215,7 +215,7 @@ define([
         if (_.isNull(prefix)) {
           return "*"
         }
-        if (/(iostat|cpu|df|net|proc)/.test(prefix)) {
+        if (/(iostat|cpu|df|net|proc|ssh_failed)/.test(prefix)) {
           return "system"
         }
         return prefix;

@@ -169,10 +169,16 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
 
         function bindClickHook(plot, eventHolder) {
           eventHolder.dblclick(function () {
+            //TODO host would be undefined
+            if (_.isNull(scope.panel.targets[0].metric) || _.isNull(scope.panel.targets[0].tags.host)) {
+              return;
+            }
             integrateSrv.format.targets = scope.panel.targets;
             integrateSrv.format.from = moment.utc(plot.getAxes().xaxis.min).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
             integrateSrv.format.to = moment.utc(plot.getAxes().xaxis.max).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
-            scope.$apply(function() { $location.path("/integrate"); });
+            scope.$apply(function () {
+              $location.path("/integrate");
+            });
           });
         }
         // Function for rendering panel
