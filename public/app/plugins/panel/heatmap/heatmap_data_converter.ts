@@ -304,7 +304,7 @@ function convertToLogScaleValueBuckets(xBucket, yBucketSplitFactor, logBase) {
  * @return {Object}               Merged buckets.
  */
 function mergeBuckets(seriesBuckets) {
-  let mergedBuckets = {};
+  let mergedBuckets: any = {};
   _.forEach(seriesBuckets, (seriesBucket, index) => {
     if (index === 0) {
       mergedBuckets = seriesBucket;
