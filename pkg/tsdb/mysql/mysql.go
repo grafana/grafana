@@ -3,10 +3,8 @@ package mysql
 import (
 	"context"
 	"fmt"
-	"strings"
 	"sync"
 
-	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
@@ -82,79 +80,79 @@ func (e *MysqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, co
 	}
 }
 
-func getData(db *core.DB, req *sqlDataRequest) (interface{}, error) {
-	queries := strings.Split(req.Query, ";")
-
-	data := dataStruct{}
-	data.Results = make([]resultsStruct, 1)
-	data.Results[0].Series = make([]seriesStruct, 0)
-
-	for i := range queries {
-		if queries[i] == "" {
-			continue
-		}
-
-		rows, err := db.Query(queries[i])
-		if err != nil {
-			return nil, err
-		}
-		defer rows.Close()
-
-		name := fmt.Sprintf("table_%d", i+1)
-		series, err := arrangeResult(rows, name)
-		if err != nil {
-			return nil, err
-		}
-		data.Results[0].Series = append(data.Results[0].Series, series.(seriesStruct))
-	}
-
-	return data, nil
-}
-
-func arrangeResult(rows *core.Rows, name string) (interface{}, error) {
-	columnNames, err := rows.Columns()
-
-	series := seriesStruct{}
-	series.Columns = columnNames
-	series.Name = name
-
-	for rows.Next() {
-		columnValues := make([]interface{}, len(columnNames))
-
-		err = rows.ScanSlice(&columnValues)
-		if err != nil {
-			return nil, err
-		}
-
-		// bytes -> string
-		for i := range columnValues {
-			switch columnValues[i].(type) {
-			case []byte:
-				columnValues[i] = fmt.Sprintf("%s", columnValues[i])
-			}
-		}
-
-		series.Values = append(series.Values, columnValues)
-	}
-
-	return series, err
-}
-
-type sqlDataRequest struct {
-	Query string `json:"query"`
-	Body  []byte `json:"-"`
-}
-
-type seriesStruct struct {
-	Columns []string        `json:"columns"`
-	Name    string          `json:"name"`
-	Values  [][]interface{} `json:"values"`
-}
-
-type resultsStruct struct {
-	Series []seriesStruct `json:"series"`
-}
-
-type dataStruct struct {
-	Results []resultsStruct `json:"results"`
-}
+// func getData(db *core.DB, req *sqlDataRequest) (interface{}, error) {
+// 	queries := strings.Split(req.Query, ";")
+//
+// 	data := dataStruct{}
+// 	data.Results = make([]resultsStruct, 1)
+// 	data.Results[0].Series = make([]seriesStruct, 0)
+//
+// 	for i := range queries {
+// 		if queries[i] == "" {
+// 			continue
+// 		}
+//
+// 		rows, err := db.Query(queries[i])
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		defer rows.Close()
+//
+// 		name := fmt.Sprintf("table_%d", i+1)
+// 		series, err := arrangeResult(rows, name)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		data.Results[0].Series = append(data.Results[0].Series, series.(seriesStruct))
+// 	}
+//
+// 	return data, nil
+// }
+//
+// func arrangeResult(rows *core.Rows, name string) (interface{}, error) {
+// 	columnNames, err := rows.Columns()
+//
+// 	series := seriesStruct{}
+// 	series.Columns = columnNames
+// 	series.Name = name
+//
+// 	for rows.Next() {
+// 		columnValues := make([]interface{}, len(columnNames))
+//
+// 		err = rows.ScanSlice(&columnValues)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+//
+// 		// bytes -> string
+// 		for i := range columnValues {
+// 			switch columnValues[i].(type) {
+// 			case []byte:
+// 				columnValues[i] = fmt.Sprintf("%s", columnValues[i])
+// 			}
+// 		}
+//
+// 		series.Values = append(series.Values, columnValues)
+// 	}
+//
+// 	return series, err
+// }
+//
+// type sqlDataRequest struct {
+// 	Query string `json:"query"`
+// 	Body  []byte `json:"-"`
+// }
+//
+// type seriesStruct struct {
+// 	Columns []string        `json:"columns"`
+// 	Name    string          `json:"name"`
+// 	Values  [][]interface{} `json:"values"`
+// }
+//
+// type resultsStruct struct {
+// 	Series []seriesStruct `json:"series"`
+// }
+//
+// type dataStruct struct {
+// 	Results []resultsStruct `json:"results"`
+// }
