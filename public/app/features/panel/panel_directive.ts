@@ -156,11 +156,21 @@ module.directive('grafanaPanel', function($rootScope, $document) {
             content: function() {
               return ctrl.getInfoContent({mode: 'tooltip'});
             },
-            position: 'top center',
             classes: ctrl.error ? 'drop-error' : 'drop-help',
             openOn: 'hover',
             hoverOpenDelay: 100,
-            constrainToScrollParent: false,
+            remove: true,
+            tetherOptions: {
+              attachment: 'bottom left',
+              targetAttachment: 'top left',
+              constraints: [
+                {
+                  to: 'window',
+                  attachment: 'together',
+                  pin: true
+                }
+              ],
+            }
           });
         }
       }
@@ -184,6 +194,10 @@ module.directive('grafanaPanel', function($rootScope, $document) {
       const refreshOnScroll = function () {
         if (ctrl.skippedLastRefresh) {
           ctrl.refresh();
+        }
+
+        if (infoDrop) {
+          infoDrop.position();
         }
       };
 
