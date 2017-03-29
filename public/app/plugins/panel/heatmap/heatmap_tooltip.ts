@@ -93,7 +93,7 @@ export class HeatmapTooltip {
       valuesNumber = yData.values.length;
       tooltipHtml += `<div>
         bucket: <b>${boundBottom} - ${boundTop}</b> <br>
-        values: <b>${valuesNumber}</b> <br>
+        count: <b>${valuesNumber}</b> <br>
       </div>`;
 
       if (this.panel.tooltip.seriesStat && yData.seriesStat) {
