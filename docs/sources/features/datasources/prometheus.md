@@ -3,6 +3,7 @@ title = "Using Prometheus in Grafana"
 description = "Guide for using Prometheus in Grafana"
 keywords = ["grafana", "prometheus", "guide"]
 type = "docs"
+aliases = ["/datasources/prometheus"]
 [menu.docs]
 name = "Prometheus"
 parent = "datasources"
@@ -15,7 +16,8 @@ weight = 2
 Grafana includes support for Prometheus Datasources. While the process of adding the datasource is similar to adding a Graphite or OpenTSDB datasource type, Prometheus does have a few different options for building queries.
 
 ## Adding the data source to Grafana
-![](/img/v2/add_Prometheus.png)
+
+![](/img/docs/v2/add_Prometheus.png)
 
 1. Open the side menu by clicking the the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
@@ -48,6 +50,7 @@ For details on Prometheus metric queries check out the Prometheus documentation
 - [Query Metrics - Prometheus documentation](http://prometheus.io/docs/querying/basics/).
 
 ## Templated queries
+
 Prometheus Datasource Plugin provides the following functions in `Variables values query` field in Templating Editor to query `metric names` and `labels names` on the Prometheus server.
 
 Name | Description
@@ -64,8 +67,8 @@ For details of `metric names` & `label names`, and `label values`, please refer 
 You can create a template variable in Grafana and have that variable filled with values from any Prometheus metric exploration query.
 You can then use this variable in your Prometheus metric queries.
 
-For example you can have a variable that contains all values for label `hostname` if you specify a query like this
-in the templating edit view.
+For example you can have a variable that contains all values for label `hostname` if you specify a query like this in the templating edit view.
+
 ```sql
 label_values(hostname)
 ```
@@ -74,7 +77,7 @@ You can also use raw queries & regular expressions to extract anything you might
 
 ### Using templated variables in queries
 
-When the `Include All` option or `Multi-Value` option is enabled, Grafana converts the labels from plain text to a regex compatible string. 
+When the `Include All` option or `Multi-Value` option is enabled, Grafana converts the labels from plain text to a regex compatible string.
 Which means you have to use `=~` instead of `=` in your Prometheus queries. For example `ALERTS{instance=~$instance}` instead of `ALERTS{instance=$instance}`.
 
-![](/img/v2/prometheus_templating.png)
+![](/img/docs/v2/prometheus_templating.png)

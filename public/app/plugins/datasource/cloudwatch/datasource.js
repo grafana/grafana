@@ -4,9 +4,10 @@ define([
   'moment',
   'app/core/utils/datemath',
   'app/core/utils/kbn',
+  'app/features/templating/variable',
   './annotation_query',
 ],
-function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
+function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnotationQuery) {
   'use strict';
 
   /** @ngInject */
@@ -390,7 +391,7 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
       });
     }
 
-    this.getExpandedVariables = function(target, dimensionKey, variable) {
+    this.getExpandedVariables = function(target, dimensionKey, variable, templateSrv) {
       /* if the all checkbox is marked we should add all values to the targets */
       var allSelected = _.find(variable.options, {'selected': true, 'text': 'All'});
       return _.chain(variable.options)
@@ -403,13 +404,11 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
       })
       .map(function(v) {
         var t = angular.copy(target);
-        t.dimensions[dimensionKey] = v.value;
+        var scopedVar = {};
+        scopedVar[variable.name] = v;
+        t.dimensions[dimensionKey] = templateSrv.replace(t.dimensions[dimensionKey], scopedVar);
         return t;
       }).value();
-    };
-
-    this.containsVariable = function (str, variableName) {
-      return str.indexOf('$' + variableName) !== -1;
     };
 
     this.expandTemplateVariable = function(targets, scopedVars, templateSrv) {
@@ -421,10 +420,13 @@ function (angular, _, moment, dateMath, kbn, CloudWatchAnnotationQuery) {
         });
 
         if (dimensionKey) {
-          var variable = _.find(templateSrv.variables, function(variable) {
-            return self.containsVariable(target.dimensions[dimensionKey], variable.name);
+          var multiVariable = _.find(templateSrv.variables, function(variable) {
+            return templatingVariable.containsVariable(target.dimensions[dimensionKey], variable.name) && variable.multi;
           });
-          return self.getExpandedVariables(target, dimensionKey, variable);
+          var variable = _.find(templateSrv.variables, function(variable) {
+            return templatingVariable.containsVariable(target.dimensions[dimensionKey], variable.name);
+          });
+          return self.getExpandedVariables(target, dimensionKey, multiVariable || variable, templateSrv);
         } else {
           return [target];
         }

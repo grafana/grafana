@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
@@ -114,6 +115,13 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 	}
 
 	proxyPath := c.Params("*")
+
+	if ds.Type == m.DS_PROMETHEUS {
+		if c.Req.Request.Method != http.MethodGet || !strings.HasPrefix(proxyPath, "api/") {
+			c.JsonApiErr(403, "GET is only allowed on proxied Prometheus datasource", nil)
+			return
+		}
+	}
 
 	if ds.Type == m.DS_ES {
 		if c.Req.Request.Method == "DELETE" {

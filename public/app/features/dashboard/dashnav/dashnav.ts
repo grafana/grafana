@@ -106,6 +106,7 @@ export class DashNavCtrl {
         confirmText: confirmText,
         yesText: 'Delete',
         onConfirm: function() {
+          $scope.dashboardMeta.canSave = false;
           $scope.deleteDashboardConfirmed();
         }
       });

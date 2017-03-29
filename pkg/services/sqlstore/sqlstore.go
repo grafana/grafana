@@ -29,6 +29,8 @@ type DatabaseConfig struct {
 	ClientKeyPath                              string
 	ClientCertPath                             string
 	ServerCertName                             string
+	MaxOpenConn                                int
+	MaxIdleConn                                int
 }
 
 var (
@@ -112,7 +114,7 @@ func getEngine() (*xorm.Engine, error) {
 			protocol = "unix"
 		}
 
-		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?charset=utf8",
+		cnnstr = fmt.Sprintf("%s:%s@%s(%s)/%s?charset=utf8mb4",
 			DbCfg.User, DbCfg.Pwd, protocol, DbCfg.Host, DbCfg.Name)
 
 		if DbCfg.SslMode == "true" || DbCfg.SslMode == "skip-verify" {
@@ -150,7 +152,17 @@ func getEngine() (*xorm.Engine, error) {
 	}
 
 	sqlog.Info("Initializing DB", "dbtype", DbCfg.Type)
-	return xorm.NewEngine(DbCfg.Type, cnnstr)
+	engine, err := xorm.NewEngine(DbCfg.Type, cnnstr)
+	if err != nil {
+		return nil, err
+	} else {
+		engine.SetMaxOpenConns(DbCfg.MaxOpenConn)
+		engine.SetMaxIdleConns(DbCfg.MaxIdleConn)
+		// engine.SetLogger(NewXormLogger(log.LvlInfo, log.New("sqlstore.xorm")))
+		// engine.ShowSQL = true
+		// engine.ShowInfo = true
+	}
+	return engine, nil
 }
 
 func LoadConfig() {
@@ -177,6 +189,8 @@ func LoadConfig() {
 		DbCfg.Host = sec.Key("host").String()
 		DbCfg.Name = sec.Key("name").String()
 		DbCfg.User = sec.Key("user").String()
+		DbCfg.MaxOpenConn = sec.Key("max_open_conn").MustInt(0)
+		DbCfg.MaxIdleConn = sec.Key("max_idle_conn").MustInt(0)
 		if len(DbCfg.Pwd) == 0 {
 			DbCfg.Pwd = sec.Key("password").String()
 		}

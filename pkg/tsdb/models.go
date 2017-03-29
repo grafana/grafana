@@ -51,8 +51,9 @@ type QueryResult struct {
 }
 
 type TimeSeries struct {
-	Name   string           `json:"name"`
-	Points TimeSeriesPoints `json:"points"`
+	Name   string            `json:"name"`
+	Points TimeSeriesPoints  `json:"points"`
+	Tags   map[string]string `json:"tags"`
 }
 
 type TimePoint [2]null.Float

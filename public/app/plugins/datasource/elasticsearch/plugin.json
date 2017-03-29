@@ -7,12 +7,12 @@
     "description": "Elasticsearch Data Source for Grafana",
     "author": {
       "name": "Grafana Project",
-      "url": "http://grafana.org"
+      "url": "https://grafana.com"
     },
     "keywords": ["elasticsearch"],
     "logos": {
-      "small": "img/logo_large.png",
-      "large": "img/logo_large.png"
+      "small": "img/elasticsearch.svg",
+      "large": "img/elasticsearch.svg"
     },
     "links": [
       {"name": "elastic.co", "url": "https://www.elastic.co/products/elasticsearch"}

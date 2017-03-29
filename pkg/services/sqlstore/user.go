@@ -6,6 +6,8 @@ import (
 
 	"github.com/go-xorm/xorm"
 
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/events"
 	m "github.com/grafana/grafana/pkg/models"
@@ -260,6 +262,20 @@ func ChangeUserPassword(cmd *m.ChangeUserPasswordCommand) error {
 }
 
 func SetUsingOrg(cmd *m.SetUsingOrgCommand) error {
+	getOrgsForUserCmd := &m.GetUserOrgListQuery{UserId: cmd.UserId}
+	GetUserOrgList(getOrgsForUserCmd)
+
+	valid := false
+	for _, other := range getOrgsForUserCmd.Result {
+		if other.OrgId == cmd.OrgId {
+			valid = true
+		}
+	}
+
+	if !valid {
+		return fmt.Errorf("user does not belong ot org")
+	}
+
 	return inTransaction(func(sess *xorm.Session) error {
 		user := m.User{}
 		sess.Id(cmd.UserId).Get(&user)
@@ -344,12 +360,30 @@ func GetSignedInUser(query *m.GetSignedInUserQuery) error {
 }
 
 func SearchUsers(query *m.SearchUsersQuery) error {
-	query.Result = make([]*m.UserSearchHitDTO, 0)
+	query.Result = m.SearchUserQueryResult{
+		Users: make([]*m.UserSearchHitDTO, 0),
+	}
+	queryWithWildcards := "%" + query.Query + "%"
+
 	sess := x.Table("user")
-	sess.Where("email LIKE ?", query.Query+"%")
-	sess.Limit(query.Limit, query.Limit*query.Page)
+	if query.Query != "" {
+		sess.Where("email LIKE ? OR name LIKE ? OR login like ?", queryWithWildcards, queryWithWildcards, queryWithWildcards)
+	}
+	offset := query.Limit * (query.Page - 1)
+	sess.Limit(query.Limit, offset)
 	sess.Cols("id", "email", "name", "login", "is_admin")
-	err := sess.Find(&query.Result)
+	if err := sess.Find(&query.Result.Users); err != nil {
+		return err
+	}
+
+	user := m.User{}
+
+	countSess := x.Table("user")
+	if query.Query != "" {
+		countSess.Where("email LIKE ? OR name LIKE ? OR login like ?", queryWithWildcards, queryWithWildcards, queryWithWildcards)
+	}
+	count, err := countSess.Count(&user)
+	query.Result.TotalCount = count
 	return err
 }
 

@@ -1,12 +1,7 @@
-<query-editor-row query-ctrl="ctrl" can-collapse="false">
+<query-editor-row query-ctrl="ctrl" can-collapse="true" has-text-edit-mode="true">
 	<div class="gf-form-inline">
 		<div class="gf-form gf-form--grow">
-			<label class="gf-form-label width-8">Query</label>
-			<input type="text" class="gf-form-input" ng-model="ctrl.target.expr" spellcheck='false' placeholder="query expression" data-min-length=0 data-items=100 ng-model-onblur ng-change="ctrl.refreshMetricData()">
-		</div>
-		<div class="gf-form max-width-22">
-			<label class="gf-form-label">Metric lookup</label>
-			<input type="text" class="gf-form-input" ng-model="ctrl.target.metric" spellcheck='false' bs-typeahead="ctrl.suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100>
+			<textarea rows="3" class="gf-form-input" ng-model="ctrl.target.expr" spellcheck="false" placeholder="query expression" data-min-length=0 data-items=100 ng-model-onblur ng-change="ctrl.refreshMetricData()"></textarea>
 		</div>
 	</div>
 
@@ -39,6 +34,14 @@
 					ng-change="ctrl.refreshMetricData()">
 				</select>
 			</div>
+		</div>
+
+		<div class="gf-form max-width-22">
+			<label class="gf-form-label">Metric lookup</label>
+			<input type="text" class="gf-form-input" ng-model="ctrl.target.metric" spellcheck='false' bs-typeahead="ctrl.suggestMetrics" placeholder="metric name" data-min-length=0 data-items=100>
+		</div>
+
+		<div class="gf-form">
 			<label class="gf-form-label">
 				<a href="{{ctrl.linkToPrometheus}}" target="_blank" bs-tooltip="'Link to Graph in Prometheus'">
 					<i class="fa fa-share-square-o"></i>

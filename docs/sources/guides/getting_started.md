@@ -3,6 +3,7 @@ title = "Getting Started"
 description = "Getting started with Grafana guide"
 keywords = ["grafana", "intro", "guide", "started"]
 type = "docs"
+aliases = ["/guides/gettingstarted"]
 [menu.docs]
 name = "Getting Started"
 identifier = "getting_started_guide"
@@ -10,12 +11,15 @@ parent = "guides"
 +++
 
 # Getting started
-This guide will help you get started and acquainted with Grafana. It assumes you have a working Grafana server up and running and have added at least one [Data Source](/datasources/overview).
+
+This guide will help you get started and acquainted with Grafana. It assumes you have a working Grafana server up and running and have added at least one [Data Source](/features/datasources/).
 
 ## Beginner guides
+
 Watch the 10min [beginners guide to building dashboards](https://www.youtube.com/watch?v=sKNZMtoSHN4&index=7&list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2) to get a quick intro to setting up Dashboards and Panels.
 
 ## Basic Concepts
+
 Read the [Basic Concepts](/guides/basic_concepts) document to get a crash course in key Grafana concepts.
 
 ### Top header
@@ -34,7 +38,8 @@ The image above shows you the top header for a Dashboard.
 6. Settings: Manage Dashboard settings and features such as Templating and Annotations.
 
 ## Dashboards, Panels, Rows, the building blocks of Grafana...
-Dashboards are at the core of what Grafana is all about. Dashboards are composed of individual Panels arranged on a number of Rows. Grafana ships with a variety of Panels. Grafana makes it easy to construct the right queries, and customize the display properties so that you can create the perfect Dashboard for your need. Each Panel can interact with data from any configured Grafana Data Source (currently InfluxDB, Graphite, OpenTSDB, and KairosDB). The [Basic Concepts](/guides/basic_concepts) guide explores these key ideas in detail.
+
+Dashboards are at the core of what Grafana is all about. Dashboards are composed of individual Panels arranged on a number of Rows. Grafana ships with a variety of Panels. Grafana makes it easy to construct the right queries, and customize the display properties so that you can create the perfect Dashboard for your need. Each Panel can interact with data from any configured Grafana Data Source (currently InfluxDB, Graphite, OpenTSDB, Prometheus and Cloudwatch). The [Basic Concepts](/guides/basic_concepts) guide explores these key ideas in detail.
 
 
 ## Adding & Editing Graphs and Panels

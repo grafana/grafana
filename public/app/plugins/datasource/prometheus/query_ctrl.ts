@@ -75,6 +75,10 @@ class PrometheusQueryCtrl extends QueryCtrl {
     var hash = encodeURIComponent(JSON.stringify([expr]));
     this.linkToPrometheus = this.datasource.directUrl + '/graph#' + hash;
   }
+
+  getCollapsedText() {
+    return this.target.expr;
+  }
 }
 
 export {PrometheusQueryCtrl};

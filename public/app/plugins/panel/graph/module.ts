@@ -26,8 +26,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   alertState: any;
 
   annotationsPromise: any;
-  datapointsCount: number;
-  datapointsOutside: boolean;
+  dataWarning: any;
   colors: any = [];
   subTabIndex: number;
   processor: DataProcessor;
@@ -178,14 +177,26 @@ class GraphCtrl extends MetricsPanelCtrl {
     this.dataList = dataList;
     this.seriesList = this.processor.getSeriesList({dataList: dataList, range: this.range});
 
-    this.datapointsCount = this.seriesList.reduce((prev, series) => {
+    this.dataWarning = null;
+    const datapointsCount = this.seriesList.reduce((prev, series) => {
       return prev + series.datapoints.length;
     }, 0);
 
-    this.datapointsOutside = false;
-    for (let series of this.seriesList) {
-      if (series.isOutsideRange) {
-        this.datapointsOutside = true;
+    if (datapointsCount === 0) {
+      this.dataWarning = {
+        title: 'No data points',
+        tip: 'No datapoints returned from data query'
+      };
+    } else {
+
+      for (let series of this.seriesList) {
+        if (series.isOutsideRange) {
+          this.dataWarning = {
+            title: 'Data points outside time range',
+            tip: 'Can be caused by timezone mismatch or missing time filter in query',
+          };
+          break;
+        }
       }
     }
 

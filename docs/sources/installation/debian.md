@@ -15,14 +15,14 @@ weight = 1
 
 Description | Download
 ------------ | -------------
-Stable for Debian-based Linux | [4.1.1 (x86-64 deb)](https://grafanarel.s3.amazonaws.com/builds/grafana_4.1.1-1484211277_amd64.deb)
+Stable for Debian-based Linux | [4.2.0 (x86-64 deb)](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.2.0_amd64.deb)
 
 ## Install Stable
 
 ```
-$ wget https://grafanarel.s3.amazonaws.com/builds/grafana_4.1.1-1484211277_amd64.deb
+$ wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.2.0_amd64.deb
 $ sudo apt-get install -y adduser libfontconfig
-$ sudo dpkg -i grafana_4.1.1-1484211277_amd64.deb
+$ sudo dpkg -i grafana_4.2.0_amd64.deb
 ```
 
 ## APT Repository
@@ -114,14 +114,14 @@ those options.
 
 ### Adding data sources
 
-- [Graphite]({{< relref "datasources/graphite.md" >}})
-- [InfluxDB]({{< relref "datasources/influxdb.md" >}})
-- [OpenTSDB]({{< relref "datasources/opentsdb.md" >}})
-- [Prometheus]({{< relref "datasources/prometheus.md" >}})
+- [Graphite]({{< relref "features/datasources/graphite.md" >}})
+- [InfluxDB]({{< relref "features/datasources/influxdb.md" >}})
+- [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
+- [Prometheus]({{< relref "features/datasources/prometheus.md" >}})
 
 ## Installing from binary tar file
 
-Download [the latest `.tar.gz` file](http://grafana.org/download) and
+Download [the latest `.tar.gz` file](https://grafana.com/get) and
 extract it.  This will extract into a folder named after the version you
 downloaded. This folder contains all files required to run Grafana.  There are
 no init scripts or install scripts in this package.

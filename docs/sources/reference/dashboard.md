@@ -66,11 +66,11 @@ Each field in the dashboard JSON is explained below with its usage:
 | **editable** | whether a dashboard is editable or not |
 | **hideControls** | whether row controls on the left in green are hidden or not |
 | **graphTooltip** | TODO |
-| **rows** | row metadata, see [rows section](/docs/sources/reference/dashboard.md/#rows) for details |
+| **rows** | row metadata, see [rows section](#rows) for details |
 | **time** | time range for dashboard, i.e. last 6 hours, last 7 days, etc |
-| **timepicker** | timepicker metadata, see [timepicker section](/docs/sources/reference/dashboard.md/#timepicker) for details |
-| **templating** | templating metadata, see [templating section](/docs/sources/reference/dashboard.md/#templating) for details |
-| **annotations** | annotations metadata, see [annotations section](/docs/sources/reference/dashboard.md/#annotations) for details |
+| **timepicker** | timepicker metadata, see [timepicker section](#timepicker) for details |
+| **templating** | templating metadata, see [templating section](#templating) for details |
+| **annotations** | annotations metadata, see [annotations section](#annotations) for details |
 | **schemaVersion** | TODO |
 | **version** | TODO |
 | **links** | TODO |
@@ -79,7 +79,7 @@ Each field in the dashboard JSON is explained below with its usage:
 
 `rows` field consists of an array of JSON object representing each row in a dashboard, such as shown below:
 
-```
+```json
  "rows": [
     {
       "collapse": false,
@@ -105,14 +105,14 @@ Usage of the fields is explained below:
 | **collapse** | whether row is collapsed or not |
 | **editable** | whether a row is editable or not |
 | **height** | height of the row in pixels |
-| **panels** | panels metadata, see [panels section](/docs/sources/reference/dashboard.md/#panels) for details |
+| **panels** | panels metadata, see [panels section](#panels) for details |
 | **title** | title of row |
 
 #### panels
 
 Panels are the building blocks a dashboard. It consists of datasource queries, type of graphs, aliases, etc. Panel JSON consists of an array of JSON objects, each representing a different panel in a row. Most of the fields are common for all panels but some fields depends on the panel type. Following is an example of panel JSON representing a `graph` panel type:
 
-```
+```json
 "panels": [
         {
           "aliasColors": {},
@@ -276,7 +276,7 @@ Usage of each field is explained below:
 
 Description: TODO
 
-```
+```json
 "timepicker": {
     "collapse": false,
     "enable": true,
@@ -330,7 +330,7 @@ Usage of the fields is explained below:
 
 `templating` fields contains array of template variables with their saved values along with some other metadata, for example:
 
-```
+```json
  "templating": {
     "enable": true,
     "list": [

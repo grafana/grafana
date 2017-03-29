@@ -96,6 +96,7 @@ var (
 	LoginHint          string
 	DefaultTheme       string
 	DisableLoginForm   bool
+	DisableSignoutMenu bool
 
 	// Http auth
 	AdminUser     string
@@ -455,22 +456,6 @@ func validateStaticRootPath() error {
 	return fmt.Errorf("Failed to detect generated css or javascript files in static root (%s), have you executed default grunt task?", StaticRootPath)
 }
 
-// func readInstanceName() string {
-// 	hostname, _ := os.Hostname()
-// 	if hostname == "" {
-// 		hostname = "hostname_unknown"
-// 	}
-//
-// 	instanceName := Cfg.Section("").Key("instance_name").MustString("")
-// 	if instanceName = "" {
-// 		// set value as it might be used in other places
-// 		Cfg.Section("").Key("instance_name").SetValue(hostname)
-// 		instanceName = hostname
-// 	}
-//
-// 	return
-// }
-
 func NewConfigContext(args *CommandLineArgs) error {
 	setHomePath(args)
 	loadConfiguration(args)
@@ -544,6 +529,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	// auth
 	auth := Cfg.Section("auth")
 	DisableLoginForm = auth.Key("disable_login_form").MustBool(false)
+	DisableSignoutMenu = auth.Key("disable_signout_menu").MustBool(false)
 
 	// anonymous access
 	AnonymousEnabled = Cfg.Section("auth.anonymous").Key("enabled").MustBool(false)
@@ -590,7 +576,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 		log.Warn("require_email_validation is enabled but smpt is disabled")
 	}
 
-	GrafanaNetUrl = Cfg.Section("grafana_net").Key("url").MustString("https://grafana.net")
+	GrafanaNetUrl = Cfg.Section("grafana_net").Key("url").MustString("https://grafana.com")
 
 	imageUploadingSection := Cfg.Section("external_image_storage")
 	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("internal")

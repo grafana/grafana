@@ -1,16 +1,13 @@
-[Grafana](http://grafana.org) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) 
+[Grafana](https://grafana.com) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) 
 ================
-[Website](http://grafana.org) |
+[Website](https://grafana.com) |
 [Twitter](https://twitter.com/grafana) |
-[IRC](https://webchat.freenode.net/?channels=grafana) |
-[![Slack](https://brandfolder.com/api/favicon/icon?size=16&domain=www.slack.com)](http://slack.raintank.io)
-[Slack](http://slack.raintank.io) |
-[Email](mailto:contact@grafana.org)
+[Community & Forum](https://community.grafana.com)
 
 Grafana is an open source, feature rich metrics dashboard and graph editor for
 Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 
-![](http://grafana.org/assets/img/features/dashboard_ex1.png)
+![](http://docs.grafana.org/assets/img/features/dashboard_ex1.png)
 
 - [Install instructions](http://docs.grafana.org/installation/)
 - [What's New in Grafana 2.0](http://docs.grafana.org/guides/whats-new-in-v2/)
@@ -19,6 +16,7 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 - [What's New in Grafana 3.0](http://docs.grafana.org/guides/whats-new-in-v3/)
 - [What's New in Grafana 4.0](http://docs.grafana.org/guides/whats-new-in-v4/)
 - [What's New in Grafana 4.1](http://docs.grafana.org/guides/whats-new-in-v4-1/)
+- [What's New in Grafana 4.2](http://docs.grafana.org/guides/whats-new-in-v4-2/)
 
 ## Features
 ### Graphite Target Editor
@@ -66,7 +64,7 @@ There are no dependencies except an external time series data store. For dashboa
 database (sqlite3) or you can use an external SQL data base like MySQL or Postgres.
 
 ## Installation
-Head to [grafana.org](http://docs.grafana.org/installation/) and [download](http://grafana.org/download/)
+Head to [grafana.org](http://docs.grafana.org/installation/) and [download](https://grafana.com/get)
 the latest release.
 
 If you have any problems please read the [troubleshooting guide](http://docs.grafana.org/installation/troubleshooting/).
@@ -76,11 +74,11 @@ Be sure to read the [getting started guide](http://docs.grafana.org/guides/getti
 
 ## Run from master
 If you want to build a package yourself, or contribute. Here is a guide for how to do that. You can always find
-the latest master builds [here](http://grafana.org/builds)
+the latest master builds [here](https://grafana.com/grafana/download)
 
 ### Dependencies
 
-- Go 1.7.3
+- Go 1.8
 - NodeJS v4+
 
 ### Get Code
@@ -110,7 +108,7 @@ go run build.go build
 
 ### Building frontend assets
 
-To build less to css for the frontend you will need a recent version of **node (v4+)**,
+To build less to css for the frontend you will need a recent version of **node (v6+)**,
 npm (v2.5.0) and grunt (v0.4.5). Run the following:
 
 ```bash

@@ -17,6 +17,7 @@ export class AlertNotificationEditCtrl {
     settings: {
       httpMethod: 'POST',
       autoResolve: true,
+      uploadImage: true,
     },
     isDefault: false
   };
@@ -32,7 +33,7 @@ export class AlertNotificationEditCtrl {
       }
 
       if (!this.$routeParams.id) {
-        return this.model;
+        return _.defaults(this.model, this.defaults);
       }
 
       return this.backendSrv.get(`/api/alert-notifications/${this.$routeParams.id}`).then(result => {

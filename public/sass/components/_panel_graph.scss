@@ -89,6 +89,7 @@
     display: block;
     overflow-y: auto;
     overflow-x: hidden;
+    padding-bottom: 1px;
   }
 
   .graph-legend-series {
@@ -132,6 +133,9 @@
     padding-left: 7px;
     text-align: left;
     width: 95%;
+    max-width: 650px;
+    text-overflow: ellipsis;
+    overflow: hidden;
   }
 
   .graph-legend-series:nth-child(odd) {
@@ -263,7 +267,10 @@
   .graph-tooltip-series-name {
     display: table-cell;
     padding: 0.15rem;
-  }
+    max-width: 650px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+   }
 
   .graph-tooltip-value {
     display: table-cell;

@@ -361,6 +361,39 @@ describe('ElasticResponse', function() {
     });
   });
 
+  describe('histogram response', function() {
+    var result;
+
+    beforeEach(function() {
+      targets = [{
+        refId: 'A',
+        metrics: [{type: 'count', id: '1'}],
+        bucketAggs: [{type: 'histogram', field: 'bytes', id: '3'}],
+      }];
+      response =  {
+        responses: [{
+          aggregations: {
+            "3": {
+              buckets: [
+                {doc_count: 1, key: 1000},
+                {doc_count: 3, key: 2000},
+                {doc_count: 2, key: 1000},
+              ]
+            }
+          }
+        }]
+      };
+
+      result = new ElasticResponse(targets, response).getTimeSeries();
+    });
+
+    it('should return docs with byte and count', function() {
+      expect(result.data[0].datapoints.length).to.be(3);
+      expect(result.data[0].datapoints[0].Count).to.be(1);
+      expect(result.data[0].datapoints[0].bytes).to.be(1000);
+    });
+  });
+
   describe('with two filters agg', function() {
     var result;
 

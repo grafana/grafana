@@ -12,6 +12,7 @@ import * as dateMath from 'app/core/utils/datemath';
 import {Subject} from 'vendor/npm/rxjs/Subject';
 
 class MetricsPanelCtrl extends PanelCtrl {
+  scope: any;
   loading: boolean;
   datasource: any;
   datasourceName: any;
@@ -40,6 +41,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasourceSrv = $injector.get('datasourceSrv');
     this.timeSrv = $injector.get('timeSrv');
     this.templateSrv = $injector.get('templateSrv');
+    this.scope = $scope;
 
     if (!this.panel.targets) {
       this.panel.targets = [{}];
@@ -88,11 +90,10 @@ class MetricsPanelCtrl extends PanelCtrl {
     delete this.error;
     this.loading = true;
 
-    this.updateTimeRange();
-
     // load datasource service
     this.setTimeQueryStart();
     this.datasourceSrv.get(this.panel.datasource)
+    .then(this.updateTimeRange.bind(this))
     .then(this.issueQueries.bind(this))
     .then(this.handleQueryResult.bind(this))
     .catch(err => {
@@ -119,7 +120,8 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.timing.queryEnd = new Date().getTime();
   }
 
-  updateTimeRange() {
+  updateTimeRange(datasource?) {
+    this.datasource = datasource || this.datasource;
     this.range = this.timeSrv.timeRange();
     this.rangeRaw = this.range.raw;
 
@@ -132,6 +134,8 @@ class MetricsPanelCtrl extends PanelCtrl {
     }
 
     this.calculateInterval();
+
+    return this.datasource;
   };
 
   calculateInterval() {
