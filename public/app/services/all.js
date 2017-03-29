@@ -12,5 +12,6 @@ define([
   './uiSegmentSrv',
   './backendSrv',
   './healthSrv',
+  './integrateSrv',
 ],
 function () {});

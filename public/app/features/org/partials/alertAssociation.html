@@ -1,15 +1,4 @@
-<topnav title="报警管理" icon="fa fa-fw fa-bell" subnav="true">
-  <ul class="nav">
-    <li><a href="alerts/status">总览</a></li>
-    <li><a href="alerts/new">新建报警规则</a></li>
-    <li><a href="alerts">报警规则</a></li>
-    <li class="active"><a href="alerts/association/{{current.name}}">关联性分析</a></li>
-  </ul>
-  <ul class="nav pull-right">
-    <li ng-if="dashboard">
-      <gf-time-picker dashboard="dashboard"></gf-time-picker>
-    </li>
-  </ul>
+<topnav title="关联性分析" icon="fa fa-fw fa-signal" subnav="true">
 </topnav>
 
 <div ng-if="!isAssociation">
