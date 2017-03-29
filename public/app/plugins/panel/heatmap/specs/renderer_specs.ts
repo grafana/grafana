@@ -47,9 +47,9 @@ describe('grafanaHeatmap', function () {
                 colorScheme: 'interpolateSpectral',
                 fillBackground: false
               },
-              xBucketSize: null,
+              xBucketSize: 1000,
               xBucketNumber: null,
-              yBucketSize: null,
+              yBucketSize: 1,
               yBucketNumber: null,
               xAxis: {
                 show: true
@@ -85,34 +85,34 @@ describe('grafanaHeatmap', function () {
           var scope = $rootScope.$new();
           scope.ctrl = ctrl;
 
-          let series = [];
-          series.push(new TimeSeries({
-            datapoints: [[1422774000000, 1], [1422774060000, 2]],
+          ctx.series = [];
+          ctx.series.push(new TimeSeries({
+            datapoints: [[1, 1422774000000], [2, 1422774060000]],
             alias: 'series1'
           }));
-          series.push(new TimeSeries({
-            datapoints: [[1422774000000, 2], [1422774060000, 3]],
+          ctx.series.push(new TimeSeries({
+            datapoints: [[2, 1422774000000], [3, 1422774060000]],
             alias: 'series2'
           }));
 
-          setupFunc(ctrl, ctx.data);
-
-          let xBucketSize = ctrl.panel.xBucketSize;
-          let yBucketSize = ctrl.panel.yBucketSize;
-          let logBase = ctrl.panel.yAxis.logBase;
-          let bucketsData = convertToHeatMap(series, yBucketSize, xBucketSize, logBase);
-          // console.log("bucketsData", bucketsData);
-
           ctx.data = {
-            buckets: bucketsData,
             heatmapStats: {
               min: 1,
               max: 3,
               minLog: 1
             },
-            xBucketSize: xBucketSize,
-            yBucketSize: yBucketSize
+            xBucketSize: ctrl.panel.xBucketSize,
+            yBucketSize: ctrl.panel.yBucketSize
           };
+
+          setupFunc(ctrl, ctx);
+
+          let logBase = ctrl.panel.yAxis.logBase;
+          let bucketsData = convertToHeatMap(ctx.series, ctx.data.yBucketSize, ctx.data.xBucketSize, logBase);
+          ctx.data.buckets = bucketsData;
+
+          // console.log("bucketsData", bucketsData);
+          // console.log("series", ctrl.panel.yAxis.logBase, ctx.series.length);
 
           let elemHtml = `
           <div class="heatmap-wrapper">
@@ -138,9 +138,7 @@ describe('grafanaHeatmap', function () {
 
   heatmapScenario('default options', function (ctx) {
     ctx.setup(function (ctrl) {
-      ctrl.panel.logBase = 1;
-      ctrl.panel.xBucketSize = 1000;
-      ctrl.panel.yBucketSize = 1;
+      ctrl.panel.yAxis.logBase = 1;
     });
 
     it('should draw correct Y axis', function () {
@@ -151,6 +149,94 @@ describe('grafanaHeatmap', function () {
     it('should draw correct X axis', function () {
       var xTicks = getTicks(ctx.element, ".axis-x");
       expect(xTicks).to.eql(['10:00:00', '10:00:15', '10:00:30', '10:00:45', '10:01:00', '10:01:15', '10:01:30']);
+    });
+  });
+
+  heatmapScenario('when logBase is 2', function (ctx) {
+    ctx.setup(function (ctrl) {
+      ctrl.panel.yAxis.logBase = 2;
+    });
+
+    it('should draw correct Y axis', function () {
+      var yTicks = getTicks(ctx.element, ".axis-y");
+      expect(yTicks).to.eql(['1', '2', '4']);
+    });
+  });
+
+  heatmapScenario('when logBase is 10', function (ctx) {
+    ctx.setup(function (ctrl, ctx) {
+      ctrl.panel.yAxis.logBase = 10;
+
+      ctx.series.push(new TimeSeries({
+        datapoints: [[10, 1422774000000], [20, 1422774060000]],
+        alias: 'series3'
+      }));
+      ctx.data.heatmapStats.max = 20;
+    });
+
+    it('should draw correct Y axis', function () {
+      var yTicks = getTicks(ctx.element, ".axis-y");
+      expect(yTicks).to.eql(['1', '10', '100']);
+    });
+  });
+
+  heatmapScenario('when logBase is 32', function (ctx) {
+    ctx.setup(function (ctrl) {
+      ctrl.panel.yAxis.logBase = 32;
+
+      ctx.series.push(new TimeSeries({
+        datapoints: [[10, 1422774000000], [100, 1422774060000]],
+        alias: 'series3'
+      }));
+      ctx.data.heatmapStats.max = 100;
+    });
+
+    it('should draw correct Y axis', function () {
+      var yTicks = getTicks(ctx.element, ".axis-y");
+      expect(yTicks).to.eql(['1', '32', '1 K']);
+    });
+  });
+
+  heatmapScenario('when logBase is 1024', function (ctx) {
+    ctx.setup(function (ctrl) {
+      ctrl.panel.yAxis.logBase = 1024;
+
+      ctx.series.push(new TimeSeries({
+        datapoints: [[2000, 1422774000000], [300000, 1422774060000]],
+        alias: 'series3'
+      }));
+      ctx.data.heatmapStats.max = 300000;
+    });
+
+    it('should draw correct Y axis', function () {
+      var yTicks = getTicks(ctx.element, ".axis-y");
+      expect(yTicks).to.eql(['1', '1 K', '1 Mil']);
+    });
+  });
+
+  heatmapScenario('when Y axis format set to "none"', function (ctx) {
+    ctx.setup(function (ctrl) {
+      ctrl.panel.yAxis.logBase = 1;
+      ctrl.panel.yAxis.format = "none";
+      ctx.data.heatmapStats.max = 10000;
+    });
+
+    it('should draw correct Y axis', function () {
+      var yTicks = getTicks(ctx.element, ".axis-y");
+      expect(yTicks).to.eql(['0', '2000', '4000', '6000', '8000', '10000', '12000']);
+    });
+  });
+
+  heatmapScenario('when Y axis format set to "second"', function (ctx) {
+    ctx.setup(function (ctrl) {
+      ctrl.panel.yAxis.logBase = 1;
+      ctrl.panel.yAxis.format = "s";
+      ctx.data.heatmapStats.max = 3600;
+    });
+
+    it('should draw correct Y axis', function () {
+      var yTicks = getTicks(ctx.element, ".axis-y");
+      expect(yTicks).to.eql(['0 ns', '17 min', '33 min', '50 min', '1 hour']);
     });
   });
 
