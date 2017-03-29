@@ -35,7 +35,6 @@ define([
             "shared": true
           },
       };
-      
       var panelMetas = [
         {
           "collapse": false,
@@ -179,9 +178,11 @@ define([
           "title": ""
         }
       ];
-      
+
       $scope.init = function (param) {
-        param.targets = param.targets.filter(_.excludeMetricSuffix(filterMetics.metric));
+        param.targets = param.targets.filter(function (metrics) {
+          return _.excludeMetricSuffix(metrics.metric);
+        });
         panelMetas[0].panels[0].targets = param.targets;
         panelMetas[1].panels[0].targets = _.cloneDeep(param.targets);
         _.each(panelMetas[1].panels[0].targets, function (target) {
