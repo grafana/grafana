@@ -33,3 +33,24 @@ func addStatsMigrations(mg *Migrator) {
 	// create table
 	mg.AddMigration("create stat_value table", NewAddTableMigration(statValue))
 }
+
+func addTestDataMigrations(mg *Migrator) {
+	testData := Table{
+		Name: "test_data",
+		Columns: []*Column{
+			{Name: "id", Type: DB_Int, IsPrimaryKey: true, IsAutoIncrement: true},
+			{Name: "metric1", Type: DB_Varchar, Length: 20, Nullable: true},
+			{Name: "metric2", Type: DB_NVarchar, Length: 150, Nullable: true},
+			{Name: "value_big_ing", Type: DB_BigInt, Nullable: true},
+			{Name: "value_double", Type: DB_Double, Nullable: true},
+			{Name: "value_float", Type: DB_Float, Nullable: true},
+			{Name: "value_int", Type: DB_Int, Nullable: true},
+			{Name: "time_epoch", Type: DB_BigInt, Nullable: false},
+			{Name: "time_datetime", Type: DB_DateTime, Nullable: false},
+			{Name: "time_timestamp", Type: DB_TimeStamp, Nullable: false},
+		},
+	}
+
+	// create table
+	mg.AddMigration("create test_data table", NewAddTableMigration(testData))
+}
