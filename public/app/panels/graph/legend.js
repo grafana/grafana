@@ -182,7 +182,7 @@ function (angular, _, $) {
             var maxHeight = scope.height || parseFloat(scope.row.height);
 
             if (!panel.legend.rightSide) {
-              maxHeight = maxHeight/2;
+              maxHeight = maxHeight/3.5;
             }
 
             var topPadding = 15;

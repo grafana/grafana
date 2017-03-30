@@ -69,7 +69,7 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           }
           if (scope.panel.legend.alignAsTable) {
             var total = 30 + (25 * data.length);
-            return Math.min(total, Math.floor(panelHeight/2));
+            return Math.min(total, Math.floor(panelHeight/3.5));
           } else {
             return 26;
           }
