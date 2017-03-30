@@ -82,4 +82,14 @@
         ng-model="ctrl.panel.xBucketSize" ng-change="ctrl.refresh()" ng-model-onblur>
     </div>
   </div>
+
+  <div class="section gf-form-group">
+  <h5 class="section-heading">Data format</h5>
+  <div class="gf-form">
+    <label class="gf-form-label width-5">Format</label>
+    <div class="gf-form-select-wrapper max-width-15">
+      <select class="gf-form-input" ng-model="ctrl.panel.dataFormat" ng-options="v as k for (k, v) in editor.dataFormats" ng-change="ctrl.render()"></select>
+    </div>
+  </div>
+</div>
 </div>

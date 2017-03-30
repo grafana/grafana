@@ -7,7 +7,7 @@ import TimeSeries from 'app/core/time_series';
 import {axesEditor} from './axes_editor';
 import {heatmapDisplayEditor} from './display_editor';
 import rendering from './rendering';
-import {convertToHeatMap, getMinLog} from './heatmap_data_converter';
+import { convertToHeatMap, elasticHistogramToHeatmap, getMinLog} from './heatmap_data_converter';
 
 let X_BUCKET_NUMBER_DEFAULT = 30;
 let Y_BUCKET_NUMBER_DEFAULT = 10;
@@ -27,6 +27,7 @@ let panelDefaults = {
     colorScheme: 'interpolateSpectral',
     fillBackground: false
   },
+  dataFormat: 'timeseries',
   xBucketSize: null,
   xBucketNumber: null,
   yBucketSize: null,
@@ -137,7 +138,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   onRender() {
     if (!this.range) { return; }
 
-    let xBucketSize, yBucketSize;
+    let xBucketSize, yBucketSize, heatmapStats, bucketsData;
     let logBase = this.panel.yAxis.logBase;
     let xBucketNumber = this.panel.xBucketNumber || X_BUCKET_NUMBER_DEFAULT;
     let xBucketSizeByNumber = Math.floor((this.range.to - this.range.from) / xBucketNumber);
@@ -152,25 +153,49 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
       xBucketSize = Number(this.panel.xBucketSize);
     }
 
-    // Calculate Y bucket size
-    let heatmapStats = this.parseSeries(this.series);
-    let yBucketNumber = this.panel.yBucketNumber || Y_BUCKET_NUMBER_DEFAULT;
-    if (logBase !== 1) {
-      yBucketSize = this.panel.yAxis.splitFactor;
-    } else {
-      if (heatmapStats.max === heatmapStats.min) {
-        if (heatmapStats.max) {
-          yBucketSize = heatmapStats.max / Y_BUCKET_NUMBER_DEFAULT;
-        } else {
-          yBucketSize = 1;
-        }
-      } else {
-        yBucketSize = (heatmapStats.max - heatmapStats.min) / yBucketNumber;
-      }
-      yBucketSize = this.panel.yBucketSize || yBucketSize;
-    }
+    if (this.panel.dataFormat === 'es_histogram') {
+      heatmapStats = this.parseHistogramSeries(this.series);
 
-    let bucketsData = convertToHeatMap(this.series, yBucketSize, xBucketSize, logBase);
+      // Calculate Y bucket size
+      let yBucketNumber = this.panel.yBucketNumber || Y_BUCKET_NUMBER_DEFAULT;
+      if (logBase !== 1) {
+        yBucketSize = this.panel.yAxis.splitFactor;
+      } else {
+        if (heatmapStats.max === heatmapStats.min) {
+          if (heatmapStats.max) {
+            yBucketSize = heatmapStats.max / Y_BUCKET_NUMBER_DEFAULT;
+          } else {
+            yBucketSize = 1;
+          }
+        } else {
+          yBucketSize = (heatmapStats.max - heatmapStats.min) / yBucketNumber;
+        }
+        yBucketSize = this.panel.yBucketSize || yBucketSize;
+      }
+
+      bucketsData = elasticHistogramToHeatmap(this.series);
+    } else {
+
+      // Calculate Y bucket size
+      heatmapStats = this.parseSeries(this.series);
+      let yBucketNumber = this.panel.yBucketNumber || Y_BUCKET_NUMBER_DEFAULT;
+      if (logBase !== 1) {
+        yBucketSize = this.panel.yAxis.splitFactor;
+      } else {
+        if (heatmapStats.max === heatmapStats.min) {
+          if (heatmapStats.max) {
+            yBucketSize = heatmapStats.max / Y_BUCKET_NUMBER_DEFAULT;
+          } else {
+            yBucketSize = 1;
+          }
+        } else {
+          yBucketSize = (heatmapStats.max - heatmapStats.min) / yBucketNumber;
+        }
+        yBucketSize = this.panel.yBucketSize || yBucketSize;
+      }
+
+      bucketsData = convertToHeatMap(this.series, yBucketSize, xBucketSize, logBase);
+    }
 
     // Set default Y range if no data
     if (!heatmapStats.min && !heatmapStats.max) {
@@ -244,6 +269,19 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     let min = _.min(_.map(series, s => s.stats.min));
     let minLog = _.min(_.map(series, s => s.minLog));
     let max = _.max(_.map(series, s => s.stats.max));
+
+    return {
+      max: max,
+      min: min,
+      minLog: minLog
+    };
+  }
+
+  parseHistogramSeries(series) {
+    let bounds = _.map(series, s => Number(s.alias));
+    let min = _.min(bounds);
+    let minLog = _.min(bounds);
+    let max = _.max(bounds);
 
     return {
       max: max,

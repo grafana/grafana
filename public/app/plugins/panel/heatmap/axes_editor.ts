@@ -7,6 +7,7 @@ export class AxesEditorCtrl {
   panelCtrl: any;
   unitFormats: any;
   logScales: any;
+  dataFormats: any;
 
   /** @ngInject */
   constructor($scope) {
@@ -22,6 +23,11 @@ export class AxesEditorCtrl {
       'log (base 10)': 10,
       'log (base 32)': 32,
       'log (base 1024)': 1024
+    };
+
+    this.dataFormats = {
+      'Timeseries': 'timeseries',
+      'ES histogram': 'es_histogram'
     };
   }
 
