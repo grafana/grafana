@@ -1,6 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
+import TimeSeries from 'app/core/time_series2';
 
 let VALUE_INDEX = 0;
 let TIME_INDEX = 1;
@@ -13,6 +14,48 @@ interface XBucket {
 interface YBucket {
   y: number;
   values: number[];
+}
+
+function elasticHistogramToHeatmap(series) {
+  let seriesBuckets = _.map(series, (s: TimeSeries) => {
+    return convertEsSeriesToHeatmap(s);
+  });
+  let buckets = mergeBuckets(seriesBuckets);
+  return buckets;
+}
+
+function convertEsSeriesToHeatmap(series: TimeSeries, saveZeroCounts = false) {
+  let xBuckets: XBucket[] = [];
+
+  _.forEach(series.datapoints, point => {
+    let bound = series.alias;
+    let count = point[VALUE_INDEX];
+    let values = new Array(count);
+    values.fill(Number(bound));
+
+    let valueBuckets = {};
+    valueBuckets[bound] = {
+      y: Number(bound),
+      values: values
+    };
+
+    let xBucket: XBucket = {
+      x: point[TIME_INDEX],
+      buckets: valueBuckets
+    };
+
+    // Don't push buckets vith 0 count until saveZeroCounts flag is set
+    if (count !== 0 || (count === 0 && saveZeroCounts)) {
+      xBuckets.push(xBucket);
+    }
+  });
+
+  let heatmap: any = {};
+  _.forEach(xBuckets, (bucket: XBucket) => {
+    heatmap[bucket.x] = bucket;
+  });
+
+  return heatmap;
 }
 
 /**
@@ -321,20 +364,29 @@ function mergeBuckets(seriesBuckets) {
     } else {
       _.forEach(seriesBucket, (xBucket, xBound) => {
         if (mergedBuckets[xBound]) {
-          mergedBuckets[xBound].points = xBucket.points.concat(mergedBuckets[xBound].points);
-          mergedBuckets[xBound].values = xBucket.values.concat(mergedBuckets[xBound].values);
+          if (xBucket.points) {
+            mergedBuckets[xBound].points = xBucket.points.concat(mergedBuckets[xBound].points);
+          }
+          if (xBucket.values) {
+            mergedBuckets[xBound].values = xBucket.values.concat(mergedBuckets[xBound].values);
+          }
 
           _.forEach(xBucket.buckets, (yBucket, yBound) => {
             let bucket = mergedBuckets[xBound].buckets[yBound];
             if (bucket && bucket.values) {
               mergedBuckets[xBound].buckets[yBound].values = bucket.values.concat(yBucket.values);
-              mergedBuckets[xBound].buckets[yBound].points = bucket.points.concat(yBucket.points);
+
+              if (bucket.points) {
+                mergedBuckets[xBound].buckets[yBound].points = bucket.points.concat(yBucket.points);
+              }
             } else {
               mergedBuckets[xBound].buckets[yBound] = yBucket;
             }
 
             let points = mergedBuckets[xBound].buckets[yBound].points;
-            mergedBuckets[xBound].buckets[yBound].seriesStat = getSeriesStat(points);
+            if (points) {
+              mergedBuckets[xBound].buckets[yBound].seriesStat = getSeriesStat(points);
+            }
           });
         } else {
           mergedBuckets[xBound] = xBucket;
@@ -363,10 +415,15 @@ function logp(value, base) {
  * @param objB
  */
 function isHeatmapDataEqual(objA: any, objB: any): boolean {
-  let is_eql = true;
+  let is_eql = !emptyXOR(objA, objB);
 
   _.forEach(objA, (xBucket: XBucket, x) => {
     if (objB[x]) {
+      if (emptyXOR(xBucket.buckets, objB[x].buckets)) {
+        is_eql = false;
+        return false;
+      }
+
       _.forEach(xBucket.buckets, (yBucket: YBucket, y) => {
         if (objB[x].buckets && objB[x].buckets[y]) {
           if (objB[x].buckets[y].values) {
@@ -396,8 +453,13 @@ function isHeatmapDataEqual(objA: any, objB: any): boolean {
   return is_eql;
 }
 
+function emptyXOR(foo: any, bar: any): boolean {
+  return (_.isEmpty(foo) || _.isEmpty(bar)) && !(_.isEmpty(foo) && _.isEmpty(bar));
+}
+
 export {
   convertToHeatMap,
+  elasticHistogramToHeatmap,
   convertToCards,
   removeZeroBuckets,
   mergeZeroBuckets,
