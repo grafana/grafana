@@ -126,3 +126,12 @@ func GenerateError(c *middleware.Context) Response {
 	var array []string
 	return Json(200, array[20])
 }
+
+// GET /api/tsdb/testdata/gensql
+func GenerateSqlTestData(c *middleware.Context) Response {
+	if err := bus.Dispatch(&models.InsertSqlTestDataCommand{}); err != nil {
+		return ApiError(500, "Failed to insert test data", err)
+	}
+
+	return Json(200, &util.DynMap{"message": "OK"})
+}

@@ -252,6 +252,7 @@ func (hs *HttpServer) registerRoutes() {
 		// metrics
 		r.Post("/tsdb/query", bind(dtos.MetricRequest{}), wrap(QueryMetrics))
 		r.Get("/tsdb/testdata/scenarios", wrap(GetTestDataScenarios))
+		r.Get("/tsdb/testdata/gensql", reqGrafanaAdmin, wrap(GenerateSqlTestData))
 
 		// metrics
 		r.Get("/metrics", wrap(GetInternalMetrics))

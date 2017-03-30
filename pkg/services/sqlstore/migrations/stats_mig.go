@@ -41,7 +41,7 @@ func addTestDataMigrations(mg *Migrator) {
 			{Name: "id", Type: DB_Int, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "metric1", Type: DB_Varchar, Length: 20, Nullable: true},
 			{Name: "metric2", Type: DB_NVarchar, Length: 150, Nullable: true},
-			{Name: "value_big_ing", Type: DB_BigInt, Nullable: true},
+			{Name: "value_big_int", Type: DB_BigInt, Nullable: true},
 			{Name: "value_double", Type: DB_Double, Nullable: true},
 			{Name: "value_float", Type: DB_Float, Nullable: true},
 			{Name: "value_int", Type: DB_Int, Nullable: true},
