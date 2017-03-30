@@ -5,6 +5,16 @@ import _ from 'lodash';
 let VALUE_INDEX = 0;
 let TIME_INDEX = 1;
 
+interface XBucket {
+  x: number;
+  buckets: any;
+}
+
+interface YBucket {
+  y: number;
+  values: number[];
+}
+
 /**
  * Convert set of time series into heatmap buckets
  * @return {Object}    Heatmap object:
@@ -347,11 +357,51 @@ function logp(value, base) {
   return Math.log(value) / Math.log(base);
 }
 
+/**
+ * Compare two heatmap data objects
+ * @param objA
+ * @param objB
+ */
+function isHeatmapDataEqual(objA: any, objB: any): boolean {
+  let is_eql = true;
+
+  _.forEach(objA, (xBucket: XBucket, x) => {
+    if (objB[x]) {
+      _.forEach(xBucket.buckets, (yBucket: YBucket, y) => {
+        if (objB[x].buckets && objB[x].buckets[y]) {
+          if (objB[x].buckets[y].values) {
+            is_eql = _.isEqual(yBucket.values.sort(), objB[x].buckets[y].values.sort());
+            if (!is_eql) {
+              return false;
+            }
+          } else {
+            is_eql = false;
+            return false;
+          }
+        } else {
+          is_eql = false;
+          return false;
+        }
+      });
+
+      if (!is_eql) {
+        return false;
+      }
+    } else {
+      is_eql = false;
+      return false;
+    }
+  });
+
+  return is_eql;
+}
+
 export {
   convertToHeatMap,
   convertToCards,
   removeZeroBuckets,
   mergeZeroBuckets,
   getMinLog,
-  getValueBucketBound
+  getValueBucketBound,
+  isHeatmapDataEqual
 };
