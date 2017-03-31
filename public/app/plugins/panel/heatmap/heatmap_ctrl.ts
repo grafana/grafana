@@ -7,7 +7,7 @@ import TimeSeries from 'app/core/time_series';
 import {axesEditor} from './axes_editor';
 import {heatmapDisplayEditor} from './display_editor';
 import rendering from './rendering';
-import { convertToHeatMap, elasticHistogramToHeatmap, getMinLog} from './heatmap_data_converter';
+import { convertToHeatMap, elasticHistogramToHeatmap, calculateBucketSize, getMinLog} from './heatmap_data_converter';
 
 let X_BUCKET_NUMBER_DEFAULT = 30;
 let Y_BUCKET_NUMBER_DEFAULT = 10;
@@ -140,41 +140,33 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
 
     let xBucketSize, yBucketSize, heatmapStats, bucketsData;
     let logBase = this.panel.yAxis.logBase;
-    let xBucketNumber = this.panel.xBucketNumber || X_BUCKET_NUMBER_DEFAULT;
-    let xBucketSizeByNumber = Math.floor((this.range.to - this.range.from) / xBucketNumber);
-
-    // Parse X bucket size (number or interval)
-    let isIntervalString = kbn.interval_regex.test(this.panel.xBucketSize);
-    if (isIntervalString) {
-      xBucketSize = kbn.interval_to_ms(this.panel.xBucketSize);
-    } else if (isNaN(Number(this.panel.xBucketSize)) || this.panel.xBucketSize === '' || this.panel.xBucketSize === null) {
-      xBucketSize = xBucketSizeByNumber;
-    } else {
-      xBucketSize = Number(this.panel.xBucketSize);
-    }
 
     if (this.panel.dataFormat === 'es_histogram') {
       heatmapStats = this.parseHistogramSeries(this.series);
-
-      // Calculate Y bucket size
-      let yBucketNumber = this.panel.yBucketNumber || Y_BUCKET_NUMBER_DEFAULT;
-      if (logBase !== 1) {
-        yBucketSize = this.panel.yAxis.splitFactor;
-      } else {
-        if (heatmapStats.max === heatmapStats.min) {
-          if (heatmapStats.max) {
-            yBucketSize = heatmapStats.max / Y_BUCKET_NUMBER_DEFAULT;
-          } else {
-            yBucketSize = 1;
-          }
-        } else {
-          yBucketSize = (heatmapStats.max - heatmapStats.min) / yBucketNumber;
-        }
-        yBucketSize = this.panel.yBucketSize || yBucketSize;
-      }
-
       bucketsData = elasticHistogramToHeatmap(this.series);
+
+      // Calculate bucket size based on ES heatmap data
+      let xBucketBoundSet = _.map(_.keys(bucketsData), key => Number(key));
+      let yBucketBoundSet = _.map(this.series, series => Number(series.alias));
+      xBucketSize = calculateBucketSize(xBucketBoundSet);
+      yBucketSize = calculateBucketSize(yBucketBoundSet, logBase);
+      if (logBase !== 1) {
+        // Use yBucketSize in meaning of "Split factor" for log scales
+        yBucketSize = 1 / yBucketSize;
+      }
     } else {
+      let xBucketNumber = this.panel.xBucketNumber || X_BUCKET_NUMBER_DEFAULT;
+      let xBucketSizeByNumber = Math.floor((this.range.to - this.range.from) / xBucketNumber);
+
+      // Parse X bucket size (number or interval)
+      let isIntervalString = kbn.interval_regex.test(this.panel.xBucketSize);
+      if (isIntervalString) {
+        xBucketSize = kbn.interval_to_ms(this.panel.xBucketSize);
+      } else if (isNaN(Number(this.panel.xBucketSize)) || this.panel.xBucketSize === '' || this.panel.xBucketSize === null) {
+        xBucketSize = xBucketSizeByNumber;
+      } else {
+        xBucketSize = Number(this.panel.xBucketSize);
+      }
 
       // Calculate Y bucket size
       heatmapStats = this.parseSeries(this.series);

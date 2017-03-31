@@ -449,7 +449,7 @@ export default function link(scope, elem, attrs, ctrl) {
 
     if (panel.yAxis.logBase !== 1) {
       let base = panel.yAxis.logBase;
-      let splitFactor = panel.yAxis.splitFactor || 1;
+      let splitFactor = data.yBucketSize || 1;
       yGridSize = Math.floor((yScale(1) - yScale(base)) / splitFactor);
     }
 
