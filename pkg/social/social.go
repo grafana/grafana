@@ -71,6 +71,11 @@ func NewOAuthService() {
 			continue
 		}
 
+		redirectUrl := setting.AppUrl
+		if setting.Proxy {
+			redirectUrl = setting.ProxyUrl
+		}
+
 		setting.OAuthService.OAuthInfos[name] = info
 
 		config := oauth2.Config{
@@ -80,7 +85,7 @@ func NewOAuthService() {
 				AuthURL:  info.AuthUrl,
 				TokenURL: info.TokenUrl,
 			},
-			RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
+			RedirectURL: strings.TrimSuffix(redirectUrl, "/") + SocialBaseUrl + name,
 			Scopes:      info.Scopes,
 		}
 
