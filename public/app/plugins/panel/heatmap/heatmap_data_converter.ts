@@ -30,7 +30,12 @@ function convertEsSeriesToHeatmap(series: TimeSeries, saveZeroCounts = false) {
   _.forEach(series.datapoints, point => {
     let bound = series.alias;
     let count = point[VALUE_INDEX];
-    let values = new Array(count);
+
+    if (!count) {
+      return;
+    }
+
+    let values = new Array(Math.round(count));
     values.fill(Number(bound));
 
     let valueBuckets = {};
