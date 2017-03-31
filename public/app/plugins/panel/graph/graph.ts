@@ -7,6 +7,7 @@ import 'jquery.flot.stack';
 import 'jquery.flot.stackpercent';
 import 'jquery.flot.fillbelow';
 import 'jquery.flot.crosshair';
+import 'jquery.flot.highlightSeries';
 import './jquery.flot.events';
 
 import $ from 'jquery';
@@ -75,6 +76,22 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         if (plot) {
           tooltip.clear(plot);
         }
+      }, scope);
+
+      appEvents.on('graph-highlight',  function(evt) {
+        if (evt.panel.id !== panel.id) {
+          return;
+        }
+        var plot = elem.data().plot;
+        plot.highlightSeries(evt.series);
+      }, scope);
+
+      appEvents.on('graph-unhighlight', function(evt) {
+        if (evt.panel.id !== panel.id) {
+          return;
+        }
+        var plot = elem.data().plot;
+        plot.unHighlightSeries(evt.series);
       }, scope);
 
       function getLegendHeight(panelHeight) {
@@ -263,6 +280,13 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
           },
           crosshair: {
             mode: 'x'
+          },
+          highlightSeries: {
+            autoHighlight: true,
+            color: null,
+            lines: {
+              lineWidth: '+1'
+            }
           }
         };
 
