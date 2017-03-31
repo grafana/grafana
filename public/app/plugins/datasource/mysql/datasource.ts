@@ -39,6 +39,11 @@ export class MysqlDatasource {
       var data = [];
       if (res.results) {
         _.forEach(res.results, queryRes => {
+
+          if (queryRes.error) {
+            throw {error: queryRes.error, message: queryRes.error};
+          }
+
           for (let series of queryRes.series) {
             data.push({
               target: series.name,

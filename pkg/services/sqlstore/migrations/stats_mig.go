@@ -46,8 +46,8 @@ func addTestDataMigrations(mg *Migrator) {
 			{Name: "value_float", Type: DB_Float, Nullable: true},
 			{Name: "value_int", Type: DB_Int, Nullable: true},
 			{Name: "time_epoch", Type: DB_BigInt, Nullable: false},
-			{Name: "time_datetime", Type: DB_DateTime, Nullable: false},
-			{Name: "time_timestamp", Type: DB_TimeStamp, Nullable: false},
+			{Name: "time_date_time", Type: DB_DateTime, Nullable: false},
+			{Name: "time_time_stamp", Type: DB_TimeStamp, Nullable: false},
 		},
 	}
 

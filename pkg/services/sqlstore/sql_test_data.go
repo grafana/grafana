@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"math/rand"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -11,23 +12,53 @@ func init() {
 	bus.AddHandler("sql", InsertSqlTestData)
 }
 
-func InsertSqlTestData(cmd *m.InsertSqlTestDataCommand) error {
-	return inTransaction2(func(sess *session) error {
+func sqlRandomWalk(m1 string, m2 string, intWalker int64, floatWalker float64, sess *session) error {
 
-		row := &m.SqlTestData{
-			Metric1:      "server1",
-			Metric2:      "frontend",
-			ValueBigInt:  123123,
-			ValueDouble:  3.14159265359,
-			ValueFloat:   3.14159265359,
-			TimeEpoch:    time.Now().Unix(),
-			TimeDateTime: time.Now(),
-		}
+	timeWalker := time.Now().Add(time.Hour * -1)
+	now := time.Now()
+	step := time.Minute
 
+	row := &m.SqlTestData{
+		Metric1:      m1,
+		Metric2:      m2,
+		TimeEpoch:    timeWalker.Unix(),
+		TimeDateTime: timeWalker,
+	}
+
+	for timeWalker.Unix() < now.Unix() {
+		timeWalker = timeWalker.Add(step)
+
+		row.Id = 0
+		row.ValueBigInt += rand.Int63n(100) - 100
+		row.ValueDouble += rand.Float64() - 0.5
+		row.ValueFloat += rand.Float32() - 0.5
+		row.TimeEpoch = timeWalker.Unix()
+		row.TimeDateTime = timeWalker
+
+		sqlog.Info("Writing SQL test data row")
 		if _, err := sess.Table("test_data").Insert(row); err != nil {
 			return err
 		}
+	}
 
-		return nil
+	return nil
+}
+
+func InsertSqlTestData(cmd *m.InsertSqlTestDataCommand) error {
+	return inTransaction2(func(sess *session) error {
+		var err error
+
+		sqlog.Info("SQL TestData: Clearing previous test data")
+		res, err := sess.Exec("TRUNCATE test_data")
+		if err != nil {
+			return err
+		}
+
+		rows, _ := res.RowsAffected()
+		sqlog.Info("SQL TestData: Truncate done", "rows", rows)
+
+		sqlRandomWalk("server1", "frontend", 100, 1.123, sess)
+
+		return err
 	})
 }

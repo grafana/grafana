@@ -1,6 +1,8 @@
 package tsdb
 
-import "context"
+import (
+	"context"
+)
 
 type HandleRequestFunc func(ctx context.Context, req *Request) (*Response, error)
 
