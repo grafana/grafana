@@ -30,6 +30,10 @@ describe('grafanaHeatmap', function () {
 
         beforeEach(angularMocks.inject(function ($rootScope, $compile) {
           var ctrl: any = {
+            colorSchemes: [
+              {name: 'Oranges',   value: 'interpolateOranges',  invert: 'dark'},
+              {name: 'Reds',      value: 'interpolateReds',     invert: 'dark'},
+            ],
             events: new Emitter(),
             height: 200,
             panel: {
@@ -40,11 +44,11 @@ describe('grafanaHeatmap', function () {
                 cardRound: null
               },
               color: {
-                mode: 'color',
+                mode: 'spectrum',
                 cardColor: '#b4ff00',
                 colorScale: 'linear',
                 exponent: 0.5,
-                colorScheme: 'interpolateSpectral',
+                colorScheme: 'interpolateOranges',
                 fillBackground: false
               },
               xBucketSize: 1000,

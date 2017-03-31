@@ -4,7 +4,7 @@ import _ from 'lodash';
 import $ from 'jquery';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
-import {appEvents} from 'app/core/core';
+import {appEvents, contextSrv} from 'app/core/core';
 import d3 from 'd3';
 import {HeatmapTooltip} from './heatmap_tooltip';
 import {convertToCards, mergeZeroBuckets, removeZeroBuckets} from './heatmap_data_converter';
@@ -371,11 +371,11 @@ export default function link(scope, elem, attrs, ctrl) {
       return card.values.length;
     });
 
-    setColorScale(max_value);
+    colorScale = getColorScale(max_value);
     setOpacityScale(max_value);
     setCardSize();
 
-    if (panel.color.fillBackground && panel.color.mode === 'color') {
+    if (panel.color.fillBackground && panel.color.mode === 'spectrum') {
       fillBackground(heatmap, colorScale(0));
     }
 
@@ -426,9 +426,16 @@ export default function link(scope, elem, attrs, ctrl) {
     }
   }
 
-  function setColorScale(max_value) {
-    let colorInterpolator = d3[panel.color.colorScheme];
-    colorScale = d3.scaleSequential(colorInterpolator).domain([max_value, 0]);
+  function getColorScale(maxValue) {
+    let colorScheme = _.find(ctrl.colorSchemes, {value: panel.color.colorScheme});
+    let colorInterpolator = d3[colorScheme.value];
+    let colorScaleInverted = colorScheme.invert === 'always' ||
+      (colorScheme.invert === 'dark' && !contextSrv.user.lightTheme);
+
+    let start = colorScaleInverted ? maxValue : 0;
+    let end = colorScaleInverted ? 0 : maxValue;
+
+    return d3.scaleSequential(colorInterpolator).domain([start, end]);
   }
 
   function setOpacityScale(max_value) {
@@ -710,8 +717,7 @@ export default function link(scope, elem, attrs, ctrl) {
     let legendWidth = Math.floor($(d3.select("#heatmap-color-legend").node()).outerWidth());
     let legendHeight = d3.select("#heatmap-color-legend").attr("height");
 
-    let colorInterpolator = d3[panel.color.colorScheme];
-    let legendColorScale = d3.scaleSequential(colorInterpolator).domain([legendWidth, 0]);
+    let legendColorScale = getColorScale(legendWidth);
 
     let rangeStep = 2;
     let valuesRange = d3.range(0, legendWidth, rangeStep);

@@ -20,11 +20,11 @@ let panelDefaults = {
     cardRound: null
   },
   color: {
-    mode: 'color',
+    mode: 'spectrum',
     cardColor: '#b4ff00',
-    colorScale: 'linear',
+    colorScale: 'sqrt',
     exponent: 0.5,
-    colorScheme: 'interpolateSpectral',
+    colorScheme: 'interpolateOranges',
     fillBackground: false
   },
   dataFormat: 'timeseries',
@@ -53,44 +53,37 @@ let panelDefaults = {
   highlightCards: true
 };
 
-let colorModes = ['opacity', 'color'];
+let colorModes = ['opacity', 'spectrum'];
 let opacityScales = ['linear', 'sqrt'];
 
 // Schemes from d3-scale-chromatic
 // https://github.com/d3/d3-scale-chromatic
 let colorSchemes = [
   // Diverging
-  {name: 'Spectral', value: 'interpolateSpectral'},
-  {name: 'BrBG', value: 'interpolateBrBG'},
-  {name: 'PRGn', value: 'interpolatePRGn'},
-  {name: 'PiYG', value: 'interpolatePiYG'},
-  {name: 'PuOr', value: 'interpolatePuOr'},
-  {name: 'RdBu', value: 'interpolateRdBu'},
-  {name: 'RdGy', value: 'interpolateRdGy'},
-  {name: 'RdYlBu', value: 'interpolateRdYlBu'},
-  {name: 'RdYlGn', value: 'interpolateRdYlGn'},
+  {name: 'Spectral',  value: 'interpolateSpectral', invert: 'always'},
+  {name: 'RdYlGn',    value: 'interpolateRdYlGn',   invert: 'always'},
 
   // Sequential (Single Hue)
-  {name: 'Blues', value: 'interpolateBlues'},
-  {name: 'Greens', value: 'interpolateGreens'},
-  {name: 'Greys', value: 'interpolateGreys'},
-  {name: 'Oranges', value: 'interpolateOranges'},
-  {name: 'Purples', value: 'interpolatePurples'},
-  {name: 'Reds', value: 'interpolateReds'},
+  {name: 'Blues',     value: 'interpolateBlues',    invert: 'dark'},
+  {name: 'Greens',    value: 'interpolateGreens',   invert: 'dark'},
+  {name: 'Greys',     value: 'interpolateGreys',    invert: 'dark'},
+  {name: 'Oranges',   value: 'interpolateOranges',  invert: 'dark'},
+  {name: 'Purples',   value: 'interpolatePurples',  invert: 'dark'},
+  {name: 'Reds',      value: 'interpolateReds',     invert: 'dark'},
 
   // Sequential (Multi-Hue)
-  {name: 'BuGn', value: 'interpolateBuGn'},
-  {name: 'BuPu', value: 'interpolateBuPu'},
-  {name: 'GnBu', value: 'interpolateGnBu'},
-  {name: 'OrRd', value: 'interpolateOrRd'},
-  {name: 'PuBuGn', value: 'interpolatePuBuGn'},
-  {name: 'PuBu', value: 'interpolatePuBu'},
-  {name: 'PuRd', value: 'interpolatePuRd'},
-  {name: 'RdPu', value: 'interpolateRdPu'},
-  {name: 'YlGnBu', value: 'interpolateYlGnBu'},
-  {name: 'YlGn', value: 'interpolateYlGn'},
-  {name: 'YlOrBr', value: 'interpolateYlOrBr'},
-  {name: 'YlOrRd', value: 'interpolateYlOrRd'}
+  {name: 'BuGn',    value: 'interpolateBuGn',       invert: 'dark'},
+  {name: 'BuPu',    value: 'interpolateBuPu',       invert: 'dark'},
+  {name: 'GnBu',    value: 'interpolateGnBu',       invert: 'dark'},
+  {name: 'OrRd',    value: 'interpolateOrRd',       invert: 'dark'},
+  {name: 'PuBuGn',  value: 'interpolatePuBuGn',     invert: 'dark'},
+  {name: 'PuBu',    value: 'interpolatePuBu',       invert: 'dark'},
+  {name: 'PuRd',    value: 'interpolatePuRd',       invert: 'dark'},
+  {name: 'RdPu',    value: 'interpolateRdPu',       invert: 'dark'},
+  {name: 'YlGnBu',  value: 'interpolateYlGnBu',     invert: 'dark'},
+  {name: 'YlGn',    value: 'interpolateYlGn',       invert: 'dark'},
+  {name: 'YlOrBr',  value: 'interpolateYlOrBr',     invert: 'dark'},
+  {name: 'YlOrRd',  value: 'interpolateYlOrRd',     invert: 'darm'}
 ];
 
 export class HeatmapCtrl extends MetricsPanelCtrl {
