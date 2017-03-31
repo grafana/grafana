@@ -3,7 +3,7 @@
 import _ from 'lodash';
 import { describe, beforeEach, it, sinon, expect, angularMocks } from '../../../../../test/lib/common';
 import TimeSeries from 'app/core/time_series2';
-import { convertToHeatMap, elasticHistogramToHeatmap, isHeatmapDataEqual } from '../heatmap_data_converter';
+import { convertToHeatMap, elasticHistogramToHeatmap, calculateBucketSize, isHeatmapDataEqual } from '../heatmap_data_converter';
 
 describe('isHeatmapDataEqual', () => {
   let ctx: any = {};
@@ -61,6 +61,55 @@ describe('isHeatmapDataEqual', () => {
 
     expect(isHeatmapDataEqual(emptyValues, ctx.heatmapA)).to.be(false);
     expect(isHeatmapDataEqual(ctx.heatmapA, emptyValues)).to.be(false);
+  });
+});
+
+describe('calculateBucketSize', () => {
+  let ctx: any = {};
+
+  describe('when logBase is 1 (linear scale)', () => {
+
+    beforeEach(() => {
+      ctx.logBase = 1;
+      ctx.bounds_set = [
+        { bounds: [], size: 0 },
+        { bounds: [0], size: 0 },
+        { bounds: [4], size: 4 },
+        { bounds: [0, 1, 2, 3, 4], size: 1 },
+        { bounds: [0, 1, 3, 5, 7], size: 1 },
+        { bounds: [0, 3, 7, 9, 15], size: 2 },
+        { bounds: [0, 7, 3, 15, 9], size: 2 },
+        { bounds: [0, 5, 10, 15, 50], size: 5 }
+      ];
+    });
+
+    it('should properly calculate bucket size', () => {
+      _.each(ctx.bounds_set, (b) => {
+        let bucketSize = calculateBucketSize(b.bounds, ctx.logBase);
+        expect(bucketSize).to.be(b.size);
+      });
+    });
+  });
+
+  describe('when logBase is 2', () => {
+
+    beforeEach(() => {
+      ctx.logBase = 2;
+      ctx.bounds_set = [
+        { bounds: [], size: 0 },
+        { bounds: [0], size: 0 },
+        { bounds: [4], size: 4 },
+        { bounds: [1, 2, 4, 8], size: 1 },
+        { bounds: [1, Math.SQRT2, 2, 8, 16], size: 0.5 }
+      ];
+    });
+
+    it('should properly calculate bucket size', () => {
+      _.each(ctx.bounds_set, (b) => {
+        let bucketSize = calculateBucketSize(b.bounds, ctx.logBase);
+        expect(isEqual(bucketSize, b.size)).to.be(true);
+      });
+    });
   });
 });
 
@@ -184,9 +233,21 @@ describe('ES Histogram converter', () => {
       };
 
       let heatmap = elasticHistogramToHeatmap(ctx.series);
-      console.log(heatmap);
       expect(isHeatmapDataEqual(heatmap, expectedHeatmap)).to.be(true);
     });
   });
 });
 
+/**
+ * Compare two numbers with given precision. Suitable for compare float numbers after conversions with precision loss.
+ * @param a
+ * @param b
+ * @param precision
+ */
+function isEqual(a: number, b: number, precision = 0.000001): boolean {
+  if (a === b) {
+    return true;
+  } else {
+    return Math.abs(1 - a / b) <= precision;
+  }
+}

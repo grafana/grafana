@@ -44,7 +44,7 @@ function convertEsSeriesToHeatmap(series: TimeSeries, saveZeroCounts = false) {
       buckets: valueBuckets
     };
 
-    // Don't push buckets vith 0 count until saveZeroCounts flag is set
+    // Don't push buckets with 0 count until saveZeroCounts flag is set
     if (count !== 0 || (count === 0 && saveZeroCounts)) {
       xBuckets.push(xBucket);
     }
@@ -404,9 +404,53 @@ function getMinLog(series) {
   return _.min(values);
 }
 
-// Logarithm for custom base
+/**
+ * Logarithm for custom base
+ * @param value
+ * @param base logarithm base
+ */
 function logp(value, base) {
   return Math.log(value) / Math.log(base);
+}
+
+/**
+ * Calculate size of Y bucket from given buckets bounds.
+ * @param bounds Array of Y buckets bounds
+ * @param logBase Logarithm base
+ */
+function calculateBucketSize(bounds: number[], logBase = 1): number {
+  let bucketSize = Infinity;
+
+  if (bounds.length === 0) {
+    return 0;
+  } else if (bounds.length === 1) {
+    return bounds[0];
+  } else {
+    bounds = _.sortBy(bounds);
+    for (let i = 1; i < bounds.length; i++) {
+      let distance = getDistance(bounds[i], bounds[i - 1], logBase);
+      bucketSize = distance < bucketSize ? distance : bucketSize;
+    }
+  }
+
+  return bucketSize;
+}
+
+/**
+ * Calculate distance between two numbers in given scale (linear or logarithmic).
+ * @param a
+ * @param b
+ * @param logBase
+ */
+function getDistance(a: number, b: number, logBase = 1): number {
+  if (logBase === 1) {
+    // Linear distance
+    return Math.abs(b - a);
+  } else {
+    // logarithmic distance
+    let ratio = Math.max(a, b) / Math.min(a, b);
+    return logp(ratio, logBase);
+  }
 }
 
 /**
@@ -427,7 +471,7 @@ function isHeatmapDataEqual(objA: any, objB: any): boolean {
       _.forEach(xBucket.buckets, (yBucket: YBucket, y) => {
         if (objB[x].buckets && objB[x].buckets[y]) {
           if (objB[x].buckets[y].values) {
-            is_eql = _.isEqual(yBucket.values.sort(), objB[x].buckets[y].values.sort());
+            is_eql = _.isEqual(_.sortBy(yBucket.values), _.sortBy(objB[x].buckets[y].values));
             if (!is_eql) {
               return false;
             }
@@ -465,5 +509,6 @@ export {
   mergeZeroBuckets,
   getMinLog,
   getValueBucketBound,
-  isHeatmapDataEqual
+  isHeatmapDataEqual,
+  calculateBucketSize
 };
