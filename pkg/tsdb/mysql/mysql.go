@@ -61,7 +61,7 @@ func (e *MysqlExecutor) initEngine() error {
 		}
 	}
 
-	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?charset=utf8mb4", e.datasource.User, e.datasource.Password, "tcp", e.datasource.Url, e.datasource.Database)
+	cnnstr := fmt.Sprintf("%s:%s@%s(%s)/%s?charset=utf8mb4&parseTime=true&loc=UTC", e.datasource.User, e.datasource.Password, "tcp", e.datasource.Url, e.datasource.Database)
 	e.log.Debug("getEngine", "connection", cnnstr)
 
 	engine, err := xorm.NewEngine("mysql", cnnstr)
