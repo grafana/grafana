@@ -3,6 +3,10 @@
 	"ignore": "test",
 	"package": [
 		{
+			"path": "appengine/cloudsql",
+			"revision": ""
+		},
+		{
 			"checksumSHA1": "QLOmSL4B0UFqEIFwCe0TMwehlfE=",
 			"path": "github.com/aws/aws-sdk-go",
 			"revision": "898c81ba64b9a467379d35e3fabad133beae0ee4",
@@ -321,6 +325,12 @@
 			"revisionTime": "2016-08-27T06:11:18Z",
 			"version": "v1.21.1",
 			"versionExact": "v1.21.1"
+		},
+		{
+			"checksumSHA1": "42vkdsxNaLyPu+FktCzZ/8zsNSE=",
+			"path": "github.com/go-sql-driver/mysql",
+			"revision": "9dee4ca50b83acdf57a35fb9e6fb4be640afa2f3",
+			"revisionTime": "2017-03-27T11:30:21Z"
 		},
 		{
 			"checksumSHA1": "B4bk7vdV9aD7AhrtATXfgEacdqE=",

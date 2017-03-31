@@ -15,6 +15,7 @@ import (
 	"fmt"
 	"net"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -28,22 +29,24 @@ var (
 
 // Config is a configuration parsed from a DSN string
 type Config struct {
-	User         string            // Username
-	Passwd       string            // Password
-	Net          string            // Network type
-	Addr         string            // Network address
-	DBName       string            // Database name
-	Params       map[string]string // Connection parameters
-	Collation    string            // Connection collation
-	Loc          *time.Location    // Location for time.Time values
-	TLSConfig    string            // TLS configuration name
-	tls          *tls.Config       // TLS configuration
-	Timeout      time.Duration     // Dial timeout
-	ReadTimeout  time.Duration     // I/O read timeout
-	WriteTimeout time.Duration     // I/O write timeout
+	User             string            // Username
+	Passwd           string            // Password (requires User)
+	Net              string            // Network type
+	Addr             string            // Network address (requires Net)
+	DBName           string            // Database name
+	Params           map[string]string // Connection parameters
+	Collation        string            // Connection collation
+	Loc              *time.Location    // Location for time.Time values
+	MaxAllowedPacket int               // Max packet size allowed
+	TLSConfig        string            // TLS configuration name
+	tls              *tls.Config       // TLS configuration
+	Timeout          time.Duration     // Dial timeout
+	ReadTimeout      time.Duration     // I/O read timeout
+	WriteTimeout     time.Duration     // I/O write timeout
 
 	AllowAllFiles           bool // Allow all files to be used with LOAD DATA LOCAL INFILE
 	AllowCleartextPasswords bool // Allows the cleartext client side plugin
+	AllowNativePasswords    bool // Allows the native password authentication method
 	AllowOldPasswords       bool // Allows the old insecure password method
 	ClientFoundRows         bool // Return number of matching rows instead of rows changed
 	ColumnsWithAlias        bool // Prepend table alias to column names
@@ -96,6 +99,15 @@ func (cfg *Config) FormatDSN() string {
 		} else {
 			hasParam = true
 			buf.WriteString("?allowCleartextPasswords=true")
+		}
+	}
+
+	if cfg.AllowNativePasswords {
+		if hasParam {
+			buf.WriteString("&allowNativePasswords=true")
+		} else {
+			hasParam = true
+			buf.WriteString("?allowNativePasswords=true")
 		}
 	}
 
@@ -220,6 +232,17 @@ func (cfg *Config) FormatDSN() string {
 			buf.WriteString("?writeTimeout=")
 		}
 		buf.WriteString(cfg.WriteTimeout.String())
+	}
+
+	if cfg.MaxAllowedPacket > 0 {
+		if hasParam {
+			buf.WriteString("&maxAllowedPacket=")
+		} else {
+			hasParam = true
+			buf.WriteString("?maxAllowedPacket=")
+		}
+		buf.WriteString(strconv.Itoa(cfg.MaxAllowedPacket))
+
 	}
 
 	// other params
@@ -368,6 +391,14 @@ func parseDSNParams(cfg *Config, params string) (err error) {
 				return errors.New("invalid bool value: " + value)
 			}
 
+		// Use native password authentication
+		case "allowNativePasswords":
+			var isBool bool
+			cfg.AllowNativePasswords, isBool = readBool(value)
+			if !isBool {
+				return errors.New("invalid bool value: " + value)
+			}
+
 		// Use old authentication mode (pre MySQL 4.1)
 		case "allowOldPasswords":
 			var isBool bool
@@ -496,7 +527,11 @@ func parseDSNParams(cfg *Config, params string) (err error) {
 			if err != nil {
 				return
 			}
-
+		case "maxAllowedPacket":
+			cfg.MaxAllowedPacket, err = strconv.Atoi(value)
+			if err != nil {
+				return
+			}
 		default:
 			// lazy init
 			if cfg.Params == nil {
