@@ -93,18 +93,13 @@ func (e *MysqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, co
 
 		rows, err := db.Query(rawSql)
 		if err != nil {
-			result.Error = err
-			return result
+			result.QueryResults[query.RefId] = &tsdb.QueryResult{Error: err}
+			continue
 		}
+
 		defer rows.Close()
 
 		result.QueryResults[query.RefId] = e.TransformToTimeSeries(query, rows)
-	}
-
-	for _, value := range result.QueryResults {
-		if value.Error != nil {
-			e.log.Error("error", "error", value.Error)
-		}
 	}
 
 	return result
@@ -190,7 +185,6 @@ func (s *stringStringScan) Update(rows *sql.Rows) error {
 	for i := 0; i < s.columnCount; i++ {
 		if rb, ok := s.rowPtrs[i].(*sql.RawBytes); ok {
 			s.rowValues[i] = string(*rb)
-			fmt.Printf("column %s = %s", s.columnNames[i], s.rowValues[i])
 
 			switch s.columnNames[i] {
 			case "time_sec":
@@ -202,9 +196,7 @@ func (s *stringStringScan) Update(rows *sql.Rows) error {
 					s.value = null.FloatFrom(value)
 				}
 			case "metric":
-				if value, err := strconv.ParseFloat(s.rowValues[i], 64); err == nil {
-					s.value = null.FloatFrom(value)
-				}
+				s.metric = s.rowValues[i]
 			}
 
 			*rb = nil // reset pointer to discard current value to avoid a bug
