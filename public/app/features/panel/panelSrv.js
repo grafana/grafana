@@ -151,10 +151,10 @@ function (angular, _, config) {
       };
 
       $scope.isShowInfo = function (event) {
-        if (event.type === "mouseenter") {
-          $(event.target).parent().parent().parent().siblings().last().addClass('active');
+        if (event.type === "click") {
+          $scope.helpShow = true;
         } else {
-          $(event.target).removeClass('active');
+          $scope.helpShow = false;
         }
       };
 

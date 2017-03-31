@@ -9,12 +9,18 @@
 		<span class="panel-loading" ng-show="panelMeta.loading">
 			<i class="fa fa-spinner fa-spin"></i>
 		</span>
-
-		<span class="alert-info panel-help small pointer" ng-mouseenter="isShowInfo($event)" ng-if="helpInfo.info">
+		<span class="alert-info panel-help small pointer"  ng-click="isShowInfo($event)" ng-if="helpInfo.info">
 			<span data-placement="top">
 				<i class="fa fa-question"></i><span class="panel-help-arrow"></span>
 			</span>
 		</span>
+
+		<div class="dropdown pull-right" style="z-index: 999;margin-right: 10px;" ng-class="{true:'active'}[helpInfo.info]"  ng-show="!panelMeta.loading">
+			<a class="pointer" ng-click="hideTooltip($event)" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-bars"></i></a>
+			<ul class="dropdown-menu">
+				<li><a class="pointer" ng-href="/alerts/association/server0/100/2.2.proc.meminfo.memfree">关联性分析</a></li>
+			</ul>
+		</div>
 
 		<div class="panel-title-container drag-handle" panel-menu></div>
 	</div>
@@ -23,7 +29,7 @@
 		<ng-transclude></ng-transclude>
 	</div>
 	<panel-resizer></panel-resizer>
-	<div class="help-info" ng-if="helpInfo.info" ng-mouseleave="isShowInfo($event)">
+	<div class="help-info" ng-class="{true:'active'}[helpShow]" ng-if="helpInfo.info" ng-mouseleave="isShowInfo($event)">
 		<div>
 			<h2>{{helpInfo.title}}</h2>
 			<div ng-bind-html="helpInfo.context"></div>
