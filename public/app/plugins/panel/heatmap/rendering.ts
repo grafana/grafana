@@ -428,7 +428,7 @@ export default function link(scope, elem, attrs, ctrl) {
 
   function setColorScale(max_value) {
     let colorInterpolator = d3[panel.color.colorScheme];
-    colorScale = d3.scaleSequential(colorInterpolator).domain([0, max_value]);
+    colorScale = d3.scaleSequential(colorInterpolator).domain([max_value, 0]);
   }
 
   function setOpacityScale(max_value) {
@@ -711,7 +711,7 @@ export default function link(scope, elem, attrs, ctrl) {
     let legendHeight = d3.select("#heatmap-color-legend").attr("height");
 
     let colorInterpolator = d3[panel.color.colorScheme];
-    let legendColorScale = d3.scaleSequential(colorInterpolator).domain([0, legendWidth]);
+    let legendColorScale = d3.scaleSequential(colorInterpolator).domain([legendWidth, 0]);
 
     let rangeStep = 2;
     let valuesRange = d3.range(0, legendWidth, rangeStep);
