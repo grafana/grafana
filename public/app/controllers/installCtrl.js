@@ -17,6 +17,7 @@ define([
       $scope.services = ["Hadoop", "zookeeper", "JMX", "Mysql"];
       $scope.platform = ["Window", "Linux"];
       $scope.orgId = contextSrv.user.orgId;
+      $scope.alertServer = backendSrv.alertDUrl;
       datasourceSrv.get("opentsdb").then(function (ds) {
         var url = document.createElement('a');
         url.href = ds.url;
