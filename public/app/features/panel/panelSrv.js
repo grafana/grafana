@@ -8,7 +8,7 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q, $location, healthSrv) {
+  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q, $location, healthSrv, contextSrv, alertSrv) {
 
     this.init = function($scope) {
 
@@ -140,7 +140,7 @@ function (angular, _, config) {
             return $scope.refreshData($scope.datasource) || $q.when({});
           }).then(function () {
             $scope.panelMeta.loading = false;
-            $scope.helpInfo = $scope.panel.helpInfo;
+            $scope.titleInit($scope.panel);
           }, function (err) {
             console.log('Panel data error:', err);
             $scope.panelMeta.loading = false;
@@ -155,6 +155,30 @@ function (angular, _, config) {
           $scope.helpShow = true;
         } else {
           $scope.helpShow = false;
+        }
+      };
+
+      $scope.titleInit = function (panel) {
+        $scope.helpInfo = panel.helpInfo;
+        $scope.showMenu = (panel.type == "graph" && $scope.panelMeta.loading == false ? true : false);
+        var path = $location.path();
+        $scope.associateMenu = /^\/anomaly/.test(path);
+      };
+
+      $scope.systemsMap = contextSrv.systemsMap[0];
+
+      $scope.associateLink = function () {
+        try{
+          var host = $scope.panel.targets[0].tags.host;
+          var metric = $scope.panel.targets[0].metric;
+          if(host && metric) {
+            var link = '/alerts/association/'+host+'/100/'+ $scope.systemsMap.Id+'.'+$scope.systemsMap.OrgId+'.'+metric;
+            $location.path(link);
+          }
+        }catch(err){
+          var reg = /\'(.*?)\'/g;
+          var msg = "图表中缺少"+err.toString().match(reg)[0]+"配置";
+          alertSrv.set("参数缺失", msg, "warning", 4000);
         }
       };
 

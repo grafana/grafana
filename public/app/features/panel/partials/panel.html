@@ -15,10 +15,10 @@
 			</span>
 		</span>
 
-		<div class="dropdown pull-right" style="z-index: 999;margin-right: 10px;" ng-class="{true:'active'}[helpInfo.info]"  ng-show="!panelMeta.loading">
+		<div class="dropdown pull-right" style="z-index: 999;margin-right: 10px;" ng-class="{true:'active'}[helpInfo.info]" ng-if="associateMenu">
 			<a class="pointer" ng-click="hideTooltip($event)" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-bars"></i></a>
 			<ul class="dropdown-menu">
-				<li><a class="pointer" ng-href="/alerts/association/server0/100/2.2.proc.meminfo.memfree">关联性分析</a></li>
+				<li><a class="pointer" ng-click="associateLink()">关联性分析</a></li>
 			</ul>
 		</div>
 
