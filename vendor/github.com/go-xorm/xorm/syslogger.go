@@ -13,51 +13,77 @@ import (
 	"github.com/go-xorm/core"
 )
 
+var _ core.ILogger = &SyslogLogger{}
+
+// SyslogLogger will be depricated
 type SyslogLogger struct {
-	w *syslog.Writer
+	w       *syslog.Writer
+	showSQL bool
 }
 
+// NewSyslogLogger implements core.ILogger
 func NewSyslogLogger(w *syslog.Writer) *SyslogLogger {
 	return &SyslogLogger{w: w}
 }
 
-func (s *SyslogLogger) Debug(v ...interface{}) (err error) {
-	return s.w.Debug(fmt.Sprint(v...))
+// Debug log content as Debug
+func (s *SyslogLogger) Debug(v ...interface{}) {
+	s.w.Debug(fmt.Sprint(v...))
 }
 
-func (s *SyslogLogger) Debugf(format string, v ...interface{}) (err error) {
-	return s.w.Debug(fmt.Sprintf(format, v...))
+// Debugf log content as Debug and format
+func (s *SyslogLogger) Debugf(format string, v ...interface{}) {
+	s.w.Debug(fmt.Sprintf(format, v...))
 }
 
-func (s *SyslogLogger) Err(v ...interface{}) (err error) {
-	return s.w.Err(fmt.Sprint(v...))
+// Error log content as Error
+func (s *SyslogLogger) Error(v ...interface{}) {
+	s.w.Err(fmt.Sprint(v...))
 }
 
-func (s *SyslogLogger) Errf(format string, v ...interface{}) (err error) {
-	return s.w.Err(fmt.Sprintf(format, v...))
+// Errorf log content as Errorf and format
+func (s *SyslogLogger) Errorf(format string, v ...interface{}) {
+	s.w.Err(fmt.Sprintf(format, v...))
 }
 
-func (s *SyslogLogger) Info(v ...interface{}) (err error) {
-	return s.w.Info(fmt.Sprint(v...))
+// Info log content as Info
+func (s *SyslogLogger) Info(v ...interface{}) {
+	s.w.Info(fmt.Sprint(v...))
 }
 
-func (s *SyslogLogger) Infof(format string, v ...interface{}) (err error) {
-	return s.w.Info(fmt.Sprintf(format, v...))
+// Infof log content as Infof and format
+func (s *SyslogLogger) Infof(format string, v ...interface{}) {
+	s.w.Info(fmt.Sprintf(format, v...))
 }
 
-func (s *SyslogLogger) Warning(v ...interface{}) (err error) {
-	return s.w.Warning(fmt.Sprint(v...))
+// Warn log content as Warn
+func (s *SyslogLogger) Warn(v ...interface{}) {
+	s.w.Warning(fmt.Sprint(v...))
 }
 
-func (s *SyslogLogger) Warningf(format string, v ...interface{}) (err error) {
-	return s.w.Warning(fmt.Sprintf(format, v...))
+// Warnf log content as Warnf and format
+func (s *SyslogLogger) Warnf(format string, v ...interface{}) {
+	s.w.Warning(fmt.Sprintf(format, v...))
 }
 
+// Level shows log level
 func (s *SyslogLogger) Level() core.LogLevel {
 	return core.LOG_UNKNOWN
 }
 
 // SetLevel always return error, as current log/syslog package doesn't allow to set priority level after syslog.Writer created
-func (s *SyslogLogger) SetLevel(l core.LogLevel) (err error) {
-	return fmt.Errorf("unable to set syslog level")
+func (s *SyslogLogger) SetLevel(l core.LogLevel) {}
+
+// ShowSQL set if logging SQL
+func (s *SyslogLogger) ShowSQL(show ...bool) {
+	if len(show) == 0 {
+		s.showSQL = true
+		return
+	}
+	s.showSQL = show[0]
+}
+
+// IsShowSQL if logging SQL
+func (s *SyslogLogger) IsShowSQL() bool {
+	return s.showSQL
 }

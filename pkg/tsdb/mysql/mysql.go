@@ -65,7 +65,7 @@ func (e *MysqlExecutor) initEngine() error {
 	e.log.Debug("getEngine", "connection", cnnstr)
 
 	engine, err := xorm.NewEngine("mysql", cnnstr)
-	engine.SetMaxConns(10)
+	engine.SetMaxOpenConns(10)
 	engine.SetMaxIdleConns(10)
 	if err != nil {
 		return err

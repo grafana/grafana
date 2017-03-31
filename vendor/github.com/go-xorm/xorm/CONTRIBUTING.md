@@ -9,6 +9,10 @@ conventions when submitting patches.
 * [fork a repo](https://help.github.com/articles/fork-a-repo)
 * [creating a pull request ](https://help.github.com/articles/creating-a-pull-request)
 
+### Language
+
+Since `xorm` is a world-wide open source project, please describe your issues or code changes in English as soon as possible.
+
 ### Sign your codes with comments
 ```
 // !<you github id>! your comments

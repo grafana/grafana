@@ -333,6 +333,28 @@
 			"revisionTime": "2017-03-27T11:30:21Z"
 		},
 		{
+			"checksumSHA1": "HHB+Jna1wv0cXLxtCyOnQqFwvn4=",
+			"path": "github.com/go-xorm/builder",
+			"revision": "c6e604e9c7b7461715091e14ad0c242ec44c26e4",
+			"revisionTime": "2017-02-24T04:30:50Z"
+		},
+		{
+			"checksumSHA1": "vt2CGANHLNXPAZ01ve3UlsgQ0uU=",
+			"path": "github.com/go-xorm/core",
+			"revision": "e8409d73255791843585964791443dbad877058c",
+			"revisionTime": "2017-03-17T12:25:07Z"
+		},
+		{
+			"path": "github.com/go-xorm/xor,m",
+			"revision": ""
+		},
+		{
+			"checksumSHA1": "xkwhf97yNV6tFwrOHCPeWtKW39E=",
+			"path": "github.com/go-xorm/xorm",
+			"revision": "6687a2b4e824f4d87f2d65060ec5cb0d896dff1e",
+			"revisionTime": "2017-03-30T09:59:41Z"
+		},
+		{
 			"checksumSHA1": "B4bk7vdV9aD7AhrtATXfgEacdqE=",
 			"path": "github.com/gorilla/websocket",
 			"revision": "3ab3a8b8831546bd18fd182c20687ca853b2bb13",

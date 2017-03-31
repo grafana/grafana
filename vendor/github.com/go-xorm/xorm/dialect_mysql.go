@@ -8,16 +8,13 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/go-xorm/core"
 )
-
-// func init() {
-// 	RegisterDialect("mysql", &mysql{})
-// }
 
 var (
 	mysqlReservedWords = map[string]bool{
@@ -206,7 +203,7 @@ func (db *mysql) SqlType(c *core.Column) string {
 		res = core.Enum
 		res += "("
 		opts := ""
-		for v, _ := range c.EnumOptions {
+		for v := range c.EnumOptions {
 			opts += fmt.Sprintf(",'%v'", v)
 		}
 		res += strings.TrimLeft(opts, ",")
@@ -215,7 +212,7 @@ func (db *mysql) SqlType(c *core.Column) string {
 		res = core.Set
 		res += "("
 		opts := ""
-		for v, _ := range c.SetOptions {
+		for v := range c.SetOptions {
 			opts += fmt.Sprintf(",'%v'", v)
 		}
 		res += strings.TrimLeft(opts, ",")
@@ -231,8 +228,8 @@ func (db *mysql) SqlType(c *core.Column) string {
 		res = t
 	}
 
-	var hasLen1 bool = (c.Length > 0)
-	var hasLen2 bool = (c.Length2 > 0)
+	hasLen1 := (c.Length > 0)
+	hasLen2 := (c.Length2 > 0)
 
 	if res == core.BigInt && !hasLen1 && !hasLen2 {
 		c.Length = 20
@@ -303,12 +300,9 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 	args := []interface{}{db.DbName, tableName}
 	s := "SELECT `COLUMN_NAME`, `IS_NULLABLE`, `COLUMN_DEFAULT`, `COLUMN_TYPE`," +
 		" `COLUMN_KEY`, `EXTRA` FROM `INFORMATION_SCHEMA`.`COLUMNS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ?"
+	db.LogSQL(s, args)
 
 	rows, err := db.DB().Query(s, args...)
-	if db.Logger != nil {
-		db.Logger.Info("[sql]", s, args)
-	}
-
 	if err != nil {
 		return nil, nil, err
 	}
@@ -318,7 +312,7 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 	colSeq := make([]string, 0)
 	for rows.Next() {
 		col := new(core.Column)
-		col.Indexes = make(map[string]bool)
+		col.Indexes = make(map[string]int)
 
 		var columnName, isNullable, colType, colKey, extra string
 		var colDefault *string
@@ -380,9 +374,9 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 		col.Length = len1
 		col.Length2 = len2
 		if _, ok := core.SqlTypes[colType]; ok {
-			col.SQLType = core.SQLType{colType, len1, len2}
+			col.SQLType = core.SQLType{Name: colType, DefaultLength: len1, DefaultLength2: len2}
 		} else {
-			return nil, nil, errors.New(fmt.Sprintf("unkonw colType %v", colType))
+			return nil, nil, fmt.Errorf("Unknown colType %v", colType)
 		}
 
 		if colKey == "PRI" {
@@ -414,12 +408,10 @@ func (db *mysql) GetColumns(tableName string) ([]string, map[string]*core.Column
 func (db *mysql) GetTables() ([]*core.Table, error) {
 	args := []interface{}{db.DbName}
 	s := "SELECT `TABLE_NAME`, `ENGINE`, `TABLE_ROWS`, `AUTO_INCREMENT` from " +
-		"`INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=? AND (`ENGINE`='MyISAM' OR `ENGINE` = 'InnoDB')"
+		"`INFORMATION_SCHEMA`.`TABLES` WHERE `TABLE_SCHEMA`=? AND (`ENGINE`='MyISAM' OR `ENGINE` = 'InnoDB' OR `ENGINE` = 'TokuDB')"
+	db.LogSQL(s, args)
 
 	rows, err := db.DB().Query(s, args...)
-	if db.Logger != nil {
-		db.Logger.Info("[sql]", s, args)
-	}
 	if err != nil {
 		return nil, err
 	}
@@ -445,11 +437,9 @@ func (db *mysql) GetTables() ([]*core.Table, error) {
 func (db *mysql) GetIndexes(tableName string) (map[string]*core.Index, error) {
 	args := []interface{}{db.DbName, tableName}
 	s := "SELECT `INDEX_NAME`, `NON_UNIQUE`, `COLUMN_NAME` FROM `INFORMATION_SCHEMA`.`STATISTICS` WHERE `TABLE_SCHEMA` = ? AND `TABLE_NAME` = ?"
+	db.LogSQL(s, args)
 
 	rows, err := db.DB().Query(s, args...)
-	if db.Logger != nil {
-		db.Logger.Info("[sql]", s, args)
-	}
 	if err != nil {
 		return nil, err
 	}
@@ -477,7 +467,7 @@ func (db *mysql) GetIndexes(tableName string) (map[string]*core.Index, error) {
 		colName = strings.Trim(colName, "` ")
 		var isRegular bool
 		if strings.HasPrefix(indexName, "IDX_"+tableName) || strings.HasPrefix(indexName, "UQE_"+tableName) {
-			indexName = indexName[5+len(tableName) : len(indexName)]
+			indexName = indexName[5+len(tableName):]
 			isRegular = true
 		}
 
@@ -497,4 +487,94 @@ func (db *mysql) GetIndexes(tableName string) (map[string]*core.Index, error) {
 
 func (db *mysql) Filters() []core.Filter {
 	return []core.Filter{&core.IdFilter{}}
+}
+
+type mymysqlDriver struct {
+}
+
+func (p *mymysqlDriver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
+	db := &core.Uri{DbType: core.MYSQL}
+
+	pd := strings.SplitN(dataSourceName, "*", 2)
+	if len(pd) == 2 {
+		// Parse protocol part of URI
+		p := strings.SplitN(pd[0], ":", 2)
+		if len(p) != 2 {
+			return nil, errors.New("Wrong protocol part of URI")
+		}
+		db.Proto = p[0]
+		options := strings.Split(p[1], ",")
+		db.Raddr = options[0]
+		for _, o := range options[1:] {
+			kv := strings.SplitN(o, "=", 2)
+			var k, v string
+			if len(kv) == 2 {
+				k, v = kv[0], kv[1]
+			} else {
+				k, v = o, "true"
+			}
+			switch k {
+			case "laddr":
+				db.Laddr = v
+			case "timeout":
+				to, err := time.ParseDuration(v)
+				if err != nil {
+					return nil, err
+				}
+				db.Timeout = to
+			default:
+				return nil, errors.New("Unknown option: " + k)
+			}
+		}
+		// Remove protocol part
+		pd = pd[1:]
+	}
+	// Parse database part of URI
+	dup := strings.SplitN(pd[0], "/", 3)
+	if len(dup) != 3 {
+		return nil, errors.New("Wrong database part of URI")
+	}
+	db.DbName = dup[0]
+	db.User = dup[1]
+	db.Passwd = dup[2]
+
+	return db, nil
+}
+
+type mysqlDriver struct {
+}
+
+func (p *mysqlDriver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
+	dsnPattern := regexp.MustCompile(
+		`^(?:(?P<user>.*?)(?::(?P<passwd>.*))?@)?` + // [user[:password]@]
+			`(?:(?P<net>[^\(]*)(?:\((?P<addr>[^\)]*)\))?)?` + // [net[(addr)]]
+			`\/(?P<dbname>.*?)` + // /dbname
+			`(?:\?(?P<params>[^\?]*))?$`) // [?param1=value1&paramN=valueN]
+	matches := dsnPattern.FindStringSubmatch(dataSourceName)
+	//tlsConfigRegister := make(map[string]*tls.Config)
+	names := dsnPattern.SubexpNames()
+
+	uri := &core.Uri{DbType: core.MYSQL}
+
+	for i, match := range matches {
+		switch names[i] {
+		case "dbname":
+			uri.DbName = match
+		case "params":
+			if len(match) > 0 {
+				kvs := strings.Split(match, "&")
+				for _, kv := range kvs {
+					splits := strings.Split(kv, "=")
+					if len(splits) == 2 {
+						switch splits[0] {
+						case "charset":
+							uri.Charset = splits[1]
+						}
+					}
+				}
+			}
+
+		}
+	}
+	return uri, nil
 }

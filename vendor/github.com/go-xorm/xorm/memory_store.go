@@ -12,16 +12,18 @@ import (
 
 var _ core.CacheStore = NewMemoryStore()
 
-// memory store
+// MemoryStore represents in-memory store
 type MemoryStore struct {
 	store map[interface{}]interface{}
 	mutex sync.RWMutex
 }
 
+// NewMemoryStore creates a new store in memory
 func NewMemoryStore() *MemoryStore {
 	return &MemoryStore{store: make(map[interface{}]interface{})}
 }
 
+// Put puts object into store
 func (s *MemoryStore) Put(key string, value interface{}) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
@@ -29,6 +31,7 @@ func (s *MemoryStore) Put(key string, value interface{}) error {
 	return nil
 }
 
+// Get gets object from store
 func (s *MemoryStore) Get(key string) (interface{}, error) {
 	s.mutex.RLock()
 	defer s.mutex.RUnlock()
@@ -39,6 +42,7 @@ func (s *MemoryStore) Get(key string) (interface{}, error) {
 	return nil, ErrNotExist
 }
 
+// Del deletes object
 func (s *MemoryStore) Del(key string) error {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()

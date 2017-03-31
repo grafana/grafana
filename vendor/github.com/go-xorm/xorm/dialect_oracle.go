@@ -7,15 +7,12 @@ package xorm
 import (
 	"errors"
 	"fmt"
+	"regexp"
 	"strconv"
 	"strings"
 
 	"github.com/go-xorm/core"
 )
-
-// func init() {
-// 	RegisterDialect("oracle", &oracle{})
-// }
 
 var (
 	oracleReservedWords = map[string]bool{
@@ -530,8 +527,9 @@ func (db *oracle) SqlType(c *core.Column) string {
 		res = t
 	}
 
-	var hasLen1 bool = (c.Length > 0)
-	var hasLen2 bool = (c.Length2 > 0)
+	hasLen1 := (c.Length > 0)
+	hasLen2 := (c.Length2 > 0)
+
 	if hasLen2 {
 		res += "(" + strconv.Itoa(c.Length) + "," + strconv.Itoa(c.Length2) + ")"
 	} else if hasLen1 {
@@ -581,14 +579,14 @@ func (db *oracle) DropTableSql(tableName string) string {
 	return fmt.Sprintf("DROP TABLE `%s`", tableName)
 }
 
-func (b *oracle) CreateTableSql(table *core.Table, tableName, storeEngine, charset string) string {
+func (db *oracle) CreateTableSql(table *core.Table, tableName, storeEngine, charset string) string {
 	var sql string
 	sql = "CREATE TABLE "
 	if tableName == "" {
 		tableName = table.Name
 	}
 
-	sql += b.Quote(tableName) + " ("
+	sql += db.Quote(tableName) + " ("
 
 	pkList := table.PrimaryKeys
 
@@ -597,7 +595,7 @@ func (b *oracle) CreateTableSql(table *core.Table, tableName, storeEngine, chars
 		/*if col.IsPrimaryKey && len(pkList) == 1 {
 			sql += col.String(b.dialect)
 		} else {*/
-		sql += col.StringNoPk(b)
+		sql += col.StringNoPk(db)
 		//}
 		sql = strings.TrimSpace(sql)
 		sql += ", "
@@ -605,17 +603,17 @@ func (b *oracle) CreateTableSql(table *core.Table, tableName, storeEngine, chars
 
 	if len(pkList) > 0 {
 		sql += "PRIMARY KEY ( "
-		sql += b.Quote(strings.Join(pkList, b.Quote(",")))
+		sql += db.Quote(strings.Join(pkList, db.Quote(",")))
 		sql += " ), "
 	}
 
 	sql = sql[:len(sql)-2] + ")"
-	if b.SupportEngine() && storeEngine != "" {
+	if db.SupportEngine() && storeEngine != "" {
 		sql += " ENGINE=" + storeEngine
 	}
-	if b.SupportCharset() {
+	if db.SupportCharset() {
 		if len(charset) == 0 {
-			charset = b.URI().Charset
+			charset = db.URI().Charset
 		}
 		if len(charset) > 0 {
 			sql += " DEFAULT CHARSET " + charset
@@ -637,9 +635,7 @@ func (db *oracle) TableCheckSql(tableName string) (string, []interface{}) {
 
 func (db *oracle) MustDropTable(tableName string) error {
 	sql, args := db.TableCheckSql(tableName)
-	if db.Logger != nil {
-		db.Logger.Info("[sql]", sql, args)
-	}
+	db.LogSQL(sql, args)
 
 	rows, err := db.DB().Query(sql, args...)
 	if err != nil {
@@ -652,9 +648,8 @@ func (db *oracle) MustDropTable(tableName string) error {
 	}
 
 	sql = "Drop Table \"" + tableName + "\""
-	if db.Logger != nil {
-		db.Logger.Info("[sql]", sql)
-	}
+	db.LogSQL(sql, args)
+
 	_, err = db.DB().Exec(sql)
 	return err
 }
@@ -669,10 +664,9 @@ func (db *oracle) IsColumnExist(tableName, colName string) (bool, error) {
 	args := []interface{}{tableName, colName}
 	query := "SELECT column_name FROM USER_TAB_COLUMNS WHERE table_name = :1" +
 		" AND column_name = :2"
+	db.LogSQL(query, args)
+
 	rows, err := db.DB().Query(query, args...)
-	if db.Logger != nil {
-		db.Logger.Info("[sql]", query, args)
-	}
 	if err != nil {
 		return false, err
 	}
@@ -688,11 +682,9 @@ func (db *oracle) GetColumns(tableName string) ([]string, map[string]*core.Colum
 	args := []interface{}{tableName}
 	s := "SELECT column_name,data_default,data_type,data_length,data_precision,data_scale," +
 		"nullable FROM USER_TAB_COLUMNS WHERE table_name = :1"
+	db.LogSQL(s, args)
 
 	rows, err := db.DB().Query(s, args...)
-	if db.Logger != nil {
-		db.Logger.Info("[sql]", s, args)
-	}
 	if err != nil {
 		return nil, nil, err
 	}
@@ -702,7 +694,7 @@ func (db *oracle) GetColumns(tableName string) ([]string, map[string]*core.Colum
 	colSeq := make([]string, 0)
 	for rows.Next() {
 		col := new(core.Column)
-		col.Indexes = make(map[string]bool)
+		col.Indexes = make(map[string]int)
 
 		var colName, colDefault, nullable, dataType, dataPrecision, dataScale *string
 		var dataLen int
@@ -743,23 +735,23 @@ func (db *oracle) GetColumns(tableName string) ([]string, map[string]*core.Colum
 
 		switch dt {
 		case "VARCHAR2":
-			col.SQLType = core.SQLType{core.Varchar, len1, len2}
+			col.SQLType = core.SQLType{Name: core.Varchar, DefaultLength: len1, DefaultLength2: len2}
 		case "NVARCHAR2":
-			col.SQLType = core.SQLType{core.NVarchar, len1, len2}
+			col.SQLType = core.SQLType{Name: core.NVarchar, DefaultLength: len1, DefaultLength2: len2}
 		case "TIMESTAMP WITH TIME ZONE":
-			col.SQLType = core.SQLType{core.TimeStampz, 0, 0}
+			col.SQLType = core.SQLType{Name: core.TimeStampz, DefaultLength: 0, DefaultLength2: 0}
 		case "NUMBER":
-			col.SQLType = core.SQLType{core.Double, len1, len2}
+			col.SQLType = core.SQLType{Name: core.Double, DefaultLength: len1, DefaultLength2: len2}
 		case "LONG", "LONG RAW":
-			col.SQLType = core.SQLType{core.Text, 0, 0}
+			col.SQLType = core.SQLType{Name: core.Text, DefaultLength: 0, DefaultLength2: 0}
 		case "RAW":
-			col.SQLType = core.SQLType{core.Binary, 0, 0}
+			col.SQLType = core.SQLType{Name: core.Binary, DefaultLength: 0, DefaultLength2: 0}
 		case "ROWID":
-			col.SQLType = core.SQLType{core.Varchar, 18, 0}
+			col.SQLType = core.SQLType{Name: core.Varchar, DefaultLength: 18, DefaultLength2: 0}
 		case "AQ$_SUBSCRIBERS":
 			ignore = true
 		default:
-			col.SQLType = core.SQLType{strings.ToUpper(dt), len1, len2}
+			col.SQLType = core.SQLType{Name: strings.ToUpper(dt), DefaultLength: len1, DefaultLength2: len2}
 		}
 
 		if ignore {
@@ -767,7 +759,7 @@ func (db *oracle) GetColumns(tableName string) ([]string, map[string]*core.Colum
 		}
 
 		if _, ok := core.SqlTypes[col.SQLType.Name]; !ok {
-			return nil, nil, errors.New(fmt.Sprintf("unkonw colType %v %v", *dataType, col.SQLType))
+			return nil, nil, fmt.Errorf("Unknown colType %v %v", *dataType, col.SQLType)
 		}
 
 		col.Length = dataLen
@@ -787,11 +779,9 @@ func (db *oracle) GetColumns(tableName string) ([]string, map[string]*core.Colum
 func (db *oracle) GetTables() ([]*core.Table, error) {
 	args := []interface{}{}
 	s := "SELECT table_name FROM user_tables"
+	db.LogSQL(s, args)
 
 	rows, err := db.DB().Query(s, args...)
-	if db.Logger != nil {
-		db.Logger.Info("[sql]", s, args)
-	}
 	if err != nil {
 		return nil, err
 	}
@@ -814,11 +804,9 @@ func (db *oracle) GetIndexes(tableName string) (map[string]*core.Index, error) {
 	args := []interface{}{tableName}
 	s := "SELECT t.column_name,i.uniqueness,i.index_name FROM user_ind_columns t,user_indexes i " +
 		"WHERE t.index_name = i.index_name and t.table_name = i.table_name and t.table_name =:1"
+	db.LogSQL(s, args)
 
 	rows, err := db.DB().Query(s, args...)
-	if db.Logger != nil {
-		db.Logger.Info("[sql]", s, args)
-	}
 	if err != nil {
 		return nil, err
 	}
@@ -856,5 +844,56 @@ func (db *oracle) GetIndexes(tableName string) (map[string]*core.Index, error) {
 }
 
 func (db *oracle) Filters() []core.Filter {
-	return []core.Filter{&core.QuoteFilter{}, &core.SeqFilter{":", 1}, &core.IdFilter{}}
+	return []core.Filter{&core.QuoteFilter{}, &core.SeqFilter{Prefix: ":", Start: 1}, &core.IdFilter{}}
+}
+
+type goracleDriver struct {
+}
+
+func (cfg *goracleDriver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
+	db := &core.Uri{DbType: core.ORACLE}
+	dsnPattern := regexp.MustCompile(
+		`^(?:(?P<user>.*?)(?::(?P<passwd>.*))?@)?` + // [user[:password]@]
+			`(?:(?P<net>[^\(]*)(?:\((?P<addr>[^\)]*)\))?)?` + // [net[(addr)]]
+			`\/(?P<dbname>.*?)` + // /dbname
+			`(?:\?(?P<params>[^\?]*))?$`) // [?param1=value1&paramN=valueN]
+	matches := dsnPattern.FindStringSubmatch(dataSourceName)
+	//tlsConfigRegister := make(map[string]*tls.Config)
+	names := dsnPattern.SubexpNames()
+
+	for i, match := range matches {
+		switch names[i] {
+		case "dbname":
+			db.DbName = match
+		}
+	}
+	if db.DbName == "" {
+		return nil, errors.New("dbname is empty")
+	}
+	return db, nil
+}
+
+type oci8Driver struct {
+}
+
+//dataSourceName=user/password@ipv4:port/dbname
+//dataSourceName=user/password@[ipv6]:port/dbname
+func (p *oci8Driver) Parse(driverName, dataSourceName string) (*core.Uri, error) {
+	db := &core.Uri{DbType: core.ORACLE}
+	dsnPattern := regexp.MustCompile(
+		`^(?P<user>.*)\/(?P<password>.*)@` + // user:password@
+			`(?P<net>.*)` + // ip:port
+			`\/(?P<dbname>.*)`) // dbname
+	matches := dsnPattern.FindStringSubmatch(dataSourceName)
+	names := dsnPattern.SubexpNames()
+	for i, match := range matches {
+		switch names[i] {
+		case "dbname":
+			db.DbName = match
+		}
+	}
+	if db.DbName == "" {
+		return nil, errors.New("dbname is empty")
+	}
+	return db, nil
 }
