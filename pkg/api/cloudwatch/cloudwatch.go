@@ -36,7 +36,7 @@ type cwRequest struct {
 	DataSource *m.DataSource
 }
 
-type datasourceInfo struct {
+type DatasourceInfo struct {
 	Profile       string
 	Region        string
 	AuthType      string
@@ -47,7 +47,7 @@ type datasourceInfo struct {
 	SecretKey string
 }
 
-func (req *cwRequest) GetDatasourceInfo() *datasourceInfo {
+func (req *cwRequest) GetDatasourceInfo() *DatasourceInfo {
 	authType := req.DataSource.JsonData.Get("authType").MustString()
 	assumeRoleArn := req.DataSource.JsonData.Get("assumeRoleArn").MustString()
 	accessKey := ""
@@ -62,7 +62,7 @@ func (req *cwRequest) GetDatasourceInfo() *datasourceInfo {
 		}
 	}
 
-	return &datasourceInfo{
+	return &DatasourceInfo{
 		AuthType:      authType,
 		AssumeRoleArn: assumeRoleArn,
 		Region:        req.Region,
@@ -95,7 +95,7 @@ type cache struct {
 var awsCredentialCache map[string]cache = make(map[string]cache)
 var credentialCacheLock sync.RWMutex
 
-func getCredentials(dsInfo *datasourceInfo) (*credentials.Credentials, error) {
+func GetCredentials(dsInfo *DatasourceInfo) (*credentials.Credentials, error) {
 	cacheKey := dsInfo.Profile + ":" + dsInfo.AssumeRoleArn
 	credentialCacheLock.RLock()
 	if _, ok := awsCredentialCache[cacheKey]; ok {
@@ -207,7 +207,7 @@ func ec2RoleProvider(sess *session.Session) credentials.Provider {
 }
 
 func getAwsConfig(req *cwRequest) (*aws.Config, error) {
-	creds, err := getCredentials(req.GetDatasourceInfo())
+	creds, err := GetCredentials(req.GetDatasourceInfo())
 	if err != nil {
 		return nil, err
 	}

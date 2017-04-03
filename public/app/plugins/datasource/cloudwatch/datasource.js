@@ -17,6 +17,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
     this.supportMetrics = true;
     this.proxyUrl = instanceSettings.url;
     this.defaultRegion = instanceSettings.jsonData.defaultRegion;
+    this.instanceSettings = instanceSettings;
     this.standardStatistics = [
       'Average',
       'Maximum',
@@ -27,31 +28,29 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
 
     var self = this;
     this.query = function(options) {
-      var start = self.convertToCloudWatchTime(options.range.from, false);
-      var end = self.convertToCloudWatchTime(options.range.to, true);
-
-      var queries = [];
       options = angular.copy(options);
       options.targets = this.expandTemplateVariable(options.targets, options.scopedVars, templateSrv);
-      _.each(options.targets, function(target) {
-        if (target.hide || !target.namespace || !target.metricName || _.isEmpty(target.statistics)) {
-          return;
-        }
 
-        var query = {};
-        query.region = templateSrv.replace(target.region, options.scopedVars);
-        query.namespace = templateSrv.replace(target.namespace, options.scopedVars);
-        query.metricName = templateSrv.replace(target.metricName, options.scopedVars);
-        query.dimensions = self.convertDimensionFormat(target.dimensions, options.scopedVars);
-        query.statistics = target.statistics;
+      var queries = _.filter(options.targets, function (item) {
+        return item.hide !== true || !item.namespace || !item.metricName || _.isEmpty(item.statistics);
+      }).map(function (item) {
+        item.region = templateSrv.replace(item.region, options.scopedVars);
+        item.namespace = templateSrv.replace(item.namespace, options.scopedVars);
+        item.metricName = templateSrv.replace(item.metricName, options.scopedVars);
+        var dimensions = {};
+        _.each(item.dimensions, function (value, key) {
+          dimensions[templateSrv.replace(key, options.scopedVars)] = templateSrv.replace(value, options.scopedVars);
+        });
+        item.dimensions = dimensions;
+        item.period = self.getPeriod(item, options);
 
-        var now = Math.round(Date.now() / 1000);
-        var period = this.getPeriod(target, query, options, start, end, now);
-        target.period = period;
-        query.period = period;
-
-        queries.push(query);
-      }.bind(this));
+        return _.extend({
+          refId: item.refId,
+          intervalMs: options.intervalMs,
+          maxDataPoints: options.maxDataPoints,
+          datasourceId: self.instanceSettings.id,
+        }, item);
+      });
 
       // No valid targets, return the empty result to save a round trip.
       if (_.isEmpty(queries)) {
@@ -60,23 +59,20 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
         return d.promise;
       }
 
-      var allQueryPromise = _.map(queries, function(query) {
-        return this.performTimeSeriesQuery(query, start, end);
-      }.bind(this));
+      var request = {
+        from: options.rangeRaw.from,
+        to: options.rangeRaw.to,
+        queries: queries
+      };
 
-      return $q.all(allQueryPromise).then(function(allResponse) {
-        var result = [];
-
-        _.each(allResponse, function(response, index) {
-          var metrics = transformMetricData(response, options.targets[index], options.scopedVars);
-          result = result.concat(metrics);
-        });
-
-        return {data: result};
-      });
+      return this.performTimeSeriesQuery(request);
     };
 
-    this.getPeriod = function(target, query, options, start, end, now) {
+    this.getPeriod = function(target, options) {
+      var start = this.convertToCloudWatchTime(options.range.from, false);
+      var end = this.convertToCloudWatchTime(options.range.to, true);
+      var now = Math.round(Date.now() / 1000);
+
       var period;
       var range = end - start;
 
@@ -85,7 +81,7 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       var periodUnit = 60;
       if (!target.period) {
         if (now - start <= (daySec * 15)) { // until 15 days ago
-          if (query.namespace === 'AWS/EC2') {
+          if (target.namespace === 'AWS/EC2') {
             periodUnit = period = 300;
           } else {
             periodUnit = period = 60;
@@ -114,22 +110,19 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       return period;
     };
 
-    this.performTimeSeriesQuery = function(query, start, end) {
-      var statistics = _.filter(query.statistics, function(s) { return _.includes(self.standardStatistics, s); });
-      var extendedStatistics = _.reject(query.statistics, function(s) { return _.includes(self.standardStatistics, s); });
-      return this.awsRequest({
-        region: query.region,
-        action: 'GetMetricStatistics',
-        parameters:  {
-          namespace: query.namespace,
-          metricName: query.metricName,
-          dimensions: query.dimensions,
-          statistics: statistics,
-          extendedStatistics: extendedStatistics,
-          startTime: start,
-          endTime: end,
-          period: query.period
+    this.performTimeSeriesQuery = function(request) {
+      return backendSrv.post('/api/tsdb/query', request).then(function (res) {
+        var data = [];
+
+        if (res.results) {
+          _.forEach(res.results, function (queryRes) {
+            _.forEach(queryRes.series, function (series) {
+              data.push({target: series.name, datapoints: series.points});
+            });
+          });
         }
+
+        return {data: data};
       });
     };
 
@@ -354,62 +347,6 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
     this.getDefaultRegion = function() {
       return this.defaultRegion;
     };
-
-    function transformMetricData(md, options, scopedVars) {
-      var aliasRegex = /\{\{(.+?)\}\}/g;
-      var aliasPattern = options.alias || '{{metric}}_{{stat}}';
-      var aliasData = {
-        region: templateSrv.replace(options.region, scopedVars),
-        namespace: templateSrv.replace(options.namespace, scopedVars),
-        metric: templateSrv.replace(options.metricName, scopedVars),
-      };
-
-      var aliasDimensions = {};
-
-      _.each(_.keys(options.dimensions), function(origKey) {
-        var key = templateSrv.replace(origKey, scopedVars);
-        var value = templateSrv.replace(options.dimensions[origKey], scopedVars);
-        aliasDimensions[key] = value;
-      });
-
-      _.extend(aliasData, aliasDimensions);
-
-      var periodMs = options.period * 1000;
-
-      return _.map(options.statistics, function(stat) {
-        var extended = !_.includes(self.standardStatistics, stat);
-        var dps = [];
-        var lastTimestamp = null;
-        _.chain(md.Datapoints)
-        .sortBy(function(dp) {
-          return dp.Timestamp;
-        })
-        .each(function(dp) {
-          var timestamp = new Date(dp.Timestamp).getTime();
-          while (lastTimestamp && (timestamp - lastTimestamp) > periodMs) {
-            dps.push([null, lastTimestamp + periodMs]);
-            lastTimestamp = lastTimestamp + periodMs;
-          }
-          lastTimestamp = timestamp;
-          if (!extended) {
-            dps.push([dp[stat], timestamp]);
-          } else {
-            dps.push([dp.ExtendedStatistics[stat], timestamp]);
-          }
-        })
-        .value();
-
-        aliasData.stat = stat;
-        var seriesName = aliasPattern.replace(aliasRegex, function(match, g1) {
-          if (aliasData[g1]) {
-            return aliasData[g1];
-          }
-          return g1;
-        });
-
-        return {target: seriesName, datapoints: dps};
-      });
-    }
 
     this.getExpandedVariables = function(target, dimensionKey, variable, templateSrv) {
       /* if the all checkbox is marked we should add all values to the targets */

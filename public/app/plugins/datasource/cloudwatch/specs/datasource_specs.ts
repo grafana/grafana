@@ -28,6 +28,7 @@ describe('CloudWatchDatasource', function() {
 
     var query = {
       range: { from: 'now-1h', to: 'now' },
+      rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
           region: 'us-east-1',
@@ -43,37 +44,41 @@ describe('CloudWatchDatasource', function() {
     };
 
     var response = {
-      Datapoints: [
-        {
-          Average: 1,
-          Timestamp: 'Wed Dec 31 1969 16:00:00 GMT-0800 (PST)'
-        },
-        {
-          Average: 2,
-          Timestamp: 'Wed Dec 31 1969 16:05:00 GMT-0800 (PST)'
-        },
-        {
-          Average: 5,
-          Timestamp: 'Wed Dec 31 1969 16:15:00 GMT-0800 (PST)'
+      timings: [null],
+      results: {
+        A: {
+          error: '',
+          refId: 'A',
+          series: [
+            {
+              name: 'CPUUtilization_Average',
+              points: [
+                [1, 1483228800000],
+                [2, 1483229100000],
+                [5, 1483229700000],
+              ],
+              tags: {
+                InstanceId: 'i-12345678'
+              }
+            }
+          ]
         }
-      ],
-      Label: 'CPUUtilization'
+      }
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(params) {
+      ctx.backendSrv.post = function(path, params) {
         requestParams = params;
-        return ctx.$q.when({data: response});
+        return ctx.$q.when(response);
       };
     });
 
     it('should generate the correct query', function(done) {
       ctx.ds.query(query).then(function() {
-        var params = requestParams.data.parameters;
+        var params = requestParams.queries[0];
         expect(params.namespace).to.be(query.targets[0].namespace);
         expect(params.metricName).to.be(query.targets[0].metricName);
-        expect(params.dimensions[0].Name).to.be(Object.keys(query.targets[0].dimensions)[0]);
-        expect(params.dimensions[0].Value).to.be(query.targets[0].dimensions[Object.keys(query.targets[0].dimensions)[0]]);
+        expect(params.dimensions['InstanceId']).to.be('i-12345678');
         expect(params.statistics).to.eql(query.targets[0].statistics);
         expect(params.period).to.be(query.targets[0].period);
         done();
@@ -88,6 +93,7 @@ describe('CloudWatchDatasource', function() {
 
       var query = {
         range: { from: 'now-1h', to: 'now' },
+        rangeRaw: { from: 1483228800, to: 1483232400 },
         targets: [
           {
             region: 'us-east-1',
@@ -103,7 +109,7 @@ describe('CloudWatchDatasource', function() {
       };
 
       ctx.ds.query(query).then(function() {
-        var params = requestParams.data.parameters;
+        var params = requestParams.queries[0];
         expect(params.period).to.be(600);
         done();
       });
@@ -112,16 +118,8 @@ describe('CloudWatchDatasource', function() {
 
     it('should return series list', function(done) {
       ctx.ds.query(query).then(function(result) {
-        expect(result.data[0].target).to.be('CPUUtilization_Average');
-        expect(result.data[0].datapoints[0][0]).to.be(response.Datapoints[0]['Average']);
-        done();
-      });
-      ctx.$rootScope.$apply();
-    });
-
-    it('should return null for missing data point', function(done) {
-      ctx.ds.query(query).then(function(result) {
-        expect(result.data[0].datapoints[2][0]).to.be(null);
+        expect(result.data[0].target).to.be(response.results.A.series[0].name);
+        expect(result.data[0].datapoints[0][0]).to.be(response.results.A.series[0].points[0][0]);
         done();
       });
       ctx.$rootScope.$apply();
@@ -173,6 +171,7 @@ describe('CloudWatchDatasource', function() {
 
     var query = {
       range: { from: 'now-1h', to: 'now' },
+      rangeRaw: { from: 1483228800, to: 1483232400 },
       targets: [
         {
           region: 'us-east-1',
@@ -189,40 +188,40 @@ describe('CloudWatchDatasource', function() {
     };
 
     var response = {
-      Datapoints: [
-        {
-          ExtendedStatistics: {
-            'p90.00': 1
-          },
-          Timestamp: 'Wed Dec 31 1969 16:00:00 GMT-0800 (PST)'
-        },
-        {
-          ExtendedStatistics: {
-            'p90.00': 2
-          },
-          Timestamp: 'Wed Dec 31 1969 16:05:00 GMT-0800 (PST)'
-        },
-        {
-          ExtendedStatistics: {
-            'p90.00': 5
-          },
-          Timestamp: 'Wed Dec 31 1969 16:15:00 GMT-0800 (PST)'
+      timings: [null],
+      results: {
+        A: {
+          error: '',
+          refId: 'A',
+          series: [
+            {
+              name: 'TargetResponseTime_p90.00',
+              points: [
+                [1, 1483228800000],
+                [2, 1483229100000],
+                [5, 1483229700000],
+              ],
+              tags: {
+                LoadBalancer: 'lb',
+                TargetGroup: 'tg'
+              }
+            }
+          ]
         }
-      ],
-      Label: 'TargetResponseTime'
+      }
     };
 
     beforeEach(function() {
-      ctx.backendSrv.datasourceRequest = function(params) {
+      ctx.backendSrv.post = function(path, params) {
         requestParams = params;
-        return ctx.$q.when({data: response});
+        return ctx.$q.when(response);
       };
     });
 
     it('should return series list', function(done) {
       ctx.ds.query(query).then(function(result) {
-        expect(result.data[0].target).to.be('TargetResponseTime_p90.00');
-        expect(result.data[0].datapoints[0][0]).to.be(response.Datapoints[0].ExtendedStatistics['p90.00']);
+        expect(result.data[0].target).to.be(response.results.A.series[0].name);
+        expect(result.data[0].datapoints[0][0]).to.be(response.results.A.series[0].points[0][0]);
         done();
       });
       ctx.$rootScope.$apply();
