@@ -153,6 +153,18 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 		params = append(params, query.UserId)
 	}
 
+	if len(query.Tags) > 0 {
+		sql.WriteString(" AND dashboard_tag.term IN (")
+		for i, tag := range query.Tags {
+			if i != 0 {
+				sql.WriteString(",")
+			}
+      sql.WriteString(" ?")
+			params = append(params, tag)
+		}
+		sql.WriteString(")")
+	}
+
 	if len(query.DashboardIds) > 0 {
 		sql.WriteString(" AND (")
 		for i, dashboardId := range query.DashboardIds {
@@ -170,6 +182,11 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 		sql.WriteString(" AND dashboard.title " + dialect.LikeStr() + " ?")
 		params = append(params, "%"+query.Title+"%")
 	}
+
+  if len(query.Tags) > 0 {
+    sql.WriteString(" GROUP BY dashboard.slug HAVING COUNT(dashboard.slug) = ?")
+    params = append(params, len(query.Tags))
+  }
 
 	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 1000"))
 
