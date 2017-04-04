@@ -17,7 +17,7 @@ class MixedDatasource {
         return this.$q([]);
       }
 
-      return this.datasourceSrv.get(dsName).then(function(ds) {
+      return this.datasourceSrv.get(dsName, options.scopedVars).then(function(ds) {
         var opt = angular.copy(options);
         opt.targets = targets;
         return ds.query(opt);
