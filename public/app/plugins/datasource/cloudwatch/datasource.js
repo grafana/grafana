@@ -231,26 +231,26 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       var ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
       if (ebsVolumeIdsQuery) {
         region = templateSrv.replace(ebsVolumeIdsQuery[1]);
-        var instanceId = templateSrv.replace(ebsVolumeIdsQuery[2]);
-        var instanceIds = [];
-        if(instanceId.indexOf(",") > -1) {
-          var instanceIdArray = instanceId.replace("{","").replace("}","").split(",");
-          instanceIdArray.forEach(function(singleInstance) {
-            instanceIds.push(singleInstance);
-          });
-        } else {
-          instanceIds.push(instanceId);
-        }
+        var format = function(value) {
+          return value;
+        };
+        var instanceId = templateSrv.replace(ebsVolumeIdsQuery[2], {}, format);
+
+        var instanceIds = _.map(instanceId.split(","), function(instance) {
+          return instance;
+        });
 
         return this.performEC2DescribeInstances(region, [], instanceIds).then(function(result) {
-          var volumeIds = [];
-          _.map(result.Reservations, function(reservation) {
-            reservation.Instances[0].BlockDeviceMappings.forEach(function(mapping) {
-              volumeIds.push(mapping.Ebs.VolumeId);
+          var volumeIds = _.chain(result.Reservations)
+          .map(function(reservations) {
+            return _.map(reservations.Instances[0].BlockDeviceMappings, function(mapping) {
+              return mapping.Ebs.VolumeId;
             });
-          });
+          })
+          .flatten().uniq().sortBy().value();
           return transformSuggestData(volumeIds);
         });
+
       }
 
       var ec2InstanceAttributeQuery = query.match(/^ec2_instance_attribute\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
