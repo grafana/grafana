@@ -10,8 +10,6 @@ export class DatasourceVariable implements Variable {
   query: string;
   options: any;
   current: any;
-  multi: boolean;
-  includeAll: boolean;
   refresh: any;
 
  defaults = {
@@ -23,8 +21,6 @@ export class DatasourceVariable implements Variable {
     regex: '',
     options: [],
     query: '',
-    multi: false,
-    includeAll: false,
     refresh: 1,
   };
 
@@ -75,14 +71,7 @@ export class DatasourceVariable implements Variable {
     }
 
     this.options = options;
-    if (this.includeAll) {
-      this.addAllOption();
-    }
     return this.variableSrv.validateVariableSelectionState(this);
-  }
-
-  addAllOption() {
-    this.options.unshift({text: 'All', value: "$__all"});
   }
 
   dependsOn(variable) {
@@ -97,9 +86,6 @@ export class DatasourceVariable implements Variable {
   }
 
   getValueForUrl() {
-    if (this.current.text === 'All') {
-      return 'All';
-    }
     return this.current.value;
   }
 }
@@ -107,6 +93,5 @@ export class DatasourceVariable implements Variable {
 variableTypes['datasource'] = {
   name: 'Datasource',
   ctor: DatasourceVariable,
-  supportsMulti: true,
   description: 'Enabled you to dynamically switch the datasource for multiple panels',
 };

@@ -92,7 +92,7 @@ class MetricsPanelCtrl extends PanelCtrl {
 
     // load datasource service
     this.setTimeQueryStart();
-    this.datasourceSrv.get(this.panel.datasource, this.panel.scopedVars)
+    this.datasourceSrv.get(this.panel.datasource)
     .then(this.updateTimeRange.bind(this))
     .then(this.issueQueries.bind(this))
     .then(this.handleQueryResult.bind(this))
