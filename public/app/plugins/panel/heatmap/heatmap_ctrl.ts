@@ -99,6 +99,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
   timeSrv: any;
   dataWarning: any;
 
+  /** @ngInject */
   constructor($scope, $injector, private $rootScope, timeSrv) {
     super($scope, $injector);
     this.$rootScope = $rootScope;
