@@ -44,7 +44,7 @@ func searchHandler(query *Query) error {
 		IsStarred:    query.IsStarred,
 		OrgId:        query.OrgId,
 		DashboardIds: query.DashboardIds,
-    Tags:         query.Tags,
+		Tags:         query.Tags,
 	}
 
 	if err := bus.Dispatch(&dashQuery); err != nil {
@@ -61,17 +61,6 @@ func searchHandler(query *Query) error {
 
 		hits = append(hits, jsonHits...)
 	}
-
-	// filter out results with tag filter
-	//if len(query.Tags) > 0 {
-	//	filtered := HitList{}
-	//	for _, hit := range hits {
-	//		if hasRequiredTags(query.Tags, hit.Tags) {
-	//			filtered = append(filtered, hit)
-	//		}
-	//	}
-	//	hits = filtered
-	//}
 
 	// sort main result array
 	sort.Sort(hits)

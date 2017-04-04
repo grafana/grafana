@@ -42,7 +42,7 @@ type FindPersistedDashboardsQuery struct {
 	UserId       int64
 	IsStarred    bool
 	DashboardIds []int
-  Tags         []string
+	Tags         []string
 
 	Result HitList
 }

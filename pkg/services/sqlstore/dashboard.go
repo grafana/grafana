@@ -132,6 +132,10 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
+	if len(query.Tags) > 0 {
+		sql.WriteString("SELECT dashboard.id, dashboard.title, dashboard.slug, dashboard_tag.term FROM (")
+	}
+
 	sql.WriteString(`SELECT
 					  dashboard.id,
 					  dashboard.title,
@@ -159,14 +163,20 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 			if i != 0 {
 				sql.WriteString(",")
 			}
-      sql.WriteString(" ?")
+			sql.WriteString(" ?")
 			params = append(params, tag)
 		}
-		sql.WriteString(")")
+		sql.WriteString(`) GROUP BY dashboard.slug HAVING COUNT(dashboard.slug) >= ?) as dashboard
+              INNER JOIN dashboard_tag on dashboard.id = dashboard_tag.dashboard_id`)
+		params = append(params, len(query.Tags))
 	}
 
 	if len(query.DashboardIds) > 0 {
-		sql.WriteString(" AND (")
+		if len(query.Tags) > 0 {
+			sql.WriteString(" WHERE ")
+		} else {
+			sql.WriteString(" AND (")
+		}
 		for i, dashboardId := range query.DashboardIds {
 			if i != 0 {
 				sql.WriteString(" OR")
@@ -182,11 +192,6 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 		sql.WriteString(" AND dashboard.title " + dialect.LikeStr() + " ?")
 		params = append(params, "%"+query.Title+"%")
 	}
-
-  if len(query.Tags) > 0 {
-    sql.WriteString(" GROUP BY dashboard.slug HAVING COUNT(dashboard.slug) = ?")
-    params = append(params, len(query.Tags))
-  }
 
 	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 1000"))
 
