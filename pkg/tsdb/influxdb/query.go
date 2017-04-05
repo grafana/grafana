@@ -34,11 +34,16 @@ func (query *Query) Build(queryContext *tsdb.QueryContext) (string, error) {
 		return "", err
 	}
 
-	res = strings.Replace(res, "$timeFilter", query.renderTimeFilter(queryContext), 1)
-	res = strings.Replace(res, "$interval", interval.Text, 1)
-	res = strings.Replace(res, "$__interval_ms", strconv.FormatInt(interval.Value.Nanoseconds()/int64(time.Millisecond), 10), 1)
-	res = strings.Replace(res, "$__interval", interval.Text, 1)
+	res = replaceVariable(res, "$timeFilter", query.renderTimeFilter(queryContext))
+	res = replaceVariable(res, "$interval", interval.Text)
+	res = replaceVariable(res, "$__interval_ms", strconv.FormatInt(interval.Value.Nanoseconds()/int64(time.Millisecond), 10))
+	res = replaceVariable(res, "$__interval", interval.Text)
 	return res, nil
+}
+
+func replaceVariable(str string, variable string, value string) string {
+	count := strings.Count(str, variable)
+	return strings.Replace(str, variable, value, count)
 }
 
 func getDefinedInterval(query *Query, queryContext *tsdb.QueryContext) (*tsdb.Interval, error) {
