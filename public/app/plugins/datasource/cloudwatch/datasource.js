@@ -232,13 +232,12 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       if (ebsVolumeIdsQuery) {
         region = templateSrv.replace(ebsVolumeIdsQuery[1]);
         var format = function(value) {
-          return value;
+          if (_.isArray(value)) {
+            return '["' + value.join('","') + '"]';
+          }
+          return '["' + value + '"]';
         };
-        var instanceId = templateSrv.replace(ebsVolumeIdsQuery[2], {}, format);
-
-        var instanceIds = _.map(instanceId.split(","), function(instance) {
-          return instance;
-        });
+        var instanceIds = JSON.parse(templateSrv.replace(ebsVolumeIdsQuery[2], {}, format));
 
         return this.performEC2DescribeInstances(region, [], instanceIds).then(function(result) {
           var volumeIds = _.chain(result.Reservations)
