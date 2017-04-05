@@ -59,9 +59,13 @@ function (_) {
 
       return this.datasource._request('GET', url)
       .then(function(result) {
-        return _.map(result.data.data, function(metric) {
+        var _labels = _.map(result.data.data, function(metric) {
+          return metric[label];
+        });
+
+        return _.uniq(_labels).map(function(metric) {
           return {
-            text: metric[label],
+            text: metric,
             expandable: true
           };
         });
