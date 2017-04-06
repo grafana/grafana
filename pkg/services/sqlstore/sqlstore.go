@@ -199,8 +199,8 @@ func LoadConfig() {
 	if DbCfg.Type == "sqlite3" {
 		UseSQLite3 = true
 		// only allow one connection as sqlite3 has multi threading issues that casue table locks
-		DbCfg.MaxIdleConn = 1
-		DbCfg.MaxOpenConn = 1
+		// DbCfg.MaxIdleConn = 1
+		// DbCfg.MaxOpenConn = 1
 	}
 	DbCfg.SslMode = sec.Key("ssl_mode").String()
 	DbCfg.CaCertPath = sec.Key("ca_cert_path").String()
