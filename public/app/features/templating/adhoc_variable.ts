@@ -49,7 +49,7 @@ export class AdhocVariable implements Variable {
       return {
         key: values[0],
         operator: values[1],
-        value: values[2],
+        value: values.slice(2).join('|'),
       };
     });
 
