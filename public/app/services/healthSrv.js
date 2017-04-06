@@ -88,8 +88,8 @@ define([
       this.transformMetricType = function (dashboard) {
         var targets = {};
         var metricsTypeQueries = [];
-        _.forEach(["/association", "/anomaly"], function (subString) {
-          if ($location.path().indexOf(subString) >= 0 && dashboardId != dashboard.id) {
+        _.forEach(["/association", "/anomaly"], function (uri) {
+          if ($location.path().indexOf(uri) >= 0 && dashboardId != dashboard.id) {
             _.forEach(dashboard.rows, function (row) {
               _.forEach(row.panels, function (panel) {
                 _.forEach(panel.targets, function (target) {
@@ -113,6 +113,9 @@ define([
             });
             metricsTypeQueries.push(q);
             dashboardId = dashboard.id;
+          }
+          if(uri == "/association"){
+            dashboardId = Math.random();
           }
         });
         return $q.all(metricsTypeQueries);
