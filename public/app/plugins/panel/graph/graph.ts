@@ -292,19 +292,24 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
             break;
           }
           case 'histogram': {
+            let bucketSize: number;
             let values = getSeriesValues(data);
 
-            let histMin = _.min(_.map(data, s => s.stats.min));
-            let histMax = _.max(_.map(data, s => s.stats.max));
-            let ticks = panel.xaxis.buckets || panelWidth / 50;
-            let bucketSize = tickStep(histMin, histMax, ticks);
-            let histogram = convertValuesToHistogram(values, bucketSize);
+            if (data.length && values.length) {
+              let histMin = _.min(_.map(data, s => s.stats.min));
+              let histMax = _.max(_.map(data, s => s.stats.max));
+              let ticks = panel.xaxis.buckets || panelWidth / 50;
+              bucketSize = tickStep(histMin, histMax, ticks);
+              let histogram = convertValuesToHistogram(values, bucketSize);
 
-            data[0].data = histogram;
-            data[0].alias = data[0].label = data[0].id = "count";
-            data = [data[0]];
+              data[0].data = histogram;
+              data[0].alias = data[0].label = data[0].id = "count";
+              data = [data[0]];
 
-            options.series.bars.barWidth = bucketSize * 0.8;
+              options.series.bars.barWidth = bucketSize * 0.8;
+            } else {
+              bucketSize = 0;
+            }
 
             addXHistogramAxis(options, bucketSize);
             break;
@@ -404,15 +409,24 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
       }
 
       function addXHistogramAxis(options, bucketSize) {
-        var ticks = _.map(data[0].data, point => point[0]);
+        let ticks, min, max;
 
-        // Expand ticks for pretty view
-        let min = Math.max(0, _.min(ticks) - bucketSize);
-        let max = _.max(ticks) + bucketSize;
+        if (data.length) {
+          ticks = _.map(data[0].data, point => point[0]);
 
-        ticks = [];
-        for (let i = min; i <= max; i += bucketSize) {
-          ticks.push(i);
+          // Expand ticks for pretty view
+          min = Math.max(0, _.min(ticks) - bucketSize);
+          max = _.max(ticks) + bucketSize;
+
+          ticks = [];
+          for (let i = min; i <= max; i += bucketSize) {
+            ticks.push(i);
+          }
+        } else {
+          // Set defaults if no data
+          ticks = panelWidth / 100;
+          min = 0;
+          max = 1;
         }
 
         options.xaxis = {
