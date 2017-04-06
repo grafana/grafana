@@ -21,6 +21,9 @@ define([
                   '<p>1. 红点标注的标识异常点,根据指标历史规律判断指标的值出现异常</p>' +
                   '<p>2. prediction.max 和prediction.min 是通过历史规律预测得到的指标上限和指标下限, 帮助您判断未来指标的走势和返回</p>',
           },
+          tooltip:{
+            shared:true
+          },
           targets: [
             {
               aggregator: "avg",
@@ -81,15 +84,27 @@ define([
             total: true,
             show: true,
             values: true
-          }
+          },
+          grid: {},
+          y_formats: [
+            "short",
+            "short"
+          ]
         };
+        var selectNum = 1;
+        $scope.toTop = false;
         $scope.init = function () {
           var anomalyList = healthSrv.anomalyMetricsData[clusterId];
           var panels = [];
+          $scope.metrics = anomalyList.elements;
+          $scope.selections = [];
+          $scope.selectAll = false;
           _.each(anomalyList.elements, function (element) {
-            panels.push(setPanelMetaHost(_.cloneDeep(panelMeta), element.metric, element.host))
+            $scope.selections.push(false);
           });
 
+          panels.push(setPanelMetaHost(_.cloneDeep(panelMeta), $scope.metrics[0].metric, $scope.metrics[0].host));
+          $scope.selections[0]=true;
           $scope.initDashboard({
             meta: {canStar: false, canShare: false, canEdit: true, canSave: false},
             dashboard: {
@@ -107,11 +122,62 @@ define([
           }, $scope);
         };
 
+        $scope.changeSelect = function (index) {
+          if(index == -1){
+            $scope.changeAll();
+          }else{
+            if($scope.selections[index]){
+              $scope.addPanel(index);
+            }else{
+              $scope.removePanel(index);
+            }
+          }
+          $timeout(function() {
+            $scope.$broadcast('render');
+          });
+        };
+
+        $scope.addPanel = function(index) {
+          selectNum++;
+          if(selectNum == $scope.selections.length){
+            $scope.selectAll = true;
+          }
+          $scope.dashboard.addPanel(setPanelMetaHost(_.cloneDeep(panelMeta), $scope.metrics[index].metric, $scope.metrics[index].host), $scope.dashboard.rows[0]);
+        }
+
+        $scope.removePanel = function(index) {
+          selectNum--;
+          $scope.selectAll = false;
+          $scope.dashboard.rows[0].panels.forEach(function(panel, id) {
+            if(panel.title.indexOf(_.getMetricName($scope.metrics[index].metric) + ".anomaly{host=" + $scope.metrics[index].host + "}")==0){
+              $scope.dashboard.rows[0].panels.splice(id,1);
+              return;
+            }
+          });
+        }
+
+        $scope.removeAll = function() {
+          selectNum = 0;
+          $scope.dashboard.rows[0].panels = [];
+        }
+
+        $scope.changeAll = function() {
+          $scope.removeAll();
+          for(var i in $scope.selections) {
+            if($scope.selectAll) {
+              $scope.selections[i] = true;
+              $scope.addPanel(i);
+            } else {
+              $scope.selections[i] = false;
+            }
+          }
+        }
+
         function setPanelMetaHost(panelDef, metric, hostname) {
           metric = _.getMetricName(metric);
           var alias = metric + ".anomaly{host=" + hostname + "}";
           var panel = panelDef;
-          panel.title = metric + "指标异常情况";
+          panel.title = alias + "指标异常情况";
           panel.targets[0].metric = metric;
           panel.targets[0].tags.host = hostname;
           panel.targets[1].metric = metric + ".anomaly";
@@ -133,6 +199,19 @@ define([
         }
 
         $scope.init();
+
+        $(window).scroll(function (event) {
+          if(window.scrollY>=60){
+            $scope.$apply(function() {
+              $scope.toTop = true;
+            });
+            $('.table-container').width($('.main-view-container').width()-10);
+          }else{
+            $scope.$apply(function() {
+              $scope.toTop = false;
+            });
+          }
+        });
       }
     );
   });

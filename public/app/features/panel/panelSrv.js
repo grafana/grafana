@@ -176,7 +176,7 @@ function (angular, _, config) {
         }catch(err){
           var reg = /\'(.*?)\'/g;
           var msg = "图表中缺少"+err.toString().match(reg)[0]+"配置";
-          alertSrv.set("参数缺失", msg, "warning", 4000);
+          $scope.appEvent('alert-warning', ['参数缺失', msg]);
         }
       };
 

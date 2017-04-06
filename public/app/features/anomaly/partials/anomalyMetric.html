@@ -10,7 +10,31 @@
   </ul>
 </topnav>
 
-<div class="main-view-container">
+<div class="main-view-container" ng-class="{'fixed-top':toTop}">
+  <div class="table-container" ng-class="{'fixed-top':toTop}">
+    <div class="table-head">
+      <table>
+        <tr>
+          <th style="width: 80px;"><input type="checkbox" ng-model="selectAll" ng-click="changeSelect(-1)"></th>
+          <th style="width: 600px"><p class="text-overflow">指标<p></th>
+          <th style="width: 150px;">健康值</th>
+          <th>操作</th>
+        </tr>
+      </table>
+    </div>
+    <div class="table-body">
+      <table style="width: 100%;">
+        <tr ng-repeat="(index, element) in metrics">
+          <td style="width: 80px;"><input type="checkbox" ng-model="selections[index]" ng-click="changeSelect(index)"></td>
+          <td style="width: 600px; text-align: left;"><p class="text-overflow">{{_.getMetricName(element.metric)+ ".anomaly{host=" + element.host + "}"}}<p></td>
+          <td  style="width: 150px;">{{element.health}}</td>
+          <td><button class="btn">暂缓报警</button></td>
+        </tr>
+      </table>
+    </div>
+    <div class="clearfix"></div>
+  </div>
+
   <div class="grafana-row" ng-controller="RowCtrl"
        ng-repeat="(row_name, row) in dashboard.rows" row-height>
 
