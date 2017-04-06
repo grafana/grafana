@@ -74,7 +74,6 @@ export class AdhocVariable implements Variable {
     return value.replace('__gfpipe', '|');
   }
 
-
   setFilters(filters: any[]) {
     this.filters = filters;
   }
