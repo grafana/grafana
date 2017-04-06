@@ -312,8 +312,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
             data[0].data = histogram;
             data = [data[0]];
 
-            options.series.bars.barWidth = bucketSize * 0.7;
-            options.series.bars.align = 'center';
+            options.series.bars.barWidth = bucketSize * 0.8;
 
             addXHistogramAxis(options, bucketSize);
             break;
