@@ -301,6 +301,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
             let histogram = convertValuesToHistogram(values, bucketSize);
 
             data[0].data = histogram;
+            data[0].alias = data[0].label = data[0].id = "count";
             data = [data[0]];
 
             options.series.bars.barWidth = bucketSize * 0.8;
