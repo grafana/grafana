@@ -173,7 +173,7 @@
 				</div>
 				<div class="gf-form">
           <span class="gf-form-label width-7">Query</span>
-          <input type="text" class="gf-form-input" ng-model='current.query' placeholder="metric name or tags query" ng-model-onblur ng-change="runQuery()" required></input>
+          <input type="text" class="gf-form-input" ng-model='current.query' placeholder="metric name or tags query" spellcheck="false" ng-model-onblur ng-change="runQuery()" required></input>
         </div>
         <div class="gf-form">
           <span class="gf-form-label width-7">
@@ -182,7 +182,7 @@
               Optional, if you want to extract part of a series name or metric node segment.
             </info-popover>
           </span>
-          <input type="text" class="gf-form-input" ng-model='current.regex' placeholder="/.*-(.*)-.*/" ng-model-onblur ng-change="runQuery()"></input>
+          <input type="text" class="gf-form-input" ng-model='current.regex' placeholder="/.*-(.*)-.*/" spellcheck="false" ng-model-onblur ng-change="runQuery()"></input>
         </div>
 				<div class="gf-form max-width-21">
 					<span class="gf-form-label width-7">
