@@ -81,13 +81,21 @@ define([
             values: true
           }
         };
+        var selectNum = 0;
+        $scope.toTop = false;
         $scope.init = function () {
           var anomalyList = healthSrv.anomalyMetricsData[clusterId];
           var panels = [];
+          $scope.metrics = anomalyList.elements;
+          $scope.selections = [];
+          $scope.selectAll = false;
           _.each(anomalyList.elements, function (element) {
-            panels.push(setPanelMetaHost(_.cloneDeep(panelMeta), element.metric, element.host))
+            $scope.selections.push(false);
           });
 
+          selectNum++;
+          panels.push(setPanelMetaHost(_.cloneDeep(panelMeta), $scope.metrics[0].metric, $scope.metrics[0].host));
+          $scope.selections[0]=true;
           $scope.initDashboard({
             meta: {canStar: false, canShare: false, canEdit: true, canSave: false},
             dashboard: {
@@ -104,6 +112,71 @@ define([
             }
           }, $scope);
         };
+
+        $(window).scroll(function (event) {
+          if(window.scrollY>=60){
+            $scope.$apply(function() {
+              $scope.toTop = true;
+            });
+          }else{
+            $scope.$apply(function() {
+              $scope.toTop = false;
+            });
+          }
+        });
+
+        $scope.changeSelect = function (index) {
+          if(index == -1){
+            changeAll();
+          }else{
+            if($scope.selections[index]){
+              addPanel(index);
+            }else{
+              removePanel(index);
+            }
+          }
+        };
+
+        function addPanel(index) {
+          selectNum++;
+          if(selectNum == $scope.selections.length){
+            $scope.selectAll = true;
+          }
+          $scope.dashboard.addPanel(setPanelMetaHost(_.cloneDeep(panelMeta), $scope.metrics[index].metric, $scope.metrics[index].host), $scope.dashboard.rows[0]);
+          $scope.$broadcast('render');
+        }
+
+        function removePanel(index) {
+          selectNum--;
+          $scope.selectAll = false;
+          _.each($scope.dashboard.rows[0].panels,function(panel,id) {
+            if(panel.title.indexOf(_.getMetricName($scope.metrics[index].metric))==0){
+              $scope.dashboard.rows[0].panels.splice(id,1);
+              $scope.$broadcast('render');
+            }
+          });
+        }
+
+        function removeAll() {
+          selectNum = 0;
+          $scope.dashboard.rows[0].panels = [];
+          $scope.$broadcast('render');
+        }
+
+        function changeAll() {
+          if($scope.selectAll){
+            removeAll()
+            for(var i in $scope.selections){
+              $scope.selections[i] = true;
+              addPanel(i);
+            }
+          } else {
+            removeAll()
+            for(var i in $scope.selections){
+              $scope.selections[i] = false;
+            }
+          }
+        }
 
         function setPanelMetaHost(panelDef, metric, hostname) {
           metric = _.getMetricName(metric);
