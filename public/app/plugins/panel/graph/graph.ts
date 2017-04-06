@@ -12,11 +12,12 @@ import './jquery.flot.events';
 import $ from 'jquery';
 import _ from 'lodash';
 import moment from 'moment';
-import kbn from   'app/core/utils/kbn';
+import kbn from 'app/core/utils/kbn';
+import {tickStep} from 'app/core/utils/ticks';
 import {appEvents, coreModule} from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import {ThresholdManager} from './threshold_manager';
-import {convertValuesToHistogram, tickStep, getSeriesValues} from './histogram';
+import {convertValuesToHistogram, getSeriesValues} from './histogram';
 
 coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
   return {

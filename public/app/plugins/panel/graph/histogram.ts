@@ -1,5 +1,9 @@
 import _ from 'lodash';
 
+/**
+ * Convert series into array of series values.
+ * @param data Array of series
+ */
 export function getSeriesValues(data: any): number[] {
   let values = [];
 
@@ -16,6 +20,12 @@ export function getSeriesValues(data: any): number[] {
   return values;
 }
 
+/**
+ * Convert array of values into timeseries-like histogram:
+ * [[val_1, count_1], [val_2, count_2], ..., [val_n, count_n]]
+ * @param values
+ * @param bucketSize
+ */
 export function convertValuesToHistogram(values: number[], bucketSize: number): any[] {
   let histogram = {};
 
@@ -35,27 +45,4 @@ export function convertValuesToHistogram(values: number[], bucketSize: number): 
 
 function getBucketBound(value: number, bucketSize: number): number {
   return Math.floor(value / bucketSize) * bucketSize;
-}
-
-// Calculate tick step.
-// Implementation from d3-array (ticks.js)
-// https://github.com/d3/d3-array/blob/master/src/ticks.js
-export function tickStep(start, stop, count) {
-  var e10 = Math.sqrt(50),
-    e5 = Math.sqrt(10),
-    e2 = Math.sqrt(2);
-
-  var step0 = Math.abs(stop - start) / Math.max(0, count),
-    step1 = Math.pow(10, Math.floor(Math.log(step0) / Math.LN10)),
-    error = step0 / step1;
-
-  if (error >= e10) {
-    step1 *= 10;
-  } else if (error >= e5) {
-    step1 *= 5;
-  } else if (error >= e2) {
-    step1 *= 2;
-  }
-
-  return stop < start ? -step1 : step1;
 }
