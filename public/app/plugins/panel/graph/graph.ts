@@ -305,7 +305,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
 
             let histMin = _.min(_.map(data, s => s.stats.min));
             let histMax = _.max(_.map(data, s => s.stats.max));
-            let ticks = panelWidth / 50;
+            let ticks = panel.xaxis.buckets || panelWidth / 50;
             let bucketSize = tickStep(histMin, histMax, ticks);
             let histogram = convertValuesToHistogram(values, bucketSize);
 
