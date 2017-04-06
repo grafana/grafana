@@ -419,6 +419,11 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         let min = Math.max(0, _.min(ticks) - bucketSize);
         let max = _.max(ticks) + bucketSize;
 
+        ticks = [];
+        for (let i = min; i <= max; i += bucketSize) {
+          ticks.push(i);
+        }
+
         options.xaxis = {
           timezone: dashboard.getTimezone(),
           show: panel.xaxis.show,
