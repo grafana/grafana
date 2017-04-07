@@ -12,10 +12,12 @@ import './jquery.flot.events';
 import $ from 'jquery';
 import _ from 'lodash';
 import moment from 'moment';
-import kbn from   'app/core/utils/kbn';
+import kbn from 'app/core/utils/kbn';
+import {tickStep} from 'app/core/utils/ticks';
 import {appEvents, coreModule} from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import {ThresholdManager} from './threshold_manager';
+import {convertValuesToHistogram, getSeriesValues} from './histogram';
 
 coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
   return {
@@ -290,6 +292,29 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
             addXSeriesAxis(options);
             break;
           }
+          case 'histogram': {
+            let bucketSize: number;
+            let values = getSeriesValues(data);
+
+            if (data.length && values.length) {
+              let histMin = _.min(_.map(data, s => s.stats.min));
+              let histMax = _.max(_.map(data, s => s.stats.max));
+              let ticks = panel.xaxis.buckets || panelWidth / 50;
+              bucketSize = tickStep(histMin, histMax, ticks);
+              let histogram = convertValuesToHistogram(values, bucketSize);
+
+              data[0].data = histogram;
+              data[0].alias = data[0].label = data[0].id = "count";
+              data = [data[0]];
+
+              options.series.bars.barWidth = bucketSize * 0.8;
+            } else {
+              bucketSize = 0;
+            }
+
+            addXHistogramAxis(options, bucketSize);
+            break;
+          }
           case 'table': {
             options.series.bars.barWidth = 0.7;
             options.series.bars.align = 'center';
@@ -380,6 +405,38 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
           min: 0,
           max: ticks.length + 1,
           label: "Datetime",
+          ticks: ticks
+        };
+      }
+
+      function addXHistogramAxis(options, bucketSize) {
+        let ticks, min, max;
+
+        if (data.length) {
+          ticks = _.map(data[0].data, point => point[0]);
+
+          // Expand ticks for pretty view
+          min = Math.max(0, _.min(ticks) - bucketSize);
+          max = _.max(ticks) + bucketSize;
+
+          ticks = [];
+          for (let i = min; i <= max; i += bucketSize) {
+            ticks.push(i);
+          }
+        } else {
+          // Set defaults if no data
+          ticks = panelWidth / 100;
+          min = 0;
+          max = 1;
+        }
+
+        options.xaxis = {
+          timezone: dashboard.getTimezone(),
+          show: panel.xaxis.show,
+          mode: null,
+          min: min,
+          max: max,
+          label: "Histogram",
           ticks: ticks
         };
       }

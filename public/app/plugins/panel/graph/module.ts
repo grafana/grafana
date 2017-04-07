@@ -59,6 +59,7 @@ class GraphCtrl extends MetricsPanelCtrl {
       mode: 'time',
       name: null,
       values: [],
+      buckets: null
     },
     // show/hide lines
     lines         : true,

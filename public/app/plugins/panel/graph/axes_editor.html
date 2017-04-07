@@ -66,6 +66,12 @@
       <metric-segment-model property="ctrl.panel.xaxis.values[0]" options="ctrl.xAxisStatOptions" on-change="ctrl.xAxisOptionChanged()" custom="false" css-class="width-10" select-mode="true"></metric-segment-model>
 		</div>
 
+		<!-- Histogram mode -->
+		<div class="gf-form" ng-if="ctrl.panel.xaxis.mode === 'histogram'">
+			<label class="gf-form-label width-5">Bars</label>
+			<input type="number" class="gf-form-input max-width-8" ng-model="ctrl.panel.xaxis.buckets" placeholder="auto" ng-change="ctrl.render()" ng-model-onblur>
+		</div>
+
 	</div>
 
 </div>
