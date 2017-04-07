@@ -48,6 +48,11 @@
 				</div>
 			</div>
 
+			<div class="alert alert-info gf-form-group" ng-if="ctrl.datasourceMeta.state === 'alpha'">
+				This plugin is marked as being in alpha state, which means it is in early development phase and
+				updates will include breaking changes.
+			</div>
+
 			<rebuild-on-change property="ctrl.datasourceMeta.id">
 			<plugin-component type="datasource-config-ctrl">
 			</plugin-component>

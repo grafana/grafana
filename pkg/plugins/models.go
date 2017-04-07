@@ -39,6 +39,7 @@ type PluginBase struct {
 	Module       string             `json:"module"`
 	BaseUrl      string             `json:"baseUrl"`
 	HideFromList bool               `json:"hideFromList"`
+	State        string             `json:"state"`
 
 	IncludedInAppId string `json:"-"`
 	PluginDir       string `json:"-"`

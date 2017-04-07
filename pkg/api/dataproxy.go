@@ -10,7 +10,6 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
-	"github.com/grafana/grafana/pkg/api/sqldb"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
@@ -96,16 +95,6 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 
 	if ds.Type == m.DS_CLOUDWATCH {
 		cloudwatch.HandleRequest(c, ds)
-		return
-	}
-
-	if ds.Type == m.DS_SQLDB {
-		targetUrl, _ := url.Parse(ds.Url)
-		if !checkWhiteList(c, targetUrl.Host) {
-			return
-		}
-
-		sqldb.HandleRequest(c, ds)
 		return
 	}
 
