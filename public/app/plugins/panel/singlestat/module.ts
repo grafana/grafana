@@ -21,7 +21,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   invalidGaugeRange: boolean;
   panel: any;
   events: any;
-  valueNameOptions: any[] = ['min','max','avg', 'current', 'total', 'name', 'first', 'delta', 'range'];
+  valueNameOptions: any[] = ['min','max','avg', 'current', 'total', 'name', 'first', 'delta', 'diff', 'range'];
 
   // Set and populate defaults
   panelDefaults = {
@@ -566,7 +566,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         if (!linkInfo) { return;}
 
         drilldownTooltip.text('click to go to: ' + linkInfo.title);
-        drilldownTooltip.place_tt(e.pageX+20, e.pageY-15);
+        drilldownTooltip.place_tt(e.pageX, e.pageY-50);
       });
     }
 

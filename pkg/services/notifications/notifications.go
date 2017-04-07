@@ -48,7 +48,7 @@ func Init() error {
 	}
 
 	if !util.IsEmail(setting.Smtp.FromAddress) {
-		return errors.New("Invalid email address for smpt from_adress config")
+		return errors.New("Invalid email address for SMTP from_address config")
 	}
 
 	if setting.EmailCodeValidMinutes == 0 {
@@ -65,6 +65,7 @@ func SendWebhookSync(ctx context.Context, cmd *m.SendWebhookSync) error {
 		Password:   cmd.Password,
 		Body:       cmd.Body,
 		HttpMethod: cmd.HttpMethod,
+		HttpHeader: cmd.HttpHeader,
 	})
 }
 

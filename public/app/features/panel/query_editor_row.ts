@@ -29,6 +29,10 @@ export class QueryRowCtrl {
       delete this.target.isNew;
       this.toggleCollapse(false);
     }
+
+    if (this.panel.targets.length < 4) {
+      this.collapsed = false;
+    }
   }
 
   toggleHideQuery() {

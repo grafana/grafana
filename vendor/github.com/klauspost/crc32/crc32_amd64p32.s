@@ -1,8 +1,8 @@
-//+build gc
-
 // Copyright 2011 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
+
+// +build gc
 
 #define NOSPLIT 4
 #define RODATA 8

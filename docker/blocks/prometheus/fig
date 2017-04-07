@@ -3,8 +3,6 @@ prometheus:
   net: host
   ports:
     - "9090:9090"
-  volumes:
-    - /var/docker/prometheus:/prometheus-data
 
 node_exporter:
   image: prom/node-exporter

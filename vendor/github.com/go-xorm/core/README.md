@@ -1,5 +1,7 @@
 Core is a lightweight wrapper of sql.DB.
 
+[![CircleCI](https://circleci.com/gh/go-xorm/core/tree/master.svg?style=svg)](https://circleci.com/gh/go-xorm/core/tree/master)
+
 # Open
 ```Go
 db, _ := core.Open(db, connstr)

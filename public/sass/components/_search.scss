@@ -68,9 +68,9 @@
   }
 
   .search-item {
+    word-wrap: break-word;
     display: block;
     padding: 3px 10px;
-    white-space: nowrap;
     background-color: $grafanaListBackground;
     margin-bottom: 4px;
 
@@ -107,17 +107,15 @@
   }
 
   .search-button-row-explore-link {
-    color: $text-muted;
+    color: $gray-3;
     font-size: $font-size-sm;
-    padding-right: 7rem;
-    background: url(../img/grafana_net_logo.svg);
-    background-size: 6.5rem;
-    background-repeat: no-repeat;
-    background-position: right;
     position: relative;
-    top: 0.8rem;
+    top: 1.0rem;
     &:hover {
       color: $link-hover-color;
+    }
+    img {
+      vertical-align: text-bottom;
     }
   }
 }

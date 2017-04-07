@@ -147,7 +147,7 @@ export class DashImportCtrl {
 
     return this.backendSrv.get('api/gnet/dashboards/' + dashboardId).then(res => {
       this.gnetInfo = res;
-      // store reference to grafana.net
+      // store reference to grafana.com
       res.json.gnetId = res.id;
       this.onUpload(res.json);
     }).catch(err => {

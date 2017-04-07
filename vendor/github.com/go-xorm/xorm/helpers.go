@@ -5,6 +5,7 @@
 package xorm
 
 import (
+	"errors"
 	"fmt"
 	"reflect"
 	"sort"
@@ -14,6 +15,86 @@ import (
 
 	"github.com/go-xorm/core"
 )
+
+// str2PK convert string value to primary key value according to tp
+func str2PKValue(s string, tp reflect.Type) (reflect.Value, error) {
+	var err error
+	var result interface{}
+	var defReturn = reflect.Zero(tp)
+
+	switch tp.Kind() {
+	case reflect.Int:
+		result, err = strconv.Atoi(s)
+		if err != nil {
+			return defReturn, fmt.Errorf("convert %s as int: %s", s, err.Error())
+		}
+	case reflect.Int8:
+		x, err := strconv.Atoi(s)
+		if err != nil {
+			return defReturn, fmt.Errorf("convert %s as int8: %s", s, err.Error())
+		}
+		result = int8(x)
+	case reflect.Int16:
+		x, err := strconv.Atoi(s)
+		if err != nil {
+			return defReturn, fmt.Errorf("convert %s as int16: %s", s, err.Error())
+		}
+		result = int16(x)
+	case reflect.Int32:
+		x, err := strconv.Atoi(s)
+		if err != nil {
+			return defReturn, fmt.Errorf("convert %s as int32: %s", s, err.Error())
+		}
+		result = int32(x)
+	case reflect.Int64:
+		result, err = strconv.ParseInt(s, 10, 64)
+		if err != nil {
+			return defReturn, fmt.Errorf("convert %s as int64: %s", s, err.Error())
+		}
+	case reflect.Uint:
+		x, err := strconv.ParseUint(s, 10, 64)
+		if err != nil {
+			return defReturn, fmt.Errorf("convert %s as uint: %s", s, err.Error())
+		}
+		result = uint(x)
+	case reflect.Uint8:
+		x, err := strconv.ParseUint(s, 10, 64)
+		if err != nil {
+			return defReturn, fmt.Errorf("convert %s as uint8: %s", s, err.Error())
+		}
+		result = uint8(x)
+	case reflect.Uint16:
+		x, err := strconv.ParseUint(s, 10, 64)
+		if err != nil {
+			return defReturn, fmt.Errorf("convert %s as uint16: %s", s, err.Error())
+		}
+		result = uint16(x)
+	case reflect.Uint32:
+		x, err := strconv.ParseUint(s, 10, 64)
+		if err != nil {
+			return defReturn, fmt.Errorf("convert %s as uint32: %s", s, err.Error())
+		}
+		result = uint32(x)
+	case reflect.Uint64:
+		result, err = strconv.ParseUint(s, 10, 64)
+		if err != nil {
+			return defReturn, fmt.Errorf("convert %s as uint64: %s", s, err.Error())
+		}
+	case reflect.String:
+		result = s
+	default:
+		return defReturn, errors.New("unsupported convert type")
+	}
+	return reflect.ValueOf(result).Convert(tp), nil
+}
+
+func str2PK(s string, tp reflect.Type) (interface{}, error) {
+	v, err := str2PKValue(s, tp)
+	if err != nil {
+		return nil, err
+	}
+	return v.Interface(), nil
+}
 
 func splitTag(tag string) (tags []string) {
 	tag = strings.TrimSpace(tag)
@@ -30,7 +111,7 @@ func splitTag(tag string) (tags []string) {
 		}
 	}
 	if lastIdx < len(tag) {
-		tags = append(tags, strings.TrimSpace(tag[lastIdx:len(tag)]))
+		tags = append(tags, strings.TrimSpace(tag[lastIdx:]))
 	}
 	return
 }
@@ -75,15 +156,55 @@ func isZero(k interface{}) bool {
 	return false
 }
 
-func int64ToInt(id int64, k reflect.Kind) interface{} {
-	var v interface{} = id
-	switch k {
+func isStructZero(v reflect.Value) bool {
+	if !v.IsValid() {
+		return true
+	}
+
+	for i := 0; i < v.NumField(); i++ {
+		field := v.Field(i)
+		switch field.Kind() {
+		case reflect.Ptr:
+			field = field.Elem()
+			fallthrough
+		case reflect.Struct:
+			if !isStructZero(field) {
+				return false
+			}
+		default:
+			if field.CanInterface() && !isZero(field.Interface()) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+func isArrayValueZero(v reflect.Value) bool {
+	if !v.IsValid() || v.Len() == 0 {
+		return true
+	}
+
+	for i := 0; i < v.Len(); i++ {
+		if !isZero(v.Index(i).Interface()) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func int64ToIntValue(id int64, tp reflect.Type) reflect.Value {
+	var v interface{}
+	switch tp.Kind() {
 	case reflect.Int16:
 		v = int16(id)
 	case reflect.Int32:
 		v = int32(id)
 	case reflect.Int:
 		v = int(id)
+	case reflect.Int64:
+		v = id
 	case reflect.Uint16:
 		v = uint16(id)
 	case reflect.Uint32:
@@ -93,7 +214,11 @@ func int64ToInt(id int64, k reflect.Kind) interface{} {
 	case reflect.Uint:
 		v = uint(id)
 	}
-	return v
+	return reflect.ValueOf(v).Convert(tp)
+}
+
+func int64ToInt(id int64, tp reflect.Type) interface{} {
+	return int64ToIntValue(id, tp).Interface()
 }
 
 func isPKZero(pk core.PK) bool {
@@ -103,10 +228,6 @@ func isPKZero(pk core.PK) bool {
 		}
 	}
 	return false
-}
-
-func equalNoCase(s1, s2 string) bool {
-	return strings.ToLower(s1) == strings.ToLower(s2)
 }
 
 func indexNoCase(s, sep string) int {
@@ -154,6 +275,19 @@ func structName(v reflect.Type) string {
 	return v.Name()
 }
 
+func col2NewCols(columns ...string) []string {
+	newColumns := make([]string, 0, len(columns))
+	for _, col := range columns {
+		col = strings.Replace(col, "`", "", -1)
+		col = strings.Replace(col, `"`, "", -1)
+		ccols := strings.Split(col, ",")
+		for _, c := range ccols {
+			newColumns = append(newColumns, strings.TrimSpace(c))
+		}
+	}
+	return newColumns
+}
+
 func sliceEq(left, right []string) bool {
 	if len(left) != len(right) {
 		return false
@@ -188,7 +322,7 @@ func reflect2value(rawValue *reflect.Value) (str string, err error) {
 		default:
 			err = fmt.Errorf("Unsupported struct type %v", vv.Type().Name())
 		}
-	//时间类型
+	// time type
 	case reflect.Struct:
 		if aa.ConvertibleTo(core.TimeType) {
 			str = vv.Convert(core.TimeType).Interface().(time.Time).Format(time.RFC3339Nano)
@@ -342,6 +476,21 @@ func query2(db *core.DB, sqlStr string, params ...interface{}) (resultsSlice []m
 	return rows2Strings(rows)
 }
 
+func setColumnInt(bean interface{}, col *core.Column, t int64) {
+	v, err := col.ValueOf(bean)
+	if err != nil {
+		return
+	}
+	if v.CanSet() {
+		switch v.Type().Kind() {
+		case reflect.Int, reflect.Int64, reflect.Int32:
+			v.SetInt(t)
+		case reflect.Uint, reflect.Uint64, reflect.Uint32:
+			v.SetUint(uint64(t))
+		}
+	}
+}
+
 func setColumnTime(bean interface{}, col *core.Column, t time.Time) {
 	v, err := col.ValueOf(bean)
 	if err != nil {
@@ -360,13 +509,12 @@ func setColumnTime(bean interface{}, col *core.Column, t time.Time) {
 }
 
 func genCols(table *core.Table, session *Session, bean interface{}, useCol bool, includeQuote bool) ([]string, []interface{}, error) {
-	colNames := make([]string, 0)
-	args := make([]interface{}, 0)
+	colNames := make([]string, 0, len(table.ColumnsSeq()))
+	args := make([]interface{}, 0, len(table.ColumnsSeq()))
 
 	for _, col := range table.Columns() {
-		lColName := strings.ToLower(col.Name)
 		if useCol && !col.IsVersion && !col.IsCreated && !col.IsUpdated {
-			if _, ok := session.Statement.columnMap[lColName]; !ok {
+			if _, ok := getFlagForColumn(session.Statement.columnMap, col); !ok {
 				continue
 			}
 		}
@@ -376,8 +524,7 @@ func genCols(table *core.Table, session *Session, bean interface{}, useCol bool,
 
 		fieldValuePtr, err := col.ValueOf(bean)
 		if err != nil {
-			session.Engine.LogError(err)
-			continue
+			return nil, nil, err
 		}
 		fieldValue := *fieldValuePtr
 
@@ -403,25 +550,26 @@ func genCols(table *core.Table, session *Session, bean interface{}, useCol bool,
 		}
 
 		if session.Statement.ColumnStr != "" {
-			if _, ok := session.Statement.columnMap[lColName]; !ok {
+			if _, ok := getFlagForColumn(session.Statement.columnMap, col); !ok {
 				continue
 			}
 		}
 		if session.Statement.OmitStr != "" {
-			if _, ok := session.Statement.columnMap[lColName]; ok {
+			if _, ok := getFlagForColumn(session.Statement.columnMap, col); ok {
 				continue
 			}
 		}
 
 		// !evalphobia! set fieldValue as nil when column is nullable and zero-value
-		if _, ok := session.Statement.nullableMap[lColName]; ok {
+		if _, ok := getFlagForColumn(session.Statement.nullableMap, col); ok {
 			if col.Nullable && isZero(fieldValue.Interface()) {
 				var nilValue *int
 				fieldValue = reflect.ValueOf(nilValue)
 			}
 		}
 
-		if (col.IsCreated || col.IsUpdated) && session.Statement.UseAutoTime {
+		if (col.IsCreated || col.IsUpdated) && session.Statement.UseAutoTime /*&& isZero(fieldValue.Interface())*/ {
+			// if time is non-empty, then set to auto time
 			val, t := session.Engine.NowTime2(col.SQLType.Name)
 			args = append(args, val)
 
@@ -447,4 +595,28 @@ func genCols(table *core.Table, session *Session, bean interface{}, useCol bool,
 		}
 	}
 	return colNames, args, nil
+}
+
+func indexName(tableName, idxName string) string {
+	return fmt.Sprintf("IDX_%v_%v", tableName, idxName)
+}
+
+func getFlagForColumn(m map[string]bool, col *core.Column) (val bool, has bool) {
+
+	if len(m) == 0 {
+		return false, false
+	}
+
+	n := len(col.Name)
+
+	for mk := range m {
+		if len(mk) != n {
+			continue
+		}
+		if strings.EqualFold(mk, col.Name) {
+			return m[mk], true
+		}
+	}
+
+	return false, false
 }

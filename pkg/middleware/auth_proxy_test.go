@@ -90,6 +90,10 @@ func (s *mockSession) Get(k interface{}) interface{} {
 	return s.value
 }
 
+func (s *mockSession) Delete(k interface{}) interface{} {
+	return nil
+}
+
 func (s *mockSession) ID() string {
 	return ""
 }

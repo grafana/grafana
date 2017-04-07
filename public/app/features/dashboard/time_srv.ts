@@ -96,9 +96,13 @@ class TimeSrv {
         this.initTimeFromUrl();
         this.setTime(this.time, true);
       }
-    } else {
+    } else if (this.timeHasChangedSinceLoad()) {
       this.setTime(this.timeAtLoad, true);
     }
+  }
+
+  private timeHasChangedSinceLoad() {
+    return this.timeAtLoad.from !== this.time.from || this.timeAtLoad.to !== this.time.to;
   }
 
   setAutoRefresh(interval) {
@@ -113,6 +117,13 @@ class TimeSrv {
 
     } else {
       this.cancelNextRefresh();
+    }
+
+    // update url
+    if (interval) {
+      var params = this.$location.search();
+      params.refresh = interval;
+      this.$location.search(params);
     }
   }
 

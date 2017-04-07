@@ -35,4 +35,13 @@ func addTempUserMigrations(mg *Migrator) {
 	// create table
 	mg.AddMigration("create temp user table v1-7", NewAddTableMigration(tempUserV1))
 	addTableIndicesMigrations(mg, "v1-7", tempUserV1)
+
+	mg.AddMigration("Update temp_user table charset", NewTableCharsetMigration("temp_user", []*Column{
+		{Name: "email", Type: DB_NVarchar, Length: 255},
+		{Name: "name", Type: DB_NVarchar, Length: 255, Nullable: true},
+		{Name: "role", Type: DB_NVarchar, Length: 20, Nullable: true},
+		{Name: "code", Type: DB_NVarchar, Length: 255},
+		{Name: "status", Type: DB_Varchar, Length: 20},
+		{Name: "remote_addr", Type: DB_Varchar, Length: 255, Nullable: true},
+	}))
 }

@@ -128,6 +128,10 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     }
 
     var path = this.getSegmentPathUpTo(fromIndex + 1);
+    if (path === "") {
+      return Promise.resolve();
+    }
+
     return this.datasource.metricFindQuery(path).then(segments => {
       if (segments.length === 0) {
         if (path !== '') {

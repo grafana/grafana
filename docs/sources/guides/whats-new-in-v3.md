@@ -7,14 +7,14 @@ type = "docs"
 name = "Version 3.0"
 identifier = "v3.0"
 parent = "whatsnew"
-weight = 2
+weight = 6
 +++
 
 # What's New in Grafana v3.0
 
 ## Commercial Support
 
-Commercial Support subscriptions for Grafana are now [generally available](https://grafana.net/support/plans/).
+Commercial Support subscriptions for Grafana are now [generally available](https://grafana.com/support/plans/).
 
 Raintank is committed to a 100% open-source strategy for Grafana. We
 do not want to go down the “open core” route. If your organization
@@ -41,15 +41,15 @@ two new plugin types:
 Dashboards, and Grafana **Pages**. Apps are a great way to provide an
 entire experience right within Grafana.
 
-## Grafana.net
+## Grafana.com
 
 <img src="/img/docs/v3/grafana_net_tour.png">
 
-[Grafana.net](https://grafana.net) offers a central repository where the community can come together to discover, create and
+[Grafana.com](https://grafana.com) offers a central repository where the community can come together to discover, create and
 share plugins (data sources, panels, apps) and dashboards.
 
 We are also working on a hosted Graphite-compatible data source that will be optimized for use with Grafana.
-It’ll be easy to combine your existing data source(s) with this OpenSaaS option. Finally, Grafana.net can
+It’ll be easy to combine your existing data source(s) with this OpenSaaS option. Finally, Grafana.com can
 also be a hub to manage all your Grafana instances. You’ll be able to monitor their health and availability,
 perform dashboard backups, and more.
 
@@ -57,12 +57,12 @@ We are also working on a hosted Graphite-compatible Data Source that
 will be optimized for use with Grafana. It’ll be easy to combine your
 existing Data Source(s) with this OpenSaaS option.
 
-Finally, Grafana.net will also be a hub to manage all your Grafana
+Finally, Grafana.com will also be a hub to manage all your Grafana
 instances. You’ll be able to monitor their health and availability,
 perform Dashboard backups, and more.
 
 Grafana.net will officially launch along with the stable version of
-Grafana 3.0, but <a href=http://www.grafana.net>check out the preview
+Grafana 3.0, but go to <a href=https://grafana.com> and check out the preview
 and sign up for an account</a> in the meantime.
 
 
@@ -189,37 +189,37 @@ variable is interpolated.
 data source (or panel) they need to be updated as well.
 
 * InfluxDB 0.8: This data source is no longer included in releases,
-you can still install manually from [Grafana.net](http://grafana.net)
+you can still install manually from [Grafana.com](https://grafana.com)
 
 * KairosDB: This data source has also no longer shipped with Grafana,
-you can install it manually from [Grafana.net](http://grafana.net)
+you can install it manually from [Grafana.com](https://grafana.com)
 
 ## Plugin showcase
 
-Discovering and installing plugins is very quick and easy with Grafana 3.0 and [Grafana.net](https://grafana.net). Here
+Discovering and installing plugins is very quick and easy with Grafana 3.0 and [Grafana.com](https://grafana.com). Here
 are a couple that I incurage you try!
 
-#### [Clock Panel](https://grafana.net/plugins/grafana-clock-panel)
+#### [Clock Panel](https://grafana.com/plugins/grafana-clock-panel)
 Support's both current time and count down mode.
 <img src="/img/docs/v3/clock_panel.png">
 
-#### [Pie Chart Panel](https://grafana.net/plugins/grafana-piechart-panel)
+#### [Pie Chart Panel](https://grafana.com/plugins/grafana-piechart-panel)
 A simple pie chart panel is now available as an external plugin.
 <img src="/img/docs/v3/pie_chart_panel.png">
 
-#### [WorldPing App](https://grafana.net/plugins/raintank-worldping-app)
+#### [WorldPing App](https://grafana.com/plugins/raintank-worldping-app)
 This is full blown Grafana App that adds new panels, data sources and pages to give
 feature rich global performance monitoring directly from your on-prem Grafana.
 
 <img src="/img/docs/v3/wP-Screenshot-dash-web.png">
 
-#### [Zabbix App](https://grafana.net/plugins/alexanderzobnin-zabbix-app)
+#### [Zabbix App](https://grafana.com/plugins/alexanderzobnin-zabbix-app)
 This app contains the already very pouplar Zabbix data source plugin, 2 dashboards and a triggers panel. It is
 created and maintained by [Alexander Zobnin](https://github.com/alexanderzobnin/grafana-zabbix).
 
 <img src="/img/docs/v3/zabbix_app.png">
 
-Checkout the full list of plugins on [Grafana.net](https://grafana.net/plugins)
+Checkout the full list of plugins on [Grafana.com](https://grafana.com/plugins)
 
 ## CHANGELOG
 

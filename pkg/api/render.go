@@ -14,11 +14,12 @@ func RenderToPng(c *middleware.Context) {
 	queryParams := fmt.Sprintf("?%s", c.Req.URL.RawQuery)
 
 	renderOpts := &renderer.RenderOpts{
-		Path:    c.Params("*") + queryParams,
-		Width:   queryReader.Get("width", "800"),
-		Height:  queryReader.Get("height", "400"),
-		OrgId:   c.OrgId,
-		Timeout: queryReader.Get("timeout", "30"),
+		Path:     c.Params("*") + queryParams,
+		Width:    queryReader.Get("width", "800"),
+		Height:   queryReader.Get("height", "400"),
+		OrgId:    c.OrgId,
+		Timeout:  queryReader.Get("timeout", "30"),
+		Timezone: queryReader.Get("tz", ""),
 	}
 
 	pngPath, err := renderer.RenderToPng(renderOpts)

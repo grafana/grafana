@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/models"
@@ -18,6 +19,20 @@ import (
 func QueryMetrics(c *middleware.Context, reqDto dtos.MetricRequest) Response {
 	timeRange := tsdb.NewTimeRange(reqDto.From, reqDto.To)
 
+	if len(reqDto.Queries) == 0 {
+		return ApiError(400, "No queries found in query", nil)
+	}
+
+	dsId, err := reqDto.Queries[0].Get("datasourceId").Int64()
+	if err != nil {
+		return ApiError(400, "Query missing datasourceId", nil)
+	}
+
+	dsQuery := models.GetDataSourceByIdQuery{Id: dsId}
+	if err := bus.Dispatch(&dsQuery); err != nil {
+		return ApiError(500, "failed to fetch data source", err)
+	}
+
 	request := &tsdb.Request{TimeRange: timeRange}
 
 	for _, query := range reqDto.Queries {
@@ -26,16 +41,19 @@ func QueryMetrics(c *middleware.Context, reqDto dtos.MetricRequest) Response {
 			MaxDataPoints: query.Get("maxDataPoints").MustInt64(100),
 			IntervalMs:    query.Get("intervalMs").MustInt64(1000),
 			Model:         query,
-			DataSource: &models.DataSource{
-				Name: "Grafana TestDataDB",
-				Type: "grafana-testdata-datasource",
-			},
+			DataSource:    dsQuery.Result,
 		})
 	}
 
-	resp, err := tsdb.HandleRequest(context.TODO(), request)
+	resp, err := tsdb.HandleRequest(context.Background(), request)
 	if err != nil {
 		return ApiError(500, "Metric request error", err)
+	}
+
+	for _, res := range resp.Results {
+		if res.Error != nil {
+			res.ErrorString = res.Error.Error()
+		}
 	}
 
 	return Json(200, &resp)
@@ -113,4 +131,13 @@ func GetInternalMetrics(c *middleware.Context) Response {
 func GenerateError(c *middleware.Context) Response {
 	var array []string
 	return Json(200, array[20])
+}
+
+// GET /api/tsdb/testdata/gensql
+func GenerateSqlTestData(c *middleware.Context) Response {
+	if err := bus.Dispatch(&models.InsertSqlTestDataCommand{}); err != nil {
+		return ApiError(500, "Failed to insert test data", err)
+	}
+
+	return Json(200, &util.DynMap{"message": "OK"})
 }

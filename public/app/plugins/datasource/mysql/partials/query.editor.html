@@ -1,0 +1,25 @@
+<query-editor-row query-ctrl="ctrl" can-collapse="false">
+  <div class="gf-form-inline">
+		<div class="gf-form gf-form--grow">
+			<textarea rows="6" class="gf-form-input" ng-model="ctrl.target.rawSql" spellcheck="false" placeholder="query expression" data-min-length=0 data-items=100 ng-model-onblur ng-change="ctrl.panelCtrl.refresh()"></textarea>
+		</div>
+	</div>
+
+  <div class="gf-form-inline">
+    <div class="gf-form">
+			<label class="gf-form-label query-keyword">Format as</label>
+			<div class="gf-form-select-wrapper">
+				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.resultFormat" ng-options="f.value as f.text for f in ctrl.resultFormats" ng-change="ctrl.refresh()"></select>
+			</div>
+		</div>
+    <div class="gf-form max-width-30">
+			<label class="gf-form-label query-keyword">Name by</label>
+			<input type="text" class="gf-form-input" ng-model="ctrl.target.alias" spellcheck='false' placeholder="pattern" ng-blur="ctrl.refresh()">
+		</div>
+
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+</query-editor-row>

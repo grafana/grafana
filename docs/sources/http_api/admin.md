@@ -143,6 +143,7 @@ with Grafana admin permission.
         "protocol":"http",
         "root_url":"%(protocol)s://%(domain)s:%(http_port)s/",
         "router_logging":"true",
+        "data_proxy_logging":"true",
         "static_root_path":"public"
       },
       "session":{
@@ -157,6 +158,7 @@ with Grafana admin permission.
         "cert_file":"",
         "enabled":"false",
         "from_address":"admin@grafana.localhost",
+        "from_name":"Grafana",
         "host":"localhost:25",
         "key_file":"",
         "password":"************",
@@ -291,4 +293,4 @@ Change password for specific user
     HTTP/1.1 200
     Content-Type: application/json
 
-    {state: "new state", message: "alerts pause/un paused", "alertsAffected": 100}    
+    {state: "new state", message: "alerts pause/un paused", "alertsAffected": 100}

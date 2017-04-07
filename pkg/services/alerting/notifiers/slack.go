@@ -116,6 +116,7 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 	body := map[string]interface{}{
 		"attachments": []map[string]interface{}{
 			{
+				"fallback":    evalContext.GetNotificationTitle(),
 				"color":       evalContext.GetStateModel().Color,
 				"title":       evalContext.GetNotificationTitle(),
 				"title_link":  ruleUrl,
@@ -123,7 +124,7 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"fields":      fields,
 				"image_url":   evalContext.ImagePublicUrl,
 				"footer":      "Grafana v" + setting.BuildVersion,
-				"footer_icon": "http://grafana.org/assets/img/fav32.png",
+				"footer_icon": "https://grafana.com/assets/img/fav32.png",
 				"ts":          time.Now().Unix(),
 			},
 		},

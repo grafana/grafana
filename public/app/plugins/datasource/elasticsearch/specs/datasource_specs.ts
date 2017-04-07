@@ -42,7 +42,7 @@ describe('ElasticDatasource', function() {
       ctx.$rootScope.$apply();
 
       var today = moment.utc().format("YYYY.MM.DD");
-      expect(requestOptions.url).to.be("http://es.com/asd-" + today + '/_stats');
+      expect(requestOptions.url).to.be("http://es.com/asd-" + today + '/_mapping');
     });
   });
 
@@ -77,7 +77,7 @@ describe('ElasticDatasource', function() {
 
     it('should json escape lucene query', function() {
       var body = angular.fromJson(parts[1]);
-      expect(body.query.bool.must[1].query_string.query).to.be('escape\\:test');
+      expect(body.query.bool.filter[1].query_string.query).to.be('escape\\:test');
     });
   });
 

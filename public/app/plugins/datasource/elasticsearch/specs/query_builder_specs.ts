@@ -16,7 +16,7 @@ describe('ElasticQueryBuilder', function() {
       bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '1'}],
     });
 
-    expect(query.query.bool.must[0].range["@timestamp"].gte).to.be("$timeFrom");
+    expect(query.query.bool.filter[0].range["@timestamp"].gte).to.be("$timeFrom");
     expect(query.aggs["1"].date_histogram.extended_bounds.min).to.be("$timeFrom");
   });
 
@@ -32,7 +32,7 @@ describe('ElasticQueryBuilder', function() {
       bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '1'}],
     });
 
-    expect(query.query.bool.must[0].range["@timestamp"].gte).to.be("$timeFrom");
+    expect(query.query.bool.filter[0].range["@timestamp"].gte).to.be("$timeFrom");
     expect(query.aggs["1"].date_histogram.extended_bounds.min).to.be("$timeFrom");
   });
 
@@ -249,15 +249,42 @@ describe('ElasticQueryBuilder', function() {
     expect(firstLevel.aggs["2"].derivative.buckets_path).to.be("3");
   });
 
+  it('with histogram', function() {
+    var query = builder.build({
+      metrics: [
+        {id: '1', type: 'count' },
+      ],
+      bucketAggs: [
+        {type: 'histogram', field: 'bytes', id: '3', settings: {interval: 10, min_doc_count: 2, missing: 5}}
+      ],
+    });
+
+    var firstLevel = query.aggs["3"];
+    expect(firstLevel.histogram.field).to.be('bytes');
+    expect(firstLevel.histogram.interval).to.be(10);
+    expect(firstLevel.histogram.min_doc_count).to.be(2);
+    expect(firstLevel.histogram.missing).to.be(5);
+  });
+
   it('with adhoc filters', function() {
     var query = builder.build({
       metrics: [{type: 'Count', id: '0'}],
       timeField: '@timestamp',
       bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '3'}],
     }, [
-      {key: 'key1', operator: '=', value: 'value1'}
+      {key: 'key1', operator: '=', value: 'value1'},
+      {key: 'key2', operator: '!=', value: 'value2'},
+      {key: 'key3', operator: '<', value: 'value3'},
+      {key: 'key4', operator: '>', value: 'value4'},
+      {key: 'key5', operator: '=~', value: 'value5'},
+      {key: 'key6', operator: '!~', value: 'value6'},
     ]);
 
-    expect(query.query.bool.must[2].term["key1"]).to.be("value1");
+    expect(query.query.bool.filter[2].term["key1"]).to.be("value1");
+    expect(query.query.bool.filter[3].bool.must_not.term["key2"]).to.be("value2");
+    expect(query.query.bool.filter[4].range["key3"].lt).to.be("value3");
+    expect(query.query.bool.filter[5].range["key4"].gt).to.be("value4");
+    expect(query.query.bool.filter[6].regexp["key5"]).to.be("value5");
+    expect(query.query.bool.filter[7].bool.must_not.regexp["key6"]).to.be("value6");
   });
 });

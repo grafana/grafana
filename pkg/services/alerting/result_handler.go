@@ -16,14 +16,14 @@ type ResultHandler interface {
 }
 
 type DefaultResultHandler struct {
-	notifier Notifier
+	notifier NotificationService
 	log      log.Logger
 }
 
 func NewResultHandler() *DefaultResultHandler {
 	return &DefaultResultHandler{
 		log:      log.New("alerting.resultHandler"),
-		notifier: NewRootNotifier(),
+		notifier: NewNotificationService(),
 	}
 }
 
@@ -31,13 +31,17 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 	executionError := ""
 	annotationData := simplejson.New()
 
+	if evalContext.Firing {
+		annotationData = simplejson.NewFromAny(evalContext.EvalMatches)
+	}
+
 	if evalContext.Error != nil {
 		executionError = evalContext.Error.Error()
 		annotationData.Set("errorMessage", executionError)
 	}
 
-	if evalContext.Firing {
-		annotationData = simplejson.NewFromAny(evalContext.EvalMatches)
+	if evalContext.NoDataFound {
+		annotationData.Set("no_data", true)
 	}
 
 	countStateResult(evalContext.Rule.State)
@@ -57,6 +61,12 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 				handler.log.Error("Cannot change state on alert thats pause", "error", err)
 				return err
 			}
+
+			if err == m.ErrRequiresNewState {
+				handler.log.Info("Alert already updated")
+				return nil
+			}
+
 			handler.log.Error("Failed to save state", "error", err)
 		}
 
@@ -81,7 +91,7 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 		}
 
 		if evalContext.ShouldSendNotification() {
-			handler.notifier.Notify(evalContext)
+			handler.notifier.Send(evalContext)
 		}
 	}
 

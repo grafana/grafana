@@ -35,6 +35,8 @@ export class PanelCtrl {
   containerHeight: any;
   events: Emitter;
   timing: any;
+  skippedLastRefresh: boolean;
+  isPanelVisible: any;
 
   constructor($scope, $injector) {
     this.$injector = $injector;
@@ -75,6 +77,13 @@ export class PanelCtrl {
   }
 
   refresh() {
+    if (!this.isPanelVisible() && !this.dashboard.meta.soloMode && !this.dashboard.snapshot) {
+      this.skippedLastRefresh = true;
+      return;
+    }
+
+    this.skippedLastRefresh = false;
+
     this.events.emit('refresh', null);
   }
 

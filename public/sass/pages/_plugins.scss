@@ -38,17 +38,15 @@
 }
 
 .get-more-plugins-link {
-  color: $text-muted;
+  color: $gray-3;
   font-size: $font-size-sm;
-  padding-right: 7rem;
-  background: url(../img/grafana_net_logo.svg);
-  background-size: 6.5rem 3rem;
-  background-repeat: no-repeat;
-  background-position: right;
   position: relative;
   top: 1.2rem;
   &:hover {
     color: $link-hover-color;
+  }
+  img {
+    vertical-align: top;
   }
 }
 

@@ -23,7 +23,7 @@ export class SideMenuCtrl {
     this.isSignedIn = contextSrv.isSignedIn;
     this.user = contextSrv.user;
     this.appSubUrl = config.appSubUrl;
-    this.showSignout = this.contextSrv.isSignedIn && !config['authProxyEnabled'];
+    this.showSignout = this.contextSrv.isSignedIn && !config['disableSignoutMenu'];
     this.maxShownOrgs = 10;
 
     this.mainLinks = config.bootData.mainNavLinks;
@@ -50,7 +50,7 @@ export class SideMenuCtrl {
      {text: 'Profile', url: this.getUrl('/profile')},
    ];
 
-   if (this.isSignedIn) {
+   if (this.showSignout) {
      this.orgMenu.push({text: "Sign out", url: this.getUrl("/logout"), target: "_self"});
    }
 

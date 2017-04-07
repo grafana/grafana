@@ -98,7 +98,8 @@ function (_, TableModel) {
           annotation: self.annotation,
           time: + new Date(value[timeCol]),
           title: value[titleCol],
-          tags: tagsCol.map(function(t) { return value[t]; }),
+          // Remove empty values, then split in different tags for comma separated values
+          tags: _.flatten(tagsCol.filter(function (t) { return value[t]; }).map(function(t) { return value[t].split(","); })),
           text: value[textCol]
         };
 

@@ -101,4 +101,9 @@ config file.
 
 This is an optional requirement, you can get slack and email notifications without setting this up.
 
+# Configure the link back to Grafana from alert notifications
+
+All alert notifications contains a link back to the triggered alert in the Grafana instance. 
+This url is based on the [domain](/installation/configuration/#domain) setting in Grafana. 
+
 

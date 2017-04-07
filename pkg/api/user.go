@@ -13,7 +13,7 @@ func GetSignedInUser(c *middleware.Context) Response {
 	return getUserUserProfile(c.UserId)
 }
 
-// GET /api/user/:id
+// GET /api/users/:id
 func GetUserById(c *middleware.Context) Response {
 	return getUserUserProfile(c.ParamsInt64(":id"))
 }
@@ -22,10 +22,34 @@ func getUserUserProfile(userId int64) Response {
 	query := m.GetUserProfileQuery{UserId: userId}
 
 	if err := bus.Dispatch(&query); err != nil {
+		if err == m.ErrUserNotFound {
+			return ApiError(404, m.ErrUserNotFound.Error(), nil)
+		}
 		return ApiError(500, "Failed to get user", err)
 	}
 
 	return Json(200, query.Result)
+}
+
+// GET /api/users/lookup
+func GetUserByLoginOrEmail(c *middleware.Context) Response {
+	query := m.GetUserByLoginQuery{LoginOrEmail: c.Query("loginOrEmail")}
+	if err := bus.Dispatch(&query); err != nil {
+		if err == m.ErrUserNotFound {
+			return ApiError(404, m.ErrUserNotFound.Error(), nil)
+		}
+		return ApiError(500, "Failed to get user", err)
+	}
+	user := query.Result
+	result := m.UserProfileDTO{
+		Name:           user.Name,
+		Email:          user.Email,
+		Login:          user.Login,
+		Theme:          user.Theme,
+		IsGrafanaAdmin: user.IsAdmin,
+		OrgId:          user.OrgId,
+	}
+	return Json(200, &result)
 }
 
 // POST /api/user
@@ -60,7 +84,7 @@ func UpdateUserActiveOrg(c *middleware.Context) Response {
 	cmd := m.SetUsingOrgCommand{UserId: userId, OrgId: orgId}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed change active organization", err)
+		return ApiError(500, "Failed to change active organization", err)
 	}
 
 	return ApiSuccess("Active organization changed")
@@ -70,12 +94,12 @@ func handleUpdateUser(cmd m.UpdateUserCommand) Response {
 	if len(cmd.Login) == 0 {
 		cmd.Login = cmd.Email
 		if len(cmd.Login) == 0 {
-			return ApiError(400, "Validation error, need specify either username or email", nil)
+			return ApiError(400, "Validation error, need to specify either username or email", nil)
 		}
 	}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "failed to update user", err)
+		return ApiError(500, "Failed to update user", err)
 	}
 
 	return ApiSuccess("User updated")
@@ -95,7 +119,7 @@ func getUserOrgList(userId int64) Response {
 	query := m.GetUserOrgListQuery{UserId: userId}
 
 	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Faile to get user organziations", err)
+		return ApiError(500, "Failed to get user organizations", err)
 	}
 
 	return Json(200, query.Result)
@@ -130,7 +154,7 @@ func UserSetUsingOrg(c *middleware.Context) Response {
 	cmd := m.SetUsingOrgCommand{UserId: c.UserId, OrgId: orgId}
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed change active organization", err)
+		return ApiError(500, "Failed to change active organization", err)
 	}
 
 	return ApiSuccess("Active organization changed")
@@ -186,12 +210,46 @@ func ChangeUserPassword(c *middleware.Context, cmd m.ChangeUserPasswordCommand) 
 
 // GET /api/users
 func SearchUsers(c *middleware.Context) Response {
-	query := m.SearchUsersQuery{Query: "", Page: 0, Limit: 1000}
-	if err := bus.Dispatch(&query); err != nil {
+	query, err := searchUser(c)
+	if err != nil {
+		return ApiError(500, "Failed to fetch users", err)
+	}
+
+	return Json(200, query.Result.Users)
+}
+
+// GET /api/search
+func SearchUsersWithPaging(c *middleware.Context) Response {
+	query, err := searchUser(c)
+	if err != nil {
 		return ApiError(500, "Failed to fetch users", err)
 	}
 
 	return Json(200, query.Result)
+}
+
+func searchUser(c *middleware.Context) (*m.SearchUsersQuery, error) {
+	perPage := c.QueryInt("perpage")
+	if perPage <= 0 {
+		perPage = 1000
+	}
+	page := c.QueryInt("page")
+
+	if page < 1 {
+		page = 1
+	}
+
+	searchQuery := c.Query("query")
+
+	query := &m.SearchUsersQuery{Query: searchQuery, Page: page, Limit: perPage}
+	if err := bus.Dispatch(query); err != nil {
+		return nil, err
+	}
+
+	query.Result.Page = page
+	query.Result.PerPage = perPage
+
+	return query, nil
 }
 
 func SetHelpFlag(c *middleware.Context) Response {

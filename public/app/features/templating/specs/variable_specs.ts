@@ -12,8 +12,13 @@ describe('containsVariable', function() {
     });
 
     it('should not find it if only part matches with $var syntax', function() {
-      var contains = containsVariable('this.$ServerDomain.filters', 'Server');
+      var contains = containsVariable('this.$serverDomain.filters', 'server');
       expect(contains).to.be(false);
+    });
+
+    it('should find it if it ends with variable and passing multiple test strings', function() {
+      var contains = containsVariable('show field keys from $pgmetric', 'test string2', 'pgmetric');
+      expect(contains).to.be(true);
     });
 
     it('should find it with [[var]] syntax', function() {

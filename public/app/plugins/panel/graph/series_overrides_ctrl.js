@@ -39,7 +39,7 @@ define([
       // can be removed by the user if they still want lines
       if (item.propertyName === 'fillBelowTo') {
         $scope.override['lines'] = false;
-        $scope.addSeriesOverride({ alias: subItem.value, lines: false });
+        $scope.ctrl.addSeriesOverride({alias: subItem.value, lines: false });
       }
 
       $scope.updateCurrentOverrides();

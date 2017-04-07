@@ -232,7 +232,7 @@ Get all tags of dashboards
 Status Codes:
 
 - **query** – Search Query
-- **tags** – Tags to use
+- **tag** – Tag to use
 - **starred** – Flag indicating if only starred Dashboards should be returned
 - **tagcloud** - Flag indicating if a tagcloud should be returned
 

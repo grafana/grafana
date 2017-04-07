@@ -34,13 +34,22 @@ function ($, core) {
     };
 
     this.findHoverIndexFromData = function(posX, series) {
-      var len = series.data.length;
-      for (var j = 0; j < len; j++) {
-        if (series.data[j][0] > posX) {
-          return Math.max(j - 1,  0);
+      var lower = 0;
+      var upper = series.data.length - 1;
+      var middle;
+      while (true) {
+        if (lower > upper) {
+          return Math.max(upper, 0);
+        }
+        middle = Math.floor((lower + upper) / 2);
+        if (series.data[middle][0] === posX) {
+          return middle;
+        } else if (series.data[middle][0] < posX) {
+          lower = middle + 1;
+        } else {
+          upper = middle - 1;
         }
       }
-      return j - 1;
     };
 
     this.renderAndShow = function(absoluteTime, innerHtml, pos, xMode) {
@@ -153,9 +162,14 @@ function ($, core) {
       appEvents.emit('graph-hover', {pos: pos, panel: panel});
     });
 
+    elem.bind("plotclick", function (event, pos, item) {
+      appEvents.emit('graph-click', {pos: pos, panel: panel, item: item});
+    });
+
     this.clear = function(plot) {
       $tooltip.detach();
       plot.clearCrosshair();
+      plot.unhighlight();
     };
 
     this.show = function(pos, item) {
@@ -171,12 +185,17 @@ function ($, core) {
       // get pageX from position on x axis and pageY from relative position in original panel
       if (pos.panelRelY) {
         var pointOffset = plot.pointOffset({x: pos.x});
-        if (Number.isNaN(pointOffset.left) || pointOffset.left < 0) {
-          $tooltip.detach();
+        if (Number.isNaN(pointOffset.left) || pointOffset.left < 0 || pointOffset.left > elem.width()) {
+          self.clear(plot);
           return;
         }
         pos.pageX = elem.offset().left + pointOffset.left;
         pos.pageY = elem.offset().top + elem.height() * pos.panelRelY;
+        var isVisible = pos.pageY >= $(window).scrollTop() && pos.pageY <= $(window).innerHeight() + $(window).scrollTop();
+        if (!isVisible) {
+          self.clear(plot);
+          return;
+        }
         plot.setCrosshair(pos);
         allSeriesMode = true;
 

@@ -29,4 +29,9 @@ func addPreferencesMigrations(mg *Migrator) {
 
 	// create table
 	mg.AddMigration("create preferences table v3", NewAddTableMigration(preferencesV2))
+
+	mg.AddMigration("Update preferences table charset", NewTableCharsetMigration("preferences", []*Column{
+		{Name: "timezone", Type: DB_NVarchar, Length: 50, Nullable: false},
+		{Name: "theme", Type: DB_NVarchar, Length: 20, Nullable: false},
+	}))
 }

@@ -45,14 +45,16 @@ func (br *BatchResult) WithError(err error) *BatchResult {
 }
 
 type QueryResult struct {
-	Error  error           `json:"error"`
-	RefId  string          `json:"refId"`
-	Series TimeSeriesSlice `json:"series"`
+	Error       error           `json:"-"`
+	ErrorString string          `json:"error"`
+	RefId       string          `json:"refId"`
+	Series      TimeSeriesSlice `json:"series"`
 }
 
 type TimeSeries struct {
-	Name   string           `json:"name"`
-	Points TimeSeriesPoints `json:"points"`
+	Name   string            `json:"name"`
+	Points TimeSeriesPoints  `json:"points"`
+	Tags   map[string]string `json:"tags"`
 }
 
 type TimePoint [2]null.Float

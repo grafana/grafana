@@ -4,25 +4,28 @@ type LogLevel int
 
 const (
 	// !nashtsai! following level also match syslog.Priority value
-	LOG_UNKNOWN LogLevel = iota - 2
-	LOG_OFF     LogLevel = iota - 1
-	LOG_ERR     LogLevel = iota + 3
+	LOG_DEBUG LogLevel = iota
+	LOG_INFO
 	LOG_WARNING
-	LOG_INFO LogLevel = iota + 6
-	LOG_DEBUG
+	LOG_ERR
+	LOG_OFF
+	LOG_UNKNOWN
 )
 
 // logger interface
 type ILogger interface {
-	Debug(v ...interface{}) (err error)
-	Debugf(format string, v ...interface{}) (err error)
-	Err(v ...interface{}) (err error)
-	Errf(format string, v ...interface{}) (err error)
-	Info(v ...interface{}) (err error)
-	Infof(format string, v ...interface{}) (err error)
-	Warning(v ...interface{}) (err error)
-	Warningf(format string, v ...interface{}) (err error)
+	Debug(v ...interface{})
+	Debugf(format string, v ...interface{})
+	Error(v ...interface{})
+	Errorf(format string, v ...interface{})
+	Info(v ...interface{})
+	Infof(format string, v ...interface{})
+	Warn(v ...interface{})
+	Warnf(format string, v ...interface{})
 
 	Level() LogLevel
-	SetLevel(l LogLevel) (err error)
+	SetLevel(l LogLevel)
+
+	ShowSQL(show ...bool)
+	IsShowSQL() bool
 }

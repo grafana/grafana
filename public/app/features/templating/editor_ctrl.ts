@@ -10,6 +10,7 @@ export class VariableEditorCtrl {
   constructor(private $scope, private datasourceSrv, private variableSrv, templateSrv) {
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
+    $scope.namePattern = /^((?!__).)*$/;
 
     $scope.refreshOptions = [
       {value: 0, text: "Never"},
@@ -73,6 +74,11 @@ export class VariableEditorCtrl {
       var sameName = _.find($scope.variables, { name: $scope.current.name });
       if (sameName && sameName !== $scope.current) {
         $scope.appEvent('alert-warning', ['Validation', 'Variable with the same name already exists']);
+        return false;
+      }
+
+      if ($scope.current.type === 'query' && $scope.current.query.match(new RegExp('\\$' + $scope.current.name))) {
+        $scope.appEvent('alert-warning', ['Validation', 'Query cannot contain a reference to itself. Variable: $'  + $scope.current.name]);
         return false;
       }
 

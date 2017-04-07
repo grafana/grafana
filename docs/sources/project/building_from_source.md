@@ -13,7 +13,7 @@ dev environment. Grafana ships with its own required backend server; also comple
 
 ## Dependencies
 
-- [Go 1.7.3](https://golang.org/dl/)
+- [Go 1.8](https://golang.org/dl/)
 - [NodeJS](https://nodejs.org/download/)
 
 ## Get Code
@@ -22,6 +22,8 @@ Create a directory for the project and set your path accordingly. Then download 
 export GOPATH=`pwd`
 go get github.com/grafana/grafana
 ```
+
+You may see an error such as: `package github.com/grafana/grafana: no buildable Go source files`. This is just a warning, and you can proceed with the directions.
 
 ## Building the backend
 ```

@@ -22,6 +22,18 @@ type PrometheusExecutor struct {
 	Transport *http.Transport
 }
 
+type basicAuthTransport struct {
+	*http.Transport
+
+	username string
+	password string
+}
+
+func (bat basicAuthTransport) RoundTrip(req *http.Request) (*http.Response, error) {
+	req.SetBasicAuth(bat.username, bat.password)
+	return bat.Transport.RoundTrip(req)
+}
+
 func NewPrometheusExecutor(dsInfo *models.DataSource) (tsdb.Executor, error) {
 	transport, err := dsInfo.GetHttpTransport()
 	if err != nil {
@@ -49,6 +61,14 @@ func (e *PrometheusExecutor) getClient() (prometheus.QueryAPI, error) {
 	cfg := prometheus.Config{
 		Address:   e.DataSource.Url,
 		Transport: e.Transport,
+	}
+
+	if e.BasicAuth {
+		cfg.Transport = basicAuthTransport{
+			Transport: e.Transport,
+			username:  e.BasicAuthUser,
+			password:  e.BasicAuthPassword,
+		}
 	}
 
 	client, err := prometheus.New(cfg)
@@ -157,6 +177,11 @@ func parseResponse(value pmodel.Value, query *PrometheusQuery) (map[string]*tsdb
 	for _, v := range data {
 		series := tsdb.TimeSeries{
 			Name: formatLegend(v.Metric, query),
+			Tags: map[string]string{},
+		}
+
+		for k, v := range v.Metric {
+			series.Tags[string(k)] = string(v)
 		}
 
 		for _, k := range v.Values {
