@@ -46,7 +46,7 @@
         "hide" : 0,
         "label" : "NetCrunch Datasource",
         "regex" : "^(?!default$)[\\w\\W\\s]+$",
-        "query" : "grafana-netcrunch-datasource",
+        "query" : "adremsoft-netcrunch-datasource",
         "refresh" : 1
       },
       {

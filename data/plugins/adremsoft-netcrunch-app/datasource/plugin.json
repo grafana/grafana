@@ -1,7 +1,7 @@
 {
   "type": "datasource",
   "name": "NetCrunch",
-  "id": "grafana-netcrunch-datasource",
+  "id": "adremsoft-netcrunch-datasource",
 
   "metrics": true,
   "annotations": false,
