@@ -2,6 +2,7 @@ package netcrunch
 
 import (
   "strings"
+  "errors"
   "io/ioutil"
   "path/filepath"
   "gopkg.in/ini.v1"
@@ -17,17 +18,17 @@ func getGrafCrunchDataPath() string {
   return GrafCrunchDataBasePath
 }
 
-func loadFile (filePath string) ([]byte, bool) {
+func loadFile (filePath string) ([]byte, error) {
   if (setting.PathExists(filePath)) {
     content, err := ioutil.ReadFile(filePath)
     if (err == nil) {
       return content, nil
     }
   }
-  return nil, true
+  return nil, errors.New("File loading error: " + filePath)
 }
 
-func loadIniFile(filePath string) (*ini.File, bool) {
+func loadIniFile(filePath string) (*ini.File, error) {
   var (iniFile *ini.File)
 
   content, err := loadFile(filePath)
@@ -39,13 +40,13 @@ func loadIniFile(filePath string) (*ini.File, bool) {
     }
   }
 
-  return nil, true
+  return nil, errors.New("File loading error: " + filePath)
 }
 
 func loadTxtFile(filePath string) (string, error) {
   content, err := loadFile(filePath)
   if (err == nil) {
-    return strings.TrimSpace(string(content))
+    return strings.TrimSpace(string(content)), nil
   }
-  return "", true
+  return "", errors.New("File loading error: " + filePath)
 }
