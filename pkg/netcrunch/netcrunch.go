@@ -12,7 +12,6 @@ import (
   "github.com/grafana/grafana/pkg/bus"
   "github.com/grafana/grafana/pkg/models"
   "github.com/grafana/grafana/pkg/components/simplejson"
-  "github.com/grafana/grafana/pkg/plugins"
   "github.com/hashicorp/go-version"
 )
 
@@ -26,7 +25,6 @@ type NetCrunchServerSettings struct {
 }
 
 const (
-  NETCRUNCH_APP_PLUGIN_ID string = "grafana-netcrunch"
   DS_NETCRUNCH_OLD     		 = "netcrunch"
   DS_NETCRUNCH     		 = "grafana-netcrunch-datasource"
 )
@@ -240,27 +238,6 @@ func updateNetCrunchDefaultDatasources(netCrunchSettings NetCrunchServerSettings
   return result
 }
 
-func getNetCrunchPluginByOrg(orgId int64) (*models.PluginSetting, bool) {
-  query := models.GetPluginSettingByIdQuery {
-    PluginId: NETCRUNCH_APP_PLUGIN_ID,
-    OrgId: orgId,
-  }
-
-  err := bus.Dispatch(&query)
-  return query.Result, (err == nil)
-}
-
-func enableNetCrunchPluginForOrg(orgId int64) bool {
-  command := models.UpdatePluginSettingCmd {
-    PluginId:      NETCRUNCH_APP_PLUGIN_ID,
-    OrgId:         orgId,
-    Enabled:       true,
-    Pinned:        true,
-  }
-
-  return (bus.Dispatch(&command) == nil)
-}
-
 func writeVersionFile(fileName string) bool {
   version := []byte(setting.BuildVersion + "\n")
   return (ioutil.WriteFile(fileName, version, 0644) == nil)
@@ -355,24 +332,6 @@ func upgradeToGC94() {
   uLog.Info("Upgrade successful to 9.4")
 }
 
-func initNetCrunchPlugin() {
-  pLog := log.New("plugins")
-
-  if netCrunchPlugin, exist := plugins.Plugins[NETCRUNCH_APP_PLUGIN_ID]; exist {
-    netCrunchPlugin.IsCorePlugin = true
-
-    if orgs, found := getOrgs(); found {
-      for index := range orgs {
-        pluginSetting, err := getNetCrunchPluginByOrg(orgs[index].Id)
-
-        if (!err && (pluginSetting == nil)) {
-          enableNetCrunchPluginForOrg(orgs[index].Id)
-          pLog.Info("Enabling NetCrunch Plugin for " + orgs[index].Name)
-        }
-      }
-    }
-  }
-}
 
 func formatVersion(ver string) string {
   if (strings.Count(ver, ".") == 3) {
