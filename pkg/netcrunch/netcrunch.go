@@ -8,11 +8,10 @@ import (
   "io/ioutil"
   "gopkg.in/ini.v1"
   "github.com/grafana/grafana/pkg/log"
-  "github.com/grafana/grafana/pkg/setting"
   "github.com/grafana/grafana/pkg/bus"
   "github.com/grafana/grafana/pkg/models"
+  "github.com/grafana/grafana/pkg/setting"
   "github.com/grafana/grafana/pkg/components/simplejson"
-  "github.com/hashicorp/go-version"
 )
 
 type NetCrunchServerSettings struct {
@@ -34,30 +33,23 @@ var (
   StatusesFile *ini.File
 )
 
-func getUpgradeFilesBasePath() string {
-  UpgradeFilesBasePath := setting.Cfg.Section("paths").Key("data").String()
-
-  if (!filepath.IsAbs(UpgradeFilesBasePath)) {
-    UpgradeFilesBasePath = filepath.Join(setting.HomePath, UpgradeFilesBasePath)
-  }
-  return UpgradeFilesBasePath
-}
 
 func getUpgradeFileName() string {
-  return filepath.Join(getUpgradeFilesBasePath(), "setup.ini")
+  return filepath.Join(getGrafCrunchDataPath(), "setup.ini")
 }
 
 func getVersionFileName() string {
-  return filepath.Join(getUpgradeFilesBasePath(), "version")
+  return filepath.Join(getGrafCrunchDataPath(), "version")
 }
 
 func getUpgradeMarkerFileName() string {
-  return filepath.Join(getUpgradeFilesBasePath(), "upgrade")
+  return filepath.Join(getGrafCrunchDataPath(), "upgrade")
 }
 
 func getStatusesFileName() string {
-  return filepath.Join(getUpgradeFilesBasePath(), "statuses")
+  return filepath.Join(getGrafCrunchDataPath(), "statuses")
 }
+
 
 func loadUpgradeFile(filePath string) bool {
   upgradeData, err := ioutil.ReadFile(filePath)
@@ -243,10 +235,6 @@ func writeVersionFile(fileName string) bool {
   return (ioutil.WriteFile(fileName, version, 0644) == nil)
 }
 
-func readVersionFile(fileName string) (string, error) {
-  content, err := ioutil.ReadFile(fileName)
-  return strings.TrimSpace(string(content)), err
-}
 
 func writeStatusesFile(fileName string, statuses *ini.File) bool {
   return (statuses.SaveTo(fileName) == nil)
@@ -332,29 +320,6 @@ func upgradeToGC94() {
   uLog.Info("Upgrade successful to 9.4")
 }
 
-
-func formatVersion(ver string) string {
-  if (strings.Count(ver, ".") == 3) {
-    return ver[0:strings.LastIndex(ver, ".")]
-  }
-  return ver
-}
-
-func compareVersions(version1 string, version2 string) (int64, error) {
-  ver1, err1 := version.NewVersion(formatVersion(version1))
-  ver2, err2 := version.NewVersion(formatVersion(version2))
-
-  if ((err1 != nil) || (err2 != nil)) {
-    return 0, errors.New("Version error")
-  }
-
-  if ver1.LessThan(ver2) {
-    return -1, nil
-  } else if ver1.GreaterThan(ver2) {
-    return 1, nil
-  }
-  return 0, nil
-}
 
 func upgrade() {
   VersionFileName := getVersionFileName()
