@@ -1,0 +1,90 @@
+package sqlstore
+
+import (
+	"fmt"
+	"testing"
+
+	. "github.com/smartystreets/goconvey/convey"
+
+	m "github.com/grafana/grafana/pkg/models"
+)
+
+func TestUserGroupCommandsAndQueries(t *testing.T) {
+
+	Convey("Testing User Group commands & queries", t, func() {
+		InitTestDB(t)
+
+		Convey("Given saved users and two user groups", func() {
+			var userIds []int64
+			for i := 0; i < 5; i++ {
+				userCmd := &m.CreateUserCommand{
+					Email: fmt.Sprint("user", i, "@test.com"),
+					Name:  fmt.Sprint("user", i),
+					Login: fmt.Sprint("loginuser", i),
+				}
+				err := CreateUser(userCmd)
+				So(err, ShouldBeNil)
+				userIds = append(userIds, userCmd.Result.Id)
+			}
+
+			group1 := m.CreateUserGroupCommand{Name: "group1 name"}
+			group2 := m.CreateUserGroupCommand{Name: "group2 name"}
+
+			err := CreateUserGroup(&group1)
+			So(err, ShouldBeNil)
+			err = CreateUserGroup(&group2)
+			So(err, ShouldBeNil)
+
+			Convey("Should be able to create user groups and add users", func() {
+				query := &m.SearchUserGroupsQuery{Name: "group1 name"}
+				err = SearchUserGroups(query)
+				So(err, ShouldBeNil)
+				So(query.Page, ShouldEqual, 0)
+
+				userGroup1 := query.Result[0]
+				So(query.Result[0].Name, ShouldEqual, "group1 name")
+
+				err = AddUserGroupMember(&m.AddUserGroupMemberCommand{OrgId: 1, UserGroupId: userGroup1.Id, UserId: userIds[0]})
+				So(err, ShouldBeNil)
+
+				q1 := &m.GetUserGroupMembersQuery{UserGroupId: userGroup1.Id}
+				err = GetUserGroupMembers(q1)
+				So(err, ShouldBeNil)
+				So(q1.Result[0].UserGroupId, ShouldEqual, userGroup1.Id)
+				So(q1.Result[0].Login, ShouldEqual, "loginuser0")
+			})
+
+			Convey("Should be able to search for user groups", func() {
+				query := &m.SearchUserGroupsQuery{Query: "group"}
+				err = SearchUserGroups(query)
+				So(err, ShouldBeNil)
+				So(len(query.Result), ShouldEqual, 2)
+			})
+
+			Convey("Should be able to remove users from a group", func() {
+				err = RemoveUserGroupMember(&m.RemoveUserGroupMemberCommand{UserGroupId: group1.Result.Id, UserId: userIds[0]})
+				So(err, ShouldBeNil)
+
+				q1 := &m.GetUserGroupMembersQuery{UserGroupId: group1.Result.Id}
+				err = GetUserGroupMembers(q1)
+				So(err, ShouldBeNil)
+				So(len(q1.Result), ShouldEqual, 0)
+			})
+
+			Convey("Should be able to remove a group with users", func() {
+				groupId := group2.Result.Id
+				err := AddUserGroupMember(&m.AddUserGroupMemberCommand{OrgId: 1, UserGroupId: groupId, UserId: userIds[1]})
+				So(err, ShouldBeNil)
+				err = AddUserGroupMember(&m.AddUserGroupMemberCommand{OrgId: 1, UserGroupId: groupId, UserId: userIds[2]})
+				So(err, ShouldBeNil)
+
+				err = DeleteUserGroup(&m.DeleteUserGroupCommand{Id: groupId})
+				So(err, ShouldBeNil)
+
+				query := &m.GetUserGroupByIdQuery{Id: groupId}
+				err = GetUserGroupById(query)
+				So(err, ShouldEqual, m.ErrUserGroupNotFound)
+			})
+		})
+	})
+}
