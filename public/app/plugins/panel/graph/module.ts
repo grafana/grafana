@@ -24,6 +24,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   dataList: any = [];
   annotations: any = [];
   alertState: any;
+  inAddAnnotationMode = false;
 
   annotationsPromise: any;
   dataWarning: any;
@@ -144,6 +145,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     actions.push({text: 'Export CSV (series as rows)', click: 'ctrl.exportCsv()'});
     actions.push({text: 'Export CSV (series as columns)', click: 'ctrl.exportCsvColumns()'});
     actions.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
+    actions.push({ text: 'Add Annotation', click: 'ctrl.enableAddAnnotationMode()' });
   }
 
   issueQueries(datasource) {
@@ -298,6 +300,27 @@ class GraphCtrl extends MetricsPanelCtrl {
   toggleLegend() {
     this.panel.legend.show = !this.panel.legend.show;
     this.refresh();
+  }
+
+  enableAddAnnotationMode() {
+    // TODO: notify user about time selection mode
+    this.inAddAnnotationMode = true;
+  }
+
+  // Get annotation info from dialog and push it to backend
+  pushAnnotation(annotation) {
+    return this.annotationsSrv.postAnnotation(annotation);
+  }
+
+  showAddAnnotationModal(event) {
+    let addAnnotationScope = this.$scope.$new();
+    let annotationTimeUnix = Math.round(event.pos.x);
+    addAnnotationScope.annotationTimeUnix = annotationTimeUnix;
+
+    this.publishAppEvent('show-modal', {
+      src: 'public/app/features/dashboard/partials/addAnnotationModal.html',
+      scope: addAnnotationScope
+    });
   }
 
   legendValuesOptionChanged() {

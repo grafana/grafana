@@ -79,6 +79,14 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         }
       }, scope);
 
+      appEvents.on('graph-click', (event) => {
+
+        // Select time for new annotation
+        if (ctrl.inAddAnnotationMode) {
+          ctrl.showAddAnnotationModal(event);
+        }
+      }, scope);
+
       function getLegendHeight(panelHeight) {
         if (!panel.legend.show || panel.legend.rightSide) {
           return 0;
