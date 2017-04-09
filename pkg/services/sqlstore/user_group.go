@@ -83,17 +83,37 @@ func isUserGroupNameTaken(name string, existingId int64, sess *session) (bool, e
 }
 
 func SearchUserGroups(query *m.SearchUserGroupsQuery) error {
-	query.Result = make([]*m.UserGroup, 0)
+	query.Result = m.SearchUserGroupQueryResult{
+		UserGroups: make([]*m.UserGroup, 0),
+	}
+	queryWithWildcards := "%" + query.Query + "%"
+
 	sess := x.Table("user_group")
 	if query.Query != "" {
-		sess.Where("name LIKE ?", query.Query+"%")
+		sess.Where("name LIKE ?", queryWithWildcards)
 	}
 	if query.Name != "" {
 		sess.Where("name=?", query.Name)
 	}
-	sess.Limit(query.Limit, query.Limit*query.Page)
+	offset := query.Limit * (query.Page - 1)
+	sess.Limit(query.Limit, offset)
 	sess.Cols("id", "name")
-	err := sess.Find(&query.Result)
+	if err := sess.Find(&query.Result.UserGroups); err != nil {
+		return err
+	}
+
+	userGroup := m.UserGroup{}
+
+	countSess := x.Table("user_group")
+	if query.Query != "" {
+		countSess.Where("name LIKE ?", queryWithWildcards)
+	}
+	if query.Name != "" {
+		countSess.Where("name=?", query.Name)
+	}
+	count, err := countSess.Count(&userGroup)
+	query.Result.TotalCount = count
+
 	return err
 }
 

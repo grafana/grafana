@@ -13,12 +13,12 @@ var (
 
 // UserGroup model
 type UserGroup struct {
-	Id    int64
-	OrgId int64
-	Name  string
+	Id    int64  `json:"id"`
+	OrgId int64  `json:"orgId"`
+	Name  string `json:"name"`
 
-	Created time.Time
-	Updated time.Time
+	Created time.Time `json:"created"`
+	Updated time.Time `json:"updated"`
 }
 
 // ---------------------
@@ -26,7 +26,7 @@ type UserGroup struct {
 
 type CreateUserGroupCommand struct {
 	Name  string `json:"name" binding:"Required"`
-	OrgId int64  `json:"orgId" binding:"Required"`
+	OrgId int64  `json:"-"`
 
 	Result UserGroup `json:"-"`
 }
@@ -46,5 +46,12 @@ type SearchUserGroupsQuery struct {
 	Limit int
 	Page  int
 
-	Result []*UserGroup
+	Result SearchUserGroupQueryResult
+}
+
+type SearchUserGroupQueryResult struct {
+	TotalCount int64        `json:"totalCount"`
+	UserGroups []*UserGroup `json:"userGroups"`
+	Page       int          `json:"page"`
+	PerPage    int          `json:"perPage"`
 }

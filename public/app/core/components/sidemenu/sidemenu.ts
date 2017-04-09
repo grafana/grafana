@@ -65,6 +65,10 @@ export class SideMenuCtrl {
        url: this.getUrl("/org/users")
      });
      this.orgMenu.push({
+       text: "User Groups",
+       url: this.getUrl("/org/user-groups")
+     });
+     this.orgMenu.push({
        text: "API Keys",
        url: this.getUrl("/org/apikeys")
      });

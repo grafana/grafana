@@ -36,13 +36,13 @@ func TestUserGroupCommandsAndQueries(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("Should be able to create user groups and add users", func() {
-				query := &m.SearchUserGroupsQuery{Name: "group1 name"}
+				query := &m.SearchUserGroupsQuery{Name: "group1 name", Page: 1, Limit: 10}
 				err = SearchUserGroups(query)
 				So(err, ShouldBeNil)
-				So(query.Page, ShouldEqual, 0)
+				So(query.Page, ShouldEqual, 1)
 
-				userGroup1 := query.Result[0]
-				So(query.Result[0].Name, ShouldEqual, "group1 name")
+				userGroup1 := query.Result.UserGroups[0]
+				So(userGroup1.Name, ShouldEqual, "group1 name")
 
 				err = AddUserGroupMember(&m.AddUserGroupMemberCommand{OrgId: 1, UserGroupId: userGroup1.Id, UserId: userIds[0]})
 				So(err, ShouldBeNil)
@@ -55,10 +55,16 @@ func TestUserGroupCommandsAndQueries(t *testing.T) {
 			})
 
 			Convey("Should be able to search for user groups", func() {
-				query := &m.SearchUserGroupsQuery{Query: "group"}
+				query := &m.SearchUserGroupsQuery{Query: "group", Page: 1}
 				err = SearchUserGroups(query)
 				So(err, ShouldBeNil)
-				So(len(query.Result), ShouldEqual, 2)
+				So(len(query.Result.UserGroups), ShouldEqual, 2)
+				So(query.Result.TotalCount, ShouldEqual, 2)
+
+				query2 := &m.SearchUserGroupsQuery{Query: ""}
+				err = SearchUserGroups(query2)
+				So(err, ShouldBeNil)
+				So(len(query2.Result.UserGroups), ShouldEqual, 2)
 			})
 
 			Convey("Should be able to remove users from a group", func() {

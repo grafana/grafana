@@ -83,6 +83,12 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controller : 'OrgApiKeysCtrl',
     resolve: loadOrgBundle,
   })
+  .when('/org/user-groups', {
+    templateUrl: 'public/app/features/org/partials/user_groups.html',
+    controller : 'UserGroupsCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadOrgBundle,
+  })
   .when('/profile', {
     templateUrl: 'public/app/features/org/partials/profile.html',
     controller : 'ProfileCtrl',
