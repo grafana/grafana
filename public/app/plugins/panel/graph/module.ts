@@ -308,14 +308,13 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   // Get annotation info from dialog and push it to backend
-  pushAnnotation(annotation) {
-    return this.annotationsSrv.postAnnotation(annotation);
+  pushAnnotations(annotations) {
+    return this.annotationsSrv.postAnnotation(annotations);
   }
 
-  showAddAnnotationModal(event) {
+  showAddAnnotationModal(timeRange) {
     let addAnnotationScope = this.$scope.$new();
-    let annotationTimeUnix = Math.round(event.pos.x);
-    addAnnotationScope.annotationTimeUnix = annotationTimeUnix;
+    addAnnotationScope.annotationTimeRange = timeRange;
 
     this.publishAppEvent('show-modal', {
       src: 'public/app/features/dashboard/partials/addAnnotationModal.html',

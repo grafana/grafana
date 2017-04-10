@@ -4,9 +4,12 @@ import angular from 'angular';
 import moment from 'moment';
 
 export class AddAnnotationModalCtrl {
-  annotationTime: any;
   annotationTimeFormat = 'YYYY-MM-DD HH:mm:ss';
-  annotation: any;
+  annotationTimeFrom: any;
+  annotationTimeTo: any = null;
+  annotationTitle: string;
+  annotationTextFrom: string;
+  annotationTextTo: string;
   graphCtrl: any;
 
   /** @ngInject */
@@ -14,20 +17,39 @@ export class AddAnnotationModalCtrl {
     this.graphCtrl = $scope.ctrl;
     $scope.ctrl = this;
 
-    this.annotation = {
-      time: null,
-      title: "",
-      text: ""
-    };
-
-    this.annotationTime = moment(this.$scope.annotationTimeUnix).format(this.annotationTimeFormat);
+    this.annotationTimeFrom = moment($scope.annotationTimeRange.from).format(this.annotationTimeFormat);
+    if ($scope.annotationTimeRange.to) {
+      this.annotationTimeTo = moment($scope.annotationTimeRange.to).format(this.annotationTimeFormat);
+    }
   }
 
   addAnnotation() {
-    let time = moment(this.annotationTime, this.annotationTimeFormat);
-    this.annotation.time = time.valueOf();
+    let dashboardId = this.graphCtrl.dashboard.id;
+    let panelId = this.graphCtrl.panel.id;
+    let timeFrom = moment(this.annotationTimeFrom, this.annotationTimeFormat).valueOf();
 
-    this.graphCtrl.pushAnnotation(this.annotation)
+    let annotationFrom = {
+      dashboardId: dashboardId,
+      panelId: panelId,
+      time: timeFrom,
+      title: this.annotationTitle,
+      text: this.annotationTextFrom
+    };
+    let annotations = [annotationFrom];
+
+    if (this.annotationTimeTo) {
+      let timeTo = moment(this.annotationTimeTo, this.annotationTimeFormat).valueOf();
+      let annotationTo = {
+        dashboardId: dashboardId,
+        panelId: panelId,
+        time: timeTo,
+        title: this.annotationTitle,
+        text: this.annotationTextTo
+      };
+      annotations.push(annotationTo);
+    }
+
+    this.graphCtrl.pushAnnotations(annotations)
     .then(response => {
       console.log(response);
       this.close();

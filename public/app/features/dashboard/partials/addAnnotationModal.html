@@ -27,23 +27,39 @@
             </p>
 
             <div class="gf-form">
-              <span class="gf-form-label width-7">Title</span>
-              <input type="text" ng-model="ctrl.annotation.title" class="gf-form-input max-width-20">
+              <span class="gf-form-label width-8">Title</span>
+              <input type="text" ng-model="ctrl.annotationTitle" class="gf-form-input max-width-20">
             </div>
             <div class="gf-form">
-              <span class="gf-form-label width-7">Time</span>
-              <input type="text" ng-model="ctrl.annotationTime" class="gf-form-input max-width-20">
+              <span class="gf-form-label width-8" ng-if="!ctrl.annotationTimeTo">Time</span>
+              <span class="gf-form-label width-8" ng-if="ctrl.annotationTimeTo">Time Start</span>
+              <input type="text" ng-model="ctrl.annotationTimeFrom" class="gf-form-input max-width-20">
+            </div>
+            <div class="gf-form" ng-if="ctrl.annotationTimeTo">
+              <span class="gf-form-label width-8">Time Stop</span>
+              <input type="text" ng-model="ctrl.annotationTimeTo" class="gf-form-input max-width-20">
             </div>
           </div>
 
           <div>
-            <h6>
-              Description
-            </h6>
+            <h6 ng-if="!ctrl.annotationTimeTo">Description</h6>
+            <h6 ng-if="ctrl.annotationTimeTo">Description Start</h6>
           </div>
           <div class="gf-form-group share-modal-options">
             <div class="gf-form">
-              <textarea rows="3" class="gf-form-input width-27" ng-model="ctrl.annotation.text"></textarea>
+              <textarea rows="3" class="gf-form-input width-27" ng-model="ctrl.annotationTextFrom"></textarea>
+            </div>
+          </div>
+
+
+          <div ng-if="ctrl.annotationTimeTo">
+            <div>
+              <h6>Description Stop</h6>
+            </div>
+            <div class="gf-form-group share-modal-options">
+              <div class="gf-form">
+                <textarea rows="3" class="gf-form-input width-27" ng-model="ctrl.annotationTextTo"></textarea>
+              </div>
             </div>
           </div>
 

@@ -83,7 +83,13 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
 
         // Select time for new annotation
         if (ctrl.inAddAnnotationMode) {
-          ctrl.showAddAnnotationModal(event);
+          let timeRange = {
+            from: event.pos.x,
+            to: null
+          };
+
+          ctrl.showAddAnnotationModal(timeRange);
+          ctrl.inAddAnnotationMode = false;
         }
       }, scope);
 
@@ -647,12 +653,20 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
       }
 
       elem.bind("plotselected", function (event, ranges) {
-        scope.$apply(function() {
-          timeSrv.setTime({
-            from  : moment.utc(ranges.xaxis.from),
-            to    : moment.utc(ranges.xaxis.to),
+        if (ctrl.inAddAnnotationMode) {
+          // Select time range for new annotation
+          let timeRange = ranges.xaxis;
+          ctrl.showAddAnnotationModal(timeRange);
+          plot.clearSelection();
+          ctrl.inAddAnnotationMode = false;
+        } else {
+          scope.$apply(function() {
+            timeSrv.setTime({
+              from  : moment.utc(ranges.xaxis.from),
+              to    : moment.utc(ranges.xaxis.to),
+            });
           });
-        });
+        }
       });
 
       scope.$on('$destroy', function() {
