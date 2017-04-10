@@ -190,6 +190,19 @@ func TestDashboardDataAccess(t *testing.T) {
 					So(len(query.Result), ShouldEqual, 1)
 					So(query.Result[0].Title, ShouldEqual, "starred dash")
 				})
+
+				Convey("Should be able to search for dashboards by tags", func() {
+					insertTestDashboard("BBAA", 1, "AA", "BB")
+					insertTestDashboard("CCAA", 1, "CC", "AA")
+					insertTestDashboard("EEAABB", 1, "AA", "BB", "EE")
+					query := search.FindPersistedDashboardsQuery{OrgId: 1, UserId: 10, Tags: []string{"AA", "BB"}}
+					err := SearchDashboards(&query)
+
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 2)
+					So(query.Result[0].Title, ShouldEqual, "BBAA")
+					So(query.Result[1].Title, ShouldEqual, "EEAABB")
+				})
 			})
 		})
 	})
