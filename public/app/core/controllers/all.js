@@ -9,4 +9,7 @@ define([
   './reset_password_ctrl',
   './sidemenu_ctrl',
   './error_ctrl',
+  './installCtrl',
+  './signupFreeCtrl',
+  './systemCtrl'
 ], function () {});

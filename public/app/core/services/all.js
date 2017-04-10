@@ -9,5 +9,9 @@ define([
   './popover_srv',
   './segment_srv',
   './backend_srv',
+  './alertMgrSrv',
+  './healthSrv',
+  './integrateSrv',
+  './oncallerMgrSrv'
 ],
 function () {});

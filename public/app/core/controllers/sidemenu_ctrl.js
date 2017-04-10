@@ -45,16 +45,12 @@ function (angular, _, $, coreModule, config) {
           icon: "fa fa-fw fa-users",
           href: $scope.getUrl("/customer"),
         });
-      }
-      /*
-      if (contextSrv.hasRole('Admin')) {
         $scope.mainLinks.push({
           text: "Data Sources",
           icon: "fa fa-fw fa-database",
           href: $scope.getUrl("/datasources"),
         });
       }
-      */
     };
 
     $scope.loadOrgs = function() {

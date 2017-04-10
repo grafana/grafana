@@ -1,14 +1,11 @@
 define([
     'angular',
     'lodash',
-    'config',
-  ],
-  function (angular, _) {
+    '../core_module',
+],
+function (angular, _, coreModule) {
     'use strict';
-
-    var module = angular.module('grafana.services');
-
-    module.service('healthSrv', function ($http, backendSrv, $location, $q) {
+  coreModule.service('healthSrv', function ($http, backendSrv, $location, $q) {
       var anomalyListUrl = "/anomaly?by_groups=true";
       var excludeAnomaly = "/anomaly/exclude";
       var includeAnomaly = "/anomaly/include";

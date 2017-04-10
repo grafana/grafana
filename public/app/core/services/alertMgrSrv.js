@@ -1,14 +1,11 @@
 define([
-  'angular',
-  'lodash',
-  'config',
+    'angular',
+    'lodash',
+    '../core_module',
 ],
-function (angular) {
+function (angular, _, coreModule) {
   'use strict';
-
-  var module = angular.module('grafana.services');
-
-  module.service('alertMgrSrv', function(alertSrv, backendSrv) {
+  coreModule.service('alertMgrSrv', function(alertSrv, backendSrv) {
     this.alertDefMap = {};
     var self = this;
     var alertDefUrl = "/alert/definition";

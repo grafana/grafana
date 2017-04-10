@@ -1,14 +1,12 @@
 define([
-  'angular',
-  'lodash',
-  'config',
+    'angular',
+    'lodash',
+    '../core_module',
 ],
-function (angular) {
-  'use strict';
+function (angular, _, coreModule) {
+    'use strict';
 
-  var module = angular.module('grafana.services');
-
-  module.service('oncallerMgrSrv', function($http, alertSrv, backendSrv, contextSrv) {
+    coreModule.service('oncallerMgrSrv', function($http, alertSrv, backendSrv, contextSrv) {
     this.oncallerDefMap = {};
     var self = this;
     var oncallerUrl = "/oncaller/definition";
