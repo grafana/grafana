@@ -173,7 +173,7 @@ function (angular, $, _) {
             dismiss(2200);
           };
 
-          elem.click(showMenu);
+          // elem.click(showMenu);
           $compile(elem.contents())($scope);
         }
       };
