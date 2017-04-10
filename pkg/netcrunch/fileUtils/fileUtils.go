@@ -1,4 +1,4 @@
-package netcrunch
+package fileUtils
 
 import (
   "os"
@@ -10,7 +10,7 @@ import (
   "github.com/grafana/grafana/pkg/setting"
 )
 
-func getGrafCrunchDataPath() string {
+func GetGrafCrunchDataPath() string {
   GrafCrunchDataBasePath := setting.Cfg.Section("paths").Key("data").String()
 
   if (!filepath.IsAbs(GrafCrunchDataBasePath)) {
@@ -19,7 +19,7 @@ func getGrafCrunchDataPath() string {
   return GrafCrunchDataBasePath
 }
 
-func loadFile (filePath string) ([]byte, error) {
+func LoadFile (filePath string) ([]byte, error) {
   if (setting.PathExists(filePath)) {
     content, err := ioutil.ReadFile(filePath)
     if (err == nil) {
@@ -29,10 +29,10 @@ func loadFile (filePath string) ([]byte, error) {
   return nil, errors.New("File loading error: " + filePath)
 }
 
-func loadIniFile(filePath string) (*ini.File, error) {
+func LoadIniFile(filePath string) (*ini.File, error) {
   var (iniFile *ini.File)
 
-  content, err := loadFile(filePath)
+  content, err := LoadFile(filePath)
   if (err == nil) {
     iniFile, err = ini.Load(content)
     if (err == nil) {
@@ -44,19 +44,19 @@ func loadIniFile(filePath string) (*ini.File, error) {
   return nil, errors.New("File loading error: " + filePath)
 }
 
-func loadTxtFile(filePath string) (string, error) {
-  content, err := loadFile(filePath)
+func LoadTxtFile(filePath string) (string, error) {
+  content, err := LoadFile(filePath)
   if (err == nil) {
     return strings.TrimSpace(string(content)), nil
   }
   return "", errors.New("File loading error: " + filePath)
 }
 
-func saveIniFile(iniFile *ini.File, filePath string) bool {
+func SaveIniFile(iniFile *ini.File, filePath string) bool {
   return (iniFile.SaveTo(filePath) == nil)
 }
 
-func removeFile(fileName string) bool {
+func RemoveFile(fileName string) bool {
   err := os.Remove(fileName)
   return (err == nil)
 }
