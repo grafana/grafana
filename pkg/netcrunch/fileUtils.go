@@ -1,6 +1,7 @@
 package netcrunch
 
 import (
+  "os"
   "strings"
   "errors"
   "io/ioutil"
@@ -49,4 +50,13 @@ func loadTxtFile(filePath string) (string, error) {
     return strings.TrimSpace(string(content)), nil
   }
   return "", errors.New("File loading error: " + filePath)
+}
+
+func saveIniFile(iniFile *ini.File, filePath string) bool {
+  return (iniFile.SaveTo(filePath) == nil)
+}
+
+func removeFile(fileName string) bool {
+  err := os.Remove(fileName)
+  return (err == nil)
 }
