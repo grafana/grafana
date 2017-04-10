@@ -16,6 +16,14 @@ type Annotation struct {
 	Data *simplejson.Json `json:"data"`
 }
 
+type PostAnnotationsCmd struct {
+	DashboardId int64  `json:"dashboardId"`
+	PanelId     int64  `json:"panelId"`
+	Time        int64  `json:"time"`
+	Title       string `json:"title"`
+	Text        string `json:"text"`
+}
+
 type DeleteAnnotationsCmd struct {
 	AlertId     int64 `json:"alertId"`
 	DashboardId int64 `json:"dashboardId"`

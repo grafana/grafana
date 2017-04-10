@@ -45,6 +45,27 @@ func GetAnnotations(c *middleware.Context) Response {
 	return Json(200, result)
 }
 
+func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response {
+	repo := annotations.GetRepository()
+
+	item := annotations.Item{
+		OrgId:       c.OrgId,
+		DashboardId: cmd.DashboardId,
+		PanelId:     cmd.PanelId,
+		Epoch:       cmd.Time / 1000,
+		Title:       cmd.Title,
+		Text:        cmd.Text,
+	}
+
+	err := repo.Save(&item)
+
+	if err != nil {
+		return ApiError(500, "Failed to save annotation", err)
+	}
+
+	return ApiSuccess("Annotation added")
+}
+
 func DeleteAnnotations(c *middleware.Context, cmd dtos.DeleteAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
 

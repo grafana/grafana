@@ -126,13 +126,18 @@ export class AnnotationsSrv {
     return this.globalAnnotationsPromise;
   }
 
-  postAnnotation(annotation) {
-    console.log("POST /api/annotations\n", annotation);
+  postAnnotation(annotations) {
+    console.log("POST /api/annotations\n", annotations);
 
     // Not implemented yet
-    let implemented = false;
+    let implemented = true;
     if (implemented) {
-      return this.backendSrv.post('/api/annotations', annotation);
+      return Promise.all(_.map(annotations, annotation => {
+        return this.backendSrv.post('/api/annotations', annotation);
+      }))
+      .catch(error => {
+        console.log(error);
+      });
     } else {
       return Promise.resolve("Not implemented");
     }
