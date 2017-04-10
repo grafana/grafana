@@ -14,7 +14,13 @@ function (angular, _, config) {
 
       if (!$scope.panel.span) { $scope.panel.span = 12; }
 
+      $scope.menuItemShow = false;
+
       $scope.inspector = {};
+
+      $scope.showRightMenu = function() {
+        $scope.menuItemShow = !$scope.menuItemShow;
+      };
 
       $scope.editPanel = function() {
         $scope.toggleFullscreen(true);
