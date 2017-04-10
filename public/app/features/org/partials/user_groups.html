@@ -6,10 +6,17 @@
 		<h1>User Groups</h1>
 
     <div class="page-header-tabs">
-      <a class="btn btn-success" href="/org/user-groups/create">
-        <i class="fa fa-plus"></i>
-          Create User Group
-      </a>
+      <form name="addTokenForm" class="gf-form-group">
+        <div class="gf-form-inline">
+          <div class="gf-form max-width-21">
+            <span class="gf-form-label">Create a User Group</span>
+            <input type="text" class="gf-form-input" ng-model='ctrl.userGroupName' placeholder="Name"></input>
+          </div>
+          <div class="gf-form">
+            <button class="btn gf-form-btn btn-success" ng-click="ctrl.createUserGroup()">Create</button>
+          </div>
+        </div>
+      </form>
     </div>
   </div>
   <div class="search-field-wrapper pull-right width-18">
