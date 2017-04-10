@@ -16,7 +16,6 @@ define([
       var metricsType = "/metrictype";
       this.anomalyMetricsData = [];
       var _this = this;
-      var dashboardId = -1;
       this.load = function () {
         return backendSrv.alertD({
           method: "get",
@@ -28,12 +27,13 @@ define([
         });
       };
 
-      this.exclude = function (metricName) {
+      this.exclude = function (metricName, host) {
         return backendSrv.alertD({
           method: "post",
           url: excludeAnomaly,
           params: {
-            metric: metricName
+            metric: metricName,
+            host: host
           }
         });
       };
@@ -89,7 +89,7 @@ define([
         var targets = {};
         var metricsTypeQueries = [];
         _.forEach(["/association", "/anomaly"], function (uri) {
-          if ($location.path().indexOf(uri) >= 0 && dashboardId != dashboard.id) {
+          if ($location.path().indexOf(uri) > -1) {
             _.forEach(dashboard.rows, function (row) {
               _.forEach(row.panels, function (panel) {
                 _.forEach(panel.targets, function (target) {
@@ -99,7 +99,11 @@ define([
                 });
               });
             });
-            var q = _this.getMetricsType(Object.keys(targets)).then(function (response) {
+
+            if(!Object.keys(targets).length) {
+              return;
+            }
+            var q = _this.getMetricsType(Object.keys(targets)).then(function onSuccess(response) {
               var types = response.data;
               _.each(Object.keys(targets), function (key) {
                 if (types[key] == "counter") {
@@ -112,10 +116,6 @@ define([
               });
             });
             metricsTypeQueries.push(q);
-            dashboardId = dashboard.id;
-          }
-          if(uri == "/association"){
-            dashboardId = Math.random();
           }
         });
         return $q.all(metricsTypeQueries);
