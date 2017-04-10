@@ -40,21 +40,21 @@
       </tr>
     </table>
 
-    <!--<div ng-if="excludeMetricLength">-->
-      <!--<h3>暂缓异常报警指标</h3>-->
-      <!--<p>共有{{excludeMetricLength}}个指标不参与健康值计算-->
-        <!--<tip>剔除噪声值,减少对健康值的影响</tip>-->
-      <!--</p>-->
-      <!--<table class="grafana-options-table">-->
-        <!--<tr ng-repeat="anomalyDef in excludeMetricsData | limitTo : 4">-->
-          <!--<td>{{_.getMetricName(anomalyDef.metric)}}</td>-->
-        <!--</tr>-->
-      <!--</table>-->
-      <!--<a ng-click="changeExcludeMetrics()" class="btn btn-inverse btn-mini">-->
-        <!--<i class="fa fa-pencil-square-o"></i>-->
-        <!--修改-->
-      <!--</a>-->
-    <!--</div>-->
+    <div ng-if="excludeMetricLength">
+      <h3>暂缓异常报警指标</h3>
+      <p>共有{{excludeMetricLength}}个指标不参与健康值计算
+        <tip>剔除噪声值,减少对健康值的影响</tip>
+      </p>
+      <table class="grafana-options-table">
+        <tr ng-repeat="anomalyDef in excludeMetricsData | limitTo : 4">
+          <td>{{_.getMetricName(anomalyDef.metric)}}  主机名: {{anomalyDef.host}}</td>
+        </tr>
+      </table>
+      <a ng-click="changeExcludeMetrics()" class="btn btn-inverse btn-mini">
+        <i class="fa fa-pencil-square-o"></i>
+        修改
+      </a>
+    </div>
 
   </div>
 

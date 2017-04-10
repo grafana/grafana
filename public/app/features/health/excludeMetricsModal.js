@@ -12,14 +12,8 @@ define([
         $scope.excludeMetric = "";
       };
 
-      $scope.exclude = function () {
-        healthSrv.exclude($scope.excludeMetric).then(function () {
-          $scope.reload();
-        });
-      };
-
-      $scope.include = function (metricName) {
-        healthSrv.include(metricName).then(function () {
+      $scope.include = function (anomalyDef) {
+        healthSrv.include(anomalyDef.metric, anomalyDef.host).then(function () {
           $scope.reload();
         });
       };

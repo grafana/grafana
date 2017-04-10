@@ -16,6 +16,8 @@ define([
           data.metricHostClusters.push(data.metricHostNotClustered);
           $scope.metricHostClusters = healthSrv.aggregateHealths(data.metricHostClusters);
           healthSrv.anomalyMetricsData = $scope.metricHostClusters;
+          $scope.excludeMetricsData = healthSrv.floor(data.metricHostExcluded.elements);
+          $scope.excludeMetricLength = _.size($scope.excludeMetricsData);
         });
       };
 
@@ -25,17 +27,17 @@ define([
       //   });
       // };
       //
-      // $scope.reload = function() {
-      //   $scope.init();
-      // };
-      //
-      // $scope.changeExcludeMetrics = function () {
-      //   $scope.appEvent('show-modal', {
-      //     src: './app/partials/exclude_metrics.html',
-      //     modalClass: 'modal-no-header confirm-modal',
-      //     scope: $scope.$new(),
-      //   });
-      // };
+      $scope.reload = function() {
+        $scope.init();
+      };
+
+      $scope.changeExcludeMetrics = function () {
+        $scope.appEvent('show-modal', {
+          src: './app/partials/exclude_metrics.html',
+          modalClass: 'modal-no-header confirm-modal',
+          scope: $scope.$new(),
+        });
+      };
 
       $scope.init();
     });

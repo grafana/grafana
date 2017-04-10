@@ -28,7 +28,7 @@
           <td style="width: 80px;"><input type="checkbox" ng-model="anomalyItem.checked" ng-click="changeSelect(anomalyItem)"></td>
           <td style="width: 600px; text-align: left;"><p class="text-overflow">{{_.getMetricName(anomalyItem.metric)+ "{host=" + anomalyItem.host + "}"}}<p></td>
           <td  style="width: 150px;">{{anomalyItem.health}}</td>
-          <td><button class="btn" ng-click="deleteMetric(anomalyItem)">暂缓报警</button></td>
+          <td><button class="btn" ng-click="exclude(anomalyItem)">暂缓报警</button></td>
         </tr>
       </table>
     </div>

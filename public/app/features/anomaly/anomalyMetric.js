@@ -131,7 +131,9 @@ define([
             $scope.changeAll();
           }
           $timeout(function() {
-            $scope.$broadcast('render');
+            healthSrv.transformMetricType($scope.dashboard).then(function () {
+              $scope.$broadcast('render');
+            });
           });
         };
 
@@ -139,7 +141,7 @@ define([
           var metricName = setMetricName(_.getMetricName(anomalyItem.metric), anomalyItem.host);
           $scope.selections.push(metricName);
           $scope.dashboard.addPanel(setPanelMetaHost(_.cloneDeep(panelMeta), anomalyItem.metric, anomalyItem.host), $scope.dashboard.rows[0]);
-        }
+        };
 
         $scope.removePanel = function(metricName) {
           $scope.dashboard.rows[0].panels.forEach(function(panel, id) {
@@ -148,7 +150,7 @@ define([
               return;
             }
           });
-        }
+        };
 
         $scope.removeAll = function() {
           $scope.selections= [];
@@ -156,7 +158,7 @@ define([
           for(var i in $scope.anomalyList) {
             $scope.anomalyList[i].checked = false;
           }
-        }
+        };
 
         $scope.changeAll = function() {
           if($scope.anomalyList.length == $scope.selections.length) {
@@ -168,19 +170,7 @@ define([
               $scope.anomalyList[i].checked = true;
             }
           }
-
-        }
-
-        $scope.deleteMetric = function(anomalyItem) {
-          var metricName = setMetricName(_.getMetricName(anomalyItem.metric), anomalyItem.host);
-          var index = _.findIndex($scope.anomalyList,{'metric': anomalyItem.metric});
-          $scope.anomalyList.splice(index,1);
-          var id = $scope.selections.indexOf(metricName);
-          if(id != -1) {
-            $scope.removePanel(metricName);
-            $scope.selections.splice(id,1);
-          }
-        }
+        };
 
         function setMetricName(metric, hostname) {
           return metric + "{host=" + hostname + "}";
@@ -210,6 +200,19 @@ define([
           panel.seriesOverrides[2].fill = 5;
           return panelDef;
         }
+
+        //TODO should not use index in anyway
+        $scope.exclude = function (anomalyItem) {
+          var metricName = setMetricName(_.getMetricName(anomalyItem.metric), anomalyItem.host);
+          var index = _.findIndex($scope.anomalyList,{'metric': anomalyItem.metric});
+          healthSrv.exclude(anomalyItem.metric, anomalyItem.host);
+          $scope.anomalyList.splice(index,1);
+          var id = $scope.selections.indexOf(metricName);
+          if(id != -1) {
+            $scope.removePanel(metricName);
+            $scope.selections.splice(id,1);
+          }
+        };
 
         $scope.init();
 

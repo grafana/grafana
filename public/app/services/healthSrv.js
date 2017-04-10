@@ -49,12 +49,13 @@ define([
         return metricHostClusters;
       };
 
-      this.include = function (metricName) {
+      this.include = function (metricName, host) {
         return backendSrv.alertD({
           method: "post",
           url: includeAnomaly,
           params: {
-            metric: metricName
+            metric: metricName,
+            host: host
           }
         });
       };
