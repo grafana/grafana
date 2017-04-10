@@ -4,7 +4,7 @@
 import angular = require('angular');
 import $ = require('jquery');
 import _ = require('lodash');
-import kbn = require('kbn');
+import kbn = require('app/core/utils/kbn');
 import moment = require('moment');
 
 import {transformers} from './transformers';
@@ -99,6 +99,14 @@ export class TablePanelEditorCtrl {
       return _.map($scope.table.columns, function(col: any) {
         return col.text;
       });
+    };
+
+    $scope.invertColorOrder = function(index) {
+      var ref = $scope.panel.styles[index].colors;
+      var copy = ref[0];
+      ref[0] = ref[2];
+      ref[2] = copy;
+      $scope.render();
     };
 
   }

@@ -52,6 +52,11 @@ function ($) {
           continue;
         }
 
+        if (!series.data.length || (scope.panel.legend.hideZero && series.allIsZero)) {
+          results.push({ hidden: true });
+          continue;
+        }
+
         hoverIndex = this.findHoverIndexFromData(pos.x, series);
         results.time = series.data[hoverIndex][0];
 

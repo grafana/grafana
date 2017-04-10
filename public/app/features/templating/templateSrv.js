@@ -79,6 +79,7 @@ function (angular, _) {
     this.highlightVariablesAsHtml = function(str) {
       if (!str || !_.isString(str)) { return str; }
 
+      str = _.escape(str);
       this._regex.lastIndex = 0;
       return str.replace(this._regex, function(match, g1, g2) {
         if (self._values[g1 || g2]) {

@@ -18,26 +18,10 @@
 					&nbsp;&nbsp; 最大网格
 				</li>
 				<li>
-					<input type="number" class="input-small tight-form-input" placeholder="auto"
-					empty-to-null ng-model="panel.grid.leftMax"
-					ng-change="render()" ng-model-onblur>
-				</li>
-				<li class="tight-form-item">
-					最小
-				</li>
-				<li>
-					<input type="number" class="input-small tight-form-input" placeholder="auto"
-					empty-to-null ng-model="panel.grid.leftMin"
-					ng-change="render()" ng-model-onblur>
-				</li>
-				<li class="tight-form-item">
-					规模
-				</li>
-				<li>
 					<select class="input-small tight-form-input" style="width: 113px" ng-model="panel.grid.leftLogBase" ng-options="v as k for (k, v) in logScales" ng-change="render()"></select>
 				</li>
 				<li class="tight-form-item">
-					标签
+					Min
 				</li>
 				<li>
 					<input type="text" class="input-small tight-form-input last"
@@ -46,7 +30,31 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-		<div class="tight-form last">
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<i class="fa fa-remove invisible"></i>
+				</li>
+				<li class="tight-form-item">
+					规模
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input" placeholder="auto"
+					empty-to-null ng-model="panel.grid.leftMax"
+					ng-change="render()" ng-model-onblur>
+				</li>
+				<li class="tight-form-item">
+					标签
+				</li>
+				<li>
+					<input type="number" class="input-small tight-form-input" placeholder="auto" style="width: 113px;"
+					empty-to-null ng-model="panel.grid.leftMin"
+					ng-change="render()" ng-model-onblur>
+				</li>
+				</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 80px">
 					右Y轴
@@ -63,30 +71,38 @@
 					&nbsp;&nbsp; 最大网格
 				</li>
 				<li>
-					<input type="number" class="input-small tight-form-input" placeholder="auto"
-					empty-to-null ng-model="panel.grid.rightMax"
-					ng-change="render()" ng-model-onblur>
+					<select class="input-small tight-form-input" style="width: 113px" ng-model="panel.grid.rightLogBase" ng-options="v as k for (k, v) in logScales" ng-change="render()"></select>
 				</li>
 				<li class="tight-form-item">
 					最小网格
 				</li>
 				<li>
-					<input type="number" class="input-small tight-form-input" placeholder="auto"
-					empty-to-null ng-model="panel.grid.rightMin"
-					ng-change="render()" ng-model-onblur>
+					<input type="text" class="input-small tight-form-input last"
+					ng-model="panel.rightYAxisLabel" ng-change="render()" ng-model-onblur>
+				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form last">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					<i class="fa fa-remove invisible"></i>
 				</li>
 				<li class="tight-form-item">
 					规模
 				</li>
 				<li>
-					<select class="input-small tight-form-input" style="width: 113px" ng-model="panel.grid.rightLogBase" ng-options="v as k for (k, v) in logScales" ng-change="render()"></select>
+					<input type="number" class="input-small tight-form-input" placeholder="auto"
+					empty-to-null ng-model="panel.grid.rightMax"
+					ng-change="render()" ng-model-onblur>
 				</li>
 				<li class="tight-form-item">
 					标签
 				</li>
 				<li>
-					<input type="text" class="input-small tight-form-input last"
-					ng-model="panel.rightYAxisLabel" ng-change="render()" ng-model-onblur>
+					<input type="number" class="input-small tight-form-input" placeholder="auto" style="width: 113px;"
+					empty-to-null ng-model="panel.grid.rightMin"
+					ng-change="render()" ng-model-onblur>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
@@ -150,7 +166,7 @@
 
 <div class="editor-row">
 	<div class="section">
-		<div class="tight-form last">
+		<div class="tight-form">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 110px">
 					图例
@@ -164,15 +180,25 @@
 				<li class="tight-form-item">
 					<editor-checkbox text="右侧显示" model="panel.legend.rightSide" change="render()"></editor-checkbox>
 				</li>
+			</ul>
+			<div class="clearfix"></div>
+		</div>
+		<div class="tight-form">
+			<ul class="tight-form-list">
+				<li class="tight-form-item" style="width: 80px">
+					Hide series
+				</li>
+				<li class="tight-form-item">
+					<editor-checkbox text="With only nulls" model="panel.legend.hideEmpty" change="render()"></editor-checkbox>
+				</li>
 				<li class="tight-form-item last">
 					<editor-checkbox text="隐藏空的" model="panel.legend.hideEmpty" change="render()"></editor-checkbox>
 				</li>
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-	</div>
-	<div class="section">
-		<div class="tight-form">
+
+		<div class="tight-form last">
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 105px">
 					图例值
@@ -189,7 +215,7 @@
 				<li class="tight-form-item">
 					<editor-checkbox text="Current" model="panel.legend.current" change="legendValuesOptionChanged()"></editor-checkbox>
 				</li>
-				<li class="tight-form-item last">
+				<li class="tight-form-item">
 					<editor-checkbox text="Total" model="panel.legend.total" change="legendValuesOptionChanged()"></editor-checkbox>
 				</li>
 			</ul>
@@ -199,6 +225,8 @@
 			<ul class="tight-form-list">
 				<li class="tight-form-item" style="width: 105px">
 					<strong>精度</strong>
+				<li class="tight-form-item">
+					Decimals
 				</li>
 				<li style="width: 105px">
 					<input type="number" class="input-small tight-form-input" placeholder="auto" bs-tooltip="'Override automatic decimal precision for legend and tooltips'" data-placement="right"
@@ -207,7 +235,5 @@
 			</ul>
 			<div class="clearfix"></div>
 		</div>
-
-
 	</div>
 </div>

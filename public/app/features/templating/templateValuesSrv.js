@@ -1,7 +1,7 @@
 define([
   'angular',
   'lodash',
-  'kbn',
+  'app/core/utils/kbn',
 ],
 function (angular, _, kbn) {
   'use strict';
@@ -45,17 +45,6 @@ function (angular, _, kbn) {
     };
 
     this.setVariableFromUrl = function(variable, urlValue) {
-      if (variable.refresh) {
-        var self = this;
-        //refresh the list of options before setting the value
-        return this.updateOptions(variable).then(function() {
-          var option = _.findWhere(variable.options, { text: urlValue });
-          option = option || { text: urlValue, value: urlValue };
-
-          self.updateAutoInterval(variable);
-          return self.setVariableValue(variable, option);
-        });
-      }
       var option = _.findWhere(variable.options, { text: urlValue });
       option = option || { text: urlValue, value: urlValue };
 
@@ -115,6 +104,11 @@ function (angular, _, kbn) {
       if (variable.type === 'interval') {
         self.updateAutoInterval(variable);
       }
+
+      if (variable.type === 'custom' && variable.includeAll) {
+        self.addAllOption(variable);
+      }
+
     };
 
     this.updateOptions = function(variable) {

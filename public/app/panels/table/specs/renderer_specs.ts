@@ -1,6 +1,5 @@
 import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
-//noinspection JSAnnotator
 import TableModel = require('app/core/table_model');
 import {TableRenderer} from '../renderer';
 

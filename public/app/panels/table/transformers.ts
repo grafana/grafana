@@ -2,7 +2,6 @@
 
 import moment = require('moment');
 import _ = require('lodash');
-//noinspection JSAnnotator
 import flatten = require('app/core/utils/flatten');
 import TimeSeries = require('app/core/time_series');
 import TableModel = require('app/core/table_model');

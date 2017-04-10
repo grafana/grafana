@@ -204,7 +204,7 @@ define([
       });
 
       it('dashboard schema version should be set to latest', function() {
-        expect(model.schemaVersion).to.be(7);
+        expect(model.schemaVersion).to.be(8);
       });
 
     });
@@ -248,5 +248,90 @@ define([
         expect(clone.meta).to.be(undefined);
       });
     });
+
+    describe('when loading dashboard with old influxdb query schema', function() {
+      var model;
+      var target;
+
+      beforeEach(function() {
+        model = _dashboardSrv.create({
+          rows: [{
+            panels: [{
+              type: 'graph',
+              targets: [{
+                "alias": "$tag_datacenter $tag_source $col",
+                "column": "value",
+                "measurement": "logins.count",
+                "fields": [
+                  {
+                    "func": "mean",
+                    "name": "value",
+                    "mathExpr": "*2",
+                    "asExpr": "value"
+                  },
+                  {
+                    "name": "one-minute",
+                    "func": "mean",
+                    "mathExpr": "*3",
+                    "asExpr": "one-minute"
+                  }
+                ],
+                "tags": [],
+                "fill": "previous",
+                "function": "mean",
+                "groupBy": [
+                  {
+                    "interval": "auto",
+                    "type": "time"
+                  },
+                  {
+                    "key": "source",
+                    "type": "tag"
+                  },
+                  {
+                    "type": "tag",
+                    "key": "datacenter"
+                  }
+                ],
+              }]
+            }]
+          }]
+        });
+
+        target = model.rows[0].panels[0].targets[0];
+      });
+
+      it('should update query schema', function() {
+        expect(target.fields).to.be(undefined);
+        expect(target.select.length).to.be(2);
+        expect(target.select[0].length).to.be(4);
+        expect(target.select[0][0].type).to.be('field');
+        expect(target.select[0][1].type).to.be('mean');
+        expect(target.select[0][2].type).to.be('math');
+        expect(target.select[0][3].type).to.be('alias');
+      });
+
+    });
+
+    describe('when creating dashboard model with missing list for annoations or templating', function() {
+      var model;
+
+      beforeEach(function() {
+        model = _dashboardSrv.create({
+          annotations: {
+            enable: true,
+          },
+          templating: {
+            enable: true
+          }
+        });
+      });
+
+      it('should add empty list', function() {
+        expect(model.annotations.list.length).to.be(0);
+        expect(model.templating.list.length).to.be(0);
+      });
+    });
+
   });
 });

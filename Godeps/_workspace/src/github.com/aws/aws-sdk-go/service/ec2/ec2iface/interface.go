@@ -486,6 +486,8 @@ type EC2API interface {
 
 	DescribeTags(*ec2.DescribeTagsInput) (*ec2.DescribeTagsOutput, error)
 
+	DescribeTagsPages(*ec2.DescribeTagsInput, func(*ec2.DescribeTagsOutput, bool) bool) error
+
 	DescribeVolumeAttributeRequest(*ec2.DescribeVolumeAttributeInput) (*request.Request, *ec2.DescribeVolumeAttributeOutput)
 
 	DescribeVolumeAttribute(*ec2.DescribeVolumeAttributeInput) (*ec2.DescribeVolumeAttributeOutput, error)
@@ -758,3 +760,5 @@ type EC2API interface {
 
 	UnmonitorInstances(*ec2.UnmonitorInstancesInput) (*ec2.UnmonitorInstancesOutput, error)
 }
+
+var _ EC2API = (*ec2.EC2)(nil)

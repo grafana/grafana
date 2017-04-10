@@ -2,7 +2,7 @@ define([
   'angular',
   'lodash',
   'app/core/utils/datemath',
-  'kbn',
+  'app/core/utils/kbn',
   './queryCtrl',
   './directives',
 ],

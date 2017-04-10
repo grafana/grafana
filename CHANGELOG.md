@@ -1,14 +1,37 @@
-# 2.5.1 (unreleased)
+# 2.6.0 (2015-12-04)
+
+### New Features
+* **Elasticsearch**: Support for pipeline aggregations Moving average and derivative, closes [#2715](https://github.com/grafana/grafana/issues/2715)
+* **Elasticsearch**: Support for inline script and missing options for metrics, closes [#3500](https://github.com/grafana/grafana/issues/3500)
+* **Syslog**: Support for syslog logging, closes [#3161](https://github.com/grafana/grafana/pull/3161)
+* **Timepicker**: Always show refresh button even with refresh rate, closes [#3498](https://github.com/grafana/grafana/pull/3498)
+* **Login**: Make it possible to change the login hint on the login page, closes [#2571](https://github.com/grafana/grafana/pull/2571)
+
+### Bug Fixes
+* **metric editors**: Fix for clicking typeahead auto dropdown option, fixes [#3428](https://github.com/grafana/grafana/issues/3428)
+* **influxdb**: Fixed issue showing Group By label only on first query, fixes [#3453](https://github.com/grafana/grafana/issues/3453)
+* **logging**: Add more verbose info logging for http reqeusts, closes [#3405](https://github.com/grafana/grafana/pull/3405)
+
+# 2.6.0-Beta1 (2015-12-04)
+
+### New Table Panel
+* **table**:  New powerful and flexible table panel, closes [#215](https://github.com/grafana/grafana/issues/215)
 
 ### Enhancements
 * **CloudWatch**: Support for multiple AWS Credentials, closes [#3053](https://github.com/grafana/grafana/issues/3053), [#3080](https://github.com/grafana/grafana/issues/3080)
 * **Elasticsearch**: Support for dynamic daily indices for annotations, closes [#3061](https://github.com/grafana/grafana/issues/3061)
+* **Elasticsearch**: Support for setting min_doc_count for date histogram, closes [#3416](https://github.com/grafana/grafana/issues/3416)
+* **Graph Panel**: Option to hide series with all zeroes from legend and tooltip, closes [#1381](https://github.com/grafana/grafana/issues/1381), [#3336](https://github.com/grafana/grafana/issues/3336)
 
 ### Bug Fixes
 * **cloudwatch**: fix for handling of period for long time ranges, fixes [#3086](https://github.com/grafana/grafana/issues/3086)
 * **dashboard**: fix for collapse row by clicking on row title, fixes [#3065](https://github.com/grafana/grafana/issues/3065)
 * **influxdb**: fix for relative time ranges `last x months` and `last x years`, fixes [#3067](https://github.com/grafana/grafana/issues/3067)
 * **graph**: layout fix for color picker when right side legend was enabled, fixes [#3093](https://github.com/grafana/grafana/issues/3093)
+* **elasticsearch**: disabling elastic query (via eye) caused error, fixes [#3300](https://github.com/grafana/grafana/issues/3300)
+
+### Breaking changes
+* **elasticsearch**: Manual json edited queries are not supported any more (They very barely worked in 2.5)
 
 # 2.5 (2015-10-28)
 

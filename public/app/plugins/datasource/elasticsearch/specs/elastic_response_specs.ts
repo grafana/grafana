@@ -411,4 +411,85 @@ describe('ElasticResponse', function() {
     });
   });
 
+  describe('No group by time', function() {
+    beforeEach(function() {
+      targets = [{
+        refId: 'A',
+        metrics: [{type: 'avg', id: '1'}, {type: 'count' }],
+        bucketAggs: [{id: '2', type: 'terms', field: 'host'}],
+      }];
+
+      response =  {
+        responses: [{
+          aggregations: {
+            "2": {
+              buckets: [
+                {
+                  "1": { value: 1000},
+                  key: "server-1",
+                  doc_count: 369,
+                },
+                {
+                  "1": { value: 2000},
+                  key: "server-2",
+                  doc_count: 200,
+                },
+              ]
+            }
+          }
+        }]
+      };
+
+      result = new ElasticResponse(targets, response).getTimeSeries();
+    });
+
+    it('should return table', function() {
+      expect(result.data.length).to.be(1);
+      expect(result.data[0].type).to.be('docs');
+      expect(result.data[0].datapoints.length).to.be(2);
+      expect(result.data[0].datapoints[0].host).to.be("server-1");
+      expect(result.data[0].datapoints[0].Average).to.be(1000);
+      expect(result.data[0].datapoints[0].Count).to.be(369);
+
+      expect(result.data[0].datapoints[1].host).to.be("server-2");
+      expect(result.data[0].datapoints[1].Average).to.be(2000);
+    });
+  });
+
+  describe('Raw documents query', function() {
+    beforeEach(function() {
+      targets = [{ refId: 'A', metrics: [{type: 'raw_document', id: '1'}], bucketAggs: [] }];
+      response = {
+        responses: [{
+          hits: {
+            total: 100,
+            hits: [
+              {
+                _id: '1',
+                _type: 'type',
+                _index: 'index',
+                _source: {sourceProp: "asd"},
+                fields: {fieldProp: "field" },
+              },
+              {
+                _source: {sourceProp: "asd2"},
+                fields: {fieldProp: "field2" },
+              }
+            ]
+          }
+        }]
+      };
+
+      result = new ElasticResponse(targets, response).getTimeSeries();
+    });
+
+    it('should return docs', function() {
+      expect(result.data.length).to.be(1);
+      expect(result.data[0].type).to.be('docs');
+      expect(result.data[0].total).to.be(100);
+      expect(result.data[0].datapoints.length).to.be(2);
+      expect(result.data[0].datapoints[0].sourceProp).to.be("asd");
+      expect(result.data[0].datapoints[0].fieldProp).to.be("field");
+    });
+  });
 });

@@ -5,8 +5,8 @@
 	</ul>
 </topnav>
 
-<div class="page-container">
-	<div class="page">
+<div class="page-container" style="background: transparent; border: 0;">
+	<div class="page-wide">
 
 		<h2>个人信息</h2>
 
@@ -62,19 +62,28 @@
 
 		<h3>公司</h3>
 
-		<table class="grafana-options-table">
-			<tr ng-repeat="org in orgs">
-				<td style="width: 98%"><strong>公司名: </strong> {{org.name}}</td>
-				<td><strong>角色: </strong> {{org.role}}</td>
-				<td class="nobg max-width-btns">
-					<span class="btn btn-primary btn-mini" ng-show="org.orgId === contextSrv.user.orgId">
-						当前用户
-					</span>
-					<a ng-click="setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== contextSrv.user.orgId">
-						选择用户
-					</a>
-				</td>
-			</tr>
+		<table class="filter-table form-inline">
+			<thead>
+				<tr>
+					<th>公司名</th>
+					<th>角色</th>
+					<th></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="org in orgs">
+					<td>{{org.name}}</td>
+					<td>{{org.role}}</td>
+					<td class="text-right">
+						<span class="btn btn-primary btn-mini" ng-show="org.orgId === contextSrv.user.orgId">
+							当前用户
+						</span>
+						<a ng-click="setUsingOrg(org)" class="btn btn-inverse btn-mini" ng-show="org.orgId !== contextSrv.user.orgId">
+							选择用户
+						</a>
+					</td>
+				</tr>
+			</tbody>
 		</table>
 
 	</div>

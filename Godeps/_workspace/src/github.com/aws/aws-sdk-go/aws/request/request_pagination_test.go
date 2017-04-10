@@ -9,14 +9,101 @@ import (
 	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/awstesting/unit"
 	"github.com/aws/aws-sdk-go/service/dynamodb"
+	"github.com/aws/aws-sdk-go/service/route53"
 	"github.com/aws/aws-sdk-go/service/s3"
 )
 
-var _ = unit.Imported
+// Use DynamoDB methods for simplicity
+func TestPaginationQueryPage(t *testing.T) {
+	db := dynamodb.New(unit.Session)
+	tokens, pages, numPages, gotToEnd := []map[string]*dynamodb.AttributeValue{}, []map[string]*dynamodb.AttributeValue{}, 0, false
+
+	reqNum := 0
+	resps := []*dynamodb.QueryOutput{
+		{
+			LastEvaluatedKey: map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key1")}},
+			Count:            aws.Int64(1),
+			Items: []map[string]*dynamodb.AttributeValue{
+				map[string]*dynamodb.AttributeValue{
+					"key": {S: aws.String("key1")},
+				},
+			},
+		},
+		{
+			LastEvaluatedKey: map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key2")}},
+			Count:            aws.Int64(1),
+			Items: []map[string]*dynamodb.AttributeValue{
+				map[string]*dynamodb.AttributeValue{
+					"key": {S: aws.String("key2")},
+				},
+			},
+		},
+		{
+			LastEvaluatedKey: map[string]*dynamodb.AttributeValue{},
+			Count:            aws.Int64(1),
+			Items: []map[string]*dynamodb.AttributeValue{
+				map[string]*dynamodb.AttributeValue{
+					"key": {S: aws.String("key3")},
+				},
+			},
+		},
+	}
+
+	db.Handlers.Send.Clear() // mock sending
+	db.Handlers.Unmarshal.Clear()
+	db.Handlers.UnmarshalMeta.Clear()
+	db.Handlers.ValidateResponse.Clear()
+	db.Handlers.Build.PushBack(func(r *request.Request) {
+		in := r.Params.(*dynamodb.QueryInput)
+		if in == nil {
+			tokens = append(tokens, nil)
+		} else if len(in.ExclusiveStartKey) != 0 {
+			tokens = append(tokens, in.ExclusiveStartKey)
+		}
+	})
+	db.Handlers.Unmarshal.PushBack(func(r *request.Request) {
+		r.Data = resps[reqNum]
+		reqNum++
+	})
+
+	params := &dynamodb.QueryInput{
+		Limit:     aws.Int64(2),
+		TableName: aws.String("tablename"),
+	}
+	err := db.QueryPages(params, func(p *dynamodb.QueryOutput, last bool) bool {
+		numPages++
+		for _, item := range p.Items {
+			pages = append(pages, item)
+		}
+		if last {
+			if gotToEnd {
+				assert.Fail(t, "last=true happened twice")
+			}
+			gotToEnd = true
+		}
+		return true
+	})
+	assert.Nil(t, err)
+
+	assert.Equal(t,
+		[]map[string]*dynamodb.AttributeValue{
+			map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key1")}},
+			map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key2")}},
+		}, tokens)
+	assert.Equal(t,
+		[]map[string]*dynamodb.AttributeValue{
+			map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key1")}},
+			map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key2")}},
+			map[string]*dynamodb.AttributeValue{"key": {S: aws.String("key3")}},
+		}, pages)
+	assert.Equal(t, 3, numPages)
+	assert.True(t, gotToEnd)
+	assert.Nil(t, params.ExclusiveStartKey)
+}
 
 // Use DynamoDB methods for simplicity
 func TestPagination(t *testing.T) {
-	db := dynamodb.New(nil)
+	db := dynamodb.New(unit.Session)
 	tokens, pages, numPages, gotToEnd := []string{}, []string{}, 0, false
 
 	reqNum := 0
@@ -68,7 +155,7 @@ func TestPagination(t *testing.T) {
 
 // Use DynamoDB methods for simplicity
 func TestPaginationEachPage(t *testing.T) {
-	db := dynamodb.New(nil)
+	db := dynamodb.New(unit.Session)
 	tokens, pages, numPages, gotToEnd := []string{}, []string{}, 0, false
 
 	reqNum := 0
@@ -121,7 +208,7 @@ func TestPaginationEachPage(t *testing.T) {
 
 // Use DynamoDB methods for simplicity
 func TestPaginationEarlyExit(t *testing.T) {
-	db := dynamodb.New(nil)
+	db := dynamodb.New(unit.Session)
 	numPages, gotToEnd := 0, false
 
 	reqNum := 0
@@ -161,7 +248,7 @@ func TestPaginationEarlyExit(t *testing.T) {
 }
 
 func TestSkipPagination(t *testing.T) {
-	client := s3.New(nil)
+	client := s3.New(unit.Session)
 	client.Handlers.Send.Clear() // mock sending
 	client.Handlers.Unmarshal.Clear()
 	client.Handlers.UnmarshalMeta.Clear()
@@ -186,10 +273,9 @@ func TestSkipPagination(t *testing.T) {
 
 // Use S3 for simplicity
 func TestPaginationTruncation(t *testing.T) {
-	count := 0
-	client := s3.New(nil)
+	client := s3.New(unit.Session)
 
-	reqNum := &count
+	reqNum := 0
 	resps := []*s3.ListObjectsOutput{
 		{IsTruncated: aws.Bool(true), Contents: []*s3.Object{{Key: aws.String("Key1")}}},
 		{IsTruncated: aws.Bool(true), Contents: []*s3.Object{{Key: aws.String("Key2")}}},
@@ -202,8 +288,8 @@ func TestPaginationTruncation(t *testing.T) {
 	client.Handlers.UnmarshalMeta.Clear()
 	client.Handlers.ValidateResponse.Clear()
 	client.Handlers.Unmarshal.PushBack(func(r *request.Request) {
-		r.Data = resps[*reqNum]
-		*reqNum++
+		r.Data = resps[reqNum]
+		reqNum++
 	})
 
 	params := &s3.ListObjectsInput{Bucket: aws.String("bucket")}
@@ -218,7 +304,7 @@ func TestPaginationTruncation(t *testing.T) {
 	assert.Nil(t, err)
 
 	// Try again without truncation token at all
-	count = 0
+	reqNum = 0
 	resps[1].IsTruncated = nil
 	resps[2].IsTruncated = aws.Bool(true)
 	results = []string{}
@@ -229,7 +315,69 @@ func TestPaginationTruncation(t *testing.T) {
 
 	assert.Equal(t, []string{"Key1", "Key2"}, results)
 	assert.Nil(t, err)
+}
 
+func TestPaginationNilToken(t *testing.T) {
+	client := route53.New(unit.Session)
+
+	reqNum := 0
+	resps := []*route53.ListResourceRecordSetsOutput{
+		{
+			ResourceRecordSets: []*route53.ResourceRecordSet{
+				{Name: aws.String("first.example.com.")},
+			},
+			IsTruncated:          aws.Bool(true),
+			NextRecordName:       aws.String("second.example.com."),
+			NextRecordType:       aws.String("MX"),
+			NextRecordIdentifier: aws.String("second"),
+			MaxItems:             aws.String("1"),
+		},
+		{
+			ResourceRecordSets: []*route53.ResourceRecordSet{
+				{Name: aws.String("second.example.com.")},
+			},
+			IsTruncated:    aws.Bool(true),
+			NextRecordName: aws.String("third.example.com."),
+			NextRecordType: aws.String("MX"),
+			MaxItems:       aws.String("1"),
+		},
+		{
+			ResourceRecordSets: []*route53.ResourceRecordSet{
+				{Name: aws.String("third.example.com.")},
+			},
+			IsTruncated: aws.Bool(false),
+			MaxItems:    aws.String("1"),
+		},
+	}
+	client.Handlers.Send.Clear() // mock sending
+	client.Handlers.Unmarshal.Clear()
+	client.Handlers.UnmarshalMeta.Clear()
+	client.Handlers.ValidateResponse.Clear()
+
+	idents := []string{}
+	client.Handlers.Build.PushBack(func(r *request.Request) {
+		p := r.Params.(*route53.ListResourceRecordSetsInput)
+		idents = append(idents, aws.StringValue(p.StartRecordIdentifier))
+
+	})
+	client.Handlers.Unmarshal.PushBack(func(r *request.Request) {
+		r.Data = resps[reqNum]
+		reqNum++
+	})
+
+	params := &route53.ListResourceRecordSetsInput{
+		HostedZoneId: aws.String("id-zone"),
+	}
+
+	results := []string{}
+	err := client.ListResourceRecordSetsPages(params, func(p *route53.ListResourceRecordSetsOutput, last bool) bool {
+		results = append(results, *p.ResourceRecordSets[0].Name)
+		return true
+	})
+
+	assert.NoError(t, err)
+	assert.Equal(t, []string{"", "second", ""}, idents)
+	assert.Equal(t, []string{"first.example.com.", "second.example.com.", "third.example.com."}, results)
 }
 
 // Benchmarks
@@ -251,7 +399,7 @@ var benchResps = []*dynamodb.ListTablesOutput{
 }
 
 var benchDb = func() *dynamodb.DynamoDB {
-	db := dynamodb.New(nil)
+	db := dynamodb.New(unit.Session)
 	db.Handlers.Send.Clear() // mock sending
 	db.Handlers.Unmarshal.Clear()
 	db.Handlers.UnmarshalMeta.Clear()

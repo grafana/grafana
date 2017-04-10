@@ -871,7 +871,7 @@ func (c *EC2) CreateCustomerGatewayRequest(input *CreateCustomerGatewayInput) (r
 // gateway is the appliance at your end of the VPN connection. (The device on
 // the AWS side of the VPN connection is the virtual private gateway.) You must
 // provide the Internet-routable IP address of the customer gateway's external
-// interface. The IP address must be static and can't be behind a device performing
+// interface. The IP address must be static and may be behind a device performing
 // network address translation (NAT).
 //
 // For devices that use Border Gateway Protocol (BGP), you can also provide
@@ -1598,6 +1598,9 @@ func (c *EC2) CreateTagsRequest(input *CreateTagsInput) (req *request.Request, o
 // of a key and optional value. Tag keys must be unique per resource.
 //
 // For more information about tags, see Tagging Your Resources (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/Using_Tags.html)
+// in the Amazon Elastic Compute Cloud User Guide. For more information about
+// creating IAM policies that control users' access to resources based on tags,
+// see Supported Resource-Level Permissions for Amazon EC2 API Actions (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-supported-iam-actions-resources.html)
 // in the Amazon Elastic Compute Cloud User Guide.
 func (c *EC2) CreateTags(input *CreateTagsInput) (*CreateTagsOutput, error) {
 	req, out := c.CreateTagsRequest(input)
@@ -3100,6 +3103,7 @@ func (c *EC2) DescribeInstanceStatus(input *DescribeInstanceStatusInput) (*Descr
 
 func (c *EC2) DescribeInstanceStatusPages(input *DescribeInstanceStatusInput, fn func(p *DescribeInstanceStatusOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeInstanceStatusRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeInstanceStatusOutput), lastPage)
 	})
@@ -3149,6 +3153,7 @@ func (c *EC2) DescribeInstances(input *DescribeInstancesInput) (*DescribeInstanc
 
 func (c *EC2) DescribeInstancesPages(input *DescribeInstancesInput, fn func(p *DescribeInstancesOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeInstancesRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeInstancesOutput), lastPage)
 	})
@@ -3534,6 +3539,7 @@ func (c *EC2) DescribeReservedInstancesModifications(input *DescribeReservedInst
 
 func (c *EC2) DescribeReservedInstancesModificationsPages(input *DescribeReservedInstancesModificationsInput, fn func(p *DescribeReservedInstancesModificationsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeReservedInstancesModificationsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeReservedInstancesModificationsOutput), lastPage)
 	})
@@ -3581,6 +3587,7 @@ func (c *EC2) DescribeReservedInstancesOfferings(input *DescribeReservedInstance
 
 func (c *EC2) DescribeReservedInstancesOfferingsPages(input *DescribeReservedInstancesOfferingsInput, fn func(p *DescribeReservedInstancesOfferingsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeReservedInstancesOfferingsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeReservedInstancesOfferingsOutput), lastPage)
 	})
@@ -3697,7 +3704,7 @@ func (c *EC2) DescribeSnapshotsRequest(input *DescribeSnapshotsInput) (req *requ
 		Paginator: &request.Paginator{
 			InputTokens:     []string{"NextToken"},
 			OutputTokens:    []string{"NextToken"},
-			LimitToken:      "",
+			LimitToken:      "MaxResults",
 			TruncationToken: "",
 		},
 	}
@@ -3760,6 +3767,7 @@ func (c *EC2) DescribeSnapshots(input *DescribeSnapshotsInput) (*DescribeSnapsho
 
 func (c *EC2) DescribeSnapshotsPages(input *DescribeSnapshotsInput, fn func(p *DescribeSnapshotsOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeSnapshotsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeSnapshotsOutput), lastPage)
 	})
@@ -3961,6 +3969,7 @@ func (c *EC2) DescribeSpotPriceHistory(input *DescribeSpotPriceHistoryInput) (*D
 
 func (c *EC2) DescribeSpotPriceHistoryPages(input *DescribeSpotPriceHistoryInput, fn func(p *DescribeSpotPriceHistoryOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeSpotPriceHistoryRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeSpotPriceHistoryOutput), lastPage)
 	})
@@ -4004,6 +4013,12 @@ func (c *EC2) DescribeTagsRequest(input *DescribeTagsInput) (req *request.Reques
 		Name:       opDescribeTags,
 		HTTPMethod: "POST",
 		HTTPPath:   "/",
+		Paginator: &request.Paginator{
+			InputTokens:     []string{"NextToken"},
+			OutputTokens:    []string{"NextToken"},
+			LimitToken:      "MaxResults",
+			TruncationToken: "",
+		},
 	}
 
 	if input == nil {
@@ -4024,6 +4039,14 @@ func (c *EC2) DescribeTags(input *DescribeTagsInput) (*DescribeTagsOutput, error
 	req, out := c.DescribeTagsRequest(input)
 	err := req.Send()
 	return out, err
+}
+
+func (c *EC2) DescribeTagsPages(input *DescribeTagsInput, fn func(p *DescribeTagsOutput, lastPage bool) (shouldContinue bool)) error {
+	page, _ := c.DescribeTagsRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
+	return page.EachPage(func(p interface{}, lastPage bool) bool {
+		return fn(p.(*DescribeTagsOutput), lastPage)
+	})
 }
 
 const opDescribeVolumeAttribute = "DescribeVolumeAttribute"
@@ -4126,6 +4149,7 @@ func (c *EC2) DescribeVolumeStatus(input *DescribeVolumeStatusInput) (*DescribeV
 
 func (c *EC2) DescribeVolumeStatusPages(input *DescribeVolumeStatusInput, fn func(p *DescribeVolumeStatusOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeVolumeStatusRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeVolumeStatusOutput), lastPage)
 	})
@@ -4176,6 +4200,7 @@ func (c *EC2) DescribeVolumes(input *DescribeVolumesInput) (*DescribeVolumesOutp
 
 func (c *EC2) DescribeVolumesPages(input *DescribeVolumesInput, fn func(p *DescribeVolumesOutput, lastPage bool) (shouldContinue bool)) error {
 	page, _ := c.DescribeVolumesRequest(input)
+	page.Handlers.Build.PushBack(request.MakeAddToUserAgentFreeFormHandler("Paginator"))
 	return page.EachPage(func(p interface{}, lastPage bool) bool {
 		return fn(p.(*DescribeVolumesOutput), lastPage)
 	})
@@ -9206,7 +9231,8 @@ func (s CreateSpotDatafeedSubscriptionOutput) GoString() string {
 type CreateSubnetInput struct {
 	// The Availability Zone for the subnet.
 	//
-	// Default: Amazon EC2 selects one for you (recommended).
+	// Default: AWS selects one for you. If you create more than one subnet in
+	// your VPC, we may not necessarily select a different zone for each subnet.
 	AvailabilityZone *string `type:"string"`
 
 	// The network range for the subnet, in CIDR notation. For example, 10.0.0.0/24.
@@ -12262,7 +12288,7 @@ type DescribeInstancesInput struct {
 	//
 	//   network-interface.vpc-id - The ID of the VPC for the network interface.
 	//
-	//   network-interface.network-interface.id - The ID of the network interface.
+	//   network-interface.network-interface-id - The ID of the network interface.
 	//
 	//   network-interface.owner-id - The ID of the owner of the network interface.
 	//
@@ -14153,7 +14179,7 @@ type DescribeSpotInstanceRequestsInput struct {
 	//
 	//   launch.image-id - The ID of the AMI.
 	//
-	//   launch.instance-type - The type of instance (for example, m1.small).
+	//   launch.instance-type - The type of instance (for example, m3.medium).
 	//
 	//   launch.kernel-id - The kernel ID.
 	//
@@ -14291,7 +14317,7 @@ type DescribeSpotPriceHistoryInput struct {
 	//
 	//   availability-zone - The Availability Zone for which prices should be returned.
 	//
-	//   instance-type - The type of instance (for example, m1.small).
+	//   instance-type - The type of instance (for example, m3.medium).
 	//
 	//   product-description - The product description for the Spot price (Linux/UNIX
 	// | SUSE Linux | Windows | Linux/UNIX (Amazon VPC) | SUSE Linux (Amazon VPC)
@@ -17491,7 +17517,7 @@ type Instance struct {
 	// Any block device mapping entries for the instance.
 	BlockDeviceMappings []*InstanceBlockDeviceMapping `locationName:"blockDeviceMapping" locationNameList:"item" type:"list"`
 
-	// The idempotency token you provided when you launched the instance.
+	// The idempotency token you provided when you launched the instance, if applicable.
 	ClientToken *string `locationName:"clientToken" type:"string"`
 
 	// Indicates whether the instance is optimized for EBS I/O. This optimization
@@ -17504,7 +17530,7 @@ type Instance struct {
 	// The hypervisor type of the instance.
 	Hypervisor *string `locationName:"hypervisor" type:"string" enum:"HypervisorType"`
 
-	// The IAM instance profile associated with the instance.
+	// The IAM instance profile associated with the instance, if applicable.
 	IamInstanceProfile *IamInstanceProfile `locationName:"iamInstanceProfile" type:"structure"`
 
 	// The ID of the AMI used to launch the instance.
@@ -17519,7 +17545,7 @@ type Instance struct {
 	// The instance type.
 	InstanceType *string `locationName:"instanceType" type:"string" enum:"InstanceType"`
 
-	// The kernel associated with this instance.
+	// The kernel associated with this instance, if applicable.
 	KernelId *string `locationName:"kernelId" type:"string"`
 
 	// The name of the key pair, if this instance was launched with an associated
@@ -17535,7 +17561,7 @@ type Instance struct {
 	// [EC2-VPC] One or more network interfaces for the instance.
 	NetworkInterfaces []*InstanceNetworkInterface `locationName:"networkInterfaceSet" locationNameList:"item" type:"list"`
 
-	// The location where the instance launched.
+	// The location where the instance launched, if applicable.
 	Placement *Placement `locationName:"placement" type:"structure"`
 
 	// The value is Windows for Windows instances; otherwise blank.
@@ -17543,23 +17569,25 @@ type Instance struct {
 
 	// The private DNS name assigned to the instance. This DNS name can only be
 	// used inside the Amazon EC2 network. This name is not available until the
-	// instance enters the running state.
+	// instance enters the running state. For EC2-VPC, this name is only available
+	// if you've enabled DNS hostnames for your VPC.
 	PrivateDnsName *string `locationName:"privateDnsName" type:"string"`
 
 	// The private IP address assigned to the instance.
 	PrivateIpAddress *string `locationName:"privateIpAddress" type:"string"`
 
-	// The product codes attached to this instance.
+	// The product codes attached to this instance, if applicable.
 	ProductCodes []*ProductCode `locationName:"productCodes" locationNameList:"item" type:"list"`
 
 	// The public DNS name assigned to the instance. This name is not available
-	// until the instance enters the running state.
+	// until the instance enters the running state. For EC2-VPC, this name is only
+	// available if you've enabled DNS hostnames for your VPC.
 	PublicDnsName *string `locationName:"dnsName" type:"string"`
 
-	// The public IP address assigned to the instance.
+	// The public IP address assigned to the instance, if applicable.
 	PublicIpAddress *string `locationName:"ipAddress" type:"string"`
 
-	// The RAM disk associated with this instance.
+	// The RAM disk associated with this instance, if applicable.
 	RamdiskId *string `locationName:"ramdiskId" type:"string"`
 
 	// The root device name (for example, /dev/sda1 or /dev/xvda).
@@ -17580,7 +17608,7 @@ type Instance struct {
 	// in the Amazon Virtual Private Cloud User Guide.
 	SourceDestCheck *bool `locationName:"sourceDestCheck" type:"boolean"`
 
-	// The ID of the Spot Instance request.
+	// If the request is a Spot instance request, the ID of the request.
 	SpotInstanceRequestId *string `locationName:"spotInstanceRequestId" type:"string"`
 
 	// Specifies whether enhanced networking is enabled.
@@ -17595,7 +17623,7 @@ type Instance struct {
 	// The reason for the most recent state transition. This might be an empty string.
 	StateTransitionReason *string `locationName:"reason" type:"string"`
 
-	// The ID of the subnet in which the instance is running.
+	// [EC2-VPC] The ID of the subnet in which the instance is running.
 	SubnetId *string `locationName:"subnetId" type:"string"`
 
 	// Any tags assigned to the instance.
@@ -17604,7 +17632,7 @@ type Instance struct {
 	// The virtualization type of the instance.
 	VirtualizationType *string `locationName:"virtualizationType" type:"string" enum:"VirtualizationType"`
 
-	// The ID of the VPC in which the instance is running.
+	// [EC2-VPC] The ID of the VPC in which the instance is running.
 	VpcId *string `locationName:"vpcId" type:"string"`
 
 	metadataInstance `json:"-" xml:"-"`
@@ -18960,7 +18988,9 @@ type ModifyVpcAttributeInput struct {
 	// Indicates whether the instances launched in the VPC get DNS hostnames. If
 	// enabled, instances in the VPC get DNS hostnames; otherwise, they do not.
 	//
-	// You can only enable DNS hostnames if you also enable DNS support.
+	// You cannot modify the DNS resolution and DNS hostnames attributes in the
+	// same request. Use separate requests for each attribute. You can only enable
+	// DNS hostnames if you've enabled DNS support.
 	EnableDnsHostnames *AttributeBooleanValue `type:"structure"`
 
 	// Indicates whether the DNS resolution is supported for the VPC. If enabled,
@@ -18968,6 +18998,9 @@ type ModifyVpcAttributeInput struct {
 	// or the reserved IP address at the base of the VPC network range "plus two"
 	// will succeed. If disabled, the Amazon provided DNS service in the VPC that
 	// resolves public DNS hostnames to IP addresses is not enabled.
+	//
+	// You cannot modify the DNS resolution and DNS hostnames attributes in the
+	// same request. Use separate requests for each attribute.
 	EnableDnsSupport *AttributeBooleanValue `type:"structure"`
 
 	// The ID of the VPC.
@@ -20589,7 +20622,7 @@ type RequestSpotInstancesInput struct {
 	// the instance a two-minute warning before it terminates.
 	//
 	// Note that you can't specify an Availability Zone group or a launch group
-	// if you specify a required duration.
+	// if you specify a duration.
 	BlockDurationMinutes *int64 `locationName:"blockDurationMinutes" type:"integer"`
 
 	// Unique, case-sensitive identifier that you provide to ensure the idempotency
@@ -22348,8 +22381,8 @@ func (s SpotFleetRequestConfigData) GoString() string {
 
 // Describes a Spot instance request.
 type SpotInstanceRequest struct {
-	// If you specified a required duration and your request was fulfilled, this
-	// is the fixed hourly price in effect for the Spot instance while it runs.
+	// If you specified a duration and your Spot instance request was fulfilled,
+	// this is the fixed hourly price in effect for the Spot instance while it runs.
 	ActualBlockHourlyPrice *string `locationName:"actualBlockHourlyPrice" type:"string"`
 
 	// The Availability Zone group. If you specify the same Availability Zone group
@@ -22357,7 +22390,7 @@ type SpotInstanceRequest struct {
 	// Availability Zone.
 	AvailabilityZoneGroup *string `locationName:"availabilityZoneGroup" type:"string"`
 
-	// The required duration for the Spot instance, in minutes.
+	// The duration for the Spot instance, in minutes.
 	BlockDurationMinutes *int64 `locationName:"blockDurationMinutes" type:"integer"`
 
 	// The date and time when the Spot instance request was created, in UTC format
@@ -22460,7 +22493,8 @@ func (s SpotInstanceStateFault) GoString() string {
 
 // Describes the status of a Spot instance request.
 type SpotInstanceStatus struct {
-	// The status code.
+	// The status code. For a list of status codes, see Spot Bid Status Codes (http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-bid-status.html#spot-instance-bid-status-understand)
+	// in the Amazon Elastic Compute Cloud User Guide.
 	Code *string `locationName:"code" type:"string"`
 
 	// The description for the status code.

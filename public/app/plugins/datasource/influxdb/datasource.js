@@ -3,11 +3,11 @@ define([
   'lodash',
   'app/core/utils/datemath',
   './influx_series',
-  './query_builder',
+  './influx_query',
   './directives',
   './query_ctrl',
 ],
-function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
+function (angular, _, dateMath, InfluxSeries, InfluxQuery) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -41,8 +41,8 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
         queryTargets.push(target);
 
         // build query
-        var queryBuilder = new InfluxQueryBuilder(target);
-        var query =  queryBuilder.build();
+        var queryModel = new InfluxQuery(target);
+        var query =  queryModel.render();
         query = query.replace(/\$interval/g, (target.interval || options.interval));
         return query;
 
@@ -53,6 +53,7 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
 
       // replace templated variables
       allQueries = templateSrv.replace(allQueries, options.scopedVars);
+
       return this._seriesQuery(allQueries).then(function(data) {
         if (!data || !data.results) {
           return [];
@@ -63,13 +64,26 @@ function (angular, _, dateMath, InfluxSeries, InfluxQueryBuilder) {
           var result = data.results[i];
           if (!result || !result.series) { continue; }
 
-          var alias = (queryTargets[i] || {}).alias;
+          var target = queryTargets[i];
+          var alias = target.alias;
           if (alias) {
-            alias = templateSrv.replace(alias, options.scopedVars);
+            alias = templateSrv.replace(target.alias, options.scopedVars);
           }
-          var targetSeries = new InfluxSeries({ series: data.results[i].series, alias: alias }).getTimeSeries();
-          for (y = 0; y < targetSeries.length; y++) {
-            seriesList.push(targetSeries[y]);
+
+          var influxSeries = new InfluxSeries({ series: data.results[i].series, alias: alias });
+
+          switch(target.resultFormat) {
+            case 'table': {
+              seriesList.push(influxSeries.getTable());
+              break;
+            }
+            default: {
+              var timeSeries = influxSeries.getTimeSeries();
+              for (y = 0; y < timeSeries.length; y++) {
+                seriesList.push(timeSeries[y]);
+              }
+              break;
+            }
           }
         }
 
