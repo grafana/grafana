@@ -16,7 +16,8 @@ func TestECSCredProvider(t *testing.T) {
 		defer os.Clearenv()
 		os.Setenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI", "/abc/123")
 
-		provider := remoteCredProvider(&session.Session{})
+		sess, _ := session.NewSession()
+		provider := remoteCredProvider(sess)
 
 		So(provider, ShouldNotBeNil)
 
@@ -30,7 +31,8 @@ func TestECSCredProvider(t *testing.T) {
 
 func TestDefaultEC2RoleProvider(t *testing.T) {
 	Convey("Running outside an ECS container task", t, func() {
-		provider := remoteCredProvider(&session.Session{})
+		sess, _ := session.NewSession()
+		provider := remoteCredProvider(sess)
 
 		So(provider, ShouldNotBeNil)
 
