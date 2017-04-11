@@ -55,7 +55,7 @@ div.flot-text {
 
 .panel-title-container {
   min-height: 9px;
-  padding-top: 4px;
+  padding: 2px 0;
   cursor: pointer;
   word-wrap: break-word;
 }
@@ -69,6 +69,16 @@ div.flot-text {
   display: block;
 }
 
+.panel-title-caret {
+  color: $text-color-faint;
+  margin-left: 10px;
+  padding: 3px 5px;
+
+  &:hover {
+    background: $dark-4;
+  }
+}
+
 .panel-loading {
   position:absolute;
   top: -3px;
@@ -78,8 +88,43 @@ div.flot-text {
 
 .panel-header {
   text-align: center;
+
+  &:hover {
+    background: $side-menu-bg;
+
+    .panel-title-caret {
+      color: $text-color;
+    }
+  }
 }
 
+.panel-dropdown-menu {
+  border: none;
+  left: 50%;
+  text-align: left;
+  transform: translateX(-50%);
+  background: $side-menu-bg;
+  box-shadow: $search-shadow;
+
+  li a {
+    display: block;
+    white-space: nowrap;
+    color: $text-muted;
+    font-size: $font-size-sm;
+    padding: $spacer/2 $spacer;
+    border-left: 2px solid $side-menu-bg;
+    i {
+      display: inline-block;
+      padding-right: $spacer/2;
+    }
+
+    &:hover {
+      @include left-brand-border-gradient();
+      color: $link-color;
+      background: $input-label-bg;
+    }
+  }
+}
 
 .panel-info-corner-inner {
   width: 0;
@@ -181,13 +226,13 @@ div.flot-text {
   }
 }
 
-.panel-highlight  {
-  box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236,10.8)
-}
-
-.panel-hover-highlight  {
-  box-shadow: inset 0 1px 1px rgba(0,0,0,0.025), 0 0 1px rgba(82,168,236,0.5)
-}
+// .panel-highlight  {
+//   box-shadow: inset 0 1px 1px rgba(0,0,0,.075), 0 0 5px rgba(82,168,236,10.8)
+// }
+//
+// .panel-hover-highlight  {
+//   box-shadow: inset 0 1px 1px rgba(0,0,0,0.025), 0 0 1px rgba(82,168,236,0.5)
+// }
 
 .on-drag-hover {
   .panel-container {

@@ -11,10 +11,17 @@ function (angular, $, _, Tether) {
     .module('grafana.directives')
     .directive('panelMenu', function($compile) {
       var linkTemplate =
-          '<span class="panel-title drag-handle pointer">' +
+          '<span class="panel-title drag-handle pointer dropdown">' +
             '<span class="icon-gf panel-alert-icon"></span>' +
             '<span class="panel-title-text drag-handle">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>' +
+            '<span class="fa fa-caret-down panel-title-caret" data-toggle="dropdown"></span>' +
             '<span class="panel-time-info" ng-show="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>' +
+            '<ul class="dropdown-menu panel-dropdown-menu" role="menu">' +
+              '<li><a ng-click="ctrl.addDataQuery(datasource);"><i class="fa fa-cog"></i> Edit <span class="dropdown-menu-item-shortcut">e</span></a></li>' +
+              '<li><a ng-click="ctrl.addDataQuery(datasource);"><i class="fa fa-eye"></i> View</a></li>' +
+              '<li><a ng-click="ctrl.addDataQuery(datasource);"><i class="fa fa-share-square-o"></i> Share</a></li>' +
+              '<li><a ng-click="ctrl.addDataQuery(datasource);"><i class="fa fa-trash"></i> Remove</a></li>' +
+            '</ul>' +
           '</span>';
 
       function createMenuTemplate(ctrl) {
@@ -100,6 +107,9 @@ function (angular, $, _, Tether) {
           }
 
           var showMenu = function(e) {
+            if (true) {
+              return;
+            }
             // if menu item is clicked and menu was just removed from dom ignore this event
             if (!$.contains(document, e.target)) {
               return;
