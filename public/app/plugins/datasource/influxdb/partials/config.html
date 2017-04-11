@@ -5,10 +5,15 @@
 
 <div class="gf-form-group">
 	<div class="gf-form-inline">
-		<div class="gf-form max-width-30">
+		<div class="gf-form">
 			<span class="gf-form-label width-7">Database</span>
-			<input type="text" class="gf-form-input" ng-model='ctrl.current.database' placeholder="" required></input>
+
+			<metric-segment segment="ctrl.dbSegment" get-options="ctrl.getDBSegments()" on-change="ctrl.dbChanged()"></metric-segment>
+
 		</div>
+		<gf-form-switch class="gf-form" label="Query" tooltip="Add the Database as a query option"
+				 checked="ctrl.current.jsonData.allowDBQuery" label-class="width-7" switch-class="max-width-6">
+		</gf-form-switch>
 	</div>
 
 	<div class="gf-form-inline">

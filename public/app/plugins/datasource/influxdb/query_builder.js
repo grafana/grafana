@@ -64,6 +64,9 @@ function (_) {
     } else if (type === 'RETENTION POLICIES') {
       query = 'SHOW RETENTION POLICIES on "' + this.database + '"';
       return query;
+    } else if (type === 'DATABASES') {
+      query = 'SHOW DATABASES';
+      return query;
     }
 
     if (measurement) {
