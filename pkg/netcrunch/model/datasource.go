@@ -55,3 +55,12 @@ func UpdateDataSource(datasource *models.DataSource, orgId int64) bool {
   }
   return (bus.Dispatch(&command) == nil)
 }
+
+func GetDatasourcesForOrg(orgId int64) ([]*models.DataSource, bool) {
+  query := models.GetDataSourcesQuery {
+    OrgId: orgId,
+  }
+
+  err := bus.Dispatch(&query)
+  return query.Result, (err == nil)
+}
