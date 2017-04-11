@@ -48,7 +48,7 @@ func ReadVersionFile() (string, error) {
 
   if (err != nil) {
     vLog.Info("Failed to load GrafCrunch version")
-    return nil, err;
+    return "", err;
   }
 
   return version, err
