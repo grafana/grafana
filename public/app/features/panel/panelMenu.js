@@ -29,35 +29,32 @@ function (angular, $, _) {
         return template;
       }
       function createMenuTemplate($scope) {
-        var template = '<div class="panel-menu small">';
-
-        if ($scope.dashboardMeta.canEdit) {
-          template += '<div class="panel-menu-inner">';
-          template += '<div class="panel-menu-row">';
-          template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(-1)"><i class="fa fa-minus"></i></a>';
-          template += '<a class="panel-menu-icon pull-left" ng-click="updateColumnSpan(1)"><i class="fa fa-plus"></i></a>';
-          template += '<a class="panel-menu-icon pull-right" ng-click="removePanel(panel)"><i class="fa fa-remove"></i></a>';
-          template += '<div class="clearfix"></div>';
-          template += '</div>';
-        }
-
-        template += '<div class="panel-menu-row">';
-        template += '<a class="panel-menu-link" gf-dropdown="extendedMenu"><i class="fa fa-bars"></i></a>';
-
-        _.each($scope.panelMeta.menu, function(item) {
-          // skip edit actions if not editor
+        var template = '<div class="pull-right panel-right-menu" ng-show="!panelMeta.loading">';
+        _.each($scope.panelMeta.menu, function (item) {
           if (item.role === 'Editor' && !$scope.dashboardMeta.canEdit) {
             return;
           }
-
-          template += '<a class="panel-menu-link" ';
-          if (item.click) { template += ' ng-click="' + item.click + '"'; }
-          if (item.editorLink) { template += ' dash-editor-link="' + item.editorLink + '"'; }
-          template += '>';
-          template += item.text + '</a>';
+          template += '<span class="panel-right-menu-item"';
+          if (item.show) {
+            template += ' ng-if="' + item.show + '"';
+          }
+          template += ' ng-click="' + item.click + '" bs-tooltip="' + "'" + item.text + "'" + '">';
+          template += '<i class="fa ' + item.icon + '"></i>';
+          template += '</span>';
         });
 
-        template += '</div>';
+        template += '<div class="dropdown pull-right panel-right-menu-item">';
+        template += '<a class="pointer" ng-click="hideTooltip($event)" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-bars"></i></a>';
+        template += '<ul class="dropdown-menu">';
+        _.each($scope.panelMeta.extendedMenu, function (item) {
+          if (item.role === 'Editor' && !$scope.dashboardMeta.canEdit) {
+            return;
+          }
+          template += '<li><a class="pointer"';
+          if (item.click) { template += ' ng-click="'+ item.click +'"'; }
+          template += '>' + item.text + '</a></li>'
+        });
+        template += '</ul>';
         template += '</div>';
         template += '</div>';
         return template;
@@ -172,6 +169,8 @@ function (angular, $, _) {
 
             dismiss(2200);
           };
+
+          elem.append($(createMenuTemplate($scope)));
 
           // elem.click(showMenu);
           $compile(elem.contents())($scope);

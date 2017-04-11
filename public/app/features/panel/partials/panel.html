@@ -10,35 +10,6 @@
 			<i class="fa fa-spinner fa-spin"></i>
 		</span>
 
-		<div class="pull-right" ng-if="showMenu">
-			<span class="panel-right-menu" ng-if="menuItemShow" ng-click="updateColumnSpan(1)" bs-tooltip="'放大'">
-				<i class="fa fa-plus"></i>
-			</span>
-			<span class="panel-right-menu" ng-if="menuItemShow" ng-click="updateColumnSpan(-1)" bs-tooltip="'缩小'">
-				<i class="fa fa-minus"></i>
-			</span>
-			<span class="panel-right-menu" ng-if="menuItemShow && helpInfo.info" ng-click="isShowInfo($event);" bs-tooltip="'信息'">
-				<i class="fa fa-question-circle"></i>
-			</span>
-			<span class="panel-right-menu" ng-if="associateMenu" ng-click="associateLink();" bs-tooltip="'关联性分析'">
-				<i class="fa fa-line-chart"></i>
-			</span>
-			<span class="panel-right-menu" ng-click="editPanel();" bs-tooltip="'编辑'">
-				<i class="fa fa-pencil"></i>
-			</span>
-			<div class="dropdown pull-right panel-right-menu">
-				<a class="pointer" ng-click="hideTooltip($event)" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-bars"></i></a>
-				<ul class="dropdown-menu">
-					<li><a class="pointer" ng-click="removePanel(panel)">删除</a></li>
-					<li><a class="pointer" ng-click="duplicatePanel();">复制</a></li>
-					<li><a class="pointer" ng-click="toggleFullscreen(false); dismiss();">查看</a></li>
-					<li><a class="pointer" ng-click="sharePanel();">分享</a></li>
-					<li><a class="pointer" ng-click="exportCsv();">导出CSV</a></li>
-				</ul>
-			</div>
-		</div>
-
-		
 		<div class="panel-title-container drag-handle" panel-menu></div>
 	</div>
 
