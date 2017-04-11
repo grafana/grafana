@@ -1,9 +1,10 @@
 {
   "type": "datasource",
-  "name": "Mixed datasource",
+  "name": "-- Mixed --",
   "id": "mixed",
 
   "builtIn": true,
   "mixed": true,
+  "alwaysDisplay": true,
   "metrics": true
 }

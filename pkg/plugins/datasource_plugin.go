@@ -4,12 +4,13 @@ import "encoding/json"
 
 type DataSourcePlugin struct {
 	FrontendPluginBase
-	Annotations bool   `json:"annotations"`
-	Metrics     bool   `json:"metrics"`
-	Alerting    bool   `json:"alerting"`
-	BuiltIn     bool   `json:"builtIn"`
-	Mixed       bool   `json:"mixed"`
-	App         string `json:"app"`
+	Annotations   bool   `json:"annotations"`
+	Metrics       bool   `json:"metrics"`
+	Alerting      bool   `json:"alerting"`
+	BuiltIn       bool   `json:"builtIn"`
+	Mixed         bool   `json:"mixed"`
+	AlwaysDisplay bool   `json:"alwaysDisplay"`
+	App           string `json:"app"`
 }
 
 func (p *DataSourcePlugin) Load(decoder *json.Decoder, pluginDir string) error {
