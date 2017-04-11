@@ -119,5 +119,3 @@ export function identityRenderer(part, innerExpr) {
 export function quotedIdentityRenderer(part, innerExpr) {
   return '"' + part.params[0] + '"';
 }
-
-

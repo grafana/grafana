@@ -292,7 +292,6 @@ register({
   renderer: functionRenderer,
 });
 
-debugger;
 register({
   type: 'holt_winters_with_fit',
   addStrategy: addTransformationStrategy,
