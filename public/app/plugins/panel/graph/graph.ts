@@ -80,9 +80,11 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
       }, scope);
 
       appEvents.on('graph-click', (event) => {
+        // Add event only for selected panel
+        let thisPanelEvent = event.panel.id === ctrl.panel.id;
 
         // Select time for new annotation
-        if (ctrl.inAddAnnotationMode) {
+        if (ctrl.inAddAnnotationMode && thisPanelEvent) {
           let timeRange = {
             from: event.pos.x,
             to: null
@@ -92,6 +94,22 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
           ctrl.inAddAnnotationMode = false;
         }
       }, scope);
+
+      // Add keybinding for Add Annotation mode
+      $(document).keydown(onCtrlKeyDown);
+      $(document).keyup(onCtrlKeyUp);
+
+      function onCtrlKeyDown(event) {
+        if (event.key === 'Control') {
+          ctrl.inAddAnnotationMode = true;
+        }
+      }
+
+      function onCtrlKeyUp(event) {
+        if (event.key === 'Control') {
+          ctrl.inAddAnnotationMode = false;
+        }
+      }
 
       function getLegendHeight(panelHeight) {
         if (!panel.legend.show || panel.legend.rightSide) {
