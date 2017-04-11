@@ -78,7 +78,7 @@ export class AddPanelCtrl {
   }
 
   addPanel(panelPluginInfo) {
-    var defaultSpan = 12;
+    var defaultSpan = 6;
     var span = 12 - this.row.span;
 
     var panel = {

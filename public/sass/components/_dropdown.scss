@@ -31,7 +31,7 @@
   width: 0;
   height: 0;
   vertical-align: top;
-  border-top:   4px solid $black;
+  border-top:   4px solid $text-color-weak;
   border-right: 4px solid transparent;
   border-left:  4px solid transparent;
   content: "";
@@ -192,7 +192,7 @@
 .dropdown-submenu > .dropdown-menu {
   top: 0;
   left: 100%;
-  margin-top: -6px;
+  margin-top: 0px;
   margin-left: -1px;
   @include border-radius(0 6px 6px 6px);
 }
@@ -218,9 +218,9 @@
   height: 0;
   border-color: transparent;
   border-style: solid;
-  border-width: 5px 0 5px 5px;
-  border-left-color: darken($dropdownBackground, 20%);
-  margin-top: 5px;
+  border-width: 4px 0 4px 4px;
+  border-left-color: $text-color-weak;
+  margin-top: 4px;
   margin-right: -10px;
 }
 .dropdown-submenu:hover > a::after {

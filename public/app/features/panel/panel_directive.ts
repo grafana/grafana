@@ -19,7 +19,7 @@ var panelTemplate = `
         <i class="fa fa-spinner fa-spin"></i>
       </span>
 
-      <div class="panel-title-container drag-handle" panel-menu></div>
+      <panel-header class="panel-title-container drag-handle" panel-ctrl="ctrl"></panel-header>
     </div>
 
     <div class="panel-content">

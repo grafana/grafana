@@ -34,7 +34,7 @@ function (coreModule) {
         rows: [
           {
             title: 'Dashboard Row',
-            height: '250px',
+            height: '350px',
             panels:[],
             isNew: true,
           }
