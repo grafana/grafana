@@ -157,7 +157,7 @@ export default class InfluxDatasource {
     return false;
   };
 
-  metricFindQuery(query) {
+  metricFindQuery(query: string, db?: string) {
     var interpolated = this.templateSrv.replace(query, null, 'regex');
 
     return this._seriesQuery(interpolated)
@@ -176,10 +176,10 @@ export default class InfluxDatasource {
     return this.metricFindQuery(query);
   }
 
-  _seriesQuery(query) {
+  _seriesQuery(query: string, db?: string) {
     if (!query) { return this.$q.when({results: []}); }
 
-    return this._influxRequest('GET', '/query', {q: query, epoch: 'ms'});
+    return this._influxRequest('GET', '/query', {q: query, epoch: 'ms'}, db);
   }
 
   serializeParams(params) {
@@ -207,19 +207,19 @@ export default class InfluxDatasource {
     });
   }
 
-  _influxRequest(method, url, data) {
-    var self = this;
-
-    var currentUrl = self.urls.shift();
-    self.urls.push(currentUrl);
+  _influxRequest(method: string, url: string, data: any, db?: string) {
+    var currentUrl = this.urls.shift();
+    this.urls.push(currentUrl);
 
     var params: any = {
-      u: self.username,
-      p: self.password,
+      u: this.username,
+      p: this.password,
     };
 
-    if (self.database) {
-      params.db = self.database;
+    if (db) {
+      params.db = db;
+    } else if (this.database) {
+      params.db = this.database;
     }
 
     if (method === 'GET') {
@@ -241,8 +241,8 @@ export default class InfluxDatasource {
     if (this.basicAuth || this.withCredentials) {
       options.withCredentials = true;
     }
-    if (self.basicAuth) {
-      options.headers.Authorization = self.basicAuth;
+    if (this.basicAuth) {
+      options.headers.Authorization = this.basicAuth;
     }
 
     return this.backendSrv.datasourceRequest(options).then(result => {
