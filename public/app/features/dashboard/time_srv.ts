@@ -15,6 +15,7 @@ class TimeSrv {
   oldRefresh: boolean;
   dashboard: any;
   timeAtLoad: any;
+  private autoRefreshBlocked: boolean;
 
   /** @ngInject **/
   constructor(private $rootScope, private $timeout, private $location, private timer, private contextSrv) {
@@ -23,6 +24,14 @@ class TimeSrv {
 
     $rootScope.$on('zoom-out', this.zoomOut.bind(this));
     $rootScope.$on('$routeUpdate', this.routeUpdated.bind(this));
+
+    document.addEventListener('visibilitychange', () => {
+      if (this.autoRefreshBlocked && document.visibilityState === 'visible') {
+        this.autoRefreshBlocked = false;
+
+        this.refreshDashboard();
+      }
+    });
   }
 
   init(dashboard) {
@@ -137,6 +146,8 @@ class TimeSrv {
       this.startNextRefreshTimer(afterMs);
       if (this.contextSrv.isGrafanaVisible()) {
         this.refreshDashboard();
+      } else {
+        this.autoRefreshBlocked = true;
       }
     }, afterMs));
   }
