@@ -21,6 +21,7 @@ func upgradeTo094(version string) (bool, error) {
       upgradeNetCrunchDatasourcesForOrgs(orgs, uLog)
     }
     uLog.Info("Upgrade successful to 9.4")
+    return true, nil
   }
 
   return false, nil
