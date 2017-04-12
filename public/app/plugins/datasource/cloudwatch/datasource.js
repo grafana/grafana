@@ -187,6 +187,14 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       });
     };
 
+    this.performEBSDescribeVolumes = function(region, filters, volumeIds) {
+      return this.awsRequest({
+        region: region,
+        action: 'DescribeVolumes',
+        parameters: { filters: filters, volumeIds: volumeIds }
+      });
+    };
+
     this.metricFindQuery = function(query) {
       var region;
       var namespace;
@@ -261,6 +269,30 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
           var attributes = _.chain(result.Reservations)
           .map(function(reservations) {
             return _.map(reservations.Instances, targetAttributeName);
+          })
+          .flatten().uniq().sortBy().value();
+          return transformSuggestData(attributes);
+        });
+      }
+
+      var ebsVolumeAttributeQuery = query.match(/^ebs_volume_attribute\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
+      if (ebsVolumeAttributeQuery) {
+        region = templateSrv.replace(ebsVolumeAttributeQuery[1]);
+        var ebsFilterJson = JSON.parse(templateSrv.replace(ebsVolumeAttributeQuery[3]));
+        var ebsFilters = _.map(ebsFilterJson, function(values, name) {
+          return {
+            Name: name,
+            Values: values
+          };
+        });
+        var ebsTargetAttributeName = templateSrv.replace(ebsVolumeAttributeQuery[2]);
+
+        return this.performEBSDescribeVolumes(region, ebsFilters, null).then(function(result) {
+          console.log(result);
+          var attributes = _.chain(result.Volumes)
+          .map(function(reservations) {
+            console.log(reservations);
+            return _.map(reservations.Attachments, ebsTargetAttributeName);
           })
           .flatten().uniq().sortBy().value();
           return transformSuggestData(attributes);

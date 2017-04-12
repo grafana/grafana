@@ -77,6 +77,7 @@ func init() {
 		"DescribeAlarmsForMetric": handleDescribeAlarmsForMetric,
 		"DescribeAlarmHistory":    handleDescribeAlarmHistory,
 		"DescribeInstances":       handleDescribeInstances,
+		"DescribeVolumes":         handleDescribeVolumes,
 		"__GetRegions":            handleGetRegions,
 		"__GetNamespaces":         handleGetNamespaces,
 		"__GetMetrics":            handleGetMetrics,
@@ -487,6 +488,52 @@ func handleDescribeInstances(req *cwRequest, c *middleware.Context) {
 			reservations, _ := awsutil.ValuesAtPath(page, "Reservations")
 			for _, reservation := range reservations {
 				resp.Reservations = append(resp.Reservations, reservation.(*ec2.Reservation))
+			}
+			return !lastPage
+		})
+	if err != nil {
+		c.JsonApiErr(500, "Unable to call AWS API", err)
+		return
+	}
+
+	c.JSON(200, resp)
+}
+
+func handleDescribeVolumes(req *cwRequest, c *middleware.Context) {
+	cfg, err := getAwsConfig(req)
+	if err != nil {
+		c.JsonApiErr(500, "Unable to call AWS API", err)
+		return
+	}
+	sess, err := session.NewSession(cfg)
+	if err != nil {
+		c.JsonApiErr(500, "Unable to call AWS API", err)
+		return
+	}
+	svc := ec2.New(sess, cfg)
+
+	reqParam := &struct {
+		Parameters struct {
+			Filters     []*ec2.Filter `json:"filters"`
+			VolumeIds   []*string     `json:"volumeIds"`
+		} `json:"parameters"`
+	}{}
+	json.Unmarshal(req.Body, reqParam)
+
+	params := &ec2.DescribeVolumesInput{}
+	if len(reqParam.Parameters.Filters) > 0 {
+		params.Filters = reqParam.Parameters.Filters
+	}
+	if len(reqParam.Parameters.VolumeIds) > 0 {
+		params.VolumeIds = reqParam.Parameters.VolumeIds
+	}
+
+	var resp ec2.DescribeVolumesOutput
+	err = svc.DescribeVolumesPages(params,
+		func(page *ec2.DescribeVolumesOutput, lastPage bool) bool {
+			volumes, _ := awsutil.ValuesAtPath(page, "Volumes")
+			for _, volume := range volumes {
+				resp.Volumes = append(resp.Volumes, volume.(*ec2.Volume))
 			}
 			return !lastPage
 		})
