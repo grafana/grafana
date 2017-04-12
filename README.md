@@ -1,4 +1,4 @@
-[Grafana](https://grafana.com) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana) 
+[Grafana](https://grafana.com) [![Circle CI](https://circleci.com/gh/grafana/grafana.svg?style=svg)](https://circleci.com/gh/grafana/grafana)
 ================
 [Website](https://grafana.com) |
 [Twitter](https://twitter.com/grafana) |
@@ -19,12 +19,6 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 - [What's New in Grafana 4.2](http://docs.grafana.org/guides/whats-new-in-v4-2/)
 
 ## Features
-### Graphite Target Editor
-- Graphite target expression parser
-- Feature rich query composer
-- Quickly add and edit functions & parameters
-- Templated queries
-- [See it in action](http://docs.grafana.org/datasources/graphite/)
 
 ### Graphing
 - Fast rendering, even over large timespans
@@ -48,16 +42,23 @@ Graphite, Elasticsearch, OpenTSDB, Prometheus and InfluxDB.
 - [Time range controls](http://docs.grafana.org/reference/timerange/)
 - [Share snapshots publicly](http://docs.grafana.org/v2.0/reference/sharing/)
 
-### Elasticsearch
-- Feature rich query editor UI
-
 ### InfluxDB
 - Use InfluxDB as a metric data source, annotation source
-- Query editor with series and column typeahead, easy group by and function selection
+- Query editor with field and tag typeahead, easy group by and function selection
 
-### OpenTSDB
-- Use as metric data source
-- Query editor with metric name typeahead and tag filtering
+### Graphite
+- Graphite target expression parser
+- Feature rich query composer
+- Quickly add and edit functions & parameters
+- Templated queries
+- [See it in action](http://docs.grafana.org/datasources/graphite/)
+
+### Elasticsearch, Prometheus & OpenTSDB
+- Feature rich query editor UI
+
+### Alerting
+- Define alert rules using graphs & query conditions
+- Schedule & evalute alert rules, send notifications to Slack, Hipchat, Email, PagerDuty, etc.
 
 ## Requirements
 There are no dependencies except an external time series data store. For dashboards and user accounts Grafana can use an embedded
@@ -78,8 +79,8 @@ the latest master builds [here](https://grafana.com/grafana/download)
 
 ### Dependencies
 
-- Go 1.8
-- NodeJS v4+
+- Go 1.8.1
+- NodeJS LTS
 
 ### Get Code
 
