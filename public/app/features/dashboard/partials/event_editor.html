@@ -1,0 +1,27 @@
+<div class="gf-form-group">
+	<h5 class="section-heading">Add annotation event</h5>
+
+	<div class="gf-form">
+		<span class="gf-form-label width-8">Title</span>
+		<input type="text" ng-model="ctrl.event.title" class="gf-form-input max-width-20">
+	</div>
+	<div class="gf-form">
+		<span class="gf-form-label width-8">Time</span>
+		<input type="text" ng-model="ctrl.event.time" class="gf-form-input max-width-20">
+	</div>
+	<div class="gf-form" ng-if="ctrl.event.isRegion">
+		<span class="gf-form-label width-8">To</span>
+		<input type="text" ng-model="ctrl.event.endTime" class="gf-form-input max-width-20">
+	</div>
+	<div class="gf-form gf-form--v-stretch">
+		<span class="gf-form-label width-7">Description</span>
+		<textarea class="gf-form-input width-25" rows="3" ng-model="ctrl.event.description"  placeholder="Panel description, supports markdown & links"></textarea>
+	</div>
+</div>
+
+<div class="gf-form-button-row">
+	<button class="btn gf-form-btn width-10 btn-success" ng-click="ctrl.addAnnotation()">
+		<i class="fa fa-pencil"></i>
+		Add Annotation
+	</button>
+</div>

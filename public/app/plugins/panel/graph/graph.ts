@@ -19,7 +19,7 @@ import GraphTooltip from './graph_tooltip';
 import {ThresholdManager} from './threshold_manager';
 import {convertValuesToHistogram, getSeriesValues} from './histogram';
 
-coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
+coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
   return {
     restrict: 'A',
     template: '',
@@ -91,9 +91,22 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
             to: null
           };
 
-          ctrl.showAddAnnotationModal(timeRange);
+          showAddAnnotationView(timeRange);
         }
       }, scope);
+
+      function showAddAnnotationView(timeRange) {
+        popoverSrv.show({
+          element: elem[0],
+          position: 'bottom center',
+          openOn: 'click',
+          template: '<event-editor panelCtrl="ctrl" timeRange="timeRange"></event-editor>',
+          model: {
+            timeRange: timeRange,
+            panelCtrl: ctrl,
+          },
+        });
+      }
 
       function getLegendHeight(panelHeight) {
         if (!panel.legend.show || panel.legend.rightSide) {
@@ -658,7 +671,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         if (ranges.ctrlKey || ranges.metaKey) {
           // Create new annotation from time range
           let timeRange = ranges.xaxis;
-          ctrl.showAddAnnotationModal(timeRange);
+          showAddAnnotationView(timeRange);
           plot.clearSelection();
         } else {
           scope.$apply(function() {
