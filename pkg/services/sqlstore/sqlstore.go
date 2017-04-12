@@ -108,6 +108,23 @@ func AddDatasourceFromConfig() {
 			log.Fatal(3, "Could not add default datasource for OrgId 1 from config: %v", err)
 			return
 		}
+
+		if err := bus.Dispatch(&m.AddDataSourceCommand{
+			OrgId:     MAINORG_ID,
+			Name:      "elk",
+			Type:      m.DS_ES,
+			Access:    m.DS_ACCESS_PROXY,
+			Url:       setting.ElkSource.ElkSourceUrlRoot,
+			IsDefault: false,
+			Database:  "[$_token-logstash-]YYYY.MM.DD",
+			JsonData:  map[string]interface{}{
+				"interval"  : "Daily",
+				"timeField" : "@timestamp",
+			},
+		}); err != nil {
+			log.Fatal(3, "Could not add default datasource for OrgId 1 from config: %v", err)
+			return
+		}
 	} else {
 		log.Info("Update default datasource for all the Orgs")
 		if err := bus.Dispatch(&m.UpdateDataSourceForAllOrgCommand{
@@ -133,6 +150,22 @@ func AddDatasourceForOrg(orgId int64) (err error) {
 		return err
 	}
 
+	if err := bus.Dispatch(&m.AddDataSourceCommand{
+		OrgId:     orgId,
+		Name:      "elk",
+		Type:      m.DS_ES,
+		Access:    m.DS_ACCESS_PROXY,
+		Url:       setting.ElkSource.ElkSourceUrlRoot,
+		IsDefault: false,
+		Database:  "[$_token-logstash-]YYYY.MM.DD",
+		JsonData:  map[string]interface{}{
+			"interval"  : "Daily",
+			"timeField" : "@timestamp",
+		},
+	}); err != nil {
+		log.Error(3, "Could not add default datasource from config: %v", err)
+		return err
+	}
 	return nil
 }
 
