@@ -8,7 +8,7 @@ function (angular, _, noUiSlider) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AlertAssociationCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, $timeout, contextSrv) {
+  module.controller('AlertAssociationCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, $timeout, contextSrv, healthSrv) {
     var alertMetric = $routeParams.metric;
     var alertHost = $routeParams.host;
     var distance = $routeParams.distance;
@@ -171,8 +171,9 @@ function (angular, _, noUiSlider) {
         };
         $scope.dashboard.rows[0].panels[0].seriesOverrides.push(seriesOverride);
       }
-      $scope.broadcastRefresh();
-      $scope.dashboard.meta.canSave = false;
+      healthSrv.transformMetricType($scope.dashboard).then(function () {
+        $scope.broadcastRefresh();
+      });
     };
 
     $scope.resetCorrelation = function () {

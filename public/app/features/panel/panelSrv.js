@@ -139,20 +139,18 @@ function (angular, _, config) {
         delete $scope.panelMeta.error;
         $scope.panelMeta.loading = true;
         $scope.panelMeta.info = false;
-
-        healthSrv.transformMetricType($scope.dashboard).then(function () {
-          $scope.getCurrentDatasource().then(function (datasource) {
-            $scope.datasource = datasource;
-            return $scope.refreshData($scope.datasource) || $q.when({});
-          }).then(function () {
-            $scope.panelMeta.loading = false;
-            $scope.titleInit($scope.panel);
-          }, function (err) {
-            console.log('Panel data error:', err);
-            $scope.panelMeta.loading = false;
-            $scope.panelMeta.error = err.message || "Timeseries data request error";
-            $scope.inspector.error = err;
-          });
+        $scope.getCurrentDatasource().then(function (datasource) {
+          $scope.datasource = datasource;
+          return $scope.refreshData($scope.datasource) || $q.when({});
+        }).then(function () {
+          $scope.panelMeta.loading = false;
+          $scope.titleInit($scope.panel);
+        }, function (err) {
+          console.log('Panel data error:', err);
+          $scope.panelMeta.loading = false;
+          $scope.panelMeta.loading = false;
+          $scope.panelMeta.error = err.message || "Timeseries data request error";
+          $scope.inspector.error = err;
         });
       };
 
@@ -184,7 +182,7 @@ function (angular, _, config) {
         }catch(err){
           var reg = /\'(.*?)\'/g;
           var msg = "图表中缺少"+err.toString().match(reg)[0]+"配置";
-          alertSrv.set("参数缺失", msg, "warning", 4000);
+          $scope.appEvent('alert-warning', ['参数缺失', msg]);
         }
       };
 

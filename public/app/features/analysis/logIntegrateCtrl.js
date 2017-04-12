@@ -215,8 +215,10 @@ define([
         if (_.isNull(prefix)) {
           return "*"
         }
-        if (/(iostat|cpu|df|net|proc|ssh_failed)/.test(prefix)) {
+        if (/(iostat|cpu|df|net|proc)/.test(prefix)) {
           return "system"
+        }else if (/(ssh_failed)/.test(prefix)) {
+          return "security"
         }
         return prefix;
       }

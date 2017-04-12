@@ -11,7 +11,7 @@ define([
   'jquery.flot.time',
   'jquery.flot.stack',
   'jquery.flot.stackpercent',
-  'jquery.flot.fillbelow',
+  'jquery.flot.fillbetween',
   'jquery.flot.crosshair'
 ],
 function (angular, $, kbn, moment, _, GraphTooltip) {

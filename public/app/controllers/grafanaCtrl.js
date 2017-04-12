@@ -34,8 +34,10 @@ function (angular, config, _, $, store) {
 
     $scope.initDashboard = function(dashboardData, viewScope) {
       $rootScope.mainScope = viewScope;
-      $controller('DashboardCtrl', { $scope: viewScope }).init(dashboardData);
-      contextSrv.system = dashboardData.dashboard.system || 0
+      healthSrv.transformMetricType(dashboardData.dashboard).then(function () {
+        $controller('DashboardCtrl', {$scope: viewScope}).init(dashboardData);
+        contextSrv.system = dashboardData.dashboard.system || 0
+      });
     };
 
     $rootScope.onAppEvent = function(name, callback, localScope) {
