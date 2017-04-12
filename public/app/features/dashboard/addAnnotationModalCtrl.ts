@@ -4,12 +4,7 @@ import angular from 'angular';
 import moment from 'moment';
 
 export class AddAnnotationModalCtrl {
-  annotationTimeFormat = 'YYYY-MM-DD HH:mm:ss';
-  annotationTimeFrom: any;
-  annotationTimeTo: any = null;
-  annotationTitle: string;
-  annotationTextFrom: string;
-  annotationTextTo: string;
+  timeFormat = 'YYYY-MM-DD HH:mm:ss';
   annotation: any;
   graphCtrl: any;
 
@@ -29,21 +24,20 @@ export class AddAnnotationModalCtrl {
       text: ""
     };
 
-    this.annotation.time = moment($scope.annotationTimeRange.from).format(this.annotationTimeFormat);
+    this.annotation.time = moment($scope.annotationTimeRange.from).format(this.timeFormat);
     if ($scope.annotationTimeRange.to) {
-      this.annotation.timeTo = moment($scope.annotationTimeRange.to).format(this.annotationTimeFormat);
+      this.annotation.timeTo = moment($scope.annotationTimeRange.to).format(this.timeFormat);
     }
   }
 
   addAnnotation() {
-    this.annotation.time = moment(this.annotation.time, this.annotationTimeFormat).valueOf();
+    this.annotation.time = moment(this.annotation.time, this.timeFormat).valueOf();
     if (this.annotation.timeTo) {
-      this.annotation.timeTo = moment(this.annotation.timeTo, this.annotationTimeFormat).valueOf();
+      this.annotation.timeTo = moment(this.annotation.timeTo, this.timeFormat).valueOf();
     }
 
     this.graphCtrl.pushAnnotation(this.annotation)
     .then(response => {
-      console.log(response);
       this.close();
     })
     .catch(error => {
