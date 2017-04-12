@@ -12,8 +12,8 @@ parent = "http_api"
 
 # Alerting API
 
-You can use the Alerting API to get information about alerts and their states but this API cannot be used to modify the alert. 
-To create new alerts or modify them you need to update the dashboard json that contains the alerts. 
+You can use the Alerting API to get information about alerts and their states but this API cannot be used to modify the alert.
+To create new alerts or modify them you need to update the dashboard json that contains the alerts.
 
 This API can also be used to create, update and delete alert notifications.
 
@@ -115,7 +115,7 @@ This API can also be used to create, update and delete alert notifications.
 
     HTTP/1.1 200
     Content-Type: application/json
-    
+
     {
       "id": 1,
       "name": "Team A",
@@ -127,11 +127,11 @@ This API can also be used to create, update and delete alert notifications.
 
 ## Create alert notification
 
-`POST /api/alerts-notifications`
+`POST /api/alert-notifications`
 
 **Example Request**:
 
-    POST /api/alerts-notifications HTTP/1.1
+    POST /api/alert-notifications HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -144,29 +144,29 @@ This API can also be used to create, update and delete alert notifications.
         "addresses": "carl@grafana.com;dev@grafana.com"
       }
     }
-    
+
 
 **Example Response**:
 
     HTTP/1.1 200
     Content-Type: application/json
     {
-      "id": 1, 
+      "id": 1,
       "name": "new alert notification",
       "type": "email",
       "isDefault": false,
       "settings": { addresses: "carl@grafana.com;dev@grafana.com"} }
-      "created": "2017-01-01 12:34", 
+      "created": "2017-01-01 12:34",
       "updated": "2017-01-01 12:34"
     }
 
 ## Update alert notification
 
-`PUT /api/alerts-notifications/1`
+`PUT /api/alert-notifications/1`
 
 **Example Request**:
 
-    PUT /api/alerts-notifications/1 HTTP/1.1
+    PUT /api/alert-notifications/1 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -176,29 +176,29 @@ This API can also be used to create, update and delete alert notifications.
       "name": "new alert notification",  //Required
       "type":  "email", //Required
       "isDefault": false,
-      "settings": { 
+      "settings": {
         "addresses: "carl@grafana.com;dev@grafana.com"
       }
     }
-    
+
 
 **Example Response**:
 
     HTTP/1.1 200
     Content-Type: application/json
     {
-      "id": 1, 
+      "id": 1,
       "name": "new alert notification",
       "type": "email",
       "isDefault": false,
       "settings": { addresses: "carl@grafana.com;dev@grafana.com"} }
-      "created": "2017-01-01 12:34", 
+      "created": "2017-01-01 12:34",
       "updated": "2017-01-01 12:34"
     }
 
 ## Delete alert notification
 
-`DELETE /api/alerts-notifications/:notificationId`
+`DELETE /api/alert-notifications/:notificationId`
 
 **Example Request**:
 
