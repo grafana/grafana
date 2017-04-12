@@ -102,18 +102,14 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		datasources[ds.Name] = dsMap
 	}
 
-	// add grafana backend data source
-	grafanaDatasourceMeta, _ := plugins.DataSources["grafana"]
-	datasources["-- Grafana --"] = map[string]interface{}{
-		"type": "grafana",
-		"name": "-- Grafana --",
-		"meta": grafanaDatasourceMeta,
-	}
-
-	// add mixed backend data source
-	datasources["-- Mixed --"] = map[string]interface{}{
-		"type": "mixed",
-		"meta": plugins.DataSources["mixed"],
+	for _, ds := range plugins.DataSources {
+		if ds.AlwaysDisplay {
+			datasources[ds.Name] = map[string]interface{}{
+				"type": ds.Type,
+				"name": ds.Name,
+				"meta": plugins.DataSources[ds.Id],
+			}
+		}
 	}
 
 	if defaultDatasource == "" {
