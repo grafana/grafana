@@ -162,16 +162,90 @@ define([
           "height": "300px",
           "panels": [
             {
-              "title": "",
+              "columns": [
+                {
+                  "text": "@timestamp",
+                  "value": "@timestamp"
+                },
+                {
+                  "text": "host",
+                  "value": "host"
+                },
+                {
+                  "text": "_type",
+                  "value": "_type"
+                },
+                {
+                  "text": "message",
+                  "value": "message"
+                }
+              ],
+              "datasource": "elk",
+              "editable": true,
               "error": false,
+              "fontSize": "100%",
+              "height": "500",
+              "helpInfo": {
+                "context": "",
+                "info": false,
+                "title": ""
+              },
+              "hideTimeOverride": false,
+              "id": 1,
+              "isNew": true,
+              "links": [],
+              "pageSize": null,
+              "scroll": true,
+              "showHeader": true,
+              "sort": {
+                "col": 3,
+                "desc": false
+              },
               "span": 12,
-              "editable": false,
-              "type": "text",
-              "id": 5,
-              "mode": "html",
-              "content": "",
-              "height": "1000px",
-              "transparent": true
+              "styles": [
+                {
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "pattern": "@timestamp",
+                  "type": "date"
+                },
+                {
+                  "colorMode": null,
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "decimals": 2,
+                  "pattern": "/.*/",
+                  "thresholds": [],
+                  "type": "number",
+                  "unit": "short"
+                }
+              ],
+              "targets": [
+                {
+                  "aggregator": "sum",
+                  "bucketAggs": [],
+                  "downsampleAggregator": "avg",
+                  "dsType": "elasticsearch",
+                  "errors": {},
+                  "metrics": [
+                    {
+                      "field": "select field",
+                      "id": "1",
+                      "meta": {},
+                      "settings": {},
+                      "type": "raw_document"
+                    }
+                  ],
+                  "refId": "A",
+                  "timeField": "@timestamp"
+                }
+              ],
+              "title": "日志查询",
+              "transform": "json",
+              "transparent": false,
+              "type": "table"
             }
           ],
           "showTitle": false,
@@ -179,6 +253,12 @@ define([
         }
       ];
 
+      $scope.reQuery = function () {
+        console.log($scope.query);
+        $scope.dashboard.rows[2].panels[0].targets[0].query = $scope.query;
+        $rootScope.$broadcast('refresh');
+        //$rootScope.appEvent('elastic-query-updated');
+      };
       $scope.init = function (param) {
         param.targets = param.targets.filter(function (metrics) {
           return _.excludeMetricSuffix(metrics.metric);
@@ -194,10 +274,9 @@ define([
         });
         var type = metricPrefix2Type(param.targets[0].metric.split(".")[0]);
         var host = param.targets[0].tags.host == "*" ? "*" : "%22" + param.targets[0].tags.host + "%22";  // *  or 'centos24'
-        var org = contextSrv.user.orgId;
-        var system = contextSrv.system;
 
-        panelMetas[2].panels[0].content = "<iframe src=\"" + contextSrv.elkUrl + "/app/kibana#/discover?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:'$time_from',mode:quick,to:'$time_to'))&_a=(columns:!(_source),index:'1000" + org + "-" + system + "',interval:auto,query:(query_string:(analyze_wildcard:!t,query:'type:" + type + "%20AND%20host:" + host + "')),sort:!('@timestamp',desc))\" height=\"1000px\" width=\"100%\"></iframe>"
+        $scope.query = "type:"+type+" AND host:"+host;
+        panelMetas[2].panels[0].targets[0].query = "type:"+type+" AND host:"+host;
 
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: true, canSave: false},
