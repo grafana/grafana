@@ -79,22 +79,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         }
       }, scope);
 
-      appEvents.on('graph-click', (event) => {
-        // Add event only for selected panel
-        let thisPanelEvent = event.panel.id === ctrl.panel.id;
-
-        // Select time for new annotation
-        let createAnnotation = event.pos.ctrlKey || event.pos.metaKey;
-        if (createAnnotation && thisPanelEvent) {
-          let timeRange = {
-            from: event.pos.x,
-            to: null
-          };
-
-          ctrl.showAddAnnotationModal(timeRange);
-        }
-      }, scope);
-
       function getLegendHeight(panelHeight) {
         if (!panel.legend.show || panel.legend.rightSide) {
           return 0;
@@ -667,6 +651,20 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
               to    : moment.utc(ranges.xaxis.to),
             });
           });
+        }
+      });
+
+      elem.bind("plotclick", function (event, pos, item) {
+        // Skip if range selected (added in "plotselected" event handler)
+        let isRangeSelection = pos.x !== pos.x1;
+        let createAnnotation = !isRangeSelection && (pos.ctrlKey || pos.metaKey);
+        if (createAnnotation) {
+          let timeRange = {
+            from: pos.x,
+            to: null
+          };
+
+          ctrl.showAddAnnotationModal(timeRange);
         }
       });
 
