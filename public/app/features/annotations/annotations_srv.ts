@@ -133,10 +133,8 @@ export class AnnotationsSrv {
     return this.globalAnnotationsPromise;
   }
 
-  postAnnotation(annotations) {
-    return Promise.all(_.map(annotations, annotation => {
-      return this.backendSrv.post('/api/annotations', annotation);
-    }));
+  postAnnotation(annotation) {
+    return this.backendSrv.post('/api/annotations', annotation);
   }
 
   translateQueryResult(annotation, results) {

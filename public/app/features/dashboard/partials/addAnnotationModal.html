@@ -28,16 +28,16 @@
 
             <div class="gf-form">
               <span class="gf-form-label width-8">Title</span>
-              <input type="text" ng-model="ctrl.annotationTitle" class="gf-form-input max-width-20">
+              <input type="text" ng-model="ctrl.annotation.title" class="gf-form-input max-width-20">
             </div>
             <div class="gf-form">
-              <span class="gf-form-label width-8" ng-if="!ctrl.annotationTimeTo">Time</span>
-              <span class="gf-form-label width-8" ng-if="ctrl.annotationTimeTo">Time Start</span>
-              <input type="text" ng-model="ctrl.annotationTimeFrom" class="gf-form-input max-width-20">
+              <span class="gf-form-label width-8" ng-if="!ctrl.annotation.timeTo">Time</span>
+              <span class="gf-form-label width-8" ng-if="ctrl.annotation.timeTo">Time Start</span>
+              <input type="text" ng-model="ctrl.annotation.time" class="gf-form-input max-width-20">
             </div>
-            <div class="gf-form" ng-if="ctrl.annotationTimeTo">
+            <div class="gf-form" ng-if="ctrl.annotation.timeTo">
               <span class="gf-form-label width-8">Time Stop</span>
-              <input type="text" ng-model="ctrl.annotationTimeTo" class="gf-form-input max-width-20">
+              <input type="text" ng-model="ctrl.annotation.timeTo" class="gf-form-input max-width-20">
             </div>
           </div>
 
@@ -46,7 +46,7 @@
           </div>
           <div class="gf-form-group share-modal-options">
             <div class="gf-form">
-              <textarea rows="3" class="gf-form-input width-27" ng-model="ctrl.annotationTextFrom"></textarea>
+              <textarea rows="3" class="gf-form-input width-27" ng-model="ctrl.annotation.text"></textarea>
             </div>
           </div>
 

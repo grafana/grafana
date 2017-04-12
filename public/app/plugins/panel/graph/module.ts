@@ -307,8 +307,8 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   // Get annotation info from dialog and push it to backend
-  pushAnnotations(annotations) {
-    return this.annotationsSrv.postAnnotation(annotations);
+  pushAnnotation(annotation) {
+    return this.annotationsSrv.postAnnotation(annotation);
   }
 
   showAddAnnotationModal(timeRange) {
