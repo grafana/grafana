@@ -157,10 +157,10 @@ export default class InfluxDatasource {
     return false;
   };
 
-  metricFindQuery(query: string, db?: string) {
+  metricFindQuery(query: string, options?: any) {
     var interpolated = this.templateSrv.replace(query, null, 'regex');
 
-    return this._seriesQuery(interpolated)
+    return this._seriesQuery(interpolated, options)
       .then(_.curry(this.responseParser.parse)(query));
   }
 
@@ -176,10 +176,10 @@ export default class InfluxDatasource {
     return this.metricFindQuery(query);
   }
 
-  _seriesQuery(query: string, db?: string) {
+  _seriesQuery(query: string, options?: any) {
     if (!query) { return this.$q.when({results: []}); }
 
-    return this._influxRequest('GET', '/query', {q: query, epoch: 'ms'}, db);
+    return this._influxRequest('GET', '/query', {q: query, epoch: 'ms'}, options);
   }
 
   serializeParams(params) {
@@ -207,7 +207,7 @@ export default class InfluxDatasource {
     });
   }
 
-  _influxRequest(method: string, url: string, data: any, db?: string) {
+  _influxRequest(method: string, url: string, data: any, options?: any) {
     var currentUrl = this.urls.shift();
     this.urls.push(currentUrl);
 
@@ -216,8 +216,8 @@ export default class InfluxDatasource {
       p: this.password,
     };
 
-    if (db) {
-      params.db = db;
+    if (options && options.database) {
+      params.db = options.database;
     } else if (this.database) {
       params.db = this.database;
     }
@@ -227,7 +227,7 @@ export default class InfluxDatasource {
       data = null;
     }
 
-    var options: any = {
+    var req: any = {
       method: method,
       url:    currentUrl + url,
       params: params,
@@ -237,15 +237,15 @@ export default class InfluxDatasource {
       paramSerializer: this.serializeParams,
     };
 
-    options.headers = options.headers || {};
+    req.headers = req.headers || {};
     if (this.basicAuth || this.withCredentials) {
-      options.withCredentials = true;
+      req.withCredentials = true;
     }
     if (this.basicAuth) {
-      options.headers.Authorization = this.basicAuth;
+      req.headers.Authorization = this.basicAuth;
     }
 
-    return this.backendSrv.datasourceRequest(options).then(result => {
+    return this.backendSrv.datasourceRequest(req).then(result => {
       return result.data;
     }, function(err) {
       if (err.status !== 0 || err.status >= 300) {
