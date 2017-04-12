@@ -35,6 +35,13 @@ export class AnnotationsSrv {
 
       // combine the annotations and flatten results
       var annotations = _.flattenDeep([results[0], results[1]]);
+      // filter out annotations that do not belong to requesting panel
+      annotations = _.filter(annotations, item => {
+        if (item.panelId && options.panel.id !== item.panelId) {
+          return false;
+        }
+        return true;
+      });
 
       // look for alert state for this panel
       var alertState = _.find(results[2], {panelId: options.panel.id});

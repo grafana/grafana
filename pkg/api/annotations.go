@@ -39,6 +39,7 @@ func GetAnnotations(c *middleware.Context) Response {
 			Text:      item.Text,
 			Metric:    item.Metric,
 			Title:     item.Title,
+			PanelId:   item.PanelId,
 		})
 	}
 
@@ -55,6 +56,8 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 		Epoch:       cmd.Time / 1000,
 		Title:       cmd.Title,
 		Text:        cmd.Text,
+		CategoryId:  cmd.CategoryId,
+		Type:        annotations.EventType,
 	}
 
 	err := repo.Save(&item)

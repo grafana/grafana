@@ -19,6 +19,7 @@ type Annotation struct {
 type PostAnnotationsCmd struct {
 	DashboardId int64  `json:"dashboardId"`
 	PanelId     int64  `json:"panelId"`
+	CategoryId  int64  `json:"categoryId"`
 	Time        int64  `json:"time"`
 	Title       string `json:"title"`
 	Text        string `json:"text"`

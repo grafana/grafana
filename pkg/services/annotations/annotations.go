@@ -49,6 +49,7 @@ type ItemType string
 
 const (
 	AlertType ItemType = "alert"
+	EventType ItemType = "event"
 )
 
 type Item struct {
