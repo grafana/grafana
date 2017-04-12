@@ -8,13 +8,19 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q, $location, healthSrv, contextSrv, alertSrv) {
+  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q, $location, healthSrv, contextSrv, alertSrv, integrateSrv) {
 
     this.init = function($scope) {
 
       if (!$scope.panel.span) { $scope.panel.span = 12; }
 
+      $scope.menuItemShow = false;
+
       $scope.inspector = {};
+
+      $scope.showRightMenu = function() {
+        $scope.menuItemShow = !$scope.menuItemShow;
+      };
 
       $scope.editPanel = function() {
         $scope.toggleFullscreen(true);
@@ -197,6 +203,18 @@ function (angular, _, config) {
         $timeout(function() {
           $scope.get_data();
         }, 30);
+      }
+
+      $scope.toIntegrate = function() {
+        try{
+          if (_.isNull($scope.panel.targets[0].metric) || _.isNull($scope.panel.targets[0].tags.host)) {
+            return;
+          }
+          integrateSrv.format.targets = $scope.panel.targets;
+          $location.path("/integrate");
+        }catch(e){
+          $scope.appEvent('alert-warning', ['日志分析跳转失败', '可能缺少指标名/主机名']);
+        };
       }
     };
   });

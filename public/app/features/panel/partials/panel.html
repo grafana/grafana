@@ -1,4 +1,4 @@
-<div class="panel-container" ng-class="{'panel-transparent': panel.transparent}">
+<div class="panel-container" ng-class="{'panel-transparent': panel.transparent}" ng-mouseenter="showRightMenu();" ng-mouseleave="showRightMenu();">
 	<div class="panel-header">
 		<span class="alert-error panel-error small pointer" config-modal="app/partials/inspector.html" ng-if="panelMeta.error">
 			<span data-placement="top" bs-tooltip="panelMeta.error">
@@ -9,18 +9,6 @@
 		<span class="panel-loading" ng-show="panelMeta.loading">
 			<i class="fa fa-spinner fa-spin"></i>
 		</span>
-		<span class="alert-info panel-help small pointer"  ng-click="isShowInfo($event)" ng-if="helpInfo.info">
-			<span data-placement="top">
-				<i class="fa fa-question"></i><span class="panel-help-arrow"></span>
-			</span>
-		</span>
-
-		<div class="dropdown pull-right" style="z-index: 999;margin-right: 10px;" ng-class="{true:'active'}[helpInfo.info]" ng-if="associateMenu">
-			<a class="pointer" ng-click="hideTooltip($event)" data-placement="bottom" data-toggle="dropdown"><i class="fa fa-bars"></i></a>
-			<ul class="dropdown-menu">
-				<li><a class="pointer" ng-click="associateLink()">关联性分析</a></li>
-			</ul>
-		</div>
 
 		<div class="panel-title-container drag-handle" panel-menu></div>
 	</div>
@@ -62,4 +50,3 @@
 		</div>
 	</div>
 </div>
-
