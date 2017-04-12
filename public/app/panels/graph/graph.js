@@ -160,6 +160,9 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
 
             rightLabel.css("margin-top", rightLabel.width() / 2);
           }
+
+          integrateSrv.format.from = moment.utc(plot.getAxes().xaxis.min).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+          integrateSrv.format.to = moment.utc(plot.getAxes().xaxis.max).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
         }
 
         function processOffsetHook(plot, gridMargin) {
@@ -167,26 +170,6 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
           if (scope.panel.rightYAxisLabel) { gridMargin.right = 20; }
         }
 
-        function bindClickHook(plot, eventHolder) {
-          eventHolder.dblclick(function () {
-            //TODO host would be undefined
-            try {
-              if (_.isNull(scope.panel.targets[0].metric) || _.isNull(scope.panel.targets[0].tags.host)) {
-                throw Error;
-              }
-              integrateSrv.format.targets = scope.panel.targets;
-              integrateSrv.format.from = moment.utc(plot.getAxes().xaxis.min).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
-              integrateSrv.format.to = moment.utc(plot.getAxes().xaxis.max).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
-              scope.$apply(function () {
-                $location.path("/integrate");
-              });
-            } catch (err){
-              scope.$apply(function () {
-                scope.appEvent('alert-warning', ['日志分析跳转失败', '可能缺少指标名/主机名']);
-              });
-            }
-          });
-        }
         // Function for rendering panel
         function render_panel() {
           if (shouldAbortRender()) {
@@ -201,7 +184,6 @@ function (angular, $, kbn, moment, _, GraphTooltip) {
             hooks: {
               draw: [drawHook],
               processOffset: [processOffsetHook],
-              bindEvents: [bindClickHook],
             },
             legend: { show: false },
             series: {

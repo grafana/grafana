@@ -16,25 +16,29 @@ class PanelMeta {
     this.editorTabs = [];
     this.extendedMenu = [];
 
-    if (options.fullscreen) {
-      this.addMenuItem('查看', 'icon-eye-open', 'toggleFullscreen(false); dismiss();');
-    }
+    this.addMenuItem('放大', 'fa-plus', 'updateColumnSpan(1);', 'menuItemShow' , 'Editor');
+    this.addMenuItem('缩小', 'fa-minus', 'updateColumnSpan(-1);', 'menuItemShow', 'Editor');
+    this.addMenuItem('删除', 'fa-trash-o', 'removePanel(panel)', 'menuItemShow', 'Editor');
+    this.addMenuItem('信息', 'fa-question-circle', 'isShowInfo($event);', 'menuItemShow && helpInfo.info');
+    this.addMenuItem('关联性分析', 'fa-line-chart', 'associateLink();', 'associateMenu');
+    this.addMenuItem('编辑', 'fa-pencil', 'editPanel();', 'true', 'Editor');
+    this.addMenuItem('整合分析', 'fa-book', 'toIntegrate();', 'showMenu');
 
-    this.addMenuItem('编辑', 'icon-cog', 'editPanel(); dismiss();', 'Editor');
-    this.addMenuItem('复制', 'icon-copy', 'duplicatePanel()', 'Editor');
-    this.addMenuItem('分享', 'icon-share', 'sharePanel(); dismiss();');
-    this.addMenuItem('分析', 'icon-share', 'decompose();','Editor');
+    this.addExtendedMenuItem('复制', 'fa-files-o', 'duplicatePanel()', 'Editor');
+    if (options.fullscreen) {
+      this.addExtendedMenuItem('查看', 'icon-eye-open', 'toggleFullscreen(false);');
+    }
     this.addEditorTab('概要', 'app/partials/panelgeneral.html');
 
     if (options.metricsEditor) {
       this.addEditorTab('指标', 'app/partials/metrics.html');
     }
 
-    this.addExtendedMenuItem('查看JSON', '', 'editPanelJson(); dismiss();');
+    this.addExtendedMenuItem('查看JSON', '', 'editPanelJson();');
   }
 
-  addMenuItem (text, icon, click, role?) {
-    this.menu.push({text: text, icon: icon, click: click, role: role});
+  addMenuItem (text, icon, click, show, role?) {
+    this.menu.push({text: text, icon: icon, click: click, show: show, role: role});
   }
 
   addExtendedMenuItem (text, icon, click, role?) {
