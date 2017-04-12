@@ -7,7 +7,7 @@ define([
 function (angular, _, coreModule, config) {
   'use strict';
 
-  coreModule.service('backendSrv', function($http, alertSrv, $timeout,contextSrv) {
+  coreModule.service('backendSrv', function($http, alertSrv, $timeout,contextSrv, $q) {
     var self = this;
     this.alertDUrl;
     this.tokens = null;

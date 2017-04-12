@@ -9,7 +9,7 @@ define([
 function (angular, _, $, coreModule, config, store) {
   "use strict";
 
-  coreModule.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, backendSrv, $rootScope, $controller, contextSrv, $location) {
+  coreModule.controller('GrafanaCtrl', function($scope, alertSrv, utilSrv, backendSrv, $rootScope, $controller, contextSrv, $location, healthSrv) {
 
     $scope.init = function() {
       $scope.contextSrv = contextSrv;
