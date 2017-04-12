@@ -53,7 +53,7 @@ export class AnnotationsSrv {
     var panel = options.panel;
     var dashboard = options.dashboard;
 
-    if (panel && panel.alert) {
+    if (panel) {
       return this.backendSrv.get('/api/annotations', {
         from: options.range.from.valueOf(),
         to: options.range.to.valueOf(),
