@@ -24,7 +24,7 @@ func Upgrade() {
     upgradeSuccess = ((err == nil) && (upTo094 || upTo100))
   }
 
-  if (upgradeSuccess){
+  if (upgradeSuccess) {
     config.WriteVersionFile()
   }
 }

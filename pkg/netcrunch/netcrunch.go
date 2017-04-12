@@ -24,7 +24,8 @@ func Init() {
     if (config.ServerSettingsFileExist() && (!config.VersionFileExist())) {
       iLog := log.New("GrafCrunch initializer")
 
-      if (defaultDatasource.AddDefaultNetCrunchDatasource() && config.RemoveServerSettingsFile()) {
+      if (defaultDatasource.AddDefaultNetCrunchDatasource() && config.RemoveServerSettingsFile() &&
+          config.WriteVersionFile()) {
         iLog.Info("Default NetCrunch datasource has been initialized")
       } else {
         iLog.Info("Initialization error")
@@ -44,4 +45,3 @@ func initNetCrunchPlugin() {
     model.EnablePluginForOrgs(orgs, NETCRUNCH_APP_PLUGIN_ID_10)
   }
 }
-
