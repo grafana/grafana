@@ -84,7 +84,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         let thisPanelEvent = event.panel.id === ctrl.panel.id;
 
         // Select time for new annotation
-        if (ctrl.inAddAnnotationMode && thisPanelEvent) {
+        let createAnnotation = ctrl.inAddAnnotationMode || event.pos.ctrlKey || event.pos.metaKey;
+        if (createAnnotation && thisPanelEvent) {
           let timeRange = {
             from: event.pos.x,
             to: null
@@ -94,22 +95,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
           ctrl.inAddAnnotationMode = false;
         }
       }, scope);
-
-      // Add keybinding for Add Annotation mode
-      $(document).keydown(onCtrlKeyDown);
-      $(document).keyup(onCtrlKeyUp);
-
-      function onCtrlKeyDown(event) {
-        if (event.key === 'Control') {
-          ctrl.inAddAnnotationMode = true;
-        }
-      }
-
-      function onCtrlKeyUp(event) {
-        if (event.key === 'Control') {
-          ctrl.inAddAnnotationMode = false;
-        }
-      }
 
       function getLegendHeight(panelHeight) {
         if (!panel.legend.show || panel.legend.rightSide) {
@@ -671,8 +656,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
       }
 
       elem.bind("plotselected", function (event, ranges) {
-        if (ctrl.inAddAnnotationMode) {
-          // Select time range for new annotation
+        if (ctrl.inAddAnnotationMode || ranges.ctrlKey || ranges.metaKey) {
+          // Create new annotation from time range
           let timeRange = ranges.xaxis;
           ctrl.showAddAnnotationModal(timeRange);
           plot.clearSelection();
