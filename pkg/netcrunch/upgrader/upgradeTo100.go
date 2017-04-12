@@ -10,31 +10,19 @@ import (
 
 const DS_NETCRUNCH_10_0 = "adremsoft-netcrunch-datasource"
 
-func upgradeTo100(version string) (bool, error) {
+func upgradeTo100(version string, logger log.Logger) (bool) {
 
   if compare, err := config.CompareVersions(version, "10.0.0"); ((compare < 0) && (err == nil)) {
-    uLog := log.New("GrafCrunch upgrader")
-    orgs, orgsFound := model.GetOrgs()
-
-    if orgsFound {
-      changeNetCrunchDatasourceTypesForOrgs(orgs, uLog)
-    }
-    uLog.Info("Upgrade successful to 10.0")
-    return true, nil
+    model.ProcessOrgs(func (org *models.OrgDTO) {
+      model.ProcessDatasourcesForOrg(org, func(datasource *models.DataSource, org *models.OrgDTO) {
+        changeNetCrunchDatasourceType(datasource, org, logger)
+      })
+    })
+    logger.Info("Upgrade successful to 10.0")
+    return true
   }
 
-  return false, nil
-}
-
-func changeNetCrunchDatasourceTypesForOrgs(orgs []*models.OrgDTO, logger log.Logger) {
-  for orgsIndex := range orgs {
-    datasources, datasourcesFound := model.GetDatasourcesForOrg(orgs[orgsIndex].Id)
-    if datasourcesFound {
-      for datasourceIndex := range datasources {
-        changeNetCrunchDatasourceType(datasources[datasourceIndex], orgs[orgsIndex], logger)
-      }
-    }
-  }
+  return false
 }
 
 func changeNetCrunchDatasourceType(datasource *models.DataSource, org *models.OrgDTO, logger log.Logger) {
