@@ -176,7 +176,7 @@ function (angular, _, config) {
           var host = $scope.panel.targets[0].tags.host;
           var metric = $scope.panel.targets[0].metric;
           if(host && metric) {
-            var link = '/alerts/association/'+host+'/100/'+ $scope.systemsMap.Id+'.'+$scope.systemsMap.OrgId+'.'+metric;
+            var link = '/alerts/association/' + host + '/100/' + $scope.systemsMap.OrgId + '.' + $scope.systemsMap.Id + '.' + metric;
             $location.path(link);
           }
         }catch(err){
