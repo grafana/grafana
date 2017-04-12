@@ -10,6 +10,21 @@ import (
 
 const DS_NETCRUNCH_DEFAULT_TYPE = "adremsoft-netcrunch-datasource"
 
+func AddDefaultNetCrunchDatasource() (bool) {
+
+  if netCrunchServerSettings, err := config.ReadNetCrunchServerSettingsFile(); (err == nil) {
+    result := true
+    model.ProcessOrgs(func(org *models.OrgDTO) {
+      if (addDefaultNetCrunchDatasourceForOrg(netCrunchServerSettings, org.Id) == false) {
+        result = false;
+      }
+    })
+    return result
+  }
+
+  return false
+}
+
 func addDefaultNetCrunchDatasourceForOrg(netCrunchSettings config.NetCrunchServerSettings, orgId int64) bool {
   defaultDatasource := getDefaultNetCrunchDatasource(netCrunchSettings)
   return model.AddDataSource(defaultDatasource, orgId)
