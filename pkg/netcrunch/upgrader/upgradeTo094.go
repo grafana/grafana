@@ -11,38 +11,22 @@ import (
 
 const DS_NETCRUNCH_94 = "grafana-netcrunch-datasource"
 
-func upgradeTo094(version string) (bool, error) {
+func upgradeTo094(version string, logger log.Logger) (bool) {
 
   if compare, err := config.CompareVersions(version, "9.4.0"); ((compare < 0) && (err == nil)) {
-    uLog := log.New("GrafCrunch upgrader")
-    orgs, orgsFound := model.GetOrgs()
-
-    if orgsFound {
-      upgradeNetCrunchDatasourcesForOrgs(orgs, uLog)
-    }
-    uLog.Info("Upgrade successful to 9.4")
-    return true, nil
+    model.ProcessOrgs(func (org *models.OrgDTO) {
+      model.ProcessDatasourcesForOrg(org, func(datasource *models.DataSource, org *models.OrgDTO) {
+        if (strings.Compare(datasource.Type, DS_NETCRUNCH_90) == 0) {
+          model.UpdateDataSource(convertNetCrunchDatasource(datasource), org.Id)
+          logger.Info("Datasource " + datasource.Name + " for " + org.Name + " has been upgraded")
+        }
+      })
+    })
+    logger.Info("Upgrade successful to 9.4")
+    return true
   }
 
-  return false, nil
-}
-
-func upgradeNetCrunchDatasourcesForOrgs(orgs []*models.OrgDTO, logger log.Logger) {
-  for orgsIndex := range orgs {
-    datasources, datasourcesFound := model.GetDatasourcesForOrg(orgs[orgsIndex].Id)
-    if datasourcesFound {
-      for datasourceIndex := range datasources {
-        upgradeNetCrunchDatasource(datasources[datasourceIndex], orgs[orgsIndex], logger)
-      }
-    }
-  }
-}
-
-func upgradeNetCrunchDatasource(datasource *models.DataSource, org *models.OrgDTO, logger log.Logger) {
-  if (strings.Compare(datasource.Type, DS_NETCRUNCH_90) == 0) {
-    model.UpdateDataSource(convertNetCrunchDatasource(datasource), org.Id)
-    logger.Info("Datasource " + datasource.Name + " for " + org.Name + " has been upgraded")
-  }
+  return false
 }
 
 func convertNetCrunchDatasource(datasource *models.DataSource) *models.DataSource {

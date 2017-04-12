@@ -9,19 +9,16 @@ func Upgrade() {
   var(
     upgradeSuccess bool = false
     uLog = log.New("GrafCrunch upgrader")
-    upTo094 bool = false
-    upTo100 bool = false
   )
 
   if (config.UpgradeMarkerFileExist()) {
     upgradeSuccess = upgradeFrom090(uLog)
   } else if version, err := config.ReadVersionFile(); (err == nil) {
 
-    if upTo094, err = upgradeTo094(version, uLog); (err == nil) {
-      upTo100, err = upgradeTo100(version, uLog)
-    }
+    upTo094 := upgradeTo094(version, uLog)
+    upTo100 := upgradeTo100(version, uLog)
 
-    upgradeSuccess = ((err == nil) && (upTo094 || upTo100))
+    upgradeSuccess = (upTo094 || upTo100)
   }
 
   if (upgradeSuccess) {
