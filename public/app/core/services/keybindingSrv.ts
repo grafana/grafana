@@ -83,10 +83,6 @@ export class KeybindingSrv {
   }
 
   setupDashboardBindings(scope, dashboard) {
-    // this.bind('b', () => {
-    //   dashboard.toggleEditMode();
-    // });
-
     this.bind('mod+o', () => {
       dashboard.graphTooltip = (dashboard.graphTooltip + 1) % 3;
       appEvents.emit('graph-hover-clear');

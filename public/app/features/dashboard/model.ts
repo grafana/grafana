@@ -193,32 +193,22 @@ export class DashboardModel {
     });
   }
 
-  toggleEditMode() {
-    if (!this.meta.canEdit) {
-      console.log('Not allowed to edit dashboard');
-      return;
-    }
-
-    this.editMode = !this.editMode;
-    this.updateSubmenuVisibility();
-    this.events.emit('edit-mode-changed', this.editMode);
-  }
-
   setPanelFocus(id) {
     this.meta.focusPanelId = id;
   }
 
   updateSubmenuVisibility() {
-    if (this.editMode) {
-      this.meta.submenuEnabled = true;
-      return;
-    }
+    this.meta.submenuEnabled = (() => {
+      if (this.links.length > 0) { return true; }
 
-    var visibleVars = _.filter(this.templating.list, function(template) {
-      return template.hide !== 2;
-    });
+      var visibleVars = _.filter(this.templating.list, variable => variable.hide !== 2);
+      if (visibleVars.length > 0) { return true; }
 
-    this.meta.submenuEnabled = visibleVars.length > 0 || this.annotations.list.length > 0 || this.links.length > 0;
+      var visibleAnnotations = _.filter(this.annotations.list, annotation => annotation.hide !== true);
+      if (visibleAnnotations.length > 0) { return true; }
+
+      return false;
+    })();
   }
 
   getPanelInfoById(panelId) {

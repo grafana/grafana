@@ -3,9 +3,11 @@
 		<span class="gf-form-label width-14">Index name</span>
 		<input type="text" class="gf-form-input max-width-20" ng-model='ctrl.annotation.index' placeholder="events-*"></input>
 	</div>
-	<div class="gf-form">
-		<span class="gf-form-label width-14">Search query (lucene) <tip>Use [[filterName]] in query to replace part of the query with a filter value</tip></span>
-		<input type="text" class="gf-form-input max-width-20" ng-model='ctrl.annotation.query' placeholder="tags:deploy"></input>
+	<div class="gf-form-group">
+		<div class="gf-form">
+			<input type="text" class="gf-form-input" ng-model='ctrl.annotation.query'
+											placeholder="Elasticsearch lucene query"></input>
+		</div>
 	</div>
 </div>
 
