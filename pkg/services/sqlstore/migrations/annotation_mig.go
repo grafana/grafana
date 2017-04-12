@@ -54,4 +54,8 @@ func addAnnotationMig(mg *Migrator) {
 		{Name: "new_state", Type: DB_NVarchar, Length: 25, Nullable: false},
 		{Name: "data", Type: DB_Text, Nullable: false},
 	}))
+
+	mg.AddMigration("Add column region_id to annotation table", NewAddColumnMigration(table, &Column{
+		Name: "region_id", Type: DB_BigInt, Nullable: true, Default: "0",
+	}))
 }

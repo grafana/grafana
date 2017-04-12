@@ -12,6 +12,7 @@ type Annotation struct {
 	Title       string `json:"title"`
 	Text        string `json:"text"`
 	Metric      string `json:"metric"`
+	RegionId    int64  `json:"regionId"`
 
 	Data *simplejson.Json `json:"data"`
 }
@@ -23,6 +24,10 @@ type PostAnnotationsCmd struct {
 	Time        int64  `json:"time"`
 	Title       string `json:"title"`
 	Text        string `json:"text"`
+
+	FillColor string `json:"fillColor"`
+	IsRegion  bool   `json:"isRegion"`
+	EndTime   int64  `json:"endTime"`
 }
 
 type DeleteAnnotationsCmd struct {
