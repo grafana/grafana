@@ -4,6 +4,7 @@ import "github.com/grafana/grafana/pkg/components/simplejson"
 
 type Repository interface {
 	Save(item *Item) error
+	Update(item *Item) error
 	Find(query *ItemQuery) ([]*Item, error)
 	Delete(params *DeleteParams) error
 }
@@ -49,6 +50,7 @@ type ItemType string
 
 const (
 	AlertType ItemType = "alert"
+	EventType ItemType = "event"
 )
 
 type Item struct {
@@ -57,6 +59,7 @@ type Item struct {
 	DashboardId int64    `json:"dashboardId"`
 	PanelId     int64    `json:"panelId"`
 	CategoryId  int64    `json:"categoryId"`
+	RegionId    int64    `json:"regionId"`
 	Type        ItemType `json:"type"`
 	Title       string   `json:"title"`
 	Text        string   `json:"text"`

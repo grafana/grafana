@@ -61,7 +61,6 @@ export class AddAnnotationModalCtrl {
   }
 
   close() {
-    this.graphCtrl.inAddAnnotationMode = false;
     this.$scope.dismiss();
   }
 }

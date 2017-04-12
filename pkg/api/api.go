@@ -277,8 +277,10 @@ func (hs *HttpServer) registerRoutes() {
 		}, reqEditorRole)
 
 		r.Get("/annotations", wrap(GetAnnotations))
-		r.Post("/annotations", bind(dtos.PostAnnotationsCmd{}), wrap(PostAnnotation))
-		r.Post("/annotations/mass-delete", reqOrgAdmin, bind(dtos.DeleteAnnotationsCmd{}), wrap(DeleteAnnotations))
+
+		r.Group("/annotations", func() {
+			r.Post("/", bind(dtos.PostAnnotationsCmd{}), wrap(PostAnnotation))
+		}, reqEditorRole)
 
 		// error test
 		r.Get("/metrics/error", wrap(GenerateError))

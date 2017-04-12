@@ -24,7 +24,6 @@ class GraphCtrl extends MetricsPanelCtrl {
   dataList: any = [];
   annotations: any = [];
   alertState: any;
-  inAddAnnotationMode = false;
 
   annotationsPromise: any;
   dataWarning: any;
@@ -303,8 +302,8 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   enableAddAnnotationMode() {
-    // TODO: notify user about time selection mode
-    this.inAddAnnotationMode = true;
+    // placehoder for some other way to teach users
+    alert('selection region while holding down CTRL or CMD');
   }
 
   // Get annotation info from dialog and push it to backend
