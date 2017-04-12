@@ -8,13 +8,19 @@ function (angular, _, config) {
 
   var module = angular.module('grafana.services');
 
-  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q, $location, healthSrv, contextSrv, alertSrv) {
+  module.service('panelSrv', function($rootScope, $timeout, datasourceSrv, $q, $location, healthSrv, contextSrv, alertSrv, integrateSrv) {
 
     this.init = function($scope) {
 
       if (!$scope.panel.span) { $scope.panel.span = 12; }
 
+      $scope.menuItemShow = false;
+
       $scope.inspector = {};
+
+      $scope.showRightMenu = function() {
+        $scope.menuItemShow = !$scope.menuItemShow;
+      };
 
       $scope.editPanel = function() {
         $scope.toggleFullscreen(true);
@@ -133,20 +139,18 @@ function (angular, _, config) {
         delete $scope.panelMeta.error;
         $scope.panelMeta.loading = true;
         $scope.panelMeta.info = false;
-
-        healthSrv.transformMetricType($scope.dashboard).then(function () {
-          $scope.getCurrentDatasource().then(function (datasource) {
-            $scope.datasource = datasource;
-            return $scope.refreshData($scope.datasource) || $q.when({});
-          }).then(function () {
-            $scope.panelMeta.loading = false;
-            $scope.titleInit($scope.panel);
-          }, function (err) {
-            console.log('Panel data error:', err);
-            $scope.panelMeta.loading = false;
-            $scope.panelMeta.error = err.message || "Timeseries data request error";
-            $scope.inspector.error = err;
-          });
+        $scope.getCurrentDatasource().then(function (datasource) {
+          $scope.datasource = datasource;
+          return $scope.refreshData($scope.datasource) || $q.when({});
+        }).then(function () {
+          $scope.panelMeta.loading = false;
+          $scope.titleInit($scope.panel);
+        }, function (err) {
+          console.log('Panel data error:', err);
+          $scope.panelMeta.loading = false;
+          $scope.panelMeta.loading = false;
+          $scope.panelMeta.error = err.message || "Timeseries data request error";
+          $scope.inspector.error = err;
         });
       };
 
@@ -178,7 +182,7 @@ function (angular, _, config) {
         }catch(err){
           var reg = /\'(.*?)\'/g;
           var msg = "图表中缺少"+err.toString().match(reg)[0]+"配置";
-          alertSrv.set("参数缺失", msg, "warning", 4000);
+          $scope.appEvent('alert-warning', ['参数缺失', msg]);
         }
       };
 
@@ -197,6 +201,18 @@ function (angular, _, config) {
         $timeout(function() {
           $scope.get_data();
         }, 30);
+      }
+
+      $scope.toIntegrate = function() {
+        try{
+          if (_.isNull($scope.panel.targets[0].metric) || _.isNull($scope.panel.targets[0].tags.host)) {
+            return;
+          }
+          integrateSrv.format.targets = $scope.panel.targets;
+          $location.path("/integrate");
+        }catch(e){
+          $scope.appEvent('alert-warning', ['日志分析跳转失败', '可能缺少指标名/主机名']);
+        };
       }
     };
   });

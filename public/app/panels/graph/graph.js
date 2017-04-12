@@ -11,7 +11,7 @@ define([
   'jquery.flot.time',
   'jquery.flot.stack',
   'jquery.flot.stackpercent',
-  'jquery.flot.fillbelow',
+  'jquery.flot.fillbetween',
   'jquery.flot.crosshair'
 ],
 function (angular, $, moment, _, kbn, GraphTooltip) {
@@ -160,6 +160,9 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
 
             rightLabel.css("margin-top", rightLabel.width() / 2);
           }
+
+          integrateSrv.format.from = moment.utc(plot.getAxes().xaxis.min).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+          integrateSrv.format.to = moment.utc(plot.getAxes().xaxis.max).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
         }
 
         function processOffsetHook(plot, gridMargin) {
@@ -167,20 +170,6 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
           if (scope.panel.rightYAxisLabel) { gridMargin.right = 20; }
         }
 
-        function bindClickHook(plot, eventHolder) {
-          eventHolder.dblclick(function () {
-            //TODO host would be undefined
-            if (_.isNull(scope.panel.targets[0].metric) || _.isNull(scope.panel.targets[0].tags.host)) {
-              return;
-            }
-            integrateSrv.format.targets = scope.panel.targets;
-            integrateSrv.format.from = moment.utc(plot.getAxes().xaxis.min).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
-            integrateSrv.format.to = moment.utc(plot.getAxes().xaxis.max).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
-            scope.$apply(function () {
-              $location.path("/integrate");
-            });
-          });
-        }
         // Function for rendering panel
         function render_panel() {
           if (shouldAbortRender()) {
@@ -195,7 +184,6 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             hooks: {
               draw: [drawHook],
               processOffset: [processOffsetHook],
-              bindEvents: [bindClickHook],
             },
             legend: { show: false },
             series: {

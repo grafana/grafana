@@ -32,6 +32,7 @@ require.config({
     'jquery.flot.time':        'vendor/flot/jquery.flot.time',
     'jquery.flot.crosshair':   'vendor/flot/jquery.flot.crosshair',
     'jquery.flot.fillbelow':   'vendor/flot/jquery.flot.fillbelow',
+    'jquery.flot.fillbetween': 'vendor/flot/jquery.flot.fillbetween',
 
     modernizr:                 'vendor/modernizr-2.6.1',
 
@@ -76,6 +77,7 @@ require.config({
     'jquery.flot.time':     ['jquery', 'jquery.flot'],
     'jquery.flot.crosshair':['jquery', 'jquery.flot'],
     'jquery.flot.fillbelow':['jquery', 'jquery.flot'],
+    'jquery.flot.fillbetween':['jquery', 'jquery.flot'],
     'angular-dragdrop':     ['jquery', 'angular'],
     'angular-mocks':        ['angular'],
     'angular-sanitize':     ['angular'],

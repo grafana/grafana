@@ -33,16 +33,18 @@
 .panel-title-container {
   min-height: 5px;
   padding-top: 4px;
-  cursor: pointer;
+  cursor: auto;
+  width: 100%;
 }
 
 .panel-title {
   border: 0px;
   font-weight: bold;
   position: relative;
-  cursor: pointer;
-  width: 100%;
+  cursor: auto;
+  width: 70%;
   display: block;
+  margin: 0 auto;
 }
 
 .panel-links-btn {
@@ -224,7 +226,7 @@
     font-size: 16px;
     line-height: 30px;
 
-    z-index: 999;
+    z-index: 99;
 
     padding: 0 10%;
     .box-sizing(border-box);
@@ -263,4 +265,13 @@
   .span3 {
     width: 30%;
   }
+}
+
+.panel-right-menu {
+  margin-top: -20px;
+  margin-right: 11px;
+}
+.panel-right-menu-item {
+  margin-right: 5px;
+  cursor: pointer;
 }

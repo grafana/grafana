@@ -13,7 +13,6 @@ function (angular, _, coreModule) {
       var metricsType = "/metrictype";
       this.anomalyMetricsData = [];
       var _this = this;
-      var dashboardId = -1;
       this.load = function () {
         return backendSrv.alertD({
           method: "get",
@@ -25,12 +24,13 @@ function (angular, _, coreModule) {
         });
       };
 
-      this.exclude = function (metricName) {
+      this.exclude = function (metricName, host) {
         return backendSrv.alertD({
           method: "post",
           url: excludeAnomaly,
           params: {
-            metric: metricName
+            metric: metricName,
+            host: host
           }
         });
       };
@@ -46,12 +46,13 @@ function (angular, _, coreModule) {
         return metricHostClusters;
       };
 
-      this.include = function (metricName) {
+      this.include = function (metricName, host) {
         return backendSrv.alertD({
           method: "post",
           url: includeAnomaly,
           params: {
-            metric: metricName
+            metric: metricName,
+            host: host
           }
         });
       };
@@ -85,8 +86,8 @@ function (angular, _, coreModule) {
       this.transformMetricType = function (dashboard) {
         var targets = {};
         var metricsTypeQueries = [];
-        _.forEach(["/association", "/anomaly"], function (subString) {
-          if ($location.path().indexOf(subString) >= 0 && dashboardId != dashboard.id) {
+        _.forEach(["/association", "/anomaly"], function (uri) {
+          if ($location.path().indexOf(uri) > -1) {
             _.forEach(dashboard.rows, function (row) {
               _.forEach(row.panels, function (panel) {
                 _.forEach(panel.targets, function (target) {
@@ -96,7 +97,11 @@ function (angular, _, coreModule) {
                 });
               });
             });
-            var q = _this.getMetricsType(Object.keys(targets)).then(function (response) {
+
+            if(!Object.keys(targets).length) {
+              return;
+            }
+            var q = _this.getMetricsType(Object.keys(targets)).then(function onSuccess(response) {
               var types = response.data;
               _.each(Object.keys(targets), function (key) {
                 if (types[key] == "counter") {
@@ -109,7 +114,6 @@ function (angular, _, coreModule) {
               });
             });
             metricsTypeQueries.push(q);
-            dashboardId = dashboard.id;
           }
         });
         return $q.all(metricsTypeQueries);
