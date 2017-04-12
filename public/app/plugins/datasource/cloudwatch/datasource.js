@@ -288,10 +288,8 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
         var ebsTargetAttributeName = templateSrv.replace(ebsVolumeAttributeQuery[2]);
 
         return this.performEBSDescribeVolumes(region, ebsFilters, null).then(function(result) {
-          console.log(result);
           var attributes = _.chain(result.Volumes)
           .map(function(reservations) {
-            console.log(reservations);
             return _.map(reservations.Attachments, ebsTargetAttributeName);
           })
           .flatten().uniq().sortBy().value();
