@@ -514,8 +514,8 @@ func handleDescribeVolumes(req *cwRequest, c *middleware.Context) {
 
 	reqParam := &struct {
 		Parameters struct {
-			Filters     []*ec2.Filter `json:"filters"`
-			VolumeIds   []*string     `json:"volumeIds"`
+			Filters   []*ec2.Filter `json:"filters"`
+			VolumeIds []*string     `json:"volumeIds"`
 		} `json:"parameters"`
 	}{}
 	json.Unmarshal(req.Body, reqParam)
