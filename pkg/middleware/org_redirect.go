@@ -1,11 +1,13 @@
 package middleware
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/setting"
 
 	"gopkg.in/macaron.v1"
 )
@@ -39,6 +41,7 @@ func OrgRedirect() macaron.Handler {
 			return
 		}
 
-		c.Redirect(c.Req.URL.String(), 302)
+		newUrl := setting.ToAbsUrl(fmt.Sprintf("%s?%s", c.Req.URL.Path, c.Req.URL.Query().Encode()))
+		c.Redirect(newUrl, 302)
 	}
 }
