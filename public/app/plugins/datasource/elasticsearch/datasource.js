@@ -22,6 +22,9 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       this.withCredentials = datasource.withCredentials;
       this.url = datasource.url;
       this.name = datasource.name;
+      var tokenTemplate ={};
+      tokenTemplate['_token'] = {value: backendSrv.getToken()};
+      datasource.index = templateSrv.replace(datasource.index, tokenTemplate);
       this.index = datasource.index;
       this.timeField = datasource.jsonData.timeField;
       this.esVersion = datasource.jsonData.esVersion;
