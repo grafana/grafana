@@ -140,6 +140,10 @@ type DeleteDashboardCommand struct {
 	OrgId int64
 }
 
+type UpdateDashboardCommand struct {
+	Dashboard *Dashboard
+}
+
 //
 // QUERIES
 //

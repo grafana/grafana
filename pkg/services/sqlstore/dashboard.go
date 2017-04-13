@@ -16,6 +16,7 @@ func init() {
 	bus.AddHandler("sql", GetDashboard)
 	bus.AddHandler("sql", GetDashboards)
 	bus.AddHandler("sql", DeleteDashboard)
+	bus.AddHandler("sql", UpdateDashboard)
 	bus.AddHandler("sql", SearchDashboards)
 	bus.AddHandler("sql", GetAllDashboards)
 	bus.AddHandler("sql", GetDashboardTags)
@@ -250,6 +251,14 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 
 		return nil
 	})
+}
+
+func UpdateDashboard(cmd *m.UpdateDashboardCommand) error {
+  return inTransaction(func(sess *xorm.Session) error {
+    dashboard := cmd.Dashboard
+    _, err := sess.Id(dashboard.Id).Update(dashboard)
+    return err
+  })
 }
 
 func GetAllDashboards(query *m.GetAllDashboardsQuery) error {
