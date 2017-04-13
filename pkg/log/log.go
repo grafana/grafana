@@ -34,7 +34,7 @@ func New(logger string, ctx ...interface{}) Logger {
 func Trace(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
-		message = fmt.Sprintf(format, v)
+		message = fmt.Sprintf(format, v...)
 	} else {
 		message = format
 	}
@@ -45,7 +45,7 @@ func Trace(format string, v ...interface{}) {
 func Debug(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
-		message = fmt.Sprintf(format, v)
+		message = fmt.Sprintf(format, v...)
 	} else {
 		message = format
 	}
@@ -60,7 +60,7 @@ func Debug2(message string, v ...interface{}) {
 func Info(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
-		message = fmt.Sprintf(format, v)
+		message = fmt.Sprintf(format, v...)
 	} else {
 		message = format
 	}
@@ -75,7 +75,7 @@ func Info2(message string, v ...interface{}) {
 func Warn(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
-		message = fmt.Sprintf(format, v)
+		message = fmt.Sprintf(format, v...)
 	} else {
 		message = format
 	}
@@ -88,7 +88,7 @@ func Warn2(message string, v ...interface{}) {
 }
 
 func Error(skip int, format string, v ...interface{}) {
-	Root.Error(fmt.Sprintf(format, v))
+	Root.Error(fmt.Sprintf(format, v...))
 }
 
 func Error2(message string, v ...interface{}) {
@@ -96,7 +96,7 @@ func Error2(message string, v ...interface{}) {
 }
 
 func Critical(skip int, format string, v ...interface{}) {
-	Root.Crit(fmt.Sprintf(format, v))
+	Root.Crit(fmt.Sprintf(format, v...))
 }
 
 func Fatal(skip int, format string, v ...interface{}) {
