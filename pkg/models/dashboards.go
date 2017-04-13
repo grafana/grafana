@@ -144,6 +144,11 @@ type DeleteDashboardCommand struct {
 // QUERIES
 //
 
+type GetAllDashboardsQuery struct {
+
+	Result       []*Dashboard
+}
+
 type GetDashboardQuery struct {
 	Slug  string
 	OrgId int64
