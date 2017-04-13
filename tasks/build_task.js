@@ -65,7 +65,7 @@ module.exports = function(grunt) {
     });
     grunt.config('copy.netcrunch_plugin', {
       expand: true,
-      src: ['data/plugins/grafana-netcrunch/**/*'],
+      src: ['data/plugins/adremsoft-netcrunch-app/**/*'],
       options: { mode: true},
       dest: '<%= tempDir %>'
     });
