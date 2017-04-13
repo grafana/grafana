@@ -98,6 +98,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       function showAddAnnotationView(timeRange) {
         popoverSrv.show({
           element: elem[0],
+          classNames: 'drop-popover drop-popover--form',
           position: 'bottom center',
           openOn: 'click',
           template: '<event-editor panelCtrl="ctrl" timeRange="timeRange"></event-editor>',
@@ -672,7 +673,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           // Create new annotation from time range
           let timeRange = ranges.xaxis;
           showAddAnnotationView(timeRange);
-          plot.clearSelection();
+          //plot.clearSelection();
         } else {
           scope.$apply(function() {
             timeSrv.setTime({

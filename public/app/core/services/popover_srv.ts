@@ -10,8 +10,13 @@ import Drop from 'tether-drop';
 function popoverSrv($compile, $rootScope) {
 
   this.show = function(options) {
+    var classNames = 'drop-popover';
     var popoverScope = _.extend($rootScope.$new(true), options.model);
     var drop;
+
+    if (options.classNames) {
+      classNames = options.classNames;
+    }
 
     function destroyDrop() {
       setTimeout(function() {
@@ -35,11 +40,11 @@ function popoverSrv($compile, $rootScope) {
       target: options.element,
       content: contentElement,
       position: options.position,
-      classes: 'drop-popover',
+      classes: classNames,
       openOn: options.openOn || 'hover',
       hoverCloseDelay: 200,
       tetherOptions: {
-        constraints: [{to: 'window', pin: true, attachment: "both"}]
+        constraints: [{to: 'scrollParent', attachment: "none both"}]
       }
     });
 
