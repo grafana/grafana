@@ -15,7 +15,7 @@
       word-wrap: break-word;
       max-width: 20rem;
       border: 1px solid $border-color;
-      box-shadow: 0 0 10px #f86e06;
+      box-shadow: 0 0 15px #5d3000;
 
       &:before {
         content: "";
@@ -158,7 +158,7 @@
       &:before {
         top: 100%;
         left: $popover-arrow-size;
-        border-top-color: $theme-bg;
+        border-top-color: $border-color;
       }
     }
 
