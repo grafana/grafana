@@ -14,6 +14,16 @@ func getDashboards() ([]*models.Dashboard, bool) {
   return query.Result, (err == nil)
 }
 
+func UpdateDashboard(dashboard *models.Dashboard) (bool) {
+
+  updateCommand := models.UpdateDashboardCommand {
+    Dashboard: dashboard,
+  }
+
+  err := bus.Dispatch(&updateCommand)
+  return (err == nil)
+}
+
 func ProcessDashboards(dashboardProcessor DashboardProcessor) {
   dashboards, dashboardsFound := getDashboards()
   if dashboardsFound {
