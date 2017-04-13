@@ -33,7 +33,14 @@ func getApiKey(c *Context) string {
 		return key
 	}
 
-	return ""
+	api_key := c.Query("api_key")
+	if api_key != "" {
+		return api_key
+	}
+
+	api_key_persist := c.GetCookie("grafana_persist_api_key")
+
+	return api_key_persist
 }
 
 func accessForbidden(c *Context) {
