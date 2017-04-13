@@ -20,6 +20,7 @@ import (
 	cwapi "github.com/grafana/grafana/pkg/api/cloudwatch"
 	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/metrics"
 )
 
 type CloudWatchExecutor struct {
@@ -169,6 +170,7 @@ func (e *CloudWatchExecutor) executeQuery(ctx context.Context, model *tsdb.Query
 	if err != nil {
 		return nil, err
 	}
+	metrics.M_Aws_CloudWatch_GetMetricStatistics.Inc(1)
 
 	queryRes, err := parseResponse(resp, query)
 	if err != nil {
