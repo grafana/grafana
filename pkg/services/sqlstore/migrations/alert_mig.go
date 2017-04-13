@@ -82,18 +82,4 @@ func addAlertMigrations(mg *Migrator) {
 		{Name: "type", Type: DB_NVarchar, Length: 255, Nullable: false},
 		{Name: "settings", Type: DB_Text, Nullable: false},
 	}))
-	active_node := Table{
-		Name: "active_node",
-		Columns: []*Column{
-			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
-			{Name: "node_id", Type: DB_NVarchar, Length: 255, Nullable: false},
-			{Name: "heartbeat", Type: DB_TimeStampz, Nullable: false},
-			{Name: "sequence", Type: DB_Int, Nullable: false},
-		},
-		Indices: []*Index{
-			{Cols: []string{"node_id", "heartbeat"}, Type: UniqueIndex},
-		},
-	}
-	mg.AddMigration("create active_node table v1", NewAddTableMigration(active_node))
-	mg.AddMigration("add unique index active_node", NewAddIndexMigration(active_node, active_node.Indices[0]))
 }
