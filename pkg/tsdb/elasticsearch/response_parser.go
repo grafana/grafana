@@ -54,7 +54,10 @@ func parseSubQueryResults(parentAggregationKey string, bucketlist BucketList, pr
 			case float64:
 				if key == "key" {
 					valueRow[1] = parseValue(value.(float64))
-				}
+				} else if key == "doc_count" {
+					metricKey = key
+					valueRow[0] = parseValue(value.(float64))
+ 				}
 			case map[string]interface{}:
 				valueMap := value.(map[string]interface{})
 				if valueMap["value"] != nil {
