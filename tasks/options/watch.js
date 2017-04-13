@@ -58,13 +58,6 @@ module.exports = function(config, grunt) {
           newPath = filepath.replace(/^public/, 'public_gen');
           grunt.log.writeln('Copying to ' + newPath);
           grunt.file.copy(filepath, newPath);
-
-          // copy ts file also used by source maps
-          //changes changed file source to that of the changed file
-          grunt.config('typescript.build.src', filepath);
-          grunt.config('tslint.source.files.src', filepath);
-
-          grunt.task.run('exec:tscompile');
           grunt.task.run('exec:tslint');
         }
 

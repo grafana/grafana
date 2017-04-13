@@ -193,8 +193,17 @@ export default class InfluxDatasource {
   }
 
   testDatasource() {
-    return this.metricFindQuery('SHOW MEASUREMENTS LIMIT 1').then(() => {
+    return this.metricFindQuery('SHOW DATABASES').then(res => {
+      let found = _.find(res, {text: this.database});
+      if (!found) {
+        return { status: "error", message: "Could not find the specified database name.", title: "DB Not found" };
+      }
       return { status: "success", message: "Data source is working", title: "Success" };
+    }).catch(err => {
+      if (err.data && err.message) {
+        return { status: "error", message: err.data.message, title: "InfluxDB Error" };
+      }
+      return { status: "error", message: err.toString(), title: "InfluxDB Error" };
     });
   }
 

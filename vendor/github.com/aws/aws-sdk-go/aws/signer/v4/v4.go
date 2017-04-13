@@ -42,6 +42,14 @@
 // the URL.Opaque or URL.RawPath. The SDK will use URL.Opaque first and then
 // call URL.EscapedPath() if Opaque is not set.
 //
+// If signing a request intended for HTTP2 server, and you're using Go 1.6.2
+// through 1.7.4 you should use the URL.RawPath as the pre-escaped form of the
+// request URL. https://github.com/golang/go/issues/16847 points to a bug in
+// Go pre 1.8 that failes to make HTTP2 requests using absolute URL in the HTTP
+// message. URL.Opaque generally will force Go to make requests with absolute URL.
+// URL.RawPath does not do this, but RawPath must be a valid escaping of Path
+// or url.EscapedPath will ignore the RawPath escaping.
+//
 // Test `TestStandaloneSign` provides a complete example of using the signer
 // outside of the SDK and pre-escaping the URI path.
 package v4
@@ -79,8 +87,9 @@ const (
 var ignoredHeaders = rules{
 	blacklist{
 		mapRule{
-			"Authorization": struct{}{},
-			"User-Agent":    struct{}{},
+			"Authorization":   struct{}{},
+			"User-Agent":      struct{}{},
+			"X-Amzn-Trace-Id": struct{}{},
 		},
 	},
 }
@@ -171,10 +180,24 @@ type Signer struct {
 	// http://docs.aws.amazon.com/general/latest/gr/sigv4-create-canonical-request.html
 	DisableURIPathEscaping bool
 
+	// Disales the automatical setting of the HTTP request's Body field with the
+	// io.ReadSeeker passed in to the signer. This is useful if you're using a
+	// custom wrapper around the body for the io.ReadSeeker and want to preserve
+	// the Body value on the Request.Body.
+	//
+	// This does run the risk of signing a request with a body that will not be
+	// sent in the request. Need to ensure that the underlying data of the Body
+	// values are the same.
+	DisableRequestBodyOverwrite bool
+
 	// currentTimeFn returns the time value which represents the current time.
 	// This value should only be used for testing. If it is nil the default
 	// time.Now will be used.
 	currentTimeFn func() time.Time
+
+	// UnsignedPayload will prevent signing of the payload. This will only
+	// work for services that have support for this.
+	UnsignedPayload bool
 }
 
 // NewSigner returns a Signer pointer configured with the credentials and optional
@@ -208,6 +231,7 @@ type signingCtx struct {
 	isPresign          bool
 	formattedTime      string
 	formattedShortTime string
+	unsignedPayload    bool
 
 	bodyDigest       string
 	signedHeaders    string
@@ -298,6 +322,7 @@ func (v4 Signer) signWithBody(r *http.Request, body io.ReadSeeker, service, regi
 		ServiceName:            service,
 		Region:                 region,
 		DisableURIPathEscaping: v4.DisableURIPathEscaping,
+		unsignedPayload:        v4.UnsignedPayload,
 	}
 
 	for key := range ctx.Query {
@@ -321,7 +346,7 @@ func (v4 Signer) signWithBody(r *http.Request, body io.ReadSeeker, service, regi
 	// If the request is not presigned the body should be attached to it. This
 	// prevents the confusion of wanting to send a signed request without
 	// the body the request was signed for attached.
-	if !ctx.isPresign {
+	if !(v4.DisableRequestBodyOverwrite || ctx.isPresign) {
 		var reader io.ReadCloser
 		if body != nil {
 			var ok bool
@@ -390,7 +415,18 @@ var SignRequestHandler = request.NamedHandler{
 func SignSDKRequest(req *request.Request) {
 	signSDKRequestWithCurrTime(req, time.Now)
 }
-func signSDKRequestWithCurrTime(req *request.Request, curTimeFn func() time.Time) {
+
+// BuildNamedHandler will build a generic handler for signing.
+func BuildNamedHandler(name string, opts ...func(*Signer)) request.NamedHandler {
+	return request.NamedHandler{
+		Name: name,
+		Fn: func(req *request.Request) {
+			signSDKRequestWithCurrTime(req, time.Now, opts...)
+		},
+	}
+}
+
+func signSDKRequestWithCurrTime(req *request.Request, curTimeFn func() time.Time, opts ...func(*Signer)) {
 	// If the request does not need to be signed ignore the signing of the
 	// request if the AnonymousCredentials object is used.
 	if req.Config.Credentials == credentials.AnonymousCredentials {
@@ -416,7 +452,15 @@ func signSDKRequestWithCurrTime(req *request.Request, curTimeFn func() time.Time
 			// S3 service should not have any escaping applied
 			v4.DisableURIPathEscaping = true
 		}
+		// Prevents setting the HTTPRequest's Body. Since the Body could be
+		// wrapped in a custom io.Closer that we do not want to be stompped
+		// on top of by the signer.
+		v4.DisableRequestBodyOverwrite = true
 	})
+
+	for _, opt := range opts {
+		opt(v4)
+	}
 
 	signingTime := req.Time
 	if !req.LastSignedAt.IsZero() {
@@ -611,14 +655,14 @@ func (ctx *signingCtx) buildSignature() {
 func (ctx *signingCtx) buildBodyDigest() {
 	hash := ctx.Request.Header.Get("X-Amz-Content-Sha256")
 	if hash == "" {
-		if ctx.isPresign && ctx.ServiceName == "s3" {
+		if ctx.unsignedPayload || (ctx.isPresign && ctx.ServiceName == "s3") {
 			hash = "UNSIGNED-PAYLOAD"
 		} else if ctx.Body == nil {
 			hash = emptyStringSHA256
 		} else {
 			hash = hex.EncodeToString(makeSha256Reader(ctx.Body))
 		}
-		if ctx.ServiceName == "s3" || ctx.ServiceName == "glacier" {
+		if ctx.unsignedPayload || ctx.ServiceName == "s3" || ctx.ServiceName == "glacier" {
 			ctx.Request.Header.Set("X-Amz-Content-Sha256", hash)
 		}
 	}

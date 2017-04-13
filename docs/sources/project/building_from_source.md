@@ -13,8 +13,8 @@ dev environment. Grafana ships with its own required backend server; also comple
 
 ## Dependencies
 
-- [Go 1.8](https://golang.org/dl/)
-- [NodeJS](https://nodejs.org/download/)
+- [Go 1.8.1](https://golang.org/dl/)
+- [NodeJS LTS](https://nodejs.org/download/)
 
 ## Get Code
 Create a directory for the project and set your path accordingly. Then download and install Grafana into your $GOPATH directory
