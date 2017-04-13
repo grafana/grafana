@@ -1,0 +1,49 @@
+.nc-no-wrap-text, .nc-default-tile, .nc-node-tile .nc-node-description .nc-node-name, .nc-node-tile .nc-node-description .nc-node-address {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden; }
+
+.nc-query-editor-row .dropdown-toggle {
+  margin-bottom: -2px; }
+
+.nc-query-editor-row .gf-form-input {
+  font-size: 0.875rem; }
+
+.nc-reset-segment {
+  padding: 0; }
+
+.nc-default-tile {
+  display: flex;
+  flex-flow: column;
+  align-content: center;
+  align-items: center;
+  justify-content: center;
+  font-weight: lighter;
+  height: 2.5rem;
+  padding-left: 1.0rem;
+  padding-right: 1.0rem; }
+
+.nc-node-tile {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  align-items: center;
+  align-content: center;
+  padding: 0.25rem 1.65rem 0.25rem 1.0rem; }
+  .nc-node-tile .nc-node-icon {
+    align-self: center;
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    height: 2rem; }
+  .nc-node-tile .nc-node-description {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    align-items: flex-start;
+    align-content: center;
+    font-size: 0.75rem;
+    line-height: 1.4; }
+    .nc-node-tile .nc-node-description .nc-node-address {
+      opacity: 0.5; }
