@@ -92,11 +92,11 @@ func addAlertMigrations(mg *Migrator) {
 			{Name: "alertRunType", Type: DB_Varchar, Length: 50, Nullable: false},
 		},
 		Indices: []*Index{
-			{Cols: []string{"node_id"}},
+			{Cols: []string{"node_id", "heartbeat"}, Type: UniqueIndex},
 			{Cols: []string{"heartbeat", "sequence", "alertRunType"}, Type: UniqueIndex},
 		},
 	}
 	mg.AddMigration("create active_node table", NewAddTableMigration(active_node))
-	mg.AddMigration("add index active_node.node_id", NewAddIndexMigration(active_node, active_node.Indices[0]))
+	mg.AddMigration("add index active_node.node_id_heartbeat", NewAddIndexMigration(active_node, active_node.Indices[0]))
 	mg.AddMigration("add unique index active_node.seq_heartbeat_alertRunType", NewAddIndexMigration(active_node, active_node.Indices[1]))
 }
