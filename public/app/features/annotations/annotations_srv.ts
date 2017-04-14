@@ -38,7 +38,6 @@ export class AnnotationsSrv {
 
       // filter out annotations that do not belong to requesting panel
       annotations = _.filter(annotations, item => {
-        console.log(item);
         // shownIn === 1 requires annotation matching panel id
         if (item.source.showIn === 1) {
           if (item.panelId && options.panel.id === item.panelId) {

@@ -1,9 +1,12 @@
 
 import {AnnotationsSrv} from './annotations_srv';
-import {eventEditor, EventManager} from './event_editor';
+import {eventEditor} from './event_editor';
+import {EventManager} from './event_manager';
+import {AnnotationEvent} from './event';
 
 export {
   AnnotationsSrv,
   eventEditor,
-  EventManager
+  EventManager,
+  AnnotationEvent,
 };

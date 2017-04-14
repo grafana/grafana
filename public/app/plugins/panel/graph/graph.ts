@@ -331,7 +331,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         }
 
         thresholdManager.addPlotOptions(options, panel);
-        addAnnotationEvents(options);
+        eventManager.addPlotEvents(annotations, options);
         configureAxisOptions(data, options);
 
         sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
@@ -460,75 +460,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           max: ticks.length + 1,
           label: "Datetime",
           ticks: ticks
-        };
-      }
-
-      function hasAnnotationEvents() {
-        return eventManager.event || annotations.length > 0 ;
-      }
-
-      function addAnnotationEvents(options) {
-        if (!hasAnnotationEvents()) {
-          return;
-        }
-
-        var types = {};
-        types['$__alerting'] = {
-          color: 'rgba(237, 46, 24, 1)',
-          position: 'BOTTOM',
-          markerSize: 5,
-        };
-
-        types['$__ok'] = {
-          color: 'rgba(11, 237, 50, 1)',
-          position: 'BOTTOM',
-          markerSize: 5,
-        };
-
-        types['$__no_data'] = {
-          color: 'rgba(150, 150, 150, 1)',
-          position: 'BOTTOM',
-          markerSize: 5,
-        };
-
-        types['$__execution_error'] = ['$__no_data'];
-
-        var annotationsToShow;
-        // adding/edditing event, only show that one
-        if (eventManager.event) {
-          const event = eventManager.event;
-          annotationsToShow = [
-            {
-              min: event.time.valueOf(),
-              title: event.title,
-              description: event.text,
-              eventType: '$__alerting',
-            }
-          ];
-        } else {
-          // annotations from query
-          for (var i = 0; i < annotations.length; i++) {
-            var item = annotations[i];
-            if (item.newState) {
-              item.eventType = '$__' + item.newState;
-              continue;
-            }
-
-            if (!types[item.source.name]) {
-              types[item.source.name] = {
-                color: item.source.iconColor,
-                position: 'BOTTOM',
-                markerSize: 5,
-              };
-            }
-          }
-          annotationsToShow = annotations;
-        }
-
-        options.events = {
-          levels: _.keys(types).length + 1,
-          data: annotationsToShow,
-          types: types,
         };
       }
 
