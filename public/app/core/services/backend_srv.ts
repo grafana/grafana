@@ -66,16 +66,14 @@ export class BackendSrv {
     var requestIsLocal = !options.url.match(/^http/);
     var firstAttempt = options.retry === 0;
 
-
     if (requestIsLocal) {
       if (this.contextSrv.user && this.contextSrv.user.orgId) {
         options.headers = options.headers || {};
         options.headers['X-Grafana-Org-Id'] = this.contextSrv.user.orgId;
       }
 
-      if (!options.hasSubUrl) {
-        options.url = config.appSubUrl + options.url;
-        options.hasSubUrl = true;
+      if (options.url.indexOf("/") === 0) {
+        options.url = options.url.substring(1);
       }
     }
 
@@ -142,8 +140,8 @@ export class BackendSrv {
         options.headers['X-Grafana-Org-Id'] = this.contextSrv.user.orgId;
       }
 
-      if (!options.hasSubUrl && options.retry === 0) {
-        options.url = config.appSubUrl + options.url;
+      if (options.url.indexOf("/") === 0) {
+        options.url = options.url.substring(1);
       }
 
       if (options.headers && options.headers.Authorization) {
