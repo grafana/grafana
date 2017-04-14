@@ -9,8 +9,8 @@ export class BackendSrv {
   inFlightRequests = {};
   HTTP_REQUEST_CANCELLED = -1;
 
-    /** @ngInject */
-  constructor(private $http, private alertSrv, private $rootScope, private $q, private $timeout) {
+  /** @ngInject */
+  constructor(private $http, private alertSrv, private $rootScope, private $q, private $timeout, private contextSrv) {
   }
 
   get(url, params?) {
@@ -65,6 +65,11 @@ export class BackendSrv {
     options.retry = options.retry || 0;
     var requestIsLocal = options.url.indexOf('/') === 0;
     var firstAttempt = options.retry === 0;
+
+    if (!options.url.match('https?://') && this.contextSrv && this.contextSrv.user && this.contextSrv.user.orgId) {
+      options.headers = options.headers || {};
+      options.headers['X-Grafana-Org-Id'] = this.contextSrv.user.orgId;
+    }
 
     if (requestIsLocal && !options.hasSubUrl) {
       options.url = config.appSubUrl + options.url;
@@ -127,6 +132,11 @@ export class BackendSrv {
 
     var requestIsLocal = options.url.indexOf('/') === 0;
     var firstAttempt = options.retry === 0;
+
+    if (!options.url.match('https?://') && this.contextSrv && this.contextSrv.user && this.contextSrv.user.orgId) {
+      options.headers = options.headers || {};
+      options.headers['X-Grafana-Org-Id'] = this.contextSrv.user.orgId;
+    }
 
     if (requestIsLocal && !options.hasSubUrl && options.retry === 0) {
       options.url = config.appSubUrl + options.url;
