@@ -17,6 +17,7 @@ import {tickStep} from 'app/core/utils/ticks';
 import {appEvents, coreModule} from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import {ThresholdManager} from './threshold_manager';
+import {EventManager} from 'app/features/annotations/all';
 import {convertValuesToHistogram, getSeriesValues} from './histogram';
 
 coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
@@ -27,13 +28,14 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       var ctrl = scope.ctrl;
       var dashboard = ctrl.dashboard;
       var panel = ctrl.panel;
+      var annotations = [];
       var data;
-      var annotations;
       var plot;
       var sortedSeries;
       var legendSideLastValue = null;
       var rootScope = scope.$root;
       var panelWidth = 0;
+      var eventManager = new EventManager(ctrl, elem, popoverSrv);
       var thresholdManager = new ThresholdManager(ctrl);
       var tooltip = new GraphTooltip(elem, dashboard, scope, function() {
         return sortedSeries;
@@ -54,7 +56,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         if (!data) {
           return;
         }
-        annotations = ctrl.annotations;
+        annotations = ctrl.annotations || [];
         render_panel();
       });
 
@@ -78,20 +80,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           tooltip.clear(plot);
         }
       }, scope);
-
-      function showAddAnnotationView(timeRange) {
-        popoverSrv.show({
-          element: elem[0],
-          classNames: 'drop-popover drop-popover--form',
-          position: 'bottom center',
-          openOn: 'click',
-          template: '<event-editor panel-ctrl="panelCtrl" time-range="timeRange" close="dismiss()"></event-editor>',
-          model: {
-            timeRange: timeRange,
-            panelCtrl: ctrl,
-          },
-        });
-      }
 
       function getLegendHeight(panelHeight) {
         if (!panel.legend.show || panel.legend.rightSide) {
@@ -343,7 +331,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         }
 
         thresholdManager.addPlotOptions(options, panel);
-        addAnnotations(options);
+        addAnnotationEvents(options);
         configureAxisOptions(data, options);
 
         sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
@@ -475,8 +463,12 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         };
       }
 
-      function addAnnotations(options) {
-        if (!annotations || annotations.length === 0) {
+      function hasAnnotationEvents() {
+        return eventManager.event || annotations.length > 0 ;
+      }
+
+      function addAnnotationEvents(options) {
+        if (!hasAnnotationEvents()) {
           return;
         }
 
@@ -501,26 +493,41 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
 
         types['$__execution_error'] = ['$__no_data'];
 
-        for (var i = 0; i < annotations.length; i++) {
-          var item = annotations[i];
-          if (item.newState) {
-            console.log(item.newState);
-            item.eventType = '$__' + item.newState;
-            continue;
-          }
+        var annotationsToShow;
+        // adding/edditing event, only show that one
+        if (eventManager.event) {
+          const event = eventManager.event;
+          annotationsToShow = [
+            {
+              min: event.time.valueOf(),
+              title: event.title,
+              description: event.text,
+              eventType: '$__alerting',
+            }
+          ];
+        } else {
+          // annotations from query
+          for (var i = 0; i < annotations.length; i++) {
+            var item = annotations[i];
+            if (item.newState) {
+              item.eventType = '$__' + item.newState;
+              continue;
+            }
 
-          if (!types[item.source.name]) {
-            types[item.source.name] = {
-              color: item.source.iconColor,
-              position: 'BOTTOM',
-              markerSize: 5,
-            };
+            if (!types[item.source.name]) {
+              types[item.source.name] = {
+                color: item.source.iconColor,
+                position: 'BOTTOM',
+                markerSize: 5,
+              };
+            }
           }
+          annotationsToShow = annotations;
         }
 
         options.events = {
           levels: _.keys(types).length + 1,
-          data: annotations,
+          data: annotationsToShow,
           types: types,
         };
       }
@@ -653,8 +660,10 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       }
 
       elem.bind("plotselected", function (event, ranges) {
-        if (ranges.ctrlKey || ranges.metaKey) {
-          showAddAnnotationView(ranges.xaxis);
+        if (ranges.ctrlKey || ranges.metaKey)  {
+          scope.$apply(() => {
+            eventManager.updateTime(ranges.xaxis);
+          });
         } else {
           scope.$apply(function() {
             timeSrv.setTime({
@@ -666,11 +675,14 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       });
 
       elem.bind("plotclick", function (event, pos, item) {
-        // Skip if range selected (added in "plotselected" event handler)
-        let isRangeSelection = pos.x !== pos.x1;
-        let createAnnotation = !isRangeSelection && (pos.ctrlKey || pos.metaKey);
-        if (createAnnotation) {
-          showAddAnnotationView({from: pos.x, to: null});
+        if (pos.ctrlKey || pos.metaKey || eventManager.event)  {
+          // Skip if range selected (added in "plotselected" event handler)
+          let isRangeSelection = pos.x !== pos.x1;
+          if (!isRangeSelection) {
+            scope.$apply(() => {
+              eventManager.updateTime({from: pos.x, to: null});
+            });
+          }
         }
       });
 
