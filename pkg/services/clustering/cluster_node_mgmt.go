@@ -16,6 +16,7 @@ type ClusterNodeMgmt interface {
 	Unregister() error
 	GetActiveNodesCount(ts uint64) (int, error)
 	GetNodeId() (string, error)
+	GetNodeSequence() (int32, error)
 }
 
 type ClusterNode struct {
@@ -82,4 +83,11 @@ func (node *ClusterNode) ScheduleNext() error {
 		return errors.New("Cluster node object is nil")
 	}
 	return errors.New("Not implemented")
+}
+
+func (node *ClusterNode) GetNodeSequence() (int32, error) {
+	if(node == nil) {
+		return errors.New("Cluster node object is nil")
+	}
+	// get node sequence number from db
 }

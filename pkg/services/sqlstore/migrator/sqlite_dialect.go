@@ -73,3 +73,8 @@ func (db *Sqlite3) DropIndexSql(tableName string, index *Index) string {
 	idxName := index.XName(tableName)
 	return fmt.Sprintf("DROP INDEX %v", quote(idxName))
 }
+
+func(db *Sqlite3) CurrentTimeToRoundMinSql() string {
+	return "SELECT cast(round(strftime('%s','now')/60)*60 as integer)"
+}
+

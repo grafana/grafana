@@ -105,3 +105,7 @@ func (db *Mysql) UpdateTableSql(tableName string, columns []*Column) string {
 
 	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"
 }
+
+func(db *Mysql) CurrentTimeToRoundMinSql() string {
+	return "SELECT round(unix_timestamp()/60)*60";
+}

@@ -30,6 +30,8 @@ type Dialect interface {
 	TableCheckSql(tableName string) (string, []interface{})
 	RenameTable(oldName string, newName string) string
 	UpdateTableSql(tableName string, columns []*Column) string
+
+	CurrentTimeToRoundMinSql() string
 }
 
 func NewDialect(name string) Dialect {
