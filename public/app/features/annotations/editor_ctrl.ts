@@ -18,13 +18,13 @@ export class AnnotationsEditorCtrl {
     datasource: null,
     iconColor: 'rgba(255, 96, 96, 1)',
     enable: true,
-    show: 0,
+    showIn: 0,
     hide: false,
   };
 
   showOptions: any = [
     {text: 'All Panels', value: 0},
-    {text: 'Specifc Panels', value: 1},
+    {text: 'Specific Panels', value: 1},
   ];
 
   /** @ngInject */
@@ -51,7 +51,7 @@ export class AnnotationsEditorCtrl {
 
   edit(annotation) {
     this.currentAnnotation = annotation;
-    this.currentAnnotation.show = this.currentAnnotation.show || 0;
+    this.currentAnnotation.showIn = this.currentAnnotation.showIn || 0;
     this.currentIsNew = false;
     this.datasourceChanged();
     this.mode = 'edit';

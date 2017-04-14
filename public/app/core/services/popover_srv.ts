@@ -69,7 +69,7 @@ function popoverSrv($compile, $rootScope, $timeout) {
 
       openDrop = drop;
       openDrop.open();
-    }, 10);
+    }, 100);
   };
 }
 
