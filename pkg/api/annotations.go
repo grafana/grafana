@@ -75,7 +75,7 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 		}
 
 		item.Id = 0
-		item.Epoch = cmd.EndTime
+		item.Epoch = cmd.TimeEnd
 
 		if err := repo.Save(&item); err != nil {
 			return ApiError(500, "Failed save annotation for region end time", err)

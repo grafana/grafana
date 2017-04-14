@@ -27,7 +27,7 @@ type PostAnnotationsCmd struct {
 
 	FillColor string `json:"fillColor"`
 	IsRegion  bool   `json:"isRegion"`
-	EndTime   int64  `json:"endTime"`
+	TimeEnd   int64  `json:"timeEnd"`
 }
 
 type DeleteAnnotationsCmd struct {

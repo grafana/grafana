@@ -84,8 +84,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           element: elem[0],
           classNames: 'drop-popover drop-popover--form',
           position: 'bottom center',
-          openOn: 'click',
-          template: '<event-editor panel-ctrl="panelCtrl" time-range="timeRange"></event-editor>',
+          openOn: null,
+          template: '<event-editor panel-ctrl="panelCtrl" time-range="timeRange" cancel="dismiss()"></event-editor>',
           model: {
             timeRange: timeRange,
             panelCtrl: ctrl,

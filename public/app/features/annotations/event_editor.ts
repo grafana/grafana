@@ -5,11 +5,11 @@ import moment from 'moment';
 import coreModule from 'app/core/core_module';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 
-export class AnnotationItem {
+export class AnnotationEvent {
   dashboardId: number;
   panelId: number;
-  time: Date;
-  timeEnd: Date;
+  time: any;
+  timeEnd: any;
   isRegion: boolean;
   title: string;
   text: string;
@@ -17,14 +17,13 @@ export class AnnotationItem {
 
 export class EventEditorCtrl {
   panelCtrl: MetricsPanelCtrl;
-  timeFormat = 'YYYY-MM-DD HH:mm:ss';
-  annotation: AnnotationItem;
+  annotation: AnnotationEvent;
   timeRange: {from: number, to: number};
   form: any;
 
   /** @ngInject **/
-  constructor() {
-    this.annotation = new AnnotationItem();
+  constructor(private annotationsSrv) {
+    this.annotation = new AnnotationEvent();
     this.annotation.panelId = this.panelCtrl.panel.id;
     this.annotation.dashboardId = this.panelCtrl.dashboard.id;
     this.annotation.text = "hello";
@@ -40,6 +39,19 @@ export class EventEditorCtrl {
     if (!this.form.$valid) {
       return;
     }
+
+    let saveModel = _.cloneDeep(this.annotation);
+    saveModel.time = saveModel.time.valueOf();
+    if (saveModel.isRegion) {
+      saveModel.timeEnd = saveModel.timeEnd.valueOf();
+    }
+
+    if (saveModel.timeEnd < saveModel.time) {
+      console.log('invalid time');
+      return;
+    }
+
+    this.annotationsSrv.saveAnnotationEvent(saveModel);
   }
 }
 
@@ -52,7 +64,8 @@ export function eventEditor() {
     templateUrl: 'public/app/features/annotations/partials/event_editor.html',
     scope: {
       "panelCtrl": "=",
-      "timeRange": "="
+      "timeRange": "=",
+      "cancel": "&",
     }
   };
 }

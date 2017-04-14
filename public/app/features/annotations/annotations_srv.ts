@@ -35,6 +35,7 @@ export class AnnotationsSrv {
 
       // combine the annotations and flatten results
       var annotations = _.flattenDeep([results[0], results[1]]);
+
       // filter out annotations that do not belong to requesting panel
       annotations = _.filter(annotations, item => {
         if (item.panelId && options.panel.id !== item.panelId) {
@@ -60,7 +61,7 @@ export class AnnotationsSrv {
     var panel = options.panel;
     var dashboard = options.dashboard;
 
-    if (panel) {
+    if (panel && panel.alert) {
       return this.backendSrv.get('/api/annotations', {
         from: options.range.from.valueOf(),
         to: options.range.to.valueOf(),
@@ -133,7 +134,7 @@ export class AnnotationsSrv {
     return this.globalAnnotationsPromise;
   }
 
-  postAnnotation(annotation) {
+  saveAnnotationEvent(annotation) {
     return this.backendSrv.post('/api/annotations', annotation);
   }
 
