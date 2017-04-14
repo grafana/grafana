@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"strconv"
 	"strings"
 	"time"
 
@@ -273,7 +274,7 @@ func SetUsingOrg(cmd *m.SetUsingOrgCommand) error {
 	}
 
 	if !valid {
-		return fmt.Errorf("user does not belong ot org")
+		return fmt.Errorf("user does not belong to org")
 	}
 
 	return inTransaction(func(sess *xorm.Session) error {
@@ -319,19 +320,24 @@ func GetUserOrgList(query *m.GetUserOrgListQuery) error {
 }
 
 func GetSignedInUser(query *m.GetSignedInUserQuery) error {
+	orgId := "u.org_id"
+	if query.OrgId > 0 {
+		orgId = strconv.FormatInt(query.OrgId, 10)
+	}
+
 	var rawSql = `SELECT
-	                u.id           as user_id,
-	                u.is_admin     as is_grafana_admin,
-	                u.email        as email,
-	                u.login        as login,
-									u.name         as name,
-									u.help_flags1  as help_flags1,
-	                org.name       as org_name,
-	                org_user.role  as org_role,
-	                org.id         as org_id
-	                FROM ` + dialect.Quote("user") + ` as u
-									LEFT OUTER JOIN org_user on org_user.org_id = u.org_id and org_user.user_id = u.id
-	                LEFT OUTER JOIN org on org.id = u.org_id `
+		u.id           as user_id,
+		u.is_admin     as is_grafana_admin,
+		u.email        as email,
+		u.login        as login,
+		u.name         as name,
+		u.help_flags1  as help_flags1,
+		org.name       as org_name,
+		org_user.role  as org_role,
+		org.id         as org_id
+		FROM ` + dialect.Quote("user") + ` as u
+		LEFT OUTER JOIN org_user on org_user.org_id = ` + orgId + ` and org_user.user_id = u.id
+		LEFT OUTER JOIN org on org.id = org_user.org_id `
 
 	sess := x.Table("user")
 	if query.UserId > 0 {

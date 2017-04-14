@@ -9,8 +9,8 @@ export class BackendSrv {
   inFlightRequests = {};
   HTTP_REQUEST_CANCELLED = -1;
 
-    /** @ngInject */
-  constructor(private $http, private alertSrv, private $rootScope, private $q, private $timeout) {
+  /** @ngInject */
+  constructor(private $http, private alertSrv, private $rootScope, private $q, private $timeout, private contextSrv) {
   }
 
   get(url, params?) {
@@ -63,12 +63,18 @@ export class BackendSrv {
 
   request(options) {
     options.retry = options.retry || 0;
-    var requestIsLocal = options.url.indexOf('/') === 0;
+    var requestIsLocal = !options.url.match(/^http/);
     var firstAttempt = options.retry === 0;
 
-    if (requestIsLocal && !options.hasSubUrl) {
-      options.url = config.appSubUrl + options.url;
-      options.hasSubUrl = true;
+    if (requestIsLocal) {
+      if (this.contextSrv.user && this.contextSrv.user.orgId) {
+        options.headers = options.headers || {};
+        options.headers['X-Grafana-Org-Id'] = this.contextSrv.user.orgId;
+      }
+
+      if (options.url.indexOf("/") === 0) {
+        options.url = options.url.substring(1);
+      }
     }
 
     return this.$http(options).then(results => {
@@ -125,16 +131,23 @@ export class BackendSrv {
       this.addCanceler(requestId, canceler);
     }
 
-    var requestIsLocal = options.url.indexOf('/') === 0;
+    var requestIsLocal = !options.url.match(/^http/);
     var firstAttempt = options.retry === 0;
 
-    if (requestIsLocal && !options.hasSubUrl && options.retry === 0) {
-      options.url = config.appSubUrl + options.url;
-    }
+    if (requestIsLocal) {
+      if (this.contextSrv.user && this.contextSrv.user.orgId) {
+        options.headers = options.headers || {};
+        options.headers['X-Grafana-Org-Id'] = this.contextSrv.user.orgId;
+      }
 
-    if (requestIsLocal && options.headers && options.headers.Authorization) {
-      options.headers['X-DS-Authorization'] = options.headers.Authorization;
-      delete options.headers.Authorization;
+      if (options.url.indexOf("/") === 0) {
+        options.url = options.url.substring(1);
+      }
+
+      if (options.headers && options.headers.Authorization) {
+        options.headers['X-DS-Authorization'] = options.headers.Authorization;
+        delete options.headers.Authorization;
+      }
     }
 
     return this.$http(options).catch(err => {

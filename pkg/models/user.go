@@ -117,6 +117,7 @@ type GetSignedInUserQuery struct {
 	UserId int64
 	Login  string
 	Email  string
+	OrgId  int64
 	Result *SignedInUser
 }
 
