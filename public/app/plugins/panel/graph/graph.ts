@@ -79,29 +79,13 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         }
       }, scope);
 
-      appEvents.on('graph-click', (event) => {
-        // Add event only for selected panel
-        let thisPanelEvent = event.panel.id === ctrl.panel.id;
-
-        // Select time for new annotation
-        let createAnnotation = event.pos.ctrlKey || event.pos.metaKey;
-        if (createAnnotation && thisPanelEvent) {
-          let timeRange = {
-            from: event.pos.x,
-            to: null
-          };
-
-          showAddAnnotationView(timeRange);
-        }
-      }, scope);
-
       function showAddAnnotationView(timeRange) {
         popoverSrv.show({
           element: elem[0],
           classNames: 'drop-popover drop-popover--form',
           position: 'bottom center',
           openOn: 'click',
-          template: '<event-editor panelCtrl="ctrl" timeRange="timeRange"></event-editor>',
+          template: '<event-editor panel-ctrl="panelCtrl" time-range="timeRange"></event-editor>',
           model: {
             timeRange: timeRange,
             panelCtrl: ctrl,
@@ -670,10 +654,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
 
       elem.bind("plotselected", function (event, ranges) {
         if (ranges.ctrlKey || ranges.metaKey) {
-          // Create new annotation from time range
-          let timeRange = ranges.xaxis;
-          showAddAnnotationView(timeRange);
-          //plot.clearSelection();
+          showAddAnnotationView(ranges.xaxis);
         } else {
           scope.$apply(function() {
             timeSrv.setTime({
@@ -681,6 +662,15 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
               to    : moment.utc(ranges.xaxis.to),
             });
           });
+        }
+      });
+
+      elem.bind("plotclick", function (event, pos, item) {
+        // Skip if range selected (added in "plotselected" event handler)
+        let isRangeSelection = pos.x !== pos.x1;
+        let createAnnotation = !isRangeSelection && (pos.ctrlKey || pos.metaKey);
+        if (createAnnotation) {
+          showAddAnnotationView({from: pos.x, to: null});
         }
       });
 

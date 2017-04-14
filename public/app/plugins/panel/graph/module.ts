@@ -306,21 +306,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     alert('selection region while holding down CTRL or CMD');
   }
 
-  // Get annotation info from dialog and push it to backend
-  pushAnnotations(annotations) {
-    return this.annotationsSrv.postAnnotation(annotations);
-  }
-
-  showAddAnnotationModal(timeRange) {
-    let addAnnotationScope = this.$scope.$new();
-    addAnnotationScope.annotationTimeRange = timeRange;
-
-    this.publishAppEvent('show-modal', {
-      src: 'public/app/features/dashboard/partials/addAnnotationModal.html',
-      scope: addAnnotationScope
-    });
-  }
-
   legendValuesOptionChanged() {
     var legend = this.panel.legend;
     legend.values = legend.min || legend.max || legend.avg || legend.current || legend.total;

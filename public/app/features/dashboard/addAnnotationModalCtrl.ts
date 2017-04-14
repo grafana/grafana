@@ -4,12 +4,8 @@ import angular from 'angular';
 import moment from 'moment';
 
 export class AddAnnotationModalCtrl {
-  annotationTimeFormat = 'YYYY-MM-DD HH:mm:ss';
-  annotationTimeFrom: any;
-  annotationTimeTo: any = null;
-  annotationTitle: string;
-  annotationTextFrom: string;
-  annotationTextTo: string;
+  timeFormat = 'YYYY-MM-DD HH:mm:ss';
+  annotation: any;
   graphCtrl: any;
 
   /** @ngInject */
@@ -17,41 +13,31 @@ export class AddAnnotationModalCtrl {
     this.graphCtrl = $scope.ctrl;
     $scope.ctrl = this;
 
-    this.annotationTimeFrom = moment($scope.annotationTimeRange.from).format(this.annotationTimeFormat);
+    let dashboardId = this.graphCtrl.dashboard.id;
+    let panelId = this.graphCtrl.panel.id;
+    this.annotation = {
+      dashboardId: dashboardId,
+      panelId: panelId,
+      time: null,
+      timeTo: null,
+      title: "",
+      text: ""
+    };
+
+    this.annotation.time = moment($scope.annotationTimeRange.from).format(this.timeFormat);0
     if ($scope.annotationTimeRange.to) {
-      this.annotationTimeTo = moment($scope.annotationTimeRange.to).format(this.annotationTimeFormat);
+      this.annotation.timeTo = moment($scope.annotationTimeRange.to).format(this.timeFormat);
     }
   }
 
   addAnnotation() {
-    let dashboardId = this.graphCtrl.dashboard.id;
-    let panelId = this.graphCtrl.panel.id;
-    let timeFrom = moment(this.annotationTimeFrom, this.annotationTimeFormat).valueOf();
-
-    let annotationFrom = {
-      dashboardId: dashboardId,
-      panelId: panelId,
-      time: timeFrom,
-      title: this.annotationTitle,
-      text: this.annotationTextFrom
-    };
-    let annotations = [annotationFrom];
-
-    if (this.annotationTimeTo) {
-      let timeTo = moment(this.annotationTimeTo, this.annotationTimeFormat).valueOf();
-      let annotationTo = {
-        dashboardId: dashboardId,
-        panelId: panelId,
-        time: timeTo,
-        title: this.annotationTitle,
-        text: this.annotationTextTo
-      };
-      annotations.push(annotationTo);
+    this.annotation.time = moment(this.annotation.time, this.timeFormat).valueOf();
+    if (this.annotation.timeTo) {
+      this.annotation.timeTo = moment(this.annotation.timeTo, this.timeFormat).valueOf();
     }
 
-    this.graphCtrl.pushAnnotations(annotations)
+    this.graphCtrl.pushAnnotation(this.annotation)
     .then(response => {
-      console.log(response);
       this.close();
     })
     .catch(error => {

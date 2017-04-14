@@ -60,7 +60,7 @@ export class AnnotationsSrv {
     var panel = options.panel;
     var dashboard = options.dashboard;
 
-    if (panel && panel.alert) {
+    if (panel) {
       return this.backendSrv.get('/api/annotations', {
         from: options.range.from.valueOf(),
         to: options.range.to.valueOf(),
@@ -133,10 +133,8 @@ export class AnnotationsSrv {
     return this.globalAnnotationsPromise;
   }
 
-  postAnnotation(annotations) {
-    return Promise.all(_.map(annotations, annotation => {
-      return this.backendSrv.post('/api/annotations', annotation);
-    }));
+  postAnnotation(annotation) {
+    return this.backendSrv.post('/api/annotations', annotation);
   }
 
   translateQueryResult(annotation, results) {
