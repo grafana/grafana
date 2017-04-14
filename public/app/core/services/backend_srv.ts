@@ -63,17 +63,20 @@ export class BackendSrv {
 
   request(options) {
     options.retry = options.retry || 0;
-    var requestIsLocal = options.url.indexOf('/') === 0;
+    var requestIsLocal = !options.url.match(/^http/);
     var firstAttempt = options.retry === 0;
 
-    if (!options.url.match('https?://') && this.contextSrv && this.contextSrv.user && this.contextSrv.user.orgId) {
-      options.headers = options.headers || {};
-      options.headers['X-Grafana-Org-Id'] = this.contextSrv.user.orgId;
-    }
 
-    if (requestIsLocal && !options.hasSubUrl) {
-      options.url = config.appSubUrl + options.url;
-      options.hasSubUrl = true;
+    if (requestIsLocal) {
+      if (this.contextSrv.user && this.contextSrv.user.orgId) {
+        options.headers = options.headers || {};
+        options.headers['X-Grafana-Org-Id'] = this.contextSrv.user.orgId;
+      }
+
+      if (!options.hasSubUrl) {
+        options.url = config.appSubUrl + options.url;
+        options.hasSubUrl = true;
+      }
     }
 
     return this.$http(options).then(results => {
@@ -130,21 +133,23 @@ export class BackendSrv {
       this.addCanceler(requestId, canceler);
     }
 
-    var requestIsLocal = options.url.indexOf('/') === 0;
+    var requestIsLocal = !options.url.match(/^http/);
     var firstAttempt = options.retry === 0;
 
-    if (!options.url.match('https?://') && this.contextSrv && this.contextSrv.user && this.contextSrv.user.orgId) {
-      options.headers = options.headers || {};
-      options.headers['X-Grafana-Org-Id'] = this.contextSrv.user.orgId;
-    }
+    if (requestIsLocal) {
+      if (this.contextSrv.user && this.contextSrv.user.orgId) {
+        options.headers = options.headers || {};
+        options.headers['X-Grafana-Org-Id'] = this.contextSrv.user.orgId;
+      }
 
-    if (requestIsLocal && !options.hasSubUrl && options.retry === 0) {
-      options.url = config.appSubUrl + options.url;
-    }
+      if (!options.hasSubUrl && options.retry === 0) {
+        options.url = config.appSubUrl + options.url;
+      }
 
-    if (requestIsLocal && options.headers && options.headers.Authorization) {
-      options.headers['X-DS-Authorization'] = options.headers.Authorization;
-      delete options.headers.Authorization;
+      if (options.headers && options.headers.Authorization) {
+        options.headers['X-DS-Authorization'] = options.headers.Authorization;
+        delete options.headers.Authorization;
+      }
     }
 
     return this.$http(options).catch(err => {
