@@ -75,6 +75,6 @@ func (db *Sqlite3) DropIndexSql(tableName string, index *Index) string {
 }
 
 func(db *Sqlite3) CurrentTimeToRoundMinSql() string {
-	return "SELECT cast(round(strftime('%s','now')/60)*60 as integer)"
+	return "cast(round(strftime('%s','now')/60)*60 as integer)"
 }
 

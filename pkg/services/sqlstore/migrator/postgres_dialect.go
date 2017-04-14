@@ -125,5 +125,5 @@ func (db *Postgres) UpdateTableSql(tableName string, columns []*Column) string {
 }
 
 func(db *Postgres) CurrentTimeToRoundMinSql() string {
-	return "SELECT round(extract(epoch from now())/60)*60"
+	return "round(extract(epoch from now())/60)*60"
 }
