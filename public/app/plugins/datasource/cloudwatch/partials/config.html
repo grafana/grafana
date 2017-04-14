@@ -19,8 +19,13 @@
 				<li class="tight-form-item" style="width: 200px">
 					Default Region<tip>Specify the region, such as for US West (Oregon) use ` us-west-2 ` as the region.</tip>
 				</li>
-				<li>
-					<input type="text" class="tight-form-input input-large last" ng-model='current.jsonData.defaultRegion' placeholder=""></input>
+        <!-- 
+          Whenever this list is updated, backend list should also be updated.
+          Please update the region list in pkg/api/cloudwatch/metric.go
+				-->
+        <li>
+          <select class="tight-form-input input-large last" ng-model="current.jsonData.defaultRegion" ng-options="region for region in ['us-east-1', 'us-west-2', 'us-west-1', 'eu-west-1',
+          'eu-central-1', 'ap-southeast-1'  ,'ap-southeast-2' ,'ap-northeast-1' ,'sa-east-1'  ,'cn-north-1']"></select>
 				</li>
 			</ul>
 			<div class="clearfix"></div>

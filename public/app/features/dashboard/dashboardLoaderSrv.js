@@ -3,7 +3,7 @@ define([
   'moment',
   'lodash',
   'jquery',
-  'kbn',
+  'app/core/utils/kbn',
   'app/core/utils/datemath',
 ],
 function (angular, moment, _, $, kbn, dateMath) {

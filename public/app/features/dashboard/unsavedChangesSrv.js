@@ -122,11 +122,7 @@ function(angular, _) {
       var currentJson = angular.toJson(current);
       var originalJson = angular.toJson(original);
 
-      if (currentJson !== originalJson) {
-        return true;
-      }
-
-      return false;
+      return currentJson !== originalJson;
     };
 
     p.open_modal = function() {

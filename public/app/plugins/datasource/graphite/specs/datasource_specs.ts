@@ -7,10 +7,12 @@ declare var helpers: any;
 describe('graphiteDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
 
+  beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(ctx.providePhase(['backendSrv']));
 
+  beforeEach(ctx.providePhase(['backendSrv']));
   beforeEach(ctx.createService('GraphiteDatasource'));
+
   beforeEach(function() {
     ctx.ds = new ctx.service({ url: [''] });
   });

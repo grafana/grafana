@@ -1,7 +1,7 @@
 define([
   'angular',
   'lodash',
-  'config'
+  'app/core/config'
 ],
 function (angular, _, config) {
   'use strict';

@@ -13,12 +13,13 @@ import (
 	"github.com/aws/aws-sdk-go/aws/corehandlers"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
-	"github.com/aws/aws-sdk-go/aws/service"
+	"github.com/aws/aws-sdk-go/awstesting"
 )
 
 func TestValidateEndpointHandler(t *testing.T) {
 	os.Clearenv()
-	svc := service.New(aws.NewConfig().WithRegion("us-west-2"))
+
+	svc := awstesting.NewClient(aws.NewConfig().WithRegion("us-west-2"))
 	svc.Handlers.Clear()
 	svc.Handlers.Validate.PushBackNamed(corehandlers.ValidateEndpointHandler)
 
@@ -30,7 +31,8 @@ func TestValidateEndpointHandler(t *testing.T) {
 
 func TestValidateEndpointHandlerErrorRegion(t *testing.T) {
 	os.Clearenv()
-	svc := service.New(nil)
+
+	svc := awstesting.NewClient()
 	svc.Handlers.Clear()
 	svc.Handlers.Validate.PushBackNamed(corehandlers.ValidateEndpointHandler)
 
@@ -58,7 +60,11 @@ func (m *mockCredsProvider) IsExpired() bool {
 func TestAfterRetryRefreshCreds(t *testing.T) {
 	os.Clearenv()
 	credProvider := &mockCredsProvider{}
-	svc := service.New(&aws.Config{Credentials: credentials.NewCredentials(credProvider), MaxRetries: aws.Int(1)})
+
+	svc := awstesting.NewClient(&aws.Config{
+		Credentials: credentials.NewCredentials(credProvider),
+		MaxRetries:  aws.Int(1),
+	})
 
 	svc.Handlers.Clear()
 	svc.Handlers.ValidateResponse.PushBack(func(r *request.Request) {
@@ -91,7 +97,7 @@ func (t *testSendHandlerTransport) RoundTrip(r *http.Request) (*http.Response, e
 }
 
 func TestSendHandlerError(t *testing.T) {
-	svc := service.New(&aws.Config{
+	svc := awstesting.NewClient(&aws.Config{
 		HTTPClient: &http.Client{
 			Transport: &testSendHandlerTransport{},
 		},

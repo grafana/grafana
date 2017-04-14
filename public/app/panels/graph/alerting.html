@@ -1,0 +1,220 @@
+<div class="editor-row" style="margin-bottom: 20px;">
+  <span style="float: right; font-size: 12px;"><i>Last updated by Grafana October 4, 2015 12:15:04 by $username</i></span>
+  <div class="section">
+    <h5>General Alerting Options</h5>
+    <div class="tight-form last">
+      <ul class="tight-form-list">
+        <li class="tight-form-item">
+          Alert Title
+        </li>
+        <li>
+          <input type="text" class="input-xlarge tight-form-input"></input>
+        </li>
+        <li class="tight-form-item">
+          Alerting Backend
+        </li>
+        <li>
+          <select class="input-medium tight-form-input">
+            <option>Grafana Alerting</option>
+          </select>
+        </li>
+        <li class="tight-form-item last">
+          <label class="checkbox-label" for="alerting-enabled">Enabled</label>
+          <input class="cr1" id="alerting-enabled" type="checkbox">
+          <label for="alerting-enabled" class="cr1"></label>
+        </li>
+      </ul>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</div>
+<div class="editor-row" style="margin-bottom: 20px;">
+  <h5>Choose your query:</h5>
+  <p>Select an exising query to alert on:</p>
+  <div class="tight-form">
+    <ul class="tight-form-list">
+      <li class="tight-form-item"><input type="radio" class="radio input-small" name="query" style="margin: 0 4px 4px;" /></li>
+      <li class="tight-form-item">None</li>
+    </ul>
+    <div class="clearfix"></div>
+  </div>
+  <div class="tight-form">
+    <ul class="tight-form-list">
+      <li class="tight-form-item"><input type="radio" class="radio input-small" name="query" style="margin: 0 4px 4px;" /></li>
+      <li class="tight-form-item" style="min-width: 15px; text-align: center">A</li>
+      <li class="tight-form-item">apps</li>
+      <li class="tight-form-item"><i class="fa fa-asterisk"><i></i></i></li>
+      <li class="tight-form-item">fakesite</li>
+      <li class="tight-form-item">counters</li>
+      <li class="tight-form-item">requests</li>
+      <li class="tight-form-item">count</li>
+      <li class="tight-form-item">scaleToSeconds(1)</li>
+      <li class="tight-form-item last">aliasByNode(2)</li>
+      <li><div class="copy-query" bs-tooltip="'Copy to custom query'" data-placement="top"></div></li>
+    </ul>
+    <div class="clearfix"></div>
+  </div>
+  <div class="tight-form">
+    <ul class="tight-form-list">
+      <li class="tight-form-item"><input type="radio" class="radio input-small" name="query" style="margin: 0 4px 4px;" /></li>
+      <li class="tight-form-item" style="min-width: 15px; text-align: center">B</li>
+      <li class="tight-form-item last"><span class="query-keyword">Metric:</span> us-west-2 AWS/EC2 CPUUtilization <span class="query-keyword">Stats:</span> Minimum Maximum <span class="query-keyword">Dimensions</span> InstanceIS <span class="query-segment-operator">=</span> i-b0e8a447 <span class="query-keyword">Alias</span> {{stat}} <span class="query-keyword">Period</span> 60</li>
+      <li><div class="copy-query" bs-tooltip="'Copy to custom query'" data-placement="top"></div></li>
+    </ul>
+    <div class="clearfix"></div>
+  </div>
+  <div class="tight-form">
+    <ul class="tight-form-list">
+      <li class="tight-form-item"><input type="radio" class="radio input-small" name="query" style="margin: 0 4px 4px;" /></li>
+      <li class="tight-form-item" style="min-width: 15px; text-align: center">C</li>
+      <li class="tight-form-item last"><span class="query-keyword">Query:</span> avg(counters_logins) by(server) <span class="query-keyword">Legend Format:</span> {{app}} - {{server}} <span class="query-keyword">Step:</span> 1s <span class="query-keyword">Resolution:</span> 1/2</li>
+      <li><div class="copy-query" bs-tooltip="'Copy to custom query'" data-placement="top"></div></li>
+    </ul>
+    <div class="clearfix"></div>
+  </div>
+  <div class="tight-form">
+    <ul class="tight-form-list">
+      <li class="tight-form-item"><input type="radio" class="radio input-small" name="query" style="margin: 0 4px 4px;" /></li>
+      <li class="tight-form-item" style="min-width: 15px; text-align: center">D</li>
+      <li class="tight-form-item last"><span class="query-keyword">SELECT</span> mean(value) <span class="query-keyword">FROM</span> logins.count <span class="query-keyword">WHERE</span> hostname <span class="query-segment-operator">=</span> /$Hostname$/ <span class="query-keyword">GROUP BY</span> time($internal) hostname</li>
+      <li><div class="copy-query" bs-tooltip="'Copy to custom query'" data-placement="top"></div></li>
+    </ul>
+    <div class="clearfix"></div>
+  </div>
+  <div class="tight-form last">
+    <ul class="tight-form-list">
+      <li class="tight-form-item"><input type="radio" class="radio input-small" name="query" style="margin: 0 4px 4px;" checked /></li>
+      <li class="tight-form-item" style="min-width: 15px; text-align: center">E</li>
+      <li class="tight-form-item last"><span class="query-keyword">Metric:</span> apps.backend.backend_01.counters.requests.count <span class="query-keyword">Alias:</span> Bristow <span class="query-keyword">Aggregator:</span> Sum <span class="query-keyword">Downsample:</span> 1m <span class="query-keyword">Aggregator</span> Sum <span class="query-keyword">Tags</span> host = test</li>
+      <li><div class="copy-query" bs-tooltip="'Copy to custom query'" data-placement="top"></div></li>
+    </ul>
+    <div class="clearfix"></div>
+  </div>
+</div>
+<div class="editor-row" style="margin-bottom: 20px;">
+  <p>Or write a new custom alerting query:</p>
+  <div class="section">
+    <div class="tight-form last">
+      <ul class="tight-form-list">
+        <li class="tight-form-item"><input type="radio" class="radio input-small" name="query" style="margin: 0 4px 4px;" /></li>
+        <li class="tight-form-item">
+          <a class="pointer">
+            <i class="fa fa-pencil"></i>
+          </a>
+        </li>
+        <li class="tight-form-item">
+          select metric
+        </li>
+        <li>
+          <a class="tight-form-item tight-form-func last dropdown-toggle"><i class="fa fa-plus"></i></a>
+        </li>
+      </ul>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</div>
+<div class="editor-row" style="margin-bottom: 10px;">
+  <div class="section">
+    <h5>Define Your States</h5>
+    <div class="tight-form last">
+      <ul class="tight-form-list">
+        <li class="tight-form-item">
+          by
+        </li>
+        <li>
+          <select class="input-medium tight-form-input">
+            <option>Averaging</option>
+          </select>
+        </li>
+        <li class="tight-form-item">
+          the values in the query over the last
+        </li>
+        <li>
+          <input type="text" class="input-mini tight-form-input last"></input>
+        </li>
+      </ul>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</div>
+<div class="editor-row" style="margin-bottom: 20px;">
+  <div class="section">
+    <div class="tight-form">
+      <ul class="tight-form-list">
+        <li class="tight-form-item" style="width: 100px;">
+          <span class="alert-state alert-state-warning">Warn</span>
+        </li>
+        <li>
+          <input type="text" class="input-mini tight-form-input" value=">" style="text-align: center;"></input>
+        </li>
+        <li>
+          <input type="text" class="input-mini tight-form-input" value="#B" style="text-align: center;"></input>
+        </li>
+        <li class="tight-form-item">
+          .notify
+        </li>
+        <li class="alert-notify-emails">
+          <bootstrap-tagsinput tagclass="label label-tag label-tag-email"></bootstrap-tagsinput>
+        </li>
+        <li class="tight-form-item last">
+          <label class="checkbox-label" for="state-enabled">Enabled</label>
+          <input class="cr1" id="state-enabled" type="checkbox">
+          <label for="state-enabled" class="cr1"></label>
+        </li>
+      </ul>
+      <div class="clearfix"></div>
+    </div>
+    <div class="tight-form last">
+      <ul class="tight-form-list">
+        <li class="tight-form-item" style="width: 100px;">
+          <span class="alert-state alert-state-critical">Critical</span>
+        </li>
+        <li>
+          <input type="text" class="input-mini tight-form-input"></input>
+        </li>
+        <li>
+          <input type="text" class="input-mini tight-form-input"></input>
+        </li>
+        <li class="tight-form-item">
+          .notify
+        </li>
+        <li class="alert-notify-emails">
+          <bootstrap-tagsinput tagclass="label label-tag label-tag-email"></bootstrap-tagsinput>
+        </li>
+        <li class="tight-form-item last">
+          <label class="checkbox-label" for="state-enabled2">Enabled</label>
+          <input class="cr1" id="state-enabled2" type="checkbox">
+          <label for="state-enabled2" class="cr1"></label>
+        </li>
+      </ul>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</div>
+<div class="editor-row">
+  <div class="section">
+    <h5>What to Say <span style="float: right; font-size: 12px; font-weight: normal;"><a href="#">Variables</a> | <a href="#">Preview</a></span></h5>
+    <div class="tight-form">
+      <ul class="tight-form-list">
+        <li class="tight-form-item" style="width: 100px;">
+          Summary
+        </li>
+        <li>
+          <input type="text" class="input-xxlarge tight-form-input last"></input>
+        </li>
+      </ul>
+      <div class="clearfix"></div>
+    </div>
+    <div class="tight-form last">
+      <ul class="tight-form-list">
+        <li class="tight-form-item" style="width: 100px;">
+          Description
+        </li>
+        <li>
+          <textarea class="tight-form-textarea input-xxlarge last"></textarea>
+        </li>
+      </ul>
+      <div class="clearfix"></div>
+    </div>
+  </div>
+</div>

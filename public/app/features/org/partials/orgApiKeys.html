@@ -4,9 +4,8 @@
 	</ul>
 </topnav>
 
-<div class="page-container">
-	<div class="page">
-
+<div class="page-container" style="background: transparent; border: 0;">
+	<div class="page-wide">
 		<h2>
 			API Keys
 		</h2>
@@ -32,24 +31,27 @@
 			</ul>
 		</form>
 
-		<table class="grafana-options-table" style="width: 250px">
-			<tr>
-				<th style="text-align: left">姓名</th>
-				<th style="text-align: left">角色</th>
-				<th style="text-align: left">Token</th>
-				<th></th>
-			</tr>
-			<tr ng-repeat="t in tokens">
-				<td>{{t.name}}</td>
-				<td>{{t.role}}</td>
-				<td>{{t.key}}</td>
-				<td style="width: 1%">
-					<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">
-						<i class="fa fa-remove"></i>
-					</a>
-				</td>
-			</tr>
+		<table class="filter-table">
+			<thead>
+				<tr>
+					<th>姓名</th>
+					<th>角色</th>
+					<th>Token</th>
+					<th style="width: 34px;"></th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr ng-repeat="t in tokens">
+					<td>{{t.name}}</td>
+					<td>{{t.role}}</td>
+					<td>{{t.key}}</td>
+					<td>
+						<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">
+							<i class="fa fa-remove"></i>
+						</a>
+					</td>
+				</tr>
+			</tbody>
 		</table>
 	</div>
-
 </div>

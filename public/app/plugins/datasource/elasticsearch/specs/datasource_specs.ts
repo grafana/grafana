@@ -10,6 +10,7 @@ declare var helpers: any;
 describe('ElasticDatasource', function() {
   var ctx = new helpers.ServiceTestContext();
 
+  beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
   beforeEach(ctx.createService('ElasticDatasource'));
@@ -79,4 +80,36 @@ describe('ElasticDatasource', function() {
       expect(body.query.filtered.query.query_string.query).to.be('escape\\:test');
     });
   });
+
+  describe('When issueing document query', function() {
+    var requestOptions, parts, header;
+
+    beforeEach(function() {
+      ctx.ds = new ctx.service({url: 'http://es.com', index: 'test', jsonData: {}});
+
+      ctx.backendSrv.datasourceRequest = function(options) {
+        requestOptions = options;
+        return ctx.$q.when({data: {responses: []}});
+      };
+
+      ctx.ds.query({
+        range: { from: moment([2015, 4, 30, 10]), to: moment([2015, 5, 1, 10]) },
+        targets: [{ bucketAggs: [], metrics: [{type: 'raw_document'}], query: 'test' }]
+      });
+
+      ctx.$rootScope.$apply();
+      parts = requestOptions.data.split('\n');
+      header = angular.fromJson(parts[0]);
+    });
+
+    it('should set search type to query_then_fetch', function() {
+      expect(header.search_type).to.eql('query_then_fetch');
+    });
+
+    it('should set size', function() {
+      var body = angular.fromJson(parts[1]);
+      expect(body.size).to.be(500);
+    });
+  });
+
 });

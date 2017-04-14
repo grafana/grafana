@@ -22,7 +22,7 @@ function (angular) {
 
   module.directive('elasticMetricAgg', function() {
     return {
-      templateUrl: 'app/plugins/datasource/elasticsearch/partials/metricAgg.html',
+      templateUrl: 'app/plugins/datasource/elasticsearch/partials/metric_agg.html',
       controller: 'ElasticMetricAggCtrl',
       restrict: 'E',
       scope: {
@@ -30,13 +30,14 @@ function (angular) {
         index: "=",
         onChange: "&",
         getFields: "&",
+        esVersion: '='
       }
     };
   });
 
   module.directive('elasticBucketAgg', function() {
     return {
-      templateUrl: 'app/plugins/datasource/elasticsearch/partials/bucketAgg.html',
+      templateUrl: 'app/plugins/datasource/elasticsearch/partials/bucket_agg.html',
       controller: 'ElasticBucketAggCtrl',
       restrict: 'E',
       scope: {

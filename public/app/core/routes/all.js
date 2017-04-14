@@ -203,6 +203,9 @@ define([
         templateUrl: 'app/partials/reset_password.html',
         controller : 'ResetPasswordCtrl',
       })
+      .when('/global-alerts', {
+        templateUrl: 'app/features/dashboard/partials/globalAlerts.html',
+      })
       .when('/logs', {
         templateUrl: 'app/features/logs/partials/logs.html',
         controller : 'LogsCtrl',

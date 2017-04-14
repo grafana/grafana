@@ -6,17 +6,20 @@ import moment  = require('moment');
 declare var helpers: any;
 
 describe('PrometheusDatasource', function() {
+
   var ctx = new helpers.ServiceTestContext();
+  beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(ctx.createService('PrometheusDatasource'));
   beforeEach(function() {
     ctx.ds = new ctx.service({ url: 'proxied', directUrl: 'direct', user: 'test', password: 'mupp' });
   });
+
   describe('When querying prometheus with one target using query editor target spec', function() {
     var results;
     var urlExpected = 'proxied/api/v1/query_range?query=' +
                       encodeURIComponent('test{job="testjob"}') +
-                      '&start=1443438675&end=1443460275&step=60s';
+                      '&start=1443438675&end=1443460275&step=60';
     var query = {
       range: { from: moment(1443438674760), to: moment(1443460274760) },
       targets: [{ expr: 'test{job="testjob"}' }],

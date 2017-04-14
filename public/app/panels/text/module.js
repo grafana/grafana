@@ -3,7 +3,7 @@ define([
   'app/app',
   'lodash',
   'require',
-  'app/components/panelmeta',
+  'app/features/panel/panel_meta',
   'moment',
   'app/core/utils/datemath',
 ],

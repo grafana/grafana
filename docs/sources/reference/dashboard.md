@@ -1,5 +1,5 @@
 ----
-page_title: Dashboard JSON 
+page_title: Dashboard JSON
 page_description: Dashboard JSON Reference
 page_keywords: grafana, dashboard, json, documentation
 ---
@@ -363,7 +363,7 @@ Usage of the fields is explained below:
         ],
         "query": "tag_values(cpu.utilization.average,env)",
         "refresh": false,
-        "refresh_on_load": false,
+        "refresh": false,
         "type": "query"
       },
       {
@@ -390,7 +390,7 @@ Usage of the fields is explained below:
           }
         ],
         "query": "tag_values(cpu.utilization.average,app)",
-        "refresh_on_load": false,
+        "refresh": false,
         "regex": "",
         "type": "query"
       }
@@ -413,7 +413,7 @@ Usage of the above mentioned fields in the templating section is explained below
 | **name** | name of variable |
 | **options** | array of variable text/value pairs available for selection on dashboard |
 | **query** | datasource query used to fetch values for a variable |
-| **refresh_on_load** | TODO |
+| **refresh** | TODO |
 | **regex** | TODO |
 | **type** | type of variable, i.e. `custom`, `query` or `interval` |
 

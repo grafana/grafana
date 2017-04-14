@@ -61,7 +61,7 @@
 }
 
 code, pre {
-  background-color: @grayLighter;
+  background-color: @codeTagBackground;
 }
 
 div.editor-row {
@@ -560,6 +560,15 @@ div.flot-text {
   background-color: darken(@purple, 10%);
 }
 
+.label-tag-email {
+  padding-left: 25px;
+  background: @black url(/img/envelope.png) 5px 50% no-repeat !important;
+  border-color: @black !important;
+  font-size: 12px;
+  font-weight: normal;
+  border-radius: 5px;
+}
+
 
 // inspector
 .inspector-request-table {
@@ -578,8 +587,10 @@ div.flot-text {
 
 // pre
 code, pre {
-  background-color: @grafanaPanelBackground;
+  background-color: @codeTagBackground;
   color: @textColor;
+  border: 1px solid darken(@codeTagBackground, 15%);
+  padding: 2px;
 }
 
 .dropdown-menu {
