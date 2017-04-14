@@ -19,6 +19,7 @@ function popoverSrv($compile, $rootScope, $timeout) {
   this.show = function(options) {
     if (openDrop) {
       openDrop.close();
+      openDrop = null;
     }
 
     var scope = _.extend($rootScope.$new(true), options.model);
@@ -27,12 +28,17 @@ function popoverSrv($compile, $rootScope, $timeout) {
     var cleanUp = () => {
       setTimeout(() => {
         scope.$destroy();
-        drop.destroy();
+
+        if (drop.tether) {
+          drop.destroy();
+        }
 
         if (options.onClose) {
           options.onClose();
         }
       });
+
+      openDrop = null;
     };
 
     scope.dismiss = () => {
@@ -44,24 +50,26 @@ function popoverSrv($compile, $rootScope, $timeout) {
 
     $compile(contentElement)(scope);
 
-    drop = new Drop({
-      target: options.element,
-      content: contentElement,
-      position: options.position,
-      classes: options.classNames || 'drop-popover',
-      openOn: options.openOn,
-      hoverCloseDelay: 200,
-      tetherOptions: {
-        constraints: [{to: 'scrollParent', attachment: "none both"}]
-      }
-    });
+    $timeout(() => {
+      drop = new Drop({
+        target: options.element,
+        content: contentElement,
+        position: options.position,
+        classes: options.classNames || 'drop-popover',
+        openOn: options.openOn,
+        hoverCloseDelay: 200,
+        tetherOptions: {
+          constraints: [{to: 'scrollParent', attachment: "none both"}]
+        }
+      });
 
-    drop.on('close', () => {
-      cleanUp();
-    });
+      drop.on('close', () => {
+        cleanUp();
+      });
 
-    openDrop = drop;
-    $timeout(() => { drop.open(); }, 10);
+      openDrop = drop;
+      openDrop.open();
+    }, 10);
   };
 }
 

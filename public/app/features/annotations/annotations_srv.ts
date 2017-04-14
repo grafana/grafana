@@ -135,6 +135,7 @@ export class AnnotationsSrv {
   }
 
   saveAnnotationEvent(annotation) {
+    this.globalAnnotationsPromise = null;
     return this.backendSrv.post('/api/annotations', annotation);
   }
 

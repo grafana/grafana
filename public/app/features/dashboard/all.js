@@ -7,7 +7,6 @@ define([
   './saveDashboardAsCtrl',
   './shareModalCtrl',
   './shareSnapshotCtrl',
-  './addAnnotationModalCtrl',
   './dashboard_srv',
   './viewStateSrv',
   './time_srv',

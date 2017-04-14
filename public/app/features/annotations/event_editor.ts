@@ -2,7 +2,7 @@
 
 import _ from 'lodash';
 import moment from 'moment';
-import coreModule from 'app/core/core_module';
+import {coreModule} from 'app/core/core';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 
 export class AnnotationEvent {
@@ -20,13 +20,13 @@ export class EventEditorCtrl {
   annotation: AnnotationEvent;
   timeRange: {from: number, to: number};
   form: any;
+  close: any;
 
   /** @ngInject **/
   constructor(private annotationsSrv) {
     this.annotation = new AnnotationEvent();
     this.annotation.panelId = this.panelCtrl.panel.id;
     this.annotation.dashboardId = this.panelCtrl.dashboard.id;
-    this.annotation.text = "hello";
 
     this.annotation.time = moment(this.timeRange.from);
     if (this.timeRange.to) {
@@ -51,7 +51,10 @@ export class EventEditorCtrl {
       return;
     }
 
-    this.annotationsSrv.saveAnnotationEvent(saveModel);
+    this.annotationsSrv.saveAnnotationEvent(saveModel).then(() => {
+      this.panelCtrl.refresh();
+      this.close();
+    });
   }
 }
 
@@ -65,7 +68,7 @@ export function eventEditor() {
     scope: {
       "panelCtrl": "=",
       "timeRange": "=",
-      "cancel": "&",
+      "close": "&",
     }
   };
 }
