@@ -330,8 +330,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           }
         }
 
-        thresholdManager.addPlotOptions(options, panel);
-        eventManager.addPlotEvents(annotations, options);
+        thresholdManager.addFlotOptions(options, panel);
+        eventManager.addFlotEvents(annotations, options);
         configureAxisOptions(data, options);
 
         sortedSeries = _.sortBy(data, function(series) { return series.zindex; });

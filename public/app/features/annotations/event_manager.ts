@@ -57,7 +57,7 @@ export class EventManager {
     this.panelCtrl.render();
   }
 
-  addPlotEvents(annotations) {
+  addFlotEvents(annotations, flotOptions) {
     if (this.event || annotations.length === 0) {
       return;
     }
@@ -108,7 +108,7 @@ export class EventManager {
       }
     }
 
-    options.events = {
+    flotOptions.events = {
       levels: _.keys(types).length + 1,
       data: annotations,
       types: types,

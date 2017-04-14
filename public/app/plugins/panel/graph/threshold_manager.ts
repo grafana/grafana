@@ -158,7 +158,7 @@ export class ThresholdManager {
     this.needsCleanup = true;
   }
 
-  addPlotOptions(options, panel) {
+  addFlotOptions(options, panel) {
     if (!panel.thresholds || panel.thresholds.length === 0) {
       return;
     }
