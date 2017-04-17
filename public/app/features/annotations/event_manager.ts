@@ -1,4 +1,4 @@
-
+import _ from 'lodash';
 import moment from 'moment';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 import {AnnotationEvent} from './event';
