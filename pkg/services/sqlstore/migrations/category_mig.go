@@ -6,12 +6,13 @@ import (
 
 func addAnnotationCategoryMig(mg *Migrator) {
 	category := Table{
-		Name: "annotation_category",
+		Name: "category",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
 			{Name: "user_id", Type: DB_BigInt, Nullable: true},
 			{Name: "name", Type: DB_Text, Nullable: false},
+			{Name: "description", Type: DB_Text, Nullable: false},
 		},
 		Indices: []*Index{
 			{Cols: []string{"org_id", "name"}, Type: IndexType},
@@ -19,7 +20,7 @@ func addAnnotationCategoryMig(mg *Migrator) {
 	}
 
 	// create table
-	mg.AddMigration("create annotation_category table", NewAddTableMigration(category))
+	mg.AddMigration("create category table", NewAddTableMigration(category))
 
 	// create indices
 	mg.AddMigration("add index org_id & name", NewAddIndexMigration(category, category.Indices[0]))
