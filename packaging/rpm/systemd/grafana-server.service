@@ -9,6 +9,7 @@ After=postgresql.service mariadb.service mysql.service
 EnvironmentFile=/etc/sysconfig/grafana-server
 User=grafana
 Group=grafana
+UMask=${UMASK}
 Type=simple
 Restart=on-failure
 WorkingDirectory=/usr/share/grafana

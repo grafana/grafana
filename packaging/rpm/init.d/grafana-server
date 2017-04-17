@@ -35,6 +35,9 @@ CONF_FILE=$CONF_DIR/grafana.ini
 MAX_OPEN_FILES=10000
 PID_FILE=/var/run/$NAME.pid
 DAEMON=/usr/sbin/$NAME
+UMASK=0027
+
+umask $UMASK
 
 if [ `id -u` -ne 0 ]; then
   echo "You need root privileges to run this script"
