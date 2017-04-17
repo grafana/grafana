@@ -22,7 +22,6 @@ define([
           $controller('ClusterCtrl', {$scope: $scope}).init();
         });
       };
-      
       $scope.reload = function() {
         $scope.init();
       };
