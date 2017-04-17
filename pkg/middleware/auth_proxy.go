@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/setting"
 )
 
-func initContextWithAuthProxy(ctx *Context) bool {
+func initContextWithAuthProxy(ctx *Context, orgId int64) bool {
 	if !setting.AuthProxyEnabled {
 		return false
 	}
@@ -30,6 +30,7 @@ func initContextWithAuthProxy(ctx *Context) bool {
 	}
 
 	query := getSignedInUserQueryForProxyAuth(proxyHeaderValue)
+	query.OrgId = orgId
 	if err := bus.Dispatch(query); err != nil {
 		if err != m.ErrUserNotFound {
 			ctx.Handle(500, "Failed to find user specified in auth proxy header", err)
@@ -46,7 +47,7 @@ func initContextWithAuthProxy(ctx *Context) bool {
 				ctx.Handle(500, "Failed to create user specified in auth proxy header", err)
 				return true
 			}
-			query = &m.GetSignedInUserQuery{UserId: cmd.Result.Id}
+			query = &m.GetSignedInUserQuery{UserId: cmd.Result.Id, OrgId: orgId}
 			if err := bus.Dispatch(query); err != nil {
 				ctx.Handle(500, "Failed find user after creation", err)
 				return true

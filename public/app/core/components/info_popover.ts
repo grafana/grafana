@@ -40,7 +40,14 @@ export function infoPopover() {
           openOn: openOn,
           hoverOpenDelay: 400,
           tetherOptions: {
-            offset: offset
+            offset: offset,
+            constraints: [
+                {
+                  to: 'window',
+                  attachment: 'together',
+                  pin: true
+                }
+              ],
           }
         });
 
