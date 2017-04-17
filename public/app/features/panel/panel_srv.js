@@ -205,15 +205,19 @@ function (angular, _, config) {
 
       $scope.toIntegrate = function() {
         try{
-          if (_.isNull($scope.panel.targets[0].metric) || _.isNull($scope.panel.targets[0].tags.host)) {
-            return;
+          integrateSrv.format.targets = _.cloneDeep($scope.panel.targets);
+          integrateSrv.format.title = $scope.panel.title;
+          if (!$scope.panel.targets[0].metric) {
+            integrateSrv.format.targets[0].metric = "*";
           }
-          integrateSrv.format.targets = $scope.panel.targets;
+          if (!_.isNull($scope.panel.targets[0].tags)) {
+            integrateSrv.format.targets[0].tags = {host: "*"};
+          }
           $location.path("/integrate");
         }catch(e){
-          $scope.appEvent('alert-warning', ['日志分析跳转失败', '可能缺少指标名/主机名']);
-        };
-      }
+          $scope.appEvent('alert-warning', ['日志分析跳转失败', '可能缺少指标名']);
+        }
+      };
     };
   });
 

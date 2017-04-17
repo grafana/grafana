@@ -33,7 +33,7 @@ define([
           "tooltip": {
             "value_type": "cumulative",
             "shared": true
-          },
+          }
       };
       var panelMetas = [
         {
@@ -76,8 +76,8 @@ define([
               "seriesOverrides": []
             }
           ],
-          "showTitle": false,
-          "title": ""
+          "showTitle": true,
+          "title": "原始数据"
         },
         {
           "collapse": true,
@@ -264,6 +264,7 @@ define([
           return _.excludeMetricSuffix(metrics.metric);
         });
         panelMetas[0].panels[0].targets = param.targets;
+        panelMetas[0].panels[0].title = param.title;
         panelMetas[1].panels[0].targets = _.cloneDeep(param.targets);
         _.each(panelMetas[1].panels[0].targets, function (target) {
           target.metric = target.metric + ".seasonal"
@@ -273,13 +274,13 @@ define([
           target.metric = target.metric + ".LB.percent"
         });
         var type = metricPrefix2Type(param.targets[0].metric.split(".")[0]);
-        var host = param.targets[0].tags.host == "*" ? "*" : "%22" + param.targets[0].tags.host + "%22";  // *  or 'centos24'
+        var host = param.targets[0].tags.host == "*" ? "*" : param.targets[0].tags.host;  // *  or 'centos24'
 
         $scope.query = "type:"+type+" AND host:"+host;
         panelMetas[2].panels[0].targets[0].query = "type:"+type+" AND host:"+host;
 
         $scope.initDashboard({
-          meta: {canStar: false, canShare: false, canEdit: true, canSave: false},
+          meta: {canStar: false, canShare: false, canEdit: false, canSave: false},
           dashboard: {
             system: contextSrv.system,
             title: "整合分析",
