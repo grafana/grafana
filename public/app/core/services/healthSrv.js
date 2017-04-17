@@ -36,12 +36,13 @@ function (angular, _, coreModule) {
       };
 
       this.aggregateHealths = function (metricHostClusters) {
-        _.each(metricHostClusters, function (cluster) {
+        _.each(metricHostClusters, function (cluster, index) {
           cluster.health = 0;
           for (var i = 0; i < cluster.elements.length; i++) {
             cluster.health += cluster.elements[i].health;
           }
           cluster.health = Math.floor(cluster.health / cluster.numElements);
+          cluster.index = index;
         });
         return metricHostClusters;
       };

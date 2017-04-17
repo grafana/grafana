@@ -161,13 +161,14 @@ define([
         };
 
         $scope.changeAll = function() {
-          if($scope.anomalyList.length == $scope.selections.length) {
+          if ($scope.anomalyList.length == $scope.selections.length) {
             $scope.removeAll();
-          }else{
-            $scope.removeAll();
-            for(var i in $scope.anomalyList) {
-              $scope.addPanel($scope.anomalyList[i]);
-              $scope.anomalyList[i].checked = true;
+          } else {
+            for (var i in $scope.anomalyList) {
+              if(!$scope.anomalyList[i].checked){
+                $scope.addPanel($scope.anomalyList[i]);
+                $scope.anomalyList[i].checked = true;
+              }
             }
           }
         };

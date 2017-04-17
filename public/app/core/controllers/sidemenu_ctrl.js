@@ -170,11 +170,11 @@ function (angular, _, $, coreModule, config) {
         href: $scope.getUrl("/anomaly")
       });
 
-      $scope.mainLinks.push({
-        text: "指标聚类分析",
-        icon: "fa fa-fw fa-area-chart",
-        href: $scope.getUrl("/cluster")
-      });
+      // $scope.mainLinks.push({
+      //   text: "指标聚类分析",
+      //   icon: "fa fa-fw fa-area-chart",
+      //   href: $scope.getUrl("/cluster")
+      // });
 
       // sinoRails would need this
       // $scope.mainLinks.push({
