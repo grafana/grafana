@@ -220,9 +220,13 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       this.target.target = _.reduce(this.functions, this.wrapFunction, metricPath);
     }
 
-    // loop through queries and update targetFull as needed
-    for (const target of this.panelCtrl.panel.targets) {
-      this.resolveTarget(target);
+    this.resolveTarget(this.target);
+
+    // loop through other queries and update targetFull as needed
+    for (const target of this.panelCtrl.panel.targets || []) {
+      if (target.refId !== this.target.refId) {
+        this.resolveTarget(target);
+      }
     }
   }
 
