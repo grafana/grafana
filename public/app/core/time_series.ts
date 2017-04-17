@@ -40,6 +40,7 @@ class TimeSeries {
   stack: any;
   nullPointMode: any;
   fillBelowTo: any;
+  fillBetween: any;
   transform: any;
 
   constructor(opts) {
@@ -77,7 +78,7 @@ class TimeSeries {
       if (override.pointradius !== void 0) { this.points.radius = override.pointradius; }
       if (override.steppedLine !== void 0) { this.lines.steps = override.steppedLine; }
       if (override.zindex !== void 0) { this.zindex = override.zindex; }
-      if (override.fillBelowTo !== void 0) { this.fillBelowTo = override.fillBelowTo; }
+      if (override.fillBelowTo !== void 0) { this.fillBetween = override.fillBelowTo; }
       if (override.color !== void 0) { this.color = override.color; }
       if (override.transform !== void 0) { this.transform = override.transform; }
       if (override.legend !== void 0) { this.legend = override.legend; }
