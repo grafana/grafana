@@ -1,16 +1,15 @@
 define([
   'angular',
-  'jquery',
   'lodash',
-  'kbn',
   'moment',
-  'app/components/timeSeries',
-  'app/components/panelmeta',
+  'app/core/utils/kbn',
+  'app/core/time_series',
+  'app/features/panel/panel_meta',
   './seriesOverridesCtrl',
   './graph',
   './legend',
 ],
-function (angular, $, _, kbn, moment, TimeSeries, PanelMeta) {
+function (angular, _, moment, kbn, TimeSeries, PanelMeta) {
   'use strict';
 
   var module = angular.module('grafana.panels.graph');
@@ -42,9 +41,9 @@ function (angular, $, _, kbn, moment, TimeSeries, PanelMeta) {
     var _d = {
       // datasource name, null = default datasource
       datasource: null,
-       // sets client side (flot) or native graphite png renderer (png)
+      // sets client side (flot) or native graphite png renderer (png)
       renderer: 'flot',
-       // Show/hide the x-axis
+      // Show/hide the x-axis
       'x-axis'      : true,
       // Show/hide y-axis
       'y-axis'      : true,
@@ -179,8 +178,8 @@ function (angular, $, _, kbn, moment, TimeSeries, PanelMeta) {
 
       var series = new TimeSeries({
         datapoints: datapoints,
-          alias: alias,
-          color: color,
+        alias: alias,
+        color: color,
       });
 
       if (datapoints && datapoints.length > 0) {

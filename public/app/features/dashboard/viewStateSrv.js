@@ -89,6 +89,11 @@ function (angular, _, $) {
           this.leaveFullscreen(false);
         }
         var panelScope = this.getPanelScope(this.state.panelId);
+        // panel could be about to be created/added and scope does
+        // not exist yet
+        if (!panelScope) {
+          return;
+        }
         this.enterFullscreen(panelScope);
         return;
       }

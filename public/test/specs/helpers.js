@@ -1,8 +1,7 @@
 define([
- 'kbn',
  'lodash',
  'app/core/utils/datemath',
-], function(kbn, _, dateMath) {
+], function(_, dateMath) {
   'use strict';
 
   function ControllerTestContext() {

@@ -4,7 +4,7 @@
 import angular = require('angular');
 import _ = require('lodash');
 import moment = require('moment');
-import kbn = require('kbn');
+import kbn = require('app/core/utils/kbn');
 import dateMath = require('app/core/utils/datemath');
 import rangeUtil = require('app/core/utils/rangeutil');
 
@@ -115,7 +115,7 @@ export class TimePickerCtrl {
       this.timeSrv.setAutoRefresh(this.refresh.value);
     }
 
-    this.timeSrv.setTime(this.timeRaw);
+    this.timeSrv.setTime(this.timeRaw, true);
     this.$rootScope.appEvent('hide-dash-editor');
   }
 

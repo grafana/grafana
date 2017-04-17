@@ -3,7 +3,7 @@
 import angular = require('angular');
 import _ = require('lodash');
 import moment = require('moment');
-import PanelMeta = require('app/components/panelmeta');
+import PanelMeta = require('app/features/panel/panel_meta');
 
 import {transformDataToTable} from './transformers';
 
@@ -39,7 +39,7 @@ export class TablePanelCtrl {
           unit: 'short',
           type: 'number',
           decimals: 2,
-          colors: ["rgba(50, 172, 45, 0.97)", "rgba(237, 129, 40, 0.89)","rgba(245, 54, 54, 0.9)"],
+          colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
           colorMode: null,
           pattern: '/.*/',
           thresholds: [],

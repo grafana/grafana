@@ -7,6 +7,7 @@ define([
   describe('linkSrv', function() {
     var _linkSrv;
 
+    beforeEach(module('grafana.core'));
     beforeEach(module('grafana.services'));
 
     beforeEach(inject(function(linkSrv) {

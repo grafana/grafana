@@ -7,6 +7,7 @@ define([
   describe('opentsdb', function() {
     var ctx = new helpers.ServiceTestContext();
 
+    beforeEach(module('grafana.core'));
     beforeEach(module('grafana.services'));
     beforeEach(ctx.providePhase(['backendSrv']));
 

@@ -133,8 +133,12 @@ _.each(rangeOptions, function (frame) {
       return from.fromNow() + ' to ' + formatDate(range.to);
     }
 
-    var res = describeTextRange(range.from);
-    return res.display;
+    if (range.to.toString() === 'now') {
+      var res = describeTextRange(range.from);
+      return res.display;
+    }
+
+    return range.from.toString() + ' to ' + range.to.toString();
   }
 
 export = {

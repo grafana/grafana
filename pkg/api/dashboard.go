@@ -57,6 +57,8 @@ func GetDashboard(c *middleware.Context) {
 			CanStar:   c.IsSignedIn,
 			CanSave:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
 			CanEdit:   canEditDashboard(c.OrgRole),
+			Created:   dash.Created,
+			Updated:   dash.Updated,
 		},
 	}
 

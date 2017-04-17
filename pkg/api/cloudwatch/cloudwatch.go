@@ -7,8 +7,11 @@ import (
 	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
+	"github.com/aws/aws-sdk-go/aws/awsutil"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/credentials/ec2rolecreds"
+	"github.com/aws/aws-sdk-go/aws/ec2metadata"
+	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/cloudwatch"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/wangy1931/grafana/pkg/middleware"
@@ -39,16 +42,20 @@ func init() {
 }
 
 func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
+	sess := session.New()
 	creds := credentials.NewChainCredentials(
 		[]credentials.Provider{
 			&credentials.EnvProvider{},
 			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database},
-			&ec2rolecreds.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
+			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
 		})
-	svc := cloudwatch.New(&aws.Config{
+
+	cfg := &aws.Config{
 		Region:      aws.String(req.Region),
 		Credentials: creds,
-	})
+	}
+
+	svc := cloudwatch.New(session.New(cfg), cfg)
 
 	reqParam := &struct {
 		Parameters struct {
@@ -83,16 +90,20 @@ func handleGetMetricStatistics(req *cwRequest, c *middleware.Context) {
 }
 
 func handleListMetrics(req *cwRequest, c *middleware.Context) {
+	sess := session.New()
 	creds := credentials.NewChainCredentials(
 		[]credentials.Provider{
 			&credentials.EnvProvider{},
 			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database},
-			&ec2rolecreds.EC2RoleProvider{ExpiryWindow: 5 * time.Minute},
+			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
 		})
-	svc := cloudwatch.New(&aws.Config{
+
+	cfg := &aws.Config{
 		Region:      aws.String(req.Region),
 		Credentials: creds,
-	})
+	}
+
+	svc := cloudwatch.New(session.New(cfg), cfg)
 
 	reqParam := &struct {
 		Parameters struct {
@@ -109,7 +120,15 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 		Dimensions: reqParam.Parameters.Dimensions,
 	}
 
-	resp, err := svc.ListMetrics(params)
+	var resp cloudwatch.ListMetricsOutput
+	err := svc.ListMetricsPages(params,
+		func(page *cloudwatch.ListMetricsOutput, lastPage bool) bool {
+			metrics, _ := awsutil.ValuesAtPath(page, "Metrics")
+			for _, metric := range metrics {
+				resp.Metrics = append(resp.Metrics, metric.(*cloudwatch.Metric))
+			}
+			return !lastPage
+		})
 	if err != nil {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return
@@ -119,7 +138,20 @@ func handleListMetrics(req *cwRequest, c *middleware.Context) {
 }
 
 func handleDescribeInstances(req *cwRequest, c *middleware.Context) {
-	svc := ec2.New(&aws.Config{Region: aws.String(req.Region)})
+	sess := session.New()
+	creds := credentials.NewChainCredentials(
+		[]credentials.Provider{
+			&credentials.EnvProvider{},
+			&credentials.SharedCredentialsProvider{Filename: "", Profile: req.DataSource.Database},
+			&ec2rolecreds.EC2RoleProvider{Client: ec2metadata.New(sess), ExpiryWindow: 5 * time.Minute},
+		})
+
+	cfg := &aws.Config{
+		Region:      aws.String(req.Region),
+		Credentials: creds,
+	}
+
+	svc := ec2.New(session.New(cfg), cfg)
 
 	reqParam := &struct {
 		Parameters struct {
@@ -137,7 +169,15 @@ func handleDescribeInstances(req *cwRequest, c *middleware.Context) {
 		params.InstanceIds = reqParam.Parameters.InstanceIds
 	}
 
-	resp, err := svc.DescribeInstances(params)
+	var resp ec2.DescribeInstancesOutput
+	err := svc.DescribeInstancesPages(params,
+		func(page *ec2.DescribeInstancesOutput, lastPage bool) bool {
+			reservations, _ := awsutil.ValuesAtPath(page, "Reservations")
+			for _, reservation := range reservations {
+				resp.Reservations = append(resp.Reservations, reservation.(*ec2.Reservation))
+			}
+			return !lastPage
+		})
 	if err != nil {
 		c.JsonApiErr(500, "Unable to call AWS API", err)
 		return

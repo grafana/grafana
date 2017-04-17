@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"os/signal"
@@ -27,6 +28,7 @@ import (
 var version = "master"
 var commit = "NA"
 var buildstamp string
+var build_date string
 
 var configFile = flag.String("config", "", "path to config file")
 var homePath = flag.String("homepath", "", "path to grafana install/home path, defaults to working directory")
@@ -38,6 +40,14 @@ func init() {
 }
 
 func main() {
+
+	v := flag.Bool("v", false, "prints current version and exits")
+	flag.Parse()
+	if *v {
+		fmt.Printf("Version %s (commit: %s)\n", version, commit)
+		os.Exit(0)
+	}
+
 	buildstampInt64, _ := strconv.ParseInt(buildstamp, 10, 64)
 
 	setting.BuildVersion = version
