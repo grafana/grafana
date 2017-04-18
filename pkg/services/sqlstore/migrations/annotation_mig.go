@@ -35,7 +35,6 @@ func addAnnotationMig(mg *Migrator) {
 	}
 
 	mg.AddMigration("Drop old annotation table v4", NewDropTableMigration("annotation"))
-
 	mg.AddMigration("create annotation table v5", NewAddTableMigration(table))
 
 	// create indices
