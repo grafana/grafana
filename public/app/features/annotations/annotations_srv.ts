@@ -126,6 +126,23 @@ export class AnnotationsSrv {
     return this.globalAnnotationsPromise;
   }
 
+  postAnnotation(annotations) {
+    console.log("POST /api/annotations\n", annotations);
+
+    // Not implemented yet
+    let implemented = true;
+    if (implemented) {
+      return Promise.all(_.map(annotations, annotation => {
+        return this.backendSrv.post('/api/annotations', annotation);
+      }))
+      .catch(error => {
+        console.log(error);
+      });
+    } else {
+      return Promise.resolve("Not implemented");
+    }
+  }
+
   translateQueryResult(annotation, results) {
     for (var item of results) {
       item.source = annotation;

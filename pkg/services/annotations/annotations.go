@@ -21,6 +21,14 @@ type ItemQuery struct {
 	Limit int64 `json:"limit"`
 }
 
+type PostParams struct {
+	DashboardId int64  `json:"dashboardId"`
+	PanelId     int64  `json:"panelId"`
+	Epoch       int64  `json:"epoch"`
+	Title       string `json:"title"`
+	Text        string `json:"text"`
+}
+
 type DeleteParams struct {
 	AlertId     int64 `json:"alertId"`
 	DashboardId int64 `json:"dashboardId"`
