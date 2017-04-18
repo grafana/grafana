@@ -144,7 +144,6 @@ class GraphCtrl extends MetricsPanelCtrl {
     actions.push({text: 'Export CSV (series as rows)', click: 'ctrl.exportCsv()'});
     actions.push({text: 'Export CSV (series as columns)', click: 'ctrl.exportCsvColumns()'});
     actions.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
-    actions.push({ text: 'Add Annotation', click: 'ctrl.enableAddAnnotationMode()' });
   }
 
   issueQueries(datasource) {
@@ -299,11 +298,6 @@ class GraphCtrl extends MetricsPanelCtrl {
   toggleLegend() {
     this.panel.legend.show = !this.panel.legend.show;
     this.refresh();
-  }
-
-  enableAddAnnotationMode() {
-    // placehoder for some other way to teach users
-    alert('selection region while holding down CTRL or CMD');
   }
 
   legendValuesOptionChanged() {

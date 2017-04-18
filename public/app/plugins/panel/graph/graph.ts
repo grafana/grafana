@@ -592,9 +592,9 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
 
       elem.bind("plotselected", function (event, ranges) {
         if (ranges.ctrlKey || ranges.metaKey)  {
-          scope.$apply(() => {
-            eventManager.updateTime(ranges.xaxis);
-          });
+          // scope.$apply(() => {
+          //   eventManager.updateTime(ranges.xaxis);
+          // });
         } else {
           scope.$apply(function() {
             timeSrv.setTime({
@@ -610,9 +610,9 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           // Skip if range selected (added in "plotselected" event handler)
           let isRangeSelection = pos.x !== pos.x1;
           if (!isRangeSelection) {
-            scope.$apply(() => {
-              eventManager.updateTime({from: pos.x, to: null});
-            });
+            // scope.$apply(() => {
+            //   eventManager.updateTime({from: pos.x, to: null});
+            // });
           }
         }
       });
