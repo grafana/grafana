@@ -76,7 +76,7 @@
     "systemjs-builder": "^0.15.34",
     "tether": "^1.4.0",
     "tether-drop": "https://github.com/torkelo/drop",
-    "tslint": "^4.0.2",
+    "tslint": "^4.5.1",
     "typescript": "^2.1.4",
     "virtual-scroll": "^1.1.1"
   }
