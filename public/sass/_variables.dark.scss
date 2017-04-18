@@ -251,8 +251,9 @@ $infoText:                $blue-dark;
 $infoBackground:          $blue-dark;
 
 // popover
-$popover-bg:         $dark-4;
-$popover-color:      $text-color;
+$popover-bg:              $panel-bg;
+$popover-color:           $text-color;
+$popover-border-color:    $gray-1;
 
 $popover-help-bg:         $btn-secondary-bg;
 $popover-help-color:      $text-color;

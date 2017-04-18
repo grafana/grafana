@@ -1,4 +1,4 @@
-<div class="submenu-controls gf-form-query">
+<div class="submenu-controls">
 
   <div ng-repeat="variable in ctrl.variables" ng-hide="variable.hide === 2" class="submenu-item gf-form-inline">
     <div class="gf-form">
@@ -11,7 +11,7 @@
   </div>
 
   <div ng-if="ctrl.dashboard.annotations.list.length > 0">
-    <div ng-repeat="annotation in ctrl.dashboard.annotations.list" class="submenu-item" ng-class="{'annotation-disabled': !annotation.enable}">
+    <div ng-repeat="annotation in ctrl.dashboard.annotations.list" ng-hide="annotation.hide" class="submenu-item" ng-class="{'annotation-disabled': !annotation.enable}">
       <gf-form-switch class="gf-form" label="{{annotation.name}}" checked="annotation.enable" on-change="ctrl.annotationStateChanged()"></gf-form-switch>
     </div>
   </div>

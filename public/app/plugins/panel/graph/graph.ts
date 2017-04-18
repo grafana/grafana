@@ -17,9 +17,10 @@ import {tickStep} from 'app/core/utils/ticks';
 import {appEvents, coreModule} from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import {ThresholdManager} from './threshold_manager';
+import {EventManager} from 'app/features/annotations/all';
 import {convertValuesToHistogram, getSeriesValues} from './histogram';
 
-coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
+coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
   return {
     restrict: 'A',
     template: '',
@@ -27,13 +28,14 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
       var ctrl = scope.ctrl;
       var dashboard = ctrl.dashboard;
       var panel = ctrl.panel;
+      var annotations = [];
       var data;
-      var annotations;
       var plot;
       var sortedSeries;
       var legendSideLastValue = null;
       var rootScope = scope.$root;
       var panelWidth = 0;
+      var eventManager = new EventManager(ctrl, elem, popoverSrv);
       var thresholdManager = new ThresholdManager(ctrl);
       var tooltip = new GraphTooltip(elem, dashboard, scope, function() {
         return sortedSeries;
@@ -54,7 +56,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         if (!data) {
           return;
         }
-        annotations = ctrl.annotations;
+        annotations = ctrl.annotations || [];
         render_panel();
       });
 
@@ -328,8 +330,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
           }
         }
 
-        thresholdManager.addPlotOptions(options, panel);
-        addAnnotations(options);
+        thresholdManager.addFlotOptions(options, panel);
+        eventManager.addFlotEvents(annotations, options);
         configureAxisOptions(data, options);
 
         sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
@@ -461,56 +463,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         };
       }
 
-      function addAnnotations(options) {
-        if (!annotations || annotations.length === 0) {
-          return;
-        }
-
-        var types = {};
-        types['$__alerting'] = {
-          color: 'rgba(237, 46, 24, 1)',
-          position: 'BOTTOM',
-          markerSize: 5,
-        };
-
-        types['$__ok'] = {
-          color: 'rgba(11, 237, 50, 1)',
-          position: 'BOTTOM',
-          markerSize: 5,
-        };
-
-        types['$__no_data'] = {
-          color: 'rgba(150, 150, 150, 1)',
-          position: 'BOTTOM',
-          markerSize: 5,
-        };
-
-        types['$__execution_error'] = ['$__no_data'];
-
-        for (var i = 0; i < annotations.length; i++) {
-          var item = annotations[i];
-          if (item.newState) {
-            console.log(item.newState);
-            item.eventType = '$__' + item.newState;
-            continue;
-          }
-
-          if (!types[item.source.name]) {
-            types[item.source.name] = {
-              color: item.source.iconColor,
-              position: 'BOTTOM',
-              markerSize: 5,
-            };
-          }
-        }
-
-        options.events = {
-          levels: _.keys(types).length + 1,
-          data: annotations,
-          types: types,
-        };
-      }
-
       function configureAxisOptions(data, options) {
         var defaults = {
           position: 'left',
@@ -639,12 +591,30 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
       }
 
       elem.bind("plotselected", function (event, ranges) {
-        scope.$apply(function() {
-          timeSrv.setTime({
-            from  : moment.utc(ranges.xaxis.from),
-            to    : moment.utc(ranges.xaxis.to),
+        if (ranges.ctrlKey || ranges.metaKey)  {
+          // scope.$apply(() => {
+          //   eventManager.updateTime(ranges.xaxis);
+          // });
+        } else {
+          scope.$apply(function() {
+            timeSrv.setTime({
+              from  : moment.utc(ranges.xaxis.from),
+              to    : moment.utc(ranges.xaxis.to),
+            });
           });
-        });
+        }
+      });
+
+      elem.bind("plotclick", function (event, pos, item) {
+        if (pos.ctrlKey || pos.metaKey || eventManager.event)  {
+          // Skip if range selected (added in "plotselected" event handler)
+          let isRangeSelection = pos.x !== pos.x1;
+          if (!isRangeSelection) {
+            // scope.$apply(() => {
+            //   eventManager.updateTime({from: pos.x, to: null});
+            // });
+          }
+        }
       });
 
       scope.$on('$destroy', function() {

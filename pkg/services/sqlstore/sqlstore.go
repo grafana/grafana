@@ -98,8 +98,8 @@ func SetEngine(engine *xorm.Engine) (err error) {
 		return fmt.Errorf("Sqlstore::Migration failed err: %v\n", err)
 	}
 
+	// Init repo instances
 	annotations.SetRepository(&SqlAnnotationRepo{})
-
 	return nil
 }
 

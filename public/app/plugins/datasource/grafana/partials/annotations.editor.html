@@ -1,11 +1,10 @@
 
 <div class="gf-form-group">
-	<h6>Filters</h6>
 	<div class="gf-form-inline">
 		<div class="gf-form">
 			<span class="gf-form-label width-7">Type</span>
 			<div class="gf-form-select-wrapper">
-				<select class="gf-form-input" ng-model="ctrl.annotation.type" ng-options="f.value as f.text for f in [{text: 'Alert', value: 'alert'}]">
+				<select class="gf-form-input" ng-model="ctrl.annotation.type" ng-options="f.value as f.text for f in [{text: 'Event', value: 'event'}, {text: 'Alert', value: 'alert'}]">
 				</select>
 			</div>
 		</div>
