@@ -232,7 +232,10 @@ function ($, _, angular, Drop) {
         lineWidth = this._types[eventTypeId].lineWidth;
       }
 
-      top = o.top + this._plot.height();
+      var topOffset = xaxis.options.eventSectionHeight || 0;
+      topOffset = topOffset / 2;
+
+      top = o.top + this._plot.height() + topOffset;
       left = xaxis.p2c(event.min) + o.left;
 
       var line = $('<div class="events_line flot-temp-elem"></div>').css({
@@ -241,7 +244,7 @@ function ($, _, angular, Drop) {
         "left": left + 'px',
         "top": 8,
         "width": lineWidth + "px",
-        "height": this._plot.height(),
+        "height": this._plot.height() + topOffset,
         "border-left-width": lineWidth + "px",
         "border-left-style": lineStyle,
         "border-left-color": color
