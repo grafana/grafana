@@ -28,7 +28,6 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   toggleEditorMode() {
-    this.target.textEditor = !this.target.textEditor;
     this.parseTarget();
   }
 
@@ -220,17 +219,17 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       this.target.target = _.reduce(this.functions, this.wrapFunction, metricPath);
     }
 
-    this.resolveTarget(this.target);
+    this.updateRenderedTarget(this.target);
 
     // loop through other queries and update targetFull as needed
     for (const target of this.panelCtrl.panel.targets || []) {
       if (target.refId !== this.target.refId) {
-        this.resolveTarget(target);
+        this.updateRenderedTarget(target);
       }
     }
   }
 
-  resolveTarget(target) {
+  updateRenderedTarget(target) {
     // render nested query
     var targetsByRefId = _.keyBy(this.panelCtrl.panel.targets, 'refId');
 
@@ -240,6 +239,8 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     var nestedSeriesRefRegex = /\#([A-Z])/g;
     var targetWithNestedQueries = target.target;
 
+    // Keep interpolating until there are no query references
+    // The reason for the loop is that the referenced query might contain another reference to another query
     while (targetWithNestedQueries.match(nestedSeriesRefRegex)) {
       var updated = targetWithNestedQueries.replace(nestedSeriesRefRegex, (match, g1) => {
         var t = targetsByRefId[g1];
@@ -249,7 +250,6 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
         // no circular references
         delete targetsByRefId[g1];
-
         return t.target;
       });
 
