@@ -47,8 +47,7 @@ func (node *ClusterNode) Register() error {
 		return errors.New("Cluster node object is nil")
 	}
 	cmd := &m.SaveActiveNodeCommand{}
-	cmd.ActiveNode = make([]*m.ActiveNode, 1)
-	cmd.ActiveNode[0] = &m.ActiveNode{NodeId: node.nodeId}
+	cmd.Result = &m.ActiveNodeHeartbeat{NodeId: node.nodeId}
 	if err := bus.Dispatch(cmd); err != nil {
 		er := fmt.Errorf("Failed to register node - %v", node.nodeId)
 		node.log.Error(er.Error())
@@ -86,8 +85,17 @@ func (node *ClusterNode) ScheduleNext() error {
 }
 
 func (node *ClusterNode) GetNodeSequence() (int32, error) {
-	if(node == nil) {
-		return errors.New("Cluster node object is nil")
+	if node == nil {
+		return 0, errors.New("Cluster node object is nil")
 	}
 	// get node sequence number from db
+	return 0, nil
+}
+
+func (node *ClusterNode) executeMissingAlerts() error {
+	if node == nil {
+		return errors.New("Cluster node object is nil")
+	}
+	//execute missing alerts
+	return errors.New("Not implemented")
 }

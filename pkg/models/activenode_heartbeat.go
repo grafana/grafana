@@ -23,14 +23,10 @@ const (
 	NORMAL_ALERT  = "normal_alert"
 )
 
-type SaveNodeProcessingMissingAlertQuery struct {
-	NodeId    string
-	Heartbeat int64 //this will change
-	Result    *ActiveNodeHeartbeat
+type SaveNodeByIdCmd struct {
+	NodeId string
 }
 
 type GetNodeProcessingMissingAlertQuery struct {
-	AlertRunType string
-	Heartbeat    int64 //this might change
-	Result       *ActiveNodeHeartbeat
+	Result *ActiveNodeHeartbeat
 }

@@ -9,6 +9,7 @@ import . "github.com/grafana/grafana/pkg/services/sqlstore/migrator"
 
 func AddMigrations(mg *Migrator) {
 	addMigrationLogMigrations(mg)
+	addActiveNodeMigration(mg)
 	addUserMigrations(mg)
 	addTempUserMigrations(mg)
 	addStarMigrations(mg)
