@@ -85,7 +85,7 @@ export default class InfluxDatasource {
     // replace templated variables
     allQueries = this.templateSrv.replace(allQueries, scopedVars);
 
-    return this._seriesQuery(allQueries).then((data): any => {
+    return this._seriesQuery(allQueries, options).then((data): any => {
       if (!data || !data.results) {
         return [];
       }
@@ -131,7 +131,7 @@ export default class InfluxDatasource {
     var query = options.annotation.query.replace('$timeFilter', timeFilter);
     query = this.templateSrv.replace(query, null, 'regex');
 
-    return this._seriesQuery(query).then(data => {
+    return this._seriesQuery(query, options).then(data => {
       if (!data || !data.results || !data.results[0]) {
         throw { message: 'No results in response from InfluxDB' };
       }
@@ -167,13 +167,13 @@ export default class InfluxDatasource {
   getTagKeys(options) {
     var queryBuilder = new InfluxQueryBuilder({measurement: '', tags: []}, this.database);
     var query = queryBuilder.buildExploreQuery('TAG_KEYS');
-    return this.metricFindQuery(query);
+    return this.metricFindQuery(query, options);
   }
 
   getTagValues(options) {
     var queryBuilder = new InfluxQueryBuilder({measurement: '', tags: []}, this.database);
     var query = queryBuilder.buildExploreQuery('TAG_VALUES', options.key);
-    return this.metricFindQuery(query);
+    return this.metricFindQuery(query, options);
   }
 
   _seriesQuery(query: string, options?: any) {
