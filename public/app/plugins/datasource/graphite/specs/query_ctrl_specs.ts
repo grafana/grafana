@@ -186,4 +186,24 @@ describe('GraphiteQueryCtrl', function() {
       expect(ctx.ctrl.target.targetFull).to.be('scaleToSeconds(nested.query.count)');
     });
   });
+
+  describe('when updating target used in other query', function() {
+    beforeEach(function() {
+      ctx.ctrl.target.target = 'metrics.a.count';
+      ctx.ctrl.target.refId = 'A';
+      ctx.ctrl.datasource.metricFindQuery = sinon.stub().returns(ctx.$q.when([{expandable: false}]));
+      ctx.ctrl.parseTarget();
+
+      ctx.ctrl.panelCtrl.panel.targets = [
+        ctx.ctrl.target, {target: 'sumSeries(#A)', refId: 'B'}
+      ];
+
+      ctx.ctrl.updateModelTarget();
+    });
+
+    it('targetFull of other query should update', function() {
+      expect(ctx.ctrl.panel.targets[1].targetFull).to.be('sumSeries(metrics.a.count)');
+    });
+  });
+
 });
