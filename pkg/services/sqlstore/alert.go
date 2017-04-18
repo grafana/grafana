@@ -247,6 +247,7 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 		alert.State = cmd.State
 		alert.StateChanges += 1
 		alert.NewStateDate = time.Now()
+		alert.EvalDate = time.Now()
 		alert.EvalData = cmd.EvalData
 
 		if cmd.Error == "" {
@@ -255,6 +256,20 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 			alert.ExecutionError = cmd.Error
 		}
 
+		sess.Id(alert.Id).Update(&alert)
+		return nil
+	})
+}
+
+func SetAlertEvalDate(cmd *m.SetAlertEvalDateCmd) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		alert := m.Alert{}
+		if has, err := sess.Id(cmd.AlertId).Get(&alert); err != nil {
+			return err
+		} else if !has {
+			return fmt.Errorf("Could not find alert")
+		}
+		alert.EvalDate = time.Now()
 		sess.Id(alert.Id).Update(&alert)
 		return nil
 	})
