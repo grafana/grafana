@@ -4,11 +4,14 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
-
-	null "gopkg.in/guregu/null.v3"
+	"strconv"
+	"strings"
 
 	"fmt"
 
+	"regexp"
+
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -17,6 +20,16 @@ func NewResponseParser() *ResponseParser {
 	return &ResponseParser{
 		log: log.New("tsdb.mqe"),
 	}
+}
+
+var (
+	indexAliasPattern    *regexp.Regexp
+	wildcardAliasPattern *regexp.Regexp
+)
+
+func init() {
+	indexAliasPattern = regexp.MustCompile(`\$(\d)`)
+	wildcardAliasPattern = regexp.MustCompile(`[*!]`)
 }
 
 type MQEResponse struct {
@@ -48,7 +61,7 @@ type ResponseParser struct {
 	log log.Logger
 }
 
-func (parser *ResponseParser) Parse(res *http.Response, queryRef *Query) ([]*tsdb.TimeSeries, error) {
+func (parser *ResponseParser) Parse(res *http.Response, queryRef QueryToSend) ([]*tsdb.TimeSeries, error) {
 	body, err := ioutil.ReadAll(res.Body)
 	defer res.Body.Close()
 	if err != nil {
@@ -74,21 +87,13 @@ func (parser *ResponseParser) Parse(res *http.Response, queryRef *Query) ([]*tsd
 	var series []*tsdb.TimeSeries
 	for _, body := range data.Body {
 		for _, mqeSerie := range body.Series {
-			namePrefix := ""
-
-			//append predefined tags to seriename
-			for key, value := range mqeSerie.Tagset {
-				if key == "cluster" && queryRef.AddClusterToAlias {
-					namePrefix += value + " "
-				}
+			serie := &tsdb.TimeSeries{
+				Tags: map[string]string{},
+				Name: parser.formatLegend(body, mqeSerie, queryRef),
 			}
 			for key, value := range mqeSerie.Tagset {
-				if key == "host" && queryRef.AddHostToAlias {
-					namePrefix += value + " "
-				}
+				serie.Tags[key] = value
 			}
-
-			serie := &tsdb.TimeSeries{Name: namePrefix + body.Name}
 
 			for i, value := range mqeSerie.Values {
 				timestamp := body.TimeRange.Start + int64(i)*body.TimeRange.Resolution
@@ -100,4 +105,73 @@ func (parser *ResponseParser) Parse(res *http.Response, queryRef *Query) ([]*tsd
 	}
 
 	return series, nil
+}
+
+func (parser *ResponseParser) formatLegend(body MQEResponseSerie, mqeSerie MQESerie, queryToSend QueryToSend) string {
+	namePrefix := ""
+
+	//append predefined tags to seriename
+	for key, value := range mqeSerie.Tagset {
+		if key == "cluster" && queryToSend.QueryRef.AddClusterToAlias {
+			namePrefix += value + " "
+		}
+	}
+	for key, value := range mqeSerie.Tagset {
+		if key == "host" && queryToSend.QueryRef.AddHostToAlias {
+			namePrefix += value + " "
+		}
+	}
+
+	return namePrefix + parser.formatName(body, queryToSend)
+}
+
+func (parser *ResponseParser) formatName(body MQEResponseSerie, queryToSend QueryToSend) string {
+	if indexAliasPattern.MatchString(queryToSend.Metric.Alias) {
+		return parser.indexAlias(body, queryToSend)
+	}
+
+	if wildcardAliasPattern.MatchString(queryToSend.Metric.Metric) && wildcardAliasPattern.MatchString(queryToSend.Metric.Alias) {
+		return parser.wildcardAlias(body, queryToSend)
+	}
+
+	return body.Name
+}
+
+func (parser *ResponseParser) wildcardAlias(body MQEResponseSerie, queryToSend QueryToSend) string {
+	regString := strings.Replace(queryToSend.Metric.Metric, `*`, `(.*)`, 1)
+	reg, err := regexp.Compile(regString)
+	if err != nil {
+		return queryToSend.Metric.Alias
+	}
+
+	matches := reg.FindAllStringSubmatch(queryToSend.RawQuery, -1)
+
+	if len(matches) == 0 || len(matches[0]) < 2 {
+		return queryToSend.Metric.Alias
+	}
+
+	return matches[0][1]
+}
+
+func (parser *ResponseParser) indexAlias(body MQEResponseSerie, queryToSend QueryToSend) string {
+	queryNameParts := strings.Split(queryToSend.Metric.Metric, `.`)
+
+	name := indexAliasPattern.ReplaceAllStringFunc(queryToSend.Metric.Alias, func(in string) string {
+		positionName := strings.TrimSpace(strings.Replace(in, "$", "", 1))
+
+		pos, err := strconv.Atoi(positionName)
+		if err != nil {
+			return ""
+		}
+
+		for i, part := range queryNameParts {
+			if i == pos-1 {
+				return strings.TrimSpace(part)
+			}
+		}
+
+		return ""
+	})
+
+	return strings.Replace(name, " ", ".", -1)
 }

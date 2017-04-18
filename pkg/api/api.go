@@ -4,14 +4,13 @@ import (
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/api/live"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"gopkg.in/macaron.v1"
 )
 
 // Register adds http routes
-func Register(r *macaron.Macaron) {
+func (hs *HttpServer) registerRoutes() {
+	r := hs.macaron
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
@@ -124,8 +123,11 @@ func Register(r *macaron.Macaron) {
 		// users (admin permission required)
 		r.Group("/users", func() {
 			r.Get("/", wrap(SearchUsers))
+			r.Get("/search", wrap(SearchUsersWithPaging))
 			r.Get("/:id", wrap(GetUserById))
 			r.Get("/:id/orgs", wrap(GetUserOrgList))
+			// query parameters /users/lookup?loginOrEmail=admin@example.com
+			r.Get("/lookup", wrap(GetUserByLoginOrEmail))
 			r.Put("/:id", bind(m.UpdateUserCommand{}), wrap(UpdateUser))
 			r.Post("/:id/using/:orgId", wrap(UpdateUserActiveOrg))
 		}, reqGrafanaAdmin)
@@ -194,10 +196,11 @@ func Register(r *macaron.Macaron) {
 
 		// Data sources
 		r.Group("/datasources", func() {
-			r.Get("/", GetDataSources)
+			r.Get("/", wrap(GetDataSources))
 			r.Post("/", quota("data_source"), bind(m.AddDataSourceCommand{}), AddDataSource)
 			r.Put("/:id", bind(m.UpdateDataSourceCommand{}), wrap(UpdateDataSource))
-			r.Delete("/:id", DeleteDataSource)
+			r.Delete("/:id", DeleteDataSourceById)
+			r.Delete("/name/:name", DeleteDataSourceByName)
 			r.Get("/:id", wrap(GetDataSourceById))
 			r.Get("/name/:name", wrap(GetDataSourceByName))
 		}, reqOrgAdmin)
@@ -262,6 +265,7 @@ func Register(r *macaron.Macaron) {
 		})
 
 		r.Get("/alert-notifications", wrap(GetAlertNotifications))
+		r.Get("/alert-notifiers", wrap(GetAlertNotifiers))
 
 		r.Group("/alert-notifications", func() {
 			r.Post("/test", bind(dtos.NotificationTestCommand{}), wrap(NotificationTest))
@@ -303,11 +307,10 @@ func Register(r *macaron.Macaron) {
 	r.Get("/avatar/:hash", avt.ServeHTTP)
 
 	// Websocket
-	liveConn := live.New()
-	r.Any("/ws", liveConn.Serve)
+	r.Any("/ws", hs.streamManager.Serve)
 
 	// streams
-	r.Post("/api/streams/push", reqSignedIn, bind(dtos.StreamMessage{}), liveConn.PushToStream)
+	//r.Post("/api/streams/push", reqSignedIn, bind(dtos.StreamMessage{}), liveConn.PushToStream)
 
 	InitAppPluginRoutes(r)
 

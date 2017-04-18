@@ -8,6 +8,9 @@ describe('templateSrv', function() {
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
+  beforeEach(angularMocks.module($provide => {
+    $provide.value('timeSrv', {});
+  }));
 
   beforeEach(angularMocks.inject(function(variableSrv, templateSrv) {
     _templateSrv = templateSrv;
@@ -150,6 +153,11 @@ describe('templateSrv', function() {
       expect(result).to.be('test,build=test2');
     });
 
+    it('multi value and distributed should render when not string', function() {
+      var result = _templateSrv.formatValue(['test'], 'distributed', { name: 'build' });
+      expect(result).to.be('test');
+    });
+
     it('slash should be properly escaped in regex format', function() {
       var result = _templateSrv.formatValue('Gi3/14', 'regex');
       expect(result).to.be('Gi3\\/14');
@@ -238,5 +246,17 @@ describe('templateSrv', function() {
       var target = _templateSrv.replaceWithText('Server: $server, period: $period');
       expect(target).to.be('Server: All, period: 13m');
     });
+  });
+
+  describe('built in interval variables', function() {
+    beforeEach(function() {
+      initTemplateSrv([]);
+    });
+
+    it('should replace $__interval_ms with interval milliseconds', function() {
+      var target = _templateSrv.replace('10 * $__interval_ms', {"__interval_ms": {text: "100", value: "100"}});
+      expect(target).to.be('10 * 100');
+    });
+
   });
 });

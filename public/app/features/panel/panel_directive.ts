@@ -156,10 +156,11 @@ module.directive('grafanaPanel', function($rootScope) {
             content: function() {
               return ctrl.getInfoContent({mode: 'tooltip'});
             },
-            position: 'right middle',
+            position: 'top center',
             classes: ctrl.error ? 'drop-error' : 'drop-help',
             openOn: 'hover',
             hoverOpenDelay: 100,
+            constrainToScrollParent: false,
           });
         }
       }

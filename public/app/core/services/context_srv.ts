@@ -57,6 +57,10 @@ export class ContextSrv {
     store.set('grafana.sidemenu.pinned', val);
   }
 
+  isGrafanaVisible() {
+    return !!(document.visibilityState === undefined || document.visibilityState === 'visible');
+  }
+
   toggleSideMenu() {
     this.sidemenu = !this.sidemenu;
     if (!this.sidemenu) {

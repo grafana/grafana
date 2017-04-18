@@ -13,7 +13,42 @@ import (
 )
 
 func init() {
-	alerting.RegisterNotifier("slack", NewSlackNotifier)
+	alerting.RegisterNotifier(&alerting.NotifierPlugin{
+		Type:        "slack",
+		Name:        "Slack",
+		Description: "Sends notifications using Grafana server configured STMP settings",
+		Factory:     NewSlackNotifier,
+		OptionsTemplate: `
+      <h3 class="page-heading">Slack settings</h3>
+      <div class="gf-form max-width-30">
+        <span class="gf-form-label width-6">Url</span>
+        <input type="text" required class="gf-form-input max-width-30" ng-model="ctrl.model.settings.url" placeholder="Slack incoming webhook url"></input>
+      </div>
+      <div class="gf-form max-width-30">
+        <span class="gf-form-label width-6">Recipient</span>
+        <input type="text"
+          class="gf-form-input max-width-30"
+          ng-model="ctrl.model.settings.recipient"
+          data-placement="right">
+        </input>
+        <info-popover mode="right-absolute">
+          Override default channel or user, use #channel-name or @username
+        </info-popover>
+      </div>
+      <div class="gf-form max-width-30">
+        <span class="gf-form-label width-6">Mention</span>
+        <input type="text"
+          class="gf-form-input max-width-30"
+          ng-model="ctrl.model.settings.mention"
+          data-placement="right">
+        </input>
+        <info-popover mode="right-absolute">
+          Mention a user or a group using @ when notifying in a channel
+        </info-popover>
+      </div>
+    `,
+	})
+
 }
 
 func NewSlackNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
@@ -88,7 +123,7 @@ func (this *SlackNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"fields":      fields,
 				"image_url":   evalContext.ImagePublicUrl,
 				"footer":      "Grafana v" + setting.BuildVersion,
-				"footer_icon": "http://grafana.org/assets/img/fav32.png",
+				"footer_icon": "https://grafana.com/assets/img/fav32.png",
 				"ts":          time.Now().Unix(),
 			},
 		},

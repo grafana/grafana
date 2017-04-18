@@ -14,8 +14,7 @@ import (
 	"net/http"
 	"net/url"
 
-	"gopkg.in/guregu/null.v3"
-
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -189,6 +188,10 @@ func (e *OpenTsdbExecutor) buildMetric(query *tsdb.Query) map[string]interface{}
 		resetValue, resetValueCheck := query.Model.CheckGet("counterResetValue")
 		if resetValueCheck {
 			rateOptions["resetValue"] = resetValue.MustFloat64()
+		}
+
+		if !counterMaxCheck && (!resetValueCheck || resetValue.MustFloat64() == 0) {
+			rateOptions["dropcounter"] = true
 		}
 
 		metric["rateOptions"] = rateOptions

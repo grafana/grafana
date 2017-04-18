@@ -1,9 +1,9 @@
 package tsdb
 
 import (
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	"gopkg.in/guregu/null.v3"
 )
 
 type Query struct {
@@ -51,8 +51,9 @@ type QueryResult struct {
 }
 
 type TimeSeries struct {
-	Name   string           `json:"name"`
-	Points TimeSeriesPoints `json:"points"`
+	Name   string            `json:"name"`
+	Points TimeSeriesPoints  `json:"points"`
+	Tags   map[string]string `json:"tags"`
 }
 
 type TimePoint [2]null.Float

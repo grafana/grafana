@@ -22,7 +22,7 @@ other domains including industrial sensors, home automation, weather, and proces
 - [Installing on Windows](installation/windows)
 - [Installing on Docker](installation/docker)
 - [Installing using Provisioning (Chef, Puppet, Salt, Ansible, etc)](installation/provisioning)
-- [Nightly Builds](http://grafana.org/builds)
+- [Nightly Builds](https://grafana.com/grafana/download)
 
 For other platforms Read the [build from source]({{< relref "project/building_from_source.md" >}})
 instructions for more information.
@@ -42,9 +42,9 @@ those options.
 
 ## Data sources guides
 
-- [Graphite](datasources/graphite)
-- [Elasticsearch](datasources/elasticsearch)
-- [InfluxDB](datasources/influxdb)
-- [OpenTSDB](datasources/opentsdb)
+- [Graphite]({{< relref "features/datasources/graphite.md" >}})
+- [Elasticsearch]({{< relref "features/datasources/elasticsearch.md" >}})
+- [InfluxDB]({{< relref "features/datasources/influxdb.md" >}})
+- [OpenTSDB]({{< relref "features/datasources/opentsdb.md" >}})
 
 

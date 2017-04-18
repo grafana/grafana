@@ -3,6 +3,7 @@ package dtos
 import (
 	"time"
 
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -16,6 +17,7 @@ type AlertRule struct {
 	State          m.AlertStateType `json:"state"`
 	NewStateDate   time.Time        `json:"newStateDate"`
 	EvalDate       time.Time        `json:"evalDate"`
+	EvalData       *simplejson.Json `json:"evalData"`
 	ExecutionError string           `json:"executionError"`
 	DashbboardUri  string           `json:"dashboardUri"`
 }
@@ -36,6 +38,7 @@ type AlertTestCommand struct {
 
 type AlertTestResult struct {
 	Firing         bool                  `json:"firing"`
+	State          m.AlertStateType      `json:"state"`
 	ConditionEvals string                `json:"conditionEvals"`
 	TimeMs         string                `json:"timeMs"`
 	Error          string                `json:"error,omitempty"`
@@ -51,7 +54,7 @@ type AlertTestResultLog struct {
 type EvalMatch struct {
 	Tags   map[string]string `json:"tags,omitempty"`
 	Metric string            `json:"metric"`
-	Value  float64           `json:"value"`
+	Value  null.Float        `json:"value"`
 }
 
 type NotificationTestCommand struct {

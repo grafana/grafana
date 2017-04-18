@@ -7,8 +7,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/tsdb"
-	"gopkg.in/guregu/null.v3"
 )
 
 type ResponseParser struct{}

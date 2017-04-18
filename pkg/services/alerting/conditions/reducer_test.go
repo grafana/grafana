@@ -3,10 +3,10 @@ package conditions
 import (
 	"testing"
 
-	"gopkg.in/guregu/null.v3"
-
-	"github.com/grafana/grafana/pkg/tsdb"
 	. "github.com/smartystreets/goconvey/convey"
+
+	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana/pkg/tsdb"
 )
 
 func TestSimpleReducer(t *testing.T) {
@@ -55,6 +55,16 @@ func TestSimpleReducer(t *testing.T) {
 		Convey("avg", func() {
 			result := testReducer("avg", 1, 2, 3)
 			So(result, ShouldEqual, float64(2))
+		})
+
+		Convey("avg with only nulls", func() {
+			reducer := NewSimpleReducer("avg")
+			series := &tsdb.TimeSeries{
+				Name: "test time serie",
+			}
+
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFromPtr(nil), 1))
+			So(reducer.Reduce(series).Valid, ShouldEqual, false)
 		})
 
 		Convey("avg of number values and null values should ignore nulls", func() {

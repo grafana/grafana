@@ -94,6 +94,21 @@ export class BackendSrv {
     });
   };
 
+  addCanceler(requestId, canceler) {
+    if (requestId in this.inFlightRequests) {
+      this.inFlightRequests[requestId].push(canceler);
+    } else {
+      this.inFlightRequests[requestId] = [canceler];
+    }
+  }
+
+  resolveCancelerIfExists(requestId) {
+    var cancelers = this.inFlightRequests[requestId];
+    if (!_.isUndefined(cancelers) && cancelers.length) {
+      cancelers[0].resolve();
+    }
+  }
+
   datasourceRequest(options) {
     options.retry = options.retry || 0;
 
@@ -101,16 +116,13 @@ export class BackendSrv {
     // particular query. If the requestID exists, the promise it is keyed to
     // is canceled, canceling the previous datasource request if it is still
     // in-flight.
-    var canceler;
-    if (options.requestId) {
-      canceler = this.inFlightRequests[options.requestId];
-      if (canceler) {
-        canceler.resolve();
-      }
+    var requestId = options.requestId;
+    if (requestId) {
+      this.resolveCancelerIfExists(requestId);
       // create new canceler
-      canceler = this.$q.defer();
+      var canceler = this.$q.defer();
       options.timeout = canceler.promise;
-      this.inFlightRequests[options.requestId] = canceler;
+      this.addCanceler(requestId, canceler);
     }
 
     var requestIsLocal = options.url.indexOf('/') === 0;
@@ -158,7 +170,7 @@ export class BackendSrv {
     }).finally(() => {
       // clean up
       if (options.requestId) {
-        delete this.inFlightRequests[options.requestId];
+        this.inFlightRequests[options.requestId].shift();
       }
     });
   };

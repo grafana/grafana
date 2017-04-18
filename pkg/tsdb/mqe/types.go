@@ -53,6 +53,7 @@ func (q *Query) Build(availableSeries []string) ([]QueryToSend, error) {
 			queriesToSend = append(queriesToSend, QueryToSend{
 				RawQuery: rawQuery,
 				QueryRef: q,
+				Metric:   metric,
 			})
 		} else {
 			m := strings.Replace(metric.Metric, "*", ".*", -1)
@@ -70,6 +71,7 @@ func (q *Query) Build(availableSeries []string) ([]QueryToSend, error) {
 					queriesToSend = append(queriesToSend, QueryToSend{
 						RawQuery: rawQuery,
 						QueryRef: q,
+						Metric:   metric,
 					})
 				}
 			}

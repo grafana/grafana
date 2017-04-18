@@ -82,6 +82,15 @@ export class AlertTabCtrl {
         ah.time = moment(ah.time).format('MMM D, YYYY HH:mm:ss');
         ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
         ah.metrics = alertDef.joinEvalMatches(ah.data, ', ');
+
+        if (ah.data.errorMessage) {
+          ah.metrics = "Error: " + ah.data.errorMessage;
+        }
+
+        if (ah.data.no_data) {
+          ah.metrics = "(due to no data)";
+        }
+
         return ah;
       });
     });
@@ -95,6 +104,8 @@ export class AlertTabCtrl {
       case "webhook": return "fa fa-cubes";
       case "pagerduty": return "fa fa-bullhorn";
       case "opsgenie": return "fa fa-bell";
+      case "hipchat": return "fa fa-mail-forward";
+      case "pushover": return "fa fa-mobile";
     }
   }
 

@@ -5,7 +5,9 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"net"
 	"net/http"
+	"time"
 
 	"golang.org/x/net/context/ctxhttp"
 
@@ -19,6 +21,19 @@ type Webhook struct {
 	Password   string
 	Body       string
 	HttpMethod string
+	HttpHeader map[string]string
+}
+
+var netTransport = &http.Transport{
+	Proxy: http.ProxyFromEnvironment,
+	Dial: (&net.Dialer{
+		Timeout: 30 * time.Second,
+	}).Dial,
+	TLSHandshakeTimeout: 5 * time.Second,
+}
+var netClient = &http.Client{
+	Timeout:   time.Second * 30,
+	Transport: netTransport,
 }
 
 var (
@@ -36,7 +51,7 @@ func processWebhookQueue() {
 	for {
 		select {
 		case webhook := <-webhookQueue:
-			err := sendWebRequestSync(context.TODO(), webhook)
+			err := sendWebRequestSync(context.Background(), webhook)
 
 			if err != nil {
 				webhookLog.Error("Failed to send webrequest ", "error", err)
@@ -63,7 +78,11 @@ func sendWebRequestSync(ctx context.Context, webhook *Webhook) error {
 		request.Header.Add("Authorization", util.GetBasicAuthHeader(webhook.User, webhook.Password))
 	}
 
-	resp, err := ctxhttp.Do(ctx, http.DefaultClient, request)
+	for k, v := range webhook.HttpHeader {
+		request.Header.Set(k, v)
+	}
+
+	resp, err := ctxhttp.Do(ctx, netClient, request)
 	if err != nil {
 		return err
 	}

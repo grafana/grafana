@@ -13,37 +13,33 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-type RootNotifier struct {
+type NotifierPlugin struct {
+	Type            string          `json:"type"`
+	Name            string          `json:"name"`
+	Description     string          `json:"description"`
+	OptionsTemplate string          `json:"optionsTemplate"`
+	Factory         NotifierFactory `json:"-"`
+}
+
+type NotificationService interface {
+	Send(context *EvalContext) error
+}
+
+func NewNotificationService() NotificationService {
+	return newNotificationService()
+}
+
+type notificationService struct {
 	log log.Logger
 }
 
-func NewRootNotifier() *RootNotifier {
-	return &RootNotifier{
+func newNotificationService() *notificationService {
+	return &notificationService{
 		log: log.New("alerting.notifier"),
 	}
 }
 
-func (n *RootNotifier) GetType() string {
-	return "root"
-}
-
-func (n *RootNotifier) NeedsImage() bool {
-	return false
-}
-
-func (n *RootNotifier) PassesFilter(rule *Rule) bool {
-	return false
-}
-
-func (n *RootNotifier) GetNotifierId() int64 {
-	return 0
-}
-
-func (n *RootNotifier) GetIsDefault() bool {
-	return false
-}
-
-func (n *RootNotifier) Notify(context *EvalContext) error {
+func (n *notificationService) Send(context *EvalContext) error {
 	notifiers, err := n.getNotifiers(context.Rule.OrgId, context.Rule.Notifications, context)
 	if err != nil {
 		return err
@@ -55,14 +51,16 @@ func (n *RootNotifier) Notify(context *EvalContext) error {
 		return nil
 	}
 
-	if err = n.uploadImage(context); err != nil {
-		n.log.Error("Failed to upload alert panel image.", "error", err)
+	if notifiers.ShouldUploadImage() {
+		if err = n.uploadImage(context); err != nil {
+			n.log.Error("Failed to upload alert panel image.", "error", err)
+		}
 	}
 
 	return n.sendNotifications(context, notifiers)
 }
 
-func (n *RootNotifier) sendNotifications(context *EvalContext, notifiers []Notifier) error {
+func (n *notificationService) sendNotifications(context *EvalContext, notifiers []Notifier) error {
 	g, _ := errgroup.WithContext(context.Ctx)
 
 	for _, notifier := range notifiers {
@@ -74,7 +72,7 @@ func (n *RootNotifier) sendNotifications(context *EvalContext, notifiers []Notif
 	return g.Wait()
 }
 
-func (n *RootNotifier) uploadImage(context *EvalContext) (err error) {
+func (n *notificationService) uploadImage(context *EvalContext) (err error) {
 	uploader, err := imguploader.NewImageUploader()
 	if err != nil {
 		return err
@@ -108,7 +106,7 @@ func (n *RootNotifier) uploadImage(context *EvalContext) (err error) {
 	return nil
 }
 
-func (n *RootNotifier) getNotifiers(orgId int64, notificationIds []int64, context *EvalContext) ([]Notifier, error) {
+func (n *notificationService) getNotifiers(orgId int64, notificationIds []int64, context *EvalContext) (NotifierSlice, error) {
 	query := &m.GetAlertNotificationsToSendQuery{OrgId: orgId, Ids: notificationIds}
 
 	if err := bus.Dispatch(query); err != nil {
@@ -129,13 +127,13 @@ func (n *RootNotifier) getNotifiers(orgId int64, notificationIds []int64, contex
 	return result, nil
 }
 
-func (n *RootNotifier) createNotifierFor(model *m.AlertNotification) (Notifier, error) {
-	factory, found := notifierFactories[model.Type]
+func (n *notificationService) createNotifierFor(model *m.AlertNotification) (Notifier, error) {
+	notifierPlugin, found := notifierFactories[model.Type]
 	if !found {
 		return nil, errors.New("Unsupported notification type")
 	}
 
-	return factory(model)
+	return notifierPlugin.Factory(model)
 }
 
 func shouldUseNotification(notifier Notifier, context *EvalContext) bool {
@@ -152,8 +150,18 @@ func shouldUseNotification(notifier Notifier, context *EvalContext) bool {
 
 type NotifierFactory func(notification *m.AlertNotification) (Notifier, error)
 
-var notifierFactories map[string]NotifierFactory = make(map[string]NotifierFactory)
+var notifierFactories map[string]*NotifierPlugin = make(map[string]*NotifierPlugin)
 
-func RegisterNotifier(typeName string, factory NotifierFactory) {
-	notifierFactories[typeName] = factory
+func RegisterNotifier(plugin *NotifierPlugin) {
+	notifierFactories[plugin.Type] = plugin
+}
+
+func GetNotifiers() []*NotifierPlugin {
+	list := make([]*NotifierPlugin, 0)
+
+	for _, value := range notifierFactories {
+		list = append(list, value)
+	}
+
+	return list
 }

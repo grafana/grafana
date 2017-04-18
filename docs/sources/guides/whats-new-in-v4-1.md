@@ -1,17 +1,17 @@
 +++
-title = "What's New in Grafana v4.1 beta"
-description = "Feature & improvement highlights for Grafana v4.1 beta"
-keywords = ["grafana", "new", "documentation", "4.1.0-beta1"]
+title = "What's New in Grafana v4.1"
+description = "Feature & improvement highlights for Grafana v4.1"
+keywords = ["grafana", "new", "documentation", "4.1.0"]
 type = "docs"
 [menu.docs]
-name = "Version 4.1 beta"
+name = "Version 4.1"
 identifier = "v4.1"
 parent = "whatsnew"
-weight = -1
+weight = 3
 +++
 
 
-## Whats new in Grafana v4.1 beta
+## Whats new in Grafana v4.1
 - **Graph**: Support for shared tooltip on all graphs as you hover over one graph. [#1578](https://github.com/grafana/grafana/pull/1578), [#6274](https://github.com/grafana/grafana/pull/6274)
 - **Victorops**: Add VictorOps notification integration [#6411](https://github.com/grafana/grafana/issues/6411), thx [@ichekrygin](https://github.com/ichekrygin)
 - **Opsgenie**: Add OpsGenie notification integratiion [#6687](https://github.com/grafana/grafana/issues/6687), thx [@kylemcc](https://github.com/kylemcc)
@@ -55,7 +55,7 @@ Once the `access key` and `secret key` have been saved the user will no longer b
 
 ## Upgrade & Breaking changes
 
-Elasticsearch 1.x is no longer supported. Please upgrade to Elasticsearch 2.x or 5.x. Otherwise Grafana 4.1.0-beta1 contains no breaking changes.
+Elasticsearch 1.x is no longer supported. Please upgrade to Elasticsearch 2.x or 5.x. Otherwise Grafana 4.1.0 contains no breaking changes.
 
 ## Changelog
 

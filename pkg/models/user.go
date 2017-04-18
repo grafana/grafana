@@ -130,7 +130,14 @@ type SearchUsersQuery struct {
 	Page  int
 	Limit int
 
-	Result []*UserSearchHitDTO
+	Result SearchUserQueryResult
+}
+
+type SearchUserQueryResult struct {
+	TotalCount int64               `json:"totalCount"`
+	Users      []*UserSearchHitDTO `json:"users"`
+	Page       int                 `json:"page"`
+	PerPage    int                 `json:"perPage"`
 }
 
 type GetUserOrgListQuery struct {

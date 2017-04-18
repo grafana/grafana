@@ -441,12 +441,15 @@ function($, _) {
   kbn.valueFormats.voltamp      = kbn.formatBuilders.decimalSIPrefix('VA');
   kbn.valueFormats.kvoltamp     = kbn.formatBuilders.decimalSIPrefix('VA', 1);
   kbn.valueFormats.voltampreact = kbn.formatBuilders.decimalSIPrefix('var');
+  kbn.valueFormats.kvoltampreact = kbn.formatBuilders.decimalSIPrefix('var', 1);
   kbn.valueFormats.watth        = kbn.formatBuilders.decimalSIPrefix('Wh');
   kbn.valueFormats.kwatth       = kbn.formatBuilders.decimalSIPrefix('Wh', 1);
   kbn.valueFormats.joule        = kbn.formatBuilders.decimalSIPrefix('J');
   kbn.valueFormats.ev           = kbn.formatBuilders.decimalSIPrefix('eV');
   kbn.valueFormats.amp          = kbn.formatBuilders.decimalSIPrefix('A');
+  kbn.valueFormats.kamp         = kbn.formatBuilders.decimalSIPrefix('A', 1);
   kbn.valueFormats.volt         = kbn.formatBuilders.decimalSIPrefix('V');
+  kbn.valueFormats.kvolt        = kbn.formatBuilders.decimalSIPrefix('V', 1);
   kbn.valueFormats.dBm          = kbn.formatBuilders.decimalSIPrefix('dBm');
 
   // Temperature
@@ -456,10 +459,18 @@ function($, _) {
   kbn.valueFormats.humidity  = kbn.formatBuilders.fixedUnit('%H');
 
   // Pressure
-  kbn.valueFormats.pressurembar = kbn.formatBuilders.fixedUnit('mbar');
+  kbn.valueFormats.pressurebar  = kbn.formatBuilders.decimalSIPrefix('bar');
+  kbn.valueFormats.pressurembar = kbn.formatBuilders.decimalSIPrefix('bar', -1);
+  kbn.valueFormats.pressurekbar = kbn.formatBuilders.decimalSIPrefix('bar', 1);
   kbn.valueFormats.pressurehpa  = kbn.formatBuilders.fixedUnit('hPa');
   kbn.valueFormats.pressurehg   = kbn.formatBuilders.fixedUnit('"Hg');
   kbn.valueFormats.pressurepsi  = kbn.formatBuilders.scaledUnits(1000, [' psi', ' ksi', ' Mpsi']);
+
+  // Force
+  kbn.valueFormats.forceNm  = kbn.formatBuilders.decimalSIPrefix('Nm');
+  kbn.valueFormats.forcekNm = kbn.formatBuilders.decimalSIPrefix('Nm', 1);
+  kbn.valueFormats.forceN   = kbn.formatBuilders.decimalSIPrefix('N');
+  kbn.valueFormats.forcekN  = kbn.formatBuilders.decimalSIPrefix('N', 1);
 
   // Length
   kbn.valueFormats.lengthm  = kbn.formatBuilders.decimalSIPrefix('m');
@@ -477,6 +488,14 @@ function($, _) {
   kbn.valueFormats.litre  = kbn.formatBuilders.decimalSIPrefix('L');
   kbn.valueFormats.mlitre = kbn.formatBuilders.decimalSIPrefix('L', -1);
   kbn.valueFormats.m3     = kbn.formatBuilders.decimalSIPrefix('m3');
+  kbn.valueFormats.dm3    = kbn.formatBuilders.decimalSIPrefix('dm3');
+  kbn.valueFormats.gallons  = kbn.formatBuilders.fixedUnit('gal');
+
+  // Flow
+  kbn.valueFormats.flowgpm  = kbn.formatBuilders.fixedUnit('gpm');
+  kbn.valueFormats.flowcms  = kbn.formatBuilders.fixedUnit('cms');
+  kbn.valueFormats.flowcfs  = kbn.formatBuilders.fixedUnit('cfs');
+  kbn.valueFormats.flowcfm  = kbn.formatBuilders.fixedUnit('cfm');
 
   // Time
   kbn.valueFormats.hertz = kbn.formatBuilders.decimalSIPrefix('Hz');
@@ -787,9 +806,11 @@ function($, _) {
       {
         text: 'volume',
         submenu: [
-          {text: 'millilitre',  value: 'mlitre'},
-          {text: 'litre',       value: 'litre' },
-          {text: 'cubic metre', value: 'm3'    },
+          {text: 'millilitre',      value: 'mlitre' },
+          {text: 'litre',           value: 'litre'  },
+          {text: 'cubic metre',     value: 'm3'     },
+          {text: 'cubic decimetre', value: 'dm3'    },
+          {text: 'gallons',         value: 'gallons'},
         ]
       },
       {
@@ -800,12 +821,15 @@ function($, _) {
           {text: 'volt-ampere (VA)',           value: 'voltamp'     },
           {text: 'kilovolt-ampere (kVA)',      value: 'kvoltamp'    },
           {text: 'volt-ampere reactive (var)', value: 'voltampreact'},
+          {text: 'kilovolt-ampere reactive (kvar)', value: 'kvoltampreact'},
           {text: 'watt-hour (Wh)',             value: 'watth'       },
           {text: 'kilowatt-hour (kWh)',        value: 'kwatth'      },
           {text: 'joule (J)',                  value: 'joule'       },
           {text: 'electron volt (eV)',         value: 'ev'          },
           {text: 'Ampere (A)',                 value: 'amp'         },
+          {text: 'Kiloampere (kA)',            value: 'kamp'        },
           {text: 'Volt (V)',                   value: 'volt'        },
+          {text: 'Kilovolt (kV)',              value: 'kvolt'       },
           {text: 'Decibel-milliwatt (dBm)',    value: 'dBm'         },
         ]
       },
@@ -821,9 +845,29 @@ function($, _) {
         text: 'pressure',
         submenu: [
           {text: 'Millibars',         value: 'pressurembar'},
+          {text: 'Bars',              value: 'pressurebar' },
+          {text: 'Kilobars',          value: 'pressurekbar'},
           {text: 'Hectopascals',      value: 'pressurehpa' },
           {text: 'Inches of mercury', value: 'pressurehg'  },
           {text: 'PSI',               value: 'pressurepsi' },
+        ]
+      },
+      {
+        text: 'force',
+        submenu: [
+          {text: 'Newton-meters (Nm)',      value: 'forceNm'  },
+          {text: 'Kilonewton-meters (kNm)', value: 'forcekNm' },
+          {text: 'Newtons (N)',             value: 'forceN'   },
+          {text: 'Kilonewtons (kN)',        value: 'forcekN'  },
+        ]
+      },
+      {
+        text: 'flow',
+        submenu: [
+          {text: 'Gallons/min (gpm)',       value: 'flowgpm'  },
+          {text: 'Cubic meters/sec (cms)',  value: 'flowcms'  },
+          {text: 'Cubic feet/sec (cfs)',    value: 'flowcfs'  },
+          {text: 'Cubic feet/min (cfm)',    value: 'flowcfm'  },
         ]
       }
     ];

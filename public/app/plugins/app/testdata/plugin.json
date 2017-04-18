@@ -7,9 +7,9 @@
     "description": "Grafana test data app",
     "author": {
       "name": "Grafana Project",
-      "url": "http://grafana.org"
+      "url": "https://grafana.com"
     },
-    "version": "1.0.15",
+    "version": "1.0.17",
     "updated": "2016-09-26"
   },
 
