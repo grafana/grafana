@@ -76,6 +76,8 @@ To select the monitoring pack it's necessary to specify a monitoring pack's fold
 
 `nodes.monitoringPacks.folder("Folder name").folder("Sub-folder name").name("Monitoring pack name")`
 
+*Hint: English names of build-in monitoring packs will be work for each language version of NetCrunch.*
+
 ###### Example
 
 The query to filter out the nodes to which monitoring pack shown in the image below has been added is as follows:

@@ -7,6 +7,7 @@
  */
 
 import { QueryParser } from './queryParser';
+import { NetCrunchDefaultEnglishMonitoringPacks } from './defaultEnglishMonitoringPacks';
 
 class NetCrunchMetricFindQuery {
 
@@ -64,16 +65,17 @@ class NetCrunchMetricFindQuery {
       const result = [];
       let subMap;
 
-      if (subMapNamesSequence.length === 0) {
-        result.push(...map.allNodesId);
-        result.success = true;
-        return result;
-      }
+      if (map != null) {
+        if (subMapNamesSequence.length === 0) {
+          result.push(...map.allNodesId);
+          result.success = true;
+          return result;
+        }
 
-
-      subMap = map.getChildMapByDisplayName(subMapNamesSequence.shift());         // eslint-disable-line prefer-const
-      if (subMap != null) {
-        return getNodeIdsForSubMap(subMap, subMapNamesSequence);
+        subMap = map.getChildMapByDisplayName(subMapNamesSequence.shift());     // eslint-disable-line prefer-const
+        if (subMap != null) {
+          return getNodeIdsForSubMap(subMap, subMapNamesSequence);
+        }
       }
 
       result.success = false;
@@ -109,6 +111,18 @@ class NetCrunchMetricFindQuery {
       );
     }
 
+    function filterNodesByMap(inputNodeList, mapId) {
+      const
+        map = atlas.atlasMaps.has(mapId) ? atlas.atlasMaps.get(mapId) : null,
+        success = (map != null),
+        filteredNodes = (success) ? filterNodesByIds(inputNodeList, map.allNodesId) : [];
+
+      return getProcessingResult(
+        success,
+        filteredNodes
+      );
+    }
+
     function createNodesTokenProcessor(nodeList) {
       return () => getProcessingResult(true, nodeList);
     }
@@ -125,8 +139,20 @@ class NetCrunchMetricFindQuery {
     }
 
     function monitoringPackTokenProcessor(parameter, nodeList) {
-      parameter.shift();
-      return filterNodesBySubMap(nodeList, atlas.monitoringPacks, parameter);
+      const
+        monitoringPackPath = parameter.shift() ? parameter : [],
+        nodesAtlasMonitoringPack = filterNodesBySubMap(nodeList, atlas.monitoringPacks, monitoringPackPath);
+
+      if (!nodesAtlasMonitoringPack.success) {
+        const monitoringPackId = NetCrunchDefaultEnglishMonitoringPacks.getMonitoringPackId(monitoringPackPath);
+
+        if (monitoringPackId != null) {
+          return filterNodesByMap(nodeList, monitoringPackId);
+        }
+        return getProcessingResult(false, []);
+      }
+
+      return nodesAtlasMonitoringPack;
     }
 
     const
