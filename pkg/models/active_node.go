@@ -18,3 +18,13 @@ type SaveActiveNodeCommand struct {
 	Node   *ActiveNode
 	Result *ActiveNode
 }
+
+const (
+	MISSING_ALERT = "missing_alert"
+	NORMAL_ALERT  = "normal_alert"
+)
+
+type GetNodeCmd struct {
+	Node   *ActiveNode
+	Result *ActiveNode
+}

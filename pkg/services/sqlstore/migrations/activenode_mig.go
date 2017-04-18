@@ -6,7 +6,7 @@ import (
 
 func addActiveNodeMigration(mg *Migrator) {
 	active_node := Table{
-		Name: "active_node_heartbeat",
+		Name: "active_node",
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "node_id", Type: DB_NVarchar, Length: 255, Nullable: false},
