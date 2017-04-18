@@ -16,6 +16,7 @@ var (
 func init() {
 	bus.AddHandler("sql", GetActiveNodeById)
 	bus.AddHandler("sql", InsertActiveNodeHeartbeat)
+	bus.AddHandler("sql", InsertNodeProcessingMissingAlert)
 }
 
 func GetActiveNodeById(query *m.GetActiveNodeByIDQuery) error {
@@ -66,7 +67,7 @@ func InsertActiveNodeHeartbeat(cmd *m.SaveActiveNodeCommand) error {
 	})
 }
 
-func InsertNodeProcessingMissingAlert(cmd *m.SaveActiveNodeCommand) error {
+func InsertNodeProcessingMissingAlert(cmd *m.SaveNodeProcessingMissingAlertCommand) error {
 	return inTransaction(func(sess *xorm.Session) error {
 		result := struct{ Ts int64 }{}
 		_, err := sess.Select(dialect.CurrentTimeToRoundMinSql() + "as ts").Cols("ts").Get(&result)

@@ -36,7 +36,7 @@ func TestActiveNode(t *testing.T) {
 		act2 := m.ActiveNode{
 			NodeId: "10.1.1.1:4330",
 		}
-		cmd2 := m.SaveActiveNodeCommand{Node: &act2}
+		cmd2 := m.SaveNodeProcessingMissingAlertCommand{Node: &act2}
 		err2 := InsertNodeProcessingMissingAlert(&cmd2)
 		Convey("Can  insert node processing missing alert", func() {
 			So(err2, ShouldBeNil)

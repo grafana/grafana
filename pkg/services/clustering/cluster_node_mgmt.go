@@ -15,6 +15,7 @@ type ClusterNodeMgmt interface {
 	GetActiveNodesCount(ts uint64) (int, error)
 	GetNodeId() (string, error)
 	GetNodeSequence() (int32, error)
+	CheckInNodeProcessingMissingAlerts() error
 }
 
 type ClusterNode struct {
@@ -56,6 +57,23 @@ func (node *ClusterNode) CheckIn() error {
 	if err := bus.Dispatch(cmd); err != nil {
 
 		errmsg := fmt.Sprintf("Failed to save heartbeat - node %v", cmd.Node)
+		node.log.Error(errmsg, "error", err)
+		return err
+	}
+	node.log.Debug("Command executed successfully")
+	return nil
+}
+
+func (node *ClusterNode) CheckInNodeProcessingMissingAlerts() error {
+	if node == nil {
+		return errors.New("Cluster node object is nil")
+	}
+	cmd := &m.SaveNodeProcessingMissingAlertCommand{}
+	cmd.Node = &m.ActiveNode{NodeId: node.nodeId}
+	node.log.Debug("Sending command ", "SaveNodeProcessingMissingAlertCommand:Node", cmd.Node)
+	if err := bus.Dispatch(cmd); err != nil {
+
+		errmsg := fmt.Sprintf("Failed to save node processing missing alert %v", cmd.Node)
 		node.log.Error(errmsg, "error", err)
 		return err
 	}
