@@ -166,6 +166,9 @@ var (
 	S3TempImageStoreSecretKey string
 
 	ImageUploadProvider string
+
+	// Clustering
+	ClusteringEnabled bool
 )
 
 type CommandLineArgs struct {
@@ -567,6 +570,9 @@ func NewConfigContext(args *CommandLineArgs) error {
 	alerting := Cfg.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
+
+	clustering := Cfg.Section("clustering")
+	ClusteringEnabled = clustering.Key("enabled").MustBool(true)
 
 	readSessionConfig()
 	readSmtpSettings()

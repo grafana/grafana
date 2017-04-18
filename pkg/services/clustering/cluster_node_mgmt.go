@@ -11,9 +11,7 @@ import (
 )
 
 type ClusterNodeMgmt interface {
-	Register() error
-	ScheduleNext() error
-	Unregister() error
+	CheckIn() error
 	GetActiveNodesCount(ts uint64) (int, error)
 	GetNodeId() (string, error)
 	GetNodeSequence() (int32, error)
@@ -25,42 +23,44 @@ type ClusterNode struct {
 }
 
 var (
-	clusterNodeMgmt ClusterNodeMgmt
+	clusterNodeMgmt ClusterNodeMgmt = nil
 )
 
 func getCurrentNodeId() string {
 	if setting.InstanceName == "" || setting.HttpPort == "" {
-		return ""
+		panic("InstanceName or HttpPort is empty. Check your configuration.")
 	}
 	return fmt.Sprintf("%v:%v", setting.InstanceName, setting.HttpPort)
 }
-func InitClusterNode() {
+
+func getClusterNode() ClusterNodeMgmt {
+	if clusterNodeMgmt != nil {
+		return clusterNodeMgmt
+	}
 	node := &ClusterNode{
 		nodeId: getCurrentNodeId(),
-		log:    log.New("alerting.clusterNode"),
+		log:    log.New("clustering.clusterNode"),
 	}
 	clusterNodeMgmt = node
+	return node
+
 }
 
-func (node *ClusterNode) Register() error {
+func (node *ClusterNode) CheckIn() error {
 	if node == nil {
 		return errors.New("Cluster node object is nil")
 	}
 	cmd := &m.SaveActiveNodeCommand{}
-	cmd.Result = &m.ActiveNodeHeartbeat{NodeId: node.nodeId}
+	cmd.Node = &m.ActiveNode{NodeId: node.nodeId, AlertRunType: "Normal"}
+	node.log.Debug("Sending command ", "SaveActiveNodeCommand:Node", cmd.Node)
 	if err := bus.Dispatch(cmd); err != nil {
-		er := fmt.Errorf("Failed to register node - %v", node.nodeId)
-		node.log.Error(er.Error())
-		return er
-	}
-	return nil
-}
 
-func (node *ClusterNode) Unregister() error {
-	if node == nil {
-		return errors.New("Cluster node object is nil")
+		errmsg := fmt.Sprintf("Failed to save heartbeat - node %v", cmd.Node)
+		node.log.Error(errmsg, "error", err)
+		return err
 	}
-	return errors.New("Not implemented")
+	node.log.Debug("Command executed successfully")
+	return nil
 }
 
 func (node *ClusterNode) GetActiveNodesCount(ts uint64) (int, error) {
@@ -77,25 +77,10 @@ func (node *ClusterNode) GetNodeId() (string, error) {
 	return node.nodeId, nil
 }
 
-func (node *ClusterNode) ScheduleNext() error {
-	if node == nil {
-		return errors.New("Cluster node object is nil")
-	}
-	return errors.New("Not implemented")
-}
-
 func (node *ClusterNode) GetNodeSequence() (int32, error) {
 	if node == nil {
 		return 0, errors.New("Cluster node object is nil")
 	}
 	// get node sequence number from db
-	return 0, nil
-}
-
-func (node *ClusterNode) executeMissingAlerts() error {
-	if node == nil {
-		return errors.New("Cluster node object is nil")
-	}
-	//execute missing alerts
-	return errors.New("Not implemented")
+	return 0, errors.New("Not implemented")
 }
