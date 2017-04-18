@@ -8,36 +8,26 @@ import (
 )
 
 func TestActiveNode(t *testing.T) {
-	Convey("Testing insert Active Data Node item", t, func() {
+	Convey("Testing insert active node heartbeat", t, func() {
 		InitTestDB(t)
 		act := m.ActiveNode{
-			Id:        11,
-			Heartbeat: 1490998410,
-			NodeId:    "10.0.0.1:3030",
-			Sequence:  122,
+			NodeId:       "10.0.0.1:3030",
+			AlertRunType: "Normal",
 		}
 		cmd := m.SaveActiveNodeCommand{
-			ActiveNode: []*m.ActiveNode{
-				&act,
-			},
+			Node: &act,
 		}
 
-		err := InsertActiveNode(&cmd)
-
+		err := InsertActiveNodeHeartbeat(&cmd)
 		Convey("Can  insert active node", func() {
 			So(err, ShouldBeNil)
 		})
 
-		query := m.GetActiveNodeByIDQuery{
-			Id: 11,
-		}
-		err2 := GetActiveNodeById(&query)
 		Convey("Retrive data", func() {
-			So(err2, ShouldBeNil)
-			So(len(query.Result), ShouldEqual, 1)
-			So(query.Result[0].NodeId, ShouldEqual, "10.0.0.1:3030")
-			So(query.Result[0].Heartbeat, ShouldEqual, 1490998410)
-			So(query.Result[0].Sequence, ShouldEqual, 122)
+			So(cmd.Result, ShouldNotBeNil)
+			So(cmd.Result.NodeId, ShouldEqual, "10.0.0.1:3030")
+			So(cmd.Result.Heartbeat, ShouldBeGreaterThan, 0)
+			So(cmd.Result.PartitionNo, ShouldEqual, 1)
 		})
 
 	})

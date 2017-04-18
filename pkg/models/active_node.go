@@ -15,5 +15,6 @@ type GetActiveNodeByIDQuery struct {
 }
 
 type SaveActiveNodeCommand struct {
+	Node   *ActiveNode
 	Result *ActiveNode
 }

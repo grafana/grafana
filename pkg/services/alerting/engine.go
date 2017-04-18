@@ -135,3 +135,7 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 	cancelFn()
 	return err
 }
+
+func (e *Engine) GetPendingJobCount() int {
+	return len(e.execQueue)
+}

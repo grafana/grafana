@@ -14,6 +14,7 @@ import (
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/services/cleanup"
+	"github.com/grafana/grafana/pkg/services/clustering"
 	"github.com/grafana/grafana/pkg/services/eventpublisher"
 	"github.com/grafana/grafana/pkg/services/notifications"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -59,6 +60,12 @@ func (g *GrafanaServerImpl) Start() {
 	if setting.AlertingEnabled && setting.ExecuteAlerts {
 		engine := alerting.NewEngine()
 		g.childRoutines.Go(func() error { return engine.Run(g.context) })
+
+		if setting.ClusteringEnabled {
+			clusterManager := clustering.NewClusterManager()
+			clusterManager.SetAlertEngine(engine)
+			g.childRoutines.Go(func() error { return clusterManager.Run(g.context) })
+		}
 	}
 
 	// cleanup service
