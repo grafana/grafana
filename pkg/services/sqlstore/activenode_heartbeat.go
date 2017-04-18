@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/go-xorm/xorm"
@@ -12,7 +13,7 @@ func init() {
 	bus.AddHandler("sql", GetActiveNodeById)
 	bus.AddHandler("sql", InsertActiveNode)
 	bus.AddHandler("sql", InsertNodeProcessingMissingAlerts)
-	bus.AddHandler("sql", GetNodeProcessingMissingAlert)
+	bus.AddHandler("sql", GetNode)
 }
 
 func GetActiveNodeById(query *m.GetActiveNodeByIDQuery) error {
@@ -40,31 +41,51 @@ func InsertActiveNode(cmd *m.SaveActiveNodeCommand) error {
 	})
 }
 
-func InsertNodeProcessingMissingAlerts(cmd *m.SaveNodeByIdCmd) error {
+func InsertNodeProcessingMissingAlerts(heartbeartCmd *m.GetHeartBeatCmd, saveNodeCmd *m.SaveNodeByAlertTypeCmd) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		sql := fmt.Sprintf("Insert into active_node_heartbeat(node_id,heartbeat,partition_no,alert_run_type) values ('%s',%s,%d,'%s')", cmd.NodeId, dialect.CurrentTimeToRoundMinSql(), 0, m.MISSING_ALERT)
-		//sqlog.Info("Query to insert node processing missing alerts : " + sql)
-		fmt.Println("Query format to insert node processing missing alerts : " + sql)
-		_, err := sess.Exec(sql)
-
-		if err != nil {
-			return err
+		heartbeatSql := fmt.Sprintf("select %s", dialect.CurrentTimeToRoundMinSql())
+		if err1 := sess.Sql(heartbeatSql).Find(&heartbeartCmd.RoundedHeartbeat); err1 != nil {
+			return err1
 		}
-		fmt.Println("Successfully inserted missing node")
+
+		activeNode := *m.ActiveNodeHeartbeat{
+			NodeId:       saveNodeCmd.NodeId,
+			PartitionNo:  saveNodeCmd.PartitionNo,
+			AlertRunType: saveNodeCmd.AlertRunType,
+			Heartbeat:    *heartbeartCmd.RoundedHeartbeat,
+		}
+
+		if _, err2 = sess.Insert(&activeNode); err != nil {
+			return err2
+		}
+		saveNodeCmd.Result = activeNode
 		return nil
 	})
 }
 
-func GetNodeProcessingMissingAlert(query *m.GetNodeProcessingMissingAlertQuery) error {
+func GetNode(query *m.GetNodeByAlertTypeAndHeartbeatCmd) error {
 	return inTransaction(func(sess *xorm.Session) error {
-		sql := fmt.Sprintf("select * from active_node_heartbeat where heartbeat=%s and partition_no=%d and alert_run_type='%s'",
-			dialect.CurrentTimeToRoundMinSql(), 0,
-			m.MISSING_ALERT)
-		fmt.Println("Query to get node processing missing alerts : " + sql)
-		if err := sess.Sql(sql).Find(&query.Result); err != nil {
+		var sql bytes.Buffer
+		params := make([]interface{}, 0)
+
+		sql.WriteString(`SELECT *
+						from activenode_heartbeat
+						`)
+
+		sql.WriteString(`WHERE alert_run_type = ?`)
+		params = append(params, query.AlertRunType)
+
+		if query.HeartBeat != 0 {
+			sql.WriteString(` AND heartbeat = ?`)
+			params = append(params, query.HeartBeat)
+		}
+
+		sql.WriteString(` AND partition_no = ?`)
+		params = append(params, query.PartitionNo)
+
+		if err := x.Sql(sql.String(), params...).Find(&query.Result); err != nil {
 			return err
 		}
-		fmt.Println("sucessfully executed get query....")
 		return nil
 	})
 }
