@@ -12,6 +12,7 @@ import (
 
 func init() {
 	bus.AddHandler("sql", CreateUserGroup)
+	bus.AddHandler("sql", UpdateUserGroup)
 	bus.AddHandler("sql", DeleteUserGroup)
 	bus.AddHandler("sql", SearchUserGroups)
 	bus.AddHandler("sql", GetUserGroupById)
@@ -41,6 +42,34 @@ func CreateUserGroup(cmd *m.CreateUserGroupCommand) error {
 		cmd.Result = userGroup
 
 		return err
+	})
+}
+
+func UpdateUserGroup(cmd *m.UpdateUserGroupCommand) error {
+	return inTransaction2(func(sess *session) error {
+
+		if isNameTaken, err := isUserGroupNameTaken(cmd.Name, cmd.Id, sess); err != nil {
+			return err
+		} else if isNameTaken {
+			return m.ErrUserGroupNameTaken
+		}
+
+		userGroup := m.UserGroup{
+			Name:    cmd.Name,
+			Updated: time.Now(),
+		}
+
+		affectedRows, err := sess.Id(cmd.Id).Update(&userGroup)
+
+		if err != nil {
+			return err
+		}
+
+		if affectedRows == 0 {
+			return m.ErrUserGroupNotFound
+		}
+
+		return nil
 	})
 }
 

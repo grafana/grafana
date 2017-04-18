@@ -134,9 +134,12 @@ func (hs *HttpServer) registerRoutes() {
 
 		// user group (admin permission required)
 		r.Group("/user-groups", func() {
+			r.Get("/:userGroupId", wrap(GetUserGroupById))
 			r.Get("/search", wrap(SearchUserGroups))
 			r.Post("/", quota("user-groups"), bind(m.CreateUserGroupCommand{}), wrap(CreateUserGroup))
+			r.Put("/:userGroupId", bind(m.UpdateUserGroupCommand{}), wrap(UpdateUserGroup))
 			r.Delete("/:userGroupId", wrap(DeleteUserGroupById))
+			r.Get("/:userGroupId/members", wrap(GetUserGroupMembers))
 		}, reqGrafanaAdmin)
 
 		// org information available to all users.

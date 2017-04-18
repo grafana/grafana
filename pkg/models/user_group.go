@@ -31,6 +31,11 @@ type CreateUserGroupCommand struct {
 	Result UserGroup `json:"-"`
 }
 
+type UpdateUserGroupCommand struct {
+	Id   int64
+	Name string
+}
+
 type DeleteUserGroupCommand struct {
 	Id int64
 }
