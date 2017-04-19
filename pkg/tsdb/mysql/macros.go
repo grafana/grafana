@@ -30,8 +30,8 @@ func (m *MySqlMacroEngine) Interpolate(sql string) (string, error) {
 	var macroError error
 
 	sql = ReplaceAllStringSubmatchFunc(rExp, sql, func(groups []string) string {
-		res, err := m.EvaluateMacro(groups[1], groups[2:len(groups)])
-		if macroError != nil {
+		res, err := m.EvaluateMacro(groups[1], groups[2:])
+		if err != nil && macroError == nil {
 			macroError = err
 			return "macro_error()"
 		}
@@ -68,7 +68,12 @@ func (m *MySqlMacroEngine) EvaluateMacro(name string, args []string) (string, er
 		if len(args) == 0 {
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
-		return "UNIX_TIMESTAMP(" + args[0] + ") as time_sec", nil
+		return fmt.Sprintf("UNIX_TIMESTAMP(%s) as time_sec", args[0]), nil
+	case "__timeFilter":
+		if len(args) == 0 {
+			return "", fmt.Errorf("missing time column argument for macro %v", name)
+		}
+		return fmt.Sprintf("UNIX_TIMESTAMP(%s) > %d AND UNIX_TIMESTAMP(%s) < %d", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), args[0], uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
 	default:
 		return "", fmt.Errorf("Unknown macro %v", name)
 	}

@@ -45,10 +45,11 @@ func (br *BatchResult) WithError(err error) *BatchResult {
 }
 
 type QueryResult struct {
-	Error       error           `json:"-"`
-	ErrorString string          `json:"error"`
-	RefId       string          `json:"refId"`
-	Series      TimeSeriesSlice `json:"series"`
+	Error       error            `json:"-"`
+	ErrorString string           `json:"error,omitempty"`
+	RefId       string           `json:"refId"`
+	Meta        *simplejson.Json `json:"meta,omitempty"`
+	Series      TimeSeriesSlice  `json:"series"`
 }
 
 type TimeSeries struct {

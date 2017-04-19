@@ -10,6 +10,7 @@ import (
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -81,6 +82,7 @@ func (e *MysqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, co
 		QueryResults: make(map[string]*tsdb.QueryResult),
 	}
 
+	macroEngine := NewMysqlMacroEngine(context.TimeRange)
 	session := e.engine.NewSession()
 	defer session.Close()
 	db := session.DB()
@@ -91,9 +93,20 @@ func (e *MysqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, co
 			continue
 		}
 
+		queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefId}
+		result.QueryResults[query.RefId] = queryResult
+
+		rawSql, err := macroEngine.Interpolate(rawSql)
+		if err != nil {
+			queryResult.Error = err
+			continue
+		}
+
+		queryResult.Meta.Set("sql", rawSql)
+
 		rows, err := db.Query(rawSql)
 		if err != nil {
-			result.QueryResults[query.RefId] = &tsdb.QueryResult{Error: err}
+			queryResult.Error = err
 			continue
 		}
 
@@ -101,14 +114,22 @@ func (e *MysqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, co
 
 		res, err := e.TransformToTimeSeries(query, rows)
 		if err != nil {
-			result.Error = err
+			queryResult.Error = err
 			return result
 		}
 
-		result.QueryResults[query.RefId] = &tsdb.QueryResult{RefId: query.RefId, Series: res}
+		queryResult.Series = res
+		queryResult.Meta.Set("rowCount", countPointsInAllSeries(res))
 	}
 
 	return result
+}
+
+func countPointsInAllSeries(seriesList tsdb.TimeSeriesSlice) (count int) {
+	for _, series := range seriesList {
+		count += len(series.Points)
+	}
+	return count
 }
 
 func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows) (tsdb.TimeSeriesSlice, error) {
