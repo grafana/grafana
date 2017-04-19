@@ -30,5 +30,24 @@ func TestActiveNode(t *testing.T) {
 			So(cmd.Result.PartitionNo, ShouldEqual, 1)
 		})
 
+		/*
+		*Test insertion of node processing missing alerts
+		 */
+		act2 := m.ActiveNode{
+			NodeId: "10.1.1.1:4330",
+		}
+		cmd2 := m.SaveNodeProcessingMissingAlertCommand{Node: &act2}
+		err2 := InsertNodeProcessingMissingAlert(&cmd2)
+		Convey("Can  insert node processing missing alert", func() {
+			So(err2, ShouldBeNil)
+		})
+		Convey("Retrive Node Processing Missing Alert", func() {
+			So(cmd.Result, ShouldNotBeNil)
+			So(cmd.Result.NodeId, ShouldEqual, "10.1.1.1:4330")
+			So(cmd.Result.Heartbeat, ShouldBeGreaterThan, 0)
+			So(cmd.Result.PartitionNo, ShouldEqual, 0)
+			So(cmd.Result.AlertRunType, ShouldEqual, m.MISSING_ALERT)
+		})
+
 	})
 }

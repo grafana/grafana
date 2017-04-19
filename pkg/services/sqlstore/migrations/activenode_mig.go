@@ -11,12 +11,12 @@ func addActiveNodeMigration(mg *Migrator) {
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "node_id", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "heartbeat", Type: DB_BigInt, Nullable: false},
-			{Name: "partitionNo", Type: DB_Int, Nullable: false},
-			{Name: "alertRunType", Type: DB_Varchar, Length: 50, Nullable: false},
+			{Name: "partition_no", Type: DB_Int, Nullable: false},
+			{Name: "alert_run_type", Type: DB_Varchar, Length: 50, Nullable: false},
 		},
 		Indices: []*Index{
 			{Cols: []string{"node_id", "heartbeat"}, Type: UniqueIndex},
-			{Cols: []string{"heartbeat", "partitionNo", "alertRunType"}, Type: UniqueIndex},
+			{Cols: []string{"heartbeat", "partition_no", "alert_run_type"}, Type: UniqueIndex},
 		},
 	}
 	mg.AddMigration("create active_node table", NewAddTableMigration(active_node))

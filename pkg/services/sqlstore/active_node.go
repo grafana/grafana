@@ -16,6 +16,7 @@ var (
 func init() {
 	bus.AddHandler("sql", GetActiveNodeById)
 	bus.AddHandler("sql", InsertActiveNodeHeartbeat)
+	bus.AddHandler("sql", InsertNodeProcessingMissingAlert)
 }
 
 func GetActiveNodeById(query *m.GetActiveNodeByIDQuery) error {
@@ -62,6 +63,28 @@ func InsertActiveNodeHeartbeat(cmd *m.SaveActiveNodeCommand) error {
 		}
 		cmd.Result = &retNode
 		sqlog.Debug("Active node heartbeat inserted", "id", cmd.Node.Id)
+		return nil
+	})
+}
+
+func InsertNodeProcessingMissingAlert(cmd *m.SaveNodeProcessingMissingAlertCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		result := struct{ Ts int64 }{}
+		_, err := sess.Select(dialect.CurrentTimeToRoundMinSql() + "as ts").Cols("ts").Get(&result)
+		if err != nil {
+			sqlog.Error("Failed to get timestamp", "error", err)
+			return err
+		}
+		nodeProcessingMissingAlert := &m.ActiveNode{
+			NodeId:       cmd.Node.NodeId,
+			PartitionNo:  0,
+			AlertRunType: m.MISSING_ALERT,
+			Heartbeat:    result.Ts,
+		}
+		if _, err = sess.Insert(nodeProcessingMissingAlert); err != nil {
+			return err
+		}
+		cmd.Result = nodeProcessingMissingAlert
 		return nil
 	})
 }
