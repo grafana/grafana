@@ -14,7 +14,7 @@ func init() {
 
 func sqlRandomWalk(m1 string, m2 string, intWalker int64, floatWalker float64, sess *session) error {
 
-	timeWalker := time.Now().UTC().Add(time.Hour * -1)
+	timeWalker := time.Now().UTC().Add(time.Hour * -200)
 	now := time.Now().UTC()
 	step := time.Minute
 
@@ -29,7 +29,7 @@ func sqlRandomWalk(m1 string, m2 string, intWalker int64, floatWalker float64, s
 		timeWalker = timeWalker.Add(step)
 
 		row.Id = 0
-		row.ValueBigInt += rand.Int63n(100) - 100
+		row.ValueBigInt += rand.Int63n(200) - 100
 		row.ValueDouble += rand.Float64() - 0.5
 		row.ValueFloat += rand.Float32() - 0.5
 		row.TimeEpoch = timeWalker.Unix()
