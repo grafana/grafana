@@ -16,9 +16,15 @@ function (angular, _, $, coreModule, config) {
 
     $scope.setupMainNav = function() {
       $scope.mainLinks.push({
+        text: "系统总览",
+        icon: "fa fa-fw fa-home",
+        href: $scope.getUrl("/"),
+      });
+
+      $scope.mainLinks.push({
         text: "智能仪表盘",
         icon: "fa fa-fw fa-th-large",
-        href: $scope.getUrl("/"),
+        href: $scope.getUrl("/dashboardlist"),
       });
 
       $scope.mainLinks.push({

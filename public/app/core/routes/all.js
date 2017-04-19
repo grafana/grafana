@@ -13,6 +13,11 @@ define([
 
     $routeProvider
       .when('/', {
+        templateUrl: 'app/features/systemsummary/partials/system_summary.html',
+        controller : 'SystemsummaryCtrl',
+        reloadOnSearch: false,
+      })
+      .when('/dashboardlist', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'LoadDashboardCtrl',
         reloadOnSearch: false,
