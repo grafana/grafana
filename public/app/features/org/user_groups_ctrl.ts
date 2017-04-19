@@ -13,7 +13,7 @@ export default class UserGroupsCtrl {
   userGroupName: any = '';
 
   /** @ngInject */
-  constructor(private $scope, private $http, private backendSrv) {
+  constructor(private $scope, private $http, private backendSrv, private $location) {
     this.get();
   }
 
@@ -39,9 +39,10 @@ export default class UserGroupsCtrl {
   }
 
   createUserGroup() {
-    this.backendSrv.post('/api/user-groups', {name: this.userGroupName}).then(result => {
-      this.get();
-      this.userGroupName = '';
+    this.backendSrv.post('/api/user-groups', {name: this.userGroupName}).then((result) => {
+      if (result.userGroupId) {
+        this.$location.path('/org/user-groups/edit/' + result.userGroupId);
+      }
     });
   }
 
@@ -60,6 +61,17 @@ export default class UserGroupsCtrl {
   deleteUserGroupConfirmed(userGroup) {
     this.backendSrv.delete('/api/user-groups/' + userGroup.id)
       .then(this.get.bind(this));
+  }
+
+  openModal() {
+    var modalScope = this.$scope.$new();
+    modalScope.createUserGroup = this.createUserGroup.bind(this);
+
+    this.$scope.appEvent('show-modal', {
+      src: 'public/app/features/org/partials/create_user_group.html',
+      modalClass: 'user-group-modal',
+      scope: this.$scope
+    });
   }
 }
 

@@ -89,6 +89,12 @@ function setupAngularRoutes($routeProvider, $locationProvider) {
     controllerAs: 'ctrl',
     resolve: loadOrgBundle,
   })
+  .when('/org/user-groups/edit/:id', {
+    templateUrl: 'public/app/features/org/partials/edit_user_group.html',
+    controller : 'UserGroupDetailsCtrl',
+    controllerAs: 'ctrl',
+    resolve: loadOrgBundle,
+  })
   .when('/profile', {
     templateUrl: 'public/app/features/org/partials/profile.html',
     controller : 'ProfileCtrl',
