@@ -25,9 +25,9 @@ type UserGroupMember struct {
 // COMMANDS
 
 type AddUserGroupMemberCommand struct {
+	UserId      int64 `json:"userId" binding:"Required"`
 	OrgId       int64 `json:"-"`
 	UserGroupId int64 `json:"-"`
-	UserId      int64 `json:"-"`
 }
 
 type RemoveUserGroupMemberCommand struct {

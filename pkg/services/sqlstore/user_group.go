@@ -33,6 +33,7 @@ func CreateUserGroup(cmd *m.CreateUserGroupCommand) error {
 
 		userGroup := m.UserGroup{
 			Name:    cmd.Name,
+			OrgId:   cmd.OrgId,
 			Created: time.Now(),
 			Updated: time.Now(),
 		}
