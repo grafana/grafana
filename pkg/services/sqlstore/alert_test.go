@@ -70,6 +70,15 @@ func TestAlertingDataAccess(t *testing.T) {
 			})
 		})
 
+		Convey("Set Eval Date", func() {
+			cmd := &m.SetAlertEvalDateCmd{
+				AlertId: 1,
+			}
+			err = SetAlertEvalDate(cmd)
+			So(err, ShouldBeNil)
+			So(cmd.EvalDate, ShouldNotBeNil)
+		})
+
 		Convey("Can read properties", func() {
 			alertQuery := m.GetAlertsQuery{DashboardId: testDash.Id, PanelId: 1, OrgId: 1}
 			err2 := HandleAlertsQuery(&alertQuery)

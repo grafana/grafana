@@ -201,5 +201,6 @@ type AlertStateInfoDTO struct {
 }
 
 type SetAlertEvalDateCmd struct {
-	AlertId int64
+	AlertId  int64
+	EvalDate time.Time
 }

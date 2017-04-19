@@ -271,6 +271,7 @@ func SetAlertEvalDate(cmd *m.SetAlertEvalDateCmd) error {
 		}
 		alert.EvalDate = time.Now()
 		sess.Id(alert.Id).Update(&alert)
+		cmd.EvalDate = alert.EvalDate
 		return nil
 	})
 }
