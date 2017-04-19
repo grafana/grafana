@@ -11,11 +11,12 @@ import (
 )
 
 type ClusterNodeMgmt interface {
-	CheckIn() error
-	GetActiveNodesCount(ts uint64) (int, error)
 	GetNodeId() (string, error)
-	GetNodeSequence() (int32, error)
+	CheckIn() error
+	GetNode(heartbeat int64) (*m.ActiveNode, error)
 	CheckInNodeProcessingMissingAlerts() error
+	GetActiveNodesCount(heartbeat int64) (int, error)
+	GetLastHeartbeat() (int64, error)
 }
 
 type ClusterNode struct {
@@ -47,12 +48,21 @@ func getClusterNode() ClusterNodeMgmt {
 
 }
 
+func (node *ClusterNode) GetNodeId() (string, error) {
+	if node == nil {
+		return "", errors.New("Cluster node object is nil")
+	}
+	return node.nodeId, nil
+}
+
 func (node *ClusterNode) CheckIn() error {
 	if node == nil {
 		return errors.New("Cluster node object is nil")
 	}
-	cmd := &m.SaveActiveNodeCommand{}
-	cmd.Node = &m.ActiveNode{NodeId: node.nodeId, AlertRunType: "Normal"}
+	cmd := &m.SaveActiveNodeCommand{
+		Node:        &m.ActiveNode{NodeId: node.nodeId, AlertRunType: m.NORMAL_ALERT},
+		FetchResult: true,
+	}
 	node.log.Debug("Sending command ", "SaveActiveNodeCommand:Node", cmd.Node)
 	if err := bus.Dispatch(cmd); err != nil {
 
@@ -62,6 +72,25 @@ func (node *ClusterNode) CheckIn() error {
 	}
 	node.log.Debug("Command executed successfully")
 	return nil
+}
+
+func (node *ClusterNode) GetNode(heartbeat int64) (*m.ActiveNode, error) {
+	if node == nil {
+		return nil, errors.New("Cluster node object is nil")
+	}
+	cmd := &m.GetActiveNodeByIdHeartbeatQuery{
+		NodeId:    node.nodeId,
+		Heartbeat: heartbeat,
+	}
+	node.log.Debug("Sending command ", "GetActiveNodeByIdHeartbeatQuery", cmd)
+	if err := bus.Dispatch(cmd); err != nil {
+
+		errmsg := fmt.Sprintf("Failed to get node %v", cmd)
+		node.log.Error(errmsg, "error", err)
+		return nil, err
+	}
+	node.log.Debug("Command executed successfully")
+	return cmd.Result, nil
 }
 
 func (node *ClusterNode) CheckInNodeProcessingMissingAlerts() error {
@@ -81,24 +110,18 @@ func (node *ClusterNode) CheckInNodeProcessingMissingAlerts() error {
 	return nil
 }
 
-func (node *ClusterNode) GetActiveNodesCount(ts uint64) (int, error) {
+func (node *ClusterNode) GetActiveNodesCount(ts int64) (int, error) {
 	if node == nil {
 		return 0, errors.New("Cluster node object is nil")
 	}
+	//TODO
 	return 0, errors.New("Not implemented")
 }
 
-func (node *ClusterNode) GetNodeId() (string, error) {
-	if node == nil {
-		return "", errors.New("Cluster node object is nil")
-	}
-	return node.nodeId, nil
-}
-
-func (node *ClusterNode) GetNodeSequence() (int32, error) {
+func (node *ClusterNode) GetLastHeartbeat() (int64, error) {
 	if node == nil {
 		return 0, errors.New("Cluster node object is nil")
 	}
-	// get node sequence number from db
+	//TODO
 	return 0, errors.New("Not implemented")
 }

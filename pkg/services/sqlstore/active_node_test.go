@@ -15,7 +15,8 @@ func TestActiveNode(t *testing.T) {
 			AlertRunType: "Normal",
 		}
 		cmd := m.SaveActiveNodeCommand{
-			Node: &act,
+			Node:        &act,
+			FetchResult: true,
 		}
 
 		err := InsertActiveNodeHeartbeat(&cmd)
@@ -42,11 +43,11 @@ func TestActiveNode(t *testing.T) {
 			So(err2, ShouldBeNil)
 		})
 		Convey("Retrive Node Processing Missing Alert", func() {
-			So(cmd.Result, ShouldNotBeNil)
-			So(cmd.Result.NodeId, ShouldEqual, "10.1.1.1:4330")
-			So(cmd.Result.Heartbeat, ShouldBeGreaterThan, 0)
-			So(cmd.Result.PartitionNo, ShouldEqual, 0)
-			So(cmd.Result.AlertRunType, ShouldEqual, m.MISSING_ALERT)
+			So(cmd2.Result, ShouldNotBeNil)
+			So(cmd2.Result.NodeId, ShouldEqual, "10.1.1.1:4330")
+			So(cmd2.Result.Heartbeat, ShouldBeGreaterThan, 0)
+			So(cmd2.Result.PartitionNo, ShouldEqual, 0)
+			So(cmd2.Result.AlertRunType, ShouldEqual, m.MISSING_ALERT)
 		})
 
 	})

@@ -65,7 +65,6 @@ func (cm *ClusterManager) clusterMgrTicker(ctx context.Context) error {
 }
 
 func (cm *ClusterManager) alertsScheduler(tick time.Time, ticksCounter int) {
-	cm.log.Debug("Cluster manager ticker - alert scheduler")
 	if ticksCounter%10 == 0 {
 		if cm.hasPendingAlertJobs() {
 			return
@@ -73,6 +72,7 @@ func (cm *ClusterManager) alertsScheduler(tick time.Time, ticksCounter int) {
 		cm.checkMissingAlerts()
 		cm.prepareNextAlertsBatch()
 		if cm.checkMinuteBoundary() {
+			//cm.clusterNodeMgmt.CheckIn()
 			cm.dispatchAlertsBatch()
 		}
 	}
