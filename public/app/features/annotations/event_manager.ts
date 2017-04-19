@@ -101,6 +101,7 @@ export class EventManager {
         if (!types[item.source.name]) {
           types[item.source.name] = {
             color: item.source.iconColor,
+            icon: item.source.icon,
             position: 'BOTTOM',
             markerSize: 5,
           };

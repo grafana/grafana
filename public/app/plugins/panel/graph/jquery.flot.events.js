@@ -186,7 +186,7 @@ function ($, _, angular, Drop) {
       var o = this._plot.getPlotOffset();
       var axes = this._plot.getAxes();
       var xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
-      var yaxis, top, left, color, markerSize, markerShow, lineStyle, lineWidth;
+      var yaxis, top, left, color, markerSize, markerShow, lineStyle, lineWidth, icon;
       var markerTooltip;
 
       // determine the y axis used
@@ -214,6 +214,12 @@ function ($, _, angular, Drop) {
         markerShow = this._types[eventTypeId].markerShow;
       }
 
+      if (this._types === null || !this._types[eventTypeId] || this._types[eventTypeId].icon === undefined) {
+        icon = null;
+      } else {
+        icon = this._types[eventTypeId].icon;
+      }
+
       if (this._types === null || !this._types[eventTypeId] || this._types[eventTypeId].markerTooltip === undefined) {
         markerTooltip = true;
       } else {
@@ -233,7 +239,7 @@ function ($, _, angular, Drop) {
       }
 
       var topOffset = xaxis.options.eventSectionHeight || 0;
-      topOffset = topOffset / 2;
+      topOffset = topOffset / 3;
 
       top = o.top + this._plot.height() + topOffset;
       left = xaxis.p2c(event.min) + o.left;
@@ -244,25 +250,47 @@ function ($, _, angular, Drop) {
         "left": left + 'px',
         "top": 8,
         "width": lineWidth + "px",
-        "height": this._plot.height() + topOffset,
+        "height": this._plot.height() + topOffset * 0.8,
         "border-left-width": lineWidth + "px",
         "border-left-style": lineStyle,
-        "border-left-color": color
+        "border-left-color": color,
+        "color": color
       })
       .appendTo(container);
 
       if (markerShow) {
-        var marker = $('<div class="events_marker"></div>').css({
-          "position": "absolute",
-          "left": (-markerSize-Math.round(lineWidth/2)) + "px",
-          "font-size": 0,
-          "line-height": 0,
-          "width": 0,
-          "height": 0,
-          "border-left": markerSize+"px solid transparent",
-          "border-right": markerSize+"px solid transparent"
-        })
-        .appendTo(line);
+        var marker;
+        if (icon) {
+          var iconElem = $('<i class="fa ' + icon + '"></i>').css({
+            "position": "absolute",
+            // Adjust icon position only to show tooltip in the center of marker
+            "left": (-markerSize - Math.round(lineWidth / 2)) + "px"
+          });
+
+          marker = $('<div class="events_marker"></div>').css({
+            "position": "absolute",
+            "left": 0 + "px",
+            "font-size": 1.2 + "rem",
+            "line-height": 0,
+            "width": 0,
+            "height": 0,
+          });
+
+          marker.append(iconElem);
+        } else {
+          marker = $('<div class="events_marker"></div>').css({
+            "position": "absolute",
+            "left": (-markerSize - Math.round(lineWidth / 2)) + "px",
+            "font-size": 0,
+            "line-height": 0,
+            "width": 0,
+            "height": 0,
+            "border-left": markerSize+"px solid transparent",
+            "border-right": markerSize+"px solid transparent"
+          });
+        }
+
+        marker.appendTo(line);
 
         if (this._types[eventTypeId] && this._types[eventTypeId].position && this._types[eventTypeId].position.toUpperCase() === 'BOTTOM') {
           marker.css({
