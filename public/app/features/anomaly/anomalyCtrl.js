@@ -7,7 +7,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('AnomalyCtrl', function ($scope, healthSrv, backendSrv, contextSrv) {
+    module.controller('AnomalyCtrl', function ($scope, healthSrv, backendSrv, contextSrv, $controller, $rootScope) {
       $scope.init = function () {
         $scope.system = backendSrv.getSystemById(contextSrv.system);
         healthSrv.load().then(function (data) {
@@ -15,18 +15,13 @@ define([
           $scope.summary = data;
           data.metricHostClusters.push(data.metricHostNotClustered);
           $scope.metricHostClusters = healthSrv.aggregateHealths(data.metricHostClusters);
+          $scope.clustersLength = $scope.metricHostClusters.length;
           healthSrv.anomalyMetricsData = $scope.metricHostClusters;
           $scope.excludeMetricsData = healthSrv.floor(data.metricHostExcluded.elements);
           $scope.excludeMetricLength = _.size($scope.excludeMetricsData);
+          $controller('ClusterCtrl', {$scope: $scope}).init();
         });
       };
-
-      // $scope.exclude = function (metric) {
-      //   healthSrv.exclude(metric).then(function () {
-      //     $scope.reload();
-      //   });
-      // };
-      //
       $scope.reload = function() {
         $scope.init();
       };
@@ -38,6 +33,12 @@ define([
           scope: $scope.$new(),
         });
       };
+
+      $rootScope.$on('anomaly-select', function (e, index) {
+        $scope.$apply(function () {
+          $scope.metricHostClusters = [healthSrv.anomalyMetricsData[index.seriesIndex]];
+        });
+      });
 
       $scope.init();
     });

@@ -5,6 +5,14 @@
 </topnav>
 
 <div class="page-container">
+  <h2>异常指标聚类分析<tip>点击图上聚类的点, 能够快速筛选出所需的内容</tip></h2>
+  <p>异常指标聚类结果反映在点图上, 点与点之间的距离能够反映异常集合间的相似程度</p>
+  <div id="cluster" class="pull-left" style="width:80%; height: 400px"></div>
+  <div id="overview" class="pull-right" style="width:20%; height:125px;"></div>
+  <div class="clearfix"></div>
+</div>
+
+<div class="page-container">
   <div class="page" style="max-width: 100%">
     <h2>自动异常探测 <span style="font-size: 17px">{{system}}</span></h2>
     <p>自动检测到所有<strong>{{ summary.numMetrics }}</strong>个指标中: 计算扫描了数据点有 <strong>{{ summary.numDataPoints }}</strong>个  异常指标 <strong>{{ summary.numAnomalyMetrics }}</strong>个  异常点总共有 <strong>{{ summary.numAnomaliesInCache }}</strong>个 <tip>通过全局扫描,并根据历史记录来自动检测异常点信息</tip></p>
@@ -20,8 +28,8 @@
       </tr>
       <tr ng-repeat="cluster in metricHostClusters">
         <td style="max-width: 230px;">
-          <p ng-if="$index != metricHostClusters.length - 1" class="max-width" title="{{_.getMetricName(cluster.elements[0].metric)}}"><i class="fa fa-bell"></i> &nbsp; {{_.getMetricName(cluster.elements[0].metric)}} 等{{cluster.numElements}}个</p>
-          <p ng-if="$index == metricHostClusters.length - 1" class="max-width"><i class="fa fa-bell"></i> &nbsp; 尚未被分类的异常点{{cluster.numElements}}个</p>
+          <p ng-if="cluster.index != clustersLength - 1" class="max-width" title="{{_.getMetricName(cluster.elements[0].metric)}}"><i class="fa fa-bell"></i> &nbsp; {{_.getMetricName(cluster.elements[0].metric)}} 等{{cluster.numElements}}个</p>
+          <p ng-if="cluster.index == clustersLength - 1" class="max-width"><i class="fa fa-bell"></i> &nbsp; 尚未被分类的异常点{{cluster.numElements}}个</p>
         </td>
         <td style="width: 300px; padding: 20px 50px 0px 10px;">
           <div class="progress progress-striped active">
@@ -32,7 +40,7 @@
           </div>
         </td>
         <td>
-          <a href="/anomaly/{{$index}}" class="btn btn-inverse btn-mini" >
+          <a href="/anomaly/{{cluster.index}}" class="btn btn-inverse btn-mini" >
             <i class="fa fa-edit"></i>
             进入
           </a>

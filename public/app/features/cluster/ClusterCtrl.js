@@ -1,23 +1,34 @@
 define([
     'angular',
-    'jquery',
     'jquery.flot',
     'jquery.flot.selection'
   ],
-  function (angular, _, dateMath) {
+  function (angular) {
     'use strict';
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('ClusterCtrl', function ($scope, backendSrv) {
-      $scope.init = function () {
-        $scope.minX = -10;
-        $scope.minY = -10;
+    module.controller('ClusterCtrl', function ($scope,$rootScope, backendSrv, healthSrv) {
+      $scope.cluster = function () {
+        $scope.initMetaData();
+        backendSrv.alertD({
+          method: 'get',
+          url: '/correlation'
+        }).then(function(res) {
+          $scope.initFlot(res.data.groups);
+        });
+      };
+
+      this.init = function () {
+        $scope.initMetaData();
+        $scope.initFlot(healthSrv.anomalyMetricsData);
+      };
+
+      $scope.initMetaData = function() {
+        $scope.minX = -1000;
+        $scope.minY = -1000;
         $scope.maxX = 1000;
         $scope.maxY = 1000;
-        $scope.getRaduis = function (numElements) {
-          return (numElements > 5 ? 6 : numElements)
-        };
 
         $scope.options = {
           xaxis:{
@@ -27,7 +38,6 @@ define([
           yaxis:{
             min: $scope.minY,
             max: $scope.maxY,
-            ticks: 10
           },
           grid: {
             hoverable: true,
@@ -40,89 +50,79 @@ define([
             mode: "xy"
           }
         };
+      };
 
-        backendSrv.alertD({
-          method: 'get',
-          url: '/correlation'
-        }).then(function(res) {
-          $scope.initFlot(res.data);
+      $scope.initFlot = function (metrics) {
+        var self = this;
+        var $tooltip = $('<div id="tooltip">');
+        var $cluster = $('#cluster');
+        var $overview = $('#overview');
+
+        var plot = $.plot($cluster, setData(metrics), $scope.options);
+        var overview = $.plot($overview, setData(metrics), $scope.options);
+        this.showTooltip = function(title, innerHtml, pos) {
+          var body = '<div class="graph-tooltip small"><div class="graph-tooltip-time">'+ title + '</div> ' ;
+          body += innerHtml + '</div>';
+          $tooltip.html(body).place_tt(pos.pageX + 20, pos.pageY);
+        };
+
+        $cluster.bind("plotselected", function (event, ranges) {
+          $scope.options.xaxis = {min: ranges.xaxis.from, max: ranges.xaxis.to};
+          $scope.options.yaxis = {min: ranges.yaxis.from, max: ranges.yaxis.to};
+          plot = $.plot($cluster, setData(metrics), $scope.options);
+          overview.setSelection(ranges, true);
         });
 
+        $overview.bind("plotselected", function (event, ranges) {
+          plot.setSelection(ranges);
+        });
+
+        $cluster.bind("plothover", function (event, pos, item) {
+          if (!item) {
+            $tooltip.detach();
+            return
+          }
+          var cluster = metrics[item.seriesIndex];
+          var health = cluster.health ? "健康指数:" + cluster.health : "";
+          self.showTooltip("聚合指标共" + cluster.numElements + "个", health, pos);
+        });
+
+        $cluster.bind("plotclick", function (event, pos, item) {
+          if (!item) {
+            $tooltip.detach();
+            return
+          }
+          $rootScope.appEvent("anomaly-select", {seriesIndex: item.seriesIndex})
+        });
+
+        $cluster.mouseleave(function () {
+          if (plot) {
+            $tooltip.detach();
+            plot.unhighlight();
+          }
+        });
       };
 
-      $scope.setData = function (groups) {
+      function setData(groups) {
         return groups.map(function (item) {
           return {
-            data : [[item.coorX,item.coorY]],
-            label : item.numElements,
+            data: [[item.coorX, item.coorY]],
             points: {
               show: true,
-              symbol: $scope.drawSymbol,
+              symbol: drawSymbol,
               fill: false,
-              radius : $scope.getRaduis(item.numElements)
-            },
+              radius: function (numElements) {
+                return (numElements > 20 ? 20 : numElements)
+              }(item.numElements)
+            }
           }
         })
-      };
+      }
 
-      $scope.drawSymbol = function(ctx, x, y, radius, shadow) {
+      function drawSymbol(ctx, x, y, radius, shadow) {
         ctx.arc(x, y, radius, 0, 2 * Math.PI, false);
         ctx.fillStyle = ctx.strokeStyle;
         ctx.fill();
       }
-
-      $scope.initFlot = function (metrics) {
-        var p = $.plot("#cluster", $scope.setData(metrics.groups), $scope.options);
-        var overview = $.plot("#overview", $scope.setData(metrics.groups), {
-          legend: {
-            show: false
-          },
-          series: {
-            lines: {
-              show: true,
-              lineWidth: 1
-            },
-            shadowSize: 0
-          },
-          xaxis: {
-            ticks: 4
-          },
-          yaxis: {
-            ticks: 3,
-            min: $scope.minY,
-            max: $scope.maxY
-          },
-          grid: {
-            color: "#999"
-          },
-          selection: {
-            mode: "xy"
-          }
-        });
-
-        $("#cluster").bind("plotselected", function (event, ranges) {
-
-          if (ranges.xaxis.to - ranges.xaxis.from < 0.001) {
-            ranges.xaxis.to = ranges.xaxis.from + 0.001;
-          }
-
-          if (ranges.yaxis.to - ranges.yaxis.from < 0.001) {
-            ranges.yaxis.to = ranges.yaxis.from + 0.001;
-          }
-
-          p = $.plot("#cluster", $scope.setData(metrics.groups),
-            $.extend(true, {}, $scope.options, {
-              xaxis: { min: ranges.xaxis.from, max: ranges.xaxis.to },
-              yaxis: { min: ranges.yaxis.from, max: ranges.yaxis.to }
-            })
-          );
-          overview.setSelection(ranges, true);
-        });
-
-        $("#overview").bind("plotselected", function (event, ranges) {
-          p.setSelection(ranges);
-        });
-      };
-      $scope.init();
     });
   });
