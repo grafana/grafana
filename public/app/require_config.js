@@ -37,13 +37,10 @@ require.config({
     modernizr:                 'vendor/modernizr-2.6.1',
 
     'bootstrap-tagsinput':    'vendor/tagsinput/bootstrap-tagsinput',
-<<<<<<< HEAD:public/app/components/require.config.js
     'aws-sdk':                'vendor/aws-sdk/dist/aws-sdk.min',
     'bootstrap-table':        'vendor/bootstrap-table/bootstrap-table.min',
     'bootstrap-table-angular':'vendor/bootstrap-table/bootstrap-table-angular.min',
     'highlight':              'vendor/bootstrap-table/highlight',
-=======
->>>>>>> 8d8724635533a66a9fccae4b0c7ab9d249682d34:public/app/require_config.js
   },
 
   shim: {
