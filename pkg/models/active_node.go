@@ -9,14 +9,16 @@ type ActiveNode struct {
 	AlertRunType string `json:"alertRunType"`
 }
 
-type GetActiveNodeByIDQuery struct {
-	Id     int64
-	Result *ActiveNode
+type GetActiveNodeByIdHeartbeatQuery struct {
+	NodeId    string
+	Heartbeat int64
+	Result    *ActiveNode
 }
 
 type SaveActiveNodeCommand struct {
-	Node   *ActiveNode
-	Result *ActiveNode
+	Node        *ActiveNode
+	FetchResult bool
+	Result      *ActiveNode
 }
 
 const (
