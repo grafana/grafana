@@ -106,7 +106,7 @@ func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 		}
 	}
 	if metrics != "" {
-		message = message + fmt.Sprintf("\n<i>Metrics:</i>%s", metrics);
+		message = message + fmt.Sprintf("\n<i>Metrics:</i>%s", metrics)
 	}
 
 	bodyJSON.Set("text", message)
