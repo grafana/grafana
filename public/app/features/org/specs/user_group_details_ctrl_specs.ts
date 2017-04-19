@@ -21,7 +21,7 @@ var backendSrv = {
       backendSrv: backendSrv,
       $routeParams: {id: 1}
     });
-    ctx.ctrl.user = {name: 'login - user@email.com'};
+    ctx.ctrl.userName = 'login - user@email.com';
   }));
 
   describe('when user is chosen to be added to user group', () => {
