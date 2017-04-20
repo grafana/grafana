@@ -3,8 +3,9 @@ define([
   'lodash',
   'angular',
   'tether-drop',
+  'twemoji'
 ],
-function ($, _, angular, Drop) {
+function ($, _, angular, Drop, twemoji) {
   'use strict';
 
   function createAnnotationToolip(element, event) {
@@ -217,7 +218,7 @@ function ($, _, angular, Drop) {
       if (this._types === null || !this._types[eventTypeId] || this._types[eventTypeId].icon === undefined) {
         icon = null;
       } else {
-        icon = this._types[eventTypeId].icon;
+        icon = this._types[eventTypeId].emoji || this._types[eventTypeId].icon;
       }
 
       if (this._types === null || !this._types[eventTypeId] || this._types[eventTypeId].markerTooltip === undefined) {
@@ -261,11 +262,19 @@ function ($, _, angular, Drop) {
       if (markerShow) {
         var marker;
         if (icon) {
-          var iconElem = $('<i class="fa ' + icon + '"></i>').css({
-            "position": "absolute",
-            // Adjust icon position only to show tooltip in the center of marker
-            "left": (-markerSize - Math.round(lineWidth / 2)) + "px"
-          });
+          var iconElem;
+
+          if (this._types[eventTypeId].emoji) {
+            var utfEmoji = twemoji.convert.fromCodePoint(icon);
+            iconElem = twemoji.parse(utfEmoji, {size: 16});
+            iconElem = $(iconElem).css({
+              "position": "absolute",
+              // Adjust icon position only to show tooltip in the center of marker
+              "left": -0.6 + "rem"
+            });
+          } else {
+            iconElem = $('<i class="fa ' + icon + '"></i>');
+          }
 
           marker = $('<div class="events_marker"></div>').css({
             "position": "absolute",
@@ -277,6 +286,18 @@ function ($, _, angular, Drop) {
           });
 
           marker.append(iconElem);
+          marker.appendTo(line);
+
+          if (!this._types[eventTypeId].emoji) {
+            // Adjust fa icon position based on real element width
+            iconElem = marker.find(iconElem);
+            var iconWidth = iconElem.width();
+            iconElem.css({
+              "position": "absolute",
+              "left": -iconWidth / 2 + "px"
+            });
+          }
+
         } else {
           marker = $('<div class="events_marker"></div>').css({
             "position": "absolute",
@@ -288,9 +309,9 @@ function ($, _, angular, Drop) {
             "border-left": markerSize+"px solid transparent",
             "border-right": markerSize+"px solid transparent"
           });
-        }
 
-        marker.appendTo(line);
+          marker.appendTo(line);
+        }
 
         if (this._types[eventTypeId] && this._types[eventTypeId].position && this._types[eventTypeId].position.toUpperCase() === 'BOTTOM') {
           marker.css({

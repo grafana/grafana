@@ -102,6 +102,7 @@ export class EventManager {
           types[item.source.name] = {
             color: item.source.iconColor,
             icon: item.source.icon,
+            emoji: item.source.emoji,
             position: 'BOTTOM',
             markerSize: 5,
           };

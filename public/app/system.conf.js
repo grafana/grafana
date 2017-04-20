@@ -31,7 +31,8 @@ System.config({
     "jquery.flot.crosshair": "vendor/flot/jquery.flot.crosshair",
     "jquery.flot.fillbelow": "vendor/flot/jquery.flot.fillbelow",
     "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge",
-    "d3": "vendor/d3/d3.js"
+    "d3": "vendor/d3/d3.js",
+    "twemoji": "vendor/twemoji/twemoji.js"
   },
 
   packages: {
