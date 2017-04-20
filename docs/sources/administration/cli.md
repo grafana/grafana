@@ -39,7 +39,7 @@ then there are two flags that can be used to set homepath and the config file pa
 
 `grafana-cli admin reset-admin-password --homepath "/usr/share/grafana" newpass`
 
-If you have not lost the admin password then it is better to set in the Grafana UI. If you need to set the password in a script then the [Grafana API]({{< relref "http_api/user/#change-password" >}}) can be used. Here is an example with curl using basic auth:
+If you have not lost the admin password then it is better to set in the Grafana UI. If you need to set the password in a script then the [Grafana API](http://docs.grafana.org/http_api/user/#change-password) can be used. Here is an example with curl using basic auth:
 
 ```
 curl -X PUT -H "Content-Type: application/json" -d '{
