@@ -200,9 +200,22 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
       payload = templateSrv.replace(payload, options.scopedVars);
 
-      return this._post('_msearch', payload).then(function(res) {
-        return new ElasticResponse(sentTargets, res).getTimeSeries();
-      });
+      if (options.scopedVars && options.scopedVars.logCluster) {
+        return backendSrv.logCluster({
+          method: "POST",
+          url: "/log/clustering",
+          data: payload
+        }).then(function (res) {
+          res.data = [
+            {target: 'docs', type: 'docs', datapoints: res.data}
+          ];
+          return res;
+        });
+      } else {
+        return this._post("_msearch", payload).then(function (res) {
+          return new ElasticResponse(sentTargets, res).getTimeSeries();
+        });
+      }
     };
 
     ElasticDatasource.prototype.getFields = function(query) {
