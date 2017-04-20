@@ -9,7 +9,7 @@ import (
 
 //const rsString = `(?:"([^"]*)")`;
 const rsIdentifier = `([_a-zA-Z0-9]+)`
-const sExpr = `\$` + rsIdentifier + `\((.*)\)`
+const sExpr = `\$` + rsIdentifier + `\(([^\)]*)\)`
 
 type SqlMacroEngine interface {
 	Interpolate(sql string) (string, error)

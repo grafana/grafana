@@ -14,12 +14,12 @@ module.exports = function(grunt) {
   );
 
   grunt.registerTask('default', [
+    'clean:gen',
     'jscs',
     'jshint',
     'copy:node_modules',
     'copy:public_to_gen',
     'exec:tslint',
-    'clean:gen',
     'phantomjs',
     'css',
     'exec:tscompile'
