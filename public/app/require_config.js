@@ -17,6 +17,7 @@ require.config({
     timepicker:               'vendor/angular-other/timepicker',
     datepicker:               'vendor/angular-other/datepicker',
     slider:                   'vendor/angular-other/nouislider.min',
+    highlight:                'vendor/angular-other/highlight',
     bindonce:                 'vendor/angular-bindonce/bindonce',
     crypto:                   'vendor/crypto.min',
     spectrum:                 'vendor/spectrum',
