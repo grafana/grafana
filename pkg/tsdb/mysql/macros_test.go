@@ -25,7 +25,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate("select min($__time(time_column))")
 			So(err, ShouldBeNil)
 
-			So(sql, ShouldEqual, "select min(UNIX_TIMESTAMP(time_column)) as time_sec)")
+			So(sql, ShouldEqual, "select min(UNIX_TIMESTAMP(time_column) as time_sec)")
 		})
 
 		Convey("interpolate __timeFilter function", func() {
