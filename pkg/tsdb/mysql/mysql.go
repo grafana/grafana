@@ -112,14 +112,18 @@ func (e *MysqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, co
 
 		defer rows.Close()
 
-		res, err := e.TransformToTimeSeries(query, rows)
-		if err != nil {
-			queryResult.Error = err
-			return result
-		}
+		format := query.Model.Get("format").MustString("time_series")
 
-		queryResult.Series = res
-		queryResult.Meta.Set("rowCount", countPointsInAllSeries(res))
+		if format == "time_series" {
+			res, err := e.TransformToTimeSeries(query, rows)
+			if err != nil {
+				queryResult.Error = err
+				return result
+			}
+
+			queryResult.Series = res
+			queryResult.Meta.Set("rowCount", countPointsInAllSeries(res))
+		}
 	}
 
 	return result

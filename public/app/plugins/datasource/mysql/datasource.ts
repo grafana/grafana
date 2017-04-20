@@ -22,6 +22,7 @@ export class MysqlDatasource {
         maxDataPoints: options.maxDataPoints,
         datasourceId: this.id,
         rawSql: item.rawSql,
+        format: item.format,
       };
     });
 
@@ -29,29 +30,31 @@ export class MysqlDatasource {
       return this.$q.when({data: []});
     }
 
-    return this.backendSrv.post('/api/tsdb/query', {
-      from: options.range.from.valueOf().toString(),
-      to: options.range.to.valueOf().toString(),
-      queries: queries,
-    }).then(res => {
-      console.log('mysql response', res);
-
-      var data = [];
-      if (res.results) {
-        _.forEach(res.results, queryRes => {
-
-          if (queryRes.error) {
-            throw {error: queryRes.error, message: queryRes.error};
-          }
-
-          for (let series of queryRes.series) {
-            data.push({
-              target: series.name,
-              datapoints: series.points
-            });
-          }
-        });
+    return this.backendSrv.datasourceRequest({
+      url: '/api/tsdb/query',
+      method: 'POST',
+      data: {
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries: queries,
       }
+    }).then(res => {
+      var data = [];
+
+      if (!res.data.results) {
+        return {data: data};
+      }
+
+      _.forEach(res.data.results, queryRes => {
+        for (let series of queryRes.series) {
+          data.push({
+            target: series.name,
+            datapoints: series.points,
+            refId: queryRes.refId,
+            meta: queryRes.meta,
+          });
+        }
+      });
 
       return {data: data};
     });

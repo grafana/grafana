@@ -27,6 +27,7 @@ type Request struct {
 type Response struct {
 	BatchTimings []*BatchTiming          `json:"timings"`
 	Results      map[string]*QueryResult `json:"results"`
+	Message      string                  `json:"message,omitempty"`
 }
 
 type BatchTiming struct {

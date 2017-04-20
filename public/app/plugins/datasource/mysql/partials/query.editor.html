@@ -9,7 +9,7 @@
     <div class="gf-form">
 			<label class="gf-form-label query-keyword">Format as</label>
 			<div class="gf-form-select-wrapper">
-				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.resultFormat" ng-options="f.value as f.text for f in ctrl.resultFormats" ng-change="ctrl.refresh()"></select>
+				<select class="gf-form-input gf-size-auto" ng-model="ctrl.target.format" ng-options="f.value as f.text for f in ctrl.formats" ng-change="ctrl.refresh()"></select>
 			</div>
 		</div>
     <div class="gf-form max-width-30">
@@ -21,5 +21,21 @@
 			<div class="gf-form-label gf-form-label--grow"></div>
 		</div>
 	</div>
+
+  <div class="gf-form-inline" ng-show="ctrl.lastQueryMeta">
+    <div class="gf-form">
+      <label class="gf-form-label query-keyword" ng-click="ctrl.showLastQuerySQL = !ctrl.showLastQuerySQL">
+        Generated SQL
+        <i class="fa fa-caret-down" ng-show="ctrl.showLastQuerySQL"></i>
+        <i class="fa fa-caret-right" ng-hide="ctrl.showLastQuerySQL"></i>
+      </label>
+		</div>
+    <div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+  </div>
+
+  <pre class="small" ng-show="ctrl.showLastQuerySQL">{{ctrl.lastQueryMeta.sql}}</pre>
+  <pre class="small alert alert-error" ng-show="ctrl.lastQueryError">{{ctrl.lastQueryError}}</pre>
 
 </query-editor-row>

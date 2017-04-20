@@ -50,13 +50,16 @@ func QueryMetrics(c *middleware.Context, reqDto dtos.MetricRequest) Response {
 		return ApiError(500, "Metric request error", err)
 	}
 
+	statusCode := 200
 	for _, res := range resp.Results {
 		if res.Error != nil {
 			res.ErrorString = res.Error.Error()
+			resp.Message = res.ErrorString
+			statusCode = 500
 		}
 	}
 
-	return Json(200, &resp)
+	return Json(statusCode, &resp)
 }
 
 // GET /api/tsdb/testdata/scenarios

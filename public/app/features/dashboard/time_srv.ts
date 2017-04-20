@@ -184,8 +184,8 @@ class TimeSrv {
   timeRangeForUrl() {
     var range = this.timeRange().raw;
 
-    if (moment.isMoment(range.from)) { range.from = range.from.valueOf(); }
-    if (moment.isMoment(range.to)) { range.to = range.to.valueOf(); }
+    if (moment.isMoment(range.from)) { range.from = range.from.valueOf().toString(); }
+    if (moment.isMoment(range.to)) { range.to = range.to.valueOf().toString(); }
 
     return range;
   }

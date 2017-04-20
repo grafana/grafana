@@ -106,6 +106,16 @@ class MetricsPanelCtrl extends PanelCtrl {
       this.loading = false;
       this.error = err.message || "Request Error";
       this.inspector = {error: err};
+
+      if (err.data) {
+        if (err.data.message) {
+          this.error = err.data.message;
+        }
+        if (err.data.error) {
+          this.error = err.data.error;
+        }
+      }
+
       this.events.emit('data-error', err);
       console.log('Panel data error:', err);
     });
