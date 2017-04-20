@@ -294,7 +294,7 @@ function ($, _, angular, Drop, twemoji) {
             var iconWidth = iconElem.width();
             iconElem.css({
               "position": "absolute",
-              "left": -iconWidth / 2 + "px"
+              "left": Math.round(-iconWidth / 2 - lineWidth / 2) + "px"
             });
           }
 
