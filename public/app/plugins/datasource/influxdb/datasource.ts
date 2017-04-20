@@ -120,7 +120,7 @@ export default class InfluxDatasource {
 
       return {data: seriesList};
     });
-  };
+  }
 
   annotationQuery(options) {
     if (!options.annotation.query) {
@@ -137,7 +137,7 @@ export default class InfluxDatasource {
       }
       return new InfluxSeries({series: data.results[0].series, annotation: options.annotation}).getAnnotations();
     });
-  };
+  }
 
   targetContainsTemplate(target) {
     for (let group of target.groupBy) {
@@ -155,7 +155,7 @@ export default class InfluxDatasource {
     }
 
     return false;
-  };
+  }
 
   metricFindQuery(query) {
     var interpolated = this.templateSrv.replace(query, null, 'regex');
@@ -256,7 +256,7 @@ export default class InfluxDatasource {
         }
       }
     });
-  };
+  }
 
   getTimeFilter(options) {
     var from = this.getInfluxTime(options.rangeRaw.from, false);

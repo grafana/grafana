@@ -69,7 +69,7 @@ export class AnnotationsEditorCtrl {
     this.reset();
     this.mode = 'list';
     this.$scope.broadcastRefresh();
-  };
+  }
 
   add() {
     this.annotations.push(this.currentAnnotation);
@@ -77,7 +77,7 @@ export class AnnotationsEditorCtrl {
     this.mode = 'list';
     this.$scope.broadcastRefresh();
     this.$scope.dashboard.updateSubmenuVisibility();
-  };
+  }
 
   removeAnnotation(annotation) {
     var index = _.indexOf(this.annotations, annotation);

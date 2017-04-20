@@ -136,7 +136,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.calculateInterval();
 
     return this.datasource;
-  };
+  }
 
   calculateInterval() {
     var intervalOverride = this.panel.interval;
@@ -194,7 +194,7 @@ class MetricsPanelCtrl extends PanelCtrl {
     if (this.panel.hideTimeOverride) {
       this.timeInfo = '';
     }
-  };
+  }
 
   issueQueries(datasource) {
     this.datasource = datasource;

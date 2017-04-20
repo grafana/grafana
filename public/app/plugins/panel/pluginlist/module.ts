@@ -70,4 +70,4 @@ class PluginListCtrl extends PanelCtrl {
   }
 }
 
-export {PluginListCtrl, PluginListCtrl as PanelCtrl}
+export {PluginListCtrl, PluginListCtrl as PanelCtrl};

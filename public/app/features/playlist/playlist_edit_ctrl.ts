@@ -74,7 +74,7 @@ export class PlaylistEditCtrl {
       return playlistItem === listedPlaylistItem;
     });
     this.filterFoundPlaylistItems();
-  };
+  }
 
   savePlaylist(playlist, playlistItems) {
     var savePromise;

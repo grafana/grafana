@@ -271,7 +271,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         };
 
         for (let i = 0; i < data.length; i++) {
-          var series = data[i];
+          let series = data[i];
           series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
 
           // if hidden remove points and disable stack
@@ -287,7 +287,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
             options.series.bars.align = 'center';
 
             for (let i = 0; i < data.length; i++) {
-              var series = data[i];
+              let series = data[i];
               series.data = [[i + 1, series.stats[panel.xaxis.values[0]]]];
             }
 

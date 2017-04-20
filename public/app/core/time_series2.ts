@@ -92,7 +92,7 @@ export default class TimeSeries {
         this.yaxis = override.yaxis;
       }
     }
-  };
+  }
 
   getFlotPairs(fillStyle) {
     var result = [];

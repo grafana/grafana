@@ -117,7 +117,7 @@ export class SearchCtrl {
   queryHasNoFilters() {
     var query = this.query;
     return query.query === '' && query.starred === false && query.tag.length === 0;
-  };
+  }
 
   filterByTag(tag, evt) {
     this.query.tag.push(tag);
@@ -127,7 +127,7 @@ export class SearchCtrl {
       evt.stopPropagation();
       evt.preventDefault();
     }
-  };
+  }
 
   removeTag(tag, evt) {
     this.query.tag = _.without(this.query.tag, tag);
@@ -135,7 +135,7 @@ export class SearchCtrl {
     this.giveSearchFocus = this.giveSearchFocus + 1;
     evt.stopPropagation();
     evt.preventDefault();
-  };
+  }
 
   getTags() {
     return this.backendSrv.get('/api/dashboards/tags').then((results) => {
@@ -146,19 +146,19 @@ export class SearchCtrl {
         this.search();
       }
     });
-  };
+  }
 
   showStarred() {
     this.query.starred = !this.query.starred;
     this.giveSearchFocus = this.giveSearchFocus + 1;
     this.search();
-  };
+  }
 
   search() {
     this.showImport = false;
     this.selectedIndex = 0;
     this.searchDashboards();
-  };
+  }
 
 }
 

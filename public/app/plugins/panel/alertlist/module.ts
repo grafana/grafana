@@ -139,4 +139,4 @@ class AlertListPanel extends PanelCtrl {
 export {
   AlertListPanel,
   AlertListPanel as PanelCtrl
-}
+};

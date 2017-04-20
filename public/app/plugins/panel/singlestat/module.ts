@@ -214,8 +214,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     // check value to text mappings if its enabled
     if (this.panel.mappingType === 1) {
-      for (var i = 0; i < this.panel.valueMaps.length; i++) {
-        var map = this.panel.valueMaps[i];
+      for (let i = 0; i < this.panel.valueMaps.length; i++) {
+        let map = this.panel.valueMaps[i];
         // special null case
         if (map.value === 'null') {
           if (data.value === null || data.value === void 0) {
@@ -233,8 +233,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         }
       }
     } else if (this.panel.mappingType === 2) {
-      for (var i = 0; i < this.panel.rangeMaps.length; i++) {
-        var map = this.panel.rangeMaps[i];
+      for (let i = 0; i < this.panel.rangeMaps.length; i++) {
+        let map = this.panel.rangeMaps[i];
         // special null case
         if (map.from === 'null' && map.to === 'null') {
           if (data.value === null || data.value === void 0) {
@@ -257,13 +257,13 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     if (data.value === null || data.value === void 0) {
       data.valueFormated = "no value";
     }
-  };
+  }
 
   removeValueMap(map) {
     var index = _.indexOf(this.panel.valueMaps, map);
     this.panel.valueMaps.splice(index, 1);
     this.render();
-  };
+  }
 
   addValueMap() {
     this.panel.valueMaps.push({value: '', op: '=', text: '' });
@@ -273,7 +273,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var index = _.indexOf(this.panel.rangeMaps, rangeMap);
     this.panel.rangeMaps.splice(index, 1);
     this.render();
-  };
+  }
 
   addRangeMap() {
     this.panel.rangeMaps.push({from: '', to: '', text: ''});

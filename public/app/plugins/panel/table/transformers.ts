@@ -42,7 +42,7 @@ transformers['timeseries_to_columns'] = {
     // group by time
     var points = {};
 
-    for (var i = 0; i < data.length; i++) {
+    for (let i = 0; i < data.length; i++) {
       var series = data[i];
       model.columns.push({text: series.target});
 
@@ -63,7 +63,7 @@ transformers['timeseries_to_columns'] = {
       var point = points[time];
       var values = [point.time];
 
-      for (var i = 0; i < data.length; i++) {
+      for (let i = 0; i < data.length; i++) {
         var value = point[i];
         values.push(value);
       }
@@ -242,4 +242,4 @@ function transformDataToTable(data, panel) {
   return model;
 }
 
-export {transformers, transformDataToTable}
+export {transformers, transformDataToTable};

@@ -195,7 +195,7 @@ export default class InfluxQuery {
 
     var escapedValues = _.map(value, kbn.regexEscape);
     return escapedValues.join('|');
-  };
+  }
 
   render(interpolate?) {
     var target = this.target;
