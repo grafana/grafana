@@ -95,13 +95,13 @@
 								<label class="gf-form-label width-7">Color</label>
 								<spectrum-picker class="gf-form-input width-3" ng-model="ctrl.currentAnnotation.iconColor"></spectrum-picker>
 							</div>
-							<div class="gf-form">
+							<!--<div class="gf-form">
 								<label class="gf-form-label width-7">Icon</label>
 								<input type="text" class="gf-form-input width-12" ng-model='ctrl.currentAnnotation.icon' placeholder="icon name"></input>
-							</div>
+							</div>-->
 							<div class="gf-form">
-								<label class="gf-form-label width-7">Emoji</label>
-								<input type="text" class="gf-form-input width-12" ng-model='ctrl.currentAnnotation.emoji' placeholder="emoji code"></input>
+								<label class="gf-form-label width-7">Icon</label>
+								<gf-icon-picker icon="ctrl.currentAnnotation.emoji"></gf-icon-picker>
 							</div>
 						</div>
 					</div>
