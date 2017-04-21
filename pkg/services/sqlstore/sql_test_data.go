@@ -61,11 +61,6 @@ func InsertSqlTestData(cmd *m.InsertSqlTestDataCommand) error {
 		sqlRandomWalk("server2", "frontend", 100, 1.123, sess)
 		sqlRandomWalk("server3", "frontend", 100, 1.123, sess)
 
-		sqlRandomWalk("server1", "backend", 100, 1.123, sess)
-		sqlRandomWalk("server2", "backend", 100, 1.123, sess)
-		sqlRandomWalk("server3", "backend", 100, 1.123, sess)
-		sqlRandomWalk("db-server1", "backend", 100, 1.123, sess)
-
 		return err
 	})
 }
