@@ -14,6 +14,7 @@ import {MetricsPanelCtrl} from 'app/plugins/sdk';
 class SingleStatCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
 
+  dataType = 'timeseries';
   series: any[];
   data: any;
   fontSizes: any[];
@@ -22,6 +23,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   panel: any;
   events: any;
   valueNameOptions: any[] = ['min','max','avg', 'current', 'total', 'name', 'first', 'delta', 'diff', 'range'];
+  tableColumnOptions: any;
 
   // Set and populate defaults
   panelDefaults = {
@@ -67,7 +69,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       maxValue: 100,
       thresholdMarkers: true,
       thresholdLabels: false
-    }
+    },
+    tableColumn: ''
   };
 
   /** @ngInject */
@@ -98,11 +101,16 @@ class SingleStatCtrl extends MetricsPanelCtrl {
   }
 
   onDataReceived(dataList) {
-    this.series = dataList.map(this.seriesHandler.bind(this));
-
-    var data: any = {};
-    this.setValues(data);
-
+    const data: any = {};
+    if (dataList.length > 0 && dataList[0].type === 'table'){
+      this.dataType = 'table';
+      const tableData = dataList.map(this.tableHandler.bind(this));
+      this.setTableValues(tableData, data);
+    } else {
+      this.dataType = 'timeseries';
+      this.series = dataList.map(this.seriesHandler.bind(this));
+      this.setValues(data);
+    }
     this.data = data;
     this.render();
   }
@@ -115,6 +123,61 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     series.flotpairs = series.getFlotPairs(this.panel.nullPointMode);
     return series;
+  }
+
+  tableHandler(tableData) {
+    const datapoints = [];
+    const columnNames = {};
+
+    tableData.columns.forEach((column, columnIndex) => {
+      columnNames[columnIndex] = column.text;
+    });
+
+    this.tableColumnOptions = columnNames;
+    if (!_.find(tableData.columns, ['text', this.panel.tableColumn])) {
+      this.setTableColumnToSensibleDefault(tableData);
+    }
+
+    tableData.rows.forEach((row) => {
+      const datapoint = {};
+
+      row.forEach((value, columnIndex) => {
+        const key = columnNames[columnIndex];
+        datapoint[key] = value;
+      });
+
+      datapoints.push(datapoint);
+    });
+
+    return datapoints;
+  }
+
+  setTableColumnToSensibleDefault(tableData) {
+    if (this.tableColumnOptions.length === 1) {
+      this.panel.tableColumn = this.tableColumnOptions[0];
+    } else {
+      this.panel.tableColumn = _.find(tableData.columns, (col) => { return col.type !== 'time'; }).text;
+    }
+  }
+
+  setTableValues(tableData, data) {
+    if (!tableData || tableData.length === 0) {
+      return;
+    }
+
+    if (tableData[0].length === 0 || !tableData[0][0][this.panel.tableColumn]) {
+      return;
+    }
+
+    let highestValue = 0;
+    let lowestValue = Number.MAX_VALUE;
+    const datapoint = tableData[0][0];
+    data.value = datapoint[this.panel.tableColumn];
+
+    var decimalInfo = this.getDecimalsForValue(data.value);
+    var formatFunc = kbn.valueFormats[this.panel.format];
+    data.valueFormatted = formatFunc(datapoint[this.panel.tableColumn], decimalInfo.decimals, decimalInfo.scaledDecimals);
+    data.valueRounded = kbn.roundValue(data.value, this.panel.decimals || 0);
   }
 
   setColoring(options) {

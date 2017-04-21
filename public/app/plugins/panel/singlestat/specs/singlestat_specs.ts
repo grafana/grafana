@@ -26,11 +26,7 @@ describe('SingleStatCtrl', function() {
 
         beforeEach(function() {
           setupFunc();
-          var data = [
-            {target: 'test.cpu1', datapoints: ctx.datapoints}
-          ];
-
-          ctx.ctrl.onDataReceived(data);
+          ctx.ctrl.onDataReceived(ctx.data);
           ctx.data = ctx.ctrl.data;
         });
       };
@@ -41,7 +37,9 @@ describe('SingleStatCtrl', function() {
 
   singleStatScenario('with defaults', function(ctx) {
     ctx.setup(function() {
-      ctx.datapoints = [[10,1], [20,2]];
+      ctx.data = [
+        {target: 'test.cpu1', datapoints: [[10,1], [20,2]]}
+      ];
     });
 
     it('Should use series avg as default main value', function() {
@@ -56,7 +54,9 @@ describe('SingleStatCtrl', function() {
 
   singleStatScenario('showing serie name instead of value', function(ctx) {
     ctx.setup(function() {
-      ctx.datapoints = [[10,1], [20,2]];
+       ctx.data = [
+        {target: 'test.cpu1', datapoints: [[10,1], [20,2]]}
+       ];
       ctx.ctrl.panel.valueName = 'name';
     });
 
@@ -72,7 +72,9 @@ describe('SingleStatCtrl', function() {
 
   singleStatScenario('MainValue should use same number for decimals as displayed when checking thresholds', function(ctx) {
     ctx.setup(function() {
-      ctx.datapoints = [[99.999,1], [99.99999,2]];
+      ctx.data = [
+        {target: 'test.cpu1', datapoints: [[99.999,1], [99.99999,2]]}
+      ];
     });
 
     it('Should be rounded', function() {
@@ -87,7 +89,9 @@ describe('SingleStatCtrl', function() {
 
   singleStatScenario('When value to text mapping is specified', function(ctx) {
     ctx.setup(function() {
-      ctx.datapoints = [[9.9,1]];
+      ctx.data = [
+        {target: 'test.cpu1', datapoints: [[9.9,1]]}
+      ];
       ctx.ctrl.panel.valueMaps = [{value: '10', text: 'OK'}];
     });
 
@@ -106,7 +110,9 @@ describe('SingleStatCtrl', function() {
 
   singleStatScenario('When range to text mapping is specifiedfor first range', function(ctx) {
     ctx.setup(function() {
-      ctx.datapoints = [[41,50]];
+      ctx.data = [
+        {target: 'test.cpu1', datapoints: [[41,50]]}
+      ];
       ctx.ctrl.panel.mappingType = 2;
       ctx.ctrl.panel.rangeMaps = [{from: '10', to: '50', text: 'OK'},{from: '51', to: '100', text: 'NOT OK'}];
     });
@@ -118,7 +124,9 @@ describe('SingleStatCtrl', function() {
 
   singleStatScenario('When range to text mapping is specified for other ranges', function(ctx) {
     ctx.setup(function() {
-      ctx.datapoints = [[65,75]];
+      ctx.data = [
+        {target: 'test.cpu1', datapoints: [[65,75]]}
+      ];
       ctx.ctrl.panel.mappingType = 2;
       ctx.ctrl.panel.rangeMaps = [{from: '10', to: '50', text: 'OK'},{from: '51', to: '100', text: 'NOT OK'}];
     });
@@ -128,4 +136,60 @@ describe('SingleStatCtrl', function() {
     });
   });
 
+  const tableData = [{
+    "columns": [
+      {
+        "text": "Time",
+        "type": "time"
+      },
+      {
+        "text": "test1"
+      },
+      {
+        "text": "mean"
+      },
+      {
+        "text": "test2"
+      }
+    ],
+    "rows": [
+      [
+        1492759673649,
+        'ignore1',
+        15,
+        'ignore2'
+      ]
+    ],
+    "type": "table"
+  }];
+
+  singleStatScenario('When table data', function(ctx) {
+    ctx.setup(function() {
+      ctx.data = tableData;
+      ctx.ctrl.panel.tableColumn = 'mean';
+    });
+
+    it('Should use series avg as default main value', function() {
+      expect(ctx.data.value).to.be(15);
+      expect(ctx.data.valueRounded).to.be(15);
+    });
+
+    it('should set formatted value', function() {
+      expect(ctx.data.valueFormatted).to.be('15');
+    });
+  });
+
+  singleStatScenario('When table data has multiple columns', function(ctx) {
+    ctx.setup(function() {
+      ctx.data = tableData;
+      ctx.ctrl.panel.tableColumn = '';
+    });
+
+    it('Should set column to first column that is not time', function() {
+      expect(ctx.ctrl.panel.tableColumn).to.be('test1');
+    });
+  });
+
 });
+
+
