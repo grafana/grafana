@@ -242,6 +242,18 @@ describe('SingleStatCtrl', function() {
         expect(ctx.data.valueFormatted).to.be('NOT OK');
       });
     });
+
+    singleStatScenario('When value is string', function(ctx) {
+      ctx.setup(function() {
+        ctx.data = tableData;
+        ctx.data[0].rows[0] = [1492759673649,'ignore1', 65, 'ignore2'];
+        ctx.ctrl.panel.tableColumn = 'test1';
+      });
+
+      it('Should replace value with text NOT OK', function() {
+        expect(ctx.data.valueFormatted).to.be('ignore1');
+      });
+    });
   });
 });
 

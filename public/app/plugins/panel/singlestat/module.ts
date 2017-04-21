@@ -174,10 +174,16 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     const datapoint = tableData[0][0];
     data.value = datapoint[this.panel.tableColumn];
 
-    var decimalInfo = this.getDecimalsForValue(data.value);
-    var formatFunc = kbn.valueFormats[this.panel.format];
-    data.valueFormatted = formatFunc(datapoint[this.panel.tableColumn], decimalInfo.decimals, decimalInfo.scaledDecimals);
-    data.valueRounded = kbn.roundValue(data.value, this.panel.decimals || 0);
+    if (_.isString(data.value)) {
+      data.valueFormatted = _.escape(data.value);
+      data.value = 0;
+      data.valueRounded = 0;
+    } else {
+      const decimalInfo = this.getDecimalsForValue(data.value);
+      const formatFunc = kbn.valueFormats[this.panel.format];
+      data.valueFormatted = formatFunc(datapoint[this.panel.tableColumn], decimalInfo.decimals, decimalInfo.scaledDecimals);
+      data.valueRounded = kbn.roundValue(data.value, this.panel.decimals || 0);
+    }
 
     this.setValueMapping(data);
   }
