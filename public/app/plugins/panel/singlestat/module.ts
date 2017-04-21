@@ -192,10 +192,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       if (this.panel.valueName === 'name') {
         data.value = 0;
         data.valueRounded = 0;
-        data.valueFormated = this.series[0].alias;
+        data.valueFormatted = this.series[0].alias;
       } else if (_.isString(lastValue)) {
         data.value = 0;
-        data.valueFormated = _.escape(lastValue);
+        data.valueFormatted = _.escape(lastValue);
         data.valueRounded = 0;
       } else {
         data.value = this.series[0].stats[this.panel.valueName];
@@ -203,7 +203,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
         var decimalInfo = this.getDecimalsForValue(data.value);
         var formatFunc = kbn.valueFormats[this.panel.format];
-        data.valueFormated = formatFunc(data.value, decimalInfo.decimals, decimalInfo.scaledDecimals);
+        data.valueFormatted = formatFunc(data.value, decimalInfo.decimals, decimalInfo.scaledDecimals);
         data.valueRounded = kbn.roundValue(data.value, decimalInfo.decimals);
       }
 
@@ -219,7 +219,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         // special null case
         if (map.value === 'null') {
           if (data.value === null || data.value === void 0) {
-            data.valueFormated = map.text;
+            data.valueFormatted = map.text;
             return;
           }
           continue;
@@ -228,7 +228,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         // value/number to text mapping
         var value = parseFloat(map.value);
         if (value === data.valueRounded) {
-          data.valueFormated = map.text;
+          data.valueFormatted = map.text;
           return;
         }
       }
@@ -238,7 +238,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         // special null case
         if (map.from === 'null' && map.to === 'null') {
           if (data.value === null || data.value === void 0) {
-            data.valueFormated = map.text;
+            data.valueFormatted = map.text;
             return;
           }
           continue;
@@ -248,14 +248,14 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         var from = parseFloat(map.from);
         var to = parseFloat(map.to);
         if (to >= data.valueRounded && from <= data.valueRounded) {
-          data.valueFormated = map.text;
+          data.valueFormatted = map.text;
           return;
         }
       }
     }
 
     if (data.value === null || data.value === void 0) {
-      data.valueFormated = "no value";
+      data.valueFormatted = "no value";
     }
   }
 
@@ -317,7 +317,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       if (panel.prefix) { body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, panel.prefix); }
 
-      var value = applyColoringThresholds(data.value, data.valueFormated);
+      var value = applyColoringThresholds(data.value, data.valueFormatted);
       body += getSpan('singlestat-panel-value', panel.valueFontSize, value);
 
       if (panel.postfix) { body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, panel.postfix); }
@@ -329,7 +329,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
     function getValueText() {
       var result = panel.prefix ? panel.prefix : '';
-      result += data.valueFormated;
+      result += data.valueFormatted;
       result += panel.postfix ? panel.postfix : '';
 
       return result;

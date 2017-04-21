@@ -49,8 +49,8 @@ describe('SingleStatCtrl', function() {
       expect(ctx.data.valueRounded).to.be(15);
     });
 
-    it('should set formated falue', function() {
-      expect(ctx.data.valueFormated).to.be('15');
+    it('should set formatted falue', function() {
+      expect(ctx.data.valueFormatted).to.be('15');
     });
   });
 
@@ -65,8 +65,8 @@ describe('SingleStatCtrl', function() {
       expect(ctx.data.valueRounded).to.be(0);
     });
 
-    it('should set formated falue', function() {
-      expect(ctx.data.valueFormated).to.be('test.cpu1');
+    it('should set formatted falue', function() {
+      expect(ctx.data.valueFormatted).to.be('test.cpu1');
     });
   });
 
@@ -80,8 +80,8 @@ describe('SingleStatCtrl', function() {
       expect(ctx.data.valueRounded).to.be(100);
     });
 
-    it('should set formated falue', function() {
-      expect(ctx.data.valueFormated).to.be('100');
+    it('should set formatted falue', function() {
+      expect(ctx.data.valueFormatted).to.be('100');
     });
   });
 
@@ -100,7 +100,7 @@ describe('SingleStatCtrl', function() {
     });
 
     it('Should replace value with text', function() {
-      expect(ctx.data.valueFormated).to.be('OK');
+      expect(ctx.data.valueFormatted).to.be('OK');
     });
   });
 
@@ -112,7 +112,7 @@ describe('SingleStatCtrl', function() {
     });
 
     it('Should replace value with text OK', function() {
-      expect(ctx.data.valueFormated).to.be('OK');
+      expect(ctx.data.valueFormatted).to.be('OK');
     });
   });
 
@@ -124,7 +124,7 @@ describe('SingleStatCtrl', function() {
     });
 
     it('Should replace value with text NOT OK', function() {
-      expect(ctx.data.valueFormated).to.be('NOT OK');
+      expect(ctx.data.valueFormatted).to.be('NOT OK');
     });
   });
 
