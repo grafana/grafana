@@ -136,60 +136,113 @@ describe('SingleStatCtrl', function() {
     });
   });
 
-  const tableData = [{
-    "columns": [
-      {
-        "text": "Time",
-        "type": "time"
-      },
-      {
-        "text": "test1"
-      },
-      {
-        "text": "mean"
-      },
-      {
-        "text": "test2"
-      }
-    ],
-    "rows": [
-      [
-        1492759673649,
-        'ignore1',
-        15,
-        'ignore2'
-      ]
-    ],
-    "type": "table"
-  }];
+  describe('When table data', function() {
+    const tableData = [{
+      "columns": [
+        { "text": "Time", "type": "time" },
+        { "text": "test1" },
+        { "text": "mean" },
+        { "text": "test2" }
+      ],
+      "rows": [
+        [1492759673649, 'ignore1', 15, 'ignore2']
+      ],
+      "type": "table"
+    }];
 
-  singleStatScenario('When table data', function(ctx) {
-    ctx.setup(function() {
-      ctx.data = tableData;
-      ctx.ctrl.panel.tableColumn = 'mean';
+    singleStatScenario('with default values', function(ctx) {
+      ctx.setup(function() {
+        ctx.data = tableData;
+        ctx.ctrl.panel.tableColumn = 'mean';
+      });
+
+      it('Should use first rows value as default main value', function() {
+        expect(ctx.data.value).to.be(15);
+        expect(ctx.data.valueRounded).to.be(15);
+      });
+
+      it('should set formatted value', function() {
+        expect(ctx.data.valueFormatted).to.be('15');
+      });
     });
 
-    it('Should use series avg as default main value', function() {
-      expect(ctx.data.value).to.be(15);
-      expect(ctx.data.valueRounded).to.be(15);
+    singleStatScenario('When table data has multiple columns', function(ctx) {
+      ctx.setup(function() {
+        ctx.data = tableData;
+        ctx.ctrl.panel.tableColumn = '';
+      });
+
+      it('Should set column to first column that is not time', function() {
+        expect(ctx.ctrl.panel.tableColumn).to.be('test1');
+      });
     });
 
-    it('should set formatted value', function() {
-      expect(ctx.data.valueFormatted).to.be('15');
+    singleStatScenario('MainValue should use same number for decimals as displayed when checking thresholds', function(ctx) {
+      ctx.setup(function() {
+        ctx.data = tableData;
+        ctx.data[0].rows[0] = [1492759673649,'ignore1', 99.99999, 'ignore2'];
+        ctx.ctrl.panel.tableColumn = 'mean';
+      });
+
+      it('Should be rounded', function() {
+        expect(ctx.data.value).to.be(99.99999);
+        expect(ctx.data.valueRounded).to.be(100);
+      });
+
+      it('should set formatted falue', function() {
+        expect(ctx.data.valueFormatted).to.be('100');
+      });
+    });
+
+    singleStatScenario('When value to text mapping is specified', function(ctx) {
+      ctx.setup(function() {
+        ctx.data = tableData;
+        ctx.data[0].rows[0] = [1492759673649,'ignore1', 9.9, 'ignore2'];
+        ctx.ctrl.panel.tableColumn = 'mean';
+        ctx.ctrl.panel.valueMaps = [{value: '10', text: 'OK'}];
+      });
+
+      it('value should remain', function() {
+        expect(ctx.data.value).to.be(9.9);
+      });
+
+      it('round should be rounded up', function() {
+        expect(ctx.data.valueRounded).to.be(10);
+      });
+
+      it('Should replace value with text', function() {
+        expect(ctx.data.valueFormatted).to.be('OK');
+      });
+    });
+
+    singleStatScenario('When range to text mapping is specified for first range', function(ctx) {
+      ctx.setup(function() {
+        ctx.data = tableData;
+        ctx.data[0].rows[0] = [1492759673649,'ignore1', 41, 'ignore2'];
+        ctx.ctrl.panel.tableColumn = 'mean';
+        ctx.ctrl.panel.mappingType = 2;
+        ctx.ctrl.panel.rangeMaps = [{from: '10', to: '50', text: 'OK'},{from: '51', to: '100', text: 'NOT OK'}];
+      });
+
+      it('Should replace value with text OK', function() {
+        expect(ctx.data.valueFormatted).to.be('OK');
+      });
+    });
+
+    singleStatScenario('When range to text mapping is specified for other ranges', function(ctx) {
+      ctx.setup(function() {
+        ctx.data = tableData;
+        ctx.data[0].rows[0] = [1492759673649,'ignore1', 65, 'ignore2'];
+        ctx.ctrl.panel.tableColumn = 'mean';
+        ctx.ctrl.panel.mappingType = 2;
+        ctx.ctrl.panel.rangeMaps = [{from: '10', to: '50', text: 'OK'},{from: '51', to: '100', text: 'NOT OK'}];
+      });
+
+      it('Should replace value with text NOT OK', function() {
+        expect(ctx.data.valueFormatted).to.be('NOT OK');
+      });
     });
   });
-
-  singleStatScenario('When table data has multiple columns', function(ctx) {
-    ctx.setup(function() {
-      ctx.data = tableData;
-      ctx.ctrl.panel.tableColumn = '';
-    });
-
-    it('Should set column to first column that is not time', function() {
-      expect(ctx.ctrl.panel.tableColumn).to.be('test1');
-    });
-  });
-
 });
 
 

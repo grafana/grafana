@@ -178,6 +178,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     var formatFunc = kbn.valueFormats[this.panel.format];
     data.valueFormatted = formatFunc(datapoint[this.panel.tableColumn], decimalInfo.decimals, decimalInfo.scaledDecimals);
     data.valueRounded = kbn.roundValue(data.value, this.panel.decimals || 0);
+
+    this.setValueMapping(data);
   }
 
   setColoring(options) {
@@ -274,7 +276,10 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       data.scopedVars = _.extend({}, this.panel.scopedVars);
       data.scopedVars["__name"] = {value: this.series[0].label};
     }
+    this.setValueMapping(data);
+  }
 
+  setValueMapping(data) {
     // check value to text mappings if its enabled
     if (this.panel.mappingType === 1) {
       for (let i = 0; i < this.panel.valueMaps.length; i++) {
