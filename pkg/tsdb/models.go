@@ -51,14 +51,25 @@ type QueryResult struct {
 	RefId       string           `json:"refId"`
 	Meta        *simplejson.Json `json:"meta,omitempty"`
 	Series      TimeSeriesSlice  `json:"series"`
+	Tables      []*Table         `json:"tables"`
 }
 
 type TimeSeries struct {
 	Name   string            `json:"name"`
 	Points TimeSeriesPoints  `json:"points"`
-	Tags   map[string]string `json:"tags"`
+	Tags   map[string]string `json:"tags,omitempty"`
 }
 
+type Table struct {
+	Columns []TableColumn `json:"columns"`
+	Rows    []RowValues   `json:"rows"`
+}
+
+type TableColumn struct {
+	Text string `json:"text"`
+}
+
+type RowValues []interface{}
 type TimePoint [2]null.Float
 type TimeSeriesPoints []TimePoint
 type TimeSeriesSlice []*TimeSeries

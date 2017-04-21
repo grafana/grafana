@@ -31,6 +31,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   skipDataOnInit: boolean;
   dataStream: any;
   dataSubscription: any;
+  dataList: any;
 
   constructor($scope, $injector) {
     super($scope, $injector);

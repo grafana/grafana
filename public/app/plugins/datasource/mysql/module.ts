@@ -27,7 +27,7 @@ class MysqlQueryCtrl extends QueryCtrl {
   constructor($scope, $injector) {
     super($scope, $injector);
 
-    this.target.format = 'time_series';
+    this.target.format = this.target.format || 'time_series';
     this.target.alias = "";
     this.formats = [
       {text: 'Time series', value: 'time_series'},

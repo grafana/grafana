@@ -38,14 +38,20 @@ export class MysqlDatasource {
         to: options.range.to.valueOf().toString(),
         queries: queries,
       }
-    }).then(res => {
-      var data = [];
+    }).then(this.processQueryResult.bind(this));
+  }
 
-      if (!res.data.results) {
-        return {data: data};
-      }
+  processQueryResult(res) {
+    var data = [];
 
-      _.forEach(res.data.results, queryRes => {
+    if (!res.data.results) {
+      return {data: data};
+    }
+
+    for (let key in res.data.results) {
+      let queryRes = res.data.results[key];
+
+      if (queryRes.series) {
         for (let series of queryRes.series) {
           data.push({
             target: series.name,
@@ -54,10 +60,19 @@ export class MysqlDatasource {
             meta: queryRes.meta,
           });
         }
-      });
+      }
 
-      return {data: data};
-    });
+      if (queryRes.tables) {
+        for (let table of queryRes.tables) {
+          table.type = 'table';
+          table.refId = queryRes.refId;
+          table.meta = queryRes.meta;
+          data.push(table);
+        }
+      }
+    }
+
+    return {data: data};
   }
 }
 
