@@ -23,6 +23,7 @@ class MysqlQueryCtrl extends QueryCtrl {
   target: MysqlQuery;
   lastQueryMeta: QueryMeta;
   lastQueryError: string;
+  showHelp: boolean;
 
   constructor($scope, $injector) {
     super($scope, $injector);
