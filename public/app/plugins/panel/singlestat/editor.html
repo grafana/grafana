@@ -3,11 +3,19 @@
     <h5 class="section-heading">Value</h5>
 
     <div class="gf-form-inline">
-      <div class="gf-form">
+      <div class="gf-form" ng-show="ctrl.dataType === 'timeseries'">
         <label class="gf-form-label width-6">Stat</label>
         <div class="gf-form-select-wrapper width-7">
           <select class="gf-form-input" ng-model="ctrl.panel.valueName" ng-options="f for f in ctrl.valueNameOptions" ng-change="ctrl.render()"></select>
         </div>
+      </div>
+      <div class="gf-form" ng-show="ctrl.dataType === 'table'">
+        <label class="gf-form-label width-6">Column</label>
+        <div class="gf-form-select-wrapper width-7">
+          <select class="gf-form-input" ng-model="ctrl.panel.tableColumn" ng-options="f for f in ctrl.tableColumnOptions" ng-change="ctrl.refresh()"></select>
+        </div>
+      </div>
+      <div class="gf-form">
         <label class="gf-form-label width-6">Font size</label>
         <div class="gf-form-select-wrapper">
           <select class="gf-form-input" ng-model="ctrl.panel.valueFontSize" ng-options="f for f in ctrl.fontSizes" ng-change="ctrl.render()"></select>
