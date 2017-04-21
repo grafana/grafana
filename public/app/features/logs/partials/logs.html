@@ -1,74 +1,61 @@
-<topnav title="日志管理" icon="fa fa-fw fa-bell" subnav="true">
-  <ul class="nav">
-    <li class="active" ><a href="logs">总览</a></li>
-  </ul>
+<topnav title="日志管理" icon="fa fa-fw fa-search" subnav="true">
+    <ul class="nav pull-right">
+        <li ng-show="true" class="back-to-dashboard-link">
+            <a onclick="javascript:history.go(-1)">
+                返回到仪表盘
+            </a>
+        </li>
+        <li ng-if="dashboard">
+            <gf-time-picker dashboard="dashboard"></gf-time-picker>
+        </li>
+    </ul>
 </topnav>
 
 <div class="page-container">
-  <div class="page">
-    <h2>日志全文搜索</h2>
+    <form>
+        <div class="page">
+            <h2>日志全文搜索</h2>
+            <div class="tight-form">
+                <ul class="tight-form-list">
+                    <li class="tight-form-item" style="width: 100px">
+                        关键词
+                    </li>
+                    <li>
+                        <input placeholder="支持AND, OR, 空格表示OR" type="text" class="input-xxlarge tight-form-input last"
+                               ng-model="query" required="">
+                    </li>
+                </ul>
+                <div class="clearfix"></div>
+            </div>
+            <button type="submit" class="btn btn-primary" ng-click="reQuery()"><i class="fa fa-search"/>查找</button>
 
-    <div class="tight-form">
-      <ul class="tight-form-list">
-        <li class="tight-form-item" style="width: 100px">
-          关键词
-        </li>
-        <li>
-          <input placeholder="支持AND, OR, 空格表示OR" ng-model="logs.keywords" type="text" required class="input-xxlarge tight-form-input last" >
-        </li>
-      </ul>
-      <div class="clearfix"></div>
-    </div>
-    <div class="tight-form">
-      <ul class="tight-form-list">
-        <li class="tight-form-item" style="width: 100px">
-          微服务类型
-        </li>
-        <li>
-          <select class="input-small tight-form-input" ng-model="logs.type" ng-options="f for f in ['OS', 'APP', 'RabbitMQ', 'Oracle']"></select>
-        </li>
-      </ul>
-      <div class="clearfix"></div>
-    </div>
-    <div class="tight-form">
-      <ul class="tight-form-list">
-        <li class="tight-form-item" style="width: 100px">
-          开始时间
-        </li>
-        <li>
-          <input placeholder="日志从多少时间之前开始" ng-model="logs.start" type="text" required class="input-large tight-form-input last" >
-        </li>
-        <li class="tight-form-item">
-          单位(日,时,分,秒)
-        </li>
-        <li>
-          <select class="input-small tight-form-input" ng-model="logs.startUnit" ng-options="f for f in ['d', 'h', 'm', 's']"></select>
-        </li>
-      </ul>
-      <div class="clearfix"></div>
-      <div class="tight-form">
-        <ul class="tight-form-list">
-          <li class="tight-form-item" style="width: 100px">
-            截止时间
-          </li>
-          <li>
-            <input placeholder="日志到多少时间之前截止" ng-model="logs.end" type="text" required class="input-large tight-form-input last" >
-          </li>
-          <li class="tight-form-item">
-            单位(日,时,分,秒)
-          </li>
-          <li>
-            <select class="input-small tight-form-input" ng-model="logs.endUnit" ng-options="f for f in ['d', 'h', 'm', 's']"></select>
-          </li>
-        </ul>
-        <div class="clearfix"></div>
-      </div>
+            <button class="btn btn-primary" ng-click="logCluster()">日志聚合</button>
+            <br>
+        </div>
+    </form>
+</div>
+</div>
 
-    <br>
-    <!--a href="http://localhost:5601/app/kibana#/discover?_g=(refreshInterval:(display:Off,pause:!f,value:0),time:(from:now-{{logs.start}}{{logs.startUnit}},mode:quick,to:{{logs.end}}{{logs.endUnit}}))&_a=(columns:!(message,type,host),index:'logstash-*',interval:auto,query:(query_string:(analyze_wildcard:!t,query:'type:{{logs.type}} AND {{logs.keywords}}')),sort:!('@timestamp',desc))&indexPattern=logstash-*&type=histogram"
-       class="pull-right btn btn-success" target="_blank">开始搜索</a-->
-      <a href="http://10.1.130.101:8081/search?rangetype=relative&fields=message%2Csource&width=1559&highlightMessage=true&start={{logs.start}}{{logs.startUnit}}&end={{logs.end}}{{logs.endUnit}}&q={{log.keywords}}"
-         class="pull-right btn btn-success" target="_blank">开始搜索</a>
+<div class="grafana-row" ng-controller="RowCtrl"
+     ng-repeat="(row_name, row) in dashboard.rows" row-height>
+
+    <div class="row-control">
+        <div class="panels-wrapper" ng-if="!row.collapse">
+            <div class="row-text pointer" ng-click="toggleRow(row)" ng-if="row.showTitle"
+                 ng-bind="row.title | interpolateTemplateVars:this">
+            </div>
+
+            <tabset>
+                <tab heading="原始数据" ng-if="panel.tab == 1" ng-repeat="(name, panel) in row.panels track by panel.id"
+                     active="true">
+                    <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+                </tab>
+                <tab heading="聚合数据" ng-if="panel.tab == 2" ng-repeat="(name, panel) in row.panels track by panel.id"
+                     ng-show="panel.tab==2 && clustering">
+                    <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+                </tab>
+            </tabset>
+            <div class="clearfix"></div>
+        </div>
     </div>
-  </div>
 </div>

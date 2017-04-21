@@ -199,8 +199,8 @@ define([
               "scroll": true,
               "showHeader": true,
               "sort": {
-                "col": 3,
-                "desc": false
+                "col": 0,
+                "desc": true
               },
               "span": 12,
               "styles": [
@@ -278,8 +278,8 @@ define([
               "scroll": true,
               "showHeader": true,
               "sort": {
-                "col": 3,
-                "desc": false
+                "col": 0,
+                "desc": true
               },
               "span": 12,
               "styles": [
@@ -371,8 +371,8 @@ define([
         var host = param.targets[0].tags.host == "*" ? "*" : param.targets[0].tags.host;  // *  or 'centos24'
 
         $scope.query = "type:"+type+" AND host:"+host;
-        panelMetas[2].panels[0].targets[0].query = "type:"+type+" AND host:"+host;
-        panelMetas[2].panels[1].targets[0].query = "type:"+type+" AND host:"+host;
+        panelMetas[2].panels[0].targets[0].query = $scope.query;
+        panelMetas[2].panels[1].targets[0].query = $scope.query;
 
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: false, canSave: false},
