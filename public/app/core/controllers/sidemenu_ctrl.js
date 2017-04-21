@@ -177,11 +177,11 @@ function (angular, _, $, coreModule, config) {
       //   href: $scope.getUrl("/analysis")
       // });
 
-      // $scope.mainLinks.push({
-      //   text: "日志管理查询",
-      //   icon: "fa fa-fw fa-search",
-      //   href: $scope.getUrl("/logs")
-      // });
+      $scope.mainLinks.push({
+        text: "日志管理查询",
+        icon: "fa fa-fw fa-search",
+        href: $scope.getUrl("/logs")
+      });
 
       $scope.mainLinks.push({
         text: "返回主页",
