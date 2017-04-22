@@ -387,6 +387,25 @@
 			"revisionTime": "2017-03-30T09:59:41Z"
 		},
 		{
+			"checksumSHA1": "H7vHmzfz6+lUOffTGi7f/WE1/Cs=",
+			"path": "github.com/gophercloud/gophercloud",
+			"revision": "9a5595b8ffe429439c63781cdc312c254e4ad990",
+			"revisionTime": "2017-03-13T18:04:29Z",
+			"tree": true
+		},
+		{
+			"checksumSHA1": "JwaTQCa/CRRHR8Wc6v5016THPys=",
+			"path": "github.com/gophercloud/gophercloud/openstack",
+			"revision": "9a5595b8ffe429439c63781cdc312c254e4ad990",
+			"revisionTime": "2017-03-13T18:04:29Z"
+		},
+		{
+			"checksumSHA1": "/tsg5GkdofeOg0AlrQE/ltO2eRU=",
+			"path": "github.com/gophercloud/gophercloud/openstack/objectstorage/v1/objects",
+			"revision": "9a5595b8ffe429439c63781cdc312c254e4ad990",
+			"revisionTime": "2017-03-13T18:04:29Z"
+		},
+		{
 			"checksumSHA1": "B4bk7vdV9aD7AhrtATXfgEacdqE=",
 			"path": "github.com/gorilla/websocket",
 			"revision": "3ab3a8b8831546bd18fd182c20687ca853b2bb13",
