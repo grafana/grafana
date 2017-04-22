@@ -178,6 +178,12 @@ function (angular, _, $, coreModule, config) {
       // });
 
       $scope.mainLinks.push({
+        text: "关联分析",
+        icon: "fa fa-fw fa-line-chart",
+        href: $scope.getUrl("/association")
+      });
+
+      $scope.mainLinks.push({
         text: "日志管理查询",
         icon: "fa fa-fw fa-search",
         href: $scope.getUrl("/logs")
@@ -202,6 +208,7 @@ function (angular, _, $, coreModule, config) {
                   || currentPath.indexOf('/oncallers') == 0
                   || currentPath.indexOf('/anomaly') == 0
                   || currentPath.indexOf('/analysis') == 0
+                  || currentPath.indexOf('/association') == 0
                   || currentPath.indexOf('/logs') == 0
                   || currentPath.indexOf('/decompose') == 0
                   || currentPath.indexOf('/health') == 0

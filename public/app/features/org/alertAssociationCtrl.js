@@ -14,6 +14,15 @@ function (angular, _, noUiSlider) {
     var distance = $routeParams.distance;
     $scope.correlationThreshold = distance;
     $scope.yaxisNumber = 3;
+
+    this.initPage = function(target) {
+      alertMetric = target.metric;
+      alertHost = target.host ;
+      distance = target.distance;
+      $scope.correlationThreshold = distance;
+      $scope.init();
+    };
+
     $scope.init = function() {
       alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
         var correlationOfAlertMap = response.data;
@@ -179,11 +188,9 @@ function (angular, _, noUiSlider) {
     $scope.resetCorrelation = function () {
       $location.path("alerts/association/" + alertHost + "/" + Math.floor($scope.thresholdSlider.get()) + "/" + alertMetric);
     };
-
-    $scope.init();
   });
 
-  angular.module('grafana.directives').directive('slider', function() {
+  module.directive('slider', function() {
     return {
       restrict: 'A',
       scope: false,
