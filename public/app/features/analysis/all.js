@@ -1,4 +1,5 @@
 define([
   './analysisCtrl',
-  './logIntegrateCtrl'
+  './logIntegrateCtrl',
+  './single_associationCtrl'
 ], function () {});
