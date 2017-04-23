@@ -43,6 +43,23 @@ function ($, _, angular, Drop, twemoji) {
     }]);
   }
 
+  function buildRegions(events) {
+    var region_events = _.filter(events, function (event) {
+      return event.regionId;
+    });
+    var regions = _.groupBy(region_events, 'regionId');
+    regions = _.compact(_.map(regions, function (region_events) {
+      if (region_events && region_events.length > 1) {
+        var region_obj = region_events[0];
+        region_obj.timeEnd = region_events[1].time;
+        region_obj.isRegion = true;
+        return region_obj;
+      }
+    }));
+
+    return regions;
+  }
+
   /*
    * jquery.flot.events
    *
@@ -122,9 +139,16 @@ function ($, _, angular, Drop, twemoji) {
      */
     this.setupEvents = function(events) {
       var that = this;
+      var regions = buildRegions(events);
+
       $.each(events, function(index, event) {
         var ve = new VisualEvent(event, that._buildDiv(event));
         _events.push(ve);
+      });
+
+      $.each(regions, function (index, event) {
+        var vre = new VisualEvent(event, that._buildRegDiv(event));
+        _events.push(vre);
       });
 
       _events.sort(function(a, b) {
@@ -297,7 +321,6 @@ function ($, _, angular, Drop, twemoji) {
               "left": Math.round(-iconWidth / 2 - lineWidth / 2) + "px"
             });
           }
-
         } else {
           marker = $('<div class="events_marker"></div>').css({
             "position": "absolute",
@@ -359,6 +382,108 @@ function ($, _, angular, Drop, twemoji) {
         top,
         line.width(),
         line.height()
+      );
+
+      return drawableEvent;
+    };
+
+    /**
+     * create a DOM element for the given region
+     */
+    this._buildRegDiv = function (event) {
+      var that = this;
+
+      var container = this._plot.getPlaceholder();
+      var o = this._plot.getPlotOffset();
+      var axes = this._plot.getAxes();
+      var xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
+      var yaxis, top, left, regionWidth, color, markerTooltip;
+
+      // determine the y axis used
+      if (axes.yaxis && axes.yaxis.used) { yaxis = axes.yaxis; }
+      if (axes.yaxis2 && axes.yaxis2.used) { yaxis = axes.yaxis2; }
+
+      // map the eventType to a types object
+      var eventTypeId = event.eventType;
+
+      if (this._types === null || !this._types[eventTypeId] || !this._types[eventTypeId].color) {
+        color = '#666';
+      } else {
+        color = this._types[eventTypeId].color;
+      }
+
+      if (this._types === null || !this._types[eventTypeId] || this._types[eventTypeId].markerTooltip === undefined) {
+        markerTooltip = true;
+      } else {
+        markerTooltip = this._types[eventTypeId].markerTooltip;
+      }
+
+      var topOffset = xaxis.options.eventSectionHeight || 0;
+      topOffset = topOffset / 3;
+
+      top = o.top + this._plot.height() + topOffset;
+
+      var timeFrom = Math.min(event.time, event.timeEnd);
+      var timeTo = Math.max(event.time, event.timeEnd);
+      left = xaxis.p2c(timeFrom) + o.left;
+      var right = xaxis.p2c(timeTo) + o.left;
+      regionWidth = right - left;
+
+      var regionArea = $('<div class="region_area_marker"></div>').css({
+        "position": "absolute",
+        "opacity": 0.2,
+        "left": left + 'px',
+        "top": 8,
+        "width": regionWidth + "px",
+        "height": this._plot.height(),
+        "background-color": color
+      });
+      regionArea.appendTo(container);
+
+      var region = $('<div class="events_marker region_marker"></div>').css({
+        "position": "absolute",
+        "opacity": 0.5,
+        "left": left + 'px',
+        "top": top,
+        "width": regionWidth + "px",
+        "height": "0.5rem",
+        "border-left-color": color,
+        "color": color,
+        "background-color": color
+      });
+      region.appendTo(container);
+
+      region.data({
+        "event": event
+      });
+
+      var mouseenter = function () {
+        createAnnotationToolip(region, $(this).data("event"));
+      };
+
+      var mouseleave = function () {
+        that._plot.clearSelection();
+      };
+
+      if (markerTooltip) {
+        region.css({ "cursor": "help" });
+        region.hover(mouseenter, mouseleave);
+      }
+
+      var drawableEvent = new DrawableEvent(
+        region,
+        function drawFunc(obj) { obj.show(); },
+        function (obj) { obj.remove(); },
+        function (obj, position) {
+          obj.css({
+            top: position.top,
+            left: position.left
+          });
+        },
+        left,
+        top,
+        region.width(),
+        region.height()
       );
 
       return drawableEvent;
