@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"sync"
 
+	"time"
+
 	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
@@ -188,6 +190,8 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 			values[i] = new(int64)
 		case mysql.FieldTypeNameDouble:
 			values[i] = new(float64)
+		case mysql.FieldTypeNameDateTime:
+			values[i] = new(time.Time)
 		default:
 			return nil, fmt.Errorf("Database type %s not supported", stype.DatabaseTypeName())
 		}
