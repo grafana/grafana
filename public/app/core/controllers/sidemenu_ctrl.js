@@ -178,9 +178,15 @@ function (angular, _, $, coreModule, config) {
       // });
 
       $scope.mainLinks.push({
-        text: "关联分析",
+        text: "关联性分析",
         icon: "fa fa-fw fa-line-chart",
         href: $scope.getUrl("/association")
+      });
+
+      $scope.mainLinks.push({
+        text: "运维知识",
+        icon: "fa fa-fw fa-stack-overflow",
+        href: $scope.getUrl("/knowledgebase")
       });
 
       $scope.mainLinks.push({
@@ -210,6 +216,7 @@ function (angular, _, $, coreModule, config) {
                   || currentPath.indexOf('/analysis') == 0
                   || currentPath.indexOf('/association') == 0
                   || currentPath.indexOf('/logs') == 0
+                  || currentPath.indexOf('/knowledgebase') == 0
                   || currentPath.indexOf('/decompose') == 0
                   || currentPath.indexOf('/health') == 0
                   || currentPath.indexOf('/cluster') == 0
