@@ -429,7 +429,7 @@ function ($, _, angular, Drop, twemoji) {
       var right = xaxis.p2c(timeTo) + o.left;
       regionWidth = right - left;
 
-      var regionArea = $('<div class="region_area_marker"></div>').css({
+      var regionArea = $('<div class="region_area_marker flot-temp-elem"></div>').css({
         "position": "absolute",
         "opacity": 0.2,
         "left": left + 'px',
@@ -440,7 +440,7 @@ function ($, _, angular, Drop, twemoji) {
       });
       regionArea.appendTo(container);
 
-      var region = $('<div class="events_marker region_marker"></div>').css({
+      var region = $('<div class="events_marker region_marker flot-temp-elem"></div>').css({
         "position": "absolute",
         "opacity": 0.5,
         "left": left + 'px',
