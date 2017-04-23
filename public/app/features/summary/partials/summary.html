@@ -20,7 +20,7 @@
         <li class="tight-form-item" style="width: 50px">
           子系统
         </li>
-        <li ng-controller="SystemCtrl" ng-init="init()">
+        <li ng-controller="SystemCtrl" ng-init="init()">                                         `
           <select ng-model="summarySelect.system" class="input-small tight-form-input" ng-change="cleanup()">
             <option ng-selected="$index == 0" ng-repeat="sys in systems" value="{{sys.Id}}">{{sys.SystemsName}}</option>
           </select>
