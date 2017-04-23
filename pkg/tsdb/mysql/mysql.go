@@ -189,7 +189,7 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 		case mysql.FieldTypeNameDouble:
 			values[i] = new(float64)
 		default:
-			return nil, fmt.Errorf("Database type %s not supported", stype)
+			return nil, fmt.Errorf("Database type %s not supported", stype.DatabaseTypeName())
 		}
 	}
 
