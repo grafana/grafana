@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS `nyc_open_data` (
   Longitude varchar(255),
   Location varchar(255)
 );
-LOAD DATA INFILE '/var/lib/mysql-files/311_Service_Requests_from_2011.csv' INTO TABLE nyc_open_data FIELDS OPTIONALLY ENCLOSED BY '"' TERMINATED BY ',' IGNORE 1 LINES;
+LOAD DATA INFILE '/var/lib/mysql-files/311_Service_Requests_from_2015.csv' INTO TABLE nyc_open_data FIELDS OPTIONALLY ENCLOSED BY '"' TERMINATED BY ',' IGNORE 1 LINES;
 update nyc_open_data set CreatedDate = STR_TO_DATE(CreatedDate, '%m/%d/%Y %r') where CreatedDate <> '';
 update nyc_open_data set ClosedDate = STR_TO_DATE(ClosedDate, '%m/%d/%Y %r') where ClosedDate <> '';
 update nyc_open_data set DueDate = STR_TO_DATE(DueDate, '%m/%d/%Y %r') where DueDate <> '';
@@ -70,3 +70,9 @@ alter table nyc_open_data modify CreatedDate datetime null;
 alter table nyc_open_data modify ClosedDate datetime null;
 alter table nyc_open_data modify DueDate datetime null;
 alter table nyc_open_data modify ResolutionActionUpdatedDate datetime null;
+
+ALTER TABLE `nyc_open_data` ADD INDEX `IX_ComplaintType` (`ComplaintType`);
+ALTER TABLE `nyc_open_data` ADD INDEX `IX_CreatedDate` (`CreatedDate`);
+ALTER TABLE `nyc_open_data` ADD INDEX `IX_LocationType` (`LocationType`);
+ALTER TABLE `nyc_open_data` ADD INDEX `IX_AgencyName` (`AgencyName`);
+ALTER TABLE `nyc_open_data` ADD INDEX `IX_City` (`City`);

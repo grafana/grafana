@@ -6,4 +6,4 @@ mysql_opendata:
     MYSQL_USER: grafana
     MYSQL_PASSWORD: password
   ports:
-    - "3306:3306"
+    - "3307:3306"
