@@ -7,9 +7,20 @@ export class MysqlDatasource {
   name: any;
 
   /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private $q) {
+  constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
+  }
+
+  interpolateVariable(value) {
+    if (typeof value === 'string') {
+      return '\"' + value + '\"';
+    }
+
+    var quotedValues = _.map(value, function(val) {
+      return '\"' + val + '\"';
+    });
+    return  quotedValues.join(',');
   }
 
   query(options) {
@@ -21,7 +32,7 @@ export class MysqlDatasource {
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
         datasourceId: this.id,
-        rawSql: item.rawSql,
+        rawSql: this.templateSrv.replace(item.rawSql, options.scopedVars, this.interpolateVariable),
         format: item.format,
       };
     });
