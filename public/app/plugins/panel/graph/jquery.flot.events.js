@@ -141,6 +141,10 @@ function ($, _, angular, Drop, twemoji) {
       var that = this;
       var regions = buildRegions(events);
 
+      events = _.filter(events, function(event) {
+        return !event.regionId;
+      });
+
       $.each(events, function(index, event) {
         var ve = new VisualEvent(event, that._buildDiv(event));
         _events.push(ve);
@@ -397,7 +401,7 @@ function ($, _, angular, Drop, twemoji) {
       var o = this._plot.getPlotOffset();
       var axes = this._plot.getAxes();
       var xaxis = this._plot.getXAxes()[this._plot.getOptions().events.xaxis - 1];
-      var yaxis, top, left, regionWidth, color, markerTooltip;
+      var yaxis, top, left, lineWidth, regionWidth, lineStyle, color, markerTooltip;
 
       // determine the y axis used
       if (axes.yaxis && axes.yaxis.used) { yaxis = axes.yaxis; }
@@ -418,8 +422,20 @@ function ($, _, angular, Drop, twemoji) {
         markerTooltip = this._types[eventTypeId].markerTooltip;
       }
 
+      if (this._types == null || !this._types[eventTypeId] || this._types[eventTypeId].lineWidth === undefined) {
+        lineWidth = 1; //default line width
+      } else {
+        lineWidth = this._types[eventTypeId].lineWidth;
+      }
+
+      if (this._types == null || !this._types[eventTypeId] || !this._types[eventTypeId].lineStyle) {
+        lineStyle = 'dashed'; //default line style
+      } else {
+        lineStyle = this._types[eventTypeId].lineStyle.toLowerCase();
+      }
+
       var topOffset = xaxis.options.eventSectionHeight || 0;
-      topOffset = topOffset / 3;
+      topOffset = topOffset / 3 + 2;
 
       top = o.top + this._plot.height() + topOffset;
 
@@ -428,6 +444,22 @@ function ($, _, angular, Drop, twemoji) {
       left = xaxis.p2c(timeFrom) + o.left;
       var right = xaxis.p2c(timeTo) + o.left;
       regionWidth = right - left;
+
+      _.each([left, right], function(position) {
+        var line = $('<div class="events_line flot-temp-elem"></div>').css({
+          "position": "absolute",
+          "opacity": 0.8,
+          "left": position + 'px',
+          "top": 8,
+          "width": lineWidth + "px",
+          "height": that._plot.height() + topOffset,
+          "border-left-width": lineWidth + "px",
+          "border-left-style": lineStyle,
+          "border-left-color": color,
+          "color": color
+        });
+        line.appendTo(container);
+      });
 
       var regionArea = $('<div class="region_area_marker flot-temp-elem"></div>').css({
         "position": "absolute",
@@ -445,7 +477,7 @@ function ($, _, angular, Drop, twemoji) {
         "opacity": 0.5,
         "left": left + 'px',
         "top": top,
-        "width": regionWidth + "px",
+        "width": Math.round(regionWidth + lineWidth) + "px",
         "height": "0.5rem",
         "border-left-color": color,
         "color": color,
