@@ -28,6 +28,7 @@ type PostParams struct {
 	Epoch       int64  `json:"epoch"`
 	Title       string `json:"title"`
 	Text        string `json:"text"`
+	Icon        string `json:"icon"`
 }
 
 type DeleteParams struct {
@@ -56,6 +57,7 @@ const (
 type Item struct {
 	Id          int64    `json:"id"`
 	OrgId       int64    `json:"orgId"`
+	UserId      int64    `json:"userId"`
 	DashboardId int64    `json:"dashboardId"`
 	PanelId     int64    `json:"panelId"`
 	CategoryId  int64    `json:"categoryId"`
@@ -63,9 +65,9 @@ type Item struct {
 	Type        ItemType `json:"type"`
 	Title       string   `json:"title"`
 	Text        string   `json:"text"`
+	Icon        string   `json:"icon"`
 	Metric      string   `json:"metric"`
 	AlertId     int64    `json:"alertId"`
-	UserId      int64    `json:"userId"`
 	PrevState   string   `json:"prevState"`
 	NewState    string   `json:"newState"`
 	Epoch       int64    `json:"epoch"`
