@@ -1,8 +1,9 @@
-Grafana Roadmap (2017-04-23)
+¤# Grafana Roadmap (2017-04-23)
+
 This roadmap is a tentative plan for the core development team. Things change constantly as PRs come in and priorities change. 
 But it will give you an idea of our current vision and plan. 
 
-# Short term (1-4 months)
+### Short term (1-4 months)
 
  - New Heatmap Panel (Implemented and available in master)
  - Support for MySQL & Postgres as data sources (Work started and a alpha version for MySQL is available in master)
@@ -13,7 +14,7 @@ But it will give you an idea of our current vision and plan.
   - Graph annotations (create from grafana, region annotations, better annotation viz)
   - Improve alerting (clustering, condition types)
   
-# Long term
+### Long term
 
 - Improved dashboard panel layout engine (to make it easier and enable more flexible layouts) 
 - Backend plugins to support more Auth options, Alerting data sources & notifications
@@ -23,7 +24,7 @@ But it will give you an idea of our current vision and plan.
 - Migrate to Angular2 
 - Improve Alerting capabilities
 
-## Outside contributions
+### Outside contributions
 We know this is being worked on right now by contributors (and we hope to merge it when it's ready). 
 
 - Dashboard revisions (be able to revert dashboard changes)
