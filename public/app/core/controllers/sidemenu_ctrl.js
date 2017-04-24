@@ -16,66 +16,118 @@ function (angular, _, $, coreModule, config) {
 
     $scope.setupMainNav = function() {
       $scope.mainLinks.push({
-        text: "智能仪表盘",
-        icon: "fa fa-fw fa-th-large",
+        text: "系统总览",
+        icon: "fa fa-fw fa-home",
         href: $scope.getUrl("/"),
       });
 
       $scope.mainLinks.push({
-        text: "系统状况",
-        icon: "fa fa-fw fa-cubes",
-        href: $scope.getUrl("/service"),
+        text: "指标浏览",
+        icon: "fa fa-fw fa-sliders",
+        href: 'javascript:void(0);',
       });
 
       $scope.mainLinks.push({
-        text: "探针状态",
-        icon: "fa fa-fw fa-crosshairs",
-        href: $scope.getUrl("/summary"),
+        text: "日志查看",
+        icon: "fa fa-fw fa-file-text-o",
+        href: 'javascript:void(0);',
+        submenu: [
+          {
+            text: '日志管理查询',
+            href: $scope.getUrl("/logs")
+          },
+          {
+            text: '日志对比',
+            href: 'javascript:void(0);',
+          },
+        ]
       });
 
       $scope.mainLinks.push({
-        text: "健康报告",
-        icon: "fa fa-fw fa-list-alt",
-        href: $scope.getUrl("/report"),
+        text: "智能检测",
+        icon: "fa fa-fw fa-stethoscope",
+        href: 'javascript:void(0);',
+        submenu: [
+          {
+            text: '报警规则检测',
+            dropdown: 'dropdown',
+            thdmenu: [
+              {
+                text: '当前报警',
+                href: $scope.getUrl('/alerts/status'),
+              },
+              {
+                text: '历史报警',
+                href: $scope.getUrl('/alerts/history'),
+              },
+              {
+                text: '所有规则',
+                href: $scope.getUrl('/alerts'),
+              },
+              {
+                text: '新建规则',
+                href: $scope.getUrl('/alerts/new'),
+              }
+            ]
+          },
+          {
+            text: '自动异常检测',
+            href: $scope.getUrl("/anomaly"),
+          }
+        ]
+        // href: $scope.getUrl("/service"),
       });
 
-      if (contextSrv.isGrafanaAdmin) {
-        $scope.mainLinks.push({
-          text: "申请用户",
-          icon: "fa fa-fw fa-users",
-          href: $scope.getUrl("/customer"),
-        });
-        $scope.mainLinks.push({
-          text: "Data Sources",
-          icon: "fa fa-fw fa-database",
-          href: $scope.getUrl("/datasources"),
-        });
-      }
+      $scope.mainLinks.push({
+        text: "智能分析",
+        icon: "fa fa-fw fa-bar-chart",
+        href: 'javascript:void(0);',
+        submenu: [
+          {
+            text: '关联性分析',
+            href: '',
+          },
+          {
+            text: '知识库',
+            href: '',
+          },
+          {
+            text: '故障溯源',
+            href: '',
+          },
+          {
+            text: '健康报告',
+            href: $scope.getUrl('/report'),
+          },
+        ]
+      });
+
+      $scope.mainLinks.push({
+        text: "运维轮班",
+        icon: "fa fa-fw fa-calendar",
+        href: $scope.getUrl("/oncallers"),
+      });
+
+      $scope.setupSettingMenu();
+
+      // $scope.mainLinks.push({
+      //   text: "系统状况",
+      //   icon: "fa fa-fw fa-cubes",
+      //   href: $scope.getUrl("/service"),
+      // });
+
+      // $scope.mainLinks.push({
+      //   text: "探针状态",
+      //   icon: "fa fa-fw fa-crosshairs",
+      //   href: $scope.getUrl("/summary"),
+      // });
+
+    };
+
+    $scope.loadSystems = function() {
     };
 
     $scope.loadOrgs = function() {
-      $scope.orgMenu = [];
-
-      if (contextSrv.hasRole('Admin')) {
-        $scope.orgMenu.push({
-          text: "公司信息设置",
-          href: $scope.getUrl("/org"),
-        });
-        $scope.orgMenu.push({
-          text: "用户管理",
-          href: $scope.getUrl("/org/users"),
-        });
-        if(contextSrv.isGrafanaAdmin){
-          $scope.orgMenu.push({
-            text: "密钥管理",
-            href: $scope.getUrl("/org/apikeys"),
-          });
-        }
-      }
-
-      if ($scope.orgMenu.length > 0) {
-        $scope.orgMenu.push({ cssClass: 'divider' });
-      }
 
       backendSrv.get('/api/user/orgs').then(function(orgs) {
         _.each(orgs, function(org) {
@@ -83,8 +135,8 @@ function (angular, _, $, coreModule, config) {
             return;
           }
 
-          $scope.orgMenu.push({
-            text: "切换到" + org.name,
+          $scope.settingMenu.submenu[1].thdmenu.push({
+            text: org.name,
             icon: "fa fa-fw fa-random",
             click: function() {
               $scope.switchOrg(org.orgId);
@@ -93,14 +145,99 @@ function (angular, _, $, coreModule, config) {
         });
 
         if (config.allowOrgCreate) {
-          $scope.orgMenu.push({
+          $scope.settingMenu.submenu.push({
             text: "新建公司",
             icon: "fa fa-fw fa-plus",
             href: $scope.getUrl('/org/new')
           });
         }
       });
+
     };
+
+    $scope.setupSettingMenu = function() {
+      $scope.settingMenu = {
+        text: "信息管理",
+        icon: "fa fa-fw fa-cogs",
+        submenu: [],
+      };
+
+      $scope.settingMenu.submenu.push({
+        text: "切换系统",
+        dropdown: 'dropdown',
+        thdmenu: [],
+        click: $scope.loadSystems()
+      });
+
+      $scope.settingMenu.submenu.push({
+        text: "切换组织",
+        dropdown: 'dropdown',
+        thdmenu: [],
+        click: function() {
+          $scope.loadOrgs()
+        }
+      });
+
+      if ($scope.length > 0) {
+        $scope.settingMenu.submenu.push({ cssClass: 'divider' });
+      }
+
+      if (contextSrv.hasRole('Admin')) {
+        $scope.settingMenu.submenu.push({
+          text: "公司信息设置",
+          href: $scope.getUrl("/org"),
+        });
+        $scope.settingMenu.submenu.push({
+          text: "用户管理",
+          href: $scope.getUrl("/org/users"),
+        });
+        if(contextSrv.isGrafanaAdmin){
+          $scope.settingMenu.submenu.push({
+            text: "密钥管理",
+            href: $scope.getUrl("/org/apikeys"),
+          });
+        }
+      }
+
+      if (contextSrv.isGrafanaAdmin) {
+        $scope.settingMenu.submenu.push({
+          text: "后台管理",
+          dropdown: 'dropdown',
+          thdmenu: [
+            {
+              text: "System info",
+              icon: "fa fa-fw fa-info",
+              href: $scope.getUrl("/admin/settings"),
+            },
+            {
+              text: "全体成员",
+              icon: "fa fa-fw fa-user",
+              href: $scope.getUrl("/admin/users"),
+            },
+            {
+              text: "所有公司",
+              icon: "fa fa-fw fa-users",
+              href: $scope.getUrl("/admin/orgs"),
+            }
+          ],
+        });
+        $scope.settingMenu.submenu.push({
+          text: "申请用户",
+          icon: "fa fa-fw fa-users",
+          href: $scope.getUrl("/customer"),
+        });
+        $scope.settingMenu.submenu.push({
+          text: "数据库",
+          icon: "fa fa-fw fa-database",
+          href: $scope.getUrl("/datasources"),
+        });
+      }
+
+      $scope.settingMenu.submenu.push({
+        text: "安装指南",
+        href: $scope.getUrl("/install"),
+      });
+    }
 
     $scope.switchOrg = function(orgId) {
       backendSrv.post('/api/user/using/' + orgId).then(function() {
@@ -108,92 +245,9 @@ function (angular, _, $, coreModule, config) {
       });
     };
 
-    $scope.setupAdminNav = function() {
-      $scope.systemSection = true;
-      $scope.grafanaVersion = config.buildInfo.version;
-
-      /*
-      $scope.mainLinks.push({
-        text: "System info",
-        icon: "fa fa-fw fa-info",
-        href: $scope.getUrl("/admin/settings"),
-      });
-      */
-
-      $scope.mainLinks.push({
-        text: "全体成员",
-        icon: "fa fa-fw fa-user",
-        href: $scope.getUrl("/admin/users"),
-      });
-
-      $scope.mainLinks.push({
-        text: "所有公司",
-        icon: "fa fa-fw fa-users",
-        href: $scope.getUrl("/admin/orgs"),
-      });
-    };
-
-    $scope.setupSystemMenu = function () {
-      $scope.mainLinks.push({
-        text: "智能分析面板",
-        icon: "fa fa-fw fa-th-large",
-        href: $scope.getUrl(contextSrv.dashboardLink)
-      });
-
-      $scope.mainLinks.push({
-        text: "报警&关联分析",
-        icon: "fa fa-fw fa-bell",
-        href: $scope.getUrl("/alerts/status")
-      });
-
-      $scope.mainLinks.push({
-        text: "实时健康状态",
-        icon: "fa fa-fw fa-ambulance",
-        href: $scope.getUrl("/health")
-      });
-
-      $scope.mainLinks.push({
-        text: "实时告警通知",
-        icon: "fa fa-fw fa-phone",
-        href: $scope.getUrl("/oncallers")
-      });
-
-      $scope.mainLinks.push({
-        text: "自动异常检测",
-        icon: "fa fa-fw fa-stethoscope",
-        href: $scope.getUrl("/anomaly")
-      });
-
-      // $scope.mainLinks.push({
-      //   text: "指标聚类分析",
-      //   icon: "fa fa-fw fa-area-chart",
-      //   href: $scope.getUrl("/cluster")
-      // });
-
-      // sinoRails would need this
-      // $scope.mainLinks.push({
-      //   text: "长期分析预测",
-      //   icon: "fa fa-fw fa-line-chart",
-      //   href: $scope.getUrl("/analysis")
-      // });
-
-      // $scope.mainLinks.push({
-      //   text: "日志管理查询",
-      //   icon: "fa fa-fw fa-search",
-      //   href: $scope.getUrl("/logs")
-      // });
-
-      $scope.mainLinks.push({
-        text: "返回主页",
-        icon: "fa fa-fw fa-backward",
-        href: $scope.getUrl("/"),
-      });
-    };
-
     $scope.updateMenu = function() {
       $scope.systemSection = false;
       $scope.mainLinks = [];
-      $scope.orgMenu = [];
       $scope.dashboardTitle = "";
       var currentPath = $location.path();
       if (currentPath.indexOf('/admin') === 0) {
@@ -213,18 +267,30 @@ function (angular, _, $, coreModule, config) {
           $scope.appEvent('alert-warning', ['非法操作', '已为您跳转到主页']);
           return;
         }
-        $scope.setupSystemMenu();
       } else if(currentPath.indexOf('/dashboard/db/') == 0){
         contextSrv.dashboardLink = currentPath;
-        $scope.setupSystemMenu();
+      }
+      $scope.setupMainNav();
+    };
+
+    $scope.updateSubmenu = function(menu) {
+      if(menu.submenu){
+        $scope.submenu = menu.submenu;
+        contextSrv.submenu = true;
+        $scope.currentMenu = {text: menu.text, icon: menu.icon};
       } else {
-        $scope.setupMainNav();
+        contextSrv.submenu = false;
       }
     };
 
+    $scope.hideSubmenu = function() {
+      contextSrv.submenu = false;
+    };
+
     $scope.init = function() {
+      $scope.hideSubmenu();
       $scope.updateMenu();
-      $scope.$on('$routeChangeSuccess', $scope.updateMenu);
+      $scope.$on('$routeChangeSuccess', $scope.hideSubmenu);
     };
   });
 
