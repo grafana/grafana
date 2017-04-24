@@ -28,9 +28,9 @@ coreModule.directive('gfEmojiPicker', function ($timeout) {
 
     // Convert code points into emoji images and add it to popover
     _.each(codePoints, codepoint => {
-      let emoji = buildEmoji(codepoint);
+      let emoji = buildEmoji(codepoint, '24px');
 
-      emoji = $(emoji).css({
+      emoji = emoji.css({
         padding: '0.2rem'
       });
 
@@ -61,13 +61,19 @@ function attributesCallback(rawText, iconId) {
   };
 }
 
-function buildEmoji(codepoint) {
+function buildEmoji(codepoint, size?) {
   let utfCode = twemoji.convert.fromCodePoint(codepoint);
   let emoji = twemoji.parse(utfCode, {
-    size: 16,
     attributes: attributesCallback,
     className: 'emoji'
   });
+
+  emoji = $(emoji);
+  if (size) {
+    emoji = $(emoji).css({
+      height: size
+    });
+  }
   return emoji;
 }
 
@@ -123,7 +129,7 @@ export class IconPickerCtrl {
       this.$scope.$apply(() => {
         this.$scope.ctrl.icon = codepoint;
 
-        let emoji = buildEmoji(codepoint);
+        let emoji = buildEmoji(codepoint, '1.2rem');
         el.replaceWith(emoji);
 
         this.iconDrop.close();
@@ -155,7 +161,7 @@ export function iconPicker() {
     link: function (scope, elem, attrs)  {
       let defaultIcon = '1f494'; // Broken heart
       let codepoint = scope.ctrl.icon || defaultIcon;
-      let emoji = buildEmoji(codepoint);
+      let emoji = buildEmoji(codepoint, '1.2rem');
       elem.find('.emoji').replaceWith(emoji);
     }
   };
