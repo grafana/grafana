@@ -135,7 +135,7 @@ export class HeatmapCtrl extends MetricsPanelCtrl {
     let xBucketSize, yBucketSize, heatmapStats, bucketsData;
     let logBase = this.panel.yAxis.logBase;
 
-    if (this.panel.dataFormat === 'es_histogram') {
+    if (this.panel.dataFormat === 'tsbuckets') {
       heatmapStats = this.parseHistogramSeries(this.series);
       bucketsData = elasticHistogramToHeatmap(this.series);
 
