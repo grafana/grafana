@@ -10,6 +10,8 @@ But it will give you an idea of our current vision and plan.
  - Improve new user UX
  - Improve docs
  - Support for alerting for Elasticsearch (can be tested in [branch](https://github.com/grafana/grafana/tree/alerting-elasticsearch) but needs more work)
+  - Graph annotations (create from grafana, region annotations, better annotation viz)
+  - Improve alerting (clustering, condition types)
   
 # Long term
 
@@ -19,4 +21,10 @@ But it will give you an idea of our current vision and plan.
 - Reporting
 - Web socket & live data streams
 - Migrate to Angular2 
+- Improve Alerting capabilities
 
+## Outside contributions
+We know this is being worked on right now by contributors (and we hope to merge it when it's ready). 
+
+- Dashboard revisions (be able to revert dashboard changes)
+- Clustering for alert engine (load distribution)  
