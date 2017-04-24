@@ -30,13 +30,16 @@ define([
       };
 
       $scope.query = function () {
+        var params =  {
+          q: $scope.q
+        }
+        if ($scope.service != "*") {
+          params.service = $scope.service;
+        }
         backendSrv.knowledge({
           method: "GET",
           url: "/search",
-          params: {
-            q: $scope.q,
-            service: $scope.service
-          }
+          params: params,
         }).then(function (result) {
           $scope.knowledge = result.data;
         });
@@ -46,7 +49,7 @@ define([
         $scope.appEvent('show-modal', {
           src: 'app/features/analysis/partials/new_knowledge.html',
           modalClass: 'modal-no-header invite-modal',
-          scope: $scope,
+          scope: $scope.$new(),
         });
       };
 

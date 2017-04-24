@@ -13,34 +13,32 @@
 
     <form name="newKnows">
         <div style="display: inline-block">
-            <div class="tight-form-container">
-                <div class="tight-form">
-                    <ul class="tight-form-list">
-                        <li class="tight-form-item">
-                            现象
+            <div class="tidy-form-container">
+                <div class="tidy-form">
+                    <ul class="tidy-form-list">
+                        <li class="tidy-form-item knowledge-form-label">
+                            <h4>现象</h4>
                         </li>
                         <li>
-                            <input type="text" required ng-model="knowledge.symptom">
+                            <input type="text" class="input-xlarge" required ng-model="knowledge.symptom">
                         </li>
                         <div class="clearfix"></div>
                     </ul>
-                    <ul class="tight-form-list">
-                        <li class="tight-form-item">
-                            解决方案
+                    <ul class="tidy-form-list">
+                        <li class="tidy-form-item knowledge-form-label">
+                            <h4>解决方案</h4>
                         </li>
-                    </ul>
-                    <ul class="tight-form-list">
                         <li>
-                            <textarea ng-model="knowledge.solution" required></textarea>
+                            <textarea ng-model="knowledge.solution" style="height:100px; resize:none;" class="input-xlarge" required></textarea>
                         </li>
                         <div class="clearfix"></div>
                     </ul>
-                    <ul class="tight-form-list">
-                        <li class="tight-form-item">
-                            类型
+                    <ul class="tidy-form-list">
+                        <li class="tidy-form-item knowledge-form-label">
+                            <h4>类型</h4>
                         </li>
                         <li>
-                            <select class="input-small tight-form-input" ng-model="knowledge.service" required>
+                            <select class="input-large tidy-form-input" ng-model="knowledge.service" required>
                                 <option ng-repeat="service in services" value="{{service}}">{{service}}</option>
                             </select>
                         </li>
@@ -51,7 +49,7 @@
 
             <div class="" style="margin-top: 30px; margin-bottom: 20px;">
                 <button type="button" class="btn btn-inverse" ng-click="dismiss()">取消</button>
-                <button type="submit" class="btn btn-success" ng-click="new();">+新增知识</button>
+                <button type="submit" class="btn btn-success" ng-click="new();">确定</button>
             </div>
         </div>
     </form>
