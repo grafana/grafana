@@ -58,7 +58,7 @@ export class EventManager {
   }
 
   addFlotEvents(annotations, flotOptions) {
-    if (!this.event || annotations.length === 0) {
+    if (!this.event && annotations.length === 0) {
       return;
     }
 
