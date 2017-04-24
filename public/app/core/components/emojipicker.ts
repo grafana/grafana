@@ -116,10 +116,7 @@ export class IconPickerCtrl {
 
     this.$timeout(() => {
       let options = {
-        element: el[0],
-        position: 'bottom center',
         template: '<gf-emoji-picker></gf-emoji-picker>',
-        openOn: 'hover',
         model: {
           onSelect: onSelect.bind(this)
         },
@@ -133,7 +130,7 @@ export class IconPickerCtrl {
       let drop = new Drop({
         target: el[0],
         content: contentElement,
-        position: 'bottom center',
+        position: 'top center',
         classes: 'drop-popover drop-popover--form',
         openOn: 'hover',
         hoverCloseDelay: 200,
