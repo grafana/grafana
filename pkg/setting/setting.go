@@ -509,7 +509,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 
 	//  read data source proxy white list
 	DataProxyWhiteList = make(map[string]bool)
-	for _, hostAndIp := range security.Key("data_source_proxy_whitelist").Strings(" ") {
+	for _, hostAndIp := range util.SplitString(security.Key("data_source_proxy_whitelist").String()) {
 		DataProxyWhiteList[hostAndIp] = true
 	}
 

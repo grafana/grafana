@@ -8,6 +8,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type BasicUserInfo struct {
@@ -53,12 +54,12 @@ func NewOAuthService() {
 		info := &setting.OAuthInfo{
 			ClientId:       sec.Key("client_id").String(),
 			ClientSecret:   sec.Key("client_secret").String(),
-			Scopes:         sec.Key("scopes").Strings(" "),
+			Scopes:         util.SplitString(sec.Key("scopes").String()),
 			AuthUrl:        sec.Key("auth_url").String(),
 			TokenUrl:       sec.Key("token_url").String(),
 			ApiUrl:         sec.Key("api_url").String(),
 			Enabled:        sec.Key("enabled").MustBool(),
-			AllowedDomains: sec.Key("allowed_domains").Strings(" "),
+			AllowedDomains: util.SplitString(sec.Key("allowed_domains").String()),
 			HostedDomain:   sec.Key("hosted_domain").String(),
 			AllowSignup:    sec.Key("allow_sign_up").MustBool(),
 			Name:           sec.Key("name").MustString(name),
@@ -92,7 +93,7 @@ func NewOAuthService() {
 				apiUrl:               info.ApiUrl,
 				allowSignup:          info.AllowSignup,
 				teamIds:              sec.Key("team_ids").Ints(","),
-				allowedOrganizations: sec.Key("allowed_organizations").Strings(" "),
+				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
 
@@ -115,7 +116,7 @@ func NewOAuthService() {
 				apiUrl:               info.ApiUrl,
 				allowSignup:          info.AllowSignup,
 				teamIds:              sec.Key("team_ids").Ints(","),
-				allowedOrganizations: sec.Key("allowed_organizations").Strings(" "),
+				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
 
@@ -135,7 +136,7 @@ func NewOAuthService() {
 				Config:               &config,
 				url:                  setting.GrafanaNetUrl,
 				allowSignup:          info.AllowSignup,
-				allowedOrganizations: sec.Key("allowed_organizations").Strings(" "),
+				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
 	}
