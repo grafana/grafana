@@ -3,6 +3,7 @@
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
+import Drop from 'tether-drop';
 import twemoji from 'twemoji';
 import emojiDef from './emoji/emoji_def';
 
@@ -22,59 +23,7 @@ let pickerTemplate = `
 
 let codePoints = emojiDef.codePoints.slice(0, 200);
 
-export class EmojiPickerCtrl {
-  codePoints: string[];
-  icons: any[];
-  pickerTemplate: any;
-
-  /** @ngInject */
-  constructor(private $scope, private $rootScope, private popoverSrv, private $timeout) {
-    this.popoverSrv = popoverSrv;
-    this.$timeout = $timeout;
-    this.$scope = $scope;
-  }
-
-  emojiSelected(emoji) {
-    console.log(emoji);
-    this.$scope.$destroy();
-  }
-}
-
-export class IconPickerCtrl {
-
-  /** @ngInject */
-  constructor(private $scope, private $rootScope, private popoverSrv, private $timeout) {
-  }
-
-  openEmojiPicker(e) {
-    let el = $(e.currentTarget).find('.emoji');
-    let onIconSelect = this.$scope.ctrl.onSelect;
-
-    this.$timeout(() => {
-      this.popoverSrv.show({
-        element: el[0],
-        position: 'bottom center',
-        template: '<gf-emoji-picker></gf-emoji-picker>',
-        openOn: 'hover',
-        model: {
-          onSelect: (codepoint) => {
-            // Wrap into $apply() to sync changes immediately
-            this.$scope.$apply(() => {
-              this.$scope.ctrl.icon = codepoint;
-
-              let emoji = buildEmoji(codepoint);
-              el.replaceWith(emoji);
-
-              this.popoverSrv.close();
-            });
-          }
-        },
-      });
-    });
-  }
-}
-
-coreModule.directive('gfEmojiPicker', function (popoverSrv, $timeout) {
+coreModule.directive('gfEmojiPicker', function ($timeout) {
   function link(scope, elem, attrs) {
 
     // Convert code points into emoji images and add it to popover
@@ -99,10 +48,7 @@ coreModule.directive('gfEmojiPicker', function (popoverSrv, $timeout) {
 
   return {
     restrict: 'E',
-    link : link,
-    controller: EmojiPickerCtrl,
-    bindToController: true,
-    controllerAs: 'ctrl',
+    link: link,
     template: pickerTemplate
   };
 });
@@ -123,6 +69,77 @@ function buildEmoji(codepoint) {
     className: 'emoji'
   });
   return emoji;
+}
+
+export class IconPickerCtrl {
+  iconDrop: any;
+  scope: any;
+
+  /** @ngInject */
+  constructor(private $scope, private $rootScope, private $timeout, private $compile) {
+    this.iconDrop = null;
+  }
+
+  openEmojiPicker(e) {
+    let el = $(e.currentTarget).find('.emoji');
+    let onIconSelect = this.$scope.ctrl.onSelect;
+
+    this.$timeout(() => {
+      let options = {
+        element: el[0],
+        position: 'bottom center',
+        template: '<gf-emoji-picker></gf-emoji-picker>',
+        openOn: 'hover',
+        model: {
+          onSelect: onSelect.bind(this)
+        },
+      };
+
+      this.scope = _.extend(this.$rootScope.$new(true), options.model);
+      var contentElement = document.createElement('div');
+      contentElement.innerHTML = options.template;
+      this.$compile(contentElement)(this.scope);
+
+      let drop = new Drop({
+        target: el[0],
+        content: contentElement,
+        position: 'bottom center',
+        classes: 'drop-popover',
+        openOn: 'hover',
+        hoverCloseDelay: 200,
+        tetherOptions: {
+          constraints: [{ to: 'scrollParent', attachment: "none both" }]
+        }
+      });
+
+      drop.on('close', this.close.bind(this));
+
+      this.iconDrop = drop;
+      this.iconDrop.open();
+    });
+
+    function onSelect(codepoint) {
+      // Wrap into $apply() to sync changes immediately
+      this.$scope.$apply(() => {
+        this.$scope.ctrl.icon = codepoint;
+
+        let emoji = buildEmoji(codepoint);
+        el.replaceWith(emoji);
+
+        this.iconDrop.close();
+      });
+    }
+  }
+
+  close() {
+    this.$timeout(() => {
+      this.scope.$destroy();
+
+      if (this.iconDrop.tether) {
+        this.iconDrop.destroy();
+      }
+    });
+  }
 }
 
 export function iconPicker() {
