@@ -9,40 +9,64 @@ import emojiDef from './emoji/emoji_def';
 
 let buttonTemplate = `
 <span class="gf-form-input width-3">
-  <a class="pointer" ng-click="ctrl.openEmojiPicker($event)">
-    <i class="emoji fa fa-smile-o"></i>
+  <a class="pointer gf-icon-picker-button" ng-click="ctrl.openEmojiPicker($event)">
+    <i class="gf-event-icon fa fa-smile-o"></i>
   </a>
 </span>
 `;
 
 let pickerTemplate = `
-<div class="graph-legend-popover">
-  <p class="m-b-0"></p>
+<div class="gf-icon-picker">
+  <div class="gf-form icon-filter">
+    <input type="text"
+      ng-model="iconFilter" ng-change="filterIcon()"
+      class="gf-form-input max-width-20" placeholder="Find icon by name">
+  </div>
+  <div class="icon-container"></div>
 </div>
 `;
 
-let codePoints = emojiDef.codePoints.slice(0, 200);
+let codePoints = emojiDef.codePoints;
 
 coreModule.directive('gfEmojiPicker', function ($timeout) {
   function link(scope, elem, attrs) {
+    scope.filterIcon = filterIcon;
+    scope.icons = [];
+
+    addIcons(elem, codePoints);
 
     // Convert code points into emoji images and add it to popover
-    _.each(codePoints, codepoint => {
-      let emoji = buildEmoji(codepoint, '24px');
+    function addIcons(elem, codePoints) {
+      _.each(codePoints, codepoint => {
+        let emoji;
+        try {
+          emoji = buildEmoji(codepoint);
+        } catch (error) {
+          console.log("Error while converting code point", codepoint);
+        }
 
-      emoji = emoji.css({
-        padding: '0.2rem'
+        scope.icons.push(emoji);
+        return emoji;
       });
-
-      emoji.on('click', onEmojiSelect);
-
-      elem.find(".m-b-0").append(emoji);
-      return emoji;
-    });
+      let container = elem.find(".icon-container");
+      container.append(scope.icons);
+      container.find('.gf-event-icon').on('click', onEmojiSelect);
+    }
 
     function onEmojiSelect(event) {
       let codepoint = $(event.currentTarget).attr('codepoint');
       scope.onSelect(codepoint);
+    }
+
+    function filterIcon() {
+      let icons = _.filter(scope.icons, icon => {
+        return icon.attr("title").indexOf(scope.iconFilter) !== -1;
+      });
+
+      let container = elem.find(".icon-container");
+      container.empty();
+      container.append(icons);
+      container.find('.gf-event-icon').on('click', onEmojiSelect);
     }
   }
 
@@ -65,7 +89,7 @@ function buildEmoji(codepoint, size?) {
   let utfCode = twemoji.convert.fromCodePoint(codepoint);
   let emoji = twemoji.parse(utfCode, {
     attributes: attributesCallback,
-    className: 'emoji'
+    className: 'emoji gf-event-icon'
   });
 
   emoji = $(emoji);
@@ -87,7 +111,7 @@ export class IconPickerCtrl {
   }
 
   openEmojiPicker(e) {
-    let el = $(e.currentTarget).find('.emoji');
+    let el = $(e.currentTarget).find('.gf-event-icon');
     let onIconSelect = this.$scope.ctrl.onSelect;
 
     this.$timeout(() => {
@@ -110,7 +134,7 @@ export class IconPickerCtrl {
         target: el[0],
         content: contentElement,
         position: 'bottom center',
-        classes: 'drop-popover',
+        classes: 'drop-popover drop-popover--form',
         openOn: 'hover',
         hoverCloseDelay: 200,
         tetherOptions: {
@@ -129,7 +153,7 @@ export class IconPickerCtrl {
       this.$scope.$apply(() => {
         this.$scope.ctrl.icon = codepoint;
 
-        let emoji = buildEmoji(codepoint, '1.2rem');
+        let emoji = buildEmoji(codepoint);
         el.replaceWith(emoji);
 
         this.iconDrop.close();
@@ -161,8 +185,8 @@ export function iconPicker() {
     link: function (scope, elem, attrs)  {
       let defaultIcon = '1f494'; // Broken heart
       let codepoint = scope.ctrl.icon || defaultIcon;
-      let emoji = buildEmoji(codepoint, '1.2rem');
-      elem.find('.emoji').replaceWith(emoji);
+      let emoji = buildEmoji(codepoint);
+      elem.find('.gf-event-icon').replaceWith(emoji);
     }
   };
 }
