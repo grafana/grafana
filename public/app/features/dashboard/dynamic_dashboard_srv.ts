@@ -180,9 +180,17 @@ export class DynamicDashboardSrv {
       selected = _.filter(variable.options, {selected: true});
     }
 
+    var subSpan = function(acc, p) {
+      if (p === panel || p.repeatPanelId === panel.id) {
+        return acc;
+      } else {
+        return acc -= p.span;
+      }
+    };
+    var span = Math.max(_.reduce(row.panels, subSpan, 12) / selected.length, panel.minSpan || 4);
     _.each(selected, (option, index) => {
       var copy = this.getPanelClone(panel, row, index);
-      copy.span = Math.max(12 / selected.length, panel.minSpan || 4);
+      copy.span = span;
       copy.scopedVars = copy.scopedVars || {};
       copy.scopedVars[variable.name] = option;
     });
