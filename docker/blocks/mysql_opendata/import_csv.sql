@@ -56,23 +56,25 @@ CREATE TABLE IF NOT EXISTS `nyc_open_data` (
   Location varchar(255)
 );
 LOAD DATA INFILE '/var/lib/mysql-files/311_Service_Requests_from_2015.csv' INTO TABLE nyc_open_data FIELDS OPTIONALLY ENCLOSED BY '"' TERMINATED BY ',' IGNORE 1 LINES;
-update nyc_open_data set CreatedDate = STR_TO_DATE(CreatedDate, '%m/%d/%Y %r') where CreatedDate <> '';
-update nyc_open_data set ClosedDate = STR_TO_DATE(ClosedDate, '%m/%d/%Y %r') where ClosedDate <> '';
-update nyc_open_data set DueDate = STR_TO_DATE(DueDate, '%m/%d/%Y %r') where DueDate <> '';
-update nyc_open_data set ResolutionActionUpdatedDate = STR_TO_DATE(ResolutionActionUpdatedDate, '%m/%d/%Y %r') where ResolutionActionUpdatedDate <> '';
+UPDATE nyc_open_data SET CreatedDate = STR_TO_DATE(CreatedDate, '%m/%d/%Y %r') WHERE CreatedDate <> '';
+UPDATE nyc_open_data SET ClosedDate = STR_TO_DATE(ClosedDate, '%m/%d/%Y %r') WHERE ClosedDate <> '';
+UPDATE nyc_open_data SET DueDate = STR_TO_DATE(DueDate, '%m/%d/%Y %r') WHERE DueDate <> '';
+UPDATE nyc_open_data SET ResolutionActionUpdatedDate = STR_TO_DATE(ResolutionActionUpdatedDate, '%m/%d/%Y %r') WHERE ResolutionActionUpdatedDate <> '';
 
-update nyc_open_data set CreatedDate=null where CreatedDate = '';
-update nyc_open_data set ClosedDate=null where ClosedDate = '';
-update nyc_open_data set DueDate=null where DueDate = '';
-update nyc_open_data set ResolutionActionUpdatedDate=null where ResolutionActionUpdatedDate = '';
+UPDATE nyc_open_data SET CreatedDate=null WHERE CreatedDate = '';
+UPDATE nyc_open_data SET ClosedDate=null WHERE ClosedDate = '';
+UPDATE nyc_open_data SET DueDate=null WHERE DueDate = '';
+UPDATE nyc_open_data SET ResolutionActionUpdatedDate=null WHERE ResolutionActionUpdatedDate = '';
 
-alter table nyc_open_data modify CreatedDate datetime null;
-alter table nyc_open_data modify ClosedDate datetime null;
-alter table nyc_open_data modify DueDate datetime null;
-alter table nyc_open_data modify ResolutionActionUpdatedDate datetime null;
+ALTER TABLE nyc_open_data modify CreatedDate datetime NULL;
+ALTER TABLE nyc_open_data modify ClosedDate datetime NULL;
+ALTER TABLE nyc_open_data modify DueDate datetime NULL;
+ALTER TABLE nyc_open_data modify ResolutionActionUpdatedDate datetime NULL;
 
 ALTER TABLE `nyc_open_data` ADD INDEX `IX_ComplaintType` (`ComplaintType`);
 ALTER TABLE `nyc_open_data` ADD INDEX `IX_CreatedDate` (`CreatedDate`);
 ALTER TABLE `nyc_open_data` ADD INDEX `IX_LocationType` (`LocationType`);
 ALTER TABLE `nyc_open_data` ADD INDEX `IX_AgencyName` (`AgencyName`);
 ALTER TABLE `nyc_open_data` ADD INDEX `IX_City` (`City`);
+
+SYSTEM rm /var/lib/mysql-files/311_Service_Requests_from_2015.csv

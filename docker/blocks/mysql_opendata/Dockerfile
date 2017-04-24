@@ -12,7 +12,8 @@ RUN apt-get update && apt-get install -y wget && apt-get install unzip
 
 # Fetch NYC Data Set
 RUN wget https://data.cityofnewyork.us/download/57g5-etyj/application%2Fzip -O /tmp/data.zip && \
-  unzip -j /tmp/data.zip 311_Service_Requests_from_2015.csv -d /var/lib/mysql-files
+  unzip -j /tmp/data.zip 311_Service_Requests_from_2015.csv -d /var/lib/mysql-files && \
+  rm /tmp/data.zip
 
 ADD import_csv.sql /docker-entrypoint-initdb.d/
 
