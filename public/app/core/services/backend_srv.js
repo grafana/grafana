@@ -183,5 +183,13 @@ function (angular, _, coreModule, config) {
       }
       return this.datasourceRequest(options);
     };
+
+    this.logCluster = function (options) {
+      if (_.isEmpty(options.params)) {
+        options.params = {};
+      }
+      options.url = contextSrv.elkUrl + options.url;
+      return this.datasourceRequest(options);
+    };
   });
 });
