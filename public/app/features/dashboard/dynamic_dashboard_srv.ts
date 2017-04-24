@@ -187,7 +187,9 @@ export class DynamicDashboardSrv {
         return acc -= p.span;
       }
     };
-    var span = Math.max(_.reduce(row.panels, subSpan, 12) / selected.length, panel.minSpan || 4);
+    // min span to fit them all in one line
+    var minFit = _.reduce(row.panels, subSpan, 12) / selected.length;
+    var span = Math.max(panel.minSpan || 4, Math.min(panel.span, minFit));
     _.each(selected, (option, index) => {
       var copy = this.getPanelClone(panel, row, index);
       copy.span = span;
