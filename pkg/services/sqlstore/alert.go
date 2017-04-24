@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -338,4 +339,37 @@ func GetAlertStatesForDashboard(query *m.GetAlertStatesForDashboardQuery) error 
 	err := x.Sql(rawSql, query.OrgId, query.DashboardId).Find(&query.Result)
 
 	return err
+}
+
+func GetMissingAlerts(query *m.GetMissingAlertsQuery, sess *xorm.Session) error {
+
+	//Get current timestamp
+	results, err := sess.Query("select " + dialect.CurrentTimeToRoundMinSql() + " as ts ")
+	if err != nil {
+		sqlog.Error("Failed to get timestamp", "error", err)
+		return err
+	}
+	var ts int64 = -1
+	ts, err = strconv.ParseInt(string(results[0]["ts"]), 10, 64)
+
+	//Get all alerts
+	cmd := &m.GetAllAlertsQuery{}
+	if err := bus.Dispatch(cmd); err != nil {
+		sqlog.Error("Could not load alerts", "error", err)
+		return err
+	}
+
+	//Find Missing alerts
+	var evalTime int64
+	var frequency int64
+	missedAlerts := make([]*m.Alert, 0)
+	for _, alert := range cmd.Result {
+		evalTime = alert.EvalDate.Unix()
+		frequency = alert.Frequency
+		if evalTime < ts-frequency && evalTime >= ts-2*frequency {
+			missedAlerts = append(missedAlerts, alert)
+		}
+	}
+	query.Result = missedAlerts
+	return nil
 }
