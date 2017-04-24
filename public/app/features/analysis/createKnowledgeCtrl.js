@@ -24,8 +24,13 @@ define([
           method: "PUT",
           url: "",
           data: $scope.knowledge
+        }).then(function(res) {
+          if(res.data.isSuccessful) {
+            $scope.appEvent('alert-success', ['添加成功']);
+          }
         });
         $scope.dismiss();
+
       };
 
     });
