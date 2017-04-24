@@ -1,9 +1,9 @@
 package securejsondata
 
 import (
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
-	"github.com/grafana/grafana/pkg/log"
 )
 
 type SecureJsonData map[string][]byte
