@@ -150,7 +150,6 @@ function (angular, _, $, coreModule, config) {
             }
           });
         });
-        
       });
 
     };

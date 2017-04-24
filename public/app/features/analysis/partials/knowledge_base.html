@@ -11,32 +11,25 @@
     </ul>
 </topnav>
 
-<div class="page-container">
+<div class="page-container" style="background:#fff;">
     <form>
-        <div class="page">
+        <div class="">
             <h2>运维知识库搜索</h2>
-            <div class="tight-form">
-                <ul class="tight-form-list">
-                    <li class="tight-form-item" style="width: 100px">
-                        关键词
+            <div class="tidy-form">
+                <ul class="tidy-form-list">
+                    <li class="tidy-form-item"><h4>关键词</h4></li>
+                    <li>
+                        <input placeholder="支持AND, OR, 空格表示OR" type="text" class="input-large tidy-form-input last" ng-model="q" required="">
+                    </li>
+                    <li class="tidy-form-item" style="margin-left:30px;"><h4>类型</h4></li>
+                    <li>
+                        <select class="input-small tidy-form-input" ng-model="service" required>
+                            <option ng-repeat="s in services" value="{{s}}" ng-selected="service == s">{{s}}</option>
+                        </select>
                     </li>
                     <li>
-                        <input placeholder="支持AND, OR, 空格表示OR" type="text" class="input-large tight-form-input last"
-                               ng-model="q" required="">
-                    </li>
-
-                    <li class="tight-form-item" style="width: 100px">
-                        类型
-                    </li>
-
-                    <select class="input-small tight-form-input" ng-model="service" required>
-                        <option ng-repeat="s in services" value="{{s}}" ng-selected="service == s">{{s}}</option>
-                    </select>
-                    </li>
-                    <li>
-                        <button type="submit" class="btn btn-primary" ng-click="query()"><i class="fa fa-search"/>查找
-                        </button>
-                        <button class="btn btn-primary" ng-click="newKnows()">+ 运维经验</button>
+                        <button style="margin:0 20px;" type="submit" class="btn btn-primary" ng-click="query()"><i class="fa fa-search"/>查找</button>
+                        <button class="btn btn-primary btn-success" ng-click="newKnows()">+ 运维经验</button>
                     </li>
                 </ul>
                 <div class="clearfix"></div>
@@ -45,19 +38,18 @@
             <br>
         </div>
     </form>
+    <table class="filter-table ng-scope" ng-if="knowledge.length" style="background:#fff;">
+        <thead>
+            <tr style="background:#fff;">
+                <th>现象</th>
+                <th>解决方案</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr ng-repeat="knows in knowledge" style="background:#fff;">
+                <td>{{knows.symptom}}</td>
+                <td>{{knows.solution}}</td>
+            </tr>
+        </tbody>
+    </table>
 </div>
-
-<table class="filter-table ng-scope" ng-if="knowledge.length">
-    <thead>
-        <tr>
-            <td>原因</td>
-            <td>解决方案</td>
-        </tr>
-    </thead>
-    <tbody ng-repeat="knows in knowledge">
-        <tr>
-            <td>{{knows.symptom}}</td>
-            <td>{{knows.solution}}</td>
-        </tr>
-    </tbody>
-</table>
