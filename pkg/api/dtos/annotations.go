@@ -7,7 +7,7 @@ type Annotation struct {
 	DashboardId int64  `json:"dashboardId"`
 	PanelId     int64  `json:"panelId"`
 	UserId      int64  `json:"userId"`
-	UserName string `json:"userName"`
+	UserName    string `json:"userName"`
 	NewState    string `json:"newState"`
 	PrevState   string `json:"prevState"`
 	Time        int64  `json:"time"`
