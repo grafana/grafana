@@ -77,10 +77,11 @@ define([
       $scope.panleJson = [
         {fullwidth: false,header: '报警情况',title: '历史报警状态',status:{ success: ['',''], warn: ['警告',0], danger: ['严重',0]}, tip:'2:critical，1:warning,0:normal'},
         {fullwidth: false,header: '智能检测异常指标',title: '历史异常指标概览',status:{ success: ['指标数量',0], warn: ['异常指标',0], danger: ['严重',0]}},
-        {fullwidth: false,header: '服务状态',title: '服务状态',status:{ success: ['正常服务',0], warn: ['异常服务',0], danger: ['严重',0]}},
-        {fullwidth: false,header: '机器连接状态',title: '机器连接状态',status:{ success: ['正常机器',0], warn: ['异常机器',0],danger: ['尚未工作',0]}},
-        {fullwidth: true,header: '历史健康指数趋势',title: '历史健康指数趋势'},
-        {fullwidth: true,header: '智能分析预测',title: '',panels:[{title: '磁盘剩余空间',tip:'预计未来1天后，磁盘剩余空间约为'},{title: 'CPU使用情况(百分比)',tip:'预计未来1天后，cpu使用情况约为'},{title: '内存使用情况',tip:'预计未来1天后，内存使用约为'},]}
+        {fullwidth: false,header: '服务状态',title: '历史服务状态',status:{ success: ['正常服务',0], warn: ['异常服务',0], danger: ['严重',0]}},
+        {fullwidth: false,header: '机器连接状态',title: '历史机器连接状态',status:{ success: ['正常机器',0], warn: ['异常机器',0],danger: ['尚未工作',0]}},
+        {fullwidth: true,header: '各线程TopN使用情况',title: '', panels:[{title: '各线程CPU占用情况(百分比)TopN'},{title: '各线程内存占用情况(百分比)TopN'},]},
+        {fullwidth: true,header: '健康指数趋势',title: '历史健康指数趋势'},
+        {fullwidth: true,header: '智能分析预测',title: '',panels:[{title: '磁盘剩余空间',tip:'预计未来1天后，磁盘剩余空间约为'},{title: 'CPU使用情况(百分比)',tip:'预计未来1天后，cpu使用情况约为'},{title: '内存使用情况',tip:'预计未来1天后，内存使用约为'},]},
       ];
 
       $scope.init = function () {
@@ -107,7 +108,7 @@ define([
               $scope.getServices();
               $scope.getHostSummary();
               $scope.getHealth();
-              $scope.getPrediction($scope.dashboard.rows[5].panels);
+              $scope.getPrediction($scope.dashboard.rows[6].panels);
             });
           }
         });
@@ -118,7 +119,7 @@ define([
         _.each($scope.panleJson, function(panel, index) {
           var row = $scope.setPanelTitle(_.cloneDeep(panelMeta), panel.title);
           if(panel.title === '') {
-            for(var i=0; i<2; i++){
+            for(var i=0; i<$scope.panleJson[index].panels.length-1; i++){
               row.panels.push(_.cloneDeep(panelMeta.panels[0]));
             }
             $scope.setPanelMeta(row.panels, panel.panels);
@@ -134,7 +135,8 @@ define([
         $scope.initAlertStatus(panelRow[0].panels[0]);
         $scope.initAnomalyStatus(panelRow[1].panels[0]);
         $scope.initHostSummary(panelRow[3].panels[0].targets[0]);
-        $scope.initHealth(panelRow[4].panels[0]);
+        $scope.initTopN();
+        $scope.initHealth(panelRow[5].panels[0]);
         return panelRow;
       };
 
@@ -145,7 +147,7 @@ define([
 
       $scope.setPanelMeta = function(panels, panelCon) {
         for(var i in panels) {
-          panels[i].span = 4;
+          panels[i].span = 12/panels.length;
           panels[i].id = i+1;
           panels[i].title = panelCon[i].title;
         }
@@ -366,10 +368,163 @@ define([
             } else {
               data = (data/Math.pow(1024,3)).toFixed(2) + 'GB';
             }
-            $scope.panleJson[5].panels[index].tip += data;
+            $scope.panleJson[6].panels[index].tip += data;
           }).catch(function () {});
         });
 
+      };
+
+      $scope.initTopN = function() {
+        panelRow[4] = {
+          "collapse": false,
+          "editable": true,
+          "height": "260px",
+          "panels": [
+            {
+              "columns": [
+                {
+                  "text": "Max",
+                  "value": "max"
+                }
+              ],
+              "editable": true,
+              "error": false,
+              "fontSize": "100%",
+              "helpInfo": {
+                "context": "",
+                "info": false,
+                "title": ""
+              },
+              "id": 6,
+              "isNew": true,
+              "links": [],
+              "pageSize": null,
+              "scroll": true,
+              "showHeader": true,
+              "sort": {
+                "col": 1,
+                "desc": true
+              },
+              "span": 6,
+              "styles": [
+                {
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "pattern": "Time",
+                  "type": "date"
+                },
+                {
+                  "colorMode": "cell",
+                  "colors": [
+                    "rgba(245, 54, 54, 0.39)",
+                    "rgba(237, 129, 40, 0.52)",
+                    "rgba(50, 172, 45, 0.54)"
+                  ],
+                  "decimals": 2,
+                  "pattern": "Max",
+                  "thresholds": [
+                    "70",
+                    "30",
+                    "0"
+                  ],
+                  "type": "number",
+                  "unit": "short"
+                }
+              ],
+              "targets": [
+                {
+                  "aggregator": "sum",
+                  "currentTagKey": "",
+                  "currentTagValue": "",
+                  "downsampleAggregator": "avg",
+                  "downsampleInterval": "",
+                  "errors": {},
+                  "metric": "cpu.topN",
+                  "refId": "A",
+                  "tags": {
+                    "host": "*",
+                    "pid_cmd": "*"
+                  }
+                }
+              ],
+              "title": "各线程CPU占用情况(百分比)TopN",
+              "transform": "timeseries_aggregations",
+              "type": "table",
+              "height": "260",
+            },
+            {
+              "columns": [
+                {
+                  "text": "Max",
+                  "value": "max"
+                }
+              ],
+              "editable": true,
+              "error": false,
+              "fontSize": "100%",
+              "helpInfo": {
+                "context": "",
+                "info": false,
+                "title": ""
+              },
+              "id": 7,
+              "isNew": true,
+              "links": [],
+              "pageSize": null,
+              "scroll": true,
+              "showHeader": true,
+              "sort": {
+                "col": 1,
+                "desc": true
+              },
+              "span": 6,
+              "styles": [
+                {
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "pattern": "Time",
+                  "type": "date"
+                },
+                {
+                  "colorMode": "cell",
+                  "colors": [
+                    "rgba(40, 166, 57, 0.52)",
+                    "rgba(237, 129, 40, 0.52)",
+                    "rgba(233, 34, 34, 0.69)"
+                  ],
+                  "decimals": 2,
+                  "pattern": "Max",
+                  "thresholds": [
+                    "1",
+                    "20",
+                    "50"
+                  ],
+                  "type": "number",
+                  "unit": "percent"
+                }
+              ],
+              "targets": [
+                {
+                  "aggregator": "sum",
+                  "currentTagKey": "",
+                  "currentTagValue": "",
+                  "downsampleAggregator": "avg",
+                  "downsampleInterval": "",
+                  "errors": {},
+                  "metric": "mem.topN",
+                  "refId": "A",
+                  "tags": {
+                    "host": "*",
+                    "pid_cmd": "*"
+                  }
+                }
+              ],
+              "title": "各线程内存占用情况(百分比)TOPN",
+              "transform": "timeseries_aggregations",
+              "type": "table",
+              "height": "260",
+            }
+          ],
+          "title": "New row"
+        }
       };
 
       $scope.init();
