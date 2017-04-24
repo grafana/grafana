@@ -1,6 +1,7 @@
 define([
     'angular',
-    'lodash'
+    'lodash',
+    'highlight',
   ],
   function (angular, _) {
     'use strict';
@@ -242,10 +243,94 @@ define([
                   "timeField": "@timestamp"
                 }
               ],
+              "tab": 1,
               "title": "日志查询",
               "transform": "json",
               "transparent": false,
               "type": "table"
+            },
+            {
+              "columns": [
+                {
+                  "text": "count",
+                  "value": "count"
+                },
+                {
+                  "text": "message",
+                  "value": "message"
+                }
+              ],
+              "datasource": "elk",
+              "editable": true,
+              "error": false,
+              "fontSize": "120%",
+              "height": "500",
+              "helpInfo": {
+                "context": "",
+                "info": false,
+                "title": ""
+              },
+              "hideTimeOverride": false,
+              "id": Math.random(),
+              "isNew": true,
+              "links": [],
+              "pageSize": null,
+              "scroll": true,
+              "showHeader": true,
+              "sort": {
+                "col": 3,
+                "desc": false
+              },
+              "span": 12,
+              "styles": [
+                {
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "pattern": "@timestamp",
+                  "type": "date"
+                },
+                {
+                  "colorMode": null,
+                  "colors": [
+                    "rgba(245, 54, 54, 0.9)",
+                    "rgba(237, 129, 40, 0.89)",
+                    "rgba(50, 172, 45, 0.97)"
+                  ],
+                  "decimals": 0,
+                  "pattern": "/.*/",
+                  "thresholds": [],
+                  "type": "number",
+                  "unit": "short"
+                }
+              ],
+              "targets": [
+                {
+                  "aggregator": "sum",
+                  "bucketAggs": [],
+                  "downsampleAggregator": "avg",
+                  "dsType": "elasticsearch",
+                  "errors": {},
+                  "metrics": [
+                    {
+                      "field": "select field",
+                      "id": Math.random(),
+                      "meta": {},
+                      "settings": {},
+                      "type": "raw_document"
+                    }
+                  ],
+                  "refId": "A",
+                  "timeField": "@timestamp",
+                  "hide": true
+                }
+              ],
+              "title": "聚合数据",
+              "transform": "json",
+              "transparent": false,
+              "type": "table",
+              "tab": 2,
+              "scopedVars": {
+                "logCluster": true
+              }
             }
           ],
           "showTitle": false,
@@ -254,12 +339,21 @@ define([
       ];
 
       $scope.reQuery = function () {
-        console.log($scope.query);
         $scope.dashboard.rows[2].panels[0].targets[0].query = $scope.query;
+        $scope.dashboard.rows[2].panels[1].targets[0].query = $scope.query;
+        $scope.dashboard.rows[2].panels[1].targets[0].hide = true;
+        $scope.clustering = false;
         $rootScope.$broadcast('refresh');
-        //$rootScope.appEvent('elastic-query-updated');
       };
+
+      $scope.logCluster = function() {
+        $scope.clustering = true;
+        $scope.dashboard.rows[2].panels[1].targets[0].hide = false;
+        $rootScope.$broadcast('refresh');
+      };
+
       $scope.init = function (param) {
+        $scope.clustering = false;
         param.targets = param.targets.filter(function (metrics) {
           return _.excludeMetricSuffix(metrics.metric);
         });
@@ -278,6 +372,7 @@ define([
 
         $scope.query = "type:"+type+" AND host:"+host;
         panelMetas[2].panels[0].targets[0].query = "type:"+type+" AND host:"+host;
+        panelMetas[2].panels[1].targets[0].query = "type:"+type+" AND host:"+host;
 
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: false, canSave: false},

@@ -5,6 +5,7 @@ import $ = require('jquery');
 import _ = require('lodash');
 import kbn = require('app/core/utils/kbn');
 import moment = require('moment');
+import 'highlight';
 
 import {TablePanelCtrl} from './controller';
 import {TableRenderer} from './renderer';
@@ -81,6 +82,7 @@ export function tablePanel() {
         appendPaginationControls(footerElem);
 
         rootElem.css({'max-height': panel.scroll ? getTableHeight() : '' });
+        container._highlight(scope.panel.targets[0].query);
       }
 
       elem.on('click', '.table-panel-page-link', switchPage);
