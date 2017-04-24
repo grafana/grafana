@@ -88,6 +88,8 @@ function attributesCallback(rawText, iconId) {
 function buildEmoji(codepoint, size?) {
   let utfCode = twemoji.convert.fromCodePoint(codepoint);
   let emoji = twemoji.parse(utfCode, {
+    folder: 'svg',
+    ext: '.svg',
     attributes: attributesCallback,
     className: 'emoji gf-event-icon'
   });

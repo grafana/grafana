@@ -297,7 +297,10 @@ function ($, _, angular, Drop, twemoji) {
 
           if (isEmoji(icon)) {
             var utfEmoji = twemoji.convert.fromCodePoint(icon);
-            iconElem = twemoji.parse(utfEmoji);
+            iconElem = twemoji.parse(utfEmoji, {
+              folder: 'svg',
+              ext: '.svg'
+            });
             iconElem = $(iconElem).css({
               "position": "absolute",
               // Adjust icon position only to show tooltip in the center of marker
