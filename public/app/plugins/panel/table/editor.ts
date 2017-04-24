@@ -101,7 +101,7 @@ export class TablePanelEditorCtrl {
   setUnitFormat(column, subItem) {
     column.unit = subItem.value;
     this.panelCtrl.render();
-  };
+  }
 
   addColumnStyle() {
     var columnStyleDefaults = {

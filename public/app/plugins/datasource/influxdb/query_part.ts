@@ -28,7 +28,7 @@ function createPart(part): any {
   }
 
   return new QueryPart(part, def);
-};
+}
 
 function register(options: any) {
   index[options.type] = new QueryPartDef(options);

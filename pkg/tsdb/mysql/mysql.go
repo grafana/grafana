@@ -7,9 +7,13 @@ import (
 	"strconv"
 	"sync"
 
+	"time"
+
+	"github.com/go-sql-driver/mysql"
 	"github.com/go-xorm/core"
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/components/null"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/tsdb"
@@ -81,6 +85,7 @@ func (e *MysqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, co
 		QueryResults: make(map[string]*tsdb.QueryResult),
 	}
 
+	macroEngine := NewMysqlMacroEngine(context.TimeRange)
 	session := e.engine.NewSession()
 	defer session.Close()
 	db := session.DB()
@@ -91,48 +96,145 @@ func (e *MysqlExecutor) Execute(ctx context.Context, queries tsdb.QuerySlice, co
 			continue
 		}
 
+		queryResult := &tsdb.QueryResult{Meta: simplejson.New(), RefId: query.RefId}
+		result.QueryResults[query.RefId] = queryResult
+
+		rawSql, err := macroEngine.Interpolate(rawSql)
+		if err != nil {
+			queryResult.Error = err
+			continue
+		}
+
+		queryResult.Meta.Set("sql", rawSql)
+
 		rows, err := db.Query(rawSql)
 		if err != nil {
-			result.QueryResults[query.RefId] = &tsdb.QueryResult{Error: err}
+			queryResult.Error = err
 			continue
 		}
 
 		defer rows.Close()
 
-		result.QueryResults[query.RefId] = e.TransformToTimeSeries(query, rows)
+		format := query.Model.Get("format").MustString("time_series")
+
+		switch format {
+		case "time_series":
+			err := e.TransformToTimeSeries(query, rows, queryResult)
+			if err != nil {
+				queryResult.Error = err
+				continue
+			}
+		case "table":
+			err := e.TransformToTable(query, rows, queryResult)
+			if err != nil {
+				queryResult.Error = err
+				continue
+			}
+		}
 	}
 
 	return result
 }
 
-func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows) *tsdb.QueryResult {
-	result := &tsdb.QueryResult{RefId: query.RefId}
+func (e MysqlExecutor) TransformToTable(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
+	columnNames, err := rows.Columns()
+	columnCount := len(columnNames)
+
+	if err != nil {
+		return err
+	}
+
+	table := &tsdb.Table{
+		Columns: make([]tsdb.TableColumn, columnCount),
+		Rows:    make([]tsdb.RowValues, 0),
+	}
+
+	for i, name := range columnNames {
+		table.Columns[i].Text = name
+	}
+
+	columnTypes, err := rows.ColumnTypes()
+	if err != nil {
+		return err
+	}
+
+	rowLimit := 1000000
+	rowCount := 0
+
+	for ; rows.Next(); rowCount += 1 {
+		if rowCount > rowLimit {
+			return fmt.Errorf("MySQL query row limit exceeded, limit %d", rowLimit)
+		}
+
+		values, err := e.getTypedRowData(columnTypes, rows)
+		if err != nil {
+			return err
+		}
+
+		table.Rows = append(table.Rows, values)
+	}
+
+	result.Tables = append(result.Tables, table)
+	result.Meta.Set("rowCount", rowCount)
+	return nil
+}
+
+func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows) (tsdb.RowValues, error) {
+	values := make([]interface{}, len(types))
+
+	for i, stype := range types {
+		switch stype.DatabaseTypeName() {
+		case mysql.FieldTypeNameVarString:
+			values[i] = new(string)
+		case mysql.FieldTypeNameLongLong:
+			values[i] = new(int64)
+		case mysql.FieldTypeNameDouble:
+			values[i] = new(float64)
+		case mysql.FieldTypeNameDateTime:
+			values[i] = new(time.Time)
+		default:
+			return nil, fmt.Errorf("Database type %s not supported", stype.DatabaseTypeName())
+		}
+	}
+
+	if err := rows.Scan(values...); err != nil {
+		return nil, err
+	}
+
+	return values, nil
+}
+
+func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows, result *tsdb.QueryResult) error {
 	pointsBySeries := make(map[string]*tsdb.TimeSeries)
 	columnNames, err := rows.Columns()
 
 	if err != nil {
-		result.Error = err
-		return result
+		return err
 	}
 
 	rowData := NewStringStringScan(columnNames)
-	for rows.Next() {
+	rowLimit := 1000000
+	rowCount := 0
+
+	for ; rows.Next(); rowCount += 1 {
+		if rowCount > rowLimit {
+			return fmt.Errorf("MySQL query row limit exceeded, limit %d", rowLimit)
+		}
+
 		err := rowData.Update(rows.Rows)
 		if err != nil {
-			e.log.Error("Mysql response parsing", "error", err)
-			result.Error = err
-			return result
+			e.log.Error("MySQL response parsing", "error", err)
+			return fmt.Errorf("MySQL response parsing error %v", err)
 		}
 
 		if rowData.metric == "" {
 			rowData.metric = "Unknown"
 		}
 
-		e.log.Info("Rows", "metric", rowData.metric, "time", rowData.time, "value", rowData.value)
+		//e.log.Debug("Rows", "metric", rowData.metric, "time", rowData.time, "value", rowData.value)
 
 		if !rowData.time.Valid {
-			result.Error = fmt.Errorf("Found row with no time value")
-			return result
+			return fmt.Errorf("Found row with no time value")
 		}
 
 		if series, exist := pointsBySeries[rowData.metric]; exist {
@@ -148,7 +250,8 @@ func (e MysqlExecutor) TransformToTimeSeries(query *tsdb.Query, rows *core.Rows)
 		result.Series = append(result.Series, value)
 	}
 
-	return result
+	result.Meta.Set("rowCount", rowCount)
+	return nil
 }
 
 type stringStringScan struct {

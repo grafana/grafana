@@ -14,7 +14,7 @@ func init() {
 
 func sqlRandomWalk(m1 string, m2 string, intWalker int64, floatWalker float64, sess *session) error {
 
-	timeWalker := time.Now().UTC().Add(time.Hour * -1)
+	timeWalker := time.Now().UTC().Add(time.Hour * -200)
 	now := time.Now().UTC()
 	step := time.Minute
 
@@ -29,7 +29,7 @@ func sqlRandomWalk(m1 string, m2 string, intWalker int64, floatWalker float64, s
 		timeWalker = timeWalker.Add(step)
 
 		row.Id = 0
-		row.ValueBigInt += rand.Int63n(100) - 100
+		row.ValueBigInt += rand.Int63n(200) - 100
 		row.ValueDouble += rand.Float64() - 0.5
 		row.ValueFloat += rand.Float32() - 0.5
 		row.TimeEpoch = timeWalker.Unix()
@@ -60,11 +60,6 @@ func InsertSqlTestData(cmd *m.InsertSqlTestDataCommand) error {
 		sqlRandomWalk("server1", "frontend", 100, 1.123, sess)
 		sqlRandomWalk("server2", "frontend", 100, 1.123, sess)
 		sqlRandomWalk("server3", "frontend", 100, 1.123, sess)
-
-		sqlRandomWalk("server1", "backend", 100, 1.123, sess)
-		sqlRandomWalk("server2", "backend", 100, 1.123, sess)
-		sqlRandomWalk("server3", "backend", 100, 1.123, sess)
-		sqlRandomWalk("db-server1", "backend", 100, 1.123, sess)
 
 		return err
 	})

@@ -284,7 +284,7 @@ class GraphCtrl extends MetricsPanelCtrl {
     }
     info.yaxis = override.yaxis = info.yaxis === 2 ? 1 : 2;
     this.render();
-  };
+  }
 
   addSeriesOverride(override) {
     this.panel.seriesOverrides.push(override || {});
@@ -316,4 +316,4 @@ class GraphCtrl extends MetricsPanelCtrl {
 
 }
 
-export {GraphCtrl, GraphCtrl as PanelCtrl}
+export {GraphCtrl, GraphCtrl as PanelCtrl};

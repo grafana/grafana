@@ -66,6 +66,16 @@ $gf-form-margin: 0.25rem;
   }
 }
 
+.gf-form-pre {
+  display: block;
+  flex-grow: 1;
+  font-size: $font-size-sm;
+  margin: 0;
+  margin-right: $gf-form-margin;
+  border: $input-btn-border-width solid transparent;
+  @include border-radius($label-border-radius-sm);
+}
+
 .gf-form-error {
   padding: $input-padding-y $input-padding-x;
   margin-right: $gf-form-margin;

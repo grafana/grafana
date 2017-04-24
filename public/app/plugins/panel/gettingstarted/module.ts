@@ -116,4 +116,4 @@ class GettingStartedPanelCtrl extends PanelCtrl {
   }
 }
 
-export {GettingStartedPanelCtrl, GettingStartedPanelCtrl as PanelCtrl}
+export {GettingStartedPanelCtrl, GettingStartedPanelCtrl as PanelCtrl};

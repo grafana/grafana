@@ -13,7 +13,7 @@ class GrafanaDatasource {
 
   metricFindQuery() {
     return this.$q.when([]);
-  };
+  }
 
   annotationQuery(options) {
     return this.backendSrv.get('/api/annotations', {

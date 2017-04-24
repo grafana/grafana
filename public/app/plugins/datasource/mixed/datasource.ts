@@ -30,4 +30,4 @@ class MixedDatasource {
   }
 }
 
-export {MixedDatasource, MixedDatasource as Datasource}
+export {MixedDatasource, MixedDatasource as Datasource};

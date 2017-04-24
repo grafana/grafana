@@ -6,10 +6,21 @@ export class MysqlDatasource {
   id: any;
   name: any;
 
-  /** @ngInject */
-  constructor(instanceSettings, private backendSrv, private $q) {
+  /** @ngInject **/
+  constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
+  }
+
+  interpolateVariable(value) {
+    if (typeof value === 'string') {
+      return '\"' + value + '\"';
+    }
+
+    var quotedValues = _.map(value, function(val) {
+      return '\"' + val + '\"';
+    });
+    return  quotedValues.join(',');
   }
 
   query(options) {
@@ -21,7 +32,8 @@ export class MysqlDatasource {
         intervalMs: options.intervalMs,
         maxDataPoints: options.maxDataPoints,
         datasourceId: this.id,
-        rawSql: item.rawSql,
+        rawSql: this.templateSrv.replace(item.rawSql, options.scopedVars, this.interpolateVariable),
+        format: item.format,
       };
     });
 
@@ -29,32 +41,49 @@ export class MysqlDatasource {
       return this.$q.when({data: []});
     }
 
-    return this.backendSrv.post('/api/tsdb/query', {
-      from: options.range.from.valueOf().toString(),
-      to: options.range.to.valueOf().toString(),
-      queries: queries,
-    }).then(res => {
-      console.log('mysql response', res);
+    return this.backendSrv.datasourceRequest({
+      url: '/api/tsdb/query',
+      method: 'POST',
+      data: {
+        from: options.range.from.valueOf().toString(),
+        to: options.range.to.valueOf().toString(),
+        queries: queries,
+      }
+    }).then(this.processQueryResult.bind(this));
+  }
 
-      var data = [];
-      if (res.results) {
-        _.forEach(res.results, queryRes => {
+  processQueryResult(res) {
+    var data = [];
 
-          if (queryRes.error) {
-            throw {error: queryRes.error, message: queryRes.error};
-          }
+    if (!res.data.results) {
+      return {data: data};
+    }
 
-          for (let series of queryRes.series) {
-            data.push({
-              target: series.name,
-              datapoints: series.points
-            });
-          }
-        });
+    for (let key in res.data.results) {
+      let queryRes = res.data.results[key];
+
+      if (queryRes.series) {
+        for (let series of queryRes.series) {
+          data.push({
+            target: series.name,
+            datapoints: series.points,
+            refId: queryRes.refId,
+            meta: queryRes.meta,
+          });
+        }
       }
 
-      return {data: data};
-    });
+      if (queryRes.tables) {
+        for (let table of queryRes.tables) {
+          table.type = 'table';
+          table.refId = queryRes.refId;
+          table.meta = queryRes.meta;
+          data.push(table);
+        }
+      }
+    }
+
+    return {data: data};
   }
 }
 

@@ -23,7 +23,7 @@ export class BackendSrv {
 
   post(url, data) {
     return this.request({ method: 'POST', url: url, data: data });
-  };
+  }
 
   patch(url, data) {
     return this.request({ method: 'PATCH', url: url, data: data });
@@ -98,7 +98,7 @@ export class BackendSrv {
       this.$timeout(this.requestErrorHandler.bind(this, err), 50);
       throw err;
     });
-  };
+  }
 
   addCanceler(requestId, canceler) {
     if (requestId in this.inFlightRequests) {
@@ -186,7 +186,7 @@ export class BackendSrv {
         this.inFlightRequests[options.requestId].shift();
       }
     });
-  };
+  }
 
   loginPing() {
     return this.request({url: '/api/login/ping', method: 'GET', retry: 1 });

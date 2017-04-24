@@ -154,7 +154,7 @@ export class DataSourceEditCtrl {
           this.$location.path('datasources/edit/' + result.id);
         });
       }
-    };
+    }
 
     confirmDelete() {
       this.backendSrv.delete('/api/datasources/' + this.current.id).then(() => {

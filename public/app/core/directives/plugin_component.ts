@@ -75,7 +75,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
 
       if (!PanelCtrl || PanelCtrl.registered) {
         return componentInfo;
-      };
+      }
 
       if (PanelCtrl.templatePromise) {
         return PanelCtrl.templatePromise.then(res => {
