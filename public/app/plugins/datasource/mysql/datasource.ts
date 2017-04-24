@@ -6,7 +6,7 @@ export class MysqlDatasource {
   id: any;
   name: any;
 
-  /** @ngInject */
+  /** @ngInject **/
   constructor(instanceSettings, private backendSrv, private $q, private templateSrv) {
     this.name = instanceSettings.name;
     this.id = instanceSettings.id;
