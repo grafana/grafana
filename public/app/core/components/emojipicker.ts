@@ -22,58 +22,6 @@ let pickerTemplate = `
 
 let codePoints = emojiDef.codePoints.slice(0, 200);
 
-
-coreModule.directive('gfEmojiPicker', function (popoverSrv, $timeout) {
-  function link(scope, elem, attrs) {
-
-    // Convert code points into emoji images and add it to popover
-    _.each(codePoints, codepoint => {
-      let emoji = buildEmoji(codepoint);
-
-      emoji = $(emoji).css({
-        padding: '0.2rem'
-      });
-
-      emoji.on('click', onEmojiSelect);
-
-      elem.find(".m-b-0").append(emoji);
-      return emoji;
-    });
-
-    function onEmojiSelect(event) {
-      let codepoint = $(event.currentTarget).attr('codepoint');
-      scope.onSelect(codepoint);
-    }
-  }
-
-  return {
-    restrict: 'E',
-    link : link,
-    controller: EmojiPickerCtrl,
-    bindToController: true,
-    controllerAs: 'ctrl',
-    template: pickerTemplate
-  };
-});
-
-function attributesCallback(rawText, iconId) {
-  let codepoint = twemoji.convert.toCodePoint(rawText);
-  return {
-    title: emojiDef.emojiMap[codepoint],
-    codepoint: codepoint
-  };
-}
-
-function buildEmoji(codepoint) {
-  let utfCode = twemoji.convert.fromCodePoint(codepoint);
-  let emoji = twemoji.parse(utfCode, {
-    size: 16,
-    attributes: attributesCallback,
-    className: 'emoji'
-  });
-  return emoji;
-}
-
 export class EmojiPickerCtrl {
   codePoints: string[];
   icons: any[];
@@ -124,6 +72,57 @@ export class IconPickerCtrl {
       });
     });
   }
+}
+
+coreModule.directive('gfEmojiPicker', function (popoverSrv, $timeout) {
+  function link(scope, elem, attrs) {
+
+    // Convert code points into emoji images and add it to popover
+    _.each(codePoints, codepoint => {
+      let emoji = buildEmoji(codepoint);
+
+      emoji = $(emoji).css({
+        padding: '0.2rem'
+      });
+
+      emoji.on('click', onEmojiSelect);
+
+      elem.find(".m-b-0").append(emoji);
+      return emoji;
+    });
+
+    function onEmojiSelect(event) {
+      let codepoint = $(event.currentTarget).attr('codepoint');
+      scope.onSelect(codepoint);
+    }
+  }
+
+  return {
+    restrict: 'E',
+    link : link,
+    controller: EmojiPickerCtrl,
+    bindToController: true,
+    controllerAs: 'ctrl',
+    template: pickerTemplate
+  };
+});
+
+function attributesCallback(rawText, iconId) {
+  let codepoint = twemoji.convert.toCodePoint(rawText);
+  return {
+    title: emojiDef.emojiMap[codepoint],
+    codepoint: codepoint
+  };
+}
+
+function buildEmoji(codepoint) {
+  let utfCode = twemoji.convert.fromCodePoint(codepoint);
+  let emoji = twemoji.parse(utfCode, {
+    size: 16,
+    attributes: attributesCallback,
+    className: 'emoji'
+  });
+  return emoji;
 }
 
 export function iconPicker() {

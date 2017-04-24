@@ -65,7 +65,7 @@
 				<h5 class="section-heading">Options</h5>
 					<div class="gf-form-inline">
 						<div class="gf-form">
-							<span class="gf-form-label width-7">Name</span>
+							<span class="gf-form-label width-6">Name</span>
 							<input type="text" class="gf-form-input width-12" ng-model='ctrl.currentAnnotation.name' placeholder="name"></input>
 						</div>
 						<div class="gf-form">
@@ -77,22 +77,21 @@
 					</div>
 					<div class="gf-form-group">
 						<div class="gf-form-inline">
-							<!-- <div class="gf&#45;form"> -->
-							<!-- 	<span class="gf&#45;form&#45;label width&#45;7">Show in</span> -->
-							<!-- 	<div class="gf&#45;form&#45;select&#45;wrapper width&#45;12"> -->
-							<!-- 		<select class="gf&#45;form&#45;input" ng&#45;model="ctrl.currentAnnotation.showIn" ng&#45;options="f.value as f.text for f in ctrl.showOptions"></select> -->
-							<!-- 	</div> -->
-							<!-- </div> -->
+							<div class="gf-form">
+								<span class="gf-form-label width-6">Show in</span>
+								<div class="gf-form-select-wrapper width-12">
+									<select class="gf-form-input" ng-model="ctrl.currentAnnotation.showIn" ng-options="f.value as f.text for f in ctrl.showOptions"></select>
+								</div>
+							</div>
 							<gf-form-switch class="gf-form"
 															label="Hide toggle"
 															tooltip="Hides the annotation query toggle from showing at the top of the dashboard"
-															checked="ctrl.currentAnnotation.hide"
-															label-class="width-7">
+															checked="ctrl.currentAnnotation.hide">
 							</gf-form-switch>
 						</div>
 						<div class="gf-form-inline">
 							<div class="gf-form">
-								<label class="gf-form-label width-7">Color</label>
+								<label class="gf-form-label width-6">Color</label>
 								<spectrum-picker class="gf-form-input width-3" ng-model="ctrl.currentAnnotation.iconColor"></spectrum-picker>
 							</div>
 							<!--<div class="gf-form">
