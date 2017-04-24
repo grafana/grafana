@@ -14,6 +14,7 @@
 ///<amd-dependency path="./directives/tags" />
 ///<amd-dependency path="./directives/topnav" />
 ///<amd-dependency path="./directives/value_select_dropdown" />
+///<amd-dependency path="./directives/system_panel" />
 ///<amd-dependency path="./routes/all" />
 
 ///<amd-dependency path="./controllers/all" />
