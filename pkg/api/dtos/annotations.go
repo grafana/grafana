@@ -27,6 +27,7 @@ type PostAnnotationsCmd struct {
 	Time        int64  `json:"time"`
 	Title       string `json:"title"`
 	Text        string `json:"text"`
+	Icon        string `json:"icon"`
 
 	FillColor string `json:"fillColor"`
 	IsRegion  bool   `json:"isRegion"`

@@ -76,6 +76,7 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 		Epoch:       cmd.Time / 1000,
 		Title:       cmd.Title,
 		Text:        cmd.Text,
+		Icon:        cmd.Icon,
 		CategoryId:  cmd.CategoryId,
 		NewState:    cmd.FillColor,
 		Type:        annotations.EventType,
