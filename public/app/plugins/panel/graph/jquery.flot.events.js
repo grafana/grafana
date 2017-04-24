@@ -243,7 +243,10 @@ function ($, _, angular, Drop, twemoji) {
         markerShow = this._types[eventTypeId].markerShow;
       }
 
-      if (this._types === null || !this._types[eventTypeId] || this._types[eventTypeId].icon === undefined) {
+      if (event.icon) {
+        // Use user-defined icon
+        icon = event.icon;
+      } else if (this._types === null || !this._types[eventTypeId] || this._types[eventTypeId].icon === undefined) {
         icon = null;
       } else {
         icon = this._types[eventTypeId].emoji || this._types[eventTypeId].icon;
@@ -292,7 +295,7 @@ function ($, _, angular, Drop, twemoji) {
         if (icon) {
           var iconElem;
 
-          if (this._types[eventTypeId].emoji) {
+          if (isEmoji(icon)) {
             var utfEmoji = twemoji.convert.fromCodePoint(icon);
             iconElem = twemoji.parse(utfEmoji, {size: 16});
             iconElem = $(iconElem).css({
@@ -316,7 +319,7 @@ function ($, _, angular, Drop, twemoji) {
           marker.append(iconElem);
           marker.appendTo(line);
 
-          if (!this._types[eventTypeId].emoji) {
+          if (isFAIcon(icon)) {
             // Adjust fa icon position based on real element width
             iconElem = marker.find(iconElem);
             var iconWidth = iconElem.width();
@@ -604,5 +607,14 @@ function ($, _, angular, Drop, twemoji) {
     name: "events",
     version: "0.2.5"
   });
+
+  function isFAIcon(icon) {
+    var faPattern = /^fa-.*/;
+    return faPattern.test(icon);
+  }
+
+  function isEmoji(icon) {
+    return !isFAIcon(icon);
+  }
 
 });

@@ -30,7 +30,8 @@
       <textarea class="gf-form-input width-20" rows="3" ng-model="ctrl.event.text"  placeholder="Event description"></textarea>
     </div>
 
-    <div class="gf-form">
+    <!-- Only for single event -->
+    <div class="gf-form" ng-if="!ctrl.event.isRegion">
       <label class="gf-form-label width-7">Icon</label>
       <gf-icon-picker icon="ctrl.event.icon"></gf-icon-picker>
     </div>
