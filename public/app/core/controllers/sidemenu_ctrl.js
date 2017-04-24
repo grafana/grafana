@@ -85,11 +85,11 @@ function (angular, _, $, coreModule, config) {
         submenu: [
           {
             text: '关联性分析',
-            href: '',
+            href: $scope.getUrl("/association"),
           },
           {
-            text: '知识库',
-            href: '',
+            text: '运维知识',
+            href: $scope.getUrl("/knowledgebase"),
           },
           {
             text: '故障溯源',
@@ -263,7 +263,9 @@ function (angular, _, $, coreModule, config) {
                   || currentPath.indexOf('/oncallers') == 0
                   || currentPath.indexOf('/anomaly') == 0
                   || currentPath.indexOf('/analysis') == 0
+                  || currentPath.indexOf('/association') == 0
                   || currentPath.indexOf('/logs') == 0
+                  || currentPath.indexOf('/knowledgebase') == 0
                   || currentPath.indexOf('/decompose') == 0
                   || currentPath.indexOf('/health') == 0
                   || currentPath.indexOf('/cluster') == 0

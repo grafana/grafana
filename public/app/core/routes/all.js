@@ -214,6 +214,14 @@ define([
         templateUrl: 'app/features/analysis/partials/analysis.html',
         controller : 'AnalysisCtrl',
       })
+      .when('/association', {
+        templateUrl: 'app/features/analysis/partials/single_association.html',
+        controller : 'SingleAssociationCtrl',
+      })
+      .when('/knowledgebase', {
+        templateUrl: 'app/features/analysis/partials/knowledge_base.html',
+        controller : 'KnowledgeBaseCtrl',
+      })
       .when('/install', {
         templateUrl: 'app/partials/install.html',
         controller : 'AnalysisCtrl',

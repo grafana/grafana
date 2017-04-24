@@ -191,5 +191,14 @@ function (angular, _, coreModule, config) {
       options.url = contextSrv.elkUrl + options.url;
       return this.datasourceRequest(options);
     };
+
+    this.knowledge = function (options) {
+      if (_.isEmpty(options.params)) {
+        options.params = {};
+      }
+      options.url = contextSrv.elkUrl + "/knowledgebase/article" + options.url;
+      return this.datasourceRequest(options);
+    };
+
   });
 });
