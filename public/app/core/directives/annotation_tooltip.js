@@ -28,6 +28,10 @@ function ($, _, coreModule) {
         var tooltip = '<div class="graph-annotation">';
         tooltip += '<div class="graph-annotation-title">' + title + "</div>";
 
+        if (event.userName) {
+          tooltip += '<div class="graph-annotation-user">User: ' + event.userName + "</div>";
+        }
+
         if (event.text) {
           var text = sanitizeString(event.text);
           tooltip += text.replace(/\n/g, '<br>') + '<br>';

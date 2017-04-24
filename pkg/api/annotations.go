@@ -2,8 +2,11 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func GetAnnotations(c *middleware.Context) Response {
@@ -30,6 +33,18 @@ func GetAnnotations(c *middleware.Context) Response {
 	result := make([]dtos.Annotation, 0)
 
 	for _, item := range items {
+		// Get user info for annotation event
+		userName := ""
+		if item.UserId != 0 {
+			userQuery := &models.GetUserByIdQuery{
+				Id: item.UserId,
+			}
+			err := sqlstore.GetUserById(userQuery)
+			if err == nil {
+				userName = userQuery.Result.NameOrFallback()
+			}
+		}
+
 		result = append(result, dtos.Annotation{
 			AlertId:   item.AlertId,
 			Time:      item.Epoch * 1000,
@@ -37,10 +52,13 @@ func GetAnnotations(c *middleware.Context) Response {
 			NewState:  item.NewState,
 			PrevState: item.PrevState,
 			Text:      item.Text,
+			Icon:      item.Icon,
 			Metric:    item.Metric,
 			Title:     item.Title,
 			PanelId:   item.PanelId,
 			RegionId:  item.RegionId,
+			UserId:    item.UserId,
+			UserName:  userName,
 		})
 	}
 
@@ -52,6 +70,7 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 
 	item := annotations.Item{
 		OrgId:       c.OrgId,
+		UserId:      c.UserId,
 		DashboardId: cmd.DashboardId,
 		PanelId:     cmd.PanelId,
 		Epoch:       cmd.Time / 1000,
@@ -70,12 +89,16 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 	if cmd.IsRegion {
 		item.RegionId = item.Id
 
+		if item.Data == nil {
+			item.Data = simplejson.New()
+		}
+
 		if err := repo.Update(&item); err != nil {
 			return ApiError(500, "Failed set regionId on annotation", err)
 		}
 
 		item.Id = 0
-		item.Epoch = cmd.TimeEnd
+		item.Epoch = cmd.TimeEnd / 1000
 
 		if err := repo.Save(&item); err != nil {
 			return ApiError(500, "Failed save annotation for region end time", err)

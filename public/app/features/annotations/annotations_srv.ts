@@ -140,7 +140,10 @@ export class AnnotationsSrv {
 
   saveAnnotationEvent(annotation) {
     this.globalAnnotationsPromise = null;
-    return this.backendSrv.post('/api/annotations', annotation);
+    return this.backendSrv.post('/api/annotations', annotation)
+    .catch(err => {
+      this.$rootScope.appEvent('alert-error', ['Annotations failed', (err.message || err)]);
+    });
   }
 
   translateQueryResult(annotation, results) {

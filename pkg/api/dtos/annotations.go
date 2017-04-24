@@ -6,11 +6,14 @@ type Annotation struct {
 	AlertId     int64  `json:"alertId"`
 	DashboardId int64  `json:"dashboardId"`
 	PanelId     int64  `json:"panelId"`
+	UserId      int64  `json:"userId"`
+	UserName string `json:"userName"`
 	NewState    string `json:"newState"`
 	PrevState   string `json:"prevState"`
 	Time        int64  `json:"time"`
 	Title       string `json:"title"`
 	Text        string `json:"text"`
+	Icon        string `json:"icon"`
 	Metric      string `json:"metric"`
 	RegionId    int64  `json:"regionId"`
 

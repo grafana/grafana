@@ -72,3 +72,8 @@ declare module 'd3' {
   var d3: any;
   export default d3;
 }
+
+declare module 'twemoji' {
+  var twemoji: any;
+  export default twemoji;
+}

@@ -29,7 +29,7 @@ export class EventEditorCtrl {
     saveModel.timeEnd = 0;
 
     if (saveModel.isRegion) {
-      saveModel.timeEnd = saveModel.timeEnd.valueOf();
+      saveModel.timeEnd = this.event.timeEnd.valueOf();
 
       if (saveModel.timeEnd < saveModel.time) {
         console.log('invalid time');
@@ -37,7 +37,12 @@ export class EventEditorCtrl {
       }
     }
 
-    this.annotationsSrv.saveAnnotationEvent(saveModel).then(() => {
+    this.annotationsSrv.saveAnnotationEvent(saveModel)
+    .then(() => {
+      this.panelCtrl.refresh();
+      this.close();
+    })
+    .catch(() => {
       this.panelCtrl.refresh();
       this.close();
     });
