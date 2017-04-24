@@ -14,7 +14,7 @@ But it will give you an idea of our current vision and plan.
   - Graph annotations (create from grafana, region annotations, better annotation viz)
   - Improve alerting (clustering, silence rules)
   
-### Long term (in our dreams)
+### Long term 
 
 - Improved dashboard panel layout engine (to make it easier and enable more flexible layouts) 
 - Backend plugins to support more Auth options, Alerting data sources & notifications
