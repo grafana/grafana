@@ -40,6 +40,7 @@
       "jquery.flot.fillbelow": "vendor/flot/jquery.flot.fillbelow",
       "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge",
       "d3": "vendor/d3/d3.js",
+      "twemoji": "vendor/npm/twemoji/2/twemoji.amd.js"
     },
 
     packages: {

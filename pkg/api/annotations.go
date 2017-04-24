@@ -4,9 +4,7 @@ import (
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/annotations"
-	"github.com/grafana/grafana/pkg/services/sqlstore"
 )
 
 func GetAnnotations(c *middleware.Context) Response {
@@ -33,18 +31,6 @@ func GetAnnotations(c *middleware.Context) Response {
 	result := make([]dtos.Annotation, 0)
 
 	for _, item := range items {
-		// Get user info for annotation event
-		userName := ""
-		if item.UserId != 0 {
-			userQuery := &models.GetUserByIdQuery{
-				Id: item.UserId,
-			}
-			err := sqlstore.GetUserById(userQuery)
-			if err == nil {
-				userName = userQuery.Result.NameOrFallback()
-			}
-		}
-
 		result = append(result, dtos.Annotation{
 			AlertId:   item.AlertId,
 			Time:      item.Epoch * 1000,
@@ -58,7 +44,6 @@ func GetAnnotations(c *middleware.Context) Response {
 			PanelId:   item.PanelId,
 			RegionId:  item.RegionId,
 			UserId:    item.UserId,
-			UserName:  userName,
 		})
 	}
 
