@@ -130,6 +130,7 @@ function (angular, _, $, coreModule, config) {
     $scope.loadOrgs = function() {
 
       backendSrv.get('/api/user/orgs').then(function(orgs) {
+        $scope.settingMenu.submenu[1].thdmenu = [];
         _.each(orgs, function(org) {
           if (org.orgId === contextSrv.user.orgId) {
             return;
@@ -143,14 +144,7 @@ function (angular, _, $, coreModule, config) {
             }
           });
         });
-
-        if (config.allowOrgCreate) {
-          $scope.settingMenu.submenu.push({
-            text: "新建公司",
-            icon: "fa fa-fw fa-plus",
-            href: $scope.getUrl('/org/new')
-          });
-        }
+        
       });
 
     };
@@ -180,6 +174,14 @@ function (angular, _, $, coreModule, config) {
 
       if ($scope.length > 0) {
         $scope.settingMenu.submenu.push({ cssClass: 'divider' });
+      }
+
+      if (config.allowOrgCreate) {
+        $scope.settingMenu.submenu.push({
+          text: "新建公司",
+          icon: "fa fa-fw fa-plus",
+          href: $scope.getUrl('/org/new')
+        });
       }
 
       if (contextSrv.hasRole('Admin')) {
@@ -236,6 +238,11 @@ function (angular, _, $, coreModule, config) {
       $scope.settingMenu.submenu.push({
         text: "安装指南",
         href: $scope.getUrl("/install"),
+      });
+
+      $scope.settingMenu.submenu.push({
+        text: "帮助文档",
+        href: "http://cloudwiz.cn/document/",
       });
     }
 
