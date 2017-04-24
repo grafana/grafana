@@ -33,12 +33,16 @@ function (angular, _, $, coreModule, config) {
         href: 'javascript:void(0);',
         submenu: [
           {
-            text: '日志管理查询',
+            text: '全文查询',
+            href: $scope.getUrl("/logs")
+          },
+          {
+            text: '聚合查询',
             href: $scope.getUrl("/logs")
           },
           {
             text: '日志对比',
-            href: 'javascript:void(0);',
+            href: $scope.getUrl("/logs")
           },
         ]
       });
@@ -144,9 +148,7 @@ function (angular, _, $, coreModule, config) {
             }
           });
         });
-        
       });
-
     };
 
     $scope.setupSettingMenu = function() {
@@ -221,7 +223,7 @@ function (angular, _, $, coreModule, config) {
               icon: "fa fa-fw fa-users",
               href: $scope.getUrl("/admin/orgs"),
             }
-          ],
+          ]
         });
         $scope.settingMenu.submenu.push({
           text: "申请用户",
@@ -244,7 +246,7 @@ function (angular, _, $, coreModule, config) {
         text: "帮助文档",
         href: "http://cloudwiz.cn/document/",
       });
-    }
+    };
 
     $scope.switchOrg = function(orgId) {
       backendSrv.post('/api/user/using/' + orgId).then(function() {
@@ -272,8 +274,7 @@ function (angular, _, $, coreModule, config) {
                   || currentPath.indexOf('/integrate') == 0
       ) {
         if (contextSrv.system == 0){
-          $location.url("/");
-          $scope.appEvent('alert-warning', ['非法操作', '已为您跳转到主页']);
+          $location.url("/systems");
           return;
         }
       } else if(currentPath.indexOf('/dashboard/db/') == 0){

@@ -25,7 +25,12 @@ function (angular, coreModule) {
         }
         $scope.dismiss();
         $location.url('dashboard/new?system=' + $scope.dashboardSetting.system + "&title=" + $scope.dashboardSetting.title);
-      }
+      };
 
+      $scope.init_system_choice = function () {
+        backendSrv.get("/api/user/system").then(function (system) {
+          $scope.systems = system;
+        });
+      };
     });
   });

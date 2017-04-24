@@ -1,0 +1,28 @@
+<div ng-controller="SystemCtrl" ng-init="init_system_choice()">
+    <div ng-repeat="sys in systems">
+        <system-panel sys="{{sys.Id}}">
+            系统:{{sys.SystemsName}} 健康值:{{health}}
+            <div ng-repeat="service in servies">
+                {{service.name}} --- {{service.status}}
+            </div>
+            <div ng-if="alertTrigger">
+                系统一切正常
+            </div>
+            <div ng-if="!alertTrigger">
+                严重个数:{{critical}}
+                警告个数: {{warn}}
+                <div id="alert-pie"></div>
+            </div>
+            <div>
+                所有指标:{{numMetrics}} / 异常指标: {{numAnomalyMetrics}}
+            </div>
+            <div ng-repeat="service in servies">
+                {{service.name}} --- {{service.status}}
+            </div>
+            <div ng-repeat="h in hostList">
+                {{h.host}} ----{{h.status}}
+            </div>
+            <br/>
+        </system-panel>
+    </div>
+</div>
