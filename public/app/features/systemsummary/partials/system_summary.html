@@ -32,7 +32,7 @@
                                 <br>
                                 <p>自动检测到所有<strong>{{ summary.numMetrics }}</strong>个指标中: 告警指标 <strong>{{ summary.numAlertsTriggered }}</strong>个  异常指标 <strong>{{ summary.numAnomalyMetrics }}</strong>个 <tip>健康值=(告警指标个数/定义规则总数)*50% + (异常指标/所有指标) * 50%</tip></p>
                             </div>
-                            <ul class="btn-list" ng-if="panleJson[row_name].status">
+                            <ul class="btn-list-status" ng-if="panleJson[row_name].status">
                                 <li class="btn-item" style="width:70px;">当前状态:</li>
                                 <li class="btn-item btn btn-danger" ng-if="panleJson[row_name].status.danger[1]!=0">{{panleJson[row_name].status.danger[0]}} <span>{{panleJson[row_name].status.danger[1]}}</span></li>
                                 <li class="btn-item btn btn-warning" ng-if="panleJson[row_name].status.warn[1]!=0">{{panleJson[row_name].status.warn[0]}} <span>{{panleJson[row_name].status.warn[1]}}</span></li>

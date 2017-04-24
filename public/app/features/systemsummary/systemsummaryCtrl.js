@@ -2,8 +2,6 @@ define([
     'angular',
     'lodash',
     'app/core/utils/datemath',
-    'jquery.flot',
-    'jquery.flot.pie',
   ],
   function (angular, _, dateMath) {
     'use strict';
@@ -88,30 +86,11 @@ define([
       $scope.init = function () {
 
         $scope.datasource = null;
-        backendSrv.get("/api/user/system").then(function (system) {
-          $scope.systems = system;
-        }).then(function () {
-          _.each(datasourceSrv.getAll(), function (ds) {
-            if (ds.type === 'opentsdb') {
-              datasourceSrv.get(ds.name).then(function (datasource) {
-                $scope.datasource = datasource;
-              }).then(function () {
-                $scope.getAlertStatus();
-                $scope.getAnomalyStatus();
-                $scope.getServices();
-                $scope.getSummary();
-                $scope.getHealth($scope.dashboard.rows[4].panels);
-                $scope.getPrediction($scope.dashboard.rows[5].panels);
-
-              });
-            }
-          });
-        })
 
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: false, canSave: false},
           dashboard: {
-            system: 2,
+            system: contextSrv.system || 2,
             title: "总览",
             id: "name",
             rows: $scope.initPanelRow(),
@@ -119,10 +98,24 @@ define([
           }
         }, $scope);
 
+        _.each(datasourceSrv.getAll(), function (ds) {
+          if (ds.type === 'opentsdb') {
+            datasourceSrv.get(ds.name).then(function (datasource) {
+              $scope.datasource = datasource;
+            }).then(function () {
+              $scope.getAlertStatus();
+              $scope.getServices();
+              $scope.getHostSummary();
+              $scope.getHealth();
+              $scope.getPrediction($scope.dashboard.rows[5].panels);
+            });
+          }
+        });
+
       };
 
       $scope.initPanelRow = function () {
-        _.each($scope.panleJson, function(panel) {
+        _.each($scope.panleJson, function(panel, index) {
           var row = $scope.setPanelTitle(_.cloneDeep(panelMeta), panel.title);
           if(panel.title === '') {
             for(var i=0; i<2; i++){
@@ -130,14 +123,18 @@ define([
             }
             $scope.setPanelMeta(row.panels, panel.panels);
           }
+          if(index < 4) {
+            row.panels[0].legend = {"alignAsTable": true,"show": true,"rightSide": true,};
+          }
           panelRow.push(row);
         });
 
-        panelRow[0].panels[0].legend = {"alignAsTable": true,"show": true,"rightSide": true,};
-        panelRow[1].panels[0].legend = {"alignAsTable": true,"show": false,"rightSide": true,};
-        panelRow[2].panels[0].legend = {"alignAsTable": true,"show": true,"rightSide": true,};
-        panelRow[3].panels[0].legend = {"alignAsTable": true,"show": true,"rightSide": true,};
+        panelRow[1].panels[0].legend.show = false;
 
+        $scope.initAlertStatus(panelRow[0].panels[0]);
+        $scope.initAnomalyStatus(panelRow[1].panels[0]);
+        $scope.initHostSummary(panelRow[3].panels[0].targets[0]);
+        $scope.initHealth(panelRow[4].panels[0]);
         return panelRow;
       };
 
@@ -152,6 +149,21 @@ define([
           panels[i].id = i+1;
           panels[i].title = panelCon[i].title;
         }
+      }
+
+      $scope.initAlertStatus = function(panel) {
+        var targets = panel.targets[0];
+        targets.metric = 'internal.alert.state';
+        targets.tags = {'host': '*','alertName':'*'};
+        targets.downsampleAggregator = 'max';
+        targets.downsampleInterval ='1m';
+        targets.alias = "$tag_alertName/$tag_host";
+        panel.grid.threshold1 = 0;
+        panel.grid.threshold2 = 1;
+        panel.grid.leftMin = 0;
+        panel.grid.leftMax = 2;
+        panel.grid.thresholdLine = false;
+        panel.pointradius = 1;
       }
 
       $scope.getAlertStatus = function() {
@@ -169,25 +181,10 @@ define([
             $scope.panleJson[0].status.success[1] = '系统正常';
           }
         });
-        var panel = $scope.dashboard.rows[0].panels[0];
-        var targets = panel.targets[0];
-        targets.metric = 'internal.alert.state';
-        targets.tags = {'host': '*','alertName':'*'};
-        targets.downsampleAggregator = 'max';
-        targets.downsampleInterval ='1m';
-        targets.alias = "$tag_alertName/$tag_host";
-        panel.grid.threshold1 = 0;
-        panel.grid.threshold2 = 1;
-        panel.grid.leftMin = 0;
-        panel.grid.leftMax = 2;
-        panel.grid.thresholdLine = false;
-        panel.pointradius = 1;
       };
 
-      $scope.getAnomalyStatus = function() {
-        var panel = $scope.dashboard.rows[1].panels[0];
+      $scope.initAnomalyStatus = function(panel) {
         var targets = panel.targets[0];
-
         panel.bars = true;
         panel.lines = false;
 
@@ -244,7 +241,6 @@ define([
               targets.downsampleAggregator = 'sum';
               $scope.dashboard.rows[2].panels[0].targets.push(targets);
             });
-            $scope.$broadcast('refresh');
           }).catch(function () {
             //nothing to do;
             //$scope.serviceList.push({"host": "尚未配置在任何主机上", "alias": alias[key], "state": "尚未工作"});
@@ -252,7 +248,16 @@ define([
         });
       };
 
-      $scope.getSummary = function() {
+      $scope.initHostSummary = function(targets) {
+        targets.metric = 'collector.state';
+        targets.alias = "$tag_host";
+        targets.tags = {'host': '*'};
+        targets.aggregator = "sum";
+        targets.downsample = "1m-sum";
+        targets.downsampleAggregator = 'sum';
+      }
+
+      $scope.getHostSummary = function() {
         $scope.summaryList = [];
         backendSrv.alertD({
           method: "get",
@@ -283,15 +288,6 @@ define([
                   }
                 }
               });
-              var targets = $scope.dashboard.rows[3].panels[0].targets[0];
-              targets.metric = 'collector.state';
-              targets.alias = "$tag_host";
-              targets.tags = {'host': '*'};
-              targets.aggregator = queries[0].aggregator;
-              targets.downsample = queries[0].downsample;
-              targets.downsampleAggregator = 'sum';
-
-              $scope.$broadcast('refresh');
             }).catch(function () {
               $scope.panleJson[3].status.danger[1]++;
             });
@@ -300,11 +296,13 @@ define([
         })
       };
 
-      $scope.getHealth = function(panels) {
-        panels[0].targets[0].metric = 'internal.system.health';
-        panels[0].targets[0].aggregator = 'sum';
-        panels[0].targets[0].downsampleInterval = '5m';
+      $scope.initHealth = function(panel) {
+        panel.targets[0].metric = 'internal.system.health';
+        panel.targets[0].aggregator = 'sum';
+        panel.targets[0].downsampleInterval = '5m';
+      }
 
+      $scope.getHealth = function() {
         healthSrv.load().then(function (data) {
           $scope.applicationHealth = Math.floor(data.health);
           $scope.leveal = getLeveal($scope.applicationHealth);
@@ -316,21 +314,20 @@ define([
             $scope.panleJson[1].status.success[1] = '系统正常';
           }
         });
-      };
-
-      function getLeveal(score) {
-        if (!_.isNumber(score) && _.isNaN(score) && _.isEmpty(score)) {
-          return "无";
-        }
-        if (score > 75) {
-          return "优";
-        } else if (score > 50) {
-          return "良";
-        } else if (score > 25) {
-          return "中";
-        } else {
-          return "差";
-        }
+        function getLeveal(score) {
+          if (!_.isNumber(score) && _.isNaN(score) && _.isEmpty(score)) {
+            return "无";
+          }
+          if (score > 75) {
+            return "优";
+          } else if (score > 50) {
+            return "良";
+          } else if (score > 25) {
+            return "中";
+          } else {
+            return "差";
+          }
+        };
       };
 
       $scope.getPrediction = function(panels) {
@@ -367,7 +364,7 @@ define([
             if(item[1] === 'cpu.usr.prediction') {
               data = data.toFixed(2)+'%';
             } else {
-              data = (data/1024/1024/1024).toFixed(2) + 'GB';
+              data = (data/Math.pow(1024,3)).toFixed(2) + 'GB';
             }
             $scope.panleJson[5].panels[index].tip += data;
           }).catch(function () {});
