@@ -170,8 +170,7 @@ func (hs *HttpServer) healthHandler(ctx *macaron.Context) {
 	}
 
 	data := simplejson.New()
-	data.Set("status", "ok")
-	data.Set("db_status", "ok")
+	data.Set("database", "ok")
 	data.Set("version", setting.BuildVersion)
 	data.Set("commit", setting.BuildCommit)
 
