@@ -383,7 +383,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         var ticks = panelWidth / 100;
         var min = _.isUndefined(ctrl.range.from) ? null : ctrl.range.from.valueOf();
         var max = _.isUndefined(ctrl.range.to) ? null : ctrl.range.to.valueOf();
-        let eventSectionHeight = 25;
 
         options.xaxis = {
           timezone: dashboard.getTimezone(),
@@ -392,12 +391,9 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           min: min,
           max: max,
           label: "Datetime",
-          eventSectionHeight: eventSectionHeight,
           ticks: ticks,
           timeformat: time_format(ticks, min, max),
         };
-
-        options.grid.eventSectionHeight = eventSectionHeight;
       }
 
       function addXSeriesAxis(options) {
