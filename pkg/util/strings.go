@@ -1,5 +1,9 @@
 package util
 
+import (
+	"regexp"
+)
+
 func StringsFallback2(val1 string, val2 string) string {
 	return stringsFallback(val1, val2)
 }
@@ -15,4 +19,12 @@ func stringsFallback(vals ...string) string {
 		}
 	}
 	return ""
+}
+
+func SplitString(str string) []string {
+	if len(str) == 0 {
+		return []string{}
+	}
+
+	return regexp.MustCompile("[, ]+").Split(str, -1)
 }

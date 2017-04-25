@@ -15,6 +15,8 @@ import (
 	"github.com/go-stack/stack"
 	"github.com/inconshreveable/log15"
 	"github.com/inconshreveable/log15/term"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var Root log15.Logger
@@ -172,7 +174,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 	Close()
 
 	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
-	defaultFilters := getFilters(cfg.Section("log").Key("filters").Strings(" "))
+	defaultFilters := getFilters(util.SplitString(cfg.Section("log").Key("filters").String()))
 
 	handlers := make([]log15.Handler, 0)
 
@@ -185,7 +187,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 
 		// Log level.
 		_, level := getLogLevelFromConfig("log."+mode, defaultLevelName, cfg)
-		modeFilters := getFilters(sec.Key("filters").Strings(" "))
+		modeFilters := getFilters(util.SplitString(sec.Key("filters").String()))
 		format := getLogFormat(sec.Key("format").MustString(""))
 
 		var handler log15.Handler
