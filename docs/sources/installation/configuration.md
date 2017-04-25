@@ -313,7 +313,6 @@ example:
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
     api_url = https://api.github.com/user
-    allow_sign_up = false
     team_ids =
     allowed_organizations =
 
