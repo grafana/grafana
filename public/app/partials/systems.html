@@ -1,44 +1,56 @@
+<div ng-include="'app/partials/login_header.html'"></div>
 <div ng-controller="SystemCtrl" ng-init="init_system_choice()" class="system-container">
-    <div ng-repeat="sys in systems"  class="system-list">
-        <system-panel sys="{{sys.Id}}" class="system-item">
+    <h3>请选择系统进入>></h3>
+    <div ng-repeat="sys in systems"  class="system-list" >
+        <system-panel sys="{{sys.Id}}"  ng-click="test()">
             <h2>{{sys.SystemsName}}: 健康值{{health}}%</h2>
             
-            <div>
-                <h4>报警状态</h4>
-                <div ng-if="alertTrigger">
-                    系统一切正常
+            <div class="system-item">
+                <h4>报警状态(个数)</h4>
+                <p>{{critical + warn}}</p>
+                <div class="system-item-pie" sys_alert="{{sys.Id}}"></div>
+                <div class="system-item-legend">
+                    <dl>
+                        <dt><span class="btn-warning"></span>警告</dt>
+                        <dd class="system-legend-warning">{{warn}}</dd>
+                    </dl>
+                    <dl>
+                        <dt><span class="btn-danger"></span>严重</dt>
+                        <dd class="system-legend-danger">{{critical}}</dd>
+                    </dl>
                 </div>
-                <div ng-if="!alertTrigger">
-                    <div class="system-item-text">
-                        <p>严重个数:{{critical}}</p>
-                        <p>警告个数: {{warn}}</p>
-                    </div>
-                    
-                    <div class="system-item-pie" id="alert-pie"></div>
-                </div>
+                <div class="clearfix"></div>
             </div>
 
-            <div>
-                <h4>异常指标占比</h4>
-                <div class="system-item-text">
-                    <p>所有指标:{{numMetrics}}</p>
-                    <p>异常指标: {{numAnomalyMetrics}}</p>
+            <div class="system-item">
+                <h4>自动异常检测(个数)</h4>
+                <p>{{numMetrics}}</p>
+                <div class="system-item-pie" sys_annomaly="{{sys.Id}}"></div>
+                <div class="system-item-legend">
+                    <dl>
+                        <dt><span class="btn-success"></span>正常指标</dt>
+                        <dd class="system-legend-success">{{numMetrics - numAnomalyMetrics}}</dd>
+                    </dl>
+                    <dl>
+                        <dt><span class="btn-warning"></span>异常指标</dt>
+                        <dd class="system-legend-warning">{{numAnomalyMetrics}}</dd>
+                    </dl>
                 </div>
-                <div class="system-item-pie" id="alert-pie"></div>
+                <div class="clearfix"></div>
             </div>
 
-            <b ng-if="servies.length">
-                <h4>服务状态</h4>
-                <button ng-repeat="service in servies" class="btn" ng-class="{'btn-success': !service.status,'btn-warning': service.status}">
-                    {{service.name}}
-                </button>
+            <div class="system-item">
+                <h4>服务状态(个数)</h4>
+                <p>{{servies.length}}</p>
+                <button class="btn btn-system-status btn-success">正常:{{seriesStatus.normal}}</button>
+                <button class="btn btn-system-status btn-warning">异常:{{seriesStatus.unnormal}}</button>
             </div>
 
-            <div ng-if="hostList.length">
-                <h4>机器连接状态</h4>
-                <div ng-repeat="h in hostList">
-                    {{h.host}} ----{{h.status}}
-                </div>
+            <div class="system-item">
+                <h4>机器连接状态(个数)</h4>
+                <p>{{hostList.length}}</p>
+                <button class="btn btn-system-status btn-success">正常:{{hostStatus.normal}}</button>
+                <button class="btn btn-system-status btn-warning">异常:{{hostStatus.unnormal}}</button>
             </div>
             <br/>
         </system-panel>
@@ -46,3 +58,4 @@
     </div>
 
 </div>
+<div ng-include="'app/partials/login_footer.html'"></div>

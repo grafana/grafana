@@ -18,10 +18,10 @@ define([
             scope.datasource = datasource;
           }).then(function () {
             contextSrv.system = system;
-
             //------get service satatus
             var serviesMap = _.allServies();
             scope.servies = [];
+            scope.seriesStatus = {normal: 0, unnormal: 0};
             _.each(Object.keys(serviesMap), function (key) {
               var queries = [{
                 "metric": contextSrv.user.orgId + "." + system + "." + key + ".state",
@@ -37,14 +37,18 @@ define([
                   "name": serviesMap[key],
                   "status": response.data[0].dps[Object.keys(response.data[0].dps)[0]]
                 };
+                if(service.status) {
+                  scope.seriesStatus.unnormal++;
+                } else {
+                  scope.seriesStatus.normal++;
+                }
                 scope.servies.push(service);
               }).catch(function () {
-
               });
             });
 
-
             //------- get Alerts status
+            var colors = [];
             alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
               scope.critical = 0;
               scope.warn = 0;
@@ -59,16 +63,18 @@ define([
                   }
                 }
                 pieData = [
-                  {label: "警告", data: scope.warn},
-                  {label: "严重", data: scope.critical}
+                  {label: "", data: scope.warn},
+                  {label: "", data: scope.critical}
                 ];
+                colors = ['#fe6600','#ff291c'];
               } else {
                 scope.alertTrigger = true;
                 pieData = [
                   {label: "健康", data: 10},
-                  {label: "严重", data: 0},
-                  {label: "警告", data: 0}
+                  {label: "", data: 0},
+                  {label: "", data: 0}
                 ];
+                colors = ['#23a127','#fe6600','#ff291c'];
               }
 
               $.plot("[sys_alert='" + system + "']", pieData, {
@@ -76,24 +82,40 @@ define([
                   pie: {
                     innerRadius: 0.5,
                     show: true,
+                    label: {
+                        show: true,
+                        radius: 1/4,
+                    }
                   }
-                }
+                },
+                legend:{
+                  show:false
+                },
+                colors: colors
               });
             });
 
             //------- get health/anomaly status
             healthSrv.load().then(function (data) {
               var pieData = [
-                {label: "所有指标", data: data.numMetrics},
-                {label: "异常指标", data: data.numAnomalyMetrics},
+                {label: "", data: data.numMetrics},
+                {label: "", data: data.numAnomalyMetrics},
               ];
               $.plot("[sys_annomaly='" + system + "']", pieData, {
                 series: {
                   pie: {
                     innerRadius: 0.5,
-                    show: true
+                    show: true,
+                    label: {
+                        show: true,
+                        radius: 1/5,
+                    }
                   }
-                }
+                },
+                legend:{
+                  show:false
+                },
+                colors: ['#23a127','#fe6600']
               });
               scope.numMetrics = data.numMetrics;
               scope.numAnomalyMetrics = data.numAnomalyMetrics;
@@ -102,6 +124,7 @@ define([
 
             //-------- get host status
             scope.hostList = [];
+            scope.hostStatus = {normal: 0, unnormal: 0};
             backendSrv.alertD({
               method: "get",
               url: "/summary",
@@ -128,13 +151,16 @@ define([
                   _.each(response.data, function (metricData) {
                     if (_.isObject(metricData)) {
                       if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
-                        host.status = "1"
+                        host.status = 1;
+                        scope.hostStatus.unnormal++;
                       } else {
-                        host.status = "0";
+                        host.status = 0;
+                        scope.hostStatus.normal++;
                       }
                     }
                   });
                 }).catch(function () {
+                  scope.hostStatus.unnormal++;
                   //nothing to do ;
                 });
 
