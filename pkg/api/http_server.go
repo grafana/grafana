@@ -13,9 +13,12 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/live"
 	httpstatic "github.com/grafana/grafana/pkg/api/static"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
+	"github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/setting"
 )
@@ -147,6 +150,7 @@ func (hs *HttpServer) newMacaron() *macaron.Macaron {
 		Delims:     macaron.Delims{Left: "[[", Right: "]]"},
 	}))
 
+	m.Use(hs.healthHandler)
 	m.Use(middleware.GetContextHandler())
 	m.Use(middleware.Sessioner(&setting.SessionOptions))
 	m.Use(middleware.RequestMetrics())
@@ -158,6 +162,28 @@ func (hs *HttpServer) newMacaron() *macaron.Macaron {
 	}
 
 	return m
+}
+
+func (hs *HttpServer) healthHandler(ctx *macaron.Context) {
+	if ctx.Req.Method != "GET" || ctx.Req.URL.Path != "/api/health" {
+		return
+	}
+
+	data := simplejson.New()
+	data.Set("status", "ok")
+	data.Set("db_status", "ok")
+	data.Set("version", setting.BuildVersion)
+	data.Set("commit", setting.BuildCommit)
+
+	if err := bus.Dispatch(&models.GetDBHealthQuery{}); err != nil {
+		data.Set("db_status", "failing")
+	}
+
+	ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	ctx.Resp.WriteHeader(200)
+
+	dataBytes, _ := data.EncodePretty()
+	ctx.Resp.Write(dataBytes)
 }
 
 func (hs *HttpServer) mapStatic(m *macaron.Macaron, rootDir string, dir string, prefix string) {
