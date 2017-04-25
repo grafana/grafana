@@ -37,7 +37,7 @@ define([
               "downsampleAggregator": "avg",
               "downsampleInterval": "5m",
               "errors": {},
-              "metric": "SystemHealth",
+              "metric": "internal.system.health",
             }
           ],
           "title": "历史健康指数趋势",

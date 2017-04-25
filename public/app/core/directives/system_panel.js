@@ -9,10 +9,15 @@ define([
   function ($, _, coreModule, dateMath) {
     'use strict';
 
-    coreModule.directive('systemPanel', function ($parse, alertMgrSrv, healthSrv, datasourceSrv, contextSrv, backendSrv) {
+    coreModule.directive('systemPanel', function ($parse, alertMgrSrv, healthSrv, datasourceSrv, contextSrv, backendSrv, $location) {
       return {
         restrict: 'E',
         link: function (scope, elem, attr) {
+          scope.enter = function (systemId) {
+            contextSrv.system = systemId;
+            scope.appEvent("toggle-sidemenu");
+            $location.url("/");
+          };
           var getter = $parse(attr.sys), system = getter(scope);
           datasourceSrv.get("opentsdb").then(function (datasource) {
             scope.datasource = datasource;

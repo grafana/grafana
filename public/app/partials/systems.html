@@ -2,7 +2,7 @@
 <div ng-controller="SystemCtrl" ng-init="init_system_choice()" class="system-container">
     <h3>请选择系统进入>></h3>
     <div ng-repeat="sys in systems"  class="system-list" >
-        <system-panel sys="{{sys.Id}}"  ng-click="test()">
+        <system-panel sys="{{sys.Id}}"  ng-click="enter(sys.Id)">
             <h2>{{sys.SystemsName}}: 健康值{{health}}%</h2>
             
             <div class="system-item">
