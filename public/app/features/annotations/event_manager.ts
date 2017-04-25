@@ -81,7 +81,11 @@ export class EventManager {
             regionId: 1,
             min: this.event.time.valueOf(),
             title: this.event.title,
-            text: this.event.text
+            text: this.event.text,
+            eventType: '$__alerting',
+            source: {
+              iconColor: 'rgba(237, 46, 24, 1)',
+            }
           },
           {
             regionId: 1,
@@ -119,10 +123,76 @@ export class EventManager {
       }
     }
 
+    let regions = buildRegions(annotations);
+    addRegionMarking(regions, flotOptions);
+
     flotOptions.events = {
       levels: _.keys(types).length + 1,
       data: annotations,
       types: types,
     };
+  }
+}
+
+function buildRegions(events) {
+  var region_events = _.filter(events, function (event) {
+    return event.regionId;
+  });
+  var regions = _.groupBy(region_events, 'regionId');
+  regions = _.compact(_.map(regions, function (region_events) {
+    if (region_events && region_events.length > 1) {
+      var region_obj = region_events[0];
+      region_obj.timeEnd = region_events[1].min;
+      region_obj.isRegion = true;
+      return region_obj;
+    }
+  }));
+
+  return regions;
+}
+
+function addRegionMarking(regions, flotOptions) {
+  let markings = flotOptions.grid.markings;
+  let defaultColor = 'rgb(237, 46, 24)';
+  let fillColor;
+
+  _.each(regions, region => {
+    if (region.source) {
+      fillColor = region.source.iconColor || defaultColor;
+    } else {
+      fillColor = defaultColor;
+    }
+
+    // Convert #FFFFFF to rgb(255, 255, 255)
+    // because panels with alerting use this format
+    let hexPattern = /^#[\da-fA-f]{3,6}/;
+    if (hexPattern.test(fillColor)) {
+      fillColor = convertToRGB(fillColor);
+    }
+
+    fillColor = addAlphaToRGB(fillColor, 0.090);
+    markings.push({ xaxis: { from: region.min, to: region.timeEnd }, color: fillColor });
+  });
+}
+
+function addAlphaToRGB(rgb, alpha) {
+  let rgbPattern = /^rgb\(/;
+  if (rgbPattern.test(rgb)) {
+    return rgb.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
+  } else {
+    return rgb.replace(/[\d\.]+\)/, `${alpha})`);
+  }
+}
+
+function convertToRGB(hex) {
+  let hexPattern = /#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2})/g;
+  let match = hexPattern.exec(hex);
+  if (match) {
+    let rgb = _.map(match.slice(1), hex_val => {
+      return parseInt(hex_val, 16);
+    });
+    return 'rgb(' + rgb.join(',')  + ')';
+  } else {
+    return null;
   }
 }

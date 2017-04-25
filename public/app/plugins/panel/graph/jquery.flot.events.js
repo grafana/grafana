@@ -468,17 +468,6 @@ function ($, _, angular, Drop, twemoji) {
         line.appendTo(container);
       });
 
-      var regionArea = $('<div class="region_area_marker flot-temp-elem"></div>').css({
-        "position": "absolute",
-        "opacity": 0.2,
-        "left": left + 'px',
-        "top": 8,
-        "width": regionWidth + "px",
-        "height": this._plot.height(),
-        "background-color": color
-      });
-      regionArea.appendTo(container);
-
       var region = $('<div class="events_marker region_marker flot-temp-elem"></div>').css({
         "position": "absolute",
         "opacity": 0.5,
