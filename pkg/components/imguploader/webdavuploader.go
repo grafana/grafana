@@ -56,10 +56,12 @@ func (u *WebdavUploader) Upload(pa string) (string, error) {
 	}
 
 	if u.public_url != "" {
-		return (u.public_url + filename), nil
-	} else {
-		return url.String(), nil
+		publicURL, _ := url.Parse(u.public_url)
+		publicURL.Path = path.Join(publicURL.Path, filename)
+		return publicURL.String(), nil
 	}
+
+	return url.String(), nil
 }
 
 func NewWebdavImageUploader(url, username, password, public_url string) (*WebdavUploader, error) {
