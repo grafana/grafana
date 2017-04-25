@@ -116,6 +116,7 @@ function (angular, _) {
         return {
           name: annotation.name,
           enable: annotation.enable,
+          iconColor: annotation.iconColor,
           snapshotData: annotation.snapshotData
         };
       }).value();
