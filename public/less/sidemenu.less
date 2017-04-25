@@ -3,7 +3,7 @@
 }
 
 .sidemenu-wrapper {
-  position: absolute;
+  position: fixed;
   display: none;
   top: 0;
   bottom: 0;
@@ -55,7 +55,8 @@
   }
 
   &.sidemenu-small {
-    margin-top: 80px;
+    position: absolute;
+    bottom: 0px;
   }
 }
 
@@ -170,6 +171,7 @@
   left: 100px;;
   top: 0px;
   bottom: 0px;
+  overflow: auto;
   .sidemenu-item {
     padding: 7px 10px;
     text-align: left;
