@@ -2,20 +2,18 @@
     <div ng-repeat="sys in systems">
         <system-panel sys="{{sys.Id}}">
             系统:{{sys.SystemsName}} 健康值:{{health}}
-            <div ng-repeat="service in servies">
-                {{service.name}} --- {{service.status}}
-            </div>
-            <div ng-if="alertTrigger">
+            <div ng-show="alertTrigger">
                 系统一切正常
             </div>
-            <div ng-if="!alertTrigger">
+            <div ng-show="!alertTrigger">
                 严重个数:{{critical}}
                 警告个数: {{warn}}
-                <div id="alert-pie"></div>
             </div>
+            <div sys_alert="{{sys.Id}}" style="height: 100px;width:100px"></div>
             <div>
                 所有指标:{{numMetrics}} / 异常指标: {{numAnomalyMetrics}}
             </div>
+            <div sys_annomaly="{{sys.Id}}" style="height: 100px;width:100px"></div>
             <div ng-repeat="service in servies">
                 {{service.name}} --- {{service.status}}
             </div>
