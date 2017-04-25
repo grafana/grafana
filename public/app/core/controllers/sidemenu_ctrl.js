@@ -8,7 +8,7 @@ define([
 function (angular, _, $, coreModule, config) {
   'use strict';
 
-  coreModule.controller('SideMenuCtrl', function($scope, $location, contextSrv, backendSrv) {
+  coreModule.controller('SideMenuCtrl', function($rootScope, $scope, $location, contextSrv, backendSrv) {
 
     $scope.getUrl = function(url) {
       return config.appSubUrl + url;
@@ -22,21 +22,14 @@ function (angular, _, $, coreModule, config) {
       });
 
       $scope.mainLinks.push({
-        text: "智能仪表盘",
-        icon: "fa fa-fw fa-th-large",
-        href: $scope.getUrl("/dashboardlist"),
-      });
-
-      $scope.mainLinks.push({
         text: "指标浏览",
         icon: "fa fa-fw fa-sliders",
-        href: 'javascript:void(0);',
+        click: $scope.loadDashboardList
       });
 
       $scope.mainLinks.push({
         text: "日志查看",
         icon: "fa fa-fw fa-file-text-o",
-        href: 'javascript:void(0);',
         submenu: [
           {
             text: '全文查询',
@@ -56,7 +49,6 @@ function (angular, _, $, coreModule, config) {
       $scope.mainLinks.push({
         text: "智能检测",
         icon: "fa fa-fw fa-stethoscope",
-        href: 'javascript:void(0);',
         submenu: [
           {
             text: '报警规则检测',
@@ -91,15 +83,14 @@ function (angular, _, $, coreModule, config) {
       $scope.mainLinks.push({
         text: "智能分析",
         icon: "fa fa-fw fa-bar-chart",
-        href: 'javascript:void(0);',
         submenu: [
           {
             text: '关联性分析',
-            href: '',
+            href: $scope.getUrl("/association"),
           },
           {
-            text: '知识库',
-            href: '',
+            text: '运维知识',
+            href: $scope.getUrl("/knowledgebase"),
           },
           {
             text: '故障溯源',
@@ -134,26 +125,56 @@ function (angular, _, $, coreModule, config) {
 
     };
 
-    $scope.loadSystems = function() {
+    $scope.loadSystems = function () {
     };
 
-    $scope.loadOrgs = function() {
+    $scope.newDashboard = function() {
+      var modalScope = $rootScope.$new();
+      $scope.appEvent('show-modal', {
+        src: './app/partials/select_system.html',
+        modalClass: 'modal-no-header confirm-modal',
+        scope: modalScope
+      });
+    };
+    $scope.loadDashboardList = function (menu) {
+      var submenu = [];
+      backendSrv.search({query: "", starred: "false"}).then(function (result) {
+        submenu.push({
+          text: "+新建",
+          click: $scope.newDashboard,
+        });
+        _.each(result, function (dash) {
+          submenu.push({
+            text: dash.title,
+            href: $scope.getUrl("dashboard/"+dash.uri),
+          })
+        });
+        menu.submenu = submenu;
+        $scope.updateSubmenu(menu);
+      });
+    };
 
-      backendSrv.get('/api/user/orgs').then(function(orgs) {
-        $scope.settingMenu.submenu[1].thdmenu = [];
-        _.each(orgs, function(org) {
+    $scope.loadOrgs = function (menu) {
+      backendSrv.get('/api/user/orgs').then(function (orgs) {
+        menu.thdmenu = [];
+        _.each(orgs, function (org) {
           if (org.orgId === contextSrv.user.orgId) {
             return;
           }
 
-          $scope.settingMenu.submenu[1].thdmenu.push({
+          menu.thdmenu.push({
             text: org.name,
             icon: "fa fa-fw fa-random",
-            click: function() {
+            click: function () {
               $scope.switchOrg(org.orgId);
             }
           });
         });
+        if (!menu.thdmenu.length) {
+          menu.thdmenu.push({
+            text: "无",
+          });
+        }
       });
     };
 
@@ -166,18 +187,14 @@ function (angular, _, $, coreModule, config) {
 
       $scope.settingMenu.submenu.push({
         text: "切换系统",
-        dropdown: 'dropdown',
-        thdmenu: [],
-        click: $scope.loadSystems()
+        href: $scope.getUrl('/systems')
       });
 
       $scope.settingMenu.submenu.push({
         text: "切换组织",
         dropdown: 'dropdown',
         thdmenu: [],
-        click: function() {
-          $scope.loadOrgs()
-        }
+        click: $scope.loadOrgs
       });
 
       if ($scope.length > 0) {
