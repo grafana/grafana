@@ -8,7 +8,7 @@ define([
 function (angular, _, $, coreModule, config) {
   'use strict';
 
-  coreModule.controller('SideMenuCtrl', function($scope, $location, contextSrv, backendSrv) {
+  coreModule.controller('SideMenuCtrl', function($rootScope, $scope, $location, contextSrv, backendSrv) {
 
     $scope.getUrl = function(url) {
       return config.appSubUrl + url;
@@ -24,7 +24,7 @@ function (angular, _, $, coreModule, config) {
       $scope.mainLinks.push({
         text: "指标浏览",
         icon: "fa fa-fw fa-sliders",
-        click: $scope.loadOrgs
+        click: $scope.loadDashboardList
       });
 
       $scope.mainLinks.push({
@@ -125,26 +125,56 @@ function (angular, _, $, coreModule, config) {
 
     };
 
-    $scope.loadSystems = function() {
+    $scope.loadSystems = function () {
     };
 
-    $scope.loadOrgs = function() {
+    $scope.newDashboard = function() {
+      var modalScope = $rootScope.$new();
+      $scope.appEvent('show-modal', {
+        src: './app/partials/select_system.html',
+        modalClass: 'modal-no-header confirm-modal',
+        scope: modalScope
+      });
+    };
+    $scope.loadDashboardList = function (menu) {
+      var submenu = [];
+      backendSrv.search({query: "", starred: "false"}).then(function (result) {
+        submenu.push({
+          text: "+新建",
+          click: $scope.newDashboard,
+        });
+        _.each(result, function (dash) {
+          submenu.push({
+            text: dash.title,
+            href: $scope.getUrl("dashboard/"+dash.uri),
+          })
+        });
+        menu.submenu = submenu;
+        $scope.updateSubmenu(menu);
+      });
+    };
 
-      backendSrv.get('/api/user/orgs').then(function(orgs) {
-        $scope.settingMenu.submenu[1].thdmenu = [];
-        _.each(orgs, function(org) {
+    $scope.loadOrgs = function (menu) {
+      backendSrv.get('/api/user/orgs').then(function (orgs) {
+        menu.thdmenu = [];
+        _.each(orgs, function (org) {
           if (org.orgId === contextSrv.user.orgId) {
             return;
           }
 
-          $scope.settingMenu.submenu[1].thdmenu.push({
+          menu.thdmenu.push({
             text: org.name,
             icon: "fa fa-fw fa-random",
-            click: function() {
+            click: function () {
               $scope.switchOrg(org.orgId);
             }
           });
         });
+        if (!menu.thdmenu.length) {
+          menu.thdmenu.push({
+            text: "无",
+          });
+        }
       });
     };
 
@@ -157,18 +187,14 @@ function (angular, _, $, coreModule, config) {
 
       $scope.settingMenu.submenu.push({
         text: "切换系统",
-        dropdown: 'dropdown',
-        thdmenu: [],
-        click: $scope.loadSystems()
+        href: $scope.getUrl('/systems')
       });
 
       $scope.settingMenu.submenu.push({
         text: "切换组织",
         dropdown: 'dropdown',
         thdmenu: [],
-        click: function() {
-          $scope.loadOrgs()
-        }
+        click: $scope.loadOrgs
       });
 
       if ($scope.length > 0) {

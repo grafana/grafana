@@ -24,7 +24,7 @@
 				<span class="icon-circle sidemenu-icon"><i class="{{item.icon}}"></i></span>
 				<span class="sidemenu-item-text">{{item.text}}</span>
 	   	</a>
-			<a class="sidemenu-item" ng-if="!item.href" ng-click="updateSubmenu(item);item.click()">
+			<a class="sidemenu-item" ng-if="!item.href" ng-click="updateSubmenu(item);item.click(item)">
 				<span class="icon-circle sidemenu-icon"><i class="{{item.icon}}"></i></span>
 				<span class="sidemenu-item-text">{{item.text}}</span>
 	   	</a>
