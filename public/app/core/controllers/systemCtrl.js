@@ -16,7 +16,6 @@ function (angular, coreModule) {
         backendSrv.get("/api/user/system").then(function (system) {
           $scope.systems = system;
         })
-
       };
 
       $scope.addSystem = function () {

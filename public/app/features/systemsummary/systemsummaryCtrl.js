@@ -91,7 +91,7 @@ define([
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: false, canSave: false},
           dashboard: {
-            system: contextSrv.system || 2,
+            system: contextSrv.system,
             title: "总览",
             id: "name",
             rows: $scope.initPanelRow(),

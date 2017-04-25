@@ -281,25 +281,14 @@ function (angular, _, $, coreModule, config) {
       $scope.systemSection = false;
       $scope.mainLinks = [];
       $scope.dashboardTitle = "";
+      if (contextSrv.system == 0 && contextSrv.user.orgId) {
+        $location.url("/systems");
+        contextSrv.sidmenu = false;
+        return;
+      }
       var currentPath = $location.path();
       if (currentPath.indexOf('/admin') === 0) {
         $scope.setupAdminNav();
-      } else if (currentPath.indexOf('/alerts') == 0
-                  || currentPath.indexOf('/oncallers') == 0
-                  || currentPath.indexOf('/anomaly') == 0
-                  || currentPath.indexOf('/analysis') == 0
-                  || currentPath.indexOf('/association') == 0
-                  || currentPath.indexOf('/logs') == 0
-                  || currentPath.indexOf('/knowledgebase') == 0
-                  || currentPath.indexOf('/decompose') == 0
-                  || currentPath.indexOf('/health') == 0
-                  || currentPath.indexOf('/cluster') == 0
-                  || currentPath.indexOf('/integrate') == 0
-      ) {
-        if (contextSrv.system == 0){
-          $location.url("/systems");
-          return;
-        }
       } else if(currentPath.indexOf('/dashboard/db/') == 0){
         contextSrv.dashboardLink = currentPath;
       }

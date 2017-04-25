@@ -72,7 +72,7 @@
 			<a href="{{item.href}}" ng-if="item.href"  class="sidemenu-item">
 				<span class="sidemenu-item-text">{{item.text}}</span>
 			</a>
-			<a ng-click="item.click()" ng-if="!item.href" class="sidemenu-item" data-toggle="{{item.dropdown}}">
+			<a ng-click="item.click(item)" ng-if="!item.href" class="sidemenu-item" data-toggle="{{item.dropdown}}">
 				<span class="sidemenu-item-text">{{item.text}}</span>
 				<span ng-if="item.thdmenu" class="right-angle"><i class="fa fa-fw fa-angle-right"></i></span>
 			</a>
