@@ -111,17 +111,7 @@ function (angular, _, $, coreModule, config) {
 
       $scope.setupSettingMenu();
 
-      // $scope.mainLinks.push({
-      //   text: "系统状况",
-      //   icon: "fa fa-fw fa-cubes",
-      //   href: $scope.getUrl("/service"),
-      // });
 
-      // $scope.mainLinks.push({
-      //   text: "探针状态",
-      //   icon: "fa fa-fw fa-crosshairs",
-      //   href: $scope.getUrl("/summary"),
-      // });
 
     };
 
@@ -259,6 +249,16 @@ function (angular, _, $, coreModule, config) {
           href: $scope.getUrl("/datasources"),
         });
       }
+
+      $scope.settingMenu.submenu.push({
+        text: "系统状况",
+        href: $scope.getUrl("/service"),
+      });
+
+      $scope.settingMenu.submenu.push({
+        text: "探针状态",
+        href: $scope.getUrl("/summary"),
+      });
 
       $scope.settingMenu.submenu.push({
         text: "安装指南",
