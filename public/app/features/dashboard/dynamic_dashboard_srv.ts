@@ -188,7 +188,7 @@ export class DynamicDashboardSrv {
       }
     };
     // min span to fit them all in one line
-    var minFit = _.reduce(row.panels, subSpan, 12) / selected.length;
+    var minFit = Math.floor(_.reduce(row.panels, subSpan, 12) / selected.length);
     var span = Math.max(panel.minSpan || 4, Math.min(panel.span, minFit));
     _.each(selected, (option, index) => {
       var copy = this.getPanelClone(panel, row, index);
