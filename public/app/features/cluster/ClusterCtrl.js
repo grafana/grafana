@@ -25,8 +25,8 @@ define([
       };
 
       $scope.initMetaData = function() {
-        $scope.minX = -1000;
-        $scope.minY = -1000;
+        $scope.minX = -100;
+        $scope.minY = -100;
         $scope.maxX = 1000;
         $scope.maxY = 1000;
 
