@@ -36,7 +36,7 @@
 		<li ng-if="contextSrv.user.isSignedIn">
 			<a href="profile" class="sidemenu-item">
 				<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-user"></i></span>
-				<span class="sidemenu-item-text">{{contextSrv.user.name}}</span>
+				<span class="sidemenu-item-text">{{contextSrv.user.name | limitTo:5}}</span>
 	   	</a>
 		</li>
 

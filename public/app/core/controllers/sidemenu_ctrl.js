@@ -110,9 +110,6 @@ function (angular, _, $, coreModule, config) {
       });
 
       $scope.setupSettingMenu();
-
-
-
     };
 
     $scope.loadSystems = function () {
