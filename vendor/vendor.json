@@ -7,6 +7,12 @@
 			"revision": ""
 		},
 		{
+			"checksumSHA1": "7HXb3cry6luicWeJM9Uxwzfo9Rs=",
+			"path": "github.com/Unknwon/com",
+			"revision": "0db4a625e949e956314d7d1adea9bf82384cc10c",
+			"revisionTime": "2017-02-13T07:20:14Z"
+		},
+		{
 			"checksumSHA1": "6nleggdedlS1mdzSnu1xf1Pnd+8=",
 			"path": "github.com/aws/aws-sdk-go",
 			"revision": "200fde3f632bb9f036ec0b8cb29fbc8588155ea5",
@@ -359,6 +365,24 @@
 			"versionExact": "v1.21.1"
 		},
 		{
+			"checksumSHA1": "OkqfwXeTVoiIxNMDA7HKvmrCDw8=",
+			"path": "github.com/go-macaron/binding",
+			"revision": "48920167fa152d02f228cfbece7e0f1e452d200a",
+			"revisionTime": "2016-12-22T07:05:54Z"
+		},
+		{
+			"checksumSHA1": "y0olVbiMQ6/UOa/eh52XYnies90=",
+			"path": "github.com/go-macaron/inject",
+			"revision": "d8a0b8677191f4380287cfebd08e462217bac7ad",
+			"revisionTime": "2016-06-27T17:00:12Z"
+		},
+		{
+			"checksumSHA1": "gO0dj0NqsmBTkf4D0JzJDtOEx+U=",
+			"path": "github.com/go-macaron/session",
+			"revision": "b8e286a0dba8f4999042d6b258daf51b31d08938",
+			"revisionTime": "2017-03-20T17:22:09Z"
+		},
+		{
 			"checksumSHA1": "42vkdsxNaLyPu+FktCzZ/8zsNSE=",
 			"path": "github.com/go-sql-driver/mysql",
 			"revision": "9dee4ca50b83acdf57a35fb9e6fb4be640afa2f3",
@@ -453,6 +477,12 @@
 			"revisionTime": "2016-08-23T18:01:44Z"
 		},
 		{
+			"checksumSHA1": "1MGpGDQqnUoRpv7VEcQrXOBydXE=",
+			"path": "golang.org/x/crypto/pbkdf2",
+			"revision": "3543873453996aaab2fc6b3928a35fc5ca2b5afb",
+			"revisionTime": "2017-04-18T16:44:36Z"
+		},
+		{
 			"checksumSHA1": "WHc3uByvGaMcnSoI21fhzYgbOgg=",
 			"path": "golang.org/x/net/context/ctxhttp",
 			"revision": "71a035914f99bb58fe82eac0f1289f10963d876c",
@@ -487,6 +517,12 @@
 			"path": "gopkg.in/gomail.v2",
 			"revision": "81ebce5c23dfd25c6c67194b37d3dd3f338c98b1",
 			"revisionTime": "2016-04-11T21:29:32Z"
+		},
+		{
+			"checksumSHA1": "1HJvJZheB5NNl3i1R9zZJpiJ1G0=",
+			"path": "gopkg.in/macaron.v1",
+			"revision": "a325110f8b392bce3e5cdeb8c44bf98078ada3be",
+			"revisionTime": "2017-02-13T09:12:08Z"
 		}
 	],
 	"rootPath": "github.com/grafana/grafana"

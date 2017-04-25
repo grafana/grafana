@@ -32,7 +32,7 @@ func (f StrTo) Uint8() (uint8, error) {
 }
 
 func (f StrTo) Int() (int, error) {
-	v, err := strconv.ParseInt(f.String(), 10, 32)
+	v, err := strconv.ParseInt(f.String(), 10, 0)
 	return int(v), err
 }
 

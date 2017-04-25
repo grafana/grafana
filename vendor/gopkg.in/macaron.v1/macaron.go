@@ -24,6 +24,7 @@ import (
 	"os"
 	"reflect"
 	"strings"
+	"sync"
 
 	"github.com/Unknwon/com"
 	"gopkg.in/ini.v1"
@@ -31,7 +32,7 @@ import (
 	"github.com/go-macaron/inject"
 )
 
-const _VERSION = "0.8.0.1013"
+const _VERSION = "1.2.1.0213"
 
 func Version() string {
 	return _VERSION
@@ -42,20 +43,63 @@ func Version() string {
 // and panics if an argument could not be fullfilled via dependency injection.
 type Handler interface{}
 
-// validateHandler makes sure a handler is a callable function,
-// and panics if it is not.
-func validateHandler(h Handler) {
+// handlerFuncInvoker is an inject.FastInvoker wrapper of func(http.ResponseWriter, *http.Request).
+type handlerFuncInvoker func(http.ResponseWriter, *http.Request)
+
+func (invoke handlerFuncInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
+	invoke(params[0].(http.ResponseWriter), params[1].(*http.Request))
+	return nil, nil
+}
+
+// internalServerErrorInvoker is an inject.FastInvoker wrapper of func(rw http.ResponseWriter, err error).
+type internalServerErrorInvoker func(rw http.ResponseWriter, err error)
+
+func (invoke internalServerErrorInvoker) Invoke(params []interface{}) ([]reflect.Value, error) {
+	invoke(params[0].(http.ResponseWriter), params[1].(error))
+	return nil, nil
+}
+
+// validateAndWrapHandler makes sure a handler is a callable function, it panics if not.
+// When the handler is also potential to be any built-in inject.FastInvoker,
+// it wraps the handler automatically to have some performance gain.
+func validateAndWrapHandler(h Handler) Handler {
 	if reflect.TypeOf(h).Kind() != reflect.Func {
 		panic("Macaron handler must be a callable function")
 	}
+
+	if !inject.IsFastInvoker(h) {
+		switch v := h.(type) {
+		case func(*Context):
+			return ContextInvoker(v)
+		case func(*Context, *log.Logger):
+			return LoggerInvoker(v)
+		case func(http.ResponseWriter, *http.Request):
+			return handlerFuncInvoker(v)
+		case func(http.ResponseWriter, error):
+			return internalServerErrorInvoker(v)
+		}
+	}
+	return h
 }
 
-// validateHandlers makes sure handlers are callable functions,
-// and panics if any of them is not.
-func validateHandlers(handlers []Handler) {
-	for _, h := range handlers {
-		validateHandler(h)
+// validateAndWrapHandlers preforms validation and wrapping for each input handler.
+// It accepts an optional wrapper function to perform custom wrapping on handlers.
+func validateAndWrapHandlers(handlers []Handler, wrappers ...func(Handler) Handler) []Handler {
+	var wrapper func(Handler) Handler
+	if len(wrappers) > 0 {
+		wrapper = wrappers[0]
 	}
+
+	wrappedHandlers := make([]Handler, len(handlers))
+	for i, h := range handlers {
+		h = validateAndWrapHandler(h)
+		if wrapper != nil && !inject.IsFastInvoker(h) {
+			h = wrapper(h)
+		}
+		wrappedHandlers[i] = h
+	}
+
+	return wrappedHandlers
 }
 
 // Macaron represents the top level web application.
@@ -100,7 +144,7 @@ func New() *Macaron {
 }
 
 // Classic creates a classic Macaron with some basic default middleware:
-// mocaron.Logger, mocaron.Recovery and mocaron.Static.
+// macaron.Logger, macaron.Recovery and macaron.Static.
 func Classic() *Macaron {
 	m := New()
 	m.Use(Logger())
@@ -122,7 +166,7 @@ func (m *Macaron) Handlers(handlers ...Handler) {
 // Action sets the handler that will be called after all the middleware has been invoked.
 // This is set to macaron.Router in a macaron.Classic().
 func (m *Macaron) Action(handler Handler) {
-	validateHandler(handler)
+	handler = validateAndWrapHandler(handler)
 	m.action = handler
 }
 
@@ -138,7 +182,7 @@ func (m *Macaron) Before(handler BeforeHandler) {
 // and panics if the handler is not a callable func.
 // Middleware Handlers are invoked in the order that they are added.
 func (m *Macaron) Use(handler Handler) {
-	validateHandler(handler)
+	handler = validateAndWrapHandler(handler)
 	m.handlers = append(m.handlers, handler)
 }
 
@@ -151,6 +195,7 @@ func (m *Macaron) createContext(rw http.ResponseWriter, req *http.Request) *Cont
 		Router:   m.Router,
 		Req:      Request{req},
 		Resp:     NewResponseWriter(rw),
+		Render:   &DummyRender{rw},
 		Data:     make(map[string]interface{}),
 	}
 	c.SetParent(m)
@@ -208,7 +253,7 @@ func (m *Macaron) Run(args ...interface{}) {
 
 	addr := host + ":" + com.ToStr(port)
 	logger := m.GetVal(reflect.TypeOf(m.logger)).Interface().(*log.Logger)
-	logger.Printf("listening on %s (%s)\n", addr, Env)
+	logger.Printf("listening on %s (%s)\n", addr, safeEnv())
 	logger.Fatalln(http.ListenAndServe(addr, m))
 }
 
@@ -234,7 +279,8 @@ const (
 var (
 	// Env is the environment that Macaron is executing in.
 	// The MACARON_ENV is read on initialization to set this variable.
-	Env = DEV
+	Env     = DEV
+	envLock sync.Mutex
 
 	// Path of work directory.
 	Root string
@@ -247,9 +293,19 @@ var (
 )
 
 func setENV(e string) {
+	envLock.Lock()
+	defer envLock.Unlock()
+
 	if len(e) > 0 {
 		Env = e
 	}
+}
+
+func safeEnv() string {
+	envLock.Lock()
+	defer envLock.Unlock()
+
+	return Env
 }
 
 func init() {
