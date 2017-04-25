@@ -11,51 +11,50 @@
     </ul>
 </topnav>
 
-<div class="page-container">
+<div class="page-container" style="background:#fff;">
     <form>
-        <div class="page">
+        <div class="">
             <h2>日志全文搜索</h2>
-            <div class="tight-form">
-                <ul class="tight-form-list">
-                    <li class="tight-form-item" style="width: 100px">
+            <div class="tidy-form">
+                <ul class="tidy-form-list">
+                    <li class="tidy-form-item" style="width: 100px">
                         关键词
                     </li>
                     <li>
-                        <input placeholder="支持AND, OR, 空格表示OR" type="text" class="input-xxlarge tight-form-input last"
+                        <input placeholder="支持AND, OR, 空格表示OR" type="text" class="input-xlarge tidy-form-input last"
                                ng-model="query" required="">
+                    </li>
+                    <li>
+                        <button type="submit" class="btn btn-primary" ng-click="reQuery()" style="margin:0 20px;"><i class="fa fa-search"/>查找</button>
+                        <button class="btn btn-primary btn-success" ng-click="logCluster()">日志聚合</button>
                     </li>
                 </ul>
                 <div class="clearfix"></div>
             </div>
-            <button type="submit" class="btn btn-primary" ng-click="reQuery()"><i class="fa fa-search"/>查找</button>
-
-            <button class="btn btn-primary" ng-click="logCluster()">日志聚合</button>
-            <br>
         </div>
     </form>
-</div>
-</div>
+    <div class="grafana-row" ng-controller="RowCtrl"
+        ng-repeat="(row_name, row) in dashboard.rows" row-height>
 
-<div class="grafana-row" ng-controller="RowCtrl"
-     ng-repeat="(row_name, row) in dashboard.rows" row-height>
+        <div class="row-control">
+            <div class="panels-wrapper" ng-if="!row.collapse">
+                <div class="row-text pointer" ng-click="toggleRow(row)" ng-if="row.showTitle"
+                    ng-bind="row.title | interpolateTemplateVars:this">
+                </div>
 
-    <div class="row-control">
-        <div class="panels-wrapper" ng-if="!row.collapse">
-            <div class="row-text pointer" ng-click="toggleRow(row)" ng-if="row.showTitle"
-                 ng-bind="row.title | interpolateTemplateVars:this">
+                <tabset>
+                    <tab heading="原始数据" ng-if="panel.tab == 1" ng-repeat="(name, panel) in row.panels track by panel.id"
+                        active="true">
+                        <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+                    </tab>
+                    <tab heading="聚合数据" ng-if="panel.tab == 2" ng-repeat="(name, panel) in row.panels track by panel.id"
+                        ng-show="panel.tab==2 && clustering">
+                        <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+                    </tab>
+                </tabset>
+                <div class="clearfix"></div>
             </div>
-
-            <tabset>
-                <tab heading="原始数据" ng-if="panel.tab == 1" ng-repeat="(name, panel) in row.panels track by panel.id"
-                     active="true">
-                    <panel-loader type="panel.type" class="panel-margin"></panel-loader>
-                </tab>
-                <tab heading="聚合数据" ng-if="panel.tab == 2" ng-repeat="(name, panel) in row.panels track by panel.id"
-                     ng-show="panel.tab==2 && clustering">
-                    <panel-loader type="panel.type" class="panel-margin"></panel-loader>
-                </tab>
-            </tabset>
-            <div class="clearfix"></div>
         </div>
     </div>
 </div>
+
