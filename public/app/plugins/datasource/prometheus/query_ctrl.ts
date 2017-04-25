@@ -12,6 +12,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
 
   metric: any;
   resolutions: any;
+  formats: any;
   oldTarget: any;
   suggestMetrics: any;
   linkToPrometheus: any;
@@ -23,15 +24,20 @@ class PrometheusQueryCtrl extends QueryCtrl {
     var target = this.target;
     target.expr = target.expr || '';
     target.intervalFactor = target.intervalFactor || 2;
+    target.format = target.format || this.getDefaultFormat();
 
     this.metric = '';
     this.resolutions = _.map([1,2,3,4,5,10], function(f) {
       return {factor: f, label: '1/' + f};
     });
 
+    this.formats = [
+      {text: 'Time series', value: 'time_series'},
+      {text: 'Table', value: 'table'},
+    ];
+
     $scope.$on('typeahead-updated', () => {
       this.$scope.$apply(() => {
-
         this.target.expr += this.target.metric;
         this.metric = '';
         this.refreshMetricData();
@@ -46,6 +52,13 @@ class PrometheusQueryCtrl extends QueryCtrl {
     };
 
     this.updateLink();
+  }
+
+  getDefaultFormat() {
+    if (this.panelCtrl.panel.type === 'table') {
+      return 'table';
+    }
+    return 'time_series';
   }
 
   refreshMetricData() {
