@@ -1,26 +1,48 @@
-<div ng-controller="SystemCtrl" ng-init="init_system_choice()">
-    <div ng-repeat="sys in systems">
-        <system-panel sys="{{sys.Id}}">
-            系统:{{sys.SystemsName}} 健康值:{{health}}
-            <div ng-show="alertTrigger">
-                系统一切正常
-            </div>
-            <div ng-show="!alertTrigger">
-                严重个数:{{critical}}
-                警告个数: {{warn}}
-            </div>
-            <div sys_alert="{{sys.Id}}" style="height: 100px;width:100px"></div>
+<div ng-controller="SystemCtrl" ng-init="init_system_choice()" class="system-container">
+    <div ng-repeat="sys in systems"  class="system-list">
+        <system-panel sys="{{sys.Id}}" class="system-item">
+            <h2>{{sys.SystemsName}}: 健康值{{health}}%</h2>
+            
             <div>
-                所有指标:{{numMetrics}} / 异常指标: {{numAnomalyMetrics}}
+                <h4>报警状态</h4>
+                <div ng-if="alertTrigger">
+                    系统一切正常
+                </div>
+                <div ng-if="!alertTrigger">
+                    <div class="system-item-text">
+                        <p>严重个数:{{critical}}</p>
+                        <p>警告个数: {{warn}}</p>
+                    </div>
+                    
+                    <div class="system-item-pie" id="alert-pie"></div>
+                </div>
             </div>
-            <div sys_annomaly="{{sys.Id}}" style="height: 100px;width:100px"></div>
-            <div ng-repeat="service in servies">
-                {{service.name}} --- {{service.status}}
+
+            <div>
+                <h4>异常指标占比</h4>
+                <div class="system-item-text">
+                    <p>所有指标:{{numMetrics}}</p>
+                    <p>异常指标: {{numAnomalyMetrics}}</p>
+                </div>
+                <div class="system-item-pie" id="alert-pie"></div>
             </div>
-            <div ng-repeat="h in hostList">
-                {{h.host}} ----{{h.status}}
+
+            <b ng-if="servies.length">
+                <h4>服务状态</h4>
+                <button ng-repeat="service in servies" class="btn" ng-class="{'btn-success': !service.status,'btn-warning': service.status}">
+                    {{service.name}}
+                </button>
+            </div>
+
+            <div ng-if="hostList.length">
+                <h4>机器连接状态</h4>
+                <div ng-repeat="h in hostList">
+                    {{h.host}} ----{{h.status}}
+                </div>
             </div>
             <br/>
         </system-panel>
+        <div class="clearfix"></div>
     </div>
+
 </div>
