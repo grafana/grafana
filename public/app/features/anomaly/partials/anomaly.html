@@ -17,33 +17,35 @@
       <div id="cluster" style="width:100%; height:500px;"></div>
       <div id="overview" style="width:40%; height:125px; position:absolute; bottom:0px; right:0px;"></div>
     </div>
-    <table class="grafana-options-table pull-right" style="width:50%;" ng-if="summary.metricHostClusters.length && summary.metricHostNotClustered.elements.length">
-      <tr>
-        <td><strong>指标名称</strong></td>
-        <td><strong>异常指数</strong></td>
-        <td><strong>操作</strong></td>
-      </tr>
-      <tr ng-repeat="cluster in metricHostClusters">
-        <td style="max-width: 230px;">
-          <p ng-if="cluster.index != clustersLength - 1" class="max-width" title="{{_.getMetricName(cluster.elements[0].metric)}}"><i class="fa fa-bell"></i> &nbsp; {{_.getMetricName(cluster.elements[0].metric)}} 等{{cluster.numElements}}个</p>
-          <p ng-if="cluster.index == clustersLength - 1" class="max-width"><i class="fa fa-bell"></i> &nbsp; 尚未被分类的异常点{{cluster.numElements}}个</p>
-        </td>
-        <td style="width: 300px; padding: 20px 50px 0px 10px;">
-          <div class="progress progress-striped active">
-            <div class="bar bar-success" style="width:{{cluster.health}}%;">
-              <span style="position: absolute;display: block;width: 200px;color:whitesmoke; ">健康指数:{{cluster.health}} %</span>
+    <div class=" pull-right" style="width:50%; max-height:500px; overflow:auto;">
+      <table class="grafana-options-table"  ng-if="summary.metricHostClusters.length && summary.metricHostNotClustered.elements.length">
+        <tr>
+          <td><strong>指标名称</strong></td>
+          <td><strong>异常指数</strong></td>
+          <td><strong>操作</strong></td>
+        </tr>
+        <tr ng-repeat="cluster in metricHostClusters">
+          <td style="max-width: 230px;">
+            <p ng-if="cluster.index != clustersLength - 1" class="max-width" title="{{_.getMetricName(cluster.elements[0].metric)}}"><i class="fa fa-bell"></i> &nbsp; {{_.getMetricName(cluster.elements[0].metric)}} 等{{cluster.numElements}}个</p>
+            <p ng-if="cluster.index == clustersLength - 1" class="max-width"><i class="fa fa-bell"></i> &nbsp; 尚未被分类的异常点{{cluster.numElements}}个</p>
+          </td>
+          <td style="width: 300px; padding: 20px 50px 0px 10px;">
+            <div class="progress progress-striped active">
+              <div class="bar bar-success" style="width:{{cluster.health}}%; position:relative;">
+                <span style="position: absolute;display: block;width: 200px;color:whitesmoke; ">健康指数:{{cluster.health}} %</span>
+              </div>
+              <div class="bar bar-danger" style="width:{{100-cluster.health}}%;"></div>
             </div>
-            <div class="bar bar-danger" style="width:{{100-cluster.health}}%;"></div>
-          </div>
-        </td>
-        <td>
-          <a href="/anomaly/{{cluster.index}}" class="btn btn-inverse btn-mini" >
-            <i class="fa fa-edit"></i>
-            进入
-          </a>
-        </td>
-      </tr>
-    </table>
+          </td>
+          <td>
+            <a href="/anomaly/{{cluster.index}}" class="btn btn-inverse btn-mini" >
+              <i class="fa fa-edit"></i>
+              进入
+            </a>
+          </td>
+        </tr>
+      </table>
+    </div>
 
     <div class="clearfix"></div>
     <div ng-if="excludeMetricLength">
