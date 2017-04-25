@@ -16,10 +16,10 @@ export class EventManager {
   }
 
   updateTime(range) {
-    let newEvent = true;
-
     if (this.event) {
-      newEvent = false;
+      // means the editor is not visible
+      this.panelCtrl.render();
+      return;
     } else {
       // init new event
       this.event = new AnnotationEvent();
@@ -33,12 +33,6 @@ export class EventManager {
     if (range.to) {
       this.event.timeEnd = moment(range.to);
       this.event.isRegion = true;
-    }
-
-    // newEvent means the editor is not visible
-    if (!newEvent) {
-      this.panelCtrl.render();
-      return;
     }
 
     this.popoverSrv.show({
@@ -81,14 +75,29 @@ export class EventManager {
     };
 
     if (this.event) {
-      annotations = [
-        {
-          min: this.event.time.valueOf(),
-          title: this.event.title,
-          text: this.event.text,
-          eventType: '$__alerting',
-        }
-      ];
+      if (this.event.isRegion) {
+        annotations = [
+          {
+            regionId: 1,
+            min: this.event.time.valueOf(),
+            title: this.event.title,
+            text: this.event.text
+          },
+          {
+            regionId: 1,
+            min: this.event.timeEnd.valueOf()
+          }
+        ];
+      } else {
+        annotations = [
+          {
+            min: this.event.time.valueOf(),
+            title: this.event.title,
+            text: this.event.text,
+            eventType: '$__alerting',
+          }
+        ];
+      }
     } else {
       // annotations from query
       for (var i = 0; i < annotations.length; i++) {

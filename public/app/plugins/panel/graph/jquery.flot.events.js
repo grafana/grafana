@@ -51,7 +51,7 @@ function ($, _, angular, Drop, twemoji) {
     regions = _.compact(_.map(regions, function (region_events) {
       if (region_events && region_events.length > 1) {
         var region_obj = region_events[0];
-        region_obj.timeEnd = region_events[1].time;
+        region_obj.timeEnd = region_events[1].min;
         region_obj.isRegion = true;
         return region_obj;
       }
@@ -446,8 +446,8 @@ function ($, _, angular, Drop, twemoji) {
 
       top = o.top + this._plot.height() + topOffset;
 
-      var timeFrom = Math.min(event.time, event.timeEnd);
-      var timeTo = Math.max(event.time, event.timeEnd);
+      var timeFrom = Math.min(event.min, event.timeEnd);
+      var timeTo = Math.max(event.min, event.timeEnd);
       left = xaxis.p2c(timeFrom) + o.left;
       var right = xaxis.p2c(timeTo) + o.left;
       regionWidth = right - left;
