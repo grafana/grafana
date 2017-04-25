@@ -3,9 +3,10 @@ define([
   'lodash',
   'angular',
   'tether-drop',
-  'twemoji'
+  'twemoji',
+  'app/features/annotations/event_manager'
 ],
-function ($, _, angular, Drop, twemoji) {
+function ($, _, angular, Drop, twemoji, EventManager) {
   'use strict';
 
   function createAnnotationToolip(element, event) {
@@ -41,23 +42,6 @@ function ($, _, angular, Drop, twemoji) {
         });
       });
     }]);
-  }
-
-  function buildRegions(events) {
-    var region_events = _.filter(events, function (event) {
-      return event.regionId;
-    });
-    var regions = _.groupBy(region_events, 'regionId');
-    regions = _.compact(_.map(regions, function (region_events) {
-      if (region_events && region_events.length > 1) {
-        var region_obj = region_events[0];
-        region_obj.timeEnd = region_events[1].min;
-        region_obj.isRegion = true;
-        return region_obj;
-      }
-    }));
-
-    return regions;
   }
 
   /*
@@ -139,7 +123,7 @@ function ($, _, angular, Drop, twemoji) {
      */
     this.setupEvents = function(events) {
       var that = this;
-      var regions = buildRegions(events);
+      var regions = EventManager.buildRegions(events);
 
       events = _.filter(events, function(event) {
         return !event.regionId;

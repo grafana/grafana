@@ -134,7 +134,7 @@ export class EventManager {
   }
 }
 
-function buildRegions(events) {
+export function buildRegions(events) {
   var region_events = _.filter(events, function (event) {
     return event.regionId;
   });
