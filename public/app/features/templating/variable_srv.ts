@@ -92,7 +92,7 @@ export class VariableSrv {
 
   addVariable(model) {
     var variable = this.createVariableFromModel(model);
-    this.variables.push(this.createVariableFromModel(variable));
+    this.variables.push(variable);
     return variable;
   }
 
