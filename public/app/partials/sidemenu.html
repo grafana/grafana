@@ -20,7 +20,11 @@
 		-->
 
 		<li ng-repeat="item in mainLinks">
-			<a href="{{item.href}}" class="sidemenu-item" ng-click="updateSubmenu(item)">
+			<a href="{{item.href}}" class="sidemenu-item" ng-if="item.href">
+				<span class="icon-circle sidemenu-icon"><i class="{{item.icon}}"></i></span>
+				<span class="sidemenu-item-text">{{item.text}}</span>
+	   	</a>
+			<a class="sidemenu-item" ng-if="!item.href" ng-click="updateSubmenu(item);item.click()">
 				<span class="icon-circle sidemenu-icon"><i class="{{item.icon}}"></i></span>
 				<span class="sidemenu-item-text">{{item.text}}</span>
 	   	</a>

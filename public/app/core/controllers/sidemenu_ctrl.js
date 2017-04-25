@@ -24,13 +24,12 @@ function (angular, _, $, coreModule, config) {
       $scope.mainLinks.push({
         text: "指标浏览",
         icon: "fa fa-fw fa-sliders",
-        href: 'javascript:void(0);',
+        click: $scope.loadOrgs
       });
 
       $scope.mainLinks.push({
         text: "日志查看",
         icon: "fa fa-fw fa-file-text-o",
-        href: 'javascript:void(0);',
         submenu: [
           {
             text: '全文查询',
@@ -50,7 +49,6 @@ function (angular, _, $, coreModule, config) {
       $scope.mainLinks.push({
         text: "智能检测",
         icon: "fa fa-fw fa-stethoscope",
-        href: 'javascript:void(0);',
         submenu: [
           {
             text: '报警规则检测',
@@ -85,7 +83,6 @@ function (angular, _, $, coreModule, config) {
       $scope.mainLinks.push({
         text: "智能分析",
         icon: "fa fa-fw fa-bar-chart",
-        href: 'javascript:void(0);',
         submenu: [
           {
             text: '关联性分析',

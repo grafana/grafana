@@ -49,33 +49,52 @@ define([
               scope.critical = 0;
               scope.warn = 0;
               var pieData = [];
-              if(response.data.length) {
+              if (response.data.length) {
                 for (var i = 0; i < response.data.length; i++) {
                   var alertDetail = response.data[i];
                   if (alertDetail.status.level === "CRITICAL") {
-                    scope.critical ++;
+                    scope.critical++;
                   } else {
-                    scope.warn ++;
+                    scope.warn++;
                   }
                 }
                 pieData = [
-                  {label: "警告", data:scope.warn},
-                  {label: "严重", data:scope.critical},
+                  {label: "警告", data: scope.warn},
+                  {label: "严重", data: scope.critical}
                 ];
-                $.plot("#alert-pie", pieData, {
-                  series: {
-                    pie: {
-                      show: true
-                    }
-                  }
-                });
               } else {
                 scope.alertTrigger = true;
+                pieData = [
+                  {label: "健康", data: 10},
+                  {label: "严重", data: 0},
+                  {label: "警告", data: 0}
+                ];
               }
+
+              $.plot("[sys_alert='" + system + "']", pieData, {
+                series: {
+                  pie: {
+                    innerRadius: 0.5,
+                    show: true,
+                  }
+                }
+              });
             });
 
             //------- get health/anomaly status
             healthSrv.load().then(function (data) {
+              var pieData = [
+                {label: "所有指标", data: data.numMetrics},
+                {label: "异常指标", data: data.numAnomalyMetrics},
+              ];
+              $.plot("[sys_annomaly='" + system + "']", pieData, {
+                series: {
+                  pie: {
+                    innerRadius: 0.5,
+                    show: true
+                  }
+                }
+              });
               scope.numMetrics = data.numMetrics;
               scope.numAnomalyMetrics = data.numAnomalyMetrics;
               scope.health = data.health;
@@ -109,9 +128,9 @@ define([
                   _.each(response.data, function (metricData) {
                     if (_.isObject(metricData)) {
                       if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
-                        host.status = "1"
+                        host.status = 1;
                       } else {
-                        host.status = "0";
+                        host.status = 0;
                       }
                     }
                   });
