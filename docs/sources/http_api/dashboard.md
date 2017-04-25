@@ -221,10 +221,6 @@ Get all tags of dashboards
       }
     ]
 
-## Dashboard from JSON file
-
-`GET /file/:file`
-
 ## Search Dashboards
 
 `GET /api/search/`
