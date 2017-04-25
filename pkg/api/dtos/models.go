@@ -84,7 +84,23 @@ type DataSource struct {
 	SecureJsonFields  map[string]bool  `json:"secureJsonFields"`
 }
 
-type DataSourceList []DataSource
+type DataSourceListItemDTO struct {
+	Id          int64            `json:"id"`
+	OrgId       int64            `json:"orgId"`
+	Name        string           `json:"name"`
+	Type        string           `json:"type"`
+	TypeLogoUrl string           `json:"typeLogoUrl"`
+	Access      m.DsAccess       `json:"access"`
+	Url         string           `json:"url"`
+	Password    string           `json:"password"`
+	User        string           `json:"user"`
+	Database    string           `json:"database"`
+	BasicAuth   bool             `json:"basicAuth"`
+	IsDefault   bool             `json:"isDefault"`
+	JsonData    *simplejson.Json `json:"jsonData,omitempty"`
+}
+
+type DataSourceList []DataSourceListItemDTO
 
 func (slice DataSourceList) Len() int {
 	return len(slice)
