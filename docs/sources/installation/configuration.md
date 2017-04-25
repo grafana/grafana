@@ -644,6 +644,9 @@ Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 ### url
 Url to where Grafana will send PUT request with images
 
+### public_url
+Url to send to users in notifications, directly appended with the resulting uploaded file name
+
 ### username
 basic auth username
 
