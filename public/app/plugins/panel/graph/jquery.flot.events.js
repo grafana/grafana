@@ -3,10 +3,9 @@ define([
   'lodash',
   'angular',
   'tether-drop',
-  'twemoji',
-  'app/features/annotations/event_manager'
+  'twemoji'
 ],
-function ($, _, angular, Drop, twemoji, EventManager) {
+function ($, _, angular, Drop, twemoji) {
   'use strict';
 
   function createAnnotationToolip(element, event) {
@@ -123,11 +122,9 @@ function ($, _, angular, Drop, twemoji, EventManager) {
      */
     this.setupEvents = function(events) {
       var that = this;
-      var regions = EventManager.buildRegions(events);
-
-      events = _.filter(events, function(event) {
-        return !event.regionId;
-      });
+      var parts = _.partition(events, 'isRegion');
+      var regions = parts[0];
+      events = parts[1];
 
       $.each(events, function(index, event) {
         var ve = new VisualEvent(event, that._buildDiv(event));

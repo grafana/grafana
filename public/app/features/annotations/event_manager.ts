@@ -123,7 +123,9 @@ export class EventManager {
       }
     }
 
-    let regions = buildRegions(annotations);
+    let [regionEvents, singleEvents] = _.partition(annotations, 'regionId');
+    let regions = this.buildRegions(regionEvents);
+    annotations = _.concat(regions, singleEvents);
     addRegionMarking(regions, flotOptions);
 
     let eventSectionHeight = 25;
@@ -136,23 +138,42 @@ export class EventManager {
       types: types,
     };
   }
+
+  buildRegions(events) {
+    let region_events = _.filter(events, event => {
+      return event.regionId;
+    });
+    let regions = _.groupBy(region_events, 'regionId');
+    regions = _.compact(_.map(regions, region_events => {
+      let region_obj;
+      if (region_events && region_events.length > 1) {
+        region_obj = region_events[0];
+        region_obj.timeEnd = region_events[1].min;
+        region_obj.isRegion = true;
+        return region_obj;
+      } else {
+        if (region_events && region_events.length) {
+          region_obj = region_events[0];
+          if (isStartOfRegion(region_obj)) {
+            region_obj.timeEnd = this.panelCtrl.range.to.valueOf();
+          } else {
+            // Start time = null
+            region_obj.min = this.panelCtrl.range.from.valueOf();
+          }
+          region_obj.isRegion = true;
+          return region_obj;
+        }
+      }
+    }));
+
+    return regions;
+  }
 }
 
-export function buildRegions(events) {
-  var region_events = _.filter(events, function (event) {
-    return event.regionId;
-  });
-  var regions = _.groupBy(region_events, 'regionId');
-  regions = _.compact(_.map(regions, function (region_events) {
-    if (region_events && region_events.length > 1) {
-      var region_obj = region_events[0];
-      region_obj.timeEnd = region_events[1].min;
-      region_obj.isRegion = true;
-      return region_obj;
-    }
-  }));
-
-  return regions;
+function isStartOfRegion(event): boolean {
+  let annotationId = event.annotationId;
+  let regionId = event.regionId;
+  return annotationId && regionId && annotationId === regionId;
 }
 
 function addRegionMarking(regions, flotOptions) {
