@@ -2,6 +2,7 @@
 title = "Dashboard List"
 keywords = ["grafana", "dashboard list", "documentation", "panel", "dashlist"]
 type = "docs"
+aliases = ["/reference/dashlist/"]
 [menu.docs]
 name = "Dashboard list"
 parent = "panels"

@@ -2,6 +2,7 @@
 title = "Graph Panel"
 keywords = ["grafana", "graph panel", "documentation", "guide", "graph"]
 type = "docs"
+aliases = ["/reference/graph/"]
 [menu.docs]
 name = "Graph"
 parent = "panels"
@@ -74,7 +75,6 @@ values can be hidden from the legend using the ``Hide empty`` checkbox.
 ### Legend Values
 
 Additional values can be shown along-side the legend names:
-
 - ``Total`` - Sum of all values returned from metric query
 - ``Current`` - Last value returned from the metric query
 - ``Min`` - Minimum of all values returned from metric query

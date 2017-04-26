@@ -2,6 +2,7 @@
 title = "Table Panel"
 keywords = ["grafana", "dashboard", "documentation", "panels", "table panel"]
 type = "docs"
+aliases = ["/reference/table/"]
 [menu.docs]
 name = "Table"
 parent = "panels"
