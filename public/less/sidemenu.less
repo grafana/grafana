@@ -3,7 +3,7 @@
 }
 
 .sidemenu-wrapper {
-  position: fixed;
+  position: absolute;
   display: none;
   top: 0;
   bottom: 0;
@@ -38,15 +38,12 @@
 
 .sidemenu {
   background: @grayDarker;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: @baseFontWeight;
   list-style: none;
   margin: 0;
   padding: 0;
 
-  >li {
-    margin-bottom: 9px;
-  }
 
   .fa-caret-down {
     position: relative;
@@ -56,7 +53,8 @@
 
   &.sidemenu-small {
     position: absolute;
-    bottom: 0px;
+    width: 100%;
+    margin-top: 100px;
   }
 }
 

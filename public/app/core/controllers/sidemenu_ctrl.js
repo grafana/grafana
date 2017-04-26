@@ -41,7 +41,7 @@ function (angular, _, $, coreModule, config) {
           },
           {
             text: '日志对比',
-            href: $scope.getUrl("/logs")
+            click: $scope.alertMessage
           },
         ]
       });
@@ -94,7 +94,7 @@ function (angular, _, $, coreModule, config) {
           },
           {
             text: '故障溯源',
-            href: '',
+            click: $scope.alertMessage
           },
           {
             text: '健康报告',
@@ -304,6 +304,16 @@ function (angular, _, $, coreModule, config) {
 
     $scope.hideSubmenu = function() {
       contextSrv.submenu = false;
+    };
+
+    $scope.alertMessage = function() {
+      $scope.appEvent('confirm-modal', {
+        title: '',
+        text: '功能暂未开放，敬请期待',
+        icon: 'fa-bell',
+        yesText: '确定',
+        modalClass : 'contact-us',
+      });
     };
 
     $scope.init = function() {

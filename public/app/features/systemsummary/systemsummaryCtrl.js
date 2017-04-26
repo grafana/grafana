@@ -313,8 +313,8 @@ define([
             $scope.panleJson[1].status.success[1] = data.numMetrics;
             $scope.panleJson[1].status.warn[1] = data.numAnomalyMetrics;
           } else {
-            $scope.panleJson[1].status.success[0] = '系统正常';
-            $scope.panleJson[1].status.success[1] = '';
+            $scope.panleJson[1].status.success[0] = '';
+            $scope.panleJson[1].status.success[1] = '系统正常';
           }
         });
         function getLeveal(score) {
