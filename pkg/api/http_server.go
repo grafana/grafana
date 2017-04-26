@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"os"
 	"path"
@@ -49,7 +50,7 @@ func (hs *HttpServer) Start(ctx context.Context) error {
 	hs.streamManager.Run(ctx)
 
 	listenAddr := fmt.Sprintf("%s:%s", setting.HttpAddr, setting.HttpPort)
-	hs.log.Info("Initializing HTTP Server", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl)
+	hs.log.Info("Initializing HTTP Server", "address", listenAddr, "protocol", setting.Protocol, "subUrl", setting.AppSubUrl, "socket", setting.SocketPath)
 
 	hs.httpSrv = &http.Server{Addr: listenAddr, Handler: hs.macaron}
 	switch setting.Protocol {
@@ -62,6 +63,18 @@ func (hs *HttpServer) Start(ctx context.Context) error {
 	case setting.HTTPS:
 		err = hs.httpSrv.ListenAndServeTLS(setting.CertFile, setting.KeyFile)
 		if err == http.ErrServerClosed {
+			hs.log.Debug("server was shutdown gracefully")
+			return nil
+		}
+	case setting.SOCKET:
+		ln, err := net.Listen("unix", setting.SocketPath)
+		if err != nil {
+			hs.log.Debug("server was shutdown gracefully")
+			return nil
+		}
+
+		err = hs.httpSrv.Serve(ln)
+		if err != nil {
 			hs.log.Debug("server was shutdown gracefully")
 			return nil
 		}

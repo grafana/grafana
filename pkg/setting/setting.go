@@ -27,6 +27,7 @@ type Scheme string
 const (
 	HTTP              Scheme = "http"
 	HTTPS             Scheme = "https"
+	SOCKET            Scheme = "socket"
 	DEFAULT_HTTP_ADDR string = "0.0.0.0"
 )
 
@@ -65,6 +66,7 @@ var (
 	HttpAddr, HttpPort string
 	SshPort            int
 	CertFile, KeyFile  string
+	SocketPath         string
 	RouterLogging      bool
 	DataProxyLogging   bool
 	StaticRootPath     string
@@ -472,6 +474,10 @@ func NewConfigContext(args *CommandLineArgs) error {
 		Protocol = HTTPS
 		CertFile = server.Key("cert_file").String()
 		KeyFile = server.Key("cert_key").String()
+	}
+	if server.Key("protocol").MustString("http") == "socket" {
+		Protocol = SOCKET
+		SocketPath = server.Key("socket").String()
 	}
 
 	Domain = server.Key("domain").MustString("localhost")
