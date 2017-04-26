@@ -3,6 +3,11 @@ import moment from 'moment';
 import {MetricsPanelCtrl} from 'app/plugins/sdk';
 import {AnnotationEvent} from './event';
 
+const OK_COLOR =       "rgba(11, 237, 50, 1)",
+      ALERTING_COLOR = "rgba(237, 46, 24, 1)",
+      NO_DATA_COLOR =  "rgba(150, 150, 150, 1)";
+
+
 export class EventManager {
   event: AnnotationEvent;
 
@@ -58,17 +63,17 @@ export class EventManager {
 
     var types = {
       '$__alerting': {
-        color: 'rgba(237, 46, 24, 1)',
+        color: ALERTING_COLOR,
         position: 'BOTTOM',
         markerSize: 5,
       },
       '$__ok': {
-        color: 'rgba(11, 237, 50, 1)',
+        color: OK_COLOR,
         position: 'BOTTOM',
         markerSize: 5,
       },
       '$__no_data': {
-        color: 'rgba(150, 150, 150, 1)',
+        color: NO_DATA_COLOR,
         position: 'BOTTOM',
         markerSize: 5,
       },
@@ -78,18 +83,15 @@ export class EventManager {
       if (this.event.isRegion) {
         annotations = [
           {
-            regionId: 1,
+            isRegion: true,
             min: this.event.time.valueOf(),
+            timeEnd: this.event.timeEnd.valueOf(),
             title: this.event.title,
             text: this.event.text,
             eventType: '$__alerting',
             source: {
-              iconColor: 'rgba(237, 46, 24, 1)',
+              iconColor: ALERTING_COLOR,
             }
-          },
-          {
-            regionId: 1,
-            min: this.event.timeEnd.valueOf()
           }
         ];
       } else {
@@ -123,9 +125,7 @@ export class EventManager {
       }
     }
 
-    let [regionEvents, singleEvents] = _.partition(annotations, 'regionId');
-    let regions = this.buildRegions(regionEvents);
-    annotations = _.concat(regions, singleEvents);
+    let regions = getRegions(annotations);
     addRegionMarking(regions, flotOptions);
 
     let eventSectionHeight = 25;
@@ -138,47 +138,10 @@ export class EventManager {
       types: types,
     };
   }
-
-  buildRegions(events) {
-    let region_events = _.filter(events, event => {
-      return event.regionId;
-    });
-    let regions = _.groupBy(region_events, 'regionId');
-    regions = _.compact(_.map(regions, region_events => {
-      let region_obj;
-      if (region_events && region_events.length > 1) {
-        region_obj = region_events[0];
-        region_obj.timeEnd = region_events[1].min;
-        region_obj.isRegion = true;
-        return region_obj;
-      } else {
-        if (region_events && region_events.length) {
-          region_obj = region_events[0];
-
-          // Don't change proper region object
-          if (!region_obj.min || !region_obj.timeEnd) {
-            if (isStartOfRegion(region_obj)) {
-              region_obj.timeEnd = this.panelCtrl.range.to.valueOf() - 1;
-            } else {
-              // Start time = null
-              region_obj.timeEnd = region_obj.min;
-              region_obj.min = this.panelCtrl.range.from.valueOf() + 1;
-            }
-            region_obj.isRegion = true;
-          }
-          return region_obj;
-        }
-      }
-    }));
-
-    return regions;
-  }
 }
 
-function isStartOfRegion(event): boolean {
-  let annotationId = event.annotationId;
-  let regionId = event.regionId;
-  return annotationId && regionId && annotationId === regionId;
+function getRegions(events) {
+  return _.filter(events, 'isRegion');
 }
 
 function addRegionMarking(regions, flotOptions) {
@@ -205,7 +168,7 @@ function addRegionMarking(regions, flotOptions) {
   });
 }
 
-function addAlphaToRGB(rgb, alpha) {
+function addAlphaToRGB(rgb: string, alpha: number): string {
   let rgbPattern = /^rgb\(/;
   if (rgbPattern.test(rgb)) {
     return rgb.replace(')', `, ${alpha})`).replace('rgb', 'rgba');
@@ -214,7 +177,7 @@ function addAlphaToRGB(rgb, alpha) {
   }
 }
 
-function convertToRGB(hex) {
+function convertToRGB(hex: string): string {
   let hexPattern = /#([\da-fA-F]{2})([\da-fA-F]{2})([\da-fA-F]{2})/g;
   let match = hexPattern.exec(hex);
   if (match) {
@@ -223,6 +186,6 @@ function convertToRGB(hex) {
     });
     return 'rgb(' + rgb.join(',')  + ')';
   } else {
-    return null;
+    return "";
   }
 }

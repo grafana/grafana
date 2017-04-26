@@ -49,6 +49,7 @@ export class AnnotationsSrv {
       });
 
       annotations = dedupAnnotations(annotations);
+      annotations = makeRegions(annotations, options);
 
       // look for alert state for this panel
       var alertState = _.find(results[2], {panelId: options.panel.id});
@@ -158,6 +159,59 @@ export class AnnotationsSrv {
     }
     return results;
   }
+}
+
+/**
+ * This function converts annotation events into set
+ * of single events and regions (event consist of two)
+ * @param annotations
+ * @param options
+ */
+function makeRegions(annotations, options) {
+  let [regionEvents, singleEvents] = _.partition(annotations, 'regionId');
+  let regions = getRegions(regionEvents, options.range);
+  annotations = _.concat(regions, singleEvents);
+  return annotations;
+}
+
+function getRegions(events, range) {
+  let region_events = _.filter(events, event => {
+    return event.regionId;
+  });
+  let regions = _.groupBy(region_events, 'regionId');
+  regions = _.compact(_.map(regions, region_events => {
+    let region_obj = _.head(region_events);
+    if (region_events && region_events.length > 1) {
+      region_obj.timeEnd = region_events[1].min;
+      region_obj.isRegion = true;
+      return region_obj;
+    } else {
+      if (region_events && region_events.length) {
+        // Don't change proper region object
+        if (!region_obj.min || !region_obj.timeEnd) {
+          // This is cut region
+          if (isStartOfRegion(region_obj)) {
+            region_obj.timeEnd = range.to.valueOf() - 1;
+          } else {
+            // Start time = null
+            region_obj.timeEnd = region_obj.min;
+            region_obj.min = range.from.valueOf() + 1;
+          }
+          region_obj.isRegion = true;
+        }
+
+        return region_obj;
+      }
+    }
+  }));
+
+  return regions;
+}
+
+function isStartOfRegion(event): boolean {
+  let annotationId = event.annotationId;
+  let regionId = event.regionId;
+  return annotationId && regionId && annotationId === regionId;
 }
 
 function dedupAnnotations(annotations) {
