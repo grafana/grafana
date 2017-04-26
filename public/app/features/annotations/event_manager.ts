@@ -154,13 +154,18 @@ export class EventManager {
       } else {
         if (region_events && region_events.length) {
           region_obj = region_events[0];
-          if (isStartOfRegion(region_obj)) {
-            region_obj.timeEnd = this.panelCtrl.range.to.valueOf();
-          } else {
-            // Start time = null
-            region_obj.min = this.panelCtrl.range.from.valueOf();
+
+          // Don't change proper region object
+          if (!region_obj.min || !region_obj.timeEnd) {
+            if (isStartOfRegion(region_obj)) {
+              region_obj.timeEnd = this.panelCtrl.range.to.valueOf() - 1;
+            } else {
+              // Start time = null
+              region_obj.timeEnd = region_obj.min;
+              region_obj.min = this.panelCtrl.range.from.valueOf() + 1;
+            }
+            region_obj.isRegion = true;
           }
-          region_obj.isRegion = true;
           return region_obj;
         }
       }
