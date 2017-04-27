@@ -32,6 +32,11 @@ func TestSearch(t *testing.T) {
 			return nil
 		})
 
+		bus.AddHandler("test", func(query *m.GetSignedInUserQuery) error {
+			query.Result = &m.SignedInUser{IsGrafanaAdmin: true}
+			return nil
+		})
+
 		Convey("That is empty", func() {
 			err := searchHandler(&query)
 			So(err, ShouldBeNil)

@@ -48,7 +48,7 @@ type GetUserGroupMembersQuery struct {
 
 type UserGroupMemberDTO struct {
 	OrgId       int64  `json:"orgId"`
-	UserGroupId int64  `json:"orgId"`
+	UserGroupId int64  `json:"userGroupId"`
 	UserId      int64  `json:"userId"`
 	Email       string `json:"email"`
 	Login       string `json:"login"`

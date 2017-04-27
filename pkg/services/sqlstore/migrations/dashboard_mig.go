@@ -172,4 +172,8 @@ func addDashboardMigration(mg *Migrator) {
 	mg.AddMigration("add unique index dashboard_acl_dashboard_id_user_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[1]))
 	mg.AddMigration("add unique index dashboard_acl_dashboard_id_group_id", NewAddIndexMigration(dashboardAclV1, dashboardAclV1.Indices[2]))
 
+	// add column to flag if dashboard has an ACL
+	mg.AddMigration("Add column has_acl in dashboard", NewAddColumnMigration(dashboardV2, &Column{
+		Name: "has_acl", Type: DB_Bool, Nullable: false, Default: "0",
+	}))
 }
