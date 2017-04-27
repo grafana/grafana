@@ -16,10 +16,11 @@ func TestSearch(t *testing.T) {
 
 		bus.AddHandler("test", func(query *FindPersistedDashboardsQuery) error {
 			query.Result = HitList{
-				&Hit{Id: 16, Title: "CCAA", Tags: []string{"BB", "AA"}},
-				&Hit{Id: 10, Title: "AABB", Tags: []string{"CC", "AA"}},
-				&Hit{Id: 15, Title: "BBAA", Tags: []string{"EE", "AA", "BB"}},
-				&Hit{Id: 17, Title: "FOLDER", Dashboards: []Hit{
+				&Hit{Id: 16, Title: "CCAA", Type: "dash-db", Tags: []string{"BB", "AA"}},
+				&Hit{Id: 10, Title: "AABB", Type: "dash-db", Tags: []string{"CC", "AA"}},
+				&Hit{Id: 15, Title: "BBAA", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
+				&Hit{Id: 25, Title: "bbAAa", Type: "dash-db", Tags: []string{"EE", "AA", "BB"}},
+				&Hit{Id: 17, Title: "FOLDER", Type: "dash-folder", Dashboards: []Hit{
 					{Id: 18, Title: "ZZAA", Tags: []string{"ZZ"}},
 				}},
 			}
@@ -36,15 +37,17 @@ func TestSearch(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("should return sorted results", func() {
-				So(query.Result[0].Title, ShouldEqual, "AABB")
-				So(query.Result[1].Title, ShouldEqual, "BBAA")
-				So(query.Result[2].Title, ShouldEqual, "CCAA")
+				So(query.Result[0].Title, ShouldEqual, "FOLDER")
+				So(query.Result[1].Title, ShouldEqual, "AABB")
+				So(query.Result[2].Title, ShouldEqual, "BBAA")
+				So(query.Result[3].Title, ShouldEqual, "bbAAa")
+				So(query.Result[4].Title, ShouldEqual, "CCAA")
 			})
 
 			Convey("should return sorted tags", func() {
-				So(query.Result[1].Tags[0], ShouldEqual, "AA")
-				So(query.Result[1].Tags[1], ShouldEqual, "BB")
-				So(query.Result[1].Tags[2], ShouldEqual, "EE")
+				So(query.Result[3].Tags[0], ShouldEqual, "AA")
+				So(query.Result[3].Tags[1], ShouldEqual, "BB")
+				So(query.Result[3].Tags[2], ShouldEqual, "EE")
 			})
 		})
 
@@ -54,9 +57,9 @@ func TestSearch(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("should return correct results", func() {
-				So(len(query.Result), ShouldEqual, 2)
+				So(len(query.Result), ShouldEqual, 3)
 				So(query.Result[0].Title, ShouldEqual, "BBAA")
-				So(query.Result[1].Title, ShouldEqual, "CCAA")
+				So(query.Result[2].Title, ShouldEqual, "CCAA")
 			})
 
 		})
@@ -67,8 +70,8 @@ func TestSearch(t *testing.T) {
 			So(err, ShouldBeNil)
 
 			Convey("should return correct results", func() {
-				So(query.Result[3].Title, ShouldEqual, "FOLDER")
-				So(len(query.Result[3].Dashboards), ShouldEqual, 1)
+				So(query.Result[0].Title, ShouldEqual, "FOLDER")
+				So(len(query.Result[0].Dashboards), ShouldEqual, 1)
 			})
 
 		})

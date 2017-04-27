@@ -1,5 +1,7 @@
 package search
 
+import "strings"
+
 type HitType string
 
 const (
@@ -23,9 +25,19 @@ type Hit struct {
 
 type HitList []*Hit
 
-func (s HitList) Len() int           { return len(s) }
-func (s HitList) Swap(i, j int)      { s[i], s[j] = s[j], s[i] }
-func (s HitList) Less(i, j int) bool { return s[i].Title < s[j].Title }
+func (s HitList) Len() int      { return len(s) }
+func (s HitList) Swap(i, j int) { s[i], s[j] = s[j], s[i] }
+func (s HitList) Less(i, j int) bool {
+	if s[i].Type == "dash-folder" && s[j].Type == "dash-db" {
+		return true
+	}
+
+	if s[i].Type == "dash-db" && s[j].Type == "dash-folder" {
+		return false
+	}
+
+	return strings.ToLower(s[i].Title) < strings.ToLower(s[j].Title)
+}
 
 type Query struct {
 	Title        string
