@@ -11,6 +11,9 @@ DOCS_MOUNT := -v $(SOURCES_HOST_DIR):/site/content
 
 DOCKER_RUN_DOCS := docker run --rm -it $(DOCS_MOUNT) -e NOCACHE -p 3004:3004 -p 3005:3005
 
+VERSION = "root"
+
+$(info publishing $(VERSION))
 
 default: docs
 
@@ -24,10 +27,10 @@ docs-watch: docs-build
 	$(DOCKER_RUN_DOCS) $(DOCS_MOUNT) -e DOCKERHOST "$(DOCKER_DOCS_IMAGE)" /bin/bash -c "grunt --env=dev-docs && grunt connect --port=3004 & grunt watch --port=3004 --env=dev-docs"
 
 publish: docs-build
-	$(DOCKER_RUN_DOCS) $(DOCS_MOUNT) -e DOCKERHOST "$(DOCKER_DOCS_IMAGE)" /bin/bash -c "./publish.sh staging-docs root"
+	$(DOCKER_RUN_DOCS) $(DOCS_MOUNT) -e DOCKERHOST "$(DOCKER_DOCS_IMAGE)" /bin/bash -c "./publish.sh staging-docs ${VERSION}"
 
 publish-prod: docs-build
-	$(DOCKER_RUN_DOCS) $(DOCS_MOUNT) -e DOCKERHOST "$(DOCKER_DOCS_IMAGE)" /bin/bash -c "./publish.sh prod-docs root"
+	$(DOCKER_RUN_DOCS) $(DOCS_MOUNT) -e DOCKERHOST "$(DOCKER_DOCS_IMAGE)" /bin/bash -c "./publish.sh prod-docs ${VERSION}"
 
 docs-build:
 	docker build -t "$(DOCKER_DOCS_IMAGE)" --no-cache .
