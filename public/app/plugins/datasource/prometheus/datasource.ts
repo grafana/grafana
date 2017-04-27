@@ -7,6 +7,7 @@ import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 import * as dateMath from 'app/core/utils/datemath';
 import PrometheusMetricFindQuery from './metric_find_query';
+import TableModel from 'app/core/table_model';
 
 var durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
@@ -20,7 +21,6 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
   this.directUrl = instanceSettings.directUrl;
   this.basicAuth = instanceSettings.basicAuth;
   this.withCredentials = instanceSettings.withCredentials;
-  this.lastErrors = {};
 
   this._request = function(method, url, requestId) {
     var options: any = {
@@ -74,7 +74,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
     options = _.clone(options);
 
-    _.each(options.targets, target => {
+    for (let target of options.targets) {
       if (!target.expr || target.hide) {
         return;
       }
@@ -91,31 +91,33 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       var range = Math.ceil(end - start);
       target.step = query.step = this.adjustStep(query.step, this.intervalSeconds(options.interval), range);
       queries.push(query);
-    });
+    }
 
     // No valid targets, return the empty result to save a round trip.
     if (_.isEmpty(queries)) {
-      var d = $q.defer();
-      d.resolve({ data: [] });
-      return d.promise;
+      return $q.when({ data: [] });
     }
 
     var allQueryPromise = _.map(queries, query => {
       return this.performTimeSeriesQuery(query, start, end);
     });
 
-    return $q.all(allQueryPromise).then(function(allResponse) {
+    return $q.all(allQueryPromise).then(responseList => {
       var result = [];
+      var index = 0;
 
-      _.each(allResponse, function(response, index) {
+      _.each(responseList, (response, index) => {
         if (response.status === 'error') {
-          self.lastErrors.query = response.error;
           throw response.error;
         }
-        delete self.lastErrors.query;
-        _.each(response.data.data.result, function(metricData) {
-          result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
-        });
+
+        if (activeTargets[index].format === "table") {
+          result.push(self.transformMetricDataToTable(response.data.data.result));
+        } else {
+          for (let metricData of response.data.data.result) {
+            result.push(self.transformMetricData(metricData, activeTargets[index], start, end));
+          }
+        }
       });
 
       return { data: result };
@@ -271,6 +273,44 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
     }
 
     return { target: metricLabel, datapoints: dps };
+  };
+
+  this.transformMetricDataToTable = function(series) {
+    var table = new TableModel();
+    var self = this;
+    var i, j;
+
+    if (series.length === 0) {
+      return table;
+    }
+
+    _.each(series, function(series, seriesIndex) {
+      if (seriesIndex === 0) {
+        table.columns.push({text: 'Time', type: 'time'});
+        _.each(_.keys(series.metric), function(key) {
+          table.columns.push({text: key});
+        });
+        table.columns.push({text: 'Value'});
+      }
+
+      if (series.values) {
+        for (i = 0; i < series.values.length; i++) {
+          var values = series.values[i];
+          var reordered = [values[0] * 1000];
+          if (series.metric) {
+            for (var key in series.metric) {
+              if (series.metric.hasOwnProperty(key)) {
+                reordered.push(series.metric[key]);
+              }
+            }
+          }
+          reordered.push(parseFloat(values[1]));
+          table.rows.push(reordered);
+        }
+      }
+    });
+
+    return table;
   };
 
   this.createMetricLabel = function(labelData, options) {

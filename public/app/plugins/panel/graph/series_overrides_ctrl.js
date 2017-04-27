@@ -100,6 +100,7 @@ define([
     $scope.addOverrideOption('Null point mode', 'nullPointMode', ['connected', 'null', 'null as zero']);
     $scope.addOverrideOption('Fill below to', 'fillBelowTo', $scope.getSeriesNames());
     $scope.addOverrideOption('Staircase line', 'steppedLine', [true, false]);
+    $scope.addOverrideOption('Dashes', 'dashes', [true, false]);
     $scope.addOverrideOption('Points', 'points', [true, false]);
     $scope.addOverrideOption('Points Radius', 'pointradius', [1,2,3,4,5]);
     $scope.addOverrideOption('Stack', 'stack', [true, false, 'A', 'B', 'C', 'D']);

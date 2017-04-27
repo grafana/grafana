@@ -2,6 +2,7 @@
 title = "Graph Panel"
 keywords = ["grafana", "graph panel", "documentation", "guide", "graph"]
 type = "docs"
+aliases = ["/reference/graph/"]
 [menu.docs]
 name = "Graph"
 parent = "panels"
@@ -18,7 +19,8 @@ Clicking the title for a panel exposes a menu.  The `edit` option opens addition
 options for the panel.
 
 ## General
-![](/img/docs/v2/graph_general.png)
+
+![](/img/docs/v43/graph_general.png)
 
 The general tab allows customization of a panel's appearance and menu options.
 
@@ -31,14 +33,14 @@ The general tab allows customization of a panel's appearance and menu options.
 ### Drilldown / detail link
 
 The drilldown section allows adding dynamic links to the panel that can link to other dashboards
-or URLs
+or URLs.
 
 Each link has a title, a type and params.  A link can be either a ``dashboard`` or ``absolute`` links.
-If it is a dashboard links, the `dashboard` value must be the name of a dashboard.  If it's an
-`absolute` link, the URL is the URL to link.
+If it is a dashboard link, the `dashboard` value must be the name of a dashboard.  If it is an
+`absolute` link, the URL is the URL to the link.
 
 ``params`` allows adding additional URL params to the links.  The format is the ``name=value`` with
-multiple params separate by ``&``.  Template variables can be added as values using ``$myvar``.
+multiple params separated by ``&``.  Template variables can be added as values using ``$myvar``.
 
 When linking to another dashboard that uses template variables, you can use ``var-myvar=value`` to
 populate the template variable to a desired value from the link.
@@ -50,7 +52,7 @@ options.
 
 ## Axes & Grid
 
-![](/img/docs/v2/graph_axes_grid_options.png)
+![](/img/docs/v43/graph_axes_grid_options.png)
 
 The Axes & Grid tab controls the display of axes, grids and legend.
 
@@ -74,7 +76,6 @@ values can be hidden from the legend using the ``Hide empty`` checkbox.
 ### Legend Values
 
 Additional values can be shown along-side the legend names:
-
 - ``Total`` - Sum of all values returned from metric query
 - ``Current`` - Last value returned from the metric query
 - ``Min`` - Minimum of all values returned from metric query
@@ -83,16 +84,16 @@ Additional values can be shown along-side the legend names:
 - ``Decimals`` - Controls how many decimals are displayed for legend values (and graph hover tooltips)
 
 The legend values are calculated client side by Grafana and depend on what type of
-aggregation or point consolidation you metric query is using. All the above legend values cannot
+aggregation or point consolidation your metric query is using. All the above legend values cannot
 be correct at the same time. For example if you plot a rate like requests/second, this is probably
 using average as aggregator, then the Total in the legend will not represent the total number of requests.
 It is just the sum of all data points received by Grafana.
 
 ## Display styles
 
-![](/img/docs/v2/graph_display_styles.png)
+![](/img/docs/v43/graph_display_styles.png)
 
-Display styles controls properties of the graph.
+Display styles control visual properties of the graph.
 
 ### Thresholds
 
@@ -108,19 +109,19 @@ the graph crosses a particular threshold.
 
 ### Line Options
 
-- ``Line Fill`` - Amount of color fill for a series.  0 is none.
+- ``Line Fill`` - Amount of color fill for a series. 0 is none.
 - ``Line Width`` - The width of the line for a series.
 - ``Null point mode`` - How null values are displayed
 - ``Staircase line`` - Draws adjacent points as staircase
 
 ### Multiple Series
 
-If there are multiple series, they can be display as a group.
+If there are multiple series, they can be displayed as a group.
 
 - ``Stack`` - Each series is stacked on top of another
-- ``Percent`` - Each series is draw as a percent of the total of all series
+- ``Percent`` - Each series is drawn as a percentage of the total of all series
 
-If you have stack enabled you can select what the mouse hover feature should show.
+If you have stack enabled, you can select what the mouse hover feature should show.
 
 - Cumulative - Sum of series below plus the series you hover over
 - Individual - Just the value for the series you hover over
@@ -134,11 +135,15 @@ If you have stack enabled you can select what the mouse hover feature should sho
 
 - ``All series`` - Show all series on the same tooltip and a x crosshairs to help follow all series
 
-### Series specific overrides
+### Series Specific Overrides
 
-The section allows a series to be render different from the rest.  For example, one series can be given
-a thicker line width to make it standout.
+The section allows a series to be rendered differently from the others. For example, one series can be given
+a thicker line width to make it stand out.
 
-## Time range
+#### Dashes Drawing Style
+
+There is an option under Series overrides to draw lines as dashes. Set Dashes to the value True to override the line draw setting for a specific series.
+
+## Time Range
 
 ![](/img/docs/v2/graph_time_range.png)

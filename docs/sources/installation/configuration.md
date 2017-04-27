@@ -313,7 +313,6 @@ example:
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
     api_url = https://api.github.com/user
-    allow_sign_up = false
     team_ids =
     allowed_organizations =
 
@@ -643,6 +642,9 @@ Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 ### url
 Url to where Grafana will send PUT request with images
+
+### public_url
+Optional parameter. Url to send to users in notifications, directly appended with the resulting uploaded file name.
 
 ### username
 basic auth username

@@ -64,9 +64,9 @@ func GetSrcPath(importPath string) (appPath string, err error) {
 // it returns error when the variable does not exist.
 func HomeDir() (home string, err error) {
 	if runtime.GOOS == "windows" {
-		home = os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH")
-		if home == "" {
-			home = os.Getenv("USERPROFILE")
+		home = os.Getenv("USERPROFILE")
+		if len(home) == 0 {
+			home = os.Getenv("HOMEDRIVE") + os.Getenv("HOMEPATH")
 		}
 	} else {
 		home = os.Getenv("HOME")

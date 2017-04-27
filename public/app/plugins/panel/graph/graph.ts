@@ -7,6 +7,7 @@ import 'jquery.flot.stack';
 import 'jquery.flot.stackpercent';
 import 'jquery.flot.fillbelow';
 import 'jquery.flot.crosshair';
+import 'jquery.flot.dashes';
 import './jquery.flot.events';
 
 import $ from 'jquery';
@@ -215,6 +216,9 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         // give space to alert editing
         thresholdManager.prepare(elem, data);
 
+        // un-check dashes if lines are unchecked
+        panel.dashes = panel.lines ? panel.dashes : false;
+
         var stack = panel.stack ? true : null;
 
         // Populate element
@@ -231,8 +235,13 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
               show: panel.lines,
               zero: false,
               fill: translateFillOption(panel.fill),
-              lineWidth: panel.linewidth,
+              lineWidth: panel.dashes ? 0 : panel.linewidth,
               steps: panel.steppedLine
+            },
+            dashes: {
+              show: panel.dashes,
+              lineWidth: panel.linewidth,
+              dashLength: [panel.dashLength, panel.spaceLength]
             },
             bars: {
               show: panel.bars,

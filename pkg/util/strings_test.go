@@ -13,3 +13,14 @@ func TestStringsUtil(t *testing.T) {
 		So(StringsFallback3("", "", "3"), ShouldEqual, "3")
 	})
 }
+
+func TestSplitString(t *testing.T) {
+	Convey("Splits strings correctly", t, func() {
+		So(SplitString(""), ShouldResemble, []string{})
+		So(SplitString("test"), ShouldResemble, []string{"test"})
+		So(SplitString("test1 test2 test3"), ShouldResemble, []string{"test1", "test2", "test3"})
+		So(SplitString("test1,test2,test3"), ShouldResemble, []string{"test1", "test2", "test3"})
+		So(SplitString("test1, test2, test3"), ShouldResemble, []string{"test1", "test2", "test3"})
+		So(SplitString("test1 , test2 test3"), ShouldResemble, []string{"test1", "test2", "test3"})
+	})
+}

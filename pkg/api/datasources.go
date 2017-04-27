@@ -20,7 +20,7 @@ func GetDataSources(c *middleware.Context) Response {
 
 	result := make(dtos.DataSourceList, 0)
 	for _, ds := range query.Result {
-		dsItem := dtos.DataSource{
+		dsItem := dtos.DataSourceListItemDTO{
 			Id:        ds.Id,
 			OrgId:     ds.OrgId,
 			Name:      ds.Name,

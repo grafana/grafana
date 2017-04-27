@@ -74,7 +74,12 @@ func UpdatePluginSetting(cmd *m.UpdatePluginSettingCmd) error {
 			return err
 		} else {
 			for key, data := range cmd.SecureJsonData {
-				pluginSetting.SecureJsonData[key] = util.Encrypt([]byte(data), setting.SecretKey)
+				encryptedData, err := util.Encrypt([]byte(data), setting.SecretKey)
+				if err != nil {
+					return err
+				}
+
+				pluginSetting.SecureJsonData[key] = encryptedData
 			}
 
 			// add state change event on commit success

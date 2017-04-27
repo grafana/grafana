@@ -144,6 +144,13 @@ export class AnnotationsSrv {
   }
 
   translateQueryResult(annotation, results) {
+    // if annotation has snapshotData
+    // make clone and remove it
+    if (annotation.snapshotData) {
+      annotation = angular.copy(annotation);
+      delete annotation.snapshotData;
+    }
+
     for (var item of results) {
       item.source = annotation;
       item.min = item.time;
