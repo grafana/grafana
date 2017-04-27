@@ -85,7 +85,7 @@ export default class InfluxDatasource {
     // replace templated variables
     allQueries = this.templateSrv.replace(allQueries, scopedVars);
 
-    return this._seriesQuery(allQueries, options).then((data): any => {
+    return this._seriesQuery(allQueries, targets[0]).then((data): any => {
       if (!data || !data.results) {
         return [];
       }
