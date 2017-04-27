@@ -22,6 +22,8 @@ func init() {
 	bus.AddHandler("sql", GetAlertStatesForDashboard)
 	bus.AddHandler("sql", PauseAlert)
 	bus.AddHandler("sql", PauseAllAlerts)
+	bus.AddHandler("sql", SetAlertEvalDate)
+	bus.AddHandler("sql", GetMissingAlerts)
 }
 
 func GetAlertById(query *m.GetAlertByIdQuery) error {
