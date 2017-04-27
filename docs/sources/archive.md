@@ -13,5 +13,6 @@ Here you can find links to older versions of the documentation that might be bet
 of Grafana.
 
 - [Latest](http://docs.grafana.org)
+- [Version 4.2](http://docs.grafana.org/v4.2)
 - [Version 3.1](http://docs.grafana.org/v3.1)
 - [Version 3.0](http://docs.grafana.org/v3.0)
