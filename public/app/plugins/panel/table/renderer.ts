@@ -24,7 +24,7 @@ export class TableRenderer {
     return _.first(style.colors);
   }
 
-  defaultCellFormater(v, style) {
+  defaultCellFormatter(v, style) {
     if (v === null || v === void 0 || v === undefined) {
       return '';
     }
@@ -40,18 +40,18 @@ export class TableRenderer {
     }
   }
 
-  createColumnFormater(style, column) {
-    if (!style) {
-      return this.defaultCellFormater;
+  createColumnFormatter(column) {
+    if (!column.style) {
+      return this.defaultCellFormatter;
     }
 
-    if (style.type === 'hidden') {
+    if (column.style.type === 'hidden') {
       return v => {
         return undefined;
       };
     }
 
-    if (style.type === 'date') {
+    if (column.style.type === 'date') {
       return v => {
         if (v === undefined || v === null) {
           return '-';
@@ -62,12 +62,12 @@ export class TableRenderer {
         if (this.isUtc) {
           date = date.utc();
         }
-        return date.format(style.dateFormat);
+        return date.format(column.style.dateFormat);
       };
     }
 
-    if (style.type === 'number') {
-      let valueFormater = kbn.valueFormats[column.unit || style.unit];
+    if (column.style.type === 'number') {
+      let valueFormatter = kbn.valueFormats[column.unit || column.style.unit];
 
       return v =>  {
         if (v === null || v === void 0) {
@@ -75,38 +75,44 @@ export class TableRenderer {
         }
 
         if (_.isString(v)) {
-          return this.defaultCellFormater(v, style);
+          return this.defaultCellFormatter(v, column.style);
         }
 
-        if (style.colorMode) {
-          this.colorState[style.colorMode] = this.getColorForValue(v, style);
+        if (column.style.colorMode) {
+          this.colorState[column.style.colorMode] = this.getColorForValue(v, column.style);
         }
 
-        return valueFormater(v, style.decimals, null);
+        return valueFormatter(v, column.style.decimals, null);
       };
     }
 
     return (value) => {
-      return this.defaultCellFormater(value, style);
+      return this.defaultCellFormatter(value, column.style);
     };
   }
 
   formatColumnValue(colIndex, value) {
-    if (this.formaters[colIndex]) {
-      return this.formaters[colIndex](value);
-    }
-
-    for (let i = 0; i < this.panel.styles.length; i++) {
-      let style = this.panel.styles[i];
+    if (!this.formaters[colIndex]) {
       let column = this.table.columns[colIndex];
-      var regex = kbn.stringToJsRegex(style.pattern);
-      if (column.text.match(regex)) {
-        this.formaters[colIndex] = this.createColumnFormater(style, column);
-        return this.formaters[colIndex](value);
+
+      if (!column.style) {
+        for (let i = 0; i < this.panel.styles.length; i++) {
+          let style = this.panel.styles[i];
+          var regex = kbn.stringToJsRegex(style.pattern);
+          const matches = column.text.match(regex);
+          if (matches) {
+            column.style = style;
+            if (style.alias) {
+              column.title = column.text.replace(regex, style.alias);
+            }
+            break;
+          }
+        }
       }
+
+      this.formaters[colIndex] = this.createColumnFormatter(column);
     }
 
-    this.formaters[colIndex] = this.defaultCellFormater;
     return this.formaters[colIndex](value);
   }
 

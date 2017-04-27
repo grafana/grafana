@@ -9,6 +9,7 @@ import {MetricsPanelCtrl} from 'app/plugins/sdk';
 import {transformDataToTable} from './transformers';
 import {tablePanelEditor} from './editor';
 import {TableRenderer} from './renderer';
+import kbn from 'app/core/utils/kbn';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
@@ -26,11 +27,13 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       {
         type: 'date',
         pattern: 'Time',
+        alias: 'Time',
         dateFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       {
         unit: 'short',
         type: 'number',
+        alias: '',
         decimals: 2,
         colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
         colorMode: null,
@@ -118,6 +121,24 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   render() {
     this.table = transformDataToTable(this.dataRaw, this.panel);
     this.table.sort(this.panel.sort);
+
+    for (let colIndex = 0; colIndex < this.table.columns.length; colIndex++) {
+      let column = this.table.columns[colIndex];
+
+      for (let i = 0; i < this.panel.styles.length; i++) {
+        let style = this.panel.styles[i];
+        var regex = kbn.stringToJsRegex(style.pattern);
+        const matches = column.text.match(regex);
+        if (matches) {
+          column.style = style;
+          if (style.alias) {
+            column.title = column.text.replace(regex, style.alias);
+          }
+          break;
+        }
+      }
+    }
+
     return super.render(this.table);
   }
 

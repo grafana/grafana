@@ -67,20 +67,38 @@
 						<select class="gf-form-input" ng-model="style.type" ng-options="c.value as c.text for c in editor.columnTypes" ng-change="editor.render()"></select>
 					</div>
 				</div>
-				<div class="gf-form" ng-if="style.type === 'date'">
-					<label class="gf-form-label">Format</label>
-					<metric-segment-model property="style.dateFormat" options="editor.dateFormats" on-change="editor.render()" custom="true"></metric-segment-model>
+				<div class="gf-form" ng-if="style.type !== 'hidden'">
+					<label class="gf-form-label">Title</label>
+					<input type="text" class="gf-form-input" ng-model="style.alias" ng-change="editor.render()" ng-model-onblur>
 				</div>
-				<gf-form-switch class="gf-form" label-class="width-8" ng-if="style.type === 'string'" label="Sanitize HTML" checked="style.sanitize" change="editor.render()"></gf-form-switch>
 				<div class="gf-form gf-form--grow">
 					<div class="gf-form-label gf-form-label--grow"></div>
 				</div>
 				<div class="gf-form">
-				  <label class="gf-form-label">
-				    <a class="pointer" ng-click="editor.removeColumnStyle(style)">
-				      <i class="fa fa-trash"></i>
-				    </a>
-				  </label>
+					<label class="gf-form-label">
+						<a class="pointer" ng-click="editor.removeColumnStyle(style)">
+							<i class="fa fa-trash"></i>
+						</a>
+					</label>
+				</div>
+			</div>
+
+			<div class="gf-form-inline" ng-if="style.type === 'date'">
+				<div class="gf-form offset-width-8">
+					<label class="gf-form-label width-8">Format</label>
+				</div>
+				<div class="gf-form">
+					<metric-segment-model property="style.dateFormat" options="editor.dateFormats" on-change="editor.render()" custom="true"></metric-segment-model>
+				</div>
+				<div class="gf-form gf-form--grow">
+					<div class="gf-form-label gf-form-label--grow"></div>
+				</div>
+			</div>
+
+			<div class="gf-form-inline" ng-if="style.type === 'string'">
+				<gf-form-switch class="gf-form offset-width-8" label-class="width-8" ng-if="style.type === 'string'" label="Sanitize HTML" checked="style.sanitize" change="editor.render()"></gf-form-switch>
+				<div class="gf-form gf-form--grow">
+					<div class="gf-form-label gf-form-label--grow"></div>
 				</div>
 			</div>
 
@@ -94,41 +112,41 @@
 				<div class="gf-form">
 					<label class="gf-form-label">Decimals</label>
 					<input type="number" class="gf-form-input width-4" data-placement="right" ng-model="style.decimals" ng-change="editor.render()" ng-model-onblur>
-        </div>
+				</div>
 				<div class="gf-form">
-          <label class="gf-form-label">Coloring</label>
-          <div class="gf-form-select-wrapper">
-            <select class="gf-form-input" ng-model="style.colorMode" ng-options="c.value as c.text for c in editor.colorModes" ng-change="editor.render()"></select>
-          </div>
-        </div>
-        <div class="gf-form gf-form--grow">
-          <div class="gf-form-label gf-form-label--grow"></div>
-        </div>
-      </div>
+					<label class="gf-form-label">Coloring</label>
+					<div class="gf-form-select-wrapper">
+						<select class="gf-form-input" ng-model="style.colorMode" ng-options="c.value as c.text for c in editor.colorModes" ng-change="editor.render()"></select>
+					</div>
+				</div>
+				<div class="gf-form gf-form--grow">
+					<div class="gf-form-label gf-form-label--grow"></div>
+				</div>
+			</div>
 
-      <div class="gf-form-inline" ng-if="style.type === 'number'">
-        <div class="gf-form offset-width-8">
-          <label class="gf-form-label width-8">Thresholds<tip>Comma separated values</tip></label>
-          <input type="text" class="gf-form-input width-10" ng-model="style.thresholds" placeholder="50,80" ng-blur="editor.render()" array-join ng-model-onblur>
-        </div>
-        <div class="gf-form">
-          <label class="gf-form-label width-5">Colors</label>
-          <span class="gf-form-label">
-            <spectrum-picker ng-model="style.colors[0]" ng-change="editor.render()"></spectrum-picker>
-          </span>
-          <span class="gf-form-label">
-            <spectrum-picker ng-model="style.colors[1]" ng-change="editor.render()"></spectrum-picker>
-          </span>
-          <span class="gf-form-label">
-            <spectrum-picker ng-model="style.colors[2]" ng-change="editor.render()"></spectrum-picker>
-          </span>
-        </div>
-        <div class="gf-form gf-form--grow">
-          <div class="gf-form-label gf-form-label--grow">
-            <a class="pointer" ng-click="editor.invertColorOrder($index)">Invert</a>
-          </div>
-        </div>
-      </div>
+			<div class="gf-form-inline" ng-if="style.type === 'number'">
+				<div class="gf-form offset-width-8">
+					<label class="gf-form-label width-8">Thresholds<tip>Comma separated values</tip></label>
+					<input type="text" class="gf-form-input width-10" ng-model="style.thresholds" placeholder="50,80" ng-blur="editor.render()" array-join ng-model-onblur>
+				</div>
+				<div class="gf-form">
+					<label class="gf-form-label width-5">Colors</label>
+					<span class="gf-form-label">
+						<spectrum-picker ng-model="style.colors[0]" ng-change="editor.render()"></spectrum-picker>
+					</span>
+					<span class="gf-form-label">
+						<spectrum-picker ng-model="style.colors[1]" ng-change="editor.render()"></spectrum-picker>
+					</span>
+					<span class="gf-form-label">
+						<spectrum-picker ng-model="style.colors[2]" ng-change="editor.render()"></spectrum-picker>
+					</span>
+				</div>
+				<div class="gf-form gf-form--grow">
+					<div class="gf-form-label gf-form-label--grow">
+						<a class="pointer" ng-click="editor.invertColorOrder($index)">Invert</a>
+					</div>
+				</div>
+			</div>
 
     </div>
   </div>
