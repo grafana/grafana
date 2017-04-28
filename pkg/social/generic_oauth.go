@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -76,9 +77,11 @@ func (s *GenericOAuth) IsOrganizationMember(client *http.Client) bool {
 
 func (s *GenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
 	type Record struct {
-		Email    string `json:"email"`
-		Primary  bool   `json:"primary"`
-		Verified bool   `json:"verified"`
+		Email       string `json:"email"`
+		Primary     bool   `json:"primary"`
+		IsPrimary   bool   `json:"is_primary"`
+		Verified    bool   `json:"verified"`
+		IsConfirmed bool   `json:"is_confirmed"`
 	}
 
 	emailsUrl := fmt.Sprintf(s.apiUrl + "/emails")
@@ -91,14 +94,30 @@ func (s *GenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
 
 	var records []Record
 
-	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
+	body, err := ioutil.ReadAll(r.Body)
+	if err != nil {
 		return "", err
+	}
+
+	err = json.Unmarshal(body, records)
+	if err != nil {
+		var data struct {
+			Values []Record `json:"values"`
+		}
+
+		err = json.Unmarshal(body, &data)
+		if err != nil {
+			return "", err
+		}
+
+		records = data.Values
 	}
 
 	var email = ""
 	for _, record := range records {
-		if record.Primary {
+		if record.Primary || record.IsPrimary {
 			email = record.Email
+			break
 		}
 	}
 
@@ -161,11 +180,12 @@ func (s *GenericOAuth) FetchOrganizations(client *http.Client) ([]string, error)
 
 func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	var data struct {
-		Name       string              `json:"name"`
-		Login      string              `json:"login"`
-		Username   string              `json:"username"`
-		Email      string              `json:"email"`
-		Attributes map[string][]string `json:"attributes"`
+		Name        string              `json:"name"`
+		DisplayName string              `json:"display_name"`
+		Login       string              `json:"login"`
+		Username    string              `json:"username"`
+		Email       string              `json:"email"`
+		Attributes  map[string][]string `json:"attributes"`
 	}
 
 	var err error
@@ -195,6 +215,10 @@ func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 		if err != nil {
 			return nil, err
 		}
+	}
+
+	if userInfo.Name == "" && data.DisplayName != "" {
+		userInfo.Name = data.DisplayName
 	}
 
 	if userInfo.Login == "" && data.Username != "" {
