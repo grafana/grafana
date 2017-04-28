@@ -15,7 +15,7 @@ weight = 10
 We recommend everyone to upgrade Grafana often to stay up to date with the latest fixes and enhancements.
 In order make this a reality Grafana upgrades are backward compatible and the upgrade process is simple & quick.
 
-Upgrading is generally always safe (between many minor and one major version) and dashboards and graphs will look the same. There can be minor breaking changes in some edge cases which are usually outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog]https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
+Upgrading is generally always safe (between many minor and one major version) and dashboards and graphs will look the same. There can be minor breaking changes in some edge cases which are usually outlined in the [Release Notes](https://community.grafana.com/c/releases) and [Changelog](https://github.com/grafana/grafana/blob/master/CHANGELOG.md)
 
 ## Database Backup
 
@@ -30,12 +30,21 @@ installed grafana to custom location using a binary tar/zip it is usally in `<gr
 #### mysql
 
 ```
-mysqldump -u root -p[root_password] [grafana] > grafana_backup.sql
+backup:
+> mysqldump -u root -p[root_password] [grafana] > grafana_backup.sql
+
+restore:
+> mysql -u root -p grafana < grafana_backup.sql
 ```
 
 #### postgres
+
 ```
-pg_dump grafana > grafana_backup
+backup:
+> pg_dump grafana > grafana_backup
+
+restore:
+> psql grafana < grafana_backup
 ```
 
 ### Ubuntu / Debian
