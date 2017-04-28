@@ -30,7 +30,10 @@ where (
 
 	query.Result = make([]int64, 0)
 	for _, dash := range res {
-		id, _ := strconv.ParseInt(string(dash["DashboardId"]), 10, 64)
+		id, err := strconv.ParseInt(string(dash["DashboardId"]), 10, 64)
+		if err != nil {
+			return err
+		}
 		query.Result = append(query.Result, id)
 	}
 
