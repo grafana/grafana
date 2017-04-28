@@ -343,16 +343,27 @@ func GetAlertStatesForDashboard(query *m.GetAlertStatesForDashboardQuery) error 
 	return err
 }
 
-func GetMissingAlerts(query *m.GetMissingAlertsQuery, sess *xorm.Session) error {
+func GetMissingAlerts(query *m.GetMissingAlertsQuery) error {
 
 	//Get current timestamp
-	results, err := sess.Query("select " + dialect.CurrentTimeToRoundMinSql() + " as ts ")
+	var ts int64 = -1
+	err := inTransaction(func(sess *xorm.Session) error {
+		results, err := sess.Query("select " + dialect.CurrentTimeToRoundMinSql() + " as ts ")
+		if err != nil {
+			sqlog.Error("Failed to get timestamp", "error", err)
+			return err
+		}
+		ts, err = strconv.ParseInt(string(results[0]["ts"]), 10, 64)
+		if err != nil {
+			sqlog.Error("Failed to get timestamp", "error", err)
+			return err
+		}
+		return nil
+	})
 	if err != nil {
-		sqlog.Error("Failed to get timestamp", "error", err)
+		sqlog.Error("Transaction failed", "error", err)
 		return err
 	}
-	var ts int64 = -1
-	ts, err = strconv.ParseInt(string(results[0]["ts"]), 10, 64)
 
 	//Get all alerts
 	cmd := &m.GetAllAlertsQuery{}
