@@ -229,6 +229,10 @@ Used for signing keep me logged in / remember me cookies.
 Set to `true` to disable the use of Gravatar for user profile images.
 Default is `false`.
 
+### data_source_proxy_whitelist
+
+Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces
+
 <hr />
 
 ## [users]
