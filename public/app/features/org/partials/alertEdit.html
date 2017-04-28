@@ -13,7 +13,7 @@
     <h2 ng-show="!isNew">修改报警规则</h2>
 
     <div class="main-view-container preview-panel">
-        <select class="pull-right" style="margin-top: 10px;margin-bottom: -10px; width: 100px;"
+        <select class="pull-right" style="margin-top: 10px;margin-bottom: -10px; margin-right: 70px; width: 100px;"
                       ng-change="setTimeRange()"
                       ng-model="timeSelected"
                       ng-options="f.id as f.txt for f in timeRange">
@@ -66,7 +66,7 @@
         </div>
         <div class="tidy-form-box pull-left">
           <ul class="tidy-form-list">
-            <li class="tidy-form-item"><h4>报警名称</h4>/li>
+            <li class="tidy-form-item"><h4>报警名称</h4></li>
             <li><input type="text" class="input-xlarge tidy-form-input last"
                             ng-model="alertDef.name" placeholder="报警规则名称" required>
             </li>
