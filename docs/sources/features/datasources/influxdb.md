@@ -121,12 +121,18 @@ SHOW TAG VALUES WITH KEY = "hostname"  WHERE region =~ /$region/
 ![](/img/docs/influxdb/templating_simple_ex1.png)
 
 ## Annotations
-Annotations allows you to overlay rich event information on top of graphs.
+
+[Annotations]({{< relref "reference/Annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+queries via the Dashboard menu / Annotations view.
 
 An example query:
 
 ```SQL
 SELECT title, description from events WHERE $timeFilter order asc
 ```
+
+For InfluxDB you need to enter a query like in the above example. You need to have the ```where $timeFilter```
+part. If you only select one column you will not need to enter anything in the column mapping fields. The
+Tags field can be a comma seperated string.
 
 
