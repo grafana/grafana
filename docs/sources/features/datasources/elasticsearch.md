@@ -92,7 +92,7 @@ The Elasticsearch datasource supports two types of queries you can use to fill t
 <br>
 ## Annotations
 
-[Annotations]({{< relref "reference/Annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view. Grafana can query any Elasticsearch index
 for annotation events.
 

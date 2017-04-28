@@ -84,7 +84,7 @@ Which means you have to use `=~` instead of `=` in your Prometheus queries. For 
 
 ## Annotations
 
-[Annotations]({{< relref "reference/Annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
 queries via the Dashboard menu / Annotations view.
 
 Prometheus supports two ways to query annotations.
