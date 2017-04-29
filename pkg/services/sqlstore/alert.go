@@ -10,6 +10,7 @@ import (
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	s "github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -376,11 +377,20 @@ func GetMissingAlerts(query *m.GetMissingAlertsQuery) error {
 	var evalTime int64
 	var frequency int64
 	missedAlerts := make([]*m.Alert, 0)
+	missingAlertCount := 0
 	for _, alert := range cmd.Result {
-		evalTime = alert.EvalDate.Unix()
-		frequency = alert.Frequency
-		if evalTime < ts-frequency && evalTime >= ts-2*frequency {
-			missedAlerts = append(missedAlerts, alert)
+		if missingAlertCount <= s.MaxMissingAlertCount { //Max no of missing alerts processed = MaxMissingAlertCount
+			evalTime = alert.EvalDate.Unix()
+			frequency = alert.Frequency
+			lowerbound := frequency * 2
+			if lowerbound < s.MaxAlertEvalTimeLimitInSeconds && //backward eval time should not not less than MaxAlertEvalTimeLimitInSeconds
+				evalTime < ts-frequency &&
+				evalTime >= ts-lowerbound {
+				missedAlerts = append(missedAlerts, alert)
+				missingAlertCount++
+			}
+		} else {
+			break
 		}
 	}
 	query.Result = missedAlerts
