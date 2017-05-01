@@ -13,6 +13,7 @@ func addActiveNodeMigration(mg *Migrator) {
 			{Name: "heartbeat", Type: DB_BigInt, Nullable: false},
 			{Name: "partition_no", Type: DB_Int, Nullable: false},
 			{Name: "alert_run_type", Type: DB_Varchar, Length: 50, Nullable: false},
+			{Name: "alert_status", Type: DB_Varchar, Length: 50, Nullable: false},
 		},
 		Indices: []*Index{
 			{Cols: []string{"node_id", "heartbeat"}, Type: UniqueIndex},

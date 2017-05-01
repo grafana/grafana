@@ -11,13 +11,14 @@ import (
 )
 
 var (
-	insertHeartbeatSQL = "insert into active_node(node_id, heartbeat, partition_no, alert_run_type) values(?, ?, (select count(partition_no) from active_node where heartbeat = ?) + 1, ?)"
+	insertHeartbeatSQL = "insert into active_node(node_id, heartbeat, partition_no, alert_run_type, alert_status) values(?, ?, (select count(partition_no) from active_node where heartbeat = ?), ?, ?)"
 )
 
 func init() {
 	bus.AddHandler("sql", GetActiveNodeByIdHeartbeat)
 	bus.AddHandler("sql", InsertActiveNodeHeartbeat)
 	bus.AddHandler("sql", InsertNodeProcessingMissingAlert)
+	bus.AddHandler("sql", GetLastDBTimeInterval)
 }
 
 func GetActiveNodeByIdHeartbeat(query *m.GetActiveNodeByIdHeartbeatQuery) error {
@@ -42,6 +43,16 @@ func InsertActiveNodeHeartbeat(cmd *m.SaveActiveNodeCommand) error {
 	if cmd.Node == nil {
 		return errors.New("No ActiveNode found to save")
 	}
+	if !validAlertRunType(cmd.Node.AlertRunType) {
+		errmsg := "Invalid alert run type " + cmd.Node.AlertRunType
+		sqlog.Error(errmsg)
+		return errors.New(errmsg)
+	}
+	if !validAlertStatus(cmd.Node.AlertStatus) {
+		errmsg := "Invalid alert status " + cmd.Node.AlertStatus
+		sqlog.Error(errmsg)
+		return errors.New(errmsg)
+	}
 	var ts int64 = -1
 	err := inTransaction(func(sess *xorm.Session) error {
 
@@ -55,12 +66,11 @@ func InsertActiveNodeHeartbeat(cmd *m.SaveActiveNodeCommand) error {
 			sqlog.Error("Failed to get timestamp", "error", err)
 			return err
 		}
-		_, err = sess.Exec(insertHeartbeatSQL, cmd.Node.NodeId, ts, ts, cmd.Node.AlertRunType)
+		_, err = sess.Exec(insertHeartbeatSQL, cmd.Node.NodeId, ts, ts, cmd.Node.AlertRunType, cmd.Node.AlertStatus)
 		if err != nil {
 			sqlog.Error("Failed to insert heartbeat", "error", err)
 			return err
 		}
-
 		sqlog.Debug("Active node heartbeat inserted", "id", cmd.Node.Id)
 		return nil
 	})
@@ -94,8 +104,9 @@ func InsertNodeProcessingMissingAlert(cmd *m.SaveNodeProcessingMissingAlertComma
 		nodeProcessingMissingAlert := &m.ActiveNode{
 			NodeId:       cmd.Node.NodeId,
 			PartitionNo:  0,
-			AlertRunType: m.MISSING_ALERT,
+			AlertRunType: m.CLN_ALERT_RUN_TYPE_MISSING,
 			Heartbeat:    ts,
+			AlertStatus:  "FIXME", // TODO heartbeat record must only be recorded via InsertActiveNodeHeartbeat
 		}
 		if _, err = sess.Insert(nodeProcessingMissingAlert); err != nil {
 			return err
@@ -103,4 +114,43 @@ func InsertNodeProcessingMissingAlert(cmd *m.SaveNodeProcessingMissingAlertComma
 		cmd.Result = nodeProcessingMissingAlert
 		return nil
 	})
+}
+
+func GetLastDBTimeInterval(cmd *m.GetLastDBTimeIntervalQuery) error {
+	if cmd == nil {
+		return errors.New("Invalid command received to GetLastDBTimeInterval")
+	}
+	results, err := x.Query("select " + dialect.CurrentTimeToRoundMinSql() + " as ts ")
+	if err != nil {
+		sqlog.Error("Failed to get db timestamp", "error", err)
+		return err
+	}
+	ts, err := strconv.ParseInt(string(results[0]["ts"]), 10, 64)
+	if err != nil {
+		sqlog.Error("Failed to get db timestamp", "error", err)
+		return err
+	}
+	cmd.Result = ts - 60
+	return nil
+}
+
+func validAlertRunType(status string) bool {
+	switch status {
+	case m.CLN_ALERT_RUN_TYPE_MISSING:
+	case m.CLN_ALERT_RUN_TYPE_NORMAL:
+	default:
+		return false
+	}
+	return true
+}
+
+func validAlertStatus(status string) bool {
+	switch status {
+	case m.CLN_ALERT_STATUS_READY:
+	case m.CLN_ALERT_STATUS_PROCESSING:
+	case m.CLN_ALERT_STATUS_SCHEDULING:
+	default:
+		return false
+	}
+	return true
 }

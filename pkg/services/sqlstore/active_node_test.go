@@ -12,7 +12,8 @@ func TestActiveNode(t *testing.T) {
 		InitTestDB(t)
 		act := m.ActiveNode{
 			NodeId:       "10.0.0.1:3030",
-			AlertRunType: "Normal",
+			AlertRunType: m.CLN_ALERT_RUN_TYPE_NORMAL,
+			AlertStatus:  m.CLN_ALERT_STATUS_READY,
 		}
 		cmd := m.SaveActiveNodeCommand{
 			Node:        &act,
@@ -28,14 +29,16 @@ func TestActiveNode(t *testing.T) {
 			So(cmd.Result, ShouldNotBeNil)
 			So(cmd.Result.NodeId, ShouldEqual, "10.0.0.1:3030")
 			So(cmd.Result.Heartbeat, ShouldBeGreaterThan, 0)
-			So(cmd.Result.PartitionNo, ShouldEqual, 1)
+			So(cmd.Result.PartitionNo, ShouldEqual, 0)
 		})
 
 		/*
 		*Test insertion of node processing missing alerts
 		 */
 		act2 := m.ActiveNode{
-			NodeId: "10.1.1.1:4330",
+			NodeId:       "10.1.1.1:4330",
+			AlertRunType: "",
+			AlertStatus:  m.CLN_ALERT_STATUS_READY,
 		}
 		cmd2 := m.SaveNodeProcessingMissingAlertCommand{Node: &act2}
 		err2 := InsertNodeProcessingMissingAlert(&cmd2)
@@ -47,7 +50,7 @@ func TestActiveNode(t *testing.T) {
 			So(cmd2.Result.NodeId, ShouldEqual, "10.1.1.1:4330")
 			So(cmd2.Result.Heartbeat, ShouldBeGreaterThan, 0)
 			So(cmd2.Result.PartitionNo, ShouldEqual, 0)
-			So(cmd2.Result.AlertRunType, ShouldEqual, m.MISSING_ALERT)
+			So(cmd2.Result.AlertRunType, ShouldEqual, m.CLN_ALERT_RUN_TYPE_MISSING)
 		})
 
 	})

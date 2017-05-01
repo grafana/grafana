@@ -12,7 +12,7 @@ import (
 
 type ClusterNodeMgmt interface {
 	GetNodeId() (string, error)
-	CheckIn() error
+	CheckIn(alertingState *AlertingState) error
 	GetNode(heartbeat int64) (*m.ActiveNode, error)
 	CheckInNodeProcessingMissingAlerts() error
 	GetActiveNodesCount(heartbeat int64) (int, error)
@@ -55,13 +55,17 @@ func (node *ClusterNode) GetNodeId() (string, error) {
 	return node.nodeId, nil
 }
 
-func (node *ClusterNode) CheckIn() error {
+func (node *ClusterNode) CheckIn(alertingState *AlertingState) error {
 	if node == nil {
 		return errors.New("Cluster node object is nil")
 	}
 	cmd := &m.SaveActiveNodeCommand{
-		Node:        &m.ActiveNode{NodeId: node.nodeId, AlertRunType: m.NORMAL_ALERT},
-		FetchResult: true,
+		Node: &m.ActiveNode{
+			NodeId:       node.nodeId,
+			AlertRunType: alertingState.run_type,
+			AlertStatus:  alertingState.status,
+		},
+		FetchResult: false,
 	}
 	node.log.Debug("Sending command ", "SaveActiveNodeCommand:Node", cmd.Node)
 	if err := bus.Dispatch(cmd); err != nil {
@@ -122,6 +126,14 @@ func (node *ClusterNode) GetLastHeartbeat() (int64, error) {
 	if node == nil {
 		return 0, errors.New("Cluster node object is nil")
 	}
-	//TODO
-	return 0, errors.New("Not implemented")
+	cmd := &m.GetLastDBTimeIntervalQuery{}
+	node.log.Debug("Sending command ", "GetLastDBTimeIntervalQuery", cmd)
+	if err := bus.Dispatch(cmd); err != nil {
+
+		errmsg := fmt.Sprintf("Failed to get db time interval %v", cmd)
+		node.log.Error(errmsg, "error", err)
+		return 0, err
+	}
+	node.log.Debug("Command executed successfully")
+	return cmd.Result, nil
 }
