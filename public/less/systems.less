@@ -1,37 +1,32 @@
 .system-container{
-  padding: 20px;
+  padding: 20px 20px 50px;
 }
 
 .system-list{
   cursor: pointer;
-  width: 20%;
-  min-width: 350px;
-  float: left;
   margin-top: 20px;
   margin-left: 2%;
-  margin-bottom: 50px;
-  border-top: 1px solid #ccc;
-  border-left: 1px solid #ccc;
   background: #fff;
   text-align: center;
   &:hover{
-    box-shadow: 10px 10px 5px #888;
+    box-shadow: 5px 5px 3px #888;
+    h2{
+      border-left: 5px solid @blue;
+    }
   }
   h2{
-    background: rgb(98,183,1237);
+    border-left: 5px solid transparent;
     margin: 0px;
-    color: #fff;
     font-weight: normal;
+    padding-top: 100px;
   }
 }
 
 .system-item{
   float: left;
-  width: 50%;
+  width: 20%;
   height: 300px;
   box-sizing: border-box;  
-  border-right: 1px solid #ccc;
-  border-bottom: 1px solid #ccc;
   p{
     font-size: 26px;
     font-weight: bold;
@@ -43,24 +38,13 @@
   &>dl{
     width: 50%;
     float: left;
-    &>dd{
-      font-size: 26px;
-      font-weight: bold;
-      margin-top: 20px;
-    }
-  }
-  span{
-    padding: 5px;
-    border-radius: 100%;
-    display: inline-block;
-    margin-right: 5px;
   }
 }
 
 .system-item-pie{
-  width: 100px;
-  height: 100px;
-  margin: 0px auto;
+  width: 150px;
+  height: 150px;
+  margin: -20px auto;
 
   .pieLabel div{
     font-size: 18px!important;
@@ -68,21 +52,45 @@
   }
 }
 
-.btn-system-status{
-  width: 40%;
-  height: 40px;
-  margin-left: 5%;
-  margin-top: 5px;
-}
 
 .system-legend-success{
-  color: #23a127;
+  color: @btnSuccessBackground;
 }
 
 .system-legend-warning{
-  color: #fe6600;
+  color: @btnWarningBackground;
 }
 
 .system-legend-danger{
-  color: #ff291c;
+  color: @btnDangerBackground;
+}
+
+.system-legend{
+    font-size: 26px;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+.system-label{
+  border-top: 2px solid;
+  font-weight: bold;
+}
+
+.system-label-success{
+  border-color: @btnSuccessBackground;
+}
+
+.system-label-warning{
+  border-color: @btnWarningBackground;
+}
+
+.system-label-danger{
+  border-color: @btnDangerBackground;
+}
+
+.system-status-box{
+  margin-top: 40px;
+  &>span{
+    margin: 20px;
+  }
 }
