@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/benbjohnson/clock"
+	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
@@ -139,7 +140,14 @@ func (cm *ClusterManager) hasPendingAlertJobs() bool {
 
 func (cm *ClusterManager) checkMissingAlerts() {
 	cm.log.Debug("Cluster manager ticker - check missing alerts")
-	//TODO
+	cmd := &m.GetMissingAlertsQuery{}
+	if err := bus.Dispatch(cmd); err != nil {
+		cm.log.Error("Failed to get missing alerts", "error", err)
+	}
+	cm.log.Debug("Command to get missing alerts executed successfully")
+
+	//TODO Execute all the missing alerts in cmd.Result.
+	//cmd.Result
 }
 
 func (cm *ClusterManager) alertRulesDispatcher(ctx context.Context) error {

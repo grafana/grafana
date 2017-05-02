@@ -204,3 +204,7 @@ type SetAlertEvalDateCmd struct {
 	AlertId  int64
 	EvalDate time.Time
 }
+
+type GetMissingAlertsQuery struct {
+	Result []*Alert
+}
