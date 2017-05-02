@@ -8,6 +8,8 @@
 * **Graph**: Support auto grid min/max when using log scale [#3090](https://github.com/grafana/grafana/issues/3090), thx [@bigbenhur](https://github.com/bigbenhur)
 * **Graph**: Support for histograms [#600](https://github.com/grafana/grafana/issues/600)
 * **Prometheus**: Support table response formats (column per label) [#6140](https://github.com/grafana/grafana/issues/6140), thx [@mtanda](https://github.com/mtanda)
+* **Single Stat Panel**: support for non time series data [#6564](https://github.com/grafana/grafana/issues/6564)
+
 
 ## Minor Enchancements
 

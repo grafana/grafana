@@ -89,7 +89,21 @@ The Elasticsearch datasource supports two types of queries you can use to fill t
 {"find": "fields", "type": "string", "query": <lucene query>}
 ```
 
-### Multi format / All format
-Use lucene format.
+<br>
+## Annotations
+
+[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+queries via the Dashboard menu / Annotations view. Grafana can query any Elasticsearch index
+for annotation events.
+
+Name | Description
+------------ | -------------
+Query | You can leave the search query blank or specify a lucene query
+Time | The name of the time field, needs to be date field.
+Title | The name of field to use for the event title.
+Tags | Optional field name to use for event tags (can be array or csv string).
+Text | Optional field name to use event text body.
+
+
 
 

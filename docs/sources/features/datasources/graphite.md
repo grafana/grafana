@@ -63,6 +63,10 @@ Some functions like aliasByNode support an optional second argument. To add this
 
 ![](/img/docs/animated_gifs/func_editor_optional_params.gif)
 
+### Nested Queries
+
+You can reference queries by the row “letter” that they’re on (similar to  Microsoft Excel). If you add a second query to graph, you can reference the first query simply by typing in #A. This provides an easy and convenient way to build compounded queries.
+
 ## Point consolidation
 
 All Graphite metrics are consolidated so that Graphite doesn't return more data points than there are pixels in the graph. By default
@@ -83,6 +87,12 @@ You can also create nested variables that use other variables in their definitio
 
 ![](/img/docs/v2/templated_variable_parameter.png)
 
+## Annotations
 
-## Query Reference
-You can reference queries by the row “letter” that they’re on (similar to  Microsoft Excel). If you add a second query to graph, you can reference the first query simply by typing in #A. This provides an easy and convenient way to build compounded queries.
+[Annotations]({{< relref "reference/annotations.md" >}}) allows you to overlay rich event information on top of graphs. You add annotation
+queries via the Dashboard menu / Annotations view.
+
+Graphite supports two ways to query annotations. A regular metric query, for this you use the `Graphite query` textbox. A Graphite events query, use the `Graphite event tags` textbox,
+specify an tag or wildcard (leave empty should also work)
+
+
