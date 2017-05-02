@@ -9,8 +9,9 @@ class StyleGuideCtrl {
   buttonNames = ['primary', 'secondary', 'inverse', 'success', 'warning', 'danger'];
   buttonSizes = ['btn-small', '', 'btn-large'];
   buttonVariants = ['-', '-outline-'];
+  icons: any = [];
   page: any;
-  pages = ['colors', 'buttons'];
+  pages = ['colors', 'buttons', 'icons'];
 
   /** @ngInject **/
   constructor(private $http, private $routeParams, private $location) {
@@ -26,6 +27,10 @@ class StyleGuideCtrl {
     if (this.page.colors) {
       this.loadColors();
     }
+
+    if (this.page.icons) {
+      this.loadIcons();
+    }
    }
 
   loadColors() {
@@ -33,6 +38,12 @@ class StyleGuideCtrl {
       this.colors = _.map(res.data[this.theme], (value, key) => {
         return {name: key, value: value};
       });
+    });
+  }
+
+  loadIcons() {
+   this.$http.get('public/sass/icons.json').then(res => {
+      this.icons = res.data;
     });
   }
 

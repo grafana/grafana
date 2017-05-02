@@ -43,6 +43,12 @@
 		</div>
 	</div>
 
+	<div class="tab-pane style-guide-icon-list" ng-if="ctrl.page.icons">
+		<div ng-repeat="icon in ctrl.icons" class="col-lg-1 col-md-2 col-sm-2 col-xs-4">
+			<i class="icon-gf icon-gf-{{icon}}" bs-tooltip="'icon-gf icon-gf-{{icon}}'"></i>
+		</div>
+	</div>
+
 	<div class="tab-pane" ng-if="ctrl.page.forms">
 		forms
 	</div>
