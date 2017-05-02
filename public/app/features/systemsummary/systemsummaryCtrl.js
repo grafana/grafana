@@ -460,7 +460,8 @@ define([
                   "tags": {
                     "host": "*",
                     "pid_cmd": "*"
-                  }
+                  },
+                  "alias": "HOST: $tag_host PID: $tag_pid_cmd"
                 }
               ],
               "timeFrom": "5m",
@@ -550,7 +551,8 @@ define([
                   "tags": {
                     "host": "*",
                     "pid_cmd": "*"
-                  }
+                  },
+                  "alias": "HOST: $tag_host PID: $tag_pid_cmd"
                 }
               ],
               "timeFrom": "5m",
