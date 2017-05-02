@@ -14,7 +14,7 @@ class StyleGuideCtrl {
   pages = ['colors', 'buttons', 'icons', 'plugins'];
 
   /** @ngInject **/
-  constructor(private $http, private $routeParams, private $location) {
+  constructor(private $http, private $routeParams, private $location, private backendSrv) {
     this.theme = config.bootData.user.lightTheme ? 'light': 'dark';
     this.page = {};
 
@@ -49,8 +49,12 @@ class StyleGuideCtrl {
 
   switchTheme() {
     this.$routeParams.theme = this.theme === 'dark' ? 'light' : 'dark';
-    this.$location.search(this.$routeParams);
-    setTimeout(() => {
+
+    var cmd = {
+      theme: this.$routeParams.theme
+    };
+
+    this.backendSrv.put('/api/user/preferences', cmd).then(() => {
       window.location.href = window.location.href;
     });
   }
