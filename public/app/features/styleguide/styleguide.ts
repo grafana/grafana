@@ -11,7 +11,7 @@ class StyleGuideCtrl {
   buttonVariants = ['-', '-outline-'];
   icons: any = [];
   page: any;
-  pages = ['colors', 'buttons', 'icons'];
+  pages = ['colors', 'buttons', 'icons', 'plugins'];
 
   /** @ngInject **/
   constructor(private $http, private $routeParams, private $location) {
