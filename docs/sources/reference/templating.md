@@ -10,18 +10,35 @@ weight = 1
 
 # Templating
 
-<img class="no-shadow" src="/img/docs/v2/templating_var_list.png">
+<img class="no-shadow" src="/img/docs/v4/templated_dash.png">
 
-Dashboard Templating allows you to make your Dashboards more interactive and dynamic.
+Templating allows you to make your dashboards more interactive and dynamic. They’re one of the more powerful and complex features in Grafana. The templating
+feature allows you to create variables that are shown as dropdown select boxes at the top of the dashboard.
+These dropdowns makes it easy to change the variable value and in turn quickly change the data being displayed.
 
-They’re one of the most powerful and most used features of Grafana, and they’ve recently gotten even more attention in Grafana 2.0 and Grafana 2.1.
+## What is a variable?
 
-You can create Dashboard Template variables that can be used practically anywhere in a Dashboard: data queries on individual Panels (within the Query Editor), the names in your legends, or titles in Panels and Rows.
+A variable is a placeholder for a value. You can use variables in metric queries and in panel titles. So when you change
+the value, using the dropdown at the top of the dashboard, your panel's metric queries will change to reflect the new value.
 
-You can configure Dashboard Templating by clicking the dropdown cog on the top of the Dashboard while viewing it.
+### Interpolation
 
+Panel titles and metric queries can refer to variables using two different syntaxes:
+
+- `$<varname>`  Example: apps.frontend.$server.requests.count
+- `[[varname]]` Example: apps.frontend.[[server]].requests.count
+
+Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of word. Use
+the second syntax for scenarios like this: `my.server[[serverNumber]].count`.
+
+Before queries are sent to your data source the query is **interpolated**, meaning the variable is replaced with its current value. During
+interpolation the variable value might be **escaped** in order to conform to the syntax of the query langauge of where it is used. For example
+a variable used in a regex expression in an InfluxDB or Prometheus query will be regex escaped. Read the data source specific documentation
+article for details on value escaping during interpolation.
 
 ## Variable types
+
+<img class="no-shadow" src="/img/docs/v4/templating_var_list.png">
 
 There are three different types of Template variables: query, custom, and interval.
 
@@ -39,6 +56,15 @@ For example a query like `prod.servers.*` will fill the variable with all possib
 You can even create nested variables that use other variables in their definition. For example `apps.$app.servers.*` uses the variable $app in its own query definition.
 
 You can utilize the special ** All ** value to allow the Dashboard user to query for every single Query variable returned. Grafana will automatically translate ** All ** into the appropriate format for your Data Source.
+
+### Annotation query details
+
+The annotation query options are different for each data source.
+
+- [Graphite annotation queries]({{< relref "features/datasources/graphite.md#annotations" >}})
+- [Elasticsearch annotation queries]({{< relref "features/datasources/elasticsearch.md#annotations" >}})
+- [InfluxDB annotation queries]({{< relref "features/datasources/influxdb.md#annotations" >}})
+- [Prometheus annotation queries]({{< relref "features/datasources/prometheus.md#annotations" >}})
 
 #### Multi-select
 As of Grafana 2.1, it is now possible to select a subset of Query Template variables (previously it was possible to select an individual value or 'All', not multiple values that were less than All). This is accomplished via the Multi-Select option. If enabled, the Dashboard user will be able to enable and disable individual variables.
