@@ -235,6 +235,24 @@ func TestAlertingDataAccess(t *testing.T) {
 					Frequency:   120,
 					EvalDate:    currentTimeLess3Frequency,
 				},
+				{
+					DashboardId: testDash.Id,
+					PanelId:     9,
+					Name:        "9",
+					OrgId:       1,
+					Settings:    simplejson.New(),
+					Frequency:   14400,                                  //4hrs
+					EvalDate:    time.Unix(currentTime.Unix()-18000, 0), //5 hours before currrent time
+				},
+				{
+					DashboardId: testDash.Id,
+					PanelId:     10,
+					Name:        "10",
+					OrgId:       1,
+					Settings:    simplejson.New(),
+					Frequency:   9000,                                   //2.5 hrs
+					EvalDate:    time.Unix(currentTime.Unix()-18000, 0), //5 hours before current time
+				},
 			}
 
 			cmd.Alerts = multipleAlerts
@@ -246,7 +264,7 @@ func TestAlertingDataAccess(t *testing.T) {
 				queryForMissedAlerts := m.GetMissingAlertsQuery{}
 				err1 := GetMissingAlerts(&queryForMissedAlerts)
 				So(err1, ShouldBeNil)
-				So(len(queryForMissedAlerts.Result), ShouldEqual, 2)
+				So(len(queryForMissedAlerts.Result), ShouldEqual, 3)
 			})
 		})
 
