@@ -76,16 +76,34 @@ this consolidation is done using `avg` function. You can how Graphite consolidat
 > client side by Grafana. And depending on your consolidation function only one or two can be correct at the same time.
 
 ## Templating
-You can create a template variable in Grafana and have that variable filled with values from any Graphite metric exploration query.
-You can then use this variable in your Graphite queries, either as part of a metric path or as arguments to functions.
 
-For example a query like `prod.servers.*` will fill the variable with all possible
-values that exists in the wildcard position.
+Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
+Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
+being displayed in your dashboard.
+
+Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
+types of template variables.
+
+### Query variables
+
+The query you specify in the query field should be a metric find type of query. For example a query like `prod.servers.*` will fill the
+variable with all possible values that exists in the wildcard position.
 
 You can also create nested variables that use other variables in their definition. For example
 `apps.$app.servers.*` uses the variable `$app` in its query definition.
 
+### Variable usage
+
+You can use a variable in a metric node path or as a parameter to a function.
 ![](/img/docs/v2/templated_variable_parameter.png)
+
+There are two syntaxes:
+
+- `$<varname>`  Example: apps.frontend.$server.requests.count
+- `[[varname]]` Example: apps.frontend.[[server]].requests.count
+
+Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of word. Use
+the second syntax in expressions like  `my.server[[serverNumber]].count`.
 
 ## Annotations
 

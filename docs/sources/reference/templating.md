@@ -12,8 +12,8 @@ weight = 1
 
 <img class="no-shadow" src="/img/docs/v4/templated_dash.png">
 
-Templating allows you to make your dashboards more interactive and dynamic. Instead of hard-coding things like server, application
-or sensor id in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
+Templating allows for more interactive and dynamic dashboards. Instead of hard-coding things like server, application
+and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
 the dashboard. These dropdowns makes it easy to change the data being displayed in your dashboard.
 
 ## What is a variable?
@@ -29,7 +29,7 @@ Panel titles and metric queries can refer to variables using two different synta
 - `[[varname]]` Example: apps.frontend.[[server]].requests.count
 
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of word. Use
-the second syntax for scenarios like this: `my.server[[serverNumber]].count`.
+the second syntax in expressions like  `my.server[[serverNumber]].count`.
 
 Before queries are sent to your data source the query is **interpolated**, meaning the variable is replaced with its current value. During
 interpolation the variable value might be **escaped** in order to conform to the syntax of the query language and where it is used.
