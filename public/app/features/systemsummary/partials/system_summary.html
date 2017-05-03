@@ -34,9 +34,9 @@
                             </div>
                             <ul class="btn-list-status" ng-if="panleJson[row_name].status">
                                 <li class="btn-item" style="width:70px;">当前状态:</li>
-                                <li class="btn-item btn btn-danger" ng-if="panleJson[row_name].status.danger[1]!=0">{{panleJson[row_name].status.danger[0]}} <span>{{panleJson[row_name].status.danger[1]}}</span></li>
-                                <li class="btn-item btn btn-warning" ng-if="panleJson[row_name].status.warn[1]!=0">{{panleJson[row_name].status.warn[0]}} <span>{{panleJson[row_name].status.warn[1]}}</span></li>
-                                <li class="btn-item btn btn-success" ng-if="panleJson[row_name].status.success[1]!=0">{{panleJson[row_name].status.success[0]}} <span>{{panleJson[row_name].status.success[1]}}</span></li>
+                                <li class="btn-item system-status system-status-danger" ng-if="panleJson[row_name].status.danger[1]!=0">{{panleJson[row_name].status.danger[0]}} <span>{{panleJson[row_name].status.danger[1]}}</span></li>
+                                <li class="btn-item system-status system-status-warning" ng-if="panleJson[row_name].status.warn[1]!=0">{{panleJson[row_name].status.warn[0]}} <span>{{panleJson[row_name].status.warn[1]}}</span></li>
+                                <li class="btn-item system-status system-status-success" ng-if="panleJson[row_name].status.success[1]!=0">{{panleJson[row_name].status.success[0]}} <span>{{panleJson[row_name].status.success[1]}}</span></li>
                             </ul>
                             <div class="clearfix"></div>
                             <panel-loader type="panel.type" class="panel-margin summary-panel"></panel-loader>
