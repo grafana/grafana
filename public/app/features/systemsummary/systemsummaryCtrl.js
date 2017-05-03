@@ -2,13 +2,17 @@ define([
   'angular',
   'lodash',
   'app/core/utils/datemath',
+  'app/core/config',
 ],
-  function (angular, _, dateMath) {
+  function (angular, _, dateMath, config) {
     'use strict';
 
     var module = angular.module('grafana.controllers');
 
     module.controller('SystemsummaryCtrl', function ($scope, backendSrv, contextSrv, datasourceSrv, alertMgrSrv, healthSrv) {
+      $scope.getUrl = function(url) {
+        return config.appSubUrl + url;
+      };
 
       var panelMeta = {
         "collapse": false,
@@ -114,10 +118,10 @@ define([
       var panelRow = [];
 
       $scope.panleJson = [
-        { fullwidth: false, header: '报警情况', title: '历史报警状态', status: { success: ['', ''], warn: ['警告', 0], danger: ['严重', 0] }, tip: '2:critical，1:warning,0:normal' },
-        { fullwidth: false, header: '智能检测异常指标', title: '历史异常指标概览', status: { success: ['指标数量', 0], warn: ['异常指标', 0], danger: ['严重', 0] } },
-        { fullwidth: false, header: '节点状态', title: '历史节点状态', status: { success: ['正常节点', 0], warn: ['异常节点', 0], danger: ['严重', 0] } },
-        { fullwidth: false, header: '机器连接状态', title: '历史机器连接状态', status: { success: ['正常机器', 0], warn: ['异常机器', 0], danger: ['尚未工作', 0] } },
+        { fullwidth: false, header: '报警情况', title: '历史报警状态', status: { success: ['', ''], warn: ['警告', 0], danger: ['严重', 0] }, tip: '2:critical，1:warning,0:normal', href: $scope.getUrl('/alerts/status') },
+        { fullwidth: false, header: '智能检测异常指标', title: '历史异常指标概览', status: { success: ['指标数量', 0], warn: ['异常指标', 0], danger: ['严重', 0] }, href: $scope.getUrl('/anomaly')},
+        { fullwidth: false, header: '节点状态', title: '历史节点状态', status: { success: ['正常节点', 0], warn: ['异常节点', 0], danger: ['严重', 0] }, href: $scope.getUrl('/service')},
+        { fullwidth: false, header: '机器连接状态', title: '历史机器连接状态', status: { success: ['正常机器', 0], warn: ['异常机器', 0], danger: ['尚未工作', 0] }, href: $scope.getUrl('/summary') },
         { fullwidth: true, header: '各线程TopN使用情况', title: '', panels: [{ title: '各线程CPU占用情况(百分比)TopN' }, { title: '各线程内存占用情况(百分比)TopN' },] },
         { fullwidth: true, header: '健康指数趋势', title: '历史健康指数趋势' },
         { fullwidth: true, header: '智能分析预测', title: '', panels: [{ title: '磁盘剩余空间', tip: '预计未来1天后，磁盘剩余空间约为' }, { title: 'CPU使用情况(百分比)', tip: '预计未来1天后，cpu使用情况约为' }, { title: '内存使用情况', tip: '预计未来1天后，内存使用约为' },] },
