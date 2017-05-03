@@ -18,7 +18,21 @@ function (angular, _, $, coreModule, config) {
       $scope.mainLinks.push({
         text: "系统总览",
         icon: "fa fa-fw fa-home",
-        href: $scope.getUrl("/"),
+        click: $scope.updateSubmenu,
+        submenu: [
+          {
+            text: '关键指标',
+            href: $scope.getUrl("/")
+          },
+          {
+            text: '节点状态',
+            href: $scope.getUrl("/service")
+          },
+          {
+            text: '探针状态',
+            href: $scope.getUrl("/summary")
+          },
+        ],
       });
 
       $scope.mainLinks.push({
@@ -43,7 +57,8 @@ function (angular, _, $, coreModule, config) {
             text: '日志对比',
             click: $scope.alertMessage
           },
-        ]
+        ],
+        click: $scope.updateSubmenu
       });
 
       $scope.mainLinks.push({
@@ -76,8 +91,8 @@ function (angular, _, $, coreModule, config) {
             text: '自动异常检测',
             href: $scope.getUrl("/anomaly"),
           }
-        ]
-        // href: $scope.getUrl("/service"),
+        ],
+        click: $scope.updateSubmenu
       });
 
       $scope.mainLinks.push({
@@ -100,7 +115,8 @@ function (angular, _, $, coreModule, config) {
             text: '健康报告',
             href: $scope.getUrl('/report'),
           },
-        ]
+        ],
+        click: $scope.updateSubmenu
       });
 
       $scope.mainLinks.push({
@@ -112,7 +128,8 @@ function (angular, _, $, coreModule, config) {
       $scope.setupSettingMenu();
     };
 
-    $scope.loadSystems = function () {
+    $scope.loadSystems = function (menu) {
+      window.location.href = $scope.getUrl('/systems');
     };
 
     $scope.newDashboard = function() {
@@ -143,13 +160,13 @@ function (angular, _, $, coreModule, config) {
 
     $scope.loadOrgs = function (menu) {
       backendSrv.get('/api/user/orgs').then(function (orgs) {
-        menu.thdmenu = [];
+        menu.submenu = [];
         _.each(orgs, function (org) {
           if (org.orgId === contextSrv.user.orgId) {
             return;
           }
 
-          menu.thdmenu.push({
+          menu.submenu.push({
             text: org.name,
             icon: "fa fa-fw fa-random",
             click: function () {
@@ -157,39 +174,43 @@ function (angular, _, $, coreModule, config) {
             }
           });
         });
-        if (!menu.thdmenu.length) {
-          menu.thdmenu.push({
+        if (!menu.submenu.length) {
+          menu.submenu.push({
             text: "无",
           });
         }
+        $scope.updateSubmenu(menu);
+        $scope.currentMenu.text = '切换到';
       });
     };
 
     $scope.setupSettingMenu = function() {
-      $scope.settingMenu = {
-        text: "信息管理",
-        icon: "fa fa-fw fa-cogs",
-        submenu: [],
-      };
-
-      $scope.settingMenu.submenu.push({
-        text: "切换系统",
-        href: $scope.getUrl('/systems')
-      });
-
-      $scope.settingMenu.submenu.push({
-        text: "切换组织",
-        dropdown: 'dropdown',
-        thdmenu: [],
-        click: $scope.loadOrgs
-      });
+      $scope.settingMenu = [
+        {
+          text: "信息管理",
+          icon: "fa fa-fw fa-cogs",
+          submenu: [],
+          click: $scope.updateSubmenu
+        },
+        {
+          text: contextSrv.user.orgName,
+          icon: "fa fa-fw fa-random",
+          submenu: [],
+          click: $scope.loadOrgs
+        },
+        {
+          text: contextSrv.systemsMap[_.findIndex(contextSrv.systemsMap,{'Id': contextSrv.system})].SystemsName,
+          icon: "fa fa-fw fa-sitemap",
+          click: $scope.loadSystems
+        }
+      ];
 
       if ($scope.length > 0) {
-        $scope.settingMenu.submenu.push({ cssClass: 'divider' });
+        $scope.settingMenu[0].submenu.push({ cssClass: 'divider' });
       }
 
       if (config.allowOrgCreate) {
-        $scope.settingMenu.submenu.push({
+        $scope.settingMenu[0].submenu.push({
           text: "新建公司",
           icon: "fa fa-fw fa-plus",
           href: $scope.getUrl('/org/new')
@@ -197,16 +218,16 @@ function (angular, _, $, coreModule, config) {
       }
 
       if (contextSrv.hasRole('Admin')) {
-        $scope.settingMenu.submenu.push({
+        $scope.settingMenu[0].submenu.push({
           text: "公司信息设置",
           href: $scope.getUrl("/org"),
         });
-        $scope.settingMenu.submenu.push({
+        $scope.settingMenu[0].submenu.push({
           text: "用户管理",
           href: $scope.getUrl("/org/users"),
         });
         if(contextSrv.isGrafanaAdmin){
-          $scope.settingMenu.submenu.push({
+          $scope.settingMenu[0].submenu.push({
             text: "密钥管理",
             href: $scope.getUrl("/org/apikeys"),
           });
@@ -214,7 +235,7 @@ function (angular, _, $, coreModule, config) {
       }
 
       if (contextSrv.isGrafanaAdmin) {
-        $scope.settingMenu.submenu.push({
+        $scope.settingMenu[0].submenu.push({
           text: "后台管理",
           dropdown: 'dropdown',
           thdmenu: [
@@ -235,36 +256,27 @@ function (angular, _, $, coreModule, config) {
             }
           ]
         });
-        $scope.settingMenu.submenu.push({
+        $scope.settingMenu[0].submenu.push({
           text: "申请用户",
           icon: "fa fa-fw fa-users",
           href: $scope.getUrl("/customer"),
         });
-        $scope.settingMenu.submenu.push({
+        $scope.settingMenu[0].submenu.push({
           text: "数据库",
           icon: "fa fa-fw fa-database",
           href: $scope.getUrl("/datasources"),
         });
       }
 
-      $scope.settingMenu.submenu.push({
-        text: "系统状况",
-        href: $scope.getUrl("/service"),
-      });
-
-      $scope.settingMenu.submenu.push({
-        text: "探针状态",
-        href: $scope.getUrl("/summary"),
-      });
-
-      $scope.settingMenu.submenu.push({
+      $scope.settingMenu[0].submenu.push({
         text: "安装指南",
         href: $scope.getUrl("/install"),
       });
 
-      $scope.settingMenu.submenu.push({
+      $scope.settingMenu[0].submenu.push({
         text: "帮助文档",
         href: "http://cloudwiz.cn/document/",
+        target: '_blank'
       });
     };
 

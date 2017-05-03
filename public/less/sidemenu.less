@@ -3,7 +3,7 @@
 }
 
 .sidemenu-wrapper {
-  position: absolute;
+  position: fixed;
   display: none;
   top: 0;
   bottom: 0;
@@ -44,7 +44,6 @@
   margin: 0;
   padding: 0;
 
-
   .fa-caret-down {
     position: relative;
     top: 2px;
@@ -54,7 +53,22 @@
   &.sidemenu-small {
     position: absolute;
     width: 100%;
-    margin-top: 100px;
+    bottom: 0;
+    .sidemenu-item{
+      text-align: left;
+      font-size: 12px;
+      padding-left: 5px;
+    }
+    .icon-circle,.sidemenu-item-text {
+      display: inline-block;
+      padding-left: 0px; 
+    }
+    .sidemenu-item-text{
+      margin-left: 5px;
+    }
+    .icon-circle>i{
+      top: 2px;
+    }
   }
 }
 
@@ -169,6 +183,10 @@
   left: 100px;;
   top: 0px;
   bottom: 0px;
+  margin-top: 50px;
+  &.scroll-y{
+    overflow-y: auto;
+  }
   .sidemenu-item {
     padding: 7px 10px;
     text-align: left;
