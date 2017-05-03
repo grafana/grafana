@@ -488,7 +488,8 @@ define([
                 "host": "*",
                 "pid_cmd": "*"
               },
-              "downsampleInterval": "1h"
+              "downsampleInterval": "1h",
+              "alias": "HOST: $tag_host PID: $tag_pid_cmd"
             }
           ];
         });

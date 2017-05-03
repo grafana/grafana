@@ -120,7 +120,7 @@ function (angular, _, $, coreModule, config) {
       });
 
       $scope.mainLinks.push({
-        text: "运维轮班",
+        text: "轮值",
         icon: "fa fa-fw fa-calendar",
         href: $scope.getUrl("/oncallers"),
       });
