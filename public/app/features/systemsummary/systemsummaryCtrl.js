@@ -16,6 +16,45 @@ define([
         "height": "260px",
         "panels": [
           {
+            "columns": [
+              {
+                "text": "Total",
+                "value": "total"
+              },
+              {
+                "text": "Current",
+                "value": "current"
+              }
+            ],
+            "sort": {
+              "col": 2,
+              "desc": true
+            },
+            "styles": [
+              {
+                "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                "pattern": "Time",
+                "type": "date"
+              },
+              {
+                "colorMode": "cell",
+                "colors": [
+                  "rgba(115, 180, 140, 0.76)",
+                  "rgba(237, 129, 40, 0.52)",
+                  "rgba(246, 0, 0, 0.54)"
+                ],
+                "decimals": 0,
+                "pattern": "/.*/",
+                "thresholds": [
+                  "0",
+                  "1",
+                  "2"
+                ],
+                "type": "number",
+                "unit": "short"
+              }
+            ],
+            "transform": "timeseries_aggregations",
             "aliasColors": {
               "test_health": "#EAB839"
             },
@@ -35,11 +74,11 @@ define([
             "stack": false,
             "steppedLine": false,
             "targets": [{
-              "aggregator": "",
+              "aggregator": "sum",
               "currentTagKey": "",
               "currentTagValue": "",
               "downsampleAggregator": "avg",
-              "downsampleInterval": "5m",
+              "downsampleInterval": "1h",
               "errors": {},
               "hide": false,
               "isCounter": false,
@@ -131,11 +170,12 @@ define([
         });
 
         panelRow[1].panels[0].legend.show = false;
+        panelRow[2].panels[0].type = 'table';
 
         $scope.initAlertStatus(panelRow[0].panels[0]);
         $scope.initAnomalyStatus(panelRow[1].panels[0]);
-        $scope.initHostSummary(panelRow[3].panels[0].targets[0]);
-        $scope.initTopN();
+        $scope.initHostSummary(panelRow[3].panels[0]);
+        $scope.initTopN(panelRow[4].panels);
         $scope.initHealth(panelRow[5].panels[0]);
         return panelRow;
       };
@@ -166,6 +206,14 @@ define([
         panel.grid.leftMax = 2;
         panel.grid.thresholdLine = false;
         panel.pointradius = 1;
+        panel.type = 'table';
+        panel.columns = [
+          {
+            "text": "Current",
+            "value": "current"
+          }
+        ];
+        panel.sort.col = 1;
       }
 
       $scope.getAlertStatus = function () {
@@ -191,7 +239,7 @@ define([
         panel.lines = false;
 
         targets.metric = 'internal.anomaly.num';
-        targets.downsampleInterval = '15m';
+        targets.downsampleInterval = '5h';
         targets.aggregator = 'sum';
         targets.downsampleAggregator = 'avg';
       };
@@ -250,7 +298,9 @@ define([
         });
       };
 
-      $scope.initHostSummary = function (targets) {
+      $scope.initHostSummary = function (panel) {
+        panel.type = 'table';
+        var targets = panel.targets[0];
         targets.metric = 'collector.state';
         targets.alias = "$tag_host";
         targets.tags = { 'host': '*' };
@@ -375,192 +425,78 @@ define([
 
       };
 
-      $scope.initTopN = function () {
-        panelRow[4] = {
-          "collapse": false,
-          "editable": true,
-          "height": "260px",
-          "panels": [
+      $scope.initTopN = function (panels) {
+        var cpuTopN = panels[0];
+        var memoryTopN = panels[1];
+        _.each(panels, function(panel) {
+          panel.type = 'table';
+          panel.columns = [
             {
-              "columns": [
-                {
-                  "text": "Current",
-                  "value": "current"
-                },
-                {
-                  "text": "Max",
-                  "value": "max"
-                }
-              ],
-              "editable": true,
-              "error": false,
-              "fontSize": "100%",
-              "helpInfo": {
-                "context": "",
-                "info": false,
-                "title": ""
-              },
-              "hideTimeOverride": true,
-              "id": 6,
-              "isNew": true,
-              "links": [],
-              "pageSize": null,
-              "scroll": true,
-              "showHeader": true,
-              "sort": {
-                "col": 1,
-                "desc": true
-              },
-              "span": 6,
-              "styles": [
-                {
-                  "colorMode": "cell",
-                  "colors": [
-                    "rgba(115, 180, 140, 0.76)",
-                    "rgba(237, 129, 40, 0.52)",
-                    "rgba(246, 0, 0, 0.54)"
-                  ],
-                  "decimals": 0,
-                  "pattern": "Current",
-                  "thresholds": [
-                    "0",
-                    "30",
-                    "70"
-                  ],
-                  "type": "number",
-                  "unit": "percent"
-                },
-                {
-                  "colorMode": null,
-                  "colors": [
-                    "rgba(245, 54, 54, 0.9)",
-                    "rgba(237, 129, 40, 0.89)",
-                    "rgba(50, 172, 45, 0.97)"
-                  ],
-                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
-                  "decimals": 0,
-                  "pattern": "Max",
-                  "thresholds": [
-                    ""
-                  ],
-                  "type": "number",
-                  "unit": "percent"
-                }
-              ],
-              "targets": [
-                {
-                  "aggregator": "p99",
-                  "currentTagKey": "",
-                  "currentTagValue": "",
-                  "downsampleAggregator": "avg",
-                  "downsampleInterval": "",
-                  "errors": {},
-                  "metric": "cpu.topN",
-                  "refId": "A",
-                  "tags": {
-                    "host": "*",
-                    "pid_cmd": "*"
-                  }
-                }
-              ],
-              "timeFrom": "5m",
-              "title": "各线程CPU占用情况(百分比)TopN",
-              "transform": "timeseries_aggregations",
-              "type": "table"
+              "text": "Max",
+              "value": "max"
             },
             {
-              "columns": [
-                {
-                  "text": "Current",
-                  "value": "current"
-                },
-                {
-                  "text": "Max",
-                  "value": "max"
-                }
+              "text": "Current",
+              "value": "current"
+            },
+          ];
+          panel.styles = [
+            {
+              "colorMode": null,
+              "colors": [
+                "rgba(245, 54, 54, 0.9)",
+                "rgba(237, 129, 40, 0.89)",
+                "rgba(50, 172, 45, 0.97)"
               ],
-              "editable": true,
-              "error": false,
-              "fontSize": "100%",
-              "helpInfo": {
-                "context": "",
-                "info": false,
-                "title": ""
+              "dateFormat": "YYYY-MM-DD HH:mm:ss",
+              "decimals": 0,
+              "pattern": "Max",
+              "thresholds": [
+                ""
+              ],
+              "type": "number",
+              "unit": "percent"
+            },
+            {
+              "colorMode": "cell",
+              "colors": [
+                "rgba(115, 180, 140, 0.76)",
+                "rgba(237, 129, 40, 0.52)",
+                "rgba(246, 0, 0, 0.54)"
+              ],
+              "decimals": 0,
+              "pattern": "Current",
+              "thresholds": [
+                "0",
+                "30",
+                "70"
+              ],
+              "type": "number",
+              "unit": "percent"
+            },
+          ];
+
+          panel.targets = [
+            {
+              "aggregator": "p99",
+              "currentTagKey": "",
+              "currentTagValue": "",
+              "downsampleAggregator": "avg",
+              "errors": {},
+              "metric": "",
+              "tags": {
+                "host": "*",
+                "pid_cmd": "*"
               },
-              "hideTimeOverride": true,
-              "id": 7,
-              "isNew": true,
-              "links": [],
-              "pageSize": null,
-              "scroll": true,
-              "showHeader": true,
-              "sort": {
-                "col": 1,
-                "desc": true
-              },
-              "span": 6,
-              "styles": [
-                {
-                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
-                  "pattern": "Time",
-                  "type": "date"
-                },
-                {
-                  "colorMode": "cell",
-                  "colors": [
-                    "rgba(40, 166, 57, 0.52)",
-                    "rgba(237, 129, 40, 0.52)",
-                    "rgba(233, 34, 34, 0.69)"
-                  ],
-                  "decimals": null,
-                  "pattern": "Current",
-                  "thresholds": [
-                    "0",
-                    "30",
-                    "70"
-                  ],
-                  "type": "number",
-                  "unit": "percent"
-                },
-                {
-                  "colorMode": null,
-                  "colors": [
-                    "rgba(245, 54, 54, 0.9)",
-                    "rgba(237, 129, 40, 0.89)",
-                    "rgba(50, 172, 45, 0.97)"
-                  ],
-                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
-                  "decimals": null,
-                  "pattern": "Max",
-                  "thresholds": [],
-                  "type": "number",
-                  "unit": "percent"
-                }
-              ],
-              "targets": [
-                {
-                  "aggregator": "p99",
-                  "currentTagKey": "",
-                  "currentTagValue": "",
-                  "downsampleAggregator": "avg",
-                  "downsampleInterval": "",
-                  "errors": {},
-                  "metric": "mem.topN",
-                  "refId": "A",
-                  "tags": {
-                    "host": "*",
-                    "pid_cmd": "*"
-                  }
-                }
-              ],
-              "timeFrom": "5m",
-              "title": "各线程内存占用情况(百分比)TOPN",
-              "transform": "timeseries_aggregations",
-              "type": "table"
+              "downsampleInterval": "1h"
             }
-          ],
-          "title": "New row"
-        }
+          ];
+        });
+
+        cpuTopN.targets[0].metric = 'cpu.topN';
+
+        memoryTopN.targets[0].metric = 'mem.topN';
+        
       };
 
       $scope.init();
