@@ -29,7 +29,7 @@ function (angular, _, $, coreModule, config) {
             href: $scope.getUrl("/service")
           },
           {
-            text: '探针状态',
+            text: '机器连接状态',
             href: $scope.getUrl("/summary")
           },
         ],

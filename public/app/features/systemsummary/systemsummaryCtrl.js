@@ -116,7 +116,7 @@ define([
       $scope.panleJson = [
         { fullwidth: false, header: '报警情况', title: '历史报警状态', status: { success: ['', ''], warn: ['警告', 0], danger: ['严重', 0] }, tip: '2:critical，1:warning,0:normal' },
         { fullwidth: false, header: '智能检测异常指标', title: '历史异常指标概览', status: { success: ['指标数量', 0], warn: ['异常指标', 0], danger: ['严重', 0] } },
-        { fullwidth: false, header: '服务状态', title: '历史服务状态', status: { success: ['正常服务', 0], warn: ['异常服务', 0], danger: ['严重', 0] } },
+        { fullwidth: false, header: '节点状态', title: '历史节点状态', status: { success: ['正常节点', 0], warn: ['异常节点', 0], danger: ['严重', 0] } },
         { fullwidth: false, header: '机器连接状态', title: '历史机器连接状态', status: { success: ['正常机器', 0], warn: ['异常机器', 0], danger: ['尚未工作', 0] } },
         { fullwidth: true, header: '各线程TopN使用情况', title: '', panels: [{ title: '各线程CPU占用情况(百分比)TopN' }, { title: '各线程内存占用情况(百分比)TopN' },] },
         { fullwidth: true, header: '健康指数趋势', title: '历史健康指数趋势' },
