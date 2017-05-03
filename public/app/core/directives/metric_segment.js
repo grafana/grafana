@@ -127,7 +127,7 @@ function (_, $, coreModule) {
           return items ? this.process(items) : items;
         };
 
-        $button.keydown(function(evt) {
+        $button.keyup(function(evt) {
           // trigger typeahead on down arrow or enter key
           if (evt.keyCode === 40 || evt.keyCode === 13) {
             $button.click();
