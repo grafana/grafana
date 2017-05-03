@@ -12,9 +12,9 @@ weight = 1
 
 <img class="no-shadow" src="/img/docs/v4/templated_dash.png">
 
-Templating allows you to make your dashboards more interactive and dynamic. They’re one of the more powerful and complex features in Grafana. The templating
-feature allows you to create variables that are shown as dropdown select boxes at the top of the dashboard.
-These dropdowns makes it easy to change the variable value and in turn quickly change the data being displayed.
+Templating allows you to make your dashboards more interactive and dynamic. Instead of hard-coding things like server, application
+or sensor id in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
+the dashboard. These dropdowns makes it easy to change the data being displayed in your dashboard.
 
 ## What is a variable?
 
@@ -32,80 +32,136 @@ Why two ways? The first syntax is easier to read and write but does not allow yo
 the second syntax for scenarios like this: `my.server[[serverNumber]].count`.
 
 Before queries are sent to your data source the query is **interpolated**, meaning the variable is replaced with its current value. During
-interpolation the variable value might be **escaped** in order to conform to the syntax of the query langauge of where it is used. For example
-a variable used in a regex expression in an InfluxDB or Prometheus query will be regex escaped. Read the data source specific documentation
-article for details on value escaping during interpolation.
+interpolation the variable value might be **escaped** in order to conform to the syntax of the query language and where it is used.
+For example a variable used in a regex expression in an InfluxDB or Prometheus query will be regex escaped. Read the data source specific
+documentation article for details on value escaping during interpolation.
 
-## Variable types
+### Variable options
+
+A variable is presented as a dropdown select box at the top of the dashboards. It has a current value and a set of **options**. The **options**
+is the the set of values you can choose from.
+
+## Adding a variable
 
 <img class="no-shadow" src="/img/docs/v4/templating_var_list.png">
 
-There are three different types of Template variables: query, custom, and interval.
+You add variables via Dashboard cogs menu > Templating. This opens up a list of variables and a `New` button to create a new variable.
 
-They can all be used to create dynamic variables that you can use throughout the Dashboard, but they differ in how they get the data for their values.
+### Basic variable options
+
+Option | Description
+------- | --------
+*Name* | The name of the variable, this is the name you use when you refer to your variable in your metric queries. Must be unique and contain no white-spaces.
+*Label* | The name of the dropdown for this variable.
+*Hide* | Options to hide the dropdown select box.
+*Type* | Defines the variable type.
 
 
-### Query
+### Variable types
 
- > Note: The Query type is Data Source specific. Please consult the appropriate documentation for your particular Data Source.
+Type | Description
+------- | --------
+*Query* | This variable type allows you to write a data source query that usually returns a list of metric names, tag values or keys. For example a query that returns a list of server names, sensor ids or data centers.
+*Interval* | This variable can represent timespans. Instead of hard-coding a group by time or date histogram interval use a variable of this type.
+*Datasource* | This type allows you to quickly change data source for an entire Dashboard. Useful if you have multiple instances of a data source in for example different environments.
+*Custom* | Define the variable options manually using a comma seperated list.
+*Constant* | Define a hidden constant. Useful for metric path prefixes for dashboards you want to share. During dashboard export constant variables will be made into an import option.
+*Ad hoc filters* | Very special kind of variable that only works with some data sources, InfluxDB & Elasticsearch currently. It allows you to add key/value filters that will automatically be added to all metric queries that use the specified data source.
 
-Query is the most common type of Template variable. Use the `Query` template type to generate a dynamic list of variables, simply by allowing Grafana to explore your Data Source metric namespace when the Dashboard loads.
+### Query options
 
-For example a query like `prod.servers.*` will fill the variable with all possible values that exists in that wildcard position (in the case of the Graphite Data Source).
+This variable type is the most powerful and complex as it  can dynamically fetch its options using a data source query.
 
-You can even create nested variables that use other variables in their definition. For example `apps.$app.servers.*` uses the variable $app in its own query definition.
+Option | Description
+------- | --------
+*Data source* | The data source target for the query.
+*Refresh* | Controls when to update the variable option list (values in the dropdown). **On Dashboard Load** will slow down dashboard load as the variable query needs to be completed before dashboard can be initialized. Set this only to **On Time Range Change** if your variable options query contains a time range filter or is dependant on dashboard time range.
+*Query* | The data source specific query expression.
+*Regex* | Regex to filter or capture specific parts of the names return by your data source query. Optional.
+*Sort* | Define sort order for options in dropdown. **Disabled** means that the order of options returned by your data source query will be used.
 
-You can utilize the special ** All ** value to allow the Dashboard user to query for every single Query variable returned. Grafana will automatically translate ** All ** into the appropriate format for your Data Source.
+### Query expressions
 
-### Annotation query details
+The query expressions are different for each data source.
 
-The annotation query options are different for each data source.
+- [Graphite templating queries]({{< relref "features/datasources/graphite.md#templating" >}})
+- [Elasticsearch templating queries]({{< relref "features/datasources/elasticsearch.md#templating" >}})
+- [InfluxDB templating queries]({{< relref "features/datasources/influxdb.md#templating" >}})
+- [Prometheus templating queries]({{< relref "features/datasources/prometheus.md#templating" >}})
+- [OpenTSDB templating queries]({{< relref "features/datasources/prometheus.md#templating" >}})
 
-- [Graphite annotation queries]({{< relref "features/datasources/graphite.md#annotations" >}})
-- [Elasticsearch annotation queries]({{< relref "features/datasources/elasticsearch.md#annotations" >}})
-- [InfluxDB annotation queries]({{< relref "features/datasources/influxdb.md#annotations" >}})
-- [Prometheus annotation queries]({{< relref "features/datasources/prometheus.md#annotations" >}})
+One thing to note is that query expressions can contain references to other variables and in effect create depend & nested
+variables. Grafana will detect this and automatically refresh a variable when one of it's containing variables change.
 
-#### Multi-select
-As of Grafana 2.1, it is now possible to select a subset of Query Template variables (previously it was possible to select an individual value or 'All', not multiple values that were less than All). This is accomplished via the Multi-Select option. If enabled, the Dashboard user will be able to enable and disable individual variables.
+## Selection Options
 
-The Multi-Select functionality is taken a step further with the introduction of Multi-Select Tagging. This functionality allows you to group individual Template variables together under a Tag or Group name.
+Option | Description
+------- | --------
+*Mulit-value* | If enabled, the variable will support the selection of multiple options at the same time.
+*Include All option* | Add a special `All` option whose value includes all options.
+*Custom all value* | By default the `All` value will include all options in combined expression. This can become very long and can have performance problems. Many times it can be better to specify a custom all value, like a wildcard regex. To make it possible to have custom regex, globs or lucene syntax in the **Custom all value** option it is never escaped so you will have to think avbout what is a valid value for your data source.
 
-For example, if you were using Templating to list all 20 of your applications, you could use Multi-Select Tagging to group your applications by function or region or criticality, etc.
+### Formating multiple values
 
- > Note: Multi-Select Tagging functionality is currently experimental but is part of Grafana 2.1. To enable this feature click the enable icon when editing Template options for a particular variable.
+Interpolating a variable with multiple values selected is tricky as it is not straight forward how to format the multiple values to into a string that
+is valid in the given context where the variable is used. Grafana tries to solve this by allowing each data source plugin to
+inform the templating interpolation engine what format to use for multiple values.
 
-<img class="no-shadow" src="/img/docs/v2/template-tags-config.png">
+**Graphite** for example uses glob expressions. A variable with multiple values would in this case be interpolated as `{host1,host2,host3}` if
+the current variable value was *host1*, *host2* and *host3*.
 
-Grafana gets the list of tags and the list of values in each tag by performing two queries on your metric namespace.
+**InfluxDB and Prometheus** uses regex expressions, so the same variable
+would be interpolated as `(host1|host2|host3)`. Every value would also be regex escaped, if not, a value with a regex control character would
+break the regex expression.
 
-The Tags query returns a list of Tags.
+**Elasticsearch** uses lucene query syntax, so the same variable would in this case be formated as `("host1" OR "host2" OR "host3")`. In this case every value
+needs to be escaped so that the value can contain lucene control words and quotation marks.
 
-The Tag values query returns the values for a given Tag.
+#### Formating troubles
 
-Note: a proof of concept shim that translates the metric query into a SQL call is provided. This allows you to maintain your tag:value mapping independently of your Data Source.
+Automatic escaping & formating can cause problems and it can be tricky to grasp the logic is behind it.
+Especially for InfluxDB and Prometheus where the use of regex syntax requires that the variable is used in regex operator context.
+If you do not want Grafana to do this automatic regex escaping and formating your only option is to disable the *Multi-value* or *Include All option*
+options.
 
-Once configured, Multi-Select Tagging provides a convenient way to group and your template variables, and slice your data in the exact way you want. The Tags can be seen on the right side of the template pull-down.
+### Value groups/tags
 
-![](/img/docs/v2/multi-select.gif)
+If you have a lot of options in the dropdown for a multi-value variable. You can use this feature to group the values into selectable tags.
 
-### Interval
+Option | Description
+------- | --------
+*Tags query* | Data source query that should return a list of tags
+*Tag values query* | Data source query that should return a list of values for a specified tag key. Use `$tag` in the query to refer the currently selected tag.
 
-Use the `Interval` type to create Template variables around time ranges (eg. `1m`,`1h`, `1d`). There is also a special `auto` option that will change depending on the current time range, you can specify how many times the current time range should be divided to calculate the current `auto` range.
+![](/img/docs/v4/variable_dropdown_tags.png)
 
-![](/img/docs/v2/templated_variable_parameter.png)
+### Interval variables
 
-### Custom
+Use the `Interval` type to create a variable that represent a timespan (eg. `1m`,`1h`, `1d`). There is also a special `auto` option that will change depending on the current time range. You can specify how many times the current time range
+should be divided to calculate the current `auto` timespan.
 
-Use the `Custom` type to manually create Template variables around explicit values that are hard-coded into the Dashboard, and not dependent on any Data Source. You can specify multiple Custom Template values by separating them with a comma.
+This variable type is useful as parameter to group by time (for InfluxDB), Date histogram interval (for Elasticsearch) or as a *summarize* function parameter (for Graphite).
 
-##  Repeating Panels and Repeating Rows
+## Repeating Panels
 
-Template Variables can be very useful to dynamically change what you're visualizing on a given panel. Sometimes, you might want to create entire new Panels (or Rows) based on what Template Variables have been selected. This is now possible in Grafana 2.1.
+Template variables can be very useful to dynamically change your queries across a whole dashboard. If you want
+Grafana to dynamically create new panels or rows based on what values you have selected you can use the *Repeat* feature.
 
-Once you've got your Template variables (of any type) configured the way you'd like, check out the Repeating Panels and Repeating Row documentation
+If you have a variable with `Multi-value` or `Include all value` options enabled you can choose one panel or one row and have Grafana repeat that row
+for every selected value. You find this option under the General tab in panel edit mode. You select the variable to repeat by, and a `min span`.
+The `min span` controls how small Grafana will make the panels (if you have many values selected). Grafana will automatically adjust the width of
+each repeated panel so that the whole row is filled. Currently you cannot mix other panels on a row with a repeated panel.
 
-## Screencast - Templated Graphite Queries
+Only make changes to the first panel (the original template). To have the changes take effect on all panels you need to trigger a dynamic dashboard re-build.
+You can do this by either changing the variable value (that is the basis for the repeat) or reload the dashboard.
 
-<iframe width="561" height="315" src="//www.youtube.com/embed/FhNUrueWwOk?list=PLDGkOdUX1Ujo3wHw9-z5Vo12YLqXRjzg2" frameborder="0" allowfullscreen></iframe>
+## Repeating Rows
+
+This option requires you to open the row options view. Hover over the row left side to trigger the row menu, in this menu click `Row Options`. This
+opens the row options view. Here you find a *Repeat* dropdown where you can select the variable to repeat by.
+
+### URL state
+
+Variable values are always synced to the URL using the syntax `var-<varname>=value`.
+
 
