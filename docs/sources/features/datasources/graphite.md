@@ -18,15 +18,13 @@ change function parameters and much more. The editor can handle all types of gra
 queries through the use of query references.
 
 ## Adding the data source
-![](/img/docs/v2/add_Graphite.jpg)
 
 1. Open the side menu by clicking the the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
+3. Click the `+ Add data source` button in the top header.
+4. Select `Graphite` from the *Type* dropdown.
 
-    > NOTE: If this link is missing in the side menu it means that your current user does not have the `Admin` role for the current organization.
-
-3. Click the `Add new` link in the top header.
-4. Select `Graphite` from the dropdown.
+> NOTE: If your not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
 Name | Description
 ------------ | -------------
@@ -84,7 +82,7 @@ being displayed in your dashboard.
 Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
 types of template variables.
 
-### Query variables
+### Query variable
 
 The query you specify in the query field should be a metric find type of query. For example a query like `prod.servers.*` will fill the
 variable with all possible values that exists in the wildcard position.
