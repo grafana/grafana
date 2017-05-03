@@ -11,7 +11,6 @@ import moment from 'moment';
 import _ from 'lodash';
 import TimeSeries from 'app/core/time_series2';
 import config from 'app/core/config';
-import * as fileExport from 'app/core/utils/file_export';
 import {MetricsPanelCtrl, alertTab} from 'app/plugins/sdk';
 import {DataProcessor} from './data_processor';
 import {axesEditorComponent} from './axes_editor';
@@ -147,8 +146,7 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   onInitPanelActions(actions) {
-    actions.push({text: 'Export CSV (series as rows)', click: 'ctrl.exportCsv()'});
-    actions.push({text: 'Export CSV (series as columns)', click: 'ctrl.exportCsvColumns()'});
+    actions.push({text: 'Export CSV', click: 'ctrl.exportCsv()'});
     actions.push({text: 'Toggle legend', click: 'ctrl.toggleLegend()'});
   }
 
@@ -313,13 +311,15 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   exportCsv() {
-    fileExport.exportSeriesListToCsv(this.seriesList);
-  }
+    var scope = this.$scope.$new();
+    scope.seriesList = this.seriesList;
 
-  exportCsvColumns() {
-    fileExport.exportSeriesListToCsvColumns(this.seriesList);
+    this.publishAppEvent('show-modal', {
+      src: 'public/app/features/dashboard/partials/exportCsvModal.html',
+      scope,
+      modalClass: 'modal--narrow'
+    });
   }
-
 }
 
 export {GraphCtrl, GraphCtrl as PanelCtrl};
