@@ -48,6 +48,8 @@ Name | Description
 *Legend format* | Controls the name of the time series, using name or pattern. For example `{{hostname}}` will be replaced with label value for the label `hostname`.
 *Min step* | Set a lower limit for the prometheus step option. Step controls how big the jumps are when the Prometheus query engine performs range queries. Sadly there is no official prometheus documentation to link to for this very important option.
 *Resolution* | Controls the step option. Small steps create high resolution graphs but can be slow over larger time ranges, lowering the resolution can speed things up. `1/2` will try to set step option to generate 1 data point over other pixel. A value of `1/10` will try to set step option so there is a data point every 10 pixels.
+*Metric lookup* | Search for metric names in this input field.
+*Format as* | **(New in v4.3)** Switch between Table & Time series. Table format will only work in the Table panel.
 
 ## Templating
 
