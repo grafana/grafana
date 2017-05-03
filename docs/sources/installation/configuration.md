@@ -624,7 +624,7 @@ Time to live for snapshots.
 These options control how images should be made public so they can be shared on services like slack.
 
 ### provider
-You can choose between (s3, webdav). If left empty Grafana will ignore the upload action.
+You can choose between (s3, swift, webdav). If left empty Grafana will ignore the upload action.
 
 ## [external_image_storage.s3]
 
@@ -641,6 +641,35 @@ Access key requires permissions to the S3 bucket for the 's3:PutObject' and 's3:
 
 ### secret_key
 Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+## [external_image_storage.swift]
+
+### authEndpoint
+URL to Keystone for authentication, for example https://my-openstack-provider:5000/v2.0
+
+### region
+Name of the region in the Openstack installation, for example "regionOne"
+
+### tenantName
+Name the tenant
+
+### username
+User to log in as
+
+### password
+Password for the user
+
+### container
+Name of the container to store the image in
+
+### prefix
+A prefix added to the image path
+
+### addDateDirs
+Boolean, if true, adds "yyyy/mm/dd" to the image path. This is added after the prefix, if set
+
+### imageTTLDays
+If set, the image is automatically removed after the set number of days
 
 ## [external_image_storage.webdav]
 

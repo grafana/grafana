@@ -36,6 +36,24 @@ func NewImageUploader() (ImageUploader, error) {
 		}
 
 		return NewS3Uploader(info.region, info.bucket, "public-read", accessKey, secretKey), nil
+	case "swift":
+		swiftsec, err := setting.Cfg.GetSection("external_image_storage.swift")
+		if err != nil {
+			return nil, err
+		}
+
+		opts := SwiftUploaderOpts{
+			authEndpoint: swiftsec.Key("authEndpoint").MustString(""),
+			region:       swiftsec.Key("region").MustString(""),
+			username:     swiftsec.Key("username").MustString(""),
+			password:     swiftsec.Key("password").MustString(""),
+			tenantName:   swiftsec.Key("tenantName").MustString(""),
+			container:    swiftsec.Key("container").MustString(""),
+			prefix:       swiftsec.Key("prefix").MustString(""),
+			addDateDirs:  swiftsec.Key("addDateDirs").MustBool(false),
+			imageTTLDays: swiftsec.Key("imageTTLDays").MustInt(0),
+		}
+		return NewSwiftUploader(opts), nil
 	case "webdav":
 		webdavSec, err := setting.Cfg.GetSection("external_image_storage.webdav")
 		if err != nil {

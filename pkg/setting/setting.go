@@ -167,6 +167,17 @@ var (
 	S3TempImageStoreAccessKey string
 	S3TempImageStoreSecretKey string
 
+	// Swift temp image store
+	SwiftAuthEndpoint string
+	SwiftRegion       string
+	SwiftTenantName   string
+	SwiftUsername     string
+	SwiftPassword     string
+	SwiftContainer    string
+	SwiftPrefix       string
+	SwiftAddDateDirs  bool
+	SwiftImageTTLDays int
+
 	ImageUploadProvider string
 )
 
