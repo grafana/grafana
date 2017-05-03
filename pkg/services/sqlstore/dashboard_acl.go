@@ -10,6 +10,7 @@ import (
 
 func init() {
 	bus.AddHandler("sql", AddOrUpdateDashboardPermission)
+	bus.AddHandler("sql", RemoveDashboardPermission)
 	bus.AddHandler("sql", GetDashboardPermissions)
 }
 
@@ -61,6 +62,18 @@ func AddOrUpdateDashboardPermission(cmd *m.AddOrUpdateDashboardPermissionCommand
 		}
 
 		return nil
+	})
+}
+
+func RemoveDashboardPermission(cmd *m.RemoveDashboardPermissionCommand) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		var rawSql = "DELETE FROM dashboard_acl WHERE dashboard_id =? and (user_group_id=? or user_id=?)"
+		_, err := sess.Exec(rawSql, cmd.DashboardId, cmd.UserGroupId, cmd.UserId)
+		if err != nil {
+			return err
+		}
+
+		return err
 	})
 }
 

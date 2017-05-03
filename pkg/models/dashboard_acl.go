@@ -41,6 +41,13 @@ type AddOrUpdateDashboardPermissionCommand struct {
 	PermissionType PermissionType `json:"permissionType" binding:"Required"`
 }
 
+type RemoveDashboardPermissionCommand struct {
+	DashboardId int64 `json:"dashboardId" binding:"Required"`
+	OrgId       int64 `json:"-"`
+	UserId      int64 `json:"userId"`
+	UserGroupId int64 `json:"userGroupId"`
+}
+
 //
 // QUERIES
 //
