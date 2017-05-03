@@ -119,7 +119,8 @@ func (node *ClusterNode) GetActiveNodesCount(ts int64) (int, error) {
 		return 0, errors.New("Cluster node object is nil")
 	}
 	//TODO
-	return 0, errors.New("Not implemented")
+	node.log.Error("GetActiveNodesCount not implemented; default 1")
+	return 1, nil
 }
 
 func (node *ClusterNode) GetLastHeartbeat() (int64, error) {

@@ -2,10 +2,13 @@ package alerting
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -38,8 +41,9 @@ func (e *Engine) Run(ctx context.Context) error {
 	e.log.Info("Initializing Alerting")
 
 	alertGroup, ctx := errgroup.WithContext(ctx)
-
-	alertGroup.Go(func() error { return e.alertingTicker(ctx) })
+	if !setting.ClusteringEnabled {
+		alertGroup.Go(func() error { return e.alertingTicker(ctx) })
+	}
 	alertGroup.Go(func() error { return e.runJobDispatcher(ctx) })
 
 	err := alertGroup.Wait()
@@ -138,4 +142,25 @@ func (e *Engine) processJob(grafanaCtx context.Context, job *Job) error {
 
 func (e *Engine) GetPendingJobCount() int {
 	return len(e.execQueue)
+}
+
+func (e *Engine) ScheduleAlertsForPartition(partitionNo int, nodeCount int) error {
+	if nodeCount == 0 {
+		return errors.New("Node count is 0")
+	}
+	if partitionNo >= nodeCount {
+		return errors.New(fmt.Sprintf("Invalid partitionNo %v (node count = %v)", partitionNo, nodeCount))
+	}
+	rules := e.ruleReader.Fetch()
+	filterCount := 0
+	for _, rule := range rules {
+		//TODO handle frequency greater than 1 min
+		if rule.Id%int64(nodeCount) == int64(partitionNo) {
+			e.execQueue <- &Job{Rule: rule}
+			filterCount++
+		}
+	}
+	e.log.Info(fmt.Sprintf("%v/%v rules scheduled for execution for partition %v/%v",
+		filterCount, len(rules), partitionNo, nodeCount))
+	return nil
 }
