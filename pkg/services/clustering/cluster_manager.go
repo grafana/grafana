@@ -146,8 +146,12 @@ func (cm *ClusterManager) checkMissingAlerts() bool {
 	cmd := &m.GetMissingAlertsQuery{}
 	if err := bus.Dispatch(cmd); err != nil {
 		cm.log.Error("Failed to get missing alerts", "error", err)
+		return false
 	}
 	cm.log.Debug("Command to get missing alerts executed successfully")
+	//TODO
+	return false
+}
 
 func (cm *ClusterManager) scheduleMissingAlerts() {
 	cm.log.Debug("Cluster manager ticker - process missing alerts")
