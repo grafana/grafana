@@ -19,20 +19,19 @@ queries through the use of query references.
 
 ## Adding the data source
 
-1. Open the side menu by clicking the the Grafana icon in the top header.
+1. Open the side menu by clicking the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 3. Click the `+ Add data source` button in the top header.
 4. Select `Graphite` from the *Type* dropdown.
 
-> NOTE: If your not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
+> NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
 Name | Description
 ------------ | -------------
 Name | The data source name, important that this is the same as in Grafana v1.x if you plan to import old dashboards.
 Default | Default data source means that it will be pre-selected for new panels.
-Url | The http protocol, ip and port of your graphite-web or graphite-api install.
+Url | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.
 Access | Proxy = access via Grafana backend, Direct = access directly from browser.
-
 
 Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication details to the Data Source to the browser.
 
@@ -63,11 +62,11 @@ Some functions like aliasByNode support an optional second argument. To add this
 
 ### Nested Queries
 
-You can reference queries by the row “letter” that they’re on (similar to  Microsoft Excel). If you add a second query to graph, you can reference the first query simply by typing in #A. This provides an easy and convenient way to build compounded queries.
+You can reference queries by the row “letter” that they’re on (similar to  Microsoft Excel). If you add a second query to a graph, you can reference the first query simply by typing in #A. This provides an easy and convenient way to build compounded queries.
 
 ## Point consolidation
 
-All Graphite metrics are consolidated so that Graphite doesn't return more data points than there are pixels in the graph. By default
+All Graphite metrics are consolidated so that Graphite doesn't return more data points than there are pixels in the graph. By default,
 this consolidation is done using `avg` function. You can how Graphite consolidates metrics by adding the Graphite consolidateBy function.
 
 > *Notice* This means that legend summary values (max, min, total) cannot be all correct at the same time. They are calculated
@@ -84,8 +83,8 @@ types of template variables.
 
 ### Query variable
 
-The query you specify in the query field should be a metric find type of query. For example a query like `prod.servers.*` will fill the
-variable with all possible values that exists in the wildcard position.
+The query you specify in the query field should be a metric find type of query. For example, a query like `prod.servers.*` will fill the
+variable with all possible values that exist in the wildcard position.
 
 You can also create nested variables that use other variables in their definition. For example
 `apps.$app.servers.*` uses the variable `$app` in its query definition.
@@ -100,7 +99,7 @@ There are two syntaxes:
 - `$<varname>`  Example: apps.frontend.$server.requests.count
 - `[[varname]]` Example: apps.frontend.[[server]].requests.count
 
-Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of word. Use
+Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. Use
 the second syntax in expressions like  `my.server[[serverNumber]].count`.
 
 ## Annotations
@@ -109,6 +108,4 @@ the second syntax in expressions like  `my.server[[serverNumber]].count`.
 queries via the Dashboard menu / Annotations view.
 
 Graphite supports two ways to query annotations. A regular metric query, for this you use the `Graphite query` textbox. A Graphite events query, use the `Graphite event tags` textbox,
-specify an tag or wildcard (leave empty should also work)
-
-
+specify a tag or wildcard (leave empty should also work)

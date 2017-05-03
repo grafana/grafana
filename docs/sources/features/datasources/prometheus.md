@@ -10,19 +10,18 @@ parent = "datasources"
 weight = 2
 +++
 
-
 # Using Prometheus in Grafana
 
-Grafana includes support for Prometheus Datasources. While the process of adding the datasource is similar to adding a Graphite or OpenTSDB datasource type, Prometheus does have a few different options for building queries.
+Grafana includes built-in support for Prometheus.
 
 ## Adding the data source to Grafana
 
-1. Open the side menu by clicking the the Grafana icon in the top header.
+1. Open the side menu by clicking the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 3. Click the `+ Add data source` button in the top header.
 4. Select `Prometheus` from the *Type* dropdown.
 
-> NOTE: If your not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
+> NOTE: If you're not seeing the `Data Sources` link in your side menu it means that your current user does not have the `Admin` role for the current organization.
 
 ## Data source options
 
@@ -32,7 +31,7 @@ Name | Description
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Url* | The http protocol, ip and port of you Prometheus server (default port is usually 9090)
 *Access* | Proxy = access via Grafana backend, Direct = access directly from browser.
-*Basic Auth* | Enable basic authentication to the Prometheus datasource.
+*Basic Auth* | Enable basic authentication to the Prometheus data source.
 *User* | Name of your Prometheus user
 *Password* | Database user's password
 
@@ -46,9 +45,8 @@ Name | Description
 ------- | --------
 *Query expression* | Prometheus query expression, check out the [Prometheus documentation](http://prometheus.io/docs/querying/basics/).
 *Legend format* | Controls the name of the time series, using name or pattern. For example `{{hostname}}` will be replaced with label value for the label `hostname`.
-*Min step* | Set a lower limit for the prometheus step option. Step controls how big the jumps are when the Prometheus query engine performs range queries. Sadly there is no official prometheus documentation to link to for this very important option.
-*Resolution* | Controls the step option. Small steps create high resolution graphs but can be slow over larger time ranges, lowering the resolution can speed things up. `1/2` will try to set step option to generate 1 data point over other pixel. A value of `1/10` will try to set step option so there is a data point every 10 pixels.
-*Metric lookup* | Search for metric names in this input field.
+*Min step* | Set a lower limit for the Prometheus step option. Step controls how big the jumps are when the Prometheus query engine performs range queries. Sadly there is no official prometheus documentation to link to for this very important option.
+*Resolution* | Controls the step option. Small steps create high-resolution graphs but can be slow over larger time ranges, lowering the resolution can speed things up. `1/2` will try to set step option to generate 1 data point for every other pixel. A value of `1/10` will try to set step option so there is a data point every 10 pixels.*Metric lookup* | Search for metric names in this input field.
 *Format as* | **(New in v4.3)** Switch between Table & Time series. Table format will only work in the Table panel.
 
 ## Templating
@@ -81,8 +79,8 @@ There are two syntaxes:
 - `$<varname>`  Example: rate(http_requests_total{job=~"$job"}[5m])
 - `[[varname]]` Example: rate(http_requests_total{job="my[[job]]"}[5m])
 
-Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of word. When the *Multi-value* or *Include all value*
-option is enabled, Grafana converts the labels from plain text to a regex compatible string. Which means you have to use `=~` instead of `=`.
+Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. When the *Multi-value* or *Include all value*
+options are enabled, Grafana converts the labels from plain text to a regex compatible string. Which means you have to use `=~` instead of `=`.
 
 ## Annotations
 
