@@ -21,4 +21,5 @@ define([
   './ad_hoc_filters',
   './row/row_ctrl',
   './repeat_option/repeat_option',
+  './exportCsvModalCtrl'
 ], function () {});
