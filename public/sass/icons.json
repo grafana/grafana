@@ -1,4 +1,6 @@
 [
+      "grafana_wordmark",
+      "worldping",
       "raintank_wordmark",
       "raintank_r-icn",
       "check-alt",
@@ -46,7 +48,5 @@
       "apps",
       "scale",
       "pending",
-      "verified",
-      "worldping",
-      "grafana_wordmark"
+      "verified"
 ]
