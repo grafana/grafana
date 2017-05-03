@@ -1,7 +1,8 @@
 package sqlstore
 
 import (
-	"strconv"
+	"fmt"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
@@ -12,6 +13,7 @@ func init() {
 }
 
 func GetAllowedDashboards(query *m.GetAllowedDashboardsQuery) error {
+	dashboardIds := arrayToString(query.DashList, ",")
 
 	rawSQL := `select distinct d.id as DashboardId
 from dashboard as d
@@ -23,19 +25,18 @@ where (
   or d.has_acl = 0)
   and d.org_id = ?`
 
-	res, err := x.Query(rawSQL, query.UserId, query.UserId, query.UserId, query.UserId, query.OrgId)
+	rawSQL = fmt.Sprintf("%v and d.id in(%v)", rawSQL, dashboardIds)
+
+	query.Result = make([]int64, 0)
+	err := x.In("DashboardId", query.DashList).SQL(rawSQL, query.UserId, query.UserId, query.UserId, query.UserId, query.OrgId).Find(&query.Result)
+
 	if err != nil {
 		return err
 	}
 
-	query.Result = make([]int64, 0)
-	for _, dash := range res {
-		id, err := strconv.ParseInt(string(dash["DashboardId"]), 10, 64)
-		if err != nil {
-			return err
-		}
-		query.Result = append(query.Result, id)
-	}
-
 	return nil
+}
+
+func arrayToString(a []int64, delim string) string {
+	return strings.Trim(strings.Replace(fmt.Sprint(a), " ", delim, -1), "[]")
 }
