@@ -17,9 +17,9 @@ define([
   './upload',
   './import/dash_import',
   './export/export_modal',
+  './export_data/export_data_modal',
   './dash_list_ctrl',
   './ad_hoc_filters',
   './row/row_ctrl',
   './repeat_option/repeat_option',
-  './exportCsvModalCtrl'
 ], function () {});

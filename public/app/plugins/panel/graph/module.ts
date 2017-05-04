@@ -311,11 +311,10 @@ class GraphCtrl extends MetricsPanelCtrl {
   }
 
   exportCsv() {
-    var scope = this.$scope.$new();
+    var scope = this.$scope.$new(true);
     scope.seriesList = this.seriesList;
-
     this.publishAppEvent('show-modal', {
-      src: 'public/app/features/dashboard/partials/exportCsvModal.html',
+      templateHtml: '<export-data-modal data="seriesList"></export-data-modal>',
       scope,
       modalClass: 'modal--narrow'
     });
