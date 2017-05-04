@@ -8,7 +8,6 @@ export class AxesEditorCtrl {
   unitFormats: any;
   logScales: any;
   dataFormats: any;
-  yBucketModes: any[];
 
   /** @ngInject */
   constructor($scope, uiSegmentSrv) {
@@ -29,11 +28,6 @@ export class AxesEditorCtrl {
       'Time series': 'timeseries',
       'Time series Pre-bucketed': 'tsbuckets'
     };
-
-    this.yBucketModes =  [
-      {text: 'Count',  value: 'count'},
-      {text: 'Interval', value: 'interval'},
-    ];
   }
 
   setUnitFormat(subItem) {

@@ -30,7 +30,11 @@ let panelDefaults = {
   dataFormat: 'timeseries',
   xAxis: {
     show: true,
-    buckets: 'auto',
+    buckets: {
+      mode: 'count',
+      count: null,
+      size: null,
+    },
   },
   yAxis: {
     show: true,
@@ -40,7 +44,11 @@ let panelDefaults = {
     splitFactor: null,
     min: null,
     max: null,
-    buckets: 'auto',
+    buckets: {
+      mode: 'count',
+      count: null,
+      size: null,
+    },
     removeZeroValues: false
   },
   tooltip: {
