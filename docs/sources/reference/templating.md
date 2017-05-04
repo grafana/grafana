@@ -170,3 +170,9 @@ opens the row options view. Here you find a *Repeat* dropdown where you can sele
 
 Variable values are always synced to the URL using the syntax `var-<varname>=value`.
 
+### Examples
+
+- [Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
+- [Elasticsearch Templated Dashboard](http://play.grafana.org/dashboard/db/elasticsearch-templated)
+- [InfluxDB Templated Dashboard](http://play.grafana.org/dashboard/db/influxdb-templated-queries)
+

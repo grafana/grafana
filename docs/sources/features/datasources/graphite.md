@@ -28,15 +28,12 @@ queries through the use of query references.
 
 Name | Description
 ------------ | -------------
-Name | The data source name, important that this is the same as in Grafana v1.x if you plan to import old dashboards.
+Name | The data source name. This is how you refer to the data source in panel metric queries.
 Default | Default data source means that it will be pre-selected for new panels.
 Url | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.
 Access | Proxy = access via Grafana backend, Direct = access directly from browser.
 
 Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication details to the Data Source to the browser.
-
-Direct access is still supported because in some cases it may be useful to access a Data Source directly depending on the use case and topology of Grafana, the user, and the Data Source.
-
 
 ## Metric editor
 
@@ -47,6 +44,7 @@ or keyboard arrow keys. You can select a wildcard and still continue.
 ![](/img/docs/animated_gifs/graphite_query1.gif)
 
 ### Functions
+
 Click the plus icon to the right to add a function. You can search for the function or select it from the menu. Once
 a function is selected it will be added and your focus will be in the text box of the first parameter. To later change
 a parameter just click on it and it will turn into a text box. To delete a function click the function name followed
@@ -54,8 +52,8 @@ by the x icon.
 
 ![](/img/docs/animated_gifs/graphite_query2.gif)
 
-
 ### Optional parameters
+
 Some functions like aliasByNode support an optional second argument. To add this parameter specify for example 3,-2 as the first parameter and the function editor will adapt and move the -2 to a second parameter. To remove the second optional parameter just click on it and leave it blank and the editor will remove it.
 
 ![](/img/docs/animated_gifs/func_editor_optional_params.gif)
@@ -101,6 +99,9 @@ There are two syntaxes:
 
 Why two ways? The first syntax is easier to read and write but does not allow you to use a variable in the middle of a word. Use
 the second syntax in expressions like  `my.server[[serverNumber]].count`.
+
+Example:
+[Graphite Templated Dashboard](http://play.grafana.org/dashboard/db/graphite-templated-nested)
 
 ## Annotations
 
