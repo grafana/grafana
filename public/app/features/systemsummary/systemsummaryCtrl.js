@@ -8,7 +8,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('SystemsummaryCtrl', function ($scope, backendSrv, contextSrv, datasourceSrv, alertMgrSrv, healthSrv) {
+    module.controller('SystemsummaryCtrl', function ($scope, $location, backendSrv, contextSrv, datasourceSrv, alertMgrSrv, healthSrv) {
 
       var panelMeta = {
         "collapse": false,
@@ -85,7 +85,11 @@ define([
       ];
 
       $scope.init = function () {
-
+        if (contextSrv.system == 0 && contextSrv.user.orgId) {
+          $location.url("/systems");
+          contextSrv.sidmenu = false;
+          return;
+        }
         $scope.datasource = null;
 
         $scope.initDashboard({
