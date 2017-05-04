@@ -27,7 +27,7 @@ Grafana includes built-in support for Prometheus.
 
 Name | Description
 ------------ | -------------
-*Name* | The data source name, important that this is the same as in Grafana v1.x if you plan to import old dashboards.
+*Name* | The data source name. This is how you refer to the data source in panels & queries.
 *Default* | Default data source means that it will be pre-selected for new panels.
 *Url* | The http protocol, ip and port of you Prometheus server (default port is usually 9090)
 *Access* | Proxy = access via Grafana backend, Direct = access directly from browser.

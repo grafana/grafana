@@ -12,12 +12,12 @@ weight = 3
 
 # Using Elasticsearch in Grafana
 
-Grafana ships with advanced support for Elasticsearch. You can do many types of simple or complex elasticsearch queries to
-visualize logs or metrics stored in elasticsearch. You can also annotate your graphs with log events stored in elasticsearch.
+Grafana ships with advanced support for Elasticsearch. You can do many types of simple or complex Elasticsearch queries to
+visualize logs or metrics stored in Elasticsearch. You can also annotate your graphs with log events stored in Elasticsearch.
 
 ## Adding the data source
 
-1. Open the side menu by clicking the the Grafana icon in the top header.
+1. Open the side menu by clicking the Grafana icon in the top header.
 2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
 3. Click the `+ Add data source` button in the top header.
 4. Select *Elasticsearch* from the *Type* dropdown.
@@ -26,12 +26,12 @@ visualize logs or metrics stored in elasticsearch. You can also annotate your gr
 
 Name | Description
 ------------ | -------------
-Name | The data source name. This is how you refer to the data source in panel metric queries.
-Default | Default data source means that it will be pre-selected for new panels.
-Url | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.
-Access | Proxy = access via Grafana backend, Direct = access directly from browser.
+*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Default* | Default data source means that it will be pre-selected for new panels.
+*Url* | The HTTP protocol, IP, and port of your Elasticsearch server.
+*Access* | Proxy = access via Grafana backend, Direct = access directly from browser.
 
-Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication details to the Data Source to the browser.
+Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication to the browser.
 
 ### Direct access
 
@@ -45,15 +45,20 @@ Elasticsearch from the browser. You do this by specifying these to options in yo
 
 ![](/img/docs/elasticsearch/elasticsearch_ds_details.png)
 
-Here you can specify a default for the `time field` and specify the name of your elasticsearch index. You can use
+Here you can specify a default for the `time field` and specify the name of your Elasticsearch index. You can use
 a time pattern for the index name or a wildcard.
+
+### Elasticsearch version
+
+Be sure to specify your Elasticsearch version in the version selection dropdown. This is very important as there are differences how queries are composed. Currently only 2.x and 5.x
+are supported.
 
 ## Metric Query editor
 
 ![](/img/docs/elasticsearch/query_editor.png)
 
-The Elasticsearch query editor allows you to select multiple metrics and group by multiple terms or filters. Use the plus and minus icons to the right to add / remove
-metrics or group bys. Some metrics and group by have options, click the option text to expand the the row to view and edit metric or group by options.
+The Elasticsearch query editor allows you to select multiple metrics and group by multiple terms or filters. Use the plus and minus icons to the right to add/remove
+metrics or group by clauses. Some metrics and group by clauses haves options, click the option text to expand the row to view and edit metric or group by options.
 
 ## Series naming & alias patterns
 
@@ -67,10 +72,7 @@ Pattern | Description
 
 ## Pipeline metrics
 
-If you have Elasticsearch 2.x and Grafana 2.6 or above then you can use pipeline metric aggregations like
-**Moving Average** and **Derivative**. Elasticsearch pipeline metrics require another metric to be based on. Use the eye icon next to the metric
-to hide metrics from appearing in the graph. This is useful for metrics you only have in the query to be used
-in a pipeline metric.
+Some metric aggregations are called Pipeline aggregations, for example, *Moving Average* and *Derivative*. Elasticsearch pipeline metrics require another metric to be based on. Use the eye icon next to the metric to hide metrics from appearing in the graph. This is useful for metrics you only have in the query for use in a pipeline metric.
 
 ![](/img/docs/elasticsearch/pipeline_metrics_editor.png)
 
@@ -85,9 +87,7 @@ types of template variables.
 
 ### Query variable
 
-The Elasticsearch datasource supports two types of queries you can use in the *Query* field of *Query* variables.
-
-The query is written using a custom json string.g
+The Elasticsearch data source supports two types of queries you can use in the *Query* field of *Query* variables. The query is written using a custom JSON string.
 
 Query | Description
 ------------ | -------------
@@ -95,14 +95,13 @@ Query | Description
 *{"find": "terms", "field": "@hostname"}* |  Returns a list of values for a field using term aggregation. Query will user current dashboard time range as time range for query.
 *{"find": "terms", "field": "@hostname", "query": '<lucene query>'}* | Returns a list of values for a field using term aggregation & and a specified lucene query filter. Query will use current dashboard time range as time range for query.
 
-You can use other variables inside the query. Example query definition for variable named `$host`.
+You can use other variables inside the query. Example query definition for a variable named `$host`.
 
 ```
 {"find": "terms", "field": "@hostname", "query": "@source:$source"}
 ```
 
-In the above example we use another variable named `$source` inside the the query definition. When ever you change, via the dropdown, the current
-value of the ` $source` variable, it will trigger an update of the `$host` variable so it now only contains hostnames filtered by in this case the
+In the above example, we use another variable named `$source` inside the query definition. Whenever you change, via the dropdown, the current value of the ` $source` variable, it will trigger an update of the `$host` variable so it now only contains hostnames filtered by in this case the
 `@source` document property.
 
 ### Using variables in queries
@@ -117,7 +116,7 @@ options are enabled, Grafana converts the labels from plain text to a lucene com
 
 ![](/img/docs/v43/elastic_templating_query.png)
 
-In the above example we have a lucene query that filters documents based on the `@hostname`  property using a variable named `$hostname`. It is also using
+In the above example, we have a lucene query that filters documents based on the `@hostname`  property using a variable named `$hostname`. It is also using
 a variable in the *Terms* group by field input box. This allows you to use a variable to quickly change how the data is grouped.
 
 Example dashboard:
@@ -133,10 +132,6 @@ Name | Description
 ------------ | -------------
 Query | You can leave the search query blank or specify a lucene query
 Time | The name of the time field, needs to be date field.
-Title | The name of field to use for the event title.
-Tags | Optional field name to use for event tags (can be array or csv string).
+Title | The name of the field to use for the event title.
+Tags | Optional field name to use for event tags (can be an array or a CSV string).
 Text | Optional field name to use event text body.
-
-
-
-

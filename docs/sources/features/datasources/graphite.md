@@ -28,12 +28,12 @@ queries through the use of query references.
 
 Name | Description
 ------------ | -------------
-Name | The data source name. This is how you refer to the data source in panel metric queries.
-Default | Default data source means that it will be pre-selected for new panels.
-Url | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.
-Access | Proxy = access via Grafana backend, Direct = access directly from browser.
+*Name* | The data source name. This is how you refer to the data source in panels & queries.
+*Default* | Default data source means that it will be pre-selected for new panels.
+*Url* | The HTTP protocol, IP, and port of your graphite-web or graphite-api install.
+*Access* | Proxy = access via Grafana backend, Direct = access directly from browser.
 
-Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication details to the Data Source to the browser.
+Proxy access means that the Grafana backend will proxy all requests from the browser, and send them on to the Data Source. This is useful because it can eliminate CORS (Cross Origin Site Resource) issues, as well as eliminate the need to disseminate authentication details to the browser.
 
 ## Metric editor
 
