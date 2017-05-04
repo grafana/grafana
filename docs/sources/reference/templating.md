@@ -14,9 +14,6 @@ Instead of hard-coding things like server, application and sensor name in you me
 Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
 being displayed in your dashboard.
 
-Checkout the [Templating]({{< relref "reference/templating.md" >}}) documentation for an introduction to the templating feature and the different
-types of template variables.
-
 <img class="no-shadow" src="/img/docs/v4/templated_dash.png">
 
 Templating allows for more interactive and dynamic dashboards. Instead of hard-coding things like server, application
