@@ -27,8 +27,13 @@ func (e *DefaultEvalHandler) Eval(context *EvalContext) {
 	noDataFound := true
 	conditionEvals := ""
 
-	for i := 0; i < len(context.Rule.Conditions); i++ {
-		condition := context.Rule.Conditions[i]
+	conditions := context.Rule.Conditions
+	if context.PrevAlertState == models.AlertStateAlerting {
+		conditions = context.Rule.ConditionsKeep
+	}
+
+	for i := 0; i < len(conditions); i++ {
+		condition := conditions[i]
 		cr, err := condition.Eval(context)
 		if err != nil {
 			context.Error = err
