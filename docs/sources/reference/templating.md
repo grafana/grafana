@@ -10,15 +10,11 @@ weight = 1
 
 # Templating
 
-Instead of hard-coding things like server, application and sensor name in you metric queries you can use variables in their place.
-Variables are shown as dropdown select boxes at the top of the dashboard. These dropdowns makes it easy to change the data
-being displayed in your dashboard.
-
-<img class="no-shadow" src="/img/docs/v4/templated_dash.png">
-
 Templating allows for more interactive and dynamic dashboards. Instead of hard-coding things like server, application
 and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
 the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
+
+<img class="no-shadow" src="/img/docs/v4/templated_dash.png">
 
 ## What is a variable?
 
@@ -42,7 +38,7 @@ documentation article for details on value escaping during interpolation.
 
 ### Variable options
 
-A variable is presented as a dropdown select box at the top of the dashboards. It has a current value and a set of **options**. The **options**
+A variable is presented as a dropdown select box at the top of the dashboard. It has a current value and a set of **options**. The **options**
 is the set of values you can choose from.
 
 ## Adding a variable
@@ -151,7 +147,7 @@ Template variables can be very useful to dynamically change your queries across 
 Grafana to dynamically create new panels or rows based on what values you have selected you can use the *Repeat* feature.
 
 If you have a variable with `Multi-value` or `Include all value` options enabled you can choose one panel or one row and have Grafana repeat that row
-for every selected value. You find this option under the General tab in panel edit mode. You select the variable to repeat by, and a `min span`.
+for every selected value. You find this option under the General tab in panel edit mode. Select the variable to repeat by, and a `min span`.
 The `min span` controls how small Grafana will make the panels (if you have many values selected). Grafana will automatically adjust the width of
 each repeated panel so that the whole row is filled. Currently, you cannot mix other panels on a row with a repeated panel.
 
