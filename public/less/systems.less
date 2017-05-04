@@ -54,15 +54,15 @@
 
 
 .system-legend-success{
-  color: @btnSuccessBackground;
+  color: @normalBackground;
 }
 
 .system-legend-warning{
-  color: @btnWarningBackground;
+  color: @warningBackground;
 }
 
 .system-legend-danger{
-  color: @btnDangerBackground;
+  color: @criticalBackground;
 }
 
 .system-legend{
@@ -77,15 +77,39 @@
 }
 
 .system-label-success{
-  border-color: @btnSuccessBackground;
+  border-color: @normalBackground;
 }
 
 .system-label-warning{
-  border-color: @btnWarningBackground;
+  border-color: @warningBackground;
 }
 
 .system-label-danger{
-  border-color: @btnDangerBackground;
+  border-color: @criticalBackground;
+}
+
+.system-status-success{
+  background-color: @normalBackground;
+  color: @white;
+}
+
+.system-status-warning{
+  background-color: @warningBackground;
+}
+
+.system-status-danger{
+  background-color: @criticalBackground;
+}
+
+.system-status{
+  color: @white;
+  text-align: center;
+  border-radius: 5px;
+  cursor: pointer;
+  &:hover,&:active{
+    text-decoration: none;
+    color: @white;
+  }
 }
 
 .system-status-box{
@@ -94,3 +118,8 @@
     margin: 20px;
   }
 }
+
+// summary label color
+@normalBackground: rgb(61,183,121);
+@warningBackground: rgb(255,197,58);
+@criticalBackground: rgb(224,76,65);

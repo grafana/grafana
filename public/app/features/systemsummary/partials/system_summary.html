@@ -1,4 +1,4 @@
-<topnav section="系统总览" icon="fa fa-fw fa-home"></topnav>
+<topnav section="关键指标" icon="fa fa-fw fa-home"></topnav>
 <div class="page-container" style="padding-left: 10px;">
     <div class="summary-list" style="box-sizing:border-box;">
 
@@ -34,9 +34,9 @@
                             </div>
                             <ul class="btn-list-status" ng-if="panleJson[row_name].status">
                                 <li class="btn-item" style="width:70px;">当前状态:</li>
-                                <li class="btn-item btn btn-danger" ng-if="panleJson[row_name].status.danger[1]!=0">{{panleJson[row_name].status.danger[0]}} <span>{{panleJson[row_name].status.danger[1]}}</span></li>
-                                <li class="btn-item btn btn-warning" ng-if="panleJson[row_name].status.warn[1]!=0">{{panleJson[row_name].status.warn[0]}} <span>{{panleJson[row_name].status.warn[1]}}</span></li>
-                                <li class="btn-item btn btn-success" ng-if="panleJson[row_name].status.success[1]!=0">{{panleJson[row_name].status.success[0]}} <span>{{panleJson[row_name].status.success[1]}}</span></li>
+                                <li ng-if="panleJson[row_name].status.danger[1]!=0"><a href="{{panleJson[row_name].href}}" class="btn-item system-status system-status-danger">{{panleJson[row_name].status.danger[0]}} <span>{{panleJson[row_name].status.danger[1]}}</span></a></li>
+                                <li ng-if="panleJson[row_name].status.warn[1]!=0"><a href="{{panleJson[row_name].href}}" class="btn-item system-status system-status-warning">{{panleJson[row_name].status.warn[0]}} <span>{{panleJson[row_name].status.warn[1]}}</span></a></li>
+                                <li ng-if="panleJson[row_name].status.success[1]!=0"><a href="{{panleJson[row_name].href}}" class="btn-item system-status system-status-success">{{panleJson[row_name].status.success[0]}} <span>{{panleJson[row_name].status.success[1]}}</span></a></li>
                             </ul>
                             <div class="clearfix"></div>
                             <panel-loader type="panel.type" class="panel-margin summary-panel"></panel-loader>

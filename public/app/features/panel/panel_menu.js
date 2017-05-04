@@ -29,7 +29,7 @@ function (angular, $, _) {
         return template;
       }
       function createMenuTemplate($scope) {
-        var template = '<div class="pull-right panel-right-menu" ng-show="!panelMeta.loading">';
+        var template = '<div class="panel-right-menu" ng-show="!panelMeta.loading">';
         _.each($scope.panelMeta.menu, function (item) {
           if (item.role === 'Editor' && !$scope.dashboardMeta.canEdit) {
             return;
