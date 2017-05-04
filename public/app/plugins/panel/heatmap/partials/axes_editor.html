@@ -3,7 +3,7 @@
     <h5 class="section-heading">Y Axis</h5>
     <div class="gf-form">
       <label class="gf-form-label width-6">Unit</label>
-      <div class="gf-form-dropdown-typeahead max-width-15"
+      <div class="gf-form-dropdown-typeahead max-width-10"
         ng-model="ctrl.panel.yAxis.format"
         dropdown-typeahead2="editor.unitFormats"
         dropdown-typeahead-on-select="editor.setUnitFormat($subItem)">
@@ -11,19 +11,17 @@
     </div>
     <div class="gf-form">
       <label class="gf-form-label width-6">Scale</label>
-      <div class="gf-form-select-wrapper max-width-15">
+      <div class="gf-form-select-wrapper max-width-10">
         <select class="gf-form-input" ng-model="ctrl.panel.yAxis.logBase" ng-options="v as k for (k, v) in editor.logScales" ng-change="ctrl.refresh()"></select>
       </div>
     </div>
-    <div class="gf-form-inline">
-      <div class="gf-form">
-        <label class="gf-form-label width-6">Y-Min</label>
-        <input type="text" class="gf-form-input width-5" placeholder="auto" empty-to-null ng-model="ctrl.panel.yAxis.min" ng-change="ctrl.render()" ng-model-onblur>
-      </div>
-      <div class="gf-form">
-        <label class="gf-form-label">Y-Max</label>
-        <input type="text" class="gf-form-input width-5" placeholder="auto" empty-to-null ng-model="ctrl.panel.yAxis.max" ng-change="ctrl.render()" ng-model-onblur>
-      </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-6">Y-Min</label>
+      <input type="text" class="gf-form-input width-10" placeholder="auto" empty-to-null ng-model="ctrl.panel.yAxis.min" ng-change="ctrl.render()" ng-model-onblur>
+    </div>
+    <div class="gf-form">
+      <label class="gf-form-label width-6">Y-Max</label>
+      <input type="text" class="gf-form-input width-10" placeholder="auto" empty-to-null ng-model="ctrl.panel.yAxis.max" ng-change="ctrl.render()" ng-model-onblur>
     </div>
     <div class="gf-form">
       <label class="gf-form-label width-6">Decimals</label>
@@ -34,10 +32,18 @@
     <div ng-show="ctrl.panel.yAxis.logBase === 1">
       <div class="gf-form-inline">
         <div class="gf-form">
-          <label class="gf-form-label width-6">Buckets
-            <info-popover mode="right-normal">Number of buckets for Y axis</info-popover>
-          </label>
-          <metric-segment-model css-class="width-10" property="ctrl.panel.yAxis.buckets" options="editor.yBucketOptions" on-change="ctrl.render()" select-mode="true"></metric-segment>
+          <label class="gf-form-label width-6">Bucket</label>
+          <div class="gf-form-select-wrapper width-7">
+            <select class="input-small gf-form-input" ng-model="ctrl.panel.yAxis.bucketMode" ng-options="f.value as f.text for f in editor.yBucketModes" ng-change="ctrl.render()"></select>
+          </div>
+          <input type="number"
+                 class="gf-form-input width-5"
+                 placeholder="auto"
+                 ng-model="ctrl.panel.yAxis.bucketCount"
+                 ng-change="ctrl.render()"
+                 ng-model-onblur>
+          </input>
+          <info-popover mode="right-normal">Number of buckets for Y axis</info-popover>
         </div>
       </div>
     </div>

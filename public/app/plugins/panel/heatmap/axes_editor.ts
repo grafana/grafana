@@ -8,8 +8,7 @@ export class AxesEditorCtrl {
   unitFormats: any;
   logScales: any;
   dataFormats: any;
-  yBucketOptions: any[];
-  xBucketOptions: any[];
+  yBucketModes: any[];
 
   /** @ngInject */
   constructor($scope, uiSegmentSrv) {
@@ -31,24 +30,9 @@ export class AxesEditorCtrl {
       'Time series Pre-bucketed': 'tsbuckets'
     };
 
-    this.yBucketOptions =  [
-      {text: '5',  value: '5'},
-      {text: '10', value: '10'},
-      {text: '20', value: '20'},
-      {text: '30', value: '30'},
-      {text: '50', value: '50'},
-    ];
-
-    this.xBucketOptions =  [
-      {text: '15', value: '15'},
-      {text: '20', value: '20'},
-      {text: '30', value: '30'},
-      {text: '50', value: '50'},
-      {text: '1m', value: '1m'},
-      {text: '5m', value: '5m'},
-      {text: '10m', value: '10m'},
-      {text: '20m', value: '20m'},
-      {text: '1h', value: '1h'},
+    this.yBucketModes =  [
+      {text: 'Count',  value: 'count'},
+      {text: 'Interval', value: 'interval'},
     ];
   }
 
