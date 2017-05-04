@@ -143,6 +143,12 @@ module.directive('grafanaPanel', function($rootScope, $document) {
         }
       }, scope);
 
+      $rootScope.onAppEvent('panel-toggle-highlight', function(evt, payload) {
+        if (ctrl.panel.id === payload.panelId) {
+          panelContainer.toggleClass('panel-hover-highlight', payload.toggle);
+        }
+      }, scope);
+
       function updatePanelCornerInfo() {
         var cornerMode = ctrl.getInfoMode();
         cornerInfoElem[0].className = 'panel-info-corner panel-info-corner--' + cornerMode;

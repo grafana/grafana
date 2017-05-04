@@ -223,6 +223,79 @@ export class KeybindingSrv {
       scope.appEvent('hide-dash-editor');
       scope.appEvent('panel-change-view', {fullscreen: false, edit: false});
     });
+
+    var focusPanel = (pos) => {
+      var rowIdx = pos.row;
+      var panelIdx = pos.panel;
+      if (dashboard.meta.focusPanelId) {
+        this.$rootScope.appEvent('panel-toggle-highlight', {
+          panelId: dashboard.meta.focusPanelId,
+          toggle: false
+        });
+      }
+
+      var row;
+      if (dashboard.rows && dashboard.rows[rowIdx]) {
+        row = dashboard.rows[rowIdx];
+      }
+      if (row && row.panels && row.panels[panelIdx]) {
+        dashboard.meta.focusPanelId = row.panels[panelIdx].id;
+      }
+
+      this.$rootScope.appEvent('panel-toggle-highlight', {
+        panelId: dashboard.meta.focusPanelId,
+        toggle: true
+      });
+    };
+
+    var getNextFocusPanelPosition = (key) => {
+      if (!dashboard.meta.focusPanelId) {
+        return { row: 0, panel: 0 };
+      }
+
+      var curRowIdx = _.findIndex(dashboard.rows, (row) => {
+        return _.find(row.panels, (panel) => {
+          return panel.id === dashboard.meta.focusPanelId;
+        });
+      });
+
+      var rowIdx;
+      switch (key) {
+        case 'k':
+          rowIdx = Math.max(0, curRowIdx-1);
+          break;
+        case 'j':
+          rowIdx = Math.min(curRowIdx+1, dashboard.rows.length-1);
+          break;
+      }
+      if (rowIdx) {
+        return { row: rowIdx, panel: 0 };
+      }
+
+      var ids = dashboard.rows[curRowIdx].panels.map(panel => { return panel.id; });
+      var curPanelIdx = _.indexOf(ids, dashboard.meta.focusPanelId);
+      var panelIdx;
+      switch (key) {
+        case 'h':
+          panelIdx = Math.max(0, curPanelIdx-1);
+          break;
+        case 'l':
+          panelIdx = Math.min(curPanelIdx+1, ids.length-1);
+          break;
+      }
+      if (panelIdx) {
+        return { row: curRowIdx, panel: panelIdx };
+      }
+
+      return { row: 0, panel: 0 };
+    };
+
+    ['h', 'j', 'k', 'l'].forEach(key => {
+      this.bind(key, () => {
+        var pos = getNextFocusPanelPosition(key);
+        focusPanel(pos);
+      });
+    });
   }
 }
 
