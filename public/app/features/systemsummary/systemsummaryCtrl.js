@@ -501,7 +501,7 @@ define([
         cpuTopN.targets[0].metric = 'cpu.topN';
 
         memoryTopN.targets[0].metric = 'mem.topN';
-        
+
       };
 
       $scope.init();

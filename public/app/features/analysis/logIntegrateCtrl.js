@@ -114,7 +114,7 @@ define([
               "steppedLine": false,
               "tooltip": option.tooltip,
               "timeFrom": null,
-              "timeShift": "2d",
+              "timeShift": null,
               "targets": [],
               "aliasColors": {},
               "seriesOverrides": []
