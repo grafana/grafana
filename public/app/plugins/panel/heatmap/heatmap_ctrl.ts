@@ -46,7 +46,6 @@ let panelDefaults = {
   yBucketNumber: null,
   tooltip: {
     show: true,
-    seriesStat: false,
     showHistogram: false
   },
   highlightCards: true

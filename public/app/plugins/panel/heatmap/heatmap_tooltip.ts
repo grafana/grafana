@@ -87,17 +87,18 @@ export class HeatmapTooltip {
     let tooltipHtml = `<div class="graph-tooltip-time">${time}</div>
       <div class="heatmap-histogram"></div>`;
 
-    if (yData && yData.bounds) {
-      boundBottom = valueFormatter(yData.bounds.bottom);
-      boundTop = valueFormatter(yData.bounds.top);
-      valuesNumber = yData.count;
-      tooltipHtml += `<div>
-        bucket: <b>${boundBottom} - ${boundTop}</b> <br>
-        count: <b>${valuesNumber}</b> <br>
-      </div>`;
-
-      if (this.panel.tooltip.seriesStat && yData.seriesStat) {
-        tooltipHtml = this.addSeriesStat(tooltipHtml, yData.seriesStat);
+    if (yData) {
+      if (yData.bounds) {
+        boundBottom = valueFormatter(yData.bounds.bottom);
+        boundTop = valueFormatter(yData.bounds.top);
+        valuesNumber = yData.count;
+        tooltipHtml += `<div>
+          bucket: <b>${boundBottom} - ${boundTop}</b> <br>
+          count: <b>${valuesNumber}</b> <br>
+        </div>`;
+      } else {
+        // currently no bounds for pre bucketed data
+        tooltipHtml += `<div>count: <b>${yData.count}</b><br></div>`;
       }
     } else {
       if (!this.panel.tooltip.showHistogram) {
@@ -159,15 +160,6 @@ export class HeatmapTooltip {
     return pos;
   }
 
-  addSeriesStat(tooltipHtml, seriesStat) {
-    tooltipHtml += "series: <br>";
-    _.forEach(seriesStat, (values, series) => {
-      tooltipHtml += `&nbsp;&nbsp;-&nbsp;&nbsp;${series}: <b>${values}</b><br>`;
-    });
-
-    return tooltipHtml;
-  }
-
   addHistogram(data) {
     let xBucket = this.scope.ctrl.data.buckets[data.x];
     let yBucketSize = this.scope.ctrl.data.yBucketSize;
@@ -181,8 +173,8 @@ export class HeatmapTooltip {
 
     let scale = this.scope.yScale.copy();
     let histXScale = scale
-      .domain([min, max])
-      .range([0, HISTOGRAM_WIDTH]);
+    .domain([min, max])
+    .range([0, HISTOGRAM_WIDTH]);
 
     let barWidth;
     if (this.panel.yAxis.logBase === 1) {
@@ -193,21 +185,21 @@ export class HeatmapTooltip {
     barWidth = Math.max(barWidth, 1);
 
     let histYScale = d3.scaleLinear()
-      .domain([0, _.max(_.map(histogramData, d => d[1]))])
-      .range([0, HISTOGRAM_HEIGHT]);
+    .domain([0, _.max(_.map(histogramData, d => d[1]))])
+    .range([0, HISTOGRAM_HEIGHT]);
 
     let histogram = this.tooltip.select(".heatmap-histogram")
-      .append("svg")
-      .attr("width", HISTOGRAM_WIDTH)
-      .attr("height", HISTOGRAM_HEIGHT);
+    .append("svg")
+    .attr("width", HISTOGRAM_WIDTH)
+    .attr("height", HISTOGRAM_HEIGHT);
 
     histogram.selectAll(".bar").data(histogramData)
-      .enter().append("rect")
-      .attr("x", d => {
-        return histXScale(d[0]);
-      })
-      .attr("width", barWidth)
-      .attr("y", d => {
+    .enter().append("rect")
+    .attr("x", d => {
+      return histXScale(d[0]);
+    })
+    .attr("width", barWidth)
+    .attr("y", d => {
         return HISTOGRAM_HEIGHT - histYScale(d[1]);
       })
       .attr("height", d => {

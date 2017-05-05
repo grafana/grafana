@@ -60,7 +60,6 @@ function convertToCards(buckets) {
         yBounds: yBucket.bounds,
         values: yBucket.values,
         count: yBucket.count,
-        seriesStat: getSeriesStat(yBucket.points)
       };
       cards.push(card);
     });
@@ -143,15 +142,6 @@ function removeZeroBuckets(buckets) {
   });
 
   return buckets;
-}
-
-/**
- * Count values number for each timeseries in given bucket
- * @param  {Array}  points Bucket's datapoints with series name ([val, ts, series_name])
- * @return {Object}        seriesStat: {seriesName_1: val_1, seriesName_2: val_2}
- */
-function getSeriesStat(points) {
-  return _.countBy(points, p => p[2]);
 }
 
 /**
