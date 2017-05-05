@@ -293,7 +293,7 @@ function($, _) {
   // offset is given, it starts the units at the given prefix; otherwise, the
   // offset defaults to zero and the initial unit is not prefixed.
   kbn.formatBuilders.binarySIPrefix = function(unit, offset) {
-    var prefixes = ['', 'Ki', 'Mi', 'Gi', 'Ti', 'Pi', 'Ei', 'Zi', 'Yi'].slice(offset);
+    var prefixes = ['', 'K', 'M', 'G', 'T', 'P', 'E', 'Z', 'Y'].slice(offset);
     var units = prefixes.map(function(p) { return ' ' + p + unit; });
     return kbn.formatBuilders.scaledUnits(1024, units);
   };

@@ -13,8 +13,18 @@ define([
 
     $routeProvider
       .when('/', {
+        templateUrl: 'app/features/systemsummary/partials/system_summary.html',
+        controller : 'SystemsummaryCtrl',
+        reloadOnSearch: false,
+      })
+      .when('/dashboardlist', {
         templateUrl: 'app/partials/dashboard.html',
         controller : 'LoadDashboardCtrl',
+        reloadOnSearch: false,
+      })
+      .when('/systems', {
+        templateUrl: 'app/partials/systems.html',
+        controller : '',
         reloadOnSearch: false,
       })
       .when('/summary', {
@@ -213,6 +223,14 @@ define([
       .when('/analysis', {
         templateUrl: 'app/features/analysis/partials/analysis.html',
         controller : 'AnalysisCtrl',
+      })
+      .when('/association', {
+        templateUrl: 'app/features/analysis/partials/single_association.html',
+        controller : 'SingleAssociationCtrl',
+      })
+      .when('/knowledgebase', {
+        templateUrl: 'app/features/analysis/partials/knowledge_base.html',
+        controller : 'KnowledgeBaseCtrl',
       })
       .when('/install', {
         templateUrl: 'app/partials/install.html',

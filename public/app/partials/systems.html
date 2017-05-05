@@ -1,0 +1,61 @@
+<div ng-include="'app/partials/login_header.html'"></div>
+<div ng-controller="SystemCtrl" ng-init="init_system_choice()" class="system-container">
+    <h3>{{contextSrv.user.orgName}}管理员 欢迎您！请选择系统进入>></h3>
+    <div ng-repeat="sys in systems"  class="system-list" >
+        <system-panel sys="{{sys.Id}}"  ng-click="enter(sys.Id)">
+            <h2 class="system-item">{{sys.SystemsName}}<br>健康值{{health}}%</h2>
+            
+            <div class="system-item">
+                <h4>报警状态(个数)</h4>
+                <p>{{critical + warn}}</p>
+                <div class="system-item-pie" sys_alert="{{sys.Id}}"></div>
+                <div class="system-item-legend">
+                    <dl>
+                        <dt><span class="system-label system-label-warning">警告</span></dt>
+                        <dd class="system-legend system-legend-warning">{{warn}}</dd>
+                    </dl>
+                    <dl>
+                        <dt><span class="system-label system-label-danger">严重</span></dt>
+                        <dd class="system-legend system-legend-danger">{{critical}}</dd>
+                    </dl>
+                </div>
+                <div class="clearfix"></div>
+            </div>
+
+            <div class="system-item">
+                <h4>自动异常检测(个数)</h4>
+                <p>{{numMetrics}}</p>
+                <div class="system-item-pie" sys_annomaly="{{sys.Id}}"></div>
+                <div class="system-item-legend">
+                    <dl>
+                        <dt><span class="system-label system-label-success">正常指标</span></dt>
+                        <dd class="system-legend system-legend-success">{{numMetrics - numAnomalyMetrics}}</dd>
+                    </dl>
+                    <dl>
+                        <dt><span class="system-label system-label-warning">异常指标</span></dt>
+                        <dd class="system-legend system-legend-warning">{{numAnomalyMetrics}}</dd>
+                    </dl>
+                </div>
+                <div class="clearfix"></div>
+            </div>
+
+            <div class="system-item">
+                <h4>节点状态(个数)</h4>
+                <p>{{servies.length}}</p>
+                <div class="system-status-box"><span class="system-label system-label-success">正常</span><span class="system-legend system-legend-success">{{seriesStatus.normal}}</span></div>
+                <div class="system-status-box"><span class="system-label system-label-warning">异常</span><span class="system-legend system-legend-warning">{{seriesStatus.unnormal}}</span></div>
+            </div>
+
+            <div class="system-item">
+                <h4>机器连接状态(个数)</h4>
+                <p>{{hostList.length}}</p>
+                <div class="system-status-box"><span class="system-label system-label-success">正常</span><span class="system-legend system-legend-success">{{hostStatus.normal}}</span></div>
+                <div class="system-status-box"><span class="system-label system-label-warning">异常</span><span class="system-legend system-legend-warning">{{hostStatus.unnormal}}</span></div>
+            </div>
+            <br/>
+        </system-panel>
+        <div class="clearfix"></div>
+    </div>
+
+</div>
+<div ng-include="'app/partials/login_footer.html'"></div>

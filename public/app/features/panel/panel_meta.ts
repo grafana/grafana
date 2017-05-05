@@ -22,7 +22,7 @@ class PanelMeta {
     this.addMenuItem('信息', 'fa-question-circle', 'isShowInfo($event); dismiss();', 'menuItemShow && helpInfo.info');
     this.addMenuItem('关联性分析', 'fa-line-chart', 'associateLink(); dismiss();', 'associateMenu');
     this.addMenuItem('编辑', 'fa-pencil', 'editPanel(); dismiss();', 'true', 'Editor');
-    this.addMenuItem('整合分析', 'fa-book', 'toIntegrate();dismiss();', 'showMenu');
+    this.addMenuItem('整合分析', 'fa-book', 'toIntegrate();dismiss();', 'integrateMenu');
 
     this.addExtendedMenuItem('复制', 'fa-files-o', 'duplicatePanel()', 'Editor');
     if (options.fullscreen) {

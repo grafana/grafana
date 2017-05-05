@@ -1,4 +1,7 @@
 define([
   './analysisCtrl',
-  './logIntegrateCtrl'
+  './logIntegrateCtrl',
+  './single_associationCtrl',
+  './knowledgeBaseCtrl',
+  './createKnowledgeCtrl'
 ], function () {});

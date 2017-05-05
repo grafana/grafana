@@ -1,0 +1,125 @@
+.system-container{
+  padding: 20px 20px 50px;
+}
+
+.system-list{
+  cursor: pointer;
+  margin-top: 20px;
+  margin-left: 2%;
+  background: #fff;
+  text-align: center;
+  &:hover{
+    box-shadow: 5px 5px 3px #888;
+    h2{
+      border-left: 5px solid @blue;
+    }
+  }
+  h2{
+    border-left: 5px solid transparent;
+    margin: 0px;
+    font-weight: normal;
+    padding-top: 100px;
+  }
+}
+
+.system-item{
+  float: left;
+  width: 20%;
+  height: 300px;
+  box-sizing: border-box;  
+  p{
+    font-size: 26px;
+    font-weight: bold;
+    margin: 25px;
+  }
+}
+
+.system-item-legend{
+  &>dl{
+    width: 50%;
+    float: left;
+  }
+}
+
+.system-item-pie{
+  width: 150px;
+  height: 150px;
+  margin: -20px auto;
+
+  .pieLabel div{
+    font-size: 18px!important;
+    margin-top: -20px;
+  }
+}
+
+
+.system-legend-success{
+  color: @normalBackground;
+}
+
+.system-legend-warning{
+  color: @warningBackground;
+}
+
+.system-legend-danger{
+  color: @criticalBackground;
+}
+
+.system-legend{
+    font-size: 26px;
+    font-weight: bold;
+    margin-top: 20px;
+}
+
+.system-label{
+  border-top: 2px solid;
+  font-weight: bold;
+}
+
+.system-label-success{
+  border-color: @normalBackground;
+}
+
+.system-label-warning{
+  border-color: @warningBackground;
+}
+
+.system-label-danger{
+  border-color: @criticalBackground;
+}
+
+.system-status-success{
+  background-color: @normalBackground;
+  color: @white;
+}
+
+.system-status-warning{
+  background-color: @warningBackground;
+}
+
+.system-status-danger{
+  background-color: @criticalBackground;
+}
+
+.system-status{
+  color: @white;
+  text-align: center;
+  border-radius: 5px;
+  cursor: pointer;
+  &:hover,&:active{
+    text-decoration: none;
+    color: @white;
+  }
+}
+
+.system-status-box{
+  margin-top: 40px;
+  &>span{
+    margin: 20px;
+  }
+}
+
+// summary label color
+@normalBackground: rgb(61,183,121);
+@warningBackground: rgb(255,197,58);
+@criticalBackground: rgb(224,76,65);

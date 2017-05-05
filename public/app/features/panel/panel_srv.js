@@ -144,7 +144,7 @@ function (angular, _, config) {
           return $scope.refreshData($scope.datasource) || $q.when({});
         }).then(function () {
           $scope.panelMeta.loading = false;
-          $scope.titleInit($scope.panel);
+          $scope.panelMenuInit($scope.panel);
         }, function (err) {
           console.log('Panel data error:', err);
           $scope.panelMeta.loading = false;
@@ -162,11 +162,12 @@ function (angular, _, config) {
         }
       };
 
-      $scope.titleInit = function (panel) {
+      $scope.panelMenuInit = function (panel) {
         $scope.helpInfo = panel.helpInfo;
-        $scope.showMenu = (panel.type == "graph" && $scope.panelMeta.loading == false ? true : false);
+        $scope.showMenu = (panel.type == "graph") && ($scope.panelMeta.loading == false ? true : false);
         var path = $location.path();
-        $scope.associateMenu = /^\/anomaly/.test(path);
+        $scope.associateMenu = panel.lines && (/^\/anomaly/.test(path) || (/^\/integrate/.test(path)));
+        $scope.integrateMenu = $scope.showMenu && !(/^\/integrate/.test(path)) && panel.lines;
       };
 
       $scope.systemsMap = contextSrv.systemsMap[0];
