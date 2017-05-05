@@ -114,13 +114,22 @@ func (node *ClusterNode) CheckInNodeProcessingMissingAlerts() error {
 	return nil
 }
 
-func (node *ClusterNode) GetActiveNodesCount(ts int64) (int, error) {
+func (node *ClusterNode) GetActiveNodesCount(heartbeat int64) (int, error) {
 	if node == nil {
 		return 0, errors.New("Cluster node object is nil")
 	}
-	//TODO
-	node.log.Error("GetActiveNodesCount not implemented; default 1")
-	return 1, nil
+	cmd := &m.GetActiveNodesCountCommand{
+		NodeId:    node.nodeId,
+		Heartbeat: heartbeat,
+	}
+	node.log.Debug("Sending command ", "GetActiveNodesCountCommand:Node", cmd.NodeId)
+	if err := bus.Dispatch(cmd); err != nil {
+		errmsg := fmt.Sprintf("Failed to get active node count %v", cmd.NodeId)
+		node.log.Error(errmsg, "error", err)
+		return 1, err
+	}
+	node.log.Debug("GetActiveNodesCountCommand executed successfully")
+	return cmd.Result, nil
 }
 
 func (node *ClusterNode) GetLastHeartbeat() (int64, error) {
