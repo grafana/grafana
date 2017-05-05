@@ -366,14 +366,12 @@ export default function link(scope, elem, attrs, ctrl) {
         data.buckets = mergeZeroBuckets(data.buckets, _.min(tick_values));
       }
     }
+
     let cardsData = convertToCards(data.buckets);
+    let maxValue = d3.max(cardsData, card => card.count);
 
-    let max_value = d3.max(cardsData, card => {
-      return card.values.length;
-    });
-
-    colorScale = getColorScale(max_value);
-    setOpacityScale(max_value);
+    colorScale = getColorScale(maxValue);
+    setOpacityScale(maxValue);
     setCardSize();
 
     let cards = heatmap.selectAll(".heatmap-card").data(cardsData);
@@ -431,14 +429,14 @@ export default function link(scope, elem, attrs, ctrl) {
     return d3.scaleSequential(colorInterpolator).domain([start, end]);
   }
 
-  function setOpacityScale(max_value) {
+  function setOpacityScale(maxValue) {
     if (panel.color.colorScale === 'linear') {
       opacityScale = d3.scaleLinear()
-      .domain([0, max_value])
+      .domain([0, maxValue])
       .range([0, 1]);
     } else if (panel.color.colorScale === 'sqrt') {
       opacityScale = d3.scalePow().exponent(panel.color.exponent)
-      .domain([0, max_value])
+      .domain([0, maxValue])
       .range([0, 1]);
     }
   }
@@ -529,13 +527,13 @@ export default function link(scope, elem, attrs, ctrl) {
     if (panel.color.mode === 'opacity') {
       return panel.color.cardColor;
     } else {
-      return colorScale(d.values.length);
+      return colorScale(d.count);
     }
   }
 
   function getCardOpacity(d) {
     if (panel.color.mode === 'opacity') {
-      return opacityScale(d.values.length);
+      return opacityScale(d.count);
     } else {
       return 1;
     }
@@ -830,9 +828,4 @@ function getPrecision(num) {
   } else {
     return str.length - dot_index - 1;
   }
-}
-
-function getTicksPrecision(values) {
-  let precisions = _.map(values, getPrecision);
-  return _.max(precisions);
 }

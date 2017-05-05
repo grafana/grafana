@@ -2,7 +2,7 @@
   <div class="section gf-form-group">
     <h5 class="section-heading">Y Axis</h5>
     <div class="gf-form">
-      <label class="gf-form-label width-6">Unit</label>
+      <label class="gf-form-label width-8">Unit</label>
       <div class="gf-form-dropdown-typeahead max-width-10"
            ng-model="ctrl.panel.yAxis.format"
            dropdown-typeahead2="editor.unitFormats"
@@ -10,21 +10,21 @@
       </div>
     </div>
     <div class="gf-form">
-      <label class="gf-form-label width-6">Scale</label>
+      <label class="gf-form-label width-8">Scale</label>
       <div class="gf-form-select-wrapper max-width-10">
         <select class="gf-form-input" ng-model="ctrl.panel.yAxis.logBase" ng-options="v as k for (k, v) in editor.logScales" ng-change="ctrl.refresh()"></select>
       </div>
     </div>
     <div class="gf-form">
-      <label class="gf-form-label width-6">Y-Min</label>
+      <label class="gf-form-label width-8">Y-Min</label>
       <input type="text" class="gf-form-input width-10" placeholder="auto" empty-to-null ng-model="ctrl.panel.yAxis.min" ng-change="ctrl.render()" ng-model-onblur>
     </div>
     <div class="gf-form">
-      <label class="gf-form-label width-6">Y-Max</label>
+      <label class="gf-form-label width-8">Y-Max</label>
       <input type="text" class="gf-form-input width-10" placeholder="auto" empty-to-null ng-model="ctrl.panel.yAxis.max" ng-change="ctrl.render()" ng-model-onblur>
     </div>
     <div class="gf-form">
-      <label class="gf-form-label width-6">Decimals</label>
+      <label class="gf-form-label width-8">Decimals</label>
       <input type="number" class="gf-form-input width-10" placeholder="auto" data-placement="right"
                                                                              bs-tooltip="'Override automatic decimal precision for axis.'"
                                                                              ng-model="ctrl.panel.yAxis.decimals" ng-change="ctrl.render()" ng-model-onblur>
@@ -55,7 +55,7 @@
           <label class="gf-form-label">Buckets</label>
           <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right"
                                                                                 bs-tooltip="'Number of buckets for Y axis.'"
-                                                                                ng-model="ctrl.panel.yBucketNumber" ng-change="ctrl.refresh()" ng-model-onblur>
+                                                                                ng-model="ctrl.panel.xBucketNumber" ng-change="ctrl.refresh()" ng-model-onblur>
         </div>
         <div class="gf-form">
           <label class="gf-form-label">Size</label>

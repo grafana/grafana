@@ -16,56 +16,38 @@ interface YBucket {
   values: number[];
 }
 
-function elasticHistogramToHeatmap(series) {
-  let seriesBuckets = _.map(series, (s: TimeSeries) => {
-    return convertEsSeriesToHeatmap(s);
-  });
-  let buckets = mergeBuckets(seriesBuckets);
-  return buckets;
-}
+function elasticHistogramToHeatmap(seriesList) {
+  let heatmap = {};
 
-function convertEsSeriesToHeatmap(series: TimeSeries, saveZeroCounts = false) {
-  let xBuckets: XBucket[] = [];
-
-  _.forEach(series.datapoints, point => {
-    let bound = series.alias;
-    let count = point[VALUE_INDEX];
-
-    if (!count) {
+  for (let series of seriesList) {
+    let bound = Number(series.alias);
+    if (isNaN(bound)) {
       return;
     }
 
-    let values = new Array(Math.round(count));
-    values.fill(Number(bound));
+    for (let point of series.datapoints) {
+      let count = point[VALUE_INDEX];
+      let time = point[TIME_INDEX];
 
-    let valueBuckets = {};
-    valueBuckets[bound] = {
-      y: Number(bound),
-      values: values
-    };
+      if (!_.isNumber(count)) {
+        continue;
+      }
 
-    let xBucket: XBucket = {
-      x: point[TIME_INDEX],
-      buckets: valueBuckets
-    };
+      let bucket = heatmap[time];
+      if (!bucket) {
+        bucket = heatmap[time] = {x: time, buckets: {}};
+      }
 
-    // Don't push buckets with 0 count until saveZeroCounts flag is set
-    if (count !== 0 || (count === 0 && saveZeroCounts)) {
-      xBuckets.push(xBucket);
+      bucket.buckets[bound] = {y: bound, count: count};
     }
-  });
-
-  let heatmap: any = {};
-  _.forEach(xBuckets, (bucket: XBucket) => {
-    heatmap[bucket.x] = bucket;
-  });
+  }
 
   return heatmap;
 }
 
-/**
- * Convert set of time series into heatmap buckets
- * @return {Object}    Heatmap object:
+  /**
+   * Convert set of time series into heatmap buckets
+   * @return {Object}    Heatmap object:
  * {
  *   xBucketBound_1: {
  *     x: xBucketBound_1,
@@ -109,18 +91,16 @@ function convertToHeatMap(series, yBucketSize, xBucketSize, logBase) {
 function convertToCards(buckets) {
   let cards = [];
   _.forEach(buckets, xBucket => {
-    _.forEach(xBucket.buckets, (yBucket, key) => {
-      if (yBucket.values.length) {
-        let card = {
-          x: Number(xBucket.x),
-          y: Number(key),
-          yBounds: yBucket.bounds,
-          values: yBucket.values,
-          seriesStat: getSeriesStat(yBucket.points)
-        };
-
-        cards.push(card);
-      }
+    _.forEach(xBucket.buckets, yBucket=> {
+      let card = {
+        x: xBucket.x,
+        y: yBucket.y,
+        yBounds: yBucket.bounds,
+        values: yBucket.values,
+        count: yBucket.count,
+        seriesStat: getSeriesStat(yBucket.points)
+      };
+      cards.push(card);
     });
   });
 

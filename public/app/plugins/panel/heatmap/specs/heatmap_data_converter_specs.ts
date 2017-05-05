@@ -200,7 +200,7 @@ describe('ES Histogram converter', () => {
       alias: '1', label: '1'
     }));
     ctx.series.push(new TimeSeries({
-      datapoints: [[1, 1422774000000], [3, 1422774060000]],
+      datapoints: [[5, 1422774000000], [3, 1422774060000]],
       alias: '2', label: '2'
     }));
     ctx.series.push(new TimeSeries({
@@ -219,21 +219,23 @@ describe('ES Histogram converter', () => {
         '1422774000000': {
           x: 1422774000000,
           buckets: {
-            '1': { y: 1, values: [1] },
-            '2': { y: 2, values: [2] }
+            '1': { y: 1, count: 1 },
+            '2': { y: 2, count: 5 },
+            '3': { y: 3, count: 0 }
           }
         },
         '1422774060000': {
           x: 1422774060000,
           buckets: {
-            '2': { y: 2, values: [2, 2, 2] },
-            '3': { y: 3, values: [3] }
+            '1': { y: 1, count: 0 },
+            '2': { y: 2, count: 3 },
+            '3': { y: 3, count: 1 }
           }
         },
       };
 
       let heatmap = elasticHistogramToHeatmap(ctx.series);
-      expect(isHeatmapDataEqual(heatmap, expectedHeatmap)).to.be(true);
+      expect(heatmap).to.eql(expectedHeatmap);
     });
   });
 });
