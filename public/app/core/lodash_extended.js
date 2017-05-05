@@ -62,5 +62,20 @@ function () {
       "nginx": "Nginx"
     };
   };
+
+  _.getLeveal = function (score) {
+    if (!_.isNumber(score) && _.isNaN(score) && _.isEmpty(score)) {
+      return "无";
+    }
+    if (score > 75) {
+      return "优";
+    } else if (score > 50) {
+      return "良";
+    } else if (score > 25) {
+      return "中";
+    } else {
+      return "差";
+    }
+  };
   return _;
 });

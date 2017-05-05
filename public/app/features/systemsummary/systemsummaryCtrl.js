@@ -174,15 +174,22 @@ define([
           }
           panelRow.push(row);
         });
+        var alertRow = panelRow[0],
+            anomalyRow = panelRow[1],
+            serviceRow = panelRow[2],
+            hostRow = panelRow[3],
+            topNRow = panelRow[4],
+            healthRow = panelRow[5],
+            predictionRow = panelRow[6];
 
-        panelRow[1].panels[0].legend.show = false;
-        panelRow[2].panels[0].type = 'table';
+        anomalyRow.panels[0].legend.show = false;
+        serviceRow.panels[0].type = 'table';
 
-        $scope.initAlertStatus(panelRow[0].panels[0]);
-        $scope.initAnomalyStatus(panelRow[1].panels[0]);
-        $scope.initHostSummary(panelRow[3].panels[0]);
-        $scope.initTopN(panelRow[4].panels);
-        $scope.initHealth(panelRow[5].panels[0]);
+        $scope.initAlertStatus(alertRow.panels[0]);
+        $scope.initAnomalyStatus(anomalyRow.panels[0]);
+        $scope.initHostSummary(hostRow.panels[0]);
+        $scope.initTopN(topNRow.panels);
+        $scope.initHealth(healthRow.panels[0]);
         return panelRow;
       };
 
@@ -252,25 +259,9 @@ define([
 
       $scope.getServices = function () {
         $scope.dashboard.rows[2].panels[0].targets = [];
-        var alias = {
-          "hadoop.datanode": "Hadoop DataNode",
-          "hadoop.namenode": "Hadoop NameNode",
-          "hbase.master": "Hbase Master",
-          "hbase.regionserver": "Hbase RegionServer",
-          "kafka": "Kafka",
-          "mysql": "Mysql",
-          "spark": "Spark",
-          "storm": "Storm",
-          "yarn": "Yarn",
-          "zookeeper": "Zookeeper",
-          "tomcat": "Tomcat",
-          "opentsdb": "OpenTSDB",
-          "mongo3": "MongoDB 3.x",
-          "nginx": "Nginx"
-        };
 
         $scope.serviceList = [];
-        _.each(Object.keys(alias), function (key) {
+        _.each(Object.keys(_.allServies()), function (key) {
           var queries = [{
             "metric": contextSrv.user.orgId + "." + contextSrv.system + "." + key + ".state",
             "aggregator": "sum",
@@ -363,7 +354,7 @@ define([
       $scope.getHealth = function () {
         healthSrv.load().then(function (data) {
           $scope.applicationHealth = Math.floor(data.health);
-          $scope.leveal = getLeveal($scope.applicationHealth);
+          $scope.leveal = _.getLeveal($scope.applicationHealth);
           $scope.summary = data;
           if (data.metricHostClusters.length && data.metricHostNotClustered.elements.length) {
             $scope.panleJson[1].status.success[1] = data.numMetrics;
@@ -373,20 +364,6 @@ define([
             $scope.panleJson[1].status.success[1] = '系统正常';
           }
         });
-        function getLeveal(score) {
-          if (!_.isNumber(score) && _.isNaN(score) && _.isEmpty(score)) {
-            return "无";
-          }
-          if (score > 75) {
-            return "优";
-          } else if (score > 50) {
-            return "良";
-          } else if (score > 25) {
-            return "中";
-          } else {
-            return "差";
-          }
-        };
       };
 
       $scope.getPrediction = function (panels) {

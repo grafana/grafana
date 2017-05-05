@@ -24,7 +24,7 @@
                         <h3 style="padding-left:10px;">{{panleJson[row_name].header}}</h3>
                         <div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel" ui-draggable="!dashboardViewState.fullscreen"
                             drag="panel.id" ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
-                            <div class="page" style="padding-left: 10px;" ng-if="panleJson[row_name].header == '历史健康指数趋势'">
+                            <div style="padding-left: 10px;" ng-if="panleJson[row_name].header == '健康指数趋势'">
                                 <div style="height: 60px">
                                     <em style="font-size: 60px;line-height:66px;font-style: normal">{{applicationHealth}}</em>
                                     <span>{{leveal}}</span>

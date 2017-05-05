@@ -71,7 +71,7 @@ define([
                   {label: "", data: scope.warn},
                   {label: "", data: scope.critical}
                 ];
-                colors = ['#fe6600','#ff291c'];
+                colors = ['rgb(255,197,58)','rgb(224,76,65)'];
               } else {
                 scope.alertTrigger = true;
                 pieData = [
@@ -79,7 +79,7 @@ define([
                   {label: "", data: 0},
                   {label: "", data: 0}
                 ];
-                colors = ['#23a127','#fe6600','#ff291c'];
+                colors = ['rgb(61,183,121)','rgb(255,197,58)','rgb(224,76,65)'];
               }
 
               $.plot("[sys_alert='" + system + "']", pieData, {
@@ -120,7 +120,7 @@ define([
                 legend:{
                   show:false
                 },
-                colors: ['#23a127','#fe6600']
+                colors: ['rgb(61,183,121)','rgb(255,197,58)']
               });
               scope.numMetrics = data.numMetrics;
               scope.numAnomalyMetrics = data.numAnomalyMetrics;
@@ -166,6 +166,7 @@ define([
                   });
                 }).catch(function () {
                   scope.hostStatus.unnormal++;
+                  host.status = 1;
                   //nothing to do ;
                 });
 
