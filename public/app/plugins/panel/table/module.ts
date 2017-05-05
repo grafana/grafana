@@ -9,7 +9,6 @@ import {MetricsPanelCtrl} from 'app/plugins/sdk';
 import {transformDataToTable} from './transformers';
 import {tablePanelEditor} from './editor';
 import {TableRenderer} from './renderer';
-import kbn from 'app/core/utils/kbn';
 
 class TablePanelCtrl extends MetricsPanelCtrl {
   static templateUrl = 'module.html';
