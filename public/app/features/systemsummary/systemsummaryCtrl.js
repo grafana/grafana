@@ -142,18 +142,16 @@ define([
           }
         }, $scope);
 
-        _.each(datasourceSrv.getAll(), function (ds) {
-          if (ds.type === 'opentsdb') {
-            datasourceSrv.get(ds.name).then(function (datasource) {
-              $scope.datasource = datasource;
-            }).then(function () {
-              $scope.getAlertStatus();
-              $scope.getServices();
-              $scope.getHostSummary();
-              $scope.getHealth();
-              $scope.getPrediction($scope.dashboard.rows[6].panels);
-            });
-          }
+        _.each(datasourceSrv.get("opentsdb"), function (ds) {
+          datasourceSrv.get(ds.name).then(function (datasource) {
+            $scope.datasource = datasource;
+          }).then(function () {
+            $scope.getAlertStatus();
+            $scope.getServices();
+            $scope.getHostSummary();
+            $scope.getHealth();
+            $scope.getPrediction($scope.dashboard.rows[6].panels);
+          });
         });
 
       };

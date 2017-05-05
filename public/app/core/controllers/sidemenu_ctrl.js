@@ -205,12 +205,14 @@ function (angular, _, $, coreModule, config) {
         }
       ];
 
+      $scope.msgManagement = $scope.settingMenu[0];
+
       if ($scope.length > 0) {
-        $scope.settingMenu[0].submenu.push({ cssClass: 'divider' });
+        $scope.msgManagement.submenu.push({ cssClass: 'divider' });
       }
 
       if (config.allowOrgCreate) {
-        $scope.settingMenu[0].submenu.push({
+        $scope.msgManagement.submenu.push({
           text: "新建公司",
           icon: "fa fa-fw fa-plus",
           href: $scope.getUrl('/org/new')
@@ -218,16 +220,16 @@ function (angular, _, $, coreModule, config) {
       }
 
       if (contextSrv.hasRole('Admin')) {
-        $scope.settingMenu[0].submenu.push({
+        $scope.msgManagement.submenu.push({
           text: "公司信息设置",
           href: $scope.getUrl("/org"),
         });
-        $scope.settingMenu[0].submenu.push({
+        $scope.msgManagement.submenu.push({
           text: "用户管理",
           href: $scope.getUrl("/org/users"),
         });
         if(contextSrv.isGrafanaAdmin){
-          $scope.settingMenu[0].submenu.push({
+          $scope.msgManagement.submenu.push({
             text: "密钥管理",
             href: $scope.getUrl("/org/apikeys"),
           });
@@ -235,7 +237,7 @@ function (angular, _, $, coreModule, config) {
       }
 
       if (contextSrv.isGrafanaAdmin) {
-        $scope.settingMenu[0].submenu.push({
+        $scope.msgManagement.submenu.push({
           text: "后台管理",
           dropdown: 'dropdown',
           thdmenu: [
@@ -256,24 +258,24 @@ function (angular, _, $, coreModule, config) {
             }
           ]
         });
-        $scope.settingMenu[0].submenu.push({
+        $scope.msgManagement.submenu.push({
           text: "申请用户",
           icon: "fa fa-fw fa-users",
           href: $scope.getUrl("/customer"),
         });
-        $scope.settingMenu[0].submenu.push({
+        $scope.msgManagement.submenu.push({
           text: "数据库",
           icon: "fa fa-fw fa-database",
           href: $scope.getUrl("/datasources"),
         });
       }
 
-      $scope.settingMenu[0].submenu.push({
+      $scope.msgManagement.submenu.push({
         text: "安装指南",
         href: $scope.getUrl("/install"),
       });
 
-      $scope.settingMenu[0].submenu.push({
+      $scope.msgManagement.submenu.push({
         text: "帮助文档",
         href: "http://cloudwiz.cn/document/",
         target: '_blank'
