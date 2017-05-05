@@ -90,8 +90,8 @@ The query expressions are different for each data source.
 - [Prometheus templating queries]({{< relref "features/datasources/prometheus.md#templating" >}})
 - [OpenTSDB templating queries]({{< relref "features/datasources/prometheus.md#templating" >}})
 
-One thing to note is that query expressions can contain references to other variables and in effect create depend & nested
-variables. Grafana will detect this and automatically refresh a variable when one of it's containing variables change.
+One thing to note is that query expressions can contain references to other variables and in effect create linked variables.
+Grafana will detect this and automatically refresh a variable when one of it's containing variables change.
 
 ## Selection Options
 
