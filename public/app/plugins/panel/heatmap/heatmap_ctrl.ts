@@ -25,7 +25,6 @@ let panelDefaults = {
     colorScale: 'sqrt',
     exponent: 0.5,
     colorScheme: 'interpolateOranges',
-    fillBackground: false
   },
   dataFormat: 'timeseries',
   xAxis: {

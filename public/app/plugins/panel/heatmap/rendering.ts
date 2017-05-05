@@ -376,10 +376,6 @@ export default function link(scope, elem, attrs, ctrl) {
     setOpacityScale(max_value);
     setCardSize();
 
-    if (panel.color.fillBackground && panel.color.mode === 'spectrum') {
-      fillBackground(heatmap, colorScale(0));
-    }
-
     let cards = heatmap.selectAll(".heatmap-card").data(cardsData);
     cards.append("title");
     cards = cards.enter().append("rect")
@@ -407,24 +403,20 @@ export default function link(scope, elem, attrs, ctrl) {
   }
 
   function highlightCard(event) {
-    if (panel.highlightCards) {
-      let color = d3.select(event.target).style("fill");
-      let highlightColor = d3.color(color).darker(2);
-      let strokeColor = d3.color(color).brighter(4);
-      let current_card = d3.select(event.target);
-      tooltip.originalFillColor = color;
-      current_card.style("fill", highlightColor)
-        .style("stroke", strokeColor)
-        .style("stroke-width", 1);
-    }
+    let color = d3.select(event.target).style("fill");
+    let highlightColor = d3.color(color).darker(2);
+    let strokeColor = d3.color(color).brighter(4);
+    let current_card = d3.select(event.target);
+    tooltip.originalFillColor = color;
+    current_card.style("fill", highlightColor)
+    .style("stroke", strokeColor)
+    .style("stroke-width", 1);
   }
 
   function resetCardHighLight(event) {
-    if (panel.highlightCards) {
-      d3.select(event.target).style("fill", tooltip.originalFillColor)
-        .style("stroke", tooltip.originalFillColor)
-        .style("stroke-width", 0);
-    }
+    d3.select(event.target).style("fill", tooltip.originalFillColor)
+    .style("stroke", tooltip.originalFillColor)
+    .style("stroke-width", 0);
   }
 
   function getColorScale(maxValue) {
@@ -442,12 +434,12 @@ export default function link(scope, elem, attrs, ctrl) {
   function setOpacityScale(max_value) {
     if (panel.color.colorScale === 'linear') {
       opacityScale = d3.scaleLinear()
-        .domain([0, max_value])
-        .range([0, 1]);
+      .domain([0, max_value])
+      .range([0, 1]);
     } else if (panel.color.colorScale === 'sqrt') {
       opacityScale = d3.scalePow().exponent(panel.color.exponent)
-        .domain([0, max_value])
-        .range([0, 1]);
+      .domain([0, max_value])
+      .range([0, 1]);
     }
   }
 
@@ -549,15 +541,6 @@ export default function link(scope, elem, attrs, ctrl) {
     }
   }
 
-  function fillBackground(heatmap, color) {
-    heatmap.insert("rect", "g")
-      .attr("x", yAxisWidth)
-      .attr("y", margin.top)
-      .attr("width", chartWidth)
-      .attr("height", chartHeight)
-      .attr("fill", color);
-  }
-
   /////////////////////////////
   // Selection and crosshair //
   /////////////////////////////
@@ -570,12 +553,12 @@ export default function link(scope, elem, attrs, ctrl) {
     if (ctrl.dashboard.graphTooltip === 2) {
       tooltip.show(event.pos, data);
     }
-  });
+  }, scope);
 
   appEvents.on('graph-hover-clear', () => {
     clearCrosshair();
     tooltip.destroy();
-  });
+  }, scope);
 
   function onMouseDown(event) {
     selection.active = true;
@@ -584,6 +567,7 @@ export default function link(scope, elem, attrs, ctrl) {
     mouseUpHandler = function() {
       onMouseUp();
     };
+
     $(document).one("mouseup", mouseUpHandler);
   }
 
@@ -660,11 +644,11 @@ export default function link(scope, elem, attrs, ctrl) {
 
       if (selectionWidth > MIN_SELECTION_WIDTH) {
         heatmap.append("rect")
-          .attr("class", "heatmap-selection")
-          .attr("x", selectionX)
-          .attr("width", selectionWidth)
-          .attr("y", chartTop)
-          .attr("height", chartHeight);
+        .attr("class", "heatmap-selection")
+        .attr("x", selectionX)
+        .attr("width", selectionWidth)
+        .attr("y", chartTop)
+        .attr("height", chartHeight);
       }
     }
   }
@@ -687,14 +671,14 @@ export default function link(scope, elem, attrs, ctrl) {
       posX = Math.min(posX, chartWidth + yAxisWidth);
 
       heatmap.append("g")
-        .attr("class", "heatmap-crosshair")
-        .attr("transform", "translate(" + posX + ",0)")
-        .append("line")
-        .attr("x1", 1)
-        .attr("y1", chartTop)
-        .attr("x2", 1)
-        .attr("y2", chartBottom)
-        .attr("stroke-width", 1);
+      .attr("class", "heatmap-crosshair")
+      .attr("transform", "translate(" + posX + ",0)")
+      .append("line")
+      .attr("x1", 1)
+      .attr("y1", chartTop)
+      .attr("x2", 1)
+      .attr("y2", chartBottom)
+      .attr("stroke-width", 1);
     }
   }
 
@@ -725,14 +709,14 @@ export default function link(scope, elem, attrs, ctrl) {
     var legendRects = legend.selectAll(".heatmap-color-legend-rect").data(valuesRange);
 
     legendRects.enter().append("rect")
-      .attr("x", d => d)
-      .attr("y", 0)
-      .attr("width", rangeStep + 1) // Overlap rectangles to prevent gaps
-      .attr("height", legendHeight)
-      .attr("stroke-width", 0)
-      .attr("fill", d => {
-        return legendColorScale(d);
-      });
+    .attr("x", d => d)
+    .attr("y", 0)
+    .attr("width", rangeStep + 1) // Overlap rectangles to prevent gaps
+    .attr("height", legendHeight)
+    .attr("stroke-width", 0)
+    .attr("fill", d => {
+      return legendColorScale(d);
+    });
   }
 
   function drawOpacityLegend() {
@@ -745,12 +729,12 @@ export default function link(scope, elem, attrs, ctrl) {
     let legendOpacityScale;
     if (panel.color.colorScale === 'linear') {
       legendOpacityScale = d3.scaleLinear()
-        .domain([0, legendWidth])
-        .range([0, 1]);
+      .domain([0, legendWidth])
+      .range([0, 1]);
     } else if (panel.color.colorScale === 'sqrt') {
       legendOpacityScale = d3.scalePow().exponent(panel.color.exponent)
-        .domain([0, legendWidth])
-        .range([0, 1]);
+      .domain([0, legendWidth])
+      .range([0, 1]);
     }
 
     let rangeStep = 1;
@@ -758,15 +742,15 @@ export default function link(scope, elem, attrs, ctrl) {
     var legendRects = legend.selectAll(".heatmap-opacity-legend-rect").data(valuesRange);
 
     legendRects.enter().append("rect")
-      .attr("x", d => d)
-      .attr("y", 0)
-      .attr("width", rangeStep)
-      .attr("height", legendHeight)
-      .attr("stroke-width", 0)
-      .attr("fill", panel.color.cardColor)
-      .style("opacity", d => {
-        return legendOpacityScale(d);
-      });
+    .attr("x", d => d)
+    .attr("y", 0)
+    .attr("width", rangeStep)
+    .attr("height", legendHeight)
+    .attr("stroke-width", 0)
+    .attr("fill", panel.color.cardColor)
+    .style("opacity", d => {
+      return legendOpacityScale(d);
+    });
   }
 
   function render() {
@@ -774,33 +758,25 @@ export default function link(scope, elem, attrs, ctrl) {
     panel = ctrl.panel;
     timeRange = ctrl.range;
 
-    if (setElementHeight()) {
-
-      if (data) {
-        // Draw default axes and return if no data
-        if (_.isEmpty(data.buckets)) {
-          addHeatmapCanvas();
-          addAxes();
-          return;
-        }
-
-        addHeatmap();
-        scope.yScale = yScale;
-        scope.xScale = xScale;
-        scope.yAxisWidth = yAxisWidth;
-        scope.xAxisHeight = xAxisHeight;
-        scope.chartHeight = chartHeight;
-        scope.chartWidth = chartWidth;
-        scope.chartTop = chartTop;
-
-        // Register selection listeners
-        $heatmap.on("mousedown", onMouseDown);
-        $heatmap.on("mousemove", onMouseMove);
-        $heatmap.on("mouseleave", onMouseLeave);
-      } else {
-        return;
-      }
+    if (!setElementHeight() || !data) {
+      return;
     }
+
+    // Draw default axes and return if no data
+    if (_.isEmpty(data.buckets)) {
+      addHeatmapCanvas();
+      addAxes();
+      return;
+    }
+
+    addHeatmap();
+    scope.yScale = yScale;
+    scope.xScale = xScale;
+    scope.yAxisWidth = yAxisWidth;
+    scope.xAxisHeight = xAxisHeight;
+    scope.chartHeight = chartHeight;
+    scope.chartWidth = chartWidth;
+    scope.chartTop = chartTop;
 
     // Draw only if color editor is opened
     if (!d3.select("#heatmap-color-legend").empty()) {
@@ -810,6 +786,11 @@ export default function link(scope, elem, attrs, ctrl) {
       drawOpacityLegend();
     }
   }
+
+  // Register selection listeners
+  $heatmap.on("mousedown", onMouseDown);
+  $heatmap.on("mousemove", onMouseMove);
+  $heatmap.on("mouseleave", onMouseLeave);
 }
 
 function grafanaTimeFormat(ticks, min, max) {
