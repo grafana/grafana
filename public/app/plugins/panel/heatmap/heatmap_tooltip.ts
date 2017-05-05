@@ -90,7 +90,7 @@ export class HeatmapTooltip {
     if (yData && yData.bounds) {
       boundBottom = valueFormatter(yData.bounds.bottom);
       boundTop = valueFormatter(yData.bounds.top);
-      valuesNumber = yData.values.length;
+      valuesNumber = yData.count;
       tooltipHtml += `<div>
         bucket: <b>${boundBottom} - ${boundTop}</b> <br>
         count: <b>${valuesNumber}</b> <br>
