@@ -5,12 +5,44 @@ import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 
 export class TableRenderer {
-  formaters: any[];
+  formatters: any[];
   colorState: any;
 
   constructor(private panel, private table, private isUtc, private sanitize) {
-    this.formaters = [];
+    this.initColumns();
+  }
+
+  setTable(table) {
+    this.table = table;
+
+    this.initColumns();
+  }
+
+  initColumns() {
+    this.formatters = [];
     this.colorState = {};
+
+    for (let colIndex = 0; colIndex < this.table.columns.length; colIndex++) {
+      let column = this.table.columns[colIndex];
+      column.title = column.text;
+
+      for (let i = 0; i < this.panel.styles.length; i++) {
+        let style = this.panel.styles[i];
+
+        var regex = kbn.stringToJsRegex(style.pattern);
+        if (column.text.match(regex)) {
+          column.style = style;
+
+          if (style.alias) {
+            column.title = column.text.replace(regex, style.alias);
+          }
+
+          break;
+        }
+      }
+
+      this.formatters[colIndex] = this.createColumnFormatter(column);
+    }
   }
 
   getColorForValue(value, style) {
@@ -92,28 +124,7 @@ export class TableRenderer {
   }
 
   formatColumnValue(colIndex, value) {
-    if (!this.formaters[colIndex]) {
-      let column = this.table.columns[colIndex];
-
-      if (!column.style) {
-        for (let i = 0; i < this.panel.styles.length; i++) {
-          let style = this.panel.styles[i];
-          var regex = kbn.stringToJsRegex(style.pattern);
-          const matches = column.text.match(regex);
-          if (matches) {
-            column.style = style;
-            if (style.alias) {
-              column.title = column.text.replace(regex, style.alias);
-            }
-            break;
-          }
-        }
-      }
-
-      this.formaters[colIndex] = this.createColumnFormatter(column);
-    }
-
-    return this.formaters[colIndex](value);
+    return this.formatters[colIndex] ? this.formatters[colIndex](value) : value;
   }
 
   renderCell(columnIndex, value, addWidthHack = false) {
@@ -132,7 +143,7 @@ export class TableRenderer {
     // this hack adds header content to cell (not visible)
     var widthHack = '';
     if (addWidthHack) {
-      widthHack = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].text + '</div>';
+      widthHack = '<div class="table-panel-width-hack">' + this.table.columns[columnIndex].title + '</div>';
     }
 
     if (value === undefined) {

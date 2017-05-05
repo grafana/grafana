@@ -17,6 +17,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   pageIndex: number;
   dataRaw: any;
   table: any;
+  renderer: any;
 
   panelDefaults = {
     targets: [{}],
@@ -122,22 +123,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     this.table = transformDataToTable(this.dataRaw, this.panel);
     this.table.sort(this.panel.sort);
 
-    for (let colIndex = 0; colIndex < this.table.columns.length; colIndex++) {
-      let column = this.table.columns[colIndex];
-
-      for (let i = 0; i < this.panel.styles.length; i++) {
-        let style = this.panel.styles[i];
-        var regex = kbn.stringToJsRegex(style.pattern);
-        const matches = column.text.match(regex);
-        if (matches) {
-          column.style = style;
-          if (style.alias) {
-            column.title = column.text.replace(regex, style.alias);
-          }
-          break;
-        }
-      }
-    }
+    this.renderer = new TableRenderer(this.panel, this.table, this.dashboard.isTimezoneUtc(), this.$sanitize);
 
     return super.render(this.table);
   }
@@ -162,8 +148,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   exportCsv() {
-    var renderer = new TableRenderer(this.panel, this.table, this.dashboard.isTimezoneUtc(), this.$sanitize);
-    FileExport.exportTableDataToCsv(renderer.render_values());
+    FileExport.exportTableDataToCsv(this.renderer.render_values());
   }
 
   link(scope, elem, attrs, ctrl) {
@@ -183,9 +168,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     function appendTableRows(tbodyElem) {
-      var renderer = new TableRenderer(panel, data, ctrl.dashboard.isTimezoneUtc(), ctrl.$sanitize);
+      ctrl.renderer.setTable(data);
       tbodyElem.empty();
-      tbodyElem.html(renderer.render(ctrl.pageIndex));
+      tbodyElem.html(ctrl.renderer.render(ctrl.pageIndex));
     }
 
     function switchPage(e) {

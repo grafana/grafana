@@ -229,7 +229,7 @@ function transformDataToTable(data, panel) {
 
   var transformer = transformers[panel.transform];
   if (!transformer) {
-    throw {message: 'Transformer ' + panel.transformer + ' not found'};
+    throw {message: 'Transformer ' + panel.transform + ' not found'};
   }
 
   if (panel.filterNull) {
@@ -239,6 +239,7 @@ function transformDataToTable(data, panel) {
   }
 
   transformer.transform(copyData, panel, model);
+
   return model;
 }
 

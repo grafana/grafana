@@ -7,7 +7,7 @@
 				<tr>
 					<th ng-repeat="col in ctrl.table.columns" ng-hide="col.hidden">
 						<div class="table-panel-table-header-inner pointer" ng-click="ctrl.toggleColumnSort(col, $index)">
-							{{col.title || col.text}}
+							{{col.title}}
 							<span class="table-panel-table-header-controls" ng-if="col.sort">
 								<i class="fa fa-caret-down" ng-show="col.desc"></i>
 								<i class="fa fa-caret-up" ng-hide="col.desc"></i>
