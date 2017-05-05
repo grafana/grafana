@@ -13,42 +13,28 @@ weight = 2
 Annotations provide a way to mark points on the graph with rich events. When you hover over an annotation
 you can get title, tags, and text information for the event.
 
-![](/img/docs/v1/annotated_graph1.png)
+![](/img/docs/annotations/toggles.png)
 
-To add an annotation query click dashboard settings icon in top menu and select `Annotations` from the
-dropdown. This will open the `Annotations` edit view. Click the `Add` tab to add a new annotation query.
+## Queries
 
-> Note: Annotations apply to all graphs in a given dashboard, not on a per-panel basis.
+Annotatation events are fetched via annotation queries. To add a new annotation query to a dashboard
+open the dashboard settings menu, then select `Annotations`. This will open the dashboard annotations
+settings view. To create a new annotation query hit the `New` button.
 
-## Graphite annotations
+![](/img/docs/annotations/new_query.png)
 
-Graphite supports two ways to query annotations.
+Specify a name for the annotation query. This name is given to the toggle (checkbox) that will allow
+you to enable/disable showing annotation events from this query. For example you might have two
+annotation queries named `Deploys` and `Outages`. The toggles will allow you to decide what annotations
+to show.
 
-- A regular metric query, use the `Graphite target expression` text input for this
-- Graphite events query, use the `Graphite event tags` text input, specify an tag or wildcard (leave empty should also work)
+### Annotation query details
 
-## Elasticsearch annotations
-![](/img/docs/v2/annotations_es.png)
+The annotation query options are different for each data source.
 
-Grafana can query any Elasticsearch index for annotation events. The index name can be the name of an alias or an index wildcard pattern.
-You can leave the search query blank or specify a lucene query.
+- [Graphite annotation queries]({{< relref "features/datasources/graphite.md#annotations" >}})
+- [Elasticsearch annotation queries]({{< relref "features/datasources/elasticsearch.md#annotations" >}})
+- [InfluxDB annotation queries]({{< relref "features/datasources/influxdb.md#annotations" >}})
+- [Prometheus annotation queries]({{< relref "features/datasources/prometheus.md#annotations" >}})
 
-If your elasticsearch document has a timestamp field other than `@timestamp` you will need to specify that. As well
-as the name for the fields that should be used for the annotation title, tags and text. Tags and text are optional.
 
-> **Note** The annotation timestamp field in elasticsearch need to be in UTC format.
-
-## InfluxDB Annotations
-![](/img/docs/v2/annotations_influxdb.png)
-
-For InfluxDB you need to enter a query like in the above screenshot. You need to have the ```where $timeFilter``` part.
-If you only select one column you will not need to enter anything in the column mapping fields.
-
-## Prometheus Annotations
-
-![](/img/docs/v3/annotations_prom.png)
-
-Prometheus supports two ways to query annotations.
-
-- A regular metric query
-- A Prometheus query for pending and firing alerts (for details see [Inspecting alerts during runtime](https://prometheus.io/docs/alerting/rules/#inspecting-alerts-during-runtime))

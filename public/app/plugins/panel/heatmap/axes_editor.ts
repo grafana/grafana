@@ -10,11 +10,10 @@ export class AxesEditorCtrl {
   dataFormats: any;
 
   /** @ngInject */
-  constructor($scope) {
+  constructor($scope, uiSegmentSrv) {
     $scope.editor = this;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
-
     this.unitFormats = kbn.getUnitFormats();
 
     this.logScales = {
@@ -27,7 +26,7 @@ export class AxesEditorCtrl {
 
     this.dataFormats = {
       'Time series': 'timeseries',
-      'Time series Pre-bucketed': 'tsbuckets'
+      'Time series buckets': 'tsbuckets'
     };
   }
 

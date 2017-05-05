@@ -78,5 +78,5 @@ func (u *S3Uploader) Upload(imageDiskPath string) (string, error) {
 		return "", err
 	}
 
-	return "https://" + u.bucket + ".s3.amazonaws.com/" + key, nil
+	return "https://" + u.bucket + ".s3-" + u.region + ".amazonaws.com/" + key, nil
 }

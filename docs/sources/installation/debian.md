@@ -17,6 +17,9 @@ Description | Download
 ------------ | -------------
 Stable for Debian-based Linux | [4.2.0 (x86-64 deb)](https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.2.0_amd64.deb)
 
+Read [Upgrading Grafana]({{< relref "installation/upgrading.md" >}}) for tips and guidance on updating an existing
+installation.
+
 ## Install Stable
 
 ```

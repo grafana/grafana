@@ -87,7 +87,7 @@ export class HeatmapTooltip {
     let tooltipHtml = `<div class="graph-tooltip-time">${time}</div>
       <div class="heatmap-histogram"></div>`;
 
-    if (yData) {
+    if (yData && yData.bounds) {
       boundBottom = valueFormatter(yData.bounds.bottom);
       boundTop = valueFormatter(yData.bounds.top);
       valuesNumber = yData.values.length;

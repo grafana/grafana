@@ -28,6 +28,17 @@ This API can also be used to create, update and delete alert notifications.
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
+  Querystring Parameters:
+
+  These parameters are used as querystring parameters. For example:
+
+  `/api/alerts?dashboardId=1`
+
+  - **dashboardId** – Return alerts for a specified dashboard.
+  - **panelId** – Return alerts for a specified panel on a dashboard.
+  - **limit** - Limit response to x number of alerts.
+  - **state** - Return alerts with one or more of the following alert states: `ALL`,`no_data`, `paused`, `alerting`, `ok`, `pending`. To specify multiple states use the following format: `?state=paused&state=alerting`
+
 **Example Response**:
 
     HTTP/1.1 200
@@ -40,6 +51,13 @@ This API can also be used to create, update and delete alert notifications.
         "name": "fire place sensor",
         "message": "Someone is trying to break in through the fire place",
         "state": "alerting",
+        "evalDate": "0001-01-01T00:00:00Z",
+        "evalData": [
+          {
+            "metric": "fire",
+            "tags": null,
+            "value": 5.349999999999999
+          }
         "newStateDate": "2016-12-25",
         "executionError": "",
         "dashboardUri": "http://grafana.com/dashboard/db/sensors"
@@ -73,7 +91,6 @@ This API can also be used to create, update and delete alert notifications.
       "dashboardUri": "http://grafana.com/dashboard/db/sensors"
     }
 
-
 ## Pause alert
 
 `POST /api/alerts/:id/pause`
@@ -86,9 +103,14 @@ This API can also be used to create, update and delete alert notifications.
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
     {
-      "alertId": 1,
       "paused": true
     }
+
+The :id query parameter is the id of the alert to be paused or unpaused.
+
+JSON Body Schema:
+
+- **paused** – Can be `true` or `false`. True to pause an alert. False to unpause an alert.
 
 **Example Response**:
 
@@ -110,6 +132,8 @@ This API can also be used to create, update and delete alert notifications.
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+
 
 **Example Response**:
 

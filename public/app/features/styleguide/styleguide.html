@@ -9,10 +9,6 @@
 			<i class="fa fa-random"></i>
 			Switch theme
 		</a>
-		<a class="btn btn-inverse" ng-click="ctrl.switchTheme()">
-			<i class="fa fa-refresh"></i>
-			Reload
-		</a>
 
 		<div class="page-header-tabs">
 			<ul class="gf-tabs">
@@ -41,6 +37,19 @@
 				</button>
 			</div>
 		</div>
+	</div>
+
+	<div class="tab-pane style-guide-icon-list" ng-if="ctrl.page.icons">
+		<div class="row">
+			<div ng-repeat="icon in ctrl.icons" class="col-md-2 col-sm-3 col-xs-4">
+				<i class="icon-gf icon-gf-{{icon}}" bs-tooltip="'icon-gf icon-gf-{{icon}}'"></i>
+			</div>
+		</div>
+	</div>
+
+	<div class="tab-pane style-guide-plugin-authoring" ng-if="ctrl.page.plugins">
+		<p>From grafana 3.0 it's very easy to develop your own plugins and share them with other grafana users.</p>
+		<p>More information about plugin development can be found at <a href="http://docs.grafana.org/plugins/developing/development/" target="_blank">docs.grafana.org</a></p>
 	</div>
 
 	<div class="tab-pane" ng-if="ctrl.page.forms">

@@ -2,7 +2,7 @@
 
 # log15 [![godoc reference](https://godoc.org/github.com/inconshreveable/log15?status.png)](https://godoc.org/github.com/inconshreveable/log15) [![Build Status](https://travis-ci.org/inconshreveable/log15.svg?branch=master)](https://travis-ci.org/inconshreveable/log15)
 
-Package log15 provides an opinionated, simple toolkit for best-practice logging in Go (golang) that is both human and machine readable. It is modeled after the Go standard library's [`io`](http://golang.org/pkg/io/) and [`net/http`](http://golang.org/pkg/net/http/) packages and is an alternative to the standard library's [`log`](http://golang.org/pkg/log/) package. 
+Package log15 provides an opinionated, simple toolkit for best-practice logging in Go (golang) that is both human and machine readable. It is modeled after the Go standard library's [`io`](http://golang.org/pkg/io/) and [`net/http`](http://golang.org/pkg/net/http/) packages and is an alternative to the standard library's [`log`](http://golang.org/pkg/log/) package.
 
 ## Features
 - A simple, easy-to-understand API
@@ -30,7 +30,7 @@ import log "github.com/inconshreveable/log15"
 // all loggers can have key/value context
 srvlog := log.New("module", "app/server")
 
-// all log messages can have key/value context 
+// all log messages can have key/value context
 srvlog.Warn("abnormal conn rate", "rate", curRate, "low", lowRate, "high", highRate)
 
 // child loggers with inherited context
@@ -45,7 +45,14 @@ srvlog.SetHandler(log.MultiHandler(
     log.StreamHandler(os.Stderr, log.LogfmtFormat()),
     log.LvlFilterHandler(
         log.LvlError,
-        log.Must.FileHandler("errors.json", log.JsonFormat())))
+        log.Must.FileHandler("errors.json", log.JsonFormat()))))
+```
+
+Will result in output that looks like this:
+
+```
+WARN[06-17|21:58:10] abnormal conn rate                       module=app/server rate=0.500 low=0.100 high=0.800
+INFO[06-17|21:58:10] connection open                          module=app/server raddr=10.0.0.1
 ```
 
 ## Breaking API Changes
