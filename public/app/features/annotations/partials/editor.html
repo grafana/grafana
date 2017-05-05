@@ -18,6 +18,12 @@
 			<li class="gf-tabs-item" ng-show="ctrl.mode === 'new'">
 				<span class="active gf-tabs-link">New Query</span>
 			</li>
+
+			<li class="gf-tabs-item" >
+        <a class="gf-tabs-link" ng-click="ctrl.mode = 'help';" ng-class="{active: ctrl.mode === 'help'}">
+          Help
+        </a>
+      </li>
 		</ul>
 
 		<button class="tabbed-view-close-btn" ng-click="dismiss();">
@@ -26,6 +32,21 @@
 	</div>
 
 	<div class="tabbed-view-body">
+
+		<div ng-show="ctrl.mode === 'help'">
+			<div class="grafana-info-box col-lg-8">
+				<h5>What are Annotations?</h5>
+				<p>
+					Annotations provide a way to integrate event data into your graphs. They are visualized as vertical lines and icons
+					on all graph panels. When you hover over an annotation icon you can get title, tags, and text information for the event.
+					In the <i>Queries</i> tab you can add queries that return annotation events.
+					<br>
+					<br>
+					Checkout the <a class="external-link" target="_blank" href="http://docs.grafana.org/reference/annotations/">Annotations documentation</a> for more information.
+				</p>
+			</div>
+		</div>
+
 		<div class="editor-row row" ng-if="ctrl.mode === 'list'">
 			<div ng-if="ctrl.annotations.length === 0">
 				<em>No annotation queries defined</em>
