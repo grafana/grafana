@@ -9,7 +9,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('SystemsummaryCtrl', function ($scope, backendSrv, contextSrv, datasourceSrv, alertMgrSrv, healthSrv) {
+    module.controller('SystemsummaryCtrl', function ($scope, $location, backendSrv, contextSrv, datasourceSrv, alertMgrSrv, healthSrv) {
       $scope.getUrl = function(url) {
         return config.appSubUrl + url;
       };
@@ -78,11 +78,11 @@ define([
             "stack": false,
             "steppedLine": false,
             "targets": [{
-              "aggregator": "sum",
+              "aggregator": "",
               "currentTagKey": "",
               "currentTagValue": "",
               "downsampleAggregator": "avg",
-              "downsampleInterval": "1h",
+              "downsampleInterval": "5m",
               "errors": {},
               "hide": false,
               "isCounter": false,
@@ -128,7 +128,11 @@ define([
       ];
 
       $scope.init = function () {
-
+        if (contextSrv.system == 0 && contextSrv.user.orgId) {
+          $location.url("/systems");
+          contextSrv.sidmenu = false;
+          return;
+        }
         $scope.datasource = null;
 
         $scope.initDashboard({
