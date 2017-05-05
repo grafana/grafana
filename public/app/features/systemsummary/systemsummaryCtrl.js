@@ -146,18 +146,15 @@ define([
           }
         }, $scope);
 
-        _.each(datasourceSrv.get("opentsdb"), function (ds) {
-          datasourceSrv.get(ds.name).then(function (datasource) {
-            $scope.datasource = datasource;
-          }).then(function () {
-            $scope.getAlertStatus();
-            $scope.getServices();
-            $scope.getHostSummary();
-            $scope.getHealth();
-            $scope.getPrediction($scope.dashboard.rows[6].panels);
-          });
+        datasourceSrv.get("opentsdb").then(function (datasource) {
+          $scope.datasource = datasource;
+        }).then(function () {
+          $scope.getAlertStatus();
+          $scope.getServices();
+          $scope.getHostSummary();
+          $scope.getHealth();
+          $scope.getPrediction($scope.dashboard.rows[6].panels);
         });
-
       };
 
       $scope.initPanelRow = function () {
