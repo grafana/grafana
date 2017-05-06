@@ -74,7 +74,7 @@ export class KeybindingSrv {
       evt.stopPropagation();
       evt.returnValue = false;
       return this.$rootScope.$apply(fn.bind(this));
-    });
+    }, 'keydown');
   }
 
   showDashEditView(view) {
