@@ -111,7 +111,6 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 		}
 	}
 
-	
 	if conditions, err := buildQueryConditions(ruleDef.Settings.Get("conditions").MustArray()); err != nil {
 		return nil, ValidationError{Err: err, DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
 	} else {
