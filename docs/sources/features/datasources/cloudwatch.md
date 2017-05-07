@@ -76,7 +76,8 @@ Name | Description
 `dimension_keys(namespace)` | Returns a list of dimension keys in the namespace.
 `dimension_values(region, namespace, metric, dimension_key)` | Returns a list of dimension values matching the specified `region`, `namespace`, `metric` and `dimension_key`.
 `ebs_volume_ids(region, instance_id)` | Returns a list of volume id matching the specified `region`, `instance_id`.
-`ec2_instance_attribute(region, attribute_name, filters)` | Returns a list of attribute matching the specified `region`, `attribute_name`, `filters`.
+`ec2_instance_attribute(region, attribute_name, filters)` | Returns a list of EC2 attributes matching the specified `region`, `attribute_name`, `filters`.
+`ebs_volume_attribute(region, attribute_name, filters)` | Returns a list of EBS attributes matching the specified `region`, `attribute_name`, `filters`.
 
 For details about the metrics CloudWatch provides, please refer to the [CloudWatch documentation](https://docs.aws.amazon.com/AmazonCloudWatch/latest/DeveloperGuide/CW_Support_For_AWS.html).
 
@@ -92,15 +93,19 @@ RedShift | `dimension_values(us-east-1,AWS/Redshift,CPUUtilization,ClusterIdenti
 RDS | `dimension_values(us-east-1,AWS/RDS,CPUUtilization,DBInstanceIdentifier)`
 S3 | `dimension_values(us-east-1,AWS/S3,BucketSizeBytes,BucketName)`
 
-## ec2_instance_attribute JSON filters
+## ec2_instance_attribute and ebs_volume_attribute JSON filters
 
-The `ec2_instance_attribute` query take `filters` in JSON format.
-You can specify [pre-defined filters of ec2:DescribeInstances](http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html).
+The `ec2_instance_attribute` and `ebs_volume_attribute` queries take `filters` in JSON format.
+You can specify pre-defined filters of [ec2:DescribeInstances](http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html) or [ec2.DescribeVolumes](http://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeVolumes.html).
 Specify like `{ filter_name1: [ filter_value1 ], filter_name2: [ filter_value2 ] }`
 
 Example `ec2_instance_attribute()` query
 
     ec2_instance_attribute(us-east-1, InstanceId, { "tag:Environment": [ "production" ] })
+
+Example `ebs_volume_attribute()` query
+
+    ebs_volume_attribute(us-east-1, VolumeId, { "attachment.instance-id": [ "i-012345ABCDEF" ] })
 
 ![](/img/docs/v2/cloudwatch_templating.png)
 
@@ -110,5 +115,3 @@ Amazon provides 1 million CloudWatch API requests each month at no additional ch
 it costs $0.01 per 1,000 GetMetricStatistics or ListMetrics requests. For each query Grafana will
 issue a GetMetricStatistics request and every time you pick a dimension in the query editor
 Grafana will issue a ListMetrics request.
-
-
