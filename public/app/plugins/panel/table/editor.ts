@@ -21,10 +21,12 @@ export class TablePanelEditorCtrl {
   addColumnSegment: any;
   unitFormats: any;
   getColumnNames: any;
+  activeStyleIndex: number;
 
   /** @ngInject */
   constructor($scope, private $q, private uiSegmentSrv) {
     $scope.editor = this;
+    this.activeStyleIndex = 0;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
     this.transformers = transformers;
@@ -111,12 +113,13 @@ export class TablePanelEditorCtrl {
       decimals: 2,
       colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
       colorMode: null,
-      pattern: '/.*/',
+      pattern: '',
       dateFormat: 'YYYY-MM-DD HH:mm:ss',
       thresholds: [],
     };
 
     this.panel.styles.push(angular.copy(columnStyleDefaults));
+    this.activeStyleIndex = this.panel.styles.length-1;
   }
 
   removeColumnStyle(style) {
