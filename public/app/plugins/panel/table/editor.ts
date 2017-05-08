@@ -106,7 +106,7 @@ export class TablePanelEditorCtrl {
   }
 
   addColumnStyle() {
-    var columnStyleDefaults = {
+    var newStyleRule = {
       unit: 'short',
       type: 'number',
       alias: '',
@@ -118,8 +118,20 @@ export class TablePanelEditorCtrl {
       thresholds: [],
     };
 
-    this.panel.styles.push(angular.copy(columnStyleDefaults));
-    this.activeStyleIndex = this.panel.styles.length-1;
+    var styles = this.panel.styles;
+    var stylesCount = styles.length;
+    var indexToInsert = stylesCount;
+
+    // check if last is a catch all rule, then add it before that one
+    if (stylesCount > 0) {
+      var last = styles[stylesCount-1];
+      if (last.pattern === '/.*/') {
+        indexToInsert = stylesCount-1;
+      }
+    }
+
+    styles.splice(indexToInsert, 0, newStyleRule);
+    this.activeStyleIndex = indexToInsert;
   }
 
   removeColumnStyle(style) {
