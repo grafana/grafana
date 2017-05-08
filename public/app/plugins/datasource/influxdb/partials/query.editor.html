@@ -11,7 +11,7 @@
 				<label class="gf-form-label query-keyword width-7">FROM</label>
 
 				<metric-segment segment="ctrl.policySegment" get-options="ctrl.getPolicySegments()" on-change="ctrl.policyChanged()"></metric-segment>
-				<metric-segment segment="ctrl.measurementSegment" get-options="ctrl.getMeasurements(measurementFilter)" on-change="ctrl.measurementChanged()"></metric-segment>
+				<metric-segment segment="ctrl.measurementSegment" get-options="ctrl.getMeasurements($query)" on-change="ctrl.measurementChanged()"></metric-segment>
 			</div>
 
 			<div class="gf-form">
