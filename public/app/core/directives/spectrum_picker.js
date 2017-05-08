@@ -18,6 +18,7 @@ function (angular, coreModule) {
         var options = angular.extend({
           showAlpha: true,
           showButtons: false,
+          showInput: true,
           color: ngModel.$viewValue,
           change: function(color) {
             scope.$apply(function() {

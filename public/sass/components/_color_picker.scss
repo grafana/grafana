@@ -35,3 +35,17 @@
   float: left;
   z-index: 0;
 }
+
+.sp-input {
+  padding: $input-padding-y $input-padding-x;
+  margin-right: $gf-form-margin;
+  font-size: $font-size-base;
+  line-height: $input-line-height;
+  color: $input-color;
+  background-color: $input-bg;
+  background-image: none;
+  background-clip: padding-box;
+  border: $input-btn-border-width solid $input-border-color;
+  @include border-radius($input-border-radius-sm);
+  @include box-shadow($input-box-shadow);
+}
