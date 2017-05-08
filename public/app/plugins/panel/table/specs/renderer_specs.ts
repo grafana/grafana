@@ -22,13 +22,15 @@ describe('when rendering table', () => {
         {
           pattern: 'Time',
           type: 'date',
-          format: 'LLL'
+          format: 'LLL',
+          alias: 'Timestamp'
         },
         {
-          pattern: 'Value',
+          pattern: '/(Val)ue/',
           type: 'number',
           unit: 'ms',
           decimals: 3,
+          alias: '$1'
         },
         {
           pattern: 'Colored',
@@ -131,6 +133,18 @@ describe('when rendering table', () => {
     it('sanitized value should render as', () => {
       var html = renderer.renderCell(6, 'text <a href="http://google.com">link</a>');
       expect(html).to.be('<td>sanitized</td>');
+    });
+
+    it('Time column title should be Timestamp', () => {
+      expect(table.columns[0].title).to.be('Timestamp');
+    });
+
+    it('Value column title should be Val', () => {
+      expect(table.columns[1].title).to.be('Val');
+    });
+
+    it('Colored column title should be Colored', () => {
+      expect(table.columns[2].title).to.be('Colored');
     });
   });
 });

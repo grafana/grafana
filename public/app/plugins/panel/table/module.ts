@@ -16,6 +16,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   pageIndex: number;
   dataRaw: any;
   table: any;
+  renderer: any;
 
   panelDefaults = {
     targets: [{}],
@@ -26,11 +27,13 @@ class TablePanelCtrl extends MetricsPanelCtrl {
       {
         type: 'date',
         pattern: 'Time',
+        alias: 'Time',
         dateFormat: 'YYYY-MM-DD HH:mm:ss',
       },
       {
         unit: 'short',
         type: 'number',
+        alias: '',
         decimals: 2,
         colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
         colorMode: null,
@@ -118,6 +121,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   render() {
     this.table = transformDataToTable(this.dataRaw, this.panel);
     this.table.sort(this.panel.sort);
+
+    this.renderer = new TableRenderer(this.panel, this.table, this.dashboard.isTimezoneUtc(), this.$sanitize);
+
     return super.render(this.table);
   }
 
@@ -141,8 +147,7 @@ class TablePanelCtrl extends MetricsPanelCtrl {
   }
 
   exportCsv() {
-    var renderer = new TableRenderer(this.panel, this.table, this.dashboard.isTimezoneUtc(), this.$sanitize);
-    FileExport.exportTableDataToCsv(renderer.render_values());
+    FileExport.exportTableDataToCsv(this.renderer.render_values());
   }
 
   link(scope, elem, attrs, ctrl) {
@@ -162,9 +167,9 @@ class TablePanelCtrl extends MetricsPanelCtrl {
     }
 
     function appendTableRows(tbodyElem) {
-      var renderer = new TableRenderer(panel, data, ctrl.dashboard.isTimezoneUtc(), ctrl.$sanitize);
+      ctrl.renderer.setTable(data);
       tbodyElem.empty();
-      tbodyElem.html(renderer.render(ctrl.pageIndex));
+      tbodyElem.html(ctrl.renderer.render(ctrl.pageIndex));
     }
 
     function switchPage(e) {
