@@ -25,10 +25,10 @@ func GetActiveNodeByIdHeartbeat(query *m.GetActiveNodeByIdHeartbeatQuery) error 
 	var retNode m.ActiveNode
 	has, err := x.Where("heartbeat=?", query.Heartbeat).And("node_id=?", query.NodeId).Get(&retNode)
 	if err != nil || !has {
-		errmsg := fmt.Sprintf("Failed to get record: nodeId=%s, heartbeat=%d", query.NodeId, query.Heartbeat)
+		errmsg := fmt.Sprintf("Heartbeat record not found: nodeId=%s, heartbeat=%d", query.NodeId, query.Heartbeat)
 		if err == nil {
 			err = errors.New(errmsg)
-			sqlog.Error(errmsg)
+			sqlog.Debug(errmsg)
 		} else {
 			sqlog.Error(errmsg, "error", err)
 		}

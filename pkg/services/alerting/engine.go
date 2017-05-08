@@ -144,7 +144,7 @@ func (e *Engine) GetPendingJobCount() int {
 	return len(e.execQueue)
 }
 
-func (e *Engine) ScheduleAlertsForPartition(partitionNo int, nodeCount int) error {
+func (e *Engine) ScheduleAlertsForPartition(interval int64, partitionNo int, nodeCount int) error {
 	if nodeCount == 0 {
 		return errors.New("Node count is 0")
 	}
@@ -153,11 +153,20 @@ func (e *Engine) ScheduleAlertsForPartition(partitionNo int, nodeCount int) erro
 	}
 	rules := e.ruleReader.Fetch()
 	filterCount := 0
+	intervalEnd := time.Unix(interval, 0).Add(time.Minute)
 	for _, rule := range rules {
-		//TODO handle frequency greater than 1 min
-		if rule.Id%int64(nodeCount) == int64(partitionNo) {
-			e.execQueue <- &Job{Rule: rule}
-			filterCount++
+		// handle frequency greater than 1 min
+		nextEvalDate := rule.EvalDate.Add(time.Duration(rule.Frequency) * time.Second)
+		if nextEvalDate.Before(intervalEnd) {
+			if rule.Id%int64(nodeCount) == int64(partitionNo) {
+				e.execQueue <- &Job{Rule: rule}
+				filterCount++
+				e.log.Debug(fmt.Sprintf("Scheduled Rule : %v for interval=%v", rule, interval))
+			} else {
+				e.log.Debug(fmt.Sprintf("Skipped Rule : %v for interval=%v, partitionNo=%v, nodeCount=%v", rule, interval, partitionNo, nodeCount))
+			}
+		} else {
+			e.log.Debug(fmt.Sprintf("Skipped Rule : %v for interval=%v, intervalEnd=%v, nextEvalDate=%v", rule, interval, intervalEnd, nextEvalDate))
 		}
 	}
 	e.log.Info(fmt.Sprintf("%v/%v rules scheduled for execution for partition %v/%v",

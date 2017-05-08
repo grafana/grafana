@@ -88,9 +88,7 @@ func (node *ClusterNode) GetNode(heartbeat int64) (*m.ActiveNode, error) {
 	}
 	node.log.Debug("Sending command ", "GetActiveNodeByIdHeartbeatQuery", cmd)
 	if err := bus.Dispatch(cmd); err != nil {
-
-		errmsg := fmt.Sprintf("Failed to get node %v", cmd)
-		node.log.Error(errmsg, "error", err)
+		node.log.Debug(fmt.Sprintf("Failed to get node %v", cmd), "error", err)
 		return nil, err
 	}
 	node.log.Debug("Command executed successfully")

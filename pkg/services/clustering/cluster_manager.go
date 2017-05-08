@@ -164,9 +164,12 @@ func (cm *ClusterManager) scheduleNormalAlerts() {
 		cm.log.Error("Failed to get last heartbeat", "error", err)
 		return
 	}
+	if lastHeartbeat <= cm.alertingState.lastProcessedInterval {
+		return
+	}
 	activeNode, err := cm.clusterNodeMgmt.GetNode(lastHeartbeat)
 	if err != nil {
-		cm.log.Error("Failed to get node for heartbeat "+strconv.FormatInt(lastHeartbeat, 10), "error", err)
+		cm.log.Debug("Failed to get node for heartbeat "+strconv.FormatInt(lastHeartbeat, 10), "error", err)
 		return
 	}
 	nodeCount, err := cm.clusterNodeMgmt.GetActiveNodesCount(lastHeartbeat)
@@ -178,19 +181,18 @@ func (cm *ClusterManager) scheduleNormalAlerts() {
 		cm.log.Warn("Found node count 0")
 		return
 	}
-	if lastHeartbeat > cm.alertingState.lastProcessedInterval {
-		cm.changeAlertingState(m.CLN_ALERT_STATUS_SCHEDULING)
-		alertDispatchTask := &DispatcherTask{
-			taskType: DISPATCHER_TASK_TYPE_ALERTS_PARTITION,
-			taskInfo: &DispatcherTaskAlertsPartition{
-				interval:    lastHeartbeat,
-				nodeCount:   nodeCount,
-				partitionNo: int(activeNode.PartitionNo),
-			},
-		}
-		cm.dispatcherTaskQ <- alertDispatchTask
-		cm.alertingState.lastProcessedInterval = lastHeartbeat
+
+	cm.changeAlertingState(m.CLN_ALERT_STATUS_SCHEDULING)
+	alertDispatchTask := &DispatcherTask{
+		taskType: DISPATCHER_TASK_TYPE_ALERTS_PARTITION,
+		taskInfo: &DispatcherTaskAlertsPartition{
+			interval:    lastHeartbeat,
+			nodeCount:   nodeCount,
+			partitionNo: int(activeNode.PartitionNo),
+		},
 	}
+	cm.dispatcherTaskQ <- alertDispatchTask
+	cm.alertingState.lastProcessedInterval = lastHeartbeat
 }
 
 func (cm *ClusterManager) alertRulesDispatcher(ctx context.Context) error {
@@ -219,7 +221,7 @@ func (cm *ClusterManager) handleAlertRulesDispatcherTask(task *DispatcherTask) e
 	switch task.taskType {
 	case DISPATCHER_TASK_TYPE_ALERTS_PARTITION:
 		taskInfo := task.taskInfo.(*DispatcherTaskAlertsPartition)
-		err = cm.alertEngine.ScheduleAlertsForPartition(taskInfo.partitionNo, taskInfo.nodeCount)
+		err = cm.alertEngine.ScheduleAlertsForPartition(taskInfo.interval, taskInfo.partitionNo, taskInfo.nodeCount)
 		cm.log.Debug("Alert rules dispatcher - submitted next alerts batch")
 	case DISPATCHER_TASK_TYPE_ALERTS_MISSING:
 		//TODO
