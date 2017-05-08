@@ -146,12 +146,8 @@
   content: "\f015";
 }
 
-.search-item-dash-folder.search-results-browse-mode > .search-result-link > .search-result-icon::before {
+.search-item-dash-folder > .search-result-link > .search-result-icon::before {
   content: "\f07c";
-}
-
-.search-item-dash-folder.search-results-search-mode > .search-result-link > .search-result-icon::before {
-  content: "\f07b";
 }
 
 .search-button-row {

@@ -218,6 +218,11 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 		return err
 	}
 
+	res, err = appendDashboardFolders(res)
+	if err != nil {
+		return err
+	}
+
 	query.Result = make([]*search.Hit, 0)
 	hits := make(map[int64]*search.Hit)
 
@@ -240,11 +245,38 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 		}
 	}
 
-	if query.BrowseMode {
-		convertToDashboardFolders(query)
-	}
+	convertToDashboardFolders(query)
 
 	return err
+}
+
+// appends parent folders for any hits to the search result
+func appendDashboardFolders(res []DashboardSearchProjection) ([]DashboardSearchProjection, error) {
+	var dashboardFolderIds []int64
+	for _, item := range res {
+		if item.ParentId > 0 {
+			dashboardFolderIds = append(dashboardFolderIds, item.ParentId)
+		}
+	}
+
+	if len(dashboardFolderIds) > 0 {
+		folderQuery := &m.GetDashboardsQuery{DashboardIds: dashboardFolderIds}
+		err := GetDashboards(folderQuery)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, folder := range folderQuery.Result {
+			res = append(res, DashboardSearchProjection{
+				Id:       folder.Id,
+				IsFolder: true,
+				Slug:     folder.Slug,
+				Title:    folder.Title,
+			})
+		}
+	}
+
+	return res, nil
 }
 
 func getHitType(item DashboardSearchProjection) search.HitType {

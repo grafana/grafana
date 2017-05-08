@@ -68,17 +68,5 @@ func TestSearch(t *testing.T) {
 			})
 
 		})
-
-		Convey("That returns result in browse mode", func() {
-			query.BrowseMode = true
-			err := searchHandler(&query)
-			So(err, ShouldBeNil)
-
-			Convey("should return correct results", func() {
-				So(query.Result[0].Title, ShouldEqual, "FOLDER")
-				So(len(query.Result[0].Dashboards), ShouldEqual, 1)
-			})
-
-		})
 	})
 }

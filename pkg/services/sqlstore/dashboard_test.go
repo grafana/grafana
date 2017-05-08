@@ -114,7 +114,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldNotBeNil)
 			})
 
-			Convey("Should be able to search for dashboard", func() {
+			Convey("Should be able to search for dashboard and return in folder hierarchy", func() {
 				query := search.FindPersistedDashboardsQuery{
 					Title: "test dash 23",
 					OrgId: 1,
@@ -124,10 +124,12 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				So(len(query.Result), ShouldEqual, 1)
-				hit := query.Result[0]
+				hit := query.Result[0].Dashboards[0]
+
 				So(len(hit.Tags), ShouldEqual, 2)
 				So(hit.Type, ShouldEqual, search.DashHitDB)
 				So(hit.ParentId, ShouldBeGreaterThan, 0)
+
 			})
 
 			Convey("Should be able to search for dashboard folder", func() {
@@ -144,23 +146,6 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(hit.Type, ShouldEqual, search.DashHitFolder)
 			})
 
-			Convey("Should be able to browse dashboard folders", func() {
-				query := search.FindPersistedDashboardsQuery{
-					OrgId:      1,
-					BrowseMode: true,
-				}
-
-				err := SearchDashboards(&query)
-				So(err, ShouldBeNil)
-
-				So(len(query.Result), ShouldEqual, 2)
-				hit := query.Result[0]
-				So(hit.Type, ShouldEqual, search.DashHitFolder)
-				So(len(hit.Dashboards), ShouldEqual, 2)
-				So(hit.Dashboards[0].Title, ShouldEqual, "test dash 23")
-
-			})
-
 			Convey("Should be able to search for dashboard by dashboard ids", func() {
 				Convey("should be able to find two dashboards by id", func() {
 					query := search.FindPersistedDashboardsQuery{
@@ -171,12 +156,12 @@ func TestDashboardDataAccess(t *testing.T) {
 					err := SearchDashboards(&query)
 					So(err, ShouldBeNil)
 
-					So(len(query.Result), ShouldEqual, 2)
+					So(len(query.Result[0].Dashboards), ShouldEqual, 2)
 
-					hit := query.Result[0]
+					hit := query.Result[0].Dashboards[0]
 					So(len(hit.Tags), ShouldEqual, 2)
 
-					hit2 := query.Result[1]
+					hit2 := query.Result[0].Dashboards[1]
 					So(len(hit2.Tags), ShouldEqual, 1)
 				})
 

@@ -20,7 +20,6 @@ export class SearchCtrl {
   ignoreClose: any;
   // triggers fade animation class
   openCompleted: boolean;
-  searchMode = 'browse';
 
   /** @ngInject */
   constructor(private $scope, private $location, private $timeout, private backendSrv, private contextSrv, private $rootScope) {
@@ -104,9 +103,6 @@ export class SearchCtrl {
     this.tagsMode = false;
     this.currentSearchId = this.currentSearchId + 1;
     var localSearchId = this.currentSearchId;
-
-    this.query.browseMode = this.queryHasNoFilters();
-    this.searchMode = this.queryHasNoFilters() ? 'browse': 'search';
 
     return this.backendSrv.search(this.query).then((results) => {
       if (localSearchId < this.currentSearchId) { return; }

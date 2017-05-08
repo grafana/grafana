@@ -47,7 +47,6 @@ type Query struct {
 	Limit        int
 	IsStarred    bool
 	DashboardIds []int
-	BrowseMode   bool
 
 	Result HitList
 }
@@ -58,7 +57,6 @@ type FindPersistedDashboardsQuery struct {
 	UserId       int64
 	IsStarred    bool
 	DashboardIds []int
-	BrowseMode   bool
 
 	Result HitList
 }
