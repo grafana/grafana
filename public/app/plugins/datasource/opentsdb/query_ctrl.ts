@@ -72,9 +72,12 @@ export class OpenTsQueryCtrl extends QueryCtrl {
       .then(this.getTextValues)
       .then(callback);
     };
+
+    this.parseQuery();
   }
 
   targetBlur() {
+    this.parseQuery();
     this.errors = this.validateTarget();
     this.refresh();
   }
@@ -210,4 +213,20 @@ export class OpenTsQueryCtrl extends QueryCtrl {
 
     return errs;
   }
+
+  toggleEditorMode() {
+    this.target.textEditor = !this.target.textEditor;
+    try {
+      this.parseQuery();
+    } catch (err) {
+      console.log('query parsing error');
+    }
+  }
+
+  parseQuery() {
+    if (this.target.metric) {
+      this.target = this.datasource.convertMetricToTarget(this.target);
+    }
+  }
+
 }
