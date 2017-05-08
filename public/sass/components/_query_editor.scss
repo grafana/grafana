@@ -24,6 +24,10 @@
   .gf-form,
   .gf-form-filler {
     margin-bottom: 2px;
+
+    a.hidden {
+      color: $gray-3;
+    }
   }
 
   .gf-form-switch,
