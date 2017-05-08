@@ -19,7 +19,7 @@ func TestGuardianDataAccess(t *testing.T) {
 			insertTestDashboard("test dash 23", 1, folder.Id, false, "prod", "webapp")
 			insertTestDashboard("test dash 45", 1, folder.Id, false, "prod")
 
-			currentUser := createUser("viewer")
+			currentUser := createUser("viewer", "Viewer", false)
 
 			Convey("and no acls are set", func() {
 				Convey("should return all dashboards", func() {
@@ -61,17 +61,17 @@ func TestGuardianDataAccess(t *testing.T) {
 	})
 }
 
-func createUser(name string) m.User {
+func createUser(name string, role string, isAdmin bool) m.User {
 	setting.AutoAssignOrg = true
-	setting.AutoAssignOrgRole = "Viewer"
+	setting.AutoAssignOrgRole = role
 
-	currentUserCmd := m.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: false}
+	currentUserCmd := m.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
 	err := CreateUser(&currentUserCmd)
 	So(err, ShouldBeNil)
 
 	q1 := m.GetUserOrgListQuery{UserId: currentUserCmd.Result.Id}
 	GetUserOrgList(&q1)
-	So(q1.Result[0].Role, ShouldEqual, "Viewer")
+	So(q1.Result[0].Role, ShouldEqual, role)
 
 	return currentUserCmd.Result
 }

@@ -247,6 +247,10 @@ func (hs *HttpServer) registerRoutes() {
 			r.Get("/home", wrap(GetHomeDashboard))
 			r.Get("/tags", GetDashboardTags)
 			r.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
+
+			r.Group("/:id/acl", func() {
+				r.Get("/", wrap(GetDashboardAcl))
+			}, reqSignedIn)
 		})
 
 		// Dashboard snapshots

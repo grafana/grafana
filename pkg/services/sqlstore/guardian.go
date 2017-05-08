@@ -28,7 +28,7 @@ where (
 	rawSQL = fmt.Sprintf("%v and d.id in(%v)", rawSQL, dashboardIds)
 
 	query.Result = make([]int64, 0)
-	err := x.In("DashboardId", query.DashList).SQL(rawSQL, query.UserId, query.UserId, query.UserId, query.UserId, query.OrgId).Find(&query.Result)
+	err := x.SQL(rawSQL, query.UserId, query.UserId, query.UserId, query.UserId, query.OrgId).Find(&query.Result)
 
 	if err != nil {
 		return err

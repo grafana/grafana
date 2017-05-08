@@ -21,6 +21,24 @@ func RemoveRestrictedDashboards(dashList []int64, orgId int64, userId int64) ([]
 	return filteredList, err
 }
 
+// CanViewAcl determines if a user has permission to view a dashboard's ACL
+func CanViewAcl(dashboardId int64, role m.RoleType, isGrafanaAdmin bool, orgId int64, userId int64) (bool, error) {
+	if role == m.ROLE_ADMIN || isGrafanaAdmin {
+		return true, nil
+	}
+
+	filteredList, err := getAllowedDashboards([]int64{dashboardId}, orgId, userId)
+	if err != nil {
+		return false, err
+	}
+
+	if len(filteredList) > 1 && filteredList[0] == dashboardId {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 func getUser(userId int64) (*m.SignedInUser, error) {
 	query := m.GetSignedInUserQuery{UserId: userId}
 	err := bus.Dispatch(&query)

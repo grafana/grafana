@@ -11,14 +11,15 @@ import (
 func TestDashboardAclDataAccess(t *testing.T) {
 	Convey("Testing DB", t, func() {
 		InitTestDB(t)
-		Convey("Given a dashboard folder", func() {
+		Convey("Given a dashboard folder and a user", func() {
+			currentUser := createUser("viewer", "Viewer", false)
 			savedFolder := insertTestDashboard("1 test dash folder", 1, 0, true, "prod", "webapp")
 			childDash := insertTestDashboard("2 test dash", 1, savedFolder.Id, false, "prod", "webapp")
 
 			Convey("Should be able to add dashboard permission", func() {
 				err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
 					OrgId:          1,
-					UserId:         1,
+					UserId:         currentUser.Id,
 					DashboardId:    savedFolder.Id,
 					PermissionType: m.PERMISSION_EDIT,
 				})
@@ -29,7 +30,9 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 				So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
 				So(q1.Result[0].Permissions, ShouldEqual, m.PERMISSION_EDIT)
-				So(q1.Result[0].UserId, ShouldEqual, 1)
+				So(q1.Result[0].UserId, ShouldEqual, currentUser.Id)
+				So(q1.Result[0].UserLogin, ShouldEqual, currentUser.Login)
+				So(q1.Result[0].UserEmail, ShouldEqual, currentUser.Email)
 
 				Convey("Should update hasAcl field to true for dashboard folder and its children", func() {
 					q2 := &m.GetDashboardsQuery{DashboardIds: []int64{savedFolder.Id, childDash.Id}}
