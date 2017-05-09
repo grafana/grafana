@@ -135,7 +135,7 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 	if len(query.Tags) > 0 {
 		sql.WriteString(`SELECT dashboard.id, dashboard.title, dashboard.slug, dashboard_tag.term
 							FROM
-							( SELECT dashboard.id, dashboard.title, dashboard.slug, dashboard_tag.term, dashboard.org_id
+							( SELECT dashboard.id
 							FROM dashboard
 							INNER JOIN dashboard_tag
 							ON dashboard_tag.dashboard_id = dashboard.id
@@ -147,8 +147,9 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 			sql.WriteString(" ?")
 			params = append(params, tag)
 		}
-		sql.WriteString(`) GROUP BY dashboard.id HAVING COUNT(dashboard.slug) >= ?) as dashboard
-							INNER JOIN dashboard_tag on dashboard.id = dashboard_tag.dashboard_id
+		sql.WriteString(`) GROUP BY dashboard.id HAVING COUNT(dashboard.id) >= ?) as ids
+							INNER JOIN dashboard on ids.id = dashboard.id
+              INNER JOIN dashboard_tag on dashboard.id = dashboard_tag.dashboard_id
               `)
 		params = append(params, len(query.Tags))
 	} else {
