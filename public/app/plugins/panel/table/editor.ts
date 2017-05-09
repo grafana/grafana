@@ -21,10 +21,12 @@ export class TablePanelEditorCtrl {
   addColumnSegment: any;
   unitFormats: any;
   getColumnNames: any;
+  activeStyleIndex: number;
 
   /** @ngInject */
   constructor($scope, private $q, private uiSegmentSrv) {
     $scope.editor = this;
+    this.activeStyleIndex = 0;
     this.panelCtrl = $scope.ctrl;
     this.panel = this.panelCtrl.panel;
     this.transformers = transformers;
@@ -104,18 +106,32 @@ export class TablePanelEditorCtrl {
   }
 
   addColumnStyle() {
-    var columnStyleDefaults = {
+    var newStyleRule = {
       unit: 'short',
       type: 'number',
+      alias: '',
       decimals: 2,
       colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
       colorMode: null,
-      pattern: '/.*/',
+      pattern: '',
       dateFormat: 'YYYY-MM-DD HH:mm:ss',
       thresholds: [],
     };
 
-    this.panel.styles.push(angular.copy(columnStyleDefaults));
+    var styles = this.panel.styles;
+    var stylesCount = styles.length;
+    var indexToInsert = stylesCount;
+
+    // check if last is a catch all rule, then add it before that one
+    if (stylesCount > 0) {
+      var last = styles[stylesCount-1];
+      if (last.pattern === '/.*/') {
+        indexToInsert = stylesCount-1;
+      }
+    }
+
+    styles.splice(indexToInsert, 0, newStyleRule);
+    this.activeStyleIndex = indexToInsert;
   }
 
   removeColumnStyle(style) {

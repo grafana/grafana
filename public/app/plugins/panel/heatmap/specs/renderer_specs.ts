@@ -81,8 +81,8 @@ describe('grafanaHeatmap', function () {
               getTimezone: sinon.stub().returns('utc')
             },
             range: {
-              from: moment.utc("01 Mar 2017 10:00:00"),
-              to: moment.utc("01 Mar 2017 11:00:00"),
+              from: moment.utc("01 Mar 2017 10:00:00", 'DD MMM YYYY HH:mm:ss'),
+              to: moment.utc("01 Mar 2017 11:00:00", 'DD MMM YYYY HH:mm:ss'),
             },
           };
 
@@ -263,5 +263,5 @@ function getTicks(element, axisSelector) {
 
 function formatLocalTime(timeStr) {
   let format = "HH:mm";
-  return moment.utc(timeStr).local().format(format);
+  return moment.utc(timeStr, 'DD MMM YYYY HH:mm:ss').local().format(format);
 }
