@@ -43,3 +43,9 @@ type GetNodeCmd struct {
 type GetLastDBTimeIntervalQuery struct {
 	Result int64
 }
+
+type GetActiveNodesCountCommand struct {
+	NodeId    string
+	Heartbeat int64
+	Result    int
+}
