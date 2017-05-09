@@ -1,4 +1,6 @@
 .table-panel-wrapper {
+  // Make text on a table panel selectable
+  user-select: text;
   .panel-content {
     padding: 0;
   }
