@@ -1,6 +1,10 @@
 package alerting
 
 import (
+	"errors"
+	"fmt"
+	"time"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -17,9 +21,21 @@ type ValidateDashboardAlertsCommand struct {
 	Dashboard *m.Dashboard
 }
 
+type PendingAlertJobCountQuery struct {
+	ResultCount int
+}
+
+type ScheduleAlertsForPartitionCommand struct {
+	PartitionNo int
+	NodeCount   int
+	Interval    int64
+}
+
 func init() {
 	bus.AddHandler("alerting", updateDashboardAlerts)
 	bus.AddHandler("alerting", validateDashboardAlerts)
+	bus.AddHandler("alerting", getPendingAlertJobCount)
+	bus.AddHandler("alerting", scheduleAlertsForPartition)
 }
 
 func validateDashboardAlerts(cmd *ValidateDashboardAlertsCommand) error {
@@ -51,5 +67,46 @@ func updateDashboardAlerts(cmd *UpdateDashboardAlertsCommand) error {
 		return err
 	}
 
+	return nil
+}
+
+func getPendingAlertJobCount(query *PendingAlertJobCountQuery) error {
+	if engine == nil {
+		return errors.New("Alerting engine is not initialized")
+	}
+	query.ResultCount = len(engine.execQueue)
+	return nil
+}
+
+func scheduleAlertsForPartition(cmd *ScheduleAlertsForPartitionCommand) error {
+	if engine == nil {
+		return errors.New("Alerting engine is not initialized")
+	}
+	if cmd.NodeCount == 0 {
+		return errors.New("Node count is 0")
+	}
+	if cmd.PartitionNo >= cmd.NodeCount {
+		return errors.New(fmt.Sprintf("Invalid partitionNo %v (node count = %v)", cmd.PartitionNo, cmd.NodeCount))
+	}
+	rules := engine.ruleReader.Fetch()
+	filterCount := 0
+	intervalEnd := time.Unix(cmd.Interval, 0).Add(time.Minute)
+	for _, rule := range rules {
+		// handle frequency greater than 1 min
+		nextEvalDate := rule.EvalDate.Add(time.Duration(rule.Frequency) * time.Second)
+		if nextEvalDate.Before(intervalEnd) {
+			if rule.Id%int64(cmd.NodeCount) == int64(cmd.PartitionNo) {
+				engine.execQueue <- &Job{Rule: rule}
+				filterCount++
+				engine.log.Debug(fmt.Sprintf("Scheduled Rule : %v for interval=%v", rule, cmd.Interval))
+			} else {
+				engine.log.Debug(fmt.Sprintf("Skipped Rule : %v for interval=%v, partitionNo=%v, nodeCount=%v", rule, cmd.Interval, cmd.PartitionNo, cmd.NodeCount))
+			}
+		} else {
+			engine.log.Debug(fmt.Sprintf("Skipped Rule : %v for interval=%v, intervalEnd=%v, nextEvalDate=%v", rule, cmd.Interval, intervalEnd, nextEvalDate))
+		}
+	}
+	engine.log.Info(fmt.Sprintf("%v/%v rules scheduled for execution for partition %v/%v",
+		filterCount, len(rules), cmd.PartitionNo, cmd.NodeCount))
 	return nil
 }

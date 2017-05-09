@@ -58,14 +58,17 @@ func (g *GrafanaServerImpl) Start() {
 
 	// init alerting
 	if setting.AlertingEnabled && setting.ExecuteAlerts {
-		engine := alerting.NewEngine()
-		g.childRoutines.Go(func() error { return engine.Run(g.context) })
-
-		if setting.ClusteringEnabled {
-			clusterManager := clustering.NewClusterManager()
-			clusterManager.SetAlertEngine(engine)
-			g.childRoutines.Go(func() error { return clusterManager.Run(g.context) })
+		engine, err := alerting.NewEngine()
+		if err != nil {
+			g.log.Crit("Failed to start alerting engine", "error", err)
+			g.Shutdown(1, "Startup failed")
 		}
+		g.childRoutines.Go(func() error { return engine.Run(g.context) })
+	}
+
+	if setting.ClusteringEnabled {
+		clusterManager := clustering.NewClusterManager()
+		g.childRoutines.Go(func() error { return clusterManager.Run(g.context) })
 	}
 
 	// cleanup service

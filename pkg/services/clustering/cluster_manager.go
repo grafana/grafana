@@ -3,6 +3,7 @@ package clustering
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -18,7 +20,6 @@ type ClusterManager struct {
 	clusterNodeMgmt      ClusterNodeMgmt
 	ticker               *alerting.Ticker // using the ticker from alerting package for now. Should move the impl outside alerting later
 	log                  log.Logger
-	alertEngine          *alerting.Engine
 	alertingState        *AlertingState
 	dispatcherTaskQ      chan *DispatcherTask
 	dispatcherTaskStatus chan *DispatcherTaskStatus
@@ -30,8 +31,9 @@ const (
 )
 
 type DispatcherTaskStatus struct {
-	success bool
-	errmsg  string
+	taskType int
+	success  bool
+	errmsg   string
 }
 type DispatcherTask struct {
 	taskType int
@@ -69,9 +71,6 @@ func NewClusterManager() *ClusterManager {
 	return cm
 }
 
-func (cm *ClusterManager) SetAlertEngine(alertEngine *alerting.Engine) {
-	cm.alertEngine = alertEngine
-}
 func (cm *ClusterManager) Run(parentCtx context.Context) error {
 	cm.log.Info("Initializing cluster manager")
 	var reterr error = nil
@@ -80,8 +79,8 @@ func (cm *ClusterManager) Run(parentCtx context.Context) error {
 	taskGroup.Go(func() error { return cm.alertRulesDispatcher(ctx) })
 
 	if reterr := taskGroup.Wait(); reterr != nil {
-		errmsg := "Cluster manager stopped with error"
-		cm.log.Error(errmsg, "reason", reterr)
+		msg := "Cluster manager stopped"
+		cm.log.Info(msg, "reason", reterr)
 	}
 
 	cm.log.Info("Cluster manager has terminated")
@@ -102,21 +101,32 @@ func (cm *ClusterManager) clusterMgrTicker(ctx context.Context) error {
 			return ctx.Err()
 		case tick := <-cm.ticker.C: // ticks every second
 			if ticksCounter%10 == 0 {
-				cm.alertsScheduler(tick, ticksCounter)
+				if setting.AlertingEnabled && setting.ExecuteAlerts {
+					cm.alertsScheduler(tick, ticksCounter)
+				}
 			}
 			if ticksCounter%60 == 0 {
 				cm.clusterNodeMgmt.CheckIn(cm.alertingState)
 			}
 			ticksCounter++
 		case taskStatus := <-cm.dispatcherTaskStatus:
-			if taskStatus.success {
-				cm.changeAlertingState(m.CLN_ALERT_STATUS_PROCESSING)
-			} else {
-				cm.log.Error("Failed to dispatch task", "error", taskStatus.errmsg)
-				cm.changeAlertingState(m.CLN_ALERT_STATUS_READY)
-			}
+			cm.handleDispatcherTaskStatus(taskStatus)
 		}
+	}
+}
 
+func (cm *ClusterManager) handleDispatcherTaskStatus(taskStatus *DispatcherTaskStatus) {
+	if taskStatus.taskType == DISPATCHER_TASK_TYPE_ALERTS_MISSING ||
+		taskStatus.taskType == DISPATCHER_TASK_TYPE_ALERTS_PARTITION {
+		if taskStatus.success {
+			cm.changeAlertingState(m.CLN_ALERT_STATUS_PROCESSING)
+		} else {
+			cm.log.Error("Failed to dispatch task", "error", taskStatus.errmsg)
+			cm.changeAlertingState(m.CLN_ALERT_STATUS_READY)
+		}
+	} else {
+		cm.log.Error("Status received on unsupported task type "+string(taskStatus.taskType),
+			"status", taskStatus.success, "error", taskStatus.errmsg)
 	}
 }
 
@@ -136,9 +146,13 @@ func (cm *ClusterManager) alertsScheduler(tick time.Time, ticksCounter int) {
 }
 
 func (cm *ClusterManager) hasPendingAlertJobs() bool {
-	jobCount := cm.alertEngine.GetPendingJobCount()
-	cm.log.Debug("Cluster manager ticker - pending alert jobs", "count", jobCount)
-	return jobCount > 0
+	jobCountQuery := &alerting.PendingAlertJobCountQuery{}
+	err := bus.Dispatch(jobCountQuery)
+	if err != nil {
+		panic(fmt.Sprintf("Failed to get pending alert job count. Error: %v", err))
+	}
+	cm.log.Debug("Cluster manager ticker - pending alert jobs", "count", jobCountQuery.ResultCount)
+	return jobCountQuery.ResultCount > 0
 }
 
 func (cm *ClusterManager) checkMissingAlerts() bool {
@@ -208,9 +222,9 @@ func (cm *ClusterManager) alertRulesDispatcher(ctx context.Context) error {
 		case task := <-cm.dispatcherTaskQ:
 			err := cm.handleAlertRulesDispatcherTask(task)
 			if err != nil {
-				cm.dispatcherTaskStatus <- &DispatcherTaskStatus{false, err.Error()}
+				cm.dispatcherTaskStatus <- &DispatcherTaskStatus{task.taskType, false, err.Error()}
 			} else {
-				cm.dispatcherTaskStatus <- &DispatcherTaskStatus{true, ""}
+				cm.dispatcherTaskStatus <- &DispatcherTaskStatus{task.taskType, true, ""}
 			}
 		}
 	}
@@ -221,7 +235,12 @@ func (cm *ClusterManager) handleAlertRulesDispatcherTask(task *DispatcherTask) e
 	switch task.taskType {
 	case DISPATCHER_TASK_TYPE_ALERTS_PARTITION:
 		taskInfo := task.taskInfo.(*DispatcherTaskAlertsPartition)
-		err = cm.alertEngine.ScheduleAlertsForPartition(taskInfo.interval, taskInfo.partitionNo, taskInfo.nodeCount)
+		scheduleCmd := &alerting.ScheduleAlertsForPartitionCommand{
+			Interval:    taskInfo.interval,
+			NodeCount:   taskInfo.nodeCount,
+			PartitionNo: taskInfo.partitionNo,
+		}
+		err = bus.Dispatch(scheduleCmd)
 		cm.log.Debug("Alert rules dispatcher - submitted next alerts batch")
 	case DISPATCHER_TASK_TYPE_ALERTS_MISSING:
 		//TODO
