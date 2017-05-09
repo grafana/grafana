@@ -19,6 +19,7 @@ func init() {
 	bus.AddHandler("sql", InsertActiveNodeHeartbeat)
 	bus.AddHandler("sql", InsertNodeProcessingMissingAlert)
 	bus.AddHandler("sql", GetLastDBTimeInterval)
+	bus.AddHandler("sql", GetActiveNodesCount)
 }
 
 func GetActiveNodeByIdHeartbeat(query *m.GetActiveNodeByIdHeartbeatQuery) error {
@@ -154,3 +155,21 @@ func validAlertStatus(status string) bool {
 	}
 	return true
 }
+
+func GetActiveNodesCount(cmd *m.GetActiveNodesCountCommand) error {
+	var actNodes []m.ActiveNode
+	err := x.Where("heartbeat=?", cmd.Heartbeat).And("alert_status=?", m.CLN_ALERT_STATUS_READY).Find(&actNodes)
+	if err != nil || (len(actNodes) == 0) {
+		errmsg := fmt.Sprintf("Failed to get node count for heartbeat=%d", cmd.Heartbeat)
+		if err == nil {
+			err = errors.New(errmsg)
+			sqlog.Error(errmsg)
+		} else {
+			sqlog.Error(errmsg, "error", err)
+		}
+		return err
+	}
+	cmd.Result = len(actNodes)
+	return nil
+}
+
