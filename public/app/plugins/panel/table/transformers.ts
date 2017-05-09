@@ -220,8 +220,7 @@ transformers['json'] = {
 };
 
 function transformDataToTable(data, panel) {
-  var model = new TableModel(),
-    copyData = angular.copy(data);
+  var model = new TableModel();
 
   if (!data || data.length === 0) {
     return model;
@@ -232,14 +231,7 @@ function transformDataToTable(data, panel) {
     throw {message: 'Transformer ' + panel.transform + ' not found'};
   }
 
-  if (panel.filterNull) {
-    for (var i = 0; i < copyData.length; i++) {
-      copyData[i].datapoints = copyData[i].datapoints.filter((dp) => dp[0] != null);
-    }
-  }
-
-  transformer.transform(copyData, panel, model);
-
+  transformer.transform(data, panel, model);
   return model;
 }
 
