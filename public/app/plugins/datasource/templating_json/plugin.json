@@ -1,0 +1,15 @@
+{
+  "pluginType": "datasource",
+  "name": "Templating_JSON",
+
+  "type": "templating_json",
+  "serviceName": "TemplatingJsonDatasource",
+
+  "module": "app/plugins/datasource/templating_json/datasource",
+
+  "partials": {
+    "config": "app/plugins/datasource/templating_json/partials/config.html"
+  },
+
+  "metrics": true
+}
