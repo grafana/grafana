@@ -4,6 +4,11 @@ import _ from 'lodash';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
 
+interface EscapeJSON {
+  success: boolean;
+  result: string;
+}
+
 export class TableRenderer {
   formaters: any[];
   colorState: any;
@@ -136,7 +141,30 @@ export class TableRenderer {
       this.table.columns[columnIndex].hidden = false;
     }
 
-    return '<td' + style + '>' + value + widthHack + '</td>';
+    function isJSON(value: string): EscapeJSON {
+      try {
+        return {
+          success: true,
+          result: JSON.parse(_.unescape(value))
+        };
+      } catch (e) {
+        return {
+          success: false,
+          result: value
+        };
+      }
+    }
+
+    function formatJSON(value: string): string {
+      const jsonString = isJSON(value);
+      // To prevent a number from being stringified
+      if (jsonString.success && isNaN(Number.parseFloat(jsonString.result))) {
+        return '<pre>' + JSON.stringify(jsonString.result, null, 2) + '</pre>';
+      } else {
+        return jsonString.result;
+      }
+    }
+    return '<td' + style + '><div>' + formatJSON(value) + widthHack + '</div></td>';
   }
 
   render(page) {
