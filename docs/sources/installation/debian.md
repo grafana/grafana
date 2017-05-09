@@ -22,10 +22,10 @@ installation.
 
 ## Install Stable
 
-```
-$ wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.2.0_amd64.deb
-$ sudo apt-get install -y adduser libfontconfig
-$ sudo dpkg -i grafana_4.2.0_amd64.deb
+```bash
+wget https://s3-us-west-2.amazonaws.com/grafana-releases/release/grafana_4.2.0_amd64.deb
+sudo apt-get install -y adduser libfontconfig
+sudo dpkg -i grafana_4.2.0_amd64.deb
 ```
 
 ## APT Repository
@@ -43,18 +43,24 @@ candidates.
 Then add the [Package Cloud](https://packagecloud.io/grafana) key. This
 allows you to install signed packages.
 
-    $ curl https://packagecloud.io/gpg.key | sudo apt-key add -
+```bash
+curl https://packagecloud.io/gpg.key | sudo apt-key add -
+```
 
 Update your Apt repositories and install Grafana
 
-    $ sudo apt-get update
-    $ sudo apt-get install grafana
+```bash
+sudo apt-get update
+sudo apt-get install grafana
+```
 
 On some older versions of Ubuntu and Debian you may need to install the
 `apt-transport-https` package which is needed to fetch packages over
 HTTPS.
 
-    $ sudo apt-get install -y apt-transport-https
+```bash
+sudo apt-get install -y apt-transport-https
+```
 
 ## Package details
 
@@ -70,7 +76,9 @@ HTTPS.
 
 Start Grafana by running:
 
-    $ sudo service grafana-server start
+```bash
+sudo service grafana-server start
+```
 
 This will start the `grafana-server` process as the `grafana` user,
 which was created during the package installation. The default HTTP port
@@ -78,19 +86,25 @@ is `3000` and default user and group is `admin`.
 
 To configure the Grafana server to start at boot time:
 
-    $ sudo update-rc.d grafana-server defaults
+```bash
+sudo update-rc.d grafana-server defaults
+```
 
 ## Start the server (via systemd)
 
 To start the service using systemd:
 
-    $ systemctl daemon-reload
-    $ systemctl start grafana-server
-    $ systemctl status grafana-server
+```bash
+systemctl daemon-reload
+systemctl start grafana-server
+systemctl status grafana-server
+```
 
 Enable the systemd service so that Grafana starts at boot.
 
-    sudo systemctl enable grafana-server.service
+```bash
+sudo systemctl enable grafana-server.service
+```
 
 ## Environment file
 
