@@ -22,16 +22,12 @@ define([
           {
             "columns": [
               {
-                "text": "Total",
-                "value": "total"
-              },
-              {
                 "text": "Current",
                 "value": "current"
               }
             ],
             "sort": {
-              "col": 2,
+              "col": 1,
               "desc": true
             },
             "styles": [
@@ -217,13 +213,6 @@ define([
         panel.grid.thresholdLine = false;
         panel.pointradius = 1;
         panel.type = 'table';
-        panel.columns = [
-          {
-            "text": "Current",
-            "value": "current"
-          }
-        ];
-        panel.sort.col = 1;
       }
 
       $scope.getAlertStatus = function () {
@@ -472,6 +461,8 @@ define([
               "alias": "HOST: $tag_host PID: $tag_pid_cmd"
             }
           ];
+
+          panel.sort.col = 2;
         });
 
         cpuTopN.targets[0].metric = 'cpu.topN';
