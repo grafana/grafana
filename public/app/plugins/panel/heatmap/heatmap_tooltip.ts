@@ -33,7 +33,7 @@ export class HeatmapTooltip {
   }
 
   onMouseOver(e) {
-    if (!this.panel.tooltip.show || _.isEmpty(this.scope.ctrl.data.buckets)) { return; }
+    if (!this.panel.tooltip.show || !this.scope.ctrl.data || _.isEmpty(this.scope.ctrl.data.buckets)) { return; }
 
     if (!this.tooltip) {
       this.add();
@@ -67,6 +67,10 @@ export class HeatmapTooltip {
 
   show(pos, data) {
     if (!this.panel.tooltip.show || !data) { return; }
+    // shared tooltip mode
+    if (pos.panelRelY) {
+      return;
+    }
 
     let {xBucketIndex, yBucketIndex} = this.getBucketIndexes(pos, data);
 
@@ -120,23 +124,8 @@ export class HeatmapTooltip {
   }
 
   getBucketIndexes(pos, data) {
-    let xBucketIndex, yBucketIndex;
-
-    // if panelRelY is defined another panel wants us to show a tooltip
-    if (pos.panelRelY) {
-      xBucketIndex = getValueBucketBound(pos.x, data.xBucketSize, 1);
-      let y = this.scope.yScale.invert(pos.panelRelY * this.scope.chartHeight);
-      yBucketIndex = getValueBucketBound(y, data.yBucketSize, this.panel.yAxis.logBase);
-      pos = this.getSharedTooltipPos(pos);
-
-      if (!this.tooltip) {
-        // Add shared tooltip for panel
-        this.add();
-      }
-    } else {
-      xBucketIndex = this.getXBucketIndex(pos.offsetX, data);
-      yBucketIndex = this.getYBucketIndex(pos.offsetY, data);
-    }
+    const xBucketIndex = this.getXBucketIndex(pos.offsetX, data);
+    const yBucketIndex = this.getYBucketIndex(pos.offsetY, data);
 
     return {xBucketIndex, yBucketIndex};
   }

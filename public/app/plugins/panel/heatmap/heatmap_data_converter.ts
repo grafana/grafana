@@ -92,7 +92,8 @@ function mergeZeroBuckets(buckets, minValue) {
     let emptyBucket = {
       bounds: {bottom: 0, top: 0},
       values: [],
-      points: []
+      points: [],
+      count: 0,
     };
 
     let nullBucket = yBuckets[0] || emptyBucket;
@@ -102,25 +103,20 @@ function mergeZeroBuckets(buckets, minValue) {
       y: 0,
       bounds: {bottom: minValue, top: minBucket.bounds.top || minValue},
       values: [],
-      points: []
+      points: [],
+      count: 0,
     };
 
-    if (nullBucket.values) {
-      newBucket.values = nullBucket.values.concat(minBucket.values);
-    }
-    if (nullBucket.points) {
-      newBucket.points = nullBucket.points.concat(minBucket.points);
+    newBucket.points = nullBucket.points.concat(minBucket.points);
+    newBucket.values = nullBucket.values.concat(minBucket.values);
+    newBucket.count = newBucket.values.length;
+
+    if (newBucket.count === 0) {
+      return;
     }
 
-    let newYBuckets = {};
-    _.forEach(yBuckets, (bucket, bound) => {
-      bound = Number(bound);
-      if (bound !== 0 && bound !== minValue) {
-        newYBuckets[bound] = bucket;
-      }
-    });
-    newYBuckets[0] = newBucket;
-    xBucket.buckets = newYBuckets;
+    delete yBuckets[minValue];
+    yBuckets[0] = newBucket;
   });
 
   return buckets;
