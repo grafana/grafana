@@ -90,11 +90,20 @@ export class DataProcessor {
     }
   }
 
+  djb2(str) {
+    var hash = 5381;
+    for (var i = 0; i < str.length; i++) {
+      hash = (hash * 33) + str.charCodeAt(i); /* hash * 33 + c */
+    }
+    return hash;
+  }
+
   timeSeriesHandler(seriesData, index, options) {
     var datapoints = seriesData.datapoints || [];
     var alias = seriesData.target;
+    var hash = this.djb2(alias);
 
-    var colorIndex = index % colors.length;
+    var colorIndex = hash % colors.length;
     var color = this.panel.aliasColors[alias] || colors[colorIndex];
 
     var series = new TimeSeries({datapoints: datapoints, alias: alias, color: color, unit: seriesData.unit});
