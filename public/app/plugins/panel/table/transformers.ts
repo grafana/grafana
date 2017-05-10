@@ -89,10 +89,6 @@ transformers['timeseries_aggregations'] = {
     var i, y;
     model.columns.push({text: 'Metric'});
 
-    if (panel.columns.length === 0) {
-      panel.columns.push({text: 'Avg', value: 'avg'});
-    }
-
     for (i = 0; i < panel.columns.length; i++) {
       model.columns.push({text: panel.columns[i].text});
     }

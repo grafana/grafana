@@ -189,10 +189,12 @@ func (hs *HttpServer) healthHandler(ctx *macaron.Context) {
 
 	if err := bus.Dispatch(&models.GetDBHealthQuery{}); err != nil {
 		data.Set("database", "failing")
+		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		ctx.Resp.WriteHeader(503)
+	} else {
+		ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
+		ctx.Resp.WriteHeader(200)
 	}
-
-	ctx.Resp.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	ctx.Resp.WriteHeader(200)
 
 	dataBytes, _ := data.EncodePretty()
 	ctx.Resp.Write(dataBytes)
