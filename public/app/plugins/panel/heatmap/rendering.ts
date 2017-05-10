@@ -94,7 +94,7 @@ export default function link(scope, elem, attrs, ctrl) {
   }
 
   function addXAxis() {
-    xScale = d3.scaleTime()
+    scope.xScale = xScale = d3.scaleTime()
       .domain([timeRange.from, timeRange.to])
       .range([0, chartWidth]);
 
@@ -147,7 +147,7 @@ export default function link(scope, elem, attrs, ctrl) {
       ticks: ticks
     };
 
-    yScale = d3.scaleLinear()
+    scope.yScale = yScale = d3.scaleLinear()
       .domain([y_min, y_max])
       .range([chartHeight, 0]);
 
@@ -206,7 +206,7 @@ export default function link(scope, elem, attrs, ctrl) {
       y_min = 1;
     }
 
-    yScale = d3.scaleLog()
+    scope.yScale = yScale = d3.scaleLog()
       .base(panel.yAxis.logBase)
       .domain([y_min, y_max])
       .range([chartHeight, 0]);
@@ -546,16 +546,10 @@ export default function link(scope, elem, attrs, ctrl) {
   // Shared crosshair and tooltip
   appEvents.on('graph-hover', event => {
     drawSharedCrosshair(event.pos);
-
-    // Show shared tooltip
-    if (ctrl.dashboard.graphTooltip === 2) {
-      tooltip.show(event.pos, data);
-    }
   }, scope);
 
   appEvents.on('graph-hover-clear', () => {
     clearCrosshair();
-    tooltip.destroy();
   }, scope);
 
   function onMouseDown(event) {
@@ -768,8 +762,6 @@ export default function link(scope, elem, attrs, ctrl) {
     }
 
     addHeatmap();
-    scope.yScale = yScale;
-    scope.xScale = xScale;
     scope.yAxisWidth = yAxisWidth;
     scope.xAxisHeight = xAxisHeight;
     scope.chartHeight = chartHeight;

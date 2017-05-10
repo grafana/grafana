@@ -38,7 +38,7 @@ function elasticHistogramToHeatmap(seriesList) {
         bucket = heatmap[time] = {x: time, buckets: {}};
       }
 
-      bucket.buckets[bound] = {y: bound, count: count};
+      bucket.buckets[bound] = {y: bound, count: count, values: [], points: []};
     }
   }
 

@@ -126,7 +126,6 @@ export class HeatmapTooltip {
   getBucketIndexes(pos, data) {
     const xBucketIndex = this.getXBucketIndex(pos.offsetX, data);
     const yBucketIndex = this.getYBucketIndex(pos.offsetY, data);
-
     return {xBucketIndex, yBucketIndex};
   }
 
