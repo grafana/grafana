@@ -569,8 +569,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
 
       var body = panel.gauge.show ? '' : getBigValueHtml();
 
-      if (panel.colorBackground && !isNaN(data.valueRounded)) {
-        var color = getColorForValue(data, data.valueRounded);
+      if (panel.colorBackground && !isNaN(data.value)) {
+        var color = getColorForValue(data, data.value);
         if (color) {
           $panelContainer.css('background-color', color);
           if (scope.fullscreen) {
