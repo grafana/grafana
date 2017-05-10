@@ -201,18 +201,23 @@ define([
 
       $scope.initAlertStatus = function (panel) {
         var targets = panel.targets[0];
-        targets.metric = 'internal.alert.state';
-        targets.tags = { 'host': '*', 'alertName': '*' };
-        targets.downsampleAggregator = 'max';
-        targets.downsampleInterval = '1m';
-        targets.alias = "$tag_alertName/$tag_host";
-        panel.grid.threshold1 = 0;
-        panel.grid.threshold2 = 1;
+        panel.lines = false;
+        panel.bars = true;
+        panel.stack = true;
+        panel.aliasColors = {
+          "critical": "#E24D42",
+          "warning": "#F9934E"
+        };
+        targets.metric = 'internal.alert.num';
+        targets.tags = { 'level': '*' };
+        targets.aggregator = 'sum';
+        // 5h 图像会好看些
+        targets.downsampleInterval = '1h';
+        targets.downsampleAggregator = "avg",
+        targets.alias = "$tag_level";
         panel.grid.leftMin = 0;
-        panel.grid.leftMax = 2;
         panel.grid.thresholdLine = false;
         panel.pointradius = 1;
-        panel.type = 'table';
       }
 
       $scope.getAlertStatus = function () {
