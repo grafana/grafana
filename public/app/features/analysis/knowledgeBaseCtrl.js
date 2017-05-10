@@ -7,7 +7,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('KnowledgeBaseCtrl', function ($scope, backendSrv) {
+    module.controller('KnowledgeBaseCtrl', function ($scope, backendSrv, contextSrv) {
       $scope.init = function () {
         $scope.q = "*";
         $scope.service = "*";
@@ -27,9 +27,11 @@ define([
           "mongo3",
           "nginx",
         ];
+        $scope.fullText = [];
       };
 
       $scope.query = function () {
+        $scope.showCreatForm = false;
         var params =  {
           q: $scope.q
         }
@@ -51,6 +53,38 @@ define([
           modalClass: 'modal-no-header invite-modal',
           scope: $scope.$new(),
         });
+      };
+
+      $scope.initNewKnows = function () {
+        $scope.showCreatForm = true;
+        $scope.newKnowledge = {};
+        $scope.newKnowledge.solution = "";
+        $scope.newKnowledge.service = "";
+      };
+
+      $scope.newKnowsByLog = function() {
+        $scope.newKnowledge.symptom = $scope.q;
+        $scope.newKnowledge.org_id = contextSrv.user.orgId;
+        $scope.newKnowledge.system_id = contextSrv.system;
+
+        backendSrv.knowledge({
+          method: "PUT",
+          url: "",
+          data: $scope.newKnowledge
+        }).then(function(res) {
+          if(res.data.isSuccessful) {
+            $scope.appEvent('alert-success', ['添加成功']);
+          }
+        });
+        $scope.showCreatForm = false;
+      };
+
+      $scope.cancelCreate = function() {
+        $scope.showCreatForm = false;
+      };
+
+      $scope.textOverflow = function(index) {
+        $scope.fullText[index] = !$scope.fullText[index];
       };
 
       $scope.init();

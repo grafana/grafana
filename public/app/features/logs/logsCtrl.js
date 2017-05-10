@@ -204,7 +204,12 @@ define([
         $rootScope.$broadcast('refresh');
       };
 
+      $scope.isShowKnows = function(type) {
+        $scope.showKnows = type;
+      }
+
       $scope.init = function () {
+        $scope.showKnows = false;
         $scope.query = "*";
         $scope.clustering = false;
         panelMetas[0].panels[0].targets[0].query = $scope.query;

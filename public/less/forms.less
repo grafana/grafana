@@ -85,6 +85,7 @@ input[type="checkbox"]:checked+label {
     &>li {
       float: left;
       line-height: 30px;
+      min-width: 60px;
     }
   }
 }
@@ -103,5 +104,26 @@ input[type="checkbox"]:checked+label {
   position: fixed;
   top: 10%;
   right: 0px;
+  min-height: 500px;
+}
+.expoler-list{
+  list-style: none;
+  height: 90%;
+  overflow: auto;
+
+  &>li{
+    border-bottom: 1px solid #ccc;
+    margin: 20px 0px;
+    cursor: pointer;
+    h5.text-overflow{
+      .text-overflow();
+    }
+    p.text-overflow{
+      .text-overflow();
+    }
+  }
+}
+.expoler-close{
+  cursor: pointer;
 }
 
