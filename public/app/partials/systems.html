@@ -7,14 +7,18 @@
             
             <div class="system-item">
                 <h4>报警状态(个数)</h4>
-                <p>{{critical + warn}}</p>
+                <p>{{alertNum}}</p>
                 <div class="system-item-pie" sys_alert="{{sys.Id}}"></div>
                 <div class="system-item-legend">
-                    <dl>
+                    <dl class="small-dl">
+                        <dt><span class="system-label system-label-success">正常</span></dt>
+                        <dd class="system-legend system-legend-success">{{alertNum - warn - critical}}</dd>
+                    </dl>
+                    <dl class="small-dl">
                         <dt><span class="system-label system-label-warning">警告</span></dt>
                         <dd class="system-legend system-legend-warning">{{warn}}</dd>
                     </dl>
-                    <dl>
+                    <dl class="small-dl">
                         <dt><span class="system-label system-label-danger">严重</span></dt>
                         <dd class="system-legend system-legend-danger">{{critical}}</dd>
                     </dl>

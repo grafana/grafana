@@ -68,18 +68,16 @@ define([
                   }
                 }
                 pieData = [
+                  {label: "", data: scope.alertNum - scope.warn - scope.critical},
                   {label: "", data: scope.warn},
                   {label: "", data: scope.critical}
                 ];
-                colors = ['rgb(255,197,58)','rgb(224,76,65)'];
-              } else {
-                scope.alertTrigger = true;
-                pieData = [
-                  {label: "健康", data: 10},
-                  {label: "", data: 0},
-                  {label: "", data: 0}
-                ];
                 colors = ['rgb(61,183,121)','rgb(255,197,58)','rgb(224,76,65)'];
+              } else {
+                pieData = [
+                  {label: "暂无规则", data: 10},
+                ];
+                colors = ['#ccc'];
               }
 
               $.plot("[sys_alert='" + system + "']", pieData, {
@@ -99,6 +97,12 @@ define([
                 colors: colors
               });
             });
+            alertMgrSrv.load().then(function onSuccess(response) {
+              scope.alertNum = response.data.length;
+              // $scope.exportJson = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(response.data));
+            }, function onFailed(response) {
+            });
+
 
             //------- get health/anomaly status
             healthSrv.load().then(function (data) {
@@ -172,6 +176,8 @@ define([
 
                 scope.hostList.push(host);
               });
+
+              scope.alertNum = scope.alertNum * (scope.hostList.length ? scope.hostList.length : 1);
             });
           });
         }
