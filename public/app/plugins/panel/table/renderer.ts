@@ -3,10 +3,12 @@
 import _ from 'lodash';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
+import $ from 'jquery';
+import JSONFormatter from 'json-formatter-js';
 
-interface EscapeJSON {
+interface FormatJSONResult {
   success: boolean;
-  result: string;
+  value: string;
 }
 
 export class TableRenderer {
@@ -141,44 +143,41 @@ export class TableRenderer {
       this.table.columns[columnIndex].hidden = false;
     }
 
-    function isJSON(value: string): EscapeJSON {
+    function isJSON(value: string): boolean {
       try {
-        return {
-          success: true,
-          result: JSON.parse(_.unescape(value))
-        };
+        JSON.parse(_.unescape(value));
+        return true;
       } catch (e) {
-        return {
-          success: false,
-          result: value
-        };
+        return false;
       }
     }
 
-    function formatJSON(value: string): string {
-      const jsonString = isJSON(value);
+    function formatCellValue(value: string): any {
+      const cell = $('<td' + style + '></td>');
       // To prevent a number from being stringified
-      if (jsonString.success && isNaN(Number.parseFloat(jsonString.result))) {
-        return '<pre>' + JSON.stringify(jsonString.result, null, 2) + '</pre>';
+      if (isJSON(value) && isNaN(Number.parseFloat(value))) {
+        return cell.append(new JSONFormatter(JSON.parse(_.unescape(value)), 1, {
+          theme: 'dark'
+        }).render()).append(widthHack);
       } else {
-        return jsonString.result;
+        return cell.html(value + widthHack);
       }
     }
-    return '<td' + style + '><div>' + formatJSON(value) + widthHack + '</div></td>';
+    return formatCellValue(value);
   }
 
   render(page) {
     let pageSize = this.panel.pageSize || 100;
     let startPos = page * pageSize;
     let endPos = Math.min(startPos + pageSize, this.table.rows.length);
-    var html = "";
+    var html = [];
 
     for (var y = startPos; y < endPos; y++) {
       let row = this.table.rows[y];
-      let cellHtml = '';
+      let cellHtml = [];
       let rowStyle = '';
       for (var i = 0; i < this.table.columns.length; i++) {
-        cellHtml += this.renderCell(i, row[i], y === startPos);
+        cellHtml.push(this.renderCell(i, row[i], y === startPos));
       }
 
       if (this.colorState.row) {
@@ -186,7 +185,10 @@ export class TableRenderer {
         this.colorState.row = null;
       }
 
-      html += '<tr ' + rowStyle + '>' + cellHtml + '</tr>';
+      // html += '<tr ' + rowStyle + '>' + cellHtml + '</tr>';
+      let htmlRow = $('<tr ' + rowStyle + '></tr>');
+      htmlRow.append(cellHtml);
+      html.push(htmlRow);
     }
 
     return html;

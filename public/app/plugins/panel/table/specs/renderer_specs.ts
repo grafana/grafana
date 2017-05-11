@@ -65,72 +65,89 @@ describe('when rendering table', () => {
 
     it('time column should be formated', () => {
       var html = renderer.renderCell(0, 1388556366666);
-      expect(html).to.be('<td>2014-01-01T06:06:06Z</td>');
+      expect(html.is("td"));
+      expect(html.html()).to.be('2014-01-01T06:06:06Z');
     });
 
     it('undefined time column should be rendered as -', () => {
       var html = renderer.renderCell(0, undefined);
-      expect(html).to.be('<td>-</td>');
+      expect(html.is("td"));
+      expect(html.html()).to.be('-');
     });
 
     it('null time column should be rendered as -', () => {
       var html = renderer.renderCell(0, null);
-      expect(html).to.be('<td>-</td>');
+      expect(html.is("td"));
+      expect(html.html()).to.be('-');
     });
 
     it('number column with unit specified should ignore style unit', () => {
       var html = renderer.renderCell(5, 1230);
-      expect(html).to.be('<td>1.23 kbps</td>');
+      expect(html.is("td"));
+      expect(html.html()).to.be('1.23 kbps');
     });
 
     it('number column should be formated', () => {
       var html = renderer.renderCell(1, 1230);
-      expect(html).to.be('<td>1.230 s</td>');
+      expect(html.is("td"));
+      expect(html.html()).to.be('1.230 s');
     });
 
     it('number style should ignore string values', () => {
       var html = renderer.renderCell(1, 'asd');
-      expect(html).to.be('<td>asd</td>');
+      expect(html.is("td"));
+      expect(html.html()).to.be('asd');
     });
 
     it('colored cell should have style', () => {
       var html = renderer.renderCell(2, 40);
-      expect(html).to.be('<td style="color:green">40.0</td>');
+      expect(html.is("td"));
+      expect(html.css('color')).to.be('green');
+      expect(html.html()).to.be('40.0');
     });
 
     it('colored cell should have style', () => {
       var html = renderer.renderCell(2, 55);
-      expect(html).to.be('<td style="color:orange">55.0</td>');
+      expect(html.is("td"));
+      expect(html.css('color')).to.be('orange');
+      expect(html.html()).to.be('55.0');
     });
 
     it('colored cell should have style', () => {
       var html = renderer.renderCell(2, 85);
-      expect(html).to.be('<td style="color:red">85.0</td>');
+      expect(html.is("td"));
+      expect(html.css('color')).to.be('red');
+      expect(html.html()).to.be('85.0');
     });
 
-    it('unformated undefined should be rendered as string', () => {
+    it('unformatted undefined should be rendered as string', () => {
       var html = renderer.renderCell(3, 'value');
-      expect(html).to.be('<td>value</td>');
+      expect(html.is("td"));
+      expect(html.html()).to.be('value');
     });
 
     it('string style with escape html should return escaped html', () => {
       var html = renderer.renderCell(4, "&breaking <br /> the <br /> row");
-      expect(html).to.be('<td>&amp;breaking &lt;br /&gt; the &lt;br /&gt; row</td>');
+      expect(html.is("td"));
+      expect(html.html()).to.be('&amp;breaking &lt;br /&gt; the &lt;br /&gt; row');
     });
 
-    it('undefined formater should return escaped html', () => {
+    it('undefined formatter should return escaped html', () => {
       var html = renderer.renderCell(3, "&breaking <br /> the <br /> row");
-      expect(html).to.be('<td>&amp;breaking &lt;br /&gt; the &lt;br /&gt; row</td>');
+      expect(html.is("td"));
+      expect(html.html()).to.be('&amp;breaking &lt;br /&gt; the &lt;br /&gt; row');
     });
 
     it('undefined value should render as -', () => {
       var html = renderer.renderCell(3, undefined);
-      expect(html).to.be('<td></td>');
+      expect(html.is("td"));
+      expect(html.text()).to.be('');
     });
 
     it('sanitized value should render as', () => {
       var html = renderer.renderCell(6, 'text <a href="http://google.com">link</a>');
-      expect(html).to.be('<td>sanitized</td>');
+      expect(html.is("td"));
+      expect(html.html()).to.be('sanitized');
     });
   });
 });
