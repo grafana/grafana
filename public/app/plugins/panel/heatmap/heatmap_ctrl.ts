@@ -38,7 +38,6 @@ let panelDefaults = {
     splitFactor: null,
     min: null,
     max: null,
-    removeZeroValues: false
   },
   xBucketSize: null,
   xBucketNumber: null,

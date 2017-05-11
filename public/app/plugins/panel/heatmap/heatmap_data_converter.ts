@@ -123,24 +123,6 @@ function mergeZeroBuckets(buckets, minValue) {
 }
 
 /**
- * Remove 0 values from heatmap buckets.
- */
-function removeZeroBuckets(buckets) {
-  _.forEach(buckets, xBucket => {
-    let yBuckets = xBucket.buckets;
-    let newYBuckets = {};
-    _.forEach(yBuckets, (bucket, bound) => {
-      if (bucket.y !== 0) {
-        newYBuckets[bound] = bucket;
-      }
-    });
-    xBucket.buckets = newYBuckets;
-  });
-
-  return buckets;
-}
-
-/**
    * Convert set of time series into heatmap buckets
    * @return {Object}    Heatmap object:
  * {
@@ -429,7 +411,6 @@ export {
   convertToHeatMap,
     elasticHistogramToHeatmap,
     convertToCards,
-    removeZeroBuckets,
     mergeZeroBuckets,
     getMinLog,
     getValueBucketBound,

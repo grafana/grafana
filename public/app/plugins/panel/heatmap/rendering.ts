@@ -8,7 +8,7 @@ import {appEvents, contextSrv} from 'app/core/core';
 import {tickStep} from 'app/core/utils/ticks';
 import d3 from 'd3';
 import {HeatmapTooltip} from './heatmap_tooltip';
-import {convertToCards, mergeZeroBuckets, removeZeroBuckets} from './heatmap_data_converter';
+import {convertToCards, mergeZeroBuckets} from './heatmap_data_converter';
 
 let MIN_CARD_SIZE = 1,
     CARD_PADDING = 1,
@@ -357,14 +357,10 @@ export default function link(scope, elem, attrs, ctrl) {
     addAxes();
 
     if (panel.yAxis.logBase !== 1) {
-      if (panel.yAxis.removeZeroValues) {
-        data.buckets = removeZeroBuckets(data.buckets);
-      } else {
-        let log_base = panel.yAxis.logBase;
-        let domain = yScale.domain();
-        let tick_values = logScaleTickValues(domain, log_base);
-        data.buckets = mergeZeroBuckets(data.buckets, _.min(tick_values));
-      }
+      let log_base = panel.yAxis.logBase;
+      let domain = yScale.domain();
+      let tick_values = logScaleTickValues(domain, log_base);
+      data.buckets = mergeZeroBuckets(data.buckets, _.min(tick_values));
     }
 
     let cardsData = convertToCards(data.buckets);
@@ -377,17 +373,17 @@ export default function link(scope, elem, attrs, ctrl) {
     let cards = heatmap.selectAll(".heatmap-card").data(cardsData);
     cards.append("title");
     cards = cards.enter().append("rect")
-      .attr("x", getCardX)
-      .attr("width", getCardWidth)
-      .attr("y", getCardY)
-      .attr("height", getCardHeight)
-      .attr("rx", cardRound)
-      .attr("ry", cardRound)
-      .attr("class", "bordered heatmap-card")
-      .style("fill", getCardColor)
-      .style("stroke", getCardColor)
-      .style("stroke-width", 0)
-      .style("opacity", getCardOpacity);
+    .attr("x", getCardX)
+    .attr("width", getCardWidth)
+    .attr("y", getCardY)
+    .attr("height", getCardHeight)
+    .attr("rx", cardRound)
+    .attr("ry", cardRound)
+    .attr("class", "bordered heatmap-card")
+    .style("fill", getCardColor)
+    .style("stroke", getCardColor)
+    .style("stroke-width", 0)
+    .style("opacity", getCardOpacity);
 
     let $cards = $heatmap.find(".heatmap-card");
     $cards.on("mouseenter", (event) => {
@@ -750,6 +746,15 @@ export default function link(scope, elem, attrs, ctrl) {
     panel = ctrl.panel;
     timeRange = ctrl.range;
 
+    // Draw only if color editor is opened
+    if (!d3.select("#heatmap-color-legend").empty()) {
+      drawColorLegend();
+    }
+
+    if (!d3.select("#heatmap-opacity-legend").empty()) {
+      drawOpacityLegend();
+    }
+
     if (!setElementHeight() || !data) {
       return;
     }
@@ -767,14 +772,6 @@ export default function link(scope, elem, attrs, ctrl) {
     scope.chartHeight = chartHeight;
     scope.chartWidth = chartWidth;
     scope.chartTop = chartTop;
-
-    // Draw only if color editor is opened
-    if (!d3.select("#heatmap-color-legend").empty()) {
-      drawColorLegend();
-    }
-    if (!d3.select("#heatmap-opacity-legend").empty()) {
-      drawOpacityLegend();
-    }
   }
 
   // Register selection listeners

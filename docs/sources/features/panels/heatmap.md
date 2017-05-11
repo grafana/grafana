@@ -20,7 +20,7 @@ The Heatmap panel allows you to view histograms over time.
 
 A histogram is a graphical representation of the distribution of numerical data. You group values into buckets
 (some times also called bins) and then count how many values fall into each bucket. Instead
-of graphing the actual values you then graph the buckets. Each each bar represents a bucket
+of graphing the actual values you then graph the buckets. Each bar represents a bucket
 and the bar height represents the frequency (i.e. count) of values that fell into that bucket's interval.
 
 Example Histogram:
@@ -34,9 +34,9 @@ this is where heatmaps become useful.
 
 ## Heatmap
 
-A Heatmap is like a histogram but over time where each time slice represents it's own
-histogram. Instead of using bar hight as a represenation of frequency you use a cells and color
-the cell propotional to the number of values in the bucket.
+A Heatmap is like a histogram but over time where each time slice represents its own
+histogram. Instead of using bar height as a representation of frequency you use cells and color
+the cell proportional to the number of values in the bucket.
 
 Example:
 
@@ -64,8 +64,7 @@ the time range `1h`.  This will make the cells 1h wide on the X-axis.
 
 ### Pre-bucketed data
 
-If you have a data that is already organized into buckets you can use the `Time series buckets` data format. This
-format requires that your metric query return regular time series and that each time series has numeric name
+If you have a data that is already organized into buckets you can use the `Time series buckets` data format. This format requires that your metric query return regular time series and that each time series has a numeric name
 that represent the upper or lower bound of the interval.
 
 The only data source that supports histograms over time is Elasticsearch. You do this by adding a *Histogram*
@@ -77,7 +76,30 @@ You control the size of the buckets using the Histogram interval (Y-Axis) and th
 
 ## Display Options
 
-The color spectrum controls what value get's assigned what color. The left most color on the
-spectrum represents the low frequency and the color on the right most side represents the max frequency.
-Most color schemes are automatically inverted when using the light theme.
+In the heatmap *Display* tab you define how the cells are rendered and what color they are assigned.
 
+### Color Mode & Spectrum
+
+{{< imgbox max-width="40%" img="/img/docs/v43/heatmap_scheme.png" caption="Color spectrum" >}}
+
+The color spectrum controls the mapping between value count (in each bucket) and the color assigned to each bucket.
+The left most color on the spectrum represents the minimum count and the color on the right most side represents the
+maximum count. Some color schemes are automatically inverted when using the light theme.
+
+You can also change the color mode to `Opacity`. In this case, the color will not change but the amount of opacity will
+change with the bucket count.
+
+## Raw data vs aggregated
+
+If you use the heatmap with regular time series data (not pre-bucketed). Then it's important to keep in mind that your data
+is often already by aggregated by your time series backend. Most time series queries do not return raw sample data
+but include a group by time interval or maxDataPoints limit coupled with an aggregation function (usually average).
+
+This all depends on the time range of your query of course. But the important point is to know that the Histogram bucketing
+that Grafana performs may be done on already aggregated and averaged data. To get more accurate heatmaps it is better
+to do the bucketing during metric collection or store the data in Elasticsearch, which currently is the only data source
+data supports doing Histogram bucketing on the raw data.
+
+If you remove or lower the group by time (or raise maxDataPoints) in your query to return more data points your heatmap will be
+more accurate but this can also be very CPU & Memory taxing for your browser and could cause hangs and crashes if the number of
+data points becomes unreasonably large. 

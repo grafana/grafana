@@ -423,7 +423,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
       function addXHistogramAxis(options, bucketSize) {
         let ticks, min, max;
 
-        if (data.length) {
+        if (data.length && bucketSize) {
           ticks = _.map(data[0].data, point => point[0]);
 
           // Expand ticks for pretty view
