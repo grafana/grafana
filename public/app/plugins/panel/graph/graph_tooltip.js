@@ -73,13 +73,13 @@ function ($, core) {
         series = seriesList[i];
 
         if (!series.data.length || (panel.legend.hideEmpty && series.allIsNull)) {
-          // Init value so that it does not brake series sorting
+          // Init value so that it does not break series sorting
           results[0].push({ hidden: true, value: 0 });
           continue;
         }
 
         if (!series.data.length || (panel.legend.hideZero && series.allIsZero)) {
-          // Init value so that it does not brake series sorting
+          // Init value so that it does not break series sorting
           results[0].push({ hidden: true, value: 0 });
           continue;
         }
@@ -112,12 +112,12 @@ function ($, core) {
         // Highlighting multiple Points depending on the plot type
         if (series.lines.steps || series.stack) {
           // stacked and steppedLine plots can have series with different length.
-          // Stacked series can increase its length on each new stacked serie if null points found,
+          // Stacked series can increase its length on each new stacked series if null points found,
           // to speed the index search we begin always on the last found hoverIndex.
           hoverIndex = this.findHoverIndexFromDataPoints(pos.x, series, hoverIndex);
         }
 
-        // Be sure we have a yaxis so that it does not brake series sorting
+        // Be sure we have a yaxis so that it does not break series sorting
         yaxis = 0;
         if (series.yaxis) {
           yaxis = series.yaxis.n;
@@ -134,7 +134,7 @@ function ($, core) {
         });
       }
 
-      // Contat the 3 sub-arrays
+      // Concat the 3 sub-arrays
       results = results[0].concat(results[1],results[2]);
 
       // Time of the point closer to pointer
@@ -179,7 +179,7 @@ function ($, core) {
       var xMode = xAxes[0].options.mode;
       var seriesList = getSeriesFn();
       var allSeriesMode = panel.tooltip.shared;
-      var group, value, absoluteTime, hoverInfo, i, series, seriesHtml, tooltipFormat;
+      var seriesHoverInfo, group, value, total, absoluteTime, hoverInfo, i, series, seriesHtml, tooltipFormat;
 
       // if panelRelY is defined another panel wants us to show a tooltip
       // get pageX from position on x axis and pageY from relative position in original panel
@@ -215,10 +215,11 @@ function ($, core) {
         tooltipFormat = 'YYYY-MM-DD HH:mm:ss';
       }
 
+      if (panel.percentage || allSeriesMode) {
+        seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
+      }
       if (allSeriesMode) {
         plot.unhighlight();
-
-        var seriesHoverInfo = self.getMultiSeriesPlotHoverInfo(plotData, pos);
 
         seriesHtml = '';
 
@@ -254,7 +255,17 @@ function ($, core) {
 
           seriesHtml += '<div class="graph-tooltip-list-item ' + highlightClass + '"><div class="graph-tooltip-series-name">';
           seriesHtml += '<i class="fa fa-minus" style="color:' + hoverInfo.color +';"></i> ' + hoverInfo.label + ':</div>';
-          seriesHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
+          if (panel.percentage) {
+            total = seriesHoverInfo.reduce(function(a, b) {
+              return {value: a.value + b.value};
+            });
+
+            seriesHtml += '<div class="graph-tooltip-value">' + value + '</div>';
+            seriesHtml += '<div class="graph-tooltip-percentage">' + (100 * value / total.value).toFixed(panel.decimals) + '%</div></div>';
+          }
+          else {
+            seriesHtml += '<div class="graph-tooltip-value">' + value + '</div></div>';
+          }
           plot.highlight(hoverInfo.index, hoverInfo.hoverIndex);
         }
 
@@ -277,7 +288,17 @@ function ($, core) {
 
         absoluteTime = dashboard.formatDate(item.datapoint[0], tooltipFormat);
 
-        group += '<div class="graph-tooltip-value">' + value + '</div>';
+        if (panel.percentage) {
+          total = seriesHoverInfo.reduce(function(a, b) {
+            return {value: a.value + b.value};
+          });
+
+          group += '<div class="graph-tooltip-value">' + value + '</div>';
+          group += '<div class="graph-tooltip-percentage">' + (100 * value / total.value).toFixed(panel.decimals) + '%</div>';
+        }
+        else {
+          group += '<div class="graph-tooltip-value">' + value + '</div>';
+        }
 
         self.renderAndShow(absoluteTime, group, pos, xMode);
       }

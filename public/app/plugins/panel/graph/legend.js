@@ -178,11 +178,31 @@ function (angular, _, $) {
               var min = series.formatValue(series.stats.min);
               var max = series.formatValue(series.stats.max);
               var total = series.formatValue(series.stats.total);
+              var percentage;
+              var sum;
 
               if (panel.legend.min) { html += '<div class="graph-legend-value min">' + min + '</div>'; }
               if (panel.legend.max) { html += '<div class="graph-legend-value max">' + max + '</div>'; }
-              if (panel.legend.avg) { html += '<div class="graph-legend-value avg">' + avg + '</div>'; }
-              if (panel.legend.current) { html += '<div class="graph-legend-value current">' + current + '</div>'; }
+              if (panel.percentage) {
+                if (panel.legend.avg) {
+                  sum = seriesList.reduce(function(a, b) {
+                    return a + b.stats.avg;
+                  }, 0);
+                  percentage = (100 * avg / sum).toFixed(panel.decimals);
+                  html += '<div class="graph-legend-value avg">' + avg + ' (' + percentage+ '%)</div>';
+                }
+                if (panel.legend.current) {
+                  sum = seriesList.reduce(function(a, b) {
+                    return a + b.stats.current;
+                  }, 0);
+                  percentage = (100 * current / sum).toFixed(panel.decimals);
+                  html += '<div class="graph-legend-value current">' + current + " (" + percentage + '%)</div>';
+                }
+              }
+              else {
+                if (panel.legend.avg) { html += '<div class="graph-legend-value avg">' + avg + '</div>'; }
+                if (panel.legend.current) { html += '<div class="graph-legend-value current">' + current + '</div>'; }
+              }
               if (panel.legend.total) { html += '<div class="graph-legend-value total">' + total + '</div>'; }
             }
 
