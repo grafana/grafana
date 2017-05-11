@@ -4,6 +4,7 @@ description = "Heatmap panel documentation"
 keywords = ["grafana", "heatmap", "panel", "documentation"]
 type = "docs"
 [menu.docs]
+name = "Heatmap"
 parent = "panels"
 weight = 3
 +++
@@ -102,4 +103,4 @@ data supports doing Histogram bucketing on the raw data.
 
 If you remove or lower the group by time (or raise maxDataPoints) in your query to return more data points your heatmap will be
 more accurate but this can also be very CPU & Memory taxing for your browser and could cause hangs and crashes if the number of
-data points becomes unreasonably large. 
+data points becomes unreasonably large.
