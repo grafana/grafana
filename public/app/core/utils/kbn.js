@@ -478,8 +478,8 @@ function($, _) {
 
   // Length
   kbn.valueFormats.lengthm  = kbn.formatBuilders.decimalSIPrefix('m');
-  kbn.valueFormats.lengthmm = kbn.formatBuilders.decimalSIPrefix('m', -1);
-  kbn.valueFormats.lengthkm = kbn.formatBuilders.decimalSIPrefix('m', 1);
+  kbn.valueFormats.lengthmm = kbn.formatBuilders.decimalSIPrefix('mm', -1);
+  kbn.valueFormats.lengthkm = kbn.formatBuilders.decimalSIPrefix('km', 1);
   kbn.valueFormats.lengthmi = kbn.formatBuilders.fixedUnit('mi');
 
   // Velocity
