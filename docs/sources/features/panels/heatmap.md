@@ -15,7 +15,9 @@ weight = 3
 
 ![](/img/docs/v43/heatmap_panel.png)
 
-The Heatmap panel allows you to view histograms over time.
+The Heatmap panel allows you to view histograms over time. To fully understand and use this panel you need
+understand what Histograms are and how they are created. Read on below to for a quick introduction to the
+term Histogram.
 
 ## Histograms and buckets
 
