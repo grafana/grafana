@@ -46,6 +46,8 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 			"type": ds.Type,
 			"name": ds.Name,
 			"url":  url,
+			// add unproxied server URL for generic datasources
+			"directUrl": ds.Url
 		}
 
 		meta, exists := enabledPlugins.DataSources[ds.Type]
