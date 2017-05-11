@@ -78,15 +78,15 @@ class PrometheusQueryCtrl extends QueryCtrl {
     var rangeDiff = Math.ceil((range.to.valueOf() - range.from.valueOf()) / 1000);
     var endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
     var expr = {
-      expr: this.templateSrv.replace(this.target.expr, this.panelCtrl.panel.scopedVars, this.datasource.interpolateQueryExpr),
-      range_input: rangeDiff + 's',
-      end_input: endTime,
-      step_input: this.target.step,
-      stacked: this.panelCtrl.panel.stack,
-      tab: 0
+      'g0.expr': this.templateSrv.replace(this.target.expr, this.panelCtrl.panel.scopedVars, this.datasource.interpolateQueryExpr),
+      'g0.range_input': rangeDiff + 's',
+      'g0.end_input': endTime,
+      'g0.step_input': this.target.step,
+      'g0.stacked': this.panelCtrl.panel.stack ? 1 : 0,
+      'g0.tab': 0
     };
-    var hash = encodeURIComponent(JSON.stringify([expr]));
-    this.linkToPrometheus = this.datasource.directUrl + '/graph#' + hash;
+    var args = _.map(expr, (v, k) => { return k + '=' + encodeURIComponent(v); }).join('&');
+    this.linkToPrometheus = this.datasource.directUrl + '/graph?' + args;
   }
 
   getCollapsedText() {
