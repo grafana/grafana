@@ -61,7 +61,7 @@ func NewClusterManager() *ClusterManager {
 		ticker:          alerting.NewTicker(time.Now(), time.Second*0, clock.New()),
 		log:             log.New("clustering.clusterManager"),
 		alertingState: &AlertingState{
-			status:                m.CLN_ALERT_STATUS_READY,
+			status:                m.CLN_ALERT_STATUS_OFF,
 			lastProcessedInterval: 0,
 			run_type:              m.CLN_ALERT_RUN_TYPE_NORMAL,
 		},
@@ -93,16 +93,17 @@ func (cm *ClusterManager) clusterMgrTicker(ctx context.Context) error {
 			cm.log.Error("Panic: stopping clusterMgrTicker", "error", err, "stack", log.Stack(1))
 		}
 	}()
-
+	cm.log.Info("clusterMgrTicker started")
 	ticksCounter := 0
 	for {
 		select {
 		case <-ctx.Done():
+			cm.log.Info("clusterMgrTicker Done")
 			return ctx.Err()
-		case tick := <-cm.ticker.C: // ticks every second
+		case <-cm.ticker.C: // ticks every second
 			if ticksCounter%10 == 0 {
 				if setting.AlertingEnabled && setting.ExecuteAlerts {
-					cm.alertsScheduler(tick, ticksCounter)
+					cm.alertsScheduler()
 				}
 			}
 			if ticksCounter%60 == 0 {
@@ -130,7 +131,7 @@ func (cm *ClusterManager) handleDispatcherTaskStatus(taskStatus *DispatcherTaskS
 	}
 }
 
-func (cm *ClusterManager) alertsScheduler(tick time.Time, ticksCounter int) {
+func (cm *ClusterManager) alertsScheduler() {
 	if cm.alertingState.status == m.CLN_ALERT_STATUS_SCHEDULING ||
 		(cm.alertingState.status == m.CLN_ALERT_STATUS_PROCESSING && cm.hasPendingAlertJobs()) {
 		return
@@ -215,22 +216,19 @@ func (cm *ClusterManager) alertRulesDispatcher(ctx context.Context) error {
 			cm.log.Error("Panic: stopping alertRulesDispatcher", "error", err, "stack", log.Stack(1))
 		}
 	}()
+	cm.log.Info("alertRulesDispatcher started")
 	for {
 		select {
 		case <-ctx.Done():
+			cm.log.Info("alertRulesDispatcher Done")
 			return ctx.Err()
 		case task := <-cm.dispatcherTaskQ:
-			err := cm.handleAlertRulesDispatcherTask(task)
-			if err != nil {
-				cm.dispatcherTaskStatus <- &DispatcherTaskStatus{task.taskType, false, err.Error()}
-			} else {
-				cm.dispatcherTaskStatus <- &DispatcherTaskStatus{task.taskType, true, ""}
-			}
+			cm.handleAlertRulesDispatcherTask(task)
 		}
 	}
 }
 
-func (cm *ClusterManager) handleAlertRulesDispatcherTask(task *DispatcherTask) error {
+func (cm *ClusterManager) handleAlertRulesDispatcherTask(task *DispatcherTask) {
 	var err error = nil
 	switch task.taskType {
 	case DISPATCHER_TASK_TYPE_ALERTS_PARTITION:
@@ -249,7 +247,11 @@ func (cm *ClusterManager) handleAlertRulesDispatcherTask(task *DispatcherTask) e
 		err = errors.New("Invalid task type " + string(task.taskType))
 		cm.log.Error(err.Error())
 	}
-	return err
+	if err != nil {
+		cm.dispatcherTaskStatus <- &DispatcherTaskStatus{task.taskType, false, err.Error()}
+	} else {
+		cm.dispatcherTaskStatus <- &DispatcherTaskStatus{task.taskType, true, ""}
+	}
 }
 
 func (cm *ClusterManager) changeAlertingState(newState string) {

@@ -13,6 +13,7 @@ type ActiveNode struct {
 const (
 	CLN_ALERT_RUN_TYPE_MISSING  = "missing"
 	CLN_ALERT_RUN_TYPE_NORMAL   = "normal"
+	CLN_ALERT_STATUS_OFF        = "off"
 	CLN_ALERT_STATUS_READY      = "ready"
 	CLN_ALERT_STATUS_PROCESSING = "processing"
 	CLN_ALERT_STATUS_SCHEDULING = "scheduling"
