@@ -53,34 +53,26 @@ define([
             });
 
             //------- get Alerts status
-            var colors = [];
+            alertMgrSrv.load().then(function(response) {
+              scope.alertNum = response.data.length;
+            });
             alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
               scope.critical = 0;
               scope.warn = 0;
               var pieData = [];
-              if (response.data.length) {
-                for (var i = 0; i < response.data.length; i++) {
-                  var alertDetail = response.data[i];
-                  if (alertDetail.status.level === "CRITICAL") {
-                    scope.critical++;
-                  } else {
-                    scope.warn++;
-                  }
+              for (var i = 0; i < response.data.length; i++) {
+                var alertDetail = response.data[i];
+                if (alertDetail.status.level === "CRITICAL") {
+                  scope.critical++;
+                } else {
+                  scope.warn++;
                 }
-                pieData = [
-                  {label: "", data: scope.warn},
-                  {label: "", data: scope.critical}
-                ];
-                colors = ['rgb(255,197,58)','rgb(224,76,65)'];
-              } else {
-                scope.alertTrigger = true;
-                pieData = [
-                  {label: "健康", data: 10},
-                  {label: "", data: 0},
-                  {label: "", data: 0}
-                ];
-                colors = ['rgb(61,183,121)','rgb(255,197,58)','rgb(224,76,65)'];
               }
+              pieData = [
+                {label: "", data: (scope.alertNum ? scope.alertNum : 1) - scope.warn - scope.critical},
+                {label: "", data: scope.warn},
+                {label: "", data: scope.critical}
+              ];
 
               $.plot("[sys_alert='" + system + "']", pieData, {
                 series: {
@@ -96,7 +88,7 @@ define([
                 legend:{
                   show:false
                 },
-                colors: colors
+                colors: ['rgb(61,183,121)','rgb(255,197,58)','rgb(224,76,65)']
               });
             });
 
