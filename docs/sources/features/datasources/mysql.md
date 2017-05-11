@@ -15,7 +15,7 @@ weight = 7
 > production use, currently in development (alpha state).
 
 Grafana ships with a built-in MySQL data source plugin that allow you to query any visualize
-data from MySQL compatible database.
+data from a MySQL compatible database.
 
 ## Macros
 
@@ -23,7 +23,7 @@ To simplify syntax and to allow for dynamic parts, like date range filters, the 
 
 Macro example | Description
 ------------ | -------------
-*__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn > FROM_UNIXTIME(1494410783) AND dateColumn < FROM_UNIXTIME(1494497183)*
+*$__timeFilter(dateColumn)* | Will be replaced by a time range filter using the specified column name. For example, *dateColumn > FROM_UNIXTIME(1494410783) AND dateColumn < FROM_UNIXTIME(1494497183)*
 
 We plan to add many more macros. If you have suggestions for what macros you would like to see, please
 [open an issue](https://github.com/grafana/grafana) in our GitHub repo.
