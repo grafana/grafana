@@ -9,7 +9,7 @@ define([
   function ($, _, coreModule, dateMath) {
     'use strict';
 
-    coreModule.directive('systemPanel', function ($parse, alertMgrSrv, healthSrv, datasourceSrv, contextSrv, backendSrv, $location) {
+    coreModule.directive('systemPanel', function ($parse, alertMgrSrv, healthSrv, datasourceSrv, contextSrv, backendSrv, $location, $q) {
       return {
         restrict: 'E',
         link: function (scope, elem, attr) {
@@ -53,30 +53,25 @@ define([
             });
 
             //------- get Alerts status
-            var getAlertNum = function() {
-              return alertMgrSrv.load().then(function(response) {
-                return response.data.length;
-              });
-            } 
+            var getAlertNum = alertMgrSrv.load().then(function(response) {
+              return response.data.length;
+            });
 
-            var getAlertStatus = function() {
-              return alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
-                var critical = 0;
-                var warn = 0;
-                var pieData = [];
-                for (var i = 0; i < response.data.length; i++) {
-                  var alertDetail = response.data[i];
-                  if (alertDetail.status.level === "CRITICAL") {
-                    critical++;
-                  } else {
-                    warn++;
-                  }
+            var getAlertStatus = alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
+              var critical = 0;
+              var warn = 0;
+              var pieData = [];
+              for (var i = 0; i < response.data.length; i++) {
+                var alertDetail = response.data[i];
+                if (alertDetail.status.level === "CRITICAL") {
+                  critical++;
+                } else {
+                  warn++;
                 }
-                return {critical:critical, warn: warn};
-              });
+              }
+              return {critical:critical, warn: warn};
+            });
 
-            }
-  
             //------- get health/anomaly status
             healthSrv.load().then(function (data) {
               var pieData = [
@@ -107,8 +102,7 @@ define([
             //-------- get host status
             scope.hostList = [];
             scope.hostStatus = {normal: 0, unnormal: 0};
-            var getHostStatus = function() {
-              return backendSrv.alertD({
+            var getHostStatus =  backendSrv.alertD({
                 method: "get",
                 url: "/summary",
                 params: {metrics: "collector.summary"},
@@ -151,17 +145,19 @@ define([
                   scope.hostList.push(host);
                 });
                 return scope.hostList.length;
-              });
-            }
+            });
 
-            //------- alertNum = alertRules * hostNum; 
+            //------- alertNum = alertRules * hostNum;
             scope.critical = 0;
             scope.warn = 0;
             scope.alertNum = 0;
-            Promise.all([getAlertNum(), getHostStatus(), getAlertStatus()]).then(function(result){
-              scope.alertNum = result[0]*result[1];
-              scope.warn = result[2].warn;
-              scope.critical = result[2].critical;
+            $q.all([getAlertNum, getHostStatus, getAlertStatus]).then(function(result) {
+              var alertRulesNum = result[0],
+                  hostNum = result[1],
+                  alertStatus = result[2];
+              scope.alertNum = alertRulesNum * hostNum;
+              scope.warn = alertStatus.warn;
+              scope.critical = alertStatus.critical;
               var pieData = [
                 {label: "", data: (scope.alertNum ? scope.alertNum : 1) - scope.warn - scope.critical},
                 {label: "", data: scope.warn},
