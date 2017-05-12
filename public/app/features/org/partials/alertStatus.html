@@ -27,7 +27,7 @@
         </tr>
         <tr ng-repeat="alertDetail in alertRows">
           <td style="width:40%">
-            <i class="fa fa-bell"></i> &nbsp;
+            <i class="fa fa-bell" ng-class="{'CRITICAL':'system-legend-danger','WARNING':'system-legend-warning'}[alertDetail.status.level]"></i> &nbsp;
             {{alertDetail.definition.name}}
           </td>
           <td style="width:40%">
@@ -43,7 +43,7 @@
             {{alertDetail.curr}}
           </td>
           <td style="width:40%">
-            {{alertDetail.status.level}}
+            {{getLevel(alertDetail)}}
           </td>
           <td style="width:40%">
             {{formatDate(alertDetail.status.levelChangedTime)}}

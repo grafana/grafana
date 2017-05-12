@@ -11,6 +11,7 @@ function (angular, _, coreModule) {
     var alertDefUrl = "/alert/definition";
     var alertStatusUrl = "/alert/status";
     var alertAssociationUrl = "/alert/correlation";
+    var alertHistoryUrl = "/alert/history?token="+backendSrv.getToken();
 
     this.currentCritialThreshold = 0;
     this.currentWarningThreshold = 0;
@@ -87,6 +88,14 @@ function (angular, _, coreModule) {
     this.resetCurrentThreshold = function (alertDetial) {
       self.currentWarningThreshold = alertDetial.warn.threshold;
       self.currentCritialThreshold = alertDetial.crit.threshold;
+    };
+
+    this.loadAlertHistory = function() {
+      return backendSrv.alertD({
+        method: "get",
+        url: alertHistoryUrl,
+        params: {}
+      });
     };
   });
 });

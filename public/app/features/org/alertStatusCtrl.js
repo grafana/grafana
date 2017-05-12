@@ -96,6 +96,14 @@ function (angular, moment, _, dateMath) {
       });
     }
 
+    $scope.getLevel = function(alert) {
+      if(alert.status.level === 'CRITICAL') {
+        return '严重';
+      } else {
+        return '警告';
+      }
+    };
+
     $scope.init();
   });
 });

@@ -7,8 +7,7 @@
   </ul>
 </topnav>
 
-<div class="page-container">
-  <div class="page">
+<div class="page-container" style="min-width: 900px;">
     <h2>报警指标状态 <span style="font-size: 12px">历史</span></h2>
 
     <div ng-if="alertRows.length === 0">
@@ -21,15 +20,11 @@
           查询历史
         </li>
         <li>
-          <select style="width: 110px">
-            <option>过去一天</option>
-            <option>过去三天</option>
-            <option>过去一星期</option>
-            <option>过去三个月</option>
+          <select style="width: 110px" ng-model="alertTimeSelected" ng-options="item.value for item in alertHistoryRange">
           </select>
         </li>
         <li style="padding-left: 20px">
-          <input type="text" class="tight-form-input input-large" required placeholder="请输入需要查询内容"/>
+          <input type="text" class="tight-form-input input-large" required placeholder="请输入需要查询内容" ng-model="alertKey"/>
         </li>
         <li>
           <span class="tight-form-btn btn btn-success btn-small"><i class="fa fa-fw fa-search"></i>查询</span>
@@ -39,79 +34,32 @@
     </div>
 
     <div class="grafana-list-item">
-      <span style="padding-left: 20px"><strong>指标名称</strong></span>
-      <span style="padding-left: 40px"><strong>应用名称</strong></span>
-      <span style="padding-left: 40px"><strong>报警值/阈值</strong></span>
-      <span style="padding-left: 50px"><strong>报警时间</strong></span>
-      <span style="padding-left: 50px"><strong>处理时间</strong></span>
+      <span><strong>报警名称</strong></span>
+      <span><strong>机器名称</strong></span>
+      <span><strong>指标名称</strong></span>
+      <span><strong>报警类型</strong></span>
+      <span><strong>报警值/阈值</strong></span>
+      <span><strong>报警时间</strong></span>
+      <span><strong>处理时间</strong></span>
+      <span><strong>处理人员</strong></span>
     </div>
-    <div class="grafana-list-item" ng-click="expanded = !expanded">
-      <span style="padding-left: 20px">respon_time</span>
-      <span style="padding-left: 40px">dziter</span>
-      <span style="padding-left: 40px"><strong>41</strong> / 20</span>
-      <span style="padding-left: 50px">2016. 11. 20</span>
-      <span style="padding-left: 50px">2016. 11. 21</span>
-        <span class="pull-right">
-          <a class="pointer">
-            <i ng-show="!expanded" class="fa fa-caret-right"></i>
-            <i ng-show="expanded" class="fa fa-caret-down"></i>
-          </a>
-        </span>
-      <div ng-show="expanded">
-        <strong>报警处理</strong>: 发现内存异常飙升, 同时触发警报.<br/>
-        <strong>处理问题方法</strong>: 将所有的service 重启一遍, 同时将堆栈内存调到适合的范围
+    <div class="grafana-list-item" ng-repeat="alert in alertHistory | filter: alertKey | filter: filterRange" ng-click="expanded = !expanded">
+      <span>{{alert.definition.name}}</span>
+      <span>{{alert.history.host}}</span>
+      <span>{{alert.definition.alertDetails.hostQuery.metricQueries[0].metric}}</span>
+      <span>{{ getLevel(alert) }}</span>
+      <span><strong>{{alert.history.triggeredValue | limitTo:5}}</strong> / {{alert.definition.alertDetails[getAlertType(alert)].threshold}}</span>
+      <span>{{alert.history.createdTimeInMillis | date:'yyyy-MM-dd'}}</span>
+      <span>{{alert.history.closedTimeInMillis | date:'yyyy-MM-dd'}}</span>
+      <span>{{ getCloseOp(alert) }}</span>
+      <span class="pull-right" ng-if="alert.history.closeOp === 'MANUAL'">
+        <a class="pointer">
+          <i ng-show="!expanded" class="fa fa-caret-right"></i>
+          <i ng-show="expanded" class="fa fa-caret-down"></i>
+        </a>
+      </span>
+      <div ng-if="alert.history.closeOp === 'MANUAL'" ng-show="expanded">
+        <strong>处理问题方法</strong>: {{alert.history.reason}}
       </div>
     </div>
-    <div class="grafana-list-item" ng-click="expanded = !expanded">
-      <span style="padding-left: 20px">throughput</span>
-      <span style="padding-left: 40px">dziter</span>
-      <span style="padding-left: 40px"><strong>31</strong> / 10</span>
-      <span style="padding-left: 50px">2016. 11. 13</span>
-      <span style="padding-left: 50px">2016. 11. 20</span>
-        <span class="pull-right">
-          <a class="pointer">
-            <i ng-show="!expanded" class="fa fa-caret-right"></i>
-            <i ng-show="expanded" class="fa fa-caret-down"></i>
-          </a>
-        </span>
-      <div ng-show="expanded">
-        <strong>报警处理</strong>: 发现内存异常飙升, 同时触发警报.<br/>
-        <strong>处理问题方法</strong>: 将所有的service 重启一遍, 同时将堆栈内存调到适合的范围
-      </div>
-    </div>
-    <div class="grafana-list-item" ng-click="expanded = !expanded">
-      <span style="padding-left: 20px">DataStore</span>
-      <span style="padding-left: 40px">dziter</span>
-      <span style="padding-left: 40px"><strong>70</strong> / 30</span>
-      <span style="padding-left: 50px">2016. 09. 10</span>
-      <span style="padding-left: 50px">2016. 10. 10</span>
-        <span class="pull-right">
-          <a class="pointer">
-            <i ng-show="!expanded" class="fa fa-caret-right"></i>
-            <i ng-show="expanded" class="fa fa-caret-down"></i>
-          </a>
-        </span>
-      <div ng-show="expanded">
-        <strong>报警处理</strong>: 发现内存异常飙升, 同时触发警报.<br/>
-        <strong>处理问题方法</strong>: 将所有的service 重启一遍, 同时将堆栈内存调到适合的范围
-      </div>
-    </div>
-    <div class="grafana-list-item" ng-click="expanded = !expanded">
-      <span style="padding-left: 20px">Used.cpu</span>
-      <span style="padding-left: 40px">dziter</span>
-      <span style="padding-left: 40px"><strong>70</strong> / 10</span>
-      <span style="padding-left: 50px">2016. 10. 31</span>
-      <span style="padding-left: 50px">2016. 11. 21</span>
-        <span class="pull-right">
-          <a class="pointer">
-            <i ng-show="!expanded" class="fa fa-caret-right"></i>
-            <i ng-show="expanded" class="fa fa-caret-down"></i>
-          </a>
-        </span>
-      <div ng-show="expanded">
-        <strong>报警处理</strong>: 发现内存异常飙升, 同时触发警报.<br/>
-        <strong>处理问题方法</strong>: 将所有的service 重启一遍, 同时将堆栈内存调到适合的范围
-      </div>
-    </div>
-  </div>
 </div>
