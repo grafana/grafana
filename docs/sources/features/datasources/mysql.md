@@ -17,6 +17,30 @@ weight = 7
 Grafana ships with a built-in MySQL data source plugin that allow you to query any visualize
 data from a MySQL compatible database.
 
+## Adding the data source
+
+1. Open the side menu by clicking the Grafana icon in the top header.
+2. In the side menu under the `Dashboards` link you should find a link named `Data Sources`.
+3. Click the `+ Add data source` button in the top header.
+4. Select *MySQL* from the *Type* dropdown.
+
+### Database User Permissions (Important!)
+
+The database user you specify when you add the data source should only be granted SELECT permissions on
+the specified database & tables you want to query. Grafana does not validate that the query is safe. The query
+could include any SQL statement. For example, statements like `USE otherdb;` and `DROP TABLE user;` would be
+executed. To protect against this we **Highly** recommmend you create a specific mysql user with
+restricted permissions.
+
+Example:
+
+```sql
+ CREATE USER 'grafanaReader' IDENTIFIED BY 'password';
+ GRANT SELECT ON mydatabase.mytable TO 'grafanaReader';
+```
+
+You can use wildcards (`*`)  in place of database or table if you want to grant access to more databases and tables.
+
 ## Macros
 
 To simplify syntax and to allow for dynamic parts, like date range filters, the query can contain macros.
