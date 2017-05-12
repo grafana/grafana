@@ -11,9 +11,9 @@ weight = 3
 
 # Heatmap Panel
 
-> New panel only available in Grafana v4.3+
+![](/img/docs/v43/heatmap_panel_cover.jpg)
 
-![](/img/docs/v43/heatmap_panel.png)
+> New panel only available in Grafana v4.3+
 
 The Heatmap panel allows you to view histograms over time. To fully understand and use this panel you need
 understand what Histograms are and how they are created. Read on below to for a quick introduction to the
