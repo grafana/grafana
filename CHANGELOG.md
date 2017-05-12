@@ -1,4 +1,4 @@
-# 4.3.0 (unreleased)
+# 4.3.0-beta1 (2017-05-12)
 
 ## Enhancements
 
