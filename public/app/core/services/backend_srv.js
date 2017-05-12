@@ -188,6 +188,7 @@ function (angular, _, coreModule, config) {
       if (_.isEmpty(options.params)) {
         options.params = {};
       }
+      options.params.token = this.getToken();
       options.url = contextSrv.elkUrl + options.url;
       return this.datasourceRequest(options);
     };
@@ -196,6 +197,7 @@ function (angular, _, coreModule, config) {
       if (_.isEmpty(options.params)) {
         options.params = {};
       }
+      options.params.token = this.getToken();
       options.url = contextSrv.elkUrl + "/knowledgebase/article" + options.url;
       return this.datasourceRequest(options);
     };
