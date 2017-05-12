@@ -12,6 +12,7 @@ function (angular, _, coreModule) {
     var alertStatusUrl = "/alert/status";
     var alertAssociationUrl = "/alert/correlation";
     var alertHistoryUrl = "/alert/history?token="+backendSrv.getToken();
+    var closeAlertUrl = "/alert/status/close";
 
     this.currentCritialThreshold = 0;
     this.currentWarningThreshold = 0;
@@ -97,5 +98,21 @@ function (angular, _, coreModule) {
         params: {}
       });
     };
+
+    this.closeAlert = function(alertId, host, alertReason, userName) {
+      // params 和 data 传参问题有待商榷
+      return backendSrv.alertD({
+        method: "post",
+        url: closeAlertUrl,
+        params: {
+          id: alertId,
+          host: host,
+        },
+        data:{
+          reason: alertReason,
+          closeBy: userName
+        }
+      });
+    }
   });
 });

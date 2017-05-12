@@ -9,7 +9,7 @@ function (angular, moment, _, dateMath) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AlertStatusCtrl', function ($scope, alertMgrSrv, datasourceSrv) {
+  module.controller('AlertStatusCtrl', function ($scope, alertMgrSrv, datasourceSrv, contextSrv) {
     $scope.init = function () {
       $scope.correlationThreshold = 100;
       alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
@@ -31,11 +31,21 @@ function (angular, moment, _, dateMath) {
       alertMgrSrv.resetCurrentThreshold(alertDetails);
     };
 
-    $scope.handleAlert = function () {
+    $scope.handleAlert = function (alertDetail) {
+      var newScope = $scope.$new();
+      newScope.alertData = alertDetail;
+      newScope.closeAlert = $scope.closeAlert;
       $scope.appEvent('show-modal', {
         src: './app/partials/handle_alert.html',
         modalClass: 'modal-no-header confirm-modal',
-        scope: $scope.$new()
+        scope: newScope
+      });
+    };
+
+    $scope.closeAlert = function() {
+      var status = $scope.alertData.status;
+      alertMgrSrv.closeAlert(status.alertId, status.monitoredEntity, $scope.reason, contextSrv.user.name).then(function(response) {
+        console.log(response);
       });
     };
 

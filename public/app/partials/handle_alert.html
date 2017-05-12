@@ -1,4 +1,4 @@
-<div class="modal-body">
+<div class="modal-body" ng-controller="AlertStatusCtrl">
 
   <a class="modal-close" ng-click="dismiss();">
     <i class="fa fa-remove"></i>
@@ -14,7 +14,7 @@
         <div class="tight-form">
           <ul class="tight-form-list">
             <li>
-              <textarea style="width: 300px"></textarea>
+              <textarea style="width: 300px" ng-model="reason" required></textarea>
             </li>
           </ul>
         </div>
@@ -22,7 +22,7 @@
 
       <div class="" style="margin-top: 30px; margin-bottom: 20px;">
         <button type="button" class="btn btn-inverse" ng-click="dismiss()">取消</button>
-        <button type="submit" class="btn btn-success" ng-click="dismiss();">关闭警告并上传报告</button>
+        <button type="submit" class="btn btn-success" ng-click="closeAlert();dismiss();">关闭警告并上传报告</button>
 
       </div>
     </div>
