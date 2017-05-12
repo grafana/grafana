@@ -102,49 +102,49 @@ define([
             //-------- get host status
             scope.hostList = [];
             scope.hostStatus = {normal: 0, unnormal: 0};
-            var getHostStatus =  backendSrv.alertD({
-                method: "get",
-                url: "/summary",
-                params: {metrics: "collector.summary"},
-                headers: {'Content-Type': 'text/plain'},
-              }).then(function (response) {
-                _.each(response.data, function (summary) {
-                  var host = {
-                    "host": summary.tag.host,
-                    "status": 0,
-                  };
+            var getHostStatus = backendSrv.alertD({
+              method: "get",
+              url: "/summary",
+              params: {metrics: "collector.summary"},
+              headers: {'Content-Type': 'text/plain'},
+            }).then(function (response) {
+              _.each(response.data, function (summary) {
+                var host = {
+                  "host": summary.tag.host,
+                  "status": 0,
+                };
 
-                  var queries = [{
-                    "metric": contextSrv.user.orgId + "." + system + ".collector.state",
-                    "aggregator": "sum",
-                    "downsample": "1m-sum",
-                    "tags": {"host": summary.tag.host}
-                  }];
+                var queries = [{
+                  "metric": contextSrv.user.orgId + "." + system + ".collector.state",
+                  "aggregator": "sum",
+                  "downsample": "1m-sum",
+                  "tags": {"host": summary.tag.host}
+                }];
 
-                  scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-1m', false).valueOf(), null).then(function (response) {
-                    if (_.isEmpty(response.data)) {
-                      throw Error;
-                    }
-                    _.each(response.data, function (metricData) {
-                      if (_.isObject(metricData)) {
-                        if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
-                          host.status = 1;
-                          scope.hostStatus.unnormal++;
-                        } else {
-                          host.status = 0;
-                          scope.hostStatus.normal++;
-                        }
+                scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-1m', false).valueOf(), null).then(function (response) {
+                  if (_.isEmpty(response.data)) {
+                    throw Error;
+                  }
+                  _.each(response.data, function (metricData) {
+                    if (_.isObject(metricData)) {
+                      if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
+                        host.status = 1;
+                        scope.hostStatus.unnormal++;
+                      } else {
+                        host.status = 0;
+                        scope.hostStatus.normal++;
                       }
-                    });
-                  }).catch(function () {
-                    scope.hostStatus.unnormal++;
-                    host.status = 1;
-                    //nothing to do ;
+                    }
                   });
-
-                  scope.hostList.push(host);
+                }).catch(function () {
+                  scope.hostStatus.unnormal++;
+                  host.status = 1;
+                  //nothing to do ;
                 });
-                return scope.hostList.length;
+
+                scope.hostList.push(host);
+              });
+              return scope.hostList.length;
             });
 
             //------- alertNum = alertRules * hostNum;

@@ -105,6 +105,7 @@ define([
             ],
             "transparent": true,
             "legend": true,
+           "hideTimeOverride": true,
           }
         ],
         "showTitle": false,
@@ -177,6 +178,7 @@ define([
 
         anomalyRow.panels[0].legend.show = false;
         serviceRow.panels[0].type = 'table';
+        serviceRow.panels[0].timeFrom = '2m';
 
         $scope.initAlertStatus(alertRow.panels[0]);
         $scope.initAnomalyStatus(anomalyRow.panels[0]);
@@ -211,9 +213,8 @@ define([
         targets.metric = 'internal.alert.num';
         targets.tags = { 'level': '*' };
         targets.aggregator = 'sum';
-        // 5h 图像会好看些
-        targets.downsampleInterval = '1h';
-        targets.downsampleAggregator = "avg",
+        targets.downsampleInterval = '5h';
+        targets.downsampleAggregator = "p99",
         targets.alias = "$tag_level";
         panel.grid.leftMin = 0;
         panel.grid.thresholdLine = false;
@@ -288,6 +289,7 @@ define([
 
       $scope.initHostSummary = function (panel) {
         panel.type = 'table';
+        panel.timeFrom = '2m';
         var targets = panel.targets[0];
         targets.metric = 'collector.state';
         targets.alias = "$tag_host";
@@ -373,7 +375,6 @@ define([
           panel.y_formats = ['bytes', 'bytes'];
           panel.timeForward = "1d";
           panel.legend.show = false;
-          panel.hideTimeOverride = true;
         });
         panels[1].y_formats = ['percent', 'percent'];
 
@@ -404,6 +405,7 @@ define([
         var memoryTopN = panels[1];
         _.each(panels, function(panel) {
           panel.type = 'table';
+          panel.timeFrom = '2m';
           panel.columns = [
             {
               "text": "Max",
@@ -462,7 +464,6 @@ define([
                 "host": "*",
                 "pid_cmd": "*"
               },
-              "downsampleInterval": "1h",
               "alias": "HOST: $tag_host PID: $tag_pid_cmd"
             }
           ];
