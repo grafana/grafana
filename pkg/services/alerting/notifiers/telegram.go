@@ -1,12 +1,12 @@
 package notifiers
 
 import (
-	"fmt"
-	"os"
 	"bytes"
+	"fmt"
 	"io"
-	"net/http"
 	"mime/multipart"
+	"net/http"
+	"os"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -54,17 +54,17 @@ func init() {
 
 type TelegramNotifier struct {
 	NotifierBase
-	BotToken string
-	ChatID   string
+	BotToken    string
+	ChatID      string
 	UploadImage bool
-	log      log.Logger
+	log         log.Logger
 }
 
 func makeHTMLUrl(title string, url string) string {
-	if strings.Contains(url,"http://localhost") {
-		return fmt.Sprintf("%s: %s\n",title,url)
+	if strings.Contains(url, "http://localhost") {
+		return fmt.Sprintf("%s: %s\n", title, url)
 	} else {
-		return fmt.Sprintf("<a href='%s'>%s</a>\n",url,title)
+		return fmt.Sprintf("<a href='%s'>%s</a>\n", url, title)
 	}
 }
 
@@ -106,7 +106,7 @@ func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 		ruleUrl, err := evalContext.GetRuleUrl()
 		if err == nil {
-			caption = caption + fmt.Sprintf("\nOpen in Grafana: %s",ruleUrl)
+			caption = caption + fmt.Sprintf("\nOpen in Grafana: %s", ruleUrl)
 		}
 
 		var b bytes.Buffer
@@ -120,17 +120,17 @@ func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 		if err != nil {
 			this.log.Error("Failed to read image file", "error", err, "telegram", this.Name)
 		}
-		io.Copy(fw, f);
+		io.Copy(fw, f)
 
 		fw, _ = w.CreateFormField("chat_id")
-		fw.Write([]byte(this.ChatID));
+		fw.Write([]byte(this.ChatID))
 
-		fw, _ = w.CreateFormField("caption");
-		fw.Write([]byte(caption));
+		fw, _ = w.CreateFormField("caption")
+		fw.Write([]byte(caption))
 
 		w.Close()
 
-		req, _ := http.NewRequest("POST",url , &b)
+		req, _ := http.NewRequest("POST", url, &b)
 		req.Header.Set("Content-Type", w.FormDataContentType())
 		client := &http.Client{}
 		res, err := client.Do(req)
@@ -151,12 +151,12 @@ func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 		message := fmt.Sprintf("<b>%s</b>\nMessage: %s\n", evalContext.GetNotificationTitle(), evalContext.Rule.Message)
 
 		if this.UploadImage == true && evalContext.ImagePublicUrl != "" {
-			message = message + fmt.Sprintf("Graph: %s\n",evalContext.ImagePublicUrl)
+			message = message + fmt.Sprintf("Graph: %s\n", evalContext.ImagePublicUrl)
 		}
 
 		ruleUrl, err := evalContext.GetRuleUrl()
 		if err == nil {
-			message = message + makeHTMLUrl("Open in Grafana",ruleUrl)
+			message = message + makeHTMLUrl("Open in Grafana", ruleUrl)
 		}
 
 		metrics := ""
