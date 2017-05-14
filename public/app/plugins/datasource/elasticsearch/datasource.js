@@ -42,11 +42,6 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         data: data
       };
 
-      if (_.isEmpty(options.params)) {
-        options.params = {};
-      }
-      options.params.token = backendSrv.getToken();
-
       if (this.basicAuth || this.withCredentials) {
         options.withCredentials = true;
       }
