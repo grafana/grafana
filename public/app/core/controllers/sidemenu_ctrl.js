@@ -25,7 +25,7 @@ function (angular, _, $, coreModule, config) {
             href: $scope.getUrl("/")
           },
           {
-            text: '节点状态',
+            text: '服务状态',
             href: $scope.getUrl("/service")
           },
           {

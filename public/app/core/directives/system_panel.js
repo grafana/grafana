@@ -9,7 +9,7 @@ define([
   function ($, _, coreModule, dateMath) {
     'use strict';
 
-    coreModule.directive('systemPanel', function ($parse, alertMgrSrv, healthSrv, datasourceSrv, contextSrv, backendSrv, $location) {
+    coreModule.directive('systemPanel', function ($parse, alertMgrSrv, healthSrv, datasourceSrv, contextSrv, backendSrv, $location, $q) {
       return {
         restrict: 'E',
         link: function (scope, elem, attr) {
@@ -53,51 +53,23 @@ define([
             });
 
             //------- get Alerts status
-            var colors = [];
-            alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
-              scope.critical = 0;
-              scope.warn = 0;
-              var pieData = [];
-              if (response.data.length) {
-                for (var i = 0; i < response.data.length; i++) {
-                  var alertDetail = response.data[i];
-                  if (alertDetail.status.level === "CRITICAL") {
-                    scope.critical++;
-                  } else {
-                    scope.warn++;
-                  }
-                }
-                pieData = [
-                  {label: "", data: scope.warn},
-                  {label: "", data: scope.critical}
-                ];
-                colors = ['rgb(255,197,58)','rgb(224,76,65)'];
-              } else {
-                scope.alertTrigger = true;
-                pieData = [
-                  {label: "健康", data: 10},
-                  {label: "", data: 0},
-                  {label: "", data: 0}
-                ];
-                colors = ['rgb(61,183,121)','rgb(255,197,58)','rgb(224,76,65)'];
-              }
+            var getAlertNum = alertMgrSrv.load().then(function(response) {
+              return response.data.length;
+            });
 
-              $.plot("[sys_alert='" + system + "']", pieData, {
-                series: {
-                  pie: {
-                    innerRadius: 0.5,
-                    show: true,
-                    label: {
-                        show: true,
-                        radius: 1/4,
-                    }
-                  }
-                },
-                legend:{
-                  show:false
-                },
-                colors: colors
-              });
+            var getAlertStatus = alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
+              var critical = 0;
+              var warn = 0;
+              var pieData = [];
+              for (var i = 0; i < response.data.length; i++) {
+                var alertDetail = response.data[i];
+                if (alertDetail.status.level === "CRITICAL") {
+                  critical++;
+                } else {
+                  warn++;
+                }
+              }
+              return {critical:critical, warn: warn};
             });
 
             //------- get health/anomaly status
@@ -130,7 +102,7 @@ define([
             //-------- get host status
             scope.hostList = [];
             scope.hostStatus = {normal: 0, unnormal: 0};
-            backendSrv.alertD({
+            var getHostStatus = backendSrv.alertD({
               method: "get",
               url: "/summary",
               params: {metrics: "collector.summary"},
@@ -171,6 +143,42 @@ define([
                 });
 
                 scope.hostList.push(host);
+              });
+              return scope.hostList.length;
+            });
+
+            //------- alertNum = alertRules * hostNum;
+            scope.critical = 0;
+            scope.warn = 0;
+            scope.alertNum = 0;
+            $q.all([getAlertNum, getHostStatus, getAlertStatus]).then(function(result) {
+              var alertRulesNum = result[0],
+                  hostNum = result[1],
+                  alertStatus = result[2];
+              scope.alertNum = alertRulesNum * hostNum;
+              scope.warn = alertStatus.warn;
+              scope.critical = alertStatus.critical;
+              var pieData = [
+                {label: "", data: (scope.alertNum ? scope.alertNum : 1) - scope.warn - scope.critical},
+                {label: "", data: scope.warn},
+                {label: "", data: scope.critical}
+              ];
+
+              $.plot("[sys_alert='" + system + "']", pieData, {
+                series: {
+                  pie: {
+                    innerRadius: 0.5,
+                    show: true,
+                    label: {
+                        show: true,
+                        radius: 1/4,
+                    }
+                  }
+                },
+                legend:{
+                  show:false
+                },
+                colors: ['rgb(61,183,121)','rgb(255,197,58)','rgb(224,76,65)']
               });
             });
           });

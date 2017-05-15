@@ -22,16 +22,12 @@ define([
           {
             "columns": [
               {
-                "text": "Total",
-                "value": "total"
-              },
-              {
                 "text": "Current",
                 "value": "current"
               }
             ],
             "sort": {
-              "col": 2,
+              "col": 1,
               "desc": true
             },
             "styles": [
@@ -109,6 +105,7 @@ define([
             ],
             "transparent": true,
             "legend": true,
+           "hideTimeOverride": true,
           }
         ],
         "showTitle": false,
@@ -120,7 +117,7 @@ define([
       $scope.panleJson = [
         { fullwidth: false, header: '报警情况', title: '历史报警状态', status: { success: ['', ''], warn: ['警告', 0], danger: ['严重', 0] }, tip: '2:critical，1:warning,0:normal', href: $scope.getUrl('/alerts/status') },
         { fullwidth: false, header: '智能检测异常指标', title: '历史异常指标概览', status: { success: ['指标数量', 0], warn: ['异常指标', 0], danger: ['严重', 0] }, href: $scope.getUrl('/anomaly')},
-        { fullwidth: false, header: '节点状态', title: '历史节点状态', status: { success: ['正常节点', 0], warn: ['异常节点', 0], danger: ['严重', 0] }, href: $scope.getUrl('/service')},
+        { fullwidth: false, header: '服务状态', title: '历史服务状态', status: { success: ['正常节点', 0], warn: ['异常节点', 0], danger: ['严重', 0] }, href: $scope.getUrl('/service')},
         { fullwidth: false, header: '机器连接状态', title: '历史机器连接状态', status: { success: ['正常机器', 0], warn: ['异常机器', 0], danger: ['尚未工作', 0] }, href: $scope.getUrl('/summary') },
         { fullwidth: true, header: '各线程TopN使用情况', title: '', panels: [{ title: '各线程CPU占用情况(百分比)TopN' }, { title: '各线程内存占用情况(百分比)TopN' },] },
         { fullwidth: true, header: '健康指数趋势', title: '历史健康指数趋势' },
@@ -181,6 +178,7 @@ define([
 
         anomalyRow.panels[0].legend.show = false;
         serviceRow.panels[0].type = 'table';
+        serviceRow.panels[0].timeFrom = '2m';
 
         $scope.initAlertStatus(alertRow.panels[0]);
         $scope.initAnomalyStatus(anomalyRow.panels[0]);
@@ -205,25 +203,22 @@ define([
 
       $scope.initAlertStatus = function (panel) {
         var targets = panel.targets[0];
-        targets.metric = 'internal.alert.state';
-        targets.tags = { 'host': '*', 'alertName': '*' };
-        targets.downsampleAggregator = 'max';
-        targets.downsampleInterval = '1m';
-        targets.alias = "$tag_alertName/$tag_host";
-        panel.grid.threshold1 = 0;
-        panel.grid.threshold2 = 1;
+        panel.lines = false;
+        panel.bars = true;
+        panel.stack = true;
+        panel.aliasColors = {
+          "critical": "#E24D42",
+          "warning": "#F9934E"
+        };
+        targets.metric = 'internal.alert.num';
+        targets.tags = { 'level': '*' };
+        targets.aggregator = 'sum';
+        targets.downsampleInterval = '5h';
+        targets.downsampleAggregator = "p99",
+        targets.alias = "$tag_level";
         panel.grid.leftMin = 0;
-        panel.grid.leftMax = 2;
         panel.grid.thresholdLine = false;
         panel.pointradius = 1;
-        panel.type = 'table';
-        panel.columns = [
-          {
-            "text": "Current",
-            "value": "current"
-          }
-        ];
-        panel.sort.col = 1;
       }
 
       $scope.getAlertStatus = function () {
@@ -294,6 +289,7 @@ define([
 
       $scope.initHostSummary = function (panel) {
         panel.type = 'table';
+        panel.timeFrom = '2m';
         var targets = panel.targets[0];
         targets.metric = 'collector.state';
         targets.alias = "$tag_host";
@@ -379,7 +375,6 @@ define([
           panel.y_formats = ['bytes', 'bytes'];
           panel.timeForward = "1d";
           panel.legend.show = false;
-          panel.hideTimeOverride = true;
         });
         panels[1].y_formats = ['percent', 'percent'];
 
@@ -410,6 +405,7 @@ define([
         var memoryTopN = panels[1];
         _.each(panels, function(panel) {
           panel.type = 'table';
+          panel.timeFrom = '2m';
           panel.columns = [
             {
               "text": "Max",
@@ -468,10 +464,11 @@ define([
                 "host": "*",
                 "pid_cmd": "*"
               },
-              "downsampleInterval": "1h",
               "alias": "HOST: $tag_host PID: $tag_pid_cmd"
             }
           ];
+
+          panel.sort.col = 2;
         });
 
         cpuTopN.targets[0].metric = 'cpu.topN';
