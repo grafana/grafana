@@ -178,7 +178,7 @@ define([
 
         anomalyRow.panels[0].legend.show = false;
         serviceRow.panels[0].type = 'table';
-        serviceRow.panels[0].timeFrom = '2m';
+        serviceRow.panels[0].timeFrom = '5m';
 
         $scope.initAlertStatus(alertRow.panels[0]);
         $scope.initAnomalyStatus(anomalyRow.panels[0]);
@@ -289,7 +289,7 @@ define([
 
       $scope.initHostSummary = function (panel) {
         panel.type = 'table';
-        panel.timeFrom = '2m';
+        panel.timeFrom = '5m';
         var targets = panel.targets[0];
         targets.metric = 'collector.state';
         targets.alias = "$tag_host";
