@@ -30,7 +30,7 @@ function (angular) {
         onConfirm: function() {
           oncallerMgrSrv.remove(oncallerOrg, oncallerService, oncallerId).then(function onSuccess() {
             for (var i = $scope.oncallerDefList.length - 1; i >= 0; i--) {
-              if (oncallerService === $scope.oncallerDefList[i].service) {
+              if (oncallerId === $scope.oncallerDefList[i].id) {
                 $scope.oncallerDefList.splice(i, 1);
                 break;
               }
