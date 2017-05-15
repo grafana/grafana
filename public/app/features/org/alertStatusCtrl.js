@@ -46,13 +46,16 @@ function (angular, moment, _, dateMath) {
       var status = $scope.alertData.status;
       alertMgrSrv.closeAlert(status.alertId, status.monitoredEntity, $scope.reason, contextSrv.user.name).then(function(response) {
         if(response.status === 200) {
-          $scope.$apply(function() {
-            _.remove($scope.alertRows, function(alertDetail) {
-              return alertDetail.definition.id === status.alertId;
-            });
+          _.remove($scope.$parent.alertRows, function(alertDetail) {
+            return (alertDetail.definition.id === status.alertId) &&  (alertDetail.status.monitoredEntity === status.monitoredEntity);
           });
+          $scope.appEvent('alert-success', ['报警处理成功']);
         }
+      }).catch(function(err) {
+        $scope.appEvent('alert-error', ['报警处理失败','请检查网络连接状态']);
       });
+
+      $scope.dismiss();
     };
 
     $scope.handleSnooze = function(alertDetails) {
