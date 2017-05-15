@@ -70,7 +70,7 @@ function (angular, moment, _, dateMath) {
             _.each($scope.alertRows, function (alertData) {
               var queries = [{
                 "metric": alertData.metric,
-                "aggregator": "avg",
+                "aggregator": alertData.definition.alertDetails.hostQuery.metricQueries[0].aggregator.toLowerCase(),
                 "downsample": "1m-avg",
                 "tags": {"host": alertData.status.monitoredEntity}
               }];
