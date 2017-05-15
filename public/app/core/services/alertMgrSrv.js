@@ -11,7 +11,7 @@ function (angular, _, coreModule) {
     var alertDefUrl = "/alert/definition";
     var alertStatusUrl = "/alert/status";
     var alertAssociationUrl = "/alert/correlation";
-    var alertHistoryUrl = "/alert/history?token="+backendSrv.getToken();
+    var alertHistoryUrl = "/alert/history";
     var closeAlertUrl = "/alert/status/close";
 
     this.currentCritialThreshold = 0;
@@ -91,10 +91,10 @@ function (angular, _, coreModule) {
       self.currentCritialThreshold = alertDetial.crit.threshold;
     };
 
-    this.loadAlertHistory = function() {
+    this.loadAlertHistory = function(fromTime) {
       return backendSrv.alertD({
         method: "get",
-        url: alertHistoryUrl,
+        url: alertHistoryUrl+'?from='+fromTime,
         params: {}
       });
     };
@@ -114,5 +114,13 @@ function (angular, _, coreModule) {
         headers: {'Content-Type': 'text/plain;application/json;charset=UTF-8'},
       });
     }
+
+    this.getLevel = function(level) {
+      if(level === 'CRITICAL') {
+        return '严重';
+      } else {
+        return '警告';
+      }
+    };
   });
 });

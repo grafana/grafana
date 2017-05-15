@@ -26,6 +26,7 @@ function (angular, moment, _, dateMath) {
         $scope.alertRows = response.data;
         $scope.getCurrent();
       });
+      $scope.getLevel = alertMgrSrv.getLevel;
     };
     $scope.resetCurrentThreshold = function (alertDetails) {
       alertMgrSrv.resetCurrentThreshold(alertDetails);
@@ -45,12 +46,10 @@ function (angular, moment, _, dateMath) {
     $scope.closeAlert = function() {
       var status = $scope.alertData.status;
       alertMgrSrv.closeAlert(status.alertId, status.monitoredEntity, $scope.reason, contextSrv.user.name).then(function(response) {
-        if(response.status === 200) {
-          _.remove($scope.$parent.alertRows, function(alertDetail) {
-            return (alertDetail.definition.id === status.alertId) &&  (alertDetail.status.monitoredEntity === status.monitoredEntity);
-          });
-          $scope.appEvent('alert-success', ['报警处理成功']);
-        }
+        _.remove($scope.$parent.alertRows, function(alertDetail) {
+          return (alertDetail.definition.id === status.alertId) &&  (alertDetail.status.monitoredEntity === status.monitoredEntity);
+        });
+        $scope.appEvent('alert-success', ['报警处理成功']);
       }).catch(function(err) {
         $scope.appEvent('alert-error', ['报警处理失败','请检查网络连接状态']);
       });
@@ -114,14 +113,6 @@ function (angular, moment, _, dateMath) {
         }
       });
     }
-
-    $scope.getLevel = function(alert) {
-      if(alert.status.level === 'CRITICAL') {
-        return '严重';
-      } else {
-        return '警告';
-      }
-    };
 
     $scope.init();
   });

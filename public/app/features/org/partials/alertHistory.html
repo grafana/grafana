@@ -20,7 +20,11 @@
           查询历史
         </li>
         <li>
-          <select style="width: 110px" ng-model="alertTimeSelected" ng-options="item.value for item in alertHistoryRange">
+          <select style="width: 110px" 
+            ng-model="alertTimeSelected" 
+            ng-options="item.value for item in alertHistoryRange"
+            ng-change="filterRange(alertTimeSelected)"
+            >
           </select>
         </li>
         <li style="padding-left: 20px">
@@ -43,11 +47,11 @@
       <span><strong>处理时间</strong></span>
       <span><strong>处理人员</strong></span>
     </div>
-    <div class="grafana-list-item" ng-repeat="alert in alertHistory | filter: alertKey | filter: filterRange" ng-click="expanded = !expanded">
+    <div class="grafana-list-item" ng-repeat="alert in alertHistory | filter: alertKey" ng-click="expanded = !expanded">
       <span>{{alert.definition.name}}</span>
       <span>{{alert.history.host}}</span>
       <span>{{alert.definition.alertDetails.hostQuery.metricQueries[0].metric}}</span>
-      <span>{{ getLevel(alert) }}</span>
+      <span>{{ getLevel(alert.history.level) }}</span>
       <span><strong>{{alert.history.triggeredValue | limitTo:5}}</strong> / {{alert.definition.alertDetails[getAlertType(alert)].threshold}}</span>
       <span>{{alert.history.createdTimeInMillis | date:'yyyy-MM-dd'}}</span>
       <span>{{alert.history.closedTimeInMillis | date:'yyyy-MM-dd'}}</span>
