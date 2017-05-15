@@ -17,7 +17,7 @@ function (angular, _, coreModule) {
       }).then(function onSuccess(response) {
         for (var i = 0; i < response.data.length; i++) {
           var theoncallerDef = response.data[i];
-          self.oncallerDefMap[theoncallerDef.org + ":" + theoncallerDef.service] = theoncallerDef;
+          self.oncallerDefMap[theoncallerDef.id] = theoncallerDef;
         }
         return response;
       }, function onFailed(response) {
@@ -45,7 +45,7 @@ function (angular, _, coreModule) {
       });
     };
 
-    //id is in the form of org:service
+    //id is in the form of id
     this.get = function(id) {
       return self.oncallerDefMap[id];
     };
