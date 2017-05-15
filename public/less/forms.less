@@ -85,6 +85,7 @@ input[type="checkbox"]:checked+label {
     &>li {
       float: left;
       line-height: 30px;
+      min-width: 60px;
     }
   }
 }
@@ -92,5 +93,37 @@ input[type="checkbox"]:checked+label {
 .knowledge-form-label{
   width: 100px;
   text-align: left;
+}
+
+.expoler-form{
+  width: 50%;
+  height: 80%;
+  padding: 20px;
+  border: 1px solid;
+  background: @white;
+  position: fixed;
+  top: 10%;
+  right: 0px;
+  min-height: 500px;
+}
+.expoler-list{
+  list-style: none;
+  height: 90%;
+  overflow: auto;
+
+  &>li{
+    border-bottom: 1px solid #ccc;
+    margin: 20px 0px;
+    cursor: pointer;
+    h5.text-overflow{
+      .text-overflow();
+    }
+    p.text-overflow{
+      .text-overflow();
+    }
+  }
+}
+.expoler-close{
+  cursor: pointer;
 }
 
