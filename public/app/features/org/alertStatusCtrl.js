@@ -9,7 +9,7 @@ function (angular, moment, _, dateMath) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AlertStatusCtrl', function ($scope, alertMgrSrv, datasourceSrv) {
+  module.controller('AlertStatusCtrl', function ($scope, alertMgrSrv, datasourceSrv, contextSrv) {
     $scope.init = function () {
       $scope.correlationThreshold = 100;
       alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
@@ -26,17 +26,35 @@ function (angular, moment, _, dateMath) {
         $scope.alertRows = response.data;
         $scope.getCurrent();
       });
+      $scope.getLevel = alertMgrSrv.getLevel;
     };
     $scope.resetCurrentThreshold = function (alertDetails) {
       alertMgrSrv.resetCurrentThreshold(alertDetails);
     };
 
-    $scope.handleAlert = function () {
+    $scope.handleAlert = function (alertDetail) {
+      var newScope = $scope.$new();
+      newScope.alertData = alertDetail;
+      newScope.closeAlert = $scope.closeAlert;
       $scope.appEvent('show-modal', {
         src: './app/partials/handle_alert.html',
         modalClass: 'modal-no-header confirm-modal',
-        scope: $scope.$new()
+        scope: newScope
       });
+    };
+
+    $scope.closeAlert = function() {
+      var status = $scope.alertData.status;
+      alertMgrSrv.closeAlert(status.alertId, status.monitoredEntity, $scope.reason, contextSrv.user.name).then(function(response) {
+        _.remove($scope.$parent.alertRows, function(alertDetail) {
+          return (alertDetail.definition.id === status.alertId) &&  (alertDetail.status.monitoredEntity === status.monitoredEntity);
+        });
+        $scope.appEvent('alert-success', ['报警处理成功']);
+      }).catch(function(err) {
+        $scope.appEvent('alert-error', ['报警处理失败','请检查网络连接状态']);
+      });
+
+      $scope.dismiss();
     };
 
     $scope.handleSnooze = function(alertDetails) {
