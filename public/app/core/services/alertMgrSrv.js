@@ -100,7 +100,6 @@ function (angular, _, coreModule) {
     };
 
     this.closeAlert = function(alertId, host, alertReason, userName) {
-      // params 和 data 传参问题有待商榷
       return backendSrv.alertD({
         method: "post",
         url: closeAlertUrl,
@@ -111,7 +110,8 @@ function (angular, _, coreModule) {
         data:{
           reason: alertReason,
           closeBy: userName
-        }
+        },
+        headers: {'Content-Type': 'text/plain;application/json;charset=UTF-8'},
       });
     }
   });

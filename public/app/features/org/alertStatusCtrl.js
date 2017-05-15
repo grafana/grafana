@@ -45,7 +45,13 @@ function (angular, moment, _, dateMath) {
     $scope.closeAlert = function() {
       var status = $scope.alertData.status;
       alertMgrSrv.closeAlert(status.alertId, status.monitoredEntity, $scope.reason, contextSrv.user.name).then(function(response) {
-        console.log(response);
+        if(response.status === 200) {
+          $scope.$apply(function() {
+            _.remove($scope.alertRows, function(alertDetail) {
+              return alertDetail.definition.id === status.alertId;
+            });
+          });
+        }
       });
     };
 
