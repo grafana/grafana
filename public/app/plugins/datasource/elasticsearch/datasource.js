@@ -41,10 +41,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         method: method,
         data: data
       };
-
-      if (this.basicAuth || this.withCredentials) {
-        options.withCredentials = true;
-      }
+      options.withCredentials = true;
       if (this.basicAuth) {
         options.headers = {
           "Authorization": this.basicAuth
