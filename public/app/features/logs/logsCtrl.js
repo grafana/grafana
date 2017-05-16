@@ -183,6 +183,99 @@ define([
               "scopedVars": {
                 "logCluster": true
               }
+            },
+            {
+              "aliasColors": {},
+              "bars": true,
+              "datasource": "elk",
+              "editable": true,
+              "error": false,
+              "fill": 1,
+              "grid": {
+                "leftLogBase": 1,
+                "leftMax": null,
+                "leftMin": null,
+                "rightLogBase": 1,
+                "rightMax": null,
+                "rightMin": null,
+                "threshold1": null,
+                "threshold1Color": "rgba(216, 200, 27, 0.27)",
+                "threshold2": null,
+                "threshold2Color": "rgba(234, 112, 112, 0.22)"
+              },
+              "id": 3,
+              "legend": {
+                "avg": false,
+                "current": false,
+                "max": false,
+                "min": false,
+                "show": false,
+                "total": false,
+                "values": false
+              },
+              "lines": false,
+              "linewidth": 2,
+              "nullPointMode": "connected",
+              "percentage": false,
+              "pointradius": 5,
+              "points": false,
+              "renderer": "flot",
+              "seriesOverrides": [],
+              "span": 12,
+              "stack": false,
+              "steppedLine": false,
+              "targets": [
+                {
+                  "aggregator": "sum",
+                  "bucketAggs": [
+                    {
+                      "field": "@timestamp",
+                      "id": "2",
+                      "settings": {
+                        "interval": "auto",
+                        "min_doc_count": 0
+                      },
+                      "type": "date_histogram"
+                    }
+                  ],
+                  "downsampleAggregator": "avg",
+                  "dsType": "elasticsearch",
+                  "errors": {},
+                  "metric": "internal.alert.state",
+                  "metrics": [
+                    {
+                      "field": "select field",
+                      "id": "1",
+                      "type": "count"
+                    }
+                  ],
+                  "query": "*",
+                  "refId": "A",
+                  "timeField": "@timestamp"
+                }
+              ],
+              "timeFrom": null,
+              "timeShift": null,
+              "title": "日志总数",
+              "tooltip": {
+                "shared": true,
+                "value_type": "cumulative"
+              },
+              "transparent": true,
+              "type": "graph",
+              "x-axis": true,
+              "y-axis": true,
+              "y_formats": [
+                "short",
+                "short"
+              ],
+              "interval": "30m",
+              "links": [],
+              "helpInfo": {
+                "info": false,
+                "title": "",
+                "context": ""
+              }
             }
           ],
           "showTitle": false,
@@ -199,6 +292,7 @@ define([
       $scope.reQuery = function () {
         $scope.dashboard.rows[0].panels[0].targets[0].query = $scope.query;
         $scope.dashboard.rows[0].panels[1].targets[0].query = $scope.query;
+        $scope.dashboard.rows[0].panels[2].targets[0].query = $scope.query;
         $scope.dashboard.rows[0].panels[1].targets[0].hide = true;
         $scope.clustering = false;
         $rootScope.$broadcast('refresh');
@@ -209,6 +303,7 @@ define([
         $scope.clustering = false;
         panelMetas[0].panels[0].targets[0].query = $scope.query;
         panelMetas[0].panels[1].targets[0].query = $scope.query;
+        panelMetas[0].panels[2].targets[0].query = $scope.query;
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: false, canSave: false},
           dashboard: {

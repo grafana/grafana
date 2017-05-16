@@ -42,6 +42,9 @@
                     ng-bind="row.title | interpolateTemplateVars:this">
                 </div>
 
+                <div ng-repeat="(name, panel) in row.panels track by panel.id" class="panel"  ng-if="panel.tab == graph" panel-width>
+                    <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+                </div>
                 <tabset>
                     <tab heading="原始数据" ng-if="panel.tab == 1" ng-repeat="(name, panel) in row.panels track by panel.id"
                         active="true">
