@@ -514,6 +514,11 @@ func readSessionConfig() {
 	if SessionOptions.CookiePath == "" {
 		SessionOptions.CookiePath = "/"
 	}
+
+	//cross domain
+	if SessionOptions.Domain == "" {
+		SessionOptions.Domain = CorssDomain
+	}
 }
 
 var logLevels = map[string]int{
