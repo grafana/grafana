@@ -14,7 +14,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
   var module = angular.module('grafana.services');
 
-  module.factory('ElasticDatasource', function($q, backendSrv, templateSrv, timeSrv) {
+  module.factory('ElasticDatasource', function($q, backendSrv, templateSrv, timeSrv, contextSrv) {
 
     function ElasticDatasource(datasource) {
       this.type = 'elasticsearch';
@@ -37,7 +37,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
     ElasticDatasource.prototype._request = function(method, url, data) {
       var options = {
-        url: this.url + "/" + url,
+        url: contextSrv.elkUrl + "/" + url,
         method: method,
         data: data
       };
@@ -212,7 +212,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           return res;
         });
       } else {
-        return this._post("_msearch", payload).then(function (res) {
+        return this._post("log/search", payload).then(function (res) {
           return new ElasticResponse(sentTargets, res).getTimeSeries();
         });
       }
