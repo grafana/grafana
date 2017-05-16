@@ -25,15 +25,10 @@ let panelDefaults = {
     colorScale: 'sqrt',
     exponent: 0.5,
     colorScheme: 'interpolateOranges',
-    fillBackground: false
   },
   dataFormat: 'timeseries',
-  xBucketSize: null,
-  xBucketNumber: null,
-  yBucketSize: null,
-  yBucketNumber: null,
   xAxis: {
-    show: true
+    show: true,
   },
   yAxis: {
     show: true,
@@ -43,11 +38,13 @@ let panelDefaults = {
     splitFactor: null,
     min: null,
     max: null,
-    removeZeroValues: false
   },
+  xBucketSize: null,
+  xBucketNumber: null,
+  yBucketSize: null,
+  yBucketNumber: null,
   tooltip: {
     show: true,
-    seriesStat: false,
     showHistogram: false
   },
   highlightCards: true

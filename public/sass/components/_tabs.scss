@@ -68,3 +68,12 @@
     top: 1px;
   }
 }
+
+.form-tabs-wrapper {
+  @include brand-bottom-border();
+  @include clearfix();
+}
+
+.form-tabs-content {
+  padding: $spacer*2 $spacer;
+}

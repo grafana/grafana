@@ -52,6 +52,34 @@ export class MysqlDatasource {
     }).then(this.processQueryResult.bind(this));
   }
 
+  testDatasource() {
+    return this.backendSrv.datasourceRequest({
+      url: '/api/tsdb/query',
+      method: 'POST',
+      data: {
+        from: '5m',
+        to: 'now',
+        queries: [{
+          refId: 'A',
+          intervalMs: 1,
+          maxDataPoints: 1,
+          datasourceId: this.id,
+          rawSql: "SELECT 1",
+          format: 'table',
+        }],
+      }
+    }).then(res => {
+      return { status: "success", message: "Database Connection OK", title: "Success" };
+    }).catch(err => {
+      console.log(err);
+      if (err.data && err.data.message) {
+        return { status: "error", message: err.data.message, title: "Error" };
+      } else {
+        return { status: "error", message: err.status, title: "Error" };
+      }
+    });
+  }
+
   processQueryResult(res) {
     var data = [];
 

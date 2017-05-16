@@ -1,9 +1,12 @@
 package sqlstore
 
 import (
+	"time"
+
 	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
+	sqlite3 "github.com/mattn/go-sqlite3"
 )
 
 type dbTransactionFunc func(sess *xorm.Session) error
@@ -19,6 +22,10 @@ func (sess *session) publishAfterCommit(msg interface{}) {
 }
 
 func inTransaction(callback dbTransactionFunc) error {
+	return inTransactionWithRetry(callback, 0)
+}
+
+func inTransactionWithRetry(callback dbTransactionFunc, retry int) error {
 	var err error
 
 	sess := x.NewSession()
@@ -29,6 +36,16 @@ func inTransaction(callback dbTransactionFunc) error {
 	}
 
 	err = callback(sess)
+
+	// special handling of database locked errors for sqlite, then we can retry 3 times
+	if sqlError, ok := err.(sqlite3.Error); ok && retry < 5 {
+		if sqlError.Code == sqlite3.ErrLocked {
+			sess.Rollback()
+			time.Sleep(time.Millisecond * time.Duration(10))
+			sqlog.Info("Database table locked, sleeping then retrying", "retry", retry)
+			return inTransactionWithRetry(callback, retry+1)
+		}
+	}
 
 	if err != nil {
 		sess.Rollback()

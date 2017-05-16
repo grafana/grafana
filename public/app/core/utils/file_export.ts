@@ -53,7 +53,7 @@ export function exportTableDataToCsv(table) {
     var text = 'sep=;\n';
     // add header
     _.each(table.columns, function(column) {
-        text += column.text + ';';
+        text += (column.title || column.text) + ';';
     });
     text += '\n';
     // process data

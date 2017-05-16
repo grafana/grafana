@@ -166,10 +166,12 @@ func getPanelSort(id string) int {
 		sort = 3
 	case "text":
 		sort = 4
-	case "alertlist":
+	case "heatmap":
 		sort = 5
-	case "dashlist":
+	case "alertlist":
 		sort = 6
+	case "dashlist":
+		sort = 7
 	}
 	return sort
 }

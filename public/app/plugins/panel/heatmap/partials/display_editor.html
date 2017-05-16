@@ -2,51 +2,49 @@
   <div class="section gf-form-group">
     <h5 class="section-heading">Colors</h5>
     <div class="gf-form">
-      <label class="gf-form-label width-7">Mode</label>
-      <div class="gf-form-select-wrapper width-12">
+      <label class="gf-form-label width-9">Mode</label>
+      <div class="gf-form-select-wrapper width-8">
         <select class="input-small gf-form-input" ng-model="ctrl.panel.color.mode" ng-options="s for s in ctrl.colorModes" ng-change="ctrl.render()"></select>
       </div>
     </div>
 
     <div ng-show="ctrl.panel.color.mode === 'opacity'">
       <div class="gf-form">
-        <label class="gf-form-label width-7">Color</label>
+        <label class="gf-form-label width-9">Color</label>
         <span class="gf-form-label">
           <spectrum-picker ng-model="ctrl.panel.color.cardColor" ng-change="ctrl.render()" ></spectrum-picker>
         </span>
       </div>
       <div class="gf-form">
-        <label class="gf-form-label width-7">Scale</label>
+        <label class="gf-form-label width-9">Scale</label>
         <div class="gf-form-select-wrapper width-8">
           <select class="input-small gf-form-input" ng-model="ctrl.panel.color.colorScale" ng-options="s for s in ctrl.opacityScales" ng-change="ctrl.render()"></select>
         </div>
       </div>
       <div class="gf-form" ng-if="ctrl.panel.color.colorScale === 'sqrt'">
-        <label class="gf-form-label width-7">Exponent</label>
+        <label class="gf-form-label width-9">Exponent</label>
         <input type="number" class="gf-form-input width-8" placeholder="auto" data-placement="right" bs-tooltip="''" ng-model="ctrl.panel.color.exponent" ng-change="ctrl.refresh()" ng-model-onblur>
       </div>
       <div class="gf-form">
-        <svg id="heatmap-opacity-legend" width="22.7em" height="2em"></svg>
+        <svg id="heatmap-opacity-legend" width="19em" height="2em"></svg>
       </div>
     </div>
 
     <div ng-show="ctrl.panel.color.mode === 'spectrum'">
       <div class="gf-form">
-        <label class="gf-form-label width-7">Scheme</label>
-        <div class="gf-form-select-wrapper width-12">
+        <label class="gf-form-label width-9">Scheme</label>
+        <div class="gf-form-select-wrapper width-8">
           <select class="input-small gf-form-input" ng-model="ctrl.panel.color.colorScheme" ng-options="s.value as s.name for s in ctrl.colorSchemes" ng-change="ctrl.render()"></select>
         </div>
       </div>
       <div class="gf-form">
-        <svg id="heatmap-color-legend" width="22.7em" height="2em"></svg>
+        <svg id="heatmap-color-legend" width="19em" height="2em"></svg>
       </div>
-      <gf-form-switch class="gf-form" label-class="width-9" label="Fill background" checked="ctrl.panel.color.fillBackground" on-change="ctrl.render()">
-			</gf-form-switch>
     </div>
   </div>
 
   <div class="section gf-form-group">
-    <h5 class="section-heading">Cards</h5>
+    <h5 class="section-heading">Buckets</h5>
     <div class="gf-form">
       <label class="gf-form-label width-8">Space</label>
       <input type="number" class="gf-form-input width-5" placeholder="auto" data-placement="right" bs-tooltip="''" ng-model="ctrl.panel.cards.cardPadding" ng-change="ctrl.refresh()" ng-model-onblur>
@@ -64,14 +62,6 @@
       checked="ctrl.panel.tooltip.show" on-change="ctrl.render()">
     </gf-form-switch>
     <div ng-if="ctrl.panel.tooltip.show">
-      <gf-form-switch class="gf-form" label-class="width-8"
-        label="Highlight cards"
-        checked="ctrl.panel.highlightCards" on-change="ctrl.render()">
-      </gf-form-switch>
-      <gf-form-switch class="gf-form" label-class="width-8"
-        label="Series stats"
-        checked="ctrl.panel.tooltip.seriesStat" on-change="ctrl.render()">
-      </gf-form-switch>
       <gf-form-switch class="gf-form" label-class="width-8"
         label="Histogram"
         checked="ctrl.panel.tooltip.showHistogram" on-change="ctrl.render()">

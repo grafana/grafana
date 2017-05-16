@@ -119,7 +119,7 @@ function (queryDef) {
     }
 
     query.script_fields = {},
-    query.fielddata_fields = [this.timeField];
+    query.docvalue_fields = [this.timeField];
     return query;
   };
 

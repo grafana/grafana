@@ -89,10 +89,6 @@ transformers['timeseries_aggregations'] = {
     var i, y;
     model.columns.push({text: 'Metric'});
 
-    if (panel.columns.length === 0) {
-      panel.columns.push({text: 'Avg', value: 'avg'});
-    }
-
     for (i = 0; i < panel.columns.length; i++) {
       model.columns.push({text: panel.columns[i].text});
     }
@@ -220,8 +216,7 @@ transformers['json'] = {
 };
 
 function transformDataToTable(data, panel) {
-  var model = new TableModel(),
-    copyData = angular.copy(data);
+  var model = new TableModel();
 
   if (!data || data.length === 0) {
     return model;
@@ -229,16 +224,10 @@ function transformDataToTable(data, panel) {
 
   var transformer = transformers[panel.transform];
   if (!transformer) {
-    throw {message: 'Transformer ' + panel.transformer + ' not found'};
+    throw {message: 'Transformer ' + panel.transform + ' not found'};
   }
 
-  if (panel.filterNull) {
-    for (var i = 0; i < copyData.length; i++) {
-      copyData[i].datapoints = copyData[i].datapoints.filter((dp) => dp[0] != null);
-    }
-  }
-
-  transformer.transform(copyData, panel, model);
+  transformer.transform(data, panel, model);
   return model;
 }
 

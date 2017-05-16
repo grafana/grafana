@@ -141,6 +141,7 @@ func UpdateDataSource(cmd *m.UpdateDataSourceCommand) error {
 			JsonData:          cmd.JsonData,
 			SecureJsonData:    securejsondata.GetEncryptedJsonData(cmd.SecureJsonData),
 			Updated:           time.Now(),
+			Version:           cmd.Version + 1,
 		}
 
 		sess.UseBool("is_default")

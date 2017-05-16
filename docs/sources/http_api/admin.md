@@ -280,13 +280,21 @@ Change password for specific user
 
 ## Pause all alerts
 
-`DELETE /api/admin/pause-all-alerts`
+`POST /api/admin/pause-all-alerts`
 
 **Example Request**:
 
-    DELETE /api/admin/pause-all-alerts HTTP/1.1
+    POST /api/admin/pause-all-alerts HTTP/1.1
     Accept: application/json
     Content-Type: application/json
+
+    {
+      "paused": true
+    }
+
+JSON Body schema:
+
+- **paused** – If true then all alerts are to be paused, false unpauses all alerts.
 
 **Example Response**:
 

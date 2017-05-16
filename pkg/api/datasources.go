@@ -149,8 +149,8 @@ func fillWithSecureJsonData(cmd *m.UpdateDataSourceCommand) error {
 	if err != nil {
 		return err
 	}
-	secureJsonData := ds.SecureJsonData.Decrypt()
 
+	secureJsonData := ds.SecureJsonData.Decrypt()
 	for k, v := range secureJsonData {
 
 		if _, ok := cmd.SecureJsonData[k]; !ok {
@@ -158,6 +158,8 @@ func fillWithSecureJsonData(cmd *m.UpdateDataSourceCommand) error {
 		}
 	}
 
+	// set version from db
+	cmd.Version = ds.Version
 	return nil
 }
 

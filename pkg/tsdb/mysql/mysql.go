@@ -184,14 +184,36 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 
 	for i, stype := range types {
 		switch stype.DatabaseTypeName() {
+		case mysql.FieldTypeNameTiny:
+			values[i] = new(int8)
+		case mysql.FieldTypeNameInt24:
+			values[i] = new(int32)
+		case mysql.FieldTypeNameShort:
+			values[i] = new(int16)
 		case mysql.FieldTypeNameVarString:
 			values[i] = new(string)
+		case mysql.FieldTypeNameVarChar:
+			values[i] = new(string)
+		case mysql.FieldTypeNameLong:
+			values[i] = new(int)
 		case mysql.FieldTypeNameLongLong:
 			values[i] = new(int64)
 		case mysql.FieldTypeNameDouble:
 			values[i] = new(float64)
+		case mysql.FieldTypeNameDecimal:
+			values[i] = new(float32)
+		case mysql.FieldTypeNameNewDecimal:
+			values[i] = new(float64)
+		case mysql.FieldTypeNameTimestamp:
+			values[i] = new(time.Time)
 		case mysql.FieldTypeNameDateTime:
 			values[i] = new(time.Time)
+		case mysql.FieldTypeNameTime:
+			values[i] = new(time.Duration)
+		case mysql.FieldTypeNameYear:
+			values[i] = new(int16)
+		case mysql.FieldTypeNameNULL:
+			values[i] = nil
 		default:
 			return nil, fmt.Errorf("Database type %s not supported", stype.DatabaseTypeName())
 		}

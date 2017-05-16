@@ -48,7 +48,14 @@ export class MysqlQueryCtrl extends QueryCtrl {
     ];
 
     if (!this.target.rawSql) {
-      this.target.rawSql = defaulQuery;
+
+      // special handling when in table panel
+      if (this.panelCtrl.panel.type === 'table') {
+        this.target.format = 'table';
+        this.target.rawSql = "SELECT 1";
+      } else {
+        this.target.rawSql = defaulQuery;
+      }
     }
 
     this.panelCtrl.events.on('data-received', this.onDataReceived.bind(this), $scope);
