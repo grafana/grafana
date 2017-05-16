@@ -28,6 +28,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   toggleEditorMode() {
+    this.target.textEditor = !this.target.textEditor;
     this.parseTarget();
   }
 
