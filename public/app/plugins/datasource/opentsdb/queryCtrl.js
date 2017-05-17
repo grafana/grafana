@@ -36,11 +36,7 @@ function (angular, _, kbn) {
       // this does not work so good
       if (!_.isEqual($scope.oldTarget, $scope.target) && _.isEmpty($scope.target.errors)) {
         $scope.oldTarget = angular.copy($scope.target);
-        if($scope.unInit) {
-          $scope.setTags($scope.dashboard.rows[0].panels[0], $scope.target.tags);
-        } else {
-          $scope.get_data();
-        }
+        $scope.get_data();
       }
     };
 

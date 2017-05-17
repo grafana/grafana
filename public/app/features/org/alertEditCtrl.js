@@ -12,6 +12,7 @@ function (angular, _) {
     $scope.init = function() {
       $scope.unInit = true;
       $controller('OpenTSDBQueryCtrl', {$scope: $scope});
+      $scope.targetBlur = $scope._targetBlur;
       $scope.datasource = null;
       _.each(datasourceSrv.getAll(), function(ds) {
         if (ds.type === 'opentsdb') {
@@ -199,7 +200,14 @@ function (angular, _) {
     $scope.setTags = function(panel, tags) {
       panel.targets[0].tags = tags;
       $scope.broadcastRefresh();
-    }
+    };
+
+    $scope._targetBlur = function() {
+      if (!_.isEqual($scope.oldTarget, $scope.target) && _.isEmpty($scope.target.errors)) {
+        $scope.oldTarget = angular.copy($scope.target);
+        $scope.setTags($scope.dashboard.rows[0].panels[0], $scope.target.tags);
+      }
+    };
 
     $scope.init();
   });
