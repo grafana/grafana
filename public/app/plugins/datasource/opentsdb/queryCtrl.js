@@ -11,6 +11,9 @@ function (angular, _, kbn) {
   module.controller('OpenTSDBQueryCtrl', function($scope) {
 
     $scope.init = function() {
+      if($scope.unInit) {
+        return;
+      }
       $scope.target.errors = validateTarget($scope.target);
       $scope.aggregators = ['avg', 'sum', 'min', 'max', 'dev', 'zimsum', 'mimmin', 'mimmax'];
 
@@ -33,7 +36,11 @@ function (angular, _, kbn) {
       // this does not work so good
       if (!_.isEqual($scope.oldTarget, $scope.target) && _.isEmpty($scope.target.errors)) {
         $scope.oldTarget = angular.copy($scope.target);
-        $scope.get_data();
+        if($scope.unInit) {
+          $scope.setTags($scope.dashboard.rows[0].panels[0], $scope.target.tags);
+        } else {
+          $scope.get_data();
+        }
       }
     };
 

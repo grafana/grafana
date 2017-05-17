@@ -7,9 +7,11 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AlertEditCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, datasourceSrv, contextSrv, backendSrv) {
+  module.controller('AlertEditCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, datasourceSrv, contextSrv, backendSrv, $controller) {
 
     $scope.init = function() {
+      $scope.unInit = true;
+      $controller('OpenTSDBQueryCtrl', {$scope: $scope});
       $scope.datasource = null;
       _.each(datasourceSrv.getAll(), function(ds) {
         if (ds.type === 'opentsdb') {
@@ -182,93 +184,6 @@ function (angular, _) {
         alertSrv.set("error", response.status + " " + (response.data || "Request failed"), response.severity, 10000);
       });
     };
-
-    $scope.getTextValues = function(metricFindResult) {
-      return _.map(metricFindResult, function(value) { return value.text; });
-    };
-
-    $scope.suggestMetrics = function(query, callback) {
-      $scope.datasource.metricFindQuery('metrics(' + query + ')')
-        .then($scope.getTextValues)
-        .then(callback);
-    };
-
-    $scope.targetBlur = function() {
-      $scope.target.errors = validateTarget($scope.target);
-
-      // this does not work so good
-      if (!_.isEqual($scope.oldTarget, $scope.target) && _.isEmpty($scope.target.errors)) {
-        $scope.oldTarget = angular.copy($scope.target);
-        $scope.setTags($scope.dashboard.rows[0].panels[0], $scope.target.tags);
-      }
-    };
-
-    $scope.suggestTagKeys = function(query, callback) {
-      $scope.datasource.metricFindQuery('suggest_tagk(' + query + ')')
-        .then($scope.getTextValues)
-        .then(callback);
-    };
-
-    $scope.suggestTagValues = function(query, callback) {
-      $scope.datasource.metricFindQuery('suggest_tagv(' + query + ')')
-        .then($scope.getTextValues)
-        .then(callback);
-    };
-
-    $scope.addTag = function() {
-      if (!$scope.addTagMode) {
-        $scope.addTagMode = true;
-        return;
-      }
-
-      if (!$scope.target.tags) {
-        $scope.target.tags = {};
-      }
-
-      $scope.target.errors = validateTarget($scope.target);
-
-      if (!$scope.target.errors.tags) {
-        $scope.target.tags[$scope.target.currentTagKey] = $scope.target.currentTagValue;
-        $scope.target.currentTagKey = '';
-        $scope.target.currentTagValue = '';
-        $scope.targetBlur();
-      }
-      $scope.addTagMode = false;
-    };
-
-    $scope.removeTag = function(key) {
-      delete $scope.target.tags[key];
-      $scope.targetBlur();
-    };
-
-    $scope.editTag = function(key, value) {
-      $scope.removeTag(key);
-      $scope.target.currentTagKey = key;
-      $scope.target.currentTagValue = value;
-      $scope.addTag();
-    };
-
-    function validateTarget(target) {
-      var errs = {};
-
-      if (target.shouldDownsample) {
-        try {
-          if (target.downsampleInterval) {
-            kbn.describe_interval(target.downsampleInterval);
-          } else {
-            errs.downsampleInterval = "您必须提供采样的间隔 (e.g. '1m' or '1h').";
-          }
-        } catch(err) {
-          errs.downsampleInterval = err.message;
-        }
-      }
-
-      if (target.tags && _.has(target.tags, target.currentTagKey)) {
-        errs.tags = "重复标签'" + target.currentTagKey + "'.";
-      }
-
-      return errs;
-    }
 
     $scope.getTags = function(tags, detail) {
       detail.tags = [];
