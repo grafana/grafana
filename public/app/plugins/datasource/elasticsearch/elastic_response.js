@@ -132,7 +132,14 @@ function (_, queryDef) {
           }
           default:  {
             metricName = this._getMetricName(metric.type);
-            doc[metricName] =bucket[metric.id].value;
+            var otherMetrics = _.filter(target.metrics, {type: metric.type});
+
+            // if more of the same metric type include field field name in property
+            if (otherMetrics.length > 1) {
+              metricName += ' ' + metric.field;
+            }
+
+            doc[metricName] = bucket[metric.id].value;
             break;
           }
         }
