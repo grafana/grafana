@@ -75,8 +75,7 @@
     <div class="gf-form-inline" ng-if="ctrl.target.orderByTime === 'DESC'">
       <div class="gf-form">
         <label class="gf-form-label query-keyword width-7">ORDER BY</label>
-        <label class="gf-form-label">time</label>
-        <label class="gf-form-label query-keyword" ng-click="ctrl.removeOrderBy()">DESC <i class="fa fa-remove"></i></label>
+        <label class="gf-form-label pointer" ng-click="ctrl.removeOrderByTime()">time <span classs="query-keyword">DESC</span> <i class="fa fa-remove"></i></label>
       </div>
       <div class="gf-form gf-form--grow">
 				<div class="gf-form-label gf-form-label--grow"></div>
@@ -104,15 +103,21 @@
     </div>
 
     <div class="gf-form-inline">
-      <div class="gf-form max-width-30">
-        <label class="gf-form-label query-keyword width-7">ALIAS BY</label>
-        <input type="text" class="gf-form-input" ng-model="ctrl.target.alias" spellcheck='false' placeholder="Naming pattern" ng-blur="ctrl.refresh()">
-      </div>
       <div class="gf-form">
-        <label class="gf-form-label query-keyword">FORMAT AS</label>
+        <label class="gf-form-label query-keyword width-7">FORMAT AS</label>
         <div class="gf-form-select-wrapper">
           <select class="gf-form-input gf-size-auto" ng-model="ctrl.target.resultFormat" ng-options="f.value as f.text for f in ctrl.resultFormats" ng-change="ctrl.refresh()"></select>
         </div>
+      </div>
+      <div class="gf-form gf-form--grow">
+        <div class="gf-form-label gf-form-label--grow"></div>
+      </div>
+    </div>
+
+    <div class="gf-form-inline"  ng-hide="ctrl.target.resultFormat === 'table'">
+      <div class="gf-form max-width-30">
+        <label class="gf-form-label query-keyword width-7">ALIAS BY</label>
+        <input type="text" class="gf-form-input" ng-model="ctrl.target.alias" spellcheck='false' placeholder="Naming pattern" ng-blur="ctrl.refresh()">
       </div>
       <div class="gf-form gf-form--grow">
         <div class="gf-form-label gf-form-label--grow"></div>
