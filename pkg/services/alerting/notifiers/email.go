@@ -69,6 +69,11 @@ func (this *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
+	error := ""
+	if evalContext.Error != nil {
+		error = evalContext.Error.Error()
+	}
+
 	cmd := &m.SendEmailCommandSync{
 		SendEmailCommand: m.SendEmailCommand{
 			Subject: evalContext.GetNotificationTitle(),
@@ -78,6 +83,7 @@ func (this *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 				"Name":         evalContext.Rule.Name,
 				"StateModel":   evalContext.GetStateModel(),
 				"Message":      evalContext.Rule.Message,
+				"Error":        error,
 				"RuleUrl":      ruleUrl,
 				"ImageLink":    "",
 				"EmbededImage": "",
