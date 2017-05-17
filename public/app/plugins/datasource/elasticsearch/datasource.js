@@ -224,8 +224,8 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         return $q.when([]);
       }
 
-      payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
-      payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
+      payload = payload.replace(/"\$timeFrom"/g, options.range.from.valueOf());
+      payload = payload.replace(/"\$timeTo"/g, options.range.to.valueOf());
       payload = templateSrv.replace(payload, options.scopedVars);
 
       return this._post('_msearch', payload).then(function(res) {
