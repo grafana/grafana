@@ -256,7 +256,7 @@ class MetricsPanelCtrl extends PanelCtrl {
       result = {data: []};
     }
 
-    return this.events.emit('data-received', result.data);
+    this.events.emit('data-received', result.data);
   }
 
   handleDataStream(stream) {

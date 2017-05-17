@@ -2,10 +2,24 @@
 
 import angular from 'angular';
 import _ from 'lodash';
+import appEvents  from 'app/core/app_events';
 
 var module = angular.module('grafana.directives');
 
 var template = `
+
+<div class="gf-form-group" ng-if="ctrl.lastError">
+  <div class="gf-form">
+    <pre class="gf-form-pre alert alert-error">{{ctrl.lastError}}</pre>
+  </div>
+</div>
+
+<div class="gf-form-group" ng-if="ctrl.showResponse">
+  <div class="gf-form">
+    <pre class="gf-form-pre alert alert-info">{{ctrl.lastResponse}}</pre>
+  </div>
+</div>
+
 <div class="gf-form-group">
   <div class="gf-form-inline">
     <div class="gf-form">
@@ -22,9 +36,9 @@ var template = `
     </div>
 
     <div class="gf-form gf-form--offset-1">
-      <button class="btn btn-secondary gf-form-btn" ng-click="ctrl.addDataQuery()" ng-hide="ctrl.current.meta.mixed">
+      <button class="btn btn-inverse gf-form-btn" ng-click="ctrl.addDataQuery()" ng-hide="ctrl.current.meta.mixed">
         <i class="fa fa-plus"></i>&nbsp;
-        Add query
+        Add Query
       </button>
 
       <div class="dropdown" ng-if="ctrl.current.meta.mixed">
@@ -33,6 +47,14 @@ var template = `
                         on-change="ctrl.mixedDatasourceChanged()"></metric-segment>
       </div>
     </div>
+
+    <div class="gf-form gf-form--offset-1">
+      <button class="btn btn-secondary gf-form-btn" ng-click="ctrl.toggleShowResponse()" ng-show="ctrl.lastResponse">
+        <i class="fa fa-info"></i>&nbsp;
+        Show Response
+      </button>
+    </div>
+
   </div>
 </div>
 `;
@@ -45,9 +67,12 @@ export class MetricsDsSelectorCtrl {
   panelCtrl: any;
   datasources: any[];
   current: any;
+  lastResponse: any;
+  lastError: any;
+  showResponse: boolean;
 
   /** @ngInject */
-  constructor(private uiSegmentSrv, datasourceSrv) {
+  constructor($scope, private uiSegmentSrv, datasourceSrv) {
     this.datasources = datasourceSrv.getMetricSources();
 
     var dsValue = this.panelCtrl.panel.datasource || null;
@@ -63,7 +88,25 @@ export class MetricsDsSelectorCtrl {
     }
 
     this.dsSegment = uiSegmentSrv.newSegment({value: this.current.name, selectMode: true});
-    this.mixedDsSegment = uiSegmentSrv.newSegment({value: 'Add query', selectMode: true});
+    this.mixedDsSegment = uiSegmentSrv.newSegment({value: 'Add Query', selectMode: true});
+
+    appEvents.on('ds-request-response', this.onRequestResponse.bind(this), $scope);
+    appEvents.on('ds-request-error', this.onRequestError.bind(this), $scope);
+  }
+
+  onRequestResponse(data) {
+    console.log(data);
+    this.lastResponse = JSON.stringify(data, null, 2);
+    this.lastError = null;
+  }
+
+  toggleShowResponse() {
+    this.showResponse = !this.showResponse;
+  }
+
+  onRequestError(err) {
+    console.log(err);
+    this.lastError = JSON.stringify(err, null, 2);
   }
 
   getOptions(includeBuiltin) {
@@ -79,6 +122,8 @@ export class MetricsDsSelectorCtrl {
     if (ds) {
       this.current = ds;
       this.panelCtrl.setDatasource(ds);
+      this.lastError = null;
+      this.lastResponse = null;
     }
   }
 
