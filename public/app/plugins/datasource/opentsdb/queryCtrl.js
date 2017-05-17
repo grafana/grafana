@@ -11,6 +11,9 @@ function (angular, _, kbn) {
   module.controller('OpenTSDBQueryCtrl', function($scope) {
 
     $scope.init = function() {
+      if($scope.unInit) {
+        return;
+      }
       $scope.target.errors = validateTarget($scope.target);
       $scope.aggregators = ['avg', 'sum', 'min', 'max', 'dev', 'zimsum', 'mimmin', 'mimmax'];
 

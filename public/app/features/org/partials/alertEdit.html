@@ -196,11 +196,53 @@
         <div class="tidy-form-box">
           <ul class="tidy-form-list">
             <li class="tidy-form-item">
+              <h4>标签</h4>
+            </li>
+            <li ng-repeat="(key, value) in target.tags track by $index" class="tidy-form-item tidy-form-tags">
+                {{key}}&nbsp;=&nbsp;{{value}}
+              <a ng-click="editTag(key, value)">
+                <i class="fa fa-pencil"></i>
+              </a>
+              <a ng-click="removeTag(key)">
+                <i class="fa fa-remove"></i>
+              </a>
+            </li>
+
+            <li class="tidy-form-item" ng-hide="addTagMode">
+              <a ng-click="addTag()">
+                <i class="fa fa-plus"></i>
+              </a>
+            </li>
+
+            <li ng-show="addTagMode">
+              <input type="text" class="input-small tidy-form-input" spellcheck='false'
+              bs-typeahead="suggestTagKeys" data-min-length=0 data-items=100
+              ng-model="target.currentTagKey" placeholder="key"></input>
+
+              <input type="text" class="input-small tidy-form-input"
+              spellcheck='false' bs-typeahead="suggestTagValues"
+              data-min-length=0 data-items=100 ng-model="target.currentTagValue" placeholder="value">
+              </input>
+              <a ng-click="addTag()">
+                添加标签
+              </a>
+              <a bs-tooltip="target.errors.tags"
+                style="color: rgb(229, 189, 28)"
+                ng-show="target.errors.tags">
+                <i class="fa fa-warning"></i>
+              </a>
+            </li>
+          </ul>
+          <div class="clearfix"></div>
+        </div>
+        <div class="tidy-form-box">
+          <ul class="tidy-form-list">
+            <li class="tidy-form-item">
               <h4>Host List</h4>
             </li>
             <li>
               <input type="text" class="tidy-form-input input-xlarge"
-                  ng-model="alertDef.alertDetails.hosts" placeholder="*" readonly>
+                  ng-model="alertDef.alertDetails.hosts" placeholder="*">
             </li>
             <li class="tidy-form-item" style="margin:0 20px;">
               <h4>Host membership</h4>
