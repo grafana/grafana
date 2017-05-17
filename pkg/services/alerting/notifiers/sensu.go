@@ -1,14 +1,15 @@
 package notifiers
 
 import (
+	"strconv"
+	"strings"
+
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"strconv"
-	"strings"
 )
 
 func init() {
@@ -22,6 +23,10 @@ func init() {
       <div class="gf-form">
         <span class="gf-form-label width-10">Url</span>
 				<input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url" placeholder="http://sensu-api.local:4567/results"></input>
+      </div>
+      <div class="gf-form">
+        <span class="gf-form-label width-10">Handler</span>
+        <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.handler" placeholder="default"></input>
       </div>
       <div class="gf-form">
         <span class="gf-form-label width-10">Username</span>
@@ -47,6 +52,7 @@ func NewSensuNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 		Url:          url,
 		User:         model.Settings.Get("username").MustString(),
 		Password:     model.Settings.Get("password").MustString(),
+		Handler:      model.Settings.Get("handler").MustString(),
 		log:          log.New("alerting.notifier.sensu"),
 	}, nil
 }
@@ -56,6 +62,7 @@ type SensuNotifier struct {
 	Url      string
 	User     string
 	Password string
+	Handler  string
 	log      log.Logger
 }
 
@@ -81,6 +88,10 @@ func (this *SensuNotifier) Notify(evalContext *alerting.EvalContext) error {
 		bodyJSON.Set("status", 1)
 	} else {
 		bodyJSON.Set("status", 0)
+	}
+
+	if this.Handler != "" {
+		bodyJSON.Set("handler", this.Handler)
 	}
 
 	ruleUrl, err := evalContext.GetRuleUrl()
