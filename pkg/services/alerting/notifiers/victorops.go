@@ -99,7 +99,7 @@ func (this *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"state_start_time": evalContext.StartTime.Unix(),
 		"state_message":    evalContext.Rule.Message,
 		"monitoring_tool":  "Grafana v" + setting.BuildVersion,
-		"alert_url": ruleUrl,
+		"alert_url":        ruleUrl,
 	}
 
 	data, _ := json.Marshal(&body)
