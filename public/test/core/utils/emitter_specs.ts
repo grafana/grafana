@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common'
+import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
 import {Emitter} from 'app/core/core';
 

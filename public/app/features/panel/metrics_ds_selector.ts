@@ -13,7 +13,7 @@ var template = `
         <i class="icon-gf icon-gf-datasources"></i>
       </label>
       <label class="gf-form-label">
-        Panel data source
+        Data Source
       </label>
 
       <metric-segment segment="ctrl.dsSegment"
@@ -22,7 +22,7 @@ var template = `
     </div>
 
     <div class="gf-form gf-form--offset-1">
-      <button class="btn btn-inverse gf-form-btn" ng-click="ctrl.addDataQuery()" ng-hide="ctrl.current.meta.mixed">
+      <button class="btn btn-secondary gf-form-btn" ng-click="ctrl.addDataQuery()" ng-hide="ctrl.current.meta.mixed">
         <i class="fa fa-plus"></i>&nbsp;
         Add query
       </button>

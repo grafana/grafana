@@ -194,6 +194,8 @@ func (e MysqlExecutor) getTypedRowData(types []*sql.ColumnType, rows *core.Rows)
 			values[i] = new(string)
 		case mysql.FieldTypeNameVarChar:
 			values[i] = new(string)
+		case mysql.FieldTypeNameLong:
+			values[i] = new(int)
 		case mysql.FieldTypeNameLongLong:
 			values[i] = new(int64)
 		case mysql.FieldTypeNameDouble:
