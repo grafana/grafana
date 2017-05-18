@@ -88,7 +88,6 @@ export class MetricsDsSelectorCtrl {
 
   onRequestResponse(data) {
     this.responseData = data;
-    this.showResponse = true;
   }
 
   toggleShowResponse() {
