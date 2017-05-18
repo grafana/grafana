@@ -45,7 +45,7 @@ import {assignModelProperties} from './utils/model_utils';
 import {contextSrv} from './services/context_srv';
 import {KeybindingSrv} from './services/keybindingSrv';
 import {helpModal} from './components/help/help';
-
+import {responseViewer} from './components/response_viewer';
 
 export {
   arrayJoin,
@@ -69,4 +69,5 @@ export {
   contextSrv,
   KeybindingSrv,
   helpModal,
+  responseViewer,
 };

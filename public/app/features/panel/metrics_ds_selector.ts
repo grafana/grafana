@@ -8,16 +8,8 @@ var module = angular.module('grafana.directives');
 
 var template = `
 
-<div class="gf-form-group" ng-if="ctrl.lastError">
-  <div class="gf-form">
-    <pre class="gf-form-pre alert alert-error">{{ctrl.lastError}}</pre>
-  </div>
-</div>
-
 <div class="gf-form-group" ng-if="ctrl.showResponse">
-  <div class="gf-form">
-    <pre class="gf-form-pre alert alert-info">{{ctrl.lastResponse}}</pre>
-  </div>
+  <response-viewer response="ctrl.responseData" />
 </div>
 
 <div class="gf-form-group">
@@ -49,9 +41,9 @@ var template = `
     </div>
 
     <div class="gf-form gf-form--offset-1">
-      <button class="btn btn-secondary gf-form-btn" ng-click="ctrl.toggleShowResponse()" ng-show="ctrl.lastResponse">
-        <i class="fa fa-info"></i>&nbsp;
-        Show Response
+      <button class="btn btn-inverse gf-form-btn" ng-click="ctrl.toggleShowResponse()" ng-show="ctrl.responseData">
+        <i class="fa fa-binoculars"></i>&nbsp;
+        Request & Response
       </button>
     </div>
 
@@ -68,7 +60,7 @@ export class MetricsDsSelectorCtrl {
   datasources: any[];
   current: any;
   lastResponse: any;
-  lastError: any;
+  responseData: any;
   showResponse: boolean;
 
   /** @ngInject */
@@ -95,9 +87,8 @@ export class MetricsDsSelectorCtrl {
   }
 
   onRequestResponse(data) {
-    console.log(data);
-    this.lastResponse = JSON.stringify(data, null, 2);
-    this.lastError = null;
+    this.responseData = data;
+    this.showResponse = true;
   }
 
   toggleShowResponse() {
@@ -105,8 +96,9 @@ export class MetricsDsSelectorCtrl {
   }
 
   onRequestError(err) {
-    console.log(err);
-    this.lastError = JSON.stringify(err, null, 2);
+    this.responseData = err;
+    this.responseData.isError = true;
+    this.showResponse = true;
   }
 
   getOptions(includeBuiltin) {
@@ -122,8 +114,7 @@ export class MetricsDsSelectorCtrl {
     if (ds) {
       this.current = ds;
       this.panelCtrl.setDatasource(ds);
-      this.lastError = null;
-      this.lastResponse = null;
+      this.responseData = null;
     }
   }
 

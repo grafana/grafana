@@ -34,6 +34,7 @@ module.exports = function(config) {
         'remarkable/dist/*',
         'virtual-scroll/**/*',
         'mousetrap/**/*',
+        'json-formatter-js/dist/*.js',
       ],
       dest: '<%= srcDir %>/vendor/npm'
     }

@@ -68,6 +68,7 @@
     "grunt-jscs": "3.0.1",
     "grunt-sass-lint": "^0.2.2",
     "grunt-sync": "^0.6.2",
+    "json-formatter-js": "^2.2.0",
     "karma-sinon": "^1.0.5",
     "lodash": "^4.17.2",
     "mousetrap": "^1.6.0",
