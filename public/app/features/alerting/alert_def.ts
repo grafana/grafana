@@ -131,6 +131,29 @@ function joinEvalMatches(matches, separator: string) {
   }, []).join(separator);
 }
 
+function getAlertAnnotationInfo(ah) {
+
+  // backward compatability, can be removed in grafana 5.x
+  // old way stored evalMatches in data property directly,
+  // new way stores it in evalMatches property on new data object
+
+  if (_.isArray(ah.data)) {
+    return joinEvalMatches(ah.data, ', ');
+  } else if (_.isArray(ah.data.evalMatches)) {
+    return joinEvalMatches(ah.data.evalMatches, ', ');
+  }
+
+  if (ah.data.error) {
+    return "Error: " + ah.data.error;
+  }
+
+  if (ah.data.noData || ah.data.no_data) {
+    return "No Data";
+  }
+
+  return "";
+}
+
 export default {
   alertQueryDef: alertQueryDef,
   getStateDisplayModel: getStateDisplayModel,
@@ -141,6 +164,6 @@ export default {
   executionErrorModes: executionErrorModes,
   reducerTypes: reducerTypes,
   createReducerPart: createReducerPart,
-  joinEvalMatches: joinEvalMatches,
+  getAlertAnnotationInfo: getAlertAnnotationInfo,
   alertStateSortScore: alertStateSortScore,
 };
