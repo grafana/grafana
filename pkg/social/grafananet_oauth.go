@@ -82,3 +82,12 @@ func (s *SocialGrafanaNet) UserInfo(client *http.Client) (*BasicUserInfo, error)
 
 	return userInfo, nil
 }
+
+func (s *SocialGrafanaNet) Scopes() []string {
+	return s.Config.Scopes
+}
+
+func (s *SocialGrafanaNet) TokenScopes(token *oauth2.Token) ([]string, error) {
+	// TODO: implement it, probably the same way as it's done for GenericOAuth
+	return s.Config.Scopes, nil
+}

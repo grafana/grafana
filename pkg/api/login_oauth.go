@@ -11,6 +11,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"golang.org/x/net/context"
 	"golang.org/x/oauth2"
@@ -116,6 +117,17 @@ func OAuthLogin(ctx *middleware.Context) {
 	// token.TokenType was defaulting to "bearer", which is out of spec, so we explicitly set to "Bearer"
 	token.TokenType = "Bearer"
 
+	scopes, err := connect.TokenScopes(token)
+	if err != nil {
+		ctx.Handle(500, "login.OAuthLogin(TokenScopes)", err)
+		return
+	}
+
+	if err := verifyScopes(scopes, connect.Scopes()); err != nil {
+		ctx.Handle(500, "login.OAuthLogin(verifyScopes)", err)
+		return
+	}
+
 	ctx.Logger.Debug("OAuthLogin Got token")
 
 	// set up oauth2 client
@@ -195,4 +207,27 @@ func redirectWithError(ctx *middleware.Context, err error, v ...interface{}) {
 	// TODO: we can use the flash storage here once it's implemented
 	ctx.Session.Set("loginError", err.Error())
 	ctx.Redirect(setting.AppSubUrl + "/login")
+}
+
+func verifyScopes(got, want []string) error {
+	var missing []string
+	for _, scope := range want {
+		if !contains(got, scope) {
+			missing = append(missing, scope)
+		}
+	}
+
+	if len(missing) > 0 {
+		return fmt.Errorf("missing required scopes: %s", strings.Join(missing, ", "))
+	}
+	return nil
+}
+
+func contains(a []string, s string) bool {
+	for _, str := range a {
+		if str == s {
+			return true
+		}
+	}
+	return false
 }
