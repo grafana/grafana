@@ -103,7 +103,11 @@ function ($, core) {
             value = series.data[hoverIndex][1];
           } else {
             last_value += series.data[hoverIndex][1];
-            value = last_value;
+            if (panel.tooltip.value_type === 'total') {
+              value = series.data[hoverIndex][1];
+            } else {
+              value = last_value;
+            }
           }
         } else {
           value = series.data[hoverIndex][1];
@@ -136,6 +140,17 @@ function ($, core) {
 
       // Contat the 3 sub-arrays
       results = results[0].concat(results[1],results[2]);
+      if (panel.tooltip.value_type === 'total') {
+        results.push({
+          hoverIndex: 0,
+          distance: 0,
+          value: last_value,
+          index: 0,
+          label: 'Total',
+          time: pointTime,
+          color: '#000000'
+        });
+      }
 
       // Time of the point closer to pointer
       results.time = minTime;
