@@ -1,4 +1,4 @@
-// Copyright 2015 The oauth2 Authors. All rights reserved.
+// Copyright 2015 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -25,9 +25,9 @@ func TestSDKConfig(t *testing.T) {
 		c, err := NewSDKConfig(tt.account)
 		if got, want := err != nil, tt.err; got != want {
 			if !tt.err {
-				t.Errorf("expected no error, got error: %v", tt.err, err)
+				t.Errorf("got %v, want nil", err)
 			} else {
-				t.Errorf("expected error, got none")
+				t.Errorf("got nil, want error")
 			}
 			continue
 		}
@@ -36,11 +36,11 @@ func TestSDKConfig(t *testing.T) {
 		}
 		tok := c.initialToken
 		if tok == nil {
-			t.Errorf("expected token %q, got: nil", tt.accessToken)
+			t.Errorf("got nil, want %q", tt.accessToken)
 			continue
 		}
 		if tok.AccessToken != tt.accessToken {
-			t.Errorf("expected token %q, got: %q", tt.accessToken, tok.AccessToken)
+			t.Errorf("got %q, want %q", tok.AccessToken, tt.accessToken)
 		}
 	}
 }

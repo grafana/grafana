@@ -1,4 +1,4 @@
-// Copyright 2014 The oauth2 Authors. All rights reserved.
+// Copyright 2014 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -41,10 +41,32 @@ func TestTokenExpiry(t *testing.T) {
 	}{
 		{name: "12 seconds", tok: &Token{Expiry: now.Add(12 * time.Second)}, want: false},
 		{name: "10 seconds", tok: &Token{Expiry: now.Add(expiryDelta)}, want: true},
+		{name: "-1 hour", tok: &Token{Expiry: now.Add(-1 * time.Hour)}, want: true},
 	}
 	for _, tc := range cases {
 		if got, want := tc.tok.expired(), tc.want; got != want {
 			t.Errorf("expired (%q) = %v; want %v", tc.name, got, want)
+		}
+	}
+}
+
+func TestTokenTypeMethod(t *testing.T) {
+	cases := []struct {
+		name string
+		tok  *Token
+		want string
+	}{
+		{name: "bearer-mixed_case", tok: &Token{TokenType: "beAREr"}, want: "Bearer"},
+		{name: "default-bearer", tok: &Token{}, want: "Bearer"},
+		{name: "basic", tok: &Token{TokenType: "basic"}, want: "Basic"},
+		{name: "basic-capitalized", tok: &Token{TokenType: "Basic"}, want: "Basic"},
+		{name: "mac", tok: &Token{TokenType: "mac"}, want: "MAC"},
+		{name: "mac-caps", tok: &Token{TokenType: "MAC"}, want: "MAC"},
+		{name: "mac-mixed_case", tok: &Token{TokenType: "mAc"}, want: "MAC"},
+	}
+	for _, tc := range cases {
+		if got, want := tc.tok.Type(), tc.want; got != want {
+			t.Errorf("TokenType(%q) = %v; want %v", tc.name, got, want)
 		}
 	}
 }

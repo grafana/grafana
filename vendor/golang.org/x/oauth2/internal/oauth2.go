@@ -1,4 +1,4 @@
-// Copyright 2014 The oauth2 Authors. All rights reserved.
+// Copyright 2014 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -66,4 +66,11 @@ func ParseINI(ini io.Reader) (map[string]map[string]string, error) {
 		return nil, fmt.Errorf("error scanning ini: %v", err)
 	}
 	return result, nil
+}
+
+func CondVal(v string) []string {
+	if v == "" {
+		return nil
+	}
+	return []string{v}
 }

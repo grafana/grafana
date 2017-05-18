@@ -47,7 +47,7 @@ func NewOAuthService() {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
-	allOauthes := []string{"github", "google", "generic_oauth", "grafananet"}
+	allOauthes := []string{"github", "google", "generic_oauth", "grafananet", "azure"}
 
 	for _, name := range allOauthes {
 		sec := setting.Cfg.Section("auth." + name)
@@ -137,6 +137,29 @@ func NewOAuthService() {
 				url:                  setting.GrafanaNetUrl,
 				allowSignup:          info.AllowSignup,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
+			}
+		}
+
+		// Azure
+		if name == "azure" {
+			config = oauth2.Config{
+				ClientID:     info.ClientId,
+				ClientSecret: info.ClientSecret,
+				Endpoint: oauth2.Endpoint{
+					AuthURL:  info.AuthUrl + "?resource=" + sec.Key("resource").String(),
+					TokenURL: info.TokenUrl,
+				},
+				RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
+				Scopes:      info.Scopes,
+			}
+
+			SocialMap["azure"] = &SocialAzure{
+				Config:          &config,
+				allowedDomains:  info.AllowedDomains,
+				hostedDomain:    info.HostedDomain,
+				apiUrl:          info.ApiUrl,
+				allowSignup:     info.AllowSignup,
+				graphApiVersion: sec.Key("graph_api_version").String(),
 			}
 		}
 	}
