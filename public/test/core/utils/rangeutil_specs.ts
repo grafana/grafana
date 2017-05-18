@@ -47,6 +47,16 @@ describe("rangeUtil", () => {
       var info = rangeUtil.describeTextRange('now/w');
       expect(info.display).to.be('This week so far');
     });
+
+    it('should handle now/M', () => {
+      var info = rangeUtil.describeTextRange('now/M');
+      expect(info.display).to.be('This month so far');
+    });
+
+    it('should handle now/y', () => {
+      var info = rangeUtil.describeTextRange('now/y');
+      expect(info.display).to.be('This year so far');
+    });
   });
 
   describe("Can get date range described", () => {

@@ -1,4 +1,4 @@
-import {describe, beforeEach, it, sinon, expect} from 'test/lib/common'
+import {describe, beforeEach, it, sinon, expect} from 'test/lib/common';
 
 import * as dateMath from 'app/core/utils/datemath';
 import moment from 'moment';
@@ -42,7 +42,7 @@ describe("DateMath", () => {
     expected.setSeconds(0);
     expected.setMilliseconds(0);
 
-    var startOfDay = dateMath.parse('now/d', false).valueOf()
+    var startOfDay = dateMath.parse('now/d', false).valueOf();
     expect(startOfDay).to.be(expected.getTime());
   });
 
