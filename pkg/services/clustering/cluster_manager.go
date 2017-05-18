@@ -101,13 +101,13 @@ func (cm *ClusterManager) clusterMgrTicker(ctx context.Context) error {
 			cm.log.Info("clusterMgrTicker Done")
 			return ctx.Err()
 		case <-cm.ticker.C: // ticks every second
+			if ticksCounter%60 == 0 {
+				cm.clusterNodeMgmt.CheckIn(cm.alertingState)
+			}
 			if ticksCounter%10 == 0 {
 				if setting.AlertingEnabled && setting.ExecuteAlerts {
 					cm.alertsScheduler()
 				}
-			}
-			if ticksCounter%60 == 0 {
-				cm.clusterNodeMgmt.CheckIn(cm.alertingState)
 			}
 			ticksCounter++
 		case taskStatus := <-cm.dispatcherTaskStatus:
@@ -185,6 +185,11 @@ func (cm *ClusterManager) scheduleNormalAlerts() {
 	activeNode, err := cm.clusterNodeMgmt.GetNode(lastHeartbeat)
 	if err != nil {
 		cm.log.Debug("Failed to get node for heartbeat "+strconv.FormatInt(lastHeartbeat, 10), "error", err)
+		return
+	}
+	if activeNode.AlertStatus != m.CLN_ALERT_STATUS_READY {
+		cm.log.Debug(fmt.Sprintf("This node %v is not scheduled to process interval %v (status=%v)",
+			activeNode.NodeId, lastHeartbeat, activeNode.AlertStatus))
 		return
 	}
 	nodeCount, err := cm.clusterNodeMgmt.GetActiveNodesCount(lastHeartbeat)

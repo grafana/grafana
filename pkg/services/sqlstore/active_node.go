@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	insertHeartbeatSQL = "insert into active_node(node_id, heartbeat, partition_no, alert_run_type, alert_status) values(?, ?, (select count(partition_no) from active_node where heartbeat = ?), ?, ?)"
+	insertHeartbeatSQL = "insert into active_node(node_id, heartbeat, partition_no, alert_run_type, alert_status) " +
+		"values(?, ?, (select count(partition_no) from active_node where heartbeat = ? and alert_status = ?), ?, ?)"
 )
 
 func init() {
@@ -67,7 +68,7 @@ func InsertActiveNodeHeartbeat(cmd *m.SaveActiveNodeCommand) error {
 			sqlog.Error("Failed to get timestamp", "error", err)
 			return err
 		}
-		_, err = sess.Exec(insertHeartbeatSQL, cmd.Node.NodeId, ts, ts, cmd.Node.AlertRunType, cmd.Node.AlertStatus)
+		_, err = sess.Exec(insertHeartbeatSQL, cmd.Node.NodeId, ts, ts, cmd.Node.AlertStatus, cmd.Node.AlertRunType, cmd.Node.AlertStatus)
 		if err != nil {
 			sqlog.Error("Failed to insert heartbeat", "error", err)
 			return err
@@ -147,6 +148,7 @@ func validAlertRunType(status string) bool {
 
 func validAlertStatus(status string) bool {
 	switch status {
+	case m.CLN_ALERT_STATUS_OFF:
 	case m.CLN_ALERT_STATUS_READY:
 	case m.CLN_ALERT_STATUS_PROCESSING:
 	case m.CLN_ALERT_STATUS_SCHEDULING:
@@ -172,4 +174,3 @@ func GetActiveNodesCount(cmd *m.GetActiveNodesCountCommand) error {
 	cmd.Result = len(actNodes)
 	return nil
 }
-
