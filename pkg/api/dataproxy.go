@@ -62,6 +62,15 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 		// clear cookie headers
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
+
+		// clear X-Forwarded headers
+		req.Header.Del("X-Forwarded-For")
+		req.Header.Del("X-Forwarded-Host")
+		req.Header.Del("X-Forwarded-Port")
+		req.Header.Del("X-Forwarded-Proto")
+
+		// reqBytes, _ := httputil.DumpRequestOut(req, true);
+		// log.Trace("Proxying datasource request: %s", string(reqBytes))
 	}
 
 	return &httputil.ReverseProxy{Director: director, FlushInterval: time.Millisecond * 200}
