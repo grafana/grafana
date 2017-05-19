@@ -3,6 +3,7 @@ package api
 import (
 	"bytes"
 	"io/ioutil"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -63,11 +64,23 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
 
-		// clear X-Forwarded headers
-		req.Header.Del("X-Forwarded-For")
+		// clear X-Forwarded Host/Port/Proto headers
 		req.Header.Del("X-Forwarded-Host")
 		req.Header.Del("X-Forwarded-Port")
 		req.Header.Del("X-Forwarded-Proto")
+
+		// set X-Forwarded-For header
+		if req.RemoteAddr != "" {
+			remoteAddr, _, err := net.SplitHostPort(req.RemoteAddr)
+			if err != nil {
+				remoteAddr = req.RemoteAddr
+			}
+			if req.Header.Get("X-Forwarded-For") != "" {
+				req.Header.Set("X-Forwarded-For", req.Header.Get("X-Forwarded-For")+", "+remoteAddr)
+			} else {
+				req.Header.Set("X-Forwarded-For", remoteAddr)
+			}
+		}
 
 		// reqBytes, _ := httputil.DumpRequestOut(req, true);
 		// log.Trace("Proxying datasource request: %s", string(reqBytes))
