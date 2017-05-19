@@ -10,6 +10,7 @@ import * as rangeUtil from 'app/core/utils/rangeutil';
 import * as dateMath from 'app/core/utils/datemath';
 
 import {Subject} from 'vendor/npm/rxjs/Subject';
+import {metricsTabDirective} from './metrics_tab';
 
 class MetricsPanelCtrl extends PanelCtrl {
   scope: any;
@@ -61,7 +62,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   }
 
   private onInitMetricsPanelEditMode() {
-    this.addEditorTab('Metrics', 'public/app/partials/metrics.html');
+    this.addEditorTab('Metrics', metricsTabDirective);
     this.addEditorTab('Time range', 'public/app/features/panel/partials/panelTime.html');
   }
 

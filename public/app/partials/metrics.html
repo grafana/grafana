@@ -1,5 +1,21 @@
 
-<metrics-ds-selector panel-ctrl="ctrl"></metrics-ds-selector>
+<div class="gf-form-group">
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <label class="gf-form-label">
+        <i class="icon-gf icon-gf-datasources"></i>
+      </label>
+
+      <label class="gf-form-label">
+        Data Source
+      </label>
+
+      <metric-segment segment="ctrl.dsSegment"
+                      get-options="ctrl.getOptions(true)"
+                      on-change="ctrl.datasourceChanged()"></metric-segment>
+    </div>
+	</div>
+</div>
 
 <div class="query-editor-rows gf-form-group">
   <div ng-repeat="target in ctrl.panel.targets" ng-class="{'gf-form-disabled': target.hide}">
@@ -7,16 +23,40 @@
       <plugin-component type="query-ctrl">
       </plugin-component>
     </rebuild-on-change>
-  </div>
+	</div>
+
+	<div class="gf-form-query">
+		<div class="gf-form gf-form-query-letter-cell">
+			<label class="gf-form-label">
+				<span class="gf-form-query-letter-cell-carret">
+					<i class="fa fa-caret-down"></i>
+				</span>
+				<span class="gf-form-query-letter-cell-letter">{{ctrl.nextRefId}}</span>
+			</label>
+					<button class="btn btn-inverse gf-form-btn" ng-click="ctrl.addDataQuery()" ng-hide="ctrl.current.meta.mixed">
+						Add Query
+					</button>
+
+					<div class="dropdown" ng-if="ctrl.current.meta.mixed">
+						<metric-segment segment="ctrl.mixedDsSegment" get-options="ctrl.getOptions(false)" on-change="ctrl.mixedDatasourceChanged()"></metric-segment>
+					</div>
+			</div>
+	</div>
 </div>
 
-<query-troubleshooter panel-ctrl="ctrl"></query-troubleshooter>
+<query-troubleshooter panel-ctrl="ctrl.panelCtrl"></query-troubleshooter>
 
-<div class="gf-form-group">
-  <rebuild-on-change property="ctrl.panel.datasource" show-null="true">
-    <plugin-component type="query-options-ctrl">
-    </plugin-component>
-  </rebuild-on-change>
-</div>
+<collapse-box title="Advanced Options & Data source help">
+	<collapse-box-body>
+
+		<div class="gf-form-group">
+			<rebuild-on-change property="ctrl.panel.datasource" show-null="true">
+				<plugin-component type="query-options-ctrl">
+				</plugin-component>
+			</rebuild-on-change>
+		</div>
+
+	</collapse-box-body>
+</collapse-box>
 
 <div class="clearfix"></div>

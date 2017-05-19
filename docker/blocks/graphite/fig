@@ -4,7 +4,6 @@ graphite:
     - "8080:80"
     - "2003:2003"
   volumes:
-    - /var/docker/gfdev/graphite:/opt/graphite/storage/whisper
     - /etc/localtime:/etc/localtime:ro
     - /etc/timezone:/etc/timezone:ro
 

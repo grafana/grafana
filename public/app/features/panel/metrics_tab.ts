@@ -1,59 +1,26 @@
 ///<reference path="../../headers/common.d.ts" />
 
-import angular from 'angular';
 import _ from 'lodash';
-import appEvents  from 'app/core/app_events';
+import {DashboardModel} from '../dashboard/model';
 
-var module = angular.module('grafana.directives');
-
-var template = `
-
-<div class="gf-form-group">
-  <div class="gf-form-inline">
-    <div class="gf-form">
-      <label class="gf-form-label">
-        <i class="icon-gf icon-gf-datasources"></i>
-      </label>
-      <label class="gf-form-label">
-        Data Source
-      </label>
-
-      <metric-segment segment="ctrl.dsSegment"
-                      get-options="ctrl.getOptions(true)"
-                      on-change="ctrl.datasourceChanged()"></metric-segment>
-    </div>
-
-    <div class="gf-form gf-form--offset-1">
-      <button class="btn btn-inverse gf-form-btn" ng-click="ctrl.addDataQuery()" ng-hide="ctrl.current.meta.mixed">
-        <i class="fa fa-plus"></i>&nbsp;
-        Add Query
-      </button>
-
-      <div class="dropdown" ng-if="ctrl.current.meta.mixed">
-        <metric-segment segment="ctrl.mixedDsSegment"
-                        get-options="ctrl.getOptions(false)"
-                        on-change="ctrl.mixedDatasourceChanged()"></metric-segment>
-      </div>
-    </div>
-
-  </div>
-</div>
-`;
-
-
-export class MetricsDsSelectorCtrl {
+export class MetricsTabCtrl {
   dsSegment: any;
   mixedDsSegment: any;
   dsName: string;
+  panel: any;
   panelCtrl: any;
   datasources: any[];
   current: any;
-  lastResponse: any;
-  responseData: any;
-  showResponse: boolean;
+  nextRefId: string;
+  dashboard: DashboardModel;
 
   /** @ngInject */
   constructor($scope, private uiSegmentSrv, datasourceSrv) {
+    this.panelCtrl = $scope.ctrl;
+    $scope.ctrl = this;
+
+    this.panel = this.panelCtrl.panel;
+    this.dashboard = this.panelCtrl.dashboard;
     this.datasources = datasourceSrv.getMetricSources();
 
     var dsValue = this.panelCtrl.panel.datasource || null;
@@ -70,8 +37,8 @@ export class MetricsDsSelectorCtrl {
 
     this.dsSegment = uiSegmentSrv.newSegment({value: this.current.name, selectMode: true});
     this.mixedDsSegment = uiSegmentSrv.newSegment({value: 'Add Query', selectMode: true});
+    this.nextRefId = this.getNextQueryLetter();
   }
-
 
   getOptions(includeBuiltin) {
     return Promise.resolve(this.datasources.filter(value => {
@@ -86,7 +53,6 @@ export class MetricsDsSelectorCtrl {
     if (ds) {
       this.current = ds;
       this.panelCtrl.setDatasource(ds);
-      this.responseData = null;
     }
   }
 
@@ -100,22 +66,27 @@ export class MetricsDsSelectorCtrl {
     }
   }
 
+  getNextQueryLetter() {
+    return this.dashboard.getNextQueryLetter(this.panel);
+  }
+
   addDataQuery() {
-    var target: any = {isNew: true};
+    var target: any = {
+      isNew: true,
+      refId: this.getNextQueryLetter()
+    };
     this.panelCtrl.panel.targets.push(target);
+    this.nextRefId = this.getNextQueryLetter();
   }
 }
 
-module.directive('metricsDsSelector', function() {
+/** @ngInject **/
+export function metricsTabDirective() {
+  'use strict';
   return {
     restrict: 'E',
-    template: template,
-    controller: MetricsDsSelectorCtrl,
-    bindToController: true,
-    controllerAs: 'ctrl',
-    transclude: true,
-    scope: {
-      panelCtrl: "="
-    }
+    scope: true,
+    templateUrl: 'public/app/partials/metrics.html',
+    controller: MetricsTabCtrl,
   };
-});
+}
