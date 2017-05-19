@@ -97,7 +97,7 @@ func (this *VictoropsNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"entity_id":        evalContext.Rule.Name,
 		"timestamp":        time.Now().Unix(),
 		"state_start_time": evalContext.StartTime.Unix(),
-		"state_message":    evalContext.Rule.Message + "\n" + ruleUrl,
+		"state_message":    evalContext.Rule.Message + " - " + ruleUrl,
 		"monitoring_tool":  "Grafana v" + setting.BuildVersion,
 	}
 
