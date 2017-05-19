@@ -161,8 +161,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             rightLabel.css("margin-top", rightLabel.width() / 2);
           }
 
-          integrateSrv.format.from = moment.utc(plot.getAxes().xaxis.min).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
-          integrateSrv.format.to = moment.utc(plot.getAxes().xaxis.max).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+          integrateSrv.options.from = _.millsToDate(plot.getAxes().xaxis.min);
+          integrateSrv.options.to = _.millsToDate(plot.getAxes().xaxis.max);
         }
 
         function processOffsetHook(plot, gridMargin) {
@@ -353,7 +353,7 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             if (event.annotation.showLine) {
               options.grid.markings.push({
                 color: event.annotation.lineColor,
-                lineWidth: 1,
+                lineWidth: 2,
                 xaxis: { from: event.min, to: event.max }
               });
             }

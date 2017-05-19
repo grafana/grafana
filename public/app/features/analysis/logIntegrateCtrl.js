@@ -381,7 +381,8 @@ define([
             title: "整合分析",
             id: "123",
             rows: panelMetas,
-            time: {from: param.from, to: param.to}
+            time: {from: param.from, to: param.to},
+            manualAnnotation: integrateSrv.options.annotations
           }
         }, $scope);
       };
@@ -398,6 +399,6 @@ define([
         return prefix;
       }
 
-      $scope.init(integrateSrv.format);
+      $scope.init(integrateSrv.options);
     });
   });
