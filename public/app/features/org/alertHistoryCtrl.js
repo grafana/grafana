@@ -78,25 +78,22 @@ define([
         var start_anno = _.cloneDeep(annotation_tpl);
         var end_anno = _.cloneDeep(annotation_tpl);
         var options = integrateSrv.options;
-
         target.aggregator = details.hostQuery.metricQueries[0].aggregator.toLowerCase();
         target.metric = details.hostQuery.metricQueries[0].metric;
         target.tags.host = history.host;
         for (var tag in $scope.alertHistory[index].definition.tags) {
           target.tags[tag.name] = tag.value;
         }
-
         start_anno.min = start_anno.max = history.createdTimeInMillis;
         start_anno.title = "报警开始时间: ";
         end_anno.min = end_anno.max = history.closedTimeInMillis;
         end_anno.title = "报警结束时间: ";
-
         options.targets = [target];
         options.title = target.metric + "异常情况";
-        options.from = _.millsToDate(history.createdTimeInMillis);
-        options.to = "now";
+        options.from = _.millsToDate(history.createdTimeInMillis - 3600000);
+        options.to = _.millsToDate(history.closedTimeInMillis + 3600000);
         options.annotations = [start_anno, end_anno];
-
+        //TODO should display threshold 
         $location.path("/integrate");
       };
 
