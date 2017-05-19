@@ -37,11 +37,11 @@ func init() {
           data-placement="right">
         </input>
       </div>
-			<div class="gf-form">
+			<div class="gf-form max-width-30">
         <gf-form-switch
-           class="gf-form"
+           class="gf-form max-width-30"
            label="Plain Text"
-           label-class="width-14"
+           label-class="width-8"
            checked="ctrl.model.settings.plainText"
            tooltip="Send Hip Chat messages as text instead of the default card (Allows for more detailed messages).">
         </gf-form-switch>
@@ -66,7 +66,7 @@ func NewHipChatNotifier(model *models.AlertNotification) (alerting.Notifier, err
 
 	apikey := model.Settings.Get("apikey").MustString()
 	roomId := model.Settings.Get("roomid").MustString()
-	plainText := model.Settings.Get("plainText").MustBool(true)
+	plainText := model.Settings.Get("plainText").MustBool(false)
 
 	return &HipChatNotifier{
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
