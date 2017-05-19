@@ -113,7 +113,7 @@ function (angular, _, coreModule) {
         },
         headers: {'Content-Type': 'text/plain;application/json;charset=UTF-8'},
       });
-    }
+    };
 
     this.getLevel = function(level) {
       if(level === 'CRITICAL') {

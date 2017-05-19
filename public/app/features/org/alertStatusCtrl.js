@@ -29,8 +29,11 @@ function (angular, moment, _, dateMath) {
       $scope.getLevel = alertMgrSrv.getLevel;
     };
     $scope.resetCurrentThreshold = function (alertDetail) {
+      var metric = _.getMetricName(alertDetail.metric);
+      var def_zh = alertDetail.definition.name;
+      var host = alertDetail.status.monitoredEntity;
       alertMgrSrv.resetCurrentThreshold(alertDetail.definition.alertDetails);
-      alertMgrSrv.annotations = {
+      alertMgrSrv.annotations = [{
         annotation: {
           datasource: "elk",
           enable: true,
@@ -47,10 +50,10 @@ function (angular, moment, _, dateMath) {
         max: alertDetail.status.creationTime,
         eventType: "123",
         title: "报警时间",
-        tags: "开始报警时间",
-        text: "",
+        tags: metric +","+ host,
+        text: "[警报] "+def_zh,
         score: 1
-      };
+      }];
     };
 
     $scope.handleAlert = function (alertDetail) {

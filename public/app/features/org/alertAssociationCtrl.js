@@ -106,7 +106,7 @@ function (angular, _, noUiSlider) {
           id: metrics,
           rows: [$scope.getRowPanelMeta(host, metrics)],
           time: {from: "now-6h", to: "now"},
-          manualAnnotation: [alertMgrSrv.annotations]
+          manualAnnotation: alertMgrSrv.annotations
         }
       }, $scope);
     };
