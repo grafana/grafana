@@ -84,11 +84,14 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-	message := evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text + "<br><a href=" + ruleUrl + ">Check Dasboard</a>"
-	fields := make([]map[string]interface{}, 0)
-	message += "<br>"
+  message := evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text
+  cardMessage := message + "\n"
+	message += "<br><a href=" + ruleUrl + ">Check Dasboard</a><br>"
+  fields := make([]map[string]interface{}, 0)
 	for index, evt := range evalContext.EvalMatches {
-		message += evt.Metric + " :: " + strconv.FormatFloat(evt.Value.Float64, 'f', -1, 64) + "<br>"
+    metricValue = evt.Metric + " :: " + strconv.FormatFloat(evt.Value.Float64, 'f', -1, 64)
+		message += metricValue + "<br>"
+    cardMessage += metricValue + "\n"
 		fields = append(fields, map[string]interface{}{
 			"title": evt.Metric,
 			"value": evt.Value,
@@ -109,6 +112,7 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	if evalContext.Rule.State != models.AlertStateOK { //dont add message when going back to alert state ok.
 		message += " " + evalContext.Rule.Message
+    cardMessage += " " + evalContext.Rule.Message
 	}
 	//HipChat has a set list of colors
 	var color string
@@ -127,7 +131,7 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"url":         ruleUrl,
 		"id":          "1",
 		"title":       evalContext.GetNotificationTitle(),
-		"description": evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text,
+		"description": cardMessage,
 		"icon": map[string]interface{}{
 			"url": "https://grafana.com/assets/img/fav32.png",
 		},
