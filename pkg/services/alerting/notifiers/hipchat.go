@@ -37,6 +37,15 @@ func init() {
           data-placement="right">
         </input>
       </div>
+			<div class="gf-form">
+        <gf-form-switch
+           class="gf-form"
+           label="Plain Text"
+           label-class="width-14"
+           checked="ctrl.model.settings.plainText"
+           tooltip="Send Hip Chat messages as text instead of the default card (Allows for more detailed messages).">
+        </gf-form-switch>
+      </div>
     `,
 	})
 
@@ -57,6 +66,7 @@ func NewHipChatNotifier(model *models.AlertNotification) (alerting.Notifier, err
 
 	apikey := model.Settings.Get("apikey").MustString()
 	roomId := model.Settings.Get("roomid").MustString()
+	plainText := model.Settings.Get("plainText").MustBool(true)
 
 	return &HipChatNotifier{
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
@@ -64,6 +74,7 @@ func NewHipChatNotifier(model *models.AlertNotification) (alerting.Notifier, err
 		ApiKey:       apikey,
 		RoomId:       roomId,
 		log:          log.New("alerting.notifier.hipchat"),
+		PlainText:		plainText,
 	}, nil
 }
 
@@ -73,6 +84,7 @@ type HipChatNotifier struct {
 	ApiKey string
 	RoomId string
 	log    log.Logger
+	PlainText bool
 }
 
 func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
@@ -84,14 +96,11 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
-  message := evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text
-  cardMessage := message + "\n"
-	message += "<br><a href=" + ruleUrl + ">Check Dasboard</a><br>"
-  fields := make([]map[string]interface{}, 0)
+	message := evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text + "<br><a href=" + ruleUrl + ">Check Dasboard</a>"
+	fields := make([]map[string]interface{}, 0)
+	message += "<br>"
 	for index, evt := range evalContext.EvalMatches {
-    metricValue = evt.Metric + " :: " + strconv.FormatFloat(evt.Value.Float64, 'f', -1, 64)
-		message += metricValue + "<br>"
-    cardMessage += metricValue + "\n"
+		message += evt.Metric + " :: " + strconv.FormatFloat(evt.Value.Float64, 'f', -1, 64) + "<br>"
 		fields = append(fields, map[string]interface{}{
 			"title": evt.Metric,
 			"value": evt.Value,
@@ -112,7 +121,6 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 
 	if evalContext.Rule.State != models.AlertStateOK { //dont add message when going back to alert state ok.
 		message += " " + evalContext.Rule.Message
-    cardMessage += " " + evalContext.Rule.Message
 	}
 	//HipChat has a set list of colors
 	var color string
@@ -131,7 +139,7 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"url":         ruleUrl,
 		"id":          "1",
 		"title":       evalContext.GetNotificationTitle(),
-		"description": cardMessage,
+		"description": evalContext.GetNotificationTitle() + " in state " + evalContext.GetStateModel().Text,
 		"icon": map[string]interface{}{
 			"url": "https://grafana.com/assets/img/fav32.png",
 		},
@@ -143,7 +151,10 @@ func (this *HipChatNotifier) Notify(evalContext *alerting.EvalContext) error {
 		"notify":         "true",
 		"message_format": "html",
 		"color":          color,
-		"card":           card,
+	}
+
+	if !this.PlainText {
+		body["card"] = card
 	}
 
 	hipUrl := fmt.Sprintf("%s/v2/room/%s/notification?auth_token=%s", this.Url, this.RoomId, this.ApiKey)
