@@ -42,21 +42,21 @@
         <span><strong>报警名称</strong></span>
         <span><strong>机器名称</strong></span>
         <span><strong>指标名称</strong></span>
-        <span><strong>报警类型</strong></span>
+        <span class="history-type"><strong>报警类型</strong></span>
         <span><strong>报警值/阈值</strong></span>
-        <span><strong>报警时间</strong></span>
-        <span><strong>处理时间</strong></span>
+        <span class="hitstory-time"><strong>报警时间</strong></span>
+        <span class="hitstory-time"><strong>处理时间</strong></span>
         <span><strong>处理人员</strong></span>
         <span><strong>报警分析</strong></span>
       </div>
-      <div class="grafana-list-item" ng-repeat="alert in alertHistory | filter: alertKey" ng-click="expanded = !expanded">
+      <div class="grafana-list-item" ng-repeat="alert in alertHistory | orderBy:closedTimeInMillis:true | filter: alertKey" ng-click="expanded = !expanded">
         <span>{{alert.definition.name}}</span>
         <span>{{alert.history.host}}</span>
         <span>{{alert.definition.alertDetails.hostQuery.metricQueries[0].metric}}</span>
-        <span style="width:80px;">{{ getLevel(alert.history.level) }}</span>
+        <span class="history-type">{{ getLevel(alert.history.level) }}</span>
         <span><strong>{{alert.history.triggeredValue | limitTo:5}}</strong> / {{alert.definition.alertDetails[getAlertType(alert)].threshold}}</span>
-        <span>{{alert.history.createdTimeInMillis | date:'yyyy-MM-dd hh:mm:ss'}}</span>
-        <span>{{alert.history.closedTimeInMillis | date:'yyyy-MM-dd hh:mm:ss'}}</span>
+        <span class="hitstory-time">{{alert.history.createdTimeInMillis | date:'yyyy-MM-dd HH:mm:ss'}}</span>
+        <span class="hitstory-time">{{alert.history.closedTimeInMillis | date:'yyyy-MM-dd HH:mm:ss'}}</span>
         <span>{{ getCloseOp(alert) }}</span>
         <span style="width: 120px;"><button class="btn" ng-click="historyDetails($index)">历史报警分析</button></span>
         <span style="width: 10px;" class="pull-right" ng-if="alert.history.closeOp === 'MANUAL'">
