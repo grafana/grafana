@@ -99,6 +99,6 @@ To manually install a Plugin via the Grafana.com API:
     }
     ```
 
-4. Download the plugin with `https://grafana.com/api/plugins/<plugin id from step 1>/versions/<current version>/download` (for example: https://grafana.com/api/plugins/jdbranham-diagram-panel/versions/1.4.0/download). Unzip the downloaded file into the Grafana Server's `data/plugins` directory.
+4. Download the plugin with `https://grafana.com/api/plugins/<plugin id from step 1>/versions/<current version>/download` (for example: https://grafana.com/api/plugins/jdbranham-diagram-panel/versions/1.4.0/download). Unzip the downloaded file into the Grafana Server's `plugins` directory.
 
 5. Restart the Grafana Server.
