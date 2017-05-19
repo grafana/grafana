@@ -52,7 +52,7 @@
             {{timeFrom(alertDetail.status.levelChangedTime, alertDetail.status.snoozeMinutes)}}
           </td>
           <td style="width: 10%">
-            <a href="/alerts/association/{{alertDetail.status.monitoredEntity}}/{{correlationThreshold}}/{{alertDetail.metric}}" class="btn btn-mini btn-primary" ng-click="resetCurrentThreshold(alertDetail.definition.alertDetails)">
+            <a href="/alerts/association/{{alertDetail.status.monitoredEntity}}/{{correlationThreshold}}/{{alertDetail.metric}}" class="btn btn-mini btn-primary" ng-click="resetCurrentThreshold(alertDetail)">
               <i class="fa fa-signal"></i>
               关联性分析
             </a>

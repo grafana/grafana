@@ -1,8 +1,7 @@
 define([
-  'lodash-src',
-  'moment'
+  'lodash-src'
 ],
-function (moment) {
+function () {
   'use strict';
 
   var _ = window._;
@@ -78,10 +77,5 @@ function (moment) {
       return "差";
     }
   };
-
-  _.millsToDate = function (mills) {
-    return moment.utc(mills).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z")
-  };
-
   return _;
 });

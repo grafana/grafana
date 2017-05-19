@@ -105,7 +105,8 @@ function (angular, _, noUiSlider) {
           title: "相关联指标",
           id: metrics,
           rows: [$scope.getRowPanelMeta(host, metrics)],
-          time: {from: "now-6h", to: "now"}
+          time: {from: "now-6h", to: "now"},
+          manualAnnotation: [alertMgrSrv.annotations]
         }
       }, $scope);
     };

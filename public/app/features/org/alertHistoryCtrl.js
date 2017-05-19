@@ -90,10 +90,10 @@ define([
         end_anno.title = "报警结束时间: ";
         options.targets = [target];
         options.title = target.metric + "异常情况";
-        options.from = _.millsToDate(history.createdTimeInMillis - 3600000);
-        options.to = _.millsToDate(history.closedTimeInMillis + 3600000);
+
+        options.from = moment.utc(history.createdTimeInMillis - 3600000).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+        options.to = moment.utc(history.closedTimeInMillis + 3600000).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
         options.annotations = [start_anno, end_anno];
-        //TODO should display threshold 
         $location.path("/integrate");
       };
 

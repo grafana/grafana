@@ -161,8 +161,8 @@ function (angular, $, moment, _, kbn, GraphTooltip) {
             rightLabel.css("margin-top", rightLabel.width() / 2);
           }
 
-          integrateSrv.options.from = _.millsToDate(plot.getAxes().xaxis.min);
-          integrateSrv.options.to = _.millsToDate(plot.getAxes().xaxis.max);
+          integrateSrv.options.from = moment.utc(plot.getAxes().xaxis.min).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+          integrateSrv.options.to = moment.utc(plot.getAxes().xaxis.max).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
         }
 
         function processOffsetHook(plot, gridMargin) {
