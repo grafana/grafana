@@ -41,7 +41,6 @@
       "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge",
       "d3": "vendor/d3/d3.js",
       "jquery.flot.dashes": "vendor/flot/jquery.flot.dashes",
-      "json-formatter-js": "vendor/npm/json-formatter-js/dist/json-formatter"
     },
 
     packages: {

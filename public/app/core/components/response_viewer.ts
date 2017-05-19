@@ -1,7 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import coreModule from 'app/core/core_module';
-import JsonFormatter from 'json-formatter-js';
+import JsonExplorer from './json_explorer/json_explorer';
 
 
 const template = `
@@ -48,7 +48,7 @@ export function responseViewer() {
         }
 
 
-        const formatter =  new JsonFormatter(scope.response, 2, {
+        const formatter =  new JsonExplorer(scope.response, 2, {
           theme: 'dark',
         });
 

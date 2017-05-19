@@ -2561,10 +2561,6 @@ jshint@~2.9.4:
     shelljs "0.3.x"
     strip-json-comments "1.0.x"
 
-json-formatter-js@^2.2.0:
-  version "2.2.0"
-  resolved "https://registry.yarnpkg.com/json-formatter-js/-/json-formatter-js-2.2.0.tgz#1ed987223ef2f1d945304597faae78b580a8212b"
-
 json-schema@0.2.3:
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/json-schema/-/json-schema-0.2.3.tgz#b480c892e59a2f05954ce727bd3f2a4e882f9e13"
