@@ -44,9 +44,9 @@ type DispatcherTaskAlertsMissing struct {
 	//TODO
 }
 type DispatcherTaskAlertsPartition struct {
-	partitionNo int
-	nodeCount   int
-	interval    int64
+	partId    int
+	nodeCount int
+	interval  int64
 }
 
 type AlertingState struct {
@@ -206,9 +206,9 @@ func (cm *ClusterManager) scheduleNormalAlerts() {
 	alertDispatchTask := &DispatcherTask{
 		taskType: DISPATCHER_TASK_TYPE_ALERTS_PARTITION,
 		taskInfo: &DispatcherTaskAlertsPartition{
-			interval:    lastHeartbeat,
-			nodeCount:   nodeCount,
-			partitionNo: int(activeNode.PartitionNo),
+			interval:  lastHeartbeat,
+			nodeCount: nodeCount,
+			partId:    int(activeNode.PartId),
 		},
 	}
 	cm.dispatcherTaskQ <- alertDispatchTask
@@ -239,9 +239,9 @@ func (cm *ClusterManager) handleAlertRulesDispatcherTask(task *DispatcherTask) {
 	case DISPATCHER_TASK_TYPE_ALERTS_PARTITION:
 		taskInfo := task.taskInfo.(*DispatcherTaskAlertsPartition)
 		scheduleCmd := &alerting.ScheduleAlertsForPartitionCommand{
-			Interval:    taskInfo.interval,
-			NodeCount:   taskInfo.nodeCount,
-			PartitionNo: taskInfo.partitionNo,
+			Interval:  taskInfo.interval,
+			NodeCount: taskInfo.nodeCount,
+			PartId:    taskInfo.partId,
 		}
 		err = bus.Dispatch(scheduleCmd)
 		cm.log.Debug("Alert rules dispatcher - submitted next alerts batch")

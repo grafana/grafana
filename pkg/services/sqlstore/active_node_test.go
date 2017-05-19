@@ -29,7 +29,7 @@ func TestActiveNode(t *testing.T) {
 			So(cmd.Result, ShouldNotBeNil)
 			So(cmd.Result.NodeId, ShouldEqual, "10.0.0.1:3030")
 			So(cmd.Result.Heartbeat, ShouldBeGreaterThan, 0)
-			So(cmd.Result.PartitionNo, ShouldEqual, 0)
+			So(cmd.Result.PartId, ShouldEqual, 0)
 		})
 
 		/*
@@ -49,7 +49,7 @@ func TestActiveNode(t *testing.T) {
 			So(cmd2.Result, ShouldNotBeNil)
 			So(cmd2.Result.NodeId, ShouldEqual, "10.1.1.1:4330")
 			So(cmd2.Result.Heartbeat, ShouldBeGreaterThan, 0)
-			So(cmd2.Result.PartitionNo, ShouldEqual, 0)
+			So(cmd2.Result.PartId, ShouldEqual, 0)
 			So(cmd2.Result.AlertRunType, ShouldEqual, m.CLN_ALERT_RUN_TYPE_MISSING)
 		})
 

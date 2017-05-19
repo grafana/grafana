@@ -5,7 +5,7 @@ type ActiveNode struct {
 	Id           int64  `json:"id"`
 	NodeId       string `json:"node_id"`
 	Heartbeat    int64  `json:"heartbeat"`
-	PartitionNo  int32  `json:"partition_no"`
+	PartId       int32  `json:"part_id"`
 	AlertRunType string `json:"alert_run_type"`
 	AlertStatus  string `json:"alert_status"`
 }

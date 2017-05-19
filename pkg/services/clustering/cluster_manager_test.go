@@ -2,6 +2,7 @@ package clustering
 
 import (
 	"errors"
+	"fmt"
 	"testing"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -17,6 +18,7 @@ func TestClusterManager(t *testing.T) {
 			HomePath: "../../../",
 		})
 		setting.AlertingEnabled = true
+		setting.ExecuteAlerts = true
 		setting.ClusteringEnabled = true
 
 		handlers := &mockHandlers{}
@@ -68,10 +70,11 @@ func TestClusterManager(t *testing.T) {
 				nodeId:          "testnode:3000",
 				activeNodeCount: 1,
 				lastHeartbeat:   1493233500,
-				activeNode:      &m.ActiveNode{PartitionNo: 0},
+				activeNode:      &m.ActiveNode{PartId: 0, AlertStatus: m.CLN_ALERT_STATUS_READY},
 			}
 			cm.clusterNodeMgmt = mockCNM
 			cm.alertsScheduler()
+			fmt.Println("status " + cm.alertingState.status)
 			So(cm.alertingState.status, ShouldEqual, m.CLN_ALERT_STATUS_SCHEDULING)
 			So(mockCNM.callCountGetLastHeartbeat, ShouldEqual, 1)
 			So(mockCNM.callCountGetActiveNodesCount, ShouldEqual, 1)
@@ -96,7 +99,7 @@ func TestClusterManager(t *testing.T) {
 				nodeId:          "testnode:3000",
 				activeNodeCount: 1,
 				lastHeartbeat:   1493233500,
-				activeNode:      &m.ActiveNode{PartitionNo: 0},
+				activeNode:      &m.ActiveNode{PartId: 0, AlertStatus: m.CLN_ALERT_STATUS_READY},
 			}
 			cm.clusterNodeMgmt = mockCNM
 			cm.alertsScheduler()

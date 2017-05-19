@@ -26,9 +26,9 @@ type PendingAlertJobCountQuery struct {
 }
 
 type ScheduleAlertsForPartitionCommand struct {
-	PartitionNo int
-	NodeCount   int
-	Interval    int64
+	PartId    int
+	NodeCount int
+	Interval  int64
 }
 
 func init() {
@@ -85,8 +85,8 @@ func scheduleAlertsForPartition(cmd *ScheduleAlertsForPartitionCommand) error {
 	if cmd.NodeCount == 0 {
 		return errors.New("Node count is 0")
 	}
-	if cmd.PartitionNo >= cmd.NodeCount {
-		return errors.New(fmt.Sprintf("Invalid partitionNo %v (node count = %v)", cmd.PartitionNo, cmd.NodeCount))
+	if cmd.PartId >= cmd.NodeCount {
+		return errors.New(fmt.Sprintf("Invalid partition id %v (node count = %v)", cmd.PartId, cmd.NodeCount))
 	}
 	rules := engine.ruleReader.Fetch()
 	filterCount := 0
@@ -95,18 +95,18 @@ func scheduleAlertsForPartition(cmd *ScheduleAlertsForPartitionCommand) error {
 		// handle frequency greater than 1 min
 		nextEvalDate := rule.EvalDate.Add(time.Duration(rule.Frequency) * time.Second)
 		if nextEvalDate.Before(intervalEnd) {
-			if rule.Id%int64(cmd.NodeCount) == int64(cmd.PartitionNo) {
+			if rule.Id%int64(cmd.NodeCount) == int64(cmd.PartId) {
 				engine.execQueue <- &Job{Rule: rule}
 				filterCount++
 				engine.log.Debug(fmt.Sprintf("Scheduled Rule : %v for interval=%v", rule, cmd.Interval))
 			} else {
-				engine.log.Debug(fmt.Sprintf("Skipped Rule : %v for interval=%v, partitionNo=%v, nodeCount=%v", rule, cmd.Interval, cmd.PartitionNo, cmd.NodeCount))
+				engine.log.Debug(fmt.Sprintf("Skipped Rule : %v for interval=%v, partition id=%v, nodeCount=%v", rule, cmd.Interval, cmd.PartId, cmd.NodeCount))
 			}
 		} else {
 			engine.log.Debug(fmt.Sprintf("Skipped Rule : %v for interval=%v, intervalEnd=%v, nextEvalDate=%v", rule, cmd.Interval, intervalEnd, nextEvalDate))
 		}
 	}
 	engine.log.Info(fmt.Sprintf("%v/%v rules scheduled for execution for partition %v/%v",
-		filterCount, len(rules), cmd.PartitionNo, cmd.NodeCount))
+		filterCount, len(rules), cmd.PartId, cmd.NodeCount))
 	return nil
 }
