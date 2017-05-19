@@ -25,6 +25,10 @@ func init() {
 				<input type="text" required class="gf-form-input max-width-26" ng-model="ctrl.model.settings.url" placeholder="http://sensu-api.local:4567/results"></input>
       </div>
       <div class="gf-form">
+        <span class="gf-form-label width-10">Source</span>
+        <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.source"></input>
+      </div>
+      <div class="gf-form">
         <span class="gf-form-label width-10">Handler</span>
         <input type="text" class="gf-form-input max-width-14" ng-model="ctrl.model.settings.handler" placeholder="default"></input>
       </div>
@@ -51,6 +55,7 @@ func NewSensuNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		Url:          url,
 		User:         model.Settings.Get("username").MustString(),
+		Source:       model.Settings.Get("source").MustString(),
 		Password:     model.Settings.Get("password").MustString(),
 		Handler:      model.Settings.Get("handler").MustString(),
 		log:          log.New("alerting.notifier.sensu"),
@@ -60,6 +65,7 @@ func NewSensuNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 type SensuNotifier struct {
 	NotifierBase
 	Url      string
+	Source   string
 	User     string
 	Password string
 	Handler  string
@@ -74,9 +80,13 @@ func (this *SensuNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON.Set("ruleId", evalContext.Rule.Id)
 	// Sensu alerts cannot have spaces in them
 	bodyJSON.Set("name", strings.Replace(evalContext.Rule.Name, " ", "_", -1))
-	// Sensu alerts require a command
-	// We set it to the grafana ruleID
-	bodyJSON.Set("source", "grafana_rule_"+strconv.FormatInt(evalContext.Rule.Id, 10))
+	// Sensu alerts require a source. We set it to the user-specified value (optional),
+	// else we fallback and use the grafana ruleID.
+	if this.Source != "" {
+		bodyJSON.Set("source", this.Source)
+	} else {
+		bodyJSON.Set("source", "grafana_rule_"+strconv.FormatInt(evalContext.Rule.Id, 10))
+	}
 	// Finally, sensu expects an output
 	// We set it to a default output
 	bodyJSON.Set("output", "Grafana Metric Condition Met")
