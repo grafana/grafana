@@ -1,5 +1,12 @@
 .collapse-box {
   margin-bottom: $spacer;
+
+  &--error {
+    .collapse-box__header {
+      background-color: $red;
+      color: $white;
+    }
+  }
 }
 
 .collapse-box__header {
@@ -27,3 +34,4 @@
   border: $input-btn-border-width solid transparent;
   @include border-radius($label-border-radius-sm);
 }
+

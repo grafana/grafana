@@ -10,7 +10,7 @@ const template = `
       <span class="fa fa-fw fa-caret-down" ng-hide="!ctrl.isOpen"></span>
       {{ctrl.title}}
     </a>
-    <div class="collapse-box__header-actions" ng-transclude="actions"></div>
+    <div class="collapse-box__header-actions" ng-transclude="actions" ng-if="ctrl.isOpen"></div>
   </div>
   <div class="collapse-box__body" ng-transclude="body" ng-if="ctrl.isOpen">
   </div>
@@ -19,18 +19,18 @@ const template = `
 
 export class CollapseBoxCtrl {
   isOpen: boolean;
-  onOpen: () => void;
+  stateChanged: () => void;
 
   /** @ngInject **/
-  constructor() {
+  constructor(private $timeout) {
     this.isOpen = false;
   }
 
   toggle() {
     this.isOpen = !this.isOpen;
-    if (this.isOpen) {
-      this.onOpen();
-    }
+    this.$timeout(() => {
+      this.stateChanged();
+    });
   }
 }
 
@@ -44,7 +44,7 @@ export function collapseBox() {
     scope: {
       "title": "@",
       "isOpen": "=?",
-      "onOpen": "&"
+      "stateChanged": "&"
     },
     transclude: {
       'actions': '?collapseBoxActions',

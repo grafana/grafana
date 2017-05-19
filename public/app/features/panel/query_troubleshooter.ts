@@ -5,7 +5,8 @@ import appEvents  from 'app/core/app_events';
 import {coreModule, JsonExplorer} from 'app/core/core';
 
 const template = `
-<collapse-box title="Query Troubleshooter" is-open="ctrl.showResponse" on-open="ctrl.onOpen()">
+<collapse-box title="Query Troubleshooter" is-open="ctrl.isOpen" state-changed="ctrl.stateChanged()"
+              ng-class="{'collapse-box--error': ctrl.hasError}">
   <collapse-box-actions>
     <a class="pointer"><i class="fa fa-clipboard"></i> Copy to clipboard</a>
   </collapse-box-actions>
@@ -16,38 +17,47 @@ const template = `
 `;
 
 export class QueryTroubleshooterCtrl {
-  responseData: any;
+  isOpen: any;
   showResponse: boolean;
   panelCtrl: any;
   renderJsonExplorer: (data) => void;
+  onRequestErrorEventListener: any;
+  onRequestResponseEventListener: any;
+  hasError: boolean;
 
   /** @ngInject **/
   constructor($scope, private $timeout) {
-    appEvents.on('ds-request-response', this.onRequestResponse.bind(this), $scope);
-    appEvents.on('ds-request-error', this.onRequestError.bind(this), $scope);
+    this.onRequestErrorEventListener = this.onRequestError.bind(this);
+    this.onRequestResponseEventListener = this.onRequestResponse.bind(this);
+
+    appEvents.on('ds-request-error', this.onRequestErrorEventListener);
+    $scope.$on('$destroy',  this.removeEventsListeners.bind(this));
   }
 
-  onRequestResponse(data) {
-    this.responseData = data;
-  }
-
-  toggleShowResponse() {
-    this.showResponse = !this.showResponse;
+  removeEventsListeners() {
+    appEvents.off('ds-request-response', this.onRequestResponseEventListener);
+    appEvents.off('ds-request-error', this.onRequestErrorEventListener);
   }
 
   onRequestError(err) {
-    this.responseData = err;
-    this.responseData.isError = true;
-    this.showResponse = true;
+    this.isOpen = true;
+    this.hasError = true;
+    this.onRequestResponse(err);
   }
 
-  onOpen() {
-    if (!this.responseData) {
-      console.log('no data');
-      return;
+  stateChanged() {
+    console.log(this.isOpen);
+    if (this.isOpen) {
+      appEvents.on('ds-request-response', this.onRequestResponseEventListener);
+      this.panelCtrl.refresh();
+    } else {
+      this.hasError = false;
     }
+  }
 
-    var data = this.responseData;
+  onRequestResponse(data) {
+    data = _.cloneDeep(data);
+
     if (data.headers) {
       delete data.headers;
     }
@@ -75,7 +85,7 @@ export class QueryTroubleshooterCtrl {
       delete data.$$config;
     }
 
-    this.$timeout(_.partial(this.renderJsonExplorer, data), 10);
+    this.$timeout(_.partial(this.renderJsonExplorer, data));
   }
 }
 
@@ -94,7 +104,7 @@ export function queryTroubleshooter() {
       ctrl.renderJsonExplorer = function(data) {
         var jsonElem = elem.find('.query-troubleshooter-json');
 
-        const formatter =  new JsonExplorer(data, 2, {
+        const formatter =  new JsonExplorer(data, 3, {
           theme: 'dark',
         });
 
