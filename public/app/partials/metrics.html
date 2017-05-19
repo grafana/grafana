@@ -1,4 +1,6 @@
 
+<metrics-ds-selector panel-ctrl="ctrl"></metrics-ds-selector>
+
 <div class="query-editor-rows gf-form-group">
   <div ng-repeat="target in ctrl.panel.targets" ng-class="{'gf-form-disabled': target.hide}">
     <rebuild-on-change property="ctrl.panel.datasource || target.datasource" show-null="true">
@@ -8,7 +10,7 @@
   </div>
 </div>
 
-<metrics-ds-selector panel-ctrl="ctrl"></metrics-ds-selector>
+<query-troubleshooter panel-ctrl="ctrl"></query-troubleshooter>
 
 <div class="gf-form-group">
   <rebuild-on-change property="ctrl.panel.datasource" show-null="true">

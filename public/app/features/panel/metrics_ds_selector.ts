@@ -8,10 +8,6 @@ var module = angular.module('grafana.directives');
 
 var template = `
 
-<div class="gf-form-group" ng-if="ctrl.showResponse">
-  <response-viewer response="ctrl.responseData" />
-</div>
-
 <div class="gf-form-group">
   <div class="gf-form-inline">
     <div class="gf-form">
@@ -38,13 +34,6 @@ var template = `
                         get-options="ctrl.getOptions(false)"
                         on-change="ctrl.mixedDatasourceChanged()"></metric-segment>
       </div>
-    </div>
-
-    <div class="gf-form gf-form--offset-1">
-      <button class="btn btn-inverse gf-form-btn" ng-click="ctrl.toggleShowResponse()" ng-show="ctrl.responseData">
-        <i class="fa fa-binoculars"></i>&nbsp;
-        Request & Response
-      </button>
     </div>
 
   </div>
@@ -81,24 +70,8 @@ export class MetricsDsSelectorCtrl {
 
     this.dsSegment = uiSegmentSrv.newSegment({value: this.current.name, selectMode: true});
     this.mixedDsSegment = uiSegmentSrv.newSegment({value: 'Add Query', selectMode: true});
-
-    appEvents.on('ds-request-response', this.onRequestResponse.bind(this), $scope);
-    appEvents.on('ds-request-error', this.onRequestError.bind(this), $scope);
   }
 
-  onRequestResponse(data) {
-    this.responseData = data;
-  }
-
-  toggleShowResponse() {
-    this.showResponse = !this.showResponse;
-  }
-
-  onRequestError(err) {
-    this.responseData = err;
-    this.responseData.isError = true;
-    this.showResponse = true;
-  }
 
   getOptions(includeBuiltin) {
     return Promise.resolve(this.datasources.filter(value => {

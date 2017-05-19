@@ -45,7 +45,7 @@ const _defaultConfig: JsonExplorerConfig = {
  * JsonExplorer allows you to render JSON objects in HTML with a
  * **collapsible** navigation.
 */
-export default class JsonExplorer {
+export class JsonExplorer {
 
   // Hold the open state after the toggler is used
   private _isOpen: boolean = null;
@@ -273,7 +273,7 @@ export default class JsonExplorer {
    *
    * @returns {HTMLDivElement}
   */
-  render(): HTMLDivElement {
+  render(skipRoot = false): HTMLDivElement {
 
     // construct the root element and assign it to this.element
     this.element = createElement('div', 'row');
@@ -371,7 +371,9 @@ export default class JsonExplorer {
     }
 
     // append toggler and children elements to root element
-    this.element.appendChild(togglerLink);
+    if (!skipRoot) {
+      this.element.appendChild(togglerLink);
+    }
     this.element.appendChild(children);
 
     // if formatter is set to be open call appendChildren

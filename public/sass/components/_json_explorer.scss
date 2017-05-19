@@ -36,7 +36,7 @@
 
   .json-formatter-string {
     color: $string-color;
-    white-space: pre;
+    white-space: normal;
     word-wrap: break-word;
   }
   .json-formatter-number { color: $number-color; }
