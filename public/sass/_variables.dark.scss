@@ -285,7 +285,7 @@ $collapse-box-body-border: $dark-5;
 $collapse-box-body-error-border: $red;
 
 // json-explorer
-$json-explorer-default-color: white;
+$json-explorer-default-color: $text-color;
 $json-explorer-string-color: #23d662;
 $json-explorer-number-color: $variable;
 $json-explorer-boolean-color: $variable;

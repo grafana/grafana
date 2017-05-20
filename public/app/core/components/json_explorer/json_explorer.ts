@@ -11,6 +11,8 @@ import {
   createElement
 } from './helpers';
 
+import _ from 'lodash';
+
 const DATE_STRING_REGEX = /(^\d{1,4}[\.|\\/|-]\d{1,2}[\.|\\/|-]\d{1,4})(\s*(?:0?[1-9]:[0-5]|1(?=[012])\d:[0-5])\d\s*[ap]m)?$/;
 const PARTIAL_DATE_REGEX = /\d{2}:\d{2}:\d{2} GMT-\d{4}/;
 const JSON_DATE_REGEX = /\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}.\d{3}Z/;
@@ -21,18 +23,12 @@ const MAX_ANIMATED_TOGGLE_ITEMS = 10;
 const requestAnimationFrame = window.requestAnimationFrame || function(cb: ()=>void) { cb(); return 0; };
 
 export interface JsonExplorerConfig {
-  hoverPreviewEnabled?: boolean;
-  hoverPreviewArrayCount?: number;
-  hoverPreviewFieldCount?: number;
   animateOpen?: boolean;
   animateClose?: boolean;
   theme?: string;
 }
 
 const _defaultConfig: JsonExplorerConfig = {
-  hoverPreviewEnabled: false,
-  hoverPreviewArrayCount: 100,
-  hoverPreviewFieldCount: 5,
   animateOpen: true,
   animateClose: true,
   theme: null
@@ -52,6 +48,8 @@ export class JsonExplorer {
 
   // A reference to the element that we render to
   private element: Element;
+
+  private skipChildren = false;
 
   /**
    * @param {object} json The JSON object you want to render. It has to be an
@@ -82,17 +80,6 @@ export class JsonExplorer {
    * context
   */
   constructor(public json: any, private open = 1, private config: JsonExplorerConfig = _defaultConfig, private key?: string) {
-
-    // Setting default values for config object
-    if (this.config.hoverPreviewEnabled === undefined) {
-      this.config.hoverPreviewEnabled = _defaultConfig.hoverPreviewEnabled;
-    }
-    if (this.config.hoverPreviewArrayCount === undefined) {
-      this.config.hoverPreviewArrayCount = _defaultConfig.hoverPreviewArrayCount;
-    }
-    if (this.config.hoverPreviewFieldCount === undefined) {
-      this.config.hoverPreviewFieldCount = _defaultConfig.hoverPreviewFieldCount;
-    }
   }
 
   /*
@@ -236,54 +223,48 @@ export class JsonExplorer {
     }
   }
 
-  /**
-   * Generates inline preview
-   *
-   * @returns {string}
-  */
-  getInlinepreview() {
-    if (this.isArray) {
-
-      // if array length is greater then 100 it shows "Array[101]"
-      if (this.json.length > this.config.hoverPreviewArrayCount) {
-        return `Array[${this.json.length}]`;
-      } else {
-        return `[${this.json.map(getPreview).join(', ')}]`;
-      }
-    } else {
-
-      const keys = this.keys;
-
-      // the first five keys (like Chrome Developer Tool)
-      const narrowKeys = keys.slice(0, this.config.hoverPreviewFieldCount);
-
-      // json value schematic information
-      const kvs = narrowKeys.map(key => `${key}:${getPreview(this.json[key])}`);
-
-      // if keys count greater then 5 then show ellipsis
-      const ellipsis = keys.length >= this.config.hoverPreviewFieldCount ? '…' : '';
-
-      return `{${kvs.join(', ')}${ellipsis}}`;
-    }
+  isNumberArray() {
+    return (this.json.length > 0 && this.json.length < 4) &&
+      (_.isNumber(this.json[0]) || _.isNumber(this.json[1]));
   }
 
+  renderArray() {
+    const arrayWrapperSpan = createElement('span');
+    arrayWrapperSpan.appendChild(createElement('span', 'bracket', '['));
+
+    // some pretty handling of number arrays
+    if (this.isNumberArray()) {
+      this.json.forEach((val, index) => {
+        if (index > 0) {
+          arrayWrapperSpan.appendChild(createElement('span', 'array-comma', ','));
+        }
+        arrayWrapperSpan.appendChild(createElement('span', 'number', val));
+      });
+      this.skipChildren = true;
+    } else {
+      arrayWrapperSpan.appendChild(createElement('span', 'number', (this.json.length)));
+    }
+
+    arrayWrapperSpan.appendChild(createElement('span', 'bracket', ']'));
+    return arrayWrapperSpan;
+  }
 
   /**
    * Renders an HTML element and installs event listeners
    *
    * @returns {HTMLDivElement}
-  */
+   */
   render(skipRoot = false): HTMLDivElement {
-
     // construct the root element and assign it to this.element
     this.element = createElement('div', 'row');
 
     // construct the toggler link
     const togglerLink = createElement('a', 'toggler-link');
+    const togglerIcon = createElement('span', 'toggler');
 
     // if this is an object we need a wrapper span (toggler)
     if (this.isObject) {
-      togglerLink.appendChild(createElement('span', 'toggler'));
+      togglerLink.appendChild(togglerIcon);
     }
 
     // if this is child of a parent formatter we need to append the key
@@ -293,7 +274,6 @@ export class JsonExplorer {
 
     // Value for objects and arrays
     if (this.isObject) {
-
       // construct the value holder element
       const value = createElement('span', 'value');
 
@@ -306,18 +286,14 @@ export class JsonExplorer {
 
       // if it's an array append the array specific elements like brackets and length
       if (this.isArray) {
-        const arrayWrapperSpan = createElement('span');
-        arrayWrapperSpan.appendChild(createElement('span', 'bracket', '['));
-        arrayWrapperSpan.appendChild(createElement('span', 'number', (this.json.length)));
-        arrayWrapperSpan.appendChild(createElement('span', 'bracket', ']'));
+        const arrayWrapperSpan = this.renderArray();
         objectWrapperSpan.appendChild(arrayWrapperSpan);
       }
 
       // append object wrapper span to toggler link
       value.appendChild(objectWrapperSpan);
       togglerLink.appendChild(value);
-
-    // Primitive values
+      // Primitive values
     } else {
 
       // make a value holder element
@@ -339,13 +315,6 @@ export class JsonExplorer {
 
       // append the value element to toggler link
       togglerLink.appendChild(value);
-    }
-
-    // if hover preview is enabled, append the inline preview element
-    if (this.isObject && this.config.hoverPreviewEnabled) {
-      const preview = createElement('span', 'preview-text');
-      preview.appendChild(document.createTextNode(this.getInlinepreview()));
-      togglerLink.appendChild(preview);
     }
 
     // construct a children element
@@ -374,7 +343,13 @@ export class JsonExplorer {
     if (!skipRoot) {
       this.element.appendChild(togglerLink);
     }
-    this.element.appendChild(children);
+
+    if (!this.skipChildren) {
+      this.element.appendChild(children);
+    } else {
+      // remove togglerIcon
+      togglerLink.removeChild(togglerIcon);
+    }
 
     // if formatter is set to be open call appendChildren
     if (this.isObject && this.isOpen) {

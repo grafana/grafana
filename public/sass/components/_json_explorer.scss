@@ -44,10 +44,14 @@
     color: $json-explorer-key-color;
     cursor: pointer;
     padding-right: 0.2rem;
+    margin-right: 4px;
   }
+
   .json-formatter-constructor-name {
     cursor: pointer;
   }
+
+  .json-formatter-array-comma { margin-right: 4px; }
 
   .json-formatter-toggler {
     line-height: 1.2rem;
