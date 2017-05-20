@@ -3,10 +3,6 @@
   <div class="gf-form-inline">
     <div class="gf-form">
       <label class="gf-form-label">
-        <i class="icon-gf icon-gf-datasources"></i>
-      </label>
-
-      <label class="gf-form-label">
         Data Source
       </label>
 
@@ -31,9 +27,9 @@
 				<span class="gf-form-query-letter-cell-carret">
 					<i class="fa fa-caret-down"></i>
 				</span>
-				<span class="gf-form-query-letter-cell-letter">{{ctrl.nextRefId}}</span>
+				<span class="gf-form-query-letter-cell-letter">{{ctrl.panelCtrl.nextRefId}}</span>
 			</label>
-					<button class="btn btn-inverse gf-form-btn" ng-click="ctrl.addDataQuery()" ng-hide="ctrl.current.meta.mixed">
+					<button class="btn btn-inverse gf-form-btn" ng-click="ctrl.addQuery()" ng-hide="ctrl.current.meta.mixed">
 						Add Query
 					</button>
 

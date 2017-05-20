@@ -1,5 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
+import angular from 'angular';
 import config from 'app/core/config';
 import $ from 'jquery';
 import _ from 'lodash';
@@ -33,6 +34,7 @@ class MetricsPanelCtrl extends PanelCtrl {
   dataStream: any;
   dataSubscription: any;
   dataList: any;
+  nextRefId: string;
 
   constructor($scope, $injector) {
     super($scope, $injector);
@@ -306,6 +308,25 @@ class MetricsPanelCtrl extends PanelCtrl {
     this.datasourceName = datasource.name;
     this.datasource = null;
     this.refresh();
+  }
+
+  addQuery(target) {
+    target.refId = this.dashboard.getNextQueryLetter(this.panel);
+
+    this.panel.targets.push(target);
+    this.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
+  }
+
+  removeQuery(target) {
+    var index = _.indexOf(this.panel.targets, target);
+    this.panel.targets.splice(index, 1);
+    this.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
+    this.refresh();
+  }
+
+  moveQuery(target, direction) {
+    var index = _.indexOf(this.panel.targets, target);
+    _.move(this.panel.targets, index, index + direction);
   }
 }
 

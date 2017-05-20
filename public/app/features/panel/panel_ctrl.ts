@@ -76,8 +76,18 @@ export class PanelCtrl {
     profiler.renderingCompleted(this.panel.id, this.timing);
   }
 
+  shouldSkipRefresh() {
+    // some scenarios we should never ignore refresh
+    if (this.fullscreen || this.dashboard.meta.soloMode || this.dashboard.snapshot) {
+      return false;
+    }
+
+    return !this.isPanelVisible();
+  }
+
   refresh() {
-    if (!this.isPanelVisible() && !this.dashboard.meta.soloMode && !this.dashboard.snapshot) {
+    // somet
+    if (this.shouldSkipRefresh()) {
       this.skippedLastRefresh = true;
       return;
     }

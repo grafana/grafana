@@ -36,8 +36,10 @@ export class MetricsTabCtrl {
     }
 
     this.dsSegment = uiSegmentSrv.newSegment({value: this.current.name, selectMode: true});
-    this.mixedDsSegment = uiSegmentSrv.newSegment({value: 'Add Query', selectMode: true});
-    this.nextRefId = this.getNextQueryLetter();
+    this.mixedDsSegment = uiSegmentSrv.newSegment({value: 'Add Query', selectMode: true, fake: true});
+
+    // update next ref id
+    this.panelCtrl.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
   }
 
   getOptions(includeBuiltin) {
@@ -61,22 +63,13 @@ export class MetricsTabCtrl {
     var ds = _.find(this.datasources, {name: this.mixedDsSegment.value});
     if (ds) {
       target.datasource = ds.name;
-      this.panelCtrl.panel.targets.push(target);
+      this.panelCtrl.addDataQuery(target);
       this.mixedDsSegment.value = '';
     }
   }
 
-  getNextQueryLetter() {
-    return this.dashboard.getNextQueryLetter(this.panel);
-  }
-
-  addDataQuery() {
-    var target: any = {
-      isNew: true,
-      refId: this.getNextQueryLetter()
-    };
-    this.panelCtrl.panel.targets.push(target);
-    this.nextRefId = this.getNextQueryLetter();
+  addQuery() {
+    this.panelCtrl.addQuery({isNew: true});
   }
 }
 
