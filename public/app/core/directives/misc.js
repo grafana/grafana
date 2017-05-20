@@ -19,17 +19,26 @@ function (angular, require, coreModule, kbn) {
     };
   });
 
-  coreModule.default.directive('clipboardButton',function() {
-    return function(scope, elem) {
-      require(['vendor/clipboard/dist/clipboard'], function(Clipboard) {
-        scope.clipboard = new Clipboard(elem[0]);
-      });
+  coreModule.default.directive('clipboardButton', function() {
+    return {
+      scope: {
+        getText: '&clipboardButton'
+      },
+      link: function(scope, elem) {
+        require(['vendor/clipboard/dist/clipboard'], function(Clipboard) {
+          scope.clipboard = new Clipboard(elem[0], {
+            text: function() {
+              return scope.getText();
+            }
+          });
+        });
 
-      scope.$on('$destroy', function() {
-        if (scope.clipboard) {
-          scope.clipboard.destroy();
-        }
-      });
+        scope.$on('$destroy', function() {
+          if (scope.clipboard) {
+            scope.clipboard.destroy();
+          }
+        });
+      }
     };
   });
 
@@ -78,10 +87,10 @@ function (angular, require, coreModule, kbn) {
           text + tip + '</label>';
 
         var template =
-          '<input class="cr1" id="' + scope.$id + model + '" type="checkbox" ' +
-          '       ng-model="' + model + '"' + ngchange +
-          '       ng-checked="' + model + '"></input>' +
-          ' <label for="' + scope.$id + model + '" class="cr1"></label>';
+        '<input class="cr1" id="' + scope.$id + model + '" type="checkbox" ' +
+        '       ng-model="' + model + '"' + ngchange +
+        '       ng-checked="' + model + '"></input>' +
+        ' <label for="' + scope.$id + model + '" class="cr1"></label>';
 
         template = template + label;
         elem.addClass('gf-form-checkbox');
@@ -106,7 +115,7 @@ function (angular, require, coreModule, kbn) {
         var li = '<li' + (item.submenu && item.submenu.length ? ' class="dropdown-submenu"' : '') + '>' +
           '<a tabindex="-1" ng-href="' + (item.href || '') + '"' + (item.click ? ' ng-click="' + item.click + '"' : '') +
           (item.target ? ' target="' + item.target + '"' : '') + (item.method ? ' data-method="' + item.method + '"' : '') +
-          '>' + (item.text || '') + '</a>';
+            '>' + (item.text || '') + '</a>';
 
         if (item.submenu && item.submenu.length) {
           li += buildTemplate(item.submenu).join('\n');

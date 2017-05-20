@@ -96,6 +96,10 @@ function (angular, _) {
       });
     };
 
+    $scope.getSnapshotUrl = function() {
+      return $scope.snapshotUrl;
+    };
+
     $scope.scrubDashboard = function(dash) {
       // change title
       dash.title = $scope.snapshot.name;

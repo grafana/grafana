@@ -88,6 +88,10 @@ function (angular, _, $, moment, config) {
       $scope.imageUrl += '&tz=UTC' + encodeURIComponent(moment().format("Z"));
     };
 
+    $scope.getShareUrl = function() {
+      return $scope.shareUrl;
+    };
+
   });
 
 });

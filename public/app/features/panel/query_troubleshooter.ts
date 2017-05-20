@@ -14,7 +14,7 @@ const template = `
     <a class="pointer" ng-click="ctrl.toggleExpand()" ng-show="ctrl.allNodesExpanded">
       <i class="fa fa-expand"></i> Collapse All
     </a>
-    <a class="pointer" data-clipboard-text="adasda" clipboard-button><i class="fa fa-clipboard"></i> Copy to Clipboard</a>
+    <a class="pointer" clipboard-button="ctrl.getClipboardText()"><i class="fa fa-clipboard"></i> Copy to Clipboard</a>
   </collapse-box-actions>
   <collapse-box-body>
     <div class="query-troubleshooter-json"></div>
@@ -59,6 +59,12 @@ export class QueryTroubleshooterCtrl {
       this.panelCtrl.refresh();
     } else {
       this.hasError = false;
+    }
+  }
+
+  getClipboardText() {
+    if (this.jsonExplorer) {
+      return JSON.stringify(this.jsonExplorer.json, null, 2);
     }
   }
 
