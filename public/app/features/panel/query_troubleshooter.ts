@@ -9,10 +9,10 @@ const template = `
               ng-class="{'collapse-box--error': ctrl.hasError}">
   <collapse-box-actions>
     <a class="pointer" ng-click="ctrl.toggleExpand()" ng-hide="ctrl.allNodesExpanded">
-      <i class="fa fa-expand"></i> Expand All
+      <i class="fa fa-plus-square-o"></i> Expand All
     </a>
     <a class="pointer" ng-click="ctrl.toggleExpand()" ng-show="ctrl.allNodesExpanded">
-      <i class="fa fa-expand"></i> Collapse All
+      <i class="fa fa-minus-square-o"></i> Collapse All
     </a>
     <a class="pointer" clipboard-button="ctrl.getClipboardText()"><i class="fa fa-clipboard"></i> Copy to Clipboard</a>
   </collapse-box-actions>
@@ -124,9 +124,7 @@ export function queryTroubleshooter() {
       ctrl.renderJsonExplorer = function(data) {
         var jsonElem = elem.find('.query-troubleshooter-json');
 
-        ctrl.jsonExplorer =  new JsonExplorer(data, 3, {
-          theme: 'dark',
-        });
+        ctrl.jsonExplorer =  new JsonExplorer(data, 3, { });
 
         const html = ctrl.jsonExplorer.render(true);
         jsonElem.html(html);

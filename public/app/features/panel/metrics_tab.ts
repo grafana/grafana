@@ -1,6 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import _ from 'lodash';
+//import {coreModule} from 'app/core/core';
 import {DashboardModel} from '../dashboard/model';
 
 export class MetricsTabCtrl {
@@ -79,7 +80,9 @@ export function metricsTabDirective() {
   return {
     restrict: 'E',
     scope: true,
-    templateUrl: 'public/app/partials/metrics.html',
+    templateUrl: 'public/app/features/panel/partials/metrics_tab.html',
     controller: MetricsTabCtrl,
   };
 }
+
+//coreModule.directive('metricsTab', metricsTabDirective);

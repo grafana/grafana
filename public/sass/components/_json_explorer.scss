@@ -1,21 +1,9 @@
-@mixin json-explorer-theme(
-  $default-color: black,
-  $string-color: green,
-  $number-color: blue,
-  $boolean-color: red,
-  $null-color: #855A00,
-  $undefined-color: rgb(202, 11, 105),
-  $function-color: #FF20ED,
-  $rotate-time: 100ms,
-  $toggler-opacity: 0.6,
-  $toggler-color: #45376F,
-  $bracket-color: blue,
-  $key-color: #00008B,
-  $url-color: blue) {
 
+.json-formatter-row {
   font-family: monospace;
+
   &, a, a:hover {
-    color: $default-color;
+    color: $json-explorer-default-color;
     text-decoration: none;
   }
 
@@ -35,25 +23,25 @@
   }
 
   .json-formatter-string {
-    color: $string-color;
+    color: $json-explorer-string-color;
     white-space: normal;
     word-wrap: break-word;
   }
-  .json-formatter-number { color: $number-color; }
-  .json-formatter-boolean { color: $boolean-color; }
-  .json-formatter-null { color: $null-color; }
-  .json-formatter-undefined { color: $undefined-color; }
-  .json-formatter-function { color: $function-color; }
-  .json-formatter-date { background-color: fade($default-color, 5%); }
+  .json-formatter-number { color: $json-explorer-number-color; }
+  .json-formatter-boolean { color: $json-explorer-boolean-color; }
+  .json-formatter-null { color: $json-explorer-null-color; }
+  .json-formatter-undefined { color: $json-explorer-undefined-color; }
+  .json-formatter-function { color: $json-explorer-function-color; }
+  .json-formatter-date { background-color: fade($json-explorer-default-color, 5%); }
   .json-formatter-url {
     text-decoration: underline;
-    color: $url-color;
+    color: $json-explorer-url-color;
     cursor: pointer;
   }
 
-  .json-formatter-bracket { color: $bracket-color; }
+  .json-formatter-bracket { color: $json-explorer-bracket-color; }
   .json-formatter-key {
-    color: $key-color;
+    color: $json-explorer-key-color;
     cursor: pointer;
     padding-right: 0.2rem;
   }
@@ -65,13 +53,13 @@
     line-height: 1.2rem;
     font-size: 0.7rem;
     vertical-align: middle;
-    opacity: $toggler-opacity;
+    opacity: $json-explorer-toggler-opacity;
     cursor: pointer;
     padding-right: 0.2rem;
 
     &::after {
       display: inline-block;
-      transition: transform $rotate-time ease-in;
+      transition: transform $json-explorer-rotate-time ease-in;
       content: "►";
     }
   }
@@ -104,25 +92,3 @@
   }
 }
 
-
-.json-formatter-row {
-  @include json-explorer-theme();
-}
-
-// Dark theme
-.json-formatter-dark.json-formatter-row {
-  @include json-explorer-theme(
-    $default-color: white,
-    $string-color: #31F031,
-    $number-color: #66C2FF,
-    $boolean-color: #EC4242,
-    $null-color: #EEC97D,
-    $undefined-color: rgb(239, 143, 190),
-    $function-color: #FD48CB,
-    $rotate-time: 100ms,
-    $toggler-opacity: 0.6,
-    $toggler-color: #45376F,
-    $bracket-color: #9494FF,
-    $key-color: #23A0DB,
-    $url-color: #027BFF);
-}
