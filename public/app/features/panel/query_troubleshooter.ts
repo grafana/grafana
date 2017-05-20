@@ -8,7 +8,13 @@ const template = `
 <collapse-box title="Query Troubleshooter" is-open="ctrl.isOpen" state-changed="ctrl.stateChanged()"
               ng-class="{'collapse-box--error': ctrl.hasError}">
   <collapse-box-actions>
-    <a class="pointer"><i class="fa fa-clipboard"></i> Copy to clipboard</a>
+    <a class="pointer" ng-click="ctrl.toggleExpand()" ng-hide="ctrl.allNodesExpanded">
+      <i class="fa fa-expand"></i> Expand All
+    </a>
+    <a class="pointer" ng-click="ctrl.toggleExpand()" ng-show="ctrl.allNodesExpanded">
+      <i class="fa fa-expand"></i> Collapse All
+    </a>
+    <a class="pointer" data-clipboard-text="adasda" clipboard-button><i class="fa fa-clipboard"></i> Copy to Clipboard</a>
   </collapse-box-actions>
   <collapse-box-body>
     <div class="query-troubleshooter-json"></div>
@@ -24,6 +30,8 @@ export class QueryTroubleshooterCtrl {
   onRequestErrorEventListener: any;
   onRequestResponseEventListener: any;
   hasError: boolean;
+  allNodesExpanded: boolean;
+  jsonExplorer: JsonExplorer;
 
   /** @ngInject **/
   constructor($scope, private $timeout) {
@@ -46,7 +54,6 @@ export class QueryTroubleshooterCtrl {
   }
 
   stateChanged() {
-    console.log(this.isOpen);
     if (this.isOpen) {
       appEvents.on('ds-request-response', this.onRequestResponseEventListener);
       this.panelCtrl.refresh();
@@ -87,6 +94,13 @@ export class QueryTroubleshooterCtrl {
 
     this.$timeout(_.partial(this.renderJsonExplorer, data));
   }
+
+  toggleExpand(depth) {
+    if (this.jsonExplorer) {
+      this.allNodesExpanded = !this.allNodesExpanded;
+      this.jsonExplorer.openAtDepth(this.allNodesExpanded ? 20 : 1);
+    }
+  }
 }
 
 export function queryTroubleshooter() {
@@ -104,11 +118,11 @@ export function queryTroubleshooter() {
       ctrl.renderJsonExplorer = function(data) {
         var jsonElem = elem.find('.query-troubleshooter-json');
 
-        const formatter =  new JsonExplorer(data, 3, {
+        ctrl.jsonExplorer =  new JsonExplorer(data, 3, {
           theme: 'dark',
         });
 
-        const html = formatter.render(true);
+        const html = ctrl.jsonExplorer.render(true);
         jsonElem.html(html);
       };
     }

@@ -1,9 +1,10 @@
 define([
   'angular',
+  'require',
   '../core_module',
   'app/core/utils/kbn',
 ],
-function (angular, coreModule, kbn) {
+function (angular, require, coreModule, kbn) {
   'use strict';
 
   coreModule.default.directive('tip', function($compile) {
@@ -15,6 +16,20 @@ function (angular, coreModule, kbn) {
         _t = _t.replace(/{/g, '\\{').replace(/}/g, '\\}');
         elem.replaceWith($compile(angular.element(_t))(scope));
       }
+    };
+  });
+
+  coreModule.default.directive('clipboardButton',function() {
+    return function(scope, elem) {
+      require(['vendor/clipboard/dist/clipboard'], function(Clipboard) {
+        scope.clipboard = new Clipboard(elem[0]);
+      });
+
+      scope.$on('$destroy', function() {
+        if (scope.clipboard) {
+          scope.clipboard.destroy();
+        }
+      });
     };
   });
 

@@ -35,3 +35,10 @@
   @include border-radius($label-border-radius-sm);
 }
 
+.collapse-box__header-actions {
+  display: flex;
+  flex-direction: row;
+  a {
+    margin-left: $spacer;
+  }
+}
