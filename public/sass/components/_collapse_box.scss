@@ -1,5 +1,15 @@
 .collapse-box {
   margin-bottom: $spacer;
+
+  &--error {
+    .collapse-box__header {
+      border-color: $collapse-box-body-error-border;
+    }
+    .collapse-box__body {
+      border-color: $collapse-box-body-error-border;
+    }
+  }
+
 }
 
 .collapse-box__header {
@@ -12,10 +22,6 @@
   margin-right: $gf-form-margin;
   border: $input-btn-border-width solid $collapse-box-body-border;
   @include border-radius($label-border-radius-sm);
-
-  &--error {
-    border-color: $collapse-box-body-error-border;
-  }
 }
 
 .collapse-box__header-title {
@@ -29,10 +35,6 @@
   border: $input-btn-border-width solid $collapse-box-body-border;
   border-top: none;
   @include border-radius($label-border-radius-sm);
-
-  &--error {
-    border-color: $collapse-box-body-error-border;
-  }
 }
 
 .collapse-box__header-actions {

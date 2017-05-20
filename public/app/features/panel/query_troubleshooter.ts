@@ -17,6 +17,7 @@ const template = `
     <a class="pointer" clipboard-button="ctrl.getClipboardText()"><i class="fa fa-clipboard"></i> Copy to Clipboard</a>
   </collapse-box-actions>
   <collapse-box-body>
+    <i class="fa fa-spinner fa-spin" ng-show="ctrl.isLoading"></i>
     <div class="query-troubleshooter-json"></div>
   </collapse-box-body>
 </collapse-box>
@@ -24,6 +25,7 @@ const template = `
 
 export class QueryTroubleshooterCtrl {
   isOpen: any;
+  isLoading: boolean;
   showResponse: boolean;
   panelCtrl: any;
   renderJsonExplorer: (data) => void;
@@ -57,8 +59,7 @@ export class QueryTroubleshooterCtrl {
     if (this.isOpen) {
       appEvents.on('ds-request-response', this.onRequestResponseEventListener);
       this.panelCtrl.refresh();
-    } else {
-      this.hasError = false;
+      this.isLoading = true;
     }
   }
 
@@ -69,6 +70,7 @@ export class QueryTroubleshooterCtrl {
   }
 
   onRequestResponse(data) {
+    this.isLoading = false;
     data = _.cloneDeep(data);
 
     if (data.headers) {
@@ -91,6 +93,15 @@ export class QueryTroubleshooterCtrl {
 
     if (data.data) {
       data.response = data.data;
+
+      if (data.status === 200) {
+        // if we are in error state, assume we automatically opened
+        // and auto close it again
+        if (this.hasError) {
+          this.hasError = false;
+          this.isOpen = false;
+        }
+      }
 
       delete data.data;
       delete data.status;
