@@ -40,6 +40,7 @@ export class QueryTroubleshooterCtrl {
     this.onRequestErrorEventListener = this.onRequestError.bind(this);
     this.onRequestResponseEventListener = this.onRequestResponse.bind(this);
 
+    appEvents.on('ds-request-response', this.onRequestResponseEventListener);
     appEvents.on('ds-request-error', this.onRequestErrorEventListener);
     $scope.$on('$destroy',  this.removeEventsListeners.bind(this));
   }
@@ -57,7 +58,6 @@ export class QueryTroubleshooterCtrl {
 
   stateChanged() {
     if (this.isOpen) {
-      appEvents.on('ds-request-response', this.onRequestResponseEventListener);
       this.panelCtrl.refresh();
       this.isLoading = true;
     }
@@ -70,6 +70,11 @@ export class QueryTroubleshooterCtrl {
   }
 
   onRequestResponse(data) {
+    // ignore if closed
+    if (!this.isOpen) {
+      return;
+    }
+
     this.isLoading = false;
     data = _.cloneDeep(data);
 
@@ -135,7 +140,9 @@ export function queryTroubleshooter() {
       ctrl.renderJsonExplorer = function(data) {
         var jsonElem = elem.find('.query-troubleshooter-json');
 
-        ctrl.jsonExplorer =  new JsonExplorer(data, 3, { });
+        ctrl.jsonExplorer =  new JsonExplorer(data, 3, {
+          animateOpen: true,
+        });
 
         const html = ctrl.jsonExplorer.render(true);
         jsonElem.html(html);

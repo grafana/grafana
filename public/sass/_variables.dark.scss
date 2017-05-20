@@ -286,9 +286,9 @@ $collapse-box-body-error-border: $red;
 
 // json-explorer
 $json-explorer-default-color: white;
-$json-explorer-string-color: #31F031;
-$json-explorer-number-color: #66C2FF;
-$json-explorer-boolean-color: #EC4242;
+$json-explorer-string-color: #23d662;
+$json-explorer-number-color: $variable;
+$json-explorer-boolean-color: $variable;
 $json-explorer-null-color: #EEC97D;
 $json-explorer-undefined-color: rgb(239, 143, 190);
 $json-explorer-function-color: #FD48CB;

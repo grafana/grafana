@@ -170,7 +170,7 @@ export class BackendSrv {
         });
       }
 
-      //populate error obj on Internal Error
+      // populate error obj on Internal Error
       if (_.isString(err.data) && err.status === 500) {
         err.data = {
           error: err.statusText,
