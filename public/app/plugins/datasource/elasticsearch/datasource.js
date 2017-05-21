@@ -99,7 +99,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
       var payload = angular.toJson(header) + '\n' + angular.toJson(data) + '\n';
 
-      return this._post('_msearch', payload).then(function(res) {
+      return this._post('log/search', payload).then(function(res) {
         var list = [];
         var hits = res.responses[0].hits.hits;
 
@@ -262,7 +262,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
       esQuery = header + '\n' + esQuery + '\n';
 
-      return this._post('/_msearch?search_type=count', esQuery).then(function(res) {
+      return this._post('log/search?search_type=count', esQuery).then(function(res) {
         var buckets = res.responses[0].aggregations["1"].buckets;
         return _.map(buckets, function(bucket) {
           return {text: bucket.key, value: bucket.key};

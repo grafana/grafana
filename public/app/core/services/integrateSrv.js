@@ -6,7 +6,7 @@ function (angular,coreModule) {
   'use strict';
   coreModule.service('integrateSrv',function () {
     return {
-        format : {}
+        options : {}
     }
   });
 });
