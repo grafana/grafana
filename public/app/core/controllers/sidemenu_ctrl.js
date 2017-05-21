@@ -292,6 +292,11 @@ function (angular, _, $, coreModule, config) {
       $scope.systemSection = false;
       $scope.mainLinks = [];
       $scope.dashboardTitle = "";
+      if(!contextSrv.systemsMap.length) {
+        $location.url("/org");
+        $scope.appEvent("alert-warning", ['系统尚未初始化', '请新建子系统']);
+        return ;
+      }
       if (contextSrv.system == 0 && contextSrv.user.orgId) {
         $location.url("/systems");
         contextSrv.sidmenu = false;
