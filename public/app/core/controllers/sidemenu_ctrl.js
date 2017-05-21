@@ -292,7 +292,7 @@ function (angular, _, $, coreModule, config) {
       $scope.systemSection = false;
       $scope.mainLinks = [];
       $scope.dashboardTitle = "";
-      if(!contextSrv.systemsMap.length) {
+      if(!contextSrv.systemsMap.length && contextSrv.isSignedIn) {
         $location.url("/org");
         $scope.appEvent("alert-warning", ['系统尚未初始化', '请新建子系统']);
         return ;
