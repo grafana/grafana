@@ -26,7 +26,7 @@
 							<th>角色</th>
 							<th></th>						</tr>
 					</thead>
-					<tr ng-repeat="user in users">
+					<tr ng-repeat="user in users" ng-if="user.userId!=1">
 						<td>{{user.login}}</td>
 						<td><span class="ellipsis">{{user.email}}</span></td>
 						<td>

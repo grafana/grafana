@@ -24,7 +24,6 @@ define([
       })
       .when('/systems', {
         templateUrl: 'app/partials/systems.html',
-        controller : '',
         reloadOnSearch: false,
       })
       .when('/summary', {
