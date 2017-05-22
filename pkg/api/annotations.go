@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/api/dtos"
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
@@ -31,16 +32,19 @@ func GetAnnotations(c *middleware.Context) Response {
 
 	for _, item := range items {
 		result = append(result, dtos.Annotation{
-			AlertId:   item.AlertId,
-			Time:      item.Epoch * 1000,
-			Data:      item.Data,
-			NewState:  item.NewState,
-			PrevState: item.PrevState,
-			Text:      item.Text,
-			Metric:    item.Metric,
-			Title:     item.Title,
-			PanelId:   item.PanelId,
-			RegionId:  item.RegionId,
+			AnnotationId: item.Id,
+			AlertId:      item.AlertId,
+			Time:         item.Epoch * 1000,
+			Data:         item.Data,
+			NewState:     item.NewState,
+			PrevState:    item.PrevState,
+			Text:         item.Text,
+			Icon:         item.Icon,
+			Metric:       item.Metric,
+			Title:        item.Title,
+			PanelId:      item.PanelId,
+			RegionId:     item.RegionId,
+			UserId:       item.UserId,
 		})
 	}
 
@@ -52,11 +56,13 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 
 	item := annotations.Item{
 		OrgId:       c.OrgId,
+		UserId:      c.UserId,
 		DashboardId: cmd.DashboardId,
 		PanelId:     cmd.PanelId,
 		Epoch:       cmd.Time / 1000,
 		Title:       cmd.Title,
 		Text:        cmd.Text,
+		Icon:        cmd.Icon,
 		CategoryId:  cmd.CategoryId,
 		NewState:    cmd.FillColor,
 		Type:        annotations.EventType,
@@ -70,12 +76,16 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 	if cmd.IsRegion {
 		item.RegionId = item.Id
 
+		if item.Data == nil {
+			item.Data = simplejson.New()
+		}
+
 		if err := repo.Update(&item); err != nil {
 			return ApiError(500, "Failed set regionId on annotation", err)
 		}
 
 		item.Id = 0
-		item.Epoch = cmd.TimeEnd
+		item.Epoch = cmd.TimeEnd / 1000
 
 		if err := repo.Save(&item); err != nil {
 			return ApiError(500, "Failed save annotation for region end time", err)

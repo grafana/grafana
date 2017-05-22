@@ -269,6 +269,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
             clickable: true,
             color: '#c8c8c8',
             margin: { left: 0, right: 0 },
+            labelMarginX: 0,
           },
           selection: {
             mode: "x",
@@ -601,9 +602,9 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
 
       elem.bind("plotselected", function (event, ranges) {
         if (ranges.ctrlKey || ranges.metaKey)  {
-          // scope.$apply(() => {
-          //   eventManager.updateTime(ranges.xaxis);
-          // });
+          scope.$apply(() => {
+            eventManager.updateTime(ranges.xaxis);
+          });
         } else {
           scope.$apply(function() {
             timeSrv.setTime({
@@ -619,9 +620,9 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           // Skip if range selected (added in "plotselected" event handler)
           let isRangeSelection = pos.x !== pos.x1;
           if (!isRangeSelection) {
-            // scope.$apply(() => {
-            //   eventManager.updateTime({from: pos.x, to: null});
-            // });
+            scope.$apply(() => {
+              eventManager.updateTime({from: pos.x, to: null});
+            });
           }
         }
       });

@@ -34,6 +34,7 @@ module.exports = function(config) {
         'remarkable/dist/*',
         'virtual-scroll/**/*',
         'mousetrap/**/*',
+        'twemoji/2/twemoji.amd*',
       ],
       dest: '<%= srcDir %>/vendor/npm'
     }
