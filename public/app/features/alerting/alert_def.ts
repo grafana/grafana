@@ -91,17 +91,9 @@ function getStateDisplayModel(state) {
         stateClass: 'alert-state-warning'
       };
     }
-    case 'execution_error': {
-      return {
-        text: 'EXECUTION ERROR',
-        iconClass: 'icon-gf icon-gf-critical',
-        stateClass: 'alert-state-critical'
-      };
-    }
-
     case 'paused': {
       return {
-        text: 'paused',
+        text: 'PAUSED',
         iconClass: "fa fa-pause",
         stateClass: 'alert-state-paused'
       };

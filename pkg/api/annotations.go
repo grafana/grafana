@@ -41,6 +41,7 @@ func GetAnnotations(c *middleware.Context) Response {
 			Title:     item.Title,
 			PanelId:   item.PanelId,
 			RegionId:  item.RegionId,
+			Type:      string(item.Type),
 		})
 	}
 
