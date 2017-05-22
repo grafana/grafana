@@ -371,6 +371,12 @@
 			"revisionTime": "2016-12-22T07:05:54Z"
 		},
 		{
+			"checksumSHA1": "Rp4MJ0xFAy00EC0zlnwCpTEdYY8=",
+			"path": "github.com/go-macaron/gzip",
+			"revision": "cad1c6580a07c56f5f6bc52d66002a05985c5854",
+			"revisionTime": "2016-02-22T04:36:47Z"
+		},
+		{
 			"checksumSHA1": "y0olVbiMQ6/UOa/eh52XYnies90=",
 			"path": "github.com/go-macaron/inject",
 			"revision": "d8a0b8677191f4380287cfebd08e462217bac7ad",

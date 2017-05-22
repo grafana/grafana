@@ -160,7 +160,7 @@ var (
 	logger log.Logger
 
 	// Grafana.NET URL
-	GrafanaNetUrl string
+	GrafanaComUrl string
 
 	// S3 temp image store
 	S3TempImageStoreBucketUrl string
@@ -582,7 +582,11 @@ func NewConfigContext(args *CommandLineArgs) error {
 		log.Warn("require_email_validation is enabled but smpt is disabled")
 	}
 
-	GrafanaNetUrl = Cfg.Section("grafana_net").Key("url").MustString("https://grafana.com")
+	// check old key  name
+	GrafanaComUrl = Cfg.Section("grafana_net").Key("url").MustString("")
+	if GrafanaComUrl == "" {
+		GrafanaComUrl = Cfg.Section("grafana_com").Key("url").MustString("https://grafana.com")
+	}
 
 	imageUploadingSection := Cfg.Section("external_image_storage")
 	ImageUploadProvider = imageUploadingSection.Key("provider").MustString("internal")

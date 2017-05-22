@@ -36,6 +36,7 @@
 .login-inner-box {
   background: $panel-bg;
   text-align: center;
+  padding-bottom: 3rem;
 }
 
 .login-tab-header {
@@ -97,7 +98,6 @@
 }
 
 .login-oauth {
-  margin-bottom: 15px;
 
   .btn {
     margin: 5px;
@@ -113,23 +113,18 @@
     color: white;
   }
 
-  .btn-grafana-net {
-    background: url(../img/grafana_net_logo.svg);
-    background-size: 10rem;
-    background-repeat: no-repeat;
-    background-position: right 35%;
-    overflow: hidden;
-    padding-right: 10.5rem;
+  .btn-grafana-com {
+    @include buttonBackground($btn-inverse-bg, $btn-inverse-bg-hl, $btn-inverse-text-color);
+    box-shadow: $card-shadow;
 
-    span {
-      display: none;
+    img {
+      width: 19px;
     }
   }
 }
 
 .password-recovery {
   background: $tight-form-bg;
-  margin-top: 10px;
   padding: 10px;
   a {
     color: $gray-2;

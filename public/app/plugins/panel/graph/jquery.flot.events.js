@@ -11,7 +11,7 @@ function ($, _, angular, Drop, twemoji) {
   function createAnnotationToolip(element, event) {
     var injector = angular.element(document).injector();
     var content = document.createElement('div');
-    content.innerHTML = '<annotation-tooltip></annotation-tooltip>';
+    content.innerHTML = '<annotation-tooltip event="event"></annotation-tooltip>';
 
     injector.invoke(["$compile", "$rootScope", function($compile, $rootScope) {
       var tmpScope = $rootScope.$new(true);
@@ -25,7 +25,7 @@ function ($, _, angular, Drop, twemoji) {
         target: element[0],
         content: content,
         position: "bottom center",
-        classes: 'drop-popover',
+        classes: 'drop-popover drop-popover--annotation',
         openOn: 'hover',
         hoverCloseDelay: 200,
         tetherOptions: {

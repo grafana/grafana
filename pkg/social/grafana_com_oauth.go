@@ -9,7 +9,7 @@ import (
 	"golang.org/x/oauth2"
 )
 
-type SocialGrafanaNet struct {
+type SocialGrafanaCom struct {
 	*oauth2.Config
 	url                  string
 	allowedOrganizations []string
@@ -20,19 +20,19 @@ type OrgRecord struct {
 	Login string `json:"login"`
 }
 
-func (s *SocialGrafanaNet) Type() int {
-	return int(models.GRAFANANET)
+func (s *SocialGrafanaCom) Type() int {
+	return int(models.GRAFANA_COM)
 }
 
-func (s *SocialGrafanaNet) IsEmailAllowed(email string) bool {
+func (s *SocialGrafanaCom) IsEmailAllowed(email string) bool {
 	return true
 }
 
-func (s *SocialGrafanaNet) IsSignupAllowed() bool {
+func (s *SocialGrafanaCom) IsSignupAllowed() bool {
 	return s.allowSignup
 }
 
-func (s *SocialGrafanaNet) IsOrganizationMember(organizations []OrgRecord) bool {
+func (s *SocialGrafanaCom) IsOrganizationMember(organizations []OrgRecord) bool {
 	if len(s.allowedOrganizations) == 0 {
 		return true
 	}
@@ -48,7 +48,7 @@ func (s *SocialGrafanaNet) IsOrganizationMember(organizations []OrgRecord) bool 
 	return false
 }
 
-func (s *SocialGrafanaNet) UserInfo(client *http.Client) (*BasicUserInfo, error) {
+func (s *SocialGrafanaCom) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	var data struct {
 		Name  string      `json:"name"`
 		Login string      `json:"username"`

@@ -1,7 +1,6 @@
 ///<reference path="../headers/common.d.ts" />
 ///<reference path="./mod_defs.d.ts" />
 
-import "./directives/annotation_tooltip";
 import "./directives/dash_class";
 import "./directives/confirm_click";
 import "./directives/dash_edit_link";

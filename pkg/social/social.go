@@ -47,7 +47,7 @@ func NewOAuthService() {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
-	allOauthes := []string{"github", "google", "generic_oauth", "grafananet"}
+	allOauthes := []string{"github", "google", "generic_oauth", "grafananet", "grafana_com"}
 
 	for _, name := range allOauthes {
 		sec := setting.Cfg.Section("auth." + name)
@@ -70,6 +70,10 @@ func NewOAuthService() {
 
 		if !info.Enabled {
 			continue
+		}
+
+		if name == "grafananet" {
+			name = "grafana_com"
 		}
 
 		setting.OAuthService.OAuthInfos[name] = info
@@ -120,21 +124,21 @@ func NewOAuthService() {
 			}
 		}
 
-		if name == "grafananet" {
+		if name == "grafana_com" {
 			config = oauth2.Config{
 				ClientID:     info.ClientId,
 				ClientSecret: info.ClientSecret,
 				Endpoint: oauth2.Endpoint{
-					AuthURL:  setting.GrafanaNetUrl + "/oauth2/authorize",
-					TokenURL: setting.GrafanaNetUrl + "/api/oauth2/token",
+					AuthURL:  setting.GrafanaComUrl + "/oauth2/authorize",
+					TokenURL: setting.GrafanaComUrl + "/api/oauth2/token",
 				},
 				RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
 				Scopes:      info.Scopes,
 			}
 
-			SocialMap["grafananet"] = &SocialGrafanaNet{
+			SocialMap["grafana_com"] = &SocialGrafanaCom{
 				Config:               &config,
-				url:                  setting.GrafanaNetUrl,
+				url:                  setting.GrafanaComUrl,
 				allowSignup:          info.AllowSignup,
 				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}

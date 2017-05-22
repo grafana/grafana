@@ -17,6 +17,7 @@ type Annotation struct {
 	Icon         string `json:"icon"`
 	Metric       string `json:"metric"`
 	RegionId     int64  `json:"regionId"`
+	Type         string `json:"type"`
 
 	Data *simplejson.Json `json:"data"`
 }

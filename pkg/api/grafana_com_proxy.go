@@ -13,7 +13,7 @@ import (
 	"github.com/grafana/grafana/pkg/util"
 )
 
-var gNetProxyTransport = &http.Transport{
+var grafanaComProxyTransport = &http.Transport{
 	TLSClientConfig: &tls.Config{InsecureSkipVerify: false},
 	Proxy:           http.ProxyFromEnvironment,
 	Dial: (&net.Dialer{
@@ -24,7 +24,7 @@ var gNetProxyTransport = &http.Transport{
 }
 
 func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
-	url, _ := url.Parse(setting.GrafanaNetUrl)
+	url, _ := url.Parse(setting.GrafanaComUrl)
 
 	director := func(req *http.Request) {
 		req.URL.Scheme = url.Scheme
@@ -45,7 +45,7 @@ func ReverseProxyGnetReq(proxyPath string) *httputil.ReverseProxy {
 func ProxyGnetRequest(c *middleware.Context) {
 	proxyPath := c.Params("*")
 	proxy := ReverseProxyGnetReq(proxyPath)
-	proxy.Transport = gNetProxyTransport
+	proxy.Transport = grafanaComProxyTransport
 	proxy.ServeHTTP(c.Resp, c.Req.Request)
 	c.Resp.Header().Del("Set-Cookie")
 }
