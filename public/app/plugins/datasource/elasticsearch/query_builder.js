@@ -1,12 +1,13 @@
 define([
-  './query_def'
+  './query_def',
 ],
 function (queryDef) {
   'use strict';
 
   function ElasticQueryBuilder(options) {
-    this.timeField = options.timeField;
-    this.esVersion = options.esVersion;
+    this.timeField          = options.timeField;
+    this.esVersion          = options.esVersion;
+    this.queryStringOptions = options.queryStringOptions;
   }
 
   ElasticQueryBuilder.prototype.getRangeFilter = function() {
@@ -18,6 +19,16 @@ function (queryDef) {
     };
 
     return filter;
+  };
+
+  ElasticQueryBuilder.prototype.addQueryStringOptions = function(object) {
+    var qsOptions = {};
+    try {
+      qsOptions = JSON.parse(this.queryStringOptions);
+    } catch (e) {
+      qsOptions = {"query_string": {"analyze_wildcard": true}};
+    }
+    return Object.assign({}, object, qsOptions);
   };
 
   ElasticQueryBuilder.prototype.buildTermsAgg = function(aggDef, queryNode, target) {
@@ -98,13 +109,10 @@ function (queryDef) {
       var query = aggDef.settings.filters[i].query;
 
       filterObj[query] = {
-        query_string: {
-          query: query,
-          analyze_wildcard: true
-        }
+        query_string:
+          this.addQueryStringOptions({"query": query})
       };
     }
-
     return filterObj;
   };
 
@@ -173,18 +181,14 @@ function (queryDef) {
           "filter": [
             {"range": this.getRangeFilter()},
             {
-              "query_string": {
-                "analyze_wildcard": true,
-                "query": queryString,
-              }
+              "query_string":
+                this.addQueryStringOptions({"query": queryString})
             }
           ]
         }
       }
     };
-
     this.addAdhocFilters(query, adhocFilters);
-
     // handle document query
     if (target.bucketAggs.length === 0) {
       metric = target.metrics[0];
@@ -274,10 +278,8 @@ function (queryDef) {
 
     if (queryDef.query) {
       query.query.bool.filter.push({
-        "query_string": {
-          "analyze_wildcard": true,
-          "query": queryDef.query,
-        }
+        "query_string":
+          this.addQueryStringOptions({"query": queryDef.query})
       });
     }
 

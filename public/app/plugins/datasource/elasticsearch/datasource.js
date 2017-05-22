@@ -22,9 +22,11 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     this.esVersion = instanceSettings.jsonData.esVersion;
     this.indexPattern = new IndexPattern(instanceSettings.index, instanceSettings.jsonData.interval);
     this.interval = instanceSettings.jsonData.timeInterval;
+    this.queryStringOptions = instanceSettings.jsonData.queryStringOptions;
     this.queryBuilder = new ElasticQueryBuilder({
-      timeField: this.timeField,
-      esVersion: this.esVersion,
+      timeField:          this.timeField,
+      esVersion:          this.esVersion,
+      queryStringOptions: this.queryStringOptions,
     });
 
     this._request = function(method, url, data) {
@@ -91,7 +93,8 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
             { "range": range },
             {
               "query_string": {
-                "query": queryInterpolated
+                "query": queryInterpolated,
+                "analyze_wildcard": true
               }
             }
           ]
