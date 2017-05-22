@@ -14,8 +14,45 @@
 	<div class="section gf-form-group">
 		<h5 class="section-heading">Dimensions</h5>
 		<div class="gf-form">
-			<span class="gf-form-label width-7">Span</span>
+			<span class="gf-form-label width-7">
+				Span
+				<span ng-show="ctrl.panel.customSpan">
+					for extra large screens
+					<i class="grafana-tip fa fa-question-circle" bs-tooltip="'Affects devices with screens larger than 1200px'"></i>
+				</span>
+			</span>
 			<select class="gf-form-input width-6" ng-model="ctrl.panel.span" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10,11,12]"></select>
+		</div>
+		<gf-form-switch class="gf-form" label-class="width-7" switch-class="max-width-6" label="Custom span" checked="ctrl.panel.customSpan" on-change="ctrl.render()"></gf-form-switch>
+		<div ng-show="ctrl.panel.customSpan">
+			<div class="gf-form">
+				<span class="gf-form-label width-7">
+					Large screens
+					<i class="grafana-tip fa fa-question-circle" bs-tooltip="'Affects devices with screens between 992px and 1200px wide'"></i>
+				</span>
+				<select class="gf-form-input width-6" ng-model="ctrl.panel.spanLarge" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10,11,12]"></select>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-7">
+					Medium screens
+					<i class="grafana-tip fa fa-question-circle" bs-tooltip="'Affects devices with screens between 768px and 991px wide'"></i>
+				</span>
+				<select class="gf-form-input width-6" ng-model="ctrl.panel.spanMedium" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10,11,12]"></select>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-7">
+					Small screens
+					<i class="grafana-tip fa fa-question-circle" bs-tooltip="'Affects devices with screens between 480px and 767px wide'"></i>
+				</span>
+				<select class="gf-form-input width-6" ng-model="ctrl.panel.spanSmall" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10,11,12]"></select>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label width-7">
+					Extra small screens
+					<i class="grafana-tip fa fa-question-circle" bs-tooltip="'Affects devices with screens smaller than 480px'"></i>
+				</span>
+				<select class="gf-form-input width-6" ng-model="ctrl.panel.spanExtraSmall" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10,11,12]"></select>
+			</div>
 		</div>
 		<div class="gf-form">
 			<span class="gf-form-label width-7">Height</span>
@@ -37,8 +74,6 @@
 			</select>
 		</div>
 	</div>
-	</div>
+</div>
 
-	<panel-links-editor panel="ctrl.panel"></panel-links-editor>
-
-
+<panel-links-editor panel="ctrl.panel"></panel-links-editor>
