@@ -105,6 +105,11 @@ define([
         controller : 'AlertAssociationCtrl',
         resolve: loadOrgBundle,
       })
+      .when('/oncallerschedule', {
+        templateUrl: 'app/features/org/partials/oncallerSchedule.html',
+        controller : 'OnCallerScheduleCtrl',
+        resolve: loadOrgBundle,
+      })
       .when('/oncallers', {
         templateUrl: 'app/features/org/partials/oncallers.html',
         controller : 'OnCallersCtrl',

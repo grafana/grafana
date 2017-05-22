@@ -127,3 +127,41 @@ input[type="checkbox"]:checked+label {
   cursor: pointer;
 }
 
+.scheduleEditBox{
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 2;
+}
+.scheduleForm{
+  width: 350px;
+  margin: 0 auto;
+  background: #fff;
+  padding: 20px;
+  border: 1px solid #ccc;
+  transform: translateY(60%);
+  &>.item{
+    &>label{
+      width: 50px;
+      height: 25px;
+      line-height: 25px;
+      background: none;
+      color: black;
+      margin-top: -6px;
+      vertical-align: middle;
+    }
+  }
+  .gf-timepicker-component{
+    position: absolute;
+    background: #fff;
+    left: 80px;
+    padding: 20px;
+    border: 1px solid;
+  }
+}
+
+.center{
+  text-align: center;
+}

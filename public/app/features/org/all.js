@@ -14,5 +14,6 @@ define([
   './orgDetailsCtrl',
   './alertHistoryCtrl',
   './importAlertsCtrl',
-  './snoozeCtrl'
+  './snoozeCtrl',
+  './oncallerScheduleCtrl',
 ], function () {});
