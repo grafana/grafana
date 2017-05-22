@@ -57,7 +57,12 @@ export class AnnotationsSrv {
       };
 
     }).catch(err => {
-      this.$rootScope.appEvent('alert-error', ['Annotations failed', (err.message || err)]);
+      if (!err.message && err.data && err.data.message) {
+        err.message = err.data.message;
+      }
+      this.$rootScope.appEvent('alert-error', ['Annotation Query Failed', (err.message || err)]);
+
+      return [];
     });
   }
 

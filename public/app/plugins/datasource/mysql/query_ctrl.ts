@@ -17,7 +17,7 @@ export interface QueryMeta {
 }
 
 
-var defaulQuery = `SELECT
+const defaultQuery = `SELECT
   UNIX_TIMESTAMP(<time_column>) as time_sec,
   <value column> as value,
   <series name column> as metric
@@ -54,7 +54,7 @@ export class MysqlQueryCtrl extends QueryCtrl {
         this.target.format = 'table';
         this.target.rawSql = "SELECT 1";
       } else {
-        this.target.rawSql = defaulQuery;
+        this.target.rawSql = defaultQuery;
       }
     }
 
