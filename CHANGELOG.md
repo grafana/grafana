@@ -12,6 +12,7 @@
 ## Enhancements
 
 * **VictorOps**:  Now supports panel image & auto resolve [#8431](https://github.com/grafana/grafana/pull/8431), thx [@davidmscott](https://github.com/davidmscott)
+* **Alerting**:  Alert annotations now provide more info [#8421](https://github.com/grafana/grafana/pull/8421)
 
 # 4.3.0-beta1 (2017-05-12)
 
