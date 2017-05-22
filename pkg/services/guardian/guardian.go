@@ -32,8 +32,40 @@ func CanViewAcl(dashboardId int64, role m.RoleType, isGrafanaAdmin bool, orgId i
 		return false, err
 	}
 
-	if len(filteredList) > 1 && filteredList[0] == dashboardId {
+	if len(filteredList) > 0 && filteredList[0] == dashboardId {
 		return true, nil
+	}
+
+	return false, nil
+}
+
+// CanDeleteFromAcl determines if a user has permission to delete from a dashboard's ACL
+func CanDeleteFromAcl(dashboardId int64, role m.RoleType, isGrafanaAdmin bool, orgId int64, userId int64) (bool, error) {
+	if role == m.ROLE_ADMIN || isGrafanaAdmin {
+		return true, nil
+	}
+
+	permissions, err := getDashboardPermissions(dashboardId)
+	if err != nil {
+		return false, err
+	}
+
+	if len(permissions) == 0 {
+		return true, nil
+	}
+
+	userGroups, err := getUserGroupsByUser(userId)
+
+	for _, p := range permissions {
+		if p.UserId == userId && p.Permissions == m.PERMISSION_EDIT {
+			return true, nil
+		}
+
+		for _, ug := range userGroups {
+			if ug.Id == p.UserGroupId && p.Permissions == m.PERMISSION_EDIT {
+				return true, nil
+			}
+		}
 	}
 
 	return false, nil
@@ -48,6 +80,20 @@ func getUser(userId int64) (*m.SignedInUser, error) {
 
 func getAllowedDashboards(dashList []int64, orgId int64, userId int64) ([]int64, error) {
 	query := m.GetAllowedDashboardsQuery{UserId: userId, OrgId: orgId, DashList: dashList}
+	err := bus.Dispatch(&query)
+
+	return query.Result, err
+}
+
+func getDashboardPermissions(dashboardId int64) ([]*m.DashboardAclInfoDTO, error) {
+	query := m.GetDashboardPermissionsQuery{DashboardId: dashboardId}
+	err := bus.Dispatch(&query)
+
+	return query.Result, err
+}
+
+func getUserGroupsByUser(userId int64) ([]*m.UserGroup, error) {
+	query := m.GetUserGroupsByUserQuery{UserId: userId}
 	err := bus.Dispatch(&query)
 
 	return query.Result, err

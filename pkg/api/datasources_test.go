@@ -56,10 +56,10 @@ func TestDataSourcesProxy(t *testing.T) {
 }
 
 func loggedInUserScenario(desc string, url string, fn scenarioFunc) {
-	loggedInUserScenarioWithRole(desc, url, models.ROLE_EDITOR, fn)
+	loggedInUserScenarioWithRole(desc, "GET", url, url, models.ROLE_EDITOR, fn)
 }
 
-func loggedInUserScenarioWithRole(desc string, url string, role models.RoleType, fn scenarioFunc) {
+func loggedInUserScenarioWithRole(desc string, method string, url string, routePattern string, role models.RoleType, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
@@ -89,7 +89,12 @@ func loggedInUserScenarioWithRole(desc string, url string, role models.RoleType,
 			return nil
 		})
 
-		sc.m.Get(url, sc.defaultHandler)
+		switch method {
+		case "GET":
+			sc.m.Get(routePattern, sc.defaultHandler)
+		case "DELETE":
+			sc.m.Delete(routePattern, sc.defaultHandler)
+		}
 
 		fn(sc)
 	})

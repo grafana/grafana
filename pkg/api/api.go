@@ -250,6 +250,8 @@ func (hs *HttpServer) registerRoutes() {
 
 			r.Group("/:id/acl", func() {
 				r.Get("/", wrap(GetDashboardAcl))
+				r.Delete("/user/:userId", wrap(DeleteDashboardAclByUser))
+				r.Delete("/user-group/:userGroupId", wrap(DeleteDashboardAclByUserGroup))
 			}, reqSignedIn)
 		})
 
