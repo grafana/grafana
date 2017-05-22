@@ -9,6 +9,7 @@
 * **Sqlite**: Fixed with database table locked and using sqlite3 database [#7992](https://github.com/grafana/grafana/issues/7992)
 * **Alerting**: Fixed issue with annotations showing up in unsaved dashboards, new graph & alert panel. [#8361](https://github.com/grafana/grafana/issues/8361)
 * **webdav**: Fixed http proxy env variable support for webdav image upload [#7922](https://github.com/grafana/grafana/issues/79222), thx [@berghauz](https://github.com/berghauz)
+* **Prometheus**: Fixed issue with hiding query [#8413](https://github.com/grafana/grafana/issues/8413)
 
 ## Enhancements
 
