@@ -102,6 +102,10 @@ func (cm *ClusterManager) clusterMgrTicker(ctx context.Context) error {
 			return ctx.Err()
 		case <-cm.ticker.C: // ticks every second
 			if ticksCounter%60 == 0 {
+				//checkin() will happen only after every 1 minute. So it will enter alert_state = processing/scehduling
+				//and alert_runType = missing/normal whatever is the situtaion at that time. But missing alert
+				//checkin() has to happen after normal alert processing is done and missing alert processing starts
+				//so that mutliple nodes don't execute missing alerts.
 				cm.clusterNodeMgmt.CheckIn(cm.alertingState)
 			}
 			if ticksCounter%10 == 0 {
@@ -139,10 +143,13 @@ func (cm *ClusterManager) alertsScheduler() {
 	if cm.alertingState.status != m.CLN_ALERT_STATUS_READY {
 		cm.changeAlertingState(m.CLN_ALERT_STATUS_READY)
 	}
-	if cm.checkMissingAlerts() {
+	cm.scheduleNormalAlerts()
+	hasNode, err := cm.isAnyOtherNodeProcessingMissingAlerts()
+	if err != nil {
+		return
+	}
+	if !hasNode {
 		cm.scheduleMissingAlerts()
-	} else {
-		cm.scheduleNormalAlerts()
 	}
 }
 
@@ -156,21 +163,39 @@ func (cm *ClusterManager) hasPendingAlertJobs() bool {
 	return jobCountQuery.ResultCount > 0
 }
 
-func (cm *ClusterManager) checkMissingAlerts() bool {
-	cm.log.Debug("Cluster manager ticker - check missing alerts")
-	cmd := &m.GetMissingAlertsQuery{}
+func (cm *ClusterManager) isAnyOtherNodeProcessingMissingAlerts() (bool, error) {
+	cm.log.Debug("Cluster manager ticker - check if any other node is processing missing alerts")
+	cmd := &m.GetNodeProcessingMissingAlertsCommand{}
 	if err := bus.Dispatch(cmd); err != nil {
-		cm.log.Error("Failed to get missing alerts", "error", err)
-		return false
+		cm.log.Error("Failed to check if any other node is processing missing alerts", "error", err)
+		return false, err
 	}
-	cm.log.Debug("Command to get missing alerts executed successfully")
-	//TODO
-	return false
+	if cmd.Result != nil {
+		return true, nil
+	}
+	return false, nil
 }
 
 func (cm *ClusterManager) scheduleMissingAlerts() {
-	cm.log.Debug("Cluster manager ticker - process missing alerts")
-	//TODO
+	lastHeartbeat, err := cm.clusterNodeMgmt.GetLastHeartbeat()
+	if err != nil {
+		cm.log.Error("Failed to get last heartbeat", "error", err)
+		return
+	}
+	if lastHeartbeat <= cm.alertingState.lastProcessedInterval {
+		return
+	}
+	activeNode, err := cm.clusterNodeMgmt.GetNode(lastHeartbeat)
+	if err != nil {
+		cm.log.Debug("Failed to get node for heartbeat "+strconv.FormatInt(lastHeartbeat, 10), "error", err, "activeNode", activeNode.NodeId)
+		return
+	}
+	cm.changeAlertingStateAndRunType(m.CLN_ALERT_STATUS_SCHEDULING, m.CLN_ALERT_RUN_TYPE_MISSING)
+	alertDispatchTask := &DispatcherTask{
+		taskType: DISPATCHER_TASK_TYPE_ALERTS_MISSING,
+	}
+	cm.dispatcherTaskQ <- alertDispatchTask
+	cm.alertingState.lastProcessedInterval = lastHeartbeat
 }
 
 func (cm *ClusterManager) scheduleNormalAlerts() {
@@ -202,7 +227,7 @@ func (cm *ClusterManager) scheduleNormalAlerts() {
 		return
 	}
 
-	cm.changeAlertingState(m.CLN_ALERT_STATUS_SCHEDULING)
+	cm.changeAlertingStateAndRunType(m.CLN_ALERT_STATUS_SCHEDULING, m.CLN_ALERT_RUN_TYPE_NORMAL)
 	alertDispatchTask := &DispatcherTask{
 		taskType: DISPATCHER_TASK_TYPE_ALERTS_PARTITION,
 		taskInfo: &DispatcherTaskAlertsPartition{
@@ -246,7 +271,8 @@ func (cm *ClusterManager) handleAlertRulesDispatcherTask(task *DispatcherTask) {
 		err = bus.Dispatch(scheduleCmd)
 		cm.log.Debug("Alert rules dispatcher - submitted next alerts batch")
 	case DISPATCHER_TASK_TYPE_ALERTS_MISSING:
-		//TODO
+		scheduleCmd := &alerting.ScheduleMissingAlertsCommand{}
+		err = bus.Dispatch(scheduleCmd)
 		cm.log.Debug("Alert rules dispatcher - submitted missing alerts batch")
 	default:
 		err = errors.New("Invalid task type " + string(task.taskType))
@@ -262,4 +288,13 @@ func (cm *ClusterManager) handleAlertRulesDispatcherTask(task *DispatcherTask) {
 func (cm *ClusterManager) changeAlertingState(newState string) {
 	cm.log.Info("Alerting state: " + cm.alertingState.status + " -> " + newState)
 	cm.alertingState.status = newState
+}
+
+func (cm *ClusterManager) changeAlertRunType(runType string) {
+	cm.alertingState.run_type = runType
+}
+
+func (cm *ClusterManager) changeAlertingStateAndRunType(newState string, runType string) {
+	cm.changeAlertingState(newState)
+	cm.changeAlertRunType(runType)
 }

@@ -31,11 +31,16 @@ type ScheduleAlertsForPartitionCommand struct {
 	Interval    int64
 }
 
+type ScheduleMissingAlertsCommand struct {
+	Result []*Rule
+}
+
 func init() {
 	bus.AddHandler("alerting", updateDashboardAlerts)
 	bus.AddHandler("alerting", validateDashboardAlerts)
 	bus.AddHandler("alerting", getPendingAlertJobCount)
 	bus.AddHandler("alerting", scheduleAlertsForPartition)
+	bus.AddHandler("alerting", scheduleMissingAlerts)
 }
 
 func validateDashboardAlerts(cmd *ValidateDashboardAlertsCommand) error {
@@ -108,5 +113,30 @@ func scheduleAlertsForPartition(cmd *ScheduleAlertsForPartitionCommand) error {
 	}
 	engine.log.Info(fmt.Sprintf("%v/%v rules scheduled for execution for partition %v/%v",
 		filterCount, len(rules), cmd.PartitionNo, cmd.NodeCount))
+	return nil
+}
+
+func scheduleMissingAlerts(cmd *ScheduleMissingAlertsCommand) error {
+	//get missing alerts
+	missingAlertsQuery := &m.GetMissingAlertsQuery{}
+	err := bus.Dispatch(missingAlertsQuery)
+	if err != nil {
+		return errors.New("Missing Alerts query failed to execute")
+	}
+
+	//transform each alert to rule
+	res := make([]*Rule, 0)
+	missingAlerts := missingAlertsQuery.Result
+	for _, ruleDef := range missingAlerts {
+		if model, err := NewRuleFromDBAlert(ruleDef); err != nil {
+			engine.log.Error("Could not build alert model for rule", "ruleId", ruleDef.Id, "error", err)
+		} else {
+			res = append(res, model)
+			engine.execQueue <- &Job{Rule: model}
+			engine.log.Debug(fmt.Sprintf("Scheduled missed Rule : %v", model))
+		}
+	}
+	cmd.Result = res
+	engine.log.Info(fmt.Sprintf("Total no of rules scheduled for execution of missed alerts is %v", len(missingAlerts)))
 	return nil
 }

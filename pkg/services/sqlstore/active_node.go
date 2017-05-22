@@ -174,3 +174,21 @@ func GetActiveNodesCount(cmd *m.GetActiveNodesCountCommand) error {
 	cmd.Result = len(actNodes)
 	return nil
 }
+
+func GetNodeProcessingMissingAlerts(cmd *m.GetNodeProcessingMissingAlertsCommand) error {
+	var retNode m.ActiveNode
+	results, err1 := x.Query("select " + dialect.CurrentTimeToRoundMinSql() + " as ts ")
+	if err1 != nil {
+		sqlog.Error("Failed to get db timestamp", "error", err1)
+		return err1
+	}
+	ts, _ := strconv.ParseInt(string(results[0]["ts"]), 10, 64)
+	_, err := x.Where("heartbeat=?", ts).And("alert_run_type=?", m.CLN_ALERT_RUN_TYPE_MISSING).Get(&retNode)
+	if err != nil {
+		errmsg := fmt.Sprintf("Failed to get Node processing missing alert for heartbeat=%d", ts)
+		sqlog.Error(errmsg, "error", err)
+		return err
+	}
+	cmd.Result = &retNode
+	return nil
+}

@@ -50,3 +50,7 @@ type GetActiveNodesCountCommand struct {
 	Heartbeat int64
 	Result    int
 }
+
+type GetNodeProcessingMissingAlertsCommand struct {
+	Result *ActiveNode
+}
