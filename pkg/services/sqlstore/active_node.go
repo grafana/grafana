@@ -11,8 +11,8 @@ import (
 )
 
 var (
-	insertHeartbeatSQL = "insert into active_node(node_id, heartbeat, partition_no, alert_run_type, alert_status) " +
-		"values(?, ?, (select count(partition_no) from active_node where heartbeat = ? and alert_status = ?), ?, ?)"
+	insertHeartbeatSQL = "insert into active_node(node_id, heartbeat, part_id, alert_run_type, alert_status) values(?, ?, ?, ?, ?)"
+	getNextPartIDSQL   = "select count(part_id) as part_id from active_node where heartbeat = ? and alert_status = ?"
 )
 
 func init() {
@@ -68,7 +68,17 @@ func InsertActiveNodeHeartbeat(cmd *m.SaveActiveNodeCommand) error {
 			sqlog.Error("Failed to get timestamp", "error", err)
 			return err
 		}
-		_, err = sess.Exec(insertHeartbeatSQL, cmd.Node.NodeId, ts, ts, cmd.Node.AlertStatus, cmd.Node.AlertRunType, cmd.Node.AlertStatus)
+		results, err = sess.Query(getNextPartIDSQL, ts, cmd.Node.AlertStatus)
+		if err != nil {
+			sqlog.Error("Failed to get next part_id", "error", err)
+			return err
+		}
+		partID, err := strconv.ParseInt(string(results[0]["part_id"]), 10, 64)
+		if err != nil {
+			sqlog.Error("Failed to get next part_id", "error", err)
+			return err
+		}
+		_, err = sess.Exec(insertHeartbeatSQL, cmd.Node.NodeId, ts, partID, cmd.Node.AlertRunType, cmd.Node.AlertStatus)
 		if err != nil {
 			sqlog.Error("Failed to insert heartbeat", "error", err)
 			return err
@@ -105,7 +115,7 @@ func InsertNodeProcessingMissingAlert(cmd *m.SaveNodeProcessingMissingAlertComma
 		}
 		nodeProcessingMissingAlert := &m.ActiveNode{
 			NodeId:       cmd.Node.NodeId,
-			PartitionNo:  0,
+			PartId:       0,
 			AlertRunType: m.CLN_ALERT_RUN_TYPE_MISSING,
 			Heartbeat:    ts,
 			AlertStatus:  "FIXME", // TODO heartbeat record must only be recorded via InsertActiveNodeHeartbeat
