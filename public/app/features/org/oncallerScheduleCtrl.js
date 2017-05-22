@@ -11,7 +11,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('OnCallerScheduleCtrl', function ($scope, oncallerMgrSrv, $compile) {
+    module.controller('OnCallerScheduleCtrl', function ($scope, oncallerMgrSrv) {
       $scope.shadow = {
         color: '#f00',
         textColor: 'yellow',
@@ -51,7 +51,7 @@ define([
             header: {
               left: 'prev,next today',
               center: 'title',
-              right: 'month,basicWeek,basicDay'
+              right: 'month,agendaWeek,agendaDay'
             },
             dayClick: $scope.getEventTime,
             eventClick: $scope.alertOnEventClick,
@@ -63,31 +63,22 @@ define([
       };
 
       var addEvent = function(oncaller, role) {
+        oncaller.stick = true;
         oncaller.color = $scope[role].color;
         oncaller.textColor = $scope[role].textColor;
         oncaller.className = [];
         oncaller.className.push(role);
-        $scope[role].events.push(oncaller);
-        if(!oncaller.end){
-          var len = $scope[role].events.length;
-          if(len < 2){
-            return;
-          } else {
-            $scope[role].events[len-2].end = oncaller.start;
+        if(_.findIndex($scope[role].events,{start:oncaller.start}) == (-1 || undefined)){
+          $scope[role].events.push(oncaller);
+          if(!oncaller.end){
+            var len = $scope[role].events.length;
+            if(len < 2){
+              return;
+            } else {
+              $scope[role].events[len-2].end = oncaller.start;
+            }
           }
         }
-      }
-
-      var getEvents = function(start,end) {
-        oncallerMgrSrv.loadSchedule(start, end).then(function onSuccess(response) {
-          _.each(response.data.roleSchedule, function(roleEvents, role) {
-            _.each(roleEvents, function(oncaller, start) {
-              oncaller.start = new Date(parseInt(start)*1000);
-              oncaller.title = oncaller.name;
-              addEvent(oncaller, role);
-            });
-          });
-        });
       }
 
       var getTimeSec = function(time) {
@@ -107,13 +98,20 @@ define([
       };
 
       $scope.viewRender = function(view, element) {
-        getEvents(getTimeSec(view.start._d), getTimeSec(view.end._d));
+        oncallerMgrSrv.loadSchedule(getTimeSec(view.start._d), getTimeSec(view.end._d)).then(function onSuccess(response) {
+          _.each(response.data.roleSchedule, function(roleEvents, role) {
+            _.each(roleEvents, function(oncaller, start) {
+              oncaller.start = new Date(parseInt(start)*1000);
+              oncaller.title = oncaller.name;
+              addEvent(oncaller, role);
+            });
+          });
+        });
       };
 
       $scope.getEventTime = function(date) {
         $scope.showEditForm = true;
         $scope.startTime = moment(date._d).format('YYYY-MM-DD HH:mm:ss');
-        $scope.endTime = null;
         oncallerMgrSrv.load().then(function onSuccess(response) {
           $scope.oncallerDefList = response.data;
         });
