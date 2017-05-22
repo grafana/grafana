@@ -16,6 +16,7 @@ func init() {
 	bus.AddHandler("sql", DeleteUserGroup)
 	bus.AddHandler("sql", SearchUserGroups)
 	bus.AddHandler("sql", GetUserGroupById)
+	bus.AddHandler("sql", GetUserGroupsByUser)
 
 	bus.AddHandler("sql", AddUserGroupMember)
 	bus.AddHandler("sql", RemoveUserGroupMember)
@@ -159,6 +160,21 @@ func GetUserGroupById(query *m.GetUserGroupByIdQuery) error {
 	}
 
 	query.Result = &userGroup
+	return nil
+}
+
+func GetUserGroupsByUser(query *m.GetUserGroupsByUserQuery) error {
+	query.Result = make([]*m.UserGroup, 0)
+
+	sess := x.Table("user_group")
+	sess.Join("INNER", "user_group_member", "user_group.id=user_group_member.user_group_id")
+	sess.Where("user_group_member.user_id=?", query.UserId)
+
+	err := sess.Find(&query.Result)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 

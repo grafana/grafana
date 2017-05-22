@@ -45,6 +45,11 @@ type GetUserGroupByIdQuery struct {
 	Result *UserGroup
 }
 
+type GetUserGroupsByUserQuery struct {
+	UserId int64        `json:"userId"`
+	Result []*UserGroup `json:"userGroups"`
+}
+
 type SearchUserGroupsQuery struct {
 	Query string
 	Name  string

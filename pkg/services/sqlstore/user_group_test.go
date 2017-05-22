@@ -67,6 +67,17 @@ func TestUserGroupCommandsAndQueries(t *testing.T) {
 				So(len(query2.Result.UserGroups), ShouldEqual, 2)
 			})
 
+			Convey("Should be able to return all user groups a user is member of", func() {
+				groupId := group2.Result.Id
+				err := AddUserGroupMember(&m.AddUserGroupMemberCommand{OrgId: 1, UserGroupId: groupId, UserId: userIds[0]})
+
+				query := &m.GetUserGroupsByUserQuery{UserId: userIds[0]}
+				err = GetUserGroupsByUser(query)
+				So(err, ShouldBeNil)
+				So(len(query.Result), ShouldEqual, 1)
+				So(query.Result[0].Name, ShouldEqual, "group2 name")
+			})
+
 			Convey("Should be able to remove users from a group", func() {
 				err = RemoveUserGroupMember(&m.RemoveUserGroupMemberCommand{UserGroupId: group1.Result.Id, UserId: userIds[0]})
 				So(err, ShouldBeNil)
