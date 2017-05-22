@@ -25,16 +25,22 @@ function (angular, _, dateMath) {
       var start = convertToTSDBTime(options.rangeRaw.from, false);
       var end = convertToTSDBTime(options.rangeRaw.to, true);
       var qs = [];
+      var gExps = [];
 
       _.each(options.targets, function(target) {
-        if (!target.metric) { return; }
-        qs.push(convertTargetToQuery(target, options));
+        if (!target.metric && !target.gexp) { return; }
+        if (target.queryType === 'metric') {
+          qs.push(convertTargetToQuery(target, options));
+        } else if (target.queryType === 'gexp') {
+          gExps.push(target.gexp);
+        }
       });
 
       var queries = _.compact(qs);
+      var gExpressions = _.compact(gExps);
 
       // No valid targets, return the empty result to save a round trip.
-      if (_.isEmpty(queries)) {
+      if (_.isEmpty(queries) && _.isEmpty(gExpressions)) {
         var d = $q.defer();
         d.resolve({ data: [] });
         return d.promise;
@@ -53,19 +59,50 @@ function (angular, _, dateMath) {
         }
       });
 
-      return this.performTimeSeriesQuery(queries, start, end).then(function(response) {
-        var metricToTargetMapping = mapMetricsToTargets(response.data, options, this.tsdbVersion);
-        var result = _.map(response.data, function(metricData, index) {
-          index = metricToTargetMapping[index];
-          if (index === -1) {
-            index = 0;
-          }
-          this._saveTagKeys(metricData);
+      var result = {};
+      result.data = [];
+      var queriesPromise;
+      var gexpPromise;
 
-          return transformMetricData(metricData, groupByTags, options.targets[index], options, this.tsdbResolution);
+      if (queries.length > 0) {
+        queriesPromise = this.performTimeSeriesQuery(queries, start, end).then(function(response) {
+          var metricToTargetMapping = mapMetricsToTargets(response.data, options, this.tsdbVersion);
+          var result = _.map(response.data, function(metricData, index) {
+            index = metricToTargetMapping[index];
+            if (index === -1) {
+              index = 0;
+            }
+            this._saveTagKeys(metricData);
+            return transformMetricData(metricData, groupByTags, options.targets[index], options, this.tsdbResolution);
+          }.bind(this));
+          return result;
         }.bind(this));
-        return { data: result };
-      }.bind(this));
+      }
+
+      if (gExpressions.length > 0) {
+        gexpPromise = this.performTimeSeriesGExpression(gExpressions, start, end).then(function(response) {
+          var gExpToTargetMapping = mapGExpToTargets(response.data, options);
+          var result = _.map(response.data, function(gexpData, index) {
+            index = gExpToTargetMapping[index];
+            if (index === -1) {
+              index = 0;
+            }
+            return transformGexpData(gexpData, options.targets[index], this.tsdbResolution);
+          }.bind(this));
+          return result;
+        }.bind(this));
+      }
+
+      return $q.all([queriesPromise, gexpPromise]).then(function(data) {
+        if (data[0] && data[0].length > 0) {
+          result.data = result.data.concat(data[0]);
+        }
+        if (data[1] && data[1].length > 0) {
+          result.data = result.data.concat(data[1]);
+        }
+        return result;
+      });
+
     };
 
     this.annotationQuery = function(options) {
@@ -150,6 +187,28 @@ function (angular, _, dateMath) {
 
       this._addCredentialOptions(options);
       return backendSrv.datasourceRequest(options);
+    };
+
+    this.performTimeSeriesGExpression = function(gExps, start, end) {
+
+      var urlParams = '?start=' + start;
+      _.each(gExps, function(gexp) {
+        urlParams += '&exp=' + gexp;
+      });
+
+      var options = {
+        method: 'GET',
+        url: this.url + '/api/query/gexp' + urlParams
+      };
+
+      // Relative queries (e.g. last hour) don't include an end time
+      if (end) {
+        urlParams = '&end=' + end;
+      }
+
+      this._addCredentialOptions(options);
+      return backendSrv.datasourceRequest(options);
+
     };
 
     this.suggestTagKeys = function(metric) {
@@ -324,11 +383,32 @@ function (angular, _, dateMath) {
 
     function transformMetricData(md, groupByTags, target, options, tsdbResolution) {
       var metricLabel = createMetricLabel(md, target, groupByTags, options);
+      var dps = getDatapoints(md, tsdbResolution);
+
+      return { target: metricLabel, datapoints: dps };
+    }
+
+    function transformGexpData(gExp, target, tsdbResolution) {
+
+      var metricLabel;
+      if (!target.gexpAlias || target.gexpAlias === '') {
+        metricLabel = target.gexp;
+      } else {
+        metricLabel = target.gexpAlias;
+      }
+      var dps = getDatapoints(gExp, tsdbResolution);
+
+      return { target: metricLabel, datapoints: dps };
+
+    }
+
+    function getDatapoints(result, tsdbResolution) {
+
       var dps = [];
 
       // TSDB returns datapoints has a hash of ts => value.
       // Can't use _.pairs(invert()) because it stringifies keys/values
-      _.each(md.dps, function (v, k) {
+      _.each(result.dps, function (v, k) {
         if (tsdbResolution === 2) {
           dps.push([v, k * 1]);
         } else {
@@ -336,7 +416,8 @@ function (angular, _, dateMath) {
         }
       });
 
-      return { target: metricLabel, datapoints: dps };
+      return dps;
+
     }
 
     function createMetricLabel(md, target, groupByTags, options) {
@@ -451,6 +532,17 @@ function (angular, _, dateMath) {
           });
         }
       });
+    }
+
+    // A hack until opentsdb supports show_query feature for gexp
+    function mapGExpToTargets(gExps, options) {
+      var targetIndexes = [];
+      _.each(options.targets, function(target, index) {
+        if (target.queryType === 'gexp') {
+          targetIndexes.push(index);
+        }
+      });
+      return targetIndexes;
     }
 
     function convertToTSDBTime(date, roundUp) {
