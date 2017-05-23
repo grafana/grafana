@@ -96,6 +96,6 @@ require.config({
 
     'bootstrap-tagsinput':          ['jquery'],
     'ui.calendar':          ['jquery','fullcalendar', 'angular'],
-    'zh-cn':                ['jquery','moment'],
+    'zh-cn':                ['jquery','moment', 'fullcalendar'],
   },
 });
