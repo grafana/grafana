@@ -21,6 +21,7 @@ func init() {
 	bus.AddHandler("sql", InsertNodeProcessingMissingAlert)
 	bus.AddHandler("sql", GetLastDBTimeInterval)
 	bus.AddHandler("sql", GetActiveNodesCount)
+	bus.AddHandler("sql", GetNodeProcessingMissingAlerts)
 }
 
 func GetActiveNodeByIdHeartbeat(query *m.GetActiveNodeByIdHeartbeatQuery) error {
