@@ -97,7 +97,7 @@ function (queryDef) {
     for (var i = 0; i < aggDef.settings.filters.length; i++) {
       var query = aggDef.settings.filters[i].query;
       var label = aggDef.settings.filters[i].label;
-      label = label==='' || label === undefined?query:label;
+      label = label === '' || label === undefined ? query : label;
       filterObj[label] = {
         query_string: {
           query: query,
