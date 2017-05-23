@@ -44,6 +44,7 @@ var (
 	M_Alerting_Notification_Sent_Slack     Counter
 	M_Alerting_Notification_Sent_Email     Counter
 	M_Alerting_Notification_Sent_Webhook   Counter
+	M_Alerting_Notification_Sent_DingDing  Counter
 	M_Alerting_Notification_Sent_PagerDuty Counter
 	M_Alerting_Notification_Sent_LINE      Counter
 	M_Alerting_Notification_Sent_Victorops Counter
@@ -116,6 +117,7 @@ func initMetricVars(settings *MetricSettings) {
 	M_Alerting_Notification_Sent_Slack = RegCounter("alerting.notifications_sent", "type", "slack")
 	M_Alerting_Notification_Sent_Email = RegCounter("alerting.notifications_sent", "type", "email")
 	M_Alerting_Notification_Sent_Webhook = RegCounter("alerting.notifications_sent", "type", "webhook")
+	M_Alerting_Notification_Sent_DingDing = RegCounter("alerting.notifications_sent", "type", "dingding")
 	M_Alerting_Notification_Sent_PagerDuty = RegCounter("alerting.notifications_sent", "type", "pagerduty")
 	M_Alerting_Notification_Sent_Victorops = RegCounter("alerting.notifications_sent", "type", "victorops")
 	M_Alerting_Notification_Sent_OpsGenie = RegCounter("alerting.notifications_sent", "type", "opsgenie")
