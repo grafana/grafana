@@ -152,7 +152,28 @@ function (angular, $, _, Tether) {
             dismiss(2200);
           };
 
-          elem.click(showMenu);
+          var switchView = function() {
+            ctrl.switchView();
+            dismiss(null, true);
+          };
+
+          // clickHandler checks what kind of click it was (click/dblclick)
+          var clicks = 0;
+          var clickHandler = function(e) {
+            clicks++;
+            if (clicks === 1) {
+              setTimeout(function() {
+                if(clicks === 1) {
+                  showMenu(e);
+                } else {
+                  switchView();
+                }
+                clicks = 0;
+              }, 200);
+            }
+          };
+
+          elem.click(clickHandler);
           $compile(elem.contents())($scope);
         }
       };
