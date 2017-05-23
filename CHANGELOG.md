@@ -1,3 +1,6 @@
+# 4.4.0 (unreleased)
+* **Elasticsearch**: Added filter aggregation label [#8420](https://github.com/grafana/grafana/pull/8420), thx [@tianzk](github.com/tianzk)
+
 # 4.3.1 (2017-05-23)
 
 ## Bug fixes
