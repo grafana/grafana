@@ -1,3 +1,9 @@
+# 4.3.1 (2017-05-23)
+
+## Bug fixes
+
+* **S3 image upload**: Fixed image url issue for us-east-1 (us standard) region. If you were missing slack images for alert notifications this should fix it. [#8444](https://github.com/grafana/grafana/issues/8444)
+
 # 4.3.0-stable (2017-05-23)
 
 ## Bug fixes
