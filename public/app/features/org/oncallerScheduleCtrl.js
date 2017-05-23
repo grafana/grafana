@@ -12,9 +12,21 @@ define([
     var module = angular.module('grafana.controllers');
 
     module.controller('OnCallerScheduleCtrl', function ($scope, oncallerMgrSrv) {
+      /* oncaller/events
+        {
+          title: name,       << 显示名称
+          start: start,
+          end: end,
+          id: id,             << 人员id,添加修改时使用
+          name: name,         << 后端返回时携带的,这里赋值给title,以供显示
+          stick: true,        << 保证events停留在view上，为repeat处理服务
+          className: [],      << 这里单纯为了记录角色,其他自定义属性也可以
+          color/textColor: color, <<  控制展示颜色,可由前端设置
+        }
+      */
       $scope.shadow = {
         color: '#f00',
-        textColor: 'yellow',
+        textColor: 'black',
         events: []
       };
       $scope.primary = {
@@ -51,24 +63,27 @@ define([
             header: {
               left: 'prev,next today',
               center: 'title',
-              right: 'month,agendaWeek,agendaDay'
+              right: 'month,basicWeek,basicDay'
             },
-            dayClick: $scope.getEventTime,
-            eventClick: $scope.alertOnEventClick,
-            viewRender: $scope.viewRender,
+            dayClick: dayClick,
+            eventClick: eventClick,
+            viewRender: viewRender,
+            eventMouseover: eventMouseover,
+            eventMouseout: eventMouseout,
           }
         };
 
         $scope.eventSources = [$scope.shadow,$scope.primary,$scope.secondary];
       };
 
-      var addEvent = function(oncaller, role) {
+      function addEvent(oncaller, role) {
         oncaller.stick = true;
         oncaller.color = $scope[role].color;
         oncaller.textColor = $scope[role].textColor;
         oncaller.className = [];
         oncaller.className.push(role);
-        if(_.findIndex($scope[role].events,{start:oncaller.start}) == (-1 || undefined)){
+        var index = _.findIndex($scope[role].events,{start:oncaller.start});
+        if(index == (-1 || undefined)){
           $scope[role].events.push(oncaller);
           if(!oncaller.end){
             var len = $scope[role].events.length;
@@ -78,18 +93,27 @@ define([
               $scope[role].events[len-2].end = oncaller.start;
             }
           }
+        } else {
+          $scope[role].events[index].title = oncaller.title;
         }
       }
 
-      var getTimeSec = function(time) {
+      function getTimeSec(time) {
         return new Date(time).valueOf()/1000;
       }
 
-      /* alert on eventClick */
-      $scope.alertOnEventClick = function(date, jsEvent, view) {
+      function formatTime(time) {
+        if(time){
+          return moment(time).format('YYYY-MM-DD HH:mm:ss');
+        } else {
+          return '';
+        }
+      }
+
+      function eventClick(date, jsEvent, view) {
         $scope.showEditForm = true;
-        $scope.startTime = date.start;
-        $scope.endTime = date.end;
+        $scope.startTime = formatTime(date.start);
+        $scope.endTime = formatTime(date.end);
         $scope.role = _.find($scope.roles,{key: date.className[0]});
         oncallerMgrSrv.load().then(function onSuccess(response) {
           $scope.oncallerDefList = response.data;
@@ -97,7 +121,7 @@ define([
         });
       };
 
-      $scope.viewRender = function(view, element) {
+      function viewRender(view, element) {
         oncallerMgrSrv.loadSchedule(getTimeSec(view.start._d), getTimeSec(view.end._d)).then(function onSuccess(response) {
           _.each(response.data.roleSchedule, function(roleEvents, role) {
             _.each(roleEvents, function(oncaller, start) {
@@ -109,20 +133,28 @@ define([
         });
       };
 
-      $scope.getEventTime = function(date) {
+      function dayClick(date) {
         $scope.showEditForm = true;
-        $scope.startTime = moment(date._d).format('YYYY-MM-DD HH:mm:ss');
+        $scope.startTime = formatTime(date._d);
         oncallerMgrSrv.load().then(function onSuccess(response) {
           $scope.oncallerDefList = response.data;
         });
       };
 
+      function eventMouseover(event, jsEvent, view) {
+        this.style.backgroundColor = '#eee';
+      };
+
+      function eventMouseout(event, jsEvent, view) {
+        this.style.backgroundColor = $scope[event.className[0]].color;
+      };
+
       $scope.absoluteFromChanged = function (start) {
-        $scope.startTime = moment(start).format('YYYY-MM-DD HH:mm:ss');
+        $scope.startTime = formatTime(start);
       }
 
       $scope.absoluteToChanged = function (end) {
-        $scope.endTime = moment(end).format('YYYY-MM-DD HH:mm:ss');
+        $scope.endTime = formatTime(end);
       }
 
       $scope.addSchedule = function(role,oncallerSelcted) {

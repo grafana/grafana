@@ -33,7 +33,7 @@
             </div>
             <div class="item">
                 <label class="label">From</label>
-                <input type="text" class="input-large" ng-model="startTime" input-datetime>
+                <input type="text" class="input-large" ng-model="startTime"  ng-change="absoluteFromChanged(startTime)">
                 <button style="margin-top: -10px;" class="btn btn-primary" type="button" ng-click="openFromPicker=!openFromPicker">
                     <i class="fa fa-calendar"></i>
                 </button>
@@ -43,7 +43,7 @@
             </div>
             <div class="item">
                 <label class="label">To</label>
-                <input type="text" class="input-large" ng-model="endTime" input-datetime>
+                <input type="text" class="input-large" ng-model="endTime" ng-change="absoluteToChanged(endTime)">
                 <button style="margin-top: -10px;" class="btn btn-primary" type="button" ng-click="openToPicker=!openToPicker">
                     <i class="fa fa-calendar"></i>
                 </button>
