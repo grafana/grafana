@@ -11,6 +11,7 @@ define([
   'angular-ui',
   'bindonce',
   'app/core/core',
+  'ui.calendar',
 ],
 function (angular, $, _, appLevelRequire) {
   "use strict";
@@ -56,6 +57,7 @@ function (angular, $, _, appLevelRequire) {
     'pasvaz.bindonce',
     'ui.bootstrap',
     'ui.bootstrap.tpls',
+    'ui.calendar',
   ];
 
   var module_types = ['controllers', 'directives', 'factories', 'services', 'filters', 'routes'];

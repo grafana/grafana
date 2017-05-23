@@ -9,6 +9,7 @@ function (angular, _, coreModule) {
     this.oncallerDefMap = {};
     var self = this;
     var oncallerUrl = "/oncaller/definition";
+    var oncallerScheduleUrl = "/oncaller/schedule";
 
     this.load = function() {
       return backendSrv.alertD({
@@ -48,6 +49,35 @@ function (angular, _, coreModule) {
     //id is in the form of id
     this.get = function(id) {
       return self.oncallerDefMap[id];
+    };
+
+    this.loadSchedule = function (start, end) {
+      return backendSrv.alertD({
+        method: "get",
+        url: oncallerScheduleUrl,
+        params: {
+          startSec: start,
+          endSec: end
+        }
+      }).then(function onSuccess(response) {
+        return response;
+      }, function onFailed(response) {
+        return response;
+      });
+    };
+
+    this.updateSchedule = function (role, id, startSec, endSec) {
+      return backendSrv.alertD({
+        method: "post",
+        url: oncallerScheduleUrl,
+        params:{
+          role: role,
+          id: id,
+          startSec: startSec,
+          endSec: endSec
+        },
+        headers: {'Content-Type': 'text/plain'},
+      });
     };
 
   });

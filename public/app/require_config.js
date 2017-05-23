@@ -38,7 +38,10 @@ require.config({
     modernizr:                 'vendor/modernizr-2.6.1',
 
     'bootstrap-tagsinput':    'vendor/tagsinput/bootstrap-tagsinput',
-    'aws-sdk':                'vendor/aws-sdk/dist/aws-sdk.min'
+    'aws-sdk':                'vendor/aws-sdk/dist/aws-sdk.min',
+    'fullcalendar':           'vendor/fullcalendar/dist/fullcalendar.min',
+    'ui.calendar':            'vendor/angular-ui-calendar/src/calendar',
+    'zh-cn':                  'vendor/fullcalendar/dist/zh-cn',
   },
 
   shim: {
@@ -92,5 +95,7 @@ require.config({
     datepicker:             ['jquery', 'bootstrap'],
 
     'bootstrap-tagsinput':          ['jquery'],
+    'ui.calendar':          ['jquery','fullcalendar', 'angular'],
+    'zh-cn':                ['jquery','moment'],
   },
 });
