@@ -1,4 +1,4 @@
-# 4.3.0-stable (unreleased)
+# 4.3.0-stable (2017-05-23)
 
 ## Bug fixes
 
