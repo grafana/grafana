@@ -3,8 +3,6 @@ package sqlstore
 import (
 	"fmt"
 
-	"github.com/go-xorm/xorm"
-
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -118,7 +116,7 @@ func DeletePlaylist(cmd *m.DeletePlaylistCommand) error {
 		return m.ErrCommandValidationFailed
 	}
 
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		var rawPlaylistSql = "DELETE FROM playlist WHERE id = ? and org_id = ?"
 		_, err := sess.Exec(rawPlaylistSql, cmd.Id, cmd.OrgId)
 

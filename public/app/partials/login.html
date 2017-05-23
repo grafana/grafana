@@ -40,10 +40,10 @@
 			</form>
 
 			<div ng-if="loginMode">
-				<div class="text-center login-divider">
+				<div class="text-center login-divider" ng-show="oauthEnabled">
 					<div class="login-divider-line">
 						<span class="login-divider-text">
-							<span ng-show="oauthEnabled && !disableLoginForm">Or</span> Login With
+							<span ng-hide="disableLoginForm">Or</span> Login With
 						</span>
 					</div>
 				</div>
