@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
@@ -23,7 +22,7 @@ func init() {
 }
 
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		dash := cmd.GetDashboardModel()
 
 		// try get existing dashboard
@@ -220,7 +219,7 @@ func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
 }
 
 func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 		dashboard := m.Dashboard{Slug: cmd.Slug, OrgId: cmd.OrgId}
 		has, err := sess.Get(&dashboard)
 		if err != nil {
@@ -243,7 +242,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			}
 		}
 
-		if err := DeleteAlertDefinition(dashboard.Id, sess.Session); err != nil {
+		if err := DeleteAlertDefinition(dashboard.Id, sess); err != nil {
 			return nil
 		}
 

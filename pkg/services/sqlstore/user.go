@@ -5,8 +5,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xorm/xorm"
-
 	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -34,7 +32,7 @@ func init() {
 	bus.AddHandler("sql", SetUserHelpFlag)
 }
 
-func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *session) (int64, error) {
+func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *DBSession) (int64, error) {
 	if cmd.SkipOrgSetup {
 		return -1, nil
 	}
@@ -77,7 +75,7 @@ func getOrgIdForNewUser(cmd *m.CreateUserCommand, sess *session) (int64, error) 
 }
 
 func CreateUser(cmd *m.CreateUserCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 		orgId, err := getOrgIdForNewUser(cmd, sess)
 		if err != nil {
 			return err
@@ -220,7 +218,7 @@ func GetUserByEmail(query *m.GetUserByEmailQuery) error {
 }
 
 func UpdateUser(cmd *m.UpdateUserCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		user := m.User{
 			Name:    cmd.Name,
@@ -247,7 +245,7 @@ func UpdateUser(cmd *m.UpdateUserCommand) error {
 }
 
 func ChangeUserPassword(cmd *m.ChangeUserPasswordCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		user := m.User{
 			Password: cmd.NewPassword,
@@ -277,7 +275,7 @@ func SetUsingOrg(cmd *m.SetUsingOrgCommand) error {
 		return fmt.Errorf("user does not belong to org")
 	}
 
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		user := m.User{}
 		sess.Id(cmd.UserId).Get(&user)
 
@@ -394,7 +392,7 @@ func SearchUsers(query *m.SearchUsersQuery) error {
 }
 
 func DeleteUser(cmd *m.DeleteUserCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		deletes := []string{
 			"DELETE FROM star WHERE user_id = ?",
 			"DELETE FROM " + dialect.Quote("user") + " WHERE id = ?",
@@ -412,7 +410,7 @@ func DeleteUser(cmd *m.DeleteUserCommand) error {
 }
 
 func UpdateUserPermissions(cmd *m.UpdateUserPermissionsCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		user := m.User{}
 		sess.Id(cmd.UserId).Get(&user)
 
@@ -424,7 +422,7 @@ func UpdateUserPermissions(cmd *m.UpdateUserPermissionsCommand) error {
 }
 
 func SetUserHelpFlag(cmd *m.SetUserHelpFlagCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		user := m.User{
 			Id:         cmd.UserId,
