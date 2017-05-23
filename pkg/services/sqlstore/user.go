@@ -345,8 +345,11 @@ func DeleteAllUserInOrg(cmd *m.DeleteAllUserInOrgCommand) error {
 
 	// Delete all the users
 	for _, result := range query.Result {
-		if err := DeleteUser(&m.DeleteUserCommand{UserId: result.UserId}); err != nil {
-			return err
+		// did not remove admin user
+		if result.UserId != 1 {
+			if err := DeleteUser(&m.DeleteUserCommand{UserId: result.UserId}); err != nil {
+				return err
+			}
 		}
 	}
 	return nil

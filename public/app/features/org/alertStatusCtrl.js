@@ -28,8 +28,32 @@ function (angular, moment, _, dateMath) {
       });
       $scope.getLevel = alertMgrSrv.getLevel;
     };
-    $scope.resetCurrentThreshold = function (alertDetails) {
-      alertMgrSrv.resetCurrentThreshold(alertDetails);
+    $scope.resetCurrentThreshold = function (alertDetail) {
+      var metric = _.getMetricName(alertDetail.metric);
+      var def_zh = alertDetail.definition.name;
+      var host = alertDetail.status.monitoredEntity;
+      alertMgrSrv.resetCurrentThreshold(alertDetail.definition.alertDetails);
+      alertMgrSrv.annotations = [{
+        annotation: {
+          datasource: "elk",
+          enable: true,
+          iconColor: "#C0C6BE",
+          iconSize: 15,
+          lineColor: "rgba(255, 96, 96, 0.592157)",
+          name: "123",
+          query: "*",
+          showLine: true,
+          textField: "123",
+          timeField: ""
+        },
+        min: alertDetail.status.creationTime,
+        max: alertDetail.status.creationTime,
+        eventType: "123",
+        title: "报警时间",
+        tags: metric +","+ host,
+        text: "[警报] "+def_zh,
+        score: 1
+      }];
     };
 
     $scope.handleAlert = function (alertDetail) {
@@ -112,7 +136,7 @@ function (angular, moment, _, dateMath) {
           });
         }
       });
-    }
+    };
 
     $scope.init();
   });

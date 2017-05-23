@@ -7,9 +7,12 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AlertEditCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, datasourceSrv, contextSrv, backendSrv) {
+  module.controller('AlertEditCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, datasourceSrv, contextSrv, backendSrv, $controller) {
 
     $scope.init = function() {
+      $scope.unInit = true;
+      $controller('OpenTSDBQueryCtrl', {$scope: $scope});
+      $scope.targetBlur = $scope._targetBlur;
       $scope.datasource = null;
       _.each(datasourceSrv.getAll(), function(ds) {
         if (ds.type === 'opentsdb') {
@@ -81,6 +84,7 @@ function (angular, _) {
       };
 
       $scope.alertDef = alertMgrSrv.get($routeParams.id);
+      $scope.target = {'tags':{}};
       $scope.isNew = !$scope.alertDef;
       if ($scope.isNew) {
         $scope.alertDef = {};
@@ -94,6 +98,7 @@ function (angular, _) {
         $scope.alertDef.alertDetails.hostQuery = {};
         $scope.alertDef.alertDetails.hostQuery.expression = ">";
         $scope.alertDef.alertDetails.hostQuery.metricQueries = [{"aggregator": "AVG","metric":""}];
+        $scope.alertDef.alertDetails.tags = null;
       } else {
         $scope.setTarget(panelMeta,$scope.alertDef);
         $scope.setCritThreshold(panelMeta,$scope.alertDef);
@@ -139,6 +144,11 @@ function (angular, _) {
     $scope.setTarget = function(panel,detail) {
       panel.panels[0].targets[0].aggregator = detail.alertDetails.hostQuery.metricQueries[0].aggregator.toLowerCase();
       panel.panels[0].targets[0].metric = detail.alertDetails.hostQuery.metricQueries[0].metric;
+      var tags = detail.alertDetails.tags;
+      _.each(tags, function(tag) {
+        panel.panels[0].targets[0].tags[tag.name] = tag.value;
+        $scope.target.tags[tag.name] = tag.value;
+      });
     };
 
     $scope.setTimeRange = function () {
@@ -167,6 +177,7 @@ function (angular, _) {
       }
       $scope.alertDef.org = contextSrv.user.orgId;
       $scope.alertDef.service = contextSrv.system;
+      $scope.getTags($scope.target.tags, $scope.alertDef.alertDetails);
 
       alertMgrSrv.save($scope.alertDef).then(function onSuccess() {
         $location.path("alerts");
@@ -175,14 +186,27 @@ function (angular, _) {
       });
     };
 
-    $scope.getTextValues = function(metricFindResult) {
-      return _.map(metricFindResult, function(value) { return value.text; });
+    $scope.getTags = function(tags, detail) {
+      detail.tags = [];
+      for(var i in tags) {
+        var temp = {
+          'name': i,
+          'value': tags[i]
+        };
+        detail.tags.push(temp);
+      };
     };
 
-    $scope.suggestMetrics = function(query, callback) {
-      $scope.datasource.metricFindQuery('metrics(' + query + ')')
-        .then($scope.getTextValues)
-        .then(callback);
+    $scope.setTags = function(panel, tags) {
+      panel.targets[0].tags = tags;
+      $scope.broadcastRefresh();
+    };
+
+    $scope._targetBlur = function() {
+      if (!_.isEqual($scope.oldTarget, $scope.target) && _.isEmpty($scope.target.errors)) {
+        $scope.oldTarget = angular.copy($scope.target);
+        $scope.setTags($scope.dashboard.rows[0].panels[0], $scope.target.tags);
+      }
     };
 
     $scope.init();

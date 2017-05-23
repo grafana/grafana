@@ -23,6 +23,10 @@ define([
     };
 
     this.getAnnotations = function(dashboard) {
+      if (!_.isNull(dashboard.manualAnnotation)) {
+        return $q.when(dashboard.manualAnnotation);
+      }
+
       if (dashboard.annotations.list.length === 0) {
         return $q.when(null);
       }

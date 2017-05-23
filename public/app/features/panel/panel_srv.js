@@ -206,13 +206,13 @@ function (angular, _, config) {
 
       $scope.toIntegrate = function() {
         try{
-          integrateSrv.format.targets = _.cloneDeep($scope.panel.targets);
-          integrateSrv.format.title = $scope.panel.title;
+          integrateSrv.options.targets = _.cloneDeep($scope.panel.targets);
+          integrateSrv.options.title = $scope.panel.title;
           if (!$scope.panel.targets[0].metric) {
-            integrateSrv.format.targets[0].metric = "*";
+            integrateSrv.options.targets[0].metric = "*";
           }
           if (!_.isNull($scope.panel.targets[0].tags)) {
-            integrateSrv.format.targets[0].tags = {host: "*"};
+            integrateSrv.options.targets[0].tags = {host: "*"};
           }
           $location.path("/integrate");
         }catch(e){
