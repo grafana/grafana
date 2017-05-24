@@ -172,8 +172,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         for (var i = 0; i < yaxis.length; i++) {
           var axis = yaxis[i];
           var panelOptions = panel.yaxes[i];
-          axis.options.max = panelOptions.max;
-          axis.options.min = panelOptions.min;
+          axis.options.max = axis.options.max !== null ? axis.options.max : panelOptions.max;
+          axis.options.min = axis.options.min !== null ? axis.options.min : panelOptions.min;
         }
       }
 
@@ -505,6 +505,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         if (axis.logBase === 1) {
           return;
         }
+
         if (axis.min < Number.MIN_VALUE) {
           axis.min = null;
         }
