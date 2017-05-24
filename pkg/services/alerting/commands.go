@@ -133,7 +133,7 @@ func scheduleMissingAlerts(cmd *ScheduleMissingAlertsCommand) error {
 		} else {
 			res = append(res, model)
 			engine.execQueue <- &Job{Rule: model}
-			engine.log.Debug(fmt.Sprintf("Scheduled missed Rule : %v", model))
+			engine.log.Debug(fmt.Sprintf("Scheduled missed Rule : %v", model.Name))
 		}
 	}
 	cmd.Result = res
