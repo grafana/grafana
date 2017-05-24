@@ -6,7 +6,7 @@ import _ from 'lodash';
 
 export class AclCtrl {
   tabIndex: any;
-  dashboardId: number;
+  dashboard: any;
   userPermissions: Permission[];
   userGroupPermissions: Permission[];
 
@@ -15,7 +15,7 @@ export class AclCtrl {
     this.tabIndex = 0;
     this.userPermissions = [];
     this.userGroupPermissions = [];
-    this.get(this.$scope.dashboardId);
+    this.get(this.dashboard.id);
   }
 
   get(dashboardId: number) {
@@ -43,13 +43,14 @@ export class AclCtrl {
   }
 }
 
-export function aclModal() {
+export function aclSettings() {
   return {
     restrict: 'E',
     templateUrl: 'public/app/features/dashboard/acl/acl.html',
     controller: AclCtrl,
     bindToController: true,
-    controllerAs: 'ctrl'
+    controllerAs: 'ctrl',
+    scope: { dashboard: "=" }
   };
 }
 
@@ -67,4 +68,4 @@ export interface Permission {
   permissions: number[];
 }
 
-coreModule.directive('aclModal', aclModal);
+coreModule.directive('aclSettings', aclSettings);

@@ -47,14 +47,14 @@ export class DashNavCtrl {
       appEvents.emit('show-modal', {templateHtml: '<help-modal></help-modal>'});
     }
 
-    showAclModal() {
-      var modalScope = this.$scope.$new();
-      modalScope.dashboardId = this.dashboard.id;
-      appEvents.emit('show-modal', {
-        templateHtml: '<acl-modal></acl-modal>',
-        scope: modalScope
-      });
-    }
+    // $scope.showAclModal = function() {
+    //   var modalScope = $scope.$new();
+    //   modalScope.dashboardId = $scope.dashboard.id;
+    //   $scope.appEvent('show-modal', {
+    //     templateHtml: '<acl-modal></acl-modal>',
+    //     scope: modalScope
+    //   });
+    // };
 
     starDashboard() {
       if (this.dashboard.meta.isStarred) {

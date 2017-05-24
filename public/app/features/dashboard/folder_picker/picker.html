@@ -1,0 +1,6 @@
+<div class="gf-form">
+  <label class="gf-form-label width-7">Folder</label>
+  <div class="gf-form-select-wrapper">
+    <select ng-model="ctrl.selectedFolder" class='gf-form-input' ng-options="f.id as f.title for f in ctrl.folders" ng-change="ctrl.folderChanged()"></select>
+  </div>
+</div>

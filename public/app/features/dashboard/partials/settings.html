@@ -4,7 +4,7 @@
 	</h2>
 
 	<ul class="gf-tabs">
-		<li class="gf-tabs-item" ng-repeat="tab in ::['General', 'Rows', 'Links', 'Time picker', 'Metadata']">
+		<li class="gf-tabs-item" ng-repeat="tab in ::['General', 'Rows', 'Links', 'Time picker', 'Metadata', 'Permissions']">
 			<a class="gf-tabs-link" ng-click="editor.index = $index" ng-class="{active: editor.index === $index}">
 				{{::tab}}
 			</a>
@@ -44,6 +44,8 @@
 					<select ng-model="dashboard.timezone" class='gf-form-input' ng-options="f.value as f.text for f in [{value: '', text: 'Default'}, {value: 'browser', text: 'Local browser time'},{value: 'utc', text: 'UTC'}]" ng-change="timezoneChanged()"></select>
 				</div>
 			</div>
+
+      <folder-picker dashboard="dashboard"></folder-picker>
 		</div>
 
     <div class="section">
@@ -139,5 +141,9 @@
 				<span class="gf-form-label width-18">{{dashboardMeta.version}}&nbsp;</span>
 			</div>
 		</div>
+	</div>
+
+  <div ng-if="editor.index == 5">
+		<acl-settings dashboard="dashboard"></acl-settings>
 	</div>
 </div>
