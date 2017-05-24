@@ -67,21 +67,22 @@ define([
         });
       };
 
-      $scope.historyDetails = function (index) {
+      $scope.historyDetails = function (id) {
         var target = {
           tags: {},
           downsampleAggregator: "avg",
           downsampleInterval: "1m"
         };
-        var details = $scope.alertHistory[index].definition.alertDetails;
-        var history = $scope.alertHistory[index].history;
+        var alert = _.find($scope.alertHistory, {'id': id});
+        var details = alert.definition.alertDetails;
+        var history = alert.history;
         var start_anno = _.cloneDeep(annotation_tpl);
         var end_anno = _.cloneDeep(annotation_tpl);
         var options = integrateSrv.options;
         target.aggregator = details.hostQuery.metricQueries[0].aggregator.toLowerCase();
         target.metric = details.hostQuery.metricQueries[0].metric;
         target.tags.host = history.host;
-        for (var tag in $scope.alertHistory[index].definition.tags) {
+        for (var tag in alert.definition.tags) {
           target.tags[tag.name] = tag.value;
         }
         start_anno.min = start_anno.max = history.createdTimeInMillis;

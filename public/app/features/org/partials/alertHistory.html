@@ -58,7 +58,7 @@
         <span class="hitstory-time">{{alert.history.createdTimeInMillis | date:'yyyy-MM-dd HH:mm:ss'}}</span>
         <span class="hitstory-time">{{alert.history.closedTimeInMillis | date:'yyyy-MM-dd HH:mm:ss'}}</span>
         <span>{{ getCloseOp(alert) }}</span>
-        <span style="width: 120px;"><button class="btn" ng-click="historyDetails($index)">历史报警分析</button></span>
+        <span style="width: 120px;"><button class="btn" ng-click="historyDetails(alert.id)">历史报警分析</button></span>
         <span style="width: 10px;" class="pull-right" ng-if="alert.history.closeOp === 'MANUAL'">
           <a class="pointer">
             <i ng-show="!expanded" class="fa fa-caret-right"></i>
