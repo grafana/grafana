@@ -201,6 +201,14 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		params = append(params, "%"+query.Title+"%")
 	}
 
+	if len(query.Type) > 0 && query.Type == "dash-folder" {
+		sql.WriteString(" AND dashboard.is_folder = 1")
+	}
+
+	if len(query.Type) > 0 && query.Type == "dash-db" {
+		sql.WriteString(" AND dashboard.is_folder = 0")
+	}
+
 	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 1000"))
 
 	var res []DashboardSearchProjection
