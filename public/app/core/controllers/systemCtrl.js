@@ -14,8 +14,6 @@ function (angular, coreModule) {
 
       $scope.getCurrentUserSystem = function () {
         backendSrv.get("/api/user/system").then(function (system) {
-          console.log(contextSrv.user.orgId);
-          con
           $scope.systems = system;
         })
       };
