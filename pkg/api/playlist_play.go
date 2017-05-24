@@ -91,6 +91,6 @@ func LoadPlaylistDashboards(orgId, userId, playlistId int64) (dtos.PlaylistDashb
 	result = append(result, k...)
 	result = append(result, populateDashboardsByTag(orgId, userId, dashboardByTag, dashboardTagOrder)...)
 
-	sort.Sort(sort.Reverse(result))
+	sort.Sort(result)
 	return result, nil
 }

@@ -83,12 +83,12 @@ func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
 
 	playlistItems := make([]m.PlaylistItem, 0)
 
-	for _, item := range cmd.Items {
+	for index, item := range cmd.Items {
 		playlistItems = append(playlistItems, m.PlaylistItem{
 			PlaylistId: playlist.Id,
 			Type:       item.Type,
 			Value:      item.Value,
-			Order:      item.Order,
+			Order:      index + 1,
 			Title:      item.Title,
 		})
 	}
