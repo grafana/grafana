@@ -27,6 +27,12 @@ define([
             $scope.reportName = '报告20170522.pdf';
             break;
           }
+          case 11: {
+            $scope.hasReport = true;
+            $scope.reportUrl = 'https://download.cloudwiz.cn/report/Report20170523.pdf';
+            $scope.reportName = '报告20170523.pdf';
+            break;
+          }
           default: {
             $scope.reportUrl = '';
             break;
