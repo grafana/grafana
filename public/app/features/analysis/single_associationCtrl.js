@@ -15,6 +15,8 @@ define([
           host: "",
           distance: 300,
         };
+        $scope.unInit = true;
+        $controller('OpenTSDBQueryCtrl', {$scope: $scope});
         $scope.targetObj = targetObj;
         _.each(datasourceSrv.getAll(), function(ds) {
           if (ds.type === 'opentsdb') {
@@ -35,24 +37,6 @@ define([
         associationObj.metric = contextSrv.user.orgId + "." + contextSrv.system + "." + $scope.targetObj.metric;
         $controller('AlertAssociationCtrl', {$scope: $scope}).initPage(associationObj);
         $scope.status = true;
-      };
-
-      $scope.getTextValues = function (metricFindResult) {
-        return _.map(metricFindResult, function (value) {
-          return value.text;
-        });
-      };
-
-      $scope.suggestMetrics = function (query, callback) {
-        $scope.datasource.metricFindQuery('metrics(' + query + ')')
-          .then($scope.getTextValues)
-          .then(callback);
-      };
-
-      $scope.suggestTagValues = function (query, callback) {
-        $scope.datasource.metricFindQuery('suggest_tagv(' + query + ')')
-          .then($scope.getTextValues)
-          .then(callback);
       };
 
       $scope.init();
