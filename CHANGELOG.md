@@ -6,6 +6,7 @@
 ## Bug fixes
 
 * **Graph Log Scale**: Fixed issue with log scale going below x-axis [#8244](https://github.com/grafana/grafana/issues/8244)
+* **Playlist**: Fixed dashboard play order issue [#7688](https://github.com/grafana/grafana/issues/7688)
 
 # 4.3.1 (2017-05-23)
 
