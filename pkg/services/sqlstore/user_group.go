@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/go-xorm/xorm"
-
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -24,7 +22,7 @@ func init() {
 }
 
 func CreateUserGroup(cmd *m.CreateUserGroupCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		if isNameTaken, err := isUserGroupNameTaken(cmd.Name, 0, sess); err != nil {
 			return err
@@ -48,7 +46,7 @@ func CreateUserGroup(cmd *m.CreateUserGroupCommand) error {
 }
 
 func UpdateUserGroup(cmd *m.UpdateUserGroupCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		if isNameTaken, err := isUserGroupNameTaken(cmd.Name, cmd.Id, sess); err != nil {
 			return err
@@ -76,7 +74,7 @@ func UpdateUserGroup(cmd *m.UpdateUserGroupCommand) error {
 }
 
 func DeleteUserGroup(cmd *m.DeleteUserGroupCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 		if res, err := sess.Query("SELECT 1 from user_group WHERE id=?", cmd.Id); err != nil {
 			return err
 		} else if len(res) != 1 {
@@ -98,7 +96,7 @@ func DeleteUserGroup(cmd *m.DeleteUserGroupCommand) error {
 	})
 }
 
-func isUserGroupNameTaken(name string, existingId int64, sess *session) (bool, error) {
+func isUserGroupNameTaken(name string, existingId int64, sess *DBSession) (bool, error) {
 	var userGroup m.UserGroup
 	exists, err := sess.Where("name=?", name).Get(&userGroup)
 
@@ -179,7 +177,7 @@ func GetUserGroupsByUser(query *m.GetUserGroupsByUserQuery) error {
 }
 
 func AddUserGroupMember(cmd *m.AddUserGroupMemberCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		if res, err := sess.Query("SELECT 1 from user_group_member WHERE user_group_id=? and user_id=?", cmd.UserGroupId, cmd.UserId); err != nil {
 			return err
 		} else if len(res) == 1 {
@@ -206,7 +204,7 @@ func AddUserGroupMember(cmd *m.AddUserGroupMemberCommand) error {
 }
 
 func RemoveUserGroupMember(cmd *m.RemoveUserGroupMemberCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		var rawSql = "DELETE FROM user_group_member WHERE user_group_id=? and user_id=?"
 		_, err := sess.Exec(rawSql, cmd.UserGroupId, cmd.UserId)
 		if err != nil {

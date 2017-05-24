@@ -3,7 +3,6 @@ package sqlstore
 import (
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -15,7 +14,7 @@ func init() {
 }
 
 func AddOrUpdateDashboardPermission(cmd *m.AddOrUpdateDashboardPermissionCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		if res, err := sess.Query("SELECT 1 from "+dialect.Quote("dashboard_acl")+" WHERE dashboard_id =? and (user_group_id=? or user_id=?)", cmd.DashboardId, cmd.UserGroupId, cmd.UserId); err != nil {
 			return err
 		} else if len(res) == 1 {
@@ -67,7 +66,7 @@ func AddOrUpdateDashboardPermission(cmd *m.AddOrUpdateDashboardPermissionCommand
 }
 
 func RemoveDashboardPermission(cmd *m.RemoveDashboardPermissionCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		var rawSQL = "DELETE FROM " + dialect.Quote("dashboard_acl") + " WHERE dashboard_id =? and (user_group_id=? or user_id=?)"
 		_, err := sess.Exec(rawSQL, cmd.DashboardId, cmd.UserGroupId, cmd.UserId)
 		if err != nil {
