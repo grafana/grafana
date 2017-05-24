@@ -81,6 +81,7 @@ func GetDashboard(c *middleware.Context) {
 			Version:   dash.Version,
 			HasAcl:    dash.HasAcl,
 			IsFolder:  dash.IsFolder,
+			ParentId:  dash.ParentId,
 		},
 	}
 

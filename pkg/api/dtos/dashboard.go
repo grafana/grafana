@@ -23,6 +23,7 @@ type DashboardMeta struct {
 	Version    int       `json:"version"`
 	HasAcl     bool      `json:"hasAcl"`
 	IsFolder   bool      `json:"isFolder"`
+	ParentId   int64     `json:"parentId"`
 }
 
 type DashboardFullWithMeta struct {
