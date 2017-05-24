@@ -24,6 +24,9 @@ function (angular, _, noUiSlider) {
     };
 
     $scope.init = function() {
+      if($scope.dashboard){
+        return;
+      }
       alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
         var correlationOfAlertMap = response.data;
         for (var host in correlationOfAlertMap) {
@@ -189,6 +192,7 @@ function (angular, _, noUiSlider) {
     $scope.resetCorrelation = function () {
       $location.path("alerts/association/" + alertHost + "/" + Math.floor($scope.thresholdSlider.get()) + "/" + alertMetric);
     };
+    $scope.init();
   });
 
   module.directive('slider', function() {

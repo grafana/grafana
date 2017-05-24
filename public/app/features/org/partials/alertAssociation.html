@@ -1,6 +1,16 @@
 <topnav title="关联性分析" icon="fa fa-fw fa-signal" subnav="true">
+  <ul class="nav pull-right">
+    <li ng-show="true" class="back-to-dashboard-link">
+      <a  onclick="javascript:history.go(-1)">
+        返回到仪表盘
+      </a>
+    </li>
+    <li ng-if="dashboard">
+      <gf-time-picker dashboard="dashboard"></gf-time-picker>
+    </li>
+  </ul>
 </topnav>
-<div ng-controller="AlertAssociationCtrl" ng-init="init()">
+<div>
   <div ng-if="!isAssociation">
     <h3 align="center">关联性分析结果尚未计算完成 <btn class="btn btn-small btn-primary" ng-click="flushResult()">刷新结果</btn></h3>
   </div>
