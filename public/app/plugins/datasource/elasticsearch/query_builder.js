@@ -118,8 +118,12 @@ function (queryDef) {
       query.fields = ["*", "_source"];
     }
 
-    query.script_fields = {},
-    query.docvalue_fields = [this.timeField];
+    query.script_fields = {};
+    if (this.esVersion < 5) {
+      query.fielddata_fields = [this.timeField];
+    } else {
+      query.docvalue_fields = [this.timeField];
+    }
     return query;
   };
 
