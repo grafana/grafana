@@ -32,7 +32,8 @@ type ScheduleAlertsForPartitionCommand struct {
 }
 
 type ScheduleMissingAlertsCommand struct {
-	Result []*Rule
+	MissingAlerts []*m.Alert
+	Result        []*Rule
 }
 
 func init() {
@@ -117,22 +118,13 @@ func scheduleAlertsForPartition(cmd *ScheduleAlertsForPartitionCommand) error {
 }
 
 func scheduleMissingAlerts(cmd *ScheduleMissingAlertsCommand) error {
-	engine.log.Info("Inside scheduleMissingAlerts command")
-	//get missing alerts
-	missingAlertsQuery := &m.GetMissingAlertsQuery{}
-	err := bus.Dispatch(missingAlertsQuery)
-	if err != nil {
-		return errors.New("Missing Alerts query failed to execute")
-	}
-
 	//transform each alert to rule
 	res := make([]*Rule, 0)
-	missingAlerts := missingAlertsQuery.Result
+	missingAlerts := cmd.MissingAlerts
 	for _, ruleDef := range missingAlerts {
 		if model, err := NewRuleFromDBAlert(ruleDef); err != nil {
 			engine.log.Error("Could not build alert model for rule", "ruleId", ruleDef.Id, "error", err)
 		} else {
-			engine.log.Debug("Print rule after conversion", model.Name)
 			res = append(res, model)
 			engine.execQueue <- &Job{Rule: model}
 			engine.log.Debug(fmt.Sprintf("Scheduled missed Rule : %v", model.Name))
