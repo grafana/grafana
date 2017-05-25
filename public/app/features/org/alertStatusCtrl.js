@@ -77,8 +77,6 @@ function (angular, moment, _, dateMath) {
       }).catch(function(err) {
         $scope.appEvent('alert-error', ['报警处理失败','请检查网络连接状态']);
       });
-
-      $scope.dismiss();
     };
 
     $scope.handleSnooze = function(alertDetails) {

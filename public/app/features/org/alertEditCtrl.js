@@ -8,8 +8,12 @@ function (angular, _) {
   var module = angular.module('grafana.controllers');
 
   module.controller('AlertEditCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, datasourceSrv, contextSrv, backendSrv, $controller) {
-
+    
     $scope.init = function() {
+      $scope.checkStatus = {
+        name: '',
+        checkName: true,
+      };
       $scope.unInit = true;
       $controller('OpenTSDBQueryCtrl', {$scope: $scope});
       $scope.targetBlur = $scope._targetBlur;
@@ -103,6 +107,8 @@ function (angular, _) {
         $scope.setTarget(panelMeta,$scope.alertDef);
         $scope.setCritThreshold(panelMeta,$scope.alertDef);
         $scope.setWarnThreshold(panelMeta,$scope.alertDef);
+        $scope.checkStatus.name = $scope.alertDef.name;
+        $scope.checkStatus.checkName = false;
       }
       $scope.orgName = contextSrv.user.orgName;
       $scope.serviceName = backendSrv.getSystemById(contextSrv.system);
@@ -208,6 +214,20 @@ function (angular, _) {
         $scope.setTags($scope.dashboard.rows[0].panels[0], $scope.target.tags);
       }
     };
+
+    $scope.checkName = function() {
+      if($scope.checkStatus.name === $scope.alertDef.name) {
+        $scope.checkStatus.checkName = false;
+        return;
+      } else {
+        alertMgrSrv.checkName($scope.alertDef.name).then(function(response) {
+          $scope.checkStatus.checkName = response.data.exist;
+          if($scope.checkStatus.checkName){
+            alertSrv.set("已存在该报警", "请修改报警名称", "error", 5000);
+          }
+        });
+      }
+    }
 
     $scope.init();
   });
