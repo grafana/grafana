@@ -14,7 +14,7 @@ type ClusterNodeMgmt interface {
 	GetNodeId() (string, error)
 	CheckIn(alertingState *AlertingState) error
 	GetNode(heartbeat int64) (*m.ActiveNode, error)
-	CheckInNodeProcessingMissingAlerts() error
+	CheckInNodeProcessingMissingAlerts(alertingState *AlertingState) error
 	GetActiveNodesCount(heartbeat int64) (int, error)
 	GetLastHeartbeat() (int64, error)
 }
@@ -95,20 +95,23 @@ func (node *ClusterNode) GetNode(heartbeat int64) (*m.ActiveNode, error) {
 	return cmd.Result, nil
 }
 
-func (node *ClusterNode) CheckInNodeProcessingMissingAlerts() error {
+func (node *ClusterNode) CheckInNodeProcessingMissingAlerts(alertingState *AlertingState) error {
 	if node == nil {
 		return errors.New("Cluster node object is nil")
 	}
-	cmd := &m.SaveNodeProcessingMissingAlertCommand{}
-	cmd.Node = &m.ActiveNode{NodeId: node.nodeId}
-	node.log.Debug("Sending command ", "SaveNodeProcessingMissingAlertCommand:Node", cmd.Node)
+	cmd := &m.SaveNodeProcessingMissingAlertCommand{
+		Node: &m.ActiveNode{
+			NodeId:       node.nodeId,
+			AlertRunType: alertingState.run_type,
+			AlertStatus:  alertingState.status,
+		},
+	}
 	if err := bus.Dispatch(cmd); err != nil {
-
 		errmsg := fmt.Sprintf("Failed to save node processing missing alert %v", cmd.Node)
 		node.log.Error(errmsg, "error", err)
 		return err
 	}
-	node.log.Debug("Command executed successfully")
+	node.log.Debug("Command executed successfully", "SaveNodeProcessingMissingAlertCommand:Node", cmd.Node)
 	return nil
 }
 

@@ -117,9 +117,9 @@ func InsertNodeProcessingMissingAlert(cmd *m.SaveNodeProcessingMissingAlertComma
 		nodeProcessingMissingAlert := &m.ActiveNode{
 			NodeId:       cmd.Node.NodeId,
 			PartId:       0,
-			AlertRunType: m.CLN_ALERT_RUN_TYPE_MISSING,
+			AlertRunType: cmd.Node.AlertRunType,
 			Heartbeat:    ts,
-			AlertStatus:  "FIXME", // TODO heartbeat record must only be recorded via InsertActiveNodeHeartbeat
+			AlertStatus:  cmd.Node.AlertStatus,
 		}
 		if _, err = sess.Insert(nodeProcessingMissingAlert); err != nil {
 			return err

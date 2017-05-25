@@ -172,7 +172,7 @@ func (cm *ClusterManager) scheduleMissingAlerts(alerts []*m.Alert) {
 		return
 	}
 	cm.changeAlertingStateAndRunType(m.CLN_ALERT_STATUS_SCHEDULING, m.CLN_ALERT_RUN_TYPE_MISSING)
-	cm.clusterNodeMgmt.CheckIn(cm.alertingState)
+	cm.clusterNodeMgmt.CheckInNodeProcessingMissingAlerts(cm.alertingState)
 	alertDispatchTask1 := &DispatcherTask{
 		taskType: DISPATCHER_TASK_TYPE_ALERTS_MISSING,
 		taskInfo: &DispatcherTaskAlertsMissing{missingAlerts: alerts},

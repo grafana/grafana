@@ -171,7 +171,7 @@ func (cn *mockClusterNodeMgmt) GetNode(heartbeat int64) (*m.ActiveNode, error) {
 	cn.callCountGetNode++
 	return cn.activeNode, cn.retError
 }
-func (cn *mockClusterNodeMgmt) CheckInNodeProcessingMissingAlerts() error {
+func (cn *mockClusterNodeMgmt) CheckInNodeProcessingMissingAlerts(alertingState *AlertingState) error {
 	cn.callCountCheckInNodeProcessingMissingAlerts++
 	return cn.retError
 }
