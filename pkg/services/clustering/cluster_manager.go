@@ -26,8 +26,8 @@ type ClusterManager struct {
 }
 
 const (
-	DISPATCHER_TASK_TYPE_ALERTS_MISSING   = iota
-	DISPATCHER_TASK_TYPE_ALERTS_PARTITION = iota
+	DISPATCHER_TASK_TYPE_ALERTS_PARTITION = 0
+	DISPATCHER_TASK_TYPE_ALERTS_MISSING   = 1
 )
 
 type DispatcherTaskStatus struct {
@@ -104,7 +104,7 @@ func (cm *ClusterManager) clusterMgrTicker(ctx context.Context) error {
 			if ticksCounter%60 == 0 {
 				cm.clusterNodeMgmt.CheckIn(cm.alertingState)
 			}
-			if ticksCounter%10 == 0 {
+			if ticksCounter%30 == 0 {
 				if setting.AlertingEnabled && setting.ExecuteAlerts {
 					cm.alertsScheduler()
 				}
@@ -140,28 +140,6 @@ func (cm *ClusterManager) alertsScheduler() {
 		cm.changeAlertingState(m.CLN_ALERT_STATUS_READY)
 	}
 	cm.scheduleNormalAlerts()
-
-	//Process Missing Alerts
-	missingAlerts := cm.hasMissingAlerts()
-	if missingAlerts != nil && len(missingAlerts) > 0 {
-		hasNode, err := cm.isAnyOtherNodeProcessingMissingAlerts()
-		if err == nil && !hasNode {
-			cm.scheduleMissingAlerts()
-		}
-	}
-	//Step1: Check If any missing alerts are present.
-	//Step2: If missing alerts present, check if any other is processing missing alerts
-	//Step3: If any other node is not processing missing alerts, then scheduleMissingAlerts
-}
-
-func (cm *ClusterManager) hasMissingAlerts() []*m.Alert {
-	//get missing alerts
-	missingAlertsQuery := &m.GetMissingAlertsQuery{}
-	err := bus.Dispatch(missingAlertsQuery)
-	if err != nil {
-		cm.log.Error("Missing Alerts query failed to execute")
-	}
-	return missingAlertsQuery.Result
 }
 
 func (cm *ClusterManager) hasPendingAlertJobs() bool {
@@ -172,6 +150,29 @@ func (cm *ClusterManager) hasPendingAlertJobs() bool {
 	}
 	cm.log.Debug("Cluster manager ticker - pending alert jobs", "count", jobCountQuery.ResultCount)
 	return jobCountQuery.ResultCount > 0
+}
+
+func (cm *ClusterManager) scheduleMissingAlerts() {
+	cm.log.Debug("Scheduling missing alerts")
+	lastHeartbeat, err := cm.clusterNodeMgmt.GetLastHeartbeat()
+	if err != nil {
+		cm.log.Error("Failed to get last heartbeat", "error", err)
+		return
+	}
+
+	activeNode, err := cm.clusterNodeMgmt.GetNode(lastHeartbeat)
+	if err != nil {
+		cm.log.Debug("Failed to get node for heartbeat "+strconv.FormatInt(lastHeartbeat, 10), "error", err, "activeNode", activeNode.NodeId)
+		return
+	}
+	cm.changeAlertingStateAndRunType(m.CLN_ALERT_STATUS_SCHEDULING, m.CLN_ALERT_RUN_TYPE_MISSING)
+	cm.clusterNodeMgmt.CheckIn(cm.alertingState)
+	alertDispatchTask1 := &DispatcherTask{
+		taskType: DISPATCHER_TASK_TYPE_ALERTS_MISSING,
+		taskInfo: &DispatcherTaskAlertsPartition{},
+	}
+	cm.dispatcherTaskQ <- alertDispatchTask1
+	cm.alertingState.lastProcessedInterval = lastHeartbeat
 }
 
 func (cm *ClusterManager) isAnyOtherNodeProcessingMissingAlerts() (bool, error) {
@@ -189,28 +190,14 @@ func (cm *ClusterManager) isAnyOtherNodeProcessingMissingAlerts() (bool, error) 
 	return false, nil
 }
 
-func (cm *ClusterManager) scheduleMissingAlerts() {
-	cm.log.Debug("Scheduling missing alerts")
-	lastHeartbeat, err := cm.clusterNodeMgmt.GetLastHeartbeat()
+func (cm *ClusterManager) hasMissingAlerts() []*m.Alert {
+	//get missing alerts
+	missingAlertsQuery := &m.GetMissingAlertsQuery{}
+	err := bus.Dispatch(missingAlertsQuery)
 	if err != nil {
-		cm.log.Error("Failed to get last heartbeat", "error", err)
-		return
+		cm.log.Error("Missing Alerts query failed to execute")
 	}
-	if lastHeartbeat <= cm.alertingState.lastProcessedInterval {
-		return
-	}
-	activeNode, err := cm.clusterNodeMgmt.GetNode(lastHeartbeat)
-	if err != nil {
-		cm.log.Debug("Failed to get node for heartbeat "+strconv.FormatInt(lastHeartbeat, 10), "error", err, "activeNode", activeNode.NodeId)
-		return
-	}
-	cm.changeAlertingStateAndRunType(m.CLN_ALERT_STATUS_SCHEDULING, m.CLN_ALERT_RUN_TYPE_MISSING)
-	cm.clusterNodeMgmt.CheckIn(cm.alertingState)
-	alertDispatchTask := &DispatcherTask{
-		taskType: DISPATCHER_TASK_TYPE_ALERTS_MISSING,
-	}
-	cm.dispatcherTaskQ <- alertDispatchTask
-	cm.alertingState.lastProcessedInterval = lastHeartbeat
+	return missingAlertsQuery.Result
 }
 
 func (cm *ClusterManager) scheduleNormalAlerts() {
@@ -285,7 +272,18 @@ func (cm *ClusterManager) handleAlertRulesDispatcherTask(task *DispatcherTask) {
 			PartId:    taskInfo.partId,
 		}
 		err = bus.Dispatch(scheduleCmd)
-		cm.log.Debug("Alert rules dispatcher - submitted next alerts batch")
+		//TODO : Need a handler here post dispatch sucess event.
+		if err == nil {
+			cm.log.Debug("Alert rules dispatcher - submitted next alerts batch")
+			//Process Missing Alerts
+			missingAlerts := cm.hasMissingAlerts()
+			if missingAlerts != nil && len(missingAlerts) > 0 {
+				hasNode, err := cm.isAnyOtherNodeProcessingMissingAlerts()
+				if err == nil && !hasNode {
+					cm.scheduleMissingAlerts()
+				}
+			}
+		}
 	case DISPATCHER_TASK_TYPE_ALERTS_MISSING:
 		scheduleCmd := &alerting.ScheduleMissingAlertsCommand{}
 		err = bus.Dispatch(scheduleCmd)

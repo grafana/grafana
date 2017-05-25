@@ -117,6 +117,7 @@ func scheduleAlertsForPartition(cmd *ScheduleAlertsForPartitionCommand) error {
 }
 
 func scheduleMissingAlerts(cmd *ScheduleMissingAlertsCommand) error {
+	engine.log.Info("Inside scheduleMissingAlerts command")
 	//get missing alerts
 	missingAlertsQuery := &m.GetMissingAlertsQuery{}
 	err := bus.Dispatch(missingAlertsQuery)
@@ -131,6 +132,7 @@ func scheduleMissingAlerts(cmd *ScheduleMissingAlertsCommand) error {
 		if model, err := NewRuleFromDBAlert(ruleDef); err != nil {
 			engine.log.Error("Could not build alert model for rule", "ruleId", ruleDef.Id, "error", err)
 		} else {
+			engine.log.Debug("Print rule after conversion", model.Name)
 			res = append(res, model)
 			engine.execQueue <- &Job{Rule: model}
 			engine.log.Debug(fmt.Sprintf("Scheduled missed Rule : %v", model.Name))
