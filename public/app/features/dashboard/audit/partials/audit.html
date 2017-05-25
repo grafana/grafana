@@ -1,0 +1,161 @@
+<div ng-controller="AuditLogCtrl">
+	<div class="tabbed-view-header">
+		<h2 class="tabbed-view-title">
+			Changelog
+		</h2>
+
+		<ul class="gf-tabs">
+			<li class="gf-tabs-item" >
+				<a class="gf-tabs-link" ng-click="ctrl.mode = 'list';" ng-class="{active: ctrl.mode === 'list'}">
+					List
+				</a>
+			</li>
+			<li class="gf-tabs-item" ng-show="ctrl.mode === 'compare'">
+				<span ng-if="ctrl.isOriginalCurrent()" class="active gf-tabs-link">
+					Version {{ctrl.selected[0]}} <i class="fa fa-arrows-h" /> Current
+				</span>
+				<span ng-if="!ctrl.isOriginalCurrent()" class="active gf-tabs-link">
+					Version {{ctrl.selected[0]}} <i class="fa fa-arrows-h" /> Version {{ctrl.selected[1]}}
+				</span>
+			</li>
+		</ul>
+
+		<button class="tabbed-view-close-btn" ng-click="dismiss();">
+			<i class="fa fa-remove"></i>
+		</button>
+	</div>
+
+	<div class="tabbed-view-body">
+
+		<div ng-if="ctrl.mode === 'list'">
+			<div ng-if="ctrl.loading">
+				<i class="fa fa-spinner fa-spin"></i>
+				<em>Fetching audit log&hellip;</em>
+			</div>
+
+			<div ng-if="!ctrl.loading">
+				<div class="audit-table gf-form">
+					<div class="gf-form-group">
+						<table class="filter-table">
+							<thead>
+								<tr>
+									<th class="width-4"></th>
+									<th class="width-4">Version</th>
+									<th class="width-14">Date</th>
+									<th class="width-10">Updated By</th>
+									<th class="width-30">Notes</th>
+									<th></th>
+								</tr>
+							</thead>
+							<tbody>
+								<tr ng-repeat="revision in ctrl.revisions">
+									<td bs-tooltip="ctrl.compareRevisionDisabled(revision.checked) ? 'You can only compare 2 versions at a time' : ''">
+										<gf-form-switch
+											checked="revision.checked"
+											on-change="ctrl.compareRevisionStateChanged(revision)"
+											ng-disabled="ctrl.compareRevisionDisabled(revision.checked)">
+										</gf-form-switch>
+									</td>
+									<td>{{revision.version}}</td>
+									<td>{{ctrl.formatDate(revision.created)}}</td>
+									<td>{{revision.createdBy}}</td>
+									<td>{{revision.message}}</td>
+									<td class="text-right">
+										<a class="btn btn-inverse btn-small" ng-show="revision.version !== ctrl.dashboard.version" ng-click="ctrl.restore(revision.version)">
+											<i class="fa fa-rotate-right"></i>&nbsp;&nbsp;Restore
+										</a>
+										<a class="btn btn-outline-disabled btn-small" ng-show="revision.version === ctrl.dashboard.version">
+											<i class="fa fa-check"></i>&nbsp;&nbsp;Current
+										</a>
+									</td>
+								</tr>
+							</tbody>
+						</table>
+
+					<div ng-if="ctrl.appending">
+						<i class="fa fa-spinner fa-spin"></i>
+						<em>Fetching more entries&hellip;</em>
+					</div>
+
+						<div class="gf-form-group" ng-show="ctrl.mode === 'list'">
+							<div class="gf-form-button-row">
+								<a	type="button"
+										class="btn gf-form-button btn-primary"
+										ng-if="ctrl.revisions.length > 1"
+										ng-class="{disabled: !ctrl.isComparable()}"
+										ng-click="ctrl.getDiff(ctrl.diff)"
+										bs-tooltip="ctrl.isComparable() ? '' : 'Select 2 versions to start comparing'">
+									<i class="fa fa-code-fork" ></i>&nbsp;&nbsp;Compare versions
+								</a>
+								<a  type="button"
+										class="btn gf-form-button btn-inverse"
+										ng-if="ctrl.revisions.length >= ctrl.limit"
+										ng-click="ctrl.addToLog()"
+										ng-class="{disabled: ctrl.isLastPage()}"
+										ng-disabled="ctrl.isLastPage()">
+									Show more versions
+								</a>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<div class="audit-log" ng-if="ctrl.mode === 'compare'">
+			<div class="page-container">
+				<div class="page-body">
+					<aside class="page-sidebar">
+						<section class="page-sidebar-section">
+							<ul class="ui-list">
+								<li><a ng-class="{active: ctrl.diff === 'basic'}" ng-click="ctrl.getDiff('basic')" href="">Change Summary</a></li>
+								<li><a ng-class="{active: ctrl.diff === 'html'}" ng-click="ctrl.getDiff('html')" href="">JSON Code View</a></li>
+							</ul>
+						</section>
+					</aside>
+
+					<div class="tab-content page-content-with-sidebar">
+						<div ng-if="ctrl.loading">
+							<i class="fa fa-spinner fa-spin"></i>
+							<em>Fetching changes&hellip;</em>
+						</div>
+
+						<div ng-if="!ctrl.loading" ng-init="new = ctrl.selected[0]; original = ctrl.selected[1]">
+							<a type="button"
+								class="btn gf-form-button btn-primary diff-restore-btn"
+								ng-click="ctrl.restore(new)"
+								ng-if="ctrl.isOriginalCurrent()">
+								<i class="fa fa-rotate-right" ></i>&nbsp;&nbsp;Restore to version {{new}}
+							</a>
+							<h4>
+								Comparing Version {{ctrl.selected[0]}}
+								<i class="fa fa-arrows-h" />
+								Version {{ctrl.selected[1]}}
+								<cite class="muted" ng-if="ctrl.isOriginalCurrent()">(Current)</cite>
+							</h4>
+							<section ng-if="ctrl.diff === 'basic'">
+								<p class="small muted">
+									<strong>Version {{new}}</strong> updated by
+									<span>{{ctrl.getMeta(new, 'createdBy')}} </span>
+									<span>{{ctrl.formatBasicDate(ctrl.getMeta(new, 'created'))}}</span>
+									<span> - {{ctrl.getMeta(new, 'message')}}</span>
+								</p>
+								<p class="small muted">
+									<strong>Version {{original}}</strong> updated by
+									<span>{{ctrl.getMeta(original, 'createdBy')}} </span>
+									<span>{{ctrl.formatBasicDate(ctrl.getMeta(original, 'created'))}}</span>
+									<span> - {{ctrl.getMeta(original, 'message')}}</span>
+								</p>
+							</section>
+							<div id="delta" diff-delta>
+								<div class="delta-basic" ng-show="ctrl.diff === 'basic'" compile="ctrl.delta.basic" />
+								<div class="delta-html" ng-show="ctrl.diff === 'html'" compile="ctrl.delta.html" />
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+
+	</div>
+</div>

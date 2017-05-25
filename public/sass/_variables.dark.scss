@@ -280,3 +280,28 @@ $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .3)
 $footer-link-color:   $gray-1;
 $footer-link-hover:   $gray-4;
 
+
+// Changelog and diff
+// -------------------------
+$diff-label-bg:         $dark-2;
+$diff-label-fg:         $white;
+
+$diff-switch-bg:        $dark-5;
+$diff-switch-disabled:  $gray-1;
+
+$diff-group-bg:         $dark-4;
+$diff-arrow-color:      $white;
+
+$diff-json-bg:          $dark-4;
+$diff-json-fg:          $gray-5;
+
+$diff-json-added:       #2f5f40;
+$diff-json-deleted:     #862d2d;
+
+$diff-json-old:         #5a372a;
+$diff-json-new:         #664e33;
+
+$diff-json-changed-fg:  $gray-5;
+$diff-json-changed-num: $text-muted;
+
+$diff-json-icon:        $gray-7;

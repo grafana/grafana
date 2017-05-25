@@ -23,32 +23,7 @@ export class DashboardSrv {
     return this.dash;
   }
 
-  saveDashboard(options) {
-    if (!this.dash.meta.canSave && options.makeEditable !== true) {
-      return Promise.resolve();
-    }
-
-    if (this.dash.title === 'New dashboard') {
-      return this.saveDashboardAs();
-    }
-
-    var clone = this.dash.getSaveModelClone();
-
-    return this.backendSrv.saveDashboard(clone, options).then(data => {
-      this.dash.version = data.version;
-
-      this.$rootScope.appEvent('dashboard-saved', this.dash);
-
-      var dashboardUrl = '/dashboard/db/' + data.slug;
-      if (dashboardUrl !== this.$location.path()) {
-        this.$location.url(dashboardUrl);
-      }
-
-      this.$rootScope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
-    }).catch(this.handleSaveDashboardError.bind(this));
-  }
-
-  handleSaveDashboardError(err) {
+  handleSaveDashboardError(clone, err) {
     if (err.data && err.data.status === "version-mismatch") {
       err.isHandled = true;
 
@@ -59,7 +34,7 @@ export class DashboardSrv {
         yesText: "Save & Overwrite",
         icon: "fa-warning",
         onConfirm: () => {
-          this.saveDashboard({overwrite: true});
+          this.saveDashboard({overwrite: true}, clone);
         }
       });
     }
@@ -74,7 +49,7 @@ export class DashboardSrv {
         yesText: "Save & Overwrite",
         icon: "fa-warning",
         onConfirm: () => {
-          this.saveDashboard({overwrite: true});
+          this.saveDashboard({overwrite: true}, clone);
         }
       });
     }
@@ -93,10 +68,48 @@ export class DashboardSrv {
           this.saveDashboardAs();
         },
         onConfirm: () => {
-          this.saveDashboard({overwrite: true});
+          this.saveDashboard({overwrite: true}, clone);
         }
       });
     }
+  }
+
+  postSave(clone, data) {
+    this.dash.version = data.version;
+
+    var dashboardUrl = '/dashboard/db/' + data.slug;
+    if (dashboardUrl !== this.$location.path()) {
+      this.$location.url(dashboardUrl);
+    }
+
+    this.$rootScope.appEvent('dashboard-saved', this.dash);
+    this.$rootScope.appEvent('alert-success', ['Dashboard saved', 'Saved as ' + clone.title]);
+  }
+
+  save(clone, options) {
+    return this.backendSrv.saveDashboard(clone, options)
+      .then(this.postSave.bind(this, clone))
+      .catch(this.handleSaveDashboardError.bind(this, clone));
+  }
+
+  saveDashboard(options, clone) {
+    if (clone) {
+      this.setCurrent(this.create(clone, this.dash.meta));
+    }
+
+    if (!this.dash.meta.canSave && options.makeEditable !== true) {
+      return Promise.resolve();
+    }
+
+    if (this.dash.title === 'New dashboard') {
+      return this.saveDashboardAs();
+    }
+
+    if (this.dash.version > 0) {
+      return this.saveDashboardMessage();
+    }
+
+    return this.save(this.dash.getSaveModelClone(), options);
   }
 
   saveDashboardAs() {
@@ -112,6 +125,16 @@ export class DashboardSrv {
     });
   }
 
+  saveDashboardMessage() {
+    var newScope = this.$rootScope.$new();
+    newScope.clone = this.dash.getSaveModelClone();
+
+    this.$rootScope.appEvent('show-modal', {
+      src: 'public/app/features/dashboard/partials/saveDashboardMessage.html',
+      scope: newScope,
+      modalClass: 'modal--narrow'
+    });
+  }
 }
 
 coreModule.service('dashboardSrv', DashboardSrv);

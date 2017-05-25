@@ -18,6 +18,20 @@ function (angular, coreModule, kbn) {
     };
   });
 
+  coreModule.default.directive('compile', function($compile) {
+    return {
+      restrict: 'A',
+      link: function(scope, element, attrs) {
+        scope.$watch(function(scope) {
+          return scope.$eval(attrs.compile);
+        }, function(value) {
+          element.html(value);
+          $compile(element.contents())(scope);
+        });
+      }
+    };
+  });
+
   coreModule.default.directive('watchChange', function() {
     return {
       scope: { onchange: '&watchChange' },
