@@ -16,11 +16,9 @@ func addActiveNodeMigration(mg *Migrator) {
 			{Name: "alert_status", Type: DB_Varchar, Length: 32, Nullable: false},
 		},
 		Indices: []*Index{
-			{Cols: []string{"node_id", "heartbeat"}, Type: UniqueIndex},
 			{Cols: []string{"heartbeat", "part_id", "alert_run_type", "alert_status"}, Type: UniqueIndex},
 		},
 	}
 	mg.AddMigration("create active_node table", NewAddTableMigration(active_node))
-	mg.AddMigration("add index active_node.node_id_heartbeat", NewAddIndexMigration(active_node, active_node.Indices[0]))
-	mg.AddMigration("add unique index active_node.heartbeat_partid_runtype_status", NewAddIndexMigration(active_node, active_node.Indices[1]))
+	mg.AddMigration("add unique index active_node.heartbeat_partid_runtype_status", NewAddIndexMigration(active_node, active_node.Indices[0]))
 }

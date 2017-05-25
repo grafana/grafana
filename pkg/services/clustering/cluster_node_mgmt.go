@@ -135,13 +135,12 @@ func (node *ClusterNode) GetLastHeartbeat() (int64, error) {
 		return 0, errors.New("Cluster node object is nil")
 	}
 	cmd := &m.GetLastDBTimeIntervalQuery{}
-	node.log.Debug("Sending command ", "GetLastDBTimeIntervalQuery", cmd)
 	if err := bus.Dispatch(cmd); err != nil {
 
 		errmsg := fmt.Sprintf("Failed to get db time interval %v", cmd)
 		node.log.Error(errmsg, "error", err)
 		return 0, err
 	}
-	node.log.Debug("Command executed successfully")
+	node.log.Debug("Command executed successfully", "GetLastDBTimeIntervalQuery", cmd)
 	return cmd.Result, nil
 }

@@ -117,17 +117,24 @@ func (cm *ClusterManager) clusterMgrTicker(ctx context.Context) error {
 }
 
 func (cm *ClusterManager) handleDispatcherTaskStatus(taskStatus *DispatcherTaskStatus) {
-	if taskStatus.taskType == DISPATCHER_TASK_TYPE_ALERTS_MISSING ||
-		taskStatus.taskType == DISPATCHER_TASK_TYPE_ALERTS_PARTITION {
+	switch taskStatus.taskType {
+	case DISPATCHER_TASK_TYPE_ALERTS_PARTITION:
 		if taskStatus.success {
 			cm.changeAlertingState(m.CLN_ALERT_STATUS_PROCESSING)
-		} else {
-			cm.log.Error("Failed to dispatch task", "error", taskStatus.errmsg)
-			cm.changeAlertingState(m.CLN_ALERT_STATUS_READY)
+			cm.processMissingAlerts()
 		}
-	} else {
+	case DISPATCHER_TASK_TYPE_ALERTS_MISSING:
+		if taskStatus.success {
+			cm.changeAlertingState(m.CLN_ALERT_STATUS_PROCESSING)
+		}
+	default:
 		cm.log.Error("Status received on unsupported task type "+string(taskStatus.taskType),
 			"status", taskStatus.success, "error", taskStatus.errmsg)
+	}
+
+	if !taskStatus.success {
+		cm.log.Error("Failed to dispatch task", "error", taskStatus.errmsg)
+		cm.changeAlertingState(m.CLN_ALERT_STATUS_READY)
 	}
 }
 
@@ -153,7 +160,7 @@ func (cm *ClusterManager) hasPendingAlertJobs() bool {
 }
 
 func (cm *ClusterManager) scheduleMissingAlerts(alerts []*m.Alert) {
-	cm.log.Debug("Scheduling missing alerts")
+	cm.log.Info("Scheduling missing alerts")
 	lastHeartbeat, err := cm.clusterNodeMgmt.GetLastHeartbeat()
 	if err != nil {
 		cm.log.Error("Failed to get last heartbeat", "error", err)
@@ -200,7 +207,7 @@ func (cm *ClusterManager) hasMissingAlerts() []*m.Alert {
 }
 
 func (cm *ClusterManager) scheduleNormalAlerts() {
-	cm.log.Debug("Scheduling normal alerts")
+	cm.log.Info("Scheduling normal alerts")
 	lastHeartbeat, err := cm.clusterNodeMgmt.GetLastHeartbeat()
 	if err != nil {
 		cm.log.Error("Failed to get last heartbeat", "error", err)
@@ -271,18 +278,14 @@ func (cm *ClusterManager) handleAlertRulesDispatcherTask(task *DispatcherTask) {
 			PartId:    taskInfo.partId,
 		}
 		err = bus.Dispatch(scheduleCmd)
-		//TODO : Need a handler here post dispatch success event.
-		if err == nil {
-			cm.log.Debug("Alert rules dispatcher - submitted next alerts batch")
-			cm.processMissingAlerts()
-		}
+		cm.log.Info("Alert rules dispatcher - submitted normal alerts batch")
 	case DISPATCHER_TASK_TYPE_ALERTS_MISSING:
 		taskInfo := task.taskInfo.(*DispatcherTaskAlertsMissing)
 		scheduleCmd := &alerting.ScheduleMissingAlertsCommand{
 			MissingAlerts: taskInfo.missingAlerts,
 		}
 		err = bus.Dispatch(scheduleCmd)
-		cm.log.Debug("Alert rules dispatcher - submitted missing alerts batch")
+		cm.log.Info("Alert rules dispatcher - submitted missing alerts batch")
 	default:
 		err = errors.New("Invalid task type " + string(task.taskType))
 		cm.log.Error(err.Error())
