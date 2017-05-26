@@ -5,7 +5,6 @@ import (
 	"errors"
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/formatter"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -115,7 +114,7 @@ func GetDashboardVersions(query *m.GetDashboardVersionsCommand) error {
 
 // RestoreDashboardVersion restores the dashboard data to the given version.
 func RestoreDashboardVersion(cmd *m.RestoreDashboardVersionCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		// check if dashboard version exists in dashboard_version table
 		//
 		// normally we could use the getDashboardVersion func here, but since
@@ -256,7 +255,7 @@ type version struct {
 // way that Postgres or MySQL do, so we use this to get around that. Since it's
 // impossible to delete a version in Grafana, this is believed to be a
 // safe-enough alternative.
-func getMaxVersion(sess *xorm.Session, dashboardId int64) (int, error) {
+func getMaxVersion(sess *DBSession, dashboardId int64) (int, error) {
 	v := version{}
 	has, err := sess.Table("dashboard_version").
 		Select("MAX(version) AS max").
