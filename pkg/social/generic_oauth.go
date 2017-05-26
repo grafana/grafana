@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -84,22 +83,14 @@ func (s *GenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
 		IsConfirmed bool   `json:"is_confirmed"`
 	}
 
-	emailsUrl := fmt.Sprintf(s.apiUrl + "/emails")
-	r, err := client.Get(emailsUrl)
+	body, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
-
-	defer r.Body.Close()
 
 	var records []Record
 
-	body, err := ioutil.ReadAll(r.Body)
-	if err != nil {
-		return "", err
-	}
-
-	err = json.Unmarshal(body, records)
+	err = json.Unmarshal(body, &records)
 	if err != nil {
 		var data struct {
 			Values []Record `json:"values"`
@@ -107,7 +98,7 @@ func (s *GenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
 
 		err = json.Unmarshal(body, &data)
 		if err != nil {
-			return "", err
+			return "", fmt.Errorf("Error getting email address: %s", err)
 		}
 
 		records = data.Values
@@ -129,18 +120,16 @@ func (s *GenericOAuth) FetchTeamMemberships(client *http.Client) ([]int, error) 
 		Id int `json:"id"`
 	}
 
-	membershipUrl := fmt.Sprintf(s.apiUrl + "/teams")
-	r, err := client.Get(membershipUrl)
+	body, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting team memberships: %s", err)
 	}
-
-	defer r.Body.Close()
 
 	var records []Record
 
-	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
-		return nil, err
+	err = json.Unmarshal(body, &records)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting team memberships: %s", err)
 	}
 
 	var ids = make([]int, len(records))
@@ -156,18 +145,16 @@ func (s *GenericOAuth) FetchOrganizations(client *http.Client) ([]string, error)
 		Login string `json:"login"`
 	}
 
-	url := fmt.Sprintf(s.apiUrl + "/orgs")
-	r, err := client.Get(url)
+	body, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/orgs"))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting organizations: %s", err)
 	}
-
-	defer r.Body.Close()
 
 	var records []Record
 
-	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
-		return nil, err
+	err = json.Unmarshal(body, &records)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting organizations: %s", err)
 	}
 
 	var logins = make([]string, len(records))
@@ -188,16 +175,14 @@ func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 		Attributes  map[string][]string `json:"attributes"`
 	}
 
-	var err error
-	r, err := client.Get(s.apiUrl)
+	body, err := HttpGet(client, s.apiUrl)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
-	defer r.Body.Close()
-
-	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
-		return nil, err
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
 	userInfo := &BasicUserInfo{
