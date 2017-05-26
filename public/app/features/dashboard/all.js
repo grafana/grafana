@@ -26,4 +26,5 @@ define([
   './repeat_option/repeat_option',
   './acl/acl',
   './folder_picker/picker',
+  './folder_modal/folder'
 ], function () {});

@@ -37,10 +37,6 @@ export class AclCtrl {
       this.get(permission.dashboardId);
     });
   }
-
-  dismiss() {
-    appEvents.emit('hide-modal');
-  }
 }
 
 export function aclSettings() {

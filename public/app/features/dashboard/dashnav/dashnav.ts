@@ -47,15 +47,6 @@ export class DashNavCtrl {
       appEvents.emit('show-modal', {templateHtml: '<help-modal></help-modal>'});
     }
 
-    // $scope.showAclModal = function() {
-    //   var modalScope = $scope.$new();
-    //   modalScope.dashboardId = $scope.dashboard.id;
-    //   $scope.appEvent('show-modal', {
-    //     templateHtml: '<acl-modal></acl-modal>',
-    //     scope: modalScope
-    //   });
-    // };
-
     starDashboard() {
       if (this.dashboard.meta.isStarred) {
         return this.backendSrv.delete('/api/user/stars/dashboard/' + this.dashboard.id).then(() =>  {

@@ -1,0 +1,24 @@
+<div class="modal-body">
+  <div class="modal-header">
+    <h2 class="modal-header-title">
+      <span class="p-l-1">Create Folder</span>
+    </h2>
+
+    <a class="modal-header-close" ng-click="ctrl.dismiss();">
+      <i class="fa fa-remove"></i>
+    </a>
+  </div>
+
+  <div class="modal-content folder-modal">
+    <div class="p-t-2">
+      <div class="gf-form">
+        <span class="gf-form-label width-10">Folder Name</span>
+        <input type="text" ng-model="ctrl.title" required give-focus="true" class="gf-form-input max-width-14" placeholder="Enter folder name" />
+      </div>
+    </div>
+    <div class="gf-form-button-row text-center">
+      <a type="submit" class="btn btn-success" ng-click="ctrl.create()">Create</a>
+      <a class="btn-text" ng-click="dismiss();">Cancel</a>
+    </div>
+  </div>
+</div>

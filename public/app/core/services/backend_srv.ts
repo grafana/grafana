@@ -210,6 +210,14 @@ export class BackendSrv {
       message: options.message || '',
     });
   }
+
+  saveDashboardFolder(name) {
+    const dash = {
+      title: name
+    };
+
+    return this.post('/api/dashboards/db/', {dashboard: dash, isFolder: true, overwrite: false});
+  }
 }
 
 coreModule.service('backendSrv', BackendSrv);
