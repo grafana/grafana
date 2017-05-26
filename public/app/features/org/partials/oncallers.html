@@ -1,8 +1,7 @@
 <topnav title="告警通知" icon="fa fa-fw fa-phone" subnav="true">
   <ul class="nav">
-    <li class="active" ><a href="oncallers">总览</a></li>
     <li><a href="oncallerschedule">值班表</a></li>
-    <li><a href="oncallers/new">新增</a></li>
+    <li class="active"><a href="oncallers">值班人员</a></li>
   </ul>
 </topnav>
 
@@ -21,7 +20,12 @@
         <td><strong>邮箱</strong></td>
         <td><strong>组织</strong></td>
         <td><strong>服务名称</strong></td>
-        <td></td>
+        <td>
+          <a href="oncallers/new" class="btn btn-inverse btn-mini">
+            <i class="fa fa-plus-square-o"></i>
+            添加
+          </a>
+        </td>
         <td></td>
       </tr>
       <tr ng-repeat="oncallerDef in oncallerDefList">

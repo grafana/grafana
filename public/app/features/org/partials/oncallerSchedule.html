@@ -1,8 +1,7 @@
 <topnav title="告警通知" icon="fa fa-fw fa-phone">
   <ul class="nav">
-    <li><a href="oncallers">总览</a></li>
     <li class="active"><a href="oncallerschedule">值班表</a></li>
-    <li><a href="oncallers/new">新增</a></li>
+    <li><a href="oncallers">值班人员</a></li>
   </ul>
 </topnav>
 
@@ -18,23 +17,23 @@
                 </button>
             </div>
             <div class="item">
-                <label class="label">Role</label>
+                <label class="label">角色</label>
                 <select class="text ui-widget-content ui-corner-all"
                      ng-model="role"
                      ng-options="r.val for r in roles">
                 </select>
             </div>
             <div class="item">
-                <label class="label">Oncaller</label>
+                <label class="label">人员</label>
                 <select class="text ui-widget-content ui-corner-all"
                     ng-model="oncallerSelcted"
                     ng-options="oncaller.name for oncaller in oncallerDefList">
                 </select>
             </div>
             <div class="item">
-                <label class="label">From</label>
+                <label class="label">开始</label>
                 <input type="text" class="input-large" ng-model="startTime"  ng-change="absoluteFromChanged(startTime)">
-                <button style="margin-top: -10px;" class="btn btn-primary" type="button" ng-click="openFromPicker=!openFromPicker">
+                <button style="margin-top: -10px;" class="btn btn-primary" type="button" ng-click="closeTimePicker('from')">
                     <i class="fa fa-calendar"></i>
                 </button>
                 <div ng-if="openFromPicker">
@@ -42,13 +41,13 @@
                 </div>
             </div>
             <div class="item">
-                <label class="label">To</label>
+                <label class="label">结束</label>
                 <input type="text" class="input-large" ng-model="endTime" ng-change="absoluteToChanged(endTime)">
-                <button style="margin-top: -10px;" class="btn btn-primary" type="button" ng-click="openToPicker=!openToPicker">
+                <button style="margin-top: -10px;" class="btn btn-primary" type="button" ng-click="closeTimePicker('to')">
                     <i class="fa fa-calendar"></i>
                 </button>
                 <div ng-if="openToPicker">
-                    <datepicker ng-model="endTime" class="gf-timepicker-component" show-weeks="false" ng-change="absoluteToChanged(endTime)"></datepicker>
+                    <datepicker ng-model="endTime" class="gf-timepicker-component" show-weeks="false" ng-change="absoluteToChanged(endTime);"></datepicker>
                 </div>
             </div>
             <div class="item center">
