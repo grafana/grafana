@@ -284,10 +284,10 @@ func (cm *ClusterManager) handleAlertRulesDispatcherTask(task *DispatcherTask) {
 }
 
 func (cm *ClusterManager) processMissingAlerts() {
-	missingAlerts := cm.clusterNodeMgmt.GetMissingAlerts() //Get Missing alerts
-	if missingAlerts != nil && len(missingAlerts) > 0 {
-		hasNode := cm.isAnyOtherNodeProcessingMissingAlerts()
-		if !hasNode {
+	hasNode := cm.isAnyOtherNodeProcessingMissingAlerts()
+	if !hasNode {
+		missingAlerts := cm.clusterNodeMgmt.GetMissingAlerts() //Get Missing alerts
+		if missingAlerts != nil && len(missingAlerts) > 0 {
 			cm.scheduleMissingAlerts(missingAlerts)
 		}
 	}
