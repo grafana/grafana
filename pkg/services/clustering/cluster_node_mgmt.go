@@ -17,6 +17,8 @@ type ClusterNodeMgmt interface {
 	CheckInNodeProcessingMissingAlerts(alertingState *AlertingState) error
 	GetActiveNodesCount(heartbeat int64) (int, error)
 	GetLastHeartbeat() (int64, error)
+	GetMissingAlerts() []*m.Alert
+	GetNodeProcessingMissingAlerts() *m.ActiveNode
 }
 
 type ClusterNode struct {
@@ -146,4 +148,22 @@ func (node *ClusterNode) GetLastHeartbeat() (int64, error) {
 	}
 	node.log.Debug("Command executed successfully", "GetLastDBTimeIntervalQuery", cmd)
 	return cmd.Result, nil
+}
+
+func (node *ClusterNode) GetMissingAlerts() []*m.Alert {
+	missingAlertsQuery := &m.GetMissingAlertsQuery{}
+	err := bus.Dispatch(missingAlertsQuery)
+	if err != nil {
+		node.log.Error("GetMissingAlertsQuery failed to execute")
+	}
+	return missingAlertsQuery.Result
+}
+
+func (node *ClusterNode) GetNodeProcessingMissingAlerts() *m.ActiveNode {
+	cmd := &m.GetNodeProcessingMissingAlertsCommand{}
+	if err := bus.Dispatch(cmd); err != nil {
+		node.log.Error("Failed to check if any other node is processing missing alerts", "error", err)
+		return nil
+	}
+	return cmd.Result
 }

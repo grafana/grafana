@@ -181,29 +181,15 @@ func (cm *ClusterManager) scheduleMissingAlerts(alerts []*m.Alert) {
 	cm.alertingState.lastProcessedInterval = lastHeartbeat
 }
 
-func (cm *ClusterManager) isAnyOtherNodeProcessingMissingAlerts() (bool, error) {
+func (cm *ClusterManager) isAnyOtherNodeProcessingMissingAlerts() bool {
 	cm.log.Debug("Is any other node processing missing alerts")
-	cmd := &m.GetNodeProcessingMissingAlertsCommand{}
-	if err := bus.Dispatch(cmd); err != nil {
-		cm.log.Error("Failed to check if any other node is processing missing alerts", "error", err)
-		return false, err
+	node := cm.clusterNodeMgmt.GetNodeProcessingMissingAlerts()
+	if node != nil && node.NodeId != "" {
+		cm.log.Debug("Other node is processing missing alert", node.NodeId)
+		return true
 	}
-	if cmd.Result.NodeId != "" {
-		cm.log.Debug("Other node is processing missing alert", cmd.Result.NodeId)
-		return true, nil
-	}
-	cm.log.Debug("No other node is processing missing alerts so current node will process missing alerts")
-	return false, nil
-}
-
-func (cm *ClusterManager) hasMissingAlerts() []*m.Alert {
-	//get missing alerts
-	missingAlertsQuery := &m.GetMissingAlertsQuery{}
-	err := bus.Dispatch(missingAlertsQuery)
-	if err != nil {
-		cm.log.Error("Missing Alerts query failed to execute")
-	}
-	return missingAlertsQuery.Result
+	cm.log.Info("No other node is processing missing alerts so current node will process missing alerts")
+	return false
 }
 
 func (cm *ClusterManager) scheduleNormalAlerts() {
@@ -298,10 +284,10 @@ func (cm *ClusterManager) handleAlertRulesDispatcherTask(task *DispatcherTask) {
 }
 
 func (cm *ClusterManager) processMissingAlerts() {
-	missingAlerts := cm.hasMissingAlerts()
+	missingAlerts := cm.clusterNodeMgmt.GetMissingAlerts() //Get Missing alerts
 	if missingAlerts != nil && len(missingAlerts) > 0 {
-		hasNode, err := cm.isAnyOtherNodeProcessingMissingAlerts()
-		if err == nil && !hasNode {
+		hasNode := cm.isAnyOtherNodeProcessingMissingAlerts()
+		if !hasNode {
 			cm.scheduleMissingAlerts(missingAlerts)
 		}
 	}
