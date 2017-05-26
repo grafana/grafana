@@ -74,6 +74,16 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	if evalContext.Rule.State == m.AlertStateOK {
 		eventType = "resolve"
 	}
+	customData := make([]map[string]interface{}, 0)
+	fieldLimitCount := 4
+	for index, evt := range evalContext.EvalMatches {
+		customData = append(customData, map[string]interface{}{
+			evt.Metric: evt.Value,
+		})
+		if index > fieldLimitCount {
+			break
+		}
+	}
 
 	this.log.Info("Notifying Pagerduty", "event_type", eventType)
 
@@ -81,6 +91,7 @@ func (this *PagerdutyNotifier) Notify(evalContext *alerting.EvalContext) error {
 	bodyJSON.Set("service_key", this.Key)
 	bodyJSON.Set("description", evalContext.Rule.Name+" - "+evalContext.Rule.Message)
 	bodyJSON.Set("client", "Grafana")
+	bodyJSON.Set("details", customData)
 	bodyJSON.Set("event_type", eventType)
 	bodyJSON.Set("incident_key", "alertId-"+strconv.FormatInt(evalContext.Rule.Id, 10))
 
