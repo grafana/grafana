@@ -151,10 +151,12 @@ define([
 
       $scope.absoluteFromChanged = function (start) {
         $scope.startTime = formatTime(start);
+        $scope.openFromPicker = false;
       }
 
       $scope.absoluteToChanged = function (end) {
         $scope.endTime = formatTime(end);
+        $scope.openToPicker = false;
       }
 
       $scope.addSchedule = function(role,oncallerSelcted) {
@@ -171,7 +173,17 @@ define([
 
       $scope.closeEdit = function() {
         $scope.showEditForm = false;
+        $scope.openToPicker = false;
+        $scope.openFromPicker = false;
       }
+
+      $scope.closeTimePicker = function(type) {
+        if(type == 'from') {
+          $scope.openFromPicker=!$scope.openFromPicker;
+        } else {
+          $scope.openToPicker=!$scope.openToPicker;
+        }
+      };
 
       $scope.init();
     });
