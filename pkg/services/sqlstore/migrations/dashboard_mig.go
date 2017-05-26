@@ -56,7 +56,7 @@ func addDashboardMigration(mg *Migrator) {
 		Columns: []*Column{
 			{Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
 			{Name: "version", Type: DB_Int, Nullable: false},
-			{Name: "slug", Type: DB_NVarchar, Length: 190, Nullable: false},
+			{Name: "slug", Type: DB_NVarchar, Length: 189, Nullable: false},
 			{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
 			{Name: "data", Type: DB_Text, Nullable: false},
 			{Name: "org_id", Type: DB_BigInt, Nullable: false},
@@ -127,7 +127,7 @@ func addDashboardMigration(mg *Migrator) {
 	}))
 
 	mg.AddMigration("Update dashboard table charset", NewTableCharsetMigration("dashboard", []*Column{
-		{Name: "slug", Type: DB_NVarchar, Length: 190, Nullable: false},
+		{Name: "slug", Type: DB_NVarchar, Length: 189, Nullable: false},
 		{Name: "title", Type: DB_NVarchar, Length: 255, Nullable: false},
 		{Name: "plugin_id", Type: DB_NVarchar, Nullable: true, Length: 255},
 		{Name: "data", Type: DB_MediumText, Nullable: false},
