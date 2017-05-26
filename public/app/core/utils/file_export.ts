@@ -8,7 +8,7 @@ declare var window: any;
 const DEFAULT_DATETIME_FORMAT: String = 'YYYY-MM-DDTHH:mm:ssZ';
 
 export function exportSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT) {
-    var text = 'sep=;\nSeries;Time;Value\n';
+    var text = 'Series;Time;Value\n';
     _.each(seriesList, function(series) {
         _.each(series.datapoints, function(dp) {
             text += series.alias + ';' + moment(dp[1]).format(dateTimeFormat) + ';' + dp[0] + '\n';
@@ -18,7 +18,7 @@ export function exportSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATET
 }
 
 export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT) {
-    var text = 'sep=;\nTime;';
+    var text = 'Time;';
     // add header
     _.each(seriesList, function(series) {
         text += series.alias + ';';
@@ -53,7 +53,7 @@ export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAUL
 }
 
 export function exportTableDataToCsv(table) {
-    var text = 'sep=;\n';
+    var text = '';
     // add header
     _.each(table.columns, function(column) {
         text += (column.title || column.text) + ';';
