@@ -8,7 +8,7 @@ function (angular, _) {
   var module = angular.module('grafana.controllers');
 
   module.controller('AlertEditCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, datasourceSrv, contextSrv, backendSrv, $controller) {
-    
+
     $scope.init = function() {
       $scope.checkStatus = {
         name: '',
