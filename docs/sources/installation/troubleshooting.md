@@ -32,3 +32,8 @@ You can enable more logging by changing log level in you grafana configuration f
 Checkout the [FAQ](https://community.grafana.com/c/howto/faq) section on our community page for frequently
 asked questions.
 
+### Firewalls and Intrusion Prevention Systems
+
+Grafana is sending queries with SQL-like syntax to your datasources.
+Intrusion Prevention Systems (IPS) are likely to block this traffic.
+Make sure you configure your firewall accordingly.
