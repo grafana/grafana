@@ -41,8 +41,8 @@ func NewDingDingNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 
 type DingDingNotifier struct {
 	NotifierBase
-	Url        string
-	log        log.Logger
+	Url string
+	log log.Logger
 }
 
 func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
@@ -59,18 +59,6 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 	message := evalContext.Rule.Message
 	picUrl := evalContext.ImagePublicUrl
 	title := evalContext.GetNotificationTitle()
-
-	if picUrl != "" {
-		this.log.Info(picUrl)
-	}
-
-	if message != "" {
-		this.log.Info(message)
-	}
-	
-	if title != ""{
-		this.log.Info(title)
-	}
 
 	bodyJSON, err := simplejson.NewJson([]byte(`{
 		"msgtype": "link",
@@ -89,8 +77,8 @@ func (this *DingDingNotifier) Notify(evalContext *alerting.EvalContext) error {
 	body, _ := bodyJSON.MarshalJSON()
 
 	cmd := &m.SendWebhookSync{
-		Url:        this.Url,
-		Body:       string(body),
+		Url:  this.Url,
+		Body: string(body),
 	}
 
 	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
