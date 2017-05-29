@@ -555,12 +555,19 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           return;
         }
 
-        axis.ticks = [];
-        var nextTick;
-        for (nextTick = min; nextTick <= max; nextTick *= axis.logBase) {
-          axis.ticks.push(nextTick);
+        if (Number.isFinite(min) && Number.isFinite(max)) {
+          axis.ticks = [];
+          var nextTick;
+          for (nextTick = min; nextTick <= max; nextTick *= axis.logBase) {
+            axis.ticks.push(nextTick);
+          }
+          axis.tickDecimals = decimalPlaces(min);
+        } else {
+          axis.ticks = [1, 2];
+          delete axis.min;
+          delete axis.max;
         }
-        axis.tickDecimals = decimalPlaces(min);
+
       }
 
       function decimalPlaces(num) {
