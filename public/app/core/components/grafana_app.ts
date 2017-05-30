@@ -122,6 +122,18 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
         body.toggleClass('page-kiosk-mode');
       });
 
+      var ticking = false;
+      window.addEventListener('scroll', function(e) {
+        if (!ticking) {
+          ticking = true;
+          setTimeout(function() {
+            appEvents.emit('scroll');
+            ticking = false;
+          }, 100);
+        }
+        ticking = true;
+      });
+
       // handle in active view state class
       var lastActivity = new Date().getTime();
       var activeUser = true;
