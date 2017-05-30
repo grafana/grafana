@@ -3,6 +3,13 @@
 import _ from 'lodash';
 import moment from 'moment';
 import kbn from 'app/core/utils/kbn';
+import $ from 'jquery';
+import JSONFormatter from 'json-formatter-js';
+
+interface FormatJSONResult {
+  success: boolean;
+  value: string;
+}
 
 export class TableRenderer {
   formatters: any[];
@@ -153,21 +160,41 @@ export class TableRenderer {
       this.table.columns[columnIndex].hidden = false;
     }
 
-    return '<td' + style + '>' + value + widthHack + '</td>';
+    function isJSON(value: string): boolean {
+      try {
+        JSON.parse(_.unescape(value));
+        return true;
+      } catch (e) {
+        return false;
+      }
+    }
+
+    function formatCellValue(value: string): any {
+      const cell = $('<td' + style + '></td>');
+      // To prevent a number from being stringified
+      if (isJSON(value) && isNaN(Number.parseFloat(value))) {
+        return cell.append(new JSONFormatter(JSON.parse(_.unescape(value)), 1, {
+          theme: 'dark'
+        }).render()).append(widthHack);
+      } else {
+        return cell.html(value + widthHack);
+      }
+    }
+    return formatCellValue(value);
   }
 
   render(page) {
     let pageSize = this.panel.pageSize || 100;
     let startPos = page * pageSize;
     let endPos = Math.min(startPos + pageSize, this.table.rows.length);
-    var html = "";
+    var html = [];
 
     for (var y = startPos; y < endPos; y++) {
       let row = this.table.rows[y];
-      let cellHtml = '';
+      let cellHtml = [];
       let rowStyle = '';
       for (var i = 0; i < this.table.columns.length; i++) {
-        cellHtml += this.renderCell(i, row[i], y === startPos);
+        cellHtml.push(this.renderCell(i, row[i], y === startPos));
       }
 
       if (this.colorState.row) {
@@ -175,7 +202,10 @@ export class TableRenderer {
         this.colorState.row = null;
       }
 
-      html += '<tr ' + rowStyle + '>' + cellHtml + '</tr>';
+      // html += '<tr ' + rowStyle + '>' + cellHtml + '</tr>';
+      let htmlRow = $('<tr ' + rowStyle + '></tr>');
+      htmlRow.append(cellHtml);
+      html.push(htmlRow);
     }
 
     return html;
