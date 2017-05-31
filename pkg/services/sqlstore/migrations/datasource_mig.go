@@ -59,7 +59,7 @@ func addDataSourceMigration(mg *Migrator) {
 			{Name: "basic_auth_user", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "basic_auth_password", Type: DB_NVarchar, Length: 255, Nullable: true},
 			{Name: "is_default", Type: DB_Bool, Nullable: false},
-			{Name: "json_data", Type: DB_Text, Nullable: true},
+			{Name: "json_data", Type: DB_Text, Nullable: false},
 			{Name: "created", Type: DB_DateTime, Nullable: false},
 			{Name: "updated", Type: DB_DateTime, Nullable: false},
 		},
