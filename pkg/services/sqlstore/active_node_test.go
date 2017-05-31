@@ -35,26 +35,32 @@ func TestActiveNode(t *testing.T) {
 		/*
 		*Test insertion of node processing missing alerts
 		 */
-		act2 := m.ActiveNode{
-			NodeId:       "10.1.1.1:4330",
-			AlertRunType: "",
-			AlertStatus:  m.CLN_ALERT_STATUS_READY,
+		nodeID := "10.1.1.1:4330"
+		cmd2 := m.SaveNodeProcessingMissingAlertCommand{
+			Node: &m.ActiveNode{
+				NodeId:       nodeID,
+				AlertRunType: m.CLN_ALERT_RUN_TYPE_MISSING,
+				AlertStatus:  m.CLN_ALERT_STATUS_READY,
+			},
 		}
-		cmd2 := m.SaveNodeProcessingMissingAlertCommand{Node: &act2}
 		err2 := InsertNodeProcessingMissingAlert(&cmd2)
 		Convey("Can  insert node processing missing alert", func() {
 			So(err2, ShouldBeNil)
 		})
+
+		cmd4 := m.GetNodeProcessingMissingAlertsCommand{}
+		err4 := GetNodeProcessingMissingAlerts(&cmd4)
 		Convey("Retrive Node Processing Missing Alert", func() {
-			So(cmd2.Result, ShouldNotBeNil)
-			So(cmd2.Result.NodeId, ShouldEqual, "10.1.1.1:4330")
+			So(err4, ShouldBeNil)
+			So(cmd4.Result.NodeId, ShouldEqual, nodeID)
 			So(cmd2.Result.Heartbeat, ShouldBeGreaterThan, 0)
 			So(cmd2.Result.PartId, ShouldEqual, 0)
 			So(cmd2.Result.AlertRunType, ShouldEqual, m.CLN_ALERT_RUN_TYPE_MISSING)
+			So(cmd2.Result.AlertStatus, ShouldEqual, m.CLN_ALERT_STATUS_READY)
 		})
 
 		// test active node count
-		cmd3 := m.GetLastDBTimeIntervalQuery {}
+		cmd3 := m.GetLastDBTimeIntervalQuery{}
 		err3 := GetLastDBTimeInterval(&cmd3)
 		Convey("Can  get last heartbeat", func() {
 			So(err3, ShouldBeNil)

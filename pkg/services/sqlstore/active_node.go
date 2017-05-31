@@ -21,6 +21,7 @@ func init() {
 	bus.AddHandler("sql", InsertNodeProcessingMissingAlert)
 	bus.AddHandler("sql", GetLastDBTimeInterval)
 	bus.AddHandler("sql", GetActiveNodesCount)
+	bus.AddHandler("sql", GetNodeProcessingMissingAlerts)
 }
 
 func GetActiveNodeByIdHeartbeat(query *m.GetActiveNodeByIdHeartbeatQuery) error {
@@ -116,9 +117,9 @@ func InsertNodeProcessingMissingAlert(cmd *m.SaveNodeProcessingMissingAlertComma
 		nodeProcessingMissingAlert := &m.ActiveNode{
 			NodeId:       cmd.Node.NodeId,
 			PartId:       0,
-			AlertRunType: m.CLN_ALERT_RUN_TYPE_MISSING,
+			AlertRunType: cmd.Node.AlertRunType,
 			Heartbeat:    ts,
-			AlertStatus:  "FIXME", // TODO heartbeat record must only be recorded via InsertActiveNodeHeartbeat
+			AlertStatus:  cmd.Node.AlertStatus,
 		}
 		if _, err = sess.Insert(nodeProcessingMissingAlert); err != nil {
 			return err
@@ -182,5 +183,23 @@ func GetActiveNodesCount(cmd *m.GetActiveNodesCountCommand) error {
 		return err
 	}
 	cmd.Result = len(actNodes)
+	return nil
+}
+
+func GetNodeProcessingMissingAlerts(cmd *m.GetNodeProcessingMissingAlertsCommand) error {
+	var retNode m.ActiveNode
+	results, err1 := x.Query("select " + dialect.CurrentTimeToRoundMinSql() + " as ts ")
+	if err1 != nil {
+		sqlog.Error("Failed to get db timestamp", "error", err1)
+		return err1
+	}
+	ts, _ := strconv.ParseInt(string(results[0]["ts"]), 10, 64)
+	_, err := x.Where("heartbeat=?", ts).And("alert_run_type=?", m.CLN_ALERT_RUN_TYPE_MISSING).Get(&retNode)
+	if err != nil {
+		errmsg := fmt.Sprintf("Failed to get Node processing missing alert for heartbeat=%d", ts)
+		sqlog.Error(errmsg, "error", err)
+		return err
+	}
+	cmd.Result = &retNode
 	return nil
 }

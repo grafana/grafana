@@ -14,9 +14,11 @@ type ClusterNodeMgmt interface {
 	GetNodeId() (string, error)
 	CheckIn(alertingState *AlertingState) error
 	GetNode(heartbeat int64) (*m.ActiveNode, error)
-	CheckInNodeProcessingMissingAlerts() error
+	CheckInNodeProcessingMissingAlerts(alertingState *AlertingState) error
 	GetActiveNodesCount(heartbeat int64) (int, error)
 	GetLastHeartbeat() (int64, error)
+	GetMissingAlerts() []*m.Alert
+	GetNodeProcessingMissingAlerts() *m.ActiveNode
 }
 
 type ClusterNode struct {
@@ -95,20 +97,23 @@ func (node *ClusterNode) GetNode(heartbeat int64) (*m.ActiveNode, error) {
 	return cmd.Result, nil
 }
 
-func (node *ClusterNode) CheckInNodeProcessingMissingAlerts() error {
+func (node *ClusterNode) CheckInNodeProcessingMissingAlerts(alertingState *AlertingState) error {
 	if node == nil {
 		return errors.New("Cluster node object is nil")
 	}
-	cmd := &m.SaveNodeProcessingMissingAlertCommand{}
-	cmd.Node = &m.ActiveNode{NodeId: node.nodeId}
-	node.log.Debug("Sending command ", "SaveNodeProcessingMissingAlertCommand:Node", cmd.Node)
+	cmd := &m.SaveNodeProcessingMissingAlertCommand{
+		Node: &m.ActiveNode{
+			NodeId:       node.nodeId,
+			AlertRunType: alertingState.run_type,
+			AlertStatus:  alertingState.status,
+		},
+	}
 	if err := bus.Dispatch(cmd); err != nil {
-
 		errmsg := fmt.Sprintf("Failed to save node processing missing alert %v", cmd.Node)
 		node.log.Error(errmsg, "error", err)
 		return err
 	}
-	node.log.Debug("Command executed successfully")
+	node.log.Debug("Command executed successfully", "SaveNodeProcessingMissingAlertCommand:Node", cmd.Node)
 	return nil
 }
 
@@ -135,13 +140,30 @@ func (node *ClusterNode) GetLastHeartbeat() (int64, error) {
 		return 0, errors.New("Cluster node object is nil")
 	}
 	cmd := &m.GetLastDBTimeIntervalQuery{}
-	node.log.Debug("Sending command ", "GetLastDBTimeIntervalQuery", cmd)
 	if err := bus.Dispatch(cmd); err != nil {
 
 		errmsg := fmt.Sprintf("Failed to get db time interval %v", cmd)
 		node.log.Error(errmsg, "error", err)
 		return 0, err
 	}
-	node.log.Debug("Command executed successfully")
+	node.log.Debug("Command executed successfully", "GetLastDBTimeIntervalQuery", cmd)
 	return cmd.Result, nil
+}
+
+func (node *ClusterNode) GetMissingAlerts() []*m.Alert {
+	missingAlertsQuery := &m.GetMissingAlertsQuery{}
+	err := bus.Dispatch(missingAlertsQuery)
+	if err != nil {
+		node.log.Error("GetMissingAlertsQuery failed to execute")
+	}
+	return missingAlertsQuery.Result
+}
+
+func (node *ClusterNode) GetNodeProcessingMissingAlerts() *m.ActiveNode {
+	cmd := &m.GetNodeProcessingMissingAlertsCommand{}
+	if err := bus.Dispatch(cmd); err != nil {
+		node.log.Error("Failed to check if any other node is processing missing alerts", "error", err)
+		return nil
+	}
+	return cmd.Result
 }
