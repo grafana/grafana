@@ -7,7 +7,7 @@ function(angular, _) {
 
   var module = angular.module('grafana.services');
 
-  module.service('unsavedChangesSrv', function($rootScope, $q, $location, $timeout, contextSrv, $window) {
+  module.service('unsavedChangesSrv', function($rootScope, $q, $location, $timeout, contextSrv, dashboardSrv, $window) {
 
     function Tracker(dashboard, scope, originalCopyDelay) {
       var self = this;
@@ -136,28 +136,28 @@ function(angular, _) {
 
     p.open_modal = function() {
       var tracker = this;
+      var dashboard = this.current;
 
       var modalScope = this.scope.$new();
+      var clone = dashboard.getSaveModelClone();
+
+      modalScope.clone = clone;
       modalScope.ignore = function() {
         tracker.original = null;
         tracker.goto_next();
       };
 
-      modalScope.save = function() {
-        var cancel = $rootScope.$on('dashboard-saved', function() {
-          cancel();
-          $timeout(function() {
-            tracker.goto_next();
-          });
+      var cancel = $rootScope.$on('dashboard-saved', function() {
+        cancel();
+        $timeout(function() {
+          tracker.goto_next();
         });
-
-        $rootScope.$emit('save-dashboard');
-      };
+      });
 
       $rootScope.appEvent('show-modal', {
         src: 'public/app/partials/unsaved-changes.html',
-        modalClass: 'confirm-modal',
         scope: modalScope,
+        modalClass: 'modal--narrow'
       });
     };
 

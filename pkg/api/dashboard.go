@@ -2,8 +2,10 @@ package api
 
 import (
 	"encoding/json"
+	"fmt"
 	"os"
 	"path"
+	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -77,6 +79,7 @@ func GetDashboard(c *middleware.Context) {
 		},
 	}
 
+	// TODO(ben): copy this performance metrics logic for the new API endpoints added
 	c.TimeRequest(metrics.M_Api_Dashboard_Get)
 	c.JSON(200, dto)
 }
@@ -253,6 +256,264 @@ func GetDashboardFromJsonFile(c *middleware.Context) {
 	dash.Meta.CanEdit = canEditDashboard(c.OrgRole)
 
 	c.JSON(200, &dash)
+}
+
+// GetDashboardVersions returns all dashboardversions as JSON
+func GetDashboardVersions(c *middleware.Context) {
+	dashboardIdStr := c.Params(":dashboardId")
+	dashboardId, err := strconv.Atoi(dashboardIdStr)
+	if err != nil {
+		c.JsonApiErr(400, err.Error(), err)
+		return
+	}
+
+	// TODO(ben) the orderBy arg should be split into snake_case?
+	orderBy := c.Query("orderBy")
+	limit := c.QueryInt("limit")
+	start := c.QueryInt("start")
+	if orderBy == "" {
+		orderBy = "version"
+	}
+	if limit == 0 {
+		limit = 1000
+	}
+
+	query := m.GetDashboardVersionsCommand{
+		DashboardId: int64(dashboardId),
+		OrderBy:     orderBy,
+		Limit:       limit,
+		Start:       start,
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		c.JsonApiErr(404, fmt.Sprintf("No versions found for dashboardId %d", dashboardId), err)
+		return
+	}
+
+	dashboardVersions := make([]*m.DashboardVersionDTO, len(query.Result))
+	for i, dashboardVersion := range query.Result {
+		creator := "Anonymous"
+		if dashboardVersion.CreatedBy > 0 {
+			creator = getUserLogin(dashboardVersion.CreatedBy)
+		}
+
+		dashboardVersions[i] = &m.DashboardVersionDTO{
+			Id:            dashboardVersion.Id,
+			DashboardId:   dashboardVersion.DashboardId,
+			ParentVersion: dashboardVersion.ParentVersion,
+			RestoredFrom:  dashboardVersion.RestoredFrom,
+			Version:       dashboardVersion.Version,
+			Created:       dashboardVersion.Created,
+			CreatedBy:     creator,
+			Message:       dashboardVersion.Message,
+		}
+	}
+
+	c.JSON(200, dashboardVersions)
+}
+
+// GetDashboardVersion returns the dashboard version with the given ID.
+func GetDashboardVersion(c *middleware.Context) {
+	dashboardIdStr := c.Params(":dashboardId")
+	dashboardId, err := strconv.Atoi(dashboardIdStr)
+	if err != nil {
+		c.JsonApiErr(400, err.Error(), err)
+		return
+	}
+
+	versionStr := c.Params(":id")
+	version, err := strconv.Atoi(versionStr)
+	if err != nil {
+		c.JsonApiErr(400, err.Error(), err)
+		return
+	}
+
+	query := m.GetDashboardVersionCommand{
+		DashboardId: int64(dashboardId),
+		Version:     version,
+	}
+	if err := bus.Dispatch(&query); err != nil {
+		c.JsonApiErr(500, err.Error(), err)
+		return
+	}
+
+	creator := "Anonymous"
+	if query.Result.CreatedBy > 0 {
+		creator = getUserLogin(query.Result.CreatedBy)
+	}
+
+	dashVersionMeta := &m.DashboardVersionMeta{
+		DashboardVersion: *query.Result,
+		CreatedBy:        creator,
+	}
+
+	c.JSON(200, dashVersionMeta)
+}
+
+func dashCmd(c *middleware.Context) (m.CompareDashboardVersionsCommand, error) {
+	cmd := m.CompareDashboardVersionsCommand{}
+
+	dashboardIdStr := c.Params(":dashboardId")
+	dashboardId, err := strconv.Atoi(dashboardIdStr)
+	if err != nil {
+		return cmd, err
+	}
+
+	versionStrings := strings.Split(c.Params(":versions"), "...")
+	if len(versionStrings) != 2 {
+		return cmd, fmt.Errorf("bad format: urls should be in the format /versions/0...1")
+	}
+
+	originalDash, err := strconv.Atoi(versionStrings[0])
+	if err != nil {
+		return cmd, fmt.Errorf("bad format: first argument is not of type int")
+	}
+
+	newDash, err := strconv.Atoi(versionStrings[1])
+	if err != nil {
+		return cmd, fmt.Errorf("bad format: second argument is not of type int")
+	}
+
+	cmd.DashboardId = int64(dashboardId)
+	cmd.Original = originalDash
+	cmd.New = newDash
+	return cmd, nil
+}
+
+// CompareDashboardVersions compares dashboards the way the GitHub API does.
+func CompareDashboardVersions(c *middleware.Context) {
+	cmd, err := dashCmd(c)
+	if err != nil {
+		c.JsonApiErr(500, err.Error(), err)
+	}
+	cmd.DiffType = m.DiffDelta
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		c.JsonApiErr(500, "cannot-compute-diff", err)
+		return
+	}
+	// here the output is already JSON, so we need to unmarshal it into a
+	// map before marshaling the entire response
+	deltaMap := make(map[string]interface{})
+	err = json.Unmarshal(cmd.Delta, &deltaMap)
+	if err != nil {
+		c.JsonApiErr(500, err.Error(), err)
+		return
+	}
+
+	c.JSON(200, simplejson.NewFromAny(util.DynMap{
+		"meta": util.DynMap{
+			"original": cmd.Original,
+			"new":      cmd.New,
+		},
+		"delta": deltaMap,
+	}))
+}
+
+// CompareDashboardVersionsJSON compares dashboards the way the GitHub API does,
+// returning a human-readable JSON diff.
+func CompareDashboardVersionsJSON(c *middleware.Context) {
+	cmd, err := dashCmd(c)
+	if err != nil {
+		c.JsonApiErr(500, err.Error(), err)
+	}
+	cmd.DiffType = m.DiffJSON
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		c.JsonApiErr(500, err.Error(), err)
+		return
+	}
+
+	c.Header().Set("Content-Type", "text/html")
+	c.WriteHeader(200)
+	c.Write(cmd.Delta)
+}
+
+// CompareDashboardVersionsBasic compares dashboards the way the GitHub API does,
+// returning a human-readable diff.
+func CompareDashboardVersionsBasic(c *middleware.Context) {
+	cmd, err := dashCmd(c)
+	if err != nil {
+		c.JsonApiErr(500, err.Error(), err)
+	}
+	cmd.DiffType = m.DiffBasic
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		c.JsonApiErr(500, err.Error(), err)
+		return
+	}
+
+	c.Header().Set("Content-Type", "text/html")
+	c.WriteHeader(200)
+	c.Write(cmd.Delta)
+}
+
+// RestoreDashboardVersion restores a dashboard to the given version.
+func RestoreDashboardVersion(c *middleware.Context, cmd m.RestoreDashboardVersionCommand) Response {
+	if !c.IsSignedIn {
+		return Json(401, util.DynMap{
+			"message": "Must be signed in to restore a version",
+			"status":  "unauthorized",
+		})
+	}
+
+	cmd.UserId = c.UserId
+	dashboardIdStr := c.Params(":dashboardId")
+	dashboardId, err := strconv.Atoi(dashboardIdStr)
+	if err != nil {
+		return Json(404, util.DynMap{
+			"message": err.Error(),
+			"status":  "cannot-find-dashboard",
+		})
+	}
+	cmd.DashboardId = int64(dashboardId)
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return Json(500, util.DynMap{
+			"message": err.Error(),
+			"status":  "cannot-restore-version",
+		})
+	}
+
+	isStarred, err := isDashboardStarredByUser(c, cmd.Result.Id)
+	if err != nil {
+		return Json(500, util.DynMap{
+			"message": "Error while checking if dashboard was starred by user",
+			"status":  err.Error(),
+		})
+	}
+
+	// Finding creator and last updater of the dashboard
+	updater, creator := "Anonymous", "Anonymous"
+	if cmd.Result.UpdatedBy > 0 {
+		updater = getUserLogin(cmd.Result.UpdatedBy)
+	}
+	if cmd.Result.CreatedBy > 0 {
+		creator = getUserLogin(cmd.Result.CreatedBy)
+	}
+
+	dto := dtos.DashboardFullWithMeta{
+		Dashboard: cmd.Result.Data,
+		Meta: dtos.DashboardMeta{
+			IsStarred: isStarred,
+			Slug:      cmd.Result.Slug,
+			Type:      m.DashTypeDB,
+			CanStar:   c.IsSignedIn,
+			CanSave:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
+			CanEdit:   canEditDashboard(c.OrgRole),
+			Created:   cmd.Result.Created,
+			Updated:   cmd.Result.Updated,
+			UpdatedBy: updater,
+			CreatedBy: creator,
+			Version:   cmd.Result.Version,
+		},
+	}
+
+	return Json(200, util.DynMap{
+		"message":   fmt.Sprintf("Dashboard restored to version %d", cmd.Result.Version),
+		"version":   cmd.Result.Version,
+		"dashboard": dto,
+	})
 }
 
 func GetDashboardTags(c *middleware.Context) {

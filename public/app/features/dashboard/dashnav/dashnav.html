@@ -56,7 +56,8 @@
 		</ul>
 	</li>
 	<li ng-show="::dashboardMeta.canSave">
-		<a ng-click="saveDashboard()" bs-tooltip="'Save dashboard <br> CTRL+S'" data-placement="bottom"><i class="fa fa-save"></i></a>
+		<a ng-show="dashboard.version === 0" ng-click="saveDashboard()" bs-tooltip="'Save dashboard <br> CTRL+S'" data-placement="bottom"><i class="fa fa-save"></i></a>
+		<a ng-show="dashboard.version > 0" ng-click="saveDashboard()" bs-tooltip="'Save to changelog <br> CTRL+S'" data-placement="bottom"><i class="fa fa-save"></i></a>
 	</li>
 	<li ng-if="dashboard.snapshot.originalUrl">
 		<a ng-href="{{dashboard.snapshot.originalUrl}}" bs-tooltip="'Open original dashboard'" data-placement="bottom"><i class="fa fa-link"></i></a>
@@ -66,6 +67,7 @@
 		<ul class="dropdown-menu">
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('settings');">Settings</a></li>
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('annotations');">Annotations</a></li>
+			<li ng-if="dashboardMeta.canEdit && dashboard.version > 0 && !dashboardMeta.isHome"><a class="pointer" ng-click="openEditView('audit');">Changelog</a></li>
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('templating');">Templating</a></li>
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="viewJson();">View JSON</a></li>
 			<li ng-if="contextSrv.isEditor && !dashboard.editable"><a class="pointer" ng-click="makeEditable();">Make Editable</a></li>

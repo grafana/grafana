@@ -223,6 +223,14 @@ func (hs *HttpServer) registerRoutes() {
 		// Dashboard
 		r.Group("/dashboards", func() {
 			r.Combo("/db/:slug").Get(GetDashboard).Delete(DeleteDashboard)
+
+			r.Get("/db/:dashboardId/versions", GetDashboardVersions)
+			r.Get("/db/:dashboardId/versions/:id", GetDashboardVersion)
+			r.Get("/db/:dashboardId/compare/:versions", CompareDashboardVersions)
+			r.Get("/db/:dashboardId/compare/:versions/html", CompareDashboardVersionsJSON)
+			r.Get("/db/:dashboardId/compare/:versions/basic", CompareDashboardVersionsBasic)
+			r.Post("/db/:dashboardId/restore", reqEditorRole, bind(m.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
+
 			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
 			r.Get("/file/:file", GetDashboardFromJsonFile)
 			r.Get("/home", wrap(GetHomeDashboard))

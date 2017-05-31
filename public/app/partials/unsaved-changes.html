@@ -1,7 +1,7 @@
-<div class="modal-body">
+<div class="modal-body" ng-controller="SaveDashboardMessageCtrl" ng-init="init();">
 	<div class="modal-header">
 		<h2 class="modal-header-title">
-		<i class="fa fa-exclamation"></i>
+			<i class="fa fa-exclamation"></i>
 			<span class="p-l-1">Unsaved changes</span>
 		</h2>
 
@@ -10,18 +10,45 @@
 		</a>
 	</div>
 
-	<div class="modal-content text-center">
-
-		<div class="confirm-modal-text">
-			What do you want to do?
+	<form name="saveMessage" ng-submit="saveVersion(saveMessage.$valid)" class="modal-content" novalidate>
+		<h6 class="text-center">
+			You're leaving without saving your changes, are you sure you want to leave? To save, add a small note to describe the changes in this version.
+		</h6>
+		<div class="p-t-2">
+			<div class="gf-form">
+				<label class="gf-form-hint">
+					<input
+						type="text"
+						name="message"
+						class="gf-form-input"
+						placeholder="Updates to &hellip;"
+						give-focus="true"
+						ng-model="clone.message"
+						ng-model-options="{allowInvalid: true}"
+						ng-keydown="keyDown($event)"
+						ng-maxlength="clone.max"
+						autocomplete="off"
+						required />
+					<small class="gf-form-hint-text muted" ng-cloak>
+						<span ng-class="{'text-error': saveMessage.message.$invalid && saveMessage.message.$dirty }">
+							{{clone.message.length || 0}}
+						</span>
+						/ {{clone.max}} characters
+					</small>
+				</label>
+			</div>
 		</div>
 
-		<div class="confirm-modal-buttons">
-			<button type="button" class="btn btn-inverse" ng-click="dismiss()">Cancel</button>
-			<button type="button" class="btn btn-danger" ng-click="ignore();dismiss()">Ignore</button>
-			<button type="button" class="btn btn-success" ng-click="save();dismiss();">Save</button>
+		<div class="gf-form-button-row text-center">
+			<button type="submit" class="btn btn-success" ng-disabled="saveMessage.$invalid">
+				Save changes
+			</button>
+			<button type="button" class="btn btn-danger" ng-click="ignore();dismiss()">
+				Discard changes and leave
+			</button>
+			<button class="btn btn-inverse" ng-click="dismiss();">Cancel</button>
 		</div>
-	</div>
+	</form>
 
 </div>
 

@@ -131,6 +131,7 @@ type SaveDashboardCommand struct {
 	OrgId     int64            `json:"-"`
 	Overwrite bool             `json:"overwrite"`
 	PluginId  string           `json:"-"`
+	Message   string           `json:"message"`
 
 	Result *Dashboard
 }

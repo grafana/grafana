@@ -202,7 +202,8 @@ export class BackendSrv {
 
   saveDashboard(dash, options) {
     options = (options || {});
-    return this.post('/api/dashboards/db/', {dashboard: dash, overwrite: options.overwrite === true});
+    const message = options.message || '';
+    return this.post('/api/dashboards/db/', {dashboard: dash, overwrite: options.overwrite === true, message});
   }
 }
 
