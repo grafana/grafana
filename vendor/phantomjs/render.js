@@ -30,11 +30,8 @@
     height: params.height || '400'
   };
 
-  var tries = 0;
-
   page.open(params.url, function (status) {
     // console.log('Loading a web page: ' + params.url + ' status: ' + status);
-
     page.onError = function(msg, trace) {
       var msgStack = ['ERROR: ' + msg];
       if (trace && trace.length) {
@@ -59,7 +56,7 @@
         return rootScope.panelsRendered >= panels;
       });
 
-      if (panelsRendered || tries === 1000) {
+      if (panelsRendered && "complete" === document.readyState) {
         var bb = page.evaluate(function () {
           return document.getElementsByClassName("main-view")[0].getBoundingClientRect();
         });
@@ -75,7 +72,6 @@
         phantom.exit();
       }
       else {
-        tries++;
         setTimeout(checkIsReady, 10);
       }
     }
