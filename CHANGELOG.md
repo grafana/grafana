@@ -5,7 +5,7 @@
 * **Sensu**: Added option for source and handler [#8405](https://github.com/grafana/grafana/pull/8405), thx [@joemiller](github.com/joemiller)
 * **CSV**: Configurable csv export datetime format [#8058](https://github.com/grafana/grafana/issues/8058), thx [@cederigo](github.com/cederigo)
 
-# 4.3.2 (upcoming patch release)
+# 4.3.2 (2017-05-31)
 
 ## Bug fixes
 
