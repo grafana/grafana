@@ -6,13 +6,14 @@ import _ from 'lodash';
 
 export class FolderPickerCtrl {
   dashboard: any;
-  folders: any[];
+  folders: Folder[];
   selectedFolder: number;
 
   /** @ngInject */
   constructor(private backendSrv, private $scope, $sce) {
     this.get(this.dashboard.id);
     this.selectedFolder = this.dashboard.meta.parentId;
+    this.folders = [{id: 0, title: 'Root', type: 'dash-folder'}];
   }
 
   get(dashboardId: number) {
@@ -21,15 +22,24 @@ export class FolderPickerCtrl {
     };
 
     return this.backendSrv.search(params).then(result => {
-      this.folders = result;
+      this.folders.push(...result);
     });
   }
 
   folderChanged() {
-    if (this.selectedFolder > 0) {
-      this.dashboard.parentId = this.selectedFolder;
-    }
+    this.dashboard.parentId = this.selectedFolder;
   }
+}
+
+export interface Folder {
+  id: number;
+  title: string;
+  uri?: string;
+  type: string;
+  tags?: string[];
+  isStarred?: boolean;
+  parentId?: number;
+  dashboards?: any;
 }
 
 export function folderPicker() {

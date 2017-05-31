@@ -191,6 +191,46 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(err, ShouldNotBeNil)
 			})
 
+			Convey("Should be able to update dashboard and remove parentId", func() {
+				cmd := m.SaveDashboardCommand{
+					OrgId: 1,
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						"id":    1,
+						"title": "parentId",
+						"tags":  []interface{}{},
+					}),
+					Overwrite: true,
+					ParentId:  2,
+				}
+
+				err := SaveDashboard(&cmd)
+				So(err, ShouldBeNil)
+				So(cmd.Result.ParentId, ShouldEqual, 2)
+
+				cmd = m.SaveDashboardCommand{
+					OrgId: 1,
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						"id":    1,
+						"title": "parentId",
+						"tags":  []interface{}{},
+					}),
+					ParentId:  0,
+					Overwrite: true,
+				}
+
+				err = SaveDashboard(&cmd)
+				So(err, ShouldBeNil)
+
+				query := m.GetDashboardQuery{
+					Slug:  cmd.Result.Slug,
+					OrgId: 1,
+				}
+
+				err = GetDashboard(&query)
+				So(err, ShouldBeNil)
+				So(query.Result.ParentId, ShouldEqual, 0)
+			})
+
 			Convey("Should be able to get dashboard tags", func() {
 				query := m.GetDashboardTagsQuery{OrgId: 1}
 

@@ -25,7 +25,7 @@ func init() {
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		dash := cmd.GetDashboardModel()
-
+		fmt.Printf("ParentId: %v", dash.ParentId)
 		// try get existing dashboard
 		var existing, sameTitle m.Dashboard
 
@@ -81,7 +81,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 		} else {
 			dash.Version += 1
 			dash.Data.Set("version", dash.Version)
-			affectedRows, err = sess.Id(dash.Id).Update(dash)
+			affectedRows, err = sess.MustCols("parent_id").Id(dash.Id).Update(dash)
 		}
 
 		if err != nil {
