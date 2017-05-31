@@ -10,6 +10,7 @@ import (
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/metrics"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 	"github.com/grafana/grafana/pkg/setting"
@@ -156,6 +157,7 @@ func (cm *ClusterManager) hasPendingAlertJobs() bool {
 		panic(fmt.Sprintf("Failed to get pending alert job count. Error: %v", err))
 	}
 	cm.log.Debug("Cluster manager ticker - pending alert jobs", "count", jobCountQuery.ResultCount)
+	metrics.M_Clustering_Pending_Alert_Jobs.Update(int64(jobCountQuery.ResultCount))
 	return jobCountQuery.ResultCount > 0
 }
 
@@ -166,6 +168,7 @@ func (cm *ClusterManager) scheduleMissingAlerts(alerts []*m.Alert) {
 		cm.log.Error("Failed to get last heartbeat", "error", err)
 		return
 	}
+
 	activeNode, err := cm.clusterNodeMgmt.GetNode(lastHeartbeat)
 	if err != nil {
 		cm.log.Debug("Failed to get node for heartbeat "+strconv.FormatInt(lastHeartbeat, 10), "error", err, "activeNode", activeNode.NodeId)
@@ -179,6 +182,9 @@ func (cm *ClusterManager) scheduleMissingAlerts(alerts []*m.Alert) {
 	}
 	cm.dispatcherTaskQ <- alertDispatchTask1
 	cm.alertingState.lastProcessedInterval = lastHeartbeat
+
+	metrics.M_Clustering_Missing_Alerts_Count.Update(int64(len(alerts)))
+	cm.log.Debug(fmt.Sprintf("Count of missing alerts %v", len(alerts)))
 }
 
 func (cm *ClusterManager) isAnyOtherNodeProcessingMissingAlerts() bool {
@@ -213,10 +219,13 @@ func (cm *ClusterManager) scheduleNormalAlerts() {
 		return
 	}
 	nodeCount, err := cm.clusterNodeMgmt.GetActiveNodesCount(lastHeartbeat)
+
 	if err != nil {
 		cm.log.Error("Failed to get active node count for heartbeat "+string(lastHeartbeat), "error", err)
 		return
 	}
+	metrics.M_Clustering_Active_Nodes.Update(int64(nodeCount))
+	cm.log.Debug(fmt.Sprintf("Total active nodes as %v", nodeCount))
 	if nodeCount == 0 {
 		cm.log.Warn("Found node count 0")
 		return
