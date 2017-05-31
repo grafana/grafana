@@ -202,5 +202,19 @@ function (angular, _, coreModule, config) {
       return this.datasourceRequest(options);
     };
 
+    this.suggestTagHost = function (query, callback) {
+      self.alertD({
+        method: "get",
+        url: "/summary",
+        params: {metrics: "collector.summary"},
+        headers: {'Content-Type': 'text/plain'},
+      }).then(function (response) {
+        var hosts = [];
+        _.each(response.data, function (summary) {
+          hosts.push(summary.tag.host);
+        });
+        return hosts;
+      }).then(callback);
+    };
   });
 });

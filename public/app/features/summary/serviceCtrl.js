@@ -10,21 +10,14 @@ define([
 
     module.controller('ServiceCtrl', function ($scope, backendSrv, contextSrv, datasourceSrv) {
       $scope.init = function () {
-        $scope.datasource = null;
-        backendSrv.get("/api/user/system").then(function (system) {
-          $scope.systems = system;
-          $scope.summarySelect.system = system[0].Id;
+        $scope.systems = contextSrv.systemsMap;
+        $scope.summarySelect.system = $scope.systems[0].Id;
+        datasourceSrv.get('opentsdb').then(function (datasource) {
+          $scope.datasource = datasource;
         }).then(function () {
-          _.each(datasourceSrv.getAll(), function (ds) {
-            if (ds.type === 'opentsdb') {
-              datasourceSrv.get(ds.name).then(function (datasource) {
-                $scope.datasource = datasource;
-              }).then(function () {
-                $scope.getServices();
-              });
-            }
-          });
-        })
+          $scope.getServices();
+        });
+        $scope.suggestTagHost = backendSrv.suggestTagHost;
       };
 
       if (contextSrv.isGrafanaAdmin) {
@@ -125,18 +118,6 @@ define([
         }
         contextSrv.system = $scope.summarySelect.system;
         $scope.getServices();
-      };
-
-      $scope.getTextValues = function (metricFindResult) {
-        return _.map(metricFindResult, function (value) {
-          return value.text;
-        });
-      };
-
-      $scope.suggestTagValues = function (query, callback) {
-        $scope.datasource.metricFindQuery('suggest_tagv(' + query + ')')
-          .then($scope.getTextValues)
-          .then(callback);
       };
 
       $scope.init();

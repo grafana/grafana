@@ -116,18 +116,6 @@ define([
         return;
       };
 
-      $scope.getTextValues = function (metricFindResult) {
-        return _.map(metricFindResult, function (value) {
-          return value.text;
-        });
-      };
-
-      $scope.suggestTagValues = function (query, callback) {
-        $scope.datasource.metricFindQuery('suggest_tagv(' + query + ')')
-          .then($scope.getTextValues)
-          .then(callback);
-      };
-
       $scope.init();
     });
   });
