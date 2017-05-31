@@ -9,7 +9,29 @@ function (angular, moment, _, dateMath) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AlertStatusCtrl', function ($scope, alertMgrSrv, datasourceSrv, contextSrv) {
+  module.controller('AlertStatusCtrl', function ($scope, alertMgrSrv, datasourceSrv, contextSrv, integrateSrv, $location) {
+    var annotation_tpl = {
+      annotation: {
+        datasource: "elk",
+        enable: true,
+        iconColor: "#C0C6BE",
+        iconSize: 15,
+        lineColor: "rgba(255, 96, 96, 0.592157)",
+        name: "123",
+        query: "*",
+        showLine: true,
+        textField: "123",
+        timeField: ""
+      },
+      min: 1495032982939,
+      max: 1495032982939,
+      eventType: "123",
+      title: ":",
+      tags: "历史报警时间",
+      text: "",
+      score: 1
+    };
+
     $scope.init = function () {
       $scope.correlationThreshold = 100;
       alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
@@ -81,6 +103,35 @@ function (angular, moment, _, dateMath) {
       $scope.dismiss();
     };
 
+    $scope.statusDetails = function(alertDetails) {
+      var target = {
+        tags: {},
+        downsampleAggregator: "avg",
+        downsampleInterval: "1m"
+      };
+      var alert = alertDetails;
+      var details = alert.definition.alertDetails;
+      var history = alert.history;
+      var host = alert.status.monitoredEntity;
+      var anno_create = alert.status.creationTime;
+      var start_anno = _.cloneDeep(annotation_tpl);
+      var options = integrateSrv.options;
+
+      target.aggregator = details.hostQuery.metricQueries[0].aggregator.toLowerCase();
+      target.metric = details.hostQuery.metricQueries[0].metric;
+      target.tags.host = host;
+      for (var tag in alert.definition.tags) {
+        target.tags[tag.name] = tag.value;
+      }
+      start_anno.min = start_anno.max = anno_create;
+      start_anno.title = "报警开始时间: ";
+      options.targets = [target];
+      options.title = target.metric + "异常情况";
+
+      options.from = moment.utc(anno_create - 3600000).format("YYYY-MM-DDTHH:mm:ss.SSS\\Z");
+      options.annotations = [start_anno];
+      $location.path("/integrate");
+    };
     $scope.handleSnooze = function(alertDetails) {
       var newScope = $scope.$new();
       newScope.alertDetails = alertDetails;
