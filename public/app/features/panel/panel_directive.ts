@@ -185,23 +185,9 @@ module.directive('grafanaPanel', function($rootScope, $document) {
       elem.on('mouseenter', mouseEnter);
       elem.on('mouseleave', mouseLeave);
 
-      ctrl.isPanelVisible = function () {
-        var position = panelContainer[0].getBoundingClientRect();
-        return (0 < position.top) && (position.top < window.innerHeight);
-      };
-
-      const refreshOnScroll = function () {
-        if (ctrl.skippedLastRefresh) {
-          ctrl.refresh();
-        }
-      };
-
-      $document.on('scroll', refreshOnScroll);
-
       scope.$on('$destroy', function() {
         elem.off();
         cornerInfoElem.off();
-        $document.off('scroll', refreshOnScroll);
 
         if (infoDrop) {
           infoDrop.destroy();
