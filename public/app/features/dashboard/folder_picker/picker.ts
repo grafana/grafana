@@ -42,7 +42,9 @@ export class FolderPickerCtrl {
 
   folderChanged() {
     const selected = _.find(this.folders, {title: this.selectedFolderSegment.value});
-    this.dashboard.parentId = selected.id;
+    if (selected) {
+      this.dashboard.parentId = selected.id;
+    }
   }
 }
 

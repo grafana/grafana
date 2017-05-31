@@ -3,7 +3,7 @@
 import coreModule from 'app/core/core_module';
 
 const  template = `
-<div class="modal-body">
+<div class="modal-body modal-body--with-overflow">
 	<div class="modal-header">
 		<h2 class="modal-header-title">
 			<i class="fa fa-copy"></i>
@@ -21,6 +21,9 @@ const  template = `
 				<label class="gf-form-label">New name</label>
 				<input type="text" class="gf-form-input" ng-model="ctrl.clone.title" give-focus="true" required>
 			</div>
+      <div class="gf-form">
+        <folder-picker ng-if="!clone.meta.isFolder" selected-folder="clone.meta.parentId" on-change="onFolderChange"></folder-picker>
+      </div>
 		</div>
 
 		<div class="gf-form-button-row text-center">
