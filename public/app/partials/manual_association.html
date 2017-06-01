@@ -1,0 +1,45 @@
+<div class="modal-body">
+
+    <a class="modal-close" ng-click="dismiss();">
+        <i class="fa fa-remove"></i>
+    </a>
+
+    <h3>
+        加入新的关联指标
+    </h3>
+    <form>
+        <div class="tidy-form">
+            <ul class="tidy-form-list">
+                <li class="tidy-form-item" style="width: 100px">
+                    指标
+                </li>
+                <li>
+                    <input type="text" class="tidy-form-input input-xlarge"
+                           ng-model='target.metric'
+                           spellcheck='false'
+                           bs-typeahead="suggestMetrics"
+                           placeholder="需要分析的指标" required/>
+                </li>
+            </ul>
+            <div class="clearfix"></div>
+        </div>
+        <div class="tidy-form">
+            <ul class="tidy-form-list">
+                <li class="tidy-form-item" style="width: 100px">
+                    机器标签
+                </li>
+                <li>
+                    <input type="text" class="input-medium tidy-form-input ng-pristine ng-untouched ng-valid"
+                           spellcheck="false"
+                           bs-typeahead="suggestTagHost"
+                           data-min-length="0" data-items="100" ng-model="target.host" placeholder="请键入主机名"
+                           data-provide="typeahead">
+                </li>
+            </ul>
+            <div class="clearfix"></div>
+        </div>
+        <button type="submit" class="btn btn-primary" ng-click="addManualMetric(target);dismiss()"><i
+                class="fa fa-search"/>加入分析
+        </button>
+    </form>
+</div>

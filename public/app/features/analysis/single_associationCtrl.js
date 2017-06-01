@@ -19,12 +19,8 @@ define([
         $controller('OpenTSDBQueryCtrl', {$scope: $scope});
         $scope.targetObj = targetObj;
         $scope.suggestTagHost = backendSrv.suggestTagHost;
-        _.each(datasourceSrv.getAll(), function(ds) {
-          if (ds.type === 'opentsdb') {
-            datasourceSrv.get(ds.name).then(function(datasource) {
-              $scope.datasource = datasource;
-            });
-          }
+        datasourceSrv.get('opentsdb').then(function(datasource) {
+          $scope.datasource = datasource;
         });
       };
 
