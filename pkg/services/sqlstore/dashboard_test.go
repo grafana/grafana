@@ -118,6 +118,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				query := search.FindPersistedDashboardsQuery{
 					Title: "test dash 23",
 					OrgId: 1,
+					Mode:  "tree",
 				}
 
 				err := SearchDashboards(&query)
@@ -146,11 +147,26 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(hit.Type, ShouldEqual, search.DashHitFolder)
 			})
 
+			Convey("Should be able to search for a dashboard folder's children", func() {
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:    1,
+					ParentId: savedFolder.Id,
+				}
+
+				err := SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 2)
+				hit := query.Result[0]
+				So(hit.Id, ShouldEqual, savedDash.Id)
+			})
+
 			Convey("Should be able to search for dashboard by dashboard ids", func() {
 				Convey("should be able to find two dashboards by id", func() {
 					query := search.FindPersistedDashboardsQuery{
 						DashboardIds: []int{2, 3},
 						OrgId:        1,
+						Mode:         "tree",
 					}
 
 					err := SearchDashboards(&query)

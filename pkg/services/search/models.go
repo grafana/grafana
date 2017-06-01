@@ -48,6 +48,8 @@ type Query struct {
 	IsStarred    bool
 	Type         string
 	DashboardIds []int
+	FolderId     int64
+	Mode         string
 
 	Result HitList
 }
@@ -59,6 +61,8 @@ type FindPersistedDashboardsQuery struct {
 	IsStarred    bool
 	DashboardIds []int
 	Type         string
+	ParentId     int64
+	Mode         string
 
 	Result HitList
 }

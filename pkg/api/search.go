@@ -15,9 +15,15 @@ func Search(c *middleware.Context) {
 	starred := c.Query("starred")
 	limit := c.QueryInt("limit")
 	dashboardType := c.Query("type")
+	folderId := c.QueryInt64("folderId")
+	mode := c.Query("mode")
 
 	if limit == 0 {
 		limit = 1000
+	}
+
+	if mode == "" {
+		mode = "list"
 	}
 
 	dbids := make([]int, 0)
@@ -37,6 +43,8 @@ func Search(c *middleware.Context) {
 		OrgId:        c.OrgId,
 		DashboardIds: dbids,
 		Type:         dashboardType,
+		FolderId:     folderId,
+		Mode:         mode,
 	}
 
 	err := bus.Dispatch(&searchQuery)

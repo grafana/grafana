@@ -25,7 +25,7 @@ func init() {
 func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		dash := cmd.GetDashboardModel()
-		fmt.Printf("ParentId: %v", dash.ParentId)
+
 		// try get existing dashboard
 		var existing, sameTitle m.Dashboard
 
@@ -209,9 +209,15 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		sql.WriteString(" AND dashboard.is_folder = 0")
 	}
 
+	if query.ParentId > 0 {
+		sql.WriteString(" AND dashboard.parent_id = ?")
+		params = append(params, query.ParentId)
+	}
+
 	sql.WriteString(fmt.Sprintf(" ORDER BY dashboard.title ASC LIMIT 1000"))
 
 	var res []DashboardSearchProjection
+
 	err := x.Sql(sql.String(), params...).Find(&res)
 	if err != nil {
 		return nil, err
@@ -226,36 +232,20 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 		return err
 	}
 
-	res, err = appendDashboardFolders(res)
-	if err != nil {
-		return err
-	}
-
-	query.Result = make([]*search.Hit, 0)
-	hits := make(map[int64]*search.Hit)
-
-	for _, item := range res {
-		hit, exists := hits[item.Id]
-		if !exists {
-			hit = &search.Hit{
-				Id:       item.Id,
-				Title:    item.Title,
-				Uri:      "db/" + item.Slug,
-				Type:     getHitType(item),
-				ParentId: item.ParentId,
-				Tags:     []string{},
-			}
-			query.Result = append(query.Result, hit)
-			hits[item.Id] = hit
-		}
-		if len(item.Term) > 0 {
-			hit.Tags = append(hit.Tags, item.Term)
+	if query.Mode == "tree" {
+		res, err = appendDashboardFolders(res)
+		if err != nil {
+			return err
 		}
 	}
 
-	convertToDashboardFolders(query)
+	makeQueryResult(query, res)
 
-	return err
+	if query.Mode == "tree" {
+		convertToDashboardFolders(query)
+	}
+
+	return nil
 }
 
 // appends parent folders for any hits to the search result
@@ -296,6 +286,30 @@ func getHitType(item DashboardSearchProjection) search.HitType {
 	}
 
 	return hitType
+}
+
+func makeQueryResult(query *search.FindPersistedDashboardsQuery, res []DashboardSearchProjection) {
+	query.Result = make([]*search.Hit, 0)
+	hits := make(map[int64]*search.Hit)
+
+	for _, item := range res {
+		hit, exists := hits[item.Id]
+		if !exists {
+			hit = &search.Hit{
+				Id:       item.Id,
+				Title:    item.Title,
+				Uri:      "db/" + item.Slug,
+				Type:     getHitType(item),
+				ParentId: item.ParentId,
+				Tags:     []string{},
+			}
+			query.Result = append(query.Result, hit)
+			hits[item.Id] = hit
+		}
+		if len(item.Term) > 0 {
+			hit.Tags = append(hit.Tags, item.Term)
+		}
+	}
 }
 
 func convertToDashboardFolders(query *search.FindPersistedDashboardsQuery) error {

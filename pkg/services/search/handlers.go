@@ -46,6 +46,8 @@ func searchHandler(query *Query) error {
 		OrgId:        query.OrgId,
 		DashboardIds: query.DashboardIds,
 		Type:         query.Type,
+		ParentId:     query.FolderId,
+		Mode:         query.Mode,
 	}
 
 	if err := bus.Dispatch(&dashQuery); err != nil {
