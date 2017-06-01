@@ -42,7 +42,7 @@ export class SearchCtrl {
     this.giveSearchFocus = 0;
     this.selectedIndex = -1;
     this.results = [];
-    this.query = { query: '', tag: [], starred: false };
+    this.query = { query: '', tag: [], starred: false, mode: 'tree' };
     this.currentSearchId = 0;
     this.ignoreClose = true;
 

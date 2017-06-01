@@ -5,32 +5,34 @@ import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 
 export class FolderPickerCtrl {
-  dashboard: any;
   folders: Folder[];
   selectedFolder: number;
   selectedFolderSegment: any;
+  onChange: any;
+  rootFolderName: string;
 
   /** @ngInject */
   constructor(private backendSrv, private $scope, private $sce, private uiSegmentSrv) {
-    this.selectedFolderSegment = this.uiSegmentSrv.newSegment({value: 'Root', selectMode: true});
-
-    this.selectedFolder = this.dashboard.meta.parentId;
-    this.get(this.dashboard.id);
+    this.selectedFolderSegment = this.uiSegmentSrv.newSegment({value: this.rootFolderName || 'Root', selectMode: true});
+    this.get();
   }
 
-  get(dashboardId: number) {
+  get() {
     var params = {
       type: 'dash-folder',
     };
 
     return this.backendSrv.search(params).then(result => {
-      this.folders = [{id: 0, title: 'Root', type: 'dash-folder'}];
+      this.folders = [{id: 0, title: this.rootFolderName || 'Root', type: 'dash-folder'}];
       this.folders.push(...result);
-      const selected = _.find(this.folders, {id: this.selectedFolder});
 
-      this.selectedFolderSegment.value = selected.title;
-      this.selectedFolderSegment.text = selected.title;
-      this.selectedFolderSegment.html = this.$sce.trustAsHtml(selected.title);
+      if (this.selectedFolder) {
+        const selected = _.find(this.folders, {id: this.selectedFolder});
+
+        this.selectedFolderSegment.value = selected.title;
+        this.selectedFolderSegment.text = selected.title;
+        this.selectedFolderSegment.html = this.$sce.trustAsHtml(selected.title);
+      }
     });
   }
 
@@ -43,7 +45,7 @@ export class FolderPickerCtrl {
   folderChanged() {
     const selected = _.find(this.folders, {title: this.selectedFolderSegment.value});
     if (selected) {
-      this.dashboard.parentId = selected.id;
+      this.onChange(selected.id);
     }
   }
 }
@@ -66,7 +68,11 @@ export function folderPicker() {
     controller: FolderPickerCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
-    scope: { dashboard: "=" }
+    scope: {
+      selectedFolder: "<",
+      onChange: "<",
+      rootFolderName: "@"
+    }
   };
 }
 

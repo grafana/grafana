@@ -135,6 +135,10 @@ export class DashNavCtrl {
       var uri = "data:application/json;charset=utf-8," + encodeURIComponent(html);
       var newWindow = window.open(uri);
     }
+
+    onFolderChange(parentId) {
+      this.dashboard.parentId = parentId;
+    }
 }
 
 export function dashNavDirective() {

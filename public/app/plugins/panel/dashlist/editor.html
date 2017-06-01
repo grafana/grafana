@@ -23,6 +23,11 @@
     </div>
 
     <div class="gf-form">
+      <span class="gf-form-label width-6">Folder</span>
+      <folder-picker on-change="ctrl.onFolderChange" root-folder-name="All"></folder-picker>
+    </div>
+
+    <div class="gf-form">
       <span class="gf-form-label width-6">Tags</span>
       <bootstrap-tagsinput ng-model="ctrl.panel.tags" tagclass="label label-tag" placeholder="add tags" on-tags-updated="ctrl.refresh()">
       </bootstrap-tagsinput>

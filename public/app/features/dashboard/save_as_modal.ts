@@ -66,6 +66,10 @@ export class SaveDashboardAsModalCtrl {
       this.save();
     }
   }
+
+  onFolderChange(parentId) {
+    this.clone.parentId = parentId;
+  }
 }
 
 export function saveDashboardAsDirective() {
