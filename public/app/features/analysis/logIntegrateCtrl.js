@@ -196,7 +196,7 @@ define([
               "isNew": true,
               "links": [],
               "pageSize": null,
-              "scroll": true,
+              "scroll": false,
               "showHeader": true,
               "sort": {
                 "col": 0,
@@ -275,7 +275,7 @@ define([
               "isNew": true,
               "links": [],
               "pageSize": null,
-              "scroll": true,
+              "scroll": false,
               "showHeader": true,
               "sort": {
                 "col": 0,
