@@ -1,15 +1,15 @@
 ///<reference path="../../../headers/common.d.ts" />
 
+import './history_srv';
+
 import _ from 'lodash';
 import angular from 'angular';
 import moment from 'moment';
 
-import coreModule from 'app/core/core_module';
-
 import {DashboardModel} from '../model';
-import {AuditLogOpts, RevisionsModel} from './models';
+import {HistoryListOpts, RevisionsModel} from './models';
 
-export class AuditLogCtrl {
+export class HistoryListCtrl {
   appending: boolean;
   dashboard: DashboardModel;
   delta: { basic: string; html: string; };
@@ -29,11 +29,10 @@ export class AuditLogCtrl {
               private $window,
               private $q,
               private contextSrv,
-              private auditSrv) {
+              private historySrv) {
     $scope.ctrl = this;
 
     this.appending = false;
-    this.dashboard = $scope.dashboard;
     this.diff = 'basic';
     this.limit = 10;
     this.loading = false;
@@ -106,7 +105,7 @@ export class AuditLogCtrl {
       this.loading = false;
       return this.$q.when(this.delta[this.diff]);
     } else {
-      return this.auditSrv.compareVersions(this.dashboard, compare, diff).then(response => {
+      return this.historySrv.compareVersions(this.dashboard, compare, diff).then(response => {
         this.delta[this.diff] = response;
       }).catch(err => {
         this.mode = 'list';
@@ -118,12 +117,12 @@ export class AuditLogCtrl {
   getLog(append = false) {
     this.loading = !append;
     this.appending = append;
-    const options: AuditLogOpts = {
+    const options: HistoryListOpts = {
       limit: this.limit,
       start: this.start,
       orderBy: this.orderBy,
     };
-    return this.auditSrv.getAuditLog(this.dashboard, options).then(revisions => {
+    return this.historySrv.getHistoryList(this.dashboard, options).then(revisions => {
       const formattedRevisions =  _.flow(
         _.partialRight(_.map, rev => _.extend({}, rev, {
           checked: false,
@@ -149,7 +148,7 @@ export class AuditLogCtrl {
 
       this.revisions = append ? this.revisions.concat(formattedRevisions) : formattedRevisions;
     }).catch(err => {
-      this.$rootScope.appEvent('alert-error', ['There was an error fetching the audit log', (err.message || err)]);
+      this.$rootScope.appEvent('alert-error', ['There was an error fetching the history list', (err.message || err)]);
     }).finally(() => {
       this.loading = false;
       this.appending = false;
@@ -209,7 +208,7 @@ export class AuditLogCtrl {
 
   restoreConfirm(version: number) {
     this.loading = true;
-    return this.auditSrv.restoreDashboard(this.dashboard, version).then(response => {
+    return this.historySrv.restoreDashboard(this.dashboard, version).then(response => {
       this.revisions.unshift({
         id: this.revisions[0].id + 1,
         checked: false,
@@ -232,4 +231,17 @@ export class AuditLogCtrl {
   }
 }
 
-coreModule.controller('AuditLogCtrl', AuditLogCtrl);
+export function dashboardHistoryDirective() {
+  return {
+    restrict: 'E',
+    templateUrl: 'public/app/features/dashboard/history/history.html',
+    controller: HistoryListCtrl,
+    bindToController: true,
+    controllerAs: 'ctrl',
+    scope: {
+      dashboard: "="
+    }
+  };
+}
+
+angular.module('grafana.directives').directive('gfDashboardHistory', dashboardHistoryDirective);

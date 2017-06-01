@@ -1,11 +1,11 @@
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 
 import _ from 'lodash';
-import {AuditLogCtrl} from 'app/features/dashboard/audit/audit_ctrl';
-import { versions, compare, restore } from 'test/mocks/audit-mocks';
+import {HistoryListCtrl} from 'app/features/dashboard/history/history';
+import { versions, compare, restore } from 'test/mocks/history-mocks';
 import config from 'app/core/config';
 
-describe('AuditLogCtrl', function() {
+describe('HistoryListCtrl', function() {
   var RESTORE_ID = 4;
 
   var ctx: any = {};
@@ -18,11 +18,11 @@ describe('AuditLogCtrl', function() {
     ctx.scope = $rootScope.$new();
   }));
 
-  var auditSrv;
+  var historySrv;
   var $rootScope;
   beforeEach(function() {
-    auditSrv = {
-      getAuditLog: sinon.stub(),
+    historySrv = {
+      getHistoryList: sinon.stub(),
       compareVersions: sinon.stub(),
       restoreDashboard: sinon.stub(),
     };
@@ -32,24 +32,24 @@ describe('AuditLogCtrl', function() {
     };
   });
 
-  describe('when the audit log component is loaded', function() {
+  describe('when the history list component is loaded', function() {
     var deferred;
 
     beforeEach(angularMocks.inject(($controller, $q) => {
       deferred = $q.defer();
-      auditSrv.getAuditLog.returns(deferred.promise);
-      ctx.ctrl = $controller(AuditLogCtrl, {
-        auditSrv,
+      historySrv.getHistoryList.returns(deferred.promise);
+      ctx.ctrl = $controller(HistoryListCtrl, {
+        historySrv,
         $rootScope,
         $scope: ctx.scope,
       });
     }));
 
-    it('should immediately attempt to fetch the audit log', function() {
-      expect(auditSrv.getAuditLog.calledOnce).to.be(true);
+    it('should immediately attempt to fetch the history list', function() {
+      expect(historySrv.getHistoryList.calledOnce).to.be(true);
     });
 
-    describe('and the audit log is successfully fetched', function() {
+    describe('and the history list is successfully fetched', function() {
       beforeEach(function() {
         deferred.resolve(versionsResponse);
         ctx.ctrl.$scope.$apply();
@@ -106,9 +106,9 @@ describe('AuditLogCtrl', function() {
       });
     });
 
-    describe('and fetching the audit log fails', function() {
+    describe('and fetching the history list fails', function() {
       beforeEach(function() {
-        deferred.reject(new Error('AuditLogError'));
+        deferred.reject(new Error('HistoryListError'));
         ctx.ctrl.$scope.$apply();
       });
 
@@ -134,7 +134,7 @@ describe('AuditLogCtrl', function() {
       });
     });
 
-    describe('should update the audit log when the dashboard is saved', function() {
+    describe('should update the history list when the dashboard is saved', function() {
       beforeEach(function() {
         ctx.ctrl.dashboard = { version: 3 };
         ctx.ctrl.resetFromSource = sinon.spy();
@@ -163,10 +163,10 @@ describe('AuditLogCtrl', function() {
 
     beforeEach(angularMocks.inject(($controller, $q) => {
       deferred = $q.defer();
-      auditSrv.getAuditLog.returns($q.when(versionsResponse));
-      auditSrv.compareVersions.returns(deferred.promise);
-      ctx.ctrl = $controller(AuditLogCtrl, {
-        auditSrv,
+      historySrv.getHistoryList.returns($q.when(versionsResponse));
+      historySrv.compareVersions.returns(deferred.promise);
+      ctx.ctrl = $controller(HistoryListCtrl, {
+        historySrv,
         $rootScope,
         $scope: ctx.scope,
       });
@@ -174,8 +174,8 @@ describe('AuditLogCtrl', function() {
       ctx.ctrl.$scope.$apply();
     }));
 
-    it('should have already fetched the audit log', function() {
-      expect(auditSrv.getAuditLog.calledOnce).to.be(true);
+    it('should have already fetched the history list', function() {
+      expect(historySrv.getHistoryList.calledOnce).to.be(true);
       expect(ctx.ctrl.revisions.length).to.be.above(0);
     });
 
@@ -205,7 +205,7 @@ describe('AuditLogCtrl', function() {
       });
 
       it('should fetch the basic diff if two valid versions are selected', function() {
-        expect(auditSrv.compareVersions.calledOnce).to.be(true);
+        expect(historySrv.compareVersions.calledOnce).to.be(true);
         expect(ctx.ctrl.delta.basic).to.be('<div></div>');
         expect(ctx.ctrl.delta.html).to.be('');
       });
@@ -229,7 +229,7 @@ describe('AuditLogCtrl', function() {
       });
 
       it('should fetch the json diff if two valid versions are selected', function() {
-        expect(auditSrv.compareVersions.calledOnce).to.be(true);
+        expect(historySrv.compareVersions.calledOnce).to.be(true);
         expect(ctx.ctrl.delta.basic).to.be('');
         expect(ctx.ctrl.delta.html).to.be('<pre><code></code></pre>');
       });
@@ -254,7 +254,7 @@ describe('AuditLogCtrl', function() {
       });
 
       it('should use the cached diffs instead of fetching', function() {
-        expect(auditSrv.compareVersions.calledOnce).to.be(false);
+        expect(historySrv.compareVersions.calledOnce).to.be(false);
         expect(ctx.ctrl.delta.basic).to.be('cached basic');
       });
 
@@ -272,10 +272,10 @@ describe('AuditLogCtrl', function() {
       });
 
       it('should fetch the diff if two valid versions are selected', function() {
-        expect(auditSrv.compareVersions.calledOnce).to.be(true);
+        expect(historySrv.compareVersions.calledOnce).to.be(true);
       });
 
-      it('should return to the audit log view', function() {
+      it('should return to the history list view', function() {
         expect(ctx.ctrl.mode).to.be('list');
       });
 
@@ -299,10 +299,10 @@ describe('AuditLogCtrl', function() {
 
     beforeEach(angularMocks.inject(($controller, $q) => {
       deferred = $q.defer();
-      auditSrv.getAuditLog.returns($q.when(versionsResponse));
-      auditSrv.restoreDashboard.returns(deferred.promise);
-      ctx.ctrl = $controller(AuditLogCtrl, {
-        auditSrv,
+      historySrv.getHistoryList.returns($q.when(versionsResponse));
+      historySrv.restoreDashboard.returns(deferred.promise);
+      ctx.ctrl = $controller(HistoryListCtrl, {
+        historySrv,
         contextSrv: { user: { name: 'Carlos' }},
         $rootScope,
         $scope: ctx.scope,
@@ -339,7 +339,7 @@ describe('AuditLogCtrl', function() {
         expect(ctx.ctrl.loading).to.be(false);
       });
 
-      it('should add an entry for the restored revision to the audit log', function() {
+      it('should add an entry for the restored revision to the history list', function() {
         expect(ctx.ctrl.revisions.length).to.be(5);
       });
 

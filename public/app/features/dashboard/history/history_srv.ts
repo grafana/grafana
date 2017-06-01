@@ -1,17 +1,15 @@
 ///<reference path="../../../headers/common.d.ts" />
 
-import './audit_ctrl';
-
 import _ from 'lodash';
 import coreModule from 'app/core/core_module';
 import {DashboardModel} from '../model';
-import {AuditLogOpts} from './models';
+import {HistoryListOpts} from './models';
 
-export class AuditSrv {
+export class HistorySrv {
   /** @ngInject */
   constructor(private backendSrv, private $q) {}
 
-  getAuditLog(dashboard: DashboardModel, options: AuditLogOpts) {
+  getHistoryList(dashboard: DashboardModel, options: HistoryListOpts) {
     const id = dashboard && dashboard.id ? dashboard.id : void 0;
     return id ? this.backendSrv.get(`api/dashboards/db/${id}/versions`, options) : this.$q.when([]);
   }
@@ -29,4 +27,4 @@ export class AuditSrv {
   }
 }
 
-coreModule.service('auditSrv', AuditSrv);
+coreModule.service('historySrv', HistorySrv);

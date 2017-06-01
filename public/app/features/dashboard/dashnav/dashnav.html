@@ -67,7 +67,7 @@
 		<ul class="dropdown-menu">
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('settings');">Settings</a></li>
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('annotations');">Annotations</a></li>
-			<li ng-if="dashboardMeta.canEdit && dashboard.version > 0 && !dashboardMeta.isHome"><a class="pointer" ng-click="openEditView('audit');">Changelog</a></li>
+			<li ng-if="dashboardMeta.canEdit && dashboard.version > 0 && !dashboardMeta.isHome"><a class="pointer" ng-click="openEditView('history');">Changelog</a></li>
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="openEditView('templating');">Templating</a></li>
 			<li ng-if="dashboardMeta.canEdit"><a class="pointer" ng-click="viewJson();">View JSON</a></li>
 			<li ng-if="contextSrv.isEditor && !dashboard.editable"><a class="pointer" ng-click="makeEditable();">Make Editable</a></li>

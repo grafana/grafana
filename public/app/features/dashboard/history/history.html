@@ -1,4 +1,4 @@
-<div ng-controller="AuditLogCtrl">
+<div>
 	<div class="tabbed-view-header">
 		<h2 class="tabbed-view-title">
 			Changelog
@@ -12,10 +12,10 @@
 			</li>
 			<li class="gf-tabs-item" ng-show="ctrl.mode === 'compare'">
 				<span ng-if="ctrl.isOriginalCurrent()" class="active gf-tabs-link">
-					Version {{ctrl.selected[0]}} <i class="fa fa-arrows-h" /> Current
+					Version {{ctrl.selected[0]}} <i class="fa fa-arrows-h"></i> Current
 				</span>
 				<span ng-if="!ctrl.isOriginalCurrent()" class="active gf-tabs-link">
-					Version {{ctrl.selected[0]}} <i class="fa fa-arrows-h" /> Version {{ctrl.selected[1]}}
+					Version {{ctrl.selected[0]}} <i class="fa fa-arrows-h"></i> Version {{ctrl.selected[1]}}
 				</span>
 			</li>
 		</ul>
@@ -30,11 +30,11 @@
 		<div ng-if="ctrl.mode === 'list'">
 			<div ng-if="ctrl.loading">
 				<i class="fa fa-spinner fa-spin"></i>
-				<em>Fetching audit log&hellip;</em>
+				<em>Fetching history list&hellip;</em>
 			</div>
 
 			<div ng-if="!ctrl.loading">
-				<div class="audit-table gf-form">
+				<div class="history-table gf-form">
 					<div class="gf-form-group">
 						<table class="filter-table">
 							<thead>
@@ -102,7 +102,7 @@
 			</div>
 		</div>
 
-		<div class="audit-log" ng-if="ctrl.mode === 'compare'">
+		<div class="history-list" ng-if="ctrl.mode === 'compare'">
 			<div class="page-container">
 				<div class="page-body">
 					<aside class="page-sidebar">
@@ -129,7 +129,7 @@
 							</a>
 							<h4>
 								Comparing Version {{ctrl.selected[0]}}
-								<i class="fa fa-arrows-h" />
+								<i class="fa fa-arrows-h"></i>
 								Version {{ctrl.selected[1]}}
 								<cite class="muted" ng-if="ctrl.isOriginalCurrent()">(Current)</cite>
 							</h4>
@@ -148,8 +148,8 @@
 								</p>
 							</section>
 							<div id="delta" diff-delta>
-								<div class="delta-basic" ng-show="ctrl.diff === 'basic'" compile="ctrl.delta.basic" />
-								<div class="delta-html" ng-show="ctrl.diff === 'html'" compile="ctrl.delta.html" />
+								<div class="delta-basic" ng-show="ctrl.diff === 'basic'" compile="ctrl.delta.basic"></div>
+								<div class="delta-html" ng-show="ctrl.diff === 'html'" compile="ctrl.delta.html"></div>
 							</div>
 						</div>
 					</div>

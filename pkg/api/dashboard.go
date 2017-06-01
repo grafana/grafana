@@ -258,16 +258,9 @@ func GetDashboardFromJsonFile(c *middleware.Context) {
 	c.JSON(200, &dash)
 }
 
-// GetDashboardVersions returns all dashboardversions as JSON
-func GetDashboardVersions(c *middleware.Context) {
-	dashboardIdStr := c.Params(":dashboardId")
-	dashboardId, err := strconv.Atoi(dashboardIdStr)
-	if err != nil {
-		c.JsonApiErr(400, err.Error(), err)
-		return
-	}
-
-	// TODO(ben) the orderBy arg should be split into snake_case?
+// GetDashboardVersions returns all dashboard versions as JSON
+func GetDashboardVersions(c *middleware.Context) Response {
+	dashboardId := c.ParamsInt64(":dashboardId")
 	orderBy := c.Query("orderBy")
 	limit := c.QueryInt("limit")
 	start := c.QueryInt("start")
@@ -279,62 +272,54 @@ func GetDashboardVersions(c *middleware.Context) {
 	}
 
 	query := m.GetDashboardVersionsCommand{
-		DashboardId: int64(dashboardId),
+		DashboardId: dashboardId,
 		OrderBy:     orderBy,
 		Limit:       limit,
 		Start:       start,
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(404, fmt.Sprintf("No versions found for dashboardId %d", dashboardId), err)
-		return
+		return ApiError(404, fmt.Sprintf("No versions found for dashboardId %d", dashboardId), err)
 	}
 
-	dashboardVersions := make([]*m.DashboardVersionDTO, len(query.Result))
-	for i, dashboardVersion := range query.Result {
-		creator := "Anonymous"
-		if dashboardVersion.CreatedBy > 0 {
-			creator = getUserLogin(dashboardVersion.CreatedBy)
-		}
+	// // TODO(ben) use inner join with DTO
+	// dashboardVersions := make([]*m.DashboardVersionDTO, len(query.Result))
+	// for i, dashboardVersion := range query.Result {
+	// 	creator := "Anonymous"
+	// 	if dashboardVersion.CreatedBy > 0 {
+	// 		creator = getUserLogin(dashboardVersion.CreatedBy)
+	// 	}
 
-		dashboardVersions[i] = &m.DashboardVersionDTO{
-			Id:            dashboardVersion.Id,
-			DashboardId:   dashboardVersion.DashboardId,
-			ParentVersion: dashboardVersion.ParentVersion,
-			RestoredFrom:  dashboardVersion.RestoredFrom,
-			Version:       dashboardVersion.Version,
-			Created:       dashboardVersion.Created,
-			CreatedBy:     creator,
-			Message:       dashboardVersion.Message,
-		}
-	}
+	// 	dashboardVersions[i] = &m.DashboardVersionDTO{
+	// 		Id:            dashboardVersion.Id,
+	// 		DashboardId:   dashboardVersion.DashboardId,
+	// 		ParentVersion: dashboardVersion.ParentVersion,
+	// 		RestoredFrom:  dashboardVersion.RestoredFrom,
+	// 		Version:       dashboardVersion.Version,
+	// 		Created:       dashboardVersion.Created,
+	// 		CreatedBy:     creator,
+	// 		Message:       dashboardVersion.Message,
+	// 	}
+	// }
 
-	c.JSON(200, dashboardVersions)
+	return Json(200, query.Result)
 }
 
 // GetDashboardVersion returns the dashboard version with the given ID.
-func GetDashboardVersion(c *middleware.Context) {
-	dashboardIdStr := c.Params(":dashboardId")
-	dashboardId, err := strconv.Atoi(dashboardIdStr)
-	if err != nil {
-		c.JsonApiErr(400, err.Error(), err)
-		return
-	}
-
-	versionStr := c.Params(":id")
-	version, err := strconv.Atoi(versionStr)
-	if err != nil {
-		c.JsonApiErr(400, err.Error(), err)
-		return
-	}
+func GetDashboardVersion(c *middleware.Context) Response {
+	dashboardId := c.ParamsInt64(":dashboardId")
+	version := c.ParamsInt(":id")
 
 	query := m.GetDashboardVersionCommand{
-		DashboardId: int64(dashboardId),
+		DashboardId: dashboardId,
 		Version:     version,
 	}
 	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, err.Error(), err)
-		return
+		return ApiError(
+			500,
+			fmt.Sprintf("Dashboard version %d not found for dashboardId %d", version, dashboardId),
+			err,
+		)
 	}
 
 	creator := "Anonymous"
@@ -347,10 +332,10 @@ func GetDashboardVersion(c *middleware.Context) {
 		CreatedBy:        creator,
 	}
 
-	c.JSON(200, dashVersionMeta)
+	return Json(200, dashVersionMeta)
 }
 
-func dashCmd(c *middleware.Context) (m.CompareDashboardVersionsCommand, error) {
+func createCompareDashboardVersionCommand(c *middleware.Context) (m.CompareDashboardVersionsCommand, error) {
 	cmd := m.CompareDashboardVersionsCommand{}
 
 	dashboardIdStr := c.Params(":dashboardId")
@@ -381,106 +366,82 @@ func dashCmd(c *middleware.Context) (m.CompareDashboardVersionsCommand, error) {
 }
 
 // CompareDashboardVersions compares dashboards the way the GitHub API does.
-func CompareDashboardVersions(c *middleware.Context) {
-	cmd, err := dashCmd(c)
+func CompareDashboardVersions(c *middleware.Context) Response {
+	cmd, err := createCompareDashboardVersionCommand(c)
 	if err != nil {
-		c.JsonApiErr(500, err.Error(), err)
+		return ApiError(500, err.Error(), err)
 	}
 	cmd.DiffType = m.DiffDelta
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, "cannot-compute-diff", err)
-		return
+		return ApiError(500, "Unable to compute diff", err)
 	}
+
 	// here the output is already JSON, so we need to unmarshal it into a
 	// map before marshaling the entire response
 	deltaMap := make(map[string]interface{})
 	err = json.Unmarshal(cmd.Delta, &deltaMap)
 	if err != nil {
-		c.JsonApiErr(500, err.Error(), err)
-		return
+		return ApiError(500, err.Error(), err)
 	}
 
-	c.JSON(200, simplejson.NewFromAny(util.DynMap{
+	return Json(200, util.DynMap{
 		"meta": util.DynMap{
 			"original": cmd.Original,
 			"new":      cmd.New,
 		},
 		"delta": deltaMap,
-	}))
+	})
 }
 
 // CompareDashboardVersionsJSON compares dashboards the way the GitHub API does,
 // returning a human-readable JSON diff.
-func CompareDashboardVersionsJSON(c *middleware.Context) {
-	cmd, err := dashCmd(c)
+func CompareDashboardVersionsJSON(c *middleware.Context) Response {
+	cmd, err := createCompareDashboardVersionCommand(c)
 	if err != nil {
-		c.JsonApiErr(500, err.Error(), err)
+		return ApiError(500, err.Error(), err)
 	}
 	cmd.DiffType = m.DiffJSON
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, err.Error(), err)
-		return
+		return ApiError(500, err.Error(), err)
 	}
 
-	c.Header().Set("Content-Type", "text/html")
-	c.WriteHeader(200)
-	c.Write(cmd.Delta)
+	return Respond(200, cmd.Delta).Header("Content-Type", "text/html")
 }
 
 // CompareDashboardVersionsBasic compares dashboards the way the GitHub API does,
 // returning a human-readable diff.
-func CompareDashboardVersionsBasic(c *middleware.Context) {
-	cmd, err := dashCmd(c)
+func CompareDashboardVersionsBasic(c *middleware.Context) Response {
+	cmd, err := createCompareDashboardVersionCommand(c)
 	if err != nil {
-		c.JsonApiErr(500, err.Error(), err)
+		return ApiError(500, err.Error(), err)
 	}
 	cmd.DiffType = m.DiffBasic
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		c.JsonApiErr(500, err.Error(), err)
-		return
+		return ApiError(500, err.Error(), err)
 	}
 
-	c.Header().Set("Content-Type", "text/html")
-	c.WriteHeader(200)
-	c.Write(cmd.Delta)
+	return Respond(200, cmd.Delta).Header("Content-Type", "text/html")
 }
 
 // RestoreDashboardVersion restores a dashboard to the given version.
 func RestoreDashboardVersion(c *middleware.Context, cmd m.RestoreDashboardVersionCommand) Response {
 	if !c.IsSignedIn {
-		return Json(401, util.DynMap{
-			"message": "Must be signed in to restore a version",
-			"status":  "unauthorized",
-		})
+		return ApiError(401, "Must be signed in to restore a version", nil)
 	}
 
 	cmd.UserId = c.UserId
-	dashboardIdStr := c.Params(":dashboardId")
-	dashboardId, err := strconv.Atoi(dashboardIdStr)
-	if err != nil {
-		return Json(404, util.DynMap{
-			"message": err.Error(),
-			"status":  "cannot-find-dashboard",
-		})
-	}
-	cmd.DashboardId = int64(dashboardId)
+	cmd.DashboardId = c.ParamsInt64(":dashboardId")
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		return Json(500, util.DynMap{
-			"message": err.Error(),
-			"status":  "cannot-restore-version",
-		})
+		return ApiError(500, "Cannot restore version", err)
 	}
 
 	isStarred, err := isDashboardStarredByUser(c, cmd.Result.Id)
 	if err != nil {
-		return Json(500, util.DynMap{
-			"message": "Error while checking if dashboard was starred by user",
-			"status":  err.Error(),
-		})
+		return ApiError(500, "Error checking if dashboard is starred by user", err)
 	}
 
 	// Finding creator and last updater of the dashboard

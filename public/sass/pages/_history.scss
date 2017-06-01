@@ -1,5 +1,5 @@
-// Audit Table
-.audit-table {
+// History Table
+.history-table {
   // .gf-form overrides
   .gf-form-label { display: none; }
 
@@ -58,7 +58,7 @@
 }
 
 // Diff View
-.audit-log {
+.history-list {
   h4 {
     margin-bottom: 0.75em;
   }

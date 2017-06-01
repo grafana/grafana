@@ -80,7 +80,7 @@ type GetDashboardVersionsCommand struct {
 	Limit       int    `json:"limit"`
 	Start       int    `json:"start"`
 
-	Result []*DashboardVersion
+	Result []*DashboardVersionDTO
 }
 
 // RestoreDashboardVersionCommand creates a new dashboard version.

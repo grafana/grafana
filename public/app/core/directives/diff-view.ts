@@ -6,6 +6,7 @@ import coreModule from '../core_module';
 export class DeltaCtrl {
   observer: any;
 
+  /** @ngInject */
   constructor(private $rootScope) {
     const waitForCompile = function(mutations) {
       if (mutations.length === 1) {
@@ -70,7 +71,7 @@ export function linkJson() {
       link: '@lineLink',
       switchView: '&',
     },
-    templateUrl: 'public/app/features/dashboard/audit/partials/link-json.html',
+    templateUrl: 'public/app/features/dashboard/history/partials/link-json.html',
   };
 }
 coreModule.directive('diffLinkJson', linkJson);

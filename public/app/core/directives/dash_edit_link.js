@@ -8,7 +8,7 @@ function ($, coreModule) {
   var editViewMap = {
     'settings':    { src: 'public/app/features/dashboard/partials/settings.html'},
     'annotations': { src: 'public/app/features/annotations/partials/editor.html'},
-    'audit':       { src: 'public/app/features/dashboard/audit/partials/audit.html'},
+    'history':     { src: 'public/app/features/dashboard/history/partials/history.html'},
     'templating':  { src: 'public/app/features/templating/partials/editor.html'},
     'import':      { src: '<dash-import></dash-import>' }
   };

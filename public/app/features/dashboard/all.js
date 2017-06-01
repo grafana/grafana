@@ -1,7 +1,7 @@
 define([
   './dashboard_ctrl',
   './alerting_srv',
-  './audit/audit_srv',
+  './history/history',
   './dashboardLoaderSrv',
   './dashnav/dashnav',
   './submenu/submenu',

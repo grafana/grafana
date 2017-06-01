@@ -1,10 +1,10 @@
 import {describe, beforeEach, it, sinon, expect, angularMocks} from 'test/lib/common';
 
 import helpers from 'test/specs/helpers';
-import AuditSrv from '../audit/audit_srv';
-import { versions, compare, restore } from 'test/mocks/audit-mocks';
+import HistorySrv from '../history/history_srv';
+import { versions, compare, restore } from 'test/mocks/history-mocks';
 
-describe('auditSrv', function() {
+describe('historySrv', function() {
   var ctx = new helpers.ServiceTestContext();
 
   var versionsResponse = versions();
@@ -23,11 +23,11 @@ describe('auditSrv', function() {
         return [200, restoreResponse(parsedData.version)];
       });
   }));
-  beforeEach(ctx.createService('auditSrv'));
+  beforeEach(ctx.createService('historySrv'));
 
-  describe('getAuditLog', function() {
+  describe('getHistoryList', function() {
     it('should return a versions array for the given dashboard id', function(done) {
-      ctx.service.getAuditLog({ id: 1 }).then(function(versions) {
+      ctx.service.getHistoryList({ id: 1 }).then(function(versions) {
         expect(versions).to.eql(versionsResponse);
         done();
       });
@@ -35,7 +35,7 @@ describe('auditSrv', function() {
     });
 
     it('should return an empty array when not given an id', function(done) {
-      ctx.service.getAuditLog({ }).then(function(versions) {
+      ctx.service.getHistoryList({ }).then(function(versions) {
         expect(versions).to.eql([]);
         done();
       });
@@ -43,7 +43,7 @@ describe('auditSrv', function() {
     });
 
     it('should return an empty array when not given a dashboard', function(done) {
-      ctx.service.getAuditLog().then(function(versions) {
+      ctx.service.getHistoryList().then(function(versions) {
         expect(versions).to.eql([]);
         done();
       });

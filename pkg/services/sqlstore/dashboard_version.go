@@ -91,15 +91,25 @@ func GetDashboardVersion(query *m.GetDashboardVersionCommand) error {
 
 // GetDashboardVersions gets all dashboard versions for the given dashboard ID.
 func GetDashboardVersions(query *m.GetDashboardVersionsCommand) error {
-	order := ""
-
-	// the query builder in xorm doesn't provide a way to set
-	// a default order, so we perform this check
-	if query.OrderBy != "" {
-		order = " desc"
+	if query.OrderBy == "" {
+		query.OrderBy = "version"
 	}
-	err := x.In("dashboard_id", query.DashboardId).
-		OrderBy(query.OrderBy+order).
+	query.OrderBy += " desc"
+
+	err := x.Table("dashboard_version").
+		Select(`dashboard_version.id,
+				dashboard_version.dashboard_id,
+				dashboard_version.parent_version,
+				dashboard_version.restored_from,
+				dashboard_version.version,
+				dashboard_version.created,
+				dashboard_version.created_by as created_by_id,
+				dashboard_version.message,
+				dashboard_version.data,
+				"user".login as created_by`).
+		Join("LEFT", "user", `dashboard_version.created_by = "user".id`).
+		Where("dashboard_version.dashboard_id=?", query.DashboardId).
+		OrderBy("dashboard_version."+query.OrderBy).
 		Limit(query.Limit, query.Start).
 		Find(&query.Result)
 	if err != nil {

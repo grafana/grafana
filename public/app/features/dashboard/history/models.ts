@@ -1,4 +1,4 @@
-export interface AuditLogOpts {
+export interface HistoryListOpts {
   limit: number;
   start: number;
   orderBy: string;
