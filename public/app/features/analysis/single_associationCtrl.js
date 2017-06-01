@@ -8,7 +8,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('SingleAssociationCtrl', function ($scope, datasourceSrv, $controller, contextSrv) {
+    module.controller('SingleAssociationCtrl', function ($scope, datasourceSrv, $controller, contextSrv, backendSrv) {
       $scope.init = function () {
         var targetObj = {
           metric: "",
@@ -18,12 +18,9 @@ define([
         $scope.unInit = true;
         $controller('OpenTSDBQueryCtrl', {$scope: $scope});
         $scope.targetObj = targetObj;
-        _.each(datasourceSrv.getAll(), function(ds) {
-          if (ds.type === 'opentsdb') {
-            datasourceSrv.get(ds.name).then(function(datasource) {
-              $scope.datasource = datasource;
-            });
-          }
+        $scope.suggestTagHost = backendSrv.suggestTagHost;
+        datasourceSrv.get('opentsdb').then(function(datasource) {
+          $scope.datasource = datasource;
         });
       };
 
