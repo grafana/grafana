@@ -96,8 +96,9 @@ function (queryDef) {
     var filterObj = {};
     for (var i = 0; i < aggDef.settings.filters.length; i++) {
       var query = aggDef.settings.filters[i].query;
-
-      filterObj[query] = {
+      var label = aggDef.settings.filters[i].label;
+      label = label === '' || label === undefined ? query : label;
+      filterObj[label] = {
         query_string: {
           query: query,
           analyze_wildcard: true
@@ -118,8 +119,12 @@ function (queryDef) {
       query.fields = ["*", "_source"];
     }
 
-    query.script_fields = {},
-    query.docvalue_fields = [this.timeField];
+    query.script_fields = {};
+    if (this.esVersion < 5) {
+      query.fielddata_fields = [this.timeField];
+    } else {
+      query.docvalue_fields = [this.timeField];
+    }
     return query;
   };
 

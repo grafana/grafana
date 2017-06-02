@@ -153,6 +153,29 @@ describe('grafanaGraph', function() {
     });
   });
 
+  graphScenario('when logBase is log 10 and data points contain only zeroes', function(ctx) {
+    ctx.setup(function(ctrl, data) {
+      ctrl.panel.yaxes[0].logBase = 10;
+      data[0] = new TimeSeries({
+        datapoints: [[0,1],[0,2],[0,3],[0,4]],
+        alias: 'seriesAutoscale',
+      });
+      data[0].yaxis = 1;
+    });
+
+    it('should not set min and max and should create some fake ticks', function() {
+      var axisAutoscale = ctx.plotOptions.yaxes[0];
+      expect(axisAutoscale.transform(100)).to.be(2);
+      expect(axisAutoscale.inverseTransform(-3)).to.be(0.001);
+      expect(axisAutoscale.min).to.be(undefined);
+      expect(axisAutoscale.max).to.be(undefined);
+      expect(axisAutoscale.ticks.length).to.be(2);
+      expect(axisAutoscale.ticks[0]).to.be(1);
+      expect(axisAutoscale.ticks[1]).to.be(2);
+      expect(axisAutoscale.tickDecimals).to.be(undefined);
+    });
+  });
+
   graphScenario('dashed lines options', function(ctx) {
     ctx.setup(function(ctrl) {
       ctrl.panel.lines = true;

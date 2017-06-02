@@ -2,6 +2,7 @@ package social
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"github.com/grafana/grafana/pkg/models"
@@ -57,16 +58,14 @@ func (s *SocialGrafanaCom) UserInfo(client *http.Client) (*BasicUserInfo, error)
 		Orgs  []OrgRecord `json:"orgs"`
 	}
 
-	var err error
-	r, err := client.Get(s.url + "/api/oauth2/user")
+	body, err := HttpGet(client, s.url+"/api/oauth2/user")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
-	defer r.Body.Close()
-
-	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
-		return nil, err
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
 	userInfo := &BasicUserInfo{
