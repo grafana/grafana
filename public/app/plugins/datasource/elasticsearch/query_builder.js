@@ -109,8 +109,8 @@ function (queryDef) {
     return filterObj;
   };
 
-  ElasticQueryBuilder.prototype.documentQuery = function(query) {
-    query.size = 500;
+  ElasticQueryBuilder.prototype.documentQuery = function(query, size) {
+    query.size = size === undefined ? 500 : parseInt(size , 10);
     query.sort = {};
     query.sort[this.timeField] = {order: 'desc', unmapped_type: 'boolean'};
 
@@ -196,7 +196,9 @@ function (queryDef) {
       if (metric && metric.type !== 'raw_document') {
         throw {message: 'Invalid query'};
       }
-      return this.documentQuery(query, target);
+      var size = metric && metric.hasOwnProperty("settings") && metric.settings.hasOwnProperty("size")
+                   && metric.settings["size"] !== null ? metric.settings["size"] : 500 ;
+      return this.documentQuery(query,size);
     }
 
     nestedAggs = query;

@@ -103,6 +103,8 @@ function (angular, _, queryDef) {
           break;
         }
         case 'raw_document': {
+          $scope.agg.settings.size = $scope.agg.settings.size || 500;
+          $scope.settingsLinkText = 'Size: ' + $scope.agg.settings.size ;
           $scope.target.metrics = [$scope.agg];
           $scope.target.bucketAggs = [];
           break;
