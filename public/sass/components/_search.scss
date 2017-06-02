@@ -10,7 +10,7 @@
 }
 
 .search-container {
-  left: 78px;
+  left: 0;
   top: 0;
   right: 0;
   z-index: ($zindex-modal-backdrop + 10);
@@ -59,6 +59,7 @@
 
 .search-dropdown {
   display: flex;
+  flex-direction: column;
   max-width: 1100px;
   visibility: none;
   opacity: 0;
@@ -163,3 +164,11 @@
   }
 }
 
+@include media-breakpoint-up(md) {
+  .search-dropdown {
+    flex-direction: row;
+  }
+  .search-container {
+    left: 78px;
+  }
+}
