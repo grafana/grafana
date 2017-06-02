@@ -1,8 +1,9 @@
 define([
   'jquery',
+  'angular',
   '../core_module',
 ],
-function ($, coreModule) {
+function ($, angular, coreModule) {
   'use strict';
 
   var editViewMap = {
@@ -47,6 +48,7 @@ function ($, coreModule) {
             elem.empty();
             lastEditor = null;
             editorScope = null;
+            elem.removeClass('dash-edit-view--open');
 
             if (editview) {
               var urlParams = $location.search();
@@ -74,11 +76,18 @@ function ($, coreModule) {
 
           var view = payload.src;
           if (view.indexOf('.html') > 0)  {
-            view = $('<div class="tabbed-view" ng-include="' + "'" + view + "'" + '"></div>');
+            view = angular.element(document.createElement('div'));
+            view.append($('<div class="tabbed-view" ng-include="' + "'" + payload.src + "'" + '"></div>'));
           }
 
-          elem.append(view);
-          $compile(elem.contents())(editorScope);
+          $compile(view)(editorScope);
+
+          setTimeout(function() {
+            elem.append(view);
+            setTimeout(function() {
+              elem.addClass('dash-edit-view--open');
+            }, 10);
+          }, 10);
         }
 
         scope.$watch("dashboardViewState.state.editview", function(newValue, oldValue) {
