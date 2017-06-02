@@ -7,6 +7,8 @@ import Drop from 'tether-drop';
 import twemoji from 'twemoji';
 import emojiDef from './emoji/emoji_def';
 
+const DEFAULT_ICON = '1f494'; // Broken heart
+
 let buttonTemplate = `
 <span class="gf-form-input width-3">
   <a class="pointer gf-icon-picker-button" ng-click="ctrl.openEmojiPicker($event)">
@@ -106,9 +108,11 @@ function buildEmoji(codepoint, size?) {
 export class IconPickerCtrl {
   iconDrop: any;
   scope: any;
+  icon: string;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private $timeout, private $compile) {
+    this.icon = this.icon || DEFAULT_ICON;
     this.iconDrop = null;
   }
 
@@ -182,8 +186,7 @@ export function iconPicker() {
       icon: "="
     },
     link: function (scope, elem, attrs)  {
-      let defaultIcon = '1f494'; // Broken heart
-      let codepoint = scope.ctrl.icon || defaultIcon;
+      let codepoint = scope.ctrl.icon || DEFAULT_ICON;
       let emoji = buildEmoji(codepoint);
       elem.find('.gf-event-icon').replaceWith(emoji);
     }
