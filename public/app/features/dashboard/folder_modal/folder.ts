@@ -19,7 +19,7 @@ export class FolderCtrl {
     const title = this.title.trim();
 
 
-    return this.backendSrv.saveDashboardFolder(title).then((result) => {
+    return this.backendSrv.createDashboardFolder(title).then((result) => {
       appEvents.emit('alert-success', ['Dashboard saved', 'Saved as ' + title]);
 
       appEvents.emit('dashboard-saved', result);

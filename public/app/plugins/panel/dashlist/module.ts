@@ -12,7 +12,6 @@ class DashListCtrl extends PanelCtrl {
   modes: any[];
 
   panelDefaults = {
-    folder: '',
     query: '',
     limit: 10,
     tags: [],

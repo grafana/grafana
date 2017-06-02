@@ -211,12 +211,45 @@ export class BackendSrv {
     });
   }
 
-  saveDashboardFolder(name) {
+  createDashboardFolder(name) {
     const dash = {
-      title: name
+      title: name,
+      editable: false,
+      hideControls: true,
+      rows: [
+        {
+          panels: [
+            {
+              folderId: 0,
+              headings: false,
+              id: 1,
+              limit: 1000,
+              links: [],
+              query: '',
+              recent: false,
+              search: true,
+              span: 12,
+              starred: false,
+              tags: [],
+              title: 'Dashboards',
+              type: 'dashlist'
+            }
+          ],
+          showTitle: false,
+          title: 'Dashboard List',
+          titleSize: 'h6'
+        }
+      ]
     };
 
-    return this.post('/api/dashboards/db/', {dashboard: dash, isFolder: true, overwrite: false});
+    return this.post('/api/dashboards/db/', {dashboard: dash, isFolder: true, overwrite: false})
+    .then(res => {
+      return this.getDashboard('db', res.slug);
+    })
+    .then(res => {
+      res.dashboard.rows[0].panels[0].folderId = res.dashboard.id;
+      return this.saveDashboard(res.dashboard, {overwrite: false});
+    });
   }
 }
 
