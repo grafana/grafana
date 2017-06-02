@@ -19,8 +19,11 @@ export class EventEditorCtrl {
   constructor(private annotationsSrv) {
     this.event.panelId = this.panelCtrl.panel.id;
     this.event.dashboardId = this.panelCtrl.dashboard.id;
-    // This overrides default icon from emojipicker.ts
-    this.event.icon = DEFAULT_EVENT_ICON;
+
+    if (!(this.event && this.event.icon)) {
+      // This overrides default icon from emojipicker.ts
+      this.event.icon = DEFAULT_EVENT_ICON;
+    }
   }
 
   save() {
@@ -39,6 +42,11 @@ export class EventEditorCtrl {
         console.log('invalid time');
         return;
       }
+    }
+
+    if (saveModel.annotationId) {
+      console.log('Should update: ' + saveModel.annotationId);
+      return;
     }
 
     this.annotationsSrv.saveAnnotationEvent(saveModel)

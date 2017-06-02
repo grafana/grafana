@@ -56,6 +56,24 @@ export class EventManager {
     this.panelCtrl.render();
   }
 
+  editEvent(event, elem?) {
+    let element = elem ? this.elem.find(elem) : this.elem;
+    this.popoverSrv.show({
+      element: element[0],
+      classNames: 'drop-popover drop-popover--form',
+      position: 'bottom center',
+      openOn: null,
+      template: '<event-editor panel-ctrl="panelCtrl" event="event" close="dismiss()"></event-editor>',
+      onClose: this.editorClosed.bind(this),
+      model: {
+        event: event,
+        panelCtrl: this.panelCtrl,
+      },
+    });
+
+    this.panelCtrl.render();
+  }
+
   addFlotEvents(annotations, flotOptions) {
     if (!this.event && annotations.length === 0) {
       return;

@@ -1,5 +1,6 @@
 
-<h5 class="section-heading text-center">Add annotation</h5>
+<h5 class="section-heading text-center" ng-if="!ctrl.event.annotationId">Add annotation</h5>
+<h5 class="section-heading text-center" ng-if="ctrl.event.annotationId">Edit annotation</h5>
 
 <form name="ctrl.form" class="text-center">
 	<div style="display: inline-block">

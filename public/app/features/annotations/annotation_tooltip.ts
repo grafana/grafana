@@ -5,9 +5,10 @@ import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
 import alertDef from '../alerting/alert_def';
+import { EventManager } from 'app/features/annotations/all';
 
 /** @ngInject **/
-export function annotationTooltipDirective($sanitize, dashboardSrv, $compile) {
+export function annotationTooltipDirective($sanitize, dashboardSrv, popoverSrv, $compile) {
 
   function sanitizeString(str) {
     try {
@@ -22,6 +23,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, $compile) {
     restrict: 'E',
     scope: {
       "event": "=",
+      "onEdit": "&"
     },
     link: function(scope, element) {
       var event = scope.event;
@@ -43,6 +45,17 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, $compile) {
         <div class="graph-annotation-header">
           <span class="graph-annotation-title ${titleStateClass}">${sanitizeString(title)}</span>
           <span class="graph-annotation-time">${dashboard.formatDate(event.min)}</span>
+      `;
+
+      if (event.type === 'event') {
+        tooltip += `
+          <span class="pointer graph-annotation-edit-icon" ng-click="onEdit()">
+            <i class="fa fa-pencil-square"></i>
+          </span>
+        `;
+      }
+
+      tooltip += `
         </div>
       `;
 

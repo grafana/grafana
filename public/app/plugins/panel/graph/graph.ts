@@ -635,6 +635,13 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         }
       });
 
+      elem.bind("editevent", (e, annotationEvent, elem) => {
+        let marker = elem.find(":first");
+        marker = $(plot.getPlaceholder()).find(marker);
+        //console.log("editevent triggered", annotationEvent, elem, marker);
+        eventManager.editEvent(annotationEvent);
+      });
+
       scope.$on('$destroy', function() {
         tooltip.destroy();
         elem.off();

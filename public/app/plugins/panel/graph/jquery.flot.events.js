@@ -8,14 +8,18 @@ define([
 function ($, _, angular, Drop, twemoji) {
   'use strict';
 
-  function createAnnotationToolip(element, event) {
+  function createAnnotationToolip(element, event, plot) {
     var injector = angular.element(document).injector();
     var content = document.createElement('div');
-    content.innerHTML = '<annotation-tooltip event="event"></annotation-tooltip>';
+    content.innerHTML = '<annotation-tooltip event="event" on-edit="onEdit()"></annotation-tooltip>';
 
     injector.invoke(["$compile", "$rootScope", function($compile, $rootScope) {
       var tmpScope = $rootScope.$new(true);
       tmpScope.event = event;
+
+      tmpScope.onEdit = function() {
+        plot.getPlaceholder().trigger("editevent", [event, element.parent()]);
+      };
 
       $compile(content)(tmpScope);
       tmpScope.$digest();
@@ -347,7 +351,7 @@ function ($, _, angular, Drop, twemoji) {
         });
 
         var mouseenter = function() {
-          createAnnotationToolip(marker, $(this).data("event"));
+          createAnnotationToolip(marker, $(this).data("event"), that._plot);
         };
 
         var mouseleave = function() {
@@ -467,7 +471,7 @@ function ($, _, angular, Drop, twemoji) {
       });
 
       var mouseenter = function () {
-        createAnnotationToolip(region, $(this).data("event"));
+        createAnnotationToolip(region, $(this).data("event"), that._plot);
       };
 
       var mouseleave = function () {
