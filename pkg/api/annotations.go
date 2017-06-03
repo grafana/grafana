@@ -96,6 +96,27 @@ func PostAnnotation(c *middleware.Context, cmd dtos.PostAnnotationsCmd) Response
 	return ApiSuccess("Annotation added")
 }
 
+func UpdateAnnotation(c *middleware.Context, cmd dtos.UpdateAnnotationsCmd) Response {
+	repo := annotations.GetRepository()
+
+	item := annotations.Item{
+		OrgId:  c.OrgId,
+		UserId: c.UserId,
+		Id:     cmd.AnnotationId,
+		Epoch:  cmd.Time / 1000,
+		Title:  cmd.Title,
+		Text:   cmd.Text,
+		Icon:   cmd.Icon,
+		Type:   annotations.EventType,
+	}
+
+	if err := repo.Update(&item); err != nil {
+		return ApiError(500, "Failed to update annotation", err)
+	}
+
+	return ApiSuccess("Annotation updated")
+}
+
 func DeleteAnnotations(c *middleware.Context, cmd dtos.DeleteAnnotationsCmd) Response {
 	repo := annotations.GetRepository()
 

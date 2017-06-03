@@ -36,6 +36,18 @@ type PostAnnotationsCmd struct {
 	TimeEnd   int64  `json:"timeEnd"`
 }
 
+type UpdateAnnotationsCmd struct {
+	AnnotationId int64  `json:"annotationId"`
+	Time         int64  `json:"time"`
+	Title        string `json:"title"`
+	Text         string `json:"text"`
+	Icon         string `json:"icon"`
+
+	FillColor string `json:"fillColor"`
+	IsRegion  bool   `json:"isRegion"`
+	TimeEnd   int64  `json:"timeEnd"`
+}
+
 type DeleteAnnotationsCmd struct {
 	AlertId     int64 `json:"alertId"`
 	DashboardId int64 `json:"dashboardId"`

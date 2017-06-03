@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"strings"
 
@@ -24,8 +25,21 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 
 func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 	return inTransaction(func(sess *DBSession) error {
+		existing := new(annotations.Item)
+		isExist, err := sess.Table("annotation").Where("id=? AND org_id=?", item.Id, item.OrgId).Get(existing)
+		if err != nil {
+			return err
+		}
+		if !isExist {
+			return errors.New("Annotation not found")
+		}
 
-		if _, err := sess.Table("annotation").Id(item.Id).Update(item); err != nil {
+		existing.Epoch = item.Epoch
+		existing.Title = item.Title
+		existing.Text = item.Text
+		existing.Icon = item.Icon
+
+		if _, err := sess.Table("annotation").Id(item.Id).Update(existing); err != nil {
 			return err
 		}
 
