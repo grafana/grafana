@@ -38,6 +38,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 		existing.Title = item.Title
 		existing.Text = item.Text
 		existing.Icon = item.Icon
+		existing.RegionId = item.RegionId
 
 		if _, err := sess.Table("annotation").Id(item.Id).Update(existing); err != nil {
 			return err

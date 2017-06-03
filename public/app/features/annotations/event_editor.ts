@@ -20,6 +20,12 @@ export class EventEditorCtrl {
     this.event.panelId = this.panelCtrl.panel.id;
     this.event.dashboardId = this.panelCtrl.dashboard.id;
 
+    // Annotations query returns time as Unix timestamp in milliseconds
+    this.event.time = tryEpochToMoment(this.event.time);
+    if (this.event.isRegion) {
+      this.event.timeEnd = tryEpochToMoment(this.event.timeEnd);
+    }
+
     if (!(this.event && this.event.icon)) {
       // This overrides default icon from emojipicker.ts
       this.event.icon = DEFAULT_EVENT_ICON;
@@ -70,6 +76,15 @@ export class EventEditorCtrl {
 
   timeChanged() {
     this.panelCtrl.render();
+  }
+}
+
+function tryEpochToMoment(timestamp) {
+  if (timestamp && _.isNumber(timestamp)) {
+    let epoch = Number(timestamp);
+    return moment(epoch);
+  } else {
+    return timestamp;
   }
 }
 
