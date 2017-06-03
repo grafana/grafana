@@ -1,0 +1,52 @@
+<div class="editor-row">
+  <div class="section">
+    <h5>Request options</h5>
+                <div class="tight-form last">
+                        <ul class="tight-form-list">
+                                <li class="tight-form-item">
+                                        Method
+                                </li>
+                                <li>
+                                       <select class="input-mini tight-form-input" ng-model="panel.verb" ng-options="v for v in ['GET','POST']" ng-change="render()"></select> 
+                                </li>
+                        </ul>
+                        <div class="clearfix"></div>
+                </div>
+                <div class="tight-form last">
+                        <ul class="tight-form-list">
+                                <li class="tight-form-item">
+                                        URL
+                                </li>
+                                <li>
+                                        <input type="text" class="input-xxlarge tight-form-input" ng-model='panel.url' ng-change="render()"></input>
+                                </li>
+                        </ul>
+                        <div class="clearfix"></div>
+                </div>
+                <div class="tight-form last">
+                        <ul class="tight-form-list">
+                                <li class="tight-form-item">
+                                        Data
+                                </li>
+                                <li>
+                                        <input type="text" class="input-xxlarge tight-form-input" ng-model='panel.data' ng-change="render()"></input>
+                                </li>
+                        </ul>
+                        <div class="clearfix"></div>
+                </div>
+        </div>
+        <div class="section">
+                <h5>Response options</h5>
+                <div class="tight-form last">
+                        <ul class="tight-form-list">
+                                <li class="tight-form-item">
+                                        Json filter
+                                </li>
+                                <li>
+                                        <input type="text" class="input-xxlarge tight-form-input" ng-model='panel.resp' ng-change="render()"></input>
+                                </li>
+                        </ul>
+                        <div class="clearfix"></div>
+                </div>
+        </div>
+</div>

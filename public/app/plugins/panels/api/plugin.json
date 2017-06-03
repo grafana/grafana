@@ -1,0 +1,8 @@
+{
+  "pluginType": "panel",
+
+  "name": "Api",
+  "type": "api",
+
+  "module": "app/plugins/panels/api/module"
+}
