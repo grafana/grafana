@@ -46,18 +46,26 @@ export class EventEditorCtrl {
 
     if (saveModel.annotationId) {
       console.log('Should update: ' + saveModel.annotationId);
-      return;
+      this.annotationsSrv.updateAnnotationEvent(saveModel)
+      .then(() => {
+        this.panelCtrl.refresh();
+        this.close();
+      })
+      .catch(() => {
+        this.panelCtrl.refresh();
+        this.close();
+      });
+    } else {
+      this.annotationsSrv.saveAnnotationEvent(saveModel)
+      .then(() => {
+        this.panelCtrl.refresh();
+        this.close();
+      })
+      .catch(() => {
+        this.panelCtrl.refresh();
+        this.close();
+      });
     }
-
-    this.annotationsSrv.saveAnnotationEvent(saveModel)
-    .then(() => {
-      this.panelCtrl.refresh();
-      this.close();
-    })
-    .catch(() => {
-      this.panelCtrl.refresh();
-      this.close();
-    });
   }
 
   timeChanged() {

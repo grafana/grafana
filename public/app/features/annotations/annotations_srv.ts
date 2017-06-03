@@ -156,6 +156,14 @@ export class AnnotationsSrv {
     });
   }
 
+  updateAnnotationEvent(annotation) {
+    this.globalAnnotationsPromise = null;
+    return this.backendSrv.put(`/api/annotations/${annotation.annotationId}`, annotation)
+      .catch(err => {
+        this.$rootScope.appEvent('alert-error', ['Annotations failed', (err.message || err)]);
+      });
+  }
+
   translateQueryResult(annotation, results) {
     // if annotation has snapshotData
     // make clone and remove it
