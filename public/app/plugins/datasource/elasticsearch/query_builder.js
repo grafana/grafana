@@ -194,11 +194,12 @@ function (queryDef) {
     if (target.bucketAggs.length === 0) {
       metric = target.metrics[0];
       if (metric && metric.type !== 'raw_document') {
-        throw {message: 'Invalid query'};
-      }
-      var size = metric && metric.hasOwnProperty("settings") && metric.settings.hasOwnProperty("size")
+        target.bucketAggs = [{type: 'date_histogram', id: '2', settings: {interval: 'auto'}}];
+      } else {
+        var size = metric && metric.hasOwnProperty("settings") && metric.settings.hasOwnProperty("size")
                    && metric.settings["size"] !== null ? metric.settings["size"] : 500 ;
-      return this.documentQuery(query,size);
+        return this.documentQuery(query,size);
+      }
     }
 
     nestedAggs = query;
