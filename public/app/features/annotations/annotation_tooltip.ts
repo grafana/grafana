@@ -34,7 +34,7 @@ export function annotationTooltipDirective($sanitize, dashboardSrv, popoverSrv, 
       var tooltip = '<div class="graph-annotation">';
       var titleStateClass = '';
 
-      if (event.source.name === 'panel-alert') {
+      if (event.source.name === 'panel-alert' && event.type !== 'event') {
         var stateModel = alertDef.getStateDisplayModel(event.newState);
         titleStateClass = stateModel.stateClass;
         title = `<i class="icon-gf ${stateModel.iconClass}"></i> ${stateModel.text}`;
