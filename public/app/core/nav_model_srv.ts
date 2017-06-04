@@ -43,8 +43,8 @@ export class NavModelSrv {
         icon: 'icon-gf icon-gf-datasources'
       },
       menu: [
-        {title: 'List view', active: subPage === 0, url: '/datasources', icon: 'fa fa-list-ul'},
-        {title: 'Add data source', active: subPage === 1, url: '/datasources/new', icon: 'fa fa-plus'},
+        {title: 'List view', active: subPage === 0, url: 'datasources', icon: 'fa fa-list-ul'},
+        {title: 'Add data source', active: subPage === 1, url: 'datasources/new', icon: 'fa fa-plus'},
       ]
     };
   }
@@ -57,8 +57,8 @@ export class NavModelSrv {
         icon: 'fa fa-fw fa-film'
       },
       menu: [
-        {title: 'List view', active: subPage === 0, url: '/playlists', icon: 'fa fa-list-ul'},
-        {title: 'Add Playlist', active: subPage === 1, url: '/playlists/create', icon: 'fa fa-plus'},
+        {title: 'List view', active: subPage === 0, url: 'playlists', icon: 'fa fa-list-ul'},
+        {title: 'Add Playlist', active: subPage === 1, url: 'playlists/create', icon: 'fa fa-plus'},
       ]
     };
   }
@@ -93,9 +93,9 @@ export class NavModelSrv {
         icon: 'icon-gf icon-gf-users'
       },
       menu: [
-        {title: 'Preferences', active: subPage === 0, url: '/org', icon: 'fa fa-fw fa-cog'},
-        {title: 'Org Users', active: subPage === 1, url: '/org/users', icon: 'fa fa-fw fa-users'},
-        {title: 'API Keys', active: subPage === 2, url: '/org/apikeys', icon: 'fa fa-fw fa-key'},
+        {title: 'Preferences', active: subPage === 0, url: 'org', icon: 'fa fa-fw fa-cog'},
+        {title: 'Org Users', active: subPage === 1, url: 'org/users', icon: 'fa fa-fw fa-users'},
+        {title: 'API Keys', active: subPage === 2, url: 'org/apikeys', icon: 'fa fa-fw fa-key'},
       ]
     };
   }
@@ -108,11 +108,11 @@ export class NavModelSrv {
         icon: 'fa fa-fw fa-cogs'
       },
       menu: [
-        {title: 'Users', active: subPage === 0, url: '/admin/users', icon: 'fa fa-fw fa-user'},
-        {title: 'Orgs', active: subPage === 1, url: '/admin/orgs', icon: 'fa fa-fw fa-users'},
-        {title: 'Server Settings', active: subPage === 2, url: '/admin/settings', icon: 'fa fa-fw fa-cogs'},
-        {title: 'Server Stats', active: subPage === 2, url: '/admin/stats', icon: 'fa fa-fw fa-line-chart'},
-        {title: 'Style Guide', active: subPage === 2, url: '/styleguide', icon: 'fa fa-fw fa-key'},
+        {title: 'Users', active: subPage === 0, url: 'admin/users', icon: 'fa fa-fw fa-user'},
+        {title: 'Orgs', active: subPage === 1, url: 'admin/orgs', icon: 'fa fa-fw fa-users'},
+        {title: 'Server Settings', active: subPage === 2, url: 'admin/settings', icon: 'fa fa-fw fa-cogs'},
+        {title: 'Server Stats', active: subPage === 2, url: 'admin/stats', icon: 'fa fa-fw fa-line-chart'},
+        {title: 'Style Guide', active: subPage === 2, url: 'styleguide', icon: 'fa fa-fw fa-key'},
       ]
     };
   }
@@ -194,6 +194,15 @@ export class NavModelSrv {
         icon: 'fa fa-fw fa-save',
         clickHandler: () => dashNavCtrl.saveDashboardAs()
       });
+    }
+
+    if (dashboard.meta.canSave) {
+      menu.push({
+        title: 'Delete',
+        icon: 'fa fa-fw fa-trash',
+        clickHandler: () => dashNavCtrl.deleteDashboard()
+      });
+
     }
 
     return {
