@@ -165,7 +165,7 @@ describe('ElasticQueryBuilder', function() {
   });
   it('with raw_document metric size set', function() {
     var query = builder.build({
-      metrics: [{type: 'raw_document', id: '1',settings: {size: '1337'}}],
+      metrics: [{type: 'raw_document', id: '1',settings: {size: 1337}}],
       timeField: '@timestamp',
       bucketAggs: [],
     });

@@ -110,7 +110,7 @@ function (queryDef) {
   };
 
   ElasticQueryBuilder.prototype.documentQuery = function(query, size) {
-    query.size = size === undefined ? 500 : parseInt(size , 10);
+    query.size = size === undefined ? 500 : size;
     query.sort = {};
     query.sort[this.timeField] = {order: 'desc', unmapped_type: 'boolean'};
 
