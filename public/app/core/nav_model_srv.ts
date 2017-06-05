@@ -167,13 +167,11 @@ export class NavModelSrv {
         clickHandler: () => dashNavCtrl.openEditView('annotations')
       });
 
-      if (dashboard.version > 0) {
-        menu.push({
-          title: 'Version History',
-          icon: 'fa fa-fw fa-history',
-          clickHandler: () => dashNavCtrl.openEditView('history')
-        });
-      }
+      menu.push({
+        title: 'Version History',
+        icon: 'fa fa-fw fa-history',
+        clickHandler: () => dashNavCtrl.openEditView('history')
+      });
 
       menu.push({
         title: 'View JSON',
