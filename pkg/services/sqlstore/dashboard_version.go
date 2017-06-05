@@ -1,78 +1,13 @@
 package sqlstore
 
 import (
-	"encoding/json"
-	"errors"
-
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/components/formatter"
-	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
-
-	diff "github.com/yudai/gojsondiff"
-	deltaFormatter "github.com/yudai/gojsondiff/formatter"
-)
-
-var (
-	// ErrUnsupportedDiffType occurs when an invalid diff type is used.
-	ErrUnsupportedDiffType = errors.New("sqlstore: unsupported diff type")
-
-	// ErrNilDiff occurs when two compared interfaces are identical.
-	ErrNilDiff = errors.New("sqlstore: diff is nil")
 )
 
 func init() {
-	bus.AddHandler("sql", CompareDashboardVersionsCommand)
 	bus.AddHandler("sql", GetDashboardVersion)
 	bus.AddHandler("sql", GetDashboardVersions)
-}
-
-// CompareDashboardVersionsCommand computes the JSON diff of two versions,
-// assigning the delta of the diff to the `Delta` field.
-func CompareDashboardVersionsCommand(cmd *m.CompareDashboardVersionsCommand) error {
-	baseVersion, err := getDashboardVersion(cmd.DashboardId, cmd.BaseVersion)
-	if err != nil {
-		return err
-	}
-
-	newVersion, err := getDashboardVersion(cmd.DashboardId, cmd.NewVersion)
-	if err != nil {
-		return err
-	}
-
-	left, jsonDiff, err := getDiff(baseVersion, newVersion)
-	if err != nil {
-		return err
-	}
-
-	switch cmd.DiffType {
-	case m.DiffDelta:
-
-		deltaOutput, err := deltaFormatter.NewDeltaFormatter().Format(jsonDiff)
-		if err != nil {
-			return err
-		}
-		cmd.Delta = []byte(deltaOutput)
-
-	case m.DiffJSON:
-		jsonOutput, err := formatter.NewJSONFormatter(left).Format(jsonDiff)
-		if err != nil {
-			return err
-		}
-		cmd.Delta = []byte(jsonOutput)
-
-	case m.DiffBasic:
-		basicOutput, err := formatter.NewBasicFormatter(left).Format(jsonDiff)
-		if err != nil {
-			return err
-		}
-		cmd.Delta = basicOutput
-
-	default:
-		return ErrUnsupportedDiffType
-	}
-
-	return nil
 }
 
 // GetDashboardVersion gets the dashboard version for the given dashboard ID
@@ -144,30 +79,4 @@ func getDashboard(dashboardId int64) (*m.Dashboard, error) {
 		return nil, m.ErrDashboardNotFound
 	}
 	return &dashboard, nil
-}
-
-// getDiff computes the diff of two dashboard versions.
-func getDiff(originalDash, newDash *m.DashboardVersion) (interface{}, diff.Diff, error) {
-	leftBytes, err := simplejson.NewFromAny(originalDash).Encode()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	rightBytes, err := simplejson.NewFromAny(newDash).Encode()
-	if err != nil {
-		return nil, nil, err
-	}
-
-	jsonDiff, err := diff.New().Compare(leftBytes, rightBytes)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	if !jsonDiff.Modified() {
-		return nil, nil, ErrNilDiff
-	}
-
-	left := make(map[string]interface{})
-	err = json.Unmarshal(leftBytes, &left)
-	return left, jsonDiff, nil
 }

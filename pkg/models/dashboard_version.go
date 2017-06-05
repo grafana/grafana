@@ -7,14 +7,6 @@ import (
 	"github.com/grafana/grafana/pkg/components/simplejson"
 )
 
-type DiffType int
-
-const (
-	DiffJSON DiffType = iota
-	DiffBasic
-	DiffDelta
-)
-
 var (
 	ErrDashboardVersionNotFound = errors.New("Dashboard version not found")
 	ErrNoVersionsForDashboardId = errors.New("No dashboard versions found for the given DashboardId")
@@ -76,19 +68,4 @@ type GetDashboardVersionsQuery struct {
 	Start       int
 
 	Result []*DashboardVersionDTO
-}
-
-//
-// Commands
-//
-
-// CompareDashboardVersionsCommand is used to compare two versions.
-type CompareDashboardVersionsCommand struct {
-	OrgId       int64
-	DashboardId int64
-	BaseVersion int
-	NewVersion  int
-	DiffType    DiffType
-
-	Delta []byte `json:"delta"`
 }

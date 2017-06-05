@@ -1,4 +1,4 @@
-package formatter
+package dashdiffs
 
 import (
 	"bytes"
@@ -261,7 +261,7 @@ var (
 				line-display="{{ .LineStart }}{{ if .LineEnd }} - {{ .LineEnd }}{{ end }}"
 				switch-view="ctrl.getDiff('html')"
 			/>
-		{{ end }} 
+		{{ end }}
 
 	</div>
 
@@ -286,7 +286,7 @@ var (
 <li class="diff-change-group">
 	<span class="bullet-position-container">
 		<div class="diff-change-item diff-change-title">{{ getChange .Change }} {{ .Key }}</div>
-		
+
 		<div class="diff-change-item">
 			{{ if .Old }}
 				<div class="change list-change diff-label">{{ .Old }}</div>
@@ -312,7 +312,7 @@ var (
 	tplSummary = `{{ define "summary" -}}
 <div class="diff-group-name">
 	<i class="diff-circle diff-circle-{{ getChange .Change }} fa fa-circle-o diff-list-circle"></i>
-	
+
 	{{ if .Count }}
 		<strong>{{ .Count }}</strong>
 	{{ end }}

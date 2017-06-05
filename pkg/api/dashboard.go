@@ -11,6 +11,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/dashdiffs"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
@@ -324,8 +325,7 @@ func GetDashboardVersion(c *middleware.Context) Response {
 	return Json(200, dashVersionMeta)
 }
 
-func createCompareDashboardVersionCommand(c *middleware.Context) (*m.CompareDashboardVersionsCommand, error) {
-	cmd := &m.CompareDashboardVersionsCommand{}
+func getDashboardVersionDiffOptions(c *middleware.Context, diffType dashdiffs.DiffType) (*dashdiffs.Options, error) {
 
 	dashId := c.ParamsInt64(":dashboardId")
 	if dashId == 0 {
@@ -347,39 +347,42 @@ func createCompareDashboardVersionCommand(c *middleware.Context) (*m.CompareDash
 		return nil, fmt.Errorf("bad format: second argument is not of type int")
 	}
 
-	cmd.DashboardId = dashId
-	cmd.OrgId = c.OrgId
-	cmd.BaseVersion = BaseVersion
-	cmd.NewVersion = newVersion
+	options := &dashdiffs.Options{}
+	options.DashboardId = dashId
+	options.OrgId = c.OrgId
+	options.BaseVersion = BaseVersion
+	options.NewVersion = newVersion
+	options.DiffType = diffType
 
-	return cmd, nil
+	return options, nil
 }
 
 // CompareDashboardVersions compares dashboards the way the GitHub API does.
 func CompareDashboardVersions(c *middleware.Context) Response {
-	cmd, err := createCompareDashboardVersionCommand(c)
+	options, err := getDashboardVersionDiffOptions(c, dashdiffs.DiffDelta)
+
 	if err != nil {
 		return ApiError(500, err.Error(), err)
 	}
 
-	cmd.DiffType = m.DiffDelta
-
-	if err := bus.Dispatch(&cmd); err != nil {
+	result, err := dashdiffs.GetVersionDiff(options)
+	if err != nil {
 		return ApiError(500, "Unable to compute diff", err)
 	}
 
 	// here the output is already JSON, so we need to unmarshal it into a
 	// map before marshaling the entire response
+
 	deltaMap := make(map[string]interface{})
-	err = json.Unmarshal(cmd.Delta, &deltaMap)
+	err = json.Unmarshal(result.Delta, &deltaMap)
 	if err != nil {
 		return ApiError(500, err.Error(), err)
 	}
 
 	return Json(200, util.DynMap{
 		"meta": util.DynMap{
-			"baseVersion": cmd.BaseVersion,
-			"newVersion":  cmd.NewVersion,
+			"baseVersion": options.BaseVersion,
+			"newVersion":  options.NewVersion,
 		},
 		"delta": deltaMap,
 	})
@@ -388,34 +391,35 @@ func CompareDashboardVersions(c *middleware.Context) Response {
 // CompareDashboardVersionsJSON compares dashboards the way the GitHub API does,
 // returning a human-readable JSON diff.
 func CompareDashboardVersionsJSON(c *middleware.Context) Response {
-	cmd, err := createCompareDashboardVersionCommand(c)
+	options, err := getDashboardVersionDiffOptions(c, dashdiffs.DiffJSON)
+
 	if err != nil {
 		return ApiError(500, err.Error(), err)
 	}
-	cmd.DiffType = m.DiffJSON
 
-	if err := bus.Dispatch(cmd); err != nil {
+	result, err := dashdiffs.GetVersionDiff(options)
+	if err != nil {
 		return ApiError(500, err.Error(), err)
 	}
 
-	return Respond(200, cmd.Delta).Header("Content-Type", "text/html")
+	return Respond(200, result.Delta).Header("Content-Type", "text/html")
 }
 
 // CompareDashboardVersionsBasic compares dashboards the way the GitHub API does,
 // returning a human-readable diff.
 func CompareDashboardVersionsBasic(c *middleware.Context) Response {
-	cmd, err := createCompareDashboardVersionCommand(c)
+	options, err := getDashboardVersionDiffOptions(c, dashdiffs.DiffBasic)
+
 	if err != nil {
 		return ApiError(500, err.Error(), err)
 	}
 
-	cmd.DiffType = m.DiffBasic
-
-	if err := bus.Dispatch(cmd); err != nil {
+	result, err := dashdiffs.GetVersionDiff(options)
+	if err != nil {
 		return ApiError(500, err.Error(), err)
 	}
 
-	return Respond(200, cmd.Delta).Header("Content-Type", "text/html")
+	return Respond(200, result.Delta).Header("Content-Type", "text/html")
 }
 
 // RestoreDashboardVersion restores a dashboard to the given version.

@@ -1,4 +1,4 @@
-package formatter
+package dashdiffs
 
 import (
 	"bytes"
