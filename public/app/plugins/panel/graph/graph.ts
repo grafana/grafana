@@ -506,6 +506,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           return;
         }
 
+        const minSetToZero = axis.min === 0;
+
         if (axis.min < Number.MIN_VALUE) {
           axis.min = null;
         }
@@ -556,10 +558,17 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
         }
 
         if (Number.isFinite(min) && Number.isFinite(max)) {
-          axis.ticks = [];
-          var nextTick;
-          for (nextTick = min; nextTick <= max; nextTick *= axis.logBase) {
-            axis.ticks.push(nextTick);
+          if (minSetToZero) {
+            axis.min = 0.1;
+            min = 1;
+          }
+
+          axis.ticks = generateTicksForLogScaleYAxis(min, max, axis.logBase);
+          if (minSetToZero) {
+            axis.ticks.unshift(0.1);
+          }
+          if (axis.ticks[axis.ticks.length - 1] > axis.max) {
+            axis.max = axis.ticks[axis.ticks.length - 1];
           }
           axis.tickDecimals = decimalPlaces(min);
         } else {
@@ -567,7 +576,28 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
           delete axis.min;
           delete axis.max;
         }
+      }
 
+      function generateTicksForLogScaleYAxis(min, max, logBase) {
+        let ticks = [];
+
+        var nextTick;
+        for (nextTick = min; nextTick <= max; nextTick *= logBase) {
+          ticks.push(nextTick);
+        }
+
+        const maxNumTicks = Math.ceil(ctrl.height/25);
+        const numTicks = ticks.length;
+        if (numTicks > maxNumTicks) {
+          const factor = Math.ceil(numTicks/maxNumTicks) * logBase;
+          ticks = [];
+
+          for (nextTick = min; nextTick <= (max * factor); nextTick *= factor) {
+            ticks.push(nextTick);
+          }
+        }
+
+        return ticks;
       }
 
       function decimalPlaces(num) {
