@@ -14,6 +14,7 @@ import (
 	"github.com/wangy1931/grafana/pkg/services/search"
 	"github.com/wangy1931/grafana/pkg/setting"
 	"github.com/wangy1931/grafana/pkg/util"
+	"io/ioutil"
 )
 
 func isDasboardStarredByUser(c *middleware.Context, dashId int64) (bool, error) {
@@ -173,4 +174,22 @@ func GetDashboardTags(c *middleware.Context) {
 	}
 
 	c.JSON(200, query.Result)
+}
+
+func GetStaticFile(c *middleware.Context) {
+	var dat map[string]interface{}
+	name := c.Params(":name")
+	filePath := path.Join(setting.StaticRootPath, "dashboards/"+name+".json")
+	file, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		c.JsonApiErr(500, "File isn't exist", err)
+		return
+	}
+
+	if err := json.Unmarshal([]byte(file), &dat); err != nil {
+		c.JsonApiErr(500, "Can't parse the file into json", err)
+		return
+	}
+
+	c.JSON(200, &dat)
 }
