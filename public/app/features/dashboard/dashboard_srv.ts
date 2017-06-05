@@ -65,7 +65,7 @@ export class DashboardSrv {
         icon: "fa-warning",
         altActionText: "Save As",
         onAltAction: () => {
-          this.saveDashboardAs();
+          this.showSaveAsModal();
         },
         onConfirm: () => {
           this.saveDashboard({overwrite: true}, clone);
@@ -102,36 +102,33 @@ export class DashboardSrv {
     }
 
     if (this.dash.title === 'New dashboard') {
-      return this.saveDashboardAs();
+      return this.showSaveAsModal();
     }
 
     if (this.dash.version > 0) {
-      return this.saveDashboardMessage();
+      return this.showSaveModal();
     }
 
     return this.save(this.dash.getSaveModelClone(), options);
   }
 
-  saveDashboardAs() {
+  showSaveAsModal() {
     var newScope = this.$rootScope.$new();
     newScope.clone = this.dash.getSaveModelClone();
     newScope.clone.editable = true;
     newScope.clone.hideControls = false;
 
     this.$rootScope.appEvent('show-modal', {
-      src: 'public/app/features/dashboard/partials/saveDashboardAs.html',
+      templateHtml: '<save-dashboard-as-modal dismiss="dismiss()"></save-dashboard-as-modal>',
       scope: newScope,
       modalClass: 'modal--narrow'
     });
   }
 
-  saveDashboardMessage() {
-    var newScope = this.$rootScope.$new();
-    newScope.clone = this.dash.getSaveModelClone();
-
+  showSaveModal() {
     this.$rootScope.appEvent('show-modal', {
-      src: 'public/app/features/dashboard/partials/saveDashboardMessage.html',
-      scope: newScope,
+      templateHtml: '<save-dashboard-modal dismiss="dismiss()"></save-dashboard-modal>"',
+      scope: this.$rootScope.$new(),
       modalClass: 'modal--narrow'
     });
   }
