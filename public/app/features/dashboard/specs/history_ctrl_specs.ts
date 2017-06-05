@@ -268,11 +268,6 @@ describe('HistoryListCtrl', function() {
         expect(ctx.ctrl.loading).to.be(false);
       });
 
-      it('should broadcast an event indicating the failure', function() {
-        expect($rootScope.appEvent.calledOnce).to.be(true);
-        expect($rootScope.appEvent.calledWith('alert-error')).to.be(true);
-      });
-
       it('should have an empty delta/changeset', function() {
         expect(ctx.ctrl.delta).to.eql({ basic: '', html: '' });
       });
