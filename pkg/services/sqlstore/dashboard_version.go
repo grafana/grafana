@@ -32,12 +32,12 @@ func init() {
 // CompareDashboardVersionsCommand computes the JSON diff of two versions,
 // assigning the delta of the diff to the `Delta` field.
 func CompareDashboardVersionsCommand(cmd *m.CompareDashboardVersionsCommand) error {
-	original, err := getDashboardVersion(cmd.DashboardId, cmd.Original, cmd.OrgId)
+	original, err := getDashboardVersion(cmd.DashboardId, cmd.Original)
 	if err != nil {
 		return err
 	}
 
-	newDashboard, err := getDashboardVersion(cmd.DashboardId, cmd.New, cmd.OrgId)
+	newDashboard, err := getDashboardVersion(cmd.DashboardId, cmd.New)
 	if err != nil {
 		return err
 	}
@@ -80,7 +80,7 @@ func CompareDashboardVersionsCommand(cmd *m.CompareDashboardVersionsCommand) err
 // GetDashboardVersion gets the dashboard version for the given dashboard ID
 // and version number.
 func GetDashboardVersion(query *m.GetDashboardVersionQuery) error {
-	result, err := getDashboardVersion(query.DashboardId, query.Version, query.OrgId)
+	result, err := getDashboardVersion(query.DashboardId, query.Version)
 	if err != nil {
 		return err
 	}
@@ -128,7 +128,7 @@ func RestoreDashboardVersion(cmd *m.RestoreDashboardVersionCommand) error {
 		// session instead of using the global `x`, so we copy those functions
 		// here, replacing `x` with `sess`
 		dashboardVersion := m.DashboardVersion{}
-		has, err := sess.Where("dashboard_id=? AND version=? AND org_id=?", cmd.DashboardId, cmd.Version, cmd.OrgId).Get(&dashboardVersion)
+		has, err := sess.Where("dashboard_id=? AND version=?", cmd.DashboardId, cmd.Version).Get(&dashboardVersion)
 		if err != nil {
 			return err
 		}
@@ -190,9 +190,9 @@ func RestoreDashboardVersion(cmd *m.RestoreDashboardVersionCommand) error {
 
 // getDashboardVersion is a helper function that gets the dashboard version for
 // the given dashboard ID and version ID.
-func getDashboardVersion(dashboardId int64, version int, orgId int64) (*m.DashboardVersion, error) {
+func getDashboardVersion(dashboardId int64, version int) (*m.DashboardVersion, error) {
 	dashboardVersion := m.DashboardVersion{}
-	has, err := x.Where("dashboard_id=? AND version=? AND org_id=?", dashboardId, version, orgId).Get(&dashboardVersion)
+	has, err := x.Where("dashboard_id=? AND version=?", dashboardId, version).Get(&dashboardVersion)
 	if err != nil {
 		return nil, err
 	}
