@@ -113,7 +113,6 @@ export class HistoryListCtrl {
         this.delta[this.diff] = response;
       }).catch(err => {
         this.mode = 'list';
-        this.$rootScope.appEvent('alert-error', ['There was an error fetching the diff', (err.message || err)]);
       }).finally(() => { this.loading = false; });
     }
   }
