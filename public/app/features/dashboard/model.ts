@@ -36,6 +36,7 @@ export class DashboardModel {
   meta: any;
   events: any;
   editMode: boolean;
+  parentId: number;
 
   constructor(data, meta?) {
     if (!data) {

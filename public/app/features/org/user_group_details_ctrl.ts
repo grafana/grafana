@@ -9,8 +9,10 @@ export default class UserGroupDetailsCtrl {
   userName = '';
   usersSearchCache: User[] = [];
   searchUsers: any;
+  navModel: any;
 
-  constructor(private $scope, private $http, private backendSrv, private $routeParams) {
+  constructor(private $scope, private $http, private backendSrv, private $routeParams, navModelSrv) {
+    this.navModel = navModelSrv.getOrgNav(3);
     this.get();
     this.usersSearchCache = [];
     this.searchUsers = (queryStr, callback) => {

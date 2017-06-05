@@ -159,7 +159,7 @@ export class SearchCtrl {
   }
 
   showNewFolderModal() {
-    this.$scope.appEvent('show-modal', {
+    appEvents.emit('show-modal', {
       templateHtml: '<folder-modal></folder-modal>',
       modalClass: 'modal--narrow'
     });

@@ -2,7 +2,7 @@
 
 import coreModule from 'app/core/core_module';
 
-export default class UserGroupsCtrl {
+export class UserGroupsCtrl {
   userGroups: any;
   pages = [];
   perPage = 50;
@@ -11,9 +11,11 @@ export default class UserGroupsCtrl {
   showPaging = false;
   query: any = '';
   userGroupName: any = '';
+  navModel: any;
 
   /** @ngInject */
-  constructor(private $scope, private $http, private backendSrv, private $location) {
+  constructor(private $scope, private $http, private backendSrv, private $location, navModelSrv) {
+    this.navModel = navModelSrv.getOrgNav(3);
     this.get();
   }
 

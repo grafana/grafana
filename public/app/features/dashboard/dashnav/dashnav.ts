@@ -101,7 +101,7 @@ export class DashNavCtrl {
 
       if (alerts > 0) {
         confirmText = 'DELETE';
-        text2 = `This dashboad contains ${alerts} alerts. Deleting this dashboad will also delete those alerts`;
+        text2 = `This dashboard contains ${alerts} alerts. Deleting this dashboad will also delete those alerts`;
       }
 
       appEvents.emit('confirm-modal', {
