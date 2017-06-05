@@ -86,8 +86,8 @@ type GetDashboardVersionsQuery struct {
 type CompareDashboardVersionsCommand struct {
 	OrgId       int64
 	DashboardId int64
-	Original    int
-	New         int
+	BaseVersion int
+	NewVersion  int
 	DiffType    DiffType
 
 	Delta []byte `json:"delta"`

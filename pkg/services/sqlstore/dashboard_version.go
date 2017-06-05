@@ -30,17 +30,17 @@ func init() {
 // CompareDashboardVersionsCommand computes the JSON diff of two versions,
 // assigning the delta of the diff to the `Delta` field.
 func CompareDashboardVersionsCommand(cmd *m.CompareDashboardVersionsCommand) error {
-	original, err := getDashboardVersion(cmd.DashboardId, cmd.Original)
+	baseVersion, err := getDashboardVersion(cmd.DashboardId, cmd.BaseVersion)
 	if err != nil {
 		return err
 	}
 
-	newDashboard, err := getDashboardVersion(cmd.DashboardId, cmd.New)
+	newVersion, err := getDashboardVersion(cmd.DashboardId, cmd.NewVersion)
 	if err != nil {
 		return err
 	}
 
-	left, jsonDiff, err := getDiff(original, newDashboard)
+	left, jsonDiff, err := getDiff(baseVersion, newVersion)
 	if err != nil {
 		return err
 	}

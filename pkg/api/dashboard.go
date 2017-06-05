@@ -2,6 +2,7 @@ package api
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path"
@@ -323,34 +324,34 @@ func GetDashboardVersion(c *middleware.Context) Response {
 	return Json(200, dashVersionMeta)
 }
 
-func createCompareDashboardVersionCommand(c *middleware.Context) (m.CompareDashboardVersionsCommand, error) {
-	cmd := m.CompareDashboardVersionsCommand{}
+func createCompareDashboardVersionCommand(c *middleware.Context) (*m.CompareDashboardVersionsCommand, error) {
+	cmd := &m.CompareDashboardVersionsCommand{}
 
-	dashboardIdStr := c.Params(":dashboardId")
-	dashboardId, err := strconv.Atoi(dashboardIdStr)
-	if err != nil {
-		return cmd, err
+	dashId := c.ParamsInt64(":dashboardId")
+	if dashId == 0 {
+		return nil, errors.New("Missing dashboardId")
 	}
 
 	versionStrings := strings.Split(c.Params(":versions"), "...")
 	if len(versionStrings) != 2 {
-		return cmd, fmt.Errorf("bad format: urls should be in the format /versions/0...1")
+		return nil, fmt.Errorf("bad format: urls should be in the format /versions/0...1")
 	}
 
-	originalDash, err := strconv.Atoi(versionStrings[0])
+	BaseVersion, err := strconv.Atoi(versionStrings[0])
 	if err != nil {
-		return cmd, fmt.Errorf("bad format: first argument is not of type int")
+		return nil, fmt.Errorf("bad format: first argument is not of type int")
 	}
 
-	newDash, err := strconv.Atoi(versionStrings[1])
+	newVersion, err := strconv.Atoi(versionStrings[1])
 	if err != nil {
-		return cmd, fmt.Errorf("bad format: second argument is not of type int")
+		return nil, fmt.Errorf("bad format: second argument is not of type int")
 	}
 
-	cmd.DashboardId = int64(dashboardId)
+	cmd.DashboardId = dashId
 	cmd.OrgId = c.OrgId
-	cmd.Original = originalDash
-	cmd.New = newDash
+	cmd.BaseVersion = BaseVersion
+	cmd.NewVersion = newVersion
+
 	return cmd, nil
 }
 
@@ -360,6 +361,7 @@ func CompareDashboardVersions(c *middleware.Context) Response {
 	if err != nil {
 		return ApiError(500, err.Error(), err)
 	}
+
 	cmd.DiffType = m.DiffDelta
 
 	if err := bus.Dispatch(&cmd); err != nil {
@@ -376,8 +378,8 @@ func CompareDashboardVersions(c *middleware.Context) Response {
 
 	return Json(200, util.DynMap{
 		"meta": util.DynMap{
-			"original": cmd.Original,
-			"new":      cmd.New,
+			"baseVersion": cmd.BaseVersion,
+			"newVersion":  cmd.NewVersion,
 		},
 		"delta": deltaMap,
 	})
@@ -392,7 +394,7 @@ func CompareDashboardVersionsJSON(c *middleware.Context) Response {
 	}
 	cmd.DiffType = m.DiffJSON
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.Dispatch(cmd); err != nil {
 		return ApiError(500, err.Error(), err)
 	}
 
@@ -406,9 +408,10 @@ func CompareDashboardVersionsBasic(c *middleware.Context) Response {
 	if err != nil {
 		return ApiError(500, err.Error(), err)
 	}
+
 	cmd.DiffType = m.DiffBasic
 
-	if err := bus.Dispatch(&cmd); err != nil {
+	if err := bus.Dispatch(cmd); err != nil {
 		return ApiError(500, err.Error(), err)
 	}
 

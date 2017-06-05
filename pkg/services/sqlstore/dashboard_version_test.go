@@ -117,8 +117,8 @@ func TestCompareDashboardVersions(t *testing.T) {
 
 			cmd := m.CompareDashboardVersionsCommand{
 				DashboardId: savedDash.Id,
-				Original:    query.Result[0].Version,
-				New:         query.Result[1].Version,
+				BaseVersion: query.Result[0].Version,
+				NewVersion:  query.Result[1].Version,
 				DiffType:    m.DiffDelta,
 			}
 
@@ -130,8 +130,8 @@ func TestCompareDashboardVersions(t *testing.T) {
 		Convey("Compare two versions that are the same", func() {
 			cmd := m.CompareDashboardVersionsCommand{
 				DashboardId: savedDash.Id,
-				Original:    savedDash.Version,
-				New:         savedDash.Version,
+				BaseVersion: savedDash.Version,
+				NewVersion:  savedDash.Version,
 				DiffType:    m.DiffDelta,
 			}
 
@@ -143,8 +143,8 @@ func TestCompareDashboardVersions(t *testing.T) {
 		Convey("Compare two versions that don't exist", func() {
 			cmd := m.CompareDashboardVersionsCommand{
 				DashboardId: savedDash.Id,
-				Original:    123,
-				New:         456,
+				BaseVersion: 123,
+				NewVersion:  456,
 				DiffType:    m.DiffDelta,
 			}
 
