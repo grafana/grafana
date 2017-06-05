@@ -125,31 +125,9 @@ export class HistoryListCtrl {
       limit: this.limit,
       start: this.start,
     };
+
     return this.historySrv.getHistoryList(this.dashboard, options).then(revisions => {
-      const formattedRevisions =  _.flow(
-        _.partialRight(_.map, rev => _.extend({}, rev, {
-          checked: false,
-          message: (revision => {
-            if (revision.message === '') {
-              if (revision.version === 1) {
-                return 'Dashboard\'s initial save';
-              }
-
-              if (revision.restoredFrom > 0) {
-                return `Restored from version ${revision.restoredFrom}`;
-              }
-
-              if (revision.parentVersion === 0) {
-                return 'Dashboard overwritten';
-              }
-
-              return 'Dashboard saved';
-            }
-            return revision.message;
-          })(rev),
-        })))(revisions);
-
-      this.revisions = append ? this.revisions.concat(formattedRevisions) : formattedRevisions;
+      this.revisions = append ? this.revisions.concat(revisions) : revisions;
     }).catch(err => {
       this.$rootScope.appEvent('alert-error', ['There was an error fetching the history list', (err.message || err)]);
     }).finally(() => {

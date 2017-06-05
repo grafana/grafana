@@ -39,7 +39,7 @@ func addDashboardVersionMigration(mg *Migrator) {
 )
 SELECT
 	dashboard.id,
-	dashboard.version + 1,
+	dashboard.version,
 	dashboard.version,
 	dashboard.version,
 	dashboard.updated,

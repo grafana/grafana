@@ -93,7 +93,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 		dashVersion := &m.DashboardVersion{
 			DashboardId:   dash.Id,
 			ParentVersion: parentVersion,
-			RestoredFrom:  -1,
+			RestoredFrom:  cmd.RestoredFrom,
 			Version:       dash.Version,
 			Created:       time.Now(),
 			CreatedBy:     dash.UpdatedBy,

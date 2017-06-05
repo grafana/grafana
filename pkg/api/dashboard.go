@@ -276,6 +276,22 @@ func GetDashboardVersions(c *middleware.Context) Response {
 		return ApiError(404, fmt.Sprintf("No versions found for dashboardId %d", dashboardId), err)
 	}
 
+	for _, version := range query.Result {
+		if version.RestoredFrom == version.Version {
+			version.Message = "Initial save (created migration)"
+			continue
+		}
+
+		if version.RestoredFrom > 0 {
+			version.Message = fmt.Sprintf("Restored from version %d", version.RestoredFrom)
+			continue
+		}
+
+		if version.ParentVersion == 0 {
+			version.Message = "Initial save"
+		}
+	}
+
 	return Json(200, query.Result)
 }
 
@@ -417,11 +433,12 @@ func RestoreDashboardVersion(c *middleware.Context, apiCmd dtos.RestoreDashboard
 	version := versionQuery.Result
 
 	saveCmd := m.SaveDashboardCommand{}
+	saveCmd.RestoredFrom = version.Version
 	saveCmd.OrgId = c.OrgId
 	saveCmd.UserId = c.UserId
 	saveCmd.Dashboard = version.Data
 	saveCmd.Dashboard.Set("version", dashboard.Version)
-	saveCmd.Message = fmt.Sprintf("Dashboard restored from version %d", version.Version)
+	saveCmd.Message = fmt.Sprintf("Restored from version %d", version.Version)
 
 	return PostDashboard(c, saveCmd)
 }

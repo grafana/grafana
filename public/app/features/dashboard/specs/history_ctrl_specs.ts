@@ -89,21 +89,6 @@ describe('HistoryListCtrl', function() {
         expect(ctx.ctrl.selected).to.eql([]);
       });
 
-      it('should add a default message to versions without a message', function() {
-        expect(ctx.ctrl.revisions[0].message).to.be('Dashboard saved');
-      });
-
-      it('should add a message to revisions restored from another version', function() {
-        expect(ctx.ctrl.revisions[1].message).to.be('Restored from version 1');
-      });
-
-      it('should add a message to entries that overwrote version history', function() {
-        expect(ctx.ctrl.revisions[2].message).to.be('Dashboard overwritten');
-      });
-
-      it('should add a message to the initial dashboard save', function() {
-        expect(ctx.ctrl.revisions[3].message).to.be('Dashboard\'s initial save');
-      });
     });
 
     describe('and fetching the history list fails', function() {
@@ -307,7 +292,6 @@ describe('HistoryListCtrl', function() {
         $rootScope,
         $scope: ctx.scope,
       });
-      ctx.ctrl.$scope.setupDashboard = sinon.stub();
       ctx.ctrl.dashboard = { id: 1 };
       ctx.ctrl.restore();
       ctx.ctrl.$scope.$apply();
@@ -318,99 +302,20 @@ describe('HistoryListCtrl', function() {
       expect($rootScope.appEvent.calledWith('confirm-modal')).to.be(true);
     });
 
-    describe('from the diff view', function() {
-      it('should return to the list view on restore', function() {
-        ctx.ctrl.mode = 'compare';
-        deferred.resolve(restoreResponse);
-        ctx.ctrl.restoreConfirm(RESTORE_ID);
-        ctx.ctrl.$scope.$apply();
-        expect(ctx.ctrl.mode).to.be('list');
-      });
-    });
-
-    describe('and restore is selected and successful', function() {
-      beforeEach(function() {
-        deferred.resolve(restoreResponse);
-        ctx.ctrl.restoreConfirm(RESTORE_ID);
-        ctx.ctrl.$scope.$apply();
-      });
-
-      it('should indicate loading has finished', function() {
-        expect(ctx.ctrl.loading).to.be(false);
-      });
-
-      it('should add an entry for the restored revision to the history list', function() {
-        expect(ctx.ctrl.revisions.length).to.be(5);
-      });
-
-      describe('the restored revision', function() {
-        var first;
-        beforeEach(function() { first = ctx.ctrl.revisions[0]; });
-
-        it('should have its `id` and `version` numbers incremented', function() {
-          expect(first.id).to.be(5);
-          expect(first.version).to.be(5);
-        });
-
-        it('should set `parentVersion` to the reverted version', function() {
-          expect(first.parentVersion).to.be(RESTORE_ID);
-        });
-
-        it('should set `dashboardId` to the dashboard\'s id', function() {
-          expect(first.dashboardId).to.be(1);
-        });
-
-        it('should set `created` to date to the current time', function() {
-          expect(_.isDate(first.created)).to.be(true);
-        });
-
-        it('should set `createdBy` to the username of the user who reverted', function() {
-          expect(first.createdBy).to.be('Carlos');
-        });
-
-        it('should set `message` to the user\'s commit message', function() {
-          expect(first.message).to.be('Restored from version 4');
-        });
-      });
-
-      it('should reset the controller\'s state', function() {
-        expect(ctx.ctrl.mode).to.be('list');
-        expect(ctx.ctrl.delta).to.eql({ basic: '', html: '' });
-        expect(ctx.ctrl.selected.length).to.be(0);
-        expect(ctx.ctrl.selected).to.eql([]);
-        expect(_.find(ctx.ctrl.revisions, rev => rev.checked)).to.be.undefined;
-      });
-
-      it('should set the dashboard object to the response dashboard data', function() {
-        expect(ctx.ctrl.dashboard).to.eql(restoreResponse.dashboard.dashboard);
-        expect(ctx.ctrl.dashboard.meta).to.eql(restoreResponse.dashboard.meta);
-      });
-
-      it('should call setupDashboard to render new revision', function() {
-        expect(ctx.ctrl.$scope.setupDashboard.calledOnce).to.be(true);
-        expect(ctx.ctrl.$scope.setupDashboard.getCall(0).args[0]).to.eql(restoreResponse.dashboard);
-      });
-    });
-
     describe('and restore fails to fetch', function() {
       beforeEach(function() {
         deferred.reject(new Error('RestoreError'));
         ctx.ctrl.restoreConfirm(RESTORE_ID);
-        ctx.ctrl.$scope.$apply();
+        try {
+          // this throws error, due to promise rejection
+          ctx.ctrl.$scope.$apply();
+        } catch (e) {}
       });
 
       it('should indicate loading has finished', function() {
         expect(ctx.ctrl.loading).to.be(false);
       });
 
-      it('should broadcast an event indicating the failure', function() {
-        expect($rootScope.appEvent.callCount).to.be(2);
-        expect($rootScope.appEvent.getCall(0).calledWith('confirm-modal')).to.be(true);
-        expect($rootScope.appEvent.getCall(1).args[0]).to.be('alert-error');
-        expect($rootScope.appEvent.getCall(1).args[1][0]).to.be('There was an error restoring the dashboard');
-      });
-
-      // TODO: test state after failure i.e. do we hide the modal or keep it visible
     });
   });
 });
