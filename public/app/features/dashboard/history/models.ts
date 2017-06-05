@@ -1,7 +1,6 @@
 export interface HistoryListOpts {
   limit: number;
   start: number;
-  orderBy: string;
 }
 
 export interface RevisionsModel {

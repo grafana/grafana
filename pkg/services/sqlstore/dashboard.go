@@ -70,24 +70,22 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 		}
 
 		parentVersion := dash.Version
-		version, err := getMaxVersion(sess, dash.Id)
-		if err != nil {
-			return err
-		}
-		dash.Version = version
-
 		affectedRows := int64(0)
+
 		if dash.Id == 0 {
 			metrics.M_Models_Dashboard_Insert.Inc(1)
 			dash.Data.Set("version", dash.Version)
 			affectedRows, err = sess.Insert(dash)
 		} else {
+			dash.Version += 1
 			dash.Data.Set("version", dash.Version)
 			affectedRows, err = sess.Id(dash.Id).Update(dash)
 		}
+
 		if err != nil {
 			return err
 		}
+
 		if affectedRows == 0 {
 			return m.ErrDashboardNotFound
 		}
@@ -102,11 +100,11 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			Message:       cmd.Message,
 			Data:          dash.Data,
 		}
-		affectedRows, err = sess.Insert(dashVersion)
-		if err != nil {
+
+		// insert version entry
+		if affectedRows, err = sess.Insert(dashVersion); err != nil {
 			return err
-		}
-		if affectedRows == 0 {
+		} else if affectedRows == 0 {
 			return m.ErrDashboardNotFound
 		}
 

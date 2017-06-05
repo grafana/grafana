@@ -7,7 +7,7 @@ const  template = `
 	<div class="modal-header">
 		<h2 class="modal-header-title">
 			<i class="fa fa-save"></i>
-			<span class="p-l-1">Save Dashboard</span>
+			<span class="p-l-1">Save changes</span>
 		</h2>
 
 		<a class="modal-header-close" ng-click="ctrl.dismiss();">

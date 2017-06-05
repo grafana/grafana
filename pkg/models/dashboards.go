@@ -98,12 +98,17 @@ func NewDashboardFromJson(data *simplejson.Json) *Dashboard {
 // GetDashboardModel turns the command into the savable model
 func (cmd *SaveDashboardCommand) GetDashboardModel() *Dashboard {
 	dash := NewDashboardFromJson(cmd.Dashboard)
+	userId := cmd.UserId
 
-	if dash.Data.Get("version").MustInt(0) == 0 {
-		dash.CreatedBy = cmd.UserId
+	if userId == 0 {
+		userId = -1
 	}
 
-	dash.UpdatedBy = cmd.UserId
+	if dash.Data.Get("version").MustInt(0) == 0 {
+		dash.CreatedBy = userId
+	}
+
+	dash.UpdatedBy = userId
 	dash.OrgId = cmd.OrgId
 	dash.PluginId = cmd.PluginId
 	dash.UpdateSlug()

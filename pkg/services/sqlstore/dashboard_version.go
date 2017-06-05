@@ -32,12 +32,12 @@ func init() {
 // CompareDashboardVersionsCommand computes the JSON diff of two versions,
 // assigning the delta of the diff to the `Delta` field.
 func CompareDashboardVersionsCommand(cmd *m.CompareDashboardVersionsCommand) error {
-	original, err := getDashboardVersion(cmd.DashboardId, cmd.Original)
+	original, err := getDashboardVersion(cmd.DashboardId, cmd.Original, cmd.OrgId)
 	if err != nil {
 		return err
 	}
 
-	newDashboard, err := getDashboardVersion(cmd.DashboardId, cmd.New)
+	newDashboard, err := getDashboardVersion(cmd.DashboardId, cmd.New, cmd.OrgId)
 	if err != nil {
 		return err
 	}
@@ -79,8 +79,8 @@ func CompareDashboardVersionsCommand(cmd *m.CompareDashboardVersionsCommand) err
 
 // GetDashboardVersion gets the dashboard version for the given dashboard ID
 // and version number.
-func GetDashboardVersion(query *m.GetDashboardVersionCommand) error {
-	result, err := getDashboardVersion(query.DashboardId, query.Version)
+func GetDashboardVersion(query *m.GetDashboardVersionQuery) error {
+	result, err := getDashboardVersion(query.DashboardId, query.Version, query.OrgId)
 	if err != nil {
 		return err
 	}
@@ -90,12 +90,7 @@ func GetDashboardVersion(query *m.GetDashboardVersionCommand) error {
 }
 
 // GetDashboardVersions gets all dashboard versions for the given dashboard ID.
-func GetDashboardVersions(query *m.GetDashboardVersionsCommand) error {
-	if query.OrderBy == "" {
-		query.OrderBy = "version"
-	}
-	query.OrderBy += " desc"
-
+func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
 	err := x.Table("dashboard_version").
 		Select(`dashboard_version.id,
 				dashboard_version.dashboard_id,
@@ -108,8 +103,9 @@ func GetDashboardVersions(query *m.GetDashboardVersionsCommand) error {
 				dashboard_version.data,
 				"user".login as created_by`).
 		Join("LEFT", "user", `dashboard_version.created_by = "user".id`).
-		Where("dashboard_version.dashboard_id=?", query.DashboardId).
-		OrderBy("dashboard_version."+query.OrderBy).
+		Join("LEFT", "dashboard", `dashboard.id = "dashboard_version".dashboard_id`).
+		Where("dashboard_version.dashboard_id=? AND dashboard.org_id=?", query.DashboardId, query.OrgId).
+		OrderBy("dashboard_version.version DESC").
 		Limit(query.Limit, query.Start).
 		Find(&query.Result)
 	if err != nil {
@@ -132,26 +128,21 @@ func RestoreDashboardVersion(cmd *m.RestoreDashboardVersionCommand) error {
 		// session instead of using the global `x`, so we copy those functions
 		// here, replacing `x` with `sess`
 		dashboardVersion := m.DashboardVersion{}
-		has, err := sess.Where(
-			"dashboard_id=? AND version=?",
-			cmd.DashboardId,
-			cmd.Version,
-		).Get(&dashboardVersion)
+		has, err := sess.Where("dashboard_id=? AND version=? AND org_id=?", cmd.DashboardId, cmd.Version, cmd.OrgId).Get(&dashboardVersion)
 		if err != nil {
 			return err
 		}
 		if !has {
 			return m.ErrDashboardVersionNotFound
 		}
+
 		dashboardVersion.Data.Set("id", dashboardVersion.DashboardId)
 
-		// get the dashboard version
 		dashboard := m.Dashboard{Id: cmd.DashboardId}
-		has, err = sess.Get(&dashboard)
-		if err != nil {
+		// Get the dashboard version
+		if has, err = sess.Get(&dashboard); err != nil {
 			return err
-		}
-		if has == false {
+		} else if !has {
 			return m.ErrDashboardNotFound
 		}
 
@@ -166,11 +157,11 @@ func RestoreDashboardVersion(cmd *m.RestoreDashboardVersionCommand) error {
 		dashboard.UpdatedBy = cmd.UserId
 		dashboard.Version = version
 		dashboard.Data.Set("version", dashboard.Version)
-		affectedRows, err := sess.Id(dashboard.Id).Update(dashboard)
-		if err != nil {
+
+		// Update dashboard
+		if affectedRows, err := sess.Id(dashboard.Id).Update(dashboard); err != nil {
 			return err
-		}
-		if affectedRows == 0 {
+		} else if affectedRows == 0 {
 			return m.ErrDashboardNotFound
 		}
 
@@ -185,11 +176,10 @@ func RestoreDashboardVersion(cmd *m.RestoreDashboardVersionCommand) error {
 			Message:       "",
 			Data:          dashboard.Data,
 		}
-		affectedRows, err = sess.Insert(dashVersion)
-		if err != nil {
+
+		if affectedRows, err := sess.Insert(dashVersion); err != nil {
 			return err
-		}
-		if affectedRows == 0 {
+		} else if affectedRows == 0 {
 			return m.ErrDashboardNotFound
 		}
 
@@ -200,9 +190,9 @@ func RestoreDashboardVersion(cmd *m.RestoreDashboardVersionCommand) error {
 
 // getDashboardVersion is a helper function that gets the dashboard version for
 // the given dashboard ID and version ID.
-func getDashboardVersion(dashboardId int64, version int) (*m.DashboardVersion, error) {
+func getDashboardVersion(dashboardId int64, version int, orgId int64) (*m.DashboardVersion, error) {
 	dashboardVersion := m.DashboardVersion{}
-	has, err := x.Where("dashboard_id=? AND version=?", dashboardId, version).Get(&dashboardVersion)
+	has, err := x.Where("dashboard_id=? AND version=? AND org_id=?", dashboardId, version, orgId).Get(&dashboardVersion)
 	if err != nil {
 		return nil, err
 	}

@@ -29,9 +29,8 @@ type DashboardVersion struct {
 	RestoredFrom  int   `json:"restoredFrom"`
 	Version       int   `json:"version"`
 
-	Created time.Time `json:"created"`
-
-	CreatedBy int64 `json:"createdBy"`
+	Created   time.Time `json:"created"`
+	CreatedBy int64     `json:"createdBy"`
 
 	Message string           `json:"message"`
 	Data    *simplejson.Json `json:"data"`
@@ -59,45 +58,47 @@ type DashboardVersionDTO struct {
 }
 
 //
-// COMMANDS
+// Queries
 //
 
-// GetDashboardVersionCommand contains the data required to execute the
-// sqlstore.GetDashboardVersionCommand, which returns the DashboardVersion for
-// the given Version.
-type GetDashboardVersionCommand struct {
-	DashboardId int64 `json:"dashboardId" binding:"Required"`
-	Version     int   `json:"version" binding:"Required"`
+type GetDashboardVersionQuery struct {
+	DashboardId int64
+	OrgId       int64
+	Version     int
 
 	Result *DashboardVersion
 }
 
-// GetDashboardVersionsCommand contains the data required to execute the
-// sqlstore.GetDashboardVersionsCommand, which returns all dashboard versions.
-type GetDashboardVersionsCommand struct {
-	DashboardId int64  `json:"dashboardId" binding:"Required"`
-	OrderBy     string `json:"orderBy"`
-	Limit       int    `json:"limit"`
-	Start       int    `json:"start"`
+type GetDashboardVersionsQuery struct {
+	DashboardId int64
+	OrgId       int64
+	Limit       int
+	Start       int
 
 	Result []*DashboardVersionDTO
 }
+
+//
+// Commands
+//
 
 // RestoreDashboardVersionCommand creates a new dashboard version.
 type RestoreDashboardVersionCommand struct {
 	DashboardId int64 `json:"dashboardId"`
 	Version     int   `json:"version" binding:"Required"`
 	UserId      int64 `json:"-"`
+	OrgId       int64 `json:"-"`
 
 	Result *Dashboard
 }
 
 // CompareDashboardVersionsCommand is used to compare two versions.
 type CompareDashboardVersionsCommand struct {
-	DashboardId int64    `json:"dashboardId"`
-	Original    int      `json:"original" binding:"Required"`
-	New         int      `json:"new" binding:"Required"`
-	DiffType    DiffType `json:"-"`
+	OrgId       int64
+	DashboardId int64
+	Original    int
+	New         int
+	DiffType    DiffType
 
 	Delta []byte `json:"delta"`
 }

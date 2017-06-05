@@ -18,7 +18,6 @@ export class HistoryListCtrl {
   loading: boolean;
   max: number;
   mode: string;
-  orderBy: string;
   revisions: RevisionsModel[];
   selected: number[];
   start: number;
@@ -38,7 +37,6 @@ export class HistoryListCtrl {
     this.loading = false;
     this.max = 2;
     this.mode = 'list';
-    this.orderBy = 'version';
     this.selected = [];
     this.start = 0;
 
@@ -124,7 +122,6 @@ export class HistoryListCtrl {
     const options: HistoryListOpts = {
       limit: this.limit,
       start: this.start,
-      orderBy: this.orderBy,
     };
     return this.historySrv.getHistoryList(this.dashboard, options).then(revisions => {
       const formattedRevisions =  _.flow(

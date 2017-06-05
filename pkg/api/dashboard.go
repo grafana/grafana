@@ -116,13 +116,9 @@ func DeleteDashboard(c *middleware.Context) {
 }
 
 func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
-	cmd.OrgId = c.OrgId
 
-	if !c.IsSignedIn {
-		cmd.UserId = -1
-	} else {
-		cmd.UserId = c.UserId
-	}
+	cmd.OrgId = c.OrgId
+	cmd.UserId = c.UserId
 
 	dash := cmd.GetDashboardModel()
 	// Check if Title is empty
@@ -261,19 +257,16 @@ func GetDashboardFromJsonFile(c *middleware.Context) {
 // GetDashboardVersions returns all dashboard versions as JSON
 func GetDashboardVersions(c *middleware.Context) Response {
 	dashboardId := c.ParamsInt64(":dashboardId")
-	orderBy := c.Query("orderBy")
 	limit := c.QueryInt("limit")
 	start := c.QueryInt("start")
-	if orderBy == "" {
-		orderBy = "version"
-	}
+
 	if limit == 0 {
 		limit = 1000
 	}
 
-	query := m.GetDashboardVersionsCommand{
+	query := m.GetDashboardVersionsQuery{
+		OrgId:       c.OrgId,
 		DashboardId: dashboardId,
-		OrderBy:     orderBy,
 		Limit:       limit,
 		Start:       start,
 	}
@@ -281,26 +274,6 @@ func GetDashboardVersions(c *middleware.Context) Response {
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(404, fmt.Sprintf("No versions found for dashboardId %d", dashboardId), err)
 	}
-
-	// // TODO(ben) use inner join with DTO
-	// dashboardVersions := make([]*m.DashboardVersionDTO, len(query.Result))
-	// for i, dashboardVersion := range query.Result {
-	// 	creator := "Anonymous"
-	// 	if dashboardVersion.CreatedBy > 0 {
-	// 		creator = getUserLogin(dashboardVersion.CreatedBy)
-	// 	}
-
-	// 	dashboardVersions[i] = &m.DashboardVersionDTO{
-	// 		Id:            dashboardVersion.Id,
-	// 		DashboardId:   dashboardVersion.DashboardId,
-	// 		ParentVersion: dashboardVersion.ParentVersion,
-	// 		RestoredFrom:  dashboardVersion.RestoredFrom,
-	// 		Version:       dashboardVersion.Version,
-	// 		Created:       dashboardVersion.Created,
-	// 		CreatedBy:     creator,
-	// 		Message:       dashboardVersion.Message,
-	// 	}
-	// }
 
 	return Json(200, query.Result)
 }
@@ -310,16 +283,14 @@ func GetDashboardVersion(c *middleware.Context) Response {
 	dashboardId := c.ParamsInt64(":dashboardId")
 	version := c.ParamsInt(":id")
 
-	query := m.GetDashboardVersionCommand{
+	query := m.GetDashboardVersionQuery{
+		OrgId:       c.OrgId,
 		DashboardId: dashboardId,
 		Version:     version,
 	}
+
 	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(
-			500,
-			fmt.Sprintf("Dashboard version %d not found for dashboardId %d", version, dashboardId),
-			err,
-		)
+		return ApiError(500, fmt.Sprintf("Dashboard version %d not found for dashboardId %d", version, dashboardId), err)
 	}
 
 	creator := "Anonymous"
@@ -360,6 +331,7 @@ func createCompareDashboardVersionCommand(c *middleware.Context) (m.CompareDashb
 	}
 
 	cmd.DashboardId = int64(dashboardId)
+	cmd.OrgId = c.OrgId
 	cmd.Original = originalDash
 	cmd.New = newDash
 	return cmd, nil
@@ -428,12 +400,9 @@ func CompareDashboardVersionsBasic(c *middleware.Context) Response {
 
 // RestoreDashboardVersion restores a dashboard to the given version.
 func RestoreDashboardVersion(c *middleware.Context, cmd m.RestoreDashboardVersionCommand) Response {
-	if !c.IsSignedIn {
-		return ApiError(401, "Must be signed in to restore a version", nil)
-	}
-
-	cmd.UserId = c.UserId
 	cmd.DashboardId = c.ParamsInt64(":dashboardId")
+	cmd.UserId = c.UserId
+	cmd.OrgId = c.OrgId
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Cannot restore version", err)

@@ -34,7 +34,7 @@ export class DashboardSrv {
         yesText: "Save & Overwrite",
         icon: "fa-warning",
         onConfirm: () => {
-          this.saveDashboard({overwrite: true}, clone);
+          this.save(clone, {overwrite: true});
         }
       });
     }
@@ -49,7 +49,7 @@ export class DashboardSrv {
         yesText: "Save & Overwrite",
         icon: "fa-warning",
         onConfirm: () => {
-          this.saveDashboard({overwrite: true}, clone);
+          this.save(clone, {overwrite: true});
         }
       });
     }
@@ -68,7 +68,7 @@ export class DashboardSrv {
           this.showSaveAsModal();
         },
         onConfirm: () => {
-          this.saveDashboard({overwrite: true}, clone);
+          this.save(clone, {overwrite: true});
         }
       });
     }
