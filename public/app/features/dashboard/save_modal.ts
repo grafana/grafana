@@ -29,7 +29,6 @@ const  template = `
 						ng-model="ctrl.message"
 						ng-model-options="{allowInvalid: true}"
 						ng-maxlength="this.max"
-						ng-keydown="ctrl.keyDown($event)"
 						autocomplete="off"
 						required />
 					<small class="gf-form-hint-text muted" ng-cloak>
@@ -72,12 +71,6 @@ export class SaveDashboardModalCtrl {
     var options = {message: this.message};
 
     return this.dashboardSrv.save(saveModel, options).then(this.dismiss);
-  }
-
-  keyDown(evt) {
-    if (evt.keyCode === 13) {
-      this.save();
-    }
   }
 }
 

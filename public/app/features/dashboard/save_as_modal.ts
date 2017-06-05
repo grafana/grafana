@@ -15,19 +15,19 @@ const  template = `
 		</a>
 	</div>
 
-	<div class="modal-content">
+	<form name="ctrl.saveForm" ng-submit="ctrl.save()" class="modal-content" novalidate>
 		<div class="p-t-2">
 			<div class="gf-form">
 				<label class="gf-form-label">New name</label>
-				<input type="text" class="gf-form-input" ng-model="ctrl.clone.title" give-focus="true" ng-keydown="ctrl.keyDown($event)">
+				<input type="text" class="gf-form-input" ng-model="ctrl.clone.title" give-focus="true" required>
 			</div>
 		</div>
 
 		<div class="gf-form-button-row text-center">
-			<a class="btn btn-success" ng-click="ctrl.save();">Save</a>
+			<button type="submit" class="btn btn-success" ng-disabled="ctrl.saveForm.$invalid">Save</button>
 			<a class="btn-text" ng-click="ctrl.dismiss();">Cancel</a>
 		</div>
-	</div>
+	</form>
 </div>
 `;
 
