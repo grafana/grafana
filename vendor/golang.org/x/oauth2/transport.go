@@ -1,4 +1,4 @@
-// Copyright 2014 The oauth2 Authors. All rights reserved.
+// Copyright 2014 The Go Authors. All rights reserved.
 // Use of this source code is governed by a BSD-style
 // license that can be found in the LICENSE file.
 
@@ -129,10 +129,4 @@ func (r *onEOFReader) runFunc() {
 		fn()
 		r.fn = nil
 	}
-}
-
-type errorTransport struct{ err error }
-
-func (t errorTransport) RoundTrip(*http.Request) (*http.Response, error) {
-	return nil, t.err
 }
