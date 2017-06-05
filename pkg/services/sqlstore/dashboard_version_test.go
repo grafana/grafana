@@ -154,28 +154,3 @@ func TestCompareDashboardVersions(t *testing.T) {
 		})
 	})
 }
-
-func TestRestoreDashboardVersion(t *testing.T) {
-	Convey("Testing dashboard version restoration", t, func() {
-		InitTestDB(t)
-		savedDash := insertTestDashboard("test dash 26", 1, "restore")
-		updateTestDashboard(savedDash, map[string]interface{}{
-			"tags": "not restore",
-		})
-
-		Convey("Restore dashboard to a previous version", func() {
-			query := m.GetDashboardVersionsQuery{DashboardId: savedDash.Id, OrgId: 1}
-			err := GetDashboardVersions(&query)
-			So(err, ShouldBeNil)
-
-			cmd := m.RestoreDashboardVersionCommand{
-				DashboardId: savedDash.Id,
-				Version:     savedDash.Version,
-				UserId:      0,
-			}
-
-			err = RestoreDashboardVersion(&cmd)
-			So(err, ShouldBeNil)
-		})
-	})
-}
