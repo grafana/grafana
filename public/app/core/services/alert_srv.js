@@ -11,7 +11,7 @@ function (angular, _, coreModule) {
 
     this.init = function() {
       $rootScope.onAppEvent('alert-error', function(e, alert) {
-        self.set(alert[0], alert[1], 'error');
+        self.set(alert[0], alert[1], 'error', 5000);
       }, $rootScope);
       $rootScope.onAppEvent('alert-warning', function(e, alert) {
         self.set(alert[0], alert[1], 'warning', 5000);

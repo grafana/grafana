@@ -1,6 +1,16 @@
 <topnav title="关联性分析" icon="fa fa-fw fa-signal" subnav="true">
+  <ul class="nav pull-right">
+    <li ng-show="true" class="back-to-dashboard-link">
+      <a  onclick="javascript:history.go(-1)">
+        返回到仪表盘
+      </a>
+    </li>
+    <li ng-if="dashboard">
+      <gf-time-picker dashboard="dashboard"></gf-time-picker>
+    </li>
+  </ul>
 </topnav>
-<div ng-controller="AlertAssociationCtrl" ng-init="init()">
+<div>
   <div ng-if="!isAssociation">
     <h3 align="center">关联性分析结果尚未计算完成 <btn class="btn btn-small btn-primary" ng-click="flushResult()">刷新结果</btn></h3>
   </div>
@@ -49,12 +59,17 @@
           </div>
 
           <div ng-if="isAssociation" class="page-container panel panel-associatoin" style="padding: 20px 20px 20px 20px;">
-            <h2>挑选推荐关联指标进行对比</h2>
+            <h2>
+              挑选推荐关联指标进行对比
+              <span ng-click="showNewAssociationManual()" class="btn btn-primary">
+                <i class="fa fa-add"></i>新增任意指标
+              </span>
+            </h2>
             <p ng-if="correlatedMetrics.length">尝试将阈值调大, 匹配更多关联指标</p>
             <div class="panel grafana-options-table">
               <div controls controls-row>
                 <label class="span3 checkbox" ng-repeat="(metricsName, metricsValue) in correlatedMetrics">
-                  <input type="checkbox" ng-click="addQuery(metricsName)"><p style="width: 90%;" class="max-width" title="{{_.getMetricName(metricsName)}}">{{_.getMetricName(metricsName)}}</p></input>
+                  <input type="checkbox" ng-checked="isManualMetric(metricsName)" ng-click="addQuery(metricsName)"><p style="width: 90%;" class="max-width" title="{{_.getMetricName(metricsName)}}">{{_.getMetricName(metricsName)}}</p></input>
                 </label>
               </div>
             </div>

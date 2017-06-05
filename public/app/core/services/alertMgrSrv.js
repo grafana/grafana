@@ -13,6 +13,7 @@ function (angular, _, coreModule) {
     var alertAssociationUrl = "/alert/correlation";
     var alertHistoryUrl = "/alert/history";
     var closeAlertUrl = "/alert/status/close";
+    var checkNameUrl = "/alert/definition/check";
 
     this.currentCritialThreshold = 0;
     this.currentWarningThreshold = 0;
@@ -121,6 +122,16 @@ function (angular, _, coreModule) {
       } else {
         return '警告';
       }
+    };
+
+    this.checkName = function(ruleName) {
+      return backendSrv.alertD({
+        method: 'get',
+        url: checkNameUrl,
+        params: {
+          name: ruleName,
+        }
+      })
     };
   });
 });

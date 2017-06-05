@@ -68,7 +68,7 @@
           <ul class="tidy-form-list">
             <li class="tidy-form-item"><h4>报警名称</h4></li>
             <li><input type="text" class="input-xlarge tidy-form-input last"
-                            ng-model="alertDef.name" placeholder="报警规则名称" required>
+                            ng-model="alertDef.name" ng-blur="checkName()" placeholder="报警规则名称" required>
             </li>
           </ul>
           <div class="clearfix"></div>
@@ -270,8 +270,8 @@
       
 
       <div class="pull-right" style="margin-top: 35px">
-        <button type="submit" class="btn btn-success" ng-show="isNew" ng-click="saveChanges()">增加</button>
-        <button type="submit" class="btn btn-success" ng-show="!isNew" ng-click="saveChanges()">保存</button>
+        <button type="submit" class="btn" ng-class="{'btn-success':!checkStatus.checkName}" ng-disabled="checkStatus.checkName" ng-show="isNew" ng-click="saveChanges()">增加</button>
+        <button type="submit" class="btn" ng-class="{'btn-success':!checkStatus.checkName}" ng-disabled="checkStatus.checkName" ng-show="!isNew" ng-click="saveChanges()">保存</button>
         <a class="btn btn-inverse" href="alerts">取消</a>
       </div>
       <br>

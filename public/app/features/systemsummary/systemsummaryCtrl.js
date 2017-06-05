@@ -395,7 +395,9 @@ define([
               data = (data / Math.pow(1024, 3)).toFixed(2) + 'GB';
             }
             $scope.panleJson[6].panels[index].tip += data;
-          }).catch(function () { });
+          }).catch(function (e) {
+            $scope.panleJson[6].panels[index].tip = '暂无预测信息';
+          });
         });
 
       };

@@ -11,7 +11,7 @@ function (angular, _, kbn) {
   module.controller('OpenTSDBQueryCtrl', function($scope) {
 
     $scope.init = function() {
-      if($scope.unInit) {
+      if($scope.unInit || _.isUndefined($scope.target)) {
         return;
       }
       $scope.target.errors = validateTarget($scope.target);

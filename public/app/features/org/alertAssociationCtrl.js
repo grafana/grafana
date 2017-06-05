@@ -8,7 +8,7 @@ function (angular, _, noUiSlider) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AlertAssociationCtrl', function($scope, $routeParams, $location, alertMgrSrv, alertSrv, $timeout, contextSrv, healthSrv) {
+  module.controller('AlertAssociationCtrl', function ($scope, $routeParams, $location, alertMgrSrv, alertSrv, $timeout, contextSrv, healthSrv, backendSrv, $controller, datasourceSrv) {
     var alertMetric = $routeParams.metric;
     var alertHost = $routeParams.host;
     var distance = $routeParams.distance;
@@ -24,6 +24,13 @@ function (angular, _, noUiSlider) {
     };
 
     $scope.init = function() {
+      if ($scope.dashboard) {
+        return;
+      }
+      $scope.manualMetrics = [];
+      datasourceSrv.get('opentsdb').then(function (datasource) {
+        $scope.datasource = datasource;
+      });
       alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
         var correlationOfAlertMap = response.data;
         for (var host in correlationOfAlertMap) {
@@ -152,15 +159,19 @@ function (angular, _, noUiSlider) {
     };
     $scope.addQuery = function(metricName) {
       var metricNameMap = $scope.correlatedMetrics;
-      var flag = true;
+      var isHidden = true;
 
-      _.each($scope.dashboard.rows[0].panels[0].targets,function(target) {
-        if(target.metric === _.getMetricName(metricName)){
-          target.hide = !target.hide;
-          flag = false;
+      _.each($scope.dashboard.rows[0].panels[0].targets, function (target) {
+        if (target.metric === _.getMetricName(metricName)) {
+          if (metricNameMap[metricName][0] == target.tags.host) {
+            isHidden = false;
+            target.hide = !target.hide;
+          } else {
+            target.hide = true;
+          }
         }
       });
-      if(flag) {
+      if (isHidden) {
         var target = {
           "aggregator":"avg",
           "currentTagKey":"",
@@ -189,6 +200,35 @@ function (angular, _, noUiSlider) {
     $scope.resetCorrelation = function () {
       $location.path("alerts/association/" + alertHost + "/" + Math.floor($scope.thresholdSlider.get()) + "/" + alertMetric);
     };
+
+    $scope.showNewAssociationManual = function() {
+      var newScope = $scope.$new();
+      newScope.datasource = $scope.datasource;
+      $controller('OpenTSDBQueryCtrl', {$scope: newScope});
+      newScope.addManualMetric = $scope.addManualMetric;
+      $scope.suggestTagHost = backendSrv.suggestTagHost;
+      $scope.appEvent('show-modal', {
+        src: './app/partials/manual_association.html',
+        modalClass: 'modal-no-header confirm-modal',
+        scope: newScope
+      });
+    };
+
+    $scope.addManualMetric = function (target) {
+      target.metric = contextSrv.user.orgId + "." + contextSrv.system + "." + target.metric;
+      if (_.indexOf(_.keys($scope.correlatedMetrics),target.metric) > -1) {
+        if($scope.correlatedMetrics[target.metric][0] == target.host)
+          return;
+      }
+      $scope.correlatedMetrics[target.metric] = [target.host];
+      $scope.addQuery(target.metric);
+      $scope.manualMetrics.push(target.metric);
+    };
+
+    $scope.isManualMetric = function (metricName) {
+      return _.indexOf($scope.manualMetrics, metricName) > -1 ? true : false;
+    };
+    $scope.init();
   });
 
   module.directive('slider', function() {

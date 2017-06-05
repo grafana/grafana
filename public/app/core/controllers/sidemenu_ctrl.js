@@ -122,7 +122,7 @@ function (angular, _, $, coreModule, config) {
       $scope.mainLinks.push({
         text: "轮值",
         icon: "fa fa-fw fa-calendar",
-        href: $scope.getUrl("/oncallers"),
+        href: $scope.getUrl("/oncallerschedule"),
       });
 
       $scope.setupSettingMenu();

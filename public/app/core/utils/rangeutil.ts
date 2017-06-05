@@ -26,9 +26,9 @@ var rangeOptions = [
   { from: 'now-1d/d', to: 'now-1d/d', display: '昨天',             section: 1 },
   { from: 'now-2d/d', to: 'now-2d/d', display: '截至昨天',  section: 1 },
   { from: 'now-7d/d', to: 'now-7d/d', display: '上一周的今天',    section: 1 },
-  { from: 'now-1w/w', to: 'now-1w/w', display: '未来一周',         section: 1 },
-  { from: 'now-1M/M', to: 'now-1M/M', display: '未来一月',        section: 1 },
-  { from: 'now-1y/y', to: 'now-1y/y', display: '未来一月',         section: 1 },
+  { from: 'now/w', to: 'now+1w/w', display: '未来一周',         section: 1 },
+  { from: 'now/M', to: 'now+1M/M', display: '未来一月',        section: 1 },
+  { from: 'now/y', to: 'now+1y/y', display: '未来一年',         section: 1 },
 
   { from: 'now-5m',   to: 'now',      display: '5  分钟之前',        section: 3 },
   { from: 'now-15m',  to: 'now',      display: '15 分钟之前',       section: 3 },

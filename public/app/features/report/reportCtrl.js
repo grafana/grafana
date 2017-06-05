@@ -11,30 +11,35 @@ define([
     module.controller('ReportCtrl', function (
       $scope, backendSrv, contextSrv, datasourceSrv) {
       $scope.init = function () {
-        $scope.hasReport = false;
-        $scope.reportUrl = '';
-        $scope.reportName = '';
+        $scope.reports = [];
         switch(contextSrv.user.orgId) {
           case 3: {
-            $scope.reportUrl = 'https://download.cloudwiz.cn/report/Report20170314.pdf';
-            $scope.hasReport = true;
-            $scope.reportName = '报告20170314.pdf';
+            $scope.reports.push({
+              reportName: '报告20170314.pdf',
+              reportUrl: 'https://download.cloudwiz.cn/report/Report20170314.pdf'
+            });
             break;
           }
           case 7: {
-            $scope.hasReport = true;
-            $scope.reportUrl = 'https://download.cloudwiz.cn/report/Report20170522.pdf';
-            $scope.reportName = '报告20170522.pdf';
+            $scope.reports.push({
+              reportName: '报告20170530.pdf',
+              reportUrl: 'https://download.cloudwiz.cn/report/Report20170530.pdf'
+            });
+            $scope.reports.push({
+              reportName: '报告20170522.pdf',
+              reportUrl: 'https://download.cloudwiz.cn/report/Report20170522.pdf'
+            });
             break;
           }
           case 11: {
-            $scope.hasReport = true;
-            $scope.reportUrl = 'https://download.cloudwiz.cn/report/Report20170523.pdf';
-            $scope.reportName = '报告20170523.pdf';
+            $scope.reports.push({
+              reportName: '报告20170523.pdf',
+              reportUrl: 'https://download.cloudwiz.cn/report/Report20170523.pdf'
+            });
             break;
           }
           default: {
-            $scope.reportUrl = '';
+            $scope.reports = [];
             break;
           }
         }
