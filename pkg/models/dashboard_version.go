@@ -82,16 +82,6 @@ type GetDashboardVersionsQuery struct {
 // Commands
 //
 
-// RestoreDashboardVersionCommand creates a new dashboard version.
-type RestoreDashboardVersionCommand struct {
-	DashboardId int64 `json:"dashboardId"`
-	Version     int   `json:"version" binding:"Required"`
-	UserId      int64 `json:"-"`
-	OrgId       int64 `json:"-"`
-
-	Result *Dashboard
-}
-
 // CompareDashboardVersionsCommand is used to compare two versions.
 type CompareDashboardVersionsCommand struct {
 	OrgId       int64

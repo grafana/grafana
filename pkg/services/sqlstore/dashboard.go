@@ -131,8 +131,9 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 }
 
 func GetDashboard(query *m.GetDashboardQuery) error {
-	dashboard := m.Dashboard{Slug: query.Slug, OrgId: query.OrgId}
+	dashboard := m.Dashboard{Slug: query.Slug, OrgId: query.OrgId, Id: query.Id}
 	has, err := x.Get(&dashboard)
+
 	if err != nil {
 		return err
 	} else if has == false {

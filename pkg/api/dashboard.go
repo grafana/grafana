@@ -116,15 +116,16 @@ func DeleteDashboard(c *middleware.Context) {
 }
 
 func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
-
 	cmd.OrgId = c.OrgId
 	cmd.UserId = c.UserId
 
 	dash := cmd.GetDashboardModel()
+
 	// Check if Title is empty
 	if dash.Title == "" {
 		return ApiError(400, m.ErrDashboardTitleEmpty.Error(), nil)
 	}
+
 	if dash.Id == 0 {
 		limitReached, err := middleware.QuotaReached(c, "dashboard")
 		if err != nil {
@@ -399,51 +400,30 @@ func CompareDashboardVersionsBasic(c *middleware.Context) Response {
 }
 
 // RestoreDashboardVersion restores a dashboard to the given version.
-func RestoreDashboardVersion(c *middleware.Context, cmd m.RestoreDashboardVersionCommand) Response {
-	cmd.DashboardId = c.ParamsInt64(":dashboardId")
-	cmd.UserId = c.UserId
-	cmd.OrgId = c.OrgId
+func RestoreDashboardVersion(c *middleware.Context, apiCmd dtos.RestoreDashboardVersionCommand) Response {
+	dashboardId := c.ParamsInt64(":dashboardId")
 
-	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Cannot restore version", err)
+	dashQuery := m.GetDashboardQuery{Id: dashboardId, OrgId: c.OrgId}
+	if err := bus.Dispatch(&dashQuery); err != nil {
+		return ApiError(404, "Dashboard not found", nil)
 	}
 
-	isStarred, err := isDashboardStarredByUser(c, cmd.Result.Id)
-	if err != nil {
-		return ApiError(500, "Error checking if dashboard is starred by user", err)
+	versionQuery := m.GetDashboardVersionQuery{DashboardId: dashboardId, Version: apiCmd.Version, OrgId: c.OrgId}
+	if err := bus.Dispatch(&versionQuery); err != nil {
+		return ApiError(404, "Dashboard version not found", nil)
 	}
 
-	// Finding creator and last updater of the dashboard
-	updater, creator := "Anonymous", "Anonymous"
-	if cmd.Result.UpdatedBy > 0 {
-		updater = getUserLogin(cmd.Result.UpdatedBy)
-	}
-	if cmd.Result.CreatedBy > 0 {
-		creator = getUserLogin(cmd.Result.CreatedBy)
-	}
+	dashboard := dashQuery.Result
+	version := versionQuery.Result
 
-	dto := dtos.DashboardFullWithMeta{
-		Dashboard: cmd.Result.Data,
-		Meta: dtos.DashboardMeta{
-			IsStarred: isStarred,
-			Slug:      cmd.Result.Slug,
-			Type:      m.DashTypeDB,
-			CanStar:   c.IsSignedIn,
-			CanSave:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
-			CanEdit:   canEditDashboard(c.OrgRole),
-			Created:   cmd.Result.Created,
-			Updated:   cmd.Result.Updated,
-			UpdatedBy: updater,
-			CreatedBy: creator,
-			Version:   cmd.Result.Version,
-		},
-	}
+	saveCmd := m.SaveDashboardCommand{}
+	saveCmd.OrgId = c.OrgId
+	saveCmd.UserId = c.UserId
+	saveCmd.Dashboard = version.Data
+	saveCmd.Dashboard.Set("version", dashboard.Version)
+	saveCmd.Message = fmt.Sprintf("Dashboard restored from version %d", version.Version)
 
-	return Json(200, util.DynMap{
-		"message":   fmt.Sprintf("Dashboard restored to version %d", cmd.Result.Version),
-		"version":   cmd.Result.Version,
-		"dashboard": dto,
-	})
+	return PostDashboard(c, saveCmd)
 }
 
 func GetDashboardTags(c *middleware.Context) {

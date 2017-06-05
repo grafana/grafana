@@ -25,7 +25,9 @@ export class HistoryListCtrl {
   /** @ngInject */
   constructor(private $scope,
               private $rootScope,
+              private $route,
               private $window,
+              private $timeout,
               private $q,
               private contextSrv,
               private historySrv) {
@@ -201,7 +203,7 @@ export class HistoryListCtrl {
       title: 'Restore version',
       text: '',
       text2: `Are you sure you want to restore the dashboard to version ${version}? All unsaved changes will be lost.`,
-      icon: 'fa-rotate-right',
+      icon: 'fa-history',
       yesText: `Yes, restore to version ${version}`,
       onConfirm: this.restoreConfirm.bind(this, version),
     });
@@ -210,25 +212,11 @@ export class HistoryListCtrl {
   restoreConfirm(version: number) {
     this.loading = true;
     return this.historySrv.restoreDashboard(this.dashboard, version).then(response => {
-      this.revisions.unshift({
-        id: this.revisions[0].id + 1,
-        checked: false,
-        dashboardId: this.dashboard.id,
-        parentVersion: version,
-        version: this.revisions[0].version + 1,
-        created: new Date(),
-        createdBy: this.contextSrv.user.name,
-        message: `Restored from version ${version}`,
-      });
-
-      this.reset();
-      const restoredData = response.dashboard;
-      this.dashboard = restoredData.dashboard;
-      this.dashboard.meta = restoredData.meta;
-      this.$scope.setupDashboard(restoredData);
-    }).catch(err => {
-      this.$rootScope.appEvent('alert-error', ['There was an error restoring the dashboard', (err.message || err)]);
-    }).finally(() => { this.loading = false; });
+      this.$route.reload();
+      this.$rootScope.appEvent('alert-success', ['Dashboard restored', 'Restored from version ' + version]);
+    }).finally(() => {
+      this.loading = false;
+    });
   }
 }
 
