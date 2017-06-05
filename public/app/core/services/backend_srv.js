@@ -11,6 +11,7 @@ function (angular, _, coreModule, config) {
     var self = this;
     this.alertDUrl;
     this.tokens = null;
+    this.hostsNum = 0;
 
     this.get = function(url, params) {
       return this.request({ method: 'GET', url: url, params: params });

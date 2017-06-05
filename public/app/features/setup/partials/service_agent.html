@@ -1,0 +1,52 @@
+<topnav section="安装指南" icon="fa fa-fw fa-cloud-download">
+  <ul class="nav">
+    <li><a  href="/setting/agent">安装探针</a></li>
+    <li class="active"><a href="/setting/service">安装服务</a></li>
+  </ul>
+</topnav>
+
+<div class="page-container">
+  <h3>
+    <i class="iconfont fa-clound icon-install"></i>
+    已经安装服务
+  </h3>
+  <div class="service-list">
+    <div class="service-item" ng-repeat="installed in services | filter:{status: 0}" ng-click="showDetail(installed)">
+      <div class="service-cover">
+        <p class="service-info">{{installed.info}}</p>
+      </div>
+      <div class="service-msg">
+        <i class="{{installed.icon}}"></i>
+        <p class="service-name">{{installed.name}}</p>
+      </div>
+      <button class="btn-install">详情</button>
+    </div>
+    <div class="service-item service-err" ng-repeat="installed in services | filter:{status: 2}" ng-click="showDetail(installed)">
+      <div class="service-cover">
+        <p class="service-info">{{installed.info}}</p>
+      </div>
+      <div class="service-msg">
+        <i class="{{installed.icon}}"></i>
+        <p class="service-name">{{installed.name}}</p>
+      </div>
+      <button class="btn-install">详情</button>
+    </div>
+  </div>
+  <h3>
+    <i class="iconfont fa-cloud1 icon-install"></i>
+    您尚未安装服务
+  </h3>
+  <div class="service-list">
+    <div class="service-item" ng-repeat="uninstall in services | filter:{status: -1}" ng-click="showDetail(uninstall)">
+      <div class="service-cover">
+        <p class="service-info">{{uninstall.info}}</p>
+      </div>
+      <div class="service-msg">
+        <i class="{{uninstall.icon}}"></i>
+        <p class="service-name">{{uninstall.name}}</p>
+      </div>
+      <button class="btn-install">安装</button>
+    </div>
+  </div>
+</div>
+

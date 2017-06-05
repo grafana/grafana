@@ -9,7 +9,8 @@ module.exports = function(config) {
         '<%= genDir %>/vendor/css/spectrum.css',
         '<%= genDir %>/css/bootstrap.dark.min.css',
         '<%= genDir %>/css/bootstrap-responsive.min.css',
-        '<%= genDir %>/vendor/css/font-awesome.min.css'
+        '<%= genDir %>/vendor/css/font-awesome.min.css',
+        '<%= genDir %>/vendor/css/iconfont.css',
       ],
       dest: '<%= genDir %>/css/grafana.dark.min.css'
     },
@@ -21,7 +22,8 @@ module.exports = function(config) {
         '<%= genDir %>/vendor/css/nouislider.min.css',
         '<%= genDir %>/css/bootstrap.light.min.css',
         '<%= genDir %>/css/bootstrap-responsive.min.css',
-        '<%= genDir %>/vendor/css/font-awesome.min.css'
+        '<%= genDir %>/vendor/css/font-awesome.min.css',
+        '<%= genDir %>/vendor/css/iconfont.css',
       ],
       dest: '<%= genDir %>/css/grafana.light.min.css'
     },

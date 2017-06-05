@@ -1,0 +1,77 @@
+
+@font-face {font-family: "iconfont";
+  src: url('../fonts/iconfont.eot?t=1496309192385'); /* IE9*/
+  src: url('../fonts/iconfont.eot?t=1496309192385#iefix') format('embedded-opentype'), /* IE6-IE8 */
+  url('../fonts/iconfont.woff?t=1496309192385') format('woff'), /* chrome, firefox */
+  url('../fonts/iconfont.ttf?t=1496309192385') format('truetype'), /* chrome, firefox, opera, Safari, Android, iOS 4.2+*/
+  url('../fonts/iconfont.svg?t=1496309192385#iconfont') format('svg'); /* iOS 4.1- */
+}
+
+.iconfont {
+  font-family:"iconfont" !important;
+  font-size:16px;
+  font-style:normal;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.fa-macos:before { content: "\e600"; }
+
+.fa-linux:before { content: "\e726"; }
+
+.fa-clound:before { content: "\e60a"; }
+
+.fa-zookeeper:before { content: "\e6f0"; }
+
+.fa-windows:before { content: "\e640"; }
+
+.fa-nginx:before { content: "\e729"; }
+
+.fa-hadoop29:before { content: "\e70a"; }
+
+.fa-ubuntu:before { content: "\e606"; }
+
+.fa-centos:before { content: "\e69a"; }
+
+.fa-cloud1:before { content: "\e61a"; }
+
+.fa-zanwutu:before { content: "\e609"; }
+
+.fa-Kafka:before { content: "\e65a"; }
+
+.fa-kafka:before { content: "\e6a2"; }
+
+.fa-spark:before { content: "\e6a6"; }
+
+.fa-image-icon_nginx:before { content: "\e64f"; }
+
+.fa-amy-db-mysql:before { content: "\ed80"; }
+
+.fa-spark1:before { content: "\e60b"; }
+
+.fa-debian:before { content: "\e643"; }
+
+.fa-mongo-db:before { content: "\e653"; }
+
+.fa-Fedora:before { content: "\e655"; }
+
+.fa-docker:before { content: "\e71e"; }
+
+.fa-tomcat:before { content: "\e62b"; }
+
+.fa-icon:before { content: "\e708"; }
+
+.fa-mysql:before { content: "\e601"; }
+
+.fa-ApacheStorm:before { content: "\e656"; }
+
+.fa-ApacheZooKeeper:before { content: "\e657"; }
+
+.fa-mongo-db1:before { content: "\e603"; }
+
+.fa-Apacheyumao:before { content: "\e602"; }
+
+.fa-hbase:before { content: "\e6fe"; }
+
+.fa-kafka1:before { content: "\e604"; }
+

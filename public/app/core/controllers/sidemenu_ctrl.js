@@ -272,7 +272,7 @@ function (angular, _, $, coreModule, config) {
 
       $scope.msgManagement.submenu.push({
         text: "安装指南",
-        href: $scope.getUrl("/install"),
+        href: $scope.getUrl("/setting/agent"),
       });
 
       $scope.msgManagement.submenu.push({
