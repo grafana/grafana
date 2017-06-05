@@ -255,3 +255,12 @@ div.flot-text {
     padding: 0.5rem .5rem .2rem .5rem;
   }
 }
+
+.dash-edit-view {
+  opacity: 0;
+
+  &--open{
+    opacity: 1;
+    transition: opacity 200ms ease-in-out;
+  }
+}

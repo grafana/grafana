@@ -7,10 +7,11 @@ function (angular, _) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AdminEditUserCtrl', function($scope, $routeParams, backendSrv, $location) {
+  module.controller('AdminEditUserCtrl', function($scope, $routeParams, backendSrv, $location, navModelSrv) {
     $scope.user = {};
     $scope.newOrg = { name: '', role: 'Editor' };
     $scope.permissions = {};
+    $scope.navModel = navModelSrv.getAdminNav();
 
     $scope.init = function() {
       if ($routeParams.id) {

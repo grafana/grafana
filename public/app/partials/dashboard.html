@@ -1,9 +1,8 @@
 <div dash-class ng-if="dashboard">
-	<dashnav></dashnav>
+	<dashnav dashboard="dashboard"></dashnav>
 
 	<div class="dashboard-container">
-		<div dash-editor-view></div>
-		<dashboard-search></dashboard-search>
+		<div dash-editor-view class="dash-edit-view"></div>
 		<div class="clearfix"></div>
 
 		<dashboard-submenu ng-if="dashboard.meta.submenuEnabled" dashboard="dashboard"></dashboard-submenu>

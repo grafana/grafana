@@ -543,6 +543,18 @@
 			"revisionTime": "2016-11-15T21:05:04Z"
 		},
 		{
+			"checksumSHA1": "SjCoL7KD7qBmgSuqGTCAuUhigDk=",
+			"path": "golang.org/x/oauth2",
+			"revision": "f047394b6d14284165300fd82dad67edb3a4d7f6",
+			"revisionTime": "2017-05-17T17:14:19Z"
+		},
+		{
+			"checksumSHA1": "Umx4Fmn5FyXJyUVzKWhnQdvFNkc=",
+			"path": "golang.org/x/oauth2/internal",
+			"revision": "f047394b6d14284165300fd82dad67edb3a4d7f6",
+			"revisionTime": "2017-05-17T17:14:19Z"
+		},
+		{
 			"checksumSHA1": "S0DP7Pn7sZUmXc55IzZnNvERu6s=",
 			"path": "golang.org/x/sync/errgroup",
 			"revision": "316e794f7b5e3df4e95175a45a5fb8b12f85cb4f",

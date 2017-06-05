@@ -40,14 +40,14 @@
 
 @include media-breakpoint-down(xs) {
   .page-dashboard .navbar-page-btn {
-    max-width: 150px;
+    max-width: 250px;
   }
 }
 
 // form styles
 @include media-breakpoint-up(md) {
   .page-dashboard .navbar-page-btn {
-    max-width: 180px;
+    max-width: 280px;
   }
   .gf-timepicker-nav-btn {
     max-width: 120px;

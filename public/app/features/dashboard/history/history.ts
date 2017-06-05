@@ -54,6 +54,10 @@ export class HistoryListCtrl {
     $rootScope.onAppEvent('dashboard-saved', this.onDashboardSaved.bind(this));
   }
 
+  dismiss() {
+    this.$rootScope.appEvent('hide-dash-editor');
+  }
+
   addToLog() {
     this.start = this.start + this.limit;
     this.getLog(true);
