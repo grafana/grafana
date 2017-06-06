@@ -63,6 +63,7 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			if dash.Id != sameTitle.Id {
 				if cmd.Overwrite {
 					dash.Id = sameTitle.Id
+					dash.Version = sameTitle.Version
 				} else {
 					return m.ErrDashboardWithSameNameExists
 				}
