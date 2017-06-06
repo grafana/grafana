@@ -15,9 +15,9 @@ describe('historySrv', function() {
   beforeEach(angularMocks.module('grafana.services'));
   beforeEach(angularMocks.inject(function($httpBackend) {
     ctx.$httpBackend = $httpBackend;
-    $httpBackend.whenRoute('GET', 'api/dashboards/db/:id/versions').respond(versionsResponse);
-    $httpBackend.whenRoute('GET', 'api/dashboards/db/:id/compare/:original...:new').respond(compareResponse);
-    $httpBackend.whenRoute('POST', 'api/dashboards/db/:id/restore')
+    $httpBackend.whenRoute('GET', 'api/dashboards/id/:id/versions').respond(versionsResponse);
+    $httpBackend.whenRoute('GET', 'api/dashboards/id/:id/compare/:original...:new').respond(compareResponse);
+    $httpBackend.whenRoute('POST', 'api/dashboards/id/:id/restore')
       .respond(function(method, url, data, headers, params) {
         const parsedData = JSON.parse(data);
         return [200, restoreResponse(parsedData.version)];
