@@ -23,7 +23,7 @@
     <h4>1. 一键安装</h4>
     <ul class="tight-form last">
       <li style="word-break: break-all">
-        sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}} METRIC_SERVER_HOST={{metricsServer}} ALERTD_SERVER={{alertServer}} AGENT_URL=https://download.cloudwiz.cn/agent bash -c "$(curl -L https://download.cloudwiz.cn/agent/deploy_agent.sh)"
+        sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}} METRIC_SERVER_HOST={{metricsServer}} ALERTD_SERVER={{alertServer}} AGENT_URL=https://download.cloudwiz.cn/agent bash -c "$(curl -kL https://download.cloudwiz.cn/agent/deploy_agent.sh)"
       </li>
     </ul>
     
