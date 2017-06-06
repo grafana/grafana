@@ -17,9 +17,9 @@ function (angular, _, dateMath) {
     };
 
     $scope.getService = function() {
-      backendSrv.get('/api/dashboards/home').then(function(result) {
-        $scope.services = result.dashboard.service;
-        $scope.getServiceStatus(result.dashboard.service);
+      backendSrv.get('/api/static/hosts').then(function(result) {
+        $scope.services = result.service;
+        $scope.getServiceStatus(result.service);
       });
     };
 
@@ -52,11 +52,13 @@ function (angular, _, dateMath) {
       });
     };
 
-    $scope.showDetail = function() {
+    $scope.showDetail = function(detail) {
+      var detailScope = $scope.$new();
+      detailScope.detail = detail;
       $scope.appEvent('show-modal', {
         src: 'app/features/setup/partials/service_detail.html',
         modalClass: 'modal-no-header invite-modal',
-        scope: $scope.$new(),
+        scope: detailScope,
       });
     };
 

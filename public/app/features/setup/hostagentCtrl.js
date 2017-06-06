@@ -11,18 +11,20 @@ function (angular, _) {
 
     $scope.init = function() {
       $interval.cancel($scope.inter);
+      // hostNum 用来判断页面能否跳转，是否安装完成
       $scope.hostNum = backendSrv.hostNum;
       $scope.orgId = contextSrv.user.orgId;
       $scope.alertServer = backendSrv.alertDUrl;
       $scope.token = backendSrv.getToken();
+      // 已有机器探针,可以展示menu,否则不可
       if(backendSrv.hostNum) {
         $scope.installed = true;
         $scope.appEvent('alert-success', ['您已安装机器探针', "请继续安装机器探针,或安装服务探针"]);
       } else {
         contextSrv.sidemenu = false;
       }
-      backendSrv.get('/api/dashboards/home').then(function(result) {
-        $scope.platform = result.dashboard.hosts;
+      backendSrv.get('/api/static/hosts').then(function(result) {
+        $scope.platform = result.hosts;
       });
 
       datasourceSrv.get("opentsdb").then(function (ds) {
@@ -30,8 +32,8 @@ function (angular, _) {
         url.href = ds.url;
         $scope.metricsServer = url.hostname;
       });
-
-      $scope.inter = $interval($scope.getHosts,1000,60);
+      // 5s轮询一次,共轮询5m
+      $scope.inter = $interval($scope.getHosts,5000,60);
     };
 
     $scope.getHosts = function() {
@@ -40,8 +42,10 @@ function (angular, _) {
         $interval.cancel($scope.inter);
         $scope.installed = true;
         $scope.appEvent('alert-success', ['安装完成', "请配置服务探针"]);
+        // 安装完成，自动加载模板
+        $scope.createTemp();
       } else {
-       backendSrv.alertD({
+        backendSrv.alertD({
           method: "get",
           url: "/summary",
           params: {metrics:"collector.summary"},
@@ -70,6 +74,10 @@ function (angular, _) {
           break;
       }
     };
+
+    $scope.createTemp = function() {
+      // 添加模板
+    }
 
     $scope.init();
   });
