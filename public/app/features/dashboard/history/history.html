@@ -33,70 +33,69 @@
 		</div>
 
 		<div ng-if="!ctrl.loading">
-			<div class="history-table gf-form">
-				<div class="gf-form-group">
-					<table class="filter-table">
-						<thead>
-							<tr>
-								<th class="width-4"></th>
-								<th class="width-4">Version</th>
-								<th class="width-14">Date</th>
-								<th class="width-10">Updated By</th>
-								<th class="width-30">Notes</th>
-								<th></th>
-							</tr>
-						</thead>
-						<tbody>
-							<tr ng-repeat="revision in ctrl.revisions">
-								<td bs-tooltip="ctrl.compareRevisionDisabled(revision.checked) ? 'You can only compare 2 versions at a time' : ''">
-									<gf-form-switch checked="revision.checked"
-																	on-change="ctrl.compareRevisionStateChanged(revision)"
-																	ng-disabled="ctrl.compareRevisionDisabled(revision.checked)">
-									</gf-form-switch>
-								</td>
-								<td>{{revision.version}}</td>
-								<td>{{ctrl.formatDate(revision.created)}}</td>
-								<td>{{revision.createdBy}}</td>
-								<td>{{revision.message}}</td>
-								<td class="text-right">
-									<a class="btn btn-inverse btn-small" ng-show="revision.version !== ctrl.dashboard.version" ng-click="ctrl.restore(revision.version)">
-										<i class="fa fa-history"></i>&nbsp;&nbsp;Restore
-									</a>
-									<a class="btn btn-outline-disabled btn-small" ng-show="revision.version === ctrl.dashboard.version">
-										<i class="fa fa-check"></i>&nbsp;&nbsp;Current
-									</a>
-								</td>
-							</tr>
-						</tbody>
-					</table>
+      <div class="gf-form-group">
+        <table class="filter-table">
+          <thead>
+            <tr>
+              <th class="width-4"></th>
+              <th class="width-4">Version</th>
+              <th class="width-14">Date</th>
+              <th class="width-10">Updated By</th>
+              <th class="width-30">Notes</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr ng-repeat="revision in ctrl.revisions">
+              <td class="filter-table__switch-cell" bs-tooltip="ctrl.compareRevisionDisabled(revision.checked) ? 'You can only compare 2 versions at a time' : ''">
+                <gf-form-switch switch-class="gf-form-switch--table-cell"
+                                checked="revision.checked"
+                                on-change="ctrl.compareRevisionStateChanged(revision)"
+                                ng-disabled="ctrl.compareRevisionDisabled(revision.checked)">
+                </gf-form-switch>
+              </td>
+              <td class="text-center">{{revision.version}}</td>
+              <td>{{ctrl.formatDate(revision.created)}}</td>
+              <td>{{revision.createdBy}}</td>
+              <td>{{revision.message}}</td>
+              <td class="text-right">
+                <a class="btn btn-inverse btn-small" ng-show="revision.version !== ctrl.dashboard.version" ng-click="ctrl.restore(revision.version)">
+                  <i class="fa fa-history"></i>&nbsp;&nbsp;Restore
+                </a>
+                <a class="btn btn-outline-disabled btn-small" ng-show="revision.version === ctrl.dashboard.version">
+                  <i class="fa fa-check"></i>&nbsp;&nbsp;Current
+                </a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
 
-					<div ng-if="ctrl.appending">
-						<i class="fa fa-spinner fa-spin"></i>
-						<em>Fetching more entries&hellip;</em>
-					</div>
+        <div ng-if="ctrl.appending">
+          <i class="fa fa-spinner fa-spin"></i>
+          <em>Fetching more entries&hellip;</em>
+        </div>
 
-					<div class="gf-form-group" ng-show="ctrl.mode === 'list'">
-						<div class="gf-form-button-row">
-							<a	type="button"
-									class="btn gf-form-button btn-primary"
-									ng-if="ctrl.revisions.length > 1"
-									ng-class="{disabled: !ctrl.isComparable()}"
-									ng-click="ctrl.getDiff(ctrl.diff)"
-									bs-tooltip="ctrl.isComparable() ? '' : 'Select 2 versions to start comparing'">
-								<i class="fa fa-code-fork" ></i>&nbsp;&nbsp;Compare versions
-							</a>
-							<a  type="button"
-									class="btn gf-form-button btn-inverse"
-									ng-if="ctrl.revisions.length >= ctrl.limit"
-									ng-click="ctrl.addToLog()"
-									ng-class="{disabled: ctrl.isLastPage()}"
-									ng-disabled="ctrl.isLastPage()">
-								Show more versions
-							</a>
-						</div>
-					</div>
-				</div>
-			</div>
+        <div class="gf-form-group" ng-show="ctrl.mode === 'list'">
+          <div class="gf-form-button-row">
+            <a	type="button"
+                class="btn gf-form-button btn-primary"
+                ng-if="ctrl.revisions.length > 1"
+                ng-class="{disabled: !ctrl.isComparable()}"
+                ng-click="ctrl.getDiff(ctrl.diff)"
+                bs-tooltip="ctrl.isComparable() ? '' : 'Select 2 versions to start comparing'">
+              <i class="fa fa-code-fork" ></i>&nbsp;&nbsp;Compare versions
+            </a>
+            <a  type="button"
+                class="btn gf-form-button btn-inverse"
+                ng-if="ctrl.revisions.length >= ctrl.limit"
+                ng-click="ctrl.addToLog()"
+                ng-class="{disabled: ctrl.isLastPage()}"
+                ng-disabled="ctrl.isLastPage()">
+              Show more versions
+            </a>
+          </div>
+        </div>
+      </div>
 		</div>
 	</div>
 
