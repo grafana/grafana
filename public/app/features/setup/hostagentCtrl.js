@@ -64,6 +64,7 @@ function (angular, _) {
       $interval.cancel($scope.inter);
       switch (type) {
         case "next":
+          contextSrv.sidemenu = true;
           $location.url('/setting/service');
           break;
         case "back":
