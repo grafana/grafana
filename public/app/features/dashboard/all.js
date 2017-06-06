@@ -13,6 +13,7 @@ define([
   './viewStateSrv',
   './time_srv',
   './unsavedChangesSrv',
+  './unsaved_changes_modal',
   './timepicker/timepicker',
   './graphiteImportCtrl',
   './impression_store',

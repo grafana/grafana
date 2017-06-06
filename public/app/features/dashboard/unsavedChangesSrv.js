@@ -134,34 +134,31 @@ function(angular, _) {
       return currentJson !== originalJson;
     };
 
+    p.discardChanges = function() {
+      this.original = null;
+      this.gotoNext();
+    };
+
     p.open_modal = function() {
-      var tracker = this;
-      var dashboard = this.current;
-
-      var modalScope = this.scope.$new();
-      var clone = dashboard.getSaveModelClone();
-
-      modalScope.clone = clone;
-      modalScope.ignore = function() {
-        tracker.original = null;
-        tracker.goto_next();
-      };
-
-      var cancel = $rootScope.$on('dashboard-saved', function() {
-        cancel();
-        $timeout(function() {
-          tracker.goto_next();
-        });
-      });
-
       $rootScope.appEvent('show-modal', {
-        src: 'public/app/partials/unsaved-changes.html',
-        scope: modalScope,
-        modalClass: 'modal--narrow'
+        templateHtml: '<unsaved-changes-modal dismiss="dismiss()"></unsaved-changes-modal>',
+        modalClass: 'modal--narrow confirm-modal'
       });
     };
 
-    p.goto_next = function() {
+    p.saveChanges = function() {
+      var self = this;
+      var cancel = $rootScope.$on('dashboard-saved', function() {
+        cancel();
+        $timeout(function() {
+          self.gotoNext();
+        });
+      });
+
+      $rootScope.appEvent('save-dashboard');
+    };
+
+    p.gotoNext = function() {
       var baseLen = $location.absUrl().length - $location.url().length;
       var nextUrl = this.next.substring(baseLen);
       $location.url(nextUrl);
@@ -169,7 +166,8 @@ function(angular, _) {
 
     this.Tracker = Tracker;
     this.init = function(dashboard, scope) {
-      return new Tracker(dashboard, scope, 1000);
+      this.tracker = new Tracker(dashboard, scope, 1000);
+      return this.tracker;
     };
   });
 });
