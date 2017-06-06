@@ -168,7 +168,7 @@ export class NavModelSrv {
       });
 
       menu.push({
-        title: 'Version History',
+        title: 'Version history',
         icon: 'fa fa-fw fa-history',
         clickHandler: () => dashNavCtrl.openEditView('history')
       });

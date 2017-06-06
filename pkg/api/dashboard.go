@@ -64,6 +64,9 @@ func GetDashboard(c *middleware.Context) {
 		creator = getUserLogin(dash.CreatedBy)
 	}
 
+	// make sure db version is in sync with json model version
+	dash.Data.Set("version", dash.Version)
+
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
 		Meta: dtos.DashboardMeta{

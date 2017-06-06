@@ -33,10 +33,10 @@ func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
 				dashboard_version.created,
 				dashboard_version.created_by as created_by_id,
 				dashboard_version.message,
-				dashboard_version.data,
-				"user".login as created_by`).
-		Join("LEFT", "user", `dashboard_version.created_by = "user".id`).
-		Join("LEFT", "dashboard", `dashboard.id = "dashboard_version".dashboard_id`).
+				dashboard_version.data,`+
+			dialect.Quote("user")+`.login as created_by`).
+		Join("LEFT", "user", `dashboard_version.created_by = `+dialect.Quote("user")+`.id`).
+		Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
 		Where("dashboard_version.dashboard_id=? AND dashboard.org_id=?", query.DashboardId, query.OrgId).
 		OrderBy("dashboard_version.version DESC").
 		Limit(query.Limit, query.Start).
