@@ -107,6 +107,8 @@ function (angular, _) {
           }]);
         }
 
+        linkDef.timeFormat = null;
+
         return $scope.searchDashboards(linkDef, 7);
       }
 
@@ -118,6 +120,7 @@ function (angular, _) {
           tooltip: linkDef.tooltip,
           target: linkDef.targetBlank ? "_blank" : "_self",
           keepTime: linkDef.keepTime,
+          timeFormat: linkDef.timeFormat,
           includeVars: linkDef.includeVars,
         }]);
       }
@@ -143,6 +146,7 @@ function (angular, _) {
               url: 'dashboard/' + dash.uri,
               icon: 'fa fa-th-large',
               keepTime: link.keepTime,
+              timeFormat: link.timeFormat,
               includeVars: link.includeVars
             });
           }
@@ -170,7 +174,10 @@ function (angular, _) {
     $scope.dashboard.links = $scope.dashboard.links || [];
 
     $scope.addLink = function() {
-      $scope.dashboard.links.push({ type: 'dashboards', icon: 'external link' });
+      $scope.dashboard.links.push({
+        type: 'dashboards',
+        icon: 'external link',
+        timeFormat: 'grafana'});
       $scope.dashboard.updateSubmenuVisibility();
       $scope.updated();
     };

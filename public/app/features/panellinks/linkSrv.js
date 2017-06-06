@@ -15,9 +15,15 @@ function (angular, _, kbn) {
         var params = {};
 
         if (link.keepTime) {
-          var range = timeSrv.timeRangeForUrl();
-          params['from'] = range.from;
-          params['to'] = range.to;
+          switch (link.timeFormat) {
+            case "kibana":
+              params['_g'] = timeSrv.timeRangeForKibanaUrl();
+              break;
+            default:
+              var range = timeSrv.timeRangeForUrl();
+              params['from'] = range.from;
+              params['to'] = range.to;
+          }
         }
 
         if (link.includeVars) {
@@ -94,9 +100,16 @@ function (angular, _, kbn) {
         var params = {};
 
         if (link.keepTime) {
-          var range = timeSrv.timeRangeForUrl();
-          params['from'] = range.from;
-          params['to'] = range.to;
+          link.timeFormat = link.type === 'dashboard' ? null : link.timeFormat;
+          switch (link.timeFormat) {
+            case "kibana":
+              params['_g'] = timeSrv.timeRangeForKibanaUrl();
+              break;
+            default:
+              var range = timeSrv.timeRangeForUrl();
+              params['from'] = range.from;
+              params['to'] = range.to;
+          }
         }
 
         if (link.includeVars) {

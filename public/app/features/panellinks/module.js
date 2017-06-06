@@ -26,6 +26,7 @@ function (angular, _) {
       $scope.addLink = function() {
         $scope.panel.links.push({
           type: 'dashboard',
+          timeFormat: 'grafana'
         });
       };
 

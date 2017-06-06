@@ -34,6 +34,12 @@
 			</div>
 
 			<gf-form-switch class="gf-form" label-class="width-10" label="Include time range" checked="link.keepTime"></gf-form-switch>
+      <div class="gf-form" ng-show="link.keepTime && link.type == 'absolute'">
+        <span class="gf-form-label width-10">Time format</span>
+        <div class="gf-form-select-wrapper gf-form--grow width-10">
+          <select class="gf-form-input" ng-model="link.timeFormat" ng-options="format for format in ['grafana','kibana']" ></select>
+        </div>
+      </div>
 			<gf-form-switch class="gf-form" label-class="width-10" label="Include variables" checked="link.includeVars"></gf-form-switch>
 			<gf-form-switch class="gf-form" label-class="width-10" label="Open in new tab " checked="link.targetBlank"></gf-form-switch>
 		</div>
