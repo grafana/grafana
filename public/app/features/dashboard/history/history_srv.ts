@@ -11,18 +11,18 @@ export class HistorySrv {
 
   getHistoryList(dashboard: DashboardModel, options: HistoryListOpts) {
     const id = dashboard && dashboard.id ? dashboard.id : void 0;
-    return id ? this.backendSrv.get(`api/dashboards/db/${id}/versions`, options) : this.$q.when([]);
+    return id ? this.backendSrv.get(`api/dashboards/id/${id}/versions`, options) : this.$q.when([]);
   }
 
   compareVersions(dashboard: DashboardModel, compare: { new: number, original: number }, view = 'html') {
     const id = dashboard && dashboard.id ? dashboard.id : void 0;
-    const url = `api/dashboards/db/${id}/compare/${compare.original}...${compare.new}/${view}`;
+    const url = `api/dashboards/id/${id}/compare/${compare.original}...${compare.new}/${view}`;
     return id ? this.backendSrv.get(url) : this.$q.when({});
   }
 
   restoreDashboard(dashboard: DashboardModel, version: number) {
     const id = dashboard && dashboard.id ? dashboard.id : void 0;
-    const url = `api/dashboards/db/${id}/restore`;
+    const url = `api/dashboards/id/${id}/restore`;
     return id && _.isNumber(version) ? this.backendSrv.post(url, { version }) : this.$q.when({});
   }
 }

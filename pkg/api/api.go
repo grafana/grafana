@@ -224,12 +224,12 @@ func (hs *HttpServer) registerRoutes() {
 		r.Group("/dashboards", func() {
 			r.Combo("/db/:slug").Get(GetDashboard).Delete(DeleteDashboard)
 
-			r.Get("/db/:dashboardId/versions", wrap(GetDashboardVersions))
-			r.Get("/db/:dashboardId/versions/:id", wrap(GetDashboardVersion))
-			r.Get("/db/:dashboardId/compare/:versions", wrap(CompareDashboardVersions))
-			r.Get("/db/:dashboardId/compare/:versions/html", wrap(CompareDashboardVersionsJSON))
-			r.Get("/db/:dashboardId/compare/:versions/basic", wrap(CompareDashboardVersionsBasic))
-			r.Post("/db/:dashboardId/restore", reqEditorRole, bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
+			r.Get("/id/:dashboardId/versions", wrap(GetDashboardVersions))
+			r.Get("/id/:dashboardId/versions/:id", wrap(GetDashboardVersion))
+			r.Get("/id/:dashboardId/compare/:versions", wrap(CompareDashboardVersions))
+			r.Get("/id/:dashboardId/compare/:versions/html", wrap(CompareDashboardVersionsJSON))
+			r.Get("/id/:dashboardId/compare/:versions/basic", wrap(CompareDashboardVersionsBasic))
+			r.Post("/id/:dashboardId/restore", reqEditorRole, bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
 
 			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
 			r.Get("/file/:file", GetDashboardFromJsonFile)
