@@ -1,7 +1,7 @@
 @ECHO OFF
 SET CurrentDir=%cd%
-SET D32="C:\Program Files (x86)\Embarcadero\Studio\17.0\bin\dcc32.exe"
-SET D64="C:\Program Files (x86)\Embarcadero\Studio\17.0\bin\dcc64.exe"
+SET D32="C:\Program Files (x86)\Embarcadero\Studio\19.0\bin\dcc32.exe"
+SET D64="C:\Program Files (x86)\Embarcadero\Studio\19.0\bin\dcc64.exe"
 
 echo BUILDING SetupTools
 call :CompileDelphiX32 "SetupTools" "packaging\windows\SetupTools"
