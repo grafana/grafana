@@ -18,7 +18,7 @@ const  template = `
   <div class="modal-content text-center">
 
     <div class="confirm-modal-text">
-      What do you want to do?
+      Do you want to save you changes?
     </div>
 
     <div class="confirm-modal-buttons">

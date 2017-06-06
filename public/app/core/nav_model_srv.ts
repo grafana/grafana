@@ -167,11 +167,13 @@ export class NavModelSrv {
         clickHandler: () => dashNavCtrl.openEditView('annotations')
       });
 
-      menu.push({
-        title: 'Version history',
-        icon: 'fa fa-fw fa-history',
-        clickHandler: () => dashNavCtrl.openEditView('history')
-      });
+      if (!dashboard.meta.isHome) {
+        menu.push({
+          title: 'Version history',
+          icon: 'fa fa-fw fa-history',
+          clickHandler: () => dashNavCtrl.openEditView('history')
+        });
+      }
 
       menu.push({
         title: 'View JSON',
