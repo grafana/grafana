@@ -78,7 +78,7 @@
         <div class="gf-form-group" ng-show="ctrl.mode === 'list'">
           <div class="gf-form-button-row">
             <a	type="button"
-                class="btn gf-form-button btn-primary"
+                class="btn gf-form-button btn-secondary"
                 ng-if="ctrl.revisions.length > 1"
                 ng-class="{disabled: !ctrl.isComparable()}"
                 ng-click="ctrl.getDiff(ctrl.diff)"
@@ -99,58 +99,52 @@
 		</div>
 	</div>
 
-	<div class="history-list" ng-if="ctrl.mode === 'compare'">
-		<div class="page-container">
-			<div class="page-body">
-				<aside class="page-sidebar">
-					<section class="page-sidebar-section">
-						<ul class="ui-list">
-							<li><a ng-class="{active: ctrl.diff === 'basic'}" ng-click="ctrl.getDiff('basic')" href="">Change Summary</a></li>
-							<li><a ng-class="{active: ctrl.diff === 'html'}" ng-click="ctrl.getDiff('html')" href="">JSON Code View</a></li>
-						</ul>
-					</section>
-				</aside>
+	<div class="edit-tab-with-sidemenu" ng-if="ctrl.mode === 'compare'">
+    <aside class="edit-sidemenu-aside">
+      <ul class="edit-sidemenu">
+        <li ng-class="{active: ctrl.diff === 'basic'}"><a ng-click="ctrl.getDiff('basic')" href="">Change Summary</a></li>
+        <li ng-class="{active: ctrl.diff === 'html'}"><a ng-click="ctrl.getDiff('html')" href="">JSON Code View</a></li>
+      </ul>
+    </aside>
 
-				<div class="tab-content page-content-with-sidebar">
-					<div ng-if="ctrl.loading">
-						<i class="fa fa-spinner fa-spin"></i>
-						<em>Fetching changes&hellip;</em>
-					</div>
+    <div class="edit-tab-content">
+      <div ng-if="ctrl.loading">
+        <i class="fa fa-spinner fa-spin"></i>
+        <em>Fetching changes&hellip;</em>
+      </div>
 
-					<div ng-if="!ctrl.loading" ng-init="new = ctrl.selected[0]; original = ctrl.selected[1]">
-						<a  type="button"
-								class="btn gf-form-button btn-primary diff-restore-btn"
-								ng-click="ctrl.restore(new)"
-								ng-if="ctrl.isOriginalCurrent()">
-							<i class="fa fa-rotate-right" ></i>&nbsp;&nbsp;Restore to version {{new}}
-						</a>
-						<h4>
-							Comparing Version {{ctrl.selected[0]}}
-							<i class="fa fa-arrows-h"></i>
-							Version {{ctrl.selected[1]}}
-							<cite class="muted" ng-if="ctrl.isOriginalCurrent()">(Current)</cite>
-						</h4>
-						<section ng-if="ctrl.diff === 'basic'">
-							<p class="small muted">
-							<strong>Version {{new}}</strong> updated by
-							<span>{{ctrl.getMeta(new, 'createdBy')}} </span>
-							<span>{{ctrl.formatBasicDate(ctrl.getMeta(new, 'created'))}}</span>
-							<span> - {{ctrl.getMeta(new, 'message')}}</span>
-							</p>
-							<p class="small muted">
-							<strong>Version {{original}}</strong> updated by
-							<span>{{ctrl.getMeta(original, 'createdBy')}} </span>
-							<span>{{ctrl.formatBasicDate(ctrl.getMeta(original, 'created'))}}</span>
-							<span> - {{ctrl.getMeta(original, 'message')}}</span>
-							</p>
-						</section>
-						<div id="delta" diff-delta>
-							<div class="delta-basic" ng-show="ctrl.diff === 'basic'" compile="ctrl.delta.basic"></div>
-							<div class="delta-html" ng-show="ctrl.diff === 'html'" compile="ctrl.delta.html"></div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</div>
-	</div>
+      <div ng-if="!ctrl.loading" ng-init="new = ctrl.selected[0]; original = ctrl.selected[1]">
+        <a  type="button"
+            class="btn gf-form-button btn-secondary pull-right"
+            ng-click="ctrl.restore(new)"
+            ng-if="ctrl.isOriginalCurrent()">
+          <i class="fa fa-rotate-right" ></i>&nbsp;&nbsp;Restore to version {{new}}
+        </a>
+        <h4>
+          Comparing Version {{ctrl.selected[0]}}
+          <i class="fa fa-arrows-h"></i>
+          Version {{ctrl.selected[1]}}
+          <cite class="muted" ng-if="ctrl.isOriginalCurrent()">(Current)</cite>
+        </h4>
+        <section ng-if="ctrl.diff === 'basic'">
+          <p class="small muted">
+          <strong>Version {{new}}</strong> updated by
+          <span>{{ctrl.getMeta(new, 'createdBy')}} </span>
+          <span>{{ctrl.formatBasicDate(ctrl.getMeta(new, 'created'))}}</span>
+          <span> - {{ctrl.getMeta(new, 'message')}}</span>
+          </p>
+          <p class="small muted">
+          <strong>Version {{original}}</strong> updated by
+          <span>{{ctrl.getMeta(original, 'createdBy')}} </span>
+          <span>{{ctrl.formatBasicDate(ctrl.getMeta(original, 'created'))}}</span>
+          <span> - {{ctrl.getMeta(original, 'message')}}</span>
+          </p>
+        </section>
+        <div id="delta" diff-delta>
+          <div class="delta-basic" ng-show="ctrl.diff === 'basic'" compile="ctrl.delta.basic"></div>
+          <div class="delta-html" ng-show="ctrl.diff === 'html'" compile="ctrl.delta.html"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>

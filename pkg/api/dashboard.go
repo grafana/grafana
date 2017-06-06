@@ -283,7 +283,7 @@ func GetDashboardVersions(c *middleware.Context) Response {
 
 	for _, version := range query.Result {
 		if version.RestoredFrom == version.Version {
-			version.Message = "Initial save (created migration)"
+			version.Message = "Initial save (created by migration)"
 			continue
 		}
 
