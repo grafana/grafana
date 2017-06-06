@@ -47,10 +47,10 @@ export class MetricsDsSelectorCtrl {
   current: any;
 
   /** @ngInject */
-  constructor(private uiSegmentSrv, datasourceSrv) {
+  constructor(private uiSegmentSrv, datasourceSrv, templateSrv) {
     this.datasources = datasourceSrv.getMetricSources();
 
-    var dsValue = this.panelCtrl.panel.datasource || null;
+    var dsValue = templateSrv.replace(this.panelCtrl.panel.datasource, this.panelCtrl.panel.scopedVars || {}) || null;
 
     for (let ds of this.datasources) {
       if (ds.value === dsValue) {

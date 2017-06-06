@@ -101,7 +101,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       // QueryCtrl
       case "query-ctrl": {
         let datasource = scope.target.datasource || scope.ctrl.panel.datasource;
-        return datasourceSrv.get(datasource).then(ds => {
+        return datasourceSrv.get(datasource, scope.ctrl.panel.scopedVars || {}).then(ds => {
           scope.datasource = ds;
 
           return System.import(ds.meta.module).then(dsModule => {
@@ -117,7 +117,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       }
       // QueryOptionsCtrl
       case "query-options-ctrl": {
-        return datasourceSrv.get(scope.ctrl.panel.datasource).then(ds => {
+        return datasourceSrv.get(scope.ctrl.panel.datasource, scope.ctrl.panel.scopedVars || {}).then(ds => {
           return System.import(ds.meta.module).then((dsModule): any => {
             if (!dsModule.QueryOptionsCtrl) {
               return {notFound: true};
