@@ -87,8 +87,8 @@ export class DashNavCtrl {
       this.$rootScope.appEvent('panel-change-view', {fullscreen: false, edit: false});
     }
 
-    saveDashboard(options) {
-      return this.dashboardSrv.saveDashboard(options);
+    saveDashboard() {
+      return this.dashboardSrv.saveDashboard();
     }
 
     deleteDashboard() {
@@ -126,7 +126,7 @@ export class DashNavCtrl {
     }
 
     saveDashboardAs() {
-      return this.dashboardSrv.saveDashboardAs();
+      return this.dashboardSrv.showSaveAsModal();
     }
 
     viewJson() {

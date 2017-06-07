@@ -3,6 +3,7 @@ package sqlstore
 import (
 	"bytes"
 	"fmt"
+	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/metrics"
@@ -62,16 +63,20 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			if dash.Id != sameTitle.Id {
 				if cmd.Overwrite {
 					dash.Id = sameTitle.Id
+					dash.Version = sameTitle.Version
 				} else {
 					return m.ErrDashboardWithSameNameExists
 				}
 			}
 		}
 
+		parentVersion := dash.Version
 		affectedRows := int64(0)
 
 		if dash.Id == 0 {
+			dash.Version = 1
 			metrics.M_Models_Dashboard_Insert.Inc(1)
+			dash.Data.Set("version", dash.Version)
 			affectedRows, err = sess.Insert(dash)
 		} else {
 			dash.Version += 1
@@ -79,7 +84,29 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 			affectedRows, err = sess.Id(dash.Id).Update(dash)
 		}
 
+		if err != nil {
+			return err
+		}
+
 		if affectedRows == 0 {
+			return m.ErrDashboardNotFound
+		}
+
+		dashVersion := &m.DashboardVersion{
+			DashboardId:   dash.Id,
+			ParentVersion: parentVersion,
+			RestoredFrom:  cmd.RestoredFrom,
+			Version:       dash.Version,
+			Created:       time.Now(),
+			CreatedBy:     dash.UpdatedBy,
+			Message:       cmd.Message,
+			Data:          dash.Data,
+		}
+
+		// insert version entry
+		if affectedRows, err = sess.Insert(dashVersion); err != nil {
+			return err
+		} else if affectedRows == 0 {
 			return m.ErrDashboardNotFound
 		}
 
@@ -106,8 +133,9 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 }
 
 func GetDashboard(query *m.GetDashboardQuery) error {
-	dashboard := m.Dashboard{Slug: query.Slug, OrgId: query.OrgId}
+	dashboard := m.Dashboard{Slug: query.Slug, OrgId: query.OrgId, Id: query.Id}
 	has, err := x.Get(&dashboard)
+
 	if err != nil {
 		return err
 	} else if has == false {
@@ -116,7 +144,6 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 
 	dashboard.Data.Set("id", dashboard.Id)
 	query.Result = &dashboard
-
 	return nil
 }
 
@@ -233,6 +260,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			"DELETE FROM star WHERE dashboard_id = ? ",
 			"DELETE FROM dashboard WHERE id = ?",
 			"DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?",
+			"DELETE FROM dashboard_version WHERE dashboard_id = ?",
 		}
 
 		for _, sql := range deletes {
