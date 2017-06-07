@@ -25,8 +25,19 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 
 func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 	return inTransaction(func(sess *DBSession) error {
+		var (
+			isExist bool
+			err     error
+		)
 		existing := new(annotations.Item)
-		isExist, err := sess.Table("annotation").Where("id=? AND org_id=?", item.Id, item.OrgId).Get(existing)
+
+		if item.Id == 0 && item.RegionId != 0 {
+			// Update region end time
+			isExist, err = sess.Table("annotation").Where("region_id=? AND id!=? AND org_id=?", item.RegionId, item.RegionId, item.OrgId).Get(existing)
+		} else {
+			isExist, err = sess.Table("annotation").Where("id=? AND org_id=?", item.Id, item.OrgId).Get(existing)
+		}
+
 		if err != nil {
 			return err
 		}
@@ -40,7 +51,7 @@ func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
 		existing.Icon = item.Icon
 		existing.RegionId = item.RegionId
 
-		if _, err := sess.Table("annotation").Id(item.Id).Update(existing); err != nil {
+		if _, err := sess.Table("annotation").Id(existing.Id).Update(existing); err != nil {
 			return err
 		}
 

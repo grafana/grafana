@@ -114,6 +114,20 @@ func UpdateAnnotation(c *middleware.Context, cmd dtos.UpdateAnnotationsCmd) Resp
 		return ApiError(500, "Failed to update annotation", err)
 	}
 
+	if cmd.IsRegion {
+		itemRight := item
+		itemRight.RegionId = item.Id
+		itemRight.Epoch = cmd.TimeEnd / 1000
+
+		// We don't know id of region right event, so set it to 0 and find then using query like
+		// ... WHERE region_id = <item.RegionId> AND id != <item.RegionId> ...
+		itemRight.Id = 0
+
+		if err := repo.Update(&itemRight); err != nil {
+			return ApiError(500, "Failed to update annotation for region end time", err)
+		}
+	}
+
 	return ApiSuccess("Annotation updated")
 }
 
