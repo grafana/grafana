@@ -49,7 +49,9 @@ type UpdateAnnotationsCmd struct {
 }
 
 type DeleteAnnotationsCmd struct {
-	AlertId     int64 `json:"alertId"`
-	DashboardId int64 `json:"dashboardId"`
-	PanelId     int64 `json:"panelId"`
+	AlertId      int64 `json:"alertId"`
+	DashboardId  int64 `json:"dashboardId"`
+	PanelId      int64 `json:"panelId"`
+	AnnotationId int64 `json:"annotationId"`
+	RegionId     int64 `json:"regionId"`
 }

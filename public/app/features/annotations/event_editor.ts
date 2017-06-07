@@ -74,6 +74,19 @@ export class EventEditorCtrl {
     }
   }
 
+  delete() {
+    console.log(this.event);
+    return this.annotationsSrv.deleteAnnotationEvent(this.event)
+    .then(() => {
+      this.panelCtrl.refresh();
+      this.close();
+    })
+    .catch(() => {
+      this.panelCtrl.refresh();
+      this.close();
+    });
+  }
+
   timeChanged() {
     this.panelCtrl.render();
   }

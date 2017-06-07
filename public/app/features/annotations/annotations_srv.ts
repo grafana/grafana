@@ -6,6 +6,7 @@ import angular from 'angular';
 import _ from 'lodash';
 import $ from 'jquery';
 import coreModule from 'app/core/core_module';
+import {AnnotationEvent} from './event';
 
 export class AnnotationsSrv {
   globalAnnotationsPromise: any;
@@ -159,6 +160,19 @@ export class AnnotationsSrv {
   updateAnnotationEvent(annotation) {
     this.globalAnnotationsPromise = null;
     return this.backendSrv.put(`/api/annotations/${annotation.annotationId}`, annotation)
+      .catch(err => {
+        this.$rootScope.appEvent('alert-error', ['Annotations failed', (err.message || err)]);
+      });
+  }
+
+  deleteAnnotationEvent(annotation) {
+    this.globalAnnotationsPromise = null;
+    let deleteUrl = `/api/annotations/${annotation.annotationId}`;
+    if (annotation.isRegion) {
+      deleteUrl = `/api/annotations/region/${annotation.regionId}`;
+    }
+
+    return this.backendSrv.delete(deleteUrl)
       .catch(err => {
         this.$rootScope.appEvent('alert-error', ['Annotations failed', (err.message || err)]);
       });

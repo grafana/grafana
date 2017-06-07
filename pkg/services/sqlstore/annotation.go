@@ -123,10 +123,24 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 
 func (r *SqlAnnotationRepo) Delete(params *annotations.DeleteParams) error {
 	return inTransaction(func(sess *DBSession) error {
+		var (
+			err         error
+			sql         string
+			queryParams []interface{}
+		)
 
-		sql := "DELETE FROM annotation WHERE dashboard_id = ? AND panel_id = ?"
+		if params.RegionId != 0 {
+			sql = "DELETE FROM annotation WHERE region_id = ?"
+			queryParams = []interface{}{params.RegionId}
+		} else if params.Id != 0 {
+			sql = "DELETE FROM annotation WHERE id = ?"
+			queryParams = []interface{}{params.Id}
+		} else {
+			sql = "DELETE FROM annotation WHERE dashboard_id = ? AND panel_id = ?"
+			queryParams = []interface{}{params.DashboardId, params.PanelId}
+		}
 
-		_, err := sess.Exec(sql, params.DashboardId, params.PanelId)
+		_, err = sess.Exec(sql, queryParams...)
 		if err != nil {
 			return err
 		}

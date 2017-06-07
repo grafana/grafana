@@ -32,9 +32,11 @@ type PostParams struct {
 }
 
 type DeleteParams struct {
+	Id          int64 `json:"id"`
 	AlertId     int64 `json:"alertId"`
 	DashboardId int64 `json:"dashboardId"`
 	PanelId     int64 `json:"panelId"`
+	RegionId    int64 `json:"regionId"`
 }
 
 var repositoryInstance Repository

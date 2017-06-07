@@ -146,3 +146,33 @@ func DeleteAnnotations(c *middleware.Context, cmd dtos.DeleteAnnotationsCmd) Res
 
 	return ApiSuccess("Annotations deleted")
 }
+
+func DeleteAnnotationById(c *middleware.Context) Response {
+	repo := annotations.GetRepository()
+	annotationId := c.ParamsInt64(":annotationId")
+
+	err := repo.Delete(&annotations.DeleteParams{
+		Id: annotationId,
+	})
+
+	if err != nil {
+		return ApiError(500, "Failed to delete annotation", err)
+	}
+
+	return ApiSuccess("Annotation deleted")
+}
+
+func DeleteAnnotationRegion(c *middleware.Context) Response {
+	repo := annotations.GetRepository()
+	regionId := c.ParamsInt64(":regionId")
+
+	err := repo.Delete(&annotations.DeleteParams{
+		RegionId: regionId,
+	})
+
+	if err != nil {
+		return ApiError(500, "Failed to delete annotation region", err)
+	}
+
+	return ApiSuccess("Annotation region deleted")
+}

@@ -282,6 +282,8 @@ func (hs *HttpServer) registerRoutes() {
 		r.Group("/annotations", func() {
 			r.Post("/", bind(dtos.PostAnnotationsCmd{}), wrap(PostAnnotation))
 			r.Put("/:annotationId", bind(dtos.UpdateAnnotationsCmd{}), wrap(UpdateAnnotation))
+			r.Delete("/:annotationId", wrap(DeleteAnnotationById))
+			r.Delete("/region/:regionId", wrap(DeleteAnnotationRegion))
 		}, reqEditorRole)
 
 		// error test

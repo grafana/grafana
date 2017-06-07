@@ -3,13 +3,13 @@
 <h5 class="section-heading text-center" ng-if="ctrl.event.annotationId">Edit annotation</h5>
 
 <form name="ctrl.form" class="text-center">
-	<div style="display: inline-block">
-		<div class="gf-form">
-			<span class="gf-form-label width-7">Title</span>
-			<input type="text" ng-model="ctrl.event.title" class="gf-form-input max-width-20" required>
-		</div>
-		<!-- single event -->
-		<div ng-if="!ctrl.event.isRegion">
+  <div style="display: inline-block">
+    <div class="gf-form">
+      <span class="gf-form-label width-7">Title</span>
+      <input type="text" ng-model="ctrl.event.title" class="gf-form-input max-width-20" required>
+    </div>
+    <!-- single event -->
+    <div ng-if="!ctrl.event.isRegion">
       <div class="gf-form">
         <span class="gf-form-label width-7">Time</span>
         <input type="text" ng-model="ctrl.event.time" class="gf-form-input max-width-20" input-datetime required ng-change="ctrl.timeChanged()">
@@ -39,7 +39,8 @@
 
     <div class="gf-form-button-row">
       <button type="submit" class="btn gf-form-btn btn-success" ng-click="ctrl.save()">Save</button>
-			<a class="btn-text" ng-click="ctrl.close();">Cancel</a>
+      <button ng-if="ctrl.event.annotationId" type="submit" class="btn gf-form-btn btn-danger" ng-click="ctrl.delete()">Delete</button>
+      <a class="btn-text" ng-click="ctrl.close();">Cancel</a>
     </div>
   </div>
 </form>
