@@ -21,6 +21,11 @@ define([
             break;
           }
           case 7: {
+            // wenjuan
+            $scope.reports.push({
+              reportName: '报告20170606.pdf',
+              reportUrl: 'https://download.cloudwiz.cn/report/Report20170606.pdf'
+            });
             $scope.reports.push({
               reportName: '报告20170530.pdf',
               reportUrl: 'https://download.cloudwiz.cn/report/Report20170530.pdf'
