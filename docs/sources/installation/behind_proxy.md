@@ -57,6 +57,9 @@ root_url = %(protocol)s://%(domain)s:/grafana
 ```
 
 #### Nginx configuration with sub path
+To make links to static assets work with Grafana running on a sub path
+an additional rewrite statement has to be included.
+
 ```
 server {
   listen 80;
@@ -65,6 +68,7 @@ server {
 
   location /grafana/ {
    proxy_pass http://localhost:3000/;
+   rewrite  ^/grafana/(.*)  /$1 break;
   }
 }
 ```
