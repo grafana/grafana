@@ -35,7 +35,7 @@ type DashboardRedirect struct {
 type CalculateDiffOptions struct {
 	Base     CalculateDiffTarget `json:"base" binding:"Required"`
 	New      CalculateDiffTarget `json:"new" binding:"Required"`
-	DiffType string              `json:"DiffType" binding:"Required"`
+	DiffType string              `json:"diffType" binding:"Required"`
 }
 
 type CalculateDiffTarget struct {

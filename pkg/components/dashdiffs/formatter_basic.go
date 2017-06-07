@@ -248,11 +248,11 @@ var (
 
 		<!-- Overview -->
 		{{ if .Old }}
-			<div class="change list-change diff-label">{{ .Old }}</div>
+			<div class="diff-label">{{ .Old }}</div>
 			<i class="diff-arrow fa fa-long-arrow-right"></i>
 		{{ end }}
 		{{ if .New }}
-				<div class="change list-change diff-label">{{ .New }}</div>
+				<div class="diff-label">{{ .New }}</div>
 		{{ end }}
 
 		{{ if .LineStart }}
@@ -289,11 +289,11 @@ var (
 
 		<div class="diff-change-item">
 			{{ if .Old }}
-				<div class="change list-change diff-label">{{ .Old }}</div>
+				<div class="diff-label">{{ .Old }}</div>
 				<i class="diff-arrow fa fa-long-arrow-right"></i>
 			{{ end }}
 			{{ if .New }}
-					<div class="change list-change diff-label">{{ .New }}</div>
+					<div class="diff-label">{{ .New }}</div>
 			{{ end }}
 		</div>
 
@@ -301,7 +301,7 @@ var (
 			<diff-link-json
 				line-link="{{ .LineStart }}"
 				line-display="{{ .LineStart }}{{ if .LineEnd }} - {{ .LineEnd }}{{ end }}"
-				switch-view="ctrl.getDiff('html')"
+				switch-view="ctrl.getDiff('json')"
 			/>
 		{{ end }}
 	</span>
@@ -326,7 +326,7 @@ var (
 		<diff-link-json
 			line-link="{{ .LineStart }}"
 			line-display="{{ .LineStart }}{{ if .LineEnd }} - {{ .LineEnd }}{{ end }}"
-			switch-view="ctrl.getDiff('html')"
+			switch-view="ctrl.getDiff('json')"
 		/>
 	{{ end }}
 </div>

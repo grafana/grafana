@@ -71,7 +71,7 @@ export function linkJson() {
       link: '@lineLink',
       switchView: '&',
     },
-    templateUrl: 'public/app/features/dashboard/history/partials/link-json.html',
+    template: `<a class="diff-linenum btn btn-inverse btn-small" ng-click="ctrl.goToLine(link)">Line {{ line }}</a>`
   };
 }
 coreModule.directive('diffLinkJson', linkJson);

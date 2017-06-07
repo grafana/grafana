@@ -292,13 +292,13 @@ $diff-arrow-color:      $white;
 $diff-json-bg:          $dark-4;
 $diff-json-fg:          $gray-5;
 
-$diff-json-added:       #2f5f40;
-$diff-json-deleted:     #862d2d;
+$diff-json-added:       #457740;
+$diff-json-deleted:     #a04338;
 
-$diff-json-old:         #5a372a;
-$diff-json-new:         #664e33;
+$diff-json-old:         #a04338;
+$diff-json-new:         #457740;
 
 $diff-json-changed-fg:  $gray-5;
-$diff-json-changed-num: $text-muted;
+$diff-json-changed-num: $text-color;
 
 $diff-json-icon:        $gray-7;
