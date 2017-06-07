@@ -1,0 +1,76 @@
+<div  class="modal-body" ng-controller="ServiceDetailCtrl" style="padding:20px;">
+  <a class="modal-close" ng-click="dismiss();">
+    <i class="fa fa-remove"></i>
+  </a>
+  <dl class="service-header">
+    <dt class="pull-left">
+      <i class="{{detail.icon}}"></i>
+      <p>{{detail.name}}</p>
+    </dt>
+    <dd>{{detail.info}}</dd>
+  </dl>
+  <div class="clearfix"></div>
+  <ul class="service-nav">
+    <li class="pull-left" ng-click="changeTab('conf')" ng-class="{'active': conf}">配置</li>
+    <li class="pull-left" ng-click="changeTab('review')" ng-class="{'active': review}">预览</li>
+    <li class="pull-left" ng-click="changeTab('metrics')" ng-class="{'active': metrics}">指标</li>
+  </ul>
+  <div class="service-tab service-conf" ng-class="{'active': conf}">
+    <!--<h3>监测目的</h3>
+    <ul>
+      <li>监测目的1</li>
+      <li>监测目的1</li>
+      <li>监测目的1</li>
+    </ul>-->
+
+    <h3>配置步骤</h3>
+    <ul>
+      <!--<li>
+        <p>请确定您的服务开放权限</p>
+      </li>-->
+      <li>
+        <p>检查配置文件设置(一般无需修改)</p>
+        <div class="tight-form last">
+          <p style="word-break: break-all" ng-repeat="deploy in detail.deploy track by $index">{{deploy}}</p>
+        </div>
+      </li>
+      <li>
+        <p>启动服务探针</p>
+        <p style="word-break: break-all">展示所有的探针列表和是否使用的状态.</p>
+        <div class="tight-form last">
+          <p style="word-break: break-all">$ ./opt/cloudwiz-agent/agent/collector_mgr.py  list </p>
+        </div>
+        <p style="word-break: break-all">通过下面命令来关闭我们不需要的探针.</p>
+        <div class="tight-form last">
+          <p style="word-break: break-all">$ ./opt/cloudwiz-agent/agent/collector_mgr.py  disable <探针名字> </p>
+        </div>
+        <p style="word-break: break-all">通过下面命令来开启我们需要的探针. </p>
+        <div class="tight-form last">
+          <p style="word-break: break-all">$ ./opt/cloudwiz-agent/agent/collector_mgr.py   enable  <探针名字> </p>
+        </div>
+      </li>
+    </ul>
+
+    <button class="btn btn-primary pull-right">安装</button>
+  </div>
+  <div class="service-tab service-review" ng-class="{'active': review}">
+    <h3 ng-if="!detail.img" style="text-align: center; line-height: 200px;">暂无预览信息</h3>
+    <img ng-if="detail.img" src="{{detail.img}}" alt="">
+  </div>
+  <div class="service-tab service-metrics" ng-class="{'active': metrics}">
+    <table class="metrics-table">
+      <tr>
+        <th style="width: 40%;">指标名称</th>
+        <th style="width: 40%;">指标定义</th>
+        <th style="width: 10%;">指标类型</th>
+        <th style="width: 10%;">指标单位</th>
+      </tr>
+      <tr ng-repeat="metric in detail.metrics">
+        <td>{{metric.name}}</td>
+        <td>{{metric.define}}</td>
+        <td>{{metric.type}}</td>
+        <td>{{metric.unit}}</td>
+      </tr>
+    </table>
+  </div>
+</div>

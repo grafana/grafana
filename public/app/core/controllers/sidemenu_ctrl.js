@@ -125,6 +125,22 @@ function (angular, _, $, coreModule, config) {
         href: $scope.getUrl("/oncallerschedule"),
       });
 
+      $scope.mainLinks.push({
+        text: "安装指南",
+        icon: "fa fa-fw fa-cloud-download",
+        submenu: [
+          {
+            text: '安装探针',
+            href: $scope.getUrl("/setting/agent"),
+          },
+          {
+            text: '安装服务',
+            href: $scope.getUrl("/setting/service"),
+          },
+        ],
+        click: $scope.updateSubmenu
+      });
+
       $scope.setupSettingMenu();
     };
 
@@ -269,11 +285,6 @@ function (angular, _, $, coreModule, config) {
           href: $scope.getUrl("/datasources"),
         });
       }
-
-      $scope.msgManagement.submenu.push({
-        text: "安装指南",
-        href: $scope.getUrl("/install"),
-      });
 
       $scope.msgManagement.submenu.push({
         text: "帮助文档",

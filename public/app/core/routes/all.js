@@ -261,6 +261,14 @@ define([
         templateUrl: 'app/features/analysis/partials/logIntegrate.html',
         controller : 'LogIntegrateCtrl',
       })
+      .when('/setting/agent', {
+        templateUrl: 'app/features/setup/partials/host_agent.html',
+        controller : 'HostAgentCtrl',
+      })
+      .when('/setting/service', {
+        templateUrl: 'app/features/setup/partials/service_agent.html',
+        controller : 'ServiceAgentCtrl',
+      })
       .otherwise({
         templateUrl: 'app/partials/error.html',
         controller: 'ErrorCtrl'

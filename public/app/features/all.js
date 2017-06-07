@@ -20,5 +20,8 @@ define([
   './report/reportCtrl',
   './cluster/ClusterCtrl',
   './panelinfo/panelInfoEditCtrl',
-  './systemsummary/systemsummaryCtrl'
+  './systemsummary/systemsummaryCtrl',
+  './setup/hostagentCtrl',
+  './setup/serviceagentCtrl',
+  './setup/servicedetailCtrl',
 ], function () {});
