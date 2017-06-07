@@ -10,15 +10,22 @@ func init() {
 	bus.AddHandler("sql", GetDashboardVersions)
 }
 
-// GetDashboardVersion gets the dashboard version for the given dashboard ID
-// and version number.
+// GetDashboardVersion gets the dashboard version for the given dashboard ID and version number.
 func GetDashboardVersion(query *m.GetDashboardVersionQuery) error {
-	result, err := getDashboardVersion(query.DashboardId, query.Version)
+	version := m.DashboardVersion{}
+	has, err := x.Where("dashboard_version.dashboard_id=? AND dashboard_version.version=? AND dashboard.org_id=?", query.DashboardId, query.Version, query.OrgId).
+		Join("LEFT", "dashboard", `dashboard.id = dashboard_version.dashboard_id`).
+		Get(&version)
+
 	if err != nil {
 		return err
 	}
 
-	query.Result = result
+	if !has {
+		return m.ErrDashboardVersionNotFound
+	}
+
+	query.Result = &version
 	return nil
 }
 
@@ -49,34 +56,4 @@ func GetDashboardVersions(query *m.GetDashboardVersionsQuery) error {
 		return m.ErrNoVersionsForDashboardId
 	}
 	return nil
-}
-
-// getDashboardVersion is a helper function that gets the dashboard version for
-// the given dashboard ID and version ID.
-func getDashboardVersion(dashboardId int64, version int) (*m.DashboardVersion, error) {
-	dashboardVersion := m.DashboardVersion{}
-	has, err := x.Where("dashboard_id=? AND version=?", dashboardId, version).Get(&dashboardVersion)
-	if err != nil {
-		return nil, err
-	}
-	if !has {
-		return nil, m.ErrDashboardVersionNotFound
-	}
-
-	dashboardVersion.Data.Set("id", dashboardVersion.DashboardId)
-	return &dashboardVersion, nil
-}
-
-// getDashboard gets a dashboard by ID. Used for retrieving the dashboard
-// associated with dashboard versions.
-func getDashboard(dashboardId int64) (*m.Dashboard, error) {
-	dashboard := m.Dashboard{Id: dashboardId}
-	has, err := x.Get(&dashboard)
-	if err != nil {
-		return nil, err
-	}
-	if has == false {
-		return nil, m.ErrDashboardNotFound
-	}
-	return &dashboard, nil
 }

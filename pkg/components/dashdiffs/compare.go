@@ -65,6 +65,7 @@ func CalculateDiff(options *Options) (*Result, error) {
 	baseVersionQuery := models.GetDashboardVersionQuery{
 		DashboardId: options.Base.DashboardId,
 		Version:     options.Base.Version,
+		OrgId:       options.OrgId,
 	}
 
 	if err := bus.Dispatch(&baseVersionQuery); err != nil {
@@ -74,6 +75,7 @@ func CalculateDiff(options *Options) (*Result, error) {
 	newVersionQuery := models.GetDashboardVersionQuery{
 		DashboardId: options.New.DashboardId,
 		Version:     options.New.Version,
+		OrgId:       options.OrgId,
 	}
 
 	if err := bus.Dispatch(&newVersionQuery); err != nil {

@@ -346,6 +346,9 @@ func CalculateDashboardDiff(c *middleware.Context, apiOptions dtos.CalculateDiff
 
 	result, err := dashdiffs.CalculateDiff(&options)
 	if err != nil {
+		if err == m.ErrDashboardVersionNotFound {
+			return ApiError(404, "Dashboard version not found", err)
+		}
 		return ApiError(500, "Unable to compute diff", err)
 	}
 
