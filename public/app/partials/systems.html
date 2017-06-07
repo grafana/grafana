@@ -1,116 +1,126 @@
 <div ng-include="'app/partials/login_header.html'"></div>
 <div ng-controller="SystemCtrl" ng-init="init_system_choice()" class="system-container">
-    <h3>{{contextSrv.user.orgName}}管理员 欢迎您！请选择系统进入>></h3>
-    <div ng-repeat="sys in systems"  ng-if="sys.OrgId == contextSrv.user.orgId" class="system-list" ng-class="{'uninstall':!hostList.length}">
-        <system-panel sys="{{sys.Id}}"  ng-click="enter(sys.Id)">
-            <h2 class="system-item">{{sys.SystemsName}}<br>健康值{{health}}%</h2>
-            
-            <div class="system-item">
-                <h4>报警状态(个数)</h4>
-                <p>{{alertNum}}</p>
-                <div class="system-item-pie" sys_alert="{{sys.Id}}"></div>
-                <div class="system-item-legend">
-                    <dl class="small-dl">
-                        <dt><span class="system-label system-label-success">正常</span></dt>
-                        <dd class="system-legend system-legend-success">{{alertNum - warn - critical}}</dd>
-                    </dl>
-                    <dl class="small-dl">
-                        <dt><span class="system-label system-label-warning">警告</span></dt>
-                        <dd class="system-legend system-legend-warning">{{warn}}</dd>
-                    </dl>
-                    <dl class="small-dl">
-                        <dt><span class="system-label system-label-danger">严重</span></dt>
-                        <dd class="system-legend system-legend-danger">{{critical}}</dd>
-                    </dl>
+  <h3>{{contextSrv.user.orgName}}管理员 欢迎您！请选择系统进入>></h3>
+  <div ng-repeat="sys in systems"  ng-if="sys.OrgId == contextSrv.user.orgId" class="system-list">
+    <system-panel sys="{{sys.Id}}" ng-click="enter(sys.Id)">
+      <div ng-if="hostList.length">
+        <h2 class="system-item">{{sys.SystemsName}}<br>健康值{{health}}%</h2>  
+      
+        <div class="system-item">
+            <h4>报警状态(个数)</h4>
+            <p>{{alertNum}}</p>
+            <div class="system-item-pie" sys_alert="{{sys.Id}}"></div>
+            <div class="system-item-legend">
+                <dl class="small-dl">
+                    <dt><span class="system-label system-label-success">正常</span></dt>
+                    <dd class="system-legend system-legend-success">{{alertNum - warn - critical}}</dd>
+                </dl>
+                <dl class="small-dl">
+                    <dt><span class="system-label system-label-warning">警告</span></dt>
+                    <dd class="system-legend system-legend-warning">{{warn}}</dd>
+                </dl>
+                <dl class="small-dl">
+                    <dt><span class="system-label system-label-danger">严重</span></dt>
+                    <dd class="system-legend system-legend-danger">{{critical}}</dd>
+                </dl>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+
+        <div class="system-item">
+            <h4>自动异常检测(个数)</h4>
+            <p>{{numMetrics}}</p>
+            <div class="system-item-pie" sys_annomaly="{{sys.Id}}"></div>
+            <div class="system-item-legend">
+                <dl>
+                    <dt><span class="system-label system-label-success">正常指标</span></dt>
+                    <dd class="system-legend system-legend-success">{{numMetrics - numAnomalyMetrics}}</dd>
+                </dl>
+                <dl>
+                    <dt><span class="system-label system-label-warning">异常指标</span></dt>
+                    <dd class="system-legend system-legend-warning">{{numAnomalyMetrics}}</dd>
+                </dl>
+            </div>
+            <div class="clearfix"></div>
+        </div>
+
+        <div class="system-item">
+            <h4>服务状态(个数)</h4>
+            <p>{{servies.length}}</p>
+            <div style="width:70%; margin:0 auto;">
+                <div class="system-status-box pull-left">
+                    <span class="system-label system-label-success">正常</span>
+                    <span class="system-legend system-legend-success">{{seriesStatus.normal}}</span>
+                </div>
+                <div class="system-status-box pull-right">
+                    <span class="system-label system-label-warning">异常</span>
+                    <span class="system-legend system-legend-warning">{{seriesStatus.unnormal}}</span>
                 </div>
                 <div class="clearfix"></div>
+                <div ng-if="servies.length" class="system-status-percent">
+                    <span style="width: {{seriesStatus.normal / servies.length * 100}}%;">{{seriesStatus.normal / servies.length * 100 |limitTo:4}}%</span>
+                    <span style="width: {{seriesStatus.unnormal / servies.length * 100}}%;">{{seriesStatus.unnormal / servies.length * 100 |limitTo:4}}%</span>
+                </div>
+                <div ng-if="!servies.length" class="system-status-percent">
+                    暂无节点状态
+                </div>
+                <div class="status-list">
+                    <div class="status-normal" style="width: {{seriesStatus.normal / servies.length * 100}}%;">
+                        <span ng-repeat="status in servies | filter:{'status': 0}">{{status.name}}</span>
+                    </div>
+                    <div class="status-unnormal" style="width: {{seriesStatus.unnormal / servies.length * 100}}%;">
+                        <span ng-repeat="status in servies | filter:{'status': 1}">{{status.name}}</span>
+                    </div>
+                </div>
+                <div ng-if="servies.length">查看详情</div>
             </div>
+        </div>
 
-            <div class="system-item">
-                <h4>自动异常检测(个数)</h4>
-                <p>{{numMetrics}}</p>
-                <div class="system-item-pie" sys_annomaly="{{sys.Id}}"></div>
-                <div class="system-item-legend">
-                    <dl>
-                        <dt><span class="system-label system-label-success">正常指标</span></dt>
-                        <dd class="system-legend system-legend-success">{{numMetrics - numAnomalyMetrics}}</dd>
-                    </dl>
-                    <dl>
-                        <dt><span class="system-label system-label-warning">异常指标</span></dt>
-                        <dd class="system-legend system-legend-warning">{{numAnomalyMetrics}}</dd>
-                    </dl>
+        <div class="system-item">
+            <h4>机器连接状态(个数)</h4>
+            <p>{{hostList.length}}</p>
+            <div style="width: 70%; margin:0 auto;">
+                <div class="system-status-box pull-left">
+                    <span class="system-label system-label-success">正常</span>
+                    <span class="system-legend system-legend-success">{{hostStatus.normal}}</span>
+                </div>
+                <div class="system-status-box pull-right">
+                    <span class="system-label system-label-warning">异常</span>
+                    <span class="system-legend system-legend-warning">{{hostStatus.unnormal}}</span>
                 </div>
                 <div class="clearfix"></div>
-            </div>
-
-            <div class="system-item">
-                <h4>服务状态(个数)</h4>
-                <p>{{servies.length}}</p>
-                <div style="width:70%; margin:0 auto;">
-                    <div class="system-status-box pull-left">
-                        <span class="system-label system-label-success">正常</span>
-                        <span class="system-legend system-legend-success">{{seriesStatus.normal}}</span>
-                    </div>
-                    <div class="system-status-box pull-right">
-                        <span class="system-label system-label-warning">异常</span>
-                        <span class="system-legend system-legend-warning">{{seriesStatus.unnormal}}</span>
-                    </div>
-                    <div class="clearfix"></div>
-                    <div ng-if="servies.length" class="system-status-percent">
-                        <span style="width: {{seriesStatus.normal / servies.length * 100}}%;">{{seriesStatus.normal / servies.length * 100 |limitTo:4}}%</span>
-                        <span style="width: {{seriesStatus.unnormal / servies.length * 100}}%;">{{seriesStatus.unnormal / servies.length * 100 |limitTo:4}}%</span>
-                    </div>
-                    <div ng-if="!servies.length" class="system-status-percent">
-                        暂无节点状态
-                    </div>
-                    <div class="status-list">
-                        <div class="status-normal" style="width: {{seriesStatus.normal / servies.length * 100}}%;">
-                            <span ng-repeat="status in servies | filter:{'status': 0}">{{status.name}}</span>
-                        </div>
-                        <div class="status-unnormal" style="width: {{seriesStatus.unnormal / servies.length * 100}}%;">
-                            <span ng-repeat="status in servies | filter:{'status': 1}">{{status.name}}</span>
-                        </div>
-                    </div>
-                    <div ng-if="servies.length">查看详情</div>
+                <div ng-if="hostList.length" class="system-status-percent">
+                    <span style="width: {{hostStatus.normal / hostList.length * 100}}%;">{{hostStatus.normal / hostList.length * 100 | limitTo:4}}%</span>
+                    <span style="width: {{hostStatus.unnormal / hostList.length * 100}}%;">{{hostStatus.unnormal / hostList.length * 100 | limitTo:4}}%</span>
                 </div>
-                
-            </div>
-
-            <div class="system-item">
-                <h4>机器连接状态(个数)</h4>
-                <p>{{hostList.length}}</p>
-                <div style="width: 70%; margin:0 auto;">
-                    <div class="system-status-box pull-left">
-                        <span class="system-label system-label-success">正常</span>
-                        <span class="system-legend system-legend-success">{{hostStatus.normal}}</span>
+                <div ng-if="!hostList.length" class="system-status-percent">
+                    暂无机器连接状态
+                </div>
+                <div class="status-list">
+                    <div class="status-normal"  style="width: {{hostStatus.normal / hostList.length * 100}}%;">
+                        <span ng-repeat="status in hostList | filter:{'status': 0}">{{status.host}}</span>
                     </div>
-                    <div class="system-status-box pull-right">
-                        <span class="system-label system-label-warning">异常</span>
-                        <span class="system-legend system-legend-warning">{{hostStatus.unnormal}}</span>
-                    </div>
-                    <div class="clearfix"></div>
-                    <div ng-if="hostList.length" class="system-status-percent">
-                        <span style="width: {{hostStatus.normal / hostList.length * 100}}%;">{{hostStatus.normal / hostList.length * 100 | limitTo:4}}%</span>
-                        <span style="width: {{hostStatus.unnormal / hostList.length * 100}}%;">{{hostStatus.unnormal / hostList.length * 100 | limitTo:4}}%</span>
-                    </div>
-                    <div ng-if="!hostList.length" class="system-status-percent">
-                        暂无机器连接状态
-                    </div>
-                    <div class="status-list">
-                        <div class="status-normal"  style="width: {{hostStatus.normal / hostList.length * 100}}%;">
-                            <span ng-repeat="status in hostList | filter:{'status': 0}">{{status.host}}</span>
-                        </div>
-                        <div class="status-unnormal" style="width: {{hostStatus.unnormal / hostList.length * 100}}%;">
-                            <span ng-repeat="status in hostList | filter:{'status': 1}">{{status.host}}</span>
-                        </div>
+                    <div class="status-unnormal" style="width: {{hostStatus.unnormal / hostList.length * 100}}%;">
+                        <span ng-repeat="status in hostList | filter:{'status': 1}">{{status.host}}</span>
                     </div>
                 </div>
-                <div ng-if="hostList.length">查看详情</div>
             </div>
-            <br/>
-        </system-panel>
-        <div class="clearfix"></div>
-    </div>
+            <div ng-if="hostList.length">查看详情</div>
+        </div>
+        <br/>
+      </div>
+      <div ng-if="!hostList.length">
+          <h4>{{sys.SystemsName}} 请安装机器探针</h4>
+          <div>
+              <div ng-repeat="host in platform" class="pull-left" style="width:25%;margin-top:10px;">
+                  <i class="{{host.icon}}"></i>
+                  <p>{{host.host}}</p>
+              </div>
+          </div>
+      </div>
+    </system-panel>
+    <div class="clearfix"></div>
+</div>
 
 </div>
 <div ng-include="'app/partials/login_footer.html'"></div>
