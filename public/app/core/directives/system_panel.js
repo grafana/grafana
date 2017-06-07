@@ -65,7 +65,7 @@ define([
                 });
               });
             };
-            
+
             //------- get Alerts status
             var getAlertNum = alertMgrSrv.load().then(function(response) {
               return response.data.length;
