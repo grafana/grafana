@@ -41,6 +41,7 @@
   }
 
   &.disabled,
+  &[disabled],
   &:disabled {
     cursor: $cursor-disabled;
     opacity: .65;

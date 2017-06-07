@@ -74,22 +74,21 @@
 
         <div class="gf-form-group" ng-show="ctrl.mode === 'list'">
           <div class="gf-form-button-row">
-            <a	type="button"
+            <button	type="button"
                 class="btn gf-form-button btn-secondary"
                 ng-if="ctrl.revisions.length > 1"
-                ng-class="{disabled: !ctrl.canCompare}"
+                ng-disabled="!ctrl.canCompare"
                 ng-click="ctrl.getDiff(ctrl.diff)"
 								bs-tooltip="ctrl.canCompare ? '' : 'Select 2 versions to start comparing'" data-placement="bottom">
               <i class="fa fa-code-fork" ></i>&nbsp;&nbsp;Compare versions
-            </a>
-            <a  type="button"
+            </button>
+            <button  type="button"
                 class="btn gf-form-button btn-inverse"
                 ng-if="ctrl.revisions.length >= ctrl.limit"
                 ng-click="ctrl.addToLog()"
-                ng-class="{disabled: ctrl.isLastPage()}"
                 ng-disabled="ctrl.isLastPage()">
               Show more versions
-            </a>
+            </button>
           </div>
         </div>
       </div>
