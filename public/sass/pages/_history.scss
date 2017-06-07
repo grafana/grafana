@@ -55,7 +55,10 @@
   right: 10px;
 }
 
-.diff-json-new, .diff-json-old {
+.diff-json-new,
+.diff-json-old,
+.diff-json-deleted,
+.diff-json-added,  {
   color: $diff-json-changed-fg;
 
   & .diff-line-number { color: $diff-json-changed-num; }
