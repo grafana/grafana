@@ -33,6 +33,7 @@ func TestGetDashboardVersion(t *testing.T) {
 			query := m.GetDashboardVersionQuery{
 				DashboardId: savedDash.Id,
 				Version:     savedDash.Version,
+				OrgId:       1,
 			}
 
 			err := GetDashboardVersion(&query)
@@ -54,6 +55,7 @@ func TestGetDashboardVersion(t *testing.T) {
 			query := m.GetDashboardVersionQuery{
 				DashboardId: int64(999),
 				Version:     123,
+				OrgId:       1,
 			}
 
 			err := GetDashboardVersion(&query)
