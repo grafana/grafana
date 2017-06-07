@@ -51,7 +51,6 @@ export class EventEditorCtrl {
     }
 
     if (saveModel.annotationId) {
-      console.log('Should update: ' + saveModel.annotationId);
       this.annotationsSrv.updateAnnotationEvent(saveModel)
       .then(() => {
         this.panelCtrl.refresh();
@@ -75,7 +74,6 @@ export class EventEditorCtrl {
   }
 
   delete() {
-    console.log(this.event);
     return this.annotationsSrv.deleteAnnotationEvent(this.event)
     .then(() => {
       this.panelCtrl.refresh();

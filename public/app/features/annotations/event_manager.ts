@@ -15,7 +15,6 @@ export class EventManager {
   }
 
   editorClosed() {
-    console.log('editorClosed');
     this.event = null;
     this.panelCtrl.render();
   }
@@ -57,6 +56,7 @@ export class EventManager {
   }
 
   editEvent(event, elem?) {
+    this.event = event;
     let element = elem ? this.elem.find(elem) : this.elem;
     this.popoverSrv.show({
       element: element[0],
@@ -118,7 +118,8 @@ export class EventManager {
             min: this.event.time.valueOf(),
             title: this.event.title,
             text: this.event.text,
-            eventType: '$__alerting',
+            icon: this.event.icon,
+            eventType: '$__alerting'
           }
         ];
       }
