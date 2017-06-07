@@ -5,6 +5,7 @@ import angular from 'angular';
 import moment from 'moment';
 
 import * as rangeUtil from 'app/core/utils/rangeutil';
+import config from 'app/core/config';
 
 export class TimePickerCtrl {
 
@@ -13,6 +14,7 @@ export class TimePickerCtrl {
     time_options: ['5m', '15m', '1h', '6h', '12h', '24h', '2d', '7d', '30d'],
     refresh_intervals: ['5s', '10s', '30s', '1m', '5m', '15m', '30m', '1h', '2h', '1d'],
   };
+  static durationSplitRegexp = /(\d+)(ms|s|m|h|d|w|M|y)/;
 
   dashboard: any;
   panel: any;
@@ -25,10 +27,12 @@ export class TimePickerCtrl {
   isOpen: boolean;
   isUtc: boolean;
   firstDayOfWeek: number;
+  minAutoRefreshDuration: any;
 
   /** @ngInject */
   constructor(private $scope, private $rootScope, private timeSrv) {
     $scope.ctrl = this;
+    this.minAutoRefreshDuration = this.getMinAutoRefreshDuration();
 
     $rootScope.onAppEvent('shift-time-forward', () => this.move(1), $scope);
     $rootScope.onAppEvent('shift-time-backward', () => this.move(-1), $scope);
@@ -42,6 +46,9 @@ export class TimePickerCtrl {
     this.panel = this.dashboard.timepicker;
 
     _.defaults(this.panel, TimePickerCtrl.defaults);
+    if (this.minAutoRefreshDuration) {
+      this.filterAutoRefreshIntervals(this.minAutoRefreshDuration);
+    }
 
     this.firstDayOfWeek = moment.localeData().firstDayOfWeek();
 
@@ -152,6 +159,58 @@ export class TimePickerCtrl {
     this.$rootScope.appEvent('hide-dash-editor');
   }
 
+  parseDataSource(parentNode) {
+    if (parentNode.datasource) {
+      return parentNode.datasource;
+    } else if (parentNode.datasource === null) {
+      return config.defaultDatasource;
+    }
+  }
+
+  getDataSources() {
+    var dataSources = new Set();
+    let me = this;
+    this.dashboard.rows.forEach(function(row) {
+      row.panels.forEach(function(panel) {
+        if (panel.datasource === "-- Mixed --") {
+          panel.targets.forEach(function(target) {
+            dataSources.add(me.parseDataSource(target));
+          });
+        } else {
+          dataSources.add(me.parseDataSource(panel));
+        }
+      });
+    });
+    return dataSources;
+  }
+
+  getMinAutoRefreshDuration() {
+    let dataSources = [];
+    this.getDataSources().forEach(ds => dataSources.push(ds));
+
+    dataSources = _.filter(dataSources, function(ds){
+      let jsonData = config.datasources[ds].jsonData;
+      return (jsonData && jsonData.minAutoRefreshInterval);
+    });
+    let minAutoRefreshIntervals = _.map(dataSources, function(ds){
+      return config.datasources[ds].jsonData.minAutoRefreshInterval;
+    });
+
+    let minAutoRefreshDurations = _.map(minAutoRefreshIntervals, function(interval){
+      let match = interval.match(TimePickerCtrl.durationSplitRegexp);
+      return moment.duration(parseInt(match[1]), match[2]);
+    });
+
+    return _.max(minAutoRefreshDurations, function(duration){ return duration.asSeconds(); });
+  }
+
+  filterAutoRefreshIntervals(minAutoRefreshDuration) {
+    this.panel.refresh_intervals = _.filter(this.panel.refresh_intervals, function(interval){
+      let m = interval.match(TimePickerCtrl.durationSplitRegexp);
+      let dur = moment.duration(parseInt(m[1]), m[2]);
+      return dur.asSeconds() >= minAutoRefreshDuration.asSeconds();
+    });
+  }
 }
 
 export function settingsDirective() {
