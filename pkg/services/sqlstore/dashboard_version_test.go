@@ -45,6 +45,7 @@ func TestGetDashboardVersion(t *testing.T) {
 				OrgId: savedDash.OrgId,
 				Slug:  savedDash.Slug,
 			}
+
 			err = GetDashboard(&dashCmd)
 			So(err, ShouldBeNil)
 			eq := reflect.DeepEqual(dashCmd.Result.Data, query.Result.Data)

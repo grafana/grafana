@@ -25,6 +25,7 @@ func GetDashboardVersion(query *m.GetDashboardVersionQuery) error {
 		return m.ErrDashboardVersionNotFound
 	}
 
+	version.Data.Set("id", version.DashboardId)
 	query.Result = &version
 	return nil
 }
