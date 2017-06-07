@@ -239,7 +239,7 @@ export class AlertTabCtrl {
       }
 
       var datasourceName = foundTarget.datasource || this.panel.datasource;
-      this.datasourceSrv.get(datasourceName).then(ds => {
+      this.datasourceSrv.get(datasourceName, this.panel.scopedVars).then(ds => {
         if (!ds.meta.alerting) {
           this.error = 'The datasource does not support alerting queries';
         } else if (ds.targetContainsTemplate(foundTarget)) {
