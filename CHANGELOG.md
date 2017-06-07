@@ -55,7 +55,7 @@
 * **Heatmap**: Heatmap Panel [#7934](https://github.com/grafana/grafana/pull/7934)
 * **Elasticsearch**: histogram aggregation [#3164](https://github.com/grafana/grafana/issues/3164)
 
-## Minor Enchancements
+## Minor Enhancements
 
 * **InfluxDB**: Small fix for the "glow" when focus the field for LIMIT and SLIMIT [#7799](https://github.com/grafana/grafana/pull/7799) thx [@thuck](https://github.com/thuck)
 * **Prometheus**: Make Prometheus query field a textarea [#7663](https://github.com/grafana/grafana/issues/7663), thx [@hagen1778](https://github.com/hagen1778)
