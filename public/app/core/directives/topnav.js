@@ -4,7 +4,7 @@ define([
 function (coreModule) {
   'use strict';
 
-  coreModule.directive('topnav', function($rootScope, contextSrv, backendSrv) {
+  coreModule.directive('topnav', function($rootScope, contextSrv) {
     return {
       restrict: 'E',
       transclude: true,
@@ -41,7 +41,7 @@ function (coreModule) {
         scope.contextSrv = contextSrv;
 
         scope.toggle = function() {
-          if(backendSrv.hostNum) {
+          if(contextSrv.hostNum) {
             $rootScope.appEvent('toggle-sidemenu');
           } else {
             $rootScope.appEvent('alert-warning', ['您还未完成探针安装', '请安装系统探针']);

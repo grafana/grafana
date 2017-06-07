@@ -10,14 +10,11 @@ function (angular, _) {
   module.controller('HostAgentCtrl', function ($scope, backendSrv, datasourceSrv, contextSrv, $interval, $location) {
 
     $scope.init = function() {
-      $interval.cancel($scope.inter);
-      // hostNum 用来判断页面能否跳转，是否安装完成
-      $scope.hostNum = backendSrv.hostNum;
+      $scope.hostNum = contextSrv.hostNum;
       $scope.orgId = contextSrv.user.orgId;
       $scope.alertServer = backendSrv.alertDUrl;
       $scope.token = backendSrv.getToken();
-      // 已有机器探针,可以展示menu,否则不可
-      if(backendSrv.hostNum) {
+      if(contextSrv.hostNum) {
         $scope.installed = true;
         $scope.appEvent('alert-success', ['您已安装机器探针', "请继续安装机器探针,或安装服务探针"]);
       } else {
@@ -32,13 +29,12 @@ function (angular, _) {
         url.href = ds.url;
         $scope.metricsServer = url.hostname;
       });
-      // 5s轮询一次,共轮询5m
-      $scope.inter = $interval($scope.getHosts,5000,60);
+      $scope.inter = $interval($scope.getHosts,5000,120);
     };
 
     $scope.getHosts = function() {
-      if($scope.hostNum > backendSrv.hostNum){
-        backendSrv.hostNum = $scope.hostNum;
+      if($scope.hostNum > contextSrv.hostNum){
+        contextSrv.hostNum = $scope.hostNum;
         $interval.cancel($scope.inter);
         $scope.installed = true;
         $scope.appEvent('alert-success', ['安装完成', "请配置服务探针"]);
@@ -60,8 +56,7 @@ function (angular, _) {
       $scope.selected = select;
     };
 
-    $scope.clearInterval = function(type) {
-      $interval.cancel($scope.inter);
+    $scope.nextEvent = function(type) {
       switch (type) {
         case "next":
           contextSrv.sidemenu = true;
@@ -79,6 +74,12 @@ function (angular, _) {
     $scope.createTemp = function() {
       // 添加模板
     }
+
+    $scope.$on("$destroy", function() {
+      if($scope.inter){
+        $interval.cancel($scope.inter);
+      }
+    });
 
     $scope.init();
   });

@@ -13,7 +13,7 @@
   </li>
 </ul>
 <div class="page-container tab-container" ng-class="{'active':contextSrv.sidemenu}">
-  <a ng-click="clearInterval('back')" class="pull-right">返回</a>
+  <a ng-click="nextEvent('back')" class="pull-right">返回</a>
   <div ng-if="!selected">
     <img src="/img/chooseHost.png" alt="" style="width:100%;"/>
   </div>
@@ -56,12 +56,6 @@
         </div>
       </li>
     </ul>
-    <!--<p style="word-break: break-all"><span class="label">处理器:</span> AMD/Intel 64bit</p>
-    <p style="word-break: break-all"><span class="label">内存:</span> 16GB-256GB</p>
-    <p style="word-break: break-all"><span class="label">本地存储:</span> 1200G</p>
-    <p style="word-break: break-all"><span class="label">网卡:</span> 千兆网卡(>=2块, 做网络升级使用)</p>
-    <p style="word-break: break-all"><span class="label">版本要求:</span> {{selected.version}}</p>
-    <p style="word-break: break-all"><span class="label">所需文件空间:</span> >1GB</p>-->
 
     <h4>3. 启动探针</h4>
     <ul class="tight-form last">
@@ -69,8 +63,8 @@
     </ul>
 
     <div class="pull-right installed">
-      <button ng-click="clearInterval('skip')" class="btn" ng-if="installed">跳过</button>
-      <button ng-click="clearInterval('next')" class="btn" ng-disabled="!installed" ng-class="{'btn-primary':installed}">下一步</button>
+      <button ng-click="nextEvent('skip')" class="btn" ng-if="installed">跳过</button>
+      <button ng-click="nextEvent('next')" class="btn" ng-disabled="!installed" ng-class="{'btn-primary':installed}">下一步</button>
     </div>
   </div>
 

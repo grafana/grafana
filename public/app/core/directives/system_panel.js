@@ -15,8 +15,8 @@ define([
         link: function (scope, elem, attr) {
           scope.enter = function (systemId) {
             contextSrv.system = systemId;
-            backendSrv.hostNum = scope.hostList.length;
-            if(backendSrv.hostNum) {
+            contextSrv.hostNum = scope.hostList.length;
+            if(contextSrv.hostNum) {
               scope.appEvent("toggle-sidemenu");
               $location.url("/");
             } else {

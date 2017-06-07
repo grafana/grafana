@@ -8,6 +8,8 @@ function (angular, _, dateMath) {
 
   var module = angular.module('grafana.controllers');
   module.controller('ServiceAgentCtrl', function ($scope, backendSrv, datasourceSrv, contextSrv) {
+    const NO_DATA = 2;
+    const GET_DATA = 0;
     $scope.init = function() {
       datasourceSrv.get("opentsdb").then(function (datasource) {
         $scope.datasource = datasource;
@@ -39,10 +41,10 @@ function (angular, _, dateMath) {
             if (_.isObject(metricData)) {
               if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
                 // 安装成功,但未获取数据
-                $scope.services[index].status = 2;
+                $scope.services[index].status = NO_DATA;
               } else {
                 // 安装成功,且配置正确
-                $scope.services[index].status = 0;
+                $scope.services[index].status = GET_DATA;
               }
             }
           });
