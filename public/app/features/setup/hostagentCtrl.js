@@ -10,6 +10,7 @@ function (angular, _) {
   module.controller('HostAgentCtrl', function ($scope, backendSrv, datasourceSrv, contextSrv, $interval, $location) {
 
     $scope.init = function() {
+      $scope.installManual = false;
       $scope.hostNum = contextSrv.hostNum;
       $scope.orgId = contextSrv.user.orgId;
       $scope.alertServer = backendSrv.alertDUrl;

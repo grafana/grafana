@@ -27,7 +27,7 @@
       </li>
     </ul>
     
-    <h4 ng-click="installManual = !installManual">2. 手动安装</h4>
+    <h4 ng-click="installManual = !installManual">2. 手动安装<i style="margin-left:10px;" ng-class="{true:'fa fa-hand-o-down',false:'fa fa-hand-o-left'}[installManual]"></i></h4>
     <ul ng-if="installManual" style="list-style:lower-roman;">
       <li>
         <p style="word-break: break-all">创建文件安装目录</p>
