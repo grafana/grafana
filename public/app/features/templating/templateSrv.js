@@ -12,6 +12,7 @@ function (angular, _, kbn) {
     var self = this;
 
     this._regex = /\$(\w+)|\[\[([\s\S]+?)\]\]/g;
+    this._maxIteration = 10;
     this._index = {};
     this._texts = {};
     this._grafanaVariables = {};
@@ -165,7 +166,7 @@ function (angular, _, kbn) {
       var variable, systemValue, value;
       this._regex.lastIndex = 0;
 
-      return target.replace(this._regex, function(match, g1, g2) {
+      var replaceFunction = function(match, g1, g2) {
         variable = self._index[g1 || g2];
 
         if (scopedVars) {
@@ -195,7 +196,26 @@ function (angular, _, kbn) {
 
         var res = self.formatValue(value, format, variable);
         return res;
-      });
+      };
+
+      var result = target;
+      for (var i = 0; i < this._maxIteration; i++) {
+        if (this._regex.test(result)) {
+          var replacement = result.replace(this._regex, replaceFunction);
+          if (replacement === result){
+            // No variables we replaced, stop iterating
+            break;
+          }
+          result = replacement;
+        }
+        else
+        {
+          // There are no variables to be replaced, return result
+          break;
+        }
+      }
+
+      return result;
     };
 
     this.isAllValue = function(value) {
@@ -208,7 +228,7 @@ function (angular, _, kbn) {
       var variable;
       this._regex.lastIndex = 0;
 
-      return target.replace(this._regex, function(match, g1, g2) {
+      var replaceFunction = function(match, g1, g2) {
         if (scopedVars) {
           var option = scopedVars[g1 || g2];
           if (option) { return option.text; }
@@ -218,7 +238,26 @@ function (angular, _, kbn) {
         if (!variable) { return match; }
 
         return self._grafanaVariables[variable.current.value] || variable.current.text;
-      });
+      };
+
+      var result = target;
+      for (var i = 0; i < this._maxIteration; i++) {
+        if (this._regex.test(result)) {
+          var replacement = result.replace(this._regex, replaceFunction);
+          if (replacement === result){
+            // No variables we replaced, stop iterating
+            break;
+          }
+          result = replacement;
+        }
+        else
+        {
+          // There are no variables to be replaced, return result
+          break;
+        }
+      }
+
+      return result;
     };
 
     this.fillVariableValuesForUrl = function(params, scopedVars) {
