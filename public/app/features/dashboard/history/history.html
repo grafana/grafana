@@ -11,7 +11,7 @@
 		</li>
 		<li class="gf-tabs-item" ng-show="ctrl.mode === 'compare'">
 			<span class="active gf-tabs-link">
-				Version {{ctrl.baseInfo.version}} <i class="fa fa-arrows-h"></i> Version {{ctrl.newInfo.version}}
+				Version Comparison
 			</span>
 		</li>
 	</ul>
@@ -123,7 +123,7 @@
 					Version {{ctrl.newInfo.version}}
           <cite class="muted" ng-if="ctrl.isNewLatest">(Latest)</cite>
         </h4>
-        <section ng-if="ctrl.diff === 'basic'">
+        <section>
           <p class="small muted">
           <strong>Version {{ctrl.newInfo.version}}</strong> updated by
           <span>{{ctrl.newInfo.createdBy}} </span>

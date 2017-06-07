@@ -97,14 +97,17 @@ func (b *BasicDiff) Basic(lines []*JSONLine) []*BasicBlock {
 
 	// iterate through each line
 	for _, line := range lines {
-		if b.LastIndent == 3 && line.Indent == 2 && line.Change == ChangeNil {
+		// TODO: this condition needs an explaination? what does it mean?
+		if b.LastIndent == 2 && line.Indent == 1 && line.Change == ChangeNil {
 			if b.Block != nil {
 				blocks = append(blocks, b.Block)
 			}
 		}
+
 		b.LastIndent = line.Indent
 
-		if line.Indent == 2 {
+		// TODO: why special handling for indent 2?
+		if line.Indent == 1 {
 			switch line.Change {
 			case ChangeNil:
 				if line.Change == ChangeNil {
@@ -143,12 +146,14 @@ func (b *BasicDiff) Basic(lines []*JSONLine) []*BasicBlock {
 			}
 		}
 
+		// TODO: why special handling for indent > 2 ?
 		// Other Lines
-		if line.Indent > 2 {
+		if line.Indent > 1 {
 			// Ensure single line change
 			if line.Key != "" && line.Val != nil && !b.writing {
 				switch line.Change {
 				case ChangeAdded, ChangeDeleted:
+
 					b.Block.Changes = append(b.Block.Changes, &BasicChange{
 						Key:       line.Key,
 						Change:    line.Change,

@@ -6,6 +6,7 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
+	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/models"
 	diff "github.com/yudai/gojsondiff"
 	deltaFormatter "github.com/yudai/gojsondiff/formatter"
@@ -17,6 +18,8 @@ var (
 
 	// ErrNilDiff occurs when two compared interfaces are identical.
 	ErrNilDiff = errors.New("dashdiff: diff is nil")
+
+	diffLogger = log.New("dashdiffs")
 )
 
 type DiffType int
@@ -77,7 +80,10 @@ func CalculateDiff(options *Options) (*Result, error) {
 		return nil, err
 	}
 
-	left, jsonDiff, err := getDiff(baseVersionQuery.Result, newVersionQuery.Result)
+	baseData := baseVersionQuery.Result.Data
+	newData := newVersionQuery.Result.Data
+
+	left, jsonDiff, err := getDiff(baseData, newData)
 	if err != nil {
 		return nil, err
 	}
@@ -115,13 +121,13 @@ func CalculateDiff(options *Options) (*Result, error) {
 }
 
 // getDiff computes the diff of two dashboard versions.
-func getDiff(originalDash, newDash *models.DashboardVersion) (interface{}, diff.Diff, error) {
-	leftBytes, err := simplejson.NewFromAny(originalDash).Encode()
+func getDiff(baseData, newData *simplejson.Json) (interface{}, diff.Diff, error) {
+	leftBytes, err := baseData.Encode()
 	if err != nil {
 		return nil, nil, err
 	}
 
-	rightBytes, err := simplejson.NewFromAny(newDash).Encode()
+	rightBytes, err := newData.Encode()
 	if err != nil {
 		return nil, nil, err
 	}
