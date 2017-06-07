@@ -182,7 +182,7 @@ export class DynamicDashboardSrv {
 
     _.each(selected, (option, index) => {
       var copy = this.getPanelClone(panel, row, index);
-      copy.span = Math.max(12 / selected.length, panel.minSpan || 4);
+      copy.span = Math.max(Math.min(12 / selected.length, panel.maxSpan || 12), panel.minSpan || 4);
       copy.scopedVars = copy.scopedVars || {};
       copy.scopedVars[variable.name] = option;
     });

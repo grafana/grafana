@@ -210,6 +210,13 @@ export class PanelCtrl {
     });
   }
 
+  compareRepeatSpans(changedSpan) {
+    this.panel.maxSpan = (changedSpan === 'min' && this.panel.minSpan && this.panel.maxSpan) ?
+      Math.min(Math.max(this.panel.minSpan, this.panel.maxSpan), 12) : this.panel.maxSpan;
+    this.panel.minSpan = (changedSpan === 'max' && this.panel.minSpan && this.panel.maxSpan) ?
+      Math.max(Math.min(this.panel.minSpan, this.panel.maxSpan), 1) : this.panel.minSpan;
+  }
+
   removePanel() {
     this.row.removePanel(this.panel);
   }
