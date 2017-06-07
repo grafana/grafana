@@ -7,6 +7,7 @@ import {coreModule, appEvents} from 'app/core/core';
 
 import './options';
 import './add_panel';
+import {DashboardRow} from './row_model';
 
 export class DashRowCtrl {
   dashboard: any;
@@ -20,6 +21,27 @@ export class DashRowCtrl {
     if (this.row.isNew) {
       this.dropView = 1;
     }
+  }
+
+  duplicateRow() {
+    var defaults = {
+      title: this.row.title,
+      isNew: false
+    };
+    var newRow = new DashboardRow(defaults);
+    this.dashboard.rows.push(newRow);
+    for ( var i in this.row.panels ) {
+      var panel = this.row.panels[i];
+      var panelOptions = {
+        id: null,
+        title: panel.title,
+        span: panel.span,
+        type: panel.type,
+      };
+
+      this.dashboard.addPanel(panelOptions, newRow);
+
+    };
   }
 
   onDrop(panelId, dropTarget) {

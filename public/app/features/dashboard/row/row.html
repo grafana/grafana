@@ -24,6 +24,12 @@
           <i class="fa fa-minus"></i> Collapse
         </a>
       </li>
+      
+      <li ng-show="ctrl.dashboard.meta.canEdit">
+        <a ng-click="ctrl.duplicateRow()">
+          <i class="fa fa-plus-square-o"></i> Duplicate Row
+        </a>
+      </li>
       <li ng-show="ctrl.dashboard.meta.canEdit">
         <a ng-click="ctrl.onMenuAddPanel()">
           <i class="fa fa-plus"></i> Add Panel
