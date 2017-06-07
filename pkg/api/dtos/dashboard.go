@@ -32,6 +32,18 @@ type DashboardRedirect struct {
 	RedirectUri string `json:"redirectUri"`
 }
 
+type CalculateDiffOptions struct {
+	Base     CalculateDiffTarget `json:"base" binding:"Required"`
+	New      CalculateDiffTarget `json:"new" binding:"Required"`
+	DiffType string              `json:"DiffType" binding:"Required"`
+}
+
+type CalculateDiffTarget struct {
+	DashboardId      int64            `json:"dashboardId"`
+	Version          int              `json:"version"`
+	UnsavedDashboard *simplejson.Json `json:"unsavedDashboard"`
+}
+
 type RestoreDashboardVersionCommand struct {
 	Version int `json:"version" binding:"Required"`
 }

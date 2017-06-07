@@ -226,10 +226,9 @@ func (hs *HttpServer) registerRoutes() {
 
 			r.Get("/id/:dashboardId/versions", wrap(GetDashboardVersions))
 			r.Get("/id/:dashboardId/versions/:id", wrap(GetDashboardVersion))
-			r.Get("/id/:dashboardId/compare/:versions", wrap(CompareDashboardVersions))
-			r.Get("/id/:dashboardId/compare/:versions/html", wrap(CompareDashboardVersionsJSON))
-			r.Get("/id/:dashboardId/compare/:versions/basic", wrap(CompareDashboardVersionsBasic))
 			r.Post("/id/:dashboardId/restore", reqEditorRole, bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
+
+			r.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), wrap(CalculateDashboardDiff))
 
 			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
 			r.Get("/file/:file", GetDashboardFromJsonFile)

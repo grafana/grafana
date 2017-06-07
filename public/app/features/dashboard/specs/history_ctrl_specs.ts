@@ -23,7 +23,7 @@ describe('HistoryListCtrl', function() {
   beforeEach(function() {
     historySrv = {
       getHistoryList: sinon.stub(),
-      compareVersions: sinon.stub(),
+      calculateDiff: sinon.stub(),
       restoreDashboard: sinon.stub(),
     };
     $rootScope = {
@@ -42,6 +42,12 @@ describe('HistoryListCtrl', function() {
         historySrv,
         $rootScope,
         $scope: ctx.scope,
+      }, {
+        dashboard: {
+          id: 2,
+          version: 3,
+          formatDate: sinon.stub().returns('date'),
+        }
       });
     }));
 
@@ -57,9 +63,8 @@ describe('HistoryListCtrl', function() {
 
       it('should reset the controller\'s state', function() {
         expect(ctx.ctrl.mode).to.be('list');
-        expect(ctx.ctrl.delta).to.eql({ basic: '', html: '' });
-        expect(ctx.ctrl.selected.length).to.be(0);
-        expect(ctx.ctrl.selected).to.eql([]);
+        expect(ctx.ctrl.delta).to.eql({ basic: '', json: '' });
+        expect(ctx.ctrl.canCompare).to.be(false);
         expect(_.find(ctx.ctrl.revisions, rev => rev.checked)).to.be.undefined;
       });
 
@@ -82,11 +87,9 @@ describe('HistoryListCtrl', function() {
       it('should set all checked properties to false on reset', function() {
         ctx.ctrl.revisions[0].checked = true;
         ctx.ctrl.revisions[2].checked = true;
-        ctx.ctrl.selected = [0, 2];
         ctx.ctrl.reset();
         var actual = _.filter(ctx.ctrl.revisions, rev => !rev.checked);
         expect(actual.length).to.be(4);
-        expect(ctx.ctrl.selected).to.eql([]);
       });
 
     });
@@ -99,19 +102,12 @@ describe('HistoryListCtrl', function() {
 
       it('should reset the controller\'s state', function() {
         expect(ctx.ctrl.mode).to.be('list');
-        expect(ctx.ctrl.delta).to.eql({ basic: '', html: '' });
-        expect(ctx.ctrl.selected.length).to.be(0);
-        expect(ctx.ctrl.selected).to.eql([]);
+        expect(ctx.ctrl.delta).to.eql({ basic: '', json: '' });
         expect(_.find(ctx.ctrl.revisions, rev => rev.checked)).to.be.undefined;
       });
 
       it('should indicate loading has finished', function() {
         expect(ctx.ctrl.loading).to.be(false);
-      });
-
-      it('should broadcast an event indicating the failure', function() {
-        expect($rootScope.appEvent.calledOnce).to.be(true);
-        expect($rootScope.appEvent.calledWith('alert-error')).to.be(true);
       });
 
       it('should have an empty revisions list', function() {
@@ -121,7 +117,7 @@ describe('HistoryListCtrl', function() {
 
     describe('should update the history list when the dashboard is saved', function() {
       beforeEach(function() {
-        ctx.ctrl.dashboard = { version: 3 };
+        ctx.ctrl.dashboard = {version: 3 };
         ctx.ctrl.resetFromSource = sinon.spy();
       });
 
@@ -134,12 +130,6 @@ describe('HistoryListCtrl', function() {
         expect($rootScope.onAppEvent.getCall(0).args[1]).to.not.be(ctx.ctrl.onDashboardSaved);
         expect($rootScope.onAppEvent.getCall(0).args[1].toString).to.be(ctx.ctrl.onDashboardSaved.toString);
       });
-
-      it('should emit an appEvent to hide the changelog', function() {
-        ctx.ctrl.onDashboardSaved();
-        expect($rootScope.appEvent.calledOnce).to.be(true);
-        expect($rootScope.appEvent.getCall(0).args[0]).to.be('hide-dash-editor');
-      });
     });
   });
 
@@ -149,12 +139,19 @@ describe('HistoryListCtrl', function() {
     beforeEach(angularMocks.inject(($controller, $q) => {
       deferred = $q.defer();
       historySrv.getHistoryList.returns($q.when(versionsResponse));
-      historySrv.compareVersions.returns(deferred.promise);
+      historySrv.calculateDiff.returns(deferred.promise);
       ctx.ctrl = $controller(HistoryListCtrl, {
         historySrv,
         $rootScope,
         $scope: ctx.scope,
+      }, {
+        dashboard: {
+          id: 2,
+          version: 3,
+          formatDate: sinon.stub().returns('date'),
+        }
       });
+
       ctx.ctrl.$scope.onDashboardSaved = sinon.spy();
       ctx.ctrl.$scope.$apply();
     }));
@@ -166,33 +163,32 @@ describe('HistoryListCtrl', function() {
 
     it('should check that two valid versions are selected', function() {
       // []
-      expect(ctx.ctrl.isComparable()).to.be(false);
+      expect(ctx.ctrl.canCompare).to.be(false);
 
       // single value
-      ctx.ctrl.selected = [4];
-      expect(ctx.ctrl.isComparable()).to.be(false);
+      ctx.ctrl.revisions = [{checked: true}];
+      ctx.ctrl.revisionSelectionChanged();
+      expect(ctx.ctrl.canCompare).to.be(false);
 
       // both values in range
-      ctx.ctrl.selected = [4, 2];
-      expect(ctx.ctrl.isComparable()).to.be(true);
-
-      // values out of range
-      ctx.ctrl.selected = [7, 4];
-      expect(ctx.ctrl.isComparable()).to.be(false);
+      ctx.ctrl.revisions = [{checked: true}, {checked: true}];
+      ctx.ctrl.revisionSelectionChanged();
+      expect(ctx.ctrl.canCompare).to.be(true);
     });
 
     describe('and the basic diff is successfully fetched', function() {
       beforeEach(function() {
         deferred.resolve(compare('basic'));
-        ctx.ctrl.selected = [3, 1];
+        ctx.ctrl.revisions[1].checked = true;
+        ctx.ctrl.revisions[3].checked = true;
         ctx.ctrl.getDiff('basic');
         ctx.ctrl.$scope.$apply();
       });
 
       it('should fetch the basic diff if two valid versions are selected', function() {
-        expect(historySrv.compareVersions.calledOnce).to.be(true);
+        expect(historySrv.calculateDiff.calledOnce).to.be(true);
         expect(ctx.ctrl.delta.basic).to.be('<div></div>');
-        expect(ctx.ctrl.delta.html).to.be('');
+        expect(ctx.ctrl.delta.json).to.be('');
       });
 
       it('should set the basic diff view as active', function() {
@@ -207,21 +203,22 @@ describe('HistoryListCtrl', function() {
 
     describe('and the json diff is successfully fetched', function() {
       beforeEach(function() {
-        deferred.resolve(compare('html'));
-        ctx.ctrl.selected = [3, 1];
-        ctx.ctrl.getDiff('html');
+        deferred.resolve(compare('json'));
+        ctx.ctrl.revisions[1].checked = true;
+        ctx.ctrl.revisions[3].checked = true;
+        ctx.ctrl.getDiff('json');
         ctx.ctrl.$scope.$apply();
       });
 
       it('should fetch the json diff if two valid versions are selected', function() {
-        expect(historySrv.compareVersions.calledOnce).to.be(true);
+        expect(historySrv.calculateDiff.calledOnce).to.be(true);
         expect(ctx.ctrl.delta.basic).to.be('');
-        expect(ctx.ctrl.delta.html).to.be('<pre><code></code></pre>');
+        expect(ctx.ctrl.delta.json).to.be('<pre><code></code></pre>');
       });
 
       it('should set the json diff view as active', function() {
         expect(ctx.ctrl.mode).to.be('compare');
-        expect(ctx.ctrl.diff).to.be('html');
+        expect(ctx.ctrl.diff).to.be('json');
       });
 
       it('should indicate loading has finished', function() {
@@ -232,14 +229,15 @@ describe('HistoryListCtrl', function() {
     describe('and diffs have already been fetched', function() {
       beforeEach(function() {
         deferred.resolve(compare('basic'));
-        ctx.ctrl.selected = [3, 1];
+        ctx.ctrl.revisions[3].checked = true;
+        ctx.ctrl.revisions[1].checked = true;
         ctx.ctrl.delta.basic = 'cached basic';
         ctx.ctrl.getDiff('basic');
         ctx.ctrl.$scope.$apply();
       });
 
       it('should use the cached diffs instead of fetching', function() {
-        expect(historySrv.compareVersions.calledOnce).to.be(false);
+        expect(historySrv.calculateDiff.calledOnce).to.be(false);
         expect(ctx.ctrl.delta.basic).to.be('cached basic');
       });
 
@@ -251,13 +249,14 @@ describe('HistoryListCtrl', function() {
     describe('and fetching the diff fails', function() {
       beforeEach(function() {
         deferred.reject(new Error('DiffError'));
-        ctx.ctrl.selected = [4, 2];
+        ctx.ctrl.revisions[3].checked = true;
+        ctx.ctrl.revisions[1].checked = true;
         ctx.ctrl.getDiff('basic');
         ctx.ctrl.$scope.$apply();
       });
 
       it('should fetch the diff if two valid versions are selected', function() {
-        expect(historySrv.compareVersions.calledOnce).to.be(true);
+        expect(historySrv.calculateDiff.calledOnce).to.be(true);
       });
 
       it('should return to the history list view', function() {
@@ -269,7 +268,7 @@ describe('HistoryListCtrl', function() {
       });
 
       it('should have an empty delta/changeset', function() {
-        expect(ctx.ctrl.delta).to.eql({ basic: '', html: '' });
+        expect(ctx.ctrl.delta).to.eql({ basic: '', json: '' });
       });
     });
   });

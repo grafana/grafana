@@ -5,16 +5,13 @@
 
 	<ul class="gf-tabs">
 		<li class="gf-tabs-item" >
-			<a class="gf-tabs-link" ng-click="ctrl.mode = 'list';" ng-class="{active: ctrl.mode === 'list'}">
+			<a class="gf-tabs-link" ng-click="ctrl.switchMode('list');" ng-class="{active: ctrl.mode === 'list'}">
 				List
 			</a>
 		</li>
 		<li class="gf-tabs-item" ng-show="ctrl.mode === 'compare'">
-			<span ng-if="ctrl.isOriginalCurrent()" class="active gf-tabs-link">
-				Version {{ctrl.selected[0]}} <i class="fa fa-arrows-h"></i> Current
-			</span>
-			<span ng-if="!ctrl.isOriginalCurrent()" class="active gf-tabs-link">
-				Version {{ctrl.selected[0]}} <i class="fa fa-arrows-h"></i> Version {{ctrl.selected[1]}}
+			<span class="active gf-tabs-link">
+				Version {{ctrl.baseInfo.version}} <i class="fa fa-arrows-h"></i> Version {{ctrl.newInfo.version}}
 			</span>
 		</li>
 	</ul>
@@ -47,15 +44,15 @@
           </thead>
           <tbody>
             <tr ng-repeat="revision in ctrl.revisions">
-              <td class="filter-table__switch-cell" bs-tooltip="ctrl.compareRevisionDisabled(revision.checked) ? 'You can only compare 2 versions at a time' : ''">
+              <td class="filter-table__switch-cell" bs-tooltip="!revision.checked && ctrl.canCompare ? 'You can only compare 2 versions at a time' : ''" data-placement="right">
                 <gf-form-switch switch-class="gf-form-switch--table-cell"
                                 checked="revision.checked"
-                                on-change="ctrl.compareRevisionStateChanged(revision)"
-                                ng-disabled="ctrl.compareRevisionDisabled(revision.checked)">
+                                on-change="ctrl.revisionSelectionChanged()"
+																ng-disabled="!revision.checked && ctrl.canCompare">
                 </gf-form-switch>
               </td>
               <td class="text-center">{{revision.version}}</td>
-              <td>{{ctrl.formatDate(revision.created)}}</td>
+              <td>{{revision.createdDateString}}</td>
               <td>{{revision.createdBy}}</td>
               <td>{{revision.message}}</td>
               <td class="text-right">
@@ -63,7 +60,7 @@
                   <i class="fa fa-history"></i>&nbsp;&nbsp;Restore
                 </a>
                 <a class="btn btn-outline-disabled btn-small" ng-show="revision.version === ctrl.dashboard.version">
-                  <i class="fa fa-check"></i>&nbsp;&nbsp;Current
+                  <i class="fa fa-check"></i>&nbsp;&nbsp;Latest
                 </a>
               </td>
             </tr>
@@ -80,9 +77,9 @@
             <a	type="button"
                 class="btn gf-form-button btn-secondary"
                 ng-if="ctrl.revisions.length > 1"
-                ng-class="{disabled: !ctrl.isComparable()}"
+                ng-class="{disabled: !ctrl.canCompare}"
                 ng-click="ctrl.getDiff(ctrl.diff)"
-                bs-tooltip="ctrl.isComparable() ? '' : 'Select 2 versions to start comparing'">
+								bs-tooltip="ctrl.canCompare ? '' : 'Select 2 versions to start comparing'" data-placement="bottom">
               <i class="fa fa-code-fork" ></i>&nbsp;&nbsp;Compare versions
             </a>
             <a  type="button"
@@ -103,7 +100,7 @@
     <aside class="edit-sidemenu-aside">
       <ul class="edit-sidemenu">
         <li ng-class="{active: ctrl.diff === 'basic'}"><a ng-click="ctrl.getDiff('basic')" href="">Change Summary</a></li>
-        <li ng-class="{active: ctrl.diff === 'html'}"><a ng-click="ctrl.getDiff('html')" href="">JSON Code View</a></li>
+        <li ng-class="{active: ctrl.diff === 'html'}"><a ng-click="ctrl.getDiff('json')" href="">JSON Code View</a></li>
       </ul>
     </aside>
 
@@ -113,36 +110,36 @@
         <em>Fetching changes&hellip;</em>
       </div>
 
-      <div ng-if="!ctrl.loading" ng-init="new = ctrl.selected[0]; original = ctrl.selected[1]">
+      <div ng-if="!ctrl.loading">
         <a  type="button"
             class="btn gf-form-button btn-secondary pull-right"
-            ng-click="ctrl.restore(new)"
-            ng-if="ctrl.isOriginalCurrent()">
-          <i class="fa fa-rotate-right" ></i>&nbsp;&nbsp;Restore to version {{new}}
+            ng-click="ctrl.restore(ctrl.baseInfo.version)"
+            ng-if="ctrl.isNewLatest">
+          <i class="fa fa-history" ></i>&nbsp;&nbsp;Restore to version {{ctrl.baseInfo.version}}
         </a>
         <h4>
-          Comparing Version {{ctrl.selected[0]}}
+          Comparing Version {{ctrl.baseInfo.version}}
           <i class="fa fa-arrows-h"></i>
-          Version {{ctrl.selected[1]}}
-          <cite class="muted" ng-if="ctrl.isOriginalCurrent()">(Current)</cite>
+					Version {{ctrl.newInfo.version}}
+          <cite class="muted" ng-if="ctrl.isNewLatest">(Latest)</cite>
         </h4>
         <section ng-if="ctrl.diff === 'basic'">
           <p class="small muted">
-          <strong>Version {{new}}</strong> updated by
-          <span>{{ctrl.getMeta(new, 'createdBy')}} </span>
-          <span>{{ctrl.formatBasicDate(ctrl.getMeta(new, 'created'))}}</span>
-          <span> - {{ctrl.getMeta(new, 'message')}}</span>
+          <strong>Version {{ctrl.newInfo.version}}</strong> updated by
+          <span>{{ctrl.newInfo.createdBy}} </span>
+          <span>{{ctrl.newInfo.ageString}}</span>
+          <span> - {{ctrl.newInfo.message}}</span>
           </p>
           <p class="small muted">
-          <strong>Version {{original}}</strong> updated by
-          <span>{{ctrl.getMeta(original, 'createdBy')}} </span>
-          <span>{{ctrl.formatBasicDate(ctrl.getMeta(original, 'created'))}}</span>
-          <span> - {{ctrl.getMeta(original, 'message')}}</span>
+          <strong>Version {{ctrl.baseInfo.version}}</strong> updated by
+          <span>{{ctrl.baseInfo.createdBy}} </span>
+          <span>{{ctrl.baseInfo.ageString}}</span>
+          <span> - {{ctrl.baseInfo.message}}</span>
           </p>
         </section>
         <div id="delta" diff-delta>
           <div class="delta-basic" ng-show="ctrl.diff === 'basic'" compile="ctrl.delta.basic"></div>
-          <div class="delta-html" ng-show="ctrl.diff === 'html'" compile="ctrl.delta.html"></div>
+          <div class="delta-html" ng-show="ctrl.diff === 'json'" compile="ctrl.delta.json"></div>
         </div>
       </div>
     </div>

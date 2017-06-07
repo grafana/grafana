@@ -2,11 +2,9 @@ package api
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path"
-	"strconv"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/api/dtos"
@@ -328,101 +326,34 @@ func GetDashboardVersion(c *middleware.Context) Response {
 	return Json(200, dashVersionMeta)
 }
 
-func getDashboardVersionDiffOptions(c *middleware.Context, diffType dashdiffs.DiffType) (*dashdiffs.Options, error) {
+// POST /api/dashboards/calculate-diff performs diffs on two dashboards
+func CalculateDashboardDiff(c *middleware.Context, apiOptions dtos.CalculateDiffOptions) Response {
 
-	dashId := c.ParamsInt64(":dashboardId")
-	if dashId == 0 {
-		return nil, errors.New("Missing dashboardId")
+	options := dashdiffs.Options{
+		OrgId:    c.OrgId,
+		DiffType: dashdiffs.ParseDiffType(apiOptions.DiffType),
+		Base: dashdiffs.DiffTarget{
+			DashboardId:      apiOptions.Base.DashboardId,
+			Version:          apiOptions.Base.Version,
+			UnsavedDashboard: apiOptions.Base.UnsavedDashboard,
+		},
+		New: dashdiffs.DiffTarget{
+			DashboardId:      apiOptions.New.DashboardId,
+			Version:          apiOptions.New.Version,
+			UnsavedDashboard: apiOptions.New.UnsavedDashboard,
+		},
 	}
 
-	versionStrings := strings.Split(c.Params(":versions"), "...")
-	if len(versionStrings) != 2 {
-		return nil, fmt.Errorf("bad format: urls should be in the format /versions/0...1")
-	}
-
-	BaseVersion, err := strconv.Atoi(versionStrings[0])
-	if err != nil {
-		return nil, fmt.Errorf("bad format: first argument is not of type int")
-	}
-
-	newVersion, err := strconv.Atoi(versionStrings[1])
-	if err != nil {
-		return nil, fmt.Errorf("bad format: second argument is not of type int")
-	}
-
-	options := &dashdiffs.Options{}
-	options.DashboardId = dashId
-	options.OrgId = c.OrgId
-	options.BaseVersion = BaseVersion
-	options.NewVersion = newVersion
-	options.DiffType = diffType
-
-	return options, nil
-}
-
-// CompareDashboardVersions compares dashboards the way the GitHub API does.
-func CompareDashboardVersions(c *middleware.Context) Response {
-	options, err := getDashboardVersionDiffOptions(c, dashdiffs.DiffDelta)
-
-	if err != nil {
-		return ApiError(500, err.Error(), err)
-	}
-
-	result, err := dashdiffs.GetVersionDiff(options)
+	result, err := dashdiffs.CalculateDiff(&options)
 	if err != nil {
 		return ApiError(500, "Unable to compute diff", err)
 	}
 
-	// here the output is already JSON, so we need to unmarshal it into a
-	// map before marshaling the entire response
-
-	deltaMap := make(map[string]interface{})
-	err = json.Unmarshal(result.Delta, &deltaMap)
-	if err != nil {
-		return ApiError(500, err.Error(), err)
+	if options.DiffType == dashdiffs.DiffDelta {
+		return Respond(200, result.Delta).Header("Content-Type", "application/json")
+	} else {
+		return Respond(200, result.Delta).Header("Content-Type", "text/html")
 	}
-
-	return Json(200, util.DynMap{
-		"meta": util.DynMap{
-			"baseVersion": options.BaseVersion,
-			"newVersion":  options.NewVersion,
-		},
-		"delta": deltaMap,
-	})
-}
-
-// CompareDashboardVersionsJSON compares dashboards the way the GitHub API does,
-// returning a human-readable JSON diff.
-func CompareDashboardVersionsJSON(c *middleware.Context) Response {
-	options, err := getDashboardVersionDiffOptions(c, dashdiffs.DiffJSON)
-
-	if err != nil {
-		return ApiError(500, err.Error(), err)
-	}
-
-	result, err := dashdiffs.GetVersionDiff(options)
-	if err != nil {
-		return ApiError(500, err.Error(), err)
-	}
-
-	return Respond(200, result.Delta).Header("Content-Type", "text/html")
-}
-
-// CompareDashboardVersionsBasic compares dashboards the way the GitHub API does,
-// returning a human-readable diff.
-func CompareDashboardVersionsBasic(c *middleware.Context) Response {
-	options, err := getDashboardVersionDiffOptions(c, dashdiffs.DiffBasic)
-
-	if err != nil {
-		return ApiError(500, err.Error(), err)
-	}
-
-	result, err := dashdiffs.GetVersionDiff(options)
-	if err != nil {
-		return ApiError(500, err.Error(), err)
-	}
-
-	return Respond(200, result.Delta).Header("Content-Type", "text/html")
 }
 
 // RestoreDashboardVersion restores a dashboard to the given version.

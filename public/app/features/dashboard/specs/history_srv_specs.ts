@@ -8,7 +8,6 @@ describe('historySrv', function() {
   var ctx = new helpers.ServiceTestContext();
 
   var versionsResponse = versions();
-  var compareResponse = compare();
   var restoreResponse = restore;
 
   beforeEach(angularMocks.module('grafana.core'));
@@ -16,7 +15,6 @@ describe('historySrv', function() {
   beforeEach(angularMocks.inject(function($httpBackend) {
     ctx.$httpBackend = $httpBackend;
     $httpBackend.whenRoute('GET', 'api/dashboards/id/:id/versions').respond(versionsResponse);
-    $httpBackend.whenRoute('GET', 'api/dashboards/id/:id/compare/:original...:new').respond(compareResponse);
     $httpBackend.whenRoute('POST', 'api/dashboards/id/:id/restore')
       .respond(function(method, url, data, headers, params) {
         const parsedData = JSON.parse(data);
@@ -45,26 +43,6 @@ describe('historySrv', function() {
     it('should return an empty array when not given a dashboard', function(done) {
       ctx.service.getHistoryList().then(function(versions) {
         expect(versions).to.eql([]);
-        done();
-      });
-      ctx.$httpBackend.flush();
-    });
-  });
-
-  describe('compareVersions', function() {
-    it('should return a diff object for the given dashboard revisions', function(done) {
-      var compare = { original: 6, new: 4 };
-      ctx.service.compareVersions({ id: 1 }, compare).then(function(response) {
-        expect(response).to.eql(compareResponse);
-        done();
-      });
-      ctx.$httpBackend.flush();
-    });
-
-    it('should return an empty object when not given an id', function(done) {
-      var compare = { original: 6, new: 4 };
-      ctx.service.compareVersions({ }, compare).then(function(response) {
-        expect(response).to.eql({});
         done();
       });
       ctx.$httpBackend.flush();

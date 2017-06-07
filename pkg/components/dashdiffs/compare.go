@@ -11,14 +11,6 @@ import (
 	deltaFormatter "github.com/yudai/gojsondiff/formatter"
 )
 
-type DiffType int
-
-const (
-	DiffJSON DiffType = iota
-	DiffBasic
-	DiffDelta
-)
-
 var (
 	// ErrUnsupportedDiffType occurs when an invalid diff type is used.
 	ErrUnsupportedDiffType = errors.New("dashdiff: unsupported diff type")
@@ -27,24 +19,49 @@ var (
 	ErrNilDiff = errors.New("dashdiff: diff is nil")
 )
 
+type DiffType int
+
+const (
+	DiffJSON DiffType = iota
+	DiffBasic
+	DiffDelta
+)
+
 type Options struct {
-	OrgId       int64
-	DashboardId int64
-	BaseVersion int
-	NewVersion  int
-	DiffType    DiffType
+	OrgId    int64
+	Base     DiffTarget
+	New      DiffTarget
+	DiffType DiffType
+}
+
+type DiffTarget struct {
+	DashboardId      int64
+	Version          int
+	UnsavedDashboard *simplejson.Json
 }
 
 type Result struct {
 	Delta []byte `json:"delta"`
 }
 
+func ParseDiffType(diff string) DiffType {
+	switch diff {
+	case "json":
+		return DiffJSON
+	case "basic":
+		return DiffBasic
+	case "delta":
+		return DiffDelta
+	}
+	return DiffBasic
+}
+
 // CompareDashboardVersionsCommand computes the JSON diff of two versions,
 // assigning the delta of the diff to the `Delta` field.
-func GetVersionDiff(options *Options) (*Result, error) {
+func CalculateDiff(options *Options) (*Result, error) {
 	baseVersionQuery := models.GetDashboardVersionQuery{
-		DashboardId: options.DashboardId,
-		Version:     options.BaseVersion,
+		DashboardId: options.Base.DashboardId,
+		Version:     options.Base.Version,
 	}
 
 	if err := bus.Dispatch(&baseVersionQuery); err != nil {
@@ -52,8 +69,8 @@ func GetVersionDiff(options *Options) (*Result, error) {
 	}
 
 	newVersionQuery := models.GetDashboardVersionQuery{
-		DashboardId: options.DashboardId,
-		Version:     options.NewVersion,
+		DashboardId: options.New.DashboardId,
+		Version:     options.New.Version,
 	}
 
 	if err := bus.Dispatch(&newVersionQuery); err != nil {
