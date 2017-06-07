@@ -39,8 +39,8 @@ class GrafanaDatasource {
     return this.backendSrv.get('/api/annotations', {
       from: options.range.from.valueOf(),
       to: options.range.to.valueOf(),
-      limit: options.limit,
-      type: options.type,
+      limit: options.annotation.limit,
+      type: options.annotation.type,
     });
   }
 
