@@ -69,4 +69,15 @@ server {
 }
 ```
 
+### Influxdb datasources in grafana 4.x running behind nginx proxy.
 
+Since some latest version of grafana you can get an error with influxdb datasource:
+
+```
+InfluxDB Error: undefined
+```
+Workaround:
+
+Switch to proxy mode you influx datasource solving an issue:
+
+`Edit data source -> Http settings -> Access -> SELECT "proxy".`
