@@ -82,7 +82,12 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
       activeTargets.push(target);
 
       var query: any = {};
-      query.expr = templateSrv.replace(target.expr, options.scopedVars, self.interpolateQueryExpr);
+      if (target.expr.indexOf("!==") !== -1 ||  target.expr.indexOf("=~") !== -1 || target.expr.indexOf("!~") !== -1) {
+        query.expr = templateSrv.replace(target.expr, options.scopedVars, self.interpolateQueryExpr);
+      } else {
+        query.expr = templateSrv.replace(target.expr, options.scopedVars, "pipe");
+      }
+
       query.requestId = options.panelId + target.refId;
 
       var interval = templateSrv.replace(target.interval, options.scopedVars) || options.interval;
