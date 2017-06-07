@@ -28,7 +28,7 @@ export class HistoryListCtrl {
   /** @ngInject */
   constructor(private $scope,
               private $rootScope,
-              private $route,
+              private $location,
               private $window,
               private $timeout,
               private $q,
@@ -178,7 +178,7 @@ export class HistoryListCtrl {
   restoreConfirm(version: number) {
     this.loading = true;
     return this.historySrv.restoreDashboard(this.dashboard, version).then(response => {
-      this.$route.reload();
+      this.$location.path('dashboard/db/' + response.slug);
       this.$rootScope.appEvent('alert-success', ['Dashboard restored', 'Restored from version ' + version]);
     }).catch(() => {
       this.mode = 'list';
