@@ -109,6 +109,7 @@ function (angular, _) {
         $scope.setWarnThreshold(panelMeta,$scope.alertDef);
         $scope.checkStatus.name = $scope.alertDef.name;
         $scope.checkStatus.checkName = false;
+        $scope.alertDef.alertDetails.hosts = $scope.alertDef.alertDetails.hosts.toString();
       }
       $scope.orgName = contextSrv.user.orgName;
       $scope.serviceName = backendSrv.getSystemById(contextSrv.system);
@@ -184,6 +185,7 @@ function (angular, _) {
       $scope.alertDef.org = contextSrv.user.orgId;
       $scope.alertDef.service = contextSrv.system;
       $scope.getTags($scope.target.tags, $scope.alertDef.alertDetails);
+      $scope.alertDef.alertDetails.hosts = $scope.alertDef.alertDetails.hosts.split(',');
 
       alertMgrSrv.save($scope.alertDef).then(function onSuccess() {
         $location.path("alerts");
