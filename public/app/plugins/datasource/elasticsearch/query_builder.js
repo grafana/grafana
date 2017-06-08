@@ -109,8 +109,8 @@ function (queryDef) {
     return filterObj;
   };
 
-  ElasticQueryBuilder.prototype.documentQuery = function(query) {
-    query.size = 500;
+  ElasticQueryBuilder.prototype.documentQuery = function(query, size) {
+    query.size = size === undefined ? 500 : size;
     query.sort = {};
     query.sort[this.timeField] = {order: 'desc', unmapped_type: 'boolean'};
 
@@ -194,9 +194,12 @@ function (queryDef) {
     if (target.bucketAggs.length === 0) {
       metric = target.metrics[0];
       if (metric && metric.type !== 'raw_document') {
-        throw {message: 'Invalid query'};
+        target.bucketAggs = [{type: 'date_histogram', id: '2', settings: {interval: 'auto'}}];
+      } else {
+        var size = metric && metric.hasOwnProperty("settings") && metric.settings.hasOwnProperty("size")
+                   && metric.settings["size"] !== null ? metric.settings["size"] : 500 ;
+        return this.documentQuery(query,size);
       }
-      return this.documentQuery(query, target);
     }
 
     nestedAggs = query;

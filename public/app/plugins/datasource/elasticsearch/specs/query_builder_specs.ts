@@ -156,12 +156,21 @@ describe('ElasticQueryBuilder', function() {
 
   it('with raw_document metric', function() {
     var query = builder.build({
-      metrics: [{type: 'raw_document', id: '1'}],
+      metrics: [{type: 'raw_document', id: '1',settings: {}}],
       timeField: '@timestamp',
       bucketAggs: [],
     });
 
     expect(query.size).to.be(500);
+  });
+  it('with raw_document metric size set', function() {
+    var query = builder.build({
+      metrics: [{type: 'raw_document', id: '1',settings: {size: 1337}}],
+      timeField: '@timestamp',
+      bucketAggs: [],
+    });
+
+    expect(query.size).to.be(1337);
   });
 
   it('with moving average', function() {
