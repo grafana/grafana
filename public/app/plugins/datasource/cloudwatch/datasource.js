@@ -231,18 +231,25 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       var ebsVolumeIdsQuery = query.match(/^ebs_volume_ids\(([^,]+?),\s?([^,]+?)\)/);
       if (ebsVolumeIdsQuery) {
         region = templateSrv.replace(ebsVolumeIdsQuery[1]);
-        var instanceId = templateSrv.replace(ebsVolumeIdsQuery[2]);
-        var instanceIds = [
-          instanceId
-        ];
+        var format = function(value) {
+          if (_.isArray(value)) {
+            return '["' + value.join('","') + '"]';
+          }
+          return '["' + value + '"]';
+        };
+        var instanceIds = JSON.parse(templateSrv.replace(ebsVolumeIdsQuery[2], {}, format));
 
         return this.performEC2DescribeInstances(region, [], instanceIds).then(function(result) {
-          var volumeIds = _.map(result.Reservations[0].Instances[0].BlockDeviceMappings, function(mapping) {
-            return mapping.Ebs.VolumeId;
-          });
-
+          var volumeIds = _.chain(result.Reservations)
+          .map(function(reservations) {
+            return _.map(reservations.Instances[0].BlockDeviceMappings, function(mapping) {
+              return mapping.Ebs.VolumeId;
+            });
+          })
+          .flatten().uniq().sortBy().value();
           return transformSuggestData(volumeIds);
         });
+
       }
 
       var ec2InstanceAttributeQuery = query.match(/^ec2_instance_attribute\(([^,]+?),\s?([^,]+?),\s?(.+?)\)/);
