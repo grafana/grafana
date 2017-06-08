@@ -12,7 +12,7 @@
 }
 
 .table-panel-container {
-  padding-top: 2.2em;
+  border-top: 2px solid $body-bg;
   position: relative;
 }
 
@@ -77,10 +77,8 @@
 
 .table-panel-header-bg {
   background: $grafanaListAccent;
-  border-top: 2px solid $body-bg;
   border-bottom: 2px solid $body-bg;
   height: 2.0em;
-  position: absolute;
   top: 0;
   right: 0;
   left: 0;
@@ -90,7 +88,6 @@
   padding: 0.45em 0 0.45em 1.1em;
   text-align: left;
   color: $blue;
-  position: absolute;
   top: 0;
 }
 
