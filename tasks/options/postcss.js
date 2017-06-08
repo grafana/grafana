@@ -11,7 +11,7 @@ module.exports = function(config) {
       },
 
       processors: [
-        require('autoprefixer')({browsers: 'last 3 versions'}), // add vendor prefixes
+        require('autoprefixer')({browsers: ['last 3 versions', 'safari >= 4']}), // add vendor prefixes
       ]
     },
     dist: {
