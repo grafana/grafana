@@ -41,11 +41,7 @@ function (coreModule) {
         scope.contextSrv = contextSrv;
 
         scope.toggle = function() {
-          if(contextSrv.hostNum) {
-            $rootScope.appEvent('toggle-sidemenu');
-          } else {
-            $rootScope.appEvent('alert-warning', ['您还未完成探针安装', '请安装系统探针']);
-          }
+          $rootScope.appEvent('toggle-sidemenu');
         };
       }
     };
