@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/grafana/grafana/pkg/api/cloudwatch"
+	"github.com/grafana/grafana/pkg/api/sqldb"
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/metrics"
@@ -40,6 +41,7 @@ func NewReverseProxy(ds *m.DataSource, proxyPath string, targetUrl *url.URL) *ht
 		} else if ds.Type == m.DS_INFLUXDB {
 			req.URL.Path = util.JoinUrlFragments(targetUrl.Path, proxyPath)
 			req.URL.RawQuery = reqQueryVals.Encode()
+			reqQueryVals.Add("db", ds.Database)
 			if !ds.BasicAuth {
 				req.Header.Del("Authorization")
 				req.Header.Add("Authorization", util.GetBasicAuthHeader(ds.User, ds.Password))
@@ -117,6 +119,11 @@ func ProxyDataSourceRequest(c *middleware.Context) {
 
 	if ds.Type == m.DS_CLOUDWATCH {
 		cloudwatch.HandleRequest(c, ds)
+		return
+	}
+
+	if ds.Type == m.DS_SQLDB {
+		sqldb.HandleRequest(c, ds)
 		return
 	}
 
