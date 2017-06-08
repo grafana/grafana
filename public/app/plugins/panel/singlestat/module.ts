@@ -165,7 +165,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       return;
     }
 
-    if (tableData[0].length === 0 || !tableData[0][0][this.panel.tableColumn]) {
+    if (tableData[0].length === 0 || tableData[0][0][this.panel.tableColumn] === undefined) {
       return;
     }
 
