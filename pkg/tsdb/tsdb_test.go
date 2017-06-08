@@ -4,21 +4,22 @@ import (
 	"context"
 	"testing"
 	"time"
-
+	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/models"
-	. "github.com/smartystreets/goconvey/convey"
-)
+	"github.com/smartystreets/goconvey/convey"
 
 func TestMetricQuery(t *testing.T) {
 
 	Convey("When batches groups for query", t, func() {
 
 		Convey("Given 3 queries for 2 data sources", func() {
+			query := simplejson.New()
+			query.Set("target", "asdf")
 			request := &Request{
 				Queries: QuerySlice{
-					{RefId: "A", DataSource: &models.DataSource{Id: 1}},
-					{RefId: "B", DataSource: &models.DataSource{Id: 1}},
-					{RefId: "C", DataSource: &models.DataSource{Id: 2}},
+					{RefId: "A", Model: query, DataSource: &DataSourceInfo{Id: 1}},
+					{RefId: "B", Model: query, DataSource: &DataSourceInfo{Id: 1}},
+					{RefId: "C", Model: query, DataSource: &DataSourceInfo{Id: 2}},
 				},
 			}
 
@@ -31,11 +32,16 @@ func TestMetricQuery(t *testing.T) {
 		})
 
 		Convey("Given query 2 depends on query 1", func() {
+			query := simplejson.New()
+			query.Set("target", "asdf")
+
+			query2 := simplejson.New()
+			query2.Set("target", "#A / #B")
 			request := &Request{
 				Queries: QuerySlice{
-					{RefId: "A", DataSource: &models.DataSource{Id: 1}},
-					{RefId: "B", DataSource: &models.DataSource{Id: 2}},
-					{RefId: "C", DataSource: &models.DataSource{Id: 3}, Depends: []string{"A", "B"}},
+					{RefId: "A", Model: query, DataSource: &DataSourceInfo{Id: 1}},
+					{RefId: "B", Model: query, DataSource: &DataSourceInfo{Id: 2}},
+					{RefId: "C", Model: query2, DataSource: &DataSourceInfo{Id: 3}, Depends: []string{"A", "B"}},
 				},
 			}
 
@@ -55,9 +61,11 @@ func TestMetricQuery(t *testing.T) {
 	})
 
 	Convey("When executing request with one query", t, func() {
+		query := simplejson.New()
+		query.Set("target", "asdf")
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
+				{RefId: "A", Model: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
 			},
 		}
 
@@ -74,10 +82,12 @@ func TestMetricQuery(t *testing.T) {
 	})
 
 	Convey("When executing one request with two queries from same data source", t, func() {
+		query := simplejson.New()
+		query.Set("target", "asdf")
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
-				{RefId: "B", DataSource: &models.DataSource{Id: 1, Type: "test"}},
+				{RefId: "A", Model: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "B", Model: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
 			},
 		}
 
@@ -100,11 +110,13 @@ func TestMetricQuery(t *testing.T) {
 	})
 
 	Convey("When executing one request with three queries from different datasources", t, func() {
+		query := simplejson.New()
+		query.Set("target", "asdf")
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"}},
-				{RefId: "B", DataSource: &models.DataSource{Id: 1, Type: "test"}},
-				{RefId: "C", DataSource: &models.DataSource{Id: 2, Type: "test"}},
+				{RefId: "A", Model: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "B", Model: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"}},
+				{RefId: "C", Model: query, DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}},
 			},
 		}
 
@@ -117,9 +129,11 @@ func TestMetricQuery(t *testing.T) {
 	})
 
 	Convey("When query uses data source of unknown type", t, func() {
+		query := simplejson.New()
+		query.Set("target", "asdf")
 		req := &Request{
 			Queries: QuerySlice{
-				{RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "asdasdas"}},
+				{RefId: "A", Model: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "asdasdas"}},
 			},
 		}
 
@@ -128,13 +142,18 @@ func TestMetricQuery(t *testing.T) {
 	})
 
 	Convey("When executing request that depend on other query", t, func() {
+		query := simplejson.New()
+		query.Set("target", "asdf")
+
+		query2 := simplejson.New()
+		query2.Set("target", "#A / #B")
 		req := &Request{
 			Queries: QuerySlice{
 				{
-					RefId: "A", DataSource: &models.DataSource{Id: 1, Type: "test"},
+					RefId: "A", Model: query, DataSource: &DataSourceInfo{Id: 1, PluginId: "test"},
 				},
 				{
-					RefId: "B", DataSource: &models.DataSource{Id: 2, Type: "test"}, Depends: []string{"A"},
+					RefId: "B", Model: query2, DataSource: &DataSourceInfo{Id: 2, PluginId: "test"}, Depends: []string{"A"},
 				},
 			},
 		}

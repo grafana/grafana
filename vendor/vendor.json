@@ -527,8 +527,26 @@
 		{
 			"checksumSHA1": "WHc3uByvGaMcnSoI21fhzYgbOgg=",
 			"path": "golang.org/x/net/context/ctxhttp",
-			"revision": "71a035914f99bb58fe82eac0f1289f10963d876c",
-			"revisionTime": "2016-09-12T21:59:12Z"
+			"revision": "f4fe4abe3c785295ddf81c7f1823bcd3bad391b6",
+			"revisionTime": "2016-09-20T17:08:14Z"
+		},
+		{
+			"checksumSHA1": "X1gHerCXsqxHcxUmlUttZu73qQg=",
+			"path": "gopkg.in/olivere/elastic.v3",
+			"revision": "0e48129397ff05068bb2909503dd2fef1644c9db",
+			"revisionTime": "2016-09-18T12:51:56Z"
+		},
+		{
+			"checksumSHA1": "lLdKOn9RPtFoTtPUNq5+sIInAiE=",
+			"path": "gopkg.in/olivere/elastic.v3/backoff",
+			"revision": "0e48129397ff05068bb2909503dd2fef1644c9db",
+			"revisionTime": "2016-09-18T12:51:56Z"
+		},
+		{
+			"checksumSHA1": "XQg6xG6l15Ke43KolthYYnVDCYo=",
+			"path": "gopkg.in/olivere/elastic.v3/uritemplates",
+			"revision": "0e48129397ff05068bb2909503dd2fef1644c9db",
+			"revisionTime": "2016-09-18T12:51:56Z"
 		},
 		{
 			"checksumSHA1": "vqc3a+oTUGX8PmD0TS+qQ7gmN8I=",

@@ -21,5 +21,6 @@
   },
 
   "annotations": true,
-  "metrics": true
+  "metrics": true,
+  "alerting": true
 }
