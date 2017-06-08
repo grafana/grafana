@@ -167,6 +167,7 @@ function (_, $, coreModule) {
         options: "=",
         getOptions: "&",
         onChange: "&",
+        custom: "@"
       },
       link: {
         pre: function postLink($scope, elem, attrs) {
@@ -176,7 +177,7 @@ function (_, $, coreModule) {
             var option = _.find($scope.options, {value: value});
             var segment = {
               cssClass: attrs.cssClass,
-              custom: attrs.custom,
+              custom: $scope.custom,
               value: option ? option.text : value,
               selectMode: attrs.selectMode,
             };
@@ -208,7 +209,7 @@ function (_, $, coreModule) {
               var option = _.find(cachedOptions, {text: $scope.segment.value});
               if (option && option.value !== $scope.property) {
                 $scope.property = option.value;
-              } else if (attrs.custom !== 'false') {
+              } else if ($scope.custom !== 'false') {
                 $scope.property = $scope.segment.value;
               }
             } else {

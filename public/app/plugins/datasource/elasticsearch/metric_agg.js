@@ -38,7 +38,11 @@ function (angular, _, queryDef) {
     };
 
     $scope.updatePipelineAggOptions = function() {
-      $scope.pipelineAggOptions = queryDef.getPipelineAggOptions($scope.target);
+      if (queryDef.isBucketScriptAgg($scope.agg.type)) {
+        $scope.pipelineAggOptions = [];
+      } else {
+        $scope.pipelineAggOptions = queryDef.getPipelineAggOptions($scope.target);
+      }
     };
 
     $rootScope.onAppEvent('elastic-query-updated', function() {
@@ -54,7 +58,8 @@ function (angular, _, queryDef) {
       $scope.aggDef = _.find($scope.metricAggTypes, {value: $scope.agg.type});
 
       if (queryDef.isPipelineAgg($scope.agg.type)) {
-        $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || 'select metric';
+        var default_text = queryDef.isBucketScriptAgg($scope.agg.type) ? 'metric name':'select metric';
+        $scope.agg.pipelineAgg = $scope.agg.pipelineAgg || default_text;
         $scope.agg.field = $scope.agg.pipelineAgg;
 
         var pipelineOptions = queryDef.getPipelineOptions($scope.agg);

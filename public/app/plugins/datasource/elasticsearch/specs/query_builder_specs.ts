@@ -296,4 +296,42 @@ describe('ElasticQueryBuilder', function() {
     expect(query.query.bool.filter[6].regexp["key5"]).to.be("value5");
     expect(query.query.bool.filter[7].bool.must_not.regexp["key6"]).to.be("value6");
   });
+
+  it('with bucket script pipeline aggregation', function() {
+    var query = builder.build({
+      metrics: [
+        {
+          id: '1',
+          type: 'sum',
+          field: '@value'
+        },
+        {
+          id: '2',
+          type: 'sum',
+          field: '@value2'
+        },
+        {
+          id: '3',
+          type: 'bucket_script',
+          field: 'diff',
+          pipelineAgg: 'diff',
+          settings: {script: 'value - value2'}
+        }
+      ],
+      bucketAggs: [
+        {type: 'date_histogram', field: '@timestamp', id: '3'}
+      ],
+    });
+
+    var firstLevel = query.aggs["3"];
+
+    expect(firstLevel.aggs["3"]).not.to.be(undefined);
+    expect(firstLevel.aggs["3"].bucket_script).not.to.be(undefined);
+    expect(firstLevel.aggs["3"].bucket_script.buckets_path['value']).to.be('1');
+    expect(firstLevel.aggs["3"].bucket_script.buckets_path['value2']).to.be('2');
+    expect(Object.keys(firstLevel.aggs["3"].bucket_script.buckets_path).length).to.be(2);
+    expect(firstLevel.aggs["3"].bucket_script.script).to.be('value - value2');
+  });
+
+
 });
