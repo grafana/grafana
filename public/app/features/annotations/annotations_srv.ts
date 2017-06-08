@@ -16,7 +16,8 @@ export class AnnotationsSrv {
               private $q,
               private datasourceSrv,
               private backendSrv,
-              private timeSrv) {
+              private timeSrv,
+              private templateSrv) {
     $rootScope.onAppEvent('refresh', this.clearCache.bind(this), $rootScope);
     $rootScope.onAppEvent('dashboard-initialized', this.clearCache.bind(this), $rootScope);
   }
@@ -122,10 +123,12 @@ export class AnnotationsSrv {
 
     var annotations = _.filter(dashboard.annotations.list, {enable: true});
     var range = this.timeSrv.timeRange();
+    var tagPattern = new RegExp(this.templateSrv.replace(options.panel.annotationFilter.tag, options.panel.scopedVars, 'regex'));
 
     this.globalAnnotationsPromise = this.$q.all(_.map(annotations, annotation => {
       if (annotation.snapshotData) {
-        return this.translateQueryResult(annotation, annotation.snapshotData);
+        var filteredSnapshot = this.filterAnnotationsByTagPattern(annotation.snapshotData, tagPattern);
+        return this.translateQueryResult(annotation, filteredSnapshot);
       }
 
       return this.datasourceSrv.get(annotation.datasource).then(datasource => {
@@ -138,7 +141,8 @@ export class AnnotationsSrv {
           annotation.snapshotData = angular.copy(results);
         }
         // translate result
-        return this.translateQueryResult(annotation, results);
+        var filteredAnnotation = this.filterAnnotationsByTagPattern(results, tagPattern);
+        return this.translateQueryResult(annotation, filteredAnnotation);
       });
     }));
 
@@ -166,6 +170,14 @@ export class AnnotationsSrv {
       item.eventType = annotation.name;
     }
     return results;
+  }
+
+  filterAnnotationsByTagPattern(annotations, tagPattern) {
+    return _.filter(annotations, annotation => {
+      return _.some(annotation.tags, tag => {
+        return tag.match(tagPattern);
+      });
+    });
   }
 }
 
