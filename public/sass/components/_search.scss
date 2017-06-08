@@ -13,8 +13,9 @@
   left: 0;
   top: 0;
   right: 0;
+  bottom: 0;
   z-index: ($zindex-modal-backdrop + 10);
-  position: absolute;
+  position: fixed;
 
   .label-tag {
     margin-left: 6px;
@@ -46,6 +47,7 @@
 .search-field-spacer {
   flex-grow: 1;
 }
+
 .search-switches {
   flex-grow: 1;
   padding: 1rem 1rem 0.75rem 1rem;
@@ -54,7 +56,7 @@
 
 .search-field-icon {
   font-size: $font-size-lg;
-  padding: 1rem 1rem 0.75rem 1rem;
+  padding: 1rem 1rem 0.75rem 1.5rem;
 }
 
 .search-dropdown {
@@ -63,6 +65,7 @@
   max-width: 1100px;
   visibility: none;
   opacity: 0;
+  height: 100%;
 
   &--fade-in {
     visibility: visible;
@@ -72,7 +75,7 @@
 }
 
 .search-results-container {
-  height: 450px;
+  height: 90%;
   overflow: auto;
   display: block;
   line-height: 28px;
@@ -143,8 +146,10 @@
 .search-button-row {
   padding: $spacer*2;
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: flex-start;
+  justify-content: space-around;
+  height: 30%;
 
   button, a {
     margin-bottom: $spacer;
@@ -164,10 +169,17 @@
   }
 }
 
-@include media-breakpoint-up(md) {
+@include media-breakpoint-up(lg) {
   .search-dropdown {
     flex-direction: row;
   }
+  .search-button-row {
+    flex-direction: column;
+    justify-content: flex-start;
+  }
+}
+
+@include media-breakpoint-up(md) {
   .search-container {
     left: 78px;
   }
