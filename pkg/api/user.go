@@ -91,6 +91,11 @@ func UpdateUserActiveOrg(c *middleware.Context) Response {
 }
 
 func handleUpdateUser(cmd m.UpdateUserCommand) Response {
+	// check for valid username
+	if !setting.AllowEmailAsLogin && util.IsEmail(cmd.Login) {
+		return ApiError(400, "Cannot set email as login name", nil);
+	}
+
 	if len(cmd.Login) == 0 {
 		cmd.Login = cmd.Email
 		if len(cmd.Login) == 0 {

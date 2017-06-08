@@ -92,6 +92,7 @@ var (
 	// User settings
 	AllowUserSignUp    bool
 	AllowUserOrgCreate bool
+	AllowEmailAsLogin  bool
 	AutoAssignOrg      bool
 	AutoAssignOrgRole  string
 	VerifyEmailEnabled bool
@@ -526,6 +527,7 @@ func NewConfigContext(args *CommandLineArgs) error {
 	users := Cfg.Section("users")
 	AllowUserSignUp = users.Key("allow_sign_up").MustBool(true)
 	AllowUserOrgCreate = users.Key("allow_org_create").MustBool(true)
+	AllowEmailAsLogin = users.Key("allow_email_username").MustBool(false)
 	AutoAssignOrg = users.Key("auto_assign_org").MustBool(true)
 	AutoAssignOrgRole = users.Key("auto_assign_org_role").In("Editor", []string{"Editor", "Admin", "Read Only Editor", "Viewer"})
 	VerifyEmailEnabled = users.Key("verify_email_enabled").MustBool(false)
