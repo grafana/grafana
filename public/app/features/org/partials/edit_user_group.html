@@ -21,8 +21,8 @@
   <form name="addMemberForm" class="gf-form-group">
 		<div class="gf-form">
 			<span class="gf-form-label width-10">Name</span>
-			<input type="text" bs-typeahead="ctrl.searchUsers" required ng-model="ctrl.userName" class="gf-form-input max-width-14" >
-		</div>
+      <user-picker required user-login="ctrl.userName" user-id="ctrl.userId"></user-picker>
+    </div>
 
 		<div class="gf-form-button-row">
 			<button type="submit" class="btn btn-success" ng-click="ctrl.addMember()">Add</button>

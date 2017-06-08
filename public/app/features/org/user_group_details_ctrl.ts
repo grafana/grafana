@@ -7,29 +7,12 @@ export default class UserGroupDetailsCtrl {
   userGroup: UserGroup;
   userGroupMembers: User[] = [];
   userName = '';
-  usersSearchCache: User[] = [];
-  searchUsers: any;
+  userId: number;
   navModel: any;
 
   constructor(private $scope, private $http, private backendSrv, private $routeParams, navModelSrv) {
     this.navModel = navModelSrv.getOrgNav(3);
     this.get();
-    this.usersSearchCache = [];
-    this.searchUsers = (queryStr, callback) => {
-      if (this.usersSearchCache.length > 0) {
-        callback(_.map(this.usersSearchCache, this.userKey));
-        return;
-      }
-
-      this.backendSrv.get('/api/users/search?perpage=10&page=1&query=' + queryStr).then(result => {
-        this.usersSearchCache = result.users;
-        callback(_.map(result.users, this.userKey));
-      });
-    };
-  }
-
-  private userKey(user: User) {
-    return user.login + ' - ' + user.email;
   }
 
   get() {
@@ -71,9 +54,7 @@ export default class UserGroupDetailsCtrl {
   addMember() {
     if (!this.$scope.addMemberForm.$valid) { return; }
 
-    const login = this.userName.split(' - ')[0];
-    const memberToAdd = _.find(this.usersSearchCache, ['login', login]);
-    this.backendSrv.post(`/api/user-groups/${this.$routeParams.id}/members`, {userId: memberToAdd.id}).then(() => {
+    this.backendSrv.post(`/api/user-groups/${this.$routeParams.id}/members`, {userId: this.userId}).then(() => {
       this.userName = '';
       this.get();
     });
