@@ -19,14 +19,15 @@
   <div ng-if="selected">
     <h3>您选择的操作系统为: {{selected.host}}</h3>
 
-    <h4>1. 一键安装</h4>
+    <h4>1. 安装部署</h4>
+    <h5>* 您可以选择一键安装</h5>
     <ul class="tight-form last">
       <li style="word-break: break-all">
         sudo ORG_TOKEN={{token}} CLIENT_ID={{orgId}} METRIC_SERVER_HOST={{metricsServer}} ALERTD_SERVER={{alertServer}} AGENT_URL=https://download.cloudwiz.cn/agent bash -c "$(curl -kL https://download.cloudwiz.cn/agent/deploy_agent.sh)"
       </li>
     </ul>
     
-    <h4 ng-click="installManual = !installManual">2. 手动安装<i style="margin-left:10px;" ng-class="{true:'fa fa-hand-o-down',false:'fa fa-hand-o-left'}[installManual]"></i></h4>
+    <h5 style="cursor: pointer;" ng-click="installManual = !installManual">* 如果您希望手动安装,请点击这里<i style="margin-left:10px;" ng-class="{true:'fa fa-hand-o-down',false:'fa fa-hand-o-left'}[installManual]"></i></h5>
     <ul ng-if="installManual" style="list-style:lower-roman;">
       <li>
         <p style="word-break: break-all">创建文件安装目录</p>
@@ -56,7 +57,7 @@
       </li>
     </ul>
 
-    <h4>3. 启动探针</h4>
+    <h4>2. 启动探针</h4>
     <ul class="tight-form last">
       <li style="word-break: break-all">sudo /etc/init.d/cloudwiz-agent start</li>
     </ul>
