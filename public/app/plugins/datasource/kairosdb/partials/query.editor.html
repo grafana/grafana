@@ -1,0 +1,349 @@
+<query-editor-row query-ctrl="ctrl" can-collapse="false">
+	<div class="gf-form-inline">
+		<div class="gf-form max-width-25">
+			<label class="gf-form-label query-keyword width-8">Metric</label>
+			<label class="gf-form-label" ng-show="ctrl.target.errors.metric">
+				<a bs-tooltip="ctrl.target.errors.metric" style="color: rgb(229, 189, 28)">
+					<i class="fa fa-warning"></i>
+				</a>
+			</label>
+			<input type="text" class="gf-form-input"
+				ng-model="ctrl.target.metric"
+				spellcheck="false"
+				bs-typeahead="ctrl.suggestMetrics"
+				placeholder="metric name"
+				data-min-length=3 data-items=20
+				ng-blur="ctrl.targetBlur()">
+		</div>
+		<gf-form-switch class="gf-form"
+			label="Peak filter"
+			label-class="query-keyword"
+			checked="ctrl.target.exOuter"
+			on-change="ctrl.targetBlur()">
+		</gf-form-switch>
+
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+	<!-- TAGS -->
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-8">Tags</label>
+		</div>
+
+		<div class="gf-form" ng-repeat="(key, value) in ctrl.target.tags track by $index">
+			<label class="gf-form-label">
+				{{key}}&nbsp;=&nbsp;{{value}} 
+				<a ng-click="ctrl.removeFilterTag(key)">
+					<i class="fa fa-remove"></i>
+				</a>
+			</label>
+		</div>
+
+		<div class="gf-form" ng-hide="ctrl.target.addFilterTagMode">
+			<label class="gf-form-label query-keyword"> <a
+				ng-click="ctrl.addFilterTag()"><i class="fa fa-plus"></i></a>
+			</label>
+		</div>
+
+		<div class="gf-form" ng-show="ctrl.target.addFilterTagMode">
+			<input type="text" class="gf-form-input" spellcheck='false'
+				bs-typeahead="ctrl.suggestTagKeys"
+				ng-change="ctrl.validateFilterTag()" data-min-length=0 data-items=100
+				ng-model="ctrl.target.currentTagKey" placeholder="key"> <input
+				type="text" class="gf-form-input" spellcheck='false'
+				bs-typeahead="ctrl.suggestTagValues"
+				ng-change="ctrl.validateFilterTag()" data-min-length=0 data-items=100
+				ng-model="ctrl.target.currentTagValue" placeholder="value"> 
+				
+			<label class="gf-form-label" ng-show="ctrl.errors.tags">
+				<a bs-tooltip="target.errors.tags" style="color: rgb(229, 189, 28)"
+					ng-show="ctrl.target.errors.tags"> <i class="fa fa-warning"></i>
+				</a>
+			</label> 
+			<label class="gf-form-label">
+				<a ng-click="ctrl.addFilterTag()"> 
+					<i ng-show="ctrl.target.errors.tags" class="fa fa-remove"></i> 
+					<i ng-hide="ctrl.target.errors.tags" class="fa fa-plus-circle"></i>
+				</a>
+			</label>
+		</div>
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+	<!-- GROUP BY -->
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-8"> Group By </label>
+		</div>
+		<div class="gf-form" ng-show="ctrl.target.groupByTags">
+			<label class="gf-form-label"> tags: </label>
+		</div>
+		<div class="gf-form" ng-repeat="key in ctrl.target.groupByTags track by $index">
+			<label class="gf-form-label">
+				{{key}}
+				<a ng-click="ctrl.removeGroupByTag($index)">
+					<i class="fa fa-remove"></i>
+				</a>
+			</label>
+		</div>
+
+		<div class="gf-form" ng-show="ctrl.target.groupByTags && ctrl.target.nonTagGroupBys">
+			<label class="gf-form-label">and by:</label>
+		</div>
+
+		<div class="gf-form" ng-repeat="groupByObject in ctrl.target.nonTagGroupBys track by $index">
+			<label class="gf-form-label">
+				{{ctrl.getValuesOfGroupBy(groupByObject)}}
+				<a ng-click="ctrl.removeNonTagGroupBy($index)">
+					<i class="fa fa-remove"></i>
+				</a>
+			</label>
+		</div>
+
+		<div class="gf-form" ng-hide="ctrl.target.addGroupByMode">
+			<label class="gf-form-label query-keyword">
+				<a ng-click="ctrl.addGroupBy()">
+					<i class="fa fa-plus"></i>
+				</a>
+			</label>
+		</div>
+
+		<div class="gf-form" ng-show="ctrl.target.addGroupByMode">
+			<div class="gf-form-select-wrapper">
+				<select class="gf-form-input"
+					ng-change="ctrl.changeGroupByInput()"
+					ng-model="ctrl.target.currentGroupByType"
+					ng-options="f for f in ['tag','value','time']"></select>
+			</div>
+		</div>
+
+		<div class="gf-form" ng-show="ctrl.target.isTagGroupBy">
+			<input type="text"
+				class="gf-form-input"
+				spellcheck='false'
+				bs-typeahead="ctrl.suggestTagKeys"
+				ng-change = "ctrl.validateGroupBy()"
+				data-min-length=0 data-items=100
+				ng-model="ctrl.target.groupBy.tagKey"
+				placeholder="key">
+			<label class="gf-form-label" ng-show="ctrl.target.errors.groupBy.tagKey"> 
+				<a bs-tooltip="ctrl.target.errors.groupBy.tagKey" style="color: rgb(229, 189, 28)">
+					<i class="fa fa-warning"></i>
+				</a>
+			</label>
+		</div>
+
+		<div class="gf-form" ng-show="ctrl.target.isValueGroupBy">
+			<input type="text"
+				class="gf-form-input"
+				spellcheck='false'
+				ng-model="ctrl.target.groupBy.valueRange"
+				placeholder="range"
+				bs-tooltip="'Range on which values are considered in the same group'"
+				ng-change = "ctrl.validateGroupBy()" >
+			<label class="gf-form-label" ng-show="ctrl.target.errors.groupBy.valueRange"> 
+				<a bs-tooltip="ctrl.target.errors.groupBy.valueRange" style="color: rgb(229, 189, 28)">
+					<i class="fa fa-warning"></i>
+				</a>
+			</label>
+		</div>
+
+		<div class="gf-form" ng-show="ctrl.target.isTimeGroupBy">
+			<input type="text"
+				class="gf-form-input"
+				ng-model="ctrl.target.groupBy.timeInterval"
+				ng-init="ctrl.target.groupBy.timeInterval='1s'"
+				placeholder="interval"
+				bs-tooltip="'Duration of time groups'"
+				spellcheck='false'
+				ng-change="ctrl.validateGroupBy()">
+			<label class="gf-form-label" ng-show="ctrl.target.errors.groupBy.timeInterval"> 
+				<a bs-tooltip="ctrl.target.errors.groupBy.timeInterval" style="color: rgb(229, 189, 28)">
+					<i class="fa fa-warning"></i>
+				</a>
+			</label>
+			<input type="text"
+				class="gf-form-input"
+				ng-model="ctrl.target.groupBy.groupCount"
+				placeholder="Count"
+				bs-tooltip="'Number of time groups to be formed'"
+				spellcheck='false'
+				ng-change="ctrl.validateGroupBy()">
+			<label class="gf-form-label" ng-show="ctrl.target.errors.groupBy.groupCount"> 
+				<a bs-tooltip="ctrl.target.errors.groupBy.groupCount" style="color: rgb(229, 189, 28)">
+					<i class="fa fa-warning"></i>
+				</a>
+			</label>
+		</div>
+		<div class="gf-form" ng-show="ctrl.target.addGroupByMode">
+			<label class="gf-form-label"> 
+				<a ng-click="ctrl.addGroupBy()">
+					<i ng-hide="ctrl.target.isGroupByValid" class="fa fa-remove"></i>
+					<i ng-show="ctrl.target.isGroupByValid" class="fa fa-plus-circle"></i>
+				</a>
+			</label>
+		</div>
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+	<!-- HORIZONTAL AGGREGATION -->
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword">Aggregators</label>
+		</div>
+		<div class="gf-form" ng-repeat="aggregatorObject in ctrl.target.horizontalAggregators track by $index">
+			<label class="gf-form-label">
+				{{aggregatorObject.name}}&#40;
+				<span ng-repeat="val in aggregatorObject">
+					{{val != aggregatorObject.name ? val : ''}}
+				</span>
+				&#41;
+				<a ng-click="ctrl.removeHorizontalAggregator($index)">
+					<i class="fa fa-remove"></i>
+				</a>
+			</label>
+		</div>
+
+		<div class="gf-form" ng-hide="ctrl.target.addHorizontalAggregatorMode">
+			<label class="gf-form-label query-keyword">
+	        	<a ng-click="ctrl.addHorizontalAggregator()">
+	          		<i class="fa fa-plus"></i>
+	        	</a>
+	        </label>
+		</div>
+	
+		<div class="gf-form" ng-show="ctrl.target.addHorizontalAggregatorMode">
+			<div class="gf-form-select-wrapper">
+	        	<select class="gf-form-input"
+	          		ng-change="ctrl.changeHorAggregationInput()"
+	          		ng-model="ctrl.target.currentHorizontalAggregatorName"
+	          		ng-options="f for f in ['avg','dev','max','min','rate','sampler','count','sum','least_squares','percentile','scale','div', 'first', 'gaps', 'last', 'diff', 'trim']"></select>
+	      	</div>
+		</div>
+	
+	    <!-- Different parameters -->
+		<div class="gf-form" ng-show="ctrl.target.hasSamplingRate">
+			<label class="gf-form-label">every</label>
+			<input type="text"
+	        	class="gf-form-input"
+	        	bs-tooltip="'Leave blank for auto handling based on time range and panel width'"
+	        	placeholder="{{interval}}"
+	        	ng-model="ctrl.target.horAggregator.samplingRate"
+	        	ng-init="ctrl.target.horAggregator.samplingRate='1s'"
+	        	spellcheck='false'
+	        	ng-change="ctrl.validateHorizontalAggregator()" >
+	        <label class="gf-form-label" ng-show="ctrl.target.errors.horAggregator.samplingRate">
+				<a bs-tooltip="ctrl.target.errors.horAggregator.samplingRate" style="color: rgb(229, 189, 28)">
+		        	<i class="fa fa-warning"></i>
+		        </a>
+	        </label>
+		</div>
+	
+		<div class="gf-form" ng-show="ctrl.target.hasUnit">
+			<label class="gf-form-label">every</label>
+			<div class="gf-form-select-wrapper">
+				<select class="gf-form-input"
+	          		ng-model="ctrl.target.horAggregator.unit"
+	          		ng-init="ctrl.target.horAggregator.unit='millisecond'"
+	          		ng-options="f for f in ['millisecond','second','minute','hour','day','week','month','year']"></select>
+			</div>
+		</div>
+	
+		<div class="gf-form" ng-show="ctrl.target.hasFactor">
+			<label class="gf-form-label">by</label>
+			<input type="text"
+	        	class="gf-form-input"
+	        	ng-model="ctrl.target.horAggregator.factor"
+	        	ng-init="ctrl.target.horAggregator.factor='1'"
+	        	spellcheck='false'
+	        	ng-change="ctrl.validateHorizontalAggregator()" >
+	        <label class="gf-form-label" ng-show="ctrl.target.errors.horAggregator.factor">
+	        	<a bs-tooltip="ctrl.target.errors.horAggregator.factor" style="color: rgb(229, 189, 28)">
+	          		<i class="fa fa-warning"></i>
+	        	</a>
+	        </label>
+		</div>
+	
+		<div class="gf-form" ng-show="ctrl.target.hasPercentile">
+			<label class="gf-form-label">percentile</label>
+	        <input type="text"
+	        	class="gf-form-input"
+	        	ng-model="ctrl.target.horAggregator.percentile"
+	        	ng-init="ctrl.target.horAggregator.percentile='0.75'"
+	        	spellcheck='false'
+	        	ng-change="ctrl.validateHorizontalAggregator()" >
+	        <label class="gf-form-label" ng-show="ctrl.target.errors.horAggregator.percentile">
+	        	<a bs-tooltip="ctrl.target.errors.horAggregator.percentile" style="color: rgb(229, 189, 28)">
+	          		<i class="fa fa-warning"></i>
+	        	</a>
+			</label>
+		</div>
+	
+		<div class="gf-form" ng-show="ctrl.target.hasTrim">
+			<label class="gf-form-label">by</label>
+			<div class="gf-form-select-wrapper">
+				<select class="gf-form-input"
+					ng-model="ctrl.target.horAggregator.trim"
+	         		ng-init="ctrl.target.horAggregator.trim='both'"
+	         		ng-options="f for f in ['both','first','last']"></select>
+			</div>
+		</div>
+	
+		<div class="gf-form" ng-show="ctrl.target.addHorizontalAggregatorMode">
+			<label class="gf-form-label">
+	        	<a ng-click="ctrl.addHorizontalAggregator()">
+	          		<i ng-hide="ctrl.target.isAggregatorValid" class="fa fa-remove"></i>
+	          		<i ng-show="ctrl.target.isAggregatorValid" class="fa fa-plus-circle"></i>
+	        	</a>
+	        </label>
+		</div>
+	    <div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+  	<!-- ALIAS -->
+	<div class="gf-form-inline">
+		<div class="gf-form">
+			<label class="gf-form-label query-keyword width-6">Alias
+			<info-popover mode="right-normal">
+			      	Expression used for metric and group aliasing <br />
+			        The following variables are available to differentiate the data groups: <br />
+			        $_tag_group_[tag name] -> The tag's value in a tag groupby <br />
+			        $_value_group_[n] -> The group number in the nth value groupby <br />
+			        $_time_group_[n] -> The group number in the nth time groupby <br />
+      			</info-popover>
+			</label>
+		</div>
+		<div class="gf-form">
+      		<div class="gf-form-select-wrapper">
+        		<select class="gf-form-input ng-pristine ng-valid ng-not-empty" 
+        			ng-change="ctrl.targetBlur()" 
+          			ng-model="ctrl.target.aliasMode" 
+          			ng-options="o for o in ['default', 'custom']"></select>
+          </div>
+		</div>
+		<div class="gf-form">
+			<input type="text" 
+				class="gf-form-input" 
+				ng-model="ctrl.target.alias"
+        		spellcheck='false' 
+        		ng-blur="ctrl.targetBlur()" 
+        		ng-readonly="ctrl.target.aliasMode!='custom'"
+        		ng-style="ctrl.target.aliasMode!='custom' && {color : 'gray'}">
+		</div>
+		<div class="gf-form gf-form--grow">
+			<div class="gf-form-label gf-form-label--grow"></div>
+		</div>
+	</div>
+
+</query-editor-row>
+
+
