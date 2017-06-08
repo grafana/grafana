@@ -10,6 +10,7 @@
   "metrics": true,
   "alerting": true,
   "annotations": true,
+  "defaultMatchFormat": "pipe",
 
   "info": {
     "author": {
