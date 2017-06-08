@@ -93,6 +93,10 @@ $panel-border:  	      solid 1px $dark-3;
 $panel-drop-zone-bg:    repeating-linear-gradient(-128deg, #111, #111 10px, #191919 10px, #222 20px);
 $panel-menu-border:     solid 1px black;
 
+// Row
+// -------------------------
+$row-menu-bg: $body-bg;
+
 $divider-border-color:        #555;
 
 // Graphite Target Editor
@@ -226,9 +230,8 @@ $navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
 
 // Sidemenu
 // -------------------------
-$side-menu-bg:            $body-bg;
-$side-menu-item-hover-bg: $dark-3;
-$side-menu-opacity:		  0.97;
+$side-menu-bg:            $dark-3;
+$side-menu-item-hover-bg: $dark-2;
 
 // Pagination
 // -------------------------

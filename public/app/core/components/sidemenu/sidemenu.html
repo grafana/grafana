@@ -13,7 +13,6 @@
 				<span class="sidemenu-org-name sidemenu-item-text">{{::ctrl.user.orgName}}</span>
 			</div>
 		</a>
-		<i class="fa fa-caret-right"></i>
 		<ul class="dropdown-menu" role="menu">
 			<li ng-repeat="menuItem in ctrl.orgMenu" ng-class="::menuItem.cssClass">
 				<span ng-show="::menuItem.section">{{::menuItem.section}}</span>
@@ -42,7 +41,6 @@
 				<img ng-src="{{::item.img}}" ng-show="::item.img">
 			</span>
 			<span class="sidemenu-item-text">{{::item.text}}</span>
-			<span class="fa fa-caret-right" ng-if="::item.children"></span>
 		</a>
 		<ul class="dropdown-menu" role="menu" ng-if="::item.children">
 			<li ng-repeat="child in ::item.children" ng-class="{divider: child.divider}">

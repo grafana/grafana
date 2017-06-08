@@ -171,27 +171,6 @@
   }
 }
 
-.sidemenu-pinned {
-  .navbar-brand-btn {
-    width: $side-menu-width;
-
-    .icon-gf-grafana_wordmark  {
-      display: inline-block;
-    }
-
-    .fa-caret-down {
-      display: none;
-    }
-
-    &:hover .fa-chevron-left {
-      display: inline-block;
-      color: $text-color-weak;
-      position: relative;
-      left: 1.3rem;
-    }
-  }
-}
-
 .navbar-section-wrapper {
   position: relative;
   float: left;

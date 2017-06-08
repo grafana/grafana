@@ -6,8 +6,9 @@
   position: absolute;
   top: 52px;
   left: 0;
+  border-top: 1px solid $navbarBorder;
   width: $side-menu-width;
-  background-color: rgba($side-menu-bg,$side-menu-opacity);
+  background-color: $side-menu-bg;
   z-index: 1000;
   opacity: 0;
   visibility: hidden;
@@ -31,7 +32,7 @@
     min-height: calc(100% - 54px);
   }
   .dashboard-container {
-    padding-left: $side-menu-width + 0.5rem;
+    padding-left: $side-menu-width + 20px;
   }
   .page-container {
     margin-left: $side-menu-width;
@@ -61,8 +62,8 @@
         top: 0px;
         // important to overlap it otherwise it can be hidden
         // again by the mouse getting outside the hover space
-        left: $side-menu-width - 0.2rem;
-        background-color: rgba($side-menu-bg,$side-menu-opacity);
+        left: $side-menu-width - 5px;
+        background-color: $side-menu-bg;
         @include animation('dropdown-anim 150ms ease-in-out 100ms forwards');
         z-index: -9999;
       }
@@ -118,10 +119,22 @@
   padding: 0px 10px 0px 10px;
   display: block;
   border-left: 1px solid transparent;
+  position: relative;
 
 
   .sidemenu-item-text {
     padding-left: 11px;
+    position: absolute;
+    display: none;
+    opacity: 0;
+  }
+
+  &:hover {
+    .sidemenu-item-text {
+      display: block;
+      opacity: 1;
+      transition: opacity 150ms ease-in-out;
+    }
   }
 
   img {
@@ -130,15 +143,6 @@
     height: 28px;
     box-shadow: 0 0 14px 2px rgba(255,255,255, 0.05);
   }
-}
-
-.sidemenu-section-tagline {
-  font-style: italic;
-  line-height: 10px;
-}
-
-.sidemenu-section-text-wrapper {
-  padding-top: 4px;
 }
 
 .sidemenu-org-section .dropdown-menu-title {
@@ -215,6 +219,7 @@
 .sidemenu-org-details {
   padding-left: 10px;
   color: $link-color;
+  display: none;
 }
 
 .sidemenu-org-name {
