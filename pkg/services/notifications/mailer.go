@@ -107,7 +107,7 @@ func createDialer() (*gomail.Dialer, error) {
 
 func buildEmailMessage(cmd *m.SendEmailCommand) (*Message, error) {
 	if !setting.Smtp.Enabled {
-		return nil, errors.New("Grafana mailing/smtp options not configured, contact your Grafana admin")
+		return nil, m.ErrSmtpNotEnabled
 	}
 
 	var buffer bytes.Buffer

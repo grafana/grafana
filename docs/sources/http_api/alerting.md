@@ -12,8 +12,8 @@ parent = "http_api"
 
 # Alerting API
 
-You can use the Alerting API to get information about alerts and their states but this API cannot be used to modify the alert. 
-To create new alerts or modify them you need to update the dashboard json that contains the alerts. 
+You can use the Alerting API to get information about alerts and their states but this API cannot be used to modify the alert.
+To create new alerts or modify them you need to update the dashboard json that contains the alerts.
 
 This API can also be used to create, update and delete alert notifications.
 
@@ -28,6 +28,17 @@ This API can also be used to create, update and delete alert notifications.
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
+  Querystring Parameters:
+
+  These parameters are used as querystring parameters. For example:
+
+  `/api/alerts?dashboardId=1`
+
+  - **dashboardId** – Return alerts for a specified dashboard.
+  - **panelId** – Return alerts for a specified panel on a dashboard.
+  - **limit** - Limit response to x number of alerts.
+  - **state** - Return alerts with one or more of the following alert states: `ALL`,`no_data`, `paused`, `alerting`, `ok`, `pending`. To specify multiple states use the following format: `?state=paused&state=alerting`
+
 **Example Response**:
 
     HTTP/1.1 200
@@ -40,6 +51,13 @@ This API can also be used to create, update and delete alert notifications.
         "name": "fire place sensor",
         "message": "Someone is trying to break in through the fire place",
         "state": "alerting",
+        "evalDate": "0001-01-01T00:00:00Z",
+        "evalData": [
+          {
+            "metric": "fire",
+            "tags": null,
+            "value": 5.349999999999999
+          }
         "newStateDate": "2016-12-25",
         "executionError": "",
         "dashboardUri": "http://grafana.com/dashboard/db/sensors"
@@ -73,7 +91,6 @@ This API can also be used to create, update and delete alert notifications.
       "dashboardUri": "http://grafana.com/dashboard/db/sensors"
     }
 
-
 ## Pause alert
 
 `POST /api/alerts/:id/pause`
@@ -86,9 +103,14 @@ This API can also be used to create, update and delete alert notifications.
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
     {
-      "alertId": 1,
       "paused": true
     }
+
+The :id query parameter is the id of the alert to be paused or unpaused.
+
+JSON Body Schema:
+
+- **paused** – Can be `true` or `false`. True to pause an alert. False to unpause an alert.
 
 **Example Response**:
 
@@ -111,11 +133,13 @@ This API can also be used to create, update and delete alert notifications.
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
+
+
 **Example Response**:
 
     HTTP/1.1 200
     Content-Type: application/json
-    
+
     {
       "id": 1,
       "name": "Team A",
@@ -127,11 +151,11 @@ This API can also be used to create, update and delete alert notifications.
 
 ## Create alert notification
 
-`POST /api/alerts-notifications`
+`POST /api/alert-notifications`
 
 **Example Request**:
 
-    POST /api/alerts-notifications HTTP/1.1
+    POST /api/alert-notifications HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -144,29 +168,29 @@ This API can also be used to create, update and delete alert notifications.
         "addresses": "carl@grafana.com;dev@grafana.com"
       }
     }
-    
+
 
 **Example Response**:
 
     HTTP/1.1 200
     Content-Type: application/json
     {
-      "id": 1, 
+      "id": 1,
       "name": "new alert notification",
       "type": "email",
       "isDefault": false,
       "settings": { addresses: "carl@grafana.com;dev@grafana.com"} }
-      "created": "2017-01-01 12:34", 
+      "created": "2017-01-01 12:34",
       "updated": "2017-01-01 12:34"
     }
 
 ## Update alert notification
 
-`PUT /api/alerts-notifications/1`
+`PUT /api/alert-notifications/1`
 
 **Example Request**:
 
-    PUT /api/alerts-notifications/1 HTTP/1.1
+    PUT /api/alert-notifications/1 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
@@ -176,33 +200,33 @@ This API can also be used to create, update and delete alert notifications.
       "name": "new alert notification",  //Required
       "type":  "email", //Required
       "isDefault": false,
-      "settings": { 
+      "settings": {
         "addresses: "carl@grafana.com;dev@grafana.com"
       }
     }
-    
+
 
 **Example Response**:
 
     HTTP/1.1 200
     Content-Type: application/json
     {
-      "id": 1, 
+      "id": 1,
       "name": "new alert notification",
       "type": "email",
       "isDefault": false,
       "settings": { addresses: "carl@grafana.com;dev@grafana.com"} }
-      "created": "2017-01-01 12:34", 
+      "created": "2017-01-01 12:34",
       "updated": "2017-01-01 12:34"
     }
 
 ## Delete alert notification
 
-`DELETE /api/alerts-notifications/:notificationId`
+`DELETE /api/alert-notifications/:notificationId`
 
 **Example Request**:
 
-    DELETE /api/alerts-notifications/1 HTTP/1.1
+    DELETE /api/alert-notifications/1 HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk

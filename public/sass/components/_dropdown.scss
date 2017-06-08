@@ -15,13 +15,13 @@
 }
 
 .dropdown-desc {
-    position: relative;
-    top: -3px;
-    width: 250px;
-    font-size: 80%;
-    margin-left: 22px;
-    color: $gray-2;
-    white-space: normal;
+  position: relative;
+  top: -3px;
+  width: 250px;
+  font-size: 80%;
+  margin-left: 22px;
+  color: $gray-2;
+  white-space: normal;
 }
 
 // Dropdown arrow/caret
@@ -75,7 +75,7 @@
 
   // Links within the dropdown menu
   > li {
-      > a {
+    > a {
       display: block;
       padding: 3px 20px 3px 15px;
       clear: both;

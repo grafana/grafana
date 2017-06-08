@@ -1,30 +1,34 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import angular from 'angular';
+import _ from 'lodash';
 import {MysqlDatasource} from './datasource';
-import {QueryCtrl} from 'app/plugins/sdk';
-
-class MysqlQueryCtrl extends QueryCtrl {
-  static templateUrl = 'partials/query.editor.html';
-
-  resultFormats: any;
-  target: any;
-
-  constructor($scope, $injector) {
-    super($scope, $injector);
-
-    this.target.resultFormat = 'time_series';
-    this.target.alias = "{{table}}{{col_3}}";
-    this.resultFormats = [
-      {text: 'Time series', value: 'time_series'},
-      {text: 'Table', value: 'table'},
-    ];
-
-  }
-}
+import {MysqlQueryCtrl} from './query_ctrl';
 
 class MysqlConfigCtrl {
   static templateUrl = 'partials/config.html';
+}
+
+const defaultQuery = `SELECT
+    UNIX_TIMESTAMP(<time_column>) as time_sec,
+    <title_column> as title,
+    <text_column> as text,
+    <tags_column> as tags
+  FROM <table name>
+  WHERE $__timeFilter(time_column)
+  ORDER BY <time_column> ASC
+  LIMIT 100
+  `;
+
+class MysqlAnnotationsQueryCtrl {
+  static templateUrl = 'partials/annotations.editor.html';
+
+  annotation: any;
+
+  /** @ngInject **/
+  constructor() {
+    this.annotation.rawQuery = this.annotation.rawQuery || defaultQuery;
+  }
 }
 
 export {
@@ -32,5 +36,6 @@ export {
   MysqlDatasource as Datasource,
   MysqlQueryCtrl as QueryCtrl,
   MysqlConfigCtrl as ConfigCtrl,
+  MysqlAnnotationsQueryCtrl as AnnotationsQueryCtrl,
 };
 

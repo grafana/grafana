@@ -81,16 +81,7 @@ export class AlertTabCtrl {
       this.alertHistory = _.map(res, ah => {
         ah.time = moment(ah.time).format('MMM D, YYYY HH:mm:ss');
         ah.stateModel = alertDef.getStateDisplayModel(ah.newState);
-        ah.metrics = alertDef.joinEvalMatches(ah.data, ', ');
-
-        if (ah.data.errorMessage) {
-          ah.metrics = "Error: " + ah.data.errorMessage;
-        }
-
-        if (ah.data.no_data) {
-          ah.metrics = "(due to no data)";
-        }
-
+        ah.info = alertDef.getAlertAnnotationInfo(ah);
         return ah;
       });
     });

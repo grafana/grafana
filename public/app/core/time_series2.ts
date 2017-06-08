@@ -35,6 +35,7 @@ export default class TimeSeries {
   isOutsideRange: boolean;
 
   lines: any;
+  dashes: any;
   bars: any;
   points: any;
   yaxis: any;
@@ -61,6 +62,9 @@ export default class TimeSeries {
 
   applySeriesOverrides(overrides) {
     this.lines = {};
+    this.dashes = {
+      dashLength: []
+    };
     this.points = {};
     this.bars = {};
     this.yaxis = 1;
@@ -74,11 +78,20 @@ export default class TimeSeries {
         continue;
       }
       if (override.lines !== void 0) { this.lines.show = override.lines; }
+      if (override.dashes !== void 0) {
+         this.dashes.show = override.dashes;
+         this.lines.lineWidth = 0;
+      }
       if (override.points !== void 0) { this.points.show = override.points; }
       if (override.bars !== void 0) { this.bars.show = override.bars; }
       if (override.fill !== void 0) { this.lines.fill = translateFillOption(override.fill); }
       if (override.stack !== void 0) { this.stack = override.stack; }
-      if (override.linewidth !== void 0) { this.lines.lineWidth = override.linewidth; }
+      if (override.linewidth !== void 0) {
+         this.lines.lineWidth = this.dashes.show ? 0: override.linewidth;
+         this.dashes.lineWidth = override.linewidth;
+      }
+      if (override.dashLength !== void 0) { this.dashes.dashLength[0] = override.dashLength; }
+      if (override.spaceLength !== void 0) { this.dashes.dashLength[1] = override.spaceLength; }
       if (override.nullPointMode !== void 0) { this.nullPointMode = override.nullPointMode; }
       if (override.pointradius !== void 0) { this.points.radius = override.pointradius; }
       if (override.steppedLine !== void 0) { this.lines.steps = override.steppedLine; }
@@ -92,7 +105,7 @@ export default class TimeSeries {
         this.yaxis = override.yaxis;
       }
     }
-  };
+  }
 
   getFlotPairs(fillStyle) {
     var result = [];

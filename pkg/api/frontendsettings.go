@@ -102,18 +102,15 @@ func getFrontendSettingsMap(c *middleware.Context) (map[string]interface{}, erro
 		datasources[ds.Name] = dsMap
 	}
 
-	// add grafana backend data source
-	grafanaDatasourceMeta, _ := plugins.DataSources["grafana"]
-	datasources["-- Grafana --"] = map[string]interface{}{
-		"type": "grafana",
-		"name": "-- Grafana --",
-		"meta": grafanaDatasourceMeta,
-	}
-
-	// add mixed backend data source
-	datasources["-- Mixed --"] = map[string]interface{}{
-		"type": "mixed",
-		"meta": plugins.DataSources["mixed"],
+	// add datasources that are built in (meaning they are not added via data sources page, nor have any entry in datasource table)
+	for _, ds := range plugins.DataSources {
+		if ds.BuiltIn {
+			datasources[ds.Name] = map[string]interface{}{
+				"type": ds.Type,
+				"name": ds.Name,
+				"meta": plugins.DataSources[ds.Id],
+			}
+		}
 	}
 
 	if defaultDatasource == "" {
@@ -169,10 +166,12 @@ func getPanelSort(id string) int {
 		sort = 3
 	case "text":
 		sort = 4
-	case "alertlist":
+	case "heatmap":
 		sort = 5
-	case "dashlist":
+	case "alertlist":
 		sort = 6
+	case "dashlist":
+		sort = 7
 	}
 	return sort
 }

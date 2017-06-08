@@ -211,6 +211,19 @@ define([
         });
       });
 
+      describe('series option overrides, dashes and lineWidth', function() {
+        beforeEach(function() {
+          series.alias = 'test';
+          series.applySeriesOverrides([{ alias: 'test', linewidth: 5, dashes: true }]);
+        });
+
+        it('should enable dashes, set dashes lineWidth to 5 and lines lineWidth to 0', function() {
+          expect(series.dashes.show).to.be(true);
+          expect(series.dashes.lineWidth).to.be(5);
+          expect(series.lines.lineWidth).to.be(0);
+        });
+      });
+
       describe('series option overrides, fill below to', function() {
         beforeEach(function() {
           series.alias = 'test';

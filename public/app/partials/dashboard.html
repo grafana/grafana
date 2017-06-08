@@ -1,9 +1,8 @@
 <div dash-class ng-if="dashboard">
-	<dashnav></dashnav>
+	<dashnav dashboard="dashboard"></dashnav>
 
 	<div class="dashboard-container">
-		<div dash-editor-view></div>
-		<dashboard-search></dashboard-search>
+		<div dash-editor-view class="dash-edit-view"></div>
 		<div class="clearfix"></div>
 
 		<dashboard-submenu ng-if="dashboard.meta.submenuEnabled" dashboard="dashboard"></dashboard-submenu>
@@ -13,7 +12,7 @@
     <dash-row class="dash-row" ng-repeat="row in dashboard.rows" row="row" dashboard="dashboard">
     </dash-row>
 
-    <div ng-show='dashboardMeta.canEdit' class="add-row-panel-hint">
+    <div ng-show='dashboard.meta.canEdit && !dashboard.meta.fullscreen' class="add-row-panel-hint">
       <div class="span12" style="text-align:left;">
         <span style="margin-left: 12px;" ng-click="addRowDefault()" class="pointer btn btn-inverse btn-small">
           <span><i class="fa fa-plus"></i> ADD ROW</span>

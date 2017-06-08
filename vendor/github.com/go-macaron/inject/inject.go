@@ -50,6 +50,34 @@ type Invoker interface {
 	Invoke(interface{}) ([]reflect.Value, error)
 }
 
+// FastInvoker represents an interface in order to avoid the calling function via reflection.
+//
+// example:
+//	type handlerFuncHandler func(http.ResponseWriter, *http.Request) error
+//	func (f handlerFuncHandler)Invoke([]interface{}) ([]reflect.Value, error){
+//		ret := f(p[0].(http.ResponseWriter), p[1].(*http.Request))
+//		return []reflect.Value{reflect.ValueOf(ret)}, nil
+//	}
+//
+//	type funcHandler func(int, string)
+//	func (f funcHandler)Invoke([]interface{}) ([]reflect.Value, error){
+//		f(p[0].(int), p[1].(string))
+//		return nil, nil
+//	}
+type FastInvoker interface {
+	// Invoke attempts to call the ordinary functions. If f is a function
+	// with the appropriate signature, f.Invoke([]interface{}) is a Call that calls f.
+	// Returns a slice of reflect.Value representing the returned values of the function.
+	// Returns an error if the injection fails.
+	Invoke([]interface{}) ([]reflect.Value, error)
+}
+
+// IsFastInvoker check interface is FastInvoker
+func IsFastInvoker(h interface{}) bool {
+	_, ok := h.(FastInvoker)
+	return ok
+}
+
 // TypeMapper represents an interface for mapping interface{} values based on type.
 type TypeMapper interface {
 	// Maps the interface{} value based on its immediate type from reflect.TypeOf.
@@ -102,18 +130,50 @@ func New() Injector {
 // It panics if f is not a function
 func (inj *injector) Invoke(f interface{}) ([]reflect.Value, error) {
 	t := reflect.TypeOf(f)
-
-	var in = make([]reflect.Value, t.NumIn()) //Panic if t is not kind of Func
-	for i := 0; i < t.NumIn(); i++ {
-		argType := t.In(i)
-		val := inj.GetVal(argType)
-		if !val.IsValid() {
-			return nil, fmt.Errorf("Value not found for type %v", argType)
-		}
-
-		in[i] = val
+	switch v := f.(type) {
+	case FastInvoker:
+		return inj.fastInvoke(v, t, t.NumIn())
+	default:
+		return inj.callInvoke(f, t, t.NumIn())
 	}
+}
 
+func (inj *injector) fastInvoke(f FastInvoker, t reflect.Type, numIn int) ([]reflect.Value, error) {
+	var in []interface{}
+	if numIn > 0 {
+		in = make([]interface{}, numIn) // Panic if t is not kind of Func
+		var argType reflect.Type
+		var val reflect.Value
+		for i := 0; i < numIn; i++ {
+			argType = t.In(i)
+			val = inj.GetVal(argType)
+			if !val.IsValid() {
+				return nil, fmt.Errorf("Value not found for type %v", argType)
+			}
+
+			in[i] = val.Interface()
+		}
+	}
+	return f.Invoke(in)
+}
+
+// callInvoke reflect.Value.Call
+func (inj *injector) callInvoke(f interface{}, t reflect.Type, numIn int) ([]reflect.Value, error) {
+	var in []reflect.Value
+	if numIn > 0 {
+		in = make([]reflect.Value, numIn)
+		var argType reflect.Type
+		var val reflect.Value
+		for i := 0; i < numIn; i++ {
+			argType = t.In(i)
+			val = inj.GetVal(argType)
+			if !val.IsValid() {
+				return nil, fmt.Errorf("Value not found for type %v", argType)
+			}
+
+			in[i] = val
+		}
+	}
 	return reflect.ValueOf(f).Call(in), nil
 }
 

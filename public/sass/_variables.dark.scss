@@ -254,8 +254,9 @@ $infoText:                $blue-dark;
 $infoBackground:          $blue-dark;
 
 // popover
-$popover-bg:         $dark-4;
-$popover-color:      $text-color;
+$popover-bg:              $panel-bg;
+$popover-color:           $text-color;
+$popover-border-color:    $gray-1;
 
 $popover-help-bg:         $btn-secondary-bg;
 $popover-help-color:      $text-color;
@@ -282,3 +283,25 @@ $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .3)
 $footer-link-color:   $gray-1;
 $footer-link-hover:   $gray-4;
 
+
+// Changelog and diff
+// -------------------------
+$diff-label-bg:         $dark-2;
+$diff-label-fg:         $white;
+
+$diff-group-bg:         $dark-4;
+$diff-arrow-color:      $white;
+
+$diff-json-bg:          $dark-4;
+$diff-json-fg:          $gray-5;
+
+$diff-json-added:       #457740;
+$diff-json-deleted:     #a04338;
+
+$diff-json-old:         #a04338;
+$diff-json-new:         #457740;
+
+$diff-json-changed-fg:  $gray-5;
+$diff-json-changed-num: $text-color;
+
+$diff-json-icon:        $gray-7;

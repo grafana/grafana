@@ -4,7 +4,6 @@ import (
 	"crypto/md5"
 	"fmt"
 	"strings"
-	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
@@ -38,32 +37,6 @@ type CurrentUser struct {
 	HelpFlags1     m.HelpFlags1 `json:"helpFlags1"`
 }
 
-type DashboardMeta struct {
-	IsStarred  bool      `json:"isStarred,omitempty"`
-	IsHome     bool      `json:"isHome,omitempty"`
-	IsSnapshot bool      `json:"isSnapshot,omitempty"`
-	Type       string    `json:"type,omitempty"`
-	CanSave    bool      `json:"canSave"`
-	CanEdit    bool      `json:"canEdit"`
-	CanStar    bool      `json:"canStar"`
-	Slug       string    `json:"slug"`
-	Expires    time.Time `json:"expires"`
-	Created    time.Time `json:"created"`
-	Updated    time.Time `json:"updated"`
-	UpdatedBy  string    `json:"updatedBy"`
-	CreatedBy  string    `json:"createdBy"`
-	Version    int       `json:"version"`
-}
-
-type DashboardFullWithMeta struct {
-	Meta      DashboardMeta    `json:"meta"`
-	Dashboard *simplejson.Json `json:"dashboard"`
-}
-
-type DashboardRedirect struct {
-	RedirectUri string `json:"redirectUri"`
-}
-
 type DataSource struct {
 	Id                int64            `json:"id"`
 	OrgId             int64            `json:"orgId"`
@@ -84,7 +57,23 @@ type DataSource struct {
 	SecureJsonFields  map[string]bool  `json:"secureJsonFields"`
 }
 
-type DataSourceList []DataSource
+type DataSourceListItemDTO struct {
+	Id          int64            `json:"id"`
+	OrgId       int64            `json:"orgId"`
+	Name        string           `json:"name"`
+	Type        string           `json:"type"`
+	TypeLogoUrl string           `json:"typeLogoUrl"`
+	Access      m.DsAccess       `json:"access"`
+	Url         string           `json:"url"`
+	Password    string           `json:"password"`
+	User        string           `json:"user"`
+	Database    string           `json:"database"`
+	BasicAuth   bool             `json:"basicAuth"`
+	IsDefault   bool             `json:"isDefault"`
+	JsonData    *simplejson.Json `json:"jsonData,omitempty"`
+}
+
+type DataSourceList []DataSourceListItemDTO
 
 func (slice DataSourceList) Len() int {
 	return len(slice)

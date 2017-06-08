@@ -8,6 +8,7 @@ import (
 	"golang.org/x/oauth2"
 
 	"github.com/grafana/grafana/pkg/setting"
+	"github.com/grafana/grafana/pkg/util"
 )
 
 type BasicUserInfo struct {
@@ -46,19 +47,19 @@ func NewOAuthService() {
 	setting.OAuthService = &setting.OAuther{}
 	setting.OAuthService.OAuthInfos = make(map[string]*setting.OAuthInfo)
 
-	allOauthes := []string{"github", "google", "generic_oauth", "grafananet"}
+	allOauthes := []string{"github", "google", "generic_oauth", "grafananet", "grafana_com"}
 
 	for _, name := range allOauthes {
 		sec := setting.Cfg.Section("auth." + name)
 		info := &setting.OAuthInfo{
 			ClientId:       sec.Key("client_id").String(),
 			ClientSecret:   sec.Key("client_secret").String(),
-			Scopes:         sec.Key("scopes").Strings(" "),
+			Scopes:         util.SplitString(sec.Key("scopes").String()),
 			AuthUrl:        sec.Key("auth_url").String(),
 			TokenUrl:       sec.Key("token_url").String(),
 			ApiUrl:         sec.Key("api_url").String(),
 			Enabled:        sec.Key("enabled").MustBool(),
-			AllowedDomains: sec.Key("allowed_domains").Strings(" "),
+			AllowedDomains: util.SplitString(sec.Key("allowed_domains").String()),
 			HostedDomain:   sec.Key("hosted_domain").String(),
 			AllowSignup:    sec.Key("allow_sign_up").MustBool(),
 			Name:           sec.Key("name").MustString(name),
@@ -69,6 +70,10 @@ func NewOAuthService() {
 
 		if !info.Enabled {
 			continue
+		}
+
+		if name == "grafananet" {
+			name = "grafana_com"
 		}
 
 		setting.OAuthService.OAuthInfos[name] = info
@@ -92,7 +97,7 @@ func NewOAuthService() {
 				apiUrl:               info.ApiUrl,
 				allowSignup:          info.AllowSignup,
 				teamIds:              sec.Key("team_ids").Ints(","),
-				allowedOrganizations: sec.Key("allowed_organizations").Strings(" "),
+				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
 
@@ -115,27 +120,27 @@ func NewOAuthService() {
 				apiUrl:               info.ApiUrl,
 				allowSignup:          info.AllowSignup,
 				teamIds:              sec.Key("team_ids").Ints(","),
-				allowedOrganizations: sec.Key("allowed_organizations").Strings(" "),
+				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
 
-		if name == "grafananet" {
+		if name == "grafana_com" {
 			config = oauth2.Config{
 				ClientID:     info.ClientId,
 				ClientSecret: info.ClientSecret,
 				Endpoint: oauth2.Endpoint{
-					AuthURL:  setting.GrafanaNetUrl + "/oauth2/authorize",
-					TokenURL: setting.GrafanaNetUrl + "/api/oauth2/token",
+					AuthURL:  setting.GrafanaComUrl + "/oauth2/authorize",
+					TokenURL: setting.GrafanaComUrl + "/api/oauth2/token",
 				},
 				RedirectURL: strings.TrimSuffix(setting.AppUrl, "/") + SocialBaseUrl + name,
 				Scopes:      info.Scopes,
 			}
 
-			SocialMap["grafananet"] = &SocialGrafanaNet{
+			SocialMap["grafana_com"] = &SocialGrafanaCom{
 				Config:               &config,
-				url:                  setting.GrafanaNetUrl,
+				url:                  setting.GrafanaComUrl,
 				allowSignup:          info.AllowSignup,
-				allowedOrganizations: sec.Key("allowed_organizations").Strings(" "),
+				allowedOrganizations: util.SplitString(sec.Key("allowed_organizations").String()),
 			}
 		}
 	}

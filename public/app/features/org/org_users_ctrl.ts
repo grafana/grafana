@@ -11,13 +11,15 @@ export class OrgUsersCtrl {
   pendingInvites: any;
   editor: any;
   showInviteUI: boolean;
+  navModel: any;
 
   /** @ngInject */
-  constructor(private $scope, private $http, private backendSrv) {
+  constructor(private $scope, private $http, private backendSrv, navModelSrv) {
     this.user = {
       loginOrEmail: '',
       role: 'Viewer',
     };
+    this.navModel = navModelSrv.getOrgNav(0);
 
     this.get();
     this.editor = { index: 0 };

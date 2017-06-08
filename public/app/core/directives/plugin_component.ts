@@ -61,7 +61,6 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
       attrs: {dashboard: "ctrl.dashboard", panel: "panel", row: "ctrl.row"},
     };
 
-    var panelElemName = 'panel-' + scope.panel.type;
     let panelInfo = config.panels[scope.panel.type];
     var panelCtrlPromise = Promise.resolve(UnknownPanelCtrl);
     if (panelInfo) {
@@ -75,7 +74,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
 
       if (!PanelCtrl || PanelCtrl.registered) {
         return componentInfo;
-      };
+      }
 
       if (PanelCtrl.templatePromise) {
         return PanelCtrl.templatePromise.then(res => {

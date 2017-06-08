@@ -101,18 +101,16 @@ function (angular, _, coreModule, config) {
       }
 
       metricSources.sort(function(a, b) {
-        if (a.meta.builtIn) {
+        // these two should always be at the bottom
+        if (a.meta.id === "mixed" || a.meta.id === "grafana") {
           return 1;
         }
-
-        if (b.meta.builtIn) {
+        if (b.meta.id === "mixed" || b.meta.id === "grafana") {
           return -1;
         }
-
         if (a.name.toLowerCase() > b.name.toLowerCase()) {
           return 1;
         }
-
         if (a.name.toLowerCase() < b.name.toLowerCase()) {
           return -1;
         }

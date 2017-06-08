@@ -7,8 +7,9 @@ function (angular, config) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('NewOrgCtrl', function($scope, $http, backendSrv) {
+  module.controller('NewOrgCtrl', function($scope, $http, backendSrv, navModelSrv) {
 
+    $scope.navModel = navModelSrv.getOrgNav(0);
     $scope.newOrg = {name: ''};
 
     $scope.createOrg = function() {

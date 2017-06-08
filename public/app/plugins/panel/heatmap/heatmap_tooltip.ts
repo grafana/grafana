@@ -33,7 +33,7 @@ export class HeatmapTooltip {
   }
 
   onMouseOver(e) {
-    if (!this.panel.tooltip.show || _.isEmpty(this.scope.ctrl.data.buckets)) { return; }
+    if (!this.panel.tooltip.show || !this.scope.ctrl.data || _.isEmpty(this.scope.ctrl.data.buckets)) { return; }
 
     if (!this.tooltip) {
       this.add();
@@ -67,6 +67,10 @@ export class HeatmapTooltip {
 
   show(pos, data) {
     if (!this.panel.tooltip.show || !data) { return; }
+    // shared tooltip mode
+    if (pos.panelRelY) {
+      return;
+    }
 
     let {xBucketIndex, yBucketIndex} = this.getBucketIndexes(pos, data);
 
@@ -88,16 +92,17 @@ export class HeatmapTooltip {
       <div class="heatmap-histogram"></div>`;
 
     if (yData) {
-      boundBottom = valueFormatter(yData.bounds.bottom);
-      boundTop = valueFormatter(yData.bounds.top);
-      valuesNumber = yData.values.length;
-      tooltipHtml += `<div>
-        bucket: <b>${boundBottom} - ${boundTop}</b> <br>
-        count: <b>${valuesNumber}</b> <br>
-      </div>`;
-
-      if (this.panel.tooltip.seriesStat && yData.seriesStat) {
-        tooltipHtml = this.addSeriesStat(tooltipHtml, yData.seriesStat);
+      if (yData.bounds) {
+        boundBottom = valueFormatter(yData.bounds.bottom);
+        boundTop = valueFormatter(yData.bounds.top);
+        valuesNumber = yData.count;
+        tooltipHtml += `<div>
+          bucket: <b>${boundBottom} - ${boundTop}</b> <br>
+          count: <b>${valuesNumber}</b> <br>
+        </div>`;
+      } else {
+        // currently no bounds for pre bucketed data
+        tooltipHtml += `<div>count: <b>${yData.count}</b><br></div>`;
       }
     } else {
       if (!this.panel.tooltip.showHistogram) {
@@ -119,24 +124,8 @@ export class HeatmapTooltip {
   }
 
   getBucketIndexes(pos, data) {
-    let xBucketIndex, yBucketIndex;
-
-    // if panelRelY is defined another panel wants us to show a tooltip
-    if (pos.panelRelY) {
-      xBucketIndex = getValueBucketBound(pos.x, data.xBucketSize, 1);
-      let y = this.scope.yScale.invert(pos.panelRelY * this.scope.chartHeight);
-      yBucketIndex = getValueBucketBound(y, data.yBucketSize, this.panel.yAxis.logBase);
-      pos = this.getSharedTooltipPos(pos);
-
-      if (!this.tooltip) {
-        // Add shared tooltip for panel
-        this.add();
-      }
-    } else {
-      xBucketIndex = this.getXBucketIndex(pos.offsetX, data);
-      yBucketIndex = this.getYBucketIndex(pos.offsetY, data);
-    }
-
+    const xBucketIndex = this.getXBucketIndex(pos.offsetX, data);
+    const yBucketIndex = this.getYBucketIndex(pos.offsetY, data);
     return {xBucketIndex, yBucketIndex};
   }
 
@@ -159,15 +148,6 @@ export class HeatmapTooltip {
     return pos;
   }
 
-  addSeriesStat(tooltipHtml, seriesStat) {
-    tooltipHtml += "series: <br>";
-    _.forEach(seriesStat, (values, series) => {
-      tooltipHtml += `&nbsp;&nbsp;-&nbsp;&nbsp;${series}: <b>${values}</b><br>`;
-    });
-
-    return tooltipHtml;
-  }
-
   addHistogram(data) {
     let xBucket = this.scope.ctrl.data.buckets[data.x];
     let yBucketSize = this.scope.ctrl.data.yBucketSize;
@@ -181,8 +161,8 @@ export class HeatmapTooltip {
 
     let scale = this.scope.yScale.copy();
     let histXScale = scale
-      .domain([min, max])
-      .range([0, HISTOGRAM_WIDTH]);
+    .domain([min, max])
+    .range([0, HISTOGRAM_WIDTH]);
 
     let barWidth;
     if (this.panel.yAxis.logBase === 1) {
@@ -193,21 +173,21 @@ export class HeatmapTooltip {
     barWidth = Math.max(barWidth, 1);
 
     let histYScale = d3.scaleLinear()
-      .domain([0, _.max(_.map(histogramData, d => d[1]))])
-      .range([0, HISTOGRAM_HEIGHT]);
+    .domain([0, _.max(_.map(histogramData, d => d[1]))])
+    .range([0, HISTOGRAM_HEIGHT]);
 
     let histogram = this.tooltip.select(".heatmap-histogram")
-      .append("svg")
-      .attr("width", HISTOGRAM_WIDTH)
-      .attr("height", HISTOGRAM_HEIGHT);
+    .append("svg")
+    .attr("width", HISTOGRAM_WIDTH)
+    .attr("height", HISTOGRAM_HEIGHT);
 
     histogram.selectAll(".bar").data(histogramData)
-      .enter().append("rect")
-      .attr("x", d => {
-        return histXScale(d[0]);
-      })
-      .attr("width", barWidth)
-      .attr("y", d => {
+    .enter().append("rect")
+    .attr("x", d => {
+      return histXScale(d[0]);
+    })
+    .attr("width", barWidth)
+    .attr("y", d => {
         return HISTOGRAM_HEIGHT - histYScale(d[1]);
       })
       .attr("height", d => {

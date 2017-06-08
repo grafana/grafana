@@ -48,6 +48,7 @@ function (angular, _, $) {
               element: el[0],
               position: 'bottom center',
               template: '<gf-color-picker></gf-color-picker>',
+              openOn: 'hover',
               model: {
                 series: series,
                 toggleAxis: function() {

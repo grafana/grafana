@@ -229,6 +229,10 @@ Used for signing keep me logged in / remember me cookies.
 Set to `true` to disable the use of Gravatar for user profile images.
 Default is `false`.
 
+### data_source_proxy_whitelist
+
+Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces
+
 <hr />
 
 ## [users]
@@ -313,7 +317,6 @@ example:
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
     api_url = https://api.github.com/user
-    allow_sign_up = false
     team_ids =
     allowed_organizations =
 
@@ -441,19 +444,28 @@ false only pre-existing Grafana users will be able to login (if ldap authenticat
 <hr>
 
 ## [auth.proxy]
+
 This feature allows you to handle authentication in a http reverse proxy.
 
 ### enabled
+
 Defaults to `false`
 
 ### header_name
+
 Defaults to X-WEBAUTH-USER
 
 #### header_property
+
 Defaults to username but can also be set to email
 
 ### auto_sign_up
+
 Set to `true` to enable auto sign up of users who do not exist in Grafana DB. Defaults to `true`.
+
+### whitelist
+
+Limit where auth proxy requests come from by configuring a list of IP addresses. This can be used to prevent users spoofing the X-WEBAUTH-USER header.
 
 <hr>
 
@@ -643,6 +655,9 @@ Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 ### url
 Url to where Grafana will send PUT request with images
+
+### public_url
+Optional parameter. Url to send to users in notifications, directly appended with the resulting uploaded file name.
 
 ### username
 basic auth username

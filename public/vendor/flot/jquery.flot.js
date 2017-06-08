@@ -2972,6 +2972,10 @@ Licensed under the MIT license.
             pos.pageX = event.pageX;
             pos.pageY = event.pageY;
 
+            // Add ctrlKey and metaKey to event
+            pos.ctrlKey = event.ctrlKey;
+            pos.metaKey = event.metaKey;
+
             var item = findNearbyItem(canvasX, canvasY, seriesFilter);
 
             if (item) {

@@ -1,5 +1,5 @@
 
-@mixin drop-theme($themeName, $theme-bg, $theme-color) {
+@mixin drop-theme($themeName, $theme-bg, $theme-color, $border-color: $theme-bg) {
   .drop-element.drop-#{$themeName} {
     max-width: 100%;
     max-height: 100%;
@@ -14,6 +14,11 @@
       font-size: $font-size-sm;
       word-wrap: break-word;
       max-width: 20rem;
+      border: 1px solid $border-color;
+
+      @if $theme-bg != $border-color {
+        box-shadow: 0 0 15px $border-color;
+      }
 
       &:before {
         content: "";
@@ -43,7 +48,7 @@
         top: 100%;
         left: 50%;
         margin-left: - $popover-arrow-size;
-        border-top-color: $theme-bg;
+        border-top-color: $border-color;
       }
     }
 
@@ -54,7 +59,7 @@
         bottom: 100%;
         left: 50%;
         margin-left: - $popover-arrow-size;
-        border-bottom-color: $theme-bg;
+        border-bottom-color: $border-color;
       }
     }
 
@@ -65,7 +70,7 @@
         left: 100%;
         top: 50%;
         margin-top: - $popover-arrow-size;
-        border-left-color: $theme-bg;
+        border-left-color: $border-color;
       }
     }
 
@@ -76,7 +81,7 @@
         right: 100%;
         top: 50%;
         margin-top: - $popover-arrow-size;
-        border-right-color: $theme-bg;
+        border-right-color: $border-color;
       }
     }
 
@@ -95,7 +100,7 @@
       &:before {
         bottom: 100%;
         left: $popover-arrow-size;
-        border-bottom-color: $theme-bg;
+        border-bottom-color: $border-color;
       }
     }
 
@@ -105,7 +110,7 @@
       &:before {
         bottom: 100%;
         right: $popover-arrow-size;
-        border-bottom-color: $theme-bg;
+        border-bottom-color: $border-color;
       }
     }
 
@@ -115,7 +120,7 @@
       &:before {
         top: 100%;
         left: $popover-arrow-size;
-        border-top-color: $theme-bg;
+        border-top-color: $border-color;
       }
     }
 
@@ -125,7 +130,7 @@
       &:before {
         top: 100%;
         right: $popover-arrow-size;
-        border-top-color: $theme-bg;
+        border-top-color: $border-color;
       }
     }
 
@@ -136,7 +141,7 @@
       &:before {
         bottom: 100%;
         left: $popover-arrow-size;
-        border-bottom-color: $theme-bg;
+        border-bottom-color: $border-color;
       }
     }
 
@@ -146,7 +151,7 @@
       &:before {
         bottom: 100%;
         right: $popover-arrow-size;
-        border-bottom-color: $theme-bg;
+        border-bottom-color: $border-color;
       }
     }
 
@@ -156,7 +161,7 @@
       &:before {
         top: 100%;
         left: $popover-arrow-size;
-        border-top-color: $theme-bg;
+        border-top-color: $border-color;
       }
     }
 
@@ -166,7 +171,7 @@
       &:before {
         top: 100%;
         right: $popover-arrow-size;
-        border-top-color: $theme-bg;
+        border-top-color: $border-color;
       }
     }
 
@@ -177,7 +182,7 @@
       &:before {
         top: $popover-arrow-size;
         left: 100%;
-        border-left-color: $theme-bg;
+        border-left-color: $border-color;
       }
     }
 
@@ -187,7 +192,7 @@
       &:before {
         top: $popover-arrow-size;
         right: 100%;
-        border-right-color: $theme-bg;
+        border-right-color: $border-color;
       }
     }
 
@@ -197,7 +202,7 @@
       &:before {
         bottom: $popover-arrow-size;
         left: 100%;
-        border-left-color: $theme-bg;
+        border-left-color: $border-color;
       }
     }
 
@@ -207,7 +212,7 @@
       &:before {
         bottom: $popover-arrow-size;
         right: 100%;
-        border-right-color: $theme-bg;
+        border-right-color: $border-color;
       }
     }
   }

@@ -18,6 +18,11 @@
       <li class="gf-tabs-item" ng-show="mode === 'new'">
         <span class="active gf-tabs-link">New</span>
       </li>
+			<li class="gf-tabs-item" >
+        <a class="gf-tabs-link" ng-click="mode = 'help';" ng-class="{active: mode === 'help'}">
+          Help
+        </a>
+      </li>
     </ul>
 
     <button class="tabbed-view-close-btn" ng-click="dismiss();">
@@ -30,7 +35,8 @@
     <div ng-if="mode === 'list'">
       <div ng-if="variables.length === 0">
         <em>No template variables defined</em>
-      </div>
+        <br /> <br />
+			</div>
       <table class="grafana-options-table">
         <tr ng-repeat="variable in variables">
           <td style="width: 1%">
@@ -64,6 +70,20 @@
       </table>
     </div>
 
+    <div ng-show="mode === 'help'">
+			<div class="grafana-info-box col-lg-8">
+				<h5>What does templating do?</h5>
+				<p>Templating allows for more interactive and dynamic dashboards. Instead of hard-coding things like server, application
+				and sensor name in you metric queries you can use variables in their place. Variables are shown as dropdown select boxes at the top of
+				the dashboard. These dropdowns make it easy to change the data being displayed in your dashboard.
+				<br>
+				<br>
+
+				Checkout the <a class="external-link" target="_blank" href="http://docs.grafana.org/reference/templating/">Templating documentation</a> for more information.
+				</p>
+			</div>
+		</div>
+
     <div class="gf-form" ng-show="mode === 'list'">
       <div class="gf-form-button-row">
         <a type="button" class="btn gf-form-button btn-success" ng-click="mode = 'new';"><i class="fa fa-plus" ></i>&nbsp;&nbsp;New</a>
@@ -73,10 +93,7 @@
     <form ng-if="mode === 'edit' || mode === 'new'" name="ctrl.form">
       <h5 class="section-heading">Variable</h5>
       <div class="gf-form-group">
-        <div class="gf-form" ng-show="ctrl.form.name.$error.pattern">
-          <span class="gf-form-error">Template names cannot begin with '__' that's reserved for Grafanas global variables</span>
-        </div>
-        <div class="gf-form-inline">
+				<div class="gf-form-inline">
           <div class="gf-form max-width-19">
             <span class="gf-form-label width-6">Name</span>
             <input type="text" class="gf-form-input" name="name" placeholder="name" ng-model='current.name' required ng-pattern="namePattern"></input>
@@ -93,6 +110,11 @@
             </div>
           </div>
         </div>
+
+				<div class="gf-form" ng-show="ctrl.form.name.$error.pattern">
+          <span class="gf-form-label gf-form-label--error">Template names cannot begin with '__' that's reserved for Grafanas global variables</span>
+        </div>
+
         <div class="gf-form-inline">
           <div class="gf-form max-width-19">
             <span class="gf-form-label width-6">Label</span>

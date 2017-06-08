@@ -7,6 +7,7 @@ import 'jquery.flot.stack';
 import 'jquery.flot.stackpercent';
 import 'jquery.flot.fillbelow';
 import 'jquery.flot.crosshair';
+import 'jquery.flot.dashes';
 import './jquery.flot.events';
 
 import $ from 'jquery';
@@ -17,9 +18,10 @@ import {tickStep} from 'app/core/utils/ticks';
 import {appEvents, coreModule} from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import {ThresholdManager} from './threshold_manager';
+import {EventManager} from 'app/features/annotations/all';
 import {convertValuesToHistogram, getSeriesValues} from './histogram';
 
-coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
+coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
   return {
     restrict: 'A',
     template: '',
@@ -27,13 +29,14 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
       var ctrl = scope.ctrl;
       var dashboard = ctrl.dashboard;
       var panel = ctrl.panel;
+      var annotations = [];
       var data;
-      var annotations;
       var plot;
       var sortedSeries;
       var legendSideLastValue = null;
       var rootScope = scope.$root;
       var panelWidth = 0;
+      var eventManager = new EventManager(ctrl, elem, popoverSrv);
       var thresholdManager = new ThresholdManager(ctrl);
       var tooltip = new GraphTooltip(elem, dashboard, scope, function() {
         return sortedSeries;
@@ -54,7 +57,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         if (!data) {
           return;
         }
-        annotations = ctrl.annotations;
+        annotations = ctrl.annotations || [];
         render_panel();
       });
 
@@ -169,8 +172,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         for (var i = 0; i < yaxis.length; i++) {
           var axis = yaxis[i];
           var panelOptions = panel.yaxes[i];
-          axis.options.max = panelOptions.max;
-          axis.options.min = panelOptions.min;
+          axis.options.max = axis.options.max !== null ? axis.options.max : panelOptions.max;
+          axis.options.min = axis.options.min !== null ? axis.options.min : panelOptions.min;
         }
       }
 
@@ -213,6 +216,9 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         // give space to alert editing
         thresholdManager.prepare(elem, data);
 
+        // un-check dashes if lines are unchecked
+        panel.dashes = panel.lines ? panel.dashes : false;
+
         var stack = panel.stack ? true : null;
 
         // Populate element
@@ -229,8 +235,13 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
               show: panel.lines,
               zero: false,
               fill: translateFillOption(panel.fill),
-              lineWidth: panel.linewidth,
+              lineWidth: panel.dashes ? 0 : panel.linewidth,
               steps: panel.steppedLine
+            },
+            dashes: {
+              show: panel.dashes,
+              lineWidth: panel.linewidth,
+              dashLength: [panel.dashLength, panel.spaceLength]
             },
             bars: {
               show: panel.bars,
@@ -269,7 +280,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         };
 
         for (let i = 0; i < data.length; i++) {
-          var series = data[i];
+          let series = data[i];
           series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
 
           // if hidden remove points and disable stack
@@ -285,7 +296,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
             options.series.bars.align = 'center';
 
             for (let i = 0; i < data.length; i++) {
-              var series = data[i];
+              let series = data[i];
               series.data = [[i + 1, series.stats[panel.xaxis.values[0]]]];
             }
 
@@ -328,8 +339,8 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
           }
         }
 
-        thresholdManager.addPlotOptions(options, panel);
-        addAnnotations(options);
+        thresholdManager.addFlotOptions(options, panel);
+        eventManager.addFlotEvents(annotations, options);
         configureAxisOptions(data, options);
 
         sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
@@ -412,7 +423,7 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
       function addXHistogramAxis(options, bucketSize) {
         let ticks, min, max;
 
-        if (data.length) {
+        if (data.length && bucketSize) {
           ticks = _.map(data[0].data, point => point[0]);
 
           // Expand ticks for pretty view
@@ -461,56 +472,6 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         };
       }
 
-      function addAnnotations(options) {
-        if (!annotations || annotations.length === 0) {
-          return;
-        }
-
-        var types = {};
-        types['$__alerting'] = {
-          color: 'rgba(237, 46, 24, 1)',
-          position: 'BOTTOM',
-          markerSize: 5,
-        };
-
-        types['$__ok'] = {
-          color: 'rgba(11, 237, 50, 1)',
-          position: 'BOTTOM',
-          markerSize: 5,
-        };
-
-        types['$__no_data'] = {
-          color: 'rgba(150, 150, 150, 1)',
-          position: 'BOTTOM',
-          markerSize: 5,
-        };
-
-        types['$__execution_error'] = ['$__no_data'];
-
-        for (var i = 0; i < annotations.length; i++) {
-          var item = annotations[i];
-          if (item.newState) {
-            console.log(item.newState);
-            item.eventType = '$__' + item.newState;
-            continue;
-          }
-
-          if (!types[item.source.name]) {
-            types[item.source.name] = {
-              color: item.source.iconColor,
-              position: 'BOTTOM',
-              markerSize: 5,
-            };
-          }
-        }
-
-        options.events = {
-          levels: _.keys(types).length + 1,
-          data: annotations,
-          types: types,
-        };
-      }
-
       function configureAxisOptions(data, options) {
         var defaults = {
           position: 'left',
@@ -544,6 +505,9 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
         if (axis.logBase === 1) {
           return;
         }
+
+        const minSetToZero = axis.min === 0;
+
         if (axis.min < Number.MIN_VALUE) {
           axis.min = null;
         }
@@ -593,12 +557,47 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
           return;
         }
 
-        axis.ticks = [];
-        var nextTick;
-        for (nextTick = min; nextTick <= max; nextTick *= axis.logBase) {
-          axis.ticks.push(nextTick);
+        if (Number.isFinite(min) && Number.isFinite(max)) {
+          if (minSetToZero) {
+            axis.min = 0.1;
+            min = 1;
+          }
+
+          axis.ticks = generateTicksForLogScaleYAxis(min, max, axis.logBase);
+          if (minSetToZero) {
+            axis.ticks.unshift(0.1);
+          }
+          if (axis.ticks[axis.ticks.length - 1] > axis.max) {
+            axis.max = axis.ticks[axis.ticks.length - 1];
+          }
+          axis.tickDecimals = decimalPlaces(min);
+        } else {
+          axis.ticks = [1, 2];
+          delete axis.min;
+          delete axis.max;
         }
-        axis.tickDecimals = decimalPlaces(min);
+      }
+
+      function generateTicksForLogScaleYAxis(min, max, logBase) {
+        let ticks = [];
+
+        var nextTick;
+        for (nextTick = min; nextTick <= max; nextTick *= logBase) {
+          ticks.push(nextTick);
+        }
+
+        const maxNumTicks = Math.ceil(ctrl.height/25);
+        const numTicks = ticks.length;
+        if (numTicks > maxNumTicks) {
+          const factor = Math.ceil(numTicks/maxNumTicks) * logBase;
+          ticks = [];
+
+          for (nextTick = min; nextTick <= (max * factor); nextTick *= factor) {
+            ticks.push(nextTick);
+          }
+        }
+
+        return ticks;
       }
 
       function decimalPlaces(num) {
@@ -639,12 +638,30 @@ coreModule.directive('grafanaGraph', function($rootScope, timeSrv) {
       }
 
       elem.bind("plotselected", function (event, ranges) {
-        scope.$apply(function() {
-          timeSrv.setTime({
-            from  : moment.utc(ranges.xaxis.from),
-            to    : moment.utc(ranges.xaxis.to),
+        if (ranges.ctrlKey || ranges.metaKey)  {
+          // scope.$apply(() => {
+          //   eventManager.updateTime(ranges.xaxis);
+          // });
+        } else {
+          scope.$apply(function() {
+            timeSrv.setTime({
+              from  : moment.utc(ranges.xaxis.from),
+              to    : moment.utc(ranges.xaxis.to),
+            });
           });
-        });
+        }
+      });
+
+      elem.bind("plotclick", function (event, pos, item) {
+        if (pos.ctrlKey || pos.metaKey || eventManager.event)  {
+          // Skip if range selected (added in "plotselected" event handler)
+          let isRangeSelection = pos.x !== pos.x1;
+          if (!isRangeSelection) {
+            // scope.$apply(() => {
+            //   eventManager.updateTime({from: pos.x, to: null});
+            // });
+          }
+        }
       });
 
       scope.$on('$destroy', function() {

@@ -104,7 +104,7 @@ function (angular, _) {
         query = $scope.datasource.getDimensionKeys($scope.target.namespace, $scope.target.region);
       } else if (segment.type === 'value')  {
         var dimensionKey = $scope.dimSegments[$index-2].value;
-        query = $scope.datasource.getDimensionValues(target.region, target.namespace, target.metricName, dimensionKey, {});
+        query = $scope.datasource.getDimensionValues(target.region, target.namespace, target.metricName, dimensionKey, target.dimensions);
       }
 
       return query.then($scope.transformToSegments(true)).then(function(results) {

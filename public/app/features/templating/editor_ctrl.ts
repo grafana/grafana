@@ -10,7 +10,7 @@ export class VariableEditorCtrl {
   constructor(private $scope, private datasourceSrv, private variableSrv, templateSrv) {
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
-    $scope.namePattern = /^((?!__).)*$/;
+    $scope.namePattern = /^(?!__).*$/;
 
     $scope.refreshOptions = [
       {value: 0, text: "Never"},
@@ -36,7 +36,7 @@ export class VariableEditorCtrl {
       $scope.mode = 'list';
 
       $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
-        return !ds.meta.builtIn && ds.value !== null;
+        return !ds.meta.mixed && ds.value !== null;
       });
 
       $scope.datasourceTypes = _($scope.datasources).uniqBy('meta.id').map(function(ds) {

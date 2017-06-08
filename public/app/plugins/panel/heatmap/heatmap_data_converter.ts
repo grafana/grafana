@@ -16,89 +16,33 @@ interface YBucket {
   values: number[];
 }
 
-function elasticHistogramToHeatmap(series) {
-  let seriesBuckets = _.map(series, (s: TimeSeries) => {
-    return convertEsSeriesToHeatmap(s);
-  });
-  let buckets = mergeBuckets(seriesBuckets);
-  return buckets;
-}
+function elasticHistogramToHeatmap(seriesList) {
+  let heatmap = {};
 
-function convertEsSeriesToHeatmap(series: TimeSeries, saveZeroCounts = false) {
-  let xBuckets: XBucket[] = [];
-
-  _.forEach(series.datapoints, point => {
-    let bound = series.alias;
-    let count = point[VALUE_INDEX];
-
-    if (!count) {
+  for (let series of seriesList) {
+    let bound = Number(series.alias);
+    if (isNaN(bound)) {
       return;
     }
 
-    let values = new Array(Math.round(count));
-    values.fill(Number(bound));
+    for (let point of series.datapoints) {
+      let count = point[VALUE_INDEX];
+      let time = point[TIME_INDEX];
 
-    let valueBuckets = {};
-    valueBuckets[bound] = {
-      y: Number(bound),
-      values: values
-    };
+      if (!_.isNumber(count)) {
+        continue;
+      }
 
-    let xBucket: XBucket = {
-      x: point[TIME_INDEX],
-      buckets: valueBuckets
-    };
+      let bucket = heatmap[time];
+      if (!bucket) {
+        bucket = heatmap[time] = {x: time, buckets: {}};
+      }
 
-    // Don't push buckets with 0 count until saveZeroCounts flag is set
-    if (count !== 0 || (count === 0 && saveZeroCounts)) {
-      xBuckets.push(xBucket);
+      bucket.buckets[bound] = {y: bound, count: count, values: [], points: []};
     }
-  });
-
-  let heatmap: any = {};
-  _.forEach(xBuckets, (bucket: XBucket) => {
-    heatmap[bucket.x] = bucket;
-  });
+  }
 
   return heatmap;
-}
-
-/**
- * Convert set of time series into heatmap buckets
- * @return {Object}    Heatmap object:
- * {
- *   xBucketBound_1: {
- *     x: xBucketBound_1,
- *     buckets: {
- *       yBucketBound_1: {
- *         y: yBucketBound_1,
- *         bounds: {bottom, top}
- *         values: [val_1, val_2, ..., val_K],
- *         points: [[val_Y, val_X, series_name], ..., [...]],
- *         seriesStat: {seriesName_1: val_1, seriesName_2: val_2}
- *       },
- *       ...
- *       yBucketBound_M: {}
- *     },
- *     values: [val_1, val_2, ..., val_K],
- *     points: [
- *       [val_Y, val_X, series_name], (point_1)
- *       ...
- *       [...] (point_K)
- *     ]
- *   },
- *   xBucketBound_2: {},
- *   ...
- *   xBucketBound_N: {}
- * }
- */
-function convertToHeatMap(series, yBucketSize, xBucketSize, logBase) {
-  let seriesBuckets = _.map(series, s => {
-    return seriesToHeatMap(s, yBucketSize, xBucketSize, logBase);
-  });
-
-  let buckets = mergeBuckets(seriesBuckets);
-  return buckets;
 }
 
 /**
@@ -109,18 +53,15 @@ function convertToHeatMap(series, yBucketSize, xBucketSize, logBase) {
 function convertToCards(buckets) {
   let cards = [];
   _.forEach(buckets, xBucket => {
-    _.forEach(xBucket.buckets, (yBucket, key) => {
-      if (yBucket.values.length) {
-        let card = {
-          x: Number(xBucket.x),
-          y: Number(key),
-          yBounds: yBucket.bounds,
-          values: yBucket.values,
-          seriesStat: getSeriesStat(yBucket.points)
-        };
-
-        cards.push(card);
-      }
+    _.forEach(xBucket.buckets, yBucket=> {
+      let card = {
+        x: xBucket.x,
+        y: yBucket.y,
+        yBounds: yBucket.bounds,
+        values: yBucket.values,
+        count: yBucket.count,
+      };
+      cards.push(card);
     });
   });
 
@@ -151,7 +92,8 @@ function mergeZeroBuckets(buckets, minValue) {
     let emptyBucket = {
       bounds: {bottom: 0, top: 0},
       values: [],
-      points: []
+      points: [],
+      count: 0,
     };
 
     let nullBucket = yBuckets[0] || emptyBucket;
@@ -161,75 +103,72 @@ function mergeZeroBuckets(buckets, minValue) {
       y: 0,
       bounds: {bottom: minValue, top: minBucket.bounds.top || minValue},
       values: [],
-      points: []
+      points: [],
+      count: 0,
     };
 
-    if (nullBucket.values) {
-      newBucket.values = nullBucket.values.concat(minBucket.values);
-    }
-    if (nullBucket.points) {
-      newBucket.points = nullBucket.points.concat(minBucket.points);
+    newBucket.points = nullBucket.points.concat(minBucket.points);
+    newBucket.values = nullBucket.values.concat(minBucket.values);
+    newBucket.count = newBucket.values.length;
+
+    if (newBucket.count === 0) {
+      return;
     }
 
-    let newYBuckets = {};
-    _.forEach(yBuckets, (bucket, bound) => {
-      bound = Number(bound);
-      if (bound !== 0 && bound !== minValue) {
-        newYBuckets[bound] = bucket;
-      }
-    });
-    newYBuckets[0] = newBucket;
-    xBucket.buckets = newYBuckets;
+    delete yBuckets[minValue];
+    yBuckets[0] = newBucket;
   });
 
   return buckets;
 }
 
 /**
- * Remove 0 values from heatmap buckets.
+   * Convert set of time series into heatmap buckets
+   * @return {Object}    Heatmap object:
+ * {
+ *   xBucketBound_1: {
+ *     x: xBucketBound_1,
+ *     buckets: {
+ *       yBucketBound_1: {
+ *         y: yBucketBound_1,
+ *         bounds: {bottom, top}
+ *         values: [val_1, val_2, ..., val_K],
+ *         points: [[val_Y, val_X, series_name], ..., [...]],
+ *         seriesStat: {seriesName_1: val_1, seriesName_2: val_2}
+ *       },
+ *       ...
+ *       yBucketBound_M: {}
+ *     },
+ *     values: [val_1, val_2, ..., val_K],
+ *     points: [
+ *       [val_Y, val_X, series_name], (point_1)
+ *       ...
+ *       [...] (point_K)
+ *     ]
+ *   },
+ *   xBucketBound_2: {},
+ *   ...
+ *   xBucketBound_N: {}
+ * }
  */
-function removeZeroBuckets(buckets) {
-  _.forEach(buckets, xBucket => {
-    let yBuckets = xBucket.buckets;
-    let newYBuckets = {};
-    _.forEach(yBuckets, (bucket, bound) => {
-      if (bucket.y !== 0) {
-        newYBuckets[bound] = bucket;
-      }
+function convertToHeatMap(seriesList, yBucketSize, xBucketSize, logBase = 1) {
+  let heatmap = {};
+
+  for (let series of seriesList) {
+    let datapoints = series.datapoints;
+    let seriesName = series.label;
+
+    // Slice series into X axis buckets
+    // |    | ** |    |  * |  **|
+    // |  * |*  *|*   |** *| *  |
+    // |** *|    | ***|    |*   |
+    // |____|____|____|____|____|_
+    //
+    _.forEach(datapoints, point => {
+      let bucketBound = getBucketBound(point[TIME_INDEX], xBucketSize);
+      pushToXBuckets(heatmap, point, bucketBound, seriesName);
     });
-    xBucket.buckets = newYBuckets;
-  });
-
-  return buckets;
-}
-
-/**
- * Count values number for each timeseries in given bucket
- * @param  {Array}  points Bucket's datapoints with series name ([val, ts, series_name])
- * @return {Object}        seriesStat: {seriesName_1: val_1, seriesName_2: val_2}
- */
-function getSeriesStat(points) {
-  return _.countBy(points, p => p[2]);
-}
-
-/**
- * Convert individual series to heatmap buckets
- */
-function seriesToHeatMap(series, yBucketSize, xBucketSize, logBase = 1) {
-  let datapoints = series.datapoints;
-  let seriesName = series.label;
-  let xBuckets = {};
-
-  // Slice series into X axis buckets
-  // |    | ** |    |  * |  **|
-  // |  * |*  *|*   |** *| *  |
-  // |** *|    | ***|    |*   |
-  // |____|____|____|____|____|_
-  //
-  _.forEach(datapoints, point => {
-    let bucketBound = getBucketBound(point[TIME_INDEX], xBucketSize);
-    pushToXBuckets(xBuckets, point, bucketBound, seriesName);
-  });
+  }
 
   // Slice X axis buckets into Y (value) buckets
   // |  **|     |2|,
@@ -237,14 +176,15 @@ function seriesToHeatMap(series, yBucketSize, xBucketSize, logBase = 1) {
   // |*   | --/ |1|,
   // |____|     |0|
   //
-  _.forEach(xBuckets, xBucket => {
+  _.forEach(heatmap, xBucket => {
     if (logBase !== 1) {
       xBucket.buckets = convertToLogScaleValueBuckets(xBucket, yBucketSize, logBase);
     } else {
       xBucket.buckets = convertToValueBuckets(xBucket, yBucketSize);
     }
   });
-  return xBuckets;
+
+  return heatmap;
 }
 
 function pushToXBuckets(buckets, point, bucketNum, seriesName) {
@@ -269,13 +209,13 @@ function pushToXBuckets(buckets, point, bucketNum, seriesName) {
 function pushToYBuckets(buckets, bucketNum, value, point, bounds) {
   if (buckets[bucketNum]) {
     buckets[bucketNum].values.push(value);
-    buckets[bucketNum].points.push(point);
+    buckets[bucketNum].count += 1;
   } else {
     buckets[bucketNum] = {
       y: bucketNum,
       bounds: bounds,
       values: [value],
-      points: [point]
+      count: 1,
     };
   }
 }
@@ -308,6 +248,7 @@ function convertToValueBuckets(xBucket, bucketSize) {
   let values = xBucket.values;
   let points = xBucket.points;
   let buckets = {};
+
   _.forEach(values, (val, index) => {
     let bounds = getBucketBounds(val, bucketSize);
     let bucketNum = bounds.bottom;
@@ -361,53 +302,6 @@ function convertToLogScaleValueBuckets(xBucket, yBucketSplitFactor, logBase) {
   });
 
   return buckets;
-}
-
-/**
- * Merge individual buckets for all series into one
- * @param  {Array}  seriesBuckets Array of series buckets
- * @return {Object}               Merged buckets.
- */
-function mergeBuckets(seriesBuckets) {
-  let mergedBuckets: any = {};
-  _.forEach(seriesBuckets, (seriesBucket, index) => {
-    if (index === 0) {
-      mergedBuckets = seriesBucket;
-    } else {
-      _.forEach(seriesBucket, (xBucket, xBound) => {
-        if (mergedBuckets[xBound]) {
-          if (xBucket.points) {
-            mergedBuckets[xBound].points = xBucket.points.concat(mergedBuckets[xBound].points);
-          }
-          if (xBucket.values) {
-            mergedBuckets[xBound].values = xBucket.values.concat(mergedBuckets[xBound].values);
-          }
-
-          _.forEach(xBucket.buckets, (yBucket, yBound) => {
-            let bucket = mergedBuckets[xBound].buckets[yBound];
-            if (bucket && bucket.values) {
-              mergedBuckets[xBound].buckets[yBound].values = bucket.values.concat(yBucket.values);
-
-              if (bucket.points) {
-                mergedBuckets[xBound].buckets[yBound].points = bucket.points.concat(yBucket.points);
-              }
-            } else {
-              mergedBuckets[xBound].buckets[yBound] = yBucket;
-            }
-
-            let points = mergedBuckets[xBound].buckets[yBound].points;
-            if (points) {
-              mergedBuckets[xBound].buckets[yBound].seriesStat = getSeriesStat(points);
-            }
-          });
-        } else {
-          mergedBuckets[xBound] = xBucket;
-        }
-      });
-    }
-  });
-
-  return mergedBuckets;
 }
 
 // Get minimum non zero value.
@@ -474,36 +368,36 @@ function isHeatmapDataEqual(objA: any, objB: any): boolean {
   let is_eql = !emptyXOR(objA, objB);
 
   _.forEach(objA, (xBucket: XBucket, x) => {
-    if (objB[x]) {
+      if (objB[x]) {
       if (emptyXOR(xBucket.buckets, objB[x].buckets)) {
-        is_eql = false;
-        return false;
+      is_eql = false;
+      return false;
       }
 
       _.forEach(xBucket.buckets, (yBucket: YBucket, y) => {
-        if (objB[x].buckets && objB[x].buckets[y]) {
+          if (objB[x].buckets && objB[x].buckets[y]) {
           if (objB[x].buckets[y].values) {
-            is_eql = _.isEqual(_.sortBy(yBucket.values), _.sortBy(objB[x].buckets[y].values));
-            if (!is_eql) {
-              return false;
-            }
-          } else {
-            is_eql = false;
-            return false;
+          is_eql = _.isEqual(_.sortBy(yBucket.values), _.sortBy(objB[x].buckets[y].values));
+          if (!is_eql) {
+          return false;
           }
-        } else {
+          } else {
           is_eql = false;
           return false;
-        }
-      });
+          }
+          } else {
+          is_eql = false;
+          return false;
+          }
+          });
 
       if (!is_eql) {
         return false;
       }
-    } else {
-      is_eql = false;
-      return false;
-    }
+      } else {
+        is_eql = false;
+        return false;
+      }
   });
 
   return is_eql;
@@ -515,12 +409,11 @@ function emptyXOR(foo: any, bar: any): boolean {
 
 export {
   convertToHeatMap,
-  elasticHistogramToHeatmap,
-  convertToCards,
-  removeZeroBuckets,
-  mergeZeroBuckets,
-  getMinLog,
-  getValueBucketBound,
-  isHeatmapDataEqual,
-  calculateBucketSize
+    elasticHistogramToHeatmap,
+    convertToCards,
+    mergeZeroBuckets,
+    getMinLog,
+    getValueBucketBound,
+    isHeatmapDataEqual,
+    calculateBucketSize
 };

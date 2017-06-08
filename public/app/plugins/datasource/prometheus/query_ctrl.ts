@@ -12,6 +12,7 @@ class PrometheusQueryCtrl extends QueryCtrl {
 
   metric: any;
   resolutions: any;
+  formats: any;
   oldTarget: any;
   suggestMetrics: any;
   linkToPrometheus: any;
@@ -23,15 +24,20 @@ class PrometheusQueryCtrl extends QueryCtrl {
     var target = this.target;
     target.expr = target.expr || '';
     target.intervalFactor = target.intervalFactor || 2;
+    target.format = target.format || this.getDefaultFormat();
 
     this.metric = '';
     this.resolutions = _.map([1,2,3,4,5,10], function(f) {
       return {factor: f, label: '1/' + f};
     });
 
+    this.formats = [
+      {text: 'Time series', value: 'time_series'},
+      {text: 'Table', value: 'table'},
+    ];
+
     $scope.$on('typeahead-updated', () => {
       this.$scope.$apply(() => {
-
         this.target.expr += this.target.metric;
         this.metric = '';
         this.refreshMetricData();
@@ -46,6 +52,13 @@ class PrometheusQueryCtrl extends QueryCtrl {
     };
 
     this.updateLink();
+  }
+
+  getDefaultFormat() {
+    if (this.panelCtrl.panel.type === 'table') {
+      return 'table';
+    }
+    return 'time_series';
   }
 
   refreshMetricData() {
@@ -65,15 +78,15 @@ class PrometheusQueryCtrl extends QueryCtrl {
     var rangeDiff = Math.ceil((range.to.valueOf() - range.from.valueOf()) / 1000);
     var endTime = range.to.utc().format('YYYY-MM-DD HH:mm');
     var expr = {
-      expr: this.templateSrv.replace(this.target.expr, this.panelCtrl.panel.scopedVars, this.datasource.interpolateQueryExpr),
-      range_input: rangeDiff + 's',
-      end_input: endTime,
-      step_input: this.target.step,
-      stacked: this.panelCtrl.panel.stack,
-      tab: 0
+      'g0.expr': this.templateSrv.replace(this.target.expr, this.panelCtrl.panel.scopedVars, this.datasource.interpolateQueryExpr),
+      'g0.range_input': rangeDiff + 's',
+      'g0.end_input': endTime,
+      'g0.step_input': this.target.step,
+      'g0.stacked': this.panelCtrl.panel.stack ? 1 : 0,
+      'g0.tab': 0
     };
-    var hash = encodeURIComponent(JSON.stringify([expr]));
-    this.linkToPrometheus = this.datasource.directUrl + '/graph#' + hash;
+    var args = _.map(expr, (v, k) => { return k + '=' + encodeURIComponent(v); }).join('&');
+    this.linkToPrometheus = this.datasource.directUrl + '/graph?' + args;
   }
 
   getCollapsedText() {

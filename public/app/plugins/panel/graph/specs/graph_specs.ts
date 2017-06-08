@@ -153,6 +153,97 @@ describe('grafanaGraph', function() {
     });
   });
 
+  graphScenario('when logBase is log 10 and data points contain only zeroes', function(ctx) {
+    ctx.setup(function(ctrl, data) {
+      ctrl.panel.yaxes[0].logBase = 10;
+      data[0] = new TimeSeries({
+        datapoints: [[0,1],[0,2],[0,3],[0,4]],
+        alias: 'seriesAutoscale',
+      });
+      data[0].yaxis = 1;
+    });
+
+    it('should not set min and max and should create some fake ticks', function() {
+      var axisAutoscale = ctx.plotOptions.yaxes[0];
+      expect(axisAutoscale.transform(100)).to.be(2);
+      expect(axisAutoscale.inverseTransform(-3)).to.be(0.001);
+      expect(axisAutoscale.min).to.be(undefined);
+      expect(axisAutoscale.max).to.be(undefined);
+      expect(axisAutoscale.ticks.length).to.be(2);
+      expect(axisAutoscale.ticks[0]).to.be(1);
+      expect(axisAutoscale.ticks[1]).to.be(2);
+      expect(axisAutoscale.tickDecimals).to.be(undefined);
+    });
+  });
+
+  // y-min set 0 is a special case for log scale,
+  // this approximates it by setting min to 0.1
+  graphScenario('when logBase is log 10 and y-min is set to 0 and auto min is > 0.1', function(ctx) {
+    ctx.setup(function(ctrl, data) {
+      ctrl.panel.yaxes[0].logBase = 10;
+      ctrl.panel.yaxes[0].min = '0';
+      data[0] = new TimeSeries({
+        datapoints: [[2000,1],[4 ,2],[500,3],[3000,4]],
+        alias: 'seriesAutoscale',
+      });
+      data[0].yaxis = 1;
+    });
+
+    it('should set min to 0.1 and add a tick for 0.1 and tickDecimals to be 0', function() {
+      var axisAutoscale = ctx.plotOptions.yaxes[0];
+      expect(axisAutoscale.transform(100)).to.be(2);
+      expect(axisAutoscale.inverseTransform(-3)).to.be(0.001);
+      expect(axisAutoscale.min).to.be(0.1);
+      expect(axisAutoscale.max).to.be(10000);
+      expect(axisAutoscale.ticks.length).to.be(6);
+      expect(axisAutoscale.ticks[0]).to.be(0.1);
+      expect(axisAutoscale.ticks[5]).to.be(10000);
+      expect(axisAutoscale.tickDecimals).to.be(0);
+    });
+  });
+
+  graphScenario('when logBase is log 2 and y-min is set to 0 and num of ticks exceeds max', function(ctx) {
+    ctx.setup(function(ctrl, data) {
+      const heightForApprox5Ticks = 125;
+      ctrl.height = heightForApprox5Ticks;
+      ctrl.panel.yaxes[0].logBase = 2;
+      ctrl.panel.yaxes[0].min = '0';
+      data[0] = new TimeSeries({
+        datapoints: [[2000,1],[4 ,2],[500,3],[3000,4], [10000,5], [100000,6]],
+        alias: 'seriesAutoscale',
+      });
+      data[0].yaxis = 1;
+    });
+
+    it('should regenerate ticks so that if fits on the y-axis', function() {
+      var axisAutoscale = ctx.plotOptions.yaxes[0];
+      expect(axisAutoscale.min).to.be(0.1);
+      expect(axisAutoscale.ticks.length).to.be(8);
+      expect(axisAutoscale.ticks[0]).to.be(0.1);
+      expect(axisAutoscale.ticks[7]).to.be(262144);
+      expect(axisAutoscale.max).to.be(262144);
+      expect(axisAutoscale.tickDecimals).to.be(0);
+    });
+
+    it('should set axis max to be max tick value', function() {
+      expect(ctx.plotOptions.yaxes[0].max).to.be(262144);
+    });
+  });
+
+  graphScenario('dashed lines options', function(ctx) {
+    ctx.setup(function(ctrl) {
+      ctrl.panel.lines = true;
+      ctrl.panel.linewidth = 2;
+      ctrl.panel.dashes = true;
+    });
+
+    it('should configure dashed plot with correct options', function() {
+      expect(ctx.plotOptions.series.lines.show).to.be(true);
+      expect(ctx.plotOptions.series.dashes.lineWidth).to.be(2);
+      expect(ctx.plotOptions.series.dashes.show).to.be(true);
+    });
+  });
+
   graphScenario('should use timeStep for barWidth', function(ctx) {
     ctx.setup(function(ctrl, data) {
       ctrl.panel.bars = true;

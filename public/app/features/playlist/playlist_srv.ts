@@ -11,6 +11,7 @@ class PlaylistSrv {
   private interval: any;
   private playlistId: number;
   private startUrl: string;
+  public isPlaying: boolean;
 
   /** @ngInject */
   constructor(private $rootScope: any, private $location: any, private $timeout: any, private backendSrv: any) { }
@@ -42,7 +43,7 @@ class PlaylistSrv {
     this.startUrl = window.location.href;
     this.index = 0;
     this.playlistId = playlistId;
-    this.$rootScope.playlistSrv = this;
+    this.isPlaying = true;
 
     this.backendSrv.get(`/api/playlists/${playlistId}`).then(playlist => {
       this.backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then(dashboards => {
@@ -55,13 +56,12 @@ class PlaylistSrv {
 
   stop() {
     this.index = 0;
+    this.isPlaying = false;
     this.playlistId = 0;
 
     if (this.cancelPromise) {
       this.$timeout.cancel(this.cancelPromise);
     }
-
-    this.$rootScope.playlistSrv = null;
   }
 }
 

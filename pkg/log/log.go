@@ -15,6 +15,8 @@ import (
 	"github.com/go-stack/stack"
 	"github.com/inconshreveable/log15"
 	"github.com/inconshreveable/log15/term"
+
+	"github.com/grafana/grafana/pkg/util"
 )
 
 var Root log15.Logger
@@ -34,7 +36,7 @@ func New(logger string, ctx ...interface{}) Logger {
 func Trace(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
-		message = fmt.Sprintf(format, v)
+		message = fmt.Sprintf(format, v...)
 	} else {
 		message = format
 	}
@@ -45,7 +47,7 @@ func Trace(format string, v ...interface{}) {
 func Debug(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
-		message = fmt.Sprintf(format, v)
+		message = fmt.Sprintf(format, v...)
 	} else {
 		message = format
 	}
@@ -60,7 +62,7 @@ func Debug2(message string, v ...interface{}) {
 func Info(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
-		message = fmt.Sprintf(format, v)
+		message = fmt.Sprintf(format, v...)
 	} else {
 		message = format
 	}
@@ -75,7 +77,7 @@ func Info2(message string, v ...interface{}) {
 func Warn(format string, v ...interface{}) {
 	var message string
 	if len(v) > 0 {
-		message = fmt.Sprintf(format, v)
+		message = fmt.Sprintf(format, v...)
 	} else {
 		message = format
 	}
@@ -88,7 +90,7 @@ func Warn2(message string, v ...interface{}) {
 }
 
 func Error(skip int, format string, v ...interface{}) {
-	Root.Error(fmt.Sprintf(format, v))
+	Root.Error(fmt.Sprintf(format, v...))
 }
 
 func Error2(message string, v ...interface{}) {
@@ -96,7 +98,7 @@ func Error2(message string, v ...interface{}) {
 }
 
 func Critical(skip int, format string, v ...interface{}) {
-	Root.Crit(fmt.Sprintf(format, v))
+	Root.Crit(fmt.Sprintf(format, v...))
 }
 
 func Fatal(skip int, format string, v ...interface{}) {
@@ -172,7 +174,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 	Close()
 
 	defaultLevelName, _ := getLogLevelFromConfig("log", "info", cfg)
-	defaultFilters := getFilters(cfg.Section("log").Key("filters").Strings(" "))
+	defaultFilters := getFilters(util.SplitString(cfg.Section("log").Key("filters").String()))
 
 	handlers := make([]log15.Handler, 0)
 
@@ -185,7 +187,7 @@ func ReadLoggingConfig(modes []string, logsPath string, cfg *ini.File) {
 
 		// Log level.
 		_, level := getLogLevelFromConfig("log."+mode, defaultLevelName, cfg)
-		modeFilters := getFilters(sec.Key("filters").Strings(" "))
+		modeFilters := getFilters(util.SplitString(sec.Key("filters").String()))
 		format := getLogFormat(sec.Key("format").MustString(""))
 
 		var handler log15.Handler

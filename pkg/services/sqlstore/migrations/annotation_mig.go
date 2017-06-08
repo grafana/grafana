@@ -35,7 +35,6 @@ func addAnnotationMig(mg *Migrator) {
 	}
 
 	mg.AddMigration("Drop old annotation table v4", NewDropTableMigration("annotation"))
-
 	mg.AddMigration("create annotation table v5", NewAddTableMigration(table))
 
 	// create indices
@@ -53,5 +52,9 @@ func addAnnotationMig(mg *Migrator) {
 		{Name: "prev_state", Type: DB_NVarchar, Length: 25, Nullable: false},
 		{Name: "new_state", Type: DB_NVarchar, Length: 25, Nullable: false},
 		{Name: "data", Type: DB_Text, Nullable: false},
+	}))
+
+	mg.AddMigration("Add column region_id to annotation table", NewAddColumnMigration(table, &Column{
+		Name: "region_id", Type: DB_BigInt, Nullable: true, Default: "0",
 	}))
 }

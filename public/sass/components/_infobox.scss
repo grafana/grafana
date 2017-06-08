@@ -10,11 +10,13 @@
 
 .grafana-info-box {
   position: relative;
-  padding: 5px 20px;
-  background-color: $tight-form-bg;
-  border: 1px solid $tight-form-border;
+  background: $card-background;
+  box-shadow: $card-shadow;
+  padding: 1rem;
+  border-radius: 4px;
+
   h5 {
-    margin-top: 5px;
+    margin-bottom: $spacer;
   }
   ul {
     padding-left: $spacer;

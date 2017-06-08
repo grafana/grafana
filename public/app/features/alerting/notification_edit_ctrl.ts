@@ -7,6 +7,7 @@ import {appEvents, coreModule} from 'app/core/core';
 
 export class AlertNotificationEditCtrl {
   theForm: any;
+  navModel: any;
   testSeverity = "critical";
   notifiers: any;
   notifierTemplateId: string;
@@ -23,7 +24,9 @@ export class AlertNotificationEditCtrl {
   };
 
   /** @ngInject */
-  constructor(private $routeParams, private backendSrv, private $location, private $templateCache) {
+  constructor(private $routeParams, private backendSrv, private $location, private $templateCache, navModelSrv) {
+    this.navModel = navModelSrv.getAlertingNav();
+
     this.backendSrv.get(`/api/alert-notifiers`).then(notifiers => {
       this.notifiers = notifiers;
 
