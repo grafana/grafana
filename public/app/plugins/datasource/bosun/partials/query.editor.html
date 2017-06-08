@@ -1,0 +1,69 @@
+<div class="tight-form">
+  <ul class="tight-form-list pull-right">
+    <li class="tight-form-item small" ng-show="target.datasource">
+      <em>{{target.datasource}}</em>
+    </li>
+    <li class="tight-form-item">
+      <div class="dropdown">
+        <a class="pointer dropdown-toggle" data-toggle="dropdown" tabindex="1">
+          <i class="fa fa-bars"></i>
+        </a>
+        <ul class="dropdown-menu pull-right" role="menu">
+          <li role="menuitem"><a tabindex="1" ng-click="toggleQueryMode()">Switch editor mode</a></li>
+          <li role="menuitem"><a tabindex="1" ng-click="duplicateDataQuery(target)">Duplicate</a></li>
+          <li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index-1)">Move up</a></li>
+          <li role="menuitem"><a tabindex="1" ng-click="moveDataQuery($index, $index+1)">Move down</a></li>
+        </ul>
+      </div>
+    </li>
+    <li class="tight-form-item last">
+      <a class="pointer" tabindex="1" ng-click="removeDataQuery(target)">
+        <i class="fa fa-remove"></i>
+      </a>
+    </li>
+  </ul>
+
+  <ul class="tight-form-list">
+    <li class="tight-form-item" style="min-width: 15px; text-align: center">
+      {{target.refId}}
+    </li>
+    <li>
+      <a  class="tight-form-item"
+          ng-click="target.hide = !target.hide; get_data();"
+          role="menuitem">
+        <i class="fa fa-eye"></i>
+      </a>
+    </li>
+  </ul>
+
+  <ul class="tight-form-list" role="menu">
+    <li class="tight-form-item" style="width: 94px">
+      Query
+    </li>
+    <li>
+      <textarea
+             class="input-xxlarge tight-form-input"
+             ng-model="target.expr"
+             spellcheck='false'
+             placeholder="query expression"
+             data-min-length=0 data-items=100
+             ng-model-onblur
+             ng-change="get_data()">
+      </textarea>
+    </li>
+    <li class="tight-form-item">
+      Alias:
+      <tip>Use patterns like $tag_tagname to replace part of the alias for a tag value</tip>
+    </li>
+    <li>
+      <input type="text" class="tight-form-input input-large"
+      ng-model="target.alias"
+      spellcheck='false'
+      placeholder="series alias"
+      data-min-length=0 data-items=100
+      ng-blur="get_data()"></input>
+    </li>
+  </ul>
+
+  <div class="clearfix"></div>
+</div>
