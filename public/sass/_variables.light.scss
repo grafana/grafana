@@ -99,7 +99,8 @@ $panel-bg: 		       $gray-7;
 $panel-border-color: $gray-5;
 $panel-border:       solid 1px $panel-border-color;
 $panel-drop-zone-bg: repeating-linear-gradient(-128deg, $body-bg, $body-bg 10px, $gray-6 10px, $gray-6 20px);
-$panel-menu-border:  solid 1px white;
+$panel-header-hover-bg:       $gray-6;
+$panel-header-menu-hover-bg:  $gray-4;
 
 $divider-border-color:	      $gray-2;
 

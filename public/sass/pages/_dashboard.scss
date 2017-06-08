@@ -70,17 +70,13 @@ div.flot-text {
 }
 
 .panel-menu-container {
-  margin-left: 8px;
+  margin-left: 6px;
 }
 
 .panel-menu-toggle {
   color: $text-color-faint;
   cursor: pointer;
   padding: 3px 5px;
-
-  &:hover {
-    background: $dark-4;
-  }
 }
 
 .panel-loading {
@@ -94,11 +90,13 @@ div.flot-text {
   text-align: center;
 
   &:hover {
-    background: $side-menu-bg;
+    background: $panel-header-hover-bg;
 
-    .panel-title-caret {
+    .panel-menu-toggle {
       color: $text-color;
+      background: $panel-header-menu-hover-bg;
     }
+
   }
 }
 
@@ -107,6 +105,8 @@ div.flot-text {
   text-align: left;
   background: $side-menu-bg;
   box-shadow: $search-shadow;
+  top: 25px;
+  left: -100px;
 
   li a {
     display: block;

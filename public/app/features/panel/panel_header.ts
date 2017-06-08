@@ -1,5 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
+import $ from 'jquery';
 import angular from 'angular';
 import {coreModule} from 'app/core/core';
 
@@ -37,7 +38,21 @@ function panelHeader() {
   return {
     restrict: 'E',
     template: template,
-    link: function() {
+    link: function(scope, elem, attrs) {
+
+      elem.click(function(evt) {
+        const targetClass = evt.target.className;
+
+        if (targetClass === 'panel-title-text drag-handle' || targetClass === 'panel-title drag-handle') {
+          evt.stopPropagation();
+          elem.find('[data-toggle=dropdown]').dropdown('toggle');
+        }
+
+        // var toggleAttribute = evt.getAttribute('data-toggle');
+        // if (!toggleAttribute) {
+        //   elem.find('[data-toggle=dropdown]').click();
+        // }
+      });
     }
   };
 }
