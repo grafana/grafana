@@ -111,36 +111,38 @@ func (e *DashAlertExtractor) GetAlerts() ([]*m.Alert, error) {
 				Frequency:   frequency,
 			}
 
-			for _, condition := range jsonAlert.Get("conditions").MustArray() {
-				jsonCondition := simplejson.NewFromAny(condition)
+			for _, conditionType := range []string{"conditions", "conditionsKeep"} {
+				for _, condition := range jsonAlert.Get(conditionType).MustArray() {
+					jsonCondition := simplejson.NewFromAny(condition)
 
-				jsonQuery := jsonCondition.Get("query")
-				queryRefId := jsonQuery.Get("params").MustArray()[0].(string)
-				panelQuery := findPanelQueryByRefId(panel, queryRefId)
+					jsonQuery := jsonCondition.Get("query")
+					queryRefId := jsonQuery.Get("params").MustArray()[0].(string)
+					panelQuery := findPanelQueryByRefId(panel, queryRefId)
 
-				if panelQuery == nil {
-					reason := fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found", alert.PanelId, queryRefId)
-					return nil, ValidationError{Reason: reason}
+					if panelQuery == nil {
+						reason := fmt.Sprintf("Alert on PanelId: %v refers to query(%s) that cannot be found", alert.PanelId, queryRefId)
+						return nil, ValidationError{Reason: reason}
+					}
+
+					dsName := ""
+					if panelQuery.Get("datasource").MustString() != "" {
+						dsName = panelQuery.Get("datasource").MustString()
+					} else if panel.Get("datasource").MustString() != "" {
+						dsName = panel.Get("datasource").MustString()
+					}
+
+					if datasource, err := e.lookupDatasourceId(dsName); err != nil {
+						return nil, err
+					} else {
+						jsonQuery.SetPath([]string{"datasourceId"}, datasource.Id)
+					}
+
+					if interval, err := panel.Get("interval").String(); err == nil {
+						panelQuery.Set("interval", interval)
+					}
+
+					jsonQuery.Set("model", panelQuery.Interface())
 				}
-
-				dsName := ""
-				if panelQuery.Get("datasource").MustString() != "" {
-					dsName = panelQuery.Get("datasource").MustString()
-				} else if panel.Get("datasource").MustString() != "" {
-					dsName = panel.Get("datasource").MustString()
-				}
-
-				if datasource, err := e.lookupDatasourceId(dsName); err != nil {
-					return nil, err
-				} else {
-					jsonQuery.SetPath([]string{"datasourceId"}, datasource.Id)
-				}
-
-				if interval, err := panel.Get("interval").String(); err == nil {
-					panelQuery.Set("interval", interval)
-				}
-
-				jsonQuery.Set("model", panelQuery.Interface())
 			}
 
 			alert.Settings = jsonAlert

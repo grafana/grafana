@@ -17,6 +17,7 @@ export class AlertTabCtrl {
   conditionTypes: any;
   alert: any;
   conditionModels: any;
+  conditionKeepModels: any;
   evalFunctions: any;
   evalOperators: any;
   noDataModes: any;
@@ -148,6 +149,7 @@ export class AlertTabCtrl {
       alert.conditions.push(this.buildDefaultCondition());
     }
 
+    alert.conditionsKeep = alert.conditionsKeep || [];
     alert.noDataState = alert.noDataState || 'no_data';
     alert.executionErrorState = alert.executionErrorState || 'alerting';
     alert.frequency = alert.frequency || '60s';
@@ -158,6 +160,10 @@ export class AlertTabCtrl {
     alert.name = alert.name || defaultName;
 
     this.conditionModels = _.reduce(alert.conditions, (memo, value) => {
+      memo.push(this.buildConditionModel(value));
+      return memo;
+    }, []);
+    this.conditionKeepModels = _.reduce(alert.conditionsKeep, (memo, value) => {
       memo.push(this.buildConditionModel(value));
       return memo;
     }, []);
@@ -209,45 +215,47 @@ export class AlertTabCtrl {
       return;
     }
 
-    let firstTarget;
-    var fixed = false;
-    let foundTarget = null;
+    for (var alertConditions of [this.alert.conditions, this.alert.conditionsKeep]) {
+      let firstTarget;
+      var fixed = false;
+      let foundTarget = null;
 
-    for (var condition of this.alert.conditions) {
-      if (condition.type !== 'query') {
-        continue;
+      for (var condition of alertConditions) {
+        if (condition.type !== 'query') {
+          continue;
+        }
+
+        for (var target of this.panel.targets) {
+          if (!firstTarget) {
+            firstTarget = target;
+          }
+          if (condition.query.params[0] === target.refId) {
+            foundTarget = target;
+            break;
+          }
+        }
+
+        if (!foundTarget) {
+          if (firstTarget) {
+            condition.query.params[0] = firstTarget.refId;
+            foundTarget = firstTarget;
+            fixed = true;
+          } else {
+            this.error = "Could not find any metric queries";
+          }
+        }
+
+        var datasourceName = foundTarget.datasource || this.panel.datasource;
+        this.datasourceSrv.get(datasourceName).then(ds => {
+          if (!ds.meta.alerting) {
+            this.error = 'The datasource does not support alerting queries';
+          } else if (ds.targetContainsTemplate(foundTarget)) {
+            this.error = 'Template variables are not supported in alert queries';
+          } else {
+            this.error = '';
+          }
+        });
       }
-
-      for (var target of this.panel.targets) {
-        if (!firstTarget) {
-          firstTarget = target;
-        }
-        if (condition.query.params[0] === target.refId) {
-          foundTarget = target;
-          break;
-        }
-      }
-
-      if (!foundTarget) {
-        if (firstTarget) {
-          condition.query.params[0] = firstTarget.refId;
-          foundTarget = firstTarget;
-          fixed = true;
-        } else {
-          this.error = "Could not find any metric queries";
-        }
-      }
-
-      var datasourceName = foundTarget.datasource || this.panel.datasource;
-      this.datasourceSrv.get(datasourceName).then(ds => {
-        if (!ds.meta.alerting) {
-          this.error = 'The datasource does not support alerting queries';
-        } else if (ds.targetContainsTemplate(foundTarget)) {
-          this.error = 'Template variables are not supported in alert queries';
-        } else {
-          this.error = '';
-        }
-      });
     }
   }
 
@@ -315,6 +323,19 @@ export class AlertTabCtrl {
     this.conditionModels.splice(index, 1);
   }
 
+  addConditionKeep(type) {
+    var condition = this.buildDefaultCondition();
+    // add to persited model
+    this.alert.conditionsKeep.push(condition);
+    // add to view model
+    this.conditionKeepModels.push(this.buildConditionModel(condition));
+  }
+
+  removeConditionKeep(index) {
+    this.alert.conditionsKeep.splice(index, 1);
+    this.conditionKeepModels.splice(index, 1);
+  }
+
   delete() {
     appEvents.emit('confirm-modal', {
       title: 'Delete Alert',
@@ -327,6 +348,7 @@ export class AlertTabCtrl {
         this.alert = null;
         this.panel.thresholds = [];
         this.conditionModels = [];
+        this.conditionKeepModels = [];
         this.panelCtrl.alertState = null;
         this.panelCtrl.render();
       }

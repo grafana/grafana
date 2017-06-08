@@ -22,6 +22,7 @@ type Rule struct {
 	ExecutionErrorState m.ExecutionErrorOption
 	State               m.AlertStateType
 	Conditions          []Condition
+	ConditionsKeep      []Condition
 	Notifications       []int64
 }
 
@@ -110,25 +111,43 @@ func NewRuleFromDBAlert(ruleDef *m.Alert) (*Rule, error) {
 		}
 	}
 
-	for index, condition := range ruleDef.Settings.Get("conditions").MustArray() {
-		conditionModel := simplejson.NewFromAny(condition)
-		conditionType := conditionModel.Get("type").MustString()
-		if factory, exist := conditionFactories[conditionType]; !exist {
-			return nil, ValidationError{Reason: "Unknown alert condition: " + conditionType, DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
-		} else {
-			if queryCondition, err := factory(conditionModel, index); err != nil {
-				return nil, ValidationError{Err: err, DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
-			} else {
-				model.Conditions = append(model.Conditions, queryCondition)
-			}
-		}
+	if conditions, err := buildQueryConditions(ruleDef.Settings.Get("conditions").MustArray()); err != nil {
+		return nil, ValidationError{Err: err, DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+	} else {
+		model.Conditions = conditions
 	}
-
 	if len(model.Conditions) == 0 {
 		return nil, fmt.Errorf("Alert is missing conditions")
 	}
 
+	if conditions, err := buildQueryConditions(ruleDef.Settings.Get("conditionsKeep").MustArray()); err != nil {
+		return nil, ValidationError{Err: err, DashboardId: model.DashboardId, Alertid: model.Id, PanelId: model.PanelId}
+	} else {
+		model.ConditionsKeep = conditions
+	}
+	if len(model.ConditionsKeep) == 0 {
+		model.ConditionsKeep = model.Conditions
+	}
+
 	return model, nil
+}
+
+func buildQueryConditions(conditions []interface{}) ([]Condition, error) {
+	var queryConditions []Condition
+	for index, condition := range conditions {
+		conditionModel := simplejson.NewFromAny(condition)
+		conditionType := conditionModel.Get("type").MustString()
+		if factory, exist := conditionFactories[conditionType]; !exist {
+			return nil, ValidationError{Reason: "Unknown alert condition: " + conditionType}
+		} else {
+			if queryCondition, err := factory(conditionModel, index); err != nil {
+				return nil, err
+			} else {
+				queryConditions = append(queryConditions, queryCondition)
+			}
+		}
+	}
+	return queryConditions, nil
 }
 
 type ConditionFactory func(model *simplejson.Json, index int) (Condition, error)
