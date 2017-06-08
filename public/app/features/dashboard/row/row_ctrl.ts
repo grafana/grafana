@@ -1,7 +1,7 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-
+import angular from 'angular';
 import config from 'app/core/config';
 import {coreModule, appEvents} from 'app/core/core';
 
@@ -14,7 +14,7 @@ export class DashRowCtrl {
   dropView: number;
 
   /** @ngInject */
-  constructor(private $scope, private $rootScope, private $timeout) {
+  constructor(private $scope, private $rootScope, private $timeout, private $window) {
     this.row.title = this.row.title || 'Row title';
 
     if (this.row.isNew) {
@@ -144,13 +144,53 @@ coreModule.directive('dashRow', function($rootScope) {
   };
 });
 
-coreModule.directive('panelWidth', function($rootScope) {
+coreModule.directive('panelWidth', function($rootScope, $window) {
   return function(scope, element) {
     var fullscreen = false;
 
     function updateWidth() {
       if (!fullscreen) {
-        element[0].style.width = ((scope.panel.span / 1.2) * 10) + '%';
+        var tempWidth = scope.panel.span;
+
+        if (scope.panel.customSpan) {
+          var windowWidth = $window.innerWidth;
+
+          if (windowWidth < 480) {
+            tempWidth = scope.panel.spanExtraSmall;
+          } else if ((windowWidth >= 480) && (windowWidth < 768)) {
+            tempWidth = scope.panel.spanSmall;
+          } else if ((windowWidth >= 768) && (windowWidth < 992)) {
+            tempWidth = scope.panel.spanMedium;
+          } else if ((windowWidth >= 992) && (windowWidth <= 1200)) {
+            tempWidth = scope.panel.spanLarge;
+          }
+        }
+
+        element[0].style.width = ((tempWidth / 1.2) * 10) + '%';
+      }
+    }
+
+    function setBreakpoints() {
+      if (scope.panel.customSpan) {
+        element.removeClass('responsive');
+      } else {
+        element.addClass('responsive');
+      }
+
+      if (scope.panel.spanExtraSmall === undefined) {
+        scope.panel.spanExtraSmall = scope.panel.span;
+      }
+
+      if (scope.panel.spanSmall === undefined) {
+        scope.panel.spanSmall = scope.panel.span;
+      }
+
+      if (scope.panel.spanMedium === undefined) {
+        scope.panel.spanMedium = scope.panel.span;
+      }
+
+      if (scope.panel.spanLarge === undefined) {
+        scope.panel.spanLarge = scope.panel.span;
       }
     }
 
@@ -175,6 +215,15 @@ coreModule.directive('panelWidth', function($rootScope) {
     }, scope);
 
     scope.$watch('panel.span', updateWidth);
+
+    scope.$watch('panel.customSpan', setBreakpoints);
+
+    angular.element($window).bind('resize', function () {
+      //no need to call the function on window resize if we don't have a custom span set :)
+      if (scope.panel.customSpan) {
+        updateWidth();
+      }
+    });
 
     if (fullscreen) {
       element.hide();
