@@ -1,7 +1,13 @@
 package notifiers
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"mime/multipart"
+	"net/http"
+	"os"
+	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
@@ -48,9 +54,18 @@ func init() {
 
 type TelegramNotifier struct {
 	NotifierBase
-	BotToken string
-	ChatID   string
-	log      log.Logger
+	BotToken    string
+	ChatID      string
+	UploadImage bool
+	log         log.Logger
+}
+
+func makeHTMLUrl(title string, url string) string {
+	if strings.Contains(url, "http://localhost") {
+		return fmt.Sprintf("%s: %s\n", title, url)
+	} else {
+		return fmt.Sprintf("<a href='%s'>%s</a>\n", url, title)
+	}
 }
 
 func NewTelegramNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
@@ -60,6 +75,7 @@ func NewTelegramNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 
 	botToken := model.Settings.Get("bottoken").MustString()
 	chatId := model.Settings.Get("chatid").MustString()
+	uploadImage := model.Settings.Get("uploadImage").MustBool()
 
 	if botToken == "" {
 		return nil, alerting.ValidationError{Reason: "Could not find Bot Token in settings"}
@@ -73,6 +89,7 @@ func NewTelegramNotifier(model *m.AlertNotification) (alerting.Notifier, error) 
 		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
 		BotToken:     botToken,
 		ChatID:       chatId,
+		UploadImage:  uploadImage,
 		log:          log.New("alerting.notifier.telegram"),
 	}, nil
 }
@@ -82,48 +99,93 @@ func (this *TelegramNotifier) Notify(evalContext *alerting.EvalContext) error {
 	this.log.Info("Sending alert notification to", "chat_id", this.ChatID)
 	metrics.M_Alerting_Notification_Sent_Telegram.Inc(1)
 
-	bodyJSON := simplejson.New()
+	_, err := os.Stat(evalContext.ImageOnDiskPath)
+	if err == nil && evalContext.ImagePublicUrl == "" && this.UploadImage == true {
+		url := fmt.Sprintf(telegeramApiUrl, this.BotToken, "sendPhoto")
+		caption := fmt.Sprintf("%s\nMessage: %s\n", evalContext.GetNotificationTitle(), evalContext.Rule.Message)
 
-	bodyJSON.Set("chat_id", this.ChatID)
-	bodyJSON.Set("parse_mode", "html")
+		ruleUrl, err := evalContext.GetRuleUrl()
+		if err == nil {
+			caption = caption + fmt.Sprintf("\nOpen in Grafana: %s", ruleUrl)
+		}
 
-	message := fmt.Sprintf("<b>%s</b>\nState: %s\nMessage: %s\n", evalContext.GetNotificationTitle(), evalContext.Rule.Name, evalContext.Rule.Message)
+		var b bytes.Buffer
+		w := multipart.NewWriter(&b)
+		f, err := os.Open(evalContext.ImageOnDiskPath)
+		if err != nil {
+			this.log.Error("Failed to read image file", "error", err, "telegram", this.Name)
+		}
+		defer f.Close()
+		fw, err := w.CreateFormFile("photo", evalContext.ImageOnDiskPath)
+		if err != nil {
+			this.log.Error("Failed to read image file", "error", err, "telegram", this.Name)
+		}
+		io.Copy(fw, f)
 
-	ruleUrl, err := evalContext.GetRuleUrl()
-	if err == nil {
-		message = message + fmt.Sprintf("URL: %s\n", ruleUrl)
-	}
-	if evalContext.ImagePublicUrl != "" {
-		message = message + fmt.Sprintf("Image: %s\n", evalContext.ImagePublicUrl)
-	}
+		fw, _ = w.CreateFormField("chat_id")
+		fw.Write([]byte(this.ChatID))
 
-	metrics := ""
-	fieldLimitCount := 4
-	for index, evt := range evalContext.EvalMatches {
-		metrics += fmt.Sprintf("\n%s: %s", evt.Metric, evt.Value)
-		if index > fieldLimitCount {
-			break
+		fw, _ = w.CreateFormField("caption")
+		fw.Write([]byte(caption))
+
+		w.Close()
+
+		req, _ := http.NewRequest("POST", url, &b)
+		req.Header.Set("Content-Type", w.FormDataContentType())
+		client := &http.Client{}
+		res, err := client.Do(req)
+		if err != nil {
+			this.log.Error("Failed to send webhook", "error", err, "webhook", this.Name)
+		}
+		if res.StatusCode != http.StatusOK {
+			this.log.Error("Failed to send webhook: bad status code in response", "error", res.StatusCode, "webhook", this.Name)
+		}
+
+	} else {
+
+		bodyJSON := simplejson.New()
+
+		bodyJSON.Set("chat_id", this.ChatID)
+		bodyJSON.Set("parse_mode", "html")
+
+		message := fmt.Sprintf("<b>%s</b>\nMessage: %s\n", evalContext.GetNotificationTitle(), evalContext.Rule.Message)
+
+		if this.UploadImage == true && evalContext.ImagePublicUrl != "" {
+			message = message + fmt.Sprintf("Graph: %s\n", evalContext.ImagePublicUrl)
+		}
+
+		ruleUrl, err := evalContext.GetRuleUrl()
+		if err == nil {
+			message = message + makeHTMLUrl("Open in Grafana", ruleUrl)
+		}
+
+		metrics := ""
+		fieldLimitCount := 4
+		for index, evt := range evalContext.EvalMatches {
+			metrics += fmt.Sprintf("\n%s: %s", evt.Metric, evt.Value)
+			if index > fieldLimitCount {
+				break
+			}
+		}
+		if metrics != "" {
+			message = message + fmt.Sprintf("\n<i>Metrics:</i>%s", metrics)
+		}
+
+		bodyJSON.Set("text", message)
+
+		url := fmt.Sprintf(telegeramApiUrl, this.BotToken, "sendMessage")
+		body, _ := bodyJSON.MarshalJSON()
+
+		cmd := &m.SendWebhookSync{
+			Url:        url,
+			Body:       string(body),
+			HttpMethod: "POST",
+		}
+
+		if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
+			this.log.Error("Failed to send webhook", "error", err, "webhook", this.Name)
+			return err
 		}
 	}
-	if metrics != "" {
-		message = message + fmt.Sprintf("\n<i>Metrics:</i>%s", metrics)
-	}
-
-	bodyJSON.Set("text", message)
-
-	url := fmt.Sprintf(telegeramApiUrl, this.BotToken, "sendMessage")
-	body, _ := bodyJSON.MarshalJSON()
-
-	cmd := &m.SendWebhookSync{
-		Url:        url,
-		Body:       string(body),
-		HttpMethod: "POST",
-	}
-
-	if err := bus.DispatchCtx(evalContext.Ctx, cmd); err != nil {
-		this.log.Error("Failed to send webhook", "error", err, "webhook", this.Name)
-		return err
-	}
-
 	return nil
 }
