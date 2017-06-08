@@ -74,6 +74,19 @@ func (m *MySqlMacroEngine) EvaluateMacro(name string, args []string) (string, er
 			return "", fmt.Errorf("missing time column argument for macro %v", name)
 		}
 		return fmt.Sprintf("%s >= FROM_UNIXTIME(%d) AND %s <= FROM_UNIXTIME(%d)", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), args[0], uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+	case "__timeFrom":
+		return fmt.Sprintf("FROM_UNIXTIME(%d)", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
+	case "__timeTo":
+		return fmt.Sprintf("FROM_UNIXTIME(%d)", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+	case "__unixEpochFilter":
+		if len(args) == 0 {
+			return "", fmt.Errorf("missing time column argument for macro %v", name)
+		}
+		return fmt.Sprintf("%s >= %d AND %s <= %d", args[0], uint64(m.TimeRange.GetFromAsMsEpoch()/1000), args[0], uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
+	case "__unixEpochFrom":
+		return fmt.Sprintf("%d", uint64(m.TimeRange.GetFromAsMsEpoch()/1000)), nil
+	case "__unixEpochTo":
+		return fmt.Sprintf("%d", uint64(m.TimeRange.GetToAsMsEpoch()/1000)), nil
 	default:
 		return "", fmt.Errorf("Unknown macro %v", name)
 	}
