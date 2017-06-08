@@ -113,12 +113,18 @@ function ($, angular, coreModule) {
         });
 
         scope.$on("$destroy", hideEditorPane);
+
         scope.onAppEvent('hide-dash-editor', function() {
           hideEditorPane(false);
         });
 
         scope.onAppEvent('show-dash-editor', showEditorPane);
+
+        scope.onAppEvent('panel-fullscreen-enter', function() {
+          scope.appEvent('hide-dash-editor');
+        });
       }
     };
   });
 });
+
