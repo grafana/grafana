@@ -130,6 +130,16 @@ function (angular, _, kbn) {
       return match[1] || match[2];
     };
 
+    this.getVariableNames = function(expression) {
+      this._regex.lastIndex = 0;
+      var match;
+      var names = [];
+      while (match = this._regex.exec(expression)) {
+        names.push(match[1] || match[2]);
+      }
+      return names;
+    };
+
     this.variableExists = function(expression) {
       var name = this.getVariableName(expression);
       return name && (self._index[name] !== void 0);

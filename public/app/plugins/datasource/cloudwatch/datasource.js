@@ -415,8 +415,15 @@ function (angular, _, moment, dateMath, kbn, templatingVariable, CloudWatchAnnot
       var self = this;
       return _.chain(targets)
       .map(function(target) {
+        // find dimension key which value includes template variable, but not includes scoped variable
         var dimensionKey = _.findKey(target.dimensions, function(v) {
-          return templateSrv.variableExists(v) && !_.has(scopedVars, templateSrv.getVariableName(v));
+          if (!templateSrv.variableExists(v)) {
+            return false;
+          }
+
+          return !templateSrv.getVariableNames(v).some(function(variableName) {
+            return _.has(scopedVars, variableName);
+          });
         });
 
         if (dimensionKey) {
