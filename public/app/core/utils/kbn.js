@@ -431,13 +431,13 @@ function($, _) {
   kbn.valueFormats.Gbits  = kbn.formatBuilders.decimalSIPrefix('bps', 3);
 
   // Throughput
-  kbn.valueFormats.ops  = kbn.formatBuilders.simpleCountUnit('ops');
-  kbn.valueFormats.rps  = kbn.formatBuilders.simpleCountUnit('rps');
-  kbn.valueFormats.wps  = kbn.formatBuilders.simpleCountUnit('wps');
-  kbn.valueFormats.iops = kbn.formatBuilders.simpleCountUnit('iops');
-  kbn.valueFormats.opm = kbn.formatBuilders.simpleCountUnit('opm');
-  kbn.valueFormats.rpm = kbn.formatBuilders.simpleCountUnit('rpm');
-  kbn.valueFormats.wpm = kbn.formatBuilders.simpleCountUnit('wpm');
+  kbn.valueFormats.opssec    = kbn.formatBuilders.simpleCountUnit('ops/s');
+  kbn.valueFormats.readsec   = kbn.formatBuilders.simpleCountUnit('reads/s');
+  kbn.valueFormats.writessec = kbn.formatBuilders.simpleCountUnit('writes/s');
+  kbn.valueFormats.ioopssec  = kbn.formatBuilders.simpleCountUnit('I/O ops/s');
+  kbn.valueFormats.opsmin    = kbn.formatBuilders.simpleCountUnit('ops/min');
+  kbn.valueFormats.readsmin  = kbn.formatBuilders.simpleCountUnit('reads/min');
+  kbn.valueFormats.writesmin = kbn.formatBuilders.simpleCountUnit('writes/min');
 
   // Energy
   kbn.valueFormats.watt         = kbn.formatBuilders.decimalSIPrefix('W');
@@ -781,13 +781,13 @@ function($, _) {
       {
         text: 'throughput',
         submenu: [
-          {text: 'ops/sec (ops)',       value: 'ops' },
-          {text: 'reads/sec (rps)',     value: 'rps' },
-          {text: 'writes/sec (wps)',    value: 'wps' },
-          {text: 'I/O ops/sec (iops)',  value: 'iops'},
-          {text: 'ops/min (opm)',       value: 'opm' },
-          {text: 'reads/min (rpm)',     value: 'rpm' },
-          {text: 'writes/min (wpm)',    value: 'wpm' },
+          {text: 'ops/sec (ops/s)',         value: 'opssec' },
+          {text: 'reads/sec (reads/s)',     value: 'readsec' },
+          {text: 'writes/sec (writes/s)',   value: 'writessec' },
+          {text: 'I/O ops/sec (I/O ops/s)', value: 'ioopssec'},
+          {text: 'ops/min (ops/min)',         value: 'opsmin' },
+          {text: 'reads/min (reads/min)',     value: 'readsmin' },
+          {text: 'writes/min (writes/min)',   value: 'writesmin' },
         ]
       },
       {
