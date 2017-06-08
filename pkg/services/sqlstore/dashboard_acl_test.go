@@ -29,7 +29,8 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				err = GetDashboardPermissions(q1)
 				So(err, ShouldBeNil)
 				So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-				So(q1.Result[0].Permissions, ShouldEqual, m.PERMISSION_EDIT)
+				So(q1.Result[0].PermissionType, ShouldEqual, m.PERMISSION_EDIT)
+				So(q1.Result[0].Permissions, ShouldEqual, "Edit")
 				So(q1.Result[0].UserId, ShouldEqual, currentUser.Id)
 				So(q1.Result[0].UserLogin, ShouldEqual, currentUser.Login)
 				So(q1.Result[0].UserEmail, ShouldEqual, currentUser.Email)
@@ -56,7 +57,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 1)
 					So(q3.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-					So(q3.Result[0].Permissions, ShouldEqual, m.PERMISSION_READ_ONLY_EDIT)
+					So(q3.Result[0].PermissionType, ShouldEqual, m.PERMISSION_READ_ONLY_EDIT)
 					So(q3.Result[0].UserId, ShouldEqual, 1)
 
 				})
@@ -94,7 +95,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					err = GetDashboardPermissions(q1)
 					So(err, ShouldBeNil)
 					So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-					So(q1.Result[0].Permissions, ShouldEqual, m.PERMISSION_EDIT)
+					So(q1.Result[0].PermissionType, ShouldEqual, m.PERMISSION_EDIT)
 					So(q1.Result[0].UserGroupId, ShouldEqual, group1.Result.Id)
 				})
 
@@ -112,7 +113,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 1)
 					So(q3.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-					So(q3.Result[0].Permissions, ShouldEqual, m.PERMISSION_READ_ONLY_EDIT)
+					So(q3.Result[0].PermissionType, ShouldEqual, m.PERMISSION_READ_ONLY_EDIT)
 					So(q3.Result[0].UserGroupId, ShouldEqual, group1.Result.Id)
 
 				})

@@ -3,6 +3,8 @@ package sqlstore
 import (
 	"time"
 
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -79,7 +81,15 @@ func RemoveDashboardPermission(cmd *m.RemoveDashboardPermissionCommand) error {
 
 func GetDashboardPermissions(query *m.GetDashboardPermissionsQuery) error {
 	rawSQL := `SELECT
-  da.*,
+  da.id,
+  da.org_id,
+  da.id,
+  da.dashboard_id,
+  da.user_id,
+  da.user_group_id,
+  da.permissions as permission_type,
+  da.created,
+  da.updated,
   u.login AS user_login,
   u.email AS user_email,
   ug.name AS user_group
@@ -91,6 +101,10 @@ func GetDashboardPermissions(query *m.GetDashboardPermissionsQuery) error {
 	query.Result = make([]*m.DashboardAclInfoDTO, 0)
 
 	err := x.SQL(rawSQL, query.DashboardId).Find(&query.Result)
+
+	for _, p := range query.Result {
+		p.Permissions = fmt.Sprint(p.PermissionType)
+	}
 
 	return err
 }

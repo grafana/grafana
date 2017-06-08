@@ -57,12 +57,12 @@ func CanDeleteFromAcl(dashboardId int64, role m.RoleType, isGrafanaAdmin bool, o
 	userGroups, err := getUserGroupsByUser(userId)
 
 	for _, p := range permissions {
-		if p.UserId == userId && p.Permissions == m.PERMISSION_EDIT {
+		if p.UserId == userId && p.PermissionType == m.PERMISSION_EDIT {
 			return true, nil
 		}
 
 		for _, ug := range userGroups {
-			if ug.Id == p.UserGroupId && p.Permissions == m.PERMISSION_EDIT {
+			if ug.Id == p.UserGroupId && p.PermissionType == m.PERMISSION_EDIT {
 				return true, nil
 			}
 		}

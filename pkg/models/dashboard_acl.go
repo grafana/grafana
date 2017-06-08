@@ -5,10 +5,19 @@ import "time"
 type PermissionType int
 
 const (
-	PERMISSION_EDIT           PermissionType = 4
-	PERMISSION_READ_ONLY_EDIT PermissionType = 2
-	PERMISSION_VIEW           PermissionType = 1
+	PERMISSION_EDIT PermissionType = 1 << iota
+	PERMISSION_READ_ONLY_EDIT
+	PERMISSION_VIEW
 )
+
+func (p PermissionType) String() string {
+	names := map[int]string{
+		int(PERMISSION_VIEW):           "View",
+		int(PERMISSION_READ_ONLY_EDIT): "Read-only Edit",
+		int(PERMISSION_EDIT):           "Edit",
+	}
+	return names[int(p)]
+}
 
 // Typed errors
 // var (
@@ -37,12 +46,13 @@ type DashboardAclInfoDTO struct {
 	Created time.Time `json:"created"`
 	Updated time.Time `json:"updated"`
 
-	UserId      int64          `json:"userId"`
-	UserLogin   string         `json:"userLogin"`
-	UserEmail   string         `json:"userEmail"`
-	UserGroupId int64          `json:"userGroupId"`
-	UserGroup   string         `json:"userGroup"`
-	Permissions PermissionType `json:"permissions"`
+	UserId         int64          `json:"userId"`
+	UserLogin      string         `json:"userLogin"`
+	UserEmail      string         `json:"userEmail"`
+	UserGroupId    int64          `json:"userGroupId"`
+	UserGroup      string         `json:"userGroup"`
+	PermissionType PermissionType `json:"permissionType"`
+	Permissions    string         `json:"permissions"`
 }
 
 //
