@@ -1,7 +1,7 @@
 # Building The Docs
 
 To build the docs locally, you need to have docker installed.  The
-docs are built using a hugo.
+docs are built using [Hugo](http://gohugo.io/) - a static site generator.
 
 **Prepare the Docker Image**:
 
@@ -19,7 +19,11 @@ make docs-build
 
 Now that the docker image has been prepared we can build the
 grafana docs and start a docs server. Switch your working directory back to the directory this file
-(README.md) is in and run (possibly with ``sudo``):
+(README.md) is in.
+
+An AWS config file is required to build the docs Docker image and to publish the site to AWS. If you are building locally only and do not have any AWS credentials for docs.grafana.org then create an empty file named `awsconfig` in the current directory.
+
+Then run (possibly with ``sudo``):
 
 ```
 make watch
@@ -37,7 +41,7 @@ All markdown files are located in this repo (main grafana repo). But all images 
 
 First you need create a feature (PR) branch of https://github.com/grafana/grafana.org so you can make change. Then add the image to the `/static/img/docs` directory. Then make a commit that adds the image. 
 
-The run 
+Then run:
 ```
 make docs-build
 ```
