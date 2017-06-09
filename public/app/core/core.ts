@@ -47,6 +47,7 @@ import {KeybindingSrv} from './services/keybindingSrv';
 import {helpModal} from './components/help/help';
 import {NavModelSrv, NavModel} from './nav_model_srv';
 import {userPicker} from './components/user_picker';
+import {userGroupPicker} from './components/user_group_picker';
 
 export {
   arrayJoin,
@@ -73,4 +74,5 @@ export {
   NavModelSrv,
   NavModel,
   userPicker,
+  userGroupPicker,
 };

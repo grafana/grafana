@@ -9,9 +9,21 @@ export class AclCtrl {
   dashboard: any;
   userPermissions: Permission[];
   userGroupPermissions: Permission[];
+  permissionTypeOptions = [
+    {value: 1, text: 'View'},
+    {value: 2, text: 'Read-only Edit'},
+    {value: 4, text: 'Edit'}
+  ];
+  userLogin: string;
+  userId: number;
+  userSegment: any;
+  type = 'User';
+  userGroupId: number;
+  userGroupSegment: any;
+  permission = 1;
 
   /** @ngInject */
-  constructor(private backendSrv, private $scope, $sce) {
+  constructor(private backendSrv, private $scope, $sce, private uiSegmentSrv) {
     this.tabIndex = 0;
     this.userPermissions = [];
     this.userGroupPermissions = [];
@@ -24,6 +36,41 @@ export class AclCtrl {
         this.userPermissions = _.filter(result, p => { return p.userId > 0;});
         this.userGroupPermissions = _.filter(result, p => { return p.userGroupId > 0;});
       });
+  }
+
+  addPermission() {
+    if (this.type === 'User') {
+      if (this.userSegment.value === 'Choose User') {
+        return;
+      }
+
+      this.backendSrv.post(`/api/dashboards/${this.dashboard.id}/acl`, {
+        userId: this.userId,
+        permissionType: this.permission
+      }).then(() => {
+        this.userId = 0;
+        this.userLogin = '';
+        this.userSegment.value = 'Choose User';
+        this.userSegment.text = 'Choose User';
+        this.userSegment.html = 'Choose User';
+        this.get(this.dashboard.id);
+      });
+    } else {
+      if (this.userGroupSegment.value === 'Choose User Group') {
+        return;
+      }
+
+      this.backendSrv.post(`/api/dashboards/${this.dashboard.id}/acl`, {
+        userGroupId: this.userGroupId,
+        permissionType: this.permission
+      }).then(() => {
+        this.userGroupId = 0;
+        this.userGroupSegment.value = 'Choose User Group';
+        this.userGroupSegment.text = 'Choose User Group';
+        this.userGroupSegment.html = 'Choose User Group';
+        this.get(this.dashboard.id);
+      });
+    }
   }
 
   removeUserPermission(permission: Permission) {
@@ -50,6 +97,13 @@ export function aclSettings() {
   };
 }
 
+export interface FormModel {
+  dashboardId: number;
+  userId?: number;
+  userGroupId?: number;
+  PermissionType: number;
+}
+
 export interface Permission {
   id: number;
   orgId: number;
@@ -61,7 +115,8 @@ export interface Permission {
   userEmail: string;
   userGroupId: number;
   userGroup: string;
-  permissions: number[];
+  permissions: string[];
+  permissionType: number[];
 }
 
 coreModule.directive('aclSettings', aclSettings);

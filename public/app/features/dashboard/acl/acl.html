@@ -1,44 +1,89 @@
 <div class="editor-row">
+  <h3 class="page-heading">Add New Permission</h3>
+	<form name="addPermission" class="gf-form-group">
+		<div class="gf-form-inline">
+      <div class="gf-form">
+				<span class="gf-form-label">Type</span>
+				<select class="gf-form-input gf-size-auto" ng-model="ctrl.type" ng-options="r for r in ['User', 'User Group']"></select>
+			</div>
+      <div class="gf-form" ng-show="ctrl.type === 'User'">
+        <span class="gf-form-label">User</span>
+        <user-picker user-login="ctrl.userLogin" user-id="ctrl.userId" user-segment="ctrl.userSegment"></user-picker>
+      </div>
+      <div class="gf-form" ng-show="ctrl.type === 'User Group'">
+        <span class="gf-form-label">User Group</span>
+        <user-group-picker user-group-id="ctrl.userGroupId" user-group-segment="ctrl.userGroupSegment"></user-group-picker>
+      </div>
+			<div class="gf-form">
+				<span class="gf-form-label">Role</span>
+				<select class="gf-form-input gf-size-auto" ng-model="ctrl.permission" ng-options="p.value as p.text for p in ctrl.permissionTypeOptions"></select>
+			</div>
+			<div class="gf-form">
+				<button class="btn gf-form-btn btn-success" ng-click="ctrl.addPermission()">Add</button>
+			</div>
+		</div>
+	</form>
+
   <div class="permissionlist">
     <div class="permissionlist__section">
       <div class="permissionlist__section-header">
         <h6>Users</h6>
-        <a href="#" class="btn btn-success btn-small permissionlist__section-header__add-button">Add User</a>
       </div>
-      <div class="permissionlist__item" ng-repeat="permission in ctrl.userPermissions">
-        <span class="permissionlist__item-text">{{permission.userLogin}}</span>
-        <div>{{permission.permissions}}</div>
-        <div class="permissionlist__item-buttons">
-          <a href="#" class="btn btn-inverse btn-small">
-            <i class="fa fa-edit"></i>
-            Edit
-          </a>
-          &nbsp;&nbsp;
-          <a ng-click="ctrl.removeUserPermission(permission)" class="btn btn-danger btn-small">
-            <i class="fa fa-remove"></i>
-          </a>
-        </div>
-      </div>
+      <table class="filter-table form-inline">
+        <thead>
+          <tr>
+            <th>User</th>
+            <th style="width: 220px;">Permission</th>
+            <th style="width: 120px"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="permission in ctrl.userPermissions" class="permissionlist__item">
+            <td>{{permission.userLogin}}</td>
+            <td>{{permission.permissions}}</td>
+            <td>
+              <a href="#" class="btn btn-inverse btn-small">
+                <i class="fa fa-edit"></i>
+                Edit
+              </a>
+              &nbsp;&nbsp;
+              <a ng-click="ctrl.removeUserPermission(permission)" class="btn btn-danger btn-small">
+                <i class="fa fa-remove"></i>
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
     <div class="permissionlist__section">
       <div class="permissionlist__section-header">
         <h6>Groups</h6>
-        <a href="#" class="btn btn-success btn-small permissionlist__section-header__add-button">Add Group</a>
       </div>
-      <div class="permissionlist__item" ng-repeat="permission in ctrl.userGroupPermissions">
-        <span class="permissionlist__item-text">{{permission.userGroup}}</span>
-        <div>{{permission.permissions}}</div>
-        <div class="permissionlist__item-buttons">
-          <a href="#" class="btn btn-inverse btn-small">
-            <i class="fa fa-edit"></i>
-            Edit
-          </a>
-          &nbsp;&nbsp;
-          <a ng-click="ctrl.removeUserGroupPermission(permission)" class="btn btn-danger btn-small">
-            <i class="fa fa-remove"></i>
-          </a>
-        </div>
-      </div>
+      <table class="filter-table form-inline">
+        <thead>
+          <tr>
+            <th>User Group</th>
+            <th style="width: 220px;">Permission</th>
+            <th style="width: 120px;"></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr ng-repeat="permission in ctrl.userGroupPermissions" class="permissionlist__item">
+            <td>{{permission.userGroup}}</td>
+            <td>{{permission.permissions}}</td>
+            <td>
+              <a href="#" class="btn btn-inverse btn-small">
+                <i class="fa fa-edit"></i>
+                Edit
+              </a>
+              &nbsp;&nbsp;
+              <a ng-click="ctrl.removeUserGroupPermission(permission)" class="btn btn-danger btn-small">
+                <i class="fa fa-remove"></i>
+              </a>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>

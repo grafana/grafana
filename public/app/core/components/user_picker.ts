@@ -29,7 +29,6 @@ export class UserPickerCtrl {
 
   onChange() {
     this.userLogin = this.userSegment.value.split(' - ')[0];
-    console.log(this.userLogin);
 
     this.backendSrv.get('/api/users/search?perpage=10&page=1&query=' + this.userLogin)
       .then(result => {
@@ -67,6 +66,7 @@ export function userPicker() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
+      userSegment: '=',
       userLogin: '=',
       userId: '=',
     }

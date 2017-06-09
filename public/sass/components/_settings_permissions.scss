@@ -19,10 +19,6 @@
   }
 
   .permissionlist__item {
-    display: flex;
-    flex-flow: row;
-    margin: 5px;
-    padding: 7px;
     background-color: $tight-form-bg;
 
     &:hover {
