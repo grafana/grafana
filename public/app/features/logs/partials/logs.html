@@ -16,7 +16,7 @@
         <div class="">
             <h2>日志全文搜索</h2>
             <div class="tidy-form">
-                <ul class="tidy-form-list">
+                <ul class="tidy-form-list" style="overflow: inherit">
                     <li class="tidy-form-item" style="width: 100px">
                         关键词
                     </li>
@@ -27,6 +27,17 @@
                     <li>
                         <button type="submit" class="btn btn-primary" ng-click="reQuery()" style="margin:0 20px;"><i class="fa fa-search"/>查找</button>
                         <button class="btn btn-primary btn-success" ng-click="logCluster()">日志聚合</button>
+                        <div class="btn-group">
+                            <button class="btn btn-primary" ng-click="logCompare('-1d')">日志对比</button>
+                            <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+                                <span class="caret"></span>
+                            </button>
+                            <ul class="dropdown-menu">
+                                <li ng-click="logCompare('-1d')">1天</li>
+                                <li ng-click="logCompare('-7d')">7天</li>
+                                <li ng-click="showInputModal()">自定义</li>
+                            </ul>
+                        </div>
                         <button class="btn btn-primary btn-success" ng-click="isShowKnows(true)">查询知识库</button>
                     </li>
                 </ul>
@@ -53,6 +64,9 @@
                     </tab>
                     <tab heading="聚合数据" ng-if="panel.tab == 2" ng-repeat="(name, panel) in row.panels track by panel.id"
                         ng-show="panel.tab==2 && clustering">
+                        <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+                    </tab>
+                    <tab heading="日志对比" ng-if="panel.tab == 3" ng-repeat="(name, panel) in row.panels track by panel.id" ng-show="panel.tab==3 && comparing">
                         <panel-loader type="panel.type" class="panel-margin"></panel-loader>
                     </tab>
                 </tabset>

@@ -7,7 +7,7 @@
 <div class="page-container" style="background: transparent; border: 0;">
 	<div class="page-wide">
 		<h2>
-			API Keys
+			API Keys(当前org 下的token)
 		</h2>
 
 		<form name="addTokenrForm" class="form-inline tight-form last">
@@ -34,8 +34,7 @@
 		<table class="filter-table">
 			<thead>
 				<tr>
-					<th>姓名</th>
-					<th>角色</th>
+					<th>系统id</th>
 					<th>Token</th>
 					<th style="width: 34px;"></th>
 				</tr>
@@ -43,7 +42,6 @@
 			<tbody>
 				<tr ng-repeat="t in tokens">
 					<td>{{t.name}}</td>
-					<td>{{t.role}}</td>
 					<td>{{t.key}}</td>
 					<td>
 						<a ng-click="removeToken(t.id)" class="btn btn-danger btn-mini">
