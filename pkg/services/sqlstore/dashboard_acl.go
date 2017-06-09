@@ -51,11 +51,14 @@ func AddOrUpdateDashboardPermission(cmd *m.AddOrUpdateDashboardPermissionCommand
 			cols = append(cols, "user_group_id")
 		}
 
-		_, err := sess.Cols(cols...).Insert(&entity)
+		entityId, err := sess.Cols(cols...).Insert(&entity)
 		if err != nil {
 			return err
 		}
+		cmd.Result = entity
+		cmd.Result.Id = entityId
 
+		// Update dashboard HasAcl flag
 		dashboard := m.Dashboard{
 			HasAcl: true,
 		}

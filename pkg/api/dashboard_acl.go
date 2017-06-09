@@ -2,6 +2,7 @@ package api
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/metrics"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/guardian"
@@ -28,6 +29,25 @@ func GetDashboardAcl(c *middleware.Context) Response {
 	}
 
 	return Json(200, &query.Result)
+}
+
+func PostDashboardAcl(c *middleware.Context, cmd m.AddOrUpdateDashboardPermissionCommand) Response {
+	cmd.OrgId = c.OrgId
+	cmd.DashboardId = c.ParamsInt64(":id")
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		if err == m.ErrDashboardPermissionAlreadyAdded {
+			return ApiError(409, "Permission for user/user group already exists", err)
+		}
+		return ApiError(500, "Failed to create permission", err)
+	}
+
+	metrics.M_Api_Dashboard_Acl_Create.Inc(1)
+
+	return Json(200, &util.DynMap{
+		"permissionId": cmd.Result.Id,
+		"message":      "Permission created",
+	})
 }
 
 func DeleteDashboardAclByUser(c *middleware.Context) Response {

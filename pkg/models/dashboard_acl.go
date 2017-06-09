@@ -1,13 +1,16 @@
 package models
 
-import "time"
+import (
+	"errors"
+	"time"
+)
 
 type PermissionType int
 
 const (
-	PERMISSION_EDIT PermissionType = 1 << iota
+	PERMISSION_VIEW PermissionType = 1 << iota
 	PERMISSION_READ_ONLY_EDIT
-	PERMISSION_VIEW
+	PERMISSION_EDIT
 )
 
 func (p PermissionType) String() string {
@@ -20,9 +23,9 @@ func (p PermissionType) String() string {
 }
 
 // Typed errors
-// var (
-// 	ErrDashboardPermissionAlreadyAdded = errors.New("A permission has  ")
-// )
+var (
+	ErrDashboardPermissionAlreadyAdded = errors.New("A permission for this user/user group already exists.")
+)
 
 // Dashboard ACL model
 type DashboardAcl struct {
@@ -60,11 +63,13 @@ type DashboardAclInfoDTO struct {
 //
 
 type AddOrUpdateDashboardPermissionCommand struct {
-	DashboardId    int64          `json:"dashboardId" binding:"Required"`
+	DashboardId    int64          `json:"-"`
 	OrgId          int64          `json:"-"`
 	UserId         int64          `json:"userId"`
 	UserGroupId    int64          `json:"userGroupId"`
 	PermissionType PermissionType `json:"permissionType" binding:"Required"`
+
+	Result DashboardAcl `json:"-"`
 }
 
 type RemoveDashboardPermissionCommand struct {
