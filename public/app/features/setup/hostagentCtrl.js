@@ -15,6 +15,7 @@ function (angular, _) {
       $scope.orgId = contextSrv.user.orgId;
       $scope.alertServer = backendSrv.alertDUrl;
       $scope.token = backendSrv.getToken();
+      $scope.system = _.find(contextSrv.systemsMap,{Id:contextSrv.system}).SystemsName;
       if(contextSrv.hostNum) {
         $scope.installed = true;
         $scope.appEvent('alert-success', ['您已安装机器探针', "请继续安装机器探针,或安装服务探针"]);

@@ -222,6 +222,9 @@
       "img": "",
       "info": "MySQL是一个关系型数据库管理系统，其特点为体积小、速度快、总体拥有成本低，且开放源码。",
       "deploy": [
+        "安装mysql之前请先执行一下命令：",
+        "bash -c \"$(curl -kL https://download.cloudwiz.cn/agent/mysql/deploy.sh)\"",
+        "(注意, 这里需要获取您的root账号密码)",
         "路径:  /opt/cloudwiz-agent/agent/collectors/conf/mysql.conf",
 	      "User: cloudwiz_user",
 	      "Pass: cloudwiz_pass"
