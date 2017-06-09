@@ -143,6 +143,10 @@ define([
                 d.resolve();
                 return d.promise;
               }
+            }, function(err) {
+              var d = $q.defer();
+              d.resolve();
+              return d.promise;
             });
 
             //------- alertNum = alertRules * hostNum;
