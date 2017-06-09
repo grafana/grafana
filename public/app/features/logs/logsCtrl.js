@@ -185,6 +185,90 @@ define([
               }
             },
             {
+              "columns": [
+                {
+                  "text": "count",
+                  "value": "count"
+                },
+                {
+                  "text": "message",
+                  "value": "message"
+                }
+              ],
+              "datasource": "elk",
+              "editable": true,
+              "error": false,
+              "fontSize": "100%",
+              "helpInfo": {
+                "context": "",
+                "info": false,
+                "title": ""
+              },
+              "id": Math.random(),
+              "isNew": true,
+              "links": [],
+              "pageSize": null,
+              "scroll": false,
+              "showHeader": true,
+              "sort": {
+                "col": 0,
+                "desc": true
+              },
+              "span": 12,
+              "styles": [
+                {
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "pattern": "Time",
+                  "type": "date"
+                }
+              ],
+              "targets": [
+                {
+                  "aggregator": "sum",
+                  "bucketAggs": [],
+                  "downsampleAggregator": "avg",
+                  "dsType": "elasticsearch",
+                  "errors": {},
+                  "metrics": [
+                    {
+                      "field": "select field",
+                      "id": Math.random(),
+                      "meta": {},
+                      "settings": {},
+                      "type": "raw_document"
+                    }
+                  ],
+                  "query": "",
+                  "refId": "A",
+                  "timeField": "@timestamp"
+                },
+                {
+                  "bucketAggs": [],
+                  "dsType": "elasticsearch",
+                  "metrics": [
+                    {
+                      "field": "select field",
+                      "id": Math.random(),
+                      "meta": {},
+                      "settings": {},
+                      "type": "raw_document"
+                    }
+                  ],
+                  "query": "",
+                  "refId": "B",
+                  "timeField": "@timestamp",
+                  "timeShift": "-1d"
+                }
+              ],
+              "tab": 3,
+              "title": "日志对比",
+              "transform": "json",
+              "type": "table",
+              "scopedVars": {
+                "logCompare": true
+              }
+            },
+            {
               "aliasColors": {},
               "bars": true,
               "datasource": "elk",
@@ -289,26 +373,60 @@ define([
         $rootScope.$broadcast('refresh');
       };
 
+      $scope.logCompare = function(timeShift) {
+        $scope.comparing = true;
+        $scope.dashboard.rows[0].panels[2].targets[0].hide = false;
+        $scope.dashboard.rows[0].panels[2].targets[1].hide = false;
+        $scope.dashboard.rows[0].panels[2].targets[1].timeShift = timeShift;
+        $rootScope.$broadcast('refresh');
+      };
+
+      $scope.showInputModal = function() {
+        var newScope = $scope.$new();
+        newScope.logCompare = $scope.logCompare;
+        newScope.shift = "-1d";
+        $scope.appEvent('show-modal', {
+          src: './app/features/logs/partials/input_time_shift.html',
+          modalClass: 'modal-no-header confirm-modal',
+          scope: newScope
+        });
+      };
+
       $scope.reQuery = function () {
-        $scope.dashboard.rows[0].panels[0].targets[0].query = $scope.query;
-        $scope.dashboard.rows[0].panels[1].targets[0].query = $scope.query;
-        $scope.dashboard.rows[0].panels[2].targets[0].query = $scope.query;
-        $scope.dashboard.rows[0].panels[1].targets[0].hide = true;
+        var panels = $scope.dashboard.rows[0].panels;
+        //log
+        panels[0].targets[0].query = $scope.query;
+        //clustering
+        panels[1].targets[0].query = $scope.query;
+        panels[1].targets[0].hide = true;
+        //compareing
+        panels[2].targets[0].query = $scope.query;
+        panels[2].targets[1].query = $scope.query;
+        //count
+        panels[3].targets[0].query = $scope.query;
+
         $scope.clustering = false;
+        $scope.comparing = false;
         $rootScope.$broadcast('refresh');
       };
 
       $scope.isShowKnows = function(type) {
         $scope.showKnows = type;
-      }
+      };
 
       $scope.init = function () {
         $scope.showKnows = false;
         $scope.query = "*";
         $scope.clustering = false;
+        //log table
         panelMetas[0].panels[0].targets[0].query = $scope.query;
+        //clustering
         panelMetas[0].panels[1].targets[0].query = $scope.query;
+        //comparing
         panelMetas[0].panels[2].targets[0].query = $scope.query;
+        panelMetas[0].panels[2].targets[1].query = $scope.query;
+        //graph
+        panelMetas[0].panels[3].targets[0].query = $scope.query;
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: false, canSave: false},
           dashboard: {

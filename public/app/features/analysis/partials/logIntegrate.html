@@ -14,6 +14,17 @@
     <input type="text" class="input-xlarge tight-form-input ng-pristine ng-untouched ng-valid ng-valid-required" ng-model="query" required="">
     <button type="submit" class="btn btn-primary" ng-click="reQuery()"><i class="fa fa-search"/>查找</button>
     <button class="btn btn-primary" ng-click="logCluster()">日志聚合</button >
+    <div class="btn-group">
+        <button class="btn btn-primary" ng-click="logCompare('-1d')">日志对比</button>
+        <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu">
+            <li ng-click="logCompare('-1d')">1天</li>
+            <li ng-click="logCompare('-7d')">7天</li>
+            <li ng-click="showInputModal()">自定义</li>
+        </ul>
+    </div>
 </form>
 <div class="grafana-row" ng-controller="RowCtrl"
       ng-repeat="(row_name, row) in dashboard.rows" row-height>
@@ -44,6 +55,9 @@
                 <panel-loader type="panel.type" class="panel-margin"></panel-loader>
             </tab>
             <tab heading="聚合数据" ng-if="panel.tab == 2" ng-repeat="(name, panel) in row.panels track by panel.id" ng-show="panel.tab==2 && clustering">
+                <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+            </tab>
+            <tab heading="日志对比" ng-if="panel.tab == 3" ng-repeat="(name, panel) in row.panels track by panel.id" ng-show="panel.tab==3 && comparing">
                 <panel-loader type="panel.type" class="panel-margin"></panel-loader>
             </tab>
         </tabset>

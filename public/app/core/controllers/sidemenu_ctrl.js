@@ -55,7 +55,7 @@ function (angular, _, $, coreModule, config) {
           },
           {
             text: '日志对比',
-            click: $scope.alertMessage
+            href: $scope.getUrl("/logs")
           },
         ],
         click: $scope.updateSubmenu
