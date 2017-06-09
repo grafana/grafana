@@ -18,10 +18,27 @@ make docs-build
 **Build the Documentation**:
 
 Now that the docker image has been prepared we can build the
-grafana docs and start a docs server. Switch your working directory back to the directory this file
+grafana docs and start a docs server. 
+
+If you have not cloned the Grafana repository already then:
+
+```
+cd ..
+git clone https://github.com/grafana/grafana
+```
+
+Switch your working directory to the directory this file
 (README.md) is in.
 
+```
+cd grafana/docs
+```
+
 An AWS config file is required to build the docs Docker image and to publish the site to AWS. If you are building locally only and do not have any AWS credentials for docs.grafana.org then create an empty file named `awsconfig` in the current directory.
+
+```
+touch awsconfig
+```
 
 Then run (possibly with ``sudo``):
 
