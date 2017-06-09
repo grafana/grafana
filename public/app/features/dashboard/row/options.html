@@ -30,5 +30,31 @@
 				<dash-repeat-option model="ctrl.row"></dash-repeat-option>
 			</div>
 		</div>
+		<div class="section">
+			<div class="gf-form">
+				<span class="gf-form-label">Background (light theme)</span>
+				<span class="gf-form-label">
+					<spectrum-picker ng-model="ctrl.row.bgLightTheme" options='{"showInput": true}'></spectrum-picker>
+				</span>
+				<button class="btn btn-primary btn-mini" ng-click="ctrl.row.bgLightTheme=''" ng-show="ctrl.row.bgLightTheme" bs-tooltip="'Remove background color'">
+					<i class="fa fa-trash"></i>
+				</button>
+			</div>
+			<div class="gf-form">
+				<span class="gf-form-label">Background (dark theme)</span>
+				<span class="gf-form-label">
+					<spectrum-picker ng-model="ctrl.row.bgDarkTheme" options='{"showInput": true}'></spectrum-picker>
+				</span>
+				<button class="btn btn-primary btn-mini" ng-click="ctrl.row.bgDarkTheme=''" ng-show="ctrl.row.bgDarkTheme" bs-tooltip="'Remove background color'">
+					<i class="fa fa-trash"></i>
+				</button>
+			</div>
+		</div>
+		<div class="section">
+			<div class="gf-form">
+				<span class="gf-form-label">Hide row for</span>
+				<select multiple="multiple" ng-model="ctrl.row.rolesHidden" class="gf-form-input" ng-options="f for f in ['Viewer', 'Editor', 'Read Only Editor']"></select>
+			</div>
+		</div>
 	</div>
 </div>

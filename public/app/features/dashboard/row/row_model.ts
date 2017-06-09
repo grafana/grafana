@@ -12,6 +12,9 @@ export class DashboardRow {
   span: number;
   height: number;
   collapse: boolean;
+  bgLightTheme: string;
+  bgDarkTheme: string;
+  rolesHidden: any;
 
   defaults = {
     title: 'Dashboard Row',
@@ -24,6 +27,9 @@ export class DashboardRow {
     repeatRowId: null,
     repeatIteration: null,
     collapse: false,
+    bgLightTheme: '',
+    bgDarkTheme: '',
+    rolesHidden: []
   };
 
   constructor(private model) {
