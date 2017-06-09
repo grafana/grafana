@@ -171,14 +171,16 @@ define([
             };
 
             $q.all([getHostStatus, getAlertNum, getAlertStatus, getService, getHealth]).then(function(result) {
-              var alertRulesNum = result[1],
+              var hostNum = result[0],
+                  alertRulesNum = result[1],
                   alertStatus = result[2],
-                  hostNum = result[0];
+                  getService = result[3];
               if(typeof(hostNum) == "undefined"){
                 backendSrv.get('/api/static/hosts').then(function(result) {
                   scope.platform = result.hosts;
                 });
               } else {
+                getService();
                 scope.alertNum = alertRulesNum * hostNum;
                 scope.warn = alertStatus.warn;
                 scope.critical = alertStatus.critical;
