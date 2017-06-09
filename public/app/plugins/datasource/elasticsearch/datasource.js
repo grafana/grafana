@@ -3,13 +3,14 @@ define([
   'lodash',
   'moment',
   'app/core/utils/kbn',
+  'app/core/utils/datemath',
   './query_builder',
   './index_pattern',
   './elastic_response',
   './query_ctrl',
   './directives'
 ],
-function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticResponse) {
+function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, ElasticResponse) {
   'use strict';
 
   var module = angular.module('grafana.services');
@@ -173,17 +174,28 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         target = options.targets[i];
         if (target.hide) {continue;}
 
+        var timeFrom = options.range.from;
+        var timeTo = options.range.to;
+
+        if(target.timeShift) {
+          timeFrom = timeFrom.clone();
+          timeFrom = dateMath.parseDateMath(target.timeShift, timeFrom);
+          timeTo = timeTo.clone();
+          timeTo = dateMath.parseDateMath(target.timeShift, timeTo);
+        }
+
         var queryObj = this.queryBuilder.build(target);
         var esQuery = angular.toJson(queryObj);
         var luceneQuery = angular.toJson(target.query || '*');
         // remove inner quotes
         luceneQuery = luceneQuery.substr(1, luceneQuery.length - 2);
         esQuery = esQuery.replace("$lucene_query", luceneQuery);
+        esQuery = esQuery.replace(/\$timeFrom/g, timeFrom.valueOf());
+        esQuery = esQuery.replace(/\$timeTo/g, timeTo.valueOf());
 
         var searchType = queryObj.size === 0 ? 'count' : 'query_then_fetch';
-        var header = this.getQueryHeader(searchType, options.range.from, options.range.to);
+        var header = this.getQueryHeader(searchType, timeFrom, timeTo);
         payload +=  header + '\n';
-
         payload += esQuery + '\n';
         sentTargets.push(target);
       }
@@ -193,8 +205,6 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       }
 
       payload = payload.replace(/\$interval/g, options.interval);
-      payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
-      payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
       payload = templateSrv.replace(payload, options.scopedVars);
 
       if (options.scopedVars && options.scopedVars.logCluster) {
@@ -203,6 +213,20 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           url: "/log/clustering",
           data: payload
         }).then(function (res) {
+          res.data = [
+            {target: 'docs', type: 'docs', datapoints: res.data}
+          ];
+          return res;
+        });
+      } else if (options.scopedVars && options.scopedVars.logCompare) {
+        return backendSrv.logCluster({
+          method: "POST",
+          url: "/log/compare",
+          data: payload
+        }).then(function (res) {
+          _.each(res.data, function (target) {
+            compare(target);
+          });
           res.data = [
             {target: 'docs', type: 'docs', datapoints: res.data}
           ];
@@ -319,6 +343,23 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
         return displayHits;
       });
+    };
+
+    function compare(target) {
+      if (target.count0 == 0 && target.count1 > 0) {
+        target.count = target.count0 +" Gone";
+      } else if (target.count0 > 0 && target.count1 == 0) {
+        target.count = target.count0 +" New";
+      } else if (target.count0 > 0 && target.count1 > 0 && target.count0 >= target.count1) {
+        var num = ((Math.abs(target.count0 - target.count1) / target.count1)*100).toFixed();
+        target.count = target.count0 + " +" + num + "%";
+      } else if (target.count0 > 0 && target.count1 > 0 && target.count0 < target.count1) {
+        var num = ((Math.abs(target.count0 - target.count1) / target.count0)*100).toFixed();
+        target.count = target.count0 + " -" + num + "%";
+      } else {
+        console.log(target);
+        target.count = "0";
+      }
     };
 
     function MD5(e) {

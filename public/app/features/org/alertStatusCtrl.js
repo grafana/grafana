@@ -14,7 +14,7 @@ function (angular, moment, _, dateMath) {
       annotation: {
         datasource: "elk",
         enable: true,
-        iconColor: "#C0C6BE",
+        iconColor: "rgba(19, 21, 19, 0.7)",
         iconSize: 15,
         lineColor: "rgba(255, 96, 96, 0.592157)",
         name: "123",

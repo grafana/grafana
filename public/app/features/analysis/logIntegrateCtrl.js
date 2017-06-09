@@ -331,6 +331,90 @@ define([
               "scopedVars": {
                 "logCluster": true
               }
+            },
+            {
+              "columns": [
+                {
+                  "text": "count",
+                  "value": "count"
+                },
+                {
+                  "text": "message",
+                  "value": "message"
+                }
+              ],
+              "datasource": "elk",
+              "editable": true,
+              "error": false,
+              "fontSize": "100%",
+              "helpInfo": {
+                "context": "",
+                "info": false,
+                "title": ""
+              },
+              "id": Math.random(),
+              "isNew": true,
+              "links": [],
+              "pageSize": null,
+              "scroll": false,
+              "showHeader": true,
+              "sort": {
+                "col": 0,
+                "desc": true
+              },
+              "span": 12,
+              "styles": [
+                {
+                  "dateFormat": "YYYY-MM-DD HH:mm:ss",
+                  "pattern": "Time",
+                  "type": "date"
+                }
+              ],
+              "targets": [
+                {
+                  "aggregator": "sum",
+                  "bucketAggs": [],
+                  "downsampleAggregator": "avg",
+                  "dsType": "elasticsearch",
+                  "errors": {},
+                  "metrics": [
+                    {
+                      "field": "select field",
+                      "id": Math.random(),
+                      "meta": {},
+                      "settings": {},
+                      "type": "raw_document"
+                    }
+                  ],
+                  "query": "",
+                  "refId": "A",
+                  "timeField": "@timestamp"
+                },
+                {
+                  "bucketAggs": [],
+                  "dsType": "elasticsearch",
+                  "metrics": [
+                    {
+                      "field": "select field",
+                      "id": Math.random(),
+                      "meta": {},
+                      "settings": {},
+                      "type": "raw_document"
+                    }
+                  ],
+                  "query": "",
+                  "refId": "B",
+                  "timeField": "@timestamp",
+                  "timeShift": "-1d"
+                }
+              ],
+              "tab": 3,
+              "title": "日志对比",
+              "transform": "json",
+              "type": "table",
+              "scopedVars": {
+                "logCompare": true
+              }
             }
           ],
           "showTitle": false,
@@ -339,16 +423,43 @@ define([
       ];
 
       $scope.reQuery = function () {
-        $scope.dashboard.rows[2].panels[0].targets[0].query = $scope.query;
-        $scope.dashboard.rows[2].panels[1].targets[0].query = $scope.query;
-        $scope.dashboard.rows[2].panels[1].targets[0].hide = true;
+        var panels = $scope.dashboard.rows[2].panels;
+        panels[0].targets[0].query = $scope.query;
+
+        panels[1].targets[0].query = $scope.query;
+        panels[1].targets[0].hide = true;
+
+        panels[2].targets[0].query = $scope.query;
+        panels[2].targets[1].query = $scope.query;
+        panels[2].targets[0].hide = true;
+        panels[2].targets[1].hide = true;
+
         $scope.clustering = false;
+        $scope.comparing = false;
         $rootScope.$broadcast('refresh');
       };
 
       $scope.logCluster = function() {
         $scope.clustering = true;
         $scope.dashboard.rows[2].panels[1].targets[0].hide = false;
+        $rootScope.$broadcast('refresh');
+      };
+
+      $scope.showInputModal = function() {
+        var newScope = $scope.$new();
+        newScope.logCompare = $scope.logCompare;
+        newScope.shift = "-1d";
+        $scope.appEvent('show-modal', {
+          src: './app/features/logs/partials/input_time_shift.html',
+          modalClass: 'modal-no-header confirm-modal',
+          scope: newScope
+        });
+      };
+      $scope.logCompare = function(timeShift) {
+        $scope.comparing = true;
+        $scope.dashboard.rows[2].panels[2].targets[0].hide = false;
+        $scope.dashboard.rows[2].panels[2].targets[1].hide = false;
+        $scope.dashboard.rows[2].panels[2].targets[1].timeShift = timeShift;
         $rootScope.$broadcast('refresh');
       };
 
@@ -373,6 +484,8 @@ define([
         $scope.query = "type:"+type+" AND host:"+host;
         panelMetas[2].panels[0].targets[0].query = $scope.query;
         panelMetas[2].panels[1].targets[0].query = $scope.query;
+        panelMetas[2].panels[2].targets[0].query = $scope.query;
+        panelMetas[2].panels[2].targets[1].query = $scope.query;
 
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: false, canSave: false},
