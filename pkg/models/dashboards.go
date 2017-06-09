@@ -143,8 +143,8 @@ type SaveDashboardCommand struct {
 	OrgId        int64            `json:"-"`
 	RestoredFrom int              `json:"-"`
 	PluginId     string           `json:"-"`
-	ParentId  int64               `json:"parentId"`
-	IsFolder  bool                `json:"isFolder"`
+	ParentId     int64            `json:"parentId"`
+	IsFolder     bool             `json:"isFolder"`
 
 	Result *Dashboard
 }
