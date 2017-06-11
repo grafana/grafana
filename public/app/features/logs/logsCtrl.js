@@ -240,7 +240,8 @@ define([
                   ],
                   "query": "",
                   "refId": "A",
-                  "timeField": "@timestamp"
+                  "timeField": "@timestamp",
+                  "hide": true
                 },
                 {
                   "bucketAggs": [],
@@ -257,7 +258,8 @@ define([
                   "query": "",
                   "refId": "B",
                   "timeField": "@timestamp",
-                  "timeShift": "-1d"
+                  "timeShift": "-1d",
+                  "hide": true
                 }
               ],
               "tab": 3,
@@ -418,6 +420,7 @@ define([
         $scope.showKnows = false;
         $scope.query = "*";
         $scope.clustering = false;
+        $scope.comparing = false;
         //log table
         panelMetas[0].panels[0].targets[0].query = $scope.query;
         //clustering

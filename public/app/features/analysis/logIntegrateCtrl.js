@@ -388,7 +388,8 @@ define([
                   ],
                   "query": "",
                   "refId": "A",
-                  "timeField": "@timestamp"
+                  "timeField": "@timestamp",
+                  "hide": true
                 },
                 {
                   "bucketAggs": [],
@@ -405,7 +406,8 @@ define([
                   "query": "",
                   "refId": "B",
                   "timeField": "@timestamp",
-                  "timeShift": "-1d"
+                  "timeShift": "-1d",
+                  "hide": true
                 }
               ],
               "tab": 3,
