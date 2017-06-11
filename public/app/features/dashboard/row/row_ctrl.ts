@@ -1,7 +1,6 @@
 ///<reference path="../../../headers/common.d.ts" />
 
 import _ from 'lodash';
-
 import config from 'app/core/config';
 import {coreModule, appEvents} from 'app/core/core';
 
@@ -14,11 +13,15 @@ export class DashRowCtrl {
   dropView: number;
 
   /** @ngInject */
-  constructor(private $scope, private $rootScope, private $timeout) {
+  constructor(private $scope, private $rootScope, private $timeout, private contextSrv) {
     this.row.title = this.row.title || 'Row title';
 
     if (this.row.isNew) {
       this.dropView = 1;
+    }
+
+    if (this.row.rolesHidden.indexOf(this.contextSrv.user.orgRole) !== -1) {
+      this.row.hidden = true;
     }
   }
 
@@ -125,9 +128,33 @@ coreModule.directive('dashRow', function($rootScope) {
       row: "=",
     },
     link: function(scope, element) {
+      if (scope.ctrl.row.hidden) {
+        element.hide();
+      }
+      scope.$watch('ctrl.row.showTitle', function() {
+        element.toggleClass('dash-row--title', scope.ctrl.row.showTitle);
+      });
+
+      scope.$watchGroup(['ctrl.row.bgLightTheme', 'ctrl.row.bgDarkTheme'], function() {
+        var bg = config.bootData.user.lightTheme ? scope.ctrl.row.bgLightTheme : scope.ctrl.row.bgDarkTheme;
+        element.css({
+          'background-color': bg
+        });
+
+        if (bg) {
+          element.addClass('dash-row--background');
+        } else {
+          element.removeClass('dash-row--background');
+        }
+      });
+
       scope.$watchGroup(['ctrl.row.collapse', 'ctrl.row.height'], function() {
+        var bg = config.bootData.user.lightTheme ? scope.ctrl.row.bgLightTheme : scope.ctrl.row.bgDarkTheme;
         element.toggleClass('dash-row--collapse', scope.ctrl.row.collapse);
         element.find('.panels-wrapper').css({minHeight: scope.ctrl.row.collapse ? '5px' : scope.ctrl.row.height});
+        element.css({
+          'background-color': (scope.ctrl.row.collapse ? 'transparent' : bg)
+        });
       });
 
       $rootScope.onAppEvent('panel-fullscreen-enter', function(evt, info) {

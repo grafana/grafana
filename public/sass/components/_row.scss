@@ -12,6 +12,14 @@
       margin-bottom: $panel-margin*2;
     }
   }
+
+  &.dash-row--background {
+    margin-bottom: 0.8rem;
+    padding-top: 0.8rem;
+    &.dash-row--title {
+      padding-top: 0;
+    }
+  }
 }
 
 .dash-row-header {
