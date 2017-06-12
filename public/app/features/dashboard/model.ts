@@ -65,6 +65,7 @@ export class DashboardModel {
     this.version = data.version || 0;
     this.links = data.links || [];
     this.gnetId = data.gnetId || null;
+    this.parentId = data.parentId || null;
 
     this.rows = [];
     if (data.rows) {
