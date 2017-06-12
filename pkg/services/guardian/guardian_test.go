@@ -22,7 +22,7 @@ func TestGuardian(t *testing.T) {
 				return nil
 			})
 
-			filteredHitlist, err := RemoveRestrictedDashboards(hitList, orgId, userId)
+			filteredHitlist, err := FilterRestrictedDashboards(hitList, orgId, userId)
 			So(err, ShouldBeNil)
 
 			Convey("should return all dashboards", func() {
@@ -38,7 +38,7 @@ func TestGuardian(t *testing.T) {
 				return nil
 			})
 
-			filteredHitlist, err := RemoveRestrictedDashboards(hitList, orgId, userId)
+			filteredHitlist, err := FilterRestrictedDashboards(hitList, orgId, userId)
 			So(err, ShouldBeNil)
 
 			Convey("should return all dashboards", func() {
@@ -58,7 +58,7 @@ func TestGuardian(t *testing.T) {
 				return nil
 			})
 
-			filteredHitlist, err := RemoveRestrictedDashboards(hitList, orgId, userId)
+			filteredHitlist, err := FilterRestrictedDashboards(hitList, orgId, userId)
 			So(err, ShouldBeNil)
 
 			Convey("should return dashboard that editor has access to", func() {

@@ -108,7 +108,7 @@ func removeRestrictedDashboardsFromList(hits HitList, query *Query) (HitList, er
 		dashboardIds = append(dashboardIds, hit.Id)
 	}
 
-	filteredHits, err := guardian.RemoveRestrictedDashboards(dashboardIds, query.OrgId, query.UserId)
+	filteredHits, err := guardian.FilterRestrictedDashboards(dashboardIds, query.OrgId, query.UserId)
 	if err != nil {
 		return nil, err
 	}

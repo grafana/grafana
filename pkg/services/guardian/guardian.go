@@ -6,7 +6,7 @@ import (
 )
 
 // RemoveRestrictedDashboards filters out dashboards from the list that the user does have access to
-func RemoveRestrictedDashboards(dashList []int64, orgId int64, userId int64) ([]int64, error) {
+func FilterRestrictedDashboards(dashList []int64, orgId int64, userId int64) ([]int64, error) {
 	user, err := getUser(userId)
 	if err != nil {
 		return nil, err
@@ -54,15 +54,59 @@ func CanDeleteFromAcl(dashboardId int64, role m.RoleType, isGrafanaAdmin bool, o
 		return true, nil
 	}
 
+	minimumPermission := m.PERMISSION_EDIT
+	return checkPermission(minimumPermission, permissions, userId)
+}
+
+// CheckDashboardPermissions determines if a user has permission to view, edit or save a dashboard
+func CheckDashboardPermissions(dashboardId int64, role m.RoleType, isGrafanaAdmin bool, orgId int64, userId int64) (bool, bool, bool, error) {
+	if role == m.ROLE_ADMIN || isGrafanaAdmin {
+		return true, true, true, nil
+	}
+
+	permissions, err := getDashboardPermissions(dashboardId)
+	if err != nil {
+		return false, false, false, err
+	}
+
+	if len(permissions) == 0 {
+		return false, false, false, nil
+	}
+
+	minimumPermission := m.PERMISSION_VIEW
+	canView, err := checkPermission(minimumPermission, permissions, userId)
+	if err != nil {
+		return false, false, false, err
+	}
+
+	minimumPermission = m.PERMISSION_READ_ONLY_EDIT
+	canEdit, err := checkPermission(minimumPermission, permissions, userId)
+	if err != nil {
+		return false, false, false, err
+	}
+
+	minimumPermission = m.PERMISSION_EDIT
+	canSave, err := checkPermission(minimumPermission, permissions, userId)
+	if err != nil {
+		return false, false, false, err
+	}
+
+	return canView, canEdit, canSave, nil
+}
+
+func checkPermission(minimumPermission m.PermissionType, permissions []*m.DashboardAclInfoDTO, userId int64) (bool, error) {
 	userGroups, err := getUserGroupsByUser(userId)
+	if err != nil {
+		return false, err
+	}
 
 	for _, p := range permissions {
-		if p.UserId == userId && p.PermissionType == m.PERMISSION_EDIT {
+		if p.UserId == userId && p.PermissionType >= minimumPermission {
 			return true, nil
 		}
 
 		for _, ug := range userGroups {
-			if ug.Id == p.UserGroupId && p.PermissionType == m.PERMISSION_EDIT {
+			if ug.Id == p.UserGroupId && p.PermissionType >= minimumPermission {
 				return true, nil
 			}
 		}

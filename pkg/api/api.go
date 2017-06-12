@@ -234,7 +234,7 @@ func (hs *HttpServer) registerRoutes() {
 
 		// Dashboard
 		r.Group("/dashboards", func() {
-			r.Combo("/db/:slug").Get(GetDashboard).Delete(DeleteDashboard)
+			r.Combo("/db/:slug").Get(wrap(GetDashboard)).Delete(DeleteDashboard)
 
 			r.Get("/id/:dashboardId/versions", wrap(GetDashboardVersions))
 			r.Get("/id/:dashboardId/versions/:id", wrap(GetDashboardVersion))

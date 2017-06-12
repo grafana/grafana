@@ -17,6 +17,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/services/alerting"
+	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/services/search"
 	"github.com/grafana/grafana/pkg/setting"
 	"github.com/grafana/grafana/pkg/util"
@@ -35,23 +36,30 @@ func isDashboardStarredByUser(c *middleware.Context, dashId int64) (bool, error)
 	return query.Result, nil
 }
 
-func GetDashboard(c *middleware.Context) {
+func GetDashboard(c *middleware.Context) Response {
 	slug := strings.ToLower(c.Params(":slug"))
 
 	query := m.GetDashboardQuery{Slug: slug, OrgId: c.OrgId}
 	err := bus.Dispatch(&query)
 	if err != nil {
-		c.JsonApiErr(404, "Dashboard not found", nil)
-		return
-	}
-
-	isStarred, err := isDashboardStarredByUser(c, query.Result.Id)
-	if err != nil {
-		c.JsonApiErr(500, "Error while checking if dashboard was starred by user", err)
-		return
+		return ApiError(404, "Dashboard not found", err)
 	}
 
 	dash := query.Result
+
+	canView, canEdit, canSave, err := getPermissions(dash, c.OrgRole, c.IsGrafanaAdmin, c.OrgId, c.UserId)
+	if err != nil {
+		return ApiError(500, "Error while checking dashboard permissions", err)
+	}
+
+	if !canView {
+		return ApiError(403, "Access denied to this dashboard", nil)
+	}
+
+	isStarred, err := isDashboardStarredByUser(c, dash.Id)
+	if err != nil {
+		return ApiError(500, "Error while checking if dashboard was starred by user", err)
+	}
 
 	// Finding creator and last updater of the dashboard
 	updater, creator := "Anonymous", "Anonymous"
@@ -72,8 +80,8 @@ func GetDashboard(c *middleware.Context) {
 			Slug:      slug,
 			Type:      m.DashTypeDB,
 			CanStar:   c.IsSignedIn,
-			CanSave:   c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR,
-			CanEdit:   canEditDashboard(c.OrgRole),
+			CanSave:   canSave,
+			CanEdit:   canEdit,
 			Created:   dash.Created,
 			Updated:   dash.Updated,
 			UpdatedBy: updater,
@@ -85,9 +93,27 @@ func GetDashboard(c *middleware.Context) {
 		},
 	}
 
-	// TODO(ben): copy this performance metrics logic for the new API endpoints added
 	c.TimeRequest(metrics.M_Api_Dashboard_Get)
-	c.JSON(200, dto)
+	return Json(200, dto)
+}
+
+func getPermissions(dash *m.Dashboard, orgRole m.RoleType, isGrafanaAdmin bool, orgId int64, userId int64) (bool, bool, bool, error) {
+	if !dash.HasAcl {
+		return true, canEditDashboard(orgRole), orgRole == m.ROLE_ADMIN || orgRole == m.ROLE_EDITOR, nil
+	}
+
+	dashId := dash.Id
+
+	if !dash.IsFolder {
+		dashId = dash.ParentId
+	}
+
+	canView, canEdit, canSave, err := guardian.CheckDashboardPermissions(dashId, orgRole, isGrafanaAdmin, orgId, userId)
+	if err != nil {
+		return false, false, false, err
+	}
+
+	return canView, canEdit, canSave, nil
 }
 
 func getUserLogin(userId int64) string {

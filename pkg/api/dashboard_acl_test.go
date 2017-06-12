@@ -23,6 +23,11 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			return nil
 		})
 
+		bus.AddHandler("test", func(query *models.GetUserGroupsByUserQuery) error {
+			query.Result = []*models.UserGroup{}
+			return nil
+		})
+
 		Convey("When user is org admin", func() {
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/1/acl", "/api/dashboards/:id/acl", models.ROLE_ADMIN, func(sc *scenarioContext) {
 				Convey("Should be able to access ACL", func() {
