@@ -234,7 +234,7 @@ func (hs *HttpServer) registerRoutes() {
 
 		// Dashboard
 		r.Group("/dashboards", func() {
-			r.Combo("/db/:slug").Get(wrap(GetDashboard)).Delete(DeleteDashboard)
+			r.Combo("/db/:slug").Get(wrap(GetDashboard)).Delete(wrap(DeleteDashboard))
 
 			r.Get("/id/:dashboardId/versions", wrap(GetDashboardVersions))
 			r.Get("/id/:dashboardId/versions/:id", wrap(GetDashboardVersion))
@@ -242,7 +242,7 @@ func (hs *HttpServer) registerRoutes() {
 
 			r.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), wrap(CalculateDashboardDiff))
 
-			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
+			r.Post("/db", bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
 			r.Get("/file/:file", GetDashboardFromJsonFile)
 			r.Get("/home", wrap(GetHomeDashboard))
 			r.Get("/tags", GetDashboardTags)

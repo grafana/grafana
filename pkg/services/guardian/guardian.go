@@ -5,7 +5,7 @@ import (
 	m "github.com/grafana/grafana/pkg/models"
 )
 
-// RemoveRestrictedDashboards filters out dashboards from the list that the user does have access to
+// FilterRestrictedDashboards filters out dashboards from the list that the user does have access to
 func FilterRestrictedDashboards(dashList []int64, orgId int64, userId int64) ([]int64, error) {
 	user, err := getUser(userId)
 	if err != nil {
@@ -59,7 +59,7 @@ func CanDeleteFromAcl(dashboardId int64, role m.RoleType, isGrafanaAdmin bool, o
 }
 
 // CheckDashboardPermissions determines if a user has permission to view, edit or save a dashboard
-func CheckDashboardPermissions(dashboardId int64, role m.RoleType, isGrafanaAdmin bool, orgId int64, userId int64) (bool, bool, bool, error) {
+func CheckDashboardPermissions(dashboardId int64, role m.RoleType, isGrafanaAdmin bool, userId int64) (bool, bool, bool, error) {
 	if role == m.ROLE_ADMIN || isGrafanaAdmin {
 		return true, true, true, nil
 	}
