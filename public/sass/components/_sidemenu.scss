@@ -56,14 +56,21 @@
       background-color: $side-menu-item-hover-bg;
       @include left-brand-border-gradient();
 
+      .sidemenu-item {
+        border-top: 1px solid $menu-dropdown-border-color;
+        border-bottom: 1px solid $menu-dropdown-border-color;
+      }
+
       .dropdown-menu {
+        margin: 0;
         display: block;
         opacity: 0;
         top: 0px;
+        border: 1px solid $dark-4;
+        border-left: none;
         // important to overlap it otherwise it can be hidden
         // again by the mouse getting outside the hover space
-        left: $side-menu-width - 5px;
-        background-color: $side-menu-bg;
+        left: $side-menu-width - 2px;
         @include animation('dropdown-anim 0ms ease-in-out 0ms forwards');
         z-index: -9999;
       }
@@ -82,19 +89,6 @@
   }
 }
 
-.sidemenu-main-link {
-  font-size: 16px;
-}
-
-.sidemenu-item-text {
-  width: 110px;
-  display: inline-block;
-  vertical-align: middle;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .icon-circle {
   width: 40px;
   height: 40px;
@@ -104,9 +98,17 @@
     opacity: .7;
     position: relative;
     left: 7px;
-    top: 5px;
     font-size: 150%;
   }
+
+  .fa {
+    top: 2px;
+  }
+
+  .icon-gf {
+    top: 5px;
+  }
+
   img {
     left: 7px;
     position: relative;
@@ -118,23 +120,9 @@
   line-height: 47px;
   padding: 0px 10px 0px 10px;
   display: block;
-  border-left: 1px solid transparent;
   position: relative;
-
-  .sidemenu-item-text {
-    padding-left: 11px;
-    position: absolute;
-    display: none;
-    opacity: 0;
-  }
-
-  &:hover {
-    .sidemenu-item-text {
-      display: block;
-      opacity: 1;
-      transition: opacity 150ms ease-in-out;
-    }
-  }
+  font-size: 16px;
+  border: 1px solid transparent;
 
   img {
     border-radius: 50%;
@@ -145,9 +133,10 @@
 }
 
 .side-menu-header {
-  padding: 8px 10px 8px 10px;
+  padding: 10px;
   background-color: $side-menu-item-hover-bg;
   font-size: 18px;
+  border-bottom: 1px solid $menu-dropdown-border-color;
 }
 
 .sidemenu-org-section .dropdown-menu-title {

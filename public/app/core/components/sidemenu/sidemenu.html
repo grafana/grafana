@@ -1,14 +1,19 @@
 <ul class="sidemenu">
 
+	<li>
+		<a class="sidemenu-item" ng-click="ctrl.search()">
+			<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-search"></i></span>
+		</a>
+	</li>
 
 	<li ng-repeat="item in ::ctrl.mainLinks" class="dropdown">
-		<a href="{{::item.url}}" class="sidemenu-item sidemenu-main-link" target="{{::item.target}}">
+		<a href="{{::item.url}}" class="sidemenu-item" target="{{::item.target}}">
 			<span class="icon-circle sidemenu-icon">
 				<i class="{{::item.icon}}" ng-show="::item.icon"></i>
 				<img ng-src="{{::item.img}}" ng-show="::item.img">
 			</span>
 		</a>
-		<ul class="dropdown-menu" role="menu" ng-if="::item.children">
+		<ul class="dropdown-menu dropdown-menu--sidemenu" role="menu" ng-if="::item.children">
 			<li class="side-menu-header">
 				<span class="sidemenu-item-text">{{::item.text}}</span>
 			</li>
@@ -29,7 +34,7 @@
 	</li>
 
 	<li class="sidemenu-org-section" ng-if="::ctrl.isSignedIn" class="dropdown">
-		<a class="sidemenu-item sidemenu-main-link" href="profile">
+		<a class="sidemenu-item" href="profile">
 			<span class="icon-circle sidemenu-icon sidemenu-org-avatar">
 				<img ng-src="{{::ctrl.user.gravatarUrl}}">
 				<span class="sidemenu-org-avatar--missing">
@@ -37,7 +42,7 @@
 				</span>
 			</div>
 		</a>
-		<ul class="dropdown-menu" role="menu">
+		<ul class="dropdown-menu dropdown-menu--sidemenu" role="menu">
 			<li class="side-menu-header">
 				<span class="sidemenu-org-user sidemenu-item-text">{{::ctrl.user.name}}</span>
 				<span class="sidemenu-org-name sidemenu-item-text">{{::ctrl.user.orgName}}</span>
@@ -62,12 +67,12 @@
 		</ul>
 	</li>
 
-
 	<li>
 		<a class="sidemenu-item" target="_self" ng-hide="ctrl.contextSrv.pinned" ng-click="ctrl.contextSrv.setPinnedState(true)">
 			<span class="icon-circle sidemenu-icon"><i class="fa fa-fw fa-thumb-tack"></i></span>
 			<span class="sidemenu-item-text">Pin</span>
 		</a>
 	</li>
+
 </ul>
 

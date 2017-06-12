@@ -187,6 +187,12 @@ $input-invalid-border-color:     lighten($red, 5%);
 $side-menu-bg:            $body-bg;
 $side-menu-item-hover-bg: $gray-6;
 
+// Menu dropdowns
+// -------------------------
+$menu-dropdown-bg:            $white;
+$menu-dropdown-hover-bg:      $gray-6;
+$menu-dropdown-border-color:  $tight-form-border;
+
 // search
 $search-shadow: 0 5px 30px 0 lighten($gray-2, 30%);
 
@@ -205,7 +211,6 @@ $dropdownLinkColorActive:       $link-color;
 
 $dropdownLinkBackgroundActive:  $gray-6;
 $dropdownLinkBackgroundHover:   $gray-6;
-
 
 // COMPONENT VARIABLES
 // --------------------------------------------------

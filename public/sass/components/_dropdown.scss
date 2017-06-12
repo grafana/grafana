@@ -90,7 +90,35 @@
       }
     }
   }
+
+  &--navbar {
+    top: 100%;
+    min-width: 100%;
+  }
+
+  &--navbar,
+  &--sidemenu {
+    background: $menu-dropdown-bg;
+    margin-top: 0px;
+
+    > li > a {
+      padding: $spacer/2 $spacer;
+      border-left: 2px solid transparent;
+
+      i {
+        display: inline-block;
+        padding-right: 21px;
+      }
+
+      &:hover {
+        @include left-brand-border-gradient();
+        color: $link-hover-color;
+        background: $input-label-bg !important;
+      }
+    }
+  }
 }
+
 
 // Hover/Focus state
 // -----------

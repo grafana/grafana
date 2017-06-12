@@ -5,9 +5,9 @@
 		</span>
 	</a>
 
-  <a class="navbar-page-btn navbar-page-btn--search" ng-click="ctrl.showSearch()">
-		<i class="fa fa-search"></i>
-	</a>
+  <!-- <a class="navbar&#45;page&#45;btn navbar&#45;page&#45;btn&#45;&#45;search" ng&#45;click="ctrl.showSearch()"> -->
+	<!-- 	<i class="fa fa&#45;search"></i> -->
+	<!-- </a> -->
 
 	<div ng-if="::!ctrl.hasMenu">
 		<a href="{{::ctrl.section.url}}" class="navbar-page-btn">
@@ -25,7 +25,7 @@
       <i class="fa fa-caret-down"></i>
     </a>
     <ul class="dropdown-menu dropdown-menu--navbar">
-      <li ng-repeat="navItem in ::ctrl.model.menu" ng-class="{active: navItem.active}">
+      <li ng-repeat="navItem in ::ctrl.model.menu">
         <a class="pointer" ng-href="{{::navItem.url}}" ng-click="ctrl.navItemClicked(navItem, $event)">
           <i class="{{::navItem.icon}}" ng-show="::navItem.icon"></i>
           {{::navItem.title}}
