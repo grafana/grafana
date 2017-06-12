@@ -99,21 +99,23 @@
   &--navbar,
   &--sidemenu {
     background: $menu-dropdown-bg;
+    box-shadow: $menu-dropdown-shadow;
     margin-top: 0px;
+    border: none;
 
     > li > a {
-      padding: $spacer/2 $spacer;
+      padding: $spacer/2 1.2rem;
       border-left: 2px solid transparent;
 
       i {
         display: inline-block;
-        padding-right: 21px;
+        margin-right: 10px;
       }
 
       &:hover {
         @include left-brand-border-gradient();
         color: $link-hover-color;
-        background: $input-label-bg !important;
+        background: $menu-dropdown-hover-bg !important;
       }
     }
   }

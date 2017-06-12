@@ -60,9 +60,9 @@
   position: relative;
   float: left;
   margin: 0;
-  background-color: $navbarButtonBackground;
-  padding: 0.4rem 2.0rem 0.4rem 1rem;
-  min-height:: $navbarHeight;
+  background-color: $side-menu-bg;
+  padding: 0.4rem 1.0rem 0.4rem 1rem;
+  min-height: $navbarHeight;
 
   .fa-caret-down {
     font-size: 70%;
@@ -101,23 +101,23 @@
   }
 }
 
+.navbar-page-btn-wrapper {
+  float: left;
+  &:hover {
+    background: $navbarButtonBackgroundHighlight;
+  }
+}
+
 .navbar-page-btn {
   text-overflow: ellipsis;
   overflow: hidden;
   white-space: nowrap;
-  float: left;
   display: block;
   margin: 0;
-  font-size: 1.4rem;
   color: darken($link-color, 5%);
-  background-color: $navbarButtonBackground;
   font-size: $font-size-lg;
   padding: 1rem 1rem 0.75rem 1rem;
   min-height:: $navbarHeight;
-
-  &:hover, &.active {
-    background: $navbarButtonBackgroundHighlight;
-  }
 
   .fa-caret-down {
     font-size: 60%;
@@ -129,6 +129,7 @@
     top: 2px;
     font-size: 20px;
     line-height: 8px;
+    margin-right: 0.5rem;
   }
 
   > img {
@@ -141,12 +142,3 @@
   }
 }
 
-.navbar-page-btn-wrapper {
-  display: inline-block;
-  position: relative;
-}
-
-.navbar-section-wrapper {
-  position: relative;
-  float: left;
-}

@@ -64,9 +64,7 @@ export class ContextSrv {
 
   toggleSideMenu() {
     this.sidemenu = !this.sidemenu;
-    if (!this.sidemenu) {
-      this.setPinnedState(false);
-    }
+    this.setPinnedState(this.sidemenu);
   }
 }
 

@@ -226,7 +226,7 @@ $navbarBrandColor:                $link-color;
 $navbarDropdownShadow:            inset 0px 4px 10px -4px $body-bg;
 
 $navbarButtonBackground:          $navbarBackground;
-$navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
+$navbarButtonBackgroundHighlight: $body-bg;
 
 // Sidemenu
 // -------------------------
@@ -237,7 +237,8 @@ $side-menu-item-hover-bg: $dark-2;
 // -------------------------
 $menu-dropdown-bg:            $body-bg;
 $menu-dropdown-hover-bg:      $dark-2;
-$menu-dropdown-border-color:  $dark-4;
+$menu-dropdown-border-color:  $dark-3;
+$menu-dropdown-shadow: 5px 5px 20px -5px $black;
 
 
 // Pagination

@@ -6,7 +6,7 @@
   position: absolute;
   top: 52px;
   left: 0;
-  border-top: 1px solid $tight-form-border;
+  //border-top: 1px solid $tight-form-border;
   width: $side-menu-width;
   background-color: $side-menu-bg;
   z-index: 1000;
@@ -32,7 +32,7 @@
     min-height: calc(100% - 54px);
   }
   .dashboard-container {
-    padding-left: $side-menu-width + 20px;
+    padding-left: $side-menu-width + 8px;
   }
   .page-container {
     margin-left: $side-menu-width;
@@ -56,18 +56,11 @@
       background-color: $side-menu-item-hover-bg;
       @include left-brand-border-gradient();
 
-      .sidemenu-item {
-        border-top: 1px solid $menu-dropdown-border-color;
-        border-bottom: 1px solid $menu-dropdown-border-color;
-      }
-
       .dropdown-menu {
         margin: 0;
         display: block;
         opacity: 0;
         top: 0px;
-        border: 1px solid $dark-4;
-        border-left: none;
         // important to overlap it otherwise it can be hidden
         // again by the mouse getting outside the hover space
         left: $side-menu-width - 2px;
@@ -133,10 +126,9 @@
 }
 
 .side-menu-header {
-  padding: 10px;
+  padding: 10px 10px 10px 20px;
   background-color: $side-menu-item-hover-bg;
   font-size: 18px;
-  border-bottom: 1px solid $menu-dropdown-border-color;
 }
 
 .sidemenu-org-section .dropdown-menu-title {
