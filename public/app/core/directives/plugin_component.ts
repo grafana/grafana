@@ -181,7 +181,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
         return System.import(appModel.module).then(function(appModule) {
           return {
             baseUrl: appModel.baseUrl,
-            name: 'app-page-' + appModel.appId + '-' + scope.ctrl.page.slug,
+            name: 'app-page-' + appModel.id + '-' + scope.ctrl.page.slug,
             bindings: {appModel: "="},
             attrs: {"app-model": "ctrl.appModel"},
             Component: appModule[scope.ctrl.page.component],
