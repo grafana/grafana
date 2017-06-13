@@ -105,7 +105,12 @@ function (moment, $, angular, _, uiCalendarConfig) {
       oncaller.title += $scope[role].type;
       oncaller.className = [];
       oncaller.className.push(role);
-      var index = _.findIndex($scope[role].events,{start:oncaller.start});
+      if($scope.role.key == 'primary' || $scope.role.key == 'secondary') {
+        var start = oncaller.start;
+      } else {
+        var start = formatTime(oncaller.start);
+      }
+      var index = _.findIndex($scope[role].events,{start: start});
       if(index == (-1 || undefined)){
         $scope[role].events.push(oncaller);
         if(!oncaller.end){
@@ -119,8 +124,6 @@ function (moment, $, angular, _, uiCalendarConfig) {
       } else {
         var event = $scope[role].events[index];
         event.title = oncaller.title;
-        event.start = oncaller.start;
-        event.end = oncaller.end;
         event.color = oncaller.color;
       }
     }
@@ -185,16 +188,18 @@ function (moment, $, angular, _, uiCalendarConfig) {
       this.style.backgroundColor = event.color;
     };
 
-    $scope.addSchedule = function(role,oncallerSelcted) {
+    $scope.addSchedule = function(oncallerSelcted) {
       var oncaller = {
         title: oncallerSelcted.name,
         start: new Date($scope.startTime),
         end: new Date($scope.endTime),
         id: oncallerSelcted.id,
-        color: oncallerSelcted.user[0]
-      }
-      addEvent(oncaller, role.key);
-      updateSchedule(role.key, oncaller);
+        color: colors[_.find($scope.oncallerDefList, {id: oncallerSelcted.id}).user][0]
+      };
+      if($scope.role.key == 'primary' || $scope.role.key == 'secondary') {
+        updateSchedule($scope.role.key, oncaller);
+      };
+      addEvent(oncaller, $scope.role.key);
       $scope.closeEdit();
     }
 
@@ -287,9 +292,6 @@ function (moment, $, angular, _, uiCalendarConfig) {
     };
 
     var updateSchedule = function(role,oncallerSelcted) {
-      oncallerSelcted.stick = false;
-      oncallerSelcted.title = oncallerSelcted.title.substring(0,oncallerSelcted.title.length-3);
-      addEvent(oncallerSelcted, role);
       oncallerMgrSrv.updateSchedule(role, oncallerSelcted.id, getTimeSec(oncallerSelcted.start), getTimeSec(oncallerSelcted.end));
     }
 
