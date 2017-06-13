@@ -62,11 +62,17 @@ export class MetricsTabCtrl {
   mixedDatasourceChanged() {
     var target: any = {isNew: true};
     var ds = _.find(this.datasources, {name: this.mixedDsSegment.value});
+
     if (ds) {
       target.datasource = ds.name;
-      this.panelCtrl.addDataQuery(target);
-      this.mixedDsSegment.value = '';
+      this.panelCtrl.addQuery(target);
     }
+
+    // metric segments are really bad, requires hacks to update
+    const segment = this.uiSegmentSrv.newSegment({value: 'Add Query', selectMode: true, fake: true});
+    this.mixedDsSegment.value = segment.value;
+    this.mixedDsSegment.html = segment.html;
+    this.mixedDsSegment.text = segment.text;
   }
 
   addQuery() {

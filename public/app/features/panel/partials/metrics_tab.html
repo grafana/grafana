@@ -14,39 +14,32 @@
 				</span>
 				<span class="gf-form-query-letter-cell-letter">{{ctrl.panelCtrl.nextRefId}}</span>
 			</label>
-					<button class="btn btn-inverse gf-form-btn" ng-click="ctrl.addQuery()" ng-hide="ctrl.current.meta.mixed">
-						Add Query
-					</button>
+      <button class="btn btn-secondary gf-form-btn" ng-click="ctrl.addQuery()" ng-hide="ctrl.current.meta.mixed">
+        Add Query
+      </button>
 
-					<div class="dropdown" ng-if="ctrl.current.meta.mixed">
-						<metric-segment segment="ctrl.mixedDsSegment" get-options="ctrl.getOptions(false)" on-change="ctrl.mixedDatasourceChanged()"></metric-segment>
-					</div>
-			</div>
-	</div>
+      <div class="dropdown" ng-if="ctrl.current.meta.mixed">
+        <metric-segment segment="ctrl.mixedDsSegment" get-options="ctrl.getOptions(false)" on-change="ctrl.mixedDatasourceChanged()"></metric-segment>
+      </div>
+    </div>
+  </div>
 </div>
 
-<query-troubleshooter panel-ctrl="ctrl.panelCtrl"></query-troubleshooter>
+<!-- <query&#45;troubleshooter panel&#45;ctrl="ctrl.panelCtrl"></query&#45;troubleshooter> -->
 
-<collapse-box title="Data Source: {{ctrl.dsSegment.value}}">
-	<collapse-box-body>
+<div class="gf-form-group">
+  <div class="gf-form-inline">
+    <div class="gf-form">
+      <label class="gf-form-label">
+        Panel Data Source
+      </label>
+      <metric-segment segment="ctrl.dsSegment" get-options="ctrl.getOptions(true)" on-change="ctrl.datasourceChanged()"></metric-segment>
+    </div>
+  </div>
+</div>
 
-		<div class="gf-form-group">
-			<div class="gf-form-inline">
-				<div class="gf-form">
-					<label class="gf-form-label">
-						Panel Data Source
-					</label>
-					<metric-segment segment="ctrl.dsSegment" get-options="ctrl.getOptions(true)" on-change="ctrl.datasourceChanged()"></metric-segment>
-				</div>
-			</div>
-		</div>
-
-		<rebuild-on-change property="ctrl.panel.datasource" show-null="true">
-			<plugin-component type="query-options-ctrl">
-			</plugin-component>
-		</rebuild-on-change>
-
-	</collapse-box-body>
-</collapse-box>
-
-<div class="clearfix"></div>
+<rebuild-on-change property="ctrl.panel.datasource" show-null="true">
+  <plugin-component type="query-options-ctrl">
+  </plugin-component>
+</rebuild-on-change>
+</div>
