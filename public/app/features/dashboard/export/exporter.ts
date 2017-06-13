@@ -103,7 +103,7 @@ export class DashboardExporter {
         templateizeDatasourceUsage(variable);
         variable.options = [];
         variable.current = {};
-        variable.refresh = 1;
+        variable.refresh = variable.refresh > 0 ? variable.refresh : 1;
       }
     }
 
