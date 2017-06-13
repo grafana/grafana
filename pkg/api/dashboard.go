@@ -116,6 +116,21 @@ func getPermissions(dash *m.Dashboard, orgRole m.RoleType, isGrafanaAdmin bool, 
 	return canView, canEdit, canSave, nil
 }
 
+func checkIfCanSaveDashboard(dashboardId int64, orgId int64, orgRole m.RoleType, isGrafanaAdmin bool, userId int64) (bool, error) {
+	dashQuery := m.GetDashboardQuery{Id: dashboardId, OrgId: orgId}
+	err := bus.Dispatch(&dashQuery)
+	if err != nil {
+		return false, err
+	}
+
+	_, _, canSave, err := getPermissions(dashQuery.Result, orgRole, isGrafanaAdmin, userId)
+	if err != nil {
+		return false, err
+	}
+
+	return canSave, nil
+}
+
 func getUserLogin(userId int64) string {
 	query := m.GetUserByIdQuery{Id: userId}
 	err := bus.Dispatch(&query)
@@ -319,6 +334,15 @@ func GetDashboardVersions(c *middleware.Context) Response {
 	limit := c.QueryInt("limit")
 	start := c.QueryInt("start")
 
+	canSave, err := checkIfCanSaveDashboard(dashboardId, c.OrgId, c.OrgRole, c.IsGrafanaAdmin, c.UserId)
+	if err != nil {
+		return ApiError(500, "Error while checking dashboard permissions", err)
+	}
+
+	if !canSave {
+		return ApiError(403, "Does not have permission to save this dashboard", nil)
+	}
+
 	if limit == 0 {
 		limit = 1000
 	}
@@ -357,6 +381,15 @@ func GetDashboardVersions(c *middleware.Context) Response {
 func GetDashboardVersion(c *middleware.Context) Response {
 	dashboardId := c.ParamsInt64(":dashboardId")
 	version := c.ParamsInt(":id")
+
+	canSave, err := checkIfCanSaveDashboard(dashboardId, c.OrgId, c.OrgRole, c.IsGrafanaAdmin, c.UserId)
+	if err != nil {
+		return ApiError(500, "Error while checking dashboard permissions", err)
+	}
+
+	if !canSave {
+		return ApiError(403, "Does not have permission to save this dashboard", nil)
+	}
 
 	query := m.GetDashboardVersionQuery{
 		OrgId:       c.OrgId,

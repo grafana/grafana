@@ -53,6 +53,16 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
 
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+				CallGetDashboardVersion(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+				CallGetDashboardVersions(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
+			})
+
 			postDashboardScenario("When calling POST on", "/api/dashboards", "/api/dashboards", role, cmd, func(sc *scenarioContext) {
 				CallPostDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
@@ -72,6 +82,16 @@ func TestDashboardApiEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
 				CallDeleteDashboard(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+				CallGetDashboardVersion(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+				CallGetDashboardVersions(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
 
@@ -95,6 +115,16 @@ func TestDashboardApiEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
 				CallDeleteDashboard(sc)
+				So(sc.resp.Code, ShouldEqual, 200)
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+				CallGetDashboardVersion(sc)
+				So(sc.resp.Code, ShouldEqual, 200)
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+				CallGetDashboardVersions(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 			})
 
@@ -149,6 +179,16 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
 
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+				CallGetDashboardVersion(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+				CallGetDashboardVersions(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
+			})
+
 			postDashboardScenario("When calling POST on", "/api/dashboards", "/api/dashboards", role, cmd, func(sc *scenarioContext) {
 				CallPostDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
@@ -174,6 +214,16 @@ func TestDashboardApiEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
 				CallDeleteDashboard(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+				CallGetDashboardVersion(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+				CallGetDashboardVersions(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
 
@@ -209,6 +259,16 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				So(sc.resp.Code, ShouldEqual, 200)
 			})
 
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+				CallGetDashboardVersion(sc)
+				So(sc.resp.Code, ShouldEqual, 200)
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+				CallGetDashboardVersions(sc)
+				So(sc.resp.Code, ShouldEqual, 200)
+			})
+
 			postDashboardScenario("When calling POST on", "/api/dashboards", "/api/dashboards", role, cmd, func(sc *scenarioContext) {
 				CallPostDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
@@ -241,6 +301,16 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				So(sc.resp.Code, ShouldEqual, 403)
 			})
 
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+				CallGetDashboardVersion(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+				CallGetDashboardVersions(sc)
+				So(sc.resp.Code, ShouldEqual, 403)
+			})
+
 			postDashboardScenario("When calling POST on", "/api/dashboards", "/api/dashboards", role, cmd, func(sc *scenarioContext) {
 				CallPostDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 403)
@@ -260,6 +330,26 @@ func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta
 	So(err, ShouldBeNil)
 
 	return dash
+}
+
+func CallGetDashboardVersion(sc *scenarioContext) {
+	bus.AddHandler("test", func(query *models.GetDashboardVersionQuery) error {
+		query.Result = &models.DashboardVersion{}
+		return nil
+	})
+
+	sc.handlerFunc = GetDashboardVersion
+	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
+}
+
+func CallGetDashboardVersions(sc *scenarioContext) {
+	bus.AddHandler("test", func(query *models.GetDashboardVersionsQuery) error {
+		query.Result = []*models.DashboardVersionDTO{}
+		return nil
+	})
+
+	sc.handlerFunc = GetDashboardVersions
+	sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
 }
 
 func CallDeleteDashboard(sc *scenarioContext) {
