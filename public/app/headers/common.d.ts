@@ -73,3 +73,7 @@ declare module 'd3' {
   export default d3;
 }
 
+declare module 'gridstack' {
+  var gridstack: any;
+  export default gridstack;
+}

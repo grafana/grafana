@@ -9,8 +9,9 @@
 
 		<div class="clearfix"></div>
 
-    <dash-row class="dash-row" ng-repeat="row in dashboard.rows" row="row" dashboard="dashboard">
-    </dash-row>
+		<dash-grid dashboard="dashboard">
+
+		</dash-grid>
 
     <div ng-show='dashboard.meta.canEdit && !dashboard.meta.fullscreen' class="add-row-panel-hint">
       <div class="span12" style="text-align:left;">

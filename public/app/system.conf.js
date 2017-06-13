@@ -32,7 +32,31 @@ System.config({
     "jquery.flot.fillbelow": "vendor/flot/jquery.flot.fillbelow",
     "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge",
     "d3": "vendor/d3/d3.js",
-    "jquery.flot.dashes": "vendor/flot/jquery.flot.dashes"
+    "jquery.flot.dashes": "vendor/flot/jquery.flot.dashes",
+    "jquery-ui": "vendor/npm/jquery-ui-dist/jquery-ui.js",
+    "gridstack": "vendor/npm/gridstack/dist/gridstack.js",
+    "gridstack.jquery-ui": "vendor/npm/gridstack/dist/gridstack.jQueryUI.js",
+
+    'jquery-ui/data': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/disable-selection': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/focusable': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/form': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/ie': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/keycode': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/labels': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/jquery-1-7': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/plugin': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/safe-active-element': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/safe-blur': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/scroll-parent': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/tabbable': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/unique-id': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/version': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/widget': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/widgets/mouse': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/widgets/draggable': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/widgets/droppable': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
+    'jquery-ui/widgets/resizable': 'vendor/npm/jquery-ui-dist/jquery-ui.js',
   },
 
   packages: {
@@ -52,10 +76,22 @@ System.config({
 
   map: {
     text: 'vendor/plugin-text/text.js',
-    css: 'app/core/utils/css_loader.js'
+    css: 'app/core/utils/css_loader.js',
   },
 
   meta: {
+    'vendor/npm/jquery-ui/jquery-ui.js': {
+      format: 'amd',
+      deps: ['jquery'],
+    },
+    'vendor/npm/gridstack/dist/gridstack.js': {
+      format: 'amd',
+      deps: ['jquery', 'jquery-ui', 'lodash'],
+    },
+    "vendor/npm/gridstack/dist/gridstack.jQueryUI.js": {
+      format: 'amd',
+      deps: ['gridstack.jquery-ui'],
+    },
     'vendor/npm/virtual-scroll/src/indx.js': {
       format: 'cjs',
       exports: 'VirtualScroll',

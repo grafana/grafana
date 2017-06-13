@@ -34,6 +34,8 @@ module.exports = function(config) {
         'remarkable/dist/*',
         'virtual-scroll/**/*',
         'mousetrap/**/*',
+        'gridstack/dist/*',
+        'jquery-ui-dist/*',
       ],
       dest: '<%= srcDir %>/vendor/npm'
     }
