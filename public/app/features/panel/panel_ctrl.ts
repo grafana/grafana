@@ -160,18 +160,19 @@ export class PanelCtrl {
   }
 
   calculatePanelHeight() {
-    if (this.fullscreen) {
-      var docHeight = $(window).height();
-      var editHeight = Math.floor(docHeight * 0.4);
-      var fullscreenHeight = Math.floor(docHeight * 0.8);
-      this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
-    } else {
-      this.containerHeight = this.panel.height || this.row.height;
-      if (_.isString(this.containerHeight)) {
-        this.containerHeight = parseInt(this.containerHeight.replace('px', ''), 10);
-      }
-    }
-
+    // if (this.fullscreen) {
+    //   var docHeight = $(window).height();
+    //   var editHeight = Math.floor(docHeight * 0.4);
+    //   var fullscreenHeight = Math.floor(docHeight * 0.8);
+    //   this.containerHeight = this.editMode ? editHeight : fullscreenHeight;
+    // } else {
+    //   this.containerHeight = this.panel.height || this.row.height;
+    //   if (_.isString(this.containerHeight)) {
+    //     this.containerHeight = parseInt(this.containerHeight.replace('px', ''), 10);
+    //   }
+    // }
+    const rowSpan = this.panel.height || 4;
+    this.containerHeight = rowSpan * 60 + ((rowSpan-1) * 20);
     this.height = this.containerHeight - (PANEL_BORDER + PANEL_PADDING + (this.panel.title ? TITLE_HEIGHT : EMPTY_TITLE_HEIGHT));
   }
 

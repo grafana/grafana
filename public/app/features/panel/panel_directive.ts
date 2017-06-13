@@ -26,7 +26,6 @@ var panelTemplate = `
     <div class="panel-content">
       <ng-transclude></ng-transclude>
     </div>
-    <panel-resizer></panel-resizer>
   </div>
 
   <div class="panel-full-edit" ng-if="ctrl.editMode">
