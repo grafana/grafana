@@ -14,14 +14,14 @@ function (moment, $, angular, _, uiCalendarConfig) {
   module.controller('OnCallerScheduleCtrl', function ($scope, oncallerMgrSrv) {
     /* oncaller/events
       {
-        title: name,       << 显示名称
-        start: start,
-        end: end,
-        id: id,             << 人员id,添加修改时使用
-        name: name,         << 后端返回时携带的,这里赋值给title,以供显示
-        stick: true,        << 保证events停留在view上，为repeat处理服务
-        className: [],      << 这里单纯为了记录角色,其他自定义属性也可以
-        color/textColor: color, <<  控制展示颜色,可由前端设置
+        title: name,            << 显示名称
+        start: start,           << 这里需要统一下格式 string YYYY-MM-DDTHH:mm:ss
+        end: end,               << 同start
+        id: id,                 << 人员id,添加修改时使用
+        name: name,             << 后端返回时携带的,这里赋值给title,以供显示
+        stick: true,            << 保证events停留在view上，为repeat处理服务
+        className: [],          << 这里单纯为了记录并获取角色,其他自定义属性也可以
+        color/textColor: color, <<  控制展示颜色,可由前端设置,每个人员一个颜色
       }
     */
     var colors = {
@@ -33,6 +33,7 @@ function (moment, $, angular, _, uiCalendarConfig) {
     };
 
     $scope.init = function() {
+      // 从后台获取的shchedule
       $scope.primary = {
         type: '(主)',
         events: []
@@ -41,6 +42,7 @@ function (moment, $, angular, _, uiCalendarConfig) {
         type: '(次)',
         events: []
       };
+      // 从纯前端排班的shchedule
       $scope.primaryReview = {
         type: '(主)',
         events: []
@@ -56,17 +58,25 @@ function (moment, $, angular, _, uiCalendarConfig) {
         {key:'secondaryReview',val:'候选',},
       ];
 
+      // 所有值班人员
       $scope.oncallerDefList = null;
-      $scope.role = $scope.roles[1];
+      // 当前人员角色
+      $scope.role = null;
+      // 编辑表单显示
       $scope.showEditForm = false;
+      // 当前人员
       $scope.oncallerSelcted = null;
+      // 参与排班人员
       $scope.oncallerList = [];
+      // 默认排班周期
       $scope.range = 7;
+      // 0点-24点时间
       $scope.changeTimeList = [];
       for(var i=0; i<24; i++){
         var t = i<10 ? '0'+i : i;
         $scope.changeTimeList.push({key: i, value: t + ':00:00'});
-      }
+      };
+      // 默认8点换班
       $scope.changeTime = $scope.changeTimeList[8];
       /* config object uiConfig defined after the event */
       $scope.uiConfig = {
@@ -96,21 +106,14 @@ function (moment, $, angular, _, uiCalendarConfig) {
         for(var i in $scope.oncallerDefList){
           var user = 'user'+(i % Object.keys(colors).length);
           $scope.oncallerDefList[i].user = user;
+          $scope.oncallerDefList[i].color = colors[user][0];
         }
       });
     };
 
     function addEvent(oncaller, role) {
       oncaller.textColor = '#fff';
-      oncaller.title += $scope[role].type;
-      oncaller.className = [];
-      oncaller.className.push(role);
-      if($scope.role.key == 'primary' || $scope.role.key == 'secondary') {
-        var start = oncaller.start;
-      } else {
-        var start = formatTime(oncaller.start);
-      }
-      var index = _.findIndex($scope[role].events,{start: start});
+      var index = _.findIndex($scope[role].events,{start: oncaller.start});
       if(index == (-1 || undefined)){
         $scope[role].events.push(oncaller);
         if(!oncaller.end){
@@ -171,9 +174,11 @@ function (moment, $, angular, _, uiCalendarConfig) {
       oncallerMgrSrv.loadSchedule(getTimeSec(view.start._d), getTimeSec(view.end._d)).then(function onSuccess(response) {
         _.each(response.data.roleSchedule, function(roleEvents, role) {
           _.each(roleEvents, function(oncaller, start) {
-            oncaller.start = new Date(parseInt(start)*1000);
-            oncaller.title = oncaller.name;
+            oncaller.start = formatTime(new Date(parseInt(start)*1000));
+            oncaller.title = oncaller.name+$scope[role].type;
             oncaller.color = colors[_.find($scope.oncallerDefList, {id: oncaller.id}).user][0];
+            oncaller.className = [];
+            oncaller.className.push(role);
             addEvent(oncaller, role);
           });
         });
@@ -189,17 +194,15 @@ function (moment, $, angular, _, uiCalendarConfig) {
     };
 
     $scope.addSchedule = function(oncallerSelcted) {
-      var oncaller = {
-        title: oncallerSelcted.name,
-        start: new Date($scope.startTime),
-        end: new Date($scope.endTime),
-        id: oncallerSelcted.id,
-        color: colors[_.find($scope.oncallerDefList, {id: oncallerSelcted.id}).user][0]
-      };
+      oncallerSelcted.title = oncallerSelcted.name + $scope[$scope.role.key].type;
+      oncallerSelcted.start = $scope.startTime;
+      oncallerSelcted.end = $scope.endTime;
+      oncallerSelcted.className = [];
+      oncallerSelcted.className.push($scope.role.key);
       if($scope.role.key == 'primary' || $scope.role.key == 'secondary') {
-        updateSchedule($scope.role.key, oncaller);
+        updateSchedule($scope.role.key, oncallerSelcted);
       };
-      addEvent(oncaller, $scope.role.key);
+      addEvent(oncallerSelcted, $scope.role.key);
       $scope.closeEdit();
     }
 
@@ -221,7 +224,6 @@ function (moment, $, angular, _, uiCalendarConfig) {
     $scope.addOncallers = function() {
       var index = _.findIndex($scope.oncallerList,$scope.oncallerSelcted);
       if(index == -1){
-        $scope.oncallerSelcted.color = colors[$scope.oncallerSelcted.user];
         $scope.oncallerList.push($scope.oncallerSelcted);
         $scope.closeEdit();
         $scope.reviewSchedule();
@@ -236,12 +238,7 @@ function (moment, $, angular, _, uiCalendarConfig) {
 
     $scope.deleteOncaller = function(oncallerSelcted) {
       _.pull($scope.oncallerList,oncallerSelcted);
-      if($scope.oncallerList.length){
-        $scope.reviewSchedule();
-      } else {
-        $scope.primary.events = [];
-        $scope.secondary.events = [];
-      }
+      $scope.reviewSchedule();
     };
 
     $scope.clearReview = function() {
@@ -253,34 +250,39 @@ function (moment, $, angular, _, uiCalendarConfig) {
 
     $scope.reviewSchedule = function() {
       $scope.clearReview();
-      var zonesStart = new Date($scope.zonesStart);
-      zonesStart.setHours($scope.changeTime.key);
-      var zonesEnd = new Date($scope.zonesEnd);
-      zonesEnd.setHours($scope.changeTime.key);
-      var num = (zonesEnd.getTime() - zonesStart.getTime())/(1000*60*60*24)/$scope.range;
-      for(var i=0; i<num; i++){
-        var start = new Date(zonesStart).setDate(zonesStart.getDate()+i*$scope.range);
-        var end = new Date(zonesStart).setDate(zonesStart.getDate()+(i+1)*$scope.range);
-        var pri = $scope.oncallerList[i%$scope.oncallerList.length];
-        var oncallerPri = {
-          title: pri.name,
-          stick: true,
-          start: formatTime(start),
-          end: formatTime(end),
-          id: pri.id,
-          color: pri.color[0],
-        };
-        addEvent(oncallerPri, 'primaryReview');
-        var sec = $scope.oncallerList[(i+1)%$scope.oncallerList.length];
-        var oncallerSec = {
-          title: sec.name,
-          stick: true,
-          start: formatTime(start+1000),
-          end: formatTime(end),
-          id: sec.id,
-          color: sec.color[0],
+      var oncallerLength = $scope.oncallerList.length;
+      if(oncallerLength) {
+        var zonesStart = new Date($scope.zonesStart);
+        zonesStart.setHours($scope.changeTime.key);
+        var zonesEnd = new Date($scope.zonesEnd);
+        zonesEnd.setHours($scope.changeTime.key);
+        var num = (zonesEnd.getTime() - zonesStart.getTime())/(1000*60*60*24)/$scope.range;
+        for(var i=0; i<num; i++) {
+          var start = new Date(zonesStart).setDate(zonesStart.getDate()+i*$scope.range);
+          var end = new Date(zonesStart).setDate(zonesStart.getDate()+(i+1)*$scope.range);
+          var pri = $scope.oncallerList[i % oncallerLength];
+          var oncallerPri = {
+            title: pri.name+$scope.primaryReview.type,
+            className: ['primaryReview'],
+            stick: true,
+            start: formatTime(start),
+            end: formatTime(end),
+            id: pri.id,
+            color: pri.color,
+          };
+          addEvent(oncallerPri, 'primaryReview');
+          var sec = $scope.oncallerList[(i+1) % oncallerLength];
+          var oncallerSec = {
+            title: sec.name+$scope.secondaryReview.type,
+            className: ['primaryReview'],
+            stick: true,
+            start: formatTime(start+1000),
+            end: formatTime(end),
+            id: sec.id,
+            color: sec.color,
+          }
+          addEvent(oncallerSec, 'secondaryReview');
         }
-        addEvent(oncallerSec, 'secondaryReview');
       };
     };
 
@@ -291,7 +293,7 @@ function (moment, $, angular, _, uiCalendarConfig) {
       };
     };
 
-    var updateSchedule = function(role,oncallerSelcted) {
+    function updateSchedule(role,oncallerSelcted) {
       oncallerMgrSrv.updateSchedule(role, oncallerSelcted.id, getTimeSec(oncallerSelcted.start), getTimeSec(oncallerSelcted.end));
     }
 
