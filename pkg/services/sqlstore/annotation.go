@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/services/annotations"
 )
 
@@ -13,7 +12,7 @@ type SqlAnnotationRepo struct {
 }
 
 func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		if _, err := sess.Table("annotation").Insert(item); err != nil {
 			return err
@@ -24,7 +23,7 @@ func (r *SqlAnnotationRepo) Save(item *annotations.Item) error {
 }
 
 func (r *SqlAnnotationRepo) Update(item *annotations.Item) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		if _, err := sess.Table("annotation").Id(item.Id).Update(item); err != nil {
 			return err
@@ -97,7 +96,7 @@ func (r *SqlAnnotationRepo) Find(query *annotations.ItemQuery) ([]*annotations.I
 }
 
 func (r *SqlAnnotationRepo) Delete(params *annotations.DeleteParams) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		sql := "DELETE FROM annotation WHERE dashboard_id = ? AND panel_id = ?"
 

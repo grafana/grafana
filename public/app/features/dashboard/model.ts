@@ -244,7 +244,7 @@ export class DashboardModel {
     return newPanel;
   }
 
-  formatDate(date, format) {
+  formatDate(date, format?) {
     date = moment.isMoment(date) ? date : moment(date);
     format = format || 'YYYY-MM-DD HH:mm:ss';
     this.timezone = this.getTimezone();

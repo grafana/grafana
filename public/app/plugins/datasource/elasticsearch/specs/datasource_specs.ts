@@ -62,7 +62,7 @@ describe('ElasticDatasource', function() {
           from: moment.utc([2015, 4, 30, 10]),
           to: moment.utc([2015, 5, 1, 10])
         },
-        targets: [{ bucketAggs: [], metrics: [], query: 'escape\\:test' }]
+        targets: [{ bucketAggs: [], metrics: [{type: 'raw_document'}], query: 'escape\\:test' }]
       });
 
       ctx.$rootScope.$apply();

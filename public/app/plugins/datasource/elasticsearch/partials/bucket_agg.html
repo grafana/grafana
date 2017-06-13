@@ -96,6 +96,8 @@
 			<div class="gf-form">
 				<label class="gf-form-label width-10">Query {{$index + 1}}</label>
 				<input type="text" class="gf-form-input max-width-12" ng-model="filter.query" spellcheck='false' placeholder="Lucene query" ng-blur="onChangeInternal()">
+				<label class="gf-form-label width-10">Label {{$index + 1}}</label>
+				<input type="text" class="gf-form-input max-width-12" ng-model="filter.label" spellcheck='false' placeholder="Label" ng-blur="onChangeInternal()">
 			</div>
 			<div class="gf-form">
 				<label class="gf-form-label" ng-if="$first">

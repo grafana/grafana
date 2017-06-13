@@ -105,10 +105,14 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
         if (pageClass) {
           body.removeClass(pageClass);
         }
-        pageClass = data.$$route.pageClass;
-        if (pageClass) {
-          body.addClass(pageClass);
+
+        if (data.$$route) {
+          pageClass = data.$$route.pageClass;
+          if (pageClass) {
+            body.addClass(pageClass);
+          }
         }
+
         $("#tooltip, .tooltip").remove();
 
         // check for kiosk url param
@@ -194,6 +198,15 @@ export function grafanaAppDirective(playlistSrv, contextSrv) {
             });
           }
         }
+
+        // hide menus
+        var openMenus = body.find('.navbar-page-btn--open');
+        if (openMenus.length > 0) {
+          if (target.parents('.navbar-page-btn--open').length === 0) {
+            openMenus.removeClass('navbar-page-btn--open');
+          }
+        }
+
         // hide sidemenu
         if (!ignoreSideMenuHide && !contextSrv.pinned && body.find('.sidemenu').length > 0) {
           if (target.parents('.sidemenu').length === 0) {

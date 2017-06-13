@@ -3,8 +3,6 @@ package sqlstore
 import (
 	"fmt"
 
-	"github.com/go-xorm/xorm"
-
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -85,12 +83,12 @@ func UpdatePlaylist(cmd *m.UpdatePlaylistCommand) error {
 
 	playlistItems := make([]m.PlaylistItem, 0)
 
-	for _, item := range cmd.Items {
+	for index, item := range cmd.Items {
 		playlistItems = append(playlistItems, m.PlaylistItem{
 			PlaylistId: playlist.Id,
 			Type:       item.Type,
 			Value:      item.Value,
-			Order:      item.Order,
+			Order:      index + 1,
 			Title:      item.Title,
 		})
 	}
@@ -118,7 +116,7 @@ func DeletePlaylist(cmd *m.DeletePlaylistCommand) error {
 		return m.ErrCommandValidationFailed
 	}
 
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		var rawPlaylistSql = "DELETE FROM playlist WHERE id = ? and org_id = ?"
 		_, err := sess.Exec(rawPlaylistSql, cmd.Id, cmd.OrgId)
 

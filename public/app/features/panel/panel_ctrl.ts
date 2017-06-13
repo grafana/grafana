@@ -35,8 +35,6 @@ export class PanelCtrl {
   containerHeight: any;
   events: Emitter;
   timing: any;
-  skippedLastRefresh: boolean;
-  isPanelVisible: any;
 
   constructor($scope, $injector) {
     this.$injector = $injector;
@@ -76,25 +74,8 @@ export class PanelCtrl {
     profiler.renderingCompleted(this.panel.id, this.timing);
   }
 
-  shouldSkipRefresh() {
-    // some scenarios we should never ignore refresh
-    if (this.fullscreen || this.dashboard.meta.soloMode || this.dashboard.snapshot) {
-      return false;
-    }
-
-    return !this.isPanelVisible();
-  }
-
   refresh() {
-    // somet
-    if (this.shouldSkipRefresh()) {
-      this.skippedLastRefresh = true;
-      return;
-    }
-
-    this.skippedLastRefresh = false;
-
-    this.events.emit('refresh', null);
+   this.events.emit('refresh', null);
   }
 
   publishAppEvent(evtName, evt) {

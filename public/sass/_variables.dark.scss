@@ -298,3 +298,25 @@ $json-explorer-toggler-color: #45376F;
 $json-explorer-bracket-color: #9494FF;
 $json-explorer-key-color: #23A0DB;
 $json-explorer-url-color: #027BFF;
+
+// Changelog and diff
+// -------------------------
+$diff-label-bg:         $dark-2;
+$diff-label-fg:         $white;
+
+$diff-group-bg:         $dark-4;
+$diff-arrow-color:      $white;
+
+$diff-json-bg:          $dark-4;
+$diff-json-fg:          $gray-5;
+
+$diff-json-added:       #457740;
+$diff-json-deleted:     #a04338;
+
+$diff-json-old:         #a04338;
+$diff-json-new:         #457740;
+
+$diff-json-changed-fg:  $gray-5;
+$diff-json-changed-num: $text-color;
+
+$diff-json-icon:        $gray-7;

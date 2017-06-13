@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
@@ -71,7 +72,25 @@ func NewApiPluginProxy(ctx *middleware.Context, proxyPath string, route *plugins
 		req.Header.Del("Cookie")
 		req.Header.Del("Set-Cookie")
 
-		//Create a HTTP header with the context in it.
+		// clear X-Forwarded Host/Port/Proto headers
+		req.Header.Del("X-Forwarded-Host")
+		req.Header.Del("X-Forwarded-Port")
+		req.Header.Del("X-Forwarded-Proto")
+
+		// set X-Forwarded-For header
+		if req.RemoteAddr != "" {
+			remoteAddr, _, err := net.SplitHostPort(req.RemoteAddr)
+			if err != nil {
+				remoteAddr = req.RemoteAddr
+			}
+			if req.Header.Get("X-Forwarded-For") != "" {
+				req.Header.Set("X-Forwarded-For", req.Header.Get("X-Forwarded-For")+", "+remoteAddr)
+			} else {
+				req.Header.Set("X-Forwarded-For", remoteAddr)
+			}
+		}
+
+		// Create a HTTP header with the context in it.
 		ctxJson, err := json.Marshal(ctx.SignedInUser)
 		if err != nil {
 			ctx.JsonApiErr(500, "failed to marshal context to json.", err)
@@ -93,6 +112,8 @@ func NewApiPluginProxy(ctx *middleware.Context, proxyPath string, route *plugins
 			}
 		}
 
+		// reqBytes, _ := httputil.DumpRequestOut(req, true);
+		// log.Trace("Proxying plugin request: %s", string(reqBytes))
 	}
 
 	return &httputil.ReverseProxy{Director: director}

@@ -11,6 +11,7 @@ $switch-height: 1.5rem;
   max-width: 4.5rem;
   flex-grow: 1;
   min-width: 4.0rem;
+  margin-right: $gf-form-margin;
 
   input {
     position: absolute;
@@ -42,8 +43,10 @@ $switch-height: 1.5rem;
     color: #fff;
     font-size: $font-size-sm;
     text-align: center;
-    line-height: 2.8rem;
     font-size: 150%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   &:hover {
@@ -89,6 +92,14 @@ $switch-height: 1.5rem;
     transform: rotateY(0);
   }
 
+  &--table-cell {
+    margin-bottom: 0;
+    margin-right: 0;
+
+    input + label {
+      height: 3.6rem;
+    }
+  }
 }
 
 gf-form-switch[disabled]  {
@@ -96,5 +107,9 @@ gf-form-switch[disabled]  {
   .gf-form-switch input + label {
     cursor: default;
     pointer-events: none !important;
+    &::before {
+      color: $text-color-faint;
+      text-shadow: none;
+    }
   }
 }

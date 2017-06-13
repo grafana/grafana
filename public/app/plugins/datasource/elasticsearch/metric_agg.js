@@ -67,7 +67,6 @@ function (angular, _, queryDef) {
       } else if (!$scope.agg.field) {
         $scope.agg.field = 'select field';
       }
-
       switch($scope.agg.type) {
         case 'cardinality': {
           var precision_threshold = $scope.agg.settings.precision_threshold || '';
@@ -103,12 +102,14 @@ function (angular, _, queryDef) {
           break;
         }
         case 'raw_document': {
-          $scope.target.metrics = [$scope.agg];
+          $scope.agg.settings.size = $scope.agg.settings.size || 500;
+          $scope.settingsLinkText = 'Size: ' + $scope.agg.settings.size ;
+          $scope.target.metrics.splice(0,$scope.target.metrics.length, $scope.agg);
+
           $scope.target.bucketAggs = [];
           break;
         }
       }
-
       if ($scope.aggDef.supportsInlineScript) {
         // I know this stores the inline script twice
         // but having it like this simplifes the query_builder
