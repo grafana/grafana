@@ -23,7 +23,13 @@ export class UserGroupPickerCtrl {
   resetUserGroupSegment() {
     this.userGroupId = null;
 
-    const userGroupSegment = this.uiSegmentSrv.newSegment({value: 'Choose User Group', selectMode: true, fake: true});
+    const userGroupSegment = this.uiSegmentSrv.newSegment({
+      value: 'Choose User Group',
+      selectMode: true,
+      fake: true,
+      cssClass: 'gf-size-auto'
+    });
+
     if (!this.userGroupSegment) {
       this.userGroupSegment = userGroupSegment;
     } else {

@@ -17,14 +17,19 @@ export class UserPickerCtrl {
 
   /** @ngInject */
   constructor(private backendSrv, private $scope, $sce, private uiSegmentSrv) {
-    this.userSegment = this.uiSegmentSrv.newSegment({value: 'Choose User', selectMode: true, fake: true});
     this.debouncedSearchUsers = _.debounce(this.searchUsers, 500, {'leading': true, 'trailing': false});
-    this.userId = null;
     this.resetUserSegment();
   }
 
   resetUserSegment() {
-    const userSegment = this.uiSegmentSrv.newSegment({value: 'Choose User', selectMode: true, fake: true});
+    this.userId = null;
+    const userSegment = this.uiSegmentSrv.newSegment({
+      value: 'Choose User',
+      selectMode: true,
+      fake: true,
+      cssClass: 'gf-size-auto'
+    });
+
     if (!this.userSegment) {
       this.userSegment = userSegment;
     } else {

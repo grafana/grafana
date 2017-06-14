@@ -4,7 +4,7 @@
 	</h2>
 
 	<ul class="gf-tabs">
-		<li class="gf-tabs-item" ng-repeat="tab in ::['General', 'Rows', 'Links', 'Time picker', 'Metadata', 'Permissions']">
+		<li class="gf-tabs-item" ng-repeat="tab in ::['General', 'Rows', 'Links', 'Time picker', 'Permissions']">
 			<a class="gf-tabs-link" ng-click="editor.index = $index" ng-class="{active: editor.index === $index}">
 				{{::tab}}
 			</a>
@@ -118,32 +118,7 @@
 	</div>
 
 	<div ng-if="editor.index == 4">
-		<h5 class="section-heading">Dashboard info</h5>
-		<div class="gf-form-group">
-			<div class="gf-form">
-				<span class="gf-form-label width-10">Last updated at:</span>
-				<span class="gf-form-label width-18">{{dashboard.formatDate(dashboardMeta.updated)}}</span>
-			</div>
-			<div class="gf-form">
-				<span class="gf-form-label width-10">Last updated by:</span>
-				<span class="gf-form-label width-18">{{dashboardMeta.updatedBy}}&nbsp;</span>
-			</div>
-			<div class="gf-form">
-				<span class="gf-form-label width-10">Created at:</span>
-				<span class="gf-form-label width-18">{{dashboard.formatDate(dashboardMeta.created)}}&nbsp;</span>
-			</div>
-			<div class="gf-form">
-				<span class="gf-form-label width-10">Created by:</span>
-				<span class="gf-form-label width-18">{{dashboardMeta.createdBy}}&nbsp;</span>
-			</div>
-			<div class="gf-form">
-				<span class="gf-form-label width-10">Current version:</span>
-				<span class="gf-form-label width-18">{{dashboardMeta.version}}&nbsp;</span>
-			</div>
-		</div>
-	</div>
-
-  <div ng-if="editor.index == 5">
 		<acl-settings dashboard="dashboard"></acl-settings>
 	</div>
+
 </div>
