@@ -14,6 +14,30 @@
   font-weight: bold;
 }
 
+.singlestat-panel-limits-container {
+  width: 100%;
+  position: absolute;
+  font-size: 2em;
+}
+
+.singlestat-panel-low-limit-container {
+  float: left;
+}
+
+.singlestat-panel-high-limit-container {
+  float: right;
+}
+
+.singlestat-flash {
+  animation: singlestat-flash 1s infinite;
+}
+
+@keyframes singlestat-flash {
+    0% { font-weight: bold; }
+    50% { font-weight: normal; }
+    100% { font-weight: bold; }
+}
+
 .singlestat-panel-prefix {
   padding-right: 20px;
 }

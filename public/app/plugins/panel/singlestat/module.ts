@@ -56,6 +56,8 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     thresholds: '',
     colorBackground: false,
     colorValue: false,
+    showLimits: false,
+    flashLimits: false,
     colors: ["rgba(245, 54, 54, 0.9)", "rgba(237, 129, 40, 0.89)", "rgba(50, 172, 45, 0.97)"],
     sparkline: {
       show: false,
@@ -389,14 +391,51 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     function getBigValueHtml() {
       var body = '<div class="singlestat-panel-value-container">';
 
+      if (panel.showLimits) { body = getLimitsHtml() + body; }
+
       if (panel.prefix) { body += getSpan('singlestat-panel-prefix', panel.prefixFontSize, panel.prefix); }
 
       var value = applyColoringThresholds(data.value, data.valueFormatted);
-      body += getSpan('singlestat-panel-value', panel.valueFontSize, value);
+
+      var spvclass = 'singlestat-panel-value';
+          if (panel.flashLimits && (data.value < data.thresholds[0] || (data.thresholds.length > 1 && data.value > data.thresholds[1]))) {
+            spvclass += ' singlestat-flash';
+          }
+
+      body += getSpan(spvclass, panel.valueFontSize, value);
 
       if (panel.postfix) { body += getSpan('singlestat-panel-postfix', panel.postfixFontSize, panel.postfix); }
 
       body += '</div>';
+
+      return body;
+    }
+
+    function getLimitsHtml() {
+      var body = '';
+
+      if (data.thresholds) {
+        body += '<div class="singlestat-panel-limits-container">';
+        body += '<span class="singlestat-panel-low-limit-container';
+        if (panel.flashLimits && data.value < data.thresholds[0]) {
+          body += ' singlestat-flash';
+        }
+        body += '">';
+        body += '<span style="color:' + data.colorMap[0] + '">'+ data.thresholds[0] + '</span>';
+        body += '</span>';
+
+        if (data.thresholds.length > 1) {
+          body += '<span class="singlestat-panel-high-limit-container';
+          if (panel.flashLimits && data.value > data.thresholds[1]) {
+            body += ' singlestat-flash';
+          }
+          body += '">';
+          body += '<span style="color:' + data.colorMap[2] + '">'+ data.thresholds[1] + '</span>';
+          body += '</span>';
+        }
+
+        body += '</div>';
+      }
 
       return body;
     }

@@ -66,6 +66,12 @@
         <input type="text" class="gf-form-input" ng-model="ctrl.panel.thresholds" ng-blur="ctrl.render()" placeholder="50,80"></input>
       </div>
     </div>
+
+    <div class="gf-form-inline">
+      <gf-form-switch class="gf-form" label-class="width-8" label="Show Limits" checked="ctrl.panel.showLimits" on-change="ctrl.render()"></gf-form-switch>
+      <gf-form-switch class="gf-form" label-class="width-4panel.flashLimits && " label="Flash" checked="ctrl.panel.flashLimits" on-change="ctrl.render()"></gf-form-switch>
+    </div>
+
     <div class="gf-form">
       <label class="gf-form-label width-8">Colors</label>
       <span class="gf-form-label">
