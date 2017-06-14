@@ -36,8 +36,8 @@ func PostDashboardAcl(c *middleware.Context, cmd m.AddOrUpdateDashboardPermissio
 	cmd.DashboardId = c.ParamsInt64(":id")
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == m.ErrDashboardPermissionAlreadyAdded {
-			return ApiError(409, "Permission for user/user group already exists", err)
+		if err == m.ErrDashboardPermissionUserOrUserGroupEmpty {
+			return ApiError(409, err.Error(), err)
 		}
 		return ApiError(500, "Failed to create permission", err)
 	}

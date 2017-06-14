@@ -16,6 +16,15 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			savedFolder := insertTestDashboard("1 test dash folder", 1, 0, true, "prod", "webapp")
 			childDash := insertTestDashboard("2 test dash", 1, savedFolder.Id, false, "prod", "webapp")
 
+			Convey("When adding dashboard permission with userId and userGroupId set to 0", func() {
+				err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
+					OrgId:          1,
+					DashboardId:    savedFolder.Id,
+					PermissionType: m.PERMISSION_EDIT,
+				})
+				So(err, ShouldEqual, m.ErrDashboardPermissionUserOrUserGroupEmpty)
+			})
+
 			Convey("Should be able to add dashboard permission", func() {
 				err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
 					OrgId:          1,
