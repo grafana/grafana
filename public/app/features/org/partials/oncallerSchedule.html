@@ -7,55 +7,111 @@
 
 <div class="page-container">
   <h2>告警值班列表</h2>
+  <div class="row-fluid">
+    <div class="oncaller oncaller-default span4">
+      <div class="oncaller-heading">
+        <h4 class="oncaller-title"><i></i>值班人员</h4>
+        <button class="btn btn-primary pull-right" style="margin-top: -26px;" ng-click="showOncallers()">添加人员</button>
+      </div>
+      <div class="row-fluid oncaller-body">
+        <div ng-repeat="oncaller in oncallerList" class="span5">
+          <p class="{{oncaller.user}} on-duty"><span class="user-span pull-left">{{oncaller.name | limitTo:1 | uppercase}}</span>{{oncaller.name}}<button ng-click="deleteOncaller(oncaller)" class="delete pull-right"><i class="fa fa-times"></i></i></button></p>
+        </div>
+      </div>
+    </div>
+
+    <div class="oncaller oncaller-default span8">
+      <div class="oncaller-heading">
+        <h4 class="oncaller-title"><i></i>排班周期</h4>
+      </div>
+      <div class="oncaller-body">
+        <form class="row-fluid">
+          <div class="rows span6 oncaller-border">
+            <div class="span5" style="margin-left:10px;">
+              <label>起始时间</label>
+              <input type="text" class="input-small" ng-model="zonesStart">
+            </div>
+            <p class="span1" style="margin-top:10px;">——</p>
+
+            <div class="span5">
+              <label>结束时间</label>
+              <input type="text" class="input-small" ng-model="zonesEnd">
+            </div>
+          </div>
+
+          <div class="span3 oncaller-border">
+            <label>值班时间</label>
+            <input ng-model="range" type="number" min="1" max="14" class="input-mini"/>天
+          </div>
+
+          <div class="span3">
+            <label>交接时间</label>
+            <select class="text ui-widget-content ui-corner-all input-small"
+                        ng-model="changeTime"
+                        ng-options="ct.value for ct in changeTimeList">
+            </select>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div class="span12 btn-list">
+      <button class="btn btn-primary" ng-click="reviewSchedule()">预览</button>
+      <button class="btn btn-success" ng-click="saveSchedule()">保存</button>
+    </div>
+  </div>
+  <div class="clearfix"></div>
   <div ui-calendar='uiConfig.calendar' ng-model="eventSources"></div>
   <div ng-if='showEditForm' class="scheduleEditBox">        
-        <form class="scheduleForm">
-            <div class="item">
-                <h4 class="center">值班信息</h4>
-                <button  ng-click="closeEdit();" class="pull-right" style="margin-top: -50px; cursor:pointer;">
-                    <i class="fa fa-times"></i>
-                </button>
-            </div>
-            <div class="item">
-                <label class="label">角色</label>
-                <select class="text ui-widget-content ui-corner-all"
-                     ng-model="role"
-                     ng-options="r.val for r in roles">
-                </select>
-            </div>
-            <div class="item">
-                <label class="label">人员</label>
-                <select class="text ui-widget-content ui-corner-all"
-                    ng-model="oncallerSelcted"
-                    ng-options="oncaller.name for oncaller in oncallerDefList">
-                </select>
-            </div>
-            <div class="item">
-                <label class="label">开始</label>
-                <input type="text" class="input-large" ng-model="startTime"  ng-change="absoluteFromChanged(startTime)">
-                <button style="margin-top: -10px;" class="btn btn-primary" type="button" ng-click="closeTimePicker('from')">
-                    <i class="fa fa-calendar"></i>
-                </button>
-                <div ng-if="openFromPicker">
-                    <datepicker ng-model="startTime" class="gf-timepicker-component" show-weeks="false" ng-change="absoluteFromChanged(startTime)"></datepicker>
-                </div>
-            </div>
-            <div class="item">
-                <label class="label">结束</label>
-                <input type="text" class="input-large" ng-model="endTime" ng-change="absoluteToChanged(endTime)">
-                <button style="margin-top: -10px;" class="btn btn-primary" type="button" ng-click="closeTimePicker('to')">
-                    <i class="fa fa-calendar"></i>
-                </button>
-                <div ng-if="openToPicker">
-                    <datepicker ng-model="endTime" class="gf-timepicker-component" show-weeks="false" ng-change="absoluteToChanged(endTime);"></datepicker>
-                </div>
-            </div>
-            <div class="item center">
-                <button ng-click="closeEdit();" class="btn">取消</button>
-                <button ng-click="addSchedule(role,oncallerSelcted)" class="btn">添加</button>
-            </div>
-
-        </form>
-    </div>
+    <form ng-if="overwrite" class="scheduleForm">
+        <div class="item">
+            <h4 class="center">修改值班信息</h4>
+        </div>
+        <div class="item">
+            <label class="label">角色</label>
+            <select class="text ui-widget-content ui-corner-all"
+                    ng-model="role"
+                    ng-options="r.val for r in roles"
+                    ng-disabled="true">
+            </select>
+        </div>
+        <div class="item">
+            <label class="label">姓名</label>
+            <select class="text ui-widget-content ui-corner-all"
+                ng-model="oncallerSelcted"
+                ng-options="oncaller.name for oncaller in oncallerDefList">
+            </select>
+        </div>
+        <div class="item">
+            <label class="label">开始</label>
+            <input type="text" class="input-large" ng-model="startTime"  ng-disabled="true">
+        </div>
+        <div class="item">
+            <label class="label">结束</label>
+            <input type="text" class="input-large" ng-model="endTime" ng-disabled="true">
+        </div>
+        <div class="item center">
+            <button ng-click="closeEdit();" class="btn">取消</button>
+            <button ng-click="addSchedule(oncallerSelcted,startTime,endTime)" class="btn btn-primary">修改</button>
+        </div>
+    </form>
+    
+    <form ng-if="addoncaller" class="scheduleForm add-oncaller-form">
+      <div class="item">
+        <h4 class="center">添加值班人员</h4>
+      </div>
+      <div class="item oncaller-list">
+        <p ng-repeat="oncaller in oncallerDefList" ng-click="chooseOncallers(oncaller)" 
+        class="{{oncaller.user}} on-duty on-duty-form" ng-class="{true:'active',false:''}[oncallerSelcted.id == oncaller.id]">
+          <span class="user-span pull-left">{{oncaller.name|limitTo:1|uppercase}}</span>
+          {{oncaller.name}}
+        </p>
+      </div>
+      <div class="item center" style="border-top: 2px solid #eee;">
+        <button ng-click="closeEdit();" class="btn">取消</button>
+        <button ng-click="addOncallers()" class="btn btn-primary">添加</button>
+      </div>
+    </form>
+  </div>
 </div>
 

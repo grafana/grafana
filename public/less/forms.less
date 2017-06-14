@@ -134,18 +134,18 @@ input[type="checkbox"]:checked+label {
 }
 
 .scheduleEditBox{
-  position: absolute;
+  position: fixed;
   left: 0;
   right: 0;
   top: 0;
   bottom: 0;
   z-index: 2;
+  background: rgba(222,222,222,0.8)
 }
 .scheduleForm{
   width: 350px;
   margin: 0 auto;
   background: #fff;
-  padding: 20px;
   border: 1px solid #ccc;
   transform: translateY(60%);
   &>.item{
@@ -156,6 +156,7 @@ input[type="checkbox"]:checked+label {
       background: none;
       color: black;
       margin-top: -6px;
+      margin-left: 20px;
       vertical-align: middle;
     }
   }
@@ -166,8 +167,24 @@ input[type="checkbox"]:checked+label {
     padding: 20px;
     border: 1px solid;
   }
+  h4{
+    height: 40px;
+    line-height: 40px;
+    color: white;
+    margin: 0;
+    margin-bottom: 10px;
+    background: rgb(35,172,245);
+  }
+  &>.oncaller-list{
+    height: 200px;
+    overflow: scroll;
+  }
 }
 
 .center{
   text-align: center;
+  padding: 10px 0;
+  &>.btn{
+    width: 100px;
+  }
 }
