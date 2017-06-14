@@ -16,8 +16,27 @@ export class UserGroupPickerCtrl {
 
   /** @ngInject */
   constructor(private backendSrv, private $scope, $sce, private uiSegmentSrv) {
-    this.userGroupSegment = this.uiSegmentSrv.newSegment({value: 'Choose User Group', selectMode: true});
     this.debouncedSearchUserGroups = _.debounce(this.searchUserGroups, 500, {'leading': true, 'trailing': false});
+    this.resetUserGroupSegment();
+  }
+
+  resetUserGroupSegment() {
+    this.userGroupId = null;
+
+    const userGroupSegment = this.uiSegmentSrv.newSegment({value: 'Choose User Group', selectMode: true, fake: true});
+    if (!this.userGroupSegment) {
+      this.userGroupSegment = userGroupSegment;
+    } else {
+      this.userGroupSegment.value = userGroupSegment.value;
+      this.userGroupSegment.html = userGroupSegment.html;
+      this.userGroupSegment.value = userGroupSegment.value;
+    }
+  }
+
+  userGroupIdChanged(newVal) {
+    if (!newVal) {
+      this.resetUserGroupSegment();
+    }
   }
 
   searchUserGroups(query: string) {
@@ -50,8 +69,12 @@ export function userGroupPicker() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      userGroupSegment: '=',
       userGroupId: '=',
+    },
+    link: function(scope, elem, attrs, ctrl) {
+      scope.$watch("ctrl.userGroupId", (newVal, oldVal) => {
+        ctrl.userGroupIdChanged(newVal);
+      });
     }
   };
 }

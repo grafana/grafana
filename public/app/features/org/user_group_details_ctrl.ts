@@ -6,9 +6,9 @@ import _ from 'lodash';
 export default class UserGroupDetailsCtrl {
   userGroup: UserGroup;
   userGroupMembers: User[] = [];
-  userName = '';
   userId: number;
   navModel: any;
+  addMemberForm: any;
 
   constructor(private $scope, private $http, private backendSrv, private $routeParams, navModelSrv) {
     this.navModel = navModelSrv.getOrgNav(3);
@@ -52,10 +52,10 @@ export default class UserGroupDetailsCtrl {
   }
 
   addMember() {
-    if (!this.$scope.addMemberForm.$valid) { return; }
+    if (!this.addMemberForm.$valid) { return; }
 
     this.backendSrv.post(`/api/user-groups/${this.$routeParams.id}/members`, {userId: this.userId}).then(() => {
-      this.userName = '';
+      this.userId = null;
       this.get();
     });
   }

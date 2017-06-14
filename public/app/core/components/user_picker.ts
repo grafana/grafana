@@ -17,8 +17,21 @@ export class UserPickerCtrl {
 
   /** @ngInject */
   constructor(private backendSrv, private $scope, $sce, private uiSegmentSrv) {
-    this.userSegment = this.uiSegmentSrv.newSegment({value: 'Choose User', selectMode: true});
+    this.userSegment = this.uiSegmentSrv.newSegment({value: 'Choose User', selectMode: true, fake: true});
     this.debouncedSearchUsers = _.debounce(this.searchUsers, 500, {'leading': true, 'trailing': false});
+    this.userId = null;
+    this.resetUserSegment();
+  }
+
+  resetUserSegment() {
+    const userSegment = this.uiSegmentSrv.newSegment({value: 'Choose User', selectMode: true, fake: true});
+    if (!this.userSegment) {
+      this.userSegment = userSegment;
+    } else {
+      this.userSegment.value = userSegment.value;
+      this.userSegment.html = userSegment.html;
+      this.userSegment.value = userSegment.value;
+    }
   }
 
   searchUsers(query: string) {
@@ -44,10 +57,15 @@ export class UserPickerCtrl {
     });
   }
 
+  userIdChanged(newVal) {
+    if (!newVal) {
+      this.resetUserSegment();
+    }
+  }
+
   private userKey(user: User) {
     return this.uiSegmentSrv.newSegment(user.login + ' - ' + user.email);
   }
-
 
 }
 
@@ -66,9 +84,12 @@ export function userPicker() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      userSegment: '=',
-      userLogin: '=',
       userId: '=',
+    },
+    link: function(scope, elem, attrs, ctrl) {
+      scope.$watch("ctrl.userId", (newVal, oldVal) => {
+        ctrl.userIdChanged(newVal);
+      });
     }
   };
 }

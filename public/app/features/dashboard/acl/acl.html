@@ -8,11 +8,11 @@
 			</div>
       <div class="gf-form" ng-show="ctrl.type === 'User'">
         <span class="gf-form-label">User</span>
-        <user-picker user-login="ctrl.userLogin" user-id="ctrl.userId" user-segment="ctrl.userSegment"></user-picker>
+        <user-picker user-id="ctrl.userId"></user-picker>
       </div>
       <div class="gf-form" ng-show="ctrl.type === 'User Group'">
         <span class="gf-form-label">User Group</span>
-        <user-group-picker user-group-id="ctrl.userGroupId" user-group-segment="ctrl.userGroupSegment"></user-group-picker>
+        <user-group-picker user-group-id="ctrl.userGroupId"></user-group-picker>
       </div>
 			<div class="gf-form">
 				<span class="gf-form-label">Role</span>

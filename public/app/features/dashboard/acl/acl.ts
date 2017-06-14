@@ -14,12 +14,9 @@ export class AclCtrl {
     {value: 2, text: 'Read-only Edit'},
     {value: 4, text: 'Edit'}
   ];
-  userLogin: string;
   userId: number;
-  userSegment: any;
   type = 'User';
   userGroupId: number;
-  userGroupSegment: any;
   permission = 1;
 
   /** @ngInject */
@@ -40,7 +37,7 @@ export class AclCtrl {
 
   addPermission() {
     if (this.type === 'User') {
-      if (this.userSegment.value === 'Choose User') {
+      if (!this.userId) {
         return;
       }
 
@@ -48,15 +45,11 @@ export class AclCtrl {
         userId: this.userId,
         permissionType: this.permission
       }).then(() => {
-        this.userId = 0;
-        this.userLogin = '';
-        this.userSegment.value = 'Choose User';
-        this.userSegment.text = 'Choose User';
-        this.userSegment.html = 'Choose User';
+        this.userId = null;
         this.get(this.dashboard.id);
       });
     } else {
-      if (this.userGroupSegment.value === 'Choose User Group') {
+      if (!this.userGroupId) {
         return;
       }
 
@@ -64,10 +57,7 @@ export class AclCtrl {
         userGroupId: this.userGroupId,
         permissionType: this.permission
       }).then(() => {
-        this.userGroupId = 0;
-        this.userGroupSegment.value = 'Choose User Group';
-        this.userGroupSegment.text = 'Choose User Group';
-        this.userGroupSegment.html = 'Choose User Group';
+        this.userGroupId = null;
         this.get(this.dashboard.id);
       });
     }
