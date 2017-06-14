@@ -71,7 +71,7 @@ export class UserGroupsCtrl {
 
     this.$scope.appEvent('show-modal', {
       src: 'public/app/features/org/partials/create_user_group.html',
-      modalClass: 'user-group-modal',
+      modalClass: 'modal--narrow',
       scope: modalScope
     });
   }

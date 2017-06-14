@@ -24,7 +24,7 @@ export class UserPickerCtrl {
   resetUserSegment() {
     this.userId = null;
     const userSegment = this.uiSegmentSrv.newSegment({
-      value: 'Choose User',
+      value: 'Choose',
       selectMode: true,
       fake: true,
       cssClass: 'gf-size-auto'
