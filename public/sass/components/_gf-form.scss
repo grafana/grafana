@@ -62,8 +62,22 @@ $gf-form-margin: 0.25rem;
 
   &--grow {
     flex-grow: 1;
-    min-height: 2.70rem;
+    min-height: 2.60rem;
   }
+
+  &--error {
+    color: $critical;
+  }
+}
+
+.gf-form-pre {
+  display: block;
+  flex-grow: 1;
+  font-size: $font-size-sm;
+  margin: 0;
+  margin-right: $gf-form-margin;
+  border: $input-btn-border-width solid transparent;
+  @include border-radius($label-border-radius-sm);
 }
 
 .gf-form-checkbox {
@@ -79,12 +93,17 @@ $gf-form-margin: 0.25rem;
   }
 }
 
+.gf-form-textarea {
+  max-width: 650px;
+}
+
 .gf-form-input {
   display: block;
   width: 100%;
   padding: $input-padding-y $input-padding-x;
   margin-right: $gf-form-margin;
   font-size: $font-size-base;
+  margin-right: $gf-form-margin;
   line-height: $input-line-height;
   color: $input-color;
   background-color: $input-bg;
@@ -145,6 +164,16 @@ $gf-form-margin: 0.25rem;
   }
 }
 
+.gf-form-hint {
+  width: 100%;
+}
+
+.gf-form-hint-text {
+  display: block;
+  text-align: right;
+  padding-top: 0.5em;
+}
+
 .gf-form-select-wrapper {
   margin-right: $gf-form-margin;
   position: relative;
@@ -196,13 +225,12 @@ $gf-form-margin: 0.25rem;
   margin-right: $gf-form-margin;
   line-height: $input-line-height;
   font-size: $font-size-sm;
+  box-shadow: none;
+  border: $input-btn-border-width solid transparent;
+  @include border-radius($label-border-radius-sm);
 
   flex-shrink: 0;
   flex-grow: 0;
-}
-
-.gf-form-switch {
-  margin-right: $gf-form-margin;
 }
 
 .natural-language-input {
@@ -237,6 +265,11 @@ $gf-form-margin: 0.25rem;
   padding-left: $spacer;
   color: $text-color-weak;
 
+  &--bold {
+    color: $text-color-emphasis;
+    padding-left: 0;
+  }
+
   &--right-absolute {
     position: absolute;
     right: $spacer;
@@ -246,8 +279,19 @@ $gf-form-margin: 0.25rem;
   &--right-normal {
     float: right;
   }
+
+  &--header {
+    margin-bottom: $gf-form-margin
+  }
 }
 
 select.gf-form-input ~ .gf-form-help-icon {
   right: 10px;
+}
+
+.gf-form-icon--right-absolute {
+  position: absolute;
+  right: $spacer;
+  top: 10px;
+  color: $text-muted;
 }

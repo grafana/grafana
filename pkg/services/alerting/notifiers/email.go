@@ -1,6 +1,7 @@
 package notifiers
 
 import (
+	"os"
 	"strings"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -12,7 +13,21 @@ import (
 )
 
 func init() {
-	alerting.RegisterNotifier("email", NewEmailNotifier)
+	alerting.RegisterNotifier(&alerting.NotifierPlugin{
+		Type:        "email",
+		Name:        "Email",
+		Description: "Sends notifications using Grafana server configured SMTP settings",
+		Factory:     NewEmailNotifier,
+		OptionsTemplate: `
+      <h3 class="page-heading">Email addresses</h3>
+      <div class="gf-form">
+         <textarea rows="7" class="gf-form-input width-25" required ng-model="ctrl.model.settings.addresses"></textarea>
+      </div>
+      <div class="gf-form">
+      <span>You can enter multiple email addresses using a ";" separator</span>
+      </div>
+    `,
+	})
 }
 
 type EmailNotifier struct {
@@ -28,9 +43,18 @@ func NewEmailNotifier(model *m.AlertNotification) (alerting.Notifier, error) {
 		return nil, alerting.ValidationError{Reason: "Could not find addresses in settings"}
 	}
 
+	// split addresses with a few different ways
+	addresses := strings.FieldsFunc(addressesString, func(r rune) bool {
+		switch r {
+		case ',', ';', '\n':
+			return true
+		}
+		return false
+	})
+
 	return &EmailNotifier{
-		NotifierBase: NewNotifierBase(model.Name, model.Type, model.Settings),
-		Addresses:    strings.Split(addressesString, "\n"),
+		NotifierBase: NewNotifierBase(model.Id, model.IsDefault, model.Name, model.Type, model.Settings),
+		Addresses:    addresses,
 		log:          log.New("alerting.notifier.email"),
 	}, nil
 }
@@ -45,28 +69,48 @@ func (this *EmailNotifier) Notify(evalContext *alerting.EvalContext) error {
 		return err
 	}
 
+	error := ""
+	if evalContext.Error != nil {
+		error = evalContext.Error.Error()
+	}
+
 	cmd := &m.SendEmailCommandSync{
 		SendEmailCommand: m.SendEmailCommand{
+			Subject: evalContext.GetNotificationTitle(),
 			Data: map[string]interface{}{
 				"Title":        evalContext.GetNotificationTitle(),
 				"State":        evalContext.Rule.State,
 				"Name":         evalContext.Rule.Name,
 				"StateModel":   evalContext.GetStateModel(),
 				"Message":      evalContext.Rule.Message,
+				"Error":        error,
 				"RuleUrl":      ruleUrl,
-				"ImageLink":    evalContext.ImagePublicUrl,
+				"ImageLink":    "",
+				"EmbededImage": "",
 				"AlertPageUrl": setting.AppUrl + "alerting",
 				"EvalMatches":  evalContext.EvalMatches,
 			},
-			To:       this.Addresses,
-			Template: "alert_notification.html",
+			To:           this.Addresses,
+			Template:     "alert_notification.html",
+			EmbededFiles: []string{},
 		},
+	}
+
+	if evalContext.ImagePublicUrl != "" {
+		cmd.Data["ImageLink"] = evalContext.ImagePublicUrl
+	} else {
+		file, err := os.Stat(evalContext.ImageOnDiskPath)
+		if err == nil {
+			cmd.EmbededFiles = []string{evalContext.ImageOnDiskPath}
+			cmd.Data["EmbededImage"] = file.Name()
+		}
 	}
 
 	err = bus.DispatchCtx(evalContext.Ctx, cmd)
 
 	if err != nil {
 		this.log.Error("Failed to send alert notification email", "error", err)
+		return err
 	}
 	return nil
 

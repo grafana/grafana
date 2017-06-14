@@ -1,9 +1,10 @@
 define([
   'angular',
+  'require',
   '../core_module',
   'app/core/utils/kbn',
 ],
-function (angular, coreModule, kbn) {
+function (angular, require, coreModule, kbn) {
   'use strict';
 
   coreModule.default.directive('tip', function($compile) {
@@ -14,6 +15,43 @@ function (angular, coreModule, kbn) {
           kbn.addslashes(elem.text())+'\'"></i>';
         _t = _t.replace(/{/g, '\\{').replace(/}/g, '\\}');
         elem.replaceWith($compile(angular.element(_t))(scope));
+      }
+    };
+  });
+
+  coreModule.default.directive('clipboardButton', function() {
+    return {
+      scope: {
+        getText: '&clipboardButton'
+      },
+      link: function(scope, elem) {
+        require(['vendor/clipboard/dist/clipboard'], function(Clipboard) {
+          scope.clipboard = new Clipboard(elem[0], {
+            text: function() {
+              return scope.getText();
+            }
+          });
+        });
+
+        scope.$on('$destroy', function() {
+          if (scope.clipboard) {
+            scope.clipboard.destroy();
+          }
+        });
+      }
+    };
+  });
+
+  coreModule.default.directive('compile', function($compile) {
+    return {
+      restrict: 'A',
+      link: function(scope, element, attrs) {
+        scope.$watch(function(scope) {
+          return scope.$eval(attrs.compile);
+        }, function(value) {
+          element.html(value);
+          $compile(element.contents())(scope);
+        });
       }
     };
   });
@@ -63,10 +101,10 @@ function (angular, coreModule, kbn) {
           text + tip + '</label>';
 
         var template =
-          '<input class="cr1" id="' + scope.$id + model + '" type="checkbox" ' +
-          '       ng-model="' + model + '"' + ngchange +
-          '       ng-checked="' + model + '"></input>' +
-          ' <label for="' + scope.$id + model + '" class="cr1"></label>';
+        '<input class="cr1" id="' + scope.$id + model + '" type="checkbox" ' +
+        '       ng-model="' + model + '"' + ngchange +
+        '       ng-checked="' + model + '"></input>' +
+        ' <label for="' + scope.$id + model + '" class="cr1"></label>';
 
         template = template + label;
         elem.addClass('gf-form-checkbox');
@@ -91,7 +129,7 @@ function (angular, coreModule, kbn) {
         var li = '<li' + (item.submenu && item.submenu.length ? ' class="dropdown-submenu"' : '') + '>' +
           '<a tabindex="-1" ng-href="' + (item.href || '') + '"' + (item.click ? ' ng-click="' + item.click + '"' : '') +
           (item.target ? ' target="' + item.target + '"' : '') + (item.method ? ' data-method="' + item.method + '"' : '') +
-          '>' + (item.text || '') + '</a>';
+            '>' + (item.text || '') + '</a>';
 
         if (item.submenu && item.submenu.length) {
           li += buildTemplate(item.submenu).join('\n');

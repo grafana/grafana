@@ -40,10 +40,10 @@
 			</form>
 
 			<div ng-if="loginMode">
-				<div class="text-center login-divider" ng-show="oauthEnabled && !disableLoginForm">
+				<div class="text-center login-divider" ng-show="oauthEnabled">
 					<div class="login-divider-line">
 						<span class="login-divider-text">
-							Or login with
+							<span ng-hide="disableLoginForm">Or</span> Login With
 						</span>
 					</div>
 				</div>
@@ -53,30 +53,31 @@
 				<div class="login-oauth text-center" ng-show="oauthEnabled">
 					<a class="btn btn-large btn-google" href="login/google" target="_self" ng-if="oauth.google">
 						<i class="fa fa-google"></i>
-						with Google
+						Google
 					</a>
 					<a class="btn btn-large btn-github" href="login/github" target="_self" ng-if="oauth.github">
 						<i class="fa fa-github"></i>
-						with Github
+						GitHub
 					</a>
-					<a class="btn btn-large btn-grafana-net" href="login/grafananet" target="_self" ng-if="oauth.grafananet">
-						with <span>Grafana.net</span>
+					<a class="btn btn-large btn-grafana-com" href="login/grafana_com" target="_self" ng-if="oauth.grafana_com">
+						<img src="public/img/grafana_com_auth_icon.svg"></img>
+						<span>Grafana.com</span>
 					</a>
 					<a class="btn btn-large btn-generic-oauth" href="login/generic_oauth" target="_self" ng-if="oauth.generic_oauth">
 						<i class="fa fa-gear"></i>
-						with {{oauth.generic_oauth.name}}
+						{{oauth.generic_oauth.name}}
 					</a>
 				</div>
 			</div>
+		</div>
 
-			<div class="clearfix"></div>
+		<div class="clearfix"></div>
 
-			<div class="text-center password-recovery" ng-hide="disableLoginForm">
-				<div class="text-center">
-					<a href="user/password/send-reset-email">
-						Forgot your password?
-					</a>
-				</div>
+		<div class="text-center password-recovery" ng-hide="disableLoginForm">
+			<div class="text-center">
+				<a href="user/password/send-reset-email">
+					Forgot your password?
+				</a>
 			</div>
 		</div>
 

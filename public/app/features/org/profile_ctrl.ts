@@ -9,12 +9,15 @@ export class ProfileCtrl {
   old_theme: any;
   orgs: any = [];
   userForm: any;
-  showOrgsList: boolean = false;
+  showOrgsList = false;
+  readonlyLoginFields = config.disableLoginForm;
+  navModel: any;
 
   /** @ngInject **/
-  constructor(private backendSrv, private contextSrv, private $location) {
+  constructor(private backendSrv, private contextSrv, private $location, navModelSrv) {
     this.getUser();
     this.getUserOrgs();
+    this.navModel = navModelSrv.getProfileNav();
   }
 
   getUser() {

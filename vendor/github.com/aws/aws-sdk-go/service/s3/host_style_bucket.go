@@ -37,14 +37,6 @@ var accelerateOpBlacklist = operationBlacklist{
 func updateEndpointForS3Config(r *request.Request) {
 	forceHostStyle := aws.BoolValue(r.Config.S3ForcePathStyle)
 	accelerate := aws.BoolValue(r.Config.S3UseAccelerate)
-	useDualStack := aws.BoolValue(r.Config.UseDualStack)
-
-	if useDualStack && accelerate {
-		r.Error = awserr.New("InvalidParameterException",
-			fmt.Sprintf("configuration aws.Config.UseDualStack is not compatible with aws.Config.Accelerate"),
-			nil)
-		return
-	}
 
 	if accelerate && accelerateOpBlacklist.Continue(r) {
 		if forceHostStyle {
@@ -75,6 +67,10 @@ func updateEndpointForHostStyle(r *request.Request) {
 	moveBucketToHost(r.HTTPRequest.URL, bucket)
 }
 
+var (
+	accelElem = []byte("s3-accelerate.dualstack.")
+)
+
 func updateEndpointForAccelerate(r *request.Request) {
 	bucket, ok := bucketNameFromReqParams(r.Params)
 	if !ok {
@@ -86,13 +82,31 @@ func updateEndpointForAccelerate(r *request.Request) {
 
 	if !hostCompatibleBucketName(r.HTTPRequest.URL, bucket) {
 		r.Error = awserr.New("InvalidParameterException",
-			fmt.Sprintf("bucket name %s is not compatibile with S3 Accelerate", bucket),
+			fmt.Sprintf("bucket name %s is not compatible with S3 Accelerate", bucket),
 			nil)
 		return
 	}
 
-	// Change endpoint from s3(-[a-z0-1-])?.amazonaws.com to s3-accelerate.amazonaws.com
-	r.HTTPRequest.URL.Host = replaceHostRegion(r.HTTPRequest.URL.Host, "accelerate")
+	parts := strings.Split(r.HTTPRequest.URL.Host, ".")
+	if len(parts) < 3 {
+		r.Error = awserr.New("InvalidParameterExecption",
+			fmt.Sprintf("unable to update endpoint host for S3 accelerate, hostname invalid, %s",
+				r.HTTPRequest.URL.Host), nil)
+		return
+	}
+
+	if parts[0] == "s3" || strings.HasPrefix(parts[0], "s3-") {
+		parts[0] = "s3-accelerate"
+	}
+	for i := 1; i+1 < len(parts); i++ {
+		if parts[i] == aws.StringValue(r.Config.Region) {
+			parts = append(parts[:i], parts[i+1:]...)
+			break
+		}
+	}
+
+	r.HTTPRequest.URL.Host = strings.Join(parts, ".")
+
 	moveBucketToHost(r.HTTPRequest.URL, bucket)
 }
 
@@ -145,29 +159,4 @@ func moveBucketToHost(u *url.URL, bucket string) {
 	if u.Path == "" {
 		u.Path = "/"
 	}
-}
-
-const s3HostPrefix = "s3"
-
-// replaceHostRegion replaces the S3 region string in the host with the
-// value provided. If v is empty the host prefix returned will be s3.
-func replaceHostRegion(host, v string) string {
-	if !strings.HasPrefix(host, s3HostPrefix) {
-		return host
-	}
-
-	suffix := host[len(s3HostPrefix):]
-	for i := len(s3HostPrefix); i < len(host); i++ {
-		if host[i] == '.' {
-			// Trim until '.' leave the it in place.
-			suffix = host[i:]
-			break
-		}
-	}
-
-	if len(v) == 0 {
-		return fmt.Sprintf("s3%s", suffix)
-	}
-
-	return fmt.Sprintf("s3-%s%s", v, suffix)
 }

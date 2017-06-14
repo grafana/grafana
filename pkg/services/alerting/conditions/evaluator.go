@@ -3,9 +3,9 @@ package conditions
 import (
 	"encoding/json"
 
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/services/alerting"
-	"gopkg.in/guregu/null.v3"
 )
 
 var (
@@ -17,9 +17,9 @@ type AlertEvaluator interface {
 	Eval(reducedValue null.Float) bool
 }
 
-type NoDataEvaluator struct{}
+type NoValueEvaluator struct{}
 
-func (e *NoDataEvaluator) Eval(reducedValue null.Float) bool {
+func (e *NoValueEvaluator) Eval(reducedValue null.Float) bool {
 	return reducedValue.Valid == false
 }
 
@@ -28,7 +28,7 @@ type ThresholdEvaluator struct {
 	Threshold float64
 }
 
-func newThresholdEvaludator(typ string, model *simplejson.Json) (*ThresholdEvaluator, error) {
+func newThresholdEvaluator(typ string, model *simplejson.Json) (*ThresholdEvaluator, error) {
 	params := model.Get("params").MustArray()
 	if len(params) == 0 {
 		return nil, alerting.ValidationError{Reason: "Evaluator missing threshold parameter"}
@@ -111,18 +111,18 @@ func NewAlertEvaluator(model *simplejson.Json) (AlertEvaluator, error) {
 	}
 
 	if inSlice(typ, defaultTypes) {
-		return newThresholdEvaludator(typ, model)
+		return newThresholdEvaluator(typ, model)
 	}
 
 	if inSlice(typ, rangedTypes) {
 		return newRangedEvaluator(typ, model)
 	}
 
-	if typ == "no_data" {
-		return &NoDataEvaluator{}, nil
+	if typ == "no_value" {
+		return &NoValueEvaluator{}, nil
 	}
 
-	return nil, alerting.ValidationError{Reason: "Evaludator invalid evaluator type"}
+	return nil, alerting.ValidationError{Reason: "Evaluator invalid evaluator type: " + typ}
 }
 
 func inSlice(a string, list []string) bool {

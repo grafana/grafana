@@ -1,8 +1,13 @@
----
-page_title: Installing on Mac OS X
-page_description: Grafana Installation guide for Mac OS X
-page_keywords: grafana, installation, mac, osx, guide
----
++++
+title = "Installing on Mac"
+description = "Installing Grafana on Mac"
+keywords = ["grafana", "configuration", "documentation", "mac", "homebrew", "osx"]
+type = "docs"
+[menu.docs]
+parent = "installation"
+weight = 4
++++
+
 
 # Installing on Mac
 

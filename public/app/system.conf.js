@@ -2,6 +2,8 @@ System.config({
   defaultJSExtenions: true,
   baseURL: 'public',
   paths: {
+    'virtual-scroll': 'vendor/npm/virtual-scroll/src/index.js',
+    'mousetrap': 'vendor/npm/mousetrap/mousetrap.js',
     'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',
     'tether': 'vendor/npm/tether/dist/js/tether.js',
     'eventemitter3': 'vendor/npm/eventemitter3/index.js',
@@ -28,7 +30,9 @@ System.config({
     "jquery.flot.time": "vendor/flot/jquery.flot.time",
     "jquery.flot.crosshair": "vendor/flot/jquery.flot.crosshair",
     "jquery.flot.fillbelow": "vendor/flot/jquery.flot.fillbelow",
-    "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge"
+    "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge",
+    "d3": "vendor/d3/d3.js",
+    "jquery.flot.dashes": "vendor/flot/jquery.flot.dashes",
   },
 
   packages: {
@@ -52,6 +56,10 @@ System.config({
   },
 
   meta: {
+    'vendor/npm/virtual-scroll/src/indx.js': {
+      format: 'cjs',
+      exports: 'VirtualScroll',
+    },
     'vendor/angular/angular.js': {
       format: 'global',
       deps: ['jquery'],
@@ -60,6 +68,10 @@ System.config({
     'vendor/npm/eventemitter3/index.js': {
       format: 'cjs',
       exports: 'EventEmitter'
+    },
+    'vendor/npm/mousetrap/mousetrap.js': {
+      format: 'global',
+      exports: 'Mousetrap'
     },
   }
 });

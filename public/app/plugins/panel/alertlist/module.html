@@ -1,4 +1,4 @@
-<div class="panel-alert-list">
+<div class="panel-alert-list" style="{{ctrl.contentHeight}}">
   <section class="card-section card-list-layout-list" ng-if="ctrl.panel.show === 'current'">
     <ol class="card-list">
       <li class="card-item-wrapper" ng-repeat="alert in ctrl.currentAlerts">
@@ -40,7 +40,7 @@
                 <span class="alert-list-item-state {{al.stateModel.stateClass}}">
                   <i class="{{al.stateModel.iconClass}}"></i>
                   {{al.stateModel.text}}
-                </span> {{al.metrics}}
+                </span> {{al.info}}
               </div>
             </div>
           </div>

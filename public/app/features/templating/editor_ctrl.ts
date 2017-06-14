@@ -10,6 +10,7 @@ export class VariableEditorCtrl {
   constructor(private $scope, private datasourceSrv, private variableSrv, templateSrv) {
     $scope.variableTypes = variableTypes;
     $scope.ctrl = {};
+    $scope.namePattern = /^(?!__).*$/;
 
     $scope.refreshOptions = [
       {value: 0, text: "Never"},
@@ -35,7 +36,7 @@ export class VariableEditorCtrl {
       $scope.mode = 'list';
 
       $scope.datasources = _.filter(datasourceSrv.getMetricSources(), function(ds) {
-        return !ds.meta.builtIn && ds.value !== null;
+        return !ds.meta.mixed && ds.value !== null;
       });
 
       $scope.datasourceTypes = _($scope.datasources).uniqBy('meta.id').map(function(ds) {
@@ -56,7 +57,7 @@ export class VariableEditorCtrl {
       if ($scope.isValid()) {
         $scope.variables.push($scope.current);
         $scope.update();
-        $scope.updateSubmenuVisibility();
+        $scope.dashboard.updateSubmenuVisibility();
       }
     };
 
@@ -73,6 +74,11 @@ export class VariableEditorCtrl {
       var sameName = _.find($scope.variables, { name: $scope.current.name });
       if (sameName && sameName !== $scope.current) {
         $scope.appEvent('alert-warning', ['Validation', 'Variable with the same name already exists']);
+        return false;
+      }
+
+      if ($scope.current.type === 'query' && $scope.current.query.match(new RegExp('\\$' + $scope.current.name))) {
+        $scope.appEvent('alert-warning', ['Validation', 'Query cannot contain a reference to itself. Variable: $'  + $scope.current.name]);
         return false;
       }
 
@@ -106,11 +112,11 @@ export class VariableEditorCtrl {
     };
 
     $scope.duplicate = function(variable) {
-      var clone = _.cloneDeep(variable.getModel());
+      var clone = _.cloneDeep(variable.getSaveModel());
       $scope.current = variableSrv.createVariableFromModel(clone);
       $scope.variables.push($scope.current);
       $scope.current.name = 'copy_of_'+variable.name;
-      $scope.updateSubmenuVisibility();
+      $scope.dashboard.updateSubmenuVisibility();
     };
 
     $scope.update = function() {
@@ -146,7 +152,7 @@ export class VariableEditorCtrl {
     $scope.removeVariable = function(variable) {
       var index = _.indexOf($scope.variables, variable);
       $scope.variables.splice(index, 1);
-      $scope.updateSubmenuVisibility();
+      $scope.dashboard.updateSubmenuVisibility();
     };
   }
 }

@@ -1,14 +1,41 @@
 package commands
 
 import (
+	"flag"
 	"os"
 
 	"github.com/codegangsta/cli"
 	"github.com/fatih/color"
 	"github.com/grafana/grafana/pkg/cmd/grafana-cli/logger"
+	"github.com/grafana/grafana/pkg/services/sqlstore"
+	"github.com/grafana/grafana/pkg/setting"
 )
 
-func runCommand(command func(commandLine CommandLine) error) func(context *cli.Context) {
+func runDbCommand(command func(commandLine CommandLine) error) func(context *cli.Context) {
+	return func(context *cli.Context) {
+		cmd := &contextCommandLine{context}
+
+		setting.NewConfigContext(&setting.CommandLineArgs{
+			Config:   cmd.String("config"),
+			HomePath: cmd.String("homepath"),
+			Args:     flag.Args(),
+		})
+
+		sqlstore.NewEngine()
+
+		if err := command(cmd); err != nil {
+			logger.Errorf("\n%s: ", color.RedString("Error"))
+			logger.Errorf("%s\n\n", err)
+
+			cmd.ShowHelp()
+			os.Exit(1)
+		} else {
+			logger.Info("\n\n")
+		}
+	}
+}
+
+func runPluginCommand(command func(commandLine CommandLine) error) func(context *cli.Context) {
 	return func(context *cli.Context) {
 
 		cmd := &contextCommandLine{context}
@@ -28,34 +55,52 @@ var pluginCommands = []cli.Command{
 	{
 		Name:   "install",
 		Usage:  "install <plugin id> <plugin version (optional)>",
-		Action: runCommand(installCommand),
+		Action: runPluginCommand(installCommand),
 	}, {
 		Name:   "list-remote",
 		Usage:  "list remote available plugins",
-		Action: runCommand(listremoteCommand),
+		Action: runPluginCommand(listremoteCommand),
 	}, {
 		Name:   "list-versions",
 		Usage:  "list-versions <plugin id>",
-		Action: runCommand(listversionsCommand),
+		Action: runPluginCommand(listversionsCommand),
 	}, {
 		Name:    "update",
 		Usage:   "update <plugin id>",
 		Aliases: []string{"upgrade"},
-		Action:  runCommand(upgradeCommand),
+		Action:  runPluginCommand(upgradeCommand),
 	}, {
 		Name:    "update-all",
 		Aliases: []string{"upgrade-all"},
 		Usage:   "update all your installed plugins",
-		Action:  runCommand(upgradeAllCommand),
+		Action:  runPluginCommand(upgradeAllCommand),
 	}, {
 		Name:   "ls",
 		Usage:  "list all installed plugins",
-		Action: runCommand(lsCommand),
+		Action: runPluginCommand(lsCommand),
 	}, {
 		Name:    "uninstall",
 		Aliases: []string{"remove"},
 		Usage:   "uninstall <plugin id>",
-		Action:  runCommand(removeCommand),
+		Action:  runPluginCommand(removeCommand),
+	},
+}
+
+var adminCommands = []cli.Command{
+	{
+		Name:   "reset-admin-password",
+		Usage:  "reset-admin-password <new password>",
+		Action: runDbCommand(resetPasswordCommand),
+		Flags: []cli.Flag{
+			cli.StringFlag{
+				Name:  "homepath",
+				Usage: "path to grafana install/home path, defaults to working directory",
+			},
+			cli.StringFlag{
+				Name:  "config",
+				Usage: "path to config file",
+			},
+		},
 	},
 }
 
@@ -64,5 +109,10 @@ var Commands = []cli.Command{
 		Name:        "plugins",
 		Usage:       "Manage plugins for grafana",
 		Subcommands: pluginCommands,
+	},
+	{
+		Name:        "admin",
+		Usage:       "Grafana admin commands",
+		Subcommands: adminCommands,
 	},
 }

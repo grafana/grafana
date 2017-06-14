@@ -100,7 +100,7 @@ export class ThresholdManager {
       handleTopPos = defaultHandleTopPos;
     } else {
       var valueCanvasPos = this.plot.p2c({x: 0, y: value});
-      handleTopPos = Math.min(Math.max(valueCanvasPos.top, 0), this.height) - 6;
+      handleTopPos = Math.round(Math.min(Math.max(valueCanvasPos.top, 0), this.height) - 6);
     }
 
     var handleElem = $(this.getHandleHtml(handleIndex, model, valueStr));
@@ -158,7 +158,7 @@ export class ThresholdManager {
     this.needsCleanup = true;
   }
 
-  addPlotOptions(options, panel) {
+  addFlotOptions(options, panel) {
     if (!panel.thresholds || panel.thresholds.length === 0) {
       return;
     }

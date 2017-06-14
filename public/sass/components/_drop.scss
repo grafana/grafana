@@ -1,10 +1,17 @@
 $popover-arrow-size: 0.7rem;
 $color: inherit;
-$backgroundColor: $btn-secondary-bg;
 $color: $text-color;
 $useDropShadow: false;
 $attachmentOffset: 0%;
 $easing: cubic-bezier(0, 0, 0.265, 1.00);
+
+@include drop-theme("error", $errorBackground, $popover-color);
+@include drop-theme("popover", $popover-bg, $popover-color, $popover-border-color);
+@include drop-theme("help", $popover-help-bg, $popover-help-color);
+
+@include drop-animation-scale("drop", "help", $attachmentOffset: $attachmentOffset, $easing: $easing);
+@include drop-animation-scale("drop", "error", $attachmentOffset: $attachmentOffset, $easing: $easing);
+@include drop-animation-scale("drop", "popover", $attachmentOffset: $attachmentOffset, $easing: $easing);
 
 .drop-element {
   z-index: 10000;
@@ -15,7 +22,6 @@ $easing: cubic-bezier(0, 0, 0.265, 1.00);
   &.drop-open {
     display: block;
   }
-
  }
 
 .drop-element, .drop-element * {
@@ -30,8 +36,11 @@ $easing: cubic-bezier(0, 0, 0.265, 1.00);
 }
 
 .drop-help {
-  ul {
-    padding-left: $spacer;
+  a {
+    color: $white;
+    &:hover {
+      color: darken($white, 10%);
+    }
   }
 }
 
@@ -41,9 +50,15 @@ $easing: cubic-bezier(0, 0, 0.265, 1.00);
     display: none;
   }
 }
-@include drop-theme("help", $popover-help-bg, $popover-help-color);
-@include drop-theme("popover", $popover-bg, $popover-color);
 
-@include drop-animation-scale("drop", "help", $attachmentOffset: $attachmentOffset, $easing: $easing);
-@include drop-animation-scale("drop", "popover", $attachmentOffset: $attachmentOffset, $easing: $easing);
+.drop-element.drop-popover--form {
+  .drop-content {
+    max-width: none;
+  }
+}
 
+.drop-element.drop-popover--annotation {
+  .drop-content {
+    padding: 0;
+  }
+}

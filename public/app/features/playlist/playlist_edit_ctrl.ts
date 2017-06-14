@@ -8,29 +8,38 @@ import config from 'app/core/config';
 export class PlaylistEditCtrl {
   filteredDashboards: any = [];
   filteredTags: any = [];
-  searchQuery: string = '';
-  loading: boolean = false;
+  searchQuery = '';
+  loading = false;
   playlist: any = {
     interval: '5m',
   };
   playlistItems: any = [];
   dashboardresult: any = [];
   tagresult: any = [];
+  navModel: any;
 
   /** @ngInject */
-  constructor(private $scope, private playlistSrv, private backendSrv, private $location, private $route) {
+  constructor(
+    private $scope,
+    private playlistSrv,
+    private backendSrv,
+    private $location,
+    private $route,
+    private navModelSrv
+  ) {
+
+    this.navModel = navModelSrv.getPlaylistsNav(0);
+
     if ($route.current.params.id) {
       var playlistId = $route.current.params.id;
 
-      backendSrv.get('/api/playlists/' + playlistId)
-        .then((result) => {
-          this.playlist = result;
-        });
+      backendSrv.get('/api/playlists/' + playlistId).then(result => {
+        this.playlist = result;
+      });
 
-      backendSrv.get('/api/playlists/' + playlistId + '/items')
-        .then((result) => {
-          this.playlistItems = result;
-        });
+      backendSrv.get('/api/playlists/' + playlistId + '/items').then(result => {
+        this.playlistItems = result;
+      });
     }
   }
 
@@ -74,7 +83,7 @@ export class PlaylistEditCtrl {
       return playlistItem === listedPlaylistItem;
     });
     this.filterFoundPlaylistItems();
-  };
+  }
 
   savePlaylist(playlist, playlistItems) {
     var savePromise;
@@ -85,7 +94,7 @@ export class PlaylistEditCtrl {
       ? this.backendSrv.put('/api/playlists/' + playlist.id, playlist)
       : this.backendSrv.post('/api/playlists', playlist);
 
-    savePromise
+      savePromise
       .then(() => {
         this.$scope.appEvent('alert-success', ['Playlist saved', '']);
         this.$location.path('/playlists');

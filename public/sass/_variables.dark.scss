@@ -33,7 +33,7 @@ $yellow:                #ECBB13;
 $pink:                  #FF4444;
 $purple:                #9933CC;
 $variable:              #32D1DF;
-$orange:                #dF7518;
+$orange:                #eb7b18;
 
 $brand-primary:         $orange;
 $brand-success:         $green;
@@ -54,7 +54,7 @@ $body-color:   		 	    $gray-4;
 $text-color:   	   		  $gray-4;
 $text-color-strong: 	  $white;
 $text-color-weak: 		  $gray-2;
-$text-color-faint:      $gray-1;
+$text-color-faint:      $dark-5;
 $text-color-emphasis: 	$gray-5;
 
 $text-shadow-strong: 1px 1px 4px $black;
@@ -88,8 +88,10 @@ $component-active-bg:    $brand-primary !default;
 
 // Panel
 // -------------------------
-$panel-bg: 				 $dark-2;
-$panel-border:  	 solid 1px $dark-3;
+$panel-bg: 				      $dark-2;
+$panel-border:  	      solid 1px $dark-3;
+$panel-drop-zone-bg:    repeating-linear-gradient(-128deg, #111, #111 10px, #191919 10px, #222 20px);
+$panel-menu-border:     solid 1px black;
 
 $divider-border-color:        #555;
 
@@ -249,8 +251,9 @@ $infoText:                $blue-dark;
 $infoBackground:          $blue-dark;
 
 // popover
-$popover-bg:         $dark-4;
-$popover-color:      $text-color;
+$popover-bg:              $panel-bg;
+$popover-color:           $text-color;
+$popover-border-color:    $gray-1;
 
 $popover-help-bg:         $btn-secondary-bg;
 $popover-help-color:      $text-color;
@@ -263,7 +266,7 @@ $tooltipBackground:       $popover-help-bg;
 $tooltipArrowWidth:       5px;
 $tooltipArrowColor:       $tooltipBackground;
 $tooltipLinkColor:        $link-color;
-$graph-tooltip-bg:        $dark-4;
+$graph-tooltip-bg:        $dark-1;
 
 // images
 $checkboxImageUrl: '../img/checkbox.png';
@@ -276,3 +279,44 @@ $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .3)
 // footer
 $footer-link-color:   $gray-1;
 $footer-link-hover:   $gray-4;
+
+// collapse box
+$collapse-box-body-border: $dark-5;
+$collapse-box-body-error-border: $red;
+
+// json-explorer
+$json-explorer-default-color: $text-color;
+$json-explorer-string-color: #23d662;
+$json-explorer-number-color: $variable;
+$json-explorer-boolean-color: $variable;
+$json-explorer-null-color: #EEC97D;
+$json-explorer-undefined-color: rgb(239, 143, 190);
+$json-explorer-function-color: #FD48CB;
+$json-explorer-rotate-time: 100ms;
+$json-explorer-toggler-opacity: 0.6;
+$json-explorer-toggler-color: #45376F;
+$json-explorer-bracket-color: #9494FF;
+$json-explorer-key-color: #23A0DB;
+$json-explorer-url-color: #027BFF;
+
+// Changelog and diff
+// -------------------------
+$diff-label-bg:         $dark-2;
+$diff-label-fg:         $white;
+
+$diff-group-bg:         $dark-4;
+$diff-arrow-color:      $white;
+
+$diff-json-bg:          $dark-4;
+$diff-json-fg:          $gray-5;
+
+$diff-json-added:       #457740;
+$diff-json-deleted:     #a04338;
+
+$diff-json-old:         #a04338;
+$diff-json-new:         #457740;
+
+$diff-json-changed-fg:  $gray-5;
+$diff-json-changed-num: $text-color;
+
+$diff-json-icon:        $gray-7;

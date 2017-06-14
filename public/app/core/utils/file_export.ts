@@ -1,21 +1,24 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import _ from 'lodash';
+import moment from 'moment';
 
 declare var window: any;
 
-export function exportSeriesListToCsv(seriesList) {
-    var text = 'sep=;\nSeries;Time;Value\n';
+const DEFAULT_DATETIME_FORMAT: String = 'YYYY-MM-DDTHH:mm:ssZ';
+
+export function exportSeriesListToCsv(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT) {
+    var text = 'Series;Time;Value\n';
     _.each(seriesList, function(series) {
         _.each(series.datapoints, function(dp) {
-            text += series.alias + ';' + new Date(dp[1]).toISOString() + ';' + dp[0] + '\n';
+            text += series.alias + ';' + moment(dp[1]).format(dateTimeFormat) + ';' + dp[0] + '\n';
         });
     });
     saveSaveBlob(text, 'grafana_data_export.csv');
-};
+}
 
-export function exportSeriesListToCsvColumns(seriesList) {
-    var text = 'sep=;\nTime;';
+export function exportSeriesListToCsvColumns(seriesList, dateTimeFormat = DEFAULT_DATETIME_FORMAT) {
+    var text = 'Time;';
     // add header
     _.each(seriesList, function(series) {
         text += series.alias + ';';
@@ -30,7 +33,7 @@ export function exportSeriesListToCsvColumns(seriesList) {
         var cIndex = 0;
         dataArr.push([]);
         _.each(series.datapoints, function(dp) {
-            dataArr[0][cIndex] = new Date(dp[1]).toISOString();
+            dataArr[0][cIndex] = moment(dp[1]).format(dateTimeFormat);
             dataArr[sIndex][cIndex] = dp[0];
             cIndex++;
         });
@@ -47,13 +50,13 @@ export function exportSeriesListToCsvColumns(seriesList) {
         text += '\n';
     }
     saveSaveBlob(text, 'grafana_data_export.csv');
-};
+}
 
 export function exportTableDataToCsv(table) {
     var text = '';
     // add header
     _.each(table.columns, function(column) {
-        text += column.text + ';';
+        text += (column.title || column.text) + ';';
     });
     text += '\n';
     // process data
@@ -64,9 +67,9 @@ export function exportTableDataToCsv(table) {
         text += '\n';
     });
     saveSaveBlob(text, 'grafana_data_export.csv');
-};
+}
 
 export function saveSaveBlob(payload, fname) {
     var blob = new Blob([payload], { type: "text/csv;charset=utf-8" });
     window.saveAs(blob, fname);
-};
+}

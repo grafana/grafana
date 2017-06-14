@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/go-xorm/xorm"
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -21,7 +20,7 @@ func init() {
 }
 
 func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		sql := "DELETE FROM alert_notification WHERE alert_notification.org_id = ? AND alert_notification.id = ?"
 		_, err := sess.Exec(sql, cmd.OrgId, cmd.Id)
 
@@ -34,7 +33,7 @@ func DeleteAlertNotification(cmd *m.DeleteAlertNotificationCommand) error {
 }
 
 func GetAlertNotifications(query *m.GetAlertNotificationsQuery) error {
-	return getAlertNotificationInternal(query, x.NewSession())
+	return getAlertNotificationInternal(query, newSession())
 }
 
 func GetAllAlertNotifications(query *m.GetAllAlertNotificationsQuery) error {
@@ -85,7 +84,7 @@ func GetAlertNotificationsToSend(query *m.GetAlertNotificationsToSendQuery) erro
 	return nil
 }
 
-func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *xorm.Session) error {
+func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *DBSession) error {
 	var sql bytes.Buffer
 	params := make([]interface{}, 0)
 
@@ -131,7 +130,7 @@ func getAlertNotificationInternal(query *m.GetAlertNotificationsQuery, sess *xor
 }
 
 func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error {
-	return inTransaction(func(sess *xorm.Session) error {
+	return inTransaction(func(sess *DBSession) error {
 		existingQuery := &m.GetAlertNotificationsQuery{OrgId: cmd.OrgId, Name: cmd.Name}
 		err := getAlertNotificationInternal(existingQuery, sess)
 
@@ -163,7 +162,7 @@ func CreateAlertNotificationCommand(cmd *m.CreateAlertNotificationCommand) error
 }
 
 func UpdateAlertNotification(cmd *m.UpdateAlertNotificationCommand) error {
-	return inTransaction(func(sess *xorm.Session) (err error) {
+	return inTransaction(func(sess *DBSession) (err error) {
 		current := m.AlertNotification{}
 
 		if _, err = sess.Id(cmd.Id).Get(&current); err != nil {

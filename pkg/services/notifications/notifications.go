@@ -31,7 +31,6 @@ func Init() error {
 
 	bus.AddCtxHandler("email", sendEmailCommandHandlerSync)
 
-	bus.AddHandler("webhook", sendWebhook)
 	bus.AddCtxHandler("webhook", SendWebhookSync)
 
 	bus.AddEventListener(signUpStartedHandler)
@@ -49,7 +48,7 @@ func Init() error {
 	}
 
 	if !util.IsEmail(setting.Smtp.FromAddress) {
-		return errors.New("Invalid email address for smpt from_adress config")
+		return errors.New("Invalid email address for SMTP from_address config")
 	}
 
 	if setting.EmailCodeValidMinutes == 0 {
@@ -61,22 +60,13 @@ func Init() error {
 
 func SendWebhookSync(ctx context.Context, cmd *m.SendWebhookSync) error {
 	return sendWebRequestSync(ctx, &Webhook{
-		Url:      cmd.Url,
-		User:     cmd.User,
-		Password: cmd.Password,
-		Body:     cmd.Body,
+		Url:        cmd.Url,
+		User:       cmd.User,
+		Password:   cmd.Password,
+		Body:       cmd.Body,
+		HttpMethod: cmd.HttpMethod,
+		HttpHeader: cmd.HttpHeader,
 	})
-}
-
-func sendWebhook(cmd *m.SendWebhook) error {
-	addToWebhookQueue(&Webhook{
-		Url:      cmd.Url,
-		User:     cmd.User,
-		Password: cmd.Password,
-		Body:     cmd.Body,
-	})
-
-	return nil
 }
 
 func subjectTemplateFunc(obj map[string]interface{}, value string) string {
@@ -86,18 +76,19 @@ func subjectTemplateFunc(obj map[string]interface{}, value string) string {
 
 func sendEmailCommandHandlerSync(ctx context.Context, cmd *m.SendEmailCommandSync) error {
 	message, err := buildEmailMessage(&m.SendEmailCommand{
-		Data:     cmd.Data,
-		Info:     cmd.Info,
-		Massive:  cmd.Massive,
-		Template: cmd.Template,
-		To:       cmd.To,
+		Data:         cmd.Data,
+		Info:         cmd.Info,
+		Template:     cmd.Template,
+		To:           cmd.To,
+		EmbededFiles: cmd.EmbededFiles,
+		Subject:      cmd.Subject,
 	})
 
 	if err != nil {
 		return err
 	}
 
-	_, err = buildAndSend(message)
+	_, err = send(message)
 
 	return err
 }

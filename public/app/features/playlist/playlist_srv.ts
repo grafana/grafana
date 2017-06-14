@@ -1,7 +1,6 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import angular from 'angular';
-import config from 'app/core/config';
 import coreModule from '../../core/core_module';
 import kbn from 'app/core/utils/kbn';
 
@@ -11,6 +10,8 @@ class PlaylistSrv {
   private index: number;
   private interval: any;
   private playlistId: number;
+  private startUrl: string;
+  public isPlaying: boolean;
 
   /** @ngInject */
   constructor(private $rootScope: any, private $location: any, private $timeout: any, private backendSrv: any) { }
@@ -21,7 +22,7 @@ class PlaylistSrv {
     var playedAllDashboards = this.index > this.dashboards.length - 1;
 
     if (playedAllDashboards) {
-      window.location.href = `${config.appSubUrl}/playlists/play/${this.playlistId}`;
+      window.location.href = this.startUrl;
     } else {
       var dash = this.dashboards[this.index];
       this.$location.url('dashboard/' + dash.uri);
@@ -39,9 +40,10 @@ class PlaylistSrv {
   start(playlistId) {
     this.stop();
 
+    this.startUrl = window.location.href;
     this.index = 0;
     this.playlistId = playlistId;
-    this.$rootScope.playlistSrv = this;
+    this.isPlaying = true;
 
     this.backendSrv.get(`/api/playlists/${playlistId}`).then(playlist => {
       this.backendSrv.get(`/api/playlists/${playlistId}/dashboards`).then(dashboards => {
@@ -54,13 +56,12 @@ class PlaylistSrv {
 
   stop() {
     this.index = 0;
+    this.isPlaying = false;
     this.playlistId = 0;
 
     if (this.cancelPromise) {
       this.$timeout.cancel(this.cancelPromise);
     }
-
-    this.$rootScope.playlistSrv = null;
   }
 }
 

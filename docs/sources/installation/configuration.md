@@ -1,8 +1,14 @@
----
-page_title: Configuration
-page_description: Configuration guide for Grafana.
-page_keywords: grafana, configuration, documentation
----
++++
+title = "Configuration"
+description = "Configuration Docs"
+keywords = ["grafana", "configuration", "documentation"]
+type = "docs"
+[menu.docs]
+name = "Configuration"
+identifier = "config"
+parent = "admin"
+weight = 1
++++
 
 # Configuration
 
@@ -49,6 +55,7 @@ Then you can override them using:
 <hr />
 
 ## instance_name
+
 Set the name of the grafana-server instance. Used in logging and internal metrics and in
 clustering info. Defaults to: `${HOSTNAME}`, which will be replaced with
 environment variable `HOSTNAME`, if that is empty or does not exist Grafana will try to use
@@ -128,6 +135,10 @@ Path to the certificate file (if `protocol` is set to `https`).
 
 Path to the certificate key file (if `protocol` is set to `https`).
 
+### router_logging
+
+Set to true for Grafana to log all HTTP requests (not just errors). These are logged as Info level events
+to grafana log.
 <hr />
 
 <hr />
@@ -137,6 +148,11 @@ Path to the certificate key file (if `protocol` is set to `https`).
 Grafana needs a database to store users and dashboards (and other
 things). By default it is configured to use `sqlite3` which is an
 embedded database (included in the main Grafana binary).
+
+### url
+
+Use either URL or or the other fields below to configure the database
+Example: `mysql://user:secret@host:port/database`
 
 ### type
 
@@ -164,7 +180,7 @@ The database user (not applicable for `sqlite3`).
 
 ### password
 
-The database user's password (not applicable for `sqlite3`).
+The database user's password (not applicable for `sqlite3`). If the password contains `#` or `;` you have to wrap it with trippel quotes. Ex `"""#password;"""`
 
 ### ssl_mode
 
@@ -213,6 +229,10 @@ Used for signing keep me logged in / remember me cookies.
 Set to `true` to disable the use of Gravatar for user profile images.
 Default is `false`.
 
+### data_source_proxy_whitelist
+
+Define a white list of allowed ips/domains to use in data sources. Format: `ip_or_domain:port` separated by spaces
+
 <hr />
 
 ## [users]
@@ -221,7 +241,7 @@ Default is `false`.
 
 Set to `false` to prohibit users from being able to sign up / create
 user accounts. Defaults to `true`.  The admin user can still create
-users from the [Grafana Admin Pages](../reference/admin.md)
+users from the [Grafana Admin Pages](../../reference/admin)
 
 ### allow_org_create
 
@@ -238,7 +258,10 @@ organization to be created for that new user.
 
 The role new users will be assigned for the main organization (if the
 above setting is set to true).  Defaults to `Viewer`, other valid
-options are `Admin` and `Editor` and `Read-Only Editor`.
+options are `Admin` and `Editor` and `Read Only Editor`. e.g. :
+
+`auto_assign_org_role = Read Only Editor`
+
 
 <hr>
 
@@ -247,6 +270,10 @@ options are `Admin` and `Editor` and `Read-Only Editor`.
 ### disable_login_form
 
 Set to true to disable (hide) the login form, useful if you use OAuth, defaults to false.
+
+### disable_signout_menu
+
+Set to true to disable the signout link in the side menu. useful if you use auth.proxy, defaults to false.
 
 <hr>
 
@@ -283,13 +310,13 @@ example:
 
     [auth.github]
     enabled = true
+    allow_sign_up = true
     client_id = YOUR_GITHUB_APP_CLIENT_ID
     client_secret = YOUR_GITHUB_APP_CLIENT_SECRET
     scopes = user:email
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
     api_url = https://api.github.com/user
-    allow_sign_up = false
     team_ids =
     allowed_organizations =
 
@@ -317,7 +344,7 @@ Grafana instance. For example:
     team_ids = 150,300
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
-    allow_sign_up = false
+    allow_sign_up = true
 
 ### allowed_organizations
 
@@ -333,7 +360,7 @@ your Grafana instance. For example
     scopes = user:email,read:org
     auth_url = https://github.com/login/oauth/authorize
     token_url = https://github.com/login/oauth/access_token
-    allow_sign_up = false
+    allow_sign_up = true
     # space-delimited organization names
     allowed_organizations = github google
 
@@ -361,7 +388,7 @@ Secret. Specify these in the Grafana configuration file. For example:
     auth_url = https://accounts.google.com/o/oauth2/auth
     token_url = https://accounts.google.com/o/oauth2/token
     allowed_domains = mycompany.com mycompany.org
-    allow_sign_up = false
+    allow_sign_up = true
 
 Restart the Grafana back-end. You should now see a Google login button
 on the login page. You can now login or sign up with your Google
@@ -386,8 +413,11 @@ browser to access Grafana, but with the prefix path of `/login/generic_oauth`.
     scopes =
     auth_url =
     token_url =
+    api_url =
     allowed_domains = mycompany.com mycompany.org
-    allow_sign_up = false
+    allow_sign_up = true
+
+Set api_url to the resource that returns [OpenID UserInfo](https://connect2id.com/products/server/docs/api/userinfo) compatible information.
 
 <hr>
 
@@ -404,24 +434,38 @@ Set to `true` to enable LDAP integration (default: `false`)
 ### config_file
 Path to the LDAP specific configuration file (default: `/etc/grafana/ldap.toml`)
 
-> For details on LDAP Configuration, go to the [LDAP Integration](ldap.md) page.
+### allow_sign_up
+
+Allow sign up should almost always be true (default) to allow new Grafana users to be created (if ldap authentication is ok). If set to
+false only pre-existing Grafana users will be able to login (if ldap authentication is ok).
+
+> For details on LDAP Configuration, go to the [LDAP Integration]({{< relref "ldap.md" >}}) page.
 
 <hr>
 
 ## [auth.proxy]
+
 This feature allows you to handle authentication in a http reverse proxy.
 
 ### enabled
+
 Defaults to `false`
 
 ### header_name
+
 Defaults to X-WEBAUTH-USER
 
 #### header_property
+
 Defaults to username but can also be set to email
 
 ### auto_sign_up
+
 Set to `true` to enable auto sign up of users who do not exist in Grafana DB. Defaults to `true`.
+
+### whitelist
+
+Limit where auth proxy requests come from by configuring a list of IP addresses. This can be used to prevent users spoofing the X-WEBAUTH-USER header.
 
 <hr>
 
@@ -438,7 +482,7 @@ session provider you have configured.
 
 - **file:** session file path, e.g. `data/sessions`
 - **mysql:** go-sql-driver/mysql dsn config string, e.g. `user:password@tcp(127.0.0.1:3306)/database_name`
-- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=disable
+- **postgres:** ex:  user=a password=b host=localhost port=5432 dbname=c sslmode=require
 - **memcache:** ex:  127.0.0.1:11211
 - **redis:** ex: `addr=127.0.0.1:6379,pool_size=100,prefix=grafana`
 
@@ -453,6 +497,17 @@ Mysql Example:
         `expiry`    INT(11) UNSIGNED NOT NULL,
         PRIMARY KEY (`key`)
     ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
+
+Postgres Example:
+
+    CREATE TABLE session (
+        key       CHAR(16) NOT NULL,
+        data      BYTEA,
+        expiry    INTEGER NOT NULL,
+        PRIMARY KEY (key)
+    );
+
+Postgres valid `sslmode` are `disable`, `require` (default), `verify-ca`, and `verify-full`.
 
 ### cookie_name
 
@@ -523,6 +578,9 @@ Verify SSL for smtp server? defaults to `false`
 ### from_address
 Address used when sending out emails, defaults to `admin@grafana.localhost`
 
+### from_name
+Name to be used when sending out emails, defaults to `Grafana`
+
 ## [log]
 
 ### mode
@@ -570,3 +628,50 @@ Enabled to automatically remove expired snapshots
 
 ### remove snapshots after 90 days
 Time to live for snapshots.
+
+## [external_image_storage]
+These options control how images should be made public so they can be shared on services like slack.
+
+### provider
+You can choose between (s3, webdav). If left empty Grafana will ignore the upload action.
+
+## [external_image_storage.s3]
+
+### bucket_url
+Bucket URL for S3. AWS region can be specified within URL or defaults to 'us-east-1', e.g.
+- http://grafana.s3.amazonaws.com/
+- https://grafana.s3-ap-southeast-2.amazonaws.com/
+- https://grafana.s3-cn-north-1.amazonaws.com.cn
+
+### access_key
+Access key. e.g. AAAAAAAAAAAAAAAAAAAA
+
+Access key requires permissions to the S3 bucket for the 's3:PutObject' and 's3:PutObjectAcl' actions.
+
+### secret_key
+Secret key. e.g. AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
+
+## [external_image_storage.webdav]
+
+### url
+Url to where Grafana will send PUT request with images
+
+### public_url
+Optional parameter. Url to send to users in notifications, directly appended with the resulting uploaded file name.
+
+### username
+basic auth username
+
+### password
+basic auth password
+
+## [alerting]
+
+### enabled
+Defaults to true. Set to false to disable alerting engine and hide Alerting from UI.
+
+### execute_alerts
+
+### execute_alerts = true
+
+Makes it possible to turn off alert rule execution.

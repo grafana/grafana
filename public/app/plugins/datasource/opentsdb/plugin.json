@@ -6,11 +6,12 @@
   "metrics": true,
   "defaultMatchFormat": "pipe",
   "annotations": true,
+  "alerting": true,
 
   "info": {
     "author": {
       "name": "Grafana Project",
-      "url": "http://grafana.org"
+      "url": "https://grafana.com"
     },
     "logos": {
       "small": "img/opentsdb_logo.png",

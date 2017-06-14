@@ -1,109 +1,23 @@
 <div dash-class ng-if="dashboard">
-	<dashnav></dashnav>
+	<dashnav dashboard="dashboard"></dashnav>
 
 	<div class="dashboard-container">
-
-		<div dash-editor-view></div>
-		<dashboard-search></dashboard-search>
+		<div dash-editor-view class="dash-edit-view"></div>
 		<div class="clearfix"></div>
 
-		<dashboard-submenu ng-if="submenuEnabled" dashboard="dashboard"></dashboard-submenu>
+		<dashboard-submenu ng-if="dashboard.meta.submenuEnabled" dashboard="dashboard"></dashboard-submenu>
 
 		<div class="clearfix"></div>
 
-		<div class="grafana-row" ng-controller="RowCtrl" ng-repeat="(row_name, row) in dashboard.rows" row-height>
-			<div class="row-control">
-				<div class="row-control-inner">
-					<div class="row-close" ng-show="row.collapse" data-placement="bottom" >
-						<div class="row-close-buttons">
-							<span class="row-button" ng-click="toggleRow(row)">
-								<i bs-tooltip="'Expand row'" data-placement="right" class="fa fa-caret-left pointer" ></i>
-							</span>
-						</div>
-						<div class="row-text pointer" ng-click="toggleRow(row)" ng-bind="row.title | interpolateTemplateVars:this"></div>
-					</div>
-					<div class="row-open" ng-show="!row.collapse">
-						<div class='row-tab dropdown' ng-show="dashboardMeta.canEdit" ng-hide="dashboard.meta.fullscreen">
-							<span class="row-tab-button dropdown-toggle" data-toggle="dropdown">
-								<i class="fa fa-bars"></i>
-							</span>
-							<ul class="dropdown-menu dropdown-menu-right" role="menu" aria-labelledby="drop1">
-								<li>
-									<a ng-click="toggleRow(row)">Collapse row</a>
-								</li>
-								<li class="dropdown-submenu">
-									<a href="javascript:void(0);">Add Panel</a>
-									<ul class="dropdown-menu">
-										<li bindonce ng-repeat="(key, value) in panels">
-											<a ng-click="addPanelDefault(key)" bo-text="value.name"></a>
-										</li>
-									</ul>
-								</li>
-								<li class="dropdown-submenu">
-									<a href="javascript:void(0);">Set height</a>
-									<ul class="dropdown-menu">
-										<li><a ng-click="setHeight('25px')">25 px</a></li>
-										<li><a ng-click="setHeight('100px')">100 px</a></li>
-										<li><a ng-click="setHeight('150px')">150 px</a></li>
-										<li><a ng-click="setHeight('200px')">200 px</a></li>
-										<li><a ng-click="setHeight('250px')">250 px</a></li>
-										<li><a ng-click="setHeight('300px')">300 px</a></li>
-										<li><a ng-click="setHeight('350px')">350 px</a></li>
-										<li><a ng-click="setHeight('450px')">450 px</a></li>
-										<li><a ng-click="setHeight('500px')">500 px</a></li>
-										<li><a ng-click="setHeight('600px')">600 px</a></li>
-										<li><a ng-click="setHeight('700px')">700 px</a></li>
-									</ul>
-								</li>
-								<li class="dropdown-submenu">
-									<a href="javascript:void(0);">Move</a>
-									<ul class="dropdown-menu">
-										<li><a ng-click="moveRow('up')">Up</a></li>
-										<li><a ng-click="moveRow('down')">Down</a></li>
-										<li><a ng-click="moveRow('top')">To top</a></li>
-										<li><a ng-click="moveRow('bottom')">To Bottom</a></li>
-									</ul>
-								</li>
-								<li>
-									<a ng-click="editRow()">Row editor</a>
-								</li>
-								<li>
-									<a ng-click="deleteRow()">Delete row</a>
-								</li>
-							</ul>
-						</div>
-					</div>
-				</div>
+    <dash-row class="dash-row" ng-repeat="row in dashboard.rows" row="row" dashboard="dashboard">
+    </dash-row>
 
-				<div class="panels-wrapper" ng-if="!row.collapse">
-					<div class="row-text pointer" ng-click="toggleRow(row)" ng-if="row.showTitle" ng-bind="row.title | interpolateTemplateVars:this">
-					</div>
-
-					<div ng-repeat="panel in row.panels track by panel.id" class="panel" ui-draggable="!dashboard.meta.fullscreen" drag="panel.id"
-						ui-on-drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
-						<plugin-component type="panel" class="panel-margin">
-						</plugin-component>
-					</div>
-
-					<div panel-drop-zone class="panel panel-drop-zone" ui-on-drop="onDrop($data, row)" data-drop="true">
-						<div class="panel-container" style="background: transparent">
-							<div style="text-align: center">
-								<em>Drop here</em>
-							</div>
-						</div>
-					</div>
-
-					<div class="clearfix"></div>
-				</div>
-			</div>
-		</div>
-
-		<div ng-show='dashboardMeta.canEdit' class="row-fluid add-row-panel-hint" ng-hide="dashboard.meta.fullscreen">
-			<div class="span12" style="text-align:right;">
-				<span style="margin-right: 10px;" ng-click="addRowDefault()" class="pointer btn btn-secondary btn-small">
-					<span><i class="fa fa-plus"></i> ADD ROW</span>
-				</span>
-			</div>
-		</div>
-	</div>
+    <div ng-show='dashboard.meta.canEdit && !dashboard.meta.fullscreen' class="add-row-panel-hint">
+      <div class="span12" style="text-align:left;">
+        <span style="margin-left: 12px;" ng-click="addRowDefault()" class="pointer btn btn-inverse btn-small">
+          <span><i class="fa fa-plus"></i> ADD ROW</span>
+        </span>
+      </div>
+    </div>
+  </div>
 </div>

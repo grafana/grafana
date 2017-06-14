@@ -11,7 +11,7 @@ describe('ElasticDatasource', function() {
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
-  beforeEach(ctx.providePhase(['templateSrv', 'backendSrv']));
+  beforeEach(ctx.providePhase(['templateSrv', 'backendSrv', 'timeSrv']));
 
   beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
     ctx.$q = $q;
@@ -28,7 +28,7 @@ describe('ElasticDatasource', function() {
 
   describe('When testing datasource with index pattern', function() {
     beforeEach(function() {
-      createDatasource({url: 'http://es.com', index: '[asd-]YYYY.MM.DD', jsonData: {interval: 'Daily'}});
+      createDatasource({url: 'http://es.com', index: '[asd-]YYYY.MM.DD', jsonData: {interval: 'Daily', esVersion: '2'}});
     });
 
     it('should translate index pattern to current day', function() {
@@ -42,7 +42,7 @@ describe('ElasticDatasource', function() {
       ctx.$rootScope.$apply();
 
       var today = moment.utc().format("YYYY.MM.DD");
-      expect(requestOptions.url).to.be("http://es.com/asd-" + today + '/_stats');
+      expect(requestOptions.url).to.be("http://es.com/asd-" + today + '/_mapping');
     });
   });
 
@@ -50,7 +50,7 @@ describe('ElasticDatasource', function() {
     var requestOptions, parts, header;
 
     beforeEach(function() {
-      createDatasource({url: 'http://es.com', index: '[asd-]YYYY.MM.DD', jsonData: {interval: 'Daily'}});
+      createDatasource({url: 'http://es.com', index: '[asd-]YYYY.MM.DD', jsonData: {interval: 'Daily', esVersion: '2'}});
 
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
@@ -62,7 +62,7 @@ describe('ElasticDatasource', function() {
           from: moment.utc([2015, 4, 30, 10]),
           to: moment.utc([2015, 5, 1, 10])
         },
-        targets: [{ bucketAggs: [], metrics: [], query: 'escape\\:test' }]
+        targets: [{ bucketAggs: [], metrics: [{type: 'raw_document'}], query: 'escape\\:test' }]
       });
 
       ctx.$rootScope.$apply();
@@ -77,7 +77,7 @@ describe('ElasticDatasource', function() {
 
     it('should json escape lucene query', function() {
       var body = angular.fromJson(parts[1]);
-      expect(body.query.filtered.query.query_string.query).to.be('escape\\:test');
+      expect(body.query.bool.filter[1].query_string.query).to.be('escape\\:test');
     });
   });
 
@@ -85,7 +85,7 @@ describe('ElasticDatasource', function() {
     var requestOptions, parts, header;
 
     beforeEach(function() {
-      createDatasource({url: 'http://es.com', index: 'test'});
+      createDatasource({url: 'http://es.com', index: 'test', jsonData: {esVersion: '2'}});
 
       ctx.backendSrv.datasourceRequest = function(options) {
         requestOptions = options;
@@ -209,4 +209,79 @@ describe('ElasticDatasource', function() {
     });
   });
 
+  describe('When issuing aggregation query on es5.x', function() {
+    var requestOptions, parts, header;
+
+    beforeEach(function() {
+      createDatasource({url: 'http://es.com', index: 'test', jsonData: {esVersion: '5'}});
+
+      ctx.backendSrv.datasourceRequest = function(options) {
+        requestOptions = options;
+        return ctx.$q.when({data: {responses: []}});
+      };
+
+      ctx.ds.query({
+        range: { from: moment([2015, 4, 30, 10]), to: moment([2015, 5, 1, 10]) },
+        targets: [{
+            bucketAggs: [
+                {type: 'date_histogram', field: '@timestamp', id: '2'}
+            ],
+            metrics: [
+                {type: 'count'}], query: 'test' }
+            ]
+      });
+
+      ctx.$rootScope.$apply();
+      parts = requestOptions.data.split('\n');
+      header = angular.fromJson(parts[0]);
+    });
+
+    it('should not set search type to count', function() {
+      expect(header.search_type).to.not.eql('count');
+    });
+
+    it('should set size to 0', function() {
+      var body = angular.fromJson(parts[1]);
+      expect(body.size).to.be(0);
+    });
+
+  });
+
+  describe('When issuing metricFind query on es5.x', function() {
+    var requestOptions, parts, header, body;
+
+    beforeEach(function() {
+      createDatasource({url: 'http://es.com', index: 'test', jsonData: {esVersion: '5'}});
+
+      ctx.backendSrv.datasourceRequest = function(options) {
+        requestOptions = options;
+        return ctx.$q.when({
+            data: {
+                responses: [{aggregations: {"1": [{buckets: {text: 'test', value: '1'}}]}}]
+            }
+        });
+      };
+
+      ctx.ds.metricFindQuery('{"find": "terms", "field": "test"}');
+      ctx.$rootScope.$apply();
+
+      parts = requestOptions.data.split('\n');
+      header = angular.fromJson(parts[0]);
+      body = angular.fromJson(parts[1]);
+    });
+
+    it('should not set search type to count', function() {
+      expect(header.search_type).to.not.eql('count');
+    });
+
+    it('should set size to 0', function() {
+      expect(body.size).to.be(0);
+    });
+
+    it('should not set terms aggregation size to 0', function() {
+      expect(body['aggs']['1']['terms'].size).to.not.be(0);
+    });
+  });
+
 });
+

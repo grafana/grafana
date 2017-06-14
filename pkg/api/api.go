@@ -4,14 +4,13 @@ import (
 	"github.com/go-macaron/binding"
 	"github.com/grafana/grafana/pkg/api/avatar"
 	"github.com/grafana/grafana/pkg/api/dtos"
-	"github.com/grafana/grafana/pkg/api/live"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
-	"gopkg.in/macaron.v1"
 )
 
 // Register adds http routes
-func Register(r *macaron.Macaron) {
+func (hs *HttpServer) registerRoutes() {
+	r := hs.macaron
 	reqSignedIn := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true})
 	reqGrafanaAdmin := middleware.Auth(&middleware.AuthOptions{ReqSignedIn: true, ReqGrafanaAdmin: true})
 	reqEditorRole := middleware.RoleAuth(m.ROLE_EDITOR, m.ROLE_ADMIN)
@@ -113,6 +112,9 @@ func Register(r *macaron.Macaron) {
 
 			r.Put("/password", bind(m.ChangeUserPasswordCommand{}), wrap(ChangeUserPassword))
 			r.Get("/quotas", wrap(GetUserQuotas))
+			r.Put("/helpflags/:id", wrap(SetHelpFlag))
+			// For dev purpose
+			r.Get("/helpflags/clear", wrap(ClearHelpFlags))
 
 			r.Get("/preferences", wrap(GetUserPreferences))
 			r.Put("/preferences", bind(dtos.UpdatePrefsCmd{}), wrap(UpdateUserPreferences))
@@ -121,8 +123,11 @@ func Register(r *macaron.Macaron) {
 		// users (admin permission required)
 		r.Group("/users", func() {
 			r.Get("/", wrap(SearchUsers))
+			r.Get("/search", wrap(SearchUsersWithPaging))
 			r.Get("/:id", wrap(GetUserById))
 			r.Get("/:id/orgs", wrap(GetUserOrgList))
+			// query parameters /users/lookup?loginOrEmail=admin@example.com
+			r.Get("/lookup", wrap(GetUserByLoginOrEmail))
 			r.Put("/:id", bind(m.UpdateUserCommand{}), wrap(UpdateUser))
 			r.Post("/:id/using/:orgId", wrap(UpdateUserActiveOrg))
 		}, reqGrafanaAdmin)
@@ -191,10 +196,11 @@ func Register(r *macaron.Macaron) {
 
 		// Data sources
 		r.Group("/datasources", func() {
-			r.Get("/", GetDataSources)
+			r.Get("/", wrap(GetDataSources))
 			r.Post("/", quota("data_source"), bind(m.AddDataSourceCommand{}), AddDataSource)
-			r.Put("/:id", bind(m.UpdateDataSourceCommand{}), UpdateDataSource)
-			r.Delete("/:id", DeleteDataSource)
+			r.Put("/:id", bind(m.UpdateDataSourceCommand{}), wrap(UpdateDataSource))
+			r.Delete("/:id", DeleteDataSourceById)
+			r.Delete("/name/:name", DeleteDataSourceByName)
 			r.Get("/:id", wrap(GetDataSourceById))
 			r.Get("/name/:name", wrap(GetDataSourceByName))
 		}, reqOrgAdmin)
@@ -217,6 +223,13 @@ func Register(r *macaron.Macaron) {
 		// Dashboard
 		r.Group("/dashboards", func() {
 			r.Combo("/db/:slug").Get(GetDashboard).Delete(DeleteDashboard)
+
+			r.Get("/id/:dashboardId/versions", wrap(GetDashboardVersions))
+			r.Get("/id/:dashboardId/versions/:id", wrap(GetDashboardVersion))
+			r.Post("/id/:dashboardId/restore", reqEditorRole, bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
+
+			r.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), wrap(CalculateDashboardDiff))
+
 			r.Post("/db", reqEditorRole, bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
 			r.Get("/file/:file", GetDashboardFromJsonFile)
 			r.Get("/home", wrap(GetHomeDashboard))
@@ -246,18 +259,22 @@ func Register(r *macaron.Macaron) {
 		// metrics
 		r.Post("/tsdb/query", bind(dtos.MetricRequest{}), wrap(QueryMetrics))
 		r.Get("/tsdb/testdata/scenarios", wrap(GetTestDataScenarios))
+		r.Get("/tsdb/testdata/gensql", reqGrafanaAdmin, wrap(GenerateSqlTestData))
+		r.Get("/tsdb/testdata/random-walk", wrap(GetTestDataRandomWalk))
 
 		// metrics
 		r.Get("/metrics", wrap(GetInternalMetrics))
 
 		r.Group("/alerts", func() {
 			r.Post("/test", bind(dtos.AlertTestCommand{}), wrap(AlertTest))
+			r.Post("/:alertId/pause", bind(dtos.PauseAlertCommand{}), wrap(PauseAlert), reqEditorRole)
 			r.Get("/:alertId", ValidateOrgAlert, wrap(GetAlert))
 			r.Get("/", wrap(GetAlerts))
 			r.Get("/states-for-dashboard", wrap(GetAlertStatesForDashboard))
 		})
 
 		r.Get("/alert-notifications", wrap(GetAlertNotifications))
+		r.Get("/alert-notifiers", wrap(GetAlertNotifiers))
 
 		r.Group("/alert-notifications", func() {
 			r.Post("/test", bind(dtos.NotificationTestCommand{}), wrap(NotificationTest))
@@ -265,9 +282,13 @@ func Register(r *macaron.Macaron) {
 			r.Put("/:notificationId", bind(m.UpdateAlertNotificationCommand{}), wrap(UpdateAlertNotification))
 			r.Get("/:notificationId", wrap(GetAlertNotificationById))
 			r.Delete("/:notificationId", wrap(DeleteAlertNotification))
-		}, reqOrgAdmin)
+		}, reqEditorRole)
 
 		r.Get("/annotations", wrap(GetAnnotations))
+
+		r.Group("/annotations", func() {
+			r.Post("/", bind(dtos.PostAnnotationsCmd{}), wrap(PostAnnotation))
+		}, reqEditorRole)
 
 		// error test
 		r.Get("/metrics/error", wrap(GenerateError))
@@ -284,6 +305,7 @@ func Register(r *macaron.Macaron) {
 		r.Get("/users/:id/quotas", wrap(GetUserQuotas))
 		r.Put("/users/:id/quotas/:target", bind(m.UpdateUserQuotaCmd{}), wrap(UpdateUserQuota))
 		r.Get("/stats", AdminGetStats)
+		r.Post("/pause-all-alerts", bind(dtos.PauseAllAlertsCommand{}), wrap(PauseAllAlerts))
 	}, reqGrafanaAdmin)
 
 	// rendering
@@ -297,12 +319,12 @@ func Register(r *macaron.Macaron) {
 	r.Get("/avatar/:hash", avt.ServeHTTP)
 
 	// Websocket
-	liveConn := live.New()
-	r.Any("/ws", liveConn.Serve)
+	r.Any("/ws", hs.streamManager.Serve)
 
 	// streams
-	r.Post("/api/streams/push", reqSignedIn, bind(dtos.StreamMessage{}), liveConn.PushToStream)
+	//r.Post("/api/streams/push", reqSignedIn, bind(dtos.StreamMessage{}), liveConn.PushToStream)
 
 	InitAppPluginRoutes(r)
 
+	r.NotFound(NotFoundHandler)
 }

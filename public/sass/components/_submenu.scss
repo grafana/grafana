@@ -1,4 +1,10 @@
 .submenu-controls {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  align-items: flex-start;
+
   margin: 0 $panel-margin ($panel-margin*2) $panel-margin;
 }
 
@@ -7,11 +13,12 @@
 }
 
 .annotation-segment {
+  padding: 8px 7px;
+
   label.cr1 {
     margin-left: 5px;
     margin-top: 3px;
   }
-  padding: 8px 7px;
 }
 
 .submenu-item {
@@ -31,14 +38,14 @@
 
 .variable-value-link {
   padding-right: 10px;
-  .label-tag {
-    margin: 0 5px;
-  }
-
   padding: 8px 7px;
   box-sizing: content-box;
   display: inline-block;
   color: $text-color;
+
+  .label-tag {
+    margin: 0 5px;
+  }
 }
 
 .variable-link-wrapper  {

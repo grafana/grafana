@@ -1,5 +1,4 @@
-<navbar title="Plugins" title-url="plugins" icon="icon-gf icon-gf-apps">
-</navbar>
+<navbar model="ctrl.navModel"></navbar>
 
 <div class="page-container" ng-init="ctrl.init()">
   <div class="page-header">
@@ -30,12 +29,12 @@
   </div>
 
   <div class="page-body">
-    <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabIndex === 0">
-      <div ng-bind-html="ctrl.readmeHtml" class="plugin-markdown-readme">
+    <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabs[ctrl.tabIndex] === 'Readme'">
+      <div ng-bind-html="ctrl.readmeHtml" class="markdown-html">
       </div>
     </div>
 
-    <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabIndex === 1">
+    <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabs[ctrl.tabIndex] === 'Config'">
       <div ng-if="ctrl.model.id">
         <plugin-component type="app-config-ctrl"></plugin-component>
 
@@ -47,7 +46,7 @@
       </div>
     </div>
 
-    <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabIndex === 2">
+    <div class="tab-content page-content-with-sidebar" ng-if="ctrl.tabs[ctrl.tabIndex] === 'Dashboards'">
 			<dashboard-import-list plugin="ctrl.model"></dashboard-import-list>
     </div>
 

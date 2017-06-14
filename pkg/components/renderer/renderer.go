@@ -11,6 +11,8 @@ import (
 
 	"strconv"
 
+	"strings"
+
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	"github.com/grafana/grafana/pkg/setting"
@@ -18,14 +20,37 @@ import (
 )
 
 type RenderOpts struct {
-	Path    string
-	Width   string
-	Height  string
-	Timeout string
-	OrgId   int64
+	Path     string
+	Width    string
+	Height   string
+	Timeout  string
+	OrgId    int64
+	Timezone string
 }
 
 var rendererLog log.Logger = log.New("png-renderer")
+
+func isoTimeOffsetToPosixTz(isoOffset string) string {
+	// invert offset
+	if strings.HasPrefix(isoOffset, "UTC+") {
+		return strings.Replace(isoOffset, "UTC+", "UTC-", 1)
+	}
+	if strings.HasPrefix(isoOffset, "UTC-") {
+		return strings.Replace(isoOffset, "UTC-", "UTC+", 1)
+	}
+	return isoOffset
+}
+
+func appendEnviron(baseEnviron []string, name string, value string) []string {
+	results := make([]string, 0)
+	prefix := fmt.Sprintf("%s=", name)
+	for _, v := range baseEnviron {
+		if !strings.HasPrefix(v, prefix) {
+			results = append(results, v)
+		}
+	}
+	return append(results, fmt.Sprintf("%s=%s", name, value))
+}
 
 func RenderToPng(params *RenderOpts) (string, error) {
 	rendererLog.Info("Rendering", "path", params.Path)
@@ -35,7 +60,12 @@ func RenderToPng(params *RenderOpts) (string, error) {
 		executable = executable + ".exe"
 	}
 
-	url := fmt.Sprintf("%s://localhost:%s/%s", setting.Protocol, setting.HttpPort, params.Path)
+	localDomain := "localhost"
+	if setting.HttpAddr != setting.DEFAULT_HTTP_ADDR {
+		localDomain = setting.HttpAddr
+	}
+
+	url := fmt.Sprintf("%s://%s:%s/%s", setting.Protocol, localDomain, setting.HttpPort, params.Path)
 
 	binPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, executable))
 	scriptPath, _ := filepath.Abs(filepath.Join(setting.PhantomDir, "render.js"))
@@ -47,12 +77,13 @@ func RenderToPng(params *RenderOpts) (string, error) {
 
 	cmdArgs := []string{
 		"--ignore-ssl-errors=true",
+		"--web-security=false",
 		scriptPath,
 		"url=" + url,
 		"width=" + params.Width,
 		"height=" + params.Height,
 		"png=" + pngPath,
-		"domain=" + setting.Domain,
+		"domain=" + localDomain,
 		"renderKey=" + renderKey,
 	}
 
@@ -65,6 +96,11 @@ func RenderToPng(params *RenderOpts) (string, error) {
 	stderr, err := cmd.StderrPipe()
 	if err != nil {
 		return "", err
+	}
+
+	if params.Timezone != "" {
+		baseEnviron := os.Environ()
+		cmd.Env = appendEnviron(baseEnviron, "TZ", isoTimeOffsetToPosixTz(params.Timezone))
 	}
 
 	err = cmd.Start()

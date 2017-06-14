@@ -81,20 +81,32 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
       range[timeField]= {
         from: options.range.from.valueOf(),
         to: options.range.to.valueOf(),
+        format: "epoch_millis",
       };
-
-      if (this.esVersion >= 2) {
-        range[timeField]["format"] = "epoch_millis";
-      }
 
       var queryInterpolated = templateSrv.replace(queryString, {}, 'lucene');
-      var filter = { "bool": { "must": [{ "range": range }] } };
-      var query = { "bool": { "should": [{ "query_string": { "query": queryInterpolated } }] } };
+      var query = {
+        "bool": {
+          "filter": [
+            { "range": range },
+            {
+              "query_string": {
+                "query": queryInterpolated
+              }
+            }
+          ]
+        }
+      };
+
       var data = {
-        "fields": [timeField, "_source"],
-        "query" : { "filtered": { "query" : query, "filter": filter } },
+        "query" : query,
         "size": 10000
       };
+
+      // fields field not supported on ES 5.x
+      if (this.esVersion < 5) {
+        data["fields"] = [timeField, "_source"];
+      }
 
       var header = {search_type: "query_then_fetch", "ignore_unavailable": true};
 
@@ -133,11 +145,12 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
         for (var i = 0; i < hits.length; i++) {
           var source = hits[i]._source;
-          var fields = hits[i].fields;
           var time = source[timeField];
-
-          if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
-            time = fields[timeField];
+          if (typeof hits[i].fields !== 'undefined') {
+            var fields = hits[i].fields;
+            if (_.isString(fields[timeField]) || _.isNumber(fields[timeField])) {
+              time = fields[timeField];
+            }
           }
 
           var event = {
@@ -155,11 +168,22 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
     };
 
     this.testDatasource = function() {
-      return this._get('/_stats').then(function() {
-        return { status: "success", message: "Data source is working", title: "Success" };
-      }, function(err) {
+      timeSrv.setTime({ from: 'now-1m', to: 'now' }, true);
+      // validate that the index exist and has date field
+      return this.getFields({type: 'date'}).then(function(dateFields) {
+        var timeField = _.find(dateFields, {text: this.timeField});
+        if (!timeField) {
+          return { status: "error", message: "No date field named " + this.timeField + ' found', title: "Error" };
+        }
+        return { status: "success", message: "Index OK. Time field name OK.", title: "Success" };
+      }.bind(this), function(err) {
+        console.log(err);
         if (err.data && err.data.error) {
-          return { status: "error", message: angular.toJson(err.data.error), title: "Error" };
+          var message = angular.toJson(err.data.error);
+          if (err.data.error.reason) {
+            message = err.data.error.reason;
+          }
+          return { status: "error", message: message, title: "Error" };
         } else {
           return { status: "error", message: err.status, title: "Error" };
         }
@@ -184,17 +208,11 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         target = options.targets[i];
         if (target.hide) {continue;}
 
-        var queryObj = this.queryBuilder.build(target, adhocFilters);
+        var queryString = templateSrv.replace(target.query || '*', options.scopedVars, 'lucene');
+        var queryObj = this.queryBuilder.build(target, adhocFilters, queryString);
         var esQuery = angular.toJson(queryObj);
-        var luceneQuery = target.query || '*';
-        luceneQuery = templateSrv.replace(luceneQuery, options.scopedVars, 'lucene');
-        luceneQuery = angular.toJson(luceneQuery);
 
-        // remove inner quotes
-        luceneQuery = luceneQuery.substr(1, luceneQuery.length - 2);
-        esQuery = esQuery.replace("$lucene_query", luceneQuery);
-
-        var searchType = queryObj.size === 0 ? 'count' : 'query_then_fetch';
+        var searchType = (queryObj.size === 0 && this.esVersion < 5) ? 'count' : 'query_then_fetch';
         var header = this.getQueryHeader(searchType, options.range.from, options.range.to);
         payload +=  header + '\n';
 
@@ -206,7 +224,6 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
         return $q.when([]);
       }
 
-      payload = payload.replace(/\$interval/g, options.interval);
       payload = payload.replace(/\$timeFrom/g, options.range.from.valueOf());
       payload = payload.replace(/\$timeTo/g, options.range.to.valueOf());
       payload = templateSrv.replace(payload, options.scopedVars);
@@ -218,6 +235,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
     this.getFields = function(query) {
       return this._get('/_mapping').then(function(result) {
+
         var typeMap = {
           'float': 'number',
           'double': 'number',
@@ -225,12 +243,28 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
           'long': 'number',
           'date': 'date',
           'string': 'string',
+          'text': 'string',
+          'scaled_float': 'number',
           'nested': 'nested'
         };
+
+        function shouldAddField(obj, key, query) {
+          if (key[0] === '_') {
+            return false;
+          }
+
+          if (!query.type) {
+            return true;
+          }
+
+          // equal query type filter, or via typemap translation
+          return query.type === obj.type || query.type === typeMap[obj.type];
+        }
 
         // Store subfield names: [system, process, cpu, total] -> system.process.cpu.total
         var fieldNameParts = [];
         var fields = {};
+
         function getFieldsRecursively(obj) {
           for (var key in obj) {
             var subObj = obj[key];
@@ -243,10 +277,7 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
               var fieldName = fieldNameParts.concat(key).join('.');
 
               // Hide meta-fields and check field type
-              if (key[0] !== '_' &&
-                  (!query.type ||
-                   query.type && typeMap[subObj.type] === query.type)) {
-
+              if (shouldAddField(subObj, key, query)) {
                 fields[fieldName] = {
                   text: fieldName,
                   type: subObj.type
@@ -277,14 +308,15 @@ function (angular, _, moment, kbn, ElasticQueryBuilder, IndexPattern, ElasticRes
 
     this.getTerms = function(queryDef) {
       var range = timeSrv.timeRange();
-      var header = this.getQueryHeader('count', range.from, range.to);
+      var searchType = this.esVersion >= 5 ? 'query_then_fetch' : 'count' ;
+      var header = this.getQueryHeader(searchType, range.from, range.to);
       var esQuery = angular.toJson(this.queryBuilder.getTermsQuery(queryDef));
 
       esQuery = esQuery.replace(/\$timeFrom/g, range.from.valueOf());
       esQuery = esQuery.replace(/\$timeTo/g, range.to.valueOf());
       esQuery = header + '\n' + esQuery + '\n';
 
-      return this._post('_msearch?search_type=count', esQuery).then(function(res) {
+      return this._post('_msearch?search_type=' + searchType, esQuery).then(function(res) {
         if (!res.responses[0].aggregations) {
           return [];
         }

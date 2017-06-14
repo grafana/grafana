@@ -4,16 +4,15 @@
 			<div class="gf-form">
 				<span class="gf-form-label"><i class="fa fa-wrench"></i></span>
 				<span class="gf-form-label width-11">Group by time interval</span>
-				<input type="text" class="gf-form-input" ng-model="ctrl.panelCtrl.panel.interval" ng-blur="ctrl.panelCtrl.refresh();"
+				<input type="text" class="gf-form-input width-16" ng-model="ctrl.panelCtrl.panel.interval" ng-blur="ctrl.panelCtrl.refresh();"
 				spellcheck='false' placeholder="example: >10s">
-				<span class="gf-form-label"><i class="fa fa-question-circle" bs-tooltip="'Set a low limit by having a greater sign: example: >60s'" data-placement="right"></i></span>
+				<info-popover mode="right-absolute">
+          Set a low limit by having a greater sign: example: >60s
+        </info-popover>
 			</div>
 		</div>
 		<div class="gf-form-inline">
 			<div class="gf-form">
-				<!--span class="gf-form-label">
-					<i class="fa fa-info-circle"></i>
-				</span-->
 				<span class="gf-form-label width-10">
 					<a ng-click="ctrl.panelCtrl.toggleEditorHelp(1);" bs-tooltip="'click to show helpful info'" data-placement="bottom">
 						<i class="fa fa-info-circle"></i>
@@ -23,7 +22,7 @@
 				<span class="gf-form-label width-10">
 					<a ng-click="ctrl.panelCtrl.toggleEditorHelp(2)" bs-tooltip="'click to show helpful info'" data-placement="bottom">
 					<i class="fa fa-info-circle"></i>
-						&nbsp;stacking &amp; and fill
+						&nbsp;stacking &amp; fill
 					</a>
 				</span>
 				<span class="gf-form-label width-10">
@@ -55,7 +54,7 @@
 		<div class="grafana-info-box span6" ng-if="ctrl.panelCtrl.editorHelpIndex === 2">
 			<h5>Stacking and fill</h5>
 			<ul>
-				<li>When stacking is enabled it important that points align</li>
+				<li>When stacking is enabled it is important that points align</li>
 				<li>If there are missing points for one series it can cause gaps or missing bars</li>
 				<li>You must use fill(0), and select a group by time low limit</li>
 				<li>Use the group by time option below your queries and specify for example &gt;10s if your metrics are written every 10 seconds</li>

@@ -16,7 +16,23 @@ describe('ElasticQueryBuilder', function() {
       bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '1'}],
     });
 
-    expect(query.query.filtered.filter.bool.must[0].range["@timestamp"].gte).to.be("$timeFrom");
+    expect(query.query.bool.filter[0].range["@timestamp"].gte).to.be("$timeFrom");
+    expect(query.aggs["1"].date_histogram.extended_bounds.min).to.be("$timeFrom");
+  });
+
+  it('with defaults on es5.x', function() {
+    var builder_5x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 5
+    });
+
+    var query = builder_5x.build({
+      metrics: [{type: 'Count', id: '0'}],
+      timeField: '@timestamp',
+      bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '1'}],
+    });
+
+    expect(query.query.bool.filter[0].range["@timestamp"].gte).to.be("$timeFrom");
     expect(query.aggs["1"].date_histogram.extended_bounds.min).to.be("$timeFrom");
   });
 
@@ -32,39 +48,6 @@ describe('ElasticQueryBuilder', function() {
 
     expect(query.aggs["2"].terms.field).to.be("@host");
     expect(query.aggs["2"].aggs["3"].date_histogram.field).to.be("@timestamp");
-  });
-
-  it('with es1.x and es2.x date histogram queries check time format', function() {
-    var builder_2x = new ElasticQueryBuilder({
-      timeField: '@timestamp',
-      esVersion: 2
-    });
-
-    var query_params = {
-      metrics: [],
-      bucketAggs: [
-        {type: 'date_histogram', field: '@timestamp', id: '1'}
-      ],
-    };
-
-    // format should not be specified in 1.x queries
-    expect("format" in builder.build(query_params)["aggs"]["1"]["date_histogram"]).to.be(false);
-
-    // 2.x query should specify format to be "epoch_millis"
-    expect(builder_2x.build(query_params)["aggs"]["1"]["date_histogram"]["format"]).to.be("epoch_millis");
-  });
-
-  it('with es1.x and es2.x range filter check time format', function() {
-    var builder_2x = new ElasticQueryBuilder({
-      timeField: '@timestamp',
-      esVersion: 2
-    });
-
-    // format should not be specified in 1.x queries
-    expect("format" in builder.getRangeFilter()["@timestamp"]).to.be(false);
-
-    // 2.x query should specify format to be "epoch_millis"
-    expect(builder_2x.getRangeFilter()["@timestamp"]["format"]).to.be("epoch_millis");
   });
 
   it('with select field', function() {
@@ -138,19 +121,56 @@ describe('ElasticQueryBuilder', function() {
       ],
     });
 
-    expect(query.aggs["2"].filters.filters["@metric:cpu"].query.query_string.query).to.be("@metric:cpu");
-    expect(query.aggs["2"].filters.filters["@metric:logins.count"].query.query_string.query).to.be("@metric:logins.count");
+    expect(query.aggs["2"].filters.filters["@metric:cpu"].query_string.query).to.be("@metric:cpu");
+    expect(query.aggs["2"].filters.filters["@metric:logins.count"].query_string.query).to.be("@metric:logins.count");
+    expect(query.aggs["2"].aggs["4"].date_histogram.field).to.be("@timestamp");
+  });
+
+  it('with filters aggs on es5.x', function() {
+    var builder_5x = new ElasticQueryBuilder({
+      timeField: '@timestamp',
+      esVersion: 5
+    });
+    var query = builder_5x.build({
+      metrics: [{type: 'count', id: '1'}],
+      timeField: '@timestamp',
+      bucketAggs: [
+        {
+          id: '2',
+          type: 'filters',
+          settings: {
+            filters: [
+              {query: '@metric:cpu' },
+              {query: '@metric:logins.count' },
+            ]
+          }
+        },
+        {type: 'date_histogram', field: '@timestamp', id: '4'}
+      ],
+    });
+
+    expect(query.aggs["2"].filters.filters["@metric:cpu"].query_string.query).to.be("@metric:cpu");
+    expect(query.aggs["2"].filters.filters["@metric:logins.count"].query_string.query).to.be("@metric:logins.count");
     expect(query.aggs["2"].aggs["4"].date_histogram.field).to.be("@timestamp");
   });
 
   it('with raw_document metric', function() {
     var query = builder.build({
-      metrics: [{type: 'raw_document', id: '1'}],
+      metrics: [{type: 'raw_document', id: '1',settings: {}}],
       timeField: '@timestamp',
       bucketAggs: [],
     });
 
     expect(query.size).to.be(500);
+  });
+  it('with raw_document metric size set', function() {
+    var query = builder.build({
+      metrics: [{type: 'raw_document', id: '1',settings: {size: 1337}}],
+      timeField: '@timestamp',
+      bucketAggs: [],
+    });
+
+    expect(query.size).to.be(1337);
   });
 
   it('with moving average', function() {
@@ -238,16 +258,42 @@ describe('ElasticQueryBuilder', function() {
     expect(firstLevel.aggs["2"].derivative.buckets_path).to.be("3");
   });
 
+  it('with histogram', function() {
+    var query = builder.build({
+      metrics: [
+        {id: '1', type: 'count' },
+      ],
+      bucketAggs: [
+        {type: 'histogram', field: 'bytes', id: '3', settings: {interval: 10, min_doc_count: 2, missing: 5}}
+      ],
+    });
+
+    var firstLevel = query.aggs["3"];
+    expect(firstLevel.histogram.field).to.be('bytes');
+    expect(firstLevel.histogram.interval).to.be(10);
+    expect(firstLevel.histogram.min_doc_count).to.be(2);
+    expect(firstLevel.histogram.missing).to.be(5);
+  });
+
   it('with adhoc filters', function() {
     var query = builder.build({
       metrics: [{type: 'Count', id: '0'}],
       timeField: '@timestamp',
       bucketAggs: [{type: 'date_histogram', field: '@timestamp', id: '3'}],
     }, [
-      {key: 'key1', operator: '=', value: 'value1'}
+      {key: 'key1', operator: '=', value: 'value1'},
+      {key: 'key2', operator: '!=', value: 'value2'},
+      {key: 'key3', operator: '<', value: 'value3'},
+      {key: 'key4', operator: '>', value: 'value4'},
+      {key: 'key5', operator: '=~', value: 'value5'},
+      {key: 'key6', operator: '!~', value: 'value6'},
     ]);
 
-    expect(query.query.filtered.filter.bool.must[1].term["key1"]).to.be("value1");
+    expect(query.query.bool.filter[2].term["key1"]).to.be("value1");
+    expect(query.query.bool.filter[3].bool.must_not.term["key2"]).to.be("value2");
+    expect(query.query.bool.filter[4].range["key3"].lt).to.be("value3");
+    expect(query.query.bool.filter[5].range["key4"].gt).to.be("value4");
+    expect(query.query.bool.filter[6].regexp["key5"]).to.be("value5");
+    expect(query.query.bool.filter[7].bool.must_not.regexp["key6"]).to.be("value6");
   });
-
 });

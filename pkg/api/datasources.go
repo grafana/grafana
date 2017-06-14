@@ -5,24 +5,22 @@ import (
 
 	"github.com/grafana/grafana/pkg/api/dtos"
 	"github.com/grafana/grafana/pkg/bus"
-	"github.com/grafana/grafana/pkg/plugins"
-	//"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
+	"github.com/grafana/grafana/pkg/plugins"
 	"github.com/grafana/grafana/pkg/util"
 )
 
-func GetDataSources(c *middleware.Context) {
+func GetDataSources(c *middleware.Context) Response {
 	query := m.GetDataSourcesQuery{OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&query); err != nil {
-		c.JsonApiErr(500, "Failed to query datasources", err)
-		return
+		return ApiError(500, "Failed to query datasources", err)
 	}
 
 	result := make(dtos.DataSourceList, 0)
 	for _, ds := range query.Result {
-		dsItem := dtos.DataSource{
+		dsItem := dtos.DataSourceListItemDTO{
 			Id:        ds.Id,
 			OrgId:     ds.OrgId,
 			Name:      ds.Name,
@@ -47,7 +45,8 @@ func GetDataSources(c *middleware.Context) {
 	}
 
 	sort.Sort(result)
-	c.JSON(200, result)
+
+	return Json(200, &result)
 }
 
 func GetDataSourceById(c *middleware.Context) Response {
@@ -69,7 +68,7 @@ func GetDataSourceById(c *middleware.Context) Response {
 	return Json(200, &dtos)
 }
 
-func DeleteDataSource(c *middleware.Context) {
+func DeleteDataSourceById(c *middleware.Context) {
 	id := c.ParamsInt64(":id")
 
 	if id <= 0 {
@@ -77,7 +76,26 @@ func DeleteDataSource(c *middleware.Context) {
 		return
 	}
 
-	cmd := &m.DeleteDataSourceCommand{Id: id, OrgId: c.OrgId}
+	cmd := &m.DeleteDataSourceByIdCommand{Id: id, OrgId: c.OrgId}
+
+	err := bus.Dispatch(cmd)
+	if err != nil {
+		c.JsonApiErr(500, "Failed to delete datasource", err)
+		return
+	}
+
+	c.JsonOK("Data source deleted")
+}
+
+func DeleteDataSourceByName(c *middleware.Context) {
+	name := c.Params(":name")
+
+	if name == "" {
+		c.JsonApiErr(400, "Missing valid datasource name", nil)
+		return
+	}
+
+	cmd := &m.DeleteDataSourceByNameCommand{Name: name, OrgId: c.OrgId}
 
 	err := bus.Dispatch(cmd)
 	if err != nil {
@@ -101,20 +119,61 @@ func AddDataSource(c *middleware.Context, cmd m.AddDataSourceCommand) {
 		return
 	}
 
-	c.JSON(200, util.DynMap{"message": "Datasource added", "id": cmd.Result.Id})
+	c.JSON(200, util.DynMap{"message": "Datasource added", "id": cmd.Result.Id, "name": cmd.Result.Name})
 }
 
-func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) {
+func UpdateDataSource(c *middleware.Context, cmd m.UpdateDataSourceCommand) Response {
 	cmd.OrgId = c.OrgId
 	cmd.Id = c.ParamsInt64(":id")
 
-	err := bus.Dispatch(&cmd)
+	err := fillWithSecureJsonData(&cmd)
 	if err != nil {
-		c.JsonApiErr(500, "Failed to update datasource", err)
-		return
+		return ApiError(500, "Failed to update datasource", err)
 	}
 
-	c.JsonOK("Datasource updated")
+	err = bus.Dispatch(&cmd)
+	if err != nil {
+		return ApiError(500, "Failed to update datasource", err)
+	}
+
+	return Json(200, util.DynMap{"message": "Datasource updated", "id": cmd.Id, "name": cmd.Name})
+}
+
+func fillWithSecureJsonData(cmd *m.UpdateDataSourceCommand) error {
+	if len(cmd.SecureJsonData) == 0 {
+		return nil
+	}
+
+	ds, err := getRawDataSourceById(cmd.Id, cmd.OrgId)
+
+	if err != nil {
+		return err
+	}
+
+	secureJsonData := ds.SecureJsonData.Decrypt()
+	for k, v := range secureJsonData {
+
+		if _, ok := cmd.SecureJsonData[k]; !ok {
+			cmd.SecureJsonData[k] = v
+		}
+	}
+
+	// set version from db
+	cmd.Version = ds.Version
+	return nil
+}
+
+func getRawDataSourceById(id int64, orgId int64) (*m.DataSource, error) {
+	query := m.GetDataSourceByIdQuery{
+		Id:    id,
+		OrgId: orgId,
+	}
+
+	if err := bus.Dispatch(&query); err != nil {
+		return nil, err
+	}
+
+	return query.Result, nil
 }
 
 // Get /api/datasources/name/:name
@@ -152,7 +211,7 @@ func GetDataSourceIdByName(c *middleware.Context) Response {
 }
 
 func convertModelToDtos(ds *m.DataSource) dtos.DataSource {
-	return dtos.DataSource{
+	dto := dtos.DataSource{
 		Id:                ds.Id,
 		OrgId:             ds.OrgId,
 		Name:              ds.Name,
@@ -168,5 +227,14 @@ func convertModelToDtos(ds *m.DataSource) dtos.DataSource {
 		WithCredentials:   ds.WithCredentials,
 		IsDefault:         ds.IsDefault,
 		JsonData:          ds.JsonData,
+		SecureJsonFields:  map[string]bool{},
 	}
+
+	for k, v := range ds.SecureJsonData {
+		if len(v) > 0 {
+			dto.SecureJsonFields[k] = true
+		}
+	}
+
+	return dto
 }

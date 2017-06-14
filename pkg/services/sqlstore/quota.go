@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/setting"
@@ -94,7 +95,7 @@ func GetOrgQuotas(query *m.GetOrgQuotasQuery) error {
 }
 
 func UpdateOrgQuota(cmd *m.UpdateOrgQuotaCmd) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 		//Check if quota is already defined in the DB
 		quota := m.Quota{
 			Target: cmd.Target,
@@ -194,7 +195,7 @@ func GetUserQuotas(query *m.GetUserQuotasQuery) error {
 }
 
 func UpdateUserQuota(cmd *m.UpdateUserQuotaCmd) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 		//Check if quota is already defined in the DB
 		quota := m.Quota{
 			Target: cmd.Target,

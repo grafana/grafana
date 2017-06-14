@@ -48,6 +48,7 @@ function (angular, _, $) {
               element: el[0],
               position: 'bottom center',
               template: '<gf-color-picker></gf-color-picker>',
+              openOn: 'hover',
               model: {
                 series: series,
                 toggleAxis: function() {
@@ -65,7 +66,9 @@ function (angular, _, $) {
           var el = $(e.currentTarget);
           var index = getSeriesIndexForElement(el);
           var seriesInfo = seriesList[index];
+          var scrollPosition = $($container.children('tbody')).scrollTop();
           ctrl.toggleSeries(seriesInfo, e);
+          $($container.children('tbody')).scrollTop(scrollPosition);
         }
 
         function sortLegend(e) {
@@ -124,6 +127,7 @@ function (angular, _, $) {
 
           $container.toggleClass('graph-legend-table', panel.legend.alignAsTable === true);
 
+          var tableHeaderElem;
           if (panel.legend.alignAsTable) {
             var header = '<tr>';
             header += '<th colspan="2" style="text-align:left"></th>';
@@ -135,7 +139,7 @@ function (angular, _, $) {
               header += getTableHeaderHtml('total');
             }
             header += '</tr>';
-            $container.append($(header));
+            tableHeaderElem = $(header);
           }
 
           if (panel.legend.sort) {
@@ -148,6 +152,8 @@ function (angular, _, $) {
           }
 
           var seriesShown = 0;
+          var seriesElements = [];
+
           for (i = 0; i < seriesList.length; i++) {
             var series = seriesList[i];
 
@@ -156,6 +162,7 @@ function (angular, _, $) {
             }
 
             var html = '<div class="graph-legend-series';
+
             if (series.yaxis === 2) { html += ' graph-legend-series--right-y'; }
             if (ctrl.hiddenSeries[series.alias]) { html += ' graph-legend-series-hidden'; }
             html += '" data-series-index="' + i + '">';
@@ -163,7 +170,7 @@ function (angular, _, $) {
             html += '<i class="fa fa-minus pointer" style="color:' + series.color + '"></i>';
             html += '</div>';
 
-            html += '<a class="graph-legend-alias pointer">' + _.escape(series.label) + '</a>';
+            html += '<a class="graph-legend-alias pointer" title="' + _.escape(series.label) + '">' + _.escape(series.label) + '</a>';
 
             if (panel.legend.values) {
               var avg = series.formatValue(series.stats.avg);
@@ -180,7 +187,7 @@ function (angular, _, $) {
             }
 
             html += '</div>';
-            $container.append($(html));
+            seriesElements.push($(html));
 
             seriesShown++;
           }
@@ -193,9 +200,13 @@ function (angular, _, $) {
             }
 
             var topPadding = 6;
-            $container.css("max-height", maxHeight - topPadding);
+            var tbodyElem = $('<tbody></tbody>');
+            tbodyElem.css("max-height", maxHeight - topPadding);
+            tbodyElem.append(tableHeaderElem);
+            tbodyElem.append(seriesElements);
+            $container.append(tbodyElem);
           } else {
-            $container.css("max-height", "");
+            $container.append(seriesElements);
           }
         }
       }

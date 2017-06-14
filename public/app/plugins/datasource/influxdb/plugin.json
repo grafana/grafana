@@ -6,11 +6,12 @@
   "defaultMatchFormat": "regex values",
   "metrics": true,
   "annotations": true,
+  "alerting": true,
 
   "info": {
     "author": {
       "name": "Grafana Project",
-      "url": "http://grafana.org"
+      "url": "https://grafana.com"
     },
     "logos": {
       "small": "img/influxdb_logo.svg",

@@ -1,8 +1,13 @@
-----
-page_title: Authentication API
-page_description: Grafana HTTP API Reference
-page_keywords: grafana, admin, http, api, documentation
----
++++
+title = "Authentication HTTP API "
+description = "Grafana Authentication HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "authentication"]
+aliases = ["/http_api/authentication/"]
+type = "docs"
+[menu.docs]
+name = "Authentication"
+parent = "http_api"
++++
 
 # Authentication API
 
@@ -13,7 +18,7 @@ Currently you can authenticate via an `API Token` or via a `Session cookie` (acq
 ## Basic Auth
 
 If basic auth is enabled (it is enabled by default) you can authenticate your HTTP request via
-standard basic auth.
+standard basic auth. Basic auth will also authenticate LDAP users.
 
 curl example:
 ```
@@ -25,7 +30,7 @@ curl example:
 
 Open the sidemenu and click the organization dropdown and select the `API Keys` option.
 
-![](/img/v2/orgdropdown_api_keys.png)
+![](/img/docs/v2/orgdropdown_api_keys.png)
 
 You use the token in all requests in the `Authorization` header, like this:
 
@@ -36,3 +41,80 @@ You use the token in all requests in the `Authorization` header, like this:
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
 
 The `Authorization` header value should be `Bearer <your api key>`.
+
+# Auth HTTP resources / actions
+
+## Api Keys
+
+`GET /api/auth/keys`
+
+**Example Request**:
+
+    GET /api/auth/keys HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+
+    [
+      {
+        "id": 3,
+        "name": "API",
+        "role": "Admin"
+      },
+      {
+        "id": 1,
+        "name": "TestAdmin",
+        "role": "Admin"
+      }
+    ]
+
+## Create API Key
+
+`POST /api/auth/keys`
+
+**Example Request**:
+
+    POST /api/auth/keys HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+    {
+      "name": "mykey",
+      "role": "Admin"
+    }
+
+JSON Body schema:
+
+- **name** – The key name
+- **role** – Sets the access level/Grafana Role for the key. Can be one of the following values: `Viewer`, `Editor`, `Read Only Editor` or `Admin`.
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+
+    {"name":"mykey","key":"eyJrIjoiWHZiSWd3NzdCYUZnNUtibE9obUpESmE3bzJYNDRIc0UiLCJuIjoibXlrZXkiLCJpZCI6MX1="}
+
+## Delete API Key
+
+`DELETE /api/auth/keys/:id`
+
+**Example Request**:
+
+    DELETE /api/auth/keys/3 HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+
+    {"message":"API key deleted"}

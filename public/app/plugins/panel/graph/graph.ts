@@ -7,20 +7,21 @@ import 'jquery.flot.stack';
 import 'jquery.flot.stackpercent';
 import 'jquery.flot.fillbelow';
 import 'jquery.flot.crosshair';
+import 'jquery.flot.dashes';
 import './jquery.flot.events';
 
-import angular from 'angular';
 import $ from 'jquery';
-import moment from 'moment';
 import _ from 'lodash';
-import kbn from   'app/core/utils/kbn';
+import moment from 'moment';
+import kbn from 'app/core/utils/kbn';
+import {tickStep} from 'app/core/utils/ticks';
+import {appEvents, coreModule} from 'app/core/core';
 import GraphTooltip from './graph_tooltip';
 import {ThresholdManager} from './threshold_manager';
+import {EventManager} from 'app/features/annotations/all';
+import {convertValuesToHistogram, getSeriesValues} from './histogram';
 
-var module = angular.module('grafana.directives');
-var labelWidthCache = {};
-
-module.directive('grafanaGraph', function($rootScope, timeSrv) {
+coreModule.directive('grafanaGraph', function($rootScope, timeSrv, popoverSrv) {
   return {
     restrict: 'A',
     template: '',
@@ -28,43 +29,58 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
       var ctrl = scope.ctrl;
       var dashboard = ctrl.dashboard;
       var panel = ctrl.panel;
-      var data, annotations;
+      var annotations = [];
+      var data;
+      var plot;
       var sortedSeries;
       var legendSideLastValue = null;
       var rootScope = scope.$root;
       var panelWidth = 0;
+      var eventManager = new EventManager(ctrl, elem, popoverSrv);
       var thresholdManager = new ThresholdManager(ctrl);
+      var tooltip = new GraphTooltip(elem, dashboard, scope, function() {
+        return sortedSeries;
+      });
 
-      rootScope.onAppEvent('setCrosshair', function(event, info) {
-        // do not need to to this if event is from this panel
-        if (info.scope === scope) {
-          return;
-        }
+      // panel events
+      ctrl.events.on('panel-teardown', () => {
+        thresholdManager = null;
 
-        if (dashboard.sharedCrosshair) {
-          var plot = elem.data().plot;
-          if (plot) {
-            plot.setCrosshair({ x: info.pos.x, y: info.pos.y });
-          }
-        }
-      }, scope);
-
-      rootScope.onAppEvent('clearCrosshair', function() {
-        var plot = elem.data().plot;
         if (plot) {
-          plot.clearCrosshair();
+          plot.destroy();
+          plot = null;
         }
-      }, scope);
+      });
 
-      // Receive render events
       ctrl.events.on('render', function(renderData) {
         data = renderData || data;
         if (!data) {
           return;
         }
-        annotations = ctrl.annotations;
+        annotations = ctrl.annotations || [];
         render_panel();
       });
+
+      // global events
+      appEvents.on('graph-hover', function(evt) {
+        // ignore other graph hover events if shared tooltip is disabled
+        if (!dashboard.sharedTooltipModeEnabled()) {
+          return;
+        }
+
+        // ignore if we are the emitter
+        if (!plot || evt.panel.id === panel.id || ctrl.otherPanelInFullscreenMode()) {
+          return;
+        }
+
+        tooltip.show(evt.pos);
+      }, scope);
+
+      appEvents.on('graph-hover-clear', function(event, info) {
+        if (plot) {
+          tooltip.clear(plot);
+        }
+      }, scope);
 
       function getLegendHeight(panelHeight) {
         if (!panel.legend.show || panel.legend.rightSide) {
@@ -106,16 +122,6 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         }
       }
 
-      function getLabelWidth(text, elem) {
-        var labelWidth = labelWidthCache[text];
-
-        if (!labelWidth) {
-          labelWidth = labelWidthCache[text] = elem.width();
-        }
-
-        return labelWidth;
-      }
-
       function drawHook(plot) {
         // Update legend values
         var yaxis = plot.getYAxes();
@@ -143,8 +149,6 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
           var yaxisLabel = $("<div class='axisLabel left-yaxis-label flot-temp-elem'></div>")
           .text(panel.yaxes[0].label)
           .appendTo(elem);
-
-          yaxisLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[0].label, yaxisLabel) / 2) + 'px';
         }
 
         // add right axis labels
@@ -152,8 +156,6 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
           var rightLabel = $("<div class='axisLabel right-yaxis-label flot-temp-elem'></div>")
           .text(panel.yaxes[1].label)
           .appendTo(elem);
-
-          rightLabel[0].style.marginTop = (getLabelWidth(panel.yaxes[1].label, rightLabel) / 2) + 'px';
         }
 
         thresholdManager.draw(plot);
@@ -170,9 +172,37 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         for (var i = 0; i < yaxis.length; i++) {
           var axis = yaxis[i];
           var panelOptions = panel.yaxes[i];
-          axis.options.max = panelOptions.max;
-          axis.options.min = panelOptions.min;
+          axis.options.max = axis.options.max !== null ? axis.options.max : panelOptions.max;
+          axis.options.min = axis.options.min !== null ? axis.options.min : panelOptions.min;
         }
+      }
+
+      // Series could have different timeSteps,
+      // let's find the smallest one so that bars are correctly rendered.
+      // In addition, only take series which are rendered as bars for this.
+      function getMinTimeStepOfSeries(data) {
+        var min = Number.MAX_VALUE;
+
+        for (let i = 0; i < data.length; i++) {
+          if (!data[i].stats.timeStep) {
+            continue;
+          }
+          if (panel.bars) {
+            if (data[i].bars && data[i].bars.show === false) {
+              continue;
+            }
+          } else {
+            if (typeof data[i].bars === 'undefined' || typeof data[i].bars.show === 'undefined' || !data[i].bars.show) {
+              continue;
+            }
+          }
+
+          if (data[i].stats.timeStep < min) {
+            min = data[i].stats.timeStep;
+          }
+        }
+
+        return min;
       }
 
       // Function for rendering panel
@@ -185,6 +215,9 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
 
         // give space to alert editing
         thresholdManager.prepare(elem, data);
+
+        // un-check dashes if lines are unchecked
+        panel.dashes = panel.lines ? panel.dashes : false;
 
         var stack = panel.stack ? true : null;
 
@@ -202,8 +235,13 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
               show: panel.lines,
               zero: false,
               fill: translateFillOption(panel.fill),
-              lineWidth: panel.linewidth,
+              lineWidth: panel.dashes ? 0 : panel.linewidth,
               steps: panel.steppedLine
+            },
+            dashes: {
+              show: panel.dashes,
+              lineWidth: panel.linewidth,
+              dashLength: [panel.dashLength, panel.spaceLength]
             },
             bars: {
               show: panel.bars,
@@ -228,6 +266,7 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
             backgroundColor: null,
             borderWidth: 0,
             hoverable: true,
+            clickable: true,
             color: '#c8c8c8',
             margin: { left: 0, right: 0 },
           },
@@ -236,12 +275,12 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
             color: '#666'
           },
           crosshair: {
-            mode: panel.tooltip.shared || dashboard.sharedCrosshair ? "x" : null
+            mode: 'x'
           }
         };
 
         for (let i = 0; i < data.length; i++) {
-          var series = data[i];
+          let series = data[i];
           series.data = series.getFlotPairs(series.nullPointMode || panel.nullPointMode);
 
           // if hidden remove points and disable stack
@@ -257,11 +296,34 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
             options.series.bars.align = 'center';
 
             for (let i = 0; i < data.length; i++) {
-              var series = data[i];
+              let series = data[i];
               series.data = [[i + 1, series.stats[panel.xaxis.values[0]]]];
             }
 
             addXSeriesAxis(options);
+            break;
+          }
+          case 'histogram': {
+            let bucketSize: number;
+            let values = getSeriesValues(data);
+
+            if (data.length && values.length) {
+              let histMin = _.min(_.map(data, s => s.stats.min));
+              let histMax = _.max(_.map(data, s => s.stats.max));
+              let ticks = panel.xaxis.buckets || panelWidth / 50;
+              bucketSize = tickStep(histMin, histMax, ticks);
+              let histogram = convertValuesToHistogram(values, bucketSize);
+
+              data[0].data = histogram;
+              data[0].alias = data[0].label = data[0].id = "count";
+              data = [data[0]];
+
+              options.series.bars.barWidth = bucketSize * 0.8;
+            } else {
+              bucketSize = 0;
+            }
+
+            addXHistogramAxis(options, bucketSize);
             break;
           }
           case 'table': {
@@ -271,23 +333,21 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
             break;
           }
           default: {
-            if (data.length && data[0].stats.timeStep) {
-              options.series.bars.barWidth = data[0].stats.timeStep / 1.5;
-            }
+            options.series.bars.barWidth = getMinTimeStepOfSeries(data) / 1.5;
             addTimeAxis(options);
             break;
           }
         }
 
-        thresholdManager.addPlotOptions(options, panel);
-        addAnnotations(options);
+        thresholdManager.addFlotOptions(options, panel);
+        eventManager.addFlotEvents(annotations, options);
         configureAxisOptions(data, options);
 
         sortedSeries = _.sortBy(data, function(series) { return series.zindex; });
 
         function callPlot(incrementRenderCounter) {
           try {
-            $.plot(elem, sortedSeries, options);
+            plot = $.plot(elem, sortedSeries, options);
             if (ctrl.renderError) {
               delete ctrl.error;
               delete ctrl.inspector;
@@ -360,6 +420,38 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         };
       }
 
+      function addXHistogramAxis(options, bucketSize) {
+        let ticks, min, max;
+
+        if (data.length && bucketSize) {
+          ticks = _.map(data[0].data, point => point[0]);
+
+          // Expand ticks for pretty view
+          min = Math.max(0, _.min(ticks) - bucketSize);
+          max = _.max(ticks) + bucketSize;
+
+          ticks = [];
+          for (let i = min; i <= max; i += bucketSize) {
+            ticks.push(i);
+          }
+        } else {
+          // Set defaults if no data
+          ticks = panelWidth / 100;
+          min = 0;
+          max = 1;
+        }
+
+        options.xaxis = {
+          timezone: dashboard.getTimezone(),
+          show: panel.xaxis.show,
+          mode: null,
+          min: min,
+          max: max,
+          label: "Histogram",
+          ticks: ticks
+        };
+      }
+
       function addXTableAxis(options) {
         var ticks = _.map(data, function(series, seriesIndex) {
           return _.map(series.datapoints, function(point, pointIndex) {
@@ -380,38 +472,14 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         };
       }
 
-      function addAnnotations(options) {
-        if (!annotations || annotations.length === 0) {
-          return;
-        }
-
-        var types = {};
-        for (var i = 0; i < annotations.length; i++) {
-          var item = annotations[i];
-
-          if (!types[item.source.name]) {
-            types[item.source.name] = {
-              color: item.source.iconColor,
-              position: 'BOTTOM',
-              markerSize: 5,
-            };
-          }
-        }
-
-        options.events = {
-          levels: _.keys(types).length + 1,
-          data: annotations,
-          types: types,
-        };
-      }
-
       function configureAxisOptions(data, options) {
         var defaults = {
           position: 'left',
           show: panel.yaxes[0].show,
           index: 1,
           logBase: panel.yaxes[0].logBase || 1,
-          max: 100, // correct later
+          min: panel.yaxes[0].min ? _.toNumber(panel.yaxes[0].min) : null,
+          max: panel.yaxes[0].max ? _.toNumber(panel.yaxes[0].max) : null,
         };
 
         options.yaxes.push(defaults);
@@ -422,10 +490,13 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
           secondY.show = panel.yaxes[1].show;
           secondY.logBase = panel.yaxes[1].logBase || 1;
           secondY.position = 'right';
+          secondY.min = panel.yaxes[1].min ? _.toNumber(panel.yaxes[1].min) : null;
+          secondY.max = panel.yaxes[1].max ? _.toNumber(panel.yaxes[1].max) : null;
           options.yaxes.push(secondY);
+
+          applyLogScale(options.yaxes[1], data);
           configureAxisMode(options.yaxes[1], panel.percentage && panel.stack ? "percent" : panel.yaxes[1].format);
         }
-
         applyLogScale(options.yaxes[0], data);
         configureAxisMode(options.yaxes[0], panel.percentage && panel.stack ? "percent" : panel.yaxes[0].format);
       }
@@ -435,42 +506,104 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
           return;
         }
 
-        var series, i;
-        var max = axis.max;
+        const minSetToZero = axis.min === 0;
 
-        if (max === null) {
-          for (i = 0; i < data.length; i++) {
-            series = data[i];
-            if (series.yaxis === axis.index) {
-              if (max < series.stats.max) {
-                max = series.stats.max;
-              }
+        if (axis.min < Number.MIN_VALUE) {
+          axis.min = null;
+        }
+        if (axis.max < Number.MIN_VALUE) {
+          axis.max = null;
+        }
+
+        var series, i;
+        var max = axis.max, min = axis.min;
+
+        for (i = 0; i < data.length; i++) {
+          series = data[i];
+          if (series.yaxis === axis.index) {
+            if (!max || max < series.stats.max) {
+              max = series.stats.max;
+            }
+            if (!min || min > series.stats.logmin) {
+              min = series.stats.logmin;
             }
           }
-          if (max === void 0) {
-            max = Number.MAX_VALUE;
-          }
         }
 
-        axis.min = axis.min !== null ? axis.min : 0;
-        axis.ticks = [0, 1];
-        var nextTick = 1;
+        axis.transform = function(v) { return (v < Number.MIN_VALUE) ? null : Math.log(v) / Math.log(axis.logBase); };
+        axis.inverseTransform  = function (v) { return Math.pow(axis.logBase,v); };
 
-        while (true) {
-          nextTick = nextTick * axis.logBase;
-          axis.ticks.push(nextTick);
-          if (nextTick > max) {
-            break;
-          }
+        if (!max && !min) {
+          max = axis.inverseTransform(+2);
+          min = axis.inverseTransform(-2);
+        } else if (!max) {
+          max = min*axis.inverseTransform(+4);
+        } else if (!min) {
+          min = max*axis.inverseTransform(-4);
         }
 
-        if (axis.logBase === 10) {
-          axis.transform = function(v) { return Math.log(v+0.1); };
-          axis.inverseTransform  = function (v) { return Math.pow(10,v); };
+        if (axis.min) {
+          min = axis.inverseTransform(Math.ceil(axis.transform(axis.min)));
         } else {
-          axis.transform = function(v) { return Math.log(v+0.1) / Math.log(axis.logBase); };
-          axis.inverseTransform  = function (v) { return Math.pow(axis.logBase,v); };
+          min = axis.min = axis.inverseTransform(Math.floor(axis.transform(min)));
         }
+        if (axis.max) {
+          max = axis.inverseTransform(Math.floor(axis.transform(axis.max)));
+        } else {
+          max = axis.max = axis.inverseTransform(Math.ceil(axis.transform(max)));
+        }
+
+        if (!min || min < Number.MIN_VALUE || !max || max < Number.MIN_VALUE) {
+          return;
+        }
+
+        if (Number.isFinite(min) && Number.isFinite(max)) {
+          if (minSetToZero) {
+            axis.min = 0.1;
+            min = 1;
+          }
+
+          axis.ticks = generateTicksForLogScaleYAxis(min, max, axis.logBase);
+          if (minSetToZero) {
+            axis.ticks.unshift(0.1);
+          }
+          if (axis.ticks[axis.ticks.length - 1] > axis.max) {
+            axis.max = axis.ticks[axis.ticks.length - 1];
+          }
+          axis.tickDecimals = decimalPlaces(min);
+        } else {
+          axis.ticks = [1, 2];
+          delete axis.min;
+          delete axis.max;
+        }
+      }
+
+      function generateTicksForLogScaleYAxis(min, max, logBase) {
+        let ticks = [];
+
+        var nextTick;
+        for (nextTick = min; nextTick <= max; nextTick *= logBase) {
+          ticks.push(nextTick);
+        }
+
+        const maxNumTicks = Math.ceil(ctrl.height/25);
+        const numTicks = ticks.length;
+        if (numTicks > maxNumTicks) {
+          const factor = Math.ceil(numTicks/maxNumTicks) * logBase;
+          ticks = [];
+
+          for (nextTick = min; nextTick <= (max * factor); nextTick *= factor) {
+            ticks.push(nextTick);
+          }
+        }
+
+        return ticks;
+      }
+
+      function decimalPlaces(num) {
+        if (!num) { return 0; }
+
+        return (num.toString().split('.')[1] || []).length;
       }
 
       function configureAxisMode(axis, format) {
@@ -504,17 +637,37 @@ module.directive('grafanaGraph', function($rootScope, timeSrv) {
         return "%H:%M";
       }
 
-      new GraphTooltip(elem, dashboard, scope, function() {
-        return sortedSeries;
+      elem.bind("plotselected", function (event, ranges) {
+        if (ranges.ctrlKey || ranges.metaKey)  {
+          // scope.$apply(() => {
+          //   eventManager.updateTime(ranges.xaxis);
+          // });
+        } else {
+          scope.$apply(function() {
+            timeSrv.setTime({
+              from  : moment.utc(ranges.xaxis.from),
+              to    : moment.utc(ranges.xaxis.to),
+            });
+          });
+        }
       });
 
-      elem.bind("plotselected", function (event, ranges) {
-        scope.$apply(function() {
-          timeSrv.setTime({
-            from  : moment.utc(ranges.xaxis.from),
-            to    : moment.utc(ranges.xaxis.to),
-          });
-        });
+      elem.bind("plotclick", function (event, pos, item) {
+        if (pos.ctrlKey || pos.metaKey || eventManager.event)  {
+          // Skip if range selected (added in "plotselected" event handler)
+          let isRangeSelection = pos.x !== pos.x1;
+          if (!isRangeSelection) {
+            // scope.$apply(() => {
+            //   eventManager.updateTime({from: pos.x, to: null});
+            // });
+          }
+        }
+      });
+
+      scope.$on('$destroy', function() {
+        tooltip.destroy();
+        elem.off();
+        elem.remove();
       });
     }
   };

@@ -61,14 +61,13 @@ function (angular, _) {
     };
 
     $scope.getStatSegments = function() {
-      return $q.when([
+      return $q.when(_.flatten([
         angular.copy($scope.removeStatSegment),
-        uiSegmentSrv.getSegmentForValue('Average'),
-        uiSegmentSrv.getSegmentForValue('Maximum'),
-        uiSegmentSrv.getSegmentForValue('Minimum'),
-        uiSegmentSrv.getSegmentForValue('Sum'),
-        uiSegmentSrv.getSegmentForValue('SampleCount'),
-      ]);
+        _.map($scope.datasource.standardStatistics, function(s) {
+          return uiSegmentSrv.getSegmentForValue(s);
+        }),
+        uiSegmentSrv.getSegmentForValue('pNN.NN'),
+      ]));
     };
 
     $scope.statSegmentChanged = function(segment, index) {
@@ -105,7 +104,7 @@ function (angular, _) {
         query = $scope.datasource.getDimensionKeys($scope.target.namespace, $scope.target.region);
       } else if (segment.type === 'value')  {
         var dimensionKey = $scope.dimSegments[$index-2].value;
-        query = $scope.datasource.getDimensionValues(target.region, target.namespace, target.metricName, dimensionKey, {});
+        query = $scope.datasource.getDimensionValues(target.region, target.namespace, target.metricName, dimensionKey, target.dimensions);
       }
 
       return query.then($scope.transformToSegments(true)).then(function(results) {

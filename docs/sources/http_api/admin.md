@@ -1,8 +1,13 @@
-----
-page_title: Admin APIs
-page_description: Grafana Admin API Reference
-page_keywords: grafana, admin, http, api, documentation
----
++++
+title = "Admin HTTP API "
+description = "Grafana Admin HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "admin"]
+aliases = ["/http_api/admin/"]
+type = "docs"
+[menu.docs]
+name = "Admin"
+parent = "http_api"
++++
 
 # Admin API
 
@@ -138,6 +143,7 @@ with Grafana admin permission.
         "protocol":"http",
         "root_url":"%(protocol)s://%(domain)s:%(http_port)s/",
         "router_logging":"true",
+        "data_proxy_logging":"true",
         "static_root_path":"public"
       },
       "session":{
@@ -152,6 +158,7 @@ with Grafana admin permission.
         "cert_file":"",
         "enabled":"false",
         "from_address":"admin@grafana.localhost",
+        "from_name":"Grafana",
         "host":"localhost:25",
         "key_file":"",
         "password":"************",
@@ -230,12 +237,14 @@ Change password for specific user
     Accept: application/json
     Content-Type: application/json
 
+    {"password":"userpassword"}
+
 **Example Response**:
 
     HTTP/1.1 200
     Content-Type: application/json
 
-    {"password":"userpassword"}
+    {"message": "User password updated"}
 
 ## Permissions
 
@@ -246,6 +255,8 @@ Change password for specific user
     PUT /api/admin/users/2/permissions HTTP/1.1
     Accept: application/json
     Content-Type: application/json
+
+    {"isGrafanaAdmin": true}
 
 **Example Response**:
 
@@ -270,3 +281,28 @@ Change password for specific user
     Content-Type: application/json
 
     {message: "User deleted"}
+
+## Pause all alerts
+
+`POST /api/admin/pause-all-alerts`
+
+**Example Request**:
+
+    POST /api/admin/pause-all-alerts HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+
+    {
+      "paused": true
+    }
+
+JSON Body schema:
+
+- **paused** – If true then all alerts are to be paused, false unpauses all alerts.
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+
+    {state: "new state", message: "alerts pause/un paused", "alertsAffected": 100}

@@ -6,13 +6,23 @@
         "noImplicitAny": false,
         "target": "es5",
         "rootDir": "public/",
-        "sourceRoot": "public/",
         "module": "system",
         "noEmitOnError": true,
         "emitDecoratorMetadata": true,
-        "experimentalDecorators": true
+        "experimentalDecorators": true,
+        "noImplicitReturns":false,
+        "noImplicitThis":false,
+        "noImplicitUseStrict":false,
+        "noUnusedLocals":false,
+        "moduleResolution": "classic"
     },
-    "files": [
-        "public/app/**/*.ts"
+    "include": [
+        "public/app/**/*.ts",
+        "public/test/**/*.ts"
+    ],
+    "exclude": [
+        "public/vendor/**/*",
+        "public/**/*.d.ts"
     ]
+
 }

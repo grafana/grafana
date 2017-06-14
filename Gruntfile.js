@@ -12,11 +12,15 @@ module.exports = function (grunt) {
     platform: process.platform.replace('win32', 'windows'),
   };
 
-  if (process.platform.match(/^win/)) {
-    config.arch = process.env.hasOwnProperty('ProgramFiles(x86)') ? 'x64' : 'x86';
-  }
+  if (grunt.option('arch')) {
+    config.arch = grunt.option('arch');
+  } else {
+    config.arch = os.arch();
 
-  config.arch = grunt.option('arch') || os.arch();
+    if (process.platform.match(/^win/)) {
+      config.arch = process.env.hasOwnProperty('ProgramFiles(x86)') ? 'x64' : 'x86';
+    }
+  }
 
   config.phjs = grunt.option('phjsToRelease');
 

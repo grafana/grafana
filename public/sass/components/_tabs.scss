@@ -65,6 +65,15 @@
     border-bottom: 2px solid $panel-bg;
     color: $link-color;
     position: relative;
-    top: 2px;
+    top: 1px;
   }
+}
+
+.form-tabs-wrapper {
+  @include brand-bottom-border();
+  @include clearfix();
+}
+
+.form-tabs-content {
+  padding: $spacer*2 $spacer;
 }

@@ -1,49 +1,65 @@
-<navbar icon="fa fa-fw fa-cogs" title="Admin" title-url="admin">
-	<a href="admin/users" class="navbar-page-btn">
-		<i class="icon-gf icon-gf-users"></i>
-		Users
-	</a>
-</navbar>
+<navbar model="ctrl.navModel"></navbar>
 
 <div class="page-container">
-	<div class="page-header">
-		<h1>Users</h1>
+  <div class="page-header">
+    <h1>Users</h1>
 
-		<a class="btn btn-success" href="admin/users/create">
-			<i class="fa fa-plus"></i>
-			Add new user
-		</a>
-	</div>
+    <a class="btn btn-success" href="admin/users/create">
+      <i class="fa fa-plus"></i>
+      Add new user
+    </a>
+  </div>
 
-	<table class="filter-table form-inline">
-		<thead>
-			<tr>
-				<th>Id</th>
-				<th>Name</th>
-				<th>Login</th>
-				<th>Email</th>
-				<th style="white-space: nowrap">Grafana Admin</th>
-				<th></th>
-			</tr>
-		</thead>
-		<tbody>
-			<tr ng-repeat="user in users">
-				<td>{{user.id}}</td>
-				<td>{{user.name}}</td>
-				<td>{{user.login}}</td>
-				<td>{{user.email}}</td>
-				<td>{{user.isAdmin}}</td>
-				<td class="text-right">
-					<a href="admin/users/edit/{{user.id}}" class="btn btn-inverse btn-small">
-						<i class="fa fa-edit"></i>
-						Edit
-					</a>
-					&nbsp;&nbsp;
-					<a ng-click="deleteUser(user)" class="btn btn-danger btn-small">
-						<i class="fa fa-remove"></i>
-					</a>
-				</td>
-			</tr>
-		</tbody>
-	</table>
+  <div class="gf-form pull-right gf-form-group">
+		<label class="gf-form-label">Search</label>
+    <span style="position: relative;">
+      <input class="gf-form-input width-15" type="text" placeholder="Find user by name/login/email" tabindex="1" give-focus="true" ng-model="ctrl.query" ng-model-options="{ debounce: 500 }" spellcheck='false' ng-change="ctrl.getUsers()" />
+    </span>
+  </div>
+
+  <div class="admin-list-table">
+    <table class="filter-table form-inline">
+      <thead>
+        <tr>
+          <th>Id</th>
+          <th>Name</th>
+          <th>Login</th>
+          <th>Email</th>
+          <th style="white-space: nowrap">Grafana Admin</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr ng-repeat="user in ctrl.users">
+          <td>{{user.id}}</td>
+          <td>{{user.name}}</td>
+          <td>{{user.login}}</td>
+          <td>{{user.email}}</td>
+          <td>{{user.isAdmin}}</td>
+          <td class="text-right">
+            <a href="admin/users/edit/{{user.id}}" class="btn btn-inverse btn-small">
+              <i class="fa fa-edit"></i>
+              Edit
+            </a>
+            &nbsp;&nbsp;
+            <a ng-click="ctrl.deleteUser(user)" class="btn btn-danger btn-small">
+              <i class="fa fa-remove"></i>
+            </a>
+          </td>
+        </tr>
+      </tbody>
+
+    </table>
+  </div>
+
+  <div class="admin-list-paging" ng-if="ctrl.showPaging">
+    <ol>
+      <li ng-repeat="page in ctrl.pages">
+        <button
+          class="btn btn-small"
+          ng-class="{'btn-secondary': page.current, 'btn-inverse': !page.current}"
+          ng-click="ctrl.navigateToPage(page)">{{page.page}}</button>
+      </li>
+    </ol>
+  </div>
 </div>

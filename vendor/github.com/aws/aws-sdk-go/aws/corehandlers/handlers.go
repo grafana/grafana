@@ -10,9 +10,11 @@ import (
 	"regexp"
 	"runtime"
 	"strconv"
+	"time"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/awserr"
+	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/aws/request"
 )
 
@@ -67,6 +69,34 @@ var SDKVersionUserAgentHandler = request.NamedHandler{
 
 var reStatusCode = regexp.MustCompile(`^(\d{3})`)
 
+// ValidateReqSigHandler is a request handler to ensure that the request's
+// signature doesn't expire before it is sent. This can happen when a request
+// is built and signed signficantly before it is sent. Or significant delays
+// occur whne retrying requests that would cause the signature to expire.
+var ValidateReqSigHandler = request.NamedHandler{
+	Name: "core.ValidateReqSigHandler",
+	Fn: func(r *request.Request) {
+		// Unsigned requests are not signed
+		if r.Config.Credentials == credentials.AnonymousCredentials {
+			return
+		}
+
+		signedTime := r.Time
+		if !r.LastSignedAt.IsZero() {
+			signedTime = r.LastSignedAt
+		}
+
+		// 10 minutes to allow for some clock skew/delays in transmission.
+		// Would be improved with aws/aws-sdk-go#423
+		if signedTime.Add(10 * time.Minute).After(time.Now()) {
+			return
+		}
+
+		fmt.Println("request expired, resigning")
+		r.Sign()
+	},
+}
+
 // SendHandler is a request handler to send service request using HTTP client.
 var SendHandler = request.NamedHandler{Name: "core.SendHandler", Fn: func(r *request.Request) {
 	var err error
@@ -104,6 +134,16 @@ var SendHandler = request.NamedHandler{Name: "core.SendHandler", Fn: func(r *req
 		// Catch all other request errors.
 		r.Error = awserr.New("RequestError", "send request failed", err)
 		r.Retryable = aws.Bool(true) // network errors are retryable
+
+		// Override the error with a context canceled error, if that was canceled.
+		ctx := r.Context()
+		select {
+		case <-ctx.Done():
+			r.Error = awserr.New(request.CanceledErrorCode,
+				"request context canceled", ctx.Err())
+			r.Retryable = aws.Bool(false)
+		default:
+		}
 	}
 }}
 
@@ -126,7 +166,16 @@ var AfterRetryHandler = request.NamedHandler{Name: "core.AfterRetryHandler", Fn:
 
 	if r.WillRetry() {
 		r.RetryDelay = r.RetryRules(r)
-		r.Config.SleepDelay(r.RetryDelay)
+
+		if sleepFn := r.Config.SleepDelay; sleepFn != nil {
+			// Support SleepDelay for backwards compatibility and testing
+			sleepFn(r.RetryDelay)
+		} else if err := aws.SleepWithContext(r.Context(), r.RetryDelay); err != nil {
+			r.Error = awserr.New(request.CanceledErrorCode,
+				"request context canceled", err)
+			r.Retryable = aws.Bool(false)
+			return
+		}
 
 		// when the expired token exception occurs the credentials
 		// need to be expired locally so that the next request to

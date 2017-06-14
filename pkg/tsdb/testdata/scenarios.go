@@ -6,8 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/guregu/null.v3"
-
+	"github.com/grafana/grafana/pkg/components/null"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/tsdb"
 )
@@ -44,7 +43,7 @@ func init() {
 			walker := rand.Float64() * 100
 
 			for i := int64(0); i < 10000 && timeWalkerMs < to; i++ {
-				points = append(points, tsdb.NewTimePoint(walker, float64(timeWalkerMs)))
+				points = append(points, tsdb.NewTimePoint(null.FloatFrom(walker), float64(timeWalkerMs)))
 
 				walker += rand.Float64() - 0.5
 				timeWalkerMs += query.IntervalMs
@@ -75,7 +74,7 @@ func init() {
 			series := newSeriesForQuery(query)
 			outsideTime := context.TimeRange.MustGetFrom().Add(-1*time.Hour).Unix() * 1000
 
-			series.Points = append(series.Points, tsdb.NewTimePoint(10, float64(outsideTime)))
+			series.Points = append(series.Points, tsdb.NewTimePoint(null.FloatFrom(10), float64(outsideTime)))
 			queryRes.Series = append(queryRes.Series, series)
 
 			return queryRes
@@ -90,6 +89,8 @@ func init() {
 			queryRes := tsdb.NewQueryResult()
 
 			stringInput := query.Model.Get("stringInput").MustString()
+			stringInput = strings.Replace(stringInput, " ", "", -1)
+
 			values := []null.Float{}
 			for _, strVal := range strings.Split(stringInput, ",") {
 				if strVal == "null" {

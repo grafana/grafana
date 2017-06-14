@@ -200,3 +200,17 @@ func (m *CopyTableDataMigration) IfTableExists(tableName string) *CopyTableDataM
 func (m *CopyTableDataMigration) Sql(d Dialect) string {
 	return d.CopyTableData(m.sourceTable, m.targetTable, m.sourceCols, m.targetCols)
 }
+
+type TableCharsetMigration struct {
+	MigrationBase
+	tableName string
+	columns   []*Column
+}
+
+func NewTableCharsetMigration(tableName string, columns []*Column) *TableCharsetMigration {
+	return &TableCharsetMigration{tableName: tableName, columns: columns}
+}
+
+func (m *TableCharsetMigration) Sql(d Dialect) string {
+	return d.UpdateTableSql(m.tableName, m.columns)
+}

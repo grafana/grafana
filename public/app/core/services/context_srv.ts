@@ -10,6 +10,8 @@ export class User {
   isSignedIn: any;
   orgRole: any;
   timezone: string;
+  helpFlags1: number;
+  lightTheme: boolean;
 
   constructor() {
     if (config.bootData.user) {
@@ -54,6 +56,10 @@ export class ContextSrv {
   setPinnedState(val) {
     this.pinned = val;
     store.set('grafana.sidemenu.pinned', val);
+  }
+
+  isGrafanaVisible() {
+    return !!(document.visibilityState === undefined || document.visibilityState === 'visible');
   }
 
   toggleSideMenu() {

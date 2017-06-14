@@ -18,9 +18,11 @@ var rangeOptions = [
   { from: 'now/d',    to: 'now/d',    display: 'Today',                 section: 2 },
   { from: 'now/d',    to: 'now',      display: 'Today so far',          section: 2 },
   { from: 'now/w',    to: 'now/w',    display: 'This week',             section: 2 },
-  { from: 'now/w',    to: 'now',      display: 'This week so far',           section: 2 },
+  { from: 'now/w',    to: 'now',      display: 'This week so far',      section: 2 },
   { from: 'now/M',    to: 'now/M',    display: 'This month',            section: 2 },
+  { from: 'now/M',    to: 'now',      display: 'This month so far',     section: 2 },
   { from: 'now/y',    to: 'now/y',    display: 'This year',             section: 2 },
+  { from: 'now/y',    to: 'now',      display: 'This year so far',      section: 2 },
 
   { from: 'now-1d/d', to: 'now-1d/d', display: 'Yesterday',             section: 1 },
   { from: 'now-2d/d', to: 'now-2d/d', display: 'Day before yesterday',  section: 1 },
@@ -38,9 +40,9 @@ var rangeOptions = [
   { from: 'now-12h',  to: 'now',      display: 'Last 12 hours',         section: 3 },
   { from: 'now-24h',  to: 'now',      display: 'Last 24 hours',         section: 3 },
 
+  { from: 'now-2d',   to: 'now',      display: 'Last 2 days',           section: 0 },
   { from: 'now-7d',   to: 'now',      display: 'Last 7 days',           section: 0 },
   { from: 'now-30d',  to: 'now',      display: 'Last 30 days',          section: 0 },
-  { from: 'now-60d',  to: 'now',      display: 'Last 60 days',          section: 0 },
   { from: 'now-90d',  to: 'now',      display: 'Last 90 days',          section: 0 },
   { from: 'now-6M',   to: 'now',      display: 'Last 6 months',         section: 0 },
   { from: 'now-1y',   to: 'now',      display: 'Last 1 year',           section: 0 },
@@ -82,8 +84,9 @@ function formatDate(date) {
 // now/d
 // if no to <expr> then to now is assumed
 export function describeTextRange(expr: any) {
+  let isLast = (expr.indexOf('+') !== 0);
   if (expr.indexOf('now') === -1) {
-    expr = 'now-' + expr;
+    expr = (isLast ? 'now-' : 'now') + expr;
   }
 
   let opt = rangeIndex[expr + ' to now'];
@@ -91,15 +94,20 @@ export function describeTextRange(expr: any) {
     return opt;
   }
 
-  opt = {from: expr, to: 'now'};
+  if (isLast) {
+    opt = {from: expr, to: 'now'};
+  } else {
+    opt = {from: 'now', to: expr};
+  }
 
-  let parts = /^now-(\d+)(\w)/.exec(expr);
+  let parts = /^now([-+])(\d+)(\w)/.exec(expr);
   if (parts) {
-    let unit = parts[2];
-    let amount = parseInt(parts[1]);
+    let unit = parts[3];
+    let amount = parseInt(parts[2]);
     let span = spans[unit];
     if (span) {
-      opt.display = 'Last ' + amount + ' ' + span.display;
+      opt.display = isLast ? 'Last ' : 'Next ';
+      opt.display += amount + ' ' + span.display;
       opt.section = span.section;
       if (amount > 1) {
         opt.display += 's';
@@ -140,4 +148,3 @@ export function describeTimeRange(range) {
 
   return range.from.toString() + ' to ' + range.to.toString();
 }
-

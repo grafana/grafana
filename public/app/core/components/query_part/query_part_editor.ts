@@ -91,7 +91,13 @@ export function queryPartEditorDirective($compile, templateSrv) {
         }
 
         var typeaheadSource = function (query, callback) {
-          if (param.options) { return param.options; }
+          if (param.options) {
+            var options = param.options;
+            if (param.type === 'int') {
+              options = _.map(options, function(val) { return val.toString(); });
+            }
+            return options;
+          }
 
           $scope.$apply(function() {
             $scope.handleEvent({$event: {name: 'get-param-options'}}).then(function(result) {
@@ -102,10 +108,6 @@ export function queryPartEditorDirective($compile, templateSrv) {
         };
 
         $input.attr('data-provide', 'typeahead');
-        var options = param.options;
-        if (param.type === 'int') {
-          options = _.map(options, function(val) { return val.toString(); });
-        }
 
         $input.typeahead({
           source: typeaheadSource,
@@ -128,11 +130,9 @@ export function queryPartEditorDirective($compile, templateSrv) {
       }
 
       $scope.showActionsMenu = function() {
-        if ($scope.partActions.length === 0) {
-          $scope.handleEvent({$event: {name: 'get-part-actions'}}).then(res => {
-            $scope.partActions = res;
-          });
-        }
+        $scope.handleEvent({$event: {name: 'get-part-actions'}}).then(res => {
+          $scope.partActions = res;
+        });
       };
 
       $scope.triggerPartAction = function(action) {

@@ -1201,24 +1201,21 @@ Licensed under the MIT license.
                             points[k + m] = null;
                         }
                     }
-                    else {
-                        // a little bit of line specific stuff that
-                        // perhaps shouldn't be here, but lacking
-                        // better means...
-                        if (insertSteps && k > 0
-                            && points[k - ps] != null
-                            && points[k - ps] != points[k]
-                            && points[k - ps + 1] != points[k + 1]) {
-                            // copy the point to make room for a middle point
-                            for (m = 0; m < ps; ++m)
-                                points[k + ps + m] = points[k + m];
 
-                            // middle point has same y
-                            points[k + 1] = points[k - ps + 1];
+                    if (insertSteps && k > 0 && (!nullify || points[k - ps] != null)) {
+                        // copy the point to make room for a middle point
+                        for (m = 0; m < ps; ++m)
+                            points[k + ps + m] = points[k + m];
 
-                            // we've added a point, better reflect that
-                            k += ps;
-                        }
+                        // middle point has same y
+                        points[k + 1] = points[k - ps + 1] || 0;
+
+                        // if series has null values, let's give the last !null value a nice step
+                        if(nullify)
+                        	points[k] = p[0];
+
+                        // we've added a point, better reflect that
+                        k += ps;
                     }
                 }
             }
@@ -1666,14 +1663,16 @@ Licensed under the MIT license.
                 // Grafana fix: wide Y min and max using increased wideFactor
                 // when all series values are the same
                 var wideFactor = 0.25;
-                var widen = max == 0 ? 1 : max * wideFactor;
+                var widen = Math.abs(max == 0 ? 1 : max * wideFactor);
 
-                if (opts.min == null)
-                    min -= widen;
+                if (opts.min == null) {
+                  min -= widen;
+                }
                 // always widen max if we couldn't widen min to ensure we
                 // don't fall into min == max which doesn't work
-                if (opts.max == null || opts.min != null)
-                    max += widen;
+                if (opts.max == null || opts.min != null) {
+                  max += widen;
+                }
             }
             else {
                 // consider autoscaling
@@ -2972,6 +2971,10 @@ Licensed under the MIT license.
 
             pos.pageX = event.pageX;
             pos.pageY = event.pageY;
+
+            // Add ctrlKey and metaKey to event
+            pos.ctrlKey = event.ctrlKey;
+            pos.metaKey = event.metaKey;
 
             var item = findNearbyItem(canvasX, canvasY, seriesFilter);
 

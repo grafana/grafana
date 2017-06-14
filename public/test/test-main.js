@@ -10,7 +10,9 @@
     baseURL: '/base/',
     defaultJSExtensions: true,
     paths: {
+      'mousetrap': 'vendor/npm/mousetrap/mousetrap.js',
       'eventemitter3': 'vendor/npm/eventemitter3/index.js',
+      'remarkable': 'vendor/npm/remarkable/dist/remarkable.js',
       'tether': 'vendor/npm/tether/dist/js/tether.js',
       'tether-drop': 'vendor/npm/tether-drop/dist/js/drop.js',
       'moment': 'vendor/moment.js',
@@ -36,7 +38,9 @@
       "jquery.flot.time": "vendor/flot/jquery.flot.time",
       "jquery.flot.crosshair": "vendor/flot/jquery.flot.crosshair",
       "jquery.flot.fillbelow": "vendor/flot/jquery.flot.fillbelow",
-      "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge"
+      "jquery.flot.gauge": "vendor/flot/jquery.flot.gauge",
+      "d3": "vendor/d3/d3.js",
+      "jquery.flot.dashes": "vendor/flot/jquery.flot.dashes",
     },
 
     packages: {
@@ -64,6 +68,10 @@
       'vendor/npm/eventemitter3/index.js': {
         format: 'cjs',
         exports: 'EventEmitter'
+      },
+      'vendor/npm/mousetrap/mousetrap.js': {
+        format: 'global',
+        exports: 'Mousetrap'
       },
     }
   });

@@ -9,22 +9,26 @@ function () {
     var ctrl;
     var tagValuesMap = {};
     var rootScope;
+    var q;
 
     beforeEach(module('grafana.core'));
     beforeEach(inject(function($controller, $rootScope, $q, $httpBackend) {
       rootScope = $rootScope;
+      q = $q;
       scope = $rootScope.$new();
       ctrl = $controller('ValueSelectDropdownCtrl', {$scope: scope});
-      ctrl.getValuesForTag = function(obj) {
-        return $q.when(tagValuesMap[obj.tagKey]);
-      };
       ctrl.onUpdated = sinon.spy();
       $httpBackend.when('GET', /\.html$/).respond('');
     }));
 
     describe("Given simple variable", function() {
       beforeEach(function() {
-        ctrl.variable = {current: {text: 'hej', value: 'hej' }};
+        ctrl.variable = {
+          current: {text: 'hej', value: 'hej' },
+          getValuesForTag: function(key) {
+            return q.when(tagValuesMap[key]);
+          },
+        };
         ctrl.init();
       });
 
@@ -43,6 +47,9 @@ function () {
             {text: 'server-3', value: 'server-3'},
           ],
           tags: ["key1", "key2", "key3"],
+          getValuesForTag: function(key) {
+            return q.when(tagValuesMap[key]);
+          },
           multi: true
         };
         tagValuesMap.key1 = ['server-1', 'server-3'];
@@ -145,6 +152,9 @@ function () {
             {text: 'server-3', value: 'server-3'},
           ],
           tags: ["key1", "key2", "key3"],
+          getValuesForTag: function(key) {
+            return q.when(tagValuesMap[key]);
+          },
           multi: true
         };
         ctrl.init();

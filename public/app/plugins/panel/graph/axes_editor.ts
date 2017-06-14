@@ -30,15 +30,17 @@ export class AxesEditorCtrl {
     this.xAxisModes = {
       'Time': 'time',
       'Series': 'series',
+      'Histogram': 'histogram'
       // 'Data field': 'field',
     };
 
     this.xAxisStatOptions =  [
       {text: 'Avg', value: 'avg'},
       {text: 'Min', value: 'min'},
-      {text: 'Max', value: 'min'},
+      {text: 'Max', value: 'max'},
       {text: 'Total', value: 'total'},
       {text: 'Count', value: 'count'},
+      {text: 'Current', value: 'current'},
     ];
 
     if (this.panel.xaxis.mode === 'custom') {

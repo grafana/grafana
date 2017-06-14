@@ -1,14 +1,19 @@
-----
-page_title: User API
-page_description: Grafana User API Reference
-page_keywords: grafana, admin, http, api, documentation, user
----
++++
+title = "User HTTP API "
+description = "Grafana User HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "user"]
+aliases = ["/http_api/user/"]
+type = "docs"
+[menu.docs]
+name = "Users"
+parent = "http_api"
++++
 
-# User API
+# User HTTP resources / actions
 
 ## Search Users
 
-`GET /api/users`
+`GET /api/users?perpage=10&page=1`
 
 **Example Request**:
 
@@ -16,6 +21,8 @@ page_keywords: grafana, admin, http, api, documentation, user
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`.
 
 **Example Response**:
 
@@ -38,6 +45,45 @@ page_keywords: grafana, admin, http, api, documentation, user
         "isAdmin": false
       }
     ]
+
+## Search Users with Paging
+
+`GET /api/users/search?perpage=10&page=1&query=mygraf`
+
+**Example Request**:
+
+    GET /api/users/search?perpage=10&page=1&query=mygraf HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+Default value for the `perpage` parameter is `1000` and for the `page` parameter is `1`. The `totalCount` field in the response can be used for pagination of the user list E.g. if `totalCount` is equal to 100 users and the `perpage` parameter is set to 10 then there are 10 pages of users. The `query` parameter is optional and it will return results where the query value is contained in one of the `name`, `login` or `email` fields. Query values with spaces need to be url encoded e.g. `query=Jane%20Doe`.
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+    {
+      "totalCount": 2,
+      "users": [
+        {
+          "id": 1,
+          "name": "Admin",
+          "login": "admin",
+          "email": "admin@mygraf.com",
+          "isAdmin": true
+        },
+        {
+          "id": 2,
+          "name": "User",
+          "login": "user",
+          "email": "user@mygraf.com",
+          "isAdmin": false
+        }
+      ],
+      "page": 1,
+      "perPage": 10
+    }
 
 ## Get single user by Id
 
@@ -63,6 +109,39 @@ page_keywords: grafana, admin, http, api, documentation, user
       "orgId": 1,
       "isGrafanaAdmin": true
     }
+
+## Get single user by Username(login) or Email
+
+`GET /api/users/lookup?loginOrEmail=user@mygraf.com`
+
+**Example Request using the email as option**:
+
+    GET /api/users/lookup?loginOrEmail=user@mygraf.com HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Request using the username as option**:
+    
+    GET /api/users/lookup?loginOrEmail=admin HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+
+    {
+      "email": "user@mygraf.com"
+      "name": "admin",
+      "login": "admin",
+      "theme": "light",
+      "orgId": 1,
+      "isGrafanaAdmin": true
+    }
+
 
 ## User Update
 

@@ -15,6 +15,7 @@ var categories = {
   Aggregations: [],
   Selectors: [],
   Transformations: [],
+  Predictors: [],
   Math: [],
   Aliasing: [],
   Fields: [],
@@ -27,7 +28,7 @@ function createPart(part): any {
   }
 
   return new QueryPart(part, def);
-};
+}
 
 function register(options: any) {
   index[options.type] = new QueryPartDef(options);
@@ -174,6 +175,15 @@ register({
 });
 
 register({
+  type: 'mode',
+  addStrategy: replaceAggregationAddStrategy,
+  category: categories.Aggregations,
+  params: [],
+  defaultParams: [],
+  renderer: functionRenderer,
+});
+
+register({
   type: 'sum',
   addStrategy: replaceAggregationAddStrategy,
   category: categories.Aggregations,
@@ -224,8 +234,17 @@ register({
   type: 'moving_average',
   addStrategy: addTransformationStrategy,
   category: categories.Transformations,
-  params: [{ name: "window", type: "number", options: [5, 10, 20, 30, 40]}],
+  params: [{ name: "window", type: "int", options: [5, 10, 20, 30, 40]}],
   defaultParams: [10],
+  renderer: functionRenderer,
+});
+
+register({
+  type: 'cumulative_sum',
+  addStrategy: addTransformationStrategy,
+  category: categories.Transformations,
+  params: [],
+  defaultParams: [],
   renderer: functionRenderer,
 });
 
@@ -241,15 +260,15 @@ register({
 register({
   type: 'time',
   category: groupByTimeFunctions,
-  params: [{ name: "interval", type: "time", options: ['auto', '1s', '10s', '1m', '5m', '10m', '15m', '1h'] }],
-  defaultParams: ['auto'],
+  params: [{ name: "interval", type: "time", options: ['$__interval', '1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
+  defaultParams: ['$__interval'],
   renderer: functionRenderer,
 });
 
 register({
   type: 'fill',
   category: groupByTimeFunctions,
-  params: [{ name: "fill", type: "string", options: ['none', 'null', '0', 'previous'] }],
+  params: [{ name: "fill", type: "string", options: ['none', 'null', '0', 'previous', 'linear'] }],
   defaultParams: ['null'],
   renderer: functionRenderer,
 });
@@ -260,6 +279,25 @@ register({
   category: categories.Transformations,
   params: [{ name: "duration", type: "interval", options: ['1s', '10s', '1m', '5m', '10m', '15m', '1h']}],
   defaultParams: ['10s'],
+  renderer: functionRenderer,
+});
+
+// predictions
+register({
+  type: 'holt_winters',
+  addStrategy: addTransformationStrategy,
+  category: categories.Predictors,
+  params: [{ name: "number", type: "int", options: [5, 10, 20, 30, 40]}, { name: "season", type: "int", options: [0, 1, 2, 5, 10]}],
+  defaultParams: [10, 2],
+  renderer: functionRenderer,
+});
+
+register({
+  type: 'holt_winters_with_fit',
+  addStrategy: addTransformationStrategy,
+  category: categories.Predictors,
+  params: [{ name: "number", type: "int", options: [5, 10, 20, 30, 40]}, { name: "season", type: "int", options: [0, 1, 2, 5, 10]}],
+  defaultParams: [10, 2],
   renderer: functionRenderer,
 });
 

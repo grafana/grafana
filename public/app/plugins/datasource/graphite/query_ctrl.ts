@@ -55,7 +55,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     }
 
     try {
-      this.parseTargeRecursive(astNode, null, 0);
+      this.parseTargetRecursive(astNode, null, 0);
     } catch (err) {
       console.log('error parsing target:', err.message);
       this.error = err.message;
@@ -72,7 +72,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     func.params[index] = value;
   }
 
-  parseTargeRecursive(astNode, func, index) {
+  parseTargetRecursive(astNode, func, index) {
     if (astNode === null) {
       return null;
     }
@@ -81,7 +81,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
       case 'function':
         var innerFunc = gfunc.createFuncInstance(astNode.name, { withDefaultParams: false });
         _.each(astNode.params, (param, index) => {
-          this.parseTargeRecursive(param, innerFunc, index);
+          this.parseTargetRecursive(param, innerFunc, index);
         });
 
         innerFunc.updateText();
@@ -128,6 +128,10 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     }
 
     var path = this.getSegmentPathUpTo(fromIndex + 1);
+    if (path === "") {
+      return Promise.resolve();
+    }
+
     return this.datasource.metricFindQuery(path).then(segments => {
       if (segments.length === 0) {
         if (path !== '') {
@@ -161,7 +165,7 @@ export class GraphiteQueryCtrl extends QueryCtrl {
 
     return this.datasource.metricFindQuery(query).then(segments => {
       var altSegments = _.map(segments, segment => {
-        return this.uiSegmentSrv.newSegment({ value: segment.text, expandable: segment.expandable });
+        return this.uiSegmentSrv.newSegment({value: segment.text, expandable: segment.expandable});
       });
 
       if (altSegments.length === 0) { return altSegments; }
@@ -205,8 +209,62 @@ export class GraphiteQueryCtrl extends QueryCtrl {
   }
 
   targetTextChanged() {
-    this.parseTarget();
-    this.panelCtrl.refresh();
+    this.updateModelTarget();
+    this.refresh();
+  }
+
+  updateModelTarget() {
+    // render query
+    if (!this.target.textEditor) {
+      var metricPath = this.getSegmentPathUpTo(this.segments.length);
+      this.target.target = _.reduce(this.functions, this.wrapFunction, metricPath);
+    }
+
+    this.updateRenderedTarget(this.target);
+
+    // loop through other queries and update targetFull as needed
+    for (const target of this.panelCtrl.panel.targets || []) {
+      if (target.refId !== this.target.refId) {
+        this.updateRenderedTarget(target);
+      }
+    }
+  }
+
+  updateRenderedTarget(target) {
+    // render nested query
+    var targetsByRefId = _.keyBy(this.panelCtrl.panel.targets, 'refId');
+
+    // no references to self
+    delete targetsByRefId[target.refId];
+
+    var nestedSeriesRefRegex = /\#([A-Z])/g;
+    var targetWithNestedQueries = target.target;
+
+    // Keep interpolating until there are no query references
+    // The reason for the loop is that the referenced query might contain another reference to another query
+    while (targetWithNestedQueries.match(nestedSeriesRefRegex)) {
+      var updated = targetWithNestedQueries.replace(nestedSeriesRefRegex, (match, g1) => {
+        var t = targetsByRefId[g1];
+        if (!t) {
+          return match;
+        }
+
+        // no circular references
+        delete targetsByRefId[g1];
+        return t.target;
+      });
+
+      if (updated === targetWithNestedQueries) {
+        break;
+      }
+
+      targetWithNestedQueries = updated;
+    }
+
+    delete target.targetFull;
+    if (target.target !== targetWithNestedQueries) {
+      target.targetFull = targetWithNestedQueries;
+    }
   }
 
   targetChanged() {
@@ -215,11 +273,11 @@ export class GraphiteQueryCtrl extends QueryCtrl {
     }
 
     var oldTarget = this.target.target;
-    var target = this.getSegmentPathUpTo(this.segments.length);
-    this.target.target = _.reduce(this.functions, this.wrapFunction, target);
+    this.updateModelTarget();
 
     if (this.target.target !== oldTarget) {
-      if (this.segments[this.segments.length - 1].value !== 'select metric') {
+      var lastSegment = this.segments.length > 0 ? this.segments[this.segments.length - 1] : {};
+      if (lastSegment.value !== 'select metric') {
         this.panelCtrl.refresh();
       }
     }

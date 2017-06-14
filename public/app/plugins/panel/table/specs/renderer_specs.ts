@@ -22,13 +22,15 @@ describe('when rendering table', () => {
         {
           pattern: 'Time',
           type: 'date',
-          format: 'LLL'
+          format: 'LLL',
+          alias: 'Timestamp'
         },
         {
-          pattern: 'Value',
+          pattern: '/(Val)ue/',
           type: 'number',
           unit: 'ms',
           decimals: 3,
+          alias: '$1'
         },
         {
           pattern: 'Colored',
@@ -66,6 +68,16 @@ describe('when rendering table', () => {
     it('time column should be formated', () => {
       var html = renderer.renderCell(0, 1388556366666);
       expect(html).to.be('<td>2014-01-01T06:06:06Z</td>');
+    });
+
+    it('undefined time column should be rendered as -', () => {
+      var html = renderer.renderCell(0, undefined);
+      expect(html).to.be('<td>-</td>');
+    });
+
+    it('null time column should be rendered as -', () => {
+      var html = renderer.renderCell(0, null);
+      expect(html).to.be('<td>-</td>');
     });
 
     it('number column with unit specified should ignore style unit', () => {
@@ -121,6 +133,18 @@ describe('when rendering table', () => {
     it('sanitized value should render as', () => {
       var html = renderer.renderCell(6, 'text <a href="http://google.com">link</a>');
       expect(html).to.be('<td>sanitized</td>');
+    });
+
+    it('Time column title should be Timestamp', () => {
+      expect(table.columns[0].title).to.be('Timestamp');
+    });
+
+    it('Value column title should be Val', () => {
+      expect(table.columns[1].title).to.be('Val');
+    });
+
+    it('Colored column title should be Colored', () => {
+      expect(table.columns[2].title).to.be('Colored');
     });
   });
 });

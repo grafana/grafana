@@ -23,6 +23,7 @@ func TestNotifications(t *testing.T) {
 		setting.Smtp.Enabled = true
 		setting.Smtp.TemplatesPattern = "emails/*.html"
 		setting.Smtp.FromAddress = "from@address.com"
+		setting.Smtp.FromName = "Grafana Admin"
 
 		err := Init()
 		So(err, ShouldBeNil)

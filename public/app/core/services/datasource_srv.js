@@ -21,6 +21,10 @@ function (angular, _, coreModule, config) {
 
       name = templateSrv.replace(name);
 
+      if (name === 'default') {
+        return this.get(config.defaultDatasource);
+      }
+
       if (this.datasources[name]) {
         return $q.when(this.datasources[name]);
       }
@@ -97,10 +101,17 @@ function (angular, _, coreModule, config) {
       }
 
       metricSources.sort(function(a, b) {
-        if (a.meta.builtIn || a.name > b.name) {
+        // these two should always be at the bottom
+        if (a.meta.id === "mixed" || a.meta.id === "grafana") {
           return 1;
         }
-        if (a.name < b.name) {
+        if (b.meta.id === "mixed" || b.meta.id === "grafana") {
+          return -1;
+        }
+        if (a.name.toLowerCase() > b.name.toLowerCase()) {
+          return 1;
+        }
+        if (a.name.toLowerCase() < b.name.toLowerCase()) {
           return -1;
         }
         return 0;

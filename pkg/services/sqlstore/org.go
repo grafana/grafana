@@ -63,7 +63,7 @@ func GetOrgByName(query *m.GetOrgByNameQuery) error {
 	return nil
 }
 
-func isOrgNameTaken(name string, existingId int64, sess *session) (bool, error) {
+func isOrgNameTaken(name string, existingId int64, sess *DBSession) (bool, error) {
 	// check if org name is taken
 	var org m.Org
 	exists, err := sess.Where("name=?", name).Get(&org)
@@ -80,7 +80,7 @@ func isOrgNameTaken(name string, existingId int64, sess *session) (bool, error) 
 }
 
 func CreateOrg(cmd *m.CreateOrgCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, 0, sess); err != nil {
 			return err
@@ -120,7 +120,7 @@ func CreateOrg(cmd *m.CreateOrgCommand) error {
 }
 
 func UpdateOrg(cmd *m.UpdateOrgCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 
 		if isNameTaken, err := isOrgNameTaken(cmd.Name, cmd.OrgId, sess); err != nil {
 			return err
@@ -133,8 +133,14 @@ func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 			Updated: time.Now(),
 		}
 
-		if _, err := sess.Id(cmd.OrgId).Update(&org); err != nil {
+		affectedRows, err := sess.Id(cmd.OrgId).Update(&org)
+
+		if err != nil {
 			return err
+		}
+
+		if affectedRows == 0 {
+			return m.ErrOrgNotFound
 		}
 
 		sess.publishAfterCommit(&events.OrgUpdated{
@@ -148,7 +154,7 @@ func UpdateOrg(cmd *m.UpdateOrgCommand) error {
 }
 
 func UpdateOrgAddress(cmd *m.UpdateOrgAddressCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
 		org := m.Org{
 			Address1: cmd.Address1,
 			Address2: cmd.Address2,
@@ -175,7 +181,12 @@ func UpdateOrgAddress(cmd *m.UpdateOrgAddressCommand) error {
 }
 
 func DeleteOrg(cmd *m.DeleteOrgCommand) error {
-	return inTransaction2(func(sess *session) error {
+	return inTransaction(func(sess *DBSession) error {
+		if res, err := sess.Query("SELECT 1 from org WHERE id=?", cmd.Id); err != nil {
+			return err
+		} else if len(res) != 1 {
+			return m.ErrOrgNotFound
+		}
 
 		deletes := []string{
 			"DELETE FROM star WHERE EXISTS (SELECT 1 FROM dashboard WHERE org_id = ? AND star.dashboard_id = dashboard.id)",

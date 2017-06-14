@@ -12,6 +12,7 @@ function (angular, _) {
     $scope.snapshot = {
       name: $scope.dashboard.title,
       expires: 0,
+      timeoutSeconds: 4,
     };
 
     $scope.step = 1;
@@ -55,7 +56,7 @@ function (angular, _) {
 
       $timeout(function() {
         $scope.saveSnapshot(external);
-      }, 4000);
+      }, $scope.snapshot.timeoutSeconds * 1000);
     };
 
     $scope.saveSnapshot = function(external) {
@@ -95,6 +96,10 @@ function (angular, _) {
       });
     };
 
+    $scope.getSnapshotUrl = function() {
+      return $scope.snapshotUrl;
+    };
+
     $scope.scrubDashboard = function(dash) {
       // change title
       dash.title = $scope.snapshot.name;
@@ -115,6 +120,7 @@ function (angular, _) {
         return {
           name: annotation.name,
           enable: annotation.enable,
+          iconColor: annotation.iconColor,
           snapshotData: annotation.snapshotData
         };
       }).value();

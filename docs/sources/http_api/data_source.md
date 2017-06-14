@@ -1,8 +1,14 @@
-----
-page_title: Data source API
-page_description: Grafana Data source API Reference
-page_keywords: grafana, admin, http, api, documentation, datasource
----
++++
+title = "Data source HTTP API "
+description = "Grafana Data source HTTP API"
+keywords = ["grafana", "http", "documentation", "api", "data source"]
+aliases = ["/http_api/datasource/"]
+type = "docs"
+[menu.docs]
+name = "Data source"
+parent = "http_api"
++++
+
 
 # Data source API
 
@@ -152,7 +158,7 @@ page_keywords: grafana, admin, http, api, documentation, datasource
     HTTP/1.1 200
     Content-Type: application/json
 
-    {"id":1,"message":"Datasource added"}
+    {"id":1,"message":"Datasource added", "name": "test_datasource"}
 
 ## Update an existing data source
 
@@ -187,15 +193,33 @@ page_keywords: grafana, admin, http, api, documentation, datasource
     HTTP/1.1 200
     Content-Type: application/json
 
-    {"message":"Datasource updated"}
+    {"message":"Datasource updated", "id": 1, "name": "test_datasource"}
 
-## Delete an existing data source
+## Delete an existing data source by id
 
 `DELETE /api/datasources/:datasourceId`
 
 **Example Request**:
 
     DELETE /api/datasources/1 HTTP/1.1
+    Accept: application/json
+    Content-Type: application/json
+    Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk
+
+**Example Response**:
+
+    HTTP/1.1 200
+    Content-Type: application/json
+
+    {"message":"Data source deleted"}
+
+## Delete an existing data source by name
+
+`DELETE /api/datasources/name/:datasourceName`
+
+**Example Request**:
+
+    DELETE /api/datasources/name/test_datasource HTTP/1.1
     Accept: application/json
     Content-Type: application/json
     Authorization: Bearer eyJrIjoiT0tTcG1pUlY2RnVKZTFVaDFsNFZXdE9ZWmNrMkZYbk

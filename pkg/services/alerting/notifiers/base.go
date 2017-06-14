@@ -6,13 +6,23 @@ import (
 )
 
 type NotifierBase struct {
-	Name string
-	Type string
+	Name        string
+	Type        string
+	Id          int64
+	IsDeault    bool
+	UploadImage bool
 }
 
-func NewNotifierBase(name, notifierType string, model *simplejson.Json) NotifierBase {
-	base := NotifierBase{Name: name, Type: notifierType}
-	return base
+func NewNotifierBase(id int64, isDefault bool, name, notifierType string, model *simplejson.Json) NotifierBase {
+	uploadImage := model.Get("uploadImage").MustBool(true)
+
+	return NotifierBase{
+		Id:          id,
+		Name:        name,
+		IsDeault:    isDefault,
+		Type:        notifierType,
+		UploadImage: uploadImage,
+	}
 }
 
 func (n *NotifierBase) PassesFilter(rule *alerting.Rule) bool {
@@ -24,5 +34,13 @@ func (n *NotifierBase) GetType() string {
 }
 
 func (n *NotifierBase) NeedsImage() bool {
-	return true
+	return n.UploadImage
+}
+
+func (n *NotifierBase) GetNotifierId() int64 {
+	return n.Id
+}
+
+func (n *NotifierBase) GetIsDefault() bool {
+	return n.IsDeault
 }

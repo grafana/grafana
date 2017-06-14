@@ -45,7 +45,7 @@ export default class InfluxDatasource {
 
   query(options) {
     var timeFilter = this.getTimeFilter(options);
-    var scopedVars = options.scopedVars ? _.cloneDeep(options.scopedVars) : {};
+    var scopedVars = options.scopedVars;
     var targets = _.cloneDeep(options.targets);
     var queryTargets = [];
     var queryModel;
@@ -56,8 +56,8 @@ export default class InfluxDatasource {
 
       queryTargets.push(target);
 
-      // build query
-      scopedVars.interval = {value: target.interval || options.interval};
+      // backward compatability
+      scopedVars.interval = scopedVars.__interval;
 
       queryModel = new InfluxQuery(target, this.templateSrv, scopedVars);
       return queryModel.render(true);
@@ -120,7 +120,7 @@ export default class InfluxDatasource {
 
       return {data: seriesList};
     });
-  };
+  }
 
   annotationQuery(options) {
     if (!options.annotation.query) {
@@ -137,7 +137,25 @@ export default class InfluxDatasource {
       }
       return new InfluxSeries({series: data.results[0].series, annotation: options.annotation}).getAnnotations();
     });
-  };
+  }
+
+  targetContainsTemplate(target) {
+    for (let group of target.groupBy) {
+      for (let param of group.params) {
+        if (this.templateSrv.variableExists(param)) {
+          return true;
+        }
+      }
+    }
+
+    for (let i in target.tags) {
+      if (this.templateSrv.variableExists(target.tags[i].value)) {
+        return true;
+      }
+    }
+
+    return false;
+  }
 
   metricFindQuery(query) {
     var interpolated = this.templateSrv.replace(query, null, 'regex');
@@ -175,8 +193,14 @@ export default class InfluxDatasource {
   }
 
   testDatasource() {
-    return this.metricFindQuery('SHOW MEASUREMENTS LIMIT 1').then(() => {
+    return this.metricFindQuery('SHOW DATABASES').then(res => {
+      let found = _.find(res, {text: this.database});
+      if (!found) {
+        return { status: "error", message: "Could not find the specified database name.", title: "DB Not found" };
+      }
       return { status: "success", message: "Data source is working", title: "Success" };
+    }).catch(err => {
+      return { status: "error", message: err.message, title: "Test Failed" };
     });
   }
 
@@ -186,10 +210,12 @@ export default class InfluxDatasource {
     var currentUrl = self.urls.shift();
     self.urls.push(currentUrl);
 
-    var params: any = {
-      u: self.username,
-      p: self.password,
-    };
+    var params: any = {};
+
+    if (self.username) {
+      params.username =  self.username;
+      params.password =  self.password;
+    }
 
     if (self.database) {
       params.db = self.database;
@@ -223,18 +249,18 @@ export default class InfluxDatasource {
     }, function(err) {
       if (err.status !== 0 || err.status >= 300) {
         if (err.data && err.data.error) {
-          throw { message: 'InfluxDB Error Response: ' + err.data.error, data: err.data, config: err.config };
+          throw { message: 'InfluxDB Error: ' + err.data.error, data: err.data, config: err.config };
         } else {
-          throw { message: 'InfluxDB Error: ' + err.message, data: err.data, config: err.config };
+          throw { message: 'Network Error: ' + err.statusText + '(' + err.status + ')', data: err.data, config: err.config };
         }
       }
     });
-  };
+  }
 
   getTimeFilter(options) {
     var from = this.getInfluxTime(options.rangeRaw.from, false);
     var until = this.getInfluxTime(options.rangeRaw.to, true);
-    var fromIsAbsolute = from[from.length-1] === 's';
+    var fromIsAbsolute = from[from.length-1] === 'ms';
 
     if (until === 'now()' && !fromIsAbsolute) {
       return 'time > ' + from;
@@ -257,7 +283,8 @@ export default class InfluxDatasource {
       }
       date = dateMath.parse(date, roundUp);
     }
-    return (date.valueOf() / 1000).toFixed(0) + 's';
+
+    return date.valueOf() + 'ms';
   }
 }
 

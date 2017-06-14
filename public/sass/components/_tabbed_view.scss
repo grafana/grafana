@@ -9,7 +9,7 @@
     padding: 0;
 
     .tabbed-view-header {
-      padding: 0;
+/*       padding: 0; */
       background-color: $body-bg;
       padding: 1.5em 1rem 0 1rem;
     }
@@ -38,10 +38,10 @@
   background-color: transparent;
   border: none;
   padding: ($tabs-padding-top + $tabs-top-margin) $spacer $tabs-padding-bottom;
+  color: $text-color;
   i {
     font-size: 120%;
   }
-  color: $text-color;
   &:hover {
     color: $white;
   }

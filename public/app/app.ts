@@ -40,11 +40,12 @@ export class GrafanaApp {
 
   init() {
     var app = angular.module('grafana', []);
-    app.constant('grafanaVersion', "@grafanaVersion@");
 
     moment.locale(config.bootData.user.locale);
 
     app.config(($locationProvider, $controllerProvider, $compileProvider, $filterProvider, $httpProvider, $provide) => {
+      // pre assing bindings before constructor calls
+      $compileProvider.preAssignBindingsEnabled(true);
 
       if (config.buildInfo.env !== 'development') {
         $compileProvider.debugInfoEnabled(false);

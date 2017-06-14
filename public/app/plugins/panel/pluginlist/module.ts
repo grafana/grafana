@@ -11,8 +11,7 @@ class PluginListCtrl extends PanelCtrl {
   viewModel: any;
 
   // Set and populate defaults
-  panelDefaults = {
-  };
+  panelDefaults = {};
 
   /** @ngInject */
   constructor($scope, $injector, private backendSrv, private $location) {
@@ -71,4 +70,4 @@ class PluginListCtrl extends PanelCtrl {
   }
 }
 
-export {PluginListCtrl, PluginListCtrl as PanelCtrl}
+export {PluginListCtrl, PluginListCtrl as PanelCtrl};

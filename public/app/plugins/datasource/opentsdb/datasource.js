@@ -28,8 +28,8 @@ function (angular, _, dateMath) {
 
       _.each(options.targets, function(target) {
         if (!target.metric) { return; }
-        qs.push(convertTargetToQuery(target, options));
-      });
+        qs.push(convertTargetToQuery(target, options, this.tsdbVersion));
+      }.bind(this));
 
       var queries = _.compact(qs);
 
@@ -100,6 +100,26 @@ function (angular, _, dateMath) {
         return eventList;
 
       }.bind(this));
+    };
+
+    this.targetContainsTemplate = function(target) {
+      if (target.filters && target.filters.length > 0) {
+        for (var i = 0; i < target.filters.length; i++) {
+          if (templateSrv.variableExists(target.filters[i].filter)) {
+            return true;
+          }
+        }
+      }
+
+      if (target.tags && Object.keys(target.tags).length > 0) {
+        for (var tagKey in target.tags) {
+          if (templateSrv.variableExists(target.tags[tagKey])) {
+            return true;
+          }
+        }
+      }
+
+      return false;
     };
 
     this.performTimeSeriesQuery = function(queries, start, end) {
@@ -224,7 +244,7 @@ function (angular, _, dateMath) {
 
       var interpolated;
       try {
-        interpolated = templateSrv.replace(query);
+        interpolated = templateSrv.replace(query, {}, 'distributed');
       }
       catch (err) {
         return $q.reject(err);
@@ -332,7 +352,7 @@ function (angular, _, dateMath) {
       var tagData = [];
 
       if (!_.isEmpty(md.tags)) {
-        _.each(_.pairs(md.tags), function(tag) {
+        _.each(_.toPairs(md.tags), function(tag) {
           if (_.has(groupByTags, tag[0])) {
             tagData.push(tag[0] + "=" + tag[1]);
           }
@@ -346,13 +366,13 @@ function (angular, _, dateMath) {
       return label;
     }
 
-    function convertTargetToQuery(target, options) {
+    function convertTargetToQuery(target, options, tsdbVersion) {
       if (!target.metric || target.hide) {
         return null;
       }
 
       var query = {
-        metric: templateSrv.replace(target.metric, options.scopedVars),
+        metric: templateSrv.replace(target.metric, options.scopedVars, 'pipe'),
         aggregator: "avg"
       };
 
@@ -373,6 +393,11 @@ function (angular, _, dateMath) {
         if (target.counterResetValue && target.counterResetValue.length) {
           query.rateOptions.resetValue = parseInt(target.counterResetValue);
         }
+
+        if(tsdbVersion >= 2) {
+          query.rateOptions.dropResets = !query.rateOptions.counterMax &&
+                (!query.rateOptions.ResetValue || query.rateOptions.ResetValue === 0);
+        }
       }
 
       if (!target.disableDownsampling) {
@@ -391,18 +416,22 @@ function (angular, _, dateMath) {
 
       if (target.filters && target.filters.length > 0) {
         query.filters = angular.copy(target.filters);
-        if(query.filters){
-          for(var filter_key in query.filters){
+        if (query.filters){
+          for (var filter_key in query.filters) {
             query.filters[filter_key].filter = templateSrv.replace(query.filters[filter_key].filter, options.scopedVars, 'pipe');
           }
         }
       } else {
         query.tags = angular.copy(target.tags);
-        if(query.tags){
-          for(var tag_key in query.tags){
+        if (query.tags){
+          for (var tag_key in query.tags) {
             query.tags[tag_key] = templateSrv.replace(query.tags[tag_key], options.scopedVars, 'pipe');
           }
         }
+      }
+
+      if (target.explicitTags) {
+        query.explicitTags = true;
       }
 
       return query;

@@ -32,7 +32,7 @@
 					<select class="gf-form-input" ng-model="ctrl.panel.fill" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]" ng-change="ctrl.render()"></select>
 				</div>
 			</div>
-			<div class="gf-form" ng-show="ctrl.panel.lines">
+			<div class="gf-form" ng-show="(ctrl.panel.lines)">
 				<label class="gf-form-label width-8">Line Width</label>
 				<div class="gf-form-select-wrapper max-width-5">
 					<select class="gf-form-input" ng-model="ctrl.panel.linewidth" ng-options="f for f in [0,1,2,3,4,5,6,7,8,9,10]" ng-change="ctrl.render()"></select>
@@ -48,7 +48,7 @@
 			</div>
 		</div>
 		<div class="section gf-form-group">
-			<h5 class="section-heading">Hover info</h5>
+			<h5 class="section-heading">Hover tooltip</h5>
 			<div class="gf-form">
 				<label class="gf-form-label width-9">Mode</label>
 				<div class="gf-form-select-wrapper max-width-8">

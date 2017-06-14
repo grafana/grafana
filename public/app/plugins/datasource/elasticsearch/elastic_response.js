@@ -132,7 +132,14 @@ function (_, queryDef) {
           }
           default:  {
             metricName = this._getMetricName(metric.type);
-            doc[metricName] =bucket[metric.id].value;
+            var otherMetrics = _.filter(target.metrics, {type: metric.type});
+
+            // if more of the same metric type include field field name in property
+            if (otherMetrics.length > 1) {
+              metricName += ' ' + metric.field;
+            }
+
+            doc[metricName] = bucket[metric.id].value;
             break;
           }
         }
@@ -166,10 +173,13 @@ function (_, queryDef) {
         for (var nameIndex in esAgg.buckets) {
           bucket = esAgg.buckets[nameIndex];
           props = _.clone(props);
-          if (bucket.key) {
+          if (bucket.key !== void 0) {
             props[aggDef.field] = bucket.key;
           } else {
             props["filter"] = nameIndex;
+          }
+          if (bucket.key_as_string) {
+            props[aggDef.field] = bucket.key_as_string;
           }
           this.processBuckets(bucket, target, seriesList, docs, props, depth+1);
         }
@@ -196,7 +206,7 @@ function (_, queryDef) {
         var group = g1 || g2;
 
         if (group.indexOf('term ') === 0) { return series.props[group.substring(5)]; }
-        if (series.props[group]) { return series.props[group]; }
+        if (series.props[group] !== void 0) { return series.props[group]; }
         if (group === 'metric') { return metricName; }
         if (group === 'field') { return series.field; }
 

@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/grafana/grafana/pkg/models"
 
@@ -77,29 +76,39 @@ func (s *GenericOAuth) IsOrganizationMember(client *http.Client) bool {
 
 func (s *GenericOAuth) FetchPrivateEmail(client *http.Client) (string, error) {
 	type Record struct {
-		Email    string `json:"email"`
-		Primary  bool   `json:"primary"`
-		Verified bool   `json:"verified"`
+		Email       string `json:"email"`
+		Primary     bool   `json:"primary"`
+		IsPrimary   bool   `json:"is_primary"`
+		Verified    bool   `json:"verified"`
+		IsConfirmed bool   `json:"is_confirmed"`
 	}
 
-	emailsUrl := fmt.Sprintf(s.apiUrl + "/emails")
-	r, err := client.Get(emailsUrl)
+	body, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/emails"))
 	if err != nil {
-		return "", err
+		return "", fmt.Errorf("Error getting email address: %s", err)
 	}
-
-	defer r.Body.Close()
 
 	var records []Record
 
-	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
-		return "", err
+	err = json.Unmarshal(body, &records)
+	if err != nil {
+		var data struct {
+			Values []Record `json:"values"`
+		}
+
+		err = json.Unmarshal(body, &data)
+		if err != nil {
+			return "", fmt.Errorf("Error getting email address: %s", err)
+		}
+
+		records = data.Values
 	}
 
 	var email = ""
 	for _, record := range records {
-		if record.Primary {
+		if record.Primary || record.IsPrimary {
 			email = record.Email
+			break
 		}
 	}
 
@@ -111,18 +120,16 @@ func (s *GenericOAuth) FetchTeamMemberships(client *http.Client) ([]int, error) 
 		Id int `json:"id"`
 	}
 
-	membershipUrl := fmt.Sprintf(s.apiUrl + "/teams")
-	r, err := client.Get(membershipUrl)
+	body, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/teams"))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting team memberships: %s", err)
 	}
-
-	defer r.Body.Close()
 
 	var records []Record
 
-	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
-		return nil, err
+	err = json.Unmarshal(body, &records)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting team memberships: %s", err)
 	}
 
 	var ids = make([]int, len(records))
@@ -138,18 +145,16 @@ func (s *GenericOAuth) FetchOrganizations(client *http.Client) ([]string, error)
 		Login string `json:"login"`
 	}
 
-	url := fmt.Sprintf(s.apiUrl + "/orgs")
-	r, err := client.Get(url)
+	body, err := HttpGet(client, fmt.Sprintf(s.apiUrl+"/orgs"))
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting organizations: %s", err)
 	}
-
-	defer r.Body.Close()
 
 	var records []Record
 
-	if err = json.NewDecoder(r.Body).Decode(&records); err != nil {
-		return nil, err
+	err = json.Unmarshal(body, &records)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting organizations: %s", err)
 	}
 
 	var logins = make([]string, len(records))
@@ -160,30 +165,53 @@ func (s *GenericOAuth) FetchOrganizations(client *http.Client) ([]string, error)
 	return logins, nil
 }
 
-func (s *GenericOAuth) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
+func (s *GenericOAuth) UserInfo(client *http.Client) (*BasicUserInfo, error) {
 	var data struct {
-		Id    int    `json:"id"`
-		Name  string `json:"login"`
-		Email string `json:"email"`
+		Name        string              `json:"name"`
+		DisplayName string              `json:"display_name"`
+		Login       string              `json:"login"`
+		Username    string              `json:"username"`
+		Email       string              `json:"email"`
+		Attributes  map[string][]string `json:"attributes"`
 	}
 
-	var err error
-	client := s.Client(oauth2.NoContext, token)
-	r, err := client.Get(s.apiUrl)
+	body, err := HttpGet(client, s.apiUrl)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
-	defer r.Body.Close()
-
-	if err = json.NewDecoder(r.Body).Decode(&data); err != nil {
-		return nil, err
+	err = json.Unmarshal(body, &data)
+	if err != nil {
+		return nil, fmt.Errorf("Error getting user info: %s", err)
 	}
 
 	userInfo := &BasicUserInfo{
-		Identity: strconv.Itoa(data.Id),
-		Name:     data.Name,
-		Email:    data.Email,
+		Name:  data.Name,
+		Login: data.Login,
+		Email: data.Email,
+	}
+
+	if userInfo.Email == "" && data.Attributes["email:primary"] != nil {
+		userInfo.Email = data.Attributes["email:primary"][0]
+	}
+
+	if userInfo.Email == "" {
+		userInfo.Email, err = s.FetchPrivateEmail(client)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	if userInfo.Name == "" && data.DisplayName != "" {
+		userInfo.Name = data.DisplayName
+	}
+
+	if userInfo.Login == "" && data.Username != "" {
+		userInfo.Login = data.Username
+	}
+
+	if userInfo.Login == "" {
+		userInfo.Login = data.Email
 	}
 
 	if !s.IsTeamMember(client) {
@@ -192,13 +220,6 @@ func (s *GenericOAuth) UserInfo(token *oauth2.Token) (*BasicUserInfo, error) {
 
 	if !s.IsOrganizationMember(client) {
 		return nil, errors.New("User not a member of one of the required organizations")
-	}
-
-	if userInfo.Email == "" {
-		userInfo.Email, err = s.FetchPrivateEmail(client)
-		if err != nil {
-			return nil, err
-		}
 	}
 
 	return userInfo, nil

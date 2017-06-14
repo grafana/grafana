@@ -18,11 +18,11 @@
 				<dash-upload on-upload="ctrl.onUpload(dash)"></dash-upload>
 			</form>
 
-			<h5 class="section-heading">Grafana.net Dashboard</h5>
+			<h5 class="section-heading">Grafana.com Dashboard</h5>
 
       <div class="gf-form-group">
 				<div class="gf-form">
-					<input type="text" class="gf-form-input" ng-model="ctrl.gnetUrl" placeholder="Paste Grafana.net dashboard url or id" ng-blur="ctrl.checkGnetDashboard()"></textarea>
+					<input type="text" class="gf-form-input" ng-model="ctrl.gnetUrl" placeholder="Paste Grafana.com dashboard url or id" ng-blur="ctrl.checkGnetDashboard()"></textarea>
 				</div>
         <div class="gf-form" ng-if="ctrl.gnetError">
           <label class="gf-form-label text-warning">
@@ -53,7 +53,7 @@
 			<div class="gf-form-group" ng-if="ctrl.dash.gnetId">
         <h3 class="section-heading">
           Importing Dashboard from
-          <a href="https://grafana.net/dashboards/{{ctrl.dash.gnetId}}" class="external-link" target="_blank">Grafana.net</a>
+          <a href="https://grafana.com/dashboards/{{ctrl.dash.gnetId}}" class="external-link" target="_blank">Grafana.com</a>
         </h3>
 
         <div class="gf-form">
@@ -74,8 +74,8 @@
         <div class="gf-form-inline">
           <div class="gf-form gf-form--grow">
             <label class="gf-form-label width-15">Name</label>
-            <input type="text" class="gf-form-input" ng-model="ctrl.dash.title" give-focus="true" ng-change="ctrl.titleChanged()" ng-class="{'validation-error': ctrl.nameExists}">
-            <label class="gf-form-label text-success" ng-if="!ctrl.nameExists">
+            <input type="text" class="gf-form-input" ng-model="ctrl.dash.title" give-focus="true" ng-change="ctrl.titleChanged()" ng-class="{'validation-error': ctrl.nameExists || !ctrl.dash.title}">
+            <label class="gf-form-label text-success" ng-if="!ctrl.nameExists && ctrl.dash.title">
               <i class="fa fa-check"></i>
             </label>
           </div>
@@ -86,6 +86,15 @@
             <label class="gf-form-label text-warning gf-form-label--grow">
               <i class="fa fa-warning"></i>
               A Dashboard with the same name already exists
+            </label>
+          </div>
+        </div>
+
+        <div class="gf-form-inline" ng-if="!ctrl.dash.title">
+          <div class="gf-form offset-width-15 gf-form--grow">
+            <label class="gf-form-label text-warning gf-form-label--grow">
+              <i class="fa fa-warning"></i>
+              A Dashboard should have a name
             </label>
           </div>
         </div>
@@ -114,11 +123,11 @@
       </div>
 
       <div class="gf-form-button-row">
-        <button type="button" class="btn gf-form-btn btn-success width-10" ng-click="ctrl.saveDashboard()" ng-hide="ctrl.nameExists" ng-disabled="!ctrl.inputsValid">
-          <i class="fa fa-save"></i> Save &amp; Open
+        <button type="button" class="btn gf-form-btn btn-success width-12" ng-click="ctrl.saveDashboard()" ng-hide="ctrl.nameExists" ng-disabled="!ctrl.inputsValid">
+          <i class="fa fa-save"></i> Import
         </button>
-        <button type="button" class="btn gf-form-btn btn-danger width-10" ng-click="ctrl.saveDashboard()" ng-show="ctrl.nameExists" ng-disabled="!ctrl.inputsValid">
-          <i class="fa fa-save"></i> Overwrite &amp; Open
+        <button type="button" class="btn gf-form-btn btn-danger width-12" ng-click="ctrl.saveDashboard()" ng-show="ctrl.nameExists" ng-disabled="!ctrl.inputsValid">
+          <i class="fa fa-save"></i> Import (Overwrite)
         </button>
         <a class="btn btn-link" ng-click="dismiss()">Cancel</a>
         <a class="btn btn-link" ng-click="ctrl.back()">Back</a>

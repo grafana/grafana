@@ -13,20 +13,29 @@ export class TextPanelCtrl extends PanelCtrl {
     mode    : "markdown", // 'html', 'markdown', 'text'
     content : "# title",
   };
-  /** @ngInject */
+
+  /** @ngInject **/
   constructor($scope, $injector, private templateSrv, private $sce) {
     super($scope, $injector);
 
     _.defaults(this.panel, this.panelDefaults);
 
     this.events.on('init-edit-mode', this.onInitEditMode.bind(this));
-    this.events.on('refresh', this.onRender.bind(this));
+    this.events.on('refresh', this.onRefresh.bind(this));
     this.events.on('render', this.onRender.bind(this));
   }
 
   onInitEditMode() {
     this.addEditorTab('Options', 'public/app/plugins/panel/text/editor.html');
     this.editorTabIndex = 1;
+
+    if (this.panel.mode === 'text') {
+      this.panel.mode = 'markdown';
+    }
+  }
+
+  onRefresh() {
+    this.render();
   }
 
   onRender() {
@@ -34,8 +43,6 @@ export class TextPanelCtrl extends PanelCtrl {
       this.renderMarkdown(this.panel.content);
     } else if (this.panel.mode === 'html') {
       this.updateContent(this.panel.content);
-    } else if (this.panel.mode === 'text') {
-      this.renderText(this.panel.content);
     }
     this.renderingCompleted();
   }
@@ -72,4 +79,4 @@ export class TextPanelCtrl extends PanelCtrl {
   }
 }
 
-export {TextPanelCtrl as PanelCtrl}
+export {TextPanelCtrl as PanelCtrl};

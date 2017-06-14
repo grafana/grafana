@@ -9,6 +9,8 @@ describe('PrometheusDatasource', function() {
 
   beforeEach(angularMocks.module('grafana.core'));
   beforeEach(angularMocks.module('grafana.services'));
+  beforeEach(ctx.providePhase(['timeSrv']));
+
   beforeEach(angularMocks.inject(function($q, $rootScope, $httpBackend, $injector) {
     ctx.$q = $q;
     ctx.$httpBackend =  $httpBackend;
@@ -156,6 +158,30 @@ describe('PrometheusDatasource', function() {
       expect(results[0].title).to.be('InstanceDown');
       expect(results[0].text).to.be('testinstance');
       expect(results[0].time).to.be(1443454528 * 1000);
+    });
+  });
+  describe('When resultFormat is table', function() {
+    var response = {
+      status: "success",
+      data: {
+        resultType: "matrix",
+        result: [{
+          metric: {"__name__": "test", job: "testjob"},
+          values: [[1443454528, "3846"]]
+        }]
+      }
+    };
+    it('should return table model', function() {
+      var table = ctx.ds.transformMetricDataToTable(response.data.result);
+      expect(table.type).to.be('table');
+      expect(table.rows).to.eql([ [ 1443454528000, 'test', 'testjob', 3846 ] ]);
+      expect(table.columns).to.eql(
+        [ { text: 'Time', type: 'time' },
+          { text: '__name__' },
+          { text: 'job' },
+          { text: 'Value' }
+        ]
+      );
     });
   });
 });

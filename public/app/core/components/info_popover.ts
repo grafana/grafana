@@ -40,12 +40,20 @@ export function infoPopover() {
           openOn: openOn,
           hoverOpenDelay: 400,
           tetherOptions: {
-            offset: offset
+            offset: offset,
+            constraints: [
+                {
+                  to: 'window',
+                  attachment: 'together',
+                  pin: true
+                }
+              ],
           }
         });
 
-        scope.$on('$destroy', function() {
+        var unbind = scope.$on('$destroy', function() {
           drop.destroy();
+          unbind();
         });
 
       });

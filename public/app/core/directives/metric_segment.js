@@ -43,7 +43,7 @@ function (_, $, coreModule) {
             var selected = _.find($scope.altSegments, {value: value});
             if (selected) {
               segment.value = selected.value;
-              segment.html = selected.html;
+              segment.html = selected.html || selected.value;
               segment.fake = false;
               segment.expandable = selected.expandable;
             }
@@ -77,7 +77,7 @@ function (_, $, coreModule) {
 
         $scope.source = function(query, callback) {
           $scope.$apply(function() {
-            $scope.getOptions({ measurementFilter: query }).then(function(altSegments) {
+            $scope.getOptions({ $query: query }).then(function(altSegments) {
               $scope.altSegments = altSegments;
               options = _.map($scope.altSegments, function(alt) { return alt.value; });
 
@@ -184,27 +184,26 @@ function (_, $, coreModule) {
 
           $scope.getOptionsInternal = function() {
             if ($scope.options) {
-              cachedOptions = _.map($scope.options, function(option) {
-                return uiSegmentSrv.newSegment({value: option.text});
-              });
-              return $q.when(cachedOptions);
+              cachedOptions = $scope.options;
+              return $q.when(_.map($scope.options, function(option) {
+                return {value: option.text};
+              }));
             } else {
               return $scope.getOptions().then(function(options) {
-                cachedOptions =_.map(options, function(option) {
+                cachedOptions = options;
+                return  _.map(options, function(option) {
                   if (option.html) {
                     return option;
                   }
-                  return uiSegmentSrv.newSegment({value: option.text});
+                  return {value: option.text};
                 });
-                return cachedOptions;
               });
             }
           };
 
           $scope.onSegmentChange = function() {
-
             if (cachedOptions) {
-              var option = _.find(cachedOptions, {value: $scope.segment.value});
+              var option = _.find(cachedOptions, {text: $scope.segment.value});
               if (option && option.value !== $scope.property) {
                 $scope.property = option.value;
               } else if (attrs.custom !== 'false') {

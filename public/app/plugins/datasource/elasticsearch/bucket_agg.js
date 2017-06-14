@@ -50,6 +50,7 @@ function (angular, _, queryDef) {
 
       switch($scope.agg.type) {
         case 'date_histogram':
+        case 'histogram':
         case 'terms':  {
           delete $scope.agg.query;
           $scope.agg.field = 'select field';
@@ -73,19 +74,24 @@ function (angular, _, queryDef) {
     $scope.validateModel = function() {
       $scope.index = _.indexOf(bucketAggs, $scope.agg);
       $scope.isFirst = $scope.index === 0;
-      $scope.isLast = $scope.index === bucketAggs.length - 1;
+      $scope.bucketAggCount = bucketAggs.length;
 
       var settingsLinkText = "";
       var settings = $scope.agg.settings || {};
 
       switch($scope.agg.type) {
         case 'terms': {
-          settings.order = settings.order || "asc";
+          settings.order = settings.order || "desc";
           settings.size = settings.size || "10";
+          settings.min_doc_count = settings.min_doc_count || 1;
           settings.orderBy = settings.orderBy || "_term";
 
           if (settings.size !== '0') {
             settingsLinkText = queryDef.describeOrder(settings.order) + ' ' + settings.size + ', ';
+          }
+
+          if (settings.min_doc_count > 0) {
+            settingsLinkText += 'Min Doc Count: ' + settings.min_doc_count + ', ';
           }
 
           settingsLinkText += 'Order by: ' + queryDef.describeOrderBy(settings.orderBy, $scope.target);
@@ -124,6 +130,16 @@ function (angular, _, queryDef) {
 
           if (settings.trimEdges && settings.trimEdges > 0) {
             settingsLinkText += ', Trim edges: ' + settings.trimEdges;
+          }
+          break;
+        }
+        case 'histogram': {
+          settings.interval = settings.interval || 1000;
+          settings.min_doc_count = _.defaultTo(settings.min_doc_count, 1);
+          settingsLinkText = 'Interval: ' + settings.interval;
+
+          if (settings.min_doc_count > 0) {
+            settingsLinkText += ', Min Doc Count: ' + settings.min_doc_count;
           }
           break;
         }
