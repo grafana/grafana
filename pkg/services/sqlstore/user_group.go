@@ -84,6 +84,7 @@ func DeleteUserGroup(cmd *m.DeleteUserGroupCommand) error {
 		deletes := []string{
 			"DELETE FROM user_group_member WHERE user_group_id = ?",
 			"DELETE FROM user_group WHERE id = ?",
+			"DELETE FROM dashboard_acl WHERE user_group_id = ?",
 		}
 
 		for _, sql := range deletes {

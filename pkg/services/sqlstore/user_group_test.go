@@ -88,12 +88,13 @@ func TestUserGroupCommandsAndQueries(t *testing.T) {
 				So(len(q1.Result), ShouldEqual, 0)
 			})
 
-			Convey("Should be able to remove a group with users", func() {
+			Convey("Should be able to remove a group with users and permissions", func() {
 				groupId := group2.Result.Id
 				err := AddUserGroupMember(&m.AddUserGroupMemberCommand{OrgId: 1, UserGroupId: groupId, UserId: userIds[1]})
 				So(err, ShouldBeNil)
 				err = AddUserGroupMember(&m.AddUserGroupMemberCommand{OrgId: 1, UserGroupId: groupId, UserId: userIds[2]})
 				So(err, ShouldBeNil)
+				err = AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{DashboardId: 1, OrgId: 1, PermissionType: m.PERMISSION_EDIT, UserGroupId: groupId})
 
 				err = DeleteUserGroup(&m.DeleteUserGroupCommand{Id: groupId})
 				So(err, ShouldBeNil)
@@ -101,6 +102,12 @@ func TestUserGroupCommandsAndQueries(t *testing.T) {
 				query := &m.GetUserGroupByIdQuery{Id: groupId}
 				err = GetUserGroupById(query)
 				So(err, ShouldEqual, m.ErrUserGroupNotFound)
+
+				permQuery := &m.GetDashboardPermissionsQuery{DashboardId: 1}
+				err = GetDashboardPermissions(permQuery)
+				So(err, ShouldBeNil)
+
+				So(len(permQuery.Result), ShouldEqual, 0)
 			})
 		})
 	})
