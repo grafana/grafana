@@ -5,5 +5,5 @@ define([
   './query_ctrl',
   './panel_editor_tab',
   './query_editor_row',
-  './metrics_ds_selector',
+  './query_troubleshooter',
 ], function () {});

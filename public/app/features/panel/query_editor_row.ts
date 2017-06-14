@@ -21,7 +21,7 @@ export class QueryRowCtrl {
     this.panel = this.panelCtrl.panel;
 
     if (!this.target.refId) {
-      this.target.refId = this.getNextQueryLetter();
+      this.target.refId = this.panelCtrl.dashboard.getNextQueryLetter(this.panel);
     }
 
     this.toggleCollapse(true);
@@ -38,16 +38,6 @@ export class QueryRowCtrl {
   toggleHideQuery() {
     this.target.hide = !this.target.hide;
     this.panelCtrl.refresh();
-  }
-
-  getNextQueryLetter() {
-    var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
-    return _.find(letters, refId => {
-      return _.every(this.panel.targets, function(other) {
-        return other.refId !== refId;
-      });
-    });
   }
 
   toggleCollapse(init) {
@@ -87,19 +77,16 @@ export class QueryRowCtrl {
       delete this.panelCtrl.__collapsedQueryCache[this.target.refId];
     }
 
-    this.panel.targets = _.without(this.panel.targets, this.target);
-    this.panelCtrl.refresh();
+    this.panelCtrl.removeQuery(this.target);
   }
 
   duplicateQuery() {
     var clone = angular.copy(this.target);
-    clone.refId = this.getNextQueryLetter();
-    this.panel.targets.push(clone);
+    this.panelCtrl.addQuery(clone);
   }
 
   moveQuery(direction) {
-    var index = _.indexOf(this.panel.targets, this.target);
-    _.move(this.panel.targets, index, index + direction);
+    this.panelCtrl.moveQuery(this.target, direction);
   }
 }
 
