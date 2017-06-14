@@ -15,15 +15,17 @@ function typeaheadMatcher(item) {
 export class FormDropdownCtrl {
   inputElement: any;
   linkElement: any;
-  value: any;
-  text: any;
+  model: any;
   display: any;
+  text: any;
   options: any;
   cssClass: any;
   allowCustom: any;
   linkMode: boolean;
   cancelBlur: any;
   onChange: any;
+  getOptions: any;
+  optionCache: any;
 
   constructor(private $scope, $element, private $sce, private templateSrv) {
     this.inputElement = $element.find('input').first();
@@ -31,10 +33,14 @@ export class FormDropdownCtrl {
     this.linkMode = true;
     this.cancelBlur = null;
 
-    if (this.options) {
-      var item = _.find(this.options, {value: this.value});
-      this.updateDisplay(item ? item.text : this.value);
+    if (!this.getOptions) {
+      this.getOptions = () => {
+        return Promise.resolve(this.options);
+      };
     }
+
+    // listen to model changes
+    $scope.$watch("ctrl.model", this.modelChanged.bind(this));
 
     this.inputElement.attr('data-provide', 'typeahead');
     this.inputElement.typeahead({
@@ -64,19 +70,40 @@ export class FormDropdownCtrl {
     this.inputElement.blur(this.inputBlur.bind(this));
   }
 
-  typeaheadSource(query, callback) {
-    if (this.options) {
-      var typeaheadOptions = _.map(this.options, 'text');
+  modelChanged(newVal) {
+    if (_.isObject(this.model)) {
+      this.updateDisplay(this.model.text);
+    } else {
 
-      // add current custom value
+      // if we have text use it
+      if (this.text) {
+        this.updateDisplay(this.text);
+      } else {
+        // otherwise we need to do initial lookup, usually happens first time
+        this.getOptions().then(options => {
+          var item = _.find(options, {value: this.model});
+          this.updateDisplay(item ? item.text : this.model);
+        });
+      }
+    }
+  }
+
+  typeaheadSource(query, callback) {
+    this.getOptions({$query: query}).then(options => {
+      this.optionCache = options;
+
+      // extract texts
+      let optionTexts = _.map(options, 'text');
+
+      // add custom values
       if (this.allowCustom) {
-        if (_.indexOf(typeaheadOptions, this.text) === -1) {
-          typeaheadOptions.unshift(this.text);
+        if (_.indexOf(optionTexts, this.text) === -1) {
+          options.unshift(this.text);
         }
       }
 
-      callback(typeaheadOptions);
-    }
+      callback(optionTexts);
+    });
   }
 
   typeaheadUpdater(text) {
@@ -114,21 +141,29 @@ export class FormDropdownCtrl {
     }
 
     this.$scope.$apply(() => {
-      var option = _.find(this.options, {text: text});
+      var option = _.find(this.optionCache, {text: text});
 
       if (option) {
-        this.value = option.value;
-        this.updateDisplay(option.text);
+        if (_.isObject(this.model)) {
+          this.model = option;
+        } else {
+          this.model = option.value;
+        }
+        this.text = option.text;
       } else if (this.allowCustom) {
-        this.value = text;
-        this.updateDisplay(text);
+        if (_.isObject(this.model)) {
+          this.model.text = this.model.value = text;
+        } else {
+          this.model = text;
+        }
+        this.text = text;
       }
 
       // needs to call this after digest so
       // property is synced with outerscope
       this.$scope.$$postDigest(() => {
         this.$scope.$apply(() => {
-          this.onChange();
+          this.onChange({$option: option});
         });
       });
 
@@ -157,17 +192,30 @@ export class FormDropdownCtrl {
   }
 }
 
+const template =  `
+<input type="text"
+data-provide="typeahead"
+class="gf-form-input"
+spellcheck="false"
+style="display:none"></input>
 
+<a class="gf-form-label"
+	 ng-class="ctrl.cssClass"
+	 tabindex="1"
+	 ng-click="ctrl.open()"
+	 give-focus="ctrl.focus"
+	 ng-bind-html="ctrl.display"></a>
+`;
 
 export function formDropdownDirective() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/core/components/form_dropdown/form_dropdown.html',
+    template: template,
     controller: FormDropdownCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      value: "=",
+      model: "=",
       options: "=",
       getOptions: "&",
       onChange: "&",
