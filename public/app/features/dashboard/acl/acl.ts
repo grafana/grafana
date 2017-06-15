@@ -14,13 +14,15 @@ export class AclCtrl {
     {value: 2, text: 'Read-only Edit'},
     {value: 4, text: 'Edit'}
   ];
-  userId: number;
+
   type = 'User';
-  userGroupId: number;
   permission = 1;
+  userId: number;
+  userGroupId: number;
+
 
   /** @ngInject */
-  constructor(private backendSrv, private $scope, $sce, private uiSegmentSrv) {
+  constructor(private backendSrv, private $scope) {
     this.tabIndex = 0;
     this.userPermissions = [];
     this.userGroupPermissions = [];
@@ -40,38 +42,56 @@ export class AclCtrl {
       if (!this.userId) {
         return;
       }
-
-      this.backendSrv.post(`/api/dashboards/${this.dashboard.id}/acl`, {
-        userId: this.userId,
-        permissionType: this.permission
-      }).then(() => {
+      return this.addOrUpdateUserPermission(this.userId, this.permission).then(() => {
         this.userId = null;
-        this.get(this.dashboard.id);
+        return this.get(this.dashboard.id);
       });
     } else {
       if (!this.userGroupId) {
         return;
       }
 
-      this.backendSrv.post(`/api/dashboards/${this.dashboard.id}/acl`, {
-        userGroupId: this.userGroupId,
-        permissionType: this.permission
-      }).then(() => {
+      this.addOrUpdateUserGroupPermission(this.userGroupId, this.permission).then(() => {
         this.userGroupId = null;
-        this.get(this.dashboard.id);
+        return this.get(this.dashboard.id);
       });
     }
   }
 
+  addOrUpdateUserPermission(userId: number, permissionType: number) {
+    return this.backendSrv.post(`/api/dashboards/${this.dashboard.id}/acl`, {
+      userId: userId,
+      permissionType: permissionType
+    });
+  }
+
+  addOrUpdateUserGroupPermission(userGroupId: number, permissionType: number) {
+    return this.backendSrv.post(`/api/dashboards/${this.dashboard.id}/acl`, {
+      userGroupId: userGroupId,
+      permissionType: permissionType
+    });
+  }
+
+  updatePermission(permission: any) {
+    if (permission.userId > 0) {
+      return this.addOrUpdateUserPermission(permission.userId, permission.permissionType);
+    } else {
+      if (!permission.userGroupId) {
+        return;
+      }
+      return this.addOrUpdateUserGroupPermission(permission.userGroupId, permission.permissionType);
+    }
+  }
+
   removeUserPermission(permission: Permission) {
-    this.backendSrv.delete(`/api/dashboards/${permission.dashboardId}/acl/user/${permission.userId}`).then(() => {
-      this.get(permission.dashboardId);
+    return this.backendSrv.delete(`/api/dashboards/${permission.dashboardId}/acl/user/${permission.userId}`).then(() => {
+      return this.get(permission.dashboardId);
     });
   }
 
   removeUserGroupPermission(permission: Permission) {
-    this.backendSrv.delete(`/api/dashboards/${permission.dashboardId}/acl/user-group/${permission.userGroupId}`).then(() => {
-      this.get(permission.dashboardId);
+    return this.backendSrv.delete(`/api/dashboards/${permission.dashboardId}/acl/user-group/${permission.userGroupId}`).then(() => {
+      return this.get(permission.dashboardId);
     });
   }
 }

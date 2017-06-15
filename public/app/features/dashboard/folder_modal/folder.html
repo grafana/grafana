@@ -9,7 +9,7 @@
     </a>
   </div>
 
-  <div class="modal-content folder-modal">
+  <form name="ctrl.saveForm" ng-submit="ctrl.create()" class="modal-content folder-modal" novalidate>
     <div class="p-t-2">
       <div class="gf-form">
         <span class="gf-form-label width-10">Folder Name</span>
@@ -17,8 +17,8 @@
       </div>
     </div>
     <div class="gf-form-button-row text-center">
-      <a type="submit" class="btn btn-success" ng-click="ctrl.create()">Create</a>
+      <button type="submit" class="btn btn-success">Create</button>
       <a class="btn-text" ng-click="dismiss();">Cancel</a>
     </div>
-  </div>
+  </form>
 </div>

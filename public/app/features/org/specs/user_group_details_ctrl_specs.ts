@@ -21,18 +21,18 @@ var backendSrv = {
       backendSrv: backendSrv,
       $routeParams: {id: 1}
     });
-    ctx.ctrl.userName = 'login - user@email.com';
+    ctx.ctrl.userId = 1;
   }));
 
   describe('when user is chosen to be added to user group', () => {
     beforeEach(() => {
-      ctx.scope.addMemberForm = {$valid: true};
-      ctx.ctrl.usersSearchCache = [{id: 1, login: 'login'}, {id: 2, login: 'login2'}];
+      ctx.ctrl.addMemberForm = {$valid: true};
       ctx.ctrl.addMember();
     });
 
     it('should parse the result and save to db', () => {
       expect(backendSrv.post.getCall(0).args[0]).to.eql('/api/user-groups/1/members');
+      expect(backendSrv.post.getCall(0).args[1].userId).to.eql(1);
     });
 
     it('should refresh the list after saving.', () => {
