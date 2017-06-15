@@ -75,7 +75,7 @@ export class PanelCtrl {
   }
 
   refresh() {
-    this.events.emit('refresh', null);
+   this.events.emit('refresh', null);
   }
 
   publishAppEvent(evtName, evt) {

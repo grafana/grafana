@@ -34,6 +34,7 @@ import {switchDirective} from './components/switch';
 import {dashboardSelector} from './components/dashboard_selector';
 import {queryPartEditorDirective} from './components/query_part/query_part_editor';
 import {WizardFlow} from './components/wizard/wizard';
+import {formDropdownDirective} from './components/form_dropdown/form_dropdown';
 import 'app/core/controllers/all';
 import 'app/core/services/all';
 import 'app/core/routes/routes';
@@ -45,6 +46,8 @@ import {assignModelProperties} from './utils/model_utils';
 import {contextSrv} from './services/context_srv';
 import {KeybindingSrv} from './services/keybindingSrv';
 import {helpModal} from './components/help/help';
+import {collapseBox} from './components/collapse_box';
+import {JsonExplorer} from './components/json_explorer/json_explorer';
 import {NavModelSrv, NavModel} from './nav_model_srv';
 import {userPicker} from './components/user_picker';
 import {userGroupPicker} from './components/user_group_picker';
@@ -67,10 +70,13 @@ export {
   queryPartEditorDirective,
   WizardFlow,
   colors,
+  formDropdownDirective,
   assignModelProperties,
   contextSrv,
   KeybindingSrv,
   helpModal,
+  collapseBox,
+  JsonExplorer,
   NavModelSrv,
   NavModel,
   userPicker,
