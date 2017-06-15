@@ -20,7 +20,9 @@ export class FormDropdownCtrl {
   text: any;
   options: any;
   cssClass: any;
+  cssClasses: any;
   allowCustom: any;
+  labelMode: boolean;
   linkMode: boolean;
   cancelBlur: any;
   onChange: any;
@@ -33,14 +35,14 @@ export class FormDropdownCtrl {
     this.linkMode = true;
     this.cancelBlur = null;
 
-    if (!this.getOptions) {
-      this.getOptions = () => {
-        return Promise.resolve(this.options);
-      };
-    }
-
     // listen to model changes
     $scope.$watch("ctrl.model", this.modelChanged.bind(this));
+
+    if (this.labelMode) {
+      this.cssClasses = 'gf-form-label ' + this.cssClass;
+    } else {
+      this.cssClasses = 'gf-form-input gf-form-input--dropdown ' + this.cssClass;
+    }
 
     this.inputElement.attr('data-provide', 'typeahead');
     this.inputElement.typeahead({
@@ -199,9 +201,7 @@ const template =  `
   spellcheck="false"
   style="display:none">
 </input>
-
-<a class="gf-form-label"
-	 ng-class="ctrl.cssClass"
+<a ng-class="ctrl.cssClasses"
 	 tabindex="1"
 	 ng-click="ctrl.open()"
 	 give-focus="ctrl.focus"
@@ -218,12 +218,11 @@ export function formDropdownDirective() {
     controllerAs: 'ctrl',
     scope: {
       model: "=",
-      options: "=",
       getOptions: "&",
       onChange: "&",
       cssClass: "@",
       allowCustom: "@",
-      selectMode: "@",
+      labelMode: "@",
     },
     link: function() {
     }
