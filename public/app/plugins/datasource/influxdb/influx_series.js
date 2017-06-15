@@ -65,8 +65,8 @@ function (_, TableModel) {
 
       if(group==="t") {
         var r='';
-        for(var k in series.tags) { 
-          if (series.tags.hasOwnProperty(k)) { 
+        for(var k in series.tags) {
+          if (series.tags.hasOwnProperty(k)) {
             r+=k+': '+series.tags[k]+', ';
           }
         }
