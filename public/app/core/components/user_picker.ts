@@ -4,74 +4,41 @@ import _ from 'lodash';
 
 const template = `
 <div class="dropdown">
-  <metric-segment segment="ctrl.userSegment"
-    get-options="ctrl.debouncedSearchUsers($query)"
-    on-change="ctrl.onChange()"></metric-segment>
-  </div>
+  <gf-form-dropdown model="ctrl.user"
+                    get-options="ctrl.debouncedSearchUsers($query)"
+                    css-class="gf-size-auto"
+                    on-change="ctrl.onChange()"
+  </gf-form-dropdown>
+</div>
 `;
 export class UserPickerCtrl {
-  userSegment: any;
-  userLogin: string;
+  user: any;
   userId: number;
   debouncedSearchUsers: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $scope, $sce, private uiSegmentSrv) {
+  constructor(private backendSrv, private $scope, $sce) {
+    this.user = {text: 'Choose', value: null};
     this.debouncedSearchUsers = _.debounce(this.searchUsers, 500, {'leading': true, 'trailing': false});
-    this.resetUserSegment();
-  }
-
-  resetUserSegment() {
-    this.userId = null;
-    const userSegment = this.uiSegmentSrv.newSegment({
-      value: 'Choose',
-      selectMode: true,
-      fake: true,
-      cssClass: 'gf-size-auto'
-    });
-
-    if (!this.userSegment) {
-      this.userSegment = userSegment;
-    } else {
-      this.userSegment.value = userSegment.value;
-      this.userSegment.html = userSegment.html;
-      this.userSegment.value = userSegment.value;
-    }
   }
 
   searchUsers(query: string) {
     return Promise.resolve(this.backendSrv.get('/api/users/search?perpage=10&page=1&query=' + query).then(result => {
-      return _.map(result.users, this.userKey.bind(this));
+      return _.map(result.users, user => {
+        return {text: user.login + ' -  ' + user.email, value: user.id};
+      });
     }));
   }
 
   onChange() {
-    this.userLogin = this.userSegment.value.split(' - ')[0];
-
-    this.backendSrv.get('/api/users/search?perpage=10&page=1&query=' + this.userLogin)
-      .then(result => {
-        if (!result) {
-          return;
-        }
-
-        result.users.forEach(u => {
-          if (u.login === this.userLogin) {
-            this.userId = u.id;
-          }
-        });
-    });
+    this.userId = this.user.value;
   }
 
-  userIdChanged(newVal) {
-    if (!newVal) {
-      this.resetUserSegment();
+  userIdChanged() {
+    if (this.userId === null) {
+      this.user = {text: 'Choose', value: null};
     }
   }
-
-  private userKey(user: User) {
-    return this.uiSegmentSrv.newSegment(user.login + ' - ' + user.email);
-  }
-
 }
 
 export interface User {
