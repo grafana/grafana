@@ -207,15 +207,20 @@ function pushToXBuckets(buckets, point, bucketNum, seriesName) {
 }
 
 function pushToYBuckets(buckets, bucketNum, value, point, bounds) {
+  var count = 1;
+  // Use the 3rd argument as scale/count
+  if (point.length > 2) {
+    count = parseInt(point[2]);
+  }
   if (buckets[bucketNum]) {
     buckets[bucketNum].values.push(value);
-    buckets[bucketNum].count += 1;
+    buckets[bucketNum].count += count;
   } else {
     buckets[bucketNum] = {
       y: bucketNum,
       bounds: bounds,
       values: [value],
-      count: 1,
+      count: count,
     };
   }
 }
