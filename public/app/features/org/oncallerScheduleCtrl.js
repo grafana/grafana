@@ -293,7 +293,9 @@ function (moment, $, angular, _, uiCalendarConfig) {
 
     function updateSchedule(role,oncallerSelcted) {
       addEvent(oncallerSelcted, role);
-      oncallerMgrSrv.updateSchedule(role, oncallerSelcted.id, getTimeSec(oncallerSelcted.start), getTimeSec(oncallerSelcted.end));
+      oncallerMgrSrv.updateSchedule(role, oncallerSelcted.id, getTimeSec(oncallerSelcted.start), getTimeSec(oncallerSelcted.end)).then(function(response) {
+        $scope.appEvent('alert-success', ['保存成功']);
+      });
     }
 
     $scope.init();
