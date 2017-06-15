@@ -28,8 +28,9 @@ export class FormDropdownCtrl {
   onChange: any;
   getOptions: any;
   optionCache: any;
+  lookupText: boolean;
 
-  constructor(private $scope, $element, private $sce, private templateSrv) {
+  constructor(private $scope, $element, private $sce, private templateSrv, private $q) {
     this.inputElement = $element.find('input').first();
     this.linkElement = $element.find('a').first();
     this.linkMode = true;
@@ -69,29 +70,45 @@ export class FormDropdownCtrl {
       }
     });
 
+    this.inputElement.keydown(evt => {
+      if (evt.keyCode === 13) {
+        this.inputElement.blur();
+      }
+    });
+
     this.inputElement.blur(this.inputBlur.bind(this));
   }
 
-  modelChanged(newVal) {
+  getOptionsInternal(query) {
+    var result = this.getOptions({$query: query});
+    if (this.isPromiseLike(result)) {
+      return result;
+    }
+    return this.$q.when(result);
+  }
+
+  isPromiseLike(obj) {
+    return obj && (typeof obj.then === 'function');
+  }
+
+  modelChanged() {
     if (_.isObject(this.model)) {
       this.updateDisplay(this.model.text);
     } else {
-
       // if we have text use it
-      if (this.text) {
-        this.updateDisplay(this.text);
-      } else {
-        // otherwise we need to do initial lookup, usually happens first time
-        this.getOptions().then(options => {
+      if (this.lookupText) {
+        this.getOptionsInternal("").then(options => {
           var item = _.find(options, {value: this.model});
           this.updateDisplay(item ? item.text : this.model);
         });
+      } else {
+        this.updateDisplay(this.model);
       }
     }
   }
 
   typeaheadSource(query, callback) {
-    this.getOptions({$query: query}).then(options => {
+    this.getOptionsInternal(query).then(options => {
       this.optionCache = options;
 
       // extract texts
@@ -223,9 +240,8 @@ export function formDropdownDirective() {
       cssClass: "@",
       allowCustom: "@",
       labelMode: "@",
+      lookupText: "@",
     },
-    link: function() {
-    }
   };
 }
 

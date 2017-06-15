@@ -11,9 +11,9 @@
 	</div>
 
 	<div class="gf-form">
-		<gf-form-dropdown value="agg.type" options="metricAggTypes" on-change="onTypeChanged()" custom="false" css-class="width-10"></gf-form-dropdown>
-		<gf-form-dropdown ng-if="aggDef.requiresField" value="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="width-12"></gf-form-dropdown>
-		<gf-form-dropdown ng-if="aggDef.isPipelineAgg" value="agg.pipelineAgg" options="pipelineAggOptions" on-change="onChangeInternal()" custom="false" css-class="width-12"></gf-form-dropdown>
+		<metric-segment-model property="agg.type" options="metricAggTypes" on-change="onTypeChange()" custom="false" css-class="width-10"></metric-segment-model>
+		<metric-segment-model ng-if="aggDef.requiresField" property="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="width-12"></metric-segment-model>
+		<metric-segment-model ng-if="aggDef.isPipelineAgg" property="agg.pipelineAgg" options="pipelineAggOptions" on-change="onChangeInternal()" custom="false" css-class="width-12"></metric-segment-model>
 	</div>
 
 	<div class="gf-form gf-form--grow">

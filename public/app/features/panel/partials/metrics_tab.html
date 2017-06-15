@@ -35,6 +35,7 @@
     <div class="gf-form">
       <label class="gf-form-label">Panel Data Source</label>
       <gf-form-dropdown model="ctrl.panelDsValue"
+                        lookup-text="true"
                         get-options="ctrl.getOptions(true)"
                         on-change="ctrl.datasourceChanged($option)">
       </gf-form-dropdown>
