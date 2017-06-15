@@ -42,7 +42,7 @@ func accessForbidden(c *Context) {
 		return
 	}
 
-	c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/")
+	c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/", nil, m.UseSecureCookie(&c.Req))
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
@@ -52,7 +52,7 @@ func notAuthorized(c *Context) {
 		return
 	}
 
-	c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/")
+	c.SetCookie("redirect_to", url.QueryEscape(setting.AppSubUrl+c.Req.RequestURI), 0, setting.AppSubUrl+"/", nil, m.UseSecureCookie(&c.Req))
 	c.Redirect(setting.AppSubUrl + "/login")
 }
 
