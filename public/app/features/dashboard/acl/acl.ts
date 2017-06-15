@@ -51,7 +51,7 @@ export class AclCtrl {
         return;
       }
 
-      this.addOrUpdateUserGroupPermission(this.userGroupId, this.permission).then(() => {
+      return this.addOrUpdateUserGroupPermission(this.userGroupId, this.permission).then(() => {
         this.userGroupId = null;
         return this.get(this.dashboard.id);
       });

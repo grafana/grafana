@@ -25,6 +25,8 @@ describe('AclCtrl', () => {
 
   describe('when user permission is to be added', () => {
     beforeEach(done => {
+      backendSrv.get.reset();
+      backendSrv.post.reset();
       ctx.ctrl.type = 'User';
       ctx.ctrl.userId = 2;
       ctx.ctrl.permission = 1;
@@ -41,11 +43,39 @@ describe('AclCtrl', () => {
     });
 
     it('should refresh the list after saving.', () => {
-      expect(backendSrv.get.getCall(1).args[0]).to.eql('/api/dashboards/1/acl');
+      expect(backendSrv.get.getCall(0).args[0]).to.eql('/api/dashboards/1/acl');
     });
 
      it('should reset userId', () => {
       expect(ctx.ctrl.userId).to.eql(null);
+    });
+  });
+
+  describe('when user group permission is to be added', () => {
+    beforeEach(done => {
+      backendSrv.get.reset();
+      backendSrv.post.reset();
+      ctx.ctrl.type = 'User Group';
+      ctx.ctrl.userGroupId = 2;
+      ctx.ctrl.permission = 1;
+
+      ctx.ctrl.addPermission().then(() => {
+        done();
+      });
+    });
+
+    it('should parse the result and save to db', () => {
+      expect(backendSrv.post.getCall(0).args[0]).to.eql('/api/dashboards/1/acl');
+      expect(backendSrv.post.getCall(0).args[1].userGroupId).to.eql(2);
+      expect(backendSrv.post.getCall(0).args[1].permissionType).to.eql(1);
+    });
+
+    it('should refresh the list after saving.', () => {
+      expect(backendSrv.get.getCall(0).args[0]).to.eql('/api/dashboards/1/acl');
+    });
+
+     it('should reset userGroupId', () => {
+      expect(ctx.ctrl.userGroupId).to.eql(null);
     });
   });
 });
