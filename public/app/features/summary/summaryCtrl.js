@@ -104,7 +104,7 @@ define([
           $scope.warningScript = "请选择子系统";
           return;
         }
-        contextSrv.system = $scope.summarySelect.system;
+        contextSrv.user.systemId = $scope.summarySelect.system;
         $scope.warningScript = "抱歉, 没有任何数据返回";
         if ($scope.summarySelect.services == "collect") {
           query['metrics'] = "collector.summary";

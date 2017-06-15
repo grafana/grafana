@@ -9,6 +9,7 @@ import (
 	"github.com/wangy1931/grafana/pkg/metrics"
 	m "github.com/wangy1931/grafana/pkg/models"
 	"github.com/wangy1931/grafana/pkg/services/search"
+	"strconv"
 )
 
 func init() {
@@ -53,10 +54,12 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 		if sameTitleExists {
 			// another dashboard with same name
 			if dash.Id != sameTitle.Id {
-				if cmd.Overwrite {
-					dash.Id = sameTitle.Id
-				} else {
-					return m.ErrDashboardWithSameNameExists
+				if dash.Data["system"] == sameTitle.Data["system"] {
+					if cmd.Overwrite {
+						dash.Id = sameTitle.Id
+					} else {
+						return m.ErrDashboardWithSameNameExists
+					}
 				}
 			}
 		}
@@ -99,16 +102,25 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 }
 
 func GetDashboard(query *m.GetDashboardQuery) error {
-	dashboard := m.Dashboard{Slug: query.Slug, OrgId: query.OrgId}
-	has, err := x.Get(&dashboard)
+	dashboards := make([]*m.Dashboard, 0)
+	sess := x.Table("dashboard")
+	sess.Where("dashboard.slug=? and dashboard.org_id=?", query.Slug, query.OrgId)
+	err :=sess.Find(&dashboards)
+
 	if err != nil {
 		return err
-	} else if has == false {
-		return m.ErrDashboardNotFound
 	}
-
-	dashboard.Data["id"] = dashboard.Id
-	query.Result = &dashboard
+	query.Result = new(m.Dashboard)
+	for _, dash := range dashboards {
+		sysId, err := strconv.ParseInt(dash.Data["system"].(string), 10, 64)
+		if err !=nil {
+			continue
+		}
+		if sysId == query.SystemId {
+			dash.Data["id"] = dash.Id
+			query.Result = dash
+		}
+	}
 
 	return nil
 }

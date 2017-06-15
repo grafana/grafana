@@ -215,7 +215,7 @@ function (angular, _, $, coreModule, config) {
           click: $scope.loadOrgs
         },
         {
-          text: contextSrv.systemsMap[_.findIndex(contextSrv.systemsMap,{'Id': contextSrv.system})].SystemsName,
+          text: contextSrv.systemsMap[_.findIndex(contextSrv.systemsMap,{'Id': contextSrv.user.systemId})].SystemsName,
           icon: "fa fa-fw fa-sitemap",
           click: $scope.loadSystems
         }
@@ -308,7 +308,7 @@ function (angular, _, $, coreModule, config) {
         $scope.appEvent("alert-warning", ['系统尚未初始化', '请新建子系统']);
         return ;
       }
-      if (contextSrv.system == 0 && contextSrv.user.orgId) {
+      if (contextSrv.user.systemId == 0 && contextSrv.user.orgId) {
         $location.url("/systems");
         contextSrv.sidmenu = false;
         return;

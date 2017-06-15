@@ -31,7 +31,7 @@ define([
 
       $scope.analysis = function () {
         var associationObj = _.cloneDeep($scope.targetObj);
-        associationObj.metric = contextSrv.user.orgId + "." + contextSrv.system + "." + $scope.targetObj.metric;
+        associationObj.metric = contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + $scope.targetObj.metric;
         $controller('AlertAssociationCtrl', {$scope: $scope}).initPage(associationObj);
         $scope.status = true;
       };
