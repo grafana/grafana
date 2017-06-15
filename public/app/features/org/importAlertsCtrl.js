@@ -21,7 +21,7 @@ define([
                   var newAlert = {};
                   var milliseconds = (new Date).getTime();
                   newAlert.org = contextSrv.user.orgId;
-                  newAlert.service = contextSrv.system;
+                  newAlert.service = contextSrv.user.systemId;
                   newAlert.alertDetails = target.alertDetails;
                   newAlert.description = target.description;
                   newAlert.name = target.name;

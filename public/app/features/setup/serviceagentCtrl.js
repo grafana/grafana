@@ -28,7 +28,7 @@ function (angular, _, dateMath) {
     $scope.getServiceStatus = function(services) {
       _.each(services, function (service, index) {
         var queries = [{
-          "metric": contextSrv.user.orgId + "." + contextSrv.system + "." + service.id + ".state",
+          "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + service.id + ".state",
           "aggregator": "sum",
           "downsample": "10m-sum",
         }];

@@ -35,4 +35,14 @@ func addSystemMigrations(mg *Migrator) {
     },
   }
   mg.AddMigration("create system_user table ", NewAddTableMigration(system_user))
+
+  system_pick := Table{
+    Name: "system_pick",
+    Columns: []*Column{
+      {Name: "id", Type: DB_BigInt, IsPrimaryKey: true, IsAutoIncrement: true},
+      {Name: "user_id", Type: DB_NVarchar, Length: 255, Nullable: false},
+      {Name: "system_id", Type: DB_BigInt, Nullable: false},
+    },
+  }
+  mg.AddMigration("create system_pick table ", NewAddTableMigration(system_pick))
 }

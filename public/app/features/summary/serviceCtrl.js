@@ -116,7 +116,7 @@ define([
           $scope.warningScript = "请填写主机名";
           return;
         }
-        contextSrv.system = $scope.summarySelect.system;
+        contextSrv.user.systemId = $scope.summarySelect.system;
         $scope.getServices();
       };
 

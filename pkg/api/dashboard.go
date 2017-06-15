@@ -35,7 +35,7 @@ func GetDashboard(c *middleware.Context) {
 
 	slug := strings.ToLower(c.Params(":slug"))
 
-	query := m.GetDashboardQuery{Slug: slug, OrgId: c.OrgId}
+	query := m.GetDashboardQuery{Slug: slug, OrgId: c.OrgId, SystemId: c.SystemId}
 	err := bus.Dispatch(&query)
 	if err != nil {
 		c.JsonApiErr(404, "Dashboard not found", nil)
@@ -69,7 +69,7 @@ func GetDashboard(c *middleware.Context) {
 func DeleteDashboard(c *middleware.Context) {
 	slug := c.Params(":slug")
 
-	query := m.GetDashboardQuery{Slug: slug, OrgId: c.OrgId}
+	query := m.GetDashboardQuery{Slug: slug, OrgId: c.OrgId, SystemId: c.SystemId}
 	if err := bus.Dispatch(&query); err != nil {
 		c.JsonApiErr(404, "Dashboard not found", nil)
 		return

@@ -18,7 +18,7 @@ define([
       $scope.new = function() {
         console.log($scope.knowledge);
         $scope.knowledge.org_id = contextSrv.user.orgId;
-        $scope.knowledge.system_id = contextSrv.system;
+        $scope.knowledge.system_id = contextSrv.user.systemId;
 
         backendSrv.knowledge({
           method: "PUT",

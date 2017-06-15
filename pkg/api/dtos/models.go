@@ -27,6 +27,7 @@ type CurrentUser struct {
 	OrgRole        m.RoleType `json:"orgRole"`
 	IsGrafanaAdmin bool       `json:"isGrafanaAdmin"`
 	GravatarUrl    string     `json:"gravatarUrl"`
+	SystemId       int64      `json:"systemId"`
 }
 
 type DashboardMeta struct {

@@ -215,7 +215,7 @@ function (angular, _, $, coreModule, config) {
           click: $scope.loadOrgs
         },
         {
-          text: contextSrv.systemsMap[_.findIndex(contextSrv.systemsMap,{'Id': contextSrv.system})].SystemsName,
+          text: contextSrv.systemsMap[_.findIndex(contextSrv.systemsMap,{'Id': contextSrv.user.systemId})].SystemsName,
           icon: "fa fa-fw fa-sitemap",
           click: $scope.loadSystems
         }
@@ -303,15 +303,9 @@ function (angular, _, $, coreModule, config) {
       $scope.systemSection = false;
       $scope.mainLinks = [];
       $scope.dashboardTitle = "";
-      if(!contextSrv.systemsMap.length && contextSrv.isSignedIn) {
-        $location.url("/org");
-        $scope.appEvent("alert-warning", ['系统尚未初始化', '请新建子系统']);
+      if(contextSrv.user.systemId == 0 && contextSrv.user.orgId && contextSrv.isSignedIn) {
+        $location.url("/newcomer");
         return ;
-      }
-      if (contextSrv.system == 0 && contextSrv.user.orgId) {
-        $location.url("/systems");
-        contextSrv.sidmenu = false;
-        return;
       }
       var currentPath = $location.path();
       if (currentPath.indexOf('/admin') === 0) {
