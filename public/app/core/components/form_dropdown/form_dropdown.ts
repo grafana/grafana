@@ -194,17 +194,19 @@ export class FormDropdownCtrl {
 
 const template =  `
 <input type="text"
-data-provide="typeahead"
-class="gf-form-input"
-spellcheck="false"
-style="display:none"></input>
+  data-provide="typeahead"
+  class="gf-form-input"
+  spellcheck="false"
+  style="display:none">
+</input>
 
 <a class="gf-form-label"
 	 ng-class="ctrl.cssClass"
 	 tabindex="1"
 	 ng-click="ctrl.open()"
 	 give-focus="ctrl.focus"
-	 ng-bind-html="ctrl.display"></a>
+	 ng-bind-html="ctrl.display">
+</a>
 `;
 
 export function formDropdownDirective() {
@@ -221,6 +223,7 @@ export function formDropdownDirective() {
       onChange: "&",
       cssClass: "@",
       allowCustom: "@",
+      selectMode: "@",
     },
     link: function() {
     }
