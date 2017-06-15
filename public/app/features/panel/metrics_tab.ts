@@ -5,8 +5,6 @@ import _ from 'lodash';
 import {DashboardModel} from '../dashboard/model';
 
 export class MetricsTabCtrl {
-  dsSegment: any;
-  mixedDsSegment: any;
   dsName: string;
   panel: any;
   panelCtrl: any;
@@ -14,30 +12,26 @@ export class MetricsTabCtrl {
   current: any;
   nextRefId: string;
   dashboard: DashboardModel;
+  panelDsValue: any;
+  addQueryDropdown: any;
 
   /** @ngInject */
-  constructor($scope, private uiSegmentSrv, datasourceSrv) {
+  constructor($scope, private uiSegmentSrv, private datasourceSrv) {
     this.panelCtrl = $scope.ctrl;
     $scope.ctrl = this;
 
     this.panel = this.panelCtrl.panel;
     this.dashboard = this.panelCtrl.dashboard;
     this.datasources = datasourceSrv.getMetricSources();
-
-    var dsValue = this.panelCtrl.panel.datasource || null;
+    this.panelDsValue = this.panelCtrl.panel.datasource || null;
 
     for (let ds of this.datasources) {
-      if (ds.value === dsValue) {
+      if (ds.value === this.panelDsValue) {
         this.current = ds;
       }
     }
 
-    if (!this.current) {
-      this.current = {name: dsValue + ' not found', value: null};
-    }
-
-    this.dsSegment = uiSegmentSrv.newSegment({value: this.current.name, selectMode: true});
-    this.mixedDsSegment = uiSegmentSrv.newSegment({value: 'Add Query', selectMode: true, fake: true});
+    this.addQueryDropdown = {text: 'Add Query', value: null, fake: true};
 
     // update next ref id
     this.panelCtrl.nextRefId = this.dashboard.getNextQueryLetter(this.panel);
@@ -46,33 +40,28 @@ export class MetricsTabCtrl {
   getOptions(includeBuiltin) {
     return Promise.resolve(this.datasources.filter(value => {
       return includeBuiltin || !value.meta.builtIn;
-    }).map(value => {
-      return this.uiSegmentSrv.newSegment(value.name);
+    }).map(ds => {
+      return {value: ds.value, text: ds.name, datasource: ds};
     }));
   }
 
-  datasourceChanged() {
-    var ds = _.find(this.datasources, {name: this.dsSegment.value});
-    if (ds) {
-      this.current = ds;
-      this.panelCtrl.setDatasource(ds);
+  datasourceChanged(option) {
+    if (!option) {
+      return;
     }
+
+    this.current = option.datasource;
+    this.panelCtrl.setDatasource(option.datasource);
   }
 
-  mixedDatasourceChanged() {
-    var target: any = {isNew: true};
-    var ds = _.find(this.datasources, {name: this.mixedDsSegment.value});
-
-    if (ds) {
-      target.datasource = ds.name;
-      this.panelCtrl.addQuery(target);
+  addMixedQuery(option) {
+    if (!option) {
+      return;
     }
 
-    // metric segments are really bad, requires hacks to update
-    const segment = this.uiSegmentSrv.newSegment({value: 'Add Query', selectMode: true, fake: true});
-    this.mixedDsSegment.value = segment.value;
-    this.mixedDsSegment.html = segment.html;
-    this.mixedDsSegment.text = segment.text;
+    var target: any = {isNew: true};
+    this.panelCtrl.addQuery({isNew: true, datasource: option.datasource.name});
+    this.addQueryDropdown = {text: 'Add Query', value: null, fake: true};
   }
 
   addQuery() {
