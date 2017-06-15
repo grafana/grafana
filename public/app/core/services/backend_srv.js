@@ -144,14 +144,15 @@ function (angular, _, coreModule, config) {
     };
 
     //update system cache when systems change
-    this.updateSystemsMap = function() {
-      this.get('/api/auth/keys').then(function (tokens) {
+    this.updateSystemsMap = function () {
+      var getTokens = this.get('/api/auth/keys').then(function (tokens) {
         self.tokens = tokens;
       });
 
-      return this.get("/api/user/system").then(function (systems) {
+      var getSystems = this.get("/api/user/system").then(function (systems) {
         contextSrv.systemsMap = systems;
       });
+      return $q.all([getTokens, getSystems])
     };
 
     this.updateSystemId = function(id) {
@@ -159,7 +160,7 @@ function (angular, _, coreModule, config) {
     };
 
     this.initCustomizedSources = function () {
-      this.get('/api/customized_sources').then(function (result) {
+      return this.get('/api/customized_sources').then(function (result) {
         self.alertDUrl = result.alert;
         contextSrv.elkUrl = result.elk;
       });
