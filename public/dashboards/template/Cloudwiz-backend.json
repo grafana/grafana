@@ -1,0 +1,1562 @@
+{
+  "id": 1,
+  "title": "Cloudwiz backend",
+  "system": "1",
+  "originalTitle": "Cloudwiz backend",
+  "tags": [],
+  "style": "dark",
+  "timezone": "browser",
+  "editable": true,
+  "hideControls": false,
+  "sharedCrosshair": false,
+  "rows": [
+    {
+      "collapse": false,
+      "editable": true,
+      "height": 319,
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 6,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "errors": {},
+              "metric": "gAllValidMetricNum",
+              "refId": "A"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "errors": {},
+              "metric": "cNewValidMetricNum",
+              "refId": "B",
+              "shouldComputeRate": true
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Number of Metrics monitored",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 5,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "errors": {},
+              "metric": "mAlertEvaluationTimeMillis",
+              "refId": "A"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "alertEvaluationTimeMillis",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 3,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "gAlertDefinitionNum",
+              "refId": "A"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "errors": {},
+              "hide": false,
+              "metric": "gAlertQueryNum",
+              "refId": "B"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "errors": {},
+              "metric": "gAlertDefinitionAddNum",
+              "refId": "C"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "errors": {},
+              "metric": "gAlertDefinitionUpdateNum",
+              "refId": "D"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "errors": {},
+              "metric": "gAlertDefinitionDeleteNum",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Alerts",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 7,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "errors": {},
+              "metric": "cDetectAnomalyTaskNum",
+              "refId": "A",
+              "shouldComputeRate": false
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "errors": {},
+              "metric": "cFetchDataTaskNum",
+              "refId": "B",
+              "shouldComputeRate": false
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "errors": {},
+              "metric": "cFindFreqTaskNum",
+              "refId": "C",
+              "shouldComputeRate": false
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "errors": {},
+              "metric": "cPollingExceptionNum",
+              "refId": "D",
+              "shouldComputeRate": false
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Number of periodic tasks",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 8,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "errors": {},
+              "metric": "mPatternMatchTimeMillis",
+              "refId": "A"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Evaluation time of pattern matching in milliseconds",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 9,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "errors": {},
+              "metric": "gPatternTaskForAlertNum",
+              "refId": "A"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "errors": {},
+              "metric": "gPatternTaskForAnomalyNum",
+              "refId": "B"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "errors": {},
+              "metric": "gPatternTaskNum",
+              "refId": "C"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Number of pattern matching tasks",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 10,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mFetchDataTimeMillis",
+              "refId": "A"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mFetchDataTimeMillis.p99",
+              "refId": "B"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mFetchDataTimeMillis.p999",
+              "refId": "C"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mFetchDataTimeMillis.min",
+              "refId": "D"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mFetchDataTimeMillis.max",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Fetch Data Time (Milliseconds)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 12,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mDecomposeTimeMillis",
+              "refId": "A"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mDecomposeTimeMillis.p99",
+              "refId": "B"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mDecomposeTimeMillis.p999",
+              "refId": "C"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mDecomposeTimeMillis.min",
+              "refId": "D"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mDecomposeTimeMillis.max",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Decompose Time (Milliseconds)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 11,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mAnomalyDetectionTimeMillis",
+              "refId": "A"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mAnomalyDetectionTimeMillis.p99",
+              "refId": "B"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mAnomalyDetectionTimeMillis.p999",
+              "refId": "C"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mAnomalyDetectionTimeMillis.min",
+              "refId": "D"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mAnomalyDetectionTimeMillis.max",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Anomaly Detection Time (Milliseconds)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 13,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 4,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mFindFrequencyTimeMillis",
+              "refId": "A"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mFindFrequencyTimeMillis.p99",
+              "refId": "B"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mFindFrequencyTimeMillis.p999",
+              "refId": "C"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mFindFrequencyTimeMillis.min",
+              "refId": "D"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "mFindFrequencyTimeMillis.max",
+              "refId": "E"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Find Frequency Time (Milliseconds)",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 14,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "cAnomaliesDetected",
+              "refId": "A",
+              "shouldComputeRate": true
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Anomalies Detected",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 15,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "cAnomalyDetectionExceptions",
+              "refId": "A",
+              "shouldComputeRate": true
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "errors": {},
+              "metric": "cAnomalyDetectionNoFreqErrors",
+              "refId": "B",
+              "shouldComputeRate": true
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "errors": {},
+              "hide": true,
+              "metric": "cAnomalyDetectionNoSeasonalErrors",
+              "refId": "C",
+              "shouldComputeRate": true
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "errors": {},
+              "metric": "cAnomalyDetectionPersistFailure",
+              "refId": "D",
+              "shouldComputeRate": true
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "downsampleInterval": "",
+              "errors": {},
+              "hide": true,
+              "metric": "cAnomalyDetectionReevaluations",
+              "refId": "E",
+              "shouldComputeRate": true
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Anomaly Detection Workload",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 16,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "cFindFreqTaskNum",
+              "refId": "A",
+              "shouldComputeRate": true
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "errors": {},
+              "metric": "cFindFrequencyExceptions",
+              "refId": "B",
+              "shouldComputeRate": true
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "errors": {},
+              "metric": "cFindFrequencyMetricHostPairsSkipped",
+              "refId": "C",
+              "shouldComputeRate": true
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Find Frequency Workload",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 17,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "cFetchDataExceptions",
+              "refId": "A",
+              "shouldComputeRate": true
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "errors": {},
+              "metric": "cFetchDataTaskNum",
+              "refId": "B",
+              "shouldComputeRate": true
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Fetch Data Workload",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 18,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "",
+              "errors": {},
+              "metric": "gDataPointsCached",
+              "refId": "A"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "errors": {},
+              "metric": "cNewDataPoints",
+              "refId": "B",
+              "shouldComputeRate": true
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "Data Points in Cache",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 19,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "15m",
+              "errors": {},
+              "metric": "gNumFreeRConnectionPool",
+              "refId": "A"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "15m",
+              "errors": {},
+              "metric": "gNumBusyRConnectionPool",
+              "refId": "B"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "downsampleInterval": "15m",
+              "errors": {},
+              "metric": "cNumNewRConnectionPool",
+              "refId": "C",
+              "shouldComputeRate": true
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "R Connections",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        },
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 22,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "links": [],
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 6,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "15m",
+              "errors": {},
+              "metric": "gNumFreeGraphConnPool",
+              "refId": "A"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "downsampleInterval": "15m",
+              "errors": {},
+              "metric": "gNumBusyGraphConnPool",
+              "refId": "B"
+            },
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "sum",
+              "downsampleInterval": "15m",
+              "errors": {},
+              "metric": "cNumNewGraphConnPool",
+              "refId": "C",
+              "shouldComputeRate": true
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "RCA connection",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "showTitle": true,
+      "title": "Alertd"
+    },
+    {
+      "collapse": true,
+      "editable": true,
+      "height": "250px",
+      "panels": [
+        {
+          "aliasColors": {},
+          "bars": false,
+          "datasource": null,
+          "editable": true,
+          "error": false,
+          "fill": 1,
+          "grid": {
+            "leftLogBase": 1,
+            "leftMax": null,
+            "leftMin": null,
+            "rightLogBase": 1,
+            "rightMax": null,
+            "rightMin": null,
+            "threshold1": null,
+            "threshold1Color": "rgba(216, 200, 27, 0.27)",
+            "threshold2": null,
+            "threshold2Color": "rgba(234, 112, 112, 0.22)"
+          },
+          "id": 21,
+          "legend": {
+            "avg": false,
+            "current": false,
+            "max": false,
+            "min": false,
+            "show": true,
+            "total": false,
+            "values": false
+          },
+          "lines": true,
+          "linewidth": 2,
+          "nullPointMode": "connected",
+          "percentage": false,
+          "pointradius": 5,
+          "points": false,
+          "renderer": "flot",
+          "seriesOverrides": [],
+          "span": 12,
+          "stack": false,
+          "steppedLine": false,
+          "targets": [
+            {
+              "aggregator": "avg",
+              "downsampleAggregator": "avg",
+              "errors": {},
+              "metric": "proc.stat.ctxt",
+              "refId": "A"
+            }
+          ],
+          "timeFrom": null,
+          "timeShift": null,
+          "title": "新的图表",
+          "tooltip": {
+            "shared": true,
+            "value_type": "cumulative"
+          },
+          "type": "graph",
+          "x-axis": true,
+          "y-axis": true,
+          "y_formats": [
+            "short",
+            "short"
+          ]
+        }
+      ],
+      "showTitle": true,
+      "title": "System"
+    }
+  ],
+  "time": {
+    "from": "now-1h",
+    "to": "now"
+  },
+  "timepicker": {
+    "now": true,
+    "refresh_intervals": [
+      "5s",
+      "10s",
+      "30s",
+      "1m",
+      "5m",
+      "15m",
+      "30m",
+      "1h",
+      "2h",
+      "1d"
+    ],
+    "time_options": [
+      "5m",
+      "15m",
+      "1h",
+      "6h",
+      "12h",
+      "24h",
+      "2d",
+      "7d",
+      "30d"
+    ]
+  },
+  "templating": {
+    "list": []
+  },
+  "annotations": {
+    "list": []
+  },
+  "refresh": false,
+  "schemaVersion": 7,
+  "version": 11,
+  "links": []
+}
