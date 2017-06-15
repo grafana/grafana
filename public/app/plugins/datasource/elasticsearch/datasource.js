@@ -347,17 +347,16 @@ function (angular, _, moment, kbn, dateMath, ElasticQueryBuilder, IndexPattern, 
 
     function compare(target) {
       if (target.count0 == 0 && target.count1 > 0) {
-        target.count = target.count0 +" Gone";
+        target.count = "消失日志:" + target.count1;
       } else if (target.count0 > 0 && target.count1 == 0) {
-        target.count = target.count0 +" New";
+        target.count = "新增日志:" + target.count0;
       } else if (target.count0 > 0 && target.count1 > 0 && target.count0 >= target.count1) {
         var num = ((Math.abs(target.count0 - target.count1) / target.count1)*100).toFixed();
-        target.count = target.count0 + " +" + num + "%";
+        target.count = "出现次数:" + target.count0 + "<br>同比增长" + num + "%";
       } else if (target.count0 > 0 && target.count1 > 0 && target.count0 < target.count1) {
         var num = ((Math.abs(target.count0 - target.count1) / target.count0)*100).toFixed();
-        target.count = target.count0 + " -" + num + "%";
+        target.count = "出现次数:" + target.count0 + "<br>同比减少" + num + "%";
       } else {
-        console.log(target);
         target.count = "0";
       }
     };
