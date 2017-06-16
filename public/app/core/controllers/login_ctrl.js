@@ -74,7 +74,7 @@ function (angular, coreModule, config) {
         if (result.redirectUrl) {
           window.location.href = result.redirectUrl;
         } else {
-          window.location.href = config.appSubUrl + '/';
+          window.location.href = config.appSubUrl + '/systems';
         }
       });
     };
@@ -87,7 +87,7 @@ function (angular, coreModule, config) {
         yesText: '确定',
         modalClass : 'contact-us',
       });
-    }
+    };
 
     $scope.init();
 
