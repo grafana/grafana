@@ -45,7 +45,7 @@
 				</div>
 			</div>
 
-      <folder-picker ng-if="!dashboardMeta.isFolder" selected-folder="dashboardMeta.parentId" on-change="onFolderChange"></folder-picker>
+      <folder-picker ng-if="!dashboardMeta.isFolder" selected-folder="dashboardMeta.parentId" on-change="onFolderChange($folderId)"></folder-picker>
 		</div>
 
     <div class="section">

@@ -22,7 +22,8 @@ const  template = `
 				<input type="text" class="gf-form-input" ng-model="ctrl.clone.title" give-focus="true" required>
 			</div>
       <div class="gf-form">
-        <folder-picker ng-if="!clone.meta.isFolder" selected-folder="clone.meta.parentId" on-change="onFolderChange"></folder-picker>
+        <folder-picker ng-if="!ctrl.clone.meta.isFolder" selected-folder="ctrl.clone.meta.parentId" on-change="ctrl.onFolderChange($folderId)">
+        </folder-picker>
       </div>
 		</div>
 

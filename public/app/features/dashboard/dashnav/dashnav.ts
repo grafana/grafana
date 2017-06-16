@@ -22,8 +22,8 @@ export class DashNavCtrl {
     private backendSrv,
     private $timeout,
     private datasourceSrv,
-    private navModelSrv) {
-
+    private navModelSrv,
+    private contextSrv) {
       this.navModel = navModelSrv.getDashboardNav(this.dashboard, this);
 
       appEvents.on('save-dashboard', this.saveDashboard.bind(this), $scope);
@@ -36,6 +36,10 @@ export class DashNavCtrl {
           this.titleTooltip += '<br>Expires: &nbsp;' + moment(meta.expires).fromNow() + '<br>';
         }
       }
+    }
+
+    toggleSideMenu() {
+      this.contextSrv.toggleSideMenu();
     }
 
     openEditView(editview) {
@@ -138,6 +142,17 @@ export class DashNavCtrl {
 
     onFolderChange(parentId) {
       this.dashboard.parentId = parentId;
+    }
+
+    showSearch() {
+      this.$rootScope.appEvent('show-dash-search');
+    }
+
+    navItemClicked(navItem, evt) {
+      if (navItem.clickHandler) {
+        navItem.clickHandler();
+        evt.preventDefault();
+      }
     }
 }
 

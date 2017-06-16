@@ -45,7 +45,7 @@ export class FolderPickerCtrl {
   folderChanged() {
     const selected = _.find(this.folders, {title: this.selectedFolderSegment.value});
     if (selected) {
-      this.onChange(selected.id);
+      this.onChange({$folderId: selected.id});
     }
   }
 }
@@ -70,7 +70,7 @@ export function folderPicker() {
     controllerAs: 'ctrl',
     scope: {
       selectedFolder: "<",
-      onChange: "<",
+      onChange: "&",
       rootFolderName: "@"
     }
   };
