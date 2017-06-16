@@ -194,6 +194,10 @@ func PostDashboard(c *middleware.Context, cmd m.SaveDashboardCommand) Response {
 		return ApiError(403, "Does not have permission to save this dashboard", nil)
 	}
 
+	if dash.IsFolder && dash.ParentId > 0 {
+		return ApiError(400, m.ErrDashboardFolderCannotHaveParent.Error(), nil)
+	}
+
 	// Check if Title is empty
 	if dash.Title == "" {
 		return ApiError(400, m.ErrDashboardTitleEmpty.Error(), nil)
