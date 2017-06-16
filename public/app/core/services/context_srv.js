@@ -64,7 +64,7 @@ function (angular, _, coreModule, store, config) {
     this.isOrgAdmin = this.hasRole('Admin');
     this.system = 0;
     this.dashboardLink = "";
-    this.systemsMap = {};
+    this.systemsMap = window.grafanaBootData.systems;
 
   });
 });

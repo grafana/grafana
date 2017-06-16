@@ -295,7 +295,7 @@ function (angular, _, $, coreModule, config) {
 
     $scope.switchOrg = function(orgId) {
       backendSrv.post('/api/user/using/' + orgId).then(function() {
-        window.location.href = $scope.getUrl('/');
+        window.location.href = $scope.getUrl('/systems');
       });
     };
 
@@ -303,8 +303,20 @@ function (angular, _, $, coreModule, config) {
       $scope.systemSection = false;
       $scope.mainLinks = [];
       $scope.dashboardTitle = "";
-      if(contextSrv.user.systemId == 0 && contextSrv.user.orgId && contextSrv.isSignedIn) {
+      if(!contextSrv.isSignedIn) {
+        $location.url("/login");
+        return;
+      }
+      if(!contextSrv.systemsMap.length) {
         $location.url("/newcomer");
+        return ;
+      }
+      if(contextSrv.user.systemId == 0 && contextSrv.user.orgId) {
+        $location.url("/newcomer");
+        return ;
+      }
+      if (!isCurrentSystemInSysmtes(contextSrv.user.systemId)) {
+        $location.url("/systems");
         return ;
       }
       var currentPath = $location.path();
@@ -312,10 +324,18 @@ function (angular, _, $, coreModule, config) {
         $scope.setupAdminNav();
       } else if(currentPath.indexOf('/dashboard/db/') == 0){
         contextSrv.dashboardLink = currentPath;
+      } else if(currentPath.indexOf('/login') == 0){
+        return;
       }
       $scope.setupMainNav();
     };
 
+    function isCurrentSystemInSysmtes(currId) {
+      if (backendSrv.getSystemById(currId) == '') {
+        return false;
+      }
+      return true;
+    }
     $scope.updateSubmenu = function(menu) {
       if(menu.submenu){
         $scope.submenu = menu.submenu;

@@ -145,9 +145,7 @@ define([
                 return d.promise;
               }
             }, function(err) {
-              var d = $q.defer();
-              d.resolve();
-              return d.promise;
+              getPlatform();
             });
 
             //------- alertNum = alertRules * hostNum;
@@ -175,15 +173,19 @@ define([
               });
             };
 
+            var getPlatform = function() {
+              backendSrv.get('/api/static/hosts').then(function(result) {
+                scope.platform = result.hosts;
+              });
+            };
+
             $q.all([getHostStatus, getAlertNum, getAlertStatus, getService, getHealth]).then(function(result) {
               var hostNum = result[0],
                   alertRulesNum = result[1],
                   alertStatus = result[2],
                   getService = result[3];
               if(typeof(hostNum) == "undefined"){
-                backendSrv.get('/api/static/hosts').then(function(result) {
-                  scope.platform = result.hosts;
-                });
+                getPlatform();
               } else {
                 getService();
                 scope.alertNum = alertRulesNum * hostNum;
@@ -201,6 +203,8 @@ define([
                 ];
                 setPie('sys_annomaly', system, annomalyPieData);
               }
+            },function(res) {
+              getPlatform();
             });
           });
           scope.init();
