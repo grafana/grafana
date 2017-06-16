@@ -841,7 +841,7 @@ function($, _) {
       {
         text: 'temperature',
         submenu: [
-          {text: 'Celcius (°C)',    value: 'celsius'     },
+          {text: 'Celsius (°C)',    value: 'celsius'     },
           {text: 'Farenheit (°F)',  value: 'farenheit'   },
           {text: 'Kelvin (K)',      value: 'kelvin'      },
         ]
