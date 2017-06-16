@@ -303,11 +303,19 @@ function (angular, _, $, coreModule, config) {
       $scope.systemSection = false;
       $scope.mainLinks = [];
       $scope.dashboardTitle = "";
-      if(contextSrv.user.systemId == 0 && contextSrv.user.orgId && contextSrv.isSignedIn) {
+      if(!contextSrv.isSignedIn) {
+        $location.url("/login");
+        return;
+      }
+      if(!contextSrv.systemsMap.length) {
         $location.url("/newcomer");
         return ;
       }
-      if (!isCurrentSystemInSysmtes(contextSrv.user.systemId) && contextSrv.isSignedIn) {
+      if(contextSrv.user.systemId == 0 && contextSrv.user.orgId) {
+        $location.url("/newcomer");
+        return ;
+      }
+      if (!isCurrentSystemInSysmtes(contextSrv.user.systemId)) {
         $location.url("/systems");
         return ;
       }
