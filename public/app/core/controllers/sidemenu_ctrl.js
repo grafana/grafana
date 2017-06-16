@@ -307,7 +307,7 @@ function (angular, _, $, coreModule, config) {
         $location.url("/newcomer");
         return ;
       }
-      if (!isCurrentSystemInSysmtes(contextSrv.user.systemId)) {
+      if (!isCurrentSystemInSysmtes(contextSrv.user.systemId) && contextSrv.isSignedIn) {
         $location.url("/systems");
         return ;
       }
