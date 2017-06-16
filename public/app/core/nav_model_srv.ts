@@ -197,7 +197,7 @@ export class NavModelSrv {
       clickHandler: () => dashNavCtrl.showHelpModal()
     });
 
-    if (this.contextSrv.isEditor) {
+    if (this.contextSrv.isEditor && !dashboard.meta.isFolder) {
       menu.push({
         title: 'Save As ...',
         icon: 'fa fa-fw fa-save',

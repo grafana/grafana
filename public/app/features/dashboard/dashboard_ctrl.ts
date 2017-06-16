@@ -128,8 +128,10 @@ export class DashboardCtrl {
         $rootScope.$broadcast("refresh");
       };
 
-      $scope.onFolderChange = function(parentId) {
-        $scope.dashboard.parentId = parentId;
+      $scope.onFolderChange = function(folder) {
+        $scope.dashboard.parentId = folder.id;
+        $scope.dashboard.meta.folderId = folder.id;
+        $scope.dashboard.meta.folderTitle= folder.title;
       };
     }
 

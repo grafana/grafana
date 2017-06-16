@@ -23,8 +23,10 @@
     </div>
 
     <div class="gf-form">
-      <span class="gf-form-label width-6">Folder</span>
-      <folder-picker selected-folder="ctrl.panel.folderId" on-change="ctrl.onFolderChange" root-folder-name="All"></folder-picker>
+      <folder-picker  initial-text="ctrl.folderTitle"
+											on-change="ctrl.onFolderChange($folder)"
+											label-class="width-6">
+			</folder-picker>
     </div>
 
     <div class="gf-form">

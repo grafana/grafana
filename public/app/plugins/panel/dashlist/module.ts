@@ -10,6 +10,7 @@ class DashListCtrl extends PanelCtrl {
 
   groups: any[];
   modes: any[];
+  folderTitle: any;
 
   panelDefaults = {
     query: '',
@@ -19,7 +20,7 @@ class DashListCtrl extends PanelCtrl {
     search: false,
     starred: true,
     headings: true,
-    folderId: 0
+    folderId: 0,
   };
 
   /** @ngInject */
@@ -65,6 +66,10 @@ class DashListCtrl extends PanelCtrl {
     this.editorTabIndex = 1;
     this.modes = ['starred', 'search', 'recently viewed'];
     this.addEditorTab('Options', 'public/app/plugins/panel/dashlist/editor.html');
+
+    if (!this.panel.folderId) {
+      this.folderTitle = "All";
+    }
   }
 
   onRefresh() {
@@ -126,9 +131,10 @@ class DashListCtrl extends PanelCtrl {
     });
   }
 
-  onFolderChange(parentId) {
-    this.$scope.$parent.ctrl.panel.folderId = parentId;
-    this.$scope.$parent.ctrl.refresh();
+  onFolderChange(folder) {
+    this.panel.folderId = folder.id;
+    this.panel.folderTitle = folder.title;
+    this.refresh();
   }
 }
 

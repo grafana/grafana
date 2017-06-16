@@ -40,8 +40,8 @@ func GetDashboard(c *middleware.Context) Response {
 	slug := strings.ToLower(c.Params(":slug"))
 
 	query := m.GetDashboardQuery{Slug: slug, OrgId: c.OrgId}
-	err := bus.Dispatch(&query)
-	if err != nil {
+
+	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(404, "Dashboard not found", err)
 	}
 
@@ -70,27 +70,39 @@ func GetDashboard(c *middleware.Context) Response {
 		creator = getUserLogin(dash.CreatedBy)
 	}
 
+	meta := dtos.DashboardMeta{
+		IsStarred:   isStarred,
+		Slug:        slug,
+		Type:        m.DashTypeDB,
+		CanStar:     c.IsSignedIn,
+		CanSave:     canSave,
+		CanEdit:     canEdit,
+		Created:     dash.Created,
+		Updated:     dash.Updated,
+		UpdatedBy:   updater,
+		CreatedBy:   creator,
+		Version:     dash.Version,
+		HasAcl:      dash.HasAcl,
+		IsFolder:    dash.IsFolder,
+		FolderId:    dash.ParentId,
+		FolderTitle: "Root",
+	}
+
+	// lookup folder title
+	if dash.ParentId > 0 {
+		query := m.GetDashboardQuery{Id: dash.ParentId, OrgId: c.OrgId}
+		if err := bus.Dispatch(&query); err != nil {
+			return ApiError(500, "Dashboard folder could not be read", err)
+		}
+		meta.FolderTitle = query.Result.Title
+	}
+
 	// make sure db version is in sync with json model version
 	dash.Data.Set("version", dash.Version)
 
 	dto := dtos.DashboardFullWithMeta{
 		Dashboard: dash.Data,
-		Meta: dtos.DashboardMeta{
-			IsStarred: isStarred,
-			Slug:      slug,
-			Type:      m.DashTypeDB,
-			CanStar:   c.IsSignedIn,
-			CanSave:   canSave,
-			CanEdit:   canEdit,
-			Created:   dash.Created,
-			Updated:   dash.Updated,
-			UpdatedBy: updater,
-			CreatedBy: creator,
-			Version:   dash.Version,
-			HasAcl:    dash.HasAcl,
-			IsFolder:  dash.IsFolder,
-			ParentId:  dash.ParentId,
-		},
+		Meta:      meta,
 	}
 
 	c.TimeRequest(metrics.M_Api_Dashboard_Get)

@@ -6,47 +6,38 @@ import _ from 'lodash';
 
 export class FolderPickerCtrl {
   folders: Folder[];
-  selectedFolder: number;
-  selectedFolderSegment: any;
+  selectedOption: any;
+  initialTitle: string;
   onChange: any;
-  rootFolderName: string;
+  labelClass: string;
 
   /** @ngInject */
-  constructor(private backendSrv, private $scope, private $sce, private uiSegmentSrv) {
-    this.selectedFolderSegment = this.uiSegmentSrv.newSegment({value: this.rootFolderName || 'Root', selectMode: true});
-    this.get();
+  constructor(private backendSrv, private $scope, private $sce) {
+    if (!this.labelClass) {
+      this.labelClass = "width-7";
+    }
+
+    this.selectedOption = {text: this.initialTitle, value: null};
   }
 
-  get() {
+  getOptions(query) {
     var params = {
+      query: query,
       type: 'dash-folder',
     };
 
     return this.backendSrv.search(params).then(result => {
-      this.folders = [{id: 0, title: this.rootFolderName || 'Root', type: 'dash-folder'}];
-      this.folders.push(...result);
-
-      if (this.selectedFolder) {
-        const selected = _.find(this.folders, {id: this.selectedFolder});
-
-        this.selectedFolderSegment.value = selected.title;
-        this.selectedFolderSegment.text = selected.title;
-        this.selectedFolderSegment.html = this.$sce.trustAsHtml(selected.title);
+      if (query === "") {
+        result.unshift({title: "Root", value: 0});
       }
+      return _.map(result, item => {
+        return {text: item.title, value: item.id};
+      });
     });
   }
 
-  getOptions() {
-    return Promise.resolve(this.folders.map(folder => {
-      return this.uiSegmentSrv.newSegment(folder.title);
-    }));
-  }
-
-  folderChanged() {
-    const selected = _.find(this.folders, {title: this.selectedFolderSegment.value});
-    if (selected) {
-      this.onChange({$folderId: selected.id});
-    }
+  folderChanged(option) {
+    this.onChange({$folder: {id: option.value, title: option.text}});
   }
 }
 
@@ -61,17 +52,29 @@ export interface Folder {
   dashboards?: any;
 }
 
+const template = `
+<div class="gf-form">
+  <label class="gf-form-label {{ctrl.labelClass}}">Folder</label>
+  <div class="dropdown">
+    <gf-form-dropdown model="ctrl.selectedOption"
+      get-options="ctrl.getOptions($query)"
+      on-change="ctrl.folderChanged($option)">
+    </gf-form-dropdown>
+  </div>
+</div>
+`;
+
 export function folderPicker() {
   return {
     restrict: 'E',
-    templateUrl: 'public/app/features/dashboard/folder_picker/picker.html',
+    template: template,
     controller: FolderPickerCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      selectedFolder: "<",
+      initialTitle: "<",
       onChange: "&",
-      rootFolderName: "@"
+      labelClass: "@",
     }
   };
 }
