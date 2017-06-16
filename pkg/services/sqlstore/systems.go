@@ -85,11 +85,10 @@ func AddSystemDash(cmd *m.AddSystemDashboardCommand) error {
       return UpdateDashSystems(&update_dash)
     }
 
-    systemId, _ := strconv.ParseInt(cmd.SystemId, 10, 64)
     dashId, _ := strconv.ParseInt(cmd.DashId, 10, 64)
 
     entity := m.SystemDash{
-      SystemId:      systemId,
+      SystemId:      cmd.SystemId,
       DashboardId:   dashId,
     }
     _, err := sess.Insert(&entity)
@@ -128,6 +127,7 @@ func UpdateSystems(systems *dtos.UpdateSystems) error {
   })
 }
 
+//TODO too much thing to do
 func UpdateUserSystems(system *m.UpdateUserSystemCommond) error {
   return inTransaction2(func(sess *session) error {
     if _, err := sess.Exec("update system_user set user_id=? where user_id=?", system.UserId, system.InviteCode); err != nil {

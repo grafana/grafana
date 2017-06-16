@@ -51,6 +51,14 @@ func GetCurrentUserSystem(c *middleware.Context) Response {
   return Json(200, query.Result)
 }
 
+func GetCurrentUserSystemFromIndex(c *middleware.Context) (interface{}, error) {
+  query := m.GetOrgSystemsQuery{OrgId:c.OrgId}
+  if err := bus.Dispatch(&query); err != nil {
+    return nil, err
+  }
+  return query.Result, nil
+}
+
 func AddOrUpdatePickSystem(c *middleware.Context, system_pick m.AddOrUpdateSystemPick) Response {
   system_pick.UserId = strconv.FormatInt(c.UserId, 10);
   if err := bus.Dispatch(&system_pick); err != nil {
