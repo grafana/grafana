@@ -145,14 +145,18 @@ function (angular, _, coreModule, config) {
 
     //update system cache when systems change
     this.updateSystemsMap = function () {
-      var getTokens = this.get('/api/auth/keys').then(function (tokens) {
-        self.tokens = tokens;
-      });
+      var getTokens = this.updateTokens();
 
       var getSystems = this.get("/api/user/system").then(function (systems) {
         contextSrv.systemsMap = systems;
       });
       return $q.all([getTokens, getSystems])
+    };
+
+    this.updateTokens = function () {
+      return this.get('/api/auth/keys').then(function (tokens) {
+        self.tokens = tokens;
+      });
     };
 
     this.updateSystemId = function(id) {

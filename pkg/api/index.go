@@ -39,11 +39,13 @@ func setIndexViewData(c *middleware.Context) error {
 	if themeUrlParam == "light" {
 		currentUser.LightTheme = true
 	}
-
+	//TODO must support Multi-tenant
+	systems, err := GetCurrentUserSystemFromIndex(c)
 	c.Data["User"] = currentUser
 	c.Data["Settings"] = settings
 	c.Data["AppUrl"] = setting.AppUrl
 	c.Data["AppSubUrl"] = setting.AppSubUrl
+	c.Data["Systems"] = systems
 
 	if setting.GoogleAnalyticsId != "" {
 		c.Data["GoogleAnalyticsId"] = setting.GoogleAnalyticsId

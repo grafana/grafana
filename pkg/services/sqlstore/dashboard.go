@@ -10,6 +10,7 @@ import (
 	m "github.com/wangy1931/grafana/pkg/models"
 	"github.com/wangy1931/grafana/pkg/services/search"
 	"strconv"
+	"errors"
 )
 
 func init() {
@@ -112,7 +113,7 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 	}
 	query.Result = new(m.Dashboard)
 	for _, dash := range dashboards {
-		sysId, err := strconv.ParseInt(dash.Data["system"].(string), 10, 64)
+		sysId, err := typeSwitch(dash.Data)
 		if err !=nil {
 			continue
 		}
@@ -123,6 +124,21 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 	}
 
 	return nil
+}
+
+func typeSwitch(dash map[string]interface{}) (int64, error) {
+	switch system := dash["system"].(type) {
+	default:
+		return 0, errors.New("can't resolve the systemId type")
+	case string:
+		sysId, err := strconv.ParseInt(system, 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		return sysId, nil
+	case float64:
+		return int64(system), nil
+	}
 }
 
 type DashboardSearchProjection struct {

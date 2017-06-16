@@ -295,7 +295,7 @@ function (angular, _, $, coreModule, config) {
 
     $scope.switchOrg = function(orgId) {
       backendSrv.post('/api/user/using/' + orgId).then(function() {
-        window.location.href = $scope.getUrl('/');
+        window.location.href = $scope.getUrl('/systems');
       });
     };
 

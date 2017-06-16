@@ -55,12 +55,12 @@ type AddSystemsUserCommand struct {
 
 type AddSystemDashboardCommand struct {
   DashId      string
-  SystemId    string
+  SystemId    int64
 }
 
 type UpdateSystemDashboardCommand struct {
   DashId      string
-  SystemId    string
+  SystemId    int64
 }
 
 type UpdateUserSystemCommond struct {

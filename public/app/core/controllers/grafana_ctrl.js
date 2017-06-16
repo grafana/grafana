@@ -26,7 +26,7 @@ function (angular, _, $, coreModule, config, store) {
       utilSrv.init();
       if (!($location.path() === '/login' || $location.path() === '/signupfree')) {
         backendSrv.initCustomizedSources();
-        backendSrv.updateSystemsMap();
+        backendSrv.updateTokens();
       }
       $scope.dashAlerts = alertSrv;
     };
