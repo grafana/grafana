@@ -9,7 +9,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('SystemsummaryCtrl', function ($scope, $location, backendSrv, contextSrv, datasourceSrv, alertMgrSrv, healthSrv) {
+    module.controller('SystemsummaryCtrl', function ($scope, $location, backendSrv, contextSrv, datasourceSrv, alertMgrSrv, healthSrv, $timeout) {
       $scope.getUrl = function(url) {
         return config.appSubUrl + url;
       };
@@ -184,6 +184,7 @@ define([
         $scope.initHostSummary(hostRow.panels[0]);
         $scope.initTopN(topNRow.panels);
         $scope.initHealth(healthRow.panels[0]);
+        $scope.initPrediction(predictionRow.panels);
         return panelRow;
       };
 
@@ -358,7 +359,7 @@ define([
         });
       };
 
-      $scope.getPrediction = function (panels) {
+      $scope.initPrediction = function (panels) {
         var prediction = [['df.bytes.free', 'df.bytes.free.prediction'], ['cpu.usr', 'cpu.usr.prediction'], ['proc.meminfo.active', 'proc.meminfo.active.prediction']];
         _.each(panels, function (panel, index) {
           panel.targets = [];
@@ -373,10 +374,14 @@ define([
           panel.seriesOverrides = [{ "alias": prediction[index][1], "color": "#DEDAF7", "zindex": -2 }];
           panel.y_formats = ['bytes', 'bytes'];
           panel.timeForward = "1d";
+          panel.legend = {};
           panel.legend.show = false;
         });
         panels[1].y_formats = ['percent', 'percent'];
+      };
 
+      $scope.getPrediction = function (panels) {
+        var prediction = [['df.bytes.free', 'df.bytes.free.prediction'], ['cpu.usr', 'cpu.usr.prediction'], ['proc.meminfo.active', 'proc.meminfo.active.prediction']];
         _.each(prediction, function (item, index) {
           var queries = [{
             "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + item[1],
@@ -473,11 +478,11 @@ define([
         });
 
         cpuTopN.targets[0].metric = 'cpu.topN';
-
         memoryTopN.targets[0].metric = 'mem.topN';
-
       };
 
-      $scope.init();
+      $timeout(function () {
+        $scope.init();
+      });
     });
   });
