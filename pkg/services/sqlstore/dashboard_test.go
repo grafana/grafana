@@ -247,6 +247,22 @@ func TestDashboardDataAccess(t *testing.T) {
 				So(query.Result.ParentId, ShouldEqual, 0)
 			})
 
+			Convey("Should be able to delete a dashboard folder and its children", func() {
+				deleteCmd := &m.DeleteDashboardCommand{Slug: savedFolder.Slug}
+				err := DeleteDashboard(deleteCmd)
+				So(err, ShouldBeNil)
+
+				query := search.FindPersistedDashboardsQuery{
+					OrgId:    1,
+					ParentId: savedFolder.Id,
+				}
+
+				err = SearchDashboards(&query)
+				So(err, ShouldBeNil)
+
+				So(len(query.Result), ShouldEqual, 0)
+			})
+
 			Convey("Should be able to get dashboard tags", func() {
 				query := m.GetDashboardTagsQuery{OrgId: 1}
 
