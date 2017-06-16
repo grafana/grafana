@@ -132,6 +132,26 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				CallPostDashboard(sc)
 				So(sc.resp.Code, ShouldEqual, 200)
 			})
+
+			Convey("When saving a dashboard folder in another folder", func() {
+				bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+					query.Result = fakeDash
+					query.Result.IsFolder = true
+					return nil
+				})
+				invalidCmd := models.SaveDashboardCommand{
+					Dashboard: simplejson.NewFromAny(map[string]interface{}{
+						"parentId": fakeDash.ParentId,
+						"title":    fakeDash.Title,
+					}),
+				}
+				Convey("Should return an error", func() {
+					postDashboardScenario("When calling POST on", "/api/dashboards", "/api/dashboards", role, invalidCmd, func(sc *scenarioContext) {
+						CallPostDashboard(sc)
+						So(sc.resp.Code, ShouldEqual, 400)
+					})
+				})
+			})
 		})
 	})
 
