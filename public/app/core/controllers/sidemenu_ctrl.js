@@ -316,7 +316,7 @@ function (angular, _, $, coreModule, config) {
         $scope.setupAdminNav();
       } else if(currentPath.indexOf('/dashboard/db/') == 0){
         contextSrv.dashboardLink = currentPath;
-      } else if(currentPath.indexOf('/login') == 0 ){
+      } else if(currentPath.indexOf('/login') == 0){
         return;
       }
       $scope.setupMainNav();
