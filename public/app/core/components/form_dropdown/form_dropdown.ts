@@ -72,7 +72,9 @@ export class FormDropdownCtrl {
 
     this.inputElement.keydown(evt => {
       if (evt.keyCode === 13) {
-        this.inputElement.blur();
+        setTimeout(() => {
+          this.inputElement.blur();
+        }, 100);
       }
     });
 
