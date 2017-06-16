@@ -307,15 +307,27 @@ function (angular, _, $, coreModule, config) {
         $location.url("/newcomer");
         return ;
       }
+      if (!isCurrentSystemInSysmtes(contextSrv.user.systemId)) {
+        $location.url("/systems");
+        return ;
+      }
       var currentPath = $location.path();
       if (currentPath.indexOf('/admin') === 0) {
         $scope.setupAdminNav();
       } else if(currentPath.indexOf('/dashboard/db/') == 0){
         contextSrv.dashboardLink = currentPath;
+      } else if(currentPath.indexOf('/login') == 0 ){
+        return;
       }
       $scope.setupMainNav();
     };
 
+    function isCurrentSystemInSysmtes(currId) {
+      if (backendSrv.getSystemById(currId) == '') {
+        return false;
+      }
+      return true;
+    }
     $scope.updateSubmenu = function(menu) {
       if(menu.submenu){
         $scope.submenu = menu.submenu;
