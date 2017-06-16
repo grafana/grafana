@@ -119,11 +119,11 @@ function (angular, _, $, coreModule, config) {
         click: $scope.updateSubmenu
       });
 
-      $scope.mainLinks.push({
-        text: "轮值",
-        icon: "fa fa-fw fa-calendar",
-        href: $scope.getUrl("/oncallerschedule"),
-      });
+      // $scope.mainLinks.push({
+      //   text: "轮值",
+      //   icon: "fa fa-fw fa-calendar",
+      //   href: $scope.getUrl("/oncallerschedule"),
+      // });
 
       $scope.mainLinks.push({
         text: "安装指南",
