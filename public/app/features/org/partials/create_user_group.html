@@ -1,23 +1,26 @@
-<div class="modal-body" ng-controller="UserGroupsCtrl">
+<div class="modal-body">
   <div class="modal-header">
 		<h2 class="modal-header-title">
-			Create User Group
+			<span class="p-l-1">Create User Group</span>
 		</h2>
-		<a class="modal-header-close" ng-click="dismiss();">
+
+		<a class="modal-header-close" ng-click="ctrl.dismiss();">
 			<i class="fa fa-remove"></i>
 		</a>
 	</div>
 
 	<div class="modal-content">
-		<form name="createUserGroupForm" class="gf-form-group">
-			<div class="gf-form-inline">
-				<div class="gf-form max-width-21">
-					<input type="text" class="gf-form-input" ng-model='ctrl.userGroupName' placeholder="Name"></input>
-				</div>
-				<div class="gf-form">
-					<button class="btn gf-form-btn btn-success" ng-click="ctrl.createUserGroup();dismiss();">Create</button>
-				</div>
-			</div>
+		<form name="ctrl.createUserGroupForm" class="gf-form-group" novalidate>
+      <div class="p-t-2">
+        <div class="gf-form-inline">
+          <div class="gf-form max-width-21">
+            <input type="text" class="gf-form-input" ng-model='ctrl.userGroupName' required give-focus="true" placeholder="Enter User Group Name"></input>
+          </div>
+          <div class="gf-form">
+            <button class="btn gf-form-btn btn-success" ng-click="ctrl.createUserGroup();ctrl.dismiss();">Create</button>
+          </div>
+        </div>
+      </div>
 		</form>
 	</div>
 </div>
