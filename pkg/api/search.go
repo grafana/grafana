@@ -26,9 +26,9 @@ func Search(c *middleware.Context) {
 		mode = "list"
 	}
 
-	dbids := make([]int, 0)
+	dbids := make([]int64, 0)
 	for _, id := range c.QueryStrings("dashboardIds") {
-		dashboardId, err := strconv.Atoi(id)
+		dashboardId, err := strconv.ParseInt(id, 10, 64)
 		if err == nil {
 			dbids = append(dbids, dashboardId)
 		}
@@ -37,7 +37,7 @@ func Search(c *middleware.Context) {
 	searchQuery := search.Query{
 		Title:        query,
 		Tags:         tags,
-		UserId:       c.UserId,
+		SignedInUser: c.SignedInUser,
 		Limit:        limit,
 		IsStarred:    starred == "true",
 		OrgId:        c.OrgId,

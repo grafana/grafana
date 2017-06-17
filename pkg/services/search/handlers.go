@@ -7,7 +7,6 @@ import (
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/services/guardian"
 	"github.com/grafana/grafana/pkg/setting"
 )
 
@@ -41,9 +40,8 @@ func searchHandler(query *Query) error {
 
 	dashQuery := FindPersistedDashboardsQuery{
 		Title:        query.Title,
-		UserId:       query.UserId,
+		SignedInUser: query.SignedInUser,
 		IsStarred:    query.IsStarred,
-		OrgId:        query.OrgId,
 		DashboardIds: query.DashboardIds,
 		Type:         query.Type,
 		ParentId:     query.FolderId,
@@ -76,11 +74,6 @@ func searchHandler(query *Query) error {
 		hits = filtered
 	}
 
-	hits, err := removeRestrictedDashboardsFromList(hits, query)
-	if err != nil {
-		return err
-	}
-
 	// sort main result array
 	sort.Sort(hits)
 
@@ -94,35 +87,12 @@ func searchHandler(query *Query) error {
 	}
 
 	// add isStarred info
-	if err := setIsStarredFlagOnSearchResults(query.UserId, hits); err != nil {
+	if err := setIsStarredFlagOnSearchResults(query.SignedInUser.UserId, hits); err != nil {
 		return err
 	}
 
 	query.Result = hits
 	return nil
-}
-
-func removeRestrictedDashboardsFromList(hits HitList, query *Query) (HitList, error) {
-	var dashboardIds = []int64{}
-	for _, hit := range hits {
-		dashboardIds = append(dashboardIds, hit.Id)
-	}
-
-	filteredHits, err := guardian.FilterRestrictedDashboards(dashboardIds, query.OrgId, query.UserId)
-	if err != nil {
-		return nil, err
-	}
-
-	filtered := HitList{}
-	for _, hit := range hits {
-		for _, dashId := range filteredHits {
-			if hit.Id == dashId {
-				filtered = append(filtered, hit)
-			}
-		}
-	}
-
-	return filtered, nil
 }
 
 func stringInSlice(a string, list []string) bool {

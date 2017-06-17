@@ -1,6 +1,7 @@
 package search
 
 import "strings"
+import "github.com/grafana/grafana/pkg/models"
 
 type HitType string
 
@@ -43,11 +44,11 @@ type Query struct {
 	Title        string
 	Tags         []string
 	OrgId        int64
-	UserId       int64
+	SignedInUser *models.SignedInUser
 	Limit        int
 	IsStarred    bool
 	Type         string
-	DashboardIds []int
+	DashboardIds []int64
 	FolderId     int64
 	Mode         string
 
@@ -57,9 +58,9 @@ type Query struct {
 type FindPersistedDashboardsQuery struct {
 	Title        string
 	OrgId        int64
-	UserId       int64
+	SignedInUser *models.SignedInUser
 	IsStarred    bool
-	DashboardIds []int
+	DashboardIds []int64
 	Type         string
 	ParentId     int64
 	Mode         string

@@ -4,7 +4,6 @@ import (
 	"testing"
 
 	m "github.com/grafana/grafana/pkg/models"
-	"github.com/grafana/grafana/pkg/setting"
 	. "github.com/smartystreets/goconvey/convey"
 )
 
@@ -59,29 +58,4 @@ func TestGuardianDataAccess(t *testing.T) {
 			})
 		})
 	})
-}
-
-func createUser(name string, role string, isAdmin bool) m.User {
-	setting.AutoAssignOrg = true
-	setting.AutoAssignOrgRole = role
-
-	currentUserCmd := m.CreateUserCommand{Login: name, Email: name + "@test.com", Name: "a " + name, IsAdmin: isAdmin}
-	err := CreateUser(&currentUserCmd)
-	So(err, ShouldBeNil)
-
-	q1 := m.GetUserOrgListQuery{UserId: currentUserCmd.Result.Id}
-	GetUserOrgList(&q1)
-	So(q1.Result[0].Role, ShouldEqual, role)
-
-	return currentUserCmd.Result
-}
-
-func updateTestDashboardWithAcl(dashId int64, userId int64, permissionType m.PermissionType) {
-	err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
-		OrgId:          1,
-		UserId:         userId,
-		DashboardId:    dashId,
-		PermissionType: permissionType,
-	})
-	So(err, ShouldBeNil)
 }

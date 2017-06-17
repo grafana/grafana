@@ -21,7 +21,7 @@ from dashboard as d
 	left join dashboard_acl as dfa on d.parent_id = dfa.dashboard_id or d.id = dfa.dashboard_id
 	left join user_group_member as ugm on ugm.user_group_id =  dfa.user_group_id
 where (
-  (d.has_acl = 1 and (dfa.user_id = ? or ugm.user_id = ? or df.created_by = ? or (d.is_folder = 1 and d.created_by = ?)))
+  (d.has_acl = 1 and (dfa.user_id = ? or ugm.user_id = ?))
   or d.has_acl = 0)
   and d.org_id = ?`
 
