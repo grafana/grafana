@@ -151,7 +151,7 @@ type SaveDashboardCommand struct {
 }
 
 type DeleteDashboardCommand struct {
-	Slug  string
+	Id    int64
 	OrgId int64
 }
 

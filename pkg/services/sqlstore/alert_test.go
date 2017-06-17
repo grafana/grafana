@@ -192,7 +192,7 @@ func TestAlertingDataAccess(t *testing.T) {
 
 			err = DeleteDashboard(&m.DeleteDashboardCommand{
 				OrgId: 1,
-				Slug:  testDash.Slug,
+				Id:    testDash.Id,
 			})
 
 			So(err, ShouldBeNil)

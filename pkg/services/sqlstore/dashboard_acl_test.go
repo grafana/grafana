@@ -18,19 +18,19 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 			Convey("When adding dashboard permission with userId and userGroupId set to 0", func() {
 				err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
-					OrgId:          1,
-					DashboardId:    savedFolder.Id,
-					PermissionType: m.PERMISSION_EDIT,
+					OrgId:       1,
+					DashboardId: savedFolder.Id,
+					Permissions: m.PERMISSION_EDIT,
 				})
 				So(err, ShouldEqual, m.ErrDashboardPermissionUserOrUserGroupEmpty)
 			})
 
 			Convey("Should be able to add dashboard permission", func() {
 				err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
-					OrgId:          1,
-					UserId:         currentUser.Id,
-					DashboardId:    savedFolder.Id,
-					PermissionType: m.PERMISSION_EDIT,
+					OrgId:       1,
+					UserId:      currentUser.Id,
+					DashboardId: savedFolder.Id,
+					Permissions: m.PERMISSION_EDIT,
 				})
 				So(err, ShouldBeNil)
 
@@ -38,8 +38,8 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				err = GetDashboardPermissions(q1)
 				So(err, ShouldBeNil)
 				So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-				So(q1.Result[0].PermissionType, ShouldEqual, m.PERMISSION_EDIT)
-				So(q1.Result[0].Permissions, ShouldEqual, "Edit")
+				So(q1.Result[0].Permissions, ShouldEqual, m.PERMISSION_EDIT)
+				So(q1.Result[0].PermissionName, ShouldEqual, "Edit")
 				So(q1.Result[0].UserId, ShouldEqual, currentUser.Id)
 				So(q1.Result[0].UserLogin, ShouldEqual, currentUser.Login)
 				So(q1.Result[0].UserEmail, ShouldEqual, currentUser.Email)
@@ -54,10 +54,10 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 				Convey("Should be able to update an existing permission", func() {
 					err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
-						OrgId:          1,
-						UserId:         1,
-						DashboardId:    savedFolder.Id,
-						PermissionType: m.PERMISSION_READ_ONLY_EDIT,
+						OrgId:       1,
+						UserId:      1,
+						DashboardId: savedFolder.Id,
+						Permissions: m.PERMISSION_READ_ONLY_EDIT,
 					})
 					So(err, ShouldBeNil)
 
@@ -66,7 +66,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 1)
 					So(q3.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-					So(q3.Result[0].PermissionType, ShouldEqual, m.PERMISSION_READ_ONLY_EDIT)
+					So(q3.Result[0].Permissions, ShouldEqual, m.PERMISSION_READ_ONLY_EDIT)
 					So(q3.Result[0].UserId, ShouldEqual, 1)
 
 				})
@@ -93,10 +93,10 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 				Convey("Should be able to add a user permission for a user group", func() {
 					err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
-						OrgId:          1,
-						UserGroupId:    group1.Result.Id,
-						DashboardId:    savedFolder.Id,
-						PermissionType: m.PERMISSION_EDIT,
+						OrgId:       1,
+						UserGroupId: group1.Result.Id,
+						DashboardId: savedFolder.Id,
+						Permissions: m.PERMISSION_EDIT,
 					})
 					So(err, ShouldBeNil)
 
@@ -104,16 +104,16 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					err = GetDashboardPermissions(q1)
 					So(err, ShouldBeNil)
 					So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-					So(q1.Result[0].PermissionType, ShouldEqual, m.PERMISSION_EDIT)
+					So(q1.Result[0].Permissions, ShouldEqual, m.PERMISSION_EDIT)
 					So(q1.Result[0].UserGroupId, ShouldEqual, group1.Result.Id)
 				})
 
 				Convey("Should be able to update an existing permission for a user group", func() {
 					err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
-						OrgId:          1,
-						UserGroupId:    group1.Result.Id,
-						DashboardId:    savedFolder.Id,
-						PermissionType: m.PERMISSION_READ_ONLY_EDIT,
+						OrgId:       1,
+						UserGroupId: group1.Result.Id,
+						DashboardId: savedFolder.Id,
+						Permissions: m.PERMISSION_READ_ONLY_EDIT,
 					})
 					So(err, ShouldBeNil)
 
@@ -122,7 +122,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 1)
 					So(q3.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-					So(q3.Result[0].PermissionType, ShouldEqual, m.PERMISSION_READ_ONLY_EDIT)
+					So(q3.Result[0].Permissions, ShouldEqual, m.PERMISSION_READ_ONLY_EDIT)
 					So(q3.Result[0].UserGroupId, ShouldEqual, group1.Result.Id)
 
 				})

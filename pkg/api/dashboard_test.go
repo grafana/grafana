@@ -21,6 +21,7 @@ import (
 func TestDashboardApiEndpoint(t *testing.T) {
 	Convey("Given a dashboard with a parent folder which does not have an acl", t, func() {
 		fakeDash := models.NewDashboard("Child dash")
+		fakeDash.Id = 1
 		fakeDash.ParentId = 1
 		fakeDash.HasAcl = false
 
@@ -33,6 +34,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
 				"parentId": fakeDash.ParentId,
 				"title":    fakeDash.Title,
+				"id":       fakeDash.Id,
 			}),
 		}
 
@@ -140,6 +142,8 @@ func TestDashboardApiEndpoint(t *testing.T) {
 					return nil
 				})
 				invalidCmd := models.SaveDashboardCommand{
+					ParentId: fakeDash.ParentId,
+					IsFolder: true,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
 						"parentId": fakeDash.ParentId,
 						"title":    fakeDash.Title,
@@ -157,6 +161,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 
 	Convey("Given a dashboard with a parent folder which has an acl", t, func() {
 		fakeDash := models.NewDashboard("Child dash")
+		fakeDash.Id = 1
 		fakeDash.ParentId = 1
 		fakeDash.HasAcl = true
 
@@ -173,6 +178,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		cmd := models.SaveDashboardCommand{
 			ParentId: fakeDash.ParentId,
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
+				"id":       fakeDash.Id,
 				"parentId": fakeDash.ParentId,
 				"title":    fakeDash.Title,
 			}),
@@ -257,7 +263,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			role := models.ROLE_VIEWER
 
 			mockResult := []*models.DashboardAclInfoDTO{
-				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, PermissionType: models.PERMISSION_EDIT},
+				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permissions: models.PERMISSION_EDIT},
 			}
 
 			bus.AddHandler("test", func(query *models.GetDashboardPermissionsQuery) error {
@@ -299,7 +305,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			role := models.ROLE_EDITOR
 
 			mockResult := []*models.DashboardAclInfoDTO{
-				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, PermissionType: models.PERMISSION_VIEW},
+				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permissions: models.PERMISSION_VIEW},
 			}
 
 			bus.AddHandler("test", func(query *models.GetDashboardPermissionsQuery) error {

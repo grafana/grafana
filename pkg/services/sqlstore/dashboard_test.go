@@ -5,7 +5,6 @@ import (
 
 	. "github.com/smartystreets/goconvey/convey"
 
-	"github.com/gosimple/slug"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/search"
@@ -69,12 +68,10 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to delete dashboard", func() {
-				insertTestDashboard("delete me", 1, 0, false, "delete this")
-
-				dashboardSlug := slug.Make("delete me")
+				dash := insertTestDashboard("delete me", 1, 0, false, "delete this")
 
 				err := DeleteDashboard(&m.DeleteDashboardCommand{
-					Slug:  dashboardSlug,
+					Id:    dash.Id,
 					OrgId: 1,
 				})
 

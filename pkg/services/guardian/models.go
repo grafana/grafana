@@ -1,6 +1,8 @@
 package guardian
 
 import (
+	"fmt"
+
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -20,6 +22,7 @@ func NewDashboardGuardian(dash *m.Dashboard, user *m.SignedInUser) *DashboardGua
 }
 
 func (g *DashboardGuardian) CanSave() (bool, error) {
+	fmt.Printf("user %v, %v", g.user.OrgRole, g.user.HasRole(m.ROLE_EDITOR))
 	if !g.dashboard.HasAcl {
 		return g.user.HasRole(m.ROLE_EDITOR), nil
 	}
@@ -69,12 +72,18 @@ func (g *DashboardGuardian) HasPermission(permission m.PermissionType) (bool, er
 	return false, nil
 }
 
+// Returns dashboard acl
 func (g *DashboardGuardian) getAcl() ([]*m.DashboardAclInfoDTO, error) {
 	if g.acl != nil {
 		return g.acl, nil
 	}
 
-	query := m.GetDashboardPermissionsQuery{DashboardId: g.dashboard.Id}
+	dashId := g.dashboard.Id
+	if g.dashboard.ParentId != 0 {
+		dashId = g.dashboard.ParentId
+	}
+
+	query := m.GetDashboardPermissionsQuery{DashboardId: dashId}
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}

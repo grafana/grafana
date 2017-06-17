@@ -357,7 +357,7 @@ func GetDashboardTags(query *m.GetDashboardTagsQuery) error {
 
 func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		dashboard := m.Dashboard{Slug: cmd.Slug, OrgId: cmd.OrgId}
+		dashboard := m.Dashboard{Id: cmd.Id, OrgId: cmd.OrgId}
 		has, err := sess.Get(&dashboard)
 		if err != nil {
 			return err

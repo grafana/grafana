@@ -13,10 +13,10 @@ import (
 func TestDashboardAclApiEndpoint(t *testing.T) {
 	Convey("Given a dashboard acl", t, func() {
 		mockResult := []*models.DashboardAclInfoDTO{
-			{Id: 1, OrgId: 1, DashboardId: 1, UserId: 2, PermissionType: models.PERMISSION_EDIT},
-			{Id: 2, OrgId: 1, DashboardId: 1, UserId: 3, PermissionType: models.PERMISSION_VIEW},
-			{Id: 3, OrgId: 1, DashboardId: 1, UserGroupId: 1, PermissionType: models.PERMISSION_EDIT},
-			{Id: 4, OrgId: 1, DashboardId: 1, UserGroupId: 2, PermissionType: models.PERMISSION_READ_ONLY_EDIT},
+			{Id: 1, OrgId: 1, DashboardId: 1, UserId: 2, Permissions: models.PERMISSION_EDIT},
+			{Id: 2, OrgId: 1, DashboardId: 1, UserId: 3, Permissions: models.PERMISSION_VIEW},
+			{Id: 3, OrgId: 1, DashboardId: 1, UserGroupId: 1, Permissions: models.PERMISSION_EDIT},
+			{Id: 4, OrgId: 1, DashboardId: 1, UserGroupId: 2, Permissions: models.PERMISSION_READ_ONLY_EDIT},
 		}
 		bus.AddHandler("test", func(query *models.GetDashboardPermissionsQuery) error {
 			query.Result = mockResult
@@ -39,14 +39,14 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 					respJSON, err := simplejson.NewJson(sc.resp.Body.Bytes())
 					So(err, ShouldBeNil)
 					So(respJSON.GetIndex(0).Get("userId").MustInt(), ShouldEqual, 2)
-					So(respJSON.GetIndex(0).Get("permissionType").MustInt(), ShouldEqual, models.PERMISSION_EDIT)
+					So(respJSON.GetIndex(0).Get("permissions").MustInt(), ShouldEqual, models.PERMISSION_EDIT)
 				})
 			})
 		})
 
 		Convey("When user is editor and in the ACL", func() {
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/1/acl", "/api/dashboards/:id/acl", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				mockResult = append(mockResult, &models.DashboardAclInfoDTO{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, PermissionType: models.PERMISSION_EDIT})
+				mockResult = append(mockResult, &models.DashboardAclInfoDTO{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permissions: models.PERMISSION_EDIT})
 
 				bus.AddHandler("test2", func(query *models.GetAllowedDashboardsQuery) error {
 					query.Result = []int64{1}
@@ -62,7 +62,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/1/acl/user/1", "/api/dashboards/:id/acl/user/:userId", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				mockResult = append(mockResult, &models.DashboardAclInfoDTO{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, PermissionType: models.PERMISSION_EDIT})
+				mockResult = append(mockResult, &models.DashboardAclInfoDTO{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permissions: models.PERMISSION_EDIT})
 
 				bus.AddHandler("test3", func(cmd *models.RemoveDashboardPermissionCommand) error {
 					return nil
@@ -115,7 +115,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/1/acl/user/1", "/api/dashboards/:id/acl/user/:userId", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				mockResult = append(mockResult, &models.DashboardAclInfoDTO{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, PermissionType: models.PERMISSION_VIEW})
+				mockResult = append(mockResult, &models.DashboardAclInfoDTO{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permissions: models.PERMISSION_VIEW})
 				bus.AddHandler("test3", func(cmd *models.RemoveDashboardPermissionCommand) error {
 					return nil
 				})

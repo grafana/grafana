@@ -10,20 +10,21 @@ import (
 )
 
 func GetDashboardAcl(c *middleware.Context) Response {
-	dashboardId := c.ParamsInt64(":id")
-
-	hasPermission, err := guardian.CanViewAcl(dashboardId, c.OrgRole, c.IsGrafanaAdmin, c.OrgId, c.UserId)
-
-	if err != nil {
-		return ApiError(500, "Failed to get Dashboard ACL", err)
+	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":id"))
+	if rsp != nil {
+		return rsp
 	}
 
-	if !hasPermission {
-		return Json(403, util.DynMap{"status": "Forbidden", "message": "Does not have access to this Dashboard ACL"})
+	guardian := guardian.NewDashboardGuardian(dash, c.SignedInUser)
+
+	canView, err := guardian.CanView(dashboardId, c.OrgRole, c.IsGrafanaAdmin, c.OrgId, c.UserId)
+	if err != nil {
+		return ApiError(500, "Failed to get Dashboard ACL", err)
+	} else if !hasPermission {
+		return ApiError(403, "Does not have access to this Dashboard ACL")
 	}
 
 	query := m.GetDashboardPermissionsQuery{DashboardId: dashboardId}
-
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "Failed to get Dashboard ACL", err)
 	}

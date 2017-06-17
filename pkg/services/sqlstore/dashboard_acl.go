@@ -23,7 +23,7 @@ func AddOrUpdateDashboardPermission(cmd *m.AddOrUpdateDashboardPermissionCommand
 			return err
 		} else if len(res) == 1 {
 			entity := m.DashboardAcl{
-				Permissions: cmd.PermissionType,
+				Permissions: cmd.Permissions,
 				Updated:     time.Now(),
 			}
 			if _, err := sess.Cols("updated", "permissions").Where("dashboard_id =? and (user_group_id=? or user_id=?)", cmd.DashboardId, cmd.UserGroupId, cmd.UserId).Update(&entity); err != nil {
@@ -40,7 +40,7 @@ func AddOrUpdateDashboardPermission(cmd *m.AddOrUpdateDashboardPermissionCommand
 			Created:     time.Now(),
 			Updated:     time.Now(),
 			DashboardId: cmd.DashboardId,
-			Permissions: cmd.PermissionType,
+			Permissions: cmd.Permissions,
 		}
 
 		cols := []string{"org_id", "created", "updated", "dashboard_id", "permissions"}
@@ -64,6 +64,7 @@ func AddOrUpdateDashboardPermission(cmd *m.AddOrUpdateDashboardPermissionCommand
 		dashboard := m.Dashboard{
 			HasAcl: true,
 		}
+
 		if _, err := sess.Cols("has_acl").Where("id=? OR parent_id=?", cmd.DashboardId, cmd.DashboardId).Update(&dashboard); err != nil {
 			return err
 		}
