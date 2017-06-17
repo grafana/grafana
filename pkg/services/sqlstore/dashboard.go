@@ -148,12 +148,14 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 }
 
 type DashboardSearchProjection struct {
-	Id       int64
-	Title    string
-	Slug     string
-	Term     string
-	IsFolder bool
-	ParentId int64
+	Id          int64
+	Title       string
+	Slug        string
+	Term        string
+	IsFolder    bool
+	ParentId    int64
+	FolderSlug  string
+	FolderTitle string
 }
 
 func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
@@ -167,9 +169,10 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 					  dashboard_tag.term,
             dashboard.is_folder,
             dashboard.parent_id,
-			      pd.title as folder_title
+			      f.slug as folder_slug,
+			      f.title as folder_title
 					FROM dashboard
-					LEFT OUTER JOIN dashboard pd on pd.id = dashboard.parent_id
+					LEFT OUTER JOIN dashboard f on f.id = dashboard.parent_id
 					LEFT OUTER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id`)
 
 	if query.IsStarred {
@@ -268,26 +271,13 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 
 // appends parent folders for any hits to the search result
 func appendDashboardFolders(res []DashboardSearchProjection) ([]DashboardSearchProjection, error) {
-	var dashboardFolderIds []int64
 	for _, item := range res {
 		if item.ParentId > 0 {
-			dashboardFolderIds = append(dashboardFolderIds, item.ParentId)
-		}
-	}
-
-	if len(dashboardFolderIds) > 0 {
-		folderQuery := &m.GetDashboardsQuery{DashboardIds: dashboardFolderIds}
-		err := GetDashboards(folderQuery)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, folder := range folderQuery.Result {
 			res = append(res, DashboardSearchProjection{
-				Id:       folder.Id,
+				Id:       item.ParentId,
 				IsFolder: true,
-				Slug:     folder.Slug,
-				Title:    folder.Title,
+				Slug:     item.FolderSlug,
+				Title:    item.FolderTitle,
 			})
 		}
 	}
