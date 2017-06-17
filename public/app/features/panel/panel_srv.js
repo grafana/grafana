@@ -169,8 +169,6 @@ function (angular, _, config) {
         $scope.associateMenu = panel.lines && (/^\/anomaly/.test(path) || (/^\/integrate/.test(path)));
         $scope.integrateMenu = $scope.showMenu && !(/^\/integrate/.test(path)) && panel.lines;
       };
-
-
       $scope.associateLink = function () {
         try {
           var host = $scope.panel.targets[0].tags.host;
