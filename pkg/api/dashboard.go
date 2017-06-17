@@ -46,13 +46,11 @@ func GetDashboard(c *middleware.Context) Response {
 	}
 
 	dash := query.Result
+	guardian := guardian.NewDashboardGuardian(dash, c.SignedInUser)
 
-	canView, canEdit, canSave, err := getPermissions(dash, c.OrgRole, c.IsGrafanaAdmin, c.UserId)
-	if err != nil {
+	if canView, err := guardian.CanView(); err != nil {
 		return ApiError(500, "Error while checking dashboard permissions", err)
-	}
-
-	if !canView {
+	} else if !canView {
 		return ApiError(403, "Access denied to this dashboard", nil)
 	}
 
@@ -162,12 +160,11 @@ func DeleteDashboard(c *middleware.Context) Response {
 		return ApiError(404, "Dashboard not found", err)
 	}
 
-	_, _, canSave, err := getPermissions(query.Result, c.OrgRole, c.IsGrafanaAdmin, c.UserId)
-	if err != nil {
-		return ApiError(500, "Error while checking dashboard permissions", err)
-	}
+	guardian := guardian.NewDashboardGuardian(query.Result, c.SignedInUser)
 
-	if !canSave {
+	if canSave, err := guardian.CanSave(); err != nil {
+		return ApiError(500, "Error while checking dashboard permissions", err)
+	} else if !canSave {
 		return ApiError(403, "Does not have permission to delete this dashboard", nil)
 	}
 
@@ -301,6 +298,8 @@ func GetHomeDashboard(c *middleware.Context) Response {
 	dash := dtos.DashboardFullWithMeta{}
 	dash.Meta.IsHome = true
 	dash.Meta.CanEdit = canEditDashboard(c.OrgRole)
+	dash.Meta.FolderTitle = "Root"
+
 	jsonParser := json.NewDecoder(file)
 	if err := jsonParser.Decode(&dash.Dashboard); err != nil {
 		return ApiError(500, "Failed to load home dashboard", err)

@@ -3,8 +3,6 @@ package sqlstore
 import (
 	"time"
 
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -94,7 +92,7 @@ func GetDashboardPermissions(query *m.GetDashboardPermissionsQuery) error {
   da.dashboard_id,
   da.user_id,
   da.user_group_id,
-  da.permissions as permission_type,
+  da.permissions,
   da.created,
   da.updated,
   u.login AS user_login,
@@ -110,7 +108,7 @@ func GetDashboardPermissions(query *m.GetDashboardPermissionsQuery) error {
 	err := x.SQL(rawSQL, query.DashboardId).Find(&query.Result)
 
 	for _, p := range query.Result {
-		p.Permissions = fmt.Sprint(p.PermissionType)
+		p.PermissionName = p.Permissions.String()
 	}
 
 	return err

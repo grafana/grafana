@@ -54,8 +54,8 @@ type DashboardAclInfoDTO struct {
 	UserEmail      string         `json:"userEmail"`
 	UserGroupId    int64          `json:"userGroupId"`
 	UserGroup      string         `json:"userGroup"`
-	PermissionType PermissionType `json:"permissionType"`
-	Permissions    string         `json:"permissions"`
+	Permissions    PermissionType `json:"permissions"`
+	PermissionName string         `json:"permissionName"`
 }
 
 //

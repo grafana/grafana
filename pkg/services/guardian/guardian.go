@@ -17,7 +17,6 @@ func FilterRestrictedDashboards(dashList []int64, orgId int64, userId int64) ([]
 	}
 
 	filteredList, err := getAllowedDashboards(dashList, orgId, userId)
-
 	return filteredList, err
 }
 
@@ -101,12 +100,12 @@ func checkPermission(minimumPermission m.PermissionType, permissions []*m.Dashbo
 	}
 
 	for _, p := range permissions {
-		if p.UserId == userId && p.PermissionType >= minimumPermission {
+		if p.UserId == userId && p.Permissions >= minimumPermission {
 			return true, nil
 		}
 
 		for _, ug := range userGroups {
-			if ug.Id == p.UserGroupId && p.PermissionType >= minimumPermission {
+			if ug.Id == p.UserGroupId && p.Permissions >= minimumPermission {
 				return true, nil
 			}
 		}
