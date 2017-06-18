@@ -109,7 +109,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
               baseUrl: ds.meta.baseUrl,
               name: 'query-ctrl-' + ds.meta.id,
               bindings: {target: "=", panelCtrl: "=", datasource: "="},
-              attrs: {"target": "target", "panel-ctrl": "ctrl", datasource: "datasource"},
+              attrs: {"target": "target", "panel-ctrl": "ctrl.panelCtrl", datasource: "datasource"},
               Component: dsModule.QueryCtrl
             };
           });
@@ -127,7 +127,7 @@ function pluginDirectiveLoader($compile, datasourceSrv, $rootScope, $q, $http, $
               baseUrl: ds.meta.baseUrl,
               name: 'query-options-ctrl-' + ds.meta.id,
               bindings: {panelCtrl: "="},
-              attrs: {"panel-ctrl": "ctrl"},
+              attrs: {"panel-ctrl": "ctrl.panelCtrl"},
               Component: dsModule.QueryOptionsCtrl
             };
           });

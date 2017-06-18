@@ -35,7 +35,7 @@ function ($, angular, coreModule) {
             options.html = editViewMap[options.editview].html;
           }
 
-          if (lastEditView === options.editview) {
+          if (lastEditView && lastEditView === options.editview) {
             hideEditorPane(false);
             return;
           }

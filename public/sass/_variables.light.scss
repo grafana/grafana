@@ -304,6 +304,24 @@ $card-shadow: -1px -1px 0 0 hsla(0, 0%, 100%, .1), 1px 1px 0 0 rgba(0, 0, 0, .1)
 $footer-link-color:   $gray-3;
 $footer-link-hover:   $dark-5;
 
+// collapse box
+$collapse-box-body-border: $gray-4;
+$collapse-box-body-error-border: $red;
+
+// json explorer
+$json-explorer-default-color: black;
+$json-explorer-string-color: green;
+$json-explorer-number-color: blue;
+$json-explorer-boolean-color: red;
+$json-explorer-null-color: #855A00;
+$json-explorer-undefined-color: rgb(202, 11, 105);
+$json-explorer-function-color: #FF20ED;
+$json-explorer-rotate-time: 100ms;
+$json-explorer-toggler-opacity: 0.6;
+$json-explorer-toggler-color: #45376F;
+$json-explorer-bracket-color: blue;
+$json-explorer-key-color: #00008B;
+$json-explorer-url-color: blue;
 
 // Changelog and diff
 // -------------------------

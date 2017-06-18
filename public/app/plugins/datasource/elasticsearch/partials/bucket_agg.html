@@ -5,8 +5,22 @@
 			<span ng-hide="isFirst">Then by</span>
 		</label>
 
-		<metric-segment-model property="agg.type" options="bucketAggTypes" on-change="onTypeChanged()" custom="false" css-class="width-10"></metric-segment-model>
-		<metric-segment-model ng-if="agg.field" property="agg.field" get-options="getFieldsInternal()" on-change="onChange()" css-class="width-12"></metric-segment-model>
+		<gf-form-dropdown model="agg.type"
+											lookup-text="true"
+											get-options="getBucketAggTypes()"
+											on-change="onTypeChanged()"
+											allow-custom="false"
+											label-mode="true"
+											css-class="width-10">
+		</gf-form-dropdown>
+		<gf-form-dropdown ng-if="agg.field"
+											model="agg.field"
+											get-options="getFieldsInternal()"
+											on-change="onChange()"
+											allow-custom="false"
+											label-mode="true"
+											css-class="width-12">
+		</gf-form-dropdown>
 	</div>
 
 	<div class="gf-form gf-form--grow">
@@ -33,7 +47,13 @@
 	<div ng-if="agg.type === 'date_histogram'">
 		<div class="gf-form offset-width-7">
 			<label class="gf-form-label width-10">Interval</label>
-			<metric-segment-model property="agg.settings.interval" get-options="getIntervalOptions()" on-change="onChangeInternal()" css-class="width-12" custom="true"></metric-segment-model>
+			<gf-form-dropdown model="agg.settings.interval"
+												get-options="getIntervalOptions()"
+												on-change="onChangeInternal()"
+												allow-custom="true"
+												label-mode="true"
+												css-class="width-12">
+			</gf-form-dropdown>
 		</div>
 
 		<div class="gf-form offset-width-7">
@@ -66,11 +86,23 @@
 	<div ng-if="agg.type === 'terms'">
 		<div class="gf-form offset-width-7">
 			<label class="gf-form-label width-10">Order</label>
-			<metric-segment-model property="agg.settings.order" options="orderOptions" on-change="onChangeInternal()" css-class="width-12"></metric-segment-model>
+			<gf-form-dropdown model="agg.settings.order"
+											  lookup-text="true"
+												get-options="getOrderOptions()"
+												on-change="onChangeInternal()"
+												label-mode="true"
+												css-class="width-12">
+			</gf-form-dropdown>
 		</div>
 		<div class="gf-form offset-width-7">
 			<label class="gf-form-label width-10">Size</label>
-			<metric-segment-model property="agg.settings.size" options="sizeOptions" on-change="onChangeInternal()" css-class="width-12"></metric-segment-model>
+			<gf-form-dropdown model="agg.settings.size"
+											  lookup-text="true"
+												get-options="getSizeOptions()"
+												on-change="onChangeInternal()"
+												label-mode="true"
+												css-class="width-12">
+			</gf-form-dropdown>
 		</div>
 		<div class="gf-form offset-width-7">
 			<label class="gf-form-label width-10">Min Doc Count</label>
@@ -78,7 +110,13 @@
 		</div>
 		<div class="gf-form offset-width-7">
 			<label class="gf-form-label width-10">Order By</label>
-			<metric-segment-model property="agg.settings.orderBy" options="orderByOptions" on-change="onChangeInternal()" css-class="width-12"></metric-segment-model>
+			<gf-form-dropdown model="agg.settings.orderBy"
+											  lookup-text="true"
+												get-options="getOrderByOptions()"
+												on-change="onChangeInternal()"
+												label-mode="true"
+												css-class="width-12">
+			</gf-form-dropdown>
 		</div>
 		<div class="gf-form offset-width-7">
 			<label class="gf-form-label width-10">

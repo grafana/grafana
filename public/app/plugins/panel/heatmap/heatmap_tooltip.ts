@@ -172,9 +172,11 @@ export class HeatmapTooltip {
     }
     barWidth = Math.max(barWidth, 1);
 
+    // Normalize histogram Y axis
+    let histogramDomain = _.reduce(_.map(histogramData, d => d[1]), (sum, val) => sum + val, 0);
     let histYScale = d3.scaleLinear()
-    .domain([0, _.max(_.map(histogramData, d => d[1]))])
-    .range([0, HISTOGRAM_HEIGHT]);
+      .domain([0, histogramDomain])
+      .range([0, HISTOGRAM_HEIGHT]);
 
     let histogram = this.tooltip.select(".heatmap-histogram")
     .append("svg")
