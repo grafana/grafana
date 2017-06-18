@@ -20,6 +20,7 @@ export default class InfluxDatasource {
   basicAuth: any;
   withCredentials: any;
   interval: any;
+  limit: number;
   supportAnnotations: boolean;
   supportMetrics: boolean;
   responseParser: any;
@@ -38,6 +39,7 @@ export default class InfluxDatasource {
     this.basicAuth = instanceSettings.basicAuth;
     this.withCredentials = instanceSettings.withCredentials;
     this.interval = (instanceSettings.jsonData || {}).timeInterval;
+    this.limit = (instanceSettings.jsonData || {}).limit;
     this.supportAnnotations = true;
     this.supportMetrics = true;
     this.responseParser = new ResponseParser();

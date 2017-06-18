@@ -27,7 +27,7 @@ export class InfluxQueryCtrl extends QueryCtrl {
 
     this.target = this.target;
     this.queryModel = new InfluxQuery(this.target, templateSrv, this.panel.scopedVars);
-    this.queryBuilder = new InfluxQueryBuilder(this.target, this.datasource.database);
+    this.queryBuilder = new InfluxQueryBuilder(this.target, this.datasource.database, this.datasource.limit);
     this.groupBySegment = this.uiSegmentSrv.newPlusButton();
     this.resultFormats = [
       {text: 'Time series', value: 'time_series'},
