@@ -192,16 +192,16 @@ function pushToXBuckets(buckets, point, bucketNum, seriesName) {
   if (value === null || value === undefined || isNaN(value)) { return; }
 
   // Add series name to point for future identification
-  point.push(seriesName);
+  let point_ext = _.concat(point, seriesName);
 
   if (buckets[bucketNum] && buckets[bucketNum].values) {
     buckets[bucketNum].values.push(value);
-    buckets[bucketNum].points.push(point);
+    buckets[bucketNum].points.push(point_ext);
   } else {
     buckets[bucketNum] = {
       x: bucketNum,
       values: [value],
-      points: [point]
+      points: [point_ext]
     };
   }
 }
@@ -209,7 +209,7 @@ function pushToXBuckets(buckets, point, bucketNum, seriesName) {
 function pushToYBuckets(buckets, bucketNum, value, point, bounds) {
   var count = 1;
   // Use the 3rd argument as scale/count
-  if (point.length > 2) {
+  if (point.length > 3) {
     count = parseInt(point[2]);
   }
   if (buckets[bucketNum]) {
