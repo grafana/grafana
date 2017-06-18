@@ -26,13 +26,21 @@ function (angular, _, queryDef) {
     var bucketAggs = $scope.target.bucketAggs;
 
     $scope.orderByOptions = [];
-    $scope.bucketAggTypes = queryDef.bucketAggTypes;
-    $scope.orderOptions = queryDef.orderOptions;
-    $scope.sizeOptions = queryDef.sizeOptions;
+
+    $scope.getBucketAggTypes = function() {
+      return queryDef.bucketAggTypes;
+    };
+
+    $scope.getOrderOptions = function() {
+      return queryDef.orderOptions;
+    };
+
+    $scope.getSizeOptions = function() {
+      return queryDef.sizeOptions;
+    };
 
     $rootScope.onAppEvent('elastic-query-updated', function() {
       $scope.validateModel();
-      $scope.updateOrderByOptions();
     }, $scope);
 
     $scope.init = function() {
@@ -166,11 +174,10 @@ function (angular, _, queryDef) {
 
     $scope.toggleOptions = function() {
       $scope.showOptions = !$scope.showOptions;
-      $scope.updateOrderByOptions();
     };
 
-    $scope.updateOrderByOptions = function() {
-      $scope.orderByOptions = queryDef.getOrderByOptions($scope.target);
+    $scope.getOrderByOptions = function() {
+      return queryDef.getOrderByOptions($scope.target);
     };
 
     $scope.getFieldsInternal = function() {

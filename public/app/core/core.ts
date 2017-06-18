@@ -34,6 +34,7 @@ import {switchDirective} from './components/switch';
 import {dashboardSelector} from './components/dashboard_selector';
 import {queryPartEditorDirective} from './components/query_part/query_part_editor';
 import {WizardFlow} from './components/wizard/wizard';
+import {formDropdownDirective} from './components/form_dropdown/form_dropdown';
 import 'app/core/controllers/all';
 import 'app/core/services/all';
 import 'app/core/routes/routes';
@@ -68,6 +69,7 @@ export {
   queryPartEditorDirective,
   WizardFlow,
   colors,
+  formDropdownDirective,
   assignModelProperties,
   contextSrv,
   KeybindingSrv,

@@ -19,7 +19,10 @@
       </button>
 
       <div class="dropdown" ng-if="ctrl.current.meta.mixed">
-        <metric-segment segment="ctrl.mixedDsSegment" get-options="ctrl.getOptions(false)" on-change="ctrl.mixedDatasourceChanged()"></metric-segment>
+        <gf-form-dropdown model="ctrl.addQueryDropdown"
+                          get-options="ctrl.getOptions(false)"
+                          on-change="ctrl.addMixedQuery($option)">
+        </gf-form-dropdown>
       </div>
     </div>
   </div>
@@ -30,10 +33,12 @@
 <div class="gf-form-group">
   <div class="gf-form-inline">
     <div class="gf-form">
-      <label class="gf-form-label">
-        Panel Data Source
-      </label>
-      <metric-segment segment="ctrl.dsSegment" get-options="ctrl.getOptions(true)" on-change="ctrl.datasourceChanged()"></metric-segment>
+      <label class="gf-form-label">Panel Data Source</label>
+      <gf-form-dropdown model="ctrl.panelDsValue"
+                        lookup-text="true"
+                        get-options="ctrl.getOptions(true)"
+                        on-change="ctrl.datasourceChanged($option)">
+      </gf-form-dropdown>
     </div>
   </div>
 </div>
