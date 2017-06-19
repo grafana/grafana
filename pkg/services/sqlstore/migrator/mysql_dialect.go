@@ -107,5 +107,5 @@ func (db *Mysql) UpdateTableSql(tableName string, columns []*Column) string {
 }
 
 func(db *Mysql) CurrentTimeToRoundMinSql() string {
-	return "round((unix_timestamp()-30)/60)*60";
+	return "round((unix_timestamp()-30)/60)*60"
 }
