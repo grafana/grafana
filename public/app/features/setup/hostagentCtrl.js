@@ -36,13 +36,13 @@ function (angular, _) {
 
     $scope.getHosts = function() {
       if($scope.hostNum > contextSrv.hostNum){
+        // 首台机器安装完成，自动加载模板
+        if(contextSrv.hostNum == 0){
+          $scope.createTemp();
+        };
         contextSrv.hostNum = $scope.hostNum;
         $interval.cancel($scope.inter);
         $scope.installed = true;
-        // 首台机器安装完成，自动加载模板
-        if(contextSrv.hostNum == 1){
-          $scope.createTemp();
-        };
       } else {
         backendSrv.alertD({
           method: "get",
