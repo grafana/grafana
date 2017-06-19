@@ -38,7 +38,7 @@ func PostDashboardAcl(c *middleware.Context, cmd m.SetDashboardAclCommand) Respo
 	cmd.DashboardId = dashId
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == m.ErrDashboardPermissionUserOrUserGroupEmpty {
+		if err == m.ErrDashboardAclInfoMissing {
 			return ApiError(409, err.Error(), err)
 		}
 		return ApiError(500, "Failed to create permission", err)

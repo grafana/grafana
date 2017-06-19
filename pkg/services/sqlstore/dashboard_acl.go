@@ -17,7 +17,7 @@ func init() {
 func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if cmd.UserId == 0 && cmd.UserGroupId == 0 {
-			return m.ErrDashboardPermissionUserOrUserGroupEmpty
+			return m.ErrDashboardAclInfoMissing
 		}
 
 		if res, err := sess.Query("SELECT 1 from "+dialect.Quote("dashboard_acl")+" WHERE dashboard_id =? and (user_group_id=? or user_id=?)", cmd.DashboardId, cmd.UserGroupId, cmd.UserId); err != nil {

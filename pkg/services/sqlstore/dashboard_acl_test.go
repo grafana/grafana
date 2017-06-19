@@ -22,7 +22,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					DashboardId: savedFolder.Id,
 					Permissions: m.PERMISSION_EDIT,
 				})
-				So(err, ShouldEqual, m.ErrDashboardPermissionUserOrUserGroupEmpty)
+				So(err, ShouldEqual, m.ErrDashboardAclInfoMissing)
 			})
 
 			Convey("Given dashboard folder permission", func() {

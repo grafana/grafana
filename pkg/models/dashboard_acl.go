@@ -24,21 +24,21 @@ func (p PermissionType) String() string {
 
 // Typed errors
 var (
-	ErrDashboardPermissionUserOrUserGroupEmpty = errors.New("User id and user group id cannot both be empty for a dashboard permission.")
+	ErrDashboardAclInfoMissing = errors.New("User id and user group id cannot both be empty for a dashboard permission.")
 )
 
 // Dashboard ACL model
 type DashboardAcl struct {
-	Id          int64 `json:"id"`
-	OrgId       int64 `json:"-"`
-	DashboardId int64 `json:"dashboardId"`
+	Id          int64
+	OrgId       int64
+	DashboardId int64
 
-	Created time.Time `json:"created"`
-	Updated time.Time `json:"updated"`
+	UserId      int64
+	UserGroupId int64
+	Permissions PermissionType
 
-	UserId      int64          `json:"userId"`
-	UserGroupId int64          `json:"userGroupId"`
-	Permissions PermissionType `json:"permissions"`
+	Created time.Time
+	Updated time.Time
 }
 
 type DashboardAclInfoDTO struct {
