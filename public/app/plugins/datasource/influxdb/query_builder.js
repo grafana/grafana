@@ -4,9 +4,10 @@ define([
 function (_) {
   'use strict';
 
-  function InfluxQueryBuilder(target, database) {
+  function InfluxQueryBuilder(target, database, limit) {
     this.target = target;
     this.database = database;
+    this.limit = limit;
   }
 
   function renderTagCondition (tag, index) {
@@ -93,7 +94,7 @@ function (_) {
     }
     if (type === 'MEASUREMENTS')
     {
-      query += ' LIMIT 100';
+      query += ' LIMIT ' + (this.limit || 100);
       //Solve issue #2524 by limiting the number of measurements returned
       //LIMIT must be after WITH MEASUREMENT and WHERE clauses
       //This also could be used for TAG KEYS and TAG VALUES, if desired
