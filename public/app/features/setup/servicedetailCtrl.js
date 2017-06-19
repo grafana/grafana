@@ -10,6 +10,11 @@ function (angular, _, dateMath) {
   module.controller('ServiceDetailCtrl', function ($scope, backendSrv, datasourceSrv, contextSrv) {
     $scope.init = function() {
       $scope.changeTab('conf');
+      if($scope.detail.status == -1) {
+        $scope.installBtn = "安装并导入模板";
+      } else {
+        $scope.installBtn = "导入模板";
+      }
     };
 
     $scope.changeTab = function(tab) {
