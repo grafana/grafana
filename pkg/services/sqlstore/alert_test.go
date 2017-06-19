@@ -2,6 +2,7 @@ package sqlstore
 
 import (
 	"testing"
+	"time"
 
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	m "github.com/grafana/grafana/pkg/models"
@@ -68,6 +69,15 @@ func TestAlertingDataAccess(t *testing.T) {
 					So(err, ShouldNotBeNil)
 				})
 			})
+		})
+
+		Convey("Set Eval Date", func() {
+			cmd := &m.SetAlertEvalDateCmd{
+				AlertId: 1,
+			}
+			err = SetAlertEvalDate(cmd)
+			So(err, ShouldBeNil)
+			So(cmd.EvalDate, ShouldNotBeNil)
 		})
 
 		Convey("Can read properties", func() {
@@ -168,6 +178,93 @@ func TestAlertingDataAccess(t *testing.T) {
 					So(err2, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 2)
 				})
+			})
+		})
+
+		Convey("Get Missing alerts", func() {
+
+			currentTime := time.Now().Round(time.Second)
+			currentTimeLessFrequency := time.Unix(currentTime.Unix()-120-30, 0)
+			currentTimeLess2Frequency := time.Unix(currentTime.Unix()-2*120+30, 0)
+			currentTimeLess60s := time.Unix(currentTime.Unix()-60, 0)
+			currentTimeLess3Frequency := time.Unix(currentTime.Unix()-3*120, 0)
+
+			multipleAlerts := []*m.Alert{
+				{
+					DashboardId: testDash.Id,
+					PanelId:     4,
+					Name:        "4",
+					OrgId:       1,
+					Settings:    simplejson.New(),
+					Frequency:   120,
+					EvalDate:    currentTime,
+				},
+				{
+					DashboardId: testDash.Id,
+					PanelId:     5,
+					Name:        "5",
+					OrgId:       1,
+					Settings:    simplejson.New(),
+					Frequency:   120,
+					EvalDate:    currentTimeLessFrequency,
+				},
+				{
+					DashboardId: testDash.Id,
+					PanelId:     6,
+					Name:        "6",
+					OrgId:       1,
+					Settings:    simplejson.New(),
+					Frequency:   120,
+					EvalDate:    currentTimeLess2Frequency,
+				},
+				{
+					DashboardId: testDash.Id,
+					PanelId:     7,
+					Name:        "7",
+					OrgId:       1,
+					Settings:    simplejson.New(),
+					Frequency:   120,
+					EvalDate:    currentTimeLess60s,
+				},
+				{
+					DashboardId: testDash.Id,
+					PanelId:     8,
+					Name:        "8",
+					OrgId:       1,
+					Settings:    simplejson.New(),
+					Frequency:   120,
+					EvalDate:    currentTimeLess3Frequency,
+				},
+				{
+					DashboardId: testDash.Id,
+					PanelId:     9,
+					Name:        "9",
+					OrgId:       1,
+					Settings:    simplejson.New(),
+					Frequency:   14400,                                  //4hrs
+					EvalDate:    time.Unix(currentTime.Unix()-18000, 0), //5 hours before currrent time
+				},
+				{
+					DashboardId: testDash.Id,
+					PanelId:     10,
+					Name:        "10",
+					OrgId:       1,
+					Settings:    simplejson.New(),
+					Frequency:   9000,                                   //2.5 hrs
+					EvalDate:    time.Unix(currentTime.Unix()-18000, 0), //5 hours before current time
+				},
+			}
+
+			cmd.Alerts = multipleAlerts
+			err = SaveAlerts(&cmd)
+
+			Convey("Get Missed Alerts", func() {
+				So(err, ShouldBeNil)
+
+				queryForMissedAlerts := m.GetMissingAlertsQuery{}
+				err1 := GetMissingAlerts(&queryForMissedAlerts)
+				So(err1, ShouldBeNil)
+				So(len(queryForMissedAlerts.Result), ShouldEqual, 3)
 			})
 		})
 

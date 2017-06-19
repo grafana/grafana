@@ -3,11 +3,13 @@ package sqlstore
 import (
 	"bytes"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
+	s "github.com/grafana/grafana/pkg/setting"
 )
 
 func init() {
@@ -20,6 +22,8 @@ func init() {
 	bus.AddHandler("sql", GetAlertStatesForDashboard)
 	bus.AddHandler("sql", PauseAlert)
 	bus.AddHandler("sql", PauseAllAlerts)
+	bus.AddHandler("sql", SetAlertEvalDate)
+	bus.AddHandler("sql", GetMissingAlerts)
 }
 
 func GetAlertById(query *m.GetAlertByIdQuery) error {
@@ -247,6 +251,7 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 		alert.State = cmd.State
 		alert.StateChanges += 1
 		alert.NewStateDate = time.Now()
+		alert.EvalDate = time.Now()
 		alert.EvalData = cmd.EvalData
 
 		if cmd.Error == "" {
@@ -256,6 +261,21 @@ func SetAlertState(cmd *m.SetAlertStateCommand) error {
 		}
 
 		sess.Id(alert.Id).Update(&alert)
+		return nil
+	})
+}
+
+func SetAlertEvalDate(cmd *m.SetAlertEvalDateCmd) error {
+	return inTransaction(func(sess *xorm.Session) error {
+		alert := m.Alert{}
+		if has, err := sess.Id(cmd.AlertId).Get(&alert); err != nil {
+			return err
+		} else if !has {
+			return fmt.Errorf("Could not find alert")
+		}
+		alert.EvalDate = time.Now()
+		sess.Id(alert.Id).Update(&alert)
+		cmd.EvalDate = alert.EvalDate
 		return nil
 	})
 }
@@ -322,4 +342,57 @@ func GetAlertStatesForDashboard(query *m.GetAlertStatesForDashboardQuery) error 
 	err := x.Sql(rawSql, query.OrgId, query.DashboardId).Find(&query.Result)
 
 	return err
+}
+
+func GetMissingAlerts(query *m.GetMissingAlertsQuery) error {
+
+	//Get current timestamp
+	var ts int64 = -1
+	err := inTransaction(func(sess *xorm.Session) error {
+		results, err := sess.Query("select " + dialect.CurrentTimeToRoundMinSql() + " as ts ")
+		if err != nil {
+			sqlog.Error("Failed to get timestamp", "error", err)
+			return err
+		}
+		ts, err = strconv.ParseInt(string(results[0]["ts"]), 10, 64)
+		if err != nil {
+			sqlog.Error("Failed to get timestamp", "error", err)
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		sqlog.Error("Transaction failed", "error", err)
+		return err
+	}
+
+	//Get all alerts
+	cmd := &m.GetAllAlertsQuery{}
+	if err := bus.Dispatch(cmd); err != nil {
+		sqlog.Error("Could not load alerts", "error", err)
+		return err
+	}
+
+	//Find Missing alerts
+	var evalTime int64
+	var frequency int64
+	missedAlerts := make([]*m.Alert, 0)
+	missingAlertCount := 0
+	for _, alert := range cmd.Result {
+		if missingAlertCount <= s.MaxMissingAlertCount { //Max no of missing alerts processed = MaxMissingAlertCount
+			evalTime = alert.EvalDate.Unix()
+			frequency = alert.Frequency
+			lowerbound := frequency * 2
+			if lowerbound < s.MaxAlertEvalTimeLimitInSeconds && //backward eval time should not not less than MaxAlertEvalTimeLimitInSeconds
+				evalTime < ts-frequency &&
+				evalTime >= ts-lowerbound {
+				missedAlerts = append(missedAlerts, alert)
+				missingAlertCount++
+			}
+		} else {
+			break
+		}
+	}
+	query.Result = missedAlerts
+	return nil
 }

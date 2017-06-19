@@ -77,8 +77,9 @@ type Alert struct {
 	NewStateDate time.Time
 	StateChanges int
 
-	Created time.Time
-	Updated time.Time
+	EvalDate time.Time
+	Created  time.Time
+	Updated  time.Time
 
 	Settings *simplejson.Json
 }
@@ -197,4 +198,13 @@ type AlertStateInfoDTO struct {
 	PanelId      int64          `json:"panelId"`
 	State        AlertStateType `json:"state"`
 	NewStateDate time.Time      `json:"newStateDate"`
+}
+
+type SetAlertEvalDateCmd struct {
+	AlertId  int64
+	EvalDate time.Time
+}
+
+type GetMissingAlertsQuery struct {
+	Result []*Alert
 }

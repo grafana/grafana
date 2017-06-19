@@ -32,9 +32,11 @@ const (
 )
 
 const (
-	DEV  string = "development"
-	PROD string = "production"
-	TEST string = "test"
+	DEV                          string = "development"
+	PROD                         string = "production"
+	TEST                         string = "test"
+	DEFAULT_ALERT_EVALTIME_LIMIT int64  = 21600 //time in seconds
+	DEFAULT_MISSING_ALERT_COUNT  int    = 500
 )
 
 var (
@@ -168,6 +170,11 @@ var (
 	S3TempImageStoreSecretKey string
 
 	ImageUploadProvider string
+
+	// Clustering
+	ClusteringEnabled              bool
+	MaxAlertEvalTimeLimitInSeconds int64 = DEFAULT_ALERT_EVALTIME_LIMIT
+	MaxMissingAlertCount           int   = DEFAULT_MISSING_ALERT_COUNT
 )
 
 type CommandLineArgs struct {
@@ -573,6 +580,11 @@ func NewConfigContext(args *CommandLineArgs) error {
 	alerting := Cfg.Section("alerting")
 	AlertingEnabled = alerting.Key("enabled").MustBool(true)
 	ExecuteAlerts = alerting.Key("execute_alerts").MustBool(true)
+
+	clustering := Cfg.Section("clustering")
+	ClusteringEnabled = clustering.Key("enabled").MustBool(true)
+	MaxAlertEvalTimeLimitInSeconds = clustering.Key("max_alert_evaltime_limit_seconds").MustInt64(DEFAULT_ALERT_EVALTIME_LIMIT)
+	MaxMissingAlertCount = clustering.Key("max_missing_alert_count").MustInt(DEFAULT_MISSING_ALERT_COUNT)
 
 	readSessionConfig()
 	readSmtpSettings()

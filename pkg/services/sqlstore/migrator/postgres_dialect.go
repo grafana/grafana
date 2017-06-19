@@ -123,3 +123,7 @@ func (db *Postgres) UpdateTableSql(tableName string, columns []*Column) string {
 
 	return "ALTER TABLE " + db.Quote(tableName) + " " + strings.Join(statements, ", ") + ";"
 }
+
+func(db *Postgres) CurrentTimeToRoundMinSql() string {
+	return "trunc(extract(epoch from now())/60)*60"
+}

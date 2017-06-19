@@ -91,8 +91,15 @@ func (handler *DefaultResultHandler) Handle(evalContext *EvalContext) error {
 		if evalContext.ShouldSendNotification() {
 			handler.notifier.Send(evalContext)
 		}
+	} else {
+		//always update eval_date no matter what the alert state is
+		cmd := &m.SetAlertEvalDateCmd{
+			AlertId: evalContext.Rule.Id,
+		}
+		if err := bus.Dispatch(cmd); err != nil {
+			handler.log.Error("Failed to update eval date for alert", "error", err)
+		}
 	}
-
 	return nil
 }
 

@@ -65,6 +65,11 @@ var (
 	M_StatTotal_Users        Gauge
 	M_StatTotal_Orgs         Gauge
 	M_StatTotal_Playlists    Gauge
+
+	//Clustering
+	M_Clustering_Active_Nodes         Gauge
+	M_Clustering_Pending_Alert_Jobs   Gauge
+	M_Clustering_Missing_Alerts_Count Gauge
 )
 
 func initMetricVars(settings *MetricSettings) {
@@ -138,4 +143,9 @@ func initMetricVars(settings *MetricSettings) {
 	M_StatTotal_Users = RegGauge("stat_totals", "stat", "users")
 	M_StatTotal_Orgs = RegGauge("stat_totals", "stat", "orgs")
 	M_StatTotal_Playlists = RegGauge("stat_totals", "stat", "playlists")
+
+	//Clustering
+	M_Clustering_Active_Nodes = RegGauge("clustering.active_nodes")
+	M_Clustering_Pending_Alert_Jobs = RegGauge("clustering.pending_alert_jobs")
+	M_Clustering_Missing_Alerts_Count = RegGauge("clustering.missing_alerts_count")
 }

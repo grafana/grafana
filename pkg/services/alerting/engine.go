@@ -2,10 +2,12 @@ package alerting
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/benbjohnson/clock"
 	"github.com/grafana/grafana/pkg/log"
+	"github.com/grafana/grafana/pkg/setting"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -20,7 +22,14 @@ type Engine struct {
 	resultHandler ResultHandler
 }
 
-func NewEngine() *Engine {
+var (
+	engine *Engine = nil
+)
+
+func NewEngine() (*Engine, error) {
+	if engine != nil {
+		return engine, errors.New("Alerting engine was already initialized")
+	}
 	e := &Engine{
 		ticker:        NewTicker(time.Now(), time.Second*0, clock.New()),
 		execQueue:     make(chan *Job, 1000),
@@ -30,16 +39,17 @@ func NewEngine() *Engine {
 		log:           log.New("alerting.engine"),
 		resultHandler: NewResultHandler(),
 	}
-
-	return e
+	engine = e
+	return e, nil
 }
 
 func (e *Engine) Run(ctx context.Context) error {
 	e.log.Info("Initializing Alerting")
 
 	alertGroup, ctx := errgroup.WithContext(ctx)
-
-	alertGroup.Go(func() error { return e.alertingTicker(ctx) })
+	if !setting.ClusteringEnabled {
+		alertGroup.Go(func() error { return e.alertingTicker(ctx) })
+	}
 	alertGroup.Go(func() error { return e.runJobDispatcher(ctx) })
 
 	err := alertGroup.Wait()
