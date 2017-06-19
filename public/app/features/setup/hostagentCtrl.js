@@ -39,9 +39,10 @@ function (angular, _) {
         contextSrv.hostNum = $scope.hostNum;
         $interval.cancel($scope.inter);
         $scope.installed = true;
-        $scope.appEvent('alert-success', ['安装完成', "请配置服务探针"]);
-        // 安装完成，自动加载模板
-        $scope.createTemp();
+        // 首台机器安装完成，自动加载模板
+        if(contextSrv.hostNum == 1){
+          $scope.createTemp();
+        };
       } else {
         backendSrv.alertD({
           method: "get",
@@ -73,8 +74,19 @@ function (angular, _) {
       }
     };
 
-    $scope.createTemp = function() {
+    $scope.createTemp = function(options) {
       // 添加模板
+      var tmp = ["iostat","machine"];
+      _.each(tmp,function(template) {
+        backendSrv.get('/api/static/template/'+template).then(function(result) {
+          result.system = contextSrv.user.systemId;
+          result.id = null;
+          backendSrv.saveDashboard(result, options).then(function(data) {
+            backendSrv.post("/api/dashboards/system", {DashId: data.id.toString(), SystemId: result.system});
+          });
+        });
+      });
+      $scope.appEvent('alert-success', ['机器探针部署成功', '请在"指标浏览"中查找相应指标']);
     };
 
     $scope.$on("$destroy", function() {
