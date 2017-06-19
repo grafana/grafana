@@ -20,6 +20,10 @@ func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 			return m.ErrDashboardAclInfoMissing
 		}
 
+		if cmd.DashboardId == 0 {
+			return m.ErrDashboardPermissionDashboardEmpty
+		}
+
 		if res, err := sess.Query("SELECT 1 from "+dialect.Quote("dashboard_acl")+" WHERE dashboard_id =? and (user_group_id=? or user_id=?)", cmd.DashboardId, cmd.UserGroupId, cmd.UserId); err != nil {
 			return err
 		} else if len(res) == 1 {

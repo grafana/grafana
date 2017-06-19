@@ -27,7 +27,7 @@ func GetDashboardAclList(c *middleware.Context) Response {
 }
 
 func PostDashboardAcl(c *middleware.Context, cmd m.SetDashboardAclCommand) Response {
-	dashId := c.ParamsInt64(":id")
+	dashId := c.ParamsInt64(":dashboardId")
 
 	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
 	if canSave, err := guardian.CanSave(); err != nil || !canSave {
@@ -38,7 +38,7 @@ func PostDashboardAcl(c *middleware.Context, cmd m.SetDashboardAclCommand) Respo
 	cmd.DashboardId = dashId
 
 	if err := bus.Dispatch(&cmd); err != nil {
-		if err == m.ErrDashboardAclInfoMissing {
+		if err == m.ErrDashboardAclInfoMissing || err == m.ErrDashboardPermissionDashboardEmpty {
 			return ApiError(409, err.Error(), err)
 		}
 		return ApiError(500, "Failed to create permission", err)
