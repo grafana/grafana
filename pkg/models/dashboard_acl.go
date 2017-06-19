@@ -74,16 +74,21 @@ type AddOrUpdateDashboardPermissionCommand struct {
 
 type RemoveDashboardPermissionCommand struct {
 	DashboardId int64 `json:"dashboardId" binding:"Required"`
-	OrgId       int64 `json:"-"`
 	UserId      int64 `json:"userId"`
 	UserGroupId int64 `json:"userGroupId"`
+
+	OrgId int64 `json:"-"`
 }
 
 //
 // QUERIES
 //
-
 type GetDashboardPermissionsQuery struct {
-	DashboardId int64 `json:"dashboardId" binding:"Required"`
+	DashboardId int64
 	Result      []*DashboardAclInfoDTO
+}
+
+type GetDashboardAclQuery struct {
+	DashboardId int64
+	Result      []*DashboardAcl
 }

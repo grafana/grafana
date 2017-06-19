@@ -11,6 +11,7 @@ func init() {
 	bus.AddHandler("sql", AddOrUpdateDashboardPermission)
 	bus.AddHandler("sql", RemoveDashboardPermission)
 	bus.AddHandler("sql", GetDashboardPermissions)
+	bus.AddHandler("sql", GetDashboardAcl)
 }
 
 func AddOrUpdateDashboardPermission(cmd *m.AddOrUpdateDashboardPermissionCommand) error {
@@ -83,6 +84,28 @@ func RemoveDashboardPermission(cmd *m.RemoveDashboardPermissionCommand) error {
 
 		return err
 	})
+}
+
+func GetDashboardAcl(query *m.GetDashboardAclQuery) error {
+	rawSQL := `SELECT
+  da.id,
+  da.org_id,
+  da.id,
+  da.dashboard_id,
+  da.user_id,
+  da.user_group_id,
+  da.permissions,
+  da.created,
+  da.updated,
+  FROM` + dialect.Quote("dashboard_acl") + ` as da
+  WHERE dashboard_id IN (
+    SELECT id FROM dashboard where id = ?
+    UNION
+    SELECT parent_id from dashboard where id = ?
+  )`
+
+	query.Result = make([]*m.DashboardAcl, 0)
+	return x.SQL(rawSQL, query.DashboardId).Find(&query.Result)
 }
 
 func GetDashboardPermissions(query *m.GetDashboardPermissionsQuery) error {

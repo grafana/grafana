@@ -99,7 +99,7 @@ func TestUserDataAccess(t *testing.T) {
 				err = AddOrgUser(&models.AddOrgUserCommand{LoginOrEmail: users[0].Login, Role: models.ROLE_VIEWER, OrgId: users[0].OrgId})
 				So(err, ShouldBeNil)
 
-				err = AddOrUpdateDashboardPermission(&models.AddOrUpdateDashboardPermissionCommand{DashboardId: 1, OrgId: users[0].OrgId, UserId: users[0].Id, PermissionType: models.PERMISSION_EDIT})
+				err = AddOrUpdateDashboardPermission(&models.AddOrUpdateDashboardPermissionCommand{DashboardId: 1, OrgId: users[0].OrgId, UserId: users[0].Id, Permissions: models.PERMISSION_EDIT})
 				So(err, ShouldBeNil)
 
 				err = SavePreferences(&models.SavePreferencesCommand{UserId: users[0].Id, OrgId: users[0].OrgId, HomeDashboardId: 1, Theme: "dark"})

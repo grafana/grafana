@@ -1,8 +1,6 @@
 package guardian
 
 import (
-	"fmt"
-
 	"github.com/grafana/grafana/pkg/bus"
 	m "github.com/grafana/grafana/pkg/models"
 )
@@ -22,7 +20,6 @@ func NewDashboardGuardian(dash *m.Dashboard, user *m.SignedInUser) *DashboardGua
 }
 
 func (g *DashboardGuardian) CanSave() (bool, error) {
-	fmt.Printf("user %v, %v", g.user.OrgRole, g.user.HasRole(m.ROLE_EDITOR))
 	if !g.dashboard.HasAcl {
 		return g.user.HasRole(m.ROLE_EDITOR), nil
 	}

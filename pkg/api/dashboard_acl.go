@@ -16,15 +16,14 @@ func GetDashboardAcl(c *middleware.Context) Response {
 	}
 
 	guardian := guardian.NewDashboardGuardian(dash, c.SignedInUser)
-
-	canView, err := guardian.CanView(dashboardId, c.OrgRole, c.IsGrafanaAdmin, c.OrgId, c.UserId)
+	canView, err := guardian.CanView()
 	if err != nil {
 		return ApiError(500, "Failed to get Dashboard ACL", err)
-	} else if !hasPermission {
-		return ApiError(403, "Does not have access to this Dashboard ACL")
+	} else if !canView {
+		return ApiError(403, "Dashboard access denied", nil)
 	}
 
-	query := m.GetDashboardPermissionsQuery{DashboardId: dashboardId}
+	query := m.GetDashboardPermissionsQuery{DashboardId: dash.Id}
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "Failed to get Dashboard ACL", err)
 	}
@@ -52,43 +51,43 @@ func PostDashboardAcl(c *middleware.Context, cmd m.AddOrUpdateDashboardPermissio
 }
 
 func DeleteDashboardAclByUser(c *middleware.Context) Response {
-	dashboardId := c.ParamsInt64(":id")
-	userId := c.ParamsInt64(":userId")
-	cmd := m.RemoveDashboardPermissionCommand{DashboardId: dashboardId, UserId: userId, OrgId: c.OrgId}
-
-	hasPermission, err := guardian.CanDeleteFromAcl(dashboardId, c.OrgRole, c.IsGrafanaAdmin, c.OrgId, c.UserId)
-	if err != nil {
-		return ApiError(500, "Failed to delete from Dashboard ACL", err)
-	}
-
-	if !hasPermission {
-		return Json(403, util.DynMap{"status": "Forbidden", "message": "Does not have access to this Dashboard ACL"})
-	}
-
-	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to delete permission for user", err)
-	}
+	// dashboardId := c.ParamsInt64(":id")
+	// userId := c.ParamsInt64(":userId")
+	// cmd := m.RemoveDashboardPermissionCommand{DashboardId: dashboardId, UserId: userId, OrgId: c.OrgId}
+	//
+	// hasPermission, err := guardian.CanDeleteFromAcl(dashboardId, c.OrgRole, c.IsGrafanaAdmin, c.OrgId, c.UserId)
+	// if err != nil {
+	// 	return ApiError(500, "Failed to delete from Dashboard ACL", err)
+	// }
+	//
+	// if !hasPermission {
+	// 	return Json(403, util.DynMap{"status": "Forbidden", "message": "Does not have access to this Dashboard ACL"})
+	// }
+	//
+	// if err := bus.Dispatch(&cmd); err != nil {
+	// 	return ApiError(500, "Failed to delete permission for user", err)
+	// }
 
 	return Json(200, "")
 }
 
 func DeleteDashboardAclByUserGroup(c *middleware.Context) Response {
-	dashboardId := c.ParamsInt64(":id")
-	userGroupId := c.ParamsInt64(":userGroupId")
-	cmd := m.RemoveDashboardPermissionCommand{DashboardId: dashboardId, UserGroupId: userGroupId, OrgId: c.OrgId}
-
-	hasPermission, err := guardian.CanDeleteFromAcl(dashboardId, c.OrgRole, c.IsGrafanaAdmin, c.OrgId, c.UserId)
-	if err != nil {
-		return ApiError(500, "Failed to delete from Dashboard ACL", err)
-	}
-
-	if !hasPermission {
-		return Json(403, util.DynMap{"status": "Forbidden", "message": "Does not have access to this Dashboard ACL"})
-	}
-
-	if err := bus.Dispatch(&cmd); err != nil {
-		return ApiError(500, "Failed to delete permission for user", err)
-	}
+	// dashboardId := c.ParamsInt64(":id")
+	// userGroupId := c.ParamsInt64(":userGroupId")
+	// cmd := m.RemoveDashboardPermissionCommand{DashboardId: dashboardId, UserGroupId: userGroupId, OrgId: c.OrgId}
+	//
+	// hasPermission, err := guardian.CanDeleteFromAcl(dashboardId, c.OrgRole, c.IsGrafanaAdmin, c.OrgId, c.UserId)
+	// if err != nil {
+	// 	return ApiError(500, "Failed to delete from Dashboard ACL", err)
+	// }
+	//
+	// if !hasPermission {
+	// 	return Json(403, util.DynMap{"status": "Forbidden", "message": "Does not have access to this Dashboard ACL"})
+	// }
+	//
+	// if err := bus.Dispatch(&cmd); err != nil {
+	// 	return ApiError(500, "Failed to delete permission for user", err)
+	// }
 
 	return Json(200, "")
 }

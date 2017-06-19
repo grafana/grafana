@@ -94,7 +94,7 @@ func TestUserGroupCommandsAndQueries(t *testing.T) {
 				So(err, ShouldBeNil)
 				err = AddUserGroupMember(&m.AddUserGroupMemberCommand{OrgId: 1, UserGroupId: groupId, UserId: userIds[2]})
 				So(err, ShouldBeNil)
-				err = AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{DashboardId: 1, OrgId: 1, PermissionType: m.PERMISSION_EDIT, UserGroupId: groupId})
+				err = AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{DashboardId: 1, OrgId: 1, Permissions: m.PERMISSION_EDIT, UserGroupId: groupId})
 
 				err = DeleteUserGroup(&m.DeleteUserGroupCommand{Id: groupId})
 				So(err, ShouldBeNil)

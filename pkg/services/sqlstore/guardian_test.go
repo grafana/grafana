@@ -76,12 +76,12 @@ func createUser(name string, role string, isAdmin bool) m.User {
 	return currentUserCmd.Result
 }
 
-func updateTestDashboardWithAcl(dashId int64, userId int64, permissionType m.PermissionType) {
+func updateTestDashboardWithAcl(dashId int64, userId int64, permission m.PermissionType) {
 	err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
-		OrgId:          1,
-		UserId:         userId,
-		DashboardId:    dashId,
-		PermissionType: permissionType,
+		OrgId:       1,
+		UserId:      userId,
+		DashboardId: dashId,
+		Permissions: permission,
 	})
 	So(err, ShouldBeNil)
 }
