@@ -25,6 +25,7 @@ func (p PermissionType) String() string {
 // Typed errors
 var (
 	ErrDashboardPermissionUserOrUserGroupEmpty = errors.New("User id and user group id cannot both be empty for a dashboard permission.")
+	ErrDashboardPermissionDashboardEmpty       = errors.New("Dashboard Id must be greater than zero for a dashboard permission.")
 )
 
 // Dashboard ACL model
