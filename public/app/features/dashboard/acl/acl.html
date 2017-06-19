@@ -4,7 +4,7 @@
 		<div class="gf-form-inline">
       <div class="gf-form">
 				<span class="gf-form-label">Type</span>
-				<select class="gf-form-input gf-size-auto" ng-model="ctrl.type" ng-options="r for r in ['User', 'User Group']"></select>
+				<select class="gf-form-input gf-size-auto" ng-model="ctrl.type" ng-options="r for r in ['User Group', 'User']"></select>
 			</div>
       <div class="gf-form" ng-show="ctrl.type === 'User'">
         <span class="gf-form-label">User</span>
@@ -27,49 +27,44 @@
   <div class="permissionlist">
     <div class="permissionlist__section">
       <div class="permissionlist__section-header">
-        <h6>Users</h6>
+        <h6>Permissions</h6>
       </div>
       <table class="filter-table form-inline">
         <thead>
           <tr>
-            <th>User</th>
+            <th style="width: 50px;"></th>
+            <th>Name</th>
             <th style="width: 220px;">Permission</th>
             <th style="width: 120px"></th>
           </tr>
         </thead>
         <tbody>
           <tr ng-repeat="permission in ctrl.userPermissions" class="permissionlist__item">
+            <td><i class="fa fa-fw fa-user"></i></td>
             <td>{{permission.userLogin}}</td>
             <td><select class="gf-form-input gf-size-auto" ng-model="permission.permissions" ng-options="p.value as p.text for p in ctrl.permissionTypeOptions" ng-change="ctrl.updatePermission(permission)"></select></td>
             <td class="text-right">
-              <a ng-click="ctrl.removeUserPermission(permission)" class="btn btn-danger btn-small">
+              <a ng-click="ctrl.removePermission(permission)" class="btn btn-danger btn-small">
                 <i class="fa fa-remove"></i>
               </a>
             </td>
           </tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="permissionlist__section">
-      <div class="permissionlist__section-header">
-        <h6>Groups</h6>
-      </div>
-      <table class="filter-table form-inline">
-        <thead>
-          <tr>
-            <th>User Group</th>
-            <th style="width: 220px;">Permission</th>
-            <th style="width: 120px;"></th>
-          </tr>
-        </thead>
-        <tbody>
           <tr ng-repeat="permission in ctrl.userGroupPermissions" class="permissionlist__item">
+            <td><i class="fa fa-fw fa-users"></i></td>
             <td>{{permission.userGroup}}</td>
-            <td><select class="gf-form-input gf-size-auto" ng-model="permission.permissionType" ng-options="p.value as p.text for p in ctrl.permissionTypeOptions" ng-change="ctrl.updatePermission(permission)"></select></td>
+            <td><select class="gf-form-input gf-size-auto" ng-model="permission.permissions" ng-options="p.value as p.text for p in ctrl.permissionTypeOptions" ng-change="ctrl.updatePermission(permission)"></select></td>
             <td class="text-right">
-              <a ng-click="ctrl.removeUserGroupPermission(permission)" class="btn btn-danger btn-small">
+              <a ng-click="ctrl.removePermission(permission)" class="btn btn-danger btn-small">
                 <i class="fa fa-remove"></i>
               </a>
+            </td>
+          </tr>
+          <tr ng-repeat="role in ctrl.roles" class="permissionlist__item">
+            <td></td>
+            <td>{{role.name}}</td>
+            <td><select class="gf-form-input gf-size-auto" ng-model="role.permissions" ng-options="p.value as p.text for p in ctrl.roleOptions" ng-change="ctrl.updatePermission(role)"></select></td>
+            <td class="text-right">
+
             </td>
           </tr>
         </tbody>
