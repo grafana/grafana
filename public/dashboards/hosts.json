@@ -1,5 +1,5 @@
 {
-  "hosts":[
+  "hosts": [
     {
       "host": "Debian",
       "icon": "iconfont fa-debian",
@@ -33,10 +33,10 @@
       "addr": "RedHat"
     }
   ],
-  "service":[
+  "service": [
     {
       "id": "hadoop.datanode",
-      "name":"Hadoop DataNode",
+      "name": "Hadoop DataNode",
       "icon": "iconfont fa-hadoop29",
       "img": "img/service_hadoop.png",
       "info": "Hadoop是一个能够对大量数据进行分布式处理的软件框架。 Hadoop 以一种可靠、高效、可伸缩的方式进行数据处理。",
@@ -44,31 +44,69 @@
         "路径：/opt/cloudwiz-agent/agent/collectors/conf/hadoop_data_node.conf",
         "Interval: 15"
       ],
-      "metrics":[
+      "metrics": [
         {
           "name": "hadoop.datanode.fsdatasetstate-null.Remaining",
-          "define":"datanode 文件系统剩余的容量",
+          "define": "datanode 文件系统剩余的容量",
           "unit": "bytes",
           "type": "number",
           "alert": ""
         },
         {
           "name": "hadoop.datanode.activity.VolumeFailures",
-          "define":"单个磁盘簇出错导致服务异常的次数",
+          "define": "单个磁盘簇出错导致服务异常的次数",
           "unit": "short",
           "type": "number",
           "alert": ""
         },
         {
           "name": "hadoop.datanode.activity.BlocksRead",
-          "define":"从硬盘读块的次数",
+          "define": "从硬盘读块的次数",
           "unit": "short",
           "type": "counter",
           "alert": ""
         }
       ],
       "status": -1,
-      "template": "hadoop"
+      "template": "hadoop",
+      "alertDef": [
+        {
+          "id": "2.1.aa5182e8-09dc-48e2-8cc9-30745cff9c11",
+          "org": "2",
+          "service": "1",
+          "name": "Hadoop文件使用空间太大",
+          "description": "Hadoop文件使用空间不要超过总空间的80% (具体临界值要设, 目前是20G)",
+          "hash": 1264853798,
+          "creationTime": 1483658472835,
+          "modificationTime": 1483658928273,
+          "alertDetails": {
+            "cluster": "cluster1",
+            "hosts": null,
+            "membership": "*",
+            "monitoringScope": "HOST",
+            "clusterwideAggregator": null,
+            "hostQuery": {
+              "metricQueries": [
+                {
+                  "metric": "hadoop.datanode.fsdatasetstate-null.DfsUsed",
+                  "aggregator": "AVG",
+                  "transform": null
+                }
+              ],
+              "expression": null
+            },
+            "overrideHostQuery": null,
+            "crit": {
+              "threshold": 20000000000,
+              "durarionMinutes": 10
+            },
+            "warn": {
+              "threshold": 10000000000,
+              "durarionMinutes": 5
+            }
+          }
+        }
+      ]
     },
     {
       "id": "hadoop.namenode",
@@ -80,31 +118,105 @@
         "路径：/opt/cloudwiz-agent/agent/collectors/conf/hadoop_name_node.conf",
         "Interval：90"
       ],
-      "metrics":[
+      "metrics": [
         {
           "name": "hadoop.namenode.fsnamesystem.CapacityRemaining",
-          "define":"HDFS文件系统剩余的容量",
+          "define": "HDFS文件系统剩余的容量",
           "unit": "bytes",
           "type": "number",
           "alert": ""
         },
         {
           "name": "hadoop.namenode.fsnamesystem.CapacityRemainingGB",
-          "define":"HDFS文件系统剩余的容量(单位GB)",
+          "define": "HDFS文件系统剩余的容量(单位GB)",
           "unit": "gigabytes",
           "type": "number",
           "alert": ""
         },
         {
           "name": "hadoop.namenode.fsnamesystem.CapacityTotal",
-          "define":"HDFS文件系统总体容量",
+          "define": "HDFS文件系统总体容量",
           "unit": "bytes",
           "type": "number",
           "alert": ""
         }
       ],
       "status": -1,
-      "template": "hadoop"
+      "template": "hadoop",
+      "alertDef": [
+        {
+          "id": "2.1.38c8b96a-ba4f-4d4f-99ec-6f8f2006e400",
+          "org": "2",
+          "service": "1",
+          "name": "Hadoop系统有不可用Block",
+          "description": "MissingBlock表示有部分数据丢失, NameNode已经无法恢复(除非有datanode被下线维修了). 这比CorruptedBlock还严重.",
+          "hash": -860959901,
+          "creationTime": 1483659442276,
+          "modificationTime": 1483660005975,
+          "alertDetails": {
+            "cluster": "cluster1",
+            "hosts": null,
+            "membership": "*",
+            "monitoringScope": "HOST",
+            "clusterwideAggregator": null,
+            "hostQuery": {
+              "metricQueries": [
+                {
+                  "metric": "hadoop.namenode.fsnamesystem.MissingBlocks",
+                  "aggregator": "AVG",
+                  "transform": null
+                }
+              ],
+              "expression": null
+            },
+            "overrideHostQuery": null,
+            "crit": {
+              "threshold": 1,
+              "durarionMinutes": 10
+            },
+            "warn": {
+              "threshold": 1,
+              "durarionMinutes": 5
+            }
+          }
+        },
+        {
+          "id": "2.1.4767ca4e-e71c-4034-b8eb-683d432e7234",
+          "org": "2",
+          "service": "1",
+          "name": "Hadoop失去的datanode数量过多",
+          "description": "DataNode一般掉线10分钟后会标识为死亡。一般系统能容忍少数的datanode死亡，但是管理员需要尽量保持死亡数为0.",
+          "hash": -1569431972,
+          "creationTime": 1483659977705,
+          "modificationTime": 1483659995262,
+          "alertDetails": {
+            "cluster": "cluster1",
+            "hosts": null,
+            "membership": "*",
+            "monitoringScope": "HOST",
+            "clusterwideAggregator": null,
+            "hostQuery": {
+              "metricQueries": [
+                {
+                  "metric": "hadoop.namenode.fsnamesystemstate.NumDeadDataNodes",
+                  "aggregator": null,
+                  "transform": null
+                }
+              ],
+              "expression": null
+            },
+            "overrideHostQuery": null,
+            "crit": {
+              "threshold": 5,
+              "durarionMinutes": 10
+            },
+            "warn": {
+              "threshold": 1,
+              "durarionMinutes": 5
+            }
+          }
+        }
+      ]
     },
     {
       "id": "hbase.master",
@@ -117,31 +229,105 @@
         "Interval: 90",
         "Port : 16010"
       ],
-      "metrics":[
+      "metrics": [
         {
           "name": "hbase.master.server.numRegionServers",
-          "define":"regionserver 存活数量",
+          "define": "regionserver 存活数量",
           "unit": "short",
           "type": "number",
           "alert": ""
         },
         {
           "name": "hbase.master.server.numDeadRegionServers",
-          "define":"regionserver 不存活数量",
+          "define": "regionserver 不存活数量",
           "unit": "short",
           "type": "number",
           "alert": ""
         },
         {
           "name": "hbase.master.ipc.numOpenConnections",
-          "define":"与master 连接数量",
+          "define": "与master 连接数量",
           "unit": "short",
           "type": "number",
           "alert": ""
         }
       ],
       "status": -1,
-      "template": "hbase"
+      "template": "hbase",
+      "alertDef": [
+        {
+          "id": "2.1.03182259-ca6d-43d7-8e19-4b28563afe68",
+          "org": "2",
+          "service": "1",
+          "name": "Hbase Regions transition的时间太长",
+          "description": "有些regions transition的时间超过threshold（60秒default）。",
+          "hash": 2137001943,
+          "creationTime": 1483665215510,
+          "modificationTime": 1483665215510,
+          "alertDetails": {
+            "cluster": "cluster1",
+            "hosts": null,
+            "membership": "*",
+            "monitoringScope": "HOST",
+            "clusterwideAggregator": null,
+            "hostQuery": {
+              "metricQueries": [
+                {
+                  "metric": "hbase.master.assignmentmanger.ritCountOverThreshold",
+                  "aggregator": null,
+                  "transform": null
+                }
+              ],
+              "expression": null
+            },
+            "overrideHostQuery": null,
+            "crit": {
+              "threshold": 1,
+              "durarionMinutes": 20
+            },
+            "warn": {
+              "threshold": 1,
+              "durarionMinutes": 10
+            }
+          }
+        },
+        {
+          "id": "2.1.3c948bf9-a9e6-426b-a6a4-3488d5eec1e2",
+          "org": "2",
+          "service": "1",
+          "name": "Hbase不服务的Regionserver数量过高",
+          "description": "Hbase不服务的Regionserver数量过高",
+          "hash": -2133710982,
+          "creationTime": 1483663830156,
+          "modificationTime": 1483663830156,
+          "alertDetails": {
+            "cluster": "cluster1",
+            "hosts": null,
+            "membership": "*",
+            "monitoringScope": "HOST",
+            "clusterwideAggregator": null,
+            "hostQuery": {
+              "metricQueries": [
+                {
+                  "metric": "hbase.master.server.numDeadRegionServers",
+                  "aggregator": "SUM",
+                  "transform": null
+                }
+              ],
+              "expression": null
+            },
+            "overrideHostQuery": null,
+            "crit": {
+              "threshold": 5,
+              "durarionMinutes": 5
+            },
+            "warn": {
+              "threshold": 2,
+              "durarionMinutes": 5
+            }
+          }
+        }
+      ]
     },
     {
       "id": "hbase.regionserver",
@@ -154,31 +340,135 @@
         "Interval: 15",
         "Port : 16030"
       ],
-      "metrics":[
+      "metrics": [
         {
           "name": "hbase.regionserver.server.regionCount",
-          "define":"region 的总数",
+          "define": "region 的总数",
           "unit": "short",
           "type": "number",
           "alert": ""
         },
         {
           "name": "hbase.regionserver.server.readRequestCount",
-          "define":"regionserver读请求的数量",
+          "define": "regionserver读请求的数量",
           "unit": "short",
           "type": "number",
           "alert": ""
         },
         {
           "name": "hbase.regionserver.server.writeRequestCount",
-          "define":"regionserver写请求的数量",
+          "define": "regionserver写请求的数量",
           "unit": "short",
           "type": "counter",
           "alert": ""
         }
       ],
       "status": -1,
-      "template": "hbase"
+      "template": "hbase",
+      "alertDef": [
+        {
+          "id": "2.1.15888f8d-6d9d-423c-9181-703999348223",
+          "org": "2",
+          "service": "1",
+          "name": "Hbase 等待flush的队列太长",
+          "description": "表示磁盘速度跟不上Flush速度， 可能是内存不够用，需要加内存。（阈值100不一定精确，需要根据系统调节）",
+          "hash": -1318548720,
+          "creationTime": 1483665787850,
+          "modificationTime": 1483665787850,
+          "alertDetails": {
+            "cluster": "cluster1",
+            "hosts": null,
+            "membership": "*",
+            "monitoringScope": "HOST",
+            "clusterwideAggregator": null,
+            "hostQuery": {
+              "metricQueries": [
+                {
+                  "metric": "hbase.regionserver.server.flushQueueLength",
+                  "aggregator": "AVG",
+                  "transform": null
+                }
+              ],
+              "expression": null
+            },
+            "overrideHostQuery": null,
+            "crit": {
+              "threshold": 100,
+              "durarionMinutes": 10
+            },
+            "warn": {
+              "threshold": 50,
+              "durarionMinutes": 5
+            }
+          }
+        },
+        {
+          "id": "2.1.9ba7fa43-1c3f-4bc0-a878-350d6b461780",
+          "org": "2",
+          "service": "1",
+          "name": "Hbase 用户连接Authentication失败数过高",
+          "description": "Hbase 用户连接Authentication失败数过高",
+          "hash": 1251601877,
+          "creationTime": 1483665412653,
+          "modificationTime": 1483665412653,
+          "alertDetails": {
+            "cluster": "cluster1",
+            "hosts": null,
+            "membership": "*",
+            "monitoringScope": "HOST",
+            "clusterwideAggregator": null,
+            "hostQuery": {
+              "metricQueries": [
+                {
+                  "metric": "hbase.regionserver.ipc.authenticationFailures",
+                  "aggregator": "AVG",
+                  "transform": null
+                }
+              ],
+              "expression": null
+            },
+            "overrideHostQuery": null,
+            "crit": {
+              "threshold": 100,
+              "durarionMinutes": 10
+            },
+            "warn": {
+              "threshold": 50,
+              "durarionMinutes": 5
+            }
+          }
+        },
+        {
+          "id": "2.1.b41c58ae-63c3-4f22-985d-d44e199927d2",
+          "org": "2",
+          "service": "1",
+          "name": "Hbase CompactionQueueSize太高",
+          "description": "表示所有Regions同时split/compact，可以考虑提前作split或者turn off auto-compaction",
+          "hash": -1358848061,
+          "creationTime": 1483664985298,
+          "modificationTime": 1483664985298,
+          "alertDetails": {
+            "cluster": "cluster1",
+            "hosts": null,
+            "membership": "*",
+            "monitoringScope": "HOST",
+            "clusterwideAggregator": null,
+            "hostQuery": {
+              "metricQueries": [
+                {
+                  "metric": "hbase.regionserver.CompactionQueueSize",
+                  "aggregator": "AVG",
+                  "transform": null
+                }
+              ],
+              "expression": null
+            },
+            "overrideHostQuery": null,
+            "crit": null,
+            "warn": null
+          }
+        }
+      ]
     },
     {
       "id": "kafka",
@@ -188,37 +478,38 @@
       "info": "Kafka是一种高吞吐量的分布式发布订阅消息系统，它可以处理消费者规模的网站中的所有动作流数据。",
       "deploy": [
         "路径：/opt/cloudwiz-agent/agent/collectors/conf/kafka.conf",
-		    "Interval：15",
+        "Interval：15",
         " ",
         "路径：/opt/cloudwiz-agent/agent/collectors/conf/kafka_consumers.conf",
         "Process_name: AppMain (指consumer 的名称，可以通过逗号加入多个）",
         "Port：7777"
       ],
-      "metrics":[
+      "metrics": [
         {
           "name": "kafka.bytesrate.BytesInPerSec.Count",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         },
         {
           "name": "kafka.bytesrate.BytesInPerSec.FifteenMinuteRate",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         },
         {
           "name": "kafka.bytesrate.BytesInPerSec.FiveMinuteRate",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         }
       ],
       "status": -1,
-      "template": "kafka"
+      "template": "kafka",
+      "alertDef": []
     },
     {
       "id": "mysql",
@@ -231,34 +522,35 @@
         "bash -c \"$(curl -kL https://download.cloudwiz.cn/agent/mysql/deploy.sh)\"",
         "(注意, 这里需要获取您的root账号密码)",
         "路径:  /opt/cloudwiz-agent/agent/collectors/conf/mysql.conf",
-	      "User: cloudwiz_user",
-	      "Pass: cloudwiz_pass"
+        "User: cloudwiz_user",
+        "Pass: cloudwiz_pass"
       ],
-      "metrics":[
+      "metrics": [
         {
           "name": "mysql.connection_states",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         },
         {
           "name": "mysql.innodb.history_list_length",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         },
         {
           "name": "mysql.innodb.ibuf.free_list_len",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         }
       ],
       "status": -1,
-      "template": "mysql"
+      "template": "mysql",
+      "alertDef": []
     },
     {
       "id": "spark",
@@ -268,38 +560,39 @@
       "info": "Apache Spark 是专为大规模数据处理而设计的快速通用的计算引擎。",
       "deploy": [
         "路径：/opt/cloudwiz-agent/agent/collectors/conf/spark.conf",
-	      "Interval:60",
-	      "Spark_host: localhost",
-	      "Spark_port: 8080",
-	      "Spark_cluster_mode: <spark_standalone_mode,", 
+        "Interval:60",
+        "Spark_host: localhost",
+        "Spark_port: 8080",
+        "Spark_cluster_mode: <spark_standalone_mode,",
         "spark_yarn_mode,",
         "spark_mesos_mode >"
       ],
-      "metrics":[
+      "metrics": [
         {
           "name": "spark.executor.activeTasks",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         },
         {
           "name": "spark.executor.completedTasks",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         },
         {
           "name": "spark.executor.count",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         }
       ],
       "status": -1,
-      "template": "spark"
+      "template": "spark",
+      "alertDef": []
     },
     {
       "id": "storm",
@@ -309,35 +602,36 @@
       "info": "Storm为分布式实时计算提供了一组通用原语，可被用于“流处理”之中，实时处理消息并更新数据库。这是管理队列及工作者集群的另一种方式。",
       "deploy": [
         "路径：/opt/cloudwiz-agent/agent/collectors/conf/storm.conf",
-	      "Interval: 30",
-	      "Host: localhost",
-	      "Port : 8080"
+        "Interval: 30",
+        "Host: localhost",
+        "Port : 8080"
       ],
-      "metrics":[
+      "metrics": [
         {
           "name": "storm.cluster.executorsTotal",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         },
         {
           "name": "storm.cluster.slotsFree",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         },
         {
           "name": "storm.cluster.slotsTotal",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         }
       ],
       "status": -1,
-      "template": "storm"
+      "template": "storm",
+      "alertDef": []
     },
     {
       "id": "yarn",
@@ -347,35 +641,36 @@
       "info": "Apache Hadoop YARN （Yet Another Resource Negotiator，另一种资源协调者）是一种新的 Hadoop 资源管理器，它是一个通用资源管理系统，可为上层应用提供统一的资源管理和调度。",
       "deploy": [
         "路径：/opt/cloudwiz-agent/agent/collectors/conf/yarn.conf",
-	      "Interval: 30",
-	      "Host:localhost",
-	      "Port : 8088"
+        "Interval: 30",
+        "Host:localhost",
+        "Port : 8088"
       ],
-      "metrics":[
+      "metrics": [
         {
           "name": "yarn.apps.allocatedMB",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         },
         {
           "name": "yarn.apps.allocatedVCores",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         },
         {
           "name": "yarn.apps.elapsedTime",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         }
       ],
       "status": -1,
-      "template": "yarn_mapreduce"
+      "template": "yarn_mapreduce",
+      "alertDef": []
     },
     {
       "id": "zookeeper",
@@ -388,31 +683,141 @@
         "SCAN_INTERVAL: 600",
         "USER: root"
       ],
-      "metrics":[
+      "metrics": [
         {
           "name": "zk_approximate_data_size",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         },
         {
           "name": "zk_avg_latency",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         },
         {
           "name": "zk_ephemerals_count",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         }
       ],
       "status": -1,
-      "template": "zookeeper"
+      "template": "zookeeper",
+      "alertDef": [
+        {
+          "id": "2.1.6664466c-763a-42de-a30f-1541798a2857",
+          "org": "2",
+          "service": "1",
+          "name": "zookeeper待处理的请求太多",
+          "description": "待处理的请求在队列里. 队列的长度大于10即表示zookeeper处理太慢",
+          "hash": 482979460,
+          "creationTime": 1483600899927,
+          "modificationTime": 1483660021820,
+          "alertDetails": {
+            "cluster": "cluster1",
+            "hosts": null,
+            "membership": "*",
+            "monitoringScope": "HOST",
+            "clusterwideAggregator": null,
+            "hostQuery": {
+              "metricQueries": [
+                {
+                  "metric": "zk_outstanding_requests",
+                  "aggregator": "AVG",
+                  "transform": null
+                }
+              ],
+              "expression": null
+            },
+            "overrideHostQuery": null,
+            "crit": {
+              "threshold": 10,
+              "durarionMinutes": 5
+            },
+            "warn": {
+              "threshold": 8,
+              "durarionMinutes": 3
+            }
+          }
+        },
+        {
+          "id": "2.1.dc731f7e-38a3-4bde-a434-91fb5c267be0",
+          "org": "2",
+          "service": "1",
+          "name": "zookeeper是否运行",
+          "description": "zk_server_state=100(停止); -1(状态未知); 0,1,2(正常)",
+          "hash": 1757727325,
+          "creationTime": 1483569120741,
+          "modificationTime": 1483569120741,
+          "alertDetails": {
+            "cluster": "cluster1",
+            "hosts": null,
+            "membership": "*",
+            "monitoringScope": "HOST",
+            "clusterwideAggregator": null,
+            "hostQuery": {
+              "metricQueries": [
+                {
+                  "metric": "zk_server_state",
+                  "aggregator": "AVG",
+                  "transform": null
+                }
+              ],
+              "expression": null
+            },
+            "overrideHostQuery": null,
+            "crit": {
+              "threshold": 99,
+              "durarionMinutes": 5
+            },
+            "warn": {
+              "threshold": 3,
+              "durarionMinutes": 2
+            }
+          }
+        },
+        {
+          "id": "2.1.ee66268a-f15e-4501-bdc7-818426505fce",
+          "org": "2",
+          "service": "1",
+          "name": "zookeeper响应时间过慢",
+          "description": "响应时间不能大于10倍tick time",
+          "hash": -1918309971,
+          "creationTime": 1483600762472,
+          "modificationTime": 1483600762472,
+          "alertDetails": {
+            "cluster": "cluster1",
+            "hosts": null,
+            "membership": "*",
+            "monitoringScope": "HOST",
+            "clusterwideAggregator": null,
+            "hostQuery": {
+              "metricQueries": [
+                {
+                  "metric": "zk_max_latency",
+                  "aggregator": "P99",
+                  "transform": null
+                }
+              ],
+              "expression": null
+            },
+            "overrideHostQuery": null,
+            "crit": {
+              "threshold": 400,
+              "durarionMinutes": 5
+            },
+            "warn": {
+              "threshold": 200,
+              "durarionMinutes": 5
+            }
+          }
+        }
+      ]
     },
     {
       "id": "tomcat",
@@ -426,31 +831,32 @@
         "Protocol: http",
         "Ports: 8080, 8081  (支持一台机器多个端口号的设置 用逗号来分割)"
       ],
-      "metrics":[
+      "metrics": [
         {
           "name": "tomcat.jsp.jspCount",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         },
         {
           "name": "tomcat.jsp.jspQueueLength",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         },
         {
           "name": "tomcat.jsp.jspReloadCount",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         }
       ],
       "status": -1,
-      "template": "tomcat"
+      "template": "tomcat",
+      "alertDef": []
     },
     {
       "id": "opentsdb",
@@ -461,7 +867,8 @@
       "deploy": "",
       "metrics": [],
       "status": -1,
-      "template": "opentsdb"
+      "template": "opentsdb",
+      "alertDef": []
     },
     {
       "id": "mongo3",
@@ -485,31 +892,32 @@
         " ",
         "注意username 和password 默认是字符串, 不需要加入 “ 或 ‘"
       ],
-      "metrics":[
+      "metrics": [
         {
           "name": "mongo.asserts.msg",
-          "define":"asserts出现的次数",
+          "define": "asserts出现的次数",
           "unit": "short",
           "type": "number",
           "alert": ""
         },
         {
           "name": "mongo.asserts.regular",
-          "define":"有规律的asserts出现的次数",
+          "define": "有规律的asserts出现的次数",
           "unit": "short",
           "type": "number",
           "alert": ""
         },
         {
           "name": "mongo.asserts.rollovers",
-          "define":"Number of times that the rollover counters roll over per second. The counters rollover to zero every 2 to the 30 assertions.",
+          "define": "Number of times that the rollover counters roll over per second. The counters rollover to zero every 2 to the 30 assertions.",
           "unit": "short",
           "type": "number",
           "alert": ""
         }
       ],
       "status": -1,
-      "template": "mongodb"
+      "template": "mongodb",
+      "alertDef": []
     },
     {
       "id": "nginx",
@@ -522,31 +930,178 @@
         "Host: localhost",
         "Port: 80"
       ],
-      "metrics":[
+      "metrics": [
         {
           "name": "nginx.active_connections",
-          "define":"已经连接上nginx server 的连接数(包括正在等待的链接)",
+          "define": "已经连接上nginx server 的连接数(包括正在等待的链接)",
           "unit": "short",
           "type": "number",
           "alert": ""
         },
         {
           "name": "nginx.exception",
-          "define":"",
+          "define": "",
           "unit": "",
           "type": "",
           "alert": ""
         },
         {
           "name": "nginx.number_requests_reading",
-          "define":"客户端读请求数量",
+          "define": "客户端读请求数量",
           "unit": "short",
           "type": "number",
           "alert": ""
         }
       ],
       "status": -1,
-      "template": "nginx"
+      "template": "nginx",
+      "alertDef": []
+    }
+  ],
+  "alertDefs": [
+    {
+      "id": "2.1.41b485a3-d12d-409f-bc2a-56f077164f52",
+      "org": "2",
+      "service": "1",
+      "name": "系统： CPU user usage > 80%",
+      "description": "CPU user usage > 80%",
+      "hash": 195312551,
+      "creationTime": 1483652438757,
+      "modificationTime": 1483660034921,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "cpu.usr",
+              "aggregator": "AVG",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 80,
+          "durarionMinutes": 5
+        },
+        "warn": {
+          "threshold": 70,
+          "durarionMinutes": 5
+        }
+      }
+    },
+    {
+      "id": "2.1.65ca2302-b573-4ec2-8ef0-f0dcab0cfbb7",
+      "org": "2",
+      "service": "1",
+      "name": "系统： 磁盘空间 < 10%",
+      "description": "磁盘空间小于10%",
+      "hash": 1984061725,
+      "creationTime": 1483600587088,
+      "modificationTime": 1483660043646,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "df.bytes.percentused",
+              "aggregator": "AVG",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 90,
+          "durarionMinutes": 5
+        },
+        "warn": {
+          "threshold": 85,
+          "durarionMinutes": 5
+        }
+      }
+    },
+    {
+      "id": "2.1.87a7ec75-8a74-4498-a2de-341f5d0c8b15",
+      "org": "2",
+      "service": "1",
+      "name": "系统： 内存swap太多",
+      "description": "内存swap最好不要发生, 超过256MB即报警",
+      "hash": 472487647,
+      "creationTime": 1483601083829,
+      "modificationTime": 1483660059551,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "zk_swap",
+              "aggregator": "AVG",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 256,
+          "durarionMinutes": 5
+        },
+        "warn": {
+          "threshold": 128,
+          "durarionMinutes": 3
+        }
+      }
+    },
+    {
+      "id": "2.1.f3d68192-0003-4e8c-bb0d-eabdc39c2fae",
+      "org": "2",
+      "service": "1",
+      "name": "系统：内存使用过高",
+      "description": "内存使用过高",
+      "hash": -811432529,
+      "creationTime": 1483653284310,
+      "modificationTime": 1483660070206,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "proc.meminfo.active",
+              "aggregator": "AVG",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 25862968,
+          "durarionMinutes": 5
+        },
+        "warn": {
+          "threshold": 23862968,
+          "durarionMinutes": 5
+        }
+      }
     }
   ]
 }

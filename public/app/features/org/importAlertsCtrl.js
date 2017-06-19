@@ -16,32 +16,7 @@ define([
                 var alertDefs = JSON.parse(e.target.result);
                 if (_.isNull(alertDefs[0]) || _.isNull(alertDefs[0].alertDetails))
                   throw "Wrong json";
-                var promiseArr = [];
-                _.each(alertDefs, function (target, i) {
-                  var newAlert = {};
-                  var milliseconds = (new Date).getTime();
-                  newAlert.org = contextSrv.user.orgId;
-                  newAlert.service = contextSrv.user.systemId;
-                  newAlert.alertDetails = target.alertDetails;
-                  newAlert.description = target.description;
-                  newAlert.name = target.name;
-                  newAlert.creationTime = milliseconds;
-                  newAlert.modificationTime = milliseconds;
-                  var p = alertMgrSrv.save(newAlert).then(function onSuccess() {
-                    return i;
-                  }, function onFailed(response) {
-                    $scope.appEvent('alert-error', ['ERROR', response.status + " " + (response.data || "Request failed")]);
-                    throw "Request failed";
-                  });
-                  promiseArr.push(p);
-                });
-                $q.all(promiseArr).then(function (values) {
-                  if (values.length == alertDefs.length) {
-                    $scope.init();
-                    $scope.dismiss();
-                    $scope.appEvent('alert-success', ['导入成功', '共导入' + alertDefs.length + '个报警设置']);
-                  }
-                });
+                $scope.importAlert(alertDefs);
               } catch (err) {
                 console.log(err);
                 $scope.appEvent('alert-error', ['导入 失败', 'JSON -> JS Serialization failed: ' + err.message]);
@@ -52,6 +27,35 @@ define([
           })(f);
           reader.readAsText(f);
         }
+      };
+
+      $scope.importAlert = function (alertDefs) {
+        var promiseArr = [];
+        _.each(alertDefs, function (target, i) {
+          var newAlert = {};
+          var milliseconds = (new Date).getTime();
+          newAlert.org = contextSrv.user.orgId;
+          newAlert.service = contextSrv.user.systemId;
+          newAlert.alertDetails = target.alertDetails;
+          newAlert.description = target.description;
+          newAlert.name = target.name;
+          newAlert.creationTime = milliseconds;
+          newAlert.modificationTime = milliseconds;
+          var p = alertMgrSrv.save(newAlert).then(function onSuccess() {
+            return i;
+          }, function onFailed(response) {
+            $scope.appEvent('alert-error', ['ERROR', response.status + " " + (response.data || "Request failed")]);
+            throw "Request failed";
+          });
+          promiseArr.push(p);
+        });
+        $q.all(promiseArr).then(function (values) {
+          if (values.length == alertDefs.length) {
+            $scope.init();
+            $scope.dismiss();
+            $scope.appEvent('alert-success', ['导入成功', '共导入' + alertDefs.length + '个报警设置']);
+          }
+        });
       };
     });
   });

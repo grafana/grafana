@@ -1,13 +1,14 @@
 define([
   'angular',
   'lodash',
+  'app/features/org/importAlertsCtrl'
 ],
 function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('HostAgentCtrl', function ($scope, backendSrv, datasourceSrv, contextSrv, $interval, $location) {
+  module.controller('HostAgentCtrl', function ($scope, backendSrv, datasourceSrv, contextSrv, $interval, $location, $controller) {
 
     $scope.init = function() {
       $scope.installManual = false;
@@ -24,6 +25,7 @@ function (angular, _) {
       }
       backendSrv.get('/api/static/hosts').then(function(result) {
         $scope.platform = result.hosts;
+        $scope.alertDefs = result.alertDefs;
       });
 
       datasourceSrv.get("opentsdb").then(function (ds) {
@@ -32,6 +34,8 @@ function (angular, _) {
         $scope.metricsServer = url.hostname;
       });
       $scope.inter = $interval($scope.getHosts,5000,120);
+
+      $controller('ImportAlertsCtrl',{$scope: $scope});
     };
 
     $scope.getHosts = function() {
@@ -71,6 +75,9 @@ function (angular, _) {
         case "skip":
           $location.url('/');
           break;
+        case "import":
+          $scope.importAlerts($scope.alertDefs);
+          break;
       }
     };
 
@@ -94,6 +101,14 @@ function (angular, _) {
         $interval.cancel($scope.inter);
       }
     });
+
+    $scope.importAlerts = function(alertDefs) {
+      if(alertDefs.length) {
+        $scope.importAlert(alertDefs);
+      } else {
+        $scope.appEvent('alert-warning', ['暂无报警规则', '请联系管理员']);
+      }
+    };
 
     $scope.init();
   });
