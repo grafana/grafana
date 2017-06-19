@@ -25,7 +25,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			{Id: 4, OrgId: 1, DashboardId: 1, UserGroupId: 2, Permissions: models.PERMISSION_READ_ONLY_EDIT},
 		}
 
-		bus.AddHandler("test", func(query *models.GetDashboardPermissionsQuery) error {
+		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
 			query.Result = dtoRes
 			return nil
 		})

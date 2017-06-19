@@ -186,16 +186,16 @@ func TestAccountDataAccess(t *testing.T) {
 						So(err, ShouldBeNil)
 
 						Convey("Should remove dependent permissions for deleted org user", func() {
-							permQuery := &m.GetDashboardPermissionsQuery{DashboardId: 1}
-							err = GetDashboardPermissions(permQuery)
+							permQuery := &m.GetDashboardAclInfoListQuery{DashboardId: 1}
+							err = GetDashboardAclInfoList(permQuery)
 							So(err, ShouldBeNil)
 
 							So(len(permQuery.Result), ShouldEqual, 0)
 						})
 
 						Convey("Should not remove dashboard permissions for same user in another org", func() {
-							permQuery := &m.GetDashboardPermissionsQuery{DashboardId: 2}
-							err = GetDashboardPermissions(permQuery)
+							permQuery := &m.GetDashboardAclInfoListQuery{DashboardId: 2}
+							err = GetDashboardAclInfoList(permQuery)
 							So(err, ShouldBeNil)
 
 							So(permQuery.Result[0].OrgId, ShouldEqual, ac3.OrgId)

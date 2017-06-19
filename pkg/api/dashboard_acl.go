@@ -18,7 +18,7 @@ func GetDashboardAcl(c *middleware.Context) Response {
 		return dashboardGuardianResponse(err)
 	}
 
-	query := m.GetDashboardPermissionsQuery{DashboardId: dashId}
+	query := m.GetDashboardAclInfoListQuery{DashboardId: dashId}
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "Failed to get Dashboard ACL", err)
 	}

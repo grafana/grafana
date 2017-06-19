@@ -75,8 +75,8 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				})
 				So(err, ShouldBeNil)
 
-				q1 := &m.GetDashboardPermissionsQuery{DashboardId: savedFolder.Id}
-				err = GetDashboardPermissions(q1)
+				q1 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
+				err = GetDashboardAclInfoList(q1)
 				So(err, ShouldBeNil)
 				So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
 				So(q1.Result[0].Permissions, ShouldEqual, m.PERMISSION_EDIT)
@@ -102,8 +102,8 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					})
 					So(err, ShouldBeNil)
 
-					q3 := &m.GetDashboardPermissionsQuery{DashboardId: savedFolder.Id}
-					err = GetDashboardPermissions(q3)
+					q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
+					err = GetDashboardAclInfoList(q3)
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 1)
 					So(q3.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
@@ -120,8 +120,8 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					})
 					So(err, ShouldBeNil)
 
-					q3 := &m.GetDashboardPermissionsQuery{DashboardId: savedFolder.Id}
-					err = GetDashboardPermissions(q3)
+					q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
+					err = GetDashboardAclInfoList(q3)
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 0)
 				})
@@ -141,8 +141,8 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					})
 					So(err, ShouldBeNil)
 
-					q1 := &m.GetDashboardPermissionsQuery{DashboardId: savedFolder.Id}
-					err = GetDashboardPermissions(q1)
+					q1 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
+					err = GetDashboardAclInfoList(q1)
 					So(err, ShouldBeNil)
 					So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
 					So(q1.Result[0].Permissions, ShouldEqual, m.PERMISSION_EDIT)
@@ -158,8 +158,8 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					})
 					So(err, ShouldBeNil)
 
-					q3 := &m.GetDashboardPermissionsQuery{DashboardId: savedFolder.Id}
-					err = GetDashboardPermissions(q3)
+					q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
+					err = GetDashboardAclInfoList(q3)
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 1)
 					So(q3.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
@@ -176,8 +176,8 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					})
 					So(err, ShouldBeNil)
 
-					q3 := &m.GetDashboardPermissionsQuery{DashboardId: savedFolder.Id}
-					err = GetDashboardPermissions(q3)
+					q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
+					err = GetDashboardAclInfoList(q3)
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 0)
 				})

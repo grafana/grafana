@@ -83,7 +83,7 @@ type RemoveDashboardAclCommand struct {
 //
 // QUERIES
 //
-type GetDashboardPermissionsQuery struct {
+type GetDashboardAclInfoListQuery struct {
 	DashboardId int64
 	Result      []*DashboardAclInfoDTO
 }

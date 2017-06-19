@@ -10,7 +10,7 @@ import (
 func init() {
 	bus.AddHandler("sql", SetDashboardAcl)
 	bus.AddHandler("sql", RemoveDashboardAcl)
-	bus.AddHandler("sql", GetDashboardPermissions)
+	bus.AddHandler("sql", GetDashboardAclInfoList)
 	bus.AddHandler("sql", GetInheritedDashboardAcl)
 }
 
@@ -107,7 +107,7 @@ func GetInheritedDashboardAcl(query *m.GetInheritedDashboardAclQuery) error {
 	return x.SQL(rawSQL, query.DashboardId, query.DashboardId, query.OrgId).Find(&query.Result)
 }
 
-func GetDashboardPermissions(query *m.GetDashboardPermissionsQuery) error {
+func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 	rawSQL := `SELECT
   da.id,
   da.org_id,

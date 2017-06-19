@@ -103,8 +103,8 @@ func TestUserGroupCommandsAndQueries(t *testing.T) {
 				err = GetUserGroupById(query)
 				So(err, ShouldEqual, m.ErrUserGroupNotFound)
 
-				permQuery := &m.GetDashboardPermissionsQuery{DashboardId: 1}
-				err = GetDashboardPermissions(permQuery)
+				permQuery := &m.GetDashboardAclInfoListQuery{DashboardId: 1}
+				err = GetDashboardAclInfoList(permQuery)
 				So(err, ShouldBeNil)
 
 				So(len(permQuery.Result), ShouldEqual, 0)
