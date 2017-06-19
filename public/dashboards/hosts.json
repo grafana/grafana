@@ -67,7 +67,8 @@
           "alert": ""
         }
       ],
-      "status": -1
+      "status": -1,
+      "template": "hadoop"
     },
     {
       "id": "hadoop.namenode",
@@ -102,7 +103,8 @@
           "alert": ""
         }
       ],
-      "status": -1
+      "status": -1,
+      "template": "hadoop"
     },
     {
       "id": "hbase.master",
@@ -138,7 +140,8 @@
           "alert": ""
         }
       ],
-      "status": -1
+      "status": -1,
+      "template": "hbase"
     },
     {
       "id": "hbase.regionserver",
@@ -174,7 +177,8 @@
           "alert": ""
         }
       ],
-      "status": -1
+      "status": -1,
+      "template": "hbase"
     },
     {
       "id": "kafka",
@@ -213,7 +217,8 @@
           "alert": ""
         }
       ],
-      "status": -1
+      "status": -1,
+      "template": "kafka"
     },
     {
       "id": "mysql",
@@ -252,7 +257,8 @@
           "alert": ""
         }
       ],
-      "status": -1
+      "status": -1,
+      "template": "mysql"
     },
     {
       "id": "spark",
@@ -292,7 +298,8 @@
           "alert": ""
         }
       ],
-      "status": -1
+      "status": -1,
+      "template": "spark"
     },
     {
       "id": "storm",
@@ -329,7 +336,8 @@
           "alert": ""
         }
       ],
-      "status": -1
+      "status": -1,
+      "template": "storm"
     },
     {
       "id": "yarn",
@@ -366,7 +374,8 @@
           "alert": ""
         }
       ],
-      "status": -1
+      "status": -1,
+      "template": "yarn_mapreduce"
     },
     {
       "id": "zookeeper",
@@ -402,7 +411,8 @@
           "alert": ""
         }
       ],
-      "status": -1
+      "status": -1,
+      "template": "zookeeper"
     },
     {
       "id": "tomcat",
@@ -439,7 +449,8 @@
           "alert": ""
         }
       ],
-      "status": -1
+      "status": -1,
+      "template": "tomcat"
     },
     {
       "id": "opentsdb",
@@ -449,7 +460,8 @@
       "info": "开源监控系统OpenTSDB，用hbase存储所有的时序（无须 采样）来构建一个分布式、可伸缩的时间序列数据库。",
       "deploy": "",
       "metrics": [],
-      "status": -1
+      "status": -1,
+      "template": "hadoop"
     },
     {
       "id": "mongo3",
@@ -496,7 +508,8 @@
           "alert": ""
         }
       ],
-      "status": -1
+      "status": -1,
+      "template": "opentsdb"
     },
     {
       "id": "nginx",
@@ -532,7 +545,8 @@
           "alert": ""
         }
       ],
-      "status": -1
+      "status": -1,
+      "template": "nginx"
     }
   ]
 }

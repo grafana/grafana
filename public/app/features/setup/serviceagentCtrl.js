@@ -56,6 +56,7 @@ function (angular, _, dateMath) {
 
     $scope.showDetail = function(detail) {
       var detailScope = $scope.$new();
+      detailScope.datasource = $scope.datasource;
       detailScope.detail = detail;
       $scope.appEvent('show-modal', {
         src: 'app/features/setup/partials/service_detail.html',
