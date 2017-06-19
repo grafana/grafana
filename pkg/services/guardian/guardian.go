@@ -6,50 +6,45 @@ import (
 )
 
 type DashboardGuardian struct {
-	user      *m.SignedInUser
-	dashboard *m.Dashboard
-	acl       []*m.DashboardAclInfoDTO
-	groups    []*m.UserGroup
+	user   *m.SignedInUser
+	dashId int64
+	orgId  int64
+	acl    []*m.DashboardAcl
+	groups []*m.UserGroup
 }
 
-func NewDashboardGuardian(dash *m.Dashboard, user *m.SignedInUser) *DashboardGuardian {
+func NewDashboardGuardian(dashId int64, orgId int64, user *m.SignedInUser) *DashboardGuardian {
 	return &DashboardGuardian{
-		user:      user,
-		dashboard: dash,
+		user:   user,
+		dashId: dashId,
+		orgId:  orgId,
 	}
 }
 
 func (g *DashboardGuardian) CanSave() (bool, error) {
-	if !g.dashboard.HasAcl {
-		return g.user.HasRole(m.ROLE_EDITOR), nil
-	}
-
-	return g.HasPermission(m.PERMISSION_EDIT)
+	return g.HasPermission(m.PERMISSION_EDIT, m.ROLE_EDITOR)
 }
 
 func (g *DashboardGuardian) CanEdit() (bool, error) {
-	if !g.dashboard.HasAcl {
-		return g.user.HasRole(m.ROLE_READ_ONLY_EDITOR), nil
-	}
-
-	return g.HasPermission(m.PERMISSION_READ_ONLY_EDIT)
+	return g.HasPermission(m.PERMISSION_READ_ONLY_EDIT, m.ROLE_READ_ONLY_EDITOR)
 }
 
 func (g *DashboardGuardian) CanView() (bool, error) {
-	if !g.dashboard.HasAcl {
-		return g.user.HasRole(m.ROLE_VIEWER), nil
-	}
-
-	return g.HasPermission(m.PERMISSION_VIEW)
+	return g.HasPermission(m.PERMISSION_VIEW, m.ROLE_VIEWER)
 }
 
-func (g *DashboardGuardian) HasPermission(permission m.PermissionType) (bool, error) {
-	userGroups, err := g.getUserGroups()
+func (g *DashboardGuardian) HasPermission(permission m.PermissionType, fallbackRole m.RoleType) (bool, error) {
+	acl, err := g.getAcl()
 	if err != nil {
 		return false, err
 	}
 
-	acl, err := g.getAcl()
+	// if no acl use org role to determine permission
+	if len(acl) == 0 {
+		return g.user.HasRole(fallbackRole), nil
+	}
+
+	userGroups, err := g.getUserGroups()
 	if err != nil {
 		return false, err
 	}
@@ -70,17 +65,12 @@ func (g *DashboardGuardian) HasPermission(permission m.PermissionType) (bool, er
 }
 
 // Returns dashboard acl
-func (g *DashboardGuardian) getAcl() ([]*m.DashboardAclInfoDTO, error) {
+func (g *DashboardGuardian) getAcl() ([]*m.DashboardAcl, error) {
 	if g.acl != nil {
 		return g.acl, nil
 	}
 
-	dashId := g.dashboard.Id
-	if g.dashboard.ParentId != 0 {
-		dashId = g.dashboard.ParentId
-	}
-
-	query := m.GetDashboardPermissionsQuery{DashboardId: dashId}
+	query := m.GetInheritedDashboardAclQuery{DashboardId: g.dashId, OrgId: g.orgId}
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}

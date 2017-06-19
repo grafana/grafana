@@ -48,11 +48,6 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/1/acl", "/api/dashboards/:id/acl", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				mockResult = append(mockResult, &models.DashboardAclInfoDTO{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permissions: models.PERMISSION_EDIT})
 
-				bus.AddHandler("test2", func(query *models.GetAllowedDashboardsQuery) error {
-					query.Result = []int64{1}
-					return nil
-				})
-
 				Convey("Should be able to access ACL", func() {
 					sc.handlerFunc = GetDashboardAcl
 					sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -100,11 +95,6 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 
 		Convey("When user is editor and not in the ACL", func() {
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/1/acl", "/api/dashboards/:id/acl", models.ROLE_EDITOR, func(sc *scenarioContext) {
-
-				bus.AddHandler("test2", func(query *models.GetAllowedDashboardsQuery) error {
-					query.Result = []int64{}
-					return nil
-				})
 
 				Convey("Should not be able to access ACL", func() {
 					sc.handlerFunc = GetDashboardAcl

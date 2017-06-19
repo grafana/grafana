@@ -192,11 +192,3 @@ type GetDashboardSlugByIdQuery struct {
 	Id     int64
 	Result string
 }
-
-type GetAllowedDashboardsQuery struct {
-	UserId   int64
-	OrgId    int64
-	DashList []int64
-
-	Result []int64
-}

@@ -25,6 +25,47 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				So(err, ShouldEqual, m.ErrDashboardPermissionUserOrUserGroupEmpty)
 			})
 
+			Convey("Given dashboard folder permission", func() {
+				err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
+					OrgId:       1,
+					UserId:      currentUser.Id,
+					DashboardId: savedFolder.Id,
+					Permissions: m.PERMISSION_EDIT,
+				})
+				So(err, ShouldBeNil)
+
+				Convey("When reading dashboard acl should include acl for parent folder", func() {
+					query := m.GetInheritedDashboardAclQuery{OrgId: 1, DashboardId: childDash.Id}
+
+					err := GetDashboardAcl(&query)
+					So(err, ShouldBeNil)
+
+					So(len(query.Result), ShouldEqual, 1)
+					So(query.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
+				})
+
+				Convey("Given child dashboard permission", func() {
+					err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
+						OrgId:       1,
+						UserId:      currentUser.Id,
+						DashboardId: childDash.Id,
+						Permissions: m.PERMISSION_EDIT,
+					})
+					So(err, ShouldBeNil)
+
+					Convey("When reading dashboard acl should include acl for parent folder and child", func() {
+						query := m.GetInheritedDashboardAclQuery{OrgId: 1, DashboardId: childDash.Id}
+
+						err := GetDashboardAcl(&query)
+						So(err, ShouldBeNil)
+
+						So(len(query.Result), ShouldEqual, 2)
+						So(query.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
+						So(query.Result[1].DashboardId, ShouldEqual, childDash.Id)
+					})
+				})
+			})
+
 			Convey("Should be able to add dashboard permission", func() {
 				err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
 					OrgId:       1,

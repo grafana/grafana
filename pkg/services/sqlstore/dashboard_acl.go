@@ -11,7 +11,7 @@ func init() {
 	bus.AddHandler("sql", AddOrUpdateDashboardPermission)
 	bus.AddHandler("sql", RemoveDashboardPermission)
 	bus.AddHandler("sql", GetDashboardPermissions)
-	bus.AddHandler("sql", GetDashboardAcl)
+	bus.AddHandler("sql", GetInheritedDashboardAcl)
 }
 
 func AddOrUpdateDashboardPermission(cmd *m.AddOrUpdateDashboardPermissionCommand) error {
@@ -86,33 +86,31 @@ func RemoveDashboardPermission(cmd *m.RemoveDashboardPermissionCommand) error {
 	})
 }
 
-func GetDashboardAcl(query *m.GetDashboardAclQuery) error {
+func GetInheritedDashboardAcl(query *m.GetInheritedDashboardAclQuery) error {
 	rawSQL := `SELECT
   da.id,
   da.org_id,
-  da.id,
   da.dashboard_id,
   da.user_id,
   da.user_group_id,
   da.permissions,
   da.created,
-  da.updated,
-  FROM` + dialect.Quote("dashboard_acl") + ` as da
-  WHERE dashboard_id IN (
+  da.updated
+  FROM dashboard_acl as da
+  WHERE da.dashboard_id IN (
     SELECT id FROM dashboard where id = ?
     UNION
     SELECT parent_id from dashboard where id = ?
-  )`
+  ) AND org_id = ?`
 
 	query.Result = make([]*m.DashboardAcl, 0)
-	return x.SQL(rawSQL, query.DashboardId).Find(&query.Result)
+	return x.SQL(rawSQL, query.DashboardId, query.DashboardId, query.OrgId).Find(&query.Result)
 }
 
 func GetDashboardPermissions(query *m.GetDashboardPermissionsQuery) error {
 	rawSQL := `SELECT
   da.id,
   da.org_id,
-  da.id,
   da.dashboard_id,
   da.user_id,
   da.user_group_id,

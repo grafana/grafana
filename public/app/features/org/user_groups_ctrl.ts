@@ -1,6 +1,7 @@
 ///<reference path="../../headers/common.d.ts" />
 
 import coreModule from 'app/core/core_module';
+import {appEvents} from 'app/core/core';
 
 export class UserGroupsCtrl {
   userGroups: any;
@@ -10,7 +11,6 @@ export class UserGroupsCtrl {
   totalPages: number;
   showPaging = false;
   query: any = '';
-  userGroupName: any = '';
   navModel: any;
 
   /** @ngInject */
@@ -40,14 +40,6 @@ export class UserGroupsCtrl {
     this.get();
   }
 
-  createUserGroup() {
-    this.backendSrv.post('/api/user-groups', {name: this.userGroupName}).then((result) => {
-      if (result.userGroupId) {
-        this.$location.path('/org/user-groups/edit/' + result.userGroupId);
-      }
-    });
-  }
-
   deleteUserGroup(userGroup) {
     this.$scope.appEvent('confirm-modal', {
       title: 'Delete',
@@ -66,13 +58,9 @@ export class UserGroupsCtrl {
   }
 
   openUserGroupModal() {
-    var modalScope = this.$scope.$new();
-    modalScope.createUserGroup = this.createUserGroup.bind(this);
-
-    this.$scope.appEvent('show-modal', {
-      src: 'public/app/features/org/partials/create_user_group.html',
-      modalClass: 'modal--narrow',
-      scope: modalScope
+    appEvents.emit('show-modal', {
+      templateHtml: '<create-user-group-modal></create-user-group-modal>',
+      modalClass: 'modal--narrow'
     });
   }
 }

@@ -88,7 +88,9 @@ type GetDashboardPermissionsQuery struct {
 	Result      []*DashboardAclInfoDTO
 }
 
-type GetDashboardAclQuery struct {
+// Returns dashboard acl list items and parent folder items
+type GetInheritedDashboardAclQuery struct {
 	DashboardId int64
+	OrgId       int64
 	Result      []*DashboardAcl
 }

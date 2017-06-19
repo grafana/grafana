@@ -148,12 +148,14 @@ func GetDashboard(query *m.GetDashboardQuery) error {
 }
 
 type DashboardSearchProjection struct {
-	Id       int64
-	Title    string
-	Slug     string
-	Term     string
-	IsFolder bool
-	ParentId int64
+	Id          int64
+	Title       string
+	Slug        string
+	Term        string
+	IsFolder    bool
+	ParentId    int64
+	FolderSlug  string
+	FolderTitle string
 }
 
 func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSearchProjection, error) {
@@ -166,8 +168,11 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 					  dashboard.slug,
 					  dashboard_tag.term,
             dashboard.is_folder,
-            dashboard.parent_id
+            dashboard.parent_id,
+			      f.slug as folder_slug,
+			      f.title as folder_title
 					FROM dashboard
+					LEFT OUTER JOIN dashboard f on f.id = dashboard.parent_id
 					LEFT OUTER JOIN dashboard_tag on dashboard_tag.dashboard_id = dashboard.id`)
 
 	if query.IsStarred {
@@ -175,12 +180,11 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 	}
 
 	sql.WriteString(` WHERE dashboard.org_id=?`)
-
-	params = append(params, query.OrgId)
+	params = append(params, query.SignedInUser.OrgId)
 
 	if query.IsStarred {
 		sql.WriteString(` AND star.user_id=?`)
-		params = append(params, query.UserId)
+		params = append(params, query.SignedInUser.UserId)
 	}
 
 	if len(query.DashboardIds) > 0 {
@@ -194,6 +198,23 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 			params = append(params, dashboardId)
 		}
 		sql.WriteString(")")
+	}
+
+	if query.SignedInUser.OrgRole != m.ROLE_ADMIN {
+		allowedDashboardsSubQuery := ` AND (dashboard.has_acl = 0 OR dashboard.id in (
+		SELECT distinct d.id AS DashboardId
+			FROM dashboard AS d
+				LEFT JOIN dashboard AS df ON d.parent_id = df.id
+				LEFT JOIN dashboard_acl as dfa on d.parent_id = dfa.dashboard_id or d.id = dfa.dashboard_id
+				LEFT JOIN user_group_member as ugm on ugm.user_group_id =  dfa.user_group_id
+			WHERE
+			  d.has_acl = 1 and
+				(dfa.user_id = ? or ugm.user_id = ?)
+			  and d.org_id = ?
+			  ))`
+
+		sql.WriteString(allowedDashboardsSubQuery)
+		params = append(params, query.SignedInUser.UserId, query.SignedInUser.UserId, query.SignedInUser.OrgId)
 	}
 
 	if len(query.Title) > 0 {
@@ -250,26 +271,13 @@ func SearchDashboards(query *search.FindPersistedDashboardsQuery) error {
 
 // appends parent folders for any hits to the search result
 func appendDashboardFolders(res []DashboardSearchProjection) ([]DashboardSearchProjection, error) {
-	var dashboardFolderIds []int64
 	for _, item := range res {
 		if item.ParentId > 0 {
-			dashboardFolderIds = append(dashboardFolderIds, item.ParentId)
-		}
-	}
-
-	if len(dashboardFolderIds) > 0 {
-		folderQuery := &m.GetDashboardsQuery{DashboardIds: dashboardFolderIds}
-		err := GetDashboards(folderQuery)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, folder := range folderQuery.Result {
 			res = append(res, DashboardSearchProjection{
-				Id:       folder.Id,
+				Id:       item.ParentId,
 				IsFolder: true,
-				Slug:     folder.Slug,
-				Title:    folder.Title,
+				Slug:     item.FolderSlug,
+				Title:    item.FolderTitle,
 			})
 		}
 	}
@@ -371,6 +379,7 @@ func DeleteDashboard(cmd *m.DeleteDashboardCommand) error {
 			"DELETE FROM dashboard WHERE id = ?",
 			"DELETE FROM playlist_item WHERE type = 'dashboard_by_id' AND value = ?",
 			"DELETE FROM dashboard_version WHERE dashboard_id = ?",
+			"DELETE FROM dashboard WHERE parent_id = ?",
 		}
 
 		for _, sql := range deletes {

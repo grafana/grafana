@@ -40,9 +40,8 @@ func searchHandler(query *Query) error {
 
 	dashQuery := FindPersistedDashboardsQuery{
 		Title:        query.Title,
-		UserId:       query.UserId,
+		SignedInUser: query.SignedInUser,
 		IsStarred:    query.IsStarred,
-		OrgId:        query.OrgId,
 		DashboardIds: query.DashboardIds,
 		Type:         query.Type,
 		ParentId:     query.FolderId,
@@ -88,7 +87,7 @@ func searchHandler(query *Query) error {
 	}
 
 	// add isStarred info
-	if err := setIsStarredFlagOnSearchResults(query.UserId, hits); err != nil {
+	if err := setIsStarredFlagOnSearchResults(query.SignedInUser.UserId, hits); err != nil {
 		return err
 	}
 

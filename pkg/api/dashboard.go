@@ -41,7 +41,7 @@ func GetDashboard(c *middleware.Context) Response {
 		return rsp
 	}
 
-	guardian := guardian.NewDashboardGuardian(dash, c.SignedInUser)
+	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
 
 	if canView, err := guardian.CanView(); err != nil {
 		return ApiError(500, "Error while checking dashboard permissions", err)
