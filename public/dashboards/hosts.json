@@ -461,7 +461,7 @@
       "deploy": "",
       "metrics": [],
       "status": -1,
-      "template": "hadoop"
+      "template": "opentsdb"
     },
     {
       "id": "mongo3",
@@ -509,7 +509,7 @@
         }
       ],
       "status": -1,
-      "template": "opentsdb"
+      "template": "mongodb"
     },
     {
       "id": "nginx",
