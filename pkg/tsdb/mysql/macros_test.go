@@ -36,7 +36,7 @@ func TestMacroEngine(t *testing.T) {
 			sql, err := engine.Interpolate("WHERE $__timeFilter(time_column)")
 			So(err, ShouldBeNil)
 
-			So(sql, ShouldEqual, "WHERE time_column > FROM_UNIXTIME(18446744066914186738) AND time_column < FROM_UNIXTIME(18446744066914187038)")
+			So(sql, ShouldEqual, "WHERE time_column >= FROM_UNIXTIME(18446744066914186738) AND time_column <= FROM_UNIXTIME(18446744066914187038)")
 		})
 
 	})
