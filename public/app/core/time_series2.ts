@@ -87,9 +87,11 @@ export default class TimeSeries {
       if (override.fill !== void 0) { this.lines.fill = translateFillOption(override.fill); }
       if (override.stack !== void 0) { this.stack = override.stack; }
       if (override.linewidth !== void 0) {
-         this.lines.lineWidth = override.linewidth;
+         this.lines.lineWidth = this.dashes.show ? 0: override.linewidth;
          this.dashes.lineWidth = override.linewidth;
       }
+      if (override.dashLength !== void 0) { this.dashes.dashLength[0] = override.dashLength; }
+      if (override.spaceLength !== void 0) { this.dashes.dashLength[1] = override.spaceLength; }
       if (override.nullPointMode !== void 0) { this.nullPointMode = override.nullPointMode; }
       if (override.pointradius !== void 0) { this.points.radius = override.pointradius; }
       if (override.steppedLine !== void 0) { this.lines.steps = override.steppedLine; }

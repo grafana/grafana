@@ -165,7 +165,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
       return;
     }
 
-    if (tableData[0].length === 0 || !tableData[0][0][this.panel.tableColumn]) {
+    if (tableData[0].length === 0 || tableData[0][0][this.panel.tableColumn] === undefined) {
       return;
     }
 
@@ -412,6 +412,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
     function addGauge() {
       var width = elem.width();
       var height = elem.height();
+      var dimension = Math.min(width, height);
 
       ctrl.invalidGaugeRange = false;
       if (panel.gauge.minValue > panel.gauge.maxValue) {
@@ -425,7 +426,7 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         margin: 'auto',
         position: 'relative',
         height: (height * 0.9) + 'px',
-        width:  width + 'px'
+        width:  dimension + 'px'
       };
 
       plotCanvas.css(plotCss);
@@ -447,7 +448,6 @@ class SingleStatCtrl extends MetricsPanelCtrl {
         : 'rgb(38,38,38)';
 
       var fontScale = parseInt(panel.valueFontSize) / 100;
-      var dimension = Math.min(width, height);
       var fontSize = Math.min(dimension/5, 100) * fontScale;
       var gaugeWidth = Math.min(dimension/6, 60);
       var thresholdMarkersWidth = gaugeWidth/5;

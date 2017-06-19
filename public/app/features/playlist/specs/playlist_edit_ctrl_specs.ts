@@ -5,7 +5,11 @@ import {PlaylistEditCtrl} from '../playlist_edit_ctrl';
 describe('PlaylistEditCtrl', () => {
   var ctx: any;
   beforeEach(() => {
-    ctx = new PlaylistEditCtrl(null, null, null, null, { current: { params: {} } });
+    let navModelSrv = {
+      getPlaylistsNav: page => {},
+    };
+
+    ctx = new PlaylistEditCtrl(null, null, null, null, { current: { params: {} } }, navModelSrv);
 
     ctx.dashboardresult = [
       { id: 2, title: 'dashboard: 2' },

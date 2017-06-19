@@ -113,10 +113,6 @@ export class KeybindingSrv {
       scope.appEvent('shift-time-forward');
     });
 
-    this.bind('mod+i', () => {
-      scope.appEvent('quick-snapshot');
-    });
-
     // edit panel
     this.bind('e', () => {
       if (dashboard.meta.focusPanelId && dashboard.meta.canEdit) {
@@ -225,7 +221,7 @@ export class KeybindingSrv {
       }
 
       scope.appEvent('hide-dash-editor');
-      scope.exitFullscreen();
+      scope.appEvent('panel-change-view', {fullscreen: false, edit: false});
     });
   }
 }

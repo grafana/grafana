@@ -76,7 +76,7 @@ export function PrometheusDatasource(instanceSettings, $q, backendSrv, templateS
 
     for (let target of options.targets) {
       if (!target.expr || target.hide) {
-        return;
+        continue;
       }
 
       activeTargets.push(target);

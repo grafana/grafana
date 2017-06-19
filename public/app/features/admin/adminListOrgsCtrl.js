@@ -6,9 +6,10 @@ function (angular) {
 
   var module = angular.module('grafana.controllers');
 
-  module.controller('AdminListOrgsCtrl', function($scope, backendSrv) {
+  module.controller('AdminListOrgsCtrl', function($scope, backendSrv, navModelSrv) {
 
     $scope.init = function() {
+      $scope.navModel = navModelSrv.getAdminNav();
       $scope.getOrgs();
     };
 

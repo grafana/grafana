@@ -17,7 +17,8 @@
         "moduleResolution": "classic"
     },
     "include": [
-        "public/app/**/*.ts"
+        "public/app/**/*.ts",
+        "public/test/**/*.ts"
     ],
     "exclude": [
         "public/vendor/**/*",

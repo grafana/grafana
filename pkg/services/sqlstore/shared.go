@@ -9,16 +9,19 @@ import (
 	sqlite3 "github.com/mattn/go-sqlite3"
 )
 
-type dbTransactionFunc func(sess *xorm.Session) error
-type dbTransactionFunc2 func(sess *session) error
-
-type session struct {
+type DBSession struct {
 	*xorm.Session
 	events []interface{}
 }
 
-func (sess *session) publishAfterCommit(msg interface{}) {
+type dbTransactionFunc func(sess *DBSession) error
+
+func (sess *DBSession) publishAfterCommit(msg interface{}) {
 	sess.events = append(sess.events, msg)
+}
+
+func newSession() *DBSession {
+	return &DBSession{Session: x.NewSession()}
 }
 
 func inTransaction(callback dbTransactionFunc) error {
@@ -28,7 +31,7 @@ func inTransaction(callback dbTransactionFunc) error {
 func inTransactionWithRetry(callback dbTransactionFunc, retry int) error {
 	var err error
 
-	sess := x.NewSession()
+	sess := newSession()
 	defer sess.Close()
 
 	if err = sess.Begin(); err != nil {
@@ -46,28 +49,6 @@ func inTransactionWithRetry(callback dbTransactionFunc, retry int) error {
 			return inTransactionWithRetry(callback, retry+1)
 		}
 	}
-
-	if err != nil {
-		sess.Rollback()
-		return err
-	} else if err = sess.Commit(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func inTransaction2(callback dbTransactionFunc2) error {
-	var err error
-
-	sess := session{Session: x.NewSession()}
-
-	defer sess.Close()
-	if err = sess.Begin(); err != nil {
-		return err
-	}
-
-	err = callback(&sess)
 
 	if err != nil {
 		sess.Rollback()

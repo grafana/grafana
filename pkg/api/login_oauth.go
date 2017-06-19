@@ -28,6 +28,7 @@ var (
 	ErrEmailNotAllowed       = errors.New("Required email domain not fulfilled")
 	ErrSignUpNotAllowed      = errors.New("Signup is not allowed for this adapter")
 	ErrUsersQuotaReached     = errors.New("Users quota reached")
+	ErrNoEmail               = errors.New("Login provider didn't return an email address")
 )
 
 func GenStateString() string {
@@ -63,7 +64,7 @@ func OAuthLogin(ctx *middleware.Context) {
 		if setting.OAuthService.OAuthInfos[name].HostedDomain == "" {
 			ctx.Redirect(connect.AuthCodeURL(state, oauth2.AccessTypeOnline))
 		} else {
-			ctx.Redirect(connect.AuthCodeURL(state, oauth2.SetParam("hd", setting.OAuthService.OAuthInfos[name].HostedDomain), oauth2.AccessTypeOnline))
+			ctx.Redirect(connect.AuthCodeURL(state, oauth2.SetAuthURLParam("hd", setting.OAuthService.OAuthInfos[name].HostedDomain), oauth2.AccessTypeOnline))
 		}
 		return
 	}
@@ -133,6 +134,12 @@ func OAuthLogin(ctx *middleware.Context) {
 	}
 
 	ctx.Logger.Debug("OAuthLogin got user info", "userInfo", userInfo)
+
+	// validate that we got at least an email address
+	if userInfo.Email == "" {
+		redirectWithError(ctx, ErrNoEmail)
+		return
+	}
 
 	// validate that the email is allowed to login to grafana
 	if !connect.IsEmailAllowed(userInfo.Email) {

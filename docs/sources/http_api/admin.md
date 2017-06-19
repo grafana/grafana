@@ -237,12 +237,14 @@ Change password for specific user
     Accept: application/json
     Content-Type: application/json
 
+    {"password":"userpassword"}
+
 **Example Response**:
 
     HTTP/1.1 200
     Content-Type: application/json
 
-    {"password":"userpassword"}
+    {"message": "User password updated"}
 
 ## Permissions
 
@@ -253,6 +255,8 @@ Change password for specific user
     PUT /api/admin/users/2/permissions HTTP/1.1
     Accept: application/json
     Content-Type: application/json
+
+    {"isGrafanaAdmin": true}
 
 **Example Response**:
 

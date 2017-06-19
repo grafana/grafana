@@ -42,7 +42,6 @@
 // Hover/focus
 .navbar .nav > li > a:focus,
 .navbar .nav > li > a:hover {
-  background-color: $navbarLinkBackgroundHover; // "transparent" is default to differentiate :hover/:focus from .active
   color: $navbarLinkColorHover;
   text-decoration: none;
 }
@@ -64,10 +63,12 @@
   border-right: 1px solid $tight-form-border;
   background-color: $navbarButtonBackground;
   padding: 0.4rem 1.0rem 0.4rem 1rem;
+  min-height:: $navbarHeight;
 
   .fa-caret-down {
     font-size: 70%;
   }
+
   .fa-chevron-left{
     display: none;
   }
@@ -95,7 +96,7 @@
   .icon-gf-grafana_wordmark {
     font-size: 21px;
     position: relative;
-    top: 4px;
+    top: 6px;
     padding-left: 5px;
     display: none;
   }
@@ -108,16 +109,16 @@
   float: left;
   display: block;
   margin: 0;
-  font-size: 1.4em;
+  font-size: 1.4rem;
   border-right: 1px solid $tight-form-border;
   color: darken($link-color, 5%);
   background-color: $navbarButtonBackground;
   font-size: $font-size-lg;
-  padding: 1rem 1rem 0.7rem 1rem;
+  padding: 1rem 1rem 0.75rem 1rem;
+  min-height:: $navbarHeight;
 
-  &:hover {
+  &:hover, &.active {
     background: $navbarButtonBackgroundHighlight;
-    color: $link-color;
   }
 
   .fa-caret-down {
@@ -136,11 +137,42 @@
     max-width: 27px;
     max-height: 27px;
   }
+
+  &--search {
+    padding: 1rem 1.5rem 0.75rem 1.5rem;
+  }
+}
+
+.navbar-page-btn-wrapper {
+  display: inline-block;
+  position: relative;
+}
+
+.dropdown-menu.dropdown-menu--navbar {
+  top: 100%;
+  min-width: 100%;
+  margin-top: 0px;
+
+  li a {
+    padding: $spacer/2 $spacer;
+    border-left: 2px solid $side-menu-bg;
+    background: $side-menu-bg;
+
+    i {
+      display: inline-block;
+      padding-right: 21px;
+    }
+
+    &:hover {
+      @include left-brand-border-gradient();
+      color: $link-hover-color;
+      background: $input-label-bg;
+    }
+  }
 }
 
 .sidemenu-pinned {
   .navbar-brand-btn {
-    background-color: $page-bg;
     width: $side-menu-width;
 
     .icon-gf-grafana_wordmark  {
@@ -160,3 +192,7 @@
   }
 }
 
+.navbar-section-wrapper {
+  position: relative;
+  float: left;
+}

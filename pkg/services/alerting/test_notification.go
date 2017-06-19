@@ -2,6 +2,7 @@ package alerting
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/null"
@@ -56,7 +57,7 @@ func createTestEvalContext(cmd *NotificationTestCommand) *EvalContext {
 	}
 	ctx.IsTestRun = true
 	ctx.Firing = true
-	ctx.Error = nil
+	ctx.Error = fmt.Errorf("This is only a test")
 	ctx.EvalMatches = evalMatchesBasedOnState()
 
 	return ctx

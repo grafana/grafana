@@ -200,10 +200,7 @@ export default class InfluxDatasource {
       }
       return { status: "success", message: "Data source is working", title: "Success" };
     }).catch(err => {
-      if (err.data && err.message) {
-        return { status: "error", message: err.data.message, title: "InfluxDB Error" };
-      }
-      return { status: "error", message: err.toString(), title: "InfluxDB Error" };
+      return { status: "error", message: err.message, title: "Test Failed" };
     });
   }
 
@@ -211,10 +208,12 @@ export default class InfluxDatasource {
     var currentUrl = this.urls.shift();
     this.urls.push(currentUrl);
 
-    var params: any = {
-      u: this.username,
-      p: this.password,
-    };
+    var params: any = {};
+
+    if (this.username) {
+      params.username =  this.username;
+      params.password =  this.password;
+    }
 
     if (options && options.database) {
       params.db = options.database;
@@ -250,9 +249,9 @@ export default class InfluxDatasource {
     }, function(err) {
       if (err.status !== 0 || err.status >= 300) {
         if (err.data && err.data.error) {
-          throw { message: 'InfluxDB Error Response: ' + err.data.error, data: err.data, config: err.config };
+          throw { message: 'InfluxDB Error: ' + err.data.error, data: err.data, config: err.config };
         } else {
-          throw { message: 'InfluxDB Error: ' + err.message, data: err.data, config: err.config };
+          throw { message: 'Network Error: ' + err.statusText + '(' + err.status + ')', data: err.data, config: err.config };
         }
       }
     });

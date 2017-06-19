@@ -28,8 +28,8 @@ function (angular, _, dateMath) {
 
       _.each(options.targets, function(target) {
         if (!target.metric) { return; }
-        qs.push(convertTargetToQuery(target, options));
-      });
+        qs.push(convertTargetToQuery(target, options, this.tsdbVersion));
+      }.bind(this));
 
       var queries = _.compact(qs);
 
@@ -366,7 +366,7 @@ function (angular, _, dateMath) {
       return label;
     }
 
-    function convertTargetToQuery(target, options) {
+    function convertTargetToQuery(target, options, tsdbVersion) {
       if (!target.metric || target.hide) {
         return null;
       }
@@ -392,6 +392,11 @@ function (angular, _, dateMath) {
 
         if (target.counterResetValue && target.counterResetValue.length) {
           query.rateOptions.resetValue = parseInt(target.counterResetValue);
+        }
+
+        if(tsdbVersion >= 2) {
+          query.rateOptions.dropResets = !query.rateOptions.counterMax &&
+                (!query.rateOptions.ResetValue || query.rateOptions.ResetValue === 0);
         }
       }
 

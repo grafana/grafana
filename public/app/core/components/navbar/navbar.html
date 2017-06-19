@@ -8,11 +8,36 @@
 		<i class="fa fa-chevron-left"></i>
 	</a>
 
-	<a href="{{ctrl.titleUrl}}" class="navbar-page-btn" ng-show="ctrl.title">
-		<i class="{{ctrl.icon}}" ng-show="ctrl.icon"></i>
-		<img ng-src="{{ctrl.iconUrl}}" ng-show="ctrl.iconUrl"></i>
-		{{ctrl.title}}
-	</a>
+  <!-- <a class="navbar&#45;page&#45;btn navbar&#45;page&#45;btn&#45;&#45;search" ng&#45;click="ctrl.showSearch()"> -->
+	<!-- 	<i class="fa fa&#45;search"></i> -->
+	<!-- </a> -->
 
-	<div ng-transclude></div>
+	<div ng-if="::!ctrl.hasMenu">
+		<a href="{{::ctrl.section.url}}" class="navbar-page-btn">
+      <i class="{{::ctrl.section.icon}}" ng-show="::ctrl.section.icon"></i>
+      <img ng-src="{{::ctrl.section.iconUrl}}" ng-show="::ctrl.section.iconUrl"></i>
+      {{::ctrl.section.title}}
+    </a>
+	</div>
+
+  <div class="dropdown navbar-section-wrapper"  ng-if="::ctrl.hasMenu">
+    <a href="{{::ctrl.section.url}}" class="navbar-page-btn" data-toggle="dropdown">
+      <i class="{{::ctrl.section.icon}}" ng-show="::ctrl.section.icon"></i>
+      <img ng-src="{{::ctrl.section.iconUrl}}" ng-show="::ctrl.section.iconUrl"></i>
+      {{::ctrl.section.title}}
+      <i class="fa fa-caret-down"></i>
+    </a>
+    <ul class="dropdown-menu dropdown-menu--navbar">
+      <li ng-repeat="navItem in ::ctrl.model.menu" ng-class="{active: navItem.active}">
+        <a class="pointer" ng-href="{{::navItem.url}}" ng-click="ctrl.navItemClicked(navItem, $event)">
+          <i class="{{::navItem.icon}}" ng-show="::navItem.icon"></i>
+          {{::navItem.title}}
+        </a>
+      </li>
+    </ul>
+  </div>
+
+  <div ng-transclude></div>
 </div>
+
+<dashboard-search></dashboard-search>

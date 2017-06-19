@@ -75,6 +75,8 @@
 @import "components/jsontree";
 @import "components/edit_sidemenu.scss";
 @import "components/row.scss";
+@import "components/json_explorer.scss";
+@import "components/collapse_box.scss";
 
 // PAGES
 @import "pages/login";
@@ -82,6 +84,7 @@
 @import "pages/playlist";
 @import "pages/admin";
 @import "pages/alerting";
+@import "pages/history";
 @import "pages/plugins";
 @import "pages/signup";
 @import "pages/styleguide";

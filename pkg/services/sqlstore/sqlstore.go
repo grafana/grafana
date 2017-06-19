@@ -199,7 +199,7 @@ func LoadConfig() {
 
 	if DbCfg.Type == "sqlite3" {
 		UseSQLite3 = true
-		// only allow one connection as sqlite3 has multi threading issues that casue table locks
+		// only allow one connection as sqlite3 has multi threading issues that cause table locks
 		// DbCfg.MaxIdleConn = 1
 		// DbCfg.MaxOpenConn = 1
 	}

@@ -146,8 +146,7 @@ Create a custom.ini in the conf directory to override default configuration opti
 You only need to add the options you want to override. Config files are applied in the order of:
 
 1. grafana.ini
-2. dev.ini (if found)
-3. custom.ini
+1. custom.ini
 
 ## Create a pull request
 Before or after you create a pull request, sign the [contributor license agreement](http://docs.grafana.org/project/cla/).

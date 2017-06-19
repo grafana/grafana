@@ -52,12 +52,22 @@ Here you can specify the name of the alert rule and how often the scheduler shou
 ### Conditions
 
 Currently the only condition type that exists is a `Query` condition that allows you to
-specify a query letter, time range and an aggregation function. The letter refers to
-a query you already have added in the **Metrics** tab. The result from the query and the aggregation function is
-a single value that is then used in the threshold check. The query used in an alert rule cannot
-contain any template variables. Currently we only support `AND` and `OR` operators between conditions and they are executed serially.
+specify a query letter, time range and an aggregation function.
+
+
+### Query condition example
+
+```sql
+avg() OF query(A, 5m, now) IS BELOW 14
+```
+
+- `avg()` Controls how the values for **each** serie should be reduced to a value that can be compared against the threshold. Click on the function to change it to another aggregation function.
+- `query(A, 5m, now)`  The letter defines what query to execute from the **Metrics** tab. The second two parameters defines the time range, `5m, now` means 5 minutes from now to now. You can also do `10m, now-2m` to define a time range that will be 10 minutes from now to 2 minutes from now. This is useful if you want to ignore the last 2 minutes of data.
+- `IS BELOW 14`  Defines the type of threshold and the threshold value.  You can click on `IS BELOW` to change the type of threshold.
+
+The query used in an alert rule cannot contain any template variables. Currently we only support `AND` and `OR` operators between conditions and they are executed serially.
 For example, we have 3 conditions in the following order:
-`condition:A(evaluates to: TRUE) OR condition:B(evaluates to: FALSE) AND condition:C(evaluates to: TRUE)`
+*condition:A(evaluates to: TRUE) OR condition:B(evaluates to: FALSE) AND condition:C(evaluates to: TRUE)*
 so the result will be calculated as ((TRUE OR FALSE) AND TRUE) = TRUE.
 
 We plan to add other condition types in the future, like `Other Alert`, where you can include the state

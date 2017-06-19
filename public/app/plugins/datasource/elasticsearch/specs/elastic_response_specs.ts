@@ -541,6 +541,46 @@ describe('ElasticResponse', function() {
     });
   });
 
+  describe('Multiple metrics of same type', function() {
+    beforeEach(function() {
+      targets = [{
+        refId: 'A',
+        metrics: [
+          {type: 'avg', id: '1', field: 'test'},
+          {type: 'avg', id: '2', field: 'test2'}
+        ],
+        bucketAggs: [{id: '2', type: 'terms', field: 'host'}],
+      }];
+
+      response =  {
+        responses: [{
+          aggregations: {
+            "2": {
+              buckets: [
+                {
+                  "1": { value: 1000},
+                  "2": { value: 3000},
+                  key: "server-1",
+                  doc_count: 369,
+                }
+              ]
+            }
+          }
+        }]
+      };
+
+      result = new ElasticResponse(targets, response).getTimeSeries();
+    });
+
+    it('should include field in metric name', function() {
+      expect(result.data[0].type).to.be('docs');
+      expect(result.data[0].datapoints[0].Average).to.be(undefined);
+      expect(result.data[0].datapoints[0]['Average test']).to.be(1000);
+      expect(result.data[0].datapoints[0]['Average test2']).to.be(3000);
+    });
+  });
+
+
   describe('Raw documents query', function() {
     beforeEach(function() {
       targets = [{ refId: 'A', metrics: [{type: 'raw_document', id: '1'}], bucketAggs: [] }];

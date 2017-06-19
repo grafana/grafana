@@ -29,7 +29,9 @@ func TestSensuNotifier(t *testing.T) {
 			Convey("from settings", func() {
 				json := `
 				{
-					"url": "http://sensu-api.example.com:4567/results"
+					"url": "http://sensu-api.example.com:4567/results",
+					"source": "grafana_instance_01",
+					"handler": "myhandler"
 				}`
 
 				settingsJSON, _ := simplejson.NewJson([]byte(json))
@@ -46,6 +48,8 @@ func TestSensuNotifier(t *testing.T) {
 				So(sensuNotifier.Name, ShouldEqual, "sensu")
 				So(sensuNotifier.Type, ShouldEqual, "sensu")
 				So(sensuNotifier.Url, ShouldEqual, "http://sensu-api.example.com:4567/results")
+				So(sensuNotifier.Source, ShouldEqual, "grafana_instance_01")
+				So(sensuNotifier.Handler, ShouldEqual, "myhandler")
 			})
 		})
 	})

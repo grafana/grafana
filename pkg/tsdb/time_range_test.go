@@ -52,8 +52,8 @@ func TestTimeRange(t *testing.T) {
 			})
 
 			Convey("now-10m ", func() {
-				fiveMinAgo, _ := time.ParseDuration("-10m")
-				expected := now.Add(fiveMinAgo)
+				tenMinAgo, _ := time.ParseDuration("-10m")
+				expected := now.Add(tenMinAgo)
 				res, err := tr.ParseTo()
 				So(err, ShouldBeNil)
 				So(res.Unix(), ShouldEqual, expected.Unix())
