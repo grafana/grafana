@@ -12,19 +12,32 @@ import (
 
 func TestDashboardAclApiEndpoint(t *testing.T) {
 	Convey("Given a dashboard acl", t, func() {
-		mockResult := []*models.DashboardAclInfoDTO{
+		mockResult := []*models.DashboardAcl{
 			{Id: 1, OrgId: 1, DashboardId: 1, UserId: 2, Permissions: models.PERMISSION_EDIT},
 			{Id: 2, OrgId: 1, DashboardId: 1, UserId: 3, Permissions: models.PERMISSION_VIEW},
 			{Id: 3, OrgId: 1, DashboardId: 1, UserGroupId: 1, Permissions: models.PERMISSION_EDIT},
 			{Id: 4, OrgId: 1, DashboardId: 1, UserGroupId: 2, Permissions: models.PERMISSION_READ_ONLY_EDIT},
 		}
+		dtoRes := []*models.DashboardAclInfoDTO{
+			{Id: 1, OrgId: 1, DashboardId: 1, UserId: 2, Permissions: models.PERMISSION_EDIT},
+			{Id: 2, OrgId: 1, DashboardId: 1, UserId: 3, Permissions: models.PERMISSION_VIEW},
+			{Id: 3, OrgId: 1, DashboardId: 1, UserGroupId: 1, Permissions: models.PERMISSION_EDIT},
+			{Id: 4, OrgId: 1, DashboardId: 1, UserGroupId: 2, Permissions: models.PERMISSION_READ_ONLY_EDIT},
+		}
+
 		bus.AddHandler("test", func(query *models.GetDashboardPermissionsQuery) error {
+			query.Result = dtoRes
+			return nil
+		})
+
+		bus.AddHandler("test", func(query *models.GetInheritedDashboardAclQuery) error {
 			query.Result = mockResult
 			return nil
 		})
 
+		userGroupResp := []*models.UserGroup{}
 		bus.AddHandler("test", func(query *models.GetUserGroupsByUserQuery) error {
-			query.Result = []*models.UserGroup{}
+			query.Result = userGroupResp
 			return nil
 		})
 
@@ -46,7 +59,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 
 		Convey("When user is editor and in the ACL", func() {
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/1/acl", "/api/dashboards/:id/acl", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				mockResult = append(mockResult, &models.DashboardAclInfoDTO{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permissions: models.PERMISSION_EDIT})
+				mockResult = append(mockResult, &models.DashboardAcl{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permissions: models.PERMISSION_EDIT})
 
 				Convey("Should be able to access ACL", func() {
 					sc.handlerFunc = GetDashboardAcl
@@ -57,7 +70,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/1/acl/user/1", "/api/dashboards/:id/acl/user/:userId", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				mockResult = append(mockResult, &models.DashboardAclInfoDTO{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permissions: models.PERMISSION_EDIT})
+				mockResult = append(mockResult, &models.DashboardAcl{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permissions: models.PERMISSION_EDIT})
 
 				bus.AddHandler("test3", func(cmd *models.RemoveDashboardPermissionCommand) error {
 					return nil
@@ -73,11 +86,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 
 			Convey("When user is a member of a user group in the ACL with edit permission", func() {
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/1/acl/user/1", "/api/dashboards/:id/acl/user/:userId", models.ROLE_EDITOR, func(sc *scenarioContext) {
-
-					bus.AddHandler("test3", func(query *models.GetUserGroupsByUserQuery) error {
-						query.Result = []*models.UserGroup{{Id: 1, OrgId: 1, Name: "UG1"}}
-						return nil
-					})
+					userGroupResp = append(userGroupResp, &models.UserGroup{Id: 1, OrgId: 1, Name: "UG1"})
 
 					bus.AddHandler("test3", func(cmd *models.RemoveDashboardPermissionCommand) error {
 						return nil
@@ -105,7 +114,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			})
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/1/acl/user/1", "/api/dashboards/:id/acl/user/:userId", models.ROLE_EDITOR, func(sc *scenarioContext) {
-				mockResult = append(mockResult, &models.DashboardAclInfoDTO{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permissions: models.PERMISSION_VIEW})
+				mockResult = append(mockResult, &models.DashboardAcl{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permissions: models.PERMISSION_VIEW})
 				bus.AddHandler("test3", func(cmd *models.RemoveDashboardPermissionCommand) error {
 					return nil
 				})

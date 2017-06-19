@@ -87,7 +87,7 @@ func (g *DashboardGuardian) getAcl() ([]*m.DashboardAcl, error) {
 }
 
 func (g *DashboardGuardian) getUserGroups() ([]*m.UserGroup, error) {
-	if g.groups == nil {
+	if g.groups != nil {
 		return g.groups, nil
 	}
 

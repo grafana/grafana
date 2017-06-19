@@ -30,6 +30,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			return nil
 		})
 
+		aclMockResp := []*models.DashboardAcl{}
+		bus.AddHandler("test", func(query *models.GetInheritedDashboardAclQuery) error {
+			query.Result = aclMockResp
+			return nil
+		})
+
 		cmd := models.SaveDashboardCommand{
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
 				"parentId": fakeDash.ParentId,
@@ -165,6 +171,19 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		fakeDash.ParentId = 1
 		fakeDash.HasAcl = true
 
+		aclMockResp := []*models.DashboardAcl{
+			{
+				DashboardId: 1,
+				Permissions: models.PERMISSION_EDIT,
+				UserId:      200,
+			},
+		}
+
+		bus.AddHandler("test", func(query *models.GetInheritedDashboardAclQuery) error {
+			query.Result = aclMockResp
+			return nil
+		})
+
 		bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
 			query.Result = fakeDash
 			return nil
@@ -186,10 +205,6 @@ func TestDashboardApiEndpoint(t *testing.T) {
 
 		Convey("When user is an Org Viewer and has no permissions for this dashboard", func() {
 			role := models.ROLE_VIEWER
-			bus.AddHandler("test", func(query *models.GetDashboardPermissionsQuery) error {
-				query.Result = []*models.DashboardAclInfoDTO{}
-				return nil
-			})
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
 				sc.handlerFunc = GetDashboard
@@ -224,11 +239,6 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		Convey("When user is an Org Editor and has no permissions for this dashboard", func() {
 			role := models.ROLE_EDITOR
 
-			bus.AddHandler("test", func(query *models.GetDashboardPermissionsQuery) error {
-				query.Result = []*models.DashboardAclInfoDTO{}
-				return nil
-			})
-
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
 				sc.handlerFunc = GetDashboard
 				sc.fakeReqWithParams("GET", sc.url, map[string]string{}).exec()
@@ -262,11 +272,11 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		Convey("When user is an Org Viewer but has an edit permission", func() {
 			role := models.ROLE_VIEWER
 
-			mockResult := []*models.DashboardAclInfoDTO{
+			mockResult := []*models.DashboardAcl{
 				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permissions: models.PERMISSION_EDIT},
 			}
 
-			bus.AddHandler("test", func(query *models.GetDashboardPermissionsQuery) error {
+			bus.AddHandler("test", func(query *models.GetInheritedDashboardAclQuery) error {
 				query.Result = mockResult
 				return nil
 			})
@@ -304,11 +314,11 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		Convey("When user is an Org Editor but has a view permission", func() {
 			role := models.ROLE_EDITOR
 
-			mockResult := []*models.DashboardAclInfoDTO{
+			mockResult := []*models.DashboardAcl{
 				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permissions: models.PERMISSION_VIEW},
 			}
 
-			bus.AddHandler("test", func(query *models.GetDashboardPermissionsQuery) error {
+			bus.AddHandler("test", func(query *models.GetInheritedDashboardAclQuery) error {
 				query.Result = mockResult
 				return nil
 			})

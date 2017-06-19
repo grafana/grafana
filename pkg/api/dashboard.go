@@ -50,7 +50,6 @@ func GetDashboard(c *middleware.Context) Response {
 	}
 
 	guardian := guardian.NewDashboardGuardian(dash.Id, c.OrgId, c.SignedInUser)
-
 	if canView, err := guardian.CanView(); err != nil || !canView {
 		return dashboardGuardianResponse(err)
 	}
