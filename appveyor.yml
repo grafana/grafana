@@ -29,6 +29,7 @@ install:
 
 build_script:
   - go run build.go build
+  - go test -v ./pkg/...
   - grunt release
   - go run build.go sha-dist
   - cp dist/* .
