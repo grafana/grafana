@@ -114,9 +114,8 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 				Convey("Should be able to delete an existing permission", func() {
 					err := RemoveDashboardAcl(&m.RemoveDashboardAclCommand{
-						OrgId:       1,
-						UserId:      1,
-						DashboardId: savedFolder.Id,
+						OrgId: 1,
+						AclId: 1,
 					})
 					So(err, ShouldBeNil)
 
@@ -170,9 +169,8 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 				Convey("Should be able to delete an existing permission for a user group", func() {
 					err := RemoveDashboardAcl(&m.RemoveDashboardAclCommand{
-						OrgId:       1,
-						UserGroupId: group1.Result.Id,
-						DashboardId: savedFolder.Id,
+						OrgId: 1,
+						AclId: 1,
 					})
 					So(err, ShouldBeNil)
 

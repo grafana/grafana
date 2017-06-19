@@ -76,8 +76,8 @@ func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 
 func RemoveDashboardAcl(cmd *m.RemoveDashboardAclCommand) error {
 	return inTransaction(func(sess *DBSession) error {
-		var rawSQL = "DELETE FROM " + dialect.Quote("dashboard_acl") + " WHERE dashboard_id =? and (user_group_id=? or user_id=?)"
-		_, err := sess.Exec(rawSQL, cmd.DashboardId, cmd.UserGroupId, cmd.UserId)
+		var rawSQL = "DELETE FROM " + dialect.Quote("dashboard_acl") + " WHERE org_id =? and id=?"
+		_, err := sess.Exec(rawSQL, cmd.OrgId, cmd.AclId)
 		if err != nil {
 			return err
 		}

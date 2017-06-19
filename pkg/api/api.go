@@ -235,24 +235,24 @@ func (hs *HttpServer) registerRoutes() {
 		// Dashboard
 		r.Group("/dashboards", func() {
 			r.Combo("/db/:slug").Get(wrap(GetDashboard)).Delete(wrap(DeleteDashboard))
-
-			r.Get("/id/:dashboardId/versions", wrap(GetDashboardVersions))
-			r.Get("/id/:dashboardId/versions/:id", wrap(GetDashboardVersion))
-			r.Post("/id/:dashboardId/restore", reqEditorRole, bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
+			r.Post("/db", bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
 
 			r.Post("/calculate-diff", bind(dtos.CalculateDiffOptions{}), wrap(CalculateDashboardDiff))
-
-			r.Post("/db", bind(m.SaveDashboardCommand{}), wrap(PostDashboard))
 			r.Get("/file/:file", GetDashboardFromJsonFile)
 			r.Get("/home", wrap(GetHomeDashboard))
 			r.Get("/tags", GetDashboardTags)
 			r.Post("/import", bind(dtos.ImportDashboardCommand{}), wrap(ImportDashboard))
 
-			r.Group("/:id/acl", func() {
-				r.Get("/", wrap(GetDashboardAcl))
-				r.Post("/", quota("acl"), bind(m.SetDashboardAclCommand{}), wrap(PostDashboardAcl))
-				r.Delete("/user/:userId", wrap(DeleteDashboardAclByUser))
-				r.Delete("/user-group/:userGroupId", wrap(DeleteDashboardAclByUserGroup))
+			r.Group("/id/:dashboardId", func() {
+				r.Get("/versions", wrap(GetDashboardVersions))
+				r.Get("/versions/:id", wrap(GetDashboardVersion))
+				r.Post("/restore", bind(dtos.RestoreDashboardVersionCommand{}), wrap(RestoreDashboardVersion))
+
+				r.Group("/acl", func() {
+					r.Get("/", wrap(GetDashboardAclList))
+					r.Post("/", bind(m.SetDashboardAclCommand{}), wrap(PostDashboardAcl))
+					r.Delete("/:aclId", wrap(DeleteDashboardAcl))
+				})
 			}, reqSignedIn)
 		})
 

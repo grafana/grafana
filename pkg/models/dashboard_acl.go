@@ -73,11 +73,8 @@ type SetDashboardAclCommand struct {
 }
 
 type RemoveDashboardAclCommand struct {
-	DashboardId int64 `json:"dashboardId" binding:"Required"`
-	UserId      int64 `json:"userId"`
-	UserGroupId int64 `json:"userGroupId"`
-
-	OrgId int64 `json:"-"`
+	AclId int64
+	OrgId int64
 }
 
 //
