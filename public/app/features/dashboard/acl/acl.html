@@ -40,7 +40,7 @@
         <tbody>
           <tr ng-repeat="permission in ctrl.userPermissions" class="permissionlist__item">
             <td>{{permission.userLogin}}</td>
-            <td><select class="gf-form-input gf-size-auto" ng-model="permission.permissionType" ng-options="p.value as p.text for p in ctrl.permissionTypeOptions" ng-change="ctrl.updatePermission(permission)"></select></td>
+            <td><select class="gf-form-input gf-size-auto" ng-model="permission.permissions" ng-options="p.value as p.text for p in ctrl.permissionTypeOptions" ng-change="ctrl.updatePermission(permission)"></select></td>
             <td class="text-right">
               <a ng-click="ctrl.removeUserPermission(permission)" class="btn btn-danger btn-small">
                 <i class="fa fa-remove"></i>

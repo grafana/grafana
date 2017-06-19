@@ -10,20 +10,15 @@ import (
 )
 
 func GetDashboardAcl(c *middleware.Context) Response {
-	dash, rsp := getDashboardHelper(c.OrgId, "", c.ParamsInt64(":id"))
-	if rsp != nil {
-		return rsp
+	dashId := c.ParamsInt64(":id")
+
+	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
+
+	if canView, err := guardian.CanView(); err != nil || !canView {
+		return dashboardGuardianResponse(err)
 	}
 
-	guardian := guardian.NewDashboardGuardian(dash, c.SignedInUser)
-	canView, err := guardian.CanView()
-	if err != nil {
-		return ApiError(500, "Failed to get Dashboard ACL", err)
-	} else if !canView {
-		return ApiError(403, "Dashboard access denied", nil)
-	}
-
-	query := m.GetDashboardPermissionsQuery{DashboardId: dash.Id}
+	query := m.GetDashboardPermissionsQuery{DashboardId: dashId}
 	if err := bus.Dispatch(&query); err != nil {
 		return ApiError(500, "Failed to get Dashboard ACL", err)
 	}
@@ -32,8 +27,15 @@ func GetDashboardAcl(c *middleware.Context) Response {
 }
 
 func PostDashboardAcl(c *middleware.Context, cmd m.AddOrUpdateDashboardPermissionCommand) Response {
+	dashId := c.ParamsInt64(":id")
+
+	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
+	if canSave, err := guardian.CanSave(); err != nil || !canSave {
+		return dashboardGuardianResponse(err)
+	}
+
 	cmd.OrgId = c.OrgId
-	cmd.DashboardId = c.ParamsInt64(":id")
+	cmd.DashboardId = dashId
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		if err == m.ErrDashboardPermissionUserOrUserGroupEmpty {
@@ -51,43 +53,37 @@ func PostDashboardAcl(c *middleware.Context, cmd m.AddOrUpdateDashboardPermissio
 }
 
 func DeleteDashboardAclByUser(c *middleware.Context) Response {
-	// dashboardId := c.ParamsInt64(":id")
-	// userId := c.ParamsInt64(":userId")
-	// cmd := m.RemoveDashboardPermissionCommand{DashboardId: dashboardId, UserId: userId, OrgId: c.OrgId}
-	//
-	// hasPermission, err := guardian.CanDeleteFromAcl(dashboardId, c.OrgRole, c.IsGrafanaAdmin, c.OrgId, c.UserId)
-	// if err != nil {
-	// 	return ApiError(500, "Failed to delete from Dashboard ACL", err)
-	// }
-	//
-	// if !hasPermission {
-	// 	return Json(403, util.DynMap{"status": "Forbidden", "message": "Does not have access to this Dashboard ACL"})
-	// }
-	//
-	// if err := bus.Dispatch(&cmd); err != nil {
-	// 	return ApiError(500, "Failed to delete permission for user", err)
-	// }
+	dashId := c.ParamsInt64(":id")
+	userId := c.ParamsInt64(":userId")
+
+	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
+	if canSave, err := guardian.CanSave(); err != nil || !canSave {
+		return dashboardGuardianResponse(err)
+	}
+
+	cmd := m.RemoveDashboardPermissionCommand{DashboardId: dashId, UserId: userId, OrgId: c.OrgId}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to delete permission for user", err)
+	}
 
 	return Json(200, "")
 }
 
 func DeleteDashboardAclByUserGroup(c *middleware.Context) Response {
-	// dashboardId := c.ParamsInt64(":id")
-	// userGroupId := c.ParamsInt64(":userGroupId")
-	// cmd := m.RemoveDashboardPermissionCommand{DashboardId: dashboardId, UserGroupId: userGroupId, OrgId: c.OrgId}
-	//
-	// hasPermission, err := guardian.CanDeleteFromAcl(dashboardId, c.OrgRole, c.IsGrafanaAdmin, c.OrgId, c.UserId)
-	// if err != nil {
-	// 	return ApiError(500, "Failed to delete from Dashboard ACL", err)
-	// }
-	//
-	// if !hasPermission {
-	// 	return Json(403, util.DynMap{"status": "Forbidden", "message": "Does not have access to this Dashboard ACL"})
-	// }
-	//
-	// if err := bus.Dispatch(&cmd); err != nil {
-	// 	return ApiError(500, "Failed to delete permission for user", err)
-	// }
+	dashId := c.ParamsInt64(":id")
+	userGroupId := c.ParamsInt64(":userGroupId")
+
+	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
+	if canSave, err := guardian.CanSave(); err != nil || !canSave {
+		return dashboardGuardianResponse(err)
+	}
+
+	cmd := m.RemoveDashboardPermissionCommand{DashboardId: dashId, UserGroupId: userGroupId, OrgId: c.OrgId}
+
+	if err := bus.Dispatch(&cmd); err != nil {
+		return ApiError(500, "Failed to delete permission for user", err)
+	}
 
 	return Json(200, "")
 }

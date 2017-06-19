@@ -2,6 +2,7 @@ package guardian
 
 import (
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/log"
 	m "github.com/grafana/grafana/pkg/models"
 )
 
@@ -11,6 +12,7 @@ type DashboardGuardian struct {
 	orgId  int64
 	acl    []*m.DashboardAcl
 	groups []*m.UserGroup
+	log    log.Logger
 }
 
 func NewDashboardGuardian(dashId int64, orgId int64, user *m.SignedInUser) *DashboardGuardian {
@@ -18,6 +20,7 @@ func NewDashboardGuardian(dashId int64, orgId int64, user *m.SignedInUser) *Dash
 		user:   user,
 		dashId: dashId,
 		orgId:  orgId,
+		log:    log.New("guardians.dashboard"),
 	}
 }
 
@@ -34,6 +37,10 @@ func (g *DashboardGuardian) CanView() (bool, error) {
 }
 
 func (g *DashboardGuardian) HasPermission(permission m.PermissionType, fallbackRole m.RoleType) (bool, error) {
+	if g.user.OrgRole == m.ROLE_ADMIN {
+		return true, nil
+	}
+
 	acl, err := g.getAcl()
 	if err != nil {
 		return false, err
