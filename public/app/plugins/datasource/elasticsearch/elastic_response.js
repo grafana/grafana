@@ -297,7 +297,7 @@ function (_, queryDef) {
       }
     }
 
-    return { data: seriesList };
+    return {data: seriesList, regularities: this.response.regularities};
   };
 
   return ElasticResponse;
