@@ -9,7 +9,6 @@
     padding: 0;
 
     .tabbed-view-header {
-/*       padding: 0; */
       background-color: $body-bg;
       padding: 1.5em 1rem 0 1rem;
     }
@@ -48,7 +47,7 @@
 }
 
 .tabbed-view-body {
-  padding: $spacer*2;
+  padding: $spacer*2 $spacer;
   min-height: 250px;
 }
 
