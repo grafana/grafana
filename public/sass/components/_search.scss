@@ -122,13 +122,10 @@
       content: "\f015";
     }
 
-    &:hover {
+    &:hover,
+    &.selected {
       background-color: $tight-form-func-bg;
       @include left-brand-border-gradient();
-    }
-
-    &.selected {
-      background-color: $grafanaListBackground;
     }
   }
 
