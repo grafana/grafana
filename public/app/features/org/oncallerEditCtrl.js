@@ -12,9 +12,9 @@ function (angular) {
       $scope.oncallerDef = oncallerMgrSrv.get($routeParams.id) || {};
       $scope.isNew = !Object.keys($scope.oncallerDef).length;
       $scope.oncallerDef.org = contextSrv.user.orgId;
-      $scope.oncallerDef.service = contextSrv.system;
+      $scope.oncallerDef.service = contextSrv.user.systemId;
       $scope.orgName = contextSrv.user.orgName;
-      $scope.serviceName = backendSrv.getSystemById(contextSrv.system);
+      $scope.serviceName = backendSrv.getSystemById(contextSrv.user.systemId);
     };
 
     $scope.saveChanges = function() {

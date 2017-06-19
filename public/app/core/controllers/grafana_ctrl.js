@@ -26,16 +26,17 @@ function (angular, _, $, coreModule, config, store) {
       utilSrv.init();
       if (!($location.path() === '/login' || $location.path() === '/signupfree')) {
         backendSrv.initCustomizedSources();
-        backendSrv.updateSystemsMap();
+        backendSrv.updateTokens();
       }
       $scope.dashAlerts = alertSrv;
     };
 
     $scope.initDashboard = function(dashboardData, viewScope) {
       $rootScope.mainScope = viewScope;
+      dashboardData.dashboard.system = contextSrv.user.systemId;
       healthSrv.transformMetricType(dashboardData.dashboard).then(function () {
         $controller('DashboardCtrl', {$scope: viewScope}).init(dashboardData);
-        contextSrv.system = dashboardData.dashboard.system || 0
+        contextSrv.user.systemId = dashboardData.dashboard.system || 0
       });
     };
 

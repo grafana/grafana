@@ -5,6 +5,7 @@ import (
   "github.com/wangy1931/grafana/pkg/bus"
   "github.com/wangy1931/grafana/pkg/middleware"
   m "github.com/wangy1931/grafana/pkg/models"
+  "strconv"
 )
 
 func UpdateSystems(c *middleware.Context, systems dtos.UpdateSystems) Response {
@@ -48,4 +49,20 @@ func GetCurrentUserSystem(c *middleware.Context) Response {
     return ApiError(500, "Failed to get Systems", err)
   }
   return Json(200, query.Result)
+}
+
+func GetCurrentUserSystemFromIndex(c *middleware.Context) (interface{}, error) {
+  query := m.GetOrgSystemsQuery{OrgId:c.OrgId}
+  if err := bus.Dispatch(&query); err != nil {
+    return nil, err
+  }
+  return query.Result, nil
+}
+
+func AddOrUpdatePickSystem(c *middleware.Context, system_pick m.AddOrUpdateSystemPick) Response {
+  system_pick.UserId = strconv.FormatInt(c.UserId, 10);
+  if err := bus.Dispatch(&system_pick); err != nil {
+    return ApiError(500, "Failed to update or add pickup system", err)
+  }
+  return ApiSuccess("picked system")
 }

@@ -19,3 +19,38 @@ body{
 .graph-legend-wrapper{
     overflow-x: scroll;
 }
+
+.btn-log-compare{
+    position: absolute;
+    right: 60px;
+    z-index: 1;
+    &>button{
+        background: none;
+        border: none;
+        line-height: 0px;
+        box-shadow: none!important;
+        -webkit-box-shadow: none!important;
+    }
+    &>.dropdown-menu{
+        left: inherit;
+        right: 0;
+        &>li{
+            padding: 0 10px;
+            cursor: pointer;
+            &:hover{
+                color: white;
+                background: #24ade0;
+            }
+        }
+    }
+}
+
+.table-panel-table td:first-child{
+    width: 100px;
+}
+
+.time-picker{
+    position: absolute;
+    right: 0;
+    z-index: 1;
+}

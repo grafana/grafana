@@ -94,6 +94,9 @@ func Register(r *macaron.Macaron) {
       r.Get("/system",wrap(GetCurrentUserSystem))
 		})
 
+		r.Group("/system", func() {
+			r.Post("/pick", bind(m.AddOrUpdateSystemPick{}), wrap(AddOrUpdatePickSystem))
+		})
 		// users (admin permission required)
 		r.Group("/users", func() {
 			r.Get("/", wrap(SearchUsers))

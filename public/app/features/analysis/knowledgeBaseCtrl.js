@@ -65,7 +65,7 @@ define([
       $scope.newKnowsByLog = function() {
         $scope.newKnowledge.symptom = $scope.q;
         $scope.newKnowledge.org_id = contextSrv.user.orgId;
-        $scope.newKnowledge.system_id = contextSrv.system;
+        $scope.newKnowledge.system_id = contextSrv.user.systemId;
 
         backendSrv.knowledge({
           method: "PUT",

@@ -20,7 +20,7 @@ type Context struct {
 	*m.SignedInUser
 
 	Session SessionStore
-
+	SystemId       int64
 	IsSignedIn     bool
 	AllowAnonymous bool
 }
@@ -89,6 +89,13 @@ func initContextWithUserSessionCookie(ctx *Context) bool {
 		log.Error(3, "Failed to get user with id %v", userId)
 		return false
 	} else {
+		pickSystem := m.GetSystemPick{UserId: strconv.FormatInt(userId, 10)}
+		if err := bus.Dispatch(&pickSystem); err != nil {
+			log.Debug("Failed to get pickup system Id  for user: %v", userId)
+			ctx.SystemId = 0;
+		} else {
+			ctx.SystemId = pickSystem.Result.SystemId;
+		}
 		ctx.SignedInUser = query.Result
 		ctx.IsSignedIn = true
 		return true

@@ -119,11 +119,11 @@ function (angular, _, $, coreModule, config) {
         click: $scope.updateSubmenu
       });
 
-      $scope.mainLinks.push({
-        text: "轮值",
-        icon: "fa fa-fw fa-calendar",
-        href: $scope.getUrl("/oncallerschedule"),
-      });
+      // $scope.mainLinks.push({
+      //   text: "轮值",
+      //   icon: "fa fa-fw fa-calendar",
+      //   href: $scope.getUrl("/oncallerschedule"),
+      // });
 
       $scope.mainLinks.push({
         text: "安装指南",
@@ -215,7 +215,7 @@ function (angular, _, $, coreModule, config) {
           click: $scope.loadOrgs
         },
         {
-          text: contextSrv.systemsMap[_.findIndex(contextSrv.systemsMap,{'Id': contextSrv.system})].SystemsName,
+          text: contextSrv.systemsMap[_.findIndex(contextSrv.systemsMap,{'Id': contextSrv.user.systemId})].SystemsName,
           icon: "fa fa-fw fa-sitemap",
           click: $scope.loadSystems
         }
@@ -295,7 +295,7 @@ function (angular, _, $, coreModule, config) {
 
     $scope.switchOrg = function(orgId) {
       backendSrv.post('/api/user/using/' + orgId).then(function() {
-        window.location.href = $scope.getUrl('/');
+        window.location.href = $scope.getUrl('/systems');
       });
     };
 
@@ -303,25 +303,39 @@ function (angular, _, $, coreModule, config) {
       $scope.systemSection = false;
       $scope.mainLinks = [];
       $scope.dashboardTitle = "";
-      if(!contextSrv.systemsMap.length && contextSrv.isSignedIn) {
-        $location.url("/org");
-        $scope.appEvent("alert-warning", ['系统尚未初始化', '请新建子系统']);
+      if(!contextSrv.isSignedIn) {
+        $location.url("/login");
+        return;
+      }
+      if(!contextSrv.systemsMap.length) {
+        $location.url("/newcomer");
         return ;
       }
-      if (contextSrv.system == 0 && contextSrv.user.orgId) {
+      if(contextSrv.user.systemId == 0 && contextSrv.user.orgId) {
+        $location.url("/newcomer");
+        return ;
+      }
+      if (!isCurrentSystemInSysmtes(contextSrv.user.systemId)) {
         $location.url("/systems");
-        contextSrv.sidmenu = false;
-        return;
+        return ;
       }
       var currentPath = $location.path();
       if (currentPath.indexOf('/admin') === 0) {
         $scope.setupAdminNav();
       } else if(currentPath.indexOf('/dashboard/db/') == 0){
         contextSrv.dashboardLink = currentPath;
+      } else if(currentPath.indexOf('/login') == 0){
+        return;
       }
       $scope.setupMainNav();
     };
 
+    function isCurrentSystemInSysmtes(currId) {
+      if (backendSrv.getSystemById(currId) == '') {
+        return false;
+      }
+      return true;
+    }
     $scope.updateSubmenu = function(menu) {
       if(menu.submenu){
         $scope.submenu = menu.submenu;

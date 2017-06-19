@@ -169,20 +169,17 @@ function (angular, _, config) {
         $scope.associateMenu = panel.lines && (/^\/anomaly/.test(path) || (/^\/integrate/.test(path)));
         $scope.integrateMenu = $scope.showMenu && !(/^\/integrate/.test(path)) && panel.lines;
       };
-
-      $scope.systemsMap = contextSrv.systemsMap[0];
-
       $scope.associateLink = function () {
-        try{
+        try {
           var host = $scope.panel.targets[0].tags.host;
           var metric = $scope.panel.targets[0].metric;
-          if(host && metric) {
-            var link = '/alerts/association/' + host + '/100/' + $scope.systemsMap.OrgId + '.' + $scope.systemsMap.Id + '.' + metric;
+          if (host && metric) {
+            var link = '/alerts/association/' + host + '/100/' + contextSrv.user.orgId + '.' + contextSrv.user.systemId + '.' + metric;
             $location.path(link);
           }
-        }catch(err){
+        } catch (err) {
           var reg = /\'(.*?)\'/g;
-          var msg = "图表中缺少"+err.toString().match(reg)[0]+"配置";
+          var msg = "图表中缺少" + err.toString().match(reg)[0] + "配置";
           $scope.appEvent('alert-warning', ['参数缺失', msg]);
         }
       };

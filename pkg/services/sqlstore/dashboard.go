@@ -9,6 +9,8 @@ import (
 	"github.com/wangy1931/grafana/pkg/metrics"
 	m "github.com/wangy1931/grafana/pkg/models"
 	"github.com/wangy1931/grafana/pkg/services/search"
+	"strconv"
+	"errors"
 )
 
 func init() {
@@ -53,10 +55,17 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 		if sameTitleExists {
 			// another dashboard with same name
 			if dash.Id != sameTitle.Id {
-				if cmd.Overwrite {
-					dash.Id = sameTitle.Id
-				} else {
-					return m.ErrDashboardWithSameNameExists
+				dashSysId, err1 :=typeSwitch(dash.Data)
+				sameSysId, err :=typeSwitch(sameTitle.Data)
+				if err1 !=nil || err !=nil{
+					return err
+				}
+				if dashSysId == sameSysId  {
+					if cmd.Overwrite {
+						dash.Id = sameTitle.Id
+					} else {
+						return m.ErrDashboardWithSameNameExists
+					}
 				}
 			}
 		}
@@ -99,18 +108,42 @@ func SaveDashboard(cmd *m.SaveDashboardCommand) error {
 }
 
 func GetDashboard(query *m.GetDashboardQuery) error {
-	dashboard := m.Dashboard{Slug: query.Slug, OrgId: query.OrgId}
-	has, err := x.Get(&dashboard)
+	dashboards := make([]*m.Dashboard, 0)
+	sess := x.Table("dashboard")
+	sess.Where("dashboard.slug=? and dashboard.org_id=?", query.Slug, query.OrgId)
+	err :=sess.Find(&dashboards)
+
 	if err != nil {
 		return err
-	} else if has == false {
-		return m.ErrDashboardNotFound
+	}
+	query.Result = new(m.Dashboard)
+	for _, dash := range dashboards {
+		sysId, err := typeSwitch(dash.Data)
+		if err !=nil {
+			continue
+		}
+		if sysId == query.SystemId {
+			dash.Data["id"] = dash.Id
+			query.Result = dash
+		}
 	}
 
-	dashboard.Data["id"] = dashboard.Id
-	query.Result = &dashboard
-
 	return nil
+}
+
+func typeSwitch(dash map[string]interface{}) (int64, error) {
+	switch system := dash["system"].(type) {
+	default:
+		return 0, errors.New("can't resolve the systemId type")
+	case string:
+		sysId, err := strconv.ParseInt(system, 10, 64)
+		if err != nil {
+			return 0, err
+		}
+		return sysId, nil
+	case float64:
+		return int64(system), nil
+	}
 }
 
 type DashboardSearchProjection struct {

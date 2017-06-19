@@ -9,7 +9,7 @@ define([
 
     var module = angular.module('grafana.controllers');
 
-    module.controller('SystemsummaryCtrl', function ($scope, $location, backendSrv, contextSrv, datasourceSrv, alertMgrSrv, healthSrv) {
+    module.controller('SystemsummaryCtrl', function ($scope, $location, backendSrv, contextSrv, datasourceSrv, alertMgrSrv, healthSrv, $timeout) {
       $scope.getUrl = function(url) {
         return config.appSubUrl + url;
       };
@@ -125,7 +125,7 @@ define([
       ];
 
       $scope.init = function () {
-        if (contextSrv.system == 0 && contextSrv.user.orgId) {
+        if (contextSrv.user.systemId == 0 && contextSrv.user.orgId) {
           $location.url("/systems");
           contextSrv.sidmenu = false;
           return;
@@ -135,7 +135,6 @@ define([
         $scope.initDashboard({
           meta: { canStar: false, canShare: false, canEdit: false, canSave: false },
           dashboard: {
-            system: contextSrv.system,
             title: "总览",
             id: "name",
             rows: $scope.initPanelRow(),
@@ -185,6 +184,7 @@ define([
         $scope.initHostSummary(hostRow.panels[0]);
         $scope.initTopN(topNRow.panels);
         $scope.initHealth(healthRow.panels[0]);
+        $scope.initPrediction(predictionRow.panels);
         return panelRow;
       };
 
@@ -219,7 +219,7 @@ define([
         panel.grid.leftMin = 0;
         panel.grid.thresholdLine = false;
         panel.pointradius = 1;
-      }
+      };
 
       $scope.getAlertStatus = function () {
         alertMgrSrv.loadTriggeredAlerts().then(function onSuccess(response) {
@@ -255,7 +255,7 @@ define([
         $scope.serviceList = [];
         _.each(Object.keys(_.allServies()), function (key) {
           var queries = [{
-            "metric": contextSrv.user.orgId + "." + contextSrv.system + "." + key + ".state",
+            "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + key + ".state",
             "aggregator": "sum",
             "downsample": "10m-sum",
           }];
@@ -311,7 +311,7 @@ define([
         }).then(function () {
           _.each($scope.summaryList, function (metric) {
             var queries = [{
-              "metric": contextSrv.user.orgId + "." + contextSrv.system + ".collector.state",
+              "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + ".collector.state",
               "aggregator": "sum",
               "downsample": "1m-sum",
               "tags": { "host": metric.tag.host }
@@ -359,7 +359,7 @@ define([
         });
       };
 
-      $scope.getPrediction = function (panels) {
+      $scope.initPrediction = function (panels) {
         var prediction = [['df.bytes.free', 'df.bytes.free.prediction'], ['cpu.usr', 'cpu.usr.prediction'], ['proc.meminfo.active', 'proc.meminfo.active.prediction']];
         _.each(panels, function (panel, index) {
           panel.targets = [];
@@ -374,13 +374,17 @@ define([
           panel.seriesOverrides = [{ "alias": prediction[index][1], "color": "#DEDAF7", "zindex": -2 }];
           panel.y_formats = ['bytes', 'bytes'];
           panel.timeForward = "1d";
+          panel.legend = {};
           panel.legend.show = false;
         });
         panels[1].y_formats = ['percent', 'percent'];
+      };
 
+      $scope.getPrediction = function (panels) {
+        var prediction = [['df.bytes.free', 'df.bytes.free.prediction'], ['cpu.usr', 'cpu.usr.prediction'], ['proc.meminfo.active', 'proc.meminfo.active.prediction']];
         _.each(prediction, function (item, index) {
           var queries = [{
-            "metric": contextSrv.user.orgId + "." + contextSrv.system + "." + item[1],
+            "metric": contextSrv.user.orgId + "." + contextSrv.user.systemId + "." + item[1],
             "downsample": "1d-avg",
             "aggregator": "avg",
           }];
@@ -474,11 +478,11 @@ define([
         });
 
         cpuTopN.targets[0].metric = 'cpu.topN';
-
         memoryTopN.targets[0].metric = 'mem.topN';
-
       };
 
-      $scope.init();
+      $timeout(function () {
+        $scope.init();
+      });
     });
   });

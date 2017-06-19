@@ -264,7 +264,6 @@ function (moment, $, angular, _, uiCalendarConfig) {
           var oncallerPri = {
             title: pri.name+$scope.primaryReview.type,
             className: ['primaryReview'],
-            stick: true,
             start: formatTime(start),
             end: formatTime(end),
             id: pri.id,
@@ -275,7 +274,6 @@ function (moment, $, angular, _, uiCalendarConfig) {
           var oncallerSec = {
             title: sec.name+$scope.secondaryReview.type,
             className: ['primaryReview'],
-            stick: true,
             start: formatTime(start+1000),
             end: formatTime(end),
             id: sec.id,
@@ -294,7 +292,10 @@ function (moment, $, angular, _, uiCalendarConfig) {
     };
 
     function updateSchedule(role,oncallerSelcted) {
-      oncallerMgrSrv.updateSchedule(role, oncallerSelcted.id, getTimeSec(oncallerSelcted.start), getTimeSec(oncallerSelcted.end));
+      addEvent(oncallerSelcted, role);
+      oncallerMgrSrv.updateSchedule(role, oncallerSelcted.id, getTimeSec(oncallerSelcted.start), getTimeSec(oncallerSelcted.end)).then(function(response) {
+        $scope.appEvent('alert-success', ['保存成功']);
+      });
     }
 
     $scope.init();

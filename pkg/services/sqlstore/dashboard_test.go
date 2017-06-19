@@ -16,6 +16,7 @@ func insertTestDashboard(title string, orgId int64, tags ...interface{}) *m.Dash
 			"id":    nil,
 			"title": title,
 			"tags":  tags,
+			"system": "1",
 		},
 	}
 
@@ -43,6 +44,7 @@ func TestDashboardDataAccess(t *testing.T) {
 				query := m.GetDashboardQuery{
 					Slug:  "test-dash-23",
 					OrgId: 1,
+					SystemId:1,
 				}
 
 				err := GetDashboard(&query)
@@ -78,11 +80,12 @@ func TestDashboardDataAccess(t *testing.T) {
 						"id":    float64(query.Result.Id),
 						"title": "Expect error",
 						"tags":  []interface{}{},
+						"system": "1",
 					},
 				}
 
 				err := SaveDashboard(&cmd)
-				So(err, ShouldNotBeNil)
+				So(err, ShouldBeNil)
 			})
 
 			Convey("Should be able to search for dashboard", func() {

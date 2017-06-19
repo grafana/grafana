@@ -35,6 +35,12 @@ type SystemDash struct {
   DashboardId   int64
 }
 
+type SystemPick struct {
+  Id            int64
+  UserId        string
+  SystemId      int64
+}
+
 // ---------------------
 // COMMANDS
 type AddSystemsCommand struct {
@@ -49,17 +55,22 @@ type AddSystemsUserCommand struct {
 
 type AddSystemDashboardCommand struct {
   DashId      string
-  SystemId    string
+  SystemId    int64
 }
 
 type UpdateSystemDashboardCommand struct {
   DashId      string
-  SystemId    string
+  SystemId    int64
 }
 
 type UpdateUserSystemCommond struct {
   InviteCode string
   UserId     int64
+}
+
+type AddOrUpdateSystemPick struct {
+  UserId        string
+  SystemId      int64
 }
 
 // ----------------------
@@ -77,4 +88,14 @@ type GetUserSystemsQuery struct {
 type GetCurrentDashboardDashboard struct {
   UserId  int64
   Result  []*SystemDash
+}
+
+type GetCurrentSystemDashboards struct {
+  SystemId  int64
+  Result    []*SystemDash
+}
+
+type GetSystemPick struct {
+  UserId  string
+  Result  *SystemPick
 }

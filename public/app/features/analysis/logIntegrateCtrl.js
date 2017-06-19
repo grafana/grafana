@@ -320,7 +320,6 @@ define([
                   ],
                   "refId": "A",
                   "timeField": "@timestamp",
-                  "hide": true
                 }
               ],
               "title": "聚合数据",
@@ -389,7 +388,6 @@ define([
                   "query": "",
                   "refId": "A",
                   "timeField": "@timestamp",
-                  "hide": true
                 },
                 {
                   "bucketAggs": [],
@@ -407,7 +405,6 @@ define([
                   "refId": "B",
                   "timeField": "@timestamp",
                   "timeShift": "-1d",
-                  "hide": true
                 }
               ],
               "tab": 3,
@@ -429,21 +426,10 @@ define([
         panels[0].targets[0].query = $scope.query;
 
         panels[1].targets[0].query = $scope.query;
-        panels[1].targets[0].hide = true;
 
         panels[2].targets[0].query = $scope.query;
         panels[2].targets[1].query = $scope.query;
-        panels[2].targets[0].hide = true;
-        panels[2].targets[1].hide = true;
 
-        $scope.clustering = false;
-        $scope.comparing = false;
-        $rootScope.$broadcast('refresh');
-      };
-
-      $scope.logCluster = function() {
-        $scope.clustering = true;
-        $scope.dashboard.rows[2].panels[1].targets[0].hide = false;
         $rootScope.$broadcast('refresh');
       };
 
@@ -458,15 +444,11 @@ define([
         });
       };
       $scope.logCompare = function(timeShift) {
-        $scope.comparing = true;
-        $scope.dashboard.rows[2].panels[2].targets[0].hide = false;
-        $scope.dashboard.rows[2].panels[2].targets[1].hide = false;
         $scope.dashboard.rows[2].panels[2].targets[1].timeShift = timeShift;
         $rootScope.$broadcast('refresh');
       };
 
       $scope.init = function (param) {
-        $scope.clustering = false;
         param.targets = param.targets.filter(function (metrics) {
           return _.excludeMetricSuffix(metrics.metric);
         });
@@ -492,7 +474,6 @@ define([
         $scope.initDashboard({
           meta: {canStar: false, canShare: false, canEdit: false, canSave: false},
           dashboard: {
-            system: contextSrv.system,
             title: "整合分析",
             id: "123",
             rows: panelMetas,

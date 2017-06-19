@@ -10,21 +10,11 @@
 				</li>
 			</ul>
 </topnav>
+<div dash-editor-view class="time-picker"></div>
+
 <form>
     <input type="text" class="input-xlarge tight-form-input ng-pristine ng-untouched ng-valid ng-valid-required" ng-model="query" required="">
     <button type="submit" class="btn btn-primary" ng-click="reQuery()"><i class="fa fa-search"/>查找</button>
-    <button class="btn btn-primary" ng-click="logCluster()">日志聚合</button >
-    <div class="btn-group">
-        <button class="btn btn-primary" ng-click="logCompare('-1d')">日志对比</button>
-        <button class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>
-        </button>
-        <ul class="dropdown-menu">
-            <li ng-click="logCompare('-1d')">1天</li>
-            <li ng-click="logCompare('-7d')">7天</li>
-            <li ng-click="showInputModal()">自定义</li>
-        </ul>
-    </div>
 </form>
 <div class="grafana-row" ng-controller="RowCtrl"
       ng-repeat="(row_name, row) in dashboard.rows" row-height>
@@ -50,17 +40,21 @@
             ui-on-Drop="onDrop($data, row, panel)" drag-handle-class="drag-handle" panel-width>
           <panel-loader ng-if="panel.type != 'table'" type="panel.type" class="panel-margin"></panel-loader>
       </div>
-        <tabset>
-            <tab heading="原始数据" ng-if="panel.tab == 1" ng-repeat="(name, panel) in row.panels track by panel.id" active="true">
-                <panel-loader type="panel.type" class="panel-margin"></panel-loader>
-            </tab>
-            <tab heading="聚合数据" ng-if="panel.tab == 2" ng-repeat="(name, panel) in row.panels track by panel.id" ng-show="panel.tab==2 && clustering">
-                <panel-loader type="panel.type" class="panel-margin"></panel-loader>
-            </tab>
-            <tab heading="日志对比" ng-if="panel.tab == 3" ng-repeat="(name, panel) in row.panels track by panel.id" ng-show="panel.tab==3 && comparing">
-                <panel-loader type="panel.type" class="panel-margin"></panel-loader>
-            </tab>
-        </tabset>
+      <tabset>
+        <tab heading="{{panel.title}}" ng-repeat="(name, panel) in row.panels track by panel.id" ng-if="panel.tab != graph">
+            <div class="btn-group btn-log-compare" ng-if="name == 2">
+                <button class="dropdown-toggle" data-toggle="dropdown">
+                    <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                    <li ng-click="logCompare('-1d')">1天以内</li>
+                    <li ng-click="logCompare('-7d')">7天以内</li>
+                    <li ng-click="showInputModal()">自定义</li>
+                </ul>
+            </div>
+            <panel-loader type="panel.type" class="panel-margin"></panel-loader>
+        </tab>
+      </tabset>
 
       <div panel-drop-zone class="panel panel-drop-zone" ui-on-drop="onDrop($data, row)" data-drop="true">
         <div class="panel-container" style="background: transparent">
