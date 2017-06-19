@@ -57,9 +57,7 @@
 			<h6 ng-hide="ctrl.results.length">No dashboards matching your query were found.</h6>
 
     <div bindonce ng-repeat="row in ctrl.results">
-      <a class="search-item pointer search-item-{{row.type}}"
-        ng-class="{'selected': $index == ctrl.selectedIndex}" ng-href="{{row.url}}">
-
+      <a class="search-item pointer search-item-{{row.type}}" ng-class="{'selected': $index == ctrl.selectedIndex}" ng-href="{{row.url}}">
         <span class="search-result-tags">
           <span ng-click="ctrl.filterByTag(tag, $event)" ng-repeat="tag in row.tags" tag-color-from-name="tag"  class="label label-tag">
             {{tag}}
@@ -71,6 +69,7 @@
           <i class="fa search-result-icon"></i>
           <span bo-text="row.title"></span>
         </span>
+
         <a class="search-item search-item-child pointer search-item-{{child.type}}" ng-repeat="child in row.dashboards"
           ng-class="{'selected': $index == ctrl.selectedIndex}" ng-href="{{'dashboard/' + child.uri}}">
           <span class="search-result-tags">

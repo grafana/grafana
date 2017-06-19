@@ -17,7 +17,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			childDash := insertTestDashboard("2 test dash", 1, savedFolder.Id, false, "prod", "webapp")
 
 			Convey("When adding dashboard permission with userId and userGroupId set to 0", func() {
-				err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
+				err := SetDashboardAcl(&m.SetDashboardAclCommand{
 					OrgId:       1,
 					DashboardId: savedFolder.Id,
 					Permissions: m.PERMISSION_EDIT,
@@ -26,7 +26,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			})
 
 			Convey("Given dashboard folder permission", func() {
-				err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
+				err := SetDashboardAcl(&m.SetDashboardAclCommand{
 					OrgId:       1,
 					UserId:      currentUser.Id,
 					DashboardId: savedFolder.Id,
@@ -45,7 +45,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				})
 
 				Convey("Given child dashboard permission", func() {
-					err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
+					err := SetDashboardAcl(&m.SetDashboardAclCommand{
 						OrgId:       1,
 						UserId:      currentUser.Id,
 						DashboardId: childDash.Id,
@@ -67,7 +67,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to add dashboard permission", func() {
-				err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
+				err := SetDashboardAcl(&m.SetDashboardAclCommand{
 					OrgId:       1,
 					UserId:      currentUser.Id,
 					DashboardId: savedFolder.Id,
@@ -94,7 +94,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				})
 
 				Convey("Should be able to update an existing permission", func() {
-					err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
+					err := SetDashboardAcl(&m.SetDashboardAclCommand{
 						OrgId:       1,
 						UserId:      1,
 						DashboardId: savedFolder.Id,
@@ -113,7 +113,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				})
 
 				Convey("Should be able to delete an existing permission", func() {
-					err := RemoveDashboardPermission(&m.RemoveDashboardPermissionCommand{
+					err := RemoveDashboardAcl(&m.RemoveDashboardAclCommand{
 						OrgId:       1,
 						UserId:      1,
 						DashboardId: savedFolder.Id,
@@ -133,7 +133,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("Should be able to add a user permission for a user group", func() {
-					err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
+					err := SetDashboardAcl(&m.SetDashboardAclCommand{
 						OrgId:       1,
 						UserGroupId: group1.Result.Id,
 						DashboardId: savedFolder.Id,
@@ -150,7 +150,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				})
 
 				Convey("Should be able to update an existing permission for a user group", func() {
-					err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
+					err := SetDashboardAcl(&m.SetDashboardAclCommand{
 						OrgId:       1,
 						UserGroupId: group1.Result.Id,
 						DashboardId: savedFolder.Id,
@@ -169,7 +169,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				})
 
 				Convey("Should be able to delete an existing permission for a user group", func() {
-					err := RemoveDashboardPermission(&m.RemoveDashboardPermissionCommand{
+					err := RemoveDashboardAcl(&m.RemoveDashboardAclCommand{
 						OrgId:       1,
 						UserGroupId: group1.Result.Id,
 						DashboardId: savedFolder.Id,

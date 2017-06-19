@@ -8,13 +8,13 @@ import (
 )
 
 func init() {
-	bus.AddHandler("sql", AddOrUpdateDashboardPermission)
-	bus.AddHandler("sql", RemoveDashboardPermission)
+	bus.AddHandler("sql", SetDashboardAcl)
+	bus.AddHandler("sql", RemoveDashboardAcl)
 	bus.AddHandler("sql", GetDashboardPermissions)
 	bus.AddHandler("sql", GetInheritedDashboardAcl)
 }
 
-func AddOrUpdateDashboardPermission(cmd *m.AddOrUpdateDashboardPermissionCommand) error {
+func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		if cmd.UserId == 0 && cmd.UserGroupId == 0 {
 			return m.ErrDashboardPermissionUserOrUserGroupEmpty
@@ -74,7 +74,7 @@ func AddOrUpdateDashboardPermission(cmd *m.AddOrUpdateDashboardPermissionCommand
 	})
 }
 
-func RemoveDashboardPermission(cmd *m.RemoveDashboardPermissionCommand) error {
+func RemoveDashboardAcl(cmd *m.RemoveDashboardAclCommand) error {
 	return inTransaction(func(sess *DBSession) error {
 		var rawSQL = "DELETE FROM " + dialect.Quote("dashboard_acl") + " WHERE dashboard_id =? and (user_group_id=? or user_id=?)"
 		_, err := sess.Exec(rawSQL, cmd.DashboardId, cmd.UserGroupId, cmd.UserId)

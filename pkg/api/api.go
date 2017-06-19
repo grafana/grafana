@@ -250,7 +250,7 @@ func (hs *HttpServer) registerRoutes() {
 
 			r.Group("/:id/acl", func() {
 				r.Get("/", wrap(GetDashboardAcl))
-				r.Post("/", quota("acl"), bind(m.AddOrUpdateDashboardPermissionCommand{}), wrap(PostDashboardAcl))
+				r.Post("/", quota("acl"), bind(m.SetDashboardAclCommand{}), wrap(PostDashboardAcl))
 				r.Delete("/user/:userId", wrap(DeleteDashboardAclByUser))
 				r.Delete("/user-group/:userGroupId", wrap(DeleteDashboardAclByUserGroup))
 			}, reqSignedIn)

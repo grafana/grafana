@@ -380,7 +380,7 @@ func createUser(name string, role string, isAdmin bool) m.User {
 }
 
 func updateTestDashboardWithAcl(dashId int64, userId int64, permissions m.PermissionType) {
-	err := AddOrUpdateDashboardPermission(&m.AddOrUpdateDashboardPermissionCommand{
+	err := SetDashboardAcl(&m.SetDashboardAclCommand{
 		OrgId:       1,
 		UserId:      userId,
 		DashboardId: dashId,

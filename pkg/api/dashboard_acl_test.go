@@ -72,7 +72,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/1/acl/user/1", "/api/dashboards/:id/acl/user/:userId", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				mockResult = append(mockResult, &models.DashboardAcl{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permissions: models.PERMISSION_EDIT})
 
-				bus.AddHandler("test3", func(cmd *models.RemoveDashboardPermissionCommand) error {
+				bus.AddHandler("test3", func(cmd *models.RemoveDashboardAclCommand) error {
 					return nil
 				})
 
@@ -88,7 +88,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 				loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/1/acl/user/1", "/api/dashboards/:id/acl/user/:userId", models.ROLE_EDITOR, func(sc *scenarioContext) {
 					userGroupResp = append(userGroupResp, &models.UserGroup{Id: 1, OrgId: 1, Name: "UG1"})
 
-					bus.AddHandler("test3", func(cmd *models.RemoveDashboardPermissionCommand) error {
+					bus.AddHandler("test3", func(cmd *models.RemoveDashboardAclCommand) error {
 						return nil
 					})
 
@@ -115,7 +115,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 
 			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/1/acl/user/1", "/api/dashboards/:id/acl/user/:userId", models.ROLE_EDITOR, func(sc *scenarioContext) {
 				mockResult = append(mockResult, &models.DashboardAcl{Id: 1, OrgId: 1, DashboardId: 1, UserId: 1, Permissions: models.PERMISSION_VIEW})
-				bus.AddHandler("test3", func(cmd *models.RemoveDashboardPermissionCommand) error {
+				bus.AddHandler("test3", func(cmd *models.RemoveDashboardAclCommand) error {
 					return nil
 				})
 

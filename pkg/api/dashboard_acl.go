@@ -26,7 +26,7 @@ func GetDashboardAcl(c *middleware.Context) Response {
 	return Json(200, &query.Result)
 }
 
-func PostDashboardAcl(c *middleware.Context, cmd m.AddOrUpdateDashboardPermissionCommand) Response {
+func PostDashboardAcl(c *middleware.Context, cmd m.SetDashboardAclCommand) Response {
 	dashId := c.ParamsInt64(":id")
 
 	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
@@ -61,7 +61,7 @@ func DeleteDashboardAclByUser(c *middleware.Context) Response {
 		return dashboardGuardianResponse(err)
 	}
 
-	cmd := m.RemoveDashboardPermissionCommand{DashboardId: dashId, UserId: userId, OrgId: c.OrgId}
+	cmd := m.RemoveDashboardAclCommand{DashboardId: dashId, UserId: userId, OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to delete permission for user", err)
@@ -79,7 +79,7 @@ func DeleteDashboardAclByUserGroup(c *middleware.Context) Response {
 		return dashboardGuardianResponse(err)
 	}
 
-	cmd := m.RemoveDashboardPermissionCommand{DashboardId: dashId, UserGroupId: userGroupId, OrgId: c.OrgId}
+	cmd := m.RemoveDashboardAclCommand{DashboardId: dashId, UserGroupId: userGroupId, OrgId: c.OrgId}
 
 	if err := bus.Dispatch(&cmd); err != nil {
 		return ApiError(500, "Failed to delete permission for user", err)

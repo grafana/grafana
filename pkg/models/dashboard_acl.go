@@ -62,17 +62,17 @@ type DashboardAclInfoDTO struct {
 // COMMANDS
 //
 
-type AddOrUpdateDashboardPermissionCommand struct {
+type SetDashboardAclCommand struct {
 	DashboardId int64          `json:"-"`
 	OrgId       int64          `json:"-"`
 	UserId      int64          `json:"userId"`
 	UserGroupId int64          `json:"userGroupId"`
-	Permissions PermissionType `json:"permissionType" binding:"Required"`
+	Permissions PermissionType `json:"permissions" binding:"Required"`
 
 	Result DashboardAcl `json:"-"`
 }
 
-type RemoveDashboardPermissionCommand struct {
+type RemoveDashboardAclCommand struct {
 	DashboardId int64 `json:"dashboardId" binding:"Required"`
 	UserId      int64 `json:"userId"`
 	UserGroupId int64 `json:"userGroupId"`
