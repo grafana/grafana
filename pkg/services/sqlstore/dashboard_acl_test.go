@@ -37,7 +37,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				Convey("When reading dashboard acl should include acl for parent folder", func() {
 					query := m.GetInheritedDashboardAclQuery{OrgId: 1, DashboardId: childDash.Id}
 
-					err := GetDashboardAcl(&query)
+					err := GetInheritedDashboardAcl(&query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 1)
@@ -56,7 +56,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					Convey("When reading dashboard acl should include acl for parent folder and child", func() {
 						query := m.GetInheritedDashboardAclQuery{OrgId: 1, DashboardId: childDash.Id}
 
-						err := GetDashboardAcl(&query)
+						err := GetInheritedDashboardAcl(&query)
 						So(err, ShouldBeNil)
 
 						So(len(query.Result), ShouldEqual, 2)
