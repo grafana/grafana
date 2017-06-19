@@ -114,17 +114,10 @@
     margin-bottom: 4px;
     @include left-brand-border();
 
-    .search-result-icon::before {
-      content: "\f009";
-    }
-
-    &:hover {
+    &:hover,
+    &.selected {
       background-color: $tight-form-func-bg;
       @include left-brand-border-gradient();
-    }
-
-    &.selected {
-      background-color: $grafanaListBackground;
     }
   }
 
@@ -136,6 +129,18 @@
     float: right;
     padding-left: 20px;
   }
+}
+
+.search-result-icon::before {
+  content: "\f009";
+}
+
+.search-item-dash-home .search-result-icon::before {
+  content: "\f015";
+}
+
+.search-item-dash-home .search-result-icon::before {
+  content: "\f015";
 }
 
 .search-item-child {

@@ -77,7 +77,7 @@ export class SearchCtrl {
       this.moveSelection(-1);
     }
     if (evt.keyCode === 13) {
-      if (this.$scope.tagMode) {
+      if (this.tagsMode) {
         var tag = this.results[this.selectedIndex];
         if (tag) {
           this.filterByTag(tag.term, null);
