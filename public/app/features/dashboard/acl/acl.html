@@ -51,11 +51,22 @@
             <i class="fa fa-remove"></i>
           </button>
         </div>
-        <div class="gf-form">
-          <button class="btn btn-inverse gf-form-btn" ng-click="ctrl.addQuery()" ng-hide="ctrl.current.meta.mixed">
-            <i class="fa fa-fw fa-plus"></i>
-            Add Permission
+        <div class="gf-form dropdown">
+          <button class="btn btn-inverse gf-form-btn" data-toggle="dropdown">
+            <i class="fa fa-fw fa-plus"></i> Add Permission
           </button>
+          <ul class="dropdown-menu dropdown-menu--new">
+            <li>
+              <a class="pointer" ng-click="ctrl.addUserGroup()">
+                <i class="fa fa-fw fa-users"></i> User Group
+              </a>
+            </li>
+            <li>
+              <a class="pointer" ng-click="ctrl.addUserAcl()">
+                <i class="fa fa-fw fa-user"></i> User
+              </a>
+            </li>
+          </ul>
         </div>
       </div>
       <div class="section pull-right">
