@@ -168,6 +168,12 @@ export class NavModelSrv {
         clickHandler: () => dashNavCtrl.openEditView('annotations')
       });
 
+      menu.push({
+        title: 'Permissions...',
+        icon: 'fa fa-fw fa-lock',
+        clickHandler: () => dashNavCtrl.openEditView('permissions')
+      });
+
       if (!dashboard.meta.isHome) {
         menu.push({
           title: 'Version history',
@@ -199,7 +205,7 @@ export class NavModelSrv {
 
     if (this.contextSrv.isEditor && !dashboard.meta.isFolder) {
       menu.push({
-        title: 'Save As ...',
+        title: 'Save As...',
         icon: 'fa fa-fw fa-save',
         clickHandler: () => dashNavCtrl.saveDashboardAs()
       });

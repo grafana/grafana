@@ -2,8 +2,9 @@ define([
   'jquery',
   'angular',
   '../core_module',
+  'lodash',
 ],
-function ($, angular, coreModule) {
+function ($, angular, coreModule, _) {
   'use strict';
 
   var editViewMap = {
@@ -12,7 +13,8 @@ function ($, angular, coreModule) {
     'templating':  { src: 'public/app/features/templating/partials/editor.html'},
     'history':     { html: '<gf-dashboard-history dashboard="dashboard"></gf-dashboard-history>'},
     'timepicker':  { src: 'public/app/features/dashboard/timepicker/dropdown.html' },
-    'import':      { html: '<dash-import></dash-import>' }
+    'import':      { html: '<dash-import dismiss="dismiss()"></dash-import>', isModal: true },
+    'permissions': { html: '<dash-acl-modal dismiss="dismiss()"></dash-acl-modal>', isModal: true }
   };
 
   coreModule.default.directive('dashEditorView', function($compile, $location, $rootScope) {
@@ -31,8 +33,7 @@ function ($, angular, coreModule) {
 
         function showEditorPane(evt, options) {
           if (options.editview) {
-            options.src = editViewMap[options.editview].src;
-            options.html = editViewMap[options.editview].html;
+            _.defaults(options, editViewMap[options.editview]);
           }
 
           if (lastEditView && lastEditView === options.editview) {
@@ -61,19 +62,24 @@ function ($, angular, coreModule) {
               var urlParams = $location.search();
               if (options.editview === urlParams.editview) {
                 delete urlParams.editview;
-                $location.search(urlParams);
+                // hack for consistently updating url
+                setTimeout(function() {
+                  $rootScope.$apply(function() {
+                    $location.search(urlParams);
+                  });
+                });
               }
             }
           };
 
-          if (options.editview === 'import') {
+          if (options.isModal) {
             var modalScope = $rootScope.$new();
             modalScope.$on("$destroy", function() {
               editorScope.dismiss();
             });
 
             $rootScope.appEvent('show-modal', {
-              templateHtml: '<dash-import></dash-import>',
+              templateHtml: options.html,
               scope: modalScope,
               backdrop: 'static'
             });

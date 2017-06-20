@@ -5,21 +5,20 @@ import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 
 export class AclCtrl {
-  tabIndex: any;
   dashboard: any;
-  userPermissions: Permission[];
-  userGroupPermissions: Permission[];
+  userAcl: DashboardAcl[];
+  groupAcl: DashboardAcl[];
   permissionTypeOptions = [
     {value: 1, text: 'View'},
-    {value: 2, text: 'Read-only Edit'},
-    {value: 4, text: 'Edit'}
+    {value: 2, text: 'Edit'},
+    {value: 4, text: 'Admin'}
   ];
 
   roleOptions = [
-    {value: 0, text: 'None'},
+    {value: 0, text: 'No Access'},
     {value: 1, text: 'View'},
-    {value: 2, text: 'Read-only Edit'},
-    {value: 4, text: 'Edit'}
+    {value: 2, text: 'Edit'},
+    {value: 4, text: 'Admin'}
   ];
 
   roles = [];
@@ -30,28 +29,27 @@ export class AclCtrl {
   userGroupId: number;
 
   /** @ngInject */
-  constructor(private backendSrv, private $scope) {
-    this.tabIndex = 0;
-    this.userPermissions = [];
-    this.userGroupPermissions = [];
+  constructor(private backendSrv, private dashboardSrv) {
+    this.userAcl = [];
+    this.groupAcl = [];
+    this.dashboard = dashboardSrv.getCurrent();
     this.get(this.dashboard.id);
   }
 
   get(dashboardId: number) {
     return this.backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`)
       .then(result => {
-        this.userPermissions = _.filter(result, p => { return p.userId > 0;});
-        this.userGroupPermissions = _.filter(result, p => { return p.userGroupId > 0;});
+        this.userAcl = _.filter(result, p => { return p.userId > 0;});
+        this.groupAcl = _.filter(result, p => { return p.userGroupId > 0;});
         this.roles = this.setRoles(result);
       });
   }
 
   setRoles(result: any) {
     return [
-      {name: 'Org Viewer', permissions: 1},
-      {name: 'Org Read Only Editor', permissions: 2},
-      {name: 'Org Editor', permissions: 4},
-      {name: 'Org Admin', permissions: 4}
+      {name: 'Viewer', permissions: 1},
+      {name: 'Editor', permissions: 2},
+      {name: 'Admin', permissions: 4}
     ];
   }
 
@@ -76,21 +74,21 @@ export class AclCtrl {
     }
   }
 
-  addOrUpdateUserPermission(userId: number, permissionType: number) {
+  addOrUpdateUserPermission(userId: number, permissions: number) {
     return this.backendSrv.post(`/api/dashboards/id/${this.dashboard.id}/acl`, {
       userId: userId,
-      permissions: permissionType
+      permissions: permissions
     });
   }
 
-  addOrUpdateUserGroupPermission(userGroupId: number, permissionType: number) {
+  addOrUpdateUserGroupPermission(userGroupId: number, permissions: number) {
     return this.backendSrv.post(`/api/dashboards/id/${this.dashboard.id}/acl`, {
       userGroupId: userGroupId,
-      permissions: permissionType
+      permissions: permissions
     });
   }
 
-  updatePermission(permission: any) {
+  updatePermission(permission: DashboardAcl) {
     if (permission.userId > 0) {
       return this.addOrUpdateUserPermission(permission.userId, permission.permissions);
     } else {
@@ -101,21 +99,23 @@ export class AclCtrl {
     }
   }
 
-  removePermission(permission: Permission) {
+  removePermission(permission: DashboardAcl) {
     return this.backendSrv.delete(`/api/dashboards/id/${permission.dashboardId}/acl/${permission.id}`).then(() => {
       return this.get(permission.dashboardId);
     });
   }
 }
 
-export function aclSettings() {
+export function dashAclModal() {
   return {
     restrict: 'E',
     templateUrl: 'public/app/features/dashboard/acl/acl.html',
     controller: AclCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
-    scope: { dashboard: "=" }
+    scope: {
+      dismiss: "&"
+    }
   };
 }
 
@@ -126,7 +126,7 @@ export interface FormModel {
   PermissionType: number;
 }
 
-export interface Permission {
+export interface DashboardAcl {
   id: number;
   orgId: number;
   dashboardId: number;
@@ -137,8 +137,8 @@ export interface Permission {
   userEmail: string;
   userGroupId: number;
   userGroup: string;
-  permissions: string[];
-  permissionType: number[];
+  permissions: number;
+  permissionName: string;
 }
 
-coreModule.directive('aclSettings', aclSettings);
+coreModule.directive('dashAclModal', dashAclModal);
