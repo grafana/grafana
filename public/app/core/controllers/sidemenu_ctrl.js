@@ -137,6 +137,10 @@ function (angular, _, $, coreModule, config) {
             text: '安装服务',
             href: $scope.getUrl("/setting/service"),
           },
+          {
+            text: '安装日志探针',
+            href: $scope.getUrl("/setting/filebeat"),
+          },
         ],
         click: $scope.updateSubmenu
       });

@@ -274,6 +274,10 @@ define([
         templateUrl: 'app/features/setup/partials/service_agent.html',
         controller : 'ServiceAgentCtrl',
       })
+      .when('/setting/filebeat', {
+        templateUrl: 'app/features/setup/partials/filebeat.html',
+        controller : 'FilebeatCtrl',
+      })
       .otherwise({
         templateUrl: 'app/partials/error.html',
         controller: 'ErrorCtrl'
