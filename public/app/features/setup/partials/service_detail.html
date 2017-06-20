@@ -49,7 +49,7 @@
     <button class="btn pull-right" style="margin-right: 10px;"
             ng-class="{false:'btn-success'}[detail.status == -1]" 
             ng-disabled="detail.status == -1" 
-            ng-click="importAlerts(detail.alertDef)">导入报警规则</button>
+            ng-click="importAlerts(detail.id)">导入报警规则</button>
   </div>
   <div class="service-tab service-review" ng-class="{'active': review}">
     <h3 ng-if="!detail.img" style="text-align: center; line-height: 200px;">暂无预览信息</h3>

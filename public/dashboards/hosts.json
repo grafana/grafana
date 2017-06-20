@@ -68,45 +68,7 @@
         }
       ],
       "status": -1,
-      "template": "hadoop",
-      "alertDef": [
-        {
-          "id": "2.1.aa5182e8-09dc-48e2-8cc9-30745cff9c11",
-          "org": "2",
-          "service": "1",
-          "name": "Hadoop文件使用空间太大",
-          "description": "Hadoop文件使用空间不要超过总空间的80% (具体临界值要设, 目前是20G)",
-          "hash": 1264853798,
-          "creationTime": 1483658472835,
-          "modificationTime": 1483658928273,
-          "alertDetails": {
-            "cluster": "cluster1",
-            "hosts": null,
-            "membership": "*",
-            "monitoringScope": "HOST",
-            "clusterwideAggregator": null,
-            "hostQuery": {
-              "metricQueries": [
-                {
-                  "metric": "hadoop.datanode.fsdatasetstate-null.DfsUsed",
-                  "aggregator": "AVG",
-                  "transform": null
-                }
-              ],
-              "expression": null
-            },
-            "overrideHostQuery": null,
-            "crit": {
-              "threshold": 20000000000,
-              "durarionMinutes": 10
-            },
-            "warn": {
-              "threshold": 10000000000,
-              "durarionMinutes": 5
-            }
-          }
-        }
-      ]
+      "template": "hadoop"
     },
     {
       "id": "hadoop.namenode",
@@ -142,81 +104,7 @@
         }
       ],
       "status": -1,
-      "template": "hadoop",
-      "alertDef": [
-        {
-          "id": "2.1.38c8b96a-ba4f-4d4f-99ec-6f8f2006e400",
-          "org": "2",
-          "service": "1",
-          "name": "Hadoop系统有不可用Block",
-          "description": "MissingBlock表示有部分数据丢失, NameNode已经无法恢复(除非有datanode被下线维修了). 这比CorruptedBlock还严重.",
-          "hash": -860959901,
-          "creationTime": 1483659442276,
-          "modificationTime": 1483660005975,
-          "alertDetails": {
-            "cluster": "cluster1",
-            "hosts": null,
-            "membership": "*",
-            "monitoringScope": "HOST",
-            "clusterwideAggregator": null,
-            "hostQuery": {
-              "metricQueries": [
-                {
-                  "metric": "hadoop.namenode.fsnamesystem.MissingBlocks",
-                  "aggregator": "AVG",
-                  "transform": null
-                }
-              ],
-              "expression": null
-            },
-            "overrideHostQuery": null,
-            "crit": {
-              "threshold": 1,
-              "durarionMinutes": 10
-            },
-            "warn": {
-              "threshold": 1,
-              "durarionMinutes": 5
-            }
-          }
-        },
-        {
-          "id": "2.1.4767ca4e-e71c-4034-b8eb-683d432e7234",
-          "org": "2",
-          "service": "1",
-          "name": "Hadoop失去的datanode数量过多",
-          "description": "DataNode一般掉线10分钟后会标识为死亡。一般系统能容忍少数的datanode死亡，但是管理员需要尽量保持死亡数为0.",
-          "hash": -1569431972,
-          "creationTime": 1483659977705,
-          "modificationTime": 1483659995262,
-          "alertDetails": {
-            "cluster": "cluster1",
-            "hosts": null,
-            "membership": "*",
-            "monitoringScope": "HOST",
-            "clusterwideAggregator": null,
-            "hostQuery": {
-              "metricQueries": [
-                {
-                  "metric": "hadoop.namenode.fsnamesystemstate.NumDeadDataNodes",
-                  "aggregator": null,
-                  "transform": null
-                }
-              ],
-              "expression": null
-            },
-            "overrideHostQuery": null,
-            "crit": {
-              "threshold": 5,
-              "durarionMinutes": 10
-            },
-            "warn": {
-              "threshold": 1,
-              "durarionMinutes": 5
-            }
-          }
-        }
-      ]
+      "template": "hadoop"
     },
     {
       "id": "hbase.master",
@@ -253,81 +141,7 @@
         }
       ],
       "status": -1,
-      "template": "hbase",
-      "alertDef": [
-        {
-          "id": "2.1.03182259-ca6d-43d7-8e19-4b28563afe68",
-          "org": "2",
-          "service": "1",
-          "name": "Hbase Regions transition的时间太长",
-          "description": "有些regions transition的时间超过threshold（60秒default）。",
-          "hash": 2137001943,
-          "creationTime": 1483665215510,
-          "modificationTime": 1483665215510,
-          "alertDetails": {
-            "cluster": "cluster1",
-            "hosts": null,
-            "membership": "*",
-            "monitoringScope": "HOST",
-            "clusterwideAggregator": null,
-            "hostQuery": {
-              "metricQueries": [
-                {
-                  "metric": "hbase.master.assignmentmanger.ritCountOverThreshold",
-                  "aggregator": null,
-                  "transform": null
-                }
-              ],
-              "expression": null
-            },
-            "overrideHostQuery": null,
-            "crit": {
-              "threshold": 1,
-              "durarionMinutes": 20
-            },
-            "warn": {
-              "threshold": 1,
-              "durarionMinutes": 10
-            }
-          }
-        },
-        {
-          "id": "2.1.3c948bf9-a9e6-426b-a6a4-3488d5eec1e2",
-          "org": "2",
-          "service": "1",
-          "name": "Hbase不服务的Regionserver数量过高",
-          "description": "Hbase不服务的Regionserver数量过高",
-          "hash": -2133710982,
-          "creationTime": 1483663830156,
-          "modificationTime": 1483663830156,
-          "alertDetails": {
-            "cluster": "cluster1",
-            "hosts": null,
-            "membership": "*",
-            "monitoringScope": "HOST",
-            "clusterwideAggregator": null,
-            "hostQuery": {
-              "metricQueries": [
-                {
-                  "metric": "hbase.master.server.numDeadRegionServers",
-                  "aggregator": "SUM",
-                  "transform": null
-                }
-              ],
-              "expression": null
-            },
-            "overrideHostQuery": null,
-            "crit": {
-              "threshold": 5,
-              "durarionMinutes": 5
-            },
-            "warn": {
-              "threshold": 2,
-              "durarionMinutes": 5
-            }
-          }
-        }
-      ]
+      "template": "hbase"
     },
     {
       "id": "hbase.regionserver",
@@ -364,111 +178,7 @@
         }
       ],
       "status": -1,
-      "template": "hbase",
-      "alertDef": [
-        {
-          "id": "2.1.15888f8d-6d9d-423c-9181-703999348223",
-          "org": "2",
-          "service": "1",
-          "name": "Hbase 等待flush的队列太长",
-          "description": "表示磁盘速度跟不上Flush速度， 可能是内存不够用，需要加内存。（阈值100不一定精确，需要根据系统调节）",
-          "hash": -1318548720,
-          "creationTime": 1483665787850,
-          "modificationTime": 1483665787850,
-          "alertDetails": {
-            "cluster": "cluster1",
-            "hosts": null,
-            "membership": "*",
-            "monitoringScope": "HOST",
-            "clusterwideAggregator": null,
-            "hostQuery": {
-              "metricQueries": [
-                {
-                  "metric": "hbase.regionserver.server.flushQueueLength",
-                  "aggregator": "AVG",
-                  "transform": null
-                }
-              ],
-              "expression": null
-            },
-            "overrideHostQuery": null,
-            "crit": {
-              "threshold": 100,
-              "durarionMinutes": 10
-            },
-            "warn": {
-              "threshold": 50,
-              "durarionMinutes": 5
-            }
-          }
-        },
-        {
-          "id": "2.1.9ba7fa43-1c3f-4bc0-a878-350d6b461780",
-          "org": "2",
-          "service": "1",
-          "name": "Hbase 用户连接Authentication失败数过高",
-          "description": "Hbase 用户连接Authentication失败数过高",
-          "hash": 1251601877,
-          "creationTime": 1483665412653,
-          "modificationTime": 1483665412653,
-          "alertDetails": {
-            "cluster": "cluster1",
-            "hosts": null,
-            "membership": "*",
-            "monitoringScope": "HOST",
-            "clusterwideAggregator": null,
-            "hostQuery": {
-              "metricQueries": [
-                {
-                  "metric": "hbase.regionserver.ipc.authenticationFailures",
-                  "aggregator": "AVG",
-                  "transform": null
-                }
-              ],
-              "expression": null
-            },
-            "overrideHostQuery": null,
-            "crit": {
-              "threshold": 100,
-              "durarionMinutes": 10
-            },
-            "warn": {
-              "threshold": 50,
-              "durarionMinutes": 5
-            }
-          }
-        },
-        {
-          "id": "2.1.b41c58ae-63c3-4f22-985d-d44e199927d2",
-          "org": "2",
-          "service": "1",
-          "name": "Hbase CompactionQueueSize太高",
-          "description": "表示所有Regions同时split/compact，可以考虑提前作split或者turn off auto-compaction",
-          "hash": -1358848061,
-          "creationTime": 1483664985298,
-          "modificationTime": 1483664985298,
-          "alertDetails": {
-            "cluster": "cluster1",
-            "hosts": null,
-            "membership": "*",
-            "monitoringScope": "HOST",
-            "clusterwideAggregator": null,
-            "hostQuery": {
-              "metricQueries": [
-                {
-                  "metric": "hbase.regionserver.CompactionQueueSize",
-                  "aggregator": "AVG",
-                  "transform": null
-                }
-              ],
-              "expression": null
-            },
-            "overrideHostQuery": null,
-            "crit": null,
-            "warn": null
-          }
-        }
-      ]
+      "template": "hbase"
     },
     {
       "id": "kafka",
@@ -508,8 +218,7 @@
         }
       ],
       "status": -1,
-      "template": "kafka",
-      "alertDef": []
+      "template": "kafka"
     },
     {
       "id": "mysql",
@@ -549,8 +258,7 @@
         }
       ],
       "status": -1,
-      "template": "mysql",
-      "alertDef": []
+      "template": "mysql"
     },
     {
       "id": "spark",
@@ -591,8 +299,7 @@
         }
       ],
       "status": -1,
-      "template": "spark",
-      "alertDef": []
+      "template": "spark"
     },
     {
       "id": "storm",
@@ -630,8 +337,7 @@
         }
       ],
       "status": -1,
-      "template": "storm",
-      "alertDef": []
+      "template": "storm"
     },
     {
       "id": "yarn",
@@ -707,117 +413,7 @@
         }
       ],
       "status": -1,
-      "template": "zookeeper",
-      "alertDef": [
-        {
-          "id": "2.1.6664466c-763a-42de-a30f-1541798a2857",
-          "org": "2",
-          "service": "1",
-          "name": "zookeeper待处理的请求太多",
-          "description": "待处理的请求在队列里. 队列的长度大于10即表示zookeeper处理太慢",
-          "hash": 482979460,
-          "creationTime": 1483600899927,
-          "modificationTime": 1483660021820,
-          "alertDetails": {
-            "cluster": "cluster1",
-            "hosts": null,
-            "membership": "*",
-            "monitoringScope": "HOST",
-            "clusterwideAggregator": null,
-            "hostQuery": {
-              "metricQueries": [
-                {
-                  "metric": "zk_outstanding_requests",
-                  "aggregator": "AVG",
-                  "transform": null
-                }
-              ],
-              "expression": null
-            },
-            "overrideHostQuery": null,
-            "crit": {
-              "threshold": 10,
-              "durarionMinutes": 5
-            },
-            "warn": {
-              "threshold": 8,
-              "durarionMinutes": 3
-            }
-          }
-        },
-        {
-          "id": "2.1.dc731f7e-38a3-4bde-a434-91fb5c267be0",
-          "org": "2",
-          "service": "1",
-          "name": "zookeeper是否运行",
-          "description": "zk_server_state=100(停止); -1(状态未知); 0,1,2(正常)",
-          "hash": 1757727325,
-          "creationTime": 1483569120741,
-          "modificationTime": 1483569120741,
-          "alertDetails": {
-            "cluster": "cluster1",
-            "hosts": null,
-            "membership": "*",
-            "monitoringScope": "HOST",
-            "clusterwideAggregator": null,
-            "hostQuery": {
-              "metricQueries": [
-                {
-                  "metric": "zk_server_state",
-                  "aggregator": "AVG",
-                  "transform": null
-                }
-              ],
-              "expression": null
-            },
-            "overrideHostQuery": null,
-            "crit": {
-              "threshold": 99,
-              "durarionMinutes": 5
-            },
-            "warn": {
-              "threshold": 3,
-              "durarionMinutes": 2
-            }
-          }
-        },
-        {
-          "id": "2.1.ee66268a-f15e-4501-bdc7-818426505fce",
-          "org": "2",
-          "service": "1",
-          "name": "zookeeper响应时间过慢",
-          "description": "响应时间不能大于10倍tick time",
-          "hash": -1918309971,
-          "creationTime": 1483600762472,
-          "modificationTime": 1483600762472,
-          "alertDetails": {
-            "cluster": "cluster1",
-            "hosts": null,
-            "membership": "*",
-            "monitoringScope": "HOST",
-            "clusterwideAggregator": null,
-            "hostQuery": {
-              "metricQueries": [
-                {
-                  "metric": "zk_max_latency",
-                  "aggregator": "P99",
-                  "transform": null
-                }
-              ],
-              "expression": null
-            },
-            "overrideHostQuery": null,
-            "crit": {
-              "threshold": 400,
-              "durarionMinutes": 5
-            },
-            "warn": {
-              "threshold": 200,
-              "durarionMinutes": 5
-            }
-          }
-        }
-      ]
+      "template": "zookeeper"
     },
     {
       "id": "tomcat",
@@ -855,8 +451,7 @@
         }
       ],
       "status": -1,
-      "template": "tomcat",
-      "alertDef": []
+      "template": "tomcat"
     },
     {
       "id": "opentsdb",
@@ -867,8 +462,7 @@
       "deploy": "",
       "metrics": [],
       "status": -1,
-      "template": "opentsdb",
-      "alertDef": []
+      "template": "opentsdb"
     },
     {
       "id": "mongo3",
@@ -916,8 +510,7 @@
         }
       ],
       "status": -1,
-      "template": "mongodb",
-      "alertDef": []
+      "template": "mongodb"
     },
     {
       "id": "nginx",
@@ -954,154 +547,7 @@
         }
       ],
       "status": -1,
-      "template": "nginx",
-      "alertDef": []
-    }
-  ],
-  "alertDefs": [
-    {
-      "id": "2.1.41b485a3-d12d-409f-bc2a-56f077164f52",
-      "org": "2",
-      "service": "1",
-      "name": "系统： CPU user usage > 80%",
-      "description": "CPU user usage > 80%",
-      "hash": 195312551,
-      "creationTime": 1483652438757,
-      "modificationTime": 1483660034921,
-      "alertDetails": {
-        "cluster": "cluster1",
-        "hosts": null,
-        "membership": "*",
-        "monitoringScope": "HOST",
-        "clusterwideAggregator": null,
-        "hostQuery": {
-          "metricQueries": [
-            {
-              "metric": "cpu.usr",
-              "aggregator": "AVG",
-              "transform": null
-            }
-          ],
-          "expression": null
-        },
-        "overrideHostQuery": null,
-        "crit": {
-          "threshold": 80,
-          "durarionMinutes": 5
-        },
-        "warn": {
-          "threshold": 70,
-          "durarionMinutes": 5
-        }
-      }
-    },
-    {
-      "id": "2.1.65ca2302-b573-4ec2-8ef0-f0dcab0cfbb7",
-      "org": "2",
-      "service": "1",
-      "name": "系统： 磁盘空间 < 10%",
-      "description": "磁盘空间小于10%",
-      "hash": 1984061725,
-      "creationTime": 1483600587088,
-      "modificationTime": 1483660043646,
-      "alertDetails": {
-        "cluster": "cluster1",
-        "hosts": null,
-        "membership": "*",
-        "monitoringScope": "HOST",
-        "clusterwideAggregator": null,
-        "hostQuery": {
-          "metricQueries": [
-            {
-              "metric": "df.bytes.percentused",
-              "aggregator": "AVG",
-              "transform": null
-            }
-          ],
-          "expression": null
-        },
-        "overrideHostQuery": null,
-        "crit": {
-          "threshold": 90,
-          "durarionMinutes": 5
-        },
-        "warn": {
-          "threshold": 85,
-          "durarionMinutes": 5
-        }
-      }
-    },
-    {
-      "id": "2.1.87a7ec75-8a74-4498-a2de-341f5d0c8b15",
-      "org": "2",
-      "service": "1",
-      "name": "系统： 内存swap太多",
-      "description": "内存swap最好不要发生, 超过256MB即报警",
-      "hash": 472487647,
-      "creationTime": 1483601083829,
-      "modificationTime": 1483660059551,
-      "alertDetails": {
-        "cluster": "cluster1",
-        "hosts": null,
-        "membership": "*",
-        "monitoringScope": "HOST",
-        "clusterwideAggregator": null,
-        "hostQuery": {
-          "metricQueries": [
-            {
-              "metric": "zk_swap",
-              "aggregator": "AVG",
-              "transform": null
-            }
-          ],
-          "expression": null
-        },
-        "overrideHostQuery": null,
-        "crit": {
-          "threshold": 256,
-          "durarionMinutes": 5
-        },
-        "warn": {
-          "threshold": 128,
-          "durarionMinutes": 3
-        }
-      }
-    },
-    {
-      "id": "2.1.f3d68192-0003-4e8c-bb0d-eabdc39c2fae",
-      "org": "2",
-      "service": "1",
-      "name": "系统：内存使用过高",
-      "description": "内存使用过高",
-      "hash": -811432529,
-      "creationTime": 1483653284310,
-      "modificationTime": 1483660070206,
-      "alertDetails": {
-        "cluster": "cluster1",
-        "hosts": null,
-        "membership": "*",
-        "monitoringScope": "HOST",
-        "clusterwideAggregator": null,
-        "hostQuery": {
-          "metricQueries": [
-            {
-              "metric": "proc.meminfo.active",
-              "aggregator": "AVG",
-              "transform": null
-            }
-          ],
-          "expression": null
-        },
-        "overrideHostQuery": null,
-        "crit": {
-          "threshold": 25862968,
-          "durarionMinutes": 5
-        },
-        "warn": {
-          "threshold": 23862968,
-          "durarionMinutes": 5
-        }
-      }
+      "template": "nginx"
     }
   ]
 }

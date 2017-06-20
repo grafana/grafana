@@ -3,8 +3,9 @@ define([
   'lodash',
   '../core_module',
   'app/core/config',
+  'app/core/utils/datemath',
 ],
-function (angular, _, coreModule, config) {
+function (angular, _, coreModule, config, dateMath) {
   'use strict';
 
   coreModule.service('datasourceSrv', function($q, $injector, $rootScope) {
@@ -84,6 +85,27 @@ function (angular, _, coreModule, config) {
     this.getMetricSources = function() {
       return this.metricSources;
     };
+
+    this.getServiceStatus = function(query, startTime, endTime) {
+      var end = endTime ? dateMath.parse(endTime, false).valueOf() : null;
+      return this.get('opentsdb').then(function(datasource) {
+        var service = _.getMetricName(query[0].metric);
+        return datasource.performTimeSeriesQuery(query, dateMath.parse(startTime, false).valueOf(), end).then(function(response) {
+          var status = null;
+          var host = null;
+          if (_.isEmpty(response.data)) {
+            throw Error;
+          }
+          _.each(response.data, function (metricData) {
+            host = metricData.tags.host;
+            if (_.isObject(metricData)) {
+              status = metricData.dps[Object.keys(metricData.dps)[0]];
+            }
+          });
+          return {name: service, status: status, host: host};
+        });
+      });
+    }
 
     this.init();
   });

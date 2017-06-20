@@ -1,9 +1,8 @@
 define([
     'angular',
     'lodash',
-    'app/core/utils/datemath'
   ],
-  function (angular, _, dateMath) {
+  function (angular, _) {
     'use strict';
 
     var module = angular.module('grafana.controllers');
@@ -12,11 +11,7 @@ define([
       $scope.init = function () {
         $scope.systems = contextSrv.systemsMap;
         $scope.summarySelect.system = $scope.systems[0].Id;
-        datasourceSrv.get('opentsdb').then(function (datasource) {
-          $scope.datasource = datasource;
-        }).then(function () {
-          $scope.getServices();
-        });
+        $scope.getServices();
         $scope.suggestTagHost = backendSrv.suggestTagHost;
       };
 
@@ -52,23 +47,7 @@ define([
       };
 
       $scope.getServices = function () {
-        var alias = {
-          "hadoop.datanode": "Hadoop DataNode",
-          "hadoop.namenode": "Hadoop NameNode",
-          "hbase.master": "Hbase Master",
-          "hbase.regionserver": "Hbase RegionServer",
-          "kafka": "Kafka",
-          "mysql": "Mysql",
-          "spark": "Spark",
-          "storm": "Storm",
-          "yarn": "Yarn",
-          "zookeeper": "Zookeeper",
-          "tomcat": "Tomcat",
-          "opentsdb": "OpenTSDB",
-          "mongo3": "MongoDB 3.x",
-          "nginx": "Nginx"
-        };
-
+        var alias = _.allServies();
         $scope.serviceList = [];
         _.each(Object.keys(alias), function (key) {
           var queries = [{
@@ -78,26 +57,16 @@ define([
             "tags": {"host": $scope.summarySelect.currentTagValue}
           }];
 
-          $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-1h', false).valueOf(), null).then(function (response) {
-            if(_.isEmpty(response.data)){
-              throw Error;
+          datasourceSrv.getServiceStatus(queries, 'now-1h').then(function(response) {
+            var metric = {};
+            metric.host = response.host;
+            metric.alias = alias[key];
+            if (response.status > 0) {
+              metric.state = "异常";
+            } else {
+              metric.state = "正常";
             }
-            _.each(response.data, function (metricData) {
-              var metric = {};
-              metric.host = metricData.tags.host;
-              metric.alias = alias[key];
-              if (_.isObject(metricData)) {
-                if (metricData.dps[Object.keys(metricData.dps)[0]] > 0) {
-                  metric.state = "异常";
-                } else {
-                  metric.state = "正常";
-                }
-              }
-              $scope.serviceList.push(metric);
-            });
-          }).catch(function () {
-            //nothing to do;
-            //$scope.serviceList.push({"host": "尚未配置在任何主机上", "alias": alias[key], "state": "尚未工作"});
+            $scope.serviceList.push(metric);
           });
         });
       };

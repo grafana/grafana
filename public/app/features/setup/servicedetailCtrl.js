@@ -1,10 +1,9 @@
 define([
   'angular',
   'lodash',
-  'app/core/utils/datemath',
   'app/features/org/importAlertsCtrl'
 ],
-function (angular, _, dateMath) {
+function (angular, _) {
   'use strict';
 
   var module = angular.module('grafana.controllers');
@@ -41,13 +40,10 @@ function (angular, _, dateMath) {
         "downsample": "10m-sum",
       }];
 
-      $scope.datasource.performTimeSeriesQuery(queries, dateMath.parse('now-10m', false).valueOf(), null).then(function (response) {
-        if (_.isEmpty(response.data)) {
-          throw Error;
-        }
+      datasourceSrv.getServiceStatus(queries, 'now-10m').then(function(response) {
         $scope.saveDashboard();
-        $scope.detail.status = 0;
-      }).catch(function () {
+        $scope.detail.status = response.status > 0 ? 2 : 0;
+      },function(err) {
         $scope.appEvent('alert-warning', ['服务探针未正确部署', '请检查您的探针部署信息']);
       });
     };
@@ -62,12 +58,17 @@ function (angular, _, dateMath) {
       $scope.dismiss();
     };
 
-    $scope.importAlerts = function(alertDefs) {
-      if(alertDefs.length) {
-        $scope.importAlert(alertDefs);
-      } else {
+    $scope.importAlerts = function(service) {
+      backendSrv.get('/api/static/alertd/'+service).then(function(result) {
+        var alertDefs = result.alertd;
+        if(alertDefs.length) {
+          $scope.importAlert(alertDefs);
+        } else {
+          $scope.appEvent('alert-warning', ['暂无报警规则', '请联系管理员']);
+        }
+      }).catch(function(err) {
         $scope.appEvent('alert-warning', ['暂无报警规则', '请联系管理员']);
-      }
+      });
     };
 
     $scope.init();

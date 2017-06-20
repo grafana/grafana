@@ -1,0 +1,40 @@
+{
+  "alertd": [
+    {
+      "id": "2.1.aa5182e8-09dc-48e2-8cc9-30745cff9c11",
+      "org": "2",
+      "service": "1",
+      "name": "Hadoop文件使用空间太大",
+      "description": "Hadoop文件使用空间不要超过总空间的80% (具体临界值要设, 目前是20G)",
+      "hash": 1264853798,
+      "creationTime": 1483658472835,
+      "modificationTime": 1483658928273,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "hadoop.datanode.fsdatasetstate-null.DfsUsed",
+              "aggregator": "AVG",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 20000000000,
+          "durarionMinutes": 10
+        },
+        "warn": {
+          "threshold": 10000000000,
+          "durarionMinutes": 5
+        }
+      }
+    }
+  ]
+}

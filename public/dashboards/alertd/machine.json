@@ -1,0 +1,148 @@
+{
+  "alertd": [
+    {
+      "id": "2.1.41b485a3-d12d-409f-bc2a-56f077164f52",
+      "org": "2",
+      "service": "1",
+      "name": "系统： CPU user usage > 80%",
+      "description": "CPU user usage > 80%",
+      "hash": 195312551,
+      "creationTime": 1483652438757,
+      "modificationTime": 1483660034921,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "cpu.usr",
+              "aggregator": "AVG",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 80,
+          "durarionMinutes": 5
+        },
+        "warn": {
+          "threshold": 70,
+          "durarionMinutes": 5
+        }
+      }
+    },
+    {
+      "id": "2.1.65ca2302-b573-4ec2-8ef0-f0dcab0cfbb7",
+      "org": "2",
+      "service": "1",
+      "name": "系统： 磁盘空间 < 10%",
+      "description": "磁盘空间小于10%",
+      "hash": 1984061725,
+      "creationTime": 1483600587088,
+      "modificationTime": 1483660043646,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "df.bytes.percentused",
+              "aggregator": "AVG",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 90,
+          "durarionMinutes": 5
+        },
+        "warn": {
+          "threshold": 85,
+          "durarionMinutes": 5
+        }
+      }
+    },
+    {
+      "id": "2.1.87a7ec75-8a74-4498-a2de-341f5d0c8b15",
+      "org": "2",
+      "service": "1",
+      "name": "系统： 内存swap太多",
+      "description": "内存swap最好不要发生, 超过256MB即报警",
+      "hash": 472487647,
+      "creationTime": 1483601083829,
+      "modificationTime": 1483660059551,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "zk_swap",
+              "aggregator": "AVG",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 256,
+          "durarionMinutes": 5
+        },
+        "warn": {
+          "threshold": 128,
+          "durarionMinutes": 3
+        }
+      }
+    },
+    {
+      "id": "2.1.f3d68192-0003-4e8c-bb0d-eabdc39c2fae",
+      "org": "2",
+      "service": "1",
+      "name": "系统：内存使用过高",
+      "description": "内存使用过高",
+      "hash": -811432529,
+      "creationTime": 1483653284310,
+      "modificationTime": 1483660070206,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "proc.meminfo.active",
+              "aggregator": "AVG",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 25862968,
+          "durarionMinutes": 5
+        },
+        "warn": {
+          "threshold": 23862968,
+          "durarionMinutes": 5
+        }
+      }
+    }
+  ]
+}

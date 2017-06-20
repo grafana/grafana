@@ -1,0 +1,106 @@
+{
+  "alertd": [
+    {
+      "id": "2.1.15888f8d-6d9d-423c-9181-703999348223",
+      "org": "2",
+      "service": "1",
+      "name": "Hbase 等待flush的队列太长",
+      "description": "表示磁盘速度跟不上Flush速度， 可能是内存不够用，需要加内存。（阈值100不一定精确，需要根据系统调节）",
+      "hash": -1318548720,
+      "creationTime": 1483665787850,
+      "modificationTime": 1483665787850,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "hbase.regionserver.server.flushQueueLength",
+              "aggregator": "AVG",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 100,
+          "durarionMinutes": 10
+        },
+        "warn": {
+          "threshold": 50,
+          "durarionMinutes": 5
+        }
+      }
+    },
+    {
+      "id": "2.1.9ba7fa43-1c3f-4bc0-a878-350d6b461780",
+      "org": "2",
+      "service": "1",
+      "name": "Hbase 用户连接Authentication失败数过高",
+      "description": "Hbase 用户连接Authentication失败数过高",
+      "hash": 1251601877,
+      "creationTime": 1483665412653,
+      "modificationTime": 1483665412653,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "hbase.regionserver.ipc.authenticationFailures",
+              "aggregator": "AVG",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": {
+          "threshold": 100,
+          "durarionMinutes": 10
+        },
+        "warn": {
+          "threshold": 50,
+          "durarionMinutes": 5
+        }
+      }
+    },
+    {
+      "id": "2.1.b41c58ae-63c3-4f22-985d-d44e199927d2",
+      "org": "2",
+      "service": "1",
+      "name": "Hbase CompactionQueueSize太高",
+      "description": "表示所有Regions同时split/compact，可以考虑提前作split或者turn off auto-compaction",
+      "hash": -1358848061,
+      "creationTime": 1483664985298,
+      "modificationTime": 1483664985298,
+      "alertDetails": {
+        "cluster": "cluster1",
+        "hosts": null,
+        "membership": "*",
+        "monitoringScope": "HOST",
+        "clusterwideAggregator": null,
+        "hostQuery": {
+          "metricQueries": [
+            {
+              "metric": "hbase.regionserver.CompactionQueueSize",
+              "aggregator": "AVG",
+              "transform": null
+            }
+          ],
+          "expression": null
+        },
+        "overrideHostQuery": null,
+        "crit": null,
+        "warn": null
+      }
+    }
+  ]
+}
