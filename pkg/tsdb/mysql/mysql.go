@@ -307,6 +307,9 @@ func (s *stringStringScan) Update(rows *sql.Rows) error {
 		return err
 	}
 
+	s.time = null.FloatFromPtr(nil)
+	s.value = null.FloatFromPtr(nil)
+
 	for i := 0; i < s.columnCount; i++ {
 		if rb, ok := s.rowPtrs[i].(*sql.RawBytes); ok {
 			s.rowValues[i] = string(*rb)
