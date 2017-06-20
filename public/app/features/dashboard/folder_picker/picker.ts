@@ -5,11 +5,13 @@ import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 
 export class FolderPickerCtrl {
-  folders: Folder[];
-  selectedOption: any;
   initialTitle: string;
-  onChange: any;
+  initialFolderId: number;
   labelClass: string;
+  onChange: any;
+  rootName = 'Root';
+
+  private folder: any;
 
   /** @ngInject */
   constructor(private backendSrv, private $scope, private $sce) {
@@ -17,7 +19,13 @@ export class FolderPickerCtrl {
       this.labelClass = "width-7";
     }
 
-    this.selectedOption = {text: this.initialTitle, value: null};
+    if (this.initialFolderId > 0) {
+      this.getOptions('').then(result => {
+        this.folder = _.find(result, {value: this.initialFolderId});
+      });
+    } else {
+      this.folder = {text: this.initialTitle, value: null};
+    }
   }
 
   getOptions(query) {
@@ -28,37 +36,28 @@ export class FolderPickerCtrl {
 
     return this.backendSrv.search(params).then(result => {
       if (query === "") {
-        result.unshift({title: "Root", value: 0});
+        result.unshift({title: this.rootName, value: 0});
       }
+
       return _.map(result, item => {
         return {text: item.title, value: item.id};
       });
     });
   }
 
-  folderChanged(option) {
+  onFolderChange(option) {
     this.onChange({$folder: {id: option.value, title: option.text}});
   }
-}
 
-export interface Folder {
-  id: number;
-  title: string;
-  uri?: string;
-  type: string;
-  tags?: string[];
-  isStarred?: boolean;
-  parentId?: number;
-  dashboards?: any;
 }
 
 const template = `
 <div class="gf-form">
   <label class="gf-form-label {{ctrl.labelClass}}">Folder</label>
   <div class="dropdown">
-    <gf-form-dropdown model="ctrl.selectedOption"
+    <gf-form-dropdown model="ctrl.folder"
       get-options="ctrl.getOptions($query)"
-      on-change="ctrl.folderChanged($option)">
+      on-change="ctrl.onFolderChange($option)">
     </gf-form-dropdown>
   </div>
 </div>
@@ -73,8 +72,10 @@ export function folderPicker() {
     controllerAs: 'ctrl',
     scope: {
       initialTitle: "<",
-      onChange: "&",
-      labelClass: "@",
+      initialFolderId: '<',
+      labelClass: '@',
+      rootName: '@',
+      onChange: '&'
     }
   };
 }
