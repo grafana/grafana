@@ -22,6 +22,7 @@ function ($, angular, coreModule, _) {
       restrict: 'A',
       link: function(scope, elem) {
         var editorScope;
+        var modalScope;
         var lastEditView;
 
         function hideEditorPane(hideToShowOtherView) {
@@ -47,6 +48,11 @@ function ($, angular, coreModule, _) {
           editorScope = options.scope ? options.scope.$new() : scope.$new();
 
           editorScope.dismiss = function(hideToShowOtherView) {
+            if (modalScope) {
+              modalScope.dismiss();
+              modalScope = null;
+            }
+
             editorScope.$destroy();
             lastEditView = null;
             editorScope = null;
@@ -73,7 +79,7 @@ function ($, angular, coreModule, _) {
           };
 
           if (options.isModal) {
-            var modalScope = $rootScope.$new();
+            modalScope = $rootScope.$new();
             modalScope.$on("$destroy", function() {
               editorScope.dismiss();
             });

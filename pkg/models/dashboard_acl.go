@@ -8,16 +8,18 @@ import (
 type PermissionType int
 
 const (
+	PERMISSION_NONE                = 0
 	PERMISSION_VIEW PermissionType = 1 << iota
-	PERMISSION_READ_ONLY_EDIT
 	PERMISSION_EDIT
+	PERMISSION_ADMIN
 )
 
 func (p PermissionType) String() string {
 	names := map[int]string{
-		int(PERMISSION_VIEW):           "View",
-		int(PERMISSION_READ_ONLY_EDIT): "Read-only Edit",
-		int(PERMISSION_EDIT):           "Edit",
+		int(PERMISSION_NONE):  "None",
+		int(PERMISSION_VIEW):  "View",
+		int(PERMISSION_EDIT):  "Edit",
+		int(PERMISSION_ADMIN): "Admin",
 	}
 	return names[int(p)]
 }
@@ -55,6 +57,7 @@ type DashboardAclInfoDTO struct {
 	UserEmail      string         `json:"userEmail"`
 	UserGroupId    int64          `json:"userGroupId"`
 	UserGroup      string         `json:"userGroup"`
+	Role           RoleType       `json:"role"`
 	Permissions    PermissionType `json:"permissions"`
 	PermissionName string         `json:"permissionName"`
 }

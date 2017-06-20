@@ -36,53 +36,27 @@
     <!-- 	</div> -->
     <!-- </form> -->
 
-    <div>
-      <div class="section">
-        <h5 class="section-heading">Groups & Users</h5>
-        <div class="gf-form" ng-repeat="acl in ctrl.userAcl">
-          <span class="gf-form-label width-15">
-            <i class="fa fa-fw fa-user"></i>
-            {{acl.userLogin}}
-          </span>
-          <div class="gf-form-select-wrapper">
-            <select class="gf-form-input gf-size-auto" ng-model="acl.permissions" ng-options="p.value as p.text for p in ctrl.permissionTypeOptions" ng-change="ctrl.updatePermission(permission)"></select>
-          </div>
-          <button class="btn btn-inverse gf-form-btn" ng-click="ctrl.addQuery()" ng-hide="ctrl.current.meta.mixed">
+    <table class="filter-table">
+      <tr ng-repeat="acl in ctrl.aclItems">
+        <td style="width: 100%;">
+          <i class="{{acl.icon}}"></i>
+          <span ng-bind-html="acl.nameHtml"></span>
+        </td>
+        <td>can...</td>
+        <td class="dropdown">
+          <a class="pointer" style="white-space: nowrap">
+            {{acl.permissionName}}
+            <i class="fa fa-caret-down"></i>
+          </a>
+        </td>
+        <td>
+          <a class="btn btn-inverse btn-small" ng-show="revision.version !== ctrl.dashboard.version" ng-click="ctrl.restore(revision.version)">
             <i class="fa fa-remove"></i>
-          </button>
-        </div>
-        <div class="gf-form dropdown">
-          <button class="btn btn-inverse gf-form-btn" data-toggle="dropdown">
-            <i class="fa fa-fw fa-plus"></i> Add Permission
-          </button>
-          <ul class="dropdown-menu dropdown-menu--new">
-            <li>
-              <a class="pointer" ng-click="ctrl.addUserGroup()">
-                <i class="fa fa-fw fa-users"></i> User Group
-              </a>
-            </li>
-            <li>
-              <a class="pointer" ng-click="ctrl.addUserAcl()">
-                <i class="fa fa-fw fa-user"></i> User
-              </a>
-            </li>
-          </ul>
-        </div>
-      </div>
-      <div class="section pull-right">
-        <h5 class="section-heading">Built-in roles</h5>
-        <div class="gf-form" ng-repeat="roleAcl in ctrl.roles">
-          <span class="gf-form-label width-5">
-            {{roleAcl.name}}
-          </span>
-          <div class="gf-form-select-wrapper">
-            <select class="gf-form-input gf-size-auto" ng-model="roleAcl.permissions" ng-options="p.value as p.text for p in ctrl.roleOptions" ng-change="ctrl.updatePermission(permission)"></select>
-          </div>
-        </div>
-      </div>
-    </div>
+          </a>
+        </td>
+      </tr>
+    </table>
 
-    <div class="clearfix"></div>
 
     <div class="gf-form-button-row text-center">
       <button type="submit" class="btn btn-danger" ng-disabled="!ctrl.canUpdate">Update Permissions</button>
@@ -136,11 +110,11 @@
 <!--           <td>{{role.name}}</td> -->
 <!--           <td><select class="gf&#45;form&#45;input gf&#45;size&#45;auto" ng&#45;model="role.permissions" ng&#45;options="p.value as p.text for p in ctrl.roleOptions" ng&#45;change="ctrl.updatePermission(role)"></select></td> -->
 <!--           <td class="text&#45;right"> -->
-  <!--  -->
-  <!--           </td> -->
-  <!--         </tr> -->
-  <!--       </tbody> -->
-  <!--     </table> -->
-  <!--   </div> -->
+<!--  -->
+<!--           </td> -->
+<!--         </tr> -->
+<!--       </tbody> -->
+<!--     </table> -->
+<!--   </div> -->
 <!--   </div> -->
 <!-- </div> -->

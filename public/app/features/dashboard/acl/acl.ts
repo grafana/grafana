@@ -6,22 +6,12 @@ import _ from 'lodash';
 
 export class AclCtrl {
   dashboard: any;
-  userAcl: DashboardAcl[];
-  groupAcl: DashboardAcl[];
-  permissionTypeOptions = [
+  aclItems: DashboardAcl[];
+  permissionOptions = [
     {value: 1, text: 'View'},
     {value: 2, text: 'Edit'},
     {value: 4, text: 'Admin'}
   ];
-
-  roleOptions = [
-    {value: 0, text: 'No Access'},
-    {value: 1, text: 'View'},
-    {value: 2, text: 'Edit'},
-    {value: 4, text: 'Admin'}
-  ];
-
-  roles = [];
 
   type = 'User Group';
   permission = 1;
@@ -29,9 +19,8 @@ export class AclCtrl {
   userGroupId: number;
 
   /** @ngInject */
-  constructor(private backendSrv, private dashboardSrv) {
-    this.userAcl = [];
-    this.groupAcl = [];
+  constructor(private backendSrv, private dashboardSrv, private $sce) {
+    this.aclItems = [];
     this.dashboard = dashboardSrv.getCurrent();
     this.get(this.dashboard.id);
   }
@@ -39,18 +28,20 @@ export class AclCtrl {
   get(dashboardId: number) {
     return this.backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`)
       .then(result => {
-        this.userAcl = _.filter(result, p => { return p.userId > 0;});
-        this.groupAcl = _.filter(result, p => { return p.userGroupId > 0;});
-        this.roles = this.setRoles(result);
+        this.aclItems = _.map(result, item => {
+          if (item.userId > 0) {
+            item.icon = "fa fa-fw fa-user";
+            item.nameHtml = this.$sce.trustAsHtml(item.userLogin);
+          } else if (item.userGroupId > 0) {
+            item.icon = "fa fa-fw fa-users";
+            item.nameHtml = this.$sce.trustAsHtml(item.userGroup);
+          } else if (item.role) {
+            item.icon = "fa fa-fw fa-street-view";
+            item.nameHtml = this.$sce.trustAsHtml(`Everyone with <span class="query-keyword">${item.role}</span> Role`);
+          }
+          return item;
+        });
       });
-  }
-
-  setRoles(result: any) {
-    return [
-      {name: 'Viewer', permissions: 1},
-      {name: 'Editor', permissions: 2},
-      {name: 'Admin', permissions: 4}
-    ];
   }
 
   addPermission() {

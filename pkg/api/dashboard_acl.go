@@ -23,7 +23,39 @@ func GetDashboardAclList(c *middleware.Context) Response {
 		return ApiError(500, "Failed to get Dashboard ACL", err)
 	}
 
-	return Json(200, &query.Result)
+	list := query.Result
+	hasViewRoleAcl := false
+	hasEditRoleAcl := false
+
+	for _, item := range list {
+		if item.Role == m.ROLE_EDITOR {
+			hasEditRoleAcl = true
+		}
+		if item.Role == m.ROLE_VIEWER {
+			hasViewRoleAcl = true
+		}
+	}
+
+	if !hasEditRoleAcl {
+		tmpList := append([]*m.DashboardAclInfoDTO{}, &m.DashboardAclInfoDTO{
+			Id:             0,
+			Role:           m.ROLE_EDITOR,
+			Permissions:    m.PERMISSION_EDIT,
+			PermissionName: "Edit",
+		})
+		list = append(tmpList, list...)
+	}
+	if !hasViewRoleAcl {
+		tmpList := append([]*m.DashboardAclInfoDTO{}, &m.DashboardAclInfoDTO{
+			Id:             0,
+			Role:           m.ROLE_VIEWER,
+			Permissions:    m.PERMISSION_VIEW,
+			PermissionName: "View",
+		})
+		list = append(tmpList, list...)
+	}
+
+	return Json(200, list)
 }
 
 func PostDashboardAcl(c *middleware.Context, cmd m.SetDashboardAclCommand) Response {

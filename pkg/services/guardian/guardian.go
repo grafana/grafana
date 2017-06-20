@@ -29,7 +29,7 @@ func (g *DashboardGuardian) CanSave() (bool, error) {
 }
 
 func (g *DashboardGuardian) CanEdit() (bool, error) {
-	return g.HasPermission(m.PERMISSION_READ_ONLY_EDIT, m.ROLE_READ_ONLY_EDITOR)
+	return g.HasPermission(m.PERMISSION_EDIT, m.ROLE_READ_ONLY_EDITOR)
 }
 
 func (g *DashboardGuardian) CanView() (bool, error) {
