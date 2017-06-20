@@ -8,6 +8,7 @@ import (
 	"net/url"
 
 	"github.com/grafana/grafana/pkg/bus"
+	"github.com/grafana/grafana/pkg/components/awsutil"
 	"github.com/grafana/grafana/pkg/log"
 	"github.com/grafana/grafana/pkg/middleware"
 	m "github.com/grafana/grafana/pkg/models"
@@ -92,6 +93,9 @@ func NewApiPluginProxy(ctx *middleware.Context, proxyPath string, route *plugins
 				req.Header.Set(key, value[0])
 			}
 		}
+
+		// after all headers are modified, sign for AWS request
+		awsutil.SignV4(req, targetUrl)
 
 		// reqBytes, _ := httputil.DumpRequestOut(req, true);
 		// log.Trace("Proxying plugin request: %s", string(reqBytes))
