@@ -41,13 +41,13 @@ define([
           newAlert.name = target.name;
           newAlert.creationTime = milliseconds;
           newAlert.modificationTime = milliseconds;
-          var p = alertMgrSrv.save(newAlert).then(function onSuccess() {
+          alertMgrSrv.save(newAlert).then(function onSuccess() {
+            promiseArr.push(i);
             return i;
           }, function onFailed(response) {
-            $scope.appEvent('alert-error', ['ERROR', response.status + " " + (response.data || "Request failed")]);
+            $scope.appEvent('alert-error', ['ERROR', '规则 "' + newAlert.name + '" 已经存在']);
             throw "Request failed";
           });
-          promiseArr.push(p);
         });
         $q.all(promiseArr).then(function (values) {
           if (values.length == alertDefs.length) {
