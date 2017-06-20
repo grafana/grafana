@@ -197,6 +197,8 @@ func Register(r *macaron.Macaron) {
 			r.Get("/:name", GetStaticFile)
 			//template
 			r.Get("/template/:name",GetDashboardTemplate)
+			//alertdef
+			r.Get("/alertd/:name",GetAlertDef)
 		})
 	}, reqSignedIn)
 
