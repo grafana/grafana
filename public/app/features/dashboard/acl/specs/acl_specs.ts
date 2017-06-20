@@ -37,13 +37,13 @@ describe('AclCtrl', () => {
     });
 
     it('should parse the result and save to db', () => {
-      expect(backendSrv.post.getCall(0).args[0]).to.eql('/api/dashboards/1/acl');
+      expect(backendSrv.post.getCall(0).args[0]).to.eql('/api/dashboards/id/1/acl');
       expect(backendSrv.post.getCall(0).args[1].userId).to.eql(2);
-      expect(backendSrv.post.getCall(0).args[1].permissionType).to.eql(1);
+      expect(backendSrv.post.getCall(0).args[1].permissions).to.eql(1);
     });
 
     it('should refresh the list after saving.', () => {
-      expect(backendSrv.get.getCall(0).args[0]).to.eql('/api/dashboards/1/acl');
+      expect(backendSrv.get.getCall(0).args[0]).to.eql('/api/dashboards/id/1/acl');
     });
 
      it('should reset userId', () => {
@@ -65,13 +65,13 @@ describe('AclCtrl', () => {
     });
 
     it('should parse the result and save to db', () => {
-      expect(backendSrv.post.getCall(0).args[0]).to.eql('/api/dashboards/1/acl');
+      expect(backendSrv.post.getCall(0).args[0]).to.eql('/api/dashboards/id/1/acl');
       expect(backendSrv.post.getCall(0).args[1].userGroupId).to.eql(2);
-      expect(backendSrv.post.getCall(0).args[1].permissionType).to.eql(1);
+      expect(backendSrv.post.getCall(0).args[1].permissions).to.eql(1);
     });
 
     it('should refresh the list after saving.', () => {
-      expect(backendSrv.get.getCall(0).args[0]).to.eql('/api/dashboards/1/acl');
+      expect(backendSrv.get.getCall(0).args[0]).to.eql('/api/dashboards/id/1/acl');
     });
 
      it('should reset userGroupId', () => {
