@@ -13,7 +13,8 @@ function (angular, $, _, Tether) {
       var linkTemplate =
           '<span class="panel-title drag-handle pointer">' +
             '<span class="icon-gf panel-alert-icon"></span>' +
-            '<span class="panel-title-text drag-handle">{{ctrl.panel.title | interpolateTemplateVars:this}}</span>' +
+            '<span class="panel-title-text drag-handle" style="font-size:{{ctrl.panel.titleFontSize}}">' +
+            '{{ctrl.panel.title | interpolateTemplateVars:this}}</span>' +
             '<span class="panel-time-info" ng-show="ctrl.timeInfo"><i class="fa fa-clock-o"></i> {{ctrl.timeInfo}}</span>' +
           '</span>';
 
