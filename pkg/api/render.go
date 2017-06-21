@@ -18,6 +18,8 @@ func RenderToPng(c *middleware.Context) {
 		Width:    queryReader.Get("width", "800"),
 		Height:   queryReader.Get("height", "400"),
 		OrgId:    c.OrgId,
+		UserId:   c.UserId,
+		OrgRole:  c.OrgRole,
 		Timeout:  queryReader.Get("timeout", "30"),
 		Timezone: queryReader.Get("tz", ""),
 	}
