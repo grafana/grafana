@@ -13,14 +13,16 @@ export class AclCtrl {
     {value: 4, text: 'Admin'}
   ];
 
-  type = 'User Group';
-  permission = 1;
-  userId: number;
-  userGroupId: number;
+  newType: string;
+  newAcl: DashboardAcl;
+  canUpdate: boolean;
 
   /** @ngInject */
-  constructor(private backendSrv, private dashboardSrv, private $sce) {
+  constructor(private backendSrv, private dashboardSrv, private $sce, private $scope) {
     this.aclItems = [];
+    this.newType = 'User Group';
+    this.resetNew();
+
     this.dashboard = dashboardSrv.getCurrent();
     this.get(this.dashboard.id);
   }
@@ -28,72 +30,57 @@ export class AclCtrl {
   get(dashboardId: number) {
     return this.backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`)
       .then(result => {
-        this.aclItems = _.map(result, item => {
-          if (item.userId > 0) {
-            item.icon = "fa fa-fw fa-user";
-            item.nameHtml = this.$sce.trustAsHtml(item.userLogin);
-          } else if (item.userGroupId > 0) {
-            item.icon = "fa fa-fw fa-users";
-            item.nameHtml = this.$sce.trustAsHtml(item.userGroup);
-          } else if (item.role) {
-            item.icon = "fa fa-fw fa-street-view";
-            item.nameHtml = this.$sce.trustAsHtml(`Everyone with <span class="query-keyword">${item.role}</span> Role`);
-          }
-          return item;
-        });
+        this.aclItems = _.map(result, this.prepareViewModel.bind(this));
       });
+  }
+
+  prepareViewModel(item: DashboardAcl): DashboardAcl {
+    if (item.userId > 0) {
+      item.icon = "fa fa-fw fa-user";
+      item.nameHtml = this.$sce.trustAsHtml(item.userLogin);
+    } else if (item.userGroupId > 0) {
+      item.icon = "fa fa-fw fa-users";
+      item.nameHtml = this.$sce.trustAsHtml(item.userGroup);
+    } else if (item.role) {
+      item.icon = "fa fa-fw fa-street-view";
+      item.nameHtml = this.$sce.trustAsHtml(`Everyone with <span class="query-keyword">${item.role}</span> Role`);
+    }
+
+    return item;
   }
 
   addPermission() {
-    if (this.type === 'User') {
-      if (!this.userId) {
-        return;
-      }
-      return this.addOrUpdateUserPermission(this.userId, this.permission).then(() => {
-        this.userId = null;
-        return this.get(this.dashboard.id);
-      });
-    } else {
-      if (!this.userGroupId) {
-        return;
-      }
-
-      return this.addOrUpdateUserGroupPermission(this.userGroupId, this.permission).then(() => {
-        this.userGroupId = null;
-        return this.get(this.dashboard.id);
-      });
-    }
+    this.aclItems.push(this.prepareViewModel(this.newAcl));
+    this.$scope.$broadcast('user-picker-reset');
+    this.$scope.$broadcast('user-group-picker-reset');
   }
 
-  addOrUpdateUserPermission(userId: number, permissions: number) {
+  resetNew() {
+    this.newAcl = {
+      userId: 0,
+      userGroupId: 0,
+      permission: 1
+    };
+  }
+
+  update() {
     return this.backendSrv.post(`/api/dashboards/id/${this.dashboard.id}/acl`, {
-      userId: userId,
-      permissions: permissions
+      acl: this.aclItems
     });
   }
 
-  addOrUpdateUserGroupPermission(userGroupId: number, permissions: number) {
-    return this.backendSrv.post(`/api/dashboards/id/${this.dashboard.id}/acl`, {
-      userGroupId: userGroupId,
-      permissions: permissions
-    });
+  permissionChanged() {
+    this.canUpdate = true;
   }
 
-  updatePermission(permission: DashboardAcl) {
-    if (permission.userId > 0) {
-      return this.addOrUpdateUserPermission(permission.userId, permission.permissions);
-    } else {
-      if (!permission.userGroupId) {
-        return;
-      }
-      return this.addOrUpdateUserGroupPermission(permission.userGroupId, permission.permissions);
-    }
+  userPicked(user) {
+    this.newAcl.userLogin = user.login;
+    this.newAcl.userId = user.id;
   }
 
-  removePermission(permission: DashboardAcl) {
-    return this.backendSrv.delete(`/api/dashboards/id/${permission.dashboardId}/acl/${permission.id}`).then(() => {
-      return this.get(permission.dashboardId);
-    });
+  removeItem(index) {
+    this.aclItems.splice(index, 1);
+    this.canUpdate = true;
   }
 }
 
@@ -118,18 +105,18 @@ export interface FormModel {
 }
 
 export interface DashboardAcl {
-  id: number;
-  orgId: number;
-  dashboardId: number;
-  created: Date;
-  updated: Date;
+  id?: number;
+  dashboardId?: number;
   userId: number;
-  userLogin: number;
-  userEmail: string;
+  userLogin?: number;
+  userEmail?: string;
   userGroupId: number;
-  userGroup: string;
-  permissions: number;
-  permissionName: string;
+  userGroup?: string;
+  permission?: number;
+  permissionName?: string;
+  role?: string;
+  icon?: string;
+  nameHtml?: string;
 }
 
 coreModule.directive('dashAclModal', dashAclModal);
