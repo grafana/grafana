@@ -220,7 +220,7 @@ export class BackendSrv {
   createDashboardFolder(name) {
     const dash = {
       title: name,
-      editable: false,
+      editable: true,
       hideControls: true,
       rows: [
         {
@@ -228,22 +228,33 @@ export class BackendSrv {
             {
               folderId: 0,
               headings: false,
-              id: 1,
               limit: 1000,
               links: [],
               query: '',
               recent: false,
               search: true,
-              span: 12,
+              span: 4,
               starred: false,
               tags: [],
-              title: 'Dashboards',
+              title: 'Dashboards in this folder',
               type: 'dashlist'
+            },
+            {
+              onlyAlertsOnDashboard: true,
+              span: 4,
+              title: 'Alerts in this folder',
+              type: 'alertlist'
+            },
+            {
+              span: 4,
+              title: 'Permissions for this folder',
+              type: 'permissionlist',
+              folderId: 0
             }
           ],
-          showTitle: false,
-          title: 'Dashboard List',
-          titleSize: 'h6'
+          showTitle: true,
+          title: name,
+          titleSize: 'h1'
         }
       ]
     };
@@ -254,6 +265,7 @@ export class BackendSrv {
     })
     .then(res => {
       res.dashboard.rows[0].panels[0].folderId = res.dashboard.id;
+      res.dashboard.rows[0].panels[2].folderId = res.dashboard.id;
       return this.saveDashboard(res.dashboard, {overwrite: false});
     });
   }
