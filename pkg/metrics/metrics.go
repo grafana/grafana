@@ -36,7 +36,7 @@ var (
 	M_Api_Dashboard_Snapshot_External      Counter
 	M_Api_Dashboard_Snapshot_Get           Counter
 	M_Api_UserGroup_Create                 Counter
-	M_Api_Dashboard_Acl_Create             Counter
+	M_Api_Dashboard_Acl_Update             Counter
 	M_Models_Dashboard_Insert              Counter
 	M_Alerting_Result_State_Alerting       Counter
 	M_Alerting_Result_State_Ok             Counter
@@ -95,7 +95,7 @@ func initMetricVars(settings *MetricSettings) {
 	M_Api_User_SignUpInvite = RegCounter("api.user.signup_invite")
 
 	M_Api_UserGroup_Create = RegCounter("api.usergroup.create")
-	M_Api_Dashboard_Acl_Create = RegCounter("api.dashboard.acl.create")
+	M_Api_Dashboard_Acl_Update = RegCounter("api.dashboard.acl.update")
 
 	M_Api_Dashboard_Save = RegTimer("api.dashboard.save")
 	M_Api_Dashboard_Get = RegTimer("api.dashboard.get")

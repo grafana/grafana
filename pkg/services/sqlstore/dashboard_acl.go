@@ -9,9 +9,42 @@ import (
 
 func init() {
 	bus.AddHandler("sql", SetDashboardAcl)
+	bus.AddHandler("sql", UpdateDashboardAcl)
 	bus.AddHandler("sql", RemoveDashboardAcl)
 	bus.AddHandler("sql", GetDashboardAclInfoList)
 	bus.AddHandler("sql", GetInheritedDashboardAcl)
+}
+
+func UpdateDashboardAcl(cmd *m.UpdateDashboardAclCommand) error {
+	return inTransaction(func(sess *DBSession) error {
+		// delete existing items
+		_, err := sess.Exec("DELETE FROM dashboard_acl WHERE dashboard_id=?", cmd.DashboardId)
+		if err != nil {
+			return err
+		}
+
+		for _, item := range cmd.Items {
+			if item.UserId == 0 && item.UserGroupId == 0 && !item.Role.IsValid() {
+				return m.ErrDashboardAclInfoMissing
+			}
+
+			if item.DashboardId == 0 {
+				return m.ErrDashboardPermissionDashboardEmpty
+			}
+
+			sess.Nullable("user_id", "user_group_id")
+			if _, err := sess.Insert(item); err != nil {
+				return err
+			}
+		}
+
+		// Update dashboard HasAcl flag
+		dashboard := m.Dashboard{HasAcl: true}
+		if _, err := sess.Cols("has_acl").Where("id=? OR parent_id=?", cmd.DashboardId, cmd.DashboardId).Update(&dashboard); err != nil {
+			return err
+		}
+		return nil
+	})
 }
 
 func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
