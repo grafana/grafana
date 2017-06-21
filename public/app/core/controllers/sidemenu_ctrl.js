@@ -138,7 +138,7 @@ function (angular, _, $, coreModule, config) {
             href: $scope.getUrl("/setting/service"),
           },
           {
-            text: '安装日志探针',
+            text: '配置日志服务',
             href: $scope.getUrl("/setting/filebeat"),
           },
         ],
