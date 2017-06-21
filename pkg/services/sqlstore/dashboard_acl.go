@@ -132,6 +132,7 @@ func GetInheritedDashboardAcl(query *m.GetInheritedDashboardAclQuery) error {
   da.dashboard_id,
   da.user_id,
   da.user_group_id,
+  da.role,
   da.permission,
   da.created,
   da.updated

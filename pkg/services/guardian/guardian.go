@@ -25,18 +25,18 @@ func NewDashboardGuardian(dashId int64, orgId int64, user *m.SignedInUser) *Dash
 }
 
 func (g *DashboardGuardian) CanSave() (bool, error) {
-	return g.HasPermission(m.PERMISSION_EDIT, m.ROLE_EDITOR)
+	return g.HasPermission(m.PERMISSION_EDIT)
 }
 
 func (g *DashboardGuardian) CanEdit() (bool, error) {
-	return g.HasPermission(m.PERMISSION_EDIT, m.ROLE_READ_ONLY_EDITOR)
+	return g.HasPermission(m.PERMISSION_EDIT)
 }
 
 func (g *DashboardGuardian) CanView() (bool, error) {
-	return g.HasPermission(m.PERMISSION_VIEW, m.ROLE_VIEWER)
+	return g.HasPermission(m.PERMISSION_VIEW)
 }
 
-func (g *DashboardGuardian) HasPermission(permission m.PermissionType, fallbackRole m.RoleType) (bool, error) {
+func (g *DashboardGuardian) HasPermission(permission m.PermissionType) (bool, error) {
 	if g.user.OrgRole == m.ROLE_ADMIN {
 		return true, nil
 	}
@@ -44,11 +44,6 @@ func (g *DashboardGuardian) HasPermission(permission m.PermissionType, fallbackR
 	acl, err := g.getAcl()
 	if err != nil {
 		return false, err
-	}
-
-	// if no acl use org role to determine permission
-	if len(acl) == 0 {
-		return g.user.HasRole(fallbackRole), nil
 	}
 
 	userGroups, err := g.getUserGroups()
@@ -63,6 +58,12 @@ func (g *DashboardGuardian) HasPermission(permission m.PermissionType, fallbackR
 
 		for _, ug := range userGroups {
 			if ug.Id == p.UserGroupId && p.Permission >= permission {
+				return true, nil
+			}
+		}
+
+		if p.Role.IsValid() {
+			if p.Role == g.user.OrgRole && p.Permission >= permission {
 				return true, nil
 			}
 		}
