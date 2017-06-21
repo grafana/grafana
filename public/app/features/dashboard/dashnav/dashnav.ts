@@ -143,17 +143,6 @@ export class DashNavCtrl {
     onFolderChange(parentId) {
       this.dashboard.parentId = parentId;
     }
-
-    showSearch() {
-      this.$rootScope.appEvent('show-dash-search');
-    }
-
-    navItemClicked(navItem, evt) {
-      if (navItem.clickHandler) {
-        navItem.clickHandler();
-        evt.preventDefault();
-      }
-    }
 }
 
 export function dashNavDirective() {

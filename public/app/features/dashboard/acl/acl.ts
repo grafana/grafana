@@ -5,117 +5,126 @@ import appEvents from 'app/core/app_events';
 import _ from 'lodash';
 
 export class AclCtrl {
-  tabIndex: any;
   dashboard: any;
-  userPermissions: Permission[];
-  userGroupPermissions: Permission[];
-  permissionTypeOptions = [
+  aclItems: DashboardAcl[];
+  permissionOptions = [
     {value: 1, text: 'View'},
-    {value: 2, text: 'Read-only Edit'},
-    {value: 4, text: 'Edit'}
+    {value: 2, text: 'Edit'},
+    {value: 4, text: 'Admin'}
+  ];
+  aclTypes = [
+    {value: 'Group', text: 'User Group'},
+    {value: 'User',  text: 'User'},
+    {value: 'Viewer', text: 'Everyone With Viewer Role'},
+    {value: 'Editor', text: 'Everyone With Editor Role'}
   ];
 
-  roleOptions = [
-    {value: 0, text: 'None'},
-    {value: 1, text: 'View'},
-    {value: 2, text: 'Read-only Edit'},
-    {value: 4, text: 'Edit'}
-  ];
-
-  roles = [];
-
-  type = 'User Group';
-  permission = 1;
-  userId: number;
-  userGroupId: number;
+  newType: string;
+  canUpdate: boolean;
 
   /** @ngInject */
-  constructor(private backendSrv, private $scope) {
-    this.tabIndex = 0;
-    this.userPermissions = [];
-    this.userGroupPermissions = [];
+  constructor(private backendSrv, private dashboardSrv, private $sce, private $scope) {
+    this.aclItems = [];
+    this.resetNewType();
+    this.dashboard = dashboardSrv.getCurrent();
     this.get(this.dashboard.id);
+  }
+
+  resetNewType() {
+    this.newType = 'Group';
   }
 
   get(dashboardId: number) {
     return this.backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`)
       .then(result => {
-        this.userPermissions = _.filter(result, p => { return p.userId > 0;});
-        this.userGroupPermissions = _.filter(result, p => { return p.userGroupId > 0;});
-        this.roles = this.setRoles(result);
+        this.aclItems = _.map(result, this.prepareViewModel.bind(this));
       });
   }
 
-  setRoles(result: any) {
-    return [
-      {name: 'Org Viewer', permissions: 1},
-      {name: 'Org Read Only Editor', permissions: 2},
-      {name: 'Org Editor', permissions: 4},
-      {name: 'Org Admin', permissions: 4}
-    ];
+  prepareViewModel(item: DashboardAcl): DashboardAcl {
+    if (item.userId > 0) {
+      item.icon = "fa fa-fw fa-user";
+      item.nameHtml = this.$sce.trustAsHtml(item.userLogin);
+    } else if (item.userGroupId > 0) {
+      item.icon = "fa fa-fw fa-users";
+      item.nameHtml = this.$sce.trustAsHtml(item.userGroup);
+    } else if (item.role) {
+      item.icon = "fa fa-fw fa-street-view";
+      item.nameHtml = this.$sce.trustAsHtml(`Everyone with <span class="query-keyword">${item.role}</span> Role`);
+    }
+
+    return item;
   }
 
-  addPermission() {
-    if (this.type === 'User') {
-      if (!this.userId) {
-        return;
-      }
-      return this.addOrUpdateUserPermission(this.userId, this.permission).then(() => {
-        this.userId = null;
-        return this.get(this.dashboard.id);
-      });
-    } else {
-      if (!this.userGroupId) {
-        return;
-      }
+  update() {
+    return this.backendSrv.post(`/api/dashboards/id/${this.dashboard.id}/acl`, {
+      acl: this.aclItems.map(item => {
+        return {
+          id: item.id,
+          userId: item.userId,
+          userGroupId: item.userGroupId,
+          role: item.role,
+          permission: item.permission,
+        };
+      })
+    });
+  }
 
-      return this.addOrUpdateUserGroupPermission(this.userGroupId, this.permission).then(() => {
-        this.userGroupId = null;
-        return this.get(this.dashboard.id);
-      });
+  typeChanged() {
+    if (this.newType === 'Viewer' || this.newType === 'Editor') {
+      this.aclItems.push(this.prepareViewModel({
+        permission: 1,
+        role: this.newType
+      }));
+
+      this.canUpdate = true;
+      this.resetNewType();
     }
   }
 
-  addOrUpdateUserPermission(userId: number, permissionType: number) {
-    return this.backendSrv.post(`/api/dashboards/id/${this.dashboard.id}/acl`, {
-      userId: userId,
-      permissions: permissionType
-    });
+  permissionChanged() {
+    this.canUpdate = true;
   }
 
-  addOrUpdateUserGroupPermission(userGroupId: number, permissionType: number) {
-    return this.backendSrv.post(`/api/dashboards/id/${this.dashboard.id}/acl`, {
-      userGroupId: userGroupId,
-      permissions: permissionType
-    });
+  userPicked(user) {
+    this.aclItems.push(this.prepareViewModel({
+      userId: user.id,
+      userLogin: user.login,
+      permission: 1,
+    }));
+
+    this.canUpdate = true;
+    this.$scope.$broadcast('user-picker-reset');
   }
 
-  updatePermission(permission: any) {
-    if (permission.userId > 0) {
-      return this.addOrUpdateUserPermission(permission.userId, permission.permissions);
-    } else {
-      if (!permission.userGroupId) {
-        return;
-      }
-      return this.addOrUpdateUserGroupPermission(permission.userGroupId, permission.permissions);
-    }
+  groupPicked(group) {
+    console.log(group);
+    this.aclItems.push(this.prepareViewModel({
+      userGroupId: group.id,
+      userGroup: group.name,
+      permission: 1,
+    }));
+
+    this.canUpdate = true;
+    this.$scope.$broadcast('user-group-picker-reset');
   }
 
-  removePermission(permission: Permission) {
-    return this.backendSrv.delete(`/api/dashboards/id/${permission.dashboardId}/acl/${permission.id}`).then(() => {
-      return this.get(permission.dashboardId);
-    });
+  removeItem(index) {
+    this.aclItems.splice(index, 1);
+    this.canUpdate = true;
   }
 }
 
-export function aclSettings() {
+export function dashAclModal() {
   return {
     restrict: 'E',
     templateUrl: 'public/app/features/dashboard/acl/acl.html',
     controller: AclCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
-    scope: { dashboard: "=" }
+    scope: {
+      dismiss: "&"
+    }
   };
 }
 
@@ -126,19 +135,19 @@ export interface FormModel {
   PermissionType: number;
 }
 
-export interface Permission {
-  id: number;
-  orgId: number;
-  dashboardId: number;
-  created: Date;
-  updated: Date;
-  userId: number;
-  userLogin: number;
-  userEmail: string;
-  userGroupId: number;
-  userGroup: string;
-  permissions: string[];
-  permissionType: number[];
+export interface DashboardAcl {
+  id?: number;
+  dashboardId?: number;
+  userId?: number;
+  userLogin?: number;
+  userEmail?: string;
+  userGroupId?: number;
+  userGroup?: string;
+  permission?: number;
+  permissionName?: string;
+  role?: string;
+  icon?: string;
+  nameHtml?: string;
 }
 
-coreModule.directive('aclSettings', aclSettings);
+coreModule.directive('dashAclModal', dashAclModal);

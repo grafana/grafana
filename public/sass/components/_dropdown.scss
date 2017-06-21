@@ -275,3 +275,22 @@
     content: "\f11c";
   }
 }
+
+.dropdown-menu.dropdown-menu--new {
+  li a {
+    padding: $spacer/2 $spacer;
+    border-left: 2px solid $side-menu-bg;
+    background: $side-menu-bg;
+
+    i {
+      display: inline-block;
+      padding-right: 21px;
+    }
+
+    &:hover {
+      @include left-brand-border-gradient();
+      color: $link-hover-color;
+      background: $input-label-bg;
+    }
+  }
+}

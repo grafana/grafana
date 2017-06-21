@@ -27,11 +27,13 @@ func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 		if res, err := sess.Query("SELECT 1 from "+dialect.Quote("dashboard_acl")+" WHERE dashboard_id =? and (user_group_id=? or user_id=?)", cmd.DashboardId, cmd.UserGroupId, cmd.UserId); err != nil {
 			return err
 		} else if len(res) == 1 {
+
 			entity := m.DashboardAcl{
-				Permissions: cmd.Permissions,
-				Updated:     time.Now(),
+				Permission: cmd.Permission,
+				Updated:    time.Now(),
 			}
-			if _, err := sess.Cols("updated", "permissions").Where("dashboard_id =? and (user_group_id=? or user_id=?)", cmd.DashboardId, cmd.UserGroupId, cmd.UserId).Update(&entity); err != nil {
+
+			if _, err := sess.Cols("updated", "permission").Where("dashboard_id =? and (user_group_id=? or user_id=?)", cmd.DashboardId, cmd.UserGroupId, cmd.UserId).Update(&entity); err != nil {
 				return err
 			}
 
@@ -45,10 +47,10 @@ func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 			Created:     time.Now(),
 			Updated:     time.Now(),
 			DashboardId: cmd.DashboardId,
-			Permissions: cmd.Permissions,
+			Permission:  cmd.Permission,
 		}
 
-		cols := []string{"org_id", "created", "updated", "dashboard_id", "permissions"}
+		cols := []string{"org_id", "created", "updated", "dashboard_id", "permission"}
 
 		if cmd.UserId != 0 {
 			cols = append(cols, "user_id")
@@ -58,12 +60,12 @@ func SetDashboardAcl(cmd *m.SetDashboardAclCommand) error {
 			cols = append(cols, "user_group_id")
 		}
 
-		entityId, err := sess.Cols(cols...).Insert(&entity)
+		_, err := sess.Cols(cols...).Insert(&entity)
 		if err != nil {
 			return err
 		}
+
 		cmd.Result = entity
-		cmd.Result.Id = entityId
 
 		// Update dashboard HasAcl flag
 		dashboard := m.Dashboard{
@@ -97,7 +99,7 @@ func GetInheritedDashboardAcl(query *m.GetInheritedDashboardAclQuery) error {
   da.dashboard_id,
   da.user_id,
   da.user_group_id,
-  da.permissions,
+  da.permission,
   da.created,
   da.updated
   FROM dashboard_acl as da
@@ -112,29 +114,51 @@ func GetInheritedDashboardAcl(query *m.GetInheritedDashboardAclQuery) error {
 }
 
 func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
-	rawSQL := `SELECT
-  da.id,
-  da.org_id,
-  da.dashboard_id,
-  da.user_id,
-  da.user_group_id,
-  da.permissions,
-  da.created,
-  da.updated,
-  u.login AS user_login,
-  u.email AS user_email,
-  ug.name AS user_group
+	rawSQL := `
+	SELECT
+		da.id,
+		da.org_id,
+		da.dashboard_id,
+		da.user_id,
+		da.user_group_id,
+		da.permission,
+		da.role,
+		da.created,
+		da.updated,
+		u.login AS user_login,
+		u.email AS user_email,
+		ug.name AS user_group
   FROM` + dialect.Quote("dashboard_acl") + ` as da
-  LEFT OUTER JOIN ` + dialect.Quote("user") + ` AS u ON u.id = da.user_id
-  LEFT OUTER JOIN user_group ug on ug.id = da.user_group_id
-  WHERE dashboard_id=?`
+		LEFT OUTER JOIN ` + dialect.Quote("user") + ` AS u ON u.id = da.user_id
+		LEFT OUTER JOIN user_group ug on ug.id = da.user_group_id
+	WHERE dashboard_id = ?
+
+	-- Also include default permission if has_acl = 0
+
+	UNION
+		SELECT
+			da.id,
+			da.org_id,
+			da.dashboard_id,
+			da.user_id,
+			da.user_group_id,
+			da.permission,
+			da.role,
+			da.created,
+			da.updated,
+			'' as user_login,
+			'' as user_email,
+			'' as user_group
+			FROM dashboard_acl as da, dashboard as dash
+			WHERE dash.id = ? AND dash.has_acl = 0 AND da.dashboard_id = -1
+	`
 
 	query.Result = make([]*m.DashboardAclInfoDTO, 0)
 
-	err := x.SQL(rawSQL, query.DashboardId).Find(&query.Result)
+	err := x.SQL(rawSQL, query.DashboardId, query.DashboardId).Find(&query.Result)
 
 	for _, p := range query.Result {
-		p.PermissionName = p.Permissions.String()
+		p.PermissionName = p.Permission.String()
 	}
 
 	return err

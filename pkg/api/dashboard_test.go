@@ -174,7 +174,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		aclMockResp := []*models.DashboardAcl{
 			{
 				DashboardId: 1,
-				Permissions: models.PERMISSION_EDIT,
+				Permission:  models.PERMISSION_EDIT,
 				UserId:      200,
 			},
 		}
@@ -273,7 +273,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			role := models.ROLE_VIEWER
 
 			mockResult := []*models.DashboardAcl{
-				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permissions: models.PERMISSION_EDIT},
+				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_EDIT},
 			}
 
 			bus.AddHandler("test", func(query *models.GetInheritedDashboardAclQuery) error {
@@ -315,7 +315,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			role := models.ROLE_EDITOR
 
 			mockResult := []*models.DashboardAcl{
-				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permissions: models.PERMISSION_VIEW},
+				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_VIEW},
 			}
 
 			bus.AddHandler("test", func(query *models.GetInheritedDashboardAclQuery) error {

@@ -7,37 +7,35 @@ const template = `
   <gf-form-dropdown model="ctrl.user"
                     get-options="ctrl.debouncedSearchUsers($query)"
                     css-class="gf-size-auto"
-                    on-change="ctrl.onChange()"
+                    on-change="ctrl.onChange($option)"
   </gf-form-dropdown>
 </div>
 `;
 export class UserPickerCtrl {
   user: any;
-  userId: number;
   debouncedSearchUsers: any;
+  userPicked: any;
 
   /** @ngInject */
   constructor(private backendSrv, private $scope, $sce) {
-    this.user = {text: 'Choose', value: null};
+    this.reset();
     this.debouncedSearchUsers = _.debounce(this.searchUsers, 500, {'leading': true, 'trailing': false});
   }
 
   searchUsers(query: string) {
     return Promise.resolve(this.backendSrv.get('/api/users/search?perpage=10&page=1&query=' + query).then(result => {
       return _.map(result.users, user => {
-        return {text: user.login + ' -  ' + user.email, value: user.id};
+        return {text: user.login + ' -  ' + user.email, value: user};
       });
     }));
   }
 
-  onChange() {
-    this.userId = this.user.value;
+  onChange(option) {
+    this.userPicked({$user: option.value});
   }
 
-  userIdChanged() {
-    if (this.userId === null) {
-      this.user = {text: 'Choose', value: null};
-    }
+  reset() {
+    this.user = {text: 'Choose', value: null};
   }
 }
 
@@ -56,11 +54,11 @@ export function userPicker() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      userId: '=',
+      userPicked: '&',
     },
     link: function(scope, elem, attrs, ctrl) {
-      scope.$watch("ctrl.userId", (newVal, oldVal) => {
-        ctrl.userIdChanged(newVal);
+      scope.$on("user-picker-reset", () => {
+        ctrl.reset();
       });
     }
   };

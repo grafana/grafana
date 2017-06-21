@@ -23,7 +23,8 @@ func GetDashboardAclList(c *middleware.Context) Response {
 		return ApiError(500, "Failed to get Dashboard ACL", err)
 	}
 
-	return Json(200, &query.Result)
+	list := query.Result
+	return Json(200, list)
 }
 
 func PostDashboardAcl(c *middleware.Context, cmd m.SetDashboardAclCommand) Response {

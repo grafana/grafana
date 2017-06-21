@@ -9,15 +9,15 @@ type PermissionType int
 
 const (
 	PERMISSION_VIEW PermissionType = 1 << iota
-	PERMISSION_READ_ONLY_EDIT
 	PERMISSION_EDIT
+	PERMISSION_ADMIN
 )
 
 func (p PermissionType) String() string {
 	names := map[int]string{
-		int(PERMISSION_VIEW):           "View",
-		int(PERMISSION_READ_ONLY_EDIT): "Read-only Edit",
-		int(PERMISSION_EDIT):           "Edit",
+		int(PERMISSION_VIEW):  "View",
+		int(PERMISSION_EDIT):  "Edit",
+		int(PERMISSION_ADMIN): "Admin",
 	}
 	return names[int(p)]
 }
@@ -36,7 +36,7 @@ type DashboardAcl struct {
 
 	UserId      int64
 	UserGroupId int64
-	Permissions PermissionType
+	Permission  PermissionType
 
 	Created time.Time
 	Updated time.Time
@@ -55,7 +55,8 @@ type DashboardAclInfoDTO struct {
 	UserEmail      string         `json:"userEmail"`
 	UserGroupId    int64          `json:"userGroupId"`
 	UserGroup      string         `json:"userGroup"`
-	Permissions    PermissionType `json:"permissions"`
+	Role           RoleType       `json:"role"`
+	Permission     PermissionType `json:"permission"`
 	PermissionName string         `json:"permissionName"`
 }
 
@@ -68,7 +69,7 @@ type SetDashboardAclCommand struct {
 	OrgId       int64          `json:"-"`
 	UserId      int64          `json:"userId"`
 	UserGroupId int64          `json:"userGroupId"`
-	Permissions PermissionType `json:"permissions" binding:"Required"`
+	Permission  PermissionType `json:"permission" binding:"Required"`
 
 	Result DashboardAcl `json:"-"`
 }

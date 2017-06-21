@@ -29,7 +29,7 @@ func (g *DashboardGuardian) CanSave() (bool, error) {
 }
 
 func (g *DashboardGuardian) CanEdit() (bool, error) {
-	return g.HasPermission(m.PERMISSION_READ_ONLY_EDIT, m.ROLE_READ_ONLY_EDITOR)
+	return g.HasPermission(m.PERMISSION_EDIT, m.ROLE_READ_ONLY_EDITOR)
 }
 
 func (g *DashboardGuardian) CanView() (bool, error) {
@@ -57,12 +57,12 @@ func (g *DashboardGuardian) HasPermission(permission m.PermissionType, fallbackR
 	}
 
 	for _, p := range acl {
-		if p.UserId == g.user.UserId && p.Permissions >= permission {
+		if p.UserId == g.user.UserId && p.Permission >= permission {
 			return true, nil
 		}
 
 		for _, ug := range userGroups {
-			if ug.Id == p.UserGroupId && p.Permissions >= permission {
+			if ug.Id == p.UserGroupId && p.Permission >= permission {
 				return true, nil
 			}
 		}
