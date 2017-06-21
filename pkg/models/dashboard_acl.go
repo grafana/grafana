@@ -8,7 +8,6 @@ import (
 type PermissionType int
 
 const (
-	PERMISSION_NONE                = 0
 	PERMISSION_VIEW PermissionType = 1 << iota
 	PERMISSION_EDIT
 	PERMISSION_ADMIN
@@ -16,7 +15,6 @@ const (
 
 func (p PermissionType) String() string {
 	names := map[int]string{
-		int(PERMISSION_NONE):  "None",
 		int(PERMISSION_VIEW):  "View",
 		int(PERMISSION_EDIT):  "Edit",
 		int(PERMISSION_ADMIN): "Admin",
