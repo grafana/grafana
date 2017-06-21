@@ -57,12 +57,12 @@ func (g *DashboardGuardian) HasPermission(permission m.PermissionType, fallbackR
 	}
 
 	for _, p := range acl {
-		if p.UserId == g.user.UserId && p.Permissions >= permission {
+		if p.UserId == g.user.UserId && p.Permission >= permission {
 			return true, nil
 		}
 
 		for _, ug := range userGroups {
-			if ug.Id == p.UserGroupId && p.Permissions >= permission {
+			if ug.Id == p.UserGroupId && p.Permission >= permission {
 				return true, nil
 			}
 		}

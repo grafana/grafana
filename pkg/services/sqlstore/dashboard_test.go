@@ -384,7 +384,7 @@ func updateTestDashboardWithAcl(dashId int64, userId int64, permissions m.Permis
 		OrgId:       1,
 		UserId:      userId,
 		DashboardId: dashId,
-		Permissions: permissions,
+		Permission:  permissions,
 	})
 	So(err, ShouldBeNil)
 }

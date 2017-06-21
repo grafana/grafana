@@ -38,7 +38,7 @@ type DashboardAcl struct {
 
 	UserId      int64
 	UserGroupId int64
-	Permissions PermissionType
+	Permission  PermissionType
 
 	Created time.Time
 	Updated time.Time
@@ -58,7 +58,7 @@ type DashboardAclInfoDTO struct {
 	UserGroupId    int64          `json:"userGroupId"`
 	UserGroup      string         `json:"userGroup"`
 	Role           RoleType       `json:"role"`
-	Permissions    PermissionType `json:"permissions"`
+	Permission     PermissionType `json:"permission"`
 	PermissionName string         `json:"permissionName"`
 }
 
@@ -71,7 +71,7 @@ type SetDashboardAclCommand struct {
 	OrgId       int64          `json:"-"`
 	UserId      int64          `json:"userId"`
 	UserGroupId int64          `json:"userGroupId"`
-	Permissions PermissionType `json:"permissions" binding:"Required"`
+	Permission  PermissionType `json:"permission" binding:"Required"`
 
 	Result DashboardAcl `json:"-"`
 }

@@ -20,7 +20,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				err := SetDashboardAcl(&m.SetDashboardAclCommand{
 					OrgId:       1,
 					DashboardId: savedFolder.Id,
-					Permissions: m.PERMISSION_EDIT,
+					Permission:  m.PERMISSION_EDIT,
 				})
 				So(err, ShouldEqual, m.ErrDashboardAclInfoMissing)
 			})
@@ -30,7 +30,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					OrgId:       1,
 					UserId:      currentUser.Id,
 					DashboardId: savedFolder.Id,
-					Permissions: m.PERMISSION_EDIT,
+					Permission:  m.PERMISSION_EDIT,
 				})
 				So(err, ShouldBeNil)
 
@@ -49,7 +49,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 						OrgId:       1,
 						UserId:      currentUser.Id,
 						DashboardId: childDash.Id,
-						Permissions: m.PERMISSION_EDIT,
+						Permission:  m.PERMISSION_EDIT,
 					})
 					So(err, ShouldBeNil)
 
@@ -67,23 +67,29 @@ func TestDashboardAclDataAccess(t *testing.T) {
 			})
 
 			Convey("Should be able to add dashboard permission", func() {
-				err := SetDashboardAcl(&m.SetDashboardAclCommand{
+				setDashAclCmd := m.SetDashboardAclCommand{
 					OrgId:       1,
 					UserId:      currentUser.Id,
 					DashboardId: savedFolder.Id,
-					Permissions: m.PERMISSION_EDIT,
-				})
+					Permission:  m.PERMISSION_EDIT,
+				}
+
+				err := SetDashboardAcl(&setDashAclCmd)
 				So(err, ShouldBeNil)
+
+				So(setDashAclCmd.Result.Id, ShouldEqual, 3)
 
 				q1 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
 				err = GetDashboardAclInfoList(q1)
 				So(err, ShouldBeNil)
+
 				So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-				So(q1.Result[0].Permissions, ShouldEqual, m.PERMISSION_EDIT)
+				So(q1.Result[0].Permission, ShouldEqual, m.PERMISSION_EDIT)
 				So(q1.Result[0].PermissionName, ShouldEqual, "Edit")
 				So(q1.Result[0].UserId, ShouldEqual, currentUser.Id)
 				So(q1.Result[0].UserLogin, ShouldEqual, currentUser.Login)
 				So(q1.Result[0].UserEmail, ShouldEqual, currentUser.Email)
+				So(q1.Result[0].Id, ShouldEqual, setDashAclCmd.Result.Id)
 
 				Convey("Should update hasAcl field to true for dashboard folder and its children", func() {
 					q2 := &m.GetDashboardsQuery{DashboardIds: []int64{savedFolder.Id, childDash.Id}}
@@ -98,8 +104,9 @@ func TestDashboardAclDataAccess(t *testing.T) {
 						OrgId:       1,
 						UserId:      1,
 						DashboardId: savedFolder.Id,
-						Permissions: m.PERMISSION_READ_ONLY_EDIT,
+						Permission:  m.PERMISSION_ADMIN,
 					})
+
 					So(err, ShouldBeNil)
 
 					q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
@@ -107,7 +114,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 1)
 					So(q3.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-					So(q3.Result[0].Permissions, ShouldEqual, m.PERMISSION_READ_ONLY_EDIT)
+					So(q3.Result[0].Permission, ShouldEqual, m.PERMISSION_ADMIN)
 					So(q3.Result[0].UserId, ShouldEqual, 1)
 
 				})
@@ -115,8 +122,9 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				Convey("Should be able to delete an existing permission", func() {
 					err := RemoveDashboardAcl(&m.RemoveDashboardAclCommand{
 						OrgId: 1,
-						AclId: 1,
+						AclId: setDashAclCmd.Result.Id,
 					})
+
 					So(err, ShouldBeNil)
 
 					q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
@@ -132,20 +140,35 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("Should be able to add a user permission for a user group", func() {
-					err := SetDashboardAcl(&m.SetDashboardAclCommand{
+					setDashAclCmd := m.SetDashboardAclCommand{
 						OrgId:       1,
 						UserGroupId: group1.Result.Id,
 						DashboardId: savedFolder.Id,
-						Permissions: m.PERMISSION_EDIT,
-					})
+						Permission:  m.PERMISSION_EDIT,
+					}
+
+					err := SetDashboardAcl(&setDashAclCmd)
 					So(err, ShouldBeNil)
 
 					q1 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
 					err = GetDashboardAclInfoList(q1)
 					So(err, ShouldBeNil)
 					So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-					So(q1.Result[0].Permissions, ShouldEqual, m.PERMISSION_EDIT)
+					So(q1.Result[0].Permission, ShouldEqual, m.PERMISSION_EDIT)
 					So(q1.Result[0].UserGroupId, ShouldEqual, group1.Result.Id)
+
+					Convey("Should be able to delete an existing permission for a user group", func() {
+						err := RemoveDashboardAcl(&m.RemoveDashboardAclCommand{
+							OrgId: 1,
+							AclId: setDashAclCmd.Result.Id,
+						})
+
+						So(err, ShouldBeNil)
+						q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
+						err = GetDashboardAclInfoList(q3)
+						So(err, ShouldBeNil)
+						So(len(q3.Result), ShouldEqual, 0)
+					})
 				})
 
 				Convey("Should be able to update an existing permission for a user group", func() {
@@ -153,7 +176,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 						OrgId:       1,
 						UserGroupId: group1.Result.Id,
 						DashboardId: savedFolder.Id,
-						Permissions: m.PERMISSION_READ_ONLY_EDIT,
+						Permission:  m.PERMISSION_ADMIN,
 					})
 					So(err, ShouldBeNil)
 
@@ -162,23 +185,10 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 1)
 					So(q3.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
-					So(q3.Result[0].Permissions, ShouldEqual, m.PERMISSION_READ_ONLY_EDIT)
+					So(q3.Result[0].Permission, ShouldEqual, m.PERMISSION_ADMIN)
 					So(q3.Result[0].UserGroupId, ShouldEqual, group1.Result.Id)
-
 				})
 
-				Convey("Should be able to delete an existing permission for a user group", func() {
-					err := RemoveDashboardAcl(&m.RemoveDashboardAclCommand{
-						OrgId: 1,
-						AclId: 1,
-					})
-					So(err, ShouldBeNil)
-
-					q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
-					err = GetDashboardAclInfoList(q3)
-					So(err, ShouldBeNil)
-					So(len(q3.Result), ShouldEqual, 0)
-				})
 			})
 		})
 	})

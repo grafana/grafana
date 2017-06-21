@@ -174,10 +174,10 @@ func TestAccountDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 3)
 
-					err = SetDashboardAcl(&m.SetDashboardAclCommand{DashboardId: 1, OrgId: ac1.OrgId, UserId: ac3.Id, Permissions: m.PERMISSION_EDIT})
+					err = SetDashboardAcl(&m.SetDashboardAclCommand{DashboardId: 1, OrgId: ac1.OrgId, UserId: ac3.Id, Permission: m.PERMISSION_EDIT})
 					So(err, ShouldBeNil)
 
-					err = SetDashboardAcl(&m.SetDashboardAclCommand{DashboardId: 2, OrgId: ac3.OrgId, UserId: ac3.Id, Permissions: m.PERMISSION_EDIT})
+					err = SetDashboardAcl(&m.SetDashboardAclCommand{DashboardId: 2, OrgId: ac3.OrgId, UserId: ac3.Id, Permission: m.PERMISSION_EDIT})
 					So(err, ShouldBeNil)
 
 					Convey("When org user is deleted", func() {
