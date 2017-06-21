@@ -4,66 +4,38 @@ import _ from 'lodash';
 
 const template = `
 <div class="dropdown">
-  <metric-segment segment="ctrl.userGroupSegment"
-    get-options="ctrl.debouncedSearchUserGroups($query)"
-    on-change="ctrl.onChange()"></metric-segment>
-  </div>
+  <gf-form-dropdown model="ctrl.group"
+                    get-options="ctrl.debouncedSearchGroups($query)"
+                    css-class="gf-size-auto"
+                    on-change="ctrl.onChange($option)"
+  </gf-form-dropdown>
+</div>
 `;
 export class UserGroupPickerCtrl {
-  userGroupSegment: any;
-  userGroupId: number;
-  debouncedSearchUserGroups: any;
+  group: any;
+  userGroupPicked: any;
+  debouncedSearchGroups: any;
 
   /** @ngInject */
   constructor(private backendSrv, private $scope, $sce, private uiSegmentSrv) {
-    this.debouncedSearchUserGroups = _.debounce(this.searchUserGroups, 500, {'leading': true, 'trailing': false});
-    this.resetUserGroupSegment();
+    this.debouncedSearchGroups = _.debounce(this.searchGroups, 500, {'leading': true, 'trailing': false});
+    this.reset();
   }
 
-  resetUserGroupSegment() {
-    this.userGroupId = null;
-
-    const userGroupSegment = this.uiSegmentSrv.newSegment({
-      value: 'Choose',
-      selectMode: true,
-      fake: true,
-      cssClass: 'gf-size-auto'
-    });
-
-    if (!this.userGroupSegment) {
-      this.userGroupSegment = userGroupSegment;
-    } else {
-      this.userGroupSegment.value = userGroupSegment.value;
-      this.userGroupSegment.html = userGroupSegment.html;
-      this.userGroupSegment.value = userGroupSegment.value;
-    }
+  reset() {
+    this.group = {text: 'Choose', value: null};
   }
 
-  userGroupIdChanged(newVal) {
-    if (!newVal) {
-      this.resetUserGroupSegment();
-    }
-  }
-
-  searchUserGroups(query: string) {
+  searchGroups(query: string) {
     return Promise.resolve(this.backendSrv.get('/api/user-groups/search?perpage=10&page=1&query=' + query).then(result => {
-      return _.map(result.userGroups, ug => { return this.uiSegmentSrv.newSegment(ug.name); });
+      return _.map(result.userGroups, ug => {
+        return {text: ug.name, value: ug};
+      });
     }));
   }
 
-  onChange() {
-    this.backendSrv.get('/api/user-groups/search?perpage=10&page=1&query=' + this.userGroupSegment.value)
-      .then(result => {
-        if (!result) {
-          return;
-        }
-
-        result.userGroups.forEach(ug => {
-          if (ug.name === this.userGroupSegment.value) {
-            this.userGroupId = ug.id;
-          }
-        });
-    });
+  onChange(option) {
+    this.userGroupPicked({$group: option.value});
   }
 }
 
@@ -75,11 +47,11 @@ export function userGroupPicker() {
     bindToController: true,
     controllerAs: 'ctrl',
     scope: {
-      userGroupId: '=',
+      userGroupPicked: '&',
     },
     link: function(scope, elem, attrs, ctrl) {
-      scope.$watch("ctrl.userGroupId", (newVal, oldVal) => {
-        ctrl.userGroupIdChanged(newVal);
+      scope.$on("user-group-picker-reset", () => {
+        ctrl.reset();
       });
     }
   };

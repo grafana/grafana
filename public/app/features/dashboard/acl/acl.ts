@@ -12,19 +12,26 @@ export class AclCtrl {
     {value: 2, text: 'Edit'},
     {value: 4, text: 'Admin'}
   ];
+  aclTypes = [
+    {value: 'Group', text: 'User Group'},
+    {value: 'User',  text: 'User'},
+    {value: 'Viewer', text: 'Everyone With Viewer Role'},
+    {value: 'Editor', text: 'Everyone With Editor Role'}
+  ];
 
   newType: string;
-  newAcl: DashboardAcl;
   canUpdate: boolean;
 
   /** @ngInject */
   constructor(private backendSrv, private dashboardSrv, private $sce, private $scope) {
     this.aclItems = [];
-    this.newType = 'User Group';
-    this.resetNew();
-
+    this.resetNewType();
     this.dashboard = dashboardSrv.getCurrent();
     this.get(this.dashboard.id);
+  }
+
+  resetNewType() {
+    this.newType = 'Group';
   }
 
   get(dashboardId: number) {
@@ -49,24 +56,30 @@ export class AclCtrl {
     return item;
   }
 
-  addPermission() {
-    this.aclItems.push(this.prepareViewModel(this.newAcl));
-    this.$scope.$broadcast('user-picker-reset');
-    this.$scope.$broadcast('user-group-picker-reset');
-  }
-
-  resetNew() {
-    this.newAcl = {
-      userId: 0,
-      userGroupId: 0,
-      permission: 1
-    };
-  }
-
   update() {
     return this.backendSrv.post(`/api/dashboards/id/${this.dashboard.id}/acl`, {
-      acl: this.aclItems
+      acl: this.aclItems.map(item => {
+        return {
+          id: item.id,
+          userId: item.userId,
+          userGroupId: item.userGroupId,
+          role: item.role,
+          permission: item.permission,
+        };
+      })
     });
+  }
+
+  typeChanged() {
+    if (this.newType === 'Viewer' || this.newType === 'Editor') {
+      this.aclItems.push(this.prepareViewModel({
+        permission: 1,
+        role: this.newType
+      }));
+
+      this.canUpdate = true;
+      this.resetNewType();
+    }
   }
 
   permissionChanged() {
@@ -74,8 +87,26 @@ export class AclCtrl {
   }
 
   userPicked(user) {
-    this.newAcl.userLogin = user.login;
-    this.newAcl.userId = user.id;
+    this.aclItems.push(this.prepareViewModel({
+      userId: user.id,
+      userLogin: user.login,
+      permission: 1,
+    }));
+
+    this.canUpdate = true;
+    this.$scope.$broadcast('user-picker-reset');
+  }
+
+  groupPicked(group) {
+    console.log(group);
+    this.aclItems.push(this.prepareViewModel({
+      userGroupId: group.id,
+      userGroup: group.name,
+      permission: 1,
+    }));
+
+    this.canUpdate = true;
+    this.$scope.$broadcast('user-group-picker-reset');
   }
 
   removeItem(index) {
@@ -107,10 +138,10 @@ export interface FormModel {
 export interface DashboardAcl {
   id?: number;
   dashboardId?: number;
-  userId: number;
+  userId?: number;
   userLogin?: number;
   userEmail?: string;
-  userGroupId: number;
+  userGroupId?: number;
   userGroup?: string;
   permission?: number;
   permissionName?: string;

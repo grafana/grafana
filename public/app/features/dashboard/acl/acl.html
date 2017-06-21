@@ -31,7 +31,7 @@
       </tr>
       <tr ng-show="ctrl.aclItems.length === 0">
         <td colspan="4">
-          <em>No permission, will only accessable by admins.</em>
+          <em>No permissions. Will only be accessible by admins.</em>
         </td>
       </tr>
     </table>
@@ -41,25 +41,14 @@
       <div class="gf-form-inline">
         <div class="gf-form">
           <div class="gf-form-select-wrapper">
-            <select class="gf-form-input gf-size-auto" ng-model="ctrl.newType" ng-options="r for r in ['User Group', 'User']"></select>
+            <select class="gf-form-input gf-size-auto" ng-model="ctrl.newType" ng-options="p.value as p.text for p in ctrl.aclTypes"  ng-change="ctrl.typeChanged()"></select>
           </div>
         </div>
         <div class="gf-form" ng-show="ctrl.newType === 'User'">
-          <span class="gf-form-label">User</span>
           <user-picker user-picked="ctrl.userPicked($user)"></user-picker>
         </div>
-        <div class="gf-form" ng-show="ctrl.newType === 'User Group'">
-          <span class="gf-form-label">User Group</span>
-          <user-group-picker user-group-id="ctrl.newAcl.userGroupId"></user-group-picker>
-        </div>
-        <div class="gf-form">
-          <span class="gf-form-label query-keyword">Can</span>
-          <div class="gf-form-select-wrapper">
-            <select class="gf-form-input gf-size-auto" ng-model="ctrl.newAcl.permission" ng-options="p.value as p.text for p in ctrl.permissionOptions"></select>
-          </div>
-        </div>
-        <div class="gf-form">
-          <button class="btn gf-form-btn btn-secondary" ng-click="ctrl.addPermission()">Add</button>
+        <div class="gf-form" ng-show="ctrl.newType === 'Group'">
+          <user-group-picker user-group-picked="ctrl.groupPicked($group)"></user-group-picker>
         </div>
       </div>
     </form>
