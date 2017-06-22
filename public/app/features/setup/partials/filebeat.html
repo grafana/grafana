@@ -1,0 +1,91 @@
+<topnav section="安装指南" icon="fa fa-fw fa-cloud-download"></topnav>
+<div class="page-container">
+  <h2>日志收集配置<span style="font-size:14px; margin-left:20px;">* 注意: 请严格按照参考实例格式</span></h2>
+  <h4>1. 修改日志配置文件</h4>
+  <h5>1.1 收集以"时间"开头的日志信息</h5>
+  <ul style="list-style:lower-roman;">
+    <li>
+      <p style="word-break: break-all">查找配置文件</p>
+      <div class="tight-form last">
+        <p  class="code-block">/opt/cloudwiz-agent/filebeat-1.3.1/filebeat.yml</p>
+      </div>
+    </li>
+    <li>
+      <p style="word-break: break-all">添加需要收集的日志路径</p>
+      <div class="tight-form last">
+        <p class="code-block">-</p>
+        <p class="code-block indent2">paths:</p>
+        <p class="code-block indent4 bold">- 需要收集的日志路径(可添加一条或多条)</p>
+      </div>
+    </li>
+    <li>
+      <p style="word-break: break-all">例如:</p>
+      <div class="tight-form last">
+        <p class="code-block">- /opt/cloudwiz-agent/altenv/var/log/collector.log</p>
+      </div>
+    </li>
+  </ul>
+
+  <h5>1.2 收集以"其他格式"开头的日志信息</h5>
+  <ul style="list-style:lower-roman;">
+    <li>
+      <p style="word-break: break-all">查找配置文件</p>
+      <div class="tight-form last">
+        <p class="code-block">/opt/cloudwiz-agent/filebeat-1.3.1/filebeat.yml</p>
+      </div>
+    </li>
+    <li>
+      <p style="word-break: break-all">在"prospectors"中添加以下信息</p>
+      <div class="tight-form last">
+        <p class="code-block">-</p>
+        <p class="code-block indent2">paths:</p>
+        <p class="code-block indent4 bold"> - /test.log</p>
+        <p class="code-block indent2">input_type: log</p>
+        <p class="code-block indent2">document_type: collector</p>
+        <p class="code-block indent2">fields:</p>
+        <p class="code-block indent4 bold">token: "{{token}}"</p>
+        <p class="code-block indent2">fields_under_root: true</p>
+        <p class="code-block indent2">close_older: 2h</p>
+        <p class="code-block indent2">multiline:</p>
+        <p class="code-block indent4 bold">pattern: '此处请填写匹配相应日志头的正则表达式'</p>
+        <p class="code-block indent4">negate: true</p>
+        <p class="code-block indent4">match: after</p>
+      </div>
+    </li>
+  </ul>
+
+  <h4>2. 相关操作</h4>
+  <ul style="list-style:lower-roman;">
+    <li>
+      <p style="word-break: break-all">查看状态</p>
+      <div class="tight-form last">
+        <p  class="code-block">/etc/init.d/cloudwiz-agent status</p>
+      </div>
+    </li>
+    <li>
+      <p style="word-break: break-all">重启</p>
+      <div class="tight-form last">
+        <p  class="code-block">/etc/init.d/cloudwiz-agent restart cloudwiz-agent:filebeat</p>
+      </div>
+    </li>
+    <li>
+      <p style="word-break: break-all">停止</p>
+      <div class="tight-form last">
+        <p class="code-block">/etc/init.d/cloudwiz-agent stop cloudwiz-agent:filebeat</p>
+      </div>
+    </li>
+    <li>
+      <p style="word-break: break-all">启动</p>
+      <div class="tight-form last">
+        <p class="code-block">/etc/init.d/cloudwiz-agent start cloudwiz-agent:filebeat</p>
+      </div>
+    </li>
+  </ul>
+
+  <h4>3. 了解更多</h4>
+  <p>如果您想了解更多关于filebeat的相关信息，
+    <a href="https://www.elastic.co/guide/en/beats/filebeat/current/configuration-filebeat-options.html" target="_blank" style="color:blue">请点击这里</a>
+  </p>
+
+</div>
+
