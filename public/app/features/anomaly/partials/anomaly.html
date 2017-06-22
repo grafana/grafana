@@ -10,21 +10,21 @@
     <p>自动检测到所有<strong>{{ summary.numMetrics }}</strong>个指标中: 计算扫描了数据点有 <strong>{{ summary.numDataPoints }}</strong>个  异常指标 <strong>{{ summary.numAnomalyMetrics }}</strong>个  异常点总共有 <strong>{{ summary.numAnomaliesInCache }}</strong>个 <tip>通过全局扫描,并根据历史记录来自动检测异常点信息</tip></p>
     <p>异常指标聚类结果反映在点图上, 点与点之间的距离能够反映异常集合间的相似程度</p>
 
-    <div ng-if="!(summary.metricHostClusters.length && summary.metricHostNotClustered.elements.length)">
+    <div ng-if="!(summary.metricHostClusters.elements.length || summary.metricHostNotClustered.elements.length)">
       <em>系统一切正常</em>
     </div>
     <div class="cluster-container pull-left" style="position:relative; width:45%;">
       <div id="cluster" style="width:100%; height:500px;"></div>
       <div id="overview" style="width:40%; height:125px; position:absolute; bottom:0px; right:0px;"></div>
     </div>
-    <div class=" pull-right" style="width:50%; max-height:500px; overflow:auto;">
-      <table class="grafana-options-table"  ng-if="summary.metricHostClusters.length && summary.metricHostNotClustered.elements.length">
+    <div class=" pull-right" style="width:50%; max-height:500px; overflow:auto;" ng-if="summary.metricHostClusters.elements.length || summary.metricHostNotClustered.elements.length">
+      <table class="grafana-options-table">
         <tr>
           <td><strong>指标名称</strong></td>
           <td><strong>异常指数</strong></td>
           <td><strong>操作</strong></td>
         </tr>
-        <tr ng-repeat="cluster in metricHostClusters">
+        <tr ng-repeat="cluster in metricHostClusters" ng-if="cluster.health != 100">
           <td style="max-width: 230px;">
             <p ng-if="cluster.index != clustersLength - 1" class="max-width" title="{{_.getMetricName(cluster.elements[0].metric)}}"><i class="fa fa-bell"></i> &nbsp; {{_.getMetricName(cluster.elements[0].metric)}} 等{{cluster.numElements}}个</p>
             <p ng-if="cluster.index == clustersLength - 1" class="max-width"><i class="fa fa-bell"></i> &nbsp; 尚未被分类的异常点{{cluster.numElements}}个</p>

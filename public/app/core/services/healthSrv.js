@@ -41,7 +41,9 @@ function (angular, _, coreModule) {
           for (var i = 0; i < cluster.elements.length; i++) {
             cluster.health += cluster.elements[i].health;
           }
-          cluster.health = Math.floor(cluster.health / cluster.numElements);
+          var divisor = cluster.numElements || 1;
+          var health = cluster.numElements ? cluster.health : 100;
+          cluster.health = Math.floor(health / divisor);
           cluster.index = index;
         });
         return metricHostClusters;
