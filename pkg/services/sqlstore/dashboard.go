@@ -204,12 +204,12 @@ func findDashboards(query *search.FindPersistedDashboardsQuery) ([]DashboardSear
 		allowedDashboardsSubQuery := ` AND (dashboard.has_acl = 0 OR dashboard.id in (
 		SELECT distinct d.id AS DashboardId
 			FROM dashboard AS d
-				LEFT JOIN dashboard AS df ON d.parent_id = df.id
-				LEFT JOIN dashboard_acl as dfa on d.parent_id = dfa.dashboard_id or d.id = dfa.dashboard_id
-				LEFT JOIN user_group_member as ugm on ugm.user_group_id =  dfa.user_group_id
+	      LEFT JOIN dashboard_acl as da on d.parent_id = da.dashboard_id or d.id = da.dashboard_id
+	      LEFT JOIN user_group_member as ugm on ugm.user_group_id =  da.user_group_id
+	      LEFT JOIN org_user ou on ou.role = da.role
 			WHERE
 			  d.has_acl = 1 and
-				(dfa.user_id = ? or ugm.user_id = ?)
+				(da.user_id = ? or ugm.user_id = ? or ou.id is not null)
 			  and d.org_id = ?
 			  ))`
 
