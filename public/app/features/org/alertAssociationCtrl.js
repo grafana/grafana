@@ -30,22 +30,22 @@ function (angular, _, noUiSlider) {
       });
       alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
         var correlationOfAlertMap = response.data;
-        for (var host in correlationOfAlertMap) {
-          //TODO only support one host
-          var correlatedMetrics = correlationOfAlertMap[host];
-          $scope.correlatedMetrics = correlatedMetrics;
-        }
-      }).finally(function() {
-        if (!_.isEmpty($scope.correlatedMetrics)) {
+        if (!_.isEmpty(correlationOfAlertMap)) {
           $scope.isAssociation = true;
+          for (var host in correlationOfAlertMap) {
+            //TODO only support one host
+            var correlatedMetrics = correlationOfAlertMap[host];
+            $scope.correlatedMetrics = correlatedMetrics;
+          }
           for (var m in $scope.correlatedMetrics) {
             if(_.isEqual(m, alertMetric)){
               delete $scope.correlatedMetrics[m];
             }
           }
         } else {
-          $scope.isAssociation = false;
+          $scope.removeAllQuery();
         }
+      }).finally(function() {
         if(!$scope.dashboard) {
           $scope.createAlertMetricsGraph(_.getMetricName(alertMetric), alertHost);
         } else {
@@ -234,6 +234,20 @@ function (angular, _, noUiSlider) {
     $scope.isManualMetric = function (metricName) {
       return _.indexOf($scope.manualMetrics, metricName) > -1 ? true : false;
     };
+
+    $scope.removeAllQuery = function() {
+      $scope.isAssociation = false;
+      $scope.correlatedMetrics = {};
+      var metric = _.getMetricName(alertMetric);
+      _.each($scope.dashboard.rows[0].panels[0].targets, function (target) {
+        if(target.metric == metric){
+          target.hide = false;
+        } else {
+          target.hide = true;
+        }
+      });
+    };
+
     $scope.init();
   });
 
