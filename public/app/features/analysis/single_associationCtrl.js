@@ -1,7 +1,8 @@
 define([
     'angular',
     'lodash',
-    'app/features/org/alertAssociationCtrl'
+    'app/features/org/alertAssociationCtrl',
+    'app/plugins/datasource/opentsdb/queryCtrl',
   ],
   function (angular, _) {
     'use strict';

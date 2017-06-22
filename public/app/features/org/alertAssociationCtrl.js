@@ -24,9 +24,6 @@ function (angular, _, noUiSlider) {
     };
 
     $scope.init = function() {
-      if ($scope.dashboard) {
-        return;
-      }
       $scope.manualMetrics = [];
       datasourceSrv.get('opentsdb').then(function (datasource) {
         $scope.datasource = datasource;
@@ -39,17 +36,24 @@ function (angular, _, noUiSlider) {
           $scope.correlatedMetrics = correlatedMetrics;
         }
       }).finally(function() {
-        if (!_.isEmpty($scope.correlatedMetrics)) {
-          $scope.isAssociation = true;
-          for (var m in $scope.correlatedMetrics) {
-            if(_.isEqual(m, alertMetric)){
-              delete $scope.correlatedMetrics[m];
+        if(!$scope.dashboard) {
+          if (!_.isEmpty($scope.correlatedMetrics)) {
+            $scope.isAssociation = true;
+            for (var m in $scope.correlatedMetrics) {
+              if(_.isEqual(m, alertMetric)){
+                delete $scope.correlatedMetrics[m];
+              }
             }
+          } else {
+            $scope.isAssociation = false;
           }
+          $scope.createAlertMetricsGraph(_.getMetricName(alertMetric), alertHost);
         } else {
-          $scope.isAssociation = false;
+          var metric = _.getMetricName(alertMetric)
+          $scope.dashboard.rows[0].panels[0].title = metric;
+          $scope.dashboard.rows[0].panels[0].targets[0].metric = metric;
+          $scope.$broadcast('refresh');
         }
-        $scope.createAlertMetricsGraph(_.getMetricName(alertMetric), alertHost);
       });
     };
 
