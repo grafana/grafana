@@ -63,7 +63,7 @@
             </tr>
         </table>
     </div>
-    <p ng-if="!isAssociation && status">关联性分析结果尚未计算完成,请选择其他指标进行查询</p>
+    <p ng-if="!isAssociation && status">关联性分析结果尚未计算完成,请选择其他指标进行查询<button class="btn btn-small btn-primary" ng-click="flushResult()">刷新结果</button></p>
     <div class="main-view-container">
         <div class="grafana-row" ng-controller="RowCtrl"
             ng-repeat="(row_name, row) in dashboard.rows" row-height>

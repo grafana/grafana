@@ -36,17 +36,17 @@ function (angular, _, noUiSlider) {
           $scope.correlatedMetrics = correlatedMetrics;
         }
       }).finally(function() {
-        if(!$scope.dashboard) {
-          if (!_.isEmpty($scope.correlatedMetrics)) {
-            $scope.isAssociation = true;
-            for (var m in $scope.correlatedMetrics) {
-              if(_.isEqual(m, alertMetric)){
-                delete $scope.correlatedMetrics[m];
-              }
+        if (!_.isEmpty($scope.correlatedMetrics)) {
+          $scope.isAssociation = true;
+          for (var m in $scope.correlatedMetrics) {
+            if(_.isEqual(m, alertMetric)){
+              delete $scope.correlatedMetrics[m];
             }
-          } else {
-            $scope.isAssociation = false;
           }
+        } else {
+          $scope.isAssociation = false;
+        }
+        if(!$scope.dashboard) {
           $scope.createAlertMetricsGraph(_.getMetricName(alertMetric), alertHost);
         } else {
           var metric = _.getMetricName(alertMetric)
@@ -122,13 +122,17 @@ function (angular, _, noUiSlider) {
     };
 
     $scope.flushResult = function () {
-      alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
-        if (!_.isEmpty(response.data)) {
-          $scope.init();
-        } else {
-          $scope.appEvent('alert-warning', ['抱歉', '运算还在进行']);
-        }
-      });
+      $scope.appEvent('alert-warning', ['请稍后', '关联性分析将于5分钟之后计算完成,先去别处逛逛吧']);
+      $timeout(function() {
+        alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
+          if (!_.isEmpty(response.data)) {
+            $scope.init();
+            $scope.appEvent('alert-success', ['关联性分析计算完成', '请在关联性分析中查看metric:"'+alertMetric+'" host:"'+alertHost+'" 的关联结果']);
+          } else {
+            $scope.appEvent('alert-warning', ['关联性分析暂无计算结果', alertMetric + '暂无相关指标']);
+          }
+        });
+      }, 30000);
     };
 
     $scope.createAssociatedMetricGraphPanel = function(associatedMetrics) {
