@@ -50,24 +50,47 @@ func (g *DashboardGuardian) HasPermission(permission m.PermissionType) (bool, er
 		return false, err
 	}
 
+	orgRole := g.user.OrgRole
+	if orgRole == m.ROLE_READ_ONLY_EDITOR {
+		orgRole = m.ROLE_VIEWER
+	}
+
+	userGroupAclItems := []*m.DashboardAclInfoDTO{}
+
+	for _, p := range acl {
+		// user match
+		if p.UserId == g.user.UserId && p.Permission >= permission {
+			return true, nil
+		}
+
+		// role match
+		if p.Role != nil {
+			if *p.Role == orgRole && p.Permission >= permission {
+				return true, nil
+			}
+		}
+
+		// remember this rule for later
+		if p.UserGroupId > 0 {
+			userGroupAclItems = append(userGroupAclItems, p)
+		}
+	}
+
+	// do we have group rules?
+	if len(userGroupAclItems) == 0 {
+		return false, nil
+	}
+
+	// load groups
 	userGroups, err := g.getUserGroups()
 	if err != nil {
 		return false, err
 	}
 
+	// evalute group rules
 	for _, p := range acl {
-		if p.UserId == g.user.UserId && p.Permission >= permission {
-			return true, nil
-		}
-
 		for _, ug := range userGroups {
 			if ug.Id == p.UserGroupId && p.Permission >= permission {
-				return true, nil
-			}
-		}
-
-		if p.Role != nil {
-			if *p.Role == g.user.OrgRole && p.Permission >= permission {
 				return true, nil
 			}
 		}

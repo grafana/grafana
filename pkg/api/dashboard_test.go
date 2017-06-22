@@ -12,7 +12,7 @@ import (
 	"github.com/grafana/grafana/pkg/bus"
 	"github.com/grafana/grafana/pkg/components/simplejson"
 	"github.com/grafana/grafana/pkg/middleware"
-	"github.com/grafana/grafana/pkg/models"
+	m "github.com/grafana/grafana/pkg/models"
 	"github.com/grafana/grafana/pkg/services/alerting"
 
 	. "github.com/smartystreets/goconvey/convey"
@@ -20,23 +20,35 @@ import (
 
 func TestDashboardApiEndpoint(t *testing.T) {
 	Convey("Given a dashboard with a parent folder which does not have an acl", t, func() {
-		fakeDash := models.NewDashboard("Child dash")
+		fakeDash := m.NewDashboard("Child dash")
 		fakeDash.Id = 1
 		fakeDash.ParentId = 1
 		fakeDash.HasAcl = false
 
-		bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
 			query.Result = fakeDash
 			return nil
 		})
 
-		aclMockResp := []*models.DashboardAcl{}
-		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+		viewerRole := m.ROLE_VIEWER
+		editorRole := m.ROLE_EDITOR
+
+		aclMockResp := []*m.DashboardAclInfoDTO{
+			{Role: &viewerRole, Permission: m.PERMISSION_VIEW},
+			{Role: &editorRole, Permission: m.PERMISSION_EDIT},
+		}
+
+		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
 			query.Result = aclMockResp
 			return nil
 		})
 
-		cmd := models.SaveDashboardCommand{
+		bus.AddHandler("test", func(query *m.GetUserGroupsByUserQuery) error {
+			query.Result = []*m.UserGroup{}
+			return nil
+		})
+
+		cmd := m.SaveDashboardCommand{
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
 				"parentId": fakeDash.ParentId,
 				"title":    fakeDash.Title,
@@ -45,7 +57,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		}
 
 		Convey("When user is an Org Viewer", func() {
-			role := models.ROLE_VIEWER
+			role := m.ROLE_VIEWER
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
 				dash := GetDashboardShouldReturn200(sc)
@@ -78,12 +90,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		})
 
 		Convey("When user is an Org Read Only Editor", func() {
-			role := models.ROLE_READ_ONLY_EDITOR
+			role := m.ROLE_READ_ONLY_EDITOR
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
 				dash := GetDashboardShouldReturn200(sc)
 
-				Convey("Should be able to edit but not save the dashboard", func() {
-					So(dash.Meta.CanEdit, ShouldBeTrue)
+				Convey("Should be able to view but not save the dashboard", func() {
+					So(dash.Meta.CanEdit, ShouldBeFalse)
 					So(dash.Meta.CanSave, ShouldBeFalse)
 				})
 			})
@@ -110,7 +122,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		})
 
 		Convey("When user is an Org Editor", func() {
-			role := models.ROLE_EDITOR
+			role := m.ROLE_EDITOR
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
 				dash := GetDashboardShouldReturn200(sc)
@@ -142,12 +154,12 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			})
 
 			Convey("When saving a dashboard folder in another folder", func() {
-				bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+				bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
 					query.Result = fakeDash
 					query.Result.IsFolder = true
 					return nil
 				})
-				invalidCmd := models.SaveDashboardCommand{
+				invalidCmd := m.SaveDashboardCommand{
 					ParentId: fakeDash.ParentId,
 					IsFolder: true,
 					Dashboard: simplejson.NewFromAny(map[string]interface{}{
@@ -166,35 +178,35 @@ func TestDashboardApiEndpoint(t *testing.T) {
 	})
 
 	Convey("Given a dashboard with a parent folder which has an acl", t, func() {
-		fakeDash := models.NewDashboard("Child dash")
+		fakeDash := m.NewDashboard("Child dash")
 		fakeDash.Id = 1
 		fakeDash.ParentId = 1
 		fakeDash.HasAcl = true
 
-		aclMockResp := []*models.DashboardAcl{
+		aclMockResp := []*m.DashboardAclInfoDTO{
 			{
 				DashboardId: 1,
-				Permission:  models.PERMISSION_EDIT,
+				Permission:  m.PERMISSION_EDIT,
 				UserId:      200,
 			},
 		}
 
-		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+		bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
 			query.Result = aclMockResp
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *models.GetDashboardQuery) error {
+		bus.AddHandler("test", func(query *m.GetDashboardQuery) error {
 			query.Result = fakeDash
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *models.GetUserGroupsByUserQuery) error {
-			query.Result = []*models.UserGroup{}
+		bus.AddHandler("test", func(query *m.GetUserGroupsByUserQuery) error {
+			query.Result = []*m.UserGroup{}
 			return nil
 		})
 
-		cmd := models.SaveDashboardCommand{
+		cmd := m.SaveDashboardCommand{
 			ParentId: fakeDash.ParentId,
 			Dashboard: simplejson.NewFromAny(map[string]interface{}{
 				"id":       fakeDash.Id,
@@ -204,7 +216,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		}
 
 		Convey("When user is an Org Viewer and has no permissions for this dashboard", func() {
-			role := models.ROLE_VIEWER
+			role := m.ROLE_VIEWER
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
 				sc.handlerFunc = GetDashboard
@@ -237,7 +249,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		})
 
 		Convey("When user is an Org Editor and has no permissions for this dashboard", func() {
-			role := models.ROLE_EDITOR
+			role := m.ROLE_EDITOR
 
 			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
 				sc.handlerFunc = GetDashboard
@@ -270,13 +282,13 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		})
 
 		Convey("When user is an Org Viewer but has an edit permission", func() {
-			role := models.ROLE_VIEWER
+			role := m.ROLE_VIEWER
 
-			mockResult := []*models.DashboardAcl{
-				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_EDIT},
+			mockResult := []*m.DashboardAclInfoDTO{
+				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_EDIT},
 			}
 
-			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+			bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
 				query.Result = mockResult
 				return nil
 			})
@@ -312,13 +324,13 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		})
 
 		Convey("When user is an Org Editor but has a view permission", func() {
-			role := models.ROLE_EDITOR
+			role := m.ROLE_EDITOR
 
-			mockResult := []*models.DashboardAcl{
-				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_VIEW},
+			mockResult := []*m.DashboardAclInfoDTO{
+				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_VIEW},
 			}
 
-			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
+			bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
 				query.Result = mockResult
 				return nil
 			})
@@ -369,8 +381,8 @@ func GetDashboardShouldReturn200(sc *scenarioContext) dtos.DashboardFullWithMeta
 }
 
 func CallGetDashboardVersion(sc *scenarioContext) {
-	bus.AddHandler("test", func(query *models.GetDashboardVersionQuery) error {
-		query.Result = &models.DashboardVersion{}
+	bus.AddHandler("test", func(query *m.GetDashboardVersionQuery) error {
+		query.Result = &m.DashboardVersion{}
 		return nil
 	})
 
@@ -379,8 +391,8 @@ func CallGetDashboardVersion(sc *scenarioContext) {
 }
 
 func CallGetDashboardVersions(sc *scenarioContext) {
-	bus.AddHandler("test", func(query *models.GetDashboardVersionsQuery) error {
-		query.Result = []*models.DashboardVersionDTO{}
+	bus.AddHandler("test", func(query *m.GetDashboardVersionsQuery) error {
+		query.Result = []*m.DashboardVersionDTO{}
 		return nil
 	})
 
@@ -389,7 +401,7 @@ func CallGetDashboardVersions(sc *scenarioContext) {
 }
 
 func CallDeleteDashboard(sc *scenarioContext) {
-	bus.AddHandler("test", func(cmd *models.DeleteDashboardCommand) error {
+	bus.AddHandler("test", func(cmd *m.DeleteDashboardCommand) error {
 		return nil
 	})
 
@@ -402,8 +414,8 @@ func CallPostDashboard(sc *scenarioContext) {
 		return nil
 	})
 
-	bus.AddHandler("test", func(cmd *models.SaveDashboardCommand) error {
-		cmd.Result = &models.Dashboard{Id: 2, Slug: "Dash", Version: 2}
+	bus.AddHandler("test", func(cmd *m.SaveDashboardCommand) error {
+		cmd.Result = &m.Dashboard{Id: 2, Slug: "Dash", Version: 2}
 		return nil
 	})
 
@@ -414,7 +426,7 @@ func CallPostDashboard(sc *scenarioContext) {
 	sc.fakeReqWithParams("POST", sc.url, map[string]string{}).exec()
 }
 
-func postDashboardScenario(desc string, url string, routePattern string, role models.RoleType, cmd models.SaveDashboardCommand, fn scenarioFunc) {
+func postDashboardScenario(desc string, url string, routePattern string, role m.RoleType, cmd m.SaveDashboardCommand, fn scenarioFunc) {
 	Convey(desc+" "+url, func() {
 		defer bus.ClearBusHandlers()
 
