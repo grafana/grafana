@@ -24,9 +24,6 @@ function (angular, _, noUiSlider) {
     };
 
     $scope.init = function() {
-      if ($scope.dashboard) {
-        return;
-      }
       $scope.manualMetrics = [];
       datasourceSrv.get('opentsdb').then(function (datasource) {
         $scope.datasource = datasource;
@@ -49,7 +46,14 @@ function (angular, _, noUiSlider) {
         } else {
           $scope.isAssociation = false;
         }
-        $scope.createAlertMetricsGraph(_.getMetricName(alertMetric), alertHost);
+        if(!$scope.dashboard) {
+          $scope.createAlertMetricsGraph(_.getMetricName(alertMetric), alertHost);
+        } else {
+          var metric = _.getMetricName(alertMetric)
+          $scope.dashboard.rows[0].panels[0].title = metric;
+          $scope.dashboard.rows[0].panels[0].targets[0].metric = metric;
+          $scope.$broadcast('refresh');
+        }
       });
     };
 
@@ -118,13 +122,17 @@ function (angular, _, noUiSlider) {
     };
 
     $scope.flushResult = function () {
-      alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
-        if (!_.isEmpty(response.data)) {
-          $scope.init();
-        } else {
-          $scope.appEvent('alert-warning', ['抱歉', '运算还在进行']);
-        }
-      });
+      $scope.appEvent('alert-warning', ['请稍后', '关联性分析将于5分钟之后计算完成,先去别处逛逛吧']);
+      $timeout(function() {
+        alertMgrSrv.loadAssociatedMetrics(alertMetric, alertHost, distance).then(function onSuccess(response) {
+          if (!_.isEmpty(response.data)) {
+            $scope.init();
+            $scope.appEvent('alert-success', ['关联性分析计算完成', '请在关联性分析中查看metric:"'+alertMetric+'" host:"'+alertHost+'" 的关联结果']);
+          } else {
+            $scope.appEvent('alert-warning', ['关联性分析暂无计算结果', alertMetric + '暂无相关指标']);
+          }
+        });
+      }, 30000);
     };
 
     $scope.createAssociatedMetricGraphPanel = function(associatedMetrics) {
