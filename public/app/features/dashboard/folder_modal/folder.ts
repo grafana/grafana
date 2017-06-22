@@ -6,9 +6,10 @@ import _ from 'lodash';
 
 export class FolderCtrl {
   title: string;
+  dismiss: any;
 
   /** @ngInject */
-  constructor(private backendSrv, private $scope, $sce) {
+  constructor(private backendSrv, private $scope, private $location) {
   }
 
   create() {
@@ -18,17 +19,13 @@ export class FolderCtrl {
 
     const title = this.title.trim();
 
-
-    return this.backendSrv.createDashboardFolder(title).then((result) => {
-      appEvents.emit('alert-success', ['Dashboard saved', 'Saved as ' + title]);
-
-      appEvents.emit('dashboard-saved', result);
+    return this.backendSrv.createDashboardFolder(title).then(result => {
+      appEvents.emit('alert-success', ['Folder Created', 'OK']);
       this.dismiss();
-    });
-  }
 
-  dismiss() {
-    appEvents.emit('hide-modal');
+      var folderUrl = '/dashboard/db/' + result.slug;
+      this.$location.url(folderUrl);
+    });
   }
 }
 
@@ -39,6 +36,9 @@ export function folderModal() {
     controller: FolderCtrl,
     bindToController: true,
     controllerAs: 'ctrl',
+    scope: {
+      dismiss: "&"
+    }
   };
 }
 

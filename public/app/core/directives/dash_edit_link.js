@@ -14,7 +14,12 @@ function ($, angular, coreModule, _) {
     'history':     { html: '<gf-dashboard-history dashboard="dashboard"></gf-dashboard-history>'},
     'timepicker':  { src: 'public/app/features/dashboard/timepicker/dropdown.html' },
     'import':      { html: '<dash-import dismiss="dismiss()"></dash-import>', isModal: true },
-    'permissions': { html: '<dash-acl-modal dismiss="dismiss()"></dash-acl-modal>', isModal: true }
+    'permissions': { html: '<dash-acl-modal dismiss="dismiss()"></dash-acl-modal>', isModal: true },
+    'new-folder':  {
+      isModal: true,
+      html: '<folder-modal dismiss="dismiss()"></folder-modal>',
+      modalClass: 'modal--narrow'
+    }
   };
 
   coreModule.default.directive('dashEditorView', function($compile, $location, $rootScope) {
@@ -87,7 +92,8 @@ function ($, angular, coreModule, _) {
             $rootScope.appEvent('show-modal', {
               templateHtml: options.html,
               scope: modalScope,
-              backdrop: 'static'
+              backdrop: 'static',
+              modalClass: options.modalClass,
             });
 
             return;

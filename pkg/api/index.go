@@ -90,9 +90,9 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Icon: "fa fa-fw fa-plus",
 			Url:  setting.AppSubUrl + "/",
 			Children: []*dtos.NavLink{
-				{Text: "Dashboard", Icon: "icon-gf icon-gf-dashboard", Url: setting.AppSubUrl + "/dashboard/new"},
-				{Text: "Folder", Icon: "fa fa-fw fa-folder", Url: setting.AppSubUrl + "/dashboard/new"},
-				{Text: "Import", Icon: "fa fa-fw fa-download", Url: setting.AppSubUrl + "/dashboard/new/?editview=import"},
+				{Text: "Dashboard", Icon: "fa fa-fw fa-plus", Url: setting.AppSubUrl + "/dashboard/new"},
+				{Text: "Folder", Icon: "fa fa-fw fa-plus", Url: setting.AppSubUrl + "/dashboard/new/?editview=new-folder"},
+				{Text: "Import", Icon: "fa fa-fw fa-plus", Url: setting.AppSubUrl + "/dashboard/new/?editview=import"},
 			},
 		})
 	}
