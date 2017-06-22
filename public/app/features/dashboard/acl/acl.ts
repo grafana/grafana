@@ -45,9 +45,6 @@ export class AclCtrl {
 
   sortItems() {
     this.items = _.orderBy(this.items, ['sortRank', 'sortName'], ['desc', 'asc']);
-    for (let i of this.items) {
-      console.log(i.sortRank);
-    }
   }
 
   prepareViewModel(item: DashboardAcl): DashboardAcl {
@@ -69,9 +66,6 @@ export class AclCtrl {
       item.nameHtml = this.$sce.trustAsHtml(`Everyone with <span class="query-keyword">${item.role}</span> Role`);
       item.sortName = item.role;
       item.sortRank = 30;
-      if (item.role === 'Viewer') {
-        item.sortRank += 2;
-      }
       if (item.role === 'Viewer') {
         item.sortRank += 1;
       }
@@ -100,7 +94,7 @@ export class AclCtrl {
     }
 
     return this.backendSrv.post(`/api/dashboards/id/${this.dashboard.id}/acl`, { items: updated }).then(() => {
-      this.dismiss();
+      return this.dismiss();
     });
   }
 
