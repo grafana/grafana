@@ -297,10 +297,10 @@ func TestDashboardDataAccess(t *testing.T) {
 			})
 		})
 
-		Convey("Given one dashboard folder with two dashboard and one dashboard in the root folder", func() {
+		Convey("Given one dashboard folder with two dashboards and one dashboard in the root folder", func() {
 			folder := insertTestDashboard("1 test dash folder", 1, 0, true, "prod", "webapp")
 			dashInRoot := insertTestDashboard("test dash 67", 1, 0, false, "prod", "webapp")
-			insertTestDashboard("test dash 23", 1, folder.Id, false, "prod", "webapp")
+			childDash := insertTestDashboard("test dash 23", 1, folder.Id, false, "prod", "webapp")
 			insertTestDashboard("test dash 45", 1, folder.Id, false, "prod")
 
 			currentUser := createUser("viewer", "Viewer", false)
@@ -360,6 +360,54 @@ func TestDashboardDataAccess(t *testing.T) {
 					})
 				})
 			})
+
+			Convey("and acl is set for dashboard child and folder has all permissions removed", func() {
+				var otherUser int64 = 999
+				aclId := updateTestDashboardWithAcl(folder.Id, otherUser, m.PERMISSION_EDIT)
+				removeAcl(aclId)
+				updateTestDashboardWithAcl(childDash.Id, otherUser, m.PERMISSION_EDIT)
+
+				Convey("should not return folder or child", func() {
+					query := &search.FindPersistedDashboardsQuery{SignedInUser: &m.SignedInUser{UserId: currentUser.Id, OrgId: 1}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}}
+					err := SearchDashboards(query)
+					So(err, ShouldBeNil)
+					So(len(query.Result), ShouldEqual, 1)
+					So(query.Result[0].Id, ShouldEqual, dashInRoot.Id)
+				})
+
+				Convey("when the user is given permission to child", func() {
+					updateTestDashboardWithAcl(childDash.Id, currentUser.Id, m.PERMISSION_EDIT)
+
+					Convey("should be able to search for child dashboard but not folder", func() {
+						query := &search.FindPersistedDashboardsQuery{SignedInUser: &m.SignedInUser{UserId: currentUser.Id, OrgId: 1}, OrgId: 1, DashboardIds: []int64{folder.Id, childDash.Id, dashInRoot.Id}}
+						err := SearchDashboards(query)
+						So(err, ShouldBeNil)
+						So(len(query.Result), ShouldEqual, 2)
+						So(query.Result[0].Id, ShouldEqual, childDash.Id)
+						So(query.Result[1].Id, ShouldEqual, dashInRoot.Id)
+					})
+				})
+
+				Convey("when the user is an admin", func() {
+					Convey("should be able to search for child dash and folder", func() {
+						query := &search.FindPersistedDashboardsQuery{
+							SignedInUser: &m.SignedInUser{
+								UserId:  currentUser.Id,
+								OrgId:   1,
+								OrgRole: m.ROLE_ADMIN,
+							},
+							OrgId:        1,
+							DashboardIds: []int64{folder.Id, dashInRoot.Id, childDash.Id},
+						}
+						err := SearchDashboards(query)
+						So(err, ShouldBeNil)
+						So(len(query.Result), ShouldEqual, 3)
+						So(query.Result[0].Id, ShouldEqual, folder.Id)
+						So(query.Result[1].Id, ShouldEqual, childDash.Id)
+						So(query.Result[2].Id, ShouldEqual, dashInRoot.Id)
+					})
+				})
+			})
 		})
 	})
 }
@@ -379,12 +427,21 @@ func createUser(name string, role string, isAdmin bool) m.User {
 	return currentUserCmd.Result
 }
 
-func updateTestDashboardWithAcl(dashId int64, userId int64, permissions m.PermissionType) {
-	err := SetDashboardAcl(&m.SetDashboardAclCommand{
+func updateTestDashboardWithAcl(dashId int64, userId int64, permissions m.PermissionType) int64 {
+	cmd := &m.SetDashboardAclCommand{
 		OrgId:       1,
 		UserId:      userId,
 		DashboardId: dashId,
 		Permission:  permissions,
-	})
+	}
+
+	err := SetDashboardAcl(cmd)
+	So(err, ShouldBeNil)
+
+	return cmd.Result.Id
+}
+
+func removeAcl(aclId int64) {
+	err := RemoveDashboardAcl(&m.RemoveDashboardAclCommand{AclId: aclId, OrgId: 1})
 	So(err, ShouldBeNil)
 }
