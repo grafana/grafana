@@ -35,9 +35,9 @@ func TestDashboardAclDataAccess(t *testing.T) {
 				So(err, ShouldBeNil)
 
 				Convey("When reading dashboard acl should include acl for parent folder", func() {
-					query := m.GetInheritedDashboardAclQuery{OrgId: 1, DashboardId: childDash.Id}
+					query := m.GetDashboardAclInfoListQuery{DashboardId: childDash.Id, OrgId: 1}
 
-					err := GetInheritedDashboardAcl(&query)
+					err := GetDashboardAclInfoList(&query)
 					So(err, ShouldBeNil)
 
 					So(len(query.Result), ShouldEqual, 1)
@@ -54,9 +54,9 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					Convey("When reading dashboard acl should include acl for parent folder and child", func() {
-						query := m.GetInheritedDashboardAclQuery{OrgId: 1, DashboardId: childDash.Id}
+						query := m.GetDashboardAclInfoListQuery{OrgId: 1, DashboardId: childDash.Id}
 
-						err := GetInheritedDashboardAcl(&query)
+						err := GetDashboardAclInfoList(&query)
 						So(err, ShouldBeNil)
 
 						So(len(query.Result), ShouldEqual, 2)
@@ -79,7 +79,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 				So(setDashAclCmd.Result.Id, ShouldEqual, 3)
 
-				q1 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
+				q1 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id, OrgId: 1}
 				err = GetDashboardAclInfoList(q1)
 				So(err, ShouldBeNil)
 
@@ -109,7 +109,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 					So(err, ShouldBeNil)
 
-					q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
+					q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id, OrgId: 1}
 					err = GetDashboardAclInfoList(q3)
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 1)
@@ -127,7 +127,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 
 					So(err, ShouldBeNil)
 
-					q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
+					q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id, OrgId: 1}
 					err = GetDashboardAclInfoList(q3)
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 0)
@@ -150,7 +150,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					err := SetDashboardAcl(&setDashAclCmd)
 					So(err, ShouldBeNil)
 
-					q1 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
+					q1 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id, OrgId: 1}
 					err = GetDashboardAclInfoList(q1)
 					So(err, ShouldBeNil)
 					So(q1.Result[0].DashboardId, ShouldEqual, savedFolder.Id)
@@ -164,7 +164,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 						})
 
 						So(err, ShouldBeNil)
-						q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
+						q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id, OrgId: 1}
 						err = GetDashboardAclInfoList(q3)
 						So(err, ShouldBeNil)
 						So(len(q3.Result), ShouldEqual, 0)
@@ -180,7 +180,7 @@ func TestDashboardAclDataAccess(t *testing.T) {
 					})
 					So(err, ShouldBeNil)
 
-					q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id}
+					q3 := &m.GetDashboardAclInfoListQuery{DashboardId: savedFolder.Id, OrgId: 1}
 					err = GetDashboardAclInfoList(q3)
 					So(err, ShouldBeNil)
 					So(len(q3.Result), ShouldEqual, 1)

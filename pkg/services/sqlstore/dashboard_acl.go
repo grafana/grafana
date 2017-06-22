@@ -13,7 +13,6 @@ func init() {
 	bus.AddHandler("sql", UpdateDashboardAcl)
 	bus.AddHandler("sql", RemoveDashboardAcl)
 	bus.AddHandler("sql", GetDashboardAclInfoList)
-	bus.AddHandler("sql", GetInheritedDashboardAcl)
 }
 
 func UpdateDashboardAcl(cmd *m.UpdateDashboardAclCommand) error {
@@ -126,31 +125,9 @@ func RemoveDashboardAcl(cmd *m.RemoveDashboardAclCommand) error {
 	})
 }
 
-func GetInheritedDashboardAcl(query *m.GetInheritedDashboardAclQuery) error {
-	rawSQL := `SELECT
-  da.id,
-  da.org_id,
-  da.dashboard_id,
-  da.user_id,
-  da.user_group_id,
-  da.role,
-  da.permission,
-  da.created,
-  da.updated
-  FROM dashboard_acl as da
-  WHERE da.dashboard_id IN (
-    SELECT id FROM dashboard where id = ?
-    UNION
-    SELECT parent_id from dashboard where id = ?
-  ) AND org_id = ?`
-
-	query.Result = make([]*m.DashboardAcl, 0)
-	return x.SQL(rawSQL, query.DashboardId, query.DashboardId, query.OrgId).Find(&query.Result)
-}
-
 func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 	dashboardFilter := fmt.Sprintf(`IN (
-    SELECT id FROM dashboard where id = %d
+    SELECT %d
     UNION
     SELECT parent_id from dashboard where id = %d
   )`, query.DashboardId, query.DashboardId)
@@ -172,7 +149,7 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
   FROM` + dialect.Quote("dashboard_acl") + ` as da
 		LEFT OUTER JOIN ` + dialect.Quote("user") + ` AS u ON u.id = da.user_id
 		LEFT OUTER JOIN user_group ug on ug.id = da.user_group_id
-	WHERE dashboard_id ` + dashboardFilter + `
+	WHERE dashboard_id ` + dashboardFilter + ` AND da.org_id = ?
 
 	-- Also include default permission if has_acl = 0
 
@@ -195,7 +172,7 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 	`
 
 	query.Result = make([]*m.DashboardAclInfoDTO, 0)
-	err := x.SQL(rawSQL, query.DashboardId).Find(&query.Result)
+	err := x.SQL(rawSQL, query.OrgId, query.DashboardId).Find(&query.Result)
 
 	for _, p := range query.Result {
 		p.PermissionName = p.Permission.String()

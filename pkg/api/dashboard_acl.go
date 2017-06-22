@@ -20,13 +20,12 @@ func GetDashboardAclList(c *middleware.Context) Response {
 		return dashboardGuardianResponse(err)
 	}
 
-	query := m.GetDashboardAclInfoListQuery{DashboardId: dashId}
-	if err := bus.Dispatch(&query); err != nil {
-		return ApiError(500, "Failed to get Dashboard ACL", err)
+	acl, err := guardian.GetAcl()
+	if err != nil {
+		return ApiError(500, "Failed to get dashboard acl", err)
 	}
 
-	list := query.Result
-	return Json(200, list)
+	return Json(200, acl)
 }
 
 func UpdateDashboardAcl(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCommand) Response {

@@ -116,7 +116,7 @@ func TestUserDataAccess(t *testing.T) {
 
 						So(len(query.Result), ShouldEqual, 1)
 
-						permQuery := &m.GetDashboardAclInfoListQuery{DashboardId: 1}
+						permQuery := &m.GetDashboardAclInfoListQuery{DashboardId: 1, OrgId: 1}
 						err = GetDashboardAclInfoList(permQuery)
 						So(err, ShouldBeNil)
 

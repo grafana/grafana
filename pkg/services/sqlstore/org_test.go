@@ -169,7 +169,7 @@ func TestAccountDataAccess(t *testing.T) {
 					err = AddOrgUser(&orgUserCmd)
 					So(err, ShouldBeNil)
 
-					query := m.GetOrgUsersQuery{OrgId: orgUserCmd.OrgId}
+					query := m.GetOrgUsersQuery{OrgId: ac1.OrgId}
 					err = GetOrgUsers(&query)
 					So(err, ShouldBeNil)
 					So(len(query.Result), ShouldEqual, 3)
@@ -181,12 +181,12 @@ func TestAccountDataAccess(t *testing.T) {
 					So(err, ShouldBeNil)
 
 					Convey("When org user is deleted", func() {
-						cmdRemove := m.RemoveOrgUserCommand{OrgId: orgUserCmd.OrgId, UserId: ac3.Id}
+						cmdRemove := m.RemoveOrgUserCommand{OrgId: ac1.OrgId, UserId: ac3.Id}
 						err := RemoveOrgUser(&cmdRemove)
 						So(err, ShouldBeNil)
 
 						Convey("Should remove dependent permissions for deleted org user", func() {
-							permQuery := &m.GetDashboardAclInfoListQuery{DashboardId: 1}
+							permQuery := &m.GetDashboardAclInfoListQuery{DashboardId: 1, OrgId: ac1.OrgId}
 							err = GetDashboardAclInfoList(permQuery)
 							So(err, ShouldBeNil)
 
@@ -194,10 +194,11 @@ func TestAccountDataAccess(t *testing.T) {
 						})
 
 						Convey("Should not remove dashboard permissions for same user in another org", func() {
-							permQuery := &m.GetDashboardAclInfoListQuery{DashboardId: 2}
+							permQuery := &m.GetDashboardAclInfoListQuery{DashboardId: 2, OrgId: ac3.OrgId}
 							err = GetDashboardAclInfoList(permQuery)
 							So(err, ShouldBeNil)
 
+							So(len(permQuery.Result), ShouldEqual, 1)
 							So(permQuery.Result[0].OrgId, ShouldEqual, ac3.OrgId)
 							So(permQuery.Result[0].UserId, ShouldEqual, ac3.Id)
 						})

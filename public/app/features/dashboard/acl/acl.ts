@@ -106,11 +106,7 @@ export class AclCtrl {
 
   typeChanged() {
     if (this.newType === 'Viewer' || this.newType === 'Editor') {
-      this.items.push(this.prepareViewModel({
-        permission: 1,
-        role: this.newType
-      }));
-
+      this.addNewItem({permission: 1, role: this.newType});
       this.canUpdate = true;
       this.resetNewType();
     }

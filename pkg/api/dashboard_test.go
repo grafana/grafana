@@ -31,7 +31,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 		})
 
 		aclMockResp := []*models.DashboardAcl{}
-		bus.AddHandler("test", func(query *models.GetInheritedDashboardAclQuery) error {
+		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
 			query.Result = aclMockResp
 			return nil
 		})
@@ -179,7 +179,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 			},
 		}
 
-		bus.AddHandler("test", func(query *models.GetInheritedDashboardAclQuery) error {
+		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
 			query.Result = aclMockResp
 			return nil
 		})
@@ -276,7 +276,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_EDIT},
 			}
 
-			bus.AddHandler("test", func(query *models.GetInheritedDashboardAclQuery) error {
+			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = mockResult
 				return nil
 			})
@@ -318,7 +318,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permission: models.PERMISSION_VIEW},
 			}
 
-			bus.AddHandler("test", func(query *models.GetInheritedDashboardAclQuery) error {
+			bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
 				query.Result = mockResult
 				return nil
 			})

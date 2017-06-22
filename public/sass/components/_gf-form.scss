@@ -21,6 +21,10 @@ $gf-form-margin: 0.25rem;
 .gf-form-disabled {
   color: $text-color-weak;
 
+  .gf-form-select-wrapper::after {
+    color: $text-color-weak;
+  }
+
   a,
   .gf-form-input {
     color: $text-color-weak;

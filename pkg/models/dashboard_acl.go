@@ -36,7 +36,7 @@ type DashboardAcl struct {
 
 	UserId      int64
 	UserGroupId int64
-	Role        RoleType
+	Role        *RoleType // pointer to be nullable
 	Permission  PermissionType
 
 	Created time.Time
@@ -56,7 +56,7 @@ type DashboardAclInfoDTO struct {
 	UserEmail      string         `json:"userEmail"`
 	UserGroupId    int64          `json:"userGroupId"`
 	UserGroup      string         `json:"userGroup"`
-	Role           RoleType       `json:"role"`
+	Role           *RoleType      `json:"role,omitempty"`
 	Permission     PermissionType `json:"permission"`
 	PermissionName string         `json:"permissionName"`
 }
@@ -90,12 +90,6 @@ type RemoveDashboardAclCommand struct {
 //
 type GetDashboardAclInfoListQuery struct {
 	DashboardId int64
-	Result      []*DashboardAclInfoDTO
-}
-
-// Returns dashboard acl list items and parent folder items
-type GetInheritedDashboardAclQuery struct {
-	DashboardId int64
 	OrgId       int64
-	Result      []*DashboardAcl
+	Result      []*DashboardAclInfoDTO
 }

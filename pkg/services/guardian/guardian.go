@@ -10,7 +10,7 @@ type DashboardGuardian struct {
 	user   *m.SignedInUser
 	dashId int64
 	orgId  int64
-	acl    []*m.DashboardAcl
+	acl    []*m.DashboardAclInfoDTO
 	groups []*m.UserGroup
 	log    log.Logger
 }
@@ -41,7 +41,7 @@ func (g *DashboardGuardian) HasPermission(permission m.PermissionType) (bool, er
 		return true, nil
 	}
 
-	acl, err := g.getAcl()
+	acl, err := g.GetAcl()
 	if err != nil {
 		return false, err
 	}
@@ -62,8 +62,8 @@ func (g *DashboardGuardian) HasPermission(permission m.PermissionType) (bool, er
 			}
 		}
 
-		if p.Role.IsValid() {
-			if p.Role == g.user.OrgRole && p.Permission >= permission {
+		if p.Role != nil {
+			if *p.Role == g.user.OrgRole && p.Permission >= permission {
 				return true, nil
 			}
 		}
@@ -73,12 +73,12 @@ func (g *DashboardGuardian) HasPermission(permission m.PermissionType) (bool, er
 }
 
 // Returns dashboard acl
-func (g *DashboardGuardian) getAcl() ([]*m.DashboardAcl, error) {
+func (g *DashboardGuardian) GetAcl() ([]*m.DashboardAclInfoDTO, error) {
 	if g.acl != nil {
 		return g.acl, nil
 	}
 
-	query := m.GetInheritedDashboardAclQuery{DashboardId: g.dashId, OrgId: g.orgId}
+	query := m.GetDashboardAclInfoListQuery{DashboardId: g.dashId, OrgId: g.orgId}
 	if err := bus.Dispatch(&query); err != nil {
 		return nil, err
 	}

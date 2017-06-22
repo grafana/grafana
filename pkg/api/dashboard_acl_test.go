@@ -30,7 +30,7 @@ func TestDashboardAclApiEndpoint(t *testing.T) {
 			return nil
 		})
 
-		bus.AddHandler("test", func(query *models.GetInheritedDashboardAclQuery) error {
+		bus.AddHandler("test", func(query *models.GetDashboardAclInfoListQuery) error {
 			query.Result = mockResult
 			return nil
 		})
