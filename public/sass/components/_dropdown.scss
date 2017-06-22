@@ -90,7 +90,37 @@
       }
     }
   }
+
+  &--navbar {
+    top: 100%;
+    min-width: 100%;
+  }
+
+  &--navbar,
+  &--sidemenu {
+    background: $menu-dropdown-bg;
+    box-shadow: $menu-dropdown-shadow;
+    margin-top: 0px;
+    border: none;
+
+    > li > a {
+      padding: $spacer/2 1.2rem;
+      border-left: 2px solid transparent;
+
+      i {
+        display: inline-block;
+        margin-right: 10px;
+      }
+
+      &:hover {
+        @include left-brand-border-gradient();
+        color: $link-hover-color;
+        background: $menu-dropdown-hover-bg !important;
+      }
+    }
+  }
 }
+
 
 // Hover/Focus state
 // -----------

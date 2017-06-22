@@ -4,9 +4,9 @@
 <div class="search-container" ng-if="ctrl.isOpen">
 
 	<div class="search-field-wrapper">
-		<div class="search-field-icon pointer" ng-click="ctrl.closeSearch()">
-			<i class="fa fa-search"></i>
-		</div>
+		<!-- <div class="search&#45;field&#45;icon pointer" ng&#45;click="ctrl.closeSearch()"> -->
+		<!-- 	<i class="fa fa&#45;search"></i> -->
+		<!-- </div> -->
 
 		<input type="text" placeholder="Find dashboards by name" give-focus="ctrl.giveSearchFocus" tabindex="1"
 						ng-keydown="ctrl.keyDown($event)"
@@ -86,27 +86,6 @@
         </a>
       </a>
     </div>
-	</div>
-
-		<div class="search-button-row">
-			<a class="btn btn-secondary" href="dashboard/new" ng-show="ctrl.contextSrv.isEditor" ng-click="ctrl.isOpen = false;">
-				<i class="fa fa-plus"></i>&nbsp; New Dashboard
-			</a>
-
-    <a class="btn btn-inverse" ng-click="ctrl.showNewFolderModal()" ng-show="ctrl.contextSrv.isEditor" ng-click="ctrl.isOpen = false;">
-			<i class="fa fa-plus"></i>
-			New Folder
-		</a>
-
-		<a class="btn btn-inverse" href="dashboard/new/?editview=import" ng-show="ctrl.contextSrv.isEditor" ng-click="ctrl.isOpen = false;">
-			<i class="fa fa-upload"></i>
-			&nbsp; Import Dashboard
-		</a>
-
-			<a class="search-button-row-explore-link" target="_blank" href="https://grafana.com/dashboards?utm_source=grafana_search">
-				Find <img src="public/img/icn-dashboard-tiny.svg" width="14" /> dashboards on Grafana.com
-			</a>
-		</div>
 	</div>
 </div>
 

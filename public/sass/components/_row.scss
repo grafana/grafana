@@ -142,7 +142,7 @@ $dash-row-menu-animation-speed: 0.20s;
   list-style: none;
   flex-grow: 1;
   box-shadow: $search-shadow;
-  background: $side-menu-bg;
+  background: $row-menu-bg;
 
   li a {
     display: block;
@@ -150,7 +150,7 @@ $dash-row-menu-animation-speed: 0.20s;
     color: $text-muted;
     font-size: $font-size-sm;
     padding: $spacer/2 $spacer;
-    border-left: 2px solid $side-menu-bg;
+    border-left: 2px solid $row-menu-bg;
     i {
       display: inline-block;
       padding-right: $spacer/2;

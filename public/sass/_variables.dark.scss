@@ -93,6 +93,10 @@ $panel-border:  	      solid 1px $dark-3;
 $panel-drop-zone-bg:    repeating-linear-gradient(-128deg, #111, #111 10px, #191919 10px, #222 20px);
 $panel-menu-border:     solid 1px black;
 
+// Row
+// -------------------------
+$row-menu-bg: $body-bg;
+
 $divider-border-color:        #555;
 
 // Graphite Target Editor
@@ -209,7 +213,7 @@ $wellBackground:                  #131517;
 
 $navbarHeight:                    52px;
 $navbarBackgroundHighlight:       $dark-3;
-$navbarBackground:                $dark-3;
+$navbarBackground:                $panel-bg;
 $navbarBorder:                    1px solid $body-bg;
 
 $navbarText:                      $gray-4;
@@ -221,14 +225,21 @@ $navbarLinkBackgroundActive:      $navbarBackground;
 $navbarBrandColor:                $link-color;
 $navbarDropdownShadow:            inset 0px 4px 10px -4px $body-bg;
 
-$navbarButtonBackground:          lighten($navbarBackground, 3%);
-$navbarButtonBackgroundHighlight: lighten($navbarBackground, 5%);
+$navbarButtonBackground:          $navbarBackground;
+$navbarButtonBackgroundHighlight: $body-bg;
 
 // Sidemenu
 // -------------------------
-$side-menu-bg:            $body-bg;
-$side-menu-item-hover-bg: $dark-3;
-$side-menu-opacity:		  0.97;
+$side-menu-bg:            $dark-3;
+$side-menu-item-hover-bg: $dark-2;
+
+// Menu dropdowns
+// -------------------------
+$menu-dropdown-bg:            $body-bg;
+$menu-dropdown-hover-bg:      $dark-2;
+$menu-dropdown-border-color:  $dark-3;
+$menu-dropdown-shadow: 5px 5px 20px -5px $black;
+
 
 // Pagination
 // -------------------------

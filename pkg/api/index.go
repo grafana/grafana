@@ -105,8 +105,8 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 
 	if setting.AlertingEnabled && (c.OrgRole == m.ROLE_ADMIN || c.OrgRole == m.ROLE_EDITOR) {
 		alertChildNavs := []*dtos.NavLink{
-			{Text: "Alert List", Url: setting.AppSubUrl + "/alerting/list"},
-			{Text: "Notification channels", Url: setting.AppSubUrl + "/alerting/notifications"},
+			{Text: "Alert List", Url: setting.AppSubUrl + "/alerting/list", Icon: "fa fa-fw fa-list-ul"},
+			{Text: "Notification channels", Url: setting.AppSubUrl + "/alerting/notifications", Icon: "fa fa-fw fa-bell-o"},
 		}
 
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
@@ -122,12 +122,17 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 			Text: "Data Sources",
 			Icon: "icon-gf icon-gf-datasources",
 			Url:  setting.AppSubUrl + "/datasources",
+			Children: []*dtos.NavLink{
+				{Text: "List", Url: setting.AppSubUrl + "/datasources", Icon: "icon-gf icon-gf-datasources"},
+			},
 		})
-
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 			Text: "Plugins",
 			Icon: "icon-gf icon-gf-apps",
 			Url:  setting.AppSubUrl + "/plugins",
+			Children: []*dtos.NavLink{
+				{Text: "List", Url: setting.AppSubUrl + "/datasources", Icon: "icon-gf icon-gf-apps"},
+			},
 		})
 	}
 

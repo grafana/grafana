@@ -100,6 +100,10 @@ $panel-border:       solid 1px $gray-6;
 $panel-drop-zone-bg: repeating-linear-gradient(-128deg, $body-bg, $body-bg 10px, $gray-6 10px, $gray-6 20px);
 $panel-menu-border:  solid 1px white;
 
+// Row
+// -------------------------
+$row-menu-bg: $body-bg;
+
 $divider-border-color:	      $gray-2;
 
 // Graphite Target Editor
@@ -182,10 +186,16 @@ $input-invalid-border-color:     lighten($red, 5%);
 // -------------------------
 $side-menu-bg:            $body-bg;
 $side-menu-item-hover-bg: $gray-6;
-$side-menu-opacity:		  0.97;
+
+// Menu dropdowns
+// -------------------------
+$menu-dropdown-bg:            $white;
+$menu-dropdown-hover-bg:      $gray-6;
+$menu-dropdown-border-color:  $tight-form-border;
+$menu-dropdown-shadow: 5px 5px 20px -5px $gray-4;
 
 // search
-$search-shadow: 0 5px 30px 0 lighten($gray-2, 30%);
+$search-shadow: 0 5px 30px 0 $gray-4;
 
 // Dropdowns
 // -------------------------
@@ -202,7 +212,6 @@ $dropdownLinkColorActive:       $link-color;
 
 $dropdownLinkBackgroundActive:  $gray-6;
 $dropdownLinkBackgroundHover:   $gray-6;
-
 
 // COMPONENT VARIABLES
 // --------------------------------------------------
