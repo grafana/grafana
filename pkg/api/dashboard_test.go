@@ -65,6 +65,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				Convey("Should not be able to edit or save dashboard", func() {
 					So(dash.Meta.CanEdit, ShouldBeFalse)
 					So(dash.Meta.CanSave, ShouldBeFalse)
+					So(dash.Meta.CanAdmin, ShouldBeFalse)
 				})
 			})
 
@@ -97,6 +98,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				Convey("Should be able to view but not save the dashboard", func() {
 					So(dash.Meta.CanEdit, ShouldBeFalse)
 					So(dash.Meta.CanSave, ShouldBeFalse)
+					So(dash.Meta.CanAdmin, ShouldBeFalse)
 				})
 			})
 
@@ -130,6 +132,7 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				Convey("Should be able to edit or save dashboard", func() {
 					So(dash.Meta.CanEdit, ShouldBeTrue)
 					So(dash.Meta.CanSave, ShouldBeTrue)
+					So(dash.Meta.CanAdmin, ShouldBeFalse)
 				})
 			})
 
@@ -299,6 +302,50 @@ func TestDashboardApiEndpoint(t *testing.T) {
 				Convey("Should be able to get dashboard with edit rights", func() {
 					So(dash.Meta.CanEdit, ShouldBeTrue)
 					So(dash.Meta.CanSave, ShouldBeTrue)
+					So(dash.Meta.CanAdmin, ShouldBeFalse)
+				})
+			})
+
+			loggedInUserScenarioWithRole("When calling DELETE on", "DELETE", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
+				CallDeleteDashboard(sc)
+				So(sc.resp.Code, ShouldEqual, 200)
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions/1", "/api/dashboards/id/:dashboardId/versions/:id", role, func(sc *scenarioContext) {
+				CallGetDashboardVersion(sc)
+				So(sc.resp.Code, ShouldEqual, 200)
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/id/2/versions", "/api/dashboards/id/:dashboardId/versions", role, func(sc *scenarioContext) {
+				CallGetDashboardVersions(sc)
+				So(sc.resp.Code, ShouldEqual, 200)
+			})
+
+			postDashboardScenario("When calling POST on", "/api/dashboards", "/api/dashboards", role, cmd, func(sc *scenarioContext) {
+				CallPostDashboard(sc)
+				So(sc.resp.Code, ShouldEqual, 200)
+			})
+		})
+
+		Convey("When user is an Org Viewer but has an admin permission", func() {
+			role := m.ROLE_VIEWER
+
+			mockResult := []*m.DashboardAclInfoDTO{
+				{Id: 1, OrgId: 1, DashboardId: 2, UserId: 1, Permission: m.PERMISSION_ADMIN},
+			}
+
+			bus.AddHandler("test", func(query *m.GetDashboardAclInfoListQuery) error {
+				query.Result = mockResult
+				return nil
+			})
+
+			loggedInUserScenarioWithRole("When calling GET on", "GET", "/api/dashboards/2", "/api/dashboards/:id", role, func(sc *scenarioContext) {
+				dash := GetDashboardShouldReturn200(sc)
+
+				Convey("Should be able to get dashboard with edit rights", func() {
+					So(dash.Meta.CanEdit, ShouldBeTrue)
+					So(dash.Meta.CanSave, ShouldBeTrue)
+					So(dash.Meta.CanAdmin, ShouldBeTrue)
 				})
 			})
 

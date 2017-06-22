@@ -13,6 +13,7 @@ type DashboardMeta struct {
 	Type        string    `json:"type,omitempty"`
 	CanSave     bool      `json:"canSave"`
 	CanEdit     bool      `json:"canEdit"`
+	CanAdmin    bool      `json:"canAdmin"`
 	CanStar     bool      `json:"canStar"`
 	Slug        string    `json:"slug"`
 	Expires     time.Time `json:"expires"`

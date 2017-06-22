@@ -57,6 +57,7 @@ func GetDashboard(c *middleware.Context) Response {
 
 	canEdit, _ := guardian.CanEdit()
 	canSave, _ := guardian.CanSave()
+	canAdmin, _ := guardian.CanAdmin()
 
 	isStarred, err := isDashboardStarredByUser(c, dash.Id)
 	if err != nil {
@@ -79,6 +80,7 @@ func GetDashboard(c *middleware.Context) Response {
 		CanStar:     c.IsSignedIn,
 		CanSave:     canSave,
 		CanEdit:     canEdit,
+		CanAdmin:    canAdmin,
 		Created:     dash.Created,
 		Updated:     dash.Updated,
 		UpdatedBy:   updater,
