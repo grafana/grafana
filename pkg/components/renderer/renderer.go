@@ -21,14 +21,15 @@ import (
 )
 
 type RenderOpts struct {
-	Path     string
-	Width    string
-	Height   string
-	Timeout  string
-	OrgId    int64
-	UserId   int64
-	OrgRole  models.RoleType
-	Timezone string
+	Path           string
+	Width          string
+	Height         string
+	Timeout        string
+	OrgId          int64
+	UserId         int64
+	OrgRole        models.RoleType
+	Timezone       string
+	IsAlertContext bool
 }
 
 var rendererLog log.Logger = log.New("png-renderer")
@@ -75,7 +76,11 @@ func RenderToPng(params *RenderOpts) (string, error) {
 	pngPath, _ := filepath.Abs(filepath.Join(setting.ImagesDir, util.GetRandomString(20)))
 	pngPath = pngPath + ".png"
 
-	renderKey := middleware.AddRenderAuthKey(params.OrgId, params.UserId, params.OrgRole)
+	orgRole := params.OrgRole
+	if params.IsAlertContext {
+		orgRole = models.ROLE_ADMIN
+	}
+	renderKey := middleware.AddRenderAuthKey(params.OrgId, params.UserId, orgRole)
 	defer middleware.RemoveRenderAuthKey(renderKey)
 
 	cmdArgs := []string{
