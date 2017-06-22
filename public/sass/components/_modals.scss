@@ -62,7 +62,6 @@
 // Body (where all modal content resides)
 .modal-body {
   position: relative;
-  overflow-y: auto;
 }
 
 .modal-content {
@@ -85,10 +84,6 @@
 
 .modal--narrow {
   max-width: 500px;
-}
-
-.modal-body--with-overflow {
-  overflow-y: visible;
 }
 
 .confirm-modal {

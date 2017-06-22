@@ -3,7 +3,7 @@
 import coreModule from 'app/core/core_module';
 
 const  template = `
-<div class="modal-body modal-body--with-overflow">
+<div class="modal-body">
 	<div class="modal-header">
 		<h2 class="modal-header-title">
 			<i class="fa fa-copy"></i>
