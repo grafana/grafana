@@ -16,7 +16,7 @@ func GetDashboardAclList(c *middleware.Context) Response {
 
 	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
 
-	if canView, err := guardian.CanView(); err != nil || !canView {
+	if canAdmin, err := guardian.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -32,7 +32,7 @@ func UpdateDashboardAcl(c *middleware.Context, apiCmd dtos.UpdateDashboardAclCom
 	dashId := c.ParamsInt64(":dashboardId")
 
 	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
+	if canAdmin, err := guardian.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
 	}
 
@@ -68,7 +68,7 @@ func DeleteDashboardAcl(c *middleware.Context) Response {
 	aclId := c.ParamsInt64(":aclId")
 
 	guardian := guardian.NewDashboardGuardian(dashId, c.OrgId, c.SignedInUser)
-	if canSave, err := guardian.CanSave(); err != nil || !canSave {
+	if canAdmin, err := guardian.CanAdmin(); err != nil || !canAdmin {
 		return dashboardGuardianResponse(err)
 	}
 

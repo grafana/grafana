@@ -36,6 +36,10 @@ func (g *DashboardGuardian) CanView() (bool, error) {
 	return g.HasPermission(m.PERMISSION_VIEW)
 }
 
+func (g *DashboardGuardian) CanAdmin() (bool, error) {
+	return g.HasPermission(m.PERMISSION_ADMIN)
+}
+
 func (g *DashboardGuardian) HasPermission(permission m.PermissionType) (bool, error) {
 	if g.user.OrgRole == m.ROLE_ADMIN {
 		return true, nil
