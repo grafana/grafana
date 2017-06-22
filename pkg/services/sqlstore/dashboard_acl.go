@@ -1,6 +1,7 @@
 package sqlstore
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/grafana/grafana/pkg/bus"
@@ -148,6 +149,12 @@ func GetInheritedDashboardAcl(query *m.GetInheritedDashboardAclQuery) error {
 }
 
 func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
+	dashboardFilter := fmt.Sprintf(`IN (
+    SELECT id FROM dashboard where id = %d
+    UNION
+    SELECT parent_id from dashboard where id = %d
+  )`, query.DashboardId, query.DashboardId)
+
 	rawSQL := `
 	SELECT
 		da.id,
@@ -165,7 +172,7 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
   FROM` + dialect.Quote("dashboard_acl") + ` as da
 		LEFT OUTER JOIN ` + dialect.Quote("user") + ` AS u ON u.id = da.user_id
 		LEFT OUTER JOIN user_group ug on ug.id = da.user_group_id
-	WHERE dashboard_id = ?
+	WHERE dashboard_id ` + dashboardFilter + `
 
 	-- Also include default permission if has_acl = 0
 
@@ -188,8 +195,7 @@ func GetDashboardAclInfoList(query *m.GetDashboardAclInfoListQuery) error {
 	`
 
 	query.Result = make([]*m.DashboardAclInfoDTO, 0)
-
-	err := x.SQL(rawSQL, query.DashboardId, query.DashboardId).Find(&query.Result)
+	err := x.SQL(rawSQL, query.DashboardId).Find(&query.Result)
 
 	for _, p := range query.Result {
 		p.PermissionName = p.Permission.String()

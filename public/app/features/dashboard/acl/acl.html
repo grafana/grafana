@@ -12,19 +12,22 @@
 
   <div class="modal-content">
     <table class="filter-table gf-form-group">
-      <tr ng-repeat="acl in ctrl.items">
+      <tr ng-repeat="acl in ctrl.items" ng-class="{'gf-form-disabled': acl.inherited}">
         <td style="width: 100%;">
           <i class="{{acl.icon}}"></i>
           <span ng-bind-html="acl.nameHtml"></span>
         </td>
+        <td>
+          <em class="muted no-wrap" ng-show="acl.inherited">Inherited from folder</em>
+        </td>
         <td class="query-keyword">Can</td>
         <td>
           <div class="gf-form-select-wrapper">
-            <select class="gf-form-input gf-size-auto" ng-model="acl.permission" ng-options="p.value as p.text for p in ctrl.permissionOptions" ng-change="ctrl.permissionChanged(acl)"></select>
+            <select class="gf-form-input gf-size-auto" ng-model="acl.permission" ng-options="p.value as p.text for p in ctrl.permissionOptions" ng-change="ctrl.permissionChanged(acl)" ng-disabled="acl.inherited"></select>
           </div>
         </td>
         <td>
-          <a class="btn btn-inverse btn-small" ng-click="ctrl.removeItem($index)">
+          <a class="btn btn-inverse btn-small" ng-click="ctrl.removeItem($index)" ng-hide="acl.inherited">
             <i class="fa fa-remove"></i>
           </a>
         </td>

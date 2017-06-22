@@ -39,36 +39,67 @@ export class AclCtrl {
     return this.backendSrv.get(`/api/dashboards/id/${dashboardId}/acl`)
       .then(result => {
         this.items = _.map(result, this.prepareViewModel.bind(this));
+        this.sortItems();
       });
   }
 
+  sortItems() {
+    this.items = _.orderBy(this.items, ['sortRank', 'sortName'], ['desc', 'asc']);
+    for (let i of this.items) {
+      console.log(i.sortRank);
+    }
+  }
+
   prepareViewModel(item: DashboardAcl): DashboardAcl {
+    item.inherited = this.dashboard.id !== item.dashboardId;
+    item.sortRank = 0;
+
     if (item.userId > 0) {
       item.icon = "fa fa-fw fa-user";
       item.nameHtml = this.$sce.trustAsHtml(item.userLogin);
+      item.sortName = item.userLogin;
+      item.sortRank = 10;
     } else if (item.userGroupId > 0) {
       item.icon = "fa fa-fw fa-users";
       item.nameHtml = this.$sce.trustAsHtml(item.userGroup);
+      item.sortName = item.userGroup;
+      item.sortRank = 20;
     } else if (item.role) {
       item.icon = "fa fa-fw fa-street-view";
       item.nameHtml = this.$sce.trustAsHtml(`Everyone with <span class="query-keyword">${item.role}</span> Role`);
+      item.sortName = item.role;
+      item.sortRank = 30;
+      if (item.role === 'Viewer') {
+        item.sortRank += 2;
+      }
+      if (item.role === 'Viewer') {
+        item.sortRank += 1;
+      }
+    }
+
+    if (item.inherited) {
+      item.sortRank += 100;
     }
 
     return item;
   }
 
   update() {
-    return this.backendSrv.post(`/api/dashboards/id/${this.dashboard.id}/acl`, {
-      items: this.items.map(item => {
-        return {
-          id: item.id,
-          userId: item.userId,
-          userGroupId: item.userGroupId,
-          role: item.role,
-          permission: item.permission,
-        };
-      })
-    }).then(() => {
+    var updated = [];
+    for (let item of this.items) {
+      if (item.inherited) {
+        continue;
+      }
+      updated.push({
+        id: item.id,
+        userId: item.userId,
+        userGroupId: item.userGroupId,
+        role: item.role,
+        permission: item.permission,
+      });
+    }
+
+    return this.backendSrv.post(`/api/dashboards/id/${this.dashboard.id}/acl`, { items: updated }).then(() => {
       this.dismiss();
     });
   }
@@ -89,26 +120,22 @@ export class AclCtrl {
     this.canUpdate = true;
   }
 
-  userPicked(user) {
-    this.items.push(this.prepareViewModel({
-      userId: user.id,
-      userLogin: user.login,
-      permission: 1,
-    }));
+  addNewItem(item) {
+    item.dashboardId = this.dashboard.id;
+
+    this.items.push(this.prepareViewModel(item));
+    this.sortItems();
 
     this.canUpdate = true;
+  }
+
+  userPicked(user) {
+    this.addNewItem({userId: user.id, userLogin: user.login, permission: 1,});
     this.$scope.$broadcast('user-picker-reset');
   }
 
   groupPicked(group) {
-    console.log(group);
-    this.items.push(this.prepareViewModel({
-      userGroupId: group.id,
-      userGroup: group.name,
-      permission: 1,
-    }));
-
-    this.canUpdate = true;
+    this.addNewItem({userGroupId: group.id, userGroup: group.name, permission: 1});
     this.$scope.$broadcast('user-group-picker-reset');
   }
 
@@ -142,7 +169,7 @@ export interface DashboardAcl {
   id?: number;
   dashboardId?: number;
   userId?: number;
-  userLogin?: number;
+  userLogin?: string;
   userEmail?: string;
   userGroupId?: number;
   userGroup?: string;
@@ -151,6 +178,9 @@ export interface DashboardAcl {
   role?: string;
   icon?: string;
   nameHtml?: string;
+  inherited?: boolean;
+  sortName?: string;
+  sortRank?: number;
 }
 
 coreModule.directive('dashAclModal', dashAclModal);
