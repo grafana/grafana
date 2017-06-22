@@ -2,10 +2,14 @@ import {describe, beforeEach, it, expect, sinon, angularMocks} from 'test/lib/co
 import {AclCtrl} from '../acl';
 
 describe('AclCtrl', () => {
-  var ctx: any = {};
-  var backendSrv = {
+  const ctx: any = {};
+  const backendSrv = {
     get: sinon.stub().returns(Promise.resolve([])),
     post: sinon.stub().returns(Promise.resolve([]))
+  };
+
+  const dashboardSrv = {
+    getCurrent: sinon.stub().returns({id: 1})
   };
 
   beforeEach(angularMocks.module('grafana.core'));
@@ -18,64 +22,59 @@ describe('AclCtrl', () => {
     ctx.ctrl = $controller(AclCtrl, {
       $scope: ctx.scope,
       backendSrv: backendSrv,
+      dashboardSrv: dashboardSrv
     }, {
-      dashboard: {id: 1}
+      dismiss: () => { return; }
     });
   }));
 
-  describe('when user permission is to be added', () => {
-    beforeEach(done => {
+  describe('when permissions are added', () => {
+    beforeEach(() => {
       backendSrv.get.reset();
       backendSrv.post.reset();
-      ctx.ctrl.type = 'User';
-      ctx.ctrl.userId = 2;
-      ctx.ctrl.permission = 1;
 
-      ctx.ctrl.addPermission().then(() => {
+      const userItem = {
+        id: 2,
+        login: 'user2',
+      };
+
+      ctx.ctrl.userPicked(userItem);
+
+      const userGroupItem = {
+        id: 2,
+        name: 'ug1',
+      };
+
+      ctx.ctrl.groupPicked(userGroupItem);
+
+      ctx.ctrl.newType = 'Editor';
+      ctx.ctrl.typeChanged();
+
+      ctx.ctrl.newType = 'Viewer';
+      ctx.ctrl.typeChanged();
+    });
+
+     it('should sort the result by role, user group and user', () => {
+        expect(ctx.ctrl.items[0].role).to.eql('Viewer');
+        expect(ctx.ctrl.items[1].role).to.eql('Editor');
+        expect(ctx.ctrl.items[2].userGroupId).to.eql(2);
+        expect(ctx.ctrl.items[3].userId).to.eql(2);
+      });
+
+    it('should save permissions to db', (done) => {
+      ctx.ctrl.update().then(() => {
         done();
       });
-    });
 
-    it('should parse the result and save to db', () => {
       expect(backendSrv.post.getCall(0).args[0]).to.eql('/api/dashboards/id/1/acl');
-      expect(backendSrv.post.getCall(0).args[1].userId).to.eql(2);
-      expect(backendSrv.post.getCall(0).args[1].permissions).to.eql(1);
-    });
-
-    it('should refresh the list after saving.', () => {
-      expect(backendSrv.get.getCall(0).args[0]).to.eql('/api/dashboards/id/1/acl');
-    });
-
-     it('should reset userId', () => {
-      expect(ctx.ctrl.userId).to.eql(null);
-    });
-  });
-
-  describe('when user group permission is to be added', () => {
-    beforeEach(done => {
-      backendSrv.get.reset();
-      backendSrv.post.reset();
-      ctx.ctrl.type = 'User Group';
-      ctx.ctrl.userGroupId = 2;
-      ctx.ctrl.permission = 1;
-
-      ctx.ctrl.addPermission().then(() => {
-        done();
-      });
-    });
-
-    it('should parse the result and save to db', () => {
-      expect(backendSrv.post.getCall(0).args[0]).to.eql('/api/dashboards/id/1/acl');
-      expect(backendSrv.post.getCall(0).args[1].userGroupId).to.eql(2);
-      expect(backendSrv.post.getCall(0).args[1].permissions).to.eql(1);
-    });
-
-    it('should refresh the list after saving.', () => {
-      expect(backendSrv.get.getCall(0).args[0]).to.eql('/api/dashboards/id/1/acl');
-    });
-
-     it('should reset userGroupId', () => {
-      expect(ctx.ctrl.userGroupId).to.eql(null);
+      expect(backendSrv.post.getCall(0).args[1].items[0].role).to.eql('Viewer');
+      expect(backendSrv.post.getCall(0).args[1].items[0].permission).to.eql(1);
+      expect(backendSrv.post.getCall(0).args[1].items[1].role).to.eql('Editor');
+      expect(backendSrv.post.getCall(0).args[1].items[1].permission).to.eql(1);
+      expect(backendSrv.post.getCall(0).args[1].items[2].userGroupId).to.eql(2);
+      expect(backendSrv.post.getCall(0).args[1].items[2].permission).to.eql(1);
+      expect(backendSrv.post.getCall(0).args[1].items[3].userId).to.eql(2);
+      expect(backendSrv.post.getCall(0).args[1].items[3].permission).to.eql(1);
     });
   });
 });
