@@ -88,7 +88,7 @@ func setIndexViewData(c *middleware.Context) (*dtos.IndexViewData, error) {
 		data.MainNavLinks = append(data.MainNavLinks, &dtos.NavLink{
 			Text: "New",
 			Icon: "fa fa-fw fa-plus",
-			Url:  setting.AppSubUrl + "/",
+			Url:  "",
 			Children: []*dtos.NavLink{
 				{Text: "Dashboard", Icon: "fa fa-fw fa-plus", Url: setting.AppSubUrl + "/dashboard/new"},
 				{Text: "Folder", Icon: "fa fa-fw fa-plus", Url: setting.AppSubUrl + "/dashboard/new/?editview=new-folder"},
