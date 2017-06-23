@@ -119,12 +119,16 @@ func SearchUserGroups(query *m.SearchUserGroupsQuery) error {
 	queryWithWildcards := "%" + query.Query + "%"
 
 	sess := x.Table("user_group")
+	sess.Where("org_id=?", query.OrgId)
+
 	if query.Query != "" {
 		sess.Where("name LIKE ?", queryWithWildcards)
 	}
 	if query.Name != "" {
 		sess.Where("name=?", query.Name)
 	}
+	sess.Asc("name")
+
 	offset := query.Limit * (query.Page - 1)
 	sess.Limit(query.Limit, offset)
 	sess.Cols("id", "name")
@@ -222,7 +226,7 @@ func GetUserGroupMembers(query *m.GetUserGroupMembersQuery) error {
 	sess.Join("INNER", "user", fmt.Sprintf("user_group_member.user_id=%s.id", x.Dialect().Quote("user")))
 	sess.Where("user_group_member.user_group_id=?", query.UserGroupId)
 	sess.Cols("user.org_id", "user_group_member.user_group_id", "user_group_member.user_id", "user.email", "user.login")
-	sess.Asc("user.email", "user.login")
+	sess.Asc("user.login", "user.email")
 
 	err := sess.Find(&query.Result)
 	return err

@@ -16,7 +16,7 @@
       </span>
     </div>
   <div class="admin-list-table">
-    <table class="filter-table form-inline">
+    <table class="filter-table form-inline" ng-show="ctrl.userGroups.length > 0">
       <thead>
         <tr>
           <th>Id</th>
@@ -54,4 +54,8 @@
       </li>
     </ol>
   </div>
+
+  <em class="muted" ng-hide="ctrl.userGroups.length > 0">
+    No User Groups found.
+  </em>
 </div>
