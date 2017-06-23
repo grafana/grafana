@@ -115,6 +115,9 @@ $gf-form-margin: 0.25rem;
   @include border-radius($input-border-radius-sm);
   @include box-shadow($input-box-shadow);
   transition: border-color ease-in-out .15s, box-shadow ease-in-out .15s;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 
   // Unstyle the caret on `<select>`s in IE10+.
   &::-ms-expand {
