@@ -55,6 +55,7 @@ type SearchUserGroupsQuery struct {
 	Name  string
 	Limit int
 	Page  int
+	OrgId int64
 
 	Result SearchUserGroupQueryResult
 }

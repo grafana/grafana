@@ -6,9 +6,7 @@ import _ from 'lodash';
 export default class UserGroupDetailsCtrl {
   userGroup: UserGroup;
   userGroupMembers: User[] = [];
-  userId: number;
   navModel: any;
-  addMemberForm: any;
 
   constructor(private $scope, private $http, private backendSrv, private $routeParams, navModelSrv) {
     this.navModel = navModelSrv.getOrgNav(3);
@@ -51,11 +49,9 @@ export default class UserGroupDetailsCtrl {
     this.backendSrv.put('/api/user-groups/' + this.userGroup.id, {name: this.userGroup.name});
   }
 
-  addMember() {
-    if (!this.addMemberForm.$valid) { return; }
-
-    this.backendSrv.post(`/api/user-groups/${this.$routeParams.id}/members`, {userId: this.userId}).then(() => {
-      this.userId = null;
+  userPicked(user) {
+    this.backendSrv.post(`/api/user-groups/${this.$routeParams.id}/members`, {userId: user.id}).then(() => {
+      this.$scope.$broadcast('user-picker-reset');
       this.get();
     });
   }

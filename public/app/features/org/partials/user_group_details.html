@@ -5,44 +5,45 @@
 		<h1>Edit User Group</h1>
 	</div>
 
-	<form name="userGroupDetailsForm" class="gf-form-group">
+	<form name="userGroupDetailsForm" class="gf-form-group gf-form-inline">
 		<div class="gf-form">
 			<span class="gf-form-label width-10">Name</span>
 			<input type="text" required ng-model="ctrl.userGroup.name" class="gf-form-input max-width-14" >
 		</div>
 
-		<div class="gf-form-button-row">
+		<div class="gf-form">
 			<button type="submit" class="btn btn-success" ng-click="ctrl.update()">Update</button>
 		</div>
 	</form>
 
-	<h3 class="page-heading">User Group Members</h3>
+  <div class="gf-form-group">
+    <h3 class="page-heading">User Group Members</h3>
 
-  <form name="ctrl.addMemberForm" class="gf-form-group">
-		<div class="gf-form">
-			<span class="gf-form-label width-10">Name</span>
-      <user-picker user-id="ctrl.userId"></user-picker>
-    </div>
+    <form name="ctrl.addMemberForm" class="gf-form-group">
+      <div class="gf-form">
+        <span class="gf-form-label width-10">User</span>
+        <user-picker user-picked="ctrl.userPicked($user)"></user-picker>
+      </div>
+    </form>
 
-		<div class="gf-form-button-row">
-			<button type="submit" class="btn btn-success" ng-click="ctrl.addMember()">Add</button>
-		</div>
-	</form>
-
-	<table class="grafana-options-table">
-		<tr>
-			<th>Username</th>
-			<th>Email</th>
-			<th></th>
-		</tr>
-		<tr ng-repeat="userGroup in ctrl.userGroupMembers">
-			<td>{{userGroup.login}}</td>
-			<td>{{userGroup.email}}</td>
-			<td style="width: 1%">
-				<a ng-click="ctrl.removeUserGroupMember(userGroup)" class="btn btn-danger btn-mini">
-					<i class="fa fa-remove"></i>
-				</a>
-			</td>
-		</tr>
-	</table>
+    <table class="grafana-options-table" ng-show="ctrl.userGroupMembers.length > 0">
+      <tr>
+        <th>Username</th>
+        <th>Email</th>
+        <th></th>
+      </tr>
+      <tr ng-repeat="member in ctrl.userGroupMembers">
+        <td>{{member.login}}</td>
+        <td>{{member.email}}</td>
+        <td style="width: 1%">
+          <a ng-click="ctrl.removeUserGroupMember(member)" class="btn btn-danger btn-mini">
+            <i class="fa fa-remove"></i>
+          </a>
+        </td>
+      </tr>
+    </table>
+    <div>
+  <em class="muted" ng-hide="ctrl.userGroupMembers.length > 0">
+    This user group has no members yet.
+  </em>
 </div>

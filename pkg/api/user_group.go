@@ -66,6 +66,7 @@ func SearchUserGroups(c *middleware.Context) Response {
 		Name:  c.Query("name"),
 		Page:  page,
 		Limit: perPage,
+		OrgId: c.OrgId,
 	}
 
 	if err := bus.Dispatch(&query); err != nil {
